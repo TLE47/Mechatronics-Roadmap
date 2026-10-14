@@ -1,0 +1,35 @@
+name: Mechatronics Roadmap & Reference Labs CI
+
+on:
+  push:
+    branches: ["main", "master", "**"]
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-test:
+    name: Repository Integrity, Math/Mermaid Lint & Labs 00-06 ({{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify Markdown structure, internal links, Mermaid diagrams & LaTeX math fences
+        run: python3 scripts/verify_repo.py --verbose
+
+      - name: Run all Python & C++20 Reference Simulations and Unit Tests (Labs 00–06)
+        run: python3 scripts/run_all_labs.py --verbose

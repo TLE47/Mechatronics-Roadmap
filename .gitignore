@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C/C++ build artifacts
+build/
+*.o
+*.out
+*.exe
+*.dSYM/
+lab04_rt_test
+
+# OS & Editor files
+.DS_Store
+*.swp
+.vscode/
+.idea/
