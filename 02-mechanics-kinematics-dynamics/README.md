@@ -181,3 +181,10 @@ Evaluating symbolic $M(q)$ and inverting it naively scales as $O(n^3)$ and gener
 | **PoE vs. Pinocchio FK/Jacobian Match** | $\|T_{\text{PoE}}(q) - T_{\text{Pinocchio}}(q)\|_F < 10^{-12}$ and $\|J_s - J_{s,\text{Pin}}\|_F < 10^{-12}$ | Automated test suite over 1,000 random $q \in [-\pi, \pi]^n$ |
 | **RNEA Inverse Dynamics Accuracy** | $\|\tau_{\text{RNEA}} - \tau_{\text{Pinocchio}}\|_\infty < 10^{-11}\text{ N\cdot m}$ | Randomized state/acceleration trajectory benchmark |
 | **Passivity Skew-Symmetry Identity** | $|x^\top(\dot{M} - 2C)x| < 10^{-9}$ across all configurations | Numerical derivative check along simulated free-fall trajectory |
+
+### 8.1 Executable Parametric CAD Generator & 3D STEP/STL Artifacts
+Run [cad/cad_parametric_parts.py](cad/cad_parametric_parts.py) and [cad/validate_cad_parts.py](cad/validate_cad_parts.py) to generate and verify watertight 2-manifold STL and ISO 10303-21 STEP models:
+* **Ti-6Al-4V Circular Notch Flexure Hinge:** [cad/notch_flexure_hinge.step](cad/notch_flexure_hinge.step) and [cad/notch_flexure_hinge.stl](cad/notch_flexure_hinge.stl)
+* **440C Kelvin 3-2-1 Kinematic Coupling Base Plate:** [cad/kelvin_kinematic_coupling.step](cad/kelvin_kinematic_coupling.step) and [cad/kelvin_kinematic_coupling.stl](cad/kelvin_kinematic_coupling.stl)
+* **Engineering Mass/Inertia/Stress Manifest:** [cad/cad_manifest.json](cad/cad_manifest.json)
+

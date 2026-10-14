@@ -14,6 +14,38 @@ This repository provides a **complete, rigorous, self-contained curriculum and i
 
 ---
 
+## 1B. Beginner's Intuition & Symbol Decoder (Read This First!)
+
+> **New to Mechatronics?** Don't let the Greek letters or differential equations intimidate you. Every graduate equation in this roadmap describes a **physical sensation you already understand**—like feeling a spring push back, balancing a broomstick in your palm, or riding a bicycle over a bump. Use this quick-reference guide to translate the math into plain English before diving into the rigorous derivations below.
+
+### How the 8 Tracks Fit Together (The Human Body Analogy)
+
+| Track | Engineering Name | Human Body Analogy | Plain-English Job Description |
+| :--- | :--- | :--- | :--- |
+| **Track 00** | **Foundations (Math & Physics)** | **Laws of Nature** | The common language connecting electricity, spinning shafts, heat, and digital filters so we can predict how a machine behaves before building it. |
+| **Track 01** | **Power Electronics & AFE** | **Heart, Arteries & Nerves** | **Power stage:** Muscles need high current ($30\text{ A}$) switched at $40\text{ kHz}$ without frying transistors. **AFE (Analog Front-End):** Cleans up tiny microvolt sensor signals before the microcontroller reads them. |
+| **Track 02** | **Mechanics, Kinematics & Dynamics** | **Skeleton, Joints & Tendons** | Designing stiff, zero-slop joints (flexures, bearings, planetary gears) and writing the exact equations connecting joint angles ($q$) to forces/torques ($\tau$). |
+| **Track 03** | **Sensors & Actuators (FOC)** | **Eyes, Inner Ear & Muscle Fibers** | Calibrating position encoders to sub-arcminute accuracy and timing 3-phase motor currents ($i_d, i_q$) so magnetic fields always push perpendicular to the rotor (**Field-Oriented Control**). |
+| **Track 04** | **Embedded & Hard Real-Time** | **Spinal Cord Reflexes** | Running control loops at an exact heartbeat (e.g., every $40\ \mu\text{s}$ with $< 200\text{ ns}$ jitter) using hardware DMA and lock-free memory so the CPU never pauses or stutters. |
+| **Track 05** | **Control & State Estimation** | **Cerebellum (Balance & Coordination)** | **Kalman Filter (ESKF):** Fuses noisy sensors to estimate true 3D orientation. **LQR / MPC:** Looks ahead in time to balance unstable systems. **CBF:** An invisible mathematical safety bumper. |
+| **Track 06** | **Robotics & Autonomy** | **Motor Cortex & Vision** | Coordinating a 6-DOF robot arm so its hand behaves like a virtual programmable spring/damper (**Impedance Control**) while dodging obstacles smoothly. |
+| **Track 07** | **Systems, SysID, HIL & Safety** | **Immune System & Medical Checkups** | Shaking the robot with multi-frequency tones (**Schroeder Multisine**) to measure its true transfer function, and dual-channel hardware **Safe Torque Off (STO)** to cut motor power in $< 1\ \mu\text{s}$ if anything goes wrong. |
+
+### The 12 Equations & Symbols You Will See Everywhere — Decoded
+
+| Symbol / Equation | How to Pronounce It | Plain-English Meaning | Why Engineers Care |
+| :--- | :--- | :--- | :--- |
+| $q,\ \dot{q},\ \ddot{q}$ | "$q$, $q$-dot, $q$-double-dot" | **Position** ($q$), **Velocity** ($\dot{q}$), and **Acceleration** ($\ddot{q}$) of a robot's joints. | Every dot over a variable just means "rate of change over time" ($\frac{d}{dt}$). |
+| $SO(3)$ and $SE(3)$ | "Special Orthogonal / Euclidean Group 3" | **3D Rotation** ($SO(3)$, a $3\times 3$ matrix) and **3D Rotation + Position** ($SE(3)$, a $4\times 4$ matrix). | Unlike Roll-Pitch-Yaw Euler angles, $SO(3)$ rotation matrices never suffer from **Gimbal Lock** at $90^\circ$ pitch. |
+| $M(q)\ddot{q} + C(q,\dot{q})\dot{q} + g(q) = \tau$ | "The Manipulator Equation" | $\text{Mass}\times\text{Accel} + \text{Centrifugal/Coriolis} + \text{Gravity} = \text{Motor Torque } (\tau)$. | It is literally Newton's $F = ma$ written for a multi-joint robot arm! |
+| $J(q)$ and $\tau = J(q)^\top F$ | "The Jacobian Matrix & Virtual Work" | A leverage multiplier table connecting joint speeds to hand speed ($v = J\dot{q}$) and hand forces to joint torques ($\tau = J^\top F$). | Lets a robot control the exact force at its fingertips without needing a force sensor at the fingertips! |
+| $J_{\text{refl}} = N^2 J_{\text{rotor}}$ | "Reflected Inertia ($N$-squared law)" | A gearbox with ratio $N:1$ makes the motor's spinning rotor feel $N^2$ times heavier at the output shaft. | A $100:1$ gearbox makes the rotor feel $10,000\times$ heavier—if a legged robot foot hits the ground, the gears shatter. That is why **QDD** uses $N \le 10:1$. |
+| $i_d,\ i_q$ (Clarke & Park) | "$d$-axis and $q$-axis currents" | Mathematical camera trick that rotates with the spinning motor magnet so AC sine waves look like simple DC numbers. | $i_d$ pulls radial on the magnet (wasted heat, keep $i_d = 0$); $i_q$ pushes tangentially (100% pure torque!). |
+| $V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{di}{dt}$ | "Inductive Voltage Spike" | Stopping $30\text{ A}$ in $10\text{ ns}$ through a tiny wire loop ($L_{\text{loop}}$) acts like slamming a water valve shut (**water hammer**). | Even $2\text{ nH}$ of stray PCB trace length creates a voltage spike that can blow up an $80\text{ V}$ MOSFET. |
+| $\text{DOF} = 6 - C$ | "Maxwell's Exact Constraint Rule" | A free 3D object has $6$ ways to move ($X,Y,Z,\text{Roll,Pitch,Yaw}$). Each contact point removes $1$ degree of freedom. | A **Kelvin Coupling** touches at $3+2+1 = 6$ exact points so the part snaps into the exact sub-micron spot even if the metal expands with heat. |
+
+---
+
 ## 2. Master System Architecture: The Mechatronic Coupling Loop
 
 Every mechatronic system is a coupled cyber-physical feedback loop bridging the continuous-time physical plant ($\mathcal{P}$, governed by conservation laws in $\mathbb{R}^n$) and the discrete-time compute engine ($\mathcal{C}$, governed by clocked state machines and floating/fixed-point arithmetic).
@@ -240,5 +272,7 @@ journey
   * [Lab 05: Gang of Four Sensitivity, Joseph-Form ESKF, CLF-CBF-QP & MPC](05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py)
   * [Lab 06: Operational-Space Cartesian Impedance, Null-Space Projector & Minimum-Jerk](06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py)
   * [Lab 07: Schroeder Multisine SysID, Dual-Channel STO Fault Injection & Regen Clamp](07-systems-hil-and-production/lab/lab07_sysid_hil_and_sto.py)
+  * [Track 02 & Capstone IV Parametric CAD Generator & Validator (`cad_parametric_parts.py`)](02-mechanics-kinematics-dynamics/cad/cad_parametric_parts.py) and [validate_cad_parts.py](02-mechanics-kinematics-dynamics/cad/validate_cad_parts.py)
+  * [Capstone I 48V / 30A FOC Servo Drive PCB Netlist, Thermal & BOM Suite (`generate_foc_pcb_and_bom.py`)](08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py)
   * [Capstone Models Validator: URDF & MuJoCo MJCF Physics/Inertia Suite](08-capstone-projects/models/validate_models.py)
 * **[Repository Verification Script](scripts/verify_repo.py)** — Run `python3 scripts/verify_repo.py` to validate every Markdown link, Mermaid diagram syntax block, equation block, and structural requirement across the repository.

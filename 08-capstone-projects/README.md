@@ -53,6 +53,12 @@ Design, lay out, assemble, and bring up a $45\text{ mm} \times 45\text{ mm}$ 6-l
 | **CAN-FD Command Latency** | $< 120\ \mu\text{s}$ from CAN frame EOF to updated PWM duty | Oscilloscope trigger on CAN RX vs. PWM duty step |
 | **Short-Circuit Protection** | Survives hard phase-to-phase and phase-to-GND short at $48\text{ V}$ | Physical contactor short test; gate shutdown $< 1.2\ \mu\text{s}$ |
 
+### 1.3 Reference KiCad Netlist, Coupled Electro-Thermal Solver & Production BOM
+* **EDA Generator & ERC/Thermal Verifier:** [eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py](eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py)
+* **KiCad S-Expression Schematic Netlist (43 Nets, Kelvin Shunts & Dual STO):** [eda-capstone1-foc-drive/capstone1_foc_48v30a.net](eda-capstone1-foc-drive/capstone1_foc_48v30a.net)
+* **Production Bill of Materials (CSV):** [eda-capstone1-foc-drive/capstone1_bom.csv](eda-capstone1-foc-drive/capstone1_bom.csv)
+* **Coupled Thermal & Switching Loss Report (JSON):** [eda-capstone1-foc-drive/foc_thermal_and_bom.json](eda-capstone1-foc-drive/foc_thermal_and_bom.json)
+
 ---
 
 ## Capstone 2: Rotary Inverted Pendulum (Furuta Pendulum) with Swing-Up, LQR & MPC
@@ -138,9 +144,10 @@ Build a 3-DOF (Hip Ab/Ad, Hip Flex/Ext, Knee Flex/Ext) Quasi-Direct-Drive roboti
 | **Continuous Hopping Apex Regulation** | Apex height regulated to $0.45\text{ m} \pm 0.012\text{ m}$ over $200$ consecutive hops | Boom encoder + IMU-kinematic state estimator log |
 | **Step Terrain Disturbance Rejection** | Survives unmapped $\pm 60\text{ mm}$ ground height step change without falling | Blind wooden-block step insertion during continuous hopping |
 
-### 4.3 Reference URDF & MuJoCo MJCF Models
+### 4.3 Reference URDF, MuJoCo MJCF & 3D STEP/STL Planetary Carrier Models
 * **URDF Model:** [models/capstone4-qdd-hopper/qdd_hopper_leg.urdf](models/capstone4-qdd-hopper/qdd_hopper_leg.urdf)
 * **MuJoCo MJCF Model:** [models/capstone4-qdd-hopper/qdd_hopper_leg.xml](models/capstone4-qdd-hopper/qdd_hopper_leg.xml)
+* **8:1 QDD Double-Shear Planetary Carrier 3D STEP & STL:** [cad/qdd_planetary_carrier.step](cad/qdd_planetary_carrier.step) and [cad/qdd_planetary_carrier.stl](cad/qdd_planetary_carrier.stl)
 * **Automated Model Validator:** [models/validate_models.py](models/validate_models.py)
 
 ---

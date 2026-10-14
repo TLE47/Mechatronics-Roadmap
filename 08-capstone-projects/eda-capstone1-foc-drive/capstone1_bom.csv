@@ -1,0 +1,13 @@
+RefDes,Qty,Category,MPN,Manufacturer,Package,RatingSpec,OperatingStress,DeratingOK,UnitCostUSD,ExtendedCostUSD
+U1,1,MCU,STM32G474RET6,STMicroelectronics,LQFP-64 (10x10mm),"3.6V max, -40 to +125 C","3.30V supply, Tj < 75 C",True,5.85,5.85
+U2,1,Gate Driver,DRV8353RSRGZR,Texas Instruments,VQFN-48 (7x7mm),"102V abs max, 1A source / 2A sink",48V nominal (58V peak surge),True,4.90,4.90
+"Q1,Q2,Q3,Q4,Q5,Q6",6,Power MOSFET,ISC030N08NM6,Infineon,TDSON-8 (SuperSO8 5x6mm),"80V VDS, 173A ID, Tj_max=175 C","55.8V peak VDS (at 30A turn-off), 15A_rms cont",True,1.45,8.70
+"U3,U4,U5",3,Current Sense Amplifier,INA240A2PWR,Texas Instruments,TSSOP-8,"-4V to +80V CM, 400 kHz BW",48V PWM common-mode @ 40 kHz,True,1.95,5.85
+"R_SH_A,R_SH_B,R_SH_C",3,Kelvin Shunt Resistor,CSS2H-2512R-1L00F,Bourns,2512 (4-Terminal Kelvin),3.0W continuous @ 70 C,0.225W @ 15A_rms (0.90W peak @ 30A),True,0.68,2.04
+U6,1,Magnetic Encoder,MA732GQ-Z,Monolithic Power Systems,QFN-16 (3x3mm),"3.6V max, -40 to +125 C","3.30V supply, on-axis diametric SmCo magnet",True,4.10,4.10
+U7,1,CAN-FD Transceiver,TCAN1044VDRBRQ1,Texas Instruments,SON-8 (3x3mm),"+/-58V bus fault, 8 Mbps data rate",5 Mbps CAN-FD @ 2 kHz impedance loop,True,1.15,1.15
+U8,1,DC-DC Buck Converter,LM5164DDAR,Texas Instruments,SO PowerPAD-8,"6V to 100V VIN, 1A IOUT",48V VIN -> 12V VOUT @ 180 mA,True,2.20,2.20
+U9,1,Low-Noise 3.3V LDO,TPS7A2033PDBVR,Texas Instruments,SOT-23-5,"6.0V VIN max, 300 mA",5.0V pre-reg -> 3.30V @ 95 mA,True,0.48,0.48
+U10,1,STO Safety Gate Buffer,SN74LVC2G08DCUR,Texas Instruments,VSSOP-8,"5.5V max, t_pd = 3.2 ns",3.3V logic interlock on DRV8353 ENABLE + Buck EN,True,0.22,0.22
+C_HF1..C_HF6,6,High-Freq Decoupling MLCC,GCM32ER72A225KA37L,Murata,1210,100V DC X7R,48V DC bus (48% voltage ratio),True,0.38,2.28
+"C_BULK1,C_BULK2",2,Hybrid Polymer Bulk Cap,EEH-ZA1K470P,Panasonic,SMD D8x10.2mm,"80V DC, 2.1A ripple current",48V DC bus (60% voltage ratio),True,1.35,2.70

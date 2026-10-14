@@ -1,0 +1,88 @@
+{
+  "ok": true,
+  "generator": "cad_parametric_parts.py",
+  "cadquery_compatible": true,
+  "parts_generated": 3,
+  "parts": [
+    {
+      "part": "notch_flexure_hinge",
+      "material": "Ti-6Al-4V (Grade 5 Titanium)",
+      "stl_path": "02-mechanics-kinematics-dynamics/cad/notch_flexure_hinge.stl",
+      "step_path": "02-mechanics-kinematics-dynamics/cad/notch_flexure_hinge.step",
+      "triangles": 276,
+      "mass_properties": {
+        "volume_mm3": 7276.912,
+        "mass_grams": 32.237,
+        "com_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "inertia_kg_m2": {
+          "ixx": 6.27e-07,
+          "iyy": 8.359e-06,
+          "izz": 8.443e-06
+        }
+      },
+      "engineering_analysis": {
+        "rotational_stiffness_nm_per_rad": 6.9835,
+        "peak_bending_stress_mpa": 248.29,
+        "fatigue_safety_factor": 2.054
+      }
+    },
+    {
+      "part": "kelvin_kinematic_coupling",
+      "material": "AISI 440C Hardened Stainless Steel (58 HRC)",
+      "stl_path": "02-mechanics-kinematics-dynamics/cad/kelvin_kinematic_coupling.stl",
+      "step_path": "02-mechanics-kinematics-dynamics/cad/kelvin_kinematic_coupling.step",
+      "triangles": 720,
+      "mass_properties": {
+        "volume_mm3": 86266.614,
+        "mass_grams": 659.94,
+        "com_mm": [
+          -0.0246,
+          -0.0317,
+          5.9904
+        ],
+        "inertia_kg_m2": {
+          "ixx": 0.000357838,
+          "iyy": 0.000357516,
+          "izz": 0.000707469
+        }
+      },
+      "engineering_analysis": {
+        "maxwell_constraints": 6,
+        "remaining_dof": 0,
+        "peak_hertzian_stress_mpa": 1468.12,
+        "hertzian_safety_factor": 1.294
+      }
+    },
+    {
+      "part": "qdd_planetary_carrier",
+      "material": "AA 7075-T6 Aerospace Aluminum",
+      "stl_path": "08-capstone-projects/cad/qdd_planetary_carrier.stl",
+      "step_path": "08-capstone-projects/cad/qdd_planetary_carrier.step",
+      "triangles": 288,
+      "mass_properties": {
+        "volume_mm3": 36423.21,
+        "mass_grams": 102.349,
+        "com_mm": [
+          -0.0,
+          0.0,
+          4.4128
+        ],
+        "inertia_kg_m2": {
+          "ixx": 5.0559e-05,
+          "iyy": 5.0559e-05,
+          "izz": 9.9896e-05
+        }
+      },
+      "engineering_analysis": {
+        "reduction_ratio": 8.0,
+        "pitch_circle_radius_mm": 36.0,
+        "double_shear_pin_stress_mpa": 3.5,
+        "shear_safety_factor": 82.92
+      }
+    }
+  ]
+}

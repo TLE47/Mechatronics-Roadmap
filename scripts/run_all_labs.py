@@ -25,10 +25,12 @@ PYTHON_LABS = [
     ("00-foundations", "00-foundations/lab/lab00_two_mass_and_so3.py"),
     ("01-electronics-and-power", "01-electronics-and-power/lab/lab01_power_and_afe.py"),
     ("02-mechanics-kinematics-dynamics", "02-mechanics-kinematics-dynamics/lab/lab02_poe_and_rnea.py"),
+    ("02-cad-parametric-parts", "02-mechanics-kinematics-dynamics/cad/validate_cad_parts.py"),
     ("03-sensors-and-actuators", "03-sensors-and-actuators/lab/lab03_foc_and_metrology.py"),
     ("05-control-and-estimation", "05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py"),
     ("06-robotics-and-autonomy", "06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py"),
     ("07-systems-hil-and-production", "07-systems-hil-and-production/lab/lab07_sysid_hil_and_sto.py"),
+    ("08-capstone1-foc-eda", "08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py"),
     ("08-capstone-models", "08-capstone-projects/models/validate_models.py"),
 ]
 
