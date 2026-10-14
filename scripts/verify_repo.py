@@ -165,6 +165,15 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
                 errors.append(
                     f"{rel_path}: Mermaid block #{idx} has unrecognized header: '{first_line}'"
                 )
+            for m_line in non_empty:
+                # GitHub Mermaid parser fails on unquoted parentheses/brackets inside edge labels -->|...()...|
+                for edge_match in re.finditer(r"\|([^|]+)\|", m_line):
+                    label_inner = edge_match.group(1).strip()
+                    if not (label_inner.startswith('"') and label_inner.endswith('"')):
+                        if any(ch in label_inner for ch in "()[]{}"):
+                            errors.append(
+                                f"{rel_path}: Mermaid block #{idx} has unquoted special chars in edge label '|{label_inner}|'"
+                            )
 
         file_link_count = 0
         for match in LINK_RE.finditer(text):

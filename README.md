@@ -88,9 +88,9 @@ flowchart TB
         ACT["Electromechanical Actuators<br/>PMSM / BLDC / Voice Coil / Hydraulic"]
         SENS["Physical Transducers<br/>MEMS IMU, Optical/Magnetic Encoders,<br/>Strain Gauges, Shunt/Hall Current"]
         
-        ENV -->|External Wrench| MECH
-        ACT -->|Force / Torque τ(t)| MECH
-        MECH -->|State x(t) = q, q̇, q̈| SENS
+        ENV -->|"External Wrench"| MECH
+        ACT -->|"Force / Torque τ(t)"| MECH
+        MECH -->|"State x(t) = q, q̇, q̈"| SENS
     end
 
     subgraph INTERFACE["Mixed-Signal & Power Interface (Domain Boundary)"]
@@ -99,9 +99,9 @@ flowchart TB
         AFE["Analog Front-End (AFE)<br/>Instrumentation Amps, Anti-Aliasing<br/>Bessel/Butterworth Filters, ΣΔ/SAR ADC"]
         SAFETY["Hardware Safety Interlocks<br/>STO (Safe Torque Off), Watchdog,<br/>Over-Current Comparator Trip"]
         
-        PWR ==>|Switched High-Power V_abc, I_abc| ACT
-        SENS -->|μV–mV Analog / Differential Edges| AFE
-        SAFETY -.->|Hardware Gate Disable < 1 μs| PWR
+        PWR ==>|"Switched High-Power V_abc, I_abc"| ACT
+        SENS -->|"μV–mV Analog / Differential Edges"| AFE
+        SAFETY -.->|"Hardware Gate Disable < 1 μs"| PWR
     end
 
     subgraph COMPUTE["Cyber / Embedded Domain (Discrete-Time, Information Flow)"]
@@ -110,11 +110,11 @@ flowchart TB
         MID["Real-Time Servo & Estimation (1–4 kHz)<br/>Error-State EKF, Joint Impedance,<br/>Whole-Body / Computed-Torque Control"]
         HIGH["Autonomy, Planning & Supervisory (50–500 Hz)<br/>NMPC / QP Trajectory Optimization,<br/>ROS 2 DDS, Fault Diagnostics"]
         
-        AFE -->|SPI / SDFM / BiSS-C / DMA| FAST
-        FAST -->|Duty Cycles d_a, d_b, d_c| PWR
-        FAST <-->|Shared Memory / IPC / EtherCAT| MID
-        MID <-->|DDS / RT-Preempt / CAN-FD| HIGH
-        FAST -.->|Fault Flags & Heartbeat| SAFETY
+        AFE -->|"SPI / SDFM / BiSS-C / DMA"| FAST
+        FAST -->|"Duty Cycles d_a, d_b, d_c"| PWR
+        FAST <-->|"Shared Memory / IPC / EtherCAT"| MID
+        MID <-->|"DDS / RT-Preempt / CAN-FD"| HIGH
+        FAST -.->|"Fault Flags & Heartbeat"| SAFETY
     end
 
     style PLANT fill:#1b263b,stroke:#415a77,color:#e0e1dd
