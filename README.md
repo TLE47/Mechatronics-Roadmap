@@ -239,4 +239,6 @@ journey
   * [Lab 04: Hard Real-Time C++20 `WaitFreeSeqLock`, Zero-Heap Guard & RTA](04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp)
   * [Lab 05: Gang of Four Sensitivity, Joseph-Form ESKF, CLF-CBF-QP & MPC](05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py)
   * [Lab 06: Operational-Space Cartesian Impedance, Null-Space Projector & Minimum-Jerk](06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py)
+  * [Lab 07: Schroeder Multisine SysID, Dual-Channel STO Fault Injection & Regen Clamp](07-systems-hil-and-production/lab/lab07_sysid_hil_and_sto.py)
+  * [Capstone Models Validator: URDF & MuJoCo MJCF Physics/Inertia Suite](08-capstone-projects/models/validate_models.py)
 * **[Repository Verification Script](scripts/verify_repo.py)** — Run `python3 scripts/verify_repo.py` to validate every Markdown link, Mermaid diagram syntax block, equation block, and structural requirement across the repository.

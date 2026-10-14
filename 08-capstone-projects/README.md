@@ -76,6 +76,10 @@ Build an underactuated 2-DOF rotary inverted pendulum demonstrating precision me
 | **Upright Balancing RMS Jitter** | $|q_2|_{\text{rms}} < 0.08^\circ$, $|q_1|_{\text{rms}} < 0.25^\circ$ at steady state | 60-second upright hold telemetry audit |
 | **Impulse Disturbance Recovery** | Recovers from $25^\circ$ angular perturbation without violating $|q_1| \le 120^\circ$ base limit | Calibrated pendulum impact hammer test |
 
+### 2.3 Reference URDF & MuJoCo MJCF Models
+* **URDF Model:** [models/capstone2-furuta-pendulum/furuta_pendulum.urdf](models/capstone2-furuta-pendulum/furuta_pendulum.urdf)
+* **MuJoCo MJCF Model:** [models/capstone2-furuta-pendulum/furuta_pendulum.xml](models/capstone2-furuta-pendulum/furuta_pendulum.xml)
+
 ---
 
 ## Capstone 3: 6-DOF Force-Controlled Serial Manipulator or Stewart Platform
@@ -106,6 +110,10 @@ flowchart TB
 | **Compliant Surface Polishing / Force Tracking** | Normal force regulated to $10.0\text{ N} \pm 0.5\text{ N}$ while traversing a $20^\circ$ unknown tilted ramp at $150\text{ mm/s}$ | Force-plate / load-cell contact trajectory test |
 | **Dynamic Visual Servoing Bandwidth** | Tracks a moving AprilTag target ($0.5\text{ m/s}$, $1.5\text{ Hz}$ figure-eight) with $< 4\text{ mm}$ lag | External motion-capture / high-speed camera ground truth |
 
+### 3.3 Reference URDF & MuJoCo MJCF Models
+* **URDF Model:** [models/capstone3-6dof-arm/manipulator_6dof.urdf](models/capstone3-6dof-arm/manipulator_6dof.urdf)
+* **MuJoCo MJCF Model:** [models/capstone3-6dof-arm/manipulator_6dof.xml](models/capstone3-6dof-arm/manipulator_6dof.xml)
+
 ---
 
 ## Capstone 4: Quasi-Direct-Drive (QDD) 3-DOF Legged Hopping Robot with Contact MPC
@@ -129,6 +137,11 @@ Build a 3-DOF (Hip Ab/Ad, Hip Flex/Ext, Knee Flex/Ext) Quasi-Direct-Drive roboti
 | **Proprioceptive GRF Estimation Accuracy** | RMS error $< 4.5\text{ N}$ ($< 5\%$ of peak vertical GRF) vs. external 6-axis force plate | Continuous hopping at $2.5\text{ Hz}$ on instrumented force plate |
 | **Continuous Hopping Apex Regulation** | Apex height regulated to $0.45\text{ m} \pm 0.012\text{ m}$ over $200$ consecutive hops | Boom encoder + IMU-kinematic state estimator log |
 | **Step Terrain Disturbance Rejection** | Survives unmapped $\pm 60\text{ mm}$ ground height step change without falling | Blind wooden-block step insertion during continuous hopping |
+
+### 4.3 Reference URDF & MuJoCo MJCF Models
+* **URDF Model:** [models/capstone4-qdd-hopper/qdd_hopper_leg.urdf](models/capstone4-qdd-hopper/qdd_hopper_leg.urdf)
+* **MuJoCo MJCF Model:** [models/capstone4-qdd-hopper/qdd_hopper_leg.xml](models/capstone4-qdd-hopper/qdd_hopper_leg.xml)
+* **Automated Model Validator:** [models/validate_models.py](models/validate_models.py)
 
 ---
 

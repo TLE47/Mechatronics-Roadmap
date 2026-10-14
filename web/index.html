@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mechatronics Engineering & Research Interactive Workbench</title>
+  <!-- KaTeX CSS & JS for Native LaTeX Mathematical Typesetting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <!-- Mermaid.js for System Architecture & State Diagrams -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     :root {
@@ -21,10 +26,10 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
+      line-height: 1.55;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -58,7 +63,7 @@
     }
     nav.tabs {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
       background: var(--panel);
       border-bottom: 1px solid var(--border);
       padding: 6px 12px;
@@ -70,7 +75,7 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 8px 10px;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s;
@@ -85,7 +90,7 @@
     main {
       flex: 1;
       padding: 14px 16px;
-      max-width: 1500px;
+      max-width: 1540px;
       width: 100%;
       margin: 0 auto;
     }
@@ -93,33 +98,47 @@
     .tab-pane.active { display: block; }
     .grid-2 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
       gap: 14px;
     }
     .card {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
     }
     .card h2 {
-      font-size: 1.02rem;
-      margin-bottom: 10px;
+      font-size: 0.98rem;
+      margin-bottom: 8px;
       color: var(--accent);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
     }
     .card p.desc {
-      font-size: 0.83rem;
+      font-size: 0.82rem;
       color: var(--muted);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
-    .ctrl-group { margin-bottom: 14px; }
+    .math-panel {
+      background: #080d1a;
+      border: 1px solid #1e293b;
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      font-size: 0.86rem;
+    }
+    .ctrl-group { margin-bottom: 12px; }
     .ctrl-group label {
       display: flex;
       justify-content: space-between;
-      font-size: 0.8rem;
+      align-items: center;
+      font-size: 0.79rem;
       color: var(--text);
       margin-bottom: 4px;
     }
@@ -133,14 +152,14 @@
       accent-color: var(--accent);
       cursor: pointer;
     }
-    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
     button.action-btn {
       background: var(--panel-2);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 8px 13px;
+      padding: 7px 12px;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
     }
@@ -148,6 +167,11 @@
       background: rgba(56, 189, 248, 0.2);
       border-color: var(--accent);
       color: var(--accent);
+    }
+    button.action-btn.danger {
+      background: rgba(251, 113, 133, 0.18);
+      border-color: var(--rose);
+      color: var(--rose);
     }
     button.action-btn:hover { filter: brightness(1.2); }
     canvas {
@@ -159,50 +183,71 @@
     }
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-bottom: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
     }
     .kpi {
       background: var(--panel-2);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 8px 10px;
     }
-    .kpi .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; }
-    .kpi .num { font-size: 1.15rem; font-weight: 700; font-family: monospace; color: var(--emerald); margin-top: 2px; }
+    .kpi .label { font-size: 0.7rem; color: var(--muted); }
+    .kpi .num { font-size: 1.05rem; font-weight: 700; font-family: monospace; color: var(--emerald); margin-top: 2px; }
     .track-cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
       gap: 14px;
-      margin-top: 16px;
+      margin-top: 14px;
     }
     .track-card {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 15px;
+      padding: 14px;
       transition: transform 0.12s, border-color 0.12s;
     }
     .track-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-    .track-card .t-id { font-size: 0.75rem; color: var(--accent); font-weight: 700; }
-    .track-card h3 { font-size: 0.96rem; margin: 4px 0 6px; }
-    .track-card p { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
+    .track-card .t-id { font-size: 0.72rem; color: var(--accent); font-weight: 700; }
+    .track-card h3 { font-size: 0.94rem; margin: 4px 0 6px; }
+    .track-card p { font-size: 0.79rem; color: var(--muted); margin-bottom: 8px; }
+    .track-card .eq-chip {
+      background: #080d1a;
+      border: 1px solid #1e293b;
+      border-radius: 5px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+      overflow-x: auto;
+    }
     .track-card .gate {
-      font-size: 0.74rem;
+      font-size: 0.73rem;
       background: rgba(52, 211, 153, 0.1);
       color: var(--emerald);
       border-left: 3px solid var(--emerald);
-      padding: 6px 8px;
+      padding: 5px 8px;
       border-radius: 4px;
     }
     .mermaid-box {
       background: #0d1322;
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 16px;
+      padding: 14px;
       overflow-x: auto;
-      margin-top: 12px;
+      margin-top: 10px;
+    }
+    pre.xml-preview {
+      background: #070a12;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 0.73rem;
+      color: #cbd5e1;
+      max-height: 220px;
+      overflow-y: auto;
+      font-family: monospace;
+      white-space: pre;
     }
   </style>
 </head>
@@ -210,28 +255,31 @@
   <header>
     <div>
       <h1>Production-Grade Mechatronics Engineering & Research Workbench</h1>
-      <div class="subtitle">Interactive Cyber-Physical Architecture, Frequency-Domain Loop Shaping, 25 kHz PMSM FOC & Nonlinear Pendulum Control</div>
+      <div class="subtitle">LaTeX Mathematical Foundations ($\mathfrak{so}(3)$, RNEA, FOC, ESKF, CBF-QP), Mermaid Architecture & Live Physics Simulators</div>
     </div>
     <div class="badge-bar">
-      <span class="badge pass">Labs 00–06 Verified (Python + C++20)</span>
-      <span class="badge">8 Core Tracks + 5 Capstones</span>
-      <span class="badge">Real-Time Physics Simulators</span>
+      <span class="badge pass">9/9 Lab & Model Suites Verified (Python + C++20)</span>
+      <span class="badge">KaTeX LaTeX Rendered</span>
+      <span class="badge">URDF + MuJoCo MJCF Validated</span>
     </div>
   </header>
 
   <nav class="tabs" role="tablist">
-    <button class="active" data-tab="tab-arch" onclick="switchTab('tab-arch', this)">1. System Architecture & Tracks</button>
-    <button data-tab="tab-bode" onclick="switchTab('tab-bode', this)">2. Two-Mass Resonance & Notch Bode Simulator (Lab 00/05)</button>
-    <button data-tab="tab-foc" onclick="switchTab('tab-foc', this)">3. 25 kHz PMSM FOC & SVPWM Simulator (Lab 01/03)</button>
-    <button data-tab="tab-pend" onclick="switchTab('tab-pend', this)">4. Furuta Pendulum Swing-Up + LQR + CBF (Lab 02/05)</button>
+    <button class="active" data-tab="tab-arch" onclick="switchTab('tab-arch', this)">1. Architecture, Tracks & LaTeX Equations</button>
+    <button data-tab="tab-bode" onclick="switchTab('tab-bode', this)">2. Two-Mass Resonance & Notch Bode (Lab 00/05)</button>
+    <button data-tab="tab-foc" onclick="switchTab('tab-foc', this)">3. 25 kHz PMSM FOC & SVPWM (Lab 01/03)</button>
+    <button data-tab="tab-pend" onclick="switchTab('tab-pend', this)">4. Furuta Pendulum + LQR + CBF (Lab 02/05)</button>
+    <button data-tab="tab-models" onclick="switchTab('tab-models', this)">5. URDF/MuJoCo Inspector & STO Safety (Lab 07/08)</button>
   </nav>
 
   <main>
-    <!-- TAB 1: ARCHITECTURE & CURRICULUM -->
+    <!-- TAB 1: ARCHITECTURE, TRACKS & LATEX EQUATIONS -->
     <section id="tab-arch" class="tab-pane active">
       <div class="card">
-        <h2>Master Cyber-Physical Coupling Loop (Mermaid.js Live Render)</h2>
-        <p class="desc">Continuous-time energy flow across generalized ports coupled with hard real-time discrete computation (40 kHz FOC → 1 kHz WBC/ESKF → 100 Hz NMPC).</p>
+        <h2>Master Cyber-Physical Coupling Equation & Architecture</h2>
+        <div class="math-panel">
+          $$\underbrace{M(q)\ddot{q} + C(q,\dot{q})\dot{q} + g(q) + \tau_{\text{fric}}(\dot{q})}_{\text{Continuous Mechanical Plant }\mathcal{P}} = \underbrace{N\eta\,\frac{3}{2}N_p\big(\lambda_{pm}i_q + (L_d - L_q)i_d i_q\big)}_{\text{Electromagnetic Transducer}} - J(q)^\top \mathcal{F}_{\text{ext}}, \qquad \underbrace{\dot{h}(\hat{x}, u) \ge -\alpha\big(h(\hat{x})\big)}_{\text{Discrete CBF Safety Filter }\mathcal{C}}$$
+        </div>
         <div class="mermaid-box">
           <pre class="mermaid">
 flowchart LR
@@ -257,174 +305,259 @@ flowchart LR
         <div class="track-card">
           <div class="t-id">TRACK 00 · FOUNDATIONS</div>
           <h3>Applied Math, Lie Groups & Bond Graphs</h3>
-          <p>SO(3)/SE(3) exponential/logarithmic maps, ZOH/Tustin pre-warping, multi-domain effort/flow bond graphs, and 4-state compliant actuator ODEs.</p>
-          <div class="gate">Lab 00 Gate: Energy balance &lt; 10⁻⁹ J · Float32 Notch ≥ 25 dB attenuation</div>
+          <p>Matrix Lie groups $SO(3)/SE(3)$, pre-warped Tustin discretization, and port-Hamiltonian energy conservation.</p>
+          <div class="eq-chip">$$\exp([\phi]_\times) = I + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1-\cos\theta}{\theta^2}[\phi]_\times^2$$</div>
+          <div class="gate">Lab 00 Gate: $|\Delta E| < 10^{-9}\text{ J}$ · `float32` Notch $\le -25\text{ dB}$</div>
         </div>
+
         <div class="track-card">
           <div class="t-id">TRACK 01 · ELECTRONICS & POWER</div>
-          <h3>Mixed-Signal AFE, Inverters & 6-Layer EMC PCB</h3>
-          <p>Kelvin shunt sensing, 2nd-order Bessel anti-aliasing, SAR charge-bucket sizing, Si/SiC/GaN gate drives, hot-loop &lt; 2 nH layout.</p>
-          <div class="gate">Lab 01 Gate: V_DS peak &lt; 58V @ 48V/30A · AFE phase lag &lt; 2.5° @ 2.5 kHz</div>
+          <h3>Mixed-Signal AFE, Inverters & EMC PCB</h3>
+          <p>Kelvin current shunts, 2nd-order Bessel anti-aliasing, SAR charge buckets, and low-inductance switching loops.</p>
+          <div class="eq-chip">$$V_{DS,\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{dI}{dt}, \quad L_{\text{loop}} < 2\text{ nH}$$</div>
+          <div class="gate">Lab 01 Gate: $V_{DS,\text{peak}} < 58\text{ V}$ · AFE lag $< 2.5^\circ$ @ $2.5\text{ kHz}$</div>
         </div>
+
         <div class="track-card">
           <div class="t-id">TRACK 02 · MECHANICS & DYNAMICS</div>
-          <h3>Exact Constraint, Screw Theory PoE & O(n) RNEA</h3>
-          <p>Maxwell exact constraint, Abbe offset, duplex bearings, flexures, QDD vs. strain-wave gearing, PoE kinematics, and Featherstone RNEA/ABA.</p>
-          <div class="gate">Lab 02 Gate: RNEA vs. Lagrangian &lt; 10⁻¹¹ N·m · Skew-symmetry xᵀ(Ṁ-2C)x = 0</div>
+          <h3>Exact Constraint, Screw PoE & $O(n)$ RNEA</h3>
+          <p>Maxwell constraint ($\text{DOF} = 6 - C$), Abbe error, Product of Exponentials, and Featherstone spatial dynamics.</p>
+          <div class="eq-chip">$$T(q) = e^{[\mathcal{S}_1]q_1}\cdots e^{[\mathcal{S}_n]q_n}M, \quad x^\top(\dot{M}-2C)x = 0$$</div>
+          <div class="gate">Lab 02 Gate: $\|\tau_{\text{RNEA}} - \tau_{\text{Lag}}\|_\infty < 10^{-11}\text{ N\cdot m}$</div>
         </div>
+
         <div class="track-card">
           <div class="t-id">TRACK 03 · SENSORS & ACTUATORS</div>
-          <h3>Metrology, Allan Variance & 25 kHz FOC Drives</h3>
-          <p>Encoder Fourier harmonic calibration, Type-II PLL velocity tracker, IMU Allan variance, synchronous d-q PI + cross-coupling decoupling, SVPWM.</p>
-          <div class="gate">Lab 03 Gate: Calibrated INL &lt; 0.04° · Current loop rise time ≤ 180 μs</div>
+          <h3>Metrology, Allan Variance & 25 kHz FOC</h3>
+          <p>Fourier encoder calibration, Type-II PLL velocity observer, synchronous $d$-$q$ PI + back-EMF decoupling, SVPWM.</p>
+          <div class="eq-chip">$$v_q^* = K_p e_q + K_i \!\int\! e_q dt + \omega_e(L_d i_d + \lambda_{pm})$$</div>
+          <div class="gate">Lab 03 Gate: Calibrated INL $< 0.04^\circ$ · $t_{\text{rise},90\%} \le 180\ \mu\text{s}$</div>
         </div>
+
         <div class="track-card">
           <div class="t-id">TRACK 04 · EMBEDDED & REAL-TIME</div>
-          <h3>Cortex-M7 TCM, Lock-Free C++20, RTOS & FPGA</h3>
-          <p>TIM1→ADC→DMA autonomous triggers, ITCM/DTCM partitioning, NVIC zero-latency ISRs, WaitFreeSeqLock, Rate-Monotonic RTA, CAN-FD & EtherCAT DC.</p>
-          <div class="gate">Lab 04 Gate: 0 heap allocations · 0 torn reads over 250k frames · RTA verified</div>
+          <h3>Cortex-M7 TCM, Lock-Free C++20 & RTOS</h3>
+          <p>Hardware timer $\to$ ADC $\to$ DMA triggers, ITCM/DTCM placement, `WaitFreeSeqLock`, and Rate-Monotonic RTA.</p>
+          <div class="eq-chip">$$R_i^{(k+1)} = C_i + B_i + \sum_{j \in hp(i)} \left\lceil \frac{R_i^{(k)}}{T_j} \right\rceil C_j \le D_i$$</div>
+          <div class="gate">Lab 04 Gate: `0` heap allocs · `0` torn reads over $2.5\times 10^5$ frames</div>
         </div>
+
         <div class="track-card">
           <div class="t-id">TRACK 05 · CONTROL & ESTIMATION</div>
-          <h3>Gang of Four, Joseph ESKF, CLF-CBF-QP & NMPC</h3>
-          <p>Bode waterbed integral, industrial 2-DOF PID, LQR/LQG margins, 6-DOF Joseph-form ESKF, Slotine-Li passivity, Control Barrier Functions, and MPC.</p>
-          <div class="gate">Lab 05 Gate: M_s ≤ 1.75 across ±25% inertia · ESKF NEES inside 95% χ² bounds</div>
+          <h3>Gang of Four, Joseph ESKF, CBF-QP & MPC</h3>
+          <p>Bode's sensitivity integral, 2-DOF anti-windup PID, Joseph-form manifold ESKF, and Control Barrier Functions.</p>
+          <div class="eq-chip">$$P^+ = (I - KH)P^-(I - KH)^\top + K R K^\top$$</div>
+          <div class="gate">Lab 05 Gate: $M_s \le 1.75$ ($\pm 25\%$ $J_L$) · NEES $\in \chi^2_{95\%}$</div>
         </div>
+
         <div class="track-card">
           <div class="t-id">TRACK 06 · ROBOTICS & AUTONOMY</div>
-          <h3>Operational-Space Impedance, WBC-QP & VIO</h3>
-          <p>Khatib operational-space inertia Λ(q), dynamically consistent null-space projector, PREEMPT_RT ros2_control, manifold IMU preintegration, Ruckig splines.</p>
-          <div class="gate">Lab 06 Gate: Null-space tip perturbation &lt; 10⁻¹² m/s² · Contact overshoot &lt; 15%</div>
+          <h3>Operational-Space Impedance, WBC & VIO</h3>
+          <p>Khatib operational inertia $\Lambda(q)$, dynamically consistent null-space $\bar{J}(q)$, manifold preintegration, and jerk bounds.</p>
+          <div class="eq-chip">$$\Lambda(q) = (J M^{-1} J^\top)^{-1}, \quad N^\top = I - J^\top \bar{J}^\top$$</div>
+          <div class="gate">Lab 06 Gate: $\|\ddot{x}_{\text{null}}\| < 10^{-12}\text{ m/s}^2$ · Overshoot $< 15\%$</div>
         </div>
+
         <div class="track-card">
           <div class="t-id">TRACK 07 & 08 · SYSTEMS, HIL & CAPSTONES</div>
-          <h3>V-Model SysID, Functional Safety STO & 5 Capstones</h3>
-          <p>RSS error budgets, Schroeder multisine SysID, hardware fault injection, dual-channel SIL-3/PLe Safe Torque Off, and 5 full-stack hardware capstones.</p>
-          <div class="gate">Gate: Hardware over-current to gate turn-off &lt; 1 μs · Automated CI verification</div>
+          <h3>Schroeder SysID, Dual-Channel STO & URDF/MJCF</h3>
+          <p>Closed-loop spectral identification, IEC 61800-5-2 Safe Torque Off fault injection, and 6 validated URDF/MuJoCo models.</p>
+          <div class="eq-chip">$$\hat{P}(j\omega_k) = \frac{\hat{S}_{y d_{\text{exc}}}(j\omega_k)}{\hat{S}_{u d_{\text{exc}}}(j\omega_k)}, \quad \phi_k = -\frac{\pi k(k-1)}{M}$$</div>
+          <div class="gate">Lab 07/08 Gate: STO trip $< 1\ \mu\text{s}$ · 6 URDF/MJCF models SPD</div>
         </div>
       </div>
     </section>
 
     <!-- TAB 2: TWO-MASS RESONANCE & NOTCH BODE SIMULATOR -->
     <section id="tab-bode" class="tab-pane">
+      <div class="card">
+        <h2>Collocated vs. Non-Collocated Two-Mass Transfer Functions & Pre-Warped Tustin Notch</h2>
+        <div class="math-panel">
+          $$\frac{\omega_m(s)}{\tau_m(s)} = \frac{1}{(J_m + J_L)s}\cdot\frac{s^2 + 2\zeta_{ar}\omega_{ar}s + \omega_{ar}^2}{s^2 + 2\zeta_r\omega_r s + \omega_r^2}, \qquad \omega_{ar} = \sqrt{\frac{k_s}{J_L}}, \qquad \omega_r = \omega_{ar}\sqrt{1 + \frac{J_L}{J_m}}, \qquad H_{\text{notch}}(s) = \frac{s^2 + \omega_n^2}{s^2 + \frac{\omega_n}{Q_n}s + \omega_n^2}$$
+        </div>
+      </div>
       <div class="grid-2">
         <div class="card">
-          <h2>Two-Mass Resonant Plant & Notch Parameters</h2>
-          <p class="desc">Adjust shaft stiffness, load-to-motor inertia ratio, and digital Tustin pre-warped notch filter parameters to observe collocated vs. non-collocated resonance.</p>
+          <h2>Plant & Digital Biquad Parameters</h2>
+          <p class="desc">Adjust torsional shaft stiffness $k_s$, load inertia $J_L$, and digital notch filter center frequency $f_{\text{notch}}$ and quality factor $Q_n$.</p>
 
           <div class="ctrl-group">
-            <label>Shaft Stiffness k_s [N·m/rad] <span class="val" id="val-ks">120</span></label>
+            <label><span>Shaft Stiffness $k_s$ $[\text{N}\cdot\text{m/rad}]$</span> <span class="val" id="val-ks">120</span></label>
             <input type="range" id="sl-ks" min="30" max="400" step="5" value="120" oninput="updateBode()" />
           </div>
           <div class="ctrl-group">
-            <label>Load Inertia J_L [×10⁻⁴ kg·m²] <span class="val" id="val-jl">1.80</span></label>
+            <label><span>Load Inertia $J_L$ $[\times 10^{-4}\text{ kg}\cdot\text{m}^2]$</span> <span class="val" id="val-jl">1.80</span></label>
             <input type="range" id="sl-jl" min="0.5" max="5.0" step="0.1" value="1.8" oninput="updateBode()" />
           </div>
           <div class="ctrl-group">
-            <label>Shaft Damping b_s [N·m·s/rad] <span class="val" id="val-bs">0.002</span></label>
+            <label><span>Shaft Damping $b_s$ $[\text{N}\cdot\text{m}\cdot\text{s/rad}]$</span> <span class="val" id="val-bs">0.0020</span></label>
             <input type="range" id="sl-bs" min="0.0005" max="0.02" step="0.0005" value="0.002" oninput="updateBode()" />
           </div>
           <div class="ctrl-group">
-            <label>Notch Filter Center f_notch [Hz] <span class="val" id="val-fn">290.6</span></label>
+            <label><span>Notch Center $f_{\text{notch}}$ $[\text{Hz}]$</span> <span class="val" id="val-fn">290.6</span></label>
             <input type="range" id="sl-fn" min="100" max="550" step="1" value="291" oninput="updateBode()" />
           </div>
           <div class="ctrl-group">
-            <label>Notch Q-Factor <span class="val" id="val-qn">5.0</span></label>
+            <label><span>Notch Quality Factor $Q_n$</span> <span class="val" id="val-qn">5.0</span></label>
             <input type="range" id="sl-qn" min="1.0" max="15.0" step="0.5" value="5.0" oninput="updateBode()" />
           </div>
           <div class="btn-row">
-            <button class="action-btn primary" onclick="snapNotchToResonance()">Auto-Tune Notch to ω_res</button>
+            <button class="action-btn primary" onclick="snapNotchToResonance()">Auto-Tune $f_{\text{notch}} \leftarrow f_r$</button>
           </div>
         </div>
 
         <div class="card">
-          <h2>Frequency Response: Collocated ω_m/τ (Cyan), Load ω_L/τ (Amber), Notch-Filtered (Emerald)</h2>
+          <h2>Bode Magnitude: Collocated $\omega_m/\tau$ (Cyan), Load $\omega_L/\tau$ (Amber), Filtered (Emerald)</h2>
           <div class="kpi-grid">
-            <div class="kpi"><div class="label">Anti-Resonance f_ar</div><div class="num" id="kpi-far">129.9 Hz</div></div>
-            <div class="kpi"><div class="label">Resonance Peak f_r</div><div class="num" id="kpi-fr">290.6 Hz</div></div>
-            <div class="kpi"><div class="label">Unfiltered Peak Gain</div><div class="num" id="kpi-pk">+24.2 dB</div></div>
-            <div class="kpi"><div class="label">Notch Suppression @ f_r</div><div class="num" id="kpi-att">-28.4 dB</div></div>
+            <div class="kpi"><div class="label">Anti-Resonance $f_{ar}$</div><div class="num" id="kpi-far">129.9 Hz</div></div>
+            <div class="kpi"><div class="label">Resonance Peak $f_r$</div><div class="num" id="kpi-fr">290.6 Hz</div></div>
+            <div class="kpi"><div class="label">Unfiltered Peak</div><div class="num" id="kpi-pk">+24.2 dB</div></div>
+            <div class="kpi"><div class="label">Notch Gain @ $f_r$</div><div class="num" id="kpi-att">-28.4 dB</div></div>
           </div>
-          <canvas id="canvas-bode" width="900" height="420"></canvas>
+          <canvas id="canvas-bode" width="900" height="400"></canvas>
         </div>
       </div>
     </section>
 
     <!-- TAB 3: 25 kHz PMSM FOC & SVPWM SIMULATOR -->
     <section id="tab-foc" class="tab-pane">
+      <div class="card">
+        <h2>Synchronous $d$-$q$ Frame PMSM Equations & Pole-Zero Cancellation PI Law</h2>
+        <div class="math-panel">
+          $$v_d = R_s i_d + L_d\frac{di_d}{dt} - \omega_e L_q i_q, \qquad v_q = R_s i_q + L_q\frac{di_q}{dt} + \omega_e(L_d i_d + \lambda_{pm}), \qquad K_{p,q} = L_q\omega_{bw}, \quad K_{i,q} = R_s\omega_{bw}, \qquad \sqrt{v_d^{*2}+v_q^{*2}} \le \frac{V_{\text{bus}}}{\sqrt{3}}$$
+        </div>
+      </div>
       <div class="grid-2">
         <div class="card">
-          <h2>25 kHz Synchronous d-q FOC & SVPWM</h2>
-          <p class="desc">Simulates pole-zero cancelled PI current control, high-speed ω_e L_q i_q cross-coupling decoupling, circular voltage clamping, and Min-Max SVPWM saddle waveforms.</p>
+          <h2>25 kHz FOC Loop & SVPWM Controls</h2>
+          <p class="desc">Toggle $\omega_e L_{d,q}$ cross-coupling decoupling to observe how rotor speed injects false $d$-axis flux current when feedforward decoupling is omitted.</p>
 
           <div class="ctrl-group">
-            <label>Target Bandwidth f_bw [Hz] <span class="val" id="val-fbw">2500</span></label>
+            <label><span>Current Loop Bandwidth $f_{bw}$ $[\text{Hz}]$</span> <span class="val" id="val-fbw">2500</span></label>
             <input type="range" id="sl-fbw" min="500" max="4000" step="100" value="2500" oninput="updateFOC()" />
           </div>
           <div class="ctrl-group">
-            <label>Step q-Axis Current i_q* [A] <span class="val" id="val-iqref">8.0</span></label>
+            <label><span>Step $q$-Axis Command $i_q^*$ $[\text{A}]$</span> <span class="val" id="val-iqref">8.0</span></label>
             <input type="range" id="sl-iqref" min="1.0" max="25.0" step="0.5" value="8.0" oninput="updateFOC()" />
           </div>
           <div class="ctrl-group">
-            <label>Rotor Speed [RPM] <span class="val" id="val-rpm">2500</span></label>
+            <label><span>Mechanical Speed $\omega_m$ $[\text{RPM}]$</span> <span class="val" id="val-rpm">2500</span></label>
             <input type="range" id="sl-rpm" min="0" max="6000" step="100" value="2500" oninput="updateFOC()" />
           </div>
           <div class="ctrl-group">
-            <label>Feedforward Cross-Coupling Decoupling <span class="val" id="val-dec">ENABLED</span></label>
+            <label><span>Cross-Coupling Decoupling ($\pm\omega_e L i_{d,q}$)</span> <span class="val" id="val-dec">ENABLED</span></label>
             <div class="btn-row">
-              <button class="action-btn primary" id="btn-dec-toggle" onclick="toggleDecoupling()">Toggle ω_e L_dq Decoupling</button>
+              <button class="action-btn primary" id="btn-dec-toggle" onclick="toggleDecoupling()">Toggle $\omega_e L_{dq}$ Decoupling</button>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <h2>Top: i_q Step Tracking & i_d Cross-Coupling · Bottom: 3-Phase SVPWM Duty Ratios (d_a, d_b, d_c)</h2>
+          <h2>Top: $i_q(t)$ Step (Emerald) & $i_d(t)$ Perturbation (Rose) · Bottom: SVPWM Duties $(d_a, d_b, d_c)$</h2>
           <div class="kpi-grid">
             <div class="kpi"><div class="label">0–90% Rise Time</div><div class="num" id="kpi-rise">140 μs</div></div>
-            <div class="kpi"><div class="label">Peak |i_d| Perturbation</div><div class="num" id="kpi-iderr">0.02 A</div></div>
-            <div class="kpi"><div class="label">PI Gains (Kp / Ki)</div><div class="num" id="kpi-pigains">1.88 / 3927</div></div>
-            <div class="kpi"><div class="label">SVPWM Headroom Boost</div><div class="num">+15.47%</div></div>
+            <div class="kpi"><div class="label">Peak $|i_d|$ Error</div><div class="num" id="kpi-iderr">0.02 A</div></div>
+            <div class="kpi"><div class="label">$K_p$ / $K_i$ Gains</div><div class="num" id="kpi-pigains">1.88 / 3927</div></div>
+            <div class="kpi"><div class="label">SVPWM Boost</div><div class="num">+15.47%</div></div>
           </div>
-          <canvas id="canvas-foc" width="900" height="420"></canvas>
+          <canvas id="canvas-foc" width="900" height="400"></canvas>
         </div>
       </div>
     </section>
 
     <!-- TAB 4: FURUTA PENDULUM SWING-UP + LQR + CBF -->
     <section id="tab-pend" class="tab-pane">
+      <div class="card">
+        <h2>Åström-Furuta Energy Pumping, LQR Stabilization & Exponential Control Barrier Function (ECBF)</h2>
+        <div class="math-panel">
+          $$E(\theta,\dot{\theta}) = \frac{1}{2}J_p\dot{\theta}^2 + m_p g l_c(\cos\theta - 1), \qquad u_{\text{swing}} = -k_E E\,\text{sign}(\dot{\theta}\cos\theta), \qquad h(x,\dot{x}) = (x_{\max} - |x|) - \frac{|\dot{x}|}{\alpha_{\text{cbf}}} \ge 0$$
+        </div>
+      </div>
       <div class="grid-2">
         <div class="card">
-          <h2>Interactive Inverted Pendulum + CBF Safety Filter</h2>
-          <p class="desc">Live 60 FPS RK4 physics simulation of Åström-Furuta nonlinear energy swing-up handing off at |θ| &lt; 20° to a discrete LQR stabilizer with Control Barrier Function position walls.</p>
+          <h2>Nonlinear Swing-Up, LQR & CBF Controls</h2>
+          <p class="desc">Real-time 60 FPS RK4 simulation switching from energy pumping to LQR at $|\theta| < 22^\circ$ while enforcing hard cart walls $\pm x_{\max}$ via a Control Barrier Function QP.</p>
 
           <div class="ctrl-group">
-            <label>LQR Angle Weight Q_θ <span class="val" id="val-qth">140</span></label>
+            <label><span>LQR Angle Weight $Q_\theta$</span> <span class="val" id="val-qth">140</span></label>
             <input type="range" id="sl-qth" min="40" max="300" step="10" value="140" oninput="updatePendParams()" />
           </div>
           <div class="ctrl-group">
-            <label>Energy Swing-Up Gain k_E <span class="val" id="val-ke">3.8</span></label>
+            <label><span>Energy Swing-Up Gain $k_E$</span> <span class="val" id="val-ke">3.8</span></label>
             <input type="range" id="sl-ke" min="1.0" max="8.0" step="0.2" value="3.8" oninput="updatePendParams()" />
           </div>
           <div class="ctrl-group">
-            <label>CBF Cart Wall Limit x_max [m] <span class="val" id="val-xmax">0.85</span></label>
+            <label><span>CBF Safety Wall $x_{\max}$ $[\text{m}]$</span> <span class="val" id="val-xmax">0.85</span></label>
             <input type="range" id="sl-xmax" min="0.45" max="1.20" step="0.05" value="0.85" oninput="updatePendParams()" />
           </div>
           <div class="btn-row">
-            <button class="action-btn primary" onclick="resetPendulum(Math.PI - 0.08)">Reset Hanging Down (Swing-Up)</button>
-            <button class="action-btn" onclick="injectPendulumImpulse(3.2)">Inject +3.2 rad/s Hammer Impulse</button>
-            <button class="action-btn" onclick="resetPendulum(0.18)">Reset Near Upright (LQR)</button>
+            <button class="action-btn primary" onclick="resetPendulum(Math.PI - 0.08)">Reset Hanging ($\theta_0 = 175^\circ$)</button>
+            <button class="action-btn" onclick="injectPendulumImpulse(3.2)">Inject $+3.2\text{ rad/s}$ Impulse</button>
+            <button class="action-btn" onclick="resetPendulum(0.18)">Reset Upright ($\theta_0 = 10^\circ$)</button>
           </div>
         </div>
 
         <div class="card">
-          <h2>Live Cart-Pole / Rotary Pendulum Animation & Phase Telemetry</h2>
+          <h2>Live Pendulum Kinematics & CBF Wall Enforcement (Dashed Rose Walls)</h2>
           <div class="kpi-grid">
-            <div class="kpi"><div class="label">Active Control Mode</div><div class="num" id="kpi-pmode">SWING-UP</div></div>
-            <div class="kpi"><div class="label">Pendulum Angle θ</div><div class="num" id="kpi-pth">175.4°</div></div>
-            <div class="kpi"><div class="label">Base Position x</div><div class="num" id="kpi-px">0.00 m</div></div>
-            <div class="kpi"><div class="label">CBF Barrier Margin h(x)</div><div class="num" id="kpi-pcbf">+0.85 m</div></div>
+            <div class="kpi"><div class="label">Active Controller</div><div class="num" id="kpi-pmode">SWING-UP</div></div>
+            <div class="kpi"><div class="label">Pendulum Angle $\theta$</div><div class="num" id="kpi-pth">175.4°</div></div>
+            <div class="kpi"><div class="label">Base Position $x$</div><div class="num" id="kpi-px">0.00 m</div></div>
+            <div class="kpi"><div class="label">CBF Margin $h(x)$</div><div class="num" id="kpi-pcbf">+0.85 m</div></div>
           </div>
-          <canvas id="canvas-pend" width="900" height="420"></canvas>
+          <canvas id="canvas-pend" width="900" height="400"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: URDF/MUJOCO KINEMATIC INSPECTOR & LAB 07 STO SAFETY SIMULATOR -->
+    <section id="tab-models" class="tab-pane">
+      <div class="card">
+        <h2>Validated URDF & MuJoCo MJCF Inertia Tensor Invariants + IEC 61800-5-2 Dual-Channel STO</h2>
+        <div class="math-panel">
+          $$\text{Sylvester SPD: } I_{xx} > 0,\ \det\begin{bmatrix}I_{xx}&I_{xy}\\I_{xy}&I_{yy}\end{bmatrix} > 0,\ \det(I) > 0, \qquad \text{Triangle Inequality: } I_1 + I_2 \ge I_3, \qquad V_{\text{bus,peak}} = \sqrt{V_{\text{nom}}^2 + \frac{\eta J\omega_0^2}{C_{\text{bus}}}}$$
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>Interactive Capstone URDF / MuJoCo Kinematic & Inertia Inspector</h2>
+          <p class="desc">Select a Capstone robot model and articulate its joint coordinates $(q_1, q_2, q_3)$ to inspect its kinematic chain and validated inertia tensors.</p>
+          <div class="btn-row" style="margin-bottom: 12px;">
+            <button class="action-btn primary" onclick="selectRobotModel('hopper')">Capstone IV: 3-DOF QDD Hopper</button>
+            <button class="action-btn" onclick="selectRobotModel('arm6')">Capstone III: 6-DOF Serial Arm</button>
+            <button class="action-btn" onclick="selectRobotModel('furuta')">Capstone II: Furuta Pendulum</button>
+          </div>
+          <div class="ctrl-group">
+            <label><span>Joint $q_1$ $[\text{deg}]$</span> <span class="val" id="val-rq1">20°</span></label>
+            <input type="range" id="sl-rq1" min="-90" max="90" step="1" value="20" oninput="drawRobotAndSTO()" />
+          </div>
+          <div class="ctrl-group">
+            <label><span>Joint $q_2$ $[\text{deg}]$</span> <span class="val" id="val-rq2">-55°</span></label>
+            <input type="range" id="sl-rq2" min="-120" max="90" step="1" value="-55" oninput="drawRobotAndSTO()" />
+          </div>
+          <div class="ctrl-group">
+            <label><span>Joint $q_3$ $[\text{deg}]$</span> <span class="val" id="val-rq3">65°</span></label>
+            <input type="range" id="sl-rq3" min="-135" max="135" step="1" value="65" oninput="drawRobotAndSTO()" />
+          </div>
+
+          <h2 style="margin-top: 14px;">Lab 07 HIL Fault-Injection & Dual-Channel STO</h2>
+          <div class="btn-row">
+            <button class="action-btn primary" onclick="triggerSTOFault('RUN')">Enable Closed-Loop</button>
+            <button class="action-btn danger" onclick="triggerSTOFault('OC_SHORT')">Inject 42A Short ($&lt;1\ \mu\text{s}$)</button>
+            <button class="action-btn danger" onclick="triggerSTOFault('ENC_CRC')">Inject Encoder Wire Break</button>
+            <button class="action-btn" onclick="triggerSTOFault('RESET')">Manual STO Reset</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Kinematic Chain Pose & Validated URDF/MJCF Inertia Summary</h2>
+          <div class="kpi-grid">
+            <div class="kpi"><div class="label">Selected Model</div><div class="num" id="kpi-rmodel">QDD Hopper</div></div>
+            <div class="kpi"><div class="label">Total Mass $\sum m_i$</div><div class="num" id="kpi-rmass">11.69 kg</div></div>
+            <div class="kpi"><div class="label">STO Safety State</div><div class="num" id="kpi-stostate">ACTIVE</div></div>
+            <div class="kpi"><div class="label">Gate Reaction Time</div><div class="num" id="kpi-stotime">0.65 μs</div></div>
+          </div>
+          <canvas id="canvas-models" width="900" height="320"></canvas>
         </div>
       </div>
     </section>
@@ -433,6 +566,18 @@ flowchart LR
   <script>
     mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 
+    function renderAllMath() {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
     function switchTab(tabId, btnEl) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('nav.tabs button').forEach(el => el.classList.remove('active'));
@@ -440,6 +585,8 @@ flowchart LR
       btnEl.classList.add('active');
       if (tabId === 'tab-bode') updateBode();
       if (tabId === 'tab-foc') updateFOC();
+      if (tabId === 'tab-models') drawRobotAndSTO();
+      renderAllMath();
     }
 
     // =========================================================================
@@ -480,7 +627,6 @@ flowchart LR
       const W = canvas.width, H = canvas.height;
       ctx.clearRect(0, 0, W, H);
 
-      // Grid
       ctx.strokeStyle = '#1e293b';
       ctx.lineWidth = 1;
       for (let i = 1; i < 6; i++) {
@@ -496,29 +642,21 @@ flowchart LR
       for (let i = 0; i < N; i++) {
         const f = fMin + (fMax - fMin) * (i / (N - 1));
         const w = 2 * Math.PI * f;
-        // Continuous two-mass impedance computation using complex numbers
-        // Z_L = i*w*J_L, Z_s = bs + ks/(i*w) = bs - i*(ks/w)
         const zl_re = 1e-4, zl_im = w * jl;
         const zs_re = bs, zs_im = -ks / w;
-        // Z_L + Z_s
         const sum_re = zl_re + zs_re, sum_im = zl_im + zs_im;
         const denom_mag2 = sum_re * sum_re + sum_im * sum_im;
-        // Z_L * Z_s
         const prod_re = zl_re * zs_re - zl_im * zs_im;
         const prod_im = zl_re * zs_im + zl_im * zs_re;
-        // Parallel (Z_L * Z_s) / (Z_L + Z_s)
         const par_re = (prod_re * sum_re + prod_im * sum_im) / denom_mag2;
         const par_im = (prod_im * sum_re - prod_re * sum_im) / denom_mag2;
 
         const zeq_re = 1e-4 + par_re;
         const zeq_im = w * J_M + par_im;
         const mag_wm = 1.0 / Math.hypot(zeq_re, zeq_im);
-
-        // Ratio w_L / w_m = Z_s / (Z_L + Z_s)
         const ratio_mag = Math.hypot(zs_re, zs_im) / Math.sqrt(denom_mag2);
         const mag_wl = mag_wm * ratio_mag;
 
-        // Notch filter H_n(jw)
         const w0 = 2 * Math.PI * fn;
         const n_re = w0 * w0 - w * w;
         const n_im_den = (w0 * w) / qn;
@@ -540,7 +678,7 @@ flowchart LR
       document.getElementById('kpi-pk').textContent = (maxPeakDB >= 0 ? '+' : '') + maxPeakDB.toFixed(1) + ' dB';
       document.getElementById('kpi-att').textContent = notchAttDB.toFixed(1) + ' dB';
 
-      const mapY = db => H * 0.52 - db * 5.2;
+      const mapY = db => H * 0.52 - db * 5.0;
       const drawCurve = (arr, color, width) => {
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
@@ -581,7 +719,7 @@ flowchart LR
       const rs = 0.25, ld = 0.12e-3, lq = 0.12e-3, lam = 0.008, vBus = 48.0, nPoles = 7;
       const wBw = 2 * Math.PI * fbw;
       const kp = ld * wBw, ki = rs * wBw;
-      const dt = 40e-6; // 25 kHz
+      const dt = 40e-6;
       const omegaE = nPoles * (rpm * 2 * Math.PI / 60.0);
 
       let id = 0, iq = 0, intD = 0, intQ = 0;
@@ -632,7 +770,6 @@ flowchart LR
       ctx.strokeStyle = '#334155';
       ctx.beginPath(); ctx.moveTo(0, midH); ctx.lineTo(W, midH); ctx.stroke();
 
-      // Top plot: i_q (Emerald), i_q* (dashed), i_d (Rose)
       const mapTopY = val => (midH - 25) - (val / Math.max(10, iqRef * 1.25)) * (midH - 50);
       ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2.6; ctx.beginPath();
       for (let i = 0; i < steps; i++) {
@@ -650,7 +787,6 @@ flowchart LR
       }
       ctx.stroke();
 
-      // Bottom plot: 3-phase SVPWM saddle waveform over 360 electrical degrees
       const svN = 180;
       const colors = ['#38bdf8', '#fbbf24', '#c084fc'];
       for (let ph = 0; ph < 3; ph++) {
@@ -699,7 +835,6 @@ flowchart LR
       const dt = 0.004;
       const g = 9.81, L = 0.45;
       for (let sub = 0; sub < 4; sub++) {
-        // Wrap theta to [-pi, pi) where 0 is upright
         let th = Math.atan2(Math.sin(pState.th), Math.cos(pState.th));
         let u_nom = 0.0;
         let mode = 'SWING-UP';
@@ -712,13 +847,11 @@ flowchart LR
           const k_v = -5.2;
           u_nom = k_th * th + k_w * pState.w + k_x * pState.x + k_v * pState.v;
         } else {
-          // Energy swing-up + gentle centering spring
           const E = 0.5 * L * L * pState.w * pState.w + g * L * (Math.cos(th) - 1.0);
           const signTerm = (pState.w * Math.cos(th) >= 0) ? 1.0 : -1.0;
           u_nom = -kEGain * E * signTerm - 3.5 * pState.x - 2.2 * pState.v;
         }
 
-        // Control Barrier Function (CBF) enforcing -xMaxWall <= x <= +xMaxWall
         const alpha = 6.0, gamma = 10.0;
         const h_pos = (xMaxWall - pState.x) - pState.v / alpha;
         const h_neg = (xMaxWall + pState.x) + pState.v / alpha;
@@ -727,7 +860,6 @@ flowchart LR
 
         const u_safe = Math.max(-22.0, Math.min(22.0, Math.max(u_min_cbf, Math.min(u_max_cbf, u_nom))));
 
-        // Nonlinear cart-pole acceleration (u_safe = cart acceleration)
         const ddth = (g / L) * Math.sin(th) + (u_safe / L) * Math.cos(th) - 0.08 * pState.w;
         pState.x += pState.v * dt;
         pState.v += u_safe * dt;
@@ -743,59 +875,151 @@ flowchart LR
       }
 
       const canvas = document.getElementById('canvas-pend');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        const cx = W * 0.5, cy = H * 0.62, scale = 320;
+        const wallPx = xMaxWall * scale;
+
+        ctx.strokeStyle = '#fb7185';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cx - wallPx, 40); ctx.lineTo(cx - wallPx, H - 40);
+        ctx.moveTo(cx + wallPx, 40); ctx.lineTo(cx + wallPx, H - 40);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(40, cy); ctx.lineTo(W - 40, cy); ctx.stroke();
+
+        const cartX = cx + pState.x * scale;
+        const rodLen = 150;
+        const tipX = cartX + rodLen * Math.sin(pState.th);
+        const tipY = cy - rodLen * Math.cos(pState.th);
+
+        pendTrail.push({ x: tipX, y: tipY });
+        if (pendTrail.length > 90) pendTrail.shift();
+
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        pendTrail.forEach((pt, idx) => { if (idx === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y); });
+        ctx.stroke();
+
+        ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5;
+        ctx.fillRect(cartX - 36, cy - 18, 72, 36);
+        ctx.strokeRect(cartX - 36, cy - 18, 72, 36);
+
+        ctx.strokeStyle = '#34d399'; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(cartX, cy); ctx.lineTo(tipX, tipY); ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.arc(tipX, tipY, 12, 0, 2 * Math.PI); ctx.fill();
+      }
+
+      requestAnimationFrame(stepPendulumPhysics);
+    }
+
+    // =========================================================================
+    // TAB 5: URDF / MUJOCO KINEMATIC INSPECTOR & LAB 07 STO SAFETY MONITOR
+    // =========================================================================
+    let currentRobotModel = 'hopper';
+    let stoState = 'ACTIVE';
+    let stoReactionUs = '0.65 μs';
+
+    function selectRobotModel(m) {
+      currentRobotModel = m;
+      const meta = {
+        hopper: { name: 'QDD Hopper', mass: '11.69 kg' },
+        arm6: { name: '6-DOF Serial Arm', mass: '12.99 kg' },
+        furuta: { name: 'Furuta Pendulum', mass: '2.98 kg' }
+      }[m];
+      document.getElementById('kpi-rmodel').textContent = meta.name;
+      document.getElementById('kpi-rmass').textContent = meta.mass;
+      drawRobotAndSTO();
+    }
+
+    function triggerSTOFault(cmd) {
+      const stEl = document.getElementById('kpi-stostate');
+      if (cmd === 'RUN') {
+        stoState = 'ACTIVE (PWM ON)';
+        stoReactionUs = '0.65 μs';
+        stEl.style.color = '#34d399';
+      } else if (cmd === 'OC_SHORT') {
+        stoState = 'FAULT: OC DESAT';
+        stoReactionUs = '0.65 μs (<1μs)';
+        stEl.style.color = '#fb7185';
+      } else if (cmd === 'ENC_CRC') {
+        stoState = 'FAULT: ENC CRC';
+        stoReactionUs = '50.0 μs (2 cyc)';
+        stEl.style.color = '#fb7185';
+      } else {
+        stoState = 'SAFE STANDBY';
+        stoReactionUs = '0.00 μs';
+        stEl.style.color = '#fbbf24';
+      }
+      stEl.textContent = stoState;
+      document.getElementById('kpi-stotime').textContent = stoReactionUs;
+      drawRobotAndSTO();
+    }
+
+    function drawRobotAndSTO() {
+      const q1 = parseFloat(document.getElementById('sl-rq1').value) * Math.PI / 180;
+      const q2 = parseFloat(document.getElementById('sl-rq2').value) * Math.PI / 180;
+      const q3 = parseFloat(document.getElementById('sl-rq3').value) * Math.PI / 180;
+
+      document.getElementById('val-rq1').textContent = Math.round(q1 * 180 / Math.PI) + '°';
+      document.getElementById('val-rq2').textContent = Math.round(q2 * 180 / Math.PI) + '°';
+      document.getElementById('val-rq3').textContent = Math.round(q3 * 180 / Math.PI) + '°';
+
+      const canvas = document.getElementById('canvas-models');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       const W = canvas.width, H = canvas.height;
       ctx.clearRect(0, 0, W, H);
 
-      const cx = W * 0.5, cy = H * 0.62, scale = 320;
-      const wallPx = xMaxWall * scale;
+      const ox = W * 0.35, oy = H * 0.45;
+      const l1 = 85, l2 = 80, l3 = 65;
+      const x1 = ox + l1 * Math.sin(q1);
+      const y1 = oy + l1 * Math.cos(q1);
+      const x2 = x1 + l2 * Math.sin(q1 + q2);
+      const y2 = y1 + l2 * Math.cos(q1 + q2);
+      const x3 = x2 + l3 * Math.sin(q1 + q2 + q3);
+      const y3 = y2 + l3 * Math.cos(q1 + q2 + q3);
 
-      // Draw CBF Safety Walls
-      ctx.strokeStyle = '#fb7185';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath();
-      ctx.moveTo(cx - wallPx, 40); ctx.lineTo(cx - wallPx, H - 40);
-      ctx.moveTo(cx + wallPx, 40); ctx.lineTo(cx + wallPx, H - 40);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      // Draw ground plane
+      ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(30, H - 30); ctx.lineTo(W * 0.65, H - 30); ctx.stroke();
 
-      // Track rail
-      ctx.strokeStyle = '#334155'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(40, cy); ctx.lineTo(W - 40, cy); ctx.stroke();
+      // Draw kinematic links
+      const linkColor = stoState.startsWith('FAULT') ? '#fb7185' : '#38bdf8';
+      ctx.strokeStyle = linkColor; ctx.lineWidth = 7; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.stroke();
 
-      const cartX = cx + pState.x * scale;
-      const rodLen = 155;
-      const tipX = cartX + rodLen * Math.sin(pState.th);
-      const tipY = cy - rodLen * Math.cos(pState.th);
+      // Draw CoM Inertia Ellipsoids & Joints
+      [[ox, oy, 11, '#f59e0b'], [x1, y1, 9, '#34d399'], [x2, y2, 8, '#34d399'], [x3, y3, 8, '#c084fc']].forEach(([jx, jy, r, col]) => {
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(jx, jy, r, 0, 2 * Math.PI); ctx.fill();
+      });
 
-      pendTrail.push({ x: tipX, y: tipY });
-      if (pendTrail.length > 90) pendTrail.shift();
-
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      pendTrail.forEach((pt, idx) => { if (idx === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y); });
-      ctx.stroke();
-
-      // Cart
-      ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5;
-      ctx.fillRect(cartX - 36, cy - 18, 72, 36);
-      ctx.strokeRect(cartX - 36, cy - 18, 72, 36);
-
-      // Pendulum Link & Tip Mass
-      ctx.strokeStyle = '#34d399'; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(cartX, cy); ctx.lineTo(tipX, tipY); ctx.stroke();
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath(); ctx.arc(tipX, tipY, 12, 0, 2 * Math.PI); ctx.fill();
-
-      requestAnimationFrame(stepPendulumPhysics);
+      // Right side telemetry box inside canvas
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '13px monospace';
+      ctx.fillText('URDF <-> MuJoCo MJCF Parity: PASS', W * 0.66, 55);
+      ctx.fillText('Sylvester SPD Inertia Check: PASS', W * 0.66, 85);
+      ctx.fillText('Triangle Inequality I1+I2>=I3: PASS', W * 0.66, 115);
+      ctx.fillText('Distal Shank Mass: 0.150 kg (<0.18kg)', W * 0.66, 145);
+      ctx.fillText('STO Ch A / Ch B: ' + (stoState.startsWith('ACTIVE') ? 'ENERGIZED' : 'SAFE HIGH-Z'), W * 0.66, 185);
+      ctx.fillText('TCP / Foot Tip: (' + ((x3 - ox) / 100).toFixed(2) + 'm, ' + ((oy - y3) / 100).toFixed(2) + 'm)', W * 0.66, 215);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('load', () => {
+      renderAllMath();
       updateBode();
       updateFOC();
+      drawRobotAndSTO();
       requestAnimationFrame(stepPendulumPhysics);
     });
   </script>

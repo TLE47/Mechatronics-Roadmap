@@ -1,0 +1,91 @@
+<mujoco model="capstone3_6dof_arm">
+  <compiler angle="radian" coordinate="local" inertiafromgeom="false"/>
+  <option timestep="0.001" integrator="implicitfast" gravity="0 0 -9.80665"/>
+
+  <default>
+    <geom contype="1" conaffinity="1" condim="3" friction="0.8 0.005 0.0001"/>
+    <joint limited="true" armature="0.015"/>
+  </default>
+
+  <worldbody>
+    <light name="workcell_light" pos="0.5 -0.5 2.0" dir="-0.2 0.2 -1" diffuse="0.85 0.85 0.85"/>
+    <geom name="workcell_table" type="plane" size="1.5 1.5 0.05" rgba="0.11 0.15 0.21 1"/>
+
+    <!-- Tilted Compliant Polishing Ramp Target (20 deg tilt for Capstone III test) -->
+    <body name="polishing_target" pos="0.42 0.0 0.25" euler="0 -0.34906585 0">
+      <geom name="ramp_surface" type="box" size="0.15 0.15 0.015" rgba="0.25 0.65 0.55 0.6"/>
+      <site name="apriltag_target_site" pos="0 0 0.016" size="0.015" rgba="0.98 0.75 0.15 1"/>
+    </body>
+
+    <!-- Link 0: Fixed Base -->
+    <body name="base_link" pos="0 0 0">
+      <inertial pos="0 0 0.05" mass="4.200" diaginertia="0.022000 0.022000 0.031000"/>
+      <geom name="base_geom" type="cylinder" pos="0 0 0.05" size="0.11 0.05" rgba="0.16 0.20 0.26 1"/>
+
+      <!-- Link 1: Shoulder Pan (+Z) -->
+      <body name="shoulder_link" pos="0 0 0.10">
+        <joint name="j1_shoulder_pan" type="hinge" axis="0 0 1" range="-3.14159265 3.14159265" damping="0.18" frictionloss="0.12" armature="0.045"/>
+        <inertial pos="0 0 0.07" mass="2.800" diaginertia="0.011500 0.011500 0.008400"/>
+        <geom name="shoulder_geom" type="cylinder" pos="0 0 0.07" size="0.07 0.07" rgba="0.22 0.58 0.92 1"/>
+
+        <!-- Link 2: Upper Arm (+Y) -->
+        <body name="upper_arm_link" pos="0 0 0.14">
+          <joint name="j2_shoulder_lift" type="hinge" axis="0 1 0" range="-2.35619449 2.35619449" damping="0.18" frictionloss="0.12" armature="0.045"/>
+          <inertial pos="0 0 0.16" mass="2.400" diaginertia="0.024500 0.024500 0.004200"/>
+          <geom name="upper_arm_geom" type="capsule" fromto="0 0 0 0 0 0.32" size="0.052" rgba="0.82 0.85 0.88 1"/>
+
+          <!-- Link 3: Forearm (+Y) -->
+          <body name="forearm_link" pos="0 0 0.32">
+            <joint name="j3_elbow_pitch" type="hinge" axis="0 1 0" range="-2.61799388 2.61799388" damping="0.12" frictionloss="0.08" armature="0.025"/>
+            <inertial pos="0 0 0.14" mass="1.650" diaginertia="0.012800 0.012800 0.002400"/>
+            <geom name="forearm_geom" type="capsule" fromto="0 0 0 0 0 0.28" size="0.042" rgba="0.82 0.85 0.88 1"/>
+
+            <!-- Link 4: Wrist 1 Roll (+Z) -->
+            <body name="wrist_1_link" pos="0 0 0.28">
+              <joint name="j4_wrist_roll" type="hinge" axis="0 0 1" range="-3.14159265 3.14159265" damping="0.05" frictionloss="0.03" armature="0.008"/>
+              <inertial pos="0 0 0.045" mass="0.850" diaginertia="0.001400 0.001400 0.001100"/>
+              <geom name="wrist_1_geom" type="cylinder" pos="0 0 0.045" size="0.036 0.045" rgba="0.22 0.58 0.92 1"/>
+
+              <!-- Link 5: Wrist 2 Pitch (+Y) -->
+              <body name="wrist_2_link" pos="0 0 0.09">
+                <joint name="j5_wrist_pitch" type="hinge" axis="0 1 0" range="-2.26892803 2.26892803" damping="0.05" frictionloss="0.03" armature="0.008"/>
+                <inertial pos="0 0 0.045" mass="0.720" diaginertia="0.001100 0.001100 0.000850"/>
+                <geom name="wrist_2_geom" type="cylinder" pos="0 0 0.045" size="0.034 0.045" rgba="0.22 0.58 0.92 1"/>
+
+                <!-- Link 6: Tool Flange Yaw (+Z) -->
+                <body name="flange_link" pos="0 0 0.09">
+                  <joint name="j6_wrist_yaw" type="hinge" axis="0 0 1" range="-6.2831853 6.2831853" damping="0.03" frictionloss="0.02" armature="0.004"/>
+                  <inertial pos="0 0 0.02" mass="0.320" diaginertia="0.000240 0.000240 0.000380"/>
+                  <geom name="flange_geom" type="cylinder" pos="0 0 0.02" size="0.032 0.02" rgba="0.16 0.78 0.52 1"/>
+
+                  <!-- TCP & 6-Axis Force/Torque Sensor Site -->
+                  <body name="tcp_link" pos="0 0 0.04">
+                    <inertial pos="0 0 0" mass="0.050" diaginertia="0.000010 0.000010 0.000010"/>
+                    <geom name="tcp_probe_geom" type="sphere" pos="0 0 0" size="0.014" rgba="0.95 0.35 0.45 1"/>
+                    <site name="ft_sensor_site" pos="0 0 0" size="0.008"/>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="tau_j1" joint="j1_shoulder_pan" gear="1" ctrllimited="true" ctrlrange="-65 65"/>
+    <motor name="tau_j2" joint="j2_shoulder_lift" gear="1" ctrllimited="true" ctrlrange="-65 65"/>
+    <motor name="tau_j3" joint="j3_elbow_pitch" gear="1" ctrllimited="true" ctrlrange="-40 40"/>
+    <motor name="tau_j4" joint="j4_wrist_roll" gear="1" ctrllimited="true" ctrlrange="-18 18"/>
+    <motor name="tau_j5" joint="j5_wrist_pitch" gear="1" ctrllimited="true" ctrlrange="-18 18"/>
+    <motor name="tau_j6" joint="j6_wrist_yaw" gear="1" ctrllimited="true" ctrlrange="-12 12"/>
+  </actuator>
+
+  <sensor>
+    <force name="wrist_force_3d" site="ft_sensor_site"/>
+    <torque name="wrist_torque_3d" site="ft_sensor_site"/>
+    <framepos name="tcp_pos" objtype="site" objname="ft_sensor_site"/>
+    <framequat name="tcp_quat" objtype="site" objname="ft_sensor_site"/>
+  </sensor>
+</mujoco>

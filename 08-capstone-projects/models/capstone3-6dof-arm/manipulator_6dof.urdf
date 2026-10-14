@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Capstone III: 6-DOF Force-Controlled Serial Robotic Manipulator
+  - Spherical-wrist industrial/collaborative kinematic topology (Z-Y-Y-Z-Y-Z)
+  - Designed for 1 kHz Operational-Space Cartesian Impedance Control & Visual Servoing
+  - All 7 rigid links + TCP tool frame satisfy SPD and triangle-inequality inertia bounds.
+-->
+<robot name="capstone3_6dof_arm">
+
+  <material name="graphite_base">
+    <color rgba="0.16 0.20 0.26 1.0"/>
+  </material>
+  <material name="cobalt_joint">
+    <color rgba="0.22 0.58 0.92 1.0"/>
+  </material>
+  <material name="silver_link">
+    <color rgba="0.82 0.85 0.88 1.0"/>
+  </material>
+  <material name="emerald_flange">
+    <color rgba="0.16 0.78 0.52 1.0"/>
+  </material>
+
+  <!-- Link 0: Fixed Mounting Base -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/>
+      <mass value="4.200"/>
+      <inertia ixx="0.022000" ixy="0.0" ixz="0.0" iyy="0.022000" iyz="0.0" izz="0.031000"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.11" length="0.10"/>
+      </geometry>
+      <material name="graphite_base"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.05" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.11" length="0.10"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint 1: Shoulder Pan (+Z) -->
+  <joint name="j1_shoulder_pan" type="revolute">
+    <parent link="base_link"/>
+    <child link="shoulder_link"/>
+    <origin xyz="0.0 0.0 0.10" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit lower="-3.14159265" upper="3.14159265" effort="65.0" velocity="3.5"/>
+    <dynamics damping="0.18" friction="0.12"/>
+  </joint>
+
+  <link name="shoulder_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.07" rpy="0.0 0.0 0.0"/>
+      <mass value="2.800"/>
+      <inertia ixx="0.011500" ixy="0.0" ixz="0.0" iyy="0.011500" iyz="0.0" izz="0.008400"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.07" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.07" length="0.14"/>
+      </geometry>
+      <material name="cobalt_joint"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.07" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.07" length="0.14"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint 2: Shoulder Lift (+Y) -->
+  <joint name="j2_shoulder_lift" type="revolute">
+    <parent link="shoulder_link"/>
+    <child link="upper_arm_link"/>
+    <origin xyz="0.0 0.0 0.14" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 1.0 0.0"/>
+    <limit lower="-2.35619449" upper="2.35619449" effort="65.0" velocity="3.5"/>
+    <dynamics damping="0.18" friction="0.12"/>
+  </joint>
+
+  <link name="upper_arm_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.16" rpy="0.0 0.0 0.0"/>
+      <mass value="2.400"/>
+      <inertia ixx="0.024500" ixy="0.0" ixz="0.0" iyy="0.024500" iyz="0.0" izz="0.004200"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.16" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.052" length="0.32"/>
+      </geometry>
+      <material name="silver_link"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.16" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.052" length="0.32"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint 3: Elbow Pitch (+Y) -->
+  <joint name="j3_elbow_pitch" type="revolute">
+    <parent link="upper_arm_link"/>
+    <child link="forearm_link"/>
+    <origin xyz="0.0 0.0 0.32" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 1.0 0.0"/>
+    <limit lower="-2.61799388" upper="2.61799388" effort="40.0" velocity="4.5"/>
+    <dynamics damping="0.12" friction="0.08"/>
+  </joint>
+
+  <link name="forearm_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.14" rpy="0.0 0.0 0.0"/>
+      <mass value="1.650"/>
+      <inertia ixx="0.012800" ixy="0.0" ixz="0.0" iyy="0.012800" iyz="0.0" izz="0.002400"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.14" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.042" length="0.28"/>
+      </geometry>
+      <material name="silver_link"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.14" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.042" length="0.28"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint 4: Wrist 1 Roll (+Z) -->
+  <joint name="j4_wrist_roll" type="revolute">
+    <parent link="forearm_link"/>
+    <child link="wrist_1_link"/>
+    <origin xyz="0.0 0.0 0.28" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit lower="-3.14159265" upper="3.14159265" effort="18.0" velocity="6.0"/>
+    <dynamics damping="0.05" friction="0.03"/>
+  </joint>
+
+  <link name="wrist_1_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.045" rpy="0.0 0.0 0.0"/>
+      <mass value="0.850"/>
+      <inertia ixx="0.001400" ixy="0.0" ixz="0.0" iyy="0.001400" iyz="0.0" izz="0.001100"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.045" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.036" length="0.09"/>
+      </geometry>
+      <material name="cobalt_joint"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.045" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.036" length="0.09"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint 5: Wrist 2 Pitch (+Y) -->
+  <joint name="j5_wrist_pitch" type="revolute">
+    <parent link="wrist_1_link"/>
+    <child link="wrist_2_link"/>
+    <origin xyz="0.0 0.0 0.09" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 1.0 0.0"/>
+    <limit lower="-2.26892803" upper="2.26892803" effort="18.0" velocity="6.0"/>
+    <dynamics damping="0.05" friction="0.03"/>
+  </joint>
+
+  <link name="wrist_2_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.045" rpy="0.0 0.0 0.0"/>
+      <mass value="0.720"/>
+      <inertia ixx="0.001100" ixy="0.0" ixz="0.0" iyy="0.001100" iyz="0.0" izz="0.000850"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.045" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.034" length="0.09"/>
+      </geometry>
+      <material name="cobalt_joint"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.045" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.034" length="0.09"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint 6: Wrist 3 Tool Flange Yaw (+Z) -->
+  <joint name="j6_wrist_yaw" type="revolute">
+    <parent link="wrist_2_link"/>
+    <child link="flange_link"/>
+    <origin xyz="0.0 0.0 0.09" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit lower="-6.2831853" upper="6.2831853" effort="12.0" velocity="8.0"/>
+    <dynamics damping="0.03" friction="0.02"/>
+  </joint>
+
+  <link name="flange_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.02" rpy="0.0 0.0 0.0"/>
+      <mass value="0.320"/>
+      <inertia ixx="0.000240" ixy="0.0" ixz="0.0" iyy="0.000240" iyz="0.0" izz="0.000380"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.02" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.032" length="0.04"/>
+      </geometry>
+      <material name="emerald_flange"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.02" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.032" length="0.04"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Fixed 6-Axis Force/Torque Sensor & TCP Frame -->
+  <joint name="tcp_fixed" type="fixed">
+    <parent link="flange_link"/>
+    <child link="tcp_link"/>
+    <origin xyz="0.0 0.0 0.04" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+  <link name="tcp_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.050"/>
+      <inertia ixx="0.000010" ixy="0.0" ixz="0.0" iyy="0.000010" iyz="0.0" izz="0.000010"/>
+    </inertial>
+  </link>
+
+</robot>
