@@ -53,11 +53,12 @@ Design, lay out, assemble, and bring up a $45\text{ mm} \times 45\text{ mm}$ 6-l
 | **CAN-FD Command Latency** | $< 120\ \mu\text{s}$ from CAN frame EOF to updated PWM duty | Oscilloscope trigger on CAN RX vs. PWM duty step |
 | **Short-Circuit Protection** | Survives hard phase-to-phase and phase-to-GND short at $48\text{ V}$ | Physical contactor short test; gate shutdown $< 1.2\ \mu\text{s}$ |
 
-### 1.3 Reference KiCad Netlist, Coupled Electro-Thermal Solver & Production BOM
+### 1.3 Reference KiCad Netlist, Coupled Electro-Thermal Solver, Production BOM & Bare-Metal STM32G474 Firmware
 * **EDA Generator & ERC/Thermal Verifier:** [eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py](eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py)
 * **KiCad S-Expression Schematic Netlist (43 Nets, Kelvin Shunts & Dual STO):** [eda-capstone1-foc-drive/capstone1_foc_48v30a.net](eda-capstone1-foc-drive/capstone1_foc_48v30a.net)
 * **Production Bill of Materials (CSV):** [eda-capstone1-foc-drive/capstone1_bom.csv](eda-capstone1-foc-drive/capstone1_bom.csv)
 * **Coupled Thermal & Switching Loss Report (JSON):** [eda-capstone1-foc-drive/foc_thermal_and_bom.json](eda-capstone1-foc-drive/foc_thermal_and_bom.json)
+* **Bare-Metal STM32G474 Register-Level 40 kHz FOC Firmware & Unit Tests (`C++20`):** [firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp](firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp)
 
 ---
 

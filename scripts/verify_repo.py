@@ -51,6 +51,7 @@ EXPECTED_FILES = [
     "08-capstone-projects/eda-capstone1-foc-drive/capstone1_foc_48v30a.net",
     "08-capstone-projects/eda-capstone1-foc-drive/capstone1_bom.csv",
     "08-capstone-projects/eda-capstone1-foc-drive/foc_thermal_and_bom.json",
+    "08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp",
     "08-capstone-projects/models/validate_models.py",
     "08-capstone-projects/models/capstone2-furuta-pendulum/furuta_pendulum.urdf",
     "08-capstone-projects/models/capstone2-furuta-pendulum/furuta_pendulum.xml",

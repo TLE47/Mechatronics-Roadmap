@@ -1,10 +1,38 @@
-# Production-Grade Mechatronics Engineering & Research Roadmap
+# ⚡ MechaLab — Production-Grade Mechatronics & Robotics Roadmap
 
-> **From Maxwell's Equations and Euler-Lagrange Mechanics to Hard Real-Time Embedded Firmware, Field-Oriented Motor Control, Model Predictive Control, and Safety-Critical Autonomous Systems.**
+> **From Maxwell's Equations and Euler-Lagrange Mechanics to Hard Real-Time STM32G4 Firmware, 48V/30A Field-Oriented Motor Control, Model Predictive Control, and Safety-Critical Autonomous Systems.**
+>
+> **Beginner-Friendly Plain-English Intuition** + **Full Graduate Mathematical Derivations** + **12 Runnable Python 3 & C++20 Hardware/Control Suites** + **3D STEP/STL CAD & KiCad PCB Netlists**.
 
 ---
 
-## 1. Executive Summary & Engineering Philosophy
+## 🚀 Quick Start & Live Interactive Workbench (`MechaLab`)
+
+* **🌐 Live Interactive Web Workbench (`MechaLab`):** [**Open Live Production Workbench (`site-2f1b42c07edb4f2ea9ce49ffab6d57e7.freebuff.page`)**](https://site-2f1b42c07edb4f2ea9ce49ffab6d57e7.freebuff.page) | Local file: [web/index.html](web/index.html)
+  * Includes a **6-Step Interactive Guided Beginner Tour** that highlights controls and explains each physical phenomenon as you drag the sliders, alongside native KaTeX math rendering and 5 live simulators (Two-Mass Resonance Bode, $25\text{ kHz}$ PMSM FOC, 60 FPS Furuta Pendulum + LQR + CBF, URDF/MuJoCo + STO Fault Injector, and 3D CAD + $48\text{ V}/30\text{ A}$ PCB Thermal Explorer).
+* **🧪 Run All 12 Verification Suites in 2 Seconds (Zero External Dependencies):**
+
+```bash
+# Execute all 12 Python 3 & C++20 simulations, URDF/MJCF checks, STEP/STL manifold tests & PCB thermal solvers
+python3 scripts/run_all_labs.py --verbose
+
+# Verify all 13 Markdown modules, 16 Mermaid diagrams, balanced LaTeX blocks & 115+ internal links
+python3 scripts/verify_repo.py --verbose
+```
+
+### 📦 What's Inside This Repository at a Glance
+
+| Pillar | What Is Included | Key Artifacts |
+| :--- | :--- | :--- |
+| **🎓 8 Core Engineering Tracks** | Beginner-friendly intuition + full graduate derivations ($SO(3)$, PoE, RNEA, FOC, ESKF, CBF-QP, HIL/STO) | [Track 00](00-foundations/README.md) – [Track 08](08-capstone-projects/README.md) |
+| **💻 12 Executable Lab Suites** | Self-checking Python 3 & C++20 physics/control/firmware suites (`0` dependencies beyond stdlib) | [scripts/run_all_labs.py](scripts/run_all_labs.py) |
+| **🔩 3D Parametric STEP & STL CAD** | Watertight 2-manifold `.stl` & ISO 10303-21 `.step` Notch Flexure, Kelvin Coupling & 8:1 QDD Carrier | [cad_parametric_parts.py](02-mechanics-kinematics-dynamics/cad/cad_parametric_parts.py) |
+| **🤖 6 Validated Robot Models** | Sylvester SPD & triangle-inequality verified URDF & MuJoCo MJCF XMLs (Furuta, 6-DOF Arm, QDD Hopper) | [validate_models.py](08-capstone-projects/models/validate_models.py) |
+| **⚡ 48V / 30A FOC PCB & Firmware** | 43-net KiCad `.net` schematic netlist, $\$40.47$ BOM, coupled thermal solver & bare-metal `STM32G474` C++20 ISR | [generate_foc_pcb_and_bom.py](08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py), [stm32g474_foc_firmware.cpp](08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp) |
+
+---
+
+## 🧭 1. Executive Summary & Engineering Philosophy
 
 Modern mechatronics is not the loose concatenation of mechanical CAD, off-the-shelf Arduino boards, and heuristic PID tuning. At the production and research frontier—spanning surgical robotics, legged locomotion, high-speed semiconductor lithography stages, autonomous aerial vehicles, and EV traction inverters—**mechatronics is the unified co-design of energy conversion, structural dynamics, mixed-signal electronics, deterministic computation, and feedback control under physical uncertainty.**
 
@@ -274,5 +302,6 @@ journey
   * [Lab 07: Schroeder Multisine SysID, Dual-Channel STO Fault Injection & Regen Clamp](07-systems-hil-and-production/lab/lab07_sysid_hil_and_sto.py)
   * [Track 02 & Capstone IV Parametric CAD Generator & Validator (`cad_parametric_parts.py`)](02-mechanics-kinematics-dynamics/cad/cad_parametric_parts.py) and [validate_cad_parts.py](02-mechanics-kinematics-dynamics/cad/validate_cad_parts.py)
   * [Capstone I 48V / 30A FOC Servo Drive PCB Netlist, Thermal & BOM Suite (`generate_foc_pcb_and_bom.py`)](08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py)
+  * [Capstone I Bare-Metal STM32G474 40 kHz TIM1 SVPWM + Dual ADC DMA + CORDIC Firmware (`stm32g474_foc_firmware.cpp`)](08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp)
   * [Capstone Models Validator: URDF & MuJoCo MJCF Physics/Inertia Suite](08-capstone-projects/models/validate_models.py)
 * **[Repository Verification Script](scripts/verify_repo.py)** — Run `python3 scripts/verify_repo.py` to validate every Markdown link, Mermaid diagram syntax block, equation block, and structural requirement across the repository.

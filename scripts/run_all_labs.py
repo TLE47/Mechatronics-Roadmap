@@ -34,7 +34,10 @@ PYTHON_LABS = [
     ("08-capstone-models", "08-capstone-projects/models/validate_models.py"),
 ]
 
-CPP_LAB = ("04-embedded-and-realtime", "04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp")
+CPP_LABS = [
+    ("04-embedded-and-realtime", "04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp"),
+    ("08-capstone1-stm32g474-firmware", "08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp"),
+]
 
 
 def find_cpp_cmd(cpp_source: Path, out_bin: Path) -> list[str]:
@@ -75,41 +78,41 @@ def run_suite(repo_root: Path) -> dict[str, Any]:
             payload["stderr"] = proc.stderr.strip()
         results.append(payload)
 
-    # Compile and execute Lab 04 C++20 suite
-    cpp_name, cpp_rel = CPP_LAB
-    cpp_src = repo_root / cpp_rel
+    # Compile and execute C++20 suites (Lab 04 & Capstone I STM32G474 Bare-Metal Firmware)
     with tempfile.TemporaryDirectory() as tmpdir:
-        bin_path = Path(tmpdir) / "lab04_rt_test"
-        compile_cmd = find_cpp_cmd(cpp_src, bin_path)
-        comp = subprocess.run(compile_cmd, capture_output=True, text=True, timeout=30, check=False)
-        if comp.returncode != 0:
-            all_ok = False
-            results.append(
-                {
-                    "lab": cpp_name,
-                    "ok": False,
-                    "stage": "compile",
-                    "stderr": comp.stderr.strip(),
-                }
-            )
-        else:
-            run_proc = subprocess.run(
-                [str(bin_path), "--json"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                check=False,
-            )
-            ok = run_proc.returncode == 0
-            if not ok:
+        for cpp_name, cpp_rel in CPP_LABS:
+            cpp_src = repo_root / cpp_rel
+            bin_path = Path(tmpdir) / f"{cpp_name}_bin"
+            compile_cmd = find_cpp_cmd(cpp_src, bin_path)
+            comp = subprocess.run(compile_cmd, capture_output=True, text=True, timeout=30, check=False)
+            if comp.returncode != 0:
                 all_ok = False
-            cpp_payload: dict[str, Any] = {"lab": cpp_name, "ok": ok, "returncode": run_proc.returncode}
-            if run_proc.stdout.strip():
-                try:
-                    cpp_payload.update(json.loads(run_proc.stdout.strip().splitlines()[-1]))
-                except json.JSONDecodeError:
-                    cpp_payload["raw_stdout"] = run_proc.stdout.strip()
-            results.append(cpp_payload)
+                results.append(
+                    {
+                        "lab": cpp_name,
+                        "ok": False,
+                        "stage": "compile",
+                        "stderr": comp.stderr.strip(),
+                    }
+                )
+            else:
+                run_proc = subprocess.run(
+                    [str(bin_path), "--json"],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=False,
+                )
+                ok = run_proc.returncode == 0
+                if not ok:
+                    all_ok = False
+                cpp_payload: dict[str, Any] = {"lab": cpp_name, "ok": ok, "returncode": run_proc.returncode}
+                if run_proc.stdout.strip():
+                    try:
+                        cpp_payload.update(json.loads(run_proc.stdout.strip().splitlines()[-1]))
+                    except json.JSONDecodeError:
+                        cpp_payload["raw_stdout"] = run_proc.stdout.strip()
+                results.append(cpp_payload)
 
     results.sort(key=lambda item: str(item.get("lab", "")))
     return {"ok": all_ok, "total_labs": len(results), "results": results}
