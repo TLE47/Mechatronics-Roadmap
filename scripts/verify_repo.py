@@ -257,6 +257,26 @@ def find_currency_math_issues(raw: str, rel_path: str, lineno: int) -> list[str]
 
 # Text-mode LaTeX groups. TeX switches to text mode inside these, so math-only
 # commands are illegal there and MathJax refuses the whole span.
+def has_unquoted_semicolon(line: str) -> bool:
+    """True when `;` splits a statement, i.e. real content follows it.
+
+    Mermaid uses `;` as a statement separator, so `A->>B: do x; do y` is read as two
+    statements and the trailing fragment is not a valid sequence message, which GitHub
+    reports as "Parse error ... Expecting 'SOLID_OPEN_ARROW' ... got 'NEWLINE'".
+    A trailing `;` (as written by many `classDef ...;` lines) merely terminates the
+    statement and parses fine, and `;;` opens a comment, so neither is flagged.
+    """
+    in_quotes = False
+    for i, ch in enumerate(line):
+        if ch == '"':
+            in_quotes = not in_quotes
+        elif ch == ";" and not in_quotes:
+            if i + 1 < len(line) and line[i + 1] == ";":
+                return False
+            return bool(line[i + 1 :].strip())
+    return False
+
+
 TEXT_MODE_GROUPS = (
     "text",
     "textrm",
@@ -406,6 +426,12 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
                     f"{rel_path}: Mermaid block #{idx} has unrecognized header: '{first_line}'"
                 )
             for m_line in non_empty:
+                if not m_line.startswith("%%") and has_unquoted_semicolon(m_line):
+                    errors.append(
+                        f"{rel_path}: Mermaid block #{idx} has content after an unquoted ';', which "
+                        f"Mermaid treats as a statement separator and splits the statement, causing "
+                        f"'Parse error ... got NEWLINE': '{m_line}'"
+                    )
                 # GitHub Mermaid parser fails on unquoted parentheses/brackets inside edge labels -->|...()...|
                 for edge_match in re.finditer(r"\|([^|]+)\|", m_line):
                     label_inner = edge_match.group(1).strip()

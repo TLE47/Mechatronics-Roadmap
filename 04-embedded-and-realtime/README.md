@@ -45,7 +45,8 @@ sequenceDiagram
     ISR->>ISR: Clarke/Park Transform + d-q PI + Decoupling + SVPWM
     ISR->>TIM: Write Shadow Registers (CCR1, CCR2, CCR3) before next Update Event
     ISR->>RTOS: Every 40th tick: Atomic SPSC Push (State Telemetry) / Pop (Torque Ref)
-    ISR->>ISR: Record WCET = DWT->CYCCNT - Start; Pet Window Watchdog Flag
+    ISR->>ISR: Record WCET = DWT->CYCCNT - Start
+    ISR->>ISR: Pet Window Watchdog Flag
 ```
 
 ---
