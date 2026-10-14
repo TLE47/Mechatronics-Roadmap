@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
+import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { TabArchitecture } from './components/tabs/TabArchitecture';
 import { TabBode } from './components/tabs/TabBode';
 import { TabFOC } from './components/tabs/TabFOC';
@@ -11,13 +12,20 @@ import { TabCadPcb } from './components/tabs/TabCadPcb';
 import { TabSysId } from './components/tabs/TabSysId';
 import { TabEskf } from './components/tabs/TabEskf';
 import { TabId } from './types';
+import {
+  ActiveTierPass,
+  LEVEL_0_STEPS,
+  TIER_1_LINEAR_PASS,
+  TIER_2_LINEAR_PASS,
+  TIER_3_LINEAR_PASS,
+} from './curriculumData';
 
 const TOUR_STEPS: TourStepInfo[] = [
   {
     tab: 'tab-arch',
     targetId: null,
-    title: 'Step 1 / 8 — The Cyber-Physical Loop (Muscles, Nerves & Brain)',
-    desc: 'Every robot is a circle connecting physical mechanics M(q)q̈ (Muscles/Skeleton), mixed-signal electronics (Nerves), and real-time code (Spinal Cord). Click "Next Step →" to tune a vibrating flexible drive shaft!',
+    title: 'Step 1 / 8 — Linear Multi-Pass Level-Up Roadmap (Level 0 → Tier 1 → Tier 2 → Tier 3)',
+    desc: 'Start with Level 0 Bench Intuition, then complete Pass 1 (Tier 1 Beginner) linearly from Track 00 to Track 08 before looping back for Pass 2 (Tier 2 Applied) and Pass 3 (Tier 3 Production). Click "Next Step →" to test the simulators!',
   },
   {
     tab: 'tab-bode',
@@ -63,14 +71,70 @@ const TOUR_STEPS: TourStepInfo[] = [
   },
 ];
 
+const STORAGE_KEY_MILESTONES = 'mechalab_linear_milestones_v1';
+const STORAGE_KEY_TIER = 'mechalab_active_tier_pass_v1';
+
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('tab-arch');
   const [tourIndex, setTourIndex] = useState<number>(0);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
+  const [activeTierPass, setActiveTierPass] = useState<ActiveTierPass>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_TIER) as ActiveTierPass | null;
+      if (saved && ['level0', 'tier1', 'tier2', 'tier3'].includes(saved)) {
+        return saved;
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return 'tier1';
+  });
+
+  const [completedMilestones, setCompletedMilestones] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_MILESTONES);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_TIER, activeTierPass);
+    } catch {
+      // ignore
+    }
+  }, [activeTierPass]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_MILESTONES, JSON.stringify(completedMilestones));
+    } catch {
+      // ignore
+    }
+  }, [completedMilestones]);
+
+  const handleToggleMilestone = (id: string) => {
+    setCompletedMilestones((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const allMilestoneIds = [
+    ...LEVEL_0_STEPS,
+    ...TIER_1_LINEAR_PASS,
+    ...TIER_2_LINEAR_PASS,
+    ...TIER_3_LINEAR_PASS,
+  ].map((s) => s.milestoneId);
+
+  const totalCompleted = allMilestoneIds.filter((id) => completedMilestones[id]).length;
+
   const tabs: { id: TabId; label: string }[] = [
-    { id: 'tab-arch', label: '1. Architecture, Free Study Links & Tracks' },
+    { id: 'tab-arch', label: '1. Linear Tier Roadmap (Tracks 00→08)' },
     { id: 'tab-bode', label: '2. Two-Mass Resonance & Notch Bode (Lab 00/05)' },
     { id: 'tab-foc', label: '3. 25 kHz PMSM FOC & SVPWM (Lab 01/03)' },
     { id: 'tab-pend', label: '4. Furuta Pendulum + LQR + CBF (Lab 02/05)' },
@@ -127,7 +191,13 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0b0f19] text-[#f1f5f9]">
-      <Header onOpenCheatSheet={() => setIsCheatSheetOpen(true)} />
+      <Header
+        onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+        activeTierPass={activeTierPass}
+        onSelectTierPass={setActiveTierPass}
+        totalCompleted={totalCompleted}
+        totalMilestones={allMilestoneIds.length}
+      />
 
       <GuidedTourBar
         currentStepIndex={tourIndex}
@@ -159,8 +229,24 @@ export const App: React.FC = () => {
       </nav>
 
       {/* Main Tab Pane */}
-      <main className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto">
-        {activeTab === 'tab-arch' && <TabArchitecture onLoadPreset={handleLoadPreset} />}
+      <main className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4">
+        {activeTab !== 'tab-arch' && (
+          <SimulatorTierBanner
+            tabId={activeTab}
+            activeTierPass={activeTierPass}
+            onSelectTierPass={setActiveTierPass}
+          />
+        )}
+
+        {activeTab === 'tab-arch' && (
+          <TabArchitecture
+            onLoadPreset={handleLoadPreset}
+            activeTierPass={activeTierPass}
+            onSelectTierPass={setActiveTierPass}
+            completedMilestones={completedMilestones}
+            onToggleMilestone={handleToggleMilestone}
+          />
+        )}
         {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
         {activeTab === 'tab-foc' && <TabFOC onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
         {activeTab === 'tab-pend' && <TabPendulum onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
@@ -175,7 +261,7 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-[#1e293b] bg-[#070b14] px-4 py-2 text-center text-xs text-[#64748b]">
-        MechaLab · Mechatronics & Robotics Workbench · All 12 Labs & Capstones Verified
+        MechaLab · Multi-Pass Spiral Mechatronics Curriculum (Level 0 → Tier 1 Pass → Tier 2 Pass → Tier 3 Pass)
       </footer>
     </div>
   );
