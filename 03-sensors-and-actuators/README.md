@@ -187,5 +187,5 @@ $$v_{\text{offset}} = -\frac{1}{2}\big(\max(v_a^*, v_b^*, v_c^*) + \min(v_a^*, v
 | :--- | :--- | :--- |
 | **Calibrated Encoder Nonlinearity (INL)** | Peak-to-peak error $< \pm 0.04^\circ$ mechanical across full $360^\circ$ rotation | Cross-check against $\ge 20\text{-bit}$ optical reference or constant-inertia coast-down test |
 | **Current Loop Bandwidth ($-3\text{ dB}$)** | $f_{-3\text{dB}} \ge 2.0\text{ kHz}$ with overshoot $< 4\%$ and zero steady-state error | $i_q^*$ step response ($0 \to 5\text{ A}$, $90\%$ rise time $\le 180\ \mu\text{s}$) & swept-sine Bode plot |
-| **$d$-$q$ Axis Cross-Coupling Rejection** | Peak $|i_d|$ perturbation $< 0.15\text{ A}$ during $0 \to 10\text{ A}$ $i_q^*$ step at $2,000\text{ RPM}$ | High-speed DMA telemetry log at $25\text{ kHz}$ |
+| **$d$-$q$ Axis Cross-Coupling Rejection** | Peak $\lvert i_d \rvert$ perturbation $< 0.15\text{ A}$ during $0 \to 10\text{ A}$ $i_q^*$ step at $2,000\text{ RPM}$ | High-speed DMA telemetry log at $25\text{ kHz}$ |
 | **Cogging Torque Ripple Suppression** | Peak-to-peak velocity ripple reduced by $\ge 75\%$ at $10\text{ RPM}$ with Anticogging LUT enabled | PLL velocity spectrum FFT at $1\times, 6\times, N_{\text{slots}}\times$ harmonics |

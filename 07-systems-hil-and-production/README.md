@@ -167,5 +167,5 @@ stateDiagram-v2
 | :--- | :--- | :--- |
 | **SysID Model-to-Hardware Correlation** | Magnitude error $< 1.5\text{ dB}$ and phase error $< 8^\circ$ across $1\text{ Hz} - 1\text{ kHz}$ (where $\gamma^2(\omega) \ge 0.90$) | Empirical Welch FRF vs. parametric state-space model overlay |
 | **Hardware Over-Current to Gate Turn-Off** | Latency $< 1.0\ \mu\text{s}$ from shunt threshold exceedance to all 6 gate-drive outputs low | Oscilloscope capture of shunt fault injection vs. `HO/LO` gate pins |
-| **Encoder CRC / Wire-Break Fault Reaction** | Fault detected within $2$ control cycles ($\le 80\ \mu\text{s}$); zero unintended torque impulse ($|\Delta\tau| < 0.05\text{ N\cdot m}$) | HIL open-circuit relay injection during $1,000\text{ RPM}$ loaded operation |
+| **Encoder CRC / Wire-Break Fault Reaction** | Fault detected within $2$ control cycles ($\le 80\ \mu\text{s}$); zero unintended torque impulse ($\lvert\Delta\tau\rvert < 0.05\text{ N}\cdot\text{m}$) | HIL open-circuit relay injection during $1,000\text{ RPM}$ loaded operation |
 | **Regenerative Braking Clamp Accuracy** | Peak DC bus rise $\Delta V_{\text{bus}} < 4.5\text{ V}$ during emergency deceleration from max rated speed with full inertia disk | High-voltage differential probe capture on `V_BUS` and brake resistor |

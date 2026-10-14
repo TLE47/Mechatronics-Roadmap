@@ -121,7 +121,7 @@ $$\exp\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix} T_s\right) = \begin
 
 | Discretization Method | Mapping $s \leftarrow f(z)$ | Stability Preservation | Frequency Warping / Phase Accuracy | Primary Mechatronics Use Case |
 | :--- | :--- | :--- | :--- | :--- |
-| **Forward Euler** | $s \leftarrow \frac{z - 1}{T_s}$ | Unstable for lightly damped poles unless $T_s \ll 1/|\lambda_{\max}|$ | Adds phase lead; expands unit circle | Simple low-bandwidth integrators; quick explicit ODE steps |
+| **Forward Euler** | $s \leftarrow \frac{z - 1}{T_s}$ | Unstable for lightly damped poles unless $T_s \ll 1/\lvert\lambda_{\max}\rvert$ | Adds phase lead; expands unit circle | Simple low-bandwidth integrators; quick explicit ODE steps |
 | **Backward Euler** | $s \leftarrow \frac{z - 1}{z T_s}$ | Unconditionally stable (maps LHP inside unit disk) | Adds artificial numerical damping | Stiff mechanical contact simulation; derivative term smoothing |
 | **Tustin (Bilinear)** | $s \leftarrow \frac{2}{T_s}\frac{z - 1}{z + 1}$ | Exact LHP $\leftrightarrow$ Unit Disk bijection | Compresses $\omega \in [0,\infty) \to [0, \pi/T_s)$ | General digital PI/lead-lag compensators |
 | **Tustin with Pre-Warping** | $s \leftarrow \frac{\omega_0}{\tan(\omega_0 T_s / 2)}\frac{z - 1}{z + 1}$ | Exact LHP $\leftrightarrow$ Unit Disk bijection | Exact gain & phase match at critical frequency $\omega_0$ | Structural notch filters and resonant current controllers |
@@ -162,7 +162,7 @@ where:
 ## 5. Failure Modes, Pitfalls & Anti-Patterns
 
 1. **Euler-Angle Singularity & Unwrapping Bugs:** Wrapping raw encoder or IMU heading angles to $[-\pi, \pi)$ inside a PID error calculation (`err = ref - meas`) causes a violent $2\pi$ torque spike when crossing the $\pm\pi$ boundary. Always compute angular error on $SO(2)$ via `atan2(sin(ref - meas), cos(ref - meas))` or on $SO(3)$ via $\log(R_{meas}^\top R_{ref})^\vee$.
-2. **Inconsistent SI Units in Electromechanical Constants:** Motor vendors frequently specify torque constant $K_t$ in $\text{N\cdot m / A}_{\text{rms}}$ and back-EMF constant $K_v$ in $\text{RPM / V}_{\text{line-to-line, peak}}$. In consistent SI units ($\text{N\cdot m/A}$ and $\text{V/(rad/s)}$ in the same reference frame), power conservation ($P_{elec} = P_{mech} \implies e^\top i = \tau \omega$) mandates $K_t \equiv K_e$. Failing to convert line-to-neutral vs. line-to-line and RMS vs. peak introduces factors of $\sqrt{3}$ or $\sqrt{3/2}$ errors in torque estimation.
+2. **Inconsistent SI Units in Electromechanical Constants:** Motor vendors frequently specify torque constant $K_t$ in $\text{N}\cdot\text{m / A}_{\text{rms}}$ and back-EMF constant $K_v$ in $\text{RPM / V}_{\text{line-to-line, peak}}$. In consistent SI units ($\text{N}\cdot\text{m/A}$ and $\text{V/(rad/s)}$ in the same reference frame), power conservation ($P_{elec} = P_{mech} \implies e^\top i = \tau \omega$) mandates $K_t \equiv K_e$. Failing to convert line-to-neutral vs. line-to-line and RMS vs. peak introduces factors of $\sqrt{3}$ or $\sqrt{3/2}$ errors in torque estimation.
 3. **Discretizing Resonant Notch Filters Without Pre-Warping:** Applying standard Tustin transform to a narrow continuous notch filter centered at $\omega_0 = 2\pi \cdot 850\text{ Hz}$ when sampling at $f_s = 4\text{ kHz}$ shifts the digital notch frequency to $\frac{2}{T_s}\arctan\left(\frac{\omega_0 T_s}{2}\right) \approx 2\pi \cdot 762\text{ Hz}$—completely missing the structural resonance!
 4. **Catastrophic Cancellation in Single-Precision (`float32`) IIR Filters:** High-$Q$ biquad filters or integrators running at $f_s = 20\text{ kHz}$ with cutoff $f_c = 1\text{ Hz}$ place poles at $z = e^{-2\pi f_c / f_s} \approx 0.9996858$. In Direct Form I/II using IEEE-754 `float32` (24-bit mantissa), coefficient quantization shifts the pole onto or outside the unit circle. Use Transposed Direct Form II, state-space form, or `float64`/32-bit fixed-point accumulator registers for low-frequency poles at high sample rates.
 
@@ -191,7 +191,7 @@ where:
 
 1. **Objective:** Model, discretize, and identify a coupled electromechanical two-mass resonant actuator in Python/C++ before building hardware.
 2. **Tasks:**
-   * Implement the 4-state coupled electromechanical model ($i_a, \omega_m, \Delta\theta, \omega_L$) using physical parameters: $R_a = 0.8\ \Omega$, $L_a = 1.2\text{ mH}$, $K_t = 0.12\text{ N\cdot m/A}$, $J_m = 4.5\times 10^{-5}\text{ kg\cdot m}^2$, $J_L = 1.8\times 10^{-4}\text{ kg\cdot m}^2$, $k_s = 120\text{ N\cdot m/rad}$, $b_s = 0.008\text{ N\cdot m\cdot s/rad}$.
+   * Implement the 4-state coupled electromechanical model ($i_a, \omega_m, \Delta\theta, \omega_L$) using physical parameters: $R_a = 0.8\ \Omega$, $L_a = 1.2\text{ mH}$, $K_t = 0.12\text{ N}\cdot\text{m/A}$, $J_m = 4.5\times 10^{-5}\text{ kg}\cdot\text{m}^2$, $J_L = 1.8\times 10^{-4}\text{ kg}\cdot\text{m}^2$, $k_s = 120\text{ N}\cdot\text{m/rad}$, $b_s = 0.008\text{ N}\cdot\text{m}\cdot\text{s/rad}$.
    * Compute exact ZOH discretization at $f_s = 10\text{ kHz}$ via matrix exponential.
    * Inject a band-limited multisine or Schroeder-phased chirp voltage input plus realistic ADC current quantization noise ($12\text{-bit}$ over $\pm 20\text{ A}$) and encoder quantization ($14\text{-bit}$ per revolution).
    * Estimate the empirical transfer function $\hat{G}_{\omega_m / V}(j\omega)$ and coherence $\gamma^2(\omega)$ using Welch's method, and design a pre-warped Tustin biquad notch filter in `float32` that suppresses the structural resonance peak by $\ge 20\text{ dB}$.
@@ -199,7 +199,7 @@ where:
 
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
-| **Energy Conservation Check** | $\left|\int_0^T V_{in} i_a\,dt - \left(\Delta E_{stored} + \int_0^T P_{dissipated}\,dt\right)\right| < 10^{-9}\text{ J}$ | Continuous RK45 energy balance audit |
-| **Analytical vs. Identified Resonance** | $|\hat{\omega}_{ar} - \omega_{ar}| / \omega_{ar} < 0.5\%$ and $|\hat{\omega}_r - \omega_r| / \omega_r < 0.5\%$ | Welch FRF peak/trough extraction with $\gamma^2(\omega) > 0.98$ |
+| **Energy Conservation Check** | $\left\lvert\int_0^T V_{in} i_a\,dt - \left(\Delta E_{stored} + \int_0^T P_{dissipated}\,dt\right)\right\rvert < 10^{-9}\text{ J}$ | Continuous RK45 energy balance audit |
+| **Analytical vs. Identified Resonance** | $\lvert\hat{\omega}_{ar} - \omega_{ar}\rvert / \omega_{ar} < 0.5\%$ and $\lvert\hat{\omega}_r - \omega_r\rvert / \omega_r < 0.5\%$ | Welch FRF peak/trough extraction with $\gamma^2(\omega) > 0.98$ |
 | **Notch Filter Suppression** | Resonant peak attenuated by $\ge 20\text{ dB}$ in `float32` Transposed Direct Form II | Closed-loop step response & Bode magnitude verification |
 | **$SO(3)$ Singularity Immunity** | $\exp([\phi]_\times)$ and $\log(R)$ round-trip error $< 10^{-14}\text{ rad}$ across $\theta \in [0, \pi]$ including $\theta = 10^{-8}$ and $\theta = \pi - 10^{-7}$ | Unit test suite across 10,000 random & edge-case axes |

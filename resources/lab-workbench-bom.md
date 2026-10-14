@@ -41,7 +41,7 @@ flowchart TB
 
 ## 2. Three-Tier Hardware Workbench Comparison
 
-### Tier 1: Foundation & Embedded Controls Bench (~$500 – $800 USD)
+### Tier 1: Foundation & Embedded Controls Bench (~\$500 – \$800 USD)
 *Designed for individual students/engineers completing Tracks 00, 03, 04, 05, and Capstone II (Furuta Pendulum) or low-voltage FOC.*
 
 | Category | Recommended Equipment / Specification | Approx. Cost | Why It Is Essential |
@@ -53,7 +53,7 @@ flowchart TB
 
 ---
 
-### Tier 2: Senior R&D & Custom PCB Bring-Up Lab (~$3,500 – $6,000 USD)
+### Tier 2: Senior R&D & Custom PCB Bring-Up Lab (~\$3,500 – \$6,000 USD)
 *Designed for startups, university research labs, and engineers executing all 8 Tracks including custom 6-layer PCBs, 48V/30A drives, and QDD robotics.*
 
 | Category | Recommended Equipment / Specification | Approx. Cost | Why It Is Essential |
@@ -66,7 +66,7 @@ flowchart TB
 
 ---
 
-### Tier 3: Principal Production Qualification & Pre-Compliance Lab (~$20,000 – $35,000 USD)
+### Tier 3: Principal Production Qualification & Pre-Compliance Lab (~\$20,000 – \$35,000 USD)
 *Designed for production hardware sign-off, SIL/PLd functional safety validation, high-speed GaN switching, and EMC pre-compliance.*
 
 | Category | Recommended Equipment / Specification | Approx. Cost | Why It Is Essential |

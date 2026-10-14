@@ -88,6 +88,24 @@ LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 FENCE_RE = re.compile(r"^```(\w*)\s*$", re.MULTILINE)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 
+# LaTeX commands that MUST appear inside math delimiters. Emitting one of these outside
+# `$...$` / `$$...$$` produces the GitHub/KaTeX render error "\cmd is only supported in math mode".
+LATEX_CMD_RE = re.compile(
+    r"\\(?:"
+    r"cdot|cdots|vdots|ddots|frac|dfrac|tfrac|sqrt|text|textbf|textit|textsf|textrm|mathrm|mathbf|mathit|mathbb|mathcal|mathfrak|boldsymbol|operatorname"
+    r"|tau|theta|Theta|omega|Omega|alpha|beta|gamma|Gamma|delta|Delta|epsilon|varepsilon|zeta|eta|kappa|lambda|Lambda|mu|nu|xi|pi|Pi|rho|sigma|Sigma|phi|Phi|varphi|chi|psi|Psi"
+    r"|partial|nabla|infty|int|iint|oint|sum|prod|lim|log|ln|exp|sin|cos|tan|tanh|sinh|cosh|arcsin|arccos|arctan|sign|max|min|arg|det|tr|diag"
+    r"|le|leq|ge|geq|ne|neq|approx|simeq|equiv|sim|propto|ll|gg|pm|mp|times|div|ast|star|circ|bullet|oplus|otimes"
+    r"|left|right|big|Big|bigg|Bigg|lvert|rvert|vert|Vert|lVert|rVert"
+    r"|dot|ddot|dddot|bar|hat|tilde|vec|overline|underline|overbrace|underbrace|widehat|widetilde|cancel"
+    r"|top|bot|perp|parallel|angle|langle|rangle|lceil|rceil|lfloor|rfloor|setminus|subset|supset|subseteq|supseteq|cup|cap|in|notin|forall|exists"
+    r"|quad|qquad|;|,|!|:|to|mapsto|rightarrow|leftarrow|Rightarrow|Leftarrow|leftrightarrow|iff|implies|prime"
+    r"|begin|end|mathrm|operatorname|mathop|overset|underset|substack|displaystyle|textstyle|hat|breve|check|acute|grave"
+    r"|Delta|Gamma|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega"
+    r"![a-zA-Z]"
+    r")"
+)
+
 
 def slugify_heading(text: str) -> str:
     slug = text.strip().lower()
@@ -118,6 +136,220 @@ def extract_mermaid_blocks(md_text: str) -> list[str]:
         elif in_mermaid:
             current.append(line)
     return blocks
+
+
+def find_math_hygiene_issues(text: str, rel_path: str) -> list[str]:
+    """Detect Markdown/LaTeX constructs that break GitHub's math renderer.
+
+    1. A raw (unescaped) `|` inside `$...$`/`$$...$$` on a pipe-table row splits the table cell,
+       leaving the trailing LaTeX outside math mode -> "\cmd is only supported in math mode".
+    2. Display math `$$...$$` inside a pipe-table row never renders on GitHub.
+    3. Any LaTeX command emitted while NOT inside math delimiters.
+    4. Inline math that opens and never closes on the same line.
+    """
+    issues: list[str] = []
+    in_fence = False
+    in_display = False
+
+    for lineno, raw in enumerate(text.splitlines(), start=1):
+        stripped = raw.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        is_table_row = stripped.startswith("|")
+        in_inline = False
+        i = 0
+        n = len(raw)
+        while i < n:
+            ch = raw[i]
+            if ch == "\\":
+                if i + 1 < n:
+                    nxt = raw[i + 1]
+                    if nxt == "\\":
+                        i += 2
+                        continue
+                    if nxt == "$":
+                        i += 2
+                        continue
+                    cmd_match = LATEX_CMD_RE.match(raw, i)
+                    if cmd_match and not in_inline and not in_display:
+                        issues.append(
+                            f"{rel_path}:{lineno}: LaTeX command '{cmd_match.group(0)}' outside math mode"
+                        )
+                    i += 2
+                    continue
+                i += 1
+                continue
+            if ch == "$":
+                if i + 1 < n and raw[i + 1] == "$":
+                    if in_display:
+                        in_display = False
+                    elif in_inline:
+                        in_inline = False
+                    else:
+                        if is_table_row:
+                            issues.append(
+                                f"{rel_path}:{lineno}: display math '$$' inside a table row does not render on GitHub"
+                            )
+                        in_display = True
+                    i += 2
+                    continue
+                if not in_display:
+                    in_inline = not in_inline
+                i += 1
+                continue
+            if ch == "|" and (in_inline or in_display) and is_table_row:
+                issues.append(
+                    f"{rel_path}:{lineno}: unescaped '|' inside math on a table row (cell split) "
+                    f"- use \\lvert/\\rvert"
+                )
+            i += 1
+
+        if in_inline:
+            issues.append(f"{rel_path}:{lineno}: unbalanced inline math '$' delimiter")
+
+        for msg in find_currency_math_issues(raw, rel_path, lineno):
+            issues.append(msg)
+
+    return issues
+
+
+def find_currency_math_issues(raw: str, rel_path: str, lineno: int) -> list[str]:
+    """Flag bare `$` currency symbols that silently open phantom inline math.
+
+    A price written as `~$500 - $800 USD` is parsed by GitHub as an inline math span
+    (`500 - `) followed by stray text, which either renders as nonsense or errors.
+    Prices must be escaped as `\$500`. Legitimate math such as `$30\text{ A}$` is unaffected.
+    """
+    issues: list[str] = []
+    dollars: list[int] = []
+    i = 0
+    n = len(raw)
+    while i < n:
+        if raw[i] == "\\":
+            i += 2
+            continue
+        if raw[i] == "$" and not (i + 1 < n and raw[i + 1] == "$"):
+            dollars.append(i)
+        if raw[i] == "$" and i + 1 < n and raw[i + 1] == "$":
+            i += 2
+            continue
+        i += 1
+
+    for idx in range(0, len(dollars) - 1, 2):
+        open_pos = dollars[idx]
+        close_pos = dollars[idx + 1]
+        segment = raw[open_pos + 1:close_pos]
+        next_char = raw[close_pos + 1] if close_pos + 1 < n else ""
+        is_currency_sandwich = next_char.isdigit()
+        mentions_currency = "USD" in segment.upper()
+        if is_currency_sandwich or mentions_currency:
+            issues.append(
+                f"{rel_path}:{lineno}: bare '$' parsed as inline math in '{raw[open_pos:close_pos + 1]}' "
+                f"- escape currency as \\$"
+            )
+
+    return issues
+
+
+# Text-mode LaTeX groups. TeX switches to text mode inside these, so math-only
+# commands are illegal there and MathJax refuses the whole span.
+TEXT_MODE_GROUPS = (
+    "text",
+    "textrm",
+    "textnormal",
+    "textup",
+    "textit",
+    "textbf",
+    "mbox",
+    "operatorname",
+)
+
+# Commands that only exist in math mode. Using any of these inside `\text{...}` makes
+# GitHub report e.g. "`\cdot` is only supported in math mode" and drop the formula.
+MATH_ONLY_COMMANDS = frozenset(
+    """
+    cdot cdots ldots ddots vdots dots dot ddot frac dfrac tfrac cfrac sqrt sum prod
+    int iint iiint oint partial nabla infty pm mp times div le leq leqslant ge geq
+    geqslant neq ne nequiv approx sim simeq cong equiv propto ll gg to mapsto rightarrow
+    leftarrow Rightarrow Leftarrow leftrightarrow Leftrightarrow implies iff in notin
+    subset supset subseteq supseteq cup cap wedge vee oplus ominus otimes oslash perp
+    parallel angle triangle circ bullet star ast lvert rvert lVert rVert vert Vert mid
+    neg lnot forall exists nexists emptyset varnothing quad qquad left right big Big bigg
+    Bigg overline underline overbrace underbrace stackrel overset underset binom choose
+    mathbf mathrm mathcal mathbb mathit mathsf mathtt mathfrak boldsymbol vec hat bar
+    tilde widehat widetilde begin end matrix bmatrix pmatrix cases aligned array hbar ell
+    Re Im aleph wp partial differential square blacksquare geqslant lfloor rfloor lceil
+    rceil langle rangle longrightarrow longleftarrow uparrow downarrow hline
+    alpha beta gamma delta epsilon varepsilon zeta eta theta vartheta iota kappa lambda
+    mu nu xi omicron pi varpi rho varrho sigma varsigma tau upsilon phi varphi chi psi
+    omega Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega
+    """.split()
+)
+
+MATH_HTML_FILES = (
+    "web/index.html",
+    "deploy/public/index.html",
+    "web/cheatsheet.html",
+    "deploy/public/cheatsheet.html",
+)
+
+_TEXT_GROUP_RE = re.compile(r"\\(?:" + "|".join(TEXT_MODE_GROUPS) + r")\s*\{")
+_MATH_CMD_RE = re.compile(r"\\([a-zA-Z]+)")
+
+
+def find_text_mode_math_issues(text: str, rel_path: str) -> list[str]:
+    """Detect math-only LaTeX commands used inside text-mode groups (`\\text{...}`).
+
+    GitHub renders Markdown math with MathJax. Inside `\\text{}` TeX is in text mode,
+    where a math-only command such as `\\cdot` is illegal; MathJax then errors with
+    "\\cdot is only supported in math mode" and drops the entire formula.
+    The fix is to close the text group around the symbol: `\\text{N}\\cdot\\text{m}`.
+    """
+    issues: list[str] = []
+    in_fence = False
+
+    for lineno, raw in enumerate(text.splitlines(), start=1):
+        stripped = raw.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        for group in _TEXT_GROUP_RE.finditer(raw):
+            start = group.end()
+            depth = 1
+            i = start
+            n = len(raw)
+            while i < n and depth:
+                if raw[i] == "\\":
+                    i += 2
+                    continue
+                if raw[i] == "{":
+                    depth += 1
+                elif raw[i] == "}":
+                    depth -= 1
+                i += 1
+            inner = raw[start : i - 1 if depth == 0 else n]
+            for cmd in _MATH_CMD_RE.finditer(inner):
+                name = cmd.group(1)
+                if name in MATH_ONLY_COMMANDS:
+                    issues.append(
+                        f"{rel_path}:{lineno}: math-only command '\\{name}' inside text mode "
+                        f"'{group.group(0)}...' - MathJax fails with '\\{name} is only supported "
+                        f"in math mode'; close the group before it, e.g. '\\text{{N}}\\{name}\\text{{m}}'"
+                    )
+            if re.search(r"(?<!\\)&", inner):
+                issues.append(
+                    f"{rel_path}:{lineno}: bare '&' inside text mode '{group.group(0)}...' "
+                    f"- MathJax rejects it with '& can not be used here'"
+                )
+
+    return issues
 
 
 def verify_repository(repo_root: Path) -> dict[str, Any]:
@@ -156,6 +388,12 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
         total_mermaid += len(m_blocks)
         if len(m_blocks) == 0 and rel_path != "resources/textbooks-and-papers.md":
             errors.append(f"{rel_path}: Expected at least 1 Mermaid diagram, found 0")
+
+        for issue in find_math_hygiene_issues(text, rel_path):
+            errors.append(issue)
+
+        for issue in find_text_mode_math_issues(text, rel_path):
+            errors.append(issue)
 
         for idx, block in enumerate(m_blocks, start=1):
             non_empty = [ln.strip() for ln in block.splitlines() if ln.strip()]
@@ -207,6 +445,15 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
                 "internal_links": file_link_count,
             }
         )
+
+    # The workbench/cheat-sheet pages render math with MathJax on GitHub Pages, so the
+    # same text-mode rule applies to their inline `$...$` and `$$...$$` spans.
+    for rel in MATH_HTML_FILES:
+        fpath = repo_root / rel
+        if not fpath.is_file():
+            continue
+        for issue in find_text_mode_math_issues(fpath.read_text(encoding="utf-8"), rel):
+            errors.append(issue)
 
     return {
         "ok": len(errors) == 0,

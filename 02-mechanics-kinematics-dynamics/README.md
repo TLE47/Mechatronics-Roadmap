@@ -179,8 +179,8 @@ Evaluating symbolic $M(q)$ and inverting it naively scales as $O(n^3)$ and gener
 | :--- | :--- | :--- |
 | **First Structural Eigenfrequency** | $f_1 > 250\text{ Hz}$ (for $50\text{ Hz}$ closed-loop bandwidth target) at worst-case full extension | CalculiX modal FEA eigenvalue solve |
 | **PoE vs. Pinocchio FK/Jacobian Match** | $\|T_{\text{PoE}}(q) - T_{\text{Pinocchio}}(q)\|_F < 10^{-12}$ and $\|J_s - J_{s,\text{Pin}}\|_F < 10^{-12}$ | Automated test suite over 1,000 random $q \in [-\pi, \pi]^n$ |
-| **RNEA Inverse Dynamics Accuracy** | $\|\tau_{\text{RNEA}} - \tau_{\text{Pinocchio}}\|_\infty < 10^{-11}\text{ N\cdot m}$ | Randomized state/acceleration trajectory benchmark |
-| **Passivity Skew-Symmetry Identity** | $|x^\top(\dot{M} - 2C)x| < 10^{-9}$ across all configurations | Numerical derivative check along simulated free-fall trajectory |
+| **RNEA Inverse Dynamics Accuracy** | $\|\tau_{\text{RNEA}} - \tau_{\text{Pinocchio}}\|_\infty < 10^{-11}\text{ N}\cdot\text{m}$ | Randomized state/acceleration trajectory benchmark |
+| **Passivity Skew-Symmetry Identity** | $\lvert x^\top(\dot{M} - 2C)x\rvert < 10^{-9}$ across all configurations | Numerical derivative check along simulated free-fall trajectory |
 
 ### 8.1 Executable Parametric CAD Generator & 3D STEP/STL Artifacts
 Run [cad/cad_parametric_parts.py](cad/cad_parametric_parts.py) and [cad/validate_cad_parts.py](cad/validate_cad_parts.py) to generate and verify watertight 2-manifold STL and ISO 10303-21 STEP models:

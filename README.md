@@ -178,9 +178,9 @@ Every track in [web/index.html](web/index.html) includes **3 clickable one-click
 
 | Track | Industry Application Example 1 | Industry Application Example 2 | Industry Application Example 3 |
 | :--- | :--- | :--- | :--- |
-| **Track 00: Foundations** | **ASML Lithography Wafer Stage** ($k_s = 340\text{ N\cdot m/rad}$, $f_r = 390\text{ Hz}$ biquad notch) | **Da Vinci Surgical Tendon-Cable Drive** ($k_s = 45\text{ N\cdot m/rad}$, $f_r = 142\text{ Hz}$) | **CNC Preloaded Ballscrew Axis** ($k_s = 120\text{ N\cdot m/rad}$, $f_r = 290.6\text{ Hz}$) |
+| **Track 00: Foundations** | **ASML Lithography Wafer Stage** ($k_s = 340\text{ N}\cdot\text{m/rad}$, $f_r = 390\text{ Hz}$ biquad notch) | **Da Vinci Surgical Tendon-Cable Drive** ($k_s = 45\text{ N}\cdot\text{m/rad}$, $f_r = 142\text{ Hz}$) | **CNC Preloaded Ballscrew Axis** ($k_s = 120\text{ N}\cdot\text{m/rad}$, $f_r = 290.6\text{ Hz}$) |
 | **Track 01: Power & AFE** | **6-Layer $1.6\text{ nH}$ Servo Drive PCB** ($V_{DS,\text{peak}} = 53.1\text{ V} < 60\text{ V}$, $99.11\%$ eff) | **2-Layer $5.2\text{ nH}$ Bad Layout** ($V_{DS,\text{peak}} = 64.6\text{ V}$ overshoot warning!) | **$30\text{ A}$ Peak Torque Thermal Soak** ($R_{DS(\text{on})}(T_j)$ self-heating loop) |
-| **Track 02: Mechanics & CAD** | **Ti-6Al-4V Fast-Steering Mirror Notch Flexure** ($t = 0.50\text{ mm}$, $k_\theta = 6.98\text{ N\cdot m/rad}$) | **440C Optical Bench Kelvin 3-2-1 Coupling** ($3+2+1=6$ constraints, $\text{DOF}=0$) | **MIT Cheetah $8:1$ QDD Planetary Carrier** (7075-T6 double-shear pin $\text{SF} = 82.9\times$) |
+| **Track 02: Mechanics & CAD** | **Ti-6Al-4V Fast-Steering Mirror Notch Flexure** ($t = 0.50\text{ mm}$, $k_\theta = 6.98\text{ N}\cdot\text{m/rad}$) | **440C Optical Bench Kelvin 3-2-1 Coupling** ($3+2+1=6$ constraints, $\text{DOF}=0$) | **MIT Cheetah $8:1$ QDD Planetary Carrier** (7075-T6 double-shear pin $\text{SF} = 82.9\times$) |
 | **Track 03: Sensors & FOC** | **Surgical Cobot Joint** ($1200\text{ RPM}$, $f_{bw} = 2.8\text{ kHz}$, $t_{\text{rise}} = 125\ \mu\text{s}$) | **High-Speed Drone Propeller** ($5500\text{ RPM}$ showing $\omega_e L_{dq}$ cross-coupling) | **$24\text{ A}$ Legged Hopper Stance Pulse** ($3.5\text{ kHz}$ current loop + SVPWM $+15.47\%$ boost) |
 | **Track 04: Embedded RT** | **`STM32G474` $40\text{ kHz}$ TIM1 + Dual ADC DMA + CORDIC** (`0` heap allocs, $98\text{ ns}$ host ISR) | **CAN-FD $2\text{ kHz}$ MIT-Mode 5-Param Impedance Codec** ($100\%$ CRC-16 fault rejection) | **`WaitFreeSeqLock<T>` Telemetry Bridge** (`0` torn reads across $250,000$ frames) |
 | **Track 05: Control & CBF** | **Autonomous Furuta Swing-Up Catch** ($\theta_0 = 175^\circ \to 0^\circ$ LQR hand-off) | **Tight $\pm 0.50\text{ m}$ CBF Workspace Safety Wall** (active QP braking) | **Heavy $+3.6\text{ rad/s}$ Impulse Hammer Kick** (disturbance rejection within rail limits) |
@@ -306,7 +306,7 @@ journey
 * **[Annotated Textbooks & Seminal Papers](resources/textbooks-and-papers.md)** — Over 80 rigorously curated texts and milestone papers across all 8 tracks, with guidance on why and when to read each.
 * **[Printable 1-Page Mechatronics Reference Cheat Sheet (`resources/mechatronics-cheatsheet.md`)](resources/mechatronics-cheatsheet.md)** and **[Print-Ready A4/Letter KaTeX Card (`web/cheatsheet.html`)](web/cheatsheet.html)** — All core equations, PCB layout rules, flexure/constraint formulas, and control tuning laws on a single page.
 * **[Production Open-Source Toolchain Matrix](resources/open-source-toolchains.md)** — The complete modern mechatronics software stack: KiCad, ngspice, FreeCAD, CalculiX, Gmsh, Drake, MuJoCo, Pinocchio, CasADi, `acados`, Zephyr, ROS 2, PlotJuggler, and Sigrok.
-* **[Tiered Hardware Lab & Workbench BOM](resources/lab-workbench-bom.md)** — Exact equipment, probes, power supplies, debuggers, and mechanical metrology tools required across three budget tiers ($500, $3,500, and $25,000).
+* **[Tiered Hardware Lab & Workbench BOM](resources/lab-workbench-bom.md)** — Exact equipment, probes, power supplies, debuggers, and mechanical metrology tools required across three budget tiers (\$500, \$3,500, and \$25,000).
 * **[Interactive Web Workbench (`web/index.html`)](web/index.html)** — Zero-build browser dashboard rendering the roadmap architecture alongside interactive Two-Mass Resonance/Notch Bode, 25 kHz PMSM FOC + SVPWM, and Furuta Inverted Pendulum + CBF simulators.
 * **[Executable Lab Simulations (`scripts/run_all_labs.py`)](scripts/run_all_labs.py)** — Run `python3 scripts/run_all_labs.py` to compile and execute the reference Python 3 and C++20 simulations and unit tests for Labs 00 through 06:
   * [Lab 00: Two-Mass Resonant Actuator, $SO(3)$ Lie Algebra & Float32 Notch](00-foundations/lab/lab00_two_mass_and_so3.py)
@@ -327,7 +327,7 @@ journey
 
 ## 8. Best Free & Open-Access Study Resources by Subcategory
 
-Every discipline in this roadmap can be studied for **$0** using world-class open-access university courses, free legal textbooks, and authoritative manufacturer engineering handbooks:
+Every discipline in this roadmap can be studied for **\$0** using world-class open-access university courses, free legal textbooks, and authoritative manufacturer engineering handbooks:
 
 | Subcategory | #1 Free Open Textbook / Reference PDF | #1 Free University Course / Video Lectures | Free Hands-On Software / Application Notes |
 | :--- | :--- | :--- | :--- |

@@ -72,7 +72,7 @@ Build an underactuated 2-DOF rotary inverted pendulum demonstrating precision me
 * **Nonlinear Dynamics & Control Law:**
   1. **Lagrangian Derivation:** Include the full coupled inertia matrix $M(q)$ where $M_{11}(q_2) = J_1 + m_2 L_1^2 + J_2 \sin^2(q_2)$ and $M_{12}(q_2) = m_2 L_1 l_{c2} \cos(q_2)$ (never drop the $\sin^2(q_2)$ centrifugal coupling term!).
   2. **Åström-Furuta Energy-Based Swing-Up:** Pump mechanical energy $E(q_2, \dot{q_2}) = \frac{1}{2}J_p \dot{q}_2^2 + m_2 g l_{c2}(\cos q_2 - 1)$ toward upright equilibrium $E = 0$ via control law $u = \text{sat}_{u_{\max}}\big(k_E (E - E_0)\,\text{sign}(\dot{q}_2 \cos q_2)\big)$.
-  3. **Hysteretic Hand-Off to LQR / Constrained MPC:** Switch cleanly into a $1\text{ kHz}$ discrete LQI or `OSQP`/`TinyMPC` controller when $|q_2| < 18^\circ$, enforcing hard base arm travel bounds $q_1 \in [-120^\circ, +120^\circ]$.
+  3. **Hysteretic Hand-Off to LQR / Constrained MPC:** Switch cleanly into a $1\text{ kHz}$ discrete LQI or `OSQP`/`TinyMPC` controller when $\lvert q_2\rvert < 18^\circ$, enforcing hard base arm travel bounds $q_1 \in [-120^\circ, +120^\circ]$.
 
 ### 2.2 Quantitative Sign-Off Gate
 
@@ -80,8 +80,8 @@ Build an underactuated 2-DOF rotary inverted pendulum demonstrating precision me
 | :--- | :--- | :--- |
 | **Unactuated Joint Damping ($Q$-Factor)** | $> 45$ free oscillations from $15^\circ$ release to $1^\circ$ decay | Free-decay ringdown log (verifies bearing alignment & zero drag) |
 | **Autonomous Swing-Up Reliability** | $100 / 100$ successful catches from hanging rest within $\le 2.2\text{ s}$ | Automated 100-trial endurance script |
-| **Upright Balancing RMS Jitter** | $|q_2|_{\text{rms}} < 0.08^\circ$, $|q_1|_{\text{rms}} < 0.25^\circ$ at steady state | 60-second upright hold telemetry audit |
-| **Impulse Disturbance Recovery** | Recovers from $25^\circ$ angular perturbation without violating $|q_1| \le 120^\circ$ base limit | Calibrated pendulum impact hammer test |
+| **Upright Balancing RMS Jitter** | $\lvert q_2\rvert_{\text{rms}} < 0.08^\circ$, $\lvert q_1\rvert_{\text{rms}} < 0.25^\circ$ at steady state | 60-second upright hold telemetry audit |
+| **Impulse Disturbance Recovery** | Recovers from $25^\circ$ angular perturbation without violating $\lvert q_1\rvert \le 120^\circ$ base limit | Calibrated pendulum impact hammer test |
 
 ### 2.3 Reference URDF & MuJoCo MJCF Models
 * **URDF Model:** [models/capstone2-furuta-pendulum/furuta_pendulum.urdf](models/capstone2-furuta-pendulum/furuta_pendulum.urdf)
@@ -132,7 +132,7 @@ Build a 3-DOF (Hip Ab/Ad, Hip Flex/Ext, Knee Flex/Ext) Quasi-Direct-Drive roboti
   * Place all three $8:1$ planetary QDD actuators coaxially at the hip to minimize lower-leg swinging mass ($m_{\text{shank}} < 180\text{ g}$); drive the knee via a 4-bar linkage or pre-tensioned $5\text{ mm}$ Gates Poly Chain GT Carbon timing belt supported in double shear.
 * **Contact Detection, State Estimation & Control:**
   * **Proprioceptive Contact Estimator:** Fuse leg Jacobian torque residuals $\hat{f}_{\text{foot}} = (J_{\text{foot}}^\top)^{-1}(\tau_m - M(q)\ddot{q} - h(q,\dot{q}))$ with IMU impact acceleration via a Kalman/Bayesian contact probability filter (no fragile foot microswitch required!).
-  * **Stance Phase Control:** $200\text{ Hz}$ Ground Reaction Force (GRF) Linear MPC enforcing friction pyramid $|f_x| \le \mu f_z$, $f_{z,\min} \le f_z \le f_{z,\max}$, mapped to joint torques via $\tau_{\text{stance}} = -J(q)^\top f_{\text{GRF}}^*$.
+  * **Stance Phase Control:** $200\text{ Hz}$ Ground Reaction Force (GRF) Linear MPC enforcing friction pyramid $\lvert f_x\rvert \le \mu f_z$, $f_{z,\min} \le f_z \le f_{z,\max}$, mapped to joint torques via $\tau_{\text{stance}} = -J(q)^\top f_{\text{GRF}}^*$.
   * **Flight Phase Control:** $1\text{ kHz}$ Operational-Space foot placement controller using Raibert's neutral-point heuristic + capture-point feedback:
     $$p_{\text{foot,touchdown}} = p_{\text{hip}} + \frac{T_{\text{stance}}}{2} v_{\text{com}} + k_v (v_{\text{com}} - v_{\text{des}})$$
 

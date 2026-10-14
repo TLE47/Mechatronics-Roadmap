@@ -169,6 +169,6 @@ $$\Delta R_{ij}(b_g^+) \approx \Delta\tilde{R}_{ij} \exp\left(\frac{\partial \De
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
 | **`ros2_control` Update Loop Determinism** | $p99.99$ loop period jitter $< 50\ \mu\text{s}$ at $1\text{ kHz}$ (`1000 μs` nominal); `0` page faults after init | `getrusage(RUSAGE_THREAD)` `ru_majflt`/`ru_minflt` check + latency histogram |
-| **Free-Space Cartesian Tracking Error** | RMS position error $< 1.5\text{ mm}$ at $1.0\text{ m/s}$ peak speed with bounded jerk $|\dddot{x}| \le 20\text{ m/s}^3$ | Closed-loop trajectory log in MuJoCo/Drake |
+| **Free-Space Cartesian Tracking Error** | RMS position error $< 1.5\text{ mm}$ at $1.0\text{ m/s}$ peak speed with bounded jerk $\lvert\dddot{x}\rvert \le 20\text{ m/s}^3$ | Closed-loop trajectory log in MuJoCo/Drake |
 | **Unplanned Rigid Contact Force Overshoot** | Peak contact force overshoot $< 15\%$ above steady-state impedance force $K_x \Delta x_{\text{penetration}}$ at $0.3\text{ m/s}$ impact | Simulated & bench force-plate collision test |
 | **Null-Space Decoupling Accuracy** | End-effector perturbation $< 0.2\text{ mm}$ during $\pm 0.5\text{ rad}$ null-space elbow posture reconfiguration | Dynamic consistency verification test |

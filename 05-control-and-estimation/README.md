@@ -75,8 +75,8 @@ flowchart TB
 For plant $P(s)$ and feedback controller $C(s)$ with open-loop transfer function $L(s) = P(s)C(s)$, a single transfer function is **never** sufficient to verify stability and robustness (internal pole-zero cancellations between $P$ and $C$ can hide unstable modes). Always evaluate all four transfer functions (**Åström's Gang of Four**):
 
 $$\begin{aligned}
-S(s) &= \frac{1}{1 + P(s)C(s)} \quad &\text{(Sensitivity: Reference tracking error & output disturbance rejection)} \\
-T(s) &= \frac{P(s)C(s)}{1 + P(s)C(s)} \quad &\text{(Complementary Sensitivity: Reference tracking & sensor noise amplification)} \\
+S(s) &= \frac{1}{1 + P(s)C(s)} \quad &\text{(Sensitivity: Reference tracking error and output disturbance rejection)} \\
+T(s) &= \frac{P(s)C(s)}{1 + P(s)C(s)} \quad &\text{(Complementary Sensitivity: Reference tracking and sensor noise amplification)} \\
 P(s)S(s) &= \frac{P(s)}{1 + P(s)C(s)} \quad &\text{(Load Disturbance Sensitivity: Input torque disturbance to output error)} \\
 C(s)S(s) &= \frac{C(s)}{1 + P(s)C(s)} \quad &\text{(Control Effort Sensitivity: Sensor noise to actuator saturation!)}
 \end{aligned}$$
