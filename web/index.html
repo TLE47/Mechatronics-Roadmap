@@ -228,6 +228,29 @@
       border-left: 3px solid var(--emerald);
       padding: 5px 8px;
       border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .app-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .app-pill {
+      font-size: 0.71rem;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .app-pill:hover {
+      background: rgba(56, 189, 248, 0.28);
+      color: #fff;
+      transform: translateY(-1px);
     }
     .mermaid-box {
       background: #0d1322;
@@ -313,11 +336,11 @@
 
   <div class="tour-bar" id="guided-tour-bar">
     <div class="tour-status" id="tour-text">
-      <strong>Interactive Guided Beginner Walkthrough (Step 1 / 6 — System Overview):</strong> Welcome to <strong>MechaLab</strong>! Click <em>Next Step →</em> to walk through each simulator hands-on—we will automatically switch tabs, highlight the exact slider to drag, and explain in plain English what happens inside the physics loop.
+      <strong>Interactive Guided Beginner Walkthrough (Step 1 / 7 — System Overview):</strong> Welcome to <strong>MechaLab</strong>! Click <em>Next Step →</em> to walk through each simulator hands-on—we will automatically switch tabs, highlight the exact slider to drag, and explain in plain English what happens inside the physics loop.
     </div>
     <div class="btn-row" style="margin-top: 0;">
       <button class="action-btn" onclick="stepGuidedTour(-1)">← Prev Step</button>
-      <button class="action-btn primary" id="btn-tour-next" onclick="stepGuidedTour(1)">Next Step (1/6) →</button>
+      <button class="action-btn primary" id="btn-tour-next" onclick="stepGuidedTour(1)">Next Step (1/7) →</button>
       <button class="action-btn" onclick="runTourAction()">Apply Demo Preset</button>
     </div>
   </div>
@@ -329,6 +352,7 @@
     <button data-tab="tab-pend" onclick="switchTab('tab-pend', this)">4. Furuta Pendulum + LQR + CBF (Lab 02/05)</button>
     <button data-tab="tab-models" onclick="switchTab('tab-models', this)">5. URDF/MuJoCo Inspector & STO Safety (Lab 07/08)</button>
     <button data-tab="tab-cadpcb" onclick="switchTab('tab-cadpcb', this)">6. 3D CAD Parts (STEP/STL) & 48V/30A FOC PCB BOM</button>
+    <button data-tab="tab-sysid" onclick="switchTab('tab-sysid', this)">7. Schroeder Multisine Closed-Loop SysID (Lab 07)</button>
   </nav>
 
   <main>
@@ -372,6 +396,11 @@ flowchart LR
           <p>Matrix Lie groups $SO(3)/SE(3)$, pre-warped Tustin discretization, and port-Hamiltonian energy conservation.</p>
           <div class="eq-chip">$$\exp([\phi]_\times) = I + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1-\cos\theta}{\theta^2}[\phi]_\times^2$$</div>
           <div class="gate">Lab 00 Gate: $|\Delta E| < 10^{-9}\text{ J}$ · `float32` Notch $\le -25\text{ dB}$</div>
+          <div class="app-pills">
+            <button class="app-pill" onclick="loadIndustryPreset('wafer_scanner')">▶ ASML Wafer Stage (390 Hz)</button>
+            <button class="app-pill" onclick="loadIndustryPreset('surgical_cable')">▶ Da Vinci Cable Drive (142 Hz)</button>
+            <button class="app-pill" onclick="loadIndustryPreset('cnc_ballscrew')">▶ CNC Ballscrew (291 Hz)</button>
+          </div>
         </div>
 
         <div class="track-card">
@@ -380,6 +409,11 @@ flowchart LR
           <p>Kelvin current shunts, 2nd-order Bessel anti-aliasing, SAR charge buckets, and low-inductance switching loops.</p>
           <div class="eq-chip">$$V_{DS,\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{dI}{dt}, \quad L_{\text{loop}} < 2\text{ nH}$$</div>
           <div class="gate">Lab 01 Gate: $V_{DS,\text{peak}} < 58\text{ V}$ · AFE lag $< 2.5^\circ$ @ $2.5\text{ kHz}$</div>
+          <div class="app-pills">
+            <button class="app-pill" onclick="loadIndustryPreset('pcb_6layer_opt')">▶ 6-Layer 1.6nH Servo PCB</button>
+            <button class="app-pill" onclick="loadIndustryPreset('pcb_2layer_bad')">▶ Bad 2-Layer 5.2nH Overshoot</button>
+            <button class="app-pill" onclick="loadIndustryPreset('pcb_peak_30a')">▶ 30A Peak Torque Thermal Load</button>
+          </div>
         </div>
 
         <div class="track-card">
@@ -388,6 +422,11 @@ flowchart LR
           <p>Maxwell constraint ($\text{DOF} = 6 - C$), Abbe error, Product of Exponentials, and Featherstone spatial dynamics.</p>
           <div class="eq-chip">$$T(q) = e^{[\mathcal{S}_1]q_1}\cdots e^{[\mathcal{S}_n]q_n}M, \quad x^\top(\dot{M}-2C)x = 0$$</div>
           <div class="gate">Lab 02 Gate: $\|\tau_{\text{RNEA}} - \tau_{\text{Lag}}\|_\infty < 10^{-11}\text{ N\cdot m}$</div>
+          <div class="app-pills">
+            <button class="app-pill" onclick="loadIndustryPreset('cad_flexure_stage')">▶ Fast-Steering Mirror Flexure</button>
+            <button class="app-pill" onclick="loadIndustryPreset('cad_kelvin_mount')">▶ Optical Bench Kelvin 3-2-1</button>
+            <button class="app-pill" onclick="loadIndustryPreset('cad_qdd_carrier')">▶ MIT Cheetah 8:1 QDD Carrier</button>
+          </div>
         </div>
 
         <div class="track-card">
@@ -396,14 +435,23 @@ flowchart LR
           <p>Fourier encoder calibration, Type-II PLL velocity observer, synchronous $d$-$q$ PI + back-EMF decoupling, SVPWM.</p>
           <div class="eq-chip">$$v_q^* = K_p e_q + K_i \!\int\! e_q dt + \omega_e(L_d i_d + \lambda_{pm})$$</div>
           <div class="gate">Lab 03 Gate: Calibrated INL $< 0.04^\circ$ · $t_{\text{rise},90\%} \le 180\ \mu\text{s}$</div>
+          <div class="app-pills">
+            <button class="app-pill" onclick="loadIndustryPreset('foc_cobot_joint')">▶ Surgical Cobot Joint (1200 RPM)</button>
+            <button class="app-pill" onclick="loadIndustryPreset('foc_drone_prop')">▶ High-Speed Drone (5500 RPM)</button>
+            <button class="app-pill" onclick="loadIndustryPreset('foc_qdd_jump')">▶ 24A Legged Hopper Jump Pulse</button>
+          </div>
         </div>
 
         <div class="track-card">
           <div class="t-id">TRACK 04 · EMBEDDED & REAL-TIME</div>
-          <h3>Cortex-M7 TCM, Lock-Free C++20 & RTOS</h3>
-          <p>Hardware timer $\to$ ADC $\to$ DMA triggers, ITCM/DTCM placement, `WaitFreeSeqLock`, and Rate-Monotonic RTA.</p>
+          <h3>Cortex-M7/M4F TCM, Lock-Free C++20 & CAN-FD</h3>
+          <p>Hardware `TIM1_TRGO2` $\to$ Dual ADC DMA, CORDIC Q1.31 sin/cos, `WaitFreeSeqLock`, and CAN-FD MIT-mode CRC-16.</p>
           <div class="eq-chip">$$R_i^{(k+1)} = C_i + B_i + \sum_{j \in hp(i)} \left\lceil \frac{R_i^{(k)}}{T_j} \right\rceil C_j \le D_i$$</div>
-          <div class="gate">Lab 04 Gate: `0` heap allocs · `0` torn reads over $2.5\times 10^5$ frames</div>
+          <div class="gate">Lab 04 Gate: `0` heap allocs · `STM32G474` 40 kHz ISR & CRC-16</div>
+          <div class="app-pills">
+            <button class="app-pill" onclick="loadIndustryPreset('sto_desat_short')">▶ <1μs Hardware BKIN Desat Trip</button>
+            <button class="app-pill" onclick="loadIndustryPreset('sto_enc_crc')">▶ 2-Cycle SPI Encoder CRC Break</button>
+          </div>
         </div>
 
         <div class="track-card">
@@ -412,6 +460,11 @@ flowchart LR
           <p>Bode's sensitivity integral, 2-DOF anti-windup PID, Joseph-form manifold ESKF, and Control Barrier Functions.</p>
           <div class="eq-chip">$$P^+ = (I - KH)P^-(I - KH)^\top + K R K^\top$$</div>
           <div class="gate">Lab 05 Gate: $M_s \le 1.75$ ($\pm 25\%$ $J_L$) · NEES $\in \chi^2_{95\%}$</div>
+          <div class="app-pills">
+            <button class="app-pill" onclick="loadIndustryPreset('pend_swingup')">▶ Autonomous Swing-Up Catch</button>
+            <button class="app-pill" onclick="loadIndustryPreset('pend_cbf_wall')">▶ Tight ±0.50m CBF Safety Wall</button>
+            <button class="app-pill" onclick="loadIndustryPreset('pend_hammer')">▶ Heavy Hammer Disturbance Kick</button>
+          </div>
         </div>
 
         <div class="track-card">
@@ -420,6 +473,11 @@ flowchart LR
           <p>Khatib operational inertia $\Lambda(q)$, dynamically consistent null-space $\bar{J}(q)$, manifold preintegration, and jerk bounds.</p>
           <div class="eq-chip">$$\Lambda(q) = (J M^{-1} J^\top)^{-1}, \quad N^\top = I - J^\top \bar{J}^\top$$</div>
           <div class="gate">Lab 06 Gate: $\|\ddot{x}_{\text{null}}\| < 10^{-12}\text{ m/s}^2$ · Overshoot $< 15\%$</div>
+          <div class="app-pills">
+            <button class="app-pill" onclick="loadIndustryPreset('robot_hopper_crouch')">▶ QDD Hopper Landing Crouch</button>
+            <button class="app-pill" onclick="loadIndustryPreset('robot_arm_polish')">▶ 6-DOF Arm 20° Ramp Polishing</button>
+            <button class="app-pill" onclick="loadIndustryPreset('robot_furuta_bal')">▶ Furuta Rotary Upright Balance</button>
+          </div>
         </div>
 
         <div class="track-card">
@@ -428,6 +486,11 @@ flowchart LR
           <p>Closed-loop spectral identification, IEC 61800-5-2 Safe Torque Off fault injection, and 6 validated URDF/MuJoCo models.</p>
           <div class="eq-chip">$$\hat{P}(j\omega_k) = \frac{\hat{S}_{y d_{\text{exc}}}(j\omega_k)}{\hat{S}_{u d_{\text{exc}}}(j\omega_k)}, \quad \phi_k = -\frac{\pi k(k-1)}{M}$$</div>
           <div class="gate">Lab 07/08 Gate: STO trip $< 1\ \mu\text{s}$ · 6 URDF/MJCF models SPD</div>
+          <div class="app-pills">
+            <button class="app-pill" onclick="loadIndustryPreset('sysid_schroeder_clean')">▶ 48-Tone Schroeder Low-CF SysID</button>
+            <button class="app-pill" onclick="loadIndustryPreset('sysid_zero_clip')">▶ Zero-Phase Impulse Saturation</button>
+            <button class="app-pill" onclick="loadIndustryPreset('sysid_noisy_avg')">▶ High-Noise 20-Period Averaging</button>
+          </div>
         </div>
       </div>
     </section>
@@ -471,6 +534,9 @@ flowchart LR
           </div>
           <div class="btn-row">
             <button class="action-btn primary" onclick="snapNotchToResonance()">Auto-Tune $f_{\text{notch}} \leftarrow f_r$</button>
+            <button class="action-btn" onclick="loadIndustryPreset('wafer_scanner')">ASML Wafer Stage</button>
+            <button class="action-btn" onclick="loadIndustryPreset('surgical_cable')">Da Vinci Cable</button>
+            <button class="action-btn" onclick="loadIndustryPreset('cnc_ballscrew')">CNC Ballscrew</button>
           </div>
         </div>
 
@@ -520,6 +586,9 @@ flowchart LR
             <label><span>Cross-Coupling Decoupling ($\pm\omega_e L i_{d,q}$)</span> <span class="val" id="val-dec">ENABLED</span></label>
             <div class="btn-row">
               <button class="action-btn primary" id="btn-dec-toggle" onclick="toggleDecoupling()">Toggle $\omega_e L_{dq}$ Decoupling</button>
+              <button class="action-btn" onclick="loadIndustryPreset('foc_cobot_joint')">Surgical Cobot</button>
+              <button class="action-btn" onclick="loadIndustryPreset('foc_drone_prop')">5500 RPM Drone</button>
+              <button class="action-btn" onclick="loadIndustryPreset('foc_qdd_jump')">24A Hopper Jump</button>
             </div>
           </div>
         </div>
@@ -710,6 +779,61 @@ flowchart LR
         </div>
       </div>
     </section>
+
+    <!-- TAB 7: SCHROEDER MULTISINE CLOSED-LOOP SYSTEM IDENTIFICATION (LAB 07) -->
+    <section id="tab-sysid" class="tab-pane">
+      <div class="beginner-box">
+        <strong>Beginner's Intuition — Why Do Zero-Phase Sine Waves Blow Up Actuators, and How Does Schroeder Phasing Fix It?</strong><br/>
+        To measure a robot's true transfer function $P(j\omega)$ quickly, we inject $M$ sine waves at once (a <strong>multisine</strong>). If all $M$ sine waves start with phase $\phi_k = 0$, they add up into a violent spike at $t = 0$ (high <strong>Crest Factor</strong> $\text{CF} = \|d\|_\infty / d_{\text{rms}} > 4.0$) that saturates your amplifier or trips over-current protection! <strong>Manfred Schroeder'squadratic phase formula</strong> $\phi_k = -\frac{\pi k(k-1)}{M}$ staggers the starting phase of each harmonic like an arpeggio chord on a piano—spreading the exact same frequency energy evenly over time ($\text{CF} \approx 1.65$) so we can identify the plant safely inside a closed feedback loop.
+      </div>
+      <div class="card">
+        <h2>Schroeder Quadratic Phase Law, Crest Factor & Unbiased Closed-Loop Spectral Estimator</h2>
+        <div class="math-panel">
+          $$d_{\text{exc}}(t) = \sum_{k=1}^{M} A_k \cos(2\pi f_k t + \phi_k), \qquad \phi_k^{\text{Schroeder}} = -\frac{\pi k(k-1)}{M}, \qquad \text{CF} = \frac{\|d_{\text{exc}}\|_\infty}{d_{\text{exc,rms}}}, \qquad \hat{P}(j\omega_k) = \frac{\hat{S}_{y d_{\text{exc}}}(j\omega_k)}{\hat{S}_{u d_{\text{exc}}}(j\omega_k)}$$
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>Schroeder Multisine & Closed-Loop SysID Controls</h2>
+          <p class="desc">Toggle between Schroeder quadratic phasing and naive zero-phase cosines ($\phi_k = 0$), adjust harmonic count $M$ and sensor noise $\sigma_v$, and compare the identified plant Bode magnitude against the true actuator transfer function.</p>
+
+          <div class="ctrl-group">
+            <label><span>Phase Schedule Mode</span> <span class="val" id="val-sysmode">SCHROEDER</span></label>
+            <div class="btn-row">
+              <button class="action-btn primary" id="btn-sysmode-toggle" onclick="toggleSysIdPhaseMode()">Toggle Schroeder vs. Zero-Phase ($\phi_k=0$)</button>
+            </div>
+          </div>
+          <div class="ctrl-group">
+            <label><span>Number of Excited Harmonics $M$</span> <span class="val" id="val-sysm">32</span></label>
+            <input type="range" id="sl-sysm" min="8" max="64" step="4" value="32" oninput="updateSysId()" />
+          </div>
+          <div class="ctrl-group">
+            <label><span>Measurement Noise Level $\sigma_v$</span> <span class="val" id="val-sysnoise">0.05</span></label>
+            <input type="range" id="sl-sysnoise" min="0.00" max="0.35" step="0.01" value="0.05" oninput="updateSysId()" />
+          </div>
+          <div class="ctrl-group">
+            <label><span>Number of Averaged Periods $P_{\text{avg}}$</span> <span class="val" id="val-sysp">8</span></label>
+            <input type="range" id="sl-sysp" min="1" max="24" step="1" value="8" oninput="updateSysId()" />
+          </div>
+          <div class="btn-row">
+            <button class="action-btn primary" onclick="loadIndustryPreset('sysid_schroeder_clean')">48-Tone Schroeder</button>
+            <button class="action-btn danger" onclick="loadIndustryPreset('sysid_zero_clip')">Zero-Phase Clipping</button>
+            <button class="action-btn" onclick="loadIndustryPreset('sysid_noisy_avg')">Noisy 20-Period Avg</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Top: Time-Domain Excitation $d_{\text{exc}}(t)$ · Bottom: True Plant $|P(j\omega)|$ (Cyan) vs. Identified $|\hat{P}(j\omega_k)|$ Dots (Emerald)</h2>
+          <div class="kpi-grid">
+            <div class="kpi"><div class="label">Active Phasing</div><div class="num" id="kpi-sysmode">SCHROEDER</div></div>
+            <div class="kpi"><div class="label">Crest Factor (CF)</div><div class="num" id="kpi-syscf">1.66</div></div>
+            <div class="kpi"><div class="label">Zero-Phase CF</div><div class="num" id="kpi-syszcf">8.00</div></div>
+            <div class="kpi"><div class="label">SysID RMS Error</div><div class="num" id="kpi-syserr">0.38 dB</div></div>
+          </div>
+          <canvas id="canvas-sysid" width="900" height="380"></canvas>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -736,6 +860,7 @@ flowchart LR
       if (tabId === 'tab-foc') updateFOC();
       if (tabId === 'tab-models') drawRobotAndSTO();
       if (tabId === 'tab-cadpcb') updateCadAndPcb();
+      if (tabId === 'tab-sysid') updateSysId();
       renderAllMath();
     }
 
@@ -1287,12 +1412,156 @@ flowchart LR
       });
     }
 
+    // =========================================================================
+    // TAB 7: SCHROEDER MULTISINE & CLOSED-LOOP FREQUENCY-DOMAIN SYSID
+    // =========================================================================
+    let sysIdUseSchroeder = true;
+    function toggleSysIdPhaseMode() {
+      sysIdUseSchroeder = !sysIdUseSchroeder;
+      updateSysId();
+    }
+
+    function updateSysId() {
+      const M = parseInt(document.getElementById('sl-sysm').value, 10);
+      const noiseSigma = parseFloat(document.getElementById('sl-sysnoise').value);
+      const nPeriods = parseInt(document.getElementById('sl-sysp').value, 10);
+
+      document.getElementById('val-sysm').textContent = M;
+      document.getElementById('val-sysnoise').textContent = noiseSigma.toFixed(2);
+      document.getElementById('val-sysp').textContent = nPeriods;
+      document.getElementById('val-sysmode').textContent = sysIdUseSchroeder ? 'SCHROEDER' : 'ZERO-PHASE (SPIKE!)';
+
+      const N = 512;
+      const sigSchroeder = new Float64Array(N);
+      const sigZero = new Float64Array(N);
+      const amp = Math.sqrt(2.0 / M);
+
+      for (let k = 1; k <= M; k++) {
+        const phiSch = -Math.PI * k * (k - 1) / M;
+        for (let n = 0; n < N; n++) {
+          const theta = (2.0 * Math.PI * k * n) / N;
+          sigSchroeder[n] += amp * Math.cos(theta + phiSch);
+          sigZero[n] += amp * Math.cos(theta);
+        }
+      }
+
+      function computeCF(arr) {
+        let pk = 0, sumSq = 0;
+        for (let i = 0; i < arr.length; i++) {
+          const v = Math.abs(arr[i]);
+          if (v > pk) pk = v;
+          sumSq += v * v;
+        }
+        return pk / Math.sqrt(sumSq / arr.length);
+      }
+
+      const cfSch = computeCF(sigSchroeder);
+      const cfZero = computeCF(sigZero);
+      const activeCF = sysIdUseSchroeder ? cfSch : cfZero;
+      const activeWave = sysIdUseSchroeder ? sigSchroeder : sigZero;
+
+      const modeEl = document.getElementById('kpi-sysmode');
+      modeEl.textContent = sysIdUseSchroeder ? 'SCHROEDER' : 'ZERO-PHASE';
+      modeEl.style.color = sysIdUseSchroeder ? '#34d399' : '#fb7185';
+
+      const cfEl = document.getElementById('kpi-syscf');
+      cfEl.textContent = activeCF.toFixed(2);
+      cfEl.style.color = activeCF < 2.2 ? '#34d399' : '#fb7185';
+      document.getElementById('kpi-syszcf').textContent = cfZero.toFixed(2);
+
+      // True velocity + resonance actuator plant P(s) across f in [2 Hz, 180 Hz]
+      function evalTruePlantDB(fHz) {
+        const w = 2.0 * Math.PI * fHz;
+        // 1st-order pole at 22 Hz + lightly damped structural mode at 95 Hz
+        const mag1 = 28.0 / Math.hypot(1.0, fHz / 22.0);
+        const r = fHz / 95.0;
+        const magRes = 1.0 / Math.hypot(1.0 - r * r, 2.0 * 0.08 * r);
+        return 20.0 * Math.log10(mag1 * magRes);
+      }
+
+      // Deterministic pseudo-random measurement perturbation decreasing as 1/sqrt(nPeriods)
+      let errSqSum = 0.0;
+      const idPts = [];
+      for (let k = 1; k <= M; k++) {
+        const fHz = 2.5 * k;
+        const trueDB = evalTruePlantDB(fHz);
+        // Zero-phase clipping distortion adds bias if !sysIdUseSchroeder
+        const clipBias = sysIdUseSchroeder ? 0.0 : 2.6 * Math.sin(k * 0.7);
+        const noiseDB = (noiseSigma * 14.0 / Math.sqrt(nPeriods)) * Math.sin(k * 12.9898 + 4.1414);
+        const estDB = trueDB + clipBias + noiseDB;
+        const diff = estDB - trueDB;
+        errSqSum += diff * diff;
+        idPts.push({ fHz, trueDB, estDB });
+      }
+      const rmsErrDB = Math.sqrt(errSqSum / M);
+      const errEl = document.getElementById('kpi-syserr');
+      errEl.textContent = rmsErrDB.toFixed(2) + ' dB';
+      errEl.style.color = rmsErrDB < 1.5 ? '#34d399' : '#fb7185';
+
+      const canvas = document.getElementById('canvas-sysid');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const midY = H * 0.44;
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(W, midY); ctx.stroke();
+
+      // Top pane: Excitation waveform d_exc(t)
+      const topCenter = midY * 0.52;
+      const yScale = (midY * 0.40) / Math.max(3.2, activeCF * 0.65);
+      ctx.strokeStyle = sysIdUseSchroeder ? '#34d399' : '#fb7185';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      for (let n = 0; n < N; n++) {
+        const x = (n / (N - 1)) * (W - 40) + 20;
+        const y = topCenter - activeWave[n] * yScale;
+        if (n === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#cbd5e1'; ctx.font = '12px monospace';
+      ctx.fillText(
+        `Excitation Waveform d_exc(t) — Crest Factor CF = ${activeCF.toFixed(2)} (${sysIdUseSchroeder ? 'Uniform Envelope, Zero Saturation' : 'Impulse Spike @ t=0 -> Amplifier Clipping!'})`,
+        20, 20
+      );
+
+      // Bottom pane: True Bode magnitude |P(jw)| vs Identified spectral estimates |P_hat(jw_k)|
+      const botTop = midY + 24, botH = H - botTop - 22;
+      const fMax = Math.max(170.0, 2.5 * M + 10.0);
+      function mapF(f) { return 20 + ((f - 2.0) / (fMax - 2.0)) * (W - 40); }
+      function mapDB(db) { return botTop + botH - ((db + 15.0) / 60.0) * botH; }
+
+      ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let i = 0; i <= 300; i++) {
+        const f = 2.0 + (fMax - 2.0) * (i / 300);
+        const x = mapF(f), y = mapDB(evalTruePlantDB(f));
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Draw identified harmonic points
+      idPts.forEach(pt => {
+        const x = mapF(pt.fHz), y = mapDB(pt.estDB);
+        ctx.fillStyle = sysIdUseSchroeder ? '#34d399' : '#fbbf24';
+        ctx.beginPath(); ctx.arc(x, y, 3.8, 0, 2 * Math.PI); ctx.fill();
+      });
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillText(
+        `Closed-Loop Spectral Estimate P_hat = S_{yd}/S_{ud} (Dots) vs True Plant |P(jw)| (Cyan) — RMS Error = ${rmsErrDB.toFixed(2)} dB`,
+        20, midY + 18
+      );
+    }
+
     window.addEventListener('load', () => {
       renderAllMath();
       updateBode();
       updateFOC();
       drawRobotAndSTO();
       updateCadAndPcb();
+      updateSysId();
       renderGuidedTourStep();
       requestAnimationFrame(stepPendulumPhysics);
     });
@@ -1305,14 +1574,14 @@ flowchart LR
       {
         tab: 'tab-arch',
         sliderId: null,
-        title: 'Step 1 / 6 — The Cyber-Physical Loop (Muscles, Nerves & Brain)',
+        title: 'Step 1 / 7 — The Cyber-Physical Loop (Muscles, Nerves & Brain)',
         desc: 'Every robot is a circle connecting physical mechanics M(q)q̈ (Muscles/Skeleton), mixed-signal electronics (Nerves), and real-time code (Spinal Cord). Click "Next Step →" to tune a vibrating flexible drive shaft!',
         preset: () => {}
       },
       {
         tab: 'tab-bode',
         sliderId: 'sl-fn',
-        title: 'Step 2 / 6 — Canceling Mechanical Resonance with a Biquad Notch Filter',
+        title: 'Step 2 / 7 — Canceling Mechanical Resonance with a Biquad Notch Filter',
         desc: 'Look at the glowing amber slider (Notch Center f_notch). Right now we detuned it to 180 Hz so the green curve has a huge +24 dB resonance spike at 290.6 Hz! Drag the highlighted slider to 291 Hz (or click "Apply Demo Preset") to watch the notch filter surgically erase the vibration peak.',
         preset: () => {
           document.getElementById('sl-fn').value = 291;
@@ -1326,7 +1595,7 @@ flowchart LR
       {
         tab: 'tab-foc',
         sliderId: 'btn-dec-toggle',
-        title: 'Step 3 / 6 — 25 kHz Field-Oriented Control (FOC) & Cross-Coupling Decoupling',
+        title: 'Step 3 / 7 — 25 kHz Field-Oriented Control (FOC) & Cross-Coupling Decoupling',
         desc: 'At 2500 RPM, spinning magnets induce cross-coupling voltages (±ω_e L i_q) between the d and q axes. Click the highlighted "Toggle ω_e L_dq Decoupling" button (or "Apply Demo Preset") to see how turning off feedforward decoupling causes a large rose-colored i_d current error spike!',
         preset: () => {
           toggleDecoupling();
@@ -1336,7 +1605,7 @@ flowchart LR
       {
         tab: 'tab-pend',
         sliderId: 'sl-xmax',
-        title: 'Step 4 / 6 — Energy Swing-Up, LQR Balancing & Control Barrier Functions (CBF)',
+        title: 'Step 4 / 7 — Energy Swing-Up, LQR Balancing & Control Barrier Functions (CBF)',
         desc: 'Watch the Furuta Pendulum pump energy until upright and catch itself with LQR! Try dragging the highlighted CBF Safety Wall slider (x_max) inward or click "Apply Demo Preset" to inject a +3.2 rad/s kick—the CBF safety filter brakes the cart before it can cross the dashed red walls.',
         preset: () => {
           injectPendulumImpulse(3.2);
@@ -1346,7 +1615,7 @@ flowchart LR
       {
         tab: 'tab-models',
         sliderId: 'sl-rq2',
-        title: 'Step 5 / 6 — Validated URDF/MuJoCo Kinematics & <1 μs Safe Torque Off (STO)',
+        title: 'Step 5 / 7 — Validated URDF/MuJoCo Kinematics & <1 μs Safe Torque Off (STO)',
         desc: 'Drag the highlighted Joint q_2 slider to move the 3-DOF QDD Hopping Leg, or click "Apply Demo Preset" to inject a 42A Overcurrent Short and watch the dual-channel hardware STO trip the MOSFET gates to SAFE HIGH-Z in 0.65 μs!',
         preset: () => {
           triggerSTOFault('OC_SHORT');
@@ -1358,7 +1627,7 @@ flowchart LR
       {
         tab: 'tab-cadpcb',
         sliderId: 'sl-pcbl',
-        title: 'Step 6 / 6 — 3D STEP/STL Flexures & 48V/30A PCB Parasitic Loop Inductance',
+        title: 'Step 6 / 7 — 3D STEP/STL Flexures & 48V/30A PCB Parasitic Loop Inductance',
         desc: 'Drag the highlighted Commutation Loop Inductance slider (L_loop) above 4.0 nH: notice how V_DS,peak turns red (>60V) because stray PCB trace inductance spikes during 30A turn-off! Click "Apply Demo Preset" to snap back to our 6-layer 1.6 nH layout (53.1V, 99.11% efficiency).',
         preset: () => {
           document.getElementById('sl-pcbl').value = 1.6;
@@ -1368,6 +1637,20 @@ flowchart LR
         enter: () => {
           document.getElementById('sl-pcbl').value = 4.4;
           updateCadAndPcb();
+        }
+      },
+      {
+        tab: 'tab-sysid',
+        sliderId: 'btn-sysmode-toggle',
+        title: 'Step 7 / 7 — Schroeder-Phased Multisine Closed-Loop System Identification',
+        desc: 'Notice how zero-phase cosines (φ_k = 0) create a giant impulse spike at t=0 (CF = 8.00) that clips the actuator and biases the Bode dots! Click "Apply Demo Preset" (or the highlighted button) to switch to Schroeder quadratic phasing—compressing the Crest Factor down to 1.66 and locking the identified dots onto the true cyan plant curve.',
+        preset: () => {
+          sysIdUseSchroeder = true;
+          updateSysId();
+        },
+        enter: () => {
+          sysIdUseSchroeder = false;
+          updateSysId();
         }
       }
     ];
@@ -1398,6 +1681,179 @@ flowchart LR
     function runTourAction() {
       const step = TOUR_STEPS[currentTourIdx];
       if (step && step.preset) step.preset();
+    }
+
+    // =========================================================================
+    // ONE-CLICK REAL-WORLD INDUSTRY APPLICATION PRESETS ACROSS ALL TRACKS
+    // =========================================================================
+    function jumpToTab(tabId) {
+      const btn = document.querySelector(`nav.tabs button[data-tab="${tabId}"]`);
+      if (btn) switchTab(tabId, btn);
+    }
+
+    function loadIndustryPreset(presetId) {
+      switch (presetId) {
+        case 'wafer_scanner':
+          jumpToTab('tab-bode');
+          document.getElementById('sl-ks').value = 340;
+          document.getElementById('sl-jl').value = 0.8;
+          document.getElementById('sl-bs').value = 0.0010;
+          document.getElementById('sl-qn').value = 6.5;
+          snapNotchToResonance();
+          break;
+        case 'surgical_cable':
+          jumpToTab('tab-bode');
+          document.getElementById('sl-ks').value = 45;
+          document.getElementById('sl-jl').value = 2.6;
+          document.getElementById('sl-bs').value = 0.0015;
+          document.getElementById('sl-qn').value = 4.0;
+          snapNotchToResonance();
+          break;
+        case 'cnc_ballscrew':
+          jumpToTab('tab-bode');
+          document.getElementById('sl-ks').value = 120;
+          document.getElementById('sl-jl').value = 1.8;
+          document.getElementById('sl-bs').value = 0.0020;
+          document.getElementById('sl-qn').value = 5.0;
+          snapNotchToResonance();
+          break;
+        case 'pcb_6layer_opt':
+          jumpToTab('tab-cadpcb');
+          document.getElementById('sl-pcbi').value = 15.0;
+          document.getElementById('sl-pcbf').value = 40;
+          document.getElementById('sl-pcbl').value = 1.6;
+          updateCadAndPcb();
+          break;
+        case 'pcb_2layer_bad':
+          jumpToTab('tab-cadpcb');
+          document.getElementById('sl-pcbi').value = 22.0;
+          document.getElementById('sl-pcbf').value = 64;
+          document.getElementById('sl-pcbl').value = 5.2;
+          updateCadAndPcb();
+          break;
+        case 'pcb_peak_30a':
+          jumpToTab('tab-cadpcb');
+          document.getElementById('sl-pcbi').value = 25.0;
+          document.getElementById('sl-pcbf').value = 40;
+          document.getElementById('sl-pcbl').value = 1.6;
+          updateCadAndPcb();
+          break;
+        case 'cad_flexure_stage':
+          jumpToTab('tab-cadpcb');
+          document.getElementById('sl-cadt').value = 0.50;
+          selectCadPart('flexure');
+          break;
+        case 'cad_kelvin_mount':
+          jumpToTab('tab-cadpcb');
+          selectCadPart('kelvin');
+          break;
+        case 'cad_qdd_carrier':
+          jumpToTab('tab-cadpcb');
+          selectCadPart('carrier');
+          break;
+        case 'foc_cobot_joint':
+          jumpToTab('tab-foc');
+          document.getElementById('sl-fbw').value = 2800;
+          document.getElementById('sl-iqref').value = 6.5;
+          document.getElementById('sl-rpm').value = 1200;
+          focDecoupling = true;
+          updateFOC();
+          break;
+        case 'foc_drone_prop':
+          jumpToTab('tab-foc');
+          document.getElementById('sl-fbw').value = 3200;
+          document.getElementById('sl-iqref').value = 14.0;
+          document.getElementById('sl-rpm').value = 5500;
+          focDecoupling = false;
+          updateFOC();
+          break;
+        case 'foc_qdd_jump':
+          jumpToTab('tab-foc');
+          document.getElementById('sl-fbw').value = 3500;
+          document.getElementById('sl-iqref').value = 24.0;
+          document.getElementById('sl-rpm').value = 2200;
+          focDecoupling = true;
+          updateFOC();
+          break;
+        case 'sto_desat_short':
+          jumpToTab('tab-models');
+          triggerSTOFault('OC_SHORT');
+          break;
+        case 'sto_enc_crc':
+          jumpToTab('tab-models');
+          triggerSTOFault('ENC_CRC');
+          break;
+        case 'pend_swingup':
+          jumpToTab('tab-pend');
+          document.getElementById('sl-qth').value = 140;
+          document.getElementById('sl-ke').value = 3.8;
+          document.getElementById('sl-xmax').value = 0.85;
+          updatePendParams();
+          resetPendulum(Math.PI - 0.08);
+          break;
+        case 'pend_cbf_wall':
+          jumpToTab('tab-pend');
+          document.getElementById('sl-xmax').value = 0.50;
+          updatePendParams();
+          resetPendulum(0.12);
+          injectPendulumImpulse(2.6);
+          break;
+        case 'pend_hammer':
+          jumpToTab('tab-pend');
+          document.getElementById('sl-xmax').value = 0.85;
+          updatePendParams();
+          resetPendulum(0.05);
+          injectPendulumImpulse(3.6);
+          break;
+        case 'robot_hopper_crouch':
+          jumpToTab('tab-models');
+          selectRobotModel('hopper');
+          document.getElementById('sl-rq1').value = 35;
+          document.getElementById('sl-rq2').value = -75;
+          document.getElementById('sl-rq3').value = 80;
+          triggerSTOFault('RUN');
+          break;
+        case 'robot_arm_polish':
+          jumpToTab('tab-models');
+          selectRobotModel('arm6');
+          document.getElementById('sl-rq1').value = 48;
+          document.getElementById('sl-rq2').value = -32;
+          document.getElementById('sl-rq3').value = 54;
+          triggerSTOFault('RUN');
+          break;
+        case 'robot_furuta_bal':
+          jumpToTab('tab-models');
+          selectRobotModel('furuta');
+          document.getElementById('sl-rq1').value = 0;
+          document.getElementById('sl-rq2').value = -15;
+          document.getElementById('sl-rq3').value = 15;
+          triggerSTOFault('RUN');
+          break;
+        case 'sysid_schroeder_clean':
+          jumpToTab('tab-sysid');
+          sysIdUseSchroeder = true;
+          document.getElementById('sl-sysm').value = 48;
+          document.getElementById('sl-sysnoise').value = 0.04;
+          document.getElementById('sl-sysp').value = 12;
+          updateSysId();
+          break;
+        case 'sysid_zero_clip':
+          jumpToTab('tab-sysid');
+          sysIdUseSchroeder = false;
+          document.getElementById('sl-sysm').value = 48;
+          document.getElementById('sl-sysnoise').value = 0.04;
+          document.getElementById('sl-sysp').value = 8;
+          updateSysId();
+          break;
+        case 'sysid_noisy_avg':
+          jumpToTab('tab-sysid');
+          sysIdUseSchroeder = true;
+          document.getElementById('sl-sysm').value = 32;
+          document.getElementById('sl-sysnoise').value = 0.25;
+          document.getElementById('sl-sysp').value = 20;
+          updateSysId();
+          break;
+      }
     }
   </script>
 </body>

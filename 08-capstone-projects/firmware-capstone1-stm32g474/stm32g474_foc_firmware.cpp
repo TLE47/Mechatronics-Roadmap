@@ -371,6 +371,114 @@ inline uint32_t encode_phase_currents_to_cdr(float i_a_amp, float i_b_amp) noexc
     return static_cast<uint32_t>(adc1) | (static_cast<uint32_t>(adc2) << 16);
 }
 
+// ============================================================================
+// 5. 2 kHz CAN-FD MIT-Mode 5-Parameter Impedance Codec & Hardware CRC-16-CCITT
+// ============================================================================
+// Standard QDD Actuator MIT-Mode Bit-Packed Frame + 16-bit Safety CRC (10 bytes total in CAN-FD frame):
+//   - Byte 0..1:  q_des   (16 bits unsigned, [-12.5, +12.5] rad)
+//   - Byte 2..3:  dq_des  (12 bits unsigned, [-45.0, +45.0] rad/s) | upper 4 bits of kp
+//   - Byte 4:     lower 8 bits of kp (12 bits total, [0.0, 500.0] N*m/rad)
+//   - Byte 5..6:  kd      (12 bits unsigned, [0.0, 5.0] N*m*s/rad) |tau_ff (12 bits, [-40.0, +40.0] N*m)
+//   - Byte 7:     lower 8 bits of tau_ff
+//   - Byte 8..9:  Hardware CRC-16-CCITT (polynomial 0x1021, init 0xFFFF) over Bytes 0..7
+
+struct MitImpedanceCmd {
+    float q_des_rad{0.0f};
+    float dq_des_rad_s{0.0f};
+    float kp_nm_rad{0.0f};
+    float kd_nms_rad{0.0f};
+    float tau_ff_nm{0.0f};
+};
+
+using CanFdMitFrame = std::array<uint8_t, 10>;
+
+inline uint16_t float_to_uint(float x, float x_min, float x_max, uint32_t bits) noexcept {
+    const float span = x_max - x_min;
+    const float clamped = std::clamp(x, x_min, x_max);
+    const uint32_t max_int = (1U << bits) - 1U;
+    return static_cast<uint16_t>(std::lround(((clamped - x_min) / span) * static_cast<float>(max_int)));
+}
+
+inline float uint_to_float(uint16_t x_int, float x_min, float x_max, uint32_t bits) noexcept {
+    const float span = x_max - x_min;
+    const uint32_t max_int = (1U << bits) - 1U;
+    return static_cast<float>(x_int) * span / static_cast<float>(max_int) + x_min;
+}
+
+// Emulates STM32G4 Hardware CRC Peripheral configured for 16-bit CRC-CCITT (Poly = 0x1021, Init = 0xFFFF)
+inline uint16_t stm32_hw_crc16_ccitt(const uint8_t* data, std::size_t len) noexcept {
+    uint16_t crc = 0xFFFFU;
+    for (std::size_t i = 0; i < len; ++i) {
+        crc ^= static_cast<uint16_t>(data[i]) << 8U;
+        for (int b = 0; b < 8; ++b) {
+            if ((crc & 0x8000U) != 0U) {
+                crc = static_cast<uint16_t>((crc << 1U) ^ 0x1021U);
+            } else {
+                crc = static_cast<uint16_t>(crc << 1U);
+            }
+        }
+    }
+    return crc;
+}
+
+inline CanFdMitFrame pack_mit_canfd_frame(const MitImpedanceCmd& cmd) noexcept {
+    const uint16_t q_int   = float_to_uint(cmd.q_des_rad,    -12.5f, 12.5f, 16U);
+    const uint16_t dq_int  = float_to_uint(cmd.dq_des_rad_s, -45.0f, 45.0f, 12U);
+    const uint16_t kp_int  = float_to_uint(cmd.kp_nm_rad,      0.0f, 500.0f, 12U);
+    const uint16_t kd_int  = float_to_uint(cmd.kd_nms_rad,     0.0f, 5.0f,   12U);
+    const uint16_t tau_int = float_to_uint(cmd.tau_ff_nm,    -40.0f, 40.0f,  12U);
+
+    CanFdMitFrame frame{};
+    frame[0] = static_cast<uint8_t>(q_int >> 8U);
+    frame[1] = static_cast<uint8_t>(q_int & 0xFFU);
+    frame[2] = static_cast<uint8_t>(dq_int >> 4U);
+    frame[3] = static_cast<uint8_t>(((dq_int & 0x0FU) << 4U) | (kp_int >> 8U));
+    frame[4] = static_cast<uint8_t>(kp_int & 0xFFU);
+    frame[5] = static_cast<uint8_t>(kd_int >> 4U);
+    frame[6] = static_cast<uint8_t>(((kd_int & 0x0FU) << 4U) | (tau_int >> 8U));
+    frame[7] = static_cast<uint8_t>(tau_int & 0xFFU);
+
+    const uint16_t crc = stm32_hw_crc16_ccitt(frame.data(), 8U);
+    frame[8] = static_cast<uint8_t>(crc >> 8U);
+    frame[9] = static_cast<uint8_t>(crc & 0xFFU);
+    return frame;
+}
+
+inline bool unpack_and_verify_mit_canfd_frame(
+    const CanFdMitFrame& frame,
+    MitImpedanceCmd& out_cmd,
+    float q_meas_rad,
+    float dq_meas_rad_s,
+    float kt_nm_per_a,
+    float& out_iq_ref_a
+) noexcept {
+    const uint16_t rx_crc = (static_cast<uint16_t>(frame[8]) << 8U) | static_cast<uint16_t>(frame[9]);
+    const uint16_t calc_crc = stm32_hw_crc16_ccitt(frame.data(), 8U);
+    if (rx_crc != calc_crc) {
+        return false; // Reject corrupted CAN-FD frame without mutating actuator command
+    }
+
+    const uint16_t q_int   = (static_cast<uint16_t>(frame[0]) << 8U) | static_cast<uint16_t>(frame[1]);
+    const uint16_t dq_int  = (static_cast<uint16_t>(frame[2]) << 4U) | (static_cast<uint16_t>(frame[3]) >> 4U);
+    const uint16_t kp_int  = (static_cast<uint16_t>(frame[3] & 0x0FU) << 8U) | static_cast<uint16_t>(frame[4]);
+    const uint16_t kd_int  = (static_cast<uint16_t>(frame[5]) << 4U) | (static_cast<uint16_t>(frame[6]) >> 4U);
+    const uint16_t tau_int = (static_cast<uint16_t>(frame[6] & 0x0FU) << 8U) | static_cast<uint16_t>(frame[7]);
+
+    out_cmd.q_des_rad    = uint_to_float(q_int,   -12.5f, 12.5f,  16U);
+    out_cmd.dq_des_rad_s = uint_to_float(dq_int,  -45.0f, 45.0f,  12U);
+    out_cmd.kp_nm_rad    = uint_to_float(kp_int,    0.0f, 500.0f, 12U);
+    out_cmd.kd_nms_rad   = uint_to_float(kd_int,    0.0f, 5.0f,   12U);
+    out_cmd.tau_ff_nm    = uint_to_float(tau_int, -40.0f, 40.0f,  12U);
+
+    // Compute 2 kHz joint impedance torque & convert to inner-loop q-axis current reference i_q*
+    const float tau_des =
+        out_cmd.kp_nm_rad * (out_cmd.q_des_rad - q_meas_rad) +
+        out_cmd.kd_nms_rad * (out_cmd.dq_des_rad_s - dq_meas_rad_s) +
+        out_cmd.tau_ff_nm;
+    out_iq_ref_a = std::clamp(tau_des / kt_nm_per_a, -30.0f, 30.0f);
+    return true;
+}
+
 } // namespace stm32g474_foc
 
 // ============================================================================
@@ -504,6 +612,33 @@ int main(int argc, char** argv) {
     hw.trigger_hardware_bkin_sto();
     const bool bkin_sto_cleared_moe = ((hw.TIM1.BDTR & TIM_BDTR_MOE) == 0U);
 
+    // Test 5: 2 kHz CAN-FD MIT-Mode 5-Parameter Impedance Codec & Hardware CRC-16 Fault Rejection
+    const MitImpedanceCmd tx_cmd{1.25f, -3.50f, 85.0f, 1.80f, 6.40f};
+    CanFdMitFrame frame = pack_mit_canfd_frame(tx_cmd);
+    MitImpedanceCmd rx_cmd{};
+    float iq_from_mit_a = 0.0f;
+    const bool valid_frame_accepted = unpack_and_verify_mit_canfd_frame(
+        frame, rx_cmd, 1.15f, -2.50f, 1.15f, iq_from_mit_a
+    );
+    const bool quant_accuracy_ok =
+        (std::abs(rx_cmd.q_des_rad - tx_cmd.q_des_rad) < 0.001f) &&
+        (std::abs(rx_cmd.dq_des_rad_s - tx_cmd.dq_des_rad_s) < 0.03f) &&
+        (std::abs(rx_cmd.kp_nm_rad - tx_cmd.kp_nm_rad) < 0.2f) &&
+        (std::abs(rx_cmd.kd_nms_rad - tx_cmd.kd_nms_rad) < 0.003f) &&
+        (std::abs(rx_cmd.tau_ff_nm - tx_cmd.tau_ff_nm) < 0.03f);
+
+    // Inject 1-bit and 2-bit burst errors across all 8 payload bytes and verify 100% CRC-16 rejection
+    int corrupted_rejected = 0;
+    for (std::size_t byte_idx = 0; byte_idx < 8; ++byte_idx) {
+        CanFdMitFrame bad_frame = frame;
+        bad_frame[byte_idx] ^= 0x05U; // 2-bit flip
+        float dummy_iq = -99.0f;
+        if (!unpack_and_verify_mit_canfd_frame(bad_frame, rx_cmd, 0.0f, 0.0f, 1.15f, dummy_iq)) {
+            corrupted_rejected += 1;
+        }
+    }
+    const bool canfd_mit_crc_ok = valid_frame_accepted && quant_accuracy_ok && (corrupted_rejected == 8);
+
     const uint64_t heap_faults = g_rt_heap_faults.load(std::memory_order_relaxed);
     const bool closed_loop_ok =
         (rise_time_us <= 175.0) &&
@@ -517,6 +652,7 @@ int main(int argc, char** argv) {
         cordic_ok &&
         closed_loop_ok &&
         bkin_sto_cleared_moe &&
+        canfd_mit_crc_ok &&
         (heap_faults == 0U);
 
     if (json_mode) {
@@ -524,6 +660,7 @@ int main(int argc, char** argv) {
             "{\"lab\":\"08-capstone1-stm32g474-firmware\",\"ok\":%s,\"pwm_freq_hz\":%u,\"tim1_arr\":%u,"
             "\"deadtime_ns\":100.0,\"cordic_max_err\":%.3e,\"iq_rise_time_us\":%.1f,"
             "\"iq_final_a\":%.3f,\"max_id_crosstalk_a\":%.3f,\"bkin_sto_moe_cleared\":%s,"
+            "\"canfd_mit_crc_ok\":%s,\"mit_iq_ref_a\":%.3f,"
             "\"rt_heap_faults\":%llu,\"mean_isr_exec_ns\":%.1f}\n",
             all_ok ? "true" : "false",
             kPwmFreqHz,
@@ -533,18 +670,21 @@ int main(int argc, char** argv) {
             static_cast<double>(i_q_plant),
             static_cast<double>(max_id_crosstalk),
             bkin_sto_cleared_moe ? "true" : "false",
+            canfd_mit_crc_ok ? "true" : "false",
+            static_cast<double>(iq_from_mit_a),
             static_cast<unsigned long long>(heap_faults),
             mean_isr_ns
         );
     } else if (!quiet_mode) {
         std::printf(
             "[%s] STM32G474 Bare-Metal 40kHz FOC Firmware | ARR=%u | CORDIC_err=%.2e | "
-            "t_rise=%.0f us | i_q=%.2f A | BKIN_STO=%s | ISR=%.0f ns\n",
+            "t_rise=%.0f us | i_q=%.2f A | CANFD_CRC16=%s | BKIN_STO=%s | ISR=%.0f ns\n",
             all_ok ? "PASS" : "FAIL",
             hw.TIM1.ARR,
             max_cordic_err,
             rise_time_us,
             static_cast<double>(i_q_plant),
+            canfd_mit_crc_ok ? "PASS" : "FAIL",
             bkin_sto_cleared_moe ? "CLEARED_MOE" : "FAIL",
             mean_isr_ns
         );

@@ -8,8 +8,9 @@
 
 ## 🚀 Quick Start & Live Interactive Workbench (`MechaLab`)
 
-* **🌐 Live Interactive Web Workbench (`MechaLab`):** [**Open Live Production Workbench (`site-2f1b42c07edb4f2ea9ce49ffab6d57e7.freebuff.page`)**](https://site-2f1b42c07edb4f2ea9ce49ffab6d57e7.freebuff.page) | Local file: [web/index.html](web/index.html)
-  * Includes a **6-Step Interactive Guided Beginner Tour** that highlights controls and explains each physical phenomenon as you drag the sliders, alongside native KaTeX math rendering and 5 live simulators (Two-Mass Resonance Bode, $25\text{ kHz}$ PMSM FOC, 60 FPS Furuta Pendulum + LQR + CBF, URDF/MuJoCo + STO Fault Injector, and 3D CAD + $48\text{ V}/30\text{ A}$ PCB Thermal Explorer).
+* **🌐 Easy-to-Remember GitHub Pages URL:** [**`https://tle47.github.io/Mechatronics-Roadmap/`**](https://tle47.github.io/Mechatronics-Roadmap/) (redirects automatically via [index.html](index.html) to [web/index.html](web/index.html))
+* **🌐 Live Freebuff Sites Production URL:** [**`https://site-2f1b42c07edb4f2ea9ce49ffab6d57e7.freebuff.page`**](https://site-2f1b42c07edb4f2ea9ce49ffab6d57e7.freebuff.page)
+  * Includes a **7-Step Interactive Guided Beginner Tour**, **24 One-Click Real-World Industry Application Presets**, native KaTeX math rendering, and **6 live physics/hardware simulators** (Two-Mass Resonance Bode, $25\text{ kHz}$ PMSM FOC, 60 FPS Furuta Pendulum + LQR + CBF, URDF/MuJoCo + STO Fault Injector, 3D CAD + $48\text{ V}/30\text{ A}$ PCB Thermal Explorer, and Schroeder Multisine Closed-Loop SysID).
 * **🧪 Run All 12 Verification Suites in 2 Seconds (Zero External Dependencies):**
 
 ```bash
@@ -170,6 +171,21 @@ mechatronics-roadmap/
 | **06** | [06-robotics-and-autonomy/README.md](06-robotics-and-autonomy/README.md) | `ros2_control` over `PREEMPT_RT`, Factor-Graph VIO, RRT*/TrajOpt, Pinocchio WBC | 6-DOF torque-controlled manipulator with visual servoing & collision avoidance |
 | **07** | [07-systems-hil-and-production/README.md](07-systems-hil-and-production/README.md) | ISO/IEC V-Model, frequency-domain sysID, real-time HIL, SIL-2/PLd safety, CE/FCC EMC | Automated CI/CD + HIL fault-injection rig validating Safe Torque Off (STO) |
 | **08** | [08-capstone-projects/README.md](08-capstone-projects/README.md) | 5 Integrated Hardware/Firmware/Control Capstones with full specs & pass/fail tables | End-to-end physical hardware bring-up and quantitative benchmark sign-off |
+
+### 🏭 Real-World Industry Example Applications & Interactive Simulator Presets Across All Tracks
+
+Every track in [web/index.html](web/index.html) includes **3 clickable one-click industry application presets** that configure the live physics simulators to match real commercial hardware:
+
+| Track | Industry Application Example 1 | Industry Application Example 2 | Industry Application Example 3 |
+| :--- | :--- | :--- | :--- |
+| **Track 00: Foundations** | **ASML Lithography Wafer Stage** ($k_s = 340\text{ N\cdot m/rad}$, $f_r = 390\text{ Hz}$ biquad notch) | **Da Vinci Surgical Tendon-Cable Drive** ($k_s = 45\text{ N\cdot m/rad}$, $f_r = 142\text{ Hz}$) | **CNC Preloaded Ballscrew Axis** ($k_s = 120\text{ N\cdot m/rad}$, $f_r = 290.6\text{ Hz}$) |
+| **Track 01: Power & AFE** | **6-Layer $1.6\text{ nH}$ Servo Drive PCB** ($V_{DS,\text{peak}} = 53.1\text{ V} < 60\text{ V}$, $99.11\%$ eff) | **2-Layer $5.2\text{ nH}$ Bad Layout** ($V_{DS,\text{peak}} = 64.6\text{ V}$ overshoot warning!) | **$30\text{ A}$ Peak Torque Thermal Soak** ($R_{DS(\text{on})}(T_j)$ self-heating loop) |
+| **Track 02: Mechanics & CAD** | **Ti-6Al-4V Fast-Steering Mirror Notch Flexure** ($t = 0.50\text{ mm}$, $k_\theta = 6.98\text{ N\cdot m/rad}$) | **440C Optical Bench Kelvin 3-2-1 Coupling** ($3+2+1=6$ constraints, $\text{DOF}=0$) | **MIT Cheetah $8:1$ QDD Planetary Carrier** (7075-T6 double-shear pin $\text{SF} = 82.9\times$) |
+| **Track 03: Sensors & FOC** | **Surgical Cobot Joint** ($1200\text{ RPM}$, $f_{bw} = 2.8\text{ kHz}$, $t_{\text{rise}} = 125\ \mu\text{s}$) | **High-Speed Drone Propeller** ($5500\text{ RPM}$ showing $\omega_e L_{dq}$ cross-coupling) | **$24\text{ A}$ Legged Hopper Stance Pulse** ($3.5\text{ kHz}$ current loop + SVPWM $+15.47\%$ boost) |
+| **Track 04: Embedded RT** | **`STM32G474` $40\text{ kHz}$ TIM1 + Dual ADC DMA + CORDIC** (`0` heap allocs, $98\text{ ns}$ host ISR) | **CAN-FD $2\text{ kHz}$ MIT-Mode 5-Param Impedance Codec** ($100\%$ CRC-16 fault rejection) | **`WaitFreeSeqLock<T>` Telemetry Bridge** (`0` torn reads across $250,000$ frames) |
+| **Track 05: Control & CBF** | **Autonomous Furuta Swing-Up Catch** ($\theta_0 = 175^\circ \to 0^\circ$ LQR hand-off) | **Tight $\pm 0.50\text{ m}$ CBF Workspace Safety Wall** (active QP braking) | **Heavy $+3.6\text{ rad/s}$ Impulse Hammer Kick** (disturbance rejection within rail limits) |
+| **Track 06: Robotics & WBC** | **Capstone IV 3-DOF QDD Hopper Landing Crouch** ($m_{\text{shank}} = 0.15\text{ kg}$ distal inertia) | **Capstone III 6-DOF Serial Arm $20^\circ$ Ramp Polishing** ($10\text{ N}$ compliant force tracking) | **Capstone II Furuta Rotary Upright Balance** (coupled $M_{11}(q_2)$ inertia verification) |
+| **Track 07/08: SysID & STO** | **48-Tone Schroeder Multisine SysID** ($\text{CF} = 1.66$, $< 0.4\text{ dB}$ RMS error) | **Zero-Phase ($\phi_k = 0$) Impulse Clipping** ($\text{CF} = 9.80$ amplifier saturation) | **$< 1\ \mu\text{s}$ Hardware `BKIN` Desat & 2-Cycle SPI Encoder Wire-Break STO** |
 
 ---
 

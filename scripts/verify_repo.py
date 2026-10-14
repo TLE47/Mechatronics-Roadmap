@@ -21,6 +21,7 @@ VERSION = "1.0.0"
 
 EXPECTED_FILES = [
     "README.md",
+    "index.html",
     "00-foundations/README.md",
     "00-foundations/lab/lab00_two_mass_and_so3.py",
     "01-electronics-and-power/README.md",
