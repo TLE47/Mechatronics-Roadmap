@@ -1,7 +1,10 @@
-# Production Open-Source Toolchain Matrix
+# Production Open-Source Toolchain Matrix (Tier 1 → Tier 3)
 
-> **Curated for:** [Production-Grade Mechatronics Engineering & Research Roadmap](../README.md)  
-> A principal mechatronics engineer can execute the entire product lifecycle—from schematic capture, SPICE transient analysis, 3D parametric CAD, and modal FEA to $O(n)$ multibody dynamics, embedded NMPC code generation, and real-time HIL telemetry—using **100% open-source, scriptable, CI/CD-compatible toolchains**.
+> **Curated for:** [MechaLab Multi-Pass Tiered Roadmap](../README.md)  
+> You do not need to install 20 industrial solvers on Day 1! Adopt toolchains progressively as you advance through the three linear passes:
+> * **🟢 Level 0 & Pass 1 (Tier 1 — Beginner Pass):** `PlatformIO` / `Arduino IDE`, `SimpleFOC`, `Python` (`NumPy`/`Matplotlib`), `PulseView` (`sigrok`), and `Onshape` / `FreeCAD` basics.
+> * **🔵 Pass 2 (Tier 2 — Applied Pass):** `KiCad 8/9` (4-layer PCBs), `ngspice`, `CadQuery` / `Build123d`, `MuJoCo`, `Python Control` (`control`), `FreeRTOS` / `Zephyr`, `Ruckig`, and `PlotJuggler`.
+> * **🟣 Pass 3 (Tier 3 — Production Pass):** `FastHenry2` / `openEMS`, `Gmsh` + `CalculiX` Modal FEA, `Pinocchio` ($O(n)$ RNEA), `acados` / `OSQP` / `TinyMPC`, `GTSAM`, `PREEMPT_RT` Linux + `ros2_control`, and `Verilator` / `Yosys`.
 
 ---
 

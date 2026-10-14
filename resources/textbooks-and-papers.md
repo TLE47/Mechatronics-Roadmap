@@ -1,7 +1,10 @@
-# Annotated Library: Authoritative Textbooks, Seminal Papers & Industry Standards
+# Annotated Library: Authoritative Textbooks, Seminal Papers & Industry Standards (Tier 1 → Tier 3)
 
-> **Curated for:** [Production-Grade Mechatronics Engineering & Research Roadmap](../README.md)  
-> Every entry in this library has been selected for mathematical rigor, physical insight, and direct applicability to building real electromechanical hardware.
+> **Curated for:** [MechaLab Multi-Pass Tiered Roadmap](../README.md)  
+> Read these references in synchronization with your current pass through the roadmap:
+> * **🟢 Level 0 & Pass 1 (Tier 1 Reading Order):** *Horowitz & Hill* (Ch. 1–4, 9), *Lynch & Park* (Ch. 1–3, 6), *Åström & Murray* (Ch. 1–6, 10 — free at `fbsbook.org`), and the *SimpleFOC* documentation.
+> * **🔵 Pass 2 (Tier 2 Reading Order):** *Horowitz & Hill* (Ch. 5, 8, 13), *Ott* (PCB return currents), *Slocum* (Exact constraint), *Ben Katz's MIT Thesis* (QDD actuators), *Yiu* (Cortex-M architecture), and *Tedrake's Underactuated Robotics* (LQR & Swing-Up).
+> * **🟣 Pass 3 (Tier 3 Reading Order):** *Sola's Micro Lie Theory & ESKF*, *Karnopp et al.* (Bond Graphs), *Featherstone* ($O(n)$ RNEA/ABA), *Krause / De Doncker* ($d$-$q$ FOC), *Buttazzo* (Real-Time Scheduling), *Slotine & Li* (Passivity), *Rawlings et al.* (MPC), *Khatib / Hogan* (Operational Impedance), and *Pintelon & Schoukens* (Frequency-Domain SysID).
 
 ---
 

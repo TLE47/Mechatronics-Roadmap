@@ -1,25 +1,92 @@
 # Track 06: Robotics, Whole-Body Control, Perception & Autonomous Systems
 
+> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
 > **Prerequisites:** [Track 02: Mechanics, Kinematics & Dynamics](../02-mechanics-kinematics-dynamics/README.md), [Track 04: Embedded & Real-Time](../04-embedded-and-realtime/README.md), [Track 05: Control & Estimation](../05-control-and-estimation/README.md)  
 > **Feeds Into:** [Track 07: Systems, HIL & Production](../07-systems-hil-and-production/README.md), [Track 08: Capstone Projects](../08-capstone-projects/README.md)  
 > **Core Principle:** High-level autonomy (SLAM, motion planning, task policies) is only as reliable as the real-time bridge connecting it to physical joint torques and contact forces. Modern robotic systems replace rigid trajectory replay with **Operational-Space Impedance Control, Hierarchical Whole-Body Quadratic Programming (WBC-QP), and Factor-Graph State Estimation**.
 
 ---
 
-## 1. Module Overview & System Context
+## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
 
-Classical industrial robots operating inside safety cages execute pre-taught joint position trajectories with high-ratio gearboxes ($N > 100$) that are stiff and blind to external contact. Modern mechatronic and robotic systems—collaborative manipulators, surgical robots, quadrupeds, humanoids, and autonomous mobile manipulators—must interact compliantly with uncertain environments, fuse asynchronous cameras/lidars/IMUs/encoders in real time, and replan collision-free trajectories online.
+Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 07 in the same Tier**:
 
-This track bridges high-rate joint control with system-level robotic autonomy:
-1. **Real-Time Middleware & System Architecture:** `PREEMPT_RT` Linux kernel tuning, `ros2_control` hardware interfaces, DDS QoS determinism, and zero-copy shared-memory IPC (`iceoryx2` / `Zenoh`).
-2. **Operational-Space Impedance & Whole-Body Control (WBC):** Khatib's Operational Space formulation, Hogan's Mechanical Impedance Control, hierarchical null-space projection, and Contact-Consistent Whole-Body QP with friction cones.
-3. **Multi-Sensor Spatial Perception & Factor-Graph SLAM:** Camera/Lidar-IMU extrinsic calibration (`Kalibr`), IMU preintegration on manifolds (Forster et al.), Visual-Inertial Odometry (VIO), and `GTSAM` factor graphs.
-4. **Kinodynamic Motion Planning & Trajectory Generation:** Sampling-based (`RRT*`, `BIT*`), optimization-based (`CHOMP`, `TrajOpt`, `GCOPTER`), and time-optimal jerk-bounded spline generation (`TOPP-RA`, `Ruckig`).
-5. **Sim-to-Real Transfer & System Identification:** Least-squares base inertial parameter identification, domain randomization, and actuator neural/physics hybrid modeling.
+| Pass / Level | Previous Step in Pass | Current Track 06 Section | Next Linear Step in This Pass |
+| :--- | :--- | :--- | :--- |
+| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 05 (Tier 1)](../05-control-and-estimation/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Cubic/Trapezoidal Trajectories & Joint Virtual Springs](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 07 (Tier 1: 10-Step Safe Bring-Up & Sine Sweeps)**](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive) |
+| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 05 (Tier 2)](../05-control-and-estimation/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Jacobian Transpose Cartesian Compliance & `Ruckig` S-Curves](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 07 (Tier 2: Regen Clamps, CRC & HIL Faults)**](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Rigid `servo.write()` Stepping $\to$ $1\text{ kHz}$ Torque/Impedance Control](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [← Track 05 (Tier 3)](../05-control-and-estimation/README.md#tier-3-advanced--production) | [§4 Tier 3: Khatib Operational Inertia $\Lambda(q)$ & Null-Space WBC](#tier-3-advanced--production) | [**Next in Pass 3 → Track 07 (Tier 3: Schroeder Multisine SysID & $<1\ \mu\text{s}$ STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production) |
 
 ---
 
-## 2. Full-Stack Autonomous Robotic Software & Hardware Architecture
+## Tier 1 (Beginner / Intuitive)
+
+> **Goal of Pass 1 (Track 06):** Stop commanding sudden step jumps (`q_des = 90.0`) that slam robot joints! Learn to generate smooth **Cubic Polynomial & Trapezoidal Velocity Trajectories** so velocity starts and ends at zero, and implement **Joint-Space Virtual Springs (Compliant PD + Gravity Offset)** so a human hand can safely push the robot arm out of the way.
+
+### 1.1 Why Step Commands Break Gears: Smooth Cubic Spline Interpolation
+If you step `q_des` instantaneously from $0\text{ rad}$ to $1.0\text{ rad}$, initial position error is huge and target velocity is infinite—slamming the motor with maximum stall current and shaking the whole desk.
+* **Rest-to-Rest Cubic Polynomial ($t \in [0, T]$ with $\dot{q}(0) = \dot{q}(T) = 0$):**
+  Define normalized time $s = t / T \in [0, 1]$:
+
+$$
+q_d(t) = q_0 + (3s^2 - 2s^3)(q_f - q_0), \qquad \dot{q}_d(t) = \frac{6s(1 - s)}{T}(q_f - q_0)
+$$
+
+  Notice that at both $s = 0$ and $s = 1$, velocity $\dot{q}_d$ is **identically zero**!
+
+### 1.2 Joint-Space Compliant Control (Virtual Spring-Damper + Gravity Feedforward)
+Instead of a stiff PID with a giant integral term $K_i$ that fights external contact until something breaks, set $K_i = 0$ and add analytical gravity compensation $g(q)$:
+
+$$
+\tau_{\text{cmd}} = K_p (q_d(t) - q) + K_d (\dot{q}_d(t) - \dot{q}) + \underbrace{m g l_c \cos(q)}_{\text{Gravity Feedforward } g(q)}
+$$
+
+Now, if you set a gentle $K_p$, the robot floats effortlessly against gravity and yields like a soft mechanical spring whenever your hand touches it!
+
+### ✅ Tier 1 Milestone Gate (`Track 06 · Pass 1`)
+* Replace step setpoints on your 1-DOF or 2-DOF gimbal arm with a rest-to-rest cubic polynomial generator and gravity feedforward $g(q)$, verifying that you can gently push the link away by hand and watch it return smoothly without overshoot.
+* **Next Linear Step in Pass 1:** [**Proceed to Track 07 (Tier 1: 10-Step Safe Bring-Up Protocol & Single-Tone Sine Sweeps) →**](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive)
+
+---
+
+## Tier 2 (Intermediate / Applied)
+
+> **Goal of Pass 2 (Track 06):** Upgrade from joint-space springs to **Cartesian Task-Space Impedance Control (`tau = J^T F_cart + g(q)`)**—allowing you to specify independent $(x, y, z)$ stiffness in millimeters/Newtons—and eliminate structural vibration using **Jerk-Bounded S-Curve Trajectories (`Ruckig`)**.
+
+### 2.1 Sensorless Cartesian Impedance via the Jacobian Transpose ($\tau = J(q)^\top F_{\text{cart}} + g(q)$)
+Suppose you want your robot gripper to be **very stiff vertically ($K_z = 1000\text{ N/m}$)** so it holds its height, but **very soft horizontally ($K_x = 50\text{ N/m}$)** so it slides smoothly into a chamfered hole. You don't even need Inverse Kinematics or a 6-axis force sensor!
+1. Compute current gripper position $x = \text{FK}(q)$ and tip velocity $\dot{x} = J(q)\dot{q}$.
+2. Compute virtual 3D Cartesian spring-damper force $F_{\text{cart}} = K_x (x_d - x) + D_x (\dot{x}_d - \dot{x})$.
+3. Map $F_{\text{cart}}$ directly to joint torques via $\tau = J(q)^\top F_{\text{cart}} + g(q)$!
+
+### 2.2 Why Trapezoidal Velocity Still Vibrates Arms: Jerk-Bounded S-Curves (`Ruckig`)
+A trapezoidal velocity profile has square-wave acceleration steps (infinite **jerk** $\dddot{q} = \frac{d\ddot{q}}{dt} = \pm\infty$), which rings flexible links like a bell. **3rd-Order S-Curve Generators (`Ruckig`)** bound maximum velocity, acceleration, *and* jerk ($\lvert\dddot{q}\rvert \le j_{\max}$), ramping acceleration in smooth linear ramps so structural modes are never excited.
+
+### ✅ Tier 2 Milestone Gate (`Track 06 · Pass 2`)
+* Test the 3-DOF QDD Hopping Leg and 6-DOF Arm kinematics in **Tab 5: URDF / MuJoCo & STO**, verifying Jacobian transpose force mapping across the workspace.
+* **Next Linear Step in Pass 2:** [**Proceed to Track 07 (Tier 2: Regen Braking Bus Clamps, CRC Watchdogs & HIL Faults) →**](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied)
+
+---
+
+## Bridging the Gap: Maker to Custom
+
+### From Rigid `servo.write(angle)` Stepping to $1\text{ kHz}$ Distributed Torque & Operational-Space Impedance Control
+
+| Feature | Tier 1 Maker Approach (`servo.write(angle)` Hobby RC Servo) | Tier 2/3 Custom Approach ($1\text{ kHz}$ CAN-FD Torque + Operational Impedance) |
+| :--- | :--- | :--- |
+| **Control Interface** | $50\text{ Hz}$ PWM pulse width ($1000\text{–}2000\ \mu\text{s}$) commands angle only; internal potentiometer loop is hidden and un-tunable. | $1\text{–}2\text{ kHz}$ CAN-FD / EtherCAT frame commands `(q_des, dq_des, Kp, Kd, tau_ff)` to a $40\text{ kHz}$ FOC loop. |
+| **Unplanned Wall Contact** | Stalls at maximum current until plastic/brass gears strip or the LDO thermal-trips. | Regulates exact Cartesian contact wrench $\mathcal{F} = K_x \Delta x$ ($10.0\text{ N} \pm 0.5\text{ N}$) with zero gear damage. |
+| **Multi-Joint Coordination** | Independent joint loops fight each other along straight lines. | Khatib's Operational Inertia $\Lambda(q)$ decouples $(x,y,z)$ dynamics and projects posture tasks into the dynamically consistent null-space $N^\top(q)$. |
+
+---
+
+## Tier 3 (Advanced / Production)
+
+> **Goal of Pass 3 (Track 06):** Master full-stack robotic autonomy and whole-body control: Khatib's Operational-Space Inertia $\Lambda(q)$ & dynamically consistent null-space projection $\bar{J}(q)$, Floating-Base Whole-Body Control QPs (`WBC-QP`) with friction cones, `PREEMPT_RT` Linux kernel isolation (`<50 µs` jitter), and Forster's Manifold IMU Preintegration for Factor-Graph SLAM (`GTSAM`).
+> * [**Next Linear Step in Pass 3 → Track 07 (Tier 3: Schroeder Multisine Closed-Loop SysID & $<1\ \mu\text{s}$ Hardware STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production)
+
+### 4.1 Full-Stack Autonomous Robotic Software & Hardware Architecture
 
 ```mermaid
 flowchart TB
@@ -63,79 +130,34 @@ flowchart TB
     style ACT_BUS fill:#450a0a,stroke:#f87171,color:#fef2f2
 ```
 
----
-
-## 3. Operational-Space Impedance & Whole-Body Control (WBC)
-
-### 3.1 Hogan's Impedance Control vs. Stiff Position Control
-When a stiff position-controlled robot contacts a rigid surface at position $x_{\text{env}}$ with environment stiffness $k_{\text{env}} \approx 10^5\text{ N/m}$, a tiny $1\text{ mm}$ position trajectory error generates $100\text{ N}$ of contact force and triggers an emergency fault. **Mechanical Impedance Control** regulates the *dynamic relationship* between end-effector pose error $\tilde{x} = x - x_d$ and interaction wrench $\mathcal{F}_{\text{ext}}$:
+### 4.2 Khatib Operational-Space Impedance & Dynamically Consistent Null-Space Projection
 
 $$
-\Lambda(q)\ddot{\tilde{x}} + D_x \dot{\tilde{x}} + K_x \tilde{x} = \mathcal{F}_{\text{ext}}
+\Lambda(q) = \left(J(q) M^{-1}(q) J(q)^\top\right)^{-1}, \qquad \bar{J}(q) = M^{-1}(q) J(q)^\top \Lambda(q)
 $$
 
-where $\Lambda(q) = \left(J(q) M^{-1}(q) J(q)^\top\right)^{-1}$ is **Khatib's Operational-Space Inertia Matrix** (the effective mass/inertia felt at the end-effector tip).
-* **Cartesian Impedance Control Law (Without Force Sensor Requirement):**
-  For backdrivable or torque-controlled joints, shaping desired stiffness $K_x \in \mathbb{R}^{6\times 6}$ and damping $D_x \in \mathbb{R}^{6\times 6}$ requires only the manipulator Jacobian $J(q)$ and gravity compensation $g(q)$:
-
 $$
-\tau = J(q)^\top \Big(-K_x \tilde{x} - D_x J(q)\dot{q}\Big) + g(q) + \underbrace{\left(I - J(q)^\top \bar{J}(q)^\top\right) \tau_{\text{null}}}_{\text{Redundant Null-Space Posture Torque}}
+\tau = J(q)^\top \Big(\Lambda(q)\ddot{x}_d - K_x \tilde{x} - D_x \dot{\tilde{x}}\Big) + g(q) + \left(I - J(q)^\top \bar{J}(q)^\top\right) \tau_{\text{null}}
 $$
 
-  where $\bar{J}(q) = M^{-1}(q) J(q)^\top \Lambda(q)$ is the **dynamically consistent generalized inverse** of $J(q)$, guaranteeing that null-space torques $\tau_{\text{null}}$ produce **zero acceleration at the end-effector**!
+Because $J(q) M^{-1}(q) \left(I - J(q)^\top \bar{J}(q)^\top\right) \equiv 0$, any posture torque $\tau_{\text{null}}$ (such as moving a 7-DOF arm's elbow away from an obstacle) produces **strictly zero acceleration at the end-effector**!
 
-### 3.2 Floating-Base Whole-Body Control via Quadratic Programming (WBC-QP)
-For a floating-base system (quadruped, humanoid, or mobile manipulator) with configuration $q = [p_b^\top, q_b^\top, q_j^\top]^\top$ and generalized velocity $v = [\mathcal{V}_b^\top, \dot{q}_j^\top]^\top \in \mathbb{R}^{6+n_j}$, the equations of motion split into 6 unactuated floating-base rows and $n_j$ actuated joint rows via selection matrix $S = [0_{n_j \times 6},\ I_{n_j \times n_j}]$:
-
-$$
-M(q)\dot{v} + h(q,v) = S^\top \tau + J_c(q)^\top f_c
-$$
-
-At $1\text{ kHz}$, the Whole-Body Controller solves a convex QP over decision variables $\xi = [\dot{v}^\top, f_c^\top, \tau^\top]^\top$:
+### 4.3 Floating-Base Whole-Body Control QP (`WBC-QP`) & `PREEMPT_RT` Linux
 
 $$
 \begin{aligned}
 \min_{\dot{v}, f_c, \tau} \quad & \sum_{k} w_k \left\| J_k(q)\dot{v} + \dot{J}_k(q,v)v - \ddot{x}_{k,\text{des}} \right\|_2^2 + \|f_c\|_{W_f}^2 + \|\tau\|_{W_\tau}^2 \\
-\text{subject to} \quad & M(q)\dot{v} + h(q,v) = S^\top \tau + J_c(q)^\top f_c \quad \text{(Full Rigid-Body Dynamics)} \\
-& J_{\text{stance}}(q)\dot{v} + \dot{J}_{\text{stance}}(q,v)v = 0 \quad \text{(Zero Stance Foot Slip)} \\
-& |f_{c,x}| \le \mu f_{c,z},\quad |f_{c,y}| \le \mu f_{c,z},\quad f_{c,z} \ge f_{z,\min} > 0 \quad \text{(Linearized Pyramid Friction Cone)} \\
-& \tau_{\min} \le \tau \le \tau_{\max} \quad \text{(Actuator Torque-Speed Envelope)}
+\text{subject to} \quad & M(q)\dot{v} + h(q,v) = S^\top \tau + J_c(q)^\top f_c, \qquad J_{\text{stance}}(q)\dot{v} + \dot{J}_{\text{stance}}(q,v)v = 0 \\
+& |f_{c,x}| \le \mu f_{c,z},\quad |f_{c,y}| \le \mu f_{c,z},\quad f_{c,z} \ge f_{z,\min} > 0, \qquad \tau_{\min} \le \tau \le \tau_{\max}
 \end{aligned}
 $$
 
-### 3.3 Distributed PD+Feedforward Impedance Split Across Fieldbus
-Never close a $1\text{ kHz}$ position/velocity PD loop exclusively over a CAN or Ethernet bus if the actuator node itself has a local high-rate encoder! Bus delay ($\tau_{\text{bus}} = 0.5\text{–}1.5\text{ ms}$) severely limits the stable $K_p, K_d$ gains. Instead, transmit the **5-tuple command packet** `(q_des, dq_des, kp, kd, tau_ff)` from the central computer at $1\text{ kHz}$ (where $\tau_{ff}$ comes from the WBC-QP), and evaluate the local PD impedance term inside the actuator's $25\text{–}40\text{ kHz}$ MCU loop:
+* **Hard Real-Time Linux (`PREEMPT_RT`) Checklist:**
+  1. Boot parameters: `isolcpus=2,3 nohz_full=2,3 rcu_nocbs=2,3 irqaffinity=0,1 processor.max_cstate=1`.
+  2. Call `mlockall(MCL_CURRENT | MCL_FUTURE)` and pin the $1\text{ kHz}$ control thread to isolated core 2 with `SCHED_FIFO` priority `80`.
+  3. Bridge `ros2_control` to DDS via lock-free `realtime_tools::RealtimeBuffer<T>` or `iceoryx` zero-copy shared memory.
 
-$$
-\tau_{\text{cmd}}(t) = \tau_{ff} + K_p (q_{\text{des}} - q_{\text{local}}) + K_d (\dot{q}_{\text{des}} - \dot{q}_{\text{local}})
-$$
-
----
-
-## 4. Real-Time Linux (`PREEMPT_RT`) & ROS 2 Determinism
-
-Standard Ubuntu/Linux kernels and default ROS 2 configurations are **not** real-time safe (page faults, CPU frequency scaling, kernel RCU callbacks, and DDS dynamic heap allocations cause $5\text{–}50\text{ ms}$ latency spikes). To achieve $< 50\ \mu\text{s}$ worst-case wakeup latency on `x86_64` or `ARM64`:
-
-1. **Kernel & Boot Parameters:** Run a `PREEMPT_RT` patched kernel with boot flags `isolcpus=2,3 nohz_full=2,3 rcu_nocbs=2,3 irqaffinity=0,1 idle=poll processor.max_cstate=1`.
-2. **Process Memory Locking & Scheduling:** Inside the real-time control process startup:
-   * Call `mlockall(MCL_CURRENT | MCL_FUTURE)` so no page fault ever touches swap/disk.
-   * Pre-fault stack memory (`memset` a stack array before entering the loop).
-   * Pin the control thread to isolated core 2 (`pthread_setaffinity_np`) with `SCHED_FIFO` priority `80`.
-3. **Zero-Copy ROS 2 / `ros2_control` Rules:**
-   * All `controller_interface::ControllerInterface::update(const rclcpp::Time&, const rclcpp::Duration&)` methods must execute with **zero dynamic memory allocation**, zero blocking mutexes (`std::mutex::lock`), and zero `RCLCPP_INFO` console prints.
-   * Use `realtime_tools::RealtimeBuffer<T>` and `RealtimePublisher<T>` to bridge the `SCHED_FIFO` `ros2_control` loop to non-real-time DDS topics, or enable **Loaned Messages (`publish_loaned_message`)** over `iceoryx` shared memory.
-
----
-
-## 5. Multi-Sensor Calibration, VIO & Factor-Graph State Estimation
-
-### 5.1 Hardware Time Synchronization & Extrinsic Calibration
-Fusing a $60\text{ Hz}$ camera or $20\text{ Hz}$ lidar with a $400\text{ Hz}$ IMU fails if timestamps are assigned when USB/Ethernet packets arrive in user space ($2\text{–}15\text{ ms}$ variable OS jitter).
-* **Hardware Sync:** Drive the camera's hardware exposure trigger pin (`FSYNC`) directly from the IMU's data-ready divider or a shared MCU hardware timer so every image exposure midpoint $t_{\text{cam}}$ is stamped on the same crystal clock as the IMU samples.
-* **Spatiotemporal Calibration (`Kalibr`):** Jointly estimate the $SE(3)$ extrinsic transform $T_{\text{cam\_imu}}$, camera intrinsics, and residual hardware trigger time offset $t_d$ by exciting all 6 rotational/translational axes in front of an AprilGrid target.
-
-### 5.2 IMU Preintegration on Manifolds & Factor Graphs
-Instead of re-integrating thousands of $1\text{ kHz}$ IMU measurements every time a non-linear solver updates past keyframe poses $x_i, x_j$, **Forster's Manifold Preintegration** accumulates relative motion increments $(\Delta\tilde{R}_{ij}, \Delta\tilde{v}_{ij}, \Delta\tilde{p}_{ij})$ between keyframes *in the local frame $i$*, complete with first-order Jacobians with respect to IMU biases $\left(\frac{\partial \Delta R_{ij}}{\partial b_g}, \frac{\partial \Delta v_{ij}}{\partial b_a}, \dots\right)$ so bias updates require only a fast tangent-space correction:
+### 4.4 Hardware-Synchronized VIO & Manifold IMU Preintegration
 
 $$
 \Delta R_{ij}(b_g^+) \approx \Delta\tilde{R}_{ij} \exp\left(\frac{\partial \Delta\tilde{R}_{ij}}{\partial b_g} (b_g^+ - \bar{b}_g)\right)
@@ -143,51 +165,19 @@ $$
 
 ---
 
-## 6. Failure Modes, Pitfalls & Anti-Patterns
+## 5. Failure Modes, Pitfalls & Anti-Patterns
 
-1. **Rolling-Shutter Cameras in High-Vibration Robotic VIO:** Cheap rolling-shutter CMOS sensors expose scanlines sequentially over $10\text{–}30\text{ ms}$. Under angular vibration or agile motion, straight lines bend ("jello effect"), causing catastrophic VIO scale drift and divergence. **Always specify Global-Shutter monochrome/RGB sensors** (e.g., `OV9281`, `IMX296`) with hardware trigger pins for robotics.
-2. **Exciting Structural Modes with Step/Trapezoidal Velocity Profiles:** Trapezoidal velocity profiles have discontinuous acceleration (infinite jerk $\dddot{q} = \pm\infty$), acting as a broadband hammer blow that excites every structural flex mode in the robot arm. Always filter trajectories through a **3rd-order (S-curve, bounded jerk)** or **4th-order (bounded snap)** profile generator (`Ruckig`).
-3. **Kinematic Singularities in Task-Space Inverse Differential Kinematics:** Near wrist alignment ($q_5 \to 0$) or elbow full extension, $\det(J(q)J(q)^\top) \to 0$ and standard $J^\dagger = J^\top(JJ^\top)^{-1}$ commands infinite joint velocities. Always monitor the manipulability index $w(q) = \sqrt{\det(JJ^\top)}$ and smoothly ramp damping $\lambda^2(w)$ in Damped Least-Squares:
-
-$$
-\lambda^2(w) = \begin{cases} \lambda_0^2 \left(1 - \frac{w}{w_{\text{thresh}}}\right)^2 & w < w_{\text{thresh}} \\ 0 & w \ge w_{\text{thresh}} \end{cases}
-$$
+1. **Rolling-Shutter Cameras in High-Vibration VIO:** Always specify Global-Shutter CMOS sensors (`OV9281`, `IMX296`) hardware-triggered via `FSYNC` from the IMU clock.
+2. **Exciting Structural Modes with Step/Trapezoidal Velocity Profiles:** Always bound jerk ($\lvert\dddot{q}\rvert \le j_{\max}$) using 3rd-order S-curves (`Ruckig`).
+3. **Kinematic Singularities in Inverse Differential Kinematics:** Monitor manipulability $w(q) = \sqrt{\det(JJ^\top)}$ and smoothly ramp damping $\lambda^2(w)$ when $w < w_{\text{thresh}}$.
 
 ---
 
-## 7. Curated Learning Resources
-
-### Authoritative Textbooks & Seminal Papers
-* **Siciliano, B., Sciavicco, L., Villani, L., & Oriolo, G.** — *Robotics: Modelling, Planning and Control* (Springer, 2009). Comprehensive coverage of kinematics, Jacobians, operational-space control, and force control.
-* **LaValle, S. M.** — *Planning Algorithms* (Cambridge University Press, 2006; free online at `lavalle.pl/planning`). Configuration spaces, `PRM`, `RRT`, kinodynamic planning, and feedback motion planning.
-* **Khatib, O.** — *"A Unified Approach for Motion and Force Control of Robot Manipulators: The Operational Space Formulation"* (*IEEE J. Robotics and Automation*, 1987).
-* **Hogan, N.** — *"Impedance Control: An Approach to Manipulation (Parts I–III)"* (*ASME J. Dynamic Systems, Measurement, and Control*, 1985).
-* **Forster, C., Carlone, L., Dellaert, F., & Scaramuzza, D.** — *"On-Manifold Preintegration for Real-Time Visual-Inertial Odometry"* (*IEEE T-RO*, 2017).
-* **Wensing, P. M., et al.** — *"Optimization-Based Control for Dynamic Legged Robots"* (*IEEE T-RO*, 2024).
-
-### Open-Source Frameworks & Toolchains
-* **ROS 2 (`Jazzy` / `Kilted`) + `ros2_control` + `MoveIt 2`** — Industry standard robotics middleware, real-time controller manager, and manipulation planning framework.
-* **Pinocchio + Crocoddyl / Aligator** — Fast rigid-body dynamics, analytical derivatives, and contact-implicit Differential Dynamic Programming (DDP) / MPC.
-* **GTSAM (`C++` / Python) & OpenVINS / VINS-Fusion** — Factor-graph optimization, `iSAM2` incremental smoothing, and Visual-Inertial Odometry.
-* **Ruckig (`C++` / Python) & TOPP-RA** — Microsecond-fast online time-optimal jerk-constrained trajectory generation from arbitrary initial states.
-* **MuJoCo, Drake (`MIT/TRI`), & Isaac Lab** — High-fidelity contact simulation and Sim-to-Real policy/controller validation.
-
----
-
-## 8. Hands-On Lab & Milestone Gate
-
-### Lab 06: Operational-Space Impedance Control, `Ruckig` Jerk-Bounded Planning & Factor-Graph Odometry
-
-1. **Objective:** Implement a $1\text{ kHz}$ Operational-Space Cartesian Impedance Controller with null-space posture regulation on a redundant manipulator in MuJoCo/Drake (and `ros2_control`), paired with online `Ruckig` jerk-bounded trajectory generation and compliant contact interaction.
-2. **Tasks:**
-   * Configure a `ros2_control` `ControllerInterface` plugin in C++20 using `Pinocchio` to compute $M(q), h(q,\dot{q}), J(q), \Lambda(q)$ and dynamically consistent null-space projector $N(q) = I - J^\top \bar{J}^\top$.
-   * Drive the end-effector along a 3D trajectory generated online by `Ruckig` while an unexpected rigid wall intersects the path; verify smooth transitions from free-space tracking to compliant force regulation without force spikes.
-   * Run `cyclictest` alongside your `ros2_control` loop to verify zero heap allocations and bounded real-time wakeup jitter.
-3. **Quantitative Acceptance Criteria:**
+## 6. Tier 3 Production Lab & Milestone Gate (`Lab 06`)
 
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
-| **`ros2_control` Update Loop Determinism** | $p99.99$ loop period jitter $< 50\ \mu\text{s}$ at $1\text{ kHz}$ (`1000 μs` nominal); `0` page faults after init | `getrusage(RUSAGE_THREAD)` `ru_majflt`/`ru_minflt` check + latency histogram |
-| **Free-Space Cartesian Tracking Error** | RMS position error $< 1.5\text{ mm}$ at $1.0\text{ m/s}$ peak speed with bounded jerk $\lvert\dddot{x}\rvert \le 20\text{ m/s}^3$ | Closed-loop trajectory log in MuJoCo/Drake |
-| **Unplanned Rigid Contact Force Overshoot** | Peak contact force overshoot $< 15\%$ above steady-state impedance force $K_x \Delta x_{\text{penetration}}$ at $0.3\text{ m/s}$ impact | Simulated & bench force-plate collision test |
-| **Null-Space Decoupling Accuracy** | End-effector perturbation $< 0.2\text{ mm}$ during $\pm 0.5\text{ rad}$ null-space elbow posture reconfiguration | Dynamic consistency verification test |
+| **`ros2_control` Update Loop Determinism** | $p99.99$ loop period jitter $< 50\ \mu\text{s}$ at $1\text{ kHz}$; `0` page faults after init | `mlockall` + `cyclictest` / `getrusage` verification |
+| **Free-Space Cartesian Tracking Error** | RMS position error $< 1.5\text{ mm}$ at $1.0\text{ m/s}$ peak speed with bounded jerk $\lvert\dddot{x}\rvert \le 20\text{ m/s}^3$ | Online `Ruckig` S-curve trajectory generator |
+| **Unplanned Rigid Contact Force Overshoot** | Peak contact force overshoot $< 15\%$ above steady-state $K_x \Delta x$ at $0.3\text{ m/s}$ impact | Operational-Space Impedance wall-contact test |
+| **Null-Space Decoupling Accuracy** | End-effector perturbation $< 0.2\text{ mm}$ during $\pm 0.5\text{ rad}$ null-space elbow motion | Dynamically consistent projector $N^\top = I - J^\top \bar{J}^\top$ check |

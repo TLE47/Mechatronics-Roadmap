@@ -1,25 +1,93 @@
 # Track 07: Mechatronic Systems Engineering, SysID, Real-Time HIL & Production Qualification
 
+> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
 > **Prerequisites:** [Track 01: Electronics & Power](../01-electronics-and-power/README.md), [Track 04: Embedded & Real-Time](../04-embedded-and-realtime/README.md), [Track 05: Control & Estimation](../05-control-and-estimation/README.md)  
 > **Feeds Into:** [Track 08: Capstone Projects](../08-capstone-projects/README.md)  
 > **Core Principle:** A prototype that works once on a laboratory bench is not a product. Production mechatronics engineering closes the V-Model via frequency-domain System Identification, deterministic Hardware-in-the-Loop (HIL) fault injection, Independent Hardware Functional Safety (IEC 61508 / ISO 13849), and first-pass Electromagnetic Compatibility (EMC) & Design-for-Manufacturing (DFM) sign-off.
 
 ---
 
-## 1. Module Overview & System Context
+## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
 
-In complex cyber-physical products, the most catastrophic failures occur at subsystem boundaries under off-nominal conditions: a broken encoder wire causing full-torque motor runaway, a firmware regression inverting a current-sense sign on a hardware revision, or a $40\text{ kHz}$ inverter failing CISPR 11 radiated emissions by $18\text{ dB}$ two weeks before factory mass production.
+Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 08 (The Boss Capstone for Your Current Pass)**:
 
-This track covers the discipline that separates hobbyist prototypes from certified industrial, medical, aerospace, and automotive hardware:
-1. **The Mechatronic V-Model & Error/Power/Thermal Budgets:** Allocating quantitative system requirements across mechanical, electrical, thermal, and control domains before CAD or schematic capture begins.
-2. **Closed-Loop System Identification (SysID):** Multisine and swept-sine excitation, ETFE/Welch non-parametric FRFs, Subspace (`N4SID`) and Prediction-Error (`PEM`) parametric fitting, and friction/inertia identification.
-3. **Simulation-in-the-Loop (SIL) & Real-Time Hardware-in-the-Loop (HIL):** Testing unmodified production MCU binaries against real-time FPGA/CPU physics emulators with automated hardware fault injection (short-to-GND, open phase, sensor dropout).
-4. **Functional Safety Engineering:** Hazard Analysis & Risk Assessment (HARA), FMEA, Fault Tree Analysis (FTA), Safe Torque Off (STO), Dual-Channel Lockstep monitoring, and IEC 61508 (SIL) / ISO 13849 (PL) / ISO 26262 (ASIL) compliance.
-5. **EMC Pre-Compliance, Thermal/Vibration Environmental Testing & EOL Factory Calibration:** Designing automated End-of-Line (EOL) production test fixtures (`pogo-pin` ICT + dynamometer characterization).
+| Pass / Level | Previous Step in Pass | Current Track 07 Section | Next Linear Step in This Pass |
+| :--- | :--- | :--- | :--- |
+| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 06 (Tier 1)](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: 10-Step Safe Bring-Up Protocol & Single-Tone Sine Sweeps](#tier-1-beginner--intuitive) | [**🏆 Next in Pass 1 → Track 08 (Tier 1 Boss: Breakout 2-DOF Desktop Robot)**](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass) |
+| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 06 (Tier 2)](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Regen Braking Bus Clamps, CRC Watchdogs & HIL Faults](#tier-2-intermediate--applied) | [**🏆 Next in Pass 2 → Track 08 (Tier 2 Boss: Custom 4-Layer CAN Servo + LQR)**](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Software `if(fault) pwm=0` $\to$ Dual-Channel Hardware STO Cutoff](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [← Track 06 (Tier 3)](../06-robotics-and-autonomy/README.md#tier-3-advanced--production) | [§4 Tier 3: Schroeder Multisine Closed-Loop SysID & $<1\ \mu\text{s}$ Hardware STO](#tier-3-advanced--production) | [**🏆 Next in Pass 3 → Track 08 (Tier 3 Boss: Full Production Capstones I–IV)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass) |
 
 ---
 
-## 2. Mechatronic V-Model & Real-Time HIL Verification Architecture
+## Tier 1 (Beginner / Intuitive)
+
+> **Goal of Pass 1 (Track 07):** Adopt a disciplined **10-Step Hardware Bring-Up Protocol** so you never release magic smoke on power-up, wire a physical E-Stop switch + inline fuse, and measure your motor's actual inertia and friction using a simple single-tone sine sweep.
+
+### 1.1 The 10-Step Smoke-Free Hardware Bring-Up Checklist
+Never plug a fresh LiPo battery into a newly wired breadboard or PCB! Follow this exact sequence every time:
+1. **Visual & Polarity Inspection:** Check electrolytic capacitor stripes, IC pin-1 dots, and power connector polarity.
+2. **DMM Unpowered Continuity Beep Test:** Probe `VIN` to `GND`, `5V` to `GND`, and `3.3V` to `GND`. Any continuous beep = dead short!
+3. **Bench Supply Current-Limit Pre-Set:** Disconnect the circuit, set PSU to nominal voltage ($12.0\text{ V}$) and **Constant-Current limit $I_{\text{limit}} = 100\text{ mA}$**.
+4. **Logic-Only Power-Up (Motor Disconnected):** Enable PSU output; verify quiescent current matches datasheet ($\sim 30\text{–}60\text{ mA}$) and check `3.3V` rail with DMM.
+5. **Finger / Thermal Check:** Ensure no regulator or gate driver feels warm after 60 seconds.
+6. **Sensor Sanity Check Before Enabling Actuators:** Spin the shaft by hand and verify the encoder angle increments smoothly ($0 \to +2\pi$) in the **same positive direction** as positive motor torque! *(Inverted encoder sign turns negative feedback into positive feedback—the #1 cause of violent motor runaway on first enable!)*
+7. **Low-Current Open-Loop Alignment:** Set $I_{\text{limit}} = 0.5\text{ A}$ and apply a tiny $10\%$ PWM test pulse.
+8. **Hardware E-Stop Verification:** Press your physical inline E-Stop switch and confirm immediate power cutoff.
+9. **Closed-Loop Low-Gain Test:** Start with $K_p$ at $10\%$ of nominal and zero $K_i$.
+10. **Raise Current Limit & Log Telemetry:** Only raise PSU current limit once step responses are clean and damped.
+
+### 1.2 Single-Tone Sine Sweeps to Measure Inertia $J$ & Friction $b$
+Command a gentle sinusoidal torque $\tau(t) = A \sin(2\pi f t)$ at $f = 0.5, 1.0, 2.0, 5.0\text{ Hz}$ and record the resulting velocity amplitude $|\omega|$. Since $J\dot{\omega} + b\omega = \tau$, the ratio $|\omega|/A = \frac{1}{\sqrt{(2\pi f J)^2 + b^2}}$ lets you solve directly for $J$ and $b$!
+
+### ✅ Tier 1 Milestone Gate (`Track 07 · Pass 1`)
+* Execute the 10-Step Bring-Up Checklist on your Tier 1 hardware setup, verify positive encoder-to-torque sign matching, and extract empirical rotor inertia $J$ and viscous damping $b$ from a 4-frequency sine sweep.
+* **🏆 Next Linear Step in Pass 1:** [**Proceed to Track 08 (Tier 1 Boss Capstone: Breadboard/Breakout 2-DOF Desktop Robot) →**](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass)
+
+---
+
+## Tier 2 (Intermediate / Applied)
+
+> **Goal of Pass 2 (Track 07):** Protect your custom 4-layer PCBs from **Regenerative Braking Over-Voltage Spikes** using an active shunt brake chopper, enforce **CRC-16 + Window Watchdog timeouts** on every CAN-FD frame, and automate **Software/Hardware-in-the-Loop (SIL/HIL) Fault Injection**.
+
+### 2.1 Why Fast Braking Blows Up Power Supplies (Regenerative Bus Clamping)
+When a spinning robot link decelerates rapidly ($\tau \cdot \omega < 0$), the brushless motor becomes a generator and dumps its kinetic energy $\frac{1}{2}J\omega^2$ back into the DC bus capacitors:
+
+$$
+V_{\text{bus,peak}} = \sqrt{V_{\text{bus,nom}}^2 + \frac{2 \eta \left(\frac{1}{2}J\omega_0^2 - E_{\text{losses}}\right)}{C_{\text{bus}}}}
+$$
+
+Bench power supplies cannot sink reverse current (they have an output diode), so $V_{\text{bus}}$ spikes from $24\text{ V}$ to $>70\text{ V}$ in milliseconds, destroying your gate driver! **Solution:** Add a comparator/MCU-driven MOSFET + $10\ \Omega$ power resistor (**Shunt Brake Chopper**) that turns on whenever $V_{\text{bus}} > V_{\text{nom}} + 3\text{ V}$.
+
+### 2.2 Communication Loss Watchdogs, CRC-16 & Thermal $I^2 t$ Protection
+* **Host Heartbeat Timeout:** If no valid CRC-checked CAN-FD frame arrives within $5.0\text{ ms}$ (5 missed $1\text{ kHz}$ ticks), automatically transition the joint into damped zero-velocity braking (`Kd` only, `tau_ff = 0`).
+* **Software Thermal $I^2 t$ Integrator:** Even without a winding thermistor, integrate $\dot{T}_{\text{est}} = \frac{1}{C_{\text{th}}}\big(I_q^2 R_s - \frac{T_{\text{est}} - T_a}{R_{\text{th}}}\big)$ at $100\text{ Hz}$ and derate maximum current smoothly before copper insulation melts.
+
+### ✅ Tier 2 Milestone Gate (`Track 07 · Pass 2`)
+* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench and inject all three hardware faults (**Overcurrent Short $42\text{ A}$**, **Encoder SPI Wire Open**, and **DC Bus Overvoltage $64\text{ V}$**) to verify deterministic fault detection and gate shutdown.
+* **🏆 Next Linear Step in Pass 2:** [**Proceed to Track 08 (Tier 2 Boss Capstone: Custom 4-Layer CAN Servo + LQR/MuJoCo Twin) →**](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass)
+
+---
+
+## Bridging the Gap: Maker to Custom
+
+### From Software `if (fault) pwm = 0` Checks to $<1\ \mu\text{s}$ Dual-Channel Hardware Safe Torque Off (STO)
+
+* **Why Software `if (current > max) analogWrite(0)` Fails in Production:**
+  1. **Too Slow:** A dead phase-to-phase short across a $48\text{ V}$ bus with $L_s = 35\ \mu\text{H}$ ramps current at $\frac{dI}{dt} = \frac{48\text{ V}}{35\ \mu\text{H}} = 1.37\text{ A/\mu s}$. In a $1\text{ kHz}$ ($1000\ \mu\text{s}$) software loop, current would try to reach $>1,000\text{ A}$, exploding the MOSFETs in the first $10\ \mu\text{s}$!
+  2. **Single Point of Failure:** If the CPU hangs inside an infinite loop or suffers a stack overflow, software `if` checks never run.
+* **How Production Drives Guarantee Safety (IEC 61800-5-2 Dual-Channel Hardware STO):**
+  1. **Analog Comparator $\to$ Timer `BKIN` ($< 650\text{ ns}$):** An analog window comparator watching the Kelvin shunt amplifier output feeds directly into the `STM32` `TIM1_BKIN` hardware break pin, asynchronously tristating all 6 PWM outputs in silicon in **$< 1\ \mu\text{s}$** with zero CPU instructions!
+  2. **Dual Independent Channels:** Channel A cuts the isolated $12\text{ V}$ gate-driver power rail (`VCC_GATE`), while Channel B disables the gate-driver enable pin (`74LVC244` hardware buffer), achieving **SIL-3 / PLe** functional safety.
+
+---
+
+## Tier 3 (Advanced / Production)
+
+> **Goal of Pass 3 (Track 07):** Master industrial V-Model qualification: Root-Sum-Square (RSS) multi-domain error budgets, **Schroeder-Phased Multisine Closed-Loop System Identification** ($\text{CF} \approx 1.66$), automated HIL fault-injection matrices, and **IEC 61508 / ISO 13849 / IEC 61800-5-2 Dual-Channel Safe Torque Off (STO)**.
+> * [**🏆 Next Linear Step in Pass 3 → Track 08 (Tier 3 Mastery: Full Production Capstones I–IV)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass)
+
+### 4.1 Mechatronic V-Model & Real-Time HIL Verification Architecture
 
 ```mermaid
 flowchart TB
@@ -49,14 +117,7 @@ flowchart TB
     style RIGHT_V fill:#064e3b,stroke:#34d399,color:#ecfdf5
 ```
 
----
-
-## 3. System Error Budgeting & Multi-Domain Allocation
-
-### 3.1 Root-Sum-Square (RSS) vs. Worst-Case Error Budgets
-When designing a precision motion system (e.g., a $3\text{-axis}$ optical alignment stage requiring $\le 5\ \mu\text{m}$ total $3\sigma$ positioning uncertainty at the tool center point), errors from mechanics, thermal drift, sensors, and control tracking must be budgeted upfront:
-* **Systematic / Slowly Varying Biases ($E_{\text{sys}}$):** Sum linearly or calibrate via lookup tables (e.g., lead-screw pitch error, gravity sag).
-* **Uncorrelated Random / Zero-Mean Errors ($\sigma_i$):** Combine via **Root-Sum-Square (RSS)**:
+### 4.2 Root-Sum-Square (RSS) Multi-Domain Error Budgeting
 
 $$
 \sigma_{\text{total}} = \sqrt{\sigma_{\text{encoder}}^2 + \left(L_{\text{Abbe}}\sigma_{\theta,\text{pitch}}\right)^2 + \sigma_{\text{thermal}}^2 + \sigma_{\text{structural,vib}}^2 + \sigma_{\text{servo,tracking}}^2}
@@ -64,53 +125,27 @@ $$
 
 | Subsystem Source | Error Mechanism | Uncalibrated Magnitude | Mitigation Strategy | Residual Budgeted Contribution ($3\sigma$) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Mechanical Guideways** | Pitch/Yaw angular error $\times 80\text{ mm}$ Abbe offset | $35\ \mu\text{rad} \times 80\text{ mm} = 2.80\ \mu\text{m}$ | Reduce Abbe offset to $15\text{ mm}$; preload crossed-roller rails | $0.52\ \mu\text{m}$ |
-| **Thermal Growth** | Aluminum frame $\Delta T = \pm 2^\circ\text{C}$ over $150\text{ mm}$ | $23\times 10^{-6} \times 0.15 \times 2 = 6.90\ \mu\text{m}$ | Symmetric Invar/steel metrology loop + PT1000 real-time thermal compensation | $0.80\ \mu\text{m}$ |
-| **Linear Encoder** | Sub-divisional error (SDE) + scale accuracy | $\pm 3.0\ \mu\text{m}$ | Heydemann Lissajous ellipse calibration + laser interferometer LUT | $0.45\ \mu\text{m}$ |
-| **Control Loop** | Dynamic following error + DAC/PWM ripple | $4.5\ \mu\text{m}$ | Zero-phase acceleration/friction feedforward + $25\text{ kHz}$ current loop | $0.65\ \mu\text{m}$ |
+| **Mechanical Guideways** | Pitch/Yaw error $\times 80\text{ mm}$ Abbe offset | $2.80\ \mu\text{m}$ | Reduce Abbe offset to $15\text{ mm}$; preload crossed-roller rails | $0.52\ \mu\text{m}$ |
+| **Thermal Growth** | Aluminum frame $\Delta T = \pm 2^\circ\text{C}$ over $150\text{ mm}$ | $6.90\ \mu\text{m}$ | Symmetric metrology loop + PT1000 real-time compensation | $0.80\ \mu\text{m}$ |
+| **Linear Encoder** | Sub-divisional error (SDE) + scale accuracy | $\pm 3.0\ \mu\text{m}$ | Heydemann Lissajous calibration + interferometer LUT | $0.45\ \mu\text{m}$ |
+| **Control Loop** | Dynamic following error + DAC/PWM ripple | $4.5\ \mu\text{m}$ | Zero-phase acceleration/friction feedforward + $25\text{ kHz}$ FOC | $0.65\ \mu\text{m}$ |
 | **Total RSS ($3\sigma$)** | $\sqrt{\sum (3\sigma_i)^2}$ | **$15.1\ \mu\text{m}$ (FAIL)** | **Co-Designed System** | **$1.24\ \mu\text{m}$ (PASS $< 5.0\ \mu\text{m}$)** |
 
----
+### 4.3 Schroeder-Phased Multisine Closed-Loop System Identification (SysID)
 
-## 4. Frequency-Domain & Parametric System Identification (SysID)
-
-Never tune a high-performance controller solely by trial-and-error step responses on hardware! A single automated $30\text{-second}$ frequency-response measurement reveals the exact rigid-body inertia, viscous damping, loop transport delay, and every structural resonance and anti-resonance.
-
-### 4.1 Excitation Signal Design: Schroeder-Phased Multisine vs. Logarithmic Chirp
-A sum of $M$ harmonically related sinusoids $u(t) = \sum_{k=1}^M A_k \cos(\omega_k t + \phi_k)$ with random phases exhibits high peak-to-average spikes that saturate the actuator. Choosing **Schroeder Phases**:
+A sum of $M$ cosines $u(t) = \sum_{k=1}^M A_k \cos(\omega_k t + \phi_k)$ with naive zero phases ($\phi_k = 0$) adds constructively at $t=0$, creating a massive impulse spike ($\text{CF} = \sqrt{2M}$) that clips the actuator. Choosing **Schroeder Quadratic Phases**:
 
 $$
-\phi_k = -\frac{\pi k (k - 1)}{M}
+\phi_k = -\frac{\pi k (k - 1)}{M} \implies \text{Crest Factor } \text{CF} = \frac{\|u\|_\infty}{\|u\|_{\text{rms}}} \approx 1.45\text{–}1.66
 $$
 
-minimizes the **Crest Factor** ($\text{CF} = \frac{\|u\|_\infty}{\|u\|_{\text{rms}}} \approx 1.45\text{–}1.6$), packing maximum spectral energy into every frequency bin without tripping current or voltage saturation limits.
-
-### 4.2 Closed-Loop Identification (Sensitivity Method)
-Unstable or integrating plants (free-spinning motors, inverted pendulums, vertical gravity axes) cannot be excited in open loop without drifting into mechanical hard stops. Instead, close a simple low-gain stabilizing controller $C_0(s)$, inject excitation $r_{\text{exc}}(t)$ at the reference or actuator input ($u = C_0(r - y) + d_{\text{exc}}$), and identify the plant via cross-spectral ratios:
+Using external excitation $d_{\text{exc}}$ as an instrumental variable inside a stabilizing feedback loop $C_0(s)$ yields an unbiased plant estimate even in the presence of circulating sensor noise:
 
 $$
-\hat{P}(j\omega) = \frac{\hat{S}_{y d_{\text{exc}}}(j\omega)}{\hat{S}_{u d_{\text{exc}}}(j\omega)}
+\hat{P}(j\omega_k) = \frac{\hat{S}_{y d_{\text{exc}}}(j\omega_k)}{\hat{S}_{u d_{\text{exc}}}(j\omega_k)}, \qquad \gamma_{uy}^2(\omega) = \frac{|\hat{S}_{uy}(j\omega)|^2}{\hat{S}_{uu}(j\omega)\hat{S}_{yy}(j\omega)} \in [0, 1]
 $$
 
-Using the external excitation $d_{\text{exc}}$ as the instrumental variable prevents sensor noise $v(t)$ circulating around the feedback loop from biasing the plant estimate! Always plot the **Coherence Function**:
-
-$$
-\gamma_{uy}^2(\omega) = \frac{|\hat{S}_{uy}(j\omega)|^2}{\hat{S}_{uu}(j\omega)\hat{S}_{yy}(j\omega)} \in [0, 1]
-$$
-
-Any frequency band where $\gamma_{uy}^2(\omega) < 0.8$ indicates either poor SNR (anti-resonance notch), actuator saturation/backlash nonlinearity, or unmeasured external disturbances.
-
----
-
-## 5. Functional Safety (IEC 61508 / ISO 13849 / IEC 61800-5-2) & Hardware Interlocks
-
-Software running on the primary control MCU **cannot** be relied upon as the sole protection against catastrophic physical hazards (a cosmic-ray bit flip, stack overflow, or welded relay contact can freeze GPIO pins in an active state).
-
-### 5.1 Dual-Channel Safe Torque Off (STO) Architecture
-Per **IEC 61800-5-2**, **Safe Torque Off (STO)** removes power from the gate-driver stage in hardware so the motor cannot generate electromagnetic torque, achieving **SIL-3 (IEC 61508) / PLe, Category 3/4 (ISO 13849-1)**:
-* **Channel A:** Hardware Emergency-Stop / Safety Relay cuts the isolated gate-driver high-side/low-side power supply (`VCC_GATE_12V`).
-* **Channel B:** Independent optical/digital isolator asserts the hardware `DISABLE` / `BKIN` pin on the gate driver IC *and* gates the 6 PWM lines via a dedicated hardware buffer (`74LVC244`) with diagnostic readback (`STO_FB_A`, `STO_FB_B`) monitored by both the MCU and safety supervisor.
-* **Cross-Monitoring & Pulse Testing:** Both channels are periodically pulse-tested ($100\ \mu\text{s}$ dark pulses) to detect latent "stuck-high" faults (increasing **Diagnostic Coverage $\text{DC}_{\text{avg}} \ge 99\%$**).
+### 4.4 Functional Safety State Machine & Dual-Channel Safe Torque Off (STO)
 
 ```mermaid
 stateDiagram-v2
@@ -139,50 +174,19 @@ stateDiagram-v2
 
 ---
 
-## 6. Failure Modes, Pitfalls & Anti-Patterns
+## 5. Failure Modes, Pitfalls & Anti-Patterns
 
-1. **Braking Regenerative Over-Voltage Destroying the DC Bus:** When a high-inertia robot axis or mobile base decelerates rapidly ($P_{\text{mech}} = \tau \omega < 0$), the PMSM acts as a 3-phase generator, pumping kinetic energy $\frac{1}{2}J\omega^2$ back through the inverter into the DC bus capacitors:
-
-$$
-V_{\text{bus,peak}} = \sqrt{V_{\text{bus,nom}}^2 + \frac{2 \eta \left(\frac{1}{2}J\omega_0^2 - E_{\text{losses}}\right)}{C_{\text{bus}}}}
-$$
-
-   If $V_{\text{bus}}$ is powered by a bench power supply (which cannot sink reverse current) or a BMS that disconnects on over-voltage, $V_{\text{bus}}$ skyrockets past $100\text{ V}$ in milliseconds! Always include an active ** Hysteretic Brake Chopper MOSFET + Power Resistor** triggered whenever $V_{\text{bus}} > V_{\text{nom}} + 4\text{ V}$.
-2. **Testing Fault Handling Only in Software Simulation:** Simulating an encoder dropout in Python does not test whether the MCU's SPI DMA peripheral hangs waiting for clock edges or whether the gate driver's hardware `DESAT` comparator trips cleanly under load. Use a physical **HIL Fault Injection Switch Matrix** (reed relays / solid-state FET switches controlled by the test runner) to physically open/short sensor and power pins while the target runs.
-3. **Ignoring Cable Shield Termination ($360^\circ$ Gland vs. "Pigtail" Wire):** Twisting a motor or encoder cable shield into a $5\text{ cm}$ "pigtail" wire to connect it to chassis ground adds $\sim 50\text{ nH}$ of series inductance, rendering the shield completely ineffective above $5\text{ MHz}$ and failing radiated emissions. Terminate shielded cables with **$360^\circ$ metallic EMC cable glands** or shielded connector backshells bonded directly to the unpainted metal enclosure wall.
+1. **Braking Regenerative Over-Voltage Destroying the DC Bus:** Always include an active hysteretic brake chopper MOSFET + power resistor triggered whenever $V_{\text{bus}} > V_{\text{nom}} + 4\text{ V}$.
+2. **Testing Fault Handling Only in Software Simulation:** Use a physical HIL fault-injection switch matrix to open/short sensor and power lines under load.
+3. **Ignoring Cable Shield Termination ($360^\circ$ Gland vs. Pigtail Wire):** Terminate shielded motor/encoder cables with $360^\circ$ metallic EMC glands or connector backshells, never a $5\text{ cm}$ twisted pigtail ($50\text{ nH}$ series inductance).
 
 ---
 
-## 7. Curated Learning Resources
-
-### Authoritative Textbooks & Standards
-* **Pintelon, R., & Schoukens, J.** — *System Identification: A Frequency Domain Approach* (2nd ed., Wiley-IEEE Press, 2012) & **Ljung, L.** — *System Identification: Theory for the User* (2nd ed., Prentice Hall, 1999).
-* **Isermann, R.** — *Fault-Diagnosis Systems: An Introduction from Fault Detection to Fault Tolerance* (Springer, 2006) & *Mechatronic Systems: Fundamentals* (Springer, 2005).
-* **IEC 61508 (Parts 1–7)** — *Functional Safety of Electrical/Electronic/Programmable Electronic Safety-Related Systems*.
-* **ISO 13849-1 & IEC 61800-5-2** — *Safety of Machinery: Safety-Related Parts of Control Systems* & *Adjustable Speed Electrical Power Drive Systems — Safety Requirements (STO, SS1, SS2, SLS)*.
-* **ISO 10218-1/2 & ISO/TS 15066** — *Robots and Robotic Devices — Safety Requirements for Industrial and Collaborative Robots* (biomechanical quasi-static and transient contact force/pressure limits).
-
-### Open-Source Toolchains
-* **`pytest` + `hypothesis` + Saleae / `sigrok-cli` + `PyVISA`** — Automated hardware-in-the-loop test runners driving programmable power supplies, oscilloscopes, and fault-injection boards via SCPI.
-* **PlotJuggler & Foxglove Studio** — High-rate time-series telemetry visualization, live FFT analysis, and ROS 2 / MCAP log inspection.
-* **Renode & QEMU** — Instruction-set simulation of full ARM Cortex-M/R/A SoCs and peripherals for deterministic CI/CD firmware verification.
-
----
-
-## 8. Hands-On Lab & Milestone Gate
-
-### Lab 07: Closed-Loop Frequency SysID, Automated HIL Fault-Injection Rig & STO Verification
-
-1. **Objective:** Build an automated HIL + physical SysID test bench that identifies the empirical Bode plot of a mechatronic actuator from $1\text{ Hz}$ to $2\text{ kHz}$ and executes a 12-case hardware fault-injection safety suite.
-2. **Tasks:**
-   * Inject a 20-second Schroeder-phased multisine into the closed-loop actuator, compute the empirical FRF $\hat{P}(j\omega)$ and coherence $\gamma^2(\omega)$, and overlay against the theoretical 4-state electromechanical model.
-   * Build a microcontroller-driven HIL fault-injection harness capable of triggering: (a) encoder `SPI_MISO` stuck-low/CRC corruption, (b) DC bus over-voltage ($V_{\text{bus}} > 56\text{ V}$), (c) phase-to-phase over-current comparator trip, and (d) primary task infinite-loop deadlock.
-   * Measure hardware fault-to-STO-latch response times on an oscilloscope and generate an automated pass/fail test report via `pytest`.
-3. **Quantitative Acceptance Criteria:**
+## 6. Tier 3 Production Lab & Milestone Gate (`Lab 07`)
 
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
-| **SysID Model-to-Hardware Correlation** | Magnitude error $< 1.5\text{ dB}$ and phase error $< 8^\circ$ across $1\text{ Hz} - 1\text{ kHz}$ (where $\gamma^2(\omega) \ge 0.90$) | Empirical Welch FRF vs. parametric state-space model overlay |
-| **Hardware Over-Current to Gate Turn-Off** | Latency $< 1.0\ \mu\text{s}$ from shunt threshold exceedance to all 6 gate-drive outputs low | Oscilloscope capture of shunt fault injection vs. `HO/LO` gate pins |
-| **Encoder CRC / Wire-Break Fault Reaction** | Fault detected within $2$ control cycles ($\le 80\ \mu\text{s}$); zero unintended torque impulse ($\lvert\Delta\tau\rvert < 0.05\text{ N}\cdot\text{m}$) | HIL open-circuit relay injection during $1,000\text{ RPM}$ loaded operation |
-| **Regenerative Braking Clamp Accuracy** | Peak DC bus rise $\Delta V_{\text{bus}} < 4.5\text{ V}$ during emergency deceleration from max rated speed with full inertia disk | High-voltage differential probe capture on `V_BUS` and brake resistor |
+| **SysID Model-to-Hardware Correlation** | Magnitude error $< 1.5\text{ dB}$ across $5\text{ Hz} - 500\text{ Hz}$ with $\text{CF} \approx 1.66$ | Interactive **Tab 7: Schroeder Multisine SysID Simulator** |
+| **Hardware Over-Current to Gate Turn-Off** | Latency $< 1.0\ \mu\text{s}$ ($0.65\ \mu\text{s}$ achieved) from shunt fault to all 6 gates High-Z | Interactive **Tab 5: Dual-Channel Hardware STO Simulator** |
+| **Encoder CRC / Wire-Break Fault Reaction** | Fault detected within $\le 2$ cycles ($\le 80\ \mu\text{s}$); zero unintended torque spike | Interactive **Tab 5: Encoder SPI Wire Open Fault Injection** |
+| **Regenerative Braking Clamp Accuracy** | Peak DC bus rise $\Delta V_{\text{bus}} < 4.5\text{ V}$ during emergency stop | Active shunt brake chopper verification |
