@@ -82,7 +82,11 @@ For $m$ independent periodic tasks $\tau_i = (C_i, T_i, D_i)$ with worst-case ex
   * **Liu & Layland Sufficient Bound:** $U \le m(2^{1/m} - 1) \xrightarrow{m\to\infty} \ln 2 \approx 0.693$.
   * **Hyperbolic Bound (Bini et al.):** $\prod_{i=1}^m \left(\frac{C_i}{T_i} + 1\right) \le 2$.
   * **Exact Response-Time Analysis (RTA — Necessary & Sufficient with Blocking $B_i$):** For each task $i$, iterate to fixed point:
-    $$R_i^{(k+1)} = C_i + B_i + \sum_{j \in hp(i)} \left\lceil \frac{R_i^{(k)}}{T_j} \right\rceil C_j \le D_i$$
+
+$$
+R_i^{(k+1)} = C_i + B_i + \sum_{j \in hp(i)} \left\lceil \frac{R_i^{(k)}}{T_j} \right\rceil C_j \le D_i
+$$
+
     where $hp(i)$ is the set of tasks with higher priority than $i$, and $B_i$ is the maximum blocking time due to lower-priority tasks holding a shared resource under **Priority Inheritance Protocol (PIP)** or **Priority Ceiling Protocol (PCP)**.
 
 ### 4.2 Wait-Free Single-Producer Single-Consumer (SPSC) Ring Buffer or Seqlock in C++20
@@ -146,7 +150,11 @@ private:
 When control loop rates exceed $50\text{ kHz}$ (e.g., GaN inverters switching at $200\text{ kHz}$, voice-coil nanometric lithography stages, or 16-axis synchronized motor controllers), sequential CPU instruction execution hits a wall. Offloading the inner loop to an FPGA (`Xilinx Zynq-7000 / UltraScale+`, `Lattice ECP5`, or `Intel Cyclone V`) unlocks **true cycle-accurate hardware parallelism**:
 * **Sinc³ Digital Decimation Filter for Isolated $\Sigma\Delta$ Current Modulators (`AMC1306`):**
   A $20\text{ MHz}$ 1-bit $\Sigma\Delta$ bitstream filtered in FPGA RTL with a 3rd-order Cascaded Integrator-Comb ($\text{CIC} / \text{sinc}^3$) filter:
-  $$H(z) = \left(\frac{1 - z^{-OSR}}{1 - z^{-1}}\right)^3$$
+
+$$
+H(z) = \left(\frac{1 - z^{-OSR}}{1 - z^{-1}}\right)^3
+$$
+
   At oversampling ratio $OSR = 128$, this delivers a clean 16-bit current measurement every $6.4\ \mu\text{s}$ ($156.25\text{ kHz}$) with zero CPU load, alongside a dedicated parallel hardware window comparator (`OSR = 16`) that trips Safe Torque Off in **$< 800\text{ ns}$** on short-circuit fault!
 
 ---

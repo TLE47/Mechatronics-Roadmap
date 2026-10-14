@@ -134,7 +134,10 @@ Build a 3-DOF (Hip Ab/Ad, Hip Flex/Ext, Knee Flex/Ext) Quasi-Direct-Drive roboti
   * **Proprioceptive Contact Estimator:** Fuse leg Jacobian torque residuals $\hat{f}_{\text{foot}} = (J_{\text{foot}}^\top)^{-1}(\tau_m - M(q)\ddot{q} - h(q,\dot{q}))$ with IMU impact acceleration via a Kalman/Bayesian contact probability filter (no fragile foot microswitch required!).
   * **Stance Phase Control:** $200\text{ Hz}$ Ground Reaction Force (GRF) Linear MPC enforcing friction pyramid $\lvert f_x\rvert \le \mu f_z$, $f_{z,\min} \le f_z \le f_{z,\max}$, mapped to joint torques via $\tau_{\text{stance}} = -J(q)^\top f_{\text{GRF}}^*$.
   * **Flight Phase Control:** $1\text{ kHz}$ Operational-Space foot placement controller using Raibert's neutral-point heuristic + capture-point feedback:
-    $$p_{\text{foot,touchdown}} = p_{\text{hip}} + \frac{T_{\text{stance}}}{2} v_{\text{com}} + k_v (v_{\text{com}} - v_{\text{des}})$$
+
+$$
+p_{\text{foot,touchdown}} = p_{\text{hip}} + \frac{T_{\text{stance}}}{2} v_{\text{com}} + k_v (v_{\text{com}} - v_{\text{des}})
+$$
 
 ### 4.2 Quantitative Sign-Off Gate
 

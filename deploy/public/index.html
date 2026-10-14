@@ -4,10 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MechaLab — Interactive Mechatronics & Robotics Workbench</title>
-  <!-- KaTeX CSS & JS for Native LaTeX Mathematical Typesetting -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <!-- MathJax 3 — the same TeX engine GitHub uses to render Markdown math, so a formula
+       typesets identically in the repo and here (one renderer, no dialect divergence). -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        processEnvironments: true,
+        tags: 'none'
+      },
+      options: {
+        // 'mjx-container' must be skipped: MathJax's own assistive-MathML output lives inside
+        // it, and re-typesetting it would render every formula a second time.
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option', 'mjx-container'],
+        enableMenu: true
+      },
+      chtml: { matchFontHeight: true },
+      startup: { typeset: false }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <!-- Mermaid.js for System Architecture & State Diagrams -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
@@ -906,22 +924,27 @@ flowchart LR
   <script>
     mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 
-    function renderAllMath() {
-      if (window.renderMathInElement) {
-        window.renderMathInElement(document.body, {
-          delimiters: [
-            { left: '$$', right: '$$', display: true },
-            { left: '$', right: '$', display: false }
-          ],
-          throwOnError: false
-        });
-      }
+    // MathJax 3 typesetting. Every call is queued behind the previous one: two overlapping
+    // typesetPromise() calls over the same region each render the math, so the page would
+    // show every formula twice. MathJax skips math it has already typeset, so a call that
+    // follows a completed pass is a cheap no-op. Do NOT use MathJax.typesetClear() here --
+    // it restores the original TeX without removing the rendered output, which duplicates
+    // every formula on the next typeset.
+    let mathTypesetQueue = Promise.resolve();
+    function renderAllMath(scope) {
+      if (!window.MathJax || !MathJax.startup || !MathJax.startup.promise) return mathTypesetQueue;
+      mathTypesetQueue = mathTypesetQueue
+        .then(() => MathJax.startup.promise)
+        .then(() => MathJax.typesetPromise(scope ? [scope] : undefined))
+        .catch(err => console.warn('MathJax typeset failed:', err));
+      return mathTypesetQueue;
     }
 
     function switchTab(tabId, btnEl) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('nav.tabs button').forEach(el => el.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
+      const pane = document.getElementById(tabId);
+      pane.classList.add('active');
       btnEl.classList.add('active');
       if (tabId === 'tab-bode') updateBode();
       if (tabId === 'tab-foc') updateFOC();
@@ -929,7 +952,7 @@ flowchart LR
       if (tabId === 'tab-cadpcb') updateCadAndPcb();
       if (tabId === 'tab-sysid') updateSysId();
       if (tabId === 'tab-eskf') updateEskfAndSeqLock();
-      renderAllMath();
+      renderAllMath(pane);
     }
 
     // =========================================================================

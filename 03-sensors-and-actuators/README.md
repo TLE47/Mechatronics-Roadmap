@@ -86,16 +86,23 @@ flowchart LR
 #### Velocity Estimation: Never Use Naive Finite Differences!
 Computing velocity via $\hat{\omega}_k = \frac{\theta_k - \theta_{k-1}}{T_s}$ amplifies encoder quantization noise $\Delta q = \frac{2\pi}{2^N}$ by $1/T_s$. At $f_s = 25\text{ kHz}$ ($T_s = 40\ \mu\text{s}$) with a 14-bit encoder ($\Delta q = 3.83\times 10^{-4}\text{ rad}$), a single-count toggle produces a velocity spike of **$\pm 9.6\text{ rad/s}$ ($91\text{ RPM}$)**!
 * **Production Solution — Angle Tracking Observer (ATO / Type-II Phase-Locked Loop):**
-  $$\begin{aligned}
-  e_\theta &= \text{wrap}_{[-\pi,\pi)}(\theta_{\text{meas}} - \hat{\theta}) = \text{atan2}(\sin(\theta_{\text{meas}} - \hat{\theta}), \cos(\theta_{\text{meas}} - \hat{\theta})) \\
-  \dot{\hat{\omega}} &= K_i e_\theta \\
-  \dot{\hat{\theta}} &= \hat{\omega} + K_p e_\theta
-  \end{aligned}$$
+
+$$
+\begin{aligned}
+e_\theta &= \text{wrap}_{[-\pi,\pi)}(\theta_{\text{meas}} - \hat{\theta}) = \text{atan2}(\sin(\theta_{\text{meas}} - \hat{\theta}), \cos(\theta_{\text{meas}} - \hat{\theta})) \\
+\dot{\hat{\omega}} &= K_i e_\theta \\
+\dot{\hat{\theta}} &= \hat{\omega} + K_p e_\theta
+\end{aligned}
+$$
+
   Selecting $K_p = 2\zeta\omega_n$ and $K_i = \omega_n^2$ provides zero-lag tracking for constant velocities (Type-II system) while filtering quantization noise above $\omega_n$.
 
 ### 3.3 MEMS Inertial Measurement Units (IMUs) & Allan Variance
 A 6-DOF MEMS IMU measurement model includes deterministic scale-factor/cross-axis matrix $M$, misalignment $R_{\text{mis}}$, bias $b(t)$, $g$-sensitivity (for gyros), and stochastic noise:
-$$\tilde{\omega}(t) = M_g \omega_{\text{true}}(t) + b_g(t) + G_g a_{\text{true}}(t) + \eta_g(t)$$
+
+$$
+\tilde{\omega}(t) = M_g \omega_{\text{true}}(t) + b_g(t) + G_g a_{\text{true}}(t) + \eta_g(t)
+$$
 
 The **Allan Deviation $\sigma_A(\tau)$** (log-log plot of cluster variance vs. averaging time $\tau$ from a static $12\text{-hour}$ temperature-controlled log) separates the underlying stochastic processes required to populate your Kalman Filter covariance matrices ($Q, R$):
 
@@ -116,33 +123,67 @@ The **Allan Deviation $\sigma_A(\tau)$** (log-log plot of cluster variance vs. a
 A 3-phase Permanent Magnet Synchronous Motor has phase voltages $v_{abc} = [v_a, v_b, v_c]^\top$ and currents $i_{abc} = [i_a, i_b, i_c]^\top$ (with $i_a + i_b + i_c = 0$ for an isolated neutral star winding).
 
 1. **Amplitude-Invariant Clarke Transform ($\{a,b,c\} \to \{\alpha,\beta\}$ Stationary Frame):**
-   $$\begin{bmatrix} i_\alpha \\ i_\beta \end{bmatrix} = \frac{2}{3}\begin{bmatrix} 1 & -\frac{1}{2} & -\frac{1}{2} \\ 0 & \frac{\sqrt{3}}{2} & -\frac{\sqrt{3}}{2} \end{bmatrix}\begin{bmatrix} i_a \\ i_b \\ i_c \end{bmatrix} = \begin{bmatrix} i_a \\ \frac{1}{\sqrt{3}}(i_a + 2i_b) \end{bmatrix}$$
+
+$$
+\begin{bmatrix} i_\alpha \\ i_\beta \end{bmatrix} = \frac{2}{3}\begin{bmatrix} 1 & -\frac{1}{2} & -\frac{1}{2} \\ 0 & \frac{\sqrt{3}}{2} & -\frac{\sqrt{3}}{2} \end{bmatrix}\begin{bmatrix} i_a \\ i_b \\ i_c \end{bmatrix} = \begin{bmatrix} i_a \\ \frac{1}{\sqrt{3}}(i_a + 2i_b) \end{bmatrix}
+$$
+
 2. **Park Transform ($\{\alpha,\beta\} \to \{d,q\}$ Rotor Flux Frame at Electrical Angle $\theta_e = N_p \theta_m$):**
-   $$\begin{bmatrix} i_d \\ i_q \end{bmatrix} = \begin{bmatrix} \cos\theta_e & \sin\theta_e \\ -\sin\theta_e & \cos\theta_e \end{bmatrix}\begin{bmatrix} i_\alpha \\ i_\beta \end{bmatrix}$$
+
+$$
+\begin{bmatrix} i_d \\ i_q \end{bmatrix} = \begin{bmatrix} \cos\theta_e & \sin\theta_e \\ -\sin\theta_e & \cos\theta_e \end{bmatrix}\begin{bmatrix} i_\alpha \\ i_\beta \end{bmatrix}
+$$
+
 3. **Stator Voltage Equations in Synchronous $d$-$q$ Frame:**
-   $$\begin{aligned}
-   v_d &= R_s i_d + L_d \frac{di_d}{dt} - \underbrace{\omega_e L_q i_q}_{\text{Cross-Coupling}} \\
-   v_q &= R_s i_q + L_q \frac{di_q}{dt} + \underbrace{\omega_e L_d i_d + \omega_e \lambda_{pm}}_{\text{Cross-Coupling + Back-EMF}}
-   \end{aligned}$$
+
+$$
+\begin{aligned}
+v_d &= R_s i_d + L_d \frac{di_d}{dt} - \underbrace{\omega_e L_q i_q}_{\text{Cross-Coupling}} \\
+v_q &= R_s i_q + L_q \frac{di_q}{dt} + \underbrace{\omega_e L_d i_d + \omega_e \lambda_{pm}}_{\text{Cross-Coupling + Back-EMF}}
+\end{aligned}
+$$
+
 4. **Electromagnetic Torque Equation:**
-   $$\tau_e = \frac{3}{2} N_p \Big(\underbrace{\lambda_{pm} i_q}_{\text{Alignment Torque}} + \underbrace{(L_d - L_q) i_d i_q}_{\text{Reluctance Torque}}\Big)$$
+
+$$
+\tau_e = \frac{3}{2} N_p \Big(\underbrace{\lambda_{pm} i_q}_{\text{Alignment Torque}} + \underbrace{(L_d - L_q) i_d i_q}_{\text{Reluctance Torque}}\Big)
+$$
+
    * For a **Surface-Mounted PMSM (SPMSM)**, $L_d = L_q = L_s$, so reluctance torque vanishes and **Maximum Torque Per Ampere (MTPA)** simply sets $i_d^* = 0$ and $i_q^* = \frac{\tau_{\text{ref}}}{\frac{3}{2} N_p \lambda_{pm}}$.
    * For an **Interior PMSM (IPMSM)** ($L_q > L_d$), setting a negative $i_d^* < 0$ harvests reluctance torque along the MTPA trajectory:
-     $$i_d^* = -\frac{\lambda_{pm}}{4(L_q - L_d)} - \sqrt{\frac{\lambda_{pm}^2}{16(L_q - L_d)^2} + \frac{i_q^{*2}}{2}}$$
+
+$$
+i_d^* = -\frac{\lambda_{pm}}{4(L_q - L_d)} - \sqrt{\frac{\lambda_{pm}^2}{16(L_q - L_d)^2} + \frac{i_q^{*2}}{2}}
+$$
 
 ### 4.2 Pole-Zero Cancellation Current PI Tuning & Feedforward Decoupling
 Once the nonlinear cross-coupling terms are cancelled via feedforward:
-$$v_d^* = u_d - \hat{\omega}_e \hat{L}_q i_q, \qquad v_q^* = u_q + \hat{\omega}_e (\hat{L}_d i_d + \hat{\lambda}_{pm})$$
+
+$$
+v_d^* = u_d - \hat{\omega}_e \hat{L}_q i_q, \qquad v_q^* = u_q + \hat{\omega}_e (\hat{L}_d i_d + \hat{\lambda}_{pm})
+$$
+
 the remaining $d$ and $q$ plants are pure decoupled first-order RL circuits $G_{d,q}(s) = \frac{1}{L_{d,q} s + R_s}$. Choosing the PI gains via internal model pole-zero cancellation for target current bandwidth $\omega_{bw,i}$ ($\text{rad/s}$, typically $\omega_{bw,i} \le 2\pi \cdot \frac{f_{sw}}{10}$):
-$$K_{p,d} = L_d \omega_{bw,i}, \quad K_{i,d} = R_s \omega_{bw,i}, \qquad K_{p,q} = L_q \omega_{bw,i}, \quad K_{i,q} = R_s \omega_{bw,i}$$
+
+$$
+K_{p,d} = L_d \omega_{bw,i}, \quad K_{i,d} = R_s \omega_{bw,i}, \qquad K_{p,q} = L_q \omega_{bw,i}, \quad K_{i,q} = R_s \omega_{bw,i}
+$$
+
 yields an exact first-order closed-loop response $\frac{I_{d,q}(s)}{I_{d,q}^*(s)} = \frac{\omega_{bw,i}}{s + \omega_{bw,i}}$!
 
 ### 4.3 Space Vector PWM (SVPWM) & Circular Voltage Limiting
 Standard sinusoidal PWM saturates at phase peak voltage $V_{\max,\text{SPWM}} = \frac{V_{\text{bus}}}{2}$. **Space Vector PWM** (or equivalently, Min-Max Zero-Sequence Injection) shifts the neutral-point common-mode voltage, expanding the linear modulation hexagon inscribed circle by $\frac{2}{\sqrt{3}} \approx 1.1547$ (+15.5% more speed/voltage before overmodulation):
-$$V_{\max,\text{SVPWM}} = \sqrt{v_d^{*2} + v_q^{*2}} \le \frac{V_{\text{bus}}}{\sqrt{3}} \approx 0.57735 \, V_{\text{bus}}$$
+
+$$
+V_{\max,\text{SVPWM}} = \sqrt{v_d^{*2} + v_q^{*2}} \le \frac{V_{\text{bus}}}{\sqrt{3}} \approx 0.57735 \, V_{\text{bus}}
+$$
+
 **Fast Embedded Min-Max SVPWM Implementation (Zero Trigonometry):**
 Given inverse Clarke phase voltages $v_a^*, v_b^*, v_c^*$ normalized by $V_{\text{bus}}$:
-$$v_{\text{offset}} = -\frac{1}{2}\big(\max(v_a^*, v_b^*, v_c^*) + \min(v_a^*, v_b^*, v_c^*)\big), \qquad d_{a,b,c} = \frac{1}{2} + \frac{v_{a,b,c}^* + v_{\text{offset}}}{V_{\text{bus}}} \in [0, 1]$$
+
+$$
+v_{\text{offset}} = -\frac{1}{2}\big(\max(v_a^*, v_b^*, v_c^*) + \min(v_a^*, v_b^*, v_c^*)\big), \qquad d_{a,b,c} = \frac{1}{2} + \frac{v_{a,b,c}^* + v_{\text{offset}}}{V_{\text{bus}}} \in [0, 1]
+$$
 
 ---
 

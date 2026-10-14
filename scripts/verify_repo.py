@@ -89,7 +89,7 @@ FENCE_RE = re.compile(r"^```(\w*)\s*$", re.MULTILINE)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 
 # LaTeX commands that MUST appear inside math delimiters. Emitting one of these outside
-# `$...$` / `$$...$$` produces the GitHub/KaTeX render error "\cmd is only supported in math mode".
+# `$...$` / `$$...$$` produces the GitHub (MathJax) render error "\cmd is only supported in math mode".
 LATEX_CMD_RE = re.compile(
     r"\\(?:"
     r"cdot|cdots|vdots|ddots|frac|dfrac|tfrac|sqrt|text|textbf|textit|textsf|textrm|mathrm|mathbf|mathit|mathbb|mathcal|mathfrak|boldsymbol|operatorname"
@@ -223,8 +223,16 @@ def find_currency_math_issues(raw: str, rel_path: str, lineno: int) -> list[str]
     A price written as `~$500 - $800 USD` is parsed by GitHub as an inline math span
     (`500 - `) followed by stray text, which either renders as nonsense or errors.
     Prices must be escaped as `\$500`. Legitimate math such as `$30\text{ A}$` is unaffected.
+
+    The opposite mistake is also rejected: wrapping escaped prices in a math span
+    (`$\$350 - \$420$`) renders as nothing useful, so the escapes must stand alone.
     """
     issues: list[str] = []
+    for match in re.finditer(r"\$\\\$", raw):
+        issues.append(
+            f"{rel_path}:{lineno}: currency wrapped in a math span '{raw[match.start():match.start() + 16]}...' "
+            f"- write \\$350 without the surrounding $...$"
+        )
     dollars: list[int] = []
     i = 0
     n = len(raw)
@@ -251,6 +259,94 @@ def find_currency_math_issues(raw: str, rel_path: str, lineno: int) -> list[str]
                 f"{rel_path}:{lineno}: bare '$' parsed as inline math in '{raw[open_pos:close_pos + 1]}' "
                 f"- escape currency as \\$"
             )
+
+    return issues
+
+
+def unescaped_display_positions(line: str) -> list[int]:
+    """Column offsets of unescaped `$$` on a line (`\$` currency is skipped)."""
+    positions: list[int] = []
+    i = 0
+    while i < len(line):
+        if line[i] == "\\":
+            i += 2
+            continue
+        if line.startswith("$$", i):
+            positions.append(i)
+            i += 2
+            continue
+        i += 1
+    return positions
+
+
+def find_display_math_layout_issues(text: str, rel_path: str) -> list[str]:
+    """Reject display-math layouts that GitHub's MathJax silently leaves as literal text.
+
+    Verified against GitHub's `/markdown` API: a `$$...$$` block renders only when the
+    delimiters stand alone at column 0 with a blank line on both sides. Each of these
+    falls back to printing `$$` and the raw LaTeX:
+
+    1. a delimiter glued to content (`$$\begin{aligned}`, `...\end{aligned}$$`);
+    2. an indented block inside a list item, once that item's text contains inline math;
+    3. no blank line before the opener, so the block cannot start its own paragraph;
+    4. no blank line after the closer, so the next line is absorbed into the block.
+    """
+    issues: list[str] = []
+    lines = text.splitlines()
+    in_fence = False
+    i = 0
+    while i < len(lines):
+        raw = lines[i]
+        if raw.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+            i += 1
+            continue
+        if in_fence:
+            i += 1
+            continue
+
+        positions = unescaped_display_positions(raw)
+        if not positions:
+            i += 1
+            continue
+
+        if raw.strip() != "$$":
+            issues.append(
+                f"{rel_path}:{i + 1}: display math '$$' is glued to content "
+                f"- put '$$' alone on its own line, with a blank line before and after"
+            )
+        elif raw != "$$":
+            issues.append(
+                f"{rel_path}:{i + 1}: display math '$$' is indented inside a list item; a block "
+                f"whose item text also contains inline math does not render on GitHub"
+            )
+        if i > 0 and lines[i - 1].strip():
+            issues.append(f"{rel_path}:{i + 1}: missing blank line before a display math block")
+
+        j = i + 1
+        closer = -1
+        while j < len(lines):
+            if unescaped_display_positions(lines[j]):
+                closer = j
+                break
+            j += 1
+        if closer < 0:
+            i += 1
+            continue
+
+        closer_raw = lines[closer]
+        if closer_raw.strip() != "$$":
+            issues.append(
+                f"{rel_path}:{closer + 1}: display math '$$' is glued to content "
+                f"- put '$$' alone on its own line at column 0"
+            )
+        elif closer_raw != "$$":
+            issues.append(
+                f"{rel_path}:{closer + 1}: display math '$$' is indented inside a list item"
+            )
+        if closer + 1 < len(lines) and lines[closer + 1].strip():
+            issues.append(f"{rel_path}:{closer + 1}: missing blank line after a display math block")
+        i = closer + 1
 
     return issues
 
@@ -410,6 +506,9 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
             errors.append(f"{rel_path}: Expected at least 1 Mermaid diagram, found 0")
 
         for issue in find_math_hygiene_issues(text, rel_path):
+            errors.append(issue)
+
+        for issue in find_display_math_layout_issues(text, rel_path):
             errors.append(issue)
 
         for issue in find_text_mode_math_issues(text, rel_path):

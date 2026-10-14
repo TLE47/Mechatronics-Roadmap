@@ -86,36 +86,69 @@ flowchart LR
   * **Total Least Squares & Damped Least Squares (Levenberg-Marquardt):** Regularized inverse $J^\dagger_\lambda = J^\top (J J^\top + \lambda^2 I)^{-1}$, mapping singular values $\sigma_i \mapsto \frac{\sigma_i}{\sigma_i^2 + \lambda^2}$.
 * **Symmetric Positive-Definite (SPD) Matrices & Cholesky Factorization:** Mass matrices $M(q) \succ 0$, covariance matrices $P \succ 0$, and quadratic cost matrices $Q \succeq 0, R \succ 0$ must be factored via Cholesky ($P = L L^\top$) or Joseph-form updates in embedded code to prevent numerical loss of positive definiteness.
 * **Matrix Calculus Identities for Optimization & Jacobians:**
-  $$\frac{\partial}{\partial x}\left(\frac{1}{2} x^\top Q x + c^\top x\right) = Q x + c \quad (\text{for } Q = Q^\top)$$
-  $$\frac{d}{dt}\left(R(t)\right) = \hat{\omega}(t) R(t) \quad \text{where } \hat{\omega} = [\omega]_\times \in \mathfrak{so}(3)$$
+
+$$
+\frac{\partial}{\partial x}\left(\frac{1}{2} x^\top Q x + c^\top x\right) = Q x + c \quad (\text{for } Q = Q^\top)
+$$
+
+$$
+\frac{d}{dt}\left(R(t)\right) = \hat{\omega}(t) R(t) \quad \text{where } \hat{\omega} = [\omega]_\times \in \mathfrak{so}(3)
+$$
 
 ### 3.2 Lie Groups $SO(3)$ and $SE(3)$ for 3D Rigid-Body Motion
 Euler angles ($\phi, \theta, \psi$) suffer from gimbal lock at $\theta = \pm \pi/2$ and lack a global metric structure. Production robotics and strapdown navigation operate directly on matrix Lie groups:
 
 1. **The Rotation Group $SO(3)$ and Lie Algebra $\mathfrak{so}(3)$:**
-   $$SO(3) = \{ R \in \mathbb{R}^{3\times 3} \mid R^\top R = I,\ \det(R) = +1 \}, \quad \mathfrak{so}(3) = \{ [\omega]_\times \in \mathbb{R}^{3\times 3} \mid [\omega]_\times^\top = -[\omega]_\times \}$$
+
+$$
+SO(3) = \{ R \in \mathbb{R}^{3\times 3} \mid R^\top R = I,\ \det(R) = +1 \}, \quad \mathfrak{so}(3) = \{ [\omega]_\times \in \mathbb{R}^{3\times 3} \mid [\omega]_\times^\top = -[\omega]_\times \}
+$$
+
    where the hat operator $[\cdot]_\times : \mathbb{R}^3 \to \mathfrak{so}(3)$ maps $\omega = [\omega_x, \omega_y, \omega_z]^\top$ to the skew-symmetric cross-product matrix:
-   $$[\omega]_\times = \begin{bmatrix} 0 & -\omega_z & \omega_z \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix} \quad \text{(corrected: } [\omega]_\times = \begin{bmatrix} 0 & -\omega_z & \omega_y \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix}\text{)}$$
+
+$$
+[\omega]_\times = \begin{bmatrix} 0 & -\omega_z & \omega_z \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix} \quad \text{(corrected: } [\omega]_\times = \begin{bmatrix} 0 & -\omega_z & \omega_y \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix}\text{)}
+$$
+
 2. **Exponential Map (Rodrigues' Formula) & Logarithmic Map:**
    For rotation vector $\phi = \theta u \in \mathbb{R}^3$ ($\|u\|_2 = 1$, $\theta = \|\phi\|_2$):
-   $$\exp([\phi]_\times) = I + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1 - \cos\theta}{\theta^2}[\phi]_\times^2 \in SO(3)$$
+
+$$
+\exp([\phi]_\times) = I + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1 - \cos\theta}{\theta^2}[\phi]_\times^2 \in SO(3)
+$$
+
    *Implementation Rule:* For $\theta < 10^{-4}\text{ rad}$, use the Taylor expansion $\frac{\sin\theta}{\theta} \approx 1 - \frac{\theta^2}{6} + \frac{\theta^4}{120}$ and $\frac{1-\cos\theta}{\theta^2} \approx \frac{1}{2} - \frac{\theta^2}{24} + \frac{\theta^4}{720}$ to prevent $0/0$ floating-point `NaN`.
 3. **Unit Quaternions $\mathbb{S}^3$ (Hamilton Convention $q = [q_w, q_x, q_y, q_z]^\top$):**
    Double cover of $SO(3)$ ($q$ and $-q$ represent the same rotation). Kinematic propagation under body angular velocity $\omega_b$:
-   $$\dot{q} = \frac{1}{2} q \otimes \begin{bmatrix} 0 \\ \omega_b \end{bmatrix}, \quad q_{k+1} = q_k \otimes \exp_q\left(\frac{1}{2}\omega_b \Delta t\right)$$
+
+$$
+\dot{q} = \frac{1}{2} q \otimes \begin{bmatrix} 0 \\ \omega_b \end{bmatrix}, \quad q_{k+1} = q_k \otimes \exp_q\left(\frac{1}{2}\omega_b \Delta t\right)
+$$
+
 4. **The Special Euclidean Group $SE(3)$ and Lie Algebra $\mathfrak{se}(3)$:**
-   $$T = \begin{bmatrix} R & p \\ 0_{1\times 3} & 1 \end{bmatrix} \in SE(3), \quad [\mathcal{V}]_\wedge = \begin{bmatrix} [\omega]_\times & v \\ 0_{1\times 3} & 0 \end{bmatrix} \in \mathfrak{se}(3)$$
+
+$$
+T = \begin{bmatrix} R & p \\ 0_{1\times 3} & 1 \end{bmatrix} \in SE(3), \quad [\mathcal{V}]_\wedge = \begin{bmatrix} [\omega]_\times & v \\ 0_{1\times 3} & 0 \end{bmatrix} \in \mathfrak{se}(3)
+$$
+
    where $\mathcal{V} = [\omega^\top, v^\top]^\top \in \mathbb{R}^6$ is a spatial twist, and the Adjoint map $\text{Ad}_T \in \mathbb{R}^{6\times 6}$ transforms twists and wrenches ($\mathcal{F} = [\tau^\top, f^\top]^\top$, via $\text{Ad}_T^\top$) between coordinate frames:
-   $$\text{Ad}_T = \begin{bmatrix} R & 0_{3\times 3} \\ [p]_\times R & R \end{bmatrix}$$
+
+$$
+\text{Ad}_T = \begin{bmatrix} R & 0_{3\times 3} \\ [p]_\times R & R \end{bmatrix}
+$$
 
 ### 3.3 Continuous-to-Discrete Systems & Sampling Theory
 A continuous LTI state-space model $\dot{x}(t) = A_c x(t) + B_c u(t)$ sampled under a Zero-Order Hold (ZOH) with period $T_s$ yields the exact discrete-time system $x_{k+1} = A_d x_k + B_d u_k$:
 
-$$A_d = e^{A_c T_s}, \quad B_d = \left(\int_0^{T_s} e^{A_c \tau}\,d\tau\right) B_c$$
+$$
+A_d = e^{A_c T_s}, \quad B_d = \left(\int_0^{T_s} e^{A_c \tau}\,d\tau\right) B_c
+$$
 
 Computed simultaneously in one matrix exponential via Van Loan's block matrix method:
 
-$$\exp\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix} T_s\right) = \begin{bmatrix} A_d & B_d \\ 0 & I \end{bmatrix}$$
+$$
+\exp\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix} T_s\right) = \begin{bmatrix} A_d & B_d \\ 0 & I \end{bmatrix}
+$$
 
 #### Continuous-to-Discrete Filter & Controller Discretization Comparison
 
@@ -129,7 +162,11 @@ $$\exp\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix} T_s\right) = \begin
 
 ### 3.4 Probability, Stochastic Processes & Noise Characterization
 * **Continuous vs. Discrete White Noise:** If continuous process noise $w(t)$ has power spectral density $Q_c$ ($\mathbb{E}[w(t)w(\tau)^\top] = Q_c \delta(t-\tau)$), its discrete covariance over step $T_s$ is:
-  $$Q_d = \int_0^{T_s} e^{A_c \tau} Q_c e^{A_c^\top \tau}\,d\tau \approx Q_c T_s \quad (\text{first-order approximation for small } T_s)$$
+
+$$
+Q_d = \int_0^{T_s} e^{A_c \tau} Q_c e^{A_c^\top \tau}\,d\tau \approx Q_c T_s \quad (\text{first-order approximation for small } T_s)
+$$
+
   *Critical Pitfall:* Note the scaling with $\sqrt{T_s}$ in standard deviation! A sensor datasheet specifying noise density $n_d$ in $\frac{\text{units}}{\sqrt{\text{Hz}}}$ sampled with front-end bandwidth $f_{BW}$ produces discrete sample variance $\sigma_d^2 = n_d^2 \cdot f_{BW}$ (or $n_d^2 / (2 T_s)$ for Nyquist-limited sampling).
 * **Power Spectral Density (PSD) & Welch's Method:** Non-parametric estimation of $S_{xx}(f)$ and cross-spectrum $S_{yu}(f)$ using overlapping Hann-windowed FFT segments to compute empirical frequency response functions $\hat{G}(j\omega) = \frac{\hat{S}_{yu}(j\omega)}{\hat{S}_{uu}(j\omega)}$ and coherence $\gamma^2(\omega) = \frac{|\hat{S}_{yu}(j\omega)|^2}{\hat{S}_{uu}(j\omega)\hat{S}_{yy}(j\omega)} \in [0, 1]$.
 
@@ -145,11 +182,15 @@ Consider the compliant motor-load bond graph from §2.2. Select the four energy-
 
 With control input $u = V_{in}$ and external load disturbance torque $d = \tau_{ext}$, the state-space equations $\dot{x} = A_c x + B_c u + E_c d$ are directly read from the bond graph junctions:
 
-$$\frac{d}{dt}\begin{bmatrix} i_a \\ \omega_m \\ \theta_m - \theta_L \\ \omega_L \end{bmatrix} = \begin{bmatrix} -\frac{R_a}{L_a} & -\frac{K_e}{L_a} & 0 & 0 \\ \frac{K_t}{J_m} & -\frac{b_m}{J_m} & -\frac{k_s}{J_m} & -\frac{b_s}{J_m} \\ 0 & 1 & 0 & -1 \\ 0 & \frac{b_s}{J_L} & \frac{k_s}{J_L} & -\frac{b_L + b_s}{J_L} \end{bmatrix} \begin{bmatrix} i_a \\ \omega_m \\ \theta_m - \theta_L \\ \omega_L \end{bmatrix} + \begin{bmatrix} \frac{1}{L_a} \\ 0 \\ 0 \\ 0 \end{bmatrix} V_{in} + \begin{bmatrix} 0 \\ 0 \\ 0 \\ -\frac{1}{J_L} \end{bmatrix} \tau_{ext}$$
+$$
+\frac{d}{dt}\begin{bmatrix} i_a \\ \omega_m \\ \theta_m - \theta_L \\ \omega_L \end{bmatrix} = \begin{bmatrix} -\frac{R_a}{L_a} & -\frac{K_e}{L_a} & 0 & 0 \\ \frac{K_t}{J_m} & -\frac{b_m}{J_m} & -\frac{k_s}{J_m} & -\frac{b_s}{J_m} \\ 0 & 1 & 0 & -1 \\ 0 & \frac{b_s}{J_L} & \frac{k_s}{J_L} & -\frac{b_L + b_s}{J_L} \end{bmatrix} \begin{bmatrix} i_a \\ \omega_m \\ \theta_m - \theta_L \\ \omega_L \end{bmatrix} + \begin{bmatrix} \frac{1}{L_a} \\ 0 \\ 0 \\ 0 \end{bmatrix} V_{in} + \begin{bmatrix} 0 \\ 0 \\ 0 \\ -\frac{1}{J_L} \end{bmatrix} \tau_{ext}
+$$
 
 From the mechanical subsystem alone (neglecting internal shaft damping $b_s \to 0$ and bearing friction $b_m, b_L \to 0$), the transfer function from electromagnetic torque $\tau_m = K_t i_a$ to **collocated motor velocity** $\omega_m(s)$ vs. **non-collocated load velocity** $\omega_L(s)$ reveals the classic two-mass resonance phenomenon:
 
-$$\frac{\omega_m(s)}{\tau_m(s)} = \frac{1}{(J_m + J_L)s} \cdot \frac{s^2 + \omega_{ar}^2}{s^2 + \omega_r^2}, \qquad \frac{\omega_L(s)}{\tau_m(s)} = \frac{1}{(J_m + J_L)s} \cdot \frac{\omega_{ar}^2}{s^2 + \omega_r^2}$$
+$$
+\frac{\omega_m(s)}{\tau_m(s)} = \frac{1}{(J_m + J_L)s} \cdot \frac{s^2 + \omega_{ar}^2}{s^2 + \omega_r^2}, \qquad \frac{\omega_L(s)}{\tau_m(s)} = \frac{1}{(J_m + J_L)s} \cdot \frac{\omega_{ar}^2}{s^2 + \omega_r^2}
+$$
 
 where:
 * **Anti-Resonance Frequency (Collocated Zero):** $\omega_{ar} = \sqrt{\frac{k_s}{J_L}}$

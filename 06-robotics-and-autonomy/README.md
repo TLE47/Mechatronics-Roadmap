@@ -70,32 +70,45 @@ flowchart TB
 ### 3.1 Hogan's Impedance Control vs. Stiff Position Control
 When a stiff position-controlled robot contacts a rigid surface at position $x_{\text{env}}$ with environment stiffness $k_{\text{env}} \approx 10^5\text{ N/m}$, a tiny $1\text{ mm}$ position trajectory error generates $100\text{ N}$ of contact force and triggers an emergency fault. **Mechanical Impedance Control** regulates the *dynamic relationship* between end-effector pose error $\tilde{x} = x - x_d$ and interaction wrench $\mathcal{F}_{\text{ext}}$:
 
-$$\Lambda(q)\ddot{\tilde{x}} + D_x \dot{\tilde{x}} + K_x \tilde{x} = \mathcal{F}_{\text{ext}}$$
+$$
+\Lambda(q)\ddot{\tilde{x}} + D_x \dot{\tilde{x}} + K_x \tilde{x} = \mathcal{F}_{\text{ext}}
+$$
 
 where $\Lambda(q) = \left(J(q) M^{-1}(q) J(q)^\top\right)^{-1}$ is **Khatib's Operational-Space Inertia Matrix** (the effective mass/inertia felt at the end-effector tip).
 * **Cartesian Impedance Control Law (Without Force Sensor Requirement):**
   For backdrivable or torque-controlled joints, shaping desired stiffness $K_x \in \mathbb{R}^{6\times 6}$ and damping $D_x \in \mathbb{R}^{6\times 6}$ requires only the manipulator Jacobian $J(q)$ and gravity compensation $g(q)$:
-  $$\tau = J(q)^\top \Big(-K_x \tilde{x} - D_x J(q)\dot{q}\Big) + g(q) + \underbrace{\left(I - J(q)^\top \bar{J}(q)^\top\right) \tau_{\text{null}}}_{\text{Redundant Null-Space Posture Torque}}$$
+
+$$
+\tau = J(q)^\top \Big(-K_x \tilde{x} - D_x J(q)\dot{q}\Big) + g(q) + \underbrace{\left(I - J(q)^\top \bar{J}(q)^\top\right) \tau_{\text{null}}}_{\text{Redundant Null-Space Posture Torque}}
+$$
+
   where $\bar{J}(q) = M^{-1}(q) J(q)^\top \Lambda(q)$ is the **dynamically consistent generalized inverse** of $J(q)$, guaranteeing that null-space torques $\tau_{\text{null}}$ produce **zero acceleration at the end-effector**!
 
 ### 3.2 Floating-Base Whole-Body Control via Quadratic Programming (WBC-QP)
 For a floating-base system (quadruped, humanoid, or mobile manipulator) with configuration $q = [p_b^\top, q_b^\top, q_j^\top]^\top$ and generalized velocity $v = [\mathcal{V}_b^\top, \dot{q}_j^\top]^\top \in \mathbb{R}^{6+n_j}$, the equations of motion split into 6 unactuated floating-base rows and $n_j$ actuated joint rows via selection matrix $S = [0_{n_j \times 6},\ I_{n_j \times n_j}]$:
 
-$$M(q)\dot{v} + h(q,v) = S^\top \tau + J_c(q)^\top f_c$$
+$$
+M(q)\dot{v} + h(q,v) = S^\top \tau + J_c(q)^\top f_c
+$$
 
 At $1\text{ kHz}$, the Whole-Body Controller solves a convex QP over decision variables $\xi = [\dot{v}^\top, f_c^\top, \tau^\top]^\top$:
 
-$$\begin{aligned}
+$$
+\begin{aligned}
 \min_{\dot{v}, f_c, \tau} \quad & \sum_{k} w_k \left\| J_k(q)\dot{v} + \dot{J}_k(q,v)v - \ddot{x}_{k,\text{des}} \right\|_2^2 + \|f_c\|_{W_f}^2 + \|\tau\|_{W_\tau}^2 \\
 \text{subject to} \quad & M(q)\dot{v} + h(q,v) = S^\top \tau + J_c(q)^\top f_c \quad \text{(Full Rigid-Body Dynamics)} \\
 & J_{\text{stance}}(q)\dot{v} + \dot{J}_{\text{stance}}(q,v)v = 0 \quad \text{(Zero Stance Foot Slip)} \\
 & |f_{c,x}| \le \mu f_{c,z},\quad |f_{c,y}| \le \mu f_{c,z},\quad f_{c,z} \ge f_{z,\min} > 0 \quad \text{(Linearized Pyramid Friction Cone)} \\
 & \tau_{\min} \le \tau \le \tau_{\max} \quad \text{(Actuator Torque-Speed Envelope)}
-\end{aligned}$$
+\end{aligned}
+$$
 
 ### 3.3 Distributed PD+Feedforward Impedance Split Across Fieldbus
 Never close a $1\text{ kHz}$ position/velocity PD loop exclusively over a CAN or Ethernet bus if the actuator node itself has a local high-rate encoder! Bus delay ($\tau_{\text{bus}} = 0.5\text{–}1.5\text{ ms}$) severely limits the stable $K_p, K_d$ gains. Instead, transmit the **5-tuple command packet** `(q_des, dq_des, kp, kd, tau_ff)` from the central computer at $1\text{ kHz}$ (where $\tau_{ff}$ comes from the WBC-QP), and evaluate the local PD impedance term inside the actuator's $25\text{–}40\text{ kHz}$ MCU loop:
-$$\tau_{\text{cmd}}(t) = \tau_{ff} + K_p (q_{\text{des}} - q_{\text{local}}) + K_d (\dot{q}_{\text{des}} - \dot{q}_{\text{local}})$$
+
+$$
+\tau_{\text{cmd}}(t) = \tau_{ff} + K_p (q_{\text{des}} - q_{\text{local}}) + K_d (\dot{q}_{\text{des}} - \dot{q}_{\text{local}})
+$$
 
 ---
 
@@ -123,7 +136,10 @@ Fusing a $60\text{ Hz}$ camera or $20\text{ Hz}$ lidar with a $400\text{ Hz}$ IM
 
 ### 5.2 IMU Preintegration on Manifolds & Factor Graphs
 Instead of re-integrating thousands of $1\text{ kHz}$ IMU measurements every time a non-linear solver updates past keyframe poses $x_i, x_j$, **Forster's Manifold Preintegration** accumulates relative motion increments $(\Delta\tilde{R}_{ij}, \Delta\tilde{v}_{ij}, \Delta\tilde{p}_{ij})$ between keyframes *in the local frame $i$*, complete with first-order Jacobians with respect to IMU biases $\left(\frac{\partial \Delta R_{ij}}{\partial b_g}, \frac{\partial \Delta v_{ij}}{\partial b_a}, \dots\right)$ so bias updates require only a fast tangent-space correction:
-$$\Delta R_{ij}(b_g^+) \approx \Delta\tilde{R}_{ij} \exp\left(\frac{\partial \Delta\tilde{R}_{ij}}{\partial b_g} (b_g^+ - \bar{b}_g)\right)$$
+
+$$
+\Delta R_{ij}(b_g^+) \approx \Delta\tilde{R}_{ij} \exp\left(\frac{\partial \Delta\tilde{R}_{ij}}{\partial b_g} (b_g^+ - \bar{b}_g)\right)
+$$
 
 ---
 
@@ -132,7 +148,10 @@ $$\Delta R_{ij}(b_g^+) \approx \Delta\tilde{R}_{ij} \exp\left(\frac{\partial \De
 1. **Rolling-Shutter Cameras in High-Vibration Robotic VIO:** Cheap rolling-shutter CMOS sensors expose scanlines sequentially over $10\text{–}30\text{ ms}$. Under angular vibration or agile motion, straight lines bend ("jello effect"), causing catastrophic VIO scale drift and divergence. **Always specify Global-Shutter monochrome/RGB sensors** (e.g., `OV9281`, `IMX296`) with hardware trigger pins for robotics.
 2. **Exciting Structural Modes with Step/Trapezoidal Velocity Profiles:** Trapezoidal velocity profiles have discontinuous acceleration (infinite jerk $\dddot{q} = \pm\infty$), acting as a broadband hammer blow that excites every structural flex mode in the robot arm. Always filter trajectories through a **3rd-order (S-curve, bounded jerk)** or **4th-order (bounded snap)** profile generator (`Ruckig`).
 3. **Kinematic Singularities in Task-Space Inverse Differential Kinematics:** Near wrist alignment ($q_5 \to 0$) or elbow full extension, $\det(J(q)J(q)^\top) \to 0$ and standard $J^\dagger = J^\top(JJ^\top)^{-1}$ commands infinite joint velocities. Always monitor the manipulability index $w(q) = \sqrt{\det(JJ^\top)}$ and smoothly ramp damping $\lambda^2(w)$ in Damped Least-Squares:
-   $$\lambda^2(w) = \begin{cases} \lambda_0^2 \left(1 - \frac{w}{w_{\text{thresh}}}\right)^2 & w < w_{\text{thresh}} \\ 0 & w \ge w_{\text{thresh}} \end{cases}$$
+
+$$
+\lambda^2(w) = \begin{cases} \lambda_0^2 \left(1 - \frac{w}{w_{\text{thresh}}}\right)^2 & w < w_{\text{thresh}} \\ 0 & w \ge w_{\text{thresh}} \end{cases}
+$$
 
 ---
 

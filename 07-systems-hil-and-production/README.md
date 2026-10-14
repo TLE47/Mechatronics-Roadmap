@@ -57,7 +57,10 @@ flowchart TB
 When designing a precision motion system (e.g., a $3\text{-axis}$ optical alignment stage requiring $\le 5\ \mu\text{m}$ total $3\sigma$ positioning uncertainty at the tool center point), errors from mechanics, thermal drift, sensors, and control tracking must be budgeted upfront:
 * **Systematic / Slowly Varying Biases ($E_{\text{sys}}$):** Sum linearly or calibrate via lookup tables (e.g., lead-screw pitch error, gravity sag).
 * **Uncorrelated Random / Zero-Mean Errors ($\sigma_i$):** Combine via **Root-Sum-Square (RSS)**:
-  $$\sigma_{\text{total}} = \sqrt{\sigma_{\text{encoder}}^2 + \left(L_{\text{Abbe}}\sigma_{\theta,\text{pitch}}\right)^2 + \sigma_{\text{thermal}}^2 + \sigma_{\text{structural,vib}}^2 + \sigma_{\text{servo,tracking}}^2}$$
+
+$$
+\sigma_{\text{total}} = \sqrt{\sigma_{\text{encoder}}^2 + \left(L_{\text{Abbe}}\sigma_{\theta,\text{pitch}}\right)^2 + \sigma_{\text{thermal}}^2 + \sigma_{\text{structural,vib}}^2 + \sigma_{\text{servo,tracking}}^2}
+$$
 
 | Subsystem Source | Error Mechanism | Uncalibrated Magnitude | Mitigation Strategy | Residual Budgeted Contribution ($3\sigma$) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -75,16 +78,26 @@ Never tune a high-performance controller solely by trial-and-error step response
 
 ### 4.1 Excitation Signal Design: Schroeder-Phased Multisine vs. Logarithmic Chirp
 A sum of $M$ harmonically related sinusoids $u(t) = \sum_{k=1}^M A_k \cos(\omega_k t + \phi_k)$ with random phases exhibits high peak-to-average spikes that saturate the actuator. Choosing **Schroeder Phases**:
-$$\phi_k = -\frac{\pi k (k - 1)}{M}$$
+
+$$
+\phi_k = -\frac{\pi k (k - 1)}{M}
+$$
+
 minimizes the **Crest Factor** ($\text{CF} = \frac{\|u\|_\infty}{\|u\|_{\text{rms}}} \approx 1.45\text{–}1.6$), packing maximum spectral energy into every frequency bin without tripping current or voltage saturation limits.
 
 ### 4.2 Closed-Loop Identification (Sensitivity Method)
 Unstable or integrating plants (free-spinning motors, inverted pendulums, vertical gravity axes) cannot be excited in open loop without drifting into mechanical hard stops. Instead, close a simple low-gain stabilizing controller $C_0(s)$, inject excitation $r_{\text{exc}}(t)$ at the reference or actuator input ($u = C_0(r - y) + d_{\text{exc}}$), and identify the plant via cross-spectral ratios:
 
-$$\hat{P}(j\omega) = \frac{\hat{S}_{y d_{\text{exc}}}(j\omega)}{\hat{S}_{u d_{\text{exc}}}(j\omega)}$$
+$$
+\hat{P}(j\omega) = \frac{\hat{S}_{y d_{\text{exc}}}(j\omega)}{\hat{S}_{u d_{\text{exc}}}(j\omega)}
+$$
 
 Using the external excitation $d_{\text{exc}}$ as the instrumental variable prevents sensor noise $v(t)$ circulating around the feedback loop from biasing the plant estimate! Always plot the **Coherence Function**:
-$$\gamma_{uy}^2(\omega) = \frac{|\hat{S}_{uy}(j\omega)|^2}{\hat{S}_{uu}(j\omega)\hat{S}_{yy}(j\omega)} \in [0, 1]$$
+
+$$
+\gamma_{uy}^2(\omega) = \frac{|\hat{S}_{uy}(j\omega)|^2}{\hat{S}_{uu}(j\omega)\hat{S}_{yy}(j\omega)} \in [0, 1]
+$$
+
 Any frequency band where $\gamma_{uy}^2(\omega) < 0.8$ indicates either poor SNR (anti-resonance notch), actuator saturation/backlash nonlinearity, or unmeasured external disturbances.
 
 ---
@@ -129,7 +142,11 @@ stateDiagram-v2
 ## 6. Failure Modes, Pitfalls & Anti-Patterns
 
 1. **Braking Regenerative Over-Voltage Destroying the DC Bus:** When a high-inertia robot axis or mobile base decelerates rapidly ($P_{\text{mech}} = \tau \omega < 0$), the PMSM acts as a 3-phase generator, pumping kinetic energy $\frac{1}{2}J\omega^2$ back through the inverter into the DC bus capacitors:
-   $$V_{\text{bus,peak}} = \sqrt{V_{\text{bus,nom}}^2 + \frac{2 \eta \left(\frac{1}{2}J\omega_0^2 - E_{\text{losses}}\right)}{C_{\text{bus}}}}$$
+
+$$
+V_{\text{bus,peak}} = \sqrt{V_{\text{bus,nom}}^2 + \frac{2 \eta \left(\frac{1}{2}J\omega_0^2 - E_{\text{losses}}\right)}{C_{\text{bus}}}}
+$$
+
    If $V_{\text{bus}}$ is powered by a bench power supply (which cannot sink reverse current) or a BMS that disconnects on over-voltage, $V_{\text{bus}}$ skyrockets past $100\text{ V}$ in milliseconds! Always include an active ** Hysteretic Brake Chopper MOSFET + Power Resistor** triggered whenever $V_{\text{bus}} > V_{\text{nom}} + 4\text{ V}$.
 2. **Testing Fault Handling Only in Software Simulation:** Simulating an encoder dropout in Python does not test whether the MCU's SPI DMA peripheral hangs waiting for clock edges or whether the gate driver's hardware `DESAT` comparator trips cleanly under load. Use a physical **HIL Fault Injection Switch Matrix** (reed relays / solid-state FET switches controlled by the test runner) to physically open/short sensor and power pins while the target runs.
 3. **Ignoring Cable Shield Termination ($360^\circ$ Gland vs. "Pigtail" Wire):** Twisting a motor or encoder cable shield into a $5\text{ cm}$ "pigtail" wire to connect it to chassis ground adds $\sim 50\text{ nH}$ of series inductance, rendering the shield completely ineffective above $5\text{ MHz}$ and failing radiated emissions. Terminate shielded cables with **$360^\circ$ metallic EMC cable glands** or shielded connector backshells bonded directly to the unpainted metal enclosure wall.

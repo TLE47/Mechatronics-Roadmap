@@ -74,20 +74,29 @@ flowchart TB
 ### 3.1 The Gang of Four Transfer Functions & Bode's Waterbed Effect
 For plant $P(s)$ and feedback controller $C(s)$ with open-loop transfer function $L(s) = P(s)C(s)$, a single transfer function is **never** sufficient to verify stability and robustness (internal pole-zero cancellations between $P$ and $C$ can hide unstable modes). Always evaluate all four transfer functions (**Åström's Gang of Four**):
 
-$$\begin{aligned}
+$$
+\begin{aligned}
 S(s) &= \frac{1}{1 + P(s)C(s)} \quad &\text{(Sensitivity: Reference tracking error and output disturbance rejection)} \\
 T(s) &= \frac{P(s)C(s)}{1 + P(s)C(s)} \quad &\text{(Complementary Sensitivity: Reference tracking and sensor noise amplification)} \\
 P(s)S(s) &= \frac{P(s)}{1 + P(s)C(s)} \quad &\text{(Load Disturbance Sensitivity: Input torque disturbance to output error)} \\
 C(s)S(s) &= \frac{C(s)}{1 + P(s)C(s)} \quad &\text{(Control Effort Sensitivity: Sensor noise to actuator saturation!)}
-\end{aligned}$$
+\end{aligned}
+$$
 
 note the algebraic identity $S(s) + T(s) \equiv 1$ at every frequency, and **Bode's Sensitivity Integral** for open-loop stable plants with relative degree $\ge 2$:
-$$\int_0^\infty \ln |S(j\omega)|\,d\omega = 0$$
+
+$$
+\int_0^\infty \ln |S(j\omega)|\,d\omega = 0
+$$
+
 Pushing $|S(j\omega)| < 1$ ($< 0\text{ dB}$) at low frequencies to reject disturbances *forces* $|S(j\omega)| > 1$ ($> 0\text{ dB}$) in a mid/high-frequency peak $M_s = \max_\omega |S(j\omega)|$.
 * **Production Robustness Specifications:**
   * **Peak Sensitivity:** $M_s = \|S(j\omega)\|_\infty \le 1.6\text{ to }2.0$ ($4\text{–}6\text{ dB}$), which guarantees a minimum vector distance $1/M_s \ge 0.5$ to the critical Nyquist point $(-1, j0)$, simultaneously enforcing **Gain Margin $\ge 6\text{ dB}$** and **Phase Margin $\ge 30^\circ\text{–}45^\circ$**.
   * **Delay Margin:** Total loop transport delay $\tau_{\text{delay}} = \frac{T_s}{2}\text{ (ADC/ZOH)} + T_{\text{compute}} + T_{\text{comm}} + \tau_{\text{AFE}}$ consumes phase $\Delta\phi(\omega) = -\omega \tau_{\text{delay}}$ (in radians). Thus, achievable crossover bandwidth is strictly bounded by:
-    $$\omega_c < \frac{\phi_{\text{margin,rad}}}{\tau_{\text{delay}}}$$
+
+$$
+\omega_c < \frac{\phi_{\text{margin,rad}}}{\tau_{\text{delay}}}
+$$
 
 ### 3.2 Production-Grade Discrete PID with Derivative Filter, Setpoint Weighting & Back-Calculation Anti-Windup
 Never write `u = Kp*e + Ki*sum_e + Kd*(e - e_prev)/Ts` in production firmware! A real industrial 2-DOF PID controller includes:
@@ -137,9 +146,17 @@ struct IndustrialPID {
 
 ### 4.1 Discrete-Time LQR & Why LQG Has Zero Guaranteed Margins
 For discrete LTI plant $x_{k+1} = A_d x_k + B_d u_k$ minimizing infinite-horizon quadratic cost:
-$$J = \sum_{k=0}^\infty \left(x_k^\top Q x_k + u_k^\top R u_k\right), \quad Q \succeq 0,\ R \succ 0$$
+
+$$
+J = \sum_{k=0}^\infty \left(x_k^\top Q x_k + u_k^\top R u_k\right), \quad Q \succeq 0,\ R \succ 0
+$$
+
 the optimal state-feedback law $u_k = -K x_k$ is obtained from the Discrete Algebraic Riccati Equation (DARE):
-$$P = Q + A_d^\top P A_d - A_d^\top P B_d \left(R + B_d^\top P B_d\right)^{-1} B_d^\top P A_d, \qquad K = \left(R + B_d^\top P B_d\right)^{-1} B_d^\top P A_d$$
+
+$$
+P = Q + A_d^\top P A_d - A_d^\top P B_d \left(R + B_d^\top P B_d\right)^{-1} B_d^\top P A_d, \qquad K = \left(R + B_d^\top P B_d\right)^{-1} B_d^\top P A_d
+$$
+
 * **Bryson's Rule for Initial $Q, R$ Scaling:** Initialize diagonal entries as $Q_{ii} = \frac{1}{x_{i,\max}^2}$ and $R_{jj} = \frac{1}{u_{j,\max}^2}$ so all physical variables (radians, meters, amperes) are normalized to dimensionless percents of maximum allowable excursion.
 * **John Doyle's 1978 Theorem ("Guaranteed Margins for LQG Regulators — Abstract: There are none"):** While full-state feedback LQR guarantees a phase margin $\ge 60^\circ$ and gain margin $[0.5, \infty)$ in continuous time, **combining LQR with a Kalman Filter (LQG) destroys those guarantees**—the combined LQG loop transfer function can have arbitrarily small gain and phase margins to plant parameter errors! Always check the open-loop Nyquist/Bode sensitivity $M_s$ of the combined observer+controller $C_{\text{LQG}}(z)$ or perform **Loop Transfer Recovery (LTR)**.
 
@@ -149,7 +166,11 @@ Applying a standard additive EKF directly to a 4-component unit quaternion $q \i
 2. **Error State ($\delta x = [\delta p, \delta v, \delta\theta, \delta b_a, \delta b_g]^\top \in \mathbb{R}^{15}$):** Evolves via a minimal, nonsingular $15\times 15$ linear tangent-space covariance $P \in \mathbb{R}^{15\times 15}$ where true rotation is $R_{\text{true}} = R_{\text{nom}} \exp([\delta\theta]_\times)$.
 3. **Joseph-Form Covariance Update (Mandatory for `float32` Embedded Code):**
    Never use the naive textbook update $P^+ = (I - K H) P^-$, which loses symmetry and positive definiteness under finite precision. Always use the **Joseph Stabilized Form** (or Square-Root UD/Cholesky filter):
-   $$P^+ = (I - K H) P^- (I - K H)^\top + K R_{\text{meas}} K^\top$$
+
+$$
+P^+ = (I - K H) P^- (I - K H)^\top + K R_{\text{meas}} K^\top
+$$
+
    followed by error injection $q^+ \leftarrow q^- \otimes \exp_q\left(\frac{1}{2}\delta\hat{\theta}^+\right)$ and error reset $\delta\hat{x} \leftarrow 0$.
 
 ---
@@ -159,27 +180,41 @@ Applying a standard additive EKF directly to a 4-component unit quaternion $q \i
 ### 5.1 Computed Torque vs. Slotine-Li Passivity Control
 For the manipulator equation $M(q)\ddot{q} + C(q,\dot{q})\dot{q} + g(q) = \tau$:
 * **Computed Torque (Exact Feedback Linearization):**
-  $$\tau = \hat{M}(q)\big(\ddot{q}_d - K_d(\dot{q} - \dot{q}_d) - K_p(q - q_d)\big) + \hat{C}(q,\dot{q})\dot{q} + \hat{g}(q)$$
+
+$$
+\tau = \hat{M}(q)\big(\ddot{q}_d - K_d(\dot{q} - \dot{q}_d) - K_p(q - q_d)\big) + \hat{C}(q,\dot{q})\dot{q} + \hat{g}(q)
+$$
+
   Gives linear error dynamics $\ddot{\tilde{q}} + K_d \dot{\tilde{q}} + K_p \tilde{q} = 0$ if $\hat{M}=M$, but does not directly exploit the skew-symmetry of $\dot{M} - 2C$ when inertial parameters are uncertain.
 * **Slotine & Li Passivity-Based Controller:**
   Define reference velocity $\dot{q}_r = \dot{q}_d - \Lambda \tilde{q}$ (with $\tilde{q} = q - q_d$, $\Lambda \succ 0$) and composite sliding surface $s = \dot{\tilde{q}} + \Lambda \tilde{q} = \dot{q} - \dot{q}_r$. Choose control law:
-  $$\tau = M(q)\ddot{q}_r + C(q,\dot{q})\dot{q}_r + g(q) - K_D s$$
+
+$$
+\tau = M(q)\ddot{q}_r + C(q,\dot{q})\dot{q}_r + g(q) - K_D s
+$$
+
   Using the Lyapunov function $V(t) = \frac{1}{2} s^\top M(q) s + \tilde{q}^\top \Lambda K_D \tilde{q}$, the time derivative is $\dot{V} = s^\top M \ddot{s} + \frac{1}{2}s^\top \dot{M} s + \dots = -s^\top K_D s \le 0$ because $s^\top(\dot{M} - 2C)s \equiv 0$ vanishes identically! Furthermore, since $M(q)\ddot{q}_r + C(q,\dot{q})\dot{q}_r + g(q) = Y(q,\dot{q},\dot{q}_r,\ddot{q}_r)\theta$ is **linear in the unknown inertial parameters $\theta$**, online adaptive law $\dot{\hat{\theta}} = -\Gamma Y^\top s$ guarantees global asymptotic tracking ($q \to q_d$).
 
 ### 5.2 Safety-Critical Control via Control Barrier Functions (CLF-CBF-QP)
 To enforce hard state constraints (joint limits, obstacle avoidance, thermal/current envelopes) defined by safe superlevel set $\mathcal{C} = \{x \in \mathbb{R}^n \mid h(x) \ge 0\}$ on control-affine plant $\dot{x} = f(x) + g(x)u$, a **Control Barrier Function (CBF)** enforces forward invariance of $\mathcal{C}$ via a tiny Quadratic Program solved at $1\text{–}4\text{ kHz}$:
 
-$$\begin{aligned}
+$$
+\begin{aligned}
 u^*(x) = \arg\min_{u \in \mathcal{U}} \quad & \frac{1}{2} \|u - u_{\text{nom}}(x)\|_2^2 \\
 \text{subject to} \quad & \underbrace{L_f h(x) + L_g h(x) u}_{\dot{h}(x,u)} \ge -\alpha\big(h(x)\big), \qquad u_{\min} \le u \le u_{\max}
-\end{aligned}$$
+\end{aligned}
+$$
 
 ### 5.3 Embedded Real-Time Model Predictive Control (Linear & RTI-NMPC)
 MPC solves a finite-horizon optimal control problem over $N$ steps at every sample instant $k$:
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \min_{x_{0:N}, u_{0:N-1}} \quad & \frac{1}{2} \|x_N - x_{\text{ref},N}\|_P^2 + \sum_{i=0}^{N-1} \frac{1}{2}\left(\|x_i - x_{\text{ref},i}\|_Q^2 + \|u_i - u_{\text{ref},i}\|_R^2\right) \\
 \text{subject to} \quad & x_{i+1} = f_d(x_i, u_i), \quad x_{\min} \le x_i \le x_{\max}, \quad u_{\min} \le u_i \le u_{\max}
-\end{aligned}$$
+\end{aligned}
+$$
+
 * **Real-Time Iteration (RTI) Scheme (Diehl et al., implemented in `acados`):** Divides each sample period into a **Preparation Phase** (linearizing dynamics and condensing/factoring the KKT matrix using the predicted state *before* the sensor measurement arrives) and a **Feedback Phase** (completing a single QP step in microseconds the instant $x_k$ is measured).
 
 | Control Paradigm | Handles Multi-Input Coupling? | Enforces Hard State/Input Constraints? | Typical Compute Load | Ideal Mechatronics Application |

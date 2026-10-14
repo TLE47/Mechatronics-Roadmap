@@ -10,7 +10,7 @@
 
 * **🌐 Easy-to-Remember GitHub Pages URL:** [**`https://tle47.github.io/Mechatronics-Roadmap/`**](https://tle47.github.io/Mechatronics-Roadmap/) (redirects automatically via [index.html](index.html) to [web/index.html](web/index.html))
 * **🌐 Live Freebuff Sites Production URL:** [**`https://site-2f1b42c07edb4f2ea9ce49ffab6d57e7.freebuff.page`**](https://site-2f1b42c07edb4f2ea9ce49ffab6d57e7.freebuff.page)
-  * Includes a **7-Step Interactive Guided Beginner Tour**, **24 One-Click Real-World Industry Application Presets**, native KaTeX math rendering, and **6 live physics/hardware simulators** (Two-Mass Resonance Bode, $25\text{ kHz}$ PMSM FOC, 60 FPS Furuta Pendulum + LQR + CBF, URDF/MuJoCo + STO Fault Injector, 3D CAD + $48\text{ V}/30\text{ A}$ PCB Thermal Explorer, and Schroeder Multisine Closed-Loop SysID).
+  * Includes a **7-Step Interactive Guided Beginner Tour**, **24 One-Click Real-World Industry Application Presets**, native MathJax math rendering, and **6 live physics/hardware simulators** (Two-Mass Resonance Bode, $25\text{ kHz}$ PMSM FOC, 60 FPS Furuta Pendulum + LQR + CBF, URDF/MuJoCo + STO Fault Injector, 3D CAD + $48\text{ V}/30\text{ A}$ PCB Thermal Explorer, and Schroeder Multisine Closed-Loop SysID).
 * **🧪 Run All 12 Verification Suites in 2 Seconds (Zero External Dependencies):**
 
 ```bash
@@ -29,7 +29,7 @@ python3 scripts/verify_repo.py --verbose
 | **💻 12 Executable Lab Suites** | Self-checking Python 3 & C++20 physics/control/firmware suites (`0` dependencies beyond stdlib) | [scripts/run_all_labs.py](scripts/run_all_labs.py) |
 | **🔩 3D Parametric STEP & STL CAD** | Watertight 2-manifold `.stl` & ISO 10303-21 `.step` Notch Flexure, Kelvin Coupling & 8:1 QDD Carrier | [cad_parametric_parts.py](02-mechanics-kinematics-dynamics/cad/cad_parametric_parts.py) |
 | **🤖 6 Validated Robot Models** | Sylvester SPD & triangle-inequality verified URDF & MuJoCo MJCF XMLs (Furuta, 6-DOF Arm, QDD Hopper) | [validate_models.py](08-capstone-projects/models/validate_models.py) |
-| **⚡ 48V / 30A FOC PCB & Firmware** | 43-net KiCad `.net` schematic netlist, $\$40.47$ BOM, coupled thermal solver & bare-metal `STM32G474` C++20 ISR | [generate_foc_pcb_and_bom.py](08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py), [stm32g474_foc_firmware.cpp](08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp) |
+| **⚡ 48V / 30A FOC PCB & Firmware** | 43-net KiCad `.net` schematic netlist, \$40.47 BOM, coupled thermal solver & bare-metal `STM32G474` C++20 ISR | [generate_foc_pcb_and_bom.py](08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py), [stm32g474_foc_firmware.cpp](08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp) |
 
 ---
 
@@ -304,7 +304,7 @@ journey
 ## 7. Quick-Access Reference Library
 
 * **[Annotated Textbooks & Seminal Papers](resources/textbooks-and-papers.md)** — Over 80 rigorously curated texts and milestone papers across all 8 tracks, with guidance on why and when to read each.
-* **[Printable 1-Page Mechatronics Reference Cheat Sheet (`resources/mechatronics-cheatsheet.md`)](resources/mechatronics-cheatsheet.md)** and **[Print-Ready A4/Letter KaTeX Card (`web/cheatsheet.html`)](web/cheatsheet.html)** — All core equations, PCB layout rules, flexure/constraint formulas, and control tuning laws on a single page.
+* **[Printable 1-Page Mechatronics Reference Cheat Sheet (`resources/mechatronics-cheatsheet.md`)](resources/mechatronics-cheatsheet.md)** and **[Print-Ready A4/Letter MathJax Card (`web/cheatsheet.html`)](web/cheatsheet.html)** — All core equations, PCB layout rules, flexure/constraint formulas, and control tuning laws on a single page.
 * **[Production Open-Source Toolchain Matrix](resources/open-source-toolchains.md)** — The complete modern mechatronics software stack: KiCad, ngspice, FreeCAD, CalculiX, Gmsh, Drake, MuJoCo, Pinocchio, CasADi, `acados`, Zephyr, ROS 2, PlotJuggler, and Sigrok.
 * **[Tiered Hardware Lab & Workbench BOM](resources/lab-workbench-bom.md)** — Exact equipment, probes, power supplies, debuggers, and mechanical metrology tools required across three budget tiers (\$500, \$3,500, and \$25,000).
 * **[Interactive Web Workbench (`web/index.html`)](web/index.html)** — Zero-build browser dashboard rendering the roadmap architecture alongside interactive Two-Mass Resonance/Notch Bode, 25 kHz PMSM FOC + SVPWM, and Furuta Inverted Pendulum + CBF simulators.

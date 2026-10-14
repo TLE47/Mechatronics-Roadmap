@@ -61,11 +61,19 @@ flowchart TB
 
 ### 3.1 Exact Kinematic Constraint (Maxwell's Criterion)
 A free rigid body in 3D space has 6 Degrees of Freedom (DOF). By James Clerk Maxwell's principle of exact constraint, constraining $C$ degrees of freedom requires **exactly $C$ point contacts**:
-$$\text{DOF} = 6 - C$$
+
+$$
+\text{DOF} = 6 - C
+$$
+
 * **Over-Constraint ($C > 6 - \text{DOF}$):** Standard bolted flanges or two parallel fully-constrained linear guide rails create statically indeterminate stress paths. Any machining tolerance error ($\pm 10\ \mu\text{m}$) or thermal gradient ($\Delta L = \alpha L \Delta T$, where aluminum $\alpha \approx 23\ \mu\text{m}/(\text{m}\cdot\text{K})$ vs. steel $\alpha \approx 11.5\ \mu\text{m}/(\text{m}\cdot\text{K})$) induces parasitic internal forces, binding friction, and geometric warping.
 * **Kinematic Couplings:** A **Kelvin Coupling** (concave tetrahedron + V-groove + flat plate mating with three spheres, $3+2+1=6$ constraints) or a **Maxwell Three-Groove Coupling** (three spheres mating with three radial V-grooves at $120^\circ$, $2+2+2=6$ constraints) achieves sub-micron ($< 0.2\ \mu\text{m}$) repeatability while remaining immune to differential thermal expansion.
 * **Abbe's Principle (First Principle of Machine Design & Metrology):**
-  $$\varepsilon_{\text{Abbe}} = L_{\text{offset}} \cdot \sin(\theta_{\text{pitch/yaw}}) \approx L_{\text{offset}} \cdot \theta$$
+
+$$
+\varepsilon_{\text{Abbe}} = L_{\text{offset}} \cdot \sin(\theta_{\text{pitch/yaw}}) \approx L_{\text{offset}} \cdot \theta
+$$
+
   The measuring scale (encoder/interferometer) must be collinear with the functional point of displacement. If an encoder is offset by $L_{\text{offset}} = 100\text{ mm}$ from the tool tip and the linear stage exhibits just $10\text{ arcsec}$ ($48.5\ \mu\text{rad}$) of angular pitch error, the unmeasured Abbe error at the tool is $4.85\ \mu\text{m}$.
 
 ### 3.2 Bearing Arrangements, Preload & Flexural Mechanisms
@@ -75,12 +83,17 @@ $$\text{DOF} = 6 - C$$
    * Apply controlled axial preload $F_{\text{preload}}$ to eliminate balls/rollers unloading under external moment, removing the deadband stiffness discontinuity at zero crossing.
 2. **Monolithic Flexures (Compliant Mechanisms):**
    For short-stroke precision motion ($< 5\text{ mm}$), replace bearings entirely with EDM-cut or milled Titanium (`Ti-6Al-4V`) or 7075-T6 Aluminum notch hinges and double-parallelogram leaf flexures. Flexures exhibit **zero friction, zero backlash, zero wear, and infinite resolution**. For a symmetric circular notch hinge of thickness $t$, cutting radius $R$, and width $b$ ($t \ll R$), Paros-Weisbord yields rotational stiffness:
-   $$k_\theta \approx \frac{2 E b t^{5/2}}{9 \pi \sqrt{R}}$$
+
+$$
+k_\theta \approx \frac{2 E b t^{5/2}}{9 \pi \sqrt{R}}
+$$
 
 ### 3.3 Mechanical Transmissions & Reflected Inertia Matching
 For a transmission with reduction ratio $N = \omega_{\text{motor}} / \omega_{\text{load}} > 1$ and forward efficiency $\eta$, the equations of motion reflected to the **joint (load) output side** are:
 
-$$\left(J_{\text{load}} + N^2 J_{\text{rotor}}\right) \ddot{q}_{\text{load}} = N \eta \tau_{\text{motor}} - \tau_{\text{ext}}$$
+$$
+\left(J_{\text{load}} + N^2 J_{\text{rotor}}\right) \ddot{q}_{\text{load}} = N \eta \tau_{\text{motor}} - \tau_{\text{ext}}
+$$
 
 * **Reflected Rotor Inertia ($J_{\text{refl}} = N^2 J_{\text{rotor}}$):** Scales with the **square** of the gear ratio! A high gear ratio ($N = 100$) multiplies a tiny rotor inertia by $10,000\times$. During an unexpected high-speed impact (e.g., a legged robot foot hitting the ground), this massive reflected inertia $N^2 J_{\text{rotor}}$ acts like a rigid wall before any force sensor or current controller can react, snapping gear teeth.
 * **Quasi-Direct-Drive (QDD) Paradigm:** Combine a large-gap-radius torque motor ($\tau \propto R_{\text{gap}}^2 L_{\text{stack}}$) with a single-stage planetary gear ($N = 5:1$ to $10:1$). Reflected inertia stays small, mechanical backdrivability exceeds $90\%$, and motor phase current $i_q$ maps directly to output joint torque without needing fragile joint torque sensors.
@@ -104,10 +117,18 @@ Rather than error-prone Denavit-Hartenberg (DH) tables with ambiguous frame assi
    * **Revolute Joint:** $\|\omega_i\|_2 = 1$, and $v_i = -\omega_i \times q_{\text{point},i}$ where $q_{\text{point},i}$ is any point on the joint axis measured in $\{s\}$ at $q=0$.
    * **Prismatic Joint:** $\omega_i = 0$, and $\|v_i\|_2 = 1$ along the translation axis.
 3. **Forward Kinematics Map:**
-   $$T(q) = e^{[\mathcal{S}_1]q_1} e^{[\mathcal{S}_2]q_2} \cdots e^{[\mathcal{S}_n]q_n} M \in SE(3)$$
+
+$$
+T(q) = e^{[\mathcal{S}_1]q_1} e^{[\mathcal{S}_2]q_2} \cdots e^{[\mathcal{S}_n]q_n} M \in SE(3)
+$$
+
 4. **Space Jacobian $J_s(q) \in \mathbb{R}^{6 \times n}$:**
    The $i$-th column of the space Jacobian is simply the $i$-th screw axis transformed by the Adjoint of the preceding joint exponentials:
-   $$J_{s,1}(q) = \mathcal{S}_1, \qquad J_{s,i}(q) = \text{Ad}_{\left(e^{[\mathcal{S}_1]q_1}\cdots e^{[\mathcal{S}_{i-1}]q_{i-1}}\right)} \left(\mathcal{S}_i\right) \quad (i = 2,\dots,n)$$
+
+$$
+J_{s,1}(q) = \mathcal{S}_1, \qquad J_{s,i}(q) = \text{Ad}_{\left(e^{[\mathcal{S}_1]q_1}\cdots e^{[\mathcal{S}_{i-1}]q_{i-1}}\right)} \left(\mathcal{S}_i\right) \quad (i = 2,\dots,n)
+$$
+
    And the body Jacobian is $J_b(q) = \text{Ad}_{T^{-1}(q)} J_s(q)$.
 
 ---
@@ -117,14 +138,22 @@ Rather than error-prone Denavit-Hartenberg (DH) tables with ambiguous frame assi
 ### 5.1 The Manipulator Equation & Structural Passivity Properties
 For an $n$-DOF rigid-body system with generalized coordinates $q \in \mathbb{R}^n$, total kinetic energy $\mathcal{T}(q,\dot{q}) = \frac{1}{2}\dot{q}^\top M(q)\dot{q}$ and potential energy $\mathcal{V}(q)$, the Euler-Lagrange equation $\frac{d}{dt}\frac{\partial \mathcal{L}}{\partial \dot{q}} - \frac{\partial \mathcal{L}}{\partial q} = \tau_{\text{gen}}$ yields:
 
-$$M(q)\ddot{q} + C(q,\dot{q})\dot{q} + g(q) + \tau_{\text{friction}}(\dot{q}) = \tau + J(q)^\top \mathcal{F}_{\text{ext}}$$
+$$
+M(q)\ddot{q} + C(q,\dot{q})\dot{q} + g(q) + \tau_{\text{friction}}(\dot{q}) = \tau + J(q)^\top \mathcal{F}_{\text{ext}}
+$$
 
 When the Coriolis/centrifugal matrix $C(q,\dot{q})$ is constructed using **Christoffel symbols of the first kind**:
 
-$$C_{ij}(q,\dot{q}) = \sum_{k=1}^n \frac{1}{2}\left(\frac{\partial M_{ij}}{\partial q_k} + \frac{\partial M_{ik}}{\partial q_j} - \frac{\partial M_{jk}}{\partial q_i}\right)\dot{q}_k$$
+$$
+C_{ij}(q,\dot{q}) = \sum_{k=1}^n \frac{1}{2}\left(\frac{\partial M_{ij}}{\partial q_k} + \frac{\partial M_{ik}}{\partial q_j} - \frac{\partial M_{jk}}{\partial q_i}\right)\dot{q}_k
+$$
 
 the matrix $\dot{M}(q) - 2C(q,\dot{q})$ is **skew-symmetric**:
-$$x^\top \left(\dot{M}(q) - 2C(q,\dot{q})\right) x = 0 \quad \forall x \in \mathbb{R}^n$$
+
+$$
+x^\top \left(\dot{M}(q) - 2C(q,\dot{q})\right) x = 0 \quad \forall x \in \mathbb{R}^n
+$$
+
 This skew-symmetry is the mathematical statement of **conservation of mechanical energy** (workless Coriolis forces) and is the cornerstone of Lyapunov passivity-based nonlinear robot control!
 
 ### 5.2 $O(n)$ Featherstone Algorithms for Real-Time Execution

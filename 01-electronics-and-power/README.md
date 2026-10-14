@@ -75,7 +75,10 @@ When amplifying low-level transducer outputs (Wheatstone bridges, thermocouples,
 * **Input Offset Voltage ($V_{os}$) & Drift ($dV_{os}/dT$):** For a $1\text{ m}\Omega$ shunt measuring $1\text{ A}$ ($V_{shunt} = 1\text{ mV}$), a standard op-amp with $V_{os} = 1\text{ mV}$ has a **100% zero-offset error**. Use zero-drift/chopper-stabilized amplifiers ($V_{os} < 10\ \mu\text{V}$, drift $< 0.05\ \mu\text{V}/^\circ\text{C}$) for precision DC/low-frequency paths, while checking that the internal chopper clock ($50\text{–}400\text{ kHz}$) does not intermodulate with your PWM frequency.
 * **Common-Mode Rejection Ratio (CMRR) at High $dV/dt$:** Inline phase current sensing exposes the amplifier inputs to a $0\text{ V} \leftrightarrow 48\text{ V}$ rectangular wave slewing at $20\text{ V/ns}$. DC CMRR ($120\text{ dB}$) drops at $20\text{ dB/decade}$ above the amplifier's CMRR corner frequency. Use dedicated PWM-rejection current-sense amplifiers (e.g., TI `INA240`, Analog Devices `AD8418`/`LTC6102`) or isolated $\Sigma\Delta$ modulators (`AMC1306`).
 * **Total Output Referred Noise Calculation:** Combine voltage noise density $e_n$ ($\text{nV}/\sqrt{\text{Hz}}$), current noise density $i_n$ ($\text{pA}/\sqrt{\text{Hz}}$), $1/f$ (flicker) corner $f_{ce}$, and Johnson-Nyquist resistor thermal noise $e_R = \sqrt{4 k_B T R_{eq}}$ over effective noise bandwidth $\text{ENBW} = \frac{\pi}{2} f_{-3\text{dB}}$ (for a 1st-order roll-off):
-  $$E_{n,\text{rms,in}} = \sqrt{ e_{n,\text{white}}^2 \left( f_{ce} \ln\frac{f_H}{f_L} + \text{ENBW} \right) + (i_n R_{eq})^2 \text{ENBW} + 4 k_B T R_{eq} \text{ENBW} }$$
+
+$$
+E_{n,\text{rms,in}} = \sqrt{ e_{n,\text{white}}^2 \left( f_{ce} \ln\frac{f_H}{f_L} + \text{ENBW} \right) + (i_n R_{eq})^2 \text{ENBW} + 4 k_B T R_{eq} \text{ENBW} }
+$$
 
 ### 3.2 Anti-Aliasing Filter Topologies: Butterworth vs. Chebyshev vs. Bessel
 In a closed-loop feedback path, **phase delay is often more destructive than gentle passband roll-off**. Every degree of phase lag added by an analog filter at the control crossover frequency $\omega_c$ directly subtracts from the system's phase margin.
@@ -105,23 +108,39 @@ A Successive Approximation Register (SAR) ADC connects an internal sampling capa
 ### 4.2 Gate-Drive Engineering, Miller Shoot-Through & Dead-Time Calculation
 1. **Peak Gate Current & Gate Resistor Sizing:**
    To switch total gate charge $Q_g$ in transition time $t_{sw}$, the required average gate current is $I_g = Q_g / t_{sw}$. Separate turn-on ($R_{g,\text{on}}$) and turn-off ($R_{g,\text{off}}$ via fast Schottky diode bypass) resistors must be used so that turn-on is controlled to limit $dV/dt$ EMI while turn-off is fast and low-impedance to prevent **dv/dt-induced Miller turn-on** (false turn-on of the low-side FET when the high-side FET turns on):
-   $$V_{GS,\text{induced}} \approx R_{g,\text{off,total}} \cdot C_{gd} \cdot \frac{dV_{DS}}{dt} < V_{GS(\text{th}),\min}$$
+
+$$
+V_{GS,\text{induced}} \approx R_{g,\text{off,total}} \cdot C_{gd} \cdot \frac{dV_{DS}}{dt} < V_{GS(\text{th}),\min}
+$$
+
 2. **Minimum Safe Dead-Time ($t_{\text{dead}}$):**
-   $$t_{\text{dead}} \ge \left(t_{d(\text{off}),\max} + t_{f,\max} + \Delta t_{\text{prop,skew}}\right) - t_{d(\text{on}),\min} + t_{\text{margin}}$$
+
+$$
+t_{\text{dead}} \ge \left(t_{d(\text{off}),\max} + t_{f,\max} + \Delta t_{\text{prop,skew}}\right) - t_{d(\text{on}),\min} + t_{\text{margin}}
+$$
+
    *Trade-off:* Excessive dead-time forces current through the MOSFET body diode (or GaN 3rd-quadrant conduction with high $V_{SD} \approx 2\text{–}3\text{ V}$), causing high dead-time conduction loss $P_{dt} = 2 \cdot V_{SD} \cdot I_{\text{load}} \cdot t_{\text{dead}} \cdot f_{sw}$ and severe zero-crossing voltage distortion in FOC torque loops.
 3. **Switching Loop Parasitic Inductance & Voltage Overshoot:**
    During turn-off at current commutation rate $dI/dt$ (often $2\text{–}10\text{ A/ns}$), the stray inductance $L_{\text{loop}}$ of the commutation loop (High-side FET $\to$ Low-side FET $\to$ High-frequency MLCC decoupling cap) generates a voltage spike:
-   $$V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{dI}{dt}$$
+
+$$
+V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{dI}{dt}
+$$
+
    If $V_{\text{bus}} = 48\text{ V}$, $dI/dt = 5\text{ A/ns}$, and poor layout yields $L_{\text{loop}} = 10\text{ nH}$, the voltage spike adds $50\text{ V}$, reaching $98\text{ V}$ and destroying an $80\text{ V}$ MOSFET via avalanche breakdown. Keep $L_{\text{loop}} < 2\text{ nH}$ using adjacent top-layer MLCCs and an immediate Layer-2 solid return plane ($0.1\text{–}0.2\text{ mm}$ prepreg spacing).
 
 ### 4.3 Inverter Loss Model & Thermal Resistance Network
 Total per-switch power dissipation combines conduction, switching, gate-drive, output-capacitance, and dead-time losses:
 
-$$P_{\text{total}} = \underbrace{I_{\text{rms}}^2 R_{DS(\text{on})}(T_j)}_{\text{Conduction}} + \underbrace{\frac{1}{2} V_{\text{bus}} I_{\text{load}} (t_r + t_f) f_{sw}}_{\text{Overlap Switching}} + \underbrace{\frac{1}{2} C_{oss} V_{\text{bus}}^2 f_{sw}}_{\text{Output Cap}} + \underbrace{V_{\text{bus}} Q_{rr} f_{sw}}_{\text{Reverse Recovery}}$$
+$$
+P_{\text{total}} = \underbrace{I_{\text{rms}}^2 R_{DS(\text{on})}(T_j)}_{\text{Conduction}} + \underbrace{\frac{1}{2} V_{\text{bus}} I_{\text{load}} (t_r + t_f) f_{sw}}_{\text{Overlap Switching}} + \underbrace{\frac{1}{2} C_{oss} V_{\text{bus}}^2 f_{sw}}_{\text{Output Cap}} + \underbrace{V_{\text{bus}} Q_{rr} f_{sw}}_{\text{Reverse Recovery}}
+$$
 
 Note the positive thermal feedback loop on $R_{DS(\text{on})}(T_j) \approx R_{DS(\text{on})}(25^\circ\text{C}) \cdot \left(1 + \alpha (T_j - 25^\circ\text{C})\right)$ where $\alpha \approx 0.004\text{–}0.006\text{ K}^{-1}$. Junction temperature $T_j$ is verified via the Cauer/Foster thermal impedance network:
 
-$$T_j = T_{\text{ambient}} + P_{\text{total}} \cdot \left(R_{\theta,\text{JC}} + R_{\theta,\text{TIM}} + R_{\theta,\text{HS-A}}\right)$$
+$$
+T_j = T_{\text{ambient}} + P_{\text{total}} \cdot \left(R_{\theta,\text{JC}} + R_{\theta,\text{TIM}} + R_{\theta,\text{HS-A}}\right)
+$$
 
 ---
 

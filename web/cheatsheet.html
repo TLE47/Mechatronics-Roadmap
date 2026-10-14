@@ -4,9 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MechaLab — Printable 1-Page Mechatronics Engineering Cheat Sheet</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <!-- MathJax 3 — the same TeX engine GitHub uses to render Markdown math, so the card and
+       the repo typeset identically (one renderer, no dialect divergence). -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        processEnvironments: true,
+        tags: 'none'
+      },
+      options: {
+        // 'mjx-container' must be skipped: MathJax's own assistive-MathML output lives inside
+        // it, and re-typesetting it would render every formula a second time.
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option', 'mjx-container'],
+        enableMenu: true
+      },
+      chtml: { matchFontHeight: true },
+      startup: { typeset: false }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <style>
     :root {
       --bg: #0b0f19;
@@ -120,7 +139,7 @@
     </div>
     <div class="btn-bar no-print">
       <a class="btn secondary" href="./index.html">← Back to Interactive Workbench</a>
-      <button class="btn" onclick="window.print()">🖨️ Print / Save 1-Page PDF</button>
+      <button class="btn" onclick="printCheatSheet()">🖨️ Print / Save 1-Page PDF</button>
     </div>
   </div>
 
@@ -239,17 +258,19 @@
   </div>
 
   <script>
-    window.addEventListener('load', () => {
-      if (window.renderMathInElement) {
-        window.renderMathInElement(document.body, {
-          delimiters: [
-            { left: '$$', right: '$$', display: true },
-            { left: '$', right: '$', display: false }
-          ],
-          throwOnError: false
-        });
-      }
-    });
+    function typesetCheatSheet() {
+      if (!window.MathJax || !MathJax.startup || !MathJax.startup.promise) return Promise.resolve();
+      return MathJax.startup.promise
+        .then(() => MathJax.typesetPromise())
+        .catch(err => console.warn('MathJax typeset failed:', err));
+    }
+
+    // Print only once typesetting has finished, so the PDF can never capture raw $...$ source.
+    function printCheatSheet() {
+      typesetCheatSheet().then(() => window.print());
+    }
+
+    window.addEventListener('load', typesetCheatSheet);
   </script>
 </body>
 </html>
