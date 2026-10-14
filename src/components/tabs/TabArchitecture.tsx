@@ -255,6 +255,29 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       </ul>
                     </div>
 
+                    {/* Curated Free Resources */}
+                    <div className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3.5">
+                      <div className="font-bold text-[#34d399] mb-2 uppercase tracking-wider text-[0.72rem] font-mono">
+                        Curated Free Resources (Websites & Simulators &gt; Books)
+                      </div>
+                      <ul className="space-y-1.5 text-[#cbd5e1] leading-relaxed">
+                        {step.studyLinks.map((lk) => (
+                          <li key={lk.url}>
+                            <span aria-hidden="true">🔗 </span>
+                            <a
+                              href={lk.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[#38bdf8] hover:underline font-semibold inline-flex items-center gap-1"
+                            >
+                              {lk.label} <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                            {lk.note && <span className="text-[#94a3b8]"> — <em>{lk.note}</em></span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
                     {step.bridgeTitle && (
                       <div className="bg-[#1e293b]/40 border border-[#fbbf24]/30 rounded-lg p-3.5">
                         <div className="flex items-center gap-1.5 font-bold text-[#fbbf24] mb-1">
@@ -282,30 +305,45 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       <div className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3.5 mt-3 text-xs">
                         <div className="font-bold text-[#34d399] mb-1 flex items-center gap-1.5">
                           <Trophy className="w-3.5 h-3.5" />
-                          <span>Actionable Hands-On Milestone ({index + 1}/{activeSteps.length}):</span>
+                          <span>🧪 Hands-On Exercise ({index + 1}/{activeSteps.length}):</span>
                         </div>
-                        <p className="text-[#cbd5e1] leading-relaxed">{step.milestoneTask}</p>
+                        <p className="text-[#cbd5e1] leading-relaxed">
+                          <em>Task:</em> {step.milestoneTask}
+                        </p>
                       </div>
+
+                      {step.quiz && (
+                        <div className="bg-[#0b0f19] border border-[#334155] rounded-lg p-3.5 mt-3 text-xs">
+                          <div className="font-bold text-[#c084fc] mb-1.5">🧠 Knowledge Check:</div>
+                          <details className="group cursor-pointer">
+                            <summary className="font-semibold text-[#f1f5f9] hover:text-[#38bdf8] select-none">
+                              <b>Click to toggle quiz questions &amp; answers</b>
+                            </summary>
+                            <div className="mt-3 pt-2.5 border-t border-[#1e293b] space-y-2.5 text-[#cbd5e1] cursor-default">
+                              <div>
+                                <div className="font-semibold text-[#f1f5f9]">
+                                  <strong>Q1:</strong> {step.quiz.q1}
+                                </div>
+                                <div className="text-[#94a3b8] mt-1 pl-3 border-l-2 border-[#34d399]">
+                                  <strong>Answer / Explanation:</strong> {step.quiz.a1}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-[#f1f5f9]">
+                                  <strong>Q2:</strong> {step.quiz.q2}
+                                </div>
+                                <div className="text-[#94a3b8] mt-1 pl-3 border-l-2 border-[#38bdf8]">
+                                  <strong>Answer &amp; Explanation:</strong> {step.quiz.a2}
+                                </div>
+                              </div>
+                            </div>
+                          </details>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Footer Buttons: Launch Interactive Simulator + Free Study Links */}
-                    <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[#1e293b]">
-                      <div className="flex flex-wrap items-center gap-2 text-[0.73rem] text-[#94a3b8]">
-                        {step.studyLinks.map((lk, idx) => (
-                          <React.Fragment key={lk.url}>
-                            {idx > 0 && <span aria-hidden="true">·</span>}
-                            <a
-                              href={lk.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[#34d399] hover:underline inline-flex items-center gap-0.5"
-                            >
-                              {lk.label} <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          </React.Fragment>
-                        ))}
-                      </div>
-
+                    {/* Footer Button: Launch Interactive Simulator */}
+                    <div className="pt-2 flex flex-wrap items-center justify-end gap-2 border-t border-[#1e293b]">
                       <button
                         onClick={() => onLoadPreset(step.presetId)}
                         className="bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8] px-3 py-1.5 rounded-md text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"

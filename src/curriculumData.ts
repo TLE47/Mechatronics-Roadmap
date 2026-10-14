@@ -21,7 +21,13 @@ export interface LinearTrackStep {
   linkedTab: TabId;
   presetId: string;
   presetLabel: string;
-  studyLinks: { label: string; url: string }[];
+  studyLinks: { label: string; url: string; note?: string }[];
+  quiz?: {
+    q1: string;
+    a1: string;
+    q2: string;
+    a2: string;
+  };
 }
 
 export interface TierPassMeta {
@@ -111,9 +117,28 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
     presetId: 'wafer_scanner',
     presetLabel: 'Inspect Two-Mass Energy Analogy',
     studyLinks: [
-      { label: 'Falstad Interactive Circuit Applet', url: 'https://www.falstad.com/circuit/' },
-      { label: 'MIT 6.002 Circuits Intro', url: 'https://ocw.mit.edu/courses/6-002-circuits-and-electronics-spring-2007/' },
+      {
+        label: 'Falstad Interactive Circuit Simulator (falstad.com)',
+        url: 'https://www.falstad.com/circuit/',
+        note: 'Visualizes voltage as color and current as animated dots in real time in your browser.',
+      },
+      {
+        label: 'SparkFun: Voltage, Current, Resistance, and Ohm’s Law',
+        url: 'https://learn.sparkfun.com/tutorials/voltage-current-resistance-and-ohms-law',
+        note: 'Water-tank physical analogies tailored for absolute hardware beginners.',
+      },
+      {
+        label: 'All About Circuits: Inductors & Capacitors (Vol. I)',
+        url: 'https://www.allaboutcircuits.com/textbook/direct-current/',
+        note: 'Open-access textbook explaining energy storage in electric and magnetic fields.',
+      },
     ],
+    quiz: {
+      q1: 'Why does a 100 nF ceramic capacitor need to be placed within 1–2 mm of a microcontroller’s VCC pin even if the main power supply has a large 1,000 µF capacitor 15 cm away?',
+      a1: 'Long wires and PCB traces have stray inductance (L) that resists rapid changes in current (V = L·dI/dt). When CPU clock edges switch in nanoseconds, the distant supply is blocked by trace inductance; the local 100 nF capacitor acts like an L1 RAM cache, supplying instant local charge.',
+      q2: 'A motor coil with inductance L = 2 mH carries I = 4 A. If a transistor switches the current off in Δt = 200 ns without a flyback diode, what theoretical voltage spike is generated?',
+      a2: 'Using V_L = L·(ΔI/Δt) = (2×10⁻³ H)·(4 A / 200×10⁻⁹ s) = 40,000 V (40 kV). This immediately destroys the transistor via avalanche breakdown unless a flyback diode provides a safe current path.',
+    },
   },
   {
     stepNumber: 'L0.2',
@@ -137,9 +162,28 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
     presetId: 'pcb_6layer_opt',
     presetLabel: 'Compare Breadboard vs. 6-Layer PCB',
     studyLinks: [
-      { label: 'SparkFun How to Use a Breadboard', url: 'https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard' },
-      { label: 'EEVblog Multimeter Guide', url: 'https://www.youtube.com/user/EEVblog' },
+      {
+        label: 'SparkFun: How to Use a Breadboard',
+        url: 'https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard',
+        note: 'Cutaway photos showing internal metal spring clips and split power rails.',
+      },
+      {
+        label: 'SparkFun: How to Use a Multimeter',
+        url: 'https://learn.sparkfun.com/tutorials/how-to-use-a-multimeter',
+        note: 'Step-by-step guide to continuity testing, voltage probing, and avoiding blown current fuses.',
+      },
+      {
+        label: 'sigrok PulseView Logic Analyzer Manual',
+        url: 'https://sigrok.org/wiki/PulseView',
+        note: 'Open-source protocol decoder documentation for I2C, SPI, UART, and CAN.',
+      },
     ],
+    quiz: {
+      q1: 'You power on a new ESP32 + sensor prototype using a bench PSU set to 12.0 V and a 0.10 A CC limit. Immediately, the display reads 0.45 V and 0.10 A with the CC LED lit. What happened?',
+      a1: 'The board is drawing more than 100 mA (likely a near-short or reversed IC), so the supply automatically crossed from Constant Voltage (CV) into Constant Current (CC) mode—clamping current at 100 mA by dropping voltage to 0.45 V and saving your hardware.',
+      q2: 'Why shouldn’t you run 10 A of motor current through a solderless breadboard strip?',
+      a2: 'Each breadboard spring contact has ~0.1–0.2 Ω of contact resistance. At 10 A, a single connection dissipates P = I²R = 100 × 0.15 = 15 W of heat, melting the ABS plastic housing within seconds.',
+    },
   },
   {
     stepNumber: 'L0.3',
@@ -163,9 +207,28 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
     presetId: 'foc_cobot_joint',
     presetLabel: 'Preview 3-Phase PWM Simulator',
     studyLinks: [
-      { label: 'STM32 Step-by-Step Beginner Guide', url: 'https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview' },
-      { label: 'ESP-IDF Motor Control PWM Docs', url: 'https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/mcpwm.html' },
+      {
+        label: 'Wokwi Browser ESP32 & STM32 Simulator',
+        url: 'https://wokwi.com/',
+        note: 'Test GPIO buttons, PWM, and ADCs in your browser before wiring physical hardware.',
+      },
+      {
+        label: 'STM32 Step-by-Step Official Beginner Wiki',
+        url: 'https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview',
+        note: 'Hands-on tutorial series covering STM32 Nucleo GPIO, timers, PWM, and ADCs.',
+      },
+      {
+        label: 'SparkFun: Pull-Up Resistors & Pulse Width Modulation',
+        url: 'https://learn.sparkfun.com/tutorials/pull-up-resistors',
+        note: 'Explains why floating digital inputs fail and how pull-up resistors solve it.',
+      },
     ],
+    quiz: {
+      q1: 'Why can’t you drive a 12 V, 1.5 A DC motor directly from an STM32 or ESP32 GPIO pin?',
+      a1: 'A microcontroller GPIO pin only outputs 3.3 V and can source at most ~15–25 mA before its internal microscopic CMOS transistors burn out. You need an external MOSFET power switch rated for the motor’s voltage and current.',
+      q2: 'You want to measure a 24 V battery rail using an STM32 ADC pin whose maximum input is 3.3 V. Using R₁ = 68 kΩ from V_bat to the ADC pin and R₂ = 10 kΩ to GND, what is V_ADC when V_bat = 25.2 V?',
+      a2: 'V_ADC = 25.2 V × (10 / (68 + 10)) = 3.231 V (safely < 3.3 V), which corresponds to 12-bit ADC code floor(4095 × 3.231 / 3.3) = 4009.',
+    },
   },
 ];
 
@@ -195,9 +258,28 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'surgical_cable',
     presetLabel: 'Open Two-Mass Resonance Sim (Tab 2)',
     studyLinks: [
-      { label: 'MIT 18.06 Linear Algebra', url: 'https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/' },
-      { label: 'Smith Scientist & Engineer DSP Guide', url: 'https://www.dspguide.com/' },
+      {
+        label: '3Blue1Brown: Essence of Linear Algebra & Differential Equations',
+        url: 'https://www.3blue1brown.com/topics/linear-algebra',
+        note: 'Visual, geometric intuition for rotation matrices and state-space differential equations.',
+      },
+      {
+        label: 'myPhysicsLab Interactive Spring-Mass Simulations',
+        url: 'https://www.myphysicslab.com/',
+        note: 'Browser-based interactive ODE physics applets with open-source JavaScript code.',
+      },
+      {
+        label: 'The Scientist and Engineer’s Guide to DSP (dspguide.com)',
+        url: 'https://www.dspguide.com/',
+        note: 'Free textbook explaining moving averages and single-pole recursive filters with plain-English code.',
+      },
     ],
+    quiz: {
+      q1: 'In a time-stepping physics loop, why does updating velocity FIRST and then updating position using the NEW velocity (semi-implicit Euler) work so much better than using the old velocity (explicit Euler)?',
+      a1: 'Explicit Euler artificially injects phantom energy on every step, causing an undamped spring-mass simulation to spiral outward and explode. Semi-implicit Euler is symplectic—it preserves phase-space area and keeps oscillatory energy bounded.',
+      q2: 'You run an exponential smoothing filter y[k] = α·x[k] + (1-α)·y[k-1] at f_s = 1000 Hz with α = 0.05. What is its approximate -3 dB cutoff frequency f_c?',
+      a2: 'Using α ≈ 2πf_cΔt / (1 + 2πf_cΔt), we solve 2πf_c(0.001) = 0.05 / 0.95 = 0.05263, giving f_c ≈ 8.38 Hz.',
+    },
   },
   {
     stepNumber: 'T1 · Step 2 / 8',
@@ -221,9 +303,28 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'pcb_6layer_opt',
     presetLabel: 'Open Power Stage Explorer (Tab 6)',
     studyLinks: [
-      { label: 'TI H-Bridge Motor Driver Basics', url: 'https://www.ti.com/lit/pdf/slva959' },
-      { label: 'ADI Decoupling Capacitor Guide (MT-101)', url: 'https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf' },
+      {
+        label: 'TI SLVA959: Brushed DC Motor Driver Basics (H-Bridge)',
+        url: 'https://www.ti.com/lit/pdf/slva959',
+        note: 'Clear diagrams showing H-bridge current paths during forward, reverse, coast, and brake.',
+      },
+      {
+        label: 'Analog Devices MT-101: Decoupling Techniques',
+        url: 'https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf',
+        note: 'Explains why pairing a bulk electrolytic capacitor with a 100 nF ceramic cap stops brown-outs.',
+      },
+      {
+        label: 'Adafruit DRV8833 DC/Stepper Motor Driver Breakout Guide',
+        url: 'https://learn.adafruit.com/adafruit-drv8833-dc-stepper-motor-driver-breakout-board',
+        note: 'Practical pinout and wiring walkthrough for a modern MOSFET H-bridge breakout.',
+      },
     ],
+    quiz: {
+      q1: 'In an H-bridge, what is the physical difference between "Coast" (High-Z) and "Active Brake" (Low-Side Slow Decay) when stopping a spinning motor?',
+      a1: 'In Coast mode, all 4 switches open so current decays rapidly and the rotor coasts freely. In Active Brake mode, both bottom switches turn ON, shorting the motor terminals together so the motor’s back-EMF drives a strong opposing braking current.',
+      q2: 'Why does an older bipolar L298N module get burning hot at 2 A compared to a modern MOSFET breakout like the DRV8833?',
+      a2: 'The L298N uses Darlington BJT transistors with a ~2.5 V saturation drop (P = 2.5 V × 2 A = 5.0 W of heat), whereas a MOSFET driver has R_DS(on) ≈ 0.36 Ω (P = I²R = 4 × 0.36 = 1.44 W).',
+    },
   },
   {
     stepNumber: 'T1 · Step 3 / 8',
@@ -246,8 +347,28 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'robot_hopper_crouch',
     presetLabel: 'Open Kinematic Chain Inspector (Tab 5)',
     studyLinks: [
-      { label: 'Lynch & Park Modern Robotics Ch. 1–3', url: 'https://hades.mech.northwestern.edu/index.php/Modern_Robotics' },
+      {
+        label: 'Modern Robotics Ch. 1–3 & Video Series (Lynch & Park)',
+        url: 'https://hades.mech.northwestern.edu/index.php/Modern_Robotics',
+        note: 'Free PDF textbook and short lecture videos introducing degrees of freedom and planar kinematics.',
+      },
+      {
+        label: 'Red Blob Games: 2D Forward & Inverse Kinematics Guide',
+        url: 'https://www.redblobgames.com/',
+        note: 'Interactive visual tutorials for 2D coordinate transforms and trigonometry for programmers.',
+      },
+      {
+        label: 'MIT 2.007 Design and Manufacturing I OpenCourseWare',
+        url: 'https://ocw.mit.edu/courses/2-007-design-and-manufacturing-i-spring-2009/',
+        note: 'Practical beginner mechanical design rules for shafts, bearings, pulleys, and gear ratios.',
+      },
     ],
+    quiz: {
+      q1: 'Why Does J_reflected scale with the SQUARE of the gear ratio (N²) rather than linearly with N?',
+      a1: 'For a 1 rad rotation of the output shaft, the motor rotor must spin N radians (multiplying angular acceleration by N), and the gearbox also multiplies the reaction torque back to the output by another factor of N: τ = N·(J_m·N·q̈) = N² J_m q̈.',
+      q2: 'A small rotor has J_rotor = 0.05 kg·cm². If you attach a 100:1 harmonic drive, what is the reflected rotor inertia at the output joint?',
+      a2: 'J_ref = 100² × 0.05 = 500 kg·cm² (0.05 kg·m²)—often heavier than the robot arm link itself, making the joint stiff and non-backdrivable.',
+    },
   },
   {
     stepNumber: 'T1 · Step 4 / 8',
@@ -270,8 +391,28 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'foc_cobot_joint',
     presetLabel: 'Open FOC & SVPWM Simulator (Tab 3)',
     studyLinks: [
-      { label: 'SimpleFOC Beginner Documentation', url: 'https://docs.simplefoc.com/' },
+      {
+        label: 'SimpleFOC Official Theory & Getting Started Docs',
+        url: 'https://docs.simplefoc.com/',
+        note: 'The best beginner-friendly guide to spinning 3-phase brushless motors with open-source hardware.',
+      },
+      {
+        label: 'GreatScott! Brushless DC Motor Fundamentals Video',
+        url: 'https://www.youtube.com/c/greatscottlab',
+        note: 'Visual animations of stator coils, permanent magnet poles, and electronic commutation.',
+      },
+      {
+        label: 'ams AS5600 / AS5048 Magnetic Encoder App Notes',
+        url: 'https://ams-osram.com/',
+        note: 'Shows how a diametric magnet must be mounted over a Hall sensor array.',
+      },
     ],
+    quiz: {
+      q1: 'What happens if you mount an axial magnet (north on top, south on bottom) over an AS5600/AS5048 magnetic encoder instead of a diametrically magnetized magnet?',
+      a1: 'The encoder reading will fail or stay nearly constant! On-axis magnetic angle encoders measure the rotating horizontal magnetic field vector in the X-Y plane, which requires a diametrically magnetized magnet (North on left half, South on right half).',
+      q2: 'A brushless gimbal motor has 14 magnets on its rotor bell. How many pole pairs (N_p) does it have, and how many electrical degrees correspond to a 10° mechanical rotation?',
+      a2: '14 magnets = 7 pole pairs (N_p = 7). A 10° mechanical rotation equals θ_e = 7 × 10° = 70° electrical.',
+    },
   },
   {
     stepNumber: 'T1 · Step 5 / 8',
@@ -294,8 +435,28 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'eskf_seqlock_clean',
     presetLabel: 'Open Real-Time Telemetry Sim (Tab 8)',
     studyLinks: [
-      { label: 'Barr Group Embedded C Coding Standard', url: 'https://barrgroup.com/embedded-systems/books/embedded-c-coding-standard' },
+      {
+        label: 'Quantum Leaps: Modern Embedded Systems Programming Course',
+        url: 'https://www.state-machine.com/video-course',
+        note: 'Free video series showing memory registers, interrupts, stack frames, and why delay() fails.',
+      },
+      {
+        label: 'Barr Group: Embedded C Coding Standard & volatile Rules',
+        url: 'https://barrgroup.com/embedded-systems/books/embedded-c-coding-standard',
+        note: 'Industry-standard rules for writing deterministic, bug-free embedded C/C++.',
+      },
+      {
+        label: 'Adafruit: Multi-tasking the Arduino (Ditching delay)',
+        url: 'https://learn.adafruit.com/multi-tasking-the-arduino-part-1',
+        note: 'Accessible walkthrough of state machines and timer interrupts.',
+      },
     ],
+    quiz: {
+      q1: 'Why should you NEVER call `Serial.println()` or `printf()` inside a 1 kHz hardware timer Interrupt Service Routine (ISR)?',
+      a1: 'Formatting ASCII strings is slow, and once the UART transmit buffer fills up, `Serial.println()` blocks waiting for previous bytes to shift out—stalling the ISR past its 1 ms deadline and crashing timing.',
+      q2: 'An STM32 timer runs from a 170 MHz clock. If you set Prescaler PSC = 169, what Auto-Reload Register (ARR) value gives an exact 1,000 Hz interrupt frequency?',
+      a2: 'Timer tick frequency = 170 MHz / (169 + 1) = 1 MHz (1 µs per tick). For 1,000 Hz (1,000 ticks), set ARR = 1000 - 1 = 999.',
+    },
   },
   {
     stepNumber: 'T1 · Step 6 / 8',
@@ -318,8 +479,28 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'pend_swingup',
     presetLabel: 'Open Pendulum Balancer Sim (Tab 4)',
     studyLinks: [
-      { label: 'Åström & Murray Feedback Systems Ch. 1 & 11', url: 'https://fbswiki.org/wiki/index.php/Main_Page' },
+      {
+        label: 'Brian Douglas Control Systems Lectures (Resourcium)',
+        url: 'https://engineeringmedia.com/',
+        note: 'Visual, intuitive video explanations of PID control, integrator windup, and filtering.',
+      },
+      {
+        label: 'Åström & Murray: Feedback Systems (FBSwiki Open Textbook)',
+        url: 'https://fbswiki.org/wiki/index.php/Main_Page',
+        note: 'Chapter 11 provides the gold-standard practical formulation of PID with anti-windup.',
+      },
+      {
+        label: 'Brett Beauregard: Improving the Beginner’s PID',
+        url: 'http://brettbeauregard.com/blog/2011/04/improving-the-beginners-pid-introduction/',
+        note: 'Step-by-step C code walkthrough fixing derivative kick, sample-time jitter, and windup.',
+      },
     ],
+    quiz: {
+      q1: 'What is "Derivative Kick," and how do you eliminate it in one line of code?',
+      a1: 'When the user suddenly steps the target setpoint q_des, the error derivative d(q_des - q)/dt spikes to a massive number, slamming the motor. Computing the derivative on the measured position ONLY (-Kd * dq/dt) eliminates derivative kick.',
+      q2: 'Why can’t you get a reliable tilt angle on a moving robot using ONLY an accelerometer, or ONLY a gyroscope?',
+      a2: 'An accelerometer measures gravity PLUS linear vibration/acceleration (noisy at high frequencies), while a gyroscope has a small DC zero-rate offset that drifts to infinity when integrated (noisy at low frequencies). The complementary filter combines the best of both.',
+    },
   },
   {
     stepNumber: 'T1 · Step 7 / 8',
@@ -342,8 +523,23 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'sysid_schroeder_clean',
     presetLabel: 'Open Frequency Identification Sim (Tab 7)',
     studyLinks: [
-      { label: 'Underactuated Robotics Ch. 1–2', url: 'https://underactuated.mit.edu/' },
+      {
+        label: 'Underactuated Robotics Ch. 1–2 (Russ Tedrake, MIT)',
+        url: 'https://underactuated.mit.edu/',
+        note: 'Interactive HTML textbook with runnable Python notebooks on trajectories and compliance.',
+      },
+      {
+        label: 'Modern Robotics Ch. 9: Trajectory Generation',
+        url: 'https://hades.mech.northwestern.edu/index.php/Modern_Robotics',
+        note: 'Derives cubic, quintic, and trapezoidal velocity profiles with clear diagrams.',
+      },
     ],
+    quiz: {
+      q1: 'Why should an industrial or benchtop Emergency Stop (E-Stop) button be wired as Normally Closed (NC) rather than Normally Open (NO)?',
+      a1: 'A Normally Closed circuit conducts continuous current when healthy. If a wire accidentally breaks or a connector vibrates loose, the circuit opens and immediately stops the robot (fail-safe). A broken wire on a Normally Open E-stop would go undetected until someone pressed the button and nothing happened!',
+      q2: 'Why do we set Ki = 0 when running a compliant virtual spring-damper (impedance) controller meant to interact with human hands?',
+      a2: 'If a human pushes and holds the robot arm away from q_d, an active integral term (Ki > 0) would wind up over time, fighting harder and harder until it overpowers the human or saturates the motor.',
+    },
   },
   {
     stepNumber: 'T1 · Step 8 / 8 (LEVEL-UP BOSS)',
@@ -366,8 +562,23 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'robot_arm_polish',
     presetLabel: 'Launch Capstone Inspector (Tab 5)',
     studyLinks: [
-      { label: 'SimpleFOC Community Projects', url: 'https://community.simplefoc.com/' },
+      {
+        label: 'SimpleFOC Community Projects Showcase',
+        url: 'https://community.simplefoc.com/',
+        note: 'Open-source desktop robot arms and pendulums built with breakout modules.',
+      },
+      {
+        label: 'ODrive Robotics Open-Source Hardware & Docs Archive',
+        url: 'https://docs.odriverobotics.com/',
+        note: 'Practical troubleshooting guide for encoders, power supplies, and brushless motor tuning.',
+      },
     ],
+    quiz: {
+      q1: 'During first bring-up of your 2-DOF brushless robot arm, Joint 1 immediately snaps to a fixed angle and draws maximum current instead of tracking your target. What is the most likely cause?',
+      a1: 'The encoder direction is inverted relative to the motor phase order (`ABZ` or `UVW` swapped), turning negative feedback into positive feedback! Swap any two motor phase wires or flip the sensor direction sign.',
+      q2: 'Why is it critical to test open-loop trajectory generation and inverse kinematics in Python/simulation BEFORE enabling closed-loop motor power?',
+      a2: 'A sign flip or `NaN` in inverse kinematics will command an instantaneous jump to an impossible angle at maximum torque, breaking 3D-printed brackets before you can hit the E-stop.',
+    },
   },
 ];
 
@@ -401,8 +612,28 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'cnc_ballscrew',
     presetLabel: 'Tune CNC Ballscrew Notch (Tab 2)',
     studyLinks: [
-      { label: 'Oppenheim & Schafer Discrete-Time Signal Processing', url: 'https://www.dspguide.com/' },
+      {
+        label: 'Julius O. Smith III: Introduction to Digital Filters (CCRMA Stanford)',
+        url: 'https://ccrma.stanford.edu/~jos/filters/',
+        note: 'Complete free online textbook covering biquad structures, TDF-II, and bilinear pre-warping.',
+      },
+      {
+        label: 'Visualizing Quaternions Interactive Course (3Blue1Brown / Ben Eater)',
+        url: 'https://eater.net/quaternions',
+        note: 'Interactive 3D sphere in your browser for manipulating quaternion rotations.',
+      },
+      {
+        label: 'Python Control Systems Library (python-control.readthedocs.io)',
+        url: 'https://python-control.readthedocs.io/',
+        note: 'Open-source Python library for state-space discretization, Bode plots, and notch design.',
+      },
     ],
+    quiz: {
+      q1: 'Why is frequency pre-warping (K = ω_n / tan(ω_n T_s / 2)) required when discretizing a 350 Hz notch filter at a 1,000 Hz sample rate?',
+      a1: 'The standard bilinear transform compresses the infinite analog frequency axis onto (-f_s/2, +f_s/2) via ω_a = (2/T_s)tan(ω_d T_s/2). Without pre-warping, the digital notch zero lands several Hz away from 350 Hz, missing the narrow mechanical resonance peak!',
+      q2: 'Why is Transposed Direct Form II (TDF-II) preferred over Direct Form I for 32-bit float embedded biquad filters?',
+      a2: 'TDF-II requires only 2 state registers instead of 4 and sums the numerator zeros before the high-gain feedback poles, preventing internal floating-point overflow and quantization limit cycles when Q is high.',
+    },
   },
   {
     stepNumber: 'T2 · Step 2 / 8',
@@ -430,9 +661,28 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'pcb_2layer_bad',
     presetLabel: 'Inspect 2-Layer vs 6-Layer PCB (Tab 6)',
     studyLinks: [
-      { label: 'TI SLUA618 Gate Driver Layout Guide', url: 'https://www.ti.com/lit/pdf/slua618' },
-      { label: 'KiCad Getting Started Docs', url: 'https://docs.kicad.org/' },
+      {
+        label: 'KiCad Official Getting Started & PCB Layout Docs',
+        url: 'https://docs.kicad.org/',
+        note: 'Official step-by-step workflow from schematic capture to Gerber/BOM export.',
+      },
+      {
+        label: 'TI SLUA618: Fundamentals of MOSFET and IGBT Gate Driver Circuits',
+        url: 'https://www.ti.com/lit/pdf/slua618',
+        note: 'The definitive engineering reference on gate charge, Miller plateau, bootstrap caps, and dead time.',
+      },
+      {
+        label: 'Phil’s Lab KiCad Mixed-Signal & STM32 PCB Design Series',
+        url: 'https://www.youtube.com/c/PhilsLab',
+        note: 'Walks through 4-layer stackups, return paths, and JLCPCB SMT assembly files.',
+      },
     ],
+    quiz: {
+      q1: 'In a half-bridge bootstrap gate driver, why can’t you hold the high-side N-MOSFET ON at 100% duty cycle indefinitely without a charge pump?',
+      a1: 'The bootstrap capacitor C_boot only recharges when the low-side MOSFET turns ON and pulls the switch node SW to GND. At 100% high-side duty cycle, C_boot slowly drains through gate driver quiescent current and the high-side FET browns out.',
+      q2: 'You use a 1 mΩ (0.001 Ω) shunt to measure 30 A. If your sense traces accidentally include 0.5 mΩ of main power-pad copper, what percentage error is introduced?',
+      a2: 'The amplifier sees 1.5 mΩ instead of 1.0 mΩ—a massive +50% current measurement error! Kelvin sensing taps strictly inside the manganin shunt element to eliminate pad resistance.',
+    },
   },
   {
     stepNumber: 'T2 · Step 3 / 8',
@@ -460,9 +710,28 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'robot_furuta_bal',
     presetLabel: 'Inspect URDF/MuJoCo Models (Tab 5)',
     studyLinks: [
-      { label: 'MuJoCo XML Reference', url: 'https://mujoco.readthedocs.io/' },
-      { label: 'CadQuery Documentation', url: 'https://cadquery.readthedocs.io/' },
+      {
+        label: 'MIT Precision Machine Design Principles (Slocum FUNdaMENTALS)',
+        url: 'https://pergatory.mit.edu/resources/FUNdaMENTALS.html',
+        note: 'Free textbook chapters by Prof. Alex Slocum on exact constraint, Abbe error, and bearings.',
+      },
+      {
+        label: 'CadQuery Python Parametric CAD Documentation',
+        url: 'https://cadquery.readthedocs.io/',
+        note: 'Code-first Python CAD framework for generating STEP and STL files.',
+      },
+      {
+        label: 'MuJoCo Physics Engine XML Modeling Guide',
+        url: 'https://mujoco.readthedocs.io/en/stable/modeling.html',
+        note: 'Explains rigid-body inertias, joint armatures, and actuator modeling.',
+      },
     ],
+    quiz: {
+      q1: 'Why is supporting a single rigid shaft with THREE collinear radial ball bearings a classic mechanical design mistake?',
+      a1: 'Two bearings already constrain 4 radial/tilt degrees of freedom. Adding a 3rd bearing over-constrains the shaft: any tiny misalignment bends the shaft on every rotation, causing massive friction and premature bearing failure.',
+      q2: 'A colleague hand-types principal inertias I₁ = 0.01, I₂ = 0.01, I₃ = 0.05 kg·m² into a URDF file. Why will MuJoCo reject this link?',
+      a2: 'It violates the principal inertia triangle inequality I₁ + I₂ ≥ I₃ (0.01 + 0.01 = 0.02 < 0.05). Even for an infinitely thin flat disc, I₃ can at most equal I₁ + I₂.',
+    },
   },
   {
     stepNumber: 'T2 · Step 4 / 8',
@@ -490,8 +759,23 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'foc_drone_prop',
     presetLabel: 'Test High-Speed FOC Coupling (Tab 3)',
     studyLinks: [
-      { label: 'TI Clarke & Park Transform App Note', url: 'https://www.ti.com/lit/pdf/bpra048' },
+      {
+        label: 'TI BPRA048: Field Orientated Control of 3-Phase AC-Motors',
+        url: 'https://www.ti.com/lit/pdf/bpra048',
+        note: 'Step-by-step derivation of Clarke and Park transforms with vector diagrams.',
+      },
+      {
+        label: 'MathWorks: Inertial Sensor Noise Analysis Using Allan Variance',
+        url: 'https://www.mathworks.com/help/nav/ug/inertial-sensor-noise-analysis-using-allan-variance.html',
+        note: 'Shows how to read Angle Random Walk (-1/2 slope) and Bias Instability (0 slope) from σ(τ) plots.',
+      },
     ],
+    quiz: {
+      q1: 'In a surface-mounted PMSM (where L_d = L_q), why do we command i_d* = 0 and put all current into i_q*?',
+      a1: 'The d-axis aligns directly with the rotor permanent magnet flux—pushing current along d only pulls/pushes radially against the bearings without producing torque, wasting heat as I_d² R. The q-axis is perpendicular (90° electrical) to the magnet flux, producing 100% torque.',
+      q2: 'Why does a Type-II PLL have zero steady-state phase lag during constant-velocity rotation, whereas a 1st-order low-pass filter on finite differences always lags?',
+      a2: 'A Type-II PLL contains two integrators in its forward loop (one in velocity state ω̂ and one in angle state θ̂). By the Internal Model Principle, a double integrator tracks a ramp input (constant velocity) with zero steady-state error.',
+    },
   },
   {
     stepNumber: 'T2 · Step 5 / 8',
@@ -519,8 +803,28 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'eskf_seqlock_clean',
     presetLabel: 'Open RTOS & IPC Simulator (Tab 8)',
     studyLinks: [
-      { label: 'FreeRTOS Mastering the Kernel Book', url: 'https://www.freertos.org/Documentation/02-Kernel/07-Books-and-manual/01-RTOS_book' },
+      {
+        label: 'FreeRTOS Official Mastering the Kernel Book (Free PDF)',
+        url: 'https://www.freertos.org/Documentation/02-Kernel/07-Books-and-manual/01-RTOS_book',
+        note: 'Covers preemptive scheduling, priority inheritance mutexes, and ISR notifications.',
+      },
+      {
+        label: 'MaJerle STM32 USART/SPI DMA Circular Buffer Guide',
+        url: 'https://github.com/MaJerle/stm32-usart-uart-dma-rx-tx',
+        note: 'Production patterns for zero-CPU DMA ring buffers with half/complete interrupts.',
+      },
+      {
+        label: 'TI SLOA101: Introduction to the Controller Area Network (CAN)',
+        url: 'https://www.ti.com/lit/pdf/sloa101',
+        note: 'Explains differential signaling, 120 Ω termination, and non-destructive bitwise arbitration.',
+      },
     ],
+    quiz: {
+      q1: 'On a CAN bus, what happens if Joint 1 (CAN ID `0x01`) and Joint 5 (CAN ID `0x05`) start transmitting at the exact same microsecond?',
+      a1: 'Neither packet is corrupted! CAN uses non-destructive bitwise arbitration where `0` is dominant and `1` is recessive. When transmitting the ID bits, `0x01` outputs dominant `0` while `0x05` outputs recessive `1`; Joint 5 sees the dominant bit, stops transmitting, and retries automatically once Joint 1 finishes.',
+      q2: 'What is "Priority Inversion" in an RTOS, and how does Priority Inheritance fix it?',
+      a2: 'Priority inversion occurs when a Low-priority task holds a mutex needed by a High-priority task, while a Medium-priority task preempts the Low-priority task—indirectly starving the High-priority task. Priority Inheritance temporarily boosts the Low-priority task to High priority until it releases the mutex.',
+    },
   },
   {
     stepNumber: 'T2 · Step 6 / 8',
@@ -548,8 +852,28 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'pend_swingup',
     presetLabel: 'Run Swing-Up + LQR Sim (Tab 4)',
     studyLinks: [
-      { label: 'Åström & Murray Feedback Systems (FBS2e)', url: 'https://fbswiki.org/wiki/index.php/Main_Page' },
+      {
+        label: 'Steve Brunton Control Bootcamp (LQR & Kalman Filter Lectures)',
+        url: 'https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m',
+        note: 'Concise graduate-level intuition for state-space controllability, LQR, and Kalman filtering.',
+      },
+      {
+        label: 'Kalman and Bayesian Filters in Python (Roger Labbe)',
+        url: 'https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python',
+        note: 'Interactive open-source Jupyter book building Kalman filters from scratch.',
+      },
+      {
+        label: 'Åström & Murray: Feedback Systems Ch. 7, 8 & 12 (Gang of Four)',
+        url: 'https://fbswiki.org/wiki/index.php/Main_Page',
+        note: 'Covers sensitivity peak M_s, Bode’s integral theorem, and loop shaping.',
+      },
     ],
+    quiz: {
+      q1: 'In Bode’s Sensitivity Integral ("The Waterbed Effect"), why does pushing down disturbance sensitivity |S(jω)| < 1 at low frequencies force |S(jω)| > 1 at higher frequencies?',
+      a1: 'For any system with relative degree ≥ 2, the integral of ln|S(jω)| across all frequencies equals zero. Pushing down the waterbed in your control bandwidth forces a bulge (sensitivity peak M_s > 1) near crossover where noise and unmodeled resonances get amplified.',
+      q2: 'Why do we augment a Kalman Filter’s state vector with a constant disturbance state d_k+1 = d_k when controlling a robot joint?',
+      a2: 'Estimating the external disturbance torque d̂ and subtracting it from the motor command acts as a model-based Disturbance Observer (DOB), eliminating steady-state error without winding up an LQR controller.',
+    },
   },
   {
     stepNumber: 'T2 · Step 7 / 8',
@@ -577,8 +901,23 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'sto_enc_crc',
     presetLabel: 'Test HIL Fault Injection (Tab 5)',
     studyLinks: [
-      { label: 'MIT Manipulation Textbook (Tedrake)', url: 'https://manipulation.csail.mit.edu/' },
+      {
+        label: 'Robotic Manipulation (Russ Tedrake, MIT Open Textbook)',
+        url: 'https://manipulation.csail.mit.edu/',
+        note: 'Covers Jacobian force duality (τ = Jᵀ F), Cartesian stiffness, and contact control.',
+      },
+      {
+        label: 'Ruckig Online Jerk-Limited Trajectory Generator',
+        url: 'https://github.com/pantor/ruckig',
+        note: 'Open-source C++/Python library for time-optimal S-curve trajectories.',
+      },
     ],
+    quiz: {
+      q1: 'Why does τ = J(q)ᵀ F_x remain completely well-defined and stable even when the robot arm stretches straight out into a kinematic singularity (det(J) = 0)?',
+      a1: 'Unlike inverse kinematics (which divides by det(J) via J⁻¹ and explodes to infinity at a singularity), J(q)ᵀ only multiplies matrices—at full extension, forces perpendicular to the arm simply project to zero torque without dividing by zero.',
+      q2: 'What happens if a heavy robot joint decelerates rapidly while powered by a benchtop power supply (which can only source current, not sink it) without a braking chopper?',
+      a2: 'The motor acts as a generator and pumps kinetic energy into the DC bus capacitors, causing V_bus to skyrocket past the 60 V / 80 V rating of the MOSFETs and gate drivers, destroying the board.',
+    },
   },
   {
     stepNumber: 'T2 · Step 8 / 8 (LEVEL-UP BOSS)',
@@ -601,8 +940,23 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'cad_qdd_carrier',
     presetLabel: 'Inspect QDD Actuator Design (Tab 6)',
     studyLinks: [
-      { label: 'Ben Katz MIT Cheetah QDD Actuator Thesis', url: 'https://dspace.mit.edu/handle/1721.1/118671' },
+      {
+        label: 'Ben Katz MIT Master’s Thesis: Low Cost Modular Actuators for Dynamic Robots',
+        url: 'https://dspace.mit.edu/handle/1721.1/118671',
+        note: 'The seminal open-access reference for custom FOC motor controllers, planetary QDD actuators, and MIT CAN mode.',
+      },
+      {
+        label: 'Open Dynamic Robot Initiative (ODRI)',
+        url: 'https://open-dynamic-robot-initiative.github.io/',
+        note: 'Complete open-source mechanical, PCB, and firmware files for torque-controlled legged robots.',
+      },
     ],
+    quiz: {
+      q1: 'Why do modern dynamic robots (like MIT Cheetah or humanoids) run the high-rate position/velocity impedance damper `Kp(q_d - q) + Kd(v_d - v)` ON THE MOTOR DRIVER MCU at 20–40 kHz rather than over the 1 kHz central CAN bus?',
+      a1: 'A 1 ms CAN bus delay limits the maximum stable derivative damping gain Kd before high-frequency chatter occurs. Running the PD damper locally inside the 40 kHz actuator loop while streaming smooth setpoints + τ_ff at 1 kHz over CAN achieves 10× higher stable damping.',
+      q2: 'Why do Quasi-Direct Drive (QDD) actuators use a low 6:1 to 9:1 single-stage planetary gear ratio instead of a 100:1 harmonic drive?',
+      a2: 'Because reflected inertia scales as N², an 8:1 reduction has 64× rotor inertia whereas a 100:1 drive has 10,000× rotor inertia! Low reflected inertia lets the actuator absorb ground impacts without stripping gears and measure contact forces directly via motor current.',
+    },
   },
 ];
 
@@ -636,8 +990,23 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'wafer_scanner',
     presetLabel: 'Run ASML Wafer Stage Sim (Tab 2)',
     studyLinks: [
-      { label: 'Solà Micro Lie Theory for State Estimation', url: 'https://arxiv.org/abs/1812.01537' },
+      {
+        label: 'Joan Solà: A Micro Lie Theory for State Estimation in Robotics (arXiv:1812.01537)',
+        url: 'https://arxiv.org/abs/1812.01537',
+        note: 'The definitive robotics tutorial on SO(3)/SE(3) exponential maps, Adjoints, and manifold Jacobians.',
+      },
+      {
+        label: 'Barfoot: State Estimation for Robotics (Free PDF Textbook)',
+        url: 'http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf',
+        note: 'Graduate reference on matrix Lie groups and estimation on manifolds.',
+      },
     ],
+    quiz: {
+      q1: 'In Rodrigues’ formula, why must production C++ code switch to the Taylor series 1 - θ²/6 and 1/2 - θ²/24 when θ < 10⁻⁴ rad?',
+      a1: 'In IEEE-754 floating point, when θ → 0, cos(θ) rounds to 1.0, causing catastrophic cancellation in (1 - cos θ)/θ² and `0.0 / 0.0 = NaN` at rest. The Taylor series evaluates smoothly at θ = 0 with full machine precision.',
+      q2: 'Why is the Box-Minus error ϕ = log(R_dᵀ R)^∨ invariant to choice of world coordinate frame?',
+      a2: 'Rotating the world frame by R_0 transforms both R_d → R_0 R_d and R → R_0 R, so (R_0 R_d)ᵀ(R_0 R) = R_dᵀ R_0ᵀ R_0 R = R_dᵀ R—the arbitrary world frame cancels out completely.',
+    },
   },
   {
     stepNumber: 'T3 · Step 2 / 8',
@@ -665,8 +1034,23 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'pcb_peak_30a',
     presetLabel: 'Run 30A Electro-Thermal Solver (Tab 6)',
     studyLinks: [
-      { label: 'TI SAR ADC Charge Bucket Design', url: 'https://www.ti.com/lit/pdf/sbaa586' },
+      {
+        label: 'TI SBAA586: Charge-Bucket Circuit Design for SAR ADCs',
+        url: 'https://www.ti.com/lit/pdf/sbaa586',
+        note: 'Explains how to size R_filt and C_filt so SAR sampling kickback settles within <0.5 LSB.',
+      },
+      {
+        label: 'Analog Devices MT-094: Microstrip & Stripline Design',
+        url: 'https://www.analog.com/media/en/training-seminars/tutorials/MT-094.pdf',
+        note: 'Formulas for loop inductance and high-speed image return currents.',
+      },
     ],
+    quiz: {
+      q1: 'Why do we choose a 2nd-order Bessel filter alignment over a Butterworth or Chebyshev alignment for a motor current-sense anti-aliasing filter?',
+      a1: 'A Bessel filter has maximally flat group delay (linear phase) in the passband and zero step-response overshoot, preserving exact peak current waveforms without eroding 2.5 kHz current-loop phase margin.',
+      q2: 'Why can ignoring the temperature coefficient α_T of MOSFET R_DS(on) cause thermal runaway in a high-current motor drive?',
+      a2: 'Silicon MOSFET R_DS(on) increases by ~50–70% from 25 °C to 125 °C. Higher T_j increases R_DS(on), which increases I²R heat, which further raises T_j in a positive feedback loop unless your heatsink thermal resistance R_θJA is small enough.',
+    },
   },
   {
     stepNumber: 'T3 · Step 3 / 8',
@@ -694,8 +1078,23 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'cad_flexure_stage',
     presetLabel: 'Inspect Ti-6Al-4V Flexure CAD (Tab 6)',
     studyLinks: [
-      { label: 'Featherstone Rigid Body Dynamics Algorithms', url: 'https://royfeatherstone.org/spatial/' },
+      {
+        label: 'Roy Featherstone: Spatial Vector Algebra & RNEA Notes',
+        url: 'https://royfeatherstone.org/spatial/',
+        note: 'Official reference notes and code for 6D Plücker coordinates and O(n) RNEA.',
+      },
+      {
+        label: 'Modern Robotics Ch. 4, 5 & 8 (Screw PoE & Dynamics)',
+        url: 'https://hades.mech.northwestern.edu/index.php/Modern_Robotics',
+        note: 'Complete derivations of Product of Exponentials and Newton-Euler inverse dynamics.',
+      },
     ],
+    quiz: {
+      q1: 'In the Paros-Weisbord circular notch flexure equation, how sensitive is rotational stiffness k_θ to machining tolerances on minimum web thickness t?',
+      a1: 'Because k_θ ∝ t^(5/2), a 10% machining error in minimum web thickness t changes rotational stiffness by 1.1^(2.5) - 1 ≈ +26.9%! That is why precision flexures are cut with wire-EDM (±2 µm tolerance).',
+      q2: 'How do you set the base acceleration a_0 in the forward pass of RNEA so that all joint gravity torques g(q) are computed automatically without a separate gravity formula?',
+      a2: 'Set the base spatial acceleration to point UPWARD at 1g (a_0 = -g_world = [0,0,0, 0,0,+9.81]ᵀ). By Einstein’s Equivalence Principle, accelerating the base upward at +g produces the exact same internal joint reaction forces as a downward gravitational field.',
+    },
   },
   {
     stepNumber: 'T3 · Step 4 / 8',
@@ -723,8 +1122,23 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'foc_qdd_jump',
     presetLabel: 'Run 24A Hopper Jump FOC (Tab 3)',
     studyLinks: [
-      { label: 'Ben Katz High-Bandwidth FOC Thesis', url: 'https://dspace.mit.edu/handle/1721.1/118671' },
+      {
+        label: 'TI SPRABQ2: Space Vector PWM (SVPWM) & Min-Max Injection',
+        url: 'https://www.ti.com/lit/pdf/sprabq2',
+        note: 'Proves the mathematical equivalence of 7-segment SVPWM and min-max neutral injection.',
+      },
+      {
+        label: 'Ben Katz Thesis Ch. 3: High-Bandwidth Current Control & Encoder Calibration',
+        url: 'https://dspace.mit.edu/handle/1721.1/118671',
+        note: 'Details pole-zero cancellation PI tuning and lookup-table eccentricity calibration.',
+      },
     ],
+    quiz: {
+      q1: 'Why does Min-Max Zero-Sequence injection increase the maximum undistorted line-to-line motor voltage by +15.47% without distorting phase currents?',
+      a1: 'In a 3-phase motor with an isolated neutral star point, adding the same common-mode offset v_0 to all 3 phases cancels out in every line-to-line voltage (v_ab = v_a - v_b). Shifting v_0 = -0.5(max + min) centers the waveform and flattens the peaks by cos(30°) = √3/2, giving a 2/√3 = 1.1547× boost.',
+      q2: 'What physical mounting errors create the 1st harmonic (sin θ_m) vs. the 2nd harmonic (sin 2θ_m) in an on-axis magnetic encoder’s INL curve?',
+      a2: 'The 1st harmonic (once per rev) is caused by radial eccentricity (magnet center offset from shaft axis), whereas the 2nd harmonic (twice per rev) is caused by magnet tilt/skew or X/Y Hall gain mismatch.',
+    },
   },
   {
     stepNumber: 'T3 · Step 5 / 8',
@@ -752,8 +1166,23 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'eskf_torn_race',
     presetLabel: 'Compare Torn Reads vs SeqLock (Tab 8)',
     studyLinks: [
-      { label: 'STM32G474 Reference Manual RM0440', url: 'https://www.st.com/resource/en/reference_manual/rm0440-stm32g4-series-advanced-armbased-32bit-mcus-stmicroelectronics.pdf' },
+      {
+        label: 'STM32G474 Reference Manual RM0440 (TIM1, ADC & CORDIC)',
+        url: 'https://www.st.com/resource/en/reference_manual/rm0440-stm32g4-series-advanced-armbased-32bit-mcus-stmicroelectronics.pdf',
+        note: 'Complete hardware reference for center-aligned PWM triggers and CORDIC acceleration.',
+      },
+      {
+        label: 'Preshing on Programming: Acquire and Release Semantics',
+        url: 'https://preshing.com/20120913/acquire-and-release-semantics/',
+        note: 'Clear visual explanation of C++ atomic memory barriers and lock-free synchronization.',
+      },
     ],
+    quiz: {
+      q1: 'In a 3-phase inverter with low-side Kelvin shunts, why must the ADC trigger specifically at the PEAK (Counter = ARR) of the center-aligned PWM triangle wave?',
+      a1: 'Current only flows through the low-side shunt when the low-side MOSFET is ON. At the triangle peak (Counter = ARR), all three high-side FETs are OFF and all three low-side FETs are simultaneously ON in the middle of the V_0 zero vector, with switching transients already settled.',
+      q2: 'In `WaitFreeSeqLock<T>`, why must the reader check BOTH `s0 != s1` AND `(s0 & 1) != 0`?',
+      a2: 'If the reader starts while the 40 kHz ISR is already mid-write (`s0` is odd) and finishes before the ISR completes (`s1` equals the same odd `s0`), checking only `s0 != s1` would falsely accept a half-written struct! Checking `(s0 & 1)` catches any read that overlapped an active write.',
+    },
   },
   {
     stepNumber: 'T3 · Step 6 / 8',
@@ -781,8 +1210,23 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'pend_cbf_wall',
     presetLabel: 'Test Tight ±0.50m CBF Wall (Tab 4)',
     studyLinks: [
-      { label: 'Ames Control Barrier Functions Tutorial', url: 'https://arxiv.org/abs/1903.11199' },
+      {
+        label: 'Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter (arXiv:1711.02508)',
+        url: 'https://arxiv.org/abs/1711.02508',
+        note: 'Complete derivation of manifold ESKF prediction, injection, and reset.',
+      },
+      {
+        label: 'Aaron Ames et al.: Control Barrier Functions Theory and Applications (arXiv:1903.11199)',
+        url: 'https://arxiv.org/abs/1903.11199',
+        note: 'Foundational tutorial on CBF-QP safety filters and relative-degree-2 ECBFs.',
+      },
     ],
+    quiz: {
+      q1: 'Why does the standard Kalman covariance update P⁺ = (I - KH)P⁻ fail in long-running 32-bit float firmware, and how does the Joseph form fix it?',
+      a1: 'Subtracting two nearly equal matrices (I - KH)P⁻ suffers from floating-point rounding that makes P⁺ asymmetric and eventually yields negative diagonal variances (NaN). The Joseph form (I-KH)P⁻(I-KH)ᵀ + KRKᵀ is the sum of two symmetric positive-definite quadratic forms, guaranteeing symmetry and positive definiteness.',
+      q2: 'Why can’t you use the simple position barrier h(x) = x_max - x directly for a torque-controlled robot joint without including velocity ẋ?',
+      a2: 'Position x has relative degree 2 with respect to motor torque u (torque controls acceleration ẍ, not velocity ẋ). Differentiating h(x) once gives ẋ, which does not contain u! An Exponential CBF h_e(x, ẋ) = (x_max - x) - ẋ/α has relative degree 1 so u appears directly in ḣ_e.',
+    },
   },
   {
     stepNumber: 'T3 · Step 7 / 8',
@@ -810,8 +1254,23 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'sysid_zero_clip',
     presetLabel: 'Compare Schroeder vs Zero-Phase (Tab 7)',
     studyLinks: [
-      { label: 'TI Functional Safety Dual-Channel STO (SLLA547)', url: 'https://www.ti.com/lit/pdf/slla547' },
+      {
+        label: 'Khatib (1987): A Unified Approach for Motion and Force Control (Operational Space)',
+        url: 'https://cs.stanford.edu/groups/manips/publications/pdfs/Khatib_1987_RA.pdf',
+        note: 'Seminal paper deriving Λ(q) and the dynamically consistent generalized inverse J̄.',
+      },
+      {
+        label: 'TI SLLA547: Functional Safety Dual-Channel Safe Torque Off (STO) Design',
+        url: 'https://www.ti.com/lit/pdf/slla547',
+        note: 'Hardware schematic architectures for IEC 61800-5-2 SIL-3 Safe Torque Off.',
+      },
     ],
+    quiz: {
+      q1: 'In a closed-loop servo system, why does the naive direct FRF estimator Y(jω)/U(jω) return a biased transfer function when sensor noise is present, and how does the indirect estimator S_yd / S_ud fix it?',
+      a1: 'Because the feedback controller feeds sensor noise n(t) back into actuator command u(t), U(jω) is correlated with noise! Since the external Schroeder excitation d(t) is uncorrelated with sensor noise, dividing cross-spectra S_yd(jω) / S_ud(jω) cancels out the noise contribution.',
+      q2: 'In an IEC 61800-5-2 SIL-3 Safe Torque Off circuit, why do we inject 100 µs "dark test pulses" into STO_A and STO_B at startup?',
+      a2: 'To detect "latent faults" (such as a shorted transistor stuck in the ON state). If the MCU briefly pulses STO_A LOW and the feedback diagnostic pin does not drop LOW, the firmware refuses to arm the drive and flags a safety hardware fault.',
+    },
   },
   {
     stepNumber: 'T3 · Step 8 / 8 (FINAL MASTERY)',
@@ -835,8 +1294,23 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetId: 'robot_hopper_crouch',
     presetLabel: 'Inspect All Capstone Models (Tab 5)',
     studyLinks: [
-      { label: 'NASA Systems Engineering Handbook', url: 'https://www.nasa.gov/reference/systems-engineering-handbook/' },
+      {
+        label: 'NASA Systems Engineering Handbook (SP-2016-6105 Rev2)',
+        url: 'https://www.nasa.gov/reference/systems-engineering-handbook/',
+        note: 'Authoritative guide to cyber-physical system verification, HIL testing, and qualification.',
+      },
+      {
+        label: 'ETH Zürich Robotic Systems Lab (RSL) Publications',
+        url: 'https://rsl.ethz.ch/publications.html',
+        note: 'Production legged and mobile manipulation research papers and open-source code.',
+      },
     ],
+    quiz: {
+      q1: 'Look at the Master Cyber-Physical Coupling Equation at the bottom of this tab. How does a 1.5 ms timing delay in the embedded RTOS (Track 04) directly cause physical structural chatter in the mechanical plant (Track 02)?',
+      a1: 'A time delay T_d injects linear phase lag Δφ = -ω·T_d into the control loop. At the mechanical resonance frequency f_r (e.g., 290 Hz), 1.5 ms of delay eats 156° of phase margin, turning negative damping feedback into positive regenerative excitation of the flexible shaft!',
+      q2: 'Across Capstones I–IV, why do we enforce automated CI verification gates (SPD inertia checks, thermal convergence, SeqLock zero torn reads, <1 µs STO) before deploying code to physical hardware?',
+      a2: 'Because in cyber-physical systems, software bugs manifest as physical kinetic energy and thermal dissipation—catching an invalid inertia matrix, an uncalibrated encoder harmonic, or a torn struct read in automated CI prevents catastrophic hardware destruction.',
+    },
   },
 ];
 
