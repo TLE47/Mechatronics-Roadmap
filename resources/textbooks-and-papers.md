@@ -101,3 +101,21 @@
 | **System Identification: A Frequency Domain Approach**<br/>*R. Pintelon & J. Schoukens* | 2012 (2nd Ed., Wiley-IEEE) | Schroeder-phased multisine excitation design, Best Linear Approximation (BLA) in the presence of nonlinearities, and closed-loop FRF variance bounds. |
 | **Fault-Diagnosis Systems: An Introduction from Fault Detection to Fault Tolerance**<br/>*R. Isermann* | 2006 (Springer) | Parity-equation and observer-based residual generation, parameter-estimation fault detection, and actuator/sensor hardware redundancy. |
 | **IEC 61508 / ISO 13849-1 / IEC 61800-5-2 / ISO 10218** | Current Editions | Functional safety lifecycle, Safe Failure Fraction (SFF), Diagnostic Coverage (DC), Performance Level (PLa–PLe), and Safe Torque Off (STO). |
+
+---
+
+## 9. Best 100% Free & Open-Access Online Textbooks, Courses & Handbooks
+
+| Subcategory | Open-Access Title & Direct Link | Why It Is the Gold-Standard Free Resource |
+| :--- | :--- | :--- |
+| **Lie Groups & Manifolds** | [J. Sola et al. — *A Micro Lie Theory for State Estimation in Robotics* (`arXiv:1812.01537`)](https://arxiv.org/abs/1812.01537) | Clearest 20-page derivation of $SO(3)/SE(3)$ exponential maps, Adjoints, and right/left Jacobians. |
+| **Digital Signal Processing** | [S. W. Smith — *The Scientist and Engineer's Guide to DSP*](https://www.dspguide.com/) & [J. O. Smith — *Intro to Digital Filters*](https://ccrma.stanford.edu/~jos/filters/) | Complete free online books covering ADC quantization, Bessel/Butterworth filters, and biquad implementation. |
+| **Analog Front-End & Op-Amps** | [Analog Devices — *Op Amp Applications Handbook* (W. Jung)](https://www.analog.com/en/resources/technical-books/op-amp-applications-handbook.html) & [TI *Analog Engineer's Pocket Reference*](https://www.ti.com/lit/eb/slyw038c/slyw038c.pdf) | 800+ pages of practical instrumentation amplifier, SAR ADC charge-bucket, and grounding schematics. |
+| **Gate Drivers & Power PCB** | [TI `SLUA618A` — *Fundamentals of MOSFET and IGBT Gate Driver Circuits* (L. Balogh)](https://www.ti.com/lit/pdf/slua618) | Step-by-step derivation of Miller plateau charge, bootstrap sizing, and parasitic switching loop inductance. |
+| **Precision Machine Design** | [A. H. Slocum — *FUNdaMENTALS of Design* (MIT Open Access PDFs)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) | Free MIT modules on Abbe error, exact kinematic constraint (Kelvin/Maxwell), flexures, and bearing preload. |
+| **Screw Theory & Dynamics** | [K. M. Lynch & F. C. Park — *Modern Robotics* (Free Preprint PDF + Video Course)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) | Full textbook + Python/C++ library on Product of Exponentials (PoE), space/body Jacobians, and RNEA dynamics. |
+| **QDD Actuators & FOC** | [B. Katz — *A Low Cost Modular Actuator for Dynamic Robots* (MIT DSpace Thesis)](https://dspace.mit.edu/handle/1721.1/118671) & [SimpleFOC Docs](https://docs.simplefoc.com/) | Complete mechanical/PCB/firmware blueprint of the MIT Mini-Cheetah QDD actuator and SVPWM FOC loop. |
+| **Real-Time Embedded & RTOS** | [R. Barry — *Mastering the FreeRTOS Real Time Kernel*](https://www.freertos.org/Documentation/02-Kernel/07-Books-and-manual/01-RTOS_book) & [STM32G4 `RM0440`](https://www.st.com/resource/en/reference_manual/rm0440-stm32g4-series-advanced-armbased-32bit-mcus-stmicroelectronics.pdf) | Authoritative reference on deterministic ISR/DMA triggering, priority inheritance, and CORDIC coprocessors. |
+| **Feedback Control & MPC** | [Åström & Murray — *Feedback Systems (FBS2e)*](https://fbswiki.org/wiki/index.php/Main_Page), [Barfoot — *State Estimation*](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf), [Rawlings — *MPC*](https://sites.engineering.ucsb.edu/~jbraw/mpc/) | Three complete, legally free graduate textbooks covering Gang-of-Four loop shaping, Lie-group EKF, and NMPC. |
+| **Underactuated & Manipulation** | [R. Tedrake — *Underactuated Robotics*](https://underactuated.mit.edu/), [*Robotic Manipulation*](https://manipulation.csail.mit.edu/), [S. M. LaValle — *Planning Algorithms*](http://lavalle.pl/planning/) | Interactive MIT textbooks with runnable Drake notebooks for swing-up control, contact MPC, and motion planning. |
+

@@ -63,9 +63,11 @@ EXPECTED_FILES = [
     "resources/textbooks-and-papers.md",
     "resources/open-source-toolchains.md",
     "resources/lab-workbench-bom.md",
+    "resources/mechatronics-cheatsheet.md",
     "scripts/verify_repo.py",
     "scripts/run_all_labs.py",
     "web/index.html",
+    "web/cheatsheet.html",
     ".github/workflows/ci.yml",
 ]
 
