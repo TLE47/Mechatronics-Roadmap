@@ -1,0 +1,70 @@
+<mujoco model="capstone4_qdd_hopper">
+  <compiler angle="radian" coordinate="local" inertiafromgeom="false"/>
+  <option timestep="0.0005" integrator="RK4" gravity="0 0 -9.80665"/>
+
+  <default>
+    <geom contype="1" conaffinity="1" condim="3" friction="0.9 0.01 0.001" solref="0.004 1.0"/>
+    <!-- Reflected rotor inertia J_refl = N^2 * J_rotor = 8^2 * 4.5e-5 = 0.00288 kg*m^2 -->
+    <joint limited="true" armature="0.00288"/>
+  </default>
+
+  <worldbody>
+    <light name="hopper_light" pos="0.5 -0.8 1.8" dir="-0.2 0.3 -1" diffuse="0.85 0.85 0.85"/>
+    <geom name="force_plate_ground" type="plane" size="2.0 2.0 0.05" rgba="0.12 0.16 0.22 1"/>
+
+    <!-- Fixed Vertical Boom Guide Column -->
+    <body name="base_link" pos="0 0 0">
+      <inertial pos="0 0 0.50" mass="8.000" diaginertia="0.650000 0.650000 0.040000"/>
+      <geom name="boom_post" type="cylinder" pos="-0.14 0 0.50" size="0.025 0.50" rgba="0.15 0.18 0.24 1" contype="0" conaffinity="0"/>
+
+      <!-- Trunk / Pelvis on Vertical Boom Slide (+Z) -->
+      <body name="trunk_link" pos="0 0 0.55">
+        <joint name="boom_z_slide" type="slide" axis="0 0 1" range="-0.48 0.80" damping="0.05" frictionloss="0.02" armature="0.001"/>
+        <inertial pos="0 0 0" mass="2.350" diaginertia="0.011200 0.014500 0.016800"/>
+        <geom name="trunk_box" type="box" pos="0 0 0" size="0.09 0.07 0.06" rgba="0.95 0.48 0.16 1"/>
+        <site name="trunk_imu_site" pos="0 0 0" size="0.01"/>
+
+        <!-- Link 1: Hip Ab/Ad (+X) -->
+        <body name="hip_abad_link" pos="0 0 -0.04">
+          <joint name="q1_hip_abad" type="hinge" axis="1 0 0" range="-0.78539816 0.78539816" damping="0.04" frictionloss="0.03"/>
+          <inertial pos="0 0 0" mass="0.540" diaginertia="0.000680 0.000720 0.000520"/>
+          <geom name="abad_housing" type="cylinder" pos="0 0 0" euler="1.57079632679 0 0" size="0.048 0.0275" rgba="0.95 0.48 0.16 1"/>
+
+          <!-- Link 2: Thigh (+Y Hip Pitch) -->
+          <body name="thigh_link" pos="0 0 0">
+            <joint name="q2_hip_pitch" type="hinge" axis="0 1 0" range="-2.0943951 2.0943951" damping="0.04" frictionloss="0.03"/>
+            <inertial pos="0 0 -0.09" mass="0.620" diaginertia="0.002850 0.002950 0.000420"/>
+            <geom name="thigh_tube" type="capsule" fromto="0 0 0 0 0 -0.22" size="0.020" rgba="0.22 0.26 0.32 1"/>
+
+            <!-- Link 3: Ultra-Low-Inertia Carbon Shank (+Y Knee Pitch) -->
+            <body name="shank_link" pos="0 0 -0.22">
+              <joint name="q3_knee_pitch" type="hinge" axis="0 1 0" range="-2.61799388 -0.26179939" damping="0.03" frictionloss="0.025"/>
+              <inertial pos="0 0 -0.10" mass="0.150" diaginertia="0.000640 0.000640 0.000035"/>
+              <geom name="shank_tube" type="capsule" fromto="0 0 0 0 0 -0.22" size="0.012" rgba="0.22 0.26 0.32 1"/>
+
+              <!-- Elastomeric Point Foot Sphere -->
+              <body name="foot_link" pos="0 0 -0.22">
+                <inertial pos="0 0 0" mass="0.025" diaginertia="0.000004 0.000004 0.000004"/>
+                <geom name="foot_sphere" type="sphere" pos="0 0 0" size="0.020" rgba="0.16 0.82 0.56 1"/>
+                <site name="foot_contact_site" pos="0 0 0" size="0.021"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="qdd_tau_abad" joint="q1_hip_abad" gear="1" ctrllimited="true" ctrlrange="-24 24"/>
+    <motor name="qdd_tau_hip" joint="q2_hip_pitch" gear="1" ctrllimited="true" ctrlrange="-24 24"/>
+    <motor name="qdd_tau_knee" joint="q3_knee_pitch" gear="1" ctrllimited="true" ctrlrange="-28 28"/>
+  </actuator>
+
+  <sensor>
+    <accelerometer name="trunk_accel" site="trunk_imu_site" noise="0.015"/>
+    <gyro name="trunk_gyro" site="trunk_imu_site" noise="0.003"/>
+    <jointpos name="boom_height" joint="boom_z_slide"/>
+    <touch name="foot_grf_touch" site="foot_contact_site"/>
+  </sensor>
+</mujoco>

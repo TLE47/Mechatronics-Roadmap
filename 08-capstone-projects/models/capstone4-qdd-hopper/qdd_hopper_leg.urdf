@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Capstone IV: 3-DOF Quasi-Direct-Drive (QDD) Legged Hopping Robot
+  - Coaxial 8:1 planetary QDD actuators placed at the hip/trunk to keep distal
+    shank mass ultra-low (m_shank = 0.165 kg < 0.180 kg requirement)
+  - Vertical boom prismatic guide + 3-DOF actuated leg (Hip Ab/Ad, Hip Flex/Ext, Knee Flex/Ext)
+-->
+<robot name="capstone4_qdd_hopper">
+
+  <material name="boom_dark">
+    <color rgba="0.15 0.18 0.24 1.0"/>
+  </material>
+  <material name="qdd_housing_orange">
+    <color rgba="0.95 0.48 0.16 1.0"/>
+  </material>
+  <material name="carbon_limb">
+    <color rgba="0.22 0.26 0.32 1.0"/>
+  </material>
+  <material name="rubber_foot">
+    <color rgba="0.16 0.82 0.56 1.0"/>
+  </material>
+
+  <!-- Fixed Ground & Vertical Boom Column -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.50" rpy="0.0 0.0 0.0"/>
+      <mass value="8.000"/>
+      <inertia ixx="0.650000" ixy="0.0" ixz="0.0" iyy="0.650000" iyz="0.0" izz="0.040000"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.50" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.025" length="1.00"/>
+      </geometry>
+      <material name="boom_dark"/>
+    </visual>
+  </link>
+
+  <!-- Unactuated Prismatic Vertical Boom Guide (+Z translation) -->
+  <joint name="boom_z_slide" type="prismatic">
+    <parent link="base_link"/>
+    <child link="trunk_link"/>
+    <origin xyz="0.0 0.0 0.55" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit lower="-0.48" upper="0.80" effort="0.0" velocity="12.0"/>
+    <dynamics damping="0.05" friction="0.02"/>
+  </joint>
+
+  <!-- Robot Trunk / Pelvis housing the 3x Coaxial 8:1 QDD Stators -->
+  <link name="trunk_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="2.350"/>
+      <inertia ixx="0.011200" ixy="0.0" ixz="0.0" iyy="0.014500" iyz="0.0" izz="0.016800"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.18 0.14 0.12"/>
+      </geometry>
+      <material name="qdd_housing_orange"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.18 0.14 0.12"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint 1: Hip Abduction / Adduction (q_abad about +X axis) -->
+  <joint name="q1_hip_abad" type="revolute">
+    <parent link="trunk_link"/>
+    <child link="hip_abad_link"/>
+    <origin xyz="0.0 0.0 -0.04" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1.0 0.0 0.0"/>
+    <limit lower="-0.78539816" upper="0.78539816" effort="24.0" velocity="32.0"/>
+    <dynamics damping="0.04" friction="0.03"/>
+  </joint>
+
+  <link name="hip_abad_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.540"/>
+      <inertia ixx="0.000680" ixy="0.0" ixz="0.0" iyy="0.000720" iyz="0.0" izz="0.000520"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="1.57079632679 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.048" length="0.055"/>
+      </geometry>
+      <material name="qdd_housing_orange"/>
+    </visual>
+  </link>
+
+  <!-- Joint 2: Hip Flexion / Extension (q_hip about +Y axis) -->
+  <joint name="q2_hip_pitch" type="revolute">
+    <parent link="hip_abad_link"/>
+    <child link="thigh_link"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 1.0 0.0"/>
+    <limit lower="-2.0943951" upper="2.0943951" effort="24.0" velocity="32.0"/>
+    <dynamics damping="0.04" friction="0.03"/>
+  </joint>
+
+  <!-- Thigh Link (Length L_thigh = 0.22 m along -Z) -->
+  <link name="thigh_link">
+    <inertial>
+      <origin xyz="0.0 0.0 -0.09" rpy="0.0 0.0 0.0"/>
+      <mass value="0.620"/>
+      <inertia ixx="0.002850" ixy="0.0" ixz="0.0" iyy="0.002950" iyz="0.0" izz="0.000420"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 -0.11" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.020" length="0.22"/>
+      </geometry>
+      <material name="carbon_limb"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 -0.11" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.020" length="0.22"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint 3: Knee Flexion / Extension (q_knee about +Y axis, belt-driven from coaxial hip QDD) -->
+  <joint name="q3_knee_pitch" type="revolute">
+    <parent link="thigh_link"/>
+    <child link="shank_link"/>
+    <origin xyz="0.0 0.0 -0.22" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 1.0 0.0"/>
+    <limit lower="-2.61799388" upper="-0.26179939" effort="28.0" velocity="30.0"/>
+    <dynamics damping="0.03" friction="0.025"/>
+  </joint>
+
+  <!-- Ultra-Low-Inertia Carbon Shank Link (m_shank = 0.150 kg < 0.180 kg Capstone IV spec, L_shank = 0.22 m) -->
+  <link name="shank_link">
+    <inertial>
+      <origin xyz="0.0 0.0 -0.10" rpy="0.0 0.0 0.0"/>
+      <mass value="0.150"/>
+      <inertia ixx="0.000640" ixy="0.0" ixz="0.0" iyy="0.000640" iyz="0.0" izz="0.000035"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 -0.11" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.012" length="0.22"/>
+      </geometry>
+      <material name="carbon_limb"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 -0.11" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.012" length="0.22"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Elastomeric Point Foot Contact Sphere -->
+  <joint name="foot_contact_fixed" type="fixed">
+    <parent link="shank_link"/>
+    <child link="foot_link"/>
+    <origin xyz="0.0 0.0 -0.22" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+  <link name="foot_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.025"/>
+      <inertia ixx="0.000004" ixy="0.0" ixz="0.0" iyy="0.000004" iyz="0.0" izz="0.000004"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.020"/>
+      </geometry>
+      <material name="rubber_foot"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.020"/>
+      </geometry>
+    </collision>
+  </link>
+
+</robot>
