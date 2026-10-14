@@ -25,15 +25,43 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 > **Goal of Pass 1 (Track 04):** Break the #1 beginner firmware habit (`delay(10)` and slow `Serial.println()` inside a control loop), set up a deterministic **$1\text{ kHz}$ hardware timer interrupt (ISR)**, and stream compact binary telemetry frames to your laptop.
 
 ### 1.1 Why `delay()` and `Serial.print()` Destroy Control Loops
-* A feedback controller (`PID`) assumes every sample $\Delta t$ occurs at an exact, fixed interval (e.g., $\Delta t = 1.000\text{ ms}$).
-* Calling `delay(5)` freezes the CPU completely, while `Serial.println("angle=" + String(q))` triggers heap allocation (`String`) and blocks on UART TX buffers—stretching your loop time randomly between $1\text{ ms}$ and $12\text{ ms}$! That timing jitter ($\Delta t$) makes the derivative term $K_d \frac{\Delta e}{\Delta t}$ explode with noise.
+- **Core Summary:** A discrete feedback controller (`PID`) assumes every sample occurs at an exact, fixed time step $\Delta t$ (e.g., $1.000\text{ ms}$). Calling `delay()` halts the CPU, while `Serial.println("q=" + String(q))` triggers heap fragmentation and blocks on slow UART TX buffers—stretching $\Delta t$ randomly and causing the derivative term $K_d \frac{\Delta e}{\Delta t}$ to explode with jitter noise.
+- **Curated Free Resources:**
+  - 🔗 [Adafruit Learn: Multi-Tasking the Arduino — Part 1 (Ditching `delay()`)](https://learn.adafruit.com/multi-tasking-the-arduino-part-1) — *Essential tutorial on replacing blocking `delay()` loops with non-blocking state machines.*
+  - 🔗 [Adafruit Learn: Multi-Tasking the Arduino — Part 2 (Hardware Timer Interrupts)](https://learn.adafruit.com/multi-tasking-the-arduino-part-2/timers) — *Explains how hardware timer comparators trigger exact periodic interrupts regardless of what `loop()` is doing.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Toggle GPIO Pin 2 high at the start and low at the end of an Arduino/ESP32 loop that calls `Serial.println("Angle: " + String(angle, 4))` at $9600\text{ baud}$. Measure the loop period on your logic analyzer or oscilloscope and observe how UART TX buffer saturation stalls the loop for $> 15\text{ ms}$!
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** At $115,200\text{ baud}$ ($8\text{-N-}1$, meaning $10\text{ bits per byte}$ including start/stop bits), how long does it take the UART wire to physically transmit a 60-character ASCII `Serial.println()` string?
+  * **Answer / Explanation:** $60\text{ bytes} \times 10\text{ bits/byte} = 600\text{ bits}$. At $115,200\text{ bits/s}$, transmission takes $600 / 115200 \approx 5.21\text{ ms}$! If your control loop tries to run at $1\text{ kHz}$ ($1.0\text{ ms}$ period), the hardware UART TX FIFO fills up after the first 2 iterations and blocks the CPU for $4.2\text{ ms}$ on every single print.
+
+  **Q2:** How much phase margin $\Delta \phi$ does a $100\text{ Hz}$ bandwidth control loop lose if `Serial.print()` introduces $\Delta t_{\max} = 2\text{ ms}$ of timing jitter?
+  * **Answer & Explanation:** $\Delta \phi = -\omega_c \Delta t_{\max} = -2\pi(100\text{ Hz})(0.002\text{ s}) = -1.257\text{ rad} = -72^\circ$ of lost phase margin! Since a typical control loop only has $45^\circ\text{–}60^\circ$ of phase margin, $2\text{ ms}$ of jitter drives the closed-loop system violently unstable.
+  </details>
 
 ### 1.2 Hardware Timer Interrupts ($1\text{ kHz}$ ISR) & `volatile` Flags
-* Configure a hardware timer peripheral to fire an Interrupt Service Routine (ISR) every $1000\ \mu\text{s}$ ($1.000\text{ kHz}$) with sub-microsecond hardware precision.
-* **The Golden ISR Rule:** Keep ISRs short! Either run fast fixed-time math inside the ISR or set a `volatile bool tick_1khz = true;` flag and never call blocking `I2C`/`Serial` functions inside an interrupt.
+- **Core Summary:** A hardware timer peripheral counts clock cycles independently in silicon and fires an Interrupt Service Routine (ISR) every $1000\ \mu\text{s}$ ($1.000\text{ kHz}$) with sub-microsecond accuracy. Variables shared between an ISR and `main()` must be marked `volatile` (or `std::atomic`) so the compiler never caches them in a CPU register.
+- **Curated Free Resources:**
+  - 🔗 [Barr Group: Embedded C Coding Standard — Interrupts & the `volatile` Keyword](https://barrgroup.com/embedded-systems/how-to/c-volatile-keyword) — *Definitive explanation by Michael Barr on why the C/C++ optimizer deletes ISR flag checks unless `volatile` is used.*
+  - 🔗 [Espressif ESP-IDF Docs: High Resolution Timer (`esp_timer`) & General Purpose Timers (`gptimer`)](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/esp_timer.html) — *Official guide to configuring microsecond-accurate hardware timers on ESP32.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Configure a $1.000\text{ kHz}$ hardware timer ISR on your MCU that toggles a debug GPIO pin on entry/exit and increments a `volatile uint32_t tick_count`. Verify on your logic analyzer or oscilloscope that the interval between rising edges is $1000.0\ \mu\text{s} \pm 1\ \mu\text{s}$.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why does `while (!tick_flag) {}` hang forever in `-O2` or `-O3` release builds if `bool tick_flag` is modified inside an ISR without the `volatile` keyword?
+  * **Answer / Explanation:** Because the C++ compiler sees no code inside the `while` loop body that modifies `tick_flag`, it optimizes the loop by loading `tick_flag` into a CPU register (`R0`) once before the loop and checking `while (R0 == 0)` forever—never re-reading the actual SRAM address written by the ISR! Declaring `volatile bool tick_flag` forces a memory read instruction on every check.
+
+  **Q2:** Why must you never call blocking `I2C` (`Wire.requestFrom()`) or `delay()` inside a hardware timer ISR?
+  * **Answer & Explanation:** Inside an ISR, interrupts of the same or lower priority are masked, and the system tick (`millis()`) may not increment. Worse, a slow $400\text{ kHz}$ `I2C` transaction takes hundreds of microseconds in a busy-wait loop, starving all other interrupts and risking watchdog resets or missed timer ticks.
+  </details>
 
 ### 1.3 Non-Blocking State Machines & Packed Binary Telemetry Structs
-Instead of ASCII strings, send a fixed-size C struct with a header byte (`0xAA`) and 8-bit XOR/CRC checksum at $115200+$ baud:
+- **Core Summary:** Replacing human-readable ASCII strings with a fixed-size `__attribute__((packed))` binary C struct containing a sync byte (`0xAA`), payload floats, and an 8-bit CRC checksum cuts UART bandwidth by $4\times$ and eliminates dynamic string formatting overhead completely.
 ```cpp
 struct __attribute__((packed)) TelemetryPacket {
     uint8_t  sync_head = 0xAA;
@@ -44,6 +72,21 @@ struct __attribute__((packed)) TelemetryPacket {
     uint8_t  crc8;
 };
 ```
+- **Curated Free Resources:**
+  - 🔗 [Ben Eater (YouTube): Cyclic Redundancy Check (CRC) Error Detection Explained](https://www.youtube.com/watch?v=izG7qT0EpBw) — *Best visual explanation of how an 8-bit CRC catches corrupted serial bits on noisy motor wires.*
+  - 🔗 [GCC Documentation: Common Type Attributes (`packed` and `aligned`)](https://gcc.gnu.org/onlinedocs/gcc/Common-Type-Attributes.html) — *Explains how compiler struct padding works and how `__attribute__((packed))` ensures exact byte layout across MCU and PC.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Write a 20-line Python `struct.unpack('<BIf f fB', raw_bytes)` receiver script that decodes the 18-byte `TelemetryPacket` above, verifies `sync_head == 0xAA` and `crc8`, and plots live $1\text{ kHz}$ motor telemetry without dropping a single frame.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Without `__attribute__((packed))`, what is `sizeof(TelemetryPacket)` on a 32-bit ARM Cortex-M microcontroller, and why?
+  * **Answer / Explanation:** Without `packed`, the compiler inserts **3 padding bytes** after `uint8_t sync_head` so that `uint32_t timestamp_us` aligns on a 4-byte boundary, plus **3 tail padding bytes** after `uint8_t crc8` so the total struct size is a multiple of 4 bytes—making `sizeof(TelemetryPacket) == 24` instead of `18` bytes!
+
+  **Q2:** Why is a single sync byte (`0xAA`) alone insufficient to frame binary packets over a raw UART stream?
+  * **Answer & Explanation:** Because binary IEEE-754 `float` values in the payload (`q_rad`, `dq_rad_s`) can legitimately contain the byte `0xAA`! Pairing the sync header (`0xAA 0x55` or COBS framing) with a trailing `crc8` checksum guarantees that if the receiver ever locks onto a fake `0xAA` inside a float, the CRC check immediately rejects the misaligned frame and re-synchronizes.
+  </details>
 
 ### ✅ Tier 1 Milestone Gate (`Track 04 · Pass 1`)
 * Replace `loop() { delay(1); }` on your `ESP32`/`STM32` with a $1.000\text{ kHz}$ hardware timer interrupt, toggle a debug GPIO pin on entry/exit, and verify on your logic analyzer/oscilloscope that period jitter is $< 2\ \mu\text{s}$.
@@ -56,18 +99,58 @@ struct __attribute__((packed)) TelemetryPacket {
 > **Goal of Pass 2 (Track 04):** Architect multi-rate embedded firmware using **FreeRTOS Rate-Monotonic Scheduling**, **Direct Memory Access (DMA)** circular buffers (zero CPU overhead I/O), and **CAN 2.0 / CAN-FD (`MIT Mini-Cheetah` 5-parameter impedance packets)**.
 
 ### 2.1 Multi-Rate FreeRTOS Task Partitioning & Response-Time Analysis (RTA)
-In a robot controller, different loops run at different rates. Under **Rate-Monotonic Scheduling (RMS)**, shorter period = higher priority:
-1. **Fast Motor ISR ($25\text{–}40\text{ kHz}$, Hardware IRQ Prio 0):** Runs above FreeRTOS (`BASEPRI` cannot mask it).
-2. **`Task_Servo_1kHz` (FreeRTOS High Priority):** Runs kinematics, LQR/impedance control, and CAN-FD bus sync using `vTaskDelayUntil(&lastWake, 1)`.
-3. **`Task_Telemetry_100Hz` (FreeRTOS Low Priority):** Logs diagnostics over UART/USB without ever delaying `Task_Servo_1kHz`.
+- **Core Summary:** In multi-rate robotics firmware, **Rate-Monotonic Scheduling (RMS)** assigns higher priorities to shorter-period tasks: the $25\text{–}40\text{ kHz}$ FOC loop runs in a zero-latency hardware IRQ above the RTOS kernel, the $1\text{ kHz}$ servo/impedance loop runs in the highest-priority FreeRTOS task via `vTaskDelayUntil()`, and $100\text{ Hz}$ logging runs in a low-priority background task.
+- **Curated Free Resources:**
+  - 🔗 [Mastering the FreeRTOS Real Time Kernel (Official Free PDF Textbook)](https://www.freertos.org/Documentation/02-Kernel/07-Books-and-manual/01-RTOS_book) — *Covers preemptive priority scheduling, `vTaskDelayUntil()`, priority inversion, and interrupt safe APIs (`FromISR`).*
+  - 🔗 [Shawn Hymel / DigiKey (YouTube): Introduction to RTOS (12-Part FreeRTOS Series)](https://www.youtube.com/playlist?list=PLEBQazB0HUyQ4hAPU1cJED6t3DU0h34bz) — *Hands-on visual walkthrough of FreeRTOS tasks, queues, mutexes, and hardware interrupts.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Run the Response-Time Analysis (RTA) verifier in `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp` (or compute by hand) for a 3-task system: $\tau_1$ ($T_1 = 25\ \mu\text{s}, C_1 = 3.2\ \mu\text{s}$), $\tau_2$ ($T_2 = 250\ \mu\text{s}, C_2 = 35\ \mu\text{s}$), $\tau_3$ ($T_3 = 1000\ \mu\text{s}, C_3 = 180\ \mu\text{s}$) and find the exact worst-case response time $R_3$ of the $1\text{ kHz}$ task.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** In FreeRTOS, what is the critical difference between `vTaskDelay(1)` and `vTaskDelayUntil(&xLastWakeTime, 1)` inside a $1\text{ kHz}$ control task?
+  * **Answer / Explanation:** `vTaskDelay(1)` sleeps for 1 tick *relative to when `vTaskDelay` is called*, so if your control math takes $0.3\text{ ms}$, the loop period drifts to $1.3\text{ ms}$! `vTaskDelayUntil(&xLastWakeTime, 1)` wakes the task at exact absolute multiples of the tick period ($t = 1.0, 2.0, 3.0\text{ ms}$), eliminating cumulative frequency drift.
+
+  **Q2:** Using fixed-point Response-Time Analysis $R_i^{(k+1)} = C_i + \sum_{j \in hp(i)} \lceil R_i^{(k)} / T_j \rceil C_j$, if $\tau_1$ has $(T_1 = 25\ \mu\text{s}, C_1 = 5\ \mu\text{s})$ and $\tau_2$ has $(T_2 = 100\ \mu\text{s}, C_2 = 40\ \mu\text{s})$, what is the exact worst-case response time $R_2$ of $\tau_2$?
+  * **Answer & Explanation:** Start with $R_2^{(0)} = 40\ \mu\text{s}$. Then $R_2^{(1)} = 40 + \lceil 40/25 \rceil \times 5 = 40 + 2 \times 5 = 50\ \mu\text{s}$. Next, $R_2^{(2)} = 40 + \lceil 50/25 \rceil \times 5 = 40 + 2 \times 5 = 50\ \mu\text{s}$ (converged!). Since $R_2 = 50\ \mu\text{s} \le D_2 = 100\ \mu\text{s}$, $\tau_2$ is guaranteed to meet its deadline.
+  </details>
 
 ### 2.2 Direct Memory Access (DMA): Moving Sensor Data With Zero CPU Cycles
-Instead of stalling a $170\text{ MHz}$ CPU for $20\ \mu\text{s}$ waiting for `SPI.transfer()` or `ADC_Read()` to finish, configure the **DMA controller** to copy ADC current registers and SPI encoder bytes directly into SRAM in the background, firing a single interrupt only when the complete packet is ready in memory.
+- **Core Summary:** Polling `SPI.transfer()` or `ADC_Read()` wastes precious CPU cycles waiting on peripheral shift registers. A **Direct Memory Access (DMA)** controller transfers ADC current samples, SPI encoder frames, and UART telemetry bytes directly between peripheral registers and SRAM in the background with **zero CPU intervention**, firing a single interrupt only when the entire transfer completes.
+- **Curated Free Resources:**
+  - 🔗 [STMicroelectronics AN4031: Using the STM32 DMA Controller](https://www.st.com/resource/en/application_note/an4031-using- the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf) — *Explains DMA circular buffers, double-buffering, bus matrix arbitration, and peripheral-to-memory pipelines.*
+  - 🔗 [Phil's Lab (YouTube): STM32 DMA Tutorial — ADC & UART Circular Buffers](https://www.youtube.com/watch?v=EsZLgqhqfO0) — *Practical embedded walkthrough of configuring circular DMA with half-transfer and transfer-complete interrupts.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Calculate how many CPU clock cycles a $170\text{ MHz}$ Cortex-M4F saves per second by moving an 18-byte telemetry packet at $1\text{ kHz}$ and a 24-bit SPI encoder frame at $25\text{ kHz}$ ($10\text{ MHz}$ SPI clock) via DMA instead of blocking polling.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** How does a **Circular DMA** buffer with Half-Transfer (`HT`) and Transfer-Complete (`TC`) interrupts prevent data overwrites during high-speed continuous logging?
+  * **Answer / Explanation:** It acts as a lock-free ping-pong buffer! While the DMA hardware is filling the *second* half of the array (`buffer[N/2 .. N-1]`), the `HT` interrupt lets the CPU safely read/process the *first* half (`buffer[0 .. N/2-1]`). When the DMA wraps around to the beginning (`TC` interrupt), the CPU processes the second half—ensuring the DMA hardware and CPU never touch the same memory half simultaneously.
+
+  **Q2:** On an ARM Cortex-M7 MCU with a Data Cache (L1 D-Cache), what bug occurs if a DMA controller writes new ADC readings into a cached SRAM buffer and the CPU immediately reads the array?
+  * **Answer / Explanation:** **Cache coherency staleness!** The DMA controller writes directly to physical SRAM, bypassing the CPU's L1 D-Cache. When the CPU reads the array, it gets stale cached values from L1 D-Cache instead of the fresh DMA data unless the buffer is placed in non-cacheable **DTCM RAM** (or `SCB_InvalidateDCache_by_Addr()` is called).
+  </details>
 
 ### 2.3 CAN-FD Bus Wiring ($120\ \Omega$ Termination) & MIT Actuator Bit-Packing
-* **Why `I2C` Fails on Robots:** Single-ended `I2C` wires act as antennas next to switching motor cables and glitch constantly. **CAN / CAN-FD** uses twisted-pair differential signaling (`CAN_H - CAN_L`, terminated with $120\ \Omega$ resistors at both ends of the trunk) that rejects puluhan volts of common-mode motor noise.
-* **MIT Mini-Cheetah 8-Byte Actuator Command Packet:** Packs 5 float commands into 64 bits at $1\text{–}2\text{ kHz}$:
-  * `q_des` ($16\text{ bits}$), `dq_des` ($12\text{ bits}$), `Kp` ($12\text{ bits}$), `Kd` ($12\text{ bits}$), `tau_ff` ($12\text{ bits}$) $\implies \tau_{\text{cmd}} = \tau_{ff} + K_p(q_{\text{des}} - q) + K_d(\dot{q}_{\text{des}} - \dot{q})$.
+- **Core Summary:** Single-ended `I2C` wires fail next to switching motor cables due to capacitive crosstalk, whereas **CAN / CAN-FD** uses twisted-pair differential signaling (`CAN_H - CAN_L` terminated with $120\ \Omega$ resistors at both ends of the bus) to reject common-mode motor noise. The **MIT Mini-Cheetah 8-byte actuator protocol** packs 5 fixed-point impedance commands (`q_des`, `dq_des`, `Kp`, `Kd`, `tau_ff`) into 64 bits so a single CAN frame updates joint stiffness, damping, and feedforward torque at $1\text{–}4\text{ kHz}$.
+- **Curated Free Resources:**
+  - 🔗 [Texas Instruments SLOA101: Introduction to the Controller Area Network (CAN)](https://www.ti.com/lit/an/sloa101b/sloa101b.pdf) — *Explains differential dominant/recessive bus states, non-destructive bitwise arbitration, and why $120\ \Omega$ termination resistors are mandatory.*
+  - 🔗 [Ben Katz MIT Mini-Cheetah Motor Driver Documentation: CAN Packet Bit-Packing](https://os.mbed.com/users/benkatz/code/CanMasterTest/) — *Shows the exact 16/12/12/12/12-bit fixed-point packing and unpacking math used across modern QDD quadruped actuators.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Write the C++ or Python bit-packing function that maps `(q_des in [-12.5, 12.5] rad, dq_des in [-45, 45] rad/s, Kp in [0, 500], Kd in [0, 5], tau_ff in [-18, 18] N·m)` into an 8-byte `uint8_t data[8]` array (16 bits `q`, 12 bits `dq`, 12 bits `Kp`, 12 bits `Kd`, 12 bits `tau`), unpacks it back, and verifies the worst-case quantization error of each parameter.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** If you wire a 3-node CAN bus on a robot leg and put a $120\ \Omega$ termination resistor on *every* node (3 resistors in parallel instead of only at the 2 physical ends of the trunk), what resistance do you measure between `CAN_H` and `CAN_L` with power off, and what happens?
+  * **Answer & Explanation:** Three $120\ \Omega$ resistors in parallel measure $120 / 3 = 40\ \Omega$ (instead of the required $120 / 2 = 60\ \Omega$). This overloads the CAN transceiver output drivers, reducing differential voltage swing and causing bus errors or thermal shutdown. Only the **two physical ends** of the main trunk cable should have $120\ \Omega$ termination ($60\ \Omega$ total DC resistance).
+
+  **Q2:** Why does the MIT Mini-Cheetah protocol send `(q_des, dq_des, Kp, Kd, tau_ff)` over CAN instead of just sending a raw torque command `tau_cmd` at $1\text{ kHz}$?
+  * **Answer & Explanation:** Because evaluating the PD impedance law $\tau = \tau_{ff} + K_p(q_{\text{des}} - q) + K_d(\dot{q}_{\text{des}} - \dot{q})$ locally inside the motor driver at **$25\text{–}40\text{ kHz}$** eliminates the $1\text{ ms}$ CAN bus transport delay from the stiffness/damping loop! This allows $10\times$ higher stable virtual damping $K_d$ and stiffness $K_p$ without high-frequency chatter.
+  </details>
 
 ### ✅ Tier 2 Milestone Gate (`Track 04 · Pass 2`)
 * Verify schedulability via exact Response-Time Analysis ($R_i \le D_i$) and test lock-free vs. torn-read behavior under contention in **Tab 8: Attitude ESKF & SeqLock** of the interactive workbench.
@@ -123,8 +206,7 @@ sequenceDiagram
 ```
 
 ### 4.2 Cortex-M7 Memory Hierarchy (`ITCM`/`DTCM`) & NVIC Priority Grouping
-
-* **Why TCM Beats L1 Cache for Real-Time Control:** DMA controllers bypass the CPU's L1 D-Cache and read/write physical SRAM directly. Place the $40\text{ kHz}$ `ADC_DMA_IRQHandler()` in **0-wait-state `ITCM` RAM** (`__attribute__((section(".itcm.text")))`) and DMA buffers / state structs in **non-cacheable `DTCM` RAM**.
+- **Core Summary:** Placing the $40\text{ kHz}$ FOC ISR in **0-wait-state `ITCM` RAM** and DMA buffers in **non-cacheable `DTCM` RAM** eliminates Flash wait states and L1 cache coherency bugs, while configuring NVIC priority Level 0 above FreeRTOS `configMAX_SYSCALL_INTERRUPT_PRIORITY` (`BASEPRI`) guarantees zero RTOS kernel masking jitter.
 
 | Priority Level | Assigned Peripherals | RTOS API Allowed? | Max Execution Time (WCET) |
 | :--- | :--- | :--- | :--- |
@@ -132,7 +214,24 @@ sequenceDiagram
 | **Tier 1: RTOS-Aware Peripherals (`Prio 2–14`)** | CAN-FD RX/TX, EtherCAT SYNC0, IMU SPI DMA, UART | Yes (`xTaskNotifyFromISR`) | $< 15\ \mu\text{s}$ |
 | **Tier 2: Kernel Tick & Context Switch (`Prio 15`)** | `SysTick` and `PendSV` | Kernel Internal | $< 5\ \mu\text{s}$ |
 
+- **Curated Free Resources:**
+  - 🔗 [STMicroelectronics AN4839: Level 1 Cache on STM32F7 and STM32H7 Series (ITCM/DTCM vs. SRAM)](https://www.st.com/resource/en/application_note/an4839-level-1-cache-on-stm32f7-series-and-stm32h7-series-stmicroelectronics.pdf) — *Essential application note on TCM tightly coupled memory and DMA cache coherency.*
+  - 🔗 [FreeRTOS Official Docs: Running the RTOS on an ARM Cortex-M Core (`BASEPRI` & Zero-Latency Interrupts)](https://www.freertos.org/RTOS-Cortex-M3-M4.html) — *Explains why Tier-0 motor control interrupts must be placed above `configMAX_SYSCALL_INTERRUPT_PRIORITY`.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Inspect `../08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp` to trace how `TIM1_TRGO2` triggers simultaneous `ADC1`/`ADC2` conversions at `CNT == ARR`, how the hardware `CORDIC` co-processor computes $\sin\theta_e, \cos\theta_e$ in 6 clock cycles, and how `DWT->CYCCNT` measures exact cycle-accurate WCET.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why does FreeRTOS use the ARM Cortex-M `BASEPRI` register instead of `CPSID i` (`PRIMASK`) when entering critical sections?
+  * **Answer & Explanation:** `CPSID i` disables *all* configurable interrupts globally, which would delay a $40\text{ kHz}$ FOC current loop or overcurrent fault whenever a low-priority task enters a critical section! By setting `BASEPRI` to `configMAX_SYSCALL_INTERRUPT_PRIORITY` (e.g., Priority 2), FreeRTOS masks only priorities $2\text{–}15$ while allowing Priority 0 and 1 hardware interrupts to execute with **zero latency**.
+
+  **Q2:** Why are you strictly forbidden from calling `xQueueSendFromISR()` or `xTaskNotifyFromISR()` inside a Priority 0 interrupt that sits above `configMAX_SYSCALL_INTERRUPT_PRIORITY`?
+  * **Answer & Explanation:** Because Priority 0 can preempt FreeRTOS right in the middle of the kernel modifying internal queue/task linked lists inside a critical section, corrupting kernel state! Priority 0 ISRs must communicate with RTOS tasks exclusively through lock-free atomics such as `WaitFreeSeqLock<T>` or a Single-Producer Single-Consumer (SPSC) ring buffer.
+  </details>
+
 ### 4.3 Exact Response-Time Analysis (RTA) & C++20 `WaitFreeSeqLock`
+- **Core Summary:** A `WaitFreeSeqLock<T>` allows a $40\text{ kHz}$ Tier-0 writer ISR to publish multi-word state structs to a $1\text{ kHz}$ reader task with **zero blocking**, **zero priority inversion**, and **mathematically guaranteed zero torn reads** using acquire/release atomic sequence fences.
 
 $$
 R_i^{(k+1)} = C_i + B_i + \sum_{j \in hp(i)} \left\lceil \frac{R_i^{(k)}}{T_j} \right\rceil C_j \le D_i
@@ -175,7 +274,24 @@ private:
 };
 ```
 
+- **Curated Free Resources:**
+  - 🔗 [Hans Boehm (ACM Queue): Can Seqlocks Get Along with Programming Language Memory Models?](https://dl.acm.org/doi/10.1145/2247684.2247688) — *Seminal paper explaining the C++11/C++20 memory-ordering fences required for a correct lock-free Sequence Lock.*
+  - 🔗 [CppReference: `std::memory_order` (`memory_order_acquire` & `memory_order_release`)](https://en.cppreference.com/w/cpp/atomic/memory_order) — *Complete reference on acquire/release semantics and preventing compiler/CPU load-store reordering.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Open **Tab 8: Attitude ESKF & SeqLock** in the interactive workbench, run the $40\text{ kHz}$ writer vs. $1\text{ kHz}$ reader stress test, and compare **Unprotected Global Struct** (which suffers torn reads where `q + dq != 0`) against **`WaitFreeSeqLock<T>`** ($0$ torn reads across $10^7$ cycles). Also compile and run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp`.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why must `read()` check *both* `(seq0 != seq1)` AND `((seq0 & 1U) != 0U)` in the `do-while` loop of `WaitFreeSeqLock`?
+  * **Answer / Explanation:** `seq0 != seq1` detects if the writer *started or finished* a write while `read()` was copying `data_`. However, if the reader began copying while a write was *already* in progress (`seq0` was odd) and finished copying before the writer completed (`seq1 == seq0`, still the same odd number), `seq0 != seq1` alone would be false! Checking `(seq0 & 1U) != 0U` catches any read that occurred while `seq_` was odd.
+
+  **Q2:** Why is `WaitFreeSeqLock` strictly wait-free for the **writer** ($40\text{ kHz}$ ISR) even if a low-priority **reader** is preempted mid-copy?
+  * **Answer & Explanation:** The writer never checks or waits for readers—it unconditionally increments `seq_` to odd, writes `data_`, and increments `seq_` to even in a fixed number of instructions ($O(1)$). If a reader was mid-copy during that preemption, only the *reader* detects `seq0 != seq1` and repeats its 20-nanosecond copy.
+  </details>
+
 ### 4.4 Deterministic Fieldbuses & FPGA Co-Design (`Sinc³` $\Sigma\Delta$ Decimation)
+- **Core Summary:** Multi-axis humanoids and industrial CNC machines synchronize $30+$ joints with $< 50\text{ ns}$ jitter using **EtherCAT Distributed Clocks (`DC SYNC0`)** (on-the-fly Ethernet frame processing), while FPGA fabrics run parallel `sinc³` digital decimation filters ($H(z) = \left(\frac{1 - z^{-OSR}}{1 - z^{-1}}\right)^3$) on isolated $20\text{ MHz}$ $\Sigma\Delta$ modulator bitstreams (`AMC1306`) to provide both 16-bit current feedback ($OSR = 128$) and $< 800\text{ ns}$ short-circuit trip ($OSR = 16$).
 
 | Bus / Protocol | Physical Layer | Payload & Bandwidth | Synchronization Jitter | Typical Mechatronics Role |
 | :--- | :--- | :--- | :--- | :--- |
@@ -183,7 +299,21 @@ private:
 | **CAN-FD (Cyphal/MIT Mode)** | ISO 11898-2 Differential ($120\ \Omega$) | $64\text{ bytes}$ @ $1\text{ Mbps}$ / $5\text{–}8\text{ Mbps}$ | $15\text{–}50\ \mu\text{s}$ | Quadruped/humanoid limb buses ($3\text{–}6\text{ QDD joints}$ @ $1\text{–}2\text{ kHz}$) |
 | **EtherCAT** | 100BASE-TX On-the-Fly Processing | Up to $1486\text{ bytes}$ @ $100\text{ Mbps}$ | **$< 50\text{ ns}$ (`DC SYNC0`)** | Industrial CNC, surgical arms, humanoids ($30+\text{ axes}$ @ $4\text{ kHz}$) |
 
-* **FPGA Sinc³ Digital Decimation Filter for Isolated $\Sigma\Delta$ Modulators (`AMC1306`):** $H(z) = \left(\frac{1 - z^{-OSR}}{1 - z^{-1}}\right)^3$ delivers 16-bit current readings every $6.4\ \mu\text{s}$ ($OSR = 128$) alongside a parallel hardware short-circuit comparator ($OSR = 16$, $<800\text{ ns}$ trip).
+- **Curated Free Resources:**
+  - 🔗 [EtherCAT Technology Group: EtherCAT Operating Principle & Distributed Clocks Guide](https://www.ethercat.org/en/technology.html) — *Explains how EtherCAT subdevices read/write data on the fly as the Ethernet frame passes through at $100\text{ Mbps}$ and lock local clocks to $< 50\text{ ns}$.*
+  - 🔗 [Texas Instruments SBAA230: Sinc Filter Design for $\Sigma\Delta$ Modulators in Motor Control](https://www.ti.com/lit/an/sbaa230/sbaa230.pdf) — *Derives the Hogenauer `sinc³` CIC filter architecture and shows why aligning the `sinc³` impulse response center with the PWM carrier peak cancels switching ripple.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp` to verify the fixed-point Hogenauer `sinc³` decimation filter response on a $20\text{ MHz}$ 1-bit $\Sigma\Delta$ modulator stream at $OSR = 128$ (16-bit current measurement) vs. $OSR = 16$ (fast overcurrent trip).
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why can a single EtherCAT frame update 30 robot joint drives in $< 100\ \mu\text{s}$, whereas standard TCP/IP Ethernet would take several milliseconds?
+  * **Answer & Explanation:** Standard Ethernet requires each node to receive an entire packet into a MAC buffer, traverse an OS network stack, and transmit a separate reply packet (incurring $30\times$ packet headers and inter-frame gaps). EtherCAT uses a hardware ASIC (`ESC`) in each drive that reads its command bytes and inserts its sensor telemetry bytes **on the fly** (in a few tens of nanoseconds) as a single Ethernet frame loops through all 30 drives!
+
+  **Q2:** For a 3rd-order `sinc³` filter running on a $f_{\text{mod}} = 20\text{ MHz}$ $\Sigma\Delta$ bitstream with oversampling ratio $OSR = 128$, what is the output sample period $T_{\text{dec}}$ and group delay?
+  * **Answer & Explanation:** Each decimated output sample takes $T_{\text{dec}} = OSR / f_{\text{mod}} = 128 / 20\text{ MHz} = 6.4\ \mu\text{s}$, and the symmetric 3-stage `sinc³` impulse response has a deterministic group delay of $1.5 \times T_{\text{dec}} = 9.6\ \mu\text{s}$.
+  </details>
 
 ---
 

@@ -13,11 +13,14 @@
 | Title & Authors | Year / Edition | Core Contribution & Why It Matters |
 | :--- | :--- | :--- |
 | **System Dynamics: Modeling, Simulation, and Control of Mechatronic Systems**<br/>*D. C. Karnopp, D. L. Margolis, & R. C. Rosenberg* | 2012 (6th Ed., Wiley) | The definitive text on **Bond Graph modeling**, causal strokes, gyrators/transformers, and deriving unified state-space ODEs across electrical, mechanical, fluid, and thermal domains. |
+| **Mechatronics: Electronic Control Systems in Mechanical and Electrical Engineering**<br/>*W. Bolton* | 2019 (7th Ed., Pearson) | The classic broad survey of sensors, signal conditioning, actuators, microprocessors, PLC architectures, and system models for multidisciplinary engineers. |
+| **Introduction to Mechatronics and Measurement Systems**<br/>*D. G. Alciatore & M. B. Histand* | 2019 (5th Ed., McGraw-Hill) | Undergraduate benchmark text covering basic analog/digital electronics, sensor instrumentation, microcontrollers, and laboratory data acquisition. |
 | **Linear Algebra and Learning from Data** & **Numerical Linear Algebra**<br/>*G. Strang* / *L. N. Trefethen & D. Bau* | 2019 / 1997 (SIAM) | SVD geometry, conditioning numbers, Householder QR, Cholesky factorization, and why naive matrix inversion fails in finite-precision floating point. |
 | **A Micro Lie Theory for State Estimation in Robotics** (`arXiv:1812.01537`)<br/>*J. Sola, J. Deray, & D. Atchuthan* | 2018 | Concise, self-contained derivation of Lie groups ($SO(3), SE(3), \mathbb{S}^3$), tangent spaces, exponential/logarithmic maps, Adjoints, and Jacobians on manifolds. |
 | **Discrete-Time Signal Processing**<br/>*A. V. Oppenheim & R. W. Schafer* | 2009 (3rd Ed., Pearson) | Sampling theorem, $Z$-transform, FIR/IIR structures, Transposed Direct Form II, coefficient quantization, limit cycles, and Welch spectral analysis. |
 | **Computer-Controlled Systems: Theory and Design**<br/>*K. J. Åström & B. Wittenmark* | 2011 (3rd Ed., Dover) | Exact ZOH discretization, inter-sample ripple, aliasing, Tustin pre-warping, and sampled-data stochastic control. |
 | **Port-Hamiltonian Systems Theory: An Introductory Overview**<br/>*A. van der Schaft & D. Jeltsema* | 2014 (*FnT in Systems & Control*) | Generalizes Bond Graphs and Lagrangian mechanics into energy-routing Dirac structures and Interconnection and Damping Assignment Passivity-Based Control (IDA-PBC). |
+
 
 ---
 

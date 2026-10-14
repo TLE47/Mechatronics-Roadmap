@@ -102,3 +102,75 @@ flowchart LR
 | **Renode** | BSD-3 | Deterministic instruction-set & multi-node network simulator | Boots unmodified production ARM `.elf` binaries in CI and simulates virtual CAN-FD/SPI/UART networks across multiple MCU nodes. |
 | **Yosys + nextpnr + Verilator + Surfer** | ISC / LGPL | Open-source Verilog/SystemVerilog synthesis, place-and-route, and fast C++ cycle-accurate RTL simulation | Compiles FPGA quadrature decoders, sinc³ $\Sigma\Delta$ filters, and SVPWM generators into fast C++ models that co-simulate directly with firmware. |
 | **PlotJuggler & `sigrok` / PulseView** | MPL 2.0 / GPLv3 | High-rate real-time telemetry plotting, live FFT, and logic-analyzer protocol decoding | Decodes SPI, BiSS-C, CAN-FD, I2C, and PWM timings while streaming live CSV/UDP/ZeroMQ/MCAP control signals. |
+
+---
+
+## 6. Curated Awesome-Mechatronics Open-Source Ecosystem (Tier-Mapped Directory)
+
+*Ingested and mapped from the open-source mechatronics community ([`engyasin/awesome-mechatronics`](https://github.com/engyasin/awesome-mechatronics)).*
+
+### 🟢 Tier 1: Beginner / Intuitive Ecosystem
+* **Simulators & Web Tools:**
+  - 🔗 [Falstad Circuit Simulator](https://www.falstad.com/circuit/) — *Real-time animated circuit simulation displaying voltage as color and current as moving electrons.*
+  - 🔗 [Wokwi Browser Simulator](https://wokwi.com/) — *Simulate ESP32, STM32, and Arduino hardware with virtual logic analyzers, ADCs, and PWM.*
+  - 🔗 [Tinkercad Circuits](https://www.tinkercad.com/circuits) — *Visual breadboard wiring and introductory microcontroller simulation.*
+  - 🔗 [myPhysicsLab](https://www.myphysicslab.com/) — *Interactive 2D physics simulations of spring-mass-dampers and pendulums.*
+  - 🔗 [Webots Robot Simulator](https://cyberbotics.com/) — *Beginner-friendly open-source 3D robot simulator with cross-platform C/C++/Python APIs.*
+* **Hardware & Starter Toolchains:**
+  - 🔗 [Arduino IDE 2.x](https://www.arduino.cc/en/software) — *Entry-level IDE for flashing 8-bit and 32-bit development boards.*
+  - 🔗 [ESP32 / ESP-IDF Framework](https://github.com/espressif/esp-idf) — *Low-cost dual-core Wi-Fi/BLE MCU with hardware motor control PWM (MCPWM).*
+  - 🔗 [Raspberry Pi Pico / RP2040](https://www.raspberrypi.com/documentation/microcontrollers/) — *Dual-core Cortex-M0+ with Programmable I/O (PIO) state machines.*
+* **High-Level Libraries:**
+  - 🔗 [SimpleFOC Library](https://github.com/simplefoc/Arduino-FOC) — *Open-source library for driving 3-phase BLDC/Stepper motors with breakout boards.*
+  - 🔗 [grbl CNC Motion Controller](https://github.com/gnea/grbl) — *High-performance, low-cost open-source G-code parser and 3-axis motion controller.*
+  - 🔗 [AccelStepper](https://www.airspayce.com/mikem/arduino/AccelStepper/) — *Non-blocking stepper motor library with acceleration and deceleration ramps.*
+
+### 🔵 Tier 2: Intermediate / Applied Ecosystem
+* **ECAD & Circuit Analysis:**
+  - 🔗 [KiCad EDA (8.0+)](https://www.kicad.org/) — *Professional open-source schematic capture and 4–8 layer PCB layout with 3D raytracing.*
+  - 🔗 [ngspice](https://ngspice.sourceforge.io/) — *Open-source mixed-signal SPICE engine for AC loop, transient, and Monte Carlo sweeps.*
+  - 🔗 [Qucs-S](https://ra3xdh.github.io/) — *Quite Universal Circuit Simulator with SPICE GUI integration.*
+  - 🔗 [EasyEDA](https://easyeda.com/) — *Cloud-based schematic capture and PCB layout tightly integrated with JLCPCB parts libraries.*
+* **Parametric CAD & Modeling:**
+  - 🔗 [FreeCAD (1.0+)](https://www.freecad.org/) — *Open-source parametric 3D modeler with assembly, draft, and FEM workbenches.*
+  - 🔗 [OpenSCAD](https://openscad.org/) — *The programmers' solid 3D CAD modeler using constructive solid geometry (CSG).*
+  - 🔗 [CadQuery](https://github.com/CadQuery/cadquery) — *Python-based parametric CAD framework built on the OpenCASCADE technology kernel.*
+* **Embedded Environments & RTOS:**
+  - 🔗 [PlatformIO](https://platformio.org/) — *Professional collaborative platform for embedded development with dependency management.*
+  - 🔗 [STM32CubeIDE / STM32CubeMX](https://www.st.com/en/development-tools/stm32cubeide.html) — *Peripheral configuration GUI and C/C++ IDE for ARM Cortex-M microcontrollers.*
+  - 🔗 [FreeRTOS Kernel](https://www.freertos.org/) — *Market-leading real-time operating system for microcontrollers and small microprocessors.*
+  - 🔗 [MicroPython](https://micropython.org/) — *Lean Python 3 implementation optimized to run on bare-metal microcontrollers.*
+  - 🔗 [micro-ROS](https://micro.ros.org/) — *Puts ROS 2 onto resource-constrained microcontrollers over serial, CAN, or UDP.*
+* **Numerical Methods & Control:**
+  - 🔗 [GNU Octave](https://octave.org/) — *Free, open-source high-level language primarily intended for numerical computations (MATLAB compatible).*
+  - 🔗 [Python Control Systems Library (`python-control`)](https://python-control.readthedocs.io/) — *Python package that implements basic operations for analysis and design of feedback control systems.*
+  - 🔗 [SymPy](https://www.sympy.org/) — *Python library for symbolic mathematics, kinematics equations, and Jacobian derivations.*
+  - 🔗 [CasADi](https://web.casadi.org/) — *Open-source tool for nonlinear optimization and algorithmic differentiation.*
+* **Actuators, Drivers & Telemetry:**
+  - 🔗 [VESC Project (Benjamin Vedder)](https://vesc-project.com/) — *Open-source motor controller hardware and firmware for high-power electric drives.*
+  - 🔗 [PlotJuggler](https://github.com/facontidavide/PlotJuggler) — *Fast, extensible time-series visualization tool for CSV, ULog, ROS 1/2, and MQTT data.*
+  - 🔗 [Foxglove Studio](https://foxglove.dev/) — *Modern visualization and debugging tool for robotics with custom 3D and plot panels.*
+
+### 🟣 Tier 3: Advanced / Production Ecosystem
+* **Robotics Middleware & Whole-Body Stacks:**
+  - 🔗 [ROS 2 (Humble / Jazzy)](https://docs.ros.org/) — *Industry-standard open-source robot middleware with DDS communications.*
+  - 🔗 [ros2_control](https://control.ros.org/) — *Real-time controller manager and hardware abstraction layer for ROS 2.*
+  - 🔗 [MoveIt 2](https://moveit.picknik.ai/) — *Advanced manipulation framework for kinematics, motion planning, and collision checking.*
+  - 🔗 [Nav2](https://nav2.org/) — *Autonomous navigation framework for mobile robots using behavior trees and costmaps.*
+* **Rigid-Body Dynamics & GPU Physics:**
+  - 🔗 [Pinocchio (LAAS-CNRS)](https://github.com/stack-of-tasks/pinocchio) — *Blazing-fast C++ library for rigid body dynamics algorithms ($O(n)$ RNEA/ABA) and derivatives.*
+  - 🔗 [Drake (MIT / Toyota Research Institute)](https://drake.mit.edu/) — *Model-based design, trajectory optimization, and Lyapunov verification for robotic systems.*
+  - 🔗 [MuJoCo (Google DeepMind)](https://mujoco.org/) — *Multi-Joint dynamics with Contact: convex optimization physics engine.*
+  - 🔗 [NVIDIA Isaac Sim / Isaac Lab](https://developer.nvidia.com/isaac-sim) — *GPU-accelerated photorealistic simulation and synthetic data generation built on Omniverse.*
+  - 🔗 [PyBullet](https://pybullet.org/) — *Python module for physics simulation for robotics, games, and machine learning.*
+* **Embedded Optimization & Fast Solvers:**
+  - 🔗 [acados](https://github.com/acados/acados) — *Fast and embedded solvers for nonlinear model predictive control (NMPC) and moving horizon estimation.*
+  - 🔗 [OSQP (Operator Splitting QP Solver)](https://osqp.org/) — *Numerical optimization package for solving convex quadratic programs with division-free embedded C codegen.*
+  - 🔗 [TinyMPC](https://tinympc.org/) — *High-speed model predictive control solver designed specifically for microcontrollers.*
+* **Production Firmware, Real-Time OS & Safety:**
+  - 🔗 [ODrive Robotics](https://github.com/odriverobotics/ODrive) — *High-performance dual-axis brushless motor controller firmware and Python tools.*
+  - 🔗 [Zephyr RTOS Project](https://www.zephyrproject.org/) — *Scalable, secure, and safety-oriented real-time operating system with rich driver subsystems.*
+  - 🔗 [RTIC (Real-Time Interrupt-driven Concurrency)](https://rtic.rs/) — *Hardware-accelerated concurrency framework for Embedded Rust on ARM Cortex-M.*
+  - 🔗 [Linux PREEMPT_RT](https://wiki.linuxfoundation.org/realtime/start) — *Real-time patch turning the Linux kernel into a hard real-time operating system.*
+  - 🔗 [Renode (Antmicro)](https://renode.io/) — *Open-source hardware simulation framework enabling virtual multi-node embedded system testing.*
+

@@ -25,24 +25,50 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 > **Goal of Pass 1 (Track 06):** Stop commanding sudden step jumps (`q_des = 90.0`) that slam robot joints! Learn to generate smooth **Cubic Polynomial & Trapezoidal Velocity Trajectories** so velocity starts and ends at zero, and implement **Joint-Space Virtual Springs (Compliant PD + Gravity Offset)** so a human hand can safely push the robot arm out of the way.
 
 ### 1.1 Why Step Commands Break Gears: Smooth Cubic Spline Interpolation
-If you step `q_des` instantaneously from $0\text{ rad}$ to $1.0\text{ rad}$, initial position error is huge and target velocity is infinite—slamming the motor with maximum stall current and shaking the whole desk.
-* **Rest-to-Rest Cubic Polynomial ($t \in [0, T]$ with $\dot{q}(0) = \dot{q}(T) = 0$):**
-  Define normalized time $s = t / T \in [0, 1]$:
+- **Core Summary:** Stepping a target angle `q_des` instantaneously demands infinite velocity and acceleration at $t = 0$, slamming the actuator into current saturation and shaking the robot frame. A **rest-to-rest cubic polynomial** $q_d(t) = q_0 + (3s^2 - 2s^3)(q_f - q_0)$ (with normalized time $s = t/T \in [0, 1]$) guarantees smooth position and strictly zero velocity $\dot{q}_d(0) = \dot{q}_d(T) = 0$ at both endpoints.
 
 $$
 q_d(t) = q_0 + (3s^2 - 2s^3)(q_f - q_0), \qquad \dot{q}_d(t) = \frac{6s(1 - s)}{T}(q_f - q_0)
 $$
 
-  Notice that at both $s = 0$ and $s = 1$, velocity $\dot{q}_d$ is **identically zero**!
+- **Curated Free Resources:**
+  - 🔗 [Lynch & Park: Modern Robotics — Chapter 9: Trajectory Generation (Free Northwestern PDF & Videos)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Derives cubic, quintic, and trapezoidal time-scaling polynomials with clear physical plots.*
+  - 🔗 [Russ Tedrake (MIT 6.4210): Robotic Manipulation — Trajectory Planning](https://manipulation.csail.mit.edu/trajectories.html) — *Interactive Python notebooks showing smooth spline interpolation for robot arms.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Write a 10-line Python or C++ function that evaluates $q_d(t)$, $\dot{q}_d(t)$, and $\ddot{q}_d(t)$ for a $1.0\text{ rad}$ move over $T = 0.8\text{ s}$ using both a cubic polynomial ($3s^2 - 2s^3$) and a quintic polynomial ($10s^3 - 15s^4 + 6s^5$). Verify that the quintic polynomial has zero acceleration $\ddot{q}_d(0) = \ddot{q}_d(T) = 0$ at the start and end of the move!
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** During a rest-to-rest cubic polynomial trajectory $q_d(t) = q_0 + (3s^2 - 2s^3)\Delta q$ over duration $T$, at what instant $t$ does the peak velocity $\dot{q}_{\max}$ occur, and how much larger is it than the average velocity $\Delta q / T$?
+  * **Answer / Explanation:** Setting $\ddot{q}_d = 0$ gives $s = 0.5$ ($t = T/2$, the exact midpoint of the move). At $s = 0.5$, $\dot{q}_{\max} = \frac{6(0.5)(0.5)}{T}\Delta q = 1.5 \frac{\Delta q}{T}$—exactly **$50\%$ higher** than the average speed!
+
+  **Q2:** Why do high-speed arms prefer a **quintic (5th-order)** polynomial $s(\tau) = 10\tau^3 - 15\tau^4 + 6\tau^5$ over a cubic (3rd-order) polynomial?
+  * **Answer & Explanation:** A cubic polynomial has only 4 coefficients (matching $q(0), q(T), \dot{q}(0), \dot{q}(T)$), so its acceleration $\ddot{q}(t)$ jumps discontinuously at $t = 0$ and $t = T$ (infinite jerk!). A quintic polynomial has 6 coefficients, allowing you to constrain $\ddot{q}(0) = \ddot{q}(T) = 0$ so motor torque ramps up smoothly from zero.
+  </details>
 
 ### 1.2 Joint-Space Compliant Control (Virtual Spring-Damper + Gravity Feedforward)
-Instead of a stiff PID with a giant integral term $K_i$ that fights external contact until something breaks, set $K_i = 0$ and add analytical gravity compensation $g(q)$:
+- **Core Summary:** Setting the integral gain $K_i = 0$ and pairing a soft PD virtual spring-damper with analytical gravity compensation $\tau_{\text{cmd}} = K_p(q_d - q) + K_d(\dot{q}_d - \dot{q}) + m g l_c \cos(q)$ allows a robot arm to hold any pose in space weightlessly while yielding safely like a mechanical spring whenever a human hand pushes it.
 
 $$
 \tau_{\text{cmd}} = K_p (q_d(t) - q) + K_d (\dot{q}_d(t) - \dot{q}) + \underbrace{m g l_c \cos(q)}_{\text{Gravity Feedforward } g(q)}
 $$
 
-Now, if you set a gentle $K_p$, the robot floats effortlessly against gravity and yields like a soft mechanical spring whenever your hand touches it!
+- **Curated Free Resources:**
+  - 🔗 [Neville Hogan (1985 Seminal Paper): Impedance Control — An Approach to Manipulation](https://mec560sbu.github.io/2016/09/28/Hogan1985/) — *The foundational robotics paper explaining why robots interacting with the physical world must control mechanical impedance (stiffness & damping) rather than rigid position.*
+  - 🔗 [Albu-Schäffer et al. (DLR): Soft Robotics & Joint-Level Torque/Impedance Control](https://ieeexplore.ieee.org/document/4543189) — *Shows how gravity compensation ($K_p = 0, K_d = 0$) creates "zero-gravity lead-through teaching" on collaborative arms.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Set $K_p = 0$ and $K_d = 0.05\text{ N}\cdot\text{m}\cdot\text{s/rad}$ in your 1-DOF or 2-DOF arm simulation while keeping gravity feedforward $\tau = \hat{g}(q)$ active ("Zero-G Teaching Mode"). Verify that you can move the arm to any angle and it stays floating in place without falling!
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why must you set the integral gain $K_i = 0$ during compliant physical human-robot interaction or contact tasks?
+  * **Answer / Explanation:** If a human pushes the robot arm away from $q_d$ and holds it for 5 seconds, a non-zero integral term $K_i \int (q_d - q)\,dt$ will wind up to maximum actuator torque trying to fight the human—and when the human lets go, the arm will whip back violently! Compliant impedance control relies on feedforward physics ($\hat{g}(q)$) for accuracy and keeps $K_i = 0$.
+
+  **Q2:** If a $0.5\text{ kg}$ robot link has its center of mass at $l_c = 0.20\text{ m}$ from the pivot, what feedforward torque $\tau_g(q)$ is required when the link is horizontal ($q = 0\text{ rad}$) vs. straight up ($q = \pi/2\text{ rad}$)?
+  * **Answer & Explanation:** Using $\tau_g(q) = m g l_c \cos(q)$: at $q = 0$ (horizontal), $\tau_g = 0.5 \times 9.81 \times 0.20 \times \cos(0) = 0.981\text{ N}\cdot\text{m}$. At $q = \pi/2$ (straight up), $\cos(\pi/2) = 0$, so $\tau_g = 0.0\text{ N}\cdot\text{m}$.
+  </details>
 
 ### ✅ Tier 1 Milestone Gate (`Track 06 · Pass 1`)
 * Replace step setpoints on your 1-DOF or 2-DOF gimbal arm with a rest-to-rest cubic polynomial generator and gravity feedforward $g(q)$, verifying that you can gently push the link away by hand and watch it return smoothly without overshoot.
@@ -55,13 +81,40 @@ Now, if you set a gentle $K_p$, the robot floats effortlessly against gravity an
 > **Goal of Pass 2 (Track 06):** Upgrade from joint-space springs to **Cartesian Task-Space Impedance Control (`tau = J^T F_cart + g(q)`)**—allowing you to specify independent $(x, y, z)$ stiffness in millimeters/Newtons—and eliminate structural vibration using **Jerk-Bounded S-Curve Trajectories (`Ruckig`)**.
 
 ### 2.1 Sensorless Cartesian Impedance via the Jacobian Transpose ($\tau = J(q)^\top F_{\text{cart}} + g(q)$)
-Suppose you want your robot gripper to be **very stiff vertically ($K_z = 1000\text{ N/m}$)** so it holds its height, but **very soft horizontally ($K_x = 50\text{ N/m}$)** so it slides smoothly into a chamfered hole. You don't even need Inverse Kinematics or a 6-axis force sensor!
-1. Compute current gripper position $x = \text{FK}(q)$ and tip velocity $\dot{x} = J(q)\dot{q}$.
-2. Compute virtual 3D Cartesian spring-damper force $F_{\text{cart}} = K_x (x_d - x) + D_x (\dot{x}_d - \dot{x})$.
-3. Map $F_{\text{cart}}$ directly to joint torques via $\tau = J(q)^\top F_{\text{cart}} + g(q)$!
+- **Core Summary:** Using the virtual-work duality $\tau = J(q)^\top F_{\text{cart}} + g(q)$ with $F_{\text{cart}} = K_x(x_d - x) + D_x(\dot{x}_d - J(q)\dot{q})$, a multi-DOF robot can act as an anisotropic 3D virtual spring-damper at its gripper—for example, very stiff vertically ($K_z = 1000\text{ N/m}$) while compliant horizontally ($K_x = 50\text{ N/m}$)—without requiring inverse kinematics or an external force/torque sensor!
+- **Curated Free Resources:**
+  - 🔗 [Russ Tedrake (MIT 6.4210): Chapter 8 — Manipulator Force & Cartesian Stiffness Control](https://manipulation.csail.mit.edu/force.html) — *Derives $\tau = J(q)^\top F_{\text{cart}} + g(q)$ and demonstrates how anisotropic stiffness enables peg-in-hole assembly and surface wiping.*
+  - 🔗 [Khatib (1987 Seminal Paper): A Unified Approach for Motion and Force Control of Robot Manipulators](https://cs.stanford.edu/groups/manips/publications/pdfs/Khatib_1987_RA.pdf) — *Introduces operational-space control directly in end-effector coordinates.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` or open **Tab 5: URDF / MuJoCo & STO** to simulate a 2-link/3-link leg or arm hitting an unexpected rigid wall at $x_{\text{wall}}$ under Cartesian Impedance Control ($K_x = 400\text{ N/m}$), verifying that steady-state contact force settles cleanly to $F_x = K_x(x_d - x_{\text{wall}})$.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why does Cartesian Impedance Control $\tau = J(q)^\top \big(K_x(x_d - \text{FK}(q)) - D_x J(q)\dot{q}\big) + g(q)$ remain completely stable even when the robot passes right through a kinematic singularity ($\det J(q) = 0$)?
+  * **Answer & Explanation:** Because it only uses **Forward Kinematics $\text{FK}(q)$ and the transpose $J(q)^\top$**—it never inverts $J(q)^{-1}$! At a singularity, components of $F_{\text{cart}}$ along the singular direction simply map to zero joint torque via $J(q)^\top F_{\text{cart}}$, avoiding the infinite velocity blow-up of inverse differential kinematics.
+
+  **Q2:** If you command a desired gripper height $z_d = -0.35\text{ m}$ with vertical Cartesian stiffness $K_z = 800\text{ N/m}$, and the foot touches the ground early at $z = -0.32\text{ m}$ at rest, what vertical ground reaction force $F_z$ does the leg exert?
+  * **Answer & Explanation:** $F_z = K_z (z_d - z) = 800 \times (-0.35 - (-0.32)) = -24.0\text{ N}$ downward onto the ground ($+24.0\text{ N}$ upward ground reaction support force).
+  </details>
 
 ### 2.2 Why Trapezoidal Velocity Still Vibrates Arms: Jerk-Bounded S-Curves (`Ruckig`)
-A trapezoidal velocity profile has square-wave acceleration steps (infinite **jerk** $\dddot{q} = \frac{d\ddot{q}}{dt} = \pm\infty$), which rings flexible links like a bell. **3rd-Order S-Curve Generators (`Ruckig`)** bound maximum velocity, acceleration, *and* jerk ($\lvert\dddot{q}\rvert \le j_{\max}$), ramping acceleration in smooth linear ramps so structural modes are never excited.
+- **Core Summary:** A trapezoidal velocity profile steps acceleration instantaneously ($\dddot{q} = \pm\infty$), acting like a hammer blow that excites flexible link and gearbox resonances. **3rd-order Jerk-Bounded S-Curve generators (`Ruckig`)** bound maximum velocity, acceleration, *and* jerk ($\lvert\dddot{q}\rvert \le j_{\max}$) across 7 smooth phases so structural modes are never rung.
+- **Curated Free Resources:**
+  - 🔗 [Ruckig Open-Source Online Jerk-Limited Trajectory Library (GitHub & Docs)](https://github.com/pantor/ruckig) — *Production C++20/Python library used in ROS 2 (`MoveIt 2`) and Franka Emika arms for sub-millisecond time-optimal S-curve generation from arbitrary initial states.*
+  - 🔗 [Biagiotti & Melchiorri: Trajectory Planning for Automatic Machines and Robots — Double-S / S-Curve Profiles](https://link.springer.com/book/10.1007/978-3-540-85629-0) — *Complete analytical equations for 7-segment jerk-limited trajectories.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` to compare the high-frequency structural vibration of a flexible joint driven by a trapezoidal velocity profile vs. a 7-segment jerk-bounded S-curve ($\lvert\dddot{q}\rvert \le 20\text{ rad/s}^3$).
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** What are the **7 phases** of a full time-optimal 3rd-order S-curve point-to-point move?
+  * **Answer / Explanation:** (1) Positive max jerk $+j_{\max}$ (ramping acceleration up), (2) Constant max acceleration $+a_{\max}$ ($j = 0$), (3) Negative max jerk $-j_{\max}$ (ramping acceleration back to $0$ as velocity reaches $v_{\max}$), (4) Constant max velocity cruise $v_{\max}$ ($a = 0, j = 0$), (5) Negative max jerk $-j_{\max}$ (ramping deceleration to $-a_{\max}$), (6) Constant max deceleration $-a_{\max}$, and (7) Positive max jerk $+j_{\max}$ (ramping deceleration smoothly to $0$ at target).
+
+  **Q2:** Physically, why does bounding **jerk** ($\dddot{q}$) directly limit the rate of change of motor phase current ($\frac{di_q}{dt}$) and prevent voltage saturation?
+  * **Answer & Explanation:** Because motor torque is proportional to acceleration ($\tau = J \ddot{q} = K_t i_q$), the time derivative of torque—**yank / jerk** ($J \dddot{q} = K_t \frac{di_q}{dt}$)—is directly proportional to the inductive voltage drop $L_q \frac{di_q}{dt}$ required from the DC bus! Infinite jerk demands infinite $\frac{di_q}{dt}$, which immediately saturates the inverter bus voltage $V_{\text{bus}}$.
+  </details>
 
 ### ✅ Tier 2 Milestone Gate (`Track 06 · Pass 2`)
 * Test the 3-DOF QDD Hopping Leg and 6-DOF Arm kinematics in **Tab 5: URDF / MuJoCo & STO**, verifying Jacobian transpose force mapping across the workspace.
@@ -131,6 +184,7 @@ flowchart TB
 ```
 
 ### 4.2 Khatib Operational-Space Impedance & Dynamically Consistent Null-Space Projection
+- **Core Summary:** Standard Jacobian transpose impedance $J^\top(K_x\tilde{x} + D_x\dot{\tilde{x}})$ suffers from configuration-dependent apparent mass at the gripper. **Khatib's Operational-Space Inertia Matrix $\Lambda(q) = (J M^{-1} J^\top)^{-1}$** decouples the Cartesian dynamics into a true unit-mass system in $(x,y,z)$, while the **dynamically consistent generalized inverse $\bar{J} = M^{-1} J^\top \Lambda$** defines a null-space projector $N^\top = I - J^\top \bar{J}^\top$ that allows redundant posture motions (such as moving a 7-DOF elbow) with **strictly zero acceleration perturbation** at the gripper.
 
 $$
 \Lambda(q) = \left(J(q) M^{-1}(q) J(q)^\top\right)^{-1}, \qquad \bar{J}(q) = M^{-1}(q) J(q)^\top \Lambda(q)
@@ -140,9 +194,24 @@ $$
 \tau = J(q)^\top \Big(\Lambda(q)\ddot{x}_d - K_x \tilde{x} - D_x \dot{\tilde{x}}\Big) + g(q) + \left(I - J(q)^\top \bar{J}(q)^\top\right) \tau_{\text{null}}
 $$
 
-Because $J(q) M^{-1}(q) \left(I - J(q)^\top \bar{J}(q)^\top\right) \equiv 0$, any posture torque $\tau_{\text{null}}$ (such as moving a 7-DOF arm's elbow away from an obstacle) produces **strictly zero acceleration at the end-effector**!
+- **Curated Free Resources:**
+  - 🔗 [Oussama Khatib (Stanford CS223A / CS327A): Operational Space Formulation & Redundant Manipulators](https://see.stanford.edu/Course/CS223A) — *Full Stanford video lectures and course reader by the creator of Operational Space Control.*
+  - 🔗 [Lab 06 Script: `06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py`](./lab/lab06_impedance_and_ruckig.py) — *Executable Python verification proving $J(q) M^{-1}(q) (I - J^\top \bar{J}^\top) \tau_{\text{null}} = \mathbf{0}$ to machine precision.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` to compare the Euclidean pseudo-inverse null-space projector $(I - J^\top (J^+)^\top)$ (which leaks false accelerations into the end-effector whenever $M(q) \ne I$) against Khatib's dynamically consistent projector $(I - J^\top \bar{J}^\top)$.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why does the standard Moore-Penrose kinematic null-space projector $N_{\text{kin}}^\top = I - J^\top (J J^\top)^{-1} J$ fail to keep the end-effector stationary when applying a posture torque $\tau_{\text{null}}$?
+  * **Answer & Explanation:** Because joint torques accelerate the arm through the **inverse mass matrix $M^{-1}(q)$**: $\ddot{x} = J M^{-1} \tau$! Since $J M^{-1} N_{\text{kin}}^\top \ne 0$ when $M(q) \ne I$, inertial coupling causes elbow torques to jerk the gripper. Weighting the generalized inverse by $M^{-1}(q)$ via $\bar{J} = M^{-1} J^\top \Lambda$ guarantees $J M^{-1} (I - J^\top \bar{J}^\top) = J M^{-1} - (J M^{-1} J^\top)\Lambda J M^{-1} = J M^{-1} - I J M^{-1} \equiv \mathbf{0}$!
+
+  **Q2:** Physically, what do the eigenvalues and eigenvectors of the $3\times 3$ translational operational inertia matrix $\Lambda_v(q)$ represent?
+  * **Answer & Explanation:** They form the **Beltrami / Khatib Inertial Ellipsoid** at the gripper: the eigenvectors point along the principal directions of maximum and minimum effective mass, and the eigenvalues equal the exact physical mass (in $\text{kg}$) a human or workpiece feels when colliding with the tip along each axis.
+  </details>
 
 ### 4.3 Floating-Base Whole-Body Control QP (`WBC-QP`) & `PREEMPT_RT` Linux
+- **Core Summary:** Legged robots (quadrupeds, bipeds) have an **unactuated 6-DOF floating base** ($S = [0_{n\times 6}, I_{n\times n}]$) and can only accelerate their center of mass by pushing against the ground through unilateral friction cones ($\lvert f_{c,x}\rvert \le \mu f_{c,z}$, $f_{c,z} \ge 0$). A $1\text{ kHz}$ **Whole-Body Control Quadratic Program (`WBC-QP`)** running on an isolated `PREEMPT_RT` Linux CPU core solves simultaneously for joint accelerations $\dot{v}$, contact forces $f_c$, and actuator torques $\tau$.
 
 $$
 \begin{aligned}
@@ -157,11 +226,44 @@ $$
   2. Call `mlockall(MCL_CURRENT | MCL_FUTURE)` and pin the $1\text{ kHz}$ control thread to isolated core 2 with `SCHED_FIFO` priority `80`.
   3. Bridge `ros2_control` to DDS via lock-free `realtime_tools::RealtimeBuffer<T>` or `iceoryx` zero-copy shared memory.
 
+- **Curated Free Resources:**
+  - 🔗 [ETH Zurich Robotic Systems Lab (Marco Hutter): Quadrupedal Locomotion & Whole-Body Control Lecture Notes](https://rsl.ethz.ch/education-students/lectures/robot-dynamics.html) — *Industry-standard derivations of floating-base dynamics, friction pyramids, and hierarchical WBC-QP.*
+  - 🔗 [Linux Foundation Real-Time Linux Wiki: Configuring `PREEMPT_RT`, `mlockall`, and `cyclictest`](https://wiki.linuxfoundation.org/realtime/start) — *Production guide to eliminating page faults, CPU C-state wake latency, and scheduler jitter on Linux.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench, select the **3-DOF QDD Hopping Leg (`Capstone 4`)**, and inspect how stance phase enforces the unilateral friction cone $\sqrt{f_x^2 + f_y^2} \le \mu f_z$ ($f_z \ge 0$) before transitioning smoothly to flight-phase Raibert foot placement.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** In the floating-base equation of motion $M(q)\dot{v} + h(q,v) = S^\top \tau + J_c(q)^\top f_c$, why are the first 6 rows of $S^\top \tau$ identically zero?
+  * **Answer / Explanation:** Because the robot's 6-DOF torso/pelvis in space has no giant skyhook motor attached to the room! The top 6 rows of $M(q)\dot{v} + h(q,v) = J_{c,\text{base}}^\top f_c$ are the **Newton-Euler centroidal dynamics** of the floating base, proving that the robot can only accelerate its Center of Mass or angular momentum via external contact forces $f_c$.
+
+  **Q2:** Why is calling `mlockall(MCL_CURRENT | MCL_FUTURE)` mandatory at the start of a $1\text{ kHz}$ `PREEMPT_RT` Linux control process?
+  * **Answer & Explanation:** Without `mlockall`, the Linux virtual memory manager can swap pages out or lazily allocate physical pages on first touch—triggering a major/minor **page fault** that stalls your $1\text{ kHz}$ `SCHED_FIFO` thread for milliseconds while waiting on NVMe disk I/O or kernel page tables!
+  </details>
+
 ### 4.4 Hardware-Synchronized VIO & Manifold IMU Preintegration
+- **Core Summary:** High-rate IMUs ($400\text{–}1000\text{ Hz}$) run $10\text{–}30\times$ faster than camera keyframes ($30\text{ Hz}$). **Forster's Manifold IMU Preintegration** integrates relative motion $(\Delta R_{ij}, \Delta v_{ij}, \Delta p_{ij})$ between keyframes in the local body frame and uses a first-order Lie-algebra Jacobian $\exp\left(\frac{\partial \Delta\tilde{R}_{ij}}{\partial b_g}(b_g^+ - \bar{b}_g)\right)$ so factor-graph optimizers (`GTSAM`/`iSAM2`) can update gyro/accel biases across past keyframes without ever re-integrating raw $1\text{ kHz}$ IMU packets.
 
 $$
 \Delta R_{ij}(b_g^+) \approx \Delta\tilde{R}_{ij} \exp\left(\frac{\partial \Delta\tilde{R}_{ij}}{\partial b_g} (b_g^+ - \bar{b}_g)\right)
 $$
+
+- **Curated Free Resources:**
+  - 🔗 [Christian Forster, Luca Carlone, Frank Dellaert, Davide Scaramuzza (IEEE TRO): On-Manifold Preintegration for Real-Time Visual-Inertial Odometry (PDF)](https://rpg.ifi.uzh.ch/docs/TRO16_forster.pdf) — *The landmark paper behind modern VIO/SLAM (`GTSAM`, `VINS-Mono`, `ORB-SLAM3`).*
+  - 🔗 [Frank Dellaert: Factor Graphs for Robot Perception (`GTSAM` Monograph)](https://gtsam.org/tutorials/intro.html) — *Interactive tutorial on factor graphs, `iSAM2` incremental smoothing, and manifold optimization.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Calculate how many raw IMU samples would have to be re-integrated on every $30\text{ Hz}$ camera frame across a 5-second sliding window of 150 keyframes at $1\text{ kHz}$ if Forster's first-order bias Jacobian correction were not used ($5000$ integrations per frame vs. $1$ matrix multiply per keyframe!).
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why must stereo cameras used in dynamic legged/aerial VIO use **Global-Shutter** CMOS sensors hardware-triggered via an `FSYNC` wire from the IMU clock instead of Rolling-Shutter webcams?
+  * **Answer / Explanation:** A rolling-shutter sensor exposes each row of pixels sequentially over $10\text{–}15\text{ ms}$. On a vibrating drone or trotting quadruped, the camera rotates significantly between the top row and bottom row of the image ("jello skew"), violating the single-timestamp pinhole projection geometry and causing VIO to diverge!
+
+  **Q2:** Why can't you simply preintegrate IMU measurements in the global World frame $W$ between keyframe $i$ and keyframe $j$?
+  * **Answer & Explanation:** Because the gravity vector $g^W$ in the body frame depends on the keyframe's initial world orientation $R_{WB_i}$! If the optimizer adjusts $R_{WB_i}$, a World-frame integral becomes invalid. Preintegrating in the local frame $B_i$ isolates $R_{WB_i}$ outside the integral so $(\Delta R_{ij}, \Delta v_{ij}, \Delta p_{ij})$ depend only on the local biases $(b_g, b_a)$.
+  </details>
 
 ---
 
