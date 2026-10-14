@@ -1,0 +1,8 @@
+{
+  "name": "MechaLab",
+  "description": "Interactive Mechatronics & Robotics Workbench with guided tutorials, real-time physics simulators, Lie groups, FOC, LQR+CBF, SysID, ESKF, and 3D CAD/PCB analysis.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

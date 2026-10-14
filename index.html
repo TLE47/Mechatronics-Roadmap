@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0; url=./web/index.html" />
-  <title>MechaLab — Interactive Mechatronics & Robotics Workbench</title>
-  <script>window.location.replace("./web/index.html");</script>
-</head>
-<body style="background:#0b0f19;color:#f1f5f9;font-family:sans-serif;padding:2rem;">
-  Redirecting to <a href="./web/index.html" style="color:#38bdf8;">MechaLab Interactive Workbench</a>...
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MechaLab</title>
+    <meta name="description" content="Interactive Mechatronics & Robotics Workbench with guided tutorials, real-time physics simulators, Lie groups, FOC, LQR+CBF, SysID, ESKF, and 3D CAD/PCB analysis." />
+    <meta property="og:title" content="MechaLab" />
+    <meta property="og:description" content="Interactive Mechatronics & Robotics Workbench with guided tutorials, real-time physics simulators, Lie groups, FOC, LQR+CBF, SysID, ESKF, and 3D CAD/PCB analysis." />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
+  </head>
+  <body class="bg-[#0b0f19] text-[#f1f5f9] antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
