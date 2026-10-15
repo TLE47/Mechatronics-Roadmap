@@ -33,6 +33,16 @@ jobs:
       - name: Verify Markdown structure, internal links, Mermaid diagrams & LaTeX math fences
         run: python3 scripts/verify_repo.py --verbose
 
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Typeset every formula (Markdown modules + workbench curriculum) with KaTeX
+        run: |
+          npm install --no-save --no-audit --no-fund katex@0.16.21
+          node scripts/audit_math.mjs .
+
       - name: Run all 12 Python & C++20 Reference Simulations, CAD, PCB EDA & Firmware Tests
         run: python3 scripts/run_all_labs.py --verbose
 

@@ -459,11 +459,85 @@ def find_text_mode_math_issues(text: str, rel_path: str) -> list[str]:
                         f"'{group.group(0)}...' - MathJax fails with '\\{name} is only supported "
                         f"in math mode'; close the group before it, e.g. '\\text{{N}}\\{name}\\text{{m}}'"
                     )
+            if "\\_" in inner:
+                issues.append(
+                    f"{rel_path}:{lineno}: '\\_' inside text mode '{group.group(0)}...' - "
+                    f"MathJax implements no macros in text-mode material, so GitHub drops the "
+                    f"whole formula with \"'_' allowed only in math mode\"; close the group "
+                    f"around the underscore, e.g. '\\text{{ESD}}\\_\\text{{fault}}'"
+                )
             if re.search(r"(?<!\\)&", inner):
                 issues.append(
                     f"{rel_path}:{lineno}: bare '&' inside text mode '{group.group(0)}...' "
                     f"- MathJax rejects it with '& can not be used here'"
                 )
+
+    return issues
+
+
+# Failures that erase a single formula without touching the rest of the page: MathJax
+# leaves an empty box, and the workbench (KaTeX) prints a red parse-error box in its place.
+_DANGLING_SCRIPT_RE = re.compile(r"[\^_]\s*$")
+_BARE_AMP_RE = re.compile(r"(?<!\\)&(?![a-zA-Z]+;|#\d+;)")
+_MATH_SPAN_RE = re.compile(r"(?<!\\)\$(?!\$)([^$\n]{1,400}?)(?<!\\)\$(?!\$)")
+_TYPE_MATH_RE = re.compile(r"""equation:\s*'((?:[^'\\]|\\.)*)'""")
+_JSX_MATH_RE = re.compile(r"""math=(?:"([^"]*)"|\{`([^`]*)`\}|\{'([^']*)'\})""")
+
+
+def check_math_render(tex: str, where: str) -> list[str]:
+    """Formulas neither engine can render, whatever container they sit in."""
+    issues: list[str] = []
+    if _BARE_AMP_RE.search(tex) and r"\begin{" not in tex:
+        issues.append(
+            f"{where}: bare '&' inside math ('{tex.strip()[:40]}') - it is an alignment "
+            f"character outside an environment, so both KaTeX and MathJax reject it; write '\\&'"
+        )
+    if _DANGLING_SCRIPT_RE.search(tex):
+        issues.append(
+            f"{where}: math span ends with a dangling script marker "
+            f"('{tex.strip()[:40]}') - '^' and '_' need an argument, e.g. '$v_d^{{*}}$'"
+        )
+    return issues
+
+
+def find_math_render_issues(text: str, rel_path: str) -> list[str]:
+    """Render-safety of every inline `$...$` span."""
+    issues: list[str] = []
+    in_fence = False
+
+    for lineno, raw in enumerate(text.splitlines(), start=1):
+        stripped = raw.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        line = re.sub(r"`[^`]*`", "", raw)
+        for match in _MATH_SPAN_RE.finditer(line):
+            issues.extend(check_math_render(match.group(1), f"{rel_path}:{lineno}"))
+
+    return issues
+
+
+def find_source_math_issues(text: str, rel_path: str) -> list[str]:
+    """The workbench renders these literals with KaTeX, so hold them to the same bar.
+
+    `equation: '...'` goes through a JavaScript string literal (so `\\\\` in the file is
+    one backslash by the time KaTeX sees it) while `math="..."` in JSX is raw attribute
+    text and keeps every backslash as written.
+    """
+    issues: list[str] = []
+
+    for match in _TYPE_MATH_RE.finditer(text):
+        tex = match.group(1).replace("\\\\", "\\").replace("\\'", "'")
+        lineno = text.count("\n", 0, match.start()) + 1
+        issues.extend(check_math_render(tex, f"{rel_path}:{lineno}"))
+
+    for match in _JSX_MATH_RE.finditer(text):
+        tex = next(group for group in match.groups() if group is not None)
+        lineno = text.count("\n", 0, match.start()) + 1
+        issues.extend(check_math_render(tex, f"{rel_path}:{lineno}"))
 
     return issues
 
@@ -570,6 +644,9 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
         for issue in find_container_math_issues(text, rel_path):
             errors.append(issue)
 
+        for issue in find_math_render_issues(text, rel_path):
+            errors.append(issue)
+
         for idx, block in enumerate(m_blocks, start=1):
             non_empty = [ln.strip() for ln in block.splitlines() if ln.strip()]
             if not non_empty:
@@ -635,6 +712,22 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
             continue
         for issue in find_text_mode_math_issues(fpath.read_text(encoding="utf-8"), rel):
             errors.append(issue)
+
+    # The workbench app typesets its own math with KaTeX, where a bad formula shows as a
+    # red parse-error box inside the tab instead of a formula.
+    src_dir = repo_root / "src"
+    if src_dir.is_dir():
+        for src_path in sorted(src_dir.rglob("*")):
+            if src_path.suffix not in {".ts", ".tsx"}:
+                continue
+            src_rel = src_path.relative_to(repo_root).as_posix()
+            src_text = src_path.read_text(encoding="utf-8")
+            for issue in find_source_math_issues(src_text, src_rel):
+                errors.append(issue)
+            for issue in find_text_mode_math_issues(src_text, src_rel):
+                errors.append(issue)
+            for issue in find_math_render_issues(src_text, src_rel):
+                errors.append(issue)
 
     return {
         "ok": len(errors) == 0,

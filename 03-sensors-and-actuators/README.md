@@ -307,7 +307,7 @@ $$
 ## 5. Failure Modes, Pitfalls & Anti-Patterns
 
 1. **Sampling ADC Currents During PWM Switching Edges:** Always trigger simultaneous ADC conversions at the exact center of the low-side MOSFET on-time (`TIM1_TRGO2` at `CNT == ARR`).
-2. **Missing Integrator Anti-Windup During Voltage Circle Saturation:** Prioritize $v_d^$ when clamping $ *\sqrt{v_d^{*2} + v_q^{*2}} \le V_{\text{bus}}/\sqrt{3}$ so rotor flux orientation is never lost.
+2. **Missing Integrator Anti-Windup During Voltage Circle Saturation:** Prioritize $v_d^{*}$ when clamping $\sqrt{v_d^{*2} + v_q^{*2}} \le V_{\text{bus}}/\sqrt{3}$ so rotor flux orientation is never lost.
 3. **Electrical Zero Offset Error ($\theta_{e,\text{offset}}$):** Calibrate electrical zero by averaging bidirectional $d$-axis alignment sweeps to cancel friction hysteresis.
 4. **6th-Harmonic Torque Ripple from Dead-Time & Cogging:** Combine current-sign dead-time voltage compensation with a position-indexed Anticogging LUT.
 

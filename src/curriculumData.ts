@@ -1321,7 +1321,7 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Capstone III: 6-DOF Force-Controlled Manipulator / ALOHA 2 / Reachy 2 (Screw PoE + O(n) RNEA + Khatib WBC + LeRobot VLA).',
       'Capstone IV: 3-DOF QDD Hopping Leg / ODRI / Open-Duck-Mini (8:1 7075-T6 planetary carrier STEP/STL + Joseph ESKF + WBC).',
     ],
-    equation: '\\text{All 12 Hardware, CAD, PCB, Firmware & Control Verification Gates} = \\text{PASS}',
+    equation: '\\text{All 12 Hardware, CAD, PCB, Firmware \\& Control Verification Gates} = \\text{PASS}',
     milestoneId: 't3_tr08',
     milestoneTask: 'Complete all Tier 3 Production Milestones to achieve 100% MechaLab Roadmap Mastery!',
     deliverableGate: '🏆 FULL ROADMAP MASTERY: 12/12 Production Suites Verified.',
