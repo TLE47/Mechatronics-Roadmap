@@ -101,7 +101,8 @@ No hardware required for this module (`hardware_required: false`). In Step 2.5 (
                                                             v                   v
                                                      [CPU reads Ping]    [CPU reads Pong]
 ```
-Pass/fail verification in simulation: `t_spi_poll_us == 2.0 us`, `cpu_dma_total_us == 0.50 us`, and all 16 ping-pong samples processed in exact order with zero overwrites.
+- **Hardware SWD Debugging (`ST-LINK` + `OpenOCD` + `gdb-multiarch`):** To inspect live DMA registers (`CNDTR`, `ISR`) or catch a `HardFault_Handler` on an `STM32G4` board over the 4-wire **Serial Wire Debug (`SWD`: `SWDIO`, `SWCLK`, `GND`, `3V3_REF`)** header, follow the canonical two-terminal `openocd` + `gdb-multiarch` walkthrough in [`04-embedded-and-realtime/README.md` (§2.2)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied).
+- Pass/fail verification in simulation: `t_spi_poll_us == 2.0 us`, `cpu_dma_total_us == 0.50 us`, and all 16 ping-pong samples processed in exact order with zero overwrites.
 
 
 ```mermaid

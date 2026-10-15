@@ -3,6 +3,13 @@
 
 Zero-external-dependency pure Python 3 reference simulation & unit test suite.
 Exit-code family: typed (0 = all checks pass, 1 = test failure, 2 = usage error).
+
+Tier Scope Guide (so Tier 1 beginners are never surprised by Tier 2/3 math):
+  - Tier 1 (Step 1.1 / 00-foundations.T1.01): Uses basic Python functions, assert checks,
+    and 2D rotation / time-stepping concepts (see 00-foundations/README.md Step 1.1).
+  - Tier 2 (Step 2.1 / 00-foundations.T2.01): Section 2 (TwoMassActuator RK4 ODE & energy
+    conservation) and Section 3 (Float32TDF2BiquadNotch filter).
+  - Tier 3 (Step 3.1 / 00-foundations.T3.01): Section 1 (3D Lie Group SO(3) exp_so3/log_so3).
 """
 
 from __future__ import annotations
@@ -28,7 +35,7 @@ def f32(val: float) -> float:
 
 
 # =============================================================================
-# 1. Lie Group SO(3) Exponential & Logarithmic Maps (Singularity-Immune)
+# 1. [TIER 3 — Step 3.1] Lie Group SO(3) Exponential & Logarithmic Maps
 # =============================================================================
 
 def hat_so3(w: Vec3) -> Mat3:

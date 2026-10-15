@@ -95,6 +95,9 @@ $$
   - 🔗 [Gates GT2 / PowerGrip Timing Belt Design Manual](https://www.gates.com/) — *Covers minimum pulley tooth engagement (* $\ge 6$ *teeth in mesh) and preload tensioning.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Compare the shaft tip deflection ratio between a cantilevered shaft of overhang $L$ ($\delta = \frac{FL^3}{3EI}$) and a double-shear shaft supported at both ends ($\delta = \frac{FL^3}{48EI}$ for pin-pin or $\delta = \frac{FL^3}{192EI}$ for fixed-fixed)—confirming a $16\times$ to $64\times$ stiffness increase simply by capturing the far end of the pin in a second bearing!
+  - *Canonical First-Use 3D Slicing (`OrcaSlicer` / `PrusaSlicer`) & Bearing Fit Recipe (for Tier 1 3D-Printed Links):*
+    - **Slicer Settings:** Orient the link flat on the build plate ($X\text{-}Y$ plane perpendicular to the joint rotation axis); set **$0.20\text{ mm}$ layer height**, **$4$ perimeter wall loops** (wall thickness dominates bending stiffness much more than infill!), **$5$ top/bottom shell layers**, and **$40\%$ Gyroid infill** in `PLA+` or `PETG`.
+    - **Dimensional Fit Clearances:** FDM holes shrink slightly inward. For a `608` radial ball bearing ($22.00\text{ mm}$ OD, $8.00\text{ mm}$ ID, $7.00\text{ mm}$ width), model the housing bore at **$22.10\text{ mm}$ (`+0.10 mm` radial press-fit)** with a $0.5\text{ mm} \times 45^\circ$ lead-in chamfer, model the rotating shaft pin at **$7.95\text{ mm}$ (`-0.05 mm` snug fit)**, and model free-running M3 clearance holes at **$3.25\text{ mm}$ (`+0.25 mm`)**.
   - *📚 What to Learn & Resource Links for This Exercise:* Study free-body diagrams and static equilibrium ($\sum F = 0, \sum \tau = 0$) in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) (`## 3. Formalization` Item 2) and [Shigley's Mechanical Engineering Design / MIT 2.001 Beam Deflection Tables](https://ocw.mit.edu/courses/2-001-mechanics-materials-i-fall-2006/).
 - **🧠 Knowledge Check:**
   <details>
@@ -176,6 +179,22 @@ $$
 I_C = R\,\text{diag}(I_1, I_2, I_3)R^\top \succ 0, \qquad I_1 + I_2 \ge I_3, \qquad I_O = I_C + m\big((r^\top r)\mathbf{1}_3 - r r^\top\big)
 $$
 
+- **Canonical First-Use `CadQuery` Parametric Link Walkthrough (`pip install cadquery`):**
+  ```python
+  import cadquery as cq
+
+  # Create a 100 mm x 28 mm x 8 mm link with two 22.10 mm (608 bearing press-fit) bores spaced 100 mm apart:
+  link = (
+      cq.Workplane("XY")
+      .slot2D(128.0, 28.0)
+      .extrude(8.0)
+      .faces(">Z").workplane()
+      .pushPoints([(-50.0, 0.0), (50.0, 0.0)])
+      .hole(22.10)
+  )
+  cq.exporters.export(link, "link_100mm.step")
+  cq.exporters.export(link, "link_100mm.stl")
+  ```
 - **Curated Free Resources:**
   - 🔗 [CadQuery Python Parametric CAD Documentation (cadquery.readthedocs.io)](https://cadquery.readthedocs.io/) — *Open-source Python library built on OpenCascade for code-first mechanical design.*
   - 🔗 [FreeCAD 1.0+ Open-Source Parametric 3D Modeler & FEM Workbench (freecad.org)](https://www.freecad.org/) — *Full-featured open-source 3D CAD with integrated CalculiX Finite Element Analysis (FEA) and Assembly4/Ondsel solvers.*

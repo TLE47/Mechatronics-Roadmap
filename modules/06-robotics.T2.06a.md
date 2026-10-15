@@ -135,6 +135,15 @@ In the `tf2` tree above (`T_b_l1 = urdf_revolute_z((0, 0, 0.10), q1)` and `T_l1_
 
 ## 6. Simulation path
 Open **Tab 3 (URDF Kinematics & Jacobian Workspace)** and **Tab 6 (Trajectory Generation)** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).
+- **Canonical First-Use `ROS 2 Jazzy` + `colcon` Workspace Walkthrough (Ubuntu 24.04 / WSL2):**
+  ```bash
+  source /opt/ros/jazzy/setup.bash
+  mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
+  ros2 pkg create --build-type ament_python my_arm_bringup --dependencies rclpy sensor_msgs geometry_msgs tf2_ros
+  cd ~/ros2_ws && colcon build --symlink-install
+  source ~/ros2_ws/install/setup.bash
+  ros2 topic list && ros2 run tf2_tools view_frames
+  ```
 
 No hardware required for this module (`hardware_required: false`). In Step 2.7 (`06-robotics.T2.07`), Step 2.8 (`07-systems.T2.08`), and Step 3.7 (`06-robotics.T3.07`), your custom CAN-FD actuator (`04-embedded.T2.05`) plugs into a Linux host via a SocketCAN USB adapter (`can0`) driven by a `ros2_control` `SystemInterface`:
 ```text

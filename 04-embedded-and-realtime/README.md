@@ -81,8 +81,23 @@ struct __attribute__((packed)) TelemetryPacket {
   - 🔗 [Ben Eater (YouTube): Cyclic Redundancy Check (CRC) Error Detection Explained](https://www.youtube.com/watch?v=izG7qT0EpBw) — *Best visual explanation of how an 8-bit CRC catches corrupted serial bits on noisy motor wires.*
   - 🔗 [GCC Documentation: Common Type Attributes (`packed` and `aligned`)](https://gcc.gnu.org/onlinedocs/gcc/Common-Type-Attributes.html) — *Explains how compiler struct padding works and how `__attribute__((packed))` ensures exact byte layout across MCU and PC.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Write a 20-line Python `struct.unpack('<BIf f fB', raw_bytes)` receiver script that decodes the 18-byte `TelemetryPacket` above, verifies `sync_head == 0xAA` and `crc8`, and plots live $1\text{ kHz}$ motor telemetry without dropping a single frame.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study Python arrays and Matplotlib plotting in Foundations [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), bitwise shifts/masks in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), and binary telemetry framing + `struct.pack`/`unpack` + CRC-8 verification in [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus the [Python `struct` Module Documentation](https://docs.python.org/3/library/struct.html).
+  - *Task:* Write a 20-line Python `struct.unpack('<BIfffB', raw_bytes)` receiver script that decodes the 18-byte `TelemetryPacket` above, verifies `sync_head == 0xAA` and `crc8`, and plots live $1\text{ kHz}$ motor telemetry without dropping a single frame:
+    ```python
+    import struct
+
+    def xor_crc8(payload_17b: bytes) -> int:
+        c = 0
+        for b in payload_17b:
+            c ^= b
+        return c
+
+    # Pack 18-byte frame (< = little-endian, B = uint8, I = uint32, fff = 3x float32, B = uint8 crc8):
+    body = struct.pack("<BIfff", 0xAA, 1000, 1.57, -0.25, 12.0)
+    raw_bytes = body + struct.pack("<B", xor_crc8(body))
+    sync, ts_us, q_rad, dq_rads, u_volts, rx_crc = struct.unpack("<BIfffB", raw_bytes)
+    assert len(raw_bytes) == 18 and sync == 0xAA and rx_crc == xor_crc8(raw_bytes[:17])
+    ```
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Python arrays and Matplotlib plotting in Foundations [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), bitwise shifts/masks in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), and binary telemetry framing + `struct.pack`/`unpack` + `PlatformIO` upload (`pio run -t upload`) in [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) and [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup), plus the [Python `struct` Module Documentation](https://docs.python.org/3/library/struct.html).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -128,6 +143,16 @@ struct __attribute__((packed)) TelemetryPacket {
 
 ### 2.2 Direct Memory Access (DMA): Moving Sensor Data With Zero CPU Cycles
 - **Core Summary:** Polling `SPI.transfer()` or `ADC_Read()` wastes precious CPU cycles waiting on peripheral shift registers. A **Direct Memory Access (DMA)** controller transfers ADC current samples, SPI encoder frames, and UART telemetry bytes directly between peripheral registers and SRAM in the background with **zero CPU intervention**, firing a single interrupt only when the entire transfer completes.
+- **Canonical First-Use Hardware SWD Debugging (`ST-LINK` + `OpenOCD` + `gdb-multiarch`) Walkthrough:**
+  When debugging DMA buffers, peripheral registers (`SPI1->SR`, `DMA1_Channel1->CNDTR`), or a `HardFault_Handler` on an `STM32G4` board, never guess with `printf`:
+  1. **4-Wire `SWD` Header Connection:** Wire `SWDIO`, `SWCLK`, `GND`, and `3V3_REF` (target voltage sense) from your `ST-LINK/V2` or onboard Nucleo debugger to the MCU.
+  2. **Two-Terminal Live Register & Breakpoint Inspection:**
+     ```bash
+     # Terminal 1: Start OpenOCD GDB server attached to the STM32G4 over ST-LINK SWD
+     openocd -f interface/stlink.cfg -f target/stm32g4x.cfg
+     # Terminal 2: Connect gdb-multiarch, flash ELF, set hardware breakpoint, and inspect registers
+     gdb-multiarch build/firmware.elf -ex "target extended-remote :3333" -ex "monitor reset halt" -ex "load" -ex "b HardFault_Handler" -ex "c"
+     ```
 - **Curated Free Resources:**
   - 🔗 [STMicroelectronics AN4031: Using the STM32 DMA Controller](https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf) — *Explains DMA circular buffers, double-buffering, bus matrix arbitration, and peripheral-to-memory pipelines.*
   - 🔗 [Phil's Lab (YouTube): STM32 DMA Tutorial — ADC & UART Circular Buffers](https://www.youtube.com/watch?v=EsZLgqhqfO0) — *Practical embedded walkthrough of configuring circular DMA with half-transfer and transfer-complete interrupts.*

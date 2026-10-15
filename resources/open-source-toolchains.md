@@ -8,6 +8,44 @@
 
 ---
 
+## 0. Core Supported OS Environment, Terminal Bootstrap & Python venv Setup
+
+If this is your very first engineering roadmap, set up your computer **once** here before starting [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md).
+
+1. **Core Supported Environment (Primary Recommended Path):**
+   - **Primary OS:** **Ubuntu 24.04 LTS** (native) or **Windows 11 with WSL2 (`wsl --install -d Ubuntu-24.04`)**. Using Ubuntu 24.04 (native or WSL2) guarantees that every command across Python, C++20, `PlatformIO`, `KiCad`, `Zephyr RTOS`, and `ROS 2 Jazzy` works identically with zero OS mismatch.
+   - **Secondary OS Notes:** On **macOS**, install [Homebrew (`brew.sh`)](https://brew.sh/) (`brew install python git gcc cmake platformio`) and use [Robostack (`conda`/`mamba`)](https://robostack.github.io/) for ROS 2. On **Windows 11 WSL2**, pass physical USB microcontroller/ST-LINK devices into WSL2 using [`usbipd-win`](https://learn.microsoft.com/en-us/windows/wsl/connect-usb) (`usbipd bind --busid <ID>` and `usbipd attach --wsl --busid <ID>`).
+2. **Terminal & Git Survival Commands (First 5 Minutes):**
+   ```bash
+   pwd                                  # Print current working folder path
+   ls -la                               # List files (including hidden .venv or .git folders)
+   mkdir -p ~/workspace && cd ~/workspace  # Create a workspace folder and enter it
+   git clone <repo-url> mechalab && cd mechalab
+   git status                           # Inspect modified or untracked files
+   git diff                             # Inspect exact line-by-line code changes
+   ```
+3. **Python 3 Virtual Environment (`.venv`) & Avoiding `PEP 668` Errors:**
+   Modern Ubuntu/Debian systems block global `pip install` (`error: externally-managed-environment`). Always create a local `.venv` inside the repository root:
+   ```bash
+   sudo apt update && sudo apt install -y python3 python3-venv python3-pip build-essential git
+   python3 -m venv .venv
+   source .venv/bin/activate            # Prompt now shows (.venv); on Windows PowerShell: .\.venv\Scripts\Activate.ps1
+   pip install --upgrade pip
+   pip install numpy scipy matplotlib pyserial pytest
+   ```
+4. **Canonical Microcontroller Build/Flash CLI (`PlatformIO`) & Linux USB `udev` Rules:**
+   When you reach Track 03/04 hardware labs (`ESP32-S3` or `STM32 Nucleo-G474RE`), install `PlatformIO` inside your `.venv` and grant your Linux user non-root USB serial/SWD permissions so uploads never fail with `Permission denied: '/dev/ttyACM0'`:
+   ```bash
+   pip install platformio
+   sudo usermod -aG dialout,plugdev $USER
+   curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/system/99-platformio-udev.rules | sudo tee /etc/udev/rules.d/99-platformio-udev.rules
+   sudo udevadm control --reload-rules && sudo udevadm trigger
+   # Build, flash over USB, and open serial monitor at 115200 bps:
+   pio run -t upload && pio device monitor -b 115200
+   ```
+
+---
+
 ## 1. End-to-End Mechatronics & Physical AI Toolchain Flow
 
 ```mermaid

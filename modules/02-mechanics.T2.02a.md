@@ -36,7 +36,7 @@ $$
 
    Chaining frames $\{0\} \to \{1\} \to \{2\}$ multiplies $T_{02} = T_{01} T_{12}$.
 3. **Planar/3D Velocity Jacobian ($J(q)$), Force Duality ($\tau = J^\top F$) & Parallel-Axis Theorem:**
-   - Differentiating planar 2-link forward kinematics $x = L_1\cos q_1 + L_2\cos(q_1+q_2),\ y = L_1\sin q_1 + L_2\sin(q_1+q_2)$ with respect to $q = [q_1, q_2]^\top$ gives the $2\times 2$ Jacobian:
+   - **What a Partial Derivative ($\frac{\partial x}{\partial q_i}$) Means:** When tip position $x(q_1, q_2)$ depends on two joint angles, the **partial derivative** $\frac{\partial x}{\partial q_1}$ simply means taking the ordinary derivative (`00-foundations.T2.00b`) with respect to $q_1$ while treating all other joint angles ($q_2$) as frozen constants! Differentiating planar 2-link forward kinematics $x = L_1\cos q_1 + L_2\cos(q_1+q_2),\ y = L_1\sin q_1 + L_2\sin(q_1+q_2)$ with respect to $q = [q_1, q_2]^\top$ gives the $2\times 2$ Jacobian:
 
 $$
 J(q) = \begin{bmatrix} \frac{\partial x}{\partial q_1} & \frac{\partial x}{\partial q_2} \\ \frac{\partial y}{\partial q_1} & \frac{\partial y}{\partial q_2} \end{bmatrix} = \begin{bmatrix} -L_1 s_1 - L_2 s_{12} & -L_2 s_{12} \\ L_1 c_1 + L_2 c_{12} & L_2 c_{12} \end{bmatrix}, \quad \dot{x} = J(q)\dot{q}, \quad \tau = J(q)^\top F

@@ -42,10 +42,17 @@ V_{\text{eff}} = D \cdot V_{\text{bus}}
 $$
 
    Substituting $V_{\text{bus}} = 12.0\text{ V}$ and $D = 0.75$ ($75\%$) gives $V_{\text{eff}} = 9.0\text{ V}$.
-3. **H-Bridge Diagonal Switching & Shoot-Through:** Four switches $(Q_{\text{AH}}, Q_{\text{AL}})$ on leg A and $(Q_{\text{BH}}, Q_{\text{BL}})$ on leg B apply terminal voltage $V_{\text{AB}} = V_A - V_B$:
+3. **H-Bridge Diagonal Switching, Shoot-Through & Reading a Driver Datasheet (`DRV8833`):** Four switches $(Q_{\text{AH}}, Q_{\text{AL}})$ on leg A and $(Q_{\text{BH}}, Q_{\text{BL}})$ on leg B apply terminal voltage $V_{\text{AB}} = V_A - V_B$:
    - Forward: $(Q_{\text{AH}}, Q_{\text{BL}})$ ON $\implies V_{\text{AB}} = +V_{\text{bus}}$.
    - Reverse: $(Q_{\text{BH}}, Q_{\text{AL}})$ ON $\implies V_{\text{AB}} = -V_{\text{bus}}$.
    - **Shoot-Through Hazard:** Turning ON both switches of the *same* vertical leg $(Q_{\text{AH}}$ and $Q_{\text{AL}})$ simultaneously shorts $V_{\text{bus}}$ directly to $\text{GND}$ through $2 R_{DS(\text{on})}$; inserting **dead-time** $t_d$ (both OFF briefly during transitions) prevents shoot-through.
+   - **Canonical Walkthrough — How to Read a Component Datasheet in 5 Minutes (`TI DRV8833`):** Whenever you meet a new IC, check four datasheet tables before wiring power: (1) **Pin Configuration & Functions** (maps physical pins to signals), (2) **Absolute Maximum Ratings** (destruction ceiling, e.g. $V_{\text{VM},\max} = 11.8\text{ V}$—never operate at this limit!), (3) **Recommended Operating Conditions** (safe continuous window: $V_{\text{VM}} \in [2.7\text{ V}, 10.8\text{ V}]$, $I_{\text{rms}} \le 1.5\text{ A}$), and (4) **Electrical Characteristics** (where combined high-side + low-side on-resistance $R_{DS(\text{on}),\text{HS}+\text{LS}} \approx 0.36\ \Omega$ is specified at $25^\circ\text{C}$).
+   - **`DRV8833` Breakout Pinout & Wiring Checklist:**
+     - `VM` & `GND`: Motor supply ($2.7\text{–}10.8\text{ V}$ from CC/CV bench supply) and star-ground return; place a $100\text{–}470\ \mu\text{F}$ electrolytic cap + $100\text{ nF}$ ceramic cap right across `VM` and `GND`.
+     - `nSLEEP` (`SLP`): Active-low enable pin—**must be tied HIGH to `3.3V`** to wake the chip (`LOW` puts the driver into sleep mode with outputs disabled!).
+     - `AIN1`, `AIN2`: $3.3\text{ V}$ PWM/logic inputs from MCU timer pins (`0,0` = Coast; `1,0` = Forward; `0,1` = Reverse; `1,1` = Dynamic Brake).
+     - `AOUT1`, `AOUT2`: High-current H-bridge outputs wired to the two brushed DC motor leads.
+     - `nFAULT` (`FLT`): Open-drain active-low fault output (pulls `LOW` on overcurrent, thermal shutdown, or undervoltage lockout).
 
 ## 4. Worked example
 Compare MOSFET conduction loss at $I_D = 4.0\text{ A}$, $R_{DS(\text{on})} = 0.020\ \Omega$ against linear drop loss at $V_{\text{bus}} = 12.0\text{ V}$, $D = 0.50$, and compute the catastrophic shoot-through current if both FETs in one leg turn on across $12.0\text{ V}$.

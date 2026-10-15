@@ -26,16 +26,21 @@ Python integers grow arbitrarily large and never overflow, but microcontroller C
 When you transition from desktop Python to microcontroller firmware, you first meet the **Arduino / Wiring execution model** (`void setup()` runs once at power-on to configure pins with `pinMode(pin, OUTPUT)`; `void loop()` repeats forever calling `digitalWrite(pin, HIGH)` or `analogWrite(pin, pwm)`). Imagine moving from an infinite notepad (Python) to a mechanical odometer with only four digit wheels (`uint16_t`, which holds `0` to `65535`). If your odometer is at `65535` and clicks forward by `1`, it doesn't add a fifth wheel—it wraps cleanly back to `0` (**integer wrap-around**). Next, when packing status flags or configuration bits into an 8-bit or 32-bit C integer, think of that integer as a row of individual toggle switches: you use a **bitwise stencil (mask)** `1U << n` with bitwise OR (`|`), AND (`&`), and NOT (`~`) to set, clear, or test one flag bit without disturbing its neighbors. Finally, a C **`struct`** is a molded tray that holds several related variables side-by-side in memory, and a **pointer** (`*`) passes the address of that tray on a sticky note instead of copying the entire tray on every function call.
 
 ## 3. Formalization
-1. **Arduino/Wiring Execution Model (`setup()` / `loop()`) & Fixed-Width Integer Types (`<stdint.h>`):** Firmware entry starts at reset, runs `setup()` once, and spins `loop()` continuously. Unlike Python's arbitrary-precision integers, an $N$-bit unsigned C integer `uintN_t` stores values in $[0, 2^N - 1]$, and a two's-complement signed integer `intN_t` stores $[-2^{N-1}, 2^{N-1} - 1]$:
-   - `uint8_t`: $[0, 255]$ ($1\text{ byte}$); `int16_t`: $[-32768, 32767]$ ($2\text{ bytes}$); `uint32_t`: $[0, 4294967295]$ ($4\text{ bytes}$); `float`: IEEE-754 single precision ($4\text{ bytes}$).
-   - Computing unsigned tick difference `(uint16_t)(now - prev)` modulo $2^{16} = 65536$: substituting `now = 4` and `prev = 65530` yields `(4 - 65530) & 0xFFFF = 10` ticks elapsed across rollover.
+1. **C-for-Python Syntax Bridge, Arduino Execution Model (`setup()` / `loop()`) & Fixed-Width Integer Types (`<stdint.h>`):**
+   - **C/C++ Syntax for Python Programmers:**
+     - **Explicit Types & Semicolons (`;`):** Every variable declaration states its fixed hardware type (`uint16_t count = 0;`, `float vel = 3.25f;`), and every statement ends with `;`.
+     - **Braces (`{ ... }`) & Comments (`//`):** Code blocks use curly braces `{ ... }` instead of indentation; comments start with `//`.
+     - **Functions & Loops:** `int32_t add(int32_t a, int32_t b) { return a + b; }` declares return and argument types; `for (int i = 0; i < N; i++) { ... }` is the C equivalent of `for i in range(N):`.
+   - **Firmware Entry (`setup()` / `loop()`) & Integer Bounds:** Firmware entry starts at reset, runs `void setup()` once, and repeats `void loop()` forever. Unlike Python's arbitrary-precision integers, an $N$-bit unsigned C integer `uintN_t` stores values in $[0, 2^N - 1]$, and a two's-complement signed integer `intN_t` stores $[-2^{N-1}, 2^{N-1} - 1]$:
+     - `uint8_t`: $[0, 255]$ ($1\text{ byte}$); `int16_t`: $[-32768, 32767]$ ($2\text{ bytes}$); `uint32_t`: $[0, 4294967295]$ ($4\text{ bytes}$); `float`: IEEE-754 single precision ($4\text{ bytes}$).
+     - Computing unsigned tick difference `(uint16_t)(now - prev)` modulo $2^{16} = 65536$: substituting `now = 4` and `prev = 65530` yields `(4 - 65530) & 0xFFFF = 10` ticks elapsed across rollover.
 2. **Bitwise Masks and Shifts (`|`, `&`, `~`, `<<`, `>>`):** For bit index $n \in \{0, \dots, 31\}$ in an unsigned status or configuration word $W$:
    - Set bit $n$ to `1`: $W \leftarrow W \mid (1\text{U} \ll n)$.
    - Clear bit $n$ to `0`: $W \leftarrow W \mathbin{\&} \sim(1\text{U} \ll n)$.
    - Toggle bit $n$: $W \leftarrow W \oplus (1\text{U} \ll n)$.
    - Test bit $n$: $\text{is}\_\text{set} = (W \gg n) \mathbin{\&} 1\text{U}$.
    Substituting $W = \text{0x01}$ (`0b00000001`), setting bit $3$ ($1 \ll 3 = 8 = \text{0x08}$) gives $W = \text{0x09}$ (`0b00001001`).
-3. **Structs and Pass-by-Pointer (`*` and `->`):** Grouping fields in `struct MotorState { int16_t count; float vel_rad_s; };` and passing `MotorState *s` passes a single memory address (`4` or `8` bytes) so `s->count += 1` mutates the caller's struct in-place and packs cleanly into binary frames (`struct.pack("<Hhf", ...)`).
+3. **Structs and Pass-by-Pointer (`*` and `->`):** Grouping fields in `struct MotorState { int16_t count; float vel_rad_s; };` and passing `MotorState *s` passes a single memory address (`4` or `8` bytes) so `s->count += 1` (`->` dereferences a struct pointer, equivalent to `(*s).count`) mutates the caller's struct in-place and packs cleanly into binary frames (`struct.pack("<Hhf", ...)`).
 
 ## 4. Worked example
 Simulate 16-bit encoder counter wrap-around, bitwise GPIO register set/clear operations, and packing an 8-byte C telemetry struct (`<Hhf`: `uint16_t`, `int16_t`, `float`) using Python's `struct` module.
@@ -77,9 +82,11 @@ Start with register value `reg = 0x5A` (`0b01011010`). Write a Python expression
   - **Study Links & Resources:** [Barr Group *Embedded C Coding Standard* (`barrgroup.com`)](https://barrgroup.com/embedded-systems/books/embedded-c-coding-standard) and [Track 04 Tier 1 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
 
 ## 6. Simulation path
-Test the C equivalent directly in the browser on the [Wokwi ESP32/STM32 Simulator](https://wokwi.com/) (`resources/open-source-toolchains.md`) or run the Python bit-exact verification script above.
-
-No hardware required for this module (`hardware_required: false`). In Step 1.5 (`04-embedded.T1.05`), the exact `struct.pack("<Hhf", ...)` layout matches the `__attribute__((packed))` C struct transmitted over the microcontroller's USB-UART bridge:
+Test the C equivalent directly in the browser on the [Wokwi ESP32/STM32 Simulator](https://wokwi.com/) (`resources/open-source-toolchains.md`), run the Python bit-exact verification script above, or compile and run native C++20 on your workstation using the **canonical host `g++` command** (taught once here and used for all C++ labs):
+```bash
+g++ -std=c++20 -O2 -Wall -Wextra -Werror 04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp -o /tmp/lab04 && /tmp/lab04
+```
+No hardware required for this module (`hardware_required: false`). In Step 1.5 (`04-embedded.T1.05`), the exact `struct.pack("<Hhf", ...)` layout matches the `__attribute__((packed))` C struct transmitted over the microcontroller's USB-UART bridge (flashed via `pio run -t upload` in [`04-embedded-and-realtime/README.md` §1.2](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive)):
 ```text
 [MCU C Struct: uint16_t + int16_t + float (8 B)] ---> (UART 115200 bps) ---> [Python struct.unpack("<Hhf")]
 ```

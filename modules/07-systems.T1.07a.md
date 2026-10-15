@@ -34,7 +34,13 @@ $$
 $$
 
    Any single open contact or severed wire forces $\text{PWR}\_\text{ENABLE} = 0$, dropping the motor supply contactor/enable hardware line without relying on software.
-3. **Single-Tone Sine-Sweep Gain (dB) and Phase Lag:** Injecting $u(t) = A\sin(2\pi f t)$ at frequency $f$ ($\text{Hz}$, period $T = 1/f$) and measuring steady-state response $y(t) = B\sin(2\pi f(t - \Delta t))$ gives empirical magnitude and phase:
+3. **Single-Tone Sine-Sweep Gain (dB) and Phase Lag (Self-Contained Logarithm & Decibel Primer):**
+   - **What $\log_{10}$ and Decibels ($\text{dB}$) Mean:** The base-10 logarithm $\log_{10}(x)$ (`math.log10(x)` in Python) simply asks: "To what power must we raise $10$ to get $x$?" Thus $\log_{10}(1) = 0$ (since $10^0 = 1$), $\log_{10}(0.1) = -1$ (since $10^{-1} = 0.1$), and $\log_{10}(1/\sqrt{2}) \approx \log_{10}(0.7071) \approx -0.1505$. Because mechanical and electrical amplitude ratios $B/A$ span factors of $1000\times$, engineers compress them onto an additive scale called **decibels ($\text{dB}$)** defined as $20\log_{10}(B/A)$ (and invert back to a linear ratio via $B/A = 10^{\text{dB}/20}$):
+     - $B/A = 1.0 \implies 20\log_{10}(1.0) = 0.0\text{ dB}$ (no attenuation).
+     - $B/A = 1/\sqrt{2} \approx 0.7071 \implies 20\log_{10}(0.7071) \approx -3.01\text{ dB}$ (the **$-3\text{ dB}$ bandwidth cutoff**).
+     - $B/A = 0.50 \implies 20\log_{10}(0.50) \approx -6.02\text{ dB}$ (half amplitude).
+     - $B/A = 0.10 \implies 20\log_{10}(0.10) = -20.0\text{ dB}$ (one-tenth amplitude).
+   - **Empirical Frequency-Response Magnitude & Phase:** Injecting $u(t) = A\sin(2\pi f t)$ at frequency $f$ ($\text{Hz}$, period $T = 1/f$) and measuring steady-state response $y(t) = B\sin(2\pi f(t - \Delta t))$ gives empirical magnitude $\lvert G(j2\pi f)\rvert_{\text{dB}}$ (standard shorthand for gain at frequency $f$ in decibels) and phase lag $\angle G(j2\pi f)$:
 
 $$
 \lvert G(j2\pi f)\rvert_{\text{dB}} = 20\log_{10}\!\left(\frac{B}{A}\right), \quad \angle G(j2\pi f) = -360^\circ \cdot f \cdot \Delta t
@@ -88,8 +94,8 @@ During a single-tone sine sweep at $f = 8.0\text{ Hz}$ ($T = 0.125\text{ s}$) wi
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Loops, Trigonometry & SI Units*) and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (Decibel Gain $20\log_{10}(B/A)$ & Phase Lag $-360^\circ f \Delta t$).
-  - **Prerequisite Bridge Modules:** [`01-electronics.T1.01c`](01-electronics.T1.01c.md) (*CC/CV Bench Safety*) and [`05-control.T1.05a`](05-control.T1.05a.md) (*PID Control*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Loops, Trigonometry & SI Units*), plus the self-contained inline logarithm and decibel primer in `## 3. Formalization` item 3 above (which previews Pass 2 [`00-foundations.T2.00d`](00-foundations.T2.00d.md)).
+  - **Prerequisite Bridge Modules:** [`01-electronics.T1.01c`](01-electronics.T1.01c.md) (*CC/CV Bench Safety*), [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*RC Cutoff*), and [`05-control.T1.05a`](05-control.T1.05a.md) (*PID Control*).
   - **Core Concepts to Review First:** Deterministic `IEC 61131-3` PLC cyclic scan (`Read -> Execute -> Write`), single-tone sine-sweep System Identification ($|G|_{\text{dB}} = 20\log_{10}(B/A)$ and $\angle G = -360^\circ f \Delta t$), and the 10-step smoke-free hardware bring-up checklist in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [OpenPLC IEC 61131-3 Documentation (`autonomylogic.com`)](https://autonomylogic.com/) and [Track 07 Tier 1 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive).
 

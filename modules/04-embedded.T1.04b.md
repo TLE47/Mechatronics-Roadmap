@@ -97,7 +97,7 @@ Calculate the maximum allowable ISR execution time $t_{\text{exec,max}}$ in micr
 ## 6. Simulation path
 Open **Tab 8 (Real-Time Concurrency & ISR Preemption)** in the MechaLab Workbench (`npm run dev`) or run a non-blocking `micros()` sketch on the [Wokwi Simulator](https://wokwi.com/).
 
-No hardware required for this module (`hardware_required: false`). In Step 1.5 (`04-embedded.T1.05`), you will toggle a physical GPIO pin at entry and exit of the $1\text{ kHz}$ timer ISR on an `ESP32` or `STM32 Nucleo` and measure pulse width $t_{\text{exec}}$ and period $T_{\text{isr}} = 1000\ \mu\text{s}$ with a logic analyzer (`PulseView`):
+No hardware required for this module (`hardware_required: false`). When you transition to physical microcontroller hardware in **Step 1.5 (`04-embedded.T1.05`)**, follow the canonical **First-Use `PlatformIO` Build/Flash (`pio run -t upload`), Linux `udev` Serial Permissions & Python `struct.unpack` Telemetry Walkthrough** in [`04-embedded-and-realtime/README.md` (§1.1–1.3)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) and [`resources/open-source-toolchains.md` (§0)](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup). There you will toggle a physical GPIO pin at entry and exit of the $1\text{ kHz}$ timer ISR on an `ESP32` or `STM32 Nucleo` and measure pulse width $t_{\text{exec}}$ and period $T_{\text{isr}} = 1000\ \mu\text{s}$ with a logic analyzer (`PulseView`):
 ```text
 [Timer ISR Entry: GPIO HIGH] ---> (PID Math: ~15 us) ---> [Timer ISR Exit: GPIO LOW] ---> [Logic Analyzer]
 ```

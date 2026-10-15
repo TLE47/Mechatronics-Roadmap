@@ -621,7 +621,7 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
 
     # Only the repository's own Markdown: a local or CI `npm install` drops hundreds of
     # dependency READMEs under node_modules/, and the build output belongs to Vite.
-    skipped = {"node_modules", ".git", "dist"}
+    skipped = {"node_modules", ".git", "dist", ".aistudio"}
     md_files = sorted(
         p
         for p in repo_root.rglob("*.md")

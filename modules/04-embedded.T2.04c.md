@@ -123,10 +123,20 @@ A Zephyr application defines two preemptible threads via `K_THREAD_DEFINE`: `thr
   - **Study Links & Resources:** [Zephyr Kernel Services: Threads, Mutexes & Message Queues (`docs.zephyrproject.org`)](https://docs.zephyrproject.org/latest/kernel/services/index.html) and [Track 04 Tier 2 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-You can build and run Zephyr RTOS applications natively on any Linux workstation or CI container **without physical microcontroller hardware** using Zephyr's POSIX architecture target (`native_sim`):
+You can build and run Zephyr RTOS applications natively on any Linux workstation or CI container **without physical microcontroller hardware** using Zephyr's POSIX architecture target (`native_sim`), or flash an `STM32G4` board (`nucleo_g474re`) using the exact same 4-file project layout:
+- **Canonical 4-File Zephyr Application Layout (`my_actuator_app/`):**
+  1. `CMakeLists.txt`: `cmake_minimum_required(VERSION 3.20.0)` / `find_package(Zephyr REQUIRED HINTS ENV{ZEPHYR_BASE})` / `project(actuator)` / `target_sources(app PRIVATE src/main.c)`
+  2. `prj.conf`: `CONFIG_CAN=y` and `CONFIG_SPI=y`
+  3. `app.overlay`: `&fdcan1 { status = "okay"; bus-speed = <1000000>; bus-speed-data = <5000000>; };`
+  4. `src/main.c`: Defines static threads (`K_THREAD_DEFINE`), priority-inheritance mutex (`K_MUTEX_DEFINE`), and checks `device_is_ready(DEVICE_DT_GET(DT_NODELABEL(fdcan1)))`.
 ```bash
+# Path A — 100% Hardware-Free Linux Simulation (native_sim):
 west build -b native_sim samples/synchronization
 ./build/zephyr/zephyr.exe
+
+# Path B — Physical STM32G474RE Nucleo Build & Flash:
+west build -b nucleo_g474re my_actuator_app -- -DDTC_OVERLAY_FILE=app.overlay
+west flash
 ```
 Or open **Tab 8 (Real-Time Concurrency & Scheduling)** in the MechaLab Workbench (`npm run dev`) to compare priority inheritance vs. priority inversion timelines.
 ```text

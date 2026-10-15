@@ -23,6 +23,13 @@ resources_verified: true
 This is the final bridge module in the Track 04 Tier 2 ladder before Step 2.5 (`04-embedded.T2.05`). Once your microcontroller runs FreeRTOS (`04-embedded.T2.04b`) or Zephyr RTOS (`04-embedded.T2.04c`), how does it exchange typed topics, services, and timestamps with a Linux companion computer running **ROS 2** (`Track 06`)? Standard ROS 2 DDS (`Fast DDS` / `Cyclone DDS`) requires megabytes of RAM, multicast UDP discovery sockets, and dynamic C++ heap allocations that do not fit on a microcontroller with $128\text{ KiB}$ of SRAM. **micro-ROS** solves this by running an ultra-lightweight **`XRCE-DDS` (eXtremely Resource Constrained Environments DDS) Client** on the MCU (over UART DMA, CAN-FD, or UDP) that bridges through a **`micro_ros_agent`** on the Linux host into the native ROS 2 graph, driven by a deterministic **`rclc_executor`** with zero dynamic heap allocation during real-time execution! Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
+Before bridging your microcontroller to **ROS 2** (which you will explore in full depth in Track 06 `06-robotics.T2.06a`), here is a self-contained 60-second primer on the four **ROS 2 Graph** terms used in this module:
+- **Self-Contained ROS 2 Vocabulary Primer (No Track 06 Prerequisites Needed):**
+  1. **Node (`rcl_node_t`):** An independent software participant in a robot system (e.g., `/wrist_actuator_node` on your MCU or `/motion_planner` on a Linux PC).
+  2. **Topic (`Publisher` & `Subscription`):** A named data bus (like `/joint_states` or `/cmd_torque`) where **Publishers** broadcast strongly typed structs (`sensor_msgs/msg/JointState`) and **Subscribers** receive them via registered callbacks.
+  3. **Service (`rcl_service_t`):** A synchronous request-reply RPC call (e.g., `/calibrate_zero_offset`) used for one-shot configuration rather than high-rate streaming.
+  4. **Quality of Service (`QoS`) & `DDS` / `CDR`:** **DDS (Data Distribution Service)** is the middleware that serializes messages into compact **CDR (Common Data Representation)** byte arrays. Each topic specifies a **QoS** policy: **`Best-Effort`** sends UDP-like frames with zero retry stalls (ideal for $500\text{ Hz}$ real-time telemetry), whereas **`Reliable`** acknowledges and retransmits dropped packets (ideal for configuration commands).
+
 Three architectural ideas explain how **micro-ROS** puts a microcontroller directly onto the ROS 2 graph without sacrificing hard-real-time determinism:
 - **Why Standard DDS Cannot Run on an MCU & How `XRCE-DDS` Client-Agent Works:** In standard desktop ROS 2, every node discovers every other node directly ($O(N^2)$ peer-to-peer discovery packets and large socket buffers). Instead, **micro-ROS** uses a **Client-Agent proxy architecture** (`OMG DDS-XRCE` standard): your microcontroller runs a tiny $< 30\text{ KiB}$ `Micro XRCE-DDS Client` that talks over a point-to-point serial/CAN-FD/USB link to a **`micro_ros_agent`** process on the Linux companion computer. The Agent acts as the MCU's proxy in the standard ROS 2 DDS world—creating real ROS 2 publishers and subscribers on the MCU's behalf so `ros2 topic list` and `ros2 topic echo` see your microcontroller as a first-class ROS 2 node!
 - **Static Memory Lifecycle (`rclc`) & Zero Heap in the Loop:** If a C callback calls `malloc()` inside a $500\text{ Hz}$ motor loop, heap fragmentation will eventually crash the MCU. In micro-ROS (`rclc`), all entities (`rclc_support_t`, `rcl_node_t`, `rcl_publisher_t`, `rcl_subscription_t`, `rcl_timer_t`, `rclc_executor_t`) and message buffers are allocated **once** during boot initialization (`CONFIGURE` phase). Once the control loop enters the `RUNNING` phase (`rclc_executor_spin_some()`), **zero bytes of heap allocation** are ever permitted!
@@ -111,12 +118,18 @@ Suppose a micro-ROS node communicates with `micro_ros_agent` over an `8N1` UART 
   - **Study Links & Resources:** [Official micro-ROS Documentation & Zephyr Tutorials (`micro.ros.org`)](https://micro.ros.org/docs/tutorials/core/first_application_rtos/zephyr/) and [eProsima Micro XRCE-DDS Docs (`micro-xrce-dds.docs.eprosima.com`)](https://micro-xrce-dds.docs.eprosima.com/).
 
 ## 6. Simulation path
-You can run a complete **micro-ROS Client + `micro_ros_agent`** loop on Linux using Zephyr's `native_sim` target or the host UDP transport **with zero physical microcontroller hardware**:
+You can run a complete **micro-ROS Client + `micro_ros_agent`** loop on Linux using Zephyr's `native_sim` target or the host UDP transport **with zero physical microcontroller hardware**, or bridge a physical `STM32G4`/`ESP32` over USB-UART:
 ```bash
-# Terminal 1: Start micro_ros_agent on UDP port 8888
+# Path A — 100% Hardware-Free Host Simulation (UDP port 8888):
 ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
-# Terminal 2: Run the Zephyr native_sim or host micro-ROS client binary
+# In Terminal 2: run the Zephyr native_sim or host micro-ROS client binary
 ./build/zephyr/zephyr.exe
+
+# Path B — Physical Microcontroller over USB-UART (/dev/ttyACM0 at 921600 bps):
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 921600
+# In Terminal 2: verify live MCU topics on the ROS 2 graph
+ros2 topic list
+ros2 topic echo /joint_states
 ```
 Or inspect the MCU-to-host packet framing and real-time scheduling budgets in **Tab 8** of the MechaLab Workbench (`npm run dev`).
 ```text

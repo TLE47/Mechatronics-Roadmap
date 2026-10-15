@@ -34,7 +34,9 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Jacob Fraden: Handbook of Modern Sensors — Physics, Designs, and Applications (5th Ed.)](https://link.springer.com/book/10.1007/978-3-319-19303-8) — *Comprehensive physics reference for optical, magnetic (Hall/AMR/TMR), inductive, piezoelectric, and capacitive transducers.*
   - 🔗 [AMS AS5600 12-Bit Programmable Contactless Potentiometer Datasheet](https://look.ams-osram.com/m/7059eac7531a86fd/original/AS5600-DS000365.pdf) — *Shows why a diametrically magnetized magnet (N/S across the diameter, not top-to-bottom) is required for on-axis magnetic angle sensing.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Mount a $6\text{ mm} \times 2.5\text{ mm}$ diametrically magnetized N35 magnet to the rear shaft of a motor ($1\text{ mm}$ airgap above an `AS5600` or `AS5048A` breakout). Stream the raw 12-bit/14-bit angle over Serial while rotating the shaft by hand, and verify that power-cycling the MCU preserves the exact absolute angle reading without homing.
+  - *Task:* Mount a $6\text{ mm} \times 2.5\text{ mm}$ diametrically magnetized N35 magnet to the rear shaft of a motor ($0.5\text{–}1.5\text{ mm}$ vertical airgap above an `AS5600` or `AS5048A` breakout, $<0.25\text{ mm}$ radial eccentricity).
+    - **Canonical `AS5600` (`I2C`, Addr `0x36`) Wiring:** Connect `VCC -> 3.3V` (on 3.3V mode: bridge `VCC` and `3V3` pads or feed `3.3V`), `GND -> GND`, `SDA -> MCU SDA` (with $3.3\text{ k}\Omega$ pull-up to `3.3V`), `SCL -> MCU SCL` (with $3.3\text{ k}\Omega$ pull-up), and tie `DIR -> GND` (so clockwise rotation increases angle; leaving `DIR` floating causes random direction flips!).
+    - Stream the raw 12-bit ($0\text{–}4095$) or 14-bit ($0\text{–}16383$) angle over Serial while rotating the shaft by hand, and verify that power-cycling the MCU preserves the exact absolute angle reading without homing.
   - *📚 What to Learn & Resource Links for This Exercise:* Study radians and angle wrapping in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), I2C/SPI sensor pull-ups in [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md), and quadrature/magnetic encoder resolution ($\Delta\theta = \frac{2\pi}{4 N_{\text{lines}}}$ or $\frac{2\pi}{2^{N_{\text{bits}}}}$) in [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), plus the [AMS AS5600 / AS5048A Magnetic Encoder Datasheet](https://ams-osram.com/).
 - **🧠 Knowledge Check:**
   <details>
@@ -68,12 +70,18 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### 1.3 Sinusoidal Voltage Commutation with `SimpleFOC`
 - **Core Summary:** Using an `ESP32`/`STM32` + `SimpleFOCMini` (`DRV8313` 3-phase driver breakout) + `AS5600` magnetic encoder, you can close a smooth position/velocity loop in 20 lines of C++ (`SimpleFOC`) by commanding sinusoidal phase voltages $v_a, v_b, v_c$ locked $90^\circ$ electrical ahead of the measured encoder angle $\theta_e$.
+- **Self-Contained C++ Sketch Anatomy Primer (Before Track 04 [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md)):**
+  Because Track 03 Tier 1 comes right before Track 04 Tier 1 in Pass 1, here is how to read a 20-line `SimpleFOC` Arduino/PlatformIO C++ sketch if you have only written Python so far:
+  - `#include <SimpleFOC.h>` is C++'s `import SimpleFOC`. Every statement ends with `;`, and blocks use `{ ... }` instead of indentation.
+  - `BLDCMotor motor = BLDCMotor(7);` and `BLDCDriver3PWM driver = BLDCDriver3PWM(25, 26, 27, 14);` instantiate C++ objects (for a 7-pole-pair motor and PWM pins `25, 26, 27` + enable pin `14`).
+  - `void setup() { ... }` runs **once** at power-up (`driver.init(); motor.linkDriver(&driver); motor.init(); motor.initFOC();`—where `&driver` passes the memory address of `driver`).
+  - `void loop() { motor.loopFOC(); motor.move(target_rad); }` repeats forever in an infinite hardware `while (true)` loop! (For `pio run -t upload` flashing instructions, see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup).)
 - **Curated Free Resources:**
   - 🔗 [SimpleFOC Official Documentation: Writing Your First Closed-Loop Angle Sketch](https://docs.simplefoc.com/angle_loop) — *Step-by-step wiring and Arduino/PlatformIO C++ code for sinusoidal voltage-mode position control.*
   - 🔗 [Texas Instruments DRV8313 Triple Half-Bridge Driver Datasheet](https://www.ti.com/lit/ds/symlink/drv8313.pdf) — *Reference datasheet for the* $8\text{–}60\text{ V}$ *,* $2.5\text{ A}$ *integrated 3-phase motor driver IC used on `SimpleFOCMini` breakouts.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a gimbal BLDC motor + `AS5600`/`AS5048` magnetic encoder + `DRV8313` breakout on your bench, run the `SimpleFOC` electrical zero-offset alignment routine, and hold a target shaft angle with a spring-like feel (or explore **Tab 3: 25 kHz PMSM FOC** in the interactive workbench).
-  - *📚 What to Learn & Resource Links for This Exercise:* Study unit-circle trigonometry ($\cos\theta_e, \sin\theta_e$) in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) and torque-speed curves + electrical zero alignment in [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), plus [SimpleFOC Closed-Loop Angle Control Guide (`docs.simplefoc.com`)](https://docs.simplefoc.com/angle_loop).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study unit-circle trigonometry ($\cos\theta_e, \sin\theta_e$) in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), C-for-Python syntax in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), and torque-speed curves + electrical zero alignment in [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), plus [SimpleFOC Closed-Loop Angle Control Guide (`docs.simplefoc.com`)](https://docs.simplefoc.com/angle_loop).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

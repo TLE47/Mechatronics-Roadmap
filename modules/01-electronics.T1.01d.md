@@ -33,13 +33,13 @@ $$
 $$
 
    Substituting $\Delta I = 2.0\text{ A}$, $\Delta t = 5.0\ \mu\text{s}$, and max droop $\Delta V = 0.10\text{ V}$ requires $C \ge 100\ \mu\text{F}$.
-2. **RC Charging Time Constant ($\tau = R C$) and Cutoff Frequency ($f_c$):** Charging a capacitor $C$ through resistor $R$ ($\Omega$) from $0\text{ V}$ toward $V_{\text{in}}$ follows:
+2. **RC Charging Time Constant ($\tau = R C$) and Cutoff Frequency ($f_c$, the $-3\text{ dB}$ Half-Power Point):** Charging a capacitor $C$ through resistor $R$ ($\Omega$) from $0\text{ V}$ toward $V_{\text{in}}$ follows:
 
 $$
 V_C(t) = V_{\text{in}}\left(1 - e^{-t/(RC)}\right), \quad \tau = R C, \quad f_c = \frac{1}{2\pi R C}
 $$
 
-   At $t = 1\tau$, $V_C(\tau) = 0.6321\,V_{\text{in}}$; at $t = 5\tau$, $V_C(5\tau) = 0.9933\,V_{\text{in}}$. Substituting $R = 1.0\text{ k}\Omega$ and $C = 1.0\ \mu\text{F}$ gives $\tau = 1.0\text{ ms}$ and $f_c = 159.15\text{ Hz}$.
+   At $t = 1\tau$, $V_C(\tau) = 0.6321\,V_{\text{in}}$; at $t = 5\tau$, $V_C(5\tau) = 0.9933\,V_{\text{in}}$. For a sine-wave input at the **cutoff frequency** $f = f_c$, output amplitude drops to $\frac{1}{\sqrt{2}} \approx 0.7071$ ($70.71\%$ of input voltage, or $\left(\frac{1}{\sqrt{2}}\right)^2 = 50\%$ power, called the **$-3\text{ dB}$ point** on the logarithmic decibel scale $20\log_{10}(0.7071) \approx -3.01\text{ dB}$ taught inline in [`07-systems.T1.07a`](07-systems.T1.07a.md)) with $-45^\circ$ phase lag. Substituting $R = 1.0\text{ k}\Omega$ and $C = 1.0\ \mu\text{F}$ gives $\tau = 1.0\text{ ms}$ and $f_c = 159.15\text{ Hz}$.
 3. **Inductor Law ($V_L = L\frac{dI}{dt}$), Stored Magnetic Energy & Flyback Clamp:** A motor winding of inductance $L$ in henries ($\text{H}$) carrying current $I$ ($\text{A}$) stores magnetic energy $E_L = \frac{1}{2} L I^2$ ($\text{J}$) and induces voltage:
 
 $$

@@ -42,13 +42,20 @@ S(s) = \frac{1}{1 + L(s)}, \quad T(s) = \frac{L(s)}{1 + L(s)}, \quad S(s) + T(s)
 $$
 
    Peak sensitivity $M_s = \max_\omega |S(j\omega)|$ measures worst-case disturbance amplification and guarantees minimum distance $1/M_s$ from the critical point $-1 + j0$ (require $M_s < 2.0 = +6.02\text{ dB}$).
-3. **Luenberger State Observer & Bryson's Rule for LQR:**
-   - **Observer Update:** Given discrete plant $(A_d, B_d, C)$ and observer gain $L_{\text{obs}}$, estimation error $e_k = x_k - \hat{x}_k$ evolves as $e_{k+1} = (A_d - L_{\text{obs}} C)e_k$, which converges to zero iff all eigenvalues of $(A_d - L_{\text{obs}} C)$ satisfy $|\lambda_i| < 1$.
-   - **Bryson's Rule:** To minimize $J = \sum (x_k^\top Q x_k + u_k^\top R u_k)$ given maximum acceptable state deviations $x_{i,\max}$ and actuator limit $u_{j,\max}$:
+3. **Luenberger State Observer, Scalar-to-Matrix Kalman Gain Bridge & Bryson's Rule for LQR (`DARE`):**
+   - **Observer Update & Matrix Kalman Filter Bridge:** Given discrete plant $(A_d, B_d, C)$ and observer gain $L_{\text{obs}}$, estimation error $e_k = x_k - \hat{x}_k$ evolves as $e_{k+1} = (A_d - L_{\text{obs}} C)e_k$, which converges to zero iff all eigenvalues of $(A_d - L_{\text{obs}} C)$ satisfy $|\lambda_i| < 1$. When process noise covariance $Q_w$ and sensor noise covariance $R_v$ are known (`00-foundations.T2.00f`), the **Linear Kalman Filter** chooses the optimal observer gain $K_k$ at each step by generalizing the 1D variance ratio $K = \frac{\sigma_{\text{pred}}^2}{\sigma_{\text{pred}}^2 + \sigma_{\text{meas}}^2}$ into matrix form:
+
+$$
+P_k^- = A_d P_{k-1} A_d^\top + Q_w, \qquad K_k = P_k^- C^\top \left(C P_k^- C^\top + R_v\right)^{-1}, \qquad P_k = (I - K_k C)P_k^-
+$$
+
+   - **Bryson's Rule & Discrete Algebraic Riccati Equation (`DARE`):** To minimize $J = \sum (x_k^\top Q x_k + u_k^\top R u_k)$ given maximum acceptable state deviations $x_{i,\max}$ and actuator limit $u_{j,\max}$:
 
 $$
 Q_{ii} = \frac{1}{x_{i,\max}^2}, \quad R_{jj} = \frac{1}{u_{j,\max}^2}
 $$
+
+     In Step 2.6 (`05-control.T2.06`), calling `P = scipy.linalg.solve_discrete_are(Ad, Bd, Q, R)` solves for the steady-state cost-to-go matrix $P$ backwards in time, yielding the optimal constant feedback gain row vector $K_{\text{lqr}} = (R + B_d^\top P B_d)^{-1} B_d^\top P A_d$ (`u = -K_lqr @ x`).
 
 
 ## 4. Worked example
