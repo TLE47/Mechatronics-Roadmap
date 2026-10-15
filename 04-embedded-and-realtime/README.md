@@ -46,6 +46,8 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 - **Core Summary:** A hardware timer peripheral counts clock cycles independently in silicon and fires an Interrupt Service Routine (ISR) every $1000\ \mu\text{s}$ ($1.000\text{ kHz}$) with sub-microsecond accuracy. Variables shared between an ISR and `main()` must be marked `volatile` (or `std::atomic`) so the compiler never caches them in a CPU register.
 - **Curated Free Resources:**
   - 🔗 [Barr Group: Embedded C Coding Standard — Interrupts & the `volatile` Keyword](https://barrgroup.com/embedded-systems/how-to/c-volatile-keyword) — *Definitive explanation by Michael Barr on why the C/C++ optimizer deletes ISR flag checks unless `volatile` is used.*
+  - 🔗 [Edward A. Lee & Sanjit A. Seshia (UC Berkeley): Introduction to Embedded Systems — A Cyber-Physical Systems Approach (Free PDF)](https://ptolemy.berkeley.edu/books/leeseshia/) — *Rigorous open-access textbook covering state machines, interrupts, real-time scheduling, and cyber-physical verification.*
+  - 🔗 [Jonathan Valvano (UT Austin): Embedded Systems — Shape The World](https://users.ece.utexas.edu/~valvano/) — *Hands-on ARM Cortex-M bare-metal programming, SysTick/timer interrupts, and finite state machines.*
   - 🔗 [Espressif ESP-IDF Docs: High Resolution Timer (`esp_timer`) & General Purpose Timers (`gptimer`)](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/esp_timer.html) — *Official guide to configuring microsecond-accurate hardware timers on ESP32.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Configure a $1.000\text{ kHz}$ hardware timer ISR on your MCU that toggles a debug GPIO pin on entry/exit and increments a `volatile uint32_t tick_count`. Verify on your logic analyzer or oscilloscope that the interval between rising edges is $1000.0\ \mu\text{s} \pm 1\ \mu\text{s}$.
@@ -102,6 +104,8 @@ struct __attribute__((packed)) TelemetryPacket {
 - **Core Summary:** In multi-rate robotics firmware, **Rate-Monotonic Scheduling (RMS)** assigns higher priorities to shorter-period tasks: the $25\text{–}40\text{ kHz}$ FOC loop runs in a zero-latency hardware IRQ above the RTOS kernel, the $1\text{ kHz}$ servo/impedance loop runs in the highest-priority FreeRTOS task via `vTaskDelayUntil()`, and $100\text{ Hz}$ logging runs in a low-priority background task.
 - **Curated Free Resources:**
   - 🔗 [Mastering the FreeRTOS Real Time Kernel (Official Free PDF Textbook)](https://www.freertos.org/Documentation/02-Kernel/07-Books-and-manual/01-RTOS_book) — *Covers preemptive priority scheduling, `vTaskDelayUntil()`, priority inversion, and interrupt safe APIs (`FromISR`).*
+  - 🔗 [Zephyr Project RTOS Documentation (zephyrproject.org)](https://www.zephyrproject.org/) — *Linux Foundation safety-certifiable RTOS with device-tree hardware abstraction and native CAN-FD / EtherCAT / `micro-ROS` support.*
+  - 🔗 [micro-ROS: ROS 2 on Microcontrollers (micro.ros.org)](https://micro.ros.org/) — *Brings native XRCE-DDS ROS 2 nodes and deterministic executors onto STM32, ESP32, and RP2350 under FreeRTOS or Zephyr.*
   - 🔗 [Shawn Hymel / DigiKey (YouTube): Introduction to RTOS (12-Part FreeRTOS Series)](https://www.youtube.com/playlist?list=PLEBQazB0HUyQ4hAPU1cJED6t3DU0h34bz) — *Hands-on visual walkthrough of FreeRTOS tasks, queues, mutexes, and hardware interrupts.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run the Response-Time Analysis (RTA) verifier in `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp` (or compute by hand) for a 3-task system: $\tau_1$ ($T_1 = 25\ \mu\text{s}, C_1 = 3.2\ \mu\text{s}$), $\tau_2$ ($T_2 = 250\ \mu\text{s}, C_2 = 35\ \mu\text{s}$), $\tau_3$ ($T_3 = 1000\ \mu\text{s}, C_3 = 180\ \mu\text{s}$) and find the exact worst-case response time $R_3$ of the $1\text{ kHz}$ task.
@@ -119,8 +123,9 @@ struct __attribute__((packed)) TelemetryPacket {
 ### 2.2 Direct Memory Access (DMA): Moving Sensor Data With Zero CPU Cycles
 - **Core Summary:** Polling `SPI.transfer()` or `ADC_Read()` wastes precious CPU cycles waiting on peripheral shift registers. A **Direct Memory Access (DMA)** controller transfers ADC current samples, SPI encoder frames, and UART telemetry bytes directly between peripheral registers and SRAM in the background with **zero CPU intervention**, firing a single interrupt only when the entire transfer completes.
 - **Curated Free Resources:**
-  - 🔗 [STMicroelectronics AN4031: Using the STM32 DMA Controller](https://www.st.com/resource/en/application_note/an4031-using- the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf) — *Explains DMA circular buffers, double-buffering, bus matrix arbitration, and peripheral-to-memory pipelines.*
+  - 🔗 [STMicroelectronics AN4031: Using the STM32 DMA Controller](https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf) — *Explains DMA circular buffers, double-buffering, bus matrix arbitration, and peripheral-to-memory pipelines.*
   - 🔗 [Phil's Lab (YouTube): STM32 DMA Tutorial — ADC & UART Circular Buffers](https://www.youtube.com/watch?v=EsZLgqhqfO0) — *Practical embedded walkthrough of configuring circular DMA with half-transfer and transfer-complete interrupts.*
+  - 🔗 [LiteRT for Microcontrollers (TFLite Micro) & Edge Impulse TinyML](https://ai.google.dev/edge/litert/microcontrollers/overview) — *Run quantized `INT8` neural anomaly/vibration classifiers in $< 20\text{ KB}$ static SRAM on DMA-streamed IMU/current windows with zero heap allocation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate how many CPU clock cycles a $170\text{ MHz}$ Cortex-M4F saves per second by moving an 18-byte telemetry packet at $1\text{ kHz}$ and a 24-bit SPI encoder frame at $25\text{ kHz}$ ($10\text{ MHz}$ SPI clock) via DMA instead of blocking polling.
 - **🧠 Knowledge Check:**
@@ -276,6 +281,7 @@ private:
 
 - **Curated Free Resources:**
   - 🔗 [Hans Boehm (ACM Queue): Can Seqlocks Get Along with Programming Language Memory Models?](https://dl.acm.org/doi/10.1145/2247684.2247688) — *Seminal paper explaining the C++11/C++20 memory-ordering fences required for a correct lock-free Sequence Lock.*
+  - 🔗 [Embassy Async Embedded Rust (`embassy.dev`) & RTIC (`rtic.rs`)](https://embassy.dev/) — *Compile-time memory-safe, data-race-free bare-metal concurrency and zero-cost Stack Resource Policy (SRP) hardware interrupt scheduling in Rust.*
   - 🔗 [CppReference: `std::memory_order` (`memory_order_acquire` & `memory_order_release`)](https://en.cppreference.com/w/cpp/atomic/memory_order) — *Complete reference on acquire/release semantics and preventing compiler/CPU load-store reordering.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 8: Attitude ESKF & SeqLock** in the interactive workbench, run the $40\text{ kHz}$ writer vs. $1\text{ kHz}$ reader stress test, and compare **Unprotected Global Struct** (which suffers torn reads where `q + dq != 0`) against **`WaitFreeSeqLock<T>`** ($0$ torn reads across $10^7$ cycles). Also compile and run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp`.

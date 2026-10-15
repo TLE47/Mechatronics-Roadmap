@@ -39,8 +39,8 @@ If you come from a strong computing/software background with no formal Electrica
 
 - **Curated Free Resources:**
   - 🔗 [Falstad Interactive Circuit Simulator (falstad.com)](https://www.falstad.com/circuit/) — *Browser-based real-time circuit simulator that visualizes voltage as color and current as animated dots so you can build immediate physical intuition.*
-  - 🔗 [SparkFun: Voltage, Current, Resistance, and Ohm's Law](https://learn.sparkfun.com/tutorials/voltage-current-resistance-and-ohms-law) — *Illustrated water-tank analogies designed for software learners with zero prior hardware background.*
-  - 🔗 [All About Circuits Vol. I: Direct Current (Open-Source Textbook)](https://www.allaboutcircuits.com/textbook/direct-current/) — *Free textbook covering passive circuit laws, energy storage in capacitors/inductors, and transient responses.*
+  - 🔗 [The Evolution of Mechatronics Engineering: Industry 3.0, 4.0, 5.0 & Physical AI (Technologies 2026 — Open Access)](https://doi.org/10.3390/technologies14020081) & [The Mechatronics Handbook (R. H. Bishop — Free 1st-Ed. PDF)](http://www.sze.hu/~szenasy/Szenzorok%20%E9s%20aktu%E1torok/Szenzakt%20jegyzetek/Mechatronics_handbook%5B1%5D.pdf) — *Traces how mechatronics evolved from the 1969 Yaskawa coinage and V-Model co-design to Cyber-Physical Systems and Embodied AI.*
+  - 🔗 [SparkFun: Voltage, Current, Resistance, and Ohm's Law](https://learn.sparkfun.com/tutorials/voltage-current-resistance-and-ohms-law) & [All About Circuits Vol. I: Direct Current (Open-Source Textbook)](https://www.allaboutcircuits.com/textbook/direct-current/) — *Illustrated water-tank analogies and passive circuit laws designed for software learners with zero prior hardware background.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open the [Falstad Circuit Simulator](https://www.falstad.com/circuit/), wire a $12\text{ V}$ voltage source in series with a switch, a $1\text{ mH}$ inductor, and a $6\ \Omega$ resistor ($I = 2\text{ A}$ steady state), and open the switch abruptly with and without a parallel flyback diode. Compute the theoretical voltage spike $V_L = L\frac{\Delta I}{\Delta t}$ if $5\text{ A}$ through $1\text{ mH}$ turns off in $100\text{ ns}$ ($50,000\text{ V}$).
 - **🧠 Knowledge Check:**
@@ -82,7 +82,7 @@ If you come from a strong computing/software background with no formal Electrica
 - **Core Summary:** Connects software variables to the physical world using the three core microcontroller peripherals: digital GPIO with pull-up/pull-down resistors, $20\text{ kHz}$ hardware timer PWM driving a low-side N-MOSFET + flyback diode, and 12-bit ADC voltage dividers.
   $$V_{\text{avg}} = D \cdot V_{\text{bus}}, \qquad \text{ADC}_{\text{code}} = \left\lfloor 4095 \cdot \frac{V_{\text{in}}}{3.3\text{ V}} \right\rfloor$$
 - **Curated Free Resources:**
-  - 🔗 [Wokwi Online ESP32, STM32 & Arduino Simulator (wokwi.com)](https://wokwi.com/) — *Interactive browser simulator for wiring GPIO buttons, potentiometers, PWM outputs, and logic analyzers with zero hardware cost.*
+  - 🔗 [Paul McWhorter: Arduino & ESP32 for Beginners (YouTube Course)](https://www.youtube.com/@paulmcwhorter) & [Wokwi Online ESP32, STM32 & Arduino Simulator (wokwi.com)](https://wokwi.com/) — *Patient hands-on beginner video series paired with an interactive browser simulator for GPIO, PWM, and ADCs with zero hardware cost.*
   - 🔗 [STM32 Step-by-Step Official Beginner Wiki (wiki.st.com)](https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview) — *Official hands-on tutorial series covering STM32 Nucleo pin configuration, hardware timers, PWM, and ADCs.*
   - 🔗 [SparkFun: Pull-Up Resistors Tutorial](https://learn.sparkfun.com/tutorials/pull-up-resistors) — *Explains why floating CMOS inputs toggle randomly from $60\text{ Hz}$ room hum and how to size pull-up resistors.*
 - **🧪 Hands-On Exercise:**
@@ -184,8 +184,8 @@ If you come from a strong computing/software background with no formal Electrica
 - **Core Summary:** Models a motor rotor ($J_m$) coupled to a load inertia ($J_L$) through a compliant shaft/gearbox ($k_s$) as a 4-state matrix system exhibiting an anti-resonance zero $\omega_{ar} = \sqrt{k_s/J_L}$ and a structural resonance pole $\omega_r = \sqrt{k_s(1/J_m + 1/J_L)}$.
   $$\omega_{ar} = \sqrt{\frac{k_s}{J_L}}, \qquad \omega_r = \omega_{ar}\sqrt{1 + \frac{J_L}{J_m}}$$
 - **Curated Free Resources:**
-  - 🔗 [Control Bootcamp: State-Space Equations (Prof. Steve Brunton, YouTube)](https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m) — *Clear walkthrough converting multi-DOF mechanical ODEs into $\dot{x} = Ax + Bu$ matrix form.*
-  - 🔗 [Åström & Murray: Feedback Systems — Ch. 5 & 6: Linear Systems (fbswiki.org)](https://fbswiki.org/wiki/index.php/Main_Page) — *Open-access textbook chapters on state-space matrices, eigenvalues, and modal resonance.*
+  - 🔗 [Control Bootcamp: State-Space Equations (Prof. Steve Brunton, YouTube)](https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m) & [Data-Driven Science and Engineering (Brunton & Kutz, 2nd Ed. Free PDF — databookuw.com)](https://www.databookuw.com/) — *Clear walkthrough converting multi-DOF mechanical ODEs into $\dot{x} = Ax + Bu$ matrix form, plus SVD, DMD, and SINDy.*
+  - 🔗 [Åström & Murray: Feedback Systems — Ch. 5 & 6: Linear Systems (fbswiki.org)](https://fbswiki.org/wiki/index.php/Main_Page) & [Control of Mechatronic Systems (P. O. J. Kaltjob)](https://www.wiley.com/en-us/Control+of+Mechatronic+Systems-p-9781119505792) — *Open-access textbook chapters on state-space matrices, eigenvalues, and discrete-time digital implementation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: Two-Mass & Notch Bode** in the MechaLab Workbench, drag the Load-to-Motor Inertia Ratio $J_L / J_m$ and Shaft Stiffness $k_s$ sliders, and observe how the motor encoder Bode plot (Cyan) exhibits an anti-resonance dip at $f_{ar}$ followed by a resonance peak at $f_r$, whereas the load tip (Amber) has only the resonance peak.
 - **🧠 Knowledge Check:**
@@ -322,8 +322,8 @@ flowchart LR
 ```
 
 - **Curated Free Resources:**
-  - 🔗 [Port-Hamiltonian Systems Theory: An Introductory Overview (van der Schaft & Jeltsema)](https://www.rug.nl/research/portal/files/14407027/PortHamiltonianSystems.pdf) — *Comprehensive open-access monograph on passivity-based Port-Hamiltonian modeling of electromechanical systems.*
-  - 🔗 [MIT 2.14 / 2.003 System Dynamics & Bond Graph Lecture Notes (MIT OCW)](https://ocw.mit.edu/courses/2-003sc-engineering-dynamics-fall-2011/) — *Covers multi-domain energy conservation and electromechanical gyrator coupling.*
+  - 🔗 [Port-Hamiltonian Systems Theory: An Introductory Overview (van der Schaft & Jeltsema)](https://www.rug.nl/research/portal/files/14407027/PortHamiltonianSystems.pdf) & [OpenModelica Acausal Multi-Domain Modeling Environment (openmodelica.org)](https://openmodelica.org/) — *Comprehensive open-access monograph on passivity-based Port-Hamiltonian modeling paired with the open-source Modelica multi-domain simulator.*
+  - 🔗 [Intelligence as Computation (Oliver Brock, arXiv:2412.14701)](https://arxiv.org/abs/2412.14701) & [MIT 2.14 / 2.003 System Dynamics & Bond Graph Lecture Notes (MIT OCW)](https://ocw.mit.edu/courses/2-003sc-engineering-dynamics-fall-2011/) — *Unifies digital, analog, mechanical, and morphological computation with multi-domain energy conservation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 00-foundations/lab/lab00_two_mass_and_so3.py` and verify the energy conservation audit: $\left|\int_0^T V_{\text{in}}i_a\,dt - (\Delta \mathcal{H}_{\text{stored}} + \int_0^T P_{\text{dissipated}}\,dt)\right| < 10^{-9}\text{ J}$.
 - **🧠 Knowledge Check:**

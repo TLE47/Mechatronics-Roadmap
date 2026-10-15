@@ -30,6 +30,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   $$\cos(q_2) = \frac{x^2 + y^2 - L_1^2 - L_2^2}{2 L_1 L_2}, \quad q_2 = \pm \arccos(\cos q_2), \quad q_1 = \text{atan2}(y, x) - \text{atan2}(L_2 \sin q_2, L_1 + L_2 \cos q_2)$$
 - **Curated Free Resources:**
   - 🔗 [Modern Robotics — Ch. 1, 2 & 6: Planar Kinematics & Inverse Kinematics (Lynch & Park Free PDF & Videos)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Clear geometric derivations of 2R planar forward/inverse kinematics and elbow-up vs. elbow-down solutions.*
+  - 🔗 [John J. Craig: Introduction to Robotics — Mechanics and Control (4th Ed. Companion Resources)](https://www.pearson.com/) — *Classic foundation for spatial descriptions, Denavit-Hartenberg (DH) parameters, and 2D/3D manipulator kinematics.*
   - 🔗 [Red Blob Games: Interactive 2D Coordinate Transforms & Kinematics](https://www.redblobgames.com/) — *Browser-based visual tutorials for trigonometry and linkage reachability.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a Python function `ik_2dof(x, y, L1=0.15, L2=0.15)` that clamps `cos_q2 = np.clip(cos_q2, -1.0, 1.0)` before calling `np.arccos()` so floating-point roundoff at full arm extension ($r = L_1 + L_2$) never throws a `NaN` runtime crash, and command a figure-8 path.
@@ -72,9 +73,10 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   $$F_{\text{radial\_bearing}} = T_{\text{belt\_preload}} + \frac{\tau_{\text{pulley}}}{r_{\text{pitch}}}, \qquad \delta_{\text{cantilever}} = \frac{F L^3}{3 E I} \gg \delta_{\text{double\_shear}} = \frac{F L^3}{192 E I}$$
 - **Curated Free Resources:**
   - 🔗 [MIT FUNdaMENTALS of Design — Topic 3 & 8: Structural Loops, Shafts & Bearings (Prof. Alex Slocum)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Illustrated golden rules for supporting shafts in double shear vs. cantilevered overhang.*
+  - 🔗 [Budynas & Nisbett: Shigley's Mechanical Engineering Design (11th Ed. Reference)](https://www.mheducation.com/) — *Industry-standard machine design reference for shaft fatigue, radial/angular-contact bearing $L_{10}$ life, Spur/Helical gear tooth bending, and bolted joint preload.*
   - 🔗 [Gates GT2 / PowerGrip Timing Belt Design Manual](https://www.gates.com/) — *Covers minimum pulley tooth engagement ($\ge 6$ teeth in mesh) and preload tensioning.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Compare the shaft tip deflection ratio between a cantilevered shaft of overhang $L$ ($\delta = \frac{FL^3}{3EI}$) and a double-shear shaft supported at both ends ($\delta = \frac{FL^3}{48EI}$ for pin-pin or $\frac{FL^3}{192EI}$ for fixed-fixed)—confirming a $16\times$ to $64\times$ stiffness increase simply by capturing the far end of the pin in a second bearing!
+  - *Task:* Compare the shaft tip deflection ratio between a cantilevered shaft of overhang $L$ ($\delta = \frac{FL^3}{3EI}$) and a double-shear shaft supported at both ends ($\delta = \frac{FL^3}{48EI}$ for pin-pin or $\delta = \frac{FL^3}{192EI}$ for fixed-fixed)—confirming a $16\times$ to $64\times$ stiffness increase simply by capturing the far end of the pin in a second bearing!
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -142,6 +144,8 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   $$I_C = R\,\text{diag}(I_1, I_2, I_3)R^\top \succ 0, \qquad I_1 + I_2 \ge I_3, \qquad I_O = I_C + m\big((r^\top r)\mathbf{1}_3 - r r^\top\big)$$
 - **Curated Free Resources:**
   - 🔗 [CadQuery Python Parametric CAD Documentation (cadquery.readthedocs.io)](https://cadquery.readthedocs.io/) — *Open-source Python library built on OpenCascade for code-first mechanical design.*
+  - 🔗 [FreeCAD 1.0+ Open-Source Parametric 3D Modeler & FEM Workbench (freecad.org)](https://www.freecad.org/) — *Full-featured open-source 3D CAD with integrated CalculiX Finite Element Analysis (FEA) and Assembly4/Ondsel solvers.*
+  - 🔗 [OpenSCAD — The Programmers Solid 3D CAD Modeller (openscad.org)](https://openscad.org/) — *Script-only constructive solid geometry (CSG) compiler ideal for rapid 3D-printed brackets, gears, and sensor mounts.*
   - 🔗 [MuJoCo Modeling & XML Reference Guide (mujoco.readthedocs.io)](https://mujoco.readthedocs.io/en/stable/modeling.html) — *Details inertial frame conventions, `<inertial>` tags, and reflected rotor `armature`.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 02-mechanics-kinematics-dynamics/cad/validate_cad_parts.py` and `python3 08-capstone-projects/models/validate_models.py` (or inspect **Tab 5** and **Tab 6**) to verify watertight STEP/STL topology and SPD inertia invariants across all capstone robots.
@@ -221,6 +225,8 @@ flowchart TB
 
 - **Curated Free Resources:**
   - 🔗 [Pinocchio C++/Python Fast Rigid Body Dynamics Library Docs (stack-of-tasks.github.io/pinocchio)](https://stack-of-tasks.github.io/pinocchio/) — *Production C++/Python library implementing analytical $SE(3)$ kinematics, RNEA, ABA, and analytical derivatives.*
+  - 🔗 [Genesis Universal Physics Engine (Genesis-Embodied-AI/Genesis)](https://github.com/Genesis-Embodied-AI/Genesis) — *100% Python/Taichi GPU physics engine capable of $43\text{M FPS}$ rigid-body, MPM, FEM, and soft-body simulation.*
+  - 🔗 [NVIDIA Isaac Lab / Isaac Sim (isaac-sim.github.io/IsaacLab)](https://isaac-sim.github.io/IsaacLab/) — *GPU-accelerated multibody physics and photorealistic USD simulation for sim-to-real locomotion and manipulation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Trace how the modal eigenfrequency requirement $\omega_1 > 5\,\omega_{\text{bw}}$ in the diagram above sets the minimum structural stiffness-to-mass ratio $E/\rho$ of a robot arm link.
 - **🧠 Knowledge Check:**

@@ -30,6 +30,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   * **On-Axis Diametric Magnetic Encoders (`AS5600` I2C / `AS5048A` SPI / `MT6835`):** A tiny $6\text{ mm}$ diametrically magnetized neodymium magnet glued to the rear shaft rotates above a Hall/AMR sensor IC, providing instant **12-bit to 16-bit absolute angle** ($0\text{–}360^\circ$) at boot.
 - **Curated Free Resources:**
   - 🔗 [SimpleFOC Docs: Position Sensors (Magnetic, Quadrature & Hall)](https://docs.simplefoc.com/sensors) — *Practical wiring and code guide for connecting `AS5600`, `AS5048A`, and optical quadrature encoders to microcontrollers.*
+  - 🔗 [Jacob Fraden: Handbook of Modern Sensors — Physics, Designs, and Applications (5th Ed.)](https://link.springer.com/book/10.1007/978-3-319-19303-8) — *Comprehensive physics reference for optical, magnetic (Hall/AMR/TMR), inductive, piezoelectric, and capacitive transducers.*
   - 🔗 [AMS AS5600 12-Bit Programmable Contactless Potentiometer Datasheet](https://look.ams-osram.com/m/7059eac7531a86fd/original/AS5600-DS000365.pdf) — *Shows why a diametrically magnetized magnet (N/S across the diameter, not top-to-bottom) is required for on-axis magnetic angle sensing.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Mount a $6\text{ mm} \times 2.5\text{ mm}$ diametrically magnetized N35 magnet to the rear shaft of a motor ($1\text{ mm}$ airgap above an `AS5600` or `AS5048A` breakout). Stream the raw 12-bit/14-bit angle over Serial while rotating the shaft by hand, and verify that power-cycling the MCU preserves the exact absolute angle reading without homing.
@@ -95,6 +96,8 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 - **Curated Free Resources:**
   - 🔗 [Texas Instruments Teaching Old Motors New Tricks — Part 1: Clarke & Park Transforms (YouTube)](https://www.youtube.com/watch?v=cdiZUszYLiA) — *Legendary lecture by Dave Wilson (TI) explaining why transforming AC currents into the rotating rotor frame makes FOC work.*
   - 🔗 [Microchip AN2590: Field-Oriented Control (FOC) of PMSMs](https://ww1.microchip.com/downloads/en/AppNotes/00002590B.pdf) — *Step-by-step vector diagrams and equations for Clarke, Park, and Inverse Park transforms.*
+  - 🔗 [VESC Project Open-Source BLDC/FOC Motor Controller (vesc-project.com)](https://vesc-project.com/) — *Production open-source C firmware (`bldc`) implementing sensorless HFI/observer and sensored FOC with live `VESC Tool` telemetry.*
+  - 🔗 [mjbots `moteus` Open-Source Brushless QDD Servo Controller (github.com/mjbots/moteus)](https://github.com/mjbots/moteus) — *STM32G4-based integrated CAN-FD FOC controller with on-board magnetic encoder LUT calibration.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 15-line Python function that generates balanced 3-phase currents $i_a(t) = I_{\text{pk}}\cos(\omega_e t + \pi/2)$, $i_b(t) = I_{\text{pk}}\cos(\omega_e t + \pi/2 - 2\pi/3)$, $i_c(t) = -i_a - i_b$ for $I_{\text{pk}} = 10\text{ A}$ at $1000\text{ RPM}$, applies the amplitude-invariant Clarke and Park transforms using $\theta_e(t) = \omega_e t$, and verifies that the resulting $(i_d, i_q)$ stays rock-solid at $(0.0\text{ A}, 10.0\text{ A})$ across all time $t$.
 - **🧠 Knowledge Check:**
@@ -237,6 +240,7 @@ flowchart LR
 
 - **Curated Free Resources:**
   - 🔗 [Ben Katz (MIT Master's Thesis): High-Performance Actuator Design & Encoder Calibration](https://dspace.mit.edu/handle/1721.1/118671) — *Details the exact off-axis/on-axis magnetic encoder lookup table (LUT) calibration routine used on the MIT Mini-Cheetah actuators.*
+  - 🔗 [Open Dynamic Robot Initiative (ODRI): Open-Source Torque-Controlled Brushless Actuator Modules & Micro-Drivers](https://open-dynamic-robot-initiative.github.io/) — *Complete open-source mechanical/PCB/firmware specifications for the Solo-12 quadruped and Bolt biped actuators.*
   - 🔗 [Matthew Piccoli & Mark Yim (ICRA): Anticogging Torque Ripple Suppression](https://www.seas.upenn.edu/~piccoli/files/Piccoli_2016_ICRA.pdf) — *Classic robotics paper showing how to record $i_{q,\text{cog}}(\theta_m)$ across one mechanical revolution and play it back as feedforward current.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./03-sensors-and-actuators/lab/lab03_foc_and_metrology.py` and inspect the Fourier harmonic fit of a magnetic encoder with $1\times, 2\times, 4\times$ eccentricity/tilt errors, verifying that the 4-harmonic LUT reduces peak-to-peak mechanical angle error from $> 0.45^\circ$ down to $< \pm 0.02^\circ$.

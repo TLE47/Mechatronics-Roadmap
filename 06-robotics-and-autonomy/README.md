@@ -34,6 +34,8 @@ $$
 - **Curated Free Resources:**
   - 🔗 [Lynch & Park: Modern Robotics — Chapter 9: Trajectory Generation (Free Northwestern PDF & Videos)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Derives cubic, quintic, and trapezoidal time-scaling polynomials with clear physical plots.*
   - 🔗 [Russ Tedrake (MIT 6.4210): Robotic Manipulation — Trajectory Planning](https://manipulation.csail.mit.edu/trajectories.html) — *Interactive Python notebooks showing smooth spline interpolation for robot arms.*
+  - 🔗 [Webots Open-Source 3D Robot Simulator (cyberbotics.com)](https://cyberbotics.com/) — *Zero-setup cross-platform simulator with 100+ pre-built mobile robots and arms for testing Tier 1 Python/C++ trajectories.*
+  - 🔗 [Cyrill Stachniss (University of Bonn): Mobile Sensing and Robotics — Photogrammetry & SLAM Lectures (YouTube)](https://www.youtube.com/c/CyrillStachniss) — *Accessible visual lectures on odometry, occupancy grids, Kalman/Particle filters, and graph SLAM.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 10-line Python or C++ function that evaluates $q_d(t)$, $\dot{q}_d(t)$, and $\ddot{q}_d(t)$ for a $1.0\text{ rad}$ move over $T = 0.8\text{ s}$ using both a cubic polynomial ($3s^2 - 2s^3$) and a quintic polynomial ($10s^3 - 15s^4 + 6s^5$). Verify that the quintic polynomial has zero acceleration $\ddot{q}_d(0) = \ddot{q}_d(T) = 0$ at the start and end of the move!
 - **🧠 Knowledge Check:**
@@ -85,6 +87,7 @@ $$
 - **Curated Free Resources:**
   - 🔗 [Russ Tedrake (MIT 6.4210): Chapter 8 — Manipulator Force & Cartesian Stiffness Control](https://manipulation.csail.mit.edu/force.html) — *Derives $\tau = J(q)^\top F_{\text{cart}} + g(q)$ and demonstrates how anisotropic stiffness enables peg-in-hole assembly and surface wiping.*
   - 🔗 [Khatib (1987 Seminal Paper): A Unified Approach for Motion and Force Control of Robot Manipulators](https://cs.stanford.edu/groups/manips/publications/pdfs/Khatib_1987_RA.pdf) — *Introduces operational-space control directly in end-effector coordinates.*
+  - 🔗 [Siciliano, Sciavicco, Villani & Oriolo: Robotics — Modelling, Planning and Control (Springer)](https://link.springer.com/book/10.1007/978-1-84628-642-1) — *Complete textbook coverage of Cartesian impedance, hybrid force/motion control, and visual servoing.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` or open **Tab 5: URDF / MuJoCo & STO** to simulate a 2-link/3-link leg or arm hitting an unexpected rigid wall at $x_{\text{wall}}$ under Cartesian Impedance Control ($K_x = 400\text{ N/m}$), verifying that steady-state contact force settles cleanly to $F_x = K_x(x_d - x_{\text{wall}})$.
 - **🧠 Knowledge Check:**
@@ -102,6 +105,7 @@ $$
 - **Core Summary:** A trapezoidal velocity profile steps acceleration instantaneously ($\dddot{q} = \pm\infty$), acting like a hammer blow that excites flexible link and gearbox resonances. **3rd-order Jerk-Bounded S-Curve generators (`Ruckig`)** bound maximum velocity, acceleration, *and* jerk ($\lvert\dddot{q}\rvert \le j_{\max}$) across 7 smooth phases so structural modes are never rung.
 - **Curated Free Resources:**
   - 🔗 [Ruckig Open-Source Online Jerk-Limited Trajectory Library (GitHub & Docs)](https://github.com/pantor/ruckig) — *Production C++20/Python library used in ROS 2 (`MoveIt 2`) and Franka Emika arms for sub-millisecond time-optimal S-curve generation from arbitrary initial states.*
+  - 🔗 [ROS 2 Jazzy Jalisco / Lyrical Luth (`docs.ros.org`), `ros2_control`, `MoveIt 2` & `Nav2`](https://docs.ros.org/) — *Modern robotics middleware stack with `rmw_zenoh_cpp` low-overhead networking, `Gazebo Harmonic` simulation, and `Rerun.io` / `Foxglove` `.mcap` multimodal telemetry.*
   - 🔗 [Biagiotti & Melchiorri: Trajectory Planning for Automatic Machines and Robots — Double-S / S-Curve Profiles](https://link.springer.com/book/10.1007/978-3-540-85629-0) — *Complete analytical equations for 7-segment jerk-limited trajectories.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` to compare the high-frequency structural vibration of a flexible joint driven by a trapezoidal velocity profile vs. a 7-segment jerk-bounded S-curve ($\lvert\dddot{q}\rvert \le 20\text{ rad/s}^3$).
@@ -136,7 +140,7 @@ $$
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 06):** Master full-stack robotic autonomy and whole-body control: Khatib's Operational-Space Inertia $\Lambda(q)$ & dynamically consistent null-space projection $\bar{J}(q)$, Floating-Base Whole-Body Control QPs (`WBC-QP`) with friction cones, `PREEMPT_RT` Linux kernel isolation (`<50 µs` jitter), and Forster's Manifold IMU Preintegration for Factor-Graph SLAM (`GTSAM`).
+> **Goal of Pass 3 (Track 06):** Master full-stack robotic autonomy and whole-body control: Khatib's Operational-Space Inertia $\Lambda(q)$ & dynamically consistent null-space projection $\bar{J}(q)$, Floating-Base Whole-Body Control QPs (`WBC-QP`) with friction cones, `PREEMPT_RT` Linux kernel isolation (`<50 µs` jitter), Forster's Manifold IMU Preintegration for Factor-Graph SLAM (`GTSAM`), and Visuomotor Imitation Learning (`ACT`, `Diffusion Policy`, `LeRobot`) & Vision-Language-Action (`VLA`) models.
 > * [**Next Linear Step in Pass 3 → Track 07 (Tier 3: Schroeder Multisine Closed-Loop SysID & $<1\ \mu\text{s}$ Hardware STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production)
 
 ### 4.1 Full-Stack Autonomous Robotic Software & Hardware Architecture
@@ -252,6 +256,7 @@ $$
 - **Curated Free Resources:**
   - 🔗 [Christian Forster, Luca Carlone, Frank Dellaert, Davide Scaramuzza (IEEE TRO): On-Manifold Preintegration for Real-Time Visual-Inertial Odometry (PDF)](https://rpg.ifi.uzh.ch/docs/TRO16_forster.pdf) — *The landmark paper behind modern VIO/SLAM (`GTSAM`, `VINS-Mono`, `ORB-SLAM3`).*
   - 🔗 [Frank Dellaert: Factor Graphs for Robot Perception (`GTSAM` Monograph)](https://gtsam.org/tutorials/intro.html) — *Interactive tutorial on factor graphs, `iSAM2` incremental smoothing, and manifold optimization.*
+  - 🔗 [Thrun, Burgard & Fox: Probabilistic Robotics & Timothy D. Barfoot: State Estimation for Robotics (Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Complete Bayesian filtering and matrix Lie group $SE(3)$ estimation references.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate how many raw IMU samples would have to be re-integrated on every $30\text{ Hz}$ camera frame across a 5-second sliding window of 150 keyframes at $1\text{ kHz}$ if Forster's first-order bias Jacobian correction were not used ($5000$ integrations per frame vs. $1$ matrix multiply per keyframe!).
 - **🧠 Knowledge Check:**
@@ -263,6 +268,26 @@ $$
 
   **Q2:** Why can't you simply preintegrate IMU measurements in the global World frame $W$ between keyframe $i$ and keyframe $j$?
   * **Answer & Explanation:** Because the gravity vector $g^W$ in the body frame depends on the keyframe's initial world orientation $R_{WB_i}$! If the optimizer adjusts $R_{WB_i}$, a World-frame integral becomes invalid. Preintegrating in the local frame $B_i$ isolates $R_{WB_i}$ outside the integral so $(\Delta R_{ij}, \Delta v_{ij}, \Delta p_{ij})$ depend only on the local biases $(b_g, b_a)$.
+  </details>
+
+### 4.5 Embodied AI: Visuomotor Imitation Learning (`ACT`, `Diffusion Policy`, `LeRobot`) & `VLA` Models
+- **Core Summary:** Contact-rich manipulation tasks with deformable objects (folding cloth, cable routing, bimanual food prep) defy hand-coded state machines. **Action Chunking with Transformers (`ACT`)** and **Visuomotor Diffusion Policies** predict smooth $k$-step future target trajectory chunks $\mathbf{A}_t = [\hat{q}_{t+1}, \dots, \hat{q}_{t+k}]$ at $30\text{–}50\text{ Hz}$ from wrist/overhead RGB cameras and joint proprioception, which are then tracked at $1\text{ kHz}$ by the underlying low-level impedance/FOC controller.
+- **Curated Free Resources:**
+  - 🔗 [Hugging Face `LeRobot` Open-Source PyTorch Robotics Library (github.com/huggingface/lerobot)](https://github.com/huggingface/lerobot) — *End-to-end teleoperation, dataset collection, and training for `ACT`, `Diffusion Policy`, and `SmolVLA` on low-cost `SO-101` and `ALOHA` hardware.*
+  - 🔗 [Capuano et al. (2025 Tutorial): Robot Learning — A Tutorial (arXiv:2510.12403)](https://arxiv.org/abs/2510.12403) — *Comprehensive modern walkthrough of behavioral cloning, action chunking, diffusion policies, and Vision-Language-Action (`VLA`) models.*
+  - 🔗 [Chi et al. (RSS / IJRR): Diffusion Policy — Visuomotor Policy Learning via Action Diffusion](https://diffusion-policy.cs.columbia.edu/) & [Zhao et al. (RSS): ACT / ALOHA Bimanual Manipulation](https://tonyzhaozh.github.io/aloha/) — *Seminal papers solving multimodal demonstration distributions and compounding behavioral-cloning covariate shift.*
+  - 🔗 [OpenVLA (`openvla.github.io`) & Physical Intelligence `openpi` ($\pi_0$ Flow-Matching VLA)](https://github.com/Physical-Intelligence/openpi) — *Open-weight Vision-Language-Action foundation models fine-tunable via LoRA for generalist manipulation.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Implement **Temporal Ensembling** in Python for an Action Chunking policy that outputs a $k = 10$-step trajectory prediction $\hat{q}_{t \to t+10}$ at every $20\text{ ms}$ camera frame: maintain a sliding buffer of overlapping predictions for the current timestep $t$ and compute the exponentially weighted average $q_{\text{cmd}}(t) = \frac{\sum_i \exp(-m \cdot i) \hat{q}_t^{(t-i)}}{\sum_i \exp(-m \cdot i)}$ ($m = 0.01$) so chunk boundaries never cause torque discontinuities!
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** Why does naive single-step Behavioral Cloning $\pi(o_t) \to \hat{a}_t$ fail when an obstacle can be avoided equally well by going *left* OR going *right* in human demonstrations?
+  * **Answer / Explanation:** A standard MSE regression loss averages the multimodal "go left" ($-1$) and "go right" ($+1$) demonstrations into $\hat{a}_t = 0$ ("drive straight into the obstacle")! **Diffusion Policy** (score-based Langevin denoising) and **CVAE Action Chunking (`ACT`)** model the full multimodal conditional distribution $p(\mathbf{A}_t \mid o_t)$ so the policy commits cleanly to one valid mode.
+
+  **Q2:** Why must a $30\text{ Hz}$ VLA or Diffusion Policy output **desired joint/Cartesian impedance targets** $(q_d, \dot{q}_d)$ into a $1\text{ kHz}$ low-level PD/FOC loop rather than raw $30\text{ Hz}$ motor currents?
+  * **Answer & Explanation:** A $30\text{ Hz}$ ($33.3\text{ ms}$ period) neural network inference loop is far too slow to damp mechanical resonances or maintain passivity during rigid contact ($\omega_c < \frac{\phi_m}{\tau_{\text{delay}}}$ caps stability at $< 4\text{ Hz}$!). Outputting smooth action chunks $(q_d(t), K_p, K_d)$ evaluated inside a $1\text{–}40\text{ kHz}$ real-time impedance/FOC loop combines high-level semantic intelligence with sub-millisecond physical stability.
   </details>
 
 ---

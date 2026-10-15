@@ -264,6 +264,7 @@ stateDiagram-v2
 - **Curated Free Resources:**
   - 🔗 [Texas Instruments SLYY136: Functional Safety & Safe Torque Off (STO) in Brushless Servo Drives (IEC 61800-5-2)](https://www.ti.com/lit/ml/slyy136/slyy136.pdf) — *Reference dual-channel hardware STO schematic architecture achieving SIL-3 / PLe without safety relays.*
   - 🔗 [STMicroelectronics AN4277: Using STM32 Timer Break Inputs (`TIMx_BKIN`) for Cycle-by-Cycle Motor Fault Protection](https://www.st.com/resource/en/application_note/an4277-using-stm32-device-pwm-shut-down-features-for-motor-control-and-digital-power-conversion-stmicroelectronics.pdf) — *Shows how internal/external analog comparators asynchronously latch PWM outputs into safe state in silicon even if the CPU clock stops.*
+  - 🔗 [ISO 10218-1:2025 / ISO/TS 15066: Industrial & Collaborative Robot Safety Requirements](https://www.iso.org/standard/73933.html) — *Newly revised 2025 global safety standard unifying collaborative Speed and Separation Monitoring (SSM), Power and Force Limiting (PFL), and industrial cybersecurity.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench, trigger the **Overcurrent Short ($42\text{ A}$)** fault, and verify on the sub-microsecond fault timeline that the analog comparator + `TIM1_BKIN` hardware latch drives all 6 MOSFET gates to `High-Z` at $t = 0.65\ \mu\text{s}$—long before the $25\ \mu\text{s}$ software ISR tick!
 - **🧠 Knowledge Check:**
@@ -275,6 +276,26 @@ stateDiagram-v2
 
   **Q2:** Why must the `FAULT_LATCHED` state require an explicit rising-edge manual operator reset *after* the fault condition clears, rather than automatically re-enabling torque as soon as current drops back to zero?
   * **Answer & Explanation:** If a drive automatically re-enabled torque as soon as current dropped to zero after an overcurrent trip, it would oscillate in a violent **hiccup/chatter loop** ($40\text{ A}$ short $\to$ trip $\to$ $0\text{ A}$ $\to$ auto-restart $\to$ $40\text{ A}$ short) or unexpectedly lunge at an operator who just cleared a jammed robot arm!
+  </details>
+
+### 4.5 Industry 4.0 / 5.0: Digital Twins, Asset Administration Shell (`IEC 63278 AAS`), `OPC UA` & `IEC 61131-3`
+- **Core Summary:** Modern industrial automation integrates real-time servo cells into plant-wide **Digital Twins** using **IEC 61131-3 Structured Text (`OpenPLC`)**, semantic **OPC UA (`IEC 62541`)** pub/sub over Time-Sensitive Networking (`TSN`), and the standardized **Asset Administration Shell (`IEC 63278 AAS`)**—which packages every actuator's CAD, calibration LUT, thermal $I^2 t$ history, and remaining useful life (`RUL`) into a queryable digital twin model.
+- **Curated Free Resources:**
+  - 🔗 [OpenPLC Project: Open-Source IEC 61131-3 PLC Runtime & Editor (autonomylogic.com)](https://autonomylogic.com/) — *Free open-source PLC runtime supporting Ladder Logic (`LD`), Structured Text (`ST`), and Function Block Diagrams (`FBD`) over Modbus TCP and EtherCAT.*
+  - 🔗 [Eclipse BaSyx & Industrial Digital Twin Association (IDTA): Asset Administration Shell (`IEC 63278 AAS`)](https://industrialdigitaltwin.org/en/) — *Open-source reference implementation of standardized Industry 4.0 Digital Twin submodels.*
+  - 🔗 [open62541: Open-Source C99 Implementation of OPC UA (`IEC 62541`)](https://open62541.org/) — *Embeddable OPC UA server/client stack with PubSub over UDP/TSN for deterministic machine-to-machine telemetry.*
+  - 🔗 [Tao et al. (IEEE TII): Digital Twin in Industry — State-of-the-Art & Factory I/O 3D Plant Simulation](https://docs.factoryio.com/) — *Foundational architecture for bi-directional synchronization between physical workcells and virtual 3D digital twins.*
+- **🧪 Hands-On Exercise:**
+  - *Task:* Write an `IEC 61131-3` **Structured Text (`ST`)** safety-interlock state machine function block `FB_CellInterlock` that monitors `bLightCurtainOK`, `bDoorLocked`, `bDriveFault`, and `rWindingTempC`, asserting `bEnableServo := (bLightCurtainOK AND bDoorLocked AND NOT bDriveFault AND (rWindingTempC < 105.0))` with a rising-edge manual reset trigger `R_TRIG`.
+- **🧠 Knowledge Check:**
+  <details>
+  <summary><b>Click to toggle quiz questions & answers</b></summary>
+
+  **Q1:** What is the fundamental difference between a static **3D CAD Simulation** ("Digital Model"), a one-way telemetry dashboard ("Digital Shadow"), and a true **Industry 4.0 Digital Twin**?
+  * **Answer / Explanation:** A **Digital Model** has no live data link to the physical asset; a **Digital Shadow** has a *one-way* automated data flow from the physical machine to the virtual model; whereas a true **Digital Twin** maintains a **bi-directional closed loop**—live sensor/current/thermal telemetry updates the virtual physics/degradation state (`RUL`), and the virtual twin feeds optimized trajectories, predictive maintenance deratings, or collision shields back to the physical controller!
+
+  **Q2:** Why do modern industrial robot cells replace legacy polling protocols (like serial Modbus RTU) with **OPC UA (`IEC 62541`) over Time-Sensitive Networking (`TSN`)**?
+  * **Answer & Explanation:** Modbus RTU/TCP uses untyped register numbers (`40001`) with no semantic units, security, or bounded latency. **OPC UA** embeds a self-describing object-oriented information model (engineering units, safety limits, X.509 authentication), and **OPC UA PubSub over IEEE 802.1Qbv TSN** schedules time-sliced Ethernet queues so real-time control frames suffer zero collision jitter from bulk camera/log traffic.
   </details>
 
 ---

@@ -29,6 +29,8 @@
   * **Mechanics & Control:** 3D-printed 2-link planar arm ($L_1 = 100\text{ mm}, L_2 = 100\text{ mm}$) with `608` radial ball bearings in double shear, tracking a smooth cubic-polynomial figure-8 trajectory with joint-space virtual spring-damper compliance (Track 02 & Track 06 Tier 1).
 - **Curated Free Resources:**
   - 🔗 [SimpleFOC Project Hub: Dual-Motor Gimbal & 2-DOF Arm Examples](https://docs.simplefoc.com/examples) — *Complete wiring schematics and dual-axis closed-loop position/torque sketches for `ESP32` and `STM32`.*
+  - 🔗 [SO-101 / SO-ARM100 Open-Source 3D-Printed 6-DOF Leader-Follower Arm (TheRobotStudio)](https://github.com/TheRobotStudio/SO-ARM100) — *$\$110\text{–}\$130$ open-source 3D-printed desktop manipulator natively supported by Hugging Face `LeRobot` for teleoperation and imitation learning.*
+  - 🔗 [LeKiwi Open-Source 3-Wheel Omnidirectional Holonomic Mobile Base (SIGRobotics-UIUC)](https://github.com/SIGRobotics-UIUC/LeKiwi) — *Low-cost holonomic mobile base designed to carry the `SO-101` arm for mobile manipulation.*
   - 🔗 [Lab Workbench Bill of Materials (`resources/lab-workbench-bom.md`)](../resources/lab-workbench-bom.md) — *Exact part numbers and budget links for all Tier 1 breakout modules, encoders, bearings, and bench tools.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Program your 2-DOF planar arm ($L_1 = L_2 = 0.10\text{ m}$) to trace a continuous figure-8 trajectory $x_d(t) = 0.12 + 0.03\sin(2\pi f t)$, $y_d(t) = 0.04\sin(4\pi f t)$ at $f = 0.5\text{ Hz}$ using analytical Law-of-Cosines IK and soft joint PD springs ($K_p = 1.5\text{ N}\cdot\text{m/rad}, K_d = 0.08\text{ N}\cdot\text{m}\cdot\text{s/rad}$). Verify that you can block the tip with two fingers and release it smoothly without triggering a brown-out or oscillation.
@@ -62,6 +64,8 @@
   * **Control & Digital Twin:** Validated URDF/MuJoCo model (`models/capstone2-furuta-pendulum/furuta_pendulum.xml` or `models/capstone4-qdd-hopper/qdd_hopper_leg.xml`) executing either Åström-Furuta energy swing-up + discrete LQR balancing or Jacobian Transpose Cartesian compliance ($\tau = J^\top F_{\text{cart}} + g(q)$) with `Ruckig` S-curves (Track 02, Track 05, Track 06 Tier 2).
 - **Curated Free Resources:**
   - 🔗 [Ben Katz MIT Mini-Cheetah Actuator Hardware & Firmware Repository](https://github.com/bgkatz/3phase_integrated) — *Open-source reference schematic, layout, and firmware for integrated brushless robot actuators.*
+  - 🔗 [Stanford Pupper / Open-Duck-Mini Open-Source Legged Platforms](https://github.com/apirrone/Open_Duck_Mini) — *Open-source quadruped and biped builds demonstrating sim-to-real MuJoCo/Isaac reinforcement learning and custom actuator integration.*
+  - 🔗 [Universal Manipulation Interface (`UMI`, `umi-gripper.github.io`)](https://umi-gripper.github.io/) — *3D-printed handheld GoPro + IMU + ArUco gripper for collecting in-the-wild visuomotor Diffusion Policy demonstrations.*
   - 🔗 [MuJoCo Python Bindings (`mujoco` pip package) & Interactive Viewer Documentation](https://mujoco.readthedocs.io/en/stable/python.html) — *Load `./models/capstone2-furuta-pendulum/furuta_pendulum.xml` directly in Python at $1\text{ kHz}$ to co-simulate your LQR controller alongside hardware.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 08-capstone-projects/models/validate_models.py` to verify all URDF and MuJoCo MJCF inertial matrices across Capstones 2, 3, and 4, and test the full swing-up + LQR + CBF safety filter in **Tab 4** and **Tab 5** of the interactive workbench.
@@ -229,6 +233,7 @@ flowchart TB
 
 - **Curated Free Resources:**
   - 🔗 [URDF (`models/capstone3-6dof-arm/manipulator_6dof.urdf`)](models/capstone3-6dof-arm/manipulator_6dof.urdf) & [MuJoCo MJCF (`manipulator_6dof.xml`)](models/capstone3-6dof-arm/manipulator_6dof.xml) — *Complete 6-DOF spatial manipulator model with full 3D inertia tensors.*
+  - 🔗 [ALOHA 2 (`aloha-2.github.io`) & Pollen Robotics `Reachy 2` (`pollen-robotics.com`)](https://aloha-2.github.io/) — *Open-source bimanual and humanoid manipulation hardware blueprints and `ros2_control` stacks.*
   - 🔗 [Pinocchio C++/Python Rigid Body Dynamics Library](https://stack-of-tasks.github.io/pinocchio/) — *Computes 6-DOF RNEA, CRBA, $J(q)$, and $\Lambda(q)$ in $< 5\ \mu\text{s}$.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: 6-DOF Spatial PoE & RNEA** and **Tab 5: URDF / MuJoCo & STO** to inspect the 6-DOF arm's space screw axes $\mathcal{S}_1 \dots \mathcal{S}_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).

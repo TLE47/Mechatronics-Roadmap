@@ -51,7 +51,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   $$V_{\text{motor}} = (D_A - D_B)V_{\text{bus}}, \qquad P_{\text{cond}} = I_{\text{motor}}^2 R_{DS(\text{on})}$$
 - **Curated Free Resources:**
   - 🔗 [Texas Instruments SLVA959: Brushed DC Motor Driver Basics (H-Bridge Decay Modes)](https://www.ti.com/lit/pdf/slva959) — *Illustrates Forward, Reverse, Fast Decay (Coast), and Slow Decay (Brake) current loops inside an H-bridge.*
-  - 🔗 [Adafruit DRV8833 DC/Stepper Motor Driver Breakout Guide](https://learn.adafruit.com/adafruit-drv8833-dc-stepper-motor-driver-breakout-board) — *Beginner wiring guide showing `AIN1/AIN2` PWM inputs, current limiting, and `nFAULT` protection.*
+  - 🔗 [Adafruit DRV8833 DC/Stepper Motor Driver Breakout Guide](https://learn.adafruit.com/adafruit-drv8833-dc-stepper-motor-driver-breakout-board) & [Practical Electronics for Inventors (Scherz & Monk)](https://www.mhprofessional.com/practical-electronics-for-inventors-fifth-edition-9781264268856-usa) — *Beginner wiring guide showing `AIN1/AIN2` PWM inputs, current limiting, and `nFAULT` protection.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a `DRV8833` or `TB6612FNG` breakout on a breadboard to drive a $12\text{ V}$ gearmotor using $20\text{ kHz}$ PWM. Compare the stopping distance of the output shaft when switching PWM to **Coast** (`IN1=0, IN2=0`) versus **Active Dynamic Brake** (`IN1=1, IN2=1`).
 - **🧠 Knowledge Check:**
@@ -100,8 +100,8 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 - **Core Summary:** Introduces custom PCB engineering in KiCad using a 4-layer stackup (`L1: Signal/Power` $\to$ `L2: Unbroken Solid GND` $\to$ `L3: Power Pours` $\to$ `L4: Signals`), Design Rule Checks (DRC), thermal via stitching under MOSFET pads, and desktop SMD reflow assembly (`0603`, `SOIC`, `QFN`).
   $$L_{\text{loop}} \approx \mu_0 \frac{h_{\text{prepreg}}}{w_{\text{trace}}}\ell, \qquad R_{\theta,\text{via\_array}} = \frac{R_{\theta,\text{single\_via}}}{N_{\text{vias}}}$$
 - **Curated Free Resources:**
-  - 🔗 [KiCad Official Getting Started & Layout Documentation (docs.kicad.org)](https://docs.kicad.org/) — *Step-by-step workflow from schematic symbols to 4-layer routing, DRC verification, and Gerber/BOM generation.*
-  - 🔗 [Phil's Lab STM32 & Mixed-Signal KiCad Hardware Design Tutorials (YouTube)](https://www.youtube.com/c/PhilsLab) — *Detailed video walkthroughs of 4-layer stackups, grounding, decoupling placement, and JLCPCB SMT assembly.*
+  - 🔗 [KiCad Official Getting Started & Layout Documentation (docs.kicad.org)](https://docs.kicad.org/) & [LTspice Free SPICE Simulator (Analog Devices)](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) — *Step-by-step workflow from SPICE gate-drive simulation and schematic symbols to 4-layer routing, DRC verification, and Gerber/BOM generation.*
+  - 🔗 [Phil's Lab STM32 & Mixed-Signal KiCad Hardware Design Tutorials (YouTube)](https://www.youtube.com/c/PhilsLab) & [The Art of Electronics (Horowitz & Hill)](https://artofelectronics.net/) — *Detailed video walkthroughs of 4-layer stackups, grounding, decoupling placement, and JLCPCB SMT assembly.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench and compare the **2-Layer Poor Layout (5.2 nH)** preset against the **6-Layer Production Stackup (1.6 nH)** to see how placing a solid ground plane $0.1\text{–}0.2\text{ mm}$ underneath the power loop cuts voltage overshoot from $62.4\text{ V}$ to $53.1\text{ V}$.
 - **🧠 Knowledge Check:**

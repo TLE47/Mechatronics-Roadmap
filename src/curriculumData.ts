@@ -533,6 +533,11 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
         url: 'https://hades.mech.northwestern.edu/index.php/Modern_Robotics',
         note: 'Derives cubic, quintic, and trapezoidal velocity profiles with clear diagrams.',
       },
+      {
+        label: 'Webots Open-Source Robot Simulator & OpenPLC IEC 61131-3 Runtime',
+        url: 'https://cyberbotics.com/',
+        note: 'Zero-setup 3D robot simulator and deterministic industrial PLC scan-cycle runtime.',
+      },
     ],
     quiz: {
       q1: 'Why should an industrial or benchtop Emergency Stop (E-Stop) button be wired as Normally Closed (NC) rather than Normally Open (NO)?',
@@ -544,13 +549,13 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
   {
     stepNumber: 'T1 · Step 8 / 8 (LEVEL-UP BOSS)',
     trackCode: 'TRACK 08 (TIER 1 CAPSTONE)',
-    trackTitle: 'Tier 1 Graduation Capstone: Off-the-Shelf 2-DOF Compliant Desktop Robot',
+    trackTitle: 'Tier 1 Graduation Capstone: Off-the-Shelf 2-DOF Compliant Desktop Robot / SO-101 / LeKiwi',
     tierBadge: 'TIER 1 · BOSS GATE',
     headline: 'Integrate Everything from Pass 1 into a Complete Working Desktop Robot to Unlock Tier 2',
     coreWhy:
-      'Before moving to custom PCBs, SMD soldering, and advanced matrix control in Tier 2, consolidate your Tier 1 skills by building an end-to-end 2-DOF planar arm or desktop inverted pendulum using off-the-shelf breakout modules.',
+      'Before moving to custom PCBs, SMD soldering, and advanced matrix control in Tier 2, consolidate your Tier 1 skills by building an end-to-end 2-DOF planar arm, desktop inverted pendulum, or open-source SO-101 / LeKiwi robot using off-the-shelf modules.',
     topics: [
-      'Hardware Stack: ESP32 or STM32 Nucleo + 2× SimpleFOCMini (DRV8313) breakouts + 2× AS5600/AS5048 magnetic encoders + 3D-printed 2-link arm.',
+      'Hardware Stack: ESP32 or STM32 Nucleo + 2× SimpleFOCMini (DRV8313) breakouts + 2× AS5600/AS5048 magnetic encoders + 3D-printed 2-link arm (or SO-ARM100 / SO-101 / LeKiwi).',
       'Firmware Stack: 1 kHz hardware timer ISR + binary UART telemetry + anti-windup PD/PID control.',
       'Control Demo: Command smooth circle trajectories via 2D inverse kinematics and demonstrate compliant hand-guiding.',
     ],
@@ -566,6 +571,11 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
         label: 'SimpleFOC Community Projects Showcase',
         url: 'https://community.simplefoc.com/',
         note: 'Open-source desktop robot arms and pendulums built with breakout modules.',
+      },
+      {
+        label: 'TheRobotStudio SO-ARM100 / SO-101 & LeKiwi Open-Source Robots',
+        url: 'https://github.com/TheRobotStudio/SO-ARM100',
+        note: 'Flagship low-cost ($110–$250) 3D-printable leader-follower arms and mobile bases from awesome-mechatronics.',
       },
       {
         label: 'ODrive Robotics Open-Source Hardware & Docs Archive',
@@ -911,6 +921,11 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
         url: 'https://github.com/pantor/ruckig',
         note: 'Open-source C++/Python library for time-optimal S-curve trajectories.',
       },
+      {
+        label: 'ROS 2 (ros2_control / MoveIt 2 / Nav2) & OPC UA (open62541)',
+        url: 'https://control.ros.org/',
+        note: 'Production robotics middleware, Gazebo simulation, and industrial OT-to-IT semantic telemetry.',
+      },
     ],
     quiz: {
       q1: 'Why does τ = J(q)ᵀ F_x remain completely well-defined and stable even when the robot arm stretches straight out into a kinematic singularity (det(J) = 0)?',
@@ -922,15 +937,15 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
   {
     stepNumber: 'T2 · Step 8 / 8 (LEVEL-UP BOSS)',
     trackCode: 'TRACK 08 (TIER 2 CAPSTONE)',
-    trackTitle: 'Tier 2 Graduation Capstone: Custom 4-Layer CAN Servo + LQR/Impedance Robot',
+    trackTitle: 'Tier 2 Graduation Capstone: Custom 4-Layer CAN Servo + LQR/Impedance Robot / Pupper / UMI',
     tierBadge: 'TIER 2 · BOSS GATE',
     headline: 'Complete Your Applied Engineering Pass to Unlock Tier 3 Production Mastery',
     coreWhy:
       'You have transitioned from breadboards and maker libraries to custom KiCad PCBs, SMD assembly, DMA-driven RTOS firmware, MuJoCo physics models, and model-based LQR/Cartesian control.',
     topics: [
-      'Hardware Deliverable: Custom 4-layer motor/sensor PCB with Kelvin current sensing and CAN-FD transceiver.',
+      'Hardware Deliverable: Custom 4-layer motor/sensor PCB with Kelvin current sensing and CAN-FD transceiver (or mjbots moteus / VESC / ODrive).',
       'Firmware Deliverable: DMA-backed SPI/ADC pipeline + Type-II velocity PLL + MIT-mode CAN impedance loop.',
-      'Control Deliverable: Validated MuJoCo digital twin + autonomous swing-up LQR or multi-DOF Cartesian compliance.',
+      'Control Deliverable: Validated MuJoCo digital twin + autonomous swing-up LQR, Stanford Pupper, or UMI Gripper.',
     ],
     equation: '\\tau_{\\text{cmd}} = K_p(q_{\\text{des}} - q) + K_d(v_{\\text{des}} - \\hat{v}_{\\text{PLL}}) + \\tau_{\\text{ff}}',
     milestoneId: 't2_tr08',
@@ -946,9 +961,9 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
         note: 'The seminal open-access reference for custom FOC motor controllers, planetary QDD actuators, and MIT CAN mode.',
       },
       {
-        label: 'Open Dynamic Robot Initiative (ODRI)',
+        label: 'Open Dynamic Robot Initiative (ODRI) & Universal Manipulation Interface (UMI)',
         url: 'https://open-dynamic-robot-initiative.github.io/',
-        note: 'Complete open-source mechanical, PCB, and firmware files for torque-controlled legged robots.',
+        note: 'Complete open-source mechanical, PCB, and firmware files for torque-controlled robots and manipulation grippers.',
       },
     ],
     quiz: {
@@ -1055,19 +1070,19 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
   {
     stepNumber: 'T3 · Step 3 / 8',
     trackCode: 'TRACK 02 (TIER 3)',
-    trackTitle: 'Screw PoE Kinematics, Paros-Weisbord Flexures & Featherstone O(n) RNEA',
+    trackTitle: 'Screw PoE Kinematics, Flexures, O(n) RNEA & GPU Physics (Newton / Isaac Lab)',
     tierBadge: 'TIER 3 · PRODUCTION',
-    headline: 'Sub-Micron Monolithic Flexure Hinges, Kelvin 3-2-1 Couplings & O(n) Spatial Dynamics',
+    headline: 'Sub-Micron Monolithic Flexure Hinges, Kelvin 3-2-1 Couplings, O(n) RNEA & GPU Physics',
     coreWhy:
-      'Precision lithography stages and legged robots demand zero-backlash mechanics and microsecond dynamics evaluation. Here you combine monolithic titanium flexures with Featherstone’s linear-time Recursive Newton-Euler Algorithm.',
+      'Precision lithography stages and legged robots demand zero-backlash mechanics, microsecond dynamics evaluation, and massively parallel GPU simulation.',
     topics: [
       'Paros-Weisbord Circular Notch Flexures & Hertzian Kelvin Couplings: Designing monolithic Ti-6Al-4V elastic hinges (k_θ = 2Ebt^(5/2)/(9π√R)) and 3-2-1 kinematic mounts.',
       'Screw Theory Product of Exponentials (PoE): Computing forward kinematics and space/body Jacobians via matrix exponentials of 6D screw axes.',
-      'Featherstone O(n) Spatial RNEA: Forward velocity/acceleration pass + backward wrench pass in 6D Plücker coordinates, verified against analytical Euler-Lagrange.',
+      'Featherstone O(n) Spatial RNEA (Pinocchio) & GPU Physics (Linux Foundation Newton / MuJoCo-Warp / NVIDIA Isaac Lab v3.0 / Genesis).',
     ],
     bridgeTitle: 'Bridging Tier 2 → Tier 3 (Spatial Dynamics & Precision CAD)',
     bridgeFrom: 'Tier 2: Standard ball-bearing joints & numerical finite-difference Jacobians',
-    bridgeTo: 'Tier 3: Monolithic Flexures / 8:1 QDD Carrier + Analytical O(n) RNEA',
+    bridgeTo: 'Tier 3: Monolithic Flexures / 8:1 QDD Carrier + Analytical O(n) RNEA + GPU Sim',
     bridgeHow:
       'Replace rolling-element bearings in short-stroke precision axes with wire-EDM notch flexures, and compute exact inverse dynamics feedforward torques τ_ff = RNEA(q, q̇, q̈_d) inside your 1 kHz control loop.',
     equation: 'M(q)\\ddot{q} + C(q,\\dot{q})\\dot{q} + g(q) = \\tau, \\qquad k_\\theta = \\frac{2 E b t^{5/2}}{9\\pi\\sqrt{R}}',
@@ -1079,9 +1094,14 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     presetLabel: 'Inspect Ti-6Al-4V Flexure CAD (Tab 6)',
     studyLinks: [
       {
-        label: 'Roy Featherstone: Spatial Vector Algebra & RNEA Notes',
-        url: 'https://royfeatherstone.org/spatial/',
-        note: 'Official reference notes and code for 6D Plücker coordinates and O(n) RNEA.',
+        label: 'Roy Featherstone: Spatial Vector Algebra & Pinocchio O(n) Library',
+        url: 'https://github.com/stack-of-tasks/pinocchio',
+        note: 'Official reference notes and C++/Python code for 6D Plücker coordinates and O(n) RNEA.',
+      },
+      {
+        label: 'Newton GPU Physics (Linux Foundation) & NVIDIA Isaac Lab v3.0',
+        url: 'https://github.com/newton-physics/newton',
+        note: 'Open-source GPU-accelerated differentiable physics engine (NVIDIA Warp + DeepMind MuJoCo-Warp).',
       },
       {
         label: 'Modern Robotics Ch. 4, 5 & 8 (Screw PoE & Dynamics)',
@@ -1128,7 +1148,7 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
         note: 'Proves the mathematical equivalence of 7-segment SVPWM and min-max neutral injection.',
       },
       {
-        label: 'Ben Katz Thesis Ch. 3: High-Bandwidth Current Control & Encoder Calibration',
+        label: 'Ben Katz Thesis Ch. 3 & VESC / mjbots moteus Open-Source Firmware',
         url: 'https://dspace.mit.edu/handle/1721.1/118671',
         note: 'Details pole-zero cancellation PI tuning and lookup-table eccentricity calibration.',
       },
@@ -1143,19 +1163,19 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
   {
     stepNumber: 'T3 · Step 5 / 8',
     trackCode: 'TRACK 04 (TIER 3)',
-    trackTitle: 'Bare-Metal STM32G474 TIM1→ADC Triggering, CORDIC & C++20 `WaitFreeSeqLock<T>`',
+    trackTitle: 'Bare-Metal STM32G474 TIM1→ADC, CORDIC, Embedded Rust (Embassy/RTIC) & `WaitFreeSeqLock<T>`',
     tierBadge: 'TIER 3 · PRODUCTION',
     headline: 'Zero Heap Allocations, 6-Cycle Hardware CORDIC & 30 ns Lock-Free Multi-Thread Telemetry',
     coreWhy:
       'In a 40 kHz ISR (25 µs budget), a mutex lock or torn struct read between the motor interrupt and the 1 kHz planner causes violent torque glitches. Lock-free sequence locks guarantee atomic multi-word transfers in <30 ns.',
     topics: [
       'Hardware Autonomous Trigger Chain: `TIM1_TRGO2` center-aligned peak trigger → simultaneous `ADC1`/`ADC2` Kelvin shunt sampling → DMA completion ISR.',
-      'STM32G474 Hardware CORDIC & Zero-Wait-State CCM SRAM: Computing Q1.31 sin/cos in 6 clock cycles and executing the entire ISR from Tightly Coupled Memory.',
+      'STM32G474 Hardware CORDIC, Zero-Wait-State CCM SRAM & Embedded Rust (`Embassy` / `RTIC` Stack Resource Policy).',
       'C++20 `WaitFreeSeqLock<T>`: Using `std::atomic<uint32_t>` odd/even sequence counters with `memory_order_acquire`/`release` so the 1 kHz reader retries automatically if preempted by the 40 kHz ISR.',
     ],
     bridgeTitle: 'Bridging Tier 2 → Tier 3 (Hard Real-Time Concurrency)',
     bridgeFrom: 'Tier 2: RTOS Mutexes / Critical Sections (`taskENTER_CRITICAL()`) that add ISR jitter',
-    bridgeTo: 'Tier 3: Zero-Jitter `WaitFreeSeqLock<T>` + CCM SRAM Execution',
+    bridgeTo: 'Tier 3: Zero-Jitter `WaitFreeSeqLock<T>` + CCM SRAM Execution + RTIC/Embassy',
     bridgeHow:
       'Wrap your shared telemetry struct in a template `WaitFreeSeqLock<ActuatorState>`: the writer increments `seq` to odd before writing and even after; the reader loops `do { s0 = seq; copy; s1 = seq; } while (s0 != s1 || (s0 & 1));`.',
     equation: '\\text{SeqLock Retry Condition: } (s_0 \\neq s_1) \\lor (s_0 \\bmod 2 = 1)',
@@ -1170,6 +1190,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
         label: 'STM32G474 Reference Manual RM0440 (TIM1, ADC & CORDIC)',
         url: 'https://www.st.com/resource/en/reference_manual/rm0440-stm32g4-series-advanced-armbased-32bit-mcus-stmicroelectronics.pdf',
         note: 'Complete hardware reference for center-aligned PWM triggers and CORDIC acceleration.',
+      },
+      {
+        label: 'Embedded Rust Concurrency: RTIC (rtic.rs) & Embassy (embassy.dev)',
+        url: 'https://rtic.rs/',
+        note: 'Compile-time race-and-deadlock-free embedded firmware frameworks from awesome-mechatronics.',
       },
       {
         label: 'Preshing on Programming: Acquire and Release Semantics',
@@ -1187,14 +1212,14 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
   {
     stepNumber: 'T3 · Step 6 / 8',
     trackCode: 'TRACK 05 (TIER 3)',
-    trackTitle: 'Joseph-Form Manifold ESKF, Receding-Horizon MPC & Control Barrier Function QPs',
+    trackTitle: 'Joseph-Form Manifold ESKF, Embedded MPC (`acados`/`TinyMPC`) & Control Barrier QPs',
     tierBadge: 'TIER 3 · PRODUCTION',
     headline: 'Estimate Hidden Gyro Biases on SO(3) & Enforce Hard Workspace Walls via Real-Time CBF-QPs',
     coreWhy:
       'Standard covariance updates P = (I - KH)P lose symmetry and go negative-definite in finite precision. Joseph-form updates guarantee positive-definiteness, while Control Barrier Functions act as a provable mathematical safety shield.',
     topics: [
       'Joseph-Form Manifold ESKF: Fusing 6-DOF IMU + vector observations to estimate attitude and hidden gyro bias b_g with χ²₆ NEES consistency.',
-      'Box-Constrained Model Predictive Control (MPC): Solving multi-step lookahead trajectories under hard actuator voltage/torque limits.',
+      'Box-Constrained Model Predictive Control (MPC): Solving multi-step lookahead trajectories via `acados`, `OSQP`, and `TinyMPC` under hard actuator limits.',
       'Exponential Control Barrier Functions (ECBF-QP): Filtering nominal LQR/MPC commands via h(x, ẋ) = (x_max - |x|) - |ẋ|/α ≥ 0 so the robot decelerates smoothly before hitting physical walls.',
     ],
     bridgeTitle: 'Bridging Tier 2 → Tier 3 (Certifiable Estimation & Safety)',
@@ -1220,6 +1245,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
         url: 'https://arxiv.org/abs/1903.11199',
         note: 'Foundational tutorial on CBF-QP safety filters and relative-degree-2 ECBFs.',
       },
+      {
+        label: 'TinyMPC & OSQP Embedded Convex Optimization Solvers',
+        url: 'https://tinympc.org/',
+        note: 'Sub-millisecond ADMM solvers for real-time microcontroller MPC and CBF-QP.',
+      },
     ],
     quiz: {
       q1: 'Why does the standard Kalman covariance update P⁺ = (I - KH)P⁻ fail in long-running 32-bit float firmware, and how does the Joseph form fix it?',
@@ -1231,21 +1261,21 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
   {
     stepNumber: 'T3 · Step 7 / 8',
     trackCode: 'TRACK 06 & 07 (TIER 3)',
-    trackTitle: 'Khatib Operational-Space WBC, Schroeder Multisine SysID & <1 µs Dual-Channel STO',
+    trackTitle: 'Khatib Operational WBC, Embodied AI (LeRobot / VLAs), Schroeder SysID & <1 µs STO',
     tierBadge: 'TIER 3 · PRODUCTION',
-    headline: 'Dynamically Consistent Null-Space Control, Low-Crest-Factor SysID & IEC 61800-5-2 Hardware STO',
+    headline: 'Dynamically Consistent WBC, Visuomotor Diffusion/VLA Policies, Schroeder SysID & Hardware STO',
     coreWhy:
-      'Production robots must identify their own resonances in closed loop without saturating actuators, decouple multi-link inertia during contact tasks, and cut MOSFET gate power in <1 µs via redundant hardware paths if a short occurs.',
+      'Production robots combine Khatib operational-space impedance and learned visuomotor policies (LeRobot, ACT, Diffusion Policy, π₀/OpenVLA) with closed-loop Schroeder system identification, IEC 63278 AAS digital twins, and <1 µs dual-channel hardware STO.',
     topics: [
-      'Khatib Operational-Space Inertia Λ(q) & Null-Space Projector Nᵀ = I - Jᵀ J̄ᵀ: Zero end-effector acceleration coupling from secondary posture tasks.',
+      'Khatib Operational-Space Inertia Λ(q) & Null-Space Projector Nᵀ = I - Jᵀ J̄ᵀ + Embodied AI (`Hugging Face LeRobot`, `ACT`, `Diffusion Policy`, `π₀ / openpi`, `SmolVLA`, `GR00T N1.6`).',
       'Schroeder Quadratic-Phase Multisine SysID: Injecting M harmonics with φ_k = -πk(k-1)/M (Crest Factor = 1.66) to estimate P̂(jω) = S_yd / S_ud in closed loop.',
-      'IEC 61800-5-2 Dual-Channel Safe Torque Off (STO): Independent hardware `STO_A` + `STO_B` gate cutoff in 0.65 µs (<1 µs) with 100 µs boot dark-pulse BIST diagnostics.',
+      'IEC 61800-5-2 / ISO 10218:2025 Dual-Channel Safe Torque Off (STO <1 µs) & IEC 63278 Asset Administration Shell (AAS) Digital Twins.',
     ],
-    bridgeTitle: 'Bridging Tier 2 → Tier 3 (Production WBC, SysID & Functional Safety)',
+    bridgeTitle: 'Bridging Tier 2 → Tier 3 (Production WBC, Embodied AI, SysID & Safety)',
     bridgeFrom: 'Tier 2: Single-tone sine sweeps, kinematic pseudoinverses & software fault checks',
-    bridgeTo: 'Tier 3: Schroeder Multisine Closed-Loop FRF + Inertia-Weighted J̄ + <1 µs Hardware STO',
+    bridgeTo: 'Tier 3: Schroeder Closed-Loop FRF + Inertia-Weighted J̄ + LeRobot VLA + <1 µs STO',
     bridgeHow:
-      'Replace zero-phase multisine bursts (which spike at t=0 and clip amplifiers) with Schroeder quadratic phases, and wire overcurrent comparator outputs directly to `TIM1_BKIN` and the gate driver enable pin.',
+      'Run high-level visuomotor action-chunking policies at 30–50 Hz with Real-Time Chunking (RTC) while enforcing 1 kHz Khatib operational impedance, CBF-QP workspace walls, and <1 µs hardware STO on the real-time controller.',
     equation: '\\phi_k^{\\text{Schroeder}} = -\\frac{\\pi k(k-1)}{M}, \\qquad \\Lambda(q) = (J M^{-1} J^\\top)^{-1}',
     milestoneId: 't3_tr06',
     milestoneTask: 'Compare Schroeder vs. Zero-Phase Clipping in Tab 7, and trigger the <1 µs 42A Short Desat Trip in Tab 5.',
@@ -1260,7 +1290,12 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
         note: 'Seminal paper deriving Λ(q) and the dynamically consistent generalized inverse J̄.',
       },
       {
-        label: 'TI SLLA547: Functional Safety Dual-Channel Safe Torque Off (STO) Design',
+        label: 'Hugging Face LeRobot & Robot Learning: A Tutorial (arXiv:2510.12403)',
+        url: 'https://github.com/huggingface/lerobot',
+        note: 'End-to-end PyTorch toolkit for ACT, Diffusion Policy, Flow Matching (π₀), and SmolVLA.',
+      },
+      {
+        label: 'TI SLLA547: Functional Safety Dual-Channel Safe Torque Off (STO) & IEC 63278 AAS',
         url: 'https://www.ti.com/lit/pdf/slla547',
         note: 'Hardware schematic architectures for IEC 61800-5-2 SIL-3 Safe Torque Off.',
       },
@@ -1275,16 +1310,16 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
   {
     stepNumber: 'T3 · Step 8 / 8 (FINAL MASTERY)',
     trackCode: 'TRACK 08 (TIER 3 CAPSTONES)',
-    trackTitle: 'Full Production Capstones I–IV: 48V FOC Drive, Furuta, 6-DOF Arm & QDD Hopper',
+    trackTitle: 'Full Production Capstones I–V: 48V FOC Drive, Furuta, 6-DOF Arm, QDD Hopper & ALOHA 2 / Reachy 2',
     tierBadge: 'TIER 3 · MASTERY',
-    headline: 'Complete All 4 Production Capstones & Pass All 12 Automated Verification Suites',
+    headline: 'Complete All Production Capstones & Pass All 12 Automated Verification Suites',
     coreWhy:
-      'You have completed all three passes across the mechatronics roadmap—progressing from Level 0 hydraulic analogies and breadboards to full production-grade electromechanical co-design.',
+      'You have completed all three passes across the mechatronics roadmap—progressing from Level 0 hydraulic analogies and breadboards to full production-grade electromechanical and Embodied AI co-design.',
     topics: [
       'Capstone I: 48V / 30A FOC Smart Actuator (KiCad netlist, $40.47 BOM, thermal solver, STM32G474 40 kHz C++20 firmware).',
       'Capstone II: Furuta Rotary Inverted Pendulum (URDF/MJCF + Swing-Up + LQR + ECBF-QP safety walls).',
-      'Capstone III: 6-DOF Serial Manipulator (Screw PoE + O(n) RNEA + Khatib Operational-Space Impedance + Ruckig).',
-      'Capstone IV: 3-DOF QDD Hopping Leg (8:1 7075-T6 planetary carrier STEP/STL + Joseph ESKF + contact-scheduled WBC).',
+      'Capstone III: 6-DOF Force-Controlled Manipulator / ALOHA 2 / Reachy 2 (Screw PoE + O(n) RNEA + Khatib WBC + LeRobot VLA).',
+      'Capstone IV: 3-DOF QDD Hopping Leg / ODRI / Open-Duck-Mini (8:1 7075-T6 planetary carrier STEP/STL + Joseph ESKF + WBC).',
     ],
     equation: '\\text{All 12 Hardware, CAD, PCB, Firmware & Control Verification Gates} = \\text{PASS}',
     milestoneId: 't3_tr08',
@@ -1298,6 +1333,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
         label: 'NASA Systems Engineering Handbook (SP-2016-6105 Rev2)',
         url: 'https://www.nasa.gov/reference/systems-engineering-handbook/',
         note: 'Authoritative guide to cyber-physical system verification, HIL testing, and qualification.',
+      },
+      {
+        label: 'ALOHA 2, Pollen Reachy 2 & Open-Duck-Mini Open-Source Platforms',
+        url: 'https://aloha-2.github.io/',
+        note: 'Full CAD, BOM, and policy code for bimanual manipulation and bipedal locomotion.',
       },
       {
         label: 'ETH Zürich Robotic Systems Lab (RSL) Publications',
