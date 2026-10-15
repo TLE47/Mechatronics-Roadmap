@@ -427,7 +427,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
       'The `volatile` Keyword & Register Basics: Why the C++ compiler caches variables in CPU registers and why any flag shared with an ISR must be declared `volatile` or `std::atomic`.',
       'Binary Telemetry Structs + Checksum: Packing floats/ints into a compact C struct with a `0xAA 0x55` sync header and 8-bit XOR/CRC checksum for 1 kHz plotting.',
     ],
-    equation: 'f_{\\text{ISR}} = \\frac{f_{\\text{timer\\_clk}}}{(\\text{PSC}+1)(\\text{ARR}+1)} = 1000\\text{ Hz}, \\qquad \\text{Jitter} < 2\\ \\mu\\text{s}',
+    equation: 'f_{\\text{ISR}} = \\frac{f_{\\text{timer}\\_\\text{clk}}}{(\\text{PSC}+1)(\\text{ARR}+1)} = 1000\\text{ Hz}, \\qquad \\text{Jitter} < 2\\ \\mu\\text{s}',
     milestoneId: 't1_tr04',
     milestoneTask: 'Refactor an Arduino/STM32 loop into a hardware-timed 1 kHz ISR, toggle a GPIO debug pin inside the ISR to verify exact 1.000 ms spacing on a scope/logic analyzer, and stream binary packets.',
     deliverableGate: 'Tier 1.4 Gate: 1 kHz hardware-timer ISR verified on scope + binary packet parser.',

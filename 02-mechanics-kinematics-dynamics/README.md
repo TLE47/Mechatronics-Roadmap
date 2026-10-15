@@ -83,7 +83,7 @@ $$
 - **Core Summary:** Teaches foundational mechanical assembly rules for makers: supporting joint shafts in **double shear** with two spaced radial ball bearings (`608` / `6804`), tensioning `GT2` fiberglass-core timing belts, and orienting 3D-printed FDM layer lines perpendicular to bending loads.
 
 $$
-F_{\text{radial\_bearing}} = T_{\text{belt\_preload}} + \frac{\tau_{\text{pulley}}}{r_{\text{pitch}}}, \qquad \delta_{\text{cantilever}} = \frac{F L^3}{3 E I} \gg \delta_{\text{double\_shear}} = \frac{F L^3}{192 E I}
+F_{\text{radial}\_\text{bearing}} = T_{\text{belt}\_\text{preload}} + \frac{\tau_{\text{pulley}}}{r_{\text{pitch}}}, \qquad \delta_{\text{cantilever}} = \frac{F L^3}{3 E I} \gg \delta_{\text{double}\_\text{shear}} = \frac{F L^3}{192 E I}
 $$
 
 - **Curated Free Resources:**

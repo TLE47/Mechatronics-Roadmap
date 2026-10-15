@@ -28,7 +28,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 - **Core Summary:** Explains why applying $5\text{ V}$ signals to non-$5\text{V}$-tolerant $3.3\text{ V}$ microcontroller pins (`ESP32`, `RP2040`, `STM32` analog pins) forward-biases internal ESD protection diodes to `VDD`, and how open-drain buses (`I2C`) and `BSS138` level shifters safely bridge voltage domains.
 
 $$
-I_{\text{ESD\_fault}} = \frac{V_{\text{in}} - (V_{DD} + 0.6\text{ V})}{R_{\text{source}}}, \qquad t_{r,\text{I2C}} \approx 0.8473 \cdot R_{\text{pullup}} C_{\text{bus}}
+I_{\text{ESD}\_\text{fault}} = \frac{V_{\text{in}} - (V_{DD} + 0.6\text{ V})}{R_{\text{source}}}, \qquad t_{r,\text{I2C}} \approx 0.8473 \cdot R_{\text{pullup}} C_{\text{bus}}
 $$
 
 - **Curated Free Resources:**
@@ -79,7 +79,7 @@ $$
 - **Core Summary:** Diagnoses and cures the #1 beginner robotics failure—MCU brown-out resets during motor reversals—by separating noisy motor return currents from logic ground (Star Grounding) and pairing a $470\ \mu\text{F}$ bulk electrolytic reservoir on `VMOT` with a $100\text{ nF}$ ceramic bypass cap on `3.3V`.
 
 $$
-\Delta V_{\text{GND\_bounce}} = I_{\text{stall}}R_{\text{wire}} + L_{\text{wire}}\frac{dI_{\text{motor}}}{dt}, \qquad C_{\text{bulk}} \ge \frac{I_{\text{surge}}\Delta t_{\text{surge}}}{\Delta V_{\text{droop}}}
+\Delta V_{\text{GND}\_\text{bounce}} = I_{\text{stall}}R_{\text{wire}} + L_{\text{wire}}\frac{dI_{\text{motor}}}{dt}, \qquad C_{\text{bulk}} \ge \frac{I_{\text{surge}}\Delta t_{\text{surge}}}{\Delta V_{\text{droop}}}
 $$
 
 - **Curated Free Resources:**
@@ -112,7 +112,7 @@ $$
 - **Core Summary:** Introduces custom PCB engineering in KiCad using a 4-layer stackup (`L1: Signal/Power` $\to$ `L2: Unbroken Solid GND` $\to$ `L3: Power Pours` $\to$ `L4: Signals`), Design Rule Checks (DRC), thermal via stitching under MOSFET pads, and desktop SMD reflow assembly (`0603`, `SOIC`, `QFN`).
 
 $$
-L_{\text{loop}} \approx \mu_0 \frac{h_{\text{prepreg}}}{w_{\text{trace}}}\ell, \qquad R_{\theta,\text{via\_array}} = \frac{R_{\theta,\text{single\_via}}}{N_{\text{vias}}}
+L_{\text{loop}} \approx \mu_0 \frac{h_{\text{prepreg}}}{w_{\text{trace}}}\ell, \qquad R_{\theta,\text{via}\_\text{array}} = \frac{R_{\theta,\text{single}\_\text{via}}}{N_{\text{vias}}}
 $$
 
 - **Curated Free Resources:**
@@ -137,7 +137,7 @@ $$
 - **Core Summary:** Explains how a floating bootstrap capacitor ($C_{\text{boot}}$) and diode generate a gate voltage $+10\text{–}12\text{ V}$ above the switching node to turn on high-side N-MOSFETs, how gate resistors ($R_g$) control switching slew rate $I_g = Q_g/t_r$, and how hardware dead-time prevents high-side/low-side shoot-through.
 
 $$
-I_{\text{gate}} = \frac{Q_{g,\text{total}}}{t_{\text{rise}}}, \qquad C_{\text{boot}} \ge \frac{10 \cdot Q_{g,\text{total}}}{\Delta V_{\text{boot\_droop}}}, \qquad t_{\text{dead}} > t_{d(\text{off})} + t_f - t_{d(\text{on})}
+I_{\text{gate}} = \frac{Q_{g,\text{total}}}{t_{\text{rise}}}, \qquad C_{\text{boot}} \ge \frac{10 \cdot Q_{g,\text{total}}}{\Delta V_{\text{boot}\_\text{droop}}}, \qquad t_{\text{dead}} > t_{d(\text{off})} + t_f - t_{d(\text{on})}
 $$
 
 - **Curated Free Resources:**
