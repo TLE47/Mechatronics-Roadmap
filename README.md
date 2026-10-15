@@ -32,6 +32,12 @@ Read **down a column** to execute a linear pass from Track 00 to Track 08, or re
 * **[1-Page Production Engineering Cheat Sheet (`resources/mechatronics-cheatsheet.md`)](resources/mechatronics-cheatsheet.md)**
 * **[Open-Source Toolchains, Simulators & Robotics Stacks (`resources/open-source-toolchains.md`)](resources/open-source-toolchains.md)** & **[Curated Textbooks, Papers, Courses & Standards (`resources/textbooks-and-papers.md`)](resources/textbooks-and-papers.md)**
 
+### 🧪 Running the Interactive MechaLab Workbench
+Every track below links into the **8-tab interactive workbench** (two-mass resonance Bode, 25 kHz PMSM FOC, Furuta swing-up + LQR + CBF, URDF/MuJoCo + STO, 3D CAD/PCB parasitics, Schroeder SysID, and the 6-DOF ESKF + `WaitFreeSeqLock`). It is a Vite + React app in this repository:
+
+* **Live:** [tle47.github.io/Mechatronics-Roadmap](https://tle47.github.io/Mechatronics-Roadmap/) — typechecked, built and deployed from `main` by GitHub Actions on every push.
+* **Local:** `npm ci`, then `npm run dev` (serves `http://localhost:3000`); `npm run build` typechecks and writes the production bundle to `dist/`.
+
 ---
 
 ## 🔄 Visual Progression Architecture: The 3-Pass Level-Up Loop
