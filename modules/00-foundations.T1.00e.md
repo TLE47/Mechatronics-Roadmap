@@ -27,13 +27,25 @@ Attach a heavy wheeled cart to a wall with a coil spring, pull the cart back by 
 
 ## 3. Formalization
 1. **Newton's Second Law and Hooke's Spring Law:** A cart of mass $m$ in kilograms ($\text{kg}$) at displacement $x$ in meters ($\text{m}$) pulled by a linear spring of stiffness $k$ in newtons per meter ($\text{N/m}$) experiences net restoring force $F_{\text{net}}$ in newtons ($\text{N}$) and acceleration $a$ in $\text{m/s}^2$:
-   $$F_{\text{net}} = -k x, \qquad a = \frac{F_{\text{net}}}{m}$$
+
+$$
+F_{\text{net}} = -k x, \qquad a = \frac{F_{\text{net}}}{m}
+$$
+
    For $m = 2.0\text{ kg}$, $k = 50.0\text{ N/m}$, and $x_0 = 0.10\text{ m}$, $F_{\text{net}} = -(50.0\text{ N/m})(0.10\text{ m}) = -5.0\text{ N}$ and $a_0 = \frac{-5.0\text{ N}}{2.0\text{ kg}} = -2.5\text{ m/s}^2$.
 2. **Rotational Analog (Torque $\tau$):** A perpendicular force $F_\perp = F\sin\phi$ in newtons ($\text{N}$) applied at lever arm radius $r$ in meters ($\text{m}$) produces torque $\tau$ in newton-meters ($\text{N}\cdot\text{m}$) on rotational inertia $J$ in $\text{kg}\cdot\text{m}^2$, causing angular acceleration $\alpha$ in $\text{rad/s}^2$:
-   $$\tau = r F\sin\phi = J\alpha$$
+
+$$
+\tau = r F\sin\phi = J\alpha
+$$
+
    For $r = 0.25\text{ m}$, $F = 20.0\text{ N}$, and $\phi = 90^\circ$, $\tau = (0.25\text{ m})(20.0\text{ N})(1.0) = 5.0\text{ N}\cdot\text{m}$.
 3. **Discrete Loop Update and Mechanical Energy ($E$):** Over time step $\Delta t$ in seconds ($\text{s}$), velocity $v$ ($\text{m/s}$) and position $x$ ($\text{m}$) update sequentially (`v += a*dt; x += v*dt`), while total mechanical energy $E$ in joules ($\text{J} = \text{N}\cdot\text{m}$) sums kinetic and potential energy:
-   $$E = \frac{1}{2}m v^2 + \frac{1}{2}k x^2$$
+
+$$
+E = \frac{1}{2}m v^2 + \frac{1}{2}k x^2
+$$
+
    At release ($x_0 = 0.10\text{ m}, v_0 = 0.0\text{ m/s}$), $E_0 = 0 + 0.5(50.0\text{ N/m})(0.10\text{ m})^2 = 0.2500\text{ J}$, so peak speed at $x = 0$ is $v_{\max} = \sqrt{2 E_0 / m} = \sqrt{0.50\text{ J} / 2.0\text{ kg}} = 0.5000\text{ m/s}$.
 
 ## 4. Worked example
@@ -90,6 +102,14 @@ No hardware required for this module (`hardware_required: false`). In Track 05 (
 ```
 Pass/fail verification in simulation: `E_init == 0.2500 J`, `E_final == 0.2500 J`, and `v_peak == 0.5000 m/s`.
 
+
+```mermaid
+flowchart LR
+    A["00-foundations.T1.00e: discrete_kinematics_pos_vel_acc"] --> B["newtons_second_law_and_torque"]
+    B --> C["spring_energy_and_power"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
 Pass criteria: complete the Skip test ($\ge 80\%$) to pass this module, or pass the 8-question Gate test ($\ge 80\%$) to test out of the entire Level -1 ladder (`00a`–`00e`).
 
@@ -117,13 +137,13 @@ assert math.isclose(q4_tau, 2.0, rel_tol=1e-9)
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2, study `## 2. Intuition first` and `## 3. Formalization`; if you missed Q3, study `## 4. Worked example`. On pass, proceed to `## 10. Next modules`.
 
 ### Gate test
-1. `[Concept: python_variables_and_types]` Trace `val = 3.0; val += 2.0; val *= 4.0` and compute `val` (tolerance $\pm 10^{-9}$).
+1. `[Concept: python_variables_and_types] [Concept: traceback_error_reading]` Trace `val = 3.0; val += 2.0; val *= 4.0` and compute `val` (tolerance $\pm 10^{-9}$).
 2. `[Concept: for_while_loops_and_functions]` Compute the integer returned by `sum(k * k for k in range(1, 5))`.
-3. `[Concept: lists_dicts_and_numpy_arrays]` For `arr = [2.0, 4.0, 6.0, 8.0]`, compute `sum(arr) / len(arr) + arr[-1]` (tolerance $\pm 10^{-9}$).
-4. `[Concept: si_base_and_derived_units]` Convert $1800\text{ RPM}$ to $\text{rad/s}$ and multiply by torque $\tau = 0.50\text{ N}\cdot\text{m}$ to find shaft power $P$ in watts (tolerance $\pm 0.05\text{ W}$).
+3. `[Concept: lists_dicts_and_numpy_arrays] [Concept: matplotlib_time_series_plotting] [Concept: terminal_and_git_basics]` For `arr = [2.0, 4.0, 6.0, 8.0]`, compute `sum(arr) / len(arr) + arr[-1]` (tolerance $\pm 10^{-9}$).
+4. `[Concept: si_base_and_derived_units] [Concept: dimensional_analysis_unit_checks]` Convert $1800\text{ RPM}$ to $\text{rad/s}$ and multiply by torque $\tau = 0.50\text{ N}\cdot\text{m}$ to find shaft power $P$ in watts (tolerance $\pm 0.05\text{ W}$).
 5. `[Concept: scientific_notation_and_prefixes]` Compute the RC time constant $\tau = R C$ in milliseconds ($\text{ms}$, tolerance $\pm 10^{-4}\text{ ms}$) for $R = 4.7\text{ k}\Omega$ and $C = 1.0\,\mu\text{F}$.
-6. `[Concept: radians_unit_circle_and_atan2]` Compute `math.degrees(math.atan2(-0.5, -0.5))` in degrees (tolerance $\pm 0.01^\circ$).
-7. `[Concept: newtons_second_law_and_torque]` A rotational joint with inertia $J = 0.05\text{ kg}\cdot\text{m}^2$ experiences net torque $\tau = 1.5\text{ N}\cdot\text{m}$. Compute angular acceleration $\alpha = \tau / J$ in $\text{rad/s}^2$ (tolerance $\pm 10^{-4}\text{ rad/s}^2$).
+6. `[Concept: radians_unit_circle_and_atan2] [Concept: linear_functions_and_slope] [Concept: 2d_vectors_and_components]` Compute `math.degrees(math.atan2(-0.5, -0.5))` in degrees (tolerance $\pm 0.01^\circ$).
+7. `[Concept: newtons_second_law_and_torque] [Concept: discrete_kinematics_pos_vel_acc]` A rotational joint with inertia $J = 0.05\text{ kg}\cdot\text{m}^2$ experiences net torque $\tau = 1.5\text{ N}\cdot\text{m}$. Compute angular acceleration $\alpha = \tau / J$ in $\text{rad/s}^2$ (tolerance $\pm 10^{-4}\text{ rad/s}^2$).
 8. `[Concept: spring_energy_and_power]` If you double the speed $v$ of a moving robot carriage from $1.5\text{ m/s}$ to $3.0\text{ m/s}$, by what exact factor does its kinetic energy $K = \frac{1}{2}m v^2$ increase?
    - **A.** $1.414\times$
    - **B.** $2.0\times$

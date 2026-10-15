@@ -32,15 +32,31 @@ Three architectural ideas explain how **micro-ROS** puts a microcontroller direc
 1. **micro-ROS `XRCE-DDS` Wire Framing & Transport Bandwidth Budget:**
    - A micro-ROS message with serialized CDR payload of $B_{\text{cdr}}$ bytes is wrapped in an `XRCE-DDS` submessage + session header of $B_{\text{xrce}}$ bytes (typically $12\text{–}16\text{ bytes}$).
    - Over an `8N1` UART DMA link ($10\text{ bits/byte}$ at baud rate $R_{\text{baud}}$) or a CAN-FD bus ($8\text{ bits/byte}$ at data bit rate $R_{\text{can}}$), the wire transmission time per message and total link utilization across $M$ periodic streams at frequencies $f_m$ ($\text{Hz}$) are:
-     $$t_{\text{wire,uart}} = \frac{10 (B_{\text{cdr}} + B_{\text{xrce}})}{R_{\text{baud}}}, \qquad t_{\text{wire,canfd}} = \frac{8 (B_{\text{cdr}} + B_{\text{xrce}})}{R_{\text{can}}}, \qquad U_{\text{link}} = \sum_{m=1}^{M} f_m \, t_{\text{wire},m} < 1.0$$
+
+$$
+t_{\text{wire,uart}} = \frac{10 (B_{\text{cdr}} + B_{\text{xrce}})}{R_{\text{baud}}}, \qquad t_{\text{wire,canfd}} = \frac{8 (B_{\text{cdr}} + B_{\text{xrce}})}{R_{\text{can}}}, \qquad U_{\text{link}} = \sum_{m=1}^{M} f_m \, t_{\text{wire},m} < 1.0
+$$
+
 2. **`rclc` Static Entity Initialization & Deterministic `rclc_executor` Budget:**
    - **Handle Count Invariant:** When initializing `rclc_executor_init(&exe, &support.context, H_total, &allocator)`, the static handle capacity $H_{\text{total}}$ must equal the exact sum of registered timers, subscriptions, services, and clients:
-     $$H_{\text{total}} = N_{\text{timers}} + N_{\text{subs}} + N_{\text{srvs}} + N_{\text{clients}}$$
+
+$$
+H_{\text{total}} = N_{\text{timers}} + N_{\text{subs}} + N_{\text{srvs}} + N_{\text{clients}}
+$$
+
    - **Per-Spin WCET Bound:** Inside a periodic RTOS thread of period $T_{\text{spin}}$ calling `rclc_executor_spin_some(&exe, timeout_ns)`, the worst-case execution time across transport I/O ($t_{\text{io}}$) and all $H_{\text{total}}$ callbacks ($C_h$) must satisfy:
-     $$t_{\text{spin,wcet}} = t_{\text{io}} + \sum_{h=1}^{H_{\text{total}}} C_h \le T_{\text{spin}}$$
+
+$$
+t_{\text{spin,wcet}} = t_{\text{io}} + \sum_{h=1}^{H_{\text{total}}} C_h \le T_{\text{spin}}
+$$
+
 3. **NTP-Style MCU-to-ROS 2 Clock Synchronization (`rmw_uros_sync_session`):**
    - The MCU sends a sync request at local timestamp $t_1$, the `micro_ros_agent` timestamps receipt at host time $t_2$ and transmits a reply at host time $t_3$, and the MCU receives the reply at local timestamp $t_4$. The symmetric round-trip delay $\delta_{\text{rtt}}$ and clock offset $\theta_{\text{offset}}$ (such that $t_{\text{ros2}} \approx t_{\text{mcu}} + \theta_{\text{offset}}$) are:
-     $$\delta_{\text{rtt}} = (t_4 - t_1) - (t_3 - t_2), \qquad \theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}$$
+
+$$
+\delta_{\text{rtt}} = (t_4 - t_1) - (t_3 - t_2), \qquad \theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}
+$$
+
 
 ## 4. Worked example
 Audit a micro-ROS actuator node running inside a $500\text{ Hz}$ ($T_{\text{spin}} = 2000\ \mu\text{s}$) Zephyr/FreeRTOS thread: (1) compute the `XRCE-DDS` wire time and link utilization for a $48\text{-byte}$ joint state payload ($+16\text{-byte}$ XRCE header) at $500\text{ Hz}$ and a $24\text{-byte}$ command subscription ($+16\text{-byte}$ XRCE header) at $500\text{ Hz}$ over $5\text{ Mbps}$ CAN-FD, (2) verify the static `rclc_executor` handle count and spin WCET budget, and (3) compute the NTP clock offset $\theta_{\text{offset}}$ and round-trip delay $\delta_{\text{rtt}}$ from a `rmw_uros_sync_session()` exchange.
@@ -110,6 +126,14 @@ Or inspect the MCU-to-host packet framing and real-time scheduling budgets in **
 ```
 Pass/fail verification in simulation: `u_link == 0.0832`, `H_total == 4`, `t_spin_wcet_us == 185.0 us`, and `offset_us == 499000.0 us`.
 
+
+```mermaid
+flowchart LR
+    A["04-embedded.T2.04d: microros_xrcedds_client_agent_bridge"] --> B["rclc_static_lifecycle_and_executor"]
+    B --> C["mcu_to_ros2_deterministic_transport"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.5 (`04-embedded.T2.05`).
 
@@ -141,7 +165,7 @@ assert q4_choice == "B"
 
 ### Gate test
 Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `04-embedded.T2.04b` $\to$ `04-embedded.T2.04c` $\to$ `04-embedded.T2.04d`) before Step 2.5 (`04-embedded.T2.05`):
-1. `[Concept: spi_full_duplex_clock_polarity_phase]` Compute the pure clock transfer time in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) to shift `16` bits over SPI at $f_{\text{sclk}} = 8.0\text{ MHz}$ ($8 \times 10^6\text{ Hz}$).
+1. `[Concept: spi_full_duplex_clock_polarity_phase] [Concept: dma_zero_cpu_memory_transfer]` Compute the pure clock transfer time in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) to shift `16` bits over SPI at $f_{\text{sclk}} = 8.0\text{ MHz}$ ($8 \times 10^6\text{ Hz}$).
 2. `[Concept: double_buffered_ping_pong_half_complete_isr]` In a ping-pong circular DMA buffer of total size $2N = 20$ samples ($N = 10$ per half), when the **Transfer-Complete (`TC`)** interrupt fires (`HAL_ADC_ConvCpltCallback`) as DMA wraps from index `19 -> 0`, which half of the buffer has just finished filling and is safe for the CPU to read?
    - **A.** The second half (`Pong`, indices `10..19`) while DMA starts filling indices `0..9`.
    - **B.** The first half (`Ping`, indices `0..9`) while DMA starts overwriting indices `0..9`.
@@ -150,7 +174,7 @@ Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `0
 3. `[Concept: rtos_preemptive_scheduling_and_cpu_utilization]` Compute the total CPU utilization $U = \sum C_i / T_i$ (tolerance $\pm 10^{-9}$) for three periodic RTOS tasks: $(C_1=100\ \mu\text{s}, T_1=500\ \mu\text{s})$, $(C_2=300\ \mu\text{s}, T_2=2000\ \mu\text{s})$, and $(C_3=1000\ \mu\text{s}, T_3=10000\ \mu\text{s})$.
 4. `[Concept: unbounded_priority_inversion_and_inheritance]` Compute the worst-case response time $R_H = C_H + B_H$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) of the highest-priority task ($C_H = 80\ \mu\text{s}$) when it blocks on a Priority-Inheritance mutex (`xSemaphoreCreateMutex` / `K_MUTEX_DEFINE`) held by a lower-priority task with remaining critical section $B_H = 25\ \mu\text{s}$.
 5. `[Concept: can_bitwise_arbitration_and_mit_packing]` Encode $x = 0.0\text{ rad}$ into an unsigned 16-bit integer $u = \operatorname{round}\!\left(\frac{x - x_{\min}}{x_{\max} - x_{\min}} \cdot 65535\right)$ for symmetric range $[x_{\min}, x_{\max}] = [-12.5, +12.5]\text{ rad}$ (exact integer, tolerance $\pm 0$).
-6. `[Concept: zephyr_devicetree_hardware_binding]` How does **Zephyr RTOS** bind physical peripheral hardware (`spi1`, `fdcan1`, GPIO pins) to C device drivers compared to traditional bare-metal `#define` macros?
+6. `[Concept: zephyr_devicetree_hardware_binding] [Concept: zephyr_west_and_kconfig_build]` How does **Zephyr RTOS** bind physical peripheral hardware (`spi1`, `fdcan1`, GPIO pins) to C device drivers compared to traditional bare-metal `#define` macros?
    - **A.** Hardware topology is declared in a **Devicetree (`*.dts` / `.overlay`)** and feature flags in **`Kconfig` (`prj.conf`)**, which compile into type-safe C macros (`DEVICE_DT_GET(DT_NODELABEL(...))`) verified at build time.
    - **B.** Zephyr parses HTML files over Wi-Fi at $40\text{ kHz}$.
    - **C.** Zephyr does not support SPI or CAN.
@@ -160,7 +184,7 @@ Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `0
    - **B.** `thread_B` (priority $4 > 1$) has higher urgency, and they must use `k_sem`.
    - **C.** Both threads have identical priority.
    - **D.** Preemptible threads cannot use mutexes.
-8. `[Concept: microros_xrcedds_client_agent_bridge]` Compute the total `rclc_executor` worst-case spin time $t_{\text{spin}} = t_{\text{io}} + C_{\text{timer}} + C_{\text{sub}}$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) when `XRCE-DDS` transport I/O takes $t_{\text{io}} = 40.0\ \mu\text{s}$, the publisher timer callback takes $C_{\text{timer}} = 55.0\ \mu\text{s}$, and the command subscription callback takes $C_{\text{sub}} = 35.0\ \mu\text{s}$.
+8. `[Concept: microros_xrcedds_client_agent_bridge] [Concept: rclc_static_lifecycle_and_executor] [Concept: mcu_to_ros2_deterministic_transport]` Compute the total `rclc_executor` worst-case spin time $t_{\text{spin}} = t_{\text{io}} + C_{\text{timer}} + C_{\text{sub}}$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) when `XRCE-DDS` transport I/O takes $t_{\text{io}} = 40.0\ \mu\text{s}$, the publisher timer callback takes $C_{\text{timer}} = 55.0\ \mu\text{s}$, and the command subscription callback takes $C_{\text{sub}} = 35.0\ \mu\text{s}$.
 
 **Gate answer key:**
 ```python

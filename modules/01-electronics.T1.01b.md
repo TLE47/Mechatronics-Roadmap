@@ -22,17 +22,25 @@ resources_verified: true
 ---
 
 ## 1. Why it matters
-This is the final bridge module in the Track 01 Tier 1 ladder before Step 1.2 (`01-electronics.T1.02`). A microcontroller GPIO pin can only source $\sim 20\text{ mA}$ at $3.3\text{ V}$—connecting a motor directly to it destroys the pin immediately. Power MOSFETs act as voltage-controlled electronic switches that let a tiny $3.3\text{ V}$ logic signal throttle amperes of motor current via **Pulse-Width Modulation (PWM)** and reverse direction via a 4-switch **H-Bridge**. Already know this? Read `## Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
+This is the final bridge module in the Track 01 Tier 1 ladder before Step 1.2 (`01-electronics.T1.02`). A microcontroller GPIO pin can only source $\sim 20\text{ mA}$ at $3.3\text{ V}$—connecting a motor directly to it destroys the pin immediately. Power MOSFETs act as voltage-controlled electronic switches that let a tiny $3.3\text{ V}$ logic signal throttle amperes of motor current via **Pulse-Width Modulation (PWM)** and reverse direction via a 4-switch **H-Bridge**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
 Think of a MOSFET as a spring-loaded water valve whose handle (the **Gate**) is controlled by pressure rather than flow. When the Gate voltage is $0\text{ V}$ relative to the **Source** ($V_{GS} = 0$), the valve is shut tight and zero current flows into the **Drain**. When you raise $V_{GS}$ above the threshold with a $3.3\text{ V}$ or $5\text{ V}$ logic signal, the valve snaps wide open with a tiny on-resistance $R_{DS(\text{on})}$ of only a few milliohms. Instead of cracking the valve half-open (which would burn huge heat inside the valve), we flick it 100% open and 100% closed twenty thousand times per second (**PWM**); the motor's inductance smooths those rapid pulses into a smooth average voltage $V_{\text{eff}} = D \cdot V_{\text{bus}}$. And to spin the motor backward, an **H-Bridge** arranges four MOSFETs like an "H" around the motor so closing one diagonal pair pushes current left-to-right and closing the opposite diagonal pushes current right-to-left.
 
 ## 3. Formalization
 1. **Low-Side N-Channel MOSFET Switch & Conduction Loss:** When gate-to-source voltage $V_{GS}$ exceeds the logic-level rating, the MOSFET conducts drain current $I_D$ ($\text{A}$) with on-resistance $R_{DS(\text{on})}$ ($\Omega$), dissipating conduction heat power $P_{\text{cond}}$ ($\text{W}$):
-   $$P_{\text{cond}} = I_D^2 \cdot R_{DS(\text{on})}$$
+
+$$
+P_{\text{cond}} = I_D^2 \cdot R_{DS(\text{on})}
+$$
+
    Substituting $I_D = 5.0\text{ A}$ and $R_{DS(\text{on})} = 0.010\ \Omega$ ($10\text{ m}\Omega$) gives $P_{\text{cond}} = 25.0 \times 0.010 = 0.25\text{ W}$ (whereas dropping $6\text{ V}$ linearly at $5\text{ A}$ would waste $30.0\text{ W}$!). A $10\text{ k}\Omega$ pull-down resistor from Gate to Source keeps $V_{GS} = 0\text{ V}$ while MCU pins float during boot.
 2. **PWM Duty Cycle ($D \in [0, 1]$):** Switching $V_{\text{bus}}$ ($\text{V}$) ON for time $t_{\text{on}}$ over period $T_{\text{pwm}} = 1/f_{\text{pwm}}$ defines duty cycle $D = t_{\text{on}}/T_{\text{pwm}}$ and average effective voltage:
-   $$V_{\text{eff}} = D \cdot V_{\text{bus}}$$
+
+$$
+V_{\text{eff}} = D \cdot V_{\text{bus}}
+$$
+
    Substituting $V_{\text{bus}} = 12.0\text{ V}$ and $D = 0.75$ ($75\%$) gives $V_{\text{eff}} = 9.0\text{ V}$.
 3. **H-Bridge Diagonal Switching & Shoot-Through:** Four switches $(Q_{\text{AH}}, Q_{\text{AL}})$ on leg A and $(Q_{\text{BH}}, Q_{\text{BL}})$ on leg B apply terminal voltage $V_{\text{AB}} = V_A - V_B$:
    - Forward: $(Q_{\text{AH}}, Q_{\text{BL}})$ ON $\implies V_{\text{AB}} = +V_{\text{bus}}$.
@@ -80,14 +88,22 @@ For a `DRV8833` dual H-bridge ($R_{DS(\text{on, high})} + R_{DS(\text{on, low})}
 ## 6. Simulation path
 Simulate a low-side MOSFET PWM switch and 4-FET H-bridge in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or inspect **Tab 2 (Power Stage & Gate Driver Dead-Time)** in the MechaLab Workbench (`npm run dev`).
 
-## Safety notes
+### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**
 > 1. **Maximum Voltage & Current Limits:** Keep Tier 1 breadboard motor supplies at $\le 12.0\text{ V}$ and set your bench power supply current limit to $\le 1.5\text{ A}$ before powering on (`L0.1`).
 > 2. **Shoot-Through & Short-Circuit Prevention:** Never wire discrete H-bridge gates without hardware dead-time or interlock logic; a simultaneous high-side + low-side ON state across an unprotected battery can dump $>100\text{ A}$, melting breadboard strips and rupturing LiPo cells. Use integrated drivers with built-in shoot-through protection (`DRV8833` in Step 1.2) and always power first from a current-limited bench supply, never directly from a LiPo battery.
 > 3. **Gate Pull-Down & Flyback Protection:** Always include a $10\text{ k}\Omega$ Gate-to-Source pull-down resistor so the motor cannot spin unexpectedly while the MCU is in reset, and never switch an inductive coil with a single FET without a freewheeling flyback diode across the coil.
 
+
+```mermaid
+flowchart LR
+    A["01-electronics.T1.01b: mosfet_low_side_rds_on_switch"] --> B["pwm_duty_cycle_effective_voltage"]
+    B --> C["h_bridge_four_switch_polarity_and_shoot_through"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
-Pass criteria: read `## Safety notes`, run the worked example and exercise asserts, or score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ required on `[SAFETY]` items). Passing the 8-question Ladder Gate test ($\ge 80\%$, $100\%$ on `[SAFETY]` items) unlocks Step 1.2 (`01-electronics.T1.02`).
+Pass criteria: read `### Safety notes`, run the worked example and exercise asserts, or score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ required on `[SAFETY]` items). Passing the 8-question Ladder Gate test ($\ge 80\%$, $100\%$ on `[SAFETY]` items) unlocks Step 1.2 (`01-electronics.T1.02`).
 
 ### Skip test
 1. `[Recall] [Concept: pwm_duty_cycle_effective_voltage]` Compute the average effective motor voltage $V_{\text{eff}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for a $V_{\text{bus}} = 12.0\text{ V}$ supply switched at duty cycle $D = 0.65$ ($65\%$).
@@ -115,20 +131,20 @@ assert math.isclose(q3_vmotor, -12.0, rel_tol=1e-9)
 assert math.isclose(q4_safety_ishoot, 300.0, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 2; if you missed Q2 or Q5, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `## Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 2; if you missed Q2 or Q5, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 
 
 ### Gate test
 Covers the complete Track 01 Tier 1 bridge ladder (`01-electronics.T1.01a` $\to$ `01-electronics.T1.01c` $\to$ `01-electronics.T1.01d` $\to$ `01-electronics.T1.01b`) before Step 1.2 (`01-electronics.T1.02`):
 1. `[Concept: voltage_current_resistance_ohms_law]` Compute the current $I$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$) when $9.0\text{ V}$ is applied across a $4.5\ \Omega$ resistor.
 2. `[Concept: kvl_kcl_and_voltage_divider]` Compute the unloaded output voltage $V_{\text{out}}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) of a divider with $V_{\text{in}} = 12.0\text{ V}$, $R_1 = 30\text{ k}\Omega$ (top), and $R_2 = 10\text{ k}\Omega$ (bottom).
-3. `[Concept: electrical_power_i2r_dissipation]` Compute the power dissipated in watts ($\text{W}$, tolerance $\pm 10^{-9}$) by a $0.10\ \Omega$ resistor carrying $5.0\text{ A}$.
-4. `[SAFETY] [Concept: multimeter_and_current_limited_psu_safety]` Why must you **never** probe a voltage source ($12\text{ V}$ rail to $\text{GND}$) while your digital multimeter leads are plugged into the $10\text{ A}$ current jack?
+3. `[Concept: electrical_power_i2r_dissipation] [Concept: mosfet_low_side_rds_on_switch]` Compute the power dissipated in watts ($\text{W}$, tolerance $\pm 10^{-9}$) by a $0.10\ \Omega$ resistor carrying $5.0\text{ A}$.
+4. `[SAFETY] [Concept: multimeter_and_current_limited_psu_safety] [Concept: breadboard_internal_bus_connectivity] [Concept: esd_and_short_circuit_prevention]` Why must you **never** probe a voltage source ($12\text{ V}$ rail to $\text{GND}$) while your digital multimeter leads are plugged into the $10\text{ A}$ current jack?
    - **A.** The multimeter screen will show hex numbers.
    - **B.** The $10\text{ A}$ current jack is a near-zero-ohm dead short ($\sim 0.01\ \Omega$) across the leads, short-circuiting the power supply and blowing the meter fuse or arcing at the probes.
    - **C.** It drains the multimeter's $9\text{ V}$ battery slightly faster.
    - **D.** It changes the PWM duty cycle.
-5. `[Concept: rc_time_constant_and_filtering]` Compute the $-3\text{ dB}$ cutoff frequency $f_c = \frac{1}{2\pi R C}$ in $\text{Hz}$ (tolerance $\pm 0.01\text{ Hz}$) for $R = 1000\ \Omega$ and $C = 1.0\ \mu\text{F}$ ($10^{-6}\text{ F}$).
+5. `[Concept: rc_time_constant_and_filtering] [Concept: capacitor_charge_storage_and_decoupling]` Compute the $-3\text{ dB}$ cutoff frequency $f_c = \frac{1}{2\pi R C}$ in $\text{Hz}$ (tolerance $\pm 0.01\text{ Hz}$) for $R = 1000\ \Omega$ and $C = 1.0\ \mu\text{F}$ ($10^{-6}\text{ F}$).
 6. `[Concept: inductor_flyback_and_freewheeling_diode]` Compute the inductive flyback spike magnitude $|V_L| = L \left|\frac{di}{dt}\right|$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) if a $2.0\text{ mH}$ ($0.002\text{ H}$) coil carrying $3.0\text{ A}$ is interrupted in $\Delta t = 1.0\ \mu\text{s}$ ($10^{-6}\text{ s}$) without a flyback diode.
 7. `[Concept: pwm_duty_cycle_effective_voltage]` Compute $V_{\text{eff}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for $V_{\text{bus}} = 24.0\text{ V}$ at $D = 0.25$.
 8. `[SAFETY] [Concept: h_bridge_four_switch_polarity_and_shoot_through]` Before powering a newly wired breadboard H-bridge for the first time, what is the mandatory bench power supply procedure?

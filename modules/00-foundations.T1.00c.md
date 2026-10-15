@@ -26,12 +26,24 @@ Imagine building a table where one blueprint sheet gives leg lengths in millimet
 
 ## 3. Formalization
 1. **Base and Derived SI Units:** Store length in meters ($\text{m}$), mass in kilograms ($\text{kg}$), time in seconds ($\text{s}$), current in amperes ($\text{A}$), and plane angle in radians ($\text{rad}$). Mechanical power $P$ in watts ($\text{W} = \text{J/s} = \text{N}\cdot\text{m/s}$) is the product of torque $\tau$ in newton-meters ($\text{N}\cdot\text{m}$) and angular velocity $\omega$ in radians per second ($\text{rad/s}$):
-   $$P = \tau \cdot \omega$$
+
+$$
+P = \tau \cdot \omega
+$$
+
    Substituting $\tau = 0.45\text{ N}\cdot\text{m}$ and $\omega = 251.3274\text{ rad/s}$ gives $P = (0.45\text{ N}\cdot\text{m})(251.3274\text{ rad/s}) = 113.0973\text{ W}$.
 2. **Engineering Prefixes ($10^{3k}$):** Convert prefixed datasheet quantities into base SI units on input: $\text{milli (m)} = 10^{-3}$, $\text{micro (}\mu\text{)} = 10^{-6}$, $\text{nano (n)} = 10^{-9}$, $\text{kilo (k)} = 10^{3}$, and $\text{mega (M)} = 10^{6}$. For an RC filter with resistance $R = 10\text{ k}\Omega = 10\times 10^3\,\Omega$ and capacitance $C = 100\text{ nF} = 100\times 10^{-9}\text{ F}$, the time constant $\tau_{RC}$ in seconds ($\text{s} = \Omega\cdot\text{F}$) is:
-   $$\tau_{RC} = R \cdot C = (10\times 10^3\,\Omega)(100\times 10^{-9}\text{ F}) = 1.0\times 10^{-3}\text{ s} = 1.00\text{ ms}$$
+
+$$
+\tau_{RC} = R \cdot C = (10\times 10^3\,\Omega)(100\times 10^{-9}\text{ F}) = 1.0\times 10^{-3}\text{ s} = 1.00\text{ ms}
+$$
+
 3. **Dimensional Cancellation (RPM to $\text{rad/s}$):** Given shaft speed $N$ in revolutions per minute ($\text{RPM}$), cancel revolutions and minutes using $2\pi\text{ rad} = 1\text{ rev}$ and $60\text{ s} = 1\text{ min}$:
-   $$\omega = N\,\left[\frac{\text{rev}}{\text{min}}\right] \times \frac{2\pi\text{ rad}}{1\text{ rev}} \times \frac{1\text{ min}}{60\text{ s}}$$
+
+$$
+\omega = N\,\left[\frac{\text{rev}}{\text{min}}\right] \times \frac{2\pi\text{ rad}}{1\text{ rev}} \times \frac{1\text{ min}}{60\text{ s}}
+$$
+
    For $N = 2400\text{ RPM}$, $\omega = 2400 \times \frac{2\pi}{60}\text{ rad/s} = 80\pi\text{ rad/s} \approx 251.3274\text{ rad/s}$.
 
 ## 4. Worked example
@@ -77,6 +89,14 @@ No hardware required for this module (`hardware_required: false`). On the physic
 [Datasheet: R=5 mOhm, I=20 A] ---> [SI Conversion: 0.005 Ohm * 20 A] ---> [DMM Readout: 0.100 V (100 mV)]
 ```
 Pass/fail verification in simulation: `omega == 251.33 rad/s`, `P == 113.10 W`, and `tau_RC == 1.00 ms`.
+
+
+```mermaid
+flowchart LR
+    A["00-foundations.T1.00c: si_base_and_derived_units"] --> B["scientific_notation_and_prefixes"]
+    B --> C["dimensional_analysis_unit_checks"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.

@@ -21,22 +21,34 @@ resources_verified: false
 ---
 
 ## 1. Why it matters
-This is the final bridge module in the entire repository before Step 3.8 (`08-capstones.T3.08`: **Capstone 1** High-Speed Precision Motion Stage, **Capstone 2** Balancing Mobility Robot, or **Capstone 3** 6-DOF Force-Controlled Tele-Impedance Manipulator — the **Graduate Goal**). Why do so many student and startup robot builds fail during final integration even when the CAD, PCB, firmware, and ROS 2 nodes each worked on their own benches? Because nobody added up the **end-to-end spatial error budget** ($\sigma_{\text{total}} = \sqrt{\sum \sigma_i^2}$), the **end-to-end latency & phase-margin erosion budget** ($\Delta\phi = \omega_{gc}\sum \tau_i$), or verified a formal **Cross-Domain Interface Contract (ICD) & Pre-Bring-Up Safety Sign-Off** before energizing the $48\text{ V}$ bus! Already know this? Read `## Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
+This is the final bridge module in the entire repository before Step 3.8 (`08-capstones.T3.08`: **Capstone 1** High-Speed Precision Motion Stage, **Capstone 2** Balancing Mobility Robot, or **Capstone 3** 6-DOF Force-Controlled Tele-Impedance Manipulator — the **Graduate Goal**). Why do so many student and startup robot builds fail during final integration even when the CAD, PCB, firmware, and ROS 2 nodes each worked on their own benches? Because nobody added up the **end-to-end spatial error budget** ($\sigma_{\text{total}} = \sqrt{\sum \sigma_i^2}$), the **end-to-end latency & phase-margin erosion budget** ($\Delta\phi = \omega_{gc}\sum \tau_i$), or verified a formal **Cross-Domain Interface Contract (ICD) & Pre-Bring-Up Safety Sign-Off** before energizing the $48\text{ V}$ bus! Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
 When you bolt six joints, six encoders, a camera, a CAN-FD bus, a $1\text{ kHz}$ `ros2_control` loop, and a $50\text{ Hz}$ learned policy together, errors and delays accumulate across every domain boundary:
-1. **Spatial Error Budgeting (RSS vs. Worst-Case):** Deterministic systematic offsets $b_i$ (like uncalibrated thermal expansion) add linearly ($\sum |b_i|$), whereas independent random errors $\sigma_i$ (encoder noise, bearing runout, structural deflection, calibration residual) add in **Root-Sum-Square (RSS)**: $\sigma_{\text{rss}} = \sqrt{\sum \sigma_i^2}$. Looking at the RSS breakdown tells you immediately which single subsystem dominates $80\%$ of your error so you don't waste $1{,}000 on an ultra-precise encoder when link deflection is $10\times$ larger!
+1. **Spatial Error Budgeting (RSS vs. Worst-Case):** Deterministic systematic offsets $b_i$ (like uncalibrated thermal expansion) add linearly ($\sum |b_i|$), whereas independent random errors $\sigma_i$ (encoder noise, bearing runout, structural deflection, calibration residual) add in **Root-Sum-Square (RSS)**: $\sigma_{\text{rss}} = \sqrt{\sum \sigma_i^2}$. Looking at the RSS breakdown tells you immediately which single subsystem dominates $80\%$ of your error so you don't waste \$1,000 on an ultra-precise encoder when link deflection is $10\times$ larger!
 2. **End-to-End Latency & Phase-Margin Budget:** Every microsecond of sensor readout delay ($\tau_{\text{enc}}$), CAN-FD wire transport ($\tau_{\text{can}}$), digital filtering ($\tau_{\text{filt}}$), and zero-order hold ($\frac{1}{2}T_s$) adds up to total loop delay $\tau_{\text{total}} = \sum \tau_k$, which steals $\Delta\phi = \omega_{gc}\tau_{\text{total}}\frac{180^\circ}{\pi}$ degrees of Phase Margin from your servo loop (`05-control.T2.05a`).
 3. **Cross-Domain Interface Control Document (ICD) & Pre-Bring-Up Sign-Off:** Before first motion on a multi-DOF capstone robot, every mechanical, electrical, firmware, control, and safety assertion must pass an automated **Go / No-Go Sign-Off Checklist**.
 
 ## 3. Formalization
 1. **Combined Systematic + Root-Sum-Square (RSS) Spatial Error Budget:** Given $M$ subsystems with residual systematic bias $b_i$ and independent $1\sigma$ random error $\sigma_i$ mapped to end-effector tip displacement via sensitivity $s_i$:
-   $$e_{3\sigma,\text{total}} = \sum_{i=1}^{M} |s_i b_i| + 3\sqrt{\sum_{i=1}^{M} (s_i \sigma_i)^2} \le e_{\text{spec}}$$
+
+$$
+e_{3\sigma,\text{total}} = \sum_{i=1}^{M} |s_i b_i| + 3\sqrt{\sum_{i=1}^{M} (s_i \sigma_i)^2} \le e_{\text{spec}}
+$$
+
    The fractional variance contribution of source $i$ is $w_i = \frac{(s_i \sigma_i)^2}{\sum_j (s_j \sigma_j)^2}$ ($\sum w_i = 1$).
 2. **End-to-End Loop Latency & Phase-Margin Erosion Budget:** Across sensor delay $\tau_{\text{sens}}$, bus transport $\tau_{\text{bus}}$, filter group delay $\tau_{\text{filt}}$, compute time $\tau_{\text{comp}}$, and Zero-Order Hold $\tau_{\text{zoh}} = \frac{1}{2}T_s$:
-   $$\tau_{\text{total}} = \tau_{\text{sens}} + \tau_{\text{bus}} + \tau_{\text{filt}} + \tau_{\text{comp}} + \frac{1}{2}T_s, \quad \text{PM}_{\text{net}} = \text{PM}_0 - \omega_{gc}\tau_{\text{total}}\frac{180^\circ}{\pi} \ge \text{PM}_{\min}$$
+
+$$
+\tau_{\text{total}} = \tau_{\text{sens}} + \tau_{\text{bus}} + \tau_{\text{filt}} + \tau_{\text{comp}} + \frac{1}{2}T_s, \quad \text{PM}_{\text{net}} = \text{PM}_0 - \omega_{gc}\tau_{\text{total}}\frac{180^\circ}{\pi} \ge \text{PM}_{\min}
+$$
+
 3. **Cross-Domain ICD & Pre-Bring-Up Go/No-Go Sign-Off Function:** A capstone build is cleared for energized closed-loop testing (`GO = True`) iff all 5 domain gates hold simultaneously:
-   $$\text{GO} = (e_{3\sigma,\text{total}} \le e_{\text{spec}}) \land (\text{PM}_{\text{net}} \ge 45^\circ) \land (\text{CPU\_Util} \le 0.70) \land (\text{CAN\_Term\_Ohm} \in [55, 65]) \land (\text{Cat3\_STO\_Verified} = \text{True})$$
+
+$$
+\text{GO} = (e_{3\sigma,\text{total}} \le e_{\text{spec}}) \land (\text{PM}_{\text{net}} \ge 45^\circ) \land (\text{CPU}\_\text{Util} \le 0.70) \land (\text{CAN}\_\text{Term}\_\text{Ohm} \in [55, 65]) \land (\text{Cat3}\_\text{STO}\_\text{Verified} = \text{True})
+$$
+
 
 ## 4. Worked example
 Evaluate the complete system error budget, latency/phase-margin budget, and 5-domain Pre-Bring-Up Go/No-Go Sign-Off for Capstone 3 (the 6-DOF Tele-Impedance Manipulator with $e_{\text{spec}} = 0.50\text{ mm}$ repeatability, $\omega_{gc} = 150\text{ rad/s}$, and nominal $\text{PM}_0 = 62.0^\circ$).
@@ -93,7 +105,7 @@ Suppose an engineer replaces the $250\ \mu\text{s}$ low-pass filter in the $1\te
 ## 6. Simulation path
 Open **Tab 9 (Capstone 3: 6-DOF Force-Controlled Tele-Impedance Manipulator & System Verification)** in the MechaLab Workbench (`npm run dev`), or run the standalone verification script `08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py`.
 
-## Safety notes
+### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before energizing any Capstone hardware build or taking the Skip/Gate test):**
 > 1. **Mandatory 5-Stage Progressive Bring-Up Sequence:** Never power up a newly assembled multi-DOF robot and immediately enable full-torque closed-loop trajectory tracking. Always execute in strict order:
 >    - **Stage 0 (Power-Off Bench Check):** Verify bus resistance (`> 10 kOhm` `+Vbus` to `GND`), CAN termination ($60\ \Omega$), fastener torque witness marks, and mechanical hard stops.
@@ -102,8 +114,16 @@ Open **Tab 9 (Capstone 3: 6-DOF Force-Controlled Tele-Impedance Manipulator & Sy
 >    - **Stage 3 (Zero-Stiffness Gravity Compensation + Damping Mode):** Set $K_p = 0$, $K_d > 0$, $\tau_{\text{ff}} = g(q)$ with $20\%$ torque ceiling; move the arm by hand to verify smooth backdrivability and confirm that pushing each link produces damped resistance (positive damping, not positive feedback!).
 >    - **Stage 4 (Full Closed-Loop Impedance + CBF Safety Shield + E-Stop Live Test):** Enable Cartesian impedance / learned policy only after Stages 0–3 and a live physical E-stop cut test pass.
 
+
+```mermaid
+flowchart LR
+    A["08-capstones.T3.07a: rss_and_worst_case_spatial_error_budget"] --> B["end_to_end_latency_and_phase_margin_erosion_budget"]
+    B --> C["pre_bring_up_interface_and_safety_signoff_gate"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
-Pass criteria: read `## Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.8 (`08-capstones.T3.08`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.8 (`08-capstones.T3.08`).
 
 ### Skip test
 1. `[Recall] [Concept: rss_and_worst_case_spatial_error_budget]` Three independent random error sources have $1\sigma$ end-effector contributions $\sigma_1 = 0.03\text{ mm}$, $\sigma_2 = 0.04\text{ mm}$, and $\sigma_3 = 0.12\text{ mm}$. Compute the combined Root-Sum-Square (RSS) $1\sigma$ error $\sigma_{\text{rss}} = \sqrt{\sigma_1^2 + \sigma_2^2 + \sigma_3^2}$ in millimeters ($\text{mm}$, tolerance $\pm 10^{-9}$).
@@ -132,7 +152,7 @@ assert math.isclose(q3_pm_net, 48.540844, abs_tol=1e-2)
 assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert q5_safety_go == 0         # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `## Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 ### Gate test
 Covers the complete Track 08 Tier 3 Capstone Engineering bridge ladder (`08-capstones.T3.07a`) before Step 3.8 (`08-capstones.T3.08`):
 1. `[Concept: rss_and_worst_case_spatial_error_budget]` Compute the $3\sigma$ total error $e_{3\sigma} = |b| + 3\sqrt{\sigma_1^2 + \sigma_2^2}$ in millimeters ($\text{mm}$, tolerance $\pm 10^{-9}$) for systematic bias $b = 0.05\text{ mm}$ and independent random errors $\sigma_1 = 0.06\text{ mm}, \sigma_2 = 0.08\text{ mm}$.
@@ -182,12 +202,12 @@ assert math.isclose(g6_can_ohm, 60.0, rel_tol=1e-9)
 assert g7_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 assert g8_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $7/8$ overall AND $2/2$ ($100\%$) on `[SAFETY]` questions Q7 and Q8. Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q8 $\to$ `## 3. Formalization` item 3 and `## Safety notes`.
+- **Pass mark:** $7/8$ overall AND $2/2$ ($100\%$) on `[SAFETY]` questions Q7 and Q8. Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q8 $\to$ `## 3. Formalization` item 3 and `### Safety notes`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
-| Final 6-DOF arm misses its $0.5\text{ mm}$ repeatability spec by $3\times$ despite using $18\text{ -bit}$ encoders | Assumed encoder resolution equals tip accuracy and ignored structural link compliance and gearbox backlash in the RSS error budget. | Build the full sensitivity-weighted RSS table $e_{3\sigma} = \sum |s_i b_i| + 3\sqrt{\sum (s_i\sigma_i)^2}$ before ordering parts, and use dual-encoder (motor + output-side) feedback if gearbox compliance dominates. |
+| Final 6-DOF arm misses its $0.5\text{ mm}$ repeatability spec by $3\times$ despite using $18\text{ -bit}$ encoders | Assumed encoder resolution equals tip accuracy and ignored structural link compliance and gearbox backlash in the RSS error budget. | Build the full sensitivity-weighted RSS table $e_{3\sigma} = \sum \lvert s_i b_i\rvert  + 3\sqrt{\sum (s_i\sigma_i)^2}$ before ordering parts, and use dual-encoder (motor + output-side) feedback if gearbox compliance dominates. |
 | Individual joint loops are stable at $1\text{ kHz}$, but closing the Cartesian loop over USB/ROS 2 oscillates at $25\text{ Hz}$ | Unbudgeted USB buffer latency ($16\text{ ms}$ bulk transfer timer) eroded $> 60^\circ$ of Phase Margin. | Run torque/impedance loops inside `ros2_control` over deterministic CAN-FD ($\tau_{\text{bus}} < 0.25\text{ ms}$) or set `BM_LATENCY_TIMER = 1 ms` on FTDI adapters. |
 | Enabled full-stiffness trajectory tracking on first power-up without running Stage 3 ($K_p = 0$ gravity/damping check) | Sign mismatch between URDF joint axis and actuator encoder caused an immediate full-torque slam into the hard stop. | Never skip Stage 3 ($K_p = 0$, $20\%$ torque limit backdrivability & damping sign check) before enabling position stiffness! |
 

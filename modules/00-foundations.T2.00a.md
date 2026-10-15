@@ -27,10 +27,19 @@ Imagine a spreadsheet where Column A holds a cart's position and Column B holds 
 
 ## 3. Formalization
 1. **Finite-Difference Derivative and Running Integral:** Given discrete positions $x_k$ in meters ($\text{m}$) sampled every $\Delta t$ seconds ($\text{s}$), the backward-difference velocity $v_k$ ($\text{m/s}$) and rectangular integral $I_k$ ($\text{m}\cdot\text{s}$) are:
-   $$v_k = \frac{x_k - x_{k-1}}{\Delta t}, \qquad I_k = I_{k-1} + x_k \Delta t$$
+
+$$
+v_k = \frac{x_k - x_{k-1}}{\Delta t}, \qquad I_k = I_{k-1} + x_k \Delta t
+$$
+
    For $x_{k-1} = 0.10\text{ m}$, $x_k = 0.12\text{ m}$, and $\Delta t = 0.01\text{ s}$, $v_k = \frac{0.12\text{ m} - 0.10\text{ m}}{0.01\text{ s}} = 2.0\text{ m/s}$.
-2. **Matrix-Vector Multiplication ($A_d \vec{x}_k + B_d u_k$):** For a mass $m$ ($\text{kg}$), stiffness $k$ ($\text{N/m}$), damping $b$ ($\text{N}\cdot\text{s/m}$), state vector $\vec{x}_k = [x_k,\; v_k]^T$, and input force $u_k$ ($\text{N}$), the Euler update packs into:
-   $$\begin{bmatrix} x_{k+1} \\ v_{k+1} \end{bmatrix} = \underbrace{\begin{bmatrix} 1 & \Delta t \\ -\frac{k}{m}\Delta t & 1 - \frac{b}{m}\Delta t \end{bmatrix}}_{A_d} \begin{bmatrix} x_k \\ v_k \end{bmatrix} + \underbrace{\begin{bmatrix} 0 \\ \frac{\Delta t}{m} \end{bmatrix}}_{B_d} u_k$$
+2. **Matrix-Vector Multiplication ($\vec{y} = A\vec{x}$):** Multiplying a $2\times 2$ matrix $A$ by a $2\times 1$ column vector $\vec{x} = [x_1,\; x_2]^T$ computes the dot product of each row of $A$ with $\vec{x}$: $y_i = A_{i1}x_1 + A_{i2}x_2$.
+3. **Discrete State-Vector One-Step Update ($\vec{x}_{k+1} = A_d \vec{x}_k + B_d u_k$):** For a mass $m$ ($\text{kg}$), stiffness $k$ ($\text{N/m}$), damping $b$ ($\text{N}\cdot\text{s/m}$), state vector $\vec{x}_k = [x_k,\; v_k]^T$, and input force $u_k$ ($\text{N}$), the Euler update packs into:
+
+$$
+\begin{bmatrix} x_{k+1} \\ v_{k+1} \end{bmatrix} = \underbrace{\begin{bmatrix} 1 & \Delta t \\ -\frac{k}{m}\Delta t & 1 - \frac{b}{m}\Delta t \end{bmatrix}}_{A_d} \begin{bmatrix} x_k \\ v_k \end{bmatrix} + \underbrace{\begin{bmatrix} 0 \\ \frac{\Delta t}{m} \end{bmatrix}}_{B_d} u_k
+$$
+
    Substituting $m = 1.0\text{ kg}$, $k = 100.0\text{ N/m}$, $b = 10.0\text{ N}\cdot\text{s/m}$, $\Delta t = 0.01\text{ s}$, $\vec{x}_0 = [0.10\text{ m},\; 0.0\text{ m/s}]^T$, and $u_0 = 5.0\text{ N}$ yields $x_1 = (1.0)(0.10\text{ m}) + (0.01\text{ s})(0.0\text{ m/s}) = 0.1000\text{ m}$ and $v_1 = (-1.0\text{ s}^{-1})(0.10\text{ m}) + (0.90)(0.0\text{ m/s}) + (0.01\text{ kg}^{-1}\text{s})(5.0\text{ N}) = -0.0500\text{ m/s}$.
 
 ## 4. Worked example
@@ -84,6 +93,14 @@ No hardware required for this module (`hardware_required: false`). On the STM32/
 ```
 Pass/fail verification in simulation: `x1 == 0.1000 m` and `v1 == -0.0500 m/s`.
 
+
+```mermaid
+flowchart LR
+    A["00-foundations.T2.00a: finite_difference_derivative_and_integral"] --> B["matrix_vector_multiplication"]
+    B --> C["state_vector_one_step_update"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
 Pass criteria: run the worked example and 500-step equilibrium exercise with zero assertion errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
@@ -119,7 +136,7 @@ assert q5_choice == "B"
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
-| In matrix math, elementwise `A * x` gives a $2\times 2$ matrix instead of a $2\times 1$ vector | Used elementwise `*` instead of matrix-multiply `@`. | Always use `A @ x` for matrix-vector multiplication in NumPy. |
+| In matrix math, elementwise `A  x` gives a $2\times 2$ matrix instead of a $2\times 1$ vector | Used elementwise `` instead of matrix-multiply `@`. | Always use `A @ x` for matrix-vector multiplication in NumPy. |
 | Matrix update diverges even with positive damping $b$ | Overwrote `x[0]` in-place before using old `x[0]` to compute `x[1]`. | Compute the full new vector `[row0, row1]` before assigning it back to `x`. |
 | Static equilibrium is off by $\Delta t$ | Forgot to multiply $B_c = [0,\; 1/m]^T$ by $\Delta t$ when forming $B_d$. | Check units: $B_d u_k$ in row 2 must have units of velocity ($\text{m/s} = \text{N}\cdot\text{s/kg}$). |
 

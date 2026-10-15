@@ -28,10 +28,18 @@ Push open a heavy glass office door equipped with an overhead hydraulic closer. 
 ## 3. Formalization
 1. **First-Order System ($\tau\dot{y} + y = u$):** Driven by a unit step $u(t) = 1$ from $y(0) = 0$, the solution is $y(t) = 1 - e^{-t/\tau}$, where time constant $\tau$ in seconds ($\text{s}$) is the time to reach $1 - e^{-1} \approx 63.2\%$ of the step. At $t = \tau = 0.010\text{ s}$, $y(0.010\text{ s}) = 1 - e^{-1} = 0.6321$.
 2. **Canonical Second-Order ODE ($\omega_n$ and $\zeta$):** Dividing rotary joint dynamics $J\ddot{\theta} + b\dot{\theta} + k\theta = \tau_{\text{in}}$ by inertia $J$ ($\text{kg}\cdot\text{m}^2$) yields the canonical form with natural frequency $\omega_n$ ($\text{rad/s}$) and dimensionless damping ratio $\zeta$:
-   $$\ddot{\theta} + 2\zeta\omega_n\dot{\theta} + \omega_n^2\theta = \frac{\tau_{\text{in}}}{J}, \qquad \omega_n = \sqrt{\frac{k}{J}}, \qquad \zeta = \frac{b}{2\sqrt{Jk}}$$
+
+$$
+\ddot{\theta} + 2\zeta\omega_n\dot{\theta} + \omega_n^2\theta = \frac{\tau_{\text{in}}}{J}, \qquad \omega_n = \sqrt{\frac{k}{J}}, \qquad \zeta = \frac{b}{2\sqrt{Jk}}
+$$
+
    For $J = 0.02\text{ kg}\cdot\text{m}^2$, stiffness $k = 8.0\text{ N}\cdot\text{m/rad}$, and damping $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$, $\omega_n = \sqrt{\frac{8.0}{0.02}} = 20.0\text{ rad/s}$ and $\zeta = \frac{0.40}{2\sqrt{0.02 \times 8.0}} = 0.50$.
 3. **Characteristic Roots, Damped Frequency $\omega_d$ & Peak Overshoot $M_p$:** The characteristic polynomial $s^2 + 2\zeta\omega_n s + \omega_n^2 = 0$ has roots $s = -\zeta\omega_n \pm j\omega_d$ for $0 < \zeta < 1$, where damped oscillation frequency $\omega_d$ ($\text{rad/s}$) and fractional step overshoot $M_p$ are:
-   $$\omega_d = \omega_n\sqrt{1 - \zeta^2}, \qquad M_p = \exp\!\left(\frac{-\pi\zeta}{\sqrt{1 - \zeta^2}}\r\right)$$
+
+$$
+\omega_d = \omega_n\sqrt{1 - \zeta^2}, \qquad M_p = \exp\!\left(\frac{-\pi\zeta}{\sqrt{1 - \zeta^2}}\right)
+$$
+
    For $\omega_n = 20.0\text{ rad/s}$ and $\zeta = 0.50$, $\omega_d = 20.0\sqrt{0.75} = 17.3205\text{ rad/s}$ and $M_p = \exp(-\pi \times 0.50 / \sqrt{0.75}) = 0.16303$ ($16.30\%$ overshoot).
 
 ## 4. Worked example
@@ -89,6 +97,14 @@ No hardware required for this module (`hardware_required: false`). On a physical
 [Step Command 1.0 rad] ---> [PD Loop: Kp=8.0, Kd=0.80 on J=0.02] ---> [Critically Damped Shaft Response (zeta=1.0)]
 ```
 Pass/fail verification in simulation: `wn == 20.0 rad/s`, `zeta == 0.50`, and `Mp == 16.30%`.
+
+
+```mermaid
+flowchart LR
+    A["00-foundations.T2.00c: first_order_ode_time_constant"] --> B["second_order_ode_wn_zeta"]
+    B --> C["characteristic_polynomial_roots"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and critical-damping exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.

@@ -1,6 +1,6 @@
 ---
 id: 05-control.T3.05a
-title: "Joseph-Form Covariance Symmetry, Tangent-Space Error-State Reset on SO(3), Receding-Horizon QP & Control Barrier Functions"
+title: "Joseph-Form Covariance Symmetry, Tangent-Space Error-State Reset on SO(3) & Control Barrier Function QPs"
 track: "05"
 tier: 3
 prereqs:
@@ -31,13 +31,25 @@ Three geometric and optimization concepts form the backbone of Tier 3 estimation
 
 ## 3. Formalization
 1. **Joseph-Form Stabilized Kalman Covariance Update:** For prior covariance $P^- \succeq 0$, measurement Jacobian $H$, measurement noise covariance $R \succ 0$, and any gain matrix $K$ (including optimal $K = P^- H^\top (H P^- H^\top + R)^{-1}$), the posterior covariance is:
-   $$P^+ = (I - K H) P^- (I - K H)^\top + K R K^\top = (P^+)^\top \succ 0$$
+
+$$
+P^+ = (I - K H) P^- (I - K H)^\top + K R K^\top = (P^+)^\top \succ 0
+$$
+
 2. **Manifold Error-State Kalman Filter (`ESKF`) Injection & Reset on $SO(3)$:**
    - **True vs. Nominal Orientation:** $R_{\text{true}} = R \exp([\delta\theta]_\times)$ where $\delta\theta \in \mathbb{R}^3$ has prior mean $\delta\hat{\theta}^- = 0$ and covariance $P^-$.
    - **Measurement Update, Manifold Injection & Reset:** Given innovation $r = y - h(\hat{x}_{\text{nom}})$, compute posterior error $\delta\hat{x}^+ = K r$, inject onto the manifold, and reset the error state to zero:
-     $$R^+ = R^- \exp([\delta\hat{\theta}^+]_\times), \qquad \delta\hat{\theta} \leftarrow 0_{3\times 1}$$
+
+$$
+R^+ = R^- \exp([\delta\hat{\theta}^+]_\times), \qquad \delta\hat{\theta} \leftarrow 0_{3\times 1}
+$$
+
 3. **Control Barrier Function Quadratic Program (`CBF-QP`) Safety Filter:** Given a safe set $\mathcal{C} = \{x : h(x) \ge 0\}$ with affine dynamics $\dot{h}(x, u) = L_f h(x) + L_g h(x) u$ (or relative-degree-2 exponential CBF $\ddot{h} + k_1 \dot{h} + k_0 h \ge 0$), the minimally invasive safety filter solves at $1\text{ kHz}$:
-   $$u^* = \arg\min_{u \in [u_{\min}, u_{\max}]} \frac{1}{2}\|u - u_{\text{nom}}\|^2 \quad \text{subject to} \quad L_f h(x) + L_g h(x) u \ge -\alpha h(x)$$
+
+$$
+u^* = \arg\min_{u \in [u_{\min}, u_{\max}]} \frac{1}{2}\|u - u_{\text{nom}}\|^2 \quad \text{subject to} \quad L_f h(x) + L_g h(x) u \ge -\alpha h(x)
+$$
+
    For a 1D scalar input with $L_g h(x) \ne 0$, the exact closed-form solution projects $u_{\text{nom}}$ onto the admissible half-space and actuator bounds $[u_{\min}, u_{\max}]$.
 
 ## 4. Worked example
@@ -85,7 +97,7 @@ For a 1D velocity-controlled joint approaching an upper limit $q_{\max} = 1.50\t
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00e`](00-foundations.T2.00e.md)–[`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*State-Space & Covariance*), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) (*$SO(3)$ Hat/Vee Maps, Rodrigues' Formula & Hamiltonian Passivity*), and Legacy **Step 3.1 (`00-foundations.T3.01`)**.
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00e`](00-foundations.T2.00e.md)–[`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*State-Space & Covariance*), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Formula & Hamiltonian Passivity), and Legacy **Step 3.1 (`00-foundations.T3.01`)**.
   - **Prerequisite Bridge Module:** [`05-control.T2.05a`](05-control.T2.05a.md) and Legacy **Step 2.6 (`05-control.T2.06`)**.
   - **Core Concepts to Review First:** Joseph-form covariance update $P^+ = (I-KH)P^-(I-KH)^\top + KRK^\top$ & $SO(3)$ ESKF multiplicative injection, condensed single-shooting linear MPC Hessian $(G^\top \bar{Q} G + \bar{R})$, and Control Barrier Function (CBF) 1D safety clamp $\dot{h}(x,u) + \gamma h(x) \ge 0$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the ESKF* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508), [Ames et al. *Control Barrier Functions* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199), and [Track 05 Tier 3 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 4 & Tab 8**).
@@ -98,6 +110,14 @@ No hardware required for this module (`hardware_required: false`). In Step 3.6 (
 [IMU + Encoder] ---> [Manifold ESKF (Joseph P^+)] ---> [Nominal LQR / MPC u_nom] ---> [CBF-QP Safety Filter u*] ---> [Plant]
 ```
 Pass/fail verification in simulation: `P_joseph == 0.80`, `det(R_plus) == 1.0`, and `u_safe == 0.20`.
+
+
+```mermaid
+flowchart LR
+    A["05-control.T3.05a: joseph_stabilized_covariance_update"] --> B["tangent_space_eskf_error_injection"]
+    B --> C["control_barrier_forward_invariance_qp"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.6 (`05-control.T3.06`).
@@ -180,7 +200,7 @@ assert g8_choice == "A"
 | :--- | :--- | :--- |
 | Kalman covariance matrix $P$ develops asymmetric off-diagonal entries or a negative diagonal entry after $10{,}000$ ticks | Used the textbook $(I - KH)P^-$ subtraction formula in 32-bit floating point. | Replace with the Joseph-form update $P^+ = (I - KH)P^-(I - KH)^\top + KRK^\top$ and enforce $P \leftarrow \frac{1}{2}(P + P^\top)$. |
 | ESKF orientation drifts or jumps double the expected correction on every camera update | Forgot to reset the tangent-space error state $\delta\hat{\theta} \leftarrow 0$ after injecting $R^+ = R^- \exp([\delta\hat{\theta}^+]_\times)$ into the nominal orientation. | Always zero out the error-state mean $\delta\hat{x} \leftarrow 0$ immediately after folding it into the nominal manifold state. |
-| CBF-QP becomes infeasible (`OSQP_PRIMAL_INFEASIBLE`) when the robot approaches a position wall at high speed under tight torque limits $\pm\tau_{\max}$ | Used a relative-degree-1 barrier $h(q) = q_{\max} - q$ on a second-order inertial plant ($\ddot{q} = u/J$) where position velocity $\dot{q}$ does not depend directly on torque $u$, or chose $\alpha$ too large for $\tau_{\max}$. | Use an **Exponential CBF (ECBF)** or Kinetic-Energy-aware barrier $h(q, \dot{q}) = (q_{\max} - q) - \frac{\dot{q}|\dot{q}|}{2 a_{\max}}$ that accounts for the stopping distance under maximum deceleration $a_{\max} = \tau_{\max}/J$! |
+| CBF-QP becomes infeasible (`OSQP_PRIMAL_INFEASIBLE`) when the robot approaches a position wall at high speed under tight torque limits $\pm\tau_{\max}$ | Used a relative-degree-1 barrier $h(q) = q_{\max} - q$ on a second-order inertial plant ($\ddot{q} = u/J$) where position velocity $\dot{q}$ does not depend directly on torque $u$, or chose $\alpha$ too large for $\tau_{\max}$. | Use an **Exponential CBF (ECBF)** or Kinetic-Energy-aware barrier $h(q, \dot{q}) = (q_{\max} - q) - \frac{\dot{q}\lvert \dot{q}\rvert }{2 a_{\max}}$ that accounts for the stopping distance under maximum deceleration $a_{\max} = \tau_{\max}/J$! |
 
 ## 9. Resources
 - **Joan Solà — *Quaternion Kinematics for the Error-State Kalman Filter* (`arXiv:1711.02508`), Aaron D. Ames et al. — *Control Barrier Functions: Theory and Applications* (`arXiv:1903.11199`), & `TinyMPC` / `acados` Docs (`resources/textbooks-and-papers.md`):** Joseph-form ESKF on $SO(3)$, embedded MPC, and CBF-QP safety filters `[VERIFIED 2026-10-15]`.

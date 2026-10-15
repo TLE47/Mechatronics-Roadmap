@@ -29,14 +29,26 @@ An unconstrained rigid part floating in 3D space has **6 Degrees of Freedom (DOF
 ## 3. Formalization
 1. **Spatial 6-DOF Constraint Counting:** A free rigid body in $\mathbb{R}^3$ has $6\text{ DOF}$. If $c \le 6$ independent point constraints are applied, remaining mobility is $M = 6 - c$. If $c > 6$ (over-constraint, such as a 4-legged table on an uneven floor), internal preload stress depends on manufacturing tolerances rather than static equilibrium.
 2. **3D Homogeneous Transformation Matrix ($T \in SE(3)$):** Combining rotation $R \in SO(3)$ ($3\times 3$) and translation $p \in \mathbb{R}^3$ ($3\times 1$) forms:
-   $$T = \begin{bmatrix} R & p \\ 0_{1\times 3} & 1 \end{bmatrix} \in \mathbb{R}^{4\times 4}, \quad T^{-1} = \begin{bmatrix} R^\top & -R^\top p \\ 0_{1\times 3} & 1 \end{bmatrix}$$
+
+$$
+T = \begin{bmatrix} R & p \\ 0_{1\times 3} & 1 \end{bmatrix} \in \mathbb{R}^{4\times 4}, \quad T^{-1} = \begin{bmatrix} R^\top & -R^\top p \\ 0_{1\times 3} & 1 \end{bmatrix}
+$$
+
    Chaining frames $\{0\} \to \{1\} \to \{2\}$ multiplies $T_{02} = T_{01} T_{12}$.
 3. **Planar/3D Velocity Jacobian ($J(q)$), Force Duality ($\tau = J^\top F$) & Parallel-Axis Theorem:**
    - Differentiating planar 2-link forward kinematics $x = L_1\cos q_1 + L_2\cos(q_1+q_2),\ y = L_1\sin q_1 + L_2\sin(q_1+q_2)$ with respect to $q = [q_1, q_2]^\top$ gives the $2\times 2$ Jacobian:
-     $$J(q) = \begin{bmatrix} \frac{\partial x}{\partial q_1} & \frac{\partial x}{\partial q_2} \\ \frac{\partial y}{\partial q_1} & \frac{\partial y}{\partial q_2} \end{bmatrix} = \begin{bmatrix} -L_1 s_1 - L_2 s_{12} & -L_2 s_{12} \\ L_1 c_1 + L_2 c_{12} & L_2 c_{12} \end{bmatrix}, \quad \dot{x} = J(q)\dot{q}, \quad \tau = J(q)^\top F$$
+
+$$
+J(q) = \begin{bmatrix} \frac{\partial x}{\partial q_1} & \frac{\partial x}{\partial q_2} \\ \frac{\partial y}{\partial q_1} & \frac{\partial y}{\partial q_2} \end{bmatrix} = \begin{bmatrix} -L_1 s_1 - L_2 s_{12} & -L_2 s_{12} \\ L_1 c_1 + L_2 c_{12} & L_2 c_{12} \end{bmatrix}, \quad \dot{x} = J(q)\dot{q}, \quad \tau = J(q)^\top F
+$$
+
      At $q_2 = 0$ (arm stretched straight) or $q_2 = \pi$ (arm folded back), $\det J(q) = L_1 L_2 \sin q_2 = 0$ (**kinematic singularity**).
    - **3D Parallel-Axis Theorem (Steiner's Theorem):** Shifting inertia tensor $I_{\text{com}} \in \mathbb{R}^{3\times 3}$ of mass $m$ ($\text{kg}$) by displacement vector $d \in \mathbb{R}^3$ ($\text{m}$) yields:
-     $$I_{\text{joint}} = I_{\text{com}} + m\left((d^\top d) I_3 - d d^\top\right)$$
+
+$$
+I_{\text{joint}} = I_{\text{com}} + m\left((d^\top d) I_3 - d d^\top\right)
+$$
+
      For scalar rotation about $z$ with planar offset $d = [L_{\text{com}}, 0, 0]^\top$, $I_{zz,\text{joint}} = I_{zz,\text{com}} + m L_{\text{com}}^2$.
 
 ## 4. Worked example
@@ -89,7 +101,7 @@ For the 2-link planar arm ($L_1 = 0.25\text{ m}, L_2 = 0.20\text{ m}$), compute 
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*$2\times 2$ Matrices, Transpose & Determinants*) and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Orthogonal Frames*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) ($2\times 2$ Matrices, Transpose & Determinants) and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Orthogonal Frames).
   - **Prerequisite Bridge Module:** [`02-mechanics.T1.02a`](02-mechanics.T1.02a.md) and Legacy **Step 1.3 (`02-mechanics.T1.03`)**.
   - **Core Concepts to Review First:** 2-link velocity Jacobian $J(q)$, static virtual-work torque $\tau = J(q)^\top F_{\text{tip}}$, parallel-axis theorem $I_O = I_{\text{com}} + m d^2$, and physical triangle-inequality validation in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 5 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [CadQuery Docs (`cadquery.readthedocs.io`)](https://cadquery.readthedocs.io/), and [Track 02 Tier 2 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
@@ -102,6 +114,14 @@ No hardware required for this module (`hardware_required: false`). In Step 2.3 (
 [Cartesian Error dx = x_d - FK(q)] ---> [F = K_x * dx - D_x * (J * dq)] ---> [tau = J(q)^T * F] ---> [Motors]
 ```
 Pass/fail verification in simulation: `tip_xy == [0.20, 0.20]`, `det_J == 0.0400`, `tau_joints == [2.0, -2.0] N*m`, and `I_end == 0.0320 kg*m^2`.
+
+
+```mermaid
+flowchart LR
+    A["02-mechanics.T2.02a: six_dof_gruebler_constraint_counting"] --> B["se3_homogeneous_transformation_matrix"]
+    B --> C["geometric_jacobian_and_parallel_axis_theorem"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.3 (`02-mechanics.T2.03`).

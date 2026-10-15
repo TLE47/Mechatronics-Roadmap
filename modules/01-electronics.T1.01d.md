@@ -27,13 +27,25 @@ Think of a **capacitor** as a rubber diaphragm stretched across a water pipe—o
 
 ## 3. Formalization
 1. **Capacitor Law ($I_C = C\frac{dV}{dt}$) and Stored Energy:** A capacitor of capacitance $C$ in farads ($\text{F}$) stores charge $Q = C V$ ($\text{C}$) and electric energy $E_C = \frac{1}{2} C V^2$ ($\text{J}$). To hold rail voltage droop $\Delta V$ ($\text{V}$) below a limit during a current pulse $\Delta I$ ($\text{A}$) lasting $\Delta t$ ($\text{s}$):
-   $$\Delta V = \frac{\Delta I \cdot \Delta t}{C} \iff C \ge \frac{\Delta I \cdot \Delta t}{\Delta V}$$
+
+$$
+\Delta V = \frac{\Delta I \cdot \Delta t}{C} \iff C \ge \frac{\Delta I \cdot \Delta t}{\Delta V}
+$$
+
    Substituting $\Delta I = 2.0\text{ A}$, $\Delta t = 5.0\ \mu\text{s}$, and max droop $\Delta V = 0.10\text{ V}$ requires $C \ge 100\ \mu\text{F}$.
 2. **RC Charging Time Constant ($\tau = R C$) and Cutoff Frequency ($f_c$):** Charging a capacitor $C$ through resistor $R$ ($\Omega$) from $0\text{ V}$ toward $V_{\text{in}}$ follows:
-   $$V_C(t) = V_{\text{in}}\left(1 - e^{-t/(RC)}\right), \quad \tau = R C, \quad f_c = \frac{1}{2\pi R C}$$
+
+$$
+V_C(t) = V_{\text{in}}\left(1 - e^{-t/(RC)}\right), \quad \tau = R C, \quad f_c = \frac{1}{2\pi R C}
+$$
+
    At $t = 1\tau$, $V_C(\tau) = 0.6321\,V_{\text{in}}$; at $t = 5\tau$, $V_C(5\tau) = 0.9933\,V_{\text{in}}$. Substituting $R = 1.0\text{ k}\Omega$ and $C = 1.0\ \mu\text{F}$ gives $\tau = 1.0\text{ ms}$ and $f_c = 159.15\text{ Hz}$.
 3. **Inductor Law ($V_L = L\frac{dI}{dt}$), Stored Magnetic Energy & Flyback Clamp:** A motor winding of inductance $L$ in henries ($\text{H}$) carrying current $I$ ($\text{A}$) stores magnetic energy $E_L = \frac{1}{2} L I^2$ ($\text{J}$) and induces voltage:
-   $$V_L = L \frac{dI}{dt}$$
+
+$$
+V_L = L \frac{dI}{dt}
+$$
+
    Interrupting $I = 2.0\text{ A}$ in $L = 5.0\text{ mH}$ over $\Delta t = 1.0\ \mu\text{s}$ without a diode produces $|V_L| = 0.005 \times (2.0 / 10^{-6}) = 10{,}000\text{ V}$, punching through any silicon transistor! Placing a freewheeling diode across the coil clamps the switch node to $V_{\text{bus}} + V_f$ ($\approx V_{\text{bus}} + 0.7\text{ V}$).
 
 ## 4. Worked example
@@ -76,7 +88,7 @@ Calculate the minimum bulk decoupling capacitance $C_{\min}$ in microfarads ($\m
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Prefixes $\mu\text{F}, \text{mH}, \text{ns}$*) and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Stored Energy*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (SI Prefixes $\mu\text{F}, \text{mH}, \text{ns}$) and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Stored Energy*).
   - **Prerequisite Bridge Modules:** [`01-electronics.T1.01a`](01-electronics.T1.01a.md) and [`01-electronics.T1.01c`](01-electronics.T1.01c.md).
   - **Core Concepts to Review First:** Capacitor current $I = C\frac{dV}{dt}$, RC time constant $\tau = RC$ and $-3\text{ dB}$ cutoff $f_c = \frac{1}{2\pi RC}$, and inductor voltage spike $V_L = L\frac{dI}{dt}$ with flyback clamping in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Falstad Interactive Circuit Simulator (`falstad.com/circuit`)](https://www.falstad.com/circuit/), [All About Circuits RC & L/R Time Constants](https://www.allaboutcircuits.com/textbook/direct-current/), and [Track 01 §1.1–1.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
@@ -91,8 +103,16 @@ No hardware required for this module (`hardware_required: false`). When wiring E
 ```
 Pass/fail verification in simulation: `tau == 1.0 ms`, `fc == 159.15 Hz`, `v_flyback_unclamped == 12000 V`, and `v_flyback_clamped == 12.7 V`.
 
-## Safety notes
+### Safety notes
 > **⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\le 0.5\text{ A}$) before energizing any breadboard or sensor circuit.
+
+
+```mermaid
+flowchart LR
+    A["01-electronics.T1.01d: capacitor_charge_storage_and_decoupling"] --> B["rc_time_constant_and_filtering"]
+    B --> C["inductor_flyback_and_freewheeling_diode"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.

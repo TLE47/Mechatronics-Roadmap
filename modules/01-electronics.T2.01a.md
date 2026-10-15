@@ -29,10 +29,18 @@ Imagine trying to measure the height of a $3\text{ cm}$ ripple on the surface of
 ## 3. Formalization
 1. **Ideal Op-Amp Under Negative Feedback:** With negative feedback active and output unsaturated, an ideal op-amp draws zero input bias current ($I_+ = I_- = 0$) and drives its differential input voltage to zero ($V_+ \approx V_-$, the **virtual short**).
 2. **Bidirectional Differential Shunt Amplifier Transfer Function:** For phase current $I_{\text{phase}}$ ($\text{A}$) through shunt resistance $R_{\text{shunt}}$ ($\Omega$), amplifier gain $G$ ($\text{V/V}$), and mid-rail reference $V_{\text{ref}} = 1.65\text{ V}$, the ADC pin voltage is:
-   $$V_{\text{ADC}} = V_{\text{ref}} + G \cdot I_{\text{phase}} \cdot R_{\text{shunt}}$$
+
+$$
+V_{\text{ADC}} = V_{\text{ref}} + G \cdot I_{\text{phase}} \cdot R_{\text{shunt}}
+$$
+
    Substituting $V_{\text{ref}} = 1.65\text{ V}$, $G = 20.0\text{ V/V}$, $R_{\text{shunt}} = 0.003\ \Omega$ ($3\text{ m}\Omega$), and $I_{\text{phase}} = +15.0\text{ A}$ gives $V_{\text{ADC}} = 1.65 + 20(15.0)(0.003) = 2.55\text{ V}$ (and $0.75\text{ V}$ at $-15.0\text{ A}$). A common-mode jump $\Delta V_{\text{CM}}$ attenuated by $\text{CMRR}_{\text{dB}}$ adds input-referred error $\Delta V_{\text{err,in}} = \Delta V_{\text{CM}} \cdot 10^{-\text{CMRR}_{\text{dB}}/20}$.
 3. **2-Terminal vs. 4-Terminal Kelvin Shunt Parasitic Error:** If two sense traces tap into the load current path with parasitic copper/solder resistance $R_{\text{trace}}$ ($\Omega$) on each pad, the apparent shunt resistance becomes $R_{\text{meas}} = R_{\text{shunt}} + 2 R_{\text{trace}}$, creating relative gain error:
-   $$\varepsilon_{\text{gain}} = \frac{2 R_{\text{trace}}}{R_{\text{shunt}}}$$
+
+$$
+\varepsilon_{\text{gain}} = \frac{2 R_{\text{trace}}}{R_{\text{shunt}}}
+$$
+
    Substituting $R_{\text{shunt}} = 2.0\text{ m}\Omega$ and $R_{\text{trace}} = 0.6\text{ m}\Omega$ gives $\varepsilon_{\text{gain}} = 1.2 / 2.0 = +60\%$ error! Tapping dedicated non-current-carrying inner Kelvin sense pads reduces $I_{\text{sense}} \approx 0$, eliminating the $2 R_{\text{trace}}$ drop.
 
 ## 4. Worked example
@@ -66,7 +74,7 @@ Calculate the maximum measurable current magnitude $I_{\max}$ in amperes ($\text
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*$\text{m}\Omega$ Shunt Scaling*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Affine Range Mapping*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Frequency Response*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Nyquist Aliasing & Anti-Aliasing Cutoff*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) ($\text{m}\Omega$ Shunt Scaling), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Affine Range Mapping*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Frequency Response*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Nyquist Aliasing & Anti-Aliasing Cutoff*).
   - **Prerequisite Bridge Module:** [`01-electronics.T1.01b`](01-electronics.T1.01b.md) and Legacy **Step 1.2 (`01-electronics.T1.02`)**.
   - **Core Concepts to Review First:** 4-terminal Kelvin sense connections, differential op-amp output $V_{\text{out}} = V_{\text{ref}}/2 + G(I_{\text{phase}}R_{\text{shunt}})$, and active RC anti-aliasing filter sizing in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [TI INA240 Current-Sense Amplifier Datasheet (`ti.com/lit/gpn/ina240`)](https://www.ti.com/lit/gpn/ina240), [TI Op Amps for Everyone (SLOD006)](https://www.ti.com/lit/pdf/slod006), and [Track 01 §2.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
@@ -82,8 +90,16 @@ No hardware required for this module (`hardware_required: false`). In Step 2.2 (
 ```
 Pass/fail verification in simulation: `v_pos25 == 3.15 V`, `v_neg25 == 0.15 V`, and `kelvin_err_pct == 40.0%`.
 
-## Safety notes
+### Safety notes
 > **⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\le 0.5\text{ A}$) before energizing any breadboard or sensor circuit.
+
+
+```mermaid
+flowchart LR
+    A["01-electronics.T2.01a: opamp_negative_feedback_virtual_short"] --> B["differential_shunt_gain_and_cmrr"]
+    B --> C["kelvin_four_terminal_sense_routing"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
@@ -125,4 +141,4 @@ assert q4_choice == "A"
 - **Texas Instruments — *INA240 Zero-Drift, Bidirectional Current-Sense Amplifier Datasheet & Kelvin Layout Guide* (`resources/textbooks-and-papers.md`):** Enhanced PWM rejection and 4-terminal shunt PCB layout rules `[VERIFIED 2026-10-15]`.
 - **Horowitz & Hill — *The Art of Electronics* (3e, Ch. 4 Operational Amplifiers):** Virtual short, differential amplifiers, and CMRR `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to [`01-electronics.T2.01b`](01-electronics.T2.01b.md) (*KiCad 4-Layer Stackup, Parasitic Loop Inductance ($L\,di/dt$), Bootstrap Gate Drivers & 48 V Pre-Charge Safety*).
+- Proceed to [`01-electronics.T2.01b`](01-electronics.T2.01b.md) (KiCad 4-Layer Stackup, Parasitic Loop Inductance ($L\,di/dt$), Bootstrap Gate Drivers & 48 V Pre-Charge Safety).

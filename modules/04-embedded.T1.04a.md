@@ -23,19 +23,19 @@ resources_verified: false
 Python integers grow arbitrarily large and never overflow, but microcontroller C/C++ variables occupy a fixed number of bits (`uint8_t`, `int16_t`, `uint32_t`, `float`) in hardware registers. Before writing real-time timer interrupts and binary serial telemetry in Step 1.5 (`04-embedded.T1.05`), you must know how fixed-width integers wrap around, how bitwise masks (`|`, `&`, `~`, `<<`) flip single register bits without corrupting neighbors, and how `struct` pointers pass data with zero copy overhead. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
-When you transition from desktop Python to microcontroller firmware, you first meet the **Arduino / Wiring model** (`void setup()` runs once at power-on to configure pins; `void loop()` repeats forever) and underneath it, **memory-mapped hardware registers**. Imagine moving from an infinite notepad (Python) to an odometer with only four mechanical digit wheels (`uint16_t`, which holds `0` to `65535`). If your odometer is at `65535` and clicks forward by `1`, it doesn't add a fifth wheel—it wraps cleanly back to `0` (**integer wrap-around**). Next, think of a microcontroller hardware peripheral register (`GPIOA->ODR` at fixed physical memory address `0x48000014`) as a wall of 32 light switches wired directly to physical silicon pins. Calling Arduino's `digitalWrite(pin, HIGH)` is simply a friendly wrapper that flips one switch on that wall; when you need sub-microsecond speed, you use a **bitwise stencil (mask)** `1U << n` to set, clear, or test individual register bits directly (`GPIOA->ODR |= (1U << 5)` or atomic bit-set/reset `GPIOA->BSRR`). Finally, a C **`struct`** is a molded tray that holds several variables side-by-side in memory, and a **pointer** (`*`) stores the shelf address of that tray on a sticky note instead of photocopying the entire tray every time you call a function.
+When you transition from desktop Python to microcontroller firmware, you first meet the **Arduino / Wiring execution model** (`void setup()` runs once at power-on to configure pins with `pinMode(pin, OUTPUT)`; `void loop()` repeats forever calling `digitalWrite(pin, HIGH)` or `analogWrite(pin, pwm)`). Imagine moving from an infinite notepad (Python) to a mechanical odometer with only four digit wheels (`uint16_t`, which holds `0` to `65535`). If your odometer is at `65535` and clicks forward by `1`, it doesn't add a fifth wheel—it wraps cleanly back to `0` (**integer wrap-around**). Next, when packing status flags or configuration bits into an 8-bit or 32-bit C integer, think of that integer as a row of individual toggle switches: you use a **bitwise stencil (mask)** `1U << n` with bitwise OR (`|`), AND (`&`), and NOT (`~`) to set, clear, or test one flag bit without disturbing its neighbors. Finally, a C **`struct`** is a molded tray that holds several related variables side-by-side in memory, and a **pointer** (`*`) passes the address of that tray on a sticky note instead of copying the entire tray on every function call.
 
 ## 3. Formalization
-1. **Arduino/Wiring Execution Model & Fixed-Width Integer Types (`<stdint.h>`):** Firmware entry starts at reset, runs `setup()` once, and spins `loop()` continuously. Unlike Python's arbitrary-precision integers, an $N$-bit unsigned C integer `uintN_t` stores values in $[0, 2^N - 1]$, and a two's-complement signed integer `intN_t` stores $[-2^{N-1}, 2^{N-1} - 1]$:
+1. **Arduino/Wiring Execution Model (`setup()` / `loop()`) & Fixed-Width Integer Types (`<stdint.h>`):** Firmware entry starts at reset, runs `setup()` once, and spins `loop()` continuously. Unlike Python's arbitrary-precision integers, an $N$-bit unsigned C integer `uintN_t` stores values in $[0, 2^N - 1]$, and a two's-complement signed integer `intN_t` stores $[-2^{N-1}, 2^{N-1} - 1]$:
    - `uint8_t`: $[0, 255]$ ($1\text{ byte}$); `int16_t`: $[-32768, 32767]$ ($2\text{ bytes}$); `uint32_t`: $[0, 4294967295]$ ($4\text{ bytes}$); `float`: IEEE-754 single precision ($4\text{ bytes}$).
    - Computing unsigned tick difference `(uint16_t)(now - prev)` modulo $2^{16} = 65536$: substituting `now = 4` and `prev = 65530` yields `(4 - 65530) & 0xFFFF = 10` ticks elapsed across rollover.
-2. **Memory-Mapped Register Basics & Bitwise Manipulation:** A hardware register is a fixed memory address (`#define GPIOA_ODR (*(volatile uint32_t *)0x48000014UL)`). For bit index $n \in \{0, \dots, 31\}$ in register $R$:
-   - Set bit $n$ to `1` (read-modify-write): $R \leftarrow R \mid (1\text{U} \ll n)$.
-   - Clear bit $n$ to `0` (read-modify-write): $R \leftarrow R \mathbin{\&} \sim(1\text{U} \ll n)$.
-   - Atomic Bit-Set/Reset Register (`BSRR`, write-only): writing $(1\text{U} \ll n)$ sets bit $n$; writing $(1\text{U} \ll (n + 16))$ clears bit $n$ in a single clock cycle without a read-modify-write race.
-   - Test bit $n$: $\text{is\_set} = (R \gg n) \mathbin{\&} 1\text{U}$.
-   Substituting $R = \text{0x01}$ (`0b00000001`), setting bit $3$ ($1 \ll 3 = 8 = \text{0x08}$) gives $R = \text{0x09}$ (`0b00001001`).
-3. **Structs and Pass-by-Pointer (`*` and `->`):** Grouping fields in `struct MotorState { int16_t count; float vel_rad_s; };` and passing `MotorState *s` passes a single memory address (`4` or `8` bytes) so `s->count += 1` mutates the caller's struct in-place.
+2. **Bitwise Masks and Shifts (`|`, `&`, `~`, `<<`, `>>`):** For bit index $n \in \{0, \dots, 31\}$ in an unsigned status or configuration word $W$:
+   - Set bit $n$ to `1`: $W \leftarrow W \mid (1\text{U} \ll n)$.
+   - Clear bit $n$ to `0`: $W \leftarrow W \mathbin{\&} \sim(1\text{U} \ll n)$.
+   - Toggle bit $n$: $W \leftarrow W \oplus (1\text{U} \ll n)$.
+   - Test bit $n$: $\text{is}\_\text{set} = (W \gg n) \mathbin{\&} 1\text{U}$.
+   Substituting $W = \text{0x01}$ (`0b00000001`), setting bit $3$ ($1 \ll 3 = 8 = \text{0x08}$) gives $W = \text{0x09}$ (`0b00001001`).
+3. **Structs and Pass-by-Pointer (`*` and `->`):** Grouping fields in `struct MotorState { int16_t count; float vel_rad_s; };` and passing `MotorState *s` passes a single memory address (`4` or `8` bytes) so `s->count += 1` mutates the caller's struct in-place and packs cleanly into binary frames (`struct.pack("<Hhf", ...)`).
 
 ## 4. Worked example
 Simulate 16-bit encoder counter wrap-around, bitwise GPIO register set/clear operations, and packing an 8-byte C telemetry struct (`<Hhf`: `uint16_t`, `int16_t`, `float`) using Python's `struct` module.
@@ -73,7 +73,7 @@ Start with register value `reg = 0x5A` (`0b01011010`). Write a Python expression
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Variables, Loops & Functions*) and [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Indexing*).
-  - **Core Concepts to Review First:** Fixed-width `<stdint.h>` integer types (`uint8_t`, `uint16_t`, `uint32_t`), bitwise set/clear/toggle/extract idioms (`|= (1U << n)`, `&= ~(1U << n)`), and `volatile` memory-mapped hardware registers in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Core Concepts to Review First:** Fixed-width `<stdint.h>` integer types (`uint8_t`, `uint16_t`, `uint32_t`), bitwise set/clear/toggle/extract idioms (`|= (1U << n)`, `&= ~(1U << n)`), and C structs/pointers in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Barr Group *Embedded C Coding Standard* (`barrgroup.com`)](https://barrgroup.com/embedded-systems/books/embedded-c-coding-standard) and [Track 04 Tier 1 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
 
 ## 6. Simulation path
@@ -84,6 +84,14 @@ No hardware required for this module (`hardware_required: false`). In Step 1.5 (
 [MCU C Struct: uint16_t + int16_t + float (8 B)] ---> (UART 115200 bps) ---> [Python struct.unpack("<Hhf")]
 ```
 Pass/fail verification in simulation: `uint16_elapsed(4, 65530) == 10`, `reg == 0x08`, and `len(raw_bytes) == 8`.
+
+
+```mermaid
+flowchart LR
+    A["04-embedded.T1.04a: c_fixed_width_integer_types_and_overflow"] --> B["bitwise_masks_and_shifts"]
+    B --> C["c_structs_and_pointers_pass_by_reference"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.

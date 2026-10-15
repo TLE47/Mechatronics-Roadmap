@@ -20,7 +20,7 @@ resources_verified: true
 ---
 
 ## 1. Why it matters
-More beginner circuits are destroyed in the first five seconds of power-on by a breadboard row short, a multimeter lead left in the $10\text{ A}$ current jack, or an unprotected LiPo battery than by any software bug. Mastering how solderless breadboard clips are wired internally, how to measure voltage vs. current safely with a Digital Multimeter (DMM), and how to set a bench power supply's Constant-Current (CC) limit protects every board you build from Stage 0 (`L0.1`) through Track 08. Already know this? Read `## Safety notes` first, then take the Skip test in section 7.
+More beginner circuits are destroyed in the first five seconds of power-on by a breadboard row short, a multimeter lead left in the $10\text{ A}$ current jack, or an unprotected LiPo battery than by any software bug. Mastering how solderless breadboard clips are wired internally, how to measure voltage vs. current safely with a Digital Multimeter (DMM), and how to set a bench power supply's Constant-Current (CC) limit protects every board you build from Stage 0 (`L0.1`) through Track 08. Already know this? Read `### Safety notes` first, then take the Skip test in section 7.
 
 ## 2. Intuition first
 Imagine a solderless breadboard as an apartment building with hidden copper hallways underneath the plastic holes: the long vertical side strips (`+` and `-`) are power elevators running the full height of the board, while each horizontal group of 5 holes (`a–b–c–d–e` and `f–g–h–i–j`, split by a center ravine) shares a single metal clip. Plugging both legs of a resistor into the *same* 5-hole row shorts the resistor out completely! Next, a **Digital Multimeter (DMM)** in **Voltage mode (`V`)** acts like an infinitely high-resistance stethoscope ($R_{\text{DMM,V}} \approx 10\text{ M}\Omega$) that you touch *across* two points in parallel; in **Current mode (`A`)**, it acts like a near-zero-ohm pipe ($R_{\text{shunt}} \approx 0.01\ \Omega$) that must be placed *in series* by breaking the circuit. Finally, a **current-limited bench supply** is an automatic circuit breaker that smoothly folds back its output voltage the instant current exceeds your preset ceiling $I_{\text{limit}}$.
@@ -33,7 +33,11 @@ Imagine a solderless breadboard as an apartment building with hidden copper hall
    - **Voltage mode (`V` jack):** $R_{\text{in}} = 10\text{ M}\Omega$. Probing a $12.0\text{ V}$ rail draws only $I = 12.0 / 10^7 = 1.2\ \mu\text{A}$.
    - **Current mode (`10A` jack):** $R_{\text{shunt}} = 0.010\ \Omega$. Accidentally probing across a $12.0\text{ V}$ source with leads in the `10A` jack attempts to draw $I_{\text{short}} = 12.0\text{ V} / 0.010\ \Omega = 1200\text{ A}$, immediately blowing the DMM fuse or arcing!
 3. **Bench Supply Constant-Voltage (CV) to Constant-Current (CC) Foldback:** Given voltage setting $V_{\text{set}}$, current limit $I_{\text{limit}}$, and load resistance $R_{\text{load}}$, the actual terminal voltage is:
-   $$V_{\text{out}} = \min\!\left(V_{\text{set}},\ I_{\text{limit}} \cdot R_{\text{load}}\right)$$
+
+$$
+V_{\text{out}} = \min\!\left(V_{\text{set}},\ I_{\text{limit}} \cdot R_{\text{load}}\right)
+$$
+
    Substituting $V_{\text{set}} = 12.0\text{ V}$, $I_{\text{limit}} = 0.20\text{ A}$, and a wiring short $R_{\text{load}} = 0.5\ \Omega$ folds output voltage down to $V_{\text{out}} = 0.20 \times 0.5 = 0.10\text{ V}$ and caps fault power at $P = I_{\text{limit}}^2 R_{\text{load}} = 0.020\text{ W}$ instead of $288\text{ W}$!
 
 ## 4. Worked example
@@ -74,7 +78,7 @@ Your circuit has normal quiescent resistance $R_{\text{idle}} = 240\ \Omega$ at 
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Conditional Logic*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Units & Power $P = VI$*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Conditional Logic*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (SI Units & Power $P = VI$).
   - **Prerequisite Bridge Module:** [`01-electronics.T1.01a`](01-electronics.T1.01a.md) (*Ohm's Law & Short-Circuit Current*).
   - **Core Concepts to Review First:** Breadboard 5-pin spring-clip topology, DMM continuity vs. current-jack hazards, and CC/CV power supply current clamping $V_{\text{out}} = \min(V_{\text{set}}, I_{\text{limit}} R_{\text{load}})$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [SparkFun How to Use a Breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard), [SparkFun How to Use a Multimeter](https://learn.sparkfun.com/tutorials/how-to-use-a-multimeter), and [Track 00 §0.2 (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools).
@@ -82,15 +86,23 @@ Your circuit has normal quiescent resistance $R_{\text{idle}} = 240\ \Omega$ at 
 ## 6. Simulation path
 Simulate a current-limited voltage source and breadboard layout in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or [Wokwi](https://wokwi.com/) (`resources/open-source-toolchains.md`).
 
-## Safety notes
+### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip test):**
 > 1. **Voltage & Current Ceilings:** Keep all Tier 1 breadboard rails at $\le 12.0\text{ V}$ and $\le 1.0\text{ A}$ continuous (`L0.1`). Solderless breadboard spring clips overheat and melt plastic above $1.5\text{–}2.0\text{ A}$.
 > 2. **Power-Off Continuity Check First:** Before enabling power on any new build, unplug the power supply and measure resistance between $V_{\text{bus}}$ and $\text{GND}$ with your DMM in $\Omega$ mode. If it reads $< 10\ \Omega$, find and fix the short before applying power.
 > 3. **DMM Lead Jack Discipline:** Keep the red DMM lead in the **`V/Ω` jack** at all times. If you ever move it to the `10A` or `mA` jack to measure series current, move it back to `V/Ω` the instant you finish—probing a voltage rail with the lead in `10A` creates a dead short.
 > 4. **ESD & First Power-On Rule:** Touch a grounded metal frame before handling bare CMOS MOSFETs or MCUs, and **always** power a new circuit from a current-limited bench supply ($I_{\text{limit}} = 0.1\text{–}0.2\text{ A}$ for logic, $0.5\text{–}1.5\text{ A}$ for small motors), never directly from a LiPo battery.
 
+
+```mermaid
+flowchart LR
+    A["01-electronics.T1.01c: breadboard_internal_bus_connectivity"] --> B["multimeter_and_current_limited_psu_safety"]
+    B --> C["esd_and_short_circuit_prevention"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
-Pass criteria: read `## Safety notes`, run the worked example and exercise asserts, or score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ required on `[SAFETY]` questions).
+Pass criteria: read `### Safety notes`, run the worked example and exercise asserts, or score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ required on `[SAFETY]` questions).
 
 ### Skip test
 1. `[Recall] [Concept: breadboard_internal_bus_connectivity]` A solderless breadboard spring clip has contact resistance $R_{\text{clip}} = 0.12\ \Omega$. If you mistakenly route $I = 5.0\text{ A}$ of motor current through that clip, compute the localized heat power $P = I^2 R_{\text{clip}}$ in watts ($\text{W}$, tolerance $\pm 10^{-6}\text{ W}$) that melts the ABS plastic housing.
@@ -118,7 +130,7 @@ assert math.isclose(q3_safety_ishort, 1200.0, rel_tol=1e-9)  # Mandatory [SAFETY
 assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert math.isclose(q5_i_ma, 10.0, rel_tol=1e-9)
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 2–3; if you missed Q4, study `## Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 2–3; if you missed Q4, study `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 
 
 ## 8. Common mistakes

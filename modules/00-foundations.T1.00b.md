@@ -26,10 +26,18 @@ Think of a Python `list` as a numbered row of pigeonholes starting at slot `0` w
 
 ## 3. Formalization
 1. **Zero-Indexed Lists and Key-Value Dictionaries:** A sequence of $N$ timestamps $t_0, t_1, \dots, t_{N-1}$ with uniform spacing $\Delta t$ in seconds ($\text{s}$) satisfies:
-   $$t_i = t_0 + i \cdot \Delta t, \quad i \in \{0, 1, \dots, N-1\}$$
+
+$$
+t_i = t_0 + i \cdot \Delta t, \quad i \in \{0, 1, \dots, N-1\}
+$$
+
    For $t_0 = 0.0\text{ s}$, $\Delta t = 0.1\text{ s}$, and $i = 4$ (the last element, indexed as `t_s[-1]`), $t_4 = 0.0\text{ s} + 4 \times 0.1\text{ s} = 0.4\text{ s}$.
-2. **Vectorized Array Scaling and Summary Statistics:** Given sensor slope $m$ in volts per second ($\text{V/s}$) and offset $b$ in volts ($\text{V}$), the voltage array $y_i = m t_i + b$ has sample mean $\bar{y}$ and peak-to-peak span $\Delta y_{\text{pp}}$:
-   $$\bar{y} = \frac{1}{N}\sum_{i=0}^{N-1} y_i, \qquad \Delta y_{\text{pp}} = \max_i(y_i) - \min_i(y_i)$$
+2. **Vectorized Array Scaling, Summary Statistics & Matplotlib Time-Series Plotting (`plt.plot`):** Given sensor slope $m$ in volts per second ($\text{V/s}$) and offset $b$ in volts ($\text{V}$), the voltage array $y_i = m t_i + b$ has sample mean $\bar{y}$ and peak-to-peak span $\Delta y_{\text{pp}}$:
+
+$$
+\bar{y} = \frac{1}{N}\sum_{i=0}^{N-1} y_i, \qquad \Delta y_{\text{pp}} = \max_i(y_i) - \min_i(y_i)
+$$
+
    For $y = [0.5, 0.8, 1.1, 1.4, 1.7]\text{ V}$ ($N = 5$), $\bar{y} = \frac{5.5\text{ V}}{5} = 1.10\text{ V}$ and $\Delta y_{\text{pp}} = 1.7\text{ V} - 0.5\text{ V} = 1.20\text{ V}$.
 3. **Terminal & Git Workflow:** Running `python3 script.py` executes the file, `git status` inspects modified files, `git diff` displays line-by-line edits, and `git commit -am "msg"` records a versioned snapshot.
 
@@ -76,6 +84,14 @@ No hardware required for this module (`hardware_required: false`). When you stre
 [MCU 1 kHz Telemetry] ===(USB UART)===> [Python List/Array Buffer: t_s[], y_v[]] ===> [Time-Series Plot]
 ```
 Pass/fail verification in simulation: `mean_v == 1.10 V` and `span_v == 1.20 V`.
+
+
+```mermaid
+flowchart LR
+    A["00-foundations.T1.00b: lists_dicts_and_numpy_arrays"] --> B["matplotlib_time_series_plotting"]
+    B --> C["terminal_and_git_basics"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise RMSE check with zero assertion failures, or score $\ge 80\%$ ($4/5$) on the Skip test below.

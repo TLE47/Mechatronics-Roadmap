@@ -92,7 +92,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 05):** Graduate from SISO trial-and-error tuning to **Bode Loop Shaping & Åström's Gang of Four ($M_s \le 1.75$)**, **Åström-Furuta Nonlinear Energy Swing-Up + MIMO LQR Balancing**, and the **Linear Kalman Filter**.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 05):** Complete Tier 2 Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order ODEs*), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space Matrices $\dot{x} = Ax + Bu$*), and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Gaussian Covariance Propagation*) plus the Track 05 Tier 2 Bridge [`05-control.T2.05a`](../modules/05-control.T2.05a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 05):** Complete Tier 2 Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order ODEs*), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (State-Space Matrices $\dot{x} = Ax + Bu$), and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Gaussian Covariance Propagation*) plus the Track 05 Tier 2 Bridge [`05-control.T2.05a`](../modules/05-control.T2.05a.md).
 
 ### 2.1 Frequency-Domain Loop Shaping, Phase Margin & Delay Bounds
 - **Core Summary:** Every millisecond of sensor/computation delay $\tau_{\text{delay}}$ steals phase $\Delta\phi(\omega) = -\omega\tau_{\text{delay}}$, bounding your maximum achievable crossover frequency to $\omega_c < \frac{\phi_{\text{margin,rad}}}{\tau_{\text{delay}}}$. Auditing **Åström's Gang of Four ($S, T, PS, CS$)** and keeping peak sensitivity $M_s = \max_\omega \lvert S(j\omega)\rvert \le 1.75$ ($4.8\text{ dB}$) guarantees robustness against unmodeled resonances and gain variations.
@@ -178,7 +178,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 05):** Production mastery of modern optimal, nonlinear, and manifold control: Joseph-form Error-State Kalman Filters (ESKF) on $SO(3)\times\mathbb{R}^n$, Slotine-Li passivity-based adaptive control, CLF-CBF-QP safety filters, and Real-Time Iteration Nonlinear Model Predictive Control (RTI-NMPC).
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 05):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (*$SO(3)$ Hat/Vee Maps, Rodrigues' Exponential & Hamiltonian Passivity*) and **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*) plus the Track 05 Tier 3 Bridge [`05-control.T3.05a`](../modules/05-control.T3.05a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 05):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Exponential & Hamiltonian Passivity) and **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*) plus the Track 05 Tier 3 Bridge [`05-control.T3.05a`](../modules/05-control.T3.05a.md).
 > * [**Next Linear Step in Pass 3 → Track 06 (Tier 3: Khatib Operational Inertia Λ(q) & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production)
 
 ### 4.1 Two-Degree-of-Freedom (2-DOF) Control & State Estimation Architecture

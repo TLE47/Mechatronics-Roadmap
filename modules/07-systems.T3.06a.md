@@ -22,7 +22,7 @@ resources_verified: false
 ---
 
 ## 1. Why it matters
-This is the bridge module in Track 07 Tier 3 before Step 3.7 (`06-robotics.T3.07`) and Step 3.8 (`08-capstones.T3.08`). When a mechatronic workcell moves from a research lab onto a factory floor, it must speak two industrial standards and pass a hardware functional-safety audit: **OPC UA (`IEC 62541`)** exposes live typed variables and methods across machines, the **Asset Administration Shell (`IEC 63278` AAS)** packages the machine's standardized Digital Twin metadata (`DigitalNameplate`, `TechnicalData`, `OperationalData`), and **ISO 13849-1 Category 3 / Performance Level d (`PLd`)** with **IEC 61800-5-2 Safe Torque Off (`STO`)** guarantees that a single welded relay or stuck transistor can never prevent the E-stop from removing motor torque! Already know this? Read `## Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
+This is the bridge module in Track 07 Tier 3 before Step 3.7 (`06-robotics.T3.07`) and Step 3.8 (`08-capstones.T3.08`). When a mechatronic workcell moves from a research lab onto a factory floor, it must speak two industrial standards and pass a hardware functional-safety audit: **OPC UA (`IEC 62541`)** exposes live typed variables and methods across machines, the **Asset Administration Shell (`IEC 63278` AAS)** packages the machine's standardized Digital Twin metadata (`DigitalNameplate`, `TechnicalData`, `OperationalData`), and **ISO 13849-1 Category 3 / Performance Level d (`PLd`)** with **IEC 61800-5-2 Safe Torque Off (`STO`)** guarantees that a single welded relay or stuck transistor can never prevent the E-stop from removing motor torque! Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
 Why not directly stream custom JSON strings over a raw TCP socket on the factory floor? Because in a plant with 200 machines from 30 vendors, custom JSON means nobody knows whether `temp_1` is Celsius or Kelvin, or whether `stop()` is safe to call while the spindle is spinning!
@@ -35,7 +35,11 @@ Why not directly stream custom JSON strings over a raw TCP socket on the factory
 2. **IEC 63278 Asset Administration Shell (AAS) Metamodel:** An AAS instance binds an `AssetInformation` record (`assetKind = Instance | Type`, `globalAssetId`) to a list of standardized `Submodel` objects (`idShort`, `semanticId`), each containing `SubmodelElement` items (`Property`, `Range`, `SubmodelElementCollection`).
 3. **ISO 13849-1 Category 3 / `PLd` Dual-Channel Architecture & Safe Torque Off (`IEC 61800-5-2 STO`):**
    - **Performance Level d (`PLd`) Target:** Probability of Dangerous Failure per Hour:
-     $$\text{PFH}_d \in [10^{-7},\ 10^{-6})\ \text{h}^{-1}$$
+
+$$
+\text{PFH}_d \in [10^{-7},\ 10^{-6})\ \text{h}^{-1}
+$$
+
    - **Category 3 Requirements:** (i) Redundant 2-channel hardware path ($I_1 \to L_1 \to O_1$ and $I_2 \to L_2 \to O_2$) so **any single fault does not lead to the loss of the safety function** ($\text{STO} = \text{STO}_A \lor \text{STO}_B$ removes torque even if one channel fails closed), and (ii) **Cross-Monitoring Discrepancy Check**: if $\text{Ch}_A \ne \text{Ch}_B$ for longer than discrepancy filter time $t_{\text{disc}}$ (e.g., $20\text{ ms}$), the safety logic latches `FAULT_LOCKOUT` and prevents restart until both channels return to the safe state and are repaired.
 
 ## 4. Worked example
@@ -95,14 +99,22 @@ Suppose a dual-channel E-stop switch has Channel A and Channel B inputs sampled 
 ## 6. Simulation path
 Open **Tab 7 (Drive Telemetry, Fault Injection & Safety State Machine)** in the MechaLab Workbench (`npm run dev`), or explore open-source OPC UA / AAS tools (`open62541`, `python-opcua`, `Eclipse BaSyx`, `AASX Package Explorer`) in `resources/open-source-toolchains.md`.
 
-## Safety notes
+### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before wiring industrial E-stop/STO chains or taking the Skip/Gate test):**
 > 1. **A Software Boolean on a ROS 2 Topic or Microcontroller GPIO Is NOT an E-Stop (ISO 13849-1 / IEC 60204-1):** Emergency Stop circuits and Safe Torque Off (`STO`, IEC 61800-5-2) must interrupt gate-driver supply power (`GVDD` / optocoupler LED current) via **hardware-redundant electro-mechanical or safety-rated semiconductor paths** independent of main CPU firmware execution.
 > 2. **Dual-Channel Redundancy + Cross-Monitoring (Category 3 / `PLd`):** Both `STO_A` and `STO_B` channels must be wired with normally-closed (`NC`) positive-opening safety contacts so a broken wire triggers an immediate safe stop, and cross-monitoring must lock out restart if the two channels disagree for $> t_{\text{disc}}$.
 > 3. **Manual Reset Required After E-Stop Release:** Releasing (twisting out) a physical E-stop mushroom button **must never** automatically re-energize motor motion; a deliberate separate manual `RESET` action after clearing faults is mandatory under ISO 13850 / IEC 60204-1.
 
+
+```mermaid
+flowchart LR
+    A["07-systems.T3.06a: opc_ua_address_space_nodes_and_pub_sub"] --> B["iec_63278_aas_submodel_digital_nameplate"]
+    B --> C["iso_13849_category3_pld_dual_channel_sto"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
-Pass criteria: read `## Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
 
 ### Skip test
 1. `[Recall] [Concept: opc_ua_address_space_nodes_and_pub_sub]` An OPC UA PubSub UDP cyclic frame carries a $14\text{-byte}$ NetworkMessage header plus $N_{\text{var}} = 8$ `Double` ($8\text{-byte}$) telemetry variables published at $f_{\text{pub}} = 250\text{ Hz}$. Compute the total payload byte rate $R_{\text{B/s}} = (14 + 8 N_{\text{var}}) f_{\text{pub}}$ in bytes per second ($\text{B/s}$, exact integer, tolerance $\pm 0$).
@@ -134,7 +146,7 @@ assert math.isclose(q3_pfh_ccf, 4.0e-9, rel_tol=1e-9)
 assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3–Q5, study `## 3. Formalization` item 3 and `## Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3–Q5, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 
 
 ### Gate test
@@ -196,7 +208,7 @@ assert g6_pld_ok == 1
 assert g7_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 assert g8_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $7/8$ overall AND $2/2$ ($100\%$) on `[SAFETY]` questions Q7 and Q8. Remediation: Q1 $\to$ `## 3. Formalization` item 1; Q2–Q3 $\to$ `## 3. Formalization` item 2; Q4–Q8 $\to$ `## 3. Formalization` item 3 and `## Safety notes`.
+- **Pass mark:** $7/8$ overall AND $2/2$ ($100\%$) on `[SAFETY]` questions Q7 and Q8. Remediation: Q1 $\to$ `## 3. Formalization` item 1; Q2–Q3 $\to$ `## 3. Formalization` item 2; Q4–Q8 $\to$ `## 3. Formalization` item 3 and `### Safety notes`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

@@ -1,6 +1,6 @@
 ---
 id: 01-electronics.T2.01b
-title: "KiCad 4-Layer Stackup, Parasitic Loop Inductance (L di/dt), Bootstrap Gate Drivers & 48 V Pre-Charge Safety"
+title: "Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping"
 track: "01"
 tier: 2
 prereqs:
@@ -20,17 +20,25 @@ resources_verified: false
 ---
 
 ## 1. Why it matters
-This is the final bridge module in the Track 01 Tier 2 ladder before Step 2.2 (`01-electronics.T2.02`). Jumping from a $12\text{ V}$ breadboard to a custom $24\text{–}48\text{ V}$, $15\text{–}30\text{ A}$ 4-layer motor controller PCB introduces three critical physics challenges: (1) even $15\text{ nH}$ of PCB trace loop inductance creates a $\Delta V = L_{\text{loop}}\frac{di}{dt}$ voltage spike that can exceed your MOSFET's $V_{DS,\max}$ rating, (2) driving an N-channel MOSFET on the **high side** requires a **bootstrap capacitor** floating above the switching phase node, and (3) plugging a $48\text{ V}$ battery straight into uncharged bulk capacitors sparks a $>200\text{ A}$ inrush arc without a **pre-charge resistor circuit**. Already know this? Read `## Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
+This is the final bridge module in the Track 01 Tier 2 ladder before Step 2.2 (`01-electronics.T2.02`). Jumping from a $12\text{ V}$ breadboard to a custom $24\text{–}48\text{ V}$, $15\text{–}30\text{ A}$ 4-layer motor controller PCB introduces three critical physics challenges: (1) even $15\text{ nH}$ of PCB trace loop inductance creates a $\Delta V = L_{\text{loop}}\frac{di}{dt}$ voltage spike that can exceed your MOSFET's $V_{DS,\max}$ rating, (2) driving an N-channel MOSFET on the **high side** requires a **bootstrap capacitor** floating above the switching phase node, and (3) plugging a $48\text{ V}$ battery straight into uncharged bulk capacitors sparks a $>200\text{ A}$ inrush arc without a **pre-charge resistor circuit**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
 First, why does a 4-layer PCB with an unbroken **Layer-2 solid ground plane** beat a 2-layer board by $10\times$? High-frequency switching current always tries to return directly underneath the trace that sent it because opposing currents cancel each other's magnetic fields. Putting a solid ground plane $0.2\text{ mm}$ directly beneath your power stage shrinks the magnetic loop area to a paper-thin slit, slashing **parasitic loop inductance** $L_{\text{loop}}$ from $\sim 25\text{ nH}$ down to $<3\text{ nH}$. Second, how do you turn ON a high-side N-MOSFET whose Source pin is sitting at $+48\text{ V}$ when it conducts? You need $+58\text{ V}$ on its Gate ($V_{GS} = 10\text{ V}$ above Source)! A **bootstrap circuit** charges a small capacitor $C_{\text{boot}}$ to $12\text{ V}$ whenever the low-side FET pulls the phase node to $\text{GND}$, and then rides that capacitor up like an elevator on top of the $48\text{ V}$ phase node (`BST = SW + 12 V`). Third, an uncharged $1000\ \mu\text{F}$ capacitor bank looks like a dead short ($0\text{ V}$) at $t=0$: a **pre-charge resistor** ($R_{\text{pre}} \approx 47\ \Omega$) fills the tank gently over $\sim 0.2\text{ s}$ before the main contactor closes.
 
 ## 3. Formalization
 1. **Commutation Loop Inductance & Turn-Off Voltage Overshoot:** When phase current $\Delta I$ ($\text{A}$) commutates in switching transition time $\Delta t_{\text{sw}}$ ($\text{s}$) through hot-loop parasitic inductance $L_{\text{loop}}$ ($\text{H}$), peak Drain-to-Source voltage reaches:
-   $$V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{\Delta I}{\Delta t_{\text{sw}}}$$
+
+$$
+V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{\Delta I}{\Delta t_{\text{sw}}}
+$$
+
    Substituting $V_{\text{bus}} = 48.0\text{ V}$, $\Delta I = 30.0\text{ A}$, $\Delta t_{\text{sw}} = 20\text{ ns}$ ($20 \times 10^{-9}\text{ s}$), and a sloppy 2-layer loop $L_{\text{loop}} = 20\text{ nH}$ ($20 \times 10^{-9}\text{ H}$) gives $V_{\text{peak}} = 48.0 + 20 \times \frac{30}{20} = 78.0\text{ V}$ (dangerously close to an $80\text{ V}$ FET ceiling!), whereas a tight PCB layout with $L_{\text{loop}} = 2.0\text{ nH}$ limits overshoot to $48.0 + 3.0 = 51.0\text{ V}$.
 2. **High-Side Bootstrap Gate Voltage & Gate Drive Current ($I_G$):** To switch total gate charge $Q_g$ ($\text{C}$) in rise time $t_r$ ($\text{s}$), average gate drive current is:
-   $$I_G = \frac{Q_g}{t_r}, \quad V_{\text{BST}} = V_{\text{SW}} + V_{\text{drv}}$$
+
+$$
+I_G = \frac{Q_g}{t_r}, \quad V_{\text{BST}} = V_{\text{SW}} + V_{\text{drv}}
+$$
+
    Substituting $Q_g = 30\text{ nC}$ and $t_r = 30\text{ ns}$ gives $I_G = 1.0\text{ A}$. Because $C_{\text{boot}}$ only recharges when $V_{\text{SW}} \approx 0\text{ V}$ (low-side ON), a bootstrap driver cannot run at $100.0\%$ high-side duty cycle indefinitely without a brief low-side refresh pulse or trickle charge pump.
 3. **Capacitor Bank Pre-Charge Time & Energy:** Pre-charging bus capacitance $C_{\text{bus}}$ ($\text{F}$) to $V_{\text{bus}}$ ($\text{V}$) through $R_{\text{pre}}$ ($\Omega$) limits initial peak inrush current to $I_{\text{pre,peak}} = V_{\text{bus}} / R_{\text{pre}}$ and dissipates total energy $E_{R,\text{pre}} = \frac{1}{2} C_{\text{bus}} V_{\text{bus}}^2$ ($\text{J}$) in $R_{\text{pre}}$ over $5\tau = 5 R_{\text{pre}} C_{\text{bus}}$. Substituting $V_{\text{bus}} = 48.0\text{ V}$, $C_{\text{bus}} = 1000\ \mu\text{F}$ ($0.001\text{ F}$), and $R_{\text{pre}} = 48.0\ \Omega$ gives $I_{\text{pre,peak}} = 1.0\text{ A}$, $5\tau = 0.24\text{ s}$, and $E_{R,\text{pre}} = 1.152\text{ J}$.
 
@@ -71,7 +79,7 @@ Calculate the maximum allowable parasitic commutation loop inductance $L_{\text{
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*$\text{nC}, \text{ns}, \text{mJ}$ Units*), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Energy Storage*), and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Impedance*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) ($\text{nC}, \text{ns}, \text{mJ}$ Units), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Energy Storage*), and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Impedance*).
   - **Prerequisite Bridge Modules:** [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*RC Time Constants*) and [`01-electronics.T2.01a`](01-electronics.T2.01a.md) (*Kelvin Shunts*).
   - **Core Concepts to Review First:** 4-layer KiCad stackup (`L2 Solid GND`), gate-driver bootstrap charge $I_g = Q_g/t_{sw}$ and shoot-through dead-time, and $48\text{ V}$ RC pre-charge sizing ($t_{\text{pre}} \approx 5 R_{\text{pre}} C_{\text{bus}}$) in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [KiCad Official Documentation (`docs.kicad.org`)](https://docs.kicad.org/), [TI SLUA887 (Gate Drive & Dead-Time Design)](https://www.ti.com/lit/pdf/slua887), and [Track 01 §2.1–2.2 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
@@ -79,14 +87,22 @@ Calculate the maximum allowable parasitic commutation loop inductance $L_{\text{
 ## 6. Simulation path
 Open **Tab 2 (Power Stage, Loop Inductance Ringing & Dead-Time)** in the MechaLab Workbench (`npm run dev`) and sweep $L_{\text{loop}}$ from $2\text{ nH}$ to $25\text{ nH}$ to watch the $V_{DS}$ turn-off ringing spike grow toward the MOSFET avalanche limit.
 
-## Safety notes
+### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**
 > 1. **48 V Bus Pre-Charge & Bleeder Discipline:** Never hot-plug a $24\text{–}48\text{ V}$ battery or high-current supply directly into an uncharged inverter capacitor bank ($>500\ \mu\text{F}$). Always engage a series **pre-charge resistor** ($33\text{–}100\ \Omega$ power resistor) until $V_{\text{cap}} \ge 0.95\,V_{\text{bus}}$ before closing the main contactor/switch, and include a permanent **bleeder resistor + LED** across the DC bus so stored energy discharges to $<5\text{ V}$ after power-off.
 > 2. **Voltage Overshoot & TVS Clamping:** Always derate silicon MOSFET $V_{DS,\max}$ to $\ge 1.6\times V_{\text{bus}}$ (e.g., $80\text{–}100\text{ V}$ FETs for a $48\text{ V}$ bus) and place an SMBJ58A/SMBJ60A Transient Voltage Suppressor (TVS) diode across the DC bus.
 > 3. **Protective Eyewear & Current-Limited First Bring-Up:** Wear safety glasses during initial $48\text{ V}$ power-stage bring-up and bring up gate drive waveforms at $V_{\text{bus}} = 12\text{ V}$, $I_{\text{limit}} = 0.5\text{ A}$ with no motor attached before stepping up to $48\text{ V}$.
 
+
+```mermaid
+flowchart LR
+    A["01-electronics.T2.01b: parasitic_loop_inductance_voltage_overshoot"] --> B["bootstrap_high_side_gate_driver_and_deadtime"]
+    B --> C["precharge_resistor_inrush_and_tvs_clamp"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
-Pass criteria: read `## Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 2.2 (`01-electronics.T2.02`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 2.2 (`01-electronics.T2.02`).
 
 ### Skip test
 1. `[Recall] [Concept: parasitic_loop_inductance_voltage_overshoot]` Compute the peak Drain-to-Source voltage $V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{\Delta I}{\Delta t}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) when $V_{\text{bus}} = 48.0\text{ V}$, $L_{\text{loop}} = 5.0\text{ nH}$, and $\Delta I = 24.0\text{ A}$ turns off in $\Delta t = 15.0\text{ ns}$.
@@ -118,7 +134,7 @@ assert math.isclose(q3_ecap, 1.728, rel_tol=1e-9)
 assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `## Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 
 
 ### Gate test

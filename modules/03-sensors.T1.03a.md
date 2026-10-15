@@ -27,13 +27,25 @@ Imagine a bicycle wheel with $p = 7$ pairs of North-South magnets glued around i
 
 ## 3. Formalization
 1. **Motor Torque Constant ($K_t$), Back-EMF Constant ($K_e$) & Steady-State DC Motor Equation:** In SI units ($\tau$ in $\text{N}\cdot\text{m}$, $i$ in $\text{A}$, $v_{\text{bemf}}$ in $\text{V}$, $\omega_m$ in $\text{rad/s}$), conservation of electromechanical power ($v_{\text{bemf}} i = \tau \omega_m$) guarantees $K_t = K_e$ ($\text{N}\cdot\text{m/A} \equiv \text{V}\cdot\text{s/rad}$):
-   $$\tau = K_t i, \quad v_{\text{bemf}} = K_e \omega_m, \quad V_{\text{term}} = i R + K_e \omega_m$$
+
+$$
+\tau = K_t i, \quad v_{\text{bemf}} = K_e \omega_m, \quad V_{\text{term}} = i R + K_e \omega_m
+$$
+
    For a motor rated in $\text{KV}$ ($\text{RPM/V}$), $K_e = K_t = \frac{60}{2\pi \cdot \text{KV}}$ (for ideal phase-to-neutral scaling). Substituting $V_{\text{term}} = 12.0\text{ V}$, $R = 2.0\ \Omega$, $K_e = 0.05\text{ V}\cdot\text{s/rad}$, and $\omega_m = 100\text{ rad/s}$ gives $v_{\text{bemf}} = 5.0\text{ V}$ and current $i = (12.0 - 5.0)/2.0 = 3.5\text{ A}$.
 2. **Pole Pairs ($p$) and Electrical vs. Mechanical Angle:** A rotor with $N_{\text{poles}} = 2p$ permanent magnets ($p$ North-South pole pairs) has electrical angle $\theta_e$ ($\text{rad}$) and electrical speed $\omega_e$ ($\text{rad/s}$):
-   $$\theta_e = p \cdot \theta_m \pmod{2\pi}, \quad \omega_e = p \cdot \omega_m$$
+
+$$
+\theta_e = p \cdot \theta_m \pmod{2\pi}, \quad \omega_e = p \cdot \omega_m
+$$
+
    Substituting $N_{\text{poles}} = 14$ ($p = 7$ pole pairs) and $\theta_m = \frac{\pi}{7}\text{ rad}$ gives $\theta_e = 7 \times \frac{\pi}{7} = \pi\text{ rad}$ ($180^\circ$ electrical).
 3. **Quadrature `A`/`B` ($4\times$) Decoding & Angle Resolution:** An incremental encoder with $N_{\text{lines}}$ lines (cycles per revolution) produces $4$ quadrature edges (`00 -> 10 -> 11 -> 01 -> 00`) per line, yielding $\text{CPR} = 4 N_{\text{lines}}$ counts per mechanical revolution and angular resolution:
-   $$\Delta\theta_{\text{rad}} = \frac{2\pi}{\text{CPR}} = \frac{2\pi}{4 N_{\text{lines}}}$$
+
+$$
+\Delta\theta_{\text{rad}} = \frac{2\pi}{\text{CPR}} = \frac{2\pi}{4 N_{\text{lines}}}
+$$
+
    Substituting $N_{\text{lines}} = 1024$ gives $\text{CPR} = 4096\text{ counts/rev}$ and $\Delta\theta_{\text{rad}} = \frac{2\pi}{4096} \approx 0.001534\text{ rad}$ ($0.0879^\circ$).
 
 ## 4. Worked example
@@ -76,7 +88,7 @@ A $2208$ gimbal BLDC motor has $12$ stator slots and $14$ rotor magnet poles (`1
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Units & RPM-to-$\text{rad/s}$*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Radians & Trigonometry*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Electromechanical Power*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (SI Units & RPM-to-$\text{rad/s}$), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Radians & Trigonometry*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Electromechanical Power*).
   - **Prerequisite Bridge Module:** [`01-electronics.T1.01b`](01-electronics.T1.01b.md) (*PWM H-Bridges*).
   - **Core Concepts to Review First:** Quadrature $4\times$ decoding ($\text{CPR} = 4 N_{\text{lines}}$), SI motor constant identity $K_t = K_e$, brushed DC torque-speed line $\tau(\omega) = \tau_{\text{stall}}(1 - \omega/\omega_{\text{no-load}})$, and BLDC electrical angle $\theta_e = N_p \theta_m$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [SimpleFOC BLDC & Encoder Theory Docs (`docs.simplefoc.com`)](https://docs.simplefoc.com/) and [Track 03 Tier 1 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive).
@@ -89,6 +101,14 @@ No hardware required for this module (`hardware_required: false`). In Step 1.4 (
 [Bench PSU 1.5V, 0.5A Limit] ---> [Phase A (+) / Phases B,C (-)] ---> Count p=7 magnetic detents per 1 turn
 ```
 Pass/fail verification in simulation: `i_stall == 3.0 A`, `w_noload == 200.0 rad/s`, `we_noload == 1400.0 rad/s`, and `count == 5`.
+
+
+```mermaid
+flowchart LR
+    A["03-sensors.T1.03a: lorentz_force_and_back_emf_constants"] --> B["mechanical_vs_electrical_angle_pole_pairs"]
+    B --> C["quadrature_ab_gray_code_direction"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.4 (`03-sensors.T1.04`).

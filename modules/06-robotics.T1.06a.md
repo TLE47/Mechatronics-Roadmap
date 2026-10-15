@@ -29,10 +29,18 @@ Imagine an elevator moving from Floor 1 to Floor 5 in $T = 2.0\text{ s}$. A **st
 ## 3. Formalization
 1. **Step Setpoint vs. Time-Parameterized Trajectory:** A trajectory generator outputs continuous reference state $(q_d(t), \dot{q}_d(t), \ddot{q}_d(t))$ over $t \in [0, T]$ so tracking error $e(t) = q_d(t) - q(t)$ remains small throughout the move and never saturates the motor.
 2. **Rest-to-Rest Cubic Polynomial Boundary Conditions:** Requiring $q_d(0) = q_0$, $\dot{q}_d(0) = 0$, $q_d(T) = q_f$, and $\dot{q}_d(T) = 0$ over duration $T$ ($\text{s}$) uniquely determines the cubic polynomial in normalized time $s = t/T \in [0, 1]$:
-   $$q_d(t) = q_0 + \Delta q\left(3s^2 - 2s^3\right), \quad \dot{q}_d(t) = \frac{6\Delta q}{T}\left(s - s^2\right), \quad \ddot{q}_d(t) = \frac{6\Delta q}{T^2}\left(1 - 2s\right)$$
+
+$$
+q_d(t) = q_0 + \Delta q\left(3s^2 - 2s^3\right), \quad \dot{q}_d(t) = \frac{6\Delta q}{T}\left(s - s^2\right), \quad \ddot{q}_d(t) = \frac{6\Delta q}{T^2}\left(1 - 2s\right)
+$$
+
    where $\Delta q = q_f - q_0$ ($\text{rad}$). At the midpoint $t = T/2$ ($s = 0.5$), position is halfway ($q_0 + 0.5\Delta q$), velocity reaches its peak $\dot{q}_{\max} = \frac{1.5\Delta q}{T}$, and acceleration passes through zero. Substituting $\Delta q = 1.0\text{ rad}$ and $T = 2.0\text{ s}$ gives $\dot{q}_{\max} = 0.75\text{ rad/s}$ and $|\ddot{q}(0)| = 1.5\text{ rad/s}^2$.
 3. **Virtual Joint Compliance + Gravity Feedforward:** Commanding joint torque $\tau$ ($\text{N}\cdot\text{m}$) with stiffness $K_p$ ($\text{N}\cdot\text{m/rad}$) and damping $K_d$ ($\text{N}\cdot\text{m}\cdot\text{s/rad}$):
-   $$\tau = K_p\left(q_d(t) - q\right) + K_d\left(\dot{q}_d(t) - \dot{q}\right) + \tau_g(q)$$
+
+$$
+\tau = K_p\left(q_d(t) - q\right) + K_d\left(\dot{q}_d(t) - \dot{q}\right) + \tau_g(q)
+$$
+
    Under an external hand push torque $\tau_{\text{ext}}$ at rest ($\dot{q} = \dot{q}_d = 0$), the joint yields like a physical torsion spring by $\Delta q = \tau_{\text{ext}} / K_p$.
 
 ## 4. Worked example
@@ -85,6 +93,14 @@ No hardware required for this module (`hardware_required: false`). In Step 1.7 (
 [1 kHz Clock t] ---> [Cubic Trajectory q_d(t), qd_d(t)] ---> [PD Spring-Damper + tau_g(q)] ---> [Actuator]
 ```
 Pass/fail verification in simulation: `qd_start == 0.0`, `qd_end == 0.0`, `qd_mid == 0.90 rad/s`, and `deflection_rad == 0.10 rad`.
+
+
+```mermaid
+flowchart LR
+    A["06-robotics.T1.06a: trajectory_vs_step_setpoint"] --> B["polynomial_endpoint_boundary_conditions"]
+    B --> C["virtual_joint_compliance_stiffness"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.7 (`06-robotics.T1.07`).

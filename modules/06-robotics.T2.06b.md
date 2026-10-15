@@ -37,15 +37,27 @@ Three operational workflows turn a collection of ROS 2 nodes into a reproducible
 1. **Launch Parameter Resolution, Simulated Clock (`use_sim_time`) & Intra-Process Pointer Transfer:**
    - **Simulated Time Rule:** When parameter `use_sim_time == True`, `Node::now()` ignores the OS wall clock (`CLOCK_REALTIME`) and returns the latest timestamp received on `/clock` (`rosgraph_msgs/msg/Clock`). If `/clock` advances in discrete steps of $\Delta t_{\text{sim}}$, a ROS timer with period $T_{\text{timer}}$ fires deterministically every $K = \lceil T_{\text{timer}} / \Delta t_{\text{sim}} \rceil$ simulation steps regardless of CPU load.
    - **Intra-Process vs. Inter-Process Bandwidth Savings:** Passing a message of size $B_{\text{msg}}$ bytes at frequency $f_{\text{pub}}$ across $N_{\text{sub}}$ intra-process `ComposableNode` subscribers via `unique_ptr` ownership transfer copies $0\text{ bytes}$ of payload (only an $8\text{-byte}$ pointer), saving serialized memory bandwidth:
-     $$\Delta R_{\text{saved}} = N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}$$
+
+$$
+\Delta R_{\text{saved}} = N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}
+$$
+
 2. **`rosbag2` (`MCAP`) Storage Throughput, Ring-Buffer Sizing & Replay Scaling:**
    - **Write Throughput & Storage Size:** Recording $M$ topics with message sizes $B_m$ (plus per-message MCAP index/timestamp overhead $B_{\text{meta}} \approx 32\text{ B}$) at frequencies $f_m$ ($\text{Hz}$) over duration $T_{\text{rec}}$ ($\text{s}$) with compression ratio $c \in (0, 1]$ ($c=1$ uncompressed) requires sustained disk write rate $R_{\text{disk}}$ and file size $S_{\text{bag}}$:
-     $$R_{\text{disk}} = c \sum_{m=1}^{M} f_m (B_m + B_{\text{meta}}), \qquad S_{\text{bag}} = R_{\text{disk}} \cdot T_{\text{rec}}$$
+
+$$
+R_{\text{disk}} = c \sum_{m=1}^{M} f_m (B_m + B_{\text{meta}}), \qquad S_{\text{bag}} = R_{\text{disk}} \cdot T_{\text{rec}}
+$$
+
    - **Replay Rate Scaling (`--rate r`):** Playing back a bag recorded at interval $\Delta t_{\text{rec}} = t_{k+1} - t_k$ with playback rate factor $r > 0$ schedules wall-clock sleep $\Delta t_{\text{wall}} = \Delta t_{\text{rec}} / r$ while publishing the **original** message timestamps $t_k$ on `/clock`, preserving exact numerical derivatives $\frac{x(t_{k+1}) - x(t_k)}{t_{k+1} - t_k}$ at any playback speed!
 3. **Closed-Loop Simulator $\leftrightarrow$ `ros2_control` Synchronization Contract:**
    - Let the physics engine step at frequency $f_{\text{sim}} = 1 / \Delta t_{\text{sim}}$ (e.g., $1000\text{ Hz}$) and the `ros2_control` `controller_manager` run at $f_{\text{ctrl}} = f_{\text{sim}} / D$ for integer decimation $D \ge 1$.
    - On simulation step $k$:
-     $$\underbrace{(q_k, \dot{q}_k)}_{\text{Sim State}} \xrightarrow{\text{read()}} \text{State Interfaces} \xrightarrow{\text{update()}} \begin{cases} \text{JointStateBroadcaster} \to \texttt{/joint\_states} \to \texttt{robot\_state\_publisher} \to \texttt{/tf} \\ \text{ImpedanceController} \to \tau_{\text{cmd},k} \end{cases} \xrightarrow{\text{write()}} \underbrace{\tau_{\text{sim},k}}_{\text{mjData->ctrl}}$$
+
+$$
+\underbrace{(q_k, \dot{q}_k)}_{\text{Sim State}} \xrightarrow{\text{read()}} \text{State Interfaces} \xrightarrow{\text{update()}} \begin{cases} \text{JointStateBroadcaster} \to \texttt{/joint\_states} \to \texttt{robot\_state\_publisher} \to \texttt{/tf} \\ \text{ImpedanceController} \to \tau_{\text{cmd},k} \end{cases} \xrightarrow{\text{write()}} \underbrace{\tau_{\text{sim},k}}_{\text{mjData->ctrl}}
+$$
+
 
 ## 4. Worked example
 Simulate a complete ROS 2 operational workflow in Python: (1) compute the `rosbag2` MCAP write throughput and 10-minute file size for a robot recording $1\text{ kHz}$ `/joint_states` ($128\text{ B}$), $200\text{ Hz}$ `/imu/data` ($96\text{ B}$), and $30\text{ Hz}$ `/camera/depth` ($150{,}000\text{ B}$) with `zstd` compression ($c = 0.40$), (2) verify deterministic `--rate 4.0` replay derivative invariance using `/clock` timestamps, and (3) run a 20-step closed-loop `MuJoCo / Gazebo` $\leftrightarrow$ `ros2_control` (`read -> update -> write`) + `robot_state_publisher` (`/joint_states` $\to$ `/tf`) simulation loop.
@@ -107,7 +119,7 @@ You record a `rosbag2` MCAP log containing two topics: `/joint_states` at $f_1 =
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Bandwidth & Storage Units $\text{B}, \text{MB/s}$*), [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*$2\times 2$ Jacobian Transpose*), and [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Structural Resonance*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (Bandwidth & Storage Units $\text{B}, \text{MB/s}$), [`00-foundations.T2.00a`](00-foundations.T2.00a.md) ($2\times 2$ Jacobian Transpose), and [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Structural Resonance*).
   - **Prerequisite Bridge Modules:** [`02-mechanics.T2.02a`](02-mechanics.T2.02a.md) (*Manipulator Jacobians*) and [`06-robotics.T2.06a`](06-robotics.T2.06a.md) (*ROS 2 Nodes, QoS & TF2*).
   - **Core Concepts to Review First:** `rosbag2` MCAP throughput $R_{\text{disk}} = \frac{1}{c}\sum f_i(B_i + 32)$ and replay scaling $T_{\text{wall}} = T_{\text{rec}}/r$, `ros2_control` `CommandInterface`/`StateInterface` exclusivity, and Cartesian task-space impedance $\tau = J(q)^\top [K_x(x_d - x) - D_x J(q)\dot{q}]$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Official `ros2_control` Documentation (`control.ros.org`)](https://control.ros.org/), [ROS 2 `rosbag2` & Launch Tutorials (`docs.ros.org`)](https://docs.ros.org/en/jazzy/Tutorials.html), and [Track 06 Tier 2 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied).
@@ -130,6 +142,14 @@ ros2 bag play arm_test_bag --clock --rate 1.0
                                                                        [rosbag2 MCAP Recorder]
 ```
 Pass/fail verification in simulation: `disk_rate_mbs == 1.874624 MB/s`, `dq_est == 20.0 rad/s` across all playback rates, and `q_sim(20ms) == 0.0825 rad`.
+
+
+```mermaid
+flowchart LR
+    A["06-robotics.T2.06b: ros2_launch_parameters_and_composition"] --> B["rosbag2_mcap_recording_and_deterministic_replay"]
+    B --> C["ros2_simulator_bridge_and_joint_state_loop"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.7 (`06-robotics.T2.07`).

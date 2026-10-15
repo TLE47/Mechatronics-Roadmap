@@ -28,10 +28,18 @@ Imagine three people standing $120^\circ$ apart around a merry-go-round (`a` at 
 
 ## 3. Formalization
 1. **Balanced Three-Phase Neutral Constraint & Amplitude-Invariant Clarke Transform ($abc \to \alpha\beta$):** With $i_a + i_b + i_c = 0$, the stationary orthogonal components $(i_\alpha, i_\beta)$ (in $\text{A}$) are:
-   $$i_\alpha = i_a, \quad i_\beta = \frac{1}{\sqrt{3}}\left(i_a + 2 i_b\right) = \frac{i_b - i_c}{\sqrt{3}}$$
+
+$$
+i_\alpha = i_a, \quad i_\beta = \frac{1}{\sqrt{3}}\left(i_a + 2 i_b\right) = \frac{i_b - i_c}{\sqrt{3}}
+$$
+
    For balanced currents $i_a = I_{\text{pk}}\cos\theta_e$, $i_b = I_{\text{pk}}\cos(\theta_e - \frac{2\pi}{3})$, $i_c = I_{\text{pk}}\cos(\theta_e + \frac{2\pi}{3})$, this yields $i_\alpha = I_{\text{pk}}\cos\theta_e$ and $i_\beta = I_{\text{pk}}\sin\theta_e$, preserving peak amplitude $\sqrt{i_\alpha^2 + i_\beta^2} = I_{\text{pk}}$.
 2. **Park Transform ($\alpha\beta \to dq$):** Rotating $(\alpha, \beta)$ by $-\theta_e$ into the rotor-locked $(d, q)$ frame gives:
-   $$\begin{bmatrix} i_d \\ i_q \end{bmatrix} = \begin{bmatrix} \cos\theta_e & \sin\theta_e \\ -\sin\theta_e & \cos\theta_e \end{bmatrix} \begin{bmatrix} i_\alpha \\ i_\beta \end{bmatrix}$$
+
+$$
+\begin{bmatrix} i_d \\ i_q \end{bmatrix} = \begin{bmatrix} \cos\theta_e & \sin\theta_e \\ -\sin\theta_e & \cos\theta_e \end{bmatrix} \begin{bmatrix} i_\alpha \\ i_\beta \end{bmatrix}
+$$
+
    When current is driven $90^\circ$ ahead of the rotor flux ($i_\alpha = -I_{\text{pk}}\sin\theta_e,\ i_\beta = I_{\text{pk}}\cos\theta_e$), substituting into the Park matrix yields constant DC values $i_d = 0\text{ A}$ and $i_q = I_{\text{pk}}$ across all $\theta_e \in [0, 2\pi)$!
 3. **Tracking Loop (PLL) & White Noise vs. Random Walk:**
    - A Type-II tracking PLL drives angle residual $e_\theta = \operatorname{wrap}(\theta_{\text{meas}} - \hat{\theta})$ to zero via $\dot{\hat{\omega}} = K_i e_\theta$ and $\dot{\hat{\theta}} = \hat{\omega} + K_p e_\theta$, extracting lag-free velocity $\hat{\omega}$ without finite-difference noise spikes.
@@ -95,6 +103,14 @@ No hardware required for this module (`hardware_required: false`). In Step 2.4 (
 ```
 Pass/fail verification in simulation: `ia + ib + ic == 0.0`, `id_val == 0.0 A`, and `iq_val == 10.0 A`.
 
+
+```mermaid
+flowchart LR
+    A["03-sensors.T2.03a: three_phase_balanced_sum_and_clarke_projection"] --> B["park_rotating_frame_dc_demodulation"]
+    B --> C["pll_velocity_tracking_and_noise_random_walk"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.4 (`03-sensors.T2.04`).
 
@@ -102,7 +118,7 @@ Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7
 1. `[Recall] [Concept: three_phase_balanced_sum_and_clarke_projection]` In a balanced 3-phase star-connected motor with floating neutral ($i_a + i_b + i_c = 0$), if $i_a = 8.0\text{ A}$ and $i_b = -3.0\text{ A}$, compute $i_c$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: three_phase_balanced_sum_and_clarke_projection]` Using the amplitude-invariant Clarke formula $i_\alpha = i_a,\ i_\beta = \frac{i_a + 2i_b}{\sqrt{3}}$, compute $i_\beta$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) when $i_a = 0.0\text{ A}$ and $i_b = \sqrt{3}\text{ A}$.
 3. `[Transfer] [Concept: park_rotating_frame_dc_demodulation]` Using the Park rotation $i_d = i_\alpha\cos\theta_e + i_\beta\sin\theta_e$ and $i_q = -i_\alpha\sin\theta_e + i_\beta\cos\theta_e$, compute $i_q$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) when $(i_\alpha, i_\beta) = (-6\sqrt{3}, 6.0)\text{ A}$ at electrical angle $\theta_e = 60^\circ$ ($\pi/3\text{ rad}$).
-4. `[Spaced review -> 01-electronics.T2.02 — Concept: electrical_vs_mechanical_pole_pairs] [Concept: park_rotating_frame_dc_demodulation]` In surface-mounted PMSM Field-Oriented Control (FOC) below base speed, why do we command $i_d^* = 0\text{ A}$ and put all current into $i_q^*$?
+4. `[Spaced review -> 01-electronics.T2.02 — Concept: electrical_vs_mechanical_pole_pairs] [Concept: park_rotating_frame_dc_demodulation]` In surface-mounted PMSM Field-Oriented Control (FOC) below base speed, why do we command $i_d^{*} = 0\text{ A}$ and put all current into $i_q^{*}$?
    - **A.** Because $d$-axis current aligns with the rotor magnets and produces zero torque (only $I^2 R$ heat), whereas $q$-axis current is perpendicular ($90^\circ$) to the rotor flux and maximizes torque per ampere ($\tau = \frac{3}{2} p \psi_m i_q$).
    - **B.** Because $i_d$ cannot be measured.
    - **C.** Because $i_q$ does not flow through the stator windings.

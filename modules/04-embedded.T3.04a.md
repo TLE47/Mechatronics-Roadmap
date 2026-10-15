@@ -1,6 +1,6 @@
 ---
 id: 04-embedded.T3.04a
-title: "Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic, Lock-Free SeqLock & Embedded Rust/Zephyr Zero-Copy"
+title: "Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic & Lock-Free SeqLock"
 track: "04"
 tier: 3
 prereqs:
@@ -34,13 +34,25 @@ Three architectural ideas eliminate every source of software jitter in a $40\tex
 
 ## 3. Formalization
 1. **Center-Aligned Up-Down Timer Period & Midpoint Sampling Window:** For a timer clocked at $f_{\text{tim}}$ ($\text{Hz}$) in center-aligned (up-down) mode with auto-reload register $\text{ARR}$, one full PWM period requires $2 \cdot \text{ARR}$ timer ticks:
-   $$f_{\text{PWM}} = \frac{f_{\text{tim}}}{2 \cdot \text{ARR}}, \qquad \text{ARR} = \frac{f_{\text{tim}}}{2 \, f_{\text{PWM}}}$$
+
+$$
+f_{\text{PWM}} = \frac{f_{\text{tim}}}{2 \cdot \text{ARR}}, \qquad \text{ARR} = \frac{f_{\text{tim}}}{2 \, f_{\text{PWM}}}
+$$
+
    For active high-side duty cycle $d_{\max} = \max(d_a, d_b, d_c)$ and dead-time $t_{\text{dead}}$, the low-side shunt conduction window centered around `CNT == ARR` has duration $t_{\text{low,min}} = (1 - d_{\max}) T_{\text{PWM}} - 2 t_{\text{dead}}$, which must exceed $t_{\text{ring}} + t_{\text{acq}}$ for valid 3-shunt sampling.
 2. **Signed Q1.31 Fixed-Point Representation (`CORDIC` Format):** Mapping normalized real number $x \in [-1.0, +1.0 - 2^{-31}]$ to signed 32-bit integer $X_{Q31} \in [-2^{31}, 2^{31}-1]$:
-   $$X_{Q31} = \operatorname{ clamp }\!\left(\operatorname{round}\!\left(x \cdot 2^{31}\right), -2^{31}, 2^{31}-1\right), \qquad \hat{x} = \frac{X_{Q31}}{2^{31}}$$
+
+$$
+X_{Q31} = \operatorname{ clamp }\!\left(\operatorname{round}\!\left(x \cdot 2^{31}\right), -2^{31}, 2^{31}-1\right), \qquad \hat{x} = \frac{X_{Q31}}{2^{31}}
+$$
+
    where an electrical angle $\theta_e \in [-\pi, +\pi)$ is normalized first to $x = \theta_e / \pi \in [-1.0, +1.0)$.
 3. **Wait-Free `SeqLock` Consistency Invariant:** Let $s_1$ be the sequence counter read before copying payload $P$ and $s_2$ be the sequence counter read after copying $P$. The snapshot $P$ is guaranteed tear-free iff:
-   $$\text{Valid}(s_1, s_2) \iff ((s_1 \bmod 2) == 0) \;\land\; (s_1 == s_2)$$
+
+$$
+\text{Valid}(s_1, s_2) \iff ((s_1 \bmod 2) == 0) \;\land\; (s_1 == s_2)
+$$
+
 
 ## 4. Worked example
 Compute (1) the center-aligned `TIM1->ARR` register value and minimum low-side shunt conduction window $t_{\text{low,min}}$ at $f_{\text{tim}} = 170\text{ MHz}$ and $f_{\text{PWM}} = 40\text{ kHz}$, (2) `Q1.31` fixed-point encoding/decoding of $\theta_e = \pi/3\text{ rad}$ and $\cos(\pi/3) = 0.5$, and (3) prove that a `SeqLock` reader detects a mid-read ISR preemption (torn read) and succeeds on the immediate retry.
@@ -99,6 +111,14 @@ No hardware required for this module (`hardware_required: false`). In Step 3.5 (
 [TIM1 Peak CNT==ARR] ==(TRGO2)==> [SAR ADC1/2 + DMA] ==> [40 kHz ISR: CORDIC Q1.31 + SeqLock Write] ==> [1 kHz RTOS/Rust Reader]
 ```
 Pass/fail verification in simulation: `ARR == 2125`, `q31_cos == 1073741824`, `seqlock_valid(4, 6) == False`, and `seqlock_valid(6, 6) == True`.
+
+
+```mermaid
+flowchart LR
+    A["04-embedded.T3.04a: center_aligned_pwm_midpoint_adc_sampling"] --> B["q131_fixed_point_trig_scaling"]
+    B --> C["seqlock_optimistic_even_odd_versioning"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.5 (`04-embedded.T3.05`).

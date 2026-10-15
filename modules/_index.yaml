@@ -238,7 +238,7 @@ bridges:
     resources_verified: false
     path: modules/00-foundations.T2.00d.md
   - id: 00-foundations.T2.00e
-    title: "Laplace Transform, Poles/Zeros, State-Space x_dot = Ax + Bu, Matrix Exponential & Discretization"
+    title: "Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization"
     track: 00
     tier: 2
     est_hours: 4.5
@@ -251,7 +251,7 @@ bridges:
     resources_verified: true
     path: modules/00-foundations.T2.00e.md
   - id: 00-foundations.T2.00f
-    title: "Sampling, Aliasing, Nyquist, z-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance"
+    title: "Nyquist Sampling & Aliasing, Pre-Warped Tustin Biquad Filters & Gaussian Covariance"
     track: 00
     tier: 2
     est_hours: 4.5
@@ -342,7 +342,7 @@ bridges:
     resources_verified: true
     path: modules/01-electronics.T2.01a.md
   - id: 01-electronics.T2.01b
-    title: "KiCad 4-Layer Stackup, Parasitic Loop Inductance (L di/dt), Bootstrap Gate Drivers & 48 V Pre-Charge Safety"
+    title: "Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping"
     track: 01
     tier: 2
     est_hours: 4.5
@@ -368,7 +368,7 @@ bridges:
     resources_verified: true
     path: modules/01-electronics.T3.01a.md
   - id: 02-mechanics.T1.02a
-    title: "Free-Body Diagrams, Static Torque Balance, Pulleys/Gears & Rotational Inertia"
+    title: "Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling"
     track: 02
     tier: 1
     est_hours: 3.5
@@ -472,7 +472,7 @@ bridges:
     resources_verified: true
     path: modules/04-embedded.T1.04b.md
   - id: 04-embedded.T2.04a
-    title: "SPI/I2C Bus Transactions, DMA Ping-Pong Ring Buffers & Zero-CPU Peripherals"
+    title: "Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers"
     track: 04
     tier: 2
     est_hours: 4.0
@@ -524,7 +524,7 @@ bridges:
     resources_verified: true
     path: modules/04-embedded.T2.04d.md
   - id: 04-embedded.T3.04a
-    title: "Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic, Lock-Free SeqLock & Embedded Rust/Zephyr Zero-Copy"
+    title: "Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic & Lock-Free SeqLock"
     track: 04
     tier: 3
     est_hours: 5.0
@@ -563,7 +563,7 @@ bridges:
     resources_verified: true
     path: modules/05-control.T2.05a.md
   - id: 05-control.T3.05a
-    title: "Joseph-Form Covariance Symmetry, Tangent-Space Error-State Reset on SO(3), Receding-Horizon QP & Control Barrier Functions"
+    title: "Joseph-Form Covariance Symmetry, Tangent-Space Error-State Reset on SO(3) & Control Barrier Function QPs"
     track: 05
     tier: 3
     est_hours: 5.0

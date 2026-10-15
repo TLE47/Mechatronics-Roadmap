@@ -23,7 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 02):** Master 2D planar robot arm kinematics (Forward & Inverse Kinematics using basic trigonometry), understand how gear ratios scale torque vs. reflected inertia ($N^2$), and learn how to support rotating shafts properly with radial ball bearings and timing belts.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 02):** Complete Tier 1 Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians, Unit-Circle Trig & `atan2`*) and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinematics, $F=ma$ & Mechanical Energy*) plus the Track 02 Tier 1 Bridge [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 02):** Complete Tier 1 Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians, Unit-Circle Trig & `atan2`*) and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (Kinematics, $F=ma$ & Mechanical Energy) plus the Track 02 Tier 1 Bridge [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md).
 
 ### [1.1 2-Link Planar Forward & Inverse Kinematics (Law of Cosines)]
 - **Core Summary:** Solves 2-DOF planar robot arm Forward Kinematics (`joint angles -> tip x, y`) and closed-form Inverse Kinematics (`target x, y -> shoulder/elbow angles`) using the Law of Cosines and two-argument `atan2(y, x)`.
@@ -116,7 +116,7 @@ $$
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 02):** Upgrade from flexible 3D-printed brackets and ad-hoc trigonometry to **Maxwell's Exact Constraint (`6 - C = DOF`)**, programmatic CAD (`CadQuery`), Duplex Angular-Contact Bearings, Manipulator Jacobians ($\tau = J^\top F$), and physical **URDF / MuJoCo MJCF** validation.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 02):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrices, Determinants & Singularities*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (*3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Change of Basis*) plus the Track 02 Tier 2 Bridge [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 02):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrices, Determinants & Singularities*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Change of Basis) plus the Track 02 Tier 2 Bridge [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md).
 
 ### 2.1 Maxwell's Rule of Exact Constraint ($6 - C = \text{DOF}$) & Abbe Error
 - **Core Summary:** Eliminates mechanical binding, thermal warping, and measurement offset errors by constraining exactly $C = 6 - \text{DOF}$ independent points (such as a 3-2-1 Kelvin Kinematic Coupling) and aligning encoders coaxial with the load axis (Abbe's Principle).
@@ -216,7 +216,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 02):** Production-grade mechanical synthesis and multibody dynamics: monolithic `Ti-6Al-4V` Paros-Weisbord flexures, Hertzian contact stress, Screw Theory Product of Exponentials (PoE) on $SE(3)$, Christoffel passivity skew-symmetry ($\dot{M}-2C$), and Featherstone's $O(n)$ RNEA/CRBA/ABA algorithms.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 02):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (*$SO(3)$ Hat/Vee Maps, Rodrigues' Formula & Port-Hamiltonian Passivity*) and **Step 3.1 (`00-foundations.T3.01`)** (*Lie Groups $SO(3)/SE(3)$ & Adjoints*) plus the Track 02 Tier 3 Bridge [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 02):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Formula & Port-Hamiltonian Passivity) and **Step 3.1 (`00-foundations.T3.01`)** (Lie Groups $SO(3)/SE(3)$ & Adjoints) plus the Track 02 Tier 3 Bridge [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md).
 > * [**Next Linear Step in Pass 3 → Track 03 (Tier 3: 25–40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production)
 
 ### [4.1 Mechanical Transmission & Multibody Computation Pipeline]

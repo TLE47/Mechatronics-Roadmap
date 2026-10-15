@@ -1,6 +1,6 @@
 ---
 id: 02-mechanics.T1.02a
-title: "Free-Body Diagrams, Static Torque Balance, Pulleys/Gears & Rotational Inertia"
+title: "Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling"
 track: "02"
 tier: 1
 prereqs:
@@ -28,10 +28,18 @@ Hold a heavy dumbbell straight out at shoulder height ($\theta = 0\text{ rad}$ h
 ## 3. Formalization
 1. **Free-Body Diagram & Static Equilibrium ($\sum F = 0,\ \sum \tau = 0$):** For a rigid body to remain stationary ($\ddot{x} = 0, \ddot{\theta} = 0$), the vector sum of external forces $\sum F_x = 0, \sum F_y = 0$ (in $\text{N}$) and the sum of torques about any pivot $\sum \tau_z = 0$ (in $\text{N}\cdot\text{m}$) must vanish.
 2. **Planar Link Gravity Holding Torque ($\tau_g(\theta)$):** For a link of mass $m$ ($\text{kg}$) whose center of mass lies at distance $L_{\text{com}}$ ($\text{m}$) from the joint pivot at angle $\theta$ ($\text{rad}$) measured from the horizontal $+x$-axis, gravity $m g$ acts straight down ($-y$), creating perpendicular lever arm $r_\perp = L_{\text{com}}\cos\theta$. The joint torque required to hold the link plus a tip payload $m_{\text{tip}}$ at length $L$ is:
-   $$\tau_g(\theta) = \left(m L_{\text{com}} + m_{\text{tip}} L\right) g \cos\theta$$
+
+$$
+\tau_g(\theta) = \left(m L_{\text{com}} + m_{\text{tip}} L\right) g \cos\theta
+$$
+
    Substituting $m = 0.40\text{ kg}$, $L_{\text{com}} = 0.10\text{ m}$, $m_{\text{tip}} = 0.50\text{ kg}$, $L = 0.20\text{ m}$, $g = 9.81\text{ m/s}^2$, and $\theta = 0\text{ rad}$ gives $\tau_{\max} = (0.04 + 0.10)(9.81)\cos(0) = 1.3734\text{ N}\cdot\text{m}$.
 3. **Gear Ratio Speed/Torque Scaling and Power Conservation:** For an ideal gear or belt reduction of ratio $N = \omega_{\text{motor}} / \omega_{\text{load}} = r_{\text{load}} / r_{\text{motor}}$ with efficiency $\eta \in (0, 1]$:
-   $$\omega_{\text{load}} = \frac{\omega_{\text{motor}}}{N}, \quad \tau_{\text{load}} = \eta N \tau_{\text{motor}}, \quad P_{\text{load}} = \tau_{\text{load}}\omega_{\text{load}} = \eta P_{\text{motor}}$$
+
+$$
+\omega_{\text{load}} = \frac{\omega_{\text{motor}}}{N}, \quad \tau_{\text{load}} = \eta N \tau_{\text{motor}}, \quad P_{\text{load}} = \tau_{\text{load}}\omega_{\text{load}} = \eta P_{\text{motor}}
+$$
+
    Substituting $N = 8.0$, $\eta = 1.0$, $\tau_{\text{motor}} = 0.25\text{ N}\cdot\text{m}$, and $\omega_{\text{motor}} = 160\text{ rad/s}$ gives $\tau_{\text{load}} = 2.0\text{ N}\cdot\text{m}$, $\omega_{\text{load}} = 20\text{ rad/s}$, and $P = 40.0\text{ W}$ on both sides.
 
 ## 4. Worked example
@@ -78,6 +86,14 @@ No hardware required for this module (`hardware_required: false`). In Step 1.3 (
 [Encoder Angle theta] ---> [tau_ff = (m*L_com + m_tip*L)*g*cos(theta)] ---> (+) ---> [Motor Torque Command]
 ```
 Pass/fail verification in simulation: `tau_0 == 1.3734 N*m`, `tau_60 == 0.6867 N*m`, and `tau_motor_0 == 0.2543 N*m`.
+
+
+```mermaid
+flowchart LR
+    A["02-mechanics.T1.02a: free_body_diagram_static_equilibrium"] --> B["gravity_lever_arm_cosine_torque"]
+    B --> C["gear_reduction_speed_torque_power_conservation"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.3 (`02-mechanics.T1.03`).

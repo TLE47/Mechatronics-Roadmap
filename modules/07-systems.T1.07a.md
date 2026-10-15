@@ -20,7 +20,7 @@ resources_verified: true
 ---
 
 ## 1. Why it matters
-This is the bridge module before the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8). Integrating a multi-DOF robot into a workcell requires three system-level skills: structuring supervisory logic around a deterministic **Read-Inputs $\to$ Execute-Logic $\to$ Write-Outputs cyclic PLC scan**, wiring a fail-safe **Normally-Closed (NC) hardware Emergency-Stop chain** that cuts motor power even if a wire breaks or the CPU freezes, and measuring your assembled robot's empirical bandwidth via a **single-tone sine sweep**. Already know this? Read `## Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
+This is the bridge module before the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8). Integrating a multi-DOF robot into a workcell requires three system-level skills: structuring supervisory logic around a deterministic **Read-Inputs $\to$ Execute-Logic $\to$ Write-Outputs cyclic PLC scan**, wiring a fail-safe **Normally-Closed (NC) hardware Emergency-Stop chain** that cuts motor power even if a wire breaks or the CPU freezes, and measuring your assembled robot's empirical bandwidth via a **single-tone sine sweep**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
 Imagine a factory supervisor who inspects a workcell every $10\text{ ms}$. Instead of letting sensors change halfway through a calculation, the supervisor takes a frozen snapshot of all switches at the top of the cycle (**1. Read Inputs**), computes the state machine rules on that snapshot (**2. Execute Logic**), and updates all relays at the end of the cycle (**3. Write Outputs**)—that is an **IEC 61131-3 cyclic PLC scan**. Next, why are industrial Emergency-Stop buttons wired **Normally-Closed (NC)** in series so current must flow continuously to hold the motor power relay closed? Because if a rat chews through an E-stop wire or a connector vibrates loose, the current stops and the machine fails **SAFE** (stops immediately)—whereas a Normally-Open (NO) wire break would silently leave you with a dead E-stop button that does nothing when pressed! Finally, a **sine sweep** shakes the joint with one pure sine frequency at a time and compares output amplitude $B$ and lag $\Delta t$ against input amplitude $A$ to plot the real hardware's frequency response.
@@ -28,10 +28,18 @@ Imagine a factory supervisor who inspects a workcell every $10\text{ ms}$. Inste
 ## 3. Formalization
 1. **Cyclic Scan Loop (`Read -> Execute -> Write`):** Each scan cycle $k$ latches input image $I_k$, evaluates pure state transition function $(S_{k+1}, Q_k) = f(S_k, I_k)$, and writes output image $Q_k$. Input changes arriving mid-scan cannot cause race conditions between rungs.
 2. **Fail-Safe Normally-Closed (NC) Series E-Stop Chain:** For $N$ series NC contacts $E_1, E_2, \dots, E_N \in \{0, 1\}$ (where `1` = closed/healthy and `0` = pressed OR broken wire) and hardware watchdog `WD_OK`:
-   $$\text{PWR\_ENABLE} = E_1 \land E_2 \land \dots \land E_N \land \text{WD\_OK}$$
-   Any single open contact or severed wire forces $\text{PWR\_ENABLE} = 0$, dropping the motor supply contactor/enable hardware line without relying on software.
+
+$$
+\text{PWR}\_\text{ENABLE} = E_1 \land E_2 \land \dots \land E_N \land \text{WD}\_\text{OK}
+$$
+
+   Any single open contact or severed wire forces $\text{PWR}\_\text{ENABLE} = 0$, dropping the motor supply contactor/enable hardware line without relying on software.
 3. **Single-Tone Sine-Sweep Gain (dB) and Phase Lag:** Injecting $u(t) = A\sin(2\pi f t)$ at frequency $f$ ($\text{Hz}$, period $T = 1/f$) and measuring steady-state response $y(t) = B\sin(2\pi f(t - \Delta t))$ gives empirical magnitude and phase:
-   $$|G(j2\pi f)|_{\text{dB}} = 20\log_{10}\!\left(\frac{B}{A}\right), \quad \angle G(j2\pi f) = -360^\circ \cdot f \cdot \Delta t$$
+
+$$
+\lvert G(j2\pi f)\rvert_{\text{dB}} = 20\log_{10}\!\left(\frac{B}{A}\right), \quad \angle G(j2\pi f) = -360^\circ \cdot f \cdot \Delta t
+$$
+
    Substituting $A = 1.0\text{ rad}$, $B = 0.7071\text{ rad}$, $f = 5.0\text{ Hz}$, and peak delay $\Delta t = 0.025\text{ s}$ gives $|G|_{\text{dB}} = -3.01\text{ dB}$ and $\angle G = -360^\circ \times 5.0 \times 0.025 = -45.0^\circ$.
 
 ## 4. Worked example
@@ -75,12 +83,12 @@ Safety state=ESTOP_LATCHED, pwr=False, Sine-sweep @ 5Hz: -3.01 dB, -45.0 deg
 ```
 
 ## 5. Exercise
-During a single-tone sine sweep at $f = 8.0\text{ Hz}$ ($T = 0.125\text{ s}$) with input amplitude $A = 0.20\text{ rad}$, the joint encoder output has steady-state amplitude $B = 0.10\text{ rad}$ and its peaks lag the input peaks by $\Delta t = 0.03125\text{ s}$. Compute $|G(j2\pi f)|_{\text{dB}}$ and $\angle G(j2\pi f)$ in degrees. Verify $|G|_{\text{dB}} = -6.0206\text{ dB}$ ($\pm 10^{-3}$) and $\angle G = -90.0^\circ$ ($\pm 10^{-6}$).
+During a single-tone sine sweep at $f = 8.0\text{ Hz}$ ($T = 0.125\text{ s}$) with input amplitude $A = 0.20\text{ rad}$, the joint encoder output has steady-state amplitude $B = 0.10\text{ rad}$ and its peaks lag the input peaks by $\Delta t = 0.03125\text{ s}$. Compute $\lvert G(j2\pi f)\rvert_{\text{dB}}$ and $\angle G(j2\pi f)$ in degrees. Verify $|G|_{\text{dB}} = -6.0206\text{ dB}$ ($\pm 10^{-3}$) and $\angle G = -90.0^\circ$ ($\pm 10^{-6}$).
 - **If your result differs:** Check that $-360^\circ \times 8.0\text{ Hz} \times 0.03125\text{ s} = -90.0^\circ$ (a quarter period of $0.125\text{ s}$) and $20\log_{10}(0.10 / 0.20) = -6.0206\text{ dB}$.
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Loops, Trigonometry & SI Units*) and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Decibel Gain $20\log_{10}(B/A)$ & Phase Lag $-360^\circ f \Delta t$*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Loops, Trigonometry & SI Units*) and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (Decibel Gain $20\log_{10}(B/A)$ & Phase Lag $-360^\circ f \Delta t$).
   - **Prerequisite Bridge Modules:** [`01-electronics.T1.01c`](01-electronics.T1.01c.md) (*CC/CV Bench Safety*) and [`05-control.T1.05a`](05-control.T1.05a.md) (*PID Control*).
   - **Core Concepts to Review First:** Deterministic `IEC 61131-3` PLC cyclic scan (`Read -> Execute -> Write`), single-tone sine-sweep System Identification ($|G|_{\text{dB}} = 20\log_{10}(B/A)$ and $\angle G = -360^\circ f \Delta t$), and the 10-step smoke-free hardware bring-up checklist in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [OpenPLC IEC 61131-3 Documentation (`autonomylogic.com`)](https://autonomylogic.com/) and [Track 07 Tier 1 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive).
@@ -88,14 +96,22 @@ During a single-tone sine sweep at $f = 8.0\text{ Hz}$ ($T = 0.125\text{ s}$) wi
 ## 6. Simulation path
 Test the cyclic PLC logic in [OpenPLC Editor](https://autonomylogic.com/) (`resources/open-source-toolchains.md`) or open **Tab 5 (Functional Safety & STO)** and **Tab 7 (System Identification)** in the MechaLab Workbench (`npm run dev`).
 
-## Safety notes
+### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**
 > 1. **Hardware E-Stop Must Break Power Physically:** A software `if (button_pressed)` check inside `loop()` is **never** a valid Emergency Stop—if the microcontroller hangs in an infinite loop or a MOSFET shorts failed-closed, software cannot stop the motor. The physical E-stop mushroom switch must directly interrupt the motor power supply (`VM`) or hardware driver enable (`nSLEEP`) via Normally-Closed (NC) contacts.
 > 2. **No Automatic Restart After E-Stop Release:** Twisting/releasing a latched E-stop mushroom button must **never** cause the robot to resume motion automatically (`ESTOP_LATCHED -> IDLE` requires an explicit manual Reset action while Start is not asserted).
 > 3. **Clear Workspace Before Sine Sweep:** Keep hands and loose cables outside the manipulator swept volume during sine-sweep excitation, and bound excitation amplitude to $\le 15\%$ of joint travel.
 
+
+```mermaid
+flowchart LR
+    A["07-systems.T1.07a: cyclic_plc_scan_read_execute_write"] --> B["normally_closed_hardware_estop_chain"]
+    B --> C["single_tone_sine_sweep_gain_phase"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
-Pass criteria: read `## Safety notes`, score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ on `[SAFETY]` items), or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ on `[SAFETY]` items), or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8).
 
 ### Skip test
 1. `[Recall] [Concept: single_tone_sine_sweep_gain_phase]` A $10.0\text{ Hz}$ sine sweep with input amplitude $A = 0.50\text{ rad}$ produces steady-state output amplitude $B = 0.25\text{ rad}$ with peak time delay $\Delta t = 0.0125\text{ s}$. Compute the phase lag $\angle G = -360^\circ f \Delta t$ in degrees (tolerance $\pm 10^{-6}$).
@@ -127,7 +143,7 @@ assert q3_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert math.isclose(q5_ratio, 1.0 / math.sqrt(2.0), abs_tol=1e-3)
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 3; if you missed Q2, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 2 and `## Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 3; if you missed Q2, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 2 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 
 
 ### Gate test
@@ -179,7 +195,7 @@ assert math.isclose(g6_db, -20.0, rel_tol=1e-6)
 assert math.isclose(g7_phase, -90.0, rel_tol=1e-6)
 assert g8_choice == "A"
 ```
-- **Pass mark:** $7/8$ overall AND $3/3$ ($100\%$) on `[SAFETY]` questions Q3, Q4, and Q5. Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q5 $\to$ `## 3. Formalization` item 2 and `## Safety notes`; Q6–Q8 $\to$ `## 3. Formalization` item 3.
+- **Pass mark:** $7/8$ overall AND $3/3$ ($100\%$) on `[SAFETY]` questions Q3, Q4, and Q5. Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q5 $\to$ `## 3. Formalization` item 2 and `### Safety notes`; Q6–Q8 $\to$ `## 3. Formalization` item 3.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
@@ -192,4 +208,4 @@ assert g8_choice == "A"
 - **Frank Petruzella — *Programmable Logic Controllers* & OpenPLC (`autonomylogic.com`, `resources/open-source-toolchains.md`):** IEC 61131-3 cyclic scan execution and safety interlock patterns `[VERIFIED 2026-10-15]`.
 - **Track 07 & 08 (`07-systems-hil-and-production/README.md`, `08-capstone-projects/README.md`):** Directly continues into the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 1.8 (`07-systems.T1.08`)** in [`08-capstone-projects/README.md`](../08-capstone-projects/README.md#tier-1-capstone-build-beginner--intuitive-pass).
+- Proceed to legacy **Step 1.8 (`07-systems.T1.08`)** in [`08-capstone-projects/README.md`](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass).

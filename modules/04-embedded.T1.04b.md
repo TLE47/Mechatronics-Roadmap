@@ -27,11 +27,19 @@ Imagine a chef cooking three dishes at once. A **`delay()` loop** is like starin
 
 ## 3. Formalization
 1. **Non-Blocking Rollover-Safe Tick Scheduler:** Given unsigned 32-bit microsecond timer `now_us` and period `PERIOD_US = 1000` ($1\text{ kHz}$), the condition:
-   $$\text{uint32\_t}(t_{\text{now}} - t_{\text{last}}) \ge T_{\text{period}} \implies t_{\text{last}} \leftarrow t_{\text{last}} + T_{\text{period}}$$
+
+$$
+\text{uint32}\_\text{t}(t_{\text{now}} - t_{\text{last}}) \ge T_{\text{period}} \implies t_{\text{last}} \leftarrow t_{\text{last}} + T_{\text{period}}
+$$
+
    executes without blocking and without cumulative phase drift. Substituting $t_{\text{last}} = 2000\ \mu\text{s}$, $T_{\text{period}} = 1000\ \mu\text{s}$, and $t_{\text{now}} = 3015\ \mu\text{s}$ triggers execution and advances $t_{\text{last}}$ to $3000\ \mu\text{s}$ (preserving the exact $1000\ \mu\text{s}$ grid).
 2. **Finite State Machine (`enum` + `switch`):** An actuator controller defines explicit states `enum class State { IDLE, HOMING, RUN, FAULT };` and transitions cleanly on each tick (e.g., `FAULT` forces `pwm = 0.0` immediately if current exceeds $I_{\max}$ or E-stop is pressed).
 3. **Hardware Timer ISR Budget & `volatile`:** If a timer ISR fires at frequency $f_{\text{isr}} = 1/T_{\text{isr}}$ and takes execution time $t_{\text{exec}}$, its CPU utilization fraction is:
-   $$U_{\text{isr}} = \frac{t_{\text{exec}}}{T_{\text{isr}}} = t_{\text{exec}} \cdot f_{\text{isr}}$$
+
+$$
+U_{\text{isr}} = \frac{t_{\text{exec}}}{T_{\text{isr}}} = t_{\text{exec}} \cdot f_{\text{isr}}
+$$
+
    Substituting $t_{\text{exec}} = 45\ \mu\text{s}$ at $f_{\text{isr}} = 1000\text{ Hz}$ ($T_{\text{isr}} = 1000\ \mu\text{s}$) gives $U_{\text{isr}} = 45 / 1000 = 4.5\%$. Any variable written inside an ISR and read in `loop()` must be declared `volatile`.
 
 ## 4. Worked example
@@ -94,6 +102,14 @@ No hardware required for this module (`hardware_required: false`). In Step 1.5 (
 [Timer ISR Entry: GPIO HIGH] ---> (PID Math: ~15 us) ---> [Timer ISR Exit: GPIO LOW] ---> [Logic Analyzer]
 ```
 Pass/fail verification in simulation: `ctrl_runs == 10`, `telem_runs == 1`, and `final_state == "FAULT"`.
+
+
+```mermaid
+flowchart LR
+    A["04-embedded.T1.04b: non_blocking_tick_scheduler"] --> B["finite_state_machine_switch_enum"]
+    B --> C["hardware_isr_and_volatile_contract"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test to pass this module, or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.5 (`04-embedded.T1.05`).

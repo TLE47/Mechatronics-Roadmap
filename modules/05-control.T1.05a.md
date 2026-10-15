@@ -32,10 +32,18 @@ Imagine steering a car toward the center of a lane. **Open-loop control** is clo
 ## 3. Formalization
 1. **Closed-Loop Tracking Error ($e_k = r_k - y_k$):** At discrete control step $k$ with period $\Delta t$ ($\text{s}$), given reference target $r_k$ ($\text{rad}$) and measured position $y_k$ ($\text{rad}$), tracking error is $e_k = r_k - y_k$.
 2. **Physical PD Virtual Spring-Damper + Integral Action:** Commanded unsaturated control effort $u_{\text{raw},k}$ ($\text{V}$ or $\text{N}\cdot\text{m}$) with proportional gain $K_p$, integral gain $K_i$, and derivative gain $K_d$ (applied on measurement velocity $\dot{y}_k$ to avoid derivative kick on step changes in $r_k$) is:
-   $$u_{\text{raw},k} = \underbrace{K_p (r_k - y_k)}_{\text{Virtual Spring}} - \underbrace{K_d \dot{y}_k}_{\text{Virtual Damper}} + \underbrace{I_k}_{\text{Gravity/Friction Bias}}, \quad I_k = I_{k-1} + K_i e_k \Delta t$$
+
+$$
+u_{\text{raw},k} = \underbrace{K_p (r_k - y_k)}_{\text{Virtual Spring}} - \underbrace{K_d \dot{y}_k}_{\text{Virtual Damper}} + \underbrace{I_k}_{\text{Gravity/Friction Bias}}, \quad I_k = I_{k-1} + K_i e_k \Delta t
+$$
+
    Substituting $r_k = 1.0\text{ rad}$, $y_k = 0.6\text{ rad}$ ($e_k = 0.4\text{ rad}$), $\dot{y}_k = 0.5\text{ rad/s}$, $I_k = 0.8\text{ N}\cdot\text{m}$, $K_p = 10.0$, and $K_d = 2.0$ gives $u_{\text{raw},k} = 10(0.4) - 2(0.5) + 0.8 = 3.8\text{ N}\cdot\text{m}$.
 3. **Actuator Saturation and Clamping Anti-Windup:** Physical actuators saturate at $\pm u_{\max}$:
-   $$u_k = \operatorname{clip}(u_{\text{raw},k},\ -u_{\max},\ +u_{\max})$$
+
+$$
+u_k = \operatorname{clip}(u_{\text{raw},k},\ -u_{\max},\ +u_{\max})
+$$
+
    Clamping anti-windup freezes $I_k$ whenever $|u_{\text{raw},k}| > u_{\max}$ and $\operatorname{sign}(e_k) = \operatorname{sign}(u_{\text{raw},k})$ (or clamps $|I_k| \le I_{\max}$).
 
 ## 4. Worked example
@@ -98,6 +106,14 @@ No hardware required for this module (`hardware_required: false`). In Step 1.6 (
                       ^___________________________________________________________________|
 ```
 Pass/fail verification in simulation: PD steady-state sag equals $\tau_g / K_p = 0.150\text{ rad}$, anti-windup steady-state error $< 0.001\text{ rad}$, and anti-windup overshoot $< 0.05\text{ rad}$.
+
+
+```mermaid
+flowchart LR
+    A["05-control.T1.05a: open_vs_closed_loop_tracking_error"] --> B["pid_spring_damper_integrator_intuition"]
+    B --> C["actuator_saturation_and_integrator_windup"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.6 (`05-control.T1.06`).
@@ -183,7 +199,7 @@ assert math.isclose(g8_di, 0.005, rel_tol=1e-9)
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Joint violently runs away to mechanical hard-stop on startup | Feedback sign is inverted (positive error drives the motor *away* from the target instead of toward it). | Verify with small $K_p$ and hand deflection that the motor pushes *back* toward the setpoint, not away from it. |
-| Huge overshoot after a large step command, but small steps look fine | Integrator windup during actuator saturation. | Clamp the integral accumulator (`anti_windup = True`) whenever $|u_{\text{raw}}| > u_{\max}$. |
+| Huge overshoot after a large step command, but small steps look fine | Integrator windup during actuator saturation. | Clamp the integral accumulator (`anti_windup = True`) whenever $\lvert u_{\text{raw}}\rvert  > u_{\max}$. |
 | Motor buzzes and chatters loudly when $K_d$ is increased | Unfiltered finite-difference velocity $(\theta_k - \theta_{k-1})/\Delta t$ amplifies encoder quantization noise by $1/\Delta t = 1000\times$. | Low-pass filter the velocity estimate before multiplying by $K_d$ (Step 1.6). |
 
 ## 9. Resources

@@ -23,7 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 03):** Read rotor position accurately using quadrature optical and on-axis magnetic encoders (`AS5600`/`AS5048`), understand how a 3-phase brushless motor rotates a magnetic field, and spin your first gimbal BLDC motor smoothly in angle mode using `SimpleFOC` and a `DRV8313`/`SimpleFOCMini` breakout.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 03):** Complete Tier 1 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (*SI Units & RPM-to-$\text{rad/s}$*), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians & 2D Vectors*), and [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) (*PWM H-Bridges*) plus the Track 03 Tier 1 Bridge [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 03):** Complete Tier 1 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (SI Units & RPM-to-$\text{rad/s}$), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians & 2D Vectors*), and [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) (*PWM H-Bridges*) plus the Track 03 Tier 1 Bridge [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md).
 
 ### 1.1 Incremental (`A/B`) vs. Absolute Magnetic Encoders (`AS5600` / `AS5048`)
 - **Core Summary:** Incremental quadrature encoders output two $90^\circ$ phase-shifted square waves (`A/B`) that count relative steps ($4\times$ edges per slot) from boot, whereas on-axis diametric magnetic encoders (`AS5600` / `AS5048A` / `MT6835`) measure the magnetic field vector of a rear-shaft neodymium magnet to provide instant 12-to-16-bit absolute shaft angle ($0^\circ\text{–}360^\circ$) the microsecond power is applied.
@@ -318,7 +318,7 @@ $$
 ## 5. Failure Modes, Pitfalls & Anti-Patterns
 
 1. **Sampling ADC Currents During PWM Switching Edges:** Always trigger simultaneous ADC conversions at the exact center of the low-side MOSFET on-time (`TIM1_TRGO2` at `CNT == ARR`).
-2. **Missing Integrator Anti-Windup During Voltage Circle Saturation:** Prioritize $v_d^{*}$ when clamping $\sqrt{v_d^{*2} + v_q^{*2}} \le V_{\text{bus}}/\sqrt{3}$ so rotor flux orientation is never lost.
+2. **Missing Integrator Anti-Windup During Voltage Circle Saturation:** Prioritize $v_d^{}$ when clamping $\sqrt{v_d^{2} + v_q^{*2}} \le V_{\text{bus}}/\sqrt{3}$ so rotor flux orientation is never lost.
 3. **Electrical Zero Offset Error ($\theta_{e,\text{offset}}$):** Calibrate electrical zero by averaging bidirectional $d$-axis alignment sweeps to cancel friction hysteresis.
 4. **6th-Harmonic Torque Ripple from Dead-Time & Cogging:** Combine current-sign dead-time voltage compensation with a position-indexed Anticogging LUT.
 

@@ -99,13 +99,24 @@ for p in sorted(ROOT.glob("*.md")):
     for s_name, s_pat in REQ_SECTIONS:
         if not re.search(s_pat, body, re.M):
             bad.append(f"{mid}: missing section '{s_name}'")
+    h2s = re.findall(r"^##\s+(.+)$", body, re.M)
+    if len(h2s) != 10:
+        bad.append(f"{mid}: expected 10 H2 headings, found {len(h2s)}: {h2s}")
+    if fm.get("safety_level", "none") != "none" and not re.search(r"^###\s+Safety notes", body, re.M):
+        bad.append(f"{mid}: safety_level={fm.get('safety_level')} missing '### Safety notes'")
     if not re.search(r"^###?\s+.*(?:Skip test|Skip Test)", body, re.M):
         bad.append(f"{mid}: missing section 'Skip test'")
+    for idx_b, py_block in enumerate(re.findall(r"```python\n(.*?)```", body, re.S), 1):
+        try:
+            exec(py_block, {})
+        except Exception as exc:
+            bad.append(f"{mid}: python block #{idx_b} failed: {exc}")
     nodes[mid] = {
         "prereqs": fm.get("prereqs", []),
         "introduces": set(fm.get("new_concepts", [])),
         "uses": set(fm.get("uses", [])),
         "legacy": False,
+        "body": body,
     }
 
 for m, d in nodes.items():
@@ -147,6 +158,19 @@ for m, d in nodes.items():
     if not d["legacy"]:
         for u in d["uses"] - reach(m):
             bad.append(f"{m}: uses '{u}' not introduced by any prereq")
+        m_gate = re.search(r"### Gate test.*?(?=^##\s|\Z)", d["body"], re.S | re.M)
+        if m_gate:
+            gtxt = m_gate.group(0)
+            tagged = set(re.findall(r"\[Concept:\s*([^\]]+)\]", gtxt))
+            track_tier = ".".join(m.split(".")[:2])
+            ladder_concepts = set()
+            for k, kd in nodes.items():
+                if not kd["legacy"] and k.startswith(track_tier):
+                    ladder_concepts |= kd["introduces"]
+            for c in sorted(ladder_concepts - tagged):
+                bad.append(f"{m}: Gate test missing ladder concept '{c}'")
+            for c in sorted(tagged - ladder_concepts):
+                bad.append(f"{m}: Gate test tags unknown concept '{c}'")
 
 if bad:
     print("\n".join(bad))

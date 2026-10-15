@@ -23,13 +23,21 @@ resources_verified: true
 To achieve the Graduate Goal—deploying a learned visuomotor or proprioceptive policy (`LeRobot`, `ACT`, `Diffusion Policy`, `π₀`) on your robot arm in Step 3.7 (`06-robotics.T3.07`)—you first need a crystal-clear understanding of how a neural policy maps robot observations $o_t = [q_t, \dot{q}_t, x_{\text{goal}}]^\top$ to action targets $a_t$, how **automatic differentiation (`autograd` / backpropagation)** computes the exact gradient $\nabla_\theta \mathcal{L}$ of a loss function using the chain rule, and how **Behavior Cloning (BC)** trains a policy by imitating expert demonstrations. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
-Think of a neural network policy $\pi_\theta(o_t)$ as a multi-stage signal conditioner made of tunable gain matrices $W_1, W_2$ and smooth nonlinear saturation curves ($\tanh$ or $\text{ReLU}$). In **Behavior Cloning (imitation learning)**, you teleoperate the robot arm (or run an expert trajectory generator) to record a dataset of $(o_t, a_t^*)$ pairs: *"When the arm was at state $o_t$, the expert commanded action $a_t^*$."* Next, we feed $o_t$ through the network (**forward pass**), measure the squared discrepancy $\mathcal{L} = \frac{1}{N}\sum \|\pi_\theta(o_t) - a_t^*\|^2$ (**Mean-Squared Error loss**), and ask: *"Which way should we nudge each weight in $W_1$ and $W_2$ to shrink $\mathcal{L}$?"* **Backpropagation (`autograd`)** applies the calculus chain rule applied backward from the output error to each layer's weights, and **gradient descent** ($\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}$) steps the weights downhill until the policy reproduces the expert's smooth motion!
+Think of a neural network policy $\pi_\theta(o_t)$ as a multi-stage signal conditioner made of tunable gain matrices $W_1, W_2$ and smooth nonlinear saturation curves ($\tanh$ or $\text{ReLU}$). In **Behavior Cloning (imitation learning)**, you teleoperate the robot arm (or run an expert trajectory generator) to record a dataset of $(o_t, a_t^{*})$ pairs: "When the arm was at state $o_t$, the expert commanded action $a_t^{*}$." Next, we feed $o_t$ through the network (**forward pass**), measure the squared discrepancy $\mathcal{L} = \frac{1}{N}\sum \|\pi_\theta(o_t) - a_t^*\|^2$ (**Mean-Squared Error loss**), and ask: "Which way should we nudge each weight in $W_1$ and $W_2$ to shrink $\mathcal{L}$?" **Backpropagation (`autograd`)** applies the calculus chain rule applied backward from the output error to each layer's weights, and **gradient descent** ($\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}$) steps the weights downhill until the policy reproduces the expert's smooth motion!
 
 ## 3. Formalization
 1. **Multi-Layer Policy Forward Pass & Mean-Squared Error (MSE) Loss:** Given observation batch $X \in \mathbb{R}^{N \times d_{\text{in}}}$ and expert target actions $Y^* \in \mathbb{R}^{N \times d_{\text{out}}}$, a 2-layer network with hidden weights $W_1 \in \mathbb{R}^{d_{\text{in}} \times h}, b_1 \in \mathbb{R}^{1 \times h}$, activation $H = \tanh(X W_1 + b_1)$, and output weights $W_2 \in \mathbb{R}^{h \times d_{\text{out}}}, b_2 \in \mathbb{R}^{1 \times d_{\text{out}}}$ predicts $\hat{Y} = H W_2 + b_2$ with MSE loss:
-   $$\mathcal{L}(\theta) = \frac{1}{N} \sum_{i=1}^{N} \|\hat{y}_i - y_i^*\|_2^2$$
+
+$$
+\mathcal{L}(\theta) = \frac{1}{N} \sum_{i=1}^{N} \|\hat{y}_i - y_i^*\|_2^2
+$$
+
 2. **Chain-Rule Backpropagation (`autograd`) & Gradient Descent Step:** Let residual $E = \hat{Y} - Y^* \in \mathbb{R}^{N \times d_{\text{out}}}$. By the matrix chain rule (with $\frac{d}{dz}\tanh(z) = 1 - \tanh^2(z) = 1 - H^2$):
-   $$\frac{\partial \mathcal{L}}{\partial \hat{Y}} = \frac{2}{N}E, \quad \frac{\partial \mathcal{L}}{\partial W_2} = H^\top \frac{\partial \mathcal{L}}{\partial \hat{Y}}, \quad \frac{\partial \mathcal{L}}{\partial H} = \frac{\partial \mathcal{L}}{\partial \hat{Y}} W_2^\top, \quad \frac{\partial \mathcal{L}}{\partial W_1} = X^\top \!\left(\frac{\partial \mathcal{L}}{\partial H} \odot (1 - H^2)\right)$$
+
+$$
+\frac{\partial \mathcal{L}}{\partial \hat{Y}} = \frac{2}{N}E, \quad \frac{\partial \mathcal{L}}{\partial W_2} = H^\top \frac{\partial \mathcal{L}}{\partial \hat{Y}}, \quad \frac{\partial \mathcal{L}}{\partial H} = \frac{\partial \mathcal{L}}{\partial \hat{Y}} W_2^\top, \quad \frac{\partial \mathcal{L}}{\partial W_1} = X^\top \!\left(\frac{\partial \mathcal{L}}{\partial H} \odot (1 - H^2)\right)
+$$
+
    Each parameter updates with learning rate $\eta > 0$: $W_k \leftarrow W_k - \eta \frac{\partial \mathcal{L}}{\partial W_k}$.
 3. **Behavior Cloning (BC) Observation Normalization & Covariate Shift:** Normalizing inputs via z-score $\tilde{o} = (o - \mu_o)/\sigma_o$ prevents high-magnitude states (e.g., velocities in $\text{rad/s}$) from dominating gradients over small position errors. Because single-step BC errors compound over horizon $H_{\text{steps}}$ as $\mathcal{O}(\epsilon H_{\text{steps}}^2)$ when the robot drifts slightly off the expert demonstration track (**covariate shift**), modern policies predict multi-step **action chunks** ($k = 16\text{–}50$ future waypoints, `ACT` / `LeRobot` in `06-robotics.T3.06b`).
 
@@ -98,12 +106,12 @@ BC initial MSE=13.5701 -> trained MSE=0.00523 (grad_err=1.15e-10)
 ```
 
 ## 5. Exercise
-For a single scalar weight $w = 2.0$, input $x = 3.0$, prediction $\hat{y} = w x = 6.0$, and expert target $y^* = 10.0$, compute (a) the squared error loss $\mathcal{L} = (\hat{y} - y^*)^2$, (b) the exact derivative $\frac{\partial \mathcal{L}}{\partial w} = 2(\hat{y} - y^*)x$, and (c) the updated weight $w_{\text{new}} = w - \eta \frac{\partial \mathcal{L}}{\partial w}$ after one gradient descent step with learning rate $\eta = 0.05$. Verify $\mathcal{L} = 16.0$, $\frac{\partial \mathcal{L}}{\partial w} = -24.0$, and $w_{\text{new}} = 3.20$ ($\pm 10^{-9}$).
-- **If your result differs:** Check the sign of $\hat{y} - y^* = 6.0 - 10.0 = -4.0$, so $\frac{\partial \mathcal{L}}{\partial w} = 2(-4.0)(3.0) = -24.0$, and subtracting $\eta(-24.0)$ *increases* $w$ from $2.0$ to $3.20$ (moving $\hat{y} = 3.20 \times 3.0 = 9.60$ much closer to $y^* = 10.0$!).
+For a single scalar weight $w = 2.0$, input $x = 3.0$, prediction $\hat{y} = w x = 6.0$, and expert target $y^{*} = 10.0$, compute (a) the squared error loss $\mathcal{L} = (\hat{y} - y^{*})^2$, (b) the exact derivative $\frac{\partial \mathcal{L}}{\partial w} = 2(\hat{y} - y^*)x$, and (c) the updated weight $w_{\text{new}} = w - \eta \frac{\partial \mathcal{L}}{\partial w}$ after one gradient descent step with learning rate $\eta = 0.05$. Verify $\mathcal{L} = 16.0$, $\frac{\partial \mathcal{L}}{\partial w} = -24.0$, and $w_{\text{new}} = 3.20$ ($\pm 10^{-9}$).
+- **If your result differs:** Check the sign of $\hat{y} - y^{*} = 6.0 - 10.0 = -4.0$, so $\frac{\partial \mathcal{L}}{\partial w} = 2(-4.0)(3.0) = -24.0$, and subtracting $\eta(-24.0)$ increases $w$ from $2.0$ to $3.20$ (moving $\hat{y} = 3.20 \times 3.0 = 9.60$ much closer to $y^{*} = 10.0$!).
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Inversion & Multiplication*), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) (*$SO(3)$ Exponential Map $\operatorname{Exp}(\phi)$*), and Legacy **Step 3.1 (`00-foundations.T3.01`)**.
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Inversion & Multiplication*), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) ($SO(3)$ Exponential Map $\operatorname{Exp}(\phi)$), and Legacy **Step 3.1 (`00-foundations.T3.01`)**.
   - **Prerequisite Bridge Module:** [`06-robotics.T2.06b`](06-robotics.T2.06b.md) and Legacy **Step 2.7 (`06-robotics.T2.07`)**.
   - **Core Concepts to Review First:** Khatib operational-space inertia $\Lambda(q) = (J M^{-1} J^\top)^{-1}$, linearized friction-cone contact constraints, Forster's $SO(3)$ IMU preintegration bias Jacobian update, and Behavior Cloning MSE loss + chain-rule gradient step in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Khatib (1987) Operational-Space Paper](https://ieeexplore.ieee.org/document/1087068), [Forster et al. On-Manifold Preintegration (`arXiv:1512.02363`)](https://arxiv.org/abs/1512.02363), [Capuano et al. *Robot Learning Tutorial* (`arXiv:2510.12403`)](https://arxiv.org/abs/2510.12403), and [Track 06 Tier 3 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-3-advanced--production).
@@ -119,12 +127,20 @@ No hardware required for this module (`hardware_required: false`). In Step 3.7 (
 ```
 Pass/fail verification in simulation: finite-difference gradient check matches analytical backprop within $< 10^{-7}$ and Behavior Cloning MSE drops from `13.57` to `< 0.01`.
 
+
+```mermaid
+flowchart LR
+    A["06-robotics.T3.06a: neural_network_forward_pass_and_mse_loss"] --> B["chain_rule_backpropagation_and_gradient_descent"]
+    B --> C["behavior_cloning_expert_demonstration_fit"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
-1. `[Recall] [Concept: neural_network_forward_pass_and_mse_loss]` Given predictions $\hat{y} = [1.0, 3.0]^\top$ and expert targets $y^* = [2.0, 1.0]^\top$ ($N = 2$), compute the Mean-Squared Error $\mathcal{L} = \frac{1}{2}\sum_{i=1}^2 (\hat{y}_i - y_i^*)^2$ (tolerance $\pm 10^{-9}$).
-2. `[Apply] [Concept: chain_rule_backpropagation_and_gradient_descent]` For loss $\mathcal{L}(w) = (w x - y^*)^2$ with $w = 1.0$, $x = 2.0$, and $y^* = 6.0$, compute the gradient $\frac{\partial \mathcal{L}}{\partial w} = 2(w x - y^*)x$ (tolerance $\pm 10^{-9}$).
+1. `[Recall] [Concept: neural_network_forward_pass_and_mse_loss]` Given predictions $\hat{y} = [1.0, 3.0]^\top$ and expert targets $y^{*} = [2.0, 1.0]^\top$ ($N = 2$), compute the Mean-Squared Error $\mathcal{L} = \frac{1}{2}\sum_{i=1}^2 (\hat{y}_i - y_i^{*})^2$ (tolerance $\pm 10^{-9}$).
+2. `[Apply] [Concept: chain_rule_backpropagation_and_gradient_descent]` For loss $\mathcal{L}(w) = (w x - y^{*})^2$ with $w = 1.0$, $x = 2.0$, and $y^{*} = 6.0$, compute the gradient $\frac{\partial \mathcal{L}}{\partial w} = 2(w x - y^*)x$ (tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: chain_rule_backpropagation_and_gradient_descent]` Using the gradient $\frac{\partial \mathcal{L}}{\partial w} = -16.0$ from Q2 and learning rate $\eta = 0.10$, compute the updated weight $w_{\text{new}} = w - \eta \frac{\partial \mathcal{L}}{\partial w}$ (tolerance $\pm 10^{-9}$).
 4. `[Spaced review -> 06-robotics.T2.07 — Concept: matrix_vector_multiplication] [Concept: behavior_cloning_expert_demonstration_fit]` What is **covariate shift (compounding error)** in naive single-step Behavior Cloning?
    - **A.** When the GPU clock frequency changes during training.

@@ -1,6 +1,6 @@
 ---
 id: 00-foundations.T2.00f
-title: "Sampling, Aliasing, Nyquist, z-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance"
+title: "Nyquist Sampling & Aliasing, Pre-Warped Tustin Biquad Filters & Gaussian Covariance"
 track: "00"
 tier: 2
 prereqs:
@@ -27,13 +27,25 @@ Have you ever watched a car commercial where the spoked wheels appear to spin ba
 
 ## 3. Formalization
 1. **Nyquist Limit and Aliasing:** Sampling at rate $f_s = 1/T_s$ ($\text{Hz}$) can uniquely represent frequencies only up to the Nyquist frequency $f_{\text{Nyquist}} = f_s / 2$. Any analog frequency $f > f_s/2$ folds to an apparent alias frequency in $[0, f_s/2]$:
-   $$f_{\text{alias}} = \left| f - k f_s \right| \in \left[0, \frac{f_s}{2}\right]$$
+
+$$
+f_{\text{alias}} = \left| f - k f_s \right| \in \left[0, \frac{f_s}{2}\right]
+$$
+
    Substituting a $f = 3150\text{ Hz}$ vibration sampled at $f_s = 4000\text{ Hz}$ ($k=1$) gives $f_{\text{alias}} = |3150 - 4000| = 850\text{ Hz}$.
-2. **Bilinear (Tustin) Warping and Pre-Warped Biquad (`TDF-II`):** The unwarped Tustin transform substitutes $s = \frac{2}{T_s}\frac{1 - z^{-1}}{1 + z^{-1}}$, which maps an analog target frequency $\omega_0 = 2\pi f_0$ ($\text{rad/s}$) to a lower digital frequency $\omega_{\text{actual}} = \frac{2}{T_s}\arctan\left(\frac{\omega_0 T_s}{2}\r\right)$. To force the digital notch to land on $f_0$, we **pre-warp** the analog prototype frequency $\omega_a$ before substituting:
-   $$\omega_a = \frac{2}{T_s}\tan\left(\frac{\pi f_0}{f_s}\r\right)$$
-   At $f_0 = 850\text{ Hz}$ and $f_s = 4000\text{ Hz}$ ($T_s = 0.00025\text{ s}$), unwarped Tustin lands at $f_{\text{actual}} = \frac{4000}{\pi}\arctan\left(\frac{\pi\cdot 850}{4000}\r\right) = 749.49\text{ Hz}$ (missing by $100.51\text{ Hz}$!), whereas pre-warping uses $\omega_a = 8000\tan(0.2125\pi) = 6297.25\text{ rad/s}$ ($1002.24\text{ Hz}$) so the digital notch lands on $850.00\text{ Hz}$. The resulting $z$-domain biquad $H(z) = \frac{b_0 + b_1 z^{-1} + b_2 z^{-2}}{1 + a_1 z^{-1} + a_2 z^{-2}}$ executes in 2 delay states ($w_1, w_2$) via Transposed Direct Form II (`TDF-II`).
+2. **Bilinear (Tustin) Warping and Pre-Warped Biquad (`TDF-II`):** The unwarped Tustin transform substitutes $s = \frac{2}{T_s}\frac{1 - z^{-1}}{1 + z^{-1}}$, which maps an analog target frequency $\omega_0 = 2\pi f_0$ ($\text{rad/s}$) to a lower digital frequency $\omega_{\text{actual}} = \frac{2}{T_s}\arctan\left(\frac{\omega_0 T_s}{2}\right)$. To force the digital notch to land on $f_0$, we **pre-warp** the analog prototype frequency $\omega_a$ before substituting:
+
+$$
+\omega_a = \frac{2}{T_s}\tan\left(\frac{\pi f_0}{f_s}\right)
+$$
+
+   At $f_0 = 850\text{ Hz}$ and $f_s = 4000\text{ Hz}$ ($T_s = 0.00025\text{ s}$), unwarped Tustin lands at $f_{\text{actual}} = \frac{4000}{\pi}\arctan\left(\frac{\pi\cdot 850}{4000}\right) = 749.49\text{ Hz}$ (missing by $100.51\text{ Hz}$!), whereas pre-warping uses $\omega_a = 8000\tan(0.2125\pi) = 6297.25\text{ rad/s}$ ($1002.24\text{ Hz}$) so the digital notch lands on $850.00\text{ Hz}$. The resulting $z$-domain biquad $H(z) = \frac{b_0 + b_1 z^{-1} + b_2 z^{-2}}{1 + a_1 z^{-1} + a_2 z^{-2}}$ executes in 2 delay states ($w_1, w_2$) via Transposed Direct Form II (`TDF-II`).
 3. **Gaussian Variance and Covariance Matrix ($\Sigma$):** A scalar sensor with standard deviation $\sigma$ has variance $\sigma^2$. For a state vector $x \in \mathbb{R}^n$ with mean $\mu$, the symmetric positive semi-definite covariance matrix is $\Sigma = \mathbb{E}[(x - \mu)(x - \mu)^\top]$. Propagating $y = A x + w$ (where $w$ has covariance $Q$) updates the covariance via the quadratic sandwich rule:
-   $$\Sigma_y = A \Sigma_x A^\top + Q$$
+
+$$
+\Sigma_y = A \Sigma_x A^\top + Q
+$$
+
    Substituting $A = \begin{bmatrix} 1 & 0.1 \\ 0 & 1 \end{bmatrix}$, $\Sigma_x = \begin{bmatrix} 1 & 0 \\ 0 & 4 \end{bmatrix}$, and $Q = 0$ gives $\Sigma_y = \begin{bmatrix} 1.04 & 0.4 \\ 0.4 & 4.0 \end{bmatrix}$.
 
 ## 4. Worked example
@@ -80,8 +92,7 @@ Compute the alias frequency $f_{\text{alias}} \in [0, f_s/2]$ when a $2700\text{
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Bode Plots*) and [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Tustin Discretization*).
-  - **Core Concepts to Review First:** Nyquist folding $f_{\text{alias}} = |f_{\text{sig}} - k f_s|$ and Tustin frequency pre-warping $\omega_a = \frac{2}{T_s}\tan\!\left(\frac{\pi f_0}{f_s}
-\right)$ in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
+  - **Core Concepts to Review First:** Nyquist folding $f_{\text{alias}} = |f_{\text{sig}} - k f_s|$ and Tustin frequency pre-warping $\omega_a = \frac{2}{T_s}\tan\!\left(\frac{\pi f_0}{f_s}\right)$ in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
   - **DSP, Biquad & Pre-Warping Study Links:** [The Scientist and Engineer's Guide to DSP (`dspguide.com`, Ch. 3 Sampling & Aliasing)](https://www.dspguide.com/), [Audio EQ Cookbook Biquad Formulas (`w3.org/TR/audio-eq-cookbook`)](https://www.w3.org/TR/audio-eq-cookbook/), and [Roger Labbe *Kalman and Bayesian Filters in Python* (Gaussian Covariance)](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (Step 2.1 Pre-Warped TDF-II Biquad Notch).
 
@@ -93,6 +104,14 @@ No hardware required for this module (`hardware_required: false`). In Step 2.1 (
 [Analog Sensor] ---> [RC Anti-Alias Filter] ---> [ADC @ f_s=4 kHz] ---> [TDF-II Pre-Warped Biquad Notch]
 ```
 Pass/fail verification in simulation: `f_unwarped == 749.49 Hz`, `f_landed == 850.00 Hz`, and `Sigma_y` symmetric positive definite.
+
+
+```mermaid
+flowchart LR
+    A["00-foundations.T2.00f: nyquist_sampling_and_aliasing"] --> B["tustin_frequency_prewarping_and_biquad"]
+    B --> C["gaussian_variance_and_covariance_matrix"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the module Skip test to pass this module, or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to verify readiness for Step 2.1 (`00-foundations.T2.01`).
@@ -125,12 +144,12 @@ assert math.isclose(q4_sigma00, 2.0, rel_tol=1e-9)
 ### Gate test
 Covers the complete Track 00 Tier 2 bridge ladder (`00-foundations.T2.00a` through `00-foundations.T2.00f`) before Step 2.1 (`00-foundations.T2.01`):
 1. `[Concept: finite_difference_derivative_and_integral]` Given $x_{k-1} = 0.20\text{ m}$ and $x_k = 0.26\text{ m}$ sampled at $\Delta t = 0.02\text{ s}$, compute the backward-difference velocity $v_k$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
-2. `[Concept: matrix_vector_multiplication]` Multiply $A = \begin{bmatrix} 1 & 0.05 \\ 0 & 1 \end{bmatrix}$ by $x = \begin{bmatrix} 2.0 \\ 4.0 \end{bmatrix}$ and report the first element $(Ax)_0$ (tolerance $\pm 10^{-9}$).
-3. `[Concept: cross_product_3d_moment]` For lever arm $r = [0.25, 0.0, 0.0]^\top\text{ m}$ and force $F = [0.0, 40.0, 0.0]^\top\text{ N}$, compute the $z$-component of torque $\tau_z = (r \times F)_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
-4. `[Concept: second_order_ode_wn_zeta]` Compute the undamped natural frequency $\omega_n$ in $\text{rad/s}$ and damping ratio $\zeta$ (tolerance $\pm 10^{-9}$) for $2\ddot{x} + 8\dot{x} + 200x = 0$.
-5. `[Concept: bode_magnitude_db_and_phase]` Convert a resonance peak gain of $|G(j\omega_n)| = 10.0$ into decibels ($\text{dB}$, tolerance $\pm 10^{-9}$).
-6. `[Concept: continuous_state_space_matrices]` For $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$, compute the determinant $\det(A)$ (tolerance $\pm 10^{-9}$).
-7. `[Concept: tustin_frequency_prewarping_and_biquad]` Compute the pre-warped analog frequency $\omega_a$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$) for $f_0 = 850\text{ Hz}$ at $f_s = 4000\text{ Hz}$.
+2. `[Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` Multiply $A = \begin{bmatrix} 1 & 0.05 \\ 0 & 1 \end{bmatrix}$ by $x = \begin{bmatrix} 2.0 \\ 4.0 \end{bmatrix}$ and report the first element $(Ax)_0$ (tolerance $\pm 10^{-9}$).
+3. `[Concept: cross_product_3d_moment] [Concept: dot_product_projection] [Concept: basis_change_and_invertibility]` For lever arm $r = [0.25, 0.0, 0.0]^\top\text{ m}$ and force $F = [0.0, 40.0, 0.0]^\top\text{ N}$, compute the $z$-component of torque $\tau_z = (r \times F)_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: second_order_ode_wn_zeta] [Concept: first_order_ode_time_constant] [Concept: characteristic_polynomial_roots]` Compute the undamped natural frequency $\omega_n$ in $\text{rad/s}$ and damping ratio $\zeta$ (tolerance $\pm 10^{-9}$) for $2\ddot{x} + 8\dot{x} + 200x = 0$.
+5. `[Concept: bode_magnitude_db_and_phase] [Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function]` Convert a resonance peak gain of $|G(j\omega_n)| = 10.0$ into decibels ($\text{dB}$, tolerance $\pm 10^{-9}$).
+6. `[Concept: continuous_state_space_matrices] [Concept: laplace_poles_and_zeros] [Concept: discrete_state_transition_euler_tustin]` For $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$, compute the determinant $\det(A)$ (tolerance $\pm 10^{-9}$).
+7. `[Concept: tustin_frequency_prewarping_and_biquad] [Concept: nyquist_sampling_and_aliasing]` Compute the pre-warped analog frequency $\omega_a$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$) for $f_0 = 850\text{ Hz}$ at $f_s = 4000\text{ Hz}$.
 8. `[Concept: gaussian_variance_and_covariance_matrix]` Why must the covariance propagation equation write $A \Sigma_x A^\top + Q$ instead of $A \Sigma_x + Q$?
    - **A.** Because covariance scales quadratically with linear transformations and must remain a symmetric positive semi-definite $n \times n$ matrix.
    - **B.** Because $A^\top$ is the inverse of $A$.

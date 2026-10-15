@@ -31,15 +31,27 @@ Three physical insights make high-speed FOC and precision metrology click:
 
 ## 3. Formalization
 1. **Synchronous $d$-$q$ Voltage Equations & Decoupling Feedforward:** In the rotor $d$-$q$ frame rotating at electrical speed $\omega_e = p \omega_m$ ($\text{rad/s}$):
-   $$\begin{aligned}
-   v_d &= R_s i_d + L_d \frac{di_d}{dt} \underbrace{- \omega_e L_q i_q}_{\text{cross-coupling}}, \qquad &v_d^* &= u_{d,\text{PI}} - \omega_e \hat{L}_q i_q \\
-   v_q &= R_s i_q + L_q \frac{di_q}{dt} + \underbrace{\omega_e (L_d i_d + \psi_m)}_{\text{cross-coupling + back-EMF}}, \qquad &v_q^* &= u_{q,\text{PI}} + \omega_e (\hat{L}_d i_d + \hat{\psi}_m)
-   \end{aligned}$$
-2. **Min-Max Zero-Sequence Space-Vector PWM (`SVPWM`):** Given inverse-Clarke phase voltage references $(v_a^*, v_b^*, v_c^*)$ with $v_a^* + v_b^* + v_c^* = 0$ and bus voltage $V_{\text{bus}}$:
-   $$v_0 = -\frac{\max(v_a^*, v_b^*, v_c^*) + \min(v_a^*, v_b^*, v_c^*)}{2}, \qquad d_x = \frac{1}{2} + \frac{v_x^* + v_0}{V_{\text{bus}}} \in [0, 1] \quad (x \in \{a, b, c\})$$
+
+$$
+\begin{aligned}
+v_d &= R_s i_d + L_d \frac{di_d}{dt} \underbrace{- \omega_e L_q i_q}_{\text{cross-coupling}}, \qquad &v_d^* &= u_{d,\text{PI}} - \omega_e \hat{L}_q i_q \\
+v_q &= R_s i_q + L_q \frac{di_q}{dt} + \underbrace{\omega_e (L_d i_d + \psi_m)}_{\text{cross-coupling + back-EMF}}, \qquad &v_q^* &= u_{q,\text{PI}} + \omega_e (\hat{L}_d i_d + \hat{\psi}_m)
+\end{aligned}
+$$
+
+2. **Min-Max Zero-Sequence Space-Vector PWM (`SVPWM`):** Given inverse-Clarke phase voltage references $(v_a^*, v_b^*, v_c^)$ with $v_a^ + v_b^* + v_c^* = 0$ and bus voltage $V_{\text{bus}}$:
+
+$$
+v_0 = -\frac{\max(v_a^*, v_b^*, v_c^*) + \min(v_a^*, v_b^*, v_c^*)}{2}, \qquad d_x = \frac{1}{2} + \frac{v_x^* + v_0}{V_{\text{bus}}} \in [0, 1] \quad (x \in \{a, b, c\})
+$$
+
    Maximum unclipped fundamental phase peak: $V_{\phi,\max}^{\text{SVPWM}} = \frac{V_{\text{bus}}}{\sqrt{3}} = \frac{2}{\sqrt{3}} V_{\phi,\max}^{\text{SPWM}} \approx 1.1547 \, V_{\phi,\max}^{\text{SPWM}}$.
 3. **Fourier Harmonic Encoder Error Model:** For mechanical angle $\theta \in [0, 2\pi)$, systematic eccentricity/ellipticity error $\Delta\theta(\theta)$ is parameterized by harmonics $h \in \{1, 2, \dots, H\}$:
-   $$\Delta\theta(\theta) = c_0 + \sum_{h=1}^{H} \left(a_h \cos(h\theta) + b_h \sin(h\theta)\right), \qquad a_h = \frac{2}{N}\sum_{k=0}^{N-1} e_k \cos(h\theta_k), \quad b_h = \frac{2}{N}\sum_{k=0}^{N-1} e_k \sin(h\theta_k)$$
+
+$$
+\Delta\theta(\theta) = c_0 + \sum_{h=1}^{H} \left(a_h \cos(h\theta) + b_h \sin(h\theta)\right), \qquad a_h = \frac{2}{N}\sum_{k=0}^{N-1} e_k \cos(h\theta_k), \quad b_h = \frac{2}{N}\sum_{k=0}^{N-1} e_k \sin(h\theta_k)
+$$
+
 
 ## 4. Worked example
 Compute (1) the $d$-$q$ decoupling feedforward voltages $(v_{d,\text{ff}}, v_{q,\text{ff}})$ for a PMSM spinning at $\omega_e = 1500\text{ rad/s}$ with $i_d = 0\text{ A}, i_q = 20.0\text{ A}$, (2) verify that Min-Max SVPWM fits a phase amplitude of $V_{\text{peak}} = V_{\text{bus}}/\sqrt{3} \approx 27.71\text{ V}$ inside $[0, 1]$ duty cycles on a $48.0\text{ V}$ bus (where SPWM clips above $24.0\text{ V}$), and (3) extract 1st and 2nd harmonic encoder errors via discrete Fourier projection.
@@ -82,7 +94,7 @@ vd_ff=-3.60V, vq_ff=12.00V, SVPWM da=0.9330, a1=0.0120 rad, b2=-0.0050 rad
 ```
 
 ## 5. Exercise
-For a 3-phase inverter with $V_{\text{bus}} = 48.0\text{ V}$ and instantaneous phase voltage references $v_a^* = +24.0\text{ V}$, $v_b^* = -12.0\text{ V}$, and $v_c^* = -12.0\text{ V}$, compute (a) the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_{abc}^*) + \min(v_{abc}^*))$, and (b) the three SVPWM duty cycles $(d_a, d_b, d_c)$ using $d_x = 0.5 + (v_x^* + v_0)/V_{\text{bus}}$. Verify that $v_0 = -6.0\text{ V}$ and $(d_a, d_b, d_c) = (0.875, 0.125, 0.125)$ ($\pm 10^{-9}$), compared to SPWM $(1.000, 0.250, 0.250)$ which is already hitting the upper saturation rail!
+For a 3-phase inverter with $V_{\text{bus}} = 48.0\text{ V}$ and instantaneous phase voltage references $v_a^ = +24.0\text{ V}$, $v_b^ = -12.0\text{ V}$, and $v_c^ = -12.0\text{ V}$, compute (a) the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_{abc}^) + \min(v_{abc}^))$, and (b) the three SVPWM duty cycles $(d_a, d_b, d_c)$ using $d_x = 0.5 + (v_x^ + v_0)/V_{\text{bus}}$. Verify that $v_0 = -6.0\text{ V}$ and $(d_a, d_b, d_c) = (0.875, 0.125, 0.125)$ ($\pm 10^{-9}$), compared to SPWM $(1.000, 0.250, 0.250)$ which is already hitting the upper saturation rail!
 - **If your result differs:** Check that $\max = +24.0\text{ V}$ and $\min = -12.0\text{ V}$, so $v_0 = -0.5 \times (24.0 - 12.0) = -6.0\text{ V}$ and $v_a^* + v_0 = +18.0\text{ V}$.
 
 
@@ -101,13 +113,21 @@ No hardware required for this module (`hardware_required: false`). In Step 3.4 (
 ```
 Pass/fail verification in simulation: `vd_ff == -3.60 V`, `vq_ff == 12.0 V`, `da - db == (va - vb) / V_bus`, and `a1_hat == 0.012 rad`.
 
+
+```mermaid
+flowchart LR
+    A["03-sensors.T3.03a: dq_inductive_cross_coupling_feedforward"] --> B["svpwm_zero_sequence_hexagonal_limit"]
+    B --> C["encoder_spatial_harmonic_error_fit"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.4 (`03-sensors.T3.04`).
 
 ### Skip test
 1. `[Recall] [Concept: dq_inductive_cross_coupling_feedforward]` A PMSM with $L_q = 150\ \mu\text{H}$ ($1.5 \times 10^{-4}\text{ H}$) operates at electrical speed $\omega_e = 2000.0\text{ rad/s}$ and quadrature current $i_q = 15.0\text{ A}$. Compute the $d$-axis inductive cross-coupling feedforward term $v_{d,\text{ff}} = -\omega_e L_q i_q$ in volts ($\text{V}$, tolerance $\pm 10^{-9}\text{ V}$).
 2. `[Apply] [Concept: svpwm_zero_sequence_hexagonal_limit]` Compute the maximum unclipped fundamental phase peak voltage $V_{\phi,\max} = V_{\text{bus}} / \sqrt{3}$ in volts ($\text{V}$, tolerance $\pm 0.01\text{ V}$) achievable with Min-Max SVPWM on a $V_{\text{bus}} = 48.0\text{ V}$ DC bus.
-3. `[Transfer] [Concept: svpwm_zero_sequence_hexagonal_limit]` Given instantaneous phase voltage commands $v_a^* = 18.0\text{ V}$, $v_b^* = -6.0\text{ V}$, and $v_c^* = -12.0\text{ V}$, compute the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_a^*, v_b^*, v_c^*) + \min(v_a^*, v_b^*, v_c^*))$ in volts ($\text{V}$, tolerance $\pm 10^{-9}\text{ V}$).
+3. `[Transfer] [Concept: svpwm_zero_sequence_hexagonal_limit]` Given instantaneous phase voltage commands $v_a^ = 18.0\text{ V}$, $v_b^ = -6.0\text{ V}$, and $v_c^ = -12.0\text{ V}$, compute the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_a^, v_b^*, v_c^*) + \min(v_a^*, v_b^*, v_c^*))$ in volts ($\text{V}$, tolerance $\pm 10^{-9}\text{ V}$).
 4. `[Spaced review -> 03-sensors.T2.04 — Concept: synchronous_dq_foc_current_loop] [Concept: encoder_spatial_harmonic_error_fit]` Why does adding the same zero-sequence voltage $v_0(t)$ to all three inverter leg commands $(v_a^* + v_0, v_b^* + v_0, v_c^* + v_0)$ produce **zero** zero-sequence phase current in a 3-phase star-connected motor with an isolated (floating) neutral point?
    - **A.** Because the motor windings only respond to line-to-line voltage differences (such as $(v_a^* + v_0) - (v_b^* + v_0) = v_a^* - v_b^*$), so the common-mode offset $v_0(t)$ shifts the neutral potential without driving any current ($i_a + i_b + i_c \equiv 0$).
    - **B.** Because $v_0(t)$ is always zero at every angle.
@@ -139,7 +159,7 @@ Covers the complete Track 03 Tier 3 bridge ladder (`03-sensors.T3.03a`) before S
    - **C.** The encoder resolution doubles.
    - **D.** The bus voltage increases by $50\%$.
 3. `[Concept: svpwm_zero_sequence_hexagonal_limit]` Compute the percentage increase in maximum linear phase voltage amplitude $100 \times \left(\frac{2}{\sqrt{3}} - 1\right)$ provided by SVPWM over sinusoidal PWM (`SPWM`, tolerance $\pm 0.01\%$).
-4. `[Concept: svpwm_zero_sequence_hexagonal_limit]` For $V_{\text{bus}} = 24.0\text{ V}$ and phase voltage commands $v_a^* = 12.0\text{ V}$, $v_b^* = -6.0\text{ V}$, $v_c^* = -6.0\text{ V}$ (giving $v_0 = -3.0\text{ V}$), compute the phase-A SVPWM duty cycle $d_a = 0.5 + \frac{v_a^* + v_0}{V_{\text{bus}}}$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: svpwm_zero_sequence_hexagonal_limit]` For $V_{\text{bus}} = 24.0\text{ V}$ and phase voltage commands $v_a^ = 12.0\text{ V}$, $v_b^ = -6.0\text{ V}$, $v_c^ = -6.0\text{ V}$ (giving $v_0 = -3.0\text{ V}$), compute the phase-A SVPWM duty cycle $d_a = 0.5 + \frac{v_a^ + v_0}{V_{\text{bus}}}$ (tolerance $\pm 10^{-9}$).
 5. `[Concept: svpwm_zero_sequence_hexagonal_limit]` Why does the Min-Max zero-sequence formula $v_0 = -\frac{1}{2}(\max(v_{abc}^*) + \min(v_{abc}^*))$ produce the exact same duty cycles as traditional sector-based $T_1, T_2, T_0$ Space-Vector PWM with far less CPU computation?
    - **A.** Because centering the maximum and minimum phase envelope inside $\pm V_{\text{bus}}/2$ allocates equal duration to the two zero vectors $V_0(000)$ and $V_7(111)$ without requiring `atan2` sector lookup or `sin()` table calls.
    - **B.** Because it sets all three duty cycles to $0.5$.

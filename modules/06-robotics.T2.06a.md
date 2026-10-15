@@ -32,24 +32,36 @@ Imagine a robot software stack as a modern airport:
   - **Services (`srv`):** Fast synchronous request-reply calls (`std_srvs/srv/SetBool` to zero a force sensor—never use for long blocking motions!).
   - **Actions (`action`):** Long-running preemptible state machines (`control_msgs/action/FollowJointTrajectory`) consisting of a **Goal** request, a continuous **Feedback** stream (percent complete / tracking error), a final **Result**, and mid-flight **Cancel** support.
   - **Parameters & Launch Files:** Dynamic node settings (`kp`, `max_vel`, `urdf_path`) loaded at startup from YAML via a Python `LaunchDescription` (`ros2 launch my_arm_bringup arm.launch.py`) after building the workspace with `colcon build --symlink-install`.
-- **`tf2` & URDF/Xacro:** The airport's live 3D radar map. Your **URDF** file declares each `<link>` (`<inertial>`, `<visual>`, `<collision>`) and `<joint>` (`parent`, `child`, `<origin xyz rpy>`, `<axis xyz>`). The `robot_state_publisher` node reads the URDF plus `/joint_states` and broadcasts the $SE(3)$ transform tree onto `/tf` (dynamic joints) and `/tf_static` (rigidly bolted sensors) so any node can ask *"Where is `camera_optical_frame` relative to `tool0` at timestamp $t$?"*
+- **`tf2` & URDF/Xacro:** The airport's live 3D radar map. Your **URDF** file declares each `<link>` (`<inertial>`, `<visual>`, `<collision>`) and `<joint>` (`parent`, `child`, `<origin xyz rpy>`, `<axis xyz>`). The `robot_state_publisher` node reads the URDF plus `/joint_states` and broadcasts the $SE(3)$ transform tree onto `/tf` (dynamic joints) and `/tf_static` (rigidly bolted sensors) so any node can ask "Where is `camera_optical_frame` relative to `tool0` at timestamp $t$?"
 - **`ros2_control` (`controller_manager`):** The hard-real-time engine room. Instead of sending $1\text{ kHz}$ motor torques over network topics, `ros2_control` loads your C++ controller plugin and your C++ hardware driver (`SystemInterface::read(time, period)` $\to$ `update(time, period)` $\to$ `write(time, period)`) into the **same real-time process**, passing raw C++ pointers to `state_interfaces` (`position`, `velocity`, `effort`) and `command_interfaces` (`effort`, `position`) with zero serialization jitter!
 
 ## 3. Formalization
 1. **ROS 2 Graph, Executor Scheduling & QoS Compatibility Rule:**
    - **QoS `offered >= requested` Rule:** A publisher offering `(Reliability_pub, Durability_pub)` and a subscriber requesting `(Reliability_sub, Durability_sub)` connect iff **both** policies are compatible:
-     $$\text{Compatible} \iff (\text{Rel}_{\text{pub}} \ge \text{Rel}_{\text{sub}}) \;\land\; (\text{Dur}_{\text{pub}} \ge \text{Dur}_{\text{sub}})$$
+
+$$
+\text{Compatible} \iff (\text{Rel}_{\text{pub}} \ge \text{Rel}_{\text{sub}}) \;\land\; (\text{Dur}_{\text{pub}} \ge \text{Dur}_{\text{sub}})
+$$
+
      where $\text{Reliable (1)} > \text{Best-Effort (0)}$ and $\text{Transient Local (1)} > \text{Volatile (0)}$. A `Best-Effort` publisher **cannot** connect to a `Reliable` subscriber, and a `Volatile` publisher **cannot** connect to a `Transient Local` subscriber!
    - **Topic Bandwidth & Executor Budget:** Publishing messages of size $B_{\text{msg}}$ bytes at frequency $f_{\text{pub}}$ ($\text{Hz}$) to $N_{\text{sub}}$ unicast subscribers consumes network bandwidth $R_{\text{MB/s}} = \frac{N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}}{10^6}\text{ MB/s}$. In a `SingleThreadedExecutor`, the worst-case blocking delay before a high-priority timer callback can fire is the maximum execution time $\max_k C_k$ of any callback in that executor.
 2. **`tf2` Tree Structure & $SE(3)$ Frame Lookup:** Every `tf2` coordinate frame has **at most one parent** (forming a directed tree with $N - 1$ directed edges for $N$ frames, never a cycle or multi-parent diamond). Given chain `base_link` $\xrightarrow{T_{b1}(q_1)}$ `link_1` $\xrightarrow{T_{12}(q_2)}$ `tool0`, `tf2` computes the transform from `tool0` to `base_link` at timestamp $t$ via:
-   $$T_{\text{base}\leftarrow\text{tool0}}(t) = T_{b1}(q_1(t)) \cdot T_{12}(q_2(t)), \quad p_{\text{base}}(t) = T_{\text{base}\leftarrow\text{tool0}}(t) \, p_{\text{tool0}}$$
+
+$$
+T_{\text{base}\leftarrow\text{tool0}}(t) = T_{b1}(q_1(t)) \cdot T_{12}(q_2(t)), \quad p_{\text{base}}(t) = T_{\text{base}\leftarrow\text{tool0}}(t) \, p_{\text{tool0}}
+$$
+
    For a revolute URDF joint with origin offset $p_{\text{xyz}}$ and unit axis $\hat{a} = [0, 0, 1]^\top$, $T_{\text{parent}\leftarrow\text{child}}(q) = \begin{bmatrix} R_z(q) & p_{\text{xyz}} \\ 0 & 1 \end{bmatrix}$. When querying `lookupTransform(target, source, t_sensor)` between asynchronous streams, `tf2` linearly/SLERP interpolates between buffered timestamps $t_a \le t_{\text{sensor}} \le t_b$:
-   $$\alpha = \frac{t_{\text{sensor}} - t_a}{t_b - t_a} \in [0, 1], \qquad p(t_{\text{sensor}}) = (1 - \alpha)p(t_a) + \alpha p(t_b)$$
+
+$$
+\alpha = \frac{t_{\text{sensor}} - t_a}{t_b - t_a} \in [0, 1], \qquad p(t_{\text{sensor}}) = (1 - \alpha)p(t_a) + \alpha p(t_b)
+$$
+
    (requesting $t_{\text{sensor}} > t_b$ throws `tf2::ExtrapolationException`).
 3. **`ros2_control` Lifecycle & Real-Time `read -> update -> write` Loop:** Inside `controller_manager` running on a `SCHED_FIFO` real-time thread at period $\Delta t = 1/f_{\text{ctrl}}$ ($\text{s}$):
-   1. `hardware_interface::SystemInterface::read(time, period)` unpacks encoder/current feedback from SocketCAN (`04-embedded.T2.05`) or `micro-ROS` into exported `state_interfaces` $(q_i, \dot{q}_i, \tau_{i,\text{meas}})$.
-   2. Active controllers (`JointTrajectoryController`, Cartesian impedance) execute `update(time, period)` in-memory and write `command_interfaces` $(\tau_{i,\text{cmd}})$.
-   3. `SystemInterface::write(time, period)` packs $\tau_{i,\text{cmd}}$ into CAN-FD MIT frames and transmits them to the actuators, satisfying $t_{\text{read}} + t_{\text{update}} + t_{\text{write}} \le \Delta t$.
+   - **Step A (`read`):** `hardware_interface::SystemInterface::read(time, period)` unpacks encoder/current feedback from SocketCAN (`04-embedded.T2.05`) or `micro-ROS` into exported `state_interfaces` $(q_i, \dot{q}_i, \tau_{i,\text{meas}})$.
+   - **Step B (`update`):** Active controllers (`JointTrajectoryController`, Cartesian impedance) execute `update(time, period)` in-memory and write `command_interfaces` $(\tau_{i,\text{cmd}})$.
+   - **Step C (`write`):** `SystemInterface::write(time, period)` packs $\tau_{i,\text{cmd}}$ into CAN-FD MIT frames and transmits them to the actuators, satisfying $t_{\text{read}} + t_{\text{update}} + t_{\text{write}} \le \Delta t$.
 
 ## 4. Worked example
 Simulate a complete ROS 2 + `tf2` + `ros2_control` pipeline in pure Python: (1) verify the full 2D QoS `(Reliability, Durability)` compatibility matrix and compute camera topic bandwidth, (2) run `robot_state_publisher` forward kinematics and `tf2` temporal interpolation on a 2-DOF URDF chain (`base_link -> link_1 -> tool0`), and (3) execute one $1\text{ kHz}$ `ros2_control` `read() -> update() -> write()` tick.
@@ -116,7 +128,7 @@ In the `tf2` tree above (`T_b_l1 = urdf_revolute_z((0, 0, 0.10), q1)` and `T_l1_
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*2D Rotation Angles*), **Step 1.1 (`00-foundations.T1.01`)** (*$SO(2)$ Rotation Matrices*), [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Multiplication & Transpose*), and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*3D Coordinate Frames*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*2D Rotation Angles*), **Step 1.1 (`00-foundations.T1.01`)** ($SO(2)$ Rotation Matrices), [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Multiplication & Transpose*), and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*3D Coordinate Frames*).
   - **Prerequisite Bridge Modules:** [`02-mechanics.T1.03`](../02-mechanics-kinematics-dynamics/README.md), [`04-embedded.T1.05`](../04-embedded-and-realtime/README.md), [`05-control.T1.06`](../05-control-and-estimation/README.md), and [`06-robotics.T1.06a`](06-robotics.T1.06a.md).
   - **Core Concepts to Review First:** ROS 2 DDS QoS compatibility truth table (`RELIABLE` vs. `BEST_EFFORT`) and deadline period, `SingleThreadedExecutor` deterministic ready-set priority (Timers $\to$ Subscriptions $\to$ Services $\to$ Clients), and `tf2` homogeneous rigid-body transform chaining ${}^W T_C = {}^W T_B \, {}^B T_C$ and inverse ${}^C T_W = ({}^W T_C)^{-1}$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Official ROS 2 Jazzy/Humble Tutorials: QoS, Executors & TF2 (`docs.ros.org`)](https://docs.ros.org/en/jazzy/Tutorials.html) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
@@ -131,6 +143,14 @@ No hardware required for this module (`hardware_required: false`). In Step 2.7 (
                                                                       [STM32G4 4-Layer FOC Actuator]
 ```
 Pass/fail verification in simulation: `p_in_base == [0.25, 0.15, 0.10]`, `x_interp == 0.22 m`, `cmd_if["effort"] == 1.70 N*m`, and `qos_compatible(False, False, True, False) == False`.
+
+
+```mermaid
+flowchart LR
+    A["06-robotics.T2.06a: ros2_nodes_topics_services_and_qos"] --> B["tf2_transform_tree_and_urdf_kinematics"]
+    B --> C["ros2_control_hardware_interface_read_write"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.

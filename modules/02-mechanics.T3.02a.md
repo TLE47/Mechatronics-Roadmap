@@ -36,9 +36,17 @@ Three physical insights bridge Tier 2 kinematics to Tier 3 spatial dynamics:
 1. **6D Spatial Twists, Screw Axes & Product of Exponentials (`PoE`):**
    - A **spatial twist** $\mathcal{V} = [\omega^\top, v^\top]^\top \in \mathbb{R}^6$ and **spatial wrench** $\mathcal{F} = [m^\top, f^\top]^\top \in \mathbb{R}^6$ pair via instantaneous mechanical power $P = \mathcal{V}^\top \mathcal{F} = \omega \cdot m + v \cdot f$ ($\text{W}$).
    - For a revolute joint with unit rotation axis $\omega_i \in \mathbb{R}^3$ ($\|\omega_i\| = 1$) passing through point $q_i \in \mathbb{R}^3$ in the home configuration, the unit screw axis and forward kinematics are:
-     $$\mathcal{S}_i = \begin{bmatrix} \omega_i \\ -\omega_i \times q_i \end{bmatrix} \in \mathbb{R}^6, \qquad T(q) = e^{[\mathcal{S}_1]q_1} e^{[\mathcal{S}_2]q_2} \cdots e^{[\mathcal{S}_n]q_n} M \in SE(3)$$
+
+$$
+\mathcal{S}_i = \begin{bmatrix} \omega_i \\ -\omega_i \times q_i \end{bmatrix} \in \mathbb{R}^6, \qquad T(q) = e^{[\mathcal{S}_1]q_1} e^{[\mathcal{S}_2]q_2} \cdots e^{[\mathcal{S}_n]q_n} M \in SE(3)
+$$
+
 2. **Paros-Weisbord Circular Notch Flexure Rotational Stiffness:** For a circular notch flexure of elastic modulus $E$ ($\text{Pa}$), out-of-plane width $b$ ($\text{m}$), minimum web thickness $t$ ($\text{m}$), and cutout radius $R$ ($\text{m}$, with $t \ll R$), the angular bending stiffness $K_\theta$ ($\text{N}\cdot\text{m/rad}$) and peak surface bending stress $\sigma_{\max}$ ($\text{Pa}$) at deflection angle $\theta$ ($\text{rad}$) are:
-   $$K_{\theta} \approx \frac{2 E b t^{5/2}}{9 \pi \sqrt{R}}, \qquad \sigma_{\max} = \frac{6 K_t M_b}{b t^2} = \frac{6 K_t (K_\theta \theta)}{b t^2}$$
+
+$$
+K_{\theta} \approx \frac{2 E b t^{5/2}}{9 \pi \sqrt{R}}, \qquad \sigma_{\max} = \frac{6 K_t M_b}{b t^2} = \frac{6 K_t (K_\theta \theta)}{b t^2}
+$$
+
    where $K_t \approx 1 + \frac{t}{2R}$ is the notch stress-concentration factor.
 3. **Two-Pass Recursive Newton-Euler (`RNEA`) & Passivity Identity:**
    - **Outward kinematics ($i = 1 \dots n$):** $\mathcal{V}_i = \text{Ad}_{T_{i,i-1}}\mathcal{V}_{i-1} + \mathcal{S}_i \dot{q}_i$, $\;\dot{\mathcal{V}}_i = \text{Ad}_{T_{i,i-1}}\dot{\mathcal{V}}_{i-1} + \text{ad}_{\mathcal{V}_i}(\mathcal{S}_i)\dot{q}_i + \mathcal{S}_i \ddot{q}_i$.
@@ -94,7 +102,7 @@ For a revolute joint whose axis points along $+Y$ ($\omega = [0.0, 1.0, 0.0]^\to
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Natural Frequency $\omega_n = \sqrt{k/m}$*), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) (*$SO(3)$ Hat/Vee Maps & Rodrigues' Formula*), and Legacy **Step 3.1 (`00-foundations.T3.01`)** (*$SE(3)$ Screw Axes & Adjoints*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (Natural Frequency $\omega_n = \sqrt{k/m}$), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps & Rodrigues' Formula), and Legacy **Step 3.1 (`00-foundations.T3.01`)** ($SE(3)$ Screw Axes & Adjoints).
   - **Prerequisite Bridge Module:** [`02-mechanics.T2.02a`](02-mechanics.T2.02a.md) and Legacy **Step 2.3 (`02-mechanics.T2.03`)**.
   - **Core Concepts to Review First:** Paros-Weisbord notch flexure stiffness $K_\theta = \frac{2 E b t^{5/2}}{9\pi R^{1/2}}$, Screw Theory Product of Exponentials (PoE) forward kinematics, and two-pass $\mathcal{O}(n)$ Recursive Newton-Euler (RNEA) inverse dynamics in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 4 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [Featherstone *Rigid Body Dynamics Algorithms*](https://royfeatherstone.org/spatial/), and [Track 02 Tier 3 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production).
@@ -107,6 +115,14 @@ No hardware required for this module (`hardware_required: false`). In Step 3.3 (
 [Trajectory (q_d, dq_d, ddq_d)] ---> [2-Pass O(n) RNEA: Outward V/dV -> Inward F] ---> [tau_ff to FOC Actuators]
 ```
 Pass/fail verification in simulation: `S2 == [0, 0, 1, 0, -0.30, 0]`, `K_theta == 54.0940 N*m/rad`, and `tau == [0.16, 0.06] N*m`.
+
+
+```mermaid
+flowchart LR
+    A["02-mechanics.T3.02a: spatial_twist_wrench_and_screw_axis"] --> B["circular_notch_flexure_stiffness_stress"]
+    B --> C["recursive_forward_velocity_backward_wrench"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.3 (`02-mechanics.T3.03`).

@@ -1,6 +1,6 @@
 ---
 id: 00-foundations.T2.00e
-title: "Laplace Transform, Poles/Zeros, State-Space x_dot = Ax + Bu, Matrix Exponential & Discretization"
+title: "Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization"
 track: "00"
 tier: 2
 prereqs:
@@ -30,10 +30,18 @@ Think of a second-order differential equation ($\ddot{q} = \dots$) as a two-stor
    - **Poles** ($D(s) = 0$) determine stability and resonance peaks ($\operatorname{Re}(p_i) < 0$ is stable).
    - **Zeros** ($N(s) = 0$) are frequencies where transmission is blocked (such as the anti-resonance $\omega_{\text{ar}} = \sqrt{k_s/J_l}$ of a two-mass drive in Step 2.1).
 2. **State-Space Companion Form ($\dot{x} = Ax + Bu$):** For a rotational drive $J\ddot{\theta} + b\dot{\theta} + k\theta = u$ with inertia $J$ ($\text{kg}\cdot\text{m}^2$), damping $b$ ($\text{N}\cdot\text{m}\cdot\text{s/rad}$), stiffness $k$ ($\text{N}\cdot\text{m/rad}$), torque $u$ ($\text{N}\cdot\text{m}$), and state $x = [\theta, \dot{\theta}]^\top$:
-   $$\begin{bmatrix} \dot{\theta} \\ \ddot{\theta} \end{bmatrix} = \underbrace{\begin{bmatrix} 0 & 1 \\ -k/J & -b/J \end{bmatrix}}_{A} \begin{bmatrix} \theta \\ \dot{\theta} \end{bmatrix} + \underbrace{\begin{bmatrix} 0 \\ 1/J \end{bmatrix}}_{B} u$$
+
+$$
+\begin{bmatrix} \dot{\theta} \\ \ddot{\theta} \end{bmatrix} = \underbrace{\begin{bmatrix} 0 & 1 \\ -k/J & -b/J \end{bmatrix}}_{A} \begin{bmatrix} \theta \\ \dot{\theta} \end{bmatrix} + \underbrace{\begin{bmatrix} 0 \\ 1/J \end{bmatrix}}_{B} u
+$$
+
    Substituting $J = 1.0\text{ kg}\cdot\text{m}^2$, $k = 100.0\text{ N}\cdot\text{m/rad}$, and $b = 4.0\text{ N}\cdot\text{m}\cdot\text{s/rad}$ gives $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ with $\operatorname{tr}(A) = -4\text{ s}^{-1}$ and $\det(A) = 100\text{ s}^{-2}$.
 3. **Discretization ($\dot{x} = Ax + Bu \to x_{k+1} = A_d x_k + B_d u_k$):** Over sample period $T_s$ ($\text{s}$), Forward Euler gives $A_{d,\text{Euler}} = I + A T_s$, whereas Bilinear (Tustin) discretization preserves left-half-plane stability:
-   $$A_{d,\text{Tustin}} = \left(I - \frac{T_s}{2}A\r\right)^{-1}\left(I + \frac{T_s}{2}A\r\right)$$
+
+$$
+A_{d,\text{Tustin}} = \left(I - \frac{T_s}{2}A\right)^{-1}\left(I + \frac{T_s}{2}A\right)
+$$
+
    At $T_s = 0.001\text{ s}$ on the above $A$, $|\lambda(A_{d,\text{Tustin}})| = 0.998002 < 1.0$.
 
 ## 4. Worked example
@@ -96,6 +104,14 @@ No hardware required for this module (`hardware_required: false`). In Track 05 (
 ```
 Pass/fail verification in simulation: `rho_euler == 1.0247 > 1.0` and `rho_tustin == 0.9258 < 1.0`.
 
+
+```mermaid
+flowchart LR
+    A["00-foundations.T2.00e: laplace_poles_and_zeros"] --> B["continuous_state_space_matrices"]
+    B --> C["discrete_state_transition_euler_tustin"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
@@ -130,7 +146,7 @@ assert math.isclose(q4_ad, 1.0 / 3.0, rel_tol=1e-6)
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
-| Checked $\operatorname{Re}(\lambda_d) < 0$ on discrete matrix $A_d$ | Confused continuous $s$-plane stability ($\operatorname{Re}(s) < 0$) with discrete $z$-plane stability ($|z| < 1$). | Always check `abs(eigvals(Ad)) < 1.0` for discrete state-transition matrices. |
+| Checked $\operatorname{Re}(\lambda_d) < 0$ on discrete matrix $A_d$ | Confused continuous $s$-plane stability ($\operatorname{Re}(s) < 0$) with discrete $z$-plane stability ($\lvert z\rvert  < 1$). | Always check `abs(eigvals(Ad)) < 1.0` for discrete state-transition matrices. |
 | State-space signs flipped in bottom row of $A$ | Forgot to move $+k\theta + b\dot{\theta}$ to the right-hand side of $J\ddot{\theta} = -k\theta - b\dot{\theta} + u$. | Write $\ddot{\theta} = -(k/J)\theta - (b/J)\dot{\theta} + (1/J)u$ before filling row 2 of $A$. |
 | Used elementwise `*` instead of `@` in Tustin formula | Multiplied matrix elements componentwise with `*` (Hadamard product) instead of matrix multiplication. | Use row-by-column matrix multiplication (`mat_mul2`) for all matrix products. |
 
@@ -139,4 +155,4 @@ assert math.isclose(q4_ad, 1.0 / 3.0, rel_tol=1e-6)
 - **Brunton & Kutz — [*Data-Driven Science and Engineering* (`databookuw.com`)](https://databookuw.com/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** State-space modeling and discretization `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Sampling, Aliasing, Nyquist, $z$-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance*).
+- Proceed to [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (Sampling, Aliasing, Nyquist, $z$-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance).

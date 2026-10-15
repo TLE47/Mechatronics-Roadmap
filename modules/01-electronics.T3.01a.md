@@ -28,18 +28,34 @@ Think of high-current, high-speed mixed-signal design as four coupled wave-and-e
 - **Flux Cancellation on a 6-Layer Stackup:** Current flowing out along Layer 1 (`+V_bus`) and returning immediately underneath on Layer 2 (`PGND`, separated by a $100\ \mu\text{m}$ prepreg dielectric) generates equal and opposite magnetic fields ($\vec{B}_{\text{out}} \approx -\vec{B}_{\text{return}}$). Because the two conductors are tightly coupled via **mutual inductance $M$**, the net loop inductance collapses to $L_{\text{loop}} = L_{\text{self},1} + L_{\text{self},2} - 2M \propto \frac{\mu_0 h_{\text{diel}}}{w_{\text{copper}}}\ell$, easily achieving $< 1.5\text{ nH}$!
 - **Bessel Constant Group Delay vs. Butterworth Ringing:** In a $40\text{ kHz}$ current loop, you sample the shunt amplifier output right at the PWM center. A Butterworth filter optimizes flat amplitude response at the expense of non-constant group delay $\tau_g(\omega) = -\frac{d\phi}{d\omega}$, causing step-response overshoot that corrupts the sampled current. A **2nd-order Bessel filter** ($Q = 1/\sqrt{3} \approx 0.5774$) maximizes flat group delay $\tau_g$, delaying all frequencies by the same time interval with **zero step overshoot**.
 - **SAR ADC Charge Bucket (`R_filt`, `C_filt`):** When a 12-bit SAR ADC closes its internal sampling switch onto sampling capacitor $C_{\text{sample}} \approx 5\text{ pF}$, it gulps an instant charge packet from the pin. An op-amp cannot respond in $10\text{ ns}$ without oscillating. Placing an external `C0G` ceramic reservoir $C_{\text{filt}} \ge 20 \, C_{\text{sample}}$ ($100\text{–}220\text{ pF}$) right at the ADC pin supplies the instant charge gulp with a voltage droop of $\Delta V \approx \frac{C_{\text{sample}}}{C_{\text{filt}} + C_{\text{sample}}} V_{\text{step}}$, while series resistor $R_{\text{filt}}$ ($22\text{–}50\ \Omega$) isolates the op-amp and settles within $N_{\tau} = \ln(2^{B+1})$ time constants.
-- **Cauer vs. Foster Electro-Thermal RC Networks:** Temperature $T$ ($\text{^\circ C}$) is analogous to voltage, heat power $P_{\text{loss}}$ ($\text{W}$) to current, thermal resistance $R_{\theta}$ ($\text{^\circ C/W}$) to electrical resistance, and thermal mass $C_{\theta}$ ($\text{J/^\circ C}$) to capacitance. The silicon die (`C_die ~ 5 mJ/°C`) heats up in milliseconds (`tau_die ~ 2 ms`), whereas the aluminum housing (`C_sink ~ 50 J/°C`) takes minutes!
+- **Cauer vs. Foster Electro-Thermal RC Networks:** Temperature $T$ (${^\circ}\text{C}$) is analogous to voltage, heat power $P_{\text{loss}}$ ($\text{W}$) to current, thermal resistance $R_{\theta}$ (${^\circ}\text{C/W}$) to electrical resistance, and thermal mass $C_{\theta}$ ($\text{J/}{^\circ}\text{C}$) to capacitance. The silicon die (`C_die ~ 5 mJ/°C`) heats up in milliseconds (`tau_die ~ 2 ms`), whereas the aluminum housing (`C_sink ~ 50 J/°C`) takes minutes!
 
 ## 3. Formalization
 1. **Parallel-Plate Mutual-Inductance Flux Cancellation (`< 2 nH` Loop):** For overlapping copper planes of length $\ell$ ($\text{m}$), width $w$ ($\text{m}$, with $w \gg h$), separated by prepreg thickness $h$ ($\text{m}$) with permeability $\mu_0 = 4\pi \times 10^{-7}\text{ H/m}$, the net commutation loop inductance and peak turn-off voltage are:
-   $$L_{\text{loop}} = L_1 + L_2 - 2M \approx \mu_0 \frac{h}{w} \ell, \qquad V_{\text{DS,peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{di}{dt}$$
+
+$$
+L_{\text{loop}} = L_1 + L_2 - 2M \approx \mu_0 \frac{h}{w} \ell, \qquad V_{\text{DS,peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{di}{dt}
+$$
+
 2. **2nd-Order Bessel Anti-Aliasing Filter ($Q = 1/\sqrt{3}$):** Normalized 2nd-order Bessel transfer function with -3 dB cutoff $\omega_c = 2\pi f_c$ and scale factor $k_B = \sqrt{3} \approx 1.73205$:
-   $$H_{\text{Bessel}}(s) = \frac{3}{\left(\frac{s}{\omega_0}\right)^2 + 3\left(\frac{s}{\omega_0}\right) + 3}, \qquad \tau_{g,0} = -\left.\frac{d\phi(\omega)}{d\omega}\right|_{\omega \to 0} = \frac{1}{\omega_0}, \qquad Q = \frac{1}{\sqrt{3}} \approx 0.57735$$
+
+$$
+H_{\text{Bessel}}(s) = \frac{3}{\left(\frac{s}{\omega_0}\right)^2 + 3\left(\frac{s}{\omega_0}\right) + 3}, \qquad \tau_{g,0} = -\left.\frac{d\phi(\omega)}{d\omega}\right|_{\omega \to 0} = \frac{1}{\omega_0}, \qquad Q = \frac{1}{\sqrt{3}} \approx 0.57735
+$$
+
 3. **SAR ADC Charge-Bucket Settling & Cauer Electro-Thermal Junction Temperature:**
    - **Charge-Bucket Settling to $\frac{1}{2}\text{ LSB}$:** For a $B$-bit ADC with acquisition window $t_{\text{acq}}$, external bucket $(R_{\text{filt}}, C_{\text{filt}})$, and internal sampling switch resistance $R_{\text{sw}}$, the required time constant $\tau_{\text{adc}} = (R_{\text{filt}} + R_{\text{sw}}) C_{\text{sample}}$ (for full-scale step settling) or $\tau_{\text{bucket}} = R_{\text{filt}} C_{\text{filt}}$ after charge sharing $\Delta V_0 = V_{\text{FS}} \frac{C_{\text{sample}}}{C_{\text{filt}} + C_{\text{sample}}}$ must satisfy:
-     $$\frac{C_{\text{sample}}}{C_{\text{filt}} + C_{\text{sample}}} e^{-t_{\text{acq}} / (R_{\text{filt}} C_{\text{filt}})} \le \frac{1}{2^{B+1}}$$
+
+$$
+\frac{C_{\text{sample}}}{C_{\text{filt}} + C_{\text{sample}}} e^{-t_{\text{acq}} / (R_{\text{filt}} C_{\text{filt}})} \le \frac{1}{2^{B+1}}
+$$
+
    - **Transient Junction Temperature $T_J(t)$:** For a $K$-stage thermal impedance $Z_{\theta JA}(t) = \sum_{k=1}^{K} R_{\theta,k}\left(1 - e^{-t / \tau_{\theta,k}}\right)$ under a rectangular power pulse $P_{\text{loss}}$ of duration $t_p$:
-     $$T_J(t_p) = T_{\text{amb}} + P_{\text{loss}} \sum_{k=1}^{K} R_{\theta,k}\left(1 - e^{-t_p / \tau_{\theta,k}}\right) < T_{J,\max}$$
+
+$$
+T_J(t_p) = T_{\text{amb}} + P_{\text{loss}} \sum_{k=1}^{K} R_{\theta,k}\left(1 - e^{-t_p / \tau_{\theta,k}}\right) < T_{J,\max}
+$$
+
 
 ## 4. Worked example
 Compute (1) the net commutation loop inductance $L_{\text{loop}}$ and peak turn-off voltage $V_{\text{DS,peak}}$ on a 6-layer PCB with $h = 0.10\text{ mm}$ prepreg vs. a 2-layer PCB with $h = 1.60\text{ mm}$ core at $di/dt = 3.0\text{ A/ns}$, (2) the low-frequency group delay $\tau_{g,0}$ of a 2nd-order Bessel filter with $\omega_0 = 2\pi \times 250\text{ kHz}$, (3) the 12-bit SAR ADC charge-bucket settling error in LSBs after $t_{\text{acq}} = 150\text{ ns}$, and (4) the silicon junction temperature $T_J$ during a $10\text{ ms}$ $120\text{ W}$ stall burst.
@@ -105,22 +121,30 @@ No hardware required for this module (`hardware_required: false`). In Step 3.2 (
 ```
 Pass/fail verification in simulation: `V_peak_6layer < 50.0 V`, `residual_lsb_12bit < 0.5 LSB`, and `T_junction < 125.0 C`.
 
-## Safety notes
+### Safety notes
 - **Mandatory Safety Rules (`safety_level: high`):**
   1. **Stored Bus Energy & Pre-Charge Gate (`48 V / 30 A` Stage):** A $48\text{ V}$ inverter bank with $C_{\text{bus}} = 2200\ \mu\text{F}$ stores $E = \frac{1}{2} C V^2 = 2.53\text{ J}$ and can deliver $> 1500\text{ A}$ into a dead short. Never hot-plug a $48\text{ V}$ battery without an active pre-charge resistor circuit + bleed resistor + polycarbonate splash shield.
   2. **Silicon Die Thermal Runaway (`< 10 ms` Time Constant):** A thermocouple glued to the aluminum heatsink (`tau_sink ~ 30 s`) **cannot** protect MOSFET silicon (`tau_die ~ 5 ms`) during a rotor lock! Hardware desaturation / comparator over-current trip (`TIM1_BRK` $< 1\ \mu\text{s}$) and fast $I^2 t$ firmware thermal integration are mandatory before enabling gate drive power.
 
+
+```mermaid
+flowchart LR
+    A["01-electronics.T3.01a: mutual_inductance_flux_cancellation"] --> B["bessel_constant_group_delay_afe"]
+    B --> C["sar_adc_charge_bucket_and_cauer_thermal_rc"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
-Pass criteria: read `## Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test below to unlock Step 3.2 (`01-electronics.T3.02`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test below to unlock Step 3.2 (`01-electronics.T3.02`).
 
 ### Skip test
 1. `[Recall] [Concept: mutual_inductance_flux_cancellation]` Two coupled traces have self-inductances $L_1 = 6.0\text{ nH}$ and $L_2 = 6.0\text{ nH}$ and mutual inductance $M = 5.2\text{ nH}$ when carrying anti-parallel supply and return currents. Compute the net commutation loop inductance $L_{\text{loop}} = L_1 + L_2 - 2M$ in nanohenries ($\text{nH}$, tolerance $\pm 10^{-9}\text{ nH}$).
 2. `[Apply] [Concept: bessel_constant_group_delay_afe]` Compute the quality factor $Q = 1 / \sqrt{3}$ (tolerance $\pm 10^{-4}$) of a maximally flat group-delay 2nd-order Bessel low-pass filter.
 3. `[Transfer] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` A SAR ADC has internal sampling capacitor $C_{\text{sample}} = 5.0\text{ pF}$ and external charge-bucket capacitor $C_{\text{filt}} = 95.0\text{ pF}$. For a full-scale step $V_{\text{FS}} = 3.30\text{ V}$, compute the instantaneous charge-sharing voltage droop $\Delta V_0 = V_{\text{FS}} \frac{C_{\text{sample}}}{C_{\text{filt}} + C_{\text{sample}}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}\text{ V}$) at the moment the sampling switch closes.
-4. `[Spaced review -> 01-electronics.T2.02 — Concept: parasitic_loop_inductance_voltage_overshoot] [SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` During a $t_p = 0.005\text{ s}$ ($5\text{ ms}$) locked-rotor fault dissipating $P_{\text{loss}} = 200.0\text{ W}$ in a MOSFET whose junction-to-case thermal stage has $R_{\theta 1} = 0.50\text{ ^\circ C/W}$ and $\tau_{\theta 1} = 0.005\text{ s}$, compute the transient junction temperature rise $\Delta T_J = P_{\text{loss}} R_{\theta 1} (1 - e^{-t_p / \tau_{\theta 1}})$ in $\text{^\circ C}$ (tolerance $\pm 0.01\text{ ^\circ C}$).
+4. `[Spaced review -> 01-electronics.T2.02 — Concept: parasitic_loop_inductance_voltage_overshoot] [SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` During a $t_p = 0.005\text{ s}$ ($5\text{ ms}$) locked-rotor fault dissipating $P_{\text{loss}} = 200.0\text{ W}$ in a MOSFET whose junction-to-case thermal stage has $R_{\theta 1} = 0.50\ {^\circ}\text{C/W}$ and $\tau_{\theta 1} = 0.005\text{ s}$, compute the transient junction temperature rise $\Delta T_J = P_{\text{loss}} R_{\theta 1} (1 - e^{-t_p / \tau_{\theta 1}})$ in ${^\circ}\text{C}$ (tolerance $\pm 0.01\ {^\circ}\text{C}$).
 5. `[SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` Why can an NTC thermistor mounted on the aluminum motor housing **never** be used as the sole protection against a locked-rotor MOSFET over-current fault?
-   - **A.** Because NTC thermistors only work below $0\text{ ^\circ C}$.
-   - **B.** Because the silicon die has a millisecond thermal time constant ($\tau_{\text{die}} \approx 2\text{–}10\text{ ms}$) and reaches its $175\text{ ^\circ C}$ destruction limit in milliseconds, whereas the aluminum housing has a multi-second thermal time constant ($\tau_{\text{sink}} \approx 20\text{–}60\text{ s}$) and barely warms up before the MOSFET explodes.
+   - **A.** Because NTC thermistors only work below $0\ {^\circ}\text{C}$.
+   - **B.** Because the silicon die has a millisecond thermal time constant ($\tau_{\text{die}} \approx 2\text{–}10\text{ ms}$) and reaches its $175\ {^\circ}\text{C}$ destruction limit in milliseconds, whereas the aluminum housing has a multi-second thermal time constant ($\tau_{\text{sink}} \approx 20\text{–}60\text{ s}$) and barely warms up before the MOSFET explodes.
    - **C.** Because aluminum is a thermal insulator.
    - **D.** Because thermistors block PWM signals.
 
@@ -140,7 +164,7 @@ assert math.isclose(q3_dv0, 0.165, rel_tol=1e-9)
 assert math.isclose(q4_safety_dtj, 63.212056, abs_tol=1e-2)  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"                                # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, Q4, or Q5, study `## 3. Formalization` item 3 and `## Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, Q4, or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 
 ### Gate test
 Covers the complete Track 01 Tier 3 bridge ladder (`01-electronics.T3.01a`) before Step 3.2 (`01-electronics.T3.02`):
@@ -158,7 +182,7 @@ Covers the complete Track 01 Tier 3 bridge ladder (`01-electronics.T3.01a`) befo
    - **C.** Because `C0G` capacitors are magnetic.
    - **D.** Because SAR ADCs cannot read DC voltages.
 6. `[Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` Compute the RC time constant $\tau = R_{\text{filt}} C_{\text{filt}}$ in nanoseconds ($\text{ns}$, tolerance $\pm 10^{-6}\text{ ns}$) for an ADC charge bucket with $R_{\text{filt}} = 25.0\ \Omega$ and $C_{\text{filt}} = 200.0\text{ pF}$ ($0.20\text{ nF}$).
-7. `[SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` Compute the steady-state junction temperature $T_J = T_{\text{amb}} + P_{\text{loss}}(R_{\theta JC} + R_{\theta CS} + R_{\theta SA})$ in $\text{^\circ C}$ (tolerance $\pm 10^{-6}\text{ ^\circ C}$) when $T_{\text{amb}} = 30.0\text{ ^\circ C}$, $P_{\text{loss}} = 20.0\text{ W}$, $R_{\theta JC} = 0.5\text{ ^\circ C/W}$, $R_{\theta CS} = 0.2\text{ ^\circ C/W}$, and $R_{\theta SA} = 2.3\text{ ^\circ C/W}$.
+7. `[SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` Compute the steady-state junction temperature $T_J = T_{\text{amb}} + P_{\text{loss}}(R_{\theta JC} + R_{\theta CS} + R_{\theta SA})$ in ${^\circ}\text{C}$ (tolerance $\pm 10^{-6}\ {^\circ}\text{C}$) when $T_{\text{amb}} = 30.0\ {^\circ}\text{C}$, $P_{\text{loss}} = 20.0\text{ W}$, $R_{\theta JC} = 0.5\ {^\circ}\text{C/W}$, $R_{\theta CS} = 0.2\ {^\circ}\text{C/W}$, and $R_{\theta SA} = 2.3\ {^\circ}\text{C/W}$.
 8. `[SAFETY] [Concept: mutual_inductance_flux_cancellation]` What hardware fault protection must trigger within $< 1\ \mu\text{s}$ if a phase-to-phase short circuit causes current to exceed the $45\text{ A}$ comparator threshold on a $48\text{ V}$ inverter?
    - **A.** Direct hardware break input (`TIM1_BKIN` / gate-driver `VDS` desaturation comparator) that asynchronously forces all 6 PWM outputs into high-impedance Safe Torque Off without waiting for software polling.
    - **B.** A Python script running at $10\text{ Hz}$ over USB.
@@ -188,7 +212,7 @@ assert math.isclose(g6_tau_ns, 5.0, rel_tol=1e-9)
 assert math.isclose(g7_safety_tj, 90.0, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required
 assert g8_safety_choice == "A"                         # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $7/8$ ($80\%+$) AND $2/2$ ($100\%$) on Q7 and Q8 (`[SAFETY]`). Remediation: Q1, Q2, Q8 $\to$ `## 3. Formalization` item 1 & `## Safety notes`; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q7 $\to$ `## 3. Formalization` item 3 & `## Safety notes`.
+- **Pass mark:** $7/8$ ($80\%+$) AND $2/2$ ($100\%$) on Q7 and Q8 (`[SAFETY]`). Remediation: Q1, Q2, Q8 $\to$ `## 3. Formalization` item 1 & `### Safety notes`; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q7 $\to$ `## 3. Formalization` item 3 & `### Safety notes`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

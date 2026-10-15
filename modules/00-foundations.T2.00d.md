@@ -27,18 +27,34 @@ Imagine pushing a child on a swing with a steady sinusoidal hand force at freque
 
 ## 3. Formalization
 1. **Complex Plane and Euler's Formula:** A complex number $z = x + jy$ with real part $x$ (dimensionless or physical unit), imaginary part $y$, and $j = \sqrt{-1}$ has magnitude $|z| = \sqrt{x^2 + y^2}$ and phase angle $\angle z = \operatorname{atan2}(y, x)$ in radians ($\text{rad}$):
-   $$z = x + jy = |z|e^{j\angle z} = |z|(\cos\angle z + j\sin\angle z)$$
+
+$$
+z = x + jy = |z|e^{j\angle z} = |z|(\cos\angle z + j\sin\angle z)
+$$
+
    Substituting $x = 1.0$ and $y = -1.0$ gives $|z| = \sqrt{1^2 + (-1)^2} = \sqrt{2} \approx 1.4142$ and $\angle z = \operatorname{atan2}(-1, 1) = -\frac{\pi}{4}\text{ rad} = -45^\circ$.
 2. **Frequency-Domain Transfer Function ($d/dt \to j\omega$):** For a steady-state sinusoid $u(t) = e^{j\omega t}$ at angular frequency $\omega = 2\pi f$ ($\text{rad/s}$), differentiating gives $\frac{d}{dt}e^{j\omega t} = j\omega e^{j\omega t}$. Thus a first-order filter $\tau\dot{y} + y = u$ with time constant $\tau$ ($\text{s}$) has complex frequency response:
-   $$H(j\omega) = \frac{1}{1 + j\omega\tau}$$
+
+$$
+H(j\omega) = \frac{1}{1 + j\omega\tau}
+$$
+
    At the cutoff frequency $\omega_c = 1/\tau$, substituting $\omega\tau = 1$ gives $H(j\omega_c) = \frac{1}{1 + j1}$, so $|H(j\omega_c)| = \frac{1}{\sqrt{2}} \approx 0.7071$ and $\angle H(j\omega_c) = -45^\circ$.
 3. **Bode Magnitude (Decibels, $\text{dB}$) and Phase:** Converting linear amplitude ratio $|H(j\omega)|$ (dimensionless) to decibels ($\text{dB}$) uses:
-   $$|H(j\omega)|_{\text{dB}} = 20\log_{10}|H(j\omega)|$$
+
+$$
+\lvert H(j\omega)\rvert_{\text{dB}} = 20\log_{10}\lvert H(j\omega)\rvert
+$$
+
    Substituting $|H(j\omega_c)| = 1/\sqrt{2} \approx 0.7071$ gives $20\log_{10}(1/\sqrt{2}) = -3.0103\text{ dB}$.
 
 ## 4. Worked example
 Evaluate a second-order structural transfer function $G(j\omega) = \frac{\omega_n^2}{(j\omega)^2 + 2\zeta\omega_n(j\omega) + \omega_n^2}$ with natural frequency $\omega_n = 100\text{ rad/s}$ and damping ratio $\zeta = 0.05$ when excited right at resonance $\omega = \omega_n = 100\text{ rad/s}$:
-$$G(j\omega_n) = \frac{\omega_n^2}{-\omega_n^2 + j2\zeta\omega_n^2 + \omega_n^2} = \frac{1}{j2\zeta} = \frac{1}{j2(0.05)} = -j10.0$$
+
+$$
+G(j\omega_n) = \frac{\omega_n^2}{-\omega_n^2 + j2\zeta\omega_n^2 + \omega_n^2} = \frac{1}{j2\zeta} = \frac{1}{j2(0.05)} = -j10.0
+$$
+
 Thus $|G(j100)| = 10.0$ ($+20.0\text{ dB}$) and $\angle G(j100) = -90.0^\circ$.
 
 ```python
@@ -73,7 +89,7 @@ For the same second-order plant ($\omega_n = 100\text{ rad/s}$, $\zeta = 0.05$),
 - **If your result differs:** Make sure you used `20.0 * math.log10(abs(G))` (amplitude decibels) rather than `10.0 * math.log10(abs(G))` (power decibels, which would give `-19.96 dB`).
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Prerequisite Foundations Module:** [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Natural Frequency $\omega_n$ & Damping Ratio $\zeta$*).
+  - **Prerequisite Foundations Module:** [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (Natural Frequency $\omega_n$ & Damping Ratio $\zeta$).
   - **Core Concepts to Review First:** Evaluating complex transfer function $G(j\omega) = \frac{\omega_n^2}{(\omega_n^2 - \omega^2) + j(2\zeta\omega_n\omega)}$, magnitude in decibels $20\log_{10}|G(j\omega)|$, and phase angle $\operatorname{atan2}(\operatorname{Im}, \operatorname{Re})$ in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
   - **Bode Plot & Phasor Study Links:** [Brian Douglas: Bode Plots by Hand & Frequency Response (YouTube)](https://www.youtube.com/user/ControlLectures), [CTMS Frequency Response Tutorial (`ctms.engin.umich.edu`)](https://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=ControlFrequency), and [Python `cmath` Documentation](https://docs.python.org/3/library/cmath.html).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (**Tab 2: Two-Mass & Notch Bode**).
@@ -87,6 +103,14 @@ No hardware required for this module (`hardware_required: false`). In Track 01 a
                                                                  |H(jw)|_dB = 20*log10(B/A), <H = phi
 ```
 Pass/fail verification in simulation: `mag == 10.0`, `mag_db == +20.0 dB`, and `phase_deg == -90.0 deg`.
+
+
+```mermaid
+flowchart LR
+    A["00-foundations.T2.00d: complex_numbers_and_euler_formula"] --> B["complex_impedance_and_transfer_function"]
+    B --> C["bode_magnitude_db_and_phase"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
@@ -124,7 +148,7 @@ assert q4_choice == "B"
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
-| Bode dB value is half of expected (`+10 dB` instead of `+20 dB`) | Used $10\log_{10}|H|$ instead of $20\log_{10}|H|$ for amplitude ratios. | Always use $20\log_{10}(|H|)$ for voltage, current, force, or position amplitude ratios. |
+| Bode dB value is half of expected (`+10 dB` instead of `+20 dB`) | Used $10\log_{10}\lvert H\rvert $ instead of $20\log_{10}\lvert H\rvert $ for amplitude ratios. | Always use $20\log_{10}(\lvert H\rvert )$ for voltage, current, force, or position amplitude ratios. |
 | Natural logarithm used instead of base-10 log | Called `math.log(mag)` (natural log $\ln$) instead of `math.log10(mag)`. | Explicitly call `math.log10(mag)` when computing decibels. |
 | Phase angle wraps unexpectedly or is in radians | Forgot `math.degrees(...)` on `cmath.phase(G)`. | Wrap `cmath.phase(G)` with `math.degrees(...)` when plotting Bode phase in degrees. |
 
@@ -133,4 +157,4 @@ assert q4_choice == "B"
 - **Track 00 ([`00-foundations/README.md#tier-2-intermediate--applied`](../00-foundations/README.md#tier-2-intermediate--applied)):** Prepares directly for Step 2.1 two-mass torsional resonance and anti-resonance Bode analysis `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Laplace Transform, Poles/Zeros, State-Space $\dot{x} = Ax + Bu$, Matrix Exponential & Discretization*).
+- Proceed to [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (Laplace Transform, Poles/Zeros, State-Space $\dot{x} = Ax + Bu$, Matrix Exponential & Discretization).

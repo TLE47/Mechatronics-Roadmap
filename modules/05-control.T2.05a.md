@@ -29,15 +29,27 @@ Why does any negative-feedback loop go unstable if you crank the gain too high? 
 ## 3. Formalization
 1. **Loop Transfer Function $L(s) = P(s)C(s)$, Crossover $\omega_{gc}$ & Phase Margin ($\text{PM}$):**
    - At the **gain crossover frequency** $\omega_{gc}$ where $|L(j\omega_{gc})| = 1$ ($0\text{ dB}$), the **Phase Margin** is:
-     $$\text{PM} = 180^\circ + \angle L(j\omega_{gc})$$
+
+$$
+\text{PM} = 180^\circ + \angle L(j\omega_{gc})
+$$
+
      Robust servo loops target $\text{PM} \in [45^\circ, 65^\circ]$ and **Gain Margin** $\text{GM} = -20\log_{10}|L(j\omega_{pc})| \ge 6\text{ dB}$ at the $-180^\circ$ phase crossover $\omega_{pc}$. Time delay $\tau_d$ ($\text{s}$) eats phase margin linearly with frequency: $\Delta\phi(\omega) = -\omega\tau_d \cdot \frac{180^\circ}{\pi}$.
 2. **Sensitivity $S(s)$, Complementary Sensitivity $T(s)$ & Waterbed Identity:**
-   $$S(s) = \frac{1}{1 + L(s)}, \quad T(s) = \frac{L(s)}{1 + L(s)}, \quad S(s) + T(s) \equiv 1$$
+
+$$
+S(s) = \frac{1}{1 + L(s)}, \quad T(s) = \frac{L(s)}{1 + L(s)}, \quad S(s) + T(s) \equiv 1
+$$
+
    Peak sensitivity $M_s = \max_\omega |S(j\omega)|$ measures worst-case disturbance amplification and guarantees minimum distance $1/M_s$ from the critical point $-1 + j0$ (require $M_s < 2.0 = +6.02\text{ dB}$).
 3. **Luenberger State Observer & Bryson's Rule for LQR:**
    - **Observer Update:** Given discrete plant $(A_d, B_d, C)$ and observer gain $L_{\text{obs}}$, estimation error $e_k = x_k - \hat{x}_k$ evolves as $e_{k+1} = (A_d - L_{\text{obs}} C)e_k$, which converges to zero iff all eigenvalues of $(A_d - L_{\text{obs}} C)$ satisfy $|\lambda_i| < 1$.
    - **Bryson's Rule:** To minimize $J = \sum (x_k^\top Q x_k + u_k^\top R u_k)$ given maximum acceptable state deviations $x_{i,\max}$ and actuator limit $u_{j,\max}$:
-     $$Q_{ii} = \frac{1}{x_{i,\max}^2}, \quad R_{jj} = \frac{1}{u_{j,\max}^2}$$
+
+$$
+Q_{ii} = \frac{1}{x_{i,\max}^2}, \quad R_{jj} = \frac{1}{u_{j,\max}^2}
+$$
+
 
 ## 4. Worked example
 Compute the Phase Margin $\text{PM}$ and peak sensitivity $M_s$ of an open-loop servo transfer function $L(s) = \frac{100}{s(0.01s + 1)}$ at its gain crossover $\omega_{gc} = 78.615\text{ rad/s}$, verify $S(j\omega) + T(j\omega) = 1$, construct Bryson's LQR weights $(Q, R)$ for a cart-pendulum ($x_{\max} = 0.05\text{ m}, \theta_{\max} = 0.10\text{ rad}, u_{\max} = 5.0\text{ N}$), and verify Luenberger observer convergence.
@@ -85,7 +97,7 @@ Suppose your servo loop has Phase Margin $\text{PM} = 51.83^\circ$ at gain cross
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Operations*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*2nd-Order Poles*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*State-Space $\dot{x} = Ax + Bu$*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Covariance Propagation*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Operations*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*2nd-Order Poles*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (State-Space $\dot{x} = Ax + Bu$), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Covariance Propagation*).
   - **Prerequisite Bridge Module:** [`05-control.T1.05a`](05-control.T1.05a.md) and Legacy **Step 1.6 (`05-control.T1.06`)**.
   - **Core Concepts to Review First:** Sensitivity peak $M_s = \max|S(j\omega)|$ and phase margin with pure time delay ($\text{PM} - \omega_{gc}\tau_d$), discrete LQR Riccati recursion, and 1D/MIMO Linear Kalman Filter predict-innovation-update equations in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Åström & Murray *Feedback Systems* Ch. 10–12 (`fbsbook.org`)](https://www.fbsbook.org/), [Roger Labbe *Kalman and Bayesian Filters in Python*](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python), and [Track 05 Tier 2 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-2-intermediate--applied).
@@ -98,6 +110,14 @@ No hardware required for this module (`hardware_required: false`). In Step 2.6 (
 [Offline Python: Bryson (Q, R) -> DARE -> K_lqr] ---> [MCU 1 kHz ISR: x_hat = Observer(y); u = -K_lqr @ x_hat]
 ```
 Pass/fail verification in simulation: `pm_deg == 51.83 deg`, `S_gc + T_gc == 1.0`, `Q_diag == [400.0, 100.0]`, and `rho_obs == 0.9000 < 1.0`.
+
+
+```mermaid
+flowchart LR
+    A["05-control.T2.05a: loop_transfer_gain_and_phase_margin"] --> B["sensitivity_complementary_waterbed_tradeoff"]
+    B --> C["luenberger_observer_and_brysons_lqr_weights"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.6 (`05-control.T2.06`).
@@ -181,7 +201,7 @@ assert g8_choice == "A"
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
-| Looked only at $|T(j\omega)|$ (closed-loop tracking Bode plot) and missed a dangerous $+12\text{ dB}$ sensitivity peak in $|S(j\omega)|$ | Relying on $T(s)$ alone hides near-instability when $L(j\omega)$ passes close to $-1 + j0$. | Always plot all **Gang of Four** transfer functions ($S, T, PS, CS$) and verify $\max_\omega |S(j\omega)| < 6\text{ dB}$ ($2.0\times$). |
+| Looked only at $\lvert T(j\omega)\rvert $ (closed-loop tracking Bode plot) and missed a dangerous $+12\text{ dB}$ sensitivity peak in $\lvert S(j\omega)\rvert $ | Relying on $T(s)$ alone hides near-instability when $L(j\omega)$ passes close to $-1 + j0$. | Always plot all **Gang of Four** transfer functions ($S, T, PS, CS$) and verify $\max_\omega \lvert S(j\omega)\rvert  < 6\text{ dB}$ ($2.0\times$). |
 | Solved continuous-time `solve_continuous_are(A, B, Q, R)` but ran the resulting $K$ at a slow discrete sample rate $T_s$ | Continuous ARE ignores sample-and-hold phase lag and discrete control weighting. | Discretize $(A, B) \to (A_d, B_d)$ at sample period $T_s$ and call `scipy.linalg.solve_discrete_are(Ad, Bd, Q, R)` (Step 2.6). |
 | Set $Q = I_4$ without Bryson normalization on a state vector mixing millimeters and radians | A $1\text{ mm}$ error and a $1\text{ rad}$ ($57.3^\circ$) error received identical weight! | Always express states in consistent SI units ($\text{m}, \text{rad}, \text{m/s}, \text{rad/s}$) and normalize $Q_{ii} = 1/x_{i,\max}^2$ via Bryson's Rule. |
 

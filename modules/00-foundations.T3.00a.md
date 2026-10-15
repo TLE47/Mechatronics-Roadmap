@@ -27,13 +27,25 @@ Suppose a rigid body is spinning with angular velocity vector $\omega \in \mathb
 
 ## 3. Formalization
 1. **Skew-Symmetric Hat Map $[\cdot]_\times : \mathbb{R}^3 \to \mathfrak{so}(3)$ and Vee Inverse $[\cdot]^\vee$:** For $\omega = [\omega_x, \omega_y, \omega_z]^\top$ ($\text{rad/s}$):
-   $$[\omega]_\times = \begin{bmatrix} 0 & -\omega_z & \omega_y \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix}, \quad [\omega]_\times^\top = -[\omega]_\times, \quad [\omega]_\times v = \omega \times v$$
+
+$$
+[\omega]_\times = \begin{bmatrix} 0 & -\omega_z & \omega_y \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix}, \quad [\omega]_\times^\top = -[\omega]_\times, \quad [\omega]_\times v = \omega \times v
+$$
+
    For any vector $v \in \mathbb{R}^3$, $v^\top [\omega]_\times v = v \cdot (\omega \times v) \equiv 0$ (power-conserving orthogonality).
 2. **Matrix Exponential & Rodrigues' Rotation Formula on $SO(3)$:** For rotation vector $\phi = \theta \hat{u} \in \mathbb{R}^3$ ($\theta = \|\phi\|\text{ rad}$, $\|\hat{u}\| = 1$), the cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ collapses the Taylor series $\exp([\phi]_\times) = \sum_{k=0}^\infty \frac{1}{k!}[\phi]_\times^k$ into:
-   $$R(\phi) = \exp([\phi]_\times) = I_3 + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1 - \cos\theta}{\theta^2}[\phi]_\times^2 \in SO(3)$$
+
+$$
+R(\phi) = \exp([\phi]_\times) = I_3 + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1 - \cos\theta}{\theta^2}[\phi]_\times^2 \in SO(3)
+$$
+
    with small-angle Taylor guard $\frac{\sin\theta}{\theta} \approx 1 - \frac{\theta^2}{6}$ and $\frac{1 - \cos\theta}{\theta^2} \approx \frac{1}{2} - \frac{\theta^2}{24}$ for $\theta < 10^{-7}\text{ rad}$ to prevent $0/0$ `NaN`. Every output satisfies $R^\top R = I_3$ and $\det(R) = +1$.
 3. **Port-Hamiltonian Energy Balance ($\dot{x} = (J - R_d)\nabla H(x) + B u$):** With total stored energy $H(x) = \frac{1}{2}x^\top Q_H x \ge 0$, skew-symmetric interconnection $J = -J^\top$, and symmetric positive semi-definite damping $R_d = R_d^\top \succeq 0$, the rate of change of stored energy is:
-   $$\dot{H} = (\nabla H)^\top \dot{x} = \underbrace{(\nabla H)^\top J (\nabla H)}_{=\,0} - \underbrace{(\nabla H)^\top R_d (\nabla H)}_{\ge\,0\text{ (dissipated heat)}} + \underbrace{u^\top y}_{\text{supplied power}} \le u^\top y$$
+
+$$
+\dot{H} = (\nabla H)^\top \dot{x} = \underbrace{(\nabla H)^\top J (\nabla H)}_{=\,0} - \underbrace{(\nabla H)^\top R_d (\nabla H)}_{\ge\,0\text{ (dissipated heat)}} + \underbrace{u^\top y}_{\text{supplied power}} \le u^\top y
+$$
+
 
 ## 4. Worked example
 Verify that $[\omega]_\times v = \omega \times v$ and $v^\top [\omega]_\times v = 0$, compute $R = \exp([\phi]_\times)$ via Rodrigues' formula for both a normal angle ($\theta = \pi/2\text{ rad}$ about $Z$) and a tiny angle ($\theta = 10^{-9}\text{ rad}$), and verify $x^\top J x = 0$ on a coupled electromechanical motor-inertia system.
@@ -110,6 +122,14 @@ No hardware required for this module (`hardware_required: false`). In Step 3.1 (
 [IMU Gyro omega] ---> [Nominal Propagate: R_{k+1} = R_k * exp([omega*dt]_x)] <--- [ESKF Error Reset: exp([d_theta]_x)]
 ```
 Pass/fail verification in simulation: `mat_vec3(hat(w), v) == cross3(w, v)`, `R_tiny.T @ R_tiny == I_3` within $10^{-14}$, and `det(R_tiny) == 1.0`.
+
+
+```mermaid
+flowchart LR
+    A["00-foundations.T3.00a: skew_symmetric_hat_vee_cross_product"] --> B["matrix_exponential_taylor_and_rodrigues"]
+    B --> C["hamiltonian_energy_power_balance"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.1 (`00-foundations.T3.01`).

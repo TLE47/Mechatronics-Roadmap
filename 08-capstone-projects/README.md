@@ -30,7 +30,7 @@
   * **Mechanics & Control:** 3D-printed 2-link planar arm ($L_1 = 100\text{ mm}, L_2 = 100\text{ mm}$) with `608` radial ball bearings in double shear, tracking a smooth cubic-polynomial figure-8 trajectory with joint-space virtual spring-damper compliance (Track 02 & Track 06 Tier 1).
 - **Curated Free Resources:**
   - 🔗 [SimpleFOC Project Hub: Dual-Motor Gimbal & 2-DOF Arm Examples](https://docs.simplefoc.com/examples) — *Complete wiring schematics and dual-axis closed-loop position/torque sketches for `ESP32` and `STM32`.*
-  - 🔗 [SO-101 / SO-ARM100 Open-Source 3D-Printed 6-DOF Leader-Follower Arm (TheRobotStudio)](https://github.com/TheRobotStudio/SO-ARM100) — *\$110–\$130 open-source 3D-printed desktop manipulator natively supported by Hugging Face `LeRobot` for teleoperation and imitation learning.*
+  - 🔗 [SO-101 / SO-ARM100 Open-Source 3D-Printed 6-DOF Leader-Follower Arm (TheRobotStudio)](https://github.com/TheRobotStudio/SO-ARM100) — \$110–\$130 open-source 3D-printed desktop manipulator natively supported by Hugging Face `LeRobot` for teleoperation and imitation learning.
   - 🔗 [LeKiwi Open-Source 3-Wheel Omnidirectional Holonomic Mobile Base (SIGRobotics-UIUC)](https://github.com/SIGRobotics-UIUC/LeKiwi) — *Low-cost holonomic mobile base designed to carry the `SO-101` arm for mobile manipulation.*
   - 🔗 [Lab Workbench Bill of Materials (`resources/lab-workbench-bom.md`)](../resources/lab-workbench-bom.md) — *Exact part numbers and budget links for all Tier 1 breakout modules, encoders, bearings, and bench tools.*
 - **🧪 Hands-On Exercise:**

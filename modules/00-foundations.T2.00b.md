@@ -27,10 +27,18 @@ Hold a wrench horizontally along your desk pointing northeast, and pull on the w
 
 ## 3. Formalization
 1. **3D Dot Product ($\vec{a} \cdot \vec{b}$):** Given force $\vec{F} = [F_x, F_y, F_z]^T$ in newtons ($\text{N}$) and unit link direction $\hat{u}_r = \vec{r} / \|\vec{r}\|$ (dimensionless), the axial force projection $F_{\text{axial}}$ in newtons ($\text{N}$) is:
-   $$F_{\text{axial}} = \vec{F} \cdot \hat{u}_r = F_x u_{rx} + F_y u_{ry} + F_z u_{rz}$$
+
+$$
+F_{\text{axial}} = \vec{F} \cdot \hat{u}_r = F_x u_{rx} + F_y u_{ry} + F_z u_{rz}
+$$
+
    For $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ ($\|\vec{r}\| = 0.50\text{ m}$, so $\hat{u}_r = [0.60, 0.80, 0.00]^T$) and $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$, $F_{\text{axial}} = (0)(0.60) + (-20.0\text{ N})(0.80) + (15.0\text{ N})(0) = -16.0\text{ N}$.
 2. **3D Cross Product ($\vec{\tau} = \vec{r} \times \vec{F}$):** The 3D moment vector $\vec{\tau}$ in newton-meters ($\text{N}\cdot\text{m}$) at the shoulder origin is:
-   $$\vec{\tau} = \vec{r} \times \vec{F} = \begin{bmatrix} r_y F_z - r_z F_y \\ r_z F_x - r_x F_z \\ r_x F_y - r_y F_x \end{bmatrix}$$
+
+$$
+\vec{\tau} = \vec{r} \times \vec{F} = \begin{bmatrix} r_y F_z - r_z F_y \\ r_z F_x - r_x F_z \\ r_x F_y - r_y F_x \end{bmatrix}
+$$
+
    Substituting $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ and $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$ gives $\vec{\tau} = [(0.40)(15.0) - 0,\; 0 - (0.30)(15.0),\; (0.30)(-20.0) - 0]^T = [6.0, -4.5, -6.0]^T\text{ N}\cdot\text{m}$, which is strictly orthogonal to $\vec{r}$ since $\vec{\tau}\cdot\vec{r} = 1.80 - 1.80 + 0 = 0.0\text{ N}\cdot\text{m}^2$.
 3. **Linear Independence & Basis Determinant:** Two 2D column vectors $\vec{b}_1 = [a, c]^T$ and $\vec{b}_2 = [b, d]^T$ form an invertible basis matrix $B$ iff $\det(B) = a d - b c \neq 0$. For $B = \begin{bmatrix} 1.0 & 2.0 \\ 2.0 & 4.0 \end{bmatrix}$, $\det(B) = (1.0)(4.0) - (2.0)(2.0) = 0.0$ (collinear/singular).
 
@@ -88,6 +96,14 @@ No hardware required for this module (`hardware_required: false`). In Track 03 (
 ```
 Pass/fail verification in simulation: `F_axial == -16.0 N` and `tau == [6.0, -4.5, -6.0] N*m`.
 
+
+```mermaid
+flowchart LR
+    A["00-foundations.T2.00b: dot_product_projection"] --> B["cross_product_3d_moment"]
+    B --> C["basis_change_and_invertibility"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
@@ -125,7 +141,7 @@ assert math.isclose(q5_row0, 4.0, rel_tol=1e-9)
 | :--- | :--- | :--- |
 | Torque vector points in the exact opposite direction ($-\vec{\tau}$) | Computed $\vec{F}\times\vec{r}$ instead of $\vec{r}\times\vec{F}$ (cross product is anti-commutative). | Always place the lever arm $\vec{r}$ (from joint to force application point) first in $\vec{r}\times\vec{F}$. |
 | Cross product $\vec{\tau}$ fails orthogonality check $\vec{\tau}\cdot\vec{r} = 0$ | Flipped the sign of the middle ($y$) component ($r_x F_z - r_z F_x$ instead of $r_z F_x - r_x F_z$). | Assert `abs(dot3(tau, r)) < 1e-9` and `abs(dot3(tau, F)) < 1e-9` in every kinematics script. |
-| Matrix inversion crashes with `LinAlgError: Singular matrix` | Arm is fully stretched out ($\theta_2 = 0$), making basis/Jacobian columns collinear ($\det = 0$). | Check $|\det(B)| > 10^{-6}$ or use damped least-squares before inverting. |
+| Matrix inversion crashes with `LinAlgError: Singular matrix` | Arm is fully stretched out ($\theta_2 = 0$), making basis/Jacobian columns collinear ($\det = 0$). | Check $\lvert \det(B)\rvert  > 10^{-6}$ or use damped least-squares before inverting. |
 
 ## 9. Resources
 - **Gilbert Strang — [*Linear Algebra and Learning from Data* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md) & [3Blue1Brown Cross Products](https://www.3blue1brown.com/lessons/cross-products):** Orthogonality, projections, determinants, and change of basis `[UNVERIFIED]`.

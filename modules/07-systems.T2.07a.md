@@ -33,13 +33,25 @@ Three systems-engineering barriers separate a benchtop demo from an industrial-g
 ## 3. Formalization
 1. **Unclamped Regenerative Voltage Surge & Shunt Brake Resistor Sizing:**
    - **Unclamped Peak Voltage:** When rotor inertia $J$ decelerates from $\omega_0$ to $0\text{ rad/s}$ with net regeneration efficiency $\eta \in (0, 1]$ into bus capacitance $C_{\text{bus}}$ starting at $V_{\text{nom}}$:
-     $$\Delta E_{\text{regen}} = \eta \left(\frac{1}{2} J \omega_0^2\right), \qquad V_{\text{bus,unclamped}} = \sqrt{V_{\text{nom}}^2 + \frac{2 \, \Delta E_{\text{regen}}}{C_{\text{bus}}}}$$
+
+$$
+\Delta E_{\text{regen}} = \eta \left(\frac{1}{2} J \omega_0^2\right), \qquad V_{\text{bus,unclamped}} = \sqrt{V_{\text{nom}}^2 + \frac{2 \, \Delta E_{\text{regen}}}{C_{\text{bus}}}}
+$$
+
    - **Maximum Brake Resistor Bound:** To absorb peak regenerative power $P_{\text{regen,peak}} = \eta |\tau_{\max} \omega_0|$ while keeping the bus clamped at or below $V_{\text{clamp}}$, the shunt brake resistor $R_{\text{brake}}$ must dissipate at least $P_{\text{regen,peak}}$ at voltage $V_{\text{clamp}}$:
-     $$P_{\text{chopper}} = \frac{V_{\text{clamp}}^2}{R_{\text{brake}}} \ge P_{\text{regen,peak}} \implies R_{\text{brake}} \le \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}, \qquad I_{\text{brake,peak}} = \frac{V_{\text{clamp}}}{R_{\text{brake}}}$$
+
+$$
+P_{\text{chopper}} = \frac{V_{\text{clamp}}^2}{R_{\text{brake}}} \ge P_{\text{regen,peak}} \implies R_{\text{brake}} \le \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}, \qquad I_{\text{brake,peak}} = \frac{V_{\text{clamp}}}{R_{\text{brake}}}
+$$
+
 2. **CAN-FD Rolling-Counter Continuity & Watchdog Timeout Budget:**
-   - Given 4-bit counter $c_k \in \{0, \dots, 15\}$, the modular step difference between consecutive received frames is $\Delta c_k = (c_k - c_{k-1}) \bmod 16$. A valid sequential stream has $\Delta c_k = 1$; $\Delta c_k = 0$ indicates a **frozen/duplicate frame**, while $1 < \Delta c_k \le N_{\text{max\_drop}}$ indicates $\Delta c_k - 1$ dropped frames.
+   - Given 4-bit counter $c_k \in \{0, \dots, 15\}$, the modular step difference between consecutive received frames is $\Delta c_k = (c_k - c_{k-1}) \bmod 16$. A valid sequential stream has $\Delta c_k = 1$; $\Delta c_k = 0$ indicates a **frozen/duplicate frame**, while $1 < \Delta c_k \le N_{\text{max}\_\text{drop}}$ indicates $\Delta c_k - 1$ dropped frames.
    - For nominal frame period $T_{\text{cmd}}$ (e.g., $1.0\text{ ms}$) and maximum tolerated consecutive missed frames $N_{\text{miss}}$ (e.g., $3$), the watchdog timeout window is:
-     $$T_{\text{wdg}} = N_{\text{miss}} \cdot T_{\text{cmd}}$$
+
+$$
+T_{\text{wdg}} = N_{\text{miss}} \cdot T_{\text{cmd}}
+$$
+
 3. **SIL/HIL Fault-Injection Coverage & Safe Reaction Margin:**
    - Across a catalog of $F_{\text{total}}$ required fault modes (Over-Voltage, Over-Current, Encoder SPI CRC Loss, CAN Watchdog Timeout, Thermal $I^2t$ Derating), fault-injection coverage is $C_{\text{hil}} = F_{\text{passed}} / F_{\text{total}}$, and every fault $i$ must satisfy measured reaction latency $t_{\text{react},i} \le t_{\text{budget},i}$.
 
@@ -95,7 +107,7 @@ A $48.0\text{ V}$ actuator bus ($C_{\text{bus}} = 500\ \mu\text{F}$) absorbs $\D
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*$\mu\text{F}$, Joules & Watts*), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Rotational Kinetic Energy $\frac{1}{2}J\omega^2$*), and [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*Capacitor Energy $\frac{1}{2}C V^2$*).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) ($\mu\text{F}$, Joules & Watts), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (Rotational Kinetic Energy $\frac{1}{2}J\omega^2$), and [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (Capacitor Energy $\frac{1}{2}C V^2$).
   - **Prerequisite Bridge Modules:** [`01-electronics.T2.02`](../01-electronics-and-power/README.md), [`04-embedded.T2.05`](../04-embedded-and-realtime/README.md), and [`06-robotics.T2.07`](../06-robotics-and-autonomy/README.md).
   - **Core Concepts to Review First:** Regenerative braking bus voltage rise $V_{\text{bus,unclamped}} = \sqrt{V_{\text{nom}}^2 + \frac{2\Delta E_{\text{regen}}}{C_{\text{bus}}}}$ and active brake chopper resistor sizing $R_{\text{brake,max}} = \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}$, CAN-FD CRC-16 + rolling counter watchdogs, and SIL/HIL fault injection in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [TI SLLA325 (Managing Regenerative Energy in BLDC Drives)](https://www.ti.com/lit/pdf/slla325) and [Track 07 Tier 2 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) (**Tab 5: URDF / MuJoCo & STO**).
@@ -108,9 +120,17 @@ Open **Tab 5 (URDF / MuJoCo Digital Twin & Fault Injection)** and **Tab 8 (CAN F
 ```
 Pass/fail verification in simulation: `V_unclamped == 166.06 V` without chopper vs $\le 28.0\text{ V}$ with $4.0\ \Omega$ chopper, and `check_rolling_counter(15, 0) == "OK"`.
 
-## Safety notes
+### Safety notes
 - **Hazard:** Regenerative over-voltage capacitor explosion ($>160\text{ V}$ spike on a $24\text{ V}$ bus during fast deceleration), exposed hot brake-chopper power resistors ($>150^\circ\text{C}$ under repetitive braking), and runaway actuator motion on stale CAN-FD commands.
 - **Mitigation:** Always verify the shunt brake chopper threshold ($V_{\text{on}} = 27.5\text{ V}$) with an adjustable bench supply before commanding high-speed deceleration, mount the wirewound brake resistor in an insulated heatsink cage with software $I^2t$ duty-cycle derating, and enforce a $3\text{ ms}$ hardware watchdog timeout that disables PWM or switches to passive damping on missed CAN frames.
+
+
+```mermaid
+flowchart LR
+    A["07-systems.T2.07a: regenerative_bus_energy_and_chopper_sizing"] --> B["can_fd_crc16_and_rolling_counter_watchdog"]
+    B --> C["sil_hil_fault_injection_verification"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.8 (`07-systems.T2.08`).
@@ -158,7 +178,7 @@ Covers the Track 07 Tier 2 bridge ladder (`07-systems.T2.07a`) and cross-domain 
    - **B.** Hold the last commanded torque $\tau_{\text{ff}}$ forever at $100\%$ duty cycle.
    - **C.** Command maximum positive current to test the power supply.
    - **D.** Reboot the microcontroller while leaving the gate driver latched ON.
-8. `[Concept: can_fd_mit_impedance_packet_packing]` In the Tier 2 Boss Capstone (`07-systems.T2.08`), why do we validate the LQR / Cartesian impedance controller against the URDF/MuJoCo digital twin (`validate_models.py`) *before* enabling the physical $24\text{ V}$ custom 4-layer PCB?
+8. `[Concept: sil_hil_fault_injection_verification]` In the Tier 2 Boss Capstone (`07-systems.T2.08`), why do we validate the LQR / Cartesian impedance controller against the URDF/MuJoCo digital twin (`validate_models.py`) *before* enabling the physical $24\text{ V}$ custom 4-layer PCB?
    - **A.** To verify sign conventions, inertia/gravity scaling, LQR gain stability, and watchdog fault recovery in zero-risk simulation before applying power to custom hardware.
    - **B.** Because MuJoCo automatically solders SMD components onto the PCB.
    - **C.** Because physical encoders only work after MuJoCo deletes the firmware.

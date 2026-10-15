@@ -30,7 +30,11 @@ Imagine an emergency room with one doctor (a single-core CPU):
 
 ## 3. Formalization
 1. **Rate-Monotonic CPU Utilization & Preemptive Scheduling (`FreeRTOS`):** For $n$ periodic tasks with worst-case execution times $C_i$ ($\text{s}$) and periods $T_i$ ($\text{s}$), total CPU utilization is:
-   $$U = \sum_{i=1}^{n} \frac{C_i}{T_i}$$
+
+$$
+U = \sum_{i=1}^{n} \frac{C_i}{T_i}
+$$
+
    Necessary condition for schedulability on one core: $U \le 1.0$ (and the Liu-Layland sufficient bound $U \le n(2^{1/n} - 1)$, which evaluates to $\approx 0.7798$ for $n=3$; exact schedulability is verified via Response-Time Analysis $R_i = C_i + \sum_{j \in hp(i)} \lceil R_i / T_j \rceil C_j \le D_i$ in Step 2.5). In FreeRTOS, drift-free periodic execution uses absolute wake times:
    ```c
    TickType_t xLastWake = xTaskGetTickCount();
@@ -40,12 +44,20 @@ Imagine an emergency room with one doctor (a single-core CPU):
    }
    ```
 2. **Priority Inversion vs. Priority Inheritance Mutex (`xSemaphoreCreateMutex`):** If low-priority task $L$ holds a shared lock for critical section duration $B_i$, a naive binary semaphore (`xSemaphoreCreateBinary`) allows any medium-priority task $M$ ($P_L < P_M < P_H$) to preempt $L$, inflating $H$'s blocking delay by $\sum C_M$:
-   $$R_{H,\text{inverted}} = C_H + B_i + \sum_{M} C_M, \qquad R_{H,\text{inherited}} = C_H + B_i$$
+
+$$
+R_{H,\text{inverted}} = C_H + B_i + \sum_{M} C_M, \qquad R_{H,\text{inherited}} = C_H + B_i
+$$
+
    FreeRTOS mutexes (`xSemaphoreCreateMutex()`) implement **Priority Inheritance** automatically so high-priority task $H$ is blocked for at most $B_i$.
 3. **CAN Non-Destructive Bitwise Arbitration & Fixed-Point MIT Mode Packing:**
    - **Arbitration:** CAN transmits the 11-bit Identifier MSB-first. Because `0` is dominant and `1` is recessive, the frame with the **lowest numeric CAN ID** always wins arbitration with zero bit delay.
    - **MIT Cheetah Fixed-Point Mapping:** Mapping float $x \in [x_{\min}, x_{\max}]$ into an $N$-bit unsigned integer $u \in [0, 2^N - 1]$ for compact 8-byte CAN frames:
-     $$u = \operatorname{round}\!\left(\frac{x - x_{\min}}{x_{\max} - x_{\min}} (2^N - 1)\right), \quad \hat{x} = x_{\min} + \frac{u}{2^N - 1}(x_{\max} - x_{\min})$$
+
+$$
+u = \operatorname{round}\!\left(\frac{x - x_{\min}}{x_{\max} - x_{\min}} (2^N - 1)\right), \quad \hat{x} = x_{\min} + \frac{u}{2^N - 1}(x_{\max} - x_{\min})
+$$
+
 
 ## 4. Worked example
 Compute total CPU utilization $U$ for a 3-task FreeRTOS actuator node, compare worst-case high-priority response time with and without Priority Inheritance during mutex contention, and verify CAN bus arbitration + 16-bit MIT fixed-point quantization.
@@ -104,6 +116,14 @@ No hardware required for this module (`hardware_required: false`). In Step 2.5 (
 [Task_Ctrl 1 kHz (Prio 3)] <--(xSemaphoreCreateMutex / Queue)--> [Task_CAN 500 Hz (Prio 2)] <==> [CAN Bus 120 Ohm]
 ```
 Pass/fail verification in simulation: `U_total == 0.325`, `resp_with_inheritance_us == 140.0 us`, and `winner_id == 0x012`.
+
+
+```mermaid
+flowchart LR
+    A["04-embedded.T2.04b: rtos_preemptive_scheduling_and_cpu_utilization"] --> B["unbounded_priority_inversion_and_inheritance"]
+    B --> C["can_bitwise_arbitration_and_mit_packing"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.

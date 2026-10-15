@@ -1,6 +1,6 @@
 ---
 id: 04-embedded.T2.04a
-title: "SPI/I2C Bus Transactions, DMA Ping-Pong Ring Buffers & Zero-CPU Peripherals"
+title: "Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers"
 track: "04"
 tier: 2
 prereqs:
@@ -24,17 +24,25 @@ resources_verified: false
 In Tier 1, reading a sensor or sending serial bytes inside a polling loop tied up the CPU for tens of microseconds per byte. When your motor loop speeds up to $20\text{–}40\text{ kHz}$ in Step 2.5 (`04-embedded.T2.05`), the CPU has only $25\text{–}50\ \mu\text{s}$ total per tick! Understanding full-duplex **SPI (`CPOL`/`CPHA`) framing**, offloading peripheral transfers to a hardware **Direct Memory Access (DMA)** controller, and processing streaming samples out of a **double-buffered (ping-pong) ring buffer** lets your microcontroller read encoders and stream telemetry with near-zero CPU overhead. Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
-Think of **I2C** ($400\text{ kHz}$ shared 2-wire bus) as a single-lane village road where every packet starts with an address callout and waits for an acknowledgment (`ACK`), whereas **SPI** ($10\text{–}20\text{ MHz}$ 4-wire bus: `SCLK`, `MOSI`, `MISO`, `CS_n`) is a dedicated twin-track expressway that shifts bits out on `MOSI` and in on `MISO` simultaneously on every clock edge as soon as you pull the slave's Chip-Select (`CS_n`) line LOW. To configure these peripherals across different chips without memorizing every register bit offset, vendor SDKs provide a **Hardware Abstraction Layer (HAL)**—such as **STM32Cube HAL / LL**—organized around peripheral handle structs (`SPI_HandleTypeDef hspi1`, `UART_HandleTypeDef huart2`). Crucially, every HAL offers two execution models: **blocking polling calls** (`HAL_SPI_TransmitReceive(&hspi1, tx, rx, len, timeout)`, which spins inside a `while` loop wasting $100\%$ of the CPU) versus **non-blocking DMA calls** (`HAL_SPI_TransmitReceive_DMA(&hspi1, tx, rx, len)`). A **DMA (Direct Memory Access)** controller is a dedicated hardware shipping clerk: the HAL function writes the source/destination addresses and length into the DMA registers in $0.2\ \mu\text{s}$ and returns immediately so the CPU can run FOC math while DMA moves the bytes in the background! Finally, a **ping-pong (double) buffer** splits a $2N$-sample array into two halves (`Ping` $[0..N-1]$ and `Pong` $[N..2N-1]$): while the DMA is filling `Pong`, the CPU safely reads the completed `Ping` half inside `HAL_ADC_ConvHalfCpltCallback()` (`HT` interrupt), and reads `Pong` inside `HAL_ADC_ConvCpltCallback()` (`TC` interrupt)—zero collisions, zero dropped samples!
+After mastering Arduino/Wiring (`04-embedded.T1.04a`) and non-blocking state machines (`04-embedded.T1.04b`), professional firmware progresses through two layers: **Vendor Hardware Abstraction Layers (`HAL`)** and **Bare-Metal Memory-Mapped Registers (`MMIO`)**:
+- **Vendor HAL (`STM32Cube HAL`) & High-Speed SPI vs. I2C:** Think of **I2C** ($400\text{ kHz}$ shared 2-wire bus) as a single-lane village road where every packet waits for an address and `ACK`, whereas **SPI** ($10\text{–}20\text{ MHz}$ 4-wire bus: `SCLK`, `MOSI`, `MISO`, `CS_n`) is a dedicated twin-track expressway that shifts bits out on `MOSI` and in on `MISO` simultaneously as soon as Chip-Select (`CS_n`) goes LOW. Vendor SDKs provide a **Hardware Abstraction Layer (HAL)** organized around handle structs (`SPI_HandleTypeDef hspi1`, `UART_HandleTypeDef huart2`) with both blocking polling calls (`HAL_SPI_TransmitReceive`) and non-blocking DMA calls (`HAL_SPI_TransmitReceive_DMA`).
+- **Peeling Back the HAL — Bare-Metal Register Basics (`ODR`, `BSRR`, `DMA`) & Zero-CPU DMA Offload:** What is `HAL_GPIO_WritePin` or `HAL_SPI_TransmitReceive_DMA` actually doing under the hood? Every microcontroller peripheral is controlled by **memory-mapped hardware registers (`MMIO`)** at fixed silicon addresses (e.g. `#define GPIOA_ODR (*(volatile uint32_t *)0x48000014UL)`). While modifying `GPIOA->ODR |= (1U << 5)` requires a 3-instruction read-modify-write sequence, writing `(1U << 5)` to the write-only **Bit-Set/Reset Register (`GPIOA->BSRR`)** sets (or `(1U << (5 + 16))` clears) the pin atomically in a single clock cycle! Similarly, starting a **DMA (Direct Memory Access)** transfer simply writes the peripheral register address (`CPAR = &SPI1->DR`), SRAM buffer address (`CMAR`), and transfer count (`CNDTR`) into the hardware DMA engine in $0.25\ \mu\text{s}$, freeing $100\%$ of the CPU while silicon moves the bytes in the background!
+- **Double-Buffered (Ping-Pong) Circular DMA Ring Buffers:** A ping-pong buffer splits a $2N$-sample array into `Ping` $[0..N-1]$ and `Pong` $[N..2N-1]$: while DMA fills `Pong`, the CPU safely reads `Ping` inside `HAL_ADC_ConvHalfCpltCallback()` (`HT` ISR), and reads `Pong` inside `HAL_ADC_ConvCpltCallback()` (`TC` ISR) with zero race conditions.
 
 ## 3. Formalization
-1. **SPI Full-Duplex Transaction Time & Modes (`CPOL`, `CPHA`):** Shifting $B_{\text{bits}}$ bits at SPI clock frequency $f_{\text{sclk}}$ ($\text{Hz}$) with chip-select setup/hold overhead $t_{\text{cs}}$ ($\text{s}$) takes wire time:
-   $$t_{\text{spi}} = \frac{B_{\text{bits}}}{f_{\text{sclk}}} + t_{\text{cs}}$$
-   Substituting a 16-bit magnetic encoder frame ($B_{\text{bits}} = 16$) at $f_{\text{sclk}} = 10\text{ MHz}$ ($10^7\text{ Hz}$) and $t_{\text{cs}} = 0.4\ \mu\text{s}$ gives $t_{\text{spi}} = 1.6\ \mu\text{s} + 0.4\ \mu\text{s} = 2.0\ \mu\text{s}$ (compared to $\sim 100\ \mu\text{s}$ over $400\text{ kHz}$ I2C!). SPI Mode 1 (`CPOL=0, CPHA=1`, used by `AS5048A`/`TLE5012B`) idles `SCLK` LOW, shifts on the rising edge, and samples data on the falling edge.
-2. **HAL Polling CPU Cost vs. HAL DMA Offload:** Calling a blocking HAL driver (`HAL_UART_Transmit` / `HAL_SPI_TransmitReceive`) for $N_{\text{bytes}}$ over a bus of bit rate $R_{\text{bps}}$ blocks the CPU for $t_{\text{cpu,poll}} = \frac{B_{\text{bits}}}{R_{\text{bps}}}$, whereas calling the non-blocking DMA HAL driver (`HAL_UART_Transmit_DMA(&huart2, buf, len)`) takes only register-setup time $t_{\text{cpu,dma}} \approx 0.25\ \mu\text{s}$ (`CMAR`, `CPAR`, `CNDTR`, `CR |= EN`) while the hardware DMA engine moves bytes across the AHB/APB bus matrix and invokes the completion callback ISR when finished.
+1. **Vendor HAL (`STM32Cube HAL`) & SPI Full-Duplex Transaction Time (`CPOL`, `CPHA`):** Shifting $B_{\text{bits}}$ bits at SPI clock frequency $f_{\text{sclk}}$ ($\text{Hz}$) with chip-select setup/hold overhead $t_{\text{cs}}$ ($\text{s}$) takes wire time:
+
+$$
+t_{\text{spi}} = \frac{B_{\text{bits}}}{f_{\text{sclk}}} + t_{\text{cs}}
+$$
+
+   Substituting a 16-bit magnetic encoder frame ($B_{\text{bits}} = 16$) at $f_{\text{sclk}} = 10\text{ MHz}$ ($10^7\text{ Hz}$) and $t_{\text{cs}} = 0.4\ \mu\text{s}$ gives $t_{\text{spi}} = 1.6\ \mu\text{s} + 0.4\ \mu\text{s} = 2.0\ \mu\text{s}$. SPI Mode 1 (`CPOL=0, CPHA=1`, used by `AS5048A`/`TLE5012B`) idles `SCLK` LOW, shifts on the rising edge, and samples on the falling edge.
+2. **Bare-Metal Register Basics (`MMIO`, `ODR`, `BSRR`) & HAL DMA Offload (`CPAR`, `CMAR`, `CNDTR`):**
+   - **Memory-Mapped Register & Atomic `BSRR`:** At physical address `0x48000014UL` (`GPIOA->ODR`), a read-modify-write `GPIOA->ODR |= (1U << n)` can be preempted mid-operation by an ISR; writing to the atomic Bit-Set/Reset Register `GPIOA->BSRR = (1U << n)` (set bit $n$) or `GPIOA->BSRR = (1U << (n + 16))` (clear bit $n$) completes in $1$ bus cycle with zero ISR race.
+   - **Blocking HAL Polling vs. DMA Register Offload:** Blocking `HAL_UART_Transmit` / `HAL_SPI_TransmitReceive` stalls the CPU for $t_{\text{cpu,poll}} = \frac{B_{\text{bits}}}{R_{\text{bps}}}$, whereas `HAL_UART_Transmit_DMA` writes the bare-metal DMA registers (`CPAR`, `CMAR`, `CNDTR`, `CCR |= DMA_CCR_EN`) in $t_{\text{cpu,dma}} \approx 0.25\ \mu\text{s}$ while the DMA controller moves bytes across the AHB bus matrix.
 3. **Ping-Pong Circular DMA Buffer Invariant:** For a circular DMA buffer of length $2N$ indexed $[0, 2N-1]$ (`HAL_ADC_Start_DMA(&hadc1, buf, 2*N)`):
    - **Half-Transfer (`HT`) ISR (`HAL_ADC_ConvHalfCpltCallback`)** fires when DMA write index reaches $N$: CPU reads slice `[0 : N]` while DMA writes `[N : 2N]`.
    - **Transfer-Complete (`TC`) ISR (`HAL_ADC_ConvCpltCallback`)** fires when DMA wraps at $2N \to 0$: CPU reads slice `[N : 2N]` while DMA writes `[0 : N]`.
-   As long as CPU processing time $t_{\text{proc}} < N \cdot T_{\text{sample}}$, the reader and writer never touch the same half simultaneously.
 
 ## 4. Worked example
 Compare CPU time blocked when reading a 16-bit encoder + sending a 32-byte telemetry frame (`320` UART bits at $1\text{ Mbps}$) using blocking polling vs. DMA offload inside a $20\text{ kHz}$ ($50\ \mu\text{s}$) control loop, and simulate a $2N = 8$ ping-pong circular DMA buffer over $16$ incoming ADC samples.
@@ -80,7 +88,7 @@ Calculate the available CPU processing window $t_{\text{window}} = N / f_{\text{
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Fixed-Point Iteration Loops*), [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Clock Cycle & Microsecond Units*), and [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Affine Range Mapping*).
   - **Prerequisite Bridge Module:** [`04-embedded.T1.04b`](04-embedded.T1.04b.md) and Legacy **Step 1.5 (`04-embedded.T1.05`)**.
-  - **Core Concepts to Review First:** DMA circular ping-pong (`HT`/`TC`) CPU overhead reduction, exact Rate-Monotonic Response-Time Analysis (RTA) recurrence $R_i^{(k+1)} = C_i + \sum \lceil R_i^{(k)}/T_j\rceil C_j$, and MIT Mini-Cheetah 8-byte CAN bit-packing in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Core Concepts to Review First:** Vendor HAL SPI/I2C transaction timing, bare-metal memory-mapped registers (`MMIO`, `GPIOA->BSRR`, `DMA` `CPAR`/`CMAR`/`CNDTR`), and circular ping-pong DMA (`HT`/`TC`) processing windows in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [STMicroelectronics AN4031 (STM32 DMA Controller)](https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf), [Buttazzo *Hard Real-Time Computing Systems*](https://link.springer.com/book/10.1007/978-1-4614-0676-1), and [Track 04 Tier 2 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
@@ -94,6 +102,14 @@ No hardware required for this module (`hardware_required: false`). In Step 2.5 (
                                                      [CPU reads Ping]    [CPU reads Pong]
 ```
 Pass/fail verification in simulation: `t_spi_poll_us == 2.0 us`, `cpu_dma_total_us == 0.50 us`, and all 16 ping-pong samples processed in exact order with zero overwrites.
+
+
+```mermaid
+flowchart LR
+    A["04-embedded.T2.04a: spi_full_duplex_clock_polarity_phase"] --> B["dma_zero_cpu_memory_transfer"]
+    B --> C["double_buffered_ping_pong_half_complete_isr"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
@@ -135,4 +151,4 @@ assert q4_choice == "B"
 - **Carmine Noviello — *Mastering STM32* & STMicroelectronics `AN4031` (*Using the STM32 DMA Controller*, `resources/textbooks-and-papers.md`):** Complete guide to circular DMA, `HT`/`TC` interrupts, and SPI framing `[UNVERIFIED]`.
 - **Track 04 (`04-embedded-and-realtime/README.md`):** Prepares directly for `04-embedded.T2.04b` and Step 2.5 (`04-embedded.T2.05`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to [`04-embedded.T2.04b`](04-embedded.T2.04b.md) (*RTOS Tasks, Priority Inversion, Rate-Monotonic Deadlines, CAN Arbitration & Zephyr/micro-ROS Preview*).
+- Proceed to [`04-embedded.T2.04b`](04-embedded.T2.04b.md) (*RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration*).

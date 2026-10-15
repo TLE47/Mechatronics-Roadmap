@@ -7,6 +7,13 @@
 
 ## 1. Tier-First Curriculum Architecture (Foundations Integrated into Each Tier)
 
+```mermaid
+flowchart LR
+    T1["Pass 1: Tier 1 (84.0 h)<br/>Tier 1 Foundations -> Tracks 01-07 -> Step 1.8 2-DOF Boss"] --> T2["Pass 2: Tier 2 (122.5 h)<br/>Tier 2 Foundations -> Tracks 01-07 -> Step 2.8 Custom PCB Boss"]
+    T2 --> T3["Pass 3: Tier 3 (117.0 h)<br/>Tier 3 Foundations -> Tracks 01-07 -> Step 3.8 Capstones I-V"]
+```
+
+
 Although `00-foundations` is stored in Track 00 for repository organization, **learners never study all of Track 00 upfront as a standalone course.** Instead, the curriculum is strictly **Tier-First**: you start each Tier with that Tier's **Foundations Ladder**, apply those exact tools across **Tracks 01–07** in the same Tier, and complete that Tier's **Integration Boss Capstone** before leveling up to the next Tier:
 
 ```text

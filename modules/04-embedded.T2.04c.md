@@ -33,7 +33,11 @@ How does **Zephyr RTOS** differ from **FreeRTOS + Vendor HAL**, and how do its t
 1. **`west` Build Workflow & `Kconfig` (`prj.conf`) Static Footprint Budget:**
    - **Workspace & Build Commands:** `west init` / `west update` synchronizes the Zephyr manifest; `west build -b native_sim app/` (or `-b nucleo_g474re`) invokes CMake + Devicetree compiler (`dtc`) + Kconfig to produce `zephyr.elf`.
    - **Static RAM Allocation:** For $N_{\text{thr}}$ statically defined threads with stack sizes $S_i$ (aligned to $A$-byte boundaries, e.g. $A = 8\text{ bytes}$: $S_{i,\text{aligned}} = A \lceil S_i / A \rceil$), plus $N_{\text{msgq}}$ static message queues (`K_MSGQ_DEFINE(q, msg_size, max_msgs, align)`) of capacity $M_k \times B_k$, the compile-time kernel object RAM footprint is strictly bounded before `main()` runs:
-     $$\text{RAM}_{\text{static}} = \sum_{i=1}^{N_{\text{thr}}} \left(S_{i,\text{aligned}} + B_{\text{tcb}}\right) + \sum_{k=1}^{N_{\text{msgq}}} M_k B_k, \qquad \text{RAM}_{\text{heap}} = 0\text{ B}$$
+
+$$
+\text{RAM}_{\text{static}} = \sum_{i=1}^{N_{\text{thr}}} \left(S_{i,\text{aligned}} + B_{\text{tcb}}\right) + \sum_{k=1}^{N_{\text{msgq}}} M_k B_k, \qquad \text{RAM}_{\text{heap}} = 0\text{ B}
+$$
+
 2. **Devicetree (`*.dts` / `.overlay`) Compile-Time Binding & Device Readiness Contract:**
    - A board overlay binds a logical alias or node label (`fdcan1: can@4000a400`) to a C `const struct device *` pointer resolved at link time:
      ```c
@@ -45,10 +49,18 @@ How does **Zephyr RTOS** differ from **FreeRTOS + Vendor HAL**, and how do its t
    - Every peripheral node requires `status = "okay";` in the merged Devicetree (`zephyr.dts`) and its corresponding driver enabled in `prj.conf` (`CONFIG_CAN=y`), otherwise `DT_NODE_HAS_STATUS(DT_NODELABEL(fdcan1), okay)` evaluates to `0` (`false`).
 3. **Zephyr Thread Priority Ordering (`k_thread`) & Priority-Inheritance `k_mutex`:**
    - **Priority Comparison Rule:** Given two Zephyr threads with numerical priorities $p_A, p_B \in \mathbb{Z}$, thread $A$ has **strictly higher scheduling urgency** than thread $B$ iff:
-     $$p_A < p_B$$
+
+$$
+p_A < p_B
+$$
+
      All **cooperative threads** ($p < 0$) outrank all **preemptible threads** ($p \ge 0$). Among preemptible threads ($0 \le p_A < p_B$), thread $A$ immediately preempts thread $B$.
    - **`K_MUTEX_DEFINE` Priority Inheritance & Reentrancy:** When a high-urgency thread ($p_H = 1$) calls `k_mutex_lock(&mtx, K_FOREVER)` on a `k_mutex` currently owned by a lower-urgency thread ($p_L = 5$, remaining critical section $B_L$), Zephyr temporarily elevates the owner's effective priority to:
-     $$p_{L,\text{eff}} = \min(p_L, p_H) = p_H$$
+
+$$
+p_{L,\text{eff}} = \min(p_L, p_H) = p_H
+$$
+
      preventing any intermediate preemptible thread ($p_M \in \{2, 3, 4\}$) from preempting $L$, bounding $H$'s worst-case response time to $R_H = C_H + B_L$.
 
 ## 4. Worked example
@@ -121,6 +133,14 @@ Or open **Tab 8 (Real-Time Concurrency & Scheduling)** in the MechaLab Workbench
 [app.overlay (.dts) + prj.conf (Kconfig)] ==(west build -b native_sim / nucleo_g474re)==> [Static Zephyr ELF: K_THREAD_DEFINE + K_MUTEX_DEFINE]
 ```
 Pass/fail verification in simulation: `device_dt_ready("fdcan1") == True`, `total_static_ram == 6144 B`, and `R_H_k_mutex_us == 120.0 us`.
+
+
+```mermaid
+flowchart LR
+    A["04-embedded.T2.04c: zephyr_west_and_kconfig_build"] --> B["zephyr_devicetree_hardware_binding"]
+    B --> C["zephyr_static_threads_and_k_mutex"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
 
 ## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.

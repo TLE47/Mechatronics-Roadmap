@@ -20,22 +20,38 @@ resources_verified: false
 ---
 
 ## 1. Why it matters
-This is the final bridge module in the Track 06 Tier 3 Embodied AI ladder before Step 3.7 (`06-robotics.T3.07`). While Behavior Cloning (`06-robotics.T3.06a`) imitates human demonstrations, **Reinforcement Learning (RL / PPO)** discovers agile locomotion and contact behaviors in GPU simulators (`Newton`, `Isaac Lab`, `MuJoCo Playground`) by maximizing discounted cumulative reward $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$. And to deploy *either* an RL policy or a Vision-Language-Action (`VLA` / `ACT` / `Diffusion` / `π₀`) policy onto real $48\text{ V}$ hardware without violent jitter or collisions, you must master **Action Chunking with Temporal Ensembling / Real-Time Chunking (`RTC`)**, **Domain Randomization**, and a hard $1\text{ kHz}$ **Sim-to-Real CBF/Impedance Safety Shield**. Already know this? Read `## Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
+This is the final bridge module in the Track 06 Tier 3 Embodied AI ladder before Step 3.7 (`06-robotics.T3.07`). While Behavior Cloning (`06-robotics.T3.06a`) imitates human demonstrations, **Reinforcement Learning (RL / PPO)** discovers agile locomotion and contact behaviors in GPU simulators (`Newton`, `Isaac Lab`, `MuJoCo Playground`) by maximizing discounted cumulative reward $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$. And to deploy *either* an RL policy or a Vision-Language-Action (`VLA` / `ACT` / `Diffusion` / `π₀`) policy onto real $48\text{ V}$ hardware without violent jitter or collisions, you must master **Action Chunking with Temporal Ensembling / Real-Time Chunking (`RTC`)**, **Domain Randomization**, and a hard $1\text{ kHz}$ **Sim-to-Real CBF/Impedance Safety Shield**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
 ## 2. Intuition first
 In supervised learning (`06-robotics.T3.06a`), a teacher tells the network the exact right action $a_t^*$ on every step. In **Reinforcement Learning (MDP)**, there is no teacher—only a scoreboard (the **reward function** $r_t$, which awards points for reaching the goal and deducts points for excessive torque or falling over). The policy tries actions, sees which rollouts scored higher than expected (positive **Advantage** $\hat{A}_t > 0$), and increases the log-probability of those winning actions while **PPO (Proximal Policy Optimization)** clips the update ratio $r_t(\theta) = \frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}$ to $[1-\epsilon, 1+\epsilon]$ so one lucky rollout doesn't wreck the policy! Second, why do modern manipulation policies (`ACT`, `Diffusion Policy`, `π₀`) predict a whole **chunk of $K=16$ future waypoints** instead of a single step, and blend overlapping chunks with exponential weights $w_i = \exp(-m \cdot i)$ (**Temporal Ensembling / Real-Time Chunking**)? Because blending overlapping predictions smooths out frame-to-frame camera noise and bridges the $30\text{–}100\text{ ms}$ vision inference delay! Finally, because a neural network can output an arbitrary wild number if given an out-of-distribution camera image, **never** wire a neural network directly to raw motor voltage—always wrap it inside a $1\text{ kHz}$ **Safety Shield** that clamps joint step size $|\Delta q_{\text{cmd}}| \le \Delta q_{\max}$, joint limits, and Control Barrier Function (`CBF-QP`) workspace walls!
 
 ## 3. Formalization
 1. **Markov Decision Process (MDP), Discounted Return ($G_t$) & PPO Clipped Surrogate:** Over state $s_t$, action $a_t \sim \pi_\theta(a_t \mid s_t)$, reward $r_t$, and discount factor $\gamma \in (0, 1)$, the discounted return from step $t$ is:
-   $$G_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k} = r_t + \gamma G_{t+1}$$
+
+$$
+G_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k} = r_t + \gamma G_{t+1}
+$$
+
    With probability ratio $\rho_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}$ and advantage $\hat{A}_t = G_t - V(s_t)$, PPO maximizes:
-   $$L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\left(\rho_t(\theta)\hat{A}_t,\ \operatorname{clip}(\rho_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t\right)\right]$$
+
+$$
+L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\left(\rho_t(\theta)\hat{A}_t,\ \operatorname{clip}(\rho_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t\right)\right]
+$$
+
 2. **Action Chunking & Temporal Ensembling (`ACT` / `RTC`):** At inference step $t$, the policy outputs a chunk of $K$ future target positions $\hat{A}_t = [\hat{a}_{t\mid t},\ \hat{a}_{t+1\mid t},\ \dots,\ \hat{a}_{t+K-1\mid t}]$. Thus for current time $t$, we have $M \le K$ overlapping predictions $\hat{a}_{t\mid t-i}$ made $i \in \{0, \dots, M-1\}$ steps ago. Temporal ensembling blends them with exponential decay rate $m \ge 0$:
-   $$a_t^{\text{ens}} = \frac{\sum_{i=0}^{M-1} \exp(-m \cdot i)\,\hat{a}_{t\mid t-i}}{\sum_{i=0}^{M-1} \exp(-m \cdot i)}$$
+
+$$
+a_t^{\text{ens}} = \frac{\sum_{i=0}^{M-1} \exp(-m \cdot i)\,\hat{a}_{t\mid t-i}}{\sum_{i=0}^{M-1} \exp(-m \cdot i)}
+$$
+
 3. **Sim-to-Real Domain Randomization & $1\text{ kHz}$ Safety Wrapper:**
    - **Domain Randomization:** Randomizing link mass $m \sim \mathcal{U}[0.8m_0, 1.2m_0]$, friction, and latency $\tau_d$ during GPU training forces $\pi_\theta$ to learn robust feedback strategies.
    - **Deterministic Safety Shield:** Before any policy action $a_t^{\text{ens}}$ reaches the $1\text{ kHz}$ PD/impedance controller, hardware-enforced safety wrapper projects it into safe bounds:
-     $$q_{d,t} = \operatorname{clip}\!\left(\operatorname{clip}\!\left(a_t^{\text{ens}},\ q - \Delta q_{\max},\ q + \Delta q_{\max}\right),\ q_{\min},\ q_{\max}\right)$$
+
+$$
+q_{d,t} = \operatorname{clip}\!\left(\operatorname{clip}\!\left(a_t^{\text{ens}},\ q - \Delta q_{\max},\ q + \Delta q_{\max}\right),\ q_{\min},\ q_{\max}\right)
+$$
+
      followed by torque saturation $|\tau| \le \tau_{\max}$ and CBF barrier enforcement (`05-control.T3.06`).
 
 ## 4. Worked example
@@ -96,14 +112,22 @@ Suppose a reward sequence is $r = [0.0, 0.0, 10.0]$ over 3 steps with discount f
 ## 6. Simulation path
 Open **Tab 4 (CBF-QP Safety Filter)** and **Tab 6 (Trajectory & Action Smoothing)** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
 
-## Safety notes
+### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before deploying any learned policy on hardware or taking the Skip/Gate test):**
 > 1. **Never Wire a Neural Policy Directly to Raw Motor Voltage/Current:** A neural network (`BC`, `PPO`, `Diffusion`, `VLA`) has no mathematical guarantee against outputting extreme actions when encountering a camera glare, occlusion, or out-of-distribution state. Every learned policy output **must** pass through a deterministic $1\text{ kHz}$ low-level **Safety Shield** (`safety_shield` + CBF-QP + joint PD torque clamp) running on the real-time controller.
 > 2. **Per-Tick Slew-Rate / Step Clamping (`dq_max`):** Clamp the maximum position deviation $|q_d - q_{\text{meas}}| \le \Delta q_{\max}$ (e.g., $\le 0.05\text{–}0.10\text{ rad}$), velocity $|\dot{q}_d| \le \dot{q}_{\max}$, and torque $|\tau| \le \tau_{\max}$ on every tick, and trip into hardware Safe Torque Off (`STO` / `FAULT`) if the policy heartbeat times out ($> 100\text{ ms}$).
 > 3. **Physical E-Stop in Hand During First Policy Rollout:** Always keep a physical hardware E-stop button in hand and test new checkpoints at $25\%$ torque ceiling in a clear workspace before full-speed evaluation.
 
+
+```mermaid
+flowchart LR
+    A["06-robotics.T3.06b: mdp_discounted_return_and_policy_gradient"] --> B["action_chunking_temporal_ensembling_rtc"]
+    B --> C["sim_to_real_domain_randomization_and_safety_shield"]
+    C --> D["Verified Simulation & Checkpoint Pass"]
+```
+
 ## 7. Checkpoint
-Pass criteria: read `## Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
 
 ### Skip test
 1. `[Recall] [Concept: mdp_discounted_return_and_policy_gradient]` Compute the discounted return $G_0 = r_0 + \gamma r_1 + \gamma^2 r_2$ (tolerance $\pm 10^{-9}$) for rewards $[2.0, 0.0, 5.0]$ and discount factor $\gamma = 0.80$.
@@ -136,7 +160,7 @@ assert q3_choice == "B"
 assert math.isclose(q4_safety_qd, 0.26, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"                          # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `## Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 ### Gate test
 Covers the complete Track 06 Tier 3 Embodied AI bridge ladder (`06-robotics.T3.06a` $\to$ `06-robotics.T3.06b`) before Step 3.7 (`06-robotics.T3.07`):
 1. `[Concept: neural_network_forward_pass_and_mse_loss]` Compute the Mean-Squared Error $\mathcal{L} = \frac{1}{2}\left((2.0 - 1.0)^2 + (4.0 - 1.0)^2\right)$ (tolerance $\pm 10^{-9}$).

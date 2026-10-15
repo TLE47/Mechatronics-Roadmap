@@ -4,13 +4,24 @@
 
 ---
 
-## 1. Two-Tier Assessment Architecture (`Skip Test` vs. `Ladder Gate Test`)
+## 1. Two-Tier Assessment Architecture
+
+```mermaid
+flowchart LR
+    A["Bridge Module Entry"] --> B["Read Safety Notes (if high/low)"]
+    B --> C["4-5 Q Module Skip Test (>= 80% + 100% Safety)"]
+    C -->|"Pass"| D["Advance to Next Bridge Module"]
+    D --> E["8 Q Ladder Gate Test (100% Ladder Concepts)"]
+    E -->|"Pass (>= 7/8 + 100% Safety)"| F["Unlock Target Legacy Step (1.1 - 3.8)"]
+```
+
+ (`Skip Test` vs. `Ladder Gate Test`)
 
 Every bridge module in `modules/*.md` contains a standardized `## 7. Checkpoint` section with executable Python `assert` answer keys:
 
 | Assessment Type | Location | Question Count & Format | Pass Threshold | What Passing Unlocks |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Module Skip Test** (`### Skip test`) | Present in **every** bridge module (`modules/*.md`, 44/44 modules) | **4–6 questions** covering `[Recall]`, `[Apply]`, `[Transfer]`, and `[Spaced review -> prior_module_id]` (for non-root modules). At least **75% (3/4 or 4/5)** are numerical calculation problems with explicit units and tolerances; every `new_concepts` item is tested at least once. | **$\ge 80\%$** ($4/4$ on 4-Q tests, $\ge 4/5$ on 5-Q tests) **AND $100\%$ on all safety items** in `safety_level: high` modules (after reading `## Safety notes`). | Skips the remainder of that individual bridge module and advances directly to `## 10. Next modules`. |
+| **1. Module Skip Test** (`### Skip test`) | Present in **every** bridge module (`modules/*.md`, 44/44 modules) | **4–6 questions** covering `[Recall]`, `[Apply]`, `[Transfer]`, and `[Spaced review -> prior_module_id]` (for non-root modules). At least **75% (3/4 or 4/5)** are numerical calculation problems with explicit units and tolerances; every `new_concepts` item is tested at least once. | **$\ge 80\%$** ($4/4$ on 4-Q tests, $\ge 4/5$ on 5-Q tests) **AND $100\%$ on all safety items** in `safety_level: high` modules (after reading `### Safety notes`). | Skips the remainder of that individual bridge module and advances directly to `## 10. Next modules`. |
 | **2. Ladder Gate Test** (`### Gate test`) | Present **only** in the **final module of each bridge ladder** (25/44 modules, covering all **24/24 legacy transitions**) | **8 questions** spanning **every** concept introduced across the entire multi-module bridge ladder (`[Concept: ...]` tags), with a complete executable Python `assert` answer key and per-question module remediation pointers. | **$\ge 80\%$** ($\ge 7/8$) **AND $100\%$ on all safety items**. | Skips the entire bridge ladder and unlocks the target Legacy Step (`Step 1.1`–`Step 3.8`). |
 
 ---
@@ -63,7 +74,7 @@ Every one of the **24 Legacy Steps (`1.1`–`3.8`)** is preceded by a dedicated 
 
 ## 3. Mandatory Safety Gates (`safety_level: high` Modules)
 
-Nine bridge modules carry `safety_level: high` and include a dedicated `## Safety notes` section detailing electrical, energetic, thermal, or kinetic hazards. **No learner may skip a `safety_level: high` module without reading `## Safety notes` and scoring $100\%$ on its safety verification items:**
+Nine bridge modules carry `safety_level: high` and include a dedicated `### Safety notes` section detailing electrical, energetic, thermal, or kinetic hazards. **No learner may skip a `safety_level: high` module without reading `### Safety notes` and scoring $100\%$ on its safety verification items:**
 
 1. **[`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) (*Multimeter, Bench Supply, Breadboard & ESD/Short-Circuit Safety*):** Unpowered DMM continuity beep check, Constant-Current (`CC`) foldback limit calculation, and series vs. parallel ammeter fuse protection.
 2. **[`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) (*Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal*):** H-bridge same-leg shoot-through prevention ($I_{\text{short}} = V_{\text{bus}} / (2 R_{DS(\text{on})})$) and dead-time enforcement.
@@ -75,7 +86,7 @@ Nine bridge modules carry `safety_level: high` and include a dedicated `## Safet
 8. **[`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) (*OPC UA Information Models, IEC 63278 AAS Submodels & ISO 13849-1 PLd*):** Dual-channel hardware Safe Torque Off (`STO`, Category 3 / PLd, $\text{DC}_{\text{avg}} \ge 90\%$) with startup cross-monitoring pulse diagnostics.
 9. **[`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md) (*System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off*):** 4-stage sequential hardware commissioning gate (`Stage 1` unpowered DMM/pre-charge $\to$ `Stage 2` $<1\ \mu\text{s}$ STO trip $\to$ `Stage 3` encoder-to-torque sign match $\to$ `Stage 4` CBF/thermal/watchdog active).
 
-Three additional electronics modules carry `safety_level: low` with dedicated `## Safety notes` sections for benchtop component thermal/flyback hazards: [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md), [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), and [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md).
+Three additional electronics modules carry `safety_level: low` with dedicated `### Safety notes` sections for benchtop component thermal/flyback hazards: [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md), [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), and [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md).
 
 ---
 
