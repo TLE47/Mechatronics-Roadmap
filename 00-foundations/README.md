@@ -8,7 +8,11 @@
 
 ## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
 
-Instead of trying to master graduate-level $SO(3)$ Lie groups before ever wiring a motor, complete **only your current Tier section** below, check off its milestone, and jump straight to **Track 01 in the same Tier**:
+**⚠️ Tier-First Learning Rule (Do NOT Complete Track 00 All at Once!):**
+`00-foundations` is **interleaved by Tier** across your learning journey—it is **not** a standalone prerequisite course that you finish from Tier 1 to Tier 3 before touching hardware! Instead:
+- **In Tier 1:** Complete the **Tier 1 Foundations Bridge Ladder** ([`T1.00a`](../modules/00-foundations.T1.00a.md)–[`T1.00e`](../modules/00-foundations.T1.00e.md)) and **§1 Tier 1 Foundations (`00-foundations.T1.01`)**, then **immediately move horizontally to [Track 01 · Tier 1](../01-electronics-and-power/README.md#tier-1-beginner--intuitive)** through **Track 08 · Tier 1 Boss**.
+- **In Tier 2:** Only after finishing the Tier 1 Boss (`07-systems.T1.08`), return here for the **Tier 2 Foundations Bridge Ladder** ([`T2.00a`](../modules/00-foundations.T2.00a.md)–[`T2.00f`](../modules/00-foundations.T2.00f.md)) and **§2 Tier 2 Foundations (`00-foundations.T2.01`)**, then **move horizontally to [Track 01 · Tier 2](../01-electronics-and-power/README.md#tier-2-intermediate--applied)** through **Track 08 · Tier 2 Boss**.
+- **In Tier 3:** Only after finishing the Tier 2 Boss (`07-systems.T2.08`), return here for the **Tier 3 Foundations Bridge** ([`T3.00a`](../modules/00-foundations.T3.00a.md)) and **§4 Tier 3 Foundations (`00-foundations.T3.01`)**, then **move horizontally to [Track 01 · Tier 3](../01-electronics-and-power/README.md#tier-3-advanced--production)** through **Track 08 · Tier 3 Capstones I–V**.
 
 | Pass / Level | Current Track 00 Section | Next Linear Step in This Pass |
 | :--- | :--- | :--- |

@@ -322,5 +322,6 @@ stateDiagram-v2
 ## 7. Track 07 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
 
 - **Tier 1 (IEC 61131-3 PLC Scan Cycle, Sine-Sweep SysID & Incremental Bring-Up → Step 1.8):** [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) *(Ladder Gate Test)*
+- **Tier 2 (Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection → Step 2.8):** [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) *(Ladder Gate Test)*
 - **Tier 3 (OPC UA Information Models, IEC 63278-1 AAS Digital Twins & ISO 13849-1 PLd Safety → Step 3.7):** [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) *(Ladder Gate Test)*
 

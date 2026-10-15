@@ -61,7 +61,7 @@ legacy:
 
   - id: 04-embedded.T2.05
     title: "Track 04 (Tier 2): FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (MIT Mode)"
-    prereqs: [04-embedded.T1.05, 03-sensors.T2.04, 04-embedded.T2.04b]
+    prereqs: [04-embedded.T1.05, 03-sensors.T2.04, 04-embedded.T2.04b, 04-embedded.T2.04d]
     introduces: [freertos_priority_inheritance_mutex, rate_monotonic_response_time_analysis, dma_double_buffered_ping_pong_isr, can_fd_mit_impedance_packet_packing]
 
   - id: 05-control.T2.06
@@ -71,12 +71,12 @@ legacy:
 
   - id: 06-robotics.T2.07
     title: "Track 06 & 07 (Tier 2): Jacobian Transpose Compliance, Ruckig S-Curves & Regen Clamps"
-    prereqs: [02-mechanics.T2.03, 05-control.T2.06, 06-robotics.T2.06a]
+    prereqs: [02-mechanics.T2.03, 05-control.T2.06, 06-robotics.T2.06a, 06-robotics.T2.06b]
     introduces: [jacobian_transpose_cartesian_impedance, ruckig_time_optimal_jerk_limited_scurve, regenerative_braking_bus_voltage_surge]
 
   - id: 07-systems.T2.08
     title: "Track 08 (Tier 2 Boss Capstone): Custom 4-Layer CAN Servo + LQR/MuJoCo Twin"
-    prereqs: [01-electronics.T2.02, 04-embedded.T2.05, 06-robotics.T2.07]
+    prereqs: [01-electronics.T2.02, 04-embedded.T2.05, 06-robotics.T2.07, 07-systems.T2.07a]
     introduces: [regenerative_braking_shunt_chopper, can_fd_crc16_rolling_counter_watchdog, opc_ua_industrial_telemetry, tier2_custom_pcb_furuta_capstone]
 
   - id: 00-foundations.T3.01
@@ -86,27 +86,27 @@ legacy:
 
   - id: 01-electronics.T3.02
     title: "Track 01 (Tier 3): 6-Layer <2 nH 48 V/30 A Inverter, Bessel AFE & SAR Charge Buckets"
-    prereqs: [01-electronics.T2.02, 00-foundations.T3.01]
+    prereqs: [01-electronics.T2.02, 00-foundations.T3.01, 01-electronics.T3.01a]
     introduces: [sub_2nh_six_layer_commutation_loop, differential_bessel_anti_aliasing_filter, sar_adc_c0g_charge_bucket_design, cauer_foster_electro_thermal_network]
 
   - id: 02-mechanics.T3.03
     title: "Track 02 (Tier 3): Screw PoE, Ti-6Al-4V Flexures, Featherstone O(n) RNEA & GPU Physics (Newton / Isaac Lab)"
-    prereqs: [00-foundations.T3.01, 02-mechanics.T2.03]
+    prereqs: [00-foundations.T3.01, 02-mechanics.T2.03, 02-mechanics.T3.02a]
     introduces: [paros_weisbord_circular_notch_flexure, product_of_exponentials_screw_kinematics, christoffel_passivity_skew_symmetry, featherstone_on_rnea_inverse_dynamics, gpu_parallel_contact_simulation]
 
   - id: 03-sensors.T3.04
     title: "Track 03 (Tier 3): 25-40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT"
-    prereqs: [01-electronics.T3.02, 03-sensors.T2.04]
+    prereqs: [01-electronics.T3.02, 03-sensors.T2.04, 03-sensors.T3.03a]
     introduces: [synchronous_dq_cross_coupling_decoupling, minmax_zero_sequence_svpwm_injection, fourier_encoder_eccentricity_anticogging_lut]
 
   - id: 04-embedded.T3.05
     title: "Track 04 (Tier 3): Bare-Metal TIM1->ADC, CORDIC, Embedded Rust (Embassy/RTIC) & C++20 WaitFreeSeqLock"
-    prereqs: [03-sensors.T3.04, 04-embedded.T2.05]
+    prereqs: [03-sensors.T3.04, 04-embedded.T2.05, 04-embedded.T3.04a]
     introduces: [tim1_trgo2_center_aligned_adc_trigger, q131_cordic_hardware_coprocessor, cpp20_wait_free_seqlock, embedded_rust_rtic_embassy_concurrency]
 
   - id: 05-control.T3.06
     title: "Track 05 (Tier 3): Joseph-Form Manifold ESKF, Embedded MPC (acados/TinyMPC) & Control Barrier QPs"
-    prereqs: [00-foundations.T3.01, 05-control.T2.06]
+    prereqs: [00-foundations.T3.01, 05-control.T2.06, 05-control.T3.05a]
     introduces: [joseph_form_so3_manifold_eskf, chi_squared_nees_nis_consistency, receding_horizon_embedded_mpc, control_barrier_function_qp_safety_filter]
 
   - id: 06-robotics.T3.07
@@ -128,7 +128,7 @@ bridges:
     prereqs: []
     introduces: [python_variables_and_types, for_while_loops_and_functions, traceback_error_reading]
     uses: []
-    feeds_into: []
+    feeds_into: [00-foundations.T1.00b]
     safety_level: none
     hardware_required: false
     resources_verified: false
@@ -141,7 +141,7 @@ bridges:
     prereqs: [00-foundations.T1.00a]
     introduces: [lists_dicts_and_numpy_arrays, matplotlib_time_series_plotting, terminal_and_git_basics]
     uses: [python_variables_and_types, for_while_loops_and_functions]
-    feeds_into: []
+    feeds_into: [00-foundations.T1.00c, 04-embedded.T1.04a]
     safety_level: none
     hardware_required: false
     resources_verified: false
@@ -154,7 +154,7 @@ bridges:
     prereqs: [00-foundations.T1.00b]
     introduces: [si_base_and_derived_units, scientific_notation_and_prefixes, dimensional_analysis_unit_checks]
     uses: [python_variables_and_types, for_while_loops_and_functions]
-    feeds_into: []
+    feeds_into: [00-foundations.T1.00d]
     safety_level: none
     hardware_required: false
     resources_verified: false
@@ -167,7 +167,7 @@ bridges:
     prereqs: [00-foundations.T1.00c]
     introduces: [linear_functions_and_slope, radians_unit_circle_and_atan2, 2d_vectors_and_components]
     uses: [python_variables_and_types, lists_dicts_and_numpy_arrays, si_base_and_derived_units]
-    feeds_into: []
+    feeds_into: [00-foundations.T1.00e]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -180,7 +180,7 @@ bridges:
     prereqs: [00-foundations.T1.00d]
     introduces: [discrete_kinematics_pos_vel_acc, newtons_second_law_and_torque, spring_energy_and_power]
     uses: [for_while_loops_and_functions, si_base_and_derived_units, 2d_vectors_and_components]
-    feeds_into: []
+    feeds_into: [00-foundations.T1.01, 01-electronics.T1.01a]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -193,7 +193,7 @@ bridges:
     prereqs: [00-foundations.T1.01]
     introduces: [finite_difference_derivative_and_integral, matrix_vector_multiplication, state_vector_one_step_update]
     uses: [symplectic_euler_integration, so2_rotation_matrix, discrete_kinematics_pos_vel_acc]
-    feeds_into: []
+    feeds_into: [00-foundations.T2.00b]
     safety_level: none
     hardware_required: false
     resources_verified: false
@@ -206,7 +206,7 @@ bridges:
     prereqs: [00-foundations.T2.00a]
     introduces: [dot_product_projection, cross_product_3d_moment, basis_change_and_invertibility]
     uses: [matrix_vector_multiplication, radians_unit_circle_and_atan2, 2d_vectors_and_components]
-    feeds_into: []
+    feeds_into: [00-foundations.T2.00c]
     safety_level: none
     hardware_required: false
     resources_verified: false
@@ -219,7 +219,7 @@ bridges:
     prereqs: [00-foundations.T2.00b]
     introduces: [first_order_ode_time_constant, second_order_ode_wn_zeta, characteristic_polynomial_roots]
     uses: [finite_difference_derivative_and_integral, newtons_second_law_and_torque, spring_energy_and_power]
-    feeds_into: []
+    feeds_into: [00-foundations.T2.00d]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -232,7 +232,7 @@ bridges:
     prereqs: [00-foundations.T2.00c]
     introduces: [complex_numbers_and_euler_formula, complex_impedance_and_transfer_function, bode_magnitude_db_and_phase]
     uses: [radians_unit_circle_and_atan2, first_order_ode_time_constant, second_order_ode_wn_zeta]
-    feeds_into: []
+    feeds_into: [00-foundations.T2.00e]
     safety_level: none
     hardware_required: false
     resources_verified: false
@@ -245,7 +245,7 @@ bridges:
     prereqs: [00-foundations.T2.00d]
     introduces: [laplace_poles_and_zeros, continuous_state_space_matrices, discrete_state_transition_euler_tustin]
     uses: [matrix_vector_multiplication, second_order_ode_wn_zeta, complex_impedance_and_transfer_function]
-    feeds_into: []
+    feeds_into: [00-foundations.T2.01, 00-foundations.T2.00f]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -258,7 +258,7 @@ bridges:
     prereqs: [00-foundations.T2.00e]
     introduces: [nyquist_sampling_and_aliasing, tustin_frequency_prewarping_and_biquad, gaussian_variance_and_covariance_matrix]
     uses: [bode_magnitude_db_and_phase, discrete_state_transition_euler_tustin, matrix_vector_multiplication]
-    feeds_into: []
+    feeds_into: [00-foundations.T2.01]
     safety_level: none
     hardware_required: false
     resources_verified: false
@@ -271,7 +271,7 @@ bridges:
     prereqs: [07-systems.T2.08]
     introduces: [skew_symmetric_hat_vee_cross_product, matrix_exponential_taylor_and_rodrigues, hamiltonian_energy_power_balance]
     uses: [cross_product_3d_moment, unit_quaternion_kinematics_slerp, continuous_state_space_matrices]
-    feeds_into: []
+    feeds_into: [00-foundations.T3.01]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -284,7 +284,7 @@ bridges:
     prereqs: [00-foundations.T1.00e]
     introduces: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, electrical_power_i2r_dissipation]
     uses: [si_base_and_derived_units, linear_functions_and_slope, spring_energy_and_power]
-    feeds_into: []
+    feeds_into: [01-electronics.T1.01c]
     safety_level: low
     hardware_required: false
     resources_verified: true
@@ -297,7 +297,7 @@ bridges:
     prereqs: [01-electronics.T1.01d]
     introduces: [mosfet_low_side_rds_on_switch, pwm_duty_cycle_effective_voltage, h_bridge_four_switch_polarity_and_shoot_through]
     uses: [voltage_current_resistance_ohms_law, electrical_power_i2r_dissipation, multimeter_and_current_limited_psu_safety, rc_time_constant_and_filtering, inductor_flyback_and_freewheeling_diode]
-    feeds_into: []
+    feeds_into: [01-electronics.T1.02]
     safety_level: high
     hardware_required: false
     resources_verified: true
@@ -310,7 +310,7 @@ bridges:
     prereqs: [01-electronics.T1.01a]
     introduces: [breadboard_internal_bus_connectivity, multimeter_and_current_limited_psu_safety, esd_and_short_circuit_prevention]
     uses: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, electrical_power_i2r_dissipation]
-    feeds_into: []
+    feeds_into: [01-electronics.T1.01d]
     safety_level: high
     hardware_required: false
     resources_verified: true
@@ -323,7 +323,7 @@ bridges:
     prereqs: [01-electronics.T1.01c]
     introduces: [capacitor_charge_storage_and_decoupling, rc_time_constant_and_filtering, inductor_flyback_and_freewheeling_diode]
     uses: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, multimeter_and_current_limited_psu_safety]
-    feeds_into: []
+    feeds_into: [01-electronics.T1.01b]
     safety_level: low
     hardware_required: false
     resources_verified: true
@@ -336,7 +336,7 @@ bridges:
     prereqs: [01-electronics.T1.02, 00-foundations.T2.01]
     introduces: [opamp_negative_feedback_virtual_short, differential_shunt_gain_and_cmrr, kelvin_four_terminal_sense_routing]
     uses: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, star_grounding]
-    feeds_into: []
+    feeds_into: [01-electronics.T2.01b]
     safety_level: low
     hardware_required: false
     resources_verified: true
@@ -349,11 +349,24 @@ bridges:
     prereqs: [01-electronics.T2.01a]
     introduces: [parasitic_loop_inductance_voltage_overshoot, bootstrap_high_side_gate_driver_and_deadtime, precharge_resistor_inrush_and_tvs_clamp]
     uses: [mosfet_low_side_rds_on_switch, differential_shunt_gain_and_cmrr, kelvin_four_terminal_sense_routing]
-    feeds_into: []
+    feeds_into: [01-electronics.T2.02]
     safety_level: high
     hardware_required: false
     resources_verified: false
     path: modules/01-electronics.T2.01b.md
+  - id: 01-electronics.T3.01a
+    title: "6-Layer Flux-Canceling Return Planes, Constant Group-Delay Bessel Filters, SAR ADC Charge-Bucket Settling & Cauer Thermal RC Networks"
+    track: 01
+    tier: 3
+    est_hours: 5.0
+    prereqs: [01-electronics.T2.02, 00-foundations.T3.01]
+    introduces: [mutual_inductance_flux_cancellation, bessel_constant_group_delay_afe, sar_adc_charge_bucket_and_cauer_thermal_rc]
+    uses: [four_layer_pcb_ground_plane_stackup, parasitic_loop_inductance_voltage_overshoot, differential_shunt_gain_and_cmrr]
+    feeds_into: [01-electronics.T3.02]
+    safety_level: high
+    hardware_required: false
+    resources_verified: true
+    path: modules/01-electronics.T3.01a.md
   - id: 02-mechanics.T1.02a
     title: "Free-Body Diagrams, Static Torque Balance, Pulleys/Gears & Rotational Inertia"
     track: 02
@@ -362,7 +375,7 @@ bridges:
     prereqs: [00-foundations.T1.01]
     introduces: [free_body_diagram_static_equilibrium, gravity_lever_arm_cosine_torque, gear_reduction_speed_torque_power_conservation]
     uses: [radians_unit_circle_and_atan2, newtons_second_law_and_torque, so2_rotation_matrix]
-    feeds_into: []
+    feeds_into: [02-mechanics.T1.03]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -375,11 +388,24 @@ bridges:
     prereqs: [02-mechanics.T1.03, 00-foundations.T2.01]
     introduces: [six_dof_gruebler_constraint_counting, se3_homogeneous_transformation_matrix, geometric_jacobian_and_parallel_axis_theorem]
     uses: [planar_2link_forward_kinematics, matrix_vector_multiplication, cross_product_3d_moment]
-    feeds_into: []
+    feeds_into: [02-mechanics.T2.03]
     safety_level: none
     hardware_required: false
     resources_verified: true
     path: modules/02-mechanics.T2.02a.md
+  - id: 02-mechanics.T3.02a
+    title: "6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity"
+    track: 02
+    tier: 3
+    est_hours: 5.0
+    prereqs: [00-foundations.T3.01, 02-mechanics.T2.03]
+    introduces: [spatial_twist_wrench_and_screw_axis, circular_notch_flexure_stiffness_stress, recursive_forward_velocity_backward_wrench]
+    uses: [rodrigues_so3_se3_exp_log_maps, se3_homogeneous_transformation_matrix, parallel_axis_urdf_inertia_tensor]
+    feeds_into: [02-mechanics.T3.03]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/02-mechanics.T3.02a.md
   - id: 03-sensors.T1.03a
     title: "Electromagnets, Permanent Magnets, Pole Pairs, Quadrature Pulses & Faraday Back-EMF"
     track: 03
@@ -388,7 +414,7 @@ bridges:
     prereqs: [01-electronics.T1.02]
     introduces: [lorentz_force_and_back_emf_constants, mechanical_vs_electrical_angle_pole_pairs, quadrature_ab_gray_code_direction]
     uses: [voltage_current_resistance_ohms_law, radians_unit_circle_and_atan2, pwm_duty_cycle_effective_voltage]
-    feeds_into: []
+    feeds_into: [03-sensors.T1.04]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -401,11 +427,24 @@ bridges:
     prereqs: [01-electronics.T2.02, 03-sensors.T1.04]
     introduces: [three_phase_balanced_sum_and_clarke_projection, park_rotating_frame_dc_demodulation, pll_velocity_tracking_and_noise_random_walk]
     uses: [electrical_vs_mechanical_pole_pairs, open_loop_three_phase_sine_modulation, so2_rotation_matrix]
-    feeds_into: []
+    feeds_into: [03-sensors.T2.04]
     safety_level: none
     hardware_required: false
     resources_verified: false
     path: modules/03-sensors.T2.03a.md
+  - id: 03-sensors.T3.03a
+    title: "Rotating-Frame Cross-Coupling (omega_e L i), Min-Max SVPWM Bus Utilization (1/sqrt(3)) & Encoder Harmonic Calibration"
+    track: 03
+    tier: 3
+    est_hours: 4.5
+    prereqs: [01-electronics.T3.02, 03-sensors.T2.04]
+    introduces: [dq_inductive_cross_coupling_feedforward, svpwm_zero_sequence_hexagonal_limit, encoder_spatial_harmonic_error_fit]
+    uses: [synchronous_dq_foc_current_loop, amplitude_invariant_clarke_park_transform, sar_adc_c0g_charge_bucket_design]
+    feeds_into: [03-sensors.T3.04]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/03-sensors.T3.03a.md
   - id: 04-embedded.T1.04a
     title: "From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers"
     track: 04
@@ -414,7 +453,7 @@ bridges:
     prereqs: [00-foundations.T1.00b]
     introduces: [c_fixed_width_integer_types_and_overflow, bitwise_masks_and_shifts, c_structs_and_pointers_pass_by_reference]
     uses: [python_variables_and_types, for_while_loops_and_functions, lists_dicts_and_numpy_arrays]
-    feeds_into: []
+    feeds_into: [04-embedded.T1.04b]
     safety_level: none
     hardware_required: false
     resources_verified: false
@@ -427,7 +466,7 @@ bridges:
     prereqs: [04-embedded.T1.04a]
     introduces: [non_blocking_tick_scheduler, finite_state_machine_switch_enum, hardware_isr_and_volatile_contract]
     uses: [c_fixed_width_integer_types_and_overflow, bitwise_masks_and_shifts, c_structs_and_pointers_pass_by_reference]
-    feeds_into: []
+    feeds_into: [04-embedded.T1.05]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -440,24 +479,63 @@ bridges:
     prereqs: [04-embedded.T1.05, 03-sensors.T2.04]
     introduces: [spi_full_duplex_clock_polarity_phase, dma_zero_cpu_memory_transfer, double_buffered_ping_pong_half_complete_isr]
     uses: [hardware_timer_isr_and_jitter, spi_magnetic_encoder_readout, packed_binary_telemetry_struct]
-    feeds_into: []
+    feeds_into: [04-embedded.T2.04b]
     safety_level: none
     hardware_required: false
     resources_verified: false
     path: modules/04-embedded.T2.04a.md
   - id: 04-embedded.T2.04b
-    title: "RTOS Tasks, Priority Inversion, Rate-Monotonic Deadlines, CAN Arbitration & Zephyr/micro-ROS Preview"
+    title: "RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration"
     track: 04
     tier: 2
-    est_hours: 4.5
+    est_hours: 4.0
     prereqs: [04-embedded.T2.04a]
     introduces: [rtos_preemptive_scheduling_and_cpu_utilization, unbounded_priority_inversion_and_inheritance, can_bitwise_arbitration_and_mit_packing]
     uses: [non_blocking_tick_scheduler, hardware_isr_and_volatile_contract, dma_zero_cpu_memory_transfer]
-    feeds_into: []
+    feeds_into: [04-embedded.T2.05, 04-embedded.T2.04c]
     safety_level: none
     hardware_required: false
     resources_verified: false
     path: modules/04-embedded.T2.04b.md
+  - id: 04-embedded.T2.04c
+    title: "Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives"
+    track: 04
+    tier: 2
+    est_hours: 4.0
+    prereqs: [04-embedded.T2.04b]
+    introduces: [zephyr_west_and_kconfig_build, zephyr_devicetree_hardware_binding, zephyr_static_threads_and_k_mutex]
+    uses: [rtos_preemptive_scheduling_and_cpu_utilization, unbounded_priority_inversion_and_inheritance, c_structs_and_pointers_pass_by_reference]
+    feeds_into: [04-embedded.T2.04d]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/04-embedded.T2.04c.md
+  - id: 04-embedded.T2.04d
+    title: "micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging"
+    track: 04
+    tier: 2
+    est_hours: 4.0
+    prereqs: [04-embedded.T2.04c]
+    introduces: [microros_xrcedds_client_agent_bridge, rclc_static_lifecycle_and_executor, mcu_to_ros2_deterministic_transport]
+    uses: [zephyr_static_threads_and_k_mutex, can_bitwise_arbitration_and_mit_packing, dma_zero_cpu_memory_transfer]
+    feeds_into: [04-embedded.T2.05]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/04-embedded.T2.04d.md
+  - id: 04-embedded.T3.04a
+    title: "Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic, Lock-Free SeqLock & Embedded Rust/Zephyr Zero-Copy"
+    track: 04
+    tier: 3
+    est_hours: 5.0
+    prereqs: [03-sensors.T3.04, 04-embedded.T2.05]
+    introduces: [center_aligned_pwm_midpoint_adc_sampling, q131_fixed_point_trig_scaling, seqlock_optimistic_even_odd_versioning]
+    uses: [dma_double_buffered_ping_pong_isr, rate_monotonic_response_time_analysis, zephyr_static_threads_and_k_mutex, minmax_zero_sequence_svpwm_injection]
+    feeds_into: [04-embedded.T3.05]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/04-embedded.T3.04a.md
   - id: 05-control.T1.05a
     title: "Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Actuator Saturation"
     track: 05
@@ -466,7 +544,7 @@ bridges:
     prereqs: [00-foundations.T1.01, 04-embedded.T1.05]
     introduces: [open_vs_closed_loop_tracking_error, pid_spring_damper_integrator_intuition, actuator_saturation_and_integrator_windup]
     uses: [symplectic_euler_integration, hardware_timer_isr_and_jitter, pwm_duty_cycle_effective_voltage]
-    feeds_into: []
+    feeds_into: [05-control.T1.06]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -479,11 +557,24 @@ bridges:
     prereqs: [00-foundations.T2.01, 02-mechanics.T2.03]
     introduces: [loop_transfer_gain_and_phase_margin, sensitivity_complementary_waterbed_tradeoff, luenberger_observer_and_brysons_lqr_weights]
     uses: [bode_magnitude_db_and_phase, continuous_state_space_matrices, discrete_pid_controller]
-    feeds_into: []
+    feeds_into: [05-control.T2.06]
     safety_level: none
     hardware_required: false
     resources_verified: true
     path: modules/05-control.T2.05a.md
+  - id: 05-control.T3.05a
+    title: "Joseph-Form Covariance Symmetry, Tangent-Space Error-State Reset on SO(3), Receding-Horizon QP & Control Barrier Functions"
+    track: 05
+    tier: 3
+    est_hours: 5.0
+    prereqs: [00-foundations.T3.01, 05-control.T2.06]
+    introduces: [joseph_stabilized_covariance_update, tangent_space_eskf_error_injection, control_barrier_forward_invariance_qp]
+    uses: [rodrigues_so3_se3_exp_log_maps, discrete_infinite_horizon_lqr, augmented_kalman_disturbance_observer]
+    feeds_into: [05-control.T3.06]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/05-control.T3.05a.md
   - id: 06-robotics.T1.06a
     title: "1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper"
     track: 06
@@ -492,24 +583,37 @@ bridges:
     prereqs: [02-mechanics.T1.03, 05-control.T1.06]
     introduces: [trajectory_vs_step_setpoint, polynomial_endpoint_boundary_conditions, virtual_joint_compliance_stiffness]
     uses: [discrete_pid_controller, planar_2link_forward_kinematics, gravity_lever_arm_cosine_torque]
-    feeds_into: []
+    feeds_into: [06-robotics.T1.07]
     safety_level: none
     hardware_required: false
     resources_verified: true
     path: modules/06-robotics.T1.06a.md
   - id: 06-robotics.T2.06a
-    title: "ROS 2 Computational Graph (Nodes, Topics, Services, QoS), TF2 Frames, URDF & ros2_control Hardware Interfaces"
+    title: "ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, QoS), TF2 Frames, URDF & ros2_control"
     track: 06
     tier: 2
-    est_hours: 5.0
+    est_hours: 5.5
     prereqs: [02-mechanics.T2.03, 04-embedded.T2.05, 05-control.T2.06]
     introduces: [ros2_nodes_topics_services_and_qos, tf2_transform_tree_and_urdf_kinematics, ros2_control_hardware_interface_read_write]
     uses: [se3_homogeneous_transformation_matrix, parallel_axis_urdf_inertia_tensor, can_fd_mit_impedance_packet_packing]
-    feeds_into: []
+    feeds_into: [06-robotics.T2.07, 06-robotics.T2.06b]
     safety_level: none
     hardware_required: false
     resources_verified: false
     path: modules/06-robotics.T2.06a.md
+  - id: 06-robotics.T2.06b
+    title: "ROS 2 Operations: Launch & Parameter Composition, Deterministic rosbag2 Recording/Replay & Simulator Integration (Gazebo / MuJoCo)"
+    track: 06
+    tier: 2
+    est_hours: 4.5
+    prereqs: [06-robotics.T2.06a]
+    introduces: [ros2_launch_parameters_and_composition, rosbag2_mcap_recording_and_deterministic_replay, ros2_simulator_bridge_and_joint_state_loop]
+    uses: [ros2_nodes_topics_services_and_qos, tf2_transform_tree_and_urdf_kinematics, ros2_control_hardware_interface_read_write, microros_xrcedds_client_agent_bridge]
+    feeds_into: [06-robotics.T2.07]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/06-robotics.T2.06b.md
   - id: 06-robotics.T3.06a
     title: "PyTorch Tensors, Automatic Differentiation (autograd), Loss Functions & Behavior Cloning on Trajectory Logs"
     track: 06
@@ -518,7 +622,7 @@ bridges:
     prereqs: [06-robotics.T2.07]
     introduces: [neural_network_forward_pass_and_mse_loss, chain_rule_backpropagation_and_gradient_descent, behavior_cloning_expert_demonstration_fit]
     uses: [matrix_vector_multiplication, jacobian_transpose_cartesian_impedance, ruckig_time_optimal_jerk_limited_scurve]
-    feeds_into: []
+    feeds_into: [06-robotics.T3.06b]
     safety_level: none
     hardware_required: false
     resources_verified: true
@@ -531,7 +635,7 @@ bridges:
     prereqs: [06-robotics.T3.06a]
     introduces: [mdp_discounted_return_and_policy_gradient, action_chunking_temporal_ensembling_rtc, sim_to_real_domain_randomization_and_safety_shield]
     uses: [neural_network_forward_pass_and_mse_loss, chain_rule_backpropagation_and_gradient_descent, behavior_cloning_expert_demonstration_fit]
-    feeds_into: []
+    feeds_into: [06-robotics.T3.07, 07-systems.T3.06a]
     safety_level: high
     hardware_required: false
     resources_verified: false
@@ -544,11 +648,24 @@ bridges:
     prereqs: [06-robotics.T1.07]
     introduces: [cyclic_plc_scan_read_execute_write, normally_closed_hardware_estop_chain, single_tone_sine_sweep_gain_phase]
     uses: [finite_state_machine_switch_enum, ten_step_power_on_bringup, rc_cutoff_phase_lag]
-    feeds_into: []
+    feeds_into: [07-systems.T1.08]
     safety_level: high
     hardware_required: false
     resources_verified: true
     path: modules/07-systems.T1.07a.md
+  - id: 07-systems.T2.07a
+    title: "Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection"
+    track: 07
+    tier: 2
+    est_hours: 4.5
+    prereqs: [01-electronics.T2.02, 04-embedded.T2.05, 06-robotics.T2.07]
+    introduces: [regenerative_bus_energy_and_chopper_sizing, can_fd_crc16_and_rolling_counter_watchdog, sil_hil_fault_injection_verification]
+    uses: [regenerative_braking_bus_voltage_surge, can_fd_mit_impedance_packet_packing, precharge_resistor_inrush_and_tvs_clamp]
+    feeds_into: [07-systems.T2.08]
+    safety_level: high
+    hardware_required: false
+    resources_verified: true
+    path: modules/07-systems.T2.07a.md
   - id: 07-systems.T3.06a
     title: "OPC UA Information Models, IEC 63278 Asset Administration Shell (AAS) Submodels & ISO 13849-1 Performance Level d (PLd)"
     track: 07
@@ -557,7 +674,7 @@ bridges:
     prereqs: [06-robotics.T3.06b, 07-systems.T2.08]
     introduces: [opc_ua_address_space_nodes_and_pub_sub, iec_63278_aas_submodel_digital_nameplate, iso_13849_category3_pld_dual_channel_sto]
     uses: [opc_ua_industrial_telemetry, can_fd_crc16_rolling_counter_watchdog, normally_closed_hardware_estop_chain, ros2_nodes_topics_services_and_qos]
-    feeds_into: []
+    feeds_into: [06-robotics.T3.07, 08-capstones.T3.07a]
     safety_level: high
     hardware_required: false
     resources_verified: false
@@ -570,7 +687,7 @@ bridges:
     prereqs: [06-robotics.T3.07, 07-systems.T3.06a]
     introduces: [rss_and_worst_case_spatial_error_budget, end_to_end_latency_and_phase_margin_erosion_budget, pre_bring_up_interface_and_safety_signoff_gate]
     uses: [loop_transfer_gain_and_phase_margin, iso_13849_category3_pld_dual_channel_sto, sim_to_real_domain_randomization_and_safety_shield]
-    feeds_into: []
+    feeds_into: [08-capstones.T3.08]
     safety_level: high
     hardware_required: false
     resources_verified: false

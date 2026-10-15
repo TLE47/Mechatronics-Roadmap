@@ -1,117 +1,156 @@
-# MechaLab Complete Curriculum Syllabus (~8 hrs/week Study Plan)
+# MechaLab Complete Curriculum Syllabus (~8 hrs/week Tier-First Study Plan)
 
-> **Target Audience:** Absolute beginners (assumes only basic computer literacy, arithmetic, and English reading; programming, algebra, trigonometry, SI units, and physics are taught from scratch or tested out via Skip/Gate Tests).  
-> **Study Pace:** `~8.0 hours/week`  
-> **Graduate Goal:** Build and tune a custom multi-DOF robot arm with `ROS 2` (`ros2_control`), deploy a learned visuomotor/RL policy (`LeRobot` / `ACT` / `PPO`) wrapped in a real-time Control Barrier Function (`CBF`) & impedance safety shield, and explain how it integrates into an Industry 4.0 / `IEC 63278` Asset Administration Shell (`AAS`) and `ISO 13849-1 PLd` dual-channel `STO` architecture.
-
----
-
-## 1. Curriculum Summary & Total Hours by Pass
-
-| Curriculum Phase | Bridge Modules (`modules/`) | Legacy Steps (`README.md` & Tracks `00`–`08`) | Bridge Hours | Legacy Step Hours | Total Phase Hours | Weeks @ `8 hrs/wk` |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Pass 1 — Tier 1 (Beginner / Breakout Pass, incl. Level -1 & Stage 0)** | 16 | 8 (`1.1`–`1.8`) + Stage 0 (`L0.1`–`L0.3`) | `53.0 h` | `40.5 h` | `93.5 h` | **Weeks 1–12** (`12 wks`) |
-| **Pass 2 — Tier 2 (Intermediate / Applied Custom Engineering Pass)** | 14 | 8 (`2.1`–`2.8`) | `61.5 h` | `44.5 h` | `106.0 h` | **Weeks 13–25** (`13 wks`) |
-| **Pass 3 — Tier 3 (Advanced / Production & Embodied AI Pass)** | 10 | 8 (`3.1`–`3.8`) | `49.0 h` | `54.5 h` | `103.5 h` | **Weeks 26–38** (`13 wks`) |
-| **Total (64 Modules: 40 Bridge + 24 Legacy)** | **40** | **24** | **`163.5 h`** | **`139.5 h`** | **`303.0 h`** | **38 Weeks (~9 Months)** |
+> **Target Audience:** Absolute beginners (assumes only basic computer literacy, arithmetic, and English reading; programming, algebra, trigonometry, SI units, and physics are taught from scratch inside the **Tier 1 Foundations** on-ramp).  
+> **Graduate Goal:** By the end of this curriculum, a learner can design, simulate, build, program, and tune a multi-DOF mechatronic system (such as a custom-PCB 2-DOF or 6-DOF robot arm with closed-loop FOC/PID/LQR/CBF control, FreeRTOS/Zephyr/micro-ROS firmware, ROS 2 `ros2_control` integration, and a learned PyTorch/LeRobot policy), diagnosing faults across power electronics, mechanics, sensors, firmware, control, and safety layers.
 
 ---
 
-## 2. Fast-Track Personas (Using Skip Tests & Ladder Gate Tests)
+## 1. Tier-First Curriculum Architecture (Foundations Integrated into Each Tier)
 
-Every bridge module includes a **Module Skip Test** (`§7 Checkpoint -> ### Skip test`), and every ladder-final bridge module includes an 8-question **Ladder Gate Test** (`§7 Checkpoint -> ### Gate test`). Passing a Ladder Gate Test ($\ge 80\%$ overall, $100\%$ on `[SAFETY]` questions after reading `## Safety notes`) lets you bypass the preceding bridge modules in that ladder:
+Although `00-foundations` is stored in Track 00 for repository organization, **learners never study all of Track 00 upfront as a standalone course.** Instead, the curriculum is strictly **Tier-First**: you start each Tier with that Tier's **Foundations Ladder**, apply those exact tools across **Tracks 01–07** in the same Tier, and complete that Tier's **Integration Boss Capstone** before leveling up to the next Tier:
 
-| Learner Background | Ladders to Test Out Via Gate Tests | Bridge Hours Saved | Adjusted Time @ `8 hrs/wk` |
-| :--- | :--- | :---: | :---: |
-| **Absolute Beginner** (No prior coding, math beyond arithmetic, or electronics) | Complete all 40 bridge modules + 24 legacy steps in sequence | `0.0 h` | **38 Weeks (`303.0 h`)** |
-| **Software / CS Engineer** (Fluent in Python, C, Git, linear algebra, and ROS 2 basics) | Gate-test out of `00-foundations.T1.00a`–`00d`, `04-embedded.T1.04a`, `00-foundations.T2.00a`–`00b`, `06-robotics.T2.06a`, `04-embedded.T3.04a`, `06-robotics.T3.06a` | `37.0 h` | **33 Weeks (`266.0 h`)** |
-| **Electrical / Embedded Engineer** (Fluent in KVL/KCL, op-amps, KiCad, C ISRs, SPI/DMA, RTOS) | Gate-test out of `01-electronics.T1.01a`–`01b`, `04-embedded.T1.04a`–`04b`, `01-electronics.T2.01a`–`01b`, `04-embedded.T2.04a`–`04b`, `01-electronics.T3.01a`, `04-embedded.T3.04a` | `46.0 h` | **32 Weeks (`257.0 h`)** |
-| **Mechanical / Controls Engineer** (Fluent in FBDs, $SE(3)$, Jacobians, ODEs, Laplace/Bode, PID/LQR) | Gate-test out of `00-foundations.T1.00c`–`00e`, `02-mechanics.T1.02a`, `05-control.T1.05a`, `00-foundations.T2.00a`–`00e`, `02-mechanics.T2.02a`, `05-control.T2.05a`, `02-mechanics.T3.02a`, `05-control.T3.05a` | `55.5 h` | **31 Weeks (`247.5 h`)** |
+```text
+Tier 1 (Phase 1 — Beginner / Breakout Pass: 24 modules, 84.0 hrs)
+├── Tier 1 Foundations          (T1.00a → T1.00b → T1.00c → T1.00d → T1.00e ──► Step 1.1: 00-foundations.T1.01)
+├── Electronics & Power         (T1.01a → T1.01c → T1.01d → T1.01b          ──► Step 1.2: 01-electronics.T1.02)
+├── Mechanics                   (T1.02a                                     ──► Step 1.3: 02-mechanics.T1.03)
+├── Sensors & Actuators         (T1.03a                                     ──► Step 1.4: 03-sensors.T1.04)
+├── Embedded & Realtime         (T1.04a → T1.04b                            ──► Step 1.5: 04-embedded.T1.05)
+├── Control & Estimation        (T1.05a                                     ──► Step 1.6: 05-control.T1.06)
+├── Robotics & Autonomy         (T1.06a                                     ──► Step 1.7: 06-robotics.T1.07)
+├── Systems / Production        (T1.07a                                     ──► Step 1.8 Safety & SysID Prep)
+└── Tier 1 integration step     (Step 1.8 Boss: 07-systems.T1.08 — Breadboard/Breakout 2-DOF Compliant Robot)
 
----
+Tier 2 (Phase 2 — Intermediate / Applied Pass: 26 modules, 122.5 hrs)
+├── Tier 2 Foundations          (T2.00a → T2.00b → T2.00c → T2.00d → T2.00e → T2.00f ──► Step 2.1: 00-foundations.T2.01)
+├── Electronics & Power         (T2.01a → T2.01b                                     ──► Step 2.2: 01-electronics.T2.02)
+├── Mechanics                   (T2.02a                                              ──► Step 2.3: 02-mechanics.T2.03)
+├── Sensors & Actuators         (T2.03a                                              ──► Step 2.4: 03-sensors.T2.04)
+├── Embedded & Realtime         (T2.04a → T2.04b → T2.04c (Zephyr) → T2.04d (uROS)   ──► Step 2.5: 04-embedded.T2.05)
+├── Control & Estimation        (T2.05a                                              ──► Step 2.6: 05-control.T2.06)
+├── Robotics & Autonomy         (T2.06a (ROS 2 Core) → T2.06b (Launch/Bag/Sim)       ──► Step 2.7: 06-robotics.T2.07)
+├── Systems / Production        (T2.07a (Regen Chopper, CAN-FD Watchdog & HIL)       ──► Step 2.8 Systems & HIL Prep)
+└── Tier 2 integration step     (Step 2.8 Boss: 07-systems.T2.08 — Custom 4-Layer CAN Servo + LQR/MuJoCo Twin)
 
-## 3. Master Week-by-Week Schedule (64 Modules in Topological Order)
+Tier 3 (Phase 3 — Advanced / Production Pass: 18 modules, 117.0 hrs)
+├── Tier 3 Foundations          (T3.00a                     ──► Step 3.1: 00-foundations.T3.01)
+├── Electronics & Power         (T3.01a                     ──► Step 3.2: 01-electronics.T3.02)
+├── Mechanics                   (T3.02a                     ──► Step 3.3: 02-mechanics.T3.03)
+├── Sensors & Actuators         (T3.03a                     ──► Step 3.4: 03-sensors.T3.04)
+├── Embedded & Realtime         (T3.04a                     ──► Step 3.5: 04-embedded.T3.05)
+├── Control & Estimation        (T3.05a                     ──► Step 3.6: 05-control.T3.06)
+├── Robotics & Autonomy         (T3.06a → T3.06b            ──► Step 3.7: 06-robotics.T3.07)
+├── Systems / Production        (T3.06a (OPC UA / AAS / PLd)──► Step 3.7 Industrial & Safety Qualification)
+└── Tier 3 integration step     (T3.07a ──► Step 3.8 Boss: 08-capstones.T3.08 — Production Capstones I–V)
+```
 
-### Pass 1 — Tier 1: Beginner / Intuitive Pass (Weeks 1–12, `93.5 hrs`)
-
-| Week | Module ID & Path | Title | Type | Prereqs | Est. Hours | HW Req? | Safety |
-| :---: | :--- | :--- | :---: | :--- | :---: | :---: | :---: |
-| **1** | [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) | Running Python, Variables, Loops, Functions & Tracebacks | Bridge | `[]` | `3.0 h` | No | `none` |
-| **1** | [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) | Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics | Bridge | `00-foundations.T1.00a` | `3.5 h` | No | `none` |
-| **1–2** | [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) | SI Units, Engineering Prefixes & Dimensional Analysis | Bridge | `00-foundations.T1.00b` | `3.0 h` | No | `none` |
-| **2** | [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) | Algebra, Linear Functions, Right-Triangle Trig, Radians & 2D Vectors | Bridge | `00-foundations.T1.00c` | `3.5 h` | No | `none` |
-| **2–3** | [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) | Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop *(Gate)* | Bridge | `00-foundations.T1.00d` | `4.0 h` | No | `none` |
-| **3** | [`Stage 0 (L0.1–L0.3)`](../README.md#stage-0-global-level-0-prerequisite-on-ramp) | Hydraulic Analogies, Breadboard/DMM/PSU Habits & Starter MCU Loops | Stage 0 | `00-foundations.T1.00e` | `4.5 h` | Sim/Opt | `low` |
-| **3–4** | [`00-foundations.T1.01`](../00-foundations/README.md#tier-1-beginner--intuitive) | **Step 1.1:** Calculus as `while` Loops, 2D Rotations & RC Smoothing | Legacy | `00-foundations.T1.00e` | `4.5 h` | No | `none` |
-| **4** | [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md) | Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers | Bridge | `00-foundations.T1.00e` | `3.0 h` | No | `low` |
-| **4–5** | [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) | Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety | Bridge | `01-electronics.T1.01a` | `3.0 h` | No | `high` |
-| **5** | [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) | Capacitors, Inductors, RC Time Constants & Inductive Flyback | Bridge | `01-electronics.T1.01c` | `3.5 h` | No | `low` |
-| **5–6** | [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) | Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal *(Gate)* | Bridge | `01-electronics.T1.01d` | `3.5 h` | No | `high` |
-| **6** | [`01-electronics.T1.02`](../01-electronics-and-power/README.md#tier-1-beginner--intuitive) | **Step 1.2:** Breadboard H-Bridges (`DRV8833`), Logic Levels & Decoupling | Legacy | `00-foundations.T1.01`, `01-electronics.T1.01b` | `4.5 h` | Sim/Opt | `high` |
-| **6–7** | [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) | Free-Body Diagrams, Static Torque Balance, Pulleys/Gears & Rotational Inertia *(Gate)* | Bridge | `00-foundations.T1.01` | `3.5 h` | No | `none` |
-| **7** | [`02-mechanics.T1.03`](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive) | **Step 1.3:** 2D Planar Kinematics, Gear Ratios ($N^2$ Inertia) & Bearings | Legacy | `00-foundations.T1.01`, `02-mechanics.T1.02a` | `4.5 h` | No | `low` |
-| **7–8** | [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md) | Electromagnets, Permanent Magnets, Pole Pairs, Quadrature Pulses & Back-EMF *(Gate)* | Bridge | `01-electronics.T1.02` | `3.0 h` | No | `low` |
-| **8** | [`03-sensors.T1.04`](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) | **Step 1.4:** Quadrature/Magnetic Encoders & Open-Loop BLDC (`SimpleFOC`) | Legacy | `01-electronics.T1.02`, `03-sensors.T1.03a` | `4.5 h` | Sim/Opt | `medium` |
-| **8–9** | [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) | From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers | Bridge | `00-foundations.T1.00b` | `3.0 h` | No | `none` |
-| **9** | [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) | Non-Blocking `millis()`/`micros()` State Machines, Hardware ISRs & `volatile` *(Gate)* | Bridge | `04-embedded.T1.04a` | `3.0 h` | No | `low` |
-| **9–10** | [`04-embedded.T1.05`](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) | **Step 1.5:** Killing `delay()`, $1\text{ kHz}$ Timer ISRs & Binary Serial | Legacy | `01-electronics.T1.02`, `04-embedded.T1.04b` | `4.5 h` | Sim/Opt | `low` |
-| **10** | [`05-control.T1.05a`](../modules/05-control.T1.05a.md) | Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Saturation *(Gate)* | Bridge | `00-foundations.T1.01`, `04-embedded.T1.05` | `3.5 h` | No | `low` |
-| **10–11** | [`05-control.T1.06`](../05-control-and-estimation/README.md#tier-1-beginner--intuitive) | **Step 1.6:** PID Virtual Spring-Damper, Anti-Windup & Complementary IMU | Legacy | `00-foundations.T1.01`, `04-embedded.T1.05`, `05-control.T1.05a` | `4.5 h` | Sim/Opt | `medium` |
-| **11** | [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) | 1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper *(Gate)* | Bridge | `02-mechanics.T1.03`, `05-control.T1.06` | `3.5 h` | No | `low` |
-| **11–12** | [`06-robotics.T1.07`](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive) | **Step 1.7:** Cubic Trajectories, Joint Springs & 10-Step Safe Bring-Up | Legacy | `02-mechanics.T1.03`, `05-control.T1.06`, `06-robotics.T1.06a` | `4.5 h` | Sim/Opt | `medium` |
-| **12** | [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) | Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep *(Gate)* | Bridge | `06-robotics.T1.07` | `3.5 h` | No | `high` |
-| **12** | [`07-systems.T1.08`](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass) | **Step 1.8 (Tier 1 Boss):** Breadboard/Breakout 2-DOF Desktop Robot | Legacy | `06-robotics.T1.07`, `07-systems.T1.07a` | `4.5 h` | Sim/Opt | `high` |
-
----
-
-### Pass 2 — Tier 2: Intermediate / Applied Custom Engineering Pass (Weeks 13–25, `106.0 hrs`)
-
-| Week | Module ID & Path | Title | Type | Prereqs | Est. Hours | HW Req? | Safety |
-| :---: | :--- | :--- | :---: | :--- | :---: | :---: | :---: |
-| **13** | [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) | Limits, Derivatives as Slopes, Integrals as Area & $2\times 2 / 3\times 3$ Matrix Algebra | Bridge | `07-systems.T1.08` | `4.0 h` | No | `none` |
-| **13** | [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) | 3D Vectors, Cross Products, Determinants, Inverses & Eigenvalues | Bridge | `00-foundations.T2.00a` | `4.0 h` | No | `none` |
-| **14** | [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) | First- & Second-Order ODEs, $\omega_n$, $\zeta$ & Damping Regimes | Bridge | `00-foundations.T2.00b` | `4.0 h` | No | `none` |
-| **14** | [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) | Complex Numbers, Euler's Formula, Phasors, Impedance & Bode Plots | Bridge | `00-foundations.T2.00c` | `4.0 h` | No | `none` |
-| **15** | [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) | Laplace Transform, Poles/Zeros, State-Space $\dot{x}=Ax+Bu$ & Discretization | Bridge | `00-foundations.T2.00d` | `4.5 h` | No | `none` |
-| **15** | [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) | Sampling, Aliasing, Nyquist, $z$-Transform, Tustin Pre-Warping & Covariance *(Gate)* | Bridge | `00-foundations.T2.00e` | `4.5 h` | No | `none` |
-| **16** | [`00-foundations.T2.01`](../00-foundations/README.md#tier-2-intermediate--applied) | **Step 2.1:** State-Space Matrices, Two-Mass Resonance, Quaternions & Biquads | Legacy | `07-systems.T1.08`, `00-foundations.T2.00e`, `00-foundations.T2.00f` | `5.5 h` | No | `none` |
-| **16–17** | [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) | Op-Amps, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing | Bridge | `01-electronics.T1.02`, `00-foundations.T2.01` | `4.0 h` | No | `low` |
-| **17** | [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) | KiCad 4-Layer Stackup, Parasitic $L\frac{di}{dt}$, Bootstrap Drivers & $48\text{ V}$ Pre-Charge *(Gate)* | Bridge | `01-electronics.T2.01a` | `4.5 h` | No | `high` |
-| **17–18** | [`01-electronics.T2.02`](../01-electronics-and-power/README.md#tier-2-intermediate--applied) | **Step 2.2:** 4-Layer KiCad PCBs, Bootstrap Gate Drivers & 4-Terminal Kelvin Shunts | Legacy | `01-electronics.T1.02`, `00-foundations.T2.01`, `01-electronics.T2.01b` | `5.5 h` | Sim/Opt | `high` |
-| **18** | [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) | 6-DOF Rigid-Body DOF, 3D Homogeneous Transforms $SE(3)$, Jacobians & Inertia *(Gate)* | Bridge | `02-mechanics.T1.03`, `00-foundations.T2.01` | `4.5 h` | No | `none` |
-| **19** | [`02-mechanics.T2.03`](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied) | **Step 2.3:** Maxwell Exact Constraint, `CadQuery` & URDF/MuJoCo Validation | Legacy | `02-mechanics.T1.03`, `00-foundations.T2.01`, `02-mechanics.T2.02a` | `5.5 h` | No | `low` |
-| **19–20** | [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) | Three-Phase Stator Frames ($abc \to \alpha\beta \to dq$), PLLs & Sensor Random Walk *(Gate)* | Bridge | `01-electronics.T2.02`, `03-sensors.T1.04` | `4.5 h` | No | `low` |
-| **20** | [`03-sensors.T2.04`](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied) | **Step 2.4:** Clarke/Park Transforms, Type-II PLLs & Allan Variance | Legacy | `01-electronics.T2.02`, `03-sensors.T1.04`, `03-sensors.T2.03a` | `5.5 h` | Sim/Opt | `medium` |
-| **21** | [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) | SPI/I2C Bus Transactions, DMA Ping-Pong Ring Buffers & Zero-CPU Peripherals | Bridge | `04-embedded.T1.05`, `03-sensors.T2.04` | `4.0 h` | No | `low` |
-| **21–22** | [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) | RTOS Tasks, Priority Inversion, Rate-Monotonic Deadlines, CAN & Zephyr/micro-ROS *(Gate)* | Bridge | `04-embedded.T2.04a` | `5.0 h` | No | `low` |
-| **22** | [`04-embedded.T2.05`](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied) | **Step 2.5:** FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (`MIT Mode`) | Legacy | `04-embedded.T1.05`, `03-sensors.T2.04`, `04-embedded.T2.04b` | `5.5 h` | Sim/Opt | `medium` |
-| **23** | [`05-control.T2.05a`](../modules/05-control.T2.05a.md) | Gain/Phase Margin, Sensitivity Waterbed ($S+T=1$), Luenberger Observers & Bryson LQR *(Gate)* | Bridge | `00-foundations.T2.01`, `02-mechanics.T2.03` | `4.5 h` | No | `none` |
-| **23–24** | [`05-control.T2.06`](../05-control-and-estimation/README.md#tier-2-intermediate--applied) | **Step 2.6:** Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF | Legacy | `00-foundations.T2.01`, `02-mechanics.T2.03`, `05-control.T2.05a` | `5.5 h` | Sim/Opt | `medium` |
-| **24** | [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) | ROS 2 Graph (Nodes, Topics, QoS, Actions, Executors), TF2, URDF & `ros2_control` *(Gate)* | Bridge | `02-mechanics.T2.03`, `04-embedded.T2.05`, `05-control.T2.06` | `5.5 h` | No | `low` |
-| **24–25** | [`06-robotics.T2.07`](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied) | **Step 2.7:** Jacobian Transpose Compliance, `Ruckig` S-Curves & Regen Clamps | Legacy | `02-mechanics.T2.03`, `05-control.T2.06`, `06-robotics.T2.06a` | `5.5 h` | Sim/Opt | `high` |
-| **25** | [`07-systems.T2.08`](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass) | **Step 2.8 (Tier 2 Boss):** Custom 4-Layer CAN Servo + LQR/MuJoCo Twin | Legacy | `01-electronics.T2.02`, `04-embedded.T2.05`, `06-robotics.T2.07` | `6.0 h` | Sim/Opt | `high` |
+| Tier / Pass | Bridge Modules (`modules/`) | Legacy Track Steps (`README.md`) | Total Modules | Estimated Hours | Pacing (~8 hrs/wk) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **🟢 Tier 1 (Beginner / Breakout Pass)** | 16 Bridge Modules (`53.0 hrs`) | 8 Legacy Steps (`31.0 hrs`) | 24 Modules | **84.0 hrs** | Weeks 1–11 |
+| **🔵 Tier 2 (Intermediate / Applied Pass)** | 18 Bridge Modules (`77.5 hrs`) | 8 Legacy Steps (`45.0 hrs`) | 26 Modules | **122.5 hrs** | Weeks 12–26 |
+| **🟣 Tier 3 (Advanced / Production Pass)** | 10 Bridge Modules (`49.0 hrs`) | 8 Legacy Steps (`68.0 hrs`) | 18 Modules | **117.0 hrs** | Weeks 27–41 |
+| **Total Curriculum (100% Sim-Capable)** | **44 Bridge Modules (`179.5 hrs`)** | **24 Legacy Steps (`144.0 hrs`)** | **68 Modules** | **323.5 hrs** | **~41 Weeks** |
 
 ---
 
-### Pass 3 — Tier 3: Advanced / Production & Embodied AI Pass (Weeks 26–38, `103.5 hrs`)
+## 2. Fast-Track Skip Paths (For Experienced Learners)
 
-| Week | Module ID & Path | Title | Type | Prereqs | Est. Hours | HW Req? | Safety |
-| :---: | :--- | :--- | :---: | :--- | :---: | :---: | :---: |
-| **26** | [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) | Skew-Symmetric Hat Map $[\omega]_\times$, Matrix Exponential $e^{At}$, Rodrigues & Energy *(Gate)* | Bridge | `07-systems.T2.08` | `5.0 h` | No | `none` |
-| **26–27** | [`00-foundations.T3.01`](../00-foundations/README.md#tier-3-advanced--production) | **Step 3.1:** Lie Groups $SO(3)/SE(3)$, Van Loan ZOH & Port-Hamiltonian Energy | Legacy | `07-systems.T2.08`, `00-foundations.T3.00a` | `6.5 h` | No | `none` |
-| **27–28** | [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) | 6-Layer `<2 nH` Stackup, Bessel Linear-Phase AFE, SAR Charge Buckets & Cauer Thermal *(Gate)* | Bridge | `01-electronics.T2.02`, `00-foundations.T3.01` | `4.5 h` | No | `high` |
-| **28** | [`01-electronics.T3.02`](../01-electronics-and-power/README.md#tier-3-advanced--production) | **Step 3.2:** 6-Layer $<2\text{ nH}$ $48\text{ V}/30\text{ A}$ Inverter, Bessel AFE & SAR Charge Buckets | Legacy | `01-electronics.T2.02`, `00-foundations.T3.01`, `01-electronics.T3.01a` | `6.5 h` | Sim/Opt | `high` |
-| **29** | [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | 6D Spatial Twists/Wrenches, Paros-Weisbord Flexure Hinges & Two-Pass RNEA *(Gate)* | Bridge | `00-foundations.T3.01`, `02-mechanics.T2.03` | `4.5 h` | No | `low` |
-| **29–30** | [`02-mechanics.T3.03`](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) | **Step 3.3:** Screw PoE, `Ti-6Al-4V` Flexures, Featherstone $O(n)$ RNEA & GPU Physics | Legacy | `00-foundations.T3.01`, `02-mechanics.T2.03`, `02-mechanics.T3.02a` | `6.5 h` | No | `low` |
-| **30–31** | [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md) | Decoupled Synchronous $d$-$q$ FOC, Min-Max SVPWM & Harmonic/Cogging LUTs *(Gate)* | Bridge | `01-electronics.T3.02`, `03-sensors.T2.04` | `4.5 h` | No | `medium` |
-| **31** | [`03-sensors.T3.04`](../03-sensors-and-actuators/README.md#tier-3-advanced--production) | **Step 3.4:** $25\text{–}40\text{ kHz}$ Decoupled $d$-$q$ FOC, SVPWM & Harmonic LUT | Legacy | `01-electronics.T3.02`, `03-sensors.T2.04`, `03-sensors.T3.03a` | `6.5 h` | Sim/Opt | `high` |
-| **32** | [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) | Center-Aligned PWM-to-ADC Triggering, Q1.31 Fixed-Point CORDIC & Wait-Free SeqLock *(Gate)* | Bridge | `03-sensors.T3.04`, `04-embedded.T2.05` | `4.5 h` | No | `low` |
-| **32–33** | [`04-embedded.T3.05`](../04-embedded-and-realtime/README.md#tier-3-advanced--production) | **Step 3.5:** Bare-Metal `TIM1`$\to$`ADC`, `CORDIC` & C++20 `WaitFreeSeqLock` | Legacy | `03-sensors.T3.04`, `04-embedded.T2.05`, `04-embedded.T3.04a` | `6.5 h` | Sim/Opt | `medium` |
-| **33–34** | [`05-control.T3.05a`](../modules/05-control.T3.05a.md) | Joseph-Form Covariance, Tangent-Space Error-State KF, Box QP & Second-Order CBF *(Gate)* | Bridge | `00-foundations.T3.01`, `04-embedded.T3.05`, `05-control.T2.06` | `4.5 h` | No | `medium` |
-| **34** | [`05-control.T3.06`](../05-control-and-estimation/README.md#tier-3-advanced--production) | **Step 3.6:** Joseph-Form Manifold ESKF, Embedded MPC & Control Barrier QPs | Legacy | `00-foundations.T3.01`, `04-embedded.T3.05`, `05-control.T2.06`, `05-control.T3.05a` | `6.5 h` | Sim/Opt | `high` |
-| **35** | [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) | PyTorch Tensors, Automatic Differentiation (`autograd`), Loss & Behavior Cloning | Bridge | `06-robotics.T2.07` | `5.0 h` | No | `low` |
-| **35–36** | [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) | MDPs, Policy Gradient / PPO, Action Chunking & Sim-to-Real Safety Wrappers *(Gate)* | Bridge | `06-robotics.T3.06a` | `5.5 h` | No | `high` |
-| **36** | [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) | OPC UA Information Models, IEC 63278 AAS Submodels & ISO 13849-1 `PLd` *(Gate)* | Bridge | `06-robotics.T3.06b`, `07-systems.T2.08` | `5.5 h` | No | `high` |
-| **37** | [`06-robotics.T3.07`](../07-systems-hil-and-production/README.md#tier-3-advanced--production) | **Step 3.7:** Khatib Operational WBC, Embodied AI (`LeRobot`), Schroeder SysID & $<1\ \mu\text{s}$ STO | Legacy | `02-mechanics.T3.03`, `05-control.T3.06`, `06-robotics.T2.07`, `06-robotics.T3.06b`, `07-systems.T3.06a` | `7.0 h` | Sim/Opt | `high` |
-| **37–38** | [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md) | System Error/Latency Budgeting, Cross-Domain ICD & Pre-Bring-Up Safety Sign-Off *(Gate)* | Bridge | `06-robotics.T3.07`, `07-systems.T3.06a` | `5.5 h` | No | `high` |
-| **38** | [`08-capstones.T3.08`](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass) | **Step 3.8 (Graduate Goal):** Full Production Capstones I–V (`48 V` FOC, Furuta, 6-DOF Arm, Hopper, AMR) | Legacy | `03-sensors.T3.04`, `06-robotics.T3.07`, `07-systems.T2.08`, `08-capstones.T3.07a` | `8.5 h` | Sim/Opt | `high` |
+Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`§7 Checkpoint -> ### Skip test`), and the final module of each of the 25 bridge ladders includes an **8-question Ladder Gate Test** (`§7 Checkpoint -> ### Gate test`). Passing any Gate Test with $\ge 80\%$ ($100\%$ on safety items after reading `## Safety notes`) skips that entire bridge ladder:
+
+1. **Software / CS Engineer Entry (Already fluent in Python, Git, C pointers & Linux):**
+   - Pass the Gate Test in [`00-foundations.T1.00e.md`](../modules/00-foundations.T1.00e.md) (or skip `T1.00a` and `T1.00b` via their Skip Tests) and `04-embedded.T1.04a.md` $\implies$ **saves ~10.0 hours** in Tier 1.
+2. **Mechanical Engineer Entry (Already fluent in SI units, vectors, FBDs, $SE(3)$, and ODEs):**
+   - Pass the Skip/Gate Tests in `00-foundations.T1.00c`–`T1.00e`, `02-mechanics.T1.02a`, `00-foundations.T2.00b`–`T2.00c`, and `02-mechanics.T2.02a` $\implies$ **saves ~25.5 hours** across Tiers 1–2.
+3. **Electrical / Embedded Engineer Entry (Already fluent in Ohm's law, RC/RL, MOSFET PWM, Op-Amps, SPI/DMA & RTOS):**
+   - Pass the Gate Tests in [`01-electronics.T1.01b.md`](../modules/01-electronics.T1.01b.md) *(completing mandatory safety items)*, [`04-embedded.T1.04b.md`](../modules/04-embedded.T1.04b.md), [`01-electronics.T2.01b.md`](../modules/01-electronics.T2.01b.md), and [`04-embedded.T2.04d.md`](../modules/04-embedded.T2.04d.md) $\implies$ **saves ~39.5 hours** across Tiers 1–2.
+
+---
+
+## 3. Complete Week-by-Week Tier-First Study Schedule (~8 Hours / Week)
+
+### 🟢 PHASE 1: Tier 1 — Beginner / Intuitive Pass (Weeks 1–11 · 84.0 Hours)
+
+| Week | Module ID & File | Title & Core Concepts Taught | Est. Hours | Prereqs |
+| :--- | :--- | :--- | :--- | :--- |
+| **Wk 1** | [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) | **Tier 1 Foundations 1:** Running Python, Variables, Loops, Functions & Tracebacks | 3.0 h | `[]` *(Entry)* |
+| **Wk 1** | [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) | **Tier 1 Foundations 2:** Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics | 3.5 h | `T1.00a` |
+| **Wk 2** | [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) | **Tier 1 Foundations 3:** SI Units, Engineering Prefixes & Dimensional Analysis | 2.5 h | `T1.00b` |
+| **Wk 2** | [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) | **Tier 1 Foundations 4:** Linear Equations, Unit-Circle Trig, Radians, `atan2` & 2D Vectors | 3.5 h | `T1.00c` |
+| **Wk 3** | [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) | **Tier 1 Foundations 5:** Position, Velocity, Acceleration, Force, Mass, Energy & Torque *(Gate Test 1)* | 4.0 h | `T1.00d` |
+| **Wk 3** | [`00-foundations.T1.01`](../00-foundations/README.md#tier-1-beginner--intuitive) | **Legacy Step 1.1 (Tier 1 Foundations):** Calculus as `while` Loops, 2D Rotations & RC Smoothing | 3.5 h | `T1.00e` |
+| **Wk 4** | [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md) | **Track 01 Bridge 1:** Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Dividers | 3.0 h | `T1.00e` |
+| **Wk 4** | [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) | **Track 01 Bridge 2:** Multimeter, Bench Supply, Breadboard & ESD/Short Safety *(Safety Gate)* | 2.5 h | `T1.01a` |
+| **Wk 4** | [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) | **Track 01 Bridge 3:** Capacitors, Inductors, RC Time Constants & Inductive Flyback | 3.0 h | `T1.01c` |
+| **Wk 5** | [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) | **Track 01 Bridge 4:** Low-Side MOSFET Switching, PWM & H-Bridge Polarity *(Gate Test 2)* | 3.5 h | `T1.01d` |
+| **Wk 5** | [`01-electronics.T1.02`](../01-electronics-and-power/README.md#tier-1-beginner--intuitive) | **Legacy Step 1.2:** Breadboard H-Bridges (`DRV8833`), Logic Levels & Decoupling | 3.5 h | `T1.01, T1.01b` |
+| **Wk 6** | [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) | **Track 02 Bridge:** Free-Body Diagrams, Static Torque, Gears & Inertia *(Gate Test 3)* | 3.5 h | `T1.01` |
+| **Wk 6** | [`02-mechanics.T1.03`](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive) | **Legacy Step 1.3:** 2D Planar Kinematics, Gear Ratios ($N^2$ Inertia) & Bearings | 4.0 h | `T1.01, T1.02a` |
+| **Wk 7** | [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md) | **Track 03 Bridge:** Electromagnets, Pole Pairs, Quadrature & Back-EMF *(Gate Test 4)* | 3.5 h | `T1.02` |
+| **Wk 7** | [`03-sensors.T1.04`](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) | **Legacy Step 1.4:** Quadrature/Magnetic Encoders & Open-Loop BLDC (`SimpleFOC`) | 4.0 h | `T1.02, T1.03a` |
+| **Wk 8** | [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) | **Track 04 Bridge 1:** From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers | 3.5 h | `T1.00b` |
+| **Wk 8** | [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) | **Track 04 Bridge 2:** Non-Blocking `millis()` State Machines, ISRs & `volatile` *(Gate Test 5)* | 3.5 h | `T1.04a` |
+| **Wk 9** | [`04-embedded.T1.05`](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) | **Legacy Step 1.5:** Killing `delay()`, $1\text{ kHz}$ Timer ISRs & Binary Serial | 3.5 h | `T1.02, T1.04b` |
+| **Wk 9** | [`05-control.T1.05a`](../modules/05-control.T1.05a.md) | **Track 05 Bridge:** Open vs. Closed Loop, P/I/D Physical Roles & Saturation *(Gate Test 6)* | 3.5 h | `T1.01, T1.05` |
+| **Wk 10** | [`05-control.T1.06`](../05-control-and-estimation/README.md#tier-1-beginner--intuitive) | **Legacy Step 1.6:** PID Virtual Spring-Damper, Anti-Windup & Complementary IMU | 4.0 h | `T1.01, T1.05, T1.05a` |
+| **Wk 10** | [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) | **Track 06 Bridge:** 1D Point-to-Point Motion, Boundary Conditions & Joint Springs *(Gate Test 7)* | 3.5 h | `T1.03, T1.06` |
+| **Wk 11** | [`06-robotics.T1.07`](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive) | **Legacy Step 1.7:** Cubic Trajectories, Joint Springs & 10-Step Safe Bring-Up | 4.0 h | `T1.03, T1.06, T1.06a` |
+| **Wk 11** | [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) | **Track 07 Bridge:** Industrial State Machines, Cyclic PLC Scan, E-Stop & Sine Sweep *(Gate Test 8)* | 3.5 h | `T1.07` |
+| **Wk 11** | [`07-systems.T1.08`](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass) | **Legacy Step 1.8 (Tier 1 Integration Boss):** Breadboard/Breakout 2-DOF Compliant Desktop Robot | 4.5 h | `T1.07, T1.07a` |
+
+---
+
+### 🔵 PHASE 2: Tier 2 — Intermediate / Applied Pass (Weeks 12–26 · 122.5 Hours)
+
+| Week | Module ID & File | Title & Core Concepts Taught | Est. Hours | Prereqs |
+| :--- | :--- | :--- | :--- | :--- |
+| **Wk 12** | [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) | **Tier 2 Foundations 1:** Numerical Derivatives, Integrals & Matrices as State Updaters | 4.0 h | `T1.01` |
+| **Wk 12** | [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) | **Tier 2 Foundations 2:** Vectors, Dot & Cross Products, Linear Independence & Basis Change | 3.5 h | `T2.00a` |
+| **Wk 13** | [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) | **Tier 2 Foundations 3:** 1st- & 2nd-Order ODEs, Characteristic Roots, $\omega_n$ & $\zeta$ | 4.5 h | `T2.00b` |
+| **Wk 13** | [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) | **Tier 2 Foundations 4:** Complex Numbers, Euler's Formula, Phasors & Bode Plots | 4.0 h | `T2.00c` |
+| **Wk 14** | [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) | **Tier 2 Foundations 5:** Laplace Transform, Poles/Zeros, State-Space $\dot{x}=Ax+Bu$ & Discretization | 4.5 h | `T2.00d` |
+| **Wk 14** | [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) | **Tier 2 Foundations 6:** Sampling, Aliasing, z-Transform, Pre-Warped Tustin Biquads & Covariance *(Gate Test 9)* | 4.5 h | `T2.00e` |
+| **Wk 15** | [`00-foundations.T2.01`](../00-foundations/README.md#tier-2-intermediate--applied) | **Legacy Step 2.1 (Tier 2 Foundations):** State-Space Matrices, Two-Mass Resonance, Quaternions & Tustin Biquads | 5.5 h | `T1.08, T2.00e, T2.00f` |
+| **Wk 16** | [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) | **Track 01 T2 Bridge 1:** Op-Amps, Differential Shunt Amplification, CMRR & Kelvin Sensing | 4.0 h | `T1.02, T2.01` |
+| **Wk 16** | [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) | **Track 01 T2 Bridge 2:** KiCad 4-Layer Stackup, $L\,di/dt$, Bootstrap Drivers & $48\text{ V}$ Pre-Charge *(Gate Test 10)* | 4.5 h | `T2.01a` |
+| **Wk 17** | [`01-electronics.T2.02`](../01-electronics-and-power/README.md#tier-2-intermediate--applied) | **Legacy Step 2.2:** 4-Layer KiCad PCBs, Bootstrap Gate Drivers & 4-Terminal Kelvin Shunts | 5.5 h | `T1.02, T2.01, T2.01b` |
+| **Wk 17** | [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) | **Track 02 T2 Bridge:** 6-DOF Constraint Counting, $SE(3)$ Transforms, Jacobians & Parallel-Axis Inertia *(Gate Test 11)* | 4.5 h | `T1.03, T2.01` |
+| **Wk 18** | [`02-mechanics.T2.03`](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied) | **Legacy Step 2.3:** Maxwell Exact Constraint, `CadQuery` & URDF/MuJoCo Validation | 5.5 h | `T1.03, T2.01, T2.02a` |
+| **Wk 19** | [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) | **Track 03 T2 Bridge:** Clarke/Park Reference Frames, PLL Velocity Tracking & Random Walk *(Gate Test 12)* | 4.5 h | `T2.02, T1.04` |
+| **Wk 19** | [`03-sensors.T2.04`](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied) | **Legacy Step 2.4:** Clarke/Park Transforms, Type-II PLLs & Allan Variance | 5.5 h | `T2.02, T1.04, T2.03a` |
+| **Wk 20** | [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) | **Track 04 T2 Bridge 1:** SPI/I2C Bus Transactions, DMA Ping-Pong Ring Buffers & Zero-CPU Peripherals | 4.0 h | `T1.05, T2.04` |
+| **Wk 20** | [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) | **Track 04 T2 Bridge 2:** RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Arbitration | 4.0 h | `T2.04a` |
+| **Wk 21** | [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md) | **Track 04 T2 Bridge 3:** Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives | 4.0 h | `T2.04b` |
+| **Wk 21** | [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md) | **Track 04 T2 Bridge 4:** micro-ROS on Microcontrollers: XRCE-DDS Client-Agent, Static `rclc_executor` & Clock Sync *(Gate Test 13)* | 4.0 h | `T2.04c` |
+| **Wk 22** | [`04-embedded.T2.05`](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied) | **Legacy Step 2.5:** FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (`MIT Mode`) | 5.5 h | `T1.05, T2.04, T2.04b, T2.04d` |
+| **Wk 23** | [`05-control.T2.05a`](../modules/05-control.T2.05a.md) | **Track 05 T2 Bridge:** Gain/Phase Margin, Sensitivity Waterbed ($S+T=1$), Luenberger Observers & Bryson LQR *(Gate Test 14)* | 4.5 h | `T2.01, T2.03` |
+| **Wk 23** | [`05-control.T2.06`](../05-control-and-estimation/README.md#tier-2-intermediate--applied) | **Legacy Step 2.6:** Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF | 5.5 h | `T2.01, T2.03, T2.05a` |
+| **Wk 24** | [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) | **Track 06 T2 Bridge 1:** ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, QoS), TF2, URDF & `ros2_control` | 5.5 h | `T2.03, T2.05, T2.06` |
+| **Wk 24** | [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) | **Track 06 T2 Bridge 2:** ROS 2 Operations: Launch & Composition, Deterministic `rosbag2` MCAP Replay & Simulator Integration *(Gate Test 15)* | 4.5 h | `T2.06a` |
+| **Wk 25** | [`06-robotics.T2.07`](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied) | **Legacy Step 2.7:** Jacobian Transpose Compliance, `Ruckig` S-Curves & Regen Clamps | 6.0 h | `T2.03, T2.06, T2.06a, T2.06b` |
+| **Wk 25** | [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) | **Track 07 T2 Bridge:** Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection *(Gate Test 16)* | 4.5 h | `T2.02, T2.05, T2.07` |
+| **Wk 26** | [`07-systems.T2.08`](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass) | **Legacy Step 2.8 (Tier 2 Integration Boss):** Custom 4-Layer CAN Servo + LQR/MuJoCo Digital Twin | 6.0 h | `T2.02, T2.05, T2.07, T2.07a` |
+
+---
+
+### 🟣 PHASE 3: Tier 3 — Advanced / Production Pass (Weeks 27–41 · 117.0 Hours)
+
+| Week | Module ID & File | Title & Core Concepts Taught | Est. Hours | Prereqs |
+| :--- | :--- | :--- | :--- | :--- |
+| **Wk 27** | [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) | **Tier 3 Foundations Bridge:** Skew-Symmetric Hat Map $[\omega]_\times$, Matrix Exponential $e^{At}$, Rodrigues & Energy *(Gate Test 17)* | 5.0 h | `T2.08` |
+| **Wk 28** | [`00-foundations.T3.01`](../00-foundations/README.md#tier-3-advanced--production) | **Legacy Step 3.1 (Tier 3 Foundations):** Lie Groups $SO(3)/SE(3)$, Van Loan ZOH & Port-Hamiltonian Energy | 8.0 h | `T2.08, T3.00a` |
+| **Wk 29** | [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) | **Track 01 T3 Bridge:** 6-Layer Flux-Canceling Planes, Bessel AFE, SAR Charge-Bucket Settling & Cauer Thermal RC *(Gate Test 18)* | 5.0 h | `T2.02, T3.01` |
+| **Wk 30** | [`01-electronics.T3.02`](../01-electronics-and-power/README.md#tier-3-advanced--production) | **Legacy Step 3.2:** 6-Layer $<2\text{ nH}$ $48\text{ V}/30\text{ A}$ Inverter, Bessel AFE & SAR Charge Buckets | 8.0 h | `T2.02, T3.01, T3.01a` |
+| **Wk 31** | [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | **Track 02 T3 Bridge:** 6D Spatial Twists/Wrenches, Screw Axes in $SE(3)$, Notch Flexure Stiffness & Two-Pass RNEA *(Gate Test 19)* | 5.0 h | `T3.01, T2.03` |
+| **Wk 32** | [`02-mechanics.T3.03`](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) | **Legacy Step 3.3:** Screw PoE, `Ti-6Al-4V` Flexures, Featherstone $O(n)$ RNEA & GPU Physics (`Newton` / `Isaac Lab`) | 8.5 h | `T3.01, T2.03, T3.02a` |
+| **Wk 33** | [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md) | **Track 03 T3 Bridge:** Rotating-Frame Cross-Coupling ($\omega_e L i$), Min-Max SVPWM ($1/\sqrt{3}$) & Encoder Harmonic LUT *(Gate Test 20)* | 4.5 h | `T3.02, T2.04` |
+| **Wk 34** | [`03-sensors.T3.04`](../03-sensors-and-actuators/README.md#tier-3-advanced--production) | **Legacy Step 3.4:** $25\text{–}40\text{ kHz}$ Decoupled $d$-$q$ FOC, SVPWM & Harmonic LUT | 8.0 h | `T3.02, T2.04, T3.03a` |
+| **Wk 35** | [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) | **Track 04 T3 Bridge:** Center-Aligned PWM Midpoint ADC Triggering, Q1.31 CORDIC & Wait-Free `SeqLock` *(Gate Test 21)* | 5.0 h | `T3.04, T2.05` |
+| **Wk 36** | [`04-embedded.T3.05`](../04-embedded-and-realtime/README.md#tier-3-advanced--production) | **Legacy Step 3.5:** Bare-Metal `TIM1`$\to$`ADC`, CORDIC, Embedded Rust (`Embassy`/`RTIC`) & C++20 `WaitFreeSeqLock` | 8.5 h | `T3.04, T2.05, T3.04a` |
+| **Wk 37** | [`05-control.T3.05a`](../modules/05-control.T3.05a.md) | **Track 05 T3 Bridge:** Joseph-Form Covariance Symmetry, Tangent-Space ESKF Reset on $SO(3)$, Box QP & CBFs *(Gate Test 22)* | 5.0 h | `T3.01, T2.06` |
+| **Wk 38** | [`05-control.T3.06`](../05-control-and-estimation/README.md#tier-3-advanced--production) | **Legacy Step 3.6:** Joseph-Form Manifold ESKF, Embedded MPC (`acados`/`TinyMPC`) & Control Barrier QPs | 8.5 h | `T3.01, T2.06, T3.05a` |
+| **Wk 39** | [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) | **Track 06 T3 Bridge 1:** PyTorch Tensors, Automatic Differentiation (`autograd`), Loss Functions & Behavior Cloning | 5.0 h | `T2.07` |
+| **Wk 39** | [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) | **Track 06 T3 Bridge 2:** MDPs, Policy Gradient / PPO, Action Chunking & Sim-to-Real Safety Wrappers *(Gate Test 23)* | 5.5 h | `T3.06a` |
+| **Wk 40** | [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) | **Track 07 T3 Bridge:** OPC UA Information Models, IEC 63278 AAS Submodels & ISO 13849-1 PLd *(Gate Test 24)* | 4.5 h | `T3.06b, T2.08` |
+| **Wk 40** | [`06-robotics.T3.07`](../07-systems-hil-and-production/README.md#tier-3-advanced--production) | **Legacy Step 3.7:** Khatib WBC, Embodied AI (`LeRobot`, Diffusion, $\pi_0$/VLA), Schroeder SysID, AAS & $<1\ \mu\text{s}$ STO | 9.0 h | `T3.03, T3.06, T3.06b, T3.06a` |
+| **Wk 41** | [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md) | **Track 08 T3 Bridge:** System Error/Latency Budgeting, Interface Contracts & Pre-Bring-Up Safety Sign-Off *(Gate Test 25)* | 4.5 h | `T3.07, 07-systems.T3.06a` |
+| **Wk 41** | [`08-capstones.T3.08`](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass) | **Legacy Step 3.8 (Tier 3 Production Mastery):** Full Production Capstones I–V & Open Robot Platforms | 9.5 h | `T3.02, T3.04, T3.05, T3.07, T3.07a` |

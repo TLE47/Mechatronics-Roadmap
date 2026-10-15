@@ -13,6 +13,7 @@ new_concepts:
 uses:
   - dma_double_buffered_ping_pong_isr
   - rate_monotonic_response_time_analysis
+  - zephyr_static_threads_and_k_mutex
   - minmax_zero_sequence_svpwm_injection
 est_hours: 5.0
 hardware_required: false

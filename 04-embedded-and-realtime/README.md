@@ -348,6 +348,6 @@ private:
 ## 7. Track 04 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
 
 - **Tier 1 (Fixed-Width C Types, Bitwise Masks, State Machines & Timer ISRs → Step 1.5):** [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) · [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) *(Ladder Gate Test)*
-- **Tier 2 (SPI/I2C Transactions, CMSIS, DMA, RTOS, Zephyr & micro-ROS → Step 2.5):** [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) · [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) *(Ladder Gate Test)*
+- **Tier 2 (SPI/I2C, DMA, FreeRTOS, Zephyr RTOS & micro-ROS → Step 2.5):** [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) · [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) · [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md) · [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md) *(Ladder Gate Test)*
 - **Tier 3 (Center-Aligned PWM→ADC Triggering, Q1.31 CORDIC & Wait-Free SeqLock → Step 3.5):** [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) *(Ladder Gate Test)*
 

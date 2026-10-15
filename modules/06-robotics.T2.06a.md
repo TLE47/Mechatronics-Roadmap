@@ -22,7 +22,7 @@ resources_verified: false
 ---
 
 ## 1. Why it matters
-This is the dedicated **ROS 2 bridge module** before Step 2.7 (`06-robotics.T2.07`) and your gateway to the Graduate Goal (building and tuning a custom robot arm with ROS 2 and a learned policy). Before running Cartesian impedance controllers (`06-robotics.T2.07`), `MoveIt 2`, or `Hugging Face LeRobot` policies (`06-robotics.T3.07`), you must master the complete **ROS 2 (`Jazzy` / `Lyrical`)** architecture: how **Nodes** and **Executors** (`SingleThreadedExecutor` vs. `MultiThreadedExecutor` + `CallbackGroups`) schedule callbacks, how **Topics**, **Services**, **Actions**, and **Parameters** exchange typed messages under strict **QoS** rules (`Reliable` vs. `Best-Effort`, `Transient Local` vs. `Volatile`), how workspaces are built (`package.xml`, `colcon build`, Python `LaunchDescription`), how the **`tf2` transform tree** chains 3D coordinate frames (`world -> base_link -> link_1 -> tool0`) from your **URDF/Xacro** robot description, and how **`ros2_control`** separates real-time hardware drivers (`SystemInterface::read()` / `write()`) from controllers (`joint_trajectory_controller`) without DDS network jitter! Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
+This is the dedicated **ROS 2 bridge module** before Step 2.7 (`06-robotics.T2.07`) and your gateway to the Graduate Goal (building and tuning a custom robot arm with ROS 2 and a learned policy). Before running Cartesian impedance controllers (`06-robotics.T2.07`), `MoveIt 2`, or `Hugging Face LeRobot` policies (`06-robotics.T3.07`), you must master the complete **ROS 2 (`Jazzy` / `Lyrical`)** architecture: how **Nodes** and **Executors** (`SingleThreadedExecutor` vs. `MultiThreadedExecutor` + `CallbackGroups`) schedule callbacks, how **Topics**, **Services**, **Actions**, and **Parameters** exchange typed messages under strict **QoS** rules (`Reliable` vs. `Best-Effort`, `Transient Local` vs. `Volatile`), how workspaces are built (`package.xml`, `colcon build`, Python `LaunchDescription`), how the **`tf2` transform tree** chains 3D coordinate frames (`world -> base_link -> link_1 -> tool0`) from your **URDF/Xacro** robot description, and how **`ros2_control`** separates real-time hardware drivers (`SystemInterface::read()` / `write()`) from controllers (`joint_trajectory_controller`) without DDS network jitter! Already know this? Take the Skip test in section 7 first.
 
 ## 2. Intuition first
 Imagine a robot software stack as a modern airport:
@@ -126,7 +126,7 @@ No hardware required for this module (`hardware_required: false`). In Step 2.7 (
 Pass/fail verification in simulation: `p_in_base == [0.25, 0.15, 0.10]`, `x_interp == 0.22 m`, `cmd_if["effort"] == 1.70 N*m`, and `qos_compatible(False, False, True, False) == False`.
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.7 (`06-robotics.T2.07`).
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
 1. `[Recall] [Concept: ros2_nodes_topics_services_and_qos]` A stereo camera node publishes depth frames of size $B_{\text{msg}} = 250{,}000\text{ bytes}$ at $f_{\text{pub}} = 60.0\text{ Hz}$ to $N_{\text{sub}} = 2$ unicast subscribers. Compute the total network data rate $R_{\text{MB/s}} = \frac{N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}}{10^6}$ in $\text{MB/s}$ (tolerance $\pm 10^{-6}\text{ MB/s}$).
@@ -155,65 +155,6 @@ assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
-### Gate test
-Covers the complete Track 06 Tier 2 bridge ladder (`06-robotics.T2.06a`) before Step 2.7 (`06-robotics.T2.07`):
-1. `[Concept: ros2_nodes_topics_services_and_qos]` Which ROS 2 communication primitive is best suited for a continuous $500\text{ Hz}$ stream of `/joint_states` data from `robot_state_publisher` to multiple listeners (`RViz2`, logger, planner)?
-   - **A.** Topic (Publish / Subscribe)
-   - **B.** Synchronous Blocking Service (`srv`)
-   - **C.** Parameter Server static string
-   - **D.** Environment variable
-2. `[Concept: ros2_nodes_topics_services_and_qos]` Which ROS 2 communication primitive is best suited for a long-running goal (`FollowJointTrajectory`) that takes $4.0\text{ s}$, needs continuous progress feedback, and must be cancelable mid-flight if an obstacle appears?
-   - **A.** Action (`Goal` + `Feedback` + `Result` + `Cancel`)
-   - **B.** Unreliable Topic
-   - **C.** Static `tf_static` broadcast
-   - **D.** Command-line argument
-3. `[Concept: ros2_nodes_topics_services_and_qos]` In a ROS 2 `SingleThreadedExecutor` running a $100\text{ Hz}$ timer ($T = 10.0\text{ ms}$) alongside a synchronous service callback that blocks for $C_{\text{srv}} = 45.0\text{ ms}$, how many $10.0\text{ ms}$ timer ticks are delayed while that single service call executes (integer part $\lfloor 45.0 / 10.0 \rfloor$, tolerance $\pm 10^{-9}$)?
-4. `[Concept: tf2_transform_tree_and_urdf_kinematics]` According to ROS `REP-103`, what are the standard right-handed coordinate axis directions (`+X`, `+Y`, `+Z`) for a robot body frame (`base_link`)?
-   - **A.** `+X` Forward, `+Y` Left, `+Z` Up
-   - **B.** `+X` Right, `+Y` Down, `+Z` Backward
-   - **C.** `+X` Up, `+Y` Forward, `+Z` Left
-   - **D.** Centimeters and degrees
-5. `[Concept: tf2_transform_tree_and_urdf_kinematics]` In a URDF `<joint type="revolute">`, which standard ROS node reads the `<robot>` XML description plus `/joint_states` and broadcasts the resulting 3D transforms onto `/tf` and `/tf_static`?
-   - **A.** `robot_state_publisher`
-   - **B.** `rosbag2`
-   - **C.** `rviz2`
-   - **D.** `colcon`
-6. `[Concept: ros2_control_hardware_interface_read_write]` What is the exact execution order of the three methods called by `ros2_control`'s `controller_manager` on every real-time control tick?
-   - **A.** `read(time, period)` $\to$ `update(time, period)` $\to$ `write(time, period)`
-   - **B.** `write()` $\to$ `read()` $\to$ `sleep(10)`
-   - **C.** `update()` $\to$ `compile()` $\to$ `reboot()`
-   - **D.** `read()` only
-7. `[Concept: ros2_control_hardware_interface_read_write]` If `controller_manager` runs at $f_{\text{cm}} = 1000\text{ Hz}$ ($1.0\text{ ms}$ period) and `SystemInterface::read()` takes $0.25\text{ ms}$, `controller::update()` takes $0.15\text{ ms}$, and `SystemInterface::write()` takes $0.20\text{ ms}$, compute the remaining idle timing margin $t_{\text{margin}} = 1.0 - (t_{\text{read}} + t_{\text{update}} + t_{\text{write}})$ in milliseconds ($\text{ms}$, tolerance $\pm 10^{-9}$).
-8. `[Concept: ros2_control_hardware_interface_read_write]` In `ros2_control`, before switching from a `position` controller to an `effort` (torque) controller on the same joint, what must the `controller_manager` verify about `command_interfaces`?
-   - **A.** Exclusivity: no two active controllers may claim the same joint's conflicting `command_interface` simultaneously; the position controller must be deactivated as the effort controller is activated in a single atomic switch.
-   - **B.** Both controllers should write different numbers to the motor at the same time.
-   - **C.** The URDF file must be deleted.
-   - **D.** The CAN bus must be unplugged.
-
-**Gate answer key:**
-```python
-import math
-
-g1_choice = "A"
-g2_choice = "A"
-g3_delayed = int(45.0 // 10.0)
-g4_choice = "A"
-g5_choice = "A"
-g6_choice = "A"
-g7_margin_ms = 1.0 - (0.25 + 0.15 + 0.20)
-g8_choice = "A"
-
-assert g1_choice == "A"
-assert g2_choice == "A"
-assert g3_delayed == 4
-assert g4_choice == "A"
-assert g5_choice == "A"
-assert g6_choice == "A"
-assert math.isclose(g7_margin_ms, 0.40, rel_tol=1e-9)
-assert g8_choice == "A"
-```
-- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q3 $\to$ `## 3. Formalization` item 1; Q4–Q5 $\to$ `## 3. Formalization` item 2; Q6–Q8 $\to$ `## 3. Formalization` item 3.
-
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
@@ -224,7 +165,7 @@ assert g8_choice == "A"
 
 ## 9. Resources
 - **Open Robotics — *Official ROS 2 Documentation (`docs.ros.org`, Jazzy / Lyrical LTS)* & `ros2_control` Docs (`control.ros.org`, `resources/open-source-toolchains.md`):** Tutorials on Nodes, Executors, CallbackGroups, Topics, Services, Actions, QoS, `tf2`, URDF, and writing a `ros2_control` `SystemInterface` `[UNVERIFIED]`.
-- **Track 06 (`06-robotics-and-autonomy/README.md`):** Directly continues into Step 2.7 (`06-robotics.T2.07`) `[VERIFIED 2026-10-15]`.
+- **Track 06 (`06-robotics-and-autonomy/README.md`):** Directly continues into `06-robotics.T2.06b` and Step 2.7 (`06-robotics.T2.07`) `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to legacy **Step 2.7 (`06-robotics.T2.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied).
+- Proceed to [`06-robotics.T2.06b`](06-robotics.T2.06b.md) (*ROS 2 Operations: Launch & Parameter Composition, Deterministic `rosbag2` Recording/Replay & Simulator Integration*).

@@ -314,6 +314,6 @@ $$
 ## 7. Track 06 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
 
 - **Tier 1 (Cubic/Quintic Boundary Polynomials & Gravity Feedforward → Step 1.7):** [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) *(Ladder Gate Test)*
-- **Tier 2 (ROS 2 DDS/QoS, TF2 Transforms, URDF & `ros2_control` → Step 2.7):** [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) *(Ladder Gate Test)*
+- **Tier 2 (ROS 2 Graph, Executors, QoS, TF2, URDF, `ros2_control`, Launch, `rosbag2` MCAP & Gazebo/MuJoCo Sim Bridge → Step 2.7):** [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) · [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) *(Ladder Gate Test)*
 - **Tier 3 (Behavior Cloning, ACT/Diffusion Policies, PPO RL & Sim-to-Real → Step 3.7):** [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) · [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) *(Ladder Gate Test)*
 

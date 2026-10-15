@@ -316,5 +316,7 @@ flowchart TB
 
 ## 6. Track 08 Bridge Modules & Pre-Flight Commissioning Gate (`modules/`)
 
+- **Tier 1 Boss Prerequisite Bridge (PLC Scan, E-Stop Chains & Sine-Sweep Bring-Up → Step 1.8):** [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) *(Ladder Gate Test)*
+- **Tier 2 Boss Prerequisite Bridge (Regenerative Shunt Chopper, CAN-FD Watchdog & HIL Fault Injection → Step 2.8):** [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) *(Ladder Gate Test)*
 - **Tier 3 (Pre-Flight Readiness Audit & Stage Commissioning Gate for Capstones I–V → Step 3.8):** [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md) *(Ladder Gate Test)*
 
