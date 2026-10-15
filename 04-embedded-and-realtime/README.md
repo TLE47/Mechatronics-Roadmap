@@ -342,3 +342,11 @@ private:
 | **Tier-0 FOC ISR WCET** | $\text{WCET}\kern0pt_{\max} < 4.0\ \mu\text{s}$ ($2.08\ \mu\text{s}$ achieved at $170\text{ MHz}$) | `DWT->CYCCNT` watermark in `ITCM`/`CCM-SRAM` |
 | **Zero Heap Allocation Verification** | `0 bytes` allocated from `.heap` section | Linker `--wrap=malloc` build gate |
 | **Lock-Free IPC Data Integrity** | `0` torn reads over $10^8$ transfers under high contention | Interactive **Tab 8: Attitude ESKF & SeqLock Simulator** |
+
+---
+
+## 7. Track 04 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
+
+- **Tier 1 (Fixed-Width C Types, Bitwise Masks, State Machines & Timer ISRs → Step 1.5):** [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) · [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) *(Ladder Gate Test)*
+- **Tier 2 (SPI/I2C Transactions, CMSIS, DMA, RTOS & CAN → Step 2.5):** [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) · [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) *(Ladder Gate Test)*
+

@@ -344,3 +344,11 @@ $$
 | **PoE vs. Analytical FK/Jacobian Match** | $\|T_{\text{PoE}}(q) - T_{\text{Analytical}}(q)\|\kern0pt_F < 10^{-12}$ | Automated test suite over 1,000 random configurations |
 | **RNEA Inverse Dynamics Accuracy** | $\|\tau_{\text{RNEA}} - \tau_{\text{Lagrange}}\|\kern0pt_\infty < 10^{-11}\text{ N}\cdot\text{m}$ | Randomized state/acceleration trajectory benchmark |
 | **Passivity Skew-Symmetry Identity** | $\lvert x^\top(\dot{M} - 2C)x\rvert < 10^{-9}$ across all configurations | Numerical derivative check along free-fall trajectory |
+
+---
+
+## 7. Track 02 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
+
+- **Tier 1 (Free-Body Diagrams, Inertia & $N^2$ Gear Ratio Reflection → Step 1.3):** [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) *(Ladder Gate Test)*
+- **Tier 2 (3D Homogeneous Transforms $SE(3)$ & Velocity Jacobian → Step 2.3):** [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) *(Ladder Gate Test)*
+

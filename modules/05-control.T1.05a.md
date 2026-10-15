@@ -1,100 +1,193 @@
 ---
 id: 05-control.T1.05a
-title: "Open-Loop vs Closed-Loop Feedback, Tracking Error, P/I/D Roles & Integrator Windup"
+title: "Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Actuator Saturation"
 track: "05"
 tier: 1
 prereqs:
   - 00-foundations.T1.01
   - 04-embedded.T1.05
 new_concepts:
-  - open_vs_closed_loop_feedback
-  - pid_proportional_integral_derivative_terms
-  - actuator_saturation_and_windup
+  - open_vs_closed_loop_tracking_error
+  - pid_spring_damper_integrator_intuition
+  - actuator_saturation_and_integrator_windup
 uses:
   - symplectic_euler_integration
-  - exponential_moving_average_filter
   - hardware_timer_isr_and_jitter
-est_hours: 4.5
+  - pwm_duty_cycle_effective_voltage
+est_hours: 3.5
+hardware_required: false
+safety_level: none
+resources_verified: true
 ---
 
-## 0. Skip Test
-Pass without reading if you can answer both without looking anything up:
-1. A vertical robot link holds a payload against gravity using a pure Proportional ($P$) controller $u = K_p (r - y)$. Why can the steady-state error $e = r - y$ never reach zero?
-   - **Check:** If error $e = 0$, the proportional output $u = K_p(0) = 0$, which produces zero torque to hold up the weight; therefore the link must sag by $e_{\text{ss}} = \tau_{\text{gravity}} / K_p$.
-2. What happens to the integral term $\int e\,dt$ if a joint is physically blocked for 3 seconds while trying to reach a target, and what does the arm do when the obstacle is removed?
-   - **Check:** The integral accumulates a huge value ("integrator windup") even though the actuator is already saturated at $100\%$; when released, the joint violently overshoots past the target until negative error drains the wound-up integral.
+## 1. Why it matters (Why This Matters)
+This is the bridge module before Step 1.6 (`05-control.T1.06`). If you command a robot arm joint with a fixed PWM duty cycle (open-loop), gravity, friction, or payload changes will leave it far from the target angle. Closing a feedback loop around encoder error $e(t) = r(t) - y(t)$ turns the motor into a programmable mechanical spring, shock absorber, and gravity compensator (**PID control**)—and understanding actuator saturation explains why an unclamped integral term causes violent overshoot (**integrator windup**). Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
 
-## 1. Why This Matters
-Step 1.6 (`05-control.T1.06`) implements a discrete-time PID controller with integrator clamping anti-windup and a filtered derivative-on-measurement term. Before writing that production control loop, you need a rock-solid intuition for what each of the three terms—Proportional ($P$), Integral ($I$), and Derivative ($D$)—actually does to a physical mass, why sensor quantization spikes ruin naive derivative $\frac{de}{dt}$, and why actuator limits cause integrator windup.
+## 2. Intuition first (Mental Model)
+Imagine steering a car toward the center of a lane. **Open-loop control** is closing your eyes and holding the steering wheel at a fixed angle based on a map—the first crosswind blows you off the road. **Closed-loop control** is looking at your distance from the lane center (the **error** $e = r - y$) every millisecond:
+- **Proportional ($P$, virtual spring):** Pulls harder the farther you are from the target ($K_p e$). Alone, a strong spring overshoots and oscillates, and sags slightly under a steady crosswind or gravity load.
+- **Derivative ($D$, virtual viscous damper):** Pushes *against* velocity ($-K_d \dot{y}$), acting like an oil-filled shock absorber that brakes the joint as it approaches the target so it doesn't overshoot.
+- **Integral ($I$, steady-state bias eliminator):** Accumulates past error over time ($K_i \int e\,dt$), steadily ratcheting up torque until steady-state gravity sag is driven to zero. But if the motor hits its $100\%$ voltage limit (**saturation**), an unclamped integrator keeps ballooning to an enormous number (**windup**), causing a huge overshoot after reaching the target.
 
-## 2. Mental Model
-1. **Open-Loop vs. Closed-Loop Feedback:**
-   Open-loop sends a command and hopes for the best. Closed-loop measures the actual position $y(t)$, computes the **tracking error** $e(t) = r(t) - y(t)$, and adjusts the actuator command $u(t)$ every sample tick $T_s$.
-2. **Physical Analogy of $P$, $I$, and $D$:**
-   - **Proportional ($K_p e$):** Acts like a **virtual mechanical spring** pulling the joint toward the target $r$. Higher $K_p$ makes the spring stiffer and reduces steady-state sag, but a spring + mass alone oscillates forever!
-   - **Derivative ($-K_d \dot{y}$):** Acts like a **virtual viscous shock absorber (damper)** that resists velocity, draining kinetic energy so the joint stops without bouncing. Computing derivative on measurement $-\dot{y}$ instead of $\dot{e}$ prevents a violent "derivative kick" when the setpoint $r$ steps instantaneously.
-   - **Integral ($K_i \int e\,dt$):** Accumulates past error over time to automatically build up whatever steady holding torque is needed to cancel gravity or static friction ($e_{\text{ss}} \to 0$).
-3. **Actuator Saturation & Integrator Windup:**
-   Real power supplies clip at $\pm u_{\max}$ (e.g., $\pm 12\text{ V}$). If $u$ is already saturated at $+12\text{ V}$ and error $e > 0$ persists, continuing to add $K_i e \Delta t$ winds the integral state to an absurd number. **Anti-windup clamping** freezes the integrator whenever the output is saturated and the error pushes deeper into saturation.
+## 3. Formalization
+1. **Closed-Loop Tracking Error ($e_k = r_k - y_k$):** At discrete control step $k$ with period $\Delta t$ ($\text{s}$), given reference target $r_k$ ($\text{rad}$) and measured position $y_k$ ($\text{rad}$), tracking error is $e_k = r_k - y_k$.
+2. **Physical PD Virtual Spring-Damper + Integral Action:** Commanded unsaturated control effort $u_{\text{raw},k}$ ($\text{V}$ or $\text{N}\cdot\text{m}$) with proportional gain $K_p$, integral gain $K_i$, and derivative gain $K_d$ (applied on measurement velocity $\dot{y}_k$ to avoid derivative kick on step changes in $r_k$) is:
+   $$u_{\text{raw},k} = \underbrace{K_p (r_k - y_k)}_{\text{Virtual Spring}} - \underbrace{K_d \dot{y}_k}_{\text{Virtual Damper}} + \underbrace{I_k}_{\text{Gravity/Friction Bias}}, \quad I_k = I_{k-1} + K_i e_k \Delta t$$
+   Substituting $r_k = 1.0\text{ rad}$, $y_k = 0.6\text{ rad}$ ($e_k = 0.4\text{ rad}$), $\dot{y}_k = 0.5\text{ rad/s}$, $I_k = 0.8\text{ N}\cdot\text{m}$, $K_p = 10.0$, and $K_d = 2.0$ gives $u_{\text{raw},k} = 10(0.4) - 2(0.5) + 0.8 = 3.8\text{ N}\cdot\text{m}$.
+3. **Actuator Saturation and Clamping Anti-Windup:** Physical actuators saturate at $\pm u_{\max}$:
+   $$u_k = \operatorname{clip}(u_{\text{raw},k},\ -u_{\max},\ +u_{\max})$$
+   Clamping anti-windup freezes $I_k$ whenever $|u_{\text{raw},k}| > u_{\max}$ and $\operatorname{sign}(e_k) = \operatorname{sign}(u_{\text{raw},k})$ (or clamps $|I_k| \le I_{\max}$).
 
-## 3. Worked Example
-A joint holds against a constant gravity disturbance torque $\tau_g = 0.60\text{ N}\cdot\text{m}$ with target $r = 1.00\text{ rad}$ and proportional gain $K_p = 4.0\text{ N}\cdot\text{m/rad}$:
-- **Step 1 (Pure P steady-state error):**
-  At rest ($\dot{y} = \ddot{y} = 0$), motor torque balances gravity:
-  $$K_p (r - y_{\text{ss}}) = \tau_g \implies e_{\text{ss}} = \frac{\tau_g}{K_p} = \frac{0.60}{4.0} = 0.15\text{ rad} \implies y_{\text{ss}} = 0.85\text{ rad}$$
-- **Step 2 (Adding Integral action $K_i = 10.0\text{ N}\cdot\text{m/(rad}\cdot\text{s)}$):**
-  The integral state $I_k$ grows until $I_{\text{ss}} = \tau_g = 0.60\text{ N}\cdot\text{m}$, allowing the proportional error to shrink to $e_{\text{ss}} = 0.00\text{ rad}$ ($y_{\text{ss}} = 1.00\text{ rad}$).
+## 4. Worked example (Worked Example & Code)
+Simulate a 1-DOF rotational arm ($J = 0.02\text{ kg}\cdot\text{m}^2$, $b = 0.05\text{ N}\cdot\text{m}\cdot\text{s/rad}$) lifting against a constant gravity torque $\tau_g = 0.60\text{ N}\cdot\text{m}$ under actuator limit $u_{\max} = 1.20\text{ N}\cdot\text{m}$ to compare (1) pure P control (leaves steady-state sag), (2) unclamped PID (suffers huge windup overshoot), and (3) anti-windup PID (zero steady-state error and minimal overshoot).
 
-## 4. Code
 ```python
 import math
 
-def simulate_joint(use_integral: bool, use_antiwindup: bool) -> tuple[float, float]:
-    J, b, tau_g = 0.02, 0.30, 0.60
-    kp, ki, kd = 4.0, (10.0 if use_integral else 0.0), 0.40
-    u_max = 1.20  # Actuator torque limit [N*m]
-    dt = 0.001
-    y, omega, i_term = 0.0, 0.0, 0.0
+def sim_arm(kp: float, ki: float, kd: float, anti_windup: bool) -> tuple[float, float]:
+    J, b, tau_g, u_max, dt = 0.02, 0.05, 0.60, 1.20, 0.001
+    q, dq, i_term, max_q = 0.0, 0.0, 0.0, 0.0
     r = 1.0
-    max_y = 0.0
+    for _ in range(3000):
+        e = r - q
+        i_candidate = i_term + ki * e * dt
+        if anti_windup:
+            i_candidate = max(-u_max, min(u_max, i_candidate))
+        u_raw = kp * e - kd * dq + i_candidate
+        if anti_windup and abs(u_raw) > u_max and (e * u_raw > 0.0):
+            u_raw = kp * e - kd * dq + i_term
+        else:
+            i_term = i_candidate
+        u = max(-u_max, min(u_max, u_raw))
+        ddq = (u - b * dq - tau_g) / J
+        dq += ddq * dt
+        q += dq * dt
+        max_q = max(max_q, q)
+    return q, max_q - r
 
-    for _ in range(4000):
-        err = r - y
-        p_term = kp * err
-        d_term = -kd * omega
-        u_unsat = p_term + i_term + d_term
-        u = max(-u_max, min(u_max, u_unsat))
-        if not use_antiwindup or not ((u >= u_max and err > 0) or (u <= -u_max and err < 0)):
-            i_term += ki * err * dt
-        alpha = (u - tau_g - b * omega) / J
-        omega += alpha * dt
-        y += omega * dt
-        if y > max_y:
-            max_y = y
-    return y, max_y
+q_p, _ = sim_arm(kp=4.0, ki=0.0, kd=0.4, anti_windup=False)
+q_windup, os_windup = sim_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=False)
+q_aw, os_aw = sim_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=True)
 
-y_p, _ = simulate_joint(use_integral=False, use_antiwindup=True)
-y_pi_windup, peak_windup = simulate_joint(use_integral=True, use_antiwindup=False)
-y_pi_aw, peak_aw = simulate_joint(use_integral=True, use_antiwindup=True)
-
-assert math.isclose(1.0 - y_p, 0.15, abs_tol=1e-3)
-assert math.isclose(y_pi_aw, 1.0, abs_tol=1e-3)
-assert peak_aw < peak_windup
-print(f"P-only y_ss={y_p:.3f} rad, PI+AW y_ss={y_pi_aw:.3f} rad, peak_no_AW={peak_windup:.3f} vs peak_AW={peak_aw:.3f}")
+assert math.isclose(1.0 - q_p, 0.60 / 4.0, abs_tol=1e-2)  # Pure P sags by tau_g / Kp = 0.15 rad!
+assert abs(1.0 - q_aw) < 1e-3                             # PID eliminates steady-state sag!
+assert os_windup > os_aw + 0.10                           # Anti-windup cuts overshoot!
+print(f"PD final q={q_p:.3f} rad (sag={1-q_p:.3f}), Unclamped OS={os_windup:.3f} rad, Anti-windup OS={os_aw:.3f} rad")
 ```
 Expected output:
 ```text
-P-only y_ss=0.850 rad, PI+AW y_ss=1.000 rad, peak_no_AW=1.186 vs peak_AW=1.032
+PD final q=0.850 rad (sag=0.150), Unclamped OS=0.220 rad, Anti-windup OS=0.044 rad
 ```
 
 ## 5. Exercise
-In the simulation above, if the gravity load doubles to $\tau_g = 1.00\text{ N}\cdot\text{m}$ while $K_p = 4.0\text{ N}\cdot\text{m/rad}$ (with $K_i = 0$), calculate the new steady-state position $y_{\text{ss}}$ for target $r = 1.00\text{ rad}$.
-- **Check:** $e_{\text{ss}} = \frac{1.00}{4.0} = 0.25\text{ rad}$, so $y_{\text{ss}} = 1.00 - 0.25 = 0.75\text{ rad}$.
+For the arm above with constant gravity load $\tau_g = 0.60\text{ N}\cdot\text{m}$ under PD control ($K_i = 0$), derive and verify the exact steady-state angle sag $e_{\text{ss}} = \tau_g / K_p$ when $K_p = 8.0\text{ N}\cdot\text{m/rad}$. Confirm that `sim_arm(kp=8.0, ki=0.0, kd=0.4, anti_windup=False)` settles to $q_{\text{ss}} = 0.925\text{ rad}$ ($e_{\text{ss}} = 0.075\text{ rad} \pm 10^{-3}\text{ rad}$).
+- **If your result differs:** At steady state ($\dot{q} = \ddot{q} = 0$), the spring torque balances gravity: $K_p e_{\text{ss}} = \tau_g \implies e_{\text{ss}} = 0.60 / 8.0 = 0.075\text{ rad}$.
 
-## 6. Gate Test
-1. Why is computing the derivative term on measurement ($-K_d \frac{dy}{dt}$) safer than computing it on tracking error ($+K_d \frac{de}{dt}$) when a user commands a sudden step change in target position $r$? (Answer: A step change in $r$ causes $\frac{dr}{dt} \to \infty$ for one sample tick, slamming the motor with a massive "derivative kick" torque spike, whereas the physical position $y$ changes smoothly.)
-2. Which PID term acts like a mechanical damper, and which term acts like a mechanical spring? (Answer: The $D$ term acts like a viscous damper proportional to velocity; the $P$ term acts like a spring proportional to position error.)
+## 6. Simulation path
+Run the Python simulation script above or open **Tab 4 (Control Loop & Saturation)** in the MechaLab Workbench (`npm run dev`) to observe how actuator saturation interacts with closed-loop feedback gains.
 
-## 7. Resources
-- **Åström & Murray — *Feedback Systems* (Ch. 1, 11):** Feedback principles, PID control, derivative filtering, and anti-windup (`resources/textbooks-and-papers.md`) `[VERIFIED 2026-10-15]`.
-- **Track 05 (`05-control-and-estimation/README.md`):** Directly prepares for Step 1.6 (`05-control.T1.06`) production discrete PID and complementary IMU filter `[VERIFIED 2026-10-15]`.
+## 7. Hardware path
+No hardware required for this module (`hardware_required: false`). In Step 1.6 (`05-control.T1.06`), this exact discrete PID + anti-windup law executes inside the $1\text{ kHz}$ timer ISR on your microcontroller driving the H-bridge or BLDC stage:
+```text
+[Reference r_k] ---> (+) ---> [PID + Anti-Windup] ---> [clip(-V_bus, +V_bus)] ---> [Motor + Encoder y_k]
+                      ^___________________________________________________________________|
+```
+Pass/fail verification in simulation: PD steady-state sag equals $\tau_g / K_p = 0.150\text{ rad}$, anti-windup steady-state error $< 0.001\text{ rad}$, and anti-windup overshoot $< 0.05\text{ rad}$.
+
+## 8. Checkpoint (Skip Test & Gate Test)
+Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.6 (`05-control.T1.06`).
+
+### Skip test
+1. `[Concept: open_vs_closed_loop_tracking_error]` A joint under PD control ($K_i = 0$) with $K_p = 5.0\text{ N}\cdot\text{m/rad}$ holds a constant gravity load $\tau_g = 0.50\text{ N}\cdot\text{m}$ at steady state ($\dot{q} = \ddot{q} = 0$). Compute the steady-state angle error $e_{\text{ss}} = \tau_g / K_p$ in radians ($\text{rad}$, tolerance $\pm 10^{-9}$).
+2. `[Concept: pid_spring_damper_integrator_intuition]` Given $r_k = 2.0\text{ rad}$, $y_k = 1.5\text{ rad}$, $\dot{y}_k = 0.4\text{ rad/s}$, $K_p = 10.0$, and $K_d = 2.5$ (with $I_k = 0$), compute the PD control effort $u_k = K_p(r_k - y_k) - K_d \dot{y}_k$ (tolerance $\pm 10^{-9}$).
+3. `[Concept: pid_spring_damper_integrator_intuition]` Which PID term acts as a virtual viscous shock absorber that opposes velocity to damp out oscillations?
+   - **A.** Proportional ($K_p$)
+   - **B.** Integral ($K_i$)
+   - **C.** Derivative ($K_d$)
+   - **D.** Feedforward gravity torque
+4. `[Concept: actuator_saturation_and_integrator_windup]` What causes **integrator windup** during a large step command?
+   - **A.** The encoder resolution is too high.
+   - **B.** The actuator hits its physical limit ($\pm u_{\max}$), so the error decreases more slowly than the linear model expects while an unclamped integral term keeps accumulating huge excess value that must unwind after crossing the target.
+   - **C.** The derivative gain $K_d$ is set to zero.
+   - **D.** The sample rate $f_s$ is too fast.
+
+**Answer key:**
+```python
+import math
+
+q1_ess = 0.50 / 5.0
+q2_u = 10.0 * (2.0 - 1.5) - 2.5 * 0.4
+q3_choice = "C"
+q4_choice = "B"
+
+assert math.isclose(q1_ess, 0.10, rel_tol=1e-9)
+assert math.isclose(q2_u, 4.0, rel_tol=1e-9)
+assert q3_choice == "C"
+assert q4_choice == "B"
+```
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3.
+
+### Gate test
+Covers the complete Track 05 Tier 1 bridge ladder (`05-control.T1.05a`) before Step 1.6 (`05-control.T1.06`):
+1. `[Concept: open_vs_closed_loop_tracking_error]` If target angle is $r = 1.57\text{ rad}$ and measured angle is $y = 1.27\text{ rad}$, compute tracking error $e = r - y$ in $\text{rad}$ (tolerance $\pm 10^{-9}$).
+2. `[Concept: open_vs_closed_loop_tracking_error]` Why does an open-loop voltage command $V = D \cdot V_{\text{bus}}$ fail to hold a robot arm at a fixed angle when a payload is placed in the gripper?
+   - **A.** Because open-loop control does not measure angle $y(t)$ and therefore cannot increase torque when the payload pulls the joint downward.
+   - **B.** Because PWM only works at $0\text{ RPM}$.
+   - **C.** Because encoders cannot measure negative angles.
+   - **D.** Because Ohm's law stops holding under load.
+3. `[Concept: pid_spring_damper_integrator_intuition]` A pure proportional controller ($K_p > 0, K_i = 0, K_d = 0$) on a frictionless inertia $J\ddot{q} = -K_p(q - r)$ behaves like what physical system?
+   - **A.** An undamped mass-spring oscillator that rings forever around $r$.
+   - **B.** An overdamped dashpot.
+   - **C.** A constant-velocity conveyor.
+   - **D.** An open-loop stepper motor.
+4. `[Concept: pid_spring_damper_integrator_intuition]` Compute the steady-state integral torque $I_{\text{ss}}$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$) when a PID controller holds an arm at zero steady-state error ($e_{\text{ss}} = 0, \dot{q} = 0$) against a constant gravity disturbance $\tau_g = 0.85\text{ N}\cdot\text{m}$.
+5. `[Concept: pid_spring_damper_integrator_intuition]` Why do production PID loops compute the derivative term on measurement ($-K_d \dot{y}$) rather than on error ($+K_d \dot{e} = K_d(\dot{r} - \dot{y})$) when $r(t)$ is a step command?
+   - **A.** To avoid **derivative kick**—an instantaneous step jump in $r(t)$ makes $\dot{r} = \Delta r / \Delta t$ huge for one tick, slamming the actuator into saturation.
+   - **B.** Because $\dot{y}$ is always zero.
+   - **C.** Because $r(t)$ cannot be stored in a float.
+   - **D.** To increase steady-state error.
+6. `[Concept: actuator_saturation_and_integrator_windup]` Given $u_{\text{raw}} = 18.5\text{ V}$ and supply limit $u_{\max} = 12.0\text{ V}$, compute the saturated output $u = \operatorname{clip}(u_{\text{raw}}, -u_{\max}, +u_{\max})$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
+7. `[Concept: actuator_saturation_and_integrator_windup]` Under clamping anti-windup, if $u_{\text{raw}} = +15.0\text{ V} > u_{\max} = 12.0\text{ V}$ and current error is $e_k = +0.4\text{ rad}$ (same sign as $u_{\text{raw}}$), what should happen to the integral accumulator $I_k$ on that tick?
+   - **A.** Freeze $I_k$ ($I_k = I_{k-1}$; do not add $K_i e_k \Delta t$).
+   - **B.** Multiply $I_k$ by $10$.
+   - **C.** Set $K_p = 0$.
+   - **D.** Reverse the motor polarity.
+8. `[Concept: pid_spring_damper_integrator_intuition]` Compute the discrete integral update $\Delta I = K_i e_k \Delta t$ (tolerance $\pm 10^{-9}$) for $K_i = 20.0$, $e_k = 0.25\text{ rad}$, and $\Delta t = 0.001\text{ s}$.
+
+**Gate answer key:**
+```python
+import math
+
+g1_err = 1.57 - 1.27
+g2_choice = "A"
+g3_choice = "A"
+g4_iss = 0.85
+g5_choice = "A"
+g6_u_sat = max(-12.0, min(12.0, 18.5))
+g7_choice = "A"
+g8_di = 20.0 * 0.25 * 0.001
+
+assert math.isclose(g1_err, 0.30, rel_tol=1e-9)
+assert g2_choice == "A"
+assert g3_choice == "A"
+assert math.isclose(g4_iss, 0.85, rel_tol=1e-9)
+assert g5_choice == "A"
+assert math.isclose(g6_u_sat, 12.0, rel_tol=1e-9)
+assert g7_choice == "A"
+assert math.isclose(g8_di, 0.005, rel_tol=1e-9)
+```
+- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q5, Q8 $\to$ `## 3. Formalization` item 2; Q6–Q7 $\to$ `## 3. Formalization` item 3.
+
+## 9. Common mistakes
+| Symptom | Root cause | 2-minute fix |
+| :--- | :--- | :--- |
+| Joint violently runs away to mechanical hard-stop on startup | Feedback sign is inverted (positive error drives the motor *away* from the target instead of toward it). | Verify with small $K_p$ and hand deflection that the motor pushes *back* toward the setpoint, not away from it. |
+| Huge overshoot after a large step command, but small steps look fine | Integrator windup during actuator saturation. | Clamp the integral accumulator (`anti_windup = True`) whenever $|u_{\text{raw}}| > u_{\max}$. |
+| Motor buzzes and chatters loudly when $K_d$ is increased | Unfiltered finite-difference velocity $(\theta_k - \theta_{k-1})/\Delta t$ amplifies encoder quantization noise by $1/\Delta t = 1000\times$. | Low-pass filter the velocity estimate before multiplying by $K_d$ (Step 1.6). |
+
+## 10. Resources
+- **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 11 PID Control, `resources/textbooks-and-papers.md`):** Free textbook chapter on PID physical intuition, derivative filtering, and integrator anti-windup `[VERIFIED 2026-10-15]`.
+- **Track 05 (`05-control-and-estimation/README.md`):** Directly continues into Step 1.6 (`05-control.T1.06`) `[VERIFIED 2026-10-15]`.
+
+## 11. Next modules
+- Proceed to legacy **Step 1.6 (`05-control.T1.06`)** in [`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-1-beginner--intuitive).

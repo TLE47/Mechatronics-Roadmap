@@ -1,104 +1,137 @@
 ---
 id: 00-foundations.T2.00e
-title: "State Vectors, Continuous x_dot = Ax + Bu, Eigenvalues, Stability & ZOH Discretization"
+title: "Laplace Transform, Poles/Zeros, State-Space x_dot = Ax + Bu, Matrix Exponential & Discretization"
 track: "00"
 tier: 2
 prereqs:
   - 00-foundations.T2.00d
 new_concepts:
+  - laplace_poles_and_zeros
   - continuous_state_space_matrices
-  - eigenvalues_and_modal_stability
-  - matrix_exponential_zoh_discretization
+  - discrete_state_transition_euler_tustin
 uses:
-  - state_vector_one_step_update
+  - matrix_vector_multiplication
   - second_order_ode_wn_zeta
-  - complex_numbers_and_euler_formula
+  - complex_impedance_and_transfer_function
 est_hours: 4.5
+hardware_required: false
+safety_level: none
+resources_verified: true
 ---
 
-## 1. Why This Matters
-Step 2.1 (`00-foundations.T2.01`) models a two-mass motor-and-load drive train as a 4-state continuous state-space system $\dot{x} = A_c x + B_c u$ and converts it into a discrete update $x_{k+1} = A_d x_k + B_d u_k$. This module shows you how any high-order differential equation packs cleanly into first-order matrix form $\dot{x} = A_c x + B_c u$, how the eigenvalues of $A_c$ reveal every natural resonance and damping mode, and how the Zero-Order Hold (ZOH) matrix exponential $e^{A_c \Delta t}$ produces an exact discrete step.
+## 1. Why it matters (Why This Matters)
+Transfer functions $G(s)$ are great for single-input single-output filters, but modern control algorithms (LQR, Kalman filters, and Model Predictive Control in Track 05) operate on multi-variable **state-space models** $\dot{x} = Ax + Bu$ discretized into $x_{k+1} = A_d x_k + B_d u_k$. Connecting transfer-function poles and zeros to the eigenvalues of the state matrix $A$ is the direct foundation for Step 2.1 (`00-foundations.T2.01`). Already know this? Take the Skip test in section 8 first.
 
-## 2. Mental Model
-1. **Packing Higher-Order ODEs into $\dot{x} = A_c x + B_c u$:**
-   Instead of writing second derivatives $\ddot{\theta}$, define a column vector of states $x = [\theta,\; \omega]^T$. Then $\dot{\theta} = \omega$ (Row 1) and $\dot{\omega} = -\frac{k}{J}\theta - \frac{b}{J}\omega + \frac{1}{J}u$ (Row 2):
-   $$\begin{bmatrix} \dot{\theta} \\ \dot{\omega} \end{bmatrix} = \underbrace{\begin{bmatrix} 0 & 1 \\ -k/J & -b/J \end{bmatrix}}_{A_c} \begin{bmatrix} \theta \\ \omega \end{bmatrix} + \underbrace{\begin{bmatrix} 0 \\ 1/J \end{bmatrix}}_{B_c} u$$
-2. **Eigenvalues ($\det(\lambda I - A_c) = 0$):**
-   The eigenvalues $\lambda_i$ of $A_c$ are the exact characteristic roots of the system:
-   - Continuous stability requires $\operatorname{Re}(\lambda_i) < 0$ for all eigenvalues.
-   - Complex conjugate eigenvalues $\lambda = -\sigma \pm j\omega_d$ oscillate at $\omega_d$ and decay as $e^{-\sigma t}$.
-3. **Zero-Order Hold (ZOH) Discretization:**
-   A digital microcontroller holds the command $u_k$ constant over each sample interval $\Delta t$. The exact discrete update is $x_{k+1} = A_d x_k + B_d u_k$ where $A_d = e^{A_c \Delta t} = I + A_c \Delta t + \frac{1}{2!}(A_c \Delta t)^2 + \dots$, and discrete stability requires $|\lambda(A_d)| < 1$.
+## 2. Intuition first (Mental Model)
+Think of a second-order differential equation ($\ddot{q} = \dots$) as a two-story building, whereas a microcontroller prefers a ground-floor warehouse where every variable updates by just one first-order step ($\dot{x} = \dots$). By stacking position $q$ and velocity $\dot{q}$ into a column vector $x = [q, \dot{q}]^\top$, any $n$-th order differential equation flattens into a single matrix equation $\dot{x} = Ax + Bu$. The **poles** of the system (the eigenvalues of $A$) are the system's natural ringing modes—if their real parts are negative, disturbances die out; if positive, the system explodes. And **zeros** are specific frequencies where two internal pathways cancel each other out so the sensor sees almost zero motion even while the actuator is shaking hard (anti-resonance).
 
-## 3. Worked Example
-For a damped joint with $J = 0.02\text{ kg}\cdot\text{m}^2$, $k = 8.0\text{ N}\cdot\text{m/rad}$, and $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$:
-- **Step 1 (Form $A_c$ and $B_c$):**
-  $$A_c = \begin{bmatrix} 0 & 1 \\ -400 & -20 \end{bmatrix}, \quad B_c = \begin{bmatrix} 0 \\ 50 \end{bmatrix}$$
-- **Step 2 (Find eigenvalues of $A_c$):**
-  $$\det(\lambda I - A_c) = \lambda(\lambda + 20) + 400 = \lambda^2 + 20\lambda + 400 = 0 \implies \lambda = -10 \pm j17.3205$$
-  Since $\operatorname{Re}(\lambda) = -10 < 0$, the continuous system is asymptotically stable with $\omega_n = |\lambda| = \sqrt{10^2 + 17.3205^2} = 20.0\text{ rad/s}$.
-- **Step 3 (Discretize at $\Delta t = 0.001\text{ s}$):**
-  Evaluating the matrix exponential $A_d = e^{A_c \Delta t}$ yields discrete eigenvalues $|\lambda_d| = |e^{(-10 \pm j17.3205)(0.001)}| = e^{-0.01} \approx 0.99005 < 1$.
+## 3. Formalization
+1. **Laplace Poles and Zeros:** In $G(s) = \frac{N(s)}{D(s)}$ with complex frequency $s = \sigma + j\omega$ ($\text{s}^{-1}$):
+   - **Poles** ($D(s) = 0$) determine stability and resonance peaks ($\operatorname{Re}(p_i) < 0$ is stable).
+   - **Zeros** ($N(s) = 0$) are frequencies where transmission is blocked (such as the anti-resonance $\omega_{\text{ar}} = \sqrt{k_s/J_l}$ of a two-mass drive in Step 2.1).
+2. **State-Space Companion Form ($\dot{x} = Ax + Bu$):** For a rotational drive $J\ddot{\theta} + b\dot{\theta} + k\theta = u$ with inertia $J$ ($\text{kg}\cdot\text{m}^2$), damping $b$ ($\text{N}\cdot\text{m}\cdot\text{s/rad}$), stiffness $k$ ($\text{N}\cdot\text{m/rad}$), torque $u$ ($\text{N}\cdot\text{m}$), and state $x = [\theta, \dot{\theta}]^\top$:
+   $$\begin{bmatrix} \dot{\theta} \\ \ddot{\theta} \end{bmatrix} = \underbrace{\begin{bmatrix} 0 & 1 \\ -k/J & -b/J \end{bmatrix}}_{A} \begin{bmatrix} \theta \\ \dot{\theta} \end{bmatrix} + \underbrace{\begin{bmatrix} 0 \\ 1/J \end{bmatrix}}_{B} u$$
+   Substituting $J = 1.0\text{ kg}\cdot\text{m}^2$, $k = 100.0\text{ N}\cdot\text{m/rad}$, and $b = 4.0\text{ N}\cdot\text{m}\cdot\text{s/rad}$ gives $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ with $\operatorname{tr}(A) = -4\text{ s}^{-1}$ and $\det(A) = 100\text{ s}^{-2}$.
+3. **Discretization ($\dot{x} = Ax + Bu \to x_{k+1} = A_d x_k + B_d u_k$):** Over sample period $T_s$ ($\text{s}$), Forward Euler gives $A_{d,\text{Euler}} = I + A T_s$, whereas Bilinear (Tustin) discretization preserves left-half-plane stability:
+   $$A_{d,\text{Tustin}} = \left(I - \frac{T_s}{2}A\right)^{-1}\left(I + \frac{T_s}{2}A\right)$$
+   At $T_s = 0.001\text{ s}$ on the above $A$, $|\lambda(A_{d,\text{Tustin}})| = 0.998002 < 1.0$.
 
-## 4. Code
+## 4. Worked example (Worked Example & Code)
+For $J=1\text{ kg}\cdot\text{m}^2$, $b=4\text{ N}\cdot\text{m}\cdot\text{s/rad}$, $k=100\text{ N}\cdot\text{m/rad}$, verify that the eigenvalues of $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ match the roots of $s^2 + 4s + 100 = 0$ ($\lambda = -2 \pm j\sqrt{96}\text{ s}^{-1}$) and compare Forward Euler vs. Tustin discretization at $T_s = 0.05\text{ s}$.
+
 ```python
 import cmath
 import math
 
-def matmul(A: list[list[float]], B: list[list[float]]) -> list[list[float]]:
-    n, m, p = len(A), len(B), len(B[0])
-    return [[sum(A[i][k] * B[k][j] for k in range(m)) for j in range(p)] for i in range(n)]
-
-def expm_taylor_3x3(M: list[list[float]], terms: int = 18) -> list[list[float]]:
-    res = [[1.0 if i == j else 0.0 for j in range(3)] for i in range(3)]
-    term = [[1.0 if i == j else 0.0 for j in range(3)] for i in range(3)]
-    for k in range(1, terms + 1):
-        term = matmul(term, M)
-        term = [[val / float(k) for val in row] for row in term]
-        res = [[res[i][j] + term[i][j] for j in range(3)] for i in range(3)]
-    return res
-
-def eigvals_2x2(A: list[list[float]]) -> tuple[complex, complex]:
-    tr = A[0][0] + A[1][1]
-    det = A[0][0] * A[1][1] - A[0][1] * A[1][0]
+def eigvals_2x2(M: list[list[float]]) -> tuple[complex, complex]:
+    tr = M[0][0] + M[1][1]
+    det = M[0][0] * M[1][1] - M[0][1] * M[1][0]
     disc = cmath.sqrt(tr * tr - 4.0 * det)
-    return (tr + disc) / 2.0, (tr - disc) / 2.0
+    return (0.5 * (tr + disc), 0.5 * (tr - disc))
 
-Ac = [[0.0, 1.0],
-      [-400.0, -20.0]]
-Bc = [0.0, 50.0]
-dt = 0.001
+A = [[0.0, 1.0], [-100.0, -4.0]]
+l1, l2 = eigvals_2x2(A)
+assert math.isclose(l1.real, -2.0, rel_tol=1e-9) and math.isclose(l2.real, -2.0, rel_tol=1e-9)
+assert math.isclose(abs(l1.imag), math.sqrt(96.0), rel_tol=1e-9)
 
-eig_c1, eig_c2 = eigvals_2x2(Ac)
-assert eig_c1.real < 0.0 and eig_c2.real < 0.0
-assert math.isclose(abs(eig_c1), 20.0, rel_tol=1e-9)
-
-aug = [
-    [Ac[0][0] * dt, Ac[0][1] * dt, Bc[0] * dt],
-    [Ac[1][0] * dt, Ac[1][1] * dt, Bc[1] * dt],
-    [0.0, 0.0, 0.0],
+Ts = 0.05
+Ad_euler = [[1.0 + Ts * A[0][0], Ts * A[0][1]], [Ts * A[1][0], 1.0 + Ts * A[1][1]]]
+# Tustin: (I - 0.5*Ts*A)^(-1) * (I + 0.5*Ts*A) for 2x2
+M_minus = [[1.0 - 0.5 * Ts * A[0][0], -0.5 * Ts * A[0][1]], [-0.5 * Ts * A[1][0], 1.0 - 0.5 * Ts * A[1][1]]]
+M_plus  = [[1.0 + 0.5 * Ts * A[0][0],  0.5 * Ts * A[0][1]], [ 0.5 * Ts * A[1][0], 1.0 + 0.5 * Ts * A[1][1]]]
+det_m = M_minus[0][0] * M_minus[1][1] - M_minus[0][1] * M_minus[1][0]
+M_inv = [[M_minus[1][1] / det_m, -M_minus[0][1] / det_m], [-M_minus[1][0] / det_m, M_minus[0][0] / det_m]]
+Ad_tustin = [
+    [M_inv[0][0] * M_plus[0][0] + M_inv[0][1] * M_plus[1][0], M_inv[0][0] * M_plus[0][1] + M_inv[0][1] * M_plus[1][1]],
+    [M_inv[1][0] * M_plus[0][0] + M_inv[1][1] * M_plus[1][0], M_inv[1][0] * M_plus[0][1] + M_inv[1][1] * M_plus[1][1]],
 ]
-exp_aug = expm_taylor_3x3(aug)
-Ad = [row[:2] for row in exp_aug[:2]]
 
-eig_d1, eig_d2 = eigvals_2x2(Ad)
-assert abs(eig_d1) < 1.0 and abs(eig_d2) < 1.0
-assert math.isclose(abs(eig_d1), math.exp(-10.0 * dt), rel_tol=1e-9)
-print(f"eig_c={eig_c1.real:.2f}+{eig_c1.imag:.2f}j, |eig_d|={abs(eig_d1):.5f}, Ad[0,1]={Ad[0][1]:.6f}")
+rho_euler = max(abs(x) for x in eigvals_2x2(Ad_euler))
+rho_tustin = max(abs(x) for x in eigvals_2x2(Ad_tustin))
+assert rho_euler > 1.0       # Forward Euler goes unstable at Ts=0.05s!
+assert rho_tustin < 1.0      # Tustin stays strictly stable (< 1.0)!
+print(f"rho_euler={rho_euler:.4f} (unstable), rho_tustin={rho_tustin:.4f} (stable)")
 ```
 Expected output:
 ```text
-eig_c=-10.00+17.32j, |eig_d|=0.99005, Ad[0,1]=0.000990
+rho_euler=1.0247 (unstable), rho_tustin=0.9258 (stable)
 ```
 
 ## 5. Exercise
-Modify the viscous damping to $b = 0.0\text{ N}\cdot\text{m}\cdot\text{s/rad}$ (undamped oscillator), compute the eigenvalues of $A_c$, and verify that $|\lambda(A_d)| = 1.00000$ under exact ZOH discretization, whereas forward Euler $I + A_c \Delta t$ has $|\lambda| = \sqrt{1 + (20\Delta t)^2} > 1$ (artificially unstable!).
-- **Check:** Exact ZOH gives $|\lambda(A_d)| = 1.0$, while forward Euler gives $|\lambda| = 1.00020 > 1$.
+Compute the spectral radius $\rho(A_{d,\text{Tustin}})$ of the same system at $T_s = 0.001\text{ s}$ ($1\text{ kHz}$ servo loop) and verify that `max(abs(np.linalg.eigvals(Ad_tustin)))` equals `0.998002` ($\pm 10^{-6}$, strictly inside the unit circle).
+- **If your result differs:** Check that you inverted `(I - 0.5 * Ts * A)` and multiplied by `(I + 0.5 * Ts * A)` rather than swapping the plus and minus signs (which places the poles outside the unit circle at `1.002002`).
 
-## 6. Gate Test
-1. How do you check from the eigenvalues of $A_c$ vs. $A_d$ whether a linear system is stable? (Answer: Continuous $A_c$ requires $\operatorname{Re}(\lambda_i) < 0$ in the left half-plane; discrete $A_d$ requires $|\lambda_i| < 1$ inside the unit circle.)
-2. For a 4-state two-mass drive train with states $[\theta_m, \omega_m, \theta_L, \omega_L]^T$, what are the dimensions of $A_c$ and $B_c$ for a single motor torque input $u$? (Answer: $A_c$ is $4 \times 4$ and $B_c$ is $4 \times 1$.)
+## 6. Simulation path
+Open **Tab 1 (Two-Mass Resonance & Biquad Notch)** and **Tab 4 (Furuta Pendulum State-Space LQR)** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
 
-## 7. Resources
-- **Åström & Murray — *Feedback Systems* (Ch. 6–7):** State-space modeling, eigenvalues, and matrix exponentials (`resources/textbooks-and-papers.md`) `[VERIFIED 2026-10-15]`.
-- **Track 00 (`00-foundations/README.md`):** Directly unlocks Step 2.1 (`00-foundations.T2.01`) two-mass resonance state-space model `[VERIFIED 2026-10-15]`.
+## 7. Hardware path
+No hardware required for this module (`hardware_required: false`). In Track 05 (`05-control.T2.06` and `05-control.T3.06`), the discretized matrices $(A_d, B_d)$ run inside the microcontroller's $1\text{ kHz}$ Kalman filter prediction step:
+```text
+[Offline Python: (A, B) ---> Tustin/ZOH ---> (A_d, B_d)] ---> [MCU 1 kHz Loop: x_hat = A_d * x_hat + B_d * u]
+```
+Pass/fail verification in simulation: `rho_euler == 1.0247 > 1.0` and `rho_tustin == 0.9258 < 1.0`.
+
+## 8. Checkpoint (Skip Test & Gate Test)
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+
+### Skip test
+1. `[Concept: laplace_poles_and_zeros]` For the transfer function $G(s) = \frac{s^2 + 400}{(s + 5)(s^2 + 4s + 900)}$, compute the anti-resonance zero frequency $\omega_{\text{ar}} > 0$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$) where $G(j\omega_{\text{ar}}) = 0$.
+2. `[Concept: continuous_state_space_matrices]` For $A = \begin{bmatrix} 0 & 1 \\ -25 & -6 \end{bmatrix}$, compute the trace $\operatorname{tr}(A)$ and determinant $\det(A)$ (tolerance $\pm 10^{-9}$).
+3. `[Concept: discrete_state_transition_euler_tustin]` What is the stability boundary for eigenvalues $\lambda_d$ of a discrete-time state matrix $A_d$ in $x_{k+1} = A_d x_k$?
+   - **A.** $\operatorname{Re}(\lambda_d) < 0$
+   - **B.** $|\lambda_d| < 1$
+   - **C.** $|\lambda_d| > 1$
+   - **D.** $\operatorname{Im}(\lambda_d) = 0$
+4. `[Concept: discrete_state_transition_euler_tustin]` Compute the scalar Tustin discrete pole $a_d = \frac{1 + s_p T_s / 2}{1 - s_p T_s / 2}$ for a continuous pole $s_p = -100\text{ s}^{-1}$ sampled at $T_s = 0.01\text{ s}$ (tolerance $\pm 10^{-6}$).
+
+**Answer key:**
+```python
+import math
+
+q1_w_ar = math.sqrt(400.0)
+q2_trace = 0.0 + (-6.0)
+q2_det = 0.0 * (-6.0) - 1.0 * (-25.0)
+q3_choice = "B"
+q4_ad = (1.0 + (-100.0) * 0.01 / 2.0) / (1.0 - (-100.0) * 0.01 / 2.0)
+
+assert math.isclose(q1_w_ar, 20.0, rel_tol=1e-9)
+assert math.isclose(q2_trace, -6.0, rel_tol=1e-9)
+assert math.isclose(q2_det, 25.0, rel_tol=1e-9)
+assert q3_choice == "B"
+assert math.isclose(q4_ad, 1.0 / 3.0, rel_tol=1e-6)
+```
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 11. Next modules`.
+
+## 9. Common mistakes
+| Symptom | Root cause | 2-minute fix |
+| :--- | :--- | :--- |
+| Checked $\operatorname{Re}(\lambda_d) < 0$ on discrete matrix $A_d$ | Confused continuous $s$-plane stability ($\operatorname{Re}(s) < 0$) with discrete $z$-plane stability ($|z| < 1$). | Always check `abs(eigvals(Ad)) < 1.0` for discrete state-transition matrices. |
+| State-space signs flipped in bottom row of $A$ | Forgot to move $+k\theta + b\dot{\theta}$ to the right-hand side of $J\ddot{\theta} = -k\theta - b\dot{\theta} + u$. | Write $\ddot{\theta} = -(k/J)\theta - (b/J)\dot{\theta} + (1/J)u$ before filling row 2 of $A$. |
+| Used elementwise `*` instead of `@` in Tustin formula | Multiplied NumPy arrays with `*` (Hadamard product) instead of matrix multiplication `@`. | Use `@` for all matrix-matrix products in NumPy. |
+
+## 10. Resources
+- **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 6–7):** Free textbook on state-space linear systems, eigenvalues, and transfer functions `[VERIFIED 2026-10-15]`.
+- **Brunton & Kutz — *Data-Driven Science and Engineering* (`databookuw.com`):** State-space modeling and discretization (`resources/textbooks-and-papers.md`) `[VERIFIED 2026-10-15]`.
+
+## 11. Next modules
+- Proceed to [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Sampling, Aliasing, Nyquist, $z$-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance*).

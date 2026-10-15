@@ -1,91 +1,121 @@
 ---
 id: 04-embedded.T1.04a
-title: "C/C++ Compilation, Fixed-Width Types, Pointers, Structs & Bitwise Register Masks"
+title: "From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers"
 track: "04"
 tier: 1
 prereqs:
   - 00-foundations.T1.00b
-  - 01-electronics.T1.01a
 new_concepts:
-  - fixed_width_integers_and_twos_complement
-  - bitwise_register_masks_and_shifts
-  - c_structs_pointers_and_endianness
+  - c_fixed_width_integer_types_and_overflow
+  - bitwise_masks_and_shifts
+  - c_structs_and_pointers_pass_by_reference
 uses:
   - python_variables_and_types
   - for_while_loops_and_functions
-  - ohms_law_and_joule_power
-est_hours: 4.5
+  - lists_dicts_and_numpy_arrays
+est_hours: 3.5
+hardware_required: false
+safety_level: none
+resources_verified: true
 ---
 
-## 0. Skip Test
-Pass without reading if you can answer both without looking anything up:
-1. Write the C expression to set bit 5 and clear bit 2 of a 32-bit hardware register `REG` without altering any other bits.
-   - **Check:** `REG = (REG | (1U << 5)) & ~(1U << 2);`
-2. A 14-bit magnetic encoder returns high byte `0x1A` and low byte `0x3F`. Reconstruct the 14-bit unsigned integer `(high << 8) | low` in decimal.
-   - **Check:** `(0x1A << 8) | 0x3F = 0x1A3F = 6719`.
+## 1. Why it matters (Why This Matters)
+Python integers grow arbitrarily large and never overflow, but microcontroller C/C++ variables occupy a fixed number of bits (`uint8_t`, `int16_t`, `uint32_t`, `float`) in hardware registers. Before writing real-time timer interrupts and binary serial telemetry in Step 1.5 (`04-embedded.T1.05`), you must know how fixed-width integers wrap around, how bitwise masks (`|`, `&`, `~`, `<<`) flip single register bits without corrupting neighbors, and how `struct` pointers pass data with zero copy overhead. Already know this? Take the Skip test in section 8 first.
 
-## 1. Why This Matters
-Python hides memory addresses and integer bit widths, but microcontrollers interact with hardware through memory-mapped 8-, 16-, and 32-bit registers and send telemetry as raw byte streams. Before writing the hardware timer ISR and packed binary telemetry frame in Step 1.5 (`04-embedded.T1.05`), you need to know fixed-width integers (`uint8_t`, `int16_t`, `uint32_t`), bitwise masks (`|`, `&`, `^`, `~`, `<<`, `>>`), pointers, and how structs pack into little-endian bytes.
+## 2. Intuition first (Mental Model)
+Imagine moving from an infinite notepad (Python) to an odometer with only four mechanical digit wheels (`uint16_t`, which holds `0` to `65535`). If your odometer is at `65535` and clicks forward by `1`, it doesn't add a fifth wheel—it wraps cleanly back to `0` (**integer wrap-around**). Next, think of a microcontroller hardware register as a wall of 8 light switches wired side-by-side in a single byte. If you want to flip switch #3 ON without touching switches #0–#2 or #4–#7, you use a **bitwise stencil (mask)** `1 << 3`. Finally, a C **`struct`** is a molded tray that holds several variables side-by-side in memory, and a **pointer** (`*`) is simply writing down the shelf address of that tray on a sticky note instead of photocopying the entire tray every time you call a function.
 
-## 2. Mental Model
-1. **Fixed-Width Integers (`<stdint.h>`):**
-   Never use plain `int` in firmware protocols because its size changes across architectures (16-bit on AVR vs. 32-bit on ARM). Always specify exact width and signedness:
-   - `uint8_t`: $0 \dots 255$ ($1\text{ byte}$)
-   - `int16_t`: $-32768 \dots +32767$ ($2\text{ bytes}$, two's complement)
-   - `uint32_t`: $0 \dots 4,294,967,295$ ($4\text{ bytes}$)
-2. **Bitwise Register Manipulation:**
-   Hardware peripherals use individual bits inside control registers as switches:
-   - **Set bit $n$ ON:** `reg |= (1U << n)`
-   - **Clear bit $n$ OFF:** `reg &= ~(1U << n)`
-   - **Toggle bit $n$:** `reg ^= (1U << n)`
-   - **Test bit $n$:** `bool is_set = (reg & (1U << n)) != 0`
-3. **Pointers, Packed Structs & Little-Endian Byte Order:**
-   A pointer holds the memory address of a variable. On ARM Cortex-M and x86 (little-endian), a 16-bit value `0x1234` stores the least-significant byte `0x34` at the lower address and `0x12` at the next address.
+## 3. Formalization
+1. **Fixed-Width Integer Types (`<stdint.h>`) and Modular Wrap-Around:** An $N$-bit unsigned integer `uintN_t` stores values in $[0, 2^N - 1]$, and a two's-complement signed integer `intN_t` stores $[-2^{N-1}, 2^{N-1} - 1]$:
+   - `uint8_t`: $[0, 255]$ ($1\text{ byte}$); `int16_t`: $[-32768, 32767]$ ($2\text{ bytes}$); `uint32_t`: $[0, 4294967295]$ ($4\text{ bytes}$); `float`: IEEE-754 single precision ($4\text{ bytes}$).
+   - Computing unsigned tick difference `(uint16_t)(now - prev)` modulo $2^{16} = 65536$: substituting `now = 4` and `prev = 65530` yields `(4 - 65530) & 0xFFFF = 10` ticks elapsed across rollover.
+2. **Bitwise Register Manipulation:** For bit index $n \in \{0, \dots, 31\}$ in register $R$:
+   - Set bit $n$ to `1`: $R \leftarrow R \mid (1 \ll n)$.
+   - Clear bit $n$ to `0`: $R \leftarrow R \mathbin{\&} \sim(1 \ll n)$.
+   - Test bit $n$: $\text{is\_set} = (R \gg n) \mathbin{\&} 1$.
+   Substituting $R = \text{0x01}$ (`0b00000001`), setting bit $3$ ($1 \ll 3 = 8 = \text{0x08}$) gives $R = \text{0x09}$ (`0b00001001`).
+3. **Structs and Pass-by-Pointer (`*` and `->`):** Grouping fields in `struct MotorState { int16_t count; float vel_rad_s; };` and passing `MotorState *s` passes a single memory address (`4` or `8` bytes) so `s->count += 1` mutates the caller's struct in-place.
 
-## 3. Worked Example
-1. **Register Bit Masking:** Suppose timer control register `TIM_CR1` starts at `0x0004` (binary `0000 0100`, bit 2 set). We want to enable the counter (set bit 0) and clear bit 2:
-   - Set bit 0: `0x0004 | (1 << 0) = 0x0005` (`0000 0101`)
-   - Clear bit 2: `0x0005 & ~(1 << 2) = 0x0001` (`0000 0001`)
-2. **16-Bit Sensor Byte Unpacking:** A signed 16-bit gyroscope reading of $\omega = -500\text{ LSB}$ is transmitted in little-endian order as two bytes:
-   - In 16-bit two's complement: $65536 - 500 = 65036 = \text{0xFE0C}$.
-   - Little-endian wire bytes: `byte[0] = 0x0C` (low byte), `byte[1] = 0xFE` (high byte).
+## 4. Worked example (Worked Example & Code)
+Simulate 16-bit encoder counter wrap-around, bitwise GPIO register set/clear operations, and packing an 8-byte C telemetry struct (`<Hhf`: `uint16_t`, `int16_t`, `float`) using Python's `struct` module.
 
-## 4. Code
 ```python
 import struct
 
-# 1. Bitwise register manipulation model (matching C uint32_t behavior)
-tim_cr1 = 0x0004
-tim_cr1 = (tim_cr1 | (1 << 0)) & ~(1 << 2) & 0xFFFFFFFF
-assert tim_cr1 == 0x0001
+def uint16_elapsed(now: int, prev: int) -> int:
+    return (now - prev) & 0xFFFF
 
-# 2. 14-bit encoder reconstruction from two I2C bytes (AS5600 raw angle)
-msb, lsb = 0x08, 0x00  # 0x0800 = 2048 counts (exactly half a revolution: 180 deg)
-raw_counts = ((msb & 0x0F) << 8) | lsb
-angle_deg = raw_counts * (360.0 / 4096.0)
-assert raw_counts == 2048 and angle_deg == 180.0
+assert uint16_elapsed(now=4, prev=65530) == 10
 
-# 3. Little-endian struct packing matching C __attribute__((packed))
-gyro_lsb = -500
-wire_bytes = struct.pack("<h", gyro_lsb)
-assert list(wire_bytes) == [0x0C, 0xFE]
-unpacked = struct.unpack("<h", wire_bytes)[0]
-assert unpacked == -500
-print(f"TIM_CR1=0x{tim_cr1:04X}, encoder={raw_counts} ({angle_deg:.1f} deg), wire={[hex(b) for b in wire_bytes]}")
+reg = 0b0000_0001
+reg |= (1 << 3)                  # Set bit 3 -> 0b0000_1001 (9)
+assert reg == 9
+reg &= ~(1 << 0)                 # Clear bit 0 -> 0b0000_1000 (8)
+assert reg == 8
+assert ((reg >> 3) & 1) == 1
+
+raw_bytes = struct.pack("<Hhf", 1000, -512, 3.25)
+assert len(raw_bytes) == 8       # 2 + 2 + 4 bytes = 8 bytes
+tick, count, vel = struct.unpack("<Hhf", raw_bytes)
+assert tick == 1000 and count == -512 and abs(vel - 3.25) < 1e-6
+print(f"Rollover delta={uint16_elapsed(4, 65530)}, reg=0x{reg:02X}, struct_size={len(raw_bytes)} bytes")
 ```
 Expected output:
 ```text
-TIM_CR1=0x0001, encoder=2048 (180.0 deg), wire=['0xc', '0xfe']
+Rollover delta=10, reg=0x08, struct_size=8 bytes
 ```
 
 ## 5. Exercise
-An 8-bit status register `STATUS` has value `0xA6` (`1010 0110` in binary). Mask out bits `[5:3]` (a 3-bit fault code field) and shift them down to bits `[2:0]` to read the integer fault code ($0\dots 7$).
-- **Check:** `(0xA6 >> 3) & 0x07 = (0b00010100) & 0b111 = 4`.
+Start with register value `reg = 0x5A` (`0b01011010`). Write a Python expression that sets bit `6` (`1 << 6`) and clears bit `3` (`~(1 << 3)`), and verify the resulting integer is `0x72` (`114` in decimal, `0b01110010`).
+- **If your result differs:** Check that bit indices are 0-based from the least-significant (rightmost) bit: bit `0` has weight $2^0 = 1$, bit `3` has weight $2^3 = 8$, and bit `6` has weight $2^6 = 64$.
 
-## 6. Gate Test
-1. Why is `uint8_t counter = 250; counter += 10;` equal to `4` instead of `260`? (Answer: Unsigned 8-bit integers wrap modulo $2^8 = 256$, and $260 \bmod 256 = 4$.)
-2. What bug happens if you write `reg = (1 << 3);` instead of `reg |= (1 << 3);` on a hardware configuration register? (Answer: You overwrite all 31 other bits in the register with zeros instead of preserving their current settings.)
+## 6. Simulation path
+Test the C equivalent directly in the browser on the [Wokwi ESP32/STM32 Simulator](https://wokwi.com/) (`resources/open-source-toolchains.md`) or run the Python bit-exact verification script above.
 
-## 7. Resources
-- **Lee & Seshia — *Introduction to Embedded Systems*:** Memory-mapped I/O, fixed-width C types, and register interfaces (`resources/textbooks-and-papers.md`) `[VERIFIED 2026-10-15]`.
-- **Track 04 (`04-embedded-and-realtime/README.md`):** Directly prepares for Step 1.5 (`04-embedded.T1.05`) packed binary telemetry and hardware timers `[VERIFIED 2026-10-15]`.
+## 7. Hardware path
+No hardware required for this module (`hardware_required: false`). In Step 1.5 (`04-embedded.T1.05`), the exact `struct.pack("<Hhf", ...)` layout matches the `__attribute__((packed))` C struct transmitted over the microcontroller's USB-UART bridge:
+```text
+[MCU C Struct: uint16_t + int16_t + float (8 B)] ---> (UART 115200 bps) ---> [Python struct.unpack("<Hhf")]
+```
+Pass/fail verification in simulation: `uint16_elapsed(4, 65530) == 10`, `reg == 0x08`, and `len(raw_bytes) == 8`.
+
+## 8. Checkpoint (Skip Test & Gate Test)
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+
+### Skip test
+1. `[Concept: c_fixed_width_integer_types_and_overflow]` What is the maximum positive integer representable by a signed 16-bit integer `int16_t`?
+2. `[Concept: c_fixed_width_integer_types_and_overflow]` Compute the unsigned 8-bit difference `(uint8_t)(now - prev)` (i.e. `(now - prev) & 0xFF`) when `now = 3` and `prev = 250`.
+3. `[Concept: bitwise_masks_and_shifts]` Starting from `reg = 0x0F` (`15`), compute the decimal value of `reg` after clearing bit `2` (`reg &= ~(1 << 2)`).
+4. `[Concept: c_structs_and_pointers_pass_by_reference]` Why does embedded C code write `REG &= ~(1U << 5)` instead of `REG = 0` when disabling peripheral bit 5?
+   - **A.** Because `REG = 0` does not compile in C.
+   - **B.** Because `REG &= ~(1U << 5)` clears **only** bit 5 while preserving the state of all other 31 configuration bits in that hardware register.
+   - **C.** Because `~` multiplies by two.
+   - **D.** Because `REG = 0` sets all bits to `1`.
+
+**Answer key:**
+```python
+q1_int16_max = (1 << 15) - 1
+q2_u8_delta = (3 - 250) & 0xFF
+q3_reg_cleared = 0x0F & ~(1 << 2)
+q4_choice = "B"
+
+assert q1_int16_max == 32767
+assert q2_u8_delta == 9
+assert q3_reg_cleared == 11
+assert q4_choice == "B"
+```
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3 or Q4, study `## 3. Formalization` item 2. On pass, proceed to `## 11. Next modules`.
+
+## 9. Common mistakes
+| Symptom | Root cause | 2-minute fix |
+| :--- | :--- | :--- |
+| Wrote `reg &= (1 << 3)` to clear bit 3, wiping out all other bits | Forgot the bitwise NOT operator `~` before `(1 << 3)`. | Always write `reg &= ~(1U << n)` to clear bit `n`. |
+| `sizeof(struct)` is 12 bytes on MCU instead of 8 bytes | Compiler inserted 2 bytes of alignment padding after `uint16_t`/`int16_t`. | Order 4-byte fields (`float`, `uint32_t`) first or mark wire packets `__attribute__((packed))`. |
+| Signed `int16_t` encoder count jumps from `+32767` to `-32768` | Exceeded the signed 16-bit range during multi-turn rotation. | Accumulate multi-turn counts in a 32-bit `int32_t` or 64-bit `int64_t` variable using unsigned 16-bit tick deltas. |
+
+## 10. Resources
+- **Jens Gustedt — *Modern C* & Arduino Reference (`resources/textbooks-and-papers.md`):** Fixed-width integer types (`<stdint.h>`), pointers, and bitwise operators `[VERIFIED 2026-10-15]`.
+- **Wokwi Embedded Simulator (`wokwi.com`, `resources/open-source-toolchains.md`):** Browser-based Arduino/ESP32/STM32 simulator `[VERIFIED 2026-10-15]`.
+
+## 11. Next modules
+- Proceed to [`04-embedded.T1.04b`](04-embedded.T1.04b.md) (*Non-Blocking `millis()`/`micros()` State Machines, Hardware Interrupts (ISRs) & `volatile`*).

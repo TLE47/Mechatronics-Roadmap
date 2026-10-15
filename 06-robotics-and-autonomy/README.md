@@ -308,3 +308,12 @@ $$
 | **Free-Space Cartesian Tracking Error** | RMS position error $< 1.5\text{ mm}$ at $1.0\text{ m/s}$ peak speed with bounded jerk $\lvert\dddot{x}\rvert \le 20\text{ m/s}^3$ | Online `Ruckig` S-curve trajectory generator |
 | **Unplanned Rigid Contact Force Overshoot** | Peak contact force overshoot $< 15\%$ above steady-state $K_x \Delta x$ at $0.3\text{ m/s}$ impact | Operational-Space Impedance wall-contact test |
 | **Null-Space Decoupling Accuracy** | End-effector perturbation $< 0.2\text{ mm}$ during $\pm 0.5\text{ rad}$ null-space elbow motion | Dynamically consistent projector $N^\top = I - J^\top \bar{J}^\top$ check |
+
+---
+
+## 7. Track 06 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
+
+- **Tier 1 (Cubic/Quintic Boundary Polynomials & Gravity Feedforward → Step 1.7):** [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) *(Ladder Gate Test)*
+- **Tier 2 (ROS 2 DDS/QoS, TF2 Transforms, URDF & `ros2_control` → Step 2.7):** [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) *(Ladder Gate Test)*
+- **Tier 3 (Behavior Cloning, ACT/Diffusion Policies, PPO RL & Sim-to-Real → Step 3.7):** [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) · [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) *(Ladder Gate Test)*
+

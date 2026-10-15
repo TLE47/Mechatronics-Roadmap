@@ -14,37 +14,31 @@ uses:
   - si_base_and_derived_units
   - 2d_vectors_and_components
 est_hours: 4.0
+hardware_required: false
+safety_level: none
+resources_verified: true
 ---
 
-## 0. Skip Test
-Pass without reading if you can compute the torque $\tau = r F \sin\theta$ of a $20\text{ N}$ vertical force at the tip of a horizontal $0.25\text{ m}$ link, and write the two discrete update lines that advance velocity $v$ and position $x$ over $\Delta t$ for a mass $m$ pulled by a spring $F = -k x$.
-- **Check:** $\tau = 0.25 \times 20 \times \sin(90^\circ) = 5.0\text{ N}\cdot\text{m}$; in loop: `v += (-k * x / m) * dt; x += v * dt`.
+## 1. Why it matters (Why This Matters)
+Before Step 1.1 (`00-foundations.T1.01`) compares numerical integration stability on an oscillating joint, you must connect physical push (force and torque), inertia (mass and rotational inertia), and stored energy (kinetic and spring potential energy) inside a discrete time-stepping loop. This final Level -1 module turns Newton's Second Law and Hooke's spring law into a 15-line Python simulation whose energy balance you can audit at every step. Already know this? Take the Skip test or Gate test in section 8 first.
 
-## 1. Why This Matters
-Before Step 1.1 (`00-foundations.T1.01`) compares numerical integration stability on a spring-mass oscillator, you need to know what position, velocity, acceleration, force, mass, spring stiffness, torque, and energy actually mean physically. This module turns Newton's Second Law ($F = m a$ and $\tau = J \alpha$) and Hooke's spring law ($F = -k x$) into a 10-line Python `while` loop.
+## 2. Intuition first (Mental Model)
+Attach a heavy wheeled cart to a wall with a coil spring, pull the cart back by $10\text{ cm}$, and let go. At the moment of release, the cart is motionless, so all the energy you put in is stored in the stretched spring coils. The spring pulls the cart toward the wall: force causes acceleration, acceleration builds up velocity, and velocity moves the cart's position. By the time the cart passes the unstretched center mark, the spring force is zero, yet the cart is moving at peak speed—all of the spring's stored energy has sloshed into the moving mass's momentum, which then compresses the spring on the other side.
 
-## 2. Mental Model
-1. **Position ($x$), Velocity ($v$), Acceleration ($a$):**
-   - Velocity is how fast position changes: $\Delta x = v \cdot \Delta t$.
-   - Acceleration is how fast velocity changes: $\Delta v = a \cdot \Delta t$.
-2. **Newton's Second Law ($F_{\text{net}} = m a$) & Springs ($F_s = -k x - b v$):**
-   - Mass $m$ ($\text{kg}$) resists acceleration: $a = F_{\text{net}} / m$.
-   - A spring with stiffness $k$ ($\text{N/m}$) pulls back toward $x = 0$ with force $-k x$; a damper with coefficient $b$ ($\text{N}\cdot\text{s/m}$) resists velocity with force $-b v$.
-3. **Rotational Analog ($\tau = r F\sin\phi = J \alpha$):**
-   - Pushing with force $F$ at lever arm radius $r$ produces **torque** $\tau = r F_\perp$ ($\text{N}\cdot\text{m}$), which causes angular acceleration $\alpha = \tau / J$ ($\text{rad/s}^2$), where $J$ ($\text{kg}\cdot\text{m}^2$) is rotational inertia.
-4. **Mechanical Energy ($E = \frac{1}{2}m v^2 + \frac{1}{2}k x^2$):**
-   - A moving mass stores kinetic energy $K = \frac{1}{2}m v^2$; a stretched spring stores potential energy $U = \frac{1}{2}k x^2$. With zero damping ($b = 0$), total energy $E = K + U$ stays constant as energy sloshes back and forth between spring and mass.
+## 3. Formalization
+1. **Newton's Second Law and Hooke's Spring Law:** A cart of mass $m$ in kilograms ($\text{kg}$) at displacement $x$ in meters ($\text{m}$) pulled by a linear spring of stiffness $k$ in newtons per meter ($\text{N/m}$) experiences net restoring force $F_{\text{net}}$ in newtons ($\text{N}$) and acceleration $a$ in $\text{m/s}^2$:
+   $$F_{\text{net}} = -k x, \qquad a = \frac{F_{\text{net}}}{m}$$
+   For $m = 2.0\text{ kg}$, $k = 50.0\text{ N/m}$, and $x_0 = 0.10\text{ m}$, $F_{\text{net}} = -(50.0\text{ N/m})(0.10\text{ m}) = -5.0\text{ N}$ and $a_0 = \frac{-5.0\text{ N}}{2.0\text{ kg}} = -2.5\text{ m/s}^2$.
+2. **Rotational Analog (Torque $\tau$):** A perpendicular force $F_\perp = F\sin\phi$ in newtons ($\text{N}$) applied at lever arm radius $r$ in meters ($\text{m}$) produces torque $\tau$ in newton-meters ($\text{N}\cdot\text{m}$) on rotational inertia $J$ in $\text{kg}\cdot\text{m}^2$, causing angular acceleration $\alpha$ in $\text{rad/s}^2$:
+   $$\tau = r F\sin\phi = J\alpha$$
+   For $r = 0.25\text{ m}$, $F = 20.0\text{ N}$, and $\phi = 90^\circ$, $\tau = (0.25\text{ m})(20.0\text{ N})(1.0) = 5.0\text{ N}\cdot\text{m}$.
+3. **Discrete Loop Update and Mechanical Energy ($E$):** Over time step $\Delta t$ in seconds ($\text{s}$), velocity $v$ ($\text{m/s}$) and position $x$ ($\text{m}$) update sequentially (`v += a*dt; x += v*dt`), while total mechanical energy $E$ in joules ($\text{J} = \text{N}\cdot\text{m}$) sums kinetic and potential energy:
+   $$E = \frac{1}{2}m v^2 + \frac{1}{2}k x^2$$
+   At release ($x_0 = 0.10\text{ m}, v_0 = 0.0\text{ m/s}$), $E_0 = 0 + 0.5(50.0\text{ N/m})(0.10\text{ m})^2 = 0.2500\text{ J}$, so peak speed at $x = 0$ is $v_{\max} = \sqrt{2 E_0 / m} = \sqrt{0.50\text{ J} / 2.0\text{ kg}} = 0.5000\text{ m/s}$.
 
-## 3. Worked Example
-A $m = 2.0\text{ kg}$ cart on a spring of stiffness $k = 50.0\text{ N/m}$ is pulled to $x_0 = 0.10\text{ m}$ and released from rest ($v_0 = 0.0\text{ m/s}$).
-- **Step 1 (Initial stored energy):**
-  $$E_0 = \frac{1}{2} k x_0^2 + \frac{1}{2} m v_0^2 = 0.5 \times 50.0 \times (0.10)^2 + 0 = 0.25\text{ J}$$
-- **Step 2 (Initial acceleration at release):**
-  $$F = -k x_0 = -50.0 \times 0.10 = -5.0\text{ N} \implies a_0 = \frac{F}{m} = \frac{-5.0}{2.0} = -2.5\text{ m/s}^2$$
-- **Step 3 (Maximum speed when passing through $x = 0$):**
-  At $x = 0$, all $0.25\text{ J}$ of potential energy has converted to kinetic energy $\frac{1}{2} m v_{\max}^2 = 0.25\text{ J}$, so $v_{\max} = \sqrt{2 E_0 / m} = \sqrt{0.50 / 2.0} = 0.50\text{ m/s}$.
+## 4. Worked example (Worked Example & Code)
+Simulate a $m = 2.0\text{ kg}$ mass on a $k = 50.0\text{ N/m}$ spring released from $x_0 = 0.10\text{ m}$, $v_0 = 0.0\text{ m/s}$ for $2,000$ steps of $\Delta t = 0.0005\text{ s}$ ($1.0\text{ s}$ total) and verify that total energy stays conserved at $0.2500\text{ J}$ and peak speed reaches $0.5000\text{ m/s}$.
 
-## 4. Code
 ```python
 import math
 
@@ -78,13 +72,93 @@ E_init=0.2500 J, E_final=0.2500 J, v_peak=0.5000 m/s
 ```
 
 ## 5. Exercise
-Add viscous damping $F_{\text{damp}} = -b v$ with $b = 4.0\text{ N}\cdot\text{s/m}$ to the loop above ($F_{\text{net}} = -k x - b v$) and verify that after $2.0\text{ s}$ (`4000` steps of `0.0005` s), more than $95\%$ of the initial $0.25\text{ J}$ mechanical energy has been dissipated as heat ($E_{\text{final}} < 0.0125\text{ J}$).
-- **Check:** `assert e_final_j < 0.0125`
+Add viscous damping $F_{\text{damp}} = -b v$ with $b = 4.0\text{ N}\cdot\text{s/m}$ to the loop (`f_net_n = -k_nm * x_m - b * v_ms`) and run for `4000` steps ($2.0\text{ s}$). Verify that $> 95\%$ of the initial $0.25\text{ J}$ energy is dissipated as heat (`e_final_j < 0.0125`).
+- **If your result differs:** Check the sign on `-b * v_ms`; writing `+b * v_ms` injects energy (negative damping) and causes the oscillation to explode instead of decay.
 
-## 6. Gate Test
-1. A robot arm link of length $r = 0.30\text{ m}$ holds a $2.0\text{ kg}$ payload horizontally under gravity ($g = 9.81\text{ m/s}^2$). What holding torque $\tau$ must the shoulder joint supply? (Answer: $F_g = 2.0 \times 9.81 = 19.62\text{ N}$, so $\tau = 0.30\text{ m} \times 19.62\text{ N} = 5.886\text{ N}\cdot\text{m}$.)
-2. If you double the velocity $v$ of a moving robot carriage, by what factor does its kinetic energy $K = \frac{1}{2}m v^2$ (and required braking work) increase? (Answer: It quadruples—$4\times$.)
+## 6. Simulation path
+Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum)** in the MechaLab Workbench to see coupled spring-mass-damper and pendulum energy loops in action.
 
-## 7. Resources
-- **Stage 0 (`00-foundations/README.md`):** Now that you have completed `00a`–`00e`, step through Stage 0 (`L0.1`–`L0.3`) and Step 1.1 (`00-foundations.T1.01`) `[VERIFIED 2026-10-15]`.
-- **Bolton — *Mechatronics* (Ch. 7):** Mechanical system building blocks (translational and rotational springs, masses, and dampers) `[VERIFIED 2026-10-15]`.
+## 7. Hardware path
+No hardware required for this module (`hardware_required: false`). In Track 05 (`Step 1.6`), a closed-loop PD motor controller creates this exact spring-damper behavior electronically:
+```text
+[Encoder Angle x, Velocity v] ---> [MCU: tau = -Kp*x - Kd*v] ---> [Motor Torque = Virtual Spring + Damper]
+```
+Pass/fail verification in simulation: `E_init == 0.2500 J`, `E_final == 0.2500 J`, and `v_peak == 0.5000 m/s`.
+
+## 8. Checkpoint (Skip Test & Gate Test)
+Pass criteria: complete the Skip test ($\ge 80\%$) to pass this module, or pass the 8-question Gate test ($\ge 80\%$) to test out of the entire Level -1 ladder (`00a`–`00e`).
+
+### Skip test
+1. `[Concept: newtons_second_law_and_torque]` Compute the holding torque $\tau$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 0.01\text{ N}\cdot\text{m}$) required at the shoulder to hold a $2.0\text{ kg}$ payload horizontally at lever arm $r = 0.30\text{ m}$ under gravity $g = 9.81\text{ m/s}^2$.
+2. `[Concept: spring_energy_and_power]` Compute the total mechanical energy $E$ in joules (tolerance $\pm 10^{-4}\text{ J}$) of a $m = 1.0\text{ kg}$ mass moving at $v = 2.0\text{ m/s}$ while attached to a spring of stiffness $k = 40.0\text{ N/m}$ stretched by $x = 0.10\text{ m}$.
+3. `[Concept: discrete_kinematics_pos_vel_acc]` Trace one step ($\Delta t = 0.01\text{ s}$) starting from $x_0 = 0.20\text{ m}, v_0 = 0.0\text{ m/s}$ with $m = 1.0\text{ kg}, k = 100.0\text{ N/m}$ using `a = -k*x/m; v += a*dt; x += v*dt`, and report $x_1$ in meters (tolerance $\pm 10^{-6}\text{ m}$).
+4. `[Spaced review — Concept: radians_unit_circle_and_atan2]` A force $F = 10.0\text{ N}$ pulls at angle $\phi = 30.0^\circ$ relative to a $r = 0.40\text{ m}$ link. Compute the torque $\tau = r F \sin\phi$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-4}\text{ N}\cdot\text{m}$).
+
+**Answer key:**
+```python
+import math
+
+q1_tau = 0.30 * (2.0 * 9.81)
+q2_energy = 0.5 * 1.0 * (2.0**2) + 0.5 * 40.0 * (0.10**2)
+v1 = 0.0 + (-100.0 * 0.20 / 1.0) * 0.01
+q3_x1 = 0.20 + v1 * 0.01
+q4_tau = 0.40 * 10.0 * math.sin(math.radians(30.0))
+
+assert math.isclose(q1_tau, 5.886, rel_tol=1e-6)
+assert math.isclose(q2_energy, 2.20, rel_tol=1e-9)
+assert math.isclose(q3_x1, 0.198, rel_tol=1e-9)
+assert math.isclose(q4_tau, 2.0, rel_tol=1e-9)
+```
+
+### Gate test (take this first; pass to skip the whole ladder)
+1. `[Concept: python_variables_and_types]` Trace `val = 3.0; val += 2.0; val *= 4.0` and compute `val` (tolerance $\pm 10^{-9}$).
+2. `[Concept: for_while_loops_and_functions]` Compute the integer returned by `sum(k * k for k in range(1, 5))`.
+3. `[Concept: lists_dicts_and_numpy_arrays]` For `arr = [2.0, 4.0, 6.0, 8.0]`, compute `sum(arr) / len(arr) + arr[-1]` (tolerance $\pm 10^{-9}$).
+4. `[Concept: si_base_and_derived_units]` Convert $1800\text{ RPM}$ to $\text{rad/s}$ and multiply by torque $\tau = 0.50\text{ N}\cdot\text{m}$ to find shaft power $P$ in watts (tolerance $\pm 0.05\text{ W}$).
+5. `[Concept: scientific_notation_and_prefixes]` Compute the RC time constant $\tau = R C$ in milliseconds ($\text{ms}$, tolerance $\pm 10^{-4}\text{ ms}$) for $R = 4.7\text{ k}\Omega$ and $C = 1.0\,\mu\text{F}$.
+6. `[Concept: radians_unit_circle_and_atan2]` Compute `math.degrees(math.atan2(-0.5, -0.5))` in degrees (tolerance $\pm 0.01^\circ$).
+7. `[Concept: newtons_second_law_and_torque]` A rotational joint with inertia $J = 0.05\text{ kg}\cdot\text{m}^2$ experiences net torque $\tau = 1.5\text{ N}\cdot\text{m}$. Compute angular acceleration $\alpha = \tau / J$ in $\text{rad/s}^2$ (tolerance $\pm 10^{-4}\text{ rad/s}^2$).
+8. `[Concept: spring_energy_and_power]` If you double the speed $v$ of a moving robot carriage from $1.5\text{ m/s}$ to $3.0\text{ m/s}$, by what exact factor does its kinetic energy $K = \frac{1}{2}m v^2$ increase?
+   - **A.** $1.414\times$
+   - **B.** $2.0\times$
+   - **C.** $4.0\times$
+   - **D.** $8.0\times$
+
+**Answer key:**
+```python
+import math
+
+g1 = (3.0 + 2.0) * 4.0
+g2 = sum(k * k for k in range(1, 5))
+arr = [2.0, 4.0, 6.0, 8.0]
+g3 = sum(arr) / len(arr) + arr[-1]
+g4 = 0.50 * (1800.0 * 2.0 * math.pi / 60.0)
+g5 = (4.7e3 * 1.0e-6) * 1e3
+g6 = math.degrees(math.atan2(-0.5, -0.5))
+g7 = 1.5 / 0.05
+g8 = "C"
+
+assert math.isclose(g1, 20.0, rel_tol=1e-9)
+assert g2 == 30
+assert math.isclose(g3, 13.0, rel_tol=1e-9)
+assert math.isclose(g4, 94.2477796, rel_tol=1e-5)
+assert math.isclose(g5, 4.7, rel_tol=1e-9)
+assert math.isclose(g6, -135.0, rel_tol=1e-9)
+assert math.isclose(g7, 30.0, rel_tol=1e-9)
+assert g8 == "C"
+```
+- **Pass mark:** $\ge 80\%$ ($4/4$ on Skip test; $\ge 7/8$ on Gate test). Missed Gate Q1–Q2: study `00-foundations.T1.00a`; Q3: `00-foundations.T1.00b`; Q4–Q5: `00-foundations.T1.00c`; Q6: `00-foundations.T1.00d`; Q7–Q8: `## 3. Formalization` above.
+
+## 9. Common mistakes
+| Symptom | Root cause | 2-minute fix |
+| :--- | :--- | :--- |
+| Simulated spring-mass amplitude grows without bound | Updated `x` using old `v` before updating `v` (unstable forward Euler) with a large `dt`. | Update velocity first (`v += a * dt`) and then update position using the new velocity (`x += v * dt`). |
+| Gravity torque is wrong by a factor of $9.81$ | Multiplied payload mass in $\text{kg}$ directly by lever arm $r$ without multiplying by $g = 9.81\text{ m/s}^2$. | Compute weight force $F_g = m g$ in newtons first, then $\tau = r F_g$. |
+| Energy check drifts rapidly | Used a coarse time step $\Delta t = 0.1\text{ s}$ on a fast oscillator. | Keep $\Delta t \le \frac{1}{50} T_{\text{osc}}$ (e.g., $\Delta t \le 1\text{ ms}$). |
+
+## 10. Resources
+- **Track 00 (`00-foundations/README.md`):** Unlocks Stage 0 (`L0.1`–`L0.3`) and Step 1.1 (`00-foundations.T1.01`) symplectic Euler vs. forward Euler comparison `[VERIFIED 2026-10-15]`.
+- **Bolton — *Mechatronics* (`resources/textbooks-and-papers.md`):** Mechanical translational and rotational springs, masses, and dampers `[VERIFIED 2026-10-15]`.
+
+## 11. Next modules
+- Proceed to Legacy Step 1.1: [`00-foundations.T1.01`](../00-foundations/README.md#tier-1-beginner--intuitive) (*Calculus as `while` Loops, 2D Rotations & RC Smoothing*).

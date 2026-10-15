@@ -311,3 +311,10 @@ flowchart TB
   **Q2:** Why does fusing wheel encoder odometry into a Visual-Inertial-LiDAR factor graph (`GTSAM`) dramatically improve reliability when an AMR drives down a long, featureless white warehouse corridor?
   * **Answer & Explanation:** In a featureless corridor or glass-walled lobby, visual feature tracking and LiDAR scan matching can become degenerate along the corridor's longitudinal axis, leaving accelerometer double-integration to drift cubically ($\frac{1}{2}b_a t^2$). Non-slipping wheel encoder preintegration provides a direct, drift-free velocity constraint in the body frame that anchors accelerometer bias $b_a$ and scale!
   </details>
+
+---
+
+## 6. Track 08 Bridge Modules & Pre-Flight Commissioning Gate (`modules/`)
+
+- **Tier 3 (Pre-Flight Readiness Audit & Stage Commissioning Gate for Capstones I–V → Step 3.8):** [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md) *(Ladder Gate Test)*
+

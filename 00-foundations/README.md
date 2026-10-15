@@ -487,3 +487,12 @@ $$
 | **Analytical vs. Identified Resonance** | $\lvert\hat{\omega}\kern0pt_{ar} - \omega_{ar}\rvert / \omega_{ar} < 0.5\%$ and $\lvert\hat{\omega}\kern0pt_r - \omega_r\rvert / \omega_r < 0.5\%$ | Welch FRF peak/trough extraction with $\gamma^2(\omega) > 0.98$ |
 | **Notch Filter Suppression** | Resonant peak attenuated by $\ge 20\text{ dB}$ in `float32` Transposed Direct Form II | Closed-loop step response & Bode magnitude verification (Tab 2 Simulator) |
 | **$SO(3)$ Singularity Immunity** | $\exp([\phi]\kern0pt_\times)$ and $\log(R)$ round-trip error $< 10^{-14}\text{ rad}$ across $\theta \in [0, \pi]$ | Unit test suite across 10,000 random & edge-case axes |
+
+---
+
+## 7. Track 00 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
+
+- **Tier 1 (Level -1 Onboarding → Step 1.1):** [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) · [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) · [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) · [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) · [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) *(Ladder Gate Test)*
+- **Tier 2 (State-Space, ODEs, Bode & DSP → Step 2.1):** [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) · [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) · [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) · [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) · [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) · [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) *(Ladder Gate Test)*
+- **Tier 3 ($SO(3)$ Hat/Vee & Matrix Exponential → Step 3.1):** [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) *(Ladder Gate Test)*
+

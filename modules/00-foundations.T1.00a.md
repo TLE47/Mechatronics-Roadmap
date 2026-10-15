@@ -10,34 +10,29 @@ new_concepts:
   - traceback_error_reading
 uses: []
 est_hours: 3.0
+hardware_required: false
+safety_level: none
+resources_verified: false
 ---
 
-## 0. Skip Test
-Pass without reading if you can predict the output of this loop and fix the bug in `def scale(x): return k * x` when `k` is undefined:
-```python
-total = 0
-for i in range(4):
-    total += i * 2
-print(total)  # Must predict: 12 (0 + 2 + 4 + 6)
-```
+## 1. Why it matters (Why This Matters)
+Every robot trajectory simulator, sensor parser, and motor controller test in this roadmap starts as a runnable Python script before touching microcontroller C++ or physical actuators. Learning how variables store physical measurements, how loops step time forward, and how error tracebacks pinpoint bugs lets you test control ideas safely on your computer. Already know this? Take the Skip test in section 8 first.
 
-## 1. Why This Matters
-Every mechatronics simulation and telemetry parser in this roadmap runs as a Python script before we touch microcontroller C++ or hardware. If you have only used spreadsheets or calculators, you first need to know how to run a `.py` file, store sensor numbers in variables, repeat a physics update inside a `while` or `for` loop, wrap formulas into reusable functions, and read a Python error traceback without panicking.
+## 2. Intuition first (Mental Model)
+Picture a clipboard checklist beside a linear slider track with a ruler taped along its edge. At the top of the page you write the starting slider position in a box labeled Position, the push speed in a box labeled Speed, and the stopwatch click interval in a box labeled Step. Each time the stopwatch clicks, you look at your checklist, multiply Speed by Step, add that distance to the number inside the Position box, erase the old Position number, and write the new one in its place. A Python script is that exact checklist executed automatically from top to bottom: variables are the labeled boxes, a `while` or `for` loop is the repeated stopwatch click, a `def` function is a reusable recipe card, and a traceback is the line-number pointer Python prints when an instruction asks for something impossible like dividing by zero.
 
-## 2. Mental Model
-Think of a Python script as a digital lab checklist executed top-to-bottom:
-1. **Variables (`x = 0.0`):** Labeled storage boxes in memory holding an integer (`int`, like `steps = 10`), a decimal floating-point number (`float`, like `voltage = 3.3`), or a boolean (`bool`, `True`/`False`). Note that `=` means *assign the value on the right into the box on the left*, so `x = x + 1` means "take the old value of `x`, add `1`, and store the result back in `x`."
-2. **Loops (`while` and `for`):** Instead of copying a formula 1,000 times, a `while t < 1.0:` loop repeats the indented block of lines until the condition becomes `False`.
-3. **Functions (`def f(x):`):** Named machines that take input arguments, compute a result, and hand it back via `return`.
-4. **Tracebacks:** When Python stops with an error, read the **very last line first** (e.g., `ZeroDivisionError: division by zero` or `NameError: name 'vel' is not defined`) and look at the line number right above it.
+## 3. Formalization
+1. **Variables and Assignment (`=`):** In Python, `pos_m = 0.0` stores the floating-point number $0.0\text{ m}$ (position in meters) inside the variable `pos_m`. An update statement evaluates the right-hand side first and writes the result into the left-hand name:
+   $$x_{\text{new}} = x_{\text{old}} + \Delta x$$
+   Substituting $x_{\text{old}} = 0.25\text{ m}$ and step change $\Delta x = 0.125\text{ m}$ gives $x_{\text{new}} = 0.25\text{ m} + 0.125\text{ m} = 0.375\text{ m}$.
+2. **Functions and Time-Stepping Loops (`while` / `for`):** A function `def step_position(pos_m, vel_m_s, dt_s):` takes current position $x$ in meters ($\text{m}$), constant velocity $v$ in meters per second ($\text{m/s}$), and time step $\Delta t$ in seconds ($\text{s}$), and returns the updated position:
+   $$x_{k+1} = x_k + v \cdot \Delta t$$
+   Substituting $x_k = 0.0\text{ m}$, $v = 0.5\text{ m/s}$, and $\Delta t = 0.25\text{ s}$ yields $x_1 = 0.0\text{ m} + (0.5\text{ m/s})(0.25\text{ s}) = 0.125\text{ m}$.
+3. **Reading Tracebacks:** When an expression divides a distance $\Delta x = 1.0\text{ m}$ by a zero time step $\Delta t = 0.0\text{ s}$ ($v = \Delta x / \Delta t$), Python halts and prints a traceback whose bottom line states the exception type (`ZeroDivisionError` or `NameError`) and the exact offending line number.
 
-## 3. Worked Example
-Suppose a robot slider starts at position $x_0 = 0.0\text{ m}$ and moves at constant speed $v = 0.5\text{ m/s}$ with time step $\Delta t = 0.25\text{ s}$. How many steps does it take to reach $1.0\text{ m}$?
-- **Step 1:** Each step advances position by $\Delta x = v \cdot \Delta t = 0.5 \times 0.25 = 0.125\text{ m}$.
-- **Step 2:** Starting from $0.0\text{ m}$, adding $0.125\text{ m}$ per iteration reaches $1.0\text{ m}$ after $1.0 / 0.125 = 8$ loop iterations.
-- **Step 3:** If someone accidentally divides by a time step of `dt = 0.0`, Python raises `ZeroDivisionError`, which we can catch or fix by checking `dt > 0`.
+## 4. Worked example (Worked Example & Code)
+A robot slider starts at $x_0 = 0.0\text{ m}$ and moves at constant velocity $v = 0.5\text{ m/s}$ with time step $\Delta t = 0.25\text{ s}$ until reaching $1.0\text{ m}$ ($8$ steps of $0.125\text{ m}$), and then tests catching a `ZeroDivisionError`.
 
-## 4. Code
 ```python
 import math
 
@@ -71,13 +66,66 @@ steps=8, pos_m=1.000 m, caught=ZeroDivisionError
 ```
 
 ## 5. Exercise
-Write a function `battery_voltage_after_steps(v_start, drop_per_step, n_steps)` that uses a `for` loop to subtract `drop_per_step` from `v_start` `n_steps` times, and verify that starting at `12.0` V with a drop of `0.15` V over `10` steps returns `10.5` V.
-- **Check:** `assert math.isclose(battery_voltage_after_steps(12.0, 0.15, 10), 10.5, rel_tol=1e-9)`
+Write a Python function `battery_voltage_after_steps(v_start, drop_per_step, n_steps)` that uses a `for` loop to subtract `drop_per_step` from `v_start` `n_steps` times. Verify that starting at $12.0\text{ V}$ with a drop of $0.15\text{ V}$ per step over $10$ steps returns `10.5` ($\pm 10^{-6}\text{ V}$).
+- **If your result differs:** Check that you passed `range(n_steps)` (which runs `10` times) rather than `range(1, n_steps)` (which only runs `9` times and leaves `10.65` V).
 
-## 6. Gate Test
-1. What is the value of `x` after running `x = 5; x = x + 3; x = x * 2`? (Answer: `16`)
-2. If Python prints `NameError: name 'kp_gain' is not defined` on line 14, what is the mistake? (Answer: `kp_gain` was used before being assigned a value, or its name was misspelled.)
+## 6. Simulation path
+Run the Worked example script directly with `python3` in your terminal, or open **Tab 1 (Architecture & Roadmap)** of the MechaLab Workbench (`npm run dev`) to inspect how discrete simulation steps drive every interactive physics plot in the browser with zero hardware.
 
-## 7. Resources
-- **Official Python Tutorial (Sections 3–4):** Informal introduction to numbers, loops, and functions `[UNVERIFIED]`.
-- **Stage 0 (`00-foundations/README.md`):** Links into the interactive Stage 0 physics playground once you finish Level -1 (`00a`–`00e`) `[VERIFIED 2026-10-15]`.
+## 7. Hardware path
+No hardware required for this module (`hardware_required: false`). In Stage 0 (`L0.3`) and Track 04, the exact same `while` loop structure maps directly onto a microcontroller firmware loop:
+```text
+[PC Python Script: while pos_m < 1.0] ---> (USB Serial) ---> [MCU Timer Loop: pos_m += vel * dt]
+```
+Pass/fail verification in simulation: `steps == 8`, `pos_m == 1.000 m`, and `caught == ZeroDivisionError`.
+
+## 8. Checkpoint (Skip Test & Gate Test)
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+
+### Skip test
+1. `[Concept: python_variables_and_types]` Compute the final numeric value of `x` (tolerance $\pm 10^{-9}$) after executing `x = 4.0; x = x + 1.5; x = x * 2.0`.
+2. `[Concept: for_while_loops_and_functions]` Trace this loop and compute the exact integer value of `total` after it finishes:
+   ```python
+   total = 0
+   for i in range(4):
+       total += i * 2
+   ```
+3. `[Concept: for_while_loops_and_functions]` What value (tolerance $\pm 10^{-9}$) does `clamp_pwm(1.35, 1.0)` return when defined as `def clamp_pwm(u, u_max): return u_max if u > u_max else u`?
+4. `[Concept: traceback_error_reading]` You run a motor script and Python prints `NameError: name 'kp_gain' is not defined` at line 12. Which option identifies the root cause?
+   - **A.** `kp_gain` was set to `0.0` and caused a division by zero.
+   - **B.** `kp_gain` was read before being assigned a value, or its variable name was misspelled.
+   - **C.** The `math` module was not imported at the top of the file.
+   - **D.** The `while` loop condition never became `False`.
+
+**Answer key:**
+```python
+import math
+
+x = 4.0
+x = x + 1.5
+x = x * 2.0
+q1_x = x
+q2_total = sum(i * 2 for i in range(4))
+q3_clamped = 1.0 if 1.35 > 1.0 else 1.35
+q4_choice = "B"
+
+assert math.isclose(q1_x, 11.0, rel_tol=1e-9)
+assert q2_total == 12
+assert math.isclose(q3_clamped, 1.0, rel_tol=1e-9)
+assert q4_choice == "B"
+```
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization`; Q2 or Q3, study `## 4. Worked example`; Q4, study `## 2. Intuition first`. On pass, proceed to `## 11. Next modules`.
+
+## 9. Common mistakes
+| Symptom | Root cause | 2-minute fix |
+| :--- | :--- | :--- |
+| `NameError: name 'vel_m_s' is not defined` | Variable used before assignment or spelled differently (`vel_ms` vs `vel_m_s`). | Initialize all state variables above the `while` loop and match spelling exactly. |
+| Loop never stops (infinite loop) | Forgot to update `pos_m` inside the `while` block or used `dt_s = 0.0`. | Indent `pos_m = step_position(...)` inside the `while` body and verify `dt_s > 0`. |
+| Function returns `None` instead of a number | Wrote `pos_m + vel_m_s * dt_s` inside `def` without the `return` keyword. | Prefix the output expression with `return`. |
+
+## 10. Resources
+- **Python Software Foundation — *The Python Tutorial* (Sections 3–4, `docs.python.org/3/tutorial/`):** Official beginner guide to numbers, variables, `while`/`for` loops, and `def` functions `[UNVERIFIED]`.
+- **MechaLab Root Roadmap (`README.md`):** Explains how Stage 0 and Pass 1 (`Track 00 -> Track 08`) use Python time-stepping scripts before embedded C++ `[VERIFIED 2026-10-15]`.
+
+## 11. Next modules
+- Proceed to [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics*).

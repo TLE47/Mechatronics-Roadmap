@@ -369,3 +369,11 @@ $$
 | **ESKF Statistical Consistency (NEES)** | Mean NEES within $95\%$ $\chi^2_6$ bounds $[0.21, 2.41]$ (normalized per DOF) | Interactive **Tab 8: Attitude ESKF & SeqLock Simulator** |
 | **Furuta Swing-Up & LQR Balancing** | Autonomous catch within $< 2.2\text{ s}$ and steady RMS error $< 0.08^\circ$ | Interactive **Tab 4: Furuta Pendulum + LQR + CBF Simulator** |
 | **CBF Safety Invariance** | $\min_t h(x(t)) \ge 0$ ($\lvert x_c \rvert \le x_{\max}$) under $+3.2\text{ rad/s}$ impulse push | Interactive **Tab 4: CBF Safety Wall Test** |
+
+---
+
+## 7. Track 05 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
+
+- **Tier 1 (Open vs. Closed Loop, P/I/D Physical Roles & Integrator Windup → Step 1.6):** [`05-control.T1.05a`](../modules/05-control.T1.05a.md) *(Ladder Gate Test)*
+- **Tier 2 (Gain/Phase Margins, Luenberger Observers & Bryson LQR → Step 2.6):** [`05-control.T2.05a`](../modules/05-control.T2.05a.md) *(Ladder Gate Test)*
+

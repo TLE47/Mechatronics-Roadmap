@@ -1,0 +1,176 @@
+---
+id: 01-electronics.T2.01b
+title: "KiCad 4-Layer Stackup, Parasitic Loop Inductance (L di/dt), Bootstrap Gate Drivers & 48 V Pre-Charge Safety"
+track: "01"
+tier: 2
+prereqs:
+  - 01-electronics.T2.01a
+new_concepts:
+  - parasitic_loop_inductance_voltage_overshoot
+  - bootstrap_high_side_gate_driver_and_deadtime
+  - precharge_resistor_inrush_and_tvs_clamp
+uses:
+  - mosfet_low_side_rds_on_switch
+  - differential_shunt_gain_and_cmrr
+  - kelvin_four_terminal_sense_routing
+est_hours: 4.5
+hardware_required: false
+safety_level: high
+resources_verified: true
+---
+
+## 1. Why it matters (Why This Matters)
+This is the final bridge module in the Track 01 Tier 2 ladder before Step 2.2 (`01-electronics.T2.02`). Jumping from a $12\text{ V}$ breadboard to a custom $24\text{–}48\text{ V}$, $15\text{–}30\text{ A}$ 4-layer motor controller PCB introduces three critical physics challenges: (1) even $15\text{ nH}$ of PCB trace loop inductance creates a $\Delta V = L_{\text{loop}}\frac{di}{dt}$ voltage spike that can exceed your MOSFET's $V_{DS,\max}$ rating, (2) driving an N-channel MOSFET on the **high side** requires a **bootstrap capacitor** floating above the switching phase node, and (3) plugging a $48\text{ V}$ battery straight into uncharged bulk capacitors sparks a $>200\text{ A}$ inrush arc without a **pre-charge resistor circuit**. Already know this? Read `## 7. Safety notes` first, then take the Skip test or the Ladder Gate test in section 8.
+
+## 2. Intuition first (Mental Model)
+First, why does a 4-layer PCB with an unbroken **Layer-2 solid ground plane** beat a 2-layer board by $10\times$? High-frequency switching current always tries to return directly underneath the trace that sent it because opposing currents cancel each other's magnetic fields. Putting a solid ground plane $0.2\text{ mm}$ directly beneath your power stage shrinks the magnetic loop area to a paper-thin slit, slashing **parasitic loop inductance** $L_{\text{loop}}$ from $\sim 25\text{ nH}$ down to $<3\text{ nH}$. Second, how do you turn ON a high-side N-MOSFET whose Source pin is sitting at $+48\text{ V}$ when it conducts? You need $+58\text{ V}$ on its Gate ($V_{GS} = 10\text{ V}$ above Source)! A **bootstrap circuit** charges a small capacitor $C_{\text{boot}}$ to $12\text{ V}$ whenever the low-side FET pulls the phase node to $\text{GND}$, and then rides that capacitor up like an elevator on top of the $48\text{ V}$ phase node (`BST = SW + 12 V`). Third, an uncharged $1000\ \mu\text{F}$ capacitor bank looks like a dead short ($0\text{ V}$) at $t=0$: a **pre-charge resistor** ($R_{\text{pre}} \approx 47\ \Omega$) fills the tank gently over $\sim 0.2\text{ s}$ before the main contactor closes.
+
+## 3. Formalization
+1. **Commutation Loop Inductance & Turn-Off Voltage Overshoot:** When phase current $\Delta I$ ($\text{A}$) commutates in switching transition time $\Delta t_{\text{sw}}$ ($\text{s}$) through hot-loop parasitic inductance $L_{\text{loop}}$ ($\text{H}$), peak Drain-to-Source voltage reaches:
+   $$V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{\Delta I}{\Delta t_{\text{sw}}}$$
+   Substituting $V_{\text{bus}} = 48.0\text{ V}$, $\Delta I = 30.0\text{ A}$, $\Delta t_{\text{sw}} = 20\text{ ns}$ ($20 \times 10^{-9}\text{ s}$), and a sloppy 2-layer loop $L_{\text{loop}} = 20\text{ nH}$ ($20 \times 10^{-9}\text{ H}$) gives $V_{\text{peak}} = 48.0 + 20 \times \frac{30}{20} = 78.0\text{ V}$ (dangerously close to an $80\text{ V}$ FET ceiling!), whereas a tight PCB layout with $L_{\text{loop}} = 2.0\text{ nH}$ limits overshoot to $48.0 + 3.0 = 51.0\text{ V}$.
+2. **High-Side Bootstrap Gate Voltage & Gate Drive Current ($I_G$):** To switch total gate charge $Q_g$ ($\text{C}$) in rise time $t_r$ ($\text{s}$), average gate drive current is:
+   $$I_G = \frac{Q_g}{t_r}, \quad V_{\text{BST}} = V_{\text{SW}} + V_{\text{drv}}$$
+   Substituting $Q_g = 30\text{ nC}$ and $t_r = 30\text{ ns}$ gives $I_G = 1.0\text{ A}$. Because $C_{\text{boot}}$ only recharges when $V_{\text{SW}} \approx 0\text{ V}$ (low-side ON), a bootstrap driver cannot run at $100.0\%$ high-side duty cycle indefinitely without a brief low-side refresh pulse or trickle charge pump.
+3. **Capacitor Bank Pre-Charge Time & Energy:** Pre-charging bus capacitance $C_{\text{bus}}$ ($\text{F}$) to $V_{\text{bus}}$ ($\text{V}$) through $R_{\text{pre}}$ ($\Omega$) limits initial peak inrush current to $I_{\text{pre,peak}} = V_{\text{bus}} / R_{\text{pre}}$ and dissipates total energy $E_{R,\text{pre}} = \frac{1}{2} C_{\text{bus}} V_{\text{bus}}^2$ ($\text{J}$) in $R_{\text{pre}}$ over $5\tau = 5 R_{\text{pre}} C_{\text{bus}}$. Substituting $V_{\text{bus}} = 48.0\text{ V}$, $C_{\text{bus}} = 1000\ \mu\text{F}$ ($0.001\text{ F}$), and $R_{\text{pre}} = 48.0\ \Omega$ gives $I_{\text{pre,peak}} = 1.0\text{ A}$, $5\tau = 0.24\text{ s}$, and $E_{R,\text{pre}} = 1.152\text{ J}$.
+
+## 4. Worked example (Worked Example & Code)
+Compare the turn-off voltage spike at $V_{\text{bus}} = 48.0\text{ V}, \Delta I = 30.0\text{ A}, \Delta t_{\text{sw}} = 20\text{ ns}$ for a sloppy 2-layer layout ($L_{\text{loop}} = 20\text{ nH}$) vs. a 4-layer solid-plane layout ($L_{\text{loop}} = 4\text{ nH}$), and size a $48\text{ V}$ pre-charge circuit for $C_{\text{bus}} = 1000\ \mu\text{F}$.
+
+```python
+import math
+
+def v_peak_turnoff(v_bus: float, l_loop_nh: float, di_amp: float, dt_ns: float) -> float:
+    return v_bus + (l_loop_nh * 1e-9) * (di_amp / (dt_ns * 1e-9))
+
+vp_2layer = v_peak_turnoff(48.0, l_loop_nh=20.0, di_amp=30.0, dt_ns=20.0)
+vp_4layer = v_peak_turnoff(48.0, l_loop_nh=4.0, di_amp=30.0, dt_ns=20.0)
+
+v_bus = 48.0
+c_bus = 1000e-6
+r_pre = 48.0
+i_inrush_pre = v_bus / r_pre
+t_99pct = 5.0 * r_pre * c_bus
+e_pre_j = 0.5 * c_bus * (v_bus ** 2)
+
+assert math.isclose(vp_2layer, 78.0, rel_tol=1e-9)
+assert math.isclose(vp_4layer, 54.0, rel_tol=1e-9)
+assert math.isclose(i_inrush_pre, 1.0, rel_tol=1e-9)
+assert math.isclose(t_99pct, 0.24, rel_tol=1e-9)
+assert math.isclose(e_pre_j, 1.152, rel_tol=1e-9)
+print(f"V_peak(20nH)={vp_2layer:.1f} V vs V_peak(4nH)={vp_4layer:.1f} V; Precharge I_max={i_inrush_pre:.1f} A, 5tau={t_99pct:.2f} s")
+```
+Expected output:
+```text
+V_peak(20nH)=78.0 V vs V_peak(4nH)=54.0 V; Precharge I_max=1.0 A, 5tau=0.24 s
+```
+
+## 5. Exercise
+Calculate the maximum allowable parasitic commutation loop inductance $L_{\text{loop,max}}$ in nanohenries ($\text{nH}$) on a $V_{\text{bus}} = 48.0\text{ V}$ inverter switching $\Delta I = 30.0\text{ A}$ in $\Delta t_{\text{sw}} = 15\text{ ns}$ so that the peak turn-off voltage $V_{\text{peak}}$ never exceeds $60.0\text{ V}$ ($80\%$ of a $75\text{ V}$ rating). Verify $L_{\text{loop,max}} = \frac{(60.0 - 48.0) \times 15\text{ ns}}{30.0\text{ A}} = 6.0\text{ nH}$.
+- **If your result differs:** Note that $\text{nH}/\text{ns} = 1\ \Omega$, so $\Delta V = L_{\text{nH}} \cdot \frac{\Delta I}{\Delta t_{\text{ns}}} \implies L_{\text{nH}} = 12.0 \times \frac{15.0}{30.0} = 6.0\text{ nH}$.
+
+## 6. Simulation path
+Open **Tab 2 (Power Stage, Loop Inductance Ringing & Dead-Time)** in the MechaLab Workbench (`npm run dev`) and sweep $L_{\text{loop}}$ from $2\text{ nH}$ to $25\text{ nH}$ to watch the $V_{DS}$ turn-off ringing spike grow toward the MOSFET avalanche limit.
+
+## 7. Safety notes
+> **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**
+> 1. **48 V Bus Pre-Charge & Bleeder Discipline:** Never hot-plug a $24\text{–}48\text{ V}$ battery or high-current supply directly into an uncharged inverter capacitor bank ($>500\ \mu\text{F}$). Always engage a series **pre-charge resistor** ($33\text{–}100\ \Omega$ power resistor) until $V_{\text{cap}} \ge 0.95\,V_{\text{bus}}$ before closing the main contactor/switch, and include a permanent **bleeder resistor + LED** across the DC bus so stored energy discharges to $<5\text{ V}$ after power-off.
+> 2. **Voltage Overshoot & TVS Clamping:** Always derate silicon MOSFET $V_{DS,\max}$ to $\ge 1.6\times V_{\text{bus}}$ (e.g., $80\text{–}100\text{ V}$ FETs for a $48\text{ V}$ bus) and place an SMBJ58A/SMBJ60A Transient Voltage Suppressor (TVS) diode across the DC bus.
+> 3. **Protective Eyewear & Current-Limited First Bring-Up:** Wear safety glasses during initial $48\text{ V}$ power-stage bring-up and bring up gate drive waveforms at $V_{\text{bus}} = 12\text{ V}$, $I_{\text{limit}} = 0.5\text{ A}$ with no motor attached before stepping up to $48\text{ V}$.
+
+## 8. Checkpoint (Skip Test & Gate Test)
+Pass criteria: read `## 7. Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 2.2 (`01-electronics.T2.02`).
+
+### Skip test
+1. `[Concept: parasitic_loop_inductance_voltage_overshoot]` Compute the peak Drain-to-Source voltage $V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{\Delta I}{\Delta t}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) when $V_{\text{bus}} = 48.0\text{ V}$, $L_{\text{loop}} = 5.0\text{ nH}$, and $\Delta I = 24.0\text{ A}$ turns off in $\Delta t = 15.0\text{ ns}$.
+2. `[Concept: bootstrap_high_side_gate_driver_and_deadtime]` Compute the average gate drive current $I_G = Q_g / t_r$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) required to charge a MOSFET gate with $Q_g = 45\text{ nC}$ in $t_r = 30\text{ ns}$.
+3. `[Concept: bootstrap_high_side_gate_driver_and_deadtime]` When does a high-side bootstrap capacitor $C_{\text{boot}}$ recharge from the $12\text{ V}$ gate-driver rail?
+   - **A.** Only when the low-side MOSFET is ON (pulling the switching node `SW` down to $\text{GND}$).
+   - **B.** Only when the motor is disconnected.
+   - **C.** Only when the high-side MOSFET is held at $100\%$ duty cycle forever.
+   - **D.** Only when $V_{\text{bus}} = 0\text{ V}$.
+4. `[SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]` What happens if you hot-plug a $48\text{ V}$ LiPo battery ($R_{\text{internal}} = 15\text{ m}\Omega$) directly into an uncharged $1500\ \mu\text{F}$ inverter capacitor bank without a pre-charge resistor?
+   - **A.** Nothing; capacitors block inrush current.
+   - **B.** The uncharged capacitor bank acts as a $0\text{ V}$ short at $t=0$, drawing an instantaneous inrush surge of $>1000\text{ A}$ that vaporizes connector pins, welds relays shut, and can avalanche the MOSFETs via $L\,di/dt$ ringing.
+   - **C.** The battery voltage drops permanently to $12\text{ V}$.
+   - **D.** The CAN bus baud rate doubles.
+5. `[SAFETY] [Concept: parasitic_loop_inductance_voltage_overshoot]` On a 4-layer motor controller PCB (`L1: Signal/Power`, `L2: Solid GND`, `L3: Power/Signal`, `L4: Signal`), why must you **never** cut slots across the Layer-2 ground plane beneath the high-speed gate drive or commutation loop?
+   - **A.** Because slots make the PCB heavier.
+   - **B.** Because cutting the return plane forces high-frequency return current to detour around the slot, dramatically expanding magnetic loop area, increasing $L_{\text{loop}}$ voltage spikes, and injecting common-mode noise into ADC signals.
+   - **C.** Because KiCad cannot export Gerbers with slots.
+   - **D.** Because copper planes only conduct DC.
+
+**Answer key:**
+```python
+import math
+
+q1_vpeak = 48.0 + 5.0 * (24.0 / 15.0)
+q2_ig = 45.0 / 30.0
+q3_choice = "A"
+q4_safety_choice = "B"
+q5_safety_choice = "B"
+
+assert math.isclose(q1_vpeak, 56.0, rel_tol=1e-6)
+assert math.isclose(q2_ig, 1.5, rel_tol=1e-6)
+assert q3_choice == "A"
+assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
+assert q5_safety_choice == "B"  # Mandatory [SAFETY] 100% required
+```
+- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3 and `## 7. Safety notes`.
+
+### Gate test
+Covers the complete Track 01 Tier 2 bridge ladder (`01-electronics.T2.01a` $\to$ `01-electronics.T2.01b`) before Step 2.2 (`01-electronics.T2.02`):
+1. `[Concept: opamp_negative_feedback_virtual_short]` Under negative feedback without saturation, what is the ideal voltage difference $V_+ - V_-$ across an op-amp's inputs (tolerance $\pm 10^{-6}\text{ V}$)?
+2. `[Concept: differential_shunt_gain_and_cmrr]` Compute the ADC voltage $V_{\text{ADC}} = 1.65 + G \cdot I \cdot R_{\text{shunt}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for $G = 20.0\text{ V/V}$, $R_{\text{shunt}} = 0.002\ \Omega$, and $I = +20.0\text{ A}$.
+3. `[Concept: kelvin_four_terminal_sense_routing]` Why must the two sense traces from a $2\text{ m}\Omega$ current shunt tap dedicated inner Kelvin pads rather than the main power solder pads?
+   - **A.** To eliminate the $I_{\text{load}} R_{\text{trace}}$ voltage drop across the power solder joint and copper pour, which would otherwise cause $30\text{–}60\%$ current gain error.
+   - **B.** To increase the shunt resistance to $10\ \Omega$.
+   - **C.** To bypass the differential amplifier.
+   - **D.** To heat up the ADC pin.
+4. `[Concept: parasitic_loop_inductance_voltage_overshoot]` Compute the inductive voltage spike $\Delta V = L_{\text{loop}} \frac{\Delta I}{\Delta t}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) for $L_{\text{loop}} = 3.0\text{ nH}$, $\Delta I = 30.0\text{ A}$, and $\Delta t = 15.0\text{ ns}$.
+5. `[Concept: bootstrap_high_side_gate_driver_and_deadtime]` When a high-side MOSFET is conducting and the switching node sits at $V_{\text{SW}} = 48.0\text{ V}$, what absolute voltage $V_G$ (relative to $\text{GND}$, tolerance $\pm 10^{-6}\text{ V}$) must a $12.0\text{ V}$ bootstrap gate driver apply to the high-side Gate pin to achieve $V_{GS} = +12.0\text{ V}$?
+6. `[Concept: precharge_resistor_inrush_and_tvs_clamp]` Compute the initial peak pre-charge current $I_{\text{pre}} = V_{\text{bus}} / R_{\text{pre}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$) when pre-charging a $48.0\text{ V}$ bus through $R_{\text{pre}} = 60.0\ \Omega$.
+7. `[SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]` Compute the stored electric energy $E = \frac{1}{2} C_{\text{bus}} V_{\text{bus}}^2$ in joules ($\text{J}$, tolerance $\pm 10^{-6}$) in a $C_{\text{bus}} = 2000\ \mu\text{F}$ ($0.002\text{ F}$) capacitor bank charged to $V_{\text{bus}} = 48.0\text{ V}$.
+8. `[SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]` Before touching or probing a powered-down $48\text{ V}$ motor inverter PCB with metal tools, what mandatory check must you perform?
+   - **A.** Assume the capacitors discharged instantly and touch the bus bars with a screwdriver.
+   - **B.** Verify the bleeder LED is extinguished **and** measure $V_{\text{bus}}$-to-$\text{GND}$ with a DMM to confirm the bulk capacitors have discharged below $<5.0\text{ V}$.
+   - **C.** Short the $48\text{ V}$ bus with tweezers.
+   - **D.** Unplug the USB cable only.
+
+**Gate answer key:**
+```python
+import math
+
+g1_vdiff = 0.0
+g2_vadc = 1.65 + 20.0 * 20.0 * 0.002
+g3_choice = "A"
+g4_dv = 3.0 * (30.0 / 15.0)
+g5_vg = 48.0 + 12.0
+g6_ipre = 48.0 / 60.0
+g7_energy_j = 0.5 * 0.002 * (48.0 ** 2)
+g8_safety_choice = "B"
+
+assert math.isclose(g1_vdiff, 0.0, abs_tol=1e-6)
+assert math.isclose(g2_vadc, 2.45, rel_tol=1e-9)
+assert g3_choice == "A"
+assert math.isclose(g4_dv, 6.0, rel_tol=1e-6)
+assert math.isclose(g5_vg, 60.0, rel_tol=1e-6)
+assert math.isclose(g6_ipre, 0.80, rel_tol=1e-9)
+assert math.isclose(g7_energy_j, 2.304, rel_tol=1e-6)  # Mandatory [SAFETY] 100% required
+assert g8_safety_choice == "B"                         # Mandatory [SAFETY] 100% required
+```
+- **Pass mark:** $7/8$ overall AND $2/2$ ($100\%$) on `[SAFETY]` questions Q7 and Q8. Remediation: Q1–Q3 $\to$ `01-electronics.T2.01a`; Q4–Q8 $\to$ `01-electronics.T2.01b`.
+
+## 9. Common mistakes
+| Symptom | Root cause | 2-minute fix |
+| :--- | :--- | :--- |
+| High-side MOSFET turns off after a few milliseconds when commanded to $100\%$ duty cycle | Bootstrap capacitor $C_{\text{boot}}$ leaked its charge because the low-side FET never turned on to refresh it. | Clamp maximum PWM duty cycle to $\le 98\%$ so the low-side FET turns on briefly every PWM cycle to recharge $C_{\text{boot}}$ (or use a gate driver with an internal trickle charge pump like `DRV8323`/`DRV8353`). |
+| XT60 connector tips vaporize with a loud pop on battery plug-in | No pre-charge circuit ahead of the bulk capacitor bank. | Use an anti-spark XT90-S connector or a $47\ \Omega$ pre-charge resistor switch before closing the main battery path. |
+| MOSFETs fail in avalanche during fast turn-off at $48\text{ V}$ | High-frequency ceramic decoupling capacitors were placed too far from the half-bridge Drain/Source pins ($L_{\text{loop}} > 15\text{ nH}$). | Place low-ESL MLCC ceramic capacitors within $<2\text{ mm}$ of every half-bridge leg over an unbroken Layer-2 ground plane. |
+
+## 10. Resources
+- **Henry Ott — *Electromagnetic Compatibility Engineering* & Texas Instruments `SLVA714` (* Layout Guide for Motor Drivers*, `resources/textbooks-and-papers.md`):** 4-layer stackup, return-current planes, and hot-loop minimization `[VERIFIED 2026-10-15]`.
+- **Track 01 (`01-electronics-and-power/README.md`):** Directly continues into Step 2.2 (`01-electronics.T2.02`) `[VERIFIED 2026-10-15]`.
+
+## 11. Next modules
+- Proceed to legacy **Step 2.2 (`01-electronics.T2.02`)** in [`01-electronics-and-power/README.md`](../01-electronics-and-power/README.md#tier-2-intermediate--applied).

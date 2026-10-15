@@ -321,3 +321,11 @@ $$
 | **Current Loop Bandwidth ($-3\text{ dB}$)** | $f_{-3\text{dB}} \ge 2.0\text{ kHz}$ with overshoot $< 4\%$ and zero steady-state error | $i_q^*$ step response ($90\%$ rise time $\le 180\ \mu\text{s}$) in Tab 3 FOC Simulator |
 | **$d$-$q$ Axis Cross-Coupling Rejection** | Peak $\lvert i_d \rvert$ perturbation $< 0.15\text{ A}$ during $0 \to 10\text{ A}$ $i_q^*$ step at $2,000\text{ RPM}$ | Compare Decoupling ON vs. OFF in Tab 3 FOC Simulator |
 | **Cogging Torque Ripple Suppression** | Peak-to-peak velocity ripple reduced by $\ge 75\%$ at $10\text{ RPM}$ with Anticogging LUT | PLL velocity spectrum FFT at $1\times, 6\times, N_{\text{slots}}\times$ harmonics |
+
+---
+
+## 7. Track 03 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
+
+- **Tier 1 (Quadrature Encoders, Pole Pairs & Offset Calibration → Step 1.4):** [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md) *(Ladder Gate Test)*
+- **Tier 2 (Stationary-to-Rotating Reference Frames: Clarke & Park → Step 2.4):** [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) *(Ladder Gate Test)*
+

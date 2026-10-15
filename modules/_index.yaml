@@ -5,39 +5,39 @@ legacy:
     introduces: [symplectic_euler_integration, so2_rotation_matrix, atan2_angle_wrapping, exponential_moving_average_filter, rc_cutoff_phase_lag]
 
   - id: 01-electronics.T1.02
-    title: "Track 01 (Tier 1): Breadboard H-Bridges (DRV8833), Logic Levels & Star Grounding"
+    title: "Track 01 (Tier 1): Breadboard H-Bridges (DRV8833), Logic Levels & Decoupling"
     prereqs: [00-foundations.T1.01, 01-electronics.T1.01b]
     introduces: [cmos_logic_levels_esd_clamping, open_drain_i2c_pullups, h_bridge_decay_modes, star_grounding, bulk_vs_ceramic_decoupling]
 
   - id: 02-mechanics.T1.03
-    title: "Track 02 (Tier 1): 2D Planar Kinematics, Gear Ratios & Double-Shear Bearings"
-    prereqs: [00-foundations.T1.01]
-    introduces: [planar_2link_forward_kinematics, law_of_cosines_inverse_kinematics, elbow_up_down_branch_selection, single_vs_double_shear_joint]
+    title: "Track 02 (Tier 1): 2D Planar Kinematics, Gear Ratios (N^2 Inertia) & Bearings"
+    prereqs: [00-foundations.T1.01, 02-mechanics.T1.02a]
+    introduces: [planar_2link_forward_kinematics, law_of_cosines_inverse_kinematics, elbow_up_down_branch_selection, reflected_inertia_n_squared_scaling, single_vs_double_shear_joint]
 
   - id: 03-sensors.T1.04
-    title: "Track 03 (Tier 1): Magnetic Encoders (AS5600) & Open-Loop BLDC Commutation"
-    prereqs: [01-electronics.T1.02]
-    introduces: [diametric_hall_magnetic_encoder, six_step_trapezoidal_commutation, open_loop_three_phase_sine_modulation, electrical_vs_mechanical_pole_pairs]
+    title: "Track 03 (Tier 1): Quadrature/Magnetic Encoders & Open-Loop BLDC (SimpleFOC)"
+    prereqs: [01-electronics.T1.02, 03-sensors.T1.03a]
+    introduces: [diametric_hall_magnetic_encoder, quadrature_optical_encoder_cpr, six_step_trapezoidal_commutation, open_loop_three_phase_sine_modulation, electrical_vs_mechanical_pole_pairs]
 
   - id: 04-embedded.T1.05
-    title: "Track 04 (Tier 1): Zero-delay() Hardware Timer ISRs & Packed Binary Telemetry"
+    title: "Track 04 (Tier 1): Killing delay(), 1 kHz Timer ISRs & Binary Serial"
     prereqs: [01-electronics.T1.02, 04-embedded.T1.04b]
-    introduces: [packed_binary_telemetry_struct, xor_crc8_packet_framing]
+    introduces: [hardware_timer_isr_and_jitter, volatile_shared_isr_flag, uart_baud_serialization_budget, packed_binary_telemetry_struct, xor_crc8_packet_framing]
 
   - id: 05-control.T1.06
-    title: "Track 05 (Tier 1): Discrete PID with Anti-Windup & Complementary IMU Fusion"
+    title: "Track 05 (Tier 1): PID Virtual Spring-Damper, Anti-Windup & Complementary IMU"
     prereqs: [00-foundations.T1.01, 04-embedded.T1.05, 05-control.T1.05a]
     introduces: [discrete_pid_controller, integrator_clamping_anti_windup, filtered_derivative_on_measurement, complementary_imu_attitude_filter]
 
   - id: 06-robotics.T1.07
-    title: "Track 06 (Tier 1): Cubic/Trapezoidal Trajectories, Webots & Joint Virtual Springs"
-    prereqs: [02-mechanics.T1.03, 05-control.T1.06]
-    introduces: [cubic_polynomial_trajectory, trapezoidal_velocity_profile, joint_space_virtual_spring_damper]
+    title: "Track 06 & 07 (Tier 1): Cubic Trajectories, Joint Springs & 10-Step Safe Bring-Up"
+    prereqs: [02-mechanics.T1.03, 05-control.T1.06, 06-robotics.T1.06a]
+    introduces: [cubic_polynomial_trajectory, trapezoidal_velocity_profile, joint_space_virtual_spring_damper, gravity_compensation_feedforward, ten_step_power_on_bringup]
 
   - id: 07-systems.T1.08
-    title: "Track 07 & 08 (Tier 1 Boss): 10-Step Bring-Up, OpenPLC, E-Stop & Tier 1 Robot Build"
-    prereqs: [06-robotics.T1.07]
-    introduces: [ten_step_power_on_bringup, hardware_emergency_stop_chain, tier1_2dof_breakout_robot_integration]
+    title: "Track 08 (Tier 1 Boss Capstone): Breadboard/Breakout 2-DOF Desktop Robot"
+    prereqs: [06-robotics.T1.07, 07-systems.T1.07a]
+    introduces: [openplc_iec61131_cyclic_scan, single_tone_sine_sweep_sysid, hardware_emergency_stop_chain, tier1_2dof_breakout_robot_integration]
 
   - id: 00-foundations.T2.01
     title: "Track 00 (Tier 2): State-Space Matrices, Two-Mass Resonance, Quaternions & Tustin Biquads"
@@ -45,76 +45,76 @@ legacy:
     introduces: [two_mass_torsional_resonance_anti_resonance, unit_quaternion_kinematics_slerp, prewarped_tustin_tdf2_biquad_notch]
 
   - id: 01-electronics.T2.02
-    title: "Track 01 (Tier 2): 4-Layer KiCad PCBs, Bootstrap Gate Drivers & Kelvin Current Shunts"
-    prereqs: [01-electronics.T1.02, 00-foundations.T2.01]
-    introduces: [four_layer_pcb_ground_plane_stackup, high_side_bootstrap_gate_driver_deadtime, four_terminal_kelvin_shunt_ina240]
+    title: "Track 01 (Tier 2): 4-Layer KiCad PCBs, Bootstrap Gate Drivers & 4-Terminal Kelvin Shunts"
+    prereqs: [01-electronics.T1.02, 00-foundations.T2.01, 01-electronics.T2.01b]
+    introduces: [four_layer_pcb_ground_plane_stackup, thermal_via_stitching, high_side_bootstrap_gate_driver_deadtime, four_terminal_kelvin_shunt_ina240]
 
   - id: 02-mechanics.T2.03
-    title: "Track 02 (Tier 2): Exact Constraint Design, Parametric CAD (CadQuery) & URDF/MuJoCo"
-    prereqs: [02-mechanics.T1.03, 00-foundations.T2.01]
-    introduces: [maxwell_locating_exact_constraint, hertzian_contact_bearing_life, programmatic_cadquery_step_generation, parallel_axis_urdf_inertia_tensor]
+    title: "Track 02 (Tier 2): Maxwell Exact Constraint, CadQuery & URDF/MuJoCo Validation"
+    prereqs: [02-mechanics.T1.03, 00-foundations.T2.01, 02-mechanics.T2.02a]
+    introduces: [maxwell_locating_exact_constraint, kelvin_kinematic_coupling, hertzian_contact_bearing_life, programmatic_cadquery_step_generation, parallel_axis_urdf_inertia_tensor]
 
   - id: 03-sensors.T2.04
-    title: "Track 03 (Tier 2): 14-Bit SPI Encoders, Type-II Tracking PLL & 25 kHz Clarke/Park FOC"
-    prereqs: [01-electronics.T2.02, 03-sensors.T1.04]
-    introduces: [spi_magnetic_encoder_readout, type2_tracking_pll_velocity_observer, synchronous_dq_foc_current_loop]
+    title: "Track 03 (Tier 2): Clarke/Park Transforms, Type-II PLLs & Allan Variance"
+    prereqs: [01-electronics.T2.02, 03-sensors.T1.04, 03-sensors.T2.03a]
+    introduces: [spi_magnetic_encoder_readout, amplitude_invariant_clarke_park_transform, type2_tracking_pll_velocity_observer, synchronous_dq_foc_current_loop, allan_variance_imu_noise_extraction]
 
   - id: 04-embedded.T2.05
-    title: "Track 04 (Tier 2): FreeRTOS Priority Inheritance, RMA Schedulability & DMA Circular Buffers"
-    prereqs: [04-embedded.T1.05, 03-sensors.T2.04]
-    introduces: [rate_monotonic_response_time_analysis, dma_double_buffered_ping_pong_isr, can_fd_mit_impedance_packet_packing]
+    title: "Track 04 (Tier 2): FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (MIT Mode)"
+    prereqs: [04-embedded.T1.05, 03-sensors.T2.04, 04-embedded.T2.04b]
+    introduces: [freertos_priority_inheritance_mutex, rate_monotonic_response_time_analysis, dma_double_buffered_ping_pong_isr, can_fd_mit_impedance_packet_packing]
 
   - id: 05-control.T2.06
-    title: "Track 05 (Tier 2): Energy Swing-Up, Discrete LQR & 3-State Kalman Disturbance Observer"
-    prereqs: [00-foundations.T2.01, 02-mechanics.T2.03]
-    introduces: [astrom_furuta_energy_swingup, hysteretic_stabilizing_handoff, augmented_kalman_disturbance_observer]
+    title: "Track 05 (Tier 2): Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF"
+    prereqs: [00-foundations.T2.01, 02-mechanics.T2.03, 05-control.T2.05a]
+    introduces: [gang_of_four_sensitivity_waterbed, astrom_furuta_energy_swingup, hysteretic_stabilizing_handoff, discrete_infinite_horizon_lqr, augmented_kalman_disturbance_observer]
 
   - id: 06-robotics.T2.07
-    title: "Track 06 (Tier 2): Jacobian Transpose Cartesian Compliance, ROS 2 & Ruckig S-Curves"
-    prereqs: [02-mechanics.T2.03, 05-control.T2.06]
-    introduces: [jacobian_transpose_cartesian_impedance, ruckig_time_optimal_jerk_limited_scurve]
+    title: "Track 06 & 07 (Tier 2): Jacobian Transpose Compliance, Ruckig S-Curves & Regen Clamps"
+    prereqs: [02-mechanics.T2.03, 05-control.T2.06, 06-robotics.T2.06a]
+    introduces: [jacobian_transpose_cartesian_impedance, ruckig_time_optimal_jerk_limited_scurve, regenerative_braking_bus_voltage_surge]
 
   - id: 07-systems.T2.08
-    title: "Track 07 & 08 (Tier 2 Boss): Active Regen Clamp, CAN-FD CRC, OPC UA & Custom Servo Capstone"
+    title: "Track 08 (Tier 2 Boss Capstone): Custom 4-Layer CAN Servo + LQR/MuJoCo Twin"
     prereqs: [01-electronics.T2.02, 04-embedded.T2.05, 06-robotics.T2.07]
-    introduces: [regenerative_braking_shunt_chopper, can_fd_crc16_rolling_counter_watchdog, tier2_custom_pcb_furuta_capstone]
+    introduces: [regenerative_braking_shunt_chopper, can_fd_crc16_rolling_counter_watchdog, opc_ua_industrial_telemetry, tier2_custom_pcb_furuta_capstone]
 
   - id: 00-foundations.T3.01
     title: "Track 00 (Tier 3): Lie Groups SO(3)/SE(3), Van Loan ZOH & Port-Hamiltonian Energy"
-    prereqs: [07-systems.T2.08]
-    introduces: [rodrigues_so3_se3_exp_log_maps, van_loan_block_matrix_zoh, bond_graph_port_hamiltonian_passivity]
+    prereqs: [07-systems.T2.08, 00-foundations.T3.00a]
+    introduces: [rodrigues_so3_se3_exp_log_maps, small_angle_taylor_lie_guard, van_loan_block_matrix_zoh, bond_graph_port_hamiltonian_passivity]
 
   - id: 01-electronics.T3.02
-    title: "Track 01 (Tier 3): 6-Layer <2 nH 48V/30A Inverter, Bessel AFE & SAR Charge Buckets"
+    title: "Track 01 (Tier 3): 6-Layer <2 nH 48 V/30 A Inverter, Bessel AFE & SAR Charge Buckets"
     prereqs: [01-electronics.T2.02, 00-foundations.T3.01]
     introduces: [sub_2nh_six_layer_commutation_loop, differential_bessel_anti_aliasing_filter, sar_adc_c0g_charge_bucket_design, cauer_foster_electro_thermal_network]
 
   - id: 02-mechanics.T3.03
-    title: "Track 02 (Tier 3): Screw PoE, Ti-6Al-4V Flexures, Featherstone O(n) RNEA & GPU Physics"
+    title: "Track 02 (Tier 3): Screw PoE, Ti-6Al-4V Flexures, Featherstone O(n) RNEA & GPU Physics (Newton / Isaac Lab)"
     prereqs: [00-foundations.T3.01, 02-mechanics.T2.03]
-    introduces: [paros_weisbord_circular_notch_flexure, product_of_exponentials_screw_kinematics, christoffel_passivity_skew_symmetry, featherstone_on_rnea_inverse_dynamics]
+    introduces: [paros_weisbord_circular_notch_flexure, product_of_exponentials_screw_kinematics, christoffel_passivity_skew_symmetry, featherstone_on_rnea_inverse_dynamics, gpu_parallel_contact_simulation]
 
   - id: 03-sensors.T3.04
-    title: "Track 03 (Tier 3): 25-40 kHz Decoupled d-q FOC, SVPWM & Harmonic Encoder/Anticogging LUT"
+    title: "Track 03 (Tier 3): 25-40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT"
     prereqs: [01-electronics.T3.02, 03-sensors.T2.04]
     introduces: [synchronous_dq_cross_coupling_decoupling, minmax_zero_sequence_svpwm_injection, fourier_encoder_eccentricity_anticogging_lut]
 
   - id: 04-embedded.T3.05
-    title: "Track 04 (Tier 3): Bare-Metal TIM1->ADC, CORDIC, Embedded Rust & C++20 WaitFreeSeqLock"
+    title: "Track 04 (Tier 3): Bare-Metal TIM1->ADC, CORDIC, Embedded Rust (Embassy/RTIC) & C++20 WaitFreeSeqLock"
     prereqs: [03-sensors.T3.04, 04-embedded.T2.05]
     introduces: [tim1_trgo2_center_aligned_adc_trigger, q131_cordic_hardware_coprocessor, cpp20_wait_free_seqlock, embedded_rust_rtic_embassy_concurrency]
 
   - id: 05-control.T3.06
-    title: "Track 05 (Tier 3): Joseph-Form Manifold ESKF, Embedded MPC (acados/TinyMPC) & CBF-QP"
+    title: "Track 05 (Tier 3): Joseph-Form Manifold ESKF, Embedded MPC (acados/TinyMPC) & Control Barrier QPs"
     prereqs: [00-foundations.T3.01, 05-control.T2.06]
-    introduces: [joseph_form_so3_manifold_eskf, chi_squared_nees_nis_consistency, control_barrier_function_qp_safety_filter]
+    introduces: [joseph_form_so3_manifold_eskf, chi_squared_nees_nis_consistency, receding_horizon_embedded_mpc, control_barrier_function_qp_safety_filter]
 
   - id: 06-robotics.T3.07
-    title: "Track 06 & 07 (Tier 3): Khatib WBC, Embodied AI, Schroeder SysID, AAS & <1 us STO"
-    prereqs: [02-mechanics.T3.03, 05-control.T3.06]
-    introduces: [khatib_operational_space_inertia_nullspace, schroeder_multisine_closed_loop_sysid, dual_channel_hardware_safe_torque_off]
+    title: "Track 06 & 07 (Tier 3): Khatib WBC, Embodied AI (LeRobot, Diffusion, pi0/VLA), Schroeder SysID, AAS Digital Twins & <1 us STO"
+    prereqs: [02-mechanics.T3.03, 05-control.T3.06, 06-robotics.T3.06b, 07-systems.T3.06a]
+    introduces: [khatib_operational_space_inertia_nullspace, embodied_ai_vla_rtc_policy_deployment, schroeder_multisine_closed_loop_sysid, aas_iec63278_digital_twin_integration, dual_channel_hardware_safe_torque_off]
 
   - id: 08-capstones.T3.08
-    title: "Track 08 (Tier 3 Production Mastery): Full Production Capstones I-V"
-    prereqs: [01-electronics.T3.02, 03-sensors.T3.04, 04-embedded.T3.05, 06-robotics.T3.07]
-    introduces: [capstone_1_to_5_qualification_signoff]
+    title: "Track 08 (Tier 3 Production Mastery): Full Production Capstones I-V & Open Robot Platforms"
+    prereqs: [01-electronics.T3.02, 03-sensors.T3.04, 04-embedded.T3.05, 06-robotics.T3.07, 08-capstones.T3.07a]
+    introduces: [capstone_1_to_5_qualification_signoff, open_robot_platform_integration]

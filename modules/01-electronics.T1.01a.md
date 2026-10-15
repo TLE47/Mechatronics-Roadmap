@@ -1,83 +1,123 @@
 ---
 id: 01-electronics.T1.01a
-title: "Voltage, Current, Resistance, Ohm's Law, KVL/KCL, Dividers & Multimeter Safety"
+title: "Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers"
 track: "01"
 tier: 1
 prereqs:
-  - 00-foundations.T1.00c
-  - 00-foundations.T1.00d
+  - 00-foundations.T1.00e
 new_concepts:
-  - ohms_law_and_joule_power
-  - kirchhoff_kvl_kcl_and_dividers
-  - multimeter_series_parallel_measurement
+  - voltage_current_resistance_ohms_law
+  - kvl_kcl_and_voltage_divider
+  - electrical_power_i2r_dissipation
 uses:
   - si_base_and_derived_units
-  - scientific_notation_and_prefixes
   - linear_functions_and_slope
-est_hours: 4.0
+  - spring_energy_and_power
+est_hours: 3.0
+hardware_required: false
+safety_level: low
+resources_verified: true
 ---
 
-## 0. Skip Test
-Pass without reading if you can answer both without looking anything up:
-1. A $24\text{ V}$ battery feeds a resistive divider with $R_{\text{top}} = 68\text{ k}\Omega$ and $R_{\text{bot}} = 10\text{ k}\Omega$ connected to a microcontroller ADC pin. What is the ADC pin voltage $V_{\text{out}}$ and the power dissipated in $R_{\text{top}}$?
-   - **Check:** $V_{\text{out}} = 24 \times \frac{10}{68 + 10} = 3.0769\text{ V}$, and $P_{\text{top}} = \frac{(24 - 3.0769)^2}{68000} = 6.438\text{ mW}$.
-2. Why does touching a multimeter's leads across a battery while the leads are plugged into the $10\text{ A}$ current jack blow the meter fuse immediately?
-   - **Check:** Current mode places an ultra-low-resistance shunt ($\approx 0.01\,\Omega$) between the leads, creating a direct short circuit across the battery.
+## 1. Why it matters (Why This Matters)
+Before wiring an H-bridge motor driver or level-shifting a $5\text{ V}$ sensor to a $3.3\text{ V}$ microcontroller in Step 1.2 (`01-electronics.T1.02`), you must be able to calculate how much current flows through a resistor, how two resistors divide a voltage, and how much heat ($P = I^2 R$) a wire or resistor dissipates. Getting these three laws right prevents magic smoke on your very first breadboard build. Already know this? Take the Skip test in section 8 first.
 
-## 1. Why This Matters
-Every sensor interface, motor winding, and PCB trace obeys Ohm's Law and Kirchhoff's circuit laws. Before wiring the breadboard H-bridge and logic-level bus in Step 1.2 (`01-electronics.T1.02`), you must be able to calculate resistor voltage dividers to scale $12\text{ V}$ or $24\text{ V}$ supply rails safely down to $3.3\text{ V}$ ADC pins, size resistors so they do not burn up from $I^2 R$ heating, and measure voltage and current without shorting your bench supply.
+## 2. Intuition first (Mental Model)
+Picture water pumped through a closed loop of pipes. **Voltage** ($V$, in volts) is the water pressure difference between two points; **current** ($I$, in amperes) is the flow rate of charge through the pipe; and **resistance** ($R$, in ohms, $\Omega$) is a narrow constriction that fights the flow. **Ohm's Law** ($V = I R$) says that pushing more current through a constriction takes proportionally more pressure. **Kirchhoff's Current Law (KCL)** says charge never vanishes at a pipe junction (what flows in must flow out), and **Kirchhoff's Voltage Law (KVL)** says if you walk around any closed loop and return to your starting point, the pressure rises and drops must sum to zero. When current squeezes through a resistor, the lost pressure turns directly into heat at rate $P = V I = I^2 R$.
 
-## 2. Mental Model
-1. **Voltage ($V$), Current ($I$), and Resistance ($R$):**
-   - **Voltage ($V$, Volts):** Electrical potential difference (push/pressure) between two points. Voltage is always measured *across* two nodes with respect to a reference node called **Ground ($\text{GND} = 0\text{ V}$)**.
-   - **Current ($I$, Amperes):** Flow rate of electric charge *through* a wire or component.
-   - **Ohm's Law & Joule Heating:** $V = I R$, and electrical power turned into heat is $P = V I = I^2 R = \frac{V^2}{R}$.
-2. **Kirchhoff's Laws & Voltage Dividers:**
-   - **KCL (Current Law):** Current flowing into any junction equals current flowing out ($\sum I_{\text{in}} = \sum I_{\text{out}}$).
-   - **KVL (Voltage Law):** Voltage drops around any closed loop sum to zero. For two resistors in series across $V_{\text{in}}$:
-     $$V_{\text{out}} = V_{\text{in}} \frac{R_{\text{bot}}}{R_{\text{top}} + R_{\text{bot}}}$$
-3. **Multimeter Rules:**
-   - Measure **Voltage in parallel** (high internal impedance $\approx 10\text{ M}\Omega$).
-   - Measure **Current in series** (break the wire so current flows through the meter's low-resistance shunt). Never touch a current-mode probe across a voltage source!
+## 3. Formalization
+1. **Ohm's Law ($V = I R$):** Across a resistor of resistance $R$ in ohms ($\Omega$), the voltage drop $V$ in volts ($\text{V}$) and current $I$ in amperes ($\text{A}$) obey:
+   $$V = I \cdot R \iff I = \frac{V}{R}$$
+   Substituting $V_{\text{bat}} = 12.0\text{ V}$ across a stalled motor winding of resistance $R_m = 2.4\ \Omega$ gives stall current $I_{\text{stall}} = 12.0\text{ V} / 2.4\ \Omega = 5.0\text{ A}$.
+2. **KVL, KCL, and the Unloaded/Loaded Voltage Divider:** Two series resistors $R_1$ (top, connected to $V_{\text{in}}$) and $R_2$ (bottom, connected to $\text{GND}$) share the same current $I = V_{\text{in}}/(R_1 + R_2)$ when unloaded, producing midpoint voltage:
+   $$V_{\text{out}} = V_{\text{in}} \frac{R_2}{R_1 + R_2}$$
+   Substituting $V_{\text{in}} = 5.0\text{ V}$, $R_1 = 10\text{ k}\Omega$, and $R_2 = 20\text{ k}\Omega$ gives $V_{\text{out}} = 5.0 \times \frac{20}{30} = 3.333\text{ V}$. If a load resistor $R_L$ is connected from $V_{\text{out}}$ to $\text{GND}$, the bottom leg becomes the parallel combination $R_{2\parallel L} = \frac{R_2 R_L}{R_2 + R_L}$.
+3. **Joule Heating ($P = V I = I^2 R$):** The thermal power $P$ in watts ($\text{W}$) dissipated as heat in resistance $R$ carrying current $I$ is:
+   $$P = V \cdot I = I^2 R = \frac{V^2}{R}$$
+   Substituting $I = 5.0\text{ A}$ through $R_m = 2.4\ \Omega$ gives $P = (5.0\text{ A})^2 (2.4\ \Omega) = 60.0\text{ W}$ of heat.
 
-## 3. Worked Example
-You want to monitor a $12.0\text{ V}$ motor battery using a $3.3\text{ V}$ microcontroller ADC pin with $R_{\text{top}} = 30\text{ k}\Omega$ and $R_{\text{bot}} = 10\text{ k}\Omega$.
-- **Step 1 (Series current by KVL + Ohm's Law):**
-  $$I = \frac{V_{\text{in}}}{R_{\text{top}} + R_{\text{bot}}} = \frac{12.0\text{ V}}{30000\,\Omega + 10000\,\Omega} = 0.0003\text{ A} = 0.30\text{ mA}$$
-- **Step 2 (Output voltage at ADC pin):**
-  $$V_{\text{out}} = I \times R_{\text{bot}} = 0.0003\text{ A} \times 10000\,\Omega = 3.00\text{ V} \le 3.3\text{ V (Safe!)}$$
-- **Step 3 (Power dissipation check):**
-  $$P_{\text{total}} = V_{\text{in}} I = 12.0\text{ V} \times 0.0003\text{ A} = 3.60\text{ mW} \ll 250\text{ mW (standard 1/4 W resistor rating)}$$
+## 4. Worked example (Worked Example & Code)
+Design a battery-voltage sensing divider that scales a $V_{\text{bat}} = 24.0\text{ V}$ supply down using $R_1 = 68\text{ k}\Omega$ and $R_2 = 10\text{ k}\Omega$ for a $3.3\text{ V}$ ADC pin, and compute both the unloaded output voltage and the loaded output voltage when the ADC input has finite input resistance $R_L = 100\text{ k}\Omega$.
 
-## 4. Code
 ```python
 import math
 
-def analyze_voltage_divider(v_in: float, r_top_ohm: float, r_bot_ohm: float) -> tuple[float, float, float]:
-    i_amp = v_in / (r_top_ohm + r_bot_ohm)
-    v_out = i_amp * r_bot_ohm
-    p_total_mw = (v_in * i_amp) * 1e3
-    return v_out, i_amp * 1e3, p_total_mw
+def divider_vout(v_in: float, r1: float, r2: float, r_load: float | None = None) -> float:
+    r_bottom = r2 if r_load is None else (r2 * r_load) / (r2 + r_load)
+    return v_in * (r_bottom / (r1 + r_bottom))
 
-v_out, i_ma, p_mw = analyze_voltage_divider(12.0, 30_000.0, 10_000.0)
-assert math.isclose(v_out, 3.0, rel_tol=1e-9)
-assert math.isclose(i_ma, 0.30, rel_tol=1e-9)
-assert math.isclose(p_mw, 3.60, rel_tol=1e-9)
-print(f"V_out={v_out:.2f} V, I={i_ma:.2f} mA, P={p_mw:.2f} mW")
+v_unloaded = divider_vout(24.0, 68_000.0, 10_000.0)
+v_loaded = divider_vout(24.0, 68_000.0, 10_000.0, r_load=100_000.0)
+p_r1_mw = ((24.0 - v_unloaded) ** 2 / 68_000.0) * 1000.0
+
+assert math.isclose(v_unloaded, 3.076923, rel_tol=1e-5)
+assert v_unloaded < 3.3
+assert math.isclose(v_loaded, 2.830189, rel_tol=1e-5)
+assert math.isclose(p_r1_mw, 6.437870, rel_tol=1e-5)
+print(f"V_unloaded={v_unloaded:.3f} V, V_loaded={v_loaded:.3f} V, P_R1={p_r1_mw:.2f} mW")
 ```
 Expected output:
 ```text
-V_out=3.00 V, I=0.30 mA, P=3.60 mW
+V_unloaded=3.077 V, V_loaded=2.830 V, P_R1=6.44 mW
 ```
 
 ## 5. Exercise
-An LED requires $V_{\text{LED}} = 2.0\text{ V}$ at $I = 10\text{ mA}$ when powered from a $5.0\text{ V}$ rail. Calculate the series current-limiting resistor $R$ and the power $P_R$ dissipated in the resistor.
-- **Check:** $R = \frac{5.0 - 2.0}{0.010} = 300\,\Omega$ and $P_R = (0.010)^2 \times 300 = 30.0\text{ mW}$.
+Calculate the current-limiting resistor $R$ required to run a status LED ($V_{\text{LED}} = 2.1\text{ V}$, target current $I = 10\text{ mA} = 0.010\text{ A}$) from a $V_{\text{supply}} = 5.0\text{ V}$ rail using KVL ($V_R = V_{\text{supply}} - V_{\text{LED}}$), and compute the power $P_R = I^2 R$ dissipated in the resistor. Verify $R = 290.0\ \Omega$ and $P_R = 0.029\text{ W}$ ($29.0\text{ mW}$, safely within a $0.25\text{ W}$ resistor rating).
+- **If your result differs:** Make sure you subtracted $V_{\text{LED}} = 2.1\text{ V}$ from $5.0\text{ V}$ before dividing by $0.010\text{ A}$ ($2.9\text{ V} / 0.010\text{ A} = 290\ \Omega$, not $5.0 / 0.010 = 500\ \Omega$).
 
-## 6. Gate Test
-1. What happens to the output voltage of a $30\text{ k}\Omega / 10\text{ k}\Omega$ divider if you accidentally connect a heavy $100\,\Omega$ load across $R_{\text{bot}}$? (Answer: The parallel combination $10\text{ k}\Omega \parallel 100\,\Omega \approx 99\,\Omega$ collapses $V_{\text{out}}$ from $3.0\text{ V}$ down to $0.039\text{ V}$.)
-2. If you double the current through a motor sense resistor, by what factor does its $I^2 R$ heat dissipation increase? (Answer: $4\times$, because power scales with the square of current.)
+## 6. Simulation path
+Simulate the voltage divider and LED resistor in the browser using [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`resources/open-source-toolchains.md`) or run the Python verification script above.
 
-## 7. Resources
-- **Horowitz & Hill — *The Art of Electronics* (Ch. 1):** Foundations of voltage dividers, Thevenin equivalents, and power dissipation (`resources/textbooks-and-papers.md`) `[VERIFIED 2026-10-15]`.
-- **Stage 0 Level 0.1 (`README.md`):** Links into the Wokwi virtual multimeter & breadboard sanity checks `[VERIFIED 2026-10-15]`.
+## 7. Hardware path
+Optional Tier 1 breadboard check (`hardware_required: false`): place a $68\text{ k}\Omega$ and $10\text{ k}\Omega$ resistor in series on a solderless breadboard powered from a $5.0\text{ V}$ USB rail and probe the midpoint with a digital multimeter:
+```text
+[+5.0 V Rail] ---> [R1 = 68 kOhm] ---+---> (DMM Red Probe: reads 0.641 V)
+                                     |
+                               [R2 = 10 kOhm]
+                                     |
+[GND Rail] --------------------------+---> (DMM Black Probe)
+```
+Pass/fail verification: unloaded $24\text{ V}$ divider reads $3.077\text{ V} < 3.3\text{ V}$ and $P_{R1} = 6.44\text{ mW} \ll 250\text{ mW}$.
+
+## 8. Checkpoint (Skip Test & Gate Test)
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+
+### Skip test
+1. `[Concept: voltage_current_resistance_ohms_law]` A $12.0\text{ V}$ supply drives a motor coil with resistance $R = 3.0\ \Omega$ while the rotor is stalled. Compute the stall current $I_{\text{stall}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
+2. `[Concept: kvl_kcl_and_voltage_divider]` Compute the unloaded output voltage $V_{\text{out}}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) of a divider with $V_{\text{in}} = 5.0\text{ V}$, top resistor $R_1 = 10\text{ k}\Omega$, and bottom resistor $R_2 = 20\text{ k}\Omega$.
+3. `[Concept: electrical_power_i2r_dissipation]` Compute the heat power $P = I^2 R$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) dissipated in a $0.050\ \Omega$ current-sense resistor carrying $I = 10.0\text{ A}$.
+4. `[Concept: kvl_kcl_and_voltage_divider]` Why can you **never** power a $3.3\text{ V}$ motor or microcontroller using a $10\text{ k}\Omega / 20\text{ k}\Omega$ resistor voltage divider from $5\text{ V}$?
+   - **A.** Because resistors only work with AC voltages.
+   - **B.** Because the load draws significant current $I_{\text{load}}$ through $R_1$, causing a massive $I_{\text{load}} R_1$ voltage drop that collapses $V_{\text{out}}$ (a voltage divider is for high-impedance signal sensing, not power delivery).
+   - **C.** Because KCL does not apply when a motor is connected.
+   - **D.** Because $3.3\text{ V}$ exceeds the breakdown voltage of carbon film resistors.
+
+**Answer key:**
+```python
+import math
+
+q1_istall = 12.0 / 3.0
+q2_vout = 5.0 * (20_000.0 / (10_000.0 + 20_000.0))
+q3_power_w = (10.0 ** 2) * 0.050
+q4_choice = "B"
+
+assert math.isclose(q1_istall, 4.0, rel_tol=1e-9)
+assert math.isclose(q2_vout, 10.0 / 3.0, rel_tol=1e-6)
+assert math.isclose(q3_power_w, 5.0, rel_tol=1e-9)
+assert q4_choice == "B"
+```
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 11. Next modules`.
+
+## 9. Common mistakes
+| Symptom | Root cause | 2-minute fix |
+| :--- | :--- | :--- |
+| Divider output is $20.9\text{ V}$ instead of $3.08\text{ V}$ ($3.3\text{ V}$ MCU pin destroyed!) | Swapped $R_1 = 68\text{ k}\Omega$ (top) and $R_2 = 10\text{ k}\Omega$ (bottom). | Always measure the divider midpoint with a multimeter before connecting it to an MCU pin. |
+| Quarter-watt ($0.25\text{ W}$) resistor smokes and turns brown | Used a low resistance ($100\ \Omega$) across $24\text{ V}$, dissipating $P = V^2/R = 5.76\text{ W}$. | Compute $P = V^2/R$ or $I^2 R$ and keep continuous dissipation below $50\%$ of the resistor's wattage rating. |
+| Tried to power a $3.3\text{ V}$ logic chip using a resistor divider | Ignored the load current $I_{\text{load}}$ flowing through the top resistor $R_1$. | Use a voltage regulator (LDO or buck converter) for power rails; use resistor dividers only for high-impedance ADC inputs. |
+
+## 10. Resources
+- **Paul Scherz & Simon Monk — *Practical Electronics for Inventors* (`resources/textbooks-and-papers.md`):** Beginner-friendly chapters on Ohm's law, KVL/KCL, and resistor power ratings `[VERIFIED 2026-10-15]`.
+- **Falstad Circuit Simulator (`falstad.com/circuit/`, `resources/open-source-toolchains.md`):** Interactive browser circuit simulator showing live current dots and voltage colors `[VERIFIED 2026-10-15]`.
+
+## 11. Next modules
+- Proceed to [`01-electronics.T1.01c`](01-electronics.T1.01c.md) (*Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety*).

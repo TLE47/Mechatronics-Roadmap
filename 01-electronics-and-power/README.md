@@ -378,3 +378,11 @@ $$
 | **Current AFE Phase Lag & Settling** | Phase lag $< 2.5^\circ$ at $2.5\text{ kHz}$; ADC sample error $< 0.25\text{ LSB}$ (12-bit) | 2nd-order Bessel AFE + SAR charge bucket ($C_{\text{filt}} \ge 20 C_{sh}$) |
 | **Current Noise Floor (PWM Active)** | $< 15\text{ mA}\kern0pt_{\text{rms}}$ at ADC output with $48\text{ V}$ bus switching at $40\text{ kHz}$ | 10,000-sample DMA capture at PWM center trigger |
 | **Thermal Rise at Continuous Load** | $\Delta T_{\text{PCB/Case}} < 40^\circ\text{C}$ ($T_j < 125^\circ\text{C}$) at $15\text{ A}\kern0pt_{\text{rms}}$ continuous ($30\text{ A}$ peak) | Coupled Cauer thermal solver & thermal camera soak test |
+
+---
+
+## 7. Track 01 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
+
+- **Tier 1 (DC Circuits, Energy Storage, Bench Safety & PWM H-Bridges → Step 1.2):** [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md) · [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) · [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) · [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) *(Ladder Gate Test)*
+- **Tier 2 (Op-Amp Shunt Conditioning, KiCad & 48V Pre-Charge Safety → Step 2.2):** [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) · [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) *(Ladder Gate Test)*
+

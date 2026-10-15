@@ -316,3 +316,11 @@ stateDiagram-v2
 | **Hardware Over-Current to Gate Turn-Off** | Latency $< 1.0\ \mu\text{s}$ ($0.65\ \mu\text{s}$ achieved) from shunt fault to all 6 gates High-Z | Interactive **Tab 5: Dual-Channel Hardware STO Simulator** |
 | **Encoder CRC / Wire-Break Fault Reaction** | Fault detected within $\le 2$ cycles ($\le 80\ \mu\text{s}$); zero unintended torque spike | Interactive **Tab 5: Encoder SPI Wire Open Fault Injection** |
 | **Regenerative Braking Clamp Accuracy** | Peak DC bus rise $\Delta V_{\text{bus}} < 4.5\text{ V}$ during emergency stop | Active shunt brake chopper verification |
+
+---
+
+## 7. Track 07 Bridge Modules & Fast-Track Skip/Gate Tests (`modules/`)
+
+- **Tier 1 (IEC 61131-3 PLC Scan Cycle, Sine-Sweep SysID & Incremental Bring-Up → Step 1.8):** [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) *(Ladder Gate Test)*
+- **Tier 3 (OPC UA Information Models, IEC 63278-1 AAS Digital Twins & ISO 13849-1 PLd Safety → Step 3.7):** [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) *(Ladder Gate Test)*
+
