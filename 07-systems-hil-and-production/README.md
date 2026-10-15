@@ -15,8 +15,8 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 | :--- | :--- | :--- | :--- |
 | **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 06 (Tier 1)](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: 10-Step Safe Bring-Up Protocol & Single-Tone Sine Sweeps](#tier-1-beginner--intuitive) | [**🏆 Next in Pass 1 → Track 08 (Tier 1 Boss: Breakout 2-DOF Desktop Robot)**](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass) |
 | **🔵 Pass 2: Tier 2 (Applied)** | [← Track 06 (Tier 2)](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Regen Braking Bus Clamps, CRC Watchdogs & HIL Faults](#tier-2-intermediate--applied) | [**🏆 Next in Pass 2 → Track 08 (Tier 2 Boss: Custom 4-Layer CAN Servo + LQR)**](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Software `if(fault) pwm=0` $\to$ Dual-Channel Hardware STO Cutoff](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 06 (Tier 3)](../06-robotics-and-autonomy/README.md#tier-3-advanced--production) | [§4 Tier 3: Schroeder Multisine Closed-Loop SysID & $<1\ \mu\text{s}$ Hardware STO](#tier-3-advanced--production) | [**🏆 Next in Pass 3 → Track 08 (Tier 3 Boss: Full Production Capstones I–IV)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Software `if(fault) pwm=0` → Dual-Channel Hardware STO Cutoff](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [← Track 06 (Tier 3)](../06-robotics-and-autonomy/README.md#tier-3-advanced--production) | [§4 Tier 3: Schroeder Multisine Closed-Loop SysID & <1 μs Hardware STO](#tier-3-advanced--production) | [**🏆 Next in Pass 3 → Track 08 (Tier 3 Boss: Full Production Capstones I–IV)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass) |
 
 ---
 
@@ -55,7 +55,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ### 1.2 Single-Tone Sine Sweeps to Measure Inertia $J$ & Friction $b$
 - **Core Summary:** Instead of guessing your motor and link's rotor inertia $J$ and viscous damping $b$, command a gentle open-loop sinusoidal torque $\tau(t) = A \sin(2\pi f t)$ across 4 frequencies ($f = 0.5, 1.0, 2.0, 5.0\text{ Hz}$) and measure the steady-state velocity amplitude $|\omega|$. Fitting $|\omega|/A = \frac{1}{\sqrt{(2\pi f J)^2 + b^2}}$ extracts the physical plant parameters directly from hardware data.
 - **Curated Free Resources:**
-  - 🔗 [CTMS (Control Tutorials for MATLAB & Simulink): System Identification from Frequency Response](https://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=SystemModeling) — *Shows how a first-order mechanical velocity plant $G_{\omega\tau}(s) = \frac{1}{J s + b}$ behaves at low frequency ($1/b$) vs. high frequency ($1/(J\omega)$).*
+  - 🔗 [CTMS (Control Tutorials for MATLAB & Simulink): System Identification from Frequency Response](https://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=SystemModeling) — *Shows how a first-order mechanical velocity plant* $G_{\omega\tau}(s) = \frac{1}{J s + b}$ *behaves at low frequency (* $1/b$ *) vs. high frequency (* $1/(J\omega)$ *).*
   - 🔗 [Brian Douglas (YouTube): Data-Driven System Identification Overview](https://www.youtube.com/watch?v=1_UobILf3cc) — *Explains how empirical frequency sweeps anchor analytical CAD models.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Command $\tau(t) = 0.1 \sin(2\pi f t)\text{ N}\cdot\text{m}$ on a simulated or physical rotor at $f_1 = 0.2\text{ Hz}$ and $f_2 = 5.0\text{ Hz}$. Use the low-frequency amplitude ratio to estimate viscous friction $b \approx A / |\omega(f_1)|$ and the high-frequency roll-off to estimate inertia $J \approx A / (2\pi f_2 |\omega(f_2)|)$.
@@ -88,7 +88,7 @@ V_{\text{bus,peak}} = \sqrt{V_{\text{bus,nom}}^2 + \frac{2 \eta \left(\frac{1}{2
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [ODrive Hardware Docs: Regenerative Braking & Brake Resistor Sizing Guide](https://docs.odriverobotics.com/v/latest/hardware.html#brake-resistor) — *Practical guide showing how ODrive motor controllers modulate a low-side MOSFET brake chopper to dump regenerative braking energy into a $2\ \Omega / 50\text{ W}$ resistor.*
+  - 🔗 [ODrive Hardware Docs: Regenerative Braking & Brake Resistor Sizing Guide](https://docs.odriverobotics.com/v/latest/hardware.html#brake-resistor) — *Practical guide showing how ODrive motor controllers modulate a low-side MOSFET brake chopper to dump regenerative braking energy into a* $2\ \Omega / 50\text{ W}$ *resistor.*
   - 🔗 [Texas Instruments SLLA325: Managing Regenerative Energy in Brushless DC Motor Drives](https://www.ti.com/lit/an/slla325/slla325.pdf) — *Derives the exact bus capacitance energy balance equation and hysteretic chopper comparator thresholds.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate the peak DC bus voltage $V_{\text{bus,peak}}$ when a robot link with reflected inertia $J = 0.04\text{ kg}\cdot\text{m}^2$ spinning at $\omega_0 = 30\text{ rad/s}$ ($E_k = 18\text{ J}$) brakes to a halt with $\eta = 75\%$ regeneration efficiency on a $V_{\text{bus,nom}} = 24\text{ V}$ supply with $C_{\text{bus}} = 1000\ \mu\text{F}$ (and no brake resistor!).
@@ -107,7 +107,7 @@ $$
 - **Core Summary:** Production actuators never trust a single communications packet blindly or allow a severed CAN cable to leave a joint holding its last commanded torque forever. Every CAN-FD command frame is validated with a hardware CRC and a **$5.0\text{ ms}$ Host Heartbeat Timeout** (which smoothly transitions the joint into pure viscous damping $K_d$), while a background $100\text{ Hz}$ **Thermal $I^2 t$ Observer** derates maximum current before copper windings overheat.
 - **Curated Free Resources:**
   - 🔗 [Jack Ganssle: Great Watchdog Timers for Embedded Systems](https://www.ganssle.com/watchdogs.htm) — *The classic industry guide to independent hardware window watchdogs, task health bitmasks, and safe fallback states.*
-  - 🔗 [Maxon Academy: Thermal Winding Time Constants & $I^2 t$ Overload Protection](https://www.maxongroup.com/) — *Explains two-node thermal RC modeling (copper winding to iron stator housing) for brushless motors.*
+  - 🔗 [Maxon Academy: Thermal Winding Time Constants & I² t Overload Protection](https://www.maxongroup.com/) — *Explains two-node thermal RC modeling (copper winding to iron stator housing) for brushless motors.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench and trigger all three hardware fault injections (**Overcurrent Short $42\text{ A}$**, **Encoder SPI Wire Open**, and **DC Bus Overvoltage $64\text{ V}$**) to inspect the deterministic fault detection latency and safe-state transition.
 - **🧠 Knowledge Check:**
@@ -191,8 +191,8 @@ $$
 | **Total RSS ($3\sigma$)** | $\sqrt{\sum (3\sigma_i)^2}$ | **$15.1\ \mu\text{m}$ (FAIL)** | **Co-Designed System** | **$1.24\ \mu\text{m}$ (PASS $< 5.0\ \mu\text{m}$)** |
 
 - **Curated Free Resources:**
-  - 🔗 [Alexander Slocum (MIT): Precision Machine Design — Error Budgeting & Homogeneous Transformation Matrices](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Shows how to combine systematic geometric/thermal drifts and random $3\sigma$ RSS variances in a unified spreadsheet/Python budget.*
-  - 🔗 [Heydemann (Applied Optics): Determination and Correction of Quadrature Fringe Measurement Errors in Interferometers](https://opg.optica.org/ao/abstract.cfm?uri=ao-20-19-3382) — *The classic least-squares ellipse-fitting algorithm used to remove sub-divisional error (SDE) from $\sin/\cos$ optical and magnetic encoders.*
+  - 🔗 [Alexander Slocum (MIT): Precision Machine Design — Error Budgeting & Homogeneous Transformation Matrices](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Shows how to combine systematic geometric/thermal drifts and random* $3\sigma$ *RSS variances in a unified spreadsheet/Python budget.*
+  - 🔗 [Heydemann (Applied Optics): Determination and Correction of Quadrature Fringe Measurement Errors in Interferometers](https://opg.optica.org/ao/abstract.cfm?uri=ao-20-19-3382) — *The classic least-squares ellipse-fitting algorithm used to remove sub-divisional error (SDE) from* $\sin/\cos$ *optical and magnetic encoders.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Verify the RSS table above in Python: notice that cutting the encoder error in half (from $3.0\ \mu\text{m}$ to $1.5\ \mu\text{m}$) without fixing the $6.90\ \mu\text{m}$ thermal drift barely changes the total RSS error! Always attack the largest squared term in $\sqrt{\sum \sigma_i^2}$ first.
 - **🧠 Knowledge Check:**

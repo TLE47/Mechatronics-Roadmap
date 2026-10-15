@@ -13,10 +13,10 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 | Pass / Level | Previous Step in Pass | Current Track 03 Section | Next Linear Step in This Pass |
 | :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 02 (Tier 1)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Quadrature/Magnetic Encoders & Open-Loop BLDC (`SimpleFOC`)](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 04 (Tier 1: Killing `delay()` & $1\text{ kHz}$ Timer ISR)**](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) |
+| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 02 (Tier 1)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Quadrature/Magnetic Encoders & Open-Loop BLDC (`SimpleFOC`)](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 04 (Tier 1: Killing `delay()` & 1 kHz Timer ISR)**](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) |
 | **🔵 Pass 2: Tier 2 (Applied)** | [← Track 02 (Tier 2)](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Clarke/Park Transforms, Type-II PLLs & Allan Variance](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 04 (Tier 2: FreeRTOS, DMA & CAN-FD)**](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Hobby Drone ESC / Voltage Mode $\to$ Center-Aligned Current FOC](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 02 (Tier 3)](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) | [§4 Tier 3: $25\text{–}40\text{ kHz}$ Decoupled $d$-$q$ FOC, SVPWM & Harmonic LUT](#tier-3-advanced--production) | [**Next in Pass 3 → Track 04 (Tier 3: `TIM1`$\to$`ADC`, CORDIC & `WaitFreeSeqLock`)**](../04-embedded-and-realtime/README.md#tier-3-advanced--production) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Hobby Drone ESC / Voltage Mode → Center-Aligned Current FOC](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [← Track 02 (Tier 3)](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) | [§4 Tier 3: 25–40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT](#tier-3-advanced--production) | [**Next in Pass 3 → Track 04 (Tier 3: `TIM1`→`ADC`, CORDIC & `WaitFreeSeqLock`)**](../04-embedded-and-realtime/README.md#tier-3-advanced--production) |
 
 ---
 
@@ -67,7 +67,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 - **Core Summary:** Using an `ESP32`/`STM32` + `SimpleFOCMini` (`DRV8313` 3-phase driver breakout) + `AS5600` magnetic encoder, you can close a smooth position/velocity loop in 20 lines of C++ (`SimpleFOC`) by commanding sinusoidal phase voltages $v_a, v_b, v_c$ locked $90^\circ$ electrical ahead of the measured encoder angle $\theta_e$.
 - **Curated Free Resources:**
   - 🔗 [SimpleFOC Official Documentation: Writing Your First Closed-Loop Angle Sketch](https://docs.simplefoc.com/angle_loop) — *Step-by-step wiring and Arduino/PlatformIO C++ code for sinusoidal voltage-mode position control.*
-  - 🔗 [Texas Instruments DRV8313 Triple Half-Bridge Driver Datasheet](https://www.ti.com/lit/ds/symlink/drv8313.pdf) — *Reference datasheet for the $8\text{–}60\text{ V}$, $2.5\text{ A}$ integrated 3-phase motor driver IC used on `SimpleFOCMini` breakouts.*
+  - 🔗 [Texas Instruments DRV8313 Triple Half-Bridge Driver Datasheet](https://www.ti.com/lit/ds/symlink/drv8313.pdf) — *Reference datasheet for the* $8\text{–}60\text{ V}$ *,* $2.5\text{ A}$ *integrated 3-phase motor driver IC used on `SimpleFOCMini` breakouts.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a gimbal BLDC motor + `AS5600`/`AS5048` magnetic encoder + `DRV8313` breakout on your bench, run the `SimpleFOC` electrical zero-offset alignment routine, and hold a target shaft angle with a spring-like feel (or explore **Tab 3: 25 kHz PMSM FOC** in the interactive workbench).
 - **🧠 Knowledge Check:**
@@ -83,7 +83,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### ✅ Tier 1 Milestone Gate (`Track 03 · Pass 1`)
 * Wire a gimbal BLDC motor + `AS5600`/`AS5048` magnetic encoder + `DRV8313` breakout on your bench, run the electrical zero-offset alignment routine, and hold a target shaft angle with spring-like feel (or explore **Tab 3: 25 kHz PMSM FOC** in the interactive workbench).
-* **Next Linear Step in Pass 1:** [**Proceed to Track 04 (Tier 1: Killing `delay()`, $1\text{ kHz}$ Timer ISRs & Binary Serial) →**](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive)
+* **Next Linear Step in Pass 1:** [**Proceed to Track 04 (Tier 1: Killing `delay()`, 1 kHz Timer ISRs & Binary Serial) →**](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive)
 
 ---
 
@@ -92,7 +92,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 > **Goal of Pass 2 (Track 03):** Move beyond voltage-mode `SimpleFOC` into true mathematical **Clarke & Park Coordinate Transforms**, **Type-II Phase-Locked Loop (PLL) Velocity Observers** (eliminating finite-difference quantization spikes), and **IMU Allan Variance** noise characterization.
 
 ### 2.1 Clarke ($\{a,b,c\}\to\{\alpha,\beta\}$) & Park ($\{\alpha,\beta\}\to\{d,q\}$) Intuition
-- **Core Summary:** Standard PI controllers lag behind high-frequency AC sine waves ($i_a, i_b, i_c$). The **Clarke transform** projects balanced 3-phase currents onto a stationary 2D orthogonal frame $(i_\alpha, i_\beta)$, and the **Park transform** rotates that frame by the live electrical angle $\theta_e = N_p \theta_m$ into the rotor's $(d,q)$ frame—turning AC sine waves into flat DC quantities where $i_d^* = 0$ regulates radial flux and $i_q^*$ directly commands torque $\tau = \frac{3}{2}N_p \lambda_{pm} i_q$.
+- **Core Summary:** Standard PI controllers lag behind high-frequency AC sine waves ($i_a, i_b, i_c$). The **Clarke transform** projects balanced 3-phase currents onto a stationary 2D orthogonal frame $(i_\alpha, i_\beta)$, and the **Park transform** rotates that frame by the live electrical angle $\theta_e = N_p \theta_m$ into the rotor's $(d,q)$ frame—turning AC sine waves into flat DC quantities where $i_d^*= 0* $ regulates radial flux and $ *i_q^*$ directly commands torque $\tau = \frac{3}{2}N_p \lambda_{pm} i_q$.
 - **Curated Free Resources:**
   - 🔗 [Texas Instruments Teaching Old Motors New Tricks — Part 1: Clarke & Park Transforms (YouTube)](https://www.youtube.com/watch?v=cdiZUszYLiA) — *Legendary lecture by Dave Wilson (TI) explaining why transforming AC currents into the rotating rotor frame makes FOC work.*
   - 🔗 [Microchip AN2590: Field-Oriented Control (FOC) of PMSMs](https://ww1.microchip.com/downloads/en/AppNotes/00002590B.pdf) — *Step-by-step vector diagrams and equations for Clarke, Park, and Inverse Park transforms.*
@@ -119,7 +119,7 @@ e_\theta = \text{atan2}(\sin(\theta_{\text{meas}} - \hat{\theta}), \cos(\theta_{
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [ODrive Firmware Docs: Encoder PLL Estimator Design](https://docs.odriverobotics.com/v/latest/control.html) — *Shows how production open-source motor drives implement a second-order tracking PLL with bandwidth $\omega_{\text{pll}}$ and critical damping ($K_p = 2\omega_{\text{pll}}$, $K_i = \omega_{\text{pll}}^2$).*
+  - 🔗 [ODrive Firmware Docs: Encoder PLL Estimator Design](https://docs.odriverobotics.com/v/latest/control.html) — *Shows how production open-source motor drives implement a second-order tracking PLL with bandwidth* $\omega_{\text{pll}}$ *and critical damping (* $K_p = 2\omega_{\text{pll}}$ *,* $K_i = \omega_{\text{pll}}^2$ *).*
   - 🔗 [Lab 03 Script: `03-sensors-and-actuators/lab/lab03_foc_and_metrology.py`](./lab/lab03_foc_and_metrology.py) — *Executable reference comparing raw finite-difference velocity spikes against the Type-II PLL velocity observer.*
 - **🧪 Hands-On Exercise:**
   - *Task:* In **Tab 3: 25 kHz PMSM FOC** or Python, simulate a 14-bit encoder spinning at $5.0\text{ rad/s}$ sampled at $25\text{ kHz}$. Compare the RMS velocity error of raw Euler backward difference $(\theta_k - \theta_{k-1})/T_s$ against a critically damped Type-II PLL with bandwidth $\omega_{\text{pll}} = 2\pi(150\text{ Hz})$ ($K_p = 2\omega_{\text{pll}}$, $K_i = \omega_{\text{pll}}^2$).
@@ -137,8 +137,8 @@ $$
 ### 2.3 IMU Metrology & Allan Deviation ($\sigma_A(\tau)$)
 - **Core Summary:** Allan Deviation $\sigma_A(\tau)$ plots two-sample variance across averaging cluster times $\tau$ on a log-log scale to separate white Angle/Velocity Random Walk ($N$, slope $-1/2$ at $\tau = 1\text{ s}$), $1/f$ Bias Instability ($B$, flat floor minimum), and brown Rate Random Walk ($K$, slope $+1/2$ at $\tau = 3\text{ s}$) for rigorous Kalman filter covariance tuning.
 - **Curated Free Resources:**
-  - 🔗 [MathWorks: Inertial Sensor Noise Analysis Using Allan Variance](https://www.mathworks.com/help/nav/ug/inertial-sensor-noise-analysis-using-allan-variance.html) — *Crystal-clear visual breakdown of the log-log slopes ($-1, -1/2, 0, +1/2, +1$) on an Allan deviation curve.*
-  - 🔗 [IEEE Std 952 / Freescale AN5087: Allan Variance Noise Characterization for MEMS Gyroscopes](https://www.nxp.com/docs/en/application-note/AN5087.pdf) — *Shows how to convert datasheet noise density ($\text{mdps}/\sqrt{\text{Hz}}$) and Allan variance parameters into discrete-time Kalman filter $Q$ matrices.*
+  - 🔗 [MathWorks: Inertial Sensor Noise Analysis Using Allan Variance](https://www.mathworks.com/help/nav/ug/inertial-sensor-noise-analysis-using-allan-variance.html) — *Crystal-clear visual breakdown of the log-log slopes (* $-1, -1/2, 0, +1/2, +1$ *) on an Allan deviation curve.*
+  - 🔗 [IEEE Std 952 / Freescale AN5087: Allan Variance Noise Characterization for MEMS Gyroscopes](https://www.nxp.com/docs/en/application-note/AN5087.pdf) — *Shows how to convert datasheet noise density (* $\text{mdps}/\sqrt{\text{Hz}}$ *) and Allan variance parameters into discrete-time Kalman filter* $Q$ *matrices.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./03-sensors-and-actuators/lab/lab03_foc_and_metrology.py` to compute the Overlapping Allan Deviation $\sigma_A(\tau)$ of a simulated static MEMS gyroscope log and extract $N$ at $\tau = 1\text{ s}$, $B$ at the curve minimum, and $K$ at $\tau = 3\text{ s}$ on the $+1/2$ slope.
 - **🧠 Knowledge Check:**
@@ -166,14 +166,14 @@ $$
 | :--- | :--- | :--- |
 | **Zero-Speed Torque** | Drone ESCs use back-EMF zero-crossing and **cannot control torque at $0\text{ RPM}$** (they cog and stutter at low speed). | High-res SPI encoder + $d$-$q$ current loop delivers **100% smooth holding torque at $0.00\text{ RPM}$**. |
 | **Thermal Runaway vs. True Torque** | Voltage-mode `SimpleFOC` sets $v_q$ without measuring phase current—as coils heat up ($R_s$ rises 40%), torque drops, or stall current melts windings. | Inner $d$-$q$ PI current loop measures true amps via Kelvin shunts at every PWM peak, guaranteeing exact torque $\tau = K_t i_q$ regardless of winding temperature. |
-| **High-Speed Cross-Coupling** | Above $500\text{ RPM}$, uncompensated $\omega_e L_q i_q$ pushes phase current out of alignment. | Feedforward decoupling ($v_d^* = u_d - \omega_e L_q i_q$, $v_q^* = u_q + \omega_e(L_d i_d + \lambda_{pm})$) + SVPWM keeps $i_d \approx 0\text{ A}$ up to base speed. |
+| **High-Speed Cross-Coupling** | Above $500\text{ RPM}$, uncompensated $\omega_e L_q i_q$ pushes phase current out of alignment. | Feedforward decoupling ($v_d^*= u_d - \omega_e L_q i_q* $, $ *v_q^* = u_q + \omega_e(L_d i_d + \lambda_{pm})$) + SVPWM keeps $i_d \approx 0\text{ A}$ up to base speed. |
 
 ---
 
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 03):** Master production actuator & metrology engineering: encoder spatial harmonic LUT calibration, Allan variance error budgets, pole-zero cancellation $d$-$q$ current PI synthesis, feedforward back-EMF/cross-coupling decoupling, Min-Max SVPWM (+15.47% bus utilization), and anticogging torque-ripple suppression.
-> * [**Next Linear Step in Pass 3 → Track 04 (Tier 3: Bare-Metal `TIM1`$\to$`ADC`, CORDIC & C++20 `WaitFreeSeqLock`)**](../04-embedded-and-realtime/README.md#tier-3-advanced--production)
+> * [**Next Linear Step in Pass 3 → Track 04 (Tier 3: Bare-Metal `TIM1`→`ADC`, CORDIC & C++20 `WaitFreeSeqLock`)**](../04-embedded-and-realtime/README.md#tier-3-advanced--production)
 
 ### 4.1 Field-Oriented Control (FOC) & Metrology Architecture
 
@@ -241,7 +241,7 @@ flowchart LR
 - **Curated Free Resources:**
   - 🔗 [Ben Katz (MIT Master's Thesis): High-Performance Actuator Design & Encoder Calibration](https://dspace.mit.edu/handle/1721.1/118671) — *Details the exact off-axis/on-axis magnetic encoder lookup table (LUT) calibration routine used on the MIT Mini-Cheetah actuators.*
   - 🔗 [Open Dynamic Robot Initiative (ODRI): Open-Source Torque-Controlled Brushless Actuator Modules & Micro-Drivers](https://open-dynamic-robot-initiative.github.io/) — *Complete open-source mechanical/PCB/firmware specifications for the Solo-12 quadruped and Bolt biped actuators.*
-  - 🔗 [Matthew Piccoli & Mark Yim (ICRA): Anticogging Torque Ripple Suppression](https://www.seas.upenn.edu/~piccoli/files/Piccoli_2016_ICRA.pdf) — *Classic robotics paper showing how to record $i_{q,\text{cog}}(\theta_m)$ across one mechanical revolution and play it back as feedforward current.*
+  - 🔗 [Matthew Piccoli & Mark Yim (ICRA): Anticogging Torque Ripple Suppression](https://www.seas.upenn.edu/~piccoli/files/Piccoli_2016_ICRA.pdf) — *Classic robotics paper showing how to record* $i_{q,\text{cog}}(\theta_m)$ *across one mechanical revolution and play it back as feedforward current.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./03-sensors-and-actuators/lab/lab03_foc_and_metrology.py` and inspect the Fourier harmonic fit of a magnetic encoder with $1\times, 2\times, 4\times$ eccentricity/tilt errors, verifying that the 4-harmonic LUT reduces peak-to-peak mechanical angle error from $> 0.45^\circ$ down to $< \pm 0.02^\circ$.
 - **🧠 Knowledge Check:**
@@ -287,8 +287,8 @@ v_{\text{offset}} = -\frac{1}{2}\big(\max(v_a^*, v_b^*, v_c^*) + \min(v_a^*, v_b
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [Texas Instruments SPRABQ7: Space Vector PWM (SVPWM) & Min-Max Zero-Sequence Injection](https://www.ti.com/lit/an/sprabq7a/sprabq7a.pdf) — *Proves mathematically why subtracting the average of $\max(v_{a,b,c})$ and $\min(v_{a,b,c})$ produces the exact same saddle waveform as sector-based Space Vector PWM with zero `atan2`/`sin` overhead.*
-  - 🔗 [STMicroelectronics UM1052: STM32 Motor Control SDK (FOC Theory & Decoupling)](https://www.st.com/resource/en/user_manual/um1052-stm32f-pmsm-singledual-foc-sdk-v43-stmicroelectronics.pdf) — *Complete production equations for $d$-$q$ PI current loops, feedforward decoupling, and circle-limitation voltage anti-windup.*
+  - 🔗 [Texas Instruments SPRABQ7: Space Vector PWM (SVPWM) & Min-Max Zero-Sequence Injection](https://www.ti.com/lit/an/sprabq7a/sprabq7a.pdf) — *Proves mathematically why subtracting the average of* $\max(v_{a,b,c})$ *and* $\min(v_{a,b,c})$ *produces the exact same saddle waveform as sector-based Space Vector PWM with zero `atan2`/`sin` overhead.*
+  - 🔗 [STMicroelectronics UM1052: STM32 Motor Control SDK (FOC Theory & Decoupling)](https://www.st.com/resource/en/user_manual/um1052-stm32f-pmsm-singledual-foc-sdk-v43-stmicroelectronics.pdf) — *Complete production equations for* $d$ *-* $q$ *PI current loops, feedforward decoupling, and circle-limitation voltage anti-windup.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 3: 25 kHz PMSM FOC** in the MechaLab Workbench, command a $0 \to 10\text{ A}$ step in $i_q^*$ at $2000\text{ RPM}$, and toggle **Cross-Coupling Decoupling ON vs. OFF** and **SVPWM vs. Sinusoidal PWM**. Observe the $i_d$ parasitic current spike drop below $0.15\text{ A}$ with decoupling active and inspect the classic triple-harmonic "saddle" duty waveforms $(d_a, d_b, d_c)$ of Min-Max SVPWM.
 - **🧠 Knowledge Check:**
@@ -307,7 +307,7 @@ $$
 ## 5. Failure Modes, Pitfalls & Anti-Patterns
 
 1. **Sampling ADC Currents During PWM Switching Edges:** Always trigger simultaneous ADC conversions at the exact center of the low-side MOSFET on-time (`TIM1_TRGO2` at `CNT == ARR`).
-2. **Missing Integrator Anti-Windup During Voltage Circle Saturation:** Prioritize $v_d^*$ when clamping $\sqrt{v_d^{*2} + v_q^{*2}} \le V_{\text{bus}}/\sqrt{3}$ so rotor flux orientation is never lost.
+2. **Missing Integrator Anti-Windup During Voltage Circle Saturation:** Prioritize $v_d^$ when clamping $ *\sqrt{v_d^{*2} + v_q^{*2}} \le V_{\text{bus}}/\sqrt{3}$ so rotor flux orientation is never lost.
 3. **Electrical Zero Offset Error ($\theta_{e,\text{offset}}$):** Calibrate electrical zero by averaging bidirectional $d$-axis alignment sweeps to cancel friction hysteresis.
 4. **6th-Harmonic Torque Ripple from Dead-Time & Cogging:** Combine current-sign dead-time voltage compensation with a position-indexed Anticogging LUT.
 

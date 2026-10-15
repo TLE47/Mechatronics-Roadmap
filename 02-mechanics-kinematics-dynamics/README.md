@@ -13,10 +13,10 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 | Pass / Level | Previous Step in Pass | Current Track 02 Section | Next Linear Step in This Pass |
 | :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 01 (Tier 1)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: 2D Planar Kinematics, Gear Ratios ($N^2$ Inertia) & Bearings](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 03 (Tier 1: Encoders & `SimpleFOC`)**](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) |
+| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 01 (Tier 1)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: 2D Planar Kinematics, Gear Ratios (N² Inertia) & Bearings](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 03 (Tier 1: Encoders & `SimpleFOC`)**](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) |
 | **🔵 Pass 2: Tier 2 (Applied)** | [← Track 01 (Tier 2)](../01-electronics-and-power/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Maxwell Exact Constraint, `CadQuery` & URDF/MuJoCo](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 03 (Tier 2: Clarke/Park & Velocity PLL)**](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: 200:1 Hobby Servos $\to$ 8:1 Backdrivable QDD Planetary](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 01 (Tier 3)](../01-electronics-and-power/README.md#tier-3-advanced--production) | [§4 Tier 3: Screw PoE on $SE(3)$, `Ti-6Al-4V` Flexures & $O(n)$ RNEA](#tier-3-advanced--production) | [**Next in Pass 3 → Track 03 (Tier 3: $40\text{ kHz}$ Decoupled FOC & SVPWM)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: 200:1 Hobby Servos → 8:1 Backdrivable QDD Planetary](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [← Track 01 (Tier 3)](../01-electronics-and-power/README.md#tier-3-advanced--production) | [§4 Tier 3: Screw PoE on SE(3), `Ti-6Al-4V` Flexures & O(n) RNEA](#tier-3-advanced--production) | [**Next in Pass 3 → Track 03 (Tier 3: 40 kHz Decoupled FOC & SVPWM)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production) |
 
 ---
 
@@ -54,7 +54,7 @@ $$
 
 ---
 
-### [1.2 Torque, Speed, Gear Ratios & Why Reflected Inertia Scales by $N^2$]
+### 1.2 Torque, Speed, Gear Ratios & Why Reflected Inertia Scales by $N^2$
 - **Core Summary:** Explains why a gearbox of ratio $N:1$ multiplies output torque by $N\eta$ and divides speed by $N$, but multiplies the motor rotor's apparent inertia at the joint output by **$N^2$** ($J_{\text{refl}} = N^2 J_{\text{rotor}}$).
 
 $$
@@ -63,7 +63,7 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [MIT 2.007 Design and Manufacturing I — Gear Ratios & Transmission Matching (MIT OCW)](https://ocw.mit.edu/courses/2-007-design-and-manufacturing-i-spring-2009/) — *Introductory mechanical engineering course notes on speed-torque trade-offs and inertia matching.*
-  - 🔗 [Underactuated Robotics — Appendix: Actuators & Reflected Inertia (Russ Tedrake, MIT)](https://underactuated.mit.edu/) — *Explains why high-$N$ gearboxes dominate joint dynamics and ruin impact robustness.*
+  - 🔗 [Underactuated Robotics — Appendix: Actuators & Reflected Inertia (Russ Tedrake, MIT)](https://underactuated.mit.edu/) — *Explains why high-* $N$ *gearboxes dominate joint dynamics and ruin impact robustness.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Compare the reflected inertia $J_{\text{refl}} = N^2 J_{\text{rotor}}$ of a $J_{\text{rotor}} = 0.2\text{ kg}\cdot\text{cm}^2$ motor paired with (a) an $8:1$ QDD planetary gearbox ($12.8\text{ kg}\cdot\text{cm}^2$) vs. (b) a $150:1$ worm/spur gearbox ($4,500\text{ kg}\cdot\text{cm}^2$) in **Tab 5: Capstones & Safety**.
 - **🧠 Knowledge Check:**
@@ -88,8 +88,8 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [MIT FUNdaMENTALS of Design — Topic 3 & 8: Structural Loops, Shafts & Bearings (Prof. Alex Slocum)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Illustrated golden rules for supporting shafts in double shear vs. cantilevered overhang.*
-  - 🔗 [Budynas & Nisbett: Shigley's Mechanical Engineering Design (11th Ed. Reference)](https://www.mheducation.com/) — *Industry-standard machine design reference for shaft fatigue, radial/angular-contact bearing $L_{10}$ life, Spur/Helical gear tooth bending, and bolted joint preload.*
-  - 🔗 [Gates GT2 / PowerGrip Timing Belt Design Manual](https://www.gates.com/) — *Covers minimum pulley tooth engagement ($\ge 6$ teeth in mesh) and preload tensioning.*
+  - 🔗 [Budynas & Nisbett: Shigley's Mechanical Engineering Design (11th Ed. Reference)](https://www.mheducation.com/) — *Industry-standard machine design reference for shaft fatigue, radial/angular-contact bearing* $L_{10}$ *life, Spur/Helical gear tooth bending, and bolted joint preload.*
+  - 🔗 [Gates GT2 / PowerGrip Timing Belt Design Manual](https://www.gates.com/) — *Covers minimum pulley tooth engagement (* $\ge 6$ *teeth in mesh) and preload tensioning.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Compare the shaft tip deflection ratio between a cantilevered shaft of overhang $L$ ($\delta = \frac{FL^3}{3EI}$) and a double-shear shaft supported at both ends ($\delta = \frac{FL^3}{48EI}$ for pin-pin or $\delta = \frac{FL^3}{192EI}$ for fixed-fixed)—confirming a $16\times$ to $64\times$ stiffness increase simply by capturing the far end of the pin in a second bearing!
 - **🧠 Knowledge Check:**
@@ -113,7 +113,7 @@ $$
 
 > **Goal of Pass 2 (Track 02):** Upgrade from flexible 3D-printed brackets and ad-hoc trigonometry to **Maxwell's Exact Constraint (`6 - C = DOF`)**, programmatic CAD (`CadQuery`), Duplex Angular-Contact Bearings, Manipulator Jacobians ($\tau = J^\top F$), and physical **URDF / MuJoCo MJCF** validation.
 
-### [2.1 Maxwell's Rule of Exact Constraint ($6 - C = \text{DOF}$) & Abbe Error]
+### 2.1 Maxwell's Rule of Exact Constraint ($6 - C = \text{DOF}$) & Abbe Error
 - **Core Summary:** Eliminates mechanical binding, thermal warping, and measurement offset errors by constraining exactly $C = 6 - \text{DOF}$ independent points (such as a 3-2-1 Kelvin Kinematic Coupling) and aligning encoders coaxial with the load axis (Abbe's Principle).
 
 $$
@@ -137,7 +137,7 @@ $$
 
 ---
 
-### [2.2 Manipulator Jacobians: Velocity Mapping & Virtual Work ($\tau = J^\top F$)]
+### 2.2 Manipulator Jacobians: Velocity Mapping & Virtual Work ($\tau = J^\top F$)
 - **Core Summary:** Derives the manipulator Jacobian matrix $J(q) = \frac{\partial x}{\partial q}$, proving by the Principle of Virtual Work ($\delta W = \tau^\top \delta q = F^\top \delta x = F^\top J(q)\delta q$) that $J(q)^\top$ maps Cartesian end-effector forces $F_{\text{ext}}$ directly to joint torques $\tau = J(q)^\top F_{\text{ext}}$.
 
 $$
@@ -145,7 +145,7 @@ $$
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [Modern Robotics — Ch. 5: Velocity Kinematics and Statics (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Derives the Jacobian, force-torque duality $\tau = J^\top F$, and manipulability ellipsoids.*
+  - 🔗 [Modern Robotics — Ch. 5: Velocity Kinematics and Statics (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Derives the Jacobian, force-torque duality* $\tau = J^\top F$ *, and manipulability ellipsoids.*
   - 🔗 [Robotic Manipulation — Ch. 3: Basic Pick and Place & Jacobians (Russ Tedrake, MIT)](https://manipulation.csail.mit.edu/) — *Shows how Jacobian Transpose control provides smooth Cartesian compliance.*
 - **🧪 Hands-On Exercise:**
   - *Task:* For a 2-link planar arm, differentiate $(x, y)$ with respect to $(q_1, q_2)$ to write the $2\times 2$ Jacobian $J(q)$, compute its determinant $\det(J(q)) = L_1 L_2 \sin(q_2)$, and verify that $\det(J) = 0$ precisely when the elbow is fully straight ($q_2 = 0$) or folded ($q_2 = \pi$).
@@ -208,7 +208,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 02):** Production-grade mechanical synthesis and multibody dynamics: monolithic `Ti-6Al-4V` Paros-Weisbord flexures, Hertzian contact stress, Screw Theory Product of Exponentials (PoE) on $SE(3)$, Christoffel passivity skew-symmetry ($\dot{M}-2C$), and Featherstone's $O(n)$ RNEA/CRBA/ABA algorithms.
-> * [**Next Linear Step in Pass 3 → Track 03 (Tier 3: $25\text{–}40\text{ kHz}$ Decoupled $d$-$q$ FOC, SVPWM & Harmonic LUT)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production)
+> * [**Next Linear Step in Pass 3 → Track 03 (Tier 3: 25–40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production)
 
 ### [4.1 Mechanical Transmission & Multibody Computation Pipeline]
 - **Core Summary:** Integrates exact kinematic constraint, preloaded bearing arrangements, Screw PoE kinematics on $SE(3)$, and Featherstone's $\mathcal{O}(n)$ spatial dynamics:
@@ -251,8 +251,8 @@ flowchart TB
 ```
 
 - **Curated Free Resources:**
-  - 🔗 [Pinocchio C++/Python Fast Rigid Body Dynamics Library Docs (stack-of-tasks.github.io/pinocchio)](https://stack-of-tasks.github.io/pinocchio/) — *Production C++/Python library implementing analytical $SE(3)$ kinematics, RNEA, ABA, and analytical derivatives.*
-  - 🔗 [Genesis Universal Physics Engine (Genesis-Embodied-AI/Genesis)](https://github.com/Genesis-Embodied-AI/Genesis) — *100% Python/Taichi GPU physics engine capable of $43\text{M FPS}$ rigid-body, MPM, FEM, and soft-body simulation.*
+  - 🔗 [Pinocchio C++/Python Fast Rigid Body Dynamics Library Docs (stack-of-tasks.github.io/pinocchio)](https://stack-of-tasks.github.io/pinocchio/) — *Production C++/Python library implementing analytical* $SE(3)$ *kinematics, RNEA, ABA, and analytical derivatives.*
+  - 🔗 [Genesis Universal Physics Engine (Genesis-Embodied-AI/Genesis)](https://github.com/Genesis-Embodied-AI/Genesis) — *100% Python/Taichi GPU physics engine capable of* $43\text{M FPS}$ *rigid-body, MPM, FEM, and soft-body simulation.*
   - 🔗 [NVIDIA Isaac Lab / Isaac Sim (isaac-sim.github.io/IsaacLab)](https://isaac-sim.github.io/IsaacLab/) — *GPU-accelerated multibody physics and photorealistic USD simulation for sim-to-real locomotion and manipulation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Trace how the modal eigenfrequency requirement $\omega_1 > 5\,\omega_{\text{bw}}$ in the diagram above sets the minimum structural stiffness-to-mass ratio $E/\rho$ of a robot arm link.
@@ -294,7 +294,7 @@ $$
 
 ---
 
-### [4.3 Spatial Kinematics via Screw Theory ($SE(3)$) & $O(n)$ Multibody Dynamics]
+### 4.3 Spatial Kinematics via Screw Theory ($SE(3)$) & $O(n)$ Multibody Dynamics
 - **Core Summary:** Formulates 3D serial-chain forward kinematics and space/body Jacobians via the Product of Exponentials ($\text{PoE}$) screw formula, proves the passivity skew-symmetry property $x^\top(\dot{M}(q) - 2C(q,\dot{q}))x = 0$, and executes Featherstone's $\mathcal{O}(n)$ Recursive Newton-Euler Algorithm (RNEA) in 6D Plücker coordinates.
 
 $$

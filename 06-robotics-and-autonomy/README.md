@@ -15,8 +15,8 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 | :--- | :--- | :--- | :--- |
 | **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 05 (Tier 1)](../05-control-and-estimation/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Cubic/Trapezoidal Trajectories & Joint Virtual Springs](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 07 (Tier 1: 10-Step Safe Bring-Up & Sine Sweeps)**](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive) |
 | **🔵 Pass 2: Tier 2 (Applied)** | [← Track 05 (Tier 2)](../05-control-and-estimation/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Jacobian Transpose Cartesian Compliance & `Ruckig` S-Curves](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 07 (Tier 2: Regen Clamps, CRC & HIL Faults)**](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Rigid `servo.write()` Stepping $\to$ $1\text{ kHz}$ Torque/Impedance Control](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 05 (Tier 3)](../05-control-and-estimation/README.md#tier-3-advanced--production) | [§4 Tier 3: Khatib Operational Inertia $\Lambda(q)$ & Null-Space WBC](#tier-3-advanced--production) | [**Next in Pass 3 → Track 07 (Tier 3: Schroeder Multisine SysID & $<1\ \mu\text{s}$ STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Rigid `servo.write()` Stepping → 1 kHz Torque/Impedance Control](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [← Track 05 (Tier 3)](../05-control-and-estimation/README.md#tier-3-advanced--production) | [§4 Tier 3: Khatib Operational Inertia Λ(q) & Null-Space WBC](#tier-3-advanced--production) | [**Next in Pass 3 → Track 07 (Tier 3: Schroeder Multisine SysID & <1 μs STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production) |
 
 ---
 
@@ -58,7 +58,7 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [Neville Hogan (1985 Seminal Paper): Impedance Control — An Approach to Manipulation](https://mec560sbu.github.io/2016/09/28/Hogan1985/) — *The foundational robotics paper explaining why robots interacting with the physical world must control mechanical impedance (stiffness & damping) rather than rigid position.*
-  - 🔗 [Albu-Schäffer et al. (DLR): Soft Robotics & Joint-Level Torque/Impedance Control](https://ieeexplore.ieee.org/document/4543189) — *Shows how gravity compensation ($K_p = 0, K_d = 0$) creates "zero-gravity lead-through teaching" on collaborative arms.*
+  - 🔗 [Albu-Schäffer et al. (DLR): Soft Robotics & Joint-Level Torque/Impedance Control](https://ieeexplore.ieee.org/document/4543189) — *Shows how gravity compensation (* $K_p = 0, K_d = 0$ *) creates "zero-gravity lead-through teaching" on collaborative arms.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Set $K_p = 0$ and $K_d = 0.05\text{ N}\cdot\text{m}\cdot\text{s/rad}$ in your 1-DOF or 2-DOF arm simulation while keeping gravity feedforward $\tau = \hat{g}(q)$ active ("Zero-G Teaching Mode"). Verify that you can move the arm to any angle and it stays floating in place without falling!
 - **🧠 Knowledge Check:**
@@ -85,7 +85,7 @@ $$
 ### 2.1 Sensorless Cartesian Impedance via the Jacobian Transpose ($\tau = J(q)^\top F_{\text{cart}} + g(q)$)
 - **Core Summary:** Using the virtual-work duality $\tau = J(q)^\top F_{\text{cart}} + g(q)$ with $F_{\text{cart}} = K_x(x_d - x) + D_x(\dot{x}_d - J(q)\dot{q})$, a multi-DOF robot can act as an anisotropic 3D virtual spring-damper at its gripper—for example, very stiff vertically ($K_z = 1000\text{ N/m}$) while compliant horizontally ($K_x = 50\text{ N/m}$)—without requiring inverse kinematics or an external force/torque sensor!
 - **Curated Free Resources:**
-  - 🔗 [Russ Tedrake (MIT 6.4210): Chapter 8 — Manipulator Force & Cartesian Stiffness Control](https://manipulation.csail.mit.edu/force.html) — *Derives $\tau = J(q)^\top F_{\text{cart}} + g(q)$ and demonstrates how anisotropic stiffness enables peg-in-hole assembly and surface wiping.*
+  - 🔗 [Russ Tedrake (MIT 6.4210): Chapter 8 — Manipulator Force & Cartesian Stiffness Control](https://manipulation.csail.mit.edu/force.html) — *Derives* $\tau = J(q)^\top F_{\text{cart}} + g(q)$ *and demonstrates how anisotropic stiffness enables peg-in-hole assembly and surface wiping.*
   - 🔗 [Khatib (1987 Seminal Paper): A Unified Approach for Motion and Force Control of Robot Manipulators](https://cs.stanford.edu/groups/manips/publications/pdfs/Khatib_1987_RA.pdf) — *Introduces operational-space control directly in end-effector coordinates.*
   - 🔗 [Siciliano, Sciavicco, Villani & Oriolo: Robotics — Modelling, Planning and Control (Springer)](https://link.springer.com/book/10.1007/978-1-84628-642-1) — *Complete textbook coverage of Cartesian impedance, hybrid force/motion control, and visual servoing.*
 - **🧪 Hands-On Exercise:**
@@ -141,7 +141,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 06):** Master full-stack robotic autonomy and whole-body control: Khatib's Operational-Space Inertia $\Lambda(q)$ & dynamically consistent null-space projection $\bar{J}(q)$, Floating-Base Whole-Body Control QPs (`WBC-QP`) with friction cones, `PREEMPT_RT` Linux kernel isolation (`<50 µs` jitter), Forster's Manifold IMU Preintegration for Factor-Graph SLAM (`GTSAM`), and Visuomotor Imitation Learning (`ACT`, `Diffusion Policy`, `LeRobot`) & Vision-Language-Action (`VLA`) models.
-> * [**Next Linear Step in Pass 3 → Track 07 (Tier 3: Schroeder Multisine Closed-Loop SysID & $<1\ \mu\text{s}$ Hardware STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production)
+> * [**Next Linear Step in Pass 3 → Track 07 (Tier 3: Schroeder Multisine Closed-Loop SysID & <1 μs Hardware STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production)
 
 ### 4.1 Full-Stack Autonomous Robotic Software & Hardware Architecture
 
@@ -200,7 +200,7 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [Oussama Khatib (Stanford CS223A / CS327A): Operational Space Formulation & Redundant Manipulators](https://see.stanford.edu/Course/CS223A) — *Full Stanford video lectures and course reader by the creator of Operational Space Control.*
-  - 🔗 [Lab 06 Script: `06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py`](./lab/lab06_impedance_and_ruckig.py) — *Executable Python verification proving $J(q) M^{-1}(q) (I - J^\top \bar{J}^\top) \tau_{\text{null}} = \mathbf{0}$ to machine precision.*
+  - 🔗 [Lab 06 Script: `06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py`](./lab/lab06_impedance_and_ruckig.py) — *Executable Python verification proving* $J(q) M^{-1}(q) (I - J^\top \bar{J}^\top) \tau_{\text{null}} = \mathbf{0}$ *to machine precision.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` to compare the Euclidean pseudo-inverse null-space projector $(I - J^\top (J^+)^\top)$ (which leaks false accelerations into the end-effector whenever $M(q) \ne I$) against Khatib's dynamically consistent projector $(I - J^\top \bar{J}^\top)$.
 - **🧠 Knowledge Check:**
@@ -256,7 +256,7 @@ $$
 - **Curated Free Resources:**
   - 🔗 [Christian Forster, Luca Carlone, Frank Dellaert, Davide Scaramuzza (IEEE TRO): On-Manifold Preintegration for Real-Time Visual-Inertial Odometry (PDF)](https://rpg.ifi.uzh.ch/docs/TRO16_forster.pdf) — *The landmark paper behind modern VIO/SLAM (`GTSAM`, `VINS-Mono`, `ORB-SLAM3`).*
   - 🔗 [Frank Dellaert: Factor Graphs for Robot Perception (`GTSAM` Monograph)](https://gtsam.org/tutorials/intro.html) — *Interactive tutorial on factor graphs, `iSAM2` incremental smoothing, and manifold optimization.*
-  - 🔗 [Thrun, Burgard & Fox: Probabilistic Robotics & Timothy D. Barfoot: State Estimation for Robotics (Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Complete Bayesian filtering and matrix Lie group $SE(3)$ estimation references.*
+  - 🔗 [Thrun, Burgard & Fox: Probabilistic Robotics & Timothy D. Barfoot: State Estimation for Robotics (Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Complete Bayesian filtering and matrix Lie group* $SE(3)$ *estimation references.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate how many raw IMU samples would have to be re-integrated on every $30\text{ Hz}$ camera frame across a 5-second sliding window of 150 keyframes at $1\text{ kHz}$ if Forster's first-order bias Jacobian correction were not used ($5000$ integrations per frame vs. $1$ matrix multiply per keyframe!).
 - **🧠 Knowledge Check:**
@@ -276,7 +276,7 @@ $$
   - 🔗 [Hugging Face `LeRobot` Open-Source PyTorch Robotics Library (github.com/huggingface/lerobot)](https://github.com/huggingface/lerobot) — *End-to-end teleoperation, dataset collection, and training for `ACT`, `Diffusion Policy`, and `SmolVLA` on low-cost `SO-101` and `ALOHA` hardware.*
   - 🔗 [Capuano et al. (2025 Tutorial): Robot Learning — A Tutorial (arXiv:2510.12403)](https://arxiv.org/abs/2510.12403) — *Comprehensive modern walkthrough of behavioral cloning, action chunking, diffusion policies, and Vision-Language-Action (`VLA`) models.*
   - 🔗 [Chi et al. (RSS / IJRR): Diffusion Policy — Visuomotor Policy Learning via Action Diffusion](https://diffusion-policy.cs.columbia.edu/) & [Zhao et al. (RSS): ACT / ALOHA Bimanual Manipulation](https://tonyzhaozh.github.io/aloha/) — *Seminal papers solving multimodal demonstration distributions and compounding behavioral-cloning covariate shift.*
-  - 🔗 [OpenVLA (`openvla.github.io`) & Physical Intelligence `openpi` ($\pi_0$ Flow-Matching VLA)](https://github.com/Physical-Intelligence/openpi) — *Open-weight Vision-Language-Action foundation models fine-tunable via LoRA for generalist manipulation.*
+  - 🔗 [OpenVLA (`openvla.github.io`) & Physical Intelligence `openpi` (π₀ Flow-Matching VLA)](https://github.com/Physical-Intelligence/openpi) — *Open-weight Vision-Language-Action foundation models fine-tunable via LoRA for generalist manipulation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Implement **Temporal Ensembling** in Python for an Action Chunking policy that outputs a $k = 10$-step trajectory prediction $\hat{q}_{t \to t+10}$ at every $20\text{ ms}$ camera frame: maintain a sliding buffer of overlapping predictions for the current timestep $t$ and compute the exponentially weighted average $q_{\text{cmd}}(t) = \frac{\sum_i \exp(-m \cdot i) \hat{q}_t^{(t-i)}}{\sum_i \exp(-m \cdot i)}$ ($m = 0.01$) so chunk boundaries never cause torque discontinuities!
 - **🧠 Knowledge Check:**

@@ -468,6 +468,59 @@ def find_text_mode_math_issues(text: str, rel_path: str) -> list[str]:
     return issues
 
 
+_CONTAINER_LINK_RE = re.compile(r"\[([^\]\n]*)\]\(([^)\n]*)\)")
+_CONTAINER_EMPH_RE = re.compile(r"(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)")
+_CONTAINER_MATH_RE = re.compile(r"(?<!\\)\$(?!\$)([^$\n]{1,200}?)(?<!\\)\$(?!\$)")
+
+
+def find_container_math_issues(text: str, rel_path: str) -> list[str]:
+    """Inline math that GitHub silently refuses to render, by container.
+
+    Verified against GitHub's own renderer: `$...$` renders in a paragraph, in
+    **bold**, in a heading, in a table cell and in a blockquote, but NOT inside
+    [a link label](url) nor inside *italic* runs; and a heading whose bare
+    `[brackets]` parse as a shortcut reference link swallows its math as well.
+    There the `$` survives as literal text and the formula never typesets.
+    """
+    issues: list[str] = []
+    in_fence = False
+
+    for lineno, raw in enumerate(text.splitlines(), start=1):
+        stripped = raw.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        line = re.sub(r"`[^`]*`", "", raw)
+
+        for match in _CONTAINER_LINK_RE.finditer(line):
+            if _CONTAINER_MATH_RE.search(match.group(1)):
+                issues.append(
+                    f"{rel_path}:{lineno}: inline math inside a link label never renders "
+                    f"('{match.group(1)[:36]}...') - move the formula out of the label "
+                    f"or write it as plain text"
+                )
+
+        for match in _CONTAINER_EMPH_RE.finditer(line):
+            if _CONTAINER_MATH_RE.search(match.group(1)):
+                issues.append(
+                    f"{rel_path}:{lineno}: inline math inside *italics* never renders "
+                    f"('{match.group(1)[:36]}...') - split the emphasis so the formula sits outside"
+                )
+
+        if re.match(r"^#{1,6} ", line):
+            for match in re.finditer(r"\[([^\[\]\n]*)\](?!\()", line):
+                if _CONTAINER_MATH_RE.search(match.group(1)):
+                    issues.append(
+                        f"{rel_path}:{lineno}: bare '[brackets]' in a heading parse as a "
+                        f"shortcut reference link, which suppresses its math - drop the brackets"
+                    )
+
+    return issues
+
+
 def verify_repository(repo_root: Path) -> dict[str, Any]:
     errors: list[str] = []
     file_stats: list[dict[str, Any]] = []
@@ -512,6 +565,9 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
             errors.append(issue)
 
         for issue in find_text_mode_math_issues(text, rel_path):
+            errors.append(issue)
+
+        for issue in find_container_math_issues(text, rel_path):
             errors.append(issue)
 
         for idx, block in enumerate(m_blocks, start=1):

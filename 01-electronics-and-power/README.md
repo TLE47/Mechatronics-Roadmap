@@ -15,8 +15,8 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 | :--- | :--- | :--- | :--- |
 | **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 00 (Tier 1)](../00-foundations/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Breadboard H-Bridges (`DRV8833`), Logic Levels & Decoupling](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 02 (Tier 1: 2D Planar IK & Gear Ratios)**](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive) |
 | **🔵 Pass 2: Tier 2 (Applied)** | [← Track 00 (Tier 2)](../00-foundations/README.md#tier-2-intermediate--applied) | [§2 Tier 2: 4-Layer KiCad PCBs, Gate Drivers & Kelvin Shunts](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 02 (Tier 2: Exact Constraint, `CadQuery` & URDF)**](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: `L298N`/`INA219` Breakouts $\to$ `DRV8353` + `INA240` Kelvin PCB](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 00 (Tier 3)](../00-foundations/README.md#tier-3-advanced--production) | [§4 Tier 3: $<2\text{ nH}$ $48\text{ V}/30\text{ A}$ 6-Layer Inverter & SAR Charge Buckets](#tier-3-advanced--production) | [**Next in Pass 3 → Track 02 (Tier 3: Screw PoE, Flexures & $O(n)$ RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: `L298N`/`INA219` Breakouts → `DRV8353` + `INA240` Kelvin PCB](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [← Track 00 (Tier 3)](../00-foundations/README.md#tier-3-advanced--production) | [§4 Tier 3: <2 nH 48 V/30 A 6-Layer Inverter & SAR Charge Buckets](#tier-3-advanced--production) | [**Next in Pass 3 → Track 02 (Tier 3: Screw PoE, Flexures & O(n) RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) |
 
 ---
 
@@ -24,7 +24,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 > **Goal of Pass 1 (Track 01):** Learn how low-voltage logic safely controls higher-voltage motor power without browning out or frying your microcontroller, using breadboard-friendly MOSFETs and modern H-bridge breakout modules (`DRV8833` / `TB6612FNG`).
 
-### [1.1 Logic Levels ($3.3\text{ V}$ vs. $5\text{ V}$) & Open-Drain Pull-Ups]
+### 1.1 Logic Levels ($3.3\text{ V}$ vs. $5\text{ V}$) & Open-Drain Pull-Ups
 - **Core Summary:** Explains why applying $5\text{ V}$ signals to non-$5\text{V}$-tolerant $3.3\text{ V}$ microcontroller pins (`ESP32`, `RP2040`, `STM32` analog pins) forward-biases internal ESD protection diodes to `VDD`, and how open-drain buses (`I2C`) and `BSS138` level shifters safely bridge voltage domains.
 
 $$
@@ -32,9 +32,9 @@ I_{\text{ESD\_fault}} = \frac{V_{\text{in}} - (V_{DD} + 0.6\text{ V})}{R_{\text{
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [SparkFun: Logic Levels (3.3V vs. 5V CMOS/TTL Thresholds)](https://learn.sparkfun.com/tutorials/logic-levels) — *Clear visual guide to $V_{IH}$, $V_{IL}$, $V_{OH}$, $V_{OL}$ thresholds and ESD clamping diodes.*
-  - 🔗 [SparkFun: Bi-Directional Logic Level Converter Hookup Guide](https://learn.sparkfun.com/tutorials/bi-directional-logic-level-converter-hookup-guide) — *Explains how a single `BSS138` N-MOSFET and two pull-up resistors shift bidirectional I2C signals between $3.3\text{ V}$ and $5\text{ V}$.*
-  - 🔗 [Texas Instruments SLVA689: I2C Bus Pullup Resistor Calculation](https://www.ti.com/lit/pdf/slva689) — *Derives the minimum and maximum pull-up resistor values for $100\text{ kHz}$ and $400\text{ kHz}$ I2C buses.*
+  - 🔗 [SparkFun: Logic Levels (3.3V vs. 5V CMOS/TTL Thresholds)](https://learn.sparkfun.com/tutorials/logic-levels) — *Clear visual guide to* $V_{IH}$ *,* $V_{IL}$ *,* $V_{OH}$ *,* $V_{OL}$ *thresholds and ESD clamping diodes.*
+  - 🔗 [SparkFun: Bi-Directional Logic Level Converter Hookup Guide](https://learn.sparkfun.com/tutorials/bi-directional-logic-level-converter-hookup-guide) — *Explains how a single `BSS138` N-MOSFET and two pull-up resistors shift bidirectional I2C signals between* $3.3\text{ V}$ *and* $5\text{ V}$ *.*
+  - 🔗 [Texas Instruments SLVA689: I2C Bus Pullup Resistor Calculation](https://www.ti.com/lit/pdf/slva689) — *Derives the minimum and maximum pull-up resistor values for* $100\text{ kHz}$ *and* $400\text{ kHz}$ *I2C buses.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Probe the `SCL` and `SDA` lines of a $400\text{ kHz}$ I2C sensor on your oscilloscope first with the MCU's weak internal $45\text{ k}\Omega$ pull-ups (observing rounded shark-fin edges that fail timing), and then after adding external $3.3\text{ k}\Omega$ pull-up resistors to `3.3V` (observing crisp $<200\text{ ns}$ rise times).
 - **🧠 Knowledge Check:**
@@ -84,7 +84,7 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [Analog Devices MT-101: Decoupling Techniques (Bulk vs. Ceramic Bypass)](https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf) — *Explains why electrolytic and ceramic capacitors work together across low and high frequencies.*
-  - 🔗 [Pololu: Dealing with Motor Noise & Power Supply Voltage Spikes](https://www.pololu.com/docs/0J15/9) — *Practical guide showing how to place $0.1\ \mu\text{F}$ ceramic caps across motor terminals and bulk caps across `VMOT`.*
+  - 🔗 [Pololu: Dealing with Motor Noise & Power Supply Voltage Spikes](https://www.pololu.com/docs/0J15/9) — *Practical guide showing how to place* $0.1\ \mu\text{F}$ *ceramic caps across motor terminals and bulk caps across `VMOT`.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Command a $12\text{ V}$ DC motor to slam from $+100\%$ forward to $-100\%$ reverse every $500\text{ ms}$ while monitoring the MCU's `3.3V` pin relative to MCU `GND` with an oscilloscope set to Single-Shot trigger at $3.0\text{ V}$. Verify that adding a $470\ \mu\text{F}$ bulk capacitor at the H-bridge and star-grounding reduces the $3.3\text{ V}$ glitch to $<50\text{ mV}$.
 - **🧠 Knowledge Check:**
@@ -202,7 +202,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 01):** Master production-grade mixed-signal and power hardware: $<2\text{ nH}$ 6-layer switching loops, Si/SiC/GaN gate-drive design, Bessel anti-aliasing filters, SAR ADC charge buckets, and coupled electro-thermal Cauer/Foster verification.
-> * [**Next Linear Step in Pass 3 → Track 02 (Tier 3: Screw PoE, `Ti-6Al-4V` Flexures & $O(n)$ RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production)
+> * [**Next Linear Step in Pass 3 → Track 02 (Tier 3: Screw PoE, `Ti-6Al-4V` Flexures & O(n) RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production)
 
 ### [4.1 Mixed-Signal & Power Hardware Architecture]
 - **Core Summary:** Partitions a $48\text{ V} / 30\text{ A}$ motor drive across high-$dI/dt$ power switching, Kelvin differential signal conditioning, and ultra-low-noise synchronous SAR ADC conversion over an unbroken solid reference plane:
@@ -286,7 +286,7 @@ $$
 | **Chebyshev Type I** | Equiripple passband, steep roll-off | High overshoot & ringing | Severe group-delay peaking near $f_c$ | Avoid inside high-bandwidth feedback loops |
 
 - **Curated Free Resources:**
-  - 🔗 [Texas Instruments SBAA586: Charge-Bucket Circuit Design for SAR ADCs](https://www.ti.com/lit/pdf/sbaa586) — *Derives step-by-step equations for sizing $R_{\text{filt}}$ and $C_{\text{filt}}$ in front of high-speed SAR ADC inputs.*
+  - 🔗 [Texas Instruments SBAA586: Charge-Bucket Circuit Design for SAR ADCs](https://www.ti.com/lit/pdf/sbaa586) — *Derives step-by-step equations for sizing* $R_{\text{filt}}$ *and* $C_{\text{filt}}$ *in front of high-speed SAR ADC inputs.*
   - 🔗 [Analog Devices Filter Wizard Interactive Browser Design Tool](https://tools.analog.com/en/filterwizard/) — *Interactive web tool for designing Sallen-Key and Multiple-Feedback Bessel anti-aliasing filters.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 01-electronics-and-power/lab/lab01_power_and_afe.py` to verify that our $R_{\text{filt}} = 22\ \Omega$, $C_{\text{filt}} = 1.5\text{ nF}$ (`NP0`) charge bucket driving the STM32G474's $C_{\text{sh}} = 5\text{ pF}$ SAR ADC settles to $< 0.1\text{ LSB}$ within $t_{\text{acq}} = 70\text{ ns}$ while keeping Bessel AAF phase lag $< 2.5^\circ$ at $2.5\text{ kHz}$.
@@ -316,7 +316,7 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [Infineon Application Note: MOSFET Power Losses Calculation Using the Data-Sheet Parameters](https://www.infineon.com/dgdl/Infineon-ApplicationNote_MOSFET_Power_Losses_Calculation_Using_the_DataSheet_Parameters-AN-v01_00-EN.pdf?fileId=db3a30431add1d95011ae08005a90294) — *Complete industry derivation of conduction, switching, gate-charge, and reverse-recovery losses.*
-  - 🔗 [Texas Instruments SLUA887: Understanding & Preventing dV/dt Turn-On (Miller Shoot-Through)](https://www.ti.com/lit/pdf/slua887) — *Derives the condition $R_{g,\text{off}} C_{gd}\frac{dV}{dt} < V_{GS(\text{th})}$ and asymmetric gate drive techniques.*
+  - 🔗 [Texas Instruments SLUA887: Understanding & Preventing dV/dt Turn-On (Miller Shoot-Through)](https://www.ti.com/lit/pdf/slua887) — *Derives the condition* $R_{g,\text{off}} C_{gd}\frac{dV}{dt} < V_{GS(\text{th})}$ *and asymmetric gate drive techniques.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench, select the **30A Peak Torque Thermal Load** preset, and observe how the fixed-point thermal solver iterates $T_j \leftrightarrow R_{DS(\text{on})}(T_j)$ to converge to $T_j = 80.5^\circ\text{C}$ and $\eta = 99.11\%$. Try increasing Heatsink Thermal Resistance $R_{\theta\text{JA}}$ until you observe thermal runaway!
 - **🧠 Knowledge Check:**

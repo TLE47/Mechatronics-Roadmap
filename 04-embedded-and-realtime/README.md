@@ -13,10 +13,10 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 | Pass / Level | Previous Step in Pass | Current Track 04 Section | Next Linear Step in This Pass |
 | :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 03 (Tier 1)](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Killing `delay()`, $1\text{ kHz}$ Timer ISRs & Binary Serial](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 05 (Tier 1: PID Virtual Spring-Damper & Comp IMU)**](../05-control-and-estimation/README.md#tier-1-beginner--intuitive) |
+| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 03 (Tier 1)](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Killing `delay()`, 1 kHz Timer ISRs & Binary Serial](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 05 (Tier 1: PID Virtual Spring-Damper & Comp IMU)**](../05-control-and-estimation/README.md#tier-1-beginner--intuitive) |
 | **🔵 Pass 2: Tier 2 (Applied)** | [← Track 03 (Tier 2)](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied) | [§2 Tier 2: FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (`MIT Mode`)](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 05 (Tier 2: Bode Loop Shaping, LQR & Linear KF)**](../05-control-and-estimation/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Global Structs / `mutex` $\to$ DMA Pipelines & `WaitFreeSeqLock`](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 03 (Tier 3)](../03-sensors-and-actuators/README.md#tier-3-advanced--production) | [§4 Tier 3: Bare-Metal `TIM1`$\to$`ADC`, CORDIC & C++20 `WaitFreeSeqLock`](#tier-3-advanced--production) | [**Next in Pass 3 → Track 05 (Tier 3: Joseph ESKF, MPC & CBF-QP Walls)**](../05-control-and-estimation/README.md#tier-3-advanced--production) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Global Structs / `mutex` → DMA Pipelines & `WaitFreeSeqLock`](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [← Track 03 (Tier 3)](../03-sensors-and-actuators/README.md#tier-3-advanced--production) | [§4 Tier 3: Bare-Metal `TIM1`→`ADC`, CORDIC & C++20 `WaitFreeSeqLock`](#tier-3-advanced--production) | [**Next in Pass 3 → Track 05 (Tier 3: Joseph ESKF, MPC & CBF-QP Walls)**](../05-control-and-estimation/README.md#tier-3-advanced--production) |
 
 ---
 
@@ -125,7 +125,7 @@ struct __attribute__((packed)) TelemetryPacket {
 - **Curated Free Resources:**
   - 🔗 [STMicroelectronics AN4031: Using the STM32 DMA Controller](https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf) — *Explains DMA circular buffers, double-buffering, bus matrix arbitration, and peripheral-to-memory pipelines.*
   - 🔗 [Phil's Lab (YouTube): STM32 DMA Tutorial — ADC & UART Circular Buffers](https://www.youtube.com/watch?v=EsZLgqhqfO0) — *Practical embedded walkthrough of configuring circular DMA with half-transfer and transfer-complete interrupts.*
-  - 🔗 [LiteRT for Microcontrollers (TFLite Micro) & Edge Impulse TinyML](https://ai.google.dev/edge/litert/microcontrollers/overview) — *Run quantized `INT8` neural anomaly/vibration classifiers in $< 20\text{ KB}$ static SRAM on DMA-streamed IMU/current windows with zero heap allocation.*
+  - 🔗 [LiteRT for Microcontrollers (TFLite Micro) & Edge Impulse TinyML](https://ai.google.dev/edge/litert/microcontrollers/overview) — *Run quantized `INT8` neural anomaly/vibration classifiers in* $< 20\text{ KB}$ *static SRAM on DMA-streamed IMU/current windows with zero heap allocation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate how many CPU clock cycles a $170\text{ MHz}$ Cortex-M4F saves per second by moving an 18-byte telemetry packet at $1\text{ kHz}$ and a 24-bit SPI encoder frame at $25\text{ kHz}$ ($10\text{ MHz}$ SPI clock) via DMA instead of blocking polling.
 - **🧠 Knowledge Check:**
@@ -142,7 +142,7 @@ struct __attribute__((packed)) TelemetryPacket {
 ### 2.3 CAN-FD Bus Wiring ($120\ \Omega$ Termination) & MIT Actuator Bit-Packing
 - **Core Summary:** Single-ended `I2C` wires fail next to switching motor cables due to capacitive crosstalk, whereas **CAN / CAN-FD** uses twisted-pair differential signaling (`CAN_H - CAN_L` terminated with $120\ \Omega$ resistors at both ends of the bus) to reject common-mode motor noise. The **MIT Mini-Cheetah 8-byte actuator protocol** packs 5 fixed-point impedance commands (`q_des`, `dq_des`, `Kp`, `Kd`, `tau_ff`) into 64 bits so a single CAN frame updates joint stiffness, damping, and feedforward torque at $1\text{–}4\text{ kHz}$.
 - **Curated Free Resources:**
-  - 🔗 [Texas Instruments SLOA101: Introduction to the Controller Area Network (CAN)](https://www.ti.com/lit/an/sloa101b/sloa101b.pdf) — *Explains differential dominant/recessive bus states, non-destructive bitwise arbitration, and why $120\ \Omega$ termination resistors are mandatory.*
+  - 🔗 [Texas Instruments SLOA101: Introduction to the Controller Area Network (CAN)](https://www.ti.com/lit/an/sloa101b/sloa101b.pdf) — *Explains differential dominant/recessive bus states, non-destructive bitwise arbitration, and why* $120\ \Omega$ *termination resistors are mandatory.*
   - 🔗 [Ben Katz MIT Mini-Cheetah Motor Driver Documentation: CAN Packet Bit-Packing](https://os.mbed.com/users/benkatz/code/CanMasterTest/) — *Shows the exact 16/12/12/12/12-bit fixed-point packing and unpacking math used across modern QDD quadruped actuators.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write the C++ or Python bit-packing function that maps `(q_des in [-12.5, 12.5] rad, dq_des in [-45, 45] rad/s, Kp in [0, 500], Kd in [0, 5], tau_ff in [-18, 18] N·m)` into an 8-byte `uint8_t data[8]` array (16 bits `q`, 12 bits `dq`, 12 bits `Kp`, 12 bits `Kd`, 12 bits `tau`), unpacks it back, and verifies the worst-case quantization error of each parameter.
@@ -306,8 +306,8 @@ private:
 | **EtherCAT** | 100BASE-TX On-the-Fly Processing | Up to $1486\text{ bytes}$ @ $100\text{ Mbps}$ | **$< 50\text{ ns}$ (`DC SYNC0`)** | Industrial CNC, surgical arms, humanoids ($30+\text{ axes}$ @ $4\text{ kHz}$) |
 
 - **Curated Free Resources:**
-  - 🔗 [EtherCAT Technology Group: EtherCAT Operating Principle & Distributed Clocks Guide](https://www.ethercat.org/en/technology.html) — *Explains how EtherCAT subdevices read/write data on the fly as the Ethernet frame passes through at $100\text{ Mbps}$ and lock local clocks to $< 50\text{ ns}$.*
-  - 🔗 [Texas Instruments SBAA230: Sinc Filter Design for $\Sigma\Delta$ Modulators in Motor Control](https://www.ti.com/lit/an/sbaa230/sbaa230.pdf) — *Derives the Hogenauer `sinc³` CIC filter architecture and shows why aligning the `sinc³` impulse response center with the PWM carrier peak cancels switching ripple.*
+  - 🔗 [EtherCAT Technology Group: EtherCAT Operating Principle & Distributed Clocks Guide](https://www.ethercat.org/en/technology.html) — *Explains how EtherCAT subdevices read/write data on the fly as the Ethernet frame passes through at* $100\text{ Mbps}$ *and lock local clocks to* $< 50\text{ ns}$ *.*
+  - 🔗 [Texas Instruments SBAA230: Sinc Filter Design for ΣΔ Modulators in Motor Control](https://www.ti.com/lit/an/sbaa230/sbaa230.pdf) — *Derives the Hogenauer `sinc³` CIC filter architecture and shows why aligning the `sinc³` impulse response center with the PWM carrier peak cancels switching ripple.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp` to verify the fixed-point Hogenauer `sinc³` decimation filter response on a $20\text{ MHz}$ 1-bit $\Sigma\Delta$ modulator stream at $OSR = 128$ (16-bit current measurement) vs. $OSR = 16$ (fast overcurrent trip).
 - **🧠 Knowledge Check:**

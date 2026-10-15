@@ -15,7 +15,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 | :--- | :--- | :--- | :--- |
 | **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 04 (Tier 1)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: PID Virtual Spring-Damper, Anti-Windup & Complementary IMU](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 06 (Tier 1: Cubic Trajectories & Joint Springs)**](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive) |
 | **🔵 Pass 2: Tier 2 (Applied)** | [← Track 04 (Tier 2)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 06 (Tier 2: Jacobian Transpose & `Ruckig` S-Curves)**](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Trial-and-Error PID / `if` Limits $\to$ LQR + Predictive CBF-QP](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Trial-and-Error PID / `if` Limits → LQR + Predictive CBF-QP](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
 | **🟣 Pass 3: Tier 3 (Production)** | [← Track 04 (Tier 3)](../04-embedded-and-realtime/README.md#tier-3-advanced--production) | [§4 Tier 3: Joseph-Form Manifold ESKF, MPC & Control Barrier QPs](#tier-3-advanced--production) | [**Next in Pass 3 → Track 06 (Tier 3: Khatib Operational Inertia & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production) |
 
 ---
@@ -27,9 +27,9 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ### 1.1 Physical Intuition for PID: Virtual Springs & Dashpots
 - **Core Summary:** A PID controller $\tau = K_p (q_{\text{des}} - q) - K_d \dot{q} + K_i \int (q_{\text{des}} - q)\,dt$ has direct mechanical meaning: **Proportional ($K_p$)** attaches an invisible spring pulling toward the target, **Derivative ($K_d$)** submerges the joint in viscous honey to damp overshoot, and **Integral ($K_i$)** slowly accumulates persistent error to overcome gravity droop or static friction.
 - **Curated Free Resources:**
-  - 🔗 [Brian Douglas (YouTube): What Is a PID Controller? (Intuitive Visual Guide)](https://www.youtube.com/watch?v=wkfEZmsQqiA) — *Gold-standard visual control lecture connecting $P$, $I$, and $D$ terms to physical springs, dampers, and steady-state offsets.*
+  - 🔗 [Brian Douglas (YouTube): What Is a PID Controller? (Intuitive Visual Guide)](https://www.youtube.com/watch?v=wkfEZmsQqiA) — *Gold-standard visual control lecture connecting* $P$ *,* $I$ *, and* $D$ *terms to physical springs, dampers, and steady-state offsets.*
   - 🔗 [Norman S. Nise: Control Systems Engineering (8th Ed. Reference)](https://www.wiley.com/) — *Accessible undergraduate reference for block diagram reduction, Routh-Hurwitz stability, root locus, and second-order transient response.*
-  - 🔗 [Fetch Robotics / Russ Tedrake: PD Control as Virtual Mechanical Stiffness & Damping](https://manipulation.csail.mit.edu/force.html) — *Explains why robotics engineers think of PD gains directly in physical units ($\text{N}\cdot\text{m/rad}$ and $\text{N}\cdot\text{m}\cdot\text{s/rad}$).*
+  - 🔗 [Fetch Robotics / Russ Tedrake: PD Control as Virtual Mechanical Stiffness & Damping](https://manipulation.csail.mit.edu/force.html) — *Explains why robotics engineers think of PD gains directly in physical units (* $\text{N}\cdot\text{m/rad}$ *and* $\text{N}\cdot\text{m}\cdot\text{s/rad}$ *).*
 - **🧪 Hands-On Exercise:**
   - *Task:* Command a motor (or simulate a 1-DOF inertia $J = 0.01\text{ kg}\cdot\text{m}^2$) with $K_d = 0, K_i = 0$ and increase $K_p$—feel/observe how a pure $P$ controller oscillates like an undamped spring! Then add $K_d = 2\sqrt{J K_p}$ (critical damping $\zeta = 1.0$) and observe the step response snap to the target with zero overshoot.
 - **🧠 Knowledge Check:**
@@ -47,7 +47,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 - **Core Summary:** When an actuator saturates at $u_{\max}$ (or a human hand blocks the shaft), an unclamped integral term accumulates a massive windup charge that causes violent overshoot upon release. Production PIDs clamp/back-calculate the integrator and take the filtered derivative strictly on **measurement (`-dy/dt`)** so setpoint steps never cause infinite "derivative kick" spikes.
 - **Curated Free Resources:**
   - 🔗 [Brett Beauregard: Improving the Beginner's PID — Derivative Kick & Integrator Windup](http://brettbeauregard.com/blog/2011/04/improving-the-beginners-pid-introduction/) — *Classic line-by-line C++ walkthrough showing how to fix every flaw in a textbook 3-line PID.*
-  - 🔗 [Karl Johan Åström & Richard M. Murray: Feedback Systems — Chapter 11 (PID Control & Anti-Windup, Free Caltech PDF)](https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-pid_24Jul2020.pdf) — *Rigorous derivation of back-calculation anti-windup ($K_{\text{aw}}$) and high-frequency derivative roll-off ($N_d$).*
+  - 🔗 [Karl Johan Åström & Richard M. Murray: Feedback Systems — Chapter 11 (PID Control & Anti-Windup, Free Caltech PDF)](https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-pid_24Jul2020.pdf) — *Rigorous derivation of back-calculation anti-windup (* $K_{\text{aw}}$ *) and high-frequency derivative roll-off (* $N_d$ *).*
 - **🧪 Hands-On Exercise:**
   - *Task:* Implement `IndustrialPID` (code in §4.2 below) with actuator limits $u \in [-10, +10]\text{ V}$. Simulate holding the plant at $y = 0$ for $1.0\text{ s}$ while $r = 1.0$, then releasing it—compare the massive overshoot when `kaw = 0.0` (no anti-windup) against the clean recovery when `kaw = 10.0`.
 - **🧠 Knowledge Check:**
@@ -64,8 +64,8 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ### 1.3 2-Line Complementary IMU Filter (Gyro + Accelerometer Fusion)
 - **Core Summary:** A gyroscope is crisp and responsive at fast timescales but drifts over seconds due to bias, whereas an accelerometer's gravity vector (`atan2(ay, az)`) never drifts over hours but is corrupted by high-frequency vibration. A **Complementary Filter** fuses the high-pass filtered gyro integration with the low-pass filtered accelerometer angle (`theta = 0.98*(theta + omega*dt) + 0.02*theta_acc`).
 - **Curated Free Resources:**
-  - 🔗 [Shane Colton (MIT): The Balance Filter — A Simple Solution for Integrating Accelerometer and Gyroscope Measurements (PDF)](https://www.pieter-jan.com/node/11) — *Clear, intuitive whitepaper explaining why high-pass + low-pass filters summing to $1.0$ create a distortionless tilt estimator.*
-  - 🔗 [Brian Douglas (YouTube): Sensor Fusion & Complementary Filters Explained](https://www.youtube.com/watch?v=whSw42XddsU) — *Shows in the frequency domain how complementary crossover frequency $\omega_c$ trades off gyro bias drift against vibration immunity.*
+  - 🔗 [Shane Colton (MIT): The Balance Filter — A Simple Solution for Integrating Accelerometer and Gyroscope Measurements (PDF)](https://www.pieter-jan.com/node/11) — *Clear, intuitive whitepaper explaining why high-pass + low-pass filters summing to* $1.0$ *create a distortionless tilt estimator.*
+  - 🔗 [Brian Douglas (YouTube): Sensor Fusion & Complementary Filters Explained](https://www.youtube.com/watch?v=whSw42XddsU) — *Shows in the frequency domain how complementary crossover frequency* $\omega_c$ *trades off gyro bias drift against vibration immunity.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Generate a $10\text{ s}$ synthetic IMU log at $200\text{ Hz}$ where true tilt is $\theta(t) = 0.3\sin(2\pi t)$, the gyro has a constant $+0.08\text{ rad/s}$ bias, and the accelerometer has $\sigma = 0.15\text{ rad}$ white vibration noise. Plot raw gyro integration (drifts away), raw accelerometer (noisy), and the $\alpha = 0.98$ complementary filter output.
 - **🧠 Knowledge Check:**
@@ -92,7 +92,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ### 2.1 Frequency-Domain Loop Shaping, Phase Margin & Delay Bounds
 - **Core Summary:** Every millisecond of sensor/computation delay $\tau_{\text{delay}}$ steals phase $\Delta\phi(\omega) = -\omega\tau_{\text{delay}}$, bounding your maximum achievable crossover frequency to $\omega_c < \frac{\phi_{\text{margin,rad}}}{\tau_{\text{delay}}}$. Auditing **Åström's Gang of Four ($S, T, PS, CS$)** and keeping peak sensitivity $M_s = \max_\omega \lvert S(j\omega)\rvert \le 1.75$ ($4.8\text{ dB}$) guarantees robustness against unmodeled resonances and gain variations.
 - **Curated Free Resources:**
-  - 🔗 [Åström & Murray: Feedback Systems — Chapter 10 & 12 (Frequency Domain Design & The Gang of Four, Free Caltech PDF)](https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-loopshaping_24Jul2020.pdf) — *Explains why checking $T(s)$ alone is a trap and why all four transfer functions ($S, T, PS, CS$) must be bounded.*
+  - 🔗 [Åström & Murray: Feedback Systems — Chapter 10 & 12 (Frequency Domain Design & The Gang of Four, Free Caltech PDF)](https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-loopshaping_24Jul2020.pdf) — *Explains why checking* $T(s)$ *alone is a trap and why all four transfer functions (* $S, T, PS, CS$ *) must be bounded.*
   - 🔗 [Katsuhiko Ogata: Modern Control Engineering (5th Ed.) & Python Control Systems Library (`python-control.readthedocs.io`)](https://python-control.readthedocs.io/) — *Classical lead-lag/Bode/Nyquist synthesis paired with open-source Python (`control.bode`, `control.gangof4`, `control.dlqr`) and Julia (`ControlSystems.jl`) toolboxes.*
   - 🔗 [Brian Douglas (YouTube): Bode Plots, Phase Margin & Loop Shaping Playlist](https://www.youtube.com/playlist?list=PLUMWjy5jgHK24TCFwngV5MeiruHxtfBQR) — *Visualizes how phase margin relates to overshoot and why time delay causes phase to plummet at high frequency.*
 - **🧪 Hands-On Exercise:**
@@ -113,7 +113,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 - **Curated Free Resources:**
   - 🔗 [Russ Tedrake (MIT 6.832): Underactuated Robotics — Chapter 3: Acrobots, Cart-Poles, and Energy Shaping](https://underactuated.csail.mit.edu/acrobot.html) — *Interactive open-access MIT textbook deriving the Åström-Furuta energy swing-up and LQR catch basin.*
   - 🔗 [Stephen Boyd (Stanford EE364a): Convex Optimization (Free Textbook & Video Lectures)](https://web.stanford.edu/~boyd/cvxbook/) — *Mathematical foundation for quadratic programming (QP), LQR, and real-time Model Predictive Control.*
-  - 🔗 [Steve Brunton (YouTube): Control Bootcamp — Linear Quadratic Regulator (LQR) & Bryson's Rule](https://www.youtube.com/watch?v=1_UobILf3cc) — *Clear walkthrough of tuning $Q$ and $R$ matrices systematically.*
+  - 🔗 [Steve Brunton (YouTube): Control Bootcamp — Linear Quadratic Regulator (LQR) & Bryson's Rule](https://www.youtube.com/watch?v=1_UobILf3cc) — *Clear walkthrough of tuning* $Q$ *and* $R$ *matrices systematically.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 4: Furuta Pendulum + LQR + CBF** in the interactive workbench, trigger a full swing-up from hanging down ($\theta = \pi$), and experiment with the $Q_\theta$ (angle penalty) and $R_{\text{ctrl}}$ (effort penalty) sliders before injecting a $+3.2\text{ rad/s}$ impulse push.
 - **🧠 Knowledge Check:**
@@ -170,7 +170,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 05):** Production mastery of modern optimal, nonlinear, and manifold control: Joseph-form Error-State Kalman Filters (ESKF) on $SO(3)\times\mathbb{R}^n$, Slotine-Li passivity-based adaptive control, CLF-CBF-QP safety filters, and Real-Time Iteration Nonlinear Model Predictive Control (RTI-NMPC).
-> * [**Next Linear Step in Pass 3 → Track 06 (Tier 3: Khatib Operational Inertia $\Lambda(q)$ & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production)
+> * [**Next Linear Step in Pass 3 → Track 06 (Tier 3: Khatib Operational Inertia Λ(q) & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production)
 
 ### 4.1 Two-Degree-of-Freedom (2-DOF) Control & State Estimation Architecture
 

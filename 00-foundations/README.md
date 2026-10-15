@@ -15,8 +15,8 @@ Instead of trying to master graduate-level $SO(3)$ Lie groups before ever wiring
 | **🛠️ Stage 0: Level 0 On-Ramp** | [§0 Global Level 0 Prerequisite Track (No Prior EE)](#level-0-global-prerequisite-on-ramp-intuition--bench-tools) | [Proceed to Track 00 · Tier 1 ↓](#tier-1-beginner--intuitive) |
 | **🟢 Pass 1: Tier 1 (Beginner)** | [§1 Tier 1: Calculus as `while` Loops, 2D Rotations & RC Smoothing](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 01 (Tier 1: Breadboard H-Bridges)**](../01-electronics-and-power/README.md#tier-1-beginner--intuitive) |
 | **🔵 Pass 2: Tier 2 (Applied)** | [§2 Tier 2: State-Space Matrices, Quaternions & Tustin Biquads](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 01 (Tier 2: 4-Layer KiCad & Kelvin Shunts)**](../01-electronics-and-power/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | [§3 Bridging the Gap: Moving Average $\to$ Pre-Warped TDF-II Biquad](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [§4 Tier 3: Bond Graphs, Lie Groups $SO(3)/SE(3)$ & Van Loan ZOH](#tier-3-advanced--production) | [**Next in Pass 3 → Track 01 (Tier 3: $<2\text{ nH}$ Inverter & SAR Buckets)**](../01-electronics-and-power/README.md#tier-3-advanced--production) |
+| **🌉 Bridge Concept** | [§3 Bridging the Gap: Moving Average → Pre-Warped TDF-II Biquad](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
+| **🟣 Pass 3: Tier 3 (Production)** | [§4 Tier 3: Bond Graphs, Lie Groups SO(3)/SE(3) & Van Loan ZOH](#tier-3-advanced--production) | [**Next in Pass 3 → Track 01 (Tier 3: <2 nH Inverter & SAR Buckets)**](../01-electronics-and-power/README.md#tier-3-advanced--production) |
 
 ---
 
@@ -92,7 +92,7 @@ $$
 - **Curated Free Resources:**
   - 🔗 [Paul McWhorter: Arduino & ESP32 for Beginners (YouTube Course)](https://www.youtube.com/@paulmcwhorter) & [Wokwi Online ESP32, STM32 & Arduino Simulator (wokwi.com)](https://wokwi.com/) — *Patient hands-on beginner video series paired with an interactive browser simulator for GPIO, PWM, and ADCs with zero hardware cost.*
   - 🔗 [STM32 Step-by-Step Official Beginner Wiki (wiki.st.com)](https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview) — *Official hands-on tutorial series covering STM32 Nucleo pin configuration, hardware timers, PWM, and ADCs.*
-  - 🔗 [SparkFun: Pull-Up Resistors Tutorial](https://learn.sparkfun.com/tutorials/pull-up-resistors) — *Explains why floating CMOS inputs toggle randomly from $60\text{ Hz}$ room hum and how to size pull-up resistors.*
+  - 🔗 [SparkFun: Pull-Up Resistors Tutorial](https://learn.sparkfun.com/tutorials/pull-up-resistors) — *Explains why floating CMOS inputs toggle randomly from* $60\text{ Hz}$ *room hum and how to size pull-up resistors.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a $10\text{ k}\Omega$ potentiometer across `3.3V` and `GND`, read its wiper with a 12-bit ADC pin ($0\text{–}4095$) on an `ESP32` or `STM32 Nucleo`, and map that value to a $20\text{ kHz}$ hardware PWM output driving an N-MOSFET (`AO3400` / `IRLZ44N`) + `1N5819` Schottky flyback diode to control a $12\text{ V}$ DC motor smoothly.
 - **🧠 Knowledge Check:**
@@ -143,7 +143,7 @@ $$
 
 ---
 
-### [1.2 2D Coordinate Frames & Rotation Matrices ($SO(2)$)]
+### 1.2 2D Coordinate Frames & Rotation Matrices ($SO(2)$)
 - **Core Summary:** Introduces 2D rigid transformations using orthogonal $2\times 2$ rotation matrices $R(\theta)$ where $R(\theta)^{-1} = R(\theta)^\top$, and enforces safe angular error wrapping across the $\pm 180^\circ$ ($\pm\pi$) boundary via `atan2(sin(err), cos(err))`.
 
 $$
@@ -151,8 +151,8 @@ R(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta 
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [3Blue1Brown: Linear Transformations and Matrices (Essence of Linear Algebra)](https://www.3blue1brown.com/lessons/linear-transformations) — *Builds instant visual intuition for how the columns of $R(\theta)$ track where the basis vectors $\hat{i}$ and $\hat{j}$ land.*
-  - 🔗 [Modern Robotics Ch. 3.1–3.2: Rigid-Body Motions in the Plane (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Free textbook chapter and video introducing $SO(2)$ rotation matrices and homogeneous transforms.*
+  - 🔗 [3Blue1Brown: Linear Transformations and Matrices (Essence of Linear Algebra)](https://www.3blue1brown.com/lessons/linear-transformations) — *Builds instant visual intuition for how the columns of* $R(\theta)$ *track where the basis vectors* $\hat{i}$ *and* $\hat{j}$ *land.*
+  - 🔗 [Modern Robotics Ch. 3.1–3.2: Rigid-Body Motions in the Plane (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Free textbook chapter and video introducing* $SO(2)$ *rotation matrices and homogeneous transforms.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 10-line test comparing naive angle subtraction `err = ref - meas` against `err = math.atan2(math.sin(ref - meas), math.cos(ref - meas))` when `ref = +179°` ($+3.124\text{ rad}$) and the encoder crosses $180^\circ$ to `meas = -179°` ($-3.124\text{ rad}$).
 - **🧠 Knowledge Check:**
@@ -177,7 +177,7 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [The Scientist and Engineer's Guide to DSP — Ch. 19: Recursive Filters (dspguide.com)](https://www.dspguide.com/ch19/2.htm) — *Free online chapter deriving single-pole recursive smoothing filters and time constants.*
-  - 🔗 [Interactive Digital Low-Pass Filter Frequency & Phase Applet (Falstad)](https://www.falstad.com/afepsilon/) — *Explore how lowering cutoff frequency $f_c$ increases phase lag.*
+  - 🔗 [Interactive Digital Low-Pass Filter Frequency & Phase Applet (Falstad)](https://www.falstad.com/afepsilon/) — *Explore how lowering cutoff frequency* $f_c$ *increases phase lag.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: Two-Mass & Notch Bode** in the MechaLab Workbench (or write a Python script) to inject a noisy $10\text{ Hz}$ sine wave + $200\text{ Hz}$ vibration into an exponential filter with $f_c = 15\text{ Hz}$, and measure the time delay (phase lag in degrees) between the clean $10\text{ Hz}$ input and filtered output.
 - **🧠 Knowledge Check:**
@@ -201,7 +201,7 @@ $$
 
 > **Goal of Pass 2 (Track 00):** When you return to Track 00 after finishing your first Tier 1 robot, upgrade your ad-hoc scalar equations into **State-Space Matrices ($\dot{x} = Ax + Bu$)**, **Two-Mass Torsional Resonance**, **Unit Quaternions**, and **Pre-Warped Tustin Biquad Notch Filters**.
 
-### [2.1 State-Space Modeling ($\dot{x} = A_c x + B_c u$) & Two-Mass Resonance]
+### 2.1 State-Space Modeling ($\dot{x} = A_c x + B_c u$) & Two-Mass Resonance
 - **Core Summary:** Models a motor rotor ($J_m$) coupled to a load inertia ($J_L$) through a compliant shaft/gearbox ($k_s$) as a 4-state matrix system exhibiting an anti-resonance zero $\omega_{ar} = \sqrt{k_s/J_L}$ and a structural resonance pole $\omega_r = \sqrt{k_s(1/J_m + 1/J_L)}$.
 
 $$
@@ -209,7 +209,7 @@ $$
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [Control Bootcamp: State-Space Equations (Prof. Steve Brunton, YouTube)](https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m) & [Data-Driven Science and Engineering (Brunton & Kutz, 2nd Ed. Free PDF — databookuw.com)](https://www.databookuw.com/) — *Clear walkthrough converting multi-DOF mechanical ODEs into $\dot{x} = Ax + Bu$ matrix form, plus SVD, DMD, and SINDy.*
+  - 🔗 [Control Bootcamp: State-Space Equations (Prof. Steve Brunton, YouTube)](https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m) & [Data-Driven Science and Engineering (Brunton & Kutz, 2nd Ed. Free PDF — databookuw.com)](https://www.databookuw.com/) — *Clear walkthrough converting multi-DOF mechanical ODEs into* $\dot{x} = Ax + Bu$ *matrix form, plus SVD, DMD, and SINDy.*
   - 🔗 [Åström & Murray: Feedback Systems — Ch. 5 & 6: Linear Systems (fbswiki.org)](https://fbswiki.org/wiki/index.php/Main_Page) & [Control of Mechatronic Systems (P. O. J. Kaltjob)](https://www.wiley.com/en-us/Control+of+Mechatronic+Systems-p-9781119505792) — *Open-access textbook chapters on state-space matrices, eigenvalues, and discrete-time digital implementation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: Two-Mass & Notch Bode** in the MechaLab Workbench, drag the Load-to-Motor Inertia Ratio $J_L / J_m$ and Shaft Stiffness $k_s$ sliders, and observe how the motor encoder Bode plot (Cyan) exhibits an anti-resonance dip at $f_{ar}$ followed by a resonance peak at $f_r$, whereas the load tip (Amber) has only the resonance peak.
@@ -226,7 +226,7 @@ $$
 
 ---
 
-### [2.2 3D Rotations Without Gimbal Lock: Unit Quaternions ($\mathbb{S}^3$)]
+### 2.2 3D Rotations Without Gimbal Lock: Unit Quaternions ($\mathbb{S}^3$)
 - **Core Summary:** Replaces gimbal-locking 3D Euler angles with 4D unit quaternions $q = [q_w, q_x, q_y, q_z]^\top \in \mathbb{S}^3$ ($\|q\|_2 = 1$), enabling smooth 3D attitude integration and spherical interpolation (`SLERP`).
 
 $$
@@ -235,7 +235,7 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [Visualizing Quaternions Interactive Sandbox (3Blue1Brown & Ben Eater — eater.net)](https://eater.net/quaternions) — *Interactive 3D browser visualization of quaternion hypersphere rotations.*
-  - 🔗 [Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter — §1–2](https://arxiv.org/abs/1711.02508) — *Concise reference sheet for Hamilton quaternion product $\otimes$, rotation action $q \otimes v \otimes q^*$, and kinematic integration.*
+  - 🔗 [Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter — §1–2](https://arxiv.org/abs/1711.02508) — *Concise reference sheet for Hamilton quaternion product* $\otimes$ *, rotation action $q \otimes v \otimes q^*$, and kinematic integration.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a Python function `quat_multiply(q1, q2)` and verify that rotating the vector $v = [1, 0, 0]^\top$ by $90^\circ$ around the $Z$-axis ($q = [\cos 45^\circ, 0, 0, \sin 45^\circ]^\top$) via $q \otimes [0, v] \otimes q^*$ lands at $[0, 1, 0]^\top$ with zero gimbal lock at $\pm 90^\circ$ pitch.
 - **🧠 Knowledge Check:**
@@ -304,7 +304,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 00):** Full mathematical mastery for production robotics and high-rate control: Bond Graph & Port-Hamiltonian energy modeling, SVD conditioning, Matrix Lie Groups $SO(3)/SE(3)$, Van Loan exact ZOH discretization, and stochastic Welch spectral estimation.
-> * [**Next Linear Step in Pass 3 → Track 01 (Tier 3: 6-Layer $<2\text{ nH}$ Inverter & SAR Charge Buckets)**](../01-electronics-and-power/README.md#tier-3-advanced--production)
+> * [**Next Linear Step in Pass 3 → Track 01 (Tier 3: 6-Layer <2 nH Inverter & SAR Charge Buckets)**](../01-electronics-and-power/README.md#tier-3-advanced--production)
 
 ### [4.1 Unified Multi-Domain Energy Architecture (Bond Graphs & Port-Hamiltonians)]
 - **Core Summary:** Unifies electrical, mechanical, hydraulic, and thermal subsystems through generalized power conjugates $P(t) = e(t) \cdot f(t)$ and Port-Hamiltonian energy-balance equations $\dot{x} = (J(x) - R(x))\nabla\mathcal{H}(x) + g(x)u$ with skew-symmetric interconnection $J(x) = -J(x)^\top$ and dissipative $R(x) \succeq 0$.
@@ -377,7 +377,7 @@ flowchart LR
 
 ---
 
-### [4.2 Applied Linear Algebra, SVD & Lie Groups ($SO(3), SE(3)$)]
+### 4.2 Applied Linear Algebra, SVD & Lie Groups ($SO(3), SE(3)$)
 - **Core Summary:** Formulates singularity-free 3D rigid-body calculus on the Special Orthogonal group $SO(3)$ and Special Euclidean group $SE(3)$ using Rodrigues' exponential map $\exp([\phi]_\times)$ with small-angle Taylor series guards ($\theta < 10^{-4}\text{ rad}$), logarithmic maps, and the $6\times 6$ Adjoint representation $\text{Ad}_T$.
 
 $$
@@ -385,8 +385,8 @@ $$
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [A Micro Lie Theory for State Estimation in Robotics (Joan Solà et al., arXiv:1812.01537)](https://arxiv.org/abs/1812.01537) — *Essential open-access reference deriving $SO(3)/SE(3)$ exponential maps, Adjoints, and Left/Right Jacobians.*
-  - 🔗 [State Estimation for Robotics — Ch. 7: Matrix Lie Groups (Prof. Tim Barfoot, Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Rigorous derivations of $\mathfrak{so}(3)$ and $\mathfrak{se}(3)$ series expansions and identities.*
+  - 🔗 [A Micro Lie Theory for State Estimation in Robotics (Joan Solà et al., arXiv:1812.01537)](https://arxiv.org/abs/1812.01537) — *Essential open-access reference deriving* $SO(3)/SE(3)$ *exponential maps, Adjoints, and Left/Right Jacobians.*
+  - 🔗 [State Estimation for Robotics — Ch. 7: Matrix Lie Groups (Prof. Tim Barfoot, Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Rigorous derivations of* $\mathfrak{so}(3)$ *and* $\mathfrak{se}(3)$ *series expansions and identities.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Implement `so3_exp(phi)` and `so3_log(R)` in Python with the $\theta < 10^{-4}\text{ rad}$ Taylor branch and verify that $\|\log(\exp([\phi]_\times))^\vee - \phi\|_2 < 10^{-14}\text{ rad}$ across $10,000$ random vectors including $\theta = 0$ and $\theta = \pi - 10^{-7}$.
 - **🧠 Knowledge Check:**

@@ -13,7 +13,7 @@
 | **🟢 Pass 1: Tier 1 Boss** | [← Track 07 (Tier 1)](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive) | [§1 Tier 1 Boss: Breadboard/Breakout 2-DOF Compliant Desktop Robot](#tier-1-capstone-builds-beginner--breakout-pass) | [**🔼 Loop Back & Level Up to Pass 2 → Track 00 (Tier 2)**](../00-foundations/README.md#tier-2-intermediate--applied) |
 | **🔵 Pass 2: Tier 2 Boss** | [← Track 07 (Tier 2)](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) | [§2 Tier 2 Boss: Custom 4-Layer CAN Servo + LQR Pendulum / MuJoCo Twin](#tier-2-capstone-builds-intermediate--applied-pass) | [**🔼 Loop Back & Level Up to Pass 3 → Track 00 (Tier 3)**](../00-foundations/README.md#tier-3-advanced--production) |
 | **🌉 Bridge Concept** | — | [§3 Bridging the Gap: 3-Pass Evolution of the Same Robot Architecture](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Capstones I–V ↓](#tier-3-capstone-builds-advanced--production-pass) |
-| **🟣 Pass 3: Tier 3 Boss** | [← Track 07 (Tier 3)](../07-systems-hil-and-production/README.md#tier-3-advanced--production) | [§4 Tier 3 Boss: Full Production Capstones I–V ($48\text{ V}$ FOC, Furuta, 6-DOF, Hopper, AMR)](#tier-3-capstone-builds-advanced--production-pass) | **🏆 Curriculum Mastery Complete!** |
+| **🟣 Pass 3: Tier 3 Boss** | [← Track 07 (Tier 3)](../07-systems-hil-and-production/README.md#tier-3-advanced--production) | [§4 Tier 3 Boss: Full Production Capstones I–V (48 V FOC, Furuta, 6-DOF, Hopper, AMR)](#tier-3-capstone-builds-advanced--production-pass) | **🏆 Curriculum Mastery Complete!** |
 
 ---
 
@@ -66,7 +66,7 @@
   - 🔗 [Ben Katz MIT Mini-Cheetah Actuator Hardware & Firmware Repository](https://github.com/bgkatz/3phase_integrated) — *Open-source reference schematic, layout, and firmware for integrated brushless robot actuators.*
   - 🔗 [Stanford Pupper / Open-Duck-Mini Open-Source Legged Platforms](https://github.com/apirrone/Open_Duck_Mini) — *Open-source quadruped and biped builds demonstrating sim-to-real MuJoCo/Isaac reinforcement learning and custom actuator integration.*
   - 🔗 [Universal Manipulation Interface (`UMI`, `umi-gripper.github.io`)](https://umi-gripper.github.io/) — *3D-printed handheld GoPro + IMU + ArUco gripper for collecting in-the-wild visuomotor Diffusion Policy demonstrations.*
-  - 🔗 [MuJoCo Python Bindings (`mujoco` pip package) & Interactive Viewer Documentation](https://mujoco.readthedocs.io/en/stable/python.html) — *Load `./models/capstone2-furuta-pendulum/furuta_pendulum.xml` directly in Python at $1\text{ kHz}$ to co-simulate your LQR controller alongside hardware.*
+  - 🔗 [MuJoCo Python Bindings (`mujoco` pip package) & Interactive Viewer Documentation](https://mujoco.readthedocs.io/en/stable/python.html) — *Load `./models/capstone2-furuta-pendulum/furuta_pendulum.xml` directly in Python at* $1\text{ kHz}$ *to co-simulate your LQR controller alongside hardware.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 08-capstone-projects/models/validate_models.py` to verify all URDF and MuJoCo MJCF inertial matrices across Capstones 2, 3, and 4, and test the full swing-up + LQR + CBF safety filter in **Tab 4** and **Tab 5** of the interactive workbench.
 - **🧠 Knowledge Check:**
@@ -83,7 +83,7 @@
 ### ✅ Tier 2 Boss Sign-Off Gate (`Unlock Pass 3!`)
 1. Custom 4-layer PCB passes Double-Pulse Test ($V_{DS,\text{peak}} < 34\text{ V}$ on $24\text{ V}$ bus) and $1\text{ kHz}$ CAN-FD command loop with CRC-16 watchdog active.
 2. Furuta Pendulum catches upright autonomously within $< 2.5\text{ s}$ (or 2-DOF leg tracks Cartesian stiffness targets in hardware + MuJoCo twin).
-* **🔼 Next Step After Completing Pass 2:** [**Loop Back & Level Up to Pass 3 → Track 00 (Tier 3: Lie Groups $SO(3)/SE(3)$ & Port-Hamiltonian Modeling)**](../00-foundations/README.md#tier-3-advanced--production)
+* **🔼 Next Step After Completing Pass 2:** [**Loop Back & Level Up to Pass 3 → Track 00 (Tier 3: Lie Groups SO(3)/SE(3) & Port-Hamiltonian Modeling)**](../00-foundations/README.md#tier-3-advanced--production)
 
 ---
 
@@ -151,7 +151,7 @@ flowchart LR
 
 - **Curated Free Resources:**
   - 🔗 [KiCad Netlist (`eda-capstone1-foc-drive/capstone1_foc_48v30a.net`)](eda-capstone1-foc-drive/capstone1_foc_48v30a.net) & [Production BOM (`capstone1_bom.csv`)](eda-capstone1-foc-drive/capstone1_bom.csv) — *Complete 43-net KiCad S-expression netlist and 18-line manufacturable BOM inside this repository.*
-  - 🔗 [Bare-Metal STM32G474 Register-Level 40 kHz FOC Firmware (`firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp`)](firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp) — *Production C++20 firmware implementing `TIM1_TRGO2` $\to$ `ADC1/2`, `CORDIC`, `WaitFreeSeqLock`, and `TIM1_BKIN` STO.*
+  - 🔗 [Bare-Metal STM32G474 Register-Level 40 kHz FOC Firmware (`firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp`)](firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp) — *Production C++20 firmware implementing `TIM1_TRGO2`* $\to$ *`ADC1/2`, `CORDIC`, `WaitFreeSeqLock`, and `TIM1_BKIN` STO.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py` and inspect `foc_thermal_and_bom.json` + **Tab 6: 48V 30A PCB & Thermal** to verify that at $48\text{ V} / 30\text{ A}$ ($40\text{ kHz}$), total 6-MOSFET loss is $12.16\text{ W}$, $T_{j,\max} = 85.4^\circ\text{C} < 125^\circ\text{C}$, and $V_{DS,\text{peak}} = 57.5\text{ V} < 64\text{ V}$.
 - **🧠 Knowledge Check:**
@@ -234,7 +234,7 @@ flowchart TB
 - **Curated Free Resources:**
   - 🔗 [URDF (`models/capstone3-6dof-arm/manipulator_6dof.urdf`)](models/capstone3-6dof-arm/manipulator_6dof.urdf) & [MuJoCo MJCF (`manipulator_6dof.xml`)](models/capstone3-6dof-arm/manipulator_6dof.xml) — *Complete 6-DOF spatial manipulator model with full 3D inertia tensors.*
   - 🔗 [ALOHA 2 (`aloha-2.github.io`) & Pollen Robotics `Reachy 2` (`pollen-robotics.com`)](https://aloha-2.github.io/) — *Open-source bimanual and humanoid manipulation hardware blueprints and `ros2_control` stacks.*
-  - 🔗 [Pinocchio C++/Python Rigid Body Dynamics Library](https://stack-of-tasks.github.io/pinocchio/) — *Computes 6-DOF RNEA, CRBA, $J(q)$, and $\Lambda(q)$ in $< 5\ \mu\text{s}$.*
+  - 🔗 [Pinocchio C++/Python Rigid Body Dynamics Library](https://stack-of-tasks.github.io/pinocchio/) — *Computes 6-DOF RNEA, CRBA,* $J(q)$ *, and* $\Lambda(q)$ *in* $< 5\ \mu\text{s}$ *.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: 6-DOF Spatial PoE & RNEA** and **Tab 5: URDF / MuJoCo & STO** to inspect the 6-DOF arm's space screw axes $\mathcal{S}_1 \dots \mathcal{S}_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).
 - **🧠 Knowledge Check:**
@@ -297,7 +297,7 @@ flowchart TB
 | **Hardware Safety STO Distance** | Hardware STO asserted in $< 5\text{ ms}$; full stop from $2.0\text{ m/s}$ within $\le 0.45\text{ m}$ | Safety zone laser intrusion test |
 
 - **Curated Free Resources:**
-  - 🔗 [FAST-LIO2: Fast Direct LiDAR-Inertial Odometry (Open-Source C++ / ROS 2 Repository)](https://github.com/hku-mars/FAST_LIO) — *State-of-the-art tightly-coupled iterated Kalman filter on $SO(3)$ manifolds used across modern AMRs and quadrupeds.*
+  - 🔗 [FAST-LIO2: Fast Direct LiDAR-Inertial Odometry (Open-Source C++ / ROS 2 Repository)](https://github.com/hku-mars/FAST_LIO) — *State-of-the-art tightly-coupled iterated Kalman filter on* $SO(3)$ *manifolds used across modern AMRs and quadrupeds.*
   - 🔗 [Nav2 MPPI (Model Predictive Path Integral) Controller Documentation](https://docs.nav2.org/configuration/packages/configuring-mppic.html) — *Production sampling-based nonlinear MPC controller for differential, swerve, and Ackermann mobile robots.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate the minimum safety LiDAR protective field radius $d_{\text{stop}}$ required for a $48\text{ V}$ AMR traveling at $v_0 = 2.0\text{ m/s}$ given a safety scanner response time $t_{\text{scan}} = 30\text{ ms}$, STO + brake contactor actuation latency $t_{\text{sto}} = 5\text{ ms}$, and tire-floor braking deceleration $a_{\text{brake}} = 5.5\text{ m/s}^2$.
