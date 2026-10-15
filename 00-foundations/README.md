@@ -47,6 +47,7 @@ If you come from a strong computing/software background with no formal Electrica
   - 🔗 [SparkFun: Voltage, Current, Resistance, and Ohm's Law](https://learn.sparkfun.com/tutorials/voltage-current-resistance-and-ohms-law) & [All About Circuits Vol. I: Direct Current (Open-Source Textbook)](https://www.allaboutcircuits.com/textbook/direct-current/) — *Illustrated water-tank analogies and passive circuit laws designed for software learners with zero prior hardware background.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open the [Falstad Circuit Simulator](https://www.falstad.com/circuit/), wire a $12\text{ V}$ voltage source in series with a switch, a $1\text{ mH}$ inductor, and a $6\ \Omega$ resistor ($I = 2\text{ A}$ steady state), and open the switch abruptly with and without a parallel flyback diode. Compute the theoretical voltage spike $V_L = L\frac{\Delta I}{\Delta t}$ if $5\text{ A}$ through $1\text{ mH}$ turns off in $100\text{ ns}$ ($50,000\text{ V}$).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study SI prefixes ($\text{mH} = 10^{-3}\text{ H}, \text{ns} = 10^{-9}\text{ s}$) in [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), Ohm's law in [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md), and inductive flyback $V_L = L\frac{dI}{dt}$ in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), plus the [Falstad Circuit Simulator Inductors Guide](https://www.falstad.com/circuit/) and [All About Circuits Vol. I (Inductance)](https://www.allaboutcircuits.com/textbook/direct-current/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -73,6 +74,7 @@ $$
   - 🔗 [sigrok PulseView Open-Source Logic Analyzer Documentation](https://sigrok.org/wiki/PulseView) — *Free software toolchain for decoding digital I2C, SPI, UART, and PWM waveforms with a \$15 USB logic analyzer.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a $1\text{ k}\Omega$ resistor and $100\text{ nF}$ capacitor as a low-pass filter on a breadboard. Perform a DMM continuity beep check between `VCC` and `GND`, power the circuit from a bench supply set to $5.0\text{ V}$ and a $0.05\text{ A}$ ($50\text{ mA}$) CC limit, and measure the $0\text{–}63.2\%$ rise time ($\tau = R C = 100\ \mu\text{s}$) on an oscilloscope.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study SI unit multiplication ($\text{k}\Omega \times \text{nF} = \mu\text{s}$) in [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), DMM continuity & CC/CV bench supply protection in [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md), and RC time constants in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), plus [SparkFun Multimeter Tutorial](https://learn.sparkfun.com/tutorials/how-to-use-a-multimeter).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -99,6 +101,7 @@ $$
   - 🔗 [SparkFun: Pull-Up Resistors Tutorial](https://learn.sparkfun.com/tutorials/pull-up-resistors) — *Explains why floating CMOS inputs toggle randomly from* $60\text{ Hz}$ *room hum and how to size pull-up resistors.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a $10\text{ k}\Omega$ potentiometer across `3.3V` and `GND`, read its wiper with a 12-bit ADC pin ($0\text{–}4095$) on an `ESP32` or `STM32 Nucleo`, and map that value to a $20\text{ kHz}$ hardware PWM output driving an N-MOSFET (`AO3400` / `IRLZ44N`) + `1N5819` Schottky flyback diode to control a $12\text{ V}$ DC motor smoothly.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study linear scaling in [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), MOSFET low-side PWM switching in [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), and fixed-width C integer types in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), plus the [Wokwi Online ESP32/STM32 Simulator](https://wokwi.com/) and [STM32 Step-by-Step PWM/ADC Wiki](https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -134,6 +137,7 @@ $$
   - 🔗 [3Blue1Brown: Differential Equations Overview (3blue1brown.com)](https://www.3blue1brown.com/topics/differential-equations) — *Visualizes phase portraits, state vectors, and discrete time-stepping trajectories.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 25-line Python script simulating an undamped spring-mass oscillator ($m=1\text{ kg}, k=100\text{ N/m}, b=0, \Delta t = 0.01\text{ s}$) for $1,000$ steps using **Explicit Euler** (`x_new = x + v_old * dt`) vs. **Semi-Implicit Euler** (`x_new = x + v_new * dt`), and plot total mechanical energy $E = \frac{1}{2}mv^2 + \frac{1}{2}kx^2$ for both.
+  - *📚 What to Learn & Resource Links for This Exercise:* Complete the Tier 1 Foundations Bridge Ladder [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Python `while` Loops*), [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) (*NumPy & Matplotlib Plotting*), and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Discrete Kinematics, $F=ma$ & Spring Energy*), and review [myPhysicsLab Spring-Mass Energy Derivations](https://www.myphysicslab.com/springs/single-spring-en.html).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -159,6 +163,7 @@ $$
   - 🔗 [Modern Robotics Ch. 3.1–3.2: Rigid-Body Motions in the Plane (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Free textbook chapter and video introducing* $SO(2)$ *rotation matrices and homogeneous transforms.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 10-line test comparing naive angle subtraction `err = ref - meas` against `err = math.atan2(math.sin(ref - meas), math.cos(ref - meas))` when `ref = +179°` ($+3.124\text{ rad}$) and the encoder crosses $180^\circ$ to `meas = -179°` ($-3.124\text{ rad}$).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study radians, unit-circle trigonometry, and four-quadrant `math.atan2(y, x)` in [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), plus [3Blue1Brown Linear Transformations](https://www.3blue1brown.com/lessons/linear-transformations) and [Lynch & Park *Modern Robotics* Ch. 3.1–3.2](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -184,6 +189,7 @@ $$
   - 🔗 [Interactive Digital Low-Pass Filter Frequency & Phase Applet (Falstad)](https://www.falstad.com/afepsilon/) — *Explore how lowering cutoff frequency* $f_c$ *increases phase lag.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: Two-Mass & Notch Bode** in the MechaLab Workbench (or write a Python script) to inject a noisy $10\text{ Hz}$ sine wave + $200\text{ Hz}$ vibration into an exponential filter with $f_c = 15\text{ Hz}$, and measure the time delay (phase lag in degrees) between the clean $10\text{ Hz}$ input and filtered output.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Python time-series arrays in [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), RC cutoff frequency $f_c = \frac{1}{2\pi RC}$ in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), and [The Scientist and Engineer's Guide to DSP Ch. 19 (Recursive Filters)](https://www.dspguide.com/ch19/2.htm).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -217,6 +223,7 @@ $$
   - 🔗 [Åström & Murray: Feedback Systems — Ch. 5 & 6: Linear Systems (fbswiki.org)](https://fbswiki.org/wiki/index.php/Main_Page) & [Control of Mechatronic Systems (P. O. J. Kaltjob)](https://www.wiley.com/en-us/Control+of+Mechatronic+Systems-p-9781119505792) — *Open-access textbook chapters on state-space matrices, eigenvalues, and discrete-time digital implementation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: Two-Mass & Notch Bode** in the MechaLab Workbench, drag the Load-to-Motor Inertia Ratio $J_L / J_m$ and Shaft Stiffness $k_s$ sliders, and observe how the motor encoder Bode plot (Cyan) exhibits an anti-resonance dip at $f_{ar}$ followed by a resonance peak at $f_r$, whereas the load tip (Amber) has only the resonance peak.
+  - *📚 What to Learn & Resource Links for This Exercise:* Complete the Tier 2 Foundations Bridge modules [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*State Update Matrices*), [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order ODEs, $\omega_n$ & $\zeta$*), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Phasors & Bode Plots*), and [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space $\dot{x} = Ax + Bu$*), plus [Steve Brunton's Control Bootcamp](https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -242,6 +249,7 @@ $$
   - 🔗 [Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter — §1–2](https://arxiv.org/abs/1711.02508) — Concise reference sheet for Hamilton quaternion product (⊗), rotation action $q \otimes v \otimes q^{*}$, and kinematic integration.
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a Python function `quat_multiply(q1, q2)` and verify that rotating the vector $v = [1, 0, 0]^\top$ by $90^\circ$ around the $Z$-axis ($q = [\cos 45^\circ, 0, 0, \sin 45^\circ]^\top$) via $q \otimes [0, v] \otimes q^*$ lands at $[0, 1, 0]^\top$ with zero gimbal lock at $\pm 90^\circ$ pitch.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study 3D vectors, dot/cross products, and basis transforms in [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md), plus [3Blue1Brown & Ben Eater's Interactive Quaternion Visualizer (`eater.net/quaternions`)](https://eater.net/quaternions) and [Joan Solà's *Quaternion Kinematics for the ESKF* §1–2 (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -267,6 +275,7 @@ $$
   - 🔗 [Robert Bristow-Johnson's Audio EQ & Biquad Cookbook (w3.org)](https://www.w3.org/TR/audio-eq-cookbook/) — *Closed-form coefficient formulas for digital notch, low-pass, and peaking biquads.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Use **Tab 2: Two-Mass & Notch Bode Simulator** to tune $f_{\text{notch}}$ and $Q_n$ on the **CNC Ballscrew** preset ($f_r = 290.6\text{ Hz}$), confirming that the resonant peak drops by $\ge 25\text{ dB}$ and the time-domain step response ringing disappears.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Bode magnitude/phase in [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), Tustin discretization in [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), and frequency pre-warping $\omega_a = \frac{2}{T_s}\tan(\omega_n T_s/2)$ + biquad filters in [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), plus [Stanford CCRMA Digital Filters (`ccrma.stanford.edu/~jos/filters/`)](https://ccrma.stanford.edu/~jos/filters/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -368,6 +377,7 @@ flowchart LR
   - 🔗 [Intelligence as Computation (Oliver Brock, arXiv:2412.14701)](https://arxiv.org/abs/2412.14701) & [MIT 2.14 / 2.003 System Dynamics & Bond Graph Lecture Notes (MIT OCW)](https://ocw.mit.edu/courses/2-003sc-engineering-dynamics-fall-2011/) — *Unifies digital, analog, mechanical, and morphological computation with multi-domain energy conservation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 00-foundations/lab/lab00_two_mass_and_so3.py` and verify the energy conservation audit: $\left|\int_0^T V_{\text{in}}i_a\,dt - (\Delta \mathcal{H}\kern0pt_{\text{stored}} + \int_0^T P_{\text{dissipated}}\,dt)\right| < 10^{-9}\text{ J}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Hamiltonian energy conservation and skew-symmetric interconnection matrices in [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (`## 3. Formalization` Item 3), plus [van der Schaft & Jeltsema *Port-Hamiltonian Systems Theory*](https://www.rug.nl/research/portal/files/14407027/PortHamiltonianSystems.pdf).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -393,6 +403,7 @@ $$
   - 🔗 [State Estimation for Robotics — Ch. 7: Matrix Lie Groups (Prof. Tim Barfoot, Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Rigorous derivations of* $\mathfrak{so}(3)$ *and* $\mathfrak{se}(3)$ *series expansions and identities.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Implement `so3_exp(phi)` and `so3_log(R)` in Python with the $\theta < 10^{-4}\text{ rad}$ Taylor branch and verify that $\|\log(\exp([\phi]\kern0pt_\times))^\vee - \phi\|\kern0pt_2 < 10^{-14}\text{ rad}$ across $10,000$ random vectors including $\theta = 0$ and $\theta = \pi - 10^{-7}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study the skew-symmetric hat map $[\omega]_\times$, cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$, and Rodrigues' rotation formula in [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (`## 3. Formalization` Items 1–2), plus [Joan Solà *Micro Lie Theory* (`arXiv:1812.01537`)](https://arxiv.org/abs/1812.01537) and [Tim Barfoot *State Estimation for Robotics* Ch. 7](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -426,6 +437,7 @@ $$
   - 🔗 [SciPy `scipy.signal.welch` & `csd` Spectral Estimation Documentation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html) — *Open-source reference for Hann-windowed cross-spectral density and coherence estimation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Discretize the 4-state electromechanical plant below at $T_s = 250\ \mu\text{s}$ ($4\text{ kHz}$) using `scipy.linalg.expm` on Van Loan's $(n+m)\times(n+m)$ block matrix and verify that it matches the analytical integral $B_d = A_c^{-1}(A_d - I)B_c$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study continuous state-space discretization in [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), Gaussian covariance propagation in [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), and matrix exponential Taylor/Padé properties in [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), plus [SciPy `linalg.expm` & `signal.welch` Docs](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -461,6 +473,7 @@ $$
   - 🔗 [Collocated vs. Non-Collocated Control of Flexible Mechanical Systems (Preumont, Active Vibration Control)](https://www.ulb.ac.be/scmero/documents/books/振动控制.pdf) — *Explains interlaced pole-zero patterns in collocated actuator-sensor pairs.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: Two-Mass & Notch Bode** and compare the phase curve of the Collocated Motor Encoder (Cyan, which dips to $-90^\circ$, jumps back to $+90^\circ$ at $f_{ar}$, and returns to $-90^\circ$ at $f_r$) against the Non-Collocated Load Tip (Amber, which plunges straight to $-270^\circ$ at $f_r$).
+  - *📚 What to Learn & Resource Links for This Exercise:* Review Bode phase lag and transfer-function zeros/poles in [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) and [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), and Port-Hamiltonian electromechanical coupling in [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

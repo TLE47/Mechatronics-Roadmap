@@ -79,6 +79,13 @@ ctrl_runs=10, telem_runs=1, final_state=FAULT
 Calculate the maximum allowable ISR execution time $t_{\text{exec,max}}$ in microseconds ($\mu\text{s}$) if a $f_{\text{isr}} = 10\text{ kHz}$ ($T_{\text{isr}} = 100\ \mu\text{s}$) current-loop ISR must consume no more than $U_{\max} = 25\%$ ($0.25$) of total CPU time so that $75\%$ remains for telemetry and state machines. Verify $t_{\text{exec,max}} = 25.0\ \mu\text{s}$.
 - **If your result differs:** Multiply the period $T_{\text{isr}} = 10^6 / 10000 = 100\ \mu\text{s}$ by $0.25$ ($100 \times 0.25 = 25.0\ \mu\text{s}$).
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Loops, Arrays & SI Timing Units*).
+  - **Prerequisite Bridge Modules:** [`01-electronics.T1.01b`](01-electronics.T1.01b.md) (*PWM Control*) and [`04-embedded.T1.04a`](04-embedded.T1.04a.md) (*Bitwise Masks & `volatile`*).
+  - **Core Concepts to Review First:** Non-blocking timer ISR execution vs. `delay()`, `enum` finite-state machines (`IDLE`, `HOMING`, `CLOSED_LOOP`, `FAULT_STOP`), and packed binary telemetry (`struct.pack`/`unpack` + XOR checksum) in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Python `struct` Binary Packing Docs (`docs.python.org`)](https://docs.python.org/3/library/struct.html), [Samek *Practical UML Statecharts in C/C++*](https://www.state-machine.com/psicc2), and [Track 04 §1.1–1.3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
+
 ## 6. Simulation path
 Open **Tab 8 (Real-Time Concurrency & ISR Preemption)** in the MechaLab Workbench (`npm run dev`) or run a non-blocking `micros()` sketch on the [Wokwi Simulator](https://wokwi.com/).
 

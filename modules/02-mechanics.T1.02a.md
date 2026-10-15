@@ -64,6 +64,12 @@ tau_load(0 deg)=1.3734 N*m, tau_load(60 deg)=0.6867 N*m, tau_motor=0.2543 N*m
 A timing-belt reduction connects a motor pulley with $Z_{\text{motor}} = 16$ teeth to a joint pulley with $Z_{\text{joint}} = 72$ teeth ($\eta = 0.95$). Compute the gear ratio $N = Z_{\text{joint}} / Z_{\text{motor}}$, the output speed $\omega_{\text{joint}}$ when $\omega_{\text{motor}} = 90\text{ rad/s}$, and the output torque $\tau_{\text{joint}}$ when $\tau_{\text{motor}} = 0.40\text{ N}\cdot\text{m}$. Verify $N = 4.5$, $\omega_{\text{joint}} = 20.0\text{ rad/s}$, and $\tau_{\text{joint}} = 1.71\text{ N}\cdot\text{m}$ ($\pm 10^{-6}$).
 - **If your result differs:** Check that the driven pulley tooth count ($72$) is divided by the driving motor pulley tooth count ($16$): $72 / 16 = 4.5$, and multiply $\tau_{\text{motor}} \times N \times \eta = 0.40 \times 4.5 \times 0.95 = 1.71\text{ N}\cdot\text{m}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Rotational Units*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Radians, Cosine Law & `math.atan2`*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Rotational Kinetic Energy*).
+  - **Core Concepts to Review First:** Lever torque $\tau = r F \sin\theta$, static equilibrium ($\sum F = 0, \sum \tau = 0$), gear ratio torque/speed scaling and reflected inertia $J_{\text{refl}} = N^2 J_{\text{motor}}$, and 2-link planar FK/IK in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 3 & Ch. 6 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 02 Tier 1 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive).
+
 ## 6. Simulation path
 Open **Tab 3 (2-Link Planar Arm Kinematics & Workspace)** in the MechaLab Workbench (`npm run dev`) to visualize how link lengths and joint angles change the horizontal moment arm of a planar robot arm.
 

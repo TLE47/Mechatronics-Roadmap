@@ -70,6 +70,13 @@ Midpoint: q=0.60 rad, qd_max=0.90 rad/s, deflection=0.10 rad
 Compute the minimum move duration $T_{\min}$ in seconds ($\text{s}$) required for a rest-to-rest cubic trajectory covering $\Delta q = 2.0\text{ rad}$ if the actuator's maximum speed is $\dot{q}_{\max} = 3.0\text{ rad/s}$ ($\dot{q}_{\max} = \frac{1.5\Delta q}{T_{\min}}$). Verify $T_{\min} = \frac{1.5 \times 2.0}{3.0} = 1.0\text{ s}$ and check that `cubic_rest_to_rest(0.5, 0.0, 2.0, 1.0)[1]` equals `3.0` $\text{rad/s}$.
 - **If your result differs:** Recall that a cubic rest-to-rest profile has peak velocity $1.5\times$ the average velocity ($\frac{1.5\Delta q}{T}$, not $\frac{\Delta q}{T}$) because it spends the first and last halves accelerating and decelerating.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Functions & Loops*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Cosine Gravity Projection*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Kinematics & Spring Energy*).
+  - **Prerequisite Bridge Modules:** [`02-mechanics.T1.02a`](02-mechanics.T1.02a.md) (*2-Link Arm & Lever Torque*) and [`05-control.T1.05a`](05-control.T1.05a.md) (*PD Virtual Spring-Damper*).
+  - **Core Concepts to Review First:** Rest-to-rest cubic polynomial interpolation $q(t) = q_0 + (3s^2 - 2s^3)\Delta q$ (peak velocity $\frac{3\Delta q}{2T}$), symmetric trapezoidal velocity profiles, and joint-space compliant PD + gravity compensation $\tau = K_p(q_d - q) - K_d\dot{q} + m g L_{\text{com}}\cos q$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 9 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 06 Tier 1 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive).
+
 ## 6. Simulation path
 Open **Tab 6 (Trajectory Generation: Cubic, Trapezoidal & Ruckig S-Curve)** in the MechaLab Workbench (`npm run dev`) to compare step setpoints against cubic and trapezoidal profiles interactively.
 

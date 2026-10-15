@@ -79,6 +79,13 @@ i_alpha=-7.51 A, i_beta=6.60 A -> i_d=0.00 A, i_q=10.00 A
 Suppose you only measure two phase currents $i_a = +6.0\text{ A}$ and $i_b = -2.0\text{ A}$ using two low-side shunt amplifiers in an isolated neutral star-wound motor. Compute (a) the third phase current $i_c = -(i_a + i_b)$, (b) the Clarke stationary components $(i_\alpha, i_\beta)$, and (c) the vector magnitude $\sqrt{i_\alpha^2 + i_\beta^2}$. Verify $i_c = -4.0\text{ A}$, $i_\alpha = 6.0\text{ A}$, $i_\beta = \frac{2.0}{\sqrt{3}} \approx 1.154701\text{ A}$, and magnitude $\approx 6.110101\text{ A}$ ($\pm 10^{-5}\text{ A}$).
 - **If your result differs:** Substitute $i_a = 6.0$ and $i_b = -2.0$ into $i_\beta = (i_a + 2i_b)/\sqrt{3} = (6.0 - 4.0)/\sqrt{3} = 2.0/\sqrt{3}\text{ A}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*2D Rotation Matrix Multiplication*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Critically Damped 2nd-Order Poles*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Variance & Noise Density*).
+  - **Prerequisite Bridge Module:** [`03-sensors.T1.03a`](03-sensors.T1.03a.md) and Legacy **Step 1.4 (`03-sensors.T1.04`)**.
+  - **Core Concepts to Review First:** Amplitude-invariant Clarke ($i_\alpha, i_\beta$) and Park ($i_d, i_q$) transforms, Type-II PLL velocity observer gains ($K_p = 2\zeta\omega_n, K_i = \omega_n^2$), and MEMS IMU Allan deviation $\sigma_A(\tau)$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [TI Sensored FOC of 3-Phase PMSM Motors (BPRA073)](https://www.ti.com/lit/pdf/bpra073), [VectorNav Allan Variance Guide](https://www.vectornav.com/resources/inertial-navigation-primer/specifications--and--error-budgets/specs-imuspecs), and [Track 03 Tier 2 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied).
+
 ## 6. Simulation path
 Open **Tab 2 (FOC Current Loop: Clarke & Park Transforms)** in the MechaLab Workbench (`npm run dev`) to watch the 3-phase AC waveforms $(i_a, i_b, i_c)$ collapse into flat DC lines $(i_d, i_q)$ in real time.
 

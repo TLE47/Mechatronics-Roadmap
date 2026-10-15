@@ -83,6 +83,12 @@ PD final q=0.850 rad (sag=0.150), Unclamped OS=0.220 rad, Anti-windup OS=0.044 r
 For the arm above with constant gravity load $\tau_g = 0.60\text{ N}\cdot\text{m}$ under PD control ($K_i = 0$), derive and verify the exact steady-state angle sag $e_{\text{ss}} = \tau_g / K_p$ when $K_p = 8.0\text{ N}\cdot\text{m/rad}$. Confirm that `sim_arm(kp=8.0, ki=0.0, kd=0.4, anti_windup=False)` settles to $q_{\text{ss}} = 0.925\text{ rad}$ ($e_{\text{ss}} = 0.075\text{ rad} \pm 10^{-3}\text{ rad}$).
 - **If your result differs:** At steady state ($\dot{q} = \ddot{q} = 0$), the spring torque balances gravity: $K_p e_{\text{ss}} = \tau_g \implies e_{\text{ss}} = 0.60 / 8.0 = 0.075\text{ rad}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Time-Stepping Loops & Clamping*), [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Plotting*), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Mass-Spring-Damper Dynamics*), and Legacy **Step 1.1 (`00-foundations.T1.01`)** (*1st-Order EMA Filtering*).
+  - **Core Concepts to Review First:** Discrete PID virtual spring-damper control, integrator windup clamping & derivative-on-measurement (`-Kd * (y[k] - y[k-1]) / dt`), and complementary IMU sensor fusion $\hat{\theta}_k = \alpha(\hat{\theta}_{k-1} + \omega_{\text{gyro}}\Delta t) + (1-\alpha)\theta_{\text{acc},k}$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Åström & Murray *Feedback Systems* Ch. 11 (`fbsbook.org`)](https://www.fbsbook.org/), [Brian Douglas PID Control Lectures](https://www.youtube.com/user/ControlLectures), and [Track 05 Tier 1 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-1-beginner--intuitive).
+
 ## 6. Simulation path
 Run the Python simulation script above or open **Tab 4 (Control Loop & Saturation)** in the MechaLab Workbench (`npm run dev`) to observe how actuator saturation interacts with closed-loop feedback gains.
 

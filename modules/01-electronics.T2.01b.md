@@ -69,6 +69,13 @@ V_peak(20nH)=78.0 V vs V_peak(4nH)=54.0 V; Precharge I_max=1.0 A, 5tau=0.24 s
 Calculate the maximum allowable parasitic commutation loop inductance $L_{\text{loop,max}}$ in nanohenries ($\text{nH}$) on a $V_{\text{bus}} = 48.0\text{ V}$ inverter switching $\Delta I = 30.0\text{ A}$ in $\Delta t_{\text{sw}} = 15\text{ ns}$ so that the peak turn-off voltage $V_{\text{peak}}$ never exceeds $60.0\text{ V}$ ($80\%$ of a $75\text{ V}$ rating). Verify $L_{\text{loop,max}} = \frac{(60.0 - 48.0) \times 15\text{ ns}}{30.0\text{ A}} = 6.0\text{ nH}$.
 - **If your result differs:** Note that $\text{nH}/\text{ns} = 1\ \Omega$, so $\Delta V = L_{\text{nH}} \cdot \frac{\Delta I}{\Delta t_{\text{ns}}} \implies L_{\text{nH}} = 12.0 \times \frac{15.0}{30.0} = 6.0\text{ nH}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*$\text{nC}, \text{ns}, \text{mJ}$ Units*), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Energy Storage*), and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Impedance*).
+  - **Prerequisite Bridge Modules:** [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*RC Time Constants*) and [`01-electronics.T2.01a`](01-electronics.T2.01a.md) (*Kelvin Shunts*).
+  - **Core Concepts to Review First:** 4-layer KiCad stackup (`L2 Solid GND`), gate-driver bootstrap charge $I_g = Q_g/t_{sw}$ and shoot-through dead-time, and $48\text{ V}$ RC pre-charge sizing ($t_{\text{pre}} \approx 5 R_{\text{pre}} C_{\text{bus}}$) in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [KiCad Official Documentation (`docs.kicad.org`)](https://docs.kicad.org/), [TI SLUA887 (Gate Drive & Dead-Time Design)](https://www.ti.com/lit/pdf/slua887), and [Track 01 §2.1–2.2 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
+
 ## 6. Simulation path
 Open **Tab 2 (Power Stage, Loop Inductance Ringing & Dead-Time)** in the MechaLab Workbench (`npm run dev`) and sweep $L_{\text{loop}}$ from $2\text{ nH}$ to $25\text{ nH}$ to watch the $V_{DS}$ turn-off ringing spike grow toward the MOSFET avalanche limit.
 

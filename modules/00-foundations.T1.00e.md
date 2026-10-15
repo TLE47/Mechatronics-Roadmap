@@ -75,6 +75,12 @@ E_init=0.2500 J, E_final=0.2500 J, v_peak=0.5000 m/s
 Add viscous damping $F_{\text{damp}} = -b v$ with $b = 4.0\text{ N}\cdot\text{s/m}$ to the loop (`f_net_n = -k_nm * x_m - b * v_ms`) and run for `4000` steps ($2.0\text{ s}$). Verify that $> 95\%$ of the initial $0.25\text{ J}$ energy is dissipated as heat (`e_final_j < 0.0125`).
 - **If your result differs:** Check the sign on `-b * v_ms`; writing `+b * v_ms` injects energy (negative damping) and causes the oscillation to explode instead of decay.
 
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Prerequisite Foundations Modules:** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Loops, SI Units & 2D Vectors*).
+  - **Core Concepts to Review First:** Newton's second law $a = F_{\text{net}}/m$ with viscous damping $F_{\text{damp}} = -b v$, symplectic Euler updates (`v += a*dt; x += v*dt`), and total mechanical energy $E = \frac{1}{2}mv^2 + \frac{1}{2}kx^2$ in `## 3. Formalization` (Items 1–3) and `## 4. Worked example` above.
+  - **Physics & Simulation Study Links:** [MyPhysicsLab: Interactive Mass-Spring-Damper Simulation & Equations (`myphysicslab.com`)](https://www.myphysicslab.com/springs/single-spring-en.html) and [R. H. Bishop *The Mechatronics Handbook* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md).
+  - **Curriculum Reference:** [Track 00 Tier 1 (`00-foundations/README.md#tier-1-beginner--intuitive`)](../00-foundations/README.md#tier-1-beginner--intuitive) (Step 1.1 Calculus as `while` Loops).
+
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum)** in the MechaLab Workbench to see coupled spring-mass-damper and pendulum energy loops in action.
 
@@ -157,7 +163,8 @@ assert g8 == "C"
 | Energy check drifts rapidly | Used a coarse time step $\Delta t = 0.1\text{ s}$ on a fast oscillator. | Keep $\Delta t \le \frac{1}{50} T_{\text{osc}}$ (e.g., $\Delta t \le 1\text{ ms}$). |
 
 ## 9. Resources
-- **Track 00 (`00-foundations/README.md`):** Unlocks Stage 0 (`L0.1`–`L0.3`) and Step 1.1 (`00-foundations.T1.01`) symplectic Euler vs. forward Euler comparison `[VERIFIED 2026-10-15]`.
-- **Bolton — *Mechatronics* (`resources/textbooks-and-papers.md`):** Mechanical translational and rotational springs, masses, and dampers `[VERIFIED 2026-10-15]`.
+- **Track 00 ([`00-foundations/README.md`](../00-foundations/README.md#tier-1-beginner--intuitive)) & [MyPhysicsLab Interactive Spring-Damper Sim](https://www.myphysicslab.com/springs/single-spring-en.html):** Unlocks Stage 0 (`L0.1`–`L0.3`) and Step 1.1 (`00-foundations.T1.01`) symplectic Euler vs. forward Euler comparison `[VERIFIED 2026-10-15]`.
+- **W. Bolton — [*Mechatronics* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md):** Mechanical translational and rotational springs, masses, and dampers `[VERIFIED 2026-10-15]`.
+
 ## 10. Next modules
 - Proceed to Legacy Step 1.1: [`00-foundations.T1.01`](../00-foundations/README.md#tier-1-beginner--intuitive) (*Calculus as `while` Loops, 2D Rotations & RC Smoothing*).

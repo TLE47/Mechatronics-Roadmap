@@ -85,6 +85,13 @@ vd_ff=-3.60V, vq_ff=12.00V, SVPWM da=0.9330, a1=0.0120 rad, b2=-0.0050 rad
 For a 3-phase inverter with $V_{\text{bus}} = 48.0\text{ V}$ and instantaneous phase voltage references $v_a^* = +24.0\text{ V}$, $v_b^* = -12.0\text{ V}$, and $v_c^* = -12.0\text{ V}$, compute (a) the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_{abc}^*) + \min(v_{abc}^*))$, and (b) the three SVPWM duty cycles $(d_a, d_b, d_c)$ using $d_x = 0.5 + (v_x^* + v_0)/V_{\text{bus}}$. Verify that $v_0 = -6.0\text{ V}$ and $(d_a, d_b, d_c) = (0.875, 0.125, 0.125)$ ($\pm 10^{-9}$), compared to SPWM $(1.000, 0.250, 0.250)$ which is already hitting the upper saturation rail!
 - **If your result differs:** Check that $\max = +24.0\text{ V}$ and $\min = -12.0\text{ V}$, so $v_0 = -0.5 \times (24.0 - 12.0) = -6.0\text{ V}$ and $v_a^* + v_0 = +18.0\text{ V}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*First-Order Transfer Functions & Bandwidth*) and [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Coupled State-Space Equations*).
+  - **Prerequisite Bridge Module:** [`03-sensors.T2.03a`](03-sensors.T2.03a.md) and Legacy **Step 2.4 (`03-sensors.T2.04`)**.
+  - **Core Concepts to Review First:** Synchronous $d$-$q$ voltage equations and feedforward decoupling ($v_{d,\text{ff}} = -\omega_e L_q i_q, v_{q,\text{ff}} = \omega_e(L_d i_d + \lambda_{pm})$), pole-zero cancellation PI gains ($K_p = L\omega_{\text{bw}}, K_i = R\omega_{\text{bw}}$), and Min-Max zero-sequence SVPWM injection in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [TI Clarke, Park & SVPWM Theory (SPRU585 / BPRA073)](https://www.ti.com/lit/pdf/bpra073) and [Track 03 Tier 3 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-3-advanced--production) (**Tab 3: 25 kHz PMSM FOC**).
+
 ## 6. Simulation path
 Open **Tab 2 (25–40 kHz Decoupled d-q PMSM FOC, SVPWM Saddle Wave & Anticogging)** in the MechaLab Workbench (`npm run dev`), or run `03-sensors-and-actuators/lab/lab03_foc_svpwm_and_lut.py` to compare coupled vs. decoupled step responses and SPWM vs. SVPWM duty waveforms.
 

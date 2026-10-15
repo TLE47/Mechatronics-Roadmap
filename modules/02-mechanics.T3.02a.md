@@ -92,6 +92,13 @@ S2=[0.0, 0.0, 1.0, 0.0, -0.3, 0.0], K_theta=54.09 N*m/rad, sigma_max=61.8 MPa, t
 For a revolute joint whose axis points along $+Y$ ($\omega = [0.0, 1.0, 0.0]^\top$) and passes through point $q = [0.40, 0.0, 0.10]^\top\text{ m}$ in the base frame, compute the linear velocity part $v = -\omega \times q$ of its 6D unit screw axis $\mathcal{S} = (\omega, v)$. Verify that $v = [-0.10, 0.0, 0.40]^\top\text{ m/rad}$ ($\pm 10^{-9}$). Next, compute how the Paros-Weisbord flexural stiffness $K_\theta \propto t^{5/2}$ scales if you double the web thickness $t \to 2t$ while keeping $E, b, R$ fixed: verify $2^{2.5} = 4\sqrt{2} \approx 5.656854$.
 - **If your result differs:** Check the cross product $-\omega \times q = [0, -1, 0]^\top \times [0.40, 0, 0.10]^\top = [-0.10, 0.0, 0.40]^\top$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Natural Frequency $\omega_n = \sqrt{k/m}$*), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) (*$SO(3)$ Hat/Vee Maps & Rodrigues' Formula*), and Legacy **Step 3.1 (`00-foundations.T3.01`)** (*$SE(3)$ Screw Axes & Adjoints*).
+  - **Prerequisite Bridge Module:** [`02-mechanics.T2.02a`](02-mechanics.T2.02a.md) and Legacy **Step 2.3 (`02-mechanics.T2.03`)**.
+  - **Core Concepts to Review First:** Paros-Weisbord notch flexure stiffness $K_\theta = \frac{2 E b t^{5/2}}{9\pi R^{1/2}}$, Screw Theory Product of Exponentials (PoE) forward kinematics, and two-pass $\mathcal{O}(n)$ Recursive Newton-Euler (RNEA) inverse dynamics in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 4 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [Featherstone *Rigid Body Dynamics Algorithms*](https://royfeatherstone.org/spatial/), and [Track 02 Tier 3 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production).
+
 ## 6. Simulation path
 Open **Tab 3 (3D Spatial Kinematics, Screw PoE & Manipulability)** and **Tab 5 (3D CAD & Flexure Mechanics)** in the MechaLab Workbench (`npm run dev`), or run `02-mechanics-kinematics-dynamics/lab/lab02_cad_urdf_and_rnea.py` to verify $O(n)$ RNEA against closed-form Lagrangian equations and `Christoffel` skew-symmetry.
 

@@ -93,6 +93,13 @@ V_unclamped=166.1 V, R_brake_max=4.36 Ohm, I_brake=7.0 A
 A $48.0\text{ V}$ actuator bus ($C_{\text{bus}} = 500\ \mu\text{F}$) absorbs $\Delta E_{\text{regen}} = 6.648\text{ J}$ of net regenerative braking energy with peak regenerative power $P_{\text{regen,peak}} = 250.0\text{ W}$, and the active brake chopper clamps at $V_{\text{clamp}} = 52.0\text{ V}$. Compute (a) the unclamped peak bus voltage $V_{\text{bus,unclamped}} = \sqrt{48.0^2 + \frac{2 \times 6.648}{500 \times 10^{-6}}}$ in Volts ($\text{V}$), and (b) the maximum allowable brake resistance $R_{\text{brake,max}} = \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}$ in Ohms ($\Omega$). Verify $V_{\text{bus,unclamped}} = 170.0\text{ V}$ and $R_{\text{brake,max}} = 10.816\ \Omega$.
 - **If your result differs:** Check that $48.0^2 = 2304$ and $\frac{2 \times 6.648}{0.0005} = 26{,}592$, so $\sqrt{2304 + 26592} = \sqrt{28896} = 170.0\text{ V}$, and $52.0^2 / 250.0 = 2704.0 / 250.0 = 10.816\ \Omega$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*$\mu\text{F}$, Joules & Watts*), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Rotational Kinetic Energy $\frac{1}{2}J\omega^2$*), and [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*Capacitor Energy $\frac{1}{2}C V^2$*).
+  - **Prerequisite Bridge Modules:** [`01-electronics.T2.02`](../01-electronics-and-power/README.md), [`04-embedded.T2.05`](../04-embedded-and-realtime/README.md), and [`06-robotics.T2.07`](../06-robotics-and-autonomy/README.md).
+  - **Core Concepts to Review First:** Regenerative braking bus voltage rise $V_{\text{bus,unclamped}} = \sqrt{V_{\text{nom}}^2 + \frac{2\Delta E_{\text{regen}}}{C_{\text{bus}}}}$ and active brake chopper resistor sizing $R_{\text{brake,max}} = \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}$, CAN-FD CRC-16 + rolling counter watchdogs, and SIL/HIL fault injection in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [TI SLLA325 (Managing Regenerative Energy in BLDC Drives)](https://www.ti.com/lit/pdf/slla325) and [Track 07 Tier 2 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) (**Tab 5: URDF / MuJoCo & STO**).
+
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo Digital Twin & Fault Injection)** and **Tab 8 (CAN Framing & Watchdog)** in the MechaLab Workbench (`npm run dev`) to test regenerative braking bus clamping and fault injection recovery before connecting physical Tier 2 hardware.
 ```text

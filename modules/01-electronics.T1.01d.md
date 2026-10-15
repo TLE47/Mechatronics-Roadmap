@@ -74,6 +74,13 @@ tau=1.0 ms, fc=159.15 Hz, Unclamped flyback=12000 V vs Clamped=12.7 V
 Calculate the minimum bulk decoupling capacitance $C_{\min}$ in microfarads ($\mu\text{F}$) needed to keep a $12.0\text{ V}$ motor bus from drooping by more than $\Delta V = 0.25\text{ V}$ during a $\Delta I = 3.0\text{ A}$ current transient lasting $\Delta t = 20\ \mu\text{s}$ ($20 \times 10^{-6}\text{ s}$). Verify $C_{\min} = \frac{\Delta I \cdot \Delta t}{\Delta V} = 240.0\ \mu\text{F}$.
 - **If your result differs:** Check your unit conversion from farads to microfarads: $\frac{3.0 \times 20\times 10^{-6}}{0.25} = 0.00024\text{ F} = 240.0\ \mu\text{F}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Prefixes $\mu\text{F}, \text{mH}, \text{ns}$*) and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Stored Energy*).
+  - **Prerequisite Bridge Modules:** [`01-electronics.T1.01a`](01-electronics.T1.01a.md) and [`01-electronics.T1.01c`](01-electronics.T1.01c.md).
+  - **Core Concepts to Review First:** Capacitor current $I = C\frac{dV}{dt}$, RC time constant $\tau = RC$ and $-3\text{ dB}$ cutoff $f_c = \frac{1}{2\pi RC}$, and inductor voltage spike $V_L = L\frac{dI}{dt}$ with flyback clamping in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Falstad Interactive Circuit Simulator (`falstad.com/circuit`)](https://www.falstad.com/circuit/), [All About Circuits RC & L/R Time Constants](https://www.allaboutcircuits.com/textbook/direct-current/), and [Track 01 §1.1–1.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
+
 ## 6. Simulation path
 Simulate an RC step response and an inductive coil turn-off with and without a flyback diode in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`Circuits -> Inductors -> Inductive Kickback`).
 

@@ -74,6 +74,13 @@ I_stall=3.0 A, w_noload=200 rad/s, w_e=1400 rad/s, quad_count=5
 A $2208$ gimbal BLDC motor has $12$ stator slots and $14$ rotor magnet poles (`12N14P`). Compute (a) the number of pole pairs $p = N_{\text{poles}} / 2$, (b) the mechanical angle $\theta_m$ in degrees corresponding to one full $360^\circ$ electrical cycle ($360^\circ / p$), and (c) the encoder angle resolution $\Delta\theta_{\text{deg}} = 360^\circ / 2^{14}$ of a 14-bit (`16384` counts/rev) `AS5048A` magnetic encoder. Verify $p = 7$, $\theta_m = 51.4286^\circ$ ($\pm 10^{-3}$), and $\Delta\theta_{\text{deg}} = 0.02197^\circ$ ($\pm 10^{-4}$).
 - **If your result differs:** Remember that `12N14P` means `12` stator teeth and `14` rotor magnets ($7$ North + $7$ South), so $p = 14 / 2 = 7$ pole pairs (not $14$).
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Units & RPM-to-$\text{rad/s}$*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Radians & Trigonometry*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Electromechanical Power*).
+  - **Prerequisite Bridge Module:** [`01-electronics.T1.01b`](01-electronics.T1.01b.md) (*PWM H-Bridges*).
+  - **Core Concepts to Review First:** Quadrature $4\times$ decoding ($\text{CPR} = 4 N_{\text{lines}}$), SI motor constant identity $K_t = K_e$, brushed DC torque-speed line $\tau(\omega) = \tau_{\text{stall}}(1 - \omega/\omega_{\text{no-load}})$, and BLDC electrical angle $\theta_e = N_p \theta_m$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [SimpleFOC BLDC & Encoder Theory Docs (`docs.simplefoc.com`)](https://docs.simplefoc.com/) and [Track 03 Tier 1 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive).
+
 ## 6. Simulation path
 Open **Tab 2 (FOC Current Loop & Clarke/Park)** in the MechaLab Workbench (`npm run dev`) to see how mechanical rotor angle $\theta_m$ multiplies by pole pairs $p$ into electrical commutation angle $\theta_e = p\theta_m$.
 

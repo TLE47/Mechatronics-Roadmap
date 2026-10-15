@@ -72,6 +72,13 @@ Bench PSU: mode=CC, V=0.05 V, P=0.010 W vs Battery fault P=576 W
 Your circuit has normal quiescent resistance $R_{\text{idle}} = 240\ \Omega$ at $V_{\text{set}} = 12.0\text{ V}$ (drawing $50\text{ mA}$). If you set the bench supply current limit to $I_{\text{limit}} = 0.10\text{ A}$ ($100\text{ mA}$), verify using `psu_output(12.0, 0.10, 240.0)` that normal operation stays in `"CV"` mode at $12.0\text{ V}$, and compute the exact threshold resistance $R_{\text{crit}} = V_{\text{set}} / I_{\text{limit}}$ below which the supply drops into `"CC"` mode ($R_{\text{crit}} = 120.0\ \Omega$).
 - **If your result differs:** Divide $V_{\text{set}} = 12.0\text{ V}$ by $I_{\text{limit}} = 0.10\text{ A}$ to get $R_{\text{crit}} = 120.0\ \Omega$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Conditional Logic*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Units & Power $P = VI$*).
+  - **Prerequisite Bridge Module:** [`01-electronics.T1.01a`](01-electronics.T1.01a.md) (*Ohm's Law & Short-Circuit Current*).
+  - **Core Concepts to Review First:** Breadboard 5-pin spring-clip topology, DMM continuity vs. current-jack hazards, and CC/CV power supply current clamping $V_{\text{out}} = \min(V_{\text{set}}, I_{\text{limit}} R_{\text{load}})$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [SparkFun How to Use a Breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard), [SparkFun How to Use a Multimeter](https://learn.sparkfun.com/tutorials/how-to-use-a-multimeter), and [Track 00 §0.2 (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools).
+
 ## 6. Simulation path
 Simulate a current-limited voltage source and breadboard layout in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or [Wokwi](https://wokwi.com/) (`resources/open-source-toolchains.md`).
 

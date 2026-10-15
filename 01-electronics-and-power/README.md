@@ -23,6 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 01):** Learn how low-voltage logic safely controls higher-voltage motor power without browning out or frying your microcontroller, using breadboard-friendly MOSFETs and modern H-bridge breakout modules (`DRV8833` / `TB6612FNG`).
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 01):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (especially SI units in [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) and energy in [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md)) plus the Track 01 Tier 1 Bridge Ladder [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md) → [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) → [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) → [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md).
 
 ### 1.1 Logic Levels ($3.3\text{ V}$ vs. $5\text{ V}$) & Open-Drain Pull-Ups
 - **Core Summary:** Explains why applying $5\text{ V}$ signals to non-$5\text{V}$-tolerant $3.3\text{ V}$ microcontroller pins (`ESP32`, `RP2040`, `STM32` analog pins) forward-biases internal ESD protection diodes to `VDD`, and how open-drain buses (`I2C`) and `BSS138` level shifters safely bridge voltage domains.
@@ -37,6 +38,7 @@ $$
   - 🔗 [Texas Instruments SLVA689: I2C Bus Pullup Resistor Calculation](https://www.ti.com/lit/pdf/slva689) — *Derives the minimum and maximum pull-up resistor values for* $100\text{ kHz}$ *and* $400\text{ kHz}$ *I2C buses.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Probe the `SCL` and `SDA` lines of a $400\text{ kHz}$ I2C sensor on your oscilloscope first with the MCU's weak internal $45\text{ k}\Omega$ pull-ups (observing rounded shark-fin edges that fail timing), and then after adding external $3.3\text{ k}\Omega$ pull-up resistors to `3.3V` (observing crisp $<200\text{ ns}$ rise times).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study SI prefixes ($\text{k}\Omega = 10^3\ \Omega, \text{pF} = 10^{-12}\text{ F}, \text{ns} = 10^{-9}\text{ s}$) in Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), voltage dividers & pull-ups in [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md), and RC rise-time constants $\tau = RC$ in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), plus [TI SLVA689 (I2C Pullup Resistor Calculation)](https://www.ti.com/lit/pdf/slva689) and [SparkFun Logic Levels Guide](https://learn.sparkfun.com/tutorials/logic-levels).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -62,6 +64,7 @@ $$
   - 🔗 [Adafruit DRV8833 DC/Stepper Motor Driver Breakout Guide](https://learn.adafruit.com/adafruit-drv8833-dc-stepper-motor-driver-breakout-board) & [Practical Electronics for Inventors (Scherz & Monk)](https://www.mhprofessional.com/practical-electronics-for-inventors-fifth-edition-9781264268856-usa) — *Beginner wiring guide showing `AIN1/AIN2` PWM inputs, current limiting, and `nFAULT` protection.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a `DRV8833` or `TB6612FNG` breakout on a breadboard to drive a $12\text{ V}$ gearmotor using $20\text{ kHz}$ PWM. Compare the stopping distance of the output shaft when switching PWM to **Coast** (`IN1=0, IN2=0`) versus **Active Dynamic Brake** (`IN1=1, IN2=1`).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Python duty-cycle clamping in Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md), Joule heating $P = I^2 R$ in [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), CC/CV bench power supply limits in [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md), and PWM H-bridge switching + flyback diodes in [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), plus [TI SLVA959 (Brushed DC Motor Driver H-Bridge Decay Modes)](https://www.ti.com/lit/pdf/slva959).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -87,6 +90,7 @@ $$
   - 🔗 [Pololu: Dealing with Motor Noise & Power Supply Voltage Spikes](https://www.pololu.com/docs/0J15/9) — *Practical guide showing how to place* $0.1\ \mu\text{F}$ *ceramic caps across motor terminals and bulk caps across `VMOT`.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Command a $12\text{ V}$ DC motor to slam from $+100\%$ forward to $-100\%$ reverse every $500\text{ ms}$ while monitoring the MCU's `3.3V` pin relative to MCU `GND` with an oscilloscope set to Single-Shot trigger at $3.0\text{ V}$. Verify that adding a $470\ \mu\text{F}$ bulk capacitor at the H-bridge and star-grounding reduces the $3.3\text{ V}$ glitch to $<50\text{ mV}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study energy conservation in Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md), capacitor/inductor energy storage ($I = C\frac{dV}{dt}$, $V = L\frac{dI}{dt}$) in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), and star grounding + bulk decoupling in [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), plus [Analog Devices MT-101 (Decoupling Techniques)](https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -107,6 +111,7 @@ $$
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 01):** Graduate from solderless breadboards and maker breakout modules to designing and SMD-soldering your own **4-layer KiCad PCB** with dedicated 3-phase gate drivers (`DRV8323`/`DRV8353`), 4-terminal Kelvin current shunts (`INA240`), and active RC anti-aliasing filters.
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 01):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Phasors, Impedance & Bode Plots*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Nyquist Aliasing & Anti-Aliasing Cutoffs*) plus the Track 01 Tier 2 Bridge Ladder [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) → [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md).
 
 ### [2.1 Schematic Capture, SMD Footprints & 4-Layer KiCad PCB Layout]
 - **Core Summary:** Introduces custom PCB engineering in KiCad using a 4-layer stackup (`L1: Signal/Power` $\to$ `L2: Unbroken Solid GND` $\to$ `L3: Power Pours` $\to$ `L4: Signals`), Design Rule Checks (DRC), thermal via stitching under MOSFET pads, and desktop SMD reflow assembly (`0603`, `SOIC`, `QFN`).
@@ -120,6 +125,7 @@ $$
   - 🔗 [Phil's Lab STM32 & Mixed-Signal KiCad Hardware Design Tutorials (YouTube)](https://www.youtube.com/c/PhilsLab) & [The Art of Electronics (Horowitz & Hill)](https://artofelectronics.net/) — *Detailed video walkthroughs of 4-layer stackups, grounding, decoupling placement, and JLCPCB SMT assembly.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench and compare the **2-Layer Poor Layout (5.2 nH)** preset against the **6-Layer Production Stackup (1.6 nH)** to see how placing a solid ground plane $0.1\text{–}0.2\text{ mm}$ underneath the power loop cuts voltage overshoot from $62.4\text{ V}$ to $53.1\text{ V}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study SI nanohenry/nanosecond scaling in Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), inductive spike $V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{dI}{dt}$ in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), and 4-layer KiCad layout + return-plane inductance in [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md), plus [KiCad Official Layout Docs](https://docs.kicad.org/) and [Phil's Lab Mixed-Signal PCB Design Tutorials](https://www.youtube.com/c/PhilsLab).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -145,6 +151,7 @@ $$
   - 🔗 [Infineon AN-978: HV Floating MOS-Gate Driver ICs (Bootstrap Design)](https://www.infineon.com/dgdl/Infineon-HV_Floating_MOS_Gate_Drivers-ApplicationNotes-v01_00-EN.pdf?fileId=5546d4626c1f3dc3016c47de609d140a) — *Detailed calculation walkthrough for bootstrap diodes and capacitors.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Given an Infineon `ISC030N08NM6` MOSFET with total gate charge $Q_g = 36\text{ nC}$, calculate the peak gate current $I_g$ required to switch it in $t_r = 20\text{ ns}$ ($I_g = 36\text{ nC} / 20\text{ ns} = 1.8\text{ A}$) and verify this against the `DRV8353RS` gate driver settings in [`08-capstone-projects/eda-capstone1-foc-drive/foc_thermal_and_bom.json`](../08-capstone-projects/eda-capstone1-foc-drive/foc_thermal_and_bom.json).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study dimensional analysis ($\text{nC}/\text{ns} = \text{A}$) in Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) and gate-driver bootstrap + dead-time sizing + $48\text{ V}$ pre-charge safety in [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md), plus [TI SLUA887 (Gate Drive & Miller Shoot-Through Prevention)](https://www.ti.com/lit/pdf/slua887).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -170,6 +177,7 @@ $$
   - 🔗 [TI INA240 Zero-Drift Current-Sense Amplifier with Enhanced PWM Rejection Datasheet](https://www.ti.com/lit/ds/symlink/ina240.pdf) — *Explains common-mode transient rejection and bidirectional reference biasing.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate the full-scale measurable current range $I_{\max}$ for a $1.0\text{ m}\Omega$ shunt amplified by an `INA240A2` ($G = 20\text{ V/V}$) powered from a $3.30\text{ V}$ ADC reference biased at $1.65\text{ V}$ ($I_{\max} = \pm \frac{1.65\text{ V}}{20 \times 0.001\ \Omega} = \pm 82.5\text{ A}$, or $40.1\text{ mA}$ per 12-bit LSB).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study linear scaling in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), Nyquist anti-aliasing filter cutoffs in Foundations [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), and 4-terminal Kelvin shunt differential op-amp conditioning (`INA240` gain + $V_{\text{ref}}/2$ bias) in [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md), plus the [TI INA240 Precision Current-Sense Amplifier Datasheet](https://www.ti.com/lit/gpn/ina240).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -202,6 +210,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 01):** Master production-grade mixed-signal and power hardware: $<2\text{ nH}$ 6-layer switching loops on $48\text{ V}$ silicon MOSFET power stages (with `SiC`/`GaN` covered as an optional Tier 3 extension), Bessel anti-aliasing filters, SAR ADC charge buckets, and coupled electro-thermal Cauer/Foster verification.
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 01):** Complete Tier 2/3 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Bode Phase & Group Delay*), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space Thermal Matrices*), and [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (*Port-Hamiltonian Energy Conservation*) plus the Track 01 Tier 3 Bridge [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md).
 > * [**Next Linear Step in Pass 3 → Track 02 (Tier 3: Screw PoE, `Ti-6Al-4V` Flexures & O(n) RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production)
 
 ### [4.1 Mixed-Signal & Power Hardware Architecture]
@@ -259,6 +268,7 @@ flowchart TB
   - 🔗 [Analog Devices MT-031: Grounding Data Converters and Solving the Mystery of "AGND" and "DGND"](https://www.analog.com/media/en/training-seminars/tutorials/MT-031.pdf) — *Explains why splitting ground planes with slots often increases EMI and how to partition return currents over a unified solid ground plane.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Trace the high-$dI/dt$ commutation loop in the diagram above (`X7R MLCC` $\to$ High-Side FET $\to$ Low-Side FET $\to$ `1 mΩ Shunt` $\to$ Layer-2 Ground Return) and verify that zero switching current crosses under the `REF5025` / `STM32G474` analog reference region.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study frequency-domain impedance in Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) and 6-layer `<2 nH` image-plane return current partitioning in [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md), plus [Analog Devices MT-031 (Grounding Data Converters: AGND & DGND)](https://www.analog.com/media/en/training-seminars/tutorials/MT-031.pdf).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -290,6 +300,7 @@ $$
   - 🔗 [Analog Devices Filter Wizard Interactive Browser Design Tool](https://tools.analog.com/en/filterwizard/) — *Interactive web tool for designing Sallen-Key and Multiple-Feedback Bessel anti-aliasing filters.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 01-electronics-and-power/lab/lab01_power_and_afe.py` to verify that our $R_{\text{filt}} = 22\ \Omega$, $C_{\text{filt}} = 1.5\text{ nF}$ (`NP0`) charge bucket driving the STM32G474's $C_{\text{sh}} = 5\text{ pF}$ SAR ADC settles to $< 0.1\text{ LSB}$ within $t_{\text{acq}} = 70\text{ ns}$ while keeping Bessel AAF phase lag $< 2.5^\circ$ at $2.5\text{ kHz}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study second-order filter phase/damping in Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md)–[`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), Nyquist aliasing in [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), and SAR ADC charge-bucket + Bessel AFE design in [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`), plus [TI SBAA586 (Charge-Bucket Circuit Design for SAR ADCs)](https://www.ti.com/lit/pdf/sbaa586).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -319,6 +330,7 @@ $$
   - 🔗 [Texas Instruments SLUA887: Understanding & Preventing dV/dt Turn-On (Miller Shoot-Through)](https://www.ti.com/lit/pdf/slua887) — *Derives the condition* $R_{g,\text{off}} C_{gd}\frac{dV}{dt} < V_{GS(\text{th})}$ *and asymmetric gate drive techniques.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench, select the **30A Peak Torque Thermal Load** preset, and observe how the fixed-point thermal solver iterates $T_j \leftrightarrow R_{DS(\text{on})}(T_j)$ to converge to $T_j = 80.5^\circ\text{C}$ and $\eta = 99.11\%$. Try increasing Heatsink Thermal Resistance $R_{\theta\text{JA}}$ until you observe thermal runaway!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study state-space ODEs in Foundations [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), Port-Hamiltonian thermal dissipation in [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), and Cauer RC electro-thermal networks in [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) (`## 3. Formalization` Item 3), plus [Infineon AN-MOSFET Power Losses Calculation](https://www.infineon.com/dgdl/Infineon-ApplicationNote_MOSFET_Power_Losses_Calculation_Using_the_DataSheet_Parameters-AN-v01_00-EN.pdf?fileId=db3a30431add1d95011ae08005a90294).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -348,6 +360,7 @@ $$
   - 🔗 [Rick Hartley: How to Achieve Proper Grounding & Multi-Layer Stackup Design (Altium / IPC Lecture)](https://www.youtube.com/watch?v=ySuUZEjARPY) — *World-renowned lecture explaining why energy travels in the dielectric fields between layers and why Layer 2 must be a solid reference plane.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Inspect `08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py` and verify how the $0.15\text{ mm}$ prepreg spacing between L1 and L2 reduces the high-frequency commutation loop inductance to $1.6\text{ nH}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study planar loop inductance $L_{\text{loop}} = \mu_0 \frac{h}{w}\ell$ in [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) (`## 3. Formalization` Item 1) and [Rick Hartley's Multi-Layer PCB Stackup & Grounding Lecture](https://www.youtube.com/watch?v=ySuUZEjARPY).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

@@ -20,6 +20,7 @@
 ## Tier 1 Capstone Builds (Beginner / Breakout Pass)
 
 > **🏆 Goal of Pass 1 Boss (`Track 08 · Tier 1`):** Combine every skill from Pass 1 (`Track 00` $\to$ `Track 07`) to build a complete, desktop-safe **$12\text{ V}$ 2-DOF Planar Compliant Robot Arm** (or 1-Axis Reaction-Wheel Pendulum) using off-the-shelf breakout boards, 3D-printed double-shear links, and a $1\text{ kHz}$ timer ISR.
+> **📚 Required Foundations & Bridge Modules for Pass 1 Boss (`07-systems.T1.08`):** Requires completing Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and **Step 1.1 (`00-foundations.T1.01`)** plus all Tier 1 Track Bridges ([`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md), [`05-control.T1.05a`](../modules/05-control.T1.05a.md), [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md), [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md)).
 
 ### 1.1 Tier 1 Boss Architecture: 2-DOF Breakout Compliant Desktop Robot (`~\$120` BOM)
 - **Core Summary:** Integrates every Pass 1 milestone into a physical 2-DOF desktop robot arm using off-the-shelf `SimpleFOCMini` (`DRV8313`) breakouts, `AS5600`/`AS5048A` magnetic encoders, 3D-printed double-shear `608` bearing joints, a $1.000\text{ kHz}$ hardware timer ISR, cubic spline interpolation, and joint-space virtual spring-damper compliance.
@@ -34,6 +35,7 @@
   - 🔗 [Lab Workbench Bill of Materials (`resources/lab-workbench-bom.md`)](../resources/lab-workbench-bom.md) — *Exact part numbers and budget links for all Tier 1 breakout modules, encoders, bearings, and bench tools.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Program your 2-DOF planar arm ($L_1 = L_2 = 0.10\text{ m}$) to trace a continuous figure-8 trajectory $x_d(t) = 0.12 + 0.03\sin(2\pi f t)$, $y_d(t) = 0.04\sin(4\pi f t)$ at $f = 0.5\text{ Hz}$ using analytical Law-of-Cosines IK and soft joint PD springs ($K_p = 1.5\text{ N}\cdot\text{m/rad}, K_d = 0.08\text{ N}\cdot\text{m}\cdot\text{s/rad}$). Verify that you can block the tip with two fingers and release it smoothly without triggering a brown-out or oscillation.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study 2D trigonometry & `atan2` in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), star grounding & bulk decoupling in [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), 2-link planar IK in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), $1\text{ kHz}$ timer ISR in [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md), and compliant PD + gravity feedforward in [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -56,6 +58,7 @@
 ## Tier 2 Capstone Builds (Intermediate / Applied Pass)
 
 > **🏆 Goal of Pass 2 Boss (`Track 08 · Tier 2`):** Combine every skill from Pass 2 (`Track 00` $\to$ `Track 07`) to build a **Custom 4-Layer $24\text{ V}/15\text{ A}$ CAN-FD Smart Actuator PCB** and use it to drive either a **Physical Furuta Rotary Inverted Pendulum (Swing-Up + LQR)** or a **2-DOF Cartesian Impedance Leg synced to a live MuJoCo Digital Twin**.
+> **📚 Required Foundations & Bridge Modules for Pass 2 Boss (`07-systems.T2.08`):** Requires completing Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md)–[`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) and **Step 2.1 (`00-foundations.T2.01`)** plus all Tier 2 Track Bridges ([`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md), [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md), [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md)–[`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md), [`05-control.T2.05a`](../modules/05-control.T2.05a.md), [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md)–[`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md), [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md)).
 
 ### 2.1 Tier 2 Boss Architecture: Custom 4-Layer CAN-FD Smart Servo + LQR / MuJoCo Twin
 - **Core Summary:** Transitions from breadboards to a custom-fabricated 4-layer KiCad PCB integrating an `STM32G4` MCU, 3-phase gate driver, 4-terminal Kelvin shunt amplifiers, and CAN-FD transceiver—running $25\text{ kHz}$ $d$-$q$ current FOC and a $1\text{ kHz}$ FreeRTOS `MIT Mode` impedance/LQR loop synchronized with a validated URDF/MuJoCo digital twin.
@@ -69,6 +72,7 @@
   - 🔗 [MuJoCo Python Bindings (`mujoco` pip package) & Interactive Viewer Documentation](https://mujoco.readthedocs.io/en/stable/python.html) — *Load `./models/capstone2-furuta-pendulum/furuta_pendulum.xml` directly in Python at* $1\text{ kHz}$ *to co-simulate your LQR controller alongside hardware.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 08-capstone-projects/models/validate_models.py` to verify all URDF and MuJoCo MJCF inertial matrices across Capstones 2, 3, and 4, and test the full swing-up + LQR + CBF safety filter in **Tab 4** and **Tab 5** of the interactive workbench.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study state-space matrices & eigenvalues in Foundations [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), parallel-axis inertia & triangle-inequality checks in [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), LQR Riccati control in [`05-control.T2.05a`](../modules/05-control.T2.05a.md), and regenerative shunt clamping + CAN-FD CRC-16 watchdogs in [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -103,6 +107,7 @@
 ## Tier 3 Capstone Builds (Advanced / Production Pass)
 
 > **🏆 Goal of Pass 3 Mastery (`Track 08 · Tier 3`):** Full industrial-grade specification, fabrication, bring-up, and quantitative sign-off of the five flagship production capstones below.
+> **📚 Required Foundations & Bridge Modules for Pass 3 Capstones (`08-capstones.T3.08`):** Requires completing Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) and **Step 3.1 (`00-foundations.T3.01`)** plus all Tier 3 Bridges ([`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md), [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md), [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md), [`05-control.T3.05a`](../modules/05-control.T3.05a.md), [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md)–[`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md), [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md), and [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md)).
 
 ```mermaid
 flowchart LR
@@ -154,6 +159,7 @@ flowchart LR
   - 🔗 [Bare-Metal STM32G474 Register-Level 40 kHz FOC Firmware (`firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp`)](firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp) — *Production C++20 firmware implementing `TIM1_TRGO2`* $\to$ *`ADC1/2`, `CORDIC`, `WaitFreeSeqLock`, and `TIM1_BKIN` STO.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py` and inspect `foc_thermal_and_bom.json` + **Tab 6: 48V 30A PCB & Thermal** to verify that at $48\text{ V} / 30\text{ A}$ ($40\text{ kHz}$), total 6-MOSFET loss is $12.16\text{ W}$, $T_{j,\max} = 85.4^\circ\text{C} < 125^\circ\text{C}$, and $V_{DS,\text{peak}} = 57.5\text{ V} < 64\text{ V}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Port-Hamiltonian power balance in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), 6-layer `<2 nH` PCB layout + Cauer thermal networks in [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md), $d$-$q$ decoupling + SVPWM in [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md), and cross-domain thermal/power budgeting in [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -190,6 +196,7 @@ flowchart LR
   - 🔗 [Åström & Furuta (Automatica 2000): Swinging Up a Pendulum by Energy Control](https://www.sciencedirect.com/science/article/pii/S0005109899001405) — *Original paper deriving the energy Lyapunov pump and homoclinic catch conditions.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 4: Furuta Pendulum + LQR + CBF**, run the autonomous swing-up, and test the maximum impulse disturbance (`+3.2 rad/s` push) the pendulum can survive with the CBF safety wall active at $x_{\max} = 0.45\text{ m}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Van Loan ZOH discretization in Foundations **Step 3.1 (`00-foundations.T3.01`)**, discrete LQR in [`05-control.T2.05a`](../modules/05-control.T2.05a.md), and CLF-CBF-QP forward invariance in [`05-control.T3.05a`](../modules/05-control.T3.05a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -237,6 +244,7 @@ flowchart TB
   - 🔗 [Pinocchio C++/Python Rigid Body Dynamics Library](https://stack-of-tasks.github.io/pinocchio/) — *Computes 6-DOF RNEA, CRBA,* $J(q)$ *, and* $\Lambda(q)$ *in* $< 5\ \mu\text{s}$ *.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: 6-DOF Spatial PoE & RNEA** and **Tab 5: URDF / MuJoCo & STO** to inspect the 6-DOF arm's space screw axes $\mathcal{S}\kern0pt_1 \dots \mathcal{S}\kern0pt_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)/SE(3)$ Lie groups in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), Screw PoE & $\mathcal{O}(n)$ RNEA in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), and Khatib operational-space impedance $\Lambda(q)$ in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -271,6 +279,7 @@ flowchart TB
   - 🔗 [Marc Raibert (MIT Leg Lab): Legged Robots That Balance — Chapter 2: Hopping on One Leg](https://mitpress.mit.edu/9780262681193/legged-robots-that-balance/) & [Jared Di Carlo et al. (MIT Cheetah 3 Convex MPC Paper)](https://dspace.mit.edu/handle/1721.1/138000) — *Foundational papers on Raibert foot placement and convex contact-force MPC.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 1: 3D CAD & FEA** to inspect the **8:1 QDD Double-Shear Planetary Carrier** (`cad/qdd_planetary_carrier.stl`), and open **Tab 5: URDF / MuJoCo & STO** to simulate the **3-DOF QDD Hopping Leg (`Capstone 4`)** through stance thrust, liftoff, apex, and touchdown impact absorption.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study reflected inertia $N^2 J_{\text{rotor}}$ in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), linearized friction-cone contact WBC constraints in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md), and EtherCAT DC synchronization in [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -301,6 +310,7 @@ flowchart TB
   - 🔗 [Nav2 MPPI (Model Predictive Path Integral) Controller Documentation](https://docs.nav2.org/configuration/packages/configuring-mppic.html) — *Production sampling-based nonlinear MPC controller for differential, swerve, and Ackermann mobile robots.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate the minimum safety LiDAR protective field radius $d_{\text{stop}}$ required for a $48\text{ V}$ AMR traveling at $v_0 = 2.0\text{ m/s}$ given a safety scanner response time $t_{\text{scan}} = 30\text{ ms}$, STO + brake contactor actuation latency $t_{\text{sto}} = 5\text{ ms}$, and tire-floor braking deceleration $a_{\text{brake}} = 5.5\text{ m/s}^2$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)$ ESKF & IMU preintegration in [`05-control.T3.05a`](../modules/05-control.T3.05a.md) and [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md), dual-channel STO latency in [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md), and `ISO 13855` safety stopping distance $d_{\text{stop}} = v_0(t_{\text{scan}} + t_{\text{sto}}) + \frac{v_0^2}{2 a_{\text{brake}}} + d_{\text{margin}}$ in [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md) (`## 3. Formalization` & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

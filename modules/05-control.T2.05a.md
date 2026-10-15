@@ -83,6 +83,13 @@ PM=51.83 deg, |S(jw_gc)|=0.819, Q_diag=[400.0, 100.0], rho_obs=0.9000
 Suppose your servo loop has Phase Margin $\text{PM} = 51.83^\circ$ at gain crossover $\omega_{gc} = 78.615\text{ rad/s}$, and you add a communication/filtering transport delay of $\tau_d = 0.005\text{ s}$ ($5.0\text{ ms}$), which subtracts $\Delta\phi = \omega_{gc}\tau_d \cdot \frac{180^\circ}{\pi}$ degrees of phase without changing $|L(j\omega_{gc})|$. Compute the phase loss $\Delta\phi$ in degrees and the new Phase Margin $\text{PM}_{\text{new}} = \text{PM} - \Delta\phi$. Verify $\Delta\phi = 22.5216^\circ$ and $\text{PM}_{\text{new}} = 29.3057^\circ$ ($\pm 10^{-2}$).
 - **If your result differs:** Convert $\omega_{gc}\tau_d = 78.61514 \times 0.005 = 0.393076\text{ rad}$ into degrees by multiplying by $180 / \pi$ ($22.52^\circ$).
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Operations*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*2nd-Order Poles*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*State-Space $\dot{x} = Ax + Bu$*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Covariance Propagation*).
+  - **Prerequisite Bridge Module:** [`05-control.T1.05a`](05-control.T1.05a.md) and Legacy **Step 1.6 (`05-control.T1.06`)**.
+  - **Core Concepts to Review First:** Sensitivity peak $M_s = \max|S(j\omega)|$ and phase margin with pure time delay ($\text{PM} - \omega_{gc}\tau_d$), discrete LQR Riccati recursion, and 1D/MIMO Linear Kalman Filter predict-innovation-update equations in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Åström & Murray *Feedback Systems* Ch. 10–12 (`fbsbook.org`)](https://www.fbsbook.org/), [Roger Labbe *Kalman and Bayesian Filters in Python*](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python), and [Track 05 Tier 2 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-2-intermediate--applied).
+
 ## 6. Simulation path
 Open **Tab 1 (Loop Shaping & Gang of Four)** and **Tab 4 (Furuta Pendulum Swing-Up + LQR + Kalman Observer)** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.
 

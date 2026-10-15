@@ -83,6 +83,13 @@ P_joseph=0.80, det(R_plus)=1.000000, h=0.04 m -> u_safe=0.20 (from u_nom=0.80)
 For a 1D velocity-controlled joint approaching an upper limit $q_{\max} = 1.50\text{ rad}$ from current angle $q = 1.40\text{ rad}$, define the Control Barrier Function $h(q) = q_{\max} - q$ so $\dot{h} = -\dot{q} = -u$. With barrier gain $\alpha = 8.0\text{ s}^{-1}$, nominal velocity command $u_{\text{nom}} = +1.20\text{ rad/s}$, and actuator bounds $u \in [-2.0, +2.0]\text{ rad/s}$, solve the CBF-QP $\min_u \frac{1}{2}(u - u_{\text{nom}})^2$ subject to $-u \ge -\alpha h(q)$ (i.e., $u \le \alpha(q_{\max} - q)$). Verify that $h(q) = 0.10\text{ rad}$ and the optimal safe command is $u^* = 0.80\text{ rad/s}$ ($\pm 10^{-9}\text{ rad/s}$).
 - **If your result differs:** Since $u_{\text{nom}} = 1.20\text{ rad/s}$ violates $u \le 8.0 \times 0.10 = 0.80\text{ rad/s}$, the closest admissible value in $(-\infty, 0.80]$ is the boundary $u^* = 0.80\text{ rad/s}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00e`](00-foundations.T2.00e.md)–[`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*State-Space & Covariance*), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) (*$SO(3)$ Hat/Vee Maps, Rodrigues' Formula & Hamiltonian Passivity*), and Legacy **Step 3.1 (`00-foundations.T3.01`)**.
+  - **Prerequisite Bridge Module:** [`05-control.T2.05a`](05-control.T2.05a.md) and Legacy **Step 2.6 (`05-control.T2.06`)**.
+  - **Core Concepts to Review First:** Joseph-form covariance update $P^+ = (I-KH)P^-(I-KH)^\top + KRK^\top$ & $SO(3)$ ESKF multiplicative injection, condensed single-shooting linear MPC Hessian $(G^\top \bar{Q} G + \bar{R})$, and Control Barrier Function (CBF) 1D safety clamp $\dot{h}(x,u) + \gamma h(x) \ge 0$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the ESKF* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508), [Ames et al. *Control Barrier Functions* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199), and [Track 05 Tier 3 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 4 & Tab 8**).
+
 ## 6. Simulation path
 Open **Tab 4 (Swing-Up, LQR & Predictive Control Barrier Function QP)** and **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`), or run `05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py` to verify Joseph-form ESKF NEES consistency and CBF-QP state-limit invariance.
 

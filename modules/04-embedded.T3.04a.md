@@ -84,6 +84,13 @@ ARR=2125, t_low_min=2500 ns, q31_cos=0x40000000, valid(4,4)=True, valid(4,6)=Fal
 Suppose `TIM1` runs at $f_{\text{tim}} = 160\text{ MHz}$ in center-aligned up-down mode to generate a $f_{\text{PWM}} = 25\text{ kHz}$ carrier ($T_{\text{PWM}} = 40{,}000\text{ ns}$). Compute (a) the integer auto-reload value $\text{ARR} = \frac{f_{\text{tim}}}{2 f_{\text{PWM}}}$, and (b) the signed `Q1.31` integer representation $\operatorname{round}(x \cdot 2^{31})$ for $x = -0.50$. Verify that $\text{ARR} = 3200$ and $X_{Q31} = -1073741824$ (`-2**30`, tolerance $\pm 0$).
 - **If your result differs:** Remember that center-aligned mode counts both up (`0 -> ARR`) and down (`ARR -> 0`) in each PWM period, dividing $f_{\text{tim}}$ by $2 \cdot \text{ARR}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Filter Group Delay*) and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Sampling, Aliasing & Decimation*).
+  - **Prerequisite Bridge Modules:** [`04-embedded.T2.04a`](04-embedded.T2.04a.md)–[`04-embedded.T2.04d`](04-embedded.T2.04d.md) and Legacy **Step 2.5 (`04-embedded.T2.05`)**.
+  - **Core Concepts to Review First:** C++20 `WaitFreeSeqLock<T>` even/odd sequence retry protocol, EtherCAT Distributed Clocks (`DC`) propagation-compensated clock offset + PI drift discipline, and Hogenauer `sinc³` $\Sigma\Delta$ decimation ($G = \text{OSR}^3$, group delay $\tau_g = \frac{3(\text{OSR}-1)}{2 f_{\text{mod}}}$) in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Hans Boehm *Seqlocks Paper*](https://dl.acm.org/doi/10.1145/2247684.2247688), [Hogenauer CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535), and [Track 04 Tier 3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-3-advanced--production) (**Tab 8: Attitude ESKF & SeqLock**).
+
 ## 6. Simulation path
 Open **Tab 8 (C++20 `WaitFreeSeqLock`, `TIM1_TRGO2` Timing & `ITCM/DTCM` Budget)** in the MechaLab Workbench (`npm run dev`), or run `04-embedded-and-realtime/lab/lab04_seqlock_cordic_and_wcet.py` to stress-test the `SeqLock` across $100{,}000$ simulated preemptions.
 

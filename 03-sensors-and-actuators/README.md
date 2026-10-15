@@ -23,6 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 03):** Read rotor position accurately using quadrature optical and on-axis magnetic encoders (`AS5600`/`AS5048`), understand how a 3-phase brushless motor rotates a magnetic field, and spin your first gimbal BLDC motor smoothly in angle mode using `SimpleFOC` and a `DRV8313`/`SimpleFOCMini` breakout.
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 03):** Complete Tier 1 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (*SI Units & RPM-to-$\text{rad/s}$*), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians & 2D Vectors*), and [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) (*PWM H-Bridges*) plus the Track 03 Tier 1 Bridge [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md).
 
 ### 1.1 Incremental (`A/B`) vs. Absolute Magnetic Encoders (`AS5600` / `AS5048`)
 - **Core Summary:** Incremental quadrature encoders output two $90^\circ$ phase-shifted square waves (`A/B`) that count relative steps ($4\times$ edges per slot) from boot, whereas on-axis diametric magnetic encoders (`AS5600` / `AS5048A` / `MT6835`) measure the magnetic field vector of a rear-shaft neodymium magnet to provide instant 12-to-16-bit absolute shaft angle ($0^\circ\text{–}360^\circ$) the microsecond power is applied.
@@ -34,6 +35,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [AMS AS5600 12-Bit Programmable Contactless Potentiometer Datasheet](https://look.ams-osram.com/m/7059eac7531a86fd/original/AS5600-DS000365.pdf) — *Shows why a diametrically magnetized magnet (N/S across the diameter, not top-to-bottom) is required for on-axis magnetic angle sensing.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Mount a $6\text{ mm} \times 2.5\text{ mm}$ diametrically magnetized N35 magnet to the rear shaft of a motor ($1\text{ mm}$ airgap above an `AS5600` or `AS5048A` breakout). Stream the raw 12-bit/14-bit angle over Serial while rotating the shaft by hand, and verify that power-cycling the MCU preserves the exact absolute angle reading without homing.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study radians and angle wrapping in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), I2C/SPI sensor pull-ups in [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md), and quadrature/magnetic encoder resolution ($\Delta\theta = \frac{2\pi}{4 N_{\text{lines}}}$ or $\frac{2\pi}{2^{N_{\text{bits}}}}$) in [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), plus the [AMS AS5600 / AS5048A Magnetic Encoder Datasheet](https://ams-osram.com/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -52,6 +54,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [GreatScott! (YouTube): Brushless DC Motors & ESCs Explained](https://www.youtube.com/watch?v=b5J5qkR722I) — *Intuitive hardware teardown of stator slots, rotor pole pairs, and electronic commutation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Count the physical permanent magnets around the rotor bell of a gimbal BLDC motor (e.g., $14\text{ magnets}$ or $22\text{ magnets}$) and divide by $2$ to find its pole pairs $N_p$ ($7$ or $11$). Verify experimentally by energizing Phase A with $+3\text{ V}$ and Phases B/C with $\text{GND}$ (current-limited to $0.5\text{ A}$) and counting how many magnetic "detents" you feel when rotating the rotor by hand through one full $360^\circ$ mechanical turn.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study CC/CV bench power supply current limiting in [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) and DC motor constants ($K_t = K_e$ in SI) + pole-pair electrical angle $\theta_e = N_p \theta_m$ in [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), plus [SimpleFOC Pole-Pair Finder & BLDC Theory Docs (`docs.simplefoc.com`)](https://docs.simplefoc.com/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -70,6 +73,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Texas Instruments DRV8313 Triple Half-Bridge Driver Datasheet](https://www.ti.com/lit/ds/symlink/drv8313.pdf) — *Reference datasheet for the* $8\text{–}60\text{ V}$ *,* $2.5\text{ A}$ *integrated 3-phase motor driver IC used on `SimpleFOCMini` breakouts.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a gimbal BLDC motor + `AS5600`/`AS5048` magnetic encoder + `DRV8313` breakout on your bench, run the `SimpleFOC` electrical zero-offset alignment routine, and hold a target shaft angle with a spring-like feel (or explore **Tab 3: 25 kHz PMSM FOC** in the interactive workbench).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study unit-circle trigonometry ($\cos\theta_e, \sin\theta_e$) in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) and torque-speed curves + electrical zero alignment in [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), plus [SimpleFOC Closed-Loop Angle Control Guide (`docs.simplefoc.com`)](https://docs.simplefoc.com/angle_loop).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -90,6 +94,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 03):** Move beyond voltage-mode `SimpleFOC` into true mathematical **Clarke & Park Coordinate Transforms**, **Type-II Phase-Locked Loop (PLL) Velocity Observers** (eliminating finite-difference quantization spikes), and **IMU Allan Variance** noise characterization.
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 03):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Orthogonal Matrix Transforms*), [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order Critically Damped Poles*), and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Gaussian Noise Variance & PSD*) plus the Track 03 Tier 2 Bridge [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md).
 
 ### 2.1 Clarke ($\{a,b,c\}\to\{\alpha,\beta\}$) & Park ($\{\alpha,\beta\}\to\{d,q\}$) Intuition
 - **Core Summary:** Standard PI controllers lag behind high-frequency AC sine waves ($i_a, i_b, i_c$). The **Clarke transform** projects balanced 3-phase currents onto a stationary 2D orthogonal frame $(i_\alpha, i_\beta)$, and the **Park transform** rotates that frame by the live electrical angle $\theta_e = N_p \theta_m$ into the rotor's $(d,q)$ frame—turning AC sine waves into flat DC quantities where $i_d^*= 0* $ regulates radial flux and $ *i_q^*$ directly commands torque $\tau = \frac{3}{2}N_p \lambda_{pm} i_q$.
@@ -100,6 +105,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [mjbots `moteus` Open-Source Brushless QDD Servo Controller (github.com/mjbots/moteus)](https://github.com/mjbots/moteus) — *STM32G4-based integrated CAN-FD FOC controller with on-board magnetic encoder LUT calibration.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 15-line Python function that generates balanced 3-phase currents $i_a(t) = I_{\text{pk}}\cos(\omega_e t + \pi/2)$, $i_b(t) = I_{\text{pk}}\cos(\omega_e t + \pi/2 - 2\pi/3)$, $i_c(t) = -i_a - i_b$ for $I_{\text{pk}} = 10\text{ A}$ at $1000\text{ RPM}$, applies the amplitude-invariant Clarke and Park transforms using $\theta_e(t) = \omega_e t$, and verifies that the resulting $(i_d, i_q)$ stays rock-solid at $(0.0\text{ A}, 10.0\text{ A})$ across all time $t$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study 2D rotation matrices in Foundations **Step 1.1 (`00-foundations.T1.01`)**, matrix multiplication in [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md), and amplitude-invariant Clarke ($i_\alpha, i_\beta$) & Park ($i_d, i_q$) transforms in [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [TI Sensored Field Oriented Control of 3-Phase PMSM Motors (BPRA073)](https://www.ti.com/lit/pdf/bpra073).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -123,6 +129,7 @@ $$
   - 🔗 [Lab 03 Script: `03-sensors-and-actuators/lab/lab03_foc_and_metrology.py`](./lab/lab03_foc_and_metrology.py) — *Executable reference comparing raw finite-difference velocity spikes against the Type-II PLL velocity observer.*
 - **🧪 Hands-On Exercise:**
   - *Task:* In **Tab 3: 25 kHz PMSM FOC** or Python, simulate a 14-bit encoder spinning at $5.0\text{ rad/s}$ sampled at $25\text{ kHz}$. Compare the RMS velocity error of raw Euler backward difference $(\theta_k - \theta_{k-1})/T_s$ against a critically damped Type-II PLL with bandwidth $\omega_{\text{pll}} = 2\pi(150\text{ Hz})$ ($K_p = 2\omega_{\text{pll}}$, $K_i = \omega_{\text{pll}}^2$).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study second-order critical damping ($\zeta = 1.0, s^2 + 2\omega_n s + \omega_n^2$) in Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) and encoder quantization velocity noise + Type-II PLL observer tuning in [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) (`## 3. Formalization` Item 2), plus [ODrive Encoder PLL Estimator Documentation (`docs.odriverobotics.com`)](https://docs.odriverobotics.com/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -141,6 +148,7 @@ $$
   - 🔗 [IEEE Std 952 / Freescale AN5087: Allan Variance Noise Characterization for MEMS Gyroscopes](https://www.nxp.com/docs/en/application-note/AN5087.pdf) — *Shows how to convert datasheet noise density (* $\text{mdps}/\sqrt{\text{Hz}}$ *) and Allan variance parameters into discrete-time Kalman filter* $Q$ *matrices.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./03-sensors-and-actuators/lab/lab03_foc_and_metrology.py` to compute the Overlapping Allan Deviation $\sigma_A(\tau)$ of a simulated static MEMS gyroscope log and extract $N$ at $\tau = 1\text{ s}$, $B$ at the curve minimum, and $K$ at $\tau = 3\text{ s}$ on the $+1/2$ slope.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Gaussian variance propagation ($\sigma^2$) in Foundations [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) and MEMS IMU Allan deviation $\sigma_A(\tau)$ slope identification in [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus [IEEE Std 952 / VectorNav Allan Variance IMU Characterization Guide](https://www.vectornav.com/resources/inertial-navigation-primer/specifications--and--error-budgets/specs-imuspecs).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -173,6 +181,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 03):** Master production actuator & metrology engineering: encoder spatial harmonic LUT calibration, Allan variance error budgets, pole-zero cancellation $d$-$q$ current PI synthesis, feedforward back-EMF/cross-coupling decoupling, Min-Max SVPWM (+15.47% bus utilization), and anticogging torque-ripple suppression.
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 03):** Complete Tier 2/3 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Transfer Function Pole-Zero Cancellation*) and [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space Coupling*) plus the Track 03 Tier 3 Bridge [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md).
 > * [**Next Linear Step in Pass 3 → Track 04 (Tier 3: Bare-Metal `TIM1`→`ADC`, CORDIC & C++20 `WaitFreeSeqLock`)**](../04-embedded-and-realtime/README.md#tier-3-advanced--production)
 
 ### 4.1 Field-Oriented Control (FOC) & Metrology Architecture
@@ -244,6 +253,7 @@ flowchart LR
   - 🔗 [Matthew Piccoli & Mark Yim (ICRA): Anticogging Torque Ripple Suppression](https://www.seas.upenn.edu/~piccoli/files/Piccoli_2016_ICRA.pdf) — *Classic robotics paper showing how to record* $i_{q,\text{cog}}(\theta_m)$ *across one mechanical revolution and play it back as feedforward current.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./03-sensors-and-actuators/lab/lab03_foc_and_metrology.py` and inspect the Fourier harmonic fit of a magnetic encoder with $1\times, 2\times, 4\times$ eccentricity/tilt errors, verifying that the 4-harmonic LUT reduces peak-to-peak mechanical angle error from $> 0.45^\circ$ down to $< \pm 0.02^\circ$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Fourier harmonic basis functions ($\sin(k\theta), \cos(k\theta)$) in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) and least-squares matrix fitting in [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md), plus [`03-sensors-and-actuators/lab/lab03_foc_and_metrology.py`](lab/lab03_foc_and_metrology.py).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -291,6 +301,7 @@ $$
   - 🔗 [STMicroelectronics UM1052: STM32 Motor Control SDK (FOC Theory & Decoupling)](https://www.st.com/resource/en/user_manual/um1052-stm32f-pmsm-singledual-foc-sdk-v43-stmicroelectronics.pdf) — *Complete production equations for* $d$ *-* $q$ *PI current loops, feedforward decoupling, and circle-limitation voltage anti-windup.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 3: 25 kHz PMSM FOC** in the MechaLab Workbench, command a $0 \to 10\text{ A}$ step in $i_q^*$ at $2000\text{ RPM}$, and toggle **Cross-Coupling Decoupling ON vs. OFF** and **SVPWM vs. Sinusoidal PWM**. Observe the $i_d$ parasitic current spike drop below $0.15\text{ A}$ with decoupling active and inspect the classic triple-harmonic "saddle" duty waveforms $(d_a, d_b, d_c)$ of Min-Max SVPWM.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study first-order transfer functions in Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) and $d$-$q$ cross-coupling decoupling + pole-zero PI tuning ($K_p = L\omega_{\text{bw}}, K_i = R\omega_{\text{bw}}$) + Min-Max SVPWM zero-sequence injection in [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md) (`## 3. Formalization` Items 1–3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

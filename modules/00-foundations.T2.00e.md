@@ -33,7 +33,7 @@ Think of a second-order differential equation ($\ddot{q} = \dots$) as a two-stor
    $$\begin{bmatrix} \dot{\theta} \\ \ddot{\theta} \end{bmatrix} = \underbrace{\begin{bmatrix} 0 & 1 \\ -k/J & -b/J \end{bmatrix}}_{A} \begin{bmatrix} \theta \\ \dot{\theta} \end{bmatrix} + \underbrace{\begin{bmatrix} 0 \\ 1/J \end{bmatrix}}_{B} u$$
    Substituting $J = 1.0\text{ kg}\cdot\text{m}^2$, $k = 100.0\text{ N}\cdot\text{m/rad}$, and $b = 4.0\text{ N}\cdot\text{m}\cdot\text{s/rad}$ gives $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ with $\operatorname{tr}(A) = -4\text{ s}^{-1}$ and $\det(A) = 100\text{ s}^{-2}$.
 3. **Discretization ($\dot{x} = Ax + Bu \to x_{k+1} = A_d x_k + B_d u_k$):** Over sample period $T_s$ ($\text{s}$), Forward Euler gives $A_{d,\text{Euler}} = I + A T_s$, whereas Bilinear (Tustin) discretization preserves left-half-plane stability:
-   $$A_{d,\text{Tustin}} = \left(I - \frac{T_s}{2}A\right)^{-1}\left(I + \frac{T_s}{2}A\right)$$
+   $$A_{d,\text{Tustin}} = \left(I - \frac{T_s}{2}A\r\right)^{-1}\left(I + \frac{T_s}{2}A\r\right)$$
    At $T_s = 0.001\text{ s}$ on the above $A$, $|\lambda(A_{d,\text{Tustin}})| = 0.998002 < 1.0$.
 
 ## 4. Worked example
@@ -80,6 +80,12 @@ rho_euler=1.0247 (unstable), rho_tustin=0.9258 (stable)
 ## 5. Exercise
 Compute the spectral radius $\rho(A_{d,\text{Tustin}})$ of the same system at $T_s = 0.001\text{ s}$ ($1\text{ kHz}$ servo loop) and verify using `trace = Ad[0][0] + Ad[1][1]`, `det = Ad[0][0]*Ad[1][1] - Ad[0][1]*Ad[1][0]`, and `cmath.sqrt(trace**2 - 4*det)` that the spectral radius $\max(|\lambda_1|, |\lambda_2|)$ equals `0.998002` ($\pm 10^{-6}$, strictly inside the unit circle).
 - **If your result differs:** Check that you inverted `(I - 0.5 * Ts * A)` and multiplied by `(I + 0.5 * Ts * A)` rather than swapping the plus and minus signs (which places the poles outside the unit circle at `1.002002`).
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Prerequisite Foundations Modules:** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*State Matrices*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*ODE Roots*), and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Transfer Functions*).
+  - **Core Concepts to Review First:** Bilinear (Tustin) state matrix $A_{d,\text{Tustin}} = (I - \frac{T_s}{2}A)^{-1}(I + \frac{T_s}{2}A)$ and $2\times 2$ eigenvalue formula $\lambda_{1,2} = \frac{\operatorname{tr}(A_d) \pm \sqrt{\operatorname{tr}(A_d)^2 - 4\det(A_d)}}{2}$ in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
+  - **State-Space & Discretization Study Links:** [Åström & Murray *Feedback Systems* Ch. 6–7 (`fbsbook.org`)](https://www.fbsbook.org/), [Python Control Library `control.c2d` Docs (`python-control.readthedocs.io`)](https://python-control.readthedocs.io/), and [Steve Brunton Control Bootcamp (`youtube.com/c/Eigensteve`)](https://www.youtube.com/c/Eigensteve).
+  - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md).
 
 ## 6. Simulation path
 Open **Tab 1 (Two-Mass Resonance & Biquad Notch)** and **Tab 4 (Furuta Pendulum State-Space LQR)** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
@@ -129,7 +135,8 @@ assert math.isclose(q4_ad, 1.0 / 3.0, rel_tol=1e-6)
 | Used elementwise `*` instead of `@` in Tustin formula | Multiplied matrix elements componentwise with `*` (Hadamard product) instead of matrix multiplication. | Use row-by-column matrix multiplication (`mat_mul2`) for all matrix products. |
 
 ## 9. Resources
-- **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 6–7):** Free textbook on state-space linear systems, eigenvalues, and transfer functions `[VERIFIED 2026-10-15]`.
-- **Brunton & Kutz — *Data-Driven Science and Engineering* (`databookuw.com`):** State-space modeling and discretization (`resources/textbooks-and-papers.md`) `[VERIFIED 2026-10-15]`.
+- **Åström & Murray — [*Feedback Systems* (`fbsbook.org`, Ch. 6–7)](https://www.fbsbook.org/) & [Python Control Library Docs](https://python-control.readthedocs.io/):** Free textbook and Python tools on state-space linear systems, eigenvalues, and `c2d` discretization `[VERIFIED 2026-10-15]`.
+- **Brunton & Kutz — [*Data-Driven Science and Engineering* (`databookuw.com`)](https://databookuw.com/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** State-space modeling and discretization `[VERIFIED 2026-10-15]`.
+
 ## 10. Next modules
 - Proceed to [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Sampling, Aliasing, Nyquist, $z$-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance*).

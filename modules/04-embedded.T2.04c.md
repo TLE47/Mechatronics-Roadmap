@@ -103,6 +103,13 @@ DT_ready(fdcan1)=True, StaticRAM=6144 B, p_L_eff=1, R_H=120 us
 A Zephyr application defines two preemptible threads via `K_THREAD_DEFINE`: `thread_fast` with priority $p_{\text{fast}} = 2$ ($C_{\text{fast}} = 110\ \mu\text{s}$) and `thread_slow` with priority $p_{\text{slow}} = 6$, plus an intermediate telemetry thread `thread_mid` with priority $p_{\text{mid}} = 4$ ($C_{\text{mid}} = 300\ \mu\text{s}$). If `thread_slow` holds a `k_mutex` with $B_{\text{slow}} = 35\ \mu\text{s}$ remaining when `thread_fast` calls `k_mutex_lock()`, compute (a) the elevated effective priority $p_{\text{slow,eff}} = \min(p_{\text{slow}}, p_{\text{fast}})$ of `thread_slow`, (b) the worst-case response time $R_{\text{fast}}$ in microseconds with `k_mutex` priority inheritance, and (c) the response time $R_{\text{fast,sem}}$ if a non-inheriting `k_sem` had been used instead while `thread_mid` was ready. Verify $p_{\text{slow,eff}} = 2$, $R_{\text{fast}} = 145.0\ \mu\text{s}$, and $R_{\text{fast,sem}} = 445.0\ \mu\text{s}$.
 - **If your result differs:** Remember that in Zephyr, **smaller numbers mean higher priority** ($p = 2$ outranks $p = 4$, which outranks $p = 6$), so `k_mutex` lowers `thread_slow`'s numerical priority value from $6 \to 2$ ($\min(6, 2) = 2 < 4$), blocking `thread_mid` ($p=4$) from running during the $35\ \mu\text{s}$ critical section!
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Iterative Recurrence Loops*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Microsecond Timing Budgets*).
+  - **Prerequisite Bridge Modules:** [`04-embedded.T2.04a`](04-embedded.T2.04a.md) (*Rate-Monotonic RTA*) and [`04-embedded.T2.04b`](04-embedded.T2.04b.md) (*Zephyr Build & Devicetree*).
+  - **Core Concepts to Review First:** Zephyr static thread allocation (`K_THREAD_DEFINE`) with cooperative vs. preemptive priority bands, `k_mutex` Priority Inheritance Protocol ($R_H = C_H + B_H$ vs. unbounded priority inversion), and zero-copy `k_msgq` ring buffers in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Zephyr Kernel Services: Threads, Mutexes & Message Queues (`docs.zephyrproject.org`)](https://docs.zephyrproject.org/latest/kernel/services/index.html) and [Track 04 Tier 2 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied).
+
 ## 6. Simulation path
 You can build and run Zephyr RTOS applications natively on any Linux workstation or CI container **without physical microcontroller hardware** using Zephyr's POSIX architecture target (`native_sim`):
 ```bash

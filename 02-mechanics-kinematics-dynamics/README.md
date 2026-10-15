@@ -23,6 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 02):** Master 2D planar robot arm kinematics (Forward & Inverse Kinematics using basic trigonometry), understand how gear ratios scale torque vs. reflected inertia ($N^2$), and learn how to support rotating shafts properly with radial ball bearings and timing belts.
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 02):** Complete Tier 1 Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians, Unit-Circle Trig & `atan2`*) and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinematics, $F=ma$ & Mechanical Energy*) plus the Track 02 Tier 1 Bridge [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md).
 
 ### [1.1 2-Link Planar Forward & Inverse Kinematics (Law of Cosines)]
 - **Core Summary:** Solves 2-DOF planar robot arm Forward Kinematics (`joint angles -> tip x, y`) and closed-form Inverse Kinematics (`target x, y -> shoulder/elbow angles`) using the Law of Cosines and two-argument `atan2(y, x)`.
@@ -41,6 +42,7 @@ $$
   - 🔗 [Red Blob Games: Interactive 2D Coordinate Transforms & Kinematics](https://www.redblobgames.com/) — *Browser-based visual tutorials for trigonometry and linkage reachability.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a Python function `ik_2dof(x, y, L1=0.15, L2=0.15)` that clamps `cos_q2 = np.clip(cos_q2, -1.0, 1.0)` before calling `np.arccos()` so floating-point roundoff at full arm extension ($r = L_1 + L_2$) never throws a `NaN` runtime crash, and command a figure-8 path.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study radians, unit-circle trigonometry, and four-quadrant `math.atan2(y, x)` in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), 2D rotation matrices in Foundations **Step 1.1 (`00-foundations.T1.01`)**, and 2-link planar FK/IK in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), plus [Lynch & Park *Modern Robotics* Ch. 3 & Ch. 6](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -66,6 +68,7 @@ $$
   - 🔗 [Underactuated Robotics — Appendix: Actuators & Reflected Inertia (Russ Tedrake, MIT)](https://underactuated.mit.edu/) — *Explains why high-* $N$ *gearboxes dominate joint dynamics and ruin impact robustness.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Compare the reflected inertia $J_{\text{refl}} = N^2 J_{\text{rotor}}$ of a $J_{\text{rotor}} = 0.2\text{ kg}\cdot\text{cm}^2$ motor paired with (a) an $8:1$ QDD planetary gearbox ($12.8\text{ kg}\cdot\text{cm}^2$) vs. (b) a $150:1$ worm/spur gearbox ($4,500\text{ kg}\cdot\text{cm}^2$) in **Tab 5: Capstones & Safety**.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study SI rotational unit conversions ($\text{kg}\cdot\text{cm}^2 \to \text{kg}\cdot\text{m}^2$, RPM $\to \text{rad/s}$) in Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), kinetic energy conservation in [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md), and lever torque + gear ratio $N^2$ reflected inertia in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), plus [MIT 2.75 Precision Machine Design Lecture Notes](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -92,6 +95,7 @@ $$
   - 🔗 [Gates GT2 / PowerGrip Timing Belt Design Manual](https://www.gates.com/) — *Covers minimum pulley tooth engagement (* $\ge 6$ *teeth in mesh) and preload tensioning.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Compare the shaft tip deflection ratio between a cantilevered shaft of overhang $L$ ($\delta = \frac{FL^3}{3EI}$) and a double-shear shaft supported at both ends ($\delta = \frac{FL^3}{48EI}$ for pin-pin or $\delta = \frac{FL^3}{192EI}$ for fixed-fixed)—confirming a $16\times$ to $64\times$ stiffness increase simply by capturing the far end of the pin in a second bearing!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study free-body diagrams and static equilibrium ($\sum F = 0, \sum \tau = 0$) in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) (`## 3. Formalization` Item 2) and [Shigley's Mechanical Engineering Design / MIT 2.001 Beam Deflection Tables](https://ocw.mit.edu/courses/2-001-mechanics-materials-i-fall-2006/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -112,6 +116,7 @@ $$
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 02):** Upgrade from flexible 3D-printed brackets and ad-hoc trigonometry to **Maxwell's Exact Constraint (`6 - C = DOF`)**, programmatic CAD (`CadQuery`), Duplex Angular-Contact Bearings, Manipulator Jacobians ($\tau = J^\top F$), and physical **URDF / MuJoCo MJCF** validation.
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 02):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrices, Determinants & Singularities*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (*3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Change of Basis*) plus the Track 02 Tier 2 Bridge [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md).
 
 ### 2.1 Maxwell's Rule of Exact Constraint ($6 - C = \text{DOF}$) & Abbe Error
 - **Core Summary:** Eliminates mechanical binding, thermal warping, and measurement offset errors by constraining exactly $C = 6 - \text{DOF}$ independent points (such as a 3-2-1 Kelvin Kinematic Coupling) and aligning encoders coaxial with the load axis (Abbe's Principle).
@@ -124,6 +129,7 @@ $$
   - 🔗 [Precision Machine Design: Exact Constraint & Kinematic Couplings (Prof. Alex Slocum, MIT)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Explains 3-vee and Kelvin 3-2-1 kinematic couplings, Hertzian contact stresses, and thermal centers.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench, select the **440C Kelvin 3-2-1 Coupling** preset, and inspect the 3D wireframe of the tetrahedral socket ($3$ contacts), V-groove ($2$ contacts), and flat pad ($1$ contact) along with the Hertzian contact stress calculation under preload.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study 3D orthogonal basis frames in Foundations [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) and Maxwell's exact constraint rule ($6 - C = \text{DOF}$) + Hertzian stress in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), plus [Slocum *Precision Machine Design* / MIT 2.75 Notes](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -149,6 +155,7 @@ $$
   - 🔗 [Robotic Manipulation — Ch. 3: Basic Pick and Place & Jacobians (Russ Tedrake, MIT)](https://manipulation.csail.mit.edu/) — *Shows how Jacobian Transpose control provides smooth Cartesian compliance.*
 - **🧪 Hands-On Exercise:**
   - *Task:* For a 2-link planar arm, differentiate $(x, y)$ with respect to $(q_1, q_2)$ to write the $2\times 2$ Jacobian $J(q)$, compute its determinant $\det(J(q)) = L_1 L_2 \sin(q_2)$, and verify that $\det(J) = 0$ precisely when the elbow is fully straight ($q_2 = 0$) or folded ($q_2 = \pi$).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study $2\times 2$ matrix determinants and singular matrices in Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md), 3D cross products in [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md), and velocity Jacobians $\dot{x} = J(q)\dot{q}$ + virtual work $\tau = J(q)^\top F$ in [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), plus [Lynch & Park *Modern Robotics* Ch. 5 (Velocity Kinematics & Statics)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -176,6 +183,7 @@ $$
   - 🔗 [MuJoCo Modeling & XML Reference Guide (mujoco.readthedocs.io)](https://mujoco.readthedocs.io/en/stable/modeling.html) — *Details inertial frame conventions, `<inertial>` tags, and reflected rotor `armature`.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 02-mechanics-kinematics-dynamics/cad/validate_cad_parts.py` and `python3 08-capstone-projects/models/validate_models.py` (or inspect **Tab 5** and **Tab 6**) to verify watertight STEP/STL topology and SPD inertia invariants across all capstone robots.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study eigenvalues and positive-definite matrices in Foundations [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) and parallel-axis inertia tensors + triangle-inequality validation in [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus [CadQuery Documentation (`cadquery.readthedocs.io`)](https://cadquery.readthedocs.io/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -208,6 +216,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 02):** Production-grade mechanical synthesis and multibody dynamics: monolithic `Ti-6Al-4V` Paros-Weisbord flexures, Hertzian contact stress, Screw Theory Product of Exponentials (PoE) on $SE(3)$, Christoffel passivity skew-symmetry ($\dot{M}-2C$), and Featherstone's $O(n)$ RNEA/CRBA/ABA algorithms.
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 02):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (*$SO(3)$ Hat/Vee Maps, Rodrigues' Formula & Port-Hamiltonian Passivity*) and **Step 3.1 (`00-foundations.T3.01`)** (*Lie Groups $SO(3)/SE(3)$ & Adjoints*) plus the Track 02 Tier 3 Bridge [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md).
 > * [**Next Linear Step in Pass 3 → Track 03 (Tier 3: 25–40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production)
 
 ### [4.1 Mechanical Transmission & Multibody Computation Pipeline]
@@ -256,6 +265,7 @@ flowchart TB
   - 🔗 [NVIDIA Isaac Lab / Isaac Sim (isaac-sim.github.io/IsaacLab)](https://isaac-sim.github.io/IsaacLab/) — *GPU-accelerated multibody physics and photorealistic USD simulation for sim-to-real locomotion and manipulation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Trace how the modal eigenfrequency requirement $\omega_1 > 5\,\omega_{\text{bw}}$ in the diagram above sets the minimum structural stiffness-to-mass ratio $E/\rho$ of a robot arm link.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study natural frequency $\omega_n = \sqrt{k/m}$ in Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md), two-mass resonance in **Step 2.1 (`00-foundations.T2.01`)**, and flexure stiffness scaling in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -281,6 +291,7 @@ $$
   - 🔗 [Paros & Weisbord (1965): How to Design Flexure Hinges (classic derivation notes)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Derives the circular notch compliance equations used in precision wafer stages and FTS diamond turning.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench, select **Ti-6Al-4V Notch Flexure**, and adjust Web Thickness $t$ from $0.4\text{ mm}$ to $1.2\text{ mm}$. Verify the $t^{5/2}$ scaling of rotational stiffness $k_\theta$ and inspect the generated CAD file [`cad/notch_flexure_hinge.step`](cad/notch_flexure_hinge.step).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Paros-Weisbord circular notch flexure equations $K_\theta = \frac{2 E b t^{5/2}}{9\pi R^{1/2}}$ and parasitic stage resonance in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Stuart T. Smith *Flexures: Elements of Elastic Mechanisms*](https://books.google.com/books?id=u9a3CgAAQBAJ).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -310,6 +321,7 @@ $$
   - 🔗 [Modern Robotics — Ch. 4 & Ch. 8: Product of Exponentials & Newton-Euler Dynamics (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Step-by-step derivations and open-source Python (`modern_robotics`) implementations of PoE and RNEA.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `python3 02-mechanics-kinematics-dynamics/lab/lab02_poe_and_rnea.py` to execute the 6-DOF Screw PoE Forward Kinematics, Space/Body Jacobian, and $\mathcal{O}(n)$ RNEA solver, verifying $\|\tau_{\text{RNEA}} - \tau_{\text{Lagrange}}\|\kern0pt_\infty < 10^{-11}\text{ N}\cdot\text{m}$ and passivity $|x^\top(\dot{M} - 2C)x| < 10^{-12}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)$ hat/vee maps and Rodrigues' rotation formula in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), $SE(3)$ Adjoint transforms in **Step 3.1 (`00-foundations.T3.01`)**, and Screw PoE + two-pass $\mathcal{O}(n)$ RNEA in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) (`## 3. Formalization` Items 2–3), plus [Lynch & Park *Modern Robotics* Ch. 4 & Ch. 8](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Featherstone *Rigid Body Dynamics Algorithms*](https://royfeatherstone.org/spatial/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

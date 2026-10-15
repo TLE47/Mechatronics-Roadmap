@@ -87,6 +87,13 @@ u_link=8.32%, H_total=4, spin_WCET=185.0 us, offset=499000.0 us
 Suppose a micro-ROS node communicates with `micro_ros_agent` over an `8N1` UART DMA link ($10\text{ bits/byte}$) at $R_{\text{baud}} = 921{,}600\text{ bps}$, publishing a serialized payload of $B_{\text{cdr}} = 32\text{ bytes}$ with an `XRCE-DDS` header of $B_{\text{xrce}} = 14\text{ bytes}$. Compute (a) the total wire frame size $B_{\text{total}} = B_{\text{cdr}} + B_{\text{xrce}}$ in bytes, (b) the UART wire transmission time $t_{\text{wire}} = \frac{10 \cdot B_{\text{total}}}{R_{\text{baud}}} \times 10^6$ in microseconds ($\mu\text{s}$), and (c) the clock offset $\theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}$ when $t_1 = 200\ \mu\text{s}, t_2 = 10{,}300\ \mu\text{s}, t_3 = 10{,}340\ \mu\text{s}, t_4 = 440\ \mu\text{s}$. Verify $B_{\text{total}} = 46\text{ B}$, $t_{\text{wire}} \approx 499.1319\ \mu\text{s}$ ($\pm 10^{-4}$), and $\theta_{\text{offset}} = 10{,}000.0\ \mu\text{s}$.
 - **If your result differs:** Remember that `8N1` UART adds 1 start bit + 1 stop bit per byte ($10\text{ bits/byte}$ total, so $46\text{ B} = 460\text{ bits}$ at $921{,}600\text{ bps}$ takes $460 / 921{,}600 \approx 499.13\ \mu\text{s}$).
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Linear Regression*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Baud Rate, Bits/Bytes & Nanosecond Clock Offsets*).
+  - **Prerequisite Bridge Modules:** [`04-embedded.T1.04b`](04-embedded.T1.04b.md) (*Binary Framing*) and [`04-embedded.T2.04c`](04-embedded.T2.04c.md) (*Zephyr Static Threads*).
+  - **Core Concepts to Review First:** XRCE-DDS wire framing overhead & baud-rate link utilization, static memory budgets (`sizeof(handle) * N <= arena`) with deterministic `rclc_executor` handle ordering, and NTP-style four-timestamp clock offset $\theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Official micro-ROS Documentation & Zephyr Tutorials (`micro.ros.org`)](https://micro.ros.org/docs/tutorials/core/first_application_rtos/zephyr/) and [eProsima Micro XRCE-DDS Docs (`micro-xrce-dds.docs.eprosima.com`)](https://micro-xrce-dds.docs.eprosima.com/).
+
 ## 6. Simulation path
 You can run a complete **micro-ROS Client + `micro_ros_agent`** loop on Linux using Zephyr's `native_sim` target or the host UDP transport **with zero physical microcontroller hardware**:
 ```bash

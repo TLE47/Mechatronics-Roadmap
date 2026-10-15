@@ -63,6 +63,12 @@ omega=251.33 rad/s, P=113.10 W, tau_RC=1.00 ms
 A $48\text{ V}$ supply delivers $I = 15\text{ A}$ through a PCB trace of resistance $R = 12\text{ m}\Omega$ ($12\times 10^{-3}\,\Omega$). Compute the voltage drop $V_{\text{drop}} = I R$ in volts ($\text{V}$) and the trace heat dissipation $P_{\text{loss}} = I^2 R$ in watts ($\text{W}$). Expected result: `V_drop = 0.18 V` and `P_loss = 2.70 W` (tolerance $\pm 10^{-6}$).
 - **If your result differs:** Check that you converted $12\text{ m}\Omega$ to $0.012\,\Omega$ (`12e-3`) before multiplying by $15^2 = 225\text{ A}^2$.
 
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Prerequisite Foundations Modules:** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Python Arithmetic & Functions*) and [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Lists & Arrays*).
+  - **Core Concepts to Review First:** SI prefix powers of ten ($\text{milli} = 10^{-3}, \text{micro} = 10^{-6}, \text{kilo} = 10^3$) and RPM-to-$\text{rad/s}$ factor-label cancellation ($\omega = \text{RPM} \times \frac{2\pi}{60}$) in `## 3. Formalization` (Items 1–3) and `## 4. Worked example` above.
+  - **SI Units & Dimensional Analysis Study Links:** [NIST Guide to the SI: Metric Prefixes & Unit Conversions (`nist.gov`)](https://www.nist.gov/pml/owm/metric-si/si-units) and [SparkFun: Metric Prefixes & Scientific Notation Tutorial](https://learn.sparkfun.com/tutorials/metric-prefixes-and-si-units).
+  - **Curriculum Reference:** [Track 00 Level 0 (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools) and [Textbooks & Papers (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md).
+
 ## 6. Simulation path
 Run the worked example script in Python, then open **Tab 3 (25 kHz PMSM FOC)** in the MechaLab Workbench to see how rotor speed in $\text{RPM}$ ($2800\text{ RPM}$) converts to electrical $\text{rad/s}$ and shaft power in watts.
 
@@ -112,8 +118,8 @@ assert math.isclose(q5_mean_a, 1.5, rel_tol=1e-9)
 | Capacitor filter cutoff is off by $10^3$ | Confused nanofarads ($\text{nF} = 10^{-9}\text{ F}$) with microfarads ($\mu\text{F} = 10^{-6}\text{ F}$). | Write scientific notation explicitly (`100e-9` for $100\text{ nF}$). |
 
 ## 9. Resources
-- **Bolton — *Mechatronics: Electronic Control Systems in Mechanical and Electrical Engineering* (`resources/textbooks-and-papers.md`):** Measurement systems, SI units, and engineering prefixes `[VERIFIED 2026-10-15]`.
-- **Track 00 (`00-foundations/README.md`):** Enforces SI unit consistency ($K_t \equiv K_e$ in $\text{N}\cdot\text{m/A}$ and $\text{V}\cdot\text{s/rad}$) across all tracks `[VERIFIED 2026-10-15]`.
-- **NIST Guide to the SI (`physics.nist.gov/cuu/Units/`):** Reference tables for base and derived SI units `[UNVERIFIED]`.
+- **NIST — [*The International System of Units (SI): Prefixes & Dimensional Analysis* (`nist.gov`)](https://www.nist.gov/pml/owm/metric-si/si-units):** Official reference for SI base/derived units and engineering prefixes `[UNVERIFIED]`.
+- **W. Bolton — [*Mechatronics* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md) & [Track 00 (`00-foundations/README.md`)](../00-foundations/README.md):** Engineering unit conversions across electrical and mechanical domains `[VERIFIED 2026-10-15]`.
+
 ## 10. Next modules
 - Proceed to [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors*).

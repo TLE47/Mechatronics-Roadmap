@@ -23,6 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 07):** Adopt a disciplined **10-Step Hardware Bring-Up Protocol** so you never release magic smoke on power-up, wire a physical E-Stop switch + inline fuse, and measure your motor's actual inertia and friction using a simple single-tone sine sweep.
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 07):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) (*CC/CV Bench Supply & Continuity Safety*) plus the Track 07 Tier 1 Bridge [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md).
 
 ### 1.1 The 10-Step Smoke-Free Hardware Bring-Up Checklist
 - **Core Summary:** Never plug an unfused LiPo battery into a newly wired breadboard or PCB! A disciplined 10-step bring-up sequence—starting with unpowered DMM continuity checks, a $100\text{ mA}$ current-limited bench power supply, logic-only power-up, and manual encoder-to-torque sign verification—catches shorts and positive-feedback wiring inversions before a single MOSFET can be damaged.
@@ -41,6 +42,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Hackaday: How to Bring Up a New PCB Without Letting the Magic Smoke Out](https://hackaday.com/2019/05/14/bringing-up-a-new-pcb-without-letting-the-magic-smoke-out/) — *Step-by-step checklist for rail isolation, continuity testing, and incremental subsystem verification.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Before enabling closed-loop PID on your motor, deliberately swap the encoder `A` and `B` channels (or invert the sign of `theta_meas`) in software while the bench PSU current limit is capped at $I_{\text{limit}} = 0.3\text{ A}$. Observe how a tiny nudge immediately drives the motor *away* from the target at full saturation (positive feedback!) while the PSU CC limit safely protects the hardware.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study CC/CV bench power supply current-limit foldback in [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md), encoder sign/quadrature verification in [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), and the 10-step incremental bring-up checklist in [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -59,6 +61,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Brian Douglas (YouTube): Data-Driven System Identification Overview](https://www.youtube.com/watch?v=1_UobILf3cc) — *Explains how empirical frequency sweeps anchor analytical CAD models.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Command $\tau(t) = 0.1 \sin(2\pi f t)\text{ N}\cdot\text{m}$ on a simulated or physical rotor at $f_1 = 0.2\text{ Hz}$ and $f_2 = 5.0\text{ Hz}$. Use the low-frequency amplitude ratio to estimate viscous friction $b \approx A / |\omega(f_1)|$ and the high-frequency roll-off to estimate inertia $J \approx A / (2\pi f_2 |\omega(f_2)|)$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study trigonometry and radians in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) and single-tone sine-sweep System Identification ($J = \frac{\sqrt{(A/|\omega(\omega_2)|)^2 - b^2}}{\omega_2}$) in [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -79,6 +82,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 07):** Protect your custom 4-layer PCBs from **Regenerative Braking Over-Voltage Spikes** using an active shunt brake chopper, enforce **CRC-16 + Window Watchdog timeouts** on every CAN-FD frame, and automate **Software/Hardware-in-the-Loop (SIL/HIL) Fault Injection**.
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 07):** Complete Tier 1/2 Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinetic & Capacitor Energy Balance*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Statistical Bounds*) plus the Track 07 Tier 2 Bridge [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md).
 
 ### 2.1 Why Fast Braking Blows Up Power Supplies (Regenerative Bus Clamping)
 - **Core Summary:** When a spinning robot joint decelerates rapidly ($\tau \cdot \omega < 0$), the brushless motor acts as a generator and pumps kinetic energy $\frac{1}{2}J\omega^2$ back into the DC bus capacitors. Because bench power supplies have output diodes and cannot sink reverse current, $V_{\text{bus}}$ spikes catastrophically unless an **active shunt brake chopper** (comparator/MCU-driven MOSFET + power resistor) clamps the rail whenever $V_{\text{bus}} > V_{\text{nom}} + 3\text{ V}$.
@@ -92,6 +96,7 @@ $$
   - 🔗 [Texas Instruments SLLA325: Managing Regenerative Energy in Brushless DC Motor Drives](https://www.ti.com/lit/an/slla325/slla325.pdf) — *Derives the exact bus capacitance energy balance equation and hysteretic chopper comparator thresholds.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate the peak DC bus voltage $V_{\text{bus,peak}}$ when a robot link with reflected inertia $J = 0.04\text{ kg}\cdot\text{m}^2$ spinning at $\omega_0 = 30\text{ rad/s}$ ($E_k = 18\text{ J}$) brakes to a halt with $\eta = 75\%$ regeneration efficiency on a $V_{\text{bus,nom}} = 24\text{ V}$ supply with $C_{\text{bus}} = 1000\ \mu\text{F}$ (and no brake resistor!).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study rotational kinetic energy $\frac{1}{2}J\omega^2$ in Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md), capacitor stored energy $\frac{1}{2}C V^2$ in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), and regenerative braking bus rise $V_{\text{peak}} = \sqrt{V_{\text{nom}}^2 + \frac{2\eta E_{\text{regen}}}{C_{\text{bus}}}}$ + shunt brake resistor sizing in [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -110,6 +115,7 @@ $$
   - 🔗 [Maxon Academy: Thermal Winding Time Constants & I² t Overload Protection](https://www.maxongroup.com/) — *Explains two-node thermal RC modeling (copper winding to iron stator housing) for brushless motors.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench and trigger all three hardware fault injections (**Overcurrent Short $42\text{ A}$**, **Encoder SPI Wire Open**, and **DC Bus Overvoltage $64\text{ V}$**) to inspect the deterministic fault detection latency and safe-state transition.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study CAN-FD CRC-16-CCITT + rolling counter watchdogs and automated SIL/HIL fault-injection matrices in [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) (`## 3. Formalization` Items 2–3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -143,6 +149,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 07):** Master industrial V-Model qualification: Root-Sum-Square (RSS) multi-domain error budgets, **Schroeder-Phased Multisine Closed-Loop System Identification** ($\text{CF} \approx 1.66$), automated HIL fault-injection matrices, and **IEC 61508 / ISO 13849 / IEC 61800-5-2 Dual-Channel Safe Torque Off (STO)**.
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 07):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Variance Addition & PSD*) plus the Track 07 Tier 3 Bridge [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md).
 > * [**🏆 Next Linear Step in Pass 3 → Track 08 (Tier 3 Mastery: Full Production Capstones I–IV)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass)
 
 ### 4.1 Mechatronic V-Model & Real-Time HIL Verification Architecture
@@ -195,6 +202,7 @@ $$
   - 🔗 [Heydemann (Applied Optics): Determination and Correction of Quadrature Fringe Measurement Errors in Interferometers](https://opg.optica.org/ao/abstract.cfm?uri=ao-20-19-3382) — *The classic least-squares ellipse-fitting algorithm used to remove sub-divisional error (SDE) from* $\sin/\cos$ *optical and magnetic encoders.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Verify the RSS table above in Python: notice that cutting the encoder error in half (from $3.0\ \mu\text{m}$ to $1.5\ \mu\text{m}$) without fixing the $6.90\ \mu\text{m}$ thermal drift barely changes the total RSS error! Always attack the largest squared term in $\sqrt{\sum \sigma_i^2}$ first.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study uncorrelated variance summation $\sigma_{\text{total}}^2 = \sum (s_i \sigma_i)^2$ in Foundations [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), plus [Slocum *Precision Machine Design* Error Budgeting](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -222,6 +230,7 @@ $$
   - 🔗 [Lab 07 Script: `07-systems-hil-and-production/lab/lab07_sysid_hil_and_sto.py`](./lab/lab07_sysid_hil_and_sto.py) — *Executable Python verification of Schroeder multisine Crest Factor reduction and closed-loop two-mass FRF identification.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 7: Schroeder Multisine SysID** in the interactive workbench, toggle between **Zero Phases ($\phi_k = 0$)** and **Schroeder Phases ($\phi_k = -\pi k(k-1)/M$)** to see the time-domain Crest Factor drop from $> 6.5$ down to $\sim 1.66$, and inspect how the extracted Bode plot pinpoints both the anti-resonance $f_{\text{ar}}$ and resonance $f_{\text{res}}$ so a Biquad Notch Filter can flatten the peak!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Bode plots in Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), pre-warped Tustin biquad notch filters in [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), and Schroeder-phased multisine Crest Factor minimization ($\phi_k = -\frac{\pi k(k-1)}{K}$) in [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`), plus [Pintelon & Schoukens *System Identification: A Frequency Domain Approach*](https://ieeexplore.ieee.org/book/6267119).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -267,6 +276,7 @@ stateDiagram-v2
   - 🔗 [ISO 10218-1:2025 / ISO/TS 15066: Industrial & Collaborative Robot Safety Requirements](https://www.iso.org/standard/73933.html) — *Newly revised 2025 global safety standard unifying collaborative Speed and Separation Monitoring (SSM), Power and Force Limiting (PFL), and industrial cybersecurity.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench, trigger the **Overcurrent Short ($42\text{ A}$)** fault, and verify on the sub-microsecond fault timeline that the analog comparator + `TIM1_BKIN` hardware latch drives all 6 MOSFET gates to `High-Z` at $t = 0.65\ \mu\text{s}$—long before the $25\ \mu\text{s}$ software ISR tick!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study dual-channel Safe Torque Off (STO) AND-gate hardware inhibit latency ($t_{\text{STO}} < 1\ \mu\text{s}$) and `IEC 61800-5-2` / `ISO 13849-1` safety verification in [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -287,6 +297,7 @@ stateDiagram-v2
   - 🔗 [Tao et al. (IEEE TII): Digital Twin in Industry — State-of-the-Art & Factory I/O 3D Plant Simulation](https://docs.factoryio.com/) — *Foundational architecture for bi-directional synchronization between physical workcells and virtual 3D digital twins.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write an `IEC 61131-3` **Structured Text (`ST`)** safety-interlock state machine function block `FB_CellInterlock` that monitors `bLightCurtainOK`, `bDoorLocked`, `bDriveFault`, and `rWindingTempC`, asserting `bEnableServo := (bLightCurtainOK AND bDoorLocked AND NOT bDriveFault AND (rWindingTempC < 105.0))` with a rising-edge manual reset trigger `R_TRIG`.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study deterministic `IEC 61131-3` PLC scan cycles (`Read Inputs -> Execute Logic -> Write Outputs`) in [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) (`## 3. Formalization` Item 1) and `OPC UA` (`IEC 62541`) + Asset Administration Shell (`IEC 63278 AAS`) pub/sub models in [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) (`## 3. Formalization` Item 1), plus [open62541 Documentation (`open62541.org`)](https://www.open62541.org/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

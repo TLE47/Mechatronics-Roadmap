@@ -87,6 +87,13 @@ tip=[0.2, 0.2], det(J)=0.0400, tau=[2.0, -2.0] N*m, I_end=0.0320 kg*m^2
 For the 2-link planar arm ($L_1 = 0.25\text{ m}, L_2 = 0.20\text{ m}$), compute the Jacobian determinant $\det J(q) = L_1 L_2 \sin q_2$ at (a) $q_2 = \pi/6\text{ rad}$ ($30^\circ$) and (b) the stretched-out boundary singularity $q_2 = 0\text{ rad}$. Verify $\det J(\pi/6) = 0.025\text{ m}^2$ and $\det J(0) = 0.0\text{ m}^2$.
 - **If your result differs:** Check that $\det J(q)$ for a 2-link planar arm depends only on the elbow angle $q_2$: $L_1 L_2 \sin(\pi/6) = 0.25 \times 0.20 \times 0.5 = 0.025\text{ m}^2$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*$2\times 2$ Matrices, Transpose & Determinants*) and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Orthogonal Frames*).
+  - **Prerequisite Bridge Module:** [`02-mechanics.T1.02a`](02-mechanics.T1.02a.md) and Legacy **Step 1.3 (`02-mechanics.T1.03`)**.
+  - **Core Concepts to Review First:** 2-link velocity Jacobian $J(q)$, static virtual-work torque $\tau = J(q)^\top F_{\text{tip}}$, parallel-axis theorem $I_O = I_{\text{com}} + m d^2$, and physical triangle-inequality validation in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 5 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [CadQuery Docs (`cadquery.readthedocs.io`)](https://cadquery.readthedocs.io/), and [Track 02 Tier 2 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
+
 ## 6. Simulation path
 Open **Tab 3 (2-Link Arm Kinematics, Jacobian Ellipsoids & Singularities)** in the MechaLab Workbench (`npm run dev`) and drag the end-effector to the workspace boundary ($q_2 \to 0$) to watch $\det J(q) \to 0$.
 

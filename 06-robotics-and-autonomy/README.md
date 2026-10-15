@@ -23,6 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 06):** Stop commanding sudden step jumps (`q_des = 90.0`) that slam robot joints! Learn to generate smooth **Cubic Polynomial & Trapezoidal Velocity Trajectories** so velocity starts and ends at zero, and implement **Joint-Space Virtual Springs (Compliant PD + Gravity Offset)** so a human hand can safely push the robot arm out of the way.
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 06):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Python Functions & Loops*), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Trigonometry for Gravity Torque*), and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinematics & Virtual Springs*) plus the Track 06 Tier 1 Bridge [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md).
 
 ### 1.1 Why Step Commands Break Gears: Smooth Cubic Spline Interpolation
 - **Core Summary:** Stepping a target angle `q_des` instantaneously demands infinite velocity and acceleration at $t = 0$, slamming the actuator into current saturation and shaking the robot frame. A **rest-to-rest cubic polynomial** $q_d(t) = q_0 + (3s^2 - 2s^3)(q_f - q_0)$ (with normalized time $s = t/T \in [0, 1]$) guarantees smooth position and strictly zero velocity $\dot{q}\kern0pt_d(0) = \dot{q}\kern0pt_d(T) = 0$ at both endpoints.
@@ -38,6 +39,7 @@ $$
   - 🔗 [Cyrill Stachniss (University of Bonn): Mobile Sensing and Robotics — Photogrammetry & SLAM Lectures (YouTube)](https://www.youtube.com/c/CyrillStachniss) — *Accessible visual lectures on odometry, occupancy grids, Kalman/Particle filters, and graph SLAM.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 10-line Python or C++ function that evaluates $q_d(t)$, $\dot{q}\kern0pt_d(t)$, and $\ddot{q}\kern0pt_d(t)$ for a $1.0\text{ rad}$ move over $T = 0.8\text{ s}$ using both a cubic polynomial ($3s^2 - 2s^3$) and a quintic polynomial ($10s^3 - 15s^4 + 6s^5$). Verify that the quintic polynomial has zero acceleration $\ddot{q}\kern0pt_d(0) = \ddot{q}\kern0pt_d(T) = 0$ at the start and end of the move!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study discrete velocity/acceleration kinematics in Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and rest-to-rest cubic polynomial & trapezoidal velocity profiling in [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) (`## 3. Formalization` Items 1–2 & `## 4. Worked example`), plus [Lynch & Park *Modern Robotics* Ch. 9 (Trajectory Generation)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -61,6 +63,7 @@ $$
   - 🔗 [Albu-Schäffer et al. (DLR): Soft Robotics & Joint-Level Torque/Impedance Control](https://ieeexplore.ieee.org/document/4543189) — *Shows how gravity compensation (* $K_p = 0, K_d = 0$ *) creates "zero-gravity lead-through teaching" on collaborative arms.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Set $K_p = 0$ and $K_d = 0.05\text{ N}\cdot\text{m}\cdot\text{s/rad}$ in your 1-DOF or 2-DOF arm simulation while keeping gravity feedforward $\tau = \hat{g}(q)$ active ("Zero-G Teaching Mode"). Verify that you can move the arm to any angle and it stays floating in place without falling!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study lever torque $\tau = m g L_{\text{com}}\cos q$ in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), PD virtual spring-damper control in [`05-control.T1.05a`](../modules/05-control.T1.05a.md), and joint-space compliant PD + gravity compensation in [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -81,6 +84,7 @@ $$
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 06):** Upgrade from joint-space springs to **Cartesian Task-Space Impedance Control (`tau = J^T F_cart + g(q)`)**—allowing you to specify independent $(x, y, z)$ stiffness in millimeters/Newtons—and eliminate structural vibration using **Jerk-Bounded S-Curve Trajectories (`Ruckig`)**.
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 06):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrix Transpose & Inverse*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (*3D Coordinate Frames*) plus the Track 06 Tier 2 Bridge Ladder [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) (*ROS 2 Nodes, Topics, Services, Actions & TF2*) → [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) (*ROS 2 Launch, Parameters, `ros2_control` & Cartesian Impedance / S-Curves*).
 
 ### 2.1 Sensorless Cartesian Impedance via the Jacobian Transpose ($\tau = J(q)^\top F_{\text{cart}} + g(q)$)
 - **Core Summary:** Using the virtual-work duality $\tau = J(q)^\top F_{\text{cart}} + g(q)$ with $F_{\text{cart}} = K_x(x_d - x) + D_x(\dot{x}\kern0pt_d - J(q)\dot{q})$, a multi-DOF robot can act as an anisotropic 3D virtual spring-damper at its gripper—for example, very stiff vertically ($K_z = 1000\text{ N/m}$) while compliant horizontally ($K_x = 50\text{ N/m}$)—without requiring inverse kinematics or an external force/torque sensor!
@@ -90,6 +94,7 @@ $$
   - 🔗 [Siciliano, Sciavicco, Villani & Oriolo: Robotics — Modelling, Planning and Control (Springer)](https://link.springer.com/book/10.1007/978-1-84628-642-1) — *Complete textbook coverage of Cartesian impedance, hybrid force/motion control, and visual servoing.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` or open **Tab 5: URDF / MuJoCo & STO** to simulate a 2-link/3-link leg or arm hitting an unexpected rigid wall at $x_{\text{wall}}$ under Cartesian Impedance Control ($K_x = 400\text{ N/m}$), verifying that steady-state contact force settles cleanly to $F_x = K_x(x_d - x_{\text{wall}})$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study $2\times 2$ matrix multiplication in Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md), Jacobian virtual work $\tau = J(q)^\top F$ in [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), ROS 2 TF2 transforms in [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md), and Cartesian impedance + `ros2_control` `JointImpedanceController` in [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) (`## 3. Formalization` Items 2–3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -109,6 +114,7 @@ $$
   - 🔗 [Biagiotti & Melchiorri: Trajectory Planning for Automatic Machines and Robots — Double-S / S-Curve Profiles](https://link.springer.com/book/10.1007/978-3-540-85629-0) — *Complete analytical equations for 7-segment jerk-limited trajectories.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` to compare the high-frequency structural vibration of a flexible joint driven by a trapezoidal velocity profile vs. a 7-segment jerk-bounded S-curve ($\lvert\dddot{q}\rvert \le 20\text{ rad/s}^3$).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study second-order structural resonance excitation in Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) and jerk-bounded S-curve acceleration ramp time $T_j = a_{\max}/j_{\max}$ in [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus [Ruckig Real-Time Jerk-Limited Trajectory Library (`github.com/pantor/ruckig`)](https://github.com/pantor/ruckig).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -141,6 +147,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 06):** Master full-stack robotic autonomy and whole-body control: Khatib's Operational-Space Inertia $\Lambda(q)$ & dynamically consistent null-space projection $\bar{J}(q)$, Floating-Base Whole-Body Control QPs (`WBC-QP`) with friction cones, `PREEMPT_RT` Linux kernel isolation (`<50 µs` jitter), Forster's Manifold IMU Preintegration for Factor-Graph SLAM (`GTSAM`), and Visuomotor Imitation Learning (`ACT`, `Diffusion Policy`, `LeRobot`) & Vision-Language-Action (`VLA`) models.
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 06):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (*$SO(3)$ Exponential/Log Maps & Port-Hamiltonians*) and **Step 3.1 (`00-foundations.T3.01`)** (*Lie Groups $SO(3)/SE(3)$*) plus the Track 06 Tier 3 Bridge Ladder [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) (*Khatib $\Lambda(q)$, Friction-Cone WBC & IMU Preintegration*) → [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) (*ACT Chunking, Diffusion DDIM & Sim-to-Real*). **also depends on:** [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md).
 > * [**Next Linear Step in Pass 3 → Track 07 (Tier 3: Schroeder Multisine Closed-Loop SysID & <1 μs Hardware STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production)
 
 ### 4.1 Full-Stack Autonomous Robotic Software & Hardware Architecture
@@ -203,6 +210,7 @@ $$
   - 🔗 [Lab 06 Script: `06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py`](./lab/lab06_impedance_and_ruckig.py) — *Executable Python verification proving* $J(q) M^{-1}(q) (I - J^\top \bar{J}^\top) \tau_{\text{null}} = \mathbf{0}$ *to machine precision.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` to compare the Euclidean pseudo-inverse null-space projector $(I - J^\top (J^+)^\top)$ (which leaks false accelerations into the end-effector whenever $M(q) \ne I$) against Khatib's dynamically consistent projector $(I - J^\top \bar{J}^\top)$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study matrix inverses in Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) and Khatib's operational-space inertia matrix $\Lambda(q) = (J M^{-1} J^\top)^{-1}$ + dynamically consistent generalized inverse $\bar{J} = M^{-1} J^\top \Lambda$ in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Khatib (1987) *A Unified Approach for Motion and Force Control*](https://ieeexplore.ieee.org/document/1087068).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -235,6 +243,7 @@ $$
   - 🔗 [Linux Foundation Real-Time Linux Wiki: Configuring `PREEMPT_RT`, `mlockall`, and `cyclictest`](https://wiki.linuxfoundation.org/realtime/start) — *Production guide to eliminating page faults, CPU C-state wake latency, and scheduler jitter on Linux.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench, select the **3-DOF QDD Hopping Leg (`Capstone 4`)**, and inspect how stance phase enforces the unilateral friction cone $\sqrt{f_x^2 + f_y^2} \le \mu f_z$ ($f_z \ge 0$) before transitioning smoothly to flight-phase Raibert foot placement.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study linearized pyramid friction-cone constraints ($f_z \ge f_{z,\min}, |f_x| \le \mu f_z, |f_y| \le \mu f_z$) in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -259,6 +268,7 @@ $$
   - 🔗 [Thrun, Burgard & Fox: Probabilistic Robotics & Timothy D. Barfoot: State Estimation for Robotics (Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Complete Bayesian filtering and matrix Lie group* $SE(3)$ *estimation references.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate how many raw IMU samples would have to be re-integrated on every $30\text{ Hz}$ camera frame across a 5-second sliding window of 150 keyframes at $1\text{ kHz}$ if Forster's first-order bias Jacobian correction were not used ($5000$ integrations per frame vs. $1$ matrix multiply per keyframe!).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)$ exponential map $\operatorname{Exp}(\phi)$ in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) and Forster's first-order IMU preintegration bias Jacobian update $\Delta\tilde{R}_{ij}(\bar{b}_g + \delta b_g) \approx \Delta\tilde{R}_{ij}(\bar{b}_g)\operatorname{Exp}(J_{\Delta R}^{b_g}\delta b_g)$ in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) (`## 3. Formalization` Item 3), plus [Forster et al. (IEEE TRO 2017, `arXiv:1512.02363`)](https://arxiv.org/abs/1512.02363).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -279,6 +289,7 @@ $$
   - 🔗 [OpenVLA (`openvla.github.io`) & Physical Intelligence `openpi` (π₀ Flow-Matching VLA)](https://github.com/Physical-Intelligence/openpi) — *Open-weight Vision-Language-Action foundation models fine-tunable via LoRA for generalist manipulation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Implement **Temporal Ensembling** in Python for an Action Chunking policy that outputs a $k = 10$-step trajectory prediction $\hat{q}\kern0pt_{t \to t+10}$ at every $20\text{ ms}$ camera frame: maintain a sliding buffer of overlapping predictions for the current timestep $t$ and compute the exponentially weighted average $q_{\text{cmd}}(t) = \frac{\sum_i \exp(-m \cdot i) \hat{q}\kern0pt_t^{(t-i)}}{\sum_i \exp(-m \cdot i)}$ ($m = 0.01$) so chunk boundaries never cause torque discontinuities!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study ACT exponential temporal ensembling, DDIM denoising steps, and Sim-to-Real domain randomization in [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) (`## 3. Formalization` Items 1–3 & `## 4. Worked example`), plus [Zhao et al. *Learning Fine-Grained Bimanual Manipulation (ACT)* (`arXiv:2304.13705`)](https://arxiv.org/abs/2304.13705) and [HuggingFace LeRobot (`github.com/huggingface/lerobot`)](https://github.com/huggingface/lerobot).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

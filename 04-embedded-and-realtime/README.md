@@ -23,6 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 04):** Break the #1 beginner firmware habit (`delay(10)` and slow `Serial.println()` inside a control loop), set up a deterministic **$1\text{ kHz}$ hardware timer interrupt (ISR)**, and stream compact binary telemetry frames to your laptop.
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 04):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Loops & Functions*), [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) (*Arrays & Plotting*), and [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (*SI Timing Units*) plus the Track 04 Tier 1 Bridge Ladder [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) → [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md).
 
 ### 1.1 Why `delay()` and `Serial.print()` Destroy Control Loops
 - **Core Summary:** A discrete feedback controller (`PID`) assumes every sample occurs at an exact, fixed time step $\Delta t$ (e.g., $1.000\text{ ms}$). Calling `delay()` halts the CPU, while `Serial.println("q=" + String(q))` triggers heap fragmentation and blocks on slow UART TX buffers—stretching $\Delta t$ randomly and causing the derivative term $K_d \frac{\Delta e}{\Delta t}$ to explode with jitter noise.
@@ -31,6 +32,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Adafruit Learn: Multi-Tasking the Arduino — Part 2 (Hardware Timer Interrupts)](https://learn.adafruit.com/multi-tasking-the-arduino-part-2/timers) — *Explains how hardware timer comparators trigger exact periodic interrupts regardless of what `loop()` is doing.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Toggle GPIO Pin 2 high at the start and low at the end of an Arduino/ESP32 loop that calls `Serial.println("Angle: " + String(angle, 4))` at $9600\text{ baud}$. Measure the loop period on your logic analyzer or oscilloscope and observe how UART TX buffer saturation stalls the loop for $> 15\text{ ms}$!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study SI millisecond/microsecond conversions in Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), logic analyzer probing in [Track 00 §0.2](../00-foundations/README.md#02-practical-bench-tools-hands-on-before-spice-or-kicad), and non-blocking `millis()`/`micros()` scheduling in [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md), plus [sigrok PulseView Logic Analyzer Guide](https://sigrok.org/wiki/PulseView).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -51,6 +53,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Espressif ESP-IDF Docs: High Resolution Timer (`esp_timer`) & General Purpose Timers (`gptimer`)](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/esp_timer.html) — *Official guide to configuring microsecond-accurate hardware timers on ESP32.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Configure a $1.000\text{ kHz}$ hardware timer ISR on your MCU that toggles a debug GPIO pin on entry/exit and increments a `volatile uint32_t tick_count`. Verify on your logic analyzer or oscilloscope that the interval between rising edges is $1000.0\ \mu\text{s} \pm 1\ \mu\text{s}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study fixed-width C integer types (`uint32_t`), bitwise register masks (`|=`, `&= ~`), and `volatile` ISR flags in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) and hardware timer ISR execution in [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md), plus [STM32 Step-by-Step Timer Interrupt Wiki](https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:Step3_Introduction_to_the_UART).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -79,6 +82,7 @@ struct __attribute__((packed)) TelemetryPacket {
   - 🔗 [GCC Documentation: Common Type Attributes (`packed` and `aligned`)](https://gcc.gnu.org/onlinedocs/gcc/Common-Type-Attributes.html) — *Explains how compiler struct padding works and how `__attribute__((packed))` ensures exact byte layout across MCU and PC.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 20-line Python `struct.unpack('<BIf f fB', raw_bytes)` receiver script that decodes the 18-byte `TelemetryPacket` above, verifies `sync_head == 0xAA` and `crc8`, and plots live $1\text{ kHz}$ motor telemetry without dropping a single frame.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Python arrays and Matplotlib plotting in Foundations [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), bitwise shifts/masks in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), and binary telemetry framing + `struct.pack`/`unpack` + CRC-8 verification in [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus the [Python `struct` Module Documentation](https://docs.python.org/3/library/struct.html).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -99,6 +103,7 @@ struct __attribute__((packed)) TelemetryPacket {
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 04):** Architect multi-rate embedded firmware using **FreeRTOS Rate-Monotonic Scheduling**, **Direct Memory Access (DMA)** circular buffers (zero CPU overhead I/O), and **CAN 2.0 / CAN-FD (`MIT Mini-Cheetah` 5-parameter impedance packets)**.
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 04):** Complete Tier 1/2 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md)–[`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Timing & Linear Range Mapping*) plus the Track 04 Tier 2 Bridge Ladder [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) (*DMA + RTA + CAN Packing*) → [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) (*Zephyr Devicetree & West*) → [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md) (*Zephyr Static Threads & Priority Inheritance*) → [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md) (*micro-ROS `rclc` Executor & XRCE-DDS*).
 
 ### 2.1 Multi-Rate FreeRTOS Task Partitioning & Response-Time Analysis (RTA)
 - **Core Summary:** In multi-rate robotics firmware, **Rate-Monotonic Scheduling (RMS)** assigns higher priorities to shorter-period tasks: the $25\text{–}40\text{ kHz}$ FOC loop runs in a zero-latency hardware IRQ above the RTOS kernel, the $1\text{ kHz}$ servo/impedance loop runs in the highest-priority FreeRTOS task via `vTaskDelayUntil()`, and $100\text{ Hz}$ logging runs in a low-priority background task.
@@ -109,6 +114,7 @@ struct __attribute__((packed)) TelemetryPacket {
   - 🔗 [Shawn Hymel / DigiKey (YouTube): Introduction to RTOS (12-Part FreeRTOS Series)](https://www.youtube.com/playlist?list=PLEBQazB0HUyQ4hAPU1cJED6t3DU0h34bz) — *Hands-on visual walkthrough of FreeRTOS tasks, queues, mutexes, and hardware interrupts.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run the Response-Time Analysis (RTA) verifier in `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp` (or compute by hand) for a 3-task system: $\tau_1$ ($T_1 = 25\ \mu\text{s}, C_1 = 3.2\ \mu\text{s}$), $\tau_2$ ($T_2 = 250\ \mu\text{s}, C_2 = 35\ \mu\text{s}$), $\tau_3$ ($T_3 = 1000\ \mu\text{s}, C_3 = 180\ \mu\text{s}$) and find the exact worst-case response time $R_3$ of the $1\text{ kHz}$ task.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study fixed-point `while` loop iteration in Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md), Rate-Monotonic Response-Time Analysis $R_i^{(k+1)} = C_i + \sum \lceil R_i^{(k)}/T_j\rceil C_j$ in [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`), and Zephyr RTOS preemptive threads + mutex priority inheritance in [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md), plus [Buttazzo *Hard Real-Time Computing Systems*](https://link.springer.com/book/10.1007/978-1-4614-0676-1).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -128,6 +134,7 @@ struct __attribute__((packed)) TelemetryPacket {
   - 🔗 [LiteRT for Microcontrollers (TFLite Micro) & Edge Impulse TinyML](https://ai.google.dev/edge/litert/microcontrollers/overview) — *Run quantized `INT8` neural anomaly/vibration classifiers in* $< 20\text{ KB}$ *static SRAM on DMA-streamed IMU/current windows with zero heap allocation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate how many CPU clock cycles a $170\text{ MHz}$ Cortex-M4F saves per second by moving an 18-byte telemetry packet at $1\text{ kHz}$ and a 24-bit SPI encoder frame at $25\text{ kHz}$ ($10\text{ MHz}$ SPI clock) via DMA instead of blocking polling.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study SI frequency/time dimensional analysis in Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), DMA double-buffered (`HT`/`TC`) ping-pong overhead in [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) (`## 3. Formalization` Item 1), and Zephyr Devicetree SPI/GPIO bindings in [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md), plus [STMicroelectronics AN4031 (Using the STM32 DMA Controller)](https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -146,6 +153,7 @@ struct __attribute__((packed)) TelemetryPacket {
   - 🔗 [Ben Katz MIT Mini-Cheetah Motor Driver Documentation: CAN Packet Bit-Packing](https://os.mbed.com/users/benkatz/code/CanMasterTest/) — *Shows the exact 16/12/12/12/12-bit fixed-point packing and unpacking math used across modern QDD quadruped actuators.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write the C++ or Python bit-packing function that maps `(q_des in [-12.5, 12.5] rad, dq_des in [-45, 45] rad/s, Kp in [0, 500], Kd in [0, 5], tau_ff in [-18, 18] N·m)` into an 8-byte `uint8_t data[8]` array (16 bits `q`, 12 bits `dq`, 12 bits `Kp`, 12 bits `Kd`, 12 bits `tau`), unpacks it back, and verifies the worst-case quantization error of each parameter.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study affine range mapping in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), bitwise shift/mask operations in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), MIT Mini-Cheetah 8-byte CAN bit-packing in [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), and micro-ROS XRCE-DDS zero-heap transport in [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md), plus [Ben Katz's MIT Mini-Cheetah Actuator Guide](https://oscarliang.com/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -178,6 +186,7 @@ struct __attribute__((packed)) TelemetryPacket {
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 04):** Master zero-jitter bare-metal and heterogeneous real-time execution: Autonomous `TIM1_TRGO2` $\to$ `ADC1/2` $\to$ `DMA` hardware pipelines, Cortex-M7 `ITCM`/`DTCM` memory placement, `CORDIC` hardware trig co-processors, C++20 `WaitFreeSeqLock`, EtherCAT Distributed Clocks (`<50 ns`), and FPGA $\Sigma\Delta$ `sinc³` decimation filters.
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 04):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Sampling, Aliasing & Decimation*) plus the Track 04 Tier 3 Bridge [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md).
 > * [**Next Linear Step in Pass 3 → Track 05 (Tier 3: Joseph-Form Manifold ESKF, MPC & Control Barrier QPs)**](../05-control-and-estimation/README.md#tier-3-advanced--production)
 
 ### 4.1 Zero-Jitter Hardware-Triggered Control Execution Pipeline
@@ -224,6 +233,7 @@ sequenceDiagram
   - 🔗 [FreeRTOS Official Docs: Running the RTOS on an ARM Cortex-M Core (`BASEPRI` & Zero-Latency Interrupts)](https://www.freertos.org/RTOS-Cortex-M3-M4.html) — *Explains why Tier-0 motor control interrupts must be placed above `configMAX_SYSCALL_INTERRUPT_PRIORITY`.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Inspect `../08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp` to trace how `TIM1_TRGO2` triggers simultaneous `ADC1`/`ADC2` conversions at `CNT == ARR`, how the hardware `CORDIC` co-processor computes $\sin\theta_e, \cos\theta_e$ in 6 clock cycles, and how `DWT->CYCCNT` measures exact cycle-accurate WCET.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study hardware timer triggers and DMA in [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) and [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md), plus [`08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp`](../08-capstone-projects/firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp) and [STMicroelectronics AN5305 (STM32G474 High-Resolution Timer & Motor Control)](https://www.st.com/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -285,6 +295,7 @@ private:
   - 🔗 [CppReference: `std::memory_order` (`memory_order_acquire` & `memory_order_release`)](https://en.cppreference.com/w/cpp/atomic/memory_order) — *Complete reference on acquire/release semantics and preventing compiler/CPU load-store reordering.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 8: Attitude ESKF & SeqLock** in the interactive workbench, run the $40\text{ kHz}$ writer vs. $1\text{ kHz}$ reader stress test, and compare **Unprotected Global Struct** (which suffers torn reads where `q + dq != 0`) against **`WaitFreeSeqLock<T>`** ($0$ torn reads across $10^7$ cycles). Also compile and run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp`.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study bitwise odd/even sequence checks (`seq & 1U`) in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) and C++20 `WaitFreeSeqLock<T>` acquire-release protocol in [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Hans Boehm *Can Seqlocks Get Along With Programming Language Memory Models?*](https://dl.acm.org/doi/10.1145/2247684.2247688).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -310,6 +321,7 @@ private:
   - 🔗 [Texas Instruments SBAA230: Sinc Filter Design for ΣΔ Modulators in Motor Control](https://www.ti.com/lit/an/sbaa230/sbaa230.pdf) — *Derives the Hogenauer `sinc³` CIC filter architecture and shows why aligning the `sinc³` impulse response center with the PWM carrier peak cancels switching ripple.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp` to verify the fixed-point Hogenauer `sinc³` decimation filter response on a $20\text{ MHz}$ 1-bit $\Sigma\Delta$ modulator stream at $OSR = 128$ (16-bit current measurement) vs. $OSR = 16$ (fast overcurrent trip).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Nyquist sampling and decimation in Foundations [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) and Hogenauer `sinc³` $\Sigma\Delta$ decimation ($G = \text{OSR}^3$, $\tau_g = \frac{3(\text{OSR}-1)}{2 f_{\text{mod}}}$) + EtherCAT Distributed Clocks PI sync in [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) (`## 3. Formalization` Items 2–3), plus [Hogenauer's Classic CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

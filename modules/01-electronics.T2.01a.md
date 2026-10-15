@@ -64,6 +64,13 @@ V_ADC(+25A)=3.15 V, V_ADC(-25A)=0.15 V, Non-Kelvin error=40.0%
 Calculate the maximum measurable current magnitude $I_{\max}$ in amperes ($\text{A}$) before clipping a $0\text{–}3.30\text{ V}$ ADC centered at $V_{\text{ref}} = 1.65\text{ V}$ when using an amplifier with gain $G = 50.0\text{ V/V}$ and a $R_{\text{shunt}} = 0.001\ \Omega$ ($1\text{ m}\Omega$) Kelvin shunt. Verify $I_{\max} = \frac{1.65}{50.0 \times 0.001} = 33.0\text{ A}$ ($\pm 10^{-6}\text{ A}$).
 - **If your result differs:** Available half-scale voltage swing around $1.65\text{ V}$ is $3.30 - 1.65 = 1.65\text{ V}$; divide $1.65\text{ V}$ by $(G \cdot R_{\text{shunt}}) = 0.050\text{ V/A}$ to get $33.0\text{ A}$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*$\text{m}\Omega$ Shunt Scaling*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Affine Range Mapping*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Frequency Response*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Nyquist Aliasing & Anti-Aliasing Cutoff*).
+  - **Prerequisite Bridge Module:** [`01-electronics.T1.01b`](01-electronics.T1.01b.md) and Legacy **Step 1.2 (`01-electronics.T1.02`)**.
+  - **Core Concepts to Review First:** 4-terminal Kelvin sense connections, differential op-amp output $V_{\text{out}} = V_{\text{ref}}/2 + G(I_{\text{phase}}R_{\text{shunt}})$, and active RC anti-aliasing filter sizing in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [TI INA240 Current-Sense Amplifier Datasheet (`ti.com/lit/gpn/ina240`)](https://www.ti.com/lit/gpn/ina240), [TI Op Amps for Everyone (SLOD006)](https://www.ti.com/lit/pdf/slod006), and [Track 01 §2.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
+
 ## 6. Simulation path
 Open **Tab 2 (Power Stage & Current-Sense AFE)** in the MechaLab Workbench (`npm run dev`) or simulate a differential amplifier in [LTspice](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) (`resources/open-source-toolchains.md`).
 

@@ -86,6 +86,13 @@ G_0=6.04, PPO_clip=2.40, a_ens=0.5015 rad, q_safe=0.58 rad
 Suppose a reward sequence is $r = [0.0, 0.0, 10.0]$ over 3 steps with discount factor $\gamma = 0.95$, and at step $t=0$ the PPO probability ratio is $\rho_0 = 0.60$ with negative advantage $\hat{A}_0 = -3.0$ and clip range $\epsilon = 0.20$. Compute $G_0 = \gamma^2 (10.0)$ and the clipped PPO objective $\min(\rho_0 \hat{A}_0,\ \operatorname{clip}(\rho_0, 0.8, 1.2)\hat{A}_0)$. Verify $G_0 = 9.025$ and $L^{\text{CLIP}}_0 = \min(-1.80, -2.40) = -2.40$ ($\pm 10^{-9}$).
 - **If your result differs:** When $\hat{A}_0 < 0$ and $\rho_0 = 0.60 < 0.80$, $\rho_0 \hat{A}_0 = -1.80$ while the clipped term is $0.80 \times (-3.0) = -2.40$; taking the pessimistic $\min(-1.80, -2.40)$ gives $-2.40$.
 
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Weighted Array Sums*), [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Noise & Randomization*), and [`00-foundations.T3.00a`](00-foundations.T3.00a.md).
+  - **Prerequisite Bridge Module:** [`06-robotics.T3.06a`](06-robotics.T3.06a.md).
+  - **Core Concepts to Review First:** Action Chunking with Transformers (ACT) exponential temporal ensembling, Diffusion Policy DDIM denoising step, and discounted return $G_0 = \sum \gamma^t r_t$ + PPO clipped surrogate objective $L^{\text{CLIP}} = \min(\rho \hat{A}, \operatorname{clip}(\rho, 1-\epsilon, 1+\epsilon)\hat{A})$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Zhao et al. *ACT* (`arXiv:2304.13705`)](https://arxiv.org/abs/2304.13705), [Chi et al. *Diffusion Policy* (`arXiv:2303.04137`)](https://arxiv.org/abs/2303.04137), [Schulman et al. *PPO* (`arXiv:1707.06347`)](https://arxiv.org/abs/1707.06347), and [HuggingFace LeRobot (`github.com/huggingface/lerobot`)](https://github.com/huggingface/lerobot).
+
 ## 6. Simulation path
 Open **Tab 4 (CBF-QP Safety Filter)** and **Tab 6 (Trajectory & Action Smoothing)** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
 

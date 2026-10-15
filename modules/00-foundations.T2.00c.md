@@ -31,7 +31,7 @@ Push open a heavy glass office door equipped with an overhead hydraulic closer. 
    $$\ddot{\theta} + 2\zeta\omega_n\dot{\theta} + \omega_n^2\theta = \frac{\tau_{\text{in}}}{J}, \qquad \omega_n = \sqrt{\frac{k}{J}}, \qquad \zeta = \frac{b}{2\sqrt{Jk}}$$
    For $J = 0.02\text{ kg}\cdot\text{m}^2$, stiffness $k = 8.0\text{ N}\cdot\text{m/rad}$, and damping $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$, $\omega_n = \sqrt{\frac{8.0}{0.02}} = 20.0\text{ rad/s}$ and $\zeta = \frac{0.40}{2\sqrt{0.02 \times 8.0}} = 0.50$.
 3. **Characteristic Roots, Damped Frequency $\omega_d$ & Peak Overshoot $M_p$:** The characteristic polynomial $s^2 + 2\zeta\omega_n s + \omega_n^2 = 0$ has roots $s = -\zeta\omega_n \pm j\omega_d$ for $0 < \zeta < 1$, where damped oscillation frequency $\omega_d$ ($\text{rad/s}$) and fractional step overshoot $M_p$ are:
-   $$\omega_d = \omega_n\sqrt{1 - \zeta^2}, \qquad M_p = \exp\!\left(\frac{-\pi\zeta}{\sqrt{1 - \zeta^2}}\right)$$
+   $$\omega_d = \omega_n\sqrt{1 - \zeta^2}, \qquad M_p = \exp\!\left(\frac{-\pi\zeta}{\sqrt{1 - \zeta^2}}\r\right)$$
    For $\omega_n = 20.0\text{ rad/s}$ and $\zeta = 0.50$, $\omega_d = 20.0\sqrt{0.75} = 17.3205\text{ rad/s}$ and $M_p = \exp(-\pi \times 0.50 / \sqrt{0.75}) = 0.16303$ ($16.30\%$ overshoot).
 
 ## 4. Worked example
@@ -74,6 +74,12 @@ wn=20.0 rad/s, zeta=0.50, Mp_analytic=16.30%, Mp_sim=16.30%
 ## 5. Exercise
 For the same inertia $J = 0.02\text{ kg}\cdot\text{m}^2$ and stiffness $k = 8.0\text{ N}\cdot\text{m/rad}$, compute the critical damping coefficient $b_{\text{crit}} = 2\sqrt{Jk}$ ($\zeta = 1.0$) and verify in the simulation loop that `mp_sim < 1e-6` ($0.0\%$ overshoot). Expected result: `b_crit = 0.80 N*m*s/rad`.
 - **If your result differs:** Check that you took the square root of the product $\sqrt{J k} = \sqrt{0.16} = 0.40$ before multiplying by $2$, rather than computing $2 J k = 0.32$.
+
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Prerequisite Foundations Modules:** [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Spring-Mass-Damper Loop*) and [`00-foundations.T2.00b`](00-foundations.T2.00b.md).
+  - **Core Concepts to Review First:** Standard second-order ODE $\ddot{q} + 2\zeta\omega_n\dot{q} + \omega_n^2 q = \omega_n^2 q_{\text{ref}}$, natural frequency $\omega_n = \sqrt{k/J}$, damping ratio $\zeta = \frac{b}{2\sqrt{Jk}}$, and critical damping $b_{\text{crit}} = 2\sqrt{Jk}$ ($\zeta = 1.0$) in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
+  - **ODEs & Damping Study Links:** [Åström & Murray *Feedback Systems* Ch. 6 (`fbsbook.org`)](https://www.fbsbook.org/), [Paul's Online Math Notes: Second-Order Differential Equations & Mechanical Vibrations](https://tutorial.math.lamar.edu/Classes/DE/Vibrations.aspx), and [MIT OCW 18.03 Differential Equations](https://ocw.mit.edu/courses/18-03sc-differential-equations-fall-2011/).
+  - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [Track 05 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md).
 
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to watch how low structural damping $\zeta$ creates a sharp time-domain ringing transient.
@@ -124,7 +130,8 @@ assert math.isclose(q5_dot, 0.0, abs_tol=1e-9)
 | `ValueError: math domain error` in $\sqrt{1 - \zeta^2}$ | Used the underdamped formula when $\zeta > 1$ (overdamped). | Check `if zeta < 1.0:` before computing $\omega_d$ and $M_p$. |
 
 ## 9. Resources
-- **Åström & Murray — *Feedback Systems: An Introduction for Scientists and Engineers* (`resources/textbooks-and-papers.md`):** Open-access textbook chapters on first- and second-order linear systems `[VERIFIED 2026-10-15]`.
-- **Track 05 (`05-control-and-estimation/README.md`):** Applies $\omega_n = \sqrt{K_p/J}$ and $K_d = 2\zeta\sqrt{JK_p}$ to joint PD tuning `[VERIFIED 2026-10-15]`.
+- **Åström & Murray — [*Feedback Systems: An Introduction for Scientists and Engineers* (`fbsbook.org`)](https://www.fbsbook.org/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Open-access textbook chapters on first- and second-order linear systems `[VERIFIED 2026-10-15]`.
+- **Track 05 ([`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md)) & [Paul's Online Math Notes (Vibrations)](https://tutorial.math.lamar.edu/Classes/DE/Vibrations.aspx):** Applies $\omega_n = \sqrt{K_p/J}$ and $K_d = 2\zeta\sqrt{JK_p}$ to joint PD tuning `[VERIFIED 2026-10-15]`.
+
 ## 10. Next modules
 - Proceed to [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Complex Numbers, Euler's Formula, Phasors, Impedance & Frequency Response (Bode Plots)*).

@@ -64,6 +64,12 @@ tip=(-0.2828, 0.2828) m, atan2=135.0 deg, atan=-45.0 deg
 A robot base at $(0, 0)$ observes a target at $(x, y) = (-0.30\text{ m}, -0.40\text{ m})$ in Quadrant III. Compute the Euclidean distance $d = \sqrt{x^2 + y^2}$ in meters and the heading angle in degrees using `math.degrees(math.atan2(y, x))`. Expected result: `d = 0.50 m` and `theta = -126.8699 deg` (tolerance $\pm 0.01^\circ$).
 - **If your result differs:** Check that you passed `y` first and `x` second in `math.atan2(y, x)`; passing `atan2(x, y)` swaps the axes and returns $-36.87^\circ$.
 
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Prerequisite Foundations Modules:** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Python Functions, Arrays & SI Units*).
+  - **Core Concepts to Review First:** 2D vector tip coordinates $(L\cos\theta, L\sin\theta)$, Euclidean norm $\sqrt{x^2+y^2}$, and four-quadrant `math.atan2(y, x)` in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
+  - **Trigonometry & 2D Vectors Study Links:** [3Blue1Brown: Essence of Linear Algebra — Vectors (`3blue1brown.com`)](https://www.3blue1brown.com/topics/linear-algebra), [Red Blob Games: Interactive 2D Trigonometry & `atan2` Guide](https://www.redblobgames.com/), and [Python `math.atan2` Documentation](https://docs.python.org/3/library/math.html#math.atan2).
+  - **Curriculum Reference:** [Track 00 Tier 1 (`00-foundations/README.md`)](../00-foundations/README.md#tier-1-beginner--intuitive) and [Lynch & Park *Modern Robotics* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md).
+
 ## 6. Simulation path
 Run the worked example in Python and open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench to watch planar and 3D link angles map to tip $(x, y, z)$ coordinates in real time.
 
@@ -114,7 +120,8 @@ assert math.isclose(q5_rad_s, math.pi, rel_tol=1e-9)
 | Arm jerks by $180^\circ$ when crossing $x = 0$ | Used `math.atan(y / x)` instead of four-quadrant `math.atan2(y, x)`. | Replace every `atan(y / x)` with `math.atan2(y, x)`. |
 
 ## 9. Resources
-- **Track 00 (`00-foundations/README.md`):** Uses unit-circle trigonometry and `atan2` directly in Step 1.1 $SO(2)$ rotation matrices `[VERIFIED 2026-10-15]`.
-- **Track 02 (`02-mechanics-kinematics-dynamics/README.md`):** Uses 2D vector projections and `atan2` in Step 1.3 planar 2-link kinematics `[VERIFIED 2026-10-15]`.
+- **Track 00 ([`00-foundations/README.md`](../00-foundations/README.md)) & [Python `math` Library Docs](https://docs.python.org/3/library/math.html):** Uses unit-circle trigonometry and `math.atan2(y, x)` directly in Step 1.1 $SO(2)$ rotation matrices `[VERIFIED 2026-10-15]`.
+- **Track 02 ([`02-mechanics-kinematics-dynamics/README.md`](../02-mechanics-kinematics-dynamics/README.md)) & [Red Blob Games Interactive 2D Math](https://www.redblobgames.com/):** Uses 2D vector projections and `atan2` in Step 1.3 planar 2-link kinematics `[VERIFIED 2026-10-15]`.
+
 ## 10. Next modules
 - Proceed to [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop*).

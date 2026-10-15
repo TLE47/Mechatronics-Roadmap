@@ -96,6 +96,12 @@ R_z90*[1,0,0]=[0.0, 1.0, 0.0], det(R_tiny)=1.000000000000
 Verify the cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ in Python for the unit vector $\hat{u} = [1/\sqrt{3},\ -1/\sqrt{3},\ 1/\sqrt{3}]^\top$ by computing `K = hat(u)` and asserting `max(abs(K3[r][c] + K[r][c]) for r in range(3) for c in range(3)) < 1e-15`.
 - **If your result differs:** Make sure $\hat{u}$ is normalized to unit length ($\|\hat{u}\| = 1$) first; for a non-unit vector $\phi$ of length $\theta$, the identity is $[\phi]_\times^3 = -\theta^2 [\phi]_\times$.
 
+- **📚 What to Learn & Resources to Solve This Exercise:**
+  - **Prerequisite Foundations Modules:** [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*3D Cross Product*), [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Matrix Exponential*), and Legacy **Step 2.1 (`00-foundations.T2.01`)**.
+  - **Core Concepts to Review First:** Skew-symmetric hat matrix $[\hat{u}]_\times$, cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ for unit axis $\|\hat{u}\| = 1$, and Rodrigues' rotation formula in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
+  - **Lie Theory & $SO(3)$ Study Links:** [Joan Solà et al., *A Micro Lie Theory for State Estimation in Robotics* (`arXiv:1812.01537`, §II.A–II.B)](https://arxiv.org/abs/1812.01537), [Lynch & Park *Modern Robotics* Ch. 3.2 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), and [Sophus C++ Lie Groups Library (`github.com/strasdat/Sophus`)](https://github.com/strasdat/Sophus).
+  - **Curriculum Reference:** [Track 00 Tier 3 (`00-foundations/README.md#tier-3-advanced--production`)](../00-foundations/README.md#tier-3-advanced--production) (Step 3.1 Lie Groups $SO(3)/SE(3)$).
+
 ## 6. Simulation path
 Open **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`) to watch how `exp_so3(omega * dt)` integrates 3D gyroscope measurements on $SO(3)$ without gimbal lock or loss of orthogonality.
 
@@ -186,7 +192,8 @@ assert g8_choice == "A"
 | Added two rotation matrices $R_1 + R_2$ or integrated $\dot{R}$ with Euler addition $R_{k+1} = R_k + \dot{R}\Delta t$ | $SO(3)$ is a curved multiplicative group, not a flat vector space; adding matrices destroys orthogonality ($R^\top R \ne I$). | Always update rotations multiplicatively on the manifold via $R_{k+1} = R_k \exp([\omega_k \Delta t]_\times)$. |
 
 ## 9. Resources
-- **Joan Solà et al. — *A Micro Lie Theory for State Estimation in Robotics* (`arXiv:1812.01537`, `resources/textbooks-and-papers.md`):** Concise robotics tutorial on $SO(3)$, $SE(3)$, hat/vee operators, and exponential/logarithmic maps `[VERIFIED 2026-10-15]`.
-- **Track 00 (`00-foundations/README.md`):** Directly continues into Step 3.1 (`00-foundations.T3.01`) `[VERIFIED 2026-10-15]`.
+- **Joan Solà et al. — [*A Micro Lie Theory for State Estimation in Robotics* (`arXiv:1812.01537`)](https://arxiv.org/abs/1812.01537) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Concise robotics tutorial on $SO(3)$, $SE(3)$, hat/vee operators, and exponential/logarithmic maps `[VERIFIED 2026-10-15]`.
+- **Track 00 ([`00-foundations/README.md#tier-3-advanced--production`](../00-foundations/README.md#tier-3-advanced--production)):** Directly continues into Step 3.1 (`00-foundations.T3.01`) `[VERIFIED 2026-10-15]`.
+
 ## 10. Next modules
 - Proceed to legacy **Step 3.1 (`00-foundations.T3.01`)** in [`00-foundations/README.md`](../00-foundations/README.md#tier-3-advanced--production).

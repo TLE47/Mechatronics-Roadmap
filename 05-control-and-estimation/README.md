@@ -23,6 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 05):** Build rock-solid physical intuition for PID control (Proportional = virtual spring, Derivative = virtual viscous damper, Integral = steady-state offset accumulator), prevent integrator windup, and fuse an accelerometer + gyroscope in 2 lines of code using a Complementary Filter.
+> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 05):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Discrete `while` Loops*), [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Mass-Spring-Damper Dynamics*), and **Step 1.1 (`00-foundations.T1.01`)** (*RC Low-Pass Smoothing*) plus the Track 05 Tier 1 Bridge [`05-control.T1.05a`](../modules/05-control.T1.05a.md).
 
 ### 1.1 Physical Intuition for PID: Virtual Springs & Dashpots
 - **Core Summary:** A PID controller $\tau = K_p (q_{\text{des}} - q) - K_d \dot{q} + K_i \int (q_{\text{des}} - q)\,dt$ has direct mechanical meaning: **Proportional ($K_p$)** attaches an invisible spring pulling toward the target, **Derivative ($K_d$)** submerges the joint in viscous honey to damp overshoot, and **Integral ($K_i$)** slowly accumulates persistent error to overcome gravity droop or static friction.
@@ -32,6 +33,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Fetch Robotics / Russ Tedrake: PD Control as Virtual Mechanical Stiffness & Damping](https://manipulation.csail.mit.edu/force.html) — *Explains why robotics engineers think of PD gains directly in physical units (* $\text{N}\cdot\text{m/rad}$ *and* $\text{N}\cdot\text{m}\cdot\text{s/rad}$ *).*
 - **🧪 Hands-On Exercise:**
   - *Task:* Command a motor (or simulate a 1-DOF inertia $J = 0.01\text{ kg}\cdot\text{m}^2$) with $K_d = 0, K_i = 0$ and increase $K_p$—feel/observe how a pure $P$ controller oscillates like an undamped spring! Then add $K_d = 2\sqrt{J K_p}$ (critical damping $\zeta = 1.0$) and observe the step response snap to the target with zero overshoot.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study spring-mass-damper simulation in Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and discrete PID virtual spring-damper control in [`05-control.T1.05a`](../modules/05-control.T1.05a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Åström & Murray *Feedback Systems* Ch. 11 (PID Control — `fbsbook.org`)](https://www.fbsbook.org/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -50,6 +52,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Karl Johan Åström & Richard M. Murray: Feedback Systems — Chapter 11 (PID Control & Anti-Windup, Free Caltech PDF)](https://www.cds.caltech.edu/~murray/books/AM08/pdf/fbs-pid_24Jul2020.pdf) — *Rigorous derivation of back-calculation anti-windup (* $K_{\text{aw}}$ *) and high-frequency derivative roll-off (* $N_d$ *).*
 - **🧪 Hands-On Exercise:**
   - *Task:* Implement `IndustrialPID` (code in §4.2 below) with actuator limits $u \in [-10, +10]\text{ V}$. Simulate holding the plant at $y = 0$ for $1.0\text{ s}$ while $r = 1.0$, then releasing it—compare the massive overshoot when `kaw = 0.0` (no anti-windup) against the clean recovery when `kaw = 10.0`.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study clamping functions in Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) and actuator saturation + integrator anti-windup clamping + derivative-on-measurement in [`05-control.T1.05a`](../modules/05-control.T1.05a.md) (`## 3. Formalization` Item 2), plus [Brian Douglas: PID Integrator Windup & Anti-Windup Tutorial](https://www.youtube.com/user/ControlLectures).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -68,6 +71,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Brian Douglas (YouTube): Sensor Fusion & Complementary Filters Explained](https://www.youtube.com/watch?v=whSw42XddsU) — *Shows in the frequency domain how complementary crossover frequency* $\omega_c$ *trades off gyro bias drift against vibration immunity.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Generate a $10\text{ s}$ synthetic IMU log at $200\text{ Hz}$ where true tilt is $\theta(t) = 0.3\sin(2\pi t)$, the gyro has a constant $+0.08\text{ rad/s}$ bias, and the accelerometer has $\sigma = 0.15\text{ rad}$ white vibration noise. Plot raw gyro integration (drifts away), raw accelerometer (noisy), and the $\alpha = 0.98$ complementary filter output.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study NumPy arrays & Matplotlib plotting in Foundations [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), first-order EMA smoothing in **Step 1.1 (`00-foundations.T1.01`)**, and complementary IMU fusion $\hat{\theta}_k = \alpha(\hat{\theta}_{k-1} + \omega_{\text{gyro}}\Delta t) + (1-\alpha)\theta_{\text{acc},k}$ in [`05-control.T1.05a`](../modules/05-control.T1.05a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -88,6 +92,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 05):** Graduate from SISO trial-and-error tuning to **Bode Loop Shaping & Åström's Gang of Four ($M_s \le 1.75$)**, **Åström-Furuta Nonlinear Energy Swing-Up + MIMO LQR Balancing**, and the **Linear Kalman Filter**.
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 05):** Complete Tier 2 Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order ODEs*), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space Matrices $\dot{x} = Ax + Bu$*), and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Gaussian Covariance Propagation*) plus the Track 05 Tier 2 Bridge [`05-control.T2.05a`](../modules/05-control.T2.05a.md).
 
 ### 2.1 Frequency-Domain Loop Shaping, Phase Margin & Delay Bounds
 - **Core Summary:** Every millisecond of sensor/computation delay $\tau_{\text{delay}}$ steals phase $\Delta\phi(\omega) = -\omega\tau_{\text{delay}}$, bounding your maximum achievable crossover frequency to $\omega_c < \frac{\phi_{\text{margin,rad}}}{\tau_{\text{delay}}}$. Auditing **Åström's Gang of Four ($S, T, PS, CS$)** and keeping peak sensitivity $M_s = \max_\omega \lvert S(j\omega)\rvert \le 1.75$ ($4.8\text{ dB}$) guarantees robustness against unmodeled resonances and gain variations.
@@ -97,6 +102,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Brian Douglas (YouTube): Bode Plots, Phase Margin & Loop Shaping Playlist](https://www.youtube.com/playlist?list=PLUMWjy5jgHK24TCFwngV5MeiruHxtfBQR) — *Visualizes how phase margin relates to overshoot and why time delay causes phase to plummet at high frequency.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Calculate the maximum achievable crossover frequency $f_c = \omega_c / (2\pi)$ with a $45^\circ$ ($\pi/4\text{ rad}$) phase margin if a double-integrator plant $P(s) = 1/(J s^2)$ is controlled with a $50^\circ$ phase-lead compensator across a total loop delay of $\tau_{\text{delay}} = 2.0\text{ ms}$ vs. $\tau_{\text{delay}} = 0.1\text{ ms}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Bode magnitude/phase evaluation in Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) and loop-delay phase erosion + phase margin + sensitivity peak $M_s = \max|S(j\omega)|$ in [`05-control.T2.05a`](../modules/05-control.T2.05a.md) (`## 3. Formalization` Item 1), plus [Åström & Murray *Feedback Systems* Ch. 10 & Ch. 12 (`fbsbook.org`)](https://www.fbsbook.org/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -116,6 +122,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Steve Brunton (YouTube): Control Bootcamp — Linear Quadratic Regulator (LQR) & Bryson's Rule](https://www.youtube.com/watch?v=1_UobILf3cc) — *Clear walkthrough of tuning* $Q$ *and* $R$ *matrices systematically.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 4: Furuta Pendulum + LQR + CBF** in the interactive workbench, trigger a full swing-up from hanging down ($\theta = \pi$), and experiment with the $Q_\theta$ (angle penalty) and $R_{\text{ctrl}}$ (effort penalty) sliders before injecting a $+3.2\text{ rad/s}$ impulse push.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study state-space matrices $(A, B)$ in Foundations [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) and discrete LQR quadratic cost $J = \sum (x_k^\top Q x_k + u_k^\top R u_k)$ + Riccati recursion in [`05-control.T2.05a`](../modules/05-control.T2.05a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`), plus [Russ Tedrake *Underactuated Robotics* Ch. 3 & Ch. 8 (`underactuated.mit.edu`)](https://underactuated.mit.edu/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -134,6 +141,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   - 🔗 [Michel van Biezen / Bilgin Esme: Kalman Filter Explained Simply](https://www.kalmanfilter.net/default.aspx) — *Step-by-step numerical examples of the Predict-Update loop and covariance propagation.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 2-state discrete Kalman Filter in Python for $x = [\theta, b_g]^\top$ where state transition is $\theta_k = \theta_{k-1} + (\omega_{\text{gyro}} - b_{g,k-1})\Delta t$, $b_{g,k} = b_{g,k-1}$, and measurement is $y_k = \theta_k + v_k$. Verify that $b_g$ converges to the true hidden gyroscope bias within $2\text{ s}$!
+  - *📚 What to Learn & Resource Links for This Exercise:* Study linear Gaussian covariance propagation $P^- = F P F^\top + Q$ in Foundations [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) and the discrete Kalman filter predict-innovation-update equations in [`05-control.T2.05a`](../modules/05-control.T2.05a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus [Roger Labbe *Kalman and Bayesian Filters in Python*](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -170,6 +178,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 05):** Production mastery of modern optimal, nonlinear, and manifold control: Joseph-form Error-State Kalman Filters (ESKF) on $SO(3)\times\mathbb{R}^n$, Slotine-Li passivity-based adaptive control, CLF-CBF-QP safety filters, and Real-Time Iteration Nonlinear Model Predictive Control (RTI-NMPC).
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 05):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (*$SO(3)$ Hat/Vee Maps, Rodrigues' Exponential & Hamiltonian Passivity*) and **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*) plus the Track 05 Tier 3 Bridge [`05-control.T3.05a`](../modules/05-control.T3.05a.md).
 > * [**Next Linear Step in Pass 3 → Track 06 (Tier 3: Khatib Operational Inertia Λ(q) & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production)
 
 ### 4.1 Two-Degree-of-Freedom (2-DOF) Control & State Estimation Architecture
@@ -276,6 +285,7 @@ struct IndustrialPID {
   - 🔗 [Skogestad & Postlethwaite: Multivariable Feedback Control — Chapter 5: Fundamental Limitations](https://folk.ntnu.no/skoge/book.html) — *Derives exact bandwidth bounds imposed by right-half-plane zeros, unstable poles, and time delays.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py` to inspect how 2-DOF feedforward + feedback reduces trajectory tracking error by $> 10\times$ compared to feedback alone without increasing the sensitivity peak $M_s$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study sensitivity $S(s)$ vs. complementary sensitivity $T(s)$ in [`05-control.T2.05a`](../modules/05-control.T2.05a.md) and Slotine-Li passivity-based feedforward + PD tracking in [`05-control.T3.05a`](../modules/05-control.T3.05a.md), plus [`05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py`](lab/lab05_eskf_mpc_and_cbf.py).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -307,6 +317,7 @@ $$
   - 🔗 [Paul Groves: Principles of GNSS, Inertial, and Multisensor Integrated Navigation Systems](https://www.artechhouse.com/) / [Tab 8: Attitude ESKF & SeqLock Simulator](../README.md) — *Interactive verification of Joseph-form ESKF convergence and Normalized Estimation Error Squared (NEES) consistency.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 8: Attitude ESKF & SeqLock** in the interactive workbench, inject a large initial gyro bias $b_g$ and attitude error, and verify that the 6-state $SO(3)$ ESKF converges while keeping its **Normalized Estimation Error Squared (NEES)** $\epsilon_k = \delta x_k^\top P_k^{-1} \delta x_k$ inside the $95\%$ $\chi^2$ consistency bounds.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)$ hat/vee maps and Rodrigues' rotation formula in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) and Joseph-form covariance update + $SO(3)$ Error-State Kalman Filter injection/reset in [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Joan Solà *Quaternion Kinematics for the Error-State Kalman Filter* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -340,6 +351,7 @@ $$
   - 🔗 [OSQP (Operator Splitting Quadratic Program Solver) Documentation](https://osqp.org/) — *Zero-allocation embedded C/C++ QP solver used across production MPC and CBF controllers.*
 - **🧪 Hands-On Exercise:**
   - *Task:* In **Tab 4: Furuta Pendulum + LQR + CBF**, toggle the **CBF Safety Filter ON vs. OFF** and apply repeated $+3.2\text{ rad/s}$ impulse pushes toward the rail limit $x_{\max}$. Verify that with CBF ON, $\min_t h(x(t)) \ge 0$ and the carriage never crosses the red safety wall.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Control Barrier Function forward invariance ($\dot{h}(x,u) + \gamma h(x) \ge 0$) and active-set 1D QP safety filtering in [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus [Ames et al., *Control Barrier Functions: Theory and Applications* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
