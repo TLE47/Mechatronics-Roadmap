@@ -66,8 +66,10 @@ EXPECTED_FILES = [
     "resources/mechatronics-cheatsheet.md",
     "scripts/verify_repo.py",
     "scripts/run_all_labs.py",
-    "web/index.html",
-    "web/cheatsheet.html",
+    "scripts/audit_math.mjs",
+    "package.json",
+    "src/App.tsx",
+    "src/curriculumData.ts",
     ".github/workflows/ci.yml",
 ]
 
@@ -108,9 +110,15 @@ LATEX_CMD_RE = re.compile(
 
 
 def slugify_heading(text: str) -> str:
+    """Reproduce GitHub's heading anchor: one dash per space, not per run of spaces.
+
+    "Tier 3 (Advanced / Production)" loses the punctuation and keeps BOTH spaces around
+    the removed slash, so GitHub's anchor is `tier-3-advanced--production`; collapsing
+    runs of whitespace reported every link to such a heading as broken.
+    """
     slug = text.strip().lower()
     slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s]+", "-", slug)
+    slug = re.sub(r"\s", "-", slug)
     return slug
 
 
@@ -406,12 +414,9 @@ MATH_ONLY_COMMANDS = frozenset(
     """.split()
 )
 
-MATH_HTML_FILES = (
-    "web/index.html",
-    "deploy/public/index.html",
-    "web/cheatsheet.html",
-    "deploy/public/cheatsheet.html",
-)
+# Shell pages that host math. The workbench's own formulas live in `src/**` (checked by
+# `find_source_math_issues`), and the old static `web/` pages were replaced by the Vite app.
+MATH_HTML_FILES = ("index.html",)
 
 _TEXT_GROUP_RE = re.compile(r"\\(?:" + "|".join(TEXT_MODE_GROUPS) + r")\s*\{")
 _MATH_CMD_RE = re.compile(r"\\([a-zA-Z]+)")
@@ -577,8 +582,12 @@ def find_container_math_issues(text: str, rel_path: str) -> list[str]:
                     f"or write it as plain text"
                 )
 
-        for match in _CONTAINER_EMPH_RE.finditer(line):
-            if _CONTAINER_MATH_RE.search(match.group(1)):
+        # A `*` inside a formula is a starred quantity (`$v_d^{*}$`), not an emphasis
+        # delimiter, so mask the math spans first: what remains is real emphasis, and the
+        # check is whether that run wraps a formula (GitHub then drops the formula).
+        math_masked = _CONTAINER_MATH_RE.sub(lambda m: "\x05" * len(m.group(0)), line)
+        for match in _CONTAINER_EMPH_RE.finditer(math_masked):
+            if _CONTAINER_MATH_RE.search(line[match.start() : match.end()]):
                 issues.append(
                     f"{rel_path}:{lineno}: inline math inside *italics* never renders "
                     f"('{match.group(1)[:36]}...') - split the emphasis so the formula sits outside"

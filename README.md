@@ -66,7 +66,7 @@ flowchart TB
 
 ---
 
-## 🛠️ STAGE 0: Global "Level 0" Prerequisite On-Ramp
+## STAGE 0: Global "Level 0" Prerequisite On-Ramp
 
 If you come from a pure software background, start here before opening Track 00.
 
@@ -129,7 +129,7 @@ If you come from a pure software background, start here before opening Track 00.
 
 ---
 
-## 🟢 PASS 1: Tier 1 Linear Roadmap (`Beginner / Intuitive Pass: Track 00 → Track 08`)
+## PASS 1: Tier 1 Linear Roadmap (`Beginner / Intuitive Pass: Track 00 → Track 08`)
 
 Complete all 8 steps below in order using breadboards, breakout modules, and high-level libraries:
 
@@ -285,7 +285,7 @@ Complete all 8 steps below in order using breadboards, breakout modules, and hig
 
 ---
 
-## 🔵 PASS 2: Tier 2 Linear Roadmap (`Intermediate / Applied Pass: Track 00 → Track 08`)
+## PASS 2: Tier 2 Linear Roadmap (`Intermediate / Applied Pass: Track 00 → Track 08`)
 
 Loop back to Track 00 and level up every module from breadboard breakouts to custom engineering:
 
@@ -442,7 +442,7 @@ Loop back to Track 00 and level up every module from breadboard breakouts to cus
 
 ---
 
-## 🟣 PASS 3: Tier 3 Linear Roadmap (`Advanced / Production Pass: Track 00 → Track 08`)
+## PASS 3: Tier 3 Linear Roadmap (`Advanced / Production Pass: Track 00 → Track 08`)
 
 Loop back to Track 00 one final time for graduate theoretical depth and industrial production qualification:
 

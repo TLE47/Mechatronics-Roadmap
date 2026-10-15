@@ -235,7 +235,7 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [Visualizing Quaternions Interactive Sandbox (3Blue1Brown & Ben Eater — eater.net)](https://eater.net/quaternions) — *Interactive 3D browser visualization of quaternion hypersphere rotations.*
-  - 🔗 [Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter — §1–2](https://arxiv.org/abs/1711.02508) — *Concise reference sheet for Hamilton quaternion product* $\otimes$ *, rotation action $q \otimes v \otimes q^*$, and kinematic integration.*
+  - 🔗 [Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter — §1–2](https://arxiv.org/abs/1711.02508) — Concise reference sheet for Hamilton quaternion product (⊗), rotation action $q \otimes v \otimes q^{*}$, and kinematic integration.
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a Python function `quat_multiply(q1, q2)` and verify that rotating the vector $v = [1, 0, 0]^\top$ by $90^\circ$ around the $Z$-axis ($q = [\cos 45^\circ, 0, 0, \sin 45^\circ]^\top$) via $q \otimes [0, v] \otimes q^*$ lands at $[0, 1, 0]^\top$ with zero gimbal lock at $\pm 90^\circ$ pitch.
 - **🧠 Knowledge Check:**
