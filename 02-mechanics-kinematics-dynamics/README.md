@@ -26,8 +26,15 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [1.1 2-Link Planar Forward & Inverse Kinematics (Law of Cosines)]
 - **Core Summary:** Solves 2-DOF planar robot arm Forward Kinematics (`joint angles -> tip x, y`) and closed-form Inverse Kinematics (`target x, y -> shoulder/elbow angles`) using the Law of Cosines and two-argument `atan2(y, x)`.
-  $$x = L_1 \cos(q_1) + L_2 \cos(q_1 + q_2), \qquad y = L_1 \sin(q_1) + L_2 \sin(q_1 + q_2)$$
-  $$\cos(q_2) = \frac{x^2 + y^2 - L_1^2 - L_2^2}{2 L_1 L_2}, \quad q_2 = \pm \arccos(\cos q_2), \quad q_1 = \text{atan2}(y, x) - \text{atan2}(L_2 \sin q_2, L_1 + L_2 \cos q_2)$$
+
+$$
+x = L_1 \cos(q_1) + L_2 \cos(q_1 + q_2), \qquad y = L_1 \sin(q_1) + L_2 \sin(q_1 + q_2)
+$$
+
+$$
+\cos(q_2) = \frac{x^2 + y^2 - L_1^2 - L_2^2}{2 L_1 L_2}, \quad q_2 = \pm \arccos(\cos q_2), \quad q_1 = \text{atan2}(y, x) - \text{atan2}(L_2 \sin q_2, L_1 + L_2 \cos q_2)
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Modern Robotics — Ch. 1, 2 & 6: Planar Kinematics & Inverse Kinematics (Lynch & Park Free PDF & Videos)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Clear geometric derivations of 2R planar forward/inverse kinematics and elbow-up vs. elbow-down solutions.*
   - 🔗 [John J. Craig: Introduction to Robotics — Mechanics and Control (4th Ed. Companion Resources)](https://www.pearson.com/) — *Classic foundation for spatial descriptions, Denavit-Hartenberg (DH) parameters, and 2D/3D manipulator kinematics.*
@@ -49,7 +56,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [1.2 Torque, Speed, Gear Ratios & Why Reflected Inertia Scales by $N^2$]
 - **Core Summary:** Explains why a gearbox of ratio $N:1$ multiplies output torque by $N\eta$ and divides speed by $N$, but multiplies the motor rotor's apparent inertia at the joint output by **$N^2$** ($J_{\text{refl}} = N^2 J_{\text{rotor}}$).
-  $$\omega_{\text{out}} = \frac{\omega_m}{N}, \qquad \tau_{\text{out}} = N\eta\tau_m, \qquad J_{\text{reflected}} = N^2 J_{\text{rotor}}$$
+
+$$
+\omega_{\text{out}} = \frac{\omega_m}{N}, \qquad \tau_{\text{out}} = N\eta\tau_m, \qquad J_{\text{reflected}} = N^2 J_{\text{rotor}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [MIT 2.007 Design and Manufacturing I — Gear Ratios & Transmission Matching (MIT OCW)](https://ocw.mit.edu/courses/2-007-design-and-manufacturing-i-spring-2009/) — *Introductory mechanical engineering course notes on speed-torque trade-offs and inertia matching.*
   - 🔗 [Underactuated Robotics — Appendix: Actuators & Reflected Inertia (Russ Tedrake, MIT)](https://underactuated.mit.edu/) — *Explains why high-$N$ gearboxes dominate joint dynamics and ruin impact robustness.*
@@ -70,7 +81,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [1.3 Practical 3D-Printed Joints, Radial Bearings & GT2 Timing Belts]
 - **Core Summary:** Teaches foundational mechanical assembly rules for makers: supporting joint shafts in **double shear** with two spaced radial ball bearings (`608` / `6804`), tensioning `GT2` fiberglass-core timing belts, and orienting 3D-printed FDM layer lines perpendicular to bending loads.
-  $$F_{\text{radial\_bearing}} = T_{\text{belt\_preload}} + \frac{\tau_{\text{pulley}}}{r_{\text{pitch}}}, \qquad \delta_{\text{cantilever}} = \frac{F L^3}{3 E I} \gg \delta_{\text{double\_shear}} = \frac{F L^3}{192 E I}$$
+
+$$
+F_{\text{radial\_bearing}} = T_{\text{belt\_preload}} + \frac{\tau_{\text{pulley}}}{r_{\text{pitch}}}, \qquad \delta_{\text{cantilever}} = \frac{F L^3}{3 E I} \gg \delta_{\text{double\_shear}} = \frac{F L^3}{192 E I}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [MIT FUNdaMENTALS of Design — Topic 3 & 8: Structural Loops, Shafts & Bearings (Prof. Alex Slocum)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Illustrated golden rules for supporting shafts in double shear vs. cantilevered overhang.*
   - 🔗 [Budynas & Nisbett: Shigley's Mechanical Engineering Design (11th Ed. Reference)](https://www.mheducation.com/) — *Industry-standard machine design reference for shaft fatigue, radial/angular-contact bearing $L_{10}$ life, Spur/Helical gear tooth bending, and bolted joint preload.*
@@ -100,7 +115,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [2.1 Maxwell's Rule of Exact Constraint ($6 - C = \text{DOF}$) & Abbe Error]
 - **Core Summary:** Eliminates mechanical binding, thermal warping, and measurement offset errors by constraining exactly $C = 6 - \text{DOF}$ independent points (such as a 3-2-1 Kelvin Kinematic Coupling) and aligning encoders coaxial with the load axis (Abbe's Principle).
-  $$\text{DOF} = 6 - \sum_{i=1}^m c_i, \qquad \varepsilon_{\text{Abbe}} = L_{\text{offset}}\cdot\sin(\theta_{\text{parasitic}})$$
+
+$$
+\text{DOF} = 6 - \sum_{i=1}^m c_i, \qquad \varepsilon_{\text{Abbe}} = L_{\text{offset}}\cdot\sin(\theta_{\text{parasitic}})
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Precision Machine Design: Exact Constraint & Kinematic Couplings (Prof. Alex Slocum, MIT)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Explains 3-vee and Kelvin 3-2-1 kinematic couplings, Hertzian contact stresses, and thermal centers.*
 - **🧪 Hands-On Exercise:**
@@ -120,7 +139,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [2.2 Manipulator Jacobians: Velocity Mapping & Virtual Work ($\tau = J^\top F$)]
 - **Core Summary:** Derives the manipulator Jacobian matrix $J(q) = \frac{\partial x}{\partial q}$, proving by the Principle of Virtual Work ($\delta W = \tau^\top \delta q = F^\top \delta x = F^\top J(q)\delta q$) that $J(q)^\top$ maps Cartesian end-effector forces $F_{\text{ext}}$ directly to joint torques $\tau = J(q)^\top F_{\text{ext}}$.
-  $$\dot{x} = J(q)\dot{q}, \qquad \tau = J(q)^\top F_{\text{ext}}, \qquad w(q) = \sqrt{\det\big(J(q)J(q)^\top\big)}$$
+
+$$
+\dot{x} = J(q)\dot{q}, \qquad \tau = J(q)^\top F_{\text{ext}}, \qquad w(q) = \sqrt{\det\big(J(q)J(q)^\top\big)}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Modern Robotics — Ch. 5: Velocity Kinematics and Statics (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Derives the Jacobian, force-torque duality $\tau = J^\top F$, and manipulability ellipsoids.*
   - 🔗 [Robotic Manipulation — Ch. 3: Basic Pick and Place & Jacobians (Russ Tedrake, MIT)](https://manipulation.csail.mit.edu/) — *Shows how Jacobian Transpose control provides smooth Cartesian compliance.*
@@ -141,7 +164,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [2.3 Programmatic CAD (`CadQuery`) & Validating URDF / MuJoCo Inertias]
 - **Core Summary:** Generates parametric `.step` and `.stl` mechanical parts in Python (`CadQuery`) and validates exported `URDF` and `MuJoCo` link inertia tensors against Sylvester's positive-definite criterion and the principal inertia triangle inequality $I_1 + I_2 \ge I_3$.
-  $$I_C = R\,\text{diag}(I_1, I_2, I_3)R^\top \succ 0, \qquad I_1 + I_2 \ge I_3, \qquad I_O = I_C + m\big((r^\top r)\mathbf{1}_3 - r r^\top\big)$$
+
+$$
+I_C = R\,\text{diag}(I_1, I_2, I_3)R^\top \succ 0, \qquad I_1 + I_2 \ge I_3, \qquad I_O = I_C + m\big((r^\top r)\mathbf{1}_3 - r r^\top\big)
+$$
+
 - **Curated Free Resources:**
   - 🔗 [CadQuery Python Parametric CAD Documentation (cadquery.readthedocs.io)](https://cadquery.readthedocs.io/) — *Open-source Python library built on OpenCascade for code-first mechanical design.*
   - 🔗 [FreeCAD 1.0+ Open-Source Parametric 3D Modeler & FEM Workbench (freecad.org)](https://www.freecad.org/) — *Full-featured open-source 3D CAD with integrated CalculiX Finite Element Analysis (FEA) and Assembly4/Ondsel solvers.*
@@ -244,7 +271,11 @@ flowchart TB
 
 ### [4.2 Exact Kinematic Constraint, Abbe Principle & Monolithic Flexures]
 - **Core Summary:** Designs zero-backlash, zero-friction monolithic `Ti-6Al-4V` circular notch flexure hinges using the Paros-Weisbord stiffness formula $k_\theta = \frac{2Ebt^{5/2}}{9\pi\sqrt{R}}$ while bounding peak outer-fiber bending stress $\sigma_{\max} = K_t \frac{6M_{\max}}{bt^2}$ below the $10^7$-cycle endurance limit.
-  $$k_\theta \approx \frac{2 E b t^{5/2}}{9 \pi \sqrt{R}}, \qquad \sigma_{\max} = K_t \frac{6 M_{\max}}{b t^2}, \qquad K_t \approx \frac{1 + 2.7 t / (2R)}{\left(1 + t / (2R)\right)^2}$$
+
+$$
+k_\theta \approx \frac{2 E b t^{5/2}}{9 \pi \sqrt{R}}, \qquad \sigma_{\max} = K_t \frac{6 M_{\max}}{b t^2}, \qquad K_t \approx \frac{1 + 2.7 t / (2R)}{\left(1 + t / (2R)\right)^2}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Compliant Mechanisms Lecture Series & Reference Resources (BYU Compliant Mechanisms Research)](https://compliantmechanisms.byu.edu/) — *Open educational resources on flexure hinges, pseudo-rigid-body models, and fatigue design.*
   - 🔗 [Paros & Weisbord (1965): How to Design Flexure Hinges (classic derivation notes)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Derives the circular notch compliance equations used in precision wafer stages and FTS diamond turning.*
@@ -265,8 +296,15 @@ flowchart TB
 
 ### [4.3 Spatial Kinematics via Screw Theory ($SE(3)$) & $O(n)$ Multibody Dynamics]
 - **Core Summary:** Formulates 3D serial-chain forward kinematics and space/body Jacobians via the Product of Exponentials ($\text{PoE}$) screw formula, proves the passivity skew-symmetry property $x^\top(\dot{M}(q) - 2C(q,\dot{q}))x = 0$, and executes Featherstone's $\mathcal{O}(n)$ Recursive Newton-Euler Algorithm (RNEA) in 6D Plücker coordinates.
-  $$T(q) = e^{[\mathcal{S}_1]q_1}\cdots e^{[\mathcal{S}_n]q_n} M, \qquad J_{s,i}(q) = \text{Ad}_{\left(e^{[\mathcal{S}_1]q_1}\cdots e^{[\mathcal{S}_{i-1}]q_{i-1}}\right)}(\mathcal{S}_i)$$
-  $$\mathcal{V}_i = \text{Ad}_{T_{i,i-1}}\mathcal{V}_{i-1} + \mathcal{S}_i\dot{q}_i, \qquad \mathcal{F}_i = \text{Ad}_{T_{i+1,i}}^\top \mathcal{F}_{i+1} + \mathcal{G}_i\dot{\mathcal{V}}_i - \text{ad}_{\mathcal{V}_i}^\top(\mathcal{G}_i\mathcal{V}_i), \qquad \tau_i = \mathcal{S}_i^\top \mathcal{F}_i$$
+
+$$
+T(q) = e^{[\mathcal{S}_1]q_1}\cdots e^{[\mathcal{S}_n]q_n} M, \qquad J_{s,i}(q) = \text{Ad}_{\left(e^{[\mathcal{S}_1]q_1}\cdots e^{[\mathcal{S}_{i-1}]q_{i-1}}\right)}(\mathcal{S}_i)
+$$
+
+$$
+\mathcal{V}_i = \text{Ad}_{T_{i,i-1}}\mathcal{V}_{i-1} + \mathcal{S}_i\dot{q}_i, \qquad \mathcal{F}_i = \text{Ad}_{T_{i+1,i}}^\top \mathcal{F}_{i+1} + \mathcal{G}_i\dot{\mathcal{V}}_i - \text{ad}_{\mathcal{V}_i}^\top(\mathcal{G}_i\mathcal{V}_i), \qquad \tau_i = \mathcal{S}_i^\top \mathcal{F}_i
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Roy Featherstone: Spatial Vector Algebra & Rigid Body Dynamics Algorithms](https://royfeatherstone.org/spatial/) — *Direct tutorials and 6D spatial vector code from the author of Rigid Body Dynamics Algorithms.*
   - 🔗 [Modern Robotics — Ch. 4 & Ch. 8: Product of Exponentials & Newton-Euler Dynamics (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Step-by-step derivations and open-source Python (`modern_robotics`) implementations of PoE and RNEA.*

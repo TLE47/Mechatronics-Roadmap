@@ -139,7 +139,13 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   <summary><b>Click to toggle quiz questions & answers</b></summary>
 
   **Q1:** How does the Kalman Filter know how to estimate gyroscope bias $b_g$ when the accelerometer only measures tilt angle $y_k = \theta_k$ ($H = [1, 0]$) and cannot measure $b_g$ directly?
-  * **Answer / Explanation:** During the **Prediction step**, $P_k^- = A_d P_{k-1}^+ A_d^\top + Q_d$ builds a negative off-diagonal cross-covariance $P_{12}^- < 0$ between angle $\theta$ and bias $b_g$ (because a positive bias error causes a negative angle prediction error via $-\Delta t$). When the **Update step** computes $K_k = P_k^- H^\top S^{-1} = \begin{bmatrix} P_{11}^- \\ P_{21}^- \end{bmatrix} S^{-1}$, that off-diagonal covariance $P_{21}^-$ maps angle innovation $(y_k - \hat{\theta}_k^-)$ directly into a correction of the hidden bias $\hat{b}_g$!
+  * **Answer / Explanation:** During the **Prediction step**, $P_k^- = A_d P_{k-1}^+ A_d^\top + Q_d$ builds a negative off-diagonal cross-covariance $P_{12}^- < 0$ between angle $\theta$ and bias $b_g$ (because a positive bias error causes a negative angle prediction error via $-\Delta t$). When the **Update step** computes
+
+$$
+K_k = P_k^- H^\top S^{-1} = \begin{bmatrix} P_{11}^- \\ P_{21}^- \end{bmatrix} S^{-1}
+$$
+
+  , that off-diagonal covariance $P_{21}^-$ maps angle innovation $(y_k - \hat{\theta}_k^-)$ directly into a correction of the hidden bias $\hat{b}_g$!
 
   **Q2:** What happens to the Kalman Gain $K_k = P_k^- H^\top (H P_k^- H^\top + R)^{-1}$ as the sensor measurement noise covariance $R \to \infty$ (e.g., during violent vibration)?
   * **Answer & Explanation:** As $R \to \infty$, $(H P_k^- H^\top + R)^{-1} \to 0$, so $K_k \to 0$: the filter automatically ignores the noisy sensor measurement and coasts purely on its physics/gyro prediction model!
@@ -223,6 +229,11 @@ $$
 
 $$
 S(s) + T(s) \equiv 1, \qquad \int_0^\infty \ln |S(j\omega)|\,d\omega = 0, \qquad \omega_c < \frac{\phi_{\text{margin,rad}}}{\tau_{\text{delay}}}
+$$
+
+
+$$
+u_k = u_{\text{ff}} + K_p\left(b\,r_k - y_k\right) + I_k + D_k, \qquad D_k = \alpha_d D_{k-1} - K_d N_d \alpha_d\left(y_k - y_{k-1}\right), \quad \alpha_d = \frac{1}{1 + N_d \Delta t}, \qquad I_k = I_{k-1} + \Delta t\left(K_i(r_k - y_k) + K_{aw}\left(u_{\text{sat},k} - u_{\text{unsat},k}\right)\right)
 $$
 
 ```cpp
@@ -357,4 +368,4 @@ $$
 | **Robustness Sensitivity Peak ($M_s, M_t$)** | $M_s = \|S(j\omega)\|_\infty \le 1.75$ ($4.8\text{ dB}$), $M_t \le 1.4$ | Gang-of-Four Bode audit |
 | **ESKF Statistical Consistency (NEES)** | Mean NEES within $95\%$ $\chi^2_6$ bounds $[0.21, 2.41]$ (normalized per DOF) | Interactive **Tab 8: Attitude ESKF & SeqLock Simulator** |
 | **Furuta Swing-Up & LQR Balancing** | Autonomous catch within $< 2.2\text{ s}$ and steady RMS error $< 0.08^\circ$ | Interactive **Tab 4: Furuta Pendulum + LQR + CBF Simulator** |
-| **CBF Safety Invariance** | $\min_t h(x(t)) \ge 0$ ($|x_c| \le x_{\max}$) under $+3.2\text{ rad/s}$ impulse push | Interactive **Tab 4: CBF Safety Wall Test** |
+| **CBF Safety Invariance** | $\min_t h(x(t)) \ge 0$ ($\lvert x_c \rvert \le x_{\max}$) under $+3.2\text{ rad/s}$ impulse push | Interactive **Tab 4: CBF Safety Wall Test** |

@@ -26,7 +26,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [1.1 Logic Levels ($3.3\text{ V}$ vs. $5\text{ V}$) & Open-Drain Pull-Ups]
 - **Core Summary:** Explains why applying $5\text{ V}$ signals to non-$5\text{V}$-tolerant $3.3\text{ V}$ microcontroller pins (`ESP32`, `RP2040`, `STM32` analog pins) forward-biases internal ESD protection diodes to `VDD`, and how open-drain buses (`I2C`) and `BSS138` level shifters safely bridge voltage domains.
-  $$I_{\text{ESD\_fault}} = \frac{V_{\text{in}} - (V_{DD} + 0.6\text{ V})}{R_{\text{source}}}, \qquad t_{r,\text{I2C}} \approx 0.8473 \cdot R_{\text{pullup}} C_{\text{bus}}$$
+
+$$
+I_{\text{ESD\_fault}} = \frac{V_{\text{in}} - (V_{DD} + 0.6\text{ V})}{R_{\text{source}}}, \qquad t_{r,\text{I2C}} \approx 0.8473 \cdot R_{\text{pullup}} C_{\text{bus}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [SparkFun: Logic Levels (3.3V vs. 5V CMOS/TTL Thresholds)](https://learn.sparkfun.com/tutorials/logic-levels) — *Clear visual guide to $V_{IH}$, $V_{IL}$, $V_{OH}$, $V_{OL}$ thresholds and ESD clamping diodes.*
   - 🔗 [SparkFun: Bi-Directional Logic Level Converter Hookup Guide](https://learn.sparkfun.com/tutorials/bi-directional-logic-level-converter-hookup-guide) — *Explains how a single `BSS138` N-MOSFET and two pull-up resistors shift bidirectional I2C signals between $3.3\text{ V}$ and $5\text{ V}$.*
@@ -48,7 +52,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [1.2 Low-Side MOSFET Switching, Flyback Diodes & H-Bridge Breakouts]
 - **Core Summary:** Demonstrates how a logic-level N-MOSFET or 4-switch H-bridge (`DRV8833` / `TB6612FNG`) amplifies milliamp MCU PWM signals into multi-amp bidirectional motor currents while safely recirculating inductive turn-off currents through flyback/freewheeling diodes.
-  $$V_{\text{motor}} = (D_A - D_B)V_{\text{bus}}, \qquad P_{\text{cond}} = I_{\text{motor}}^2 R_{DS(\text{on})}$$
+
+$$
+V_{\text{motor}} = (D_A - D_B)V_{\text{bus}}, \qquad P_{\text{cond}} = I_{\text{motor}}^2 R_{DS(\text{on})}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Texas Instruments SLVA959: Brushed DC Motor Driver Basics (H-Bridge Decay Modes)](https://www.ti.com/lit/pdf/slva959) — *Illustrates Forward, Reverse, Fast Decay (Coast), and Slow Decay (Brake) current loops inside an H-bridge.*
   - 🔗 [Adafruit DRV8833 DC/Stepper Motor Driver Breakout Guide](https://learn.adafruit.com/adafruit-drv8833-dc-stepper-motor-driver-breakout-board) & [Practical Electronics for Inventors (Scherz & Monk)](https://www.mhprofessional.com/practical-electronics-for-inventors-fifth-edition-9781264268856-usa) — *Beginner wiring guide showing `AIN1/AIN2` PWM inputs, current limiting, and `nFAULT` protection.*
@@ -69,7 +77,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [1.3 Why Motors Reboot Microcontrollers (Star Grounding & Decoupling)]
 - **Core Summary:** Diagnoses and cures the #1 beginner robotics failure—MCU brown-out resets during motor reversals—by separating noisy motor return currents from logic ground (Star Grounding) and pairing a $470\ \mu\text{F}$ bulk electrolytic reservoir on `VMOT` with a $100\text{ nF}$ ceramic bypass cap on `3.3V`.
-  $$\Delta V_{\text{GND\_bounce}} = I_{\text{stall}}R_{\text{wire}} + L_{\text{wire}}\frac{dI_{\text{motor}}}{dt}, \qquad C_{\text{bulk}} \ge \frac{I_{\text{surge}}\Delta t_{\text{surge}}}{\Delta V_{\text{droop}}}$$
+
+$$
+\Delta V_{\text{GND\_bounce}} = I_{\text{stall}}R_{\text{wire}} + L_{\text{wire}}\frac{dI_{\text{motor}}}{dt}, \qquad C_{\text{bulk}} \ge \frac{I_{\text{surge}}\Delta t_{\text{surge}}}{\Delta V_{\text{droop}}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Analog Devices MT-101: Decoupling Techniques (Bulk vs. Ceramic Bypass)](https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf) — *Explains why electrolytic and ceramic capacitors work together across low and high frequencies.*
   - 🔗 [Pololu: Dealing with Motor Noise & Power Supply Voltage Spikes](https://www.pololu.com/docs/0J15/9) — *Practical guide showing how to place $0.1\ \mu\text{F}$ ceramic caps across motor terminals and bulk caps across `VMOT`.*
@@ -98,7 +110,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [2.1 Schematic Capture, SMD Footprints & 4-Layer KiCad PCB Layout]
 - **Core Summary:** Introduces custom PCB engineering in KiCad using a 4-layer stackup (`L1: Signal/Power` $\to$ `L2: Unbroken Solid GND` $\to$ `L3: Power Pours` $\to$ `L4: Signals`), Design Rule Checks (DRC), thermal via stitching under MOSFET pads, and desktop SMD reflow assembly (`0603`, `SOIC`, `QFN`).
-  $$L_{\text{loop}} \approx \mu_0 \frac{h_{\text{prepreg}}}{w_{\text{trace}}}\ell, \qquad R_{\theta,\text{via\_array}} = \frac{R_{\theta,\text{single\_via}}}{N_{\text{vias}}}$$
+
+$$
+L_{\text{loop}} \approx \mu_0 \frac{h_{\text{prepreg}}}{w_{\text{trace}}}\ell, \qquad R_{\theta,\text{via\_array}} = \frac{R_{\theta,\text{single\_via}}}{N_{\text{vias}}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [KiCad Official Getting Started & Layout Documentation (docs.kicad.org)](https://docs.kicad.org/) & [LTspice Free SPICE Simulator (Analog Devices)](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) — *Step-by-step workflow from SPICE gate-drive simulation and schematic symbols to 4-layer routing, DRC verification, and Gerber/BOM generation.*
   - 🔗 [Phil's Lab STM32 & Mixed-Signal KiCad Hardware Design Tutorials (YouTube)](https://www.youtube.com/c/PhilsLab) & [The Art of Electronics (Horowitz & Hill)](https://artofelectronics.net/) — *Detailed video walkthroughs of 4-layer stackups, grounding, decoupling placement, and JLCPCB SMT assembly.*
@@ -108,7 +124,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
-  **Q1:** Why is a **4-layer PCB** (`Sig / GND / PWR / Sig`) vastly superior to a 2-layer PCB for a mixed-signal motor controller, even though it only costs ~$2–$5 more at prototype fabs?
+  **Q1:** Why is a **4-layer PCB** (`Sig / GND / PWR / Sig`) vastly superior to a 2-layer PCB for a mixed-signal motor controller, even though it only costs ~\$2–\$5 more at prototype fabs?
   * **Answer / Explanation:** On a 2-layer board, routing gate and sensor traces on the bottom layer inevitably slices slots through your ground plane—forcing high-frequency return currents to detour around the slots and creating large radiating magnetic loops. Dedicating Layer 2 to an **unbroken solid ground plane** just $0.1\text{–}0.2\text{ mm}$ beneath Layer 1 shrinks loop inductance by $5\text{–}8\times$ and shields sensitive analog traces.
   
   **Q2:** Why must you place an array of small plated through-hole **thermal vias** ($0.3\text{ mm}$ drill) directly inside the exposed drain/ground pad of a surface-mount power MOSFET or gate driver?
@@ -119,7 +135,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [2.2 Gate Driver Bootstrap Circuits & Shoot-Through Dead-Time]
 - **Core Summary:** Explains how a floating bootstrap capacitor ($C_{\text{boot}}$) and diode generate a gate voltage $+10\text{–}12\text{ V}$ above the switching node to turn on high-side N-MOSFETs, how gate resistors ($R_g$) control switching slew rate $I_g = Q_g/t_r$, and how hardware dead-time prevents high-side/low-side shoot-through.
-  $$I_{\text{gate}} = \frac{Q_{g,\text{total}}}{t_{\text{rise}}}, \qquad C_{\text{boot}} \ge \frac{10 \cdot Q_{g,\text{total}}}{\Delta V_{\text{boot\_droop}}}, \qquad t_{\text{dead}} > t_{d(\text{off})} + t_f - t_{d(\text{on})}$$
+
+$$
+I_{\text{gate}} = \frac{Q_{g,\text{total}}}{t_{\text{rise}}}, \qquad C_{\text{boot}} \ge \frac{10 \cdot Q_{g,\text{total}}}{\Delta V_{\text{boot\_droop}}}, \qquad t_{\text{dead}} > t_{d(\text{off})} + t_f - t_{d(\text{on})}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Texas Instruments SLUA618: Fundamentals of MOSFET and IGBT Gate Driver Circuits](https://www.ti.com/lit/pdf/slua618) — *Industry-standard engineering guide covering gate charge curves, Miller plateau, bootstrap sizing, and dead-time.*
   - 🔗 [Infineon AN-978: HV Floating MOS-Gate Driver ICs (Bootstrap Design)](https://www.infineon.com/dgdl/Infineon-HV_Floating_MOS_Gate_Drivers-ApplicationNotes-v01_00-EN.pdf?fileId=5546d4626c1f3dc3016c47de609d140a) — *Detailed calculation walkthrough for bootstrap diodes and capacitors.*
@@ -140,7 +160,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ### [2.3 4-Terminal Kelvin Current Shunts & Differential Sense Amplifier (`INA240`)]
 - **Core Summary:** Routes clean millivolt current measurements from $1\text{ m}\Omega$ shunts using 4-terminal Kelvin sense traces into a bidirectional PWM-rejection instrumentation amplifier (`INA240A2`, gain $20\text{ V/V}$) biased around $V_{\text{ref}}/2 = 1.65\text{ V}$.
-  $$V_{\text{ADC}} = \frac{V_{\text{ref}}}{2} + G_{\text{INA240}}\cdot (I_{\text{phase}}R_{\text{shunt}}), \qquad I_{\max} = \pm\frac{V_{\text{ref}}/2}{G \cdot R_{\text{shunt}}}$$
+
+$$
+V_{\text{ADC}} = \frac{V_{\text{ref}}}{2} + G_{\text{INA240}}\cdot (I_{\text{phase}}R_{\text{shunt}}), \qquad I_{\max} = \pm\frac{V_{\text{ref}}/2}{G \cdot R_{\text{shunt}}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Texas Instruments SBOA170: Optimizing Kelvin Connections for Low-Side Current Sensing](https://www.ti.com/lit/pdf/sboa170) — *PCB footprint diagrams showing exactly how to split the inner sense pads on a 2-pad or 4-pad shunt resistor.*
   - 🔗 [TI INA240 Zero-Drift Current-Sense Amplifier with Enhanced PWM Rejection Datasheet](https://www.ti.com/lit/ds/symlink/ina240.pdf) — *Explains common-mode transient rejection and bidirectional reference biasing.*
@@ -250,7 +274,10 @@ flowchart TB
 
 ### [4.2 Precision Analog Front-End (AFE) & SAR ADC Charge-Bucket Engineering]
 - **Core Summary:** Designs low-noise, linear-phase 2nd-order Bessel anti-aliasing filters and sizes SAR ADC RC charge buckets ($C_{\text{filt}} \ge 20\,C_{\text{sh}}$ using `C0G/NP0` dielectric) so switching charge kickback from the ADC's internal sampling switch settles to $< 0.25\text{ LSB}$ within the $70\text{ ns}$ acquisition window.
-  $$\Delta V_{\text{kick}} \approx \frac{C_{\text{sh}}}{C_{\text{filt}} + C_{\text{sh}}}\Delta V_{\text{step}}, \qquad t_{\text{acq}} \ge \ln(2^{N+1})\cdot R_{\text{filt}}C_{\text{sh}}$$
+
+$$
+\Delta V_{\text{kick}} \approx \frac{C_{\text{sh}}}{C_{\text{filt}} + C_{\text{sh}}}\Delta V_{\text{step}}, \qquad t_{\text{acq}} \ge \ln(2^{N+1})\cdot R_{\text{filt}}C_{\text{sh}}
+$$
 
 | Filter Topology | Magnitude Response | Step Response Overshoot | Group Delay $\tau_g(\omega) = -\frac{d\phi}{d\omega}$ | Mechatronics Application |
 | :--- | :--- | :--- | :--- | :--- |
@@ -278,8 +305,15 @@ flowchart TB
 
 ### [4.3 Power Electronics, Gate Drives & Inverter Thermal Network]
 - **Core Summary:** Models high-frequency switching transients ($V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{dI}{dt}$), Miller $C_{gd}\frac{dV}{dt}$ shoot-through immunity, and solves the coupled fixed-point electro-thermal equation linking temperature-dependent $R_{DS(\text{on})}(T_j)$ to total conduction, switching, output-capacitance ($C_{oss}$), and reverse-recovery ($Q_{rr}$) losses.
-  $$V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{dI}{dt}, \qquad P_{\text{total}} = I_{\text{rms}}^2 R_{DS(\text{on})}(T_j) + \frac{1}{2} V_{\text{bus}} I_{\text{load}} (t_r + t_f) f_{sw} + \frac{1}{2} C_{oss} V_{\text{bus}}^2 f_{sw} + V_{\text{bus}} Q_{rr} f_{sw}$$
-  $$R_{DS(\text{on})}(T_j) \approx R_{DS(\text{on})}(25^\circ\text{C}) \cdot \left(1 + \alpha_T (T_j - 25^\circ\text{C})\right), \qquad T_j = T_{\text{ambient}} + P_{\text{total}} \cdot R_{\theta\text{JA}}$$
+
+$$
+V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}} \frac{dI}{dt}, \qquad P_{\text{total}} = I_{\text{rms}}^2 R_{DS(\text{on})}(T_j) + \frac{1}{2} V_{\text{bus}} I_{\text{load}} (t_r + t_f) f_{sw} + \frac{1}{2} C_{oss} V_{\text{bus}}^2 f_{sw} + V_{\text{bus}} Q_{rr} f_{sw}
+$$
+
+$$
+R_{DS(\text{on})}(T_j) \approx R_{DS(\text{on})}(25^\circ\text{C}) \cdot \left(1 + \alpha_T (T_j - 25^\circ\text{C})\right), \qquad T_j = T_{\text{ambient}} + P_{\text{total}} \cdot R_{\theta\text{JA}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Infineon Application Note: MOSFET Power Losses Calculation Using the Data-Sheet Parameters](https://www.infineon.com/dgdl/Infineon-ApplicationNote_MOSFET_Power_Losses_Calculation_Using_the_DataSheet_Parameters-AN-v01_00-EN.pdf?fileId=db3a30431add1d95011ae08005a90294) — *Complete industry derivation of conduction, switching, gate-charge, and reverse-recovery losses.*
   - 🔗 [Texas Instruments SLUA887: Understanding & Preventing dV/dt Turn-On (Miller Shoot-Through)](https://www.ti.com/lit/pdf/slua887) — *Derives the condition $R_{g,\text{off}} C_{gd}\frac{dV}{dt} < V_{GS(\text{th})}$ and asymmetric gate drive techniques.*

@@ -132,7 +132,7 @@ $$
 ### From Software `if (fault) pwm = 0` Checks to $<1\ \mu\text{s}$ Dual-Channel Hardware Safe Torque Off (STO)
 
 * **Why Software `if (current > max) analogWrite(0)` Fails in Production:**
-  1. **Too Slow:** A dead phase-to-phase short across a $48\text{ V}$ bus with $L_s = 35\ \mu\text{H}$ ramps current at $\frac{dI}{dt} = \frac{48\text{ V}}{35\ \mu\text{H}} = 1.37\text{ A/\mu s}$. In a $1\text{ kHz}$ ($1000\ \mu\text{s}$) software loop, current would try to reach $>1,000\text{ A}$, exploding the MOSFETs in the first $10\ \mu\text{s}$!
+  1. **Too Slow:** A dead phase-to-phase short across a $48\text{ V}$ bus with $L_s = 35\ \mu\text{H}$ ramps current at $\frac{dI}{dt} = \frac{48\text{ V}}{35\ \mu\text{H}} = 1.37\text{ A}/\mu\text{s}$. In a $1\text{ kHz}$ ($1000\ \mu\text{s}$) software loop, current would try to reach $>1,000\text{ A}$, exploding the MOSFETs in the first $10\ \mu\text{s}$!
   2. **Single Point of Failure:** If the CPU hangs inside an infinite loop or suffers a stack overflow, software `if` checks never run.
 * **How Production Drives Guarantee Safety (IEC 61800-5-2 Dual-Channel Hardware STO):**
   1. **Analog Comparator $\to$ Timer `BKIN` ($< 650\text{ ns}$):** An analog window comparator watching the Kelvin shunt amplifier output feeds directly into the `STM32` `TIM1_BKIN` hardware break pin, asynchronously tristating all 6 PWM outputs in silicon in **$< 1\ \mu\text{s}$** with zero CPU instructions!

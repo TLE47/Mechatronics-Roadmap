@@ -21,7 +21,7 @@
 
 > **🏆 Goal of Pass 1 Boss (`Track 08 · Tier 1`):** Combine every skill from Pass 1 (`Track 00` $\to$ `Track 07`) to build a complete, desktop-safe **$12\text{ V}$ 2-DOF Planar Compliant Robot Arm** (or 1-Axis Reaction-Wheel Pendulum) using off-the-shelf breakout boards, 3D-printed double-shear links, and a $1\text{ kHz}$ timer ISR.
 
-### 1.1 Tier 1 Boss Architecture: 2-DOF Breakout Compliant Desktop Robot (`~$120` BOM)
+### 1.1 Tier 1 Boss Architecture: 2-DOF Breakout Compliant Desktop Robot (`~\$120` BOM)
 - **Core Summary:** Integrates every Pass 1 milestone into a physical 2-DOF desktop robot arm using off-the-shelf `SimpleFOCMini` (`DRV8313`) breakouts, `AS5600`/`AS5048A` magnetic encoders, 3D-printed double-shear `608` bearing joints, a $1.000\text{ kHz}$ hardware timer ISR, cubic spline interpolation, and joint-space virtual spring-damper compliance.
   * **Compute:** `ESP32-S3` or `STM32 Nucleo-G474RE` running a zero-`delay()` $1.000\text{ kHz}$ hardware timer ISR (Track 04 Tier 1).
   * **Power & Actuators:** $12\text{ V} / 3\text{ A}$ current-limited bench supply + $470\ \mu\text{F}$ bulk decoupling + $2\times$ gimbal BLDC motors (`2804`/`4108` hollow-shaft) driven by `SimpleFOCMini` (`DRV8313`) breakouts (Track 01 & Track 03 Tier 1).
@@ -29,7 +29,7 @@
   * **Mechanics & Control:** 3D-printed 2-link planar arm ($L_1 = 100\text{ mm}, L_2 = 100\text{ mm}$) with `608` radial ball bearings in double shear, tracking a smooth cubic-polynomial figure-8 trajectory with joint-space virtual spring-damper compliance (Track 02 & Track 06 Tier 1).
 - **Curated Free Resources:**
   - 🔗 [SimpleFOC Project Hub: Dual-Motor Gimbal & 2-DOF Arm Examples](https://docs.simplefoc.com/examples) — *Complete wiring schematics and dual-axis closed-loop position/torque sketches for `ESP32` and `STM32`.*
-  - 🔗 [SO-101 / SO-ARM100 Open-Source 3D-Printed 6-DOF Leader-Follower Arm (TheRobotStudio)](https://github.com/TheRobotStudio/SO-ARM100) — *$\$110\text{–}\$130$ open-source 3D-printed desktop manipulator natively supported by Hugging Face `LeRobot` for teleoperation and imitation learning.*
+  - 🔗 [SO-101 / SO-ARM100 Open-Source 3D-Printed 6-DOF Leader-Follower Arm (TheRobotStudio)](https://github.com/TheRobotStudio/SO-ARM100) — *\$110–\$130 open-source 3D-printed desktop manipulator natively supported by Hugging Face `LeRobot` for teleoperation and imitation learning.*
   - 🔗 [LeKiwi Open-Source 3-Wheel Omnidirectional Holonomic Mobile Base (SIGRobotics-UIUC)](https://github.com/SIGRobotics-UIUC/LeKiwi) — *Low-cost holonomic mobile base designed to carry the `SO-101` arm for mobile manipulation.*
   - 🔗 [Lab Workbench Bill of Materials (`resources/lab-workbench-bom.md`)](../resources/lab-workbench-bom.md) — *Exact part numbers and budget links for all Tier 1 breakout modules, encoders, bearings, and bench tools.*
 - **🧪 Hands-On Exercise:**
@@ -241,7 +241,7 @@ flowchart TB
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
 
-  **Q1:** How do you calibrate the link length and joint zero-offset manufacturing errors ($\Delta \theta_i, \Delta L_i$) of a 3D-printed or CNC-machined 6-DOF arm down to $< 0.35\text{ mm}$ without a $\$50,000$ laser tracker?
+  **Q1:** How do you calibrate the link length and joint zero-offset manufacturing errors ($\Delta \theta_i, \Delta L_i$) of a 3D-printed or CNC-machined 6-DOF arm down to $< 0.35\text{ mm}$ without a \$50,000 laser tracker?
   * **Answer / Explanation:** Use **Closed-Loop Kinematic Calibration**! Touch a pointed stylus mounted on the end-effector into 20+ machined dimples at known spacing on an aluminum calibration plate (or observe a printed ChArUco board from 30 poses), and run non-linear least-squares (`scipy.optimize.least_squares`) on the Product-of-Exponentials twist parameters $\xi_i$ to minimize the residual position error $\|\text{FK}(q_k; \xi) - p_{\text{plate},k}\|_2^2$.
 
   **Q2:** Why does a 6-DOF arm using $8:1$ planetary QDD actuators achieve $< 3.5\text{ N}$ backdriving transparency using motor current sensing alone, whereas a $100:1$ harmonic-drive arm requires joint torque sensors (`JTS`) or a 6-axis wrist Force/Torque sensor?

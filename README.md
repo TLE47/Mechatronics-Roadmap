@@ -28,7 +28,7 @@ Read **down a column** to execute a linear pass from Track 00 to Track 08, or re
 | **[Track 08: Capstone Projects](08-capstone-projects/README.md)** | [Tier 1 Boss: Breakout 2-DOF Arm / `SO-101` / `LeKiwi`](08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass) | [Tier 2 Boss: Custom 4-Layer CAN Servo + LQR/MuJoCo / `Pupper` / `UMI`](08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass) | [Tier 3 Boss: Capstones I–V (`48V` FOC, Furuta, 6-DOF, `ODRI` Hopper, `ALOHA 2` / `Reachy 2`)](08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass) | [Progressive 3-Pass Hardware/Software Capstone Evolution](08-capstone-projects/README.md#bridging-the-gap-maker-to-custom) |
 
 ### 📚 Supporting Reference & Lab Setup Guides (Merged with [`engyasin/awesome-mechatronics`](https://github.com/engyasin/awesome-mechatronics))
-* **[Tiered Hardware Lab & Workbench BOM (`resources/lab-workbench-bom.md`)](resources/lab-workbench-bom.md):** Exact shopping lists for **Level 0 / Tier 1 ($150 Starter Bench)**, **Tier 2 ($600 Custom PCB & CAN Bench)**, and **Tier 3 ($3,500+ Production Metrology & HIL Lab)**, plus open-source actuators (`SimpleFOCMini`, `ODrive`, `VESC`, `mjbots moteus`) and open robot platforms (`SO-101`, `LeKiwi`, `UMI`, `ALOHA 2`, `Open-Duck-Mini`, `Stanford Pupper`, `ODRI`, `Reachy 2`).
+* **[Tiered Hardware Lab & Workbench BOM (`resources/lab-workbench-bom.md`)](resources/lab-workbench-bom.md):** Exact shopping lists for **Level 0 / Tier 1 (\$150 Starter Bench)**, **Tier 2 (\$600 Custom PCB & CAN Bench)**, and **Tier 3 (\$3,500+ Production Metrology & HIL Lab)**, plus open-source actuators (`SimpleFOCMini`, `ODrive`, `VESC`, `mjbots moteus`) and open robot platforms (`SO-101`, `LeKiwi`, `UMI`, `ALOHA 2`, `Open-Duck-Mini`, `Stanford Pupper`, `ODRI`, `Reachy 2`).
 * **[1-Page Production Engineering Cheat Sheet (`resources/mechatronics-cheatsheet.md`)](resources/mechatronics-cheatsheet.md)**
 * **[Open-Source Toolchains, Simulators & Robotics Stacks (`resources/open-source-toolchains.md`)](resources/open-source-toolchains.md)** & **[Curated Textbooks, Papers, Courses & Standards (`resources/textbooks-and-papers.md`)](resources/textbooks-and-papers.md)**
 
@@ -94,7 +94,7 @@ If you come from a pure software background, start here before opening Track 00.
 - **Curated Free Resources:**
   - 🔗 [SparkFun: How to Use a Breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard) — *X-ray photos of internal 5-pin spring clips, power bus rails, and common short-circuit mistakes.*
   - 🔗 [Adafruit: Multimeters Guide — Continuity, Voltage & Current](https://learn.adafruit.com/multimeters) — *Step-by-step guide to continuity beep checks and why measuring voltage with probes in the Amps jack blows the DMM fuse.*
-  - 🔗 [PulseView & sigrok Open-Source Logic Analyzer Manual](https://sigrok.org/wiki/PulseView) — *Free open-source protocol decoder documentation for $15 USB logic analyzers (`I2C`, `SPI`, `UART`, `PWM`).*
+  - 🔗 [PulseView & sigrok Open-Source Logic Analyzer Manual](https://sigrok.org/wiki/PulseView) — *Free open-source protocol decoder documentation for \$15 USB logic analyzers (`I2C`, `SPI`, `UART`, `PWM`).*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a $1\text{ k}\Omega$ resistor and $100\text{ nF}$ capacitor as a low-pass filter on a breadboard. (1) Perform an unpowered DMM Continuity Beep Check between `VCC` and `GND`. (2) Set your bench PSU to $5.0\text{ V}$ and a **$50\text{ mA}$ Constant-Current (CC) limit** before enabling output. (3) Feed a $1\text{ kHz}$ square wave into the RC input and measure the $10\%\to 90\%$ rise time ($t_r \approx 2.2 R C = 220\ \mu\text{s}$) on your oscilloscope.
 - **🧠 Knowledge Check:**
@@ -460,8 +460,22 @@ Loop back to Track 00 one final time for graduate theoretical depth and industri
   **Q1:** Why does naive floating-point evaluation of $\frac{1 - \cos\theta}{\theta^2}$ in Rodrigues' formula suffer catastrophic cancellation for $\theta = 10^{-5}\text{ rad}$ in `float32`?
   * **Answer / Explanation:** For $\theta = 10^{-5}$, $\cos\theta \approx 1 - 0.5\times 10^{-10}$. Because IEEE-754 `float32` has only 24 bits of mantissa ($\epsilon_{\text{mach}} \approx 1.19\times 10^{-7}$), $\cos(10^{-5})$ rounds to `1.0000000f`, making $1 - \cos\theta = 0$ instead of $\frac{1}{2}\theta^2$! Switching to the Taylor polynomial $\frac{1}{2} - \frac{\theta^2}{24}$ below $10^{-4}\text{ rad}$ preserves full machine precision.
   
-  **Q2:** How does Van Loan's block matrix exponential $\exp\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix}T_s\right) = \begin{bmatrix} A_d & B_d \\ 0 & I \end{bmatrix}$ compute exact Zero-Order Hold matrix $B_d = \left(\int_0^{T_s} e^{A_c \tau}d\tau\right)B_c$ even when $A_c$ is singular (non-invertible, e.g., pure double integrator)?
-  * **Answer & Explanation:** Computing $A_c^{-1}(e^{A_c T_s} - I)B_c$ fails with a division-by-zero singularity whenever $A_c$ has a zero eigenvalue (such as rigid-body position states). Evaluating the power series / Padé approximant of the upper-triangular block matrix $\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix}T_s$ integrates the Taylor series term-by-term without ever inverting $A_c$.
+  **Q2:** How does Van Loan's block matrix exponential
+
+$$
+\exp\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix}T_s\right) = \begin{bmatrix} A_d & B_d \\ 0 & I \end{bmatrix}
+$$
+
+  compute exact Zero-Order Hold matrix $B_d = \left(\int_0^{T_s} e^{A_c \tau}d\tau\right)B_c$ even when $A_c$ is singular (non-invertible, e.g., pure double integrator)?
+
+  * **Answer & Explanation:** Computing $A_c^{-1}(e^{A_c T_s} - I)B_c$ fails with a division-by-zero singularity whenever $A_c$ has a zero eigenvalue (such as rigid-body position states). Evaluating the power series / Padé approximant of the upper-triangular block matrix
+
+$$
+\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix}T_s
+$$
+
+  integrates the Taylor series term-by-term without ever inverting $A_c$.
+
   </details>
 
 ### Step 3.2 — [Track 01 (Tier 3): 6-Layer $<2\text{ nH}$ $48\text{ V}/30\text{ A}$ Inverter, Bessel AFE & SAR Charge Buckets](01-electronics-and-power/README.md#tier-3-advanced--production)

@@ -58,11 +58,15 @@ If you come from a strong computing/software background with no formal Electrica
 
 ### [0.2 Practical Bench Tools (Hands-On Before SPICE or KiCad)]
 - **Core Summary:** Introduces the essential physical debugging instruments—solderless breadboards, Digital Multimeter (DMM) continuity checks, Constant-Current/Constant-Voltage (CC/CV) bench power supplies as a hardware `try/catch` block, and USB logic analyzers vs. oscilloscopes.
-  $$V_{\text{load}} = V_{\text{supply}} - I_{\text{load}}R_{\text{breadboard}}, \qquad \tau_{RC} = R \cdot C$$
+
+$$
+V_{\text{load}} = V_{\text{supply}} - I_{\text{load}}R_{\text{breadboard}}, \qquad \tau_{RC} = R \cdot C
+$$
+
 - **Curated Free Resources:**
   - 🔗 [SparkFun: How to Use a Breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard) — *Shows cutaway photos of internal 5-pin spring clips and explains why breadboards fail at high current or high frequency.*
   - 🔗 [SparkFun: How to Use a Multimeter](https://learn.sparkfun.com/tutorials/how-to-use-a-multimeter) — *Covers the pre-power continuity beep test, measuring voltage in parallel, and avoiding blown current fuses.*
-  - 🔗 [sigrok PulseView Open-Source Logic Analyzer Documentation](https://sigrok.org/wiki/PulseView) — *Free software toolchain for decoding digital I2C, SPI, UART, and PWM waveforms with a $15 USB logic analyzer.*
+  - 🔗 [sigrok PulseView Open-Source Logic Analyzer Documentation](https://sigrok.org/wiki/PulseView) — *Free software toolchain for decoding digital I2C, SPI, UART, and PWM waveforms with a \$15 USB logic analyzer.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Wire a $1\text{ k}\Omega$ resistor and $100\text{ nF}$ capacitor as a low-pass filter on a breadboard. Perform a DMM continuity beep check between `VCC` and `GND`, power the circuit from a bench supply set to $5.0\text{ V}$ and a $0.05\text{ A}$ ($50\text{ mA}$) CC limit, and measure the $0\text{–}63.2\%$ rise time ($\tau = R C = 100\ \mu\text{s}$) on an oscilloscope.
 - **🧠 Knowledge Check:**
@@ -80,7 +84,11 @@ If you come from a strong computing/software background with no formal Electrica
 
 ### [0.3 Starter Hardware (`ESP32` / `Arduino` / `STM32 Nucleo`)]
 - **Core Summary:** Connects software variables to the physical world using the three core microcontroller peripherals: digital GPIO with pull-up/pull-down resistors, $20\text{ kHz}$ hardware timer PWM driving a low-side N-MOSFET + flyback diode, and 12-bit ADC voltage dividers.
-  $$V_{\text{avg}} = D \cdot V_{\text{bus}}, \qquad \text{ADC}_{\text{code}} = \left\lfloor 4095 \cdot \frac{V_{\text{in}}}{3.3\text{ V}} \right\rfloor$$
+
+$$
+V_{\text{avg}} = D \cdot V_{\text{bus}}, \qquad \text{ADC}_{\text{code}} = \left\lfloor 4095 \cdot \frac{V_{\text{in}}}{3.3\text{ V}} \right\rfloor
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Paul McWhorter: Arduino & ESP32 for Beginners (YouTube Course)](https://www.youtube.com/@paulmcwhorter) & [Wokwi Online ESP32, STM32 & Arduino Simulator (wokwi.com)](https://wokwi.com/) — *Patient hands-on beginner video series paired with an interactive browser simulator for GPIO, PWM, and ADCs with zero hardware cost.*
   - 🔗 [STM32 Step-by-Step Official Beginner Wiki (wiki.st.com)](https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview) — *Official hands-on tutorial series covering STM32 Nucleo pin configuration, hardware timers, PWM, and ADCs.*
@@ -106,6 +114,11 @@ If you come from a strong computing/software background with no formal Electrica
 
 ### [1.1 Differential Equations as Discrete `while` Loops]
 - **Core Summary:** Shows that any physical Ordinary Differential Equation (ODE) $\dot{x} = f(x, u)$ is simply a discrete software `while` loop updating a state struct by $\Delta t$, where updating velocity before position (Semi-Implicit / Symplectic Euler) preserves mechanical energy:
+
+$$
+m\ddot{x} + b\dot{x} + kx = F_{\text{cmd}}, \qquad a_k = \frac{F_{\text{cmd}} - b\,v_k - k\,x_k}{m}, \quad v_{k+1} = v_k + a_k \Delta t, \quad x_{k+1} = x_k + v_{k+1} \Delta t
+$$
+
   ```python
   # 1-DOF Mass-Spring-Damper in 3 Lines of Code (m*x_ddot + b*x_dot + k*x = F_cmd)
   a = (F_cmd - b * v - k * x) / m   # Newton's 2nd Law: F_net / m
@@ -132,7 +145,11 @@ If you come from a strong computing/software background with no formal Electrica
 
 ### [1.2 2D Coordinate Frames & Rotation Matrices ($SO(2)$)]
 - **Core Summary:** Introduces 2D rigid transformations using orthogonal $2\times 2$ rotation matrices $R(\theta)$ where $R(\theta)^{-1} = R(\theta)^\top$, and enforces safe angular error wrapping across the $\pm 180^\circ$ ($\pm\pi$) boundary via `atan2(sin(err), cos(err))`.
-  $$R(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}, \qquad e_\theta = \text{atan2}\big(\sin(\theta_{\text{ref}} - \theta_{\text{meas}}), \cos(\theta_{\text{ref}} - \theta_{\text{meas}})\big) \in (-\pi, \pi]$$
+
+$$
+R(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}, \qquad e_\theta = \text{atan2}\big(\sin(\theta_{\text{ref}} - \theta_{\text{meas}}), \cos(\theta_{\text{ref}} - \theta_{\text{meas}})\big) \in (-\pi, \pi]
+$$
+
 - **Curated Free Resources:**
   - 🔗 [3Blue1Brown: Linear Transformations and Matrices (Essence of Linear Algebra)](https://www.3blue1brown.com/lessons/linear-transformations) — *Builds instant visual intuition for how the columns of $R(\theta)$ track where the basis vectors $\hat{i}$ and $\hat{j}$ land.*
   - 🔗 [Modern Robotics Ch. 3.1–3.2: Rigid-Body Motions in the Plane (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Free textbook chapter and video introducing $SO(2)$ rotation matrices and homogeneous transforms.*
@@ -153,7 +170,11 @@ If you come from a strong computing/software background with no formal Electrica
 
 ### [1.3 Time vs. Frequency Intuition & First-Order RC Smoothing]
 - **Core Summary:** Connects hardware RC low-pass filters ($\tau = RC, f_c = \frac{1}{2\pi RC}$) to the 1-line software Exponential Moving Average (`y_filt += alpha * (x_raw - y_filt)`), highlighting the fundamental trade-off between noise attenuation and phase lag inside a feedback loop.
-  $$y_k = y_{k-1} + \alpha(u_k - y_{k-1}), \qquad \alpha = \frac{\Delta t}{\tau + \Delta t} = \frac{2\pi f_c \Delta t}{1 + 2\pi f_c \Delta t}$$
+
+$$
+y_k = y_{k-1} + \alpha(u_k - y_{k-1}), \qquad \alpha = \frac{\Delta t}{\tau + \Delta t} = \frac{2\pi f_c \Delta t}{1 + 2\pi f_c \Delta t}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [The Scientist and Engineer's Guide to DSP — Ch. 19: Recursive Filters (dspguide.com)](https://www.dspguide.com/ch19/2.htm) — *Free online chapter deriving single-pole recursive smoothing filters and time constants.*
   - 🔗 [Interactive Digital Low-Pass Filter Frequency & Phase Applet (Falstad)](https://www.falstad.com/afepsilon/) — *Explore how lowering cutoff frequency $f_c$ increases phase lag.*
@@ -182,7 +203,11 @@ If you come from a strong computing/software background with no formal Electrica
 
 ### [2.1 State-Space Modeling ($\dot{x} = A_c x + B_c u$) & Two-Mass Resonance]
 - **Core Summary:** Models a motor rotor ($J_m$) coupled to a load inertia ($J_L$) through a compliant shaft/gearbox ($k_s$) as a 4-state matrix system exhibiting an anti-resonance zero $\omega_{ar} = \sqrt{k_s/J_L}$ and a structural resonance pole $\omega_r = \sqrt{k_s(1/J_m + 1/J_L)}$.
-  $$\omega_{ar} = \sqrt{\frac{k_s}{J_L}}, \qquad \omega_r = \omega_{ar}\sqrt{1 + \frac{J_L}{J_m}}$$
+
+$$
+\omega_{ar} = \sqrt{\frac{k_s}{J_L}}, \qquad \omega_r = \omega_{ar}\sqrt{1 + \frac{J_L}{J_m}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Control Bootcamp: State-Space Equations (Prof. Steve Brunton, YouTube)](https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m) & [Data-Driven Science and Engineering (Brunton & Kutz, 2nd Ed. Free PDF — databookuw.com)](https://www.databookuw.com/) — *Clear walkthrough converting multi-DOF mechanical ODEs into $\dot{x} = Ax + Bu$ matrix form, plus SVD, DMD, and SINDy.*
   - 🔗 [Åström & Murray: Feedback Systems — Ch. 5 & 6: Linear Systems (fbswiki.org)](https://fbswiki.org/wiki/index.php/Main_Page) & [Control of Mechatronic Systems (P. O. J. Kaltjob)](https://www.wiley.com/en-us/Control+of+Mechatronic+Systems-p-9781119505792) — *Open-access textbook chapters on state-space matrices, eigenvalues, and discrete-time digital implementation.*
@@ -203,7 +228,11 @@ If you come from a strong computing/software background with no formal Electrica
 
 ### [2.2 3D Rotations Without Gimbal Lock: Unit Quaternions ($\mathbb{S}^3$)]
 - **Core Summary:** Replaces gimbal-locking 3D Euler angles with 4D unit quaternions $q = [q_w, q_x, q_y, q_z]^\top \in \mathbb{S}^3$ ($\|q\|_2 = 1$), enabling smooth 3D attitude integration and spherical interpolation (`SLERP`).
-  $$q_{k+1} = \text{normalize}\!\left(q_k + \frac{\Delta t}{2}\,q_k \otimes \begin{bmatrix}0\\\omega_b\end{bmatrix}\right), \qquad q_{\text{err}} = q_{\text{des}}^{-1} \otimes q_{\text{meas}}$$
+
+$$
+q_{k+1} = \text{normalize}\!\left(q_k + \frac{\Delta t}{2}\,q_k \otimes \begin{bmatrix}0\\\omega_b\end{bmatrix}\right), \qquad q_{\text{err}} = q_{\text{des}}^{-1} \otimes q_{\text{meas}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Visualizing Quaternions Interactive Sandbox (3Blue1Brown & Ben Eater — eater.net)](https://eater.net/quaternions) — *Interactive 3D browser visualization of quaternion hypersphere rotations.*
   - 🔗 [Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter — §1–2](https://arxiv.org/abs/1711.02508) — *Concise reference sheet for Hamilton quaternion product $\otimes$, rotation action $q \otimes v \otimes q^*$, and kinematic integration.*
@@ -224,7 +253,11 @@ If you come from a strong computing/software background with no formal Electrica
 
 ### [2.3 Continuous-to-Discrete Filter Design: Pre-Warped Tustin Biquads]
 - **Core Summary:** Designs surgical 2nd-order digital notch filters in **Transposed Direct Form II (`TDF-II`)** using the frequency-pre-warped bilinear (Tustin) transform so the digital zero lands precisely on the mechanical resonance frequency $\omega_n$.
-  $$H_{\text{notch}}(s) = \frac{s^2 + \frac{\omega_n}{Q_{\text{zero}}}s + \omega_n^2}{s^2 + \frac{\omega_n}{Q_{\text{pole}}}s + \omega_n^2} \xrightarrow{s \leftarrow \frac{\omega_n}{\tan(\omega_n T_s/2)}\frac{z-1}{z+1}} H(z) = \frac{b_0 + b_1 z^{-1} + b_2 z^{-2}}{1 + a_1 z^{-1} + a_2 z^{-2}}$$
+
+$$
+H_{\text{notch}}(s) = \frac{s^2 + \frac{\omega_n}{Q_{\text{zero}}}s + \omega_n^2}{s^2 + \frac{\omega_n}{Q_{\text{pole}}}s + \omega_n^2} \xrightarrow{s \leftarrow \frac{\omega_n}{\tan(\omega_n T_s/2)}\frac{z-1}{z+1}} H(z) = \frac{b_0 + b_1 z^{-1} + b_2 z^{-2}}{1 + a_1 z^{-1} + a_2 z^{-2}}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [Julius O. Smith III: Introduction to Digital Filters — Biquad Sections & TDF-II (Stanford CCRMA)](https://ccrma.stanford.edu/~jos/filters/) — *Free online textbook detailing biquad filter structures and numerical precision in floating-point DSP.*
   - 🔗 [Robert Bristow-Johnson's Audio EQ & Biquad Cookbook (w3.org)](https://www.w3.org/TR/audio-eq-cookbook/) — *Closed-form coefficient formulas for digital notch, low-pass, and peaking biquads.*
@@ -255,6 +288,11 @@ If you come from a strong computing/software background with no formal Electrica
   1. Identify the exact structural resonance frequency $f_r$ from an FFT / Bode sweep (e.g., $f_r = 259\text{ Hz}$).
   2. Compute exact discrete biquad coefficients using **Pre-Warped Tustin** substitution $s \leftarrow \frac{\omega_n}{\tan(\omega_n T_s / 2)}\frac{z-1}{z+1}$ so the digital notch lands exactly on $f_r$ instead of warping lower in frequency.
   3. Execute the filter in **Transposed Direct Form II (`TDF-II`)** using 2 state variables (`s1, s2`) in 5 floating-point multiply-accumulates per tick—surgically carving out the $259\text{ Hz}$ resonance while leaving phase below $50\text{ Hz}$ virtually untouched:
+
+$$
+H(z) = \frac{b_0 + b_1 z^{-1} + b_2 z^{-2}}{1 + a_1 z^{-1} + a_2 z^{-2}}, \qquad y_k = b_0 x_k + s_{1,k}, \quad s_{1,k+1} = b_1 x_k - a_1 y_k + s_{2,k}, \quad s_{2,k+1} = b_2 x_k - a_2 y_k
+$$
+
   ```cpp
   float y = b0 * x + s1;
   s1 = b1 * x - a1 * y + s2;
@@ -341,7 +379,11 @@ flowchart LR
 
 ### [4.2 Applied Linear Algebra, SVD & Lie Groups ($SO(3), SE(3)$)]
 - **Core Summary:** Formulates singularity-free 3D rigid-body calculus on the Special Orthogonal group $SO(3)$ and Special Euclidean group $SE(3)$ using Rodrigues' exponential map $\exp([\phi]_\times)$ with small-angle Taylor series guards ($\theta < 10^{-4}\text{ rad}$), logarithmic maps, and the $6\times 6$ Adjoint representation $\text{Ad}_T$.
-  $$\exp([\phi]_\times) = I + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1 - \cos\theta}{\theta^2}[\phi]_\times^2 \in SO(3), \qquad \text{Ad}_T = \begin{bmatrix} R & 0_{3\times 3} \\ [p]_\times R & R \end{bmatrix}$$
+
+$$
+\exp([\phi]_\times) = I + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1 - \cos\theta}{\theta^2}[\phi]_\times^2 \in SO(3), \qquad \text{Ad}_T = \begin{bmatrix} R & 0_{3\times 3} \\ [p]_\times R & R \end{bmatrix}
+$$
+
 - **Curated Free Resources:**
   - 🔗 [A Micro Lie Theory for State Estimation in Robotics (Joan Solà et al., arXiv:1812.01537)](https://arxiv.org/abs/1812.01537) — *Essential open-access reference deriving $SO(3)/SE(3)$ exponential maps, Adjoints, and Left/Right Jacobians.*
   - 🔗 [State Estimation for Robotics — Ch. 7: Matrix Lie Groups (Prof. Tim Barfoot, Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Rigorous derivations of $\mathfrak{so}(3)$ and $\mathfrak{se}(3)$ series expansions and identities.*
@@ -362,7 +404,10 @@ flowchart LR
 
 ### [4.3 Continuous-to-Discrete Systems, Van Loan ZOH & Stochastic Processes]
 - **Core Summary:** Computes exact Zero-Order Hold (ZOH) discrete state-space matrices $(A_d, B_d)$ simultaneously via Van Loan's block matrix exponential, maps continuous process noise PSD $Q_c$ to discrete covariance $Q_d$, and extracts empirical Frequency Response Functions $\hat{G}(j\omega) = \hat{S}_{yu}/\hat{S}_{uu}$ via Welch's overlapping windowed FFT method.
-  $$\exp\!\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix} T_s\right) = \begin{bmatrix} A_d & B_d \\ 0 & I \end{bmatrix}, \qquad \gamma^2(\omega) = \frac{|\hat{S}_{yu}(j\omega)|^2}{\hat{S}_{uu}(j\omega)\hat{S}_{yy}(j\omega)} \in [0, 1]$$
+
+$$
+\exp\!\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix} T_s\right) = \begin{bmatrix} A_d & B_d \\ 0 & I \end{bmatrix}, \qquad \gamma^2(\omega) = \frac{|\hat{S}_{yu}(j\omega)|^2}{\hat{S}_{uu}(j\omega)\hat{S}_{yy}(j\omega)} \in [0, 1]
+$$
 
 | Discretization Method | Mapping $s \leftarrow f(z)$ | Stability Preservation | Frequency Warping / Phase Accuracy | Primary Mechatronics Use Case |
 | :--- | :--- | :--- | :--- | :--- |
@@ -381,7 +426,14 @@ flowchart LR
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
-  **Q1:** Why is Van Loan's block matrix exponential $\exp\!\left(\begin{bmatrix}A_c & B_c\\0 & 0\end{bmatrix}T_s\right)$ preferred over the formula $B_d = A_c^{-1}(A_d - I)B_c$ when discretizing mechanical robot models?
+  **Q1:** Why is Van Loan's block matrix exponential
+
+$$
+\exp\!\left(\begin{bmatrix}A_c & B_c\\0 & 0\end{bmatrix}T_s\right)
+$$
+
+  preferred over the formula $B_d = A_c^{-1}(A_d - I)B_c$ when discretizing mechanical robot models?
+
   * **Answer / Explanation:** Free rigid-body position states have pure integrators ($\ddot{q} = u / J$), which place zero eigenvalues at the origin of $A_c$! Because $A_c$ is singular ($\det(A_c) = 0$), $A_c^{-1}$ does not exist. Van Loan's block matrix exponential requires **no matrix inversion** of $A_c$ and works for any singular or nilpotent plant.
   
   **Q2:** An accelerometer datasheet specifies a noise density of $n_d = 100\ \mu\text{g}/\sqrt{\text{Hz}}$. If your analog anti-aliasing filter has an effective noise bandwidth $\text{ENBW} = 400\text{ Hz}$, what is the discrete RMS noise $\sigma_d$ on each ADC sample?
