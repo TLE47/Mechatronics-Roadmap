@@ -40,7 +40,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   * **Answer / Explanation:** The closed-loop characteristic polynomial of $J\ddot{q} + K_d\dot{q} + K_p q = K_p q_{\text{des}}$ is $s^2 + \frac{K_d}{J}s + \frac{K_p}{J} = s^2 + 2\zeta\omega_n s + \omega_n^2$. Thus $\omega_n = \sqrt{K_p / J} = \sqrt{8.0 / 0.02} = 20\text{ rad/s}$, and for $\zeta = 1.0$, $K_d = 2 J \omega_n = 2\sqrt{J K_p} = 2 \times 0.02 \times 20 = 0.80\text{ N}\cdot\text{m}\cdot\text{s/rad}$.
 
   **Q2:** Why does a pure PD controller ($K_i = 0$) on a horizontal robot arm link exhibit a small steady-state droop $\Delta q_{\text{ss}}$ under gravity if gravity feedforward is not included?
-  * **Answer & Explanation:** At rest ($\dot{q} = 0$), the PD torque is simply $\tau = K_p (q_{\text{des}} - q)$. To hold up a link requiring gravity torque $\tau_g = m g l_c$, the spring *must* stretch by $\Delta q_{\text{ss}} = \tau_g / K_p$. Either an integrator ($K_i$) or analytical gravity feedforward ($+\hat{\tau}_g(q)$) is needed to eliminate the droop.
+  * **Answer & Explanation:** At rest ($\dot{q} = 0$), the PD torque is simply $\tau = K_p (q_{\text{des}} - q)$. To hold up a link requiring gravity torque $\tau_g = m g l_c$, the spring *must* stretch by $\Delta q_{\text{ss}} = \tau_g / K_p$. Either an integrator ($K_i$) or analytical gravity feedforward ($+\hat{\tau}\kern0pt_g(q)$) is needed to eliminate the droop.
   </details>
 
 ### 1.2 Why Unclamped Integrators Explode (Anti-Windup) & Derivative Kick
@@ -109,7 +109,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   </details>
 
 ### 2.2 Underactuated Control: Energy-Pumping Swing-Up + Discrete LQR Catch
-- **Core Summary:** An underactuated 4-state Furuta/cart-pole pendulum ($x = [\theta, \dot{\theta}, x_c, \dot{x}_c]^\top$) has 2 degrees of freedom and only 1 actuator. Far from upright ($\lvert\theta\rvert \ge 22^\circ$), an **Åström-Furuta nonlinear energy pump** drives total mechanical energy $E$ to the upright homoclinic orbit ($E = 0$); inside the catch basin ($\lvert\theta\rvert < 22^\circ$), a **Discrete Linear Quadratic Regulator (LQR)** ($u = -Kx$ from the `DARE`) stabilizes all four states simultaneously.
+- **Core Summary:** An underactuated 4-state Furuta/cart-pole pendulum ($x = [\theta, \dot{\theta}, x_c, \dot{x}\kern0pt_c]^\top$) has 2 degrees of freedom and only 1 actuator. Far from upright ($\lvert\theta\rvert \ge 22^\circ$), an **Åström-Furuta nonlinear energy pump** drives total mechanical energy $E$ to the upright homoclinic orbit ($E = 0$); inside the catch basin ($\lvert\theta\rvert < 22^\circ$), a **Discrete Linear Quadratic Regulator (LQR)** ($u = -Kx$ from the `DARE`) stabilizes all four states simultaneously.
 - **Curated Free Resources:**
   - 🔗 [Russ Tedrake (MIT 6.832): Underactuated Robotics — Chapter 3: Acrobots, Cart-Poles, and Energy Shaping](https://underactuated.csail.mit.edu/acrobot.html) — *Interactive open-access MIT textbook deriving the Åström-Furuta energy swing-up and LQR catch basin.*
   - 🔗 [Stephen Boyd (Stanford EE364a): Convex Optimization (Free Textbook & Video Lectures)](https://web.stanford.edu/~boyd/cvxbook/) — *Mathematical foundation for quadratic programming (QP), LQR, and real-time Model Predictive Control.*
@@ -124,11 +124,11 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   * **Answer / Explanation:** Set each diagonal entry equal to the reciprocal square of the maximum acceptable deviation for that variable: $Q_{ii} = \frac{1}{(x_{i,\max})^2}$ and $R_{jj} = \frac{1}{(u_{j,\max})^2}$. This normalizes different physical units ($\text{rad}$, $\text{m}$, $\text{N}$) so a $100\%$ limit excursion in any state contributes $1.0$ to the quadratic cost!
 
   **Q2:** Why can't the linear LQR controller $u = -Kx$ be active all the way from the downward hanging position $\theta = \pi$?
-  * **Answer & Explanation:** Because the linearized state matrix $A = \frac{\partial f}{\partial x}\big|_{\theta=0}$ uses the small-angle approximation $\sin\theta \approx \theta$ and $\cos\theta \approx 1$. Below $|\theta| > 90^\circ$, $\cos\theta < 0$, so the physical sign of how horizontal carriage acceleration torques the pendulum *reverses*—meaning the upright LQR gain would push the carriage the wrong way!
+  * **Answer & Explanation:** Because the linearized state matrix $A = \frac{\partial f}{\partial x}\big|\kern0pt_{\theta=0}$ uses the small-angle approximation $\sin\theta \approx \theta$ and $\cos\theta \approx 1$. Below $|\theta| > 90^\circ$, $\cos\theta < 0$, so the physical sign of how horizontal carriage acceleration torques the pendulum *reverses*—meaning the upright LQR gain would push the carriage the wrong way!
   </details>
 
 ### 2.3 Linear Kalman Filter (Predict $\to$ Innovation $\to$ Update)
-- **Core Summary:** A Linear Kalman Filter propagates a state estimate $\hat{x}_k$ and uncertainty covariance matrix $P_k$ through a physics prediction step ($\hat{x}_k^- = A_d \hat{x}_{k-1}^+ + B_d u_{k-1}$) and an optimal measurement update ($K_k = P_k^- H^\top (H P_k^- H^\top + R)^{-1}$), estimating unmeasured hidden states such as velocity $\dot{x}$ or gyroscope bias $b_g$.
+- **Core Summary:** A Linear Kalman Filter propagates a state estimate $\hat{x}\kern0pt_k$ and uncertainty covariance matrix $P_k$ through a physics prediction step ($\hat{x}\kern0pt_k^- = A_d \hat{x}\kern0pt_{k-1}^+ + B_d u_{k-1}$) and an optimal measurement update ($K_k = P_k^- H^\top (H P_k^- H^\top + R)^{-1}$), estimating unmeasured hidden states such as velocity $\dot{x}$ or gyroscope bias $b_g$.
 - **Curated Free Resources:**
   - 🔗 [Roger Labbe: Kalman and Bayesian Filters in Python (Open-Source Interactive Book)](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python) — *Hands-on Jupyter/Python textbook building intuition from 1D Gaussians to full multi-state Kalman filters.*
   - 🔗 [Michel van Biezen / Bilgin Esme: Kalman Filter Explained Simply](https://www.kalmanfilter.net/default.aspx) — *Step-by-step numerical examples of the Predict-Update loop and covariance propagation.*
@@ -145,7 +145,7 @@ $$
 K_k = P_k^- H^\top S^{-1} = \begin{bmatrix} P_{11}^- \\ P_{21}^- \end{bmatrix} S^{-1}
 $$
 
-  , that off-diagonal covariance $P_{21}^-$ maps angle innovation $(y_k - \hat{\theta}_k^-)$ directly into a correction of the hidden bias $\hat{b}_g$!
+  , that off-diagonal covariance $P_{21}^-$ maps angle innovation $(y_k - \hat{\theta}\kern0pt_k^-)$ directly into a correction of the hidden bias $\hat{b}\kern0pt_g$!
 
   **Q2:** What happens to the Kalman Gain $K_k = P_k^- H^\top (H P_k^- H^\top + R)^{-1}$ as the sensor measurement noise covariance $R \to \infty$ (e.g., during violent vibration)?
   * **Answer & Explanation:** As $R \to \infty$, $(H P_k^- H^\top + R)^{-1} \to 0$, so $K_k \to 0$: the filter automatically ignores the noisy sensor measurement and coasts purely on its physics/gyro prediction model!
@@ -288,7 +288,7 @@ struct IndustrialPID {
   </details>
 
 ### 4.3 Discrete LQR (`DARE`) & Error-State Kalman Filter (ESKF) on $SO(3) \times \mathbb{R}^n$
-- **Core Summary:** Standard additive Extended Kalman Filters fail on 3D rotations because adding covariance vectors to a $3\times 3$ rotation matrix or unit quaternion destroys orthogonality ($R^\top R \ne I$). An **Error-State Kalman Filter (ESKF)** integrates the nominal orientation noiselessly on the manifold $SO(3)$, estimates a minimal $3\text{-DOF}$ tangent-space error $\delta\theta \in \mathbb{R}^3$ using the **Joseph-form covariance update**, and injects the correction multiplicatively via $R^+ = R^- \exp([\delta\hat{\theta}^+]_\times)$ before resetting $\delta\hat{x} \leftarrow 0$.
+- **Core Summary:** Standard additive Extended Kalman Filters fail on 3D rotations because adding covariance vectors to a $3\times 3$ rotation matrix or unit quaternion destroys orthogonality ($R^\top R \ne I$). An **Error-State Kalman Filter (ESKF)** integrates the nominal orientation noiselessly on the manifold $SO(3)$, estimates a minimal $3\text{-DOF}$ tangent-space error $\delta\theta \in \mathbb{R}^3$ using the **Joseph-form covariance update**, and injects the correction multiplicatively via $R^+ = R^- \exp([\delta\hat{\theta}^+]\kern0pt_\times)$ before resetting $\delta\hat{x} \leftarrow 0$.
 
 * **Discrete Algebraic Riccati Equation (`DARE`):**
 
@@ -312,7 +312,7 @@ $$
   <summary><b>Click to toggle quiz questions & answers</b></summary>
 
   **Q1:** Why does running a standard 7-state additive EKF directly on a 4D unit quaternion $q \in \mathbb{R}^4$ cause the $4\times 4$ quaternion covariance block $P_{qq}$ to become singular?
-  * **Answer / Explanation:** Because a unit quaternion satisfies the 1D constraint $\|q\|_2 = 1$, it only has **3 degrees of freedom**! Any uncertainty parallel to $q$ is zero ($q^\top \delta q = 0$), which gives the $4\times 4$ covariance matrix $P_{qq}$ a zero eigenvalue and causes matrix inversions to blow up in 32-bit floating point. The ESKF tracks a 3D tangent-space rotation vector $\delta\theta \in \mathbb{R}^3$ whose $3\times 3$ covariance is strictly full-rank!
+  * **Answer / Explanation:** Because a unit quaternion satisfies the 1D constraint $\|q\|\kern0pt_2 = 1$, it only has **3 degrees of freedom**! Any uncertainty parallel to $q$ is zero ($q^\top \delta q = 0$), which gives the $4\times 4$ covariance matrix $P_{qq}$ a zero eigenvalue and causes matrix inversions to blow up in 32-bit floating point. The ESKF tracks a 3D tangent-space rotation vector $\delta\theta \in \mathbb{R}^3$ whose $3\times 3$ covariance is strictly full-rank!
 
   **Q2:** Why must production flight controllers use the **Joseph-form** covariance update $P^+ = (I - KH)P^-(I - KH)^\top + K R K^\top$ instead of the textbook shortcut $P^+ = (I - KH)P^-$?
   * **Answer & Explanation:** In `float32` arithmetic, subtracting two nearly equal matrices in $(I - KH)P^-$ easily loses symmetry and produces tiny negative eigenvalues, causing the Kalman filter to diverge to `NaN` after a few minutes of flight. The Joseph form is the sum of two symmetric positive-definite outer products ($A P^- A^\top + K R K^\top$), guaranteeing symmetry and positive-definiteness by construction!
@@ -321,7 +321,7 @@ $$
 ### 4.4 Slotine-Li Passivity Control, CLF-CBF-QP & Real-Time Iteration MPC
 - **Core Summary:** **Slotine-Li Passivity Control** exploits the physical skew-symmetry $s^\top(\dot{M} - 2C)s \equiv 0$ to guarantee global asymptotic trajectory tracking on nonlinear manipulators; **Control Barrier Function QPs (CBF-QP)** wrap any nominal controller in a 1D/3D safety filter that guarantees forward invariance of $h(x) \ge 0$; and **Model Predictive Control (MPC)** optimizes future trajectories over a preview horizon subject to hard actuator and state constraints.
 
-* **Slotine & Li Passivity Controller:** Using reference velocity $\dot{q}_r = \dot{q}_d - \Lambda \tilde{q}$ and sliding surface $s = \dot{q} - \dot{q}_r$, the control law $\tau = M(q)\ddot{q}_r + C(q,\dot{q})\dot{q}_r + g(q) - K_D s$ yields $\dot{V} = -s^\top K_D s \le 0$ because $s^\top(\dot{M} - 2C)s \equiv 0$.
+* **Slotine & Li Passivity Controller:** Using reference velocity $\dot{q}\kern0pt_r = \dot{q}\kern0pt_d - \Lambda \tilde{q}$ and sliding surface $s = \dot{q} - \dot{q}\kern0pt_r$, the control law $\tau = M(q)\ddot{q}\kern0pt_r + C(q,\dot{q})\dot{q}\kern0pt_r + g(q) - K_D s$ yields $\dot{V} = -s^\top K_D s \le 0$ because $s^\top(\dot{M} - 2C)s \equiv 0$.
 * **Control Barrier Function Quadratic Program (CBF-QP):**
 
 $$
@@ -347,7 +347,7 @@ $$
   **Q1:** Why must a position limit $p_{\max} - p \ge 0$ on a mechanical system ($\ddot{p} = u/m$) use a velocity-dependent Control Barrier Function $h(p, \dot{p})$ (or Exponential CBF) rather than simply setting $h(p) = p_{\max} - p$?
   * **Answer & Explanation:** Because position $p$ has **relative degree 2** with respect to force/torque $u$! The first derivative $\dot{h}(p) = -\dot{p}$ does not contain the control input $u$ at all ($L_g h = 0$), so the 1st-order condition $\dot{h} \ge -\alpha h$ cannot constrain $u$. Including velocity in $h(p, \dot{p}) = p_{\max}^2 - p^2 - k_v p \dot{p}$ makes $\dot{h}$ depend directly on acceleration $\ddot{p}$ (and therefore $u$), accounting for stopping distance!
 
-  **Q2:** Why does Slotine-Li passivity control $\tau = M(q)\ddot{q}_r + C(q,\dot{q})\dot{q}_r + g(q) - K_D s$ avoid inverting the mass matrix $M^{-1}(q)$ required by feedback linearization?
+  **Q2:** Why does Slotine-Li passivity control $\tau = M(q)\ddot{q}\kern0pt_r + C(q,\dot{q})\dot{q}\kern0pt_r + g(q) - K_D s$ avoid inverting the mass matrix $M^{-1}(q)$ required by feedback linearization?
   * **Answer & Explanation:** Instead of canceling the nonlinear Coriolis dynamics via $M(q)u$ to force a linear double integrator $\ddot{\tilde{q}} + K_d \dot{\tilde{q}} + K_p \tilde{q} = 0$, Slotine-Li uses the true physical kinetic energy $V(s) = \frac{1}{2}s^\top M(q) s$ as a Lyapunov function. The natural physical skew-symmetry $\dot{M} - 2C$ cancels out identically in $\dot{V} = -s^\top K_D s \le 0$, providing global stability and linear-in-parameters adaptive control without ever inverting $M(q)$!
   </details>
 
@@ -365,7 +365,7 @@ $$
 
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
-| **Robustness Sensitivity Peak ($M_s, M_t$)** | $M_s = \|S(j\omega)\|_\infty \le 1.75$ ($4.8\text{ dB}$), $M_t \le 1.4$ | Gang-of-Four Bode audit |
+| **Robustness Sensitivity Peak ($M_s, M_t$)** | $M_s = \|S(j\omega)\|\kern0pt_\infty \le 1.75$ ($4.8\text{ dB}$), $M_t \le 1.4$ | Gang-of-Four Bode audit |
 | **ESKF Statistical Consistency (NEES)** | Mean NEES within $95\%$ $\chi^2_6$ bounds $[0.21, 2.41]$ (normalized per DOF) | Interactive **Tab 8: Attitude ESKF & SeqLock Simulator** |
 | **Furuta Swing-Up & LQR Balancing** | Autonomous catch within $< 2.2\text{ s}$ and steady RMS error $< 0.08^\circ$ | Interactive **Tab 4: Furuta Pendulum + LQR + CBF Simulator** |
 | **CBF Safety Invariance** | $\min_t h(x(t)) \ge 0$ ($\lvert x_c \rvert \le x_{\max}$) under $+3.2\text{ rad/s}$ impulse push | Interactive **Tab 4: CBF Safety Wall Test** |

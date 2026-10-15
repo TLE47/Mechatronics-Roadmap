@@ -154,7 +154,7 @@ struct __attribute__((packed)) TelemetryPacket {
   * **Answer & Explanation:** Three $120\ \Omega$ resistors in parallel measure $120 / 3 = 40\ \Omega$ (instead of the required $120 / 2 = 60\ \Omega$). This overloads the CAN transceiver output drivers, reducing differential voltage swing and causing bus errors or thermal shutdown. Only the **two physical ends** of the main trunk cable should have $120\ \Omega$ termination ($60\ \Omega$ total DC resistance).
 
   **Q2:** Why does the MIT Mini-Cheetah protocol send `(q_des, dq_des, Kp, Kd, tau_ff)` over CAN instead of just sending a raw torque command `tau_cmd` at $1\text{ kHz}$?
-  * **Answer & Explanation:** Because evaluating the PD impedance law $\tau = \tau_{ff} + K_p(q_{\text{des}} - q) + K_d(\dot{q}_{\text{des}} - \dot{q})$ locally inside the motor driver at **$25\text{–}40\text{ kHz}$** eliminates the $1\text{ ms}$ CAN bus transport delay from the stiffness/damping loop! This allows $10\times$ higher stable virtual damping $K_d$ and stiffness $K_p$ without high-frequency chatter.
+  * **Answer & Explanation:** Because evaluating the PD impedance law $\tau = \tau_{ff} + K_p(q_{\text{des}} - q) + K_d(\dot{q}\kern0pt_{\text{des}} - \dot{q})$ locally inside the motor driver at **$25\text{–}40\text{ kHz}$** eliminates the $1\text{ ms}$ CAN bus transport delay from the stiffness/damping loop! This allows $10\times$ higher stable virtual damping $K_d$ and stiffness $K_p$ without high-frequency chatter.
   </details>
 
 ### ✅ Tier 2 Milestone Gate (`Track 04 · Pass 2`)
@@ -339,6 +339,6 @@ private:
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
 | **ADC-Trigger-to-ISR-Entry Jitter** | Peak-to-peak jitter $< 50\text{ ns}$ ($< 25$ CPU cycles) over $10^7$ cycles | Hardware `TIM1_TRGO2` $\to$ `ADC` DMA pipeline |
-| **Tier-0 FOC ISR WCET** | $\text{WCET}_{\max} < 4.0\ \mu\text{s}$ ($2.08\ \mu\text{s}$ achieved at $170\text{ MHz}$) | `DWT->CYCCNT` watermark in `ITCM`/`CCM-SRAM` |
+| **Tier-0 FOC ISR WCET** | $\text{WCET}\kern0pt_{\max} < 4.0\ \mu\text{s}$ ($2.08\ \mu\text{s}$ achieved at $170\text{ MHz}$) | `DWT->CYCCNT` watermark in `ITCM`/`CCM-SRAM` |
 | **Zero Heap Allocation Verification** | `0 bytes` allocated from `.heap` section | Linker `--wrap=malloc` build gate |
 | **Lock-Free IPC Data Integrity** | `0` torn reads over $10^8$ transfers under high contention | Interactive **Tab 8: Attitude ESKF & SeqLock Simulator** |

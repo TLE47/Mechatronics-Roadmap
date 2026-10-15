@@ -31,7 +31,7 @@ If you come from a strong computing/software background with no formal Electrica
 | :--- | :--- | :--- | :--- |
 | **Voltage ($V$)** [Volts] | **Water Pressure Difference** between two points in a pipe | Potential energy difference (`delta`) relative to a chosen `0 V` reference (`GND`) | $V_{AB} = V_A - V_B$. Voltage *pushes* charge; voltage itself never "flows." |
 | **Current ($I$)** [Amps] | **Flow Rate** (Liters/second) through a pipe cross-section | Throughput (packets/sec) passing through a channel | $I = \frac{dq}{dt}$. Current flows *through* components in a closed loop and returns to the source. |
-| **Resistance ($R$)** [$\Omega$] | **Narrow Pipe Constriction** dissipating pressure as heat | Rate-limiting throttle that converts energy into heat | $V = I R$, $P_{\text{heat}} = I^2 R$. Double the current $\implies 4\times$ the heat! |
+| **Resistance ($R$)** $\Omega$ | **Narrow Pipe Constriction** dissipating pressure as heat | Rate-limiting throttle that converts energy into heat | $V = I R$, $P_{\text{heat}} = I^2 R$. Double the current $\implies 4\times$ the heat! |
 | **Capacitance ($C$)** [Farads] | **Flexible Rubber Diaphragm** in a pipe (stores pressure) | Local L1 burst cache right next to a CPU core | $I = C\frac{dV}{dt}$. Resists sudden changes in **voltage**. Supplies instant nanosecond current bursts to ICs. |
 | **Inductance ($L$)** [Henries] | **Heavy Paddlewheel / Flywheel** in a pipe (stores flow momentum) | In-flight pipeline momentum that refuses to stop instantaneously | $V = L\frac{dI}{dt}$. Resists sudden changes in **current**. Opening a switch on a spinning motor coil forces $\frac{dI}{dt} \to -\infty$, causing a high-voltage spark unless given a flyback path! |
 | **Frequency ($f$) & Phase ($\phi$)** | **Pushing a Playground Swing** at its natural rhythm vs. out of sync | Polling/update rate vs. end-to-end pipeline latency ($\Delta\phi = -360^\circ f \Delta t_{\text{delay}}$) | Even $500\ \mu\text{s}$ of sensor/filter delay adds $-18^\circ$ of phase lag at $100\text{ Hz}$, eroding stability. |
@@ -227,7 +227,7 @@ $$
 ---
 
 ### 2.2 3D Rotations Without Gimbal Lock: Unit Quaternions ($\mathbb{S}^3$)
-- **Core Summary:** Replaces gimbal-locking 3D Euler angles with 4D unit quaternions $q = [q_w, q_x, q_y, q_z]^\top \in \mathbb{S}^3$ ($\|q\|_2 = 1$), enabling smooth 3D attitude integration and spherical interpolation (`SLERP`).
+- **Core Summary:** Replaces gimbal-locking 3D Euler angles with 4D unit quaternions $q = [q_w, q_x, q_y, q_z]^\top \in \mathbb{S}^3$ ($\|q\|\kern0pt_2 = 1$), enabling smooth 3D attitude integration and spherical interpolation (`SLERP`).
 
 $$
 q_{k+1} = \text{normalize}\!\left(q_k + \frac{\Delta t}{2}\,q_k \otimes \begin{bmatrix}0\\\omega_b\end{bmatrix}\right), \qquad q_{\text{err}} = q_{\text{des}}^{-1} \otimes q_{\text{meas}}
@@ -313,7 +313,7 @@ $$
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Translational Mechanics** | Force $F$ [N] | Velocity $v$ [m/s] | Linear Momentum $p$ [N·s] | Position $x$ [m] | Compliance $1/k$ [m/N] | Mass $m$ [kg] | Viscous Damper $b$ [N·s/m] |
 | **Rotational Mechanics** | Torque $\tau$ [N·m] | Angular Velocity $\omega$ [rad/s] | Angular Momentum $L$ [N·m·s] | Angle $\theta$ [rad] | Torsional Compliance $1/k_\theta$ | Rotational Inertia $J$ [kg·m²] | Rotational Damper $b_\theta$ |
-| **Electrical Circuits** | Voltage $v$ [V] | Current $i$ [A] | Flux Linkage $\lambda$ [Wb] | Charge $q$ [C] | Capacitance $C$ [F] | Inductance $L$ [H] | Resistance $R$ [$\Omega$] |
+| **Electrical Circuits** | Voltage $v$ [V] | Current $i$ [A] | Flux Linkage $\lambda$ [Wb] | Charge $q$ [C] | Capacitance $C$ [F] | Inductance $L$ [H] | Resistance $R$ $\Omega$ |
 | **Hydraulic / Pneumatic** | Pressure $P$ [Pa] | Volumetric Flow $Q$ [m³/s] | Pressure Momentum $\Gamma$ [Pa·s] | Volume $V$ [m³] | Fluid Compressibility $C_f$ | Fluid Inertance $I_f$ | Orifice Resistance $R_f$ |
 | **Thermal (Pseudo-Bond)** | Temperature $T$ [K] | Heat Flow $\dot{Q}$ [W] or Entropy Flow $\dot{S}$ | — | Thermal Energy $Q$ [J] | Thermal Capacity $C_{th}$ [J/K] | *None (Diffusion only)* | Thermal Resistance $R_{th}$ [K/W] |
 
@@ -363,12 +363,12 @@ flowchart LR
   - 🔗 [Port-Hamiltonian Systems Theory: An Introductory Overview (van der Schaft & Jeltsema)](https://www.rug.nl/research/portal/files/14407027/PortHamiltonianSystems.pdf) & [OpenModelica Acausal Multi-Domain Modeling Environment (openmodelica.org)](https://openmodelica.org/) — *Comprehensive open-access monograph on passivity-based Port-Hamiltonian modeling paired with the open-source Modelica multi-domain simulator.*
   - 🔗 [Intelligence as Computation (Oliver Brock, arXiv:2412.14701)](https://arxiv.org/abs/2412.14701) & [MIT 2.14 / 2.003 System Dynamics & Bond Graph Lecture Notes (MIT OCW)](https://ocw.mit.edu/courses/2-003sc-engineering-dynamics-fall-2011/) — *Unifies digital, analog, mechanical, and morphological computation with multi-domain energy conservation.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Run `python3 00-foundations/lab/lab00_two_mass_and_so3.py` and verify the energy conservation audit: $\left|\int_0^T V_{\text{in}}i_a\,dt - (\Delta \mathcal{H}_{\text{stored}} + \int_0^T P_{\text{dissipated}}\,dt)\right| < 10^{-9}\text{ J}$.
+  - *Task:* Run `python3 00-foundations/lab/lab00_two_mass_and_so3.py` and verify the energy conservation audit: $\left|\int_0^T V_{\text{in}}i_a\,dt - (\Delta \mathcal{H}\kern0pt_{\text{stored}} + \int_0^T P_{\text{dissipated}}\,dt)\right| < 10^{-9}\text{ J}$.
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
-  **Q1:** Why must a motor's torque constant $K_t$ [$\text{N}\cdot\text{m/A}$] and back-EMF constant $K_e$ [$\text{V}/(\text{rad/s})$] be numerically **identical** ($K_t \equiv K_e$) when expressed in consistent SI units?
+  **Q1:** Why must a motor's torque constant $K_t$ $\text{N}\cdot\text{m/A}$ and back-EMF constant $K_e$ $\text{V}/(\text{rad/s})$ be numerically **identical** ($K_t \equiv K_e$) when expressed in consistent SI units?
   * **Answer / Explanation:** An ideal electromagnetic airgap stores no net energy over a cycle; by Conservation of Power across the gyrator port, instantaneous electrical power converted by back-EMF must equal instantaneous mechanical power: $e_{\text{bemf}} \cdot i = \tau_m \cdot \omega_m \implies (K_e \omega_m)i = (K_t i)\omega_m \implies K_t \equiv K_e$.
   
   **Q2:** In a Port-Hamiltonian system $\dot{x} = (J(x) - R(x))\nabla\mathcal{H}(x) + g(x)u$, why does the skew-symmetry property $J(x) = -J(x)^\top$ guarantee that internal interconnection forces do zero net work?
@@ -378,7 +378,7 @@ flowchart LR
 ---
 
 ### 4.2 Applied Linear Algebra, SVD & Lie Groups ($SO(3), SE(3)$)
-- **Core Summary:** Formulates singularity-free 3D rigid-body calculus on the Special Orthogonal group $SO(3)$ and Special Euclidean group $SE(3)$ using Rodrigues' exponential map $\exp([\phi]_\times)$ with small-angle Taylor series guards ($\theta < 10^{-4}\text{ rad}$), logarithmic maps, and the $6\times 6$ Adjoint representation $\text{Ad}_T$.
+- **Core Summary:** Formulates singularity-free 3D rigid-body calculus on the Special Orthogonal group $SO(3)$ and Special Euclidean group $SE(3)$ using Rodrigues' exponential map $\exp([\phi]\kern0pt_\times)$ with small-angle Taylor series guards ($\theta < 10^{-4}\text{ rad}$), logarithmic maps, and the $6\times 6$ Adjoint representation $\text{Ad}\kern0pt_T$.
 
 $$
 \exp([\phi]_\times) = I + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1 - \cos\theta}{\theta^2}[\phi]_\times^2 \in SO(3), \qquad \text{Ad}_T = \begin{bmatrix} R & 0_{3\times 3} \\ [p]_\times R & R \end{bmatrix}
@@ -388,7 +388,7 @@ $$
   - 🔗 [A Micro Lie Theory for State Estimation in Robotics (Joan Solà et al., arXiv:1812.01537)](https://arxiv.org/abs/1812.01537) — *Essential open-access reference deriving* $SO(3)/SE(3)$ *exponential maps, Adjoints, and Left/Right Jacobians.*
   - 🔗 [State Estimation for Robotics — Ch. 7: Matrix Lie Groups (Prof. Tim Barfoot, Free PDF)](http://asrl.utias.utoronto.ca/~tdb/bib/barfoot_ser17.pdf) — *Rigorous derivations of* $\mathfrak{so}(3)$ *and* $\mathfrak{se}(3)$ *series expansions and identities.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Implement `so3_exp(phi)` and `so3_log(R)` in Python with the $\theta < 10^{-4}\text{ rad}$ Taylor branch and verify that $\|\log(\exp([\phi]_\times))^\vee - \phi\|_2 < 10^{-14}\text{ rad}$ across $10,000$ random vectors including $\theta = 0$ and $\theta = \pi - 10^{-7}$.
+  - *Task:* Implement `so3_exp(phi)` and `so3_log(R)` in Python with the $\theta < 10^{-4}\text{ rad}$ Taylor branch and verify that $\|\log(\exp([\phi]\kern0pt_\times))^\vee - \phi\|\kern0pt_2 < 10^{-14}\text{ rad}$ across $10,000$ random vectors including $\theta = 0$ and $\theta = \pi - 10^{-7}$.
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -396,14 +396,14 @@ $$
   **Q1:** Why does evaluating $\frac{1 - \cos\theta}{\theta^2}$ directly in IEEE-754 floating point fail as $\theta \to 0$, and what are the first two terms of its Taylor series?
   * **Answer / Explanation:** For $\theta < 10^{-4}\text{ rad}$, $\cos\theta \approx 1 - \frac{\theta^2}{2}$ rounds to `1.0` in single precision, causing catastrophic cancellation in $1 - \cos\theta = 0$ and `0.0 / 0.0 = NaN` at $\theta = 0$. Expanding $\cos\theta = 1 - \frac{\theta^2}{2!} + \frac{\theta^4}{4!} - \dots$ yields $\frac{1-\cos\theta}{\theta^2} = \frac{1}{2} - \frac{\theta^2}{24} + \frac{\theta^4}{720}$.
   
-  **Q2:** When transforming a 6D spatial wrench $\mathcal{F}_b = [\tau_b^\top, f_b^\top]^\top$ from body frame $\{b\}$ to space frame $\{s\}$ using $T_{sb} \in SE(3)$, why do we multiply by $\text{Ad}_{T_{bs}}^\top$ rather than $\text{Ad}_{T_{sb}}$?
-  * **Answer & Explanation:** Mechanical power $\langle \mathcal{F}, \mathcal{V} \rangle = \tau^\top \omega + f^\top v$ is frame-invariant: $\mathcal{F}_s^\top \mathcal{V}_s = \mathcal{F}_b^\top \mathcal{V}_b$. Since twists transform covariantly via $\mathcal{V}_b = \text{Ad}_{T_{bs}}\mathcal{V}_s$, substituting gives $\mathcal{F}_s^\top \mathcal{V}_s = \mathcal{F}_b^\top (\text{Ad}_{T_{bs}}\mathcal{V}_s) = (\text{Ad}_{T_{bs}}^\top \mathcal{F}_b)^\top \mathcal{V}_s \implies \mathcal{F}_s = \text{Ad}_{T_{bs}}^\top \mathcal{F}_b$ (wrenches transform contravariantly as dual covectors).
+  **Q2:** When transforming a 6D spatial wrench $\mathcal{F}\kern0pt_b = [\tau_b^\top, f_b^\top]^\top$ from body frame $\{b\}$ to space frame $\{s\}$ using $T_{sb} \in SE(3)$, why do we multiply by $\text{Ad}\kern0pt_{T_{bs}}^\top$ rather than $\text{Ad}\kern0pt_{T_{sb}}$?
+  * **Answer & Explanation:** Mechanical power $\langle \mathcal{F}, \mathcal{V} \rangle = \tau^\top \omega + f^\top v$ is frame-invariant: $\mathcal{F}\kern0pt_s^\top \mathcal{V}\kern0pt_s = \mathcal{F}\kern0pt_b^\top \mathcal{V}\kern0pt_b$. Since twists transform covariantly via $\mathcal{V}\kern0pt_b = \text{Ad}\kern0pt_{T_{bs}}\mathcal{V}\kern0pt_s$, substituting gives $\mathcal{F}\kern0pt_s^\top \mathcal{V}\kern0pt_s = \mathcal{F}\kern0pt_b^\top (\text{Ad}\kern0pt_{T_{bs}}\mathcal{V}\kern0pt_s) = (\text{Ad}\kern0pt_{T_{bs}}^\top \mathcal{F}\kern0pt_b)^\top \mathcal{V}\kern0pt_s \implies \mathcal{F}\kern0pt_s = \text{Ad}\kern0pt_{T_{bs}}^\top \mathcal{F}\kern0pt_b$ (wrenches transform contravariantly as dual covectors).
   </details>
 
 ---
 
 ### [4.3 Continuous-to-Discrete Systems, Van Loan ZOH & Stochastic Processes]
-- **Core Summary:** Computes exact Zero-Order Hold (ZOH) discrete state-space matrices $(A_d, B_d)$ simultaneously via Van Loan's block matrix exponential, maps continuous process noise PSD $Q_c$ to discrete covariance $Q_d$, and extracts empirical Frequency Response Functions $\hat{G}(j\omega) = \hat{S}_{yu}/\hat{S}_{uu}$ via Welch's overlapping windowed FFT method.
+- **Core Summary:** Computes exact Zero-Order Hold (ZOH) discrete state-space matrices $(A_d, B_d)$ simultaneously via Van Loan's block matrix exponential, maps continuous process noise PSD $Q_c$ to discrete covariance $Q_d$, and extracts empirical Frequency Response Functions $\hat{G}(j\omega) = \hat{S}\kern0pt_{yu}/\hat{S}\kern0pt_{uu}$ via Welch's overlapping windowed FFT method.
 
 $$
 \exp\!\left(\begin{bmatrix} A_c & B_c \\ 0 & 0 \end{bmatrix} T_s\right) = \begin{bmatrix} A_d & B_d \\ 0 & I \end{bmatrix}, \qquad \gamma^2(\omega) = \frac{|\hat{S}_{yu}(j\omega)|^2}{\hat{S}_{uu}(j\omega)\hat{S}_{yy}(j\omega)} \in [0, 1]
@@ -484,6 +484,6 @@ $$
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
 | **Energy Conservation Check** | $\left\lvert\int_0^T V_{in} i_a\,dt - \left(\Delta E_{stored} + \int_0^T P_{dissipated}\,dt\right)\right\rvert < 10^{-9}\text{ J}$ | Continuous RK45 / Störmer-Verlet energy balance audit |
-| **Analytical vs. Identified Resonance** | $\lvert\hat{\omega}_{ar} - \omega_{ar}\rvert / \omega_{ar} < 0.5\%$ and $\lvert\hat{\omega}_r - \omega_r\rvert / \omega_r < 0.5\%$ | Welch FRF peak/trough extraction with $\gamma^2(\omega) > 0.98$ |
+| **Analytical vs. Identified Resonance** | $\lvert\hat{\omega}\kern0pt_{ar} - \omega_{ar}\rvert / \omega_{ar} < 0.5\%$ and $\lvert\hat{\omega}\kern0pt_r - \omega_r\rvert / \omega_r < 0.5\%$ | Welch FRF peak/trough extraction with $\gamma^2(\omega) > 0.98$ |
 | **Notch Filter Suppression** | Resonant peak attenuated by $\ge 20\text{ dB}$ in `float32` Transposed Direct Form II | Closed-loop step response & Bode magnitude verification (Tab 2 Simulator) |
-| **$SO(3)$ Singularity Immunity** | $\exp([\phi]_\times)$ and $\log(R)$ round-trip error $< 10^{-14}\text{ rad}$ across $\theta \in [0, \pi]$ | Unit test suite across 10,000 random & edge-case axes |
+| **$SO(3)$ Singularity Immunity** | $\exp([\phi]\kern0pt_\times)$ and $\log(R)$ round-trip error $< 10^{-14}\text{ rad}$ across $\theta \in [0, \pi]$ | Unit test suite across 10,000 random & edge-case axes |

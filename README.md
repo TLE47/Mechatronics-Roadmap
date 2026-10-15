@@ -243,7 +243,7 @@ Complete all 8 steps below in order using breadboards, breakout modules, and hig
   **Q1:** If you set $K_p = 5.0\text{ N}\cdot\text{m/rad}$, $K_i = 0$, and $K_d = 0$ on a frictionless motor with inertia $J = 0.01\text{ kg}\cdot\text{m}^2$, what happens when you command a $10^\circ$ step change?
   * **Answer / Explanation:** The closed-loop dynamics are $J\ddot{q} + K_p(q - q_d) = 0$, which is an **undamped harmonic oscillator** (a pure spring with zero damping)! The shaft will oscillate back and forth forever around $10^\circ$ at natural frequency $\omega_n = \sqrt{K_p / J} = 22.36\text{ rad/s}$. You **must** add derivative damping $K_d$ to dissipate kinetic energy.
   
-  **Q2:** In the complementary filter $\hat{\theta}_k = 0.98(\hat{\theta}_{k-1} + \omega_{\text{gyro}}\Delta t) + 0.02\,\theta_{\text{accel}}$, why do we weight the integrated gyroscope at $98\%$ and the accelerometer at only $2\%$ on each $1\text{ ms}$ tick?
+  **Q2:** In the complementary filter $\hat{\theta}\kern0pt_k = 0.98(\hat{\theta}\kern0pt_{k-1} + \omega_{\text{gyro}}\Delta t) + 0.02\,\theta_{\text{accel}}$, why do we weight the integrated gyroscope at $98\%$ and the accelerometer at only $2\%$ on each $1\text{ ms}$ tick?
   * **Answer & Explanation:** Over short millisecond intervals, the gyroscope is extremely clean whereas the accelerometer is corrupted by linear acceleration and frame vibration. Weighting the gyro at $0.98$ trusts the gyro for fast motion ($\tau = \frac{0.98 \times 0.001}{0.02} \approx 49\text{ ms}$ crossover), while the $2\%$ accelerometer pull slowly anchors the estimate to gravity over tenths of a second so gyro bias can never drift away.
   </details>
 
@@ -253,7 +253,7 @@ Complete all 8 steps below in order using breadboards, breakout modules, and hig
   - 🔗 [Underactuated Robotics (Russ Tedrake, MIT) — Free Online Textbook](https://underactuated.mit.edu/) — *Interactive Jupyter notebooks on trajectory design, gravity compensation, and compliant control.*
   - 🔗 [ Northwestern Modern Robotics Ch. 9: Trajectory Generation](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Derives cubic, quintic, and trapezoidal point-to-point time scalings.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Code a rest-to-rest cubic polynomial trajectory generator moving a pendulum link from $q_0 = 0\text{ rad}$ to $q_f = \pi/2\text{ rad}$ in $T = 1.5\text{ s}$. Compare the peak motor current required when tracking $q_d(t), \dot{q}_d(t)$ + gravity feedforward $g(q) = mgl_c\cos(q)$ against commanding an instantaneous step jump $q_{\text{des}} = \pi/2$.
+  - *Task:* Code a rest-to-rest cubic polynomial trajectory generator moving a pendulum link from $q_0 = 0\text{ rad}$ to $q_f = \pi/2\text{ rad}$ in $T = 1.5\text{ s}$. Compare the peak motor current required when tracking $q_d(t), \dot{q}\kern0pt_d(t)$ + gravity feedforward $g(q) = mgl_c\cos(q)$ against commanding an instantaneous step jump $q_{\text{des}} = \pi/2$.
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -386,7 +386,7 @@ Loop back to Track 00 and level up every module from breadboard breakouts to cus
   </details>
 
 ### Step 2.6 — [Track 05 (Tier 2): Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF](05-control-and-estimation/README.md#tier-2-intermediate--applied)
-- **Core Summary:** Evaluates robustness via Åström's Gang of Four ($M_s = \|S\|_\infty \le 1.75$), pumps energy into an underactuated inverted pendulum using Åström-Furuta swing-up before catching upright with discrete LQR ($u = -Kx$), and implements the Linear Kalman Filter.
+- **Core Summary:** Evaluates robustness via Åström's Gang of Four ($M_s = \|S\|\kern0pt_\infty \le 1.75$), pumps energy into an underactuated inverted pendulum using Åström-Furuta swing-up before catching upright with discrete LQR ($u = -Kx$), and implements the Linear Kalman Filter.
 - **Curated Free Resources:**
   - 🔗 [MechaLab Interactive Tab 4: Furuta Pendulum Swing-Up + LQR + CBF Simulator](05-control-and-estimation/README.md#tier-2-intermediate--applied) — *Live 60 FPS interactive simulation of energy swing-up, LQR balancing, and impulse recovery.*
   - 🔗 [Steve Brunton — Control Bootcamp: LQR & Kalman Filter Lectures (YouTube)](https://www.youtube.com/c/Eigensteve) — *Concise university lecture series deriving controllable/observable state-space LQR and Kalman filtering.*
@@ -433,8 +433,8 @@ Loop back to Track 00 and level up every module from breadboard breakouts to cus
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
-  **Q1:** Why do we evaluate the high-rate PD position/velocity spring $\tau_{pd} = K_p(q_{\text{des}} - q) + K_d(\dot{q}_{\text{des}} - \dot{q})$ *locally* inside the motor drive's $25\text{ kHz}$ MCU loop rather than computing torque on the central PC and sending pure $\tau$ over the $1\text{ kHz}$ CAN bus?
-  * **Answer / Explanation:** Closing stiffness $K_p$ and damping $K_d$ at $25\text{ kHz}$ right on the actuator MCU eliminates the $1\text{–}2\text{ ms}$ CAN bus transport delay from the PD loop, allowing $3\text{–}5\times$ higher stable damping $K_d$ while the $1\text{ kHz}$ central PC updates $(q_{\text{des}}, \dot{q}_{\text{des}}, \tau_{ff})$ smoothly.
+  **Q1:** Why do we evaluate the high-rate PD position/velocity spring $\tau_{pd} = K_p(q_{\text{des}} - q) + K_d(\dot{q}\kern0pt_{\text{des}} - \dot{q})$ *locally* inside the motor drive's $25\text{ kHz}$ MCU loop rather than computing torque on the central PC and sending pure $\tau$ over the $1\text{ kHz}$ CAN bus?
+  * **Answer / Explanation:** Closing stiffness $K_p$ and damping $K_d$ at $25\text{ kHz}$ right on the actuator MCU eliminates the $1\text{–}2\text{ ms}$ CAN bus transport delay from the PD loop, allowing $3\text{–}5\times$ higher stable damping $K_d$ while the $1\text{ kHz}$ central PC updates $(q_{\text{des}}, \dot{q}\kern0pt_{\text{des}}, \tau_{ff})$ smoothly.
   
   **Q2:** Once your Tier 2 Boss system passes sign-off, what is your final loop-back action?
   * **Answer & Explanation:** Loop back to **Track 00 (Tier 3)** to execute **Pass 3 (Advanced / Production Pass)**—mastering Lie groups $SO(3)/SE(3)$, $<2\text{ nH}$ 6-layer $48\text{ V}/30\text{ A}$ inverters, $O(n)$ RNEA, $40\text{ kHz}$ bare-metal `STM32G474` FOC, `WaitFreeSeqLock`, Joseph ESKF, CBF-QP safety walls, and $<1\ \mu\text{s}$ hardware STO!
@@ -452,7 +452,7 @@ Loop back to Track 00 one final time for graduate theoretical depth and industri
   - 🔗 [Joan Solà — "A Micro Lie Theory for State Estimation in Robotics" (`arXiv:1812.01537` Free PDF)](https://arxiv.org/abs/1812.01537) — *The clearest, most actionable reference on* $SO(3), SE(3)$ *, hat/vee operators, Adjoints, and Jacobians on manifolds.*
   - 🔗 [Sophus C++ / Python Lie Groups Library (`GitHub`)](https://github.com/strasdat/Sophus) — *Production header-only Eigen implementation of `SO3` and `SE3` exponential/logarithmic maps.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Implement `so3_exp(phi)` and `so3_log(R)` in Python/C++ with Taylor series fallback $1 - \theta^2/6$ and $\frac{1}{2} - \theta^2/24$ for $\|\phi\| < 10^{-4}\text{ rad}$. Verify that $\|\log(\exp([\phi]_\times))^\vee - \phi\|_2 < 10^{-14}\text{ rad}$ for tiny angles $\|\phi\| = 10^{-8}\text{ rad}$ where naive $\sin\theta / \theta$ would divide by zero or lose precision.
+  - *Task:* Implement `so3_exp(phi)` and `so3_log(R)` in Python/C++ with Taylor series fallback $1 - \theta^2/6$ and $\frac{1}{2} - \theta^2/24$ for $\|\phi\| < 10^{-4}\text{ rad}$. Verify that $\|\log(\exp([\phi]\kern0pt_\times))^\vee - \phi\|\kern0pt_2 < 10^{-14}\text{ rad}$ for tiny angles $\|\phi\| = 10^{-8}\text{ rad}$ where naive $\sin\theta / \theta$ would divide by zero or lose precision.
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -509,7 +509,7 @@ $$
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
   **Q1:** In Featherstone's $O(n)$ Recursive Newton-Euler Algorithm (RNEA), how do you include the gravity torque vector $g(q)$ for all $n$ joints without ever computing a separate potential energy derivative $\frac{\partial \mathcal{V}}{\partial q}$?
-  * **Answer / Explanation:** By Einstein's Equivalence Principle, sitting in a downward gravitational field $a_{\text{grav}} = [0, 0, -9.81]^\top\text{ m/s}^2$ is dynamically identical to accelerating the robot's base frame upward at $\dot{\mathcal{V}}_0 = [0,0,0, 0, 0, +9.81]^\top$! Initializing the outward kinematic pass with $\dot{\mathcal{V}}_0 = -a_{\text{grav}}$ automatically propagates gravity wrenches across every link in $O(n)$ time.
+  * **Answer / Explanation:** By Einstein's Equivalence Principle, sitting in a downward gravitational field $a_{\text{grav}} = [0, 0, -9.81]^\top\text{ m/s}^2$ is dynamically identical to accelerating the robot's base frame upward at $\dot{\mathcal{V}}\kern0pt_0 = [0,0,0, 0, 0, +9.81]^\top$! Initializing the outward kinematic pass with $\dot{\mathcal{V}}\kern0pt_0 = -a_{\text{grav}}$ automatically propagates gravity wrenches across every link in $O(n)$ time.
   
   **Q2:** According to the Paros-Weisbord equation $k_\theta \approx \frac{2 E b t^{5/2}}{9\pi\sqrt{R}}$, by what factor does rotational stiffness $k_\theta$ increase if you double the minimum notch web thickness $t \to 2t$?
   * **Answer & Explanation:** $2^{5/2} = 4\sqrt{2} \approx \mathbf{5.66\times}$ stiffer! Because of the $t^{2.5}$ power law, wire-EDM machining tolerance on web thickness $t$ ($\pm 5\ \mu\text{m}$) is the single most critical dimension on a flexure drawing.
@@ -527,7 +527,7 @@ $$
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
   **Q1:** Why does stepping $i_q^*$ from $0\text{ A}$ to $18\text{ A}$ at $2800\text{ RPM}$ cause a large transient error in $i_d$ if feedforward decoupling ($-\omega_e L_q i_q$) is disabled?
-  * **Answer / Explanation:** In the rotating $d$-$q$ frame, the stator voltage equation is $v_d = R_s i_d + L_d\frac{di_d}{dt} - \omega_e L_q i_q$. When $i_q$ steps to $18\text{ A}$ at high electrical speed $\omega_e$, the $-\omega_e L_q i_q$ rotational back-EMF cross-couples into the $d$-axis like a sudden voltage disturbance that the $d$-axis PI integrator must slowly fight unless canceled proactively by $v_{d,\text{ff}} = -\hat{\omega}_e \hat{L}_q i_q$.
+  * **Answer / Explanation:** In the rotating $d$-$q$ frame, the stator voltage equation is $v_d = R_s i_d + L_d\frac{di_d}{dt} - \omega_e L_q i_q$. When $i_q$ steps to $18\text{ A}$ at high electrical speed $\omega_e$, the $-\omega_e L_q i_q$ rotational back-EMF cross-couples into the $d$-axis like a sudden voltage disturbance that the $d$-axis PI integrator must slowly fight unless canceled proactively by $v_{d,\text{ff}} = -\hat{\omega}\kern0pt_e \hat{L}\kern0pt_q i_q$.
   
   **Q2:** For a $V_{\text{bus}} = 48.0\text{ V}$ inverter, what is the maximum undistorted phase peak voltage achievable with pure Sinusoidal PWM ($V_{\text{bus}}/2$) versus Space Vector PWM ($V_{\text{bus}}/\sqrt{3}$)?
   * **Answer & Explanation:** Sinusoidal PWM saturates at $48 / 2 = \mathbf{24.0\text{ V}}$, whereas Min-Max SVPWM shifts the neutral common-mode voltage to inscribed-circle radius $48 / \sqrt{3} = \mathbf{27.71\text{ V}}$—giving $+15.47\%$ higher motor top speed from the exact same battery!
@@ -559,7 +559,7 @@ $$
   - 🔗 [Joan Solà — "Quaternion Kinematics for the Error-State Kalman Filter" (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508) & [Stanford EE364a Convex Optimization + `TinyMPC` / `OSQP` / `acados`](https://tinympc.org/) — *Complete derivation of error-state Jacobians, covariance propagation, and sub-millisecond embedded ADMM/SQP solvers.*
   - 🔗 [Aaron Ames et al. — "Control Barrier Functions: Theory and Applications" (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199) — *Foundational tutorial on CLF-CBF-QP safety filters for robotic systems.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 4: Furuta Pendulum + LQR + CBF**, set the CBF Safety Wall to $x_{\max} = 0.22\text{ m}$, and click **"Inject Impulse Kick"** with the CBF Safety Filter toggled **ON** vs. **OFF**. Observe how the velocity-aware barrier $h(x_c, \dot{x}_c) = x_{\max}^2 - x_c^2 - k_v x_c \dot{x}_c \ge 0$ brakes the cart *before* reaching the red wall.
+  - *Task:* Open **Tab 4: Furuta Pendulum + LQR + CBF**, set the CBF Safety Wall to $x_{\max} = 0.22\text{ m}$, and click **"Inject Impulse Kick"** with the CBF Safety Filter toggled **ON** vs. **OFF**. Observe how the velocity-aware barrier $h(x_c, \dot{x}\kern0pt_c) = x_{\max}^2 - x_c^2 - k_v x_c \dot{x}\kern0pt_c \ge 0$ brakes the cart *before* reaching the red wall.
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -567,8 +567,8 @@ $$
   **Q1:** Why does production embedded code always use the **Joseph-Form covariance update** $P^+ = (I - KH)P^-(I - KH)^\top + KRK^\top$ instead of the shorter textbook formula $P^+ = (I - KH)P^-$?
   * **Answer / Explanation:** In `float32` arithmetic, subtracting $KHP^-$ in $(I - KH)P^-$ can lose symmetry and produce a slightly negative eigenvalue due to rounding, causing the Kalman filter to diverge to `NaN`! The Joseph form is the sum of two symmetric positive-semidefinite quadratic forms $A P^- A^\top + K R K^\top$, guaranteeing symmetry and positive definiteness even under suboptimal gains or `float32` rounding.
   
-  **Q2:** Why does a position constraint $y(x) = x_{\max}^2 - x_c^2 \ge 0$ on a mechanical system ($\ddot{x}_c = f + g u$) have **relative degree 2**, requiring a velocity-dependent barrier $h(x_c, \dot{x}_c)$?
-  * **Answer & Explanation:** The first time derivative $\dot{y} = -2 x_c \dot{x}_c$ does **not** contain the motor force input $u$ (motor force changes acceleration $\ddot{x}_c$, not velocity $\dot{x}_c$ instantaneously!). Including the velocity braking term in $h(x_c, \dot{x}_c)$ ensures $\dot{h}$ explicitly contains $\ddot{x}_c(u)$ so the QP can command braking force *before* position reaches $x_{\max}$.
+  **Q2:** Why does a position constraint $y(x) = x_{\max}^2 - x_c^2 \ge 0$ on a mechanical system ($\ddot{x}\kern0pt_c = f + g u$) have **relative degree 2**, requiring a velocity-dependent barrier $h(x_c, \dot{x}\kern0pt_c)$?
+  * **Answer & Explanation:** The first time derivative $\dot{y} = -2 x_c \dot{x}\kern0pt_c$ does **not** contain the motor force input $u$ (motor force changes acceleration $\ddot{x}\kern0pt_c$, not velocity $\dot{x}\kern0pt_c$ instantaneously!). Including the velocity braking term in $h(x_c, \dot{x}\kern0pt_c)$ ensures $\dot{h}$ explicitly contains $\ddot{x}\kern0pt_c(u)$ so the QP can command braking force *before* position reaches $x_{\max}$.
   </details>
 
 ### Step 3.7 — [Track 06 & 07 (Tier 3): Khatib WBC, Embodied AI (`LeRobot`, Diffusion, `π₀`/VLA), Schroeder SysID, AAS Digital Twins & <1 μs STO](07-systems-hil-and-production/README.md#tier-3-advanced--production)
@@ -586,8 +586,8 @@ $$
   **Q1:** Why must a redundant 7-DOF manipulator use the **dynamically consistent generalized inverse** $\bar{J}(q) = M^{-1}(q)J(q)^\top \Lambda(q)$ in its null-space projector $N^\top(q) = I - J^\top \bar{J}^\top$ rather than the standard Moore-Penrose pseudoinverse $J^+ = J^\top(J J^\top)^{-1}$?
   * **Answer / Explanation:** The Moore-Penrose pseudoinverse $J^+$ only guarantees zero kinematic velocity coupling, ignoring link inertia $M(q)$. Multiplying the equation of motion by $J M^{-1}$ shows that $J M^{-1}(I - J^\top \bar{J}^\top)\tau_{\text{null}} = (J M^{-1} - J M^{-1} J^\top (J M^{-1} J^\top)^{-1} J M^{-1})\tau_{\text{null}} \equiv 0$—meaning only $\bar{J}$ guarantees that internal elbow posture torques produce **zero instantaneous acceleration at the end-effector**!
   
-  **Q2:** In closed-loop system identification, why does the naive spectral estimate $\hat{P}(j\omega) = \frac{\hat{S}_{yu}(j\omega)}{\hat{S}_{uu}(j\omega)}$ yield a biased (wrong) plant transfer function when sensor noise $v(t)$ is present, and how does $\hat{P}(j\omega) = \frac{\hat{S}_{y d_{\text{exc}}}(j\omega)}{\hat{S}_{u d_{\text{exc}}}(j\omega)}$ fix it?
-  * **Answer & Explanation:** Inside a closed feedback loop, sensor noise $v(t)$ passes through controller $C(s)$ into the actuator input $u(t)$, making $u(t)$ correlated with the noise ($S_{vu} \ne 0$). At high frequencies where noise dominates, $\hat{S}_{yu}/\hat{S}_{uu}$ converges to $-1/C(j\omega)$ instead of $P(j\omega)$! Cross-correlating both $y$ and $u$ against the known external Schroeder excitation $d_{\text{exc}}$ (which is strictly uncorrelated with sensor noise, $S_{v d_{\text{exc}}} \equiv 0$) eliminates closed-loop noise bias completely.
+  **Q2:** In closed-loop system identification, why does the naive spectral estimate $\hat{P}(j\omega) = \frac{\hat{S}\kern0pt_{yu}(j\omega)}{\hat{S}\kern0pt_{uu}(j\omega)}$ yield a biased (wrong) plant transfer function when sensor noise $v(t)$ is present, and how does $\hat{P}(j\omega) = \frac{\hat{S}\kern0pt_{y d_{\text{exc}}}(j\omega)}{\hat{S}\kern0pt_{u d_{\text{exc}}}(j\omega)}$ fix it?
+  * **Answer & Explanation:** Inside a closed feedback loop, sensor noise $v(t)$ passes through controller $C(s)$ into the actuator input $u(t)$, making $u(t)$ correlated with the noise ($S_{vu} \ne 0$). At high frequencies where noise dominates, $\hat{S}\kern0pt_{yu}/\hat{S}\kern0pt_{uu}$ converges to $-1/C(j\omega)$ instead of $P(j\omega)$! Cross-correlating both $y$ and $u$ against the known external Schroeder excitation $d_{\text{exc}}$ (which is strictly uncorrelated with sensor noise, $S_{v d_{\text{exc}}} \equiv 0$) eliminates closed-loop noise bias completely.
   </details>
 
 ### Step 3.8 — [Track 08 (Tier 3 Production Mastery): Full Production Capstones I–V & Open Robot Platforms](08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass)
