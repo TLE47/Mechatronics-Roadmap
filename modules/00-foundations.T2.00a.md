@@ -23,7 +23,7 @@ resources_verified: false
 In Tier 1 (`00-foundations.T1.01`), you updated position and velocity as separate scalar lines inside a `while` loop, which becomes unwieldy when a two-mass drivetrain or 6-DOF arm has $4$ to $12$ coupled states. Stacking all state variables into a single state vector $\vec{x}_k$ lets a single matrix-vector update $\vec{x}_{k+1} = A_d \vec{x}_k + B_d u_k$ advance the entire physical plant, Kalman filter, or LQR controller in one step. Already know this? Take the Skip test in section 8 first.
 
 ## 2. Intuition first (Mental Model)
-Imagine a spreadsheet where Column A holds a cart's position and Column B holds its velocity. To compute the next row, you follow two fixed recipes: "new position equals $1$ times old position plus $\Delta t$ times old velocity," and "new velocity equals stiffness-factor times old position plus damping-factor times old velocity plus input-factor times motor force." Instead of writing those two long sentences on every row, you write the four multiplier weights once inside a $2\times 2$ grid called matrix $A_d$ and the two force weights inside a $2\times 1$ column called $B_d$. Multiplying a matrix by a column vector simply means taking each row of the grid and matching its weights against the state column.
+Imagine a spreadsheet where Column A holds a cart's position and Column B holds its velocity. To compute the next row, you follow two fixed recipes: "new position equals $1$ times old position plus $\Delta t$ times old velocity," and "new velocity equals stiffness-factor times old position plus damping-factor times old velocity plus input-factor times motor force." Instead of writing those two long sentences on every row, you write the four multiplier weights once inside a $2\times 2$ grid called matrix $A_d$ and the two force weights inside a $2\times 1$ column called $B_d$. Multiplying a matrix by a column vector consists of taking each row of the grid and matching its weights against the state column.
 
 ## 3. Formalization
 1. **Finite-Difference Derivative and Running Integral:** Given discrete positions $x_k$ in meters ($\text{m}$) sampled every $\Delta t$ seconds ($\text{s}$), the backward-difference velocity $v_k$ ($\text{m/s}$) and rectangular integral $I_k$ ($\text{m}\cdot\text{s}$) are:
@@ -69,29 +69,31 @@ x1=0.1000 m, v1=-0.0500 m/s
 Iterate `x = [Ad[0][0]*x[0] + Ad[0][1]*x[1] + Bd[0]*u0, Ad[1][0]*x[0] + Ad[1][1]*x[1] + Bd[1]*u0]` for `500` steps ($5.0\text{ s}$) with constant force $u_0 = 5.0\text{ N}$ and verify that position converges to static Hooke equilibrium $x_{\text{eq}} = u_0 / k = 0.0500\text{ m}$ (tolerance $\pm 10^{-3}\text{ m}$) and velocity converges to $0.0000\text{ m/s}$ (tolerance $\pm 10^{-4}\text{ m/s}$).
 - **If your result differs:** Make sure you compute both new components `x_next` and `v_next` from the *previous* step's `x[0]` and `x[1]` before overwriting `x`.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to see a 4-state matrix updater driving a motor + flexible shaft + load plant.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). On the STM32/ESP32 in Pass 2 (`Track 05`), this exact matrix-vector product executes inside the $1\text{ kHz}$ Kalman filter prediction step:
 ```text
 [State Vector x_k] ---> [Matrix Multiply: x_{k+1} = Ad * x_k + Bd * u_k] ---> [Predicted State x_{k+1}]
 ```
 Pass/fail verification in simulation: `x1 == 0.1000 m` and `v1 == -0.0500 m/s`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: run the worked example and 500-step equilibrium exercise with zero assertion errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
-1. `[Concept: finite_difference_derivative_and_integral]` An encoder reads $x_{k-1} = 1.20\text{ rad}$ and $x_k = 1.26\text{ rad}$ at sample step $\Delta t = 0.002\text{ s}$. Compute the backward finite-difference velocity $v_k$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$).
-2. `[Concept: matrix_vector_multiplication]` Multiply $A = \begin{bmatrix} 2.0 & -1.0 \\ 0.5 & 3.0 \end{bmatrix}$ by $\vec{x} = \begin{bmatrix} 4.0 \\ 2.0 \end{bmatrix}$ and report the second row entry $(A\vec{x})_1$ (tolerance $\pm 10^{-9}$).
-3. `[Concept: state_vector_one_step_update]` Using $A_d = \begin{bmatrix} 1.0 & 0.01 \\ -1.0 & 0.90 \end{bmatrix}$, $B_d = \begin{bmatrix} 0.0 \\ 0.01 \end{bmatrix}$, $\vec{x}_0 = \begin{bmatrix} 0.0 \\ 1.0 \end{bmatrix}$, and $u_0 = 0.0$, compute the updated position $x_1$ after one step (tolerance $\pm 10^{-9}\text{ m}$).
+1. `[Recall] [Concept: finite_difference_derivative_and_integral]` An encoder reads $x_{k-1} = 1.20\text{ rad}$ and $x_k = 1.26\text{ rad}$ at sample step $\Delta t = 0.002\text{ s}$. Compute the backward finite-difference velocity $v_k$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$).
+2. `[Apply] [Concept: matrix_vector_multiplication]` Multiply $A = \begin{bmatrix} 2.0 & -1.0 \\ 0.5 & 3.0 \end{bmatrix}$ by $\vec{x} = \begin{bmatrix} 4.0 \\ 2.0 \end{bmatrix}$ and report the second row entry $(A\vec{x})_1$ (tolerance $\pm 10^{-9}$).
+3. `[Transfer] [Concept: state_vector_one_step_update]` Using $A_d = \begin{bmatrix} 1.0 & 0.01 \\ -1.0 & 0.90 \end{bmatrix}$, $B_d = \begin{bmatrix} 0.0 \\ 0.01 \end{bmatrix}$, $\vec{x}_0 = \begin{bmatrix} 0.0 \\ 1.0 \end{bmatrix}$, and $u_0 = 0.0$, compute the updated position $x_1$ after one step (tolerance $\pm 10^{-9}\text{ m}$).
 4. `[Concept: matrix_vector_multiplication]` If state matrix $A_d$ has shape $(4, 4)$ and state vector $\vec{x}_k$ has shape $(4, 1)$, what is the shape of the product $A_d \vec{x}_k$?
    - **A.** $(1, 4)$
    - **B.** $(4, 4)$
    - **C.** $(4, 1)$
    - **D.** $(1, 1)$
-5. `[Spaced review — Concept: symplectic_euler_integration]` For an undamped spring-mass system, why does updating velocity first and then using the new velocity to update position preserve energy better than standard forward Euler?
+5. `[Spaced review -> 00-foundations.T1.01 — Concept: symplectic_euler_integration]` For an undamped spring-mass system, why does updating velocity first and then using the new velocity to update position preserve energy better than standard forward Euler?
    - **A.** It sets the spring stiffness $k$ to zero.
    - **B.** It is a symplectic map that preserves phase-space area instead of spiraling outward.
    - **C.** It doubles the time step $\Delta t$.
@@ -118,14 +120,13 @@ assert q5_choice == "B"
 ## 9. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
-| In NumPy, `A * x` gives a $2\times 2$ matrix instead of a $2\times 1$ vector | Used elementwise `*` instead of matrix-multiply `@`. | Always use `A @ x` for matrix-vector multiplication in NumPy. |
+| In matrix math, elementwise `A * x` gives a $2\times 2$ matrix instead of a $2\times 1$ vector | Used elementwise `*` instead of matrix-multiply `@`. | Always use `A @ x` for matrix-vector multiplication in NumPy. |
 | Matrix update diverges even with positive damping $b$ | Overwrote `x[0]` in-place before using old `x[0]` to compute `x[1]`. | Compute the full new vector `[row0, row1]` before assigning it back to `x`. |
 | Static equilibrium is off by $\Delta t$ | Forgot to multiply $B_c = [0,\; 1/m]^T$ by $\Delta t$ when forming $B_d$. | Check units: $B_d u_k$ in row 2 must have units of velocity ($\text{m/s} = \text{N}\cdot\text{s/kg}$). |
 
 ## 10. Resources
-- **Strang — *Linear Algebra and Learning from Data* (`resources/textbooks-and-papers.md`):** Matrix-vector multiplication and discrete difference equations `[VERIFIED 2026-10-15]`.
+- **Strang — *Linear Algebra and Learning from Data* (`resources/textbooks-and-papers.md`):** Matrix-vector multiplication and discrete difference equations `[UNVERIFIED]`.
 - **Brunton & Kutz — *Data-Driven Science and Engineering* (`resources/textbooks-and-papers.md`):** Open-access PDF connecting linear algebra to dynamical systems `[VERIFIED 2026-10-15]`.
 - **3Blue1Brown — *Essence of Linear Algebra* (`3blue1brown.com/topics/linear-algebra`):** Visual intuition for matrices as linear transformations `[UNVERIFIED]`.
-
 ## 11. Next modules
 - Proceed to [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*Vectors, Dot & Cross Products, Linear Independence & Change of Basis*).

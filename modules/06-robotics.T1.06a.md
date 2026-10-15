@@ -70,24 +70,26 @@ Midpoint: q=0.60 rad, qd_max=0.90 rad/s, deflection=0.10 rad
 Compute the minimum move duration $T_{\min}$ in seconds ($\text{s}$) required for a rest-to-rest cubic trajectory covering $\Delta q = 2.0\text{ rad}$ if the actuator's maximum speed is $\dot{q}_{\max} = 3.0\text{ rad/s}$ ($\dot{q}_{\max} = \frac{1.5\Delta q}{T_{\min}}$). Verify $T_{\min} = \frac{1.5 \times 2.0}{3.0} = 1.0\text{ s}$ and check that `cubic_rest_to_rest(0.5, 0.0, 2.0, 1.0)[1]` equals `3.0` $\text{rad/s}$.
 - **If your result differs:** Recall that a cubic rest-to-rest profile has peak velocity $1.5\times$ the average velocity ($\frac{1.5\Delta q}{T}$, not $\frac{\Delta q}{T}$) because it spends the first and last halves accelerating and decelerating.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 6 (Trajectory Generation: Cubic, Trapezoidal & Ruckig S-Curve)** in the MechaLab Workbench (`npm run dev`) to compare step setpoints against cubic and trapezoidal profiles interactively.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 1.7 (`06-robotics.T1.07`), `cubic_rest_to_rest(t, q0, qf, T)` runs at $1\text{ kHz}$ on the microcontroller to feed $(q_d(t), \dot{q}_d(t))$ into the joint PD + gravity compensation loop:
 ```text
 [1 kHz Clock t] ---> [Cubic Trajectory q_d(t), qd_d(t)] ---> [PD Spring-Damper + tau_g(q)] ---> [Actuator]
 ```
 Pass/fail verification in simulation: `qd_start == 0.0`, `qd_end == 0.0`, `qd_mid == 0.90 rad/s`, and `deflection_rad == 0.10 rad`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.7 (`06-robotics.T1.07`).
 
 ### Skip test
-1. `[Concept: polynomial_endpoint_boundary_conditions]` For a rest-to-rest cubic trajectory from $q_0 = 0.0\text{ rad}$ to $q_f = 2.0\text{ rad}$ in $T = 4.0\text{ s}$, compute the midpoint position $q_d(2.0)$ in $\text{rad}$ and peak velocity $\dot{q}_d(2.0) = \frac{1.5\Delta q}{T}$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
-2. `[Concept: polynomial_endpoint_boundary_conditions]` Compute the initial acceleration $\ddot{q}_d(0) = \frac{6\Delta q}{T^2}$ in $\text{rad/s}^2$ (tolerance $\pm 10^{-9}$) for $\Delta q = 2.0\text{ rad}$ and $T = 2.0\text{ s}$.
-3. `[Concept: virtual_joint_compliance_stiffness]` A compliant joint controller $\tau = K_p(q_d - q) - K_d\dot{q} + \tau_g(q)$ with $K_p = 4.0\text{ N}\cdot\text{m/rad}$ is pushed by an external human hand torque of $\tau_{\text{ext}} = 0.80\text{ N}\cdot\text{m}$ at rest. By what angle $\Delta q = \tau_{\text{ext}} / K_p$ in radians (tolerance $\pm 10^{-9}$) does the joint yield?
-4. `[Concept: trajectory_vs_step_setpoint]` Why do collaborative robots omit the integral term ($K_i = 0$, using PD + gravity feedforward instead) when operating in compliant human-interaction mode?
+1. `[Recall] [Concept: polynomial_endpoint_boundary_conditions]` For a rest-to-rest cubic trajectory from $q_0 = 0.0\text{ rad}$ to $q_f = 2.0\text{ rad}$ in $T = 4.0\text{ s}$, compute the midpoint position $q_d(2.0)$ in $\text{rad}$ and peak velocity $\dot{q}_d(2.0) = \frac{1.5\Delta q}{T}$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
+2. `[Apply] [Concept: polynomial_endpoint_boundary_conditions]` Compute the initial acceleration $\ddot{q}_d(0) = \frac{6\Delta q}{T^2}$ in $\text{rad/s}^2$ (tolerance $\pm 10^{-9}$) for $\Delta q = 2.0\text{ rad}$ and $T = 2.0\text{ s}$.
+3. `[Transfer] [Concept: virtual_joint_compliance_stiffness]` A compliant joint controller $\tau = K_p(q_d - q) - K_d\dot{q} + \tau_g(q)$ with $K_p = 4.0\text{ N}\cdot\text{m/rad}$ is pushed by an external human hand torque of $\tau_{\text{ext}} = 0.80\text{ N}\cdot\text{m}$ at rest. By what angle $\Delta q = \tau_{\text{ext}} / K_p$ in radians (tolerance $\pm 10^{-9}$) does the joint yield?
+4. `[Spaced review -> 02-mechanics.T1.03 — Concept: discrete_pid_controller] [Concept: trajectory_vs_step_setpoint]` Why do collaborative robots omit the integral term ($K_i = 0$, using PD + gravity feedforward instead) when operating in compliant human-interaction mode?
    - **A.** Because $K_i$ is difficult to program in C.
    - **B.** Because if a human pushes and holds the arm away from $q_d$, an integral term would wind up to maximum stall torque fighting the human, whereas PD + gravity feedforward yields like a gentle mechanical spring!
    - **C.** Because gravity feedforward eliminates inertia.
@@ -165,6 +167,5 @@ assert g8_choice == "A"
 ## 10. Resources
 - **Kevin Lynch & Frank Park — *Modern Robotics* (`modernrobotics.org`, Ch. 9 Trajectory Generation, `resources/textbooks-and-papers.md`):** Free textbook + video lectures on polynomial and trapezoidal time scaling `[VERIFIED 2026-10-15]`.
 - **Track 06 (`06-robotics-and-autonomy/README.md`):** Directly continues into Step 1.7 (`06-robotics.T1.07`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 1.7 (`06-robotics.T1.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive).

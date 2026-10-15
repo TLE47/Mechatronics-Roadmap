@@ -16,14 +16,14 @@ uses:
 est_hours: 5.5
 hardware_required: false
 safety_level: high
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
 This is the final bridge module in the Track 06 Tier 3 Embodied AI ladder before Step 3.7 (`06-robotics.T3.07`). While Behavior Cloning (`06-robotics.T3.06a`) imitates human demonstrations, **Reinforcement Learning (RL / PPO)** discovers agile locomotion and contact behaviors in GPU simulators (`Newton`, `Isaac Lab`, `MuJoCo Playground`) by maximizing discounted cumulative reward $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$. And to deploy *either* an RL policy or a Vision-Language-Action (`VLA` / `ACT` / `Diffusion` / `π₀`) policy onto real $48\text{ V}$ hardware without violent jitter or collisions, you must master **Action Chunking with Temporal Ensembling / Real-Time Chunking (`RTC`)**, **Domain Randomization**, and a hard $1\text{ kHz}$ **Sim-to-Real CBF/Impedance Safety Shield**. Already know this? Read `## 7. Safety notes` first, then take the Skip test or the Ladder Gate test in section 8.
 
 ## 2. Intuition first (Mental Model)
-In supervised learning (`06-robotics.T3.06a`), a teacher tells the network the exact right action $a_t^*$ on every step. In **Reinforcement Learning (MDP)**, there is no teacher—only a scoreboard (the **reward function** $r_t$, which awards points for reaching the goal and deducts points for excessive torque or falling over). The policy tries actions, sees which rollouts scored higher than expected (positive **Advantage** $\hat{A}_t > 0$), and increases the log-probability of those winning actions while **PPO (Proximal Policy Optimization)** clips the update ratio $r_t(\theta) = \frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}$ to $[1-\epsilon, 1+\epsilon]$ so one lucky rollout doesn't wreck the policy! Second, why do modern manipulation policies (`ACT`, `Diffusion Policy`, `π₀`) predict a whole **chunk of $K=16$ future waypoints** instead of just 1 step, and blend overlapping chunks with exponential weights $w_i = \exp(-m \cdot i)$ (**Temporal Ensembling / Real-Time Chunking**)? Because blending overlapping predictions smooths out frame-to-frame camera noise and bridges the $30\text{–}100\text{ ms}$ vision inference delay! Finally, because a neural network can output an arbitrary wild number if given an out-of-distribution camera image, **never** wire a neural network directly to raw motor voltage—always wrap it inside a $1\text{ kHz}$ **Safety Shield** that clamps joint step size $|\Delta q_{\text{cmd}}| \le \Delta q_{\max}$, joint limits, and Control Barrier Function (`CBF-QP`) workspace walls!
+In supervised learning (`06-robotics.T3.06a`), a teacher tells the network the exact right action $a_t^*$ on every step. In **Reinforcement Learning (MDP)**, there is no teacher—only a scoreboard (the **reward function** $r_t$, which awards points for reaching the goal and deducts points for excessive torque or falling over). The policy tries actions, sees which rollouts scored higher than expected (positive **Advantage** $\hat{A}_t > 0$), and increases the log-probability of those winning actions while **PPO (Proximal Policy Optimization)** clips the update ratio $r_t(\theta) = \frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}$ to $[1-\epsilon, 1+\epsilon]$ so one lucky rollout doesn't wreck the policy! Second, why do modern manipulation policies (`ACT`, `Diffusion Policy`, `π₀`) predict a whole **chunk of $K=16$ future waypoints** instead of a single step, and blend overlapping chunks with exponential weights $w_i = \exp(-m \cdot i)$ (**Temporal Ensembling / Real-Time Chunking**)? Because blending overlapping predictions smooths out frame-to-frame camera noise and bridges the $30\text{–}100\text{ ms}$ vision inference delay! Finally, because a neural network can output an arbitrary wild number if given an out-of-distribution camera image, **never** wire a neural network directly to raw motor voltage—always wrap it inside a $1\text{ kHz}$ **Safety Shield** that clamps joint step size $|\Delta q_{\text{cmd}}| \le \Delta q_{\max}$, joint limits, and Control Barrier Function (`CBF-QP`) workspace walls!
 
 ## 3. Formalization
 1. **Markov Decision Process (MDP), Discounted Return ($G_t$) & PPO Clipped Surrogate:** Over state $s_t$, action $a_t \sim \pi_\theta(a_t \mid s_t)$, reward $r_t$, and discount factor $\gamma \in (0, 1)$, the discounted return from step $t$ is:
@@ -86,27 +86,32 @@ G_0=6.04, PPO_clip=2.40, a_ens=0.5015 rad, q_safe=0.58 rad
 Suppose a reward sequence is $r = [0.0, 0.0, 10.0]$ over 3 steps with discount factor $\gamma = 0.95$, and at step $t=0$ the PPO probability ratio is $\rho_0 = 0.60$ with negative advantage $\hat{A}_0 = -3.0$ and clip range $\epsilon = 0.20$. Compute $G_0 = \gamma^2 (10.0)$ and the clipped PPO objective $\min(\rho_0 \hat{A}_0,\ \operatorname{clip}(\rho_0, 0.8, 1.2)\hat{A}_0)$. Verify $G_0 = 9.025$ and $L^{\text{CLIP}}_0 = \min(-1.80, -2.40) = -2.40$ ($\pm 10^{-9}$).
 - **If your result differs:** When $\hat{A}_0 < 0$ and $\rho_0 = 0.60 < 0.80$, $\rho_0 \hat{A}_0 = -1.80$ while the clipped term is $0.80 \times (-3.0) = -2.40$; taking the pessimistic $\min(-1.80, -2.40)$ gives $-2.40$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 4 (CBF-QP Safety Filter)** and **Tab 6 (Trajectory & Action Smoothing)** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
 
-## 7. Safety notes
+## 7. Hardware path (and Safety notes)
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before deploying any learned policy on hardware or taking the Skip/Gate test):**
 > 1. **Never Wire a Neural Policy Directly to Raw Motor Voltage/Current:** A neural network (`BC`, `PPO`, `Diffusion`, `VLA`) has no mathematical guarantee against outputting extreme actions when encountering a camera glare, occlusion, or out-of-distribution state. Every learned policy output **must** pass through a deterministic $1\text{ kHz}$ low-level **Safety Shield** (`safety_shield` + CBF-QP + joint PD torque clamp) running on the real-time controller.
 > 2. **Per-Tick Slew-Rate / Step Clamping (`dq_max`):** Clamp the maximum position deviation $|q_d - q_{\text{meas}}| \le \Delta q_{\max}$ (e.g., $\le 0.05\text{–}0.10\text{ rad}$), velocity $|\dot{q}_d| \le \dot{q}_{\max}$, and torque $|\tau| \le \tau_{\max}$ on every tick, and trip into hardware Safe Torque Off (`STO` / `FAULT`) if the policy heartbeat times out ($> 100\text{ ms}$).
 > 3. **Physical E-Stop in Hand During First Policy Rollout:** Always keep a physical hardware E-stop button in hand and test new checkpoints at $25\%$ torque ceiling in a clear workspace before full-speed evaluation.
 
+**Optional Hardware Path (`hardware_required: false`):** Complete all simulation and assertion gates in `## 6. Sim-first path (Simulation path)` first before energizing any physical hardware stage:
+```text
+[Sim-First Gate Passed] ---> [Current-Limited Bench PSU + E-Stop Ready] ---> [Incremental Hardware Verification]
+```
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: read `## 7. Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
 
 ### Skip test
-1. `[Concept: mdp_discounted_return_and_policy_gradient]` Compute the discounted return $G_0 = r_0 + \gamma r_1 + \gamma^2 r_2$ (tolerance $\pm 10^{-9}$) for rewards $[2.0, 0.0, 5.0]$ and discount factor $\gamma = 0.80$.
-2. `[Concept: mdp_discounted_return_and_policy_gradient]` In PPO with clip parameter $\epsilon = 0.20$, if advantage is $\hat{A}_t = +4.0$ and probability ratio is $\rho_t = 1.60$, compute the clipped surrogate value $\min(\rho_t \hat{A}_t,\ \operatorname{clip}(\rho_t, 0.8, 1.2)\hat{A}_t)$ (tolerance $\pm 10^{-9}$).
-3. `[Concept: action_chunking_temporal_ensembling_rtc]` Why do modern visuomotor policies (`ACT`, `Diffusion Policy`, `π₀` with Real-Time Chunking `RTC`) predict a chunk of $K = 16\text{–}50$ future actions at once and blend overlapping chunks rather than predicting a single action $a_t$ independently at each frame?
+1. `[Recall] [Concept: mdp_discounted_return_and_policy_gradient]` Compute the discounted return $G_0 = r_0 + \gamma r_1 + \gamma^2 r_2$ (tolerance $\pm 10^{-9}$) for rewards $[2.0, 0.0, 5.0]$ and discount factor $\gamma = 0.80$.
+2. `[Apply] [Concept: mdp_discounted_return_and_policy_gradient]` In PPO with clip parameter $\epsilon = 0.20$, if advantage is $\hat{A}_t = +4.0$ and probability ratio is $\rho_t = 1.60$, compute the clipped surrogate value $\min(\rho_t \hat{A}_t,\ \operatorname{clip}(\rho_t, 0.8, 1.2)\hat{A}_t)$ (tolerance $\pm 10^{-9}$).
+3. `[Transfer] [Concept: action_chunking_temporal_ensembling_rtc]` Why do modern visuomotor policies (`ACT`, `Diffusion Policy`, `π₀` with Real-Time Chunking `RTC`) predict a chunk of $K = 16\text{–}50$ future actions at once and blend overlapping chunks rather than predicting a single action $a_t$ independently at each frame?
    - **A.** To use more GPU memory.
    - **B.** To eliminate non-Markovian human pauses, smooth out high-frequency action jitter across frames, and maintain continuous $1\text{ kHz}$ execution even while the next vision inference takes $30\text{–}80\text{ ms}$.
    - **C.** Because cameras only capture 1 image per minute.
    - **D.** To disable the joint encoders.
-4. `[SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]` A vision-language-action (`VLA`) policy running at $30\text{ Hz}$ suffers a camera glare and suddenly outputs a joint target of $q_{\text{policy}} = +3.14\text{ rad}$ while the robot arm is at $q = 0.20\text{ rad}$. If the $1\text{ kHz}$ safety shield enforces a maximum step clamp $\Delta q_{\max} = 0.06\text{ rad}$ around $q$, what safe target $q_d$ in radians (tolerance $\pm 10^{-9}$) is passed to the PD controller?
+4. `[Spaced review -> 06-robotics.T3.06a — Concept: neural_network_forward_pass_and_mse_loss] [SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]` A vision-language-action (`VLA`) policy running at $30\text{ Hz}$ suffers a camera glare and suddenly outputs a joint target of $q_{\text{policy}} = +3.14\text{ rad}$ while the robot arm is at $q = 0.20\text{ rad}$. If the $1\text{ kHz}$ safety shield enforces a maximum step clamp $\Delta q_{\max} = 0.06\text{ rad}$ around $q$, what safe target $q_d$ in radians (tolerance $\pm 10^{-9}$) is passed to the PD controller?
 5. `[SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]` What must the $1\text{ kHz}$ real-time motor controller do if the $30\text{ Hz}$ GPU policy process crashes or stops sending action chunks for more than the watchdog timeout ($100\text{ ms}$)?
    - **A.** Continue extrapolating the last velocity forever until the arm hits the table.
    - **B.** Immediately transition to a safe hold/damped-stop trajectory (`qd_des = 0`, hold current $q$ or engage STO) and raise a communication timeout fault.
@@ -186,8 +191,7 @@ assert math.isclose(g8_safety_qd, -1.50, rel_tol=1e-9)  # Mandatory [SAFETY] 100
 | Joint sign or gear offset in real robot differs from `MuJoCo`/`Isaac` model, causing instant runaway on policy start | Mismatched joint zero offset or axis sign between sim URDF and `ros2_control` hardware interface. | Verify in a passive gravity-comp mode that moving each real joint $+0.2\text{ rad}$ moves the simulated twin's joint in the exact same direction before enabling policy output. |
 
 ## 10. Resources
-- **Tony Z. Zhao et al. — *Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT)*, *Diffusion Policy* (Chi et al.), & *Real-Time Execution of Action Chunking Flow Policies (RTC)* (Black et al., `arXiv:2506.07339`, `resources/textbooks-and-papers.md`):** Foundational papers behind modern action-chunking visuomotor policies `[VERIFIED 2026-10-15]`.
+- **Tony Z. Zhao et al. — *Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT)*, *Diffusion Policy* (Chi et al.), & *Real-Time Execution of Action Chunking Flow Policies (RTC)* (Black et al., `arXiv:2506.07339`, `resources/textbooks-and-papers.md`):** Foundational papers behind modern action-chunking visuomotor policies `[UNVERIFIED]`.
 - **Track 06 (`06-robotics-and-autonomy/README.md`):** Directly continues into Step 3.7 (`06-robotics.T3.07`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to [`07-systems.T3.06a`](07-systems.T3.06a.md) or legacy **Step 3.7 (`06-robotics.T3.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-3-advanced--production).

@@ -62,29 +62,31 @@ t=[0.0, 0.1, 0.2, 0.3, 0.4], y=[0.5, 0.8, 1.1, 1.4, 1.7], mean=1.10, span=1.20
 Given target angles `target = [1.0, 2.0, 3.0, 4.0]` rad and measured angles `measured = [0.9, 2.1, 2.8, 4.2]` rad, compute the per-sample error list `err = [t - m for t, m in zip(target, measured)]` and the Root-Mean-Square Error $\text{RMSE} = \sqrt{\frac{1}{N}\sum e_i^2}$. Verify that $\text{RMSE} \approx 0.1581139\text{ rad}$ ($\sqrt{0.025}\text{ rad}$, tolerance $\pm 10^{-6}\text{ rad}$).
 - **If your result differs:** Make sure you square each error $e_i^2$ *before* averaging (`sum(e*e for e in err) / len(err)`), because averaging signed errors directly cancels $+0.1$ against $-0.1$ to give $0.0$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Run the script in your terminal with `python3`, or inspect how time-series arrays (`t`, `q`, `i_q`) are plotted across **Tab 2** and **Tab 3** of the MechaLab Workbench (`resources/open-source-toolchains.md`).
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). When you stream binary telemetry from a microcontroller in Track 04, incoming serial packets unpack directly into these timestamp and measurement arrays:
 ```text
 [MCU 1 kHz Telemetry] ===(USB UART)===> [Python List/Array Buffer: t_s[], y_v[]] ===> [Time-Series Plot]
 ```
 Pass/fail verification in simulation: `mean_v == 1.10 V` and `span_v == 1.20 V`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: run the worked example and exercise RMSE check with zero assertion failures, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
-1. `[Concept: lists_dicts_and_numpy_arrays]` For `samples = [10.0, 20.0, 30.0, 40.0]`, compute the numeric difference `samples[-1] - samples[0]` (tolerance $\pm 10^{-9}$).
-2. `[Concept: lists_dicts_and_numpy_arrays]` Evaluate `[2.5 * x - 1.0 for x in [0.0, 1.0, 2.0]]` and state the middle element (index `1`, tolerance $\pm 10^{-9}$).
-3. `[Concept: matplotlib_time_series_plotting]` You record $1,000$ samples over $2.0\text{ s}$ starting at $t_0 = 0.0\text{ s}$ with step $\Delta t = 0.002\text{ s}$. What is the timestamp $t_{500}$ at index `500` in seconds (tolerance $\pm 10^{-9}\text{ s}$)?
+1. `[Recall] [Concept: lists_dicts_and_numpy_arrays]` For `samples = [10.0, 20.0, 30.0, 40.0]`, compute the numeric difference `samples[-1] - samples[0]` (tolerance $\pm 10^{-9}$).
+2. `[Apply] [Concept: lists_dicts_and_numpy_arrays]` Evaluate `[2.5 * x - 1.0 for x in [0.0, 1.0, 2.0]]` and state the middle element (index `1`, tolerance $\pm 10^{-9}$).
+3. `[Transfer] [Concept: matplotlib_time_series_plotting]` You record $1,000$ samples over $2.0\text{ s}$ starting at $t_0 = 0.0\text{ s}$ with step $\Delta t = 0.002\text{ s}$. What is the timestamp $t_{500}$ at index `500` in seconds (tolerance $\pm 10^{-9}\text{ s}$)?
 4. `[Concept: terminal_and_git_basics]` Which Git command shows the exact line-by-line code changes you have made since the last commit before staging them?
    - **A.** `git init`
    - **B.** `git diff`
    - **C.** `git clone`
    - **D.** `git branch`
-5. `[Spaced review — Concept: for_while_loops_and_functions]` Trace `s = 0; [s := s + k for k in range(1, 5)]` and state the final integer value of `s`.
+5. `[Spaced review -> 00-foundations.T1.00a — Concept: for_while_loops_and_functions]` Trace `s = 0; [s := s + k for k in range(1, 5)]` and state the final integer value of `s`.
 
 **Answer key:**
 ```python
@@ -115,6 +117,5 @@ assert q5_sum == 10
 ## 10. Resources
 - **Open-Source Toolchain Matrix (`resources/open-source-toolchains.md`):** Lists Python (`NumPy` / `Matplotlib` / `PythonRobotics`) as the Tier 1 simulation and plotting stack `[VERIFIED 2026-10-15]`.
 - **NumPy Quickstart Tutorial (`numpy.org/doc/stable/user/quickstart.html`):** Official guide to 1D/2D array indexing and vectorized operations `[UNVERIFIED]`.
-
 ## 11. Next modules
 - Proceed to [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Units, Engineering Prefixes & Dimensional Analysis*).

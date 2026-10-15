@@ -118,3 +118,460 @@ legacy:
     title: "Track 08 (Tier 3 Production Mastery): Full Production Capstones I-V & Open Robot Platforms"
     prereqs: [01-electronics.T3.02, 03-sensors.T3.04, 04-embedded.T3.05, 06-robotics.T3.07, 08-capstones.T3.07a]
     introduces: [capstone_1_to_5_qualification_signoff, open_robot_platform_integration]
+
+bridges:
+  - id: 00-foundations.T1.00a
+    title: "Running Python, Variables, Loops, Functions & Tracebacks"
+    track: 00
+    tier: 1
+    est_hours: 3.0
+    prereqs: []
+    introduces: [python_variables_and_types, for_while_loops_and_functions, traceback_error_reading]
+    uses: []
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/00-foundations.T1.00a.md
+  - id: 00-foundations.T1.00b
+    title: "Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics"
+    track: 00
+    tier: 1
+    est_hours: 3.5
+    prereqs: [00-foundations.T1.00a]
+    introduces: [lists_dicts_and_numpy_arrays, matplotlib_time_series_plotting, terminal_and_git_basics]
+    uses: [python_variables_and_types, for_while_loops_and_functions]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/00-foundations.T1.00b.md
+  - id: 00-foundations.T1.00c
+    title: "SI Units, Engineering Prefixes & Dimensional Analysis"
+    track: 00
+    tier: 1
+    est_hours: 2.5
+    prereqs: [00-foundations.T1.00b]
+    introduces: [si_base_and_derived_units, scientific_notation_and_prefixes, dimensional_analysis_unit_checks]
+    uses: [python_variables_and_types, for_while_loops_and_functions]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/00-foundations.T1.00c.md
+  - id: 00-foundations.T1.00d
+    title: "Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors"
+    track: 00
+    tier: 1
+    est_hours: 3.5
+    prereqs: [00-foundations.T1.00c]
+    introduces: [linear_functions_and_slope, radians_unit_circle_and_atan2, 2d_vectors_and_components]
+    uses: [python_variables_and_types, lists_dicts_and_numpy_arrays, si_base_and_derived_units]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T1.00d.md
+  - id: 00-foundations.T1.00e
+    title: "Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop"
+    track: 00
+    tier: 1
+    est_hours: 4.0
+    prereqs: [00-foundations.T1.00d]
+    introduces: [discrete_kinematics_pos_vel_acc, newtons_second_law_and_torque, spring_energy_and_power]
+    uses: [for_while_loops_and_functions, si_base_and_derived_units, 2d_vectors_and_components]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T1.00e.md
+  - id: 00-foundations.T2.00a
+    title: "Numerical Derivatives, Integrals & Matrices as One-Step State Updaters"
+    track: 00
+    tier: 2
+    est_hours: 4.0
+    prereqs: [00-foundations.T1.01]
+    introduces: [finite_difference_derivative_and_integral, matrix_vector_multiplication, state_vector_one_step_update]
+    uses: [symplectic_euler_integration, so2_rotation_matrix, discrete_kinematics_pos_vel_acc]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/00-foundations.T2.00a.md
+  - id: 00-foundations.T2.00b
+    title: "Vectors, Dot & Cross Products, Linear Independence & Change of Basis"
+    track: 00
+    tier: 2
+    est_hours: 3.5
+    prereqs: [00-foundations.T2.00a]
+    introduces: [dot_product_projection, cross_product_3d_moment, basis_change_and_invertibility]
+    uses: [matrix_vector_multiplication, radians_unit_circle_and_atan2, 2d_vectors_and_components]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/00-foundations.T2.00b.md
+  - id: 00-foundations.T2.00c
+    title: "First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio"
+    track: 00
+    tier: 2
+    est_hours: 4.5
+    prereqs: [00-foundations.T2.00b]
+    introduces: [first_order_ode_time_constant, second_order_ode_wn_zeta, characteristic_polynomial_roots]
+    uses: [finite_difference_derivative_and_integral, newtons_second_law_and_torque, spring_energy_and_power]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T2.00c.md
+  - id: 00-foundations.T2.00d
+    title: "Complex Numbers, Euler's Formula, Phasors, Impedance & Frequency Response (Bode Plots)"
+    track: 00
+    tier: 2
+    est_hours: 4.0
+    prereqs: [00-foundations.T2.00c]
+    introduces: [complex_numbers_and_euler_formula, complex_impedance_and_transfer_function, bode_magnitude_db_and_phase]
+    uses: [radians_unit_circle_and_atan2, first_order_ode_time_constant, second_order_ode_wn_zeta]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/00-foundations.T2.00d.md
+  - id: 00-foundations.T2.00e
+    title: "Laplace Transform, Poles/Zeros, State-Space x_dot = Ax + Bu, Matrix Exponential & Discretization"
+    track: 00
+    tier: 2
+    est_hours: 4.5
+    prereqs: [00-foundations.T2.00d]
+    introduces: [laplace_poles_and_zeros, continuous_state_space_matrices, discrete_state_transition_euler_tustin]
+    uses: [matrix_vector_multiplication, second_order_ode_wn_zeta, complex_impedance_and_transfer_function]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T2.00e.md
+  - id: 00-foundations.T2.00f
+    title: "Sampling, Aliasing, Nyquist, z-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance"
+    track: 00
+    tier: 2
+    est_hours: 4.5
+    prereqs: [00-foundations.T2.00e]
+    introduces: [nyquist_sampling_and_aliasing, tustin_frequency_prewarping_and_biquad, gaussian_variance_and_covariance_matrix]
+    uses: [bode_magnitude_db_and_phase, discrete_state_transition_euler_tustin, matrix_vector_multiplication]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/00-foundations.T2.00f.md
+  - id: 00-foundations.T3.00a
+    title: "Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation"
+    track: 00
+    tier: 3
+    est_hours: 5.0
+    prereqs: [07-systems.T2.08]
+    introduces: [skew_symmetric_hat_vee_cross_product, matrix_exponential_taylor_and_rodrigues, hamiltonian_energy_power_balance]
+    uses: [cross_product_3d_moment, unit_quaternion_kinematics_slerp, continuous_state_space_matrices]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T3.00a.md
+  - id: 01-electronics.T1.01a
+    title: "Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers"
+    track: 01
+    tier: 1
+    est_hours: 3.0
+    prereqs: [00-foundations.T1.00e]
+    introduces: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, electrical_power_i2r_dissipation]
+    uses: [si_base_and_derived_units, linear_functions_and_slope, spring_energy_and_power]
+    feeds_into: []
+    safety_level: low
+    hardware_required: false
+    resources_verified: true
+    path: modules/01-electronics.T1.01a.md
+  - id: 01-electronics.T1.01b
+    title: "Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal"
+    track: 01
+    tier: 1
+    est_hours: 3.5
+    prereqs: [01-electronics.T1.01d]
+    introduces: [mosfet_low_side_rds_on_switch, pwm_duty_cycle_effective_voltage, h_bridge_four_switch_polarity_and_shoot_through]
+    uses: [voltage_current_resistance_ohms_law, electrical_power_i2r_dissipation, multimeter_and_current_limited_psu_safety, rc_time_constant_and_filtering, inductor_flyback_and_freewheeling_diode]
+    feeds_into: []
+    safety_level: high
+    hardware_required: false
+    resources_verified: true
+    path: modules/01-electronics.T1.01b.md
+  - id: 01-electronics.T1.01c
+    title: "Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety"
+    track: 01
+    tier: 1
+    est_hours: 2.5
+    prereqs: [01-electronics.T1.01a]
+    introduces: [breadboard_internal_bus_connectivity, multimeter_and_current_limited_psu_safety, esd_and_short_circuit_prevention]
+    uses: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, electrical_power_i2r_dissipation]
+    feeds_into: []
+    safety_level: high
+    hardware_required: false
+    resources_verified: true
+    path: modules/01-electronics.T1.01c.md
+  - id: 01-electronics.T1.01d
+    title: "Capacitors, Inductors, RC Time Constants & Inductive Flyback"
+    track: 01
+    tier: 1
+    est_hours: 3.0
+    prereqs: [01-electronics.T1.01c]
+    introduces: [capacitor_charge_storage_and_decoupling, rc_time_constant_and_filtering, inductor_flyback_and_freewheeling_diode]
+    uses: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, multimeter_and_current_limited_psu_safety]
+    feeds_into: []
+    safety_level: low
+    hardware_required: false
+    resources_verified: true
+    path: modules/01-electronics.T1.01d.md
+  - id: 01-electronics.T2.01a
+    title: "Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing"
+    track: 01
+    tier: 2
+    est_hours: 4.0
+    prereqs: [01-electronics.T1.02, 00-foundations.T2.01]
+    introduces: [opamp_negative_feedback_virtual_short, differential_shunt_gain_and_cmrr, kelvin_four_terminal_sense_routing]
+    uses: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, star_grounding]
+    feeds_into: []
+    safety_level: low
+    hardware_required: false
+    resources_verified: true
+    path: modules/01-electronics.T2.01a.md
+  - id: 01-electronics.T2.01b
+    title: "KiCad 4-Layer Stackup, Parasitic Loop Inductance (L di/dt), Bootstrap Gate Drivers & 48 V Pre-Charge Safety"
+    track: 01
+    tier: 2
+    est_hours: 4.5
+    prereqs: [01-electronics.T2.01a]
+    introduces: [parasitic_loop_inductance_voltage_overshoot, bootstrap_high_side_gate_driver_and_deadtime, precharge_resistor_inrush_and_tvs_clamp]
+    uses: [mosfet_low_side_rds_on_switch, differential_shunt_gain_and_cmrr, kelvin_four_terminal_sense_routing]
+    feeds_into: []
+    safety_level: high
+    hardware_required: false
+    resources_verified: false
+    path: modules/01-electronics.T2.01b.md
+  - id: 02-mechanics.T1.02a
+    title: "Free-Body Diagrams, Static Torque Balance, Pulleys/Gears & Rotational Inertia"
+    track: 02
+    tier: 1
+    est_hours: 3.5
+    prereqs: [00-foundations.T1.01]
+    introduces: [free_body_diagram_static_equilibrium, gravity_lever_arm_cosine_torque, gear_reduction_speed_torque_power_conservation]
+    uses: [radians_unit_circle_and_atan2, newtons_second_law_and_torque, so2_rotation_matrix]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/02-mechanics.T1.02a.md
+  - id: 02-mechanics.T2.02a
+    title: "6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia"
+    track: 02
+    tier: 2
+    est_hours: 4.5
+    prereqs: [02-mechanics.T1.03, 00-foundations.T2.01]
+    introduces: [six_dof_gruebler_constraint_counting, se3_homogeneous_transformation_matrix, geometric_jacobian_and_parallel_axis_theorem]
+    uses: [planar_2link_forward_kinematics, matrix_vector_multiplication, cross_product_3d_moment]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/02-mechanics.T2.02a.md
+  - id: 03-sensors.T1.03a
+    title: "Electromagnets, Permanent Magnets, Pole Pairs, Quadrature Pulses & Faraday Back-EMF"
+    track: 03
+    tier: 1
+    est_hours: 3.5
+    prereqs: [01-electronics.T1.02]
+    introduces: [lorentz_force_and_back_emf_constants, mechanical_vs_electrical_angle_pole_pairs, quadrature_ab_gray_code_direction]
+    uses: [voltage_current_resistance_ohms_law, radians_unit_circle_and_atan2, pwm_duty_cycle_effective_voltage]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/03-sensors.T1.03a.md
+  - id: 03-sensors.T2.03a
+    title: "Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Locked Loops & Sensor Random Walk"
+    track: 03
+    tier: 2
+    est_hours: 4.5
+    prereqs: [01-electronics.T2.02, 03-sensors.T1.04]
+    introduces: [three_phase_balanced_sum_and_clarke_projection, park_rotating_frame_dc_demodulation, pll_velocity_tracking_and_noise_random_walk]
+    uses: [electrical_vs_mechanical_pole_pairs, open_loop_three_phase_sine_modulation, so2_rotation_matrix]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/03-sensors.T2.03a.md
+  - id: 04-embedded.T1.04a
+    title: "From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers"
+    track: 04
+    tier: 1
+    est_hours: 3.5
+    prereqs: [00-foundations.T1.00b]
+    introduces: [c_fixed_width_integer_types_and_overflow, bitwise_masks_and_shifts, c_structs_and_pointers_pass_by_reference]
+    uses: [python_variables_and_types, for_while_loops_and_functions, lists_dicts_and_numpy_arrays]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/04-embedded.T1.04a.md
+  - id: 04-embedded.T1.04b
+    title: "Non-Blocking millis()/micros() State Machines, Hardware Interrupts (ISRs) & volatile"
+    track: 04
+    tier: 1
+    est_hours: 3.5
+    prereqs: [04-embedded.T1.04a]
+    introduces: [non_blocking_tick_scheduler, finite_state_machine_switch_enum, hardware_isr_and_volatile_contract]
+    uses: [c_fixed_width_integer_types_and_overflow, bitwise_masks_and_shifts, c_structs_and_pointers_pass_by_reference]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/04-embedded.T1.04b.md
+  - id: 04-embedded.T2.04a
+    title: "SPI/I2C Bus Transactions, DMA Ping-Pong Ring Buffers & Zero-CPU Peripherals"
+    track: 04
+    tier: 2
+    est_hours: 4.0
+    prereqs: [04-embedded.T1.05, 03-sensors.T2.04]
+    introduces: [spi_full_duplex_clock_polarity_phase, dma_zero_cpu_memory_transfer, double_buffered_ping_pong_half_complete_isr]
+    uses: [hardware_timer_isr_and_jitter, spi_magnetic_encoder_readout, packed_binary_telemetry_struct]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/04-embedded.T2.04a.md
+  - id: 04-embedded.T2.04b
+    title: "RTOS Tasks, Priority Inversion, Rate-Monotonic Deadlines, CAN Arbitration & Zephyr/micro-ROS Preview"
+    track: 04
+    tier: 2
+    est_hours: 4.5
+    prereqs: [04-embedded.T2.04a]
+    introduces: [rtos_preemptive_scheduling_and_cpu_utilization, unbounded_priority_inversion_and_inheritance, can_bitwise_arbitration_and_mit_packing]
+    uses: [non_blocking_tick_scheduler, hardware_isr_and_volatile_contract, dma_zero_cpu_memory_transfer]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/04-embedded.T2.04b.md
+  - id: 05-control.T1.05a
+    title: "Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Actuator Saturation"
+    track: 05
+    tier: 1
+    est_hours: 3.5
+    prereqs: [00-foundations.T1.01, 04-embedded.T1.05]
+    introduces: [open_vs_closed_loop_tracking_error, pid_spring_damper_integrator_intuition, actuator_saturation_and_integrator_windup]
+    uses: [symplectic_euler_integration, hardware_timer_isr_and_jitter, pwm_duty_cycle_effective_voltage]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/05-control.T1.05a.md
+  - id: 05-control.T2.05a
+    title: "Gain/Phase Margin, Sensitivity Waterbed (S+T=1), Luenberger State Observers & Bryson's Rule for LQR"
+    track: 05
+    tier: 2
+    est_hours: 4.5
+    prereqs: [00-foundations.T2.01, 02-mechanics.T2.03]
+    introduces: [loop_transfer_gain_and_phase_margin, sensitivity_complementary_waterbed_tradeoff, luenberger_observer_and_brysons_lqr_weights]
+    uses: [bode_magnitude_db_and_phase, continuous_state_space_matrices, discrete_pid_controller]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/05-control.T2.05a.md
+  - id: 06-robotics.T1.06a
+    title: "1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper"
+    track: 06
+    tier: 1
+    est_hours: 3.5
+    prereqs: [02-mechanics.T1.03, 05-control.T1.06]
+    introduces: [trajectory_vs_step_setpoint, polynomial_endpoint_boundary_conditions, virtual_joint_compliance_stiffness]
+    uses: [discrete_pid_controller, planar_2link_forward_kinematics, gravity_lever_arm_cosine_torque]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/06-robotics.T1.06a.md
+  - id: 06-robotics.T2.06a
+    title: "ROS 2 Computational Graph (Nodes, Topics, Services, QoS), TF2 Frames, URDF & ros2_control Hardware Interfaces"
+    track: 06
+    tier: 2
+    est_hours: 5.0
+    prereqs: [02-mechanics.T2.03, 04-embedded.T2.05, 05-control.T2.06]
+    introduces: [ros2_nodes_topics_services_and_qos, tf2_transform_tree_and_urdf_kinematics, ros2_control_hardware_interface_read_write]
+    uses: [se3_homogeneous_transformation_matrix, parallel_axis_urdf_inertia_tensor, can_fd_mit_impedance_packet_packing]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: false
+    path: modules/06-robotics.T2.06a.md
+  - id: 06-robotics.T3.06a
+    title: "PyTorch Tensors, Automatic Differentiation (autograd), Loss Functions & Behavior Cloning on Trajectory Logs"
+    track: 06
+    tier: 3
+    est_hours: 5.0
+    prereqs: [06-robotics.T2.07]
+    introduces: [neural_network_forward_pass_and_mse_loss, chain_rule_backpropagation_and_gradient_descent, behavior_cloning_expert_demonstration_fit]
+    uses: [matrix_vector_multiplication, jacobian_transpose_cartesian_impedance, ruckig_time_optimal_jerk_limited_scurve]
+    feeds_into: []
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/06-robotics.T3.06a.md
+  - id: 06-robotics.T3.06b
+    title: "Markov Decision Processes (MDPs), Policy Gradient / PPO, Action Chunking & Sim-to-Real Safety Wrappers"
+    track: 06
+    tier: 3
+    est_hours: 5.5
+    prereqs: [06-robotics.T3.06a]
+    introduces: [mdp_discounted_return_and_policy_gradient, action_chunking_temporal_ensembling_rtc, sim_to_real_domain_randomization_and_safety_shield]
+    uses: [neural_network_forward_pass_and_mse_loss, chain_rule_backpropagation_and_gradient_descent, behavior_cloning_expert_demonstration_fit]
+    feeds_into: []
+    safety_level: high
+    hardware_required: false
+    resources_verified: false
+    path: modules/06-robotics.T3.06b.md
+  - id: 07-systems.T1.07a
+    title: "Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep Gain/Phase"
+    track: 07
+    tier: 1
+    est_hours: 3.5
+    prereqs: [06-robotics.T1.07]
+    introduces: [cyclic_plc_scan_read_execute_write, normally_closed_hardware_estop_chain, single_tone_sine_sweep_gain_phase]
+    uses: [finite_state_machine_switch_enum, ten_step_power_on_bringup, rc_cutoff_phase_lag]
+    feeds_into: []
+    safety_level: high
+    hardware_required: false
+    resources_verified: true
+    path: modules/07-systems.T1.07a.md
+  - id: 07-systems.T3.06a
+    title: "OPC UA Information Models, IEC 63278 Asset Administration Shell (AAS) Submodels & ISO 13849-1 Performance Level d (PLd)"
+    track: 07
+    tier: 3
+    est_hours: 4.5
+    prereqs: [06-robotics.T3.06b, 07-systems.T2.08]
+    introduces: [opc_ua_address_space_nodes_and_pub_sub, iec_63278_aas_submodel_digital_nameplate, iso_13849_category3_pld_dual_channel_sto]
+    uses: [opc_ua_industrial_telemetry, can_fd_crc16_rolling_counter_watchdog, normally_closed_hardware_estop_chain, ros2_nodes_topics_services_and_qos]
+    feeds_into: []
+    safety_level: high
+    hardware_required: false
+    resources_verified: false
+    path: modules/07-systems.T3.06a.md
+  - id: 08-capstones.T3.07a
+    title: "System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off"
+    track: 08
+    tier: 3
+    est_hours: 4.5
+    prereqs: [06-robotics.T3.07, 07-systems.T3.06a]
+    introduces: [rss_and_worst_case_spatial_error_budget, end_to_end_latency_and_phase_margin_erosion_budget, pre_bring_up_interface_and_safety_signoff_gate]
+    uses: [loop_transfer_gain_and_phase_margin, iso_13849_category3_pld_dual_channel_sto, sim_to_real_domain_randomization_and_safety_shield]
+    feeds_into: []
+    safety_level: high
+    hardware_required: false
+    resources_verified: false
+    path: modules/08-capstones.T3.07a.md

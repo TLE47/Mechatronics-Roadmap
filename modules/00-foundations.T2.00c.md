@@ -75,29 +75,31 @@ wn=20.0 rad/s, zeta=0.50, Mp_analytic=16.30%, Mp_sim=16.30%
 For the same inertia $J = 0.02\text{ kg}\cdot\text{m}^2$ and stiffness $k = 8.0\text{ N}\cdot\text{m/rad}$, compute the critical damping coefficient $b_{\text{crit}} = 2\sqrt{Jk}$ ($\zeta = 1.0$) and verify in the simulation loop that `mp_sim < 1e-6` ($0.0\%$ overshoot). Expected result: `b_crit = 0.80 N*m*s/rad`.
 - **If your result differs:** Check that you took the square root of the product $\sqrt{J k} = \sqrt{0.16} = 0.40$ before multiplying by $2$, rather than computing $2 J k = 0.32$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to watch how low structural damping $\zeta$ creates a sharp time-domain ringing transient.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). On a physical servo joint in Track 05 (`Step 1.6`), proportional gain $K_p$ sets $k$ and derivative gain $K_d$ sets $b$:
 ```text
 [Step Command 1.0 rad] ---> [PD Loop: Kp=8.0, Kd=0.80 on J=0.02] ---> [Critically Damped Shaft Response (zeta=1.0)]
 ```
 Pass/fail verification in simulation: `wn == 20.0 rad/s`, `zeta == 0.50`, and `Mp == 16.30%`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: run the worked example and critical-damping exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
-1. `[Concept: first_order_ode_time_constant]` A motor winding has inductance $L = 2.0\text{ mH}$ and resistance $R = 0.50\,\Omega$, giving electrical time constant $\tau_e = L / R = 4.0\text{ ms}$. What fraction of steady-state current (tolerance $\pm 0.005$) does it reach at $t = 4.0\text{ ms}$ after a voltage step?
-2. `[Concept: second_order_ode_wn_zeta]` Compute the undamped natural frequency $\omega_n = \sqrt{k / m}$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$) for $m = 0.50\text{ kg}$ and $k = 200.0\text{ N/m}$.
-3. `[Concept: second_order_ode_wn_zeta]` For $m = 0.50\text{ kg}$ and $k = 200.0\text{ N/m}$, compute the damping ratio $\zeta = \frac{b}{2\sqrt{mk}}$ (tolerance $\pm 0.01$) when $b = 14.0\text{ N}\cdot\text{s/m}$.
+1. `[Recall] [Concept: first_order_ode_time_constant]` A motor winding has inductance $L = 2.0\text{ mH}$ and resistance $R = 0.50\,\Omega$, giving electrical time constant $\tau_e = L / R = 4.0\text{ ms}$. What fraction of steady-state current (tolerance $\pm 0.005$) does it reach at $t = 4.0\text{ ms}$ after a voltage step?
+2. `[Apply] [Concept: second_order_ode_wn_zeta]` Compute the undamped natural frequency $\omega_n = \sqrt{k / m}$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$) for $m = 0.50\text{ kg}$ and $k = 200.0\text{ N/m}$.
+3. `[Transfer] [Concept: second_order_ode_wn_zeta]` For $m = 0.50\text{ kg}$ and $k = 200.0\text{ N/m}$, compute the damping ratio $\zeta = \frac{b}{2\sqrt{mk}}$ (tolerance $\pm 0.01$) when $b = 14.0\text{ N}\cdot\text{s/m}$.
 4. `[Concept: characteristic_polynomial_roots]` Where do the roots of the characteristic polynomial $s^2 + 2\zeta\omega_n s + \omega_n^2 = 0$ lie when a second-order system is unstable with growing oscillations?
    - **A.** On the negative real axis ($s < 0$).
    - **B.** In the open right half-plane ($\operatorname{Re}(s) > 0, \operatorname{Im}(s) \neq 0$).
    - **C.** In the open left half-plane ($\operatorname{Re}(s) < 0, \operatorname{Im}(s) \neq 0$).
    - **D.** At $s = -\omega_n$ (repeated negative real root).
-5. `[Spaced review — Concept: dot_product_projection]` Compute $\vec{u}\cdot\vec{v}$ (tolerance $\pm 10^{-9}$) for $\vec{u} = [1.0, 0.0, -2.0]^T$ and $\vec{v} = [3.0, 5.0, 1.5]^T$.
+5. `[Spaced review -> 00-foundations.T2.00b — Concept: dot_product_projection]` Compute $\vec{u}\cdot\vec{v}$ (tolerance $\pm 10^{-9}$) for $\vec{u} = [1.0, 0.0, -2.0]^T$ and $\vec{v} = [3.0, 5.0, 1.5]^T$.
 
 **Answer key:**
 ```python
@@ -127,6 +129,5 @@ assert math.isclose(q5_dot, 0.0, abs_tol=1e-9)
 ## 10. Resources
 - **Åström & Murray — *Feedback Systems: An Introduction for Scientists and Engineers* (`resources/textbooks-and-papers.md`):** Open-access textbook chapters on first- and second-order linear systems `[VERIFIED 2026-10-15]`.
 - **Track 05 (`05-control-and-estimation/README.md`):** Applies $\omega_n = \sqrt{K_p/J}$ and $K_d = 2\zeta\sqrt{JK_p}$ to joint PD tuning `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Complex Numbers, Euler's Formula, Phasors, Impedance & Frequency Response (Bode Plots)*).

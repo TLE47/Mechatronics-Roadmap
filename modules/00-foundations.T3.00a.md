@@ -23,7 +23,7 @@ resources_verified: true
 This is the bridge module before Step 3.1 (`00-foundations.T3.01`), which launches Tier 3 across the entire roadmap. In Tier 3 (`3.1`–`3.8`), 3D orientations are updated on the curved manifold $SO(3)$ (never by adding Euler angles!), linear state-space models are discretized exactly via the matrix exponential $e^{AT_s}$, and multi-domain mechatronic models are checked for physical passivity via Hamiltonian energy balance $\dot{H} = u^\top y - d(t) \le u^\top y$. Connecting the 3D cross product $\omega \times v$ to a $3\times 3$ **skew-symmetric matrix $[\omega]_\times$** makes Rodrigues' rotation formula and Lie algebra $\mathfrak{so}(3)$ completely natural. Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
 
 ## 2. Intuition first (Mental Model)
-Suppose a rigid body is spinning with angular velocity vector $\omega \in \mathbb{R}^3$. The velocity of any point $v$ attached to the body is the cross product $\dot{v} = \omega \times v$. By rewriting $\omega \times v$ as a $3\times 3$ matrix multiplication $[\omega]_\times v$, the rotational differential equation becomes $\dot{R} = [\omega]_\times R$—which looks just like the familiar scalar differential equation $\dot{x} = a x$ whose solution is $x(t) = e^{at}x(0)$! Indeed, the exact 3D rotation matrix after turning about unit axis $\hat{u}$ by angle $\theta$ is the **matrix exponential** $R = \exp(\theta[\hat{u}]_\times)$. And because $[\hat{u}]_\times^3 = -[\hat{u}]_\times$, all higher powers in the infinite Taylor series $I + A + \frac{A^2}{2!} + \frac{A^3}{3!} + \cdots$ collapse neatly into **Rodrigues' closed-form formula** $R = I + \sin\theta[\hat{u}]_\times + (1 - \cos\theta)[\hat{u}]_\times^2$! Finally, **Hamiltonian passivity** says that if you write down total stored energy $H(x) = E_{\text{kinetic}} + E_{\text{potential}} + E_{\text{magnetic}} + E_{\text{electric}}$, any skew-symmetric internal coupling matrix $J = -J^\top$ (like gyroscopic forces or motor back-EMF $\tau = K_t i \leftrightarrow v = K_e \omega$) transfers power between domains with **zero net energy creation** ($x^\top J x \equiv 0$).
+Suppose a rigid body is spinning with angular velocity vector $\omega \in \mathbb{R}^3$. The velocity of any point $v$ attached to the body is the cross product $\dot{v} = \omega \times v$. By rewriting $\omega \times v$ as a $3\times 3$ matrix multiplication $[\omega]_\times v$, the rotational differential equation becomes $\dot{R} = [\omega]_\times R$—which mirrors the exact form of the scalar differential equation $\dot{x} = a x$ whose solution is $x(t) = e^{at}x(0)$! Indeed, the exact 3D rotation matrix after turning about unit axis $\hat{u}$ by angle $\theta$ is the **matrix exponential** $R = \exp(\theta[\hat{u}]_\times)$. And because $[\hat{u}]_\times^3 = -[\hat{u}]_\times$, all higher powers in the infinite Taylor series $I + A + \frac{A^2}{2!} + \frac{A^3}{3!} + \cdots$ collapse neatly into **Rodrigues' closed-form formula** $R = I + \sin\theta[\hat{u}]_\times + (1 - \cos\theta)[\hat{u}]_\times^2$! Finally, **Hamiltonian passivity** says that if you write down total stored energy $H(x) = E_{\text{kinetic}} + E_{\text{potential}} + E_{\text{magnetic}} + E_{\text{electric}}$, any skew-symmetric internal coupling matrix $J = -J^\top$ (like gyroscopic forces or motor back-EMF $\tau = K_t i \leftrightarrow v = K_e \omega$) transfers power between domains with **zero net energy creation** ($x^\top J x \equiv 0$).
 
 ## 3. Formalization
 1. **Skew-Symmetric Hat Map $[\cdot]_\times : \mathbb{R}^3 \to \mathfrak{so}(3)$ and Vee Inverse $[\cdot]^\vee$:** For $\omega = [\omega_x, \omega_y, \omega_z]^\top$ ($\text{rad/s}$):
@@ -93,27 +93,29 @@ R_z90*[1,0,0]=[0.0, 1.0, 0.0], det(R_tiny)=1.000000000000
 ```
 
 ## 5. Exercise
-Verify the cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ in Python for the unit vector $\hat{u} = [1/\sqrt{3},\ -1/\sqrt{3},\ 1/\sqrt{3}]^\top$ by computing `K = hat(u)` and asserting `np.allclose(K @ K @ K, -K, atol=1e-15)`.
+Verify the cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ in Python for the unit vector $\hat{u} = [1/\sqrt{3},\ -1/\sqrt{3},\ 1/\sqrt{3}]^\top$ by computing `K = hat(u)` and asserting `max(abs(K3[r][c] + K[r][c]) for r in range(3) for c in range(3)) < 1e-15`.
 - **If your result differs:** Make sure $\hat{u}$ is normalized to unit length ($\|\hat{u}\| = 1$) first; for a non-unit vector $\phi$ of length $\theta$, the identity is $[\phi]_\times^3 = -\theta^2 [\phi]_\times$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`) to watch how `exp_so3(omega * dt)` integrates 3D gyroscope measurements on $SO(3)$ without gimbal lock or loss of orthogonality.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 3.1 (`00-foundations.T3.01`) and Step 3.6 (`05-control.T3.06`), `exp_so3` executes at $1\text{ kHz}$ inside the microcontroller's Joseph-form Error-State Kalman Filter to inject attitude error $\delta\theta \in \mathbb{R}^3$ back onto the nominal orientation manifold:
 ```text
 [IMU Gyro omega] ---> [Nominal Propagate: R_{k+1} = R_k * exp([omega*dt]_x)] <--- [ESKF Error Reset: exp([d_theta]_x)]
 ```
-Pass/fail verification in simulation: `hat(w) @ v == np.cross(w, v)`, `R_tiny.T @ R_tiny == I_3` within $10^{-14}$, and `det(R_tiny) == 1.0`.
+Pass/fail verification in simulation: `mat_vec3(hat(w), v) == cross3(w, v)`, `R_tiny.T @ R_tiny == I_3` within $10^{-14}$, and `det(R_tiny) == 1.0`.
+
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
 
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.1 (`00-foundations.T3.01`).
 
 ### Skip test
-1. `[Concept: skew_symmetric_hat_vee_cross_product]` What is the trace $\operatorname{tr}([\omega]_\times)$ (the sum of the diagonal entries) of any $3\times 3$ skew-symmetric matrix $[\omega]_\times \in \mathfrak{so}(3)$ (tolerance $\pm 10^{-12}$)?
-2. `[Concept: skew_symmetric_hat_vee_cross_product]` Given $\omega = [0.0, 0.0, 4.0]^\top\text{ rad/s}$ and $v = [2.0, 0.0, 0.0]^\top\text{ m}$, compute the $y$-component of $([\omega]_\times v)$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
-3. `[Concept: matrix_exponential_taylor_and_rodrigues]` What is the limit of the Rodrigues coefficient $\frac{1 - \cos\theta}{\theta^2}$ as $\theta \to 0\text{ rad}$ (tolerance $\pm 10^{-9}$)?
-4. `[Concept: hamiltonian_energy_power_balance]` Why does the skew-symmetric interconnection matrix $J = -J^\top$ in a port-Hamiltonian system $\dot{x} = (J - R_d)\nabla H(x)$ contribute **zero** net power to $\dot{H} = (\nabla H)^\top \dot{x}$?
+1. `[Recall] [Concept: skew_symmetric_hat_vee_cross_product]` What is the trace $\operatorname{tr}([\omega]_\times)$ (the sum of the diagonal entries) of any $3\times 3$ skew-symmetric matrix $[\omega]_\times \in \mathfrak{so}(3)$ (tolerance $\pm 10^{-12}$)?
+2. `[Apply] [Concept: skew_symmetric_hat_vee_cross_product]` Given $\omega = [0.0, 0.0, 4.0]^\top\text{ rad/s}$ and $v = [2.0, 0.0, 0.0]^\top\text{ m}$, compute the $y$-component of $([\omega]_\times v)$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
+3. `[Transfer] [Concept: matrix_exponential_taylor_and_rodrigues]` What is the limit of the Rodrigues coefficient $\frac{1 - \cos\theta}{\theta^2}$ as $\theta \to 0\text{ rad}$ (tolerance $\pm 10^{-9}$)?
+4. `[Spaced review -> 07-systems.T2.08 — Concept: cross_product_3d_moment] [Concept: hamiltonian_energy_power_balance]` Why does the skew-symmetric interconnection matrix $J = -J^\top$ in a port-Hamiltonian system $\dot{x} = (J - R_d)\nabla H(x)$ contribute **zero** net power to $\dot{H} = (\nabla H)^\top \dot{x}$?
    - **A.** Because $J$ is the zero matrix.
    - **B.** Because for any column vector $z = \nabla H$ and skew-symmetric matrix $J^\top = -J$, the scalar $s = z^\top J z$ equals its own transpose $s^\top = z^\top J^\top z = -z^\top J z = -s$, so $z^\top J z \equiv 0$ identically!
    - **C.** Because $\nabla H$ is always zero.
@@ -184,12 +186,11 @@ assert g8_choice == "A"
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Attitude estimator outputs `NaN` when the robot sits completely still ($\omega = 0$) | Divided by $\theta = \|\omega\Delta t\| = 0$ in $\frac{\sin\theta}{\theta}$ without a small-angle Taylor guard. | Branch on `if theta < 1e-7:` and use $1 - \theta^2/6$ and $\frac{1}{2} - \theta^2/24$. |
-| Signs of $[\omega]_\times$ are transposed ($[\omega]_\times v = v \times \omega$ instead of $\omega \times v$) | Put $+\omega_z$ instead of $-\omega_z$ in row 0, col 1 of $[\omega]_\times$. | Always verify `np.allclose(hat(w) @ v, np.cross(w, v))` in a unit test. |
+| Signs of $[\omega]_\times$ are transposed ($[\omega]_\times v = v \times \omega$ instead of $\omega \times v$) | Put $+\omega_z$ instead of $-\omega_z$ in row 0, col 1 of $[\omega]_\times$. | Always verify `mat_vec3(hat(w), v) == cross3(w, v)` in a unit test. |
 | Added two rotation matrices $R_1 + R_2$ or integrated $\dot{R}$ with Euler addition $R_{k+1} = R_k + \dot{R}\Delta t$ | $SO(3)$ is a curved multiplicative group, not a flat vector space; adding matrices destroys orthogonality ($R^\top R \ne I$). | Always update rotations multiplicatively on the manifold via $R_{k+1} = R_k \exp([\omega_k \Delta t]_\times)$. |
 
 ## 10. Resources
 - **Joan Solà et al. — *A Micro Lie Theory for State Estimation in Robotics* (`arXiv:1812.01537`, `resources/textbooks-and-papers.md`):** Concise robotics tutorial on $SO(3)$, $SE(3)$, hat/vee operators, and exponential/logarithmic maps `[VERIFIED 2026-10-15]`.
 - **Track 00 (`00-foundations/README.md`):** Directly continues into Step 3.1 (`00-foundations.T3.01`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 3.1 (`00-foundations.T3.01`)** in [`00-foundations/README.md`](../00-foundations/README.md#tier-3-advanced--production).

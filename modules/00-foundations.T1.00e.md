@@ -75,24 +75,26 @@ E_init=0.2500 J, E_final=0.2500 J, v_peak=0.5000 m/s
 Add viscous damping $F_{\text{damp}} = -b v$ with $b = 4.0\text{ N}\cdot\text{s/m}$ to the loop (`f_net_n = -k_nm * x_m - b * v_ms`) and run for `4000` steps ($2.0\text{ s}$). Verify that $> 95\%$ of the initial $0.25\text{ J}$ energy is dissipated as heat (`e_final_j < 0.0125`).
 - **If your result differs:** Check the sign on `-b * v_ms`; writing `+b * v_ms` injects energy (negative damping) and causes the oscillation to explode instead of decay.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum)** in the MechaLab Workbench to see coupled spring-mass-damper and pendulum energy loops in action.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Track 05 (`Step 1.6`), a closed-loop PD motor controller creates this exact spring-damper behavior electronically:
 ```text
 [Encoder Angle x, Velocity v] ---> [MCU: tau = -Kp*x - Kd*v] ---> [Motor Torque = Virtual Spring + Damper]
 ```
 Pass/fail verification in simulation: `E_init == 0.2500 J`, `E_final == 0.2500 J`, and `v_peak == 0.5000 m/s`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: complete the Skip test ($\ge 80\%$) to pass this module, or pass the 8-question Gate test ($\ge 80\%$) to test out of the entire Level -1 ladder (`00a`–`00e`).
 
 ### Skip test
-1. `[Concept: newtons_second_law_and_torque]` Compute the holding torque $\tau$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 0.01\text{ N}\cdot\text{m}$) required at the shoulder to hold a $2.0\text{ kg}$ payload horizontally at lever arm $r = 0.30\text{ m}$ under gravity $g = 9.81\text{ m/s}^2$.
-2. `[Concept: spring_energy_and_power]` Compute the total mechanical energy $E$ in joules (tolerance $\pm 10^{-4}\text{ J}$) of a $m = 1.0\text{ kg}$ mass moving at $v = 2.0\text{ m/s}$ while attached to a spring of stiffness $k = 40.0\text{ N/m}$ stretched by $x = 0.10\text{ m}$.
-3. `[Concept: discrete_kinematics_pos_vel_acc]` Trace one step ($\Delta t = 0.01\text{ s}$) starting from $x_0 = 0.20\text{ m}, v_0 = 0.0\text{ m/s}$ with $m = 1.0\text{ kg}, k = 100.0\text{ N/m}$ using `a = -k*x/m; v += a*dt; x += v*dt`, and report $x_1$ in meters (tolerance $\pm 10^{-6}\text{ m}$).
-4. `[Spaced review — Concept: radians_unit_circle_and_atan2]` A force $F = 10.0\text{ N}$ pulls at angle $\phi = 30.0^\circ$ relative to a $r = 0.40\text{ m}$ link. Compute the torque $\tau = r F \sin\phi$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-4}\text{ N}\cdot\text{m}$).
+1. `[Recall] [Concept: newtons_second_law_and_torque]` Compute the holding torque $\tau$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 0.01\text{ N}\cdot\text{m}$) required at the shoulder to hold a $2.0\text{ kg}$ payload horizontally at lever arm $r = 0.30\text{ m}$ under gravity $g = 9.81\text{ m/s}^2$.
+2. `[Apply] [Concept: spring_energy_and_power]` Compute the total mechanical energy $E$ in joules (tolerance $\pm 10^{-4}\text{ J}$) of a $m = 1.0\text{ kg}$ mass moving at $v = 2.0\text{ m/s}$ while attached to a spring of stiffness $k = 40.0\text{ N/m}$ stretched by $x = 0.10\text{ m}$.
+3. `[Transfer] [Concept: discrete_kinematics_pos_vel_acc]` Trace one step ($\Delta t = 0.01\text{ s}$) starting from $x_0 = 0.20\text{ m}, v_0 = 0.0\text{ m/s}$ with $m = 1.0\text{ kg}, k = 100.0\text{ N/m}$ using `a = -k*x/m; v += a*dt; x += v*dt`, and report $x_1$ in meters (tolerance $\pm 10^{-6}\text{ m}$).
+4. `[Spaced review -> 00-foundations.T1.00d — Concept: radians_unit_circle_and_atan2]` A force $F = 10.0\text{ N}$ pulls at angle $\phi = 30.0^\circ$ relative to a $r = 0.40\text{ m}$ link. Compute the torque $\tau = r F \sin\phi$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-4}\text{ N}\cdot\text{m}$).
 
 **Answer key:**
 ```python
@@ -159,6 +161,5 @@ assert g8 == "C"
 ## 10. Resources
 - **Track 00 (`00-foundations/README.md`):** Unlocks Stage 0 (`L0.1`–`L0.3`) and Step 1.1 (`00-foundations.T1.01`) symplectic Euler vs. forward Euler comparison `[VERIFIED 2026-10-15]`.
 - **Bolton — *Mechatronics* (`resources/textbooks-and-papers.md`):** Mechanical translational and rotational springs, masses, and dampers `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to Legacy Step 1.1: [`00-foundations.T1.01`](../00-foundations/README.md#tier-1-beginner--intuitive) (*Calculus as `while` Loops, 2D Rotations & RC Smoothing*).

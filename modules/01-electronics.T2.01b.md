@@ -16,7 +16,7 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: high
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
@@ -69,27 +69,32 @@ V_peak(20nH)=78.0 V vs V_peak(4nH)=54.0 V; Precharge I_max=1.0 A, 5tau=0.24 s
 Calculate the maximum allowable parasitic commutation loop inductance $L_{\text{loop,max}}$ in nanohenries ($\text{nH}$) on a $V_{\text{bus}} = 48.0\text{ V}$ inverter switching $\Delta I = 30.0\text{ A}$ in $\Delta t_{\text{sw}} = 15\text{ ns}$ so that the peak turn-off voltage $V_{\text{peak}}$ never exceeds $60.0\text{ V}$ ($80\%$ of a $75\text{ V}$ rating). Verify $L_{\text{loop,max}} = \frac{(60.0 - 48.0) \times 15\text{ ns}}{30.0\text{ A}} = 6.0\text{ nH}$.
 - **If your result differs:** Note that $\text{nH}/\text{ns} = 1\ \Omega$, so $\Delta V = L_{\text{nH}} \cdot \frac{\Delta I}{\Delta t_{\text{ns}}} \implies L_{\text{nH}} = 12.0 \times \frac{15.0}{30.0} = 6.0\text{ nH}$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 2 (Power Stage, Loop Inductance Ringing & Dead-Time)** in the MechaLab Workbench (`npm run dev`) and sweep $L_{\text{loop}}$ from $2\text{ nH}$ to $25\text{ nH}$ to watch the $V_{DS}$ turn-off ringing spike grow toward the MOSFET avalanche limit.
 
-## 7. Safety notes
+## 7. Hardware path (and Safety notes)
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**
 > 1. **48 V Bus Pre-Charge & Bleeder Discipline:** Never hot-plug a $24\text{–}48\text{ V}$ battery or high-current supply directly into an uncharged inverter capacitor bank ($>500\ \mu\text{F}$). Always engage a series **pre-charge resistor** ($33\text{–}100\ \Omega$ power resistor) until $V_{\text{cap}} \ge 0.95\,V_{\text{bus}}$ before closing the main contactor/switch, and include a permanent **bleeder resistor + LED** across the DC bus so stored energy discharges to $<5\text{ V}$ after power-off.
 > 2. **Voltage Overshoot & TVS Clamping:** Always derate silicon MOSFET $V_{DS,\max}$ to $\ge 1.6\times V_{\text{bus}}$ (e.g., $80\text{–}100\text{ V}$ FETs for a $48\text{ V}$ bus) and place an SMBJ58A/SMBJ60A Transient Voltage Suppressor (TVS) diode across the DC bus.
 > 3. **Protective Eyewear & Current-Limited First Bring-Up:** Wear safety glasses during initial $48\text{ V}$ power-stage bring-up and bring up gate drive waveforms at $V_{\text{bus}} = 12\text{ V}$, $I_{\text{limit}} = 0.5\text{ A}$ with no motor attached before stepping up to $48\text{ V}$.
 
+**Optional Hardware Path (`hardware_required: false`):** Complete all simulation and assertion gates in `## 6. Sim-first path (Simulation path)` first before energizing any physical hardware stage:
+```text
+[Sim-First Gate Passed] ---> [Current-Limited Bench PSU + E-Stop Ready] ---> [Incremental Hardware Verification]
+```
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: read `## 7. Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 2.2 (`01-electronics.T2.02`).
 
 ### Skip test
-1. `[Concept: parasitic_loop_inductance_voltage_overshoot]` Compute the peak Drain-to-Source voltage $V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{\Delta I}{\Delta t}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) when $V_{\text{bus}} = 48.0\text{ V}$, $L_{\text{loop}} = 5.0\text{ nH}$, and $\Delta I = 24.0\text{ A}$ turns off in $\Delta t = 15.0\text{ ns}$.
-2. `[Concept: bootstrap_high_side_gate_driver_and_deadtime]` Compute the average gate drive current $I_G = Q_g / t_r$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) required to charge a MOSFET gate with $Q_g = 45\text{ nC}$ in $t_r = 30\text{ ns}$.
-3. `[Concept: bootstrap_high_side_gate_driver_and_deadtime]` When does a high-side bootstrap capacitor $C_{\text{boot}}$ recharge from the $12\text{ V}$ gate-driver rail?
+1. `[Recall] [Concept: parasitic_loop_inductance_voltage_overshoot]` Compute the peak Drain-to-Source voltage $V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{\Delta I}{\Delta t}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) when $V_{\text{bus}} = 48.0\text{ V}$, $L_{\text{loop}} = 5.0\text{ nH}$, and $\Delta I = 24.0\text{ A}$ turns off in $\Delta t = 15.0\text{ ns}$.
+2. `[Apply] [Concept: bootstrap_high_side_gate_driver_and_deadtime]` Compute the average gate drive current $I_G = Q_g / t_r$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) required to charge a MOSFET gate with $Q_g = 45\text{ nC}$ in $t_r = 30\text{ ns}$.
+3. `[Transfer] [Concept: bootstrap_high_side_gate_driver_and_deadtime]` When does a high-side bootstrap capacitor $C_{\text{boot}}$ recharge from the $12\text{ V}$ gate-driver rail?
    - **A.** Only when the low-side MOSFET is ON (pulling the switching node `SW` down to $\text{GND}$).
    - **B.** Only when the motor is disconnected.
    - **C.** Only when the high-side MOSFET is held at $100\%$ duty cycle forever.
    - **D.** Only when $V_{\text{bus}} = 0\text{ V}$.
-4. `[SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]` What happens if you hot-plug a $48\text{ V}$ LiPo battery ($R_{\text{internal}} = 15\text{ m}\Omega$) directly into an uncharged $1500\ \mu\text{F}$ inverter capacitor bank without a pre-charge resistor?
+4. `[Spaced review -> 01-electronics.T2.01a — Concept: mosfet_low_side_rds_on_switch] [SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]` What happens if you hot-plug a $48\text{ V}$ LiPo battery ($R_{\text{internal}} = 15\text{ m}\Omega$) directly into an uncharged $1500\ \mu\text{F}$ inverter capacitor bank without a pre-charge resistor?
    - **A.** Nothing; capacitors block inrush current.
    - **B.** The uncharged capacitor bank acts as a $0\text{ V}$ short at $t=0$, drawing an instantaneous inrush surge of $>1000\text{ A}$ that vaporizes connector pins, welds relays shut, and can avalanche the MOSFETs via $L\,di/dt$ ringing.
    - **C.** The battery voltage drops permanently to $12\text{ V}$.
@@ -169,8 +174,7 @@ assert g8_safety_choice == "B"                         # Mandatory [SAFETY] 100%
 | MOSFETs fail in avalanche during fast turn-off at $48\text{ V}$ | High-frequency ceramic decoupling capacitors were placed too far from the half-bridge Drain/Source pins ($L_{\text{loop}} > 15\text{ nH}$). | Place low-ESL MLCC ceramic capacitors within $<2\text{ mm}$ of every half-bridge leg over an unbroken Layer-2 ground plane. |
 
 ## 10. Resources
-- **Henry Ott — *Electromagnetic Compatibility Engineering* & Texas Instruments `SLVA714` (* Layout Guide for Motor Drivers*, `resources/textbooks-and-papers.md`):** 4-layer stackup, return-current planes, and hot-loop minimization `[VERIFIED 2026-10-15]`.
+- **Henry Ott — *Electromagnetic Compatibility Engineering* & Texas Instruments `SLVA714` (* Layout Guide for Motor Drivers*, `resources/textbooks-and-papers.md`):** 4-layer stackup, return-current planes, and hot-loop minimization `[UNVERIFIED]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Directly continues into Step 2.2 (`01-electronics.T2.02`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 2.2 (`01-electronics.T2.02`)** in [`01-electronics-and-power/README.md`](../01-electronics-and-power/README.md#tier-2-intermediate--applied).

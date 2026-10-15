@@ -23,7 +23,7 @@ resources_verified: true
 This is the bridge module before Step 1.3 (`02-mechanics.T1.03`). Before sizing a robot arm motor or computing $N^2$ reflected inertia in Step 1.3, you need to isolate a link in a **Free-Body Diagram (FBD)**, calculate how gravity torque varies with shoulder angle ($\tau_g = m g L_{\text{com}} \cos\theta$), and understand how a gearbox or timing belt trades speed for torque while conserving mechanical power ($P = \tau \omega$). Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
 
 ## 2. Intuition first (Mental Model)
-Hold a heavy dumbbell straight out at shoulder height ($\theta = 0\text{ rad}$ horizontal): your shoulder muscles burn because gravity acts at the full horizontal lever arm $L\cos(0) = L$. Now raise your arm straight overhead ($\theta = \pi/2\text{ rad}$ vertical): the dumbbell rests directly over your shoulder pivot with zero horizontal lever arm ($L\cos(\pi/2) = 0$), requiring zero holding torque! Drawing a **Free-Body Diagram (FBD)** means cutting the link free from the rest of the world and drawing arrows for every force and torque acting on it so nothing is forgotten. And a **gearbox** with ratio $N:1$ is just a rotary lever: just like a $10\times$ crowbar moves your hand $10\times$ farther to multiply force by $10\times$, an $N:1$ gear reducer spins the motor shaft $N$ times faster than the output joint while multiplying output torque by $N\times$.
+Hold a heavy dumbbell straight out at shoulder height ($\theta = 0\text{ rad}$ horizontal): your shoulder muscles burn because gravity acts at the full horizontal lever arm $L\cos(0) = L$. Now raise your arm straight overhead ($\theta = \pi/2\text{ rad}$ vertical): the dumbbell rests directly over your shoulder pivot with zero horizontal lever arm ($L\cos(\pi/2) = 0$), requiring zero holding torque! Drawing a **Free-Body Diagram (FBD)** means cutting the link free from the rest of the world and drawing arrows for every force and torque acting on it so nothing is forgotten. And a **gearbox** with ratio $N:1$ acts as a rotary lever: much like a $10\times$ crowbar moves your hand $10\times$ farther to multiply force by $10\times$, an $N:1$ gear reducer spins the motor shaft $N$ times faster than the output joint while multiplying output torque by $N\times$.
 
 ## 3. Formalization
 1. **Free-Body Diagram & Static Equilibrium ($\sum F = 0,\ \sum \tau = 0$):** For a rigid body to remain stationary ($\ddot{x} = 0, \ddot{\theta} = 0$), the vector sum of external forces $\sum F_x = 0, \sum F_y = 0$ (in $\text{N}$) and the sum of torques about any pivot $\sum \tau_z = 0$ (in $\text{N}\cdot\text{m}$) must vanish.
@@ -64,24 +64,26 @@ tau_load(0 deg)=1.3734 N*m, tau_load(60 deg)=0.6867 N*m, tau_motor=0.2543 N*m
 A timing-belt reduction connects a motor pulley with $Z_{\text{motor}} = 16$ teeth to a joint pulley with $Z_{\text{joint}} = 72$ teeth ($\eta = 0.95$). Compute the gear ratio $N = Z_{\text{joint}} / Z_{\text{motor}}$, the output speed $\omega_{\text{joint}}$ when $\omega_{\text{motor}} = 90\text{ rad/s}$, and the output torque $\tau_{\text{joint}}$ when $\tau_{\text{motor}} = 0.40\text{ N}\cdot\text{m}$. Verify $N = 4.5$, $\omega_{\text{joint}} = 20.0\text{ rad/s}$, and $\tau_{\text{joint}} = 1.71\text{ N}\cdot\text{m}$ ($\pm 10^{-6}$).
 - **If your result differs:** Check that the driven pulley tooth count ($72$) is divided by the driving motor pulley tooth count ($16$): $72 / 16 = 4.5$, and multiply $\tau_{\text{motor}} \times N \times \eta = 0.40 \times 4.5 \times 0.95 = 1.71\text{ N}\cdot\text{m}$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 3 (2-Link Planar Arm Kinematics & Workspace)** in the MechaLab Workbench (`npm run dev`) to visualize how link lengths and joint angles change the horizontal moment arm of a planar robot arm.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 1.3 (`02-mechanics.T1.03`) and Step 1.7 (`06-robotics.T1.07`), your gravity torque equation $\tau_g(\theta) = M g L_{\text{eff}}\cos\theta$ becomes the exact **gravity feedforward compensation term** added to the PID controller output:
 ```text
 [Encoder Angle theta] ---> [tau_ff = (m*L_com + m_tip*L)*g*cos(theta)] ---> (+) ---> [Motor Torque Command]
 ```
 Pass/fail verification in simulation: `tau_0 == 1.3734 N*m`, `tau_60 == 0.6867 N*m`, and `tau_motor_0 == 0.2543 N*m`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.3 (`02-mechanics.T1.03`).
 
 ### Skip test
-1. `[Concept: free_body_diagram_static_equilibrium]` A horizontal massless beam is pivoted at $x = 0\text{ m}$. A downward load of $F_1 = 30.0\text{ N}$ acts at $x_1 = 0.20\text{ m}$. What upward force $F_2$ in newtons ($\text{N}$, tolerance $\pm 10^{-9}$) must act at $x_2 = 0.10\text{ m}$ to maintain static torque equilibrium ($\sum \tau_z = 0$)?
-2. `[Concept: gravity_lever_arm_cosine_torque]` Compute the gravity holding torque $\tau_g = m g L \cos\theta$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-6}$) for a point mass $m = 1.0\text{ kg}$ at arm length $L = 0.30\text{ m}$ with $g = 9.81\text{ m/s}^2$ when the arm is straight up ($\theta = \pi/2\text{ rad}$ from horizontal).
-3. `[Concept: gear_reduction_speed_torque_power_conservation]` An ideal ($\eta = 1.0$) planetary gearbox with ratio $N = 9.0$ is driven by a motor producing $\tau_m = 0.20\text{ N}\cdot\text{m}$ at $\omega_m = 90.0\text{ rad/s}$. Compute the output torque $\tau_{\text{load}}$ ($\text{N}\cdot\text{m}$) and output speed $\omega_{\text{load}}$ ($\text{rad/s}$, tolerance $\pm 10^{-9}$).
-4. `[Concept: gravity_lever_arm_cosine_torque]` At what shoulder angle $\theta$ (measured from the horizontal $+x$-axis) does a planar robot link experience the **maximum** gravity holding torque?
+1. `[Recall] [Concept: free_body_diagram_static_equilibrium]` A horizontal massless beam is pivoted at $x = 0\text{ m}$. A downward load of $F_1 = 30.0\text{ N}$ acts at $x_1 = 0.20\text{ m}$. What upward force $F_2$ in newtons ($\text{N}$, tolerance $\pm 10^{-9}$) must act at $x_2 = 0.10\text{ m}$ to maintain static torque equilibrium ($\sum \tau_z = 0$)?
+2. `[Apply] [Concept: gravity_lever_arm_cosine_torque]` Compute the gravity holding torque $\tau_g = m g L \cos\theta$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-6}$) for a point mass $m = 1.0\text{ kg}$ at arm length $L = 0.30\text{ m}$ with $g = 9.81\text{ m/s}^2$ when the arm is straight up ($\theta = \pi/2\text{ rad}$ from horizontal).
+3. `[Transfer] [Concept: gear_reduction_speed_torque_power_conservation]` An ideal ($\eta = 1.0$) planetary gearbox with ratio $N = 9.0$ is driven by a motor producing $\tau_m = 0.20\text{ N}\cdot\text{m}$ at $\omega_m = 90.0\text{ rad/s}$. Compute the output torque $\tau_{\text{load}}$ ($\text{N}\cdot\text{m}$) and output speed $\omega_{\text{load}}$ ($\text{rad/s}$, tolerance $\pm 10^{-9}$).
+4. `[Spaced review -> 00-foundations.T1.01 — Concept: radians_unit_circle_and_atan2] [Concept: gravity_lever_arm_cosine_torque]` At what shoulder angle $\theta$ (measured from the horizontal $+x$-axis) does a planar robot link experience the **maximum** gravity holding torque?
    - **A.** $\theta = 0\text{ rad}$ (horizontal)
    - **B.** $\theta = \pi/4\text{ rad}$ ($45^\circ$)
    - **C.** $\theta = \pi/2\text{ rad}$ (vertical overhead)
@@ -154,6 +156,5 @@ assert g8_choice == "A"
 ## 10. Resources
 - **Shigley's *Mechanical Engineering Design* & Lynch/Park *Modern Robotics* (`resources/textbooks-and-papers.md`):** Free-body diagrams, static equilibrium, and gear transmission basics `[VERIFIED 2026-10-15]`.
 - **Track 02 (`02-mechanics-kinematics-dynamics/README.md`):** Directly continues into Step 1.3 (`02-mechanics.T1.03`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 1.3 (`02-mechanics.T1.03`)** in [`02-mechanics-kinematics-dynamics/README.md`](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive).

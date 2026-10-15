@@ -24,7 +24,7 @@ resources_verified: true
 This is the bridge module before Step 2.6 (`05-control.T2.06`). Trial-and-error PID tuning breaks down when your plant has a flexible shaft resonance, unmeasured velocity states, or multiple coupled degrees of freedom like the underactuated Furuta pendulum. Measuring **Gain Margin (GM)** and **Phase Margin (PM)** on the open-loop transfer function $L(s) = P(s)C(s)$, respecting the algebraic constraint $S(s) + T(s) \equiv 1$ (which explains Bode's **waterbed effect**), estimating unmeasured states with a **Luenberger observer** (the deterministic half of a Kalman filter), and normalizing **LQR cost matrices $(Q, R)$ via Bryson's Rule** gives you systematic, first-principles control design for Step 2.6. Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
 
 ## 2. Intuition first (Mental Model)
-Why does any negative-feedback loop go unstable if you crank the gain too high? Because every Closed-Loop transfer function has $1 + L(j\omega)$ in its denominator! If the loop transfer function $L(j\omega) = P(j\omega)C(j\omega)$ ever hits magnitude $|L| = 1$ ($0\text{ dB}$) at the same frequency where its phase lag reaches $-180^\circ$, then $L(j\omega) = -1$, the denominator $1 + (-1) = 0$ blows up, and negative feedback turns into a self-sustaining oscillator! **Phase Margin ($\text{PM}$)** is simply how many degrees of safety buffer you have above $-180^\circ$ at the $0\text{ dB}$ crossover frequency $\omega_{gc}$. Second, **Sensitivity** $S = \frac{1}{1+L}$ measures how much disturbances get through, while **Complementary Sensitivity** $T = \frac{L}{1+L}$ measures how much sensor noise gets through—and because $S(s) + T(s) \equiv 1$ at every frequency, you cannot make both zero at the same frequency (**the waterbed tradeoff**). Third, a **Luenberger observer** runs a virtual copy of your plant $\hat{x}_{k+1} = A_d\hat{x}_k + B_d u_k + L_{\text{obs}}(y_k - C\hat{x}_k)$ in software and nudges it using sensor prediction error. Finally, **Bryson's Rule** takes the guesswork out of LQR tuning by setting $Q_{ii} = 1 / x_{i,\max}^2$ and $R_{jj} = 1 / u_{j,\max}^2$ so meters, radians, and newton-meters are normalized to dimensionless percentages of their maximum allowable swings!
+Why does any negative-feedback loop go unstable if you crank the gain too high? Because every Closed-Loop transfer function has $1 + L(j\omega)$ in its denominator! If the loop transfer function $L(j\omega) = P(j\omega)C(j\omega)$ ever hits magnitude $|L| = 1$ ($0\text{ dB}$) at the same frequency where its phase lag reaches $-180^\circ$, then $L(j\omega) = -1$, the denominator $1 + (-1) = 0$ blows up, and negative feedback turns into a self-sustaining oscillator! **Phase Margin ($\text{PM}$)** quantifies how many degrees of safety buffer you have above $-180^\circ$ at the $0\text{ dB}$ crossover frequency $\omega_{gc}$. Second, **Sensitivity** $S = \frac{1}{1+L}$ measures how much disturbances get through, while **Complementary Sensitivity** $T = \frac{L}{1+L}$ measures how much sensor noise gets through—and because $S(s) + T(s) \equiv 1$ at every frequency, you cannot make both zero at the same frequency (**the waterbed tradeoff**). Third, a **Luenberger observer** runs a virtual copy of your plant $\hat{x}_{k+1} = A_d\hat{x}_k + B_d u_k + L_{\text{obs}}(y_k - C\hat{x}_k)$ in software and nudges it using sensor prediction error. Finally, **Bryson's Rule** takes the guesswork out of LQR tuning by setting $Q_{ii} = 1 / x_{i,\max}^2$ and $R_{jj} = 1 / u_{j,\max}^2$ so meters, radians, and newton-meters are normalized to dimensionless percentages of their maximum allowable swings!
 
 ## 3. Formalization
 1. **Loop Transfer Function $L(s) = P(s)C(s)$, Crossover $\omega_{gc}$ & Phase Margin ($\text{PM}$):**
@@ -83,24 +83,26 @@ PM=51.83 deg, |S(jw_gc)|=0.819, Q_diag=[400.0, 100.0], rho_obs=0.9000
 Suppose your servo loop has Phase Margin $\text{PM} = 51.83^\circ$ at gain crossover $\omega_{gc} = 78.615\text{ rad/s}$, and you add a communication/filtering transport delay of $\tau_d = 0.005\text{ s}$ ($5.0\text{ ms}$), which subtracts $\Delta\phi = \omega_{gc}\tau_d \cdot \frac{180^\circ}{\pi}$ degrees of phase without changing $|L(j\omega_{gc})|$. Compute the phase loss $\Delta\phi$ in degrees and the new Phase Margin $\text{PM}_{\text{new}} = \text{PM} - \Delta\phi$. Verify $\Delta\phi = 22.5216^\circ$ and $\text{PM}_{\text{new}} = 29.3057^\circ$ ($\pm 10^{-2}$).
 - **If your result differs:** Convert $\omega_{gc}\tau_d = 78.61514 \times 0.005 = 0.393076\text{ rad}$ into degrees by multiplying by $180 / \pi$ ($22.52^\circ$).
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 1 (Loop Shaping & Gang of Four)** and **Tab 4 (Furuta Pendulum Swing-Up + LQR + Kalman Observer)** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.6 (`05-control.T2.06`), the offline Python solver (`scipy.linalg.solve_discrete_are`) computes the steady-state LQR gain row vector $K_{\text{lqr}}$ from Bryson's $(Q, R)$ matrices, and you paste those 4 floats directly into the microcontroller's $1\text{ kHz}$ ISR (`u = -K_lqr @ x_hat`):
 ```text
 [Offline Python: Bryson (Q, R) -> DARE -> K_lqr] ---> [MCU 1 kHz ISR: x_hat = Observer(y); u = -K_lqr @ x_hat]
 ```
 Pass/fail verification in simulation: `pm_deg == 51.83 deg`, `S_gc + T_gc == 1.0`, `Q_diag == [400.0, 100.0]`, and `rho_obs == 0.9000 < 1.0`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.6 (`05-control.T2.06`).
 
 ### Skip test
-1. `[Concept: loop_transfer_gain_and_phase_margin]` At the gain crossover frequency $\omega_{gc}$ where $|L(j\omega_{gc})| = 0\text{ dB}$, the open-loop phase is $\angle L(j\omega_{gc}) = -125.0^\circ$. Compute the Phase Margin $\text{PM} = 180^\circ + \angle L(j\omega_{gc})$ in degrees (tolerance $\pm 10^{-9}$).
-2. `[Concept: sensitivity_complementary_waterbed_tradeoff]` At a low frequency $\omega = 1.0\text{ rad/s}$ where the open-loop gain is $L(j1) = -j99$ (so $T(j1) = \frac{L}{1+L}$), what is the exact complex sum $S(j1) + T(j1)$ (tolerance $\pm 10^{-9}$)?
-3. `[Concept: luenberger_observer_and_brysons_lqr_weights]` Using Bryson's Rule $Q_{ii} = 1 / x_{i,\max}^2$, compute the diagonal weight $Q_{11}$ (in $\text{rad}^{-2}$, tolerance $\pm 10^{-9}$) for a pendulum angle state whose maximum acceptable deviation is $\theta_{\max} = 0.20\text{ rad}$.
-4. `[Concept: luenberger_observer_and_brysons_lqr_weights]` What happens to the optimal LQR feedback gains $K$ and actuator effort $u = -Kx$ if you multiply **both** cost matrices $Q$ and $R$ by the same positive scalar $\alpha = 10$ ($J = \sum x^\top (10Q) x + u^\top (10R) u$)?
+1. `[Recall] [Concept: loop_transfer_gain_and_phase_margin]` At the gain crossover frequency $\omega_{gc}$ where $|L(j\omega_{gc})| = 0\text{ dB}$, the open-loop phase is $\angle L(j\omega_{gc}) = -125.0^\circ$. Compute the Phase Margin $\text{PM} = 180^\circ + \angle L(j\omega_{gc})$ in degrees (tolerance $\pm 10^{-9}$).
+2. `[Apply] [Concept: sensitivity_complementary_waterbed_tradeoff]` At a low frequency $\omega = 1.0\text{ rad/s}$ where the open-loop gain is $L(j1) = -j99$ (so $T(j1) = \frac{L}{1+L}$), what is the exact complex sum $S(j1) + T(j1)$ (tolerance $\pm 10^{-9}$)?
+3. `[Transfer] [Concept: luenberger_observer_and_brysons_lqr_weights]` Using Bryson's Rule $Q_{ii} = 1 / x_{i,\max}^2$, compute the diagonal weight $Q_{11}$ (in $\text{rad}^{-2}$, tolerance $\pm 10^{-9}$) for a pendulum angle state whose maximum acceptable deviation is $\theta_{\max} = 0.20\text{ rad}$.
+4. `[Spaced review -> 00-foundations.T2.01 — Concept: bode_magnitude_db_and_phase] [Concept: luenberger_observer_and_brysons_lqr_weights]` What happens to the optimal LQR feedback gains $K$ and actuator effort $u = -Kx$ if you multiply **both** cost matrices $Q$ and $R$ by the same positive scalar $\alpha = 10$ ($J = \sum x^\top (10Q) x + u^\top (10R) u$)?
    - **A.** The gain $K$ increases by $10\times$.
    - **B.** The optimal gain $K$ is **completely unchanged**, because scaling the entire cost function $J$ by a positive constant $10$ does not change the location of its minimum; only the *ratio* of $Q$ to $R$ matters!
    - **C.** The system becomes unstable.
@@ -183,6 +185,5 @@ assert g8_choice == "A"
 ## 10. Resources
 - **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 7–8 & 10–12, `resources/textbooks-and-papers.md`):** Free textbook on observers, LQR, Bode loop shaping, and the Gang of Four `[VERIFIED 2026-10-15]`.
 - **Track 05 (`05-control-and-estimation/README.md`):** Directly continues into Step 2.6 (`05-control.T2.06`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 2.6 (`05-control.T2.06`)** in [`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-2-intermediate--applied).

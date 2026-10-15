@@ -25,7 +25,7 @@ resources_verified: true
 This is the final bridge module in the Track 01 Tier 1 ladder before Step 1.2 (`01-electronics.T1.02`). A microcontroller GPIO pin can only source $\sim 20\text{ mA}$ at $3.3\text{ V}$—connecting a motor directly to it destroys the pin immediately. Power MOSFETs act as voltage-controlled electronic switches that let a tiny $3.3\text{ V}$ logic signal throttle amperes of motor current via **Pulse-Width Modulation (PWM)** and reverse direction via a 4-switch **H-Bridge**. Already know this? Read `## 7. Safety notes` first, then take the Skip test or the Ladder Gate test in section 8.
 
 ## 2. Intuition first (Mental Model)
-Think of a MOSFET as a spring-loaded water valve whose handle (the **Gate**) is controlled by pressure rather than flow. When the Gate voltage is $0\text{ V}$ relative to the **Source** ($V_{GS} = 0$), the valve is shut tight and zero current flows into the **Drain**. When you raise $V_{GS}$ above the threshold with a $3.3\text{ V}$ or $5\text{ V}$ logic signal, the valve snaps wide open with a tiny on-resistance $R_{DS(\text{on})}$ of just a few milliohms. Instead of cracking the valve half-open (which would burn huge heat inside the valve), we flick it 100% open and 100% closed twenty thousand times per second (**PWM**); the motor's inductance smooths those rapid pulses into a smooth average voltage $V_{\text{eff}} = D \cdot V_{\text{bus}}$. And to spin the motor backward, an **H-Bridge** arranges four MOSFETs like an "H" around the motor so closing one diagonal pair pushes current left-to-right and closing the opposite diagonal pushes current right-to-left.
+Think of a MOSFET as a spring-loaded water valve whose handle (the **Gate**) is controlled by pressure rather than flow. When the Gate voltage is $0\text{ V}$ relative to the **Source** ($V_{GS} = 0$), the valve is shut tight and zero current flows into the **Drain**. When you raise $V_{GS}$ above the threshold with a $3.3\text{ V}$ or $5\text{ V}$ logic signal, the valve snaps wide open with a tiny on-resistance $R_{DS(\text{on})}$ of only a few milliohms. Instead of cracking the valve half-open (which would burn huge heat inside the valve), we flick it 100% open and 100% closed twenty thousand times per second (**PWM**); the motor's inductance smooths those rapid pulses into a smooth average voltage $V_{\text{eff}} = D \cdot V_{\text{bus}}$. And to spin the motor backward, an **H-Bridge** arranges four MOSFETs like an "H" around the motor so closing one diagonal pair pushes current left-to-right and closing the opposite diagonal pushes current right-to-left.
 
 ## 3. Formalization
 1. **Low-Side N-Channel MOSFET Switch & Conduction Loss:** When gate-to-source voltage $V_{GS}$ exceeds the logic-level rating, the MOSFET conducts drain current $I_D$ ($\text{A}$) with on-resistance $R_{DS(\text{on})}$ ($\Omega$), dissipating conduction heat power $P_{\text{cond}}$ ($\text{W}$):
@@ -70,27 +70,32 @@ V_eff=6.0 V, P_PWM=0.16 W vs P_linear=24.0 W, I_shoot=300 A
 For a `DRV8833` dual H-bridge ($R_{DS(\text{on, high})} + R_{DS(\text{on, low})} = 0.36\ \Omega$ total path resistance) driving $I = 1.2\text{ A}$ continuously at $D = 1.0$ from $V_{\text{bus}} = 9.0\text{ V}$, compute the total H-bridge conduction power loss $P_{\text{loss}} = I^2 (R_{\text{high}} + R_{\text{low}})$ in watts ($\text{W}$). Verify $P_{\text{loss}} = 0.5184\text{ W}$ ($\pm 10^{-4}\text{ W}$).
 - **If your result differs:** Remember that in an H-bridge, motor current flows through **two** switches in series (one high-side FET in leg A and one low-side FET in leg B), so you must multiply $I^2$ by the combined high+low resistance ($0.36\ \Omega$).
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Simulate a low-side MOSFET PWM switch and 4-FET H-bridge in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or inspect **Tab 2 (Power Stage & Gate Driver Dead-Time)** in the MechaLab Workbench (`npm run dev`).
 
-## 7. Safety notes
+## 7. Hardware path (and Safety notes)
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**
 > 1. **Maximum Voltage & Current Limits:** Keep Tier 1 breadboard motor supplies at $\le 12.0\text{ V}$ and set your bench power supply current limit to $\le 1.5\text{ A}$ before powering on (`L0.1`).
 > 2. **Shoot-Through & Short-Circuit Prevention:** Never wire discrete H-bridge gates without hardware dead-time or interlock logic; a simultaneous high-side + low-side ON state across an unprotected battery can dump $>100\text{ A}$, melting breadboard strips and rupturing LiPo cells. Use integrated drivers with built-in shoot-through protection (`DRV8833` in Step 1.2) and always power first from a current-limited bench supply, never directly from a LiPo battery.
 > 3. **Gate Pull-Down & Flyback Protection:** Always include a $10\text{ k}\Omega$ Gate-to-Source pull-down resistor so the motor cannot spin unexpectedly while the MCU is in reset, and never switch an inductive coil with a single FET without a freewheeling flyback diode across the coil.
 
+**Optional Hardware Path (`hardware_required: false`):** Complete all simulation and assertion gates in `## 6. Sim-first path (Simulation path)` first before energizing any physical hardware stage:
+```text
+[Sim-First Gate Passed] ---> [Current-Limited Bench PSU + E-Stop Ready] ---> [Incremental Hardware Verification]
+```
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: read `## 7. Safety notes`, run the worked example and exercise asserts, or score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ required on `[SAFETY]` items). Passing the 8-question Ladder Gate test ($\ge 80\%$, $100\%$ on `[SAFETY]` items) unlocks Step 1.2 (`01-electronics.T1.02`).
 
 ### Skip test
-1. `[Concept: pwm_duty_cycle_effective_voltage]` Compute the average effective motor voltage $V_{\text{eff}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for a $V_{\text{bus}} = 12.0\text{ V}$ supply switched at duty cycle $D = 0.65$ ($65\%$).
-2. `[Concept: mosfet_low_side_rds_on_switch]` Compute the conduction heat dissipation $P_{\text{cond}} = I_D^2 R_{DS(\text{on})}$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) in a MOSFET with $R_{DS(\text{on})} = 0.015\ \Omega$ carrying $I_D = 6.0\text{ A}$ at $100\%$ duty cycle.
-3. `[Concept: h_bridge_four_switch_polarity_and_shoot_through]` Which pair of H-bridge switches must close to apply $-V_{\text{bus}}$ ($V_A = 0\text{ V}, V_B = +V_{\text{bus}}$) across the motor?
+1. `[Recall] [Concept: pwm_duty_cycle_effective_voltage]` Compute the average effective motor voltage $V_{\text{eff}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for a $V_{\text{bus}} = 12.0\text{ V}$ supply switched at duty cycle $D = 0.65$ ($65\%$).
+2. `[Apply] [Concept: mosfet_low_side_rds_on_switch]` Compute the conduction heat dissipation $P_{\text{cond}} = I_D^2 R_{DS(\text{on})}$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) in a MOSFET with $R_{DS(\text{on})} = 0.015\ \Omega$ carrying $I_D = 6.0\text{ A}$ at $100\%$ duty cycle.
+3. `[Transfer] [Concept: h_bridge_four_switch_polarity_and_shoot_through]` Which pair of H-bridge switches must close to apply $-V_{\text{bus}}$ ($V_A = 0\text{ V}, V_B = +V_{\text{bus}}$) across the motor?
    - **A.** $Q_{\text{AH}}$ and $Q_{\text{AL}}$
    - **B.** $Q_{\text{AH}}$ and $Q_{\text{BL}}$
    - **C.** $Q_{\text{BH}}$ and $Q_{\text{AL}}$
    - **D.** $Q_{\text{AH}}$ and $Q_{\text{BH}}$
-4. `[SAFETY] [Concept: h_bridge_four_switch_polarity_and_shoot_through]` What happens if both $Q_{\text{AH}}$ (high-side leg A) and $Q_{\text{AL}}$ (low-side leg A) turn ON at the same instant, and what hardware feature prevents it during PWM transitions?
+4. `[Spaced review -> 01-electronics.T1.01d — Concept: voltage_current_resistance_ohms_law] [SAFETY] [Concept: h_bridge_four_switch_polarity_and_shoot_through]` What happens if both $Q_{\text{AH}}$ (high-side leg A) and $Q_{\text{AL}}$ (low-side leg A) turn ON at the same instant, and what hardware feature prevents it during PWM transitions?
    - **A.** The motor brakes gently; no protection is needed.
    - **B.** Shoot-through shorts $V_{\text{bus}}$ directly to $\text{GND}$ through the two FETs (`300 A` surge); **dead-time** (turning off the outgoing FET before turning on the incoming FET) and a current-limited bench supply prevent destruction.
    - **C.** The ADC reads zero; a pull-up resistor prevents it.
@@ -172,6 +177,5 @@ assert g8_safety == "B"  # Mandatory [SAFETY] 100% required
 ## 10. Resources
 - **Texas Instruments — *Understanding Motor Driver Current Ratings and PWM Decay Modes* (`SLVA959` & `SLUA618`, `resources/textbooks-and-papers.md`):** Clear diagrams of H-bridge forward, reverse, brake, and coast states `[VERIFIED 2026-10-15]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Directly continues into Step 1.2 (`01-electronics.T1.02`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 1.2 (`01-electronics.T1.02`)** in [`01-electronics-and-power/README.md`](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).

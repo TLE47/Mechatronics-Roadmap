@@ -74,10 +74,10 @@ tau=1.0 ms, fc=159.15 Hz, Unclamped flyback=12000 V vs Clamped=12.7 V
 Calculate the minimum bulk decoupling capacitance $C_{\min}$ in microfarads ($\mu\text{F}$) needed to keep a $12.0\text{ V}$ motor bus from drooping by more than $\Delta V = 0.25\text{ V}$ during a $\Delta I = 3.0\text{ A}$ current transient lasting $\Delta t = 20\ \mu\text{s}$ ($20 \times 10^{-6}\text{ s}$). Verify $C_{\min} = \frac{\Delta I \cdot \Delta t}{\Delta V} = 240.0\ \mu\text{F}$.
 - **If your result differs:** Check your unit conversion from farads to microfarads: $\frac{3.0 \times 20\times 10^{-6}}{0.25} = 0.00024\text{ F} = 240.0\ \mu\text{F}$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Simulate an RC step response and an inductive coil turn-off with and without a flyback diode in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`Circuits -> Inductors -> Inductive Kickback`).
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). When wiring Electrolytic bulk capacitors ($100\text{–}470\ \mu\text{F}$) in Step 1.2 (`01-electronics.T1.02`), always align the negative stripe (`-`) with $\text{GND}$ and choose a voltage rating $\ge 2\times V_{\text{bus}}$ (e.g., $\ge 25\text{ V}$ capacitor for a $12\text{ V}$ bus):
 ```text
 [+12V Bus] ---+--- [100 uF Electrolytic (Stripe to GND)] ---+--- [100 nF Ceramic] ---+---> [H-Bridge VM Pin]
@@ -85,14 +85,16 @@ No hardware required for this module (`hardware_required: false`). When wiring E
 ```
 Pass/fail verification in simulation: `tau == 1.0 ms`, `fc == 159.15 Hz`, `v_flyback_unclamped == 12000 V`, and `v_flyback_clamped == 12.7 V`.
 
+> **⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\le 0.5\text{ A}$) before energizing any breadboard or sensor circuit.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
-1. `[Concept: rc_time_constant_and_filtering]` Compute the time constant $\tau = R C$ in seconds ($\text{s}$, tolerance $\pm 10^{-9}$) for $R = 4.7\text{ k}\Omega$ ($4700\ \Omega$) and $C = 10\ \mu\text{F}$ ($10 \times 10^{-6}\text{ F}$).
-2. `[Concept: rc_time_constant_and_filtering]` What percentage of the step input voltage $V_{\text{in}}$ does an initially uncharged capacitor reach after exactly $t = 1\tau$ ($100 \times (1 - e^{-1})$, tolerance $\pm 0.01\%$)?
-3. `[Concept: inductor_flyback_and_freewheeling_diode]` Compute the stored magnetic energy $E_L = \frac{1}{2} L I^2$ in joules ($\text{J}$, tolerance $\pm 10^{-9}$) in a $L = 4.0\text{ mH}$ ($0.004\text{ H}$) motor phase winding carrying $I = 5.0\text{ A}$.
-4. `[Concept: capacitor_charge_storage_and_decoupling]` Why do motor driver PCBs and breadboards place **both** a $100\text{ nF}$ ($0.1\ \mu\text{F}$) ceramic capacitor and a $100\text{–}470\ \mu\text{F}$ electrolytic bulk capacitor across $V_{\text{bus}}$ and $\text{GND}$ right at the driver IC?
+1. `[Recall] [Concept: rc_time_constant_and_filtering]` Compute the time constant $\tau = R C$ in seconds ($\text{s}$, tolerance $\pm 10^{-9}$) for $R = 4.7\text{ k}\Omega$ ($4700\ \Omega$) and $C = 10\ \mu\text{F}$ ($10 \times 10^{-6}\text{ F}$).
+2. `[Apply] [Concept: rc_time_constant_and_filtering]` What percentage of the step input voltage $V_{\text{in}}$ does an initially uncharged capacitor reach after exactly $t = 1\tau$ ($100 \times (1 - e^{-1})$, tolerance $\pm 0.01\%$)?
+3. `[Transfer] [Concept: inductor_flyback_and_freewheeling_diode]` Compute the stored magnetic energy $E_L = \frac{1}{2} L I^2$ in joules ($\text{J}$, tolerance $\pm 10^{-9}$) in a $L = 4.0\text{ mH}$ ($0.004\text{ H}$) motor phase winding carrying $I = 5.0\text{ A}$.
+4. `[Spaced review -> 01-electronics.T1.01c — Concept: voltage_current_resistance_ohms_law] [Concept: capacitor_charge_storage_and_decoupling]` Why do motor driver PCBs and breadboards place **both** a $100\text{ nF}$ ($0.1\ \mu\text{F}$) ceramic capacitor and a $100\text{–}470\ \mu\text{F}$ electrolytic bulk capacitor across $V_{\text{bus}}$ and $\text{GND}$ right at the driver IC?
    - **A.** Ceramic capacitors look nicer next to tall cylinders.
    - **B.** The small low-inductance $100\text{ nF}$ ceramic cap shunts nanosecond high-frequency switching edges, while the large $100\text{–}470\ \mu\text{F}$ electrolytic reservoir supplies millisecond motor current surges without bus droop.
    - **C.** Putting two capacitors in parallel divides the voltage in half.
@@ -124,6 +126,5 @@ assert q4_choice == "B"
 ## 10. Resources
 - **Horowitz & Hill — *The Art of Electronics* (3e, Ch. 1, `resources/textbooks-and-papers.md`):** Capacitive decoupling, RC filters, and inductive kickback protection `[VERIFIED 2026-10-15]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Prepares directly for MOSFET switching in `01-electronics.T1.01b` and Step 1.2 (`01-electronics.T1.02`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to [`01-electronics.T1.01b`](01-electronics.T1.01b.md) (*Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal*).

@@ -69,28 +69,30 @@ steps=8, pos_m=1.000 m, caught=ZeroDivisionError
 Write a Python function `battery_voltage_after_steps(v_start, drop_per_step, n_steps)` that uses a `for` loop to subtract `drop_per_step` from `v_start` `n_steps` times. Verify that starting at $12.0\text{ V}$ with a drop of $0.15\text{ V}$ per step over $10$ steps returns `10.5` ($\pm 10^{-6}\text{ V}$).
 - **If your result differs:** Check that you passed `range(n_steps)` (which runs `10` times) rather than `range(1, n_steps)` (which only runs `9` times and leaves `10.65` V).
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Run the Worked example script directly with `python3` in your terminal, or open **Tab 1 (Architecture & Roadmap)** of the MechaLab Workbench (`npm run dev`) to inspect how discrete simulation steps drive every interactive physics plot in the browser with zero hardware.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Stage 0 (`L0.3`) and Track 04, the exact same `while` loop structure maps directly onto a microcontroller firmware loop:
 ```text
 [PC Python Script: while pos_m < 1.0] ---> (USB Serial) ---> [MCU Timer Loop: pos_m += vel * dt]
 ```
 Pass/fail verification in simulation: `steps == 8`, `pos_m == 1.000 m`, and `caught == ZeroDivisionError`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
-1. `[Concept: python_variables_and_types]` Compute the final numeric value of `x` (tolerance $\pm 10^{-9}$) after executing `x = 4.0; x = x + 1.5; x = x * 2.0`.
-2. `[Concept: for_while_loops_and_functions]` Trace this loop and compute the exact integer value of `total` after it finishes:
+1. `[Recall] [Concept: python_variables_and_types]` Compute the final numeric value of `x` (tolerance $\pm 10^{-9}$) after executing `x = 4.0; x = x + 1.5; x = x * 2.0`.
+2. `[Apply] [Concept: for_while_loops_and_functions]` Trace this loop and compute the exact integer value of `total` after it finishes:
    ```python
    total = 0
    for i in range(4):
        total += i * 2
    ```
-3. `[Concept: for_while_loops_and_functions]` What value (tolerance $\pm 10^{-9}$) does `clamp_pwm(1.35, 1.0)` return when defined as `def clamp_pwm(u, u_max): return u_max if u > u_max else u`?
+3. `[Transfer] [Concept: for_while_loops_and_functions]` What value (tolerance $\pm 10^{-9}$) does `clamp_pwm(1.35, 1.0)` return when defined as `def clamp_pwm(u, u_max): return u_max if u > u_max else u`?
 4. `[Concept: traceback_error_reading]` You run a motor script and Python prints `NameError: name 'kp_gain' is not defined` at line 12. Which option identifies the root cause?
    - **A.** `kp_gain` was set to `0.0` and caused a division by zero.
    - **B.** `kp_gain` was read before being assigned a value, or its variable name was misspelled.
@@ -126,6 +128,5 @@ assert q4_choice == "B"
 ## 10. Resources
 - **Python Software Foundation — *The Python Tutorial* (Sections 3–4, `docs.python.org/3/tutorial/`):** Official beginner guide to numbers, variables, `while`/`for` loops, and `def` functions `[UNVERIFIED]`.
 - **MechaLab Root Roadmap (`README.md`):** Explains how Stage 0 and Pass 1 (`Track 00 -> Track 08`) use Python time-stepping scripts before embedded C++ `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics*).

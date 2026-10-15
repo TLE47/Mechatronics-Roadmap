@@ -18,7 +18,7 @@ uses:
 est_hours: 5.0
 hardware_required: false
 safety_level: none
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
@@ -97,10 +97,10 @@ p_in_base=[0.25, 0.15, 0.1], effort_cmd=1.70 N*m, QoS(BE->Rel)=False
 In the `tf2` tree above (`T_b_l1 = urdf_revolute_z((0, 0, 0.10), q1)` and `T_l1_tool = urdf_revolute_z((0.25, 0, 0), q2)`), compute the 3D position of `p_in_tool = [0.15, 0.0, 0.0, 1.0]` in `base_link` when $q_1 = \pi/2\text{ rad}$ and $q_2 = 0.0\text{ rad}$. Verify that `p_in_base` equals `[0.0, 0.40, 0.10]` $\text{m}$ ($\pm 10^{-9}\text{ m}$).
 - **If your result differs:** When $q_1 = \pi/2\text{ rad}$ and $q_2 = 0\text{ rad}$, both the $0.25\text{ m}$ `link_1` offset and the $0.15\text{ m}$ `tool0` offset point along the $+Y$ axis of `base_link` ($0.25 + 0.15 = 0.40\text{ m}$).
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 3 (URDF Kinematics & Jacobian Workspace)** and **Tab 6 (Trajectory Generation)** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.7 (`06-robotics.T2.07`), Step 2.8 (`07-systems.T2.08`), and Step 3.7 (`06-robotics.T3.07`), your custom CAN-FD actuator (`04-embedded.T2.05`) plugs into a Linux host via a SocketCAN USB adapter (`can0`) driven by a `ros2_control` `SystemInterface`:
 ```text
 [MoveIt 2 / LeRobot Policy] ---> (/joint_trajectory_controller) ---> [ros2_control 1 kHz read/update/write]
@@ -109,14 +109,16 @@ No hardware required for this module (`hardware_required: false`). In Step 2.7 (
 ```
 Pass/fail verification in simulation: `p_in_base == [0.25, 0.15, 0.10]`, `cmd_if["effort"] == 1.70 N*m`, and `qos_compatible(False, True) == False`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.7 (`06-robotics.T2.07`).
 
 ### Skip test
-1. `[Concept: ros2_nodes_topics_services_and_qos]` A camera driver publishes `/camera/depth` with `Best-Effort` reliability QoS, and your perception node subscribes to `/camera/depth` requesting `Reliable` QoS. How many messages will your subscriber receive? (Report the integer count.)
-2. `[Concept: tf2_transform_tree_and_urdf_kinematics]` In a valid `tf2` coordinate frame tree with $N = 7$ frames (`world`, `base_link`, and 5 arm links), how many parent frames can any single child frame have at the same time?
-3. `[Concept: tf2_transform_tree_and_urdf_kinematics]` Given `T_base_link1` translating $+0.30\text{ m}$ along $Z$ (zero rotation) and `T_link1_ee` translating $+0.40\text{ m}$ along $X$ (zero rotation), compute the Euclidean distance $\|p_{\text{ee}}\|$ from `base` origin to `ee` origin in meters ($\text{m}$, tolerance $\pm 10^{-9}$).
-4. `[Concept: ros2_control_hardware_interface_read_write]` Why does `ros2_control` execute controllers (`update()`) and hardware drivers (`read()` / `write()`) inside the same real-time C++ process via shared double pointers instead of sending motor commands over standard ROS 2 DDS network topics?
+1. `[Recall] [Concept: ros2_nodes_topics_services_and_qos]` A camera driver publishes `/camera/depth` with `Best-Effort` reliability QoS, and your perception node subscribes to `/camera/depth` requesting `Reliable` QoS. How many messages will your subscriber receive? (Report the integer count.)
+2. `[Apply] [Concept: tf2_transform_tree_and_urdf_kinematics]` In a valid `tf2` coordinate frame tree with $N = 7$ frames (`world`, `base_link`, and 5 arm links), how many parent frames can any single child frame have at the same time?
+3. `[Transfer] [Concept: tf2_transform_tree_and_urdf_kinematics]` Given `T_base_link1` translating $+0.30\text{ m}$ along $Z$ (zero rotation) and `T_link1_ee` translating $+0.40\text{ m}$ along $X$ (zero rotation), compute the Euclidean distance $\|p_{\text{ee}}\|$ from `base` origin to `ee` origin in meters ($\text{m}$, tolerance $\pm 10^{-9}$).
+4. `[Spaced review -> 02-mechanics.T2.03 — Concept: se3_homogeneous_transformation_matrix] [Concept: ros2_control_hardware_interface_read_write]` Why does `ros2_control` execute controllers (`update()`) and hardware drivers (`read()` / `write()`) inside the same real-time C++ process via shared double pointers instead of sending motor commands over standard ROS 2 DDS network topics?
    - **A.** Because DDS topics cannot send floating-point numbers.
    - **B.** To guarantee deterministic sub-millisecond ($1\text{ kHz}$) loop execution with zero network serialization latency, packet loss, or OS socket jitter inside the feedback loop.
    - **C.** Because `ros2_control` does not support URDF files.
@@ -203,8 +205,7 @@ assert g8_choice == "A"
 | `ros2_control` loop prints `Overrun detected!` every few seconds | Performed blocking socket/serial reads or dynamic memory allocation (`new`/`std::vector::push_back`) inside `read()` or `update()`. | Use non-blocking `O_NONBLOCK` SocketCAN / lock-free ring buffers in `read()` and pre-allocate all buffers inside `on_init()` / `on_configure()`. |
 
 ## 10. Resources
-- **Open Robotics — *Official ROS 2 Documentation (`docs.ros.org`, Jazzy / Lyrical LTS)* & `ros2_control` Docs (`control.ros.org`, `resources/open-source-toolchains.md`):** Tutorials on Nodes, Topics, QoS, `tf2`, URDF, and writing a `ros2_control` `SystemInterface` `[VERIFIED 2026-10-15]`.
+- **Open Robotics — *Official ROS 2 Documentation (`docs.ros.org`, Jazzy / Lyrical LTS)* & `ros2_control` Docs (`control.ros.org`, `resources/open-source-toolchains.md`):** Tutorials on Nodes, Topics, QoS, `tf2`, URDF, and writing a `ros2_control` `SystemInterface` `[UNVERIFIED]`.
 - **Track 06 (`06-robotics-and-autonomy/README.md`):** Directly continues into Step 2.7 (`06-robotics.T2.07`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 2.7 (`06-robotics.T2.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied).

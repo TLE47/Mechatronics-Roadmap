@@ -16,14 +16,14 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: none
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
 This is the final bridge module before Step 2.1 (`00-foundations.T2.01`). When a digital controller samples sensors at $f_s = 4\text{ kHz}$, high-frequency vibrations above $f_s/2$ fold down as fake low-frequency signals (aliasing), naive Tustin discretization shifts notch filter center frequencies downward (frequency warping), and multi-dimensional Kalman filters represent sensor uncertainty using covariance matrices $\Sigma$. Mastering these three tools unlocks all of Tier 2 (`2.1`–`2.8`). Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
 
 ## 2. Intuition first (Mental Model)
-Have you ever watched a car commercial where the spoked wheels appear to spin backward even though the car is speeding forward? The camera shutter (sampling rate $f_s$) is taking snapshots too slowly to catch each spoke's true speed, so a fast rotation masquerades as a slow phantom rotation (**aliasing**). Next, when you map the infinite analog frequency axis onto a digital clock that repeats every $f_s$, the Tustin formula squishes frequencies like a fisheye camera lens (**frequency warping**)—so if you want a digital notch filter to land on $850\text{ Hz}$, you must aim slightly higher in analog first (**pre-warping**). Finally, a **covariance matrix** $\Sigma$ is just a 2D error ellipse showing how uncertain your position and velocity estimates are and whether an error in one tends to go hand-in-hand with an error in the other.
+Have you ever watched a car commercial where the spoked wheels appear to spin backward even though the car is speeding forward? The camera shutter (sampling rate $f_s$) is taking snapshots too slowly to catch each spoke's true speed, so a fast rotation masquerades as a slow phantom rotation (**aliasing**). Next, when you map the infinite analog frequency axis onto a digital clock that repeats every $f_s$, the Tustin formula squishes frequencies like a fisheye camera lens (**frequency warping**)—so if you want a digital notch filter to land on $850\text{ Hz}$, you must aim slightly higher in analog first (**pre-warping**). Finally, a **covariance matrix** $\Sigma$ defines a 2D error ellipse showing how uncertain your position and velocity estimates are and whether an error in one tends to go hand-in-hand with an error in the other.
 
 ## 3. Formalization
 1. **Nyquist Limit and Aliasing:** Sampling at rate $f_s = 1/T_s$ ($\text{Hz}$) can uniquely represent frequencies only up to the Nyquist frequency $f_{\text{Nyquist}} = f_s / 2$. Any analog frequency $f > f_s/2$ folds to an apparent alias frequency in $[0, f_s/2]$:
@@ -78,28 +78,30 @@ Unwarped lands at 749.49 Hz (misses by 100.51 Hz); pre-warped lands at 850.00 Hz
 Compute the alias frequency $f_{\text{alias}} \in [0, f_s/2]$ when a $2700\text{ Hz}$ structural resonance is sampled at $f_s = 2000\text{ Hz}$ without an analog anti-aliasing filter, and compute the pre-warped analog frequency $\omega_a$ ($\text{rad/s}$) required to place a digital notch at $f_0 = 600\text{ Hz}$ when $f_s = 2000\text{ Hz}$. Verify $f_{\text{alias}} = 700.0\text{ Hz}$ and $\omega_a = 5505.5277\text{ rad/s}$ ($\pm 10^{-3}$).
 - **If your result differs:** For aliasing, subtract the nearest integer multiple of $f_s$ ($|2700 - 1 \times 2000| = 700\text{ Hz}$). For pre-warping, check that $\tan(\pi f_0 / f_s)$ is evaluated in radians ($\pi \times 600 / 2000 = 0.3\pi\text{ rad}$).
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 1 (Pre-Warped Tustin Biquad Notch vs. Two-Mass Resonance)** in the MechaLab Workbench (`npm run dev`) and toggle pre-warping ON vs. OFF at $f_0 = 850\text{ Hz}$, $f_s = 4000\text{ Hz}$ to watch the notch center shift from $749.5\text{ Hz}$ right onto the $850\text{ Hz}$ resonance peak.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.1 (`00-foundations.T2.01`) and Step 2.4 (`03-sensors.T2.04`), the 5 pre-warped biquad coefficients $(b_0, b_1, b_2, a_1, a_2)$ execute inside the microcontroller's `TDF-II` filter loop on every ADC/encoder sample:
 ```text
 [Analog Sensor] ---> [RC Anti-Alias Filter] ---> [ADC @ f_s=4 kHz] ---> [TDF-II Pre-Warped Biquad Notch]
 ```
 Pass/fail verification in simulation: `f_unwarped == 749.49 Hz`, `f_landed == 850.00 Hz`, and `Sigma_y` symmetric positive definite.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the module Skip test to pass this module, or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to verify readiness for Step 2.1 (`00-foundations.T2.01`).
 
 ### Skip test
-1. `[Concept: nyquist_sampling_and_aliasing]` A $3150\text{ Hz}$ motor switching harmonic is sampled at $f_s = 4000\text{ Hz}$ without an anti-aliasing filter. What alias frequency $f_{\text{alias}} \in [0, 2000]\text{ Hz}$ (tolerance $\pm 10^{-9}$) appears in the digital data?
-2. `[Concept: tustin_frequency_prewarping_and_biquad]` Compute the actual digital notch frequency $f_{\text{unwarped}}$ in $\text{Hz}$ (tolerance $\pm 0.01\text{ Hz}$) when an unwarped Tustin transform is applied to $f_0 = 850\text{ Hz}$ at $f_s = 4000\text{ Hz}$.
-3. `[Concept: tustin_frequency_prewarping_and_biquad]` Why can a digital biquad notch filter **never** un-alias a signal that exceeded $f_s/2$ *before* the ADC sampled it?
+1. `[Recall] [Concept: nyquist_sampling_and_aliasing]` A $3150\text{ Hz}$ motor switching harmonic is sampled at $f_s = 4000\text{ Hz}$ without an anti-aliasing filter. What alias frequency $f_{\text{alias}} \in [0, 2000]\text{ Hz}$ (tolerance $\pm 10^{-9}$) appears in the digital data?
+2. `[Apply] [Concept: tustin_frequency_prewarping_and_biquad]` Compute the actual digital notch frequency $f_{\text{unwarped}}$ in $\text{Hz}$ (tolerance $\pm 0.01\text{ Hz}$) when an unwarped Tustin transform is applied to $f_0 = 850\text{ Hz}$ at $f_s = 4000\text{ Hz}$.
+3. `[Transfer] [Concept: tustin_frequency_prewarping_and_biquad]` Why can a digital biquad notch filter **never** un-alias a signal that exceeded $f_s/2$ *before* the ADC sampled it?
    - **A.** Because digital filters only work below $100\text{ Hz}$.
    - **B.** Because once sampling folds $f > f_s/2$ into $[0, f_s/2]$, the aliased samples are mathematically indistinguishable from a true low-frequency signal; an **analog** anti-aliasing filter must precede the ADC.
    - **C.** Because TDF-II biquads require double-precision floating point.
    - **D.** Because Tustin pre-warping amplifies high frequencies.
-4. `[Concept: gaussian_variance_and_covariance_matrix]` Given $\Sigma_x = \begin{bmatrix} 1.0 & 0.0 \\ 0.0 & 4.0 \end{bmatrix}$ and $A = \begin{bmatrix} 1.0 & 0.5 \\ 0.0 & 1.0 \end{bmatrix}$, compute the $(0,0)$ entry of $\Sigma_y = A \Sigma_x A^\top$ (tolerance $\pm 10^{-9}$).
+4. `[Spaced review -> 00-foundations.T2.00e — Concept: bode_magnitude_db_and_phase] [Concept: gaussian_variance_and_covariance_matrix]` Given $\Sigma_x = \begin{bmatrix} 1.0 & 0.0 \\ 0.0 & 4.0 \end{bmatrix}$ and $A = \begin{bmatrix} 1.0 & 0.5 \\ 0.0 & 1.0 \end{bmatrix}$, compute the $(0,0)$ entry of $\Sigma_y = A \Sigma_x A^\top$ (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -166,8 +168,7 @@ assert g8_choice == "A"
 | Covariance matrix $\Sigma$ loses symmetry in `float32` | Accumulated floating-point rounding errors across thousands of updates. | Enforce $\Sigma \leftarrow \frac{1}{2}(\Sigma + \Sigma^\top)$ and use the Joseph form in Step 3.6. |
 
 ## 10. Resources
-- **Audio EQ Cookbook (Robert Bristow-Johnson) & Oppenheim/Schafer — *Discrete-Time Signal Processing* (`resources/textbooks-and-papers.md`):** Standard biquad and Tustin pre-warping derivations `[VERIFIED 2026-10-15]`.
+- **Audio EQ Cookbook (Robert Bristow-Johnson) & Oppenheim/Schafer — *Discrete-Time Signal Processing* (`resources/textbooks-and-papers.md`):** Standard biquad and Tustin pre-warping derivations `[UNVERIFIED]`.
 - **Track 00 (`00-foundations/README.md`):** Directly continues into Step 2.1 (`00-foundations.T2.01`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 2.1 (`00-foundations.T2.01`)** in [`00-foundations/README.md`](../00-foundations/README.md#tier-2-intermediate--applied).

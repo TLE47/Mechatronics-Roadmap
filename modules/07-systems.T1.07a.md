@@ -78,31 +78,36 @@ Safety state=ESTOP_LATCHED, pwr=False, Sine-sweep @ 5Hz: -3.01 dB, -45.0 deg
 During a single-tone sine sweep at $f = 8.0\text{ Hz}$ ($T = 0.125\text{ s}$) with input amplitude $A = 0.20\text{ rad}$, the joint encoder output has steady-state amplitude $B = 0.10\text{ rad}$ and its peaks lag the input peaks by $\Delta t = 0.03125\text{ s}$. Compute $|G(j2\pi f)|_{\text{dB}}$ and $\angle G(j2\pi f)$ in degrees. Verify $|G|_{\text{dB}} = -6.0206\text{ dB}$ ($\pm 10^{-3}$) and $\angle G = -90.0^\circ$ ($\pm 10^{-6}$).
 - **If your result differs:** Check that $-360^\circ \times 8.0\text{ Hz} \times 0.03125\text{ s} = -90.0^\circ$ (a quarter period of $0.125\text{ s}$) and $20\log_{10}(0.10 / 0.20) = -6.0206\text{ dB}$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Test the cyclic PLC logic in [OpenPLC Editor](https://autonomylogic.com/) (`resources/open-source-toolchains.md`) or open **Tab 5 (Functional Safety & STO)** and **Tab 7 (System Identification)** in the MechaLab Workbench (`npm run dev`).
 
-## 7. Safety notes
+## 7. Hardware path (and Safety notes)
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**
 > 1. **Hardware E-Stop Must Break Power Physically:** A software `if (button_pressed)` check inside `loop()` is **never** a valid Emergency Stop—if the microcontroller hangs in an infinite loop or a MOSFET shorts failed-closed, software cannot stop the motor. The physical E-stop mushroom switch must directly interrupt the motor power supply (`VM`) or hardware driver enable (`nSLEEP`) via Normally-Closed (NC) contacts.
 > 2. **No Automatic Restart After E-Stop Release:** Twisting/releasing a latched E-stop mushroom button must **never** cause the robot to resume motion automatically (`ESTOP_LATCHED -> IDLE` requires an explicit manual Reset action while Start is not asserted).
 > 3. **Clear Workspace Before Sine Sweep:** Keep hands and loose cables outside the manipulator swept volume during sine-sweep excitation, and bound excitation amplitude to $\le 15\%$ of joint travel.
 
+**Optional Hardware Path (`hardware_required: false`):** Complete all simulation and assertion gates in `## 6. Sim-first path (Simulation path)` first before energizing any physical hardware stage:
+```text
+[Sim-First Gate Passed] ---> [Current-Limited Bench PSU + E-Stop Ready] ---> [Incremental Hardware Verification]
+```
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: read `## 7. Safety notes`, score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ on `[SAFETY]` items), or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8).
 
 ### Skip test
-1. `[Concept: single_tone_sine_sweep_gain_phase]` A $10.0\text{ Hz}$ sine sweep with input amplitude $A = 0.50\text{ rad}$ produces steady-state output amplitude $B = 0.25\text{ rad}$ with peak time delay $\Delta t = 0.0125\text{ s}$. Compute the phase lag $\angle G = -360^\circ f \Delta t$ in degrees (tolerance $\pm 10^{-6}$).
-2. `[Concept: cyclic_plc_scan_read_execute_write]` In what exact 3-step order does an IEC 61131-3 PLC execute each cyclic scan?
+1. `[Recall] [Concept: single_tone_sine_sweep_gain_phase]` A $10.0\text{ Hz}$ sine sweep with input amplitude $A = 0.50\text{ rad}$ produces steady-state output amplitude $B = 0.25\text{ rad}$ with peak time delay $\Delta t = 0.0125\text{ s}$. Compute the phase lag $\angle G = -360^\circ f \Delta t$ in degrees (tolerance $\pm 10^{-6}$).
+2. `[Apply] [Concept: cyclic_plc_scan_read_execute_write]` In what exact 3-step order does an IEC 61131-3 PLC execute each cyclic scan?
    - **A.** Write Outputs $\to$ Read Inputs $\to$ Delay
    - **B.** Read Inputs (freeze input image) $\to$ Execute Logic $\to$ Write Outputs
    - **C.** Execute Logic $\to$ Random Interrupt $\to$ Reboot
    - **D.** Read Outputs $\to$ Write Inputs $\to$ Halt
-3. `[SAFETY] [Concept: normally_closed_hardware_estop_chain]` Why are industrial Emergency-Stop buttons wired with **Normally-Closed (NC)** contacts in series rather than Normally-Open (NO) contacts in parallel?
+3. `[Transfer] [SAFETY] [Concept: normally_closed_hardware_estop_chain]` Why are industrial Emergency-Stop buttons wired with **Normally-Closed (NC)** contacts in series rather than Normally-Open (NO) contacts in parallel?
    - **A.** Because NC switches are cheaper.
    - **B.** Because in a series NC chain, continuous current is required to hold power enabled; pressing any E-stop **or** severing/unplugging any wire drops current to zero and fails safe immediately.
    - **C.** Because NO contacts cannot carry $3.3\text{ V}$.
    - **D.** To make the motor spin faster.
-4. `[SAFETY] [Concept: normally_closed_hardware_estop_chain]` When an operator twists and releases a tripped E-stop button, what must the control state machine do?
+4. `[Spaced review -> 06-robotics.T1.07 — Concept: finite_state_machine_switch_enum] [SAFETY] [Concept: normally_closed_hardware_estop_chain]` When an operator twists and releases a tripped E-stop button, what must the control state machine do?
    - **A.** Immediately resume the interrupted trajectory at full speed.
    - **B.** Remain inhibited in a safe latched state (`ESTOP_LATCHED` / `IDLE`) with motor torque disabled until a deliberate Reset command is issued.
    - **C.** Apply $100\%$ reverse PWM.
@@ -188,6 +193,5 @@ assert g8_choice == "A"
 ## 10. Resources
 - **Frank Petruzella — *Programmable Logic Controllers* & OpenPLC (`autonomylogic.com`, `resources/open-source-toolchains.md`):** IEC 61131-3 cyclic scan execution and safety interlock patterns `[VERIFIED 2026-10-15]`.
 - **Track 07 & 08 (`07-systems-hil-and-production/README.md`, `08-capstone-projects/README.md`):** Directly continues into the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 1.8 (`07-systems.T1.08`)** in [`08-capstone-projects/README.md`](../08-capstone-projects/README.md#tier-1-capstone-build-beginner--intuitive-pass).

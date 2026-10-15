@@ -17,7 +17,7 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: high
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
@@ -83,10 +83,10 @@ e_3sigma=0.425 mm (dominant: Structural link deflection), tau=1.10 ms, PM_net=52
 Suppose an engineer replaces the $250\ \mu\text{s}$ low-pass filter in the $1\text{ kHz}$ loop above with a heavy 10-tap moving-average filter that adds $\tau_{\text{filt,new}} = 2550\ \mu\text{s}$ of delay (so $\tau_{\text{total}}$ increases from $1.10\text{ ms}$ to $3.40\text{ ms}$). Compute the new net Phase Margin $\text{PM}_{\text{net}} = 62.0^\circ - 150.0 \times 0.0034 \times \frac{180^\circ}{\pi}$ in degrees, and verify whether `capstone_signoff` returns `True` or `False`. Verify $\text{PM}_{\text{net}} = 32.779^\circ < 45.0^\circ$ and `capstone_signoff == False`.
 - **If your result differs:** Multiply $150.0\text{ rad/s} \times 0.0034\text{ s} = 0.51\text{ rad}$, convert to degrees ($0.51 \times 180/\pi = 29.2208^\circ$), and subtract from $62.0^\circ$ ($32.78^\circ < 45^\circ \implies \text{NO-GO}$).
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 9 (Capstone 3: 6-DOF Force-Controlled Tele-Impedance Manipulator & System Verification)** in the MechaLab Workbench (`npm run dev`), or run the standalone verification script `08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py`.
 
-## 7. Safety notes
+## 7. Hardware path (and Safety notes)
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before energizing any Capstone hardware build or taking the Skip/Gate test):**
 > 1. **Mandatory 5-Stage Progressive Bring-Up Sequence:** Never power up a newly assembled multi-DOF robot and immediately enable full-torque closed-loop trajectory tracking. Always execute in strict order:
 >    - **Stage 0 (Power-Off Bench Check):** Verify bus resistance (`> 10 kOhm` `+Vbus` to `GND`), CAN termination ($60\ \Omega$), fastener torque witness marks, and mechanical hard stops.
@@ -95,14 +95,19 @@ Open **Tab 9 (Capstone 3: 6-DOF Force-Controlled Tele-Impedance Manipulator & Sy
 >    - **Stage 3 (Zero-Stiffness Gravity Compensation + Damping Mode):** Set $K_p = 0$, $K_d > 0$, $\tau_{\text{ff}} = g(q)$ with $20\%$ torque ceiling; move the arm by hand to verify smooth backdrivability and confirm that pushing each link produces damped resistance (positive damping, not positive feedback!).
 >    - **Stage 4 (Full Closed-Loop Impedance + CBF Safety Shield + E-Stop Live Test):** Enable Cartesian impedance / learned policy only after Stages 0–3 and a live physical E-stop cut test pass.
 
+**Optional Hardware Path (`hardware_required: false`):** Complete all simulation and assertion gates in `## 6. Sim-first path (Simulation path)` first before energizing any physical hardware stage:
+```text
+[Sim-First Gate Passed] ---> [Current-Limited Bench PSU + E-Stop Ready] ---> [Incremental Hardware Verification]
+```
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: read `## 7. Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.8 (`08-capstones.T3.08`).
 
 ### Skip test
-1. `[Concept: rss_and_worst_case_spatial_error_budget]` Three independent random error sources have $1\sigma$ end-effector contributions $\sigma_1 = 0.03\text{ mm}$, $\sigma_2 = 0.04\text{ mm}$, and $\sigma_3 = 0.12\text{ mm}$. Compute the combined Root-Sum-Square (RSS) $1\sigma$ error $\sigma_{\text{rss}} = \sqrt{\sigma_1^2 + \sigma_2^2 + \sigma_3^2}$ in millimeters ($\text{mm}$, tolerance $\pm 10^{-9}$).
-2. `[Concept: rss_and_worst_case_spatial_error_budget]` In Q1 ($\sigma_1 = 0.03, \sigma_2 = 0.04, \sigma_3 = 0.12\text{ mm}$, so $\sigma_{\text{rss}} = 0.13\text{ mm}$), what fraction of the total error variance $\sigma_3^2 / \sigma_{\text{rss}}^2$ comes from source 3 alone (tolerance $\pm 10^{-4}$)?
-3. `[Concept: end_to_end_latency_and_phase_margin_erosion_budget]` A servo loop has crossover $\omega_{gc} = 200\text{ rad/s}$, delay-free Phase Margin $\text{PM}_0 = 60.0^\circ$, and total end-to-end loop delay $\tau_{\text{total}} = 0.001\text{ s}$ ($1.0\text{ ms}$). Compute the net Phase Margin $\text{PM}_{\text{net}} = \text{PM}_0 - \omega_{gc}\tau_{\text{total}}\frac{180^\circ}{\pi}$ in degrees (tolerance $\pm 0.01^\circ$).
-4. `[SAFETY] [Concept: pre_bring_up_interface_and_safety_signoff_gate]` During **Stage 3** of progressive bring-up on a 6-DOF robot arm (before enabling stiff position trajectories), you set $K_p = 0$, $K_d = 1.5\text{ N}\cdot\text{m}\cdot\text{s/rad}$, and $\tau_{\text{ff}} = g(q)$ at a $20\%$ torque limit and gently push Joint 2 by hand. Why is this test mandatory before enabling $K_p > 0$?
+1. `[Recall] [Concept: rss_and_worst_case_spatial_error_budget]` Three independent random error sources have $1\sigma$ end-effector contributions $\sigma_1 = 0.03\text{ mm}$, $\sigma_2 = 0.04\text{ mm}$, and $\sigma_3 = 0.12\text{ mm}$. Compute the combined Root-Sum-Square (RSS) $1\sigma$ error $\sigma_{\text{rss}} = \sqrt{\sigma_1^2 + \sigma_2^2 + \sigma_3^2}$ in millimeters ($\text{mm}$, tolerance $\pm 10^{-9}$).
+2. `[Apply] [Concept: rss_and_worst_case_spatial_error_budget]` In Q1 ($\sigma_1 = 0.03, \sigma_2 = 0.04, \sigma_3 = 0.12\text{ mm}$, so $\sigma_{\text{rss}} = 0.13\text{ mm}$), what fraction of the total error variance $\sigma_3^2 / \sigma_{\text{rss}}^2$ comes from source 3 alone (tolerance $\pm 10^{-4}$)?
+3. `[Transfer] [Concept: end_to_end_latency_and_phase_margin_erosion_budget]` A servo loop has crossover $\omega_{gc} = 200\text{ rad/s}$, delay-free Phase Margin $\text{PM}_0 = 60.0^\circ$, and total end-to-end loop delay $\tau_{\text{total}} = 0.001\text{ s}$ ($1.0\text{ ms}$). Compute the net Phase Margin $\text{PM}_{\text{net}} = \text{PM}_0 - \omega_{gc}\tau_{\text{total}}\frac{180^\circ}{\pi}$ in degrees (tolerance $\pm 0.01^\circ$).
+4. `[Spaced review -> 06-robotics.T3.07 — Concept: loop_transfer_gain_and_phase_margin] [SAFETY] [Concept: pre_bring_up_interface_and_safety_signoff_gate]` During **Stage 3** of progressive bring-up on a 6-DOF robot arm (before enabling stiff position trajectories), you set $K_p = 0$, $K_d = 1.5\text{ N}\cdot\text{m}\cdot\text{s/rad}$, and $\tau_{\text{ff}} = g(q)$ at a $20\%$ torque limit and gently push Joint 2 by hand. Why is this test mandatory before enabling $K_p > 0$?
    - **A.** To polish the aluminum links.
    - **B.** It safely verifies at low torque that encoder direction, motor phase sequence, velocity sign ($-K_d\dot{q}$), and gravity vector $g(q)$ all oppose external disturbances rather than accelerating into positive-feedback runaway!
    - **C.** Because $K_p$ is never used in robotics.
@@ -186,8 +191,7 @@ assert g8_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 | Enabled full-stiffness trajectory tracking on first power-up without running Stage 3 ($K_p = 0$ gravity/damping check) | Sign mismatch between URDF joint axis and actuator encoder caused an immediate full-torque slam into the hard stop. | Never skip Stage 3 ($K_p = 0$, $20\%$ torque limit backdrivability & damping sign check) before enabling position stiffness! |
 
 ## 10. Resources
-- **Alexander Slocum — *Precision Machine Design* & NASA *Systems Engineering Handbook (`NASA/SP-2016-6105 Rev2`)* (`resources/textbooks-and-papers.md`):** Industry-standard methodology for structural error budgets, interface control documents (ICDs), and staged system verification `[VERIFIED 2026-10-15]`.
+- **Alexander Slocum — *Precision Machine Design* & NASA *Systems Engineering Handbook (`NASA/SP-2016-6105 Rev2`)* (`resources/textbooks-and-papers.md`):** Industry-standard methodology for structural error budgets, interface control documents (ICDs), and staged system verification `[UNVERIFIED]`.
 - **Track 08 (`08-capstone-projects/README.md`):** Directly unlocks Step 3.8 (`08-capstones.T3.08`: Capstones 1, 2, and 3) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 3.8 (`08-capstones.T3.08`)** in [`08-capstone-projects/README.md`](../08-capstone-projects/README.md) — **Capstone 1** (Precision Stage), **Capstone 2** (Balancing Robot), or **Capstone 3** (6-DOF Force-Controlled Tele-Impedance Manipulator — the **Graduate Goal**).

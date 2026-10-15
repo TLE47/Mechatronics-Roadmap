@@ -17,14 +17,14 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: none
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
 This is the bridge module before Step 2.4 (`03-sensors.T2.04`). In a 3-phase BLDC motor spinning at $3000\text{ RPM}$ ($350\text{ Hz}$ electrical for $p=7$), the three stator currents $(i_a, i_b, i_c)$ are high-frequency AC sine waves that a standard PI controller cannot track without severe phase lag. Projecting the three $120^\circ$-spaced coils onto a 2D stationary frame ($\alpha$-$\beta$, **Clarke transform**) and then rotating that frame at the rotor's exact electrical angle $\theta_e$ ($d$-$q$, **Park transform**) turns those fast AC sine waves into two steady **DC numbers** $(i_d, i_q)$! Combine that with a **Phase-Locked Loop (PLL)** to estimate smooth velocity from quantized encoder angles and **random-walk noise scaling** ($\sigma \propto \sqrt{t}$) for IMUs, and you have the complete foundation for Step 2.4. Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
 
 ## 2. Intuition first (Mental Model)
-Imagine three people standing $120^\circ$ apart around a merry-go-round (`a` at $0^\circ$, `b` at $+120^\circ$, `c` at $-120^\circ$), passing a magnetic arrow around the circle so the arrow spins smoothly at speed $\omega_e$. Because the three coil wires meet at a floating star neutral point with nowhere else for current to go, Kirchoff's Current Law guarantees $i_a + i_b + i_c = 0$ at every instant. First, the **Clarke transform** simply rewrites the 2D tip of that spinning magnetic arrow in standard $(x, y)$ coordinates called $(\alpha, \beta)$ on the stationary floor. Second, if you jump onto the merry-go-round and spin *with* the rotor at angle $\theta_e$, the spinning magnetic arrow looks completely **stationary (DC)** to you! That rotating coordinate frame is the **Park $(d, q)$ frame**: the **$d$-axis (direct)** points straight along the rotor's North magnet pole (producing zero torque, just magnetic squeeze), and the **$q$-axis (quadrature)** points $90^\circ$ ahead of the magnet (producing $100\%$ of motor torque $\tau \propto i_q$).
+Imagine three people standing $120^\circ$ apart around a merry-go-round (`a` at $0^\circ$, `b` at $+120^\circ$, `c` at $-120^\circ$), passing a magnetic arrow around the circle so the arrow spins smoothly at speed $\omega_e$. Because the three coil wires meet at a floating star neutral point with nowhere else for current to go, Kirchoff's Current Law guarantees $i_a + i_b + i_c = 0$ at every instant. First, the **Clarke transform** projects the 2D tip of that spinning magnetic arrow in standard $(x, y)$ coordinates called $(\alpha, \beta)$ on the stationary floor. Second, if you jump onto the merry-go-round and spin *with* the rotor at angle $\theta_e$, the spinning magnetic arrow looks completely **stationary (DC)** to you! That rotating coordinate frame is the **Park $(d, q)$ frame**: the **$d$-axis (direct)** points straight along the rotor's North magnet pole (producing zero torque, only radial magnetic flux), and the **$q$-axis (quadrature)** points $90^\circ$ ahead of the magnet (producing $100\%$ of motor torque $\tau \propto i_q$).
 
 ## 3. Formalization
 1. **Balanced Three-Phase Neutral Constraint & Amplitude-Invariant Clarke Transform ($abc \to \alpha\beta$):** With $i_a + i_b + i_c = 0$, the stationary orthogonal components $(i_\alpha, i_\beta)$ (in $\text{A}$) are:
@@ -79,24 +79,26 @@ i_alpha=-7.51 A, i_beta=6.60 A -> i_d=0.00 A, i_q=10.00 A
 Suppose you only measure two phase currents $i_a = +6.0\text{ A}$ and $i_b = -2.0\text{ A}$ using two low-side shunt amplifiers in an isolated neutral star-wound motor. Compute (a) the third phase current $i_c = -(i_a + i_b)$, (b) the Clarke stationary components $(i_\alpha, i_\beta)$, and (c) the vector magnitude $\sqrt{i_\alpha^2 + i_\beta^2}$. Verify $i_c = -4.0\text{ A}$, $i_\alpha = 6.0\text{ A}$, $i_\beta = \frac{2.0}{\sqrt{3}} \approx 1.154701\text{ A}$, and magnitude $\approx 6.110101\text{ A}$ ($\pm 10^{-5}\text{ A}$).
 - **If your result differs:** Substitute $i_a = 6.0$ and $i_b = -2.0$ into $i_\beta = (i_a + 2i_b)/\sqrt{3} = (6.0 - 4.0)/\sqrt{3} = 2.0/\sqrt{3}\text{ A}$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 2 (FOC Current Loop: Clarke & Park Transforms)** in the MechaLab Workbench (`npm run dev`) to watch the 3-phase AC waveforms $(i_a, i_b, i_c)$ collapse into flat DC lines $(i_d, i_q)$ in real time.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.4 (`03-sensors.T2.04`), `clarke_park(ia, ib, theta_e)` runs inside the microcontroller's $20\text{ kHz}$ ADC interrupt immediately after reading the `INA240` shunts and SPI magnetic encoder:
 ```text
 [ADC ia, ib] ---> [Clarke (ia, ib) -> (i_alpha, i_beta)] ---> [Park (theta_e) -> (id, iq)] ---> [PI Loops]
 ```
 Pass/fail verification in simulation: `ia + ib + ic == 0.0`, `id_val == 0.0 A`, and `iq_val == 10.0 A`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.4 (`03-sensors.T2.04`).
 
 ### Skip test
-1. `[Concept: three_phase_balanced_sum_and_clarke_projection]` In a balanced 3-phase star-connected motor with floating neutral ($i_a + i_b + i_c = 0$), if $i_a = 8.0\text{ A}$ and $i_b = -3.0\text{ A}$, compute $i_c$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
-2. `[Concept: three_phase_balanced_sum_and_clarke_projection]` Using the amplitude-invariant Clarke formula $i_\alpha = i_a,\ i_\beta = \frac{i_a + 2i_b}{\sqrt{3}}$, compute $i_\beta$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) when $i_a = 0.0\text{ A}$ and $i_b = \sqrt{3}\text{ A}$.
-3. `[Concept: park_rotating_frame_dc_demodulation]` Given $(i_\alpha, i_\beta) = (0.0, 12.0)\text{ A}$ at electrical angle $\theta_e = 0.0\text{ rad}$, compute $(i_d, i_q)$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
-4. `[Concept: park_rotating_frame_dc_demodulation]` In surface-mounted PMSM Field-Oriented Control (FOC) below base speed, why do we command $i_d^* = 0\text{ A}$ and put all current into $i_q^*$?
+1. `[Recall] [Concept: three_phase_balanced_sum_and_clarke_projection]` In a balanced 3-phase star-connected motor with floating neutral ($i_a + i_b + i_c = 0$), if $i_a = 8.0\text{ A}$ and $i_b = -3.0\text{ A}$, compute $i_c$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
+2. `[Apply] [Concept: three_phase_balanced_sum_and_clarke_projection]` Using the amplitude-invariant Clarke formula $i_\alpha = i_a,\ i_\beta = \frac{i_a + 2i_b}{\sqrt{3}}$, compute $i_\beta$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) when $i_a = 0.0\text{ A}$ and $i_b = \sqrt{3}\text{ A}$.
+3. `[Transfer] [Concept: park_rotating_frame_dc_demodulation]` Given $(i_\alpha, i_\beta) = (0.0, 12.0)\text{ A}$ at electrical angle $\theta_e = 0.0\text{ rad}$, compute $(i_d, i_q)$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
+4. `[Spaced review -> 01-electronics.T2.02 — Concept: electrical_vs_mechanical_pole_pairs] [Concept: park_rotating_frame_dc_demodulation]` In surface-mounted PMSM Field-Oriented Control (FOC) below base speed, why do we command $i_d^* = 0\text{ A}$ and put all current into $i_q^*$?
    - **A.** Because $d$-axis current aligns with the rotor magnets and produces zero torque (only $I^2 R$ heat), whereas $q$-axis current is perpendicular ($90^\circ$) to the rotor flux and maximizes torque per ampere ($\tau = \frac{3}{2} p \psi_m i_q$).
    - **B.** Because $i_d$ cannot be measured.
    - **C.** Because $i_q$ does not flow through the stator windings.
@@ -175,8 +177,7 @@ assert math.isclose(g8_slope, -0.5, rel_tol=1e-9)
 | Inverse Park transform rotates in the wrong direction | Used the forward Park matrix ($-\theta_e$) instead of its transpose ($+\theta_e$) when transforming $(v_d, v_q) \to (v_\alpha, v_\beta)$. | Use $\begin{bmatrix} \cos\theta_e & -\sin\theta_e \\ \sin\theta_e & \cos\theta_e \end{bmatrix}$ for the inverse Park transform. |
 
 ## 10. Resources
-- **Texas Instruments — *Field Oriented Control of Permanent Magnet Motors* (`SPRABZ0`, `resources/textbooks-and-papers.md`):** Complete derivation of Clarke, Park, and inverse Park transforms `[VERIFIED 2026-10-15]`.
+- **Texas Instruments — *Field Oriented Control of Permanent Magnet Motors* (`SPRABZ0`, `resources/textbooks-and-papers.md`):** Complete derivation of Clarke, Park, and inverse Park transforms `[UNVERIFIED]`.
 - **Track 03 (`03-sensors-and-actuators/README.md`):** Directly continues into Step 2.4 (`03-sensors.T2.04`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 2.4 (`03-sensors.T2.04`)** in [`03-sensors-and-actuators/README.md`](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied).

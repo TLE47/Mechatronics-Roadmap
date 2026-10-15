@@ -17,7 +17,7 @@ uses:
 est_hours: 4.0
 hardware_required: false
 safety_level: none
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
@@ -76,10 +76,10 @@ Polling CPU=322.0 us (OVERFLOW) vs DMA CPU=0.50 us; Ping-Pong items=16
 Calculate the available CPU processing window $t_{\text{window}} = N / f_{\text{adc}}$ in microseconds ($\mu\text{s}$) between Half-Transfer (`HT`) and Transfer-Complete (`TC`) interrupts when a circular DMA buffer with half-size $N = 16$ samples is fed by an ADC sampling at $f_{\text{adc}} = 200\text{ kHz}$ ($5\ \mu\text{s}$ per sample). Verify $t_{\text{window}} = 16 / 200{,}000 = 80.0\ \mu\text{s}$.
 - **If your result differs:** Multiply the half-buffer length $N = 16$ (not $2N = 32$) by the sample period $T_{\text{adc}} = 5.0\ \mu\text{s}$ ($16 \times 5.0 = 80.0\ \mu\text{s}$).
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 8 (Real-Time Concurrency & DMA/ISR Timing)** in the MechaLab Workbench (`npm run dev`) or inspect logic-analyzer SPI/DMA traces in [PulseView (`sigrok`)](https://sigrok.org/wiki/PulseView) (`resources/open-source-toolchains.md`).
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.5 (`04-embedded.T2.05`), the STM32 DMA controller runs in circular mode (`DMA_CIRCULAR`) attached to `ADC1` and `SPI1`, firing `DMA_ISR_HTIF` and `DMA_ISR_TCIF`:
 ```text
 [ADC / SPI Peripheral] ===(Hardware DMA Channel)===> [Ping Buffer 0..N-1 | Pong Buffer N..2N-1]
@@ -89,22 +89,24 @@ No hardware required for this module (`hardware_required: false`). In Step 2.5 (
 ```
 Pass/fail verification in simulation: `t_spi_poll_us == 2.0 us`, `cpu_dma_total_us == 0.50 us`, and all 16 ping-pong samples processed in exact order with zero overwrites.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
-1. `[Concept: spi_full_duplex_clock_polarity_phase]` Compute the pure clock shifting time $t_{\text{shift}} = B_{\text{bits}} / f_{\text{sclk}}$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) to transfer a $24\text{ -bit}$ SPI sensor frame at $f_{\text{sclk}} = 12\text{ MHz}$ ($12 \times 10^6\text{ Hz}$).
-2. `[Concept: dma_zero_cpu_memory_transfer]` Why does blocking UART polling of a $50\text{ -byte}$ ($500\text{ -bit}$) packet at $1\text{ Mbps}$ break a $20\text{ kHz}$ ($50\ \mu\text{s}$ period) FOC current loop if called directly without DMA?
+1. `[Recall] [Concept: spi_full_duplex_clock_polarity_phase]` Compute the pure clock shifting time $t_{\text{shift}} = B_{\text{bits}} / f_{\text{sclk}}$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) to transfer a $24\text{ -bit}$ SPI sensor frame at $f_{\text{sclk}} = 12\text{ MHz}$ ($12 \times 10^6\text{ Hz}$).
+2. `[Apply] [Concept: dma_zero_cpu_memory_transfer]` Why does blocking UART polling of a $50\text{ -byte}$ ($500\text{ -bit}$) packet at $1\text{ Mbps}$ break a $20\text{ kHz}$ ($50\ \mu\text{s}$ period) FOC current loop if called directly without DMA?
    - **A.** Because $1\text{ Mbps}$ is too fast for copper wires.
    - **B.** Because waiting for $500\text{ bits}$ at $1\text{ Mbps}$ blocks the CPU for $500\ \mu\text{s}$—ten times longer than the entire $50\ \mu\text{s}$ control period!
    - **C.** Because UART cannot send binary numbers.
    - **D.** Because DMA changes the baud rate.
-3. `[Concept: double_buffered_ping_pong_half_complete_isr]` In a circular DMA buffer of total length $2N = 64$ samples ($N = 32$ per half), which slice of indices does the CPU safely read when the **Half-Transfer (`HT`)** interrupt fires (just as the DMA finishes index `31` and moves to index `32`)?
+3. `[Transfer] [Concept: double_buffered_ping_pong_half_complete_isr]` In a circular DMA buffer of total length $2N = 64$ samples ($N = 32$ per half), which slice of indices does the CPU safely read when the **Half-Transfer (`HT`)** interrupt fires (right as the DMA finishes index `31` and moves to index `32`)?
    - **A.** Indices `0` through `31` (the `Ping` half)
    - **B.** Indices `32` through `63` (the `Pong` half)
    - **C.** All `64` indices simultaneously
    - **D.** Index `64` only
-4. `[Concept: spi_full_duplex_clock_polarity_phase]` On an SPI bus sharing `SCLK`, `MOSI`, and `MISO` across three slave devices (an encoder, an IMU, and a gate driver), what hardware rule must be obeyed regarding the three Chip-Select (`CS_n`) pins?
+4. `[Spaced review -> 04-embedded.T1.05 — Concept: hardware_timer_isr_and_jitter] [Concept: spi_full_duplex_clock_polarity_phase]` On an SPI bus sharing `SCLK`, `MOSI`, and `MISO` across three slave devices (an encoder, an IMU, and a gate driver), what hardware rule must be obeyed regarding the three Chip-Select (`CS_n`) pins?
    - **A.** Pull all three `CS_n` pins LOW at the same time so all three chips drive `MISO` together.
    - **B.** Assert (pull LOW) **at most one** slave's `CS_n` pin at a time while holding the other two HIGH (tri-stated on `MISO`) so two slaves never fight each other on the `MISO` line.
    - **C.** Leave all `CS_n` pins disconnected.
@@ -134,8 +136,7 @@ assert q4_choice == "B"
 | SPI slave ignores every command even though `SCLK` and `MOSI` toggle | De-asserted `CS_n` (pulled HIGH) immediately after writing `SPI->DR` before the hardware shift register finished clocking out the last bit. | Wait for the SPI `TXE` + `BSY == 0` (or RX DMA complete) flag before pulling `CS_n` HIGH. |
 
 ## 10. Resources
-- **Carmine Noviello — *Mastering STM32* & STMicroelectronics `AN4031` (*Using the STM32 DMA Controller*, `resources/textbooks-and-papers.md`):** Complete guide to circular DMA, `HT`/`TC` interrupts, and SPI framing `[VERIFIED 2026-10-15]`.
+- **Carmine Noviello — *Mastering STM32* & STMicroelectronics `AN4031` (*Using the STM32 DMA Controller*, `resources/textbooks-and-papers.md`):** Complete guide to circular DMA, `HT`/`TC` interrupts, and SPI framing `[UNVERIFIED]`.
 - **Track 04 (`04-embedded-and-realtime/README.md`):** Prepares directly for `04-embedded.T2.04b` and Step 2.5 (`04-embedded.T2.05`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to [`04-embedded.T2.04b`](04-embedded.T2.04b.md) (*RTOS Tasks, Priority Inversion, Rate-Monotonic Deadlines, CAN Arbitration & Zephyr/micro-ROS Preview*).

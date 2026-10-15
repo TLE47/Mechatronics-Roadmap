@@ -201,7 +201,7 @@ $$
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 01):** Master production-grade mixed-signal and power hardware: $<2\text{ nH}$ 6-layer switching loops, Si/SiC/GaN gate-drive design, Bessel anti-aliasing filters, SAR ADC charge buckets, and coupled electro-thermal Cauer/Foster verification.
+> **Goal of Pass 3 (Track 01):** Master production-grade mixed-signal and power hardware: $<2\text{ nH}$ 6-layer switching loops on $48\text{ V}$ silicon MOSFET power stages (with `SiC`/`GaN` covered as an optional Tier 3 extension), Bessel anti-aliasing filters, SAR ADC charge buckets, and coupled electro-thermal Cauer/Foster verification.
 > * [**Next Linear Step in Pass 3 → Track 02 (Tier 3: Screw PoE, `Ti-6Al-4V` Flexures & O(n) RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production)
 
 ### [4.1 Mixed-Signal & Power Hardware Architecture]
@@ -213,7 +213,7 @@ flowchart TB
         BAT["DC Bus Supply<br/>24V – 48V Nominal<br/>TVS + Precharge / eFuse"]
         BULK["DC Link Capacitor Bank<br/>Electrolytic (Bulk Damping)<br/>+ X7R MLCC (< 2 nH Hot Loop)"]
         GATE["Isolated / Bootstrap 3-Phase Gate Driver<br/>(DRV8353 / UCC21520 / Si827x)<br/>Dead-Time, UVLO, Desat Protection"]
-        INV["3-Phase Half-Bridge Array<br/>6x Low-Rds(on) MOSFETs / GaN<br/>Kelvin Source Connection"]
+        INV["3-Phase Half-Bridge Array<br/>6x 48V Low-Rds(on) Si MOSFETs (Opt. Tier 3 GaN)<br/>Kelvin Source Connection"]
         SHUNT["3x Low-Inductance Shunt Resistors<br/>(0.5–2 mΩ, 4-Terminal Kelvin)<br/>or In-Line Hall/Fluxgate"]
         MOTOR(["3-Phase PMSM / BLDC<br/>Shielded Twisted-Pair Cable"])
 

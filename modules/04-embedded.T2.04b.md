@@ -16,7 +16,7 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: none
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
@@ -78,28 +78,30 @@ U=0.325, R_inv=740 us vs R_inh=140 us, CAN_win=0x012
 Suppose a 12-bit (`0..4095`) MIT-mode torque command encodes $\tau \in [-18.0\text{ N}\cdot\text{m}, +18.0\text{ N}\cdot\text{m}]$. Compute (a) the integer code $u$ for $\tau = +9.0\text{ N}\cdot\text{m}$ ($\frac{9.0 - (-18.0)}{36.0} \times 4095$) rounded to the nearest integer, and (b) the quantization step size $\Delta\tau = \frac{36.0}{4095}$ in $\text{N}\cdot\text{m}$. Verify $u = 3071$ and $\Delta\tau \approx 0.0087912\text{ N}\cdot\text{m}$ ($\pm 10^{-6}$).
 - **If your result differs:** Check that the full span is $18.0 - (-18.0) = 36.0\text{ N}\cdot\text{m}$, so $+9.0\text{ N}\cdot\text{m}$ sits at $75\%$ of full scale ($0.75 \times 4095 = 3071.25 \to 3071$).
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 8 (Real-Time Concurrency, Scheduling & CAN Framing)** in the MechaLab Workbench (`npm run dev`) to inspect preemptive task timelines and shared-data synchronization.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.5 (`04-embedded.T2.05`), your `STM32G4` or `ESP32` runs `FreeRTOS` (or `Zephyr RTOS`) with `vTaskDelayUntil()` for drift-free periodic execution and `FDCAN` hardware filters for $1\text{ kHz}$ actuator command frames:
 ```text
 [ROS 2 / micro-ROS Host] ===(CAN-FD Bus: 120 Ohm Terminated)===> [MCU FDCAN RX ISR -> RTOS Task_Ctrl (1 kHz)]
 ```
 Pass/fail verification in simulation: `U_total == 0.325`, `resp_with_inheritance_us == 140.0 us`, and `winner_id == 0x012`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.5 (`04-embedded.T2.05`).
 
 ### Skip test
-1. `[Concept: rtos_preemptive_scheduling_and_cpu_utilization]` Compute the total CPU utilization $U = \frac{C_1}{T_1} + \frac{C_2}{T_2}$ (tolerance $\pm 10^{-9}$) for two RTOS tasks: Task 1 ($C_1 = 200\ \mu\text{s}, T_1 = 1000\ \mu\text{s}$) and Task 2 ($C_2 = 500\ \mu\text{s}, T_2 = 2500\ \mu\text{s}$).
-2. `[Concept: unbounded_priority_inversion_and_inheritance]` Why must an RTOS mutex protecting shared telemetry between a low-priority logging task and a high-priority control task use **Priority Inheritance** (`xSemaphoreCreateMutex()`) instead of a plain binary semaphore (`xSemaphoreCreateBinary()`)?
+1. `[Recall] [Concept: rtos_preemptive_scheduling_and_cpu_utilization]` Compute the total CPU utilization $U = \frac{C_1}{T_1} + \frac{C_2}{T_2}$ (tolerance $\pm 10^{-9}$) for two RTOS tasks: Task 1 ($C_1 = 200\ \mu\text{s}, T_1 = 1000\ \mu\text{s}$) and Task 2 ($C_2 = 500\ \mu\text{s}, T_2 = 2500\ \mu\text{s}$).
+2. `[Apply] [Concept: unbounded_priority_inversion_and_inheritance]` Why must an RTOS mutex protecting shared telemetry between a low-priority logging task and a high-priority control task use **Priority Inheritance** (`xSemaphoreCreateMutex()`) instead of a plain binary semaphore (`xSemaphoreCreateBinary()`)?
    - **A.** Because binary semaphores use more RAM.
    - **B.** Because without Priority Inheritance, a medium-priority task can preempt the low-priority lock holder and stall the high-priority control task for an unbounded duration (unbounded priority inversion).
    - **C.** Because mutexes automatically encrypt data.
    - **D.** Because binary semaphores cannot be used in C.
-3. `[Concept: can_bitwise_arbitration_and_mit_packing]` Three actuator nodes start transmitting on a CAN bus at the exact same instant with 11-bit IDs `0x201`, `0x080`, and `0x104`. Which node wins arbitration and transmits its frame without interruption? (Report the integer value of the winning ID, i.e., `0x080 == 128`.)
-4. `[Concept: can_bitwise_arbitration_and_mit_packing]` Why must a high-speed ($1\text{ Mbps}$ / $5\text{ Mbps}$ CAN-FD) twisted-pair differential bus have a $120\ \Omega$ termination resistor at **each physical end** of the trunk cable (giving $60\ \Omega$ DC resistance between `CAN_H` and `CAN_L` when powered off)?
+3. `[Transfer] [Concept: can_bitwise_arbitration_and_mit_packing]` Three actuator nodes start transmitting on a CAN bus at the exact same instant with 11-bit IDs `0x201`, `0x080`, and `0x104`. Which node wins arbitration and transmits its frame without interruption? (Report the integer value of the winning ID, i.e., `0x080 == 128`.)
+4. `[Spaced review -> 04-embedded.T2.04a — Concept: non_blocking_tick_scheduler] [Concept: can_bitwise_arbitration_and_mit_packing]` Why must a high-speed ($1\text{ Mbps}$ / $5\text{ Mbps}$ CAN-FD) twisted-pair differential bus have a $120\ \Omega$ termination resistor at **each physical end** of the trunk cable (giving $60\ \Omega$ DC resistance between `CAN_H` and `CAN_L` when powered off)?
    - **A.** To warm up the cable in winter.
    - **B.** To match the $120\ \Omega$ characteristic impedance of the twisted pair so fast voltage edges do not reflect off open cable ends and corrupt bits, and to pull the bus back to the recessive state.
    - **C.** To short `CAN_H` to $+48\text{ V}$.
@@ -129,7 +131,7 @@ Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `0
    - **B.** Because DMA deletes half the sensor bytes.
    - **C.** Because DMA increases the wire gauge.
    - **D.** Because DMA disables the system clock.
-3. `[Concept: double_buffered_ping_pong_half_complete_isr]` In a ping-pong DMA buffer of total size $2N = 20$ samples ($N = 10$ per half), when the **Transfer-Complete (`TC`)** interrupt fires at index `19 -> 0`, which half of the buffer has just finished filling and is safe for the CPU to read?
+3. `[Concept: double_buffered_ping_pong_half_complete_isr]` In a ping-pong DMA buffer of total size $2N = 20$ samples ($N = 10$ per half), when the **Transfer-Complete (`TC`)** interrupt fires at index `19 -> 0`, which half of the buffer has completed filling and is safe for the CPU to read?
    - **A.** The second half (`Pong`, indices `10..19`) while DMA starts overwriting indices `0..9`.
    - **B.** The first half (`Ping`, indices `0..9`) while DMA starts overwriting indices `0..9`.
    - **C.** Neither half.
@@ -176,8 +178,7 @@ assert g8_u16 == 32768
 | System deadlocks when two tasks acquire Mutex A and Mutex B in opposite orders | Classic AB-BA lock-ordering deadlock (`Task 1` locks A then waits for B; `Task 2` locks B then waits for A). | Acquire mutexes in a strict global order across all tasks, or keep critical sections single-lock and under $10\ \mu\text{s}$. |
 
 ## 10. Resources
-- **Richard Barry — *Mastering the FreeRTOS Real Time Kernel*, Zephyr Project Docs (`docs.zephyrproject.org`), & micro-ROS (`micro.ros.org`, `resources/open-source-toolchains.md`):** Preemptive scheduling, priority inheritance mutexes, and embedded ROS 2 nodes `[VERIFIED 2026-10-15]`.
+- **Richard Barry — *Mastering the FreeRTOS Real Time Kernel*, Zephyr Project Docs (`docs.zephyrproject.org`), & micro-ROS (`micro.ros.org`, `resources/open-source-toolchains.md`):** Preemptive scheduling, priority inheritance mutexes, and embedded ROS 2 nodes `[UNVERIFIED]`.
 - **Track 04 (`04-embedded-and-realtime/README.md`):** Directly continues into Step 2.5 (`04-embedded.T2.05`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 2.5 (`04-embedded.T2.05`)** in [`04-embedded-and-realtime/README.md`](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied).

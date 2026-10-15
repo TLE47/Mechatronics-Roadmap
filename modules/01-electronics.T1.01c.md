@@ -72,28 +72,33 @@ Bench PSU: mode=CC, V=0.05 V, P=0.010 W vs Battery fault P=576 W
 Your circuit has normal quiescent resistance $R_{\text{idle}} = 240\ \Omega$ at $V_{\text{set}} = 12.0\text{ V}$ (drawing $50\text{ mA}$). If you set the bench supply current limit to $I_{\text{limit}} = 0.10\text{ A}$ ($100\text{ mA}$), verify using `psu_output(12.0, 0.10, 240.0)` that normal operation stays in `"CV"` mode at $12.0\text{ V}$, and compute the exact threshold resistance $R_{\text{crit}} = V_{\text{set}} / I_{\text{limit}}$ below which the supply drops into `"CC"` mode ($R_{\text{crit}} = 120.0\ \Omega$).
 - **If your result differs:** Divide $V_{\text{set}} = 12.0\text{ V}$ by $I_{\text{limit}} = 0.10\text{ A}$ to get $R_{\text{crit}} = 120.0\ \Omega$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Simulate a current-limited voltage source and breadboard layout in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or [Wokwi](https://wokwi.com/) (`resources/open-source-toolchains.md`).
 
-## 7. Safety notes
+## 7. Hardware path (and Safety notes)
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip test):**
 > 1. **Voltage & Current Ceilings:** Keep all Tier 1 breadboard rails at $\le 12.0\text{ V}$ and $\le 1.0\text{ A}$ continuous (`L0.1`). Solderless breadboard spring clips overheat and melt plastic above $1.5\text{–}2.0\text{ A}$.
 > 2. **Power-Off Continuity Check First:** Before enabling power on any new build, unplug the power supply and measure resistance between $V_{\text{bus}}$ and $\text{GND}$ with your DMM in $\Omega$ mode. If it reads $< 10\ \Omega$, find and fix the short before applying power.
 > 3. **DMM Lead Jack Discipline:** Keep the red DMM lead in the **`V/Ω` jack** at all times. If you ever move it to the `10A` or `mA` jack to measure series current, move it back to `V/Ω` the instant you finish—probing a voltage rail with the lead in `10A` creates a dead short.
 > 4. **ESD & First Power-On Rule:** Touch a grounded metal frame before handling bare CMOS MOSFETs or MCUs, and **always** power a new circuit from a current-limited bench supply ($I_{\text{limit}} = 0.1\text{–}0.2\text{ A}$ for logic, $0.5\text{–}1.5\text{ A}$ for small motors), never directly from a LiPo battery.
 
+**Optional Hardware Path (`hardware_required: false`):** Complete all simulation and assertion gates in `## 6. Sim-first path (Simulation path)` first before energizing any physical hardware stage:
+```text
+[Sim-First Gate Passed] ---> [Current-Limited Bench PSU + E-Stop Ready] ---> [Incremental Hardware Verification]
+```
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: read `## 7. Safety notes`, run the worked example and exercise asserts, or score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ required on `[SAFETY]` questions).
 
 ### Skip test
-1. `[Concept: breadboard_internal_bus_connectivity]` On a standard solderless breadboard, a beginner plugs both leads of a $1\text{ k}\Omega$ resistor into holes `a12` and `d12` (same horizontal 5-hole strip). What is the effective resistance in ohms ($\Omega$, tolerance $\pm 0.1\ \Omega$) between those two leads?
-2. `[Concept: multimeter_and_current_limited_psu_safety]` A bench supply is set to $V_{\text{set}} = 12.0\text{ V}$ and $I_{\text{limit}} = 0.25\text{ A}$. If connected across a $R_{\text{load}} = 4.0\ \Omega$ fault load, compute the folded-back output voltage $V_{\text{out}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
-3. `[SAFETY] [Concept: multimeter_and_current_limited_psu_safety]` What happens if you leave your multimeter red probe in the **`10A` current jack** and touch the probes across a $12\text{ V}$ power rail and $\text{GND}$?
+1. `[Recall] [Concept: breadboard_internal_bus_connectivity]` On a standard solderless breadboard, a beginner plugs both leads of a $1\text{ k}\Omega$ resistor into holes `a12` and `d12` (same horizontal 5-hole strip). What is the effective resistance in ohms ($\Omega$, tolerance $\pm 0.1\ \Omega$) between those two leads?
+2. `[Apply] [Concept: multimeter_and_current_limited_psu_safety]` A bench supply is set to $V_{\text{set}} = 12.0\text{ V}$ and $I_{\text{limit}} = 0.25\text{ A}$. If connected across a $R_{\text{load}} = 4.0\ \Omega$ fault load, compute the folded-back output voltage $V_{\text{out}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
+3. `[Transfer] [SAFETY] [Concept: multimeter_and_current_limited_psu_safety]` What happens if you leave your multimeter red probe in the **`10A` current jack** and touch the probes across a $12\text{ V}$ power rail and $\text{GND}$?
    - **A.** The meter safely displays $12.00\text{ V}$.
    - **B.** The $0.01\ \Omega$ internal current shunt creates a dead short across the $12\text{ V}$ supply, blowing the meter fuse or melting the probe tips.
    - **C.** The meter measures the resistor color code.
    - **D.** Nothing happens because the `10A` jack is open circuit.
-4. `[SAFETY] [Concept: esd_and_short_circuit_prevention]` Before turning ON the output of your bench power supply on a freshly wired breadboard circuit, what two steps are mandatory?
+4. `[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law] [SAFETY] [Concept: esd_and_short_circuit_prevention]` Before turning ON the output of your bench power supply on a freshly wired breadboard circuit, what two steps are mandatory?
    - **A.** Connect a LiPo battery in parallel and set current limit to maximum.
    - **B.** With power OFF, verify $V_{\text{bus}}$-to-$\text{GND}$ resistance is not a short using a DMM in $\Omega$ mode, and pre-configure the bench PSU to target voltage with a low Constant-Current limit ($0.1\text{–}0.2\text{ A}$).
    - **C.** Touch the $12\text{ V}$ wire to the MCU `3.3V` pin to test ESD protection.
@@ -132,6 +137,5 @@ assert q5_choice == "B"
 ## 10. Resources
 - **Stage 0 Onboarding (`README.md#stage-0--pre-tier-1-absolute-beginner-on-ramp`, `L0.1`):** Breadboard, multimeter, and current-limited PSU bring-up checklist `[VERIFIED 2026-10-15]`.
 - **Paul Scherz & Simon Monk — *Practical Electronics for Inventors* (`resources/textbooks-and-papers.md`):** Hands-on guide to multimeters, bench supplies, and breadboard prototyping `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*Capacitors, Inductors, RC Time Constants & Inductive Flyback*).

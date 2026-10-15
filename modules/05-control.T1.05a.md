@@ -83,10 +83,10 @@ PD final q=0.850 rad (sag=0.150), Unclamped OS=0.220 rad, Anti-windup OS=0.044 r
 For the arm above with constant gravity load $\tau_g = 0.60\text{ N}\cdot\text{m}$ under PD control ($K_i = 0$), derive and verify the exact steady-state angle sag $e_{\text{ss}} = \tau_g / K_p$ when $K_p = 8.0\text{ N}\cdot\text{m/rad}$. Confirm that `sim_arm(kp=8.0, ki=0.0, kd=0.4, anti_windup=False)` settles to $q_{\text{ss}} = 0.925\text{ rad}$ ($e_{\text{ss}} = 0.075\text{ rad} \pm 10^{-3}\text{ rad}$).
 - **If your result differs:** At steady state ($\dot{q} = \ddot{q} = 0$), the spring torque balances gravity: $K_p e_{\text{ss}} = \tau_g \implies e_{\text{ss}} = 0.60 / 8.0 = 0.075\text{ rad}$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Run the Python simulation script above or open **Tab 4 (Control Loop & Saturation)** in the MechaLab Workbench (`npm run dev`) to observe how actuator saturation interacts with closed-loop feedback gains.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 1.6 (`05-control.T1.06`), this exact discrete PID + anti-windup law executes inside the $1\text{ kHz}$ timer ISR on your microcontroller driving the H-bridge or BLDC stage:
 ```text
 [Reference r_k] ---> (+) ---> [PID + Anti-Windup] ---> [clip(-V_bus, +V_bus)] ---> [Motor + Encoder y_k]
@@ -94,18 +94,20 @@ No hardware required for this module (`hardware_required: false`). In Step 1.6 (
 ```
 Pass/fail verification in simulation: PD steady-state sag equals $\tau_g / K_p = 0.150\text{ rad}$, anti-windup steady-state error $< 0.001\text{ rad}$, and anti-windup overshoot $< 0.05\text{ rad}$.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.6 (`05-control.T1.06`).
 
 ### Skip test
-1. `[Concept: open_vs_closed_loop_tracking_error]` A joint under PD control ($K_i = 0$) with $K_p = 5.0\text{ N}\cdot\text{m/rad}$ holds a constant gravity load $\tau_g = 0.50\text{ N}\cdot\text{m}$ at steady state ($\dot{q} = \ddot{q} = 0$). Compute the steady-state angle error $e_{\text{ss}} = \tau_g / K_p$ in radians ($\text{rad}$, tolerance $\pm 10^{-9}$).
-2. `[Concept: pid_spring_damper_integrator_intuition]` Given $r_k = 2.0\text{ rad}$, $y_k = 1.5\text{ rad}$, $\dot{y}_k = 0.4\text{ rad/s}$, $K_p = 10.0$, and $K_d = 2.5$ (with $I_k = 0$), compute the PD control effort $u_k = K_p(r_k - y_k) - K_d \dot{y}_k$ (tolerance $\pm 10^{-9}$).
-3. `[Concept: pid_spring_damper_integrator_intuition]` Which PID term acts as a virtual viscous shock absorber that opposes velocity to damp out oscillations?
+1. `[Recall] [Concept: open_vs_closed_loop_tracking_error]` A joint under PD control ($K_i = 0$) with $K_p = 5.0\text{ N}\cdot\text{m/rad}$ holds a constant gravity load $\tau_g = 0.50\text{ N}\cdot\text{m}$ at steady state ($\dot{q} = \ddot{q} = 0$). Compute the steady-state angle error $e_{\text{ss}} = \tau_g / K_p$ in radians ($\text{rad}$, tolerance $\pm 10^{-9}$).
+2. `[Apply] [Concept: pid_spring_damper_integrator_intuition]` Given $r_k = 2.0\text{ rad}$, $y_k = 1.5\text{ rad}$, $\dot{y}_k = 0.4\text{ rad/s}$, $K_p = 10.0$, and $K_d = 2.5$ (with $I_k = 0$), compute the PD control effort $u_k = K_p(r_k - y_k) - K_d \dot{y}_k$ (tolerance $\pm 10^{-9}$).
+3. `[Transfer] [Concept: pid_spring_damper_integrator_intuition]` Which PID term acts as a virtual viscous shock absorber that opposes velocity to damp out oscillations?
    - **A.** Proportional ($K_p$)
    - **B.** Integral ($K_i$)
    - **C.** Derivative ($K_d$)
    - **D.** Feedforward gravity torque
-4. `[Concept: actuator_saturation_and_integrator_windup]` What causes **integrator windup** during a large step command?
+4. `[Spaced review -> 00-foundations.T1.01 — Concept: symplectic_euler_integration] [Concept: actuator_saturation_and_integrator_windup]` What causes **integrator windup** during a large step command?
    - **A.** The encoder resolution is too high.
    - **B.** The actuator hits its physical limit ($\pm u_{\max}$), so the error decreases more slowly than the linear model expects while an unclamped integral term keeps accumulating huge excess value that must unwind after crossing the target.
    - **C.** The derivative gain $K_d$ is set to zero.
@@ -188,6 +190,5 @@ assert math.isclose(g8_di, 0.005, rel_tol=1e-9)
 ## 10. Resources
 - **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 11 PID Control, `resources/textbooks-and-papers.md`):** Free textbook chapter on PID physical intuition, derivative filtering, and integrator anti-windup `[VERIFIED 2026-10-15]`.
 - **Track 05 (`05-control-and-estimation/README.md`):** Directly continues into Step 1.6 (`05-control.T1.06`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 1.6 (`05-control.T1.06`)** in [`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-1-beginner--intuitive).

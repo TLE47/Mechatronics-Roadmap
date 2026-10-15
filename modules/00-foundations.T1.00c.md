@@ -63,29 +63,31 @@ omega=251.33 rad/s, P=113.10 W, tau_RC=1.00 ms
 A $48\text{ V}$ supply delivers $I = 15\text{ A}$ through a PCB trace of resistance $R = 12\text{ m}\Omega$ ($12\times 10^{-3}\,\Omega$). Compute the voltage drop $V_{\text{drop}} = I R$ in volts ($\text{V}$) and the trace heat dissipation $P_{\text{loss}} = I^2 R$ in watts ($\text{W}$). Expected result: `V_drop = 0.18 V` and `P_loss = 2.70 W` (tolerance $\pm 10^{-6}$).
 - **If your result differs:** Check that you converted $12\text{ m}\Omega$ to $0.012\,\Omega$ (`12e-3`) before multiplying by $15^2 = 225\text{ A}^2$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Run the worked example script in Python, then open **Tab 3 (25 kHz PMSM FOC)** in the MechaLab Workbench to see how rotor speed in $\text{RPM}$ ($2800\text{ RPM}$) converts to electrical $\text{rad/s}$ and shaft power in watts.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). On the physical bench in Stage 0 (`L0.2`), this unit discipline prevents DMM and oscilloscope scaling errors:
 ```text
 [Datasheet: R=5 mOhm, I=20 A] ---> [SI Conversion: 0.005 Ohm * 20 A] ---> [DMM Readout: 0.100 V (100 mV)]
 ```
 Pass/fail verification in simulation: `omega == 251.33 rad/s`, `P == 113.10 W`, and `tau_RC == 1.00 ms`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
-1. `[Concept: dimensional_analysis_unit_checks]` Convert $3000\text{ RPM}$ into angular velocity $\omega$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$).
-2. `[Concept: scientific_notation_and_prefixes]` Compute the voltage drop in millivolts ($\text{mV}$, tolerance $\pm 0.01\text{ mV}$) across a $5\text{ m}\Omega$ shunt resistor carrying $20\text{ A}$.
-3. `[Concept: scientific_notation_and_prefixes]` What is the loop period $T_s = 1 / f_s$ in microseconds ($\mu\text{s}$, tolerance $\pm 0.01\,\mu\text{s}$) for a $25\text{ kHz}$ FOC control loop?
+1. `[Recall] [Concept: dimensional_analysis_unit_checks]` Convert $3000\text{ RPM}$ into angular velocity $\omega$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$).
+2. `[Apply] [Concept: scientific_notation_and_prefixes]` Compute the voltage drop in millivolts ($\text{mV}$, tolerance $\pm 0.01\text{ mV}$) across a $5\text{ m}\Omega$ shunt resistor carrying $20\text{ A}$.
+3. `[Transfer] [Concept: scientific_notation_and_prefixes]` What is the loop period $T_s = 1 / f_s$ in microseconds ($\mu\text{s}$, tolerance $\pm 0.01\,\mu\text{s}$) for a $25\text{ kHz}$ FOC control loop?
 4. `[Concept: si_base_and_derived_units]` Given position $x$ in $\text{m}$, velocity $v$ in $\text{m/s}$, acceleration $a$ in $\text{m/s}^2$, and time step $\Delta t$ in $\text{s}$, which expression is dimensionally valid?
    - **A.** $x_{\text{new}} = x + v + a\,\Delta t$
    - **B.** $x_{\text{new}} = x + v\,\Delta t + 0.5\,a\,\Delta t^2$
    - **C.** $x_{\text{new}} = x\,\Delta t + v + a / \Delta t$
    - **D.** $x_{\text{new}} = x + v / \Delta t$
-5. `[Spaced review — Concept: lists_dicts_and_numpy_arrays]` Given `currents_ma = [500.0, 1500.0, 2500.0]`, compute the mean current in base amperes ($\text{A}$, tolerance $\pm 10^{-9}\text{ A}$).
+5. `[Spaced review -> 00-foundations.T1.00b — Concept: lists_dicts_and_numpy_arrays]` Given `currents_ma = [500.0, 1500.0, 2500.0]`, compute the mean current in base amperes ($\text{A}$, tolerance $\pm 10^{-9}\text{ A}$).
 
 **Answer key:**
 ```python
@@ -116,6 +118,5 @@ assert math.isclose(q5_mean_a, 1.5, rel_tol=1e-9)
 - **Bolton — *Mechatronics: Electronic Control Systems in Mechanical and Electrical Engineering* (`resources/textbooks-and-papers.md`):** Measurement systems, SI units, and engineering prefixes `[VERIFIED 2026-10-15]`.
 - **Track 00 (`00-foundations/README.md`):** Enforces SI unit consistency ($K_t \equiv K_e$ in $\text{N}\cdot\text{m/A}$ and $\text{V}\cdot\text{s/rad}$) across all tracks `[VERIFIED 2026-10-15]`.
 - **NIST Guide to the SI (`physics.nist.gov/cuu/Units/`):** Reference tables for base and derived SI units `[UNVERIFIED]`.
-
 ## 11. Next modules
 - Proceed to [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors*).

@@ -18,14 +18,14 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: high
-resources_verified: true
+resources_verified: false
 ---
 
 ## 1. Why it matters (Why This Matters)
 This is the bridge module in Track 07 Tier 3 before Step 3.7 (`06-robotics.T3.07`) and Step 3.8 (`08-capstones.T3.08`). When a mechatronic workcell moves from a research lab onto a factory floor, it must speak two industrial standards and pass a hardware functional-safety audit: **OPC UA (`IEC 62541`)** exposes live typed variables and methods across machines, the **Asset Administration Shell (`IEC 63278` AAS)** packages the machine's standardized Digital Twin metadata (`DigitalNameplate`, `TechnicalData`, `OperationalData`), and **ISO 13849-1 Category 3 / Performance Level d (`PLd`)** with **IEC 61800-5-2 Safe Torque Off (`STO`)** guarantees that a single welded relay or stuck transistor can never prevent the E-stop from removing motor torque! Already know this? Read `## 7. Safety notes` first, then take the Skip test or the Ladder Gate test in section 8.
 
 ## 2. Intuition first (Mental Model)
-Why not just stream custom JSON strings over a raw TCP socket on the factory floor? Because in a plant with 200 machines from 30 vendors, custom JSON means nobody knows whether `temp_1` is Celsius or Kelvin, or whether `stop()` is safe to call while the spindle is spinning!
+Why not directly stream custom JSON strings over a raw TCP socket on the factory floor? Because in a plant with 200 machines from 30 vendors, custom JSON means nobody knows whether `temp_1` is Celsius or Kelvin, or whether `stop()` is safe to call while the spindle is spinning!
 - **OPC UA (`IEC 62541`)** turns your machine into a strongly-typed, browseable **Object Graph (Address Space)** where every `NodeId` (`ns=2;s=Actuator1.BusVoltage`) carries its engineering unit (`V`), access permissions, and real-time `PubSub` rate.
 - **Asset Administration Shell (`IEC 63278` AAS)** is the standardized "digital passport" of every physical asset (identified by a globally unique `globalAssetId` URI): its **Submodels** (`DigitalNameplate`, `CarbonFootprint`, `PredictiveMaintenance`) use universal semantic dictionary IDs (`ECLASS` / `IEC CDD` IRDIs) so any ERP/MES system can query peak torque, serial number, and remaining bearing life automatically.
 - **ISO 13849-1 Category 3 / `PLd` Dual-Channel Safety** solves a life-critical problem: what if the single relay cutting power to your $48\text{ V}$ robot arm welds its contacts shut during a high-current arc? A single-channel E-stop would fail! **Category 3** requires **two independent hardware channels (`STO_A` and `STO_B`)** cutting gate drive power in series, plus **cross-monitoring (`Diagnostic Coverage` $DC_{\text{avg}} \ge 60\%$)** that checks whether both channels switched together and latches a permanent fault if one channel sticks!
@@ -85,27 +85,32 @@ AAS=MechaArm6DOF_AAS, Cat3 Single-Fault TorqueRemoved=True, FaultLatched=True
 Suppose a dual-channel E-stop switch has Channel A and Channel B inputs sampled every $1\text{ ms}$, with a mechanical contact bounce discrepancy tolerance of $t_{\text{disc,max}} = 20\text{ ms}$. If an operator presses the E-stop slightly obliquely so Channel A opens at $t = 0\text{ ms}$ (`ch_a_safe = True`) and Channel B opens at $t = 12\text{ ms}$ (`ch_b_safe = True`), evaluate `cat3_sto_evaluator(True, False, discrepancy_ms=12.0)` at $t = 12\text{ ms}$ and `cat3_sto_evaluator(True, True, discrepancy_ms=0.0)` at $t = 13\text{ ms}$. Verify that `torque_removed` is `True` immediately at $t=0\text{ ms}$ and `discrepancy_fault` remains `False` because $12.0\text{ ms} \le 20.0\text{ ms}$.
 - **If your result differs:** Check the inequality `discrepancy_ms > t_disc_max_ms` ($12.0 > 20.0$ is `False`); the $20\text{ ms}$ window prevents nuisance lockout from normal mechanical switch skew while catching permanently stuck contacts.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 7 (Drive Telemetry, Fault Injection & Safety State Machine)** in the MechaLab Workbench (`npm run dev`), or explore open-source OPC UA / AAS tools (`open62541`, `python-opcua`, `Eclipse BaSyx`, `AASX Package Explorer`) in `resources/open-source-toolchains.md`.
 
-## 7. Safety notes
+## 7. Hardware path (and Safety notes)
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before wiring industrial E-stop/STO chains or taking the Skip/Gate test):**
 > 1. **A Software Boolean on a ROS 2 Topic or Microcontroller GPIO Is NOT an E-Stop (ISO 13849-1 / IEC 60204-1):** Emergency Stop circuits and Safe Torque Off (`STO`, IEC 61800-5-2) must interrupt gate-driver supply power (`GVDD` / optocoupler LED current) via **hardware-redundant electro-mechanical or safety-rated semiconductor paths** independent of main CPU firmware execution.
 > 2. **Dual-Channel Redundancy + Cross-Monitoring (Category 3 / `PLd`):** Both `STO_A` and `STO_B` channels must be wired with normally-closed (`NC`) positive-opening safety contacts so a broken wire triggers an immediate safe stop, and cross-monitoring must lock out restart if the two channels disagree for $> t_{\text{disc}}$.
 > 3. **Manual Reset Required After E-Stop Release:** Releasing (twisting out) a physical E-stop mushroom button **must never** automatically re-energize motor motion; a deliberate separate manual `RESET` action after clearing faults is mandatory under ISO 13850 / IEC 60204-1.
 
+**Optional Hardware Path (`hardware_required: false`):** Complete all simulation and assertion gates in `## 6. Sim-first path (Simulation path)` first before energizing any physical hardware stage:
+```text
+[Sim-First Gate Passed] ---> [Current-Limited Bench PSU + E-Stop Ready] ---> [Incremental Hardware Verification]
+```
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: read `## 7. Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
 
 ### Skip test
-1. `[Concept: opc_ua_address_space_nodes_and_pub_sub]` In the OPC UA NodeId string `ns=2;s=Actuator1.BusVoltage`, what does the integer `2` in `ns=2` represent? (Report the integer value.)
-2. `[Concept: iec_63278_aas_submodel_digital_nameplate]` In an IEC 63278 Asset Administration Shell (AAS), which `assetKind` value denotes a specific physical serialized robot arm on the shop floor (`urn:mechalab:asset:arm6dof:sn0042`) rather than a generic catalog blueprint?
+1. `[Recall] [Concept: opc_ua_address_space_nodes_and_pub_sub]` In the OPC UA NodeId string `ns=2;s=Actuator1.BusVoltage`, what does the integer `2` in `ns=2` represent? (Report the integer value.)
+2. `[Apply] [Concept: iec_63278_aas_submodel_digital_nameplate]` In an IEC 63278 Asset Administration Shell (AAS), which `assetKind` value denotes a specific physical serialized robot arm on the shop floor (`urn:mechalab:asset:arm6dof:sn0042`) rather than a generic catalog blueprint?
    - **A.** `Instance`
    - **B.** `Type`
    - **C.** `Deprecated`
    - **D.** `Float32`
-3. `[Concept: iso_13849_category3_pld_dual_channel_sto]` What is the upper bound (exclusive) of Probability of Dangerous Failure per Hour ($\text{PFH}_d$, in $\text{h}^{-1}$, tolerance $\pm 10^{-10}$) required to achieve **Performance Level d (`PLd`)** under ISO 13849-1 ($\text{PFH}_d \in [10^{-7}, 10^{-6})\text{ h}^{-1}$)?
-4. `[SAFETY] [Concept: iso_13849_category3_pld_dual_channel_sto]` Under ISO 13849-1 Category 3 / `PLd`, if Channel A of a dual-channel Safe Torque Off (`STO`) circuit opens properly when E-Stop is pressed, but Channel B's transistor fails shorted, what must happen to the motor torque and the restart interlock?
+3. `[Transfer] [Concept: iso_13849_category3_pld_dual_channel_sto]` What is the upper bound (exclusive) of Probability of Dangerous Failure per Hour ($\text{PFH}_d$, in $\text{h}^{-1}$, tolerance $\pm 10^{-10}$) required to achieve **Performance Level d (`PLd`)** under ISO 13849-1 ($\text{PFH}_d \in [10^{-7}, 10^{-6})\text{ h}^{-1}$)?
+4. `[Spaced review -> 06-robotics.T3.06b — Concept: opc_ua_industrial_telemetry] [SAFETY] [Concept: iso_13849_category3_pld_dual_channel_sto]` Under ISO 13849-1 Category 3 / `PLd`, if Channel A of a dual-channel Safe Torque Off (`STO`) circuit opens properly when E-Stop is pressed, but Channel B's transistor fails shorted, what must happen to the motor torque and the restart interlock?
    - **A.** The motor keeps spinning at half speed.
    - **B.** Motor torque is **still immediately removed** by Channel A (single-fault tolerance), AND the cross-monitoring diagnostics detect the `Ch_A != Ch_B` discrepancy and **lock out** any future restart until Channel B is repaired.
    - **C.** The firmware ignores Channel A and keeps running.
@@ -203,8 +208,7 @@ assert g8_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 | OPC UA client sees raw integer `16384` without knowing whether it means rad, deg, or counts | Published bare primitive nodes without `EngineeringUnits` (`EUInformation`) or `EURange` properties. | Use `AnalogItemType` nodes in OPC UA and bind every node to its `IEC 63278` AAS `SubmodelElement` semantic property. |
 
 ## 10. Resources
-- **Industrial Digital Twin Association (`IDTA`) — *Specification of the Asset Administration Shell (`IEC 63278`)*, OPC Foundation (`opcfoundation.org`), & ISO 13849-1 / SISTEMA Cookbook (`resources/textbooks-and-papers.md`):** Official specifications for AAS submodels, OPC UA information modeling, and Category 3 / `PLd` safety validation `[VERIFIED 2026-10-15]`.
+- **Industrial Digital Twin Association (`IDTA`) — *Specification of the Asset Administration Shell (`IEC 63278`)*, OPC Foundation (`opcfoundation.org`), & ISO 13849-1 / SISTEMA Cookbook (`resources/textbooks-and-papers.md`):** Official specifications for AAS submodels, OPC UA information modeling, and Category 3 / `PLd` safety validation `[UNVERIFIED]`.
 - **Track 07 (`07-systems-hil-and-production/README.md`):** Bridges directly into Step 3.7 (`06-robotics.T3.07`) and Step 3.8 (`08-capstones.T3.08`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 3.7 (`06-robotics.T3.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-3-advanced--production), then [`08-capstones.T3.07a`](08-capstones.T3.07a.md).

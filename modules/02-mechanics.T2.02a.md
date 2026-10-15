@@ -24,7 +24,7 @@ resources_verified: true
 This is the bridge module before Step 2.3 (`02-mechanics.T2.03`) and Step 2.7 (`06-robotics.T2.07`). Moving from 2D planar links to 3D CAD (`CadQuery`), kinematic couplings, and `URDF`/`MuJoCo` physics requires four core tools: counting **6-DOF spatial degrees of freedom** ($3$ translations + $3$ rotations), combining 3D rotation $R \in SO(3)$ and translation $p \in \mathbb{R}^3$ into a single $4\times 4$ **homogeneous transformation matrix** $T \in SE(3)$, mapping joint speeds $\dot{q}$ to tip velocity $\dot{x} = J(q)\dot{q}$ via the **Jacobian matrix** (which also transforms tip forces into joint torques via $\tau = J^\top F$), and shifting 3D inertia tensors from the Center of Mass to a joint axis via the **Parallel-Axis Theorem**. Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
 
 ## 2. Intuition first (Mental Model)
-An unconstrained rigid part floating in 3D space has **6 Degrees of Freedom (DOF)**: it can slide along $X, Y, Z$ and pitch, roll, or yaw about those three axes. Every ideal point contact removes exactly $1\text{ DOF}$ along its surface normal—so removing all $6\text{ DOF}$ without over-constraining the part takes exactly $6$ non-redundant contact points (**Maxwell's exact-constraint principle** in Step 2.3). Next, why do robotics engineers love $4\times 4$ **homogeneous matrices** $T = \begin{bmatrix} R & p \\ 0 & 1 \end{bmatrix}$? Because adding a `1` at the bottom of a 3D position vector $[x, y, z, 1]^\top$ turns "rotate by $R$, then add offset $p$" into a single matrix multiplication $T_{\text{base}\to\text{tip}} = T_{01} T_{12} \cdots T_{n-1,n}$! Next, the **Jacobian matrix** $J(q)$ is simply a multi-dimensional gear ratio that depends on posture $q$: it maps joint velocities to tip velocity ($\dot{x} = J(q)\dot{q}$), and by conservation of virtual work ($\tau^\top \dot{q} = F^\top \dot{x}$), its transpose maps tip forces directly to joint torques ($\tau = J(q)^\top F$). Finally, swinging a heavy hammer by the end of its handle feels much heavier than spinning the hammerhead in your palm—the **Parallel-Axis Theorem** ($I_{\text{pivot}} = I_{\text{com}} + m d^2$) quantifies that extra $m d^2$ inertia when a link's mass is offset by distance $d$ from the joint axis.
+An unconstrained rigid part floating in 3D space has **6 Degrees of Freedom (DOF)**: it can slide along $X, Y, Z$ and pitch, roll, or yaw about those three axes. Every ideal point contact removes exactly $1\text{ DOF}$ along its surface normal—so removing all $6\text{ DOF}$ without over-constraining the part takes exactly $6$ non-redundant contact points (**Maxwell's exact-constraint principle** in Step 2.3). Next, why do robotics engineers love $4\times 4$ **homogeneous matrices** $T = \begin{bmatrix} R & p \\ 0 & 1 \end{bmatrix}$? Because adding a `1` at the bottom of a 3D position vector $[x, y, z, 1]^\top$ turns "rotate by $R$, then add offset $p$" into a single matrix multiplication $T_{\text{base}\to\text{tip}} = T_{01} T_{12} \cdots T_{n-1,n}$! Next, the **Jacobian matrix** $J(q)$ acts as a multi-dimensional gear ratio that depends on posture $q$: it maps joint velocities to tip velocity ($\dot{x} = J(q)\dot{q}$), and by conservation of virtual work ($\tau^\top \dot{q} = F^\top \dot{x}$), its transpose maps tip forces directly to joint torques ($\tau = J(q)^\top F$). Finally, swinging a heavy hammer by the end of its handle feels much heavier than spinning the hammerhead in your palm—the **Parallel-Axis Theorem** ($I_{\text{pivot}} = I_{\text{com}} + m d^2$) quantifies that extra $m d^2$ inertia when a link's mass is offset by distance $d$ from the joint axis.
 
 ## 3. Formalization
 1. **Spatial 6-DOF Constraint Counting:** A free rigid body in $\mathbb{R}^3$ has $6\text{ DOF}$. If $c \le 6$ independent point constraints are applied, remaining mobility is $M = 6 - c$. If $c > 6$ (over-constraint, such as a 4-legged table on an uneven floor), internal preload stress depends on manufacturing tolerances rather than static equilibrium.
@@ -87,28 +87,30 @@ tip=[0.2, 0.2], det(J)=0.0400, tau=[2.0, -2.0] N*m, I_end=0.0320 kg*m^2
 For the 2-link planar arm ($L_1 = 0.25\text{ m}, L_2 = 0.20\text{ m}$), compute the Jacobian determinant $\det J(q) = L_1 L_2 \sin q_2$ at (a) $q_2 = \pi/6\text{ rad}$ ($30^\circ$) and (b) the stretched-out boundary singularity $q_2 = 0\text{ rad}$. Verify $\det J(\pi/6) = 0.025\text{ m}^2$ and $\det J(0) = 0.0\text{ m}^2$.
 - **If your result differs:** Check that $\det J(q)$ for a 2-link planar arm depends only on the elbow angle $q_2$: $L_1 L_2 \sin(\pi/6) = 0.25 \times 0.20 \times 0.5 = 0.025\text{ m}^2$.
 
-## 6. Simulation path
+## 6. Sim-first path (Simulation path)
 Open **Tab 3 (2-Link Arm Kinematics, Jacobian Ellipsoids & Singularities)** in the MechaLab Workbench (`npm run dev`) and drag the end-effector to the workspace boundary ($q_2 \to 0$) to watch $\det J(q) \to 0$.
 
-## 7. Hardware path
+## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.3 (`02-mechanics.T2.03`) and Step 2.7 (`06-robotics.T2.07`), `tau = J(q).T @ F_cartesian` runs at $1\text{ kHz}$ to turn the 2-link arm into a Cartesian virtual spring-damper without ever inverting $J(q)$:
 ```text
 [Cartesian Error dx = x_d - FK(q)] ---> [F = K_x * dx - D_x * (J * dq)] ---> [tau = J(q)^T * F] ---> [Motors]
 ```
 Pass/fail verification in simulation: `tip_xy == [0.20, 0.20]`, `det_J == 0.0400`, `tau_joints == [2.0, -2.0] N*m`, and `I_end == 0.0320 kg*m^2`.
 
+> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
+
 ## 8. Checkpoint (Skip Test & Gate Test)
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.3 (`02-mechanics.T2.03`).
 
 ### Skip test
-1. `[Concept: six_dof_gruebler_constraint_counting]` How many independent point-contact constraints $c$ are required to exactly constrain all $6$ spatial degrees of freedom of a rigid body in 3D space ($M = 6 - c = 0$)?
-2. `[Concept: se3_homogeneous_transformation_matrix]` For a $4\times 4$ homogeneous transform $T = \begin{bmatrix} I_3 & p \\ 0 & 1 \end{bmatrix}$ with pure translation $p = [0.3, -0.1, 0.5]^\top\text{ m}$, what is the translation vector $p_{\text{inv}}$ of its inverse $T^{-1}$?
+1. `[Recall] [Concept: six_dof_gruebler_constraint_counting]` How many independent point-contact constraints $c$ are required to exactly constrain all $6$ spatial degrees of freedom of a rigid body in 3D space ($M = 6 - c = 0$)?
+2. `[Apply] [Concept: se3_homogeneous_transformation_matrix]` For a $4\times 4$ homogeneous transform $T = \begin{bmatrix} I_3 & p \\ 0 & 1 \end{bmatrix}$ with pure translation $p = [0.3, -0.1, 0.5]^\top\text{ m}$, what is the translation vector $p_{\text{inv}}$ of its inverse $T^{-1}$?
    - **A.** $[0.3, -0.1, 0.5]^\top\text{ m}$
    - **B.** $[-0.3, 0.1, -0.5]^\top\text{ m}$
    - **C.** $[0.0, 0.0, 0.0]^\top\text{ m}$
    - **D.** $[1.0, 1.0, 1.0]^\top\text{ m}$
-3. `[Concept: geometric_jacobian_and_parallel_axis_theorem]` Given Jacobian $J = \begin{bmatrix} 0.0 & -0.2 \\ 0.4 & 0.2 \end{bmatrix}\text{ m/rad}$ and Cartesian tip force $F = [10.0, 5.0]^\top\text{ N}$, compute the first joint torque $\tau_1 = (J^\top F)_0$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
-4. `[Concept: geometric_jacobian_and_parallel_axis_theorem]` A link has mass $m = 2.0\text{ kg}$, center-of-mass inertia $I_{zz,\text{com}} = 0.015\text{ kg}\cdot\text{m}^2$, and center-of-mass offset $d = 0.10\text{ m}$ from the joint pivot. Compute $I_{zz,\text{joint}} = I_{zz,\text{com}} + m d^2$ in $\text{kg}\cdot\text{m}^2$ (tolerance $\pm 10^{-9}$).
+3. `[Transfer] [Concept: geometric_jacobian_and_parallel_axis_theorem]` Given Jacobian $J = \begin{bmatrix} 0.0 & -0.2 \\ 0.4 & 0.2 \end{bmatrix}\text{ m/rad}$ and Cartesian tip force $F = [10.0, 5.0]^\top\text{ N}$, compute the first joint torque $\tau_1 = (J^\top F)_0$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
+4. `[Spaced review -> 02-mechanics.T1.03 — Concept: planar_2link_forward_kinematics] [Concept: geometric_jacobian_and_parallel_axis_theorem]` A link has mass $m = 2.0\text{ kg}$, center-of-mass inertia $I_{zz,\text{com}} = 0.015\text{ kg}\cdot\text{m}^2$, and center-of-mass offset $d = 0.10\text{ m}$ from the joint pivot. Compute $I_{zz,\text{joint}} = I_{zz,\text{com}} + m d^2$ in $\text{kg}\cdot\text{m}^2$ (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -184,11 +186,10 @@ assert math.isclose(g8_izz_joint, 0.024, rel_tol=1e-9)
 | :--- | :--- | :--- |
 | MuJoCo / Gazebo simulation explodes with `Non-positive definite inertia` or unrealistic swing dynamics | Exported CAD inertia tensor about the CAD world origin instead of the URDF `<inertial>` frame origin without applying the Parallel-Axis Theorem. | Set the URDF `<inertial>` origin at the link's Center of Mass (or shift $I_{\text{com}}$ via $I + m((d^\top d)I_3 - d d^\top)$) and verify $I_{xx} + I_{yy} \ge I_{zz}$ (triangle inequality). |
 | Used $\tau = J(q) F$ instead of $\tau = J(q)^\top F$ | Forgot the transpose on $J(q)$ when mapping Cartesian forces to joint torques. | Always transpose: velocities map forward via $\dot{x} = J\dot{q}$, wrenches map backward via $\tau = J^\top F$. |
-| Inverted $T \in SE(3)$ using `[R.T, -p]` | Forgot to rotate $-p$ by $R^\top$ in the top-right $3\times 1$ block of $T^{-1}$. | Use `-R.T @ p` for the translation part of $T^{-1}$ and verify `np.allclose(T @ T_inv, np.eye(4))`. |
+| Inverted $T \in SE(3)$ using `[R.T, -p]` | Forgot to rotate $-p$ by $R^\top$ in the top-right $3\times 1$ block of $T^{-1}$. | Use `-R.T @ p` for the translation part of $T^{-1}$ and verify `mat_mul4(T, T_inv) == I_4` within $10^{-14}$. |
 
 ## 10. Resources
 - **Kevin Lynch & Frank Park — *Modern Robotics* (`modernrobotics.org`, Ch. 3, 5 & 8, `resources/textbooks-and-papers.md`):** Free textbook on $SE(3)$ transforms, Jacobians, and spatial inertia matrices `[VERIFIED 2026-10-15]`.
 - **Track 02 (`02-mechanics-kinematics-dynamics/README.md`):** Directly continues into Step 2.3 (`02-mechanics.T2.03`) `[VERIFIED 2026-10-15]`.
-
 ## 11. Next modules
 - Proceed to legacy **Step 2.3 (`02-mechanics.T2.03`)** in [`02-mechanics-kinematics-dynamics/README.md`](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
