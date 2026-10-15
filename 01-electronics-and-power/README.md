@@ -385,4 +385,5 @@ $$
 
 - **Tier 1 (DC Circuits, Energy Storage, Bench Safety & PWM H-Bridges → Step 1.2):** [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md) · [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) · [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) · [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) *(Ladder Gate Test)*
 - **Tier 2 (Op-Amp Shunt Conditioning, KiCad & 48V Pre-Charge Safety → Step 2.2):** [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) · [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) *(Ladder Gate Test)*
+- **Tier 3 (6-Layer `<2 nH` Stackup, Bessel AFE, SAR Charge Buckets & Cauer Thermal RC → Step 3.2):** [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) *(Ladder Gate Test)*
 

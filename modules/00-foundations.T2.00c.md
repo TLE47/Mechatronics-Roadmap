@@ -19,10 +19,10 @@ safety_level: none
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-Every motor winding, thermal heatsink, and RC filter obeys a first-order differential equation governed by a time constant $\tau$, while every compliant robot joint and closed-loop PID servo obeys a second-order differential equation governed by natural frequency $\omega_n$ and damping ratio $\zeta$. Knowing how $\omega_n$ and $\zeta$ determine overshoot and settling time lets you compute exact controller gains instead of guessing by trial and error. Already know this? Take the Skip test in section 8 first.
+## 1. Why it matters
+Every motor winding, thermal heatsink, and RC filter obeys a first-order differential equation governed by a time constant $\tau$, while every compliant robot joint and closed-loop PID servo obeys a second-order differential equation governed by natural frequency $\omega_n$ and damping ratio $\zeta$. Knowing how $\omega_n$ and $\zeta$ determine overshoot and settling time lets you compute exact controller gains instead of guessing by trial and error. Already know this? Take the Skip test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Push open a heavy glass office door equipped with an overhead hydraulic closer. If the closer valve is wide open (underdamped), the door swings fast, slams past the frame, and rings back and forth several times before stopping. If a mechanic tightens the hydraulic valve way too far (overdamped), the door creeps shut painfully slowly without ever overshooting. Right on the boundary between those two regimes sits a sweet spot (critical damping) where the door snaps shut as fast as physically possible with zero rebound.
 
 ## 3. Formalization
@@ -34,7 +34,7 @@ Push open a heavy glass office door equipped with an overhead hydraulic closer. 
    $$\omega_d = \omega_n\sqrt{1 - \zeta^2}, \qquad M_p = \exp\!\left(\frac{-\pi\zeta}{\sqrt{1 - \zeta^2}}\right)$$
    For $\omega_n = 20.0\text{ rad/s}$ and $\zeta = 0.50$, $\omega_d = 20.0\sqrt{0.75} = 17.3205\text{ rad/s}$ and $M_p = \exp(-\pi \times 0.50 / \sqrt{0.75}) = 0.16303$ ($16.30\%$ overshoot).
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Compute $\omega_n$, $\zeta$, $\omega_d$, and analytical step overshoot $M_p$ for $J = 0.02\text{ kg}\cdot\text{m}^2$, $k = 8.0\text{ N}\cdot\text{m/rad}$, and $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$, and verify that a numerical time-stepping simulation matches $M_p = 16.30\%$.
 
 ```python
@@ -75,19 +75,16 @@ wn=20.0 rad/s, zeta=0.50, Mp_analytic=16.30%, Mp_sim=16.30%
 For the same inertia $J = 0.02\text{ kg}\cdot\text{m}^2$ and stiffness $k = 8.0\text{ N}\cdot\text{m/rad}$, compute the critical damping coefficient $b_{\text{crit}} = 2\sqrt{Jk}$ ($\zeta = 1.0$) and verify in the simulation loop that `mp_sim < 1e-6` ($0.0\%$ overshoot). Expected result: `b_crit = 0.80 N*m*s/rad`.
 - **If your result differs:** Check that you took the square root of the product $\sqrt{J k} = \sqrt{0.16} = 0.40$ before multiplying by $2$, rather than computing $2 J k = 0.32$.
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to watch how low structural damping $\zeta$ creates a sharp time-domain ringing transient.
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). On a physical servo joint in Track 05 (`Step 1.6`), proportional gain $K_p$ sets $k$ and derivative gain $K_d$ sets $b$:
 ```text
 [Step Command 1.0 rad] ---> [PD Loop: Kp=8.0, Kd=0.80 on J=0.02] ---> [Critically Damped Shaft Response (zeta=1.0)]
 ```
 Pass/fail verification in simulation: `wn == 20.0 rad/s`, `zeta == 0.50`, and `Mp == 16.30%`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: run the worked example and critical-damping exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
@@ -99,7 +96,7 @@ Pass criteria: run the worked example and critical-damping exercise asserts with
    - **B.** In the open right half-plane ($\operatorname{Re}(s) > 0, \operatorname{Im}(s) \neq 0$).
    - **C.** In the open left half-plane ($\operatorname{Re}(s) < 0, \operatorname{Im}(s) \neq 0$).
    - **D.** At $s = -\omega_n$ (repeated negative real root).
-5. `[Spaced review -> 00-foundations.T2.00b — Concept: dot_product_projection]` Compute $\vec{u}\cdot\vec{v}$ (tolerance $\pm 10^{-9}$) for $\vec{u} = [1.0, 0.0, -2.0]^T$ and $\vec{v} = [3.0, 5.0, 1.5]^T$.
+5. `[Spaced review -> 00-foundations.T2.00b — Concept: dot_product_projection] [Concept: first_order_ode_time_constant]` Compute $\vec{u}\cdot\vec{v}$ (tolerance $\pm 10^{-9}$) for $\vec{u} = [1.0, 0.0, -2.0]^T$ and $\vec{v} = [3.0, 5.0, 1.5]^T$.
 
 **Answer key:**
 ```python
@@ -117,17 +114,17 @@ assert math.isclose(q3_zeta, 0.70, rel_tol=1e-9)
 assert q4_choice == "B"
 assert math.isclose(q5_dot, 0.0, abs_tol=1e-9)
 ```
-- **Pass mark:** $4/5$ ($80\%+$). Missed Q1–Q3: study `## 3. Formalization`; Q4: study `## 4. Worked example`; Q5: review `00-foundations.T2.00b`. On pass, proceed to `## 11. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, Q2, or Q3, study `## 3. Formalization`; if you missed Q4, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T2.00b`). On pass, proceed to `## 10. Next modules`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Cranking up $K_p$ ($k$) makes the joint ring more instead of less | Increasing $k$ with fixed $b$ reduces $\zeta = \frac{b}{2\sqrt{Jk}} \propto 1/\sqrt{k}$. | Scale derivative damping $b$ ($K_d$) up by $\sqrt{\text{factor}}$ whenever you increase $K_p$ by $\text{factor}$. |
 | Forgot to divide $b$ and $k$ by inertia $J$ in canonical form | Set $2\zeta\omega_n = b$ instead of $b / J$. | Always normalize the highest derivative coefficient to $1$ ($\ddot{\theta} + \frac{b}{J}\dot{\theta} + \frac{k}{J}\theta$) first. |
 | `ValueError: math domain error` in $\sqrt{1 - \zeta^2}$ | Used the underdamped formula when $\zeta > 1$ (overdamped). | Check `if zeta < 1.0:` before computing $\omega_d$ and $M_p$. |
 
-## 10. Resources
+## 9. Resources
 - **Åström & Murray — *Feedback Systems: An Introduction for Scientists and Engineers* (`resources/textbooks-and-papers.md`):** Open-access textbook chapters on first- and second-order linear systems `[VERIFIED 2026-10-15]`.
 - **Track 05 (`05-control-and-estimation/README.md`):** Applies $\omega_n = \sqrt{K_p/J}$ and $K_d = 2\zeta\sqrt{JK_p}$ to joint PD tuning `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Complex Numbers, Euler's Formula, Phasors, Impedance & Frequency Response (Bode Plots)*).

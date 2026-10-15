@@ -351,4 +351,5 @@ $$
 
 - **Tier 1 (Free-Body Diagrams, Inertia & $N^2$ Gear Ratio Reflection → Step 1.3):** [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) *(Ladder Gate Test)*
 - **Tier 2 (3D Homogeneous Transforms $SE(3)$ & Velocity Jacobian → Step 2.3):** [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) *(Ladder Gate Test)*
+- **Tier 3 (6D Spatial Twists/Wrenches, Paros-Weisbord Flexures & Two-Pass RNEA → Step 3.3):** [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) *(Ladder Gate Test)*
 

@@ -376,4 +376,5 @@ $$
 
 - **Tier 1 (Open vs. Closed Loop, P/I/D Physical Roles & Integrator Windup → Step 1.6):** [`05-control.T1.05a`](../modules/05-control.T1.05a.md) *(Ladder Gate Test)*
 - **Tier 2 (Gain/Phase Margins, Luenberger Observers & Bryson LQR → Step 2.6):** [`05-control.T2.05a`](../modules/05-control.T2.05a.md) *(Ladder Gate Test)*
+- **Tier 3 (Joseph-Form Covariance, Tangent-Space ESKF & Second-Order CBF-QP → Step 3.6):** [`05-control.T3.05a`](../modules/05-control.T3.05a.md) *(Ladder Gate Test)*
 

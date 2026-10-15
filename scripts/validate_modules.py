@@ -58,13 +58,16 @@ except ImportError:
 ROOT = pathlib.Path("modules")
 ID_RE = re.compile(r"^\d{2}-[a-z0-9-]+\.T[123]\.\d{2}[a-z]?$")
 REQ_SECTIONS = [
-    "Why This Matters",
-    "Mental Model",
-    "Worked Example",
-    "Code",
-    "Exercise",
-    "Gate Test",
-    "Resources",
+    ("Why it matters", r"^##\s+.*(?:Why it matters|Why This Matters)"),
+    ("Intuition first", r"^##\s+.*(?:Intuition first|Mental Model)"),
+    ("Formalization", r"^##\s+.*Formalization"),
+    ("Worked example", r"^##\s+.*(?:Worked example|Worked Example)"),
+    ("Exercise", r"^##\s+.*Exercise"),
+    ("Simulation path", r"^##\s+.*(?:Simulation path|Sim-first path)"),
+    ("Checkpoint", r"^##\s+.*(?:Checkpoint|Gate Test)"),
+    ("Common mistakes", r"^##\s+.*Common mistakes"),
+    ("Resources", r"^##\s+.*Resources"),
+    ("Next modules", r"^##\s+.*Next modules"),
 ]
 
 nodes = {}
@@ -93,10 +96,11 @@ for p in sorted(ROOT.glob("*.md")):
         bad.append(f"{mid}: >3 new_concepts")
     if fm.get("est_hours", 99) > 6:
         bad.append(f"{mid}: >6 est_hours")
-    need = REQ_SECTIONS + (["Skip Test"] if fm.get("tier") == 1 else [])
-    for s in need:
-        if not re.search(rf"^##\s+.*{re.escape(s)}", body, re.M):
-            bad.append(f"{mid}: missing section '{s}'")
+    for s_name, s_pat in REQ_SECTIONS:
+        if not re.search(s_pat, body, re.M):
+            bad.append(f"{mid}: missing section '{s_name}'")
+    if not re.search(r"^###?\s+.*(?:Skip test|Skip Test)", body, re.M):
+        bad.append(f"{mid}: missing section 'Skip test'")
     nodes[mid] = {
         "prereqs": fm.get("prereqs", []),
         "introduces": set(fm.get("new_concepts", [])),

@@ -19,10 +19,10 @@ safety_level: none
 resources_verified: false
 ---
 
-## 1. Why it matters (Why This Matters)
-When you vibrate a mechanical structure or inject a sine-wave voltage into a motor winding, every time derivative $\frac{d}{dt}$ turns into multiplication by $j\omega$ (where $j = \sqrt{-1}$). Complex numbers and Euler's formula collapse differential equations into simple algebra so you can read a Bode plot of magnitude (in decibels, $\text{dB}$) and phase lag (in degrees) at any frequency $\omega$ in Step 2.1 (`00-foundations.T2.01`) and Step 2.6 (`05-control.T2.06`). Already know this? Take the Skip test in section 8 first.
+## 1. Why it matters
+When you vibrate a mechanical structure or inject a sine-wave voltage into a motor winding, every time derivative $\frac{d}{dt}$ turns into multiplication by $j\omega$ (where $j = \sqrt{-1}$). Complex numbers and Euler's formula collapse differential equations into simple algebra so you can read a Bode plot of magnitude (in decibels, $\text{dB}$) and phase lag (in degrees) at any frequency $\omega$ in Step 2.1 (`00-foundations.T2.01`) and Step 2.6 (`05-control.T2.06`). Already know this? Take the Skip test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Imagine pushing a child on a swing with a steady sinusoidal hand force at frequency $\omega$. When you push very slowly ($\omega \ll \omega_n$), the swing moves in sync with your hand ($0^\circ$ phase lag) at normal amplitude. When you push right at the swing's natural frequency ($\omega = \omega_n$), the swing's amplitude balloons by $10\times$ ($+20\text{ dB}$) and its position lags your hand force by a quarter cycle ($-90^\circ$). When you wiggle your hand frantically ($\omega \gg \omega_n$), the heavy swing barely moves at all (rolling off at $-40\text{ dB/decade}$) and moves opposite to your hand ($-180^\circ$ phase lag). A complex number $H(j\omega) = |H|e^{j\phi}$ packages both pieces of steady-state sine response—the amplitude ratio $|H|$ and the phase shift $\phi$—into a single arrow on a 2D plane, and a Bode plot directly graphs $|H|$ in decibels and $\phi$ in degrees across frequency.
 
 ## 3. Formalization
@@ -36,7 +36,7 @@ Imagine pushing a child on a swing with a steady sinusoidal hand force at freque
    $$|H(j\omega)|_{\text{dB}} = 20\log_{10}|H(j\omega)|$$
    Substituting $|H(j\omega_c)| = 1/\sqrt{2} \approx 0.7071$ gives $20\log_{10}(1/\sqrt{2}) = -3.0103\text{ dB}$.
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Evaluate a second-order structural transfer function $G(j\omega) = \frac{\omega_n^2}{(j\omega)^2 + 2\zeta\omega_n(j\omega) + \omega_n^2}$ with natural frequency $\omega_n = 100\text{ rad/s}$ and damping ratio $\zeta = 0.05$ when excited right at resonance $\omega = \omega_n = 100\text{ rad/s}$:
 $$G(j\omega_n) = \frac{\omega_n^2}{-\omega_n^2 + j2\zeta\omega_n^2 + \omega_n^2} = \frac{1}{j2\zeta} = \frac{1}{j2(0.05)} = -j10.0$$
 Thus $|G(j100)| = 10.0$ ($+20.0\text{ dB}$) and $\angle G(j100) = -90.0^\circ$.
@@ -72,10 +72,9 @@ Resonance mag=10.0x (20.0 dB), phase=-90.0 deg
 For the same second-order plant ($\omega_n = 100\text{ rad/s}$, $\zeta = 0.05$), call `second_order_freq_response(100.0, 0.05, 1000.0)` at $\omega = 1000\text{ rad/s}$ ($10\times$ above resonance) and verify that $|G(j1000)|_{\text{dB}} = -39.9127\text{ dB}$ ($\pm 10^{-3}\text{ dB}$, rolling off at $-40\text{ dB/decade}$) and $\angle G(j1000) = -179.4213^\circ$ ($\pm 10^{-3}\text{ deg}$).
 - **If your result differs:** Make sure you used `20.0 * math.log10(abs(G))` (amplitude decibels) rather than `10.0 * math.log10(abs(G))` (power decibels, which would give `-19.96 dB`).
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Open **Tab 1 (Biquad Notch & Two-Mass Resonance)** in the MechaLab Workbench (`npm run dev`) to inspect how a lightly damped resonance peak ($+20\text{ dB}$) and $-180^\circ$ phase drop appear on an interactive Bode magnitude and phase plot.
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Track 01 and Track 07, the exact same complex ratio $H(j\omega) = Y(j\omega)/U(j\omega)$ is measured on real actuators by injecting sinusoidal current commands and comparing encoder output amplitude and phase lag:
 ```text
 [Sine Excitation u(t) = A sin(wt)] ---> [Motor + Gearbox] ---> [Encoder y(t) = B sin(wt + phi)]
@@ -83,9 +82,7 @@ No hardware required for this module (`hardware_required: false`). In Track 01 a
 ```
 Pass/fail verification in simulation: `mag == 10.0`, `mag_db == +20.0 dB`, and `phase_deg == -90.0 deg`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
@@ -116,17 +113,17 @@ assert math.isclose(q2_z_ohm, 5.0, rel_tol=1e-9)
 assert math.isclose(q3_db, -20.0, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 11. Next modules`.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Bode dB value is half of expected (`+10 dB` instead of `+20 dB`) | Used $10\log_{10}|H|$ instead of $20\log_{10}|H|$ for amplitude ratios. | Always use $20\log_{10}(|H|)$ for voltage, current, force, or position amplitude ratios. |
 | Natural logarithm used instead of base-10 log | Called `math.log(mag)` (natural log $\ln$) instead of `math.log10(mag)`. | Explicitly call `math.log10(mag)` when computing decibels. |
 | Phase angle wraps unexpectedly or is in radians | Forgot `math.degrees(...)` on `cmath.phase(G)`. | Wrap `cmath.phase(G)` with `math.degrees(...)` when plotting Bode phase in degrees. |
 
-## 10. Resources
+## 9. Resources
 - **Oppenheim & Willsky — *Signals and Systems* (`resources/textbooks-and-papers.md`):** Frequency response, phasors, and Bode diagrams `[UNVERIFIED]`.
 - **Track 00 (`00-foundations/README.md`):** Prepares directly for Step 2.1 two-mass torsional resonance and anti-resonance Bode analysis `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Laplace Transform, Poles/Zeros, State-Space $\dot{x} = Ax + Bu$, Matrix Exponential & Discretization*).

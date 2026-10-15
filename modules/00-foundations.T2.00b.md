@@ -19,10 +19,10 @@ safety_level: none
 resources_verified: false
 ---
 
-## 1. Why it matters (Why This Matters)
-In 3D robot manipulators and field-oriented brushless drives, forces and magnetic fields act along tilted 3D axes while joints rotate around specific hinge vectors. You need the dot product to project forces onto a link axis, the 3D cross product to compute the moment vector $\vec{\tau} = \vec{r} \times \vec{F}$, and basis-change determinants to detect when a robot arm hits a kinematic singularity. Already know this? Take the Skip test in section 8 first.
+## 1. Why it matters
+In 3D robot manipulators and field-oriented brushless drives, forces and magnetic fields act along tilted 3D axes while joints rotate around specific hinge vectors. You need the dot product to project forces onto a link axis, the 3D cross product to compute the moment vector $\vec{\tau} = \vec{r} \times \vec{F}$, and basis-change determinants to detect when a robot arm hits a kinematic singularity. Already know this? Take the Skip test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Hold a wrench horizontally along your desk pointing northeast, and pull on the wrench handle with a string angled partly inward and partly upward. Only the component of pull parallel to the wrench shaft tries to stretch or compress the metal handle—that parallel overlap is measured by the **dot product**. Meanwhile, the components of pull perpendicular to the handle twist the bolt around an axis perpendicular to both the handle and the string (found by curling the fingers of your right hand from the wrench vector toward the force vector; your thumb points along the torque axis)—that perpendicular twist vector is the **cross product**. Finally, if two joint axes line up parallel to each other, they can no longer span 3D space independently, which is what a zero determinant warns you about.
 
 ## 3. Formalization
@@ -34,7 +34,7 @@ Hold a wrench horizontally along your desk pointing northeast, and pull on the w
    Substituting $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ and $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$ gives $\vec{\tau} = [(0.40)(15.0) - 0,\; 0 - (0.30)(15.0),\; (0.30)(-20.0) - 0]^T = [6.0, -4.5, -6.0]^T\text{ N}\cdot\text{m}$, which is strictly orthogonal to $\vec{r}$ since $\vec{\tau}\cdot\vec{r} = 1.80 - 1.80 + 0 = 0.0\text{ N}\cdot\text{m}^2$.
 3. **Linear Independence & Basis Determinant:** Two 2D column vectors $\vec{b}_1 = [a, c]^T$ and $\vec{b}_2 = [b, d]^T$ form an invertible basis matrix $B$ iff $\det(B) = a d - b c \neq 0$. For $B = \begin{bmatrix} 1.0 & 2.0 \\ 2.0 & 4.0 \end{bmatrix}$, $\det(B) = (1.0)(4.0) - (2.0)(2.0) = 0.0$ (collinear/singular).
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Compute the axial force projection $F_{\text{axial}} = \vec{F}\cdot\hat{u}_r$ and 3D shoulder torque $\vec{\tau} = \vec{r}\times\vec{F}$ for lever arm $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ and wrist force $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$, and assert orthogonality $\vec{\tau}\cdot\vec{r} = 0$.
 
 ```python
@@ -73,19 +73,16 @@ F_axial=-16.0 N, tau=[6.0, -4.5, -6.0] N*m
 Given lever arm $\vec{r} = [0.25, 0.00, 0.10]^T\text{ m}$ and payload force $\vec{F} = [10.0, 30.0, -20.0]^T\text{ N}$, compute $\vec{\tau} = \vec{r}\times\vec{F}$ and verify that $\vec{\tau}\cdot\vec{F} = 0.0\text{ N}^2\cdot\text{m}$. Expected result: `tau = [-3.0, 6.0, 7.5] N*m` (tolerance $\pm 10^{-6}\text{ N}\cdot\text{m}$).
 - **If your result differs:** Check the middle ($y$) component sign of the cross product: $\tau_y = r_z F_x - r_x F_z = (0.10)(10.0) - (0.25)(-20.0) = +6.0\text{ N}\cdot\text{m}$, not $-6.0\text{ N}\cdot\text{m}$.
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Run the worked example in Python, then open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench to inspect how 3D joint axes and link lever arms produce spatial torques across the 6-DOF arm.
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Track 03 (`Step 2.4`), the Clarke transform changes basis from three $120^\circ$-spaced stator coil axes $(a, b, c)$ into two orthogonal $(\alpha, \beta)$ axes via this exact projection:
 ```text
 [3-Phase Coil Currents ia, ib, ic] ---> [Change-of-Basis Dot Projections] ---> [Orthogonal i_alpha, i_beta]
 ```
 Pass/fail verification in simulation: `F_axial == -16.0 N` and `tau == [6.0, -4.5, -6.0] N*m`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
@@ -97,7 +94,7 @@ Pass criteria: run the worked example and exercise asserts with zero errors, or 
    - **B.** The vectors are perpendicular ($90^\circ$ apart).
    - **C.** The cross product $\vec{a}\times\vec{b}$ is also zero.
    - **D.** The vectors point in opposite directions ($180^\circ$ apart).
-5. `[Spaced review -> 00-foundations.T2.00a — Concept: matrix_vector_multiplication]` Compute the first entry $(B\vec{v})_0$ (tolerance $\pm 10^{-9}$) for $B = \begin{bmatrix} 3.0 & 2.0 \\ 1.5 & 4.0 \end{bmatrix}$ and $\vec{v} = \begin{bmatrix} 2.0 \\ -1.0 \end{bmatrix}$.
+5. `[Spaced review -> 00-foundations.T2.00a — Concept: matrix_vector_multiplication] [Concept: basis_change_and_invertibility]` Compute the first entry $(B\vec{v})_0$ (tolerance $\pm 10^{-9}$) for $B = \begin{bmatrix} 3.0 & 2.0 \\ 1.5 & 4.0 \end{bmatrix}$ and $\vec{v} = \begin{bmatrix} 2.0 \\ -1.0 \end{bmatrix}$.
 
 **Answer key:**
 ```python
@@ -115,17 +112,17 @@ assert math.isclose(q3_det, 9.0, rel_tol=1e-9)
 assert q4_choice == "B"
 assert math.isclose(q5_row0, 4.0, rel_tol=1e-9)
 ```
-- **Pass mark:** $4/5$ ($80\%+$). Missed Q1 or Q4: study `## 3. Formalization`; Q2 or Q3: study `## 4. Worked example`; Q5: review `00-foundations.T2.00a`. On pass, proceed to `## 11. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2 or Q3, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T2.00a`). On pass, proceed to `## 10. Next modules`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Torque vector points in the exact opposite direction ($-\vec{\tau}$) | Computed $\vec{F}\times\vec{r}$ instead of $\vec{r}\times\vec{F}$ (cross product is anti-commutative). | Always place the lever arm $\vec{r}$ (from joint to force application point) first in $\vec{r}\times\vec{F}$. |
 | Cross product $\vec{\tau}$ fails orthogonality check $\vec{\tau}\cdot\vec{r} = 0$ | Flipped the sign of the middle ($y$) component ($r_x F_z - r_z F_x$ instead of $r_z F_x - r_x F_z$). | Assert `abs(dot3(tau, r)) < 1e-9` and `abs(dot3(tau, F)) < 1e-9` in every kinematics script. |
 | Matrix inversion crashes with `LinAlgError: Singular matrix` | Arm is fully stretched out ($\theta_2 = 0$), making basis/Jacobian columns collinear ($\det = 0$). | Check $|\det(B)| > 10^{-6}$ or use damped least-squares before inverting. |
 
-## 10. Resources
+## 9. Resources
 - **Strang — *Linear Algebra and Learning from Data* (`resources/textbooks-and-papers.md`):** Orthogonality, projections, determinants, and change of basis `[UNVERIFIED]`.
 - **Lynch & Park — *Modern Robotics* (`resources/textbooks-and-papers.md`):** Spatial moments $\vec{r}\times\vec{F}$ and coordinate frames `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio*).

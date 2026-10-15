@@ -20,10 +20,10 @@ safety_level: low
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-To control motor torque at $20\text{–}40\text{ kHz}$ in Tier 2 (`01-electronics.T2.02` and `03-sensors.T2.04`), your microcontroller must measure phase currents of $\pm 15\text{ A}$ across a tiny $R_{\text{shunt}} = 2\text{ m}\Omega$ resistor. That produces a signal of only $\pm 30\text{ mV}$ riding on top of a noisy power ground or switching phase node! Understanding how **operational amplifiers (op-amps)** and dedicated current-sense amplifiers (`INA240`) amplify microvolt differential drops around a $V_{\text{ref}} = 1.65\text{ V}$ mid-supply bias while rejecting common-mode bounce—and why **4-terminal Kelvin traces** are mandatory—prevents 50% current measurement errors on your first custom PCB. Already know this? Take the Skip test in section 8 first.
+## 1. Why it matters
+To control motor torque at $20\text{–}40\text{ kHz}$ in Tier 2 (`01-electronics.T2.02` and `03-sensors.T2.04`), your microcontroller must measure phase currents of $\pm 15\text{ A}$ across a tiny $R_{\text{shunt}} = 2\text{ m}\Omega$ resistor. That produces a signal of only $\pm 30\text{ mV}$ riding on top of a noisy power ground or switching phase node! Understanding how **operational amplifiers (op-amps)** and dedicated current-sense amplifiers (`INA240`) amplify microvolt differential drops around a $V_{\text{ref}} = 1.65\text{ V}$ mid-supply bias while rejecting common-mode bounce—and why **4-terminal Kelvin traces** are mandatory—prevents 50% current measurement errors on your first custom PCB. Already know this? Take the Skip test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Imagine trying to measure the height of a $3\text{ cm}$ ripple on the surface of the ocean while both you and the ripple are riding up and down on a $48\text{ m}$ tidal wave. The $48\text{ m}$ wave is the **common-mode voltage** $V_{\text{CM}}$ (shared equally by both ends of the shunt resistor), and the $3\text{ cm}$ ripple is the **differential shunt voltage** $V_{\text{diff}} = I \cdot R_{\text{shunt}}$. A **differential current-sense amplifier** (`INA240`) subtracts the two pins so the tidal wave cancels out (**Common-Mode Rejection Ratio, CMRR**), multiplies only the $3\text{ cm}$ ripple by gain $G = 20\text{ V/V}$, and centers the result at $V_{\text{ref}} = 1.65\text{ V}$ so the $0\text{–}3.3\text{ V}$ ADC can read both positive ($+15\text{ A}$) and negative ($-15\text{ A}$) currents. And why **4-terminal Kelvin connections**? Because if your sense traces tap into the heavy copper power pads where $15\text{ A}$ is flowing, even $1\text{ m}\Omega$ of solder/trace resistance adds a $50\%$ fake voltage error to a $2\text{ m}\Omega$ shunt!
 
 ## 3. Formalization
@@ -35,7 +35,7 @@ Imagine trying to measure the height of a $3\text{ cm}$ ripple on the surface of
    $$\varepsilon_{\text{gain}} = \frac{2 R_{\text{trace}}}{R_{\text{shunt}}}$$
    Substituting $R_{\text{shunt}} = 2.0\text{ m}\Omega$ and $R_{\text{trace}} = 0.6\text{ m}\Omega$ gives $\varepsilon_{\text{gain}} = 1.2 / 2.0 = +60\%$ error! Tapping dedicated non-current-carrying inner Kelvin sense pads reduces $I_{\text{sense}} \approx 0$, eliminating the $2 R_{\text{trace}}$ drop.
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Design a bidirectional current-sense stage using an `INA240A1` ($G = 20\text{ V/V}$, $\text{CMRR} = 93\text{ dB}$ AC) with $R_{\text{shunt}} = 0.003\ \Omega$ ($3\text{ m}\Omega$) and $V_{\text{ref}} = 1.65\text{ V}$ for $I \in [-25\text{ A}, +25\text{ A}]$, and compare the 2-terminal parasitic copper error ($R_{\text{trace}} = 0.6\text{ m}\Omega$ per pad) against a 4-terminal Kelvin layout.
 
 ```python
@@ -64,10 +64,9 @@ V_ADC(+25A)=3.15 V, V_ADC(-25A)=0.15 V, Non-Kelvin error=40.0%
 Calculate the maximum measurable current magnitude $I_{\max}$ in amperes ($\text{A}$) before clipping a $0\text{–}3.30\text{ V}$ ADC centered at $V_{\text{ref}} = 1.65\text{ V}$ when using an amplifier with gain $G = 50.0\text{ V/V}$ and a $R_{\text{shunt}} = 0.001\ \Omega$ ($1\text{ m}\Omega$) Kelvin shunt. Verify $I_{\max} = \frac{1.65}{50.0 \times 0.001} = 33.0\text{ A}$ ($\pm 10^{-6}\text{ A}$).
 - **If your result differs:** Available half-scale voltage swing around $1.65\text{ V}$ is $3.30 - 1.65 = 1.65\text{ V}$; divide $1.65\text{ V}$ by $(G \cdot R_{\text{shunt}}) = 0.050\text{ V/A}$ to get $33.0\text{ A}$.
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Open **Tab 2 (Power Stage & Current-Sense AFE)** in the MechaLab Workbench (`npm run dev`) or simulate a differential amplifier in [LTspice](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) (`resources/open-source-toolchains.md`).
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.2 (`01-electronics.T2.02`), your KiCad PCB footprint routes the two inner Kelvin pads (`S+`, `S-`) as a tightly coupled differential pair directly to the `INA240` inputs, completely separate from the high-current power pours:
 ```text
 [High-Current Pour 15A] ===> [Pad 1 (Force+)] [Pad 2 (Sense+)] ---> (Diff Pair) ---> [INA240 IN+]
@@ -76,19 +75,16 @@ No hardware required for this module (`hardware_required: false`). In Step 2.2 (
 ```
 Pass/fail verification in simulation: `v_pos25 == 3.15 V`, `v_neg25 == 0.15 V`, and `kelvin_err_pct == 40.0%`.
 
+## Safety notes
 > **⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\le 0.5\text{ A}$) before energizing any breadboard or sensor circuit.
 
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
 1. `[Recall] [Concept: differential_shunt_gain_and_cmrr]` Compute the ADC voltage $V_{\text{ADC}} = V_{\text{ref}} + G \cdot I \cdot R_{\text{shunt}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for $V_{\text{ref}} = 1.65\text{ V}$, $G = 20.0\text{ V/V}$, $R_{\text{shunt}} = 0.005\ \Omega$ ($5\text{ m}\Omega$), and $I = -10.0\text{ A}$.
 2. `[Apply] [Concept: kelvin_four_terminal_sense_routing]` A $2.0\text{ m}\Omega$ shunt is routed without Kelvin connections, adding $0.4\text{ m}\Omega$ of copper trace resistance in series with each of the two pads ($2 R_{\text{trace}} = 0.8\text{ m}\Omega$). Compute the percentage gain error $100 \times \frac{2 R_{\text{trace}}}{R_{\text{shunt}}}$ (tolerance $\pm 10^{-9}$).
-3. `[Transfer] [Concept: opamp_negative_feedback_virtual_short]` Why must a bidirectional motor current-sense amplifier bias its zero-current output at $V_{\text{ref}} = 1.65\text{ V}$ instead of $0.0\text{ V}$ when feeding a single-supply $0\text{–}3.3\text{ V}$ microcontroller ADC?
-   - **A.** Because $1.65\text{ V}$ uses less power.
-   - **B.** Because motor phase current reverses sign ($\pm I$); biasing zero current at mid-supply ($1.65\text{ V}$) lets negative currents swing toward $0\text{ V}$ and positive currents swing toward $3.3\text{ V}$ without clipping at the ground rail.
-   - **C.** Because op-amps cannot output voltages above $2.0\text{ V}$.
-   - **D.** Because $1.65\text{ V}$ disables the ADC.
+3. `[Transfer] [Concept: opamp_negative_feedback_virtual_short]` For a bidirectional current-sense amplifier biased at $V_{\text{ref}} = 1.65\text{ V}$ feeding a $0\text{–}3.30\text{ V}$ ADC with gain $G = 20.0\text{ V/V}$ and $R_{\text{shunt}} = 0.005\ \Omega$, compute the maximum positive current $I_{\max} = \frac{3.30 - V_{\text{ref}}}{G \cdot R_{\text{shunt}}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) before the op-amp output saturates at $3.30\text{ V}$.
 4. `[Spaced review -> 01-electronics.T1.02 — Concept: voltage_current_resistance_ohms_law] [Concept: kelvin_four_terminal_sense_routing]` Why do the two inner Kelvin sense traces carry almost zero current ($I_{\text{sense}} \approx 0$)?
    - **A.** Because they terminate into the very high input impedance of the differential amplifier, so virtually none of the $15\text{ A}$ motor current flows through the sense traces or their solder joints.
    - **B.** Because the sense traces are made of plastic.
@@ -101,25 +97,25 @@ import math
 
 q1_vadc = 1.65 + 20.0 * (-10.0) * 0.005
 q2_err_pct = 100.0 * (2.0 * 0.4) / 2.0
-q3_choice = "B"
+q3_imax = (3.30 - 1.65) / (20.0 * 0.005)
 q4_choice = "A"
-
 assert math.isclose(q1_vadc, 0.65, rel_tol=1e-9)
 assert math.isclose(q2_err_pct, 40.0, rel_tol=1e-9)
-assert q3_choice == "B"
+assert math.isclose(q3_imax, 16.5, rel_tol=1e-9)
 assert q4_choice == "A"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 2; Q2 or Q4, study `## 3. Formalization` item 3; Q3, study `## 3. Formalization` item 1 & 2. On pass, proceed to `## 11. Next modules`.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 2; if you missed Q2 or Q4, study `## 3. Formalization` item 3; if you missed Q3, study `## 3. Formalization` item 1 & 2. On pass, proceed to `## 10. Next modules`.
 
-## 9. Common mistakes
+
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Current reading is $30\text{–}60\%$ higher than a calibrated bench ammeter | Tapped the sense traces off the outer power copper pour instead of dedicated inner Kelvin pads. | Use a 4-pad Kelvin footprint (`Net-Tie` at the shunt pads) so sense traces connect only to the inner blade edges of the shunt element. |
 | ADC reads $1.65\text{ V}$ for positive current and clips at $0.0\text{ V}$ for negative current | Tied the amplifier's `REF` pin to $\text{GND}$ instead of a low-impedance $1.65\text{ V}$ reference (`VREF/2`). | Tie `REF1` and `REF2` of the `INA240` together to $V_{\text{ADC,ref}}/2 = 1.65\text{ V}$. |
 | Large current spikes appear on ADC whenever adjacent phase switches | Sense traces were routed far apart, creating a magnetic loop that picks up $d\Phi/dt$ from the switching node. | Route `IN+` and `IN-` as a tightly coupled differential pair over an unbroken Layer-2 ground plane. |
 
-## 10. Resources
+## 9. Resources
 - **Texas Instruments — *INA240 Zero-Drift, Bidirectional Current-Sense Amplifier Datasheet & Kelvin Layout Guide* (`resources/textbooks-and-papers.md`):** Enhanced PWM rejection and 4-terminal shunt PCB layout rules `[VERIFIED 2026-10-15]`.
 - **Horowitz & Hill — *The Art of Electronics* (3e, Ch. 4 Operational Amplifiers):** Virtual short, differential amplifiers, and CMRR `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`01-electronics.T2.01b`](01-electronics.T2.01b.md) (*KiCad 4-Layer Stackup, Parasitic Loop Inductance ($L\,di/dt$), Bootstrap Gate Drivers & 48 V Pre-Charge Safety*).

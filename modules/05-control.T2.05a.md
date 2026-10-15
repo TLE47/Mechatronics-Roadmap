@@ -20,10 +20,10 @@ safety_level: none
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-This is the bridge module before Step 2.6 (`05-control.T2.06`). Trial-and-error PID tuning breaks down when your plant has a flexible shaft resonance, unmeasured velocity states, or multiple coupled degrees of freedom like the underactuated Furuta pendulum. Measuring **Gain Margin (GM)** and **Phase Margin (PM)** on the open-loop transfer function $L(s) = P(s)C(s)$, respecting the algebraic constraint $S(s) + T(s) \equiv 1$ (which explains Bode's **waterbed effect**), estimating unmeasured states with a **Luenberger observer** (the deterministic half of a Kalman filter), and normalizing **LQR cost matrices $(Q, R)$ via Bryson's Rule** gives you systematic, first-principles control design for Step 2.6. Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
+## 1. Why it matters
+This is the bridge module before Step 2.6 (`05-control.T2.06`). Trial-and-error PID tuning breaks down when your plant has a flexible shaft resonance, unmeasured velocity states, or multiple coupled degrees of freedom like the underactuated Furuta pendulum. Measuring **Gain Margin (GM)** and **Phase Margin (PM)** on the open-loop transfer function $L(s) = P(s)C(s)$, respecting the algebraic constraint $S(s) + T(s) \equiv 1$ (which explains Bode's **waterbed effect**), estimating unmeasured states with a **Luenberger observer** (the deterministic half of a Kalman filter), and normalizing **LQR cost matrices $(Q, R)$ via Bryson's Rule** gives you systematic, first-principles control design for Step 2.6. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Why does any negative-feedback loop go unstable if you crank the gain too high? Because every Closed-Loop transfer function has $1 + L(j\omega)$ in its denominator! If the loop transfer function $L(j\omega) = P(j\omega)C(j\omega)$ ever hits magnitude $|L| = 1$ ($0\text{ dB}$) at the same frequency where its phase lag reaches $-180^\circ$, then $L(j\omega) = -1$, the denominator $1 + (-1) = 0$ blows up, and negative feedback turns into a self-sustaining oscillator! **Phase Margin ($\text{PM}$)** quantifies how many degrees of safety buffer you have above $-180^\circ$ at the $0\text{ dB}$ crossover frequency $\omega_{gc}$. Second, **Sensitivity** $S = \frac{1}{1+L}$ measures how much disturbances get through, while **Complementary Sensitivity** $T = \frac{L}{1+L}$ measures how much sensor noise gets through—and because $S(s) + T(s) \equiv 1$ at every frequency, you cannot make both zero at the same frequency (**the waterbed tradeoff**). Third, a **Luenberger observer** runs a virtual copy of your plant $\hat{x}_{k+1} = A_d\hat{x}_k + B_d u_k + L_{\text{obs}}(y_k - C\hat{x}_k)$ in software and nudges it using sensor prediction error. Finally, **Bryson's Rule** takes the guesswork out of LQR tuning by setting $Q_{ii} = 1 / x_{i,\max}^2$ and $R_{jj} = 1 / u_{j,\max}^2$ so meters, radians, and newton-meters are normalized to dimensionless percentages of their maximum allowable swings!
 
 ## 3. Formalization
@@ -39,7 +39,7 @@ Why does any negative-feedback loop go unstable if you crank the gain too high? 
    - **Bryson's Rule:** To minimize $J = \sum (x_k^\top Q x_k + u_k^\top R u_k)$ given maximum acceptable state deviations $x_{i,\max}$ and actuator limit $u_{j,\max}$:
      $$Q_{ii} = \frac{1}{x_{i,\max}^2}, \quad R_{jj} = \frac{1}{u_{j,\max}^2}$$
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Compute the Phase Margin $\text{PM}$ and peak sensitivity $M_s$ of an open-loop servo transfer function $L(s) = \frac{100}{s(0.01s + 1)}$ at its gain crossover $\omega_{gc} = 78.615\text{ rad/s}$, verify $S(j\omega) + T(j\omega) = 1$, construct Bryson's LQR weights $(Q, R)$ for a cart-pendulum ($x_{\max} = 0.05\text{ m}, \theta_{\max} = 0.10\text{ rad}, u_{\max} = 5.0\text{ N}$), and verify Luenberger observer convergence.
 
 ```python
@@ -83,24 +83,21 @@ PM=51.83 deg, |S(jw_gc)|=0.819, Q_diag=[400.0, 100.0], rho_obs=0.9000
 Suppose your servo loop has Phase Margin $\text{PM} = 51.83^\circ$ at gain crossover $\omega_{gc} = 78.615\text{ rad/s}$, and you add a communication/filtering transport delay of $\tau_d = 0.005\text{ s}$ ($5.0\text{ ms}$), which subtracts $\Delta\phi = \omega_{gc}\tau_d \cdot \frac{180^\circ}{\pi}$ degrees of phase without changing $|L(j\omega_{gc})|$. Compute the phase loss $\Delta\phi$ in degrees and the new Phase Margin $\text{PM}_{\text{new}} = \text{PM} - \Delta\phi$. Verify $\Delta\phi = 22.5216^\circ$ and $\text{PM}_{\text{new}} = 29.3057^\circ$ ($\pm 10^{-2}$).
 - **If your result differs:** Convert $\omega_{gc}\tau_d = 78.61514 \times 0.005 = 0.393076\text{ rad}$ into degrees by multiplying by $180 / \pi$ ($22.52^\circ$).
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Open **Tab 1 (Loop Shaping & Gang of Four)** and **Tab 4 (Furuta Pendulum Swing-Up + LQR + Kalman Observer)** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 2.6 (`05-control.T2.06`), the offline Python solver (`scipy.linalg.solve_discrete_are`) computes the steady-state LQR gain row vector $K_{\text{lqr}}$ from Bryson's $(Q, R)$ matrices, and you paste those 4 floats directly into the microcontroller's $1\text{ kHz}$ ISR (`u = -K_lqr @ x_hat`):
 ```text
 [Offline Python: Bryson (Q, R) -> DARE -> K_lqr] ---> [MCU 1 kHz ISR: x_hat = Observer(y); u = -K_lqr @ x_hat]
 ```
 Pass/fail verification in simulation: `pm_deg == 51.83 deg`, `S_gc + T_gc == 1.0`, `Q_diag == [400.0, 100.0]`, and `rho_obs == 0.9000 < 1.0`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.6 (`05-control.T2.06`).
 
 ### Skip test
 1. `[Recall] [Concept: loop_transfer_gain_and_phase_margin]` At the gain crossover frequency $\omega_{gc}$ where $|L(j\omega_{gc})| = 0\text{ dB}$, the open-loop phase is $\angle L(j\omega_{gc}) = -125.0^\circ$. Compute the Phase Margin $\text{PM} = 180^\circ + \angle L(j\omega_{gc})$ in degrees (tolerance $\pm 10^{-9}$).
-2. `[Apply] [Concept: sensitivity_complementary_waterbed_tradeoff]` At a low frequency $\omega = 1.0\text{ rad/s}$ where the open-loop gain is $L(j1) = -j99$ (so $T(j1) = \frac{L}{1+L}$), what is the exact complex sum $S(j1) + T(j1)$ (tolerance $\pm 10^{-9}$)?
+2. `[Apply] [Concept: sensitivity_complementary_waterbed_tradeoff]` At a high-frequency waterbed peak $\omega_p$ where the open-loop return ratio is $L(j\omega_p) = -0.60 + j0.0$, compute the sensitivity magnitude $M_s = |S(j\omega_p)| = \frac{1}{|1 + L(j\omega_p)|}$ (dimensionless, tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: luenberger_observer_and_brysons_lqr_weights]` Using Bryson's Rule $Q_{ii} = 1 / x_{i,\max}^2$, compute the diagonal weight $Q_{11}$ (in $\text{rad}^{-2}$, tolerance $\pm 10^{-9}$) for a pendulum angle state whose maximum acceptable deviation is $\theta_{\max} = 0.20\text{ rad}$.
 4. `[Spaced review -> 00-foundations.T2.01 — Concept: bode_magnitude_db_and_phase] [Concept: luenberger_observer_and_brysons_lqr_weights]` What happens to the optimal LQR feedback gains $K$ and actuator effort $u = -Kx$ if you multiply **both** cost matrices $Q$ and $R$ by the same positive scalar $\alpha = 10$ ($J = \sum x^\top (10Q) x + u^\top (10R) u$)?
    - **A.** The gain $K$ increases by $10\times$.
@@ -113,17 +110,16 @@ Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7
 import math
 
 q1_pm_deg = 180.0 + (-125.0)
-q2_sum_st = 1.0
+q2_ms = 1.0 / abs(1.0 + (-0.60))
 q3_q11 = 1.0 / (0.20 ** 2)
 q4_choice = "B"
 
 assert math.isclose(q1_pm_deg, 55.0, rel_tol=1e-9)
-assert math.isclose(q2_sum_st, 1.0, rel_tol=1e-9)
+assert math.isclose(q2_ms, 2.5, rel_tol=1e-9)
 assert math.isclose(q3_q11, 25.0, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3.
-
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 ### Gate test
 Covers the complete Track 05 Tier 2 bridge ladder (`05-control.T2.05a`) before Step 2.6 (`05-control.T2.06`):
 1. `[Concept: loop_transfer_gain_and_phase_margin]` At the phase crossover frequency $\omega_{pc}$ where $\angle L(j\omega_{pc}) = -180^\circ$, the open-loop magnitude is $|L(j\omega_{pc})| = 0.25$. Compute the Gain Margin $\text{GM}_{\text{dB}} = -20\log_{10}(0.25)$ in decibels ($\text{dB}$, tolerance $\pm 10^{-3}\text{ dB}$).
@@ -175,15 +171,15 @@ assert g8_choice == "A"
 ```
 - **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q8 $\to$ `## 3. Formalization` item 3.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Looked only at $|T(j\omega)|$ (closed-loop tracking Bode plot) and missed a dangerous $+12\text{ dB}$ sensitivity peak in $|S(j\omega)|$ | Relying on $T(s)$ alone hides near-instability when $L(j\omega)$ passes close to $-1 + j0$. | Always plot all **Gang of Four** transfer functions ($S, T, PS, CS$) and verify $\max_\omega |S(j\omega)| < 6\text{ dB}$ ($2.0\times$). |
 | Solved continuous-time `solve_continuous_are(A, B, Q, R)` but ran the resulting $K$ at a slow discrete sample rate $T_s$ | Continuous ARE ignores sample-and-hold phase lag and discrete control weighting. | Discretize $(A, B) \to (A_d, B_d)$ at sample period $T_s$ and call `scipy.linalg.solve_discrete_are(Ad, Bd, Q, R)` (Step 2.6). |
 | Set $Q = I_4$ without Bryson normalization on a state vector mixing millimeters and radians | A $1\text{ mm}$ error and a $1\text{ rad}$ ($57.3^\circ$) error received identical weight! | Always express states in consistent SI units ($\text{m}, \text{rad}, \text{m/s}, \text{rad/s}$) and normalize $Q_{ii} = 1/x_{i,\max}^2$ via Bryson's Rule. |
 
-## 10. Resources
+## 9. Resources
 - **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 7–8 & 10–12, `resources/textbooks-and-papers.md`):** Free textbook on observers, LQR, Bode loop shaping, and the Gang of Four `[VERIFIED 2026-10-15]`.
 - **Track 05 (`05-control-and-estimation/README.md`):** Directly continues into Step 2.6 (`05-control.T2.06`) `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to legacy **Step 2.6 (`05-control.T2.06`)** in [`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-2-intermediate--applied).

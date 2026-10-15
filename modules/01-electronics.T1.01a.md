@@ -19,10 +19,10 @@ safety_level: low
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-Before wiring an H-bridge motor driver or level-shifting a $5\text{ V}$ sensor to a $3.3\text{ V}$ microcontroller in Step 1.2 (`01-electronics.T1.02`), you must be able to calculate how much current flows through a resistor, how two resistors divide a voltage, and how much heat ($P = I^2 R$) a wire or resistor dissipates. Getting these three laws right prevents magic smoke on your very first breadboard build. Already know this? Take the Skip test in section 8 first.
+## 1. Why it matters
+Before wiring an H-bridge motor driver or level-shifting a $5\text{ V}$ sensor to a $3.3\text{ V}$ microcontroller in Step 1.2 (`01-electronics.T1.02`), you must be able to calculate how much current flows through a resistor, how two resistors divide a voltage, and how much heat ($P = I^2 R$) a wire or resistor dissipates. Getting these three laws right prevents magic smoke on your very first breadboard build. Already know this? Take the Skip test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Picture water pumped through a closed loop of pipes. **Voltage** ($V$, in volts) is the water pressure difference between two points; **current** ($I$, in amperes) is the flow rate of charge through the pipe; and **resistance** ($R$, in ohms, $\Omega$) is a narrow constriction that fights the flow. **Ohm's Law** ($V = I R$) says that pushing more current through a constriction takes proportionally more pressure. **Kirchhoff's Current Law (KCL)** says charge never vanishes at a pipe junction (what flows in must flow out), and **Kirchhoff's Voltage Law (KVL)** says if you walk around any closed loop and return to your starting point, the pressure rises and drops must sum to zero. When current squeezes through a resistor, the lost pressure turns directly into heat at rate $P = V I = I^2 R$.
 
 ## 3. Formalization
@@ -36,7 +36,7 @@ Picture water pumped through a closed loop of pipes. **Voltage** ($V$, in volts)
    $$P = V \cdot I = I^2 R = \frac{V^2}{R}$$
    Substituting $I = 5.0\text{ A}$ through $R_m = 2.4\ \Omega$ gives $P = (5.0\text{ A})^2 (2.4\ \Omega) = 60.0\text{ W}$ of heat.
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Design a battery-voltage sensing divider that scales a $V_{\text{bat}} = 24.0\text{ V}$ supply down using $R_1 = 68\text{ k}\Omega$ and $R_2 = 10\text{ k}\Omega$ for a $3.3\text{ V}$ ADC pin, and compute both the unloaded output voltage and the loaded output voltage when the ADC input has finite input resistance $R_L = 100\text{ k}\Omega$.
 
 ```python
@@ -65,10 +65,9 @@ V_unloaded=3.077 V, V_loaded=2.830 V, P_R1=6.44 mW
 Calculate the current-limiting resistor $R$ required to run a status LED ($V_{\text{LED}} = 2.1\text{ V}$, target current $I = 10\text{ mA} = 0.010\text{ A}$) from a $V_{\text{supply}} = 5.0\text{ V}$ rail using KVL ($V_R = V_{\text{supply}} - V_{\text{LED}}$), and compute the power $P_R = I^2 R$ dissipated in the resistor. Verify $R = 290.0\ \Omega$ and $P_R = 0.029\text{ W}$ ($29.0\text{ mW}$, safely within a $0.25\text{ W}$ resistor rating).
 - **If your result differs:** Make sure you subtracted $V_{\text{LED}} = 2.1\text{ V}$ from $5.0\text{ V}$ before dividing by $0.010\text{ A}$ ($2.9\text{ V} / 0.010\text{ A} = 290\ \Omega$, not $5.0 / 0.010 = 500\ \Omega$).
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Simulate the voltage divider and LED resistor in the browser using [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`resources/open-source-toolchains.md`) or run the Python verification script above.
 
-## 7. Hardware path (and Safety notes)
 Optional Tier 1 breadboard check (`hardware_required: false`): place a $68\text{ k}\Omega$ and $10\text{ k}\Omega$ resistor in series on a solderless breadboard powered from a $5.0\text{ V}$ USB rail and probe the midpoint with a digital multimeter:
 ```text
 [+5.0 V Rail] ---> [R1 = 68 kOhm] ---+---> (DMM Red Probe: reads 0.641 V)
@@ -79,9 +78,10 @@ Optional Tier 1 breadboard check (`hardware_required: false`): place a $68\text{
 ```
 Pass/fail verification: unloaded $24\text{ V}$ divider reads $3.077\text{ V} < 3.3\text{ V}$ and $P_{R1} = 6.44\text{ mW} \ll 250\text{ mW}$.
 
+## Safety notes
 > **⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\le 0.5\text{ A}$) before energizing any breadboard or sensor circuit.
 
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
@@ -108,17 +108,17 @@ assert math.isclose(q2_vout, 10.0 / 3.0, rel_tol=1e-6)
 assert math.isclose(q3_power_w, 5.0, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 11. Next modules`.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Divider output is $20.9\text{ V}$ instead of $3.08\text{ V}$ ($3.3\text{ V}$ MCU pin destroyed!) | Swapped $R_1 = 68\text{ k}\Omega$ (top) and $R_2 = 10\text{ k}\Omega$ (bottom). | Always measure the divider midpoint with a multimeter before connecting it to an MCU pin. |
 | Quarter-watt ($0.25\text{ W}$) resistor smokes and turns brown | Used a low resistance ($100\ \Omega$) across $24\text{ V}$, dissipating $P = V^2/R = 5.76\text{ W}$. | Compute $P = V^2/R$ or $I^2 R$ and keep continuous dissipation below $50\%$ of the resistor's wattage rating. |
 | Tried to power a $3.3\text{ V}$ logic chip using a resistor divider | Ignored the load current $I_{\text{load}}$ flowing through the top resistor $R_1$. | Use a voltage regulator (LDO or buck converter) for power rails; use resistor dividers only for high-impedance ADC inputs. |
 
-## 10. Resources
+## 9. Resources
 - **Paul Scherz & Simon Monk — *Practical Electronics for Inventors* (`resources/textbooks-and-papers.md`):** Beginner-friendly chapters on Ohm's law, KVL/KCL, and resistor power ratings `[VERIFIED 2026-10-15]`.
 - **Falstad Circuit Simulator (`falstad.com/circuit/`, `resources/open-source-toolchains.md`):** Interactive browser circuit simulator showing live current dots and voltage colors `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`01-electronics.T1.01c`](01-electronics.T1.01c.md) (*Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety*).

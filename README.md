@@ -619,8 +619,8 @@ $$
 ## 🪜 Bridge Modules and How to Skip Ahead (`modules/`)
 
 Every steep transition before the 24 legacy steps (`1.1`–`3.8`) has a dedicated, self-contained **Bridge Module** in [`modules/`](modules/) indexed against [`modules/_index.yaml`](modules/_index.yaml) (see the 34-week study schedule in [`docs/SYLLABUS.md`](docs/SYLLABUS.md) and the full gate specification in [`docs/ASSESSMENTS.md`](docs/ASSESSMENTS.md)).
-- **Module-Level Skip Test (`§8 Checkpoint -> ### Skip test`):** Every bridge module contains a 4–5 question hands-on Skip test with a runnable Python `assert` answer key. Score $\ge 80\%$ ($100\%$ on safety questions in `safety_level: high` modules after reading `## Safety notes`) to skip directly to `## 11. Next modules`. If you miss a question, the remediation key points to the exact `##` section to study.
-- **Ladder-Level Gate Test (`§8 Checkpoint -> ### Gate test`):** Only the **final bridge module** of each ladder includes an 8-question Gate test covering every concept introduced across that entire ladder. Pass the Gate test ($\ge 80\%$, $100\%$ on safety items) to skip the entire ladder and enter the legacy step directly.
+- **Module-Level Skip Test (`§7 Checkpoint -> ### Skip test`):** Every bridge module contains a 4–6 question hands-on Skip test with a runnable Python `assert` answer key. Score $\ge 80\%$ ($100\%$ on safety questions in `safety_level: high` modules after reading `## Safety notes`) to skip directly to `## 10. Next modules`. If you miss a question, the remediation key points to the exact `##` section to study.
+- **Ladder-Level Gate Test (`§7 Checkpoint -> ### Gate test`):** Only the **final bridge module** of each ladder includes an 8-question Gate test covering every concept introduced across that entire ladder. Pass the Gate test ($\ge 80\%$, $100\%$ on safety items) to skip the entire ladder and enter the legacy step directly.
 
 | Ladder & Target Legacy Step | Bridge Modules in `modules/` (Ordered) | Ladder Final (Has Gate Test) |
 | :--- | :--- | :--- |
@@ -640,6 +640,11 @@ Every steep transition before the 24 legacy steps (`1.1`–`3.8`) has a dedicate
 | **Track 05 Tier 2 Margins, Observers & Bryson LQR → Step 2.6 (`05-control.T2.06`)** | [`05-control.T2.05a`](modules/05-control.T2.05a.md) | [`05-control.T2.05a`](modules/05-control.T2.05a.md) |
 | **Track 06 Tier 2 ROS 2, TF2 & `ros2_control` → Step 2.7 (`06-robotics.T2.07`)** | [`06-robotics.T2.06a`](modules/06-robotics.T2.06a.md) | [`06-robotics.T2.06a`](modules/06-robotics.T2.06a.md) |
 | **Track 00 Tier 3 SO(3) Hat/Vee & Matrix Exp → Step 3.1 (`00-foundations.T3.01`)** | [`00-foundations.T3.00a`](modules/00-foundations.T3.00a.md) | [`00-foundations.T3.00a`](modules/00-foundations.T3.00a.md) |
+| **Track 01 Tier 3 `<2 nH` Stackup, Bessel AFE & Cauer Thermal → Step 3.2 (`01-electronics.T3.02`)** | [`01-electronics.T3.01a`](modules/01-electronics.T3.01a.md) | [`01-electronics.T3.01a`](modules/01-electronics.T3.01a.md) |
+| **Track 02 Tier 3 Spatial Twists/Wrenches, Flexures & RNEA → Step 3.3 (`02-mechanics.T3.03`)** | [`02-mechanics.T3.02a`](modules/02-mechanics.T3.02a.md) | [`02-mechanics.T3.02a`](modules/02-mechanics.T3.02a.md) |
+| **Track 03 Tier 3 Decoupled $d$-$q$ FOC, SVPWM & Harmonic LUT → Step 3.4 (`03-sensors.T3.04`)** | [`03-sensors.T3.03a`](modules/03-sensors.T3.03a.md) | [`03-sensors.T3.03a`](modules/03-sensors.T3.03a.md) |
+| **Track 04 Tier 3 Center-Aligned PWM→ADC, Q1.31 CORDIC & SeqLock → Step 3.5 (`04-embedded.T3.05`)** | [`04-embedded.T3.04a`](modules/04-embedded.T3.04a.md) | [`04-embedded.T3.04a`](modules/04-embedded.T3.04a.md) |
+| **Track 05 Tier 3 Joseph-Form ESKF, Box QP & Second-Order CBF → Step 3.6 (`05-control.T3.06`)** | [`05-control.T3.05a`](modules/05-control.T3.05a.md) | [`05-control.T3.05a`](modules/05-control.T3.05a.md) |
 | **Track 06 Tier 3 Embodied AI & RL → Step 3.7 (`06-robotics.T3.07`)** | [`06-robotics.T3.06a`](modules/06-robotics.T3.06a.md) → [`06-robotics.T3.06b`](modules/06-robotics.T3.06b.md) | [`06-robotics.T3.06b`](modules/06-robotics.T3.06b.md) |
 | **Track 07 Tier 3 OPC UA, AAS & ISO 13849 → Step 3.7 (`06-robotics.T3.07`)** | [`07-systems.T3.06a`](modules/07-systems.T3.06a.md) | [`07-systems.T3.06a`](modules/07-systems.T3.06a.md) |
 | **Track 08 Tier 3 Capstone Pre-Flight Gate → Step 3.8 (`08-capstones.T3.08`)** | [`08-capstones.T3.07a`](modules/08-capstones.T3.07a.md) | [`08-capstones.T3.07a`](modules/08-capstones.T3.07a.md) |

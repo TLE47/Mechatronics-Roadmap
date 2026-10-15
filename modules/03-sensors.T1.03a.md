@@ -19,10 +19,10 @@ safety_level: none
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-This is the bridge module before Step 1.4 (`03-sensors.T1.04`). Every electric motor is simultaneously an actuator ($\tau = K_t i$) and a generator ($v_{\text{bemf}} = K_e \omega_m$), every brushless motor has $p$ magnetic **pole pairs** that make its electrical phase spin $p$ times faster than its physical shaft ($\theta_e = p\theta_m$), and every incremental encoder determines rotation direction from two $90^\circ$-shifted pulse channels (`A` and `B`). Mastering these three ideas makes SimpleFOC and encoder feedback in Step 1.4 click immediately. Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
+## 1. Why it matters
+This is the bridge module before Step 1.4 (`03-sensors.T1.04`). Every electric motor is simultaneously an actuator ($\tau = K_t i$) and a generator ($v_{\text{bemf}} = K_e \omega_m$), every brushless motor has $p$ magnetic **pole pairs** that make its electrical phase spin $p$ times faster than its physical shaft ($\theta_e = p\theta_m$), and every incremental encoder determines rotation direction from two $90^\circ$-shifted pulse channels (`A` and `B`). Mastering these three ideas makes SimpleFOC and encoder feedback in Step 1.4 click immediately. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Imagine a bicycle wheel with $p = 7$ pairs of North-South magnets glued around its rim, spinning past a stationary electromagnet coil on the frame. Every time the physical wheel turns by $1/7\text{th}$ of a revolution, a full North-South magnet pair sweeps past the coil—so the coil sees a complete $360^\circ$ ($2\pi\text{ rad}$) **electrical cycle** for every $1/7\text{th}$ of a **mechanical turn** ($\theta_e = p\theta_m$). When you push current $i$ into the coil, the magnetic push produces torque $\tau = K_t i$; conversely, as the magnets sweep past the coil at speed $\omega_m$, Faraday's law generates an opposing **Back-EMF voltage** $v_{\text{bemf}} = K_e \omega_m$ that fights the supply voltage (which is why a motor draws maximum stall current at $\omega_m = 0$ and less current as it speeds up!). Finally, to know which way the wheel is turning, a **quadrature encoder** places two optical or Hall sensors (`A` and `B`) a quarter-slot apart: if `A` rises before `B`, the wheel is spinning forward; if `B` rises before `A`, it is spinning backward.
 
 ## 3. Formalization
@@ -36,7 +36,7 @@ Imagine a bicycle wheel with $p = 7$ pairs of North-South magnets glued around i
    $$\Delta\theta_{\text{rad}} = \frac{2\pi}{\text{CPR}} = \frac{2\pi}{4 N_{\text{lines}}}$$
    Substituting $N_{\text{lines}} = 1024$ gives $\text{CPR} = 4096\text{ counts/rev}$ and $\Delta\theta_{\text{rad}} = \frac{2\pi}{4096} \approx 0.001534\text{ rad}$ ($0.0879^\circ$).
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Compute the no-load speed $\omega_{\text{no-load}}$, stall current $I_{\text{stall}}$, electrical frequency $\omega_e$ for a $14$-pole ($p=7$) gimbal motor with $R = 4.0\ \Omega, K_e = 0.06\text{ V}\cdot\text{s/rad}$ driven at $V_{\text{term}} = 12.0\text{ V}$, and decode a sequence of quadrature $(A, B)$ state transitions.
 
 ```python
@@ -74,25 +74,22 @@ I_stall=3.0 A, w_noload=200 rad/s, w_e=1400 rad/s, quad_count=5
 A $2208$ gimbal BLDC motor has $12$ stator slots and $14$ rotor magnet poles (`12N14P`). Compute (a) the number of pole pairs $p = N_{\text{poles}} / 2$, (b) the mechanical angle $\theta_m$ in degrees corresponding to one full $360^\circ$ electrical cycle ($360^\circ / p$), and (c) the encoder angle resolution $\Delta\theta_{\text{deg}} = 360^\circ / 2^{14}$ of a 14-bit (`16384` counts/rev) `AS5048A` magnetic encoder. Verify $p = 7$, $\theta_m = 51.4286^\circ$ ($\pm 10^{-3}$), and $\Delta\theta_{\text{deg}} = 0.02197^\circ$ ($\pm 10^{-4}$).
 - **If your result differs:** Remember that `12N14P` means `12` stator teeth and `14` rotor magnets ($7$ North + $7$ South), so $p = 14 / 2 = 7$ pole pairs (not $14$).
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Open **Tab 2 (FOC Current Loop & Clarke/Park)** in the MechaLab Workbench (`npm run dev`) to see how mechanical rotor angle $\theta_m$ multiplies by pole pairs $p$ into electrical commutation angle $\theta_e = p\theta_m$.
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 1.4 (`03-sensors.T1.04`), you can verify pole pairs $p$ on a real BLDC motor by Energizing Phase A to $+1.5\text{ V}$ (current-limited to $0.5\text{ A}$) and Phase B/C to $\text{GND}$, rotating the rotor by hand through one full $360^\circ$ mechanical turn, and counting the $p$ magnetic detent lock positions:
 ```text
 [Bench PSU 1.5V, 0.5A Limit] ---> [Phase A (+) / Phases B,C (-)] ---> Count p=7 magnetic detents per 1 turn
 ```
 Pass/fail verification in simulation: `i_stall == 3.0 A`, `w_noload == 200.0 rad/s`, `we_noload == 1400.0 rad/s`, and `count == 5`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.4 (`03-sensors.T1.04`).
 
 ### Skip test
 1. `[Recall] [Concept: lorentz_force_and_back_emf_constants]` A DC motor with winding resistance $R = 2.5\ \Omega$ and back-EMF constant $K_e = 0.10\text{ V}\cdot\text{s/rad}$ spins at $\omega_m = 40.0\text{ rad/s}$ while driven from $V_{\text{term}} = 10.0\text{ V}$. Compute the winding current $i = (V_{\text{term}} - K_e\omega_m)/R$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: mechanical_vs_electrical_angle_pole_pairs]` A `24N28P` outrunner motor has $28$ permanent magnet poles ($14$ North, $14$ South). Compute its number of pole pairs $p$ and its electrical speed $\omega_e = p\omega_m$ in $\text{rad/s}$ when $\omega_m = 10.0\text{ rad/s}$ (tolerance $\pm 10^{-9}$).
-3. `[Transfer] [Concept: quadrature_ab_gray_code_direction]` An optical quadrature encoder disc has $N_{\text{lines}} = 500$ lines per revolution and is decoded in $4\times$ quadrature mode (counting rising and falling edges of both channels `A` and `B`). Compute the total counts per mechanical revolution ($\text{CPR}$).
+3. `[Transfer] [Concept: quadrature_ab_gray_code_direction]` An optical quadrature encoder disc has $N_{\text{lines}} = 500$ lines per revolution and is decoded in $4\times$ quadrature mode (counting rising and falling edges of both channels `A` and `B`). Compute the total counts per mechanical revolution ($\text{CPR} = 4 N_{\text{lines}}$, exact integer, tolerance $\pm 0$).
 4. `[Spaced review -> 01-electronics.T1.02 — Concept: voltage_current_resistance_ohms_law] [Concept: quadrature_ab_gray_code_direction]` Why does a quadrature encoder require **two** channels (`A` and `B` shifted by $90^\circ$ electrical) instead of a single pulse channel `A`?
    - **A.** Because a single channel can only count up to 100.
    - **B.** Because a single pulse channel tells you speed (edge rate) but cannot distinguish clockwise from counter-clockwise rotation when the motor reverses direction.
@@ -115,8 +112,7 @@ assert math.isclose(q2_we, 140.0, rel_tol=1e-9)
 assert q3_cpr == 2000
 assert q4_choice == "B"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3.
-
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 ### Gate test
 Covers the complete Track 03 Tier 1 bridge ladder (`03-sensors.T1.03a`) before Step 1.4 (`03-sensors.T1.04`):
 1. `[Concept: lorentz_force_and_back_emf_constants]` Compute the electromagnetic torque $\tau = K_t i$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$) produced by a motor with $K_t = 0.08\text{ N}\cdot\text{m/A}$ carrying $i = 4.5\text{ A}$.
@@ -160,15 +156,15 @@ assert g8_choice == "B"
 ```
 - **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q3 $\to$ `## 3. Formalization` item 1; Q4–Q5 $\to$ `## 3. Formalization` item 2; Q6–Q8 $\to$ `## 3. Formalization` item 3.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Entered `14` instead of `7` as pole pairs in `BLDCMotor(14)` for a `12N14P` motor | Confused total magnet poles ($2p = 14$) with pole pairs ($p = 7$). | Divide the rotor magnet pole count (`14P`) by `2` to get pole pairs $p = 7$. |
 | Encoder angle reads $4\times$ too small ($90^\circ$ after one full turn) | Used line count $N_{\text{lines}}$ instead of $4\times$ quadrature count $\text{CPR} = 4 N_{\text{lines}}$. | Rotate the shaft through one exact $360^\circ$ turn by hand against a mark and verify `count == CPR`. |
 | Magnetic encoder (`AS5600`) reads erratic non-linear jumps | Used an axially magnetized disc magnet (North on top, South on bottom) instead of a **diametrically magnetized** magnet (North on left half, South on right half). | Always use a diametrically magnetized cylinder magnet centered $0.5\text{–}2\text{ mm}$ above the Hall sensor IC. |
 
-## 10. Resources
+## 9. Resources
 - **Jacob Fraden — *Handbook of Modern Sensors* & SimpleFOC Docs (`docs.simplefoc.com`, `resources/open-source-toolchains.md`):** Practical guide to optical/magnetic encoders, pole pairs, and BLDC commutation `[VERIFIED 2026-10-15]`.
 - **Track 03 (`03-sensors-and-actuators/README.md`):** Directly continues into Step 1.4 (`03-sensors.T1.04`) `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to legacy **Step 1.4 (`03-sensors.T1.04`)** in [`03-sensors-and-actuators/README.md`](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive).

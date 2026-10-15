@@ -19,10 +19,10 @@ safety_level: none
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-Transfer functions $G(s)$ are great for single-input single-output filters, but modern control algorithms (LQR, Kalman filters, and Model Predictive Control in Track 05) operate on multi-variable **state-space models** $\dot{x} = Ax + Bu$ discretized into $x_{k+1} = A_d x_k + B_d u_k$. Connecting transfer-function poles and zeros to the eigenvalues of the state matrix $A$ is the direct foundation for Step 2.1 (`00-foundations.T2.01`). Already know this? Take the Skip test in section 8 first.
+## 1. Why it matters
+Transfer functions $G(s)$ are great for single-input single-output filters, but modern control algorithms (LQR, Kalman filters, and Model Predictive Control in Track 05) operate on multi-variable **state-space models** $\dot{x} = Ax + Bu$ discretized into $x_{k+1} = A_d x_k + B_d u_k$. Connecting transfer-function poles and zeros to the eigenvalues of the state matrix $A$ is the direct foundation for Step 2.1 (`00-foundations.T2.01`). Already know this? Take the Skip test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Think of a second-order differential equation ($\ddot{q} = \dots$) as a two-story building, whereas a microcontroller prefers a ground-floor warehouse where every variable updates by a single first-order step ($\dot{x} = \dots$). By stacking position $q$ and velocity $\dot{q}$ into a column vector $x = [q, \dot{q}]^\top$, any $n$-th order differential equation flattens into a single matrix equation $\dot{x} = Ax + Bu$. The **poles** of the system (the eigenvalues of $A$) are the system's natural ringing modes—if their real parts are negative, disturbances die out; if positive, the system explodes. And **zeros** are specific frequencies where two internal pathways cancel each other out so the sensor sees almost zero motion even while the actuator is shaking hard (anti-resonance).
 
 ## 3. Formalization
@@ -36,7 +36,7 @@ Think of a second-order differential equation ($\ddot{q} = \dots$) as a two-stor
    $$A_{d,\text{Tustin}} = \left(I - \frac{T_s}{2}A\right)^{-1}\left(I + \frac{T_s}{2}A\right)$$
    At $T_s = 0.001\text{ s}$ on the above $A$, $|\lambda(A_{d,\text{Tustin}})| = 0.998002 < 1.0$.
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 For $J=1\text{ kg}\cdot\text{m}^2$, $b=4\text{ N}\cdot\text{m}\cdot\text{s/rad}$, $k=100\text{ N}\cdot\text{m/rad}$, verify that the eigenvalues of $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ match the roots of $s^2 + 4s + 100 = 0$ ($\lambda = -2 \pm j\sqrt{96}\text{ s}^{-1}$) and compare Forward Euler vs. Tustin discretization at $T_s = 0.05\text{ s}$.
 
 ```python
@@ -81,19 +81,16 @@ rho_euler=1.0247 (unstable), rho_tustin=0.9258 (stable)
 Compute the spectral radius $\rho(A_{d,\text{Tustin}})$ of the same system at $T_s = 0.001\text{ s}$ ($1\text{ kHz}$ servo loop) and verify using `trace = Ad[0][0] + Ad[1][1]`, `det = Ad[0][0]*Ad[1][1] - Ad[0][1]*Ad[1][0]`, and `cmath.sqrt(trace**2 - 4*det)` that the spectral radius $\max(|\lambda_1|, |\lambda_2|)$ equals `0.998002` ($\pm 10^{-6}$, strictly inside the unit circle).
 - **If your result differs:** Check that you inverted `(I - 0.5 * Ts * A)` and multiplied by `(I + 0.5 * Ts * A)` rather than swapping the plus and minus signs (which places the poles outside the unit circle at `1.002002`).
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Open **Tab 1 (Two-Mass Resonance & Biquad Notch)** and **Tab 4 (Furuta Pendulum State-Space LQR)** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Track 05 (`05-control.T2.06` and `05-control.T3.06`), the discretized matrices $(A_d, B_d)$ run inside the microcontroller's $1\text{ kHz}$ Kalman filter prediction step:
 ```text
 [Offline Python: (A, B) ---> Tustin/ZOH ---> (A_d, B_d)] ---> [MCU 1 kHz Loop: x_hat = A_d * x_hat + B_d * u]
 ```
 Pass/fail verification in simulation: `rho_euler == 1.0247 > 1.0` and `rho_tustin == 0.9258 < 1.0`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
@@ -122,17 +119,17 @@ assert math.isclose(q2_det, 25.0, rel_tol=1e-9)
 assert q3_choice == "B"
 assert math.isclose(q4_ad, 1.0 / 3.0, rel_tol=1e-6)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 11. Next modules`.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Checked $\operatorname{Re}(\lambda_d) < 0$ on discrete matrix $A_d$ | Confused continuous $s$-plane stability ($\operatorname{Re}(s) < 0$) with discrete $z$-plane stability ($|z| < 1$). | Always check `abs(eigvals(Ad)) < 1.0` for discrete state-transition matrices. |
 | State-space signs flipped in bottom row of $A$ | Forgot to move $+k\theta + b\dot{\theta}$ to the right-hand side of $J\ddot{\theta} = -k\theta - b\dot{\theta} + u$. | Write $\ddot{\theta} = -(k/J)\theta - (b/J)\dot{\theta} + (1/J)u$ before filling row 2 of $A$. |
 | Used elementwise `*` instead of `@` in Tustin formula | Multiplied matrix elements componentwise with `*` (Hadamard product) instead of matrix multiplication. | Use row-by-column matrix multiplication (`mat_mul2`) for all matrix products. |
 
-## 10. Resources
+## 9. Resources
 - **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 6–7):** Free textbook on state-space linear systems, eigenvalues, and transfer functions `[VERIFIED 2026-10-15]`.
 - **Brunton & Kutz — *Data-Driven Science and Engineering* (`databookuw.com`):** State-space modeling and discretization (`resources/textbooks-and-papers.md`) `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Sampling, Aliasing, Nyquist, $z$-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance*).

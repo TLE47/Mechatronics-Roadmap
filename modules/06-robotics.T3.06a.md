@@ -19,10 +19,10 @@ safety_level: none
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-To achieve the Graduate Goal—deploying a learned visuomotor or proprioceptive policy (`LeRobot`, `ACT`, `Diffusion Policy`, `π₀`) on your robot arm in Step 3.7 (`06-robotics.T3.07`)—you first need a crystal-clear understanding of how a neural policy maps robot observations $o_t = [q_t, \dot{q}_t, x_{\text{goal}}]^\top$ to action targets $a_t$, how **automatic differentiation (`autograd` / backpropagation)** computes the exact gradient $\nabla_\theta \mathcal{L}$ of a loss function using the chain rule, and how **Behavior Cloning (BC)** trains a policy by imitating expert demonstrations. Already know this? Take the Skip test in section 8 first.
+## 1. Why it matters
+To achieve the Graduate Goal—deploying a learned visuomotor or proprioceptive policy (`LeRobot`, `ACT`, `Diffusion Policy`, `π₀`) on your robot arm in Step 3.7 (`06-robotics.T3.07`)—you first need a crystal-clear understanding of how a neural policy maps robot observations $o_t = [q_t, \dot{q}_t, x_{\text{goal}}]^\top$ to action targets $a_t$, how **automatic differentiation (`autograd` / backpropagation)** computes the exact gradient $\nabla_\theta \mathcal{L}$ of a loss function using the chain rule, and how **Behavior Cloning (BC)** trains a policy by imitating expert demonstrations. Already know this? Take the Skip test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Think of a neural network policy $\pi_\theta(o_t)$ as a multi-stage signal conditioner made of tunable gain matrices $W_1, W_2$ and smooth nonlinear saturation curves ($\tanh$ or $\text{ReLU}$). In **Behavior Cloning (imitation learning)**, you teleoperate the robot arm (or run an expert trajectory generator) to record a dataset of $(o_t, a_t^*)$ pairs: *"When the arm was at state $o_t$, the expert commanded action $a_t^*$."* Next, we feed $o_t$ through the network (**forward pass**), measure the squared discrepancy $\mathcal{L} = \frac{1}{N}\sum \|\pi_\theta(o_t) - a_t^*\|^2$ (**Mean-Squared Error loss**), and ask: *"Which way should we nudge each weight in $W_1$ and $W_2$ to shrink $\mathcal{L}$?"* **Backpropagation (`autograd`)** applies the calculus chain rule applied backward from the output error to each layer's weights, and **gradient descent** ($\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}$) steps the weights downhill until the policy reproduces the expert's smooth motion!
 
 ## 3. Formalization
@@ -33,7 +33,7 @@ Think of a neural network policy $\pi_\theta(o_t)$ as a multi-stage signal condi
    Each parameter updates with learning rate $\eta > 0$: $W_k \leftarrow W_k - \eta \frac{\partial \mathcal{L}}{\partial W_k}$.
 3. **Behavior Cloning (BC) Observation Normalization & Covariate Shift:** Normalizing inputs via z-score $\tilde{o} = (o - \mu_o)/\sigma_o$ prevents high-magnitude states (e.g., velocities in $\text{rad/s}$) from dominating gradients over small position errors. Because single-step BC errors compound over horizon $H_{\text{steps}}$ as $\mathcal{O}(\epsilon H_{\text{steps}}^2)$ when the robot drifts slightly off the expert demonstration track (**covariate shift**), modern policies predict multi-step **action chunks** ($k = 16\text{–}50$ future waypoints, `ACT` / `LeRobot` in `06-robotics.T3.06b`).
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Train a 2-layer nonlinear Behavior Cloning policy in pure standard-library Python (verifying analytical backpropagation gradients against finite differences to $10^{-8}$) to imitate an expert nonlinear PD + gravity-compensation controller $\tau^*(q, \dot{q}) = 4.0(0.5 - q) - 0.8\dot{q} + 1.5\cos(q)$ across 100 robot arm states.
 
 ```python
@@ -101,10 +101,9 @@ BC initial MSE=13.5701 -> trained MSE=0.00523 (grad_err=1.15e-10)
 For a single scalar weight $w = 2.0$, input $x = 3.0$, prediction $\hat{y} = w x = 6.0$, and expert target $y^* = 10.0$, compute (a) the squared error loss $\mathcal{L} = (\hat{y} - y^*)^2$, (b) the exact derivative $\frac{\partial \mathcal{L}}{\partial w} = 2(\hat{y} - y^*)x$, and (c) the updated weight $w_{\text{new}} = w - \eta \frac{\partial \mathcal{L}}{\partial w}$ after one gradient descent step with learning rate $\eta = 0.05$. Verify $\mathcal{L} = 16.0$, $\frac{\partial \mathcal{L}}{\partial w} = -24.0$, and $w_{\text{new}} = 3.20$ ($\pm 10^{-9}$).
 - **If your result differs:** Check the sign of $\hat{y} - y^* = 6.0 - 10.0 = -4.0$, so $\frac{\partial \mathcal{L}}{\partial w} = 2(-4.0)(3.0) = -24.0$, and subtracting $\eta(-24.0)$ *increases* $w$ from $2.0$ to $3.20$ (moving $\hat{y} = 3.20 \times 3.0 = 9.60$ much closer to $y^* = 10.0$!).
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Run the Python Behavior Cloning script above or inspect how learned policies interface with the $1\text{ kHz}$ Operational-Space & CBF safety layer in **Tab 4** and **Tab 6** of the MechaLab Workbench (`npm run dev`).
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 3.7 (`06-robotics.T3.07`), a policy trained in PyTorch / `Hugging Face LeRobot` exports its weights to `ONNX` / `TorchScript` and runs at $30\text{–}50\text{ Hz}$ on the host PC, streaming smooth joint position/action chunks to the $1\text{ kHz}$ `ros2_control` impedance loop:
 ```text
 [Teleop Demonstrations (o_t, a_t*)] ---> [PyTorch BC Training] ---> [Trained Policy pi_theta(o_t) @ 50 Hz]
@@ -113,9 +112,7 @@ No hardware required for this module (`hardware_required: false`). In Step 3.7 (
 ```
 Pass/fail verification in simulation: finite-difference gradient check matches analytical backprop within $< 10^{-7}$ and Behavior Cloning MSE drops from `13.57` to `< 0.01`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
@@ -142,17 +139,17 @@ assert math.isclose(q2_grad, -16.0, rel_tol=1e-9)
 assert math.isclose(q3_wnew, 2.6, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 11. Next modules`.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Loss explodes to `NaN` on the second gradient descent iteration | Learning rate $\eta$ is too large or input features have wildly different scales (e.g., encoder counts in $[0, 16384]$ vs angles in $[-1, 1]$). | Z-score normalize all observations and actions to zero mean and unit variance, and start with $\eta \in [10^{-4}, 10^{-3}]$ using AdamW. |
 | PyTorch gradients accumulate across batches (`grad` grows larger every step) | Forgot to call `optimizer.zero_grad()` before `loss.backward()`. | Always call `optimizer.zero_grad()` at the top of every training batch loop. |
 | Trained policy works on training states but jerks wildly when deployed at $50\text{ Hz}$ on the arm | Trained single-step actions without action chunking or low-level impedance smoothing. | Predict multi-step action chunks (`ACT` / `Diffusion Policy` in `06-robotics.T3.06b`) and track them through a $1\text{ kHz}$ joint/Cartesian impedance filter. |
 
-## 10. Resources
+## 9. Resources
 - **Capuano et al. — *Robot Learning: A Tutorial* (`arXiv:2510.12403`) & Hugging Face `LeRobot` (`github.com/huggingface/lerobot`, `resources/textbooks-and-papers.md`):** Open-source PyTorch tutorial and codebase for Behavior Cloning, ACT, and visuomotor policy training `[VERIFIED 2026-10-15]`.
 - **Track 06 (`06-robotics-and-autonomy/README.md`):** Continues into `06-robotics.T3.06b` and Step 3.7 (`06-robotics.T3.07`) `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`06-robotics.T3.06b`](06-robotics.T3.06b.md) (*Markov Decision Processes (MDPs), Policy Gradient / PPO, Action Chunking & Sim-to-Real Safety Wrappers*).

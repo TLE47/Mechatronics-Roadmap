@@ -19,10 +19,10 @@ safety_level: none
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-Before Step 1.1 (`00-foundations.T1.01`) compares numerical integration stability on an oscillating joint, you must connect physical push (force and torque), inertia (mass and rotational inertia), and stored energy (kinetic and spring potential energy) inside a discrete time-stepping loop. This final Level -1 module turns Newton's Second Law and Hooke's spring law into a 15-line Python simulation whose energy balance you can audit at every step. Already know this? Take the Skip test or Gate test in section 8 first.
+## 1. Why it matters
+Before Step 1.1 (`00-foundations.T1.01`) compares numerical integration stability on an oscillating joint, you must connect physical push (force and torque), inertia (mass and rotational inertia), and stored energy (kinetic and spring potential energy) inside a discrete time-stepping loop. This final Level -1 module turns Newton's Second Law and Hooke's spring law into a 15-line Python simulation whose energy balance you can audit at every step. Already know this? Take the Skip test or Gate test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Attach a heavy wheeled cart to a wall with a coil spring, pull the cart back by $10\text{ cm}$, and let go. At the moment of release, the cart is motionless, so all the energy you put in is stored in the stretched spring coils. The spring pulls the cart toward the wall: force causes acceleration, acceleration builds up velocity, and velocity moves the cart's position. By the time the cart passes the unstretched center mark, the spring force is zero, yet the cart is moving at peak speed—all of the spring's stored energy has sloshed into the moving mass's momentum, which then compresses the spring on the other side.
 
 ## 3. Formalization
@@ -36,7 +36,7 @@ Attach a heavy wheeled cart to a wall with a coil spring, pull the cart back by 
    $$E = \frac{1}{2}m v^2 + \frac{1}{2}k x^2$$
    At release ($x_0 = 0.10\text{ m}, v_0 = 0.0\text{ m/s}$), $E_0 = 0 + 0.5(50.0\text{ N/m})(0.10\text{ m})^2 = 0.2500\text{ J}$, so peak speed at $x = 0$ is $v_{\max} = \sqrt{2 E_0 / m} = \sqrt{0.50\text{ J} / 2.0\text{ kg}} = 0.5000\text{ m/s}$.
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Simulate a $m = 2.0\text{ kg}$ mass on a $k = 50.0\text{ N/m}$ spring released from $x_0 = 0.10\text{ m}$, $v_0 = 0.0\text{ m/s}$ for $2,000$ steps of $\Delta t = 0.0005\text{ s}$ ($1.0\text{ s}$ total) and verify that total energy stays conserved at $0.2500\text{ J}$ and peak speed reaches $0.5000\text{ m/s}$.
 
 ```python
@@ -75,26 +75,23 @@ E_init=0.2500 J, E_final=0.2500 J, v_peak=0.5000 m/s
 Add viscous damping $F_{\text{damp}} = -b v$ with $b = 4.0\text{ N}\cdot\text{s/m}$ to the loop (`f_net_n = -k_nm * x_m - b * v_ms`) and run for `4000` steps ($2.0\text{ s}$). Verify that $> 95\%$ of the initial $0.25\text{ J}$ energy is dissipated as heat (`e_final_j < 0.0125`).
 - **If your result differs:** Check the sign on `-b * v_ms`; writing `+b * v_ms` injects energy (negative damping) and causes the oscillation to explode instead of decay.
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum)** in the MechaLab Workbench to see coupled spring-mass-damper and pendulum energy loops in action.
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Track 05 (`Step 1.6`), a closed-loop PD motor controller creates this exact spring-damper behavior electronically:
 ```text
 [Encoder Angle x, Velocity v] ---> [MCU: tau = -Kp*x - Kd*v] ---> [Motor Torque = Virtual Spring + Damper]
 ```
 Pass/fail verification in simulation: `E_init == 0.2500 J`, `E_final == 0.2500 J`, and `v_peak == 0.5000 m/s`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: complete the Skip test ($\ge 80\%$) to pass this module, or pass the 8-question Gate test ($\ge 80\%$) to test out of the entire Level -1 ladder (`00a`–`00e`).
 
 ### Skip test
 1. `[Recall] [Concept: newtons_second_law_and_torque]` Compute the holding torque $\tau$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 0.01\text{ N}\cdot\text{m}$) required at the shoulder to hold a $2.0\text{ kg}$ payload horizontally at lever arm $r = 0.30\text{ m}$ under gravity $g = 9.81\text{ m/s}^2$.
 2. `[Apply] [Concept: spring_energy_and_power]` Compute the total mechanical energy $E$ in joules (tolerance $\pm 10^{-4}\text{ J}$) of a $m = 1.0\text{ kg}$ mass moving at $v = 2.0\text{ m/s}$ while attached to a spring of stiffness $k = 40.0\text{ N/m}$ stretched by $x = 0.10\text{ m}$.
 3. `[Transfer] [Concept: discrete_kinematics_pos_vel_acc]` Trace one step ($\Delta t = 0.01\text{ s}$) starting from $x_0 = 0.20\text{ m}, v_0 = 0.0\text{ m/s}$ with $m = 1.0\text{ kg}, k = 100.0\text{ N/m}$ using `a = -k*x/m; v += a*dt; x += v*dt`, and report $x_1$ in meters (tolerance $\pm 10^{-6}\text{ m}$).
-4. `[Spaced review -> 00-foundations.T1.00d — Concept: radians_unit_circle_and_atan2]` A force $F = 10.0\text{ N}$ pulls at angle $\phi = 30.0^\circ$ relative to a $r = 0.40\text{ m}$ link. Compute the torque $\tau = r F \sin\phi$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-4}\text{ N}\cdot\text{m}$).
+4. `[Spaced review -> 00-foundations.T1.00d — Concept: radians_unit_circle_and_atan2] [Concept: newtons_second_law_and_torque]` A force $F = 10.0\text{ N}$ pulls at angle $\phi = 30.0^\circ$ relative to a $r = 0.40\text{ m}$ link. Compute the torque $\tau = r F \sin\phi$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-4}\text{ N}\cdot\text{m}$).
 
 **Answer key:**
 ```python
@@ -111,8 +108,9 @@ assert math.isclose(q2_energy, 2.20, rel_tol=1e-9)
 assert math.isclose(q3_x1, 0.198, rel_tol=1e-9)
 assert math.isclose(q4_tau, 2.0, rel_tol=1e-9)
 ```
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2, study `## 2. Intuition first` and `## 3. Formalization`; if you missed Q3, study `## 4. Worked example`. On pass, proceed to `## 10. Next modules`.
 
-### Gate test (take this first; pass to skip the whole ladder)
+### Gate test
 1. `[Concept: python_variables_and_types]` Trace `val = 3.0; val += 2.0; val *= 4.0` and compute `val` (tolerance $\pm 10^{-9}$).
 2. `[Concept: for_while_loops_and_functions]` Compute the integer returned by `sum(k * k for k in range(1, 5))`.
 3. `[Concept: lists_dicts_and_numpy_arrays]` For `arr = [2.0, 4.0, 6.0, 8.0]`, compute `sum(arr) / len(arr) + arr[-1]` (tolerance $\pm 10^{-9}$).
@@ -151,15 +149,15 @@ assert g8 == "C"
 ```
 - **Pass mark:** $\ge 80\%$ ($4/4$ on Skip test; $\ge 7/8$ on Gate test). Missed Gate Q1–Q2: study `00-foundations.T1.00a`; Q3: `00-foundations.T1.00b`; Q4–Q5: `00-foundations.T1.00c`; Q6: `00-foundations.T1.00d`; Q7–Q8: `## 3. Formalization` above.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Simulated spring-mass amplitude grows without bound | Updated `x` using old `v` before updating `v` (unstable forward Euler) with a large `dt`. | Update velocity first (`v += a * dt`) and then update position using the new velocity (`x += v * dt`). |
 | Gravity torque is wrong by a factor of $9.81$ | Multiplied payload mass in $\text{kg}$ directly by lever arm $r$ without multiplying by $g = 9.81\text{ m/s}^2$. | Compute weight force $F_g = m g$ in newtons first, then $\tau = r F_g$. |
 | Energy check drifts rapidly | Used a coarse time step $\Delta t = 0.1\text{ s}$ on a fast oscillator. | Keep $\Delta t \le \frac{1}{50} T_{\text{osc}}$ (e.g., $\Delta t \le 1\text{ ms}$). |
 
-## 10. Resources
+## 9. Resources
 - **Track 00 (`00-foundations/README.md`):** Unlocks Stage 0 (`L0.1`–`L0.3`) and Step 1.1 (`00-foundations.T1.01`) symplectic Euler vs. forward Euler comparison `[VERIFIED 2026-10-15]`.
 - **Bolton — *Mechatronics* (`resources/textbooks-and-papers.md`):** Mechanical translational and rotational springs, masses, and dampers `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to Legacy Step 1.1: [`00-foundations.T1.01`](../00-foundations/README.md#tier-1-beginner--intuitive) (*Calculus as `while` Loops, 2D Rotations & RC Smoothing*).

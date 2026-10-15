@@ -328,4 +328,5 @@ $$
 
 - **Tier 1 (Quadrature Encoders, Pole Pairs & Offset Calibration → Step 1.4):** [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md) *(Ladder Gate Test)*
 - **Tier 2 (Stationary-to-Rotating Reference Frames: Clarke & Park → Step 2.4):** [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) *(Ladder Gate Test)*
+- **Tier 3 (Decoupled Synchronous $d$-$q$ FOC, Min-Max SVPWM & Harmonic LUT → Step 3.4):** [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md) *(Ladder Gate Test)*
 

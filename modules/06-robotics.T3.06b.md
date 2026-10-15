@@ -19,10 +19,10 @@ safety_level: high
 resources_verified: false
 ---
 
-## 1. Why it matters (Why This Matters)
-This is the final bridge module in the Track 06 Tier 3 Embodied AI ladder before Step 3.7 (`06-robotics.T3.07`). While Behavior Cloning (`06-robotics.T3.06a`) imitates human demonstrations, **Reinforcement Learning (RL / PPO)** discovers agile locomotion and contact behaviors in GPU simulators (`Newton`, `Isaac Lab`, `MuJoCo Playground`) by maximizing discounted cumulative reward $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$. And to deploy *either* an RL policy or a Vision-Language-Action (`VLA` / `ACT` / `Diffusion` / `π₀`) policy onto real $48\text{ V}$ hardware without violent jitter or collisions, you must master **Action Chunking with Temporal Ensembling / Real-Time Chunking (`RTC`)**, **Domain Randomization**, and a hard $1\text{ kHz}$ **Sim-to-Real CBF/Impedance Safety Shield**. Already know this? Read `## 7. Safety notes` first, then take the Skip test or the Ladder Gate test in section 8.
+## 1. Why it matters
+This is the final bridge module in the Track 06 Tier 3 Embodied AI ladder before Step 3.7 (`06-robotics.T3.07`). While Behavior Cloning (`06-robotics.T3.06a`) imitates human demonstrations, **Reinforcement Learning (RL / PPO)** discovers agile locomotion and contact behaviors in GPU simulators (`Newton`, `Isaac Lab`, `MuJoCo Playground`) by maximizing discounted cumulative reward $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$. And to deploy *either* an RL policy or a Vision-Language-Action (`VLA` / `ACT` / `Diffusion` / `π₀`) policy onto real $48\text{ V}$ hardware without violent jitter or collisions, you must master **Action Chunking with Temporal Ensembling / Real-Time Chunking (`RTC`)**, **Domain Randomization**, and a hard $1\text{ kHz}$ **Sim-to-Real CBF/Impedance Safety Shield**. Already know this? Read `## Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 In supervised learning (`06-robotics.T3.06a`), a teacher tells the network the exact right action $a_t^*$ on every step. In **Reinforcement Learning (MDP)**, there is no teacher—only a scoreboard (the **reward function** $r_t$, which awards points for reaching the goal and deducts points for excessive torque or falling over). The policy tries actions, sees which rollouts scored higher than expected (positive **Advantage** $\hat{A}_t > 0$), and increases the log-probability of those winning actions while **PPO (Proximal Policy Optimization)** clips the update ratio $r_t(\theta) = \frac{\pi_\theta}{\pi_{\theta_{\text{old}}}}$ to $[1-\epsilon, 1+\epsilon]$ so one lucky rollout doesn't wreck the policy! Second, why do modern manipulation policies (`ACT`, `Diffusion Policy`, `π₀`) predict a whole **chunk of $K=16$ future waypoints** instead of a single step, and blend overlapping chunks with exponential weights $w_i = \exp(-m \cdot i)$ (**Temporal Ensembling / Real-Time Chunking**)? Because blending overlapping predictions smooths out frame-to-frame camera noise and bridges the $30\text{–}100\text{ ms}$ vision inference delay! Finally, because a neural network can output an arbitrary wild number if given an out-of-distribution camera image, **never** wire a neural network directly to raw motor voltage—always wrap it inside a $1\text{ kHz}$ **Safety Shield** that clamps joint step size $|\Delta q_{\text{cmd}}| \le \Delta q_{\max}$, joint limits, and Control Barrier Function (`CBF-QP`) workspace walls!
 
 ## 3. Formalization
@@ -38,7 +38,7 @@ In supervised learning (`06-robotics.T3.06a`), a teacher tells the network the e
      $$q_{d,t} = \operatorname{clip}\!\left(\operatorname{clip}\!\left(a_t^{\text{ens}},\ q - \Delta q_{\max},\ q + \Delta q_{\max}\right),\ q_{\min},\ q_{\max}\right)$$
      followed by torque saturation $|\tau| \le \tau_{\max}$ and CBF barrier enforcement (`05-control.T3.06`).
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Compute the discounted return $G_0$, evaluate the PPO clipped objective for an overly large probability ratio $\rho = 1.50$ ($\epsilon = 0.20$), blend 3 overlapping action chunks via Temporal Ensembling ($m = 0.5$), and verify that the Sim-to-Real Safety Wrapper clamps an out-of-distribution policy spike before it can jerk the joint.
 
 ```python
@@ -86,22 +86,17 @@ G_0=6.04, PPO_clip=2.40, a_ens=0.5015 rad, q_safe=0.58 rad
 Suppose a reward sequence is $r = [0.0, 0.0, 10.0]$ over 3 steps with discount factor $\gamma = 0.95$, and at step $t=0$ the PPO probability ratio is $\rho_0 = 0.60$ with negative advantage $\hat{A}_0 = -3.0$ and clip range $\epsilon = 0.20$. Compute $G_0 = \gamma^2 (10.0)$ and the clipped PPO objective $\min(\rho_0 \hat{A}_0,\ \operatorname{clip}(\rho_0, 0.8, 1.2)\hat{A}_0)$. Verify $G_0 = 9.025$ and $L^{\text{CLIP}}_0 = \min(-1.80, -2.40) = -2.40$ ($\pm 10^{-9}$).
 - **If your result differs:** When $\hat{A}_0 < 0$ and $\rho_0 = 0.60 < 0.80$, $\rho_0 \hat{A}_0 = -1.80$ while the clipped term is $0.80 \times (-3.0) = -2.40$; taking the pessimistic $\min(-1.80, -2.40)$ gives $-2.40$.
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Open **Tab 4 (CBF-QP Safety Filter)** and **Tab 6 (Trajectory & Action Smoothing)** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
 
-## 7. Hardware path (and Safety notes)
+## Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before deploying any learned policy on hardware or taking the Skip/Gate test):**
 > 1. **Never Wire a Neural Policy Directly to Raw Motor Voltage/Current:** A neural network (`BC`, `PPO`, `Diffusion`, `VLA`) has no mathematical guarantee against outputting extreme actions when encountering a camera glare, occlusion, or out-of-distribution state. Every learned policy output **must** pass through a deterministic $1\text{ kHz}$ low-level **Safety Shield** (`safety_shield` + CBF-QP + joint PD torque clamp) running on the real-time controller.
 > 2. **Per-Tick Slew-Rate / Step Clamping (`dq_max`):** Clamp the maximum position deviation $|q_d - q_{\text{meas}}| \le \Delta q_{\max}$ (e.g., $\le 0.05\text{–}0.10\text{ rad}$), velocity $|\dot{q}_d| \le \dot{q}_{\max}$, and torque $|\tau| \le \tau_{\max}$ on every tick, and trip into hardware Safe Torque Off (`STO` / `FAULT`) if the policy heartbeat times out ($> 100\text{ ms}$).
 > 3. **Physical E-Stop in Hand During First Policy Rollout:** Always keep a physical hardware E-stop button in hand and test new checkpoints at $25\%$ torque ceiling in a clear workspace before full-speed evaluation.
 
-**Optional Hardware Path (`hardware_required: false`):** Complete all simulation and assertion gates in `## 6. Sim-first path (Simulation path)` first before energizing any physical hardware stage:
-```text
-[Sim-First Gate Passed] ---> [Current-Limited Bench PSU + E-Stop Ready] ---> [Incremental Hardware Verification]
-```
-
-## 8. Checkpoint (Skip Test & Gate Test)
-Pass criteria: read `## 7. Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
+## 7. Checkpoint
+Pass criteria: read `## Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
 
 ### Skip test
 1. `[Recall] [Concept: mdp_discounted_return_and_policy_gradient]` Compute the discounted return $G_0 = r_0 + \gamma r_1 + \gamma^2 r_2$ (tolerance $\pm 10^{-9}$) for rewards $[2.0, 0.0, 5.0]$ and discount factor $\gamma = 0.80$.
@@ -134,8 +129,7 @@ assert q3_choice == "B"
 assert math.isclose(q4_safety_qd, 0.26, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"                          # Mandatory [SAFETY] 100% required
 ```
-- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `## 7. Safety notes`.
-
+- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `## Safety notes`. On pass, proceed to `## 10. Next modules`.
 ### Gate test
 Covers the complete Track 06 Tier 3 Embodied AI bridge ladder (`06-robotics.T3.06a` $\to$ `06-robotics.T3.06b`) before Step 3.7 (`06-robotics.T3.07`):
 1. `[Concept: neural_network_forward_pass_and_mse_loss]` Compute the Mean-Squared Error $\mathcal{L} = \frac{1}{2}\left((2.0 - 1.0)^2 + (4.0 - 1.0)^2\right)$ (tolerance $\pm 10^{-9}$).
@@ -183,15 +177,15 @@ assert math.isclose(g8_safety_qd, -1.50, rel_tol=1e-9)  # Mandatory [SAFETY] 100
 ```
 - **Pass mark:** $7/8$ overall AND $2/2$ ($100\%$) on `[SAFETY]` questions Q7 and Q8. Remediation: Q1–Q3 $\to$ `06-robotics.T3.06a`; Q4–Q8 $\to$ `06-robotics.T3.06b`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | RL policy achieves huge reward in simulation by vibrating joints at $500\text{ Hz}$, then shakes real hardware to pieces | Reward function omitted action-rate penalty $-\alpha \|a_t - a_{t-1}\|^2$ and torque penalty $-\beta \|\tau_t\|^2$. | Always penalize action smoothness $\|a_t - a_{t-1}\|^2$, joint velocity, and torque in the training reward, and randomize actuator delay in sim. |
 | Arm pauses for $50\text{ ms}$ every $K=16$ steps at the boundary between action chunks | Executed an entire chunk open-loop to completion before starting the next camera inference. | Run inference every $d < K$ steps asynchronously and blend overlapping chunks with Temporal Ensembling / Real-Time Chunking (`RTC`, `arXiv:2506.07339`). |
 | Joint sign or gear offset in real robot differs from `MuJoCo`/`Isaac` model, causing instant runaway on policy start | Mismatched joint zero offset or axis sign between sim URDF and `ros2_control` hardware interface. | Verify in a passive gravity-comp mode that moving each real joint $+0.2\text{ rad}$ moves the simulated twin's joint in the exact same direction before enabling policy output. |
 
-## 10. Resources
+## 9. Resources
 - **Tony Z. Zhao et al. — *Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT)*, *Diffusion Policy* (Chi et al.), & *Real-Time Execution of Action Chunking Flow Policies (RTC)* (Black et al., `arXiv:2506.07339`, `resources/textbooks-and-papers.md`):** Foundational papers behind modern action-chunking visuomotor policies `[UNVERIFIED]`.
 - **Track 06 (`06-robotics-and-autonomy/README.md`):** Directly continues into Step 3.7 (`06-robotics.T3.07`) `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`07-systems.T3.06a`](07-systems.T3.06a.md) or legacy **Step 3.7 (`06-robotics.T3.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-3-advanced--production).

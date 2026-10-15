@@ -19,10 +19,10 @@ safety_level: low
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-Resistors respond instantaneously to voltage changes, but every real motor drive is dominated by two energy-storage components: **capacitors** (which store electric-field energy to stabilize power rails and filter noisy sensors) and **inductors** (the copper coils inside every motor, which store magnetic-field energy and unleash destructive high-voltage flyback spikes if switched off without a return path). Understanding $I_C = C\frac{dV}{dt}$ and $V_L = L\frac{dI}{dt}$ prepares you directly for PWM switching in `01-electronics.T1.01b` and Step 1.2 (`01-electronics.T1.02`). Already know this? Take the Skip test in section 8 first.
+## 1. Why it matters
+Resistors respond instantaneously to voltage changes, but every real motor drive is dominated by two energy-storage components: **capacitors** (which store electric-field energy to stabilize power rails and filter noisy sensors) and **inductors** (the copper coils inside every motor, which store magnetic-field energy and unleash destructive high-voltage flyback spikes if switched off without a return path). Understanding $I_C = C\frac{dV}{dt}$ and $V_L = L\frac{dI}{dt}$ prepares you directly for PWM switching in `01-electronics.T1.01b` and Step 1.2 (`01-electronics.T1.02`). Already know this? Take the Skip test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Think of a **capacitor** as a rubber diaphragm stretched across a water pipe—or a tiny rechargeable pressure tank mounted right next to a thirsty valve. Voltage across a capacitor cannot jump instantaneously ($I_C = C\frac{dV}{dt}$): when a microcontroller or H-bridge suddenly gulps a spike of current, a **decoupling capacitor** right next to its pins supplies that instant gulp before the long supply wires can droop. Conversely, think of an **inductor** (a motor coil) as a heavy paddlewheel spinning inside the pipe. Because of magnetic inertia, **current through an inductor cannot stop instantaneously** ($V_L = L\frac{dI}{dt}$). If you slam a valve shut on a spinning paddlewheel, the water hammers against the closed valve with a massive pressure spike (**inductive flyback**) that bursts the pipe—unless you provide a **freewheeling diode** loop so the current can coast down smoothly through its own coil resistance.
 
 ## 3. Formalization
@@ -36,7 +36,7 @@ Think of a **capacitor** as a rubber diaphragm stretched across a water pipe—o
    $$V_L = L \frac{dI}{dt}$$
    Interrupting $I = 2.0\text{ A}$ in $L = 5.0\text{ mH}$ over $\Delta t = 1.0\ \mu\text{s}$ without a diode produces $|V_L| = 0.005 \times (2.0 / 10^{-6}) = 10{,}000\text{ V}$, punching through any silicon transistor! Placing a freewheeling diode across the coil clamps the switch node to $V_{\text{bus}} + V_f$ ($\approx V_{\text{bus}} + 0.7\text{ V}$).
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Compute the RC charging curve at $t = 1\tau$ and $t = 5\tau$ for $R = 10\text{ k}\Omega, C = 0.1\ \mu\text{F}$ ($\tau = 1.0\text{ ms}$), and compare the unclamped inductive flyback spike of a $L = 3.0\text{ mH}$ coil carrying $I = 2.0\text{ A}$ opened in $\Delta t = 0.5\ \mu\text{s}$ against a diode-clamped switch node on a $12.0\text{ V}$ bus.
 
 ```python
@@ -74,10 +74,9 @@ tau=1.0 ms, fc=159.15 Hz, Unclamped flyback=12000 V vs Clamped=12.7 V
 Calculate the minimum bulk decoupling capacitance $C_{\min}$ in microfarads ($\mu\text{F}$) needed to keep a $12.0\text{ V}$ motor bus from drooping by more than $\Delta V = 0.25\text{ V}$ during a $\Delta I = 3.0\text{ A}$ current transient lasting $\Delta t = 20\ \mu\text{s}$ ($20 \times 10^{-6}\text{ s}$). Verify $C_{\min} = \frac{\Delta I \cdot \Delta t}{\Delta V} = 240.0\ \mu\text{F}$.
 - **If your result differs:** Check your unit conversion from farads to microfarads: $\frac{3.0 \times 20\times 10^{-6}}{0.25} = 0.00024\text{ F} = 240.0\ \mu\text{F}$.
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Simulate an RC step response and an inductive coil turn-off with and without a flyback diode in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`Circuits -> Inductors -> Inductive Kickback`).
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). When wiring Electrolytic bulk capacitors ($100\text{–}470\ \mu\text{F}$) in Step 1.2 (`01-electronics.T1.02`), always align the negative stripe (`-`) with $\text{GND}$ and choose a voltage rating $\ge 2\times V_{\text{bus}}$ (e.g., $\ge 25\text{ V}$ capacitor for a $12\text{ V}$ bus):
 ```text
 [+12V Bus] ---+--- [100 uF Electrolytic (Stripe to GND)] ---+--- [100 nF Ceramic] ---+---> [H-Bridge VM Pin]
@@ -85,9 +84,10 @@ No hardware required for this module (`hardware_required: false`). When wiring E
 ```
 Pass/fail verification in simulation: `tau == 1.0 ms`, `fc == 159.15 Hz`, `v_flyback_unclamped == 12000 V`, and `v_flyback_clamped == 12.7 V`.
 
+## Safety notes
 > **⚠️ Bench Safety Note (`safety_level: low`):** Always verify probe placement (`V/Ohm` voltage port, never the `10A` shunt port in parallel) and set your CC/CV bench power supply current limit ($\le 0.5\text{ A}$) before energizing any breadboard or sensor circuit.
 
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
@@ -114,17 +114,17 @@ assert math.isclose(q2_pct_1tau, 63.21205588, abs_tol=1e-2)
 assert math.isclose(q3_energy_j, 0.05, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3; Q4, study `## 3. Formalization` item 1. On pass, proceed to `## 11. Next modules`.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3; Q4, study `## 3. Formalization` item 1. On pass, proceed to `## 10. Next modules`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Electrolytic capacitor pops or vents hot electrolyte | Inserted polarized electrolytic capacitor backward (`-` stripe on $+V_{\text{bus}}$) or exceeded its voltage rating. | Always connect the negative `-` stripe (shorter lead) to $\text{GND}$ and derate capacitor voltage by $\ge 2\times V_{\text{bus}}$. |
 | Flyback diode gets smoking hot and shorts out when power is applied | Installed the freewheeling diode forward-biased from $+V_{\text{bus}}$ to $\text{GND}$ instead of reverse-biased (cathode stripe to $+V_{\text{bus}}$). | Orient the diode cathode stripe toward $+V_{\text{bus}}$ so it blocks current during normal ON states and conducts only coil flyback current at turn-off. |
 | Decoupling capacitor placed $15\text{ cm}$ away on the far corner of the breadboard | Long jumper wires add $\sim 100\text{ nH}$ of parasitic inductance that blocks fast current delivery. | Place the $100\text{ nF}$ ceramic capacitor within $<1\text{ cm}$ of the IC's $V_{\text{CC}}$ and $\text{GND}$ pins. |
 
-## 10. Resources
+## 9. Resources
 - **Horowitz & Hill — *The Art of Electronics* (3e, Ch. 1, `resources/textbooks-and-papers.md`):** Capacitive decoupling, RC filters, and inductive kickback protection `[VERIFIED 2026-10-15]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Prepares directly for MOSFET switching in `01-electronics.T1.01b` and Step 1.2 (`01-electronics.T1.02`) `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to [`01-electronics.T1.01b`](01-electronics.T1.01b.md) (*Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal*).

@@ -19,10 +19,10 @@ safety_level: none
 resources_verified: true
 ---
 
-## 1. Why it matters (Why This Matters)
-This is the final bridge module in the Track 04 Tier 1 ladder before Step 1.5 (`04-embedded.T1.05`). Calling `delay(100)` freezes the CPU for $100\text{ ms}$—during that time your robot is blind to encoder pulses, limit switches, and PID loops. Replacing `delay()` with a non-blocking tick scheduler (`now_us - last_us >= PERIOD_US`), an `enum` finite state machine, and a hardware timer **Interrupt Service Routine (ISR)** with `volatile` shared variables gives your robot deterministic $1\text{ kHz}$ reflexes. Already know this? Take the Skip test or the Ladder Gate test in section 8 first.
+## 1. Why it matters
+This is the final bridge module in the Track 04 Tier 1 ladder before Step 1.5 (`04-embedded.T1.05`). Calling `delay(100)` freezes the CPU for $100\text{ ms}$—during that time your robot is blind to encoder pulses, limit switches, and PID loops. Replacing `delay()` with a non-blocking tick scheduler (`now_us - last_us >= PERIOD_US`), an `enum` finite state machine, and a hardware timer **Interrupt Service Routine (ISR)** with `volatile` shared variables gives your robot deterministic $1\text{ kHz}$ reflexes. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
-## 2. Intuition first (Mental Model)
+## 2. Intuition first
 Imagine a chef cooking three dishes at once. A **`delay()` loop** is like staring at a pot of water for 10 minutes with your eyes glued to it while the toast burns and the doorbell goes unanswered. A **non-blocking tick scheduler** (`micros() - last_us >= 1000`) is glancing at the wall clock on every pass through the kitchen: if $1000\ \mu\text{s}$ has elapsed, you stir the pot for $5\ \mu\text{s}$ and immediately check the next station. A **hardware interrupt (ISR)** is a smoke alarm wired directly to your reflex nervous system—the instant the hardware timer hits zero, the CPU pauses whatever background line it was running, executes the short ISR function in a few microseconds, sets a flag on a shared whiteboard, and resumes the background loop. Marking that flag **`volatile`** tells the C++ compiler: *"Do not cache this variable in a register—another context (the ISR) can change it behind your back at any nanosecond!"*
 
 ## 3. Formalization
@@ -34,7 +34,7 @@ Imagine a chef cooking three dishes at once. A **`delay()` loop** is like starin
    $$U_{\text{isr}} = \frac{t_{\text{exec}}}{T_{\text{isr}}} = t_{\text{exec}} \cdot f_{\text{isr}}$$
    Substituting $t_{\text{exec}} = 45\ \mu\text{s}$ at $f_{\text{isr}} = 1000\text{ Hz}$ ($T_{\text{isr}} = 1000\ \mu\text{s}$) gives $U_{\text{isr}} = 45 / 1000 = 4.5\%$. Any variable written inside an ISR and read in `loop()` must be declared `volatile`.
 
-## 4. Worked example (Worked Example & Code)
+## 4. Worked example
 Simulate $10\text{ ms}$ ($10{,}000\ \mu\text{s}$) of a microcontroller running a $1\text{ kHz}$ ($1000\ \mu\text{s}$) control task and a $100\text{ Hz}$ ($10{,}000\ \mu\text{s}$) telemetry task concurrently alongside an `IDLE -> HOMING -> RUN -> FAULT` state machine with zero `delay()` calls.
 
 ```python
@@ -79,34 +79,27 @@ ctrl_runs=10, telem_runs=1, final_state=FAULT
 Calculate the maximum allowable ISR execution time $t_{\text{exec,max}}$ in microseconds ($\mu\text{s}$) if a $f_{\text{isr}} = 10\text{ kHz}$ ($T_{\text{isr}} = 100\ \mu\text{s}$) current-loop ISR must consume no more than $U_{\max} = 25\%$ ($0.25$) of total CPU time so that $75\%$ remains for telemetry and state machines. Verify $t_{\text{exec,max}} = 25.0\ \mu\text{s}$.
 - **If your result differs:** Multiply the period $T_{\text{isr}} = 10^6 / 10000 = 100\ \mu\text{s}$ by $0.25$ ($100 \times 0.25 = 25.0\ \mu\text{s}$).
 
-## 6. Sim-first path (Simulation path)
+## 6. Simulation path
 Open **Tab 8 (Real-Time Concurrency & ISR Preemption)** in the MechaLab Workbench (`npm run dev`) or run a non-blocking `micros()` sketch on the [Wokwi Simulator](https://wokwi.com/).
 
-## 7. Hardware path (and Safety notes)
 No hardware required for this module (`hardware_required: false`). In Step 1.5 (`04-embedded.T1.05`), you will toggle a physical GPIO pin at entry and exit of the $1\text{ kHz}$ timer ISR on an `ESP32` or `STM32 Nucleo` and measure pulse width $t_{\text{exec}}$ and period $T_{\text{isr}} = 1000\ \mu\text{s}$ with a logic analyzer (`PulseView`):
 ```text
 [Timer ISR Entry: GPIO HIGH] ---> (PID Math: ~15 us) ---> [Timer ISR Exit: GPIO LOW] ---> [Logic Analyzer]
 ```
 Pass/fail verification in simulation: `ctrl_runs == 10`, `telem_runs == 1`, and `final_state == "FAULT"`.
 
-> **Safety Note (`safety_level: none`):** Pure simulation, math, and software module (`hardware_required: false`); no physical energization hazards.
-
-## 8. Checkpoint (Skip Test & Gate Test)
+## 7. Checkpoint
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test to pass this module, or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.5 (`04-embedded.T1.05`).
 
 ### Skip test
 1. `[Recall] [Concept: non_blocking_tick_scheduler]` If a main loop calls `delay(50)` ($50\text{ ms}$) for an LED blink and `delay(20)` ($20\text{ ms}$) for a sensor wait, what is the maximum loop execution frequency $f_{\text{loop}} = \frac{1}{0.050 + 0.020}$ in $\text{Hz}$ (tolerance $\pm 0.01\text{ Hz}$)?
 2. `[Apply] [Concept: hardware_isr_and_volatile_contract]` Compute the CPU utilization percentage $U_{\text{isr}}\% = 100 \times \frac{t_{\text{exec}}}{T_{\text{isr}}}$ (tolerance $\pm 10^{-6}$) for a $1\text{ kHz}$ ($1000\ \mu\text{s}$) timer ISR that takes $t_{\text{exec}} = 35\ \mu\text{s}$.
-3. `[Transfer] [Concept: hardware_isr_and_volatile_contract]` Why must a global flag `bool tick_ready` written inside a hardware timer ISR and polled inside `main()` be declared `volatile bool tick_ready` in C/C++?
+3. `[Transfer] [Concept: finite_state_machine_switch_enum]` An actuator FSM running inside a $f_{\text{isr}} = 20\text{ kHz}$ ($T_{\text{isr}} = 50\ \mu\text{s}$) timer ISR transitions from `RUN` to `FAULT` (forcing `pwm_cmd = 0.0`) after $N_{\text{debounce}} = 3$ consecutive overcurrent samples. Compute the total fault-detection latency $t_{\text{fault}} = N_{\text{debounce}} / f_{\text{isr}}$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$).
+4. `[Spaced review -> 04-embedded.T1.04a — Concept: c_fixed_width_integer_types_and_overflow] [Concept: hardware_isr_and_volatile_contract]` Why must a global flag `bool tick_ready` written inside a hardware timer ISR and polled inside `main()` be declared `volatile bool tick_ready` in C/C++?
    - **A.** To make the variable use flash memory instead of RAM.
    - **B.** To prevent the compiler optimizer (`-O2`/`-O3`) from caching `tick_ready` in a CPU register and turning `while (!tick_ready)` into an infinite loop.
    - **C.** To automatically disable interrupts during math operations.
    - **D.** To convert the boolean into a 32-bit float.
-4. `[Spaced review -> 04-embedded.T1.04a — Concept: c_fixed_width_integer_types_and_overflow] [Concept: finite_state_machine_switch_enum]` In a non-blocking actuator state machine (`IDLE`, `HOMING`, `RUN`, `FAULT`), what must the `FAULT` state do on every control tick?
-   - **A.** Call `delay(5000)` and restart `RUN` automatically.
-   - **B.** Command zero actuator output (`pwm = 0.0` / disable bridge) immediately and remain latched until an explicit fault-clear condition is met.
-   - **C.** Double the proportional gain $K_p$.
-   - **D.** Disable the watchdog timer.
 
 **Answer key:**
 ```python
@@ -114,15 +107,15 @@ import math
 
 q1_floop_hz = 1.0 / (0.050 + 0.020)
 q2_cpu_pct = 100.0 * (35.0 / 1000.0)
-q3_choice = "B"
+q3_tfault_us = (3.0 / 20_000.0) * 1e6
 q4_choice = "B"
-
 assert math.isclose(q1_floop_hz, 14.2857, abs_tol=1e-2)
 assert math.isclose(q2_cpu_pct, 3.5, rel_tol=1e-9)
-assert q3_choice == "B"
+assert math.isclose(q3_tfault_us, 150.0, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 3; Q4, study `## 3. Formalization` item 2.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 3; if you missed Q3, study `## 3. Formalization` item 2. On pass, proceed to `## 10. Next modules`.
+
 
 ### Gate test
 Covers the complete Track 04 Tier 1 bridge ladder (`04-embedded.T1.04a` $\to$ `04-embedded.T1.04b`) before Step 1.5 (`04-embedded.T1.05`):
@@ -171,15 +164,15 @@ assert g8_choice == "A"
 ```
 - **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q5 $\to$ `04-embedded.T1.04a`; Q6–Q8 $\to$ `04-embedded.T1.04b`.
 
-## 9. Common mistakes
+## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | `while (!isr_flag)` hangs forever when compiled with `-O2` | Forgot `volatile` on `isr_flag`. | Declare shared ISR flags as `volatile bool isr_flag = false;`. |
 | Scheduler stops firing after ~71.6 minutes (`uint32_t` `micros()` rollover) | Wrote `if (now_us >= next_us)` instead of unsigned subtraction `if ((uint32_t)(now_us - last_us) >= PERIOD_US)`. | Always subtract unsigned timestamps before comparing against `PERIOD_US`. |
 | Control loop jitter spikes to milliseconds whenever telemetry prints | Called `Serial.print()` inside the timer ISR or printed long ASCII strings at $9600\text{ bps}$. | Keep ISRs under $20\ \mu\text{s}$ and send compact binary structs from `loop()` at $\ge 115200\text{ bps}$ (Step 1.5). |
 
-## 10. Resources
+## 9. Resources
 - **Lee & Seshia — *Introduction to Embedded Systems* (`leeseshia.org`, `resources/textbooks-and-papers.md`):** Free textbook covering finite state machines, interrupts, and `volatile` memory semantics `[VERIFIED 2026-10-15]`.
 - **Track 04 (`04-embedded-and-realtime/README.md`):** Directly continues into Step 1.5 (`04-embedded.T1.05`) `[VERIFIED 2026-10-15]`.
-## 11. Next modules
+## 10. Next modules
 - Proceed to legacy **Step 1.5 (`04-embedded.T1.05`)** in [`04-embedded-and-realtime/README.md`](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
