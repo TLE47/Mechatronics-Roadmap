@@ -68,6 +68,9 @@ EXPECTED_FILES = [
     "scripts/run_all_labs.py",
     "scripts/audit_math.mjs",
     "package.json",
+    "package-lock.json",
+    "vite.config.ts",
+    "src/main.tsx",
     "src/App.tsx",
     "src/curriculumData.ts",
     ".github/workflows/ci.yml",
@@ -616,7 +619,14 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
         if not fpath.is_file():
             errors.append(f"Missing expected file: {rel}")
 
-    md_files = sorted(repo_root.rglob("*.md"))
+    # Only the repository's own Markdown: a local or CI `npm install` drops hundreds of
+    # dependency READMEs under node_modules/, and the build output belongs to Vite.
+    skipped = {"node_modules", ".git", "dist"}
+    md_files = sorted(
+        p
+        for p in repo_root.rglob("*.md")
+        if not skipped.intersection(p.relative_to(repo_root).parts)
+    )
     anchors_cache: dict[Path, set[str]] = {}
     for md_path in md_files:
         anchors_cache[md_path.resolve()] = extract_anchors(md_path.read_text(encoding="utf-8"))

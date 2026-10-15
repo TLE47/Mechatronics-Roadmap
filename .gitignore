@@ -11,6 +11,11 @@ build/
 *.dSYM/
 lab04_rt_test
 
+# Node / Vite
+node_modules/
+dist/
+*.tsbuildinfo
+
 # OS & Editor files
 .DS_Store
 *.swp

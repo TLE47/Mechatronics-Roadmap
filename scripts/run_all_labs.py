@@ -40,17 +40,25 @@ CPP_LABS = [
 ]
 
 
-def find_cpp_cmd(cpp_source: Path, out_bin: Path) -> list[str]:
+def cpp_commands(cpp_source: Path, out_bin: Path) -> list[list[str]]:
+    """Every plausible C++20 invocation for this machine, best first.
+
+    The compiler's own headers are used whenever they work. A CLT-only macOS install can
+    be left with a clang++ that cannot find <algorithm>, and pointing `-isystem` at that
+    SDK's libc++ unconditionally is what made the macOS CI runner fail with `reference to
+    unresolved using declaration` in <__type_traits/is_trivially_copyable.h> - so the SDK
+    headers are only offered when the default invocation does not compile.
+    """
     cxx = os.environ.get("CXX") or shutil.which("clang++") or shutil.which("g++")
     if not cxx:
         raise RuntimeError("No C++20 compiler (clang++ or g++) found on PATH")
-    cmd = [cxx, "-std=c++20", "-O3", "-Wall", "-Wextra", "-Werror", "-pthread"]
-    # On macOS CommandLineTools, add explicit SDK C++ header path if present
-    macos_cxx_inc = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1")
-    if sys.platform == "darwin" and macos_cxx_inc.is_dir():
-        cmd.extend(["-isystem", str(macos_cxx_inc)])
-    cmd.extend([str(cpp_source), "-o", str(out_bin)])
-    return cmd
+    base = [cxx, "-std=c++20", "-O3", "-Wall", "-Wextra", "-Werror", "-pthread"]
+    tail = [str(cpp_source), "-o", str(out_bin)]
+    commands = [base + tail]
+    sdk_cxx = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1")
+    if sys.platform == "darwin" and sdk_cxx.is_dir():
+        commands.append(base + ["-isystem", str(sdk_cxx)] + tail)
+    return commands
 
 
 def run_suite(repo_root: Path) -> dict[str, Any]:
@@ -83,8 +91,17 @@ def run_suite(repo_root: Path) -> dict[str, Any]:
         for cpp_name, cpp_rel in CPP_LABS:
             cpp_src = repo_root / cpp_rel
             bin_path = Path(tmpdir) / f"{cpp_name}_bin"
-            compile_cmd = find_cpp_cmd(cpp_src, bin_path)
-            comp = subprocess.run(compile_cmd, capture_output=True, text=True, timeout=30, check=False)
+            commands = cpp_commands(cpp_src, bin_path)
+            compile_cmd = commands[0]
+            comp = subprocess.run(compile_cmd, capture_output=True, text=True, timeout=60, check=False)
+            if comp.returncode != 0:
+                for fallback in commands[1:]:
+                    retry = subprocess.run(
+                        fallback, capture_output=True, text=True, timeout=60, check=False
+                    )
+                    if retry.returncode == 0:
+                        comp, compile_cmd = retry, fallback
+                        break
             if comp.returncode != 0:
                 all_ok = False
                 results.append(
@@ -92,6 +109,7 @@ def run_suite(repo_root: Path) -> dict[str, Any]:
                         "lab": cpp_name,
                         "ok": False,
                         "stage": "compile",
+                        "command": " ".join(compile_cmd),
                         "stderr": comp.stderr.strip(),
                     }
                 )

@@ -46,24 +46,46 @@ jobs:
       - name: Run all 12 Python & C++20 Reference Simulations, CAD, PCB EDA & Firmware Tests
         run: python3 scripts/run_all_labs.py --verbose
 
+  build-workbench:
+    name: Typecheck & build the Vite workbench bundle
+    needs: verify-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install the locked dependencies
+        run: npm ci
+
+      - name: Typecheck and build the production bundle (base /Mechatronics-Roadmap/)
+        run: npm run build
+
+      - name: Configure Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/configure-pages@v5
+
+      - name: Upload the built workbench as the Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
   deploy-pages:
     name: Deploy MechaLab Workbench to GitHub Pages
-    needs: verify-and-test
+    needs: build-workbench
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "."
-      - name: Deploy to GitHub Pages
+      - name: Deploy the built bundle to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
