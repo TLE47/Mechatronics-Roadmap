@@ -59,6 +59,15 @@ prevent. The loose read is gone, and both tools now print the named-marker count
 hole it leaves; a module still carrying it scores **0** on every item, and `scripts/lint_modules.py`
 rejects it outright.
 
+**One plant.** An advanced exercise runs on the Tier 1 capstone's own arm, not on fresh toy numbers:
+`resources/plants/mechalab_plant.py` (executable model) and `resources/plants/tier1_arm_motor.yaml`
+(values with provenance) are embedded into the workbench by `scripts/generate_plant_data.py`, so
+`import mechalab_plant` works in the browser runner. `tests/test_plant.py` proves the YAML and the
+module agree, that every value cites a lesson, and that the plant reproduces the capstone's published
+numbers (0.0000 mm IK→FK, 2.40 mm peak / 0.91 mm RMS tracking error, 412 dropped frames at
+115.2 kbaud). **Not yet instrumented:** whether a given module actually uses it — see
+[`resources/plants/README.md`](../resources/plants/README.md).
+
 ## 2. The two metadata blocks
 
 ```yaml

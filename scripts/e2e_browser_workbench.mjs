@@ -393,12 +393,63 @@ async function runRealBrowserE2ETests() {
       console.log(
         '  ok formatting is graded separately from behaviour: 03.1 keeps its padded table, P.6 accepts re-spaced output'
       );
+
+      // 11. The shared plant is importable inside Pyodide. An exercise may `import mechalab_plant`
+      // and get the arm the Tier 1 capstone builds - the same numbers CI tests on the host, which is
+      // the whole point of one plant every exercise shares.
+      const plantProbe = `import mechalab_plant as plant
+
+print(plant.plant_summary())
+print("gravity holding torque at q1=q2=0: %.4f, %.4f N*m" % plant.gravity_torque(0.0, 0.0))
+run = plant.simulate_arm(steps=1000)
+print("tip err max=%.2f mm rms=%.2f mm" % (run["max_dyn_err_mm"], run["rms_dyn_err_mm"]))
+print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.001, 115200), plant.simulate_uart_tx(1000, 20, 0.001, 500000)))
+`;
+      await formattingPage.getByTestId('textarea-python-code').fill(plantProbe);
+      await formattingPage.getByTestId('btn-run-verify').click();
+      await formattingPage.waitForFunction(
+        () =>
+          document
+            .querySelector('[data-testid="pre-actual-stdout"]')
+            ?.textContent?.includes('encoder=4096 cpr'),
+        { timeout: 30000 }
+      );
+      const plantStdout = (await formattingPage.getByTestId('pre-actual-stdout').textContent()) || '';
+      assert(
+        plantStdout.includes('2-DOF planar arm: L1=0.10 m, L2=0.10 m'),
+        `the shared plant must be importable in the browser, got: ${plantStdout}`
+      );
+      assert(
+        plantStdout.includes('I=(0.0080, 0.0030) kg*m^2') &&
+          plantStdout.includes('tau_limit=2.5 N*m'),
+        `the in-browser plant must carry the capstone's joint values, got: ${plantStdout}`
+      );
+      assert(
+        plantStdout.includes('gravity holding torque at q1=q2=0: 0.3188, 0.0736 N*m'),
+        `the in-browser plant must reproduce the capstone's gravity torques, got: ${plantStdout}`
+      );
+      assert(
+        plantStdout.includes('tip err max=2.40 mm rms=0.91 mm'),
+        `the in-browser plant must reproduce the capstone's tracking error, got: ${plantStdout}`
+      );
+      assert(
+        plantStdout.includes('uart dropped @115.2k=412, @500k=0'),
+        `the in-browser plant must reproduce the capstone's UART budget, got: ${plantStdout}`
+      );
+      assert.equal(
+        (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+        '2 / 36 Verified',
+        'Using the shared plant must not award lesson verification on its own'
+      );
+      console.log(
+        '  ok the shared plant imports inside Pyodide and reproduces the capstone numbers in the browser'
+      );
     } finally {
       await formattingContext.close();
     }
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs & whitespace-vs-formatting grading).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading & shared-plant import).'
     );
   } finally {
     await browser.close();

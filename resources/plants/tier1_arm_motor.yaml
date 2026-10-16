@@ -1,0 +1,56 @@
+# tier1_arm_motor.yaml - the one plant every MechaLab exercise shares.
+#
+# Values only, flat dotted keys, one per line, each with the lesson that states it. This file is the
+# documentation and provenance; the executable single source of truth is the module next to it,
+# `resources/plants/mechalab_plant.py`, because the browser workbench has to ship the module into
+# Pyodide as Python source (there is no YAML parser there). `tests/test_plant.py` fails if the two
+# drift apart, and fails any row whose citation is missing or unrecognisable.
+#
+# Rule: never invent a number in this file. Every value is quoted from a lesson or measured on the
+# bench, and the citation says which. An exercise that needs a value this file does not carry states
+# it inline, with its own source.
+#
+# Units are SI: metres, kilograms, seconds, radians, newton-metres, volts, amperes, ohms, henries,
+# kilograms-square-metres.
+
+arm.l1_m: 0.10                          # shoulder link length - capstone 08.1 Idea 1 (reach 0.20 m)
+arm.l2_m: 0.10                          # elbow link length - capstone 08.1 Idea 1
+arm.lc1_m: 0.05                         # shoulder link centre of mass - capstone 08.1 Stage 1 worksheet
+arm.lc2_m: 0.05                         # elbow link centre of mass - capstone 08.1 Stage 1 worksheet
+arm.m1_kg: 0.20                         # shoulder link mass - capstone 08.1 Stage 1 worksheet
+arm.m2_kg: 0.15                         # elbow link mass - capstone 08.1 Stage 1 worksheet
+arm.g_m_s2: 9.81                        # gravitational acceleration - used by every Pass 1 lesson
+
+joint.inertia_1_kg_m2: 0.008            # I_1 shoulder, motor + gearbox + link reflected - 08.1 Starter Code
+joint.inertia_2_kg_m2: 0.003            # I_2 elbow - capstone 08.1 Starter Code plant loop
+joint.damping_1_nm_s_rad: 0.04          # b_1 shoulder viscous damping - capstone 08.1 Starter Code
+joint.damping_2_nm_s_rad: 0.02          # b_2 elbow viscous damping - capstone 08.1 Starter Code
+
+limits.torque_nm: 2.5                   # +/- tau clamp on both joints - capstone 08.1 Idea 2, Stage 3 C
+
+control.kp_1: 18.0                      # shoulder proportional gain - capstone 08.1 Starter Code
+control.kd_1: 0.60                      # shoulder derivative gain - capstone 08.1 Starter Code
+control.kp_2: 12.0                      # elbow proportional gain - capstone 08.1 Starter Code
+control.kd_2: 0.35                      # elbow derivative gain - capstone 08.1 Starter Code
+
+timing.dt_s: 0.001                      # 1 kHz control and plant step - capstone 08.1 Goal
+timing.ticks: 1000                      # one full figure-8 run - capstone 08.1 Goal
+
+disturbance.start_s: 0.40               # payload pulse window opens - capstone 08.1 Idea 2
+disturbance.end_s: 0.60                 # payload pulse window closes - capstone 08.1 Idea 2
+disturbance.torque_1_nm: -0.15          # shoulder payload torque - capstone 08.1 Idea 2
+disturbance.torque_2_nm: -0.08          # elbow payload torque - capstone 08.1 Idea 2
+
+trajectory.x0_m: 0.12                   # figure-8 centre x - capstone 08.1 Idea 1 (Lemniscate of Gerono)
+trajectory.y0_m: 0.00                   # figure-8 centre y - capstone 08.1 Idea 1
+trajectory.ax_m: 0.03                   # x semi-amplitude - capstone 08.1 Idea 1
+trajectory.ay_m: 0.04                   # y semi-amplitude - capstone 08.1 Idea 1
+trajectory.freq_hz: 0.5                 # figure-8 frequency - capstone 08.1 Idea 1
+
+encoder.cpr: 4096                       # counts per shaft revolution - capstone 08.1 Stage 3 Broken B
+encoder.bits: 12                        # AS5600 on-axis magnetic encoder resolution - capstone Check 2
+
+telemetry.frame_bytes: 20               # one telemetry frame - capstone 08.1 Idea 2, Lesson 04.2
+telemetry.tx_ring_bytes: 256            # UART TX ring buffer - capstone 08.1 Idea 2
+telemetry.baud_that_overflows: 115200   # overflows at 1 kHz: capstone 08.1 Idea 2 (412 dropped frames)
+telemetry.baud_that_fits: 500000        # keeps up at 1 kHz: capstone 08.1 Idea 2 (zero dropped frames)

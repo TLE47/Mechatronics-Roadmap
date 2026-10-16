@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
+import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import {
   Play,
@@ -74,10 +75,21 @@ self.onmessage = async (event) => {
       cdnUrl,
       maxSteps = 400000,
       timeoutSec = 4.0,
+      plantSource,
+      plantFilename,
     } = msg;
 
     try {
       const py = await ensurePyodideLoaded(cdnUrl);
+      // Install the shared plant once per runtime: one file on the Pyodide filesystem and one
+      // importable name, so every Tier 2 and Tier 3 exercise works the same arm the Tier 1
+      // capstone builds (resources/plants/mechalab_plant.py, embedded by
+      // scripts/generate_plant_data.py).
+      if (plantSource && plantFilename && py.__mechalabPlantInstalled !== plantFilename) {
+        py.FS.writeFile('/' + plantFilename, plantSource);
+        py.runPython('import sys\\nif "/" not in sys.path:\\n    sys.path.insert(0, "/")\\n');
+        py.__mechalabPlantInstalled = plantFilename;
+      }
       const capturedOut = [];
       const capturedErr = [];
       let captureEnabled = true;
@@ -503,6 +515,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           cdnUrl,
           maxSteps,
           timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
+          plantSource: MECHALAB_PLANT_PY,
+          plantFilename: MECHALAB_PLANT_FILENAME,
         });
       });
 
