@@ -243,7 +243,7 @@ flowchart TB
   - 🔗 [ALOHA 2 (`aloha-2.github.io`) & Pollen Robotics `Reachy 2` (`pollen-robotics.com`)](https://aloha-2.github.io/) — *Open-source bimanual and humanoid manipulation hardware blueprints and `ros2_control` stacks.*
   - 🔗 [Pinocchio C++/Python Rigid Body Dynamics Library](https://stack-of-tasks.github.io/pinocchio/) — *Computes 6-DOF RNEA, CRBA,* $J(q)$ *, and* $\Lambda(q)$ *in* $< 5\ \mu\text{s}$ *.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 2: 6-DOF Spatial PoE & RNEA** and **Tab 5: URDF / MuJoCo & STO** to inspect the 6-DOF arm's space screw axes $\mathcal{S}\kern0pt_1 \dots \mathcal{S}\kern0pt_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).
+  - *Task:* Open **Tab 5: URDF / MuJoCo & STO** and **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench (`npm run dev`), or run `python3 08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py` to inspect the 6-DOF arm's space screw axes $\mathcal{S}\kern0pt_1 \dots \mathcal{S}\kern0pt_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).
   - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)/SE(3)$ Lie groups in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), Screw PoE & $\mathcal{O}(n)$ RNEA in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), and Khatib operational-space impedance $\Lambda(q)$ in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md).
 - **🧠 Knowledge Check:**
   <details>

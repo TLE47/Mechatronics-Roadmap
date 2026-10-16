@@ -80,7 +80,7 @@ Calculate the maximum measurable current magnitude $I_{\max}$ in amperes ($\text
   - **Study Links & Resources:** [TI INA240 Current-Sense Amplifier Datasheet (`ti.com/lit/gpn/ina240`)](https://www.ti.com/lit/gpn/ina240), [TI Op Amps for Everyone (SLOD006)](https://www.ti.com/lit/pdf/slod006), and [Track 01 §2.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-Open **Tab 2 (Power Stage & Current-Sense AFE)** in the MechaLab Workbench (`npm run dev`) or simulate a differential amplifier in [LTspice](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) (`resources/open-source-toolchains.md`).
+Open **Tab 3 (25 kHz PMSM FOC)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`) or simulate a differential amplifier in [LTspice](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) (`resources/open-source-toolchains.md`).
 
 No hardware required for this module (`hardware_required: false`). In Step 2.2 (`01-electronics.T2.02`), your KiCad PCB footprint routes the two inner Kelvin pads (`S+`, `S-`) as a tightly coupled differential pair directly to the `INA240` inputs, completely separate from the high-current power pours:
 ```text

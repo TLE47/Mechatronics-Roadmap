@@ -97,7 +97,7 @@ Compute the alias frequency $f_{\text{alias}} \in [0, f_s/2]$ when a $2700\text{
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (Step 2.1 Pre-Warped TDF-II Biquad Notch).
 
 ## 6. Simulation path
-Open **Tab 1 (Pre-Warped Tustin Biquad Notch vs. Two-Mass Resonance)** in the MechaLab Workbench (`npm run dev`) and toggle pre-warping ON vs. OFF at $f_0 = 850\text{ Hz}$, $f_s = 4000\text{ Hz}$ to watch the notch center shift from $749.5\text{ Hz}$ right onto the $850\text{ Hz}$ resonance peak.
+Open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench (`npm run dev`) and toggle pre-warping ON vs. OFF at $f_0 = 850\text{ Hz}$, $f_s = 4000\text{ Hz}$ to watch the notch center shift from $749.5\text{ Hz}$ right onto the $850\text{ Hz}$ resonance peak.
 
 No hardware required for this module (`hardware_required: false`). In Step 2.1 (`00-foundations.T2.01`) and Step 2.4 (`03-sensors.T2.04`), the 5 pre-warped biquad coefficients $(b_0, b_1, b_2, a_1, a_2)$ execute inside the microcontroller's `TDF-II` filter loop on every ADC/encoder sample:
 ```text

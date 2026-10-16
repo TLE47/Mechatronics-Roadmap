@@ -85,7 +85,7 @@ Calculate the maximum allowable parasitic commutation loop inductance $L_{\text{
   - **Study Links & Resources:** [KiCad Official Documentation (`docs.kicad.org`)](https://docs.kicad.org/), [TI SLUA887 (Gate Drive & Dead-Time Design)](https://www.ti.com/lit/pdf/slua887), and [Track 01 §2.1–2.2 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-Open **Tab 2 (Power Stage, Loop Inductance Ringing & Dead-Time)** in the MechaLab Workbench (`npm run dev`) and sweep $L_{\text{loop}}$ from $2\text{ nH}$ to $25\text{ nH}$ to watch the $V_{DS}$ turn-off ringing spike grow toward the MOSFET avalanche limit.
+Open **Tab 6 (3D CAD & 48V PCB — Loop Inductance Ringing & Thermal Solver)** in the MechaLab Workbench (`npm run dev`) and sweep $L_{\text{loop}}$ from $2\text{ nH}$ to $25\text{ nH}$ to watch the $V_{DS}$ turn-off ringing spike grow toward the MOSFET avalanche limit, or run the Worked Example Python script above (for `KiCad 8+` and `kicad-cli` installation, verification, and ERC/DRC/Gerber export, see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup) and [`01-electronics-and-power/README.md` §2.1](../01-electronics-and-power/README.md#21-schematic-capture-smd-footprints--4-layer-kicad-pcb-layout)).
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**

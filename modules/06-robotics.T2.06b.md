@@ -125,14 +125,14 @@ You record a `rosbag2` MCAP log containing two topics: `/joint_states` at $f_1 =
   - **Study Links & Resources:** [Official `ros2_control` Documentation (`control.ros.org`)](https://control.ros.org/), [ROS 2 `rosbag2` & Launch Tutorials (`docs.ros.org`)](https://docs.ros.org/en/jazzy/Tutorials.html), and [Track 06 Tier 2 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-Inspect the reference URDF and MuJoCo XML scene in `08-capstone-projects/urdf-mujoco-capstone3-6dof/` or open **Tab 3 & Tab 6** in the MechaLab Workbench (`npm run dev`). In a local ROS 2 + Gazebo Harmonic / MuJoCo workspace (`resources/open-source-toolchains.md`), launch the closed-loop simulation and record an MCAP bag:
+Inspect the reference URDF and MuJoCo XML scene in `08-capstone-projects/urdf-mujoco-capstone3-6dof/` or open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`). In a local ROS 2 + Gazebo Harmonic / MuJoCo workspace (see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)), launch `robot_state_publisher` with the repository's reference URDF and record an MCAP bag:
 ```bash
-# Terminal 1: Launch simulator + ros2_control + robot_state_publisher with use_sim_time:=true
-ros2 launch my_arm_bringup sim_mujoco_ros2_control.launch.py use_sim_time:=true
-# Terminal 2: Record deterministic MCAP bag of joint states and TF
+# Terminal 1: Publish the repository's 6-DOF reference URDF with simulated clock enabled
+ros2 run robot_state_publisher robot_state_publisher 08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf --ros-args -p use_sim_time:=true
+# Terminal 2: Record deterministic MCAP bag of joint states and TF (press Ctrl+C after 5s)
 ros2 bag record -s mcap -o arm_test_bag /clock /joint_states /tf /tf_static
-# Terminal 3: Replay with simulated clock for offline estimator/LeRobot training
-ros2 bag play arm_test_bag --clock --rate 1.0
+# Terminal 3: Inspect bag metadata and replay with simulated clock
+ros2 bag info arm_test_bag && ros2 bag play arm_test_bag --clock --rate 1.0
 ```
 ```text
 [MuJoCo / Gazebo Physics Step (1 kHz)] ==(/clock + state_interfaces)==> [ros2_control: read() -> update() -> write()]

@@ -107,7 +107,7 @@ For the 2-link planar arm ($L_1 = 0.25\text{ m}, L_2 = 0.20\text{ m}$), compute 
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 5 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [CadQuery Docs (`cadquery.readthedocs.io`)](https://cadquery.readthedocs.io/), and [Track 02 Tier 2 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-Open **Tab 3 (2-Link Arm Kinematics, Jacobian Ellipsoids & Singularities)** in the MechaLab Workbench (`npm run dev`) and drag the end-effector to the workspace boundary ($q_2 \to 0$) to watch $\det J(q) \to 0$.
+Open **Tab 5 (URDF / MuJoCo & STO)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`) and drag the end-effector to the workspace boundary ($q_2 \to 0$) to watch $\det J(q) \to 0$ (for `cadquery` STEP export installation and verification, see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)).
 
 No hardware required for this module (`hardware_required: false`). In Step 2.3 (`02-mechanics.T2.03`) and Step 2.7 (`06-robotics.T2.07`), `tau = J(q).T @ F_cartesian` runs at $1\text{ kHz}$ to turn the 2-link arm into a Cartesian virtual spring-damper without ever inverting $J(q)$:
 ```text

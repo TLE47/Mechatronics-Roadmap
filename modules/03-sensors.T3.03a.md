@@ -105,7 +105,7 @@ For a 3-phase inverter with $V_{\text{bus}} = 48.0\text{ V}$ and instantaneous p
   - **Study Links & Resources:** [TI Clarke, Park & SVPWM Theory (SPRU585 / BPRA073)](https://www.ti.com/lit/pdf/bpra073) and [Track 03 Tier 3 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-3-advanced--production) (**Tab 3: 25 kHz PMSM FOC**).
 
 ## 6. Simulation path
-Open **Tab 2 (25–40 kHz Decoupled d-q PMSM FOC, SVPWM Saddle Wave & Anticogging)** in the MechaLab Workbench (`npm run dev`), or run `03-sensors-and-actuators/lab/lab03_foc_svpwm_and_lut.py` to compare coupled vs. decoupled step responses and SPWM vs. SVPWM duty waveforms.
+Open **Tab 3 (25 kHz PMSM FOC — Decoupled d-q, SVPWM Saddle Wave & Anticogging)** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to compare coupled vs. decoupled step responses and SPWM vs. SVPWM duty waveforms (see [`03-sensors-and-actuators/README.md` §3.1–3.2](../03-sensors-and-actuators/README.md#tier-3-advanced--production)).
 
 No hardware required for this module (`hardware_required: false`). In Step 3.4 (`03-sensors.T3.04`) and Step 3.5 (`04-embedded.T3.05`), these exact decoupling and Min-Max SVPWM equations execute in $< 3.2\ \mu\text{s}$ inside the `STM32G474` $40\text{ kHz}$ `ADC_DMA_TC` ISR:
 ```text

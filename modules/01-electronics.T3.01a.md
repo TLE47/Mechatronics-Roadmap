@@ -113,7 +113,7 @@ Suppose a 12-bit SAR ADC ($2^{12} = 4096\text{ LSB}$) has $C_{\text{sample}} = 6
   - **Study Links & Resources:** [TI SBAA586 (Charge-Bucket Circuit Design for SAR ADCs)](https://www.ti.com/lit/pdf/sbaa586), [Infineon MOSFET Power Losses Application Note](https://www.infineon.com/dgdl/Infineon-ApplicationNote_MOSFET_Power_Losses_Calculation_Using_the_DataSheet_Parameters-AN-v01_00-EN.pdf?fileId=db3a30431add1d95011ae08005a90294), and [Track 01 Tier 3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-3-advanced--production).
 
 ## 6. Simulation path
-Open **Tab 2 (PMSM FOC & Inverter Switching)** and **Tab 5 (PCB Parasitics & Thermal Analyzer)** in the MechaLab Workbench (`npm run dev`), or simulate the 2nd-order Bessel AFE + SAR charge bucket in `LTspice` / `ngspice` (`01-electronics-and-power/lab/lab01_afe_spice_and_loop.py`).
+Open **Tab 3 (25 kHz PMSM FOC)** and **Tab 6 (3D CAD & 48V PCB — Parasitics & Thermal Analyzer)** in the MechaLab Workbench (`npm run dev`), or simulate the 2nd-order Bessel AFE + SAR charge bucket by running `python3 01-electronics-and-power/lab/lab01_power_and_afe_sim.py`.
 
 No hardware required for this module (`hardware_required: false`). In Step 3.2 (`01-electronics.T3.02`), these exact equations size the 6-layer `STM32G474` + `DRV8353` inverter stackup:
 ```text

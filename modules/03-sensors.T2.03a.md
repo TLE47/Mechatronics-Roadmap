@@ -95,7 +95,7 @@ Suppose you only measure two phase currents $i_a = +6.0\text{ A}$ and $i_b = -2.
   - **Study Links & Resources:** [TI Sensored FOC of 3-Phase PMSM Motors (BPRA073)](https://www.ti.com/lit/pdf/bpra073), [VectorNav Allan Variance Guide](https://www.vectornav.com/resources/inertial-navigation-primer/specifications--and--error-budgets/specs-imuspecs), and [Track 03 Tier 2 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-Open **Tab 2 (FOC Current Loop: Clarke & Park Transforms)** in the MechaLab Workbench (`npm run dev`) to watch the 3-phase AC waveforms $(i_a, i_b, i_c)$ collapse into flat DC lines $(i_d, i_q)$ in real time.
+Open **Tab 3 (25 kHz PMSM FOC: Clarke & Park Transforms)** in the MechaLab Workbench (`npm run dev`) to watch the 3-phase AC waveforms $(i_a, i_b, i_c)$ collapse into flat DC lines $(i_d, i_q)$ in real time.
 
 No hardware required for this module (`hardware_required: false`). In Step 2.4 (`03-sensors.T2.04`), `clarke_park(ia, ib, theta_e)` runs inside the microcontroller's $20\text{ kHz}$ ADC interrupt immediately after reading the `INA240` shunts and SPI magnetic encoder:
 ```text

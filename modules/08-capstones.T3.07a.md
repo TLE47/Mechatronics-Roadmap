@@ -103,7 +103,7 @@ Suppose an engineer replaces the $250\ \mu\text{s}$ low-pass filter in the $1\te
   - **Study Links & Resources:** [Slocum *Precision Machine Design*](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/), [NASA Systems Engineering Handbook (`NASA/SP-2016-6105`)](https://www.nasa.gov/reference/systems-engineering-handbook/), and [Track 08 Capstones (`08-capstone-projects/README.md`)](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass).
 
 ## 6. Simulation path
-Open **Tab 9 (Capstone 3: 6-DOF Force-Controlled Tele-Impedance Manipulator & System Verification)** in the MechaLab Workbench (`npm run dev`), or run the standalone verification script `08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py`.
+Open **Tab 5 (URDF / MuJoCo & STO — Capstone 3: 6-DOF Force-Controlled Tele-Impedance Manipulator & System Verification)** in the MechaLab Workbench (`npm run dev`), or run the standalone verification script `python3 08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py`.
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before energizing any Capstone hardware build or taking the Skip/Gate test):**

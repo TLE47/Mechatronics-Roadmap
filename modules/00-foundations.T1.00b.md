@@ -83,7 +83,16 @@ Given target angles `target = [1.0, 2.0, 3.0, 4.0]` rad and measured angles `mea
   - **Curriculum Reference:** [Track 00 Tier 1 (`00-foundations/README.md`)](../00-foundations/README.md#tier-1-beginner--intuitive) and [Open-Source Toolchains (`resources/open-source-toolchains.md`)](../resources/open-source-toolchains.md).
 
 ## 6. Simulation path
-Run the script in your terminal with `python3` (inside your `.venv`), or inspect how time-series arrays (`t`, `q`, `i_q`) are plotted across **Tab 2** and **Tab 3** of the MechaLab Workbench (`resources/open-source-toolchains.md`).
+Run the worked-example script in your terminal with `python3` (inside your `.venv`), or inspect how time-series arrays (`t`, `q`, `i_q`) are plotted across **Tab 2 (Two-Mass & Notch Bode)** and **Tab 3 (25 kHz PMSM FOC)** of the MechaLab Workbench (`resources/open-source-toolchains.md`).
+- **Canonical First-Success Hands-On Practice (`NumPy` Array + `Matplotlib` Plot + `Git` Commit):**
+  Inside your activated `.venv` (`source .venv/bin/activate`), run this 1-minute verification to practice creating a `numpy` array, saving a `matplotlib` plot to disk, and recording your first `git commit`:
+  ```bash
+  python3 -c "import numpy as np, matplotlib.pyplot as plt; t = np.linspace(0.0, 0.4, 5); y = 3.0 * t + 0.5; plt.plot(t, y, 'o-'); plt.xlabel('Time [s]'); plt.ylabel('Voltage [V]'); plt.savefig('t1_00b_plot.png'); print('Saved plot, mean=', float(np.mean(y)))"
+  ls -lh t1_00b_plot.png               # Verify non-empty PNG file was created
+  git status                           # Inspect untracked/modified files
+  git add t1_00b_plot.png && git commit -m "Verify T1.00b NumPy and Matplotlib plot" && git log -n 1 --oneline
+  ```
+  *If `ModuleNotFoundError: No module named 'numpy'` occurs:* Activate your virtual environment first (`source .venv/bin/activate && pip install numpy matplotlib`). *If `git commit` asks `Please tell me who you are`:* Run `git config --global user.name "Your Name" && git config --global user.email "you@example.com"`.
 
 No hardware required for this module (`hardware_required: false`). When you stream binary telemetry from a microcontroller in Track 04, incoming serial packets unpack directly into these timestamp and measurement arrays:
 ```text

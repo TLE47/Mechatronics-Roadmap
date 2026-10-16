@@ -110,7 +110,7 @@ Suppose your servo loop has Phase Margin $\text{PM} = 51.83^\circ$ at gain cross
   - **Study Links & Resources:** [Åström & Murray *Feedback Systems* Ch. 10–12 (`fbsbook.org`)](https://www.fbsbook.org/), [Roger Labbe *Kalman and Bayesian Filters in Python*](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python), and [Track 05 Tier 2 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-Open **Tab 1 (Loop Shaping & Gang of Four)** and **Tab 4 (Furuta Pendulum Swing-Up + LQR + Kalman Observer)** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.
+Open **Tab 2 (Two-Mass & Notch Bode — Loop Shaping & Gang of Four)** and **Tab 4 (Furuta Pendulum + LQR + CBF)** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.
 
 No hardware required for this module (`hardware_required: false`). In Step 2.6 (`05-control.T2.06`), the offline Python solver (`scipy.linalg.solve_discrete_are`) computes the steady-state LQR gain row vector $K_{\text{lqr}}$ from Bryson's $(Q, R)$ matrices, and you paste those 4 floats directly into the microcontroller's $1\text{ kHz}$ ISR (`u = -K_lqr @ x_hat`):
 ```text

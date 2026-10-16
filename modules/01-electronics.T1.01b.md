@@ -82,7 +82,7 @@ V_eff=6.0 V, P_PWM=0.16 W vs P_linear=24.0 W, I_shoot=300 A
 ```
 
 ## 5. Exercise
-For a `DRV8833` dual H-bridge ($R_{DS(\text{on, high})} + R_{DS(\text{on, low})} = 0.36\ \Omega$ total path resistance) driving $I = 1.2\text{ A}$ continuously at $D = 1.0$ from $V_{\text{bus}} = 9.0\text{ V}$, compute the total H-bridge conduction power loss $P_{\text{loss}} = I^2 (R_{\text{high}} + R_{\text{low}})$ in watts ($\text{W}$). Verify $P_{\text{loss}} = 0.5184\text{ W}$ ($\pm 10^{-4}\text{ W}$).
+Using the **Canonical `TI DRV8833` Datasheet Walkthrough** in `## 3. Formalization` Item 3 above, (a) extract the maximum Recommended Operating supply voltage $V_{\text{VM,rec,max}}$ ($10.8\text{ V}$) vs. the Absolute Maximum destruction ceiling $V_{\text{VM,abs,max}}$ ($11.8\text{ V}$) and verify that a $V_{\text{bus}} = 9.0\text{ V}$ supply is safely inside the recommended operating window (`2.7 <= 9.0 <= 10.8`), and (b) extract the combined high-side + low-side path on-resistance $R_{DS(\text{on, high})} + R_{DS(\text{on, low})} = 0.36\ \Omega$ to compute the total H-bridge conduction power loss $P_{\text{loss}} = I^2 (R_{\text{high}} + R_{\text{low}})$ in watts ($\text{W}$) when driving $I = 1.2\text{ A}$ continuously at $D = 1.0$. Verify $P_{\text{loss}} = 0.5184\text{ W}$ ($\pm 10^{-4}\text{ W}$).
 - **If your result differs:** Remember that in an H-bridge, motor current flows through **two** switches in series (one high-side FET in leg A and one low-side FET in leg B), so you must multiply $I^2$ by the combined high+low resistance ($0.36\ \Omega$).
 
 
@@ -93,7 +93,7 @@ For a `DRV8833` dual H-bridge ($R_{DS(\text{on, high})} + R_{DS(\text{on, low})}
   - **Study Links & Resources:** [TI SLVA959 (Brushed DC Motor Driver H-Bridge Basics)](https://www.ti.com/lit/pdf/slva959), [Analog Devices MT-101 (Decoupling Techniques)](https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf), and [Track 01 §1.2–1.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
 
 ## 6. Simulation path
-Simulate a low-side MOSFET PWM switch and 4-FET H-bridge in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or inspect **Tab 2 (Power Stage & Gate Driver Dead-Time)** in the MechaLab Workbench (`npm run dev`).
+Simulate a low-side MOSFET PWM switch and 4-FET H-bridge in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or inspect **Tab 3 (25 kHz PMSM FOC)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`).
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**

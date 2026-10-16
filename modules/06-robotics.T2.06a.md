@@ -134,7 +134,7 @@ In the `tf2` tree above (`T_b_l1 = urdf_revolute_z((0, 0, 0.10), q1)` and `T_l1_
   - **Study Links & Resources:** [Official ROS 2 Jazzy/Humble Tutorials: QoS, Executors & TF2 (`docs.ros.org`)](https://docs.ros.org/en/jazzy/Tutorials.html) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
 
 ## 6. Simulation path
-Open **Tab 3 (URDF Kinematics & Jacobian Workspace)** and **Tab 6 (Trajectory Generation)** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).
+Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).
 - **Canonical First-Use `ROS 2 Jazzy` + `colcon` Workspace Walkthrough (Ubuntu 24.04 / WSL2):**
   ```bash
   source /opt/ros/jazzy/setup.bash

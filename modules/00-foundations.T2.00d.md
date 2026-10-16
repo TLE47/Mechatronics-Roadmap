@@ -95,7 +95,7 @@ For the same second-order plant ($\omega_n = 100\text{ rad/s}$, $\zeta = 0.05$),
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (**Tab 2: Two-Mass & Notch Bode**).
 
 ## 6. Simulation path
-Open **Tab 1 (Biquad Notch & Two-Mass Resonance)** in the MechaLab Workbench (`npm run dev`) to inspect how a lightly damped resonance peak ($+20\text{ dB}$) and $-180^\circ$ phase drop appear on an interactive Bode magnitude and phase plot.
+Open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench (`npm run dev`) to inspect how a lightly damped resonance peak ($+20\text{ dB}$) and $-180^\circ$ phase drop appear on an interactive Bode magnitude and phase plot.
 
 No hardware required for this module (`hardware_required: false`). In Track 01 and Track 07, the exact same complex ratio $H(j\omega) = Y(j\omega)/U(j\omega)$ is measured on real actuators by injecting sinusoidal current commands and comparing encoder output amplitude and phase lag:
 ```text

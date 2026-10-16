@@ -117,7 +117,7 @@ For a single scalar weight $w = 2.0$, input $x = 3.0$, prediction $\hat{y} = w x
   - **Study Links & Resources:** [Khatib (1987) Operational-Space Paper](https://ieeexplore.ieee.org/document/1087068), [Forster et al. On-Manifold Preintegration (`arXiv:1512.02363`)](https://arxiv.org/abs/1512.02363), [Capuano et al. *Robot Learning Tutorial* (`arXiv:2510.12403`)](https://arxiv.org/abs/2510.12403), and [Track 06 Tier 3 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-3-advanced--production).
 
 ## 6. Simulation path
-Run the Python Behavior Cloning script above or inspect how learned policies interface with the $1\text{ kHz}$ Operational-Space & CBF safety layer in **Tab 4** and **Tab 6** of the MechaLab Workbench (`npm run dev`).
+Run the Python Behavior Cloning script above or inspect how learned policies interface with the $1\text{ kHz}$ Operational-Space & CBF safety layer in **Tab 4 (Furuta Pendulum + LQR + CBF)** and **Tab 5 (URDF / MuJoCo & STO)** of the MechaLab Workbench (`npm run dev`).
 
 No hardware required for this module (`hardware_required: false`). In Step 3.7 (`06-robotics.T3.07`), a policy trained in PyTorch / `Hugging Face LeRobot` exports its weights to `ONNX` / `TorchScript` and runs at $30\text{–}50\text{ Hz}$ on the host PC, streaming smooth joint position/action chunks to the $1\text{ kHz}$ `ros2_control` impedance loop:
 ```text

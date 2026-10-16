@@ -94,7 +94,7 @@ A $2208$ gimbal BLDC motor has $12$ stator slots and $14$ rotor magnet poles (`1
   - **Study Links & Resources:** [SimpleFOC BLDC & Encoder Theory Docs (`docs.simplefoc.com`)](https://docs.simplefoc.com/) and [Track 03 Tier 1 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive).
 
 ## 6. Simulation path
-Open **Tab 2 (FOC Current Loop & Clarke/Park)** in the MechaLab Workbench (`npm run dev`) to see how mechanical rotor angle $\theta_m$ multiplies by pole pairs $p$ into electrical commutation angle $\theta_e = p\theta_m$.
+Open **Tab 3 (25 kHz PMSM FOC)** in the MechaLab Workbench (`npm run dev`) to see how mechanical rotor angle $\theta_m$ multiplies by pole pairs $p$ into electrical commutation angle $\theta_e = p\theta_m$.
 
 No hardware required for this module (`hardware_required: false`). In Step 1.4 (`03-sensors.T1.04`), you can verify pole pairs $p$ on a real BLDC motor by Energizing Phase A to $+1.5\text{ V}$ (current-limited to $0.5\text{ A}$) and Phase B/C to $\text{GND}$, rotating the rotor by hand through one full $360^\circ$ mechanical turn, and counting the $p$ magnetic detent lock positions:
 ```text

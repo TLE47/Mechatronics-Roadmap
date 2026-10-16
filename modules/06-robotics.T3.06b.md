@@ -110,7 +110,7 @@ Suppose a reward sequence is $r = [0.0, 0.0, 10.0]$ over 3 steps with discount f
   - **Study Links & Resources:** [Zhao et al. *ACT* (`arXiv:2304.13705`)](https://arxiv.org/abs/2304.13705), [Chi et al. *Diffusion Policy* (`arXiv:2303.04137`)](https://arxiv.org/abs/2303.04137), [Schulman et al. *PPO* (`arXiv:1707.06347`)](https://arxiv.org/abs/1707.06347), and [HuggingFace LeRobot (`github.com/huggingface/lerobot`)](https://github.com/huggingface/lerobot).
 
 ## 6. Simulation path
-Open **Tab 4 (CBF-QP Safety Filter)** and **Tab 6 (Trajectory & Action Smoothing)** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
+Open **Tab 4 (Furuta Pendulum + LQR + CBF)** and **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before deploying any learned policy on hardware or taking the Skip/Gate test):**

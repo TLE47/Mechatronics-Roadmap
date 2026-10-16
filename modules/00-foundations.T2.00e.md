@@ -96,7 +96,7 @@ Compute the spectral radius $\rho(A_{d,\text{Tustin}})$ of the same system at $T
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md).
 
 ## 6. Simulation path
-Open **Tab 1 (Two-Mass Resonance & Biquad Notch)** and **Tab 4 (Furuta Pendulum State-Space LQR)** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
+Open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum + LQR + CBF)** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
 
 No hardware required for this module (`hardware_required: false`). In Track 05 (`05-control.T2.06` and `05-control.T3.06`), the discretized matrices $(A_d, B_d)$ run inside the microcontroller's $1\text{ kHz}$ Kalman filter prediction step:
 ```text

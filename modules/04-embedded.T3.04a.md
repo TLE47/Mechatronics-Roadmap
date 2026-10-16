@@ -104,9 +104,9 @@ Suppose `TIM1` runs at $f_{\text{tim}} = 160\text{ MHz}$ in center-aligned up-do
   - **Study Links & Resources:** [Hans Boehm *Seqlocks Paper*](https://dl.acm.org/doi/10.1145/2247684.2247688), [Hogenauer CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535), and [Track 04 Tier 3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-3-advanced--production) (**Tab 8: Attitude ESKF & SeqLock**).
 
 ## 6. Simulation path
-Open **Tab 8 (C++20 `WaitFreeSeqLock`, `TIM1_TRGO2` Timing & `ITCM/DTCM` Budget)** in the MechaLab Workbench (`npm run dev`), or run `04-embedded-and-realtime/lab/lab04_seqlock_cordic_and_wcet.py` to stress-test the `SeqLock` across $100{,}000$ simulated preemptions.
+Open **Tab 8 (Attitude ESKF & SeqLock — C++20 `WaitFreeSeqLock`, `TIM1_TRGO2` Timing & `ITCM/DTCM` Budget)** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to stress-test the `SeqLock` across $100{,}000$ simulated preemptions.
 
-No hardware required for this module (`hardware_required: false`). In Step 3.5 (`04-embedded.T3.05`), the `STM32G474` bare-metal C++20 firmware (`08-capstone-projects/stm32g4-foc-firmware/main_foc_isr.cpp`) and Embedded Rust (`RTIC` / `Embassy`) implementations run this exact pipeline:
+No hardware required for this module (`hardware_required: false`). In Step 3.5 (`04-embedded.T3.05`), the `STM32G474` bare-metal C++20 firmware (`08-capstone-projects/stm32g4-foc-firmware/main.cpp`) and Embedded Rust (`RTIC` / `Embassy`) implementations run this exact pipeline:
 ```text
 [TIM1 Peak CNT==ARR] ==(TRGO2)==> [SAR ADC1/2 + DMA] ==> [40 kHz ISR: CORDIC Q1.31 + SeqLock Write] ==> [1 kHz RTOS/Rust Reader]
 ```

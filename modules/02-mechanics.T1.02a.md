@@ -79,7 +79,7 @@ A timing-belt reduction connects a motor pulley with $Z_{\text{motor}} = 16$ tee
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 3 & Ch. 6 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 02 Tier 1 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive).
 
 ## 6. Simulation path
-Open **Tab 3 (2-Link Planar Arm Kinematics & Workspace)** in the MechaLab Workbench (`npm run dev`) to visualize how link lengths and joint angles change the horizontal moment arm of a planar robot arm.
+Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`) to visualize how link lengths and joint angles change the horizontal moment arm of a planar robot arm.
 
 No hardware required for this module (`hardware_required: false`). In Step 1.3 (`02-mechanics.T1.03`) and Step 1.7 (`06-robotics.T1.07`), your gravity torque equation $\tau_g(\theta) = M g L_{\text{eff}}\cos\theta$ becomes the exact **gravity feedforward compensation term** added to the PID controller output:
 ```text

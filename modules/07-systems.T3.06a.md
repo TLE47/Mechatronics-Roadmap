@@ -97,7 +97,7 @@ Suppose a dual-channel E-stop switch has Channel A and Channel B inputs sampled 
   - **Study Links & Resources:** [open62541 OPC UA Docs (`open62541.org`)](https://www.open62541.org/), [IDTA Asset Administration Shell Specs (`industrialdigitaltwin.org`)](https://industrialdigitaltwin.org/), and [Track 07 Tier 3 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-3-advanced--production) (**Tab 5 & Tab 7**).
 
 ## 6. Simulation path
-Open **Tab 7 (Drive Telemetry, Fault Injection & Safety State Machine)** in the MechaLab Workbench (`npm run dev`), or explore open-source OPC UA / AAS tools (`open62541`, `python-opcua`, `Eclipse BaSyx`, `AASX Package Explorer`) in `resources/open-source-toolchains.md`.
+Open **Tab 5 (URDF / MuJoCo & STO — Dual-Channel Hardware STO)** and **Tab 7 (Schroeder Multisine SysID)** in the MechaLab Workbench (`npm run dev`), or explore open-source OPC UA / AAS tools (`open62541`, `python-opcua`, `Eclipse BaSyx`, `AASX Package Explorer`) in `resources/open-source-toolchains.md`.
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before wiring industrial E-stop/STO chains or taking the Skip/Gate test):**

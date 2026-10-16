@@ -86,7 +86,7 @@ Compute the minimum move duration $T_{\min}$ in seconds ($\text{s}$) required fo
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 9 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 06 Tier 1 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive).
 
 ## 6. Simulation path
-Open **Tab 6 (Trajectory Generation: Cubic, Trapezoidal & Ruckig S-Curve)** in the MechaLab Workbench (`npm run dev`) to compare step setpoints against cubic and trapezoidal profiles interactively.
+Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`) to compare step setpoints against cubic, trapezoidal, and minimum-jerk profiles interactively.
 
 No hardware required for this module (`hardware_required: false`). In Step 1.7 (`06-robotics.T1.07`), `cubic_rest_to_rest(t, q0, qf, T)` runs at $1\text{ kHz}$ on the microcontroller to feed $(q_d(t), \dot{q}_d(t))$ into the joint PD + gravity compensation loop:
 ```text

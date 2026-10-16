@@ -108,7 +108,7 @@ For a revolute joint whose axis points along $+Y$ ($\omega = [0.0, 1.0, 0.0]^\to
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 4 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [Featherstone *Rigid Body Dynamics Algorithms*](https://royfeatherstone.org/spatial/), and [Track 02 Tier 3 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production).
 
 ## 6. Simulation path
-Open **Tab 3 (3D Spatial Kinematics, Screw PoE & Manipulability)** and **Tab 5 (3D CAD & Flexure Mechanics)** in the MechaLab Workbench (`npm run dev`), or run `02-mechanics-kinematics-dynamics/lab/lab02_cad_urdf_and_rnea.py` to verify $O(n)$ RNEA against closed-form Lagrangian equations and `Christoffel` skew-symmetry.
+Open **Tab 5 (URDF / MuJoCo & STO)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to verify $O(n)$ RNEA against closed-form Lagrangian equations and `Christoffel` skew-symmetry (see [`02-mechanics-kinematics-dynamics/README.md` §3.1–3.2](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) and [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)).
 
 No hardware required for this module (`hardware_required: false`). In Step 3.3 (`02-mechanics.T3.03`), Step 3.5 (`05-control.T3.06`), and Step 3.7 (`06-robotics.T3.07`), two-pass RNEA runs at $1\text{–}4\text{ kHz}$ to supply exact inverse-dynamics feedforward torque $\tau_{\text{ff}} = \text{RNEA}(q, \dot{q}, \ddot{q}_d)$:
 ```text
