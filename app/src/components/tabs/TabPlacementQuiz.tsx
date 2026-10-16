@@ -59,31 +59,31 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
   },
   {
     id: 'q2-si-trig-torque',
-    stageBadge: 'Track P · P.7–P.M',
+    stageBadge: 'Gate P→0 · P.7–P.14 & P.M',
     moduleId: '00-foundations.T1.00c',
-    lessonId: 'P.7',
-    lessonTitle: 'Track P: SI Prefixes, Binary Bits, Radians & Gravity Lever Torque (P.7–P.M)',
+    lessonId: 'P.14',
+    lessonTitle: 'Gate P→0: SI Prefixes, Loop+Assert & DRV8833 Datasheet Table (P.7–P.14)',
     prereqChain: ['P.1–P.6', '00-foundations.T1.00a'],
     question:
-      'Skip-Gate 2 (SI Units, Binary & Lever Torque): How many distinct counts does a 12-bit encoder have, and what is the gravity torque tau = m * g * L * cos(theta) on a horizontal arm (theta = 0 rad) with m = 0.5 kg, g = 9.81 m/s², L = 0.20 m?',
+      'Skip-Gate 2 / Gate P→0 (15-Min Track P → Stage 0 Check): Convert (15 mA, 4.7 kΩ, 500 µs) to base SI units, and read the DRV8833 datasheet table (VM Recommended: 2.7–10.8 V, Abs Max: 11.8 V) to check if a 12.0 V supply is safe:',
     options: [
       {
-        label: '2^12 = 4096 counts (0..4095), and tau = 0.5 * 9.81 * 0.20 * cos(0) = 0.981 N·m',
+        label: '0.015 A, 4700 Ω, 0.0005 s; 12.0 V exceeds both the 10.8 V recommended max and 11.8 V abs max (use 6–9 V on DRV8833 or TB6612FNG for 12 V)',
         isCorrect: true,
         explanation:
-          'Correct! 12 bits yield 4096 states, and at horizontal (theta = 0 rad), cos(0) = 1.0 gives peak gravity torque 0.981 N·m.',
+          'Correct! You passed Gate P→0 (SI prefix conversion + datasheet table reading) and are ready for Stage 0 (Lesson S0.0)!',
       },
       {
-        label: '1200 counts, and tau = 0.0 N·m because sin(0) = 0',
+        label: '1.5 A, 470 Ω, 0.05 s; 12.0 V is safe because 12.0 V is close to 11.8 V',
         isCorrect: false,
         explanation:
-          'Start at Lesson P.7 / P.10 / P.12 to master binary powers of 2 and the horizontal lever-torque convention.',
+          'Targeted review (not "start over"): review Lesson P.7 (SI prefixes) and Lesson P.14 (Reading a Datasheet Table: Recommended vs. Abs Max).',
       },
       {
-        label: '2048 counts, and tau = 9.81 N·m',
+        label: '0.0015 A, 47000 Ω, 0.005 s; DRV8833 operates up to 24 V',
         isCorrect: false,
         explanation:
-          'Start at Lesson P.7 / P.8 to review 2^N binary resolution and SI unit conversions.',
+          'Targeted review (not "start over"): review Lesson P.7 (milli = ÷1000, kilo = ×1000, micro = ÷1e6) and Lesson P.14 (DRV8833 datasheet table).',
       },
     ],
     recommendedTab: 8,
@@ -214,31 +214,31 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
   },
   {
     id: 'q7-track04-embedded-cpp',
-    stageBadge: 'Track 04 · 04.1–04.2',
+    stageBadge: 'Track 04 · 04.1–04.3',
     moduleId: '04-embedded.T1.04a',
     lessonId: '04.1',
-    lessonTitle: 'Track 04 (Tier 1): C/C++ Fixed-Width Types, volatile 1 kHz Timer ISRs & Binary CRC8 (04.1–04.2)',
+    lessonTitle: 'Track 04 (Tier 1): 3-Part C Bridge — Fixed-Width Ints (04.1), Bitwise/CRC8 (04.2) & Struct Pointers (04.3)',
     prereqChain: ['04-embedded.T1.04a', '04-embedded.T1.04b'],
     question:
-      'Skip-Gate 7 (Embedded C/C++ & Real-Time ISRs): Why must a boolean flag written inside a 1 kHz hardware timer ISR and polled in loop() be declared volatile in C/C++, and what is (uint16_t)(4 - 65530)?',
+      'Skip-Gate 7 (3-Part Python→C Bridge & 1 kHz ISRs): Why must a boolean ISR flag be declared volatile, what happens when a uint8_t counter at 255 increments by 1, and why does void update(JointBox *p) use a pointer instead of JointBox b?',
     options: [
       {
-        label: 'volatile prevents compiler register-caching of ISR-modified RAM; unsigned 16-bit rollover yields 10 ticks',
+        label: 'volatile prevents register-caching; uint8_t wraps 255 -> 0; passing JointBox *p updates the caller’s struct in-place via p->pos_rad instead of mutating a discarded photocopy',
         isCorrect: true,
         explanation:
-          'Correct! Without volatile, -O2 optimization caches the flag in a CPU register forever; modulo 65536 subtraction gives (4 - 65530) & 0xFFFF = 10.',
+          'Correct! You mastered all 3 parts of the Python→C bridge: fixed-width rollover (04.1), bitwise/CRC-8 framing (04.2), and struct pointers as labeled boxes (04.3).',
       },
       {
-        label: 'volatile makes the variable thread-safe across 64-bit floats; subtraction gives -65526',
+        label: 'volatile makes 64-bit floats atomic; uint8_t saturates at 255; C structs are always passed by reference automatically',
         isCorrect: false,
         explanation:
-          'Start at Track 04 Lesson 04.1 & Bridge Module 04-embedded.T1.04a (Python-to-C++ Transition & 1 kHz Timer ISRs).',
+          'Targeted review: start at Lesson 04.1 (uint8_t wrap at 255), 04.2 (CRC-8), and 04.3 (C structs as labeled boxes & pointers).',
       },
       {
-        label: 'volatile stores the variable in Flash ROM; subtraction overflows to 0',
+        label: 'volatile stores variables in Flash ROM; uint8_t overflows to -1; pointers are only needed for strings',
         isCorrect: false,
         explanation:
-          'Start at Track 04 Lesson 04.1 & 04.2 to master C/C++ fixed-width types, volatile ISR flags, and packed binary structs.',
+          'Targeted review: start at Lesson 04.1 & 04.3 to master fixed-width C types, volatile ISR flags, and struct pointers.',
       },
     ],
     recommendedTab: 7,
@@ -686,18 +686,24 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
         </div>
       )}
 
-      {/* MODE 3: Tier 1 -> Tier 2 Exit Readiness Review (6 Practical Gates + Targeted Refreshers) */}
+      {/* MODE 3: Tier 1 -> Tier 2 Exit Readiness Review (6 Practical Gates + Self-Administered Exit Project) */}
       {diagnosticMode === 'tier1-exit' && (
         <div className="space-y-4" data-testid="panel-tier1-exit-review">
           <div className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-[#c084fc]">
-                Tier 1 &rarr; Tier 2 Exit Readiness Review ({exitReadyCount} / {TIER1_EXIT_GATES.length} Practical Gates Verified)
+                Gate 1&rarr;2 (&ldquo;Tier 1 Exit&rdquo;) Readiness Review ({exitReadyCount} / {TIER1_EXIT_GATES.length} Practical Gates Verified)
               </h3>
               <p className="text-xs text-[#94a3b8] mt-1">
-                Before starting Tier 2 (`00-foundations.T2.00a` State-Space &amp; ODEs on the recurring arm), verify that you can explain the system diagram, predict parameter changes, isolate faults, interpret sensor graphs, verify safety checks, and handle a capstone transfer variation. Any missed gate links directly to its targeted refresher lesson.
+                Before starting Tier 2 (`00-foundations.T2.00a` State-Space &amp; ODEs on the recurring arm), verify the 6 practical readiness gates below and complete the <b>2–3 Hour Self-Administered Position-Loop Exit Project</b>: <i>&ldquo;Given this motor&rsquo;s parameters, build a simulated position loop with anti-windup that meets &plusmn;2% overshoot and settles in &lt; 0.5 s; log and plot it.&rdquo;</i>
               </p>
             </div>
+            <button
+              onClick={() => onOpenPyodideLesson('08.1')}
+              className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#c084fc] text-[#0b0f19] cursor-pointer"
+            >
+              Launch 4-Stage 08.1 Boss &amp; Exit Spec &rarr;
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

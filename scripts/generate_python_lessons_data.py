@@ -26,6 +26,9 @@ def natural_sort_key(path: str):
 
 def get_python_lesson_files():
     track_p = sorted(glob.glob(os.path.join(ROOT, "track-p", "P.*.md")), key=natural_sort_key)
+    stage_0_py = [
+        os.path.join(ROOT, "stage-0", "S0.0-why-electricity-is-like-flow.md"),
+    ]
     track_00 = sorted(glob.glob(os.path.join(ROOT, "00-foundations", "00.*.md")), key=natural_sort_key)
     track_01_py = [
         os.path.join(ROOT, "01-electronics-and-power", "01.3-power-regulators-and-power-budget.md"),
@@ -61,6 +64,7 @@ def get_python_lesson_files():
     )
     return (
         track_p
+        + stage_0_py
         + track_00
         + track_01_py
         + track_02
@@ -272,6 +276,22 @@ assert math.isclose(gravity_torque_nm(1.0, 0.5, 60.0), 2.4525, abs_tol=1e-4)
 assert math.isclose(gravity_torque_nm(1.0, 0.5, 90.0), 0.0, abs_tol=1e-6)
 """,
     ),
+    "P.14": (
+        [
+            "Test is_within_recommended_bounds and select_safe_driver across 3.3 V, 6.0 V, 10.8 V, 11.5 V, and 12.0 V supply rails",
+            "Test datasheet_val_to_base_si across mA, mV, ms, kHz, and base SI units",
+        ],
+        """import math
+assert is_within_recommended_bounds(10.8, 2.7, 10.8) is True
+assert is_within_recommended_bounds(11.5, 2.7, 10.8) is False
+assert select_safe_driver(3.3) == ["DRV8833"]
+assert select_safe_driver(6.0) == ["DRV8833", "TB6612FNG"]
+assert select_safe_driver(12.0) == ["TB6612FNG"]
+assert select_safe_driver(14.5) == []
+assert math.isclose(datasheet_val_to_base_si(250.0, "mA"), 0.25, abs_tol=1e-9)
+assert math.isclose(datasheet_val_to_base_si(20.0, "kHz"), 20000.0, abs_tol=1e-6)
+""",
+    ),
     "P.M": (
         [
             "Test cmd10_to_torque saturation at negative (-50), zero, midpoint (511.5), and overflow (2048) inputs",
@@ -284,6 +304,19 @@ assert math.isclose(cmd10_to_torque(2048, 4.0), 4.0, abs_tol=1e-6)
 assert math.isclose(holding_torque_nm(0.50, 1.0, math.pi / 3.0), 2.4525, abs_tol=1e-4)
 assert math.isclose(holding_torque_nm(0.50, 1.0, math.pi / 2.0), 0.0, abs_tol=1e-6)
 assert can_lift is True and math.isclose(math.degrees(angle_rad), 54.0, abs_tol=1e-3)
+""",
+    ),
+    "S0.0": (
+        [
+            "Test compute_flow inversely proportional to opposition and zero guard at opposition <= 0",
+            "Test compute_effort_flow_power (Effort * Flow) across active and zero-flow (closed valve) states",
+        ],
+        """import math
+assert math.isclose(compute_flow(12.0, 60.0), 0.20, abs_tol=1e-9)
+assert math.isclose(compute_flow(12.0, 120.0), 0.10, abs_tol=1e-9)
+assert math.isclose(compute_flow(12.0, 0.0), 0.0, abs_tol=1e-9)
+assert math.isclose(compute_effort_flow_power(12.0, 0.20), 2.40, abs_tol=1e-9)
+assert math.isclose(compute_effort_flow_power(12.0, 0.0), 0.0, abs_tol=1e-9)
 """,
     ),
     "00.1": (
@@ -450,16 +483,31 @@ for _ang in [0.0, 0.7, 2.1]:
     assert math.isclose(_va + _vb + _vc, 0.0, abs_tol=1e-6), "Three-phase voltages must sum to zero"
 """,
     ),
+    "03.3": (
+        [
+            "Test encoders_to_tip_xy at horizontal stretch (0, 0) and orthogonal bend (1024, -1024)",
+            "Test diagnose_encoder_fk_fault across ok, inverted_elbow_sign, and missing_4x_cpr fault modes",
+        ],
+        """import math
+_x0, _y0 = encoders_to_tip_xy(0, 0, cpr1=4096, cpr2=4096, l1_m=0.15, l2_m=0.10)
+assert math.isclose(_x0, 0.25, abs_tol=1e-6) and math.isclose(_y0, 0.0, abs_tol=1e-6)
+assert diagnose_encoder_fk_fault(1024, -1024, (0.10, 0.12)) == "ok"
+assert diagnose_encoder_fk_fault(1024, -1024, (-0.10, 0.12)) == "inverted_elbow_sign"
+""",
+    ),
     "04.1": (
         [
             "Test uint16_tick_delta at zero elapsed, normal step, and 16-bit wraparound boundary (65535 -> 0)",
-            "Test velocity_from_step jitter amplification when actual_dt_s != assumed_dt_s",
+            "Test velocity_from_step jitter amplification and diagnose_uint8_wrap_bug at 255 vs 256/300 rollover",
         ],
         """import math
 assert uint16_tick_delta(0, 0) == 0
 assert uint16_tick_delta(0, 65535) == 1
 assert uint16_tick_delta(10, 65526) == 20
 assert math.isclose(velocity_from_step(10.0, 0.002, assumed_dt_s=0.001), 20.0, abs_tol=1e-6)
+assert diagnose_uint8_wrap_bug(255) == (255, False)
+assert diagnose_uint8_wrap_bug(256) == (0, True)
+assert diagnose_uint8_wrap_bug(300) == (44, True)
 """,
     ),
     "04.2": (
@@ -477,6 +525,20 @@ _bad = bytearray(_f); _bad[2] ^= 0x01
 assert unpack_and_verify_10b(bytes(_bad))[0] is False
 assert uart_bandwidth_ok(25, 1000, 250000) == (250000, False)
 assert uart_bandwidth_ok(25, 1000, 500000) == (250000, True)
+""",
+    ),
+    "04.3": (
+        [
+            "Test make_joint_box and update_joint_in_place mutation vs update_joint_copy_bug pass-by-value behavior",
+            "Test diagnose_struct_update_bug detection of pass_by_value_copy_bug vs updated_in_place_ok",
+        ],
+        """import math
+_jb = make_joint_box("elbow", cpr=4096)
+assert _jb["enc_count"] == 0 and _jb["pos_rad"] == 0.0
+update_joint_in_place(_jb, 2048, 0.020)
+assert _jb["enc_count"] == 2048 and math.isclose(_jb["pos_rad"], math.pi, abs_tol=1e-6)
+assert diagnose_struct_update_bug(0, 0, 512) == "pass_by_value_copy_bug"
+assert diagnose_struct_update_bug(0, 512, 512) == "updated_in_place_ok"
 """,
     ),
     "05.1": (
@@ -537,15 +599,21 @@ assert math.isclose(_bh, _b_true, abs_tol=1e-4) and math.isclose(_jh, _j_true, a
     ),
     "08.1": (
         [
-            "Test fk_2link / ik_2link round-trip on unseen target (0.12, 0.08) and gravity_ff_2link at vertical posture",
-            "Test pack_boss_telemetry 20-byte CRC-8 integrity, simulate_uart_tx bandwidth drops, and closed-loop tracking bounds",
+            "Test fk_2link / ik_2link round-trip on unseen target (0.12, 0.08), figure8_target from spec, and gravity_ff_2link at vertical posture",
+            "Test diagnose_capstone_fault across all 3 R4 broken versions, pack_boss_telemetry 20-byte CRC-8 integrity, and simulate_uart_tx bandwidth drops",
         ],
         """import math
 _q1u, _q2u = ik_2link(0.12, 0.08)
 _x1u, _y1u = fk_2link(_q1u, _q2u)
 assert math.hypot(_x1u - 0.12, _y1u - 0.08) < 1e-6
+_fx, _fy = figure8_target(0.25, x0=0.12, y0=0.0, ax=0.03, ay=0.04, freq_hz=0.5)
+assert math.isclose(_fx, 0.12 + 0.03 * math.sin(math.pi / 4.0), abs_tol=1e-6)
 _tg1, _tg2 = gravity_ff_2link(math.pi / 2.0, 0.0)
 assert abs(_tg1) < 1e-6 and abs(_tg2) < 1e-6
+assert diagnose_capstone_fault(-0.22, 1.0, 4.0) == "gravity_ff_sign_inverted"
+assert diagnose_capstone_fault(-0.01, 85.0, 4.0) == "wrong_encoder_cpr"
+assert diagnose_capstone_fault(-0.01, 1.0, 37.2) == "missing_anti_windup"
+assert diagnose_capstone_fault(-0.01, 1.0, 4.0) == "nominal_ok"
 _pkt = pack_boss_telemetry(42, 0.1, -0.2, 0.3, -0.4)
 assert len(_pkt) == 20 and _pkt[0] == 0xAA and crc8_ccitt(_pkt[:-1]) == _pkt[-1]
 assert simulate_uart_tx(100, 20, 0.001, 115200) > 0

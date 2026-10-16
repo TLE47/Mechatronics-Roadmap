@@ -46,13 +46,15 @@ flowchart LR
 | **Force ($F$) and Weight ($W$)** | Push or pull in Newtons ($F = m \cdot a$); gravitational weight is $W = m \cdot g$ where $g = 9.81\text{ m/s}^2$. | Newton (`N` $= \text{kg}\cdot\text{m/s}^2$) | [Lesson P.12](../track-p/P.12-forces-and-lever-torque.md) |
 | **Lever Arm ($r_\perp$)** | The perpendicular distance from a joint pivot to the line of action of a force ($r_\perp = L\cos\theta$ for gravity when arm angle $\theta$ is measured from the horizontal). | Meter (`m`) | [Lesson P.12](../track-p/P.12-forces-and-lever-torque.md) |
 | **Lever Torque ($\tau$)** | Rotational twisting effort around a pivot: $\tau = F \cdot r_\perp = m \cdot g \cdot L \cdot \cos\theta$ (with $\theta$ measured from horizontal). | Newton-meter (`N·m`) | [Lesson P.12](../track-p/P.12-forces-and-lever-torque.md) |
+| **Recommended Operating Conditions** | The `Min` / `Typ` / `Max` datasheet operating window within which a part is guaranteed to work reliably (distinct from destructive **Absolute Maximum Ratings**). | `Min`, `Typ`, `Max` | [Lesson P.14](../track-p/P.14-reading-a-datasheet-table.md) |
 
 ---
 
-## Stage 0 — Electronics, Circuits & Arduino Uno (`S0.1`–`S0.M`)
+## Stage 0 — Electronics, Circuits & Arduino Uno (`S0.0`–`S0.M`)
 
 | Term | Plain-English Definition | Unit / Symbol | First Lesson |
 | :--- | :--- | :--- | :--- |
+| **Effort and Flow** | Cross-domain pair of variables whose product is instantaneous power ($P = \text{Effort} \times \text{Flow}$): Water pressure $\times$ stream rate (`S0.0`), Voltage $\times$ Current (`S0.1`), or Force/Torque $\times$ Velocity (`00.1` revisit). | Watt (`W`) | [Lesson S0.0](../stage-0/S0.0-why-electricity-is-like-flow.md) |
 | **Ground (`GND`)** | The common $0.0\text{ V}$ reference node in a circuit against which all other voltages are measured. | $0\text{ V}$ (`GND`) | [Lesson S0.1](../stage-0/S0.1-closed-circuits-and-ohms-law.md) |
 | **Voltage ($V$)** | Electrical potential difference ("pressure") between two nodes that pushes charge around a closed loop. | Volt (`V`) | [Lesson S0.1](../stage-0/S0.1-closed-circuits-and-ohms-law.md) |
 | **Current ($I$)** | Flow rate of electric charge through a conductor. | Ampere (`A`), milliamp (`mA`) | [Lesson S0.1](../stage-0/S0.1-closed-circuits-and-ohms-law.md) |
@@ -83,7 +85,6 @@ flowchart LR
 
 | Term | Plain-English Definition | Unit / Symbol | First Lesson |
 | :--- | :--- | :--- | :--- |
-| **Effort and Flow** | Cross-domain pair of variables whose product is instantaneous power ($P = \text{Effort} \times \text{Flow}$): Voltage $\times$ Current, Force $\times$ Velocity, or Torque $\times$ Angular Velocity. | Watt (`W`) | [Lesson 00.1](../00-foundations/00.1-effort-flow-and-first-order-lag.md) |
 | **Mechanical Power** | Instantaneous rate of mechanical work: $P_{\text{mech}} = F \cdot v$ (linear) or $P_{\text{rot}} = \tau \cdot \omega$ (rotational, with $\omega$ in `rad/s`). | Watt (`W` $= \text{N}\cdot\text{m/s}$) | [Lesson 00.1](../00-foundations/00.1-effort-flow-and-first-order-lag.md) |
 | **First-Order Lag** | A system with one energy storage state that approaches its target exponentially with time constant $\tau$ ($63.2\%$ at $1\tau$, $99.3\%$ at $5\tau$). | $\tau$ (`s`) | [Lesson 00.1](../00-foundations/00.1-effort-flow-and-first-order-lag.md) |
 | **Hooke's Law** | Linear spring law stating that spring restoring force is proportional to stretch or compression $x$: $F_{\text{spring}} = -k \cdot x$. | $F_s = -kx$ (`N`) | [Lesson 00.2](../00-foundations/00.2-mass-spring-damper-oscillations.md) |
@@ -153,6 +154,7 @@ flowchart LR
 | **Volatile Variable (`volatile`)** | C/C++ qualifier telling the compiler that a variable is modified asynchronously inside an `ISR`, forcing every check to read fresh SRAM. | `volatile` | [Lesson 04.1](../04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md) |
 | **Packed Binary Struct** | Fixed-layout binary packet (`__attribute__((packed))` in C, `struct.pack("<BHHfB", ...)` in Python) that transmits numbers in raw bytes without padding or ASCII overhead. | `bytes` | [Lesson 04.2](../04-embedded-and-realtime/04.2-packed-structs-and-crc8-telemetry.md) |
 | **XOR Checksum (`crc8`)** | 8-bit frame integrity check: a simple longitudinal **XOR checksum** (`chk ^= b`) catches single-bit flips, whereas a shift-register polynomial **CRC-8 (`0x07`)** (`crc8_ccitt`) also catches paired two-byte bit flips. | `uint8_t` | [Lesson 04.2](../04-embedded-and-realtime/04.2-packed-structs-and-crc8-telemetry.md) |
+| **C Struct Pointer (`*`, `&`, `->`)** | Passing the memory address of a C `struct` ("a labeled box") via `&box` to a pointer parameter (`JointBox *p`) so the function updates fields in place via `p->field` instead of modifying a temporary copy. | `*`, `&`, `->` | [Lesson 04.3](../04-embedded-and-realtime/04.3-structs-and-pointers-labeled-boxes.md) |
 | **PID Controller** | Closed-loop feedback law combining a virtual spring ($K_p e$), a virtual viscous damper ($-K_d \dot{q}$), and a steady-state error integrator ($K_i \int e\,dt$). | `N·m` or `V` | [Lesson 05.1](../05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md) |
 | **Integrator Windup** | Overshoot fault where an unclamped integral term accumulates a huge value while the actuator is saturated at $\pm u_{\max}$; cured by **anti-windup clamping**. | — | [Lesson 05.1](../05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md) |
 | **Gyroscope Bias** | Small constant offset error ($b_g$, in `rad/s`) on a gyroscope reading that causes pure angle integration ($\sum \omega \Delta t$) to drift linearly over time. | `rad/s` | [Lesson 05.2](../05-control-and-estimation/05.2-complementary-imu-sensor-fusion.md) |

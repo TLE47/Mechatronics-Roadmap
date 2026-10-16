@@ -6,7 +6,8 @@ Welcome to **Track P**! If you have never written a line of code, never wired a 
 flowchart LR
     Diag["0. School-Math Diagnostic<br/>& Tooling Orientation"] --> Py["P.1–P.6: Python Foundations<br/>Variables, Math, Clamping, Loops, Functions, Assert"]
     Py --> Math["P.7–P.10: Hardware Math<br/>SI Prefixes, Hz/Binary, Scaling, Radians/Trig"]
-    Math --> Phys["P.11–P.M: Physics & Milestone<br/>Time Graphs, Lever Torque & Robot Arm Sim"]
+    Math --> Phys["P.11–P.14 & P.M: Physics, Datasheets & Milestone<br/>Time Graphs, Lever Torque, DRV8833 Datasheet & Arm Sim"]
+    Phys --> GateP0["Gate P→0 (15-Min Check)<br/>Loop+Assert · 3 SI Conversions · Datasheet Row"]
 ```
 
 ---
@@ -60,12 +61,22 @@ You do **not** need to take a separate math course before starting robotics. Use
 | **[Lesson P.10](P.10-radians-and-right-triangle-trig.md)** | **Radians, Rotational Speed (`rad/s`) & Right-Triangle Trig** | 1. Measuring angles in radians and rotational speed (`rad/s`)<br>2. Right-triangle trigonometry (`cos`, `sin`, `atan2`) | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
 | **[Lesson P.11](P.11-reading-time-series-graphs.md)** | **Reading Time-Series Graphs — Slope & Area** | 1. Graph slope as rate of change<br>2. Area under a curve as accumulated change | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
 | **[Lesson P.12](P.12-forces-and-lever-torque.md)** | **Linear Forces ($F = ma$) & Lever Torque ($\tau = mgL\cos\theta$)** | 1. Linear force ($F = ma$) and gravitational weight ($W = mg$)<br>2. Lever torque from horizontal arm angle ($\tau = mgL\cos\theta$) | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
+| **[Lesson P.14](P.14-reading-a-datasheet-table.md)** | **Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds** | 1. Reading datasheet `Symbol / Min / Typ / Max / Unit` columns (`DRV8833` $2.7\text{–}10.8\text{ V}$)<br>2. Recommended Operating Conditions vs. Absolute Maximum Ratings ($11.8\text{ V}$) | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
 | **[Lesson P.M](P.M-track-p-milestone.md)** | **Track P Milestone — Gravity-Holding Robot Arm Simulator** | 1. End-to-end sense-compute-simulate loop | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
-| **Total Track P** | **12 Lessons + 1 Milestone (13 Files)** | **25 Ideas Total ($\le 2$ per lesson)** | **Unmeasured (~10–13 hrs total target)** | **Submit logs via Issue Template** |
+| **Total Track P** | **13 Lessons + 1 Milestone (14 Files)** | **27 Ideas Total ($\le 2$ per lesson)** | **Unmeasured (~10.5–14 hrs total target)** | **Submit logs via Issue Template** |
 
 ---
 
-## 4. How to Run the Exercises (Zero Installation Required)
+## 4. Gate P→0: 15-Minute Track P → Stage 0 Readiness Check (Targeted Review, Never "Start Over")
+
+Before jumping into Stage 0 circuits and Arduino sketches, verify these three practical skills in **Tab 3 (`Placement & Readiness`)** or **Tab 2 (`Run Python Lessons`)** of the Workbench (~15 minutes total):
+1. **Write a function with a loop and an `assert`:** Write a short `def` function that loops over a list of commands and verified behavior with `assert` $\to$ *If rusty, review only **[Lesson P.5](P.5-functions-and-while-loops.md)** & **[Lesson P.6](P.6-modules-and-automated-asserts.md)**.*
+2. **Convert 3 quantities between SI prefixes:** Convert $15\text{ mA} \to 0.015\text{ A}$, $4.7\text{ k}\Omega \to 4700\ \Omega$, and $500\ \mu\text{s} \to 0.0005\text{ s}$ $\to$ *If rusty, review only **[Lesson P.7](P.7-si-units-and-metric-prefixes.md)**.*
+3. **Read one row from a component datasheet table:** Given the `DRV8833` datasheet row (`VM: Min 2.7 V, Max 10.8 V Recommended; 11.8 V Abs Max`), explain why a $12.0\text{ V}$ supply is unsafe on `DRV8833` and requires `TB6612FNG` ($4.5\text{–}13.5\text{ V}$) $\to$ *If rusty, review only **[Lesson P.14](P.14-reading-a-datasheet-table.md)**.*
+
+---
+
+## 5. How to Run the Exercises (Zero Installation Required)
 1. **In your browser (Web-Worker Isolated Pyodide Runner):** Open **Tab 2 (`Run Python Lessons`)** in the live MechaLab Workbench to edit starter code, unlock 3-step progressive hints, and run instructor behavioral tests directly in your browser.
 2. **Or locally:** Run `python3 tests/test_exercises.py` to execute all automated exercise and behavioral tests across the roadmap.
 

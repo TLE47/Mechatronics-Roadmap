@@ -25,14 +25,15 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 > **Goal of Pass 1 (Track 03):** Read rotor position accurately using quadrature optical and on-axis magnetic encoders (`AS5600`/`AS5048`), understand how a 3-phase brushless motor rotates a magnetic field, and spin your first gimbal BLDC motor smoothly in angle mode using `SimpleFOC` and a `DRV8313`/`SimpleFOCMini` breakout.
 > **📚 Required Foundations & Bridge Modules for Pass 1 (Track 03):** Complete Tier 1 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (SI Units & RPM-to-$\text{rad/s}$), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians & 2D Vectors*), and [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) (*PWM H-Bridges*) plus the Track 03 Tier 1 Bridge [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md).
 
-### Beginner-First Lesson Series (`03.1 – 03.2`, $\le 2$ new ideas per lesson)
+### Beginner-First Lesson Series (`03.1 – 03.3`, $\le 2$ new ideas per lesson + Integration Micro-Lab)
 
-If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 00–08 Tier 1`)**, complete these two self-contained Python lessons before or alongside the hardware build steps below:
+If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 00–08 Tier 1`)**, complete these three self-contained Python lessons (including the 20-minute **zero-new-ideas integration micro-lab `03.3`** combining Track 02 FK and Track 03 encoders with R2/R4 practice) before or alongside the hardware build steps below:
 
 | Lesson | Title | New Ideas ($\le 2$) | Est. Time |
 | :--- | :--- | :--- | :--- |
 | **[03.1](03.1-quadrature-and-magnetic-encoders.md)** | **Quadrature Encoders ($4\times$ Counting) and 12-Bit Magnetic Angle Sensors** | 1. Incremental quadrature encoders (A/B channels & $4\times$ edge counting)<br>2. 12-bit absolute magnetic encoders (`AS5600` $0\text{–}4095$ counts to degrees/radians) | 45–60 min |
 | **[03.2](03.2-three-phase-bldc-and-electrical-angle.md)** | **3-Phase Brushless Motors, Pole Pairs and $90^\circ$ Electrical Torque Lead** | 1. Pole pairs ($N_p$) and electrical angle vs. mechanical shaft angle ($\theta_e = N_p \theta_m$)<br>2. 3-phase sinusoidal commutation and the $90^\circ$ electrical torque lead rule | 45–60 min |
+| **[03.3](03.3-encoder-to-fk-integration-microlab.md)** | **Track 02 + 03 Integration Micro-Lab — Read Dual Encoders to Compute 2-Link End-Effector Position** | 1. Zero-new-ideas integration micro-lab combining dual encoder decoding (`03.1`) with 2-link planar FK (`02.2`), R2 retargeting, and R4 CPR/sign fault diagnosis | 20–30 min |
 
 ### 1.1 Incremental (`A/B`) vs. Absolute Magnetic Encoders (`AS5600` / `AS5048`)
 - **Core Summary:** Incremental quadrature encoders output two $90^\circ$ phase-shifted square waves (`A/B`) that count relative steps ($4\times$ edges per slot) from boot, whereas on-axis diametric magnetic encoders (`AS5600` / `AS5048A` / `MT6835`) measure the magnetic field vector of a rear-shaft neodymium magnet to provide instant 12-to-16-bit absolute shaft angle ($0^\circ\text{–}360^\circ$) the microsecond power is applied.

@@ -14,18 +14,19 @@ Combine everything from Track P (variables, clamping, loops, functions, `assert`
 
 - **New ideas (max 2):**
   1. **End-to-end sense-compute-simulate loop**: Connecting a 10-bit digital command (`0..1023`), linear torque scaling, horizontal-angle gravity torque ($\tau_{\text{grav}} = mgL\cos\theta$), and discrete time-stepping (`angle = angle + omega * dt`) in one script.
-- **New syntax:** None (integrates Lessons P.1 through P.12).
+- **New syntax:** None (integrates Lessons P.1 through P.14).
 - **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
 
 ---
 
 ## Prerequisites
-- All Track P lessons: [P.1](P.1-variables-and-data-types.md)–[P.12](P.12-forces-and-lever-torque.md).
+- All Track P lessons: [P.1](P.1-variables-and-data-types.md)–[P.12](P.12-forces-and-lever-torque.md) and [P.14](P.14-reading-a-datasheet-table.md).
 
 ```mermaid
 flowchart LR
-    P12["P.12: Forces & Lever Torque"] --> PM["P.M: Track P Milestone"]
-    PM --> S01["Stage 0 (S0.1): Closed Circuits & Ohm's Law"]
+    P12["P.12: Forces & Lever Torque"] --> P14["P.14: Reading a Datasheet Table"]
+    P14 --> PM["P.M: Track P Milestone"]
+    PM --> S00["Stage 0 (S0.0): Why Electricity Is Like Flow"]
 ```
 
 ---
@@ -213,4 +214,4 @@ assert round(math.degrees(angle_rad), 1) == 54.0
 ### You're done with Track P when...
 - [ ] Your milestone script prints the exact 4 expected lines and passes all `assert` checks.
 - [ ] You can explain every single line of the milestone solution in plain English without looking anything up.
-- **Next lesson:** [Stage 0 (Lesson S0.1): Closed DC Circuits, Ground Reference & Ohm's Law](../stage-0/S0.1-closed-circuits-and-ohms-law.md)
+- **Next lesson:** [Stage 0 (Lesson S0.0): Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction](../stage-0/S0.0-why-electricity-is-like-flow.md)

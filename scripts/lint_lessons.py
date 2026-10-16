@@ -2,19 +2,19 @@
 """
 Automated Lesson Template & Topic-Alignment Linter (`scripts/lint_lessons.py`)
 
-Enforces all curriculum design rules across all 44 beginner lessons:
-- `track-p/P.*.md` (13 lessons: P.1 through P.12 + P.M)
-- `stage-0/S0.*.md` (10 lessons: S0.1 through S0.9 + S0.M)
+Enforces all curriculum design rules across all 48 beginner lessons:
+- `track-p/P.*.md` (14 lessons: P.1 through P.12 + P.14 + P.M)
+- `stage-0/S0.*.md` (11 lessons: S0.0 through S0.9 + S0.M)
 - `00-foundations/00.*.md` (3 lessons: 00.1 through 00.3)
 - `01-electronics-and-power/01.*.md` (4 lessons: 01.1 through 01.4)
 - `02-mechanics-kinematics-dynamics/02.*.md` (5 lessons: 02.1 through 02.5)
-- `03-sensors-and-actuators/03.*.md` (2 lessons: 03.1 through 03.2)
-- `04-embedded-and-realtime/04.*.md` (2 lessons: 04.1 through 04.2)
+- `03-sensors-and-actuators/03.*.md` (3 lessons: 03.1 through 03.3)
+- `04-embedded-and-realtime/04.*.md` (3 lessons: 04.1 through 04.3)
 - `05-control-and-estimation/05.*.md` (2 lessons: 05.1 through 05.2)
 - `06-robotics-and-autonomy/06.1-*.md` (1 lesson: 06.1)
 - `07-systems-hil-and-production/07.1-*.md` (1 lesson: 07.1)
 - `08-capstone-projects/08.1-*.md` (1 lesson: 08.1)
-Total: 44 beginner lessons (32 Python lessons, 7 Falstad circuit lessons, 5 Wokwi Arduino lessons).
+Total: 48 beginner lessons (36 Python lessons, 7 Falstad circuit lessons, 5 Wokwi Arduino lessons).
 
 Checks enforced on every lesson:
 1. Valid YAML front matter (`--- ... ---`) containing `lesson_id`, `title`, `ideas` (1..2 entries),
@@ -350,9 +350,9 @@ def lint_file(filepath: str, glossary_entries: list[tuple[str, str, str]]) -> li
 
 def main():
     files = get_lesson_files()
-    if len(files) != 44:
+    if len(files) != 48:
         print(
-            f"ERROR: Expected 44 beginner lesson files (13 Track P + 10 Stage 0 + 21 Tracks 00-08 Tier 1), found {len(files)}"
+            f"ERROR: Expected 48 beginner lesson files (14 Track P + 11 Stage 0 + 23 Tracks 00-08 Tier 1), found {len(files)}"
         )
         sys.exit(1)
 

@@ -2,8 +2,8 @@
 """
 scripts/check_term_order.py — Automated curriculum term-order and prerequisite order verifier.
 
-Verifies two strict pedagogical invariants across all 44 beginner lessons:
-1. Prerequisite Order: In `docs/PLAN-batch-1.md` and across all 44 beginner lessons (`Track P` -> `Stage 0` ->
+Verifies two strict pedagogical invariants across all 48 beginner lessons:
+1. Prerequisite Order: In `docs/PLAN-batch-1.md` and across all 48 beginner lessons (`Track P` -> `Stage 0` ->
    `Tracks 00–08 Tier 1`), every prerequisite lesson ID listed in a lesson's `Prerequisites` section
    (or in `docs/PLAN-batch-1.md`) must appear strictly earlier in curriculum path order.
 2. Glossary Term Order: For every glossary term in `resources/glossary.md`, finds the earliest lesson
@@ -28,13 +28,13 @@ GLOSSARY_PATH = os.path.join(ROOT, "resources", "glossary.md")
 PLAN_PATH = os.path.join(ROOT, "docs", "PLAN-batch-1.md")
 
 PATH_ORDER_IDS = [
-    "P.1", "P.2", "P.3", "P.4", "P.5", "P.6", "P.7", "P.8", "P.9", "P.10", "P.11", "P.12", "P.M",
-    "S0.1", "S0.2", "S0.3", "S0.4", "S0.5", "S0.6", "S0.7", "S0.8", "S0.9", "S0.M",
+    "P.1", "P.2", "P.3", "P.4", "P.5", "P.6", "P.7", "P.8", "P.9", "P.10", "P.11", "P.12", "P.14", "P.M",
+    "S0.0", "S0.1", "S0.2", "S0.3", "S0.4", "S0.5", "S0.6", "S0.7", "S0.8", "S0.9", "S0.M",
     "00.1", "00.2", "00.3",
     "01.1", "01.2", "01.3", "01.4",
     "02.1", "02.2", "02.3", "02.4", "02.5",
-    "03.1", "03.2",
-    "04.1", "04.2",
+    "03.1", "03.2", "03.3",
+    "04.1", "04.2", "04.3",
     "05.1", "05.2",
     "06.1",
     "07.1",
@@ -69,6 +69,7 @@ TERM_PATTERNS: dict[str, str] = {
     "Force ($F$) and Weight ($W$)": r"\bnewton's second law\b|\bgravitational weight\b",
     "Lever Arm ($r_\\perp$)": r"\blever arm\b",
     "Lever Torque ($\\tau$)": r"\btorque\b",
+    "Recommended Operating Conditions": r"\brecommended operating (?:conditions|bounds|range)\b",
     "Ground (`GND`)": r"\bground\b|\bgnd\b",
     "Voltage ($V$)": r"\bvoltages?\b",
     "Current ($I$)": r"\bcurrents?\b",
@@ -141,6 +142,7 @@ TERM_PATTERNS: dict[str, str] = {
     "Volatile Variable (`volatile`)": r"\bvolatile\b",
     "Packed Binary Struct": r"\bpacked binary\b",
     "XOR Checksum (`crc8`)": r"\bxor checksums?\b",
+    "C Struct Pointer (`*`, `&`, `->`)": r"\bpass-by-value\b|\bp->pos_rad\b",
     "PID Controller": r"\bpid controllers?\b",
     "Integrator Windup": r"\bintegrator windup\b|\banti-windup\b",
     "Gyroscope Bias": r"\bgyroscope bias\b",
