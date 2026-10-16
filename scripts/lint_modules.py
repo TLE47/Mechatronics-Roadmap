@@ -8,8 +8,9 @@ any standard at all. This linter closes that hole and keeps the two halves apart
 
 1. **Gated - structural invariants** every module carries today (measured 44/44 on 2026-10-16):
    the YAML front-matter contract, the numbered `## 1. Why it matters` .. `## 10. Next modules`
-   sequence with its exact titles, the `### Skip test` section, and the `[Recall]` / `[Apply]` /
-   `[Transfer]` question tags. A new module that drops one of these fails.
+   sequence with its exact titles, the `### Skip test` section, the `[Recall]` / `[Apply]` /
+   `[Transfer]` question tags, and no `TODO-AUTHOR` scaffold marker left behind by
+   `scripts/new_module.py`. A new module that drops one of these fails.
 2. **Reported - the ladder stages some modules do not carry.** The unified 8-Step Teaching Ladder
    (`docs/SYLLABUS.md` section C: Recall -> See it -> Predict -> Work through -> Practice with
    support -> Break it on purpose -> Transfer -> Integrate) is only partly present in the bridge
@@ -63,6 +64,10 @@ REQUIRED_FRONT_MATTER = (
     "hardware_required",
     "safety_level",
 )
+
+# `scripts/new_module.py` writes this marker into every hole it leaves behind, so an unchanged
+# scaffold can never be mistaken for a finished module (milestone M0 of the Tier 2/3 parity plan).
+SCAFFOLD_MARKER = "TODO-AUTHOR"
 
 REQUIRED_QUESTION_TAGS = ("[Recall]", "[Apply]", "[Transfer]")
 
@@ -136,6 +141,12 @@ def main() -> int:
         for tag in REQUIRED_QUESTION_TAGS:
             if tag not in text:
                 findings.append(f"{rel}: no `{tag}` question tag")
+
+        if SCAFFOLD_MARKER in text:
+            findings.append(
+                f"{rel}: still carries the `{SCAFFOLD_MARKER}` scaffold marker - replace every one of "
+                "them with real content before this counts as a module"
+            )
 
         stages = {stage: bool(re.search(pattern, text, flags=re.IGNORECASE | re.MULTILINE)) for stage, pattern in LADDER_MARKERS.items()}
         for stage in GATE_MARKERS:

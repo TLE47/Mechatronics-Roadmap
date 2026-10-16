@@ -692,3 +692,38 @@ bridges:
     hardware_required: false
     resources_verified: false
     path: modules/08-capstones.T3.07a.md
+# Milestone M0 of the Tier 2/3 parity plan: what happens when a track's parity score is not 100%.
+#   report - the score is published in docs/coverage-table.md (every track starts here)
+#   warn   - missing items print a warning line, the build still passes
+#   error  - any module below 100% fails the build; flipping a track to `error` is the visible
+#            "this track is done" signal
+# Read by scripts/module_parity.py; the ratchet (docs/parity-baseline.json) holds every track at or
+# above its recorded score whatever the level here says.
+tracks:
+  "00":
+    name: foundations
+    lint_level: report
+  "01":
+    name: electronics
+    lint_level: report
+  "02":
+    name: mechanics
+    lint_level: report
+  "03":
+    name: sensors
+    lint_level: report
+  "04":
+    name: embedded
+    lint_level: report
+  "05":
+    name: control
+    lint_level: report
+  "06":
+    name: robotics
+    lint_level: report
+  "07":
+    name: systems
+    lint_level: report
+  "08":
+    name: capstone
+    lint_level: report

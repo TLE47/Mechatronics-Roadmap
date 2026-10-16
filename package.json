@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "lint": "tsc -b",
     "check:lessons": "python3 scripts/generate_python_lessons_data.py --check",
+    "check:parity": "python3 scripts/module_parity.py --check",
     "test:smoke": "node scripts/smoke_test_workbench.mjs",
     "test:e2e": "node scripts/e2e_browser_workbench.mjs",
     "test:e2e:pages": "node scripts/e2e_pages_bundle.mjs"
