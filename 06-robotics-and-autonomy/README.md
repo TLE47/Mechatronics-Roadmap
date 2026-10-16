@@ -25,8 +25,16 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 > **Goal of Pass 1 (Track 06):** Stop commanding sudden step jumps (`q_des = 90.0`) that slam robot joints! Learn to generate smooth **Cubic Polynomial & Trapezoidal Velocity Trajectories** so velocity starts and ends at zero, and implement **Joint-Space Virtual Springs (Compliant PD + Gravity Offset)** so a human hand can safely push the robot arm out of the way.
 > **📚 Required Foundations & Bridge Modules for Pass 1 (Track 06):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Python Functions & Loops*), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Trigonometry for Gravity Torque*), and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinematics & Virtual Springs*) plus the Track 06 Tier 1 Bridge [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md).
 
+### Beginner-First Lesson Series (`06.1`, $\le 2$ new ideas per lesson)
+
+If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 00–08 Tier 1`)**, complete this self-contained lesson before or alongside the steps below:
+
+| Lesson | Title | New Ideas ($\le 2$) | Est. Time |
+| :--- | :--- | :--- | :--- |
+| **[06.1](06.1-cubic-trajectories-and-compliant-joints.md)** | **Rest-to-Rest Cubic Polynomial Trajectories and Joint-Space Gravity Feedforward** | 1. Rest-to-rest cubic polynomial trajectories ($q_d(s) = q_0 + (3s^2 - 2s^3)\Delta q$) with zero endpoint velocity<br>2. Joint-space compliant PD control with gravity feedforward ($\tau = K_p e - K_d \dot{q} + \tau_g(q)$) | 45–60 min |
+
 ### 1.1 Why Step Commands Break Gears: Smooth Cubic Spline Interpolation
-- **Core Summary:** Stepping a target angle `q_des` instantaneously demands infinite velocity and acceleration at $t = 0$, slamming the actuator into current saturation and shaking the robot frame. A **rest-to-rest cubic polynomial** $q_d(t) = q_0 + (3s^2 - 2s^3)(q_f - q_0)$ (with normalized time $s = t/T \in [0, 1]$) guarantees smooth position and strictly zero velocity $\dot{q}\kern0pt_d(0) = \dot{q}\kern0pt_d(T) = 0$ at both endpoints.
+- **Core Summary:** Stepping a target angle `q_des` instantaneously demands infinite velocity and acceleration at $t = 0$, slamming the actuator into current saturation and shaking the robot frame. A **rest-to-rest cubic polynomial** $q_d(t) = q_0 + (3s^2 - 2s^3)(q_f - q_0)$ (with normalized time $s = t/T \in [0, 1]$) guarantees smooth position and strictly zero velocity $\dot{q}_d(0) = \dot{q}_d(T) = 0$ at both endpoints.
 
 $$
 q_d(t) = q_0 + (3s^2 - 2s^3)(q_f - q_0), \qquad \dot{q}_d(t) = \frac{6s(1 - s)}{T}(q_f - q_0)
@@ -38,21 +46,21 @@ $$
   - 🔗 [Webots Open-Source 3D Robot Simulator (cyberbotics.com)](https://cyberbotics.com/) — *Zero-setup cross-platform simulator with 100+ pre-built mobile robots and arms for testing Tier 1 Python/C++ trajectories.*
   - 🔗 [Cyrill Stachniss (University of Bonn): Mobile Sensing and Robotics — Photogrammetry & SLAM Lectures (YouTube)](https://www.youtube.com/c/CyrillStachniss) — *Accessible visual lectures on odometry, occupancy grids, Kalman/Particle filters, and graph SLAM.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Write a 10-line Python or C++ function that evaluates $q_d(t)$, $\dot{q}\kern0pt_d(t)$, and $\ddot{q}\kern0pt_d(t)$ for a $1.0\text{ rad}$ move over $T = 0.8\text{ s}$ using both a cubic polynomial ($3s^2 - 2s^3$) and a quintic polynomial ($10s^3 - 15s^4 + 6s^5$). Verify that the quintic polynomial has zero acceleration $\ddot{q}\kern0pt_d(0) = \ddot{q}\kern0pt_d(T) = 0$ at the start and end of the move!
+  - *Task:* Write a 10-line Python or C++ function that evaluates $q_d(t)$, $\dot{q}_d(t)$, and $\ddot{q}_d(t)$ for a $1.0\text{ rad}$ move over $T = 0.8\text{ s}$ using both a cubic polynomial ($3s^2 - 2s^3$) and a quintic polynomial ($10s^3 - 15s^4 + 6s^5$). Verify that the quintic polynomial has zero acceleration $\ddot{q}_d(0) = \ddot{q}_d(T) = 0$ at the start and end of the move!
   - *📚 What to Learn & Resource Links for This Exercise:* Study discrete velocity/acceleration kinematics in Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and rest-to-rest cubic polynomial & trapezoidal velocity profiling in [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) (`## 3. Formalization` Items 1–2 & `## 4. Worked example`), plus [Lynch & Park *Modern Robotics* Ch. 9 (Trajectory Generation)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
 
-  **Q1:** During a rest-to-rest cubic polynomial trajectory $q_d(t) = q_0 + (3s^2 - 2s^3)\Delta q$ over duration $T$, at what instant $t$ does the peak velocity $\dot{q}\kern0pt_{\max}$ occur, and how much larger is it than the average velocity $\Delta q / T$?
-  * **Answer / Explanation:** Setting $\ddot{q}\kern0pt_d = 0$ gives $s = 0.5$ ($t = T/2$, the exact midpoint of the move). At $s = 0.5$, $\dot{q}\kern0pt_{\max} = \frac{6(0.5)(0.5)}{T}\Delta q = 1.5 \frac{\Delta q}{T}$—exactly **$50\%$ higher** than the average speed!
+  **Q1:** During a rest-to-rest cubic polynomial trajectory $q_d(t) = q_0 + (3s^2 - 2s^3)\Delta q$ over duration $T$, at what instant $t$ does the peak velocity $\dot{q}_{\max}$ occur, and how much larger is it than the average velocity $\Delta q / T$?
+  * **Answer / Explanation:** Setting $\ddot{q}_d = 0$ gives $s = 0.5$ ($t = T/2$, the exact midpoint of the move). At $s = 0.5$, $\dot{q}_{\max} = \frac{6(0.5)(0.5)}{T}\Delta q = 1.5 \frac{\Delta q}{T}$—exactly **$50\%$ higher** than the average speed!
 
   **Q2:** Why do high-speed arms prefer a **quintic (5th-order)** polynomial $s(\tau) = 10\tau^3 - 15\tau^4 + 6\tau^5$ over a cubic (3rd-order) polynomial?
   * **Answer & Explanation:** A cubic polynomial has only 4 coefficients (matching $q(0), q(T), \dot{q}(0), \dot{q}(T)$), so its acceleration $\ddot{q}(t)$ jumps discontinuously at $t = 0$ and $t = T$ (infinite jerk!). A quintic polynomial has 6 coefficients, allowing you to constrain $\ddot{q}(0) = \ddot{q}(T) = 0$ so motor torque ramps up smoothly from zero.
   </details>
 
 ### 1.2 Joint-Space Compliant Control (Virtual Spring-Damper + Gravity Feedforward)
-- **Core Summary:** Setting the integral gain $K_i = 0$ and pairing a soft PD virtual spring-damper with analytical gravity compensation $\tau_{\text{cmd}} = K_p(q_d - q) + K_d(\dot{q}\kern0pt_d - \dot{q}) + m g l_c \cos(q)$ allows a robot arm to hold any pose in space weightlessly while yielding safely like a mechanical spring whenever a human hand pushes it.
+- **Core Summary:** Setting the integral gain $K_i = 0$ and pairing a soft PD virtual spring-damper with analytical gravity compensation $\tau_{\text{cmd}} = K_p(q_d - q) + K_d(\dot{q}_d - \dot{q}) + m g l_c \cos(q)$ allows a robot arm to hold any pose in space weightlessly while yielding safely like a mechanical spring whenever a human hand pushes it.
 
 $$
 \tau_{\text{cmd}} = K_p (q_d(t) - q) + K_d (\dot{q}_d(t) - \dot{q}) + \underbrace{m g l_c \cos(q)}_{\text{Gravity Feedforward } g(q)}
@@ -87,7 +95,7 @@ $$
 > **📚 Required Foundations & Bridge Modules for Pass 2 (Track 06):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrix Transpose & Inverse*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (*3D Coordinate Frames*) plus the Track 06 Tier 2 Bridge Ladder [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) (*ROS 2 Nodes, Topics, Services, Actions & TF2*) → [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) (*ROS 2 Launch, Parameters, `ros2_control` & Cartesian Impedance / S-Curves*).
 
 ### 2.1 Sensorless Cartesian Impedance via the Jacobian Transpose ($\tau = J(q)^\top F_{\text{cart}} + g(q)$)
-- **Core Summary:** Using the virtual-work duality $\tau = J(q)^\top F_{\text{cart}} + g(q)$ with $F_{\text{cart}} = K_x(x_d - x) + D_x(\dot{x}\kern0pt_d - J(q)\dot{q})$, a multi-DOF robot can act as an anisotropic 3D virtual spring-damper at its gripper—for example, very stiff vertically ($K_z = 1000\text{ N/m}$) while compliant horizontally ($K_x = 50\text{ N/m}$)—without requiring inverse kinematics or an external force/torque sensor!
+- **Core Summary:** Using the virtual-work duality $\tau = J(q)^\top F_{\text{cart}} + g(q)$ with $F_{\text{cart}} = K_x(x_d - x) + D_x(\dot{x}_d - J(q)\dot{q})$, a multi-DOF robot can act as an anisotropic 3D virtual spring-damper at its gripper—for example, very stiff vertically ($K_z = 1000\text{ N/m}$) while compliant horizontally ($K_x = 50\text{ N/m}$)—without requiring inverse kinematics or an external force/torque sensor!
 - **Curated Free Resources:**
   - 🔗 [Russ Tedrake (MIT 6.4210): Chapter 8 — Manipulator Force & Cartesian Stiffness Control](https://manipulation.csail.mit.edu/force.html) — *Derives* $\tau = J(q)^\top F_{\text{cart}} + g(q)$ *and demonstrates how anisotropic stiffness enables peg-in-hole assembly and surface wiping.*
   - 🔗 [Khatib (1987 Seminal Paper): A Unified Approach for Motion and Force Control of Robot Manipulators](https://cs.stanford.edu/groups/manips/publications/pdfs/Khatib_1987_RA.pdf) — *Introduces operational-space control directly in end-effector coordinates.*
@@ -256,7 +264,7 @@ $$
   </details>
 
 ### 4.4 Hardware-Synchronized VIO & Manifold IMU Preintegration
-- **Core Summary:** High-rate IMUs ($400\text{–}1000\text{ Hz}$) run $10\text{–}30\times$ faster than camera keyframes ($30\text{ Hz}$). **Forster's Manifold IMU Preintegration** integrates relative motion $(\Delta R_{ij}, \Delta v_{ij}, \Delta p_{ij})$ between keyframes in the local body frame and uses a first-order Lie-algebra Jacobian $\exp\left(\frac{\partial \Delta\tilde{R}\kern0pt_{ij}}{\partial b_g}(b_g^+ - \bar{b}\kern0pt_g)\right)$ so factor-graph optimizers (`GTSAM`/`iSAM2`) can update gyro/accel biases across past keyframes without ever re-integrating raw $1\text{ kHz}$ IMU packets.
+- **Core Summary:** High-rate IMUs ($400\text{–}1000\text{ Hz}$) run $10\text{–}30\times$ faster than camera keyframes ($30\text{ Hz}$). **Forster's Manifold IMU Preintegration** integrates relative motion $(\Delta R_{ij}, \Delta v_{ij}, \Delta p_{ij})$ between keyframes in the local body frame and uses a first-order Lie-algebra Jacobian $\exp\left(\frac{\partial \Delta\tilde{R}_{ij}}{\partial b_g}(b_g^+ - \bar{b}_g)\right)$ so factor-graph optimizers (`GTSAM`/`iSAM2`) can update gyro/accel biases across past keyframes without ever re-integrating raw $1\text{ kHz}$ IMU packets.
 
 $$
 \Delta R_{ij}(b_g^+) \approx \Delta\tilde{R}_{ij} \exp\left(\frac{\partial \Delta\tilde{R}_{ij}}{\partial b_g} (b_g^+ - \bar{b}_g)\right)
@@ -281,23 +289,23 @@ $$
   </details>
 
 ### 4.5 Embodied AI: Visuomotor Imitation Learning (`ACT`, `Diffusion Policy`, `LeRobot`) & `VLA` Models
-- **Core Summary:** Contact-rich manipulation tasks with deformable objects (folding cloth, cable routing, bimanual food prep) defy hand-coded state machines. **Action Chunking with Transformers (`ACT`)** and **Visuomotor Diffusion Policies** predict smooth $k$-step future target trajectory chunks $\mathbf{A}\kern0pt_t = [\hat{q}\kern0pt_{t+1}, \dots, \hat{q}\kern0pt_{t+k}]$ at $30\text{–}50\text{ Hz}$ from wrist/overhead RGB cameras and joint proprioception, which are then tracked at $1\text{ kHz}$ by the underlying low-level impedance/FOC controller.
+- **Core Summary:** Contact-rich manipulation tasks with deformable objects (folding cloth, cable routing, bimanual food prep) defy hand-coded state machines. **Action Chunking with Transformers (`ACT`)** and **Visuomotor Diffusion Policies** predict smooth $k$-step future target trajectory chunks $\mathbf{A}_t = [\hat{q}_{t+1}, \dots, \hat{q}_{t+k}]$ at $30\text{–}50\text{ Hz}$ from wrist/overhead RGB cameras and joint proprioception, which are then tracked at $1\text{ kHz}$ by the underlying low-level impedance/FOC controller.
 - **Curated Free Resources:**
   - 🔗 [Hugging Face `LeRobot` Open-Source PyTorch Robotics Library (github.com/huggingface/lerobot)](https://github.com/huggingface/lerobot) — *End-to-end teleoperation, dataset collection, and training for `ACT`, `Diffusion Policy`, and `SmolVLA` on low-cost `SO-101` and `ALOHA` hardware.*
   - 🔗 [Capuano et al. (2025 Tutorial): Robot Learning — A Tutorial (arXiv:2510.12403)](https://arxiv.org/abs/2510.12403) — *Comprehensive modern walkthrough of behavioral cloning, action chunking, diffusion policies, and Vision-Language-Action (`VLA`) models.*
   - 🔗 [Chi et al. (RSS / IJRR): Diffusion Policy — Visuomotor Policy Learning via Action Diffusion](https://diffusion-policy.cs.columbia.edu/) & [Zhao et al. (RSS): ACT / ALOHA Bimanual Manipulation](https://tonyzhaozh.github.io/aloha/) — *Seminal papers solving multimodal demonstration distributions and compounding behavioral-cloning covariate shift.*
   - 🔗 [OpenVLA (`openvla.github.io`) & Physical Intelligence `openpi` (π₀ Flow-Matching VLA)](https://github.com/Physical-Intelligence/openpi) — *Open-weight Vision-Language-Action foundation models fine-tunable via LoRA for generalist manipulation.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Implement **Temporal Ensembling** in Python for an Action Chunking policy that outputs a $k = 10$-step trajectory prediction $\hat{q}\kern0pt_{t \to t+10}$ at every $20\text{ ms}$ camera frame: maintain a sliding buffer of overlapping predictions for the current timestep $t$ and compute the exponentially weighted average $q_{\text{cmd}}(t) = \frac{\sum_i \exp(-m \cdot i) \hat{q}\kern0pt_t^{(t-i)}}{\sum_i \exp(-m \cdot i)}$ ($m = 0.01$) so chunk boundaries never cause torque discontinuities!
+  - *Task:* Implement **Temporal Ensembling** in Python for an Action Chunking policy that outputs a $k = 10$-step trajectory prediction $\hat{q}_{t \to t+10}$ at every $20\text{ ms}$ camera frame: maintain a sliding buffer of overlapping predictions for the current timestep $t$ and compute the exponentially weighted average $q_{\text{cmd}}(t) = \frac{\sum_i \exp(-m \cdot i) \hat{q}_t^{(t-i)}}{\sum_i \exp(-m \cdot i)}$ ($m = 0.01$) so chunk boundaries never cause torque discontinuities!
   - *📚 What to Learn & Resource Links for This Exercise:* Study ACT exponential temporal ensembling, DDIM denoising steps, and Sim-to-Real domain randomization in [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) (`## 3. Formalization` Items 1–3 & `## 4. Worked example`), plus [Zhao et al. *Learning Fine-Grained Bimanual Manipulation (ACT)* (`arXiv:2304.13705`)](https://arxiv.org/abs/2304.13705) and [HuggingFace LeRobot (`github.com/huggingface/lerobot`)](https://github.com/huggingface/lerobot).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
 
-  **Q1:** Why does naive single-step Behavioral Cloning $\pi(o_t) \to \hat{a}\kern0pt_t$ fail when an obstacle can be avoided equally well by going *left* OR going *right* in human demonstrations?
-  * **Answer / Explanation:** A standard MSE regression loss averages the multimodal "go left" ($-1$) and "go right" ($+1$) demonstrations into $\hat{a}\kern0pt_t = 0$ ("drive straight into the obstacle")! **Diffusion Policy** (score-based Langevin denoising) and **CVAE Action Chunking (`ACT`)** model the full multimodal conditional distribution $p(\mathbf{A}\kern0pt_t \mid o_t)$ so the policy commits cleanly to one valid mode.
+  **Q1:** Why does naive single-step Behavioral Cloning $\pi(o_t) \to \hat{a}_t$ fail when an obstacle can be avoided equally well by going *left* OR going *right* in human demonstrations?
+  * **Answer / Explanation:** A standard MSE regression loss averages the multimodal "go left" ($-1$) and "go right" ($+1$) demonstrations into $\hat{a}_t = 0$ ("drive straight into the obstacle")! **Diffusion Policy** (score-based Langevin denoising) and **CVAE Action Chunking (`ACT`)** model the full multimodal conditional distribution $p(\mathbf{A}_t \mid o_t)$ so the policy commits cleanly to one valid mode.
 
-  **Q2:** Why must a $30\text{ Hz}$ VLA or Diffusion Policy output **desired joint/Cartesian impedance targets** $(q_d, \dot{q}\kern0pt_d)$ into a $1\text{ kHz}$ low-level PD/FOC loop rather than raw $30\text{ Hz}$ motor currents?
+  **Q2:** Why must a $30\text{ Hz}$ VLA or Diffusion Policy output **desired joint/Cartesian impedance targets** $(q_d, \dot{q}_d)$ into a $1\text{ kHz}$ low-level PD/FOC loop rather than raw $30\text{ Hz}$ motor currents?
   * **Answer & Explanation:** A $30\text{ Hz}$ ($33.3\text{ ms}$ period) neural network inference loop is far too slow to damp mechanical resonances or maintain passivity during rigid contact ($\omega_c < \frac{\phi_m}{\tau_{\text{delay}}}$ caps stability at $< 4\text{ Hz}$!). Outputting smooth action chunks $(q_d(t), K_p, K_d)$ evaluated inside a $1\text{–}40\text{ kHz}$ real-time impedance/FOC loop combines high-level semantic intelligence with sub-millisecond physical stability.
   </details>
 

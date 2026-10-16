@@ -1355,7 +1355,7 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
 ];
 
 export const SIMULATOR_TIER_GUIDES: Record<
-  Exclude<TabId, 'tab-arch'>,
+  Exclude<TabId, 'tab-arch' | 'tab-pyodide' | 'tab-placement'>,
   Record<ActiveTierPass, { badge: string; title: string; focus: string; actionHint: string }>
 > = {
   'tab-bode': {

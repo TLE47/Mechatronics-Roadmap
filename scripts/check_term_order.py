@@ -25,7 +25,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GLOSSARY_PATH = os.path.join(ROOT, "resources", "glossary.md")
-PLAN_PATH = os.path.join(ROOT, "PLAN-batch-1.md")
+PLAN_PATH = os.path.join(ROOT, "docs", "PLAN-batch-1.md")
 
 PATH_ORDER_IDS = [
     "P.1", "P.2", "P.3", "P.4", "P.5", "P.6", "P.7", "P.8", "P.9", "P.10", "P.11", "P.12", "P.M",
@@ -33,6 +33,12 @@ PATH_ORDER_IDS = [
     "00.1", "00.2", "00.3",
     "01.1", "01.2", "01.3", "01.4",
     "02.1", "02.2", "02.3", "02.4", "02.5",
+    "03.1", "03.2",
+    "04.1", "04.2",
+    "05.1", "05.2",
+    "06.1",
+    "07.1",
+    "08.1",
 ]
 
 # Explicit search patterns for each glossary term so multi-word phrases and technical terms
@@ -127,6 +133,23 @@ TERM_PATTERNS: dict[str, str] = {
     "Double Shear": r"\bdouble[- ]shear\b|\bcantilevered\b",
     "Timing Belt Pitch": r"\btiming belts?\b|\bgt2\b",
     "Clearance Fit": r"\bclearance fits?\b",
+    "Quadrature Encoder": r"\bquadrature encoders?\b",
+    "Absolute Magnetic Encoder": r"\babsolute magnetic encoders?\b|\bas5600\b",
+    "Pole Pairs ($N_p$)": r"\bpole pairs?\b",
+    "Electrical Angle ($\\theta_e$)": r"\belectrical angles?\b",
+    "Interrupt Service Routine (ISR)": r"\binterrupt service routines?\b",
+    "Volatile Variable (`volatile`)": r"\bvolatile\b",
+    "Packed Binary Struct": r"\bpacked binary\b",
+    "XOR Checksum (`crc8`)": r"\bxor checksums?\b",
+    "PID Controller": r"\bpid controllers?\b",
+    "Integrator Windup": r"\bintegrator windup\b|\banti-windup\b",
+    "Gyroscope Bias": r"\bgyroscope bias\b",
+    "Complementary IMU Filter": r"\bcomplementary imu filters?\b",
+    "Cubic Polynomial Trajectory": r"\bcubic polynomial trajector(?:y|ies)\b",
+    "Gravity Feedforward": r"\bgravity feedforward\b",
+    "Encoder-to-Actuator Sign Verification": r"\bencoder-to-actuator sign verification\b",
+    "Sine-Sweep System Identification": r"\bsine-sweep system identification\b",
+    "Figure-8 Trajectory": r"\bfigure-8\b",
 }
 
 
@@ -208,6 +231,12 @@ def discover_existing_lessons() -> list[tuple[str, str]]:
         + glob.glob(os.path.join(ROOT, "00-foundations", "00.*.md"))
         + glob.glob(os.path.join(ROOT, "01-electronics-and-power", "01.*.md"))
         + glob.glob(os.path.join(ROOT, "02-mechanics-kinematics-dynamics", "02.*.md"))
+        + glob.glob(os.path.join(ROOT, "03-sensors-and-actuators", "03.*.md"))
+        + glob.glob(os.path.join(ROOT, "04-embedded-and-realtime", "04.*.md"))
+        + glob.glob(os.path.join(ROOT, "05-control-and-estimation", "05.*.md"))
+        + glob.glob(os.path.join(ROOT, "06-robotics-and-autonomy", "06.*.md"))
+        + glob.glob(os.path.join(ROOT, "07-systems-hil-and-production", "07.*.md"))
+        + glob.glob(os.path.join(ROOT, "08-capstone-projects", "08.*.md"))
     )
     by_id: dict[str, str] = {}
     for path in all_md:
@@ -247,7 +276,7 @@ def check_lessons(glossary_entries: list[tuple[str, str, str]]) -> tuple[list[st
         prereq_sec = re.search(r"^## Prerequisites\s*$(.*?)(?=^## |\Z)", raw, flags=re.MULTILINE | re.DOTALL)
         if prereq_sec:
             prereq_text = re.sub(r"```mermaid.*?```", "", prereq_sec.group(1), flags=re.DOTALL)
-            for m in re.finditer(r"\b(P\.\d+|P\.M|S0\.\d+|S0\.M|0[0-2]\.\d+)\b", prereq_text):
+            for m in re.finditer(r"\b(P\.\d+|P\.M|S0\.\d+|S0\.M|0[0-8]\.\d+)\b", prereq_text):
                 pid = m.group(1)
                 if pid in PATH_ORDER_IDS and PATH_ORDER_IDS.index(pid) >= lid_idx:
                     errors.append(

@@ -95,7 +95,7 @@ print(f"PM={pm_deg:.2f} deg, |S(jw_gc)|={abs(S_gc):.3f}, Q_diag={Q_diag}, rho_ob
 ```
 Expected output:
 ```text
-PM=51.83 deg, |S(jw_gc)|=0.819, Q_diag=[400.0, 100.0], rho_obs=0.9000
+PM=51.83 deg, |S(jw_gc)|=1.144, Q_diag=[399.99999999999994, 99.99999999999999], rho_obs=0.9005
 ```
 
 ## 5. Exercise

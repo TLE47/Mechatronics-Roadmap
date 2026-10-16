@@ -16,7 +16,7 @@ uses:
 est_hours: 3.5
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -144,7 +144,7 @@ assert math.isclose(q5_row0, 4.0, rel_tol=1e-9)
 | Matrix inversion crashes with `LinAlgError: Singular matrix` | Arm is fully stretched out ($\theta_2 = 0$), making basis/Jacobian columns collinear ($\det = 0$). | Check $\lvert \det(B)\rvert  > 10^{-6}$ or use damped least-squares before inverting. |
 
 ## 9. Resources
-- **Gilbert Strang — [*Linear Algebra and Learning from Data* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md) & [3Blue1Brown Cross Products](https://www.3blue1brown.com/lessons/cross-products):** Orthogonality, projections, determinants, and change of basis `[UNVERIFIED]`.
+- **Gilbert Strang — [*Linear Algebra and Learning from Data* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md) & [3Blue1Brown Cross Products](https://www.3blue1brown.com/lessons/cross-products):** Orthogonality, projections, determinants, and change of basis `[VERIFIED 2026-10-15]`.
 - **Lynch & Park — [*Modern Robotics* (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Spatial moments $\vec{r}\times\vec{F}$ and coordinate frames `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules

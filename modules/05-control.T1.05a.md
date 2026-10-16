@@ -84,7 +84,7 @@ print(f"PD final q={q_p:.3f} rad (sag={1-q_p:.3f}), Unclamped OS={os_windup:.3f}
 ```
 Expected output:
 ```text
-PD final q=0.850 rad (sag=0.150), Unclamped OS=0.220 rad, Anti-windup OS=0.044 rad
+PD final q=0.850 rad (sag=0.150), Unclamped OS=0.372 rad, Anti-windup OS=0.047 rad
 ```
 
 ## 5. Exercise

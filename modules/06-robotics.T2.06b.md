@@ -55,7 +55,7 @@ $$
    - On simulation step $k$:
 
 $$
-\underbrace{(q_k, \dot{q}_k)}_{\text{Sim State}} \xrightarrow{\text{read()}} \text{State Interfaces} \xrightarrow{\text{update()}} \begin{cases} \text{JointStateBroadcaster} \to \texttt{/joint\_states} \to \texttt{robot\_state\_publisher} \to \texttt{/tf} \\ \text{ImpedanceController} \to \tau_{\text{cmd},k} \end{cases} \xrightarrow{\text{write()}} \underbrace{\tau_{\text{sim},k}}_{\text{mjData->ctrl}}
+\underbrace{(q_k, \dot{q}_k)}_{\text{Sim State}} \xrightarrow{\text{read()}} \text{State Interfaces} \xrightarrow{\text{update()}} \begin{cases} \text{JointStateBroadcaster} \to \texttt{/joint-states} \to \texttt{robot-state-publisher} \to \texttt{/tf} \\ \text{ImpedanceController} \to \tau_{\text{cmd},k} \end{cases} \xrightarrow{\text{write()}} \underbrace{\tau_{\text{sim},k}}_{\text{mjData->ctrl}}
 $$
 
 
@@ -110,7 +110,7 @@ print(f"disk_rate={disk_rate_mbs:.3f} MB/s, bag_10m={bag_size_10min_mb:.1f} MB, 
 ```
 Expected output:
 ```text
-disk_rate=1.875 MB/s, bag_10m=1124.8 MB, q_sim(20ms)=0.0825 rad
+disk_rate=1.875 MB/s, bag_10m=1124.8 MB, q_sim(20ms)=0.0752 rad
 ```
 
 ## 5. Exercise

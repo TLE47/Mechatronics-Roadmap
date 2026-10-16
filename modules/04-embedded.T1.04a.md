@@ -16,7 +16,7 @@ uses:
 est_hours: 3.5
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -38,7 +38,7 @@ When you transition from desktop Python to microcontroller firmware, you first m
    - Set bit $n$ to `1`: $W \leftarrow W \mid (1\text{U} \ll n)$.
    - Clear bit $n$ to `0`: $W \leftarrow W \mathbin{\&} \sim(1\text{U} \ll n)$.
    - Toggle bit $n$: $W \leftarrow W \oplus (1\text{U} \ll n)$.
-   - Test bit $n$: $\text{is}\_\text{set} = (W \gg n) \mathbin{\&} 1\text{U}$.
+   - Test bit $n$: $\text{is-set} = (W \gg n) \mathbin{\&} 1\text{U}$.
    Substituting $W = \text{0x01}$ (`0b00000001`), setting bit $3$ ($1 \ll 3 = 8 = \text{0x08}$) gives $W = \text{0x09}$ (`0b00001001`).
 3. **Structs and Pass-by-Pointer (`*` and `->`):** Grouping fields in `struct MotorState { int16_t count; float vel_rad_s; };` and passing `MotorState *s` passes a single memory address (`4` or `8` bytes) so `s->count += 1` (`->` dereferences a struct pointer, equivalent to `(*s).count`) mutates the caller's struct in-place and packs cleanly into binary frames (`struct.pack("<Hhf", ...)`).
 
@@ -135,7 +135,7 @@ assert q4_choice == "B"
 | Signed `int16_t` encoder count jumps from `+32767` to `-32768` | Exceeded the signed 16-bit range during multi-turn rotation. | Accumulate multi-turn counts in a 32-bit `int32_t` or 64-bit `int64_t` variable using unsigned 16-bit tick deltas. |
 
 ## 9. Resources
-- **Jens Gustedt — *Modern C* & Arduino Reference (`resources/textbooks-and-papers.md`):** Fixed-width integer types (`<stdint.h>`), pointers, and bitwise operators `[UNVERIFIED]`.
+- **Jens Gustedt — *Modern C* & Arduino Reference (`resources/textbooks-and-papers.md`):** Fixed-width integer types (`<stdint.h>`), pointers, and bitwise operators `[VERIFIED 2026-10-15]`.
 - **Wokwi Embedded Simulator (`wokwi.com`, `resources/open-source-toolchains.md`):** Browser-based Arduino/ESP32/STM32 simulator `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 - Proceed to [`04-embedded.T1.04b`](04-embedded.T1.04b.md) (*Non-Blocking `millis()`/`micros()` State Machines, Hardware Interrupts (ISRs) & `volatile`*).

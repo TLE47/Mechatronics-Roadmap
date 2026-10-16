@@ -106,11 +106,33 @@ for p in sorted(ROOT.glob("*.md")):
         bad.append(f"{mid}: safety_level={fm.get('safety_level')} missing '### Safety notes'")
     if not re.search(r"^###?\s+.*(?:Skip test|Skip Test)", body, re.M):
         bad.append(f"{mid}: missing section 'Skip test'")
-    for idx_b, py_block in enumerate(re.findall(r"```python\n(.*?)```", body, re.S), 1):
+    if not fm.get("resources_verified", False):
+        bad.append(f"{mid}: resources_verified is not true")
+    if "[UNVERIFIED]" in body or "[verify in-app]" in body:
+        bad.append(f"{mid}: contains unverified resource tag ([UNVERIFIED] or [verify in-app])")
+
+    import contextlib
+    import io
+
+    py_blocks = re.findall(r"```python\n(.*?)```", body, re.S)
+    exp_match = re.search(r"```python\n(.*?)```\s*Expected output:\s*```text\n(.*?)```", body, re.S)
+    if not exp_match:
+        bad.append(f"{mid}: missing 'Expected output:' block after worked example")
+
+    for idx_b, py_block in enumerate(py_blocks, 1):
+        buf = io.StringIO()
         try:
-            exec(py_block, {})
+            with contextlib.redirect_stdout(buf):
+                exec(py_block, {})
         except Exception as exc:
             bad.append(f"{mid}: python block #{idx_b} failed: {exc}")
+            continue
+        if idx_b == 1 and exp_match:
+            got_out = buf.getvalue().strip()
+            exp_out = exp_match.group(2).strip()
+            if got_out != exp_out:
+                bad.append(f"{mid}: Expected output mismatch:\n  expected: {exp_out}\n  actual:   {got_out}")
+
     nodes[mid] = {
         "prereqs": fm.get("prereqs", []),
         "introduces": set(fm.get("new_concepts", [])),
@@ -154,15 +176,17 @@ def reach(n, seen=None):
     return out
 
 
+ladders = set()
 for m, d in nodes.items():
     if not d["legacy"]:
+        track_tier = ".".join(m.split(".")[:2])
+        ladders.add(track_tier)
         for u in d["uses"] - reach(m):
             bad.append(f"{m}: uses '{u}' not introduced by any prereq")
         m_gate = re.search(r"### Gate test.*?(?=^##\s|\Z)", d["body"], re.S | re.M)
         if m_gate:
             gtxt = m_gate.group(0)
             tagged = set(re.findall(r"\[Concept:\s*([^\]]+)\]", gtxt))
-            track_tier = ".".join(m.split(".")[:2])
             ladder_concepts = set()
             for k, kd in nodes.items():
                 if not kd["legacy"] and k.startswith(track_tier):
@@ -172,7 +196,27 @@ for m, d in nodes.items():
             for c in sorted(tagged - ladder_concepts):
                 bad.append(f"{m}: Gate test tags unknown concept '{c}'")
 
+legacy_cnt = sum(1 for d in nodes.values() if d["legacy"])
+bridge_cnt = sum(1 for d in nodes.values() if not d["legacy"])
+
+readme_path = pathlib.Path("README.md")
+if readme_path.exists():
+    rtxt = readme_path.read_text(encoding="utf-8")
+    expected_summary = (
+        f"**{len(nodes)} formal modules** (**{legacy_cnt} legacy** modules and "
+        f"**{bridge_cnt} bridge** modules across **{len(ladders)} ladders**"
+    )
+    if expected_summary not in rtxt:
+        bad.append(
+            f"README.md: module count summary out of sync with _index.yaml (expected '{expected_summary}')"
+        )
+
 if bad:
     print("\n".join(bad))
     sys.exit(1)
-print(f"OK ({len(nodes)} modules: {sum(1 for d in nodes.values() if d['legacy'])} legacy, {sum(1 for d in nodes.values() if not d['legacy'])} bridge)")
+
+print(
+    f"OK ({len(nodes)} modules: {legacy_cnt} legacy, {bridge_cnt} bridge across {len(ladders)} ladders; "
+    f"all {bridge_cnt} Expected output blocks diffed & verified)"
+)
+

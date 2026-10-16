@@ -5,9 +5,26 @@ All structural changes, lesson splits, curriculum reorderings, angle-convention 
 ```mermaid
 flowchart LR
     TP["Track P (13 Files: P.1–P.12 + P.M)"] --> S0["Stage 0 (10 Files: S0.1–S0.9 + S0.M)"]
-    S0 --> B1["Batch 1 Tier 1 (12 Files: 00.1–00.3, 01.1–01.4, 02.1–02.5)"]
-    B1 --> QA["Automated CI: check_term_order + lint_lessons + density_report + test_exercises + check_links"]
+    S0 --> B1["Pass 1 Tier 1 (21 Files: 00.1–08.1 across Tracks 00–08)"]
+    B1 --> QA["Automated CI: verify_repo + validate_modules + lint_lessons + check_term_order + clean_tex + test_exercises + run_all_labs"]
 ```
+
+---
+
+## [2026-10-16] — Run 4: Course Packaging, Technical Fixes (`DRV8833` & `05-control.T1.05a`), Tracks 03–08 Beginner Lessons (`03.1–08.1`), Clean TeX & In-Browser Pyodide/Placement Workbench
+
+### 1. Technical Accuracy & CI Expected-Output Diffing
+- **Fixed `DRV8833` Voltage Rating (`2.7–10.8 V` operating, `11.8 V` abs max):** Updated `01-electronics-and-power/01.2-h-bridge-and-stall-current.md`, `01-electronics-and-power/README.md`, `modules/01-electronics.T1.01b.md`, `docs/SYLLABUS.md`, and `resources/lab-workbench-bom.md` so `DRV8833` is paired with a $6\text{–}9\text{ V}$ supply while $12\text{ V}$ motors explicitly use `TB6612FNG` ($4.5\text{–}13.5\text{ V}$) or `DRV8871` ($6.5\text{–}45\text{ V}$).
+- **Fixed `modules/05-control.T1.05a.md` Expected Output & Added CI Output Diffing:** Updated `05-control.T1.05a.md` to match the exact stdout of its worked PID simulation (`Unclamped OS=0.372, Anti-windup OS=0.047`) and extended both `scripts/run_all_labs.py` and `scripts/validate_modules.py` to execute and diff all 44 bridge module `Expected output` blocks and forbid `[verify in-app]` / `[UNVERIFIED]` placeholders when `resources_verified: true`.
+
+### 2. Openness, Licensing, Attribution & Slim Single-Screen `README.md`
+- **Added Dual `LICENSE` (`CC BY 4.0` for docs, `MIT` for code), `CONTRIBUTING.md`, and `.github/ISSUE_TEMPLATE/`:** Added explicit attribution for [`engyasin/awesome-mechatronics`](https://github.com/engyasin/awesome-mechatronics) and structured issue templates (`lesson-error.yml`, `lab-bug.yml`).
+- **Slimmed Root `README.md` (111 KB $\to$ 12 KB) & Cleaned Root Clutter:** Fixed Step 3 to start at `Track 00 Lesson 00.1`, separated the \$0 Simulator Path, \$15–\$25 Starter Kit, and \$150 Closed-Loop Bench in `README.md` and `resources/lab-workbench-bom.md`, moved `SYLLABUS.md` and `PLAN-batch-1.md` into `docs/`, and verified live module/bridge/ladder counts (`68 modules: 24 legacy, 44 bridge across 25 ladders`) against `modules/_index.yaml`.
+- **Clean TeX Source (`scripts/clean_tex.py`):** Stripped all 862 `\kern0pt` and `\_` math-mode workarounds across the repository and added `python3 scripts/clean_tex.py --check` to CI.
+
+### 3. Closed the Beginner Cliff (`Lessons 03.1–08.1`) & Added In-Browser Pyodide + Placement Quiz
+- **Expanded Tier 1 Tracks 03–08 into 9 Full Beginner Lesson Files (`03.1`, `03.2`, `04.1`, `04.2`, `05.1`, `05.2`, `06.1`, `07.1`, `08.1`):** Every lesson enforces $\le 2$ new ideas in YAML front matter, 150–250 word `Bridge Notes`, runnable Python 3 starter code, 3-step progressive hints, and `assert`-verified full solutions (44 total beginner lessons across Track P, Stage 0, and Tracks 00–08 Tier 1).
+- **Embedded In-Browser Pyodide Runner (`Tab 9`) & Placement Diagnostic (`Tab 10`):** Added `TabPyodideRunner.tsx` (running all 32 Python beginner lessons directly in the browser via Pyodide WebAssembly) and `TabPlacementQuiz.tsx` (evaluating 8 module skip-test gates to recommend the learner's exact starting lesson and simulator tab).
 
 ---
 

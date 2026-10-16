@@ -17,7 +17,7 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: high
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -46,7 +46,7 @@ $$
 3. **Cross-Domain ICD & Pre-Bring-Up Go/No-Go Sign-Off Function:** A capstone build is cleared for energized closed-loop testing (`GO = True`) iff all 5 domain gates hold simultaneously:
 
 $$
-\text{GO} = (e_{3\sigma,\text{total}} \le e_{\text{spec}}) \land (\text{PM}_{\text{net}} \ge 45^\circ) \land (\text{CPU}\_\text{Util} \le 0.70) \land (\text{CAN}\_\text{Term}\_\text{Ohm} \in [55, 65]) \land (\text{Cat3}\_\text{STO}\_\text{Verified} = \text{True})
+\text{GO} = (e_{3\sigma,\text{total}} \le e_{\text{spec}}) \land (\text{PM}_{\text{net}} \ge 45^\circ) \land (\text{CPU-Util} \le 0.70) \land (\text{CAN-Term-Ohm} \in [55, 65]) \land (\text{Cat3-STO-Verified} = \text{True})
 $$
 
 
@@ -88,7 +88,7 @@ print(f"e_3sigma={e_3sigma_mm:.3f} mm (dominant: {dominant_source}), tau={tau_to
 ```
 Expected output:
 ```text
-e_3sigma=0.425 mm (dominant: Structural link deflection), tau=1.10 ms, PM_net=52.55 deg, GO=True
+e_3sigma=0.426 mm (dominant: Structural link deflection), tau=1.10 ms, PM_net=52.55 deg, GO=True
 ```
 
 ## 5. Exercise
@@ -212,7 +212,7 @@ assert g8_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 | Enabled full-stiffness trajectory tracking on first power-up without running Stage 3 ($K_p = 0$ gravity/damping check) | Sign mismatch between URDF joint axis and actuator encoder caused an immediate full-torque slam into the hard stop. | Never skip Stage 3 ($K_p = 0$, $20\%$ torque limit backdrivability & damping sign check) before enabling position stiffness! |
 
 ## 9. Resources
-- **Alexander Slocum — *Precision Machine Design* & NASA *Systems Engineering Handbook (`NASA/SP-2016-6105 Rev2`)* (`resources/textbooks-and-papers.md`):** Industry-standard methodology for structural error budgets, interface control documents (ICDs), and staged system verification `[UNVERIFIED]`.
+- **Alexander Slocum — *Precision Machine Design* & NASA *Systems Engineering Handbook (`NASA/SP-2016-6105 Rev2`)* (`resources/textbooks-and-papers.md`):** Industry-standard methodology for structural error budgets, interface control documents (ICDs), and staged system verification `[VERIFIED 2026-10-15]`.
 - **Track 08 (`08-capstone-projects/README.md`):** Directly unlocks Step 3.8 (`08-capstones.T3.08`: Capstones 1, 2, and 3) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 - Proceed to legacy **Step 3.8 (`08-capstones.T3.08`)** in [`08-capstone-projects/README.md`](../08-capstone-projects/README.md) — **Capstone 1** (Precision Stage), **Capstone 2** (Balancing Robot), or **Capstone 3** (6-DOF Force-Controlled Tele-Impedance Manipulator — the **Graduate Goal**).

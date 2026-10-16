@@ -16,7 +16,7 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -83,7 +83,7 @@ print(f"Unwarped lands at {f_unwarped:.2f} Hz (misses by {miss_hz:.2f} Hz); pre-
 ```
 Expected output:
 ```text
-Unwarped lands at 749.49 Hz (misses by 100.51 Hz); pre-warped lands at 850.00 Hz
+Unwarped lands at 749.48 Hz (misses by 100.52 Hz); pre-warped lands at 850.00 Hz
 ```
 
 ## 5. Exercise
@@ -190,7 +190,7 @@ assert g8_choice == "A"
 | Covariance matrix $\Sigma$ loses symmetry in `float32` | Accumulated floating-point rounding errors across thousands of updates. | Enforce $\Sigma \leftarrow \frac{1}{2}(\Sigma + \Sigma^\top)$ and use the Joseph form in Step 3.6. |
 
 ## 9. Resources
-- **Robert Bristow-Johnson — [*Audio EQ Cookbook* (`w3.org/TR/audio-eq-cookbook`)](https://www.w3.org/TR/audio-eq-cookbook/) & [DSP Guide (`dspguide.com`)](https://www.dspguide.com/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Standard biquad and Tustin pre-warping derivations `[UNVERIFIED]`.
+- **Julius O. Smith III — [*Introduction to Digital Filters* (`ccrma.stanford.edu/~jos/filters/`)](https://ccrma.stanford.edu/~jos/filters/) & [DSP Guide (`dspguide.com`)](https://www.dspguide.com/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Standard biquad and Tustin pre-warping derivations `[VERIFIED 2026-10-15]`.
 - **Track 00 ([`00-foundations/README.md#tier-2-intermediate--applied`](../00-foundations/README.md#tier-2-intermediate--applied)):** Directly continues into Step 2.1 (`00-foundations.T2.01`) `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules

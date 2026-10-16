@@ -29,7 +29,7 @@ Imagine a chef cooking three dishes at once. A **`delay()` loop** is like starin
 1. **Non-Blocking Rollover-Safe Tick Scheduler:** Given unsigned 32-bit microsecond timer `now_us` and period `PERIOD_US = 1000` ($1\text{ kHz}$), the condition:
 
 $$
-\text{uint32}\_\text{t}(t_{\text{now}} - t_{\text{last}}) \ge T_{\text{period}} \implies t_{\text{last}} \leftarrow t_{\text{last}} + T_{\text{period}}
+\text{uint32-t}(t_{\text{now}} - t_{\text{last}}) \ge T_{\text{period}} \implies t_{\text{last}} \leftarrow t_{\text{last}} + T_{\text{period}}
 $$
 
    executes without blocking and without cumulative phase drift. Substituting $t_{\text{last}} = 2000\ \mu\text{s}$, $T_{\text{period}} = 1000\ \mu\text{s}$, and $t_{\text{now}} = 3015\ \mu\text{s}$ triggers execution and advances $t_{\text{last}}$ to $3000\ \mu\text{s}$ (preserving the exact $1000\ \mu\text{s}$ grid).

@@ -25,6 +25,15 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 > **Goal of Pass 1 (Track 03):** Read rotor position accurately using quadrature optical and on-axis magnetic encoders (`AS5600`/`AS5048`), understand how a 3-phase brushless motor rotates a magnetic field, and spin your first gimbal BLDC motor smoothly in angle mode using `SimpleFOC` and a `DRV8313`/`SimpleFOCMini` breakout.
 > **📚 Required Foundations & Bridge Modules for Pass 1 (Track 03):** Complete Tier 1 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (SI Units & RPM-to-$\text{rad/s}$), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians & 2D Vectors*), and [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) (*PWM H-Bridges*) plus the Track 03 Tier 1 Bridge [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md).
 
+### Beginner-First Lesson Series (`03.1 – 03.2`, $\le 2$ new ideas per lesson)
+
+If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 00–08 Tier 1`)**, complete these two self-contained Python lessons before or alongside the hardware build steps below:
+
+| Lesson | Title | New Ideas ($\le 2$) | Est. Time |
+| :--- | :--- | :--- | :--- |
+| **[03.1](03.1-quadrature-and-magnetic-encoders.md)** | **Quadrature Encoders ($4\times$ Counting) and 12-Bit Magnetic Angle Sensors** | 1. Incremental quadrature encoders (A/B channels & $4\times$ edge counting)<br>2. 12-bit absolute magnetic encoders (`AS5600` $0\text{–}4095$ counts to degrees/radians) | 45–60 min |
+| **[03.2](03.2-three-phase-bldc-and-electrical-angle.md)** | **3-Phase Brushless Motors, Pole Pairs and $90^\circ$ Electrical Torque Lead** | 1. Pole pairs ($N_p$) and electrical angle vs. mechanical shaft angle ($\theta_e = N_p \theta_m$)<br>2. 3-phase sinusoidal commutation and the $90^\circ$ electrical torque lead rule | 45–60 min |
+
 ### 1.1 Incremental (`A/B`) vs. Absolute Magnetic Encoders (`AS5600` / `AS5048`)
 - **Core Summary:** Incremental quadrature encoders output two $90^\circ$ phase-shifted square waves (`A/B`) that count relative steps ($4\times$ edges per slot) from boot, whereas on-axis diametric magnetic encoders (`AS5600` / `AS5048A` / `MT6835`) measure the magnetic field vector of a rear-shaft neodymium magnet to provide instant 12-to-16-bit absolute shaft angle ($0^\circ\text{–}360^\circ$) the microsecond power is applied.
   * **Incremental Quadrature Encoders (`A/B/Z`):** Two square waves offset by $90^\circ$ electrical let a hardware timer count $4\times$ edges per slot and detect direction from which channel leads. *Catch:* On power-up, the MCU does not know absolute angle until it rotates past the index pulse `Z`.
@@ -65,7 +74,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
   * **Answer / Explanation:** $\Delta \theta_e = N_p \cdot \Delta \theta_{\text{mech}} = 11 \times 10^\circ = 110^\circ\text{ electrical}$. Because the magnetic pattern repeats $11$ times per mechanical revolution, the electrical sine wave cycles $11\times$ faster than the mechanical shaft!
 
   **Q2:** Why does aligning the stator magnetic field at $0^\circ$ electrical relative to the rotor permanent magnet produce zero torque?
-  * **Answer & Explanation:** Torque is the cross product $\boldsymbol{\tau} = \boldsymbol{\mu}\kern0pt_{\text{rotor}} \times \mathbf{B}\kern0pt_{\text{stator}}$, which is proportional to $\sin(\theta_{\text{stator}} - \theta_{\text{rotor}})$. At $0^\circ$, $\sin(0^\circ) = 0$: the stator coils merely pull or push radially on the rotor bearings (pure $d$-axis current $i_d$), generating heat without tangential force. At $90^\circ$, $\sin(90^\circ) = 1$, producing maximum tangential torque per amp (pure $q$-axis current $i_q$).
+  * **Answer & Explanation:** Torque is the cross product $\boldsymbol{\tau} = \boldsymbol{\mu}_{\text{rotor}} \times \mathbf{B}_{\text{stator}}$, which is proportional to $\sin(\theta_{\text{stator}} - \theta_{\text{rotor}})$. At $0^\circ$, $\sin(0^\circ) = 0$: the stator coils merely pull or push radially on the rotor bearings (pure $d$-axis current $i_d$), generating heat without tangential force. At $90^\circ$, $\sin(90^\circ) = 1$, producing maximum tangential torque per amp (pure $q$-axis current $i_q$).
   </details>
 
 ### 1.3 Sinusoidal Voltage Commutation with `SimpleFOC`
@@ -146,7 +155,7 @@ $$
   * **Answer / Explanation:** Because rotor angle wraps around at $\pm \pi$ (or $0 \leftrightarrow 2\pi$)! Simple subtraction across the wrap boundary (e.g., $\theta_{\text{meas}} = +3.14\text{ rad}$ and $\hat{\theta} = -3.14\text{ rad}$) produces a false $6.28\text{ rad}$ error jump that violent kicks the velocity integrator. The `atan2(sin, cos)` wrap maps the shortest angular distance onto $(-\pi, +\pi]$.
 
   **Q2:** Why is a **Type-II** PLL (which includes an integrator $\dot{\hat{\omega}} = K_i e_\theta$) required instead of a Type-I first-order low-pass filter?
-  * **Answer & Explanation:** A Type-I filter has only one integrator in the loop, so it suffers from a steady-state phase lag $e_{\theta,\text{ss}} = \omega / K_p$ whenever the motor spins at constant velocity $\omega \ne 0$. That phase lag corrupts the Park transform angle $\hat{\theta}\kern0pt_e$ at high speed! A Type-II PLL has two integrators ($\hat{\omega}$ and $\hat{\theta}$), guaranteeing **zero steady-state angle and velocity error** during constant-velocity rotation.
+  * **Answer & Explanation:** A Type-I filter has only one integrator in the loop, so it suffers from a steady-state phase lag $e_{\theta,\text{ss}} = \omega / K_p$ whenever the motor spins at constant velocity $\omega \ne 0$. That phase lag corrupts the Park transform angle $\hat{\theta}_e$ at high speed! A Type-II PLL has two integrators ($\hat{\omega}$ and $\hat{\theta}$), guaranteeing **zero steady-state angle and velocity error** during constant-velocity rotation.
   </details>
 
 ### 2.3 IMU Metrology & Allan Deviation ($\sigma_A(\tau)$)
@@ -243,7 +252,7 @@ flowchart LR
 | Encoder Technology | Typical Resolution | Max Speed / Bandwidth | Interface Protocol | Primary Error Sources & Mitigation |
 | :--- | :--- | :--- | :--- | :--- |
 | **Optical Incremental** | $1,000 - 10,000\text{ CPR}$ ($\times 4$) | $> 1\text{ MHz}$ edge rate | RS-422 Diff `A/A-, B/B-, Z/Z-` | Disk eccentricity ($1\times$ harmonic); requires homing to index `Z` on boot |
-| **Optical Sin/Cos Interpolated** | $20 - 26\text{ bits}$ ($1\text{ V}\kern0pt_{\text{pp}}$) | $500\text{ kHz}$ analog | Diff $1\text{ V}\kern0pt_{\text{pp}}$ + EnDat 2.2 / BiSS-C | Lissajous offset, amplitude mismatch, phase error; Heydemann calibration |
+| **Optical Sin/Cos Interpolated** | $20 - 26\text{ bits}$ ($1\text{ V}_{\text{pp}}$) | $500\text{ kHz}$ analog | Diff $1\text{ V}_{\text{pp}}$ + EnDat 2.2 / BiSS-C | Lissajous offset, amplitude mismatch, phase error; Heydemann calibration |
 | **Magnetic (Hall / AMR / TMR)** | $14 - 18\text{ bits}$ absolute | $10 - 50\text{ kHz}$ SPI | SPI / BiSS-C / SSI | $1\times, 2\times, 4\times$ spatial harmonics from magnet tilt; calibrate via harmonic LUT |
 | **Inductive (IncOder / Eddy)** | $16 - 22\text{ bits}$ absolute | $10 - 40\text{ kHz}$ | BiSS-C / SPI | Immune to oil, dust, and stray magnetic fields; ideal for harsh robot joints |
 | **Electromagnetic Resolver** | $12 - 16\text{ bits}$ (`AD2S1210`) | $>150^\circ\text{C}$, $50g$ shock | $2\text{–}10\text{ kHz}$ sine excitation | Phase shift between excitation and secondary windings |

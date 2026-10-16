@@ -1,0 +1,53 @@
+# Dual License (CC BY 4.0 for Documentation / MIT for Code) & Attribution
+
+This repository is dual-licensed so that both educators/learners and software/firmware engineers can freely reuse, adapt, and build upon it:
+
+1. **Curriculum Documentation, Lessons, Modules & Educational Assets (`*.md`, `*.svg`, `*.stl`, `*.step`, `*.urdf`, `*.xml`):** Licensed under the **Creative Commons Attribution 4.0 International License (CC BY 4.0)**.
+2. **Source Code, Reference Simulations, Firmware, Scripts & Interactive Workbench (`*.py`, `*.cpp`, `*.h`, `*.ts`, `*.tsx`, `*.mjs`, `*.json`, `*.yaml`):** Licensed under the **MIT License**.
+
+---
+
+## Attribution & Acknowledgements
+
+- **Curated External Reference Links (`engyasin/awesome-mechatronics`):** Portions of the supporting reference library (`resources/textbooks-and-papers.md`, `resources/open-source-toolchains.md`, and `resources/lab-workbench-bom.md`) incorporate and expand upon curated community links from [`engyasin/awesome-mechatronics`](https://github.com/engyasin/awesome-mechatronics) by Yasin (`@engyasin`) and contributors.
+- **Open-Source Simulators & Textbooks Cited:** We gratefully acknowledge the authors of *Modern Robotics* (Kevin M. Lynch & Frank C. Park, Northwestern University), *Feedback Systems* (Karl J. Åström & Richard M. Murray), *Underactuated Robotics* (Russ Tedrake, MIT), Paul Falstad (`falstad.com/circuit`), Wokwi (`wokwi.com`), futurecoder (`futurecoder.io` by Alex Hall), CS50P (David J. Malan, Harvard University), and SparkFun Electronics (`learn.sparkfun.com`, CC BY-SA 4.0 tutorials linked externally).
+
+---
+
+## Part 1: MIT License (Software, Scripts, Firmware & Interactive Workbench)
+
+Copyright (c) 2026 MechaLab Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Part 2: Creative Commons Attribution 4.0 International (CC BY 4.0 — Curriculum & Text)
+
+Copyright (c) 2026 MechaLab Contributors
+
+You are free to:
+- **Share** — copy and redistribute the material in any medium or format for any purpose, even commercially.
+- **Adapt** — remix, transform, and build upon the material for any purpose, even commercially.
+
+Under the following terms:
+- **Attribution** — You must give appropriate credit, provide a link to the license (`https://creativecommons.org/licenses/by/4.0/`), and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+- **No additional restrictions** — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+
+Full legal code: https://creativecommons.org/licenses/by/4.0/legalcode

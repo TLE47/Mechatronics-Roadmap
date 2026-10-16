@@ -16,7 +16,7 @@ uses:
 est_hours: 4.0
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -162,7 +162,7 @@ assert q4_choice == "B"
 | System deadlocks when two tasks acquire Mutex A and Mutex B in opposite orders | Classic AB-BA lock-ordering deadlock (`Task 1` locks A then waits for B; `Task 2` locks B then waits for A). | Acquire mutexes in a strict global order across all tasks, or keep critical sections single-lock and under $10\ \mu\text{s}$. |
 
 ## 9. Resources
-- **Richard Barry — *Mastering the FreeRTOS Real Time Kernel* (`freertos.org`, `resources/open-source-toolchains.md`):** Preemptive task scheduling, `vTaskDelayUntil`, and priority-inheritance mutexes `[UNVERIFIED]`.
+- **Richard Barry — *Mastering the FreeRTOS Real Time Kernel* (`freertos.org`, `resources/open-source-toolchains.md`):** Preemptive task scheduling, `vTaskDelayUntil`, and priority-inheritance mutexes `[VERIFIED 2026-10-15]`.
 - **Track 04 (`04-embedded-and-realtime/README.md`):** Prepares for `04-embedded.T2.04c` (Zephyr RTOS) and Step 2.5 (`04-embedded.T2.05`) `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules

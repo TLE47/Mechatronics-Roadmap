@@ -25,6 +25,14 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 > **Goal of Pass 1 (Track 07):** Adopt a disciplined **10-Step Hardware Bring-Up Protocol** so you never release magic smoke on power-up, wire a physical E-Stop switch + inline fuse, and measure your motor's actual inertia and friction using a simple single-tone sine sweep.
 > **📚 Required Foundations & Bridge Modules for Pass 1 (Track 07):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) (*CC/CV Bench Supply & Continuity Safety*) plus the Track 07 Tier 1 Bridge [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md).
 
+### Beginner-First Lesson Series (`07.1`, $\le 2$ new ideas per lesson)
+
+If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 00–08 Tier 1`)**, complete this self-contained lesson before or alongside the steps below:
+
+| Lesson | Title | New Ideas ($\le 2$) | Est. Time |
+| :--- | :--- | :--- | :--- |
+| **[07.1](07.1-safe-bringup-and-sine-sweep-sysid.md)** | **10-Step Smoke-Free Hardware Bring-Up and Single-Tone Sine-Sweep System Identification** | 1. 10-step smoke-free hardware bring-up and encoder-to-actuator sign verification<br>2. Single-tone sine-sweep system identification (gain ratio $A_{\text{out}}/A_{\text{in}}$ in dB and phase lag $\Delta \phi$) | 45–60 min |
+
 ### 1.1 The 10-Step Smoke-Free Hardware Bring-Up Checklist
 - **Core Summary:** Never plug an unfused LiPo battery into a newly wired breadboard or PCB! A disciplined 10-step bring-up sequence—starting with unpowered DMM continuity checks, a $100\text{ mA}$ current-limited bench power supply, logic-only power-up, and manual encoder-to-torque sign verification—catches shorts and positive-feedback wiring inversions before a single MOSFET can be damaged.
   1. **Visual & Polarity Inspection:** Check electrolytic capacitor stripes, IC pin-1 dots, and power connector polarity.
@@ -215,7 +223,7 @@ $$
   </details>
 
 ### 4.3 Schroeder-Phased Multisine Closed-Loop System Identification (SysID)
-- **Core Summary:** Exciting a mechanical plant with $M$ simultaneous sine waves $u(t) = \sum_{k=1}^M A_k \cos(\omega_k t + \phi_k)$ using naive zero phases ($\phi_k = 0$) creates a massive constructive interference spike at $t = 0$ (Crest Factor $\text{CF} = \sqrt{2M}$). **Schroeder Quadratic Phases** $\phi_k = -\frac{\pi k(k-1)}{M}$ compress the Crest Factor to $\sim 1.45\text{–}1.66$, while the **Closed-Loop Instrumental-Variable Cross-Spectral Estimator** $\hat{P}(j\omega_k) = \frac{\hat{S}\kern0pt_{y d_{\text{exc}}}}{\hat{S}\kern0pt_{u d_{\text{exc}}}}$ extracts unbiased non-parametric Bode plots (including flexible resonances and anti-resonances) while the stabilizing feedback controller stays safely active.
+- **Core Summary:** Exciting a mechanical plant with $M$ simultaneous sine waves $u(t) = \sum_{k=1}^M A_k \cos(\omega_k t + \phi_k)$ using naive zero phases ($\phi_k = 0$) creates a massive constructive interference spike at $t = 0$ (Crest Factor $\text{CF} = \sqrt{2M}$). **Schroeder Quadratic Phases** $\phi_k = -\frac{\pi k(k-1)}{M}$ compress the Crest Factor to $\sim 1.45\text{–}1.66$, while the **Closed-Loop Instrumental-Variable Cross-Spectral Estimator** $\hat{P}(j\omega_k) = \frac{\hat{S}_{y d_{\text{exc}}}}{\hat{S}_{u d_{\text{exc}}}}$ extracts unbiased non-parametric Bode plots (including flexible resonances and anti-resonances) while the stabilizing feedback controller stays safely active.
 
 $$
 \phi_k = -\frac{\pi k (k - 1)}{M} \implies \text{Crest Factor } \text{CF} = \frac{\|u\|_\infty}{\|u\|_{\text{rms}}} \approx 1.45\text{–}1.66
@@ -235,8 +243,8 @@ $$
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
 
-  **Q1:** Why does naive direct spectral division $\hat{P}\kern0pt_{\text{naive}}(j\omega) = \frac{\hat{S}\kern0pt_{uy}(j\omega)}{\hat{S}\kern0pt_{uu}(j\omega)}$ produce a **biased (wrong)** plant estimate when data is recorded inside a closed feedback loop?
-  * **Answer / Explanation:** In a closed loop, output measurement noise $v(t)$ circulates back through the feedback controller $u(t) = d_{\text{exc}}(t) - C(s)v(t)$, making input $u$ correlated with noise $v$ ($\hat{S}\kern0pt_{uv} \ne 0$)! At high frequencies where loop gain is small, $\hat{P}\kern0pt_{\text{naive}}(j\omega)$ converges to the negative inverse of your controller $-1/C(j\omega)$ instead of the plant $P(j\omega)$. Dividing cross-spectra with the known external excitation $\frac{\hat{S}\kern0pt_{y d_{\text{exc}}}}{\hat{S}\kern0pt_{u d_{\text{exc}}}}$ eliminates noise bias completely because $d_{\text{exc}}$ is uncorrelated with sensor noise ($S_{v d_{\text{exc}}} \equiv 0$).
+  **Q1:** Why does naive direct spectral division $\hat{P}_{\text{naive}}(j\omega) = \frac{\hat{S}_{uy}(j\omega)}{\hat{S}_{uu}(j\omega)}$ produce a **biased (wrong)** plant estimate when data is recorded inside a closed feedback loop?
+  * **Answer / Explanation:** In a closed loop, output measurement noise $v(t)$ circulates back through the feedback controller $u(t) = d_{\text{exc}}(t) - C(s)v(t)$, making input $u$ correlated with noise $v$ ($\hat{S}_{uv} \ne 0$)! At high frequencies where loop gain is small, $\hat{P}_{\text{naive}}(j\omega)$ converges to the negative inverse of your controller $-1/C(j\omega)$ instead of the plant $P(j\omega)$. Dividing cross-spectra with the known external excitation $\frac{\hat{S}_{y d_{\text{exc}}}}{\hat{S}_{u d_{\text{exc}}}}$ eliminates noise bias completely because $d_{\text{exc}}$ is uncorrelated with sensor noise ($S_{v d_{\text{exc}}} \equiv 0$).
 
   **Q2:** What does it mean when the magnitude-squared coherence $\gamma_{uy}^2(\omega) \in [0, 1]$ drops below $0.4$ at a specific frequency band during a SysID sweep?
   * **Answer & Explanation:** Low coherence $\gamma^2 \ll 1$ warns you that the output at that frequency is **not** linearly caused by your excitation—either due to deep anti-resonance notches where signal falls into the ADC noise floor, actuator saturation/backlash nonlinearity, or unmeasured external disturbances.

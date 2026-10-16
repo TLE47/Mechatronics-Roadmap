@@ -197,6 +197,45 @@ def run_suite(repo_root: Path) -> dict[str, Any]:
                         cpp_payload["raw_stdout"] = run_proc.stdout.strip()
                 results.append(cpp_payload)
 
+    # Verify all module worked examples & diff Expected output blocks
+    import contextlib
+    import io
+    import re
+
+    mod_dir = repo_root / "modules"
+    mod_mismatches: list[str] = []
+    mod_count = 0
+    if mod_dir.is_dir():
+        for mp in sorted(mod_dir.glob("*.md")):
+            mtxt = mp.read_text(encoding="utf-8")
+            m = re.search(r"```python\n(.*?)```\s*Expected output:\s*```text\n(.*?)```", mtxt, re.S)
+            if not m:
+                mod_mismatches.append(f"{mp.name}: missing Expected output block")
+                continue
+            mod_count += 1
+            buf = io.StringIO()
+            try:
+                with contextlib.redirect_stdout(buf):
+                    exec(m.group(1), {})
+                got_out = buf.getvalue().strip()
+                exp_out = m.group(2).strip()
+                if got_out != exp_out:
+                    mod_mismatches.append(f"{mp.name}: expected '{exp_out}', got '{got_out}'")
+            except Exception as exc:
+                mod_mismatches.append(f"{mp.name}: execution error: {exc}")
+        mod_ok = len(mod_mismatches) == 0
+        if not mod_ok:
+            all_ok = False
+        results.append(
+            {
+                "lab": "modules-expected-outputs",
+                "ok": mod_ok,
+                "returncode": 0 if mod_ok else 1,
+                "verified_modules": mod_count,
+                "mismatches": mod_mismatches,
+            }
+        )
+
     results.sort(key=lambda item: str(item.get("lab", "")))
     return {"ok": all_ok, "total_labs": len(results), "results": results}
 

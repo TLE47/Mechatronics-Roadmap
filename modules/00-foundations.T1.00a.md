@@ -12,7 +12,7 @@ uses: []
 est_hours: 3.0
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -160,7 +160,7 @@ assert q4_choice == "B"
 | Function returns `None` instead of a number | Wrote `pos_m + vel_m_s * dt_s` inside `def` without the `return` keyword. | Prefix the output expression with `return`. |
 
 ## 9. Resources
-- **Python Software Foundation — [*The Python Tutorial* (Sections 3–4: Numbers, Variables, `for`/`while` Loops & Functions)](https://docs.python.org/3/tutorial/):** Official beginner guide to numbers, variables, `while`/`for` loops, `range()`, and `def` functions needed for the exercise `[UNVERIFIED]`.
+- **Python Software Foundation — [*The Python Tutorial* (Sections 3–4: Numbers, Variables, `for`/`while` Loops & Functions)](https://docs.python.org/3/tutorial/):** Official beginner guide to numbers, variables, `while`/`for` loops, `range()`, and `def` functions needed for the exercise `[VERIFIED 2026-10-15]`.
 - **MechaLab Root Roadmap ([`README.md`](../README.md)) & [Track 00 (`00-foundations/README.md`)](../00-foundations/README.md):** Explains how Stage 0 and Pass 1 (`Track 00 -> Track 08`) use Python time-stepping scripts before embedded C++ `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules

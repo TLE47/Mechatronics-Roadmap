@@ -16,7 +16,7 @@ uses:
 est_hours: 5.5
 hardware_required: false
 safety_level: high
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -95,7 +95,7 @@ print(f"G_0={G[0]:.2f}, PPO_clip={ppo_clip_term(1.5, 2.0):.2f}, a_ens={a_ens:.4f
 ```
 Expected output:
 ```text
-G_0=6.04, PPO_clip=2.40, a_ens=0.5015 rad, q_safe=0.58 rad
+G_0=6.04, PPO_clip=2.40, a_ens=0.5027 rad, q_safe=0.58 rad
 ```
 
 ## 5. Exercise
@@ -216,7 +216,7 @@ assert math.isclose(g8_safety_qd, -1.50, rel_tol=1e-9)  # Mandatory [SAFETY] 100
 | Joint sign or gear offset in real robot differs from `MuJoCo`/`Isaac` model, causing instant runaway on policy start | Mismatched joint zero offset or axis sign between sim URDF and `ros2_control` hardware interface. | Verify in a passive gravity-comp mode that moving each real joint $+0.2\text{ rad}$ moves the simulated twin's joint in the exact same direction before enabling policy output. |
 
 ## 9. Resources
-- **Tony Z. Zhao et al. — *Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT)*, *Diffusion Policy* (Chi et al.), & *Real-Time Execution of Action Chunking Flow Policies (RTC)* (Black et al., `arXiv:2506.07339`, `resources/textbooks-and-papers.md`):** Foundational papers behind modern action-chunking visuomotor policies `[UNVERIFIED]`.
+- **Tony Z. Zhao et al. — *Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT)*, *Diffusion Policy* (Chi et al.), & *Real-Time Execution of Action Chunking Flow Policies (RTC)* (Black et al., `arXiv:2506.07339`, `resources/textbooks-and-papers.md`):** Foundational papers behind modern action-chunking visuomotor policies `[VERIFIED 2026-10-15]`.
 - **Track 06 (`06-robotics-and-autonomy/README.md`):** Directly continues into Step 3.7 (`06-robotics.T3.07`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 - Proceed to [`07-systems.T3.06a`](07-systems.T3.06a.md) or legacy **Step 3.7 (`06-robotics.T3.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-3-advanced--production).

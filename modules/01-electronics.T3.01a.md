@@ -98,7 +98,7 @@ print(f"V_peak_6L={V_peak_6layer:.2f}V vs 2L={V_peak_2layer:.2f}V, err={residual
 ```
 Expected output:
 ```text
-V_peak_6L=48.47V vs 2L=123.40V, err=0.0001 LSB, T_J=71.8 C
+V_peak_6L=48.47V vs 2L=123.40V, err=0.0000 LSB, T_J=71.8 C
 ```
 
 ## 5. Exercise

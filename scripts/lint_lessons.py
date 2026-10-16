@@ -97,7 +97,16 @@ def get_lesson_files() -> list[str]:
         glob.glob(os.path.join(ROOT, "02-mechanics-kinematics-dynamics", "02.*.md")),
         key=natural_sort_key,
     )
-    return track_p + stage_0 + track_00 + track_01 + track_02
+    track_03 = sorted(glob.glob(os.path.join(ROOT, "03-sensors-and-actuators", "03.*.md")), key=natural_sort_key)
+    track_04 = sorted(glob.glob(os.path.join(ROOT, "04-embedded-and-realtime", "04.*.md")), key=natural_sort_key)
+    track_05 = sorted(glob.glob(os.path.join(ROOT, "05-control-and-estimation", "05.*.md")), key=natural_sort_key)
+    track_06 = sorted(glob.glob(os.path.join(ROOT, "06-robotics-and-autonomy", "06.*.md")), key=natural_sort_key)
+    track_07 = sorted(glob.glob(os.path.join(ROOT, "07-systems-hil-and-production", "07.*.md")), key=natural_sort_key)
+    track_08 = sorted(glob.glob(os.path.join(ROOT, "08-capstone-projects", "08.*.md")), key=natural_sort_key)
+    return (
+        track_p + stage_0 + track_00 + track_01 + track_02
+        + track_03 + track_04 + track_05 + track_06 + track_07 + track_08
+    )
 
 
 def parse_front_matter(text: str):
@@ -335,9 +344,9 @@ def lint_file(filepath: str, glossary_entries: list[tuple[str, str, str]]) -> li
 
 def main():
     files = get_lesson_files()
-    if len(files) != 35:
+    if len(files) != 44:
         print(
-            f"ERROR: Expected 35 beginner lesson files (13 Track P + 10 Stage 0 + 3 Track 00 + 4 Track 01 + 5 Track 02), found {len(files)}"
+            f"ERROR: Expected 44 beginner lesson files (13 Track P + 10 Stage 0 + 21 Tracks 00-08 Tier 1), found {len(files)}"
         )
         sys.exit(1)
 

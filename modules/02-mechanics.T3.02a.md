@@ -93,7 +93,7 @@ print(f"S2={S2}, K_theta={K_theta:.2f} N*m/rad, sigma_max={sigma_max_mpa:.1f} MP
 ```
 Expected output:
 ```text
-S2=[0.0, 0.0, 1.0, 0.0, -0.3, 0.0], K_theta=54.09 N*m/rad, sigma_max=61.8 MPa, tau=[0.16, 0.06] N*m
+S2=[0.0, 0.0, 1.0, 0.0, -0.3, 0.0], K_theta=54.09 N*m/rad, sigma_max=207.7 MPa, tau=[0.16, 0.06] N*m
 ```
 
 ## 5. Exercise

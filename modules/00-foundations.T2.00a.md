@@ -16,7 +16,7 @@ uses:
 est_hours: 4.0
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -141,9 +141,9 @@ assert q5_choice == "B"
 | Static equilibrium is off by $\Delta t$ | Forgot to multiply $B_c = [0,\; 1/m]^T$ by $\Delta t$ when forming $B_d$. | Check units: $B_d u_k$ in row 2 must have units of velocity ($\text{m/s} = \text{N}\cdot\text{s/kg}$). |
 
 ## 9. Resources
-- **Gilbert Strang — [*Linear Algebra and Learning from Data* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md):** Matrix-vector multiplication and discrete difference equations `[UNVERIFIED]`.
+- **Gilbert Strang — [*Linear Algebra and Learning from Data* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md):** Matrix-vector multiplication and discrete difference equations `[VERIFIED 2026-10-15]`.
 - **Brunton & Kutz — [*Data-Driven Science and Engineering* (`databookuw.com`)](https://databookuw.com/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Open-access PDF connecting linear algebra to dynamical systems `[VERIFIED 2026-10-15]`.
-- **3Blue1Brown — [*Essence of Linear Algebra* (`3blue1brown.com/topics/linear-algebra`)](https://www.3blue1brown.com/topics/linear-algebra):** Visual intuition for matrices as linear transformations `[UNVERIFIED]`.
+- **3Blue1Brown — [*Essence of Linear Algebra* (`3blue1brown.com/topics/linear-algebra`)](https://www.3blue1brown.com/topics/linear-algebra):** Visual intuition for matrices as linear transformations `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
 - Proceed to [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*Vectors, Dot & Cross Products, Linear Independence & Change of Basis*).

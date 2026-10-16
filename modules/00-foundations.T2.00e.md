@@ -82,7 +82,7 @@ print(f"rho_euler={rho_euler:.4f} (unstable), rho_tustin={rho_tustin:.4f} (stabl
 ```
 Expected output:
 ```text
-rho_euler=1.0247 (unstable), rho_tustin=0.9258 (stable)
+rho_euler=1.0247 (unstable), rho_tustin=0.9099 (stable)
 ```
 
 ## 5. Exercise

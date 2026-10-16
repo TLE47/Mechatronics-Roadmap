@@ -45,7 +45,7 @@ P_{\text{chopper}} = \frac{V_{\text{clamp}}^2}{R_{\text{brake}}} \ge P_{\text{re
 $$
 
 2. **CAN-FD Rolling-Counter Continuity & Watchdog Timeout Budget:**
-   - Given 4-bit counter $c_k \in \{0, \dots, 15\}$, the modular step difference between consecutive received frames is $\Delta c_k = (c_k - c_{k-1}) \bmod 16$. A valid sequential stream has $\Delta c_k = 1$; $\Delta c_k = 0$ indicates a **frozen/duplicate frame**, while $1 < \Delta c_k \le N_{\text{max}\_\text{drop}}$ indicates $\Delta c_k - 1$ dropped frames.
+   - Given 4-bit counter $c_k \in \{0, \dots, 15\}$, the modular step difference between consecutive received frames is $\Delta c_k = (c_k - c_{k-1}) \bmod 16$. A valid sequential stream has $\Delta c_k = 1$; $\Delta c_k = 0$ indicates a **frozen/duplicate frame**, while $1 < \Delta c_k \le N_{\text{max-drop}}$ indicates $\Delta c_k - 1$ dropped frames.
    - For nominal frame period $T_{\text{cmd}}$ (e.g., $1.0\text{ ms}$) and maximum tolerated consecutive missed frames $N_{\text{miss}}$ (e.g., $3$), the watchdog timeout window is:
 
 $$

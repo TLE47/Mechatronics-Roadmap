@@ -22,6 +22,14 @@
 > **🏆 Goal of Pass 1 Boss (`Track 08 · Tier 1`):** Combine every skill from Pass 1 (`Track 00` $\to$ `Track 07`) to build a complete, desktop-safe **$12\text{ V}$ 2-DOF Planar Compliant Robot Arm** (or 1-Axis Reaction-Wheel Pendulum) using off-the-shelf breakout boards, 3D-printed double-shear links, and a $1\text{ kHz}$ timer ISR.
 > **📚 Required Foundations & Bridge Modules for Pass 1 Boss (`07-systems.T1.08`):** Requires completing Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and **Step 1.1 (`00-foundations.T1.01`)** plus all Tier 1 Track Bridges ([`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md), [`05-control.T1.05a`](../modules/05-control.T1.05a.md), [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md), [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md)).
 
+### Beginner-First Capstone Lesson (`08.1`, $\le 2$ new ideas per lesson)
+
+If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 00–08 Tier 1`)**, complete this self-contained Python capstone simulation before building the physical 2-DOF arm:
+
+| Lesson | Title | New Ideas ($\le 2$) | Est. Time |
+| :--- | :--- | :--- | :--- |
+| **[08.1](08.1-tier1-2dof-compliant-arm-capstone.md)** | **Tier 1 Boss Milestone — 2-DOF Figure-8 Trajectory and Compliant Arm Integration** | 1. End-to-end 2-DOF Cartesian figure-8 path generation and Law-of-Cosines IK loop<br>2. Dual-joint compliant PD control with coupled gravity feedforward and RMS tracking verification | 60–90 min |
+
 ### 1.1 Tier 1 Boss Architecture: 2-DOF Breakout Compliant Desktop Robot (`~\$120` BOM)
 - **Core Summary:** Integrates every Pass 1 milestone into a physical 2-DOF desktop robot arm using off-the-shelf `SimpleFOCMini` (`DRV8313`) breakouts, `AS5600`/`AS5048A` magnetic encoders, 3D-printed double-shear `608` bearing joints, a $1.000\text{ kHz}$ hardware timer ISR, cubic spline interpolation, and joint-space virtual spring-damper compliance.
   * **Compute:** `ESP32-S3` or `STM32 Nucleo-G474RE` running a zero-`delay()` $1.000\text{ kHz}$ hardware timer ISR (Track 04 Tier 1).
@@ -137,7 +145,7 @@ flowchart LR
 
 #### 1.1 System Specification & Architecture
 * **Electrical Hardware:**
-  * **DC Bus:** $18\text{ V} - 54\text{ V}$ nominal ($80\text{ V}$ MOSFET rating, `ISC030N08NM6`, $R_{DS(\text{on})} \le 3.0\text{ m}\Omega$), $30\text{ A}$ peak phase current, $15\text{ A}\kern0pt_{\text{rms}}$ continuous.
+  * **DC Bus:** $18\text{ V} - 54\text{ V}$ nominal ($80\text{ V}$ MOSFET rating, `ISC030N08NM6`, $R_{DS(\text{on})} \le 3.0\text{ m}\Omega$), $30\text{ A}$ peak phase current, $15\text{ A}_{\text{rms}}$ continuous.
   * **Gate Driver & Current Sensing:** 3-phase smart gate driver (`DRV8353RS` or `UCC21520` + discrete `INA240A2` inline $1\text{ m}\Omega$ 4-terminal Kelvin shunts).
   * **MCU & Sensors:** `STM32G474RET6` ($170\text{ MHz}$ Cortex-M4F with CORDIC coprocessor & high-resolution timer), onboard 16-bit absolute magnetic/inductive encoder (`MA732` / `MT6835`) over $16\text{ MHz}$ SPI + PT1000 stator winding thermistor + CAN-FD transceiver (`TCAN1044V`).
 * **Firmware & Control Stack:**
@@ -179,7 +187,7 @@ flowchart LR
 #### 2.1 System Specification & Architecture
 * **Nonlinear Dynamics & Control Law:**
   1. **Lagrangian Derivation:** Full coupled inertia matrix $M(q)$ where $M_{11}(q_2) = J_1 + m_2 L_1^2 + J_2 \sin^2(q_2)$ and $M_{12}(q_2) = m_2 L_1 l_{c2} \cos(q_2)$.
-  2. **Åström-Furuta Energy-Based Swing-Up:** $u = \text{sat}\kern0pt_{u_{\max}}\big(k_E (E - E_0)\,\text{sign}(\dot{q}\kern0pt_2 \cos q_2)\big)$.
+  2. **Åström-Furuta Energy-Based Swing-Up:** $u = \text{sat}_{u_{\max}}\big(k_E (E - E_0)\,\text{sign}(\dot{q}_2 \cos q_2)\big)$.
   3. **Hysteretic Hand-Off to LQR + CBF-QP:** Switch into a $1\text{ kHz}$ discrete LQR + CBF safety filter when $\lvert q_2\rvert < 18^\circ$, enforcing hard base travel bounds.
 
 #### 2.2 Quantitative Sign-Off Gate
@@ -202,7 +210,7 @@ flowchart LR
   <summary><b>Click to toggle quiz questions & answers</b></summary>
 
   **Q1:** Why must you remove the rubber contact seals (`2RS`) from the unactuated pendulum pivot bearings (or use open/shielded `ZZ` bearings flushed with light instrument oil) on a physical Furuta pendulum?
-  * **Answer / Explanation:** Rubber contact lip seals (`2RS`) introduce heavy Coulomb stick-slip friction at zero velocity. Whenever the upright pendulum crosses $\dot{q}\kern0pt_2 = 0$, stick-slip friction causes the pivot to momentarily lock and jump, creating a persistent $\pm 1.5^\circ$ limit-cycle hunting oscillation!
+  * **Answer / Explanation:** Rubber contact lip seals (`2RS`) introduce heavy Coulomb stick-slip friction at zero velocity. Whenever the upright pendulum crosses $\dot{q}_2 = 0$, stick-slip friction causes the pivot to momentarily lock and jump, creating a persistent $\pm 1.5^\circ$ limit-cycle hunting oscillation!
 
   **Q2:** Why does the mode-switching logic between Swing-Up and LQR use **hysteresis** (e.g., enter LQR when $\lvert\theta\rvert < 18^\circ$, exit back to Swing-Up only if $\lvert\theta\rvert > 28^\circ$)?
   * **Answer & Explanation:** Without hysteresis, a pendulum disturbed right to the $\lvert\theta\rvert = 22^\circ$ boundary will chatter rapidly back and forth between the Swing-Up law and the LQR law at $1\text{ kHz}$ (**sliding-mode chattering**), injecting violent high-frequency torque reversals into the base motor.
@@ -243,14 +251,14 @@ flowchart TB
   - 🔗 [ALOHA 2 (`aloha-2.github.io`) & Pollen Robotics `Reachy 2` (`pollen-robotics.com`)](https://aloha-2.github.io/) — *Open-source bimanual and humanoid manipulation hardware blueprints and `ros2_control` stacks.*
   - 🔗 [Pinocchio C++/Python Rigid Body Dynamics Library](https://stack-of-tasks.github.io/pinocchio/) — *Computes 6-DOF RNEA, CRBA,* $J(q)$ *, and* $\Lambda(q)$ *in* $< 5\ \mu\text{s}$ *.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 5: URDF / MuJoCo & STO** and **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench (`npm run dev`), or run `python3 08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py` to inspect the 6-DOF arm's space screw axes $\mathcal{S}\kern0pt_1 \dots \mathcal{S}\kern0pt_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).
+  - *Task:* Open **Tab 5: URDF / MuJoCo & STO** and **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench (`npm run dev`), or run `python3 08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py` to inspect the 6-DOF arm's space screw axes $\mathcal{S}_1 \dots \mathcal{S}_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).
   - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)/SE(3)$ Lie groups in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), Screw PoE & $\mathcal{O}(n)$ RNEA in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), and Khatib operational-space impedance $\Lambda(q)$ in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
 
   **Q1:** How do you calibrate the link length and joint zero-offset manufacturing errors ($\Delta \theta_i, \Delta L_i$) of a 3D-printed or CNC-machined 6-DOF arm down to $< 0.35\text{ mm}$ without a \$50,000 laser tracker?
-  * **Answer / Explanation:** Use **Closed-Loop Kinematic Calibration**! Touch a pointed stylus mounted on the end-effector into 20+ machined dimples at known spacing on an aluminum calibration plate (or observe a printed ChArUco board from 30 poses), and run non-linear least-squares (`scipy.optimize.least_squares`) on the Product-of-Exponentials twist parameters $\xi_i$ to minimize the residual position error $\|\text{FK}(q_k; \xi) - p_{\text{plate},k}\|\kern0pt_2^2$.
+  * **Answer / Explanation:** Use **Closed-Loop Kinematic Calibration**! Touch a pointed stylus mounted on the end-effector into 20+ machined dimples at known spacing on an aluminum calibration plate (or observe a printed ChArUco board from 30 poses), and run non-linear least-squares (`scipy.optimize.least_squares`) on the Product-of-Exponentials twist parameters $\xi_i$ to minimize the residual position error $\|\text{FK}(q_k; \xi) - p_{\text{plate},k}\|_2^2$.
 
   **Q2:** Why does a 6-DOF arm using $8:1$ planetary QDD actuators achieve $< 3.5\text{ N}$ backdriving transparency using motor current sensing alone, whereas a $100:1$ harmonic-drive arm requires joint torque sensors (`JTS`) or a 6-axis wrist Force/Torque sensor?
   * **Answer & Explanation:** Reflected rotor inertia scales as $N^2 J_m$ ($10,000\times$ vs. $64\times$) and harmonic gear seal/wave-generator friction requires $15\text{–}30\text{ N}$ of breakaway force at the tip! A $100:1$ harmonic arm can only achieve low backdriving force by measuring torque *after* the gearbox with a strain-gauge Joint Torque Sensor and closing an inner torque feedback loop to mask gearbox friction.
@@ -262,7 +270,7 @@ flowchart TB
 - **Core Summary:** A high-impact 3-DOF Quasi-Direct-Drive (QDD) robotic leg placing all three $8:1$ planetary actuators coaxially at the hip to keep distal shank mass $< 180\text{ g}$, executing proprioceptive ground-reaction-force (GRF) contact detection, stance-phase Contact Force QP/MPC within friction cones, and flight-phase Raibert neutral-point foot placement.
 
 #### 4.1 System Specification & Architecture
-* **Proprioceptive Contact Estimator:** $\hat{f}\kern0pt_{\text{foot}} = (J_{\text{foot}}^\top)^{-1}(\tau_m - M(q)\ddot{q} - h(q,\dot{q}))$.
+* **Proprioceptive Contact Estimator:** $\hat{f}_{\text{foot}} = (J_{\text{foot}}^\top)^{-1}(\tau_m - M(q)\ddot{q} - h(q,\dot{q}))$.
 * **Flight Phase Raibert Foot Placement:** $p_{\text{foot,touchdown}} = p_{\text{hip}} + \frac{T_{\text{stance}}}{2} v_{\text{com}} + k_v (v_{\text{com}} - v_{\text{des}})$.
 
 #### 4.2 Quantitative Sign-Off Gate
@@ -288,7 +296,7 @@ flowchart TB
   * **Answer / Explanation:** If the foot lands at a distance $\frac{T_{\text{stance}}}{2} v_{\text{com}}$ ahead of the hip, then during the stance duration $T_{\text{stance}}$ the hip travels symmetrically from $-\frac{T_{\text{stance}}}{2} v_{\text{com}}$ behind the foot to $+\frac{T_{\text{stance}}}{2} v_{\text{com}}$ ahead of the foot! The horizontal braking impulse in the first half of stance exactly cancels the accelerating impulse in the second half, keeping average forward speed $v_{\text{com}}$ unchanged (**CG print symmetry**). Landing ahead of the neutral point brakes the robot; landing behind it accelerates the robot!
 
   **Q2:** Why does a QDD hopping leg switch its joint gains from high stiffness in stance ($K_p$ high) to **very low stiffness ($K_p$ low, $K_d$ moderate)** right before expected ground touchdown?
-  * **Answer & Explanation:** If the leg hits the ground early with stiff position gains ($K_p$ high) tracking a flight trajectory, the impact spike bounces the foot right back off the ground! Lowering $K_p$ just before touchdown lets the low-inertia $8:1$ QDD joint absorb the initial $1\text{ ms}$ impact passively like a shock absorber while the proprioceptive GRF estimator detects $\hat{f}\kern0pt_z > 15\text{ N}$ and switches smoothly into stance-phase force control.
+  * **Answer & Explanation:** If the leg hits the ground early with stiff position gains ($K_p$ high) tracking a flight trajectory, the impact spike bounces the foot right back off the ground! Lowering $K_p$ just before touchdown lets the low-inertia $8:1$ QDD joint absorb the initial $1\text{ ms}$ impact passively like a shock absorber while the proprioceptive GRF estimator detects $\hat{f}_z > 15\text{ N}$ and switches smoothly into stance-phase force control.
   </details>
 
 ---

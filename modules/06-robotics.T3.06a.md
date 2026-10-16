@@ -85,7 +85,8 @@ eps = 1e-6
 W1_p = [row[:] for row in W1]; W1_p[0][0] += eps
 W1_m = [row[:] for row in W1]; W1_m[0][0] -= eps
 fd_grad = (forward_and_grads(W1_p, b1, W2, b2)[0] - forward_and_grads(W1_m, b1, W2, b2)[0]) / (2.0 * eps)
-assert abs(dW1[0][0] - fd_grad) < 1e-7
+grad_err = abs(dW1[0][0] - fd_grad)
+assert grad_err < 1e-7
 
 lr = 0.05
 for _ in range(400):
@@ -98,11 +99,11 @@ for _ in range(400):
     b2 -= lr * db2
 
 assert loss_final < 0.02 and loss_final < 0.01 * loss_init
-print(f"BC initial MSE={loss_init:.4f} -> trained MSE={loss_final:.5f} (grad_err={abs(dW1[0][0]-fd_grad):.2e})")
+print(f"BC initial MSE={loss_init:.4f} -> trained MSE={loss_final:.5f} (grad_err={grad_err:.2e})")
 ```
 Expected output:
 ```text
-BC initial MSE=13.5701 -> trained MSE=0.00523 (grad_err=1.15e-10)
+BC initial MSE=18.2258 -> trained MSE=0.00817 (grad_err=5.52e-10)
 ```
 
 ## 5. Exercise

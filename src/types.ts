@@ -6,7 +6,9 @@ export type TabId =
   | 'tab-models'
   | 'tab-cadpcb'
   | 'tab-sysid'
-  | 'tab-eskf';
+  | 'tab-eskf'
+  | 'tab-pyodide'
+  | 'tab-placement';
 
 export interface TourStep {
   tab: TabId;

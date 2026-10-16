@@ -15,7 +15,7 @@ uses:
 est_hours: 2.5
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -138,7 +138,7 @@ assert math.isclose(q5_mean_a, 1.5, rel_tol=1e-9)
 | Capacitor filter cutoff is off by $10^3$ | Confused nanofarads ($\text{nF} = 10^{-9}\text{ F}$) with microfarads ($\mu\text{F} = 10^{-6}\text{ F}$). | Write scientific notation explicitly (`100e-9` for $100\text{ nF}$). |
 
 ## 9. Resources
-- **NIST — [*The International System of Units (SI): Prefixes & Dimensional Analysis* (`nist.gov`)](https://www.nist.gov/pml/owm/metric-si/si-units):** Official reference for SI base/derived units and engineering prefixes `[UNVERIFIED]`.
+- **NIST — [*The International System of Units (SI): Prefixes & Dimensional Analysis* (`nist.gov`)](https://www.nist.gov/pml/owm/metric-si/si-units):** Official reference for SI base/derived units and engineering prefixes `[VERIFIED 2026-10-15]`.
 - **W. Bolton — [*Mechatronics* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md) & [Track 00 (`00-foundations/README.md`)](../00-foundations/README.md):** Engineering unit conversions across electrical and mechanical domains `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules

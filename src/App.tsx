@@ -11,6 +11,8 @@ import { TabModels } from './components/tabs/TabModels';
 import { TabCadPcb } from './components/tabs/TabCadPcb';
 import { TabSysId } from './components/tabs/TabSysId';
 import { TabEskf } from './components/tabs/TabEskf';
+import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
+import { TabPlacementQuiz } from './components/tabs/TabPlacementQuiz';
 import { TabId } from './types';
 import {
   ActiveTierPass,
@@ -133,6 +135,8 @@ export const App: React.FC = () => {
 
   const totalCompleted = allMilestoneIds.filter((id) => completedMilestones[id]).length;
 
+  const [pyodideLessonId, setPyodideLessonId] = useState<string>('P.1');
+
   const tabs: { id: TabId; label: string }[] = [
     { id: 'tab-arch', label: '1. Linear Tier Roadmap (Tracks 00→08)' },
     { id: 'tab-bode', label: '2. Two-Mass Resonance & Notch Bode (Lab 00/05)' },
@@ -142,6 +146,8 @@ export const App: React.FC = () => {
     { id: 'tab-cadpcb', label: '6. 3D CAD Parts & 48V/30A FOC PCB BOM' },
     { id: 'tab-sysid', label: '7. Schroeder Multisine Closed-Loop SysID (Lab 07)' },
     { id: 'tab-eskf', label: '8. 6-DOF Attitude ESKF & RTOS SeqLock (Lab 04/05)' },
+    { id: 'tab-pyodide', label: '9. In-Browser Python Runner (32 Lessons)' },
+    { id: 'tab-placement', label: '10. Prerequisite Placement Quiz' },
   ];
 
   const handleNextTourStep = () => {
@@ -209,7 +215,7 @@ export const App: React.FC = () => {
       />
 
       {/* Tabs navigation */}
-      <nav className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 bg-[#111827] border-b border-[#334155] p-1.5 gap-1.5">
+      <nav className="grid grid-cols-2 sm:grid-cols-5 xl:grid-cols-10 bg-[#111827] border-b border-[#334155] p-1.5 gap-1.5">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -230,7 +236,7 @@ export const App: React.FC = () => {
 
       {/* Main Tab Pane */}
       <main className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4">
-        {activeTab !== 'tab-arch' && (
+        {activeTab !== 'tab-arch' && activeTab !== 'tab-pyodide' && activeTab !== 'tab-placement' && (
           <SimulatorTierBanner
             tabId={activeTab}
             activeTierPass={activeTierPass}
@@ -254,6 +260,19 @@ export const App: React.FC = () => {
         {activeTab === 'tab-cadpcb' && <TabCadPcb onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
         {activeTab === 'tab-sysid' && <TabSysId onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
         {activeTab === 'tab-eskf' && <TabEskf onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
+        {activeTab === 'tab-pyodide' && <TabPyodideRunner initialLessonId={pyodideLessonId} />}
+        {activeTab === 'tab-placement' && (
+          <TabPlacementQuiz
+            onOpenPyodideLesson={(lessonId) => {
+              setPyodideLessonId(lessonId);
+              setActiveTab('tab-pyodide');
+            }}
+            onSwitchSimulatorTab={(tabIdx) => {
+              const target = tabs[tabIdx]?.id || 'tab-arch';
+              setActiveTab(target);
+            }}
+          />
+        )}
       </main>
 
       {/* Cheat sheet modal */}
@@ -261,7 +280,7 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-[#1e293b] bg-[#070b14] px-4 py-2 text-center text-xs text-[#64748b]">
-        MechaLab · Multi-Pass Spiral Mechatronics Curriculum (Level 0 → Tier 1 Pass → Tier 2 Pass → Tier 3 Pass)
+        MechaLab · Multi-Pass Spiral Mechatronics Curriculum (Level 0 → Tier 1 Pass → Tier 2 Pass → Tier 3 Pass) · Dual License: CC BY 4.0 (Docs) & MIT (Code)
       </footer>
     </div>
   );

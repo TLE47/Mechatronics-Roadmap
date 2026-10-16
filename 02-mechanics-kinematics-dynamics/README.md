@@ -178,7 +178,7 @@ $$
   * **Answer / Explanation:** Because the force vector $F_{\text{ext}}$ lies in the null space of $J(q)^\top$ at a singularity, $\tau = J(q)^\top F_{\text{ext}} \approx 0$! Physically, the aligned mechanical links carry $100\%$ of the radial load in structural compression directly into the shoulder bearings without requiring motor holding torque.
   
   **Q2:** What does Yoshikawa's **Manipulability Index** $w(q) = \sqrt{\det(J(q)J(q)^\top)}$ measure geometrically?
-  * **Answer & Explanation:** It is proportional to the **volume of the velocity manipulability ellipsoid**—the set of all Cartesian tip velocities $\dot{x}$ achievable by unit joint velocity norm $\|\dot{q}\|\kern0pt_2 = 1$. As the robot approaches any kinematic singularity, the ellipsoid flattens into a pancake and $w(q) \to 0$.
+  * **Answer & Explanation:** It is proportional to the **volume of the velocity manipulability ellipsoid**—the set of all Cartesian tip velocities $\dot{x}$ achievable by unit joint velocity norm $\|\dot{q}\|_2 = 1$. As the robot approaches any kinematic singularity, the ellipsoid flattens into a pancake and $w(q) \to 0$.
   </details>
 
 ---
@@ -350,7 +350,7 @@ $$
   - 🔗 [Roy Featherstone: Spatial Vector Algebra & Rigid Body Dynamics Algorithms](https://royfeatherstone.org/spatial/) — *Direct tutorials and 6D spatial vector code from the author of Rigid Body Dynamics Algorithms.*
   - 🔗 [Modern Robotics — Ch. 4 & Ch. 8: Product of Exponentials & Newton-Euler Dynamics (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Step-by-step derivations and open-source Python (`modern_robotics`) implementations of PoE and RNEA.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Run `python3 02-mechanics-kinematics-dynamics/lab/lab02_poe_and_rnea.py` to execute the 6-DOF Screw PoE Forward Kinematics, Space/Body Jacobian, and $\mathcal{O}(n)$ RNEA solver, verifying $\|\tau_{\text{RNEA}} - \tau_{\text{Lagrange}}\|\kern0pt_\infty < 10^{-11}\text{ N}\cdot\text{m}$ and passivity $|x^\top(\dot{M} - 2C)x| < 10^{-12}$.
+  - *Task:* Run `python3 02-mechanics-kinematics-dynamics/lab/lab02_poe_and_rnea.py` to execute the 6-DOF Screw PoE Forward Kinematics, Space/Body Jacobian, and $\mathcal{O}(n)$ RNEA solver, verifying $\|\tau_{\text{RNEA}} - \tau_{\text{Lagrange}}\|_\infty < 10^{-11}\text{ N}\cdot\text{m}$ and passivity $|x^\top(\dot{M} - 2C)x| < 10^{-12}$.
   - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)$ hat/vee maps and Rodrigues' rotation formula in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), $SE(3)$ Adjoint transforms in **Step 3.1 (`00-foundations.T3.01`)**, and Screw PoE + two-pass $\mathcal{O}(n)$ RNEA in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) (`## 3. Formalization` Items 2–3), plus [Lynch & Park *Modern Robotics* Ch. 4 & Ch. 8](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Featherstone *Rigid Body Dynamics Algorithms*](https://royfeatherstone.org/spatial/).
 - **🧠 Knowledge Check:**
   <details>
@@ -383,8 +383,8 @@ $$
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
 | **First Structural Eigenfrequency** | $f_1 > 250\text{ Hz}$ (for $50\text{ Hz}$ closed-loop bandwidth target) | Modal FEA & Tab 6 CAD Flexure Solver |
-| **PoE vs. Analytical FK/Jacobian Match** | $\|T_{\text{PoE}}(q) - T_{\text{Analytical}}(q)\|\kern0pt_F < 10^{-12}$ | Automated test suite over 1,000 random configurations |
-| **RNEA Inverse Dynamics Accuracy** | $\|\tau_{\text{RNEA}} - \tau_{\text{Lagrange}}\|\kern0pt_\infty < 10^{-11}\text{ N}\cdot\text{m}$ | Randomized state/acceleration trajectory benchmark |
+| **PoE vs. Analytical FK/Jacobian Match** | $\|T_{\text{PoE}}(q) - T_{\text{Analytical}}(q)\|_F < 10^{-12}$ | Automated test suite over 1,000 random configurations |
+| **RNEA Inverse Dynamics Accuracy** | $\|\tau_{\text{RNEA}} - \tau_{\text{Lagrange}}\|_\infty < 10^{-11}\text{ N}\cdot\text{m}$ | Randomized state/acceleration trajectory benchmark |
 | **Passivity Skew-Symmetry Identity** | $\lvert x^\top(\dot{M} - 2C)x\rvert < 10^{-9}$ across all configurations | Numerical derivative check along free-fall trajectory |
 
 ---

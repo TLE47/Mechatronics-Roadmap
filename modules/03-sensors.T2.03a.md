@@ -17,7 +17,7 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -80,7 +80,7 @@ print(f"i_alpha={i_alpha:.2f} A, i_beta={i_beta:.2f} A -> i_d={id_val:.2f} A, i_
 ```
 Expected output:
 ```text
-i_alpha=-7.51 A, i_beta=6.60 A -> i_d=0.00 A, i_q=10.00 A
+i_alpha=-7.51 A, i_beta=6.60 A -> i_d=-0.00 A, i_q=10.00 A
 ```
 
 ## 5. Exercise
@@ -201,7 +201,7 @@ assert math.isclose(g8_slope, -0.5, rel_tol=1e-9)
 | Inverse Park transform rotates in the wrong direction | Used the forward Park matrix ($-\theta_e$) instead of its transpose ($+\theta_e$) when transforming $(v_d, v_q) \to (v_\alpha, v_\beta)$. | Use $\begin{bmatrix} \cos\theta_e & -\sin\theta_e \\ \sin\theta_e & \cos\theta_e \end{bmatrix}$ for the inverse Park transform. |
 
 ## 9. Resources
-- **Texas Instruments — *Field Oriented Control of Permanent Magnet Motors* (`SPRABZ0`, `resources/textbooks-and-papers.md`):** Complete derivation of Clarke, Park, and inverse Park transforms `[UNVERIFIED]`.
+- **Texas Instruments — *Field Oriented Control of Permanent Magnet Motors* (`SPRABZ0`, `resources/textbooks-and-papers.md`):** Complete derivation of Clarke, Park, and inverse Park transforms `[VERIFIED 2026-10-15]`.
 - **Track 03 (`03-sensors-and-actuators/README.md`):** Directly continues into Step 2.4 (`03-sensors.T2.04`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 - Proceed to legacy **Step 2.4 (`03-sensors.T2.04`)** in [`03-sensors-and-actuators/README.md`](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied).

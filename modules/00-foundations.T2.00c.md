@@ -76,7 +76,7 @@ print(f"wn={wn:.1f} rad/s, zeta={zeta:.2f}, Mp_analytic={mp_analytic*100:.2f}%, 
 ```
 Expected output:
 ```text
-wn=20.0 rad/s, zeta=0.50, Mp_analytic=16.30%, Mp_sim=16.30%
+wn=20.0 rad/s, zeta=0.50, Mp_analytic=16.30%, Mp_sim=16.28%
 ```
 
 ## 5. Exercise

@@ -25,6 +25,15 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 > **Goal of Pass 1 (Track 04):** Break the #1 beginner firmware habit (`delay(10)` and slow `Serial.println()` inside a control loop), set up a deterministic **$1\text{ kHz}$ hardware timer interrupt (ISR)**, and stream compact binary telemetry frames to your laptop.
 > **📚 Required Foundations & Bridge Modules for Pass 1 (Track 04):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Loops & Functions*), [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) (*Arrays & Plotting*), and [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (*SI Timing Units*) plus the Track 04 Tier 1 Bridge Ladder [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) → [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md).
 
+### Beginner-First Lesson Series (`04.1 – 04.2`, $\le 2$ new ideas per lesson)
+
+If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 00–08 Tier 1`)**, complete these two self-contained lessons (alongside Bridge [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) for Python-to-C++ transition) before or alongside the steps below:
+
+| Lesson | Title | New Ideas ($\le 2$) | Est. Time |
+| :--- | :--- | :--- | :--- |
+| **[04.1](04.1-c-types-and-hardware-timer-isr.md)** | **Fixed-Width C/C++ Types (`uint16_t`), `volatile` ISR Flags and $1\text{ kHz}$ Timer Loops** | 1. Fixed-width C/C++ integers (`uint8_t`, `uint16_t`, `int16_t`) and modular rollover subtraction<br>2. Hardware timer ISRs, the `volatile` keyword, and why `delay()` ruins control loops | 45–60 min |
+| **[04.2](04.2-packed-structs-and-crc8-telemetry.md)** | **Packed Binary Telemetry Structs (`struct.pack`) and 8-Bit XOR Checksums** | 1. Packed binary C structs (`__attribute__((packed))` and Python `struct.pack`/`unpack`) vs. slow ASCII text<br>2. Sync headers (`0xAA`) and 8-bit XOR checksums for framing over UART | 45–60 min |
+
 ### 1.1 Why `delay()` and `Serial.print()` Destroy Control Loops
 - **Core Summary:** A discrete feedback controller (`PID`) assumes every sample occurs at an exact, fixed time step $\Delta t$ (e.g., $1.000\text{ ms}$). Calling `delay()` halts the CPU, while `Serial.println("q=" + String(q))` triggers heap fragmentation and blocks on slow UART TX buffers—stretching $\Delta t$ randomly and causing the derivative term $K_d \frac{\Delta e}{\Delta t}$ to explode with jitter noise.
 - **Curated Free Resources:**
@@ -187,7 +196,7 @@ struct __attribute__((packed)) TelemetryPacket {
   * **Answer & Explanation:** Three $120\ \Omega$ resistors in parallel measure $120 / 3 = 40\ \Omega$ (instead of the required $120 / 2 = 60\ \Omega$). This overloads the CAN transceiver output drivers, reducing differential voltage swing and causing bus errors or thermal shutdown. Only the **two physical ends** of the main trunk cable should have $120\ \Omega$ termination ($60\ \Omega$ total DC resistance).
 
   **Q2:** Why does the MIT Mini-Cheetah protocol send `(q_des, dq_des, Kp, Kd, tau_ff)` over CAN instead of just sending a raw torque command `tau_cmd` at $1\text{ kHz}$?
-  * **Answer & Explanation:** Because evaluating the PD impedance law $\tau = \tau_{ff} + K_p(q_{\text{des}} - q) + K_d(\dot{q}\kern0pt_{\text{des}} - \dot{q})$ locally inside the motor driver at **$25\text{–}40\text{ kHz}$** eliminates the $1\text{ ms}$ CAN bus transport delay from the stiffness/damping loop! This allows $10\times$ higher stable virtual damping $K_d$ and stiffness $K_p$ without high-frequency chatter.
+  * **Answer & Explanation:** Because evaluating the PD impedance law $\tau = \tau_{ff} + K_p(q_{\text{des}} - q) + K_d(\dot{q}_{\text{des}} - \dot{q})$ locally inside the motor driver at **$25\text{–}40\text{ kHz}$** eliminates the $1\text{ ms}$ CAN bus transport delay from the stiffness/damping loop! This allows $10\times$ higher stable virtual damping $K_d$ and stiffness $K_p$ without high-frequency chatter.
   </details>
 
 ### ✅ Tier 2 Milestone Gate (`Track 04 · Pass 2`)
@@ -376,7 +385,7 @@ private:
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
 | **ADC-Trigger-to-ISR-Entry Jitter** | Peak-to-peak jitter $< 50\text{ ns}$ ($< 25$ CPU cycles) over $10^7$ cycles | Hardware `TIM1_TRGO2` $\to$ `ADC` DMA pipeline |
-| **Tier-0 FOC ISR WCET** | $\text{WCET}\kern0pt_{\max} < 4.0\ \mu\text{s}$ ($2.08\ \mu\text{s}$ achieved at $170\text{ MHz}$) | `DWT->CYCCNT` watermark in `ITCM`/`CCM-SRAM` |
+| **Tier-0 FOC ISR WCET** | $\text{WCET}_{\max} < 4.0\ \mu\text{s}$ ($2.08\ \mu\text{s}$ achieved at $170\text{ MHz}$) | `DWT->CYCCNT` watermark in `ITCM`/`CCM-SRAM` |
 | **Zero Heap Allocation Verification** | `0 bytes` allocated from `.heap` section | Linker `--wrap=malloc` build gate |
 | **Lock-Free IPC Data Integrity** | `0` torn reads over $10^8$ transfers under high contention | Interactive **Tab 8: Attitude ESKF & SeqLock Simulator** |
 

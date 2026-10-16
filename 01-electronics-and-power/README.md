@@ -39,7 +39,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 - **Core Summary:** Explains why applying $5\text{ V}$ signals to non-$5\text{V}$-tolerant $3.3\text{ V}$ microcontroller pins (`ESP32`, `RP2040`, `STM32` analog pins) forward-biases internal ESD protection diodes to `VDD`, and how open-drain buses (`I2C`) and `BSS138` level shifters safely bridge voltage domains.
 
 $$
-I_{\text{ESD}\_\text{fault}} = \frac{V_{\text{in}} - (V_{DD} + 0.6\text{ V})}{R_{\text{source}}}, \qquad t_{r,\text{I2C}} \approx 0.8473 \cdot R_{\text{pullup}} C_{\text{bus}}
+I_{\text{ESD-fault}} = \frac{V_{\text{in}} - (V_{DD} + 0.6\text{ V})}{R_{\text{source}}}, \qquad t_{r,\text{I2C}} \approx 0.8473 \cdot R_{\text{pullup}} C_{\text{bus}}
 $$
 
 - **Curated Free Resources:**
@@ -73,7 +73,7 @@ $$
   - 🔗 [Texas Instruments SLVA959: Brushed DC Motor Driver Basics (H-Bridge Decay Modes)](https://www.ti.com/lit/pdf/slva959) — *Illustrates Forward, Reverse, Fast Decay (Coast), and Slow Decay (Brake) current loops inside an H-bridge.*
   - 🔗 [Adafruit DRV8833 DC/Stepper Motor Driver Breakout Guide](https://learn.adafruit.com/adafruit-drv8833-dc-stepper-motor-driver-breakout-board) & [Practical Electronics for Inventors (Scherz & Monk)](https://www.mhprofessional.com/practical-electronics-for-inventors-fifth-edition-9781264268856-usa) — *Beginner wiring guide showing `AIN1/AIN2` PWM inputs, current limiting, and `nFAULT` protection.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Wire a `DRV8833` or `TB6612FNG` breakout on a breadboard to drive a $12\text{ V}$ gearmotor (up to $10.8\text{ V}$ on `DRV8833` or $13.5\text{ V}$ on `TB6612FNG`) using $20\text{ kHz}$ PWM:
+  - *Task:* Simulate in Falstad/Wokwi (**[Lesson 01.2](01.2-h-bridge-and-stall-current.md)**, \$0 hardware) or wire on a breadboard a **`DRV8833`** with a **$6\text{–}9\text{ V}$ motor supply** ($2.7\text{–}10.8\text{ V}$ recommended operating range; **never** apply $12\text{ V}$ to a `DRV8833` since its absolute maximum destruction limit is $11.8\text{ V}$!) or a **`TB6612FNG`** ($4.5\text{–}13.5\text{ V}$ operating) / **`DRV8871`** ($6.5\text{–}45\text{ V}$) for a **$12\text{ V}$ gearmotor** using $20\text{ kHz}$ PWM:
     - **Canonical Breadboard Wiring Checklist (see datasheet guide in [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md)):** Connect bench supply $+V_{\text{mot}}$ (current limit set to $0.5\text{ A}$) + $100\ \mu\text{F}$ electrolytic cap across `VM` and `GND`; tie `nSLEEP` (or `STBY`) to MCU `3.3V` to wake the driver; wire two MCU hardware PWM pins to `AIN1` and `AIN2`; connect motor leads to `AOUT1` and `AOUT2`; and join MCU `GND` to driver `GND` at the supply negative terminal.
     - Compare the stopping distance of the output shaft when switching PWM to **Coast** (`IN1=0, IN2=0`) versus **Active Dynamic Brake** (`IN1=1, IN2=1`).
   - *📚 What to Learn & Resource Links for This Exercise:* Study Python duty-cycle clamping in Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md), Joule heating $P = I^2 R$ in [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), CC/CV bench power supply limits in [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md), and PWM H-bridge switching + flyback diodes + datasheet pinouts in [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), plus [TI SLVA959 (Brushed DC Motor Driver H-Bridge Decay Modes)](https://www.ti.com/lit/pdf/slva959).
@@ -94,7 +94,7 @@ $$
 - **Core Summary:** Diagnoses and cures the #1 beginner robotics failure—MCU brown-out resets during motor reversals—by separating noisy motor return currents from logic ground (Star Grounding) and pairing a $470\ \mu\text{F}$ bulk electrolytic reservoir on `VMOT` with a $100\text{ nF}$ ceramic bypass cap on `3.3V`.
 
 $$
-\Delta V_{\text{GND}\_\text{bounce}} = I_{\text{stall}}R_{\text{wire}} + L_{\text{wire}}\frac{dI_{\text{motor}}}{dt}, \qquad C_{\text{bulk}} \ge \frac{I_{\text{surge}}\Delta t_{\text{surge}}}{\Delta V_{\text{droop}}}
+\Delta V_{\text{GND-bounce}} = I_{\text{stall}}R_{\text{wire}} + L_{\text{wire}}\frac{dI_{\text{motor}}}{dt}, \qquad C_{\text{bulk}} \ge \frac{I_{\text{surge}}\Delta t_{\text{surge}}}{\Delta V_{\text{droop}}}
 $$
 
 - **Curated Free Resources:**
@@ -129,7 +129,7 @@ $$
 - **Core Summary:** Introduces custom PCB engineering in KiCad using a 4-layer stackup (`L1: Signal/Power` $\to$ `L2: Unbroken Solid GND` $\to$ `L3: Power Pours` $\to$ `L4: Signals`), Design Rule Checks (DRC), thermal via stitching under MOSFET pads, and desktop SMD reflow assembly (`0603`, `SOIC`, `QFN`).
 
 $$
-L_{\text{loop}} \approx \mu_0 \frac{h_{\text{prepreg}}}{w_{\text{trace}}}\ell, \qquad R_{\theta,\text{via}\_\text{array}} = \frac{R_{\theta,\text{single}\_\text{via}}}{N_{\text{vias}}}
+L_{\text{loop}} \approx \mu_0 \frac{h_{\text{prepreg}}}{w_{\text{trace}}}\ell, \qquad R_{\theta,\text{via-array}} = \frac{R_{\theta,\text{single-via}}}{N_{\text{vias}}}
 $$
 
 - **Canonical First-Use `KiCad 8/9` Schematic $\to$ 4-Layer PCB $\to$ `kicad-cli` Fab Export Walkthrough:**
@@ -165,7 +165,7 @@ $$
 - **Core Summary:** Explains how a floating bootstrap capacitor ($C_{\text{boot}}$) and diode generate a gate voltage $+10\text{–}12\text{ V}$ above the switching node to turn on high-side N-MOSFETs, how gate resistors ($R_g$) control switching slew rate $I_g = Q_g/t_r$, and how hardware dead-time prevents high-side/low-side shoot-through.
 
 $$
-I_{\text{gate}} = \frac{Q_{g,\text{total}}}{t_{\text{rise}}}, \qquad C_{\text{boot}} \ge \frac{10 \cdot Q_{g,\text{total}}}{\Delta V_{\text{boot}\_\text{droop}}}, \qquad t_{\text{dead}} > t_{d(\text{off})} + t_f - t_{d(\text{on})}
+I_{\text{gate}} = \frac{Q_{g,\text{total}}}{t_{\text{rise}}}, \qquad C_{\text{boot}} \ge \frac{10 \cdot Q_{g,\text{total}}}{\Delta V_{\text{boot-droop}}}, \qquad t_{\text{dead}} > t_{d(\text{off})} + t_f - t_{d(\text{on})}
 $$
 
 - **Curated Free Resources:**
@@ -411,8 +411,8 @@ $$
 | :--- | :--- | :--- |
 | **Half-Bridge Voltage Overshoot** | $V_{DS,\text{peak}} < 58\text{ V}$ at $V_{\text{bus}} = 48\text{ V}$, $I_D = 30\text{ A}$, $t_{sw} \le 25\text{ ns}$ | Double-Pulse Test (DPT) in SPICE & Tab 6 PCB Simulator ($L_{\text{loop}} \le 2\text{ nH}$) |
 | **Current AFE Phase Lag & Settling** | Phase lag $< 2.5^\circ$ at $2.5\text{ kHz}$; ADC sample error $< 0.25\text{ LSB}$ (12-bit) | 2nd-order Bessel AFE + SAR charge bucket ($C_{\text{filt}} \ge 20 C_{sh}$) |
-| **Current Noise Floor (PWM Active)** | $< 15\text{ mA}\kern0pt_{\text{rms}}$ at ADC output with $48\text{ V}$ bus switching at $40\text{ kHz}$ | 10,000-sample DMA capture at PWM center trigger |
-| **Thermal Rise at Continuous Load** | $\Delta T_{\text{PCB/Case}} < 40^\circ\text{C}$ ($T_j < 125^\circ\text{C}$) at $15\text{ A}\kern0pt_{\text{rms}}$ continuous ($30\text{ A}$ peak) | Coupled Cauer thermal solver & thermal camera soak test |
+| **Current Noise Floor (PWM Active)** | $< 15\text{ mA}_{\text{rms}}$ at ADC output with $48\text{ V}$ bus switching at $40\text{ kHz}$ | 10,000-sample DMA capture at PWM center trigger |
+| **Thermal Rise at Continuous Load** | $\Delta T_{\text{PCB/Case}} < 40^\circ\text{C}$ ($T_j < 125^\circ\text{C}$) at $15\text{ A}_{\text{rms}}$ continuous ($30\text{ A}$ peak) | Coupled Cauer thermal solver & thermal camera soak test |
 
 ---
 

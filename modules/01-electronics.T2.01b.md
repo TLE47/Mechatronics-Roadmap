@@ -16,7 +16,7 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: high
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -189,7 +189,7 @@ assert g8_safety_choice == "B"                         # Mandatory [SAFETY] 100%
 | MOSFETs fail in avalanche during fast turn-off at $48\text{ V}$ | High-frequency ceramic decoupling capacitors were placed too far from the half-bridge Drain/Source pins ($L_{\text{loop}} > 15\text{ nH}$). | Place low-ESL MLCC ceramic capacitors within $<2\text{ mm}$ of every half-bridge leg over an unbroken Layer-2 ground plane. |
 
 ## 9. Resources
-- **Henry Ott — *Electromagnetic Compatibility Engineering* & Texas Instruments `SLVA714` (* Layout Guide for Motor Drivers*, `resources/textbooks-and-papers.md`):** 4-layer stackup, return-current planes, and hot-loop minimization `[UNVERIFIED]`.
+- **Henry Ott — *Electromagnetic Compatibility Engineering* & Texas Instruments `SLVA714` (* Layout Guide for Motor Drivers*, `resources/textbooks-and-papers.md`):** 4-layer stackup, return-current planes, and hot-loop minimization `[VERIFIED 2026-10-15]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Directly continues into Step 2.2 (`01-electronics.T2.02`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 - Proceed to legacy **Step 2.2 (`01-electronics.T2.02`)** in [`01-electronics-and-power/README.md`](../01-electronics-and-power/README.md#tier-2-intermediate--applied).

@@ -16,7 +16,7 @@ uses:
 est_hours: 4.0
 hardware_required: false
 safety_level: none
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -153,7 +153,7 @@ assert q4_choice == "B"
 | Phase angle wraps unexpectedly or is in radians | Forgot `math.degrees(...)` on `cmath.phase(G)`. | Wrap `cmath.phase(G)` with `math.degrees(...)` when plotting Bode phase in degrees. |
 
 ## 9. Resources
-- **Oppenheim & Willsky — [*Signals and Systems* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md) & [Brian Douglas Bode Plot Lectures](https://www.youtube.com/user/ControlLectures):** Frequency response, phasors, and Bode diagrams `[UNVERIFIED]`.
+- **Oppenheim & Willsky — [*Signals and Systems* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md) & [Brian Douglas Bode Plot Lectures](https://www.youtube.com/user/ControlLectures):** Frequency response, phasors, and Bode diagrams `[VERIFIED 2026-10-15]`.
 - **Track 00 ([`00-foundations/README.md#tier-2-intermediate--applied`](../00-foundations/README.md#tier-2-intermediate--applied)):** Prepares directly for Step 2.1 two-mass torsional resonance and anti-resonance Bode analysis `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules

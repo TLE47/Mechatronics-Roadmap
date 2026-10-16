@@ -47,7 +47,16 @@ def get_python_lesson_files():
         glob.glob(os.path.join(ROOT, "02-mechanics-kinematics-dynamics", "02.*.md")),
         key=natural_sort_key,
     )
-    return track_p + track_00 + track_01_py + track_02
+    track_03 = sorted(glob.glob(os.path.join(ROOT, "03-sensors-and-actuators", "03.*.md")), key=natural_sort_key)
+    track_04 = sorted(glob.glob(os.path.join(ROOT, "04-embedded-and-realtime", "04.*.md")), key=natural_sort_key)
+    track_05 = sorted(glob.glob(os.path.join(ROOT, "05-control-and-estimation", "05.*.md")), key=natural_sort_key)
+    track_06 = sorted(glob.glob(os.path.join(ROOT, "06-robotics-and-autonomy", "06.*.md")), key=natural_sort_key)
+    track_07 = sorted(glob.glob(os.path.join(ROOT, "07-systems-hil-and-production", "07.*.md")), key=natural_sort_key)
+    track_08 = sorted(glob.glob(os.path.join(ROOT, "08-capstone-projects", "08.*.md")), key=natural_sort_key)
+    return (
+        track_p + track_00 + track_01_py + track_02
+        + track_03 + track_04 + track_05 + track_06 + track_07 + track_08
+    )
 
 
 def extract_python_blocks(markdown_text: str, filepath: str):
@@ -85,10 +94,10 @@ def extract_expected_output(filepath: str) -> str:
 
 
 class TestBeginnerRoadmapExercises(unittest.TestCase):
-    def test_all_23_python_lessons_starter_and_full_solutions(self):
+    def test_all_32_python_lessons_starter_and_full_solutions(self):
         """Every Python lesson's Starter Code runs without error, and Full Solution matches Expected Output."""
         lesson_files = get_python_lesson_files()
-        self.assertEqual(len(lesson_files), 23)
+        self.assertEqual(len(lesson_files), 32)
 
         for path in lesson_files:
             rel_path = os.path.relpath(path, ROOT)

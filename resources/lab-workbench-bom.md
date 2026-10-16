@@ -1,7 +1,7 @@
 # Tiered Mechatronics Hardware Lab, Actuators & Open Robot Platforms (Tier 1 → Tier 3)
 
 > **Curated for:** [MechaLab Multi-Pass Tiered Roadmap](../README.md) · **Merged with [`engyasin/awesome-mechatronics`](https://github.com/engyasin/awesome-mechatronics)**  
-> Building and debugging physical mechatronic systems requires instruments, compute, and actuator platforms matched to your current pass in the roadmap. You do **not** need a \$10,000 lab to start Pass 1! Start with the **Level 0 / Tier 1 Starter Bench (~\$150–\$280)**, and only upgrade instruments and robot platforms when you loop back for **Pass 2 (Tier 2)** and **Pass 3 (Tier 3)**.
+> Building and debugging physical mechatronic systems requires instruments, compute, and actuator platforms matched to your current pass in the roadmap. You can complete **100% of Track P, Stage 0, and every Pass 1 (Tier 1) simulation exercise for \$0 in your browser** (in-page Python runner, Falstad, Wokwi, and the 8-tab MechaLab Workbench). When you want physical hardware, start with an optional **\$15–\$25 Arduino Uno + Breadboard Starter Kit** for Stage 0 LEDs/buttons/potentiometers, upgrade to the **~\$150–\$280 Closed-Loop Motor Control Bench** for full Pass 1 12 V / BLDC hardware labs, and only invest in Pass 2 / Pass 3 instruments when designing custom PCBs.
 
 ---
 
@@ -41,15 +41,25 @@ flowchart TB
 
 ## 2. Multi-Pass Hardware Workbench Shopping Lists
 
-### 🛠️ Stage 0 & Pass 1 (Tier 1): Breadboard & Breakout Starter Bench (~\$150 – \$280 USD)
-*Everything required to complete **Stage 0 (Level 0 On-Ramp)** and **Pass 1 (Tier 1: Track 00 $\to$ Track 08)** on your desk with zero custom PCB fabrication.*
+### 💻 Tier 0A (\$0 USD): 100% Browser Simulator Path (`Track P` $\to$ `Stage 0` $\to$ `Pass 1` Sim Path)
+| Category | Browser Tools Included | Cost | Coverage |
+| :--- | :--- | :--- | :--- |
+| **In-Browser Python & Simulators** | Built-in **MechaLab Python (`Pyodide`) Runner**, [Falstad Circuit Simulator](https://www.falstad.com/circuit/circuitjs.html), [Wokwi Arduino/ESP32 Simulator](https://wokwi.com/), and the **8-Tab MechaLab Physics Workbench** | **\$0** | 100% of `Track P`, 100% of `Stage 0`, all 44 Bridge Modules (`hardware_required: false`), and the simulation path of every `Pass 1` lesson (`Tracks 00–08`). |
+
+### 🔌 Tier 0B (~\$15 – \$25 USD): Optional Stage 0 Desktop Micro-Kit
+| Category | Recommended Starter Parts | Approx. Cost | Coverage |
+| :--- | :--- | :--- | :--- |
+| **Arduino Uno + Breadboard Kit** | `Arduino Uno R3/R4` clone + USB cable + 400-point breadboard + $10\text{ k}\Omega$ potentiometer + pushbuttons + LEDs + $220\ \Omega / 1\text{ k}\Omega / 10\text{ k}\Omega$ resistor assortment + $100\text{ nF} / 100\ \mu\text{F}$ capacitors | **\$15 - \$25** | Physical breadboard builds for `Stage 0` (`S0.1–S0.M`) and `Lesson 01.1` low-voltage switching powered from $5\text{ V}$ USB. |
+
+### 🛠️ Pass 1 (Tier 1): Closed-Loop Motor & Breakout Starter Bench (~\$150 – \$280 USD)
+*Everything required to wire physical $6\text{–}12\text{ V}$ DC gearmotors, quadrature/magnetic encoders, `SimpleFOCMini` gimbal actuators, and the **Track 08 Tier 1 Boss 2-DOF Compliant Desktop Robot** on your bench.*
 
 | Category | Recommended Equipment / Breakout Modules | Approx. Cost | Why It Is Essential in Level 0 & Pass 1 |
 | :--- | :--- | :--- | :--- |
 | **Breadboards & Wiring** | 2x 830-Tie-Point Solderless Breadboards (BB830) + 22 AWG Solid-Core Pre-Bent Jumper Kit + XT60/Banana Pigtails | \$18 - \$25 | Clean color-coded wiring (`Red = VCC`, `Black = GND`) and star-ground distribution. |
 | **Current-Limited Bench PSU** | $30\text{ V} / 5\text{ A}$ Regulated CC/CV Bench Power Supply (`Korad KA3005D` or `Wanptek`) + Physical E-Stop Switch | \$50 - \$75 | Constant-Current (CC) limiting acts as your hardware `try/catch` block against wiring shorts. |
 | **Multimeter & Logic Analyzer** | Auto-Ranging True-RMS Digital Multimeter (`UNI-T UT61E+` / `ANENG AN8008`) + $24\text{ MHz}$ 8-Ch USB Logic Analyzer (`sigrok`/`PulseView`) | \$35 - \$60 | Continuity beep checks before power-up + decoding `PWM`, `I2C`, `SPI`, and `UART` packets. |
-| **Starter MCUs & Breakouts** | [`Arduino Uno R4` / `Nano ESP32`](https://www.arduino.cc/), [`ESP32-S3 DevKitC`](https://www.espressif.com/), [`Raspberry Pi Pico 2 (RP2350)`](https://www.raspberrypi.com/products/rp2350/), or `STM32 Nucleo-G474RE` + `DRV8833` DC H-Bridge + 2x [`SimpleFOCMini` (`DRV8313`)](https://simplefoc.com/) + 2x Gimbal BLDC Motors with `AS5600`/`AS5048A` Magnetic Encoders + `MPU6050` IMU | \$55 - \$110 | Runs every Level 0 and Tier 1 lab (`RP2350` PIO state machines excel at glitch-free quadrature decoding; `ESP32-S3` runs `micro-ROS`) up through the **Track 08 Tier 1 Boss 2-DOF Compliant Robot Arm**. |
+| **Starter MCUs & Breakouts** | [`Arduino Uno R4` / `Nano ESP32`](https://www.arduino.cc/), [`ESP32-S3 DevKitC`](https://www.espressif.com/), [`Raspberry Pi Pico 2 (RP2350)`](https://www.raspberrypi.com/products/rp2350/), or `STM32 Nucleo-G474RE` + `DRV8833` ($2.7\text{–}10.8\text{ V}$) / `TB6612FNG` ($4.5\text{–}13.5\text{ V}$) DC H-Bridges + 2x [`SimpleFOCMini` (`DRV8313`)](https://simplefoc.com/) + 2x Gimbal BLDC Motors with `AS5600`/`AS5048A` Magnetic Encoders + `MPU6050` IMU | \$55 - \$110 | Runs every Level 0 and Tier 1 hardware lab (`RP2350` PIO state machines excel at glitch-free quadrature decoding; `ESP32-S3` runs `micro-ROS`) up through the **Track 08 Tier 1 Boss 2-DOF Compliant Robot Arm**. |
 
 ---
 

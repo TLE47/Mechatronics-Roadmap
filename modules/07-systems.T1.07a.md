@@ -30,10 +30,10 @@ Imagine a factory supervisor who inspects a workcell every $10\text{ ms}$. Inste
 2. **Fail-Safe Normally-Closed (NC) Series E-Stop Chain:** For $N$ series NC contacts $E_1, E_2, \dots, E_N \in \{0, 1\}$ (where `1` = closed/healthy and `0` = pressed OR broken wire) and hardware watchdog `WD_OK`:
 
 $$
-\text{PWR}\_\text{ENABLE} = E_1 \land E_2 \land \dots \land E_N \land \text{WD}\_\text{OK}
+\text{PWR-ENABLE} = E_1 \land E_2 \land \dots \land E_N \land \text{WD-OK}
 $$
 
-   Any single open contact or severed wire forces $\text{PWR}\_\text{ENABLE} = 0$, dropping the motor supply contactor/enable hardware line without relying on software.
+   Any single open contact or severed wire forces $\text{PWR-ENABLE} = 0$, dropping the motor supply contactor/enable hardware line without relying on software.
 3. **Single-Tone Sine-Sweep Gain (dB) and Phase Lag (Self-Contained Logarithm & Decibel Primer):**
    - **What $\log_{10}$ and Decibels ($\text{dB}$) Mean:** The base-10 logarithm $\log_{10}(x)$ (`math.log10(x)` in Python) simply asks: "To what power must we raise $10$ to get $x$?" Thus $\log_{10}(1) = 0$ (since $10^0 = 1$), $\log_{10}(0.1) = -1$ (since $10^{-1} = 0.1$), and $\log_{10}(1/\sqrt{2}) \approx \log_{10}(0.7071) \approx -0.1505$. Because mechanical and electrical amplitude ratios $B/A$ span factors of $1000\times$, engineers compress them onto an additive scale called **decibels ($\text{dB}$)** defined as $20\log_{10}(B/A)$ (and invert back to a linear ratio via $B/A = 10^{\text{dB}/20}$):
      - $B/A = 1.0 \implies 20\log_{10}(1.0) = 0.0\text{ dB}$ (no attenuation).

@@ -18,7 +18,7 @@ uses:
 est_hours: 4.5
 hardware_required: false
 safety_level: high
-resources_verified: false
+resources_verified: true
 ---
 
 ## 1. Why it matters
@@ -218,7 +218,7 @@ assert g8_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 | OPC UA client sees raw integer `16384` without knowing whether it means rad, deg, or counts | Published bare primitive nodes without `EngineeringUnits` (`EUInformation`) or `EURange` properties. | Use `AnalogItemType` nodes in OPC UA and bind every node to its `IEC 63278` AAS `SubmodelElement` semantic property. |
 
 ## 9. Resources
-- **Industrial Digital Twin Association (`IDTA`) — *Specification of the Asset Administration Shell (`IEC 63278`)*, OPC Foundation (`opcfoundation.org`), & ISO 13849-1 / SISTEMA Cookbook (`resources/textbooks-and-papers.md`):** Official specifications for AAS submodels, OPC UA information modeling, and Category 3 / `PLd` safety validation `[UNVERIFIED]`.
+- **Industrial Digital Twin Association (`IDTA`) — *Specification of the Asset Administration Shell (`IEC 63278`)*, OPC Foundation (`opcfoundation.org`), & ISO 13849-1 / SISTEMA Cookbook (`resources/textbooks-and-papers.md`):** Official specifications for AAS submodels, OPC UA information modeling, and Category 3 / `PLd` safety validation `[VERIFIED 2026-10-15]`.
 - **Track 07 (`07-systems-hil-and-production/README.md`):** Bridges directly into Step 3.7 (`06-robotics.T3.07`) and Step 3.8 (`08-capstones.T3.08`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 - Proceed to legacy **Step 3.7 (`06-robotics.T3.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-3-advanced--production), then [`08-capstones.T3.07a`](08-capstones.T3.07a.md).

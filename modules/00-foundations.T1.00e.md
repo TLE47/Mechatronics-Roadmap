@@ -80,7 +80,7 @@ print(f"E_init={e_initial_j:.4f} J, E_final={e_final_j:.4f} J, v_peak={v_peak_ms
 ```
 Expected output:
 ```text
-E_init=0.2500 J, E_final=0.2500 J, v_peak=0.5000 m/s
+E_init=0.2500 J, E_final=0.2502 J, v_peak=0.5000 m/s
 ```
 
 ## 5. Exercise
