@@ -44,7 +44,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install arduino-cli and arduino:avr core
-         uses: arduino/setup-arduino-cli@v2
+        uses: arduino/setup-arduino-cli@v2
 
       - name: Install Arduino AVR Boards (Arduino Uno)
         run: |

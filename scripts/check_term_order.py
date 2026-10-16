@@ -2,17 +2,17 @@
 """
 scripts/check_term_order.py — Automated curriculum term-order and prerequisite order verifier.
 
-Verifies two strict pedagogical invariants:
-1. Prerequisite Order: In `PLAN-batch-1.md` and across all beginner lessons (`Track P` -> `Stage 0` ->
-   `Track 00` -> `Track 01` -> `Track 02`), every prerequisite lesson ID listed in a lesson's
-   `Prerequisites` section (or in `PLAN-batch-1.md`) must appear strictly earlier in curriculum path order.
+Verifies two strict pedagogical invariants across all 44 beginner lessons:
+1. Prerequisite Order: In `docs/PLAN-batch-1.md` and across all 44 beginner lessons (`Track P` -> `Stage 0` ->
+   `Tracks 00–08 Tier 1`), every prerequisite lesson ID listed in a lesson's `Prerequisites` section
+   (or in `docs/PLAN-batch-1.md`) must appear strictly earlier in curriculum path order.
 2. Glossary Term Order: For every glossary term in `resources/glossary.md`, finds the earliest lesson
    (in curriculum path order) that uses the term in its body text (excluding forward `Next lesson:` links
    and `What to skip:` lines) and fails if that lesson comes BEFORE the lesson that defines the term.
 
 Usage:
     python3 scripts/check_term_order.py
-    python3 scripts/check_term_order.py --plan PLAN-batch-1.md
+    python3 scripts/check_term_order.py --plan docs/PLAN-batch-1.md
 """
 
 from __future__ import annotations

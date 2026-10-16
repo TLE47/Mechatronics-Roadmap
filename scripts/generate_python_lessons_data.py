@@ -86,15 +86,15 @@ def extract_fenced(text: str, heading_pattern: str, lang: str) -> str:
 
 
 def extract_hints(text: str) -> list[str]:
-    m = re.search(r"^### Progressive Hints", text, re.MULTILINE)
-    if not m:
-        return []
-    rest = text[m.end() :]
-    end_m = re.search(r"(?:^### Full Solution|<summary>[^\n]*Full Solution)", rest, re.MULTILINE)
+    diy_m = re.search(r"^## Do it yourself\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
+    diy_sec = diy_m.group(1) if diy_m else text
+    end_m = re.search(r"(?:^### Full Solution|<summary>[^\n]*Full Solution)", diy_sec, re.MULTILINE)
     if end_m:
-        rest = rest[: end_m.start()]
+        diy_sec = diy_sec[: end_m.start()]
     details = re.findall(
-        r"<details>\s*<summary>.*?</summary>\s*(.*?)\s*</details>", rest, re.DOTALL
+        r"<details>\s*<summary>[^\n]*?Hint\s*\d+[^\n]*?</summary>\s*(.*?)\s*</details>",
+        diy_sec,
+        re.DOTALL | re.IGNORECASE,
     )
     cleaned = []
     for d in details:
@@ -112,9 +112,10 @@ def main():
         with open(path, "r", encoding="utf-8") as f:
             txt = f.read()
 
-        lid_m = re.search(r'^lesson_id:\s*"([^"]+)"', txt, re.MULTILINE)
-        title_m = re.search(r'^title:\s*"([^"]+)"', txt, re.MULTILINE)
-        ideas = re.findall(r'^\s*-\s*"([^"]+)"', txt.split("---")[1], re.MULTILINE)
+        fm_block = txt.split("---")[1] if txt.startswith("---") else txt
+        lid_m = re.search(r'^lesson_id:\s*["\']?([^"\'\n]+)["\']?', fm_block, re.MULTILINE)
+        title_m = re.search(r'^title:\s*["\']?([^"\'\n]+)["\']?', fm_block, re.MULTILINE)
+        ideas = re.findall(r'^\s*-\s*["\']?([^"\'\n]+)["\']?', fm_block, re.MULTILINE)
 
         starter = extract_fenced(txt, r"^### Starter Code", "python")
         solution = extract_fenced(
@@ -125,11 +126,11 @@ def main():
 
         lessons.append(
             {
-                "id": lid_m.group(1) if lid_m else rel,
-                "title": title_m.group(1) if title_m else rel,
+                "id": lid_m.group(1).strip() if lid_m else rel,
+                "title": title_m.group(1).strip() if title_m else rel,
                 "track": folder,
                 "path": rel,
-                "ideas": ideas,
+                "ideas": [i.strip() for i in ideas if i.strip()],
                 "starterCode": starter,
                 "hints": hints,
                 "fullSolution": solution,

@@ -1,8 +1,37 @@
 # ⚡ MechaLab — Beginner-First Mechatronics & Robotics Roadmap
 
+[![CI & Reference Labs](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml/badge.svg)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml)
+[![Weekly Link & Arduino Sketch Check](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/link-check.yml/badge.svg)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/link-check.yml)
+[![Live Browser Workbench](https://img.shields.io/badge/Live_Workbench-Open_in_Browser-38bdf8?logo=githubpages&logoColor=white)](https://tle47.github.io/Mechatronics-Roadmap/)
+[![Curriculum](https://img.shields.io/badge/Curriculum-44_Beginner_Lessons_%C2%B7_68_Modules-34d399)](track-p/README.md)
+[![License: CC BY 4.0 + MIT](https://img.shields.io/badge/License-CC_BY_4.0_(Docs)_%2B_MIT_(Code)-fbbf24)](LICENSE)
+
 > **Welcome! Never studied electronics, mechanics, or control before? Only know basic school math? You are in the right place.**
 >
 > Every lesson in our **Beginner Path (`Track P` $\to$ `Stage 0` $\to$ `Pass 1: Track 00 → Track 08`)** introduces **at most 2 new ideas** (enforced in CI by `scripts/lint_lessons.py`), includes runnable starter code with a 3-step hint ladder and `assert` answer key, and runs **first in 100% free browser simulators** (**\$0 hardware required**).
+>
+> 🚀 **[Open the Live MechaLab Browser Workbench (`tle47.github.io/Mechatronics-Roadmap`)](https://tle47.github.io/Mechatronics-Roadmap/)** — Launches directly in **Beginner View** with plain-English navigation, an **In-Browser Python 3.12 Runner (Pyodide)** for all 32 Python lessons, an interactive **Prerequisite Placement Quiz**, persistent progress tracking, and **1-click Markdown Portfolio Export**.
+
+<details>
+<summary><b>🔍 Before vs. After MechaLab: From Fragile Hobby Code to Deterministic 1 kHz Control (Click to expand)</b></summary>
+
+```python
+# ❌ BEFORE (Fragile Hobby Loop): Blocking delay, unclamped windup, no gravity compensation
+#    - delay(10) freezes the CPU and ruins derivative timing when Serial prints are added
+#    - Unclamped integral_sum winds up during saturation, causing violent 37.2% overshoot!
+error = target_rad - measured_rad
+integral_sum += error * 0.010
+pwm_cmd = Kp * error + Ki * integral_sum + Kd * (error - prev_error) / 0.010
+
+# ✅ AFTER PASS 1 (Lessons 04.1, 05.1, 06.1): 1 kHz Timer ISR + Anti-Windup + Gravity Feedforward
+#    - Derivative acts on measurement (-Kd * q_dot) to eliminate setpoint derivative kick
+#    - Clamping anti-windup freezes integrator under saturation (overshoot drops 37.2% -> 4.7%)
+tau_grav = m * g * L_com * math.cos(q_rad)
+u_raw = tau_grav + Kp * (q_des - q_rad) - Kd * q_dot + i_term
+u_cmd = max(-u_max, min(u_max, u_raw))
+```
+
+</details>
 
 ---
 

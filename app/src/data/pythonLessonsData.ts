@@ -13,7 +13,7 @@ export interface PythonLessonItem {
 
 export const PYTHON_LESSONS: PythonLessonItem[] = [
   {
-    "id": "track-p/P.1-variables-and-data-types.md",
+    "id": "P.1",
     "title": "Variables and Fundamental Data Types",
     "track": "track-p",
     "path": "track-p/P.1-variables-and-data-types.md",
@@ -22,12 +22,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Fundamental data types (int, float, str, bool)"
     ],
     "starterCode": "# Robot state variables (units documented in comments)\nbattery_level = 12.60        # float: battery reading\nencoder_ticks = 400          # int: wheel sensor pulse count\nrobot_mode = \"STANDBY\"       # str: active status label\nis_estop_active = False      # bool: emergency stop switch state\n\n# TODO 1: Update encoder_ticks by adding 25 to its existing value,\n#         and update battery_level by subtracting 0.45 from its existing value.\nencoder_ticks = encoder_ticks\nbattery_level = battery_level\n\n# TODO 2: Change robot_mode to \"ACTIVE\" (a string) and keep is_estop_active as False.\nrobot_mode = robot_mode\n\nprint(f\"Mode: {robot_mode} | E-Stop: {is_estop_active}\")\nprint(f\"Encoder Ticks: {encoder_ticks} | Battery: {battery_level:.2f} V\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, remember that `variable = variable + change` reads the old value on the right and stores the new value on the left. In `TODO 2`, wrap `\"ACTIVE\"` in double quotes so Python knows it is a string (`str`).",
+      "Replace the three `TODO` assignment lines with: ```python encoder_ticks = encoder_ticks + 25 battery_level = battery_level - 0.45 robot_mode = \"ACTIVE\" ```"
+    ],
     "fullSolution": "battery_level = 12.60\nencoder_ticks = 400\nrobot_mode = \"STANDBY\"\nis_estop_active = False\n\nencoder_ticks = encoder_ticks + 25\nbattery_level = battery_level - 0.45\nrobot_mode = \"ACTIVE\"\n\nprint(f\"Mode: {robot_mode} | E-Stop: {is_estop_active}\")\nprint(f\"Encoder Ticks: {encoder_ticks} | Battery: {battery_level:.2f} V\")",
     "expectedOutput": "Mode: ACTIVE | E-Stop: False\nEncoder Ticks: 425 | Battery: 12.15 V"
   },
   {
-    "id": "track-p/P.2-arithmetic-and-order-of-operations.md",
+    "id": "P.2",
     "title": "Computer Arithmetic and Order of Operations",
     "track": "track-p",
     "path": "track-p/P.2-arithmetic-and-order-of-operations.md",
@@ -36,12 +39,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Parentheses and order of operations"
     ],
     "starterCode": "wheel_speed = 1.25\nelapsed_sec = 0.05\nstart_pos_m = 2.0\n\nsupply_level = 12.0\npart_a = 20000\npart_b = 10000\n\ncart_mass = 2.0\ncart_speed = 3.0\n\n# TODO 1: Compute new_pos_m = start_pos_m + (wheel_speed * elapsed_sec)\nnew_pos_m = 0.0\n\n# TODO 2: Compute sensor_pin = supply_level * (part_b / (part_a + part_b))\n#         Keep parentheses around (part_a + part_b)!\nsensor_pin = 0.0\n\n# TODO 3: Compute kinetic_energy_j = 0.5 * cart_mass * (cart_speed ** 2)\nkinetic_energy_j = 0.0\n\nprint(f\"New Position: {new_pos_m:.4f} m\")\nprint(f\"Scaled Sensor Output: {sensor_pin:.2f} V\")\nprint(f\"Kinetic Energy: {kinetic_energy_j:.2f} J\")",
-    "hints": [],
+    "hints": [
+      "Use `*` for multiplication, `/` for division, and `** 2` to square `cart_speed`. Make sure `part_a + part_b` is inside parentheses `(part_a + part_b)`.",
+      "```python new_pos_m = start_pos_m + (wheel_speed * elapsed_sec) sensor_pin = supply_level * (part_b / (part_a + part_b)) kinetic_energy_j = 0.5 * cart_mass * (cart_speed ** 2) ```"
+    ],
     "fullSolution": "wheel_speed = 1.25\nelapsed_sec = 0.05\nstart_pos_m = 2.0\n\nsupply_level = 12.0\npart_a = 20000\npart_b = 10000\n\ncart_mass = 2.0\ncart_speed = 3.0\n\nnew_pos_m = start_pos_m + (wheel_speed * elapsed_sec)\nsensor_pin = supply_level * (part_b / (part_a + part_b))\nkinetic_energy_j = 0.5 * cart_mass * (cart_speed ** 2)\n\nprint(f\"New Position: {new_pos_m:.4f} m\")\nprint(f\"Scaled Sensor Output: {sensor_pin:.2f} V\")\nprint(f\"Kinetic Energy: {kinetic_energy_j:.2f} J\")",
     "expectedOutput": "New Position: 2.0625 m\nScaled Sensor Output: 4.00 V\nKinetic Energy: 9.00 J"
   },
   {
-    "id": "track-p/P.3-decisions-and-clamping.md",
+    "id": "P.3",
     "title": "Conditional Decisions (if/elif/else) and Command Clamping",
     "track": "track-p",
     "path": "track-p/P.3-decisions-and-clamping.md",
@@ -50,12 +56,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Clamping actuator commands within safe limits"
     ],
     "starterCode": "raw_cmd_high = 310\nraw_cmd_low = -45\nraw_cmd_normal = 180\nis_estop_pressed = True\n\n# TODO 1: Clamp raw_cmd_high into [0, 255] using if / elif:\n#         if raw_cmd_high > 255, set clamped_high = 255;\n#         elif raw_cmd_high < 0, set clamped_high = 0; else set clamped_high = raw_cmd_high.\nclamped_high = raw_cmd_high\n\n# Clamp raw_cmd_low into [0, 255] the same way:\nclamped_low = raw_cmd_low\n\n# TODO 2: If is_estop_pressed is True, set safe_output = 0;\n#         else set safe_output = raw_cmd_normal.\nsafe_output = raw_cmd_normal\n\nprint(f\"310 clamped -> {clamped_high} | -45 clamped -> {clamped_low}\")\nprint(f\"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}\")",
-    "hints": [],
+    "hints": [
+      "Check `if raw_cmd_high > 255:` first, then `elif raw_cmd_high < 0:`, and `else:`. Remember the colon `:` at the end of each `if`/`elif`/`else` line and 4 spaces of indentation on the line below it.",
+      "```python if raw_cmd_high > 255: clamped_high = 255 elif raw_cmd_high < 0: clamped_high = 0 else: clamped_high = raw_cmd_high ``` Apply the same pattern to `raw_cmd_low` -> `clamped_low`, and use `if is_estop_pressed:` to set `safe_output = 0`."
+    ],
     "fullSolution": "raw_cmd_high = 310\nraw_cmd_low = -45\nraw_cmd_normal = 180\nis_estop_pressed = True\n\nif raw_cmd_high > 255:\n    clamped_high = 255\nelif raw_cmd_high < 0:\n    clamped_high = 0\nelse:\n    clamped_high = raw_cmd_high\n\nif raw_cmd_low > 255:\n    clamped_low = 255\nelif raw_cmd_low < 0:\n    clamped_low = 0\nelse:\n    clamped_low = raw_cmd_low\n\nif is_estop_pressed:\n    safe_output = 0\nelse:\n    safe_output = raw_cmd_normal\n\nprint(f\"310 clamped -> {clamped_high} | -45 clamped -> {clamped_low}\")\nprint(f\"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}\")",
     "expectedOutput": "310 clamped -> 255 | -45 clamped -> 0\nE-Stop=True -> Safe Output: 0"
   },
   {
-    "id": "track-p/P.4-lists-and-for-loops.md",
+    "id": "P.4",
     "title": "Ordered Lists and Repeating Actions with for Loops",
     "track": "track-p",
     "path": "track-p/P.4-lists-and-for-loops.md",
@@ -64,12 +73,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Repeating actions with for loops"
     ],
     "starterCode": "raw_commands = [-30, 0, 64, 128, 200, 310]\nclamped_commands = []\ntotal_cmd = 0\n\nfor cmd in raw_commands:\n    # TODO 1: Clamp cmd into [0, 255] using if / elif / else,\n    #         storing the result in safe_cmd.\n    safe_cmd = cmd\n\n    # TODO 2: Append safe_cmd to clamped_commands using clamped_commands.append(safe_cmd)\n    #         and add safe_cmd to total_cmd.\n\nmean_cmd = total_cmd / len(raw_commands)\nprint(f\"Clamped list: {clamped_commands}\")\nprint(f\"First={raw_commands[0]} | Last={raw_commands[5]} | Mean Clamped Cmd={mean_cmd:.2f}\")",
-    "hints": [],
+    "hints": [
+      "Inside the `for cmd in raw_commands:` loop, use the exact same `if cmd > 255:` / `elif cmd < 0:` clamping logic from Lesson P.3, then call `clamped_commands.append(safe_cmd)` and `total_cmd = total_cmd + safe_cmd`.",
+      "```python for cmd in raw_commands: if cmd > 255: safe_cmd = 255 elif cmd < 0: safe_cmd = 0 else: safe_cmd = cmd clamped_commands.append(safe_cmd) total_cmd = total_cmd + safe_cmd ```"
+    ],
     "fullSolution": "raw_commands = [-30, 0, 64, 128, 200, 310]\nclamped_commands = []\ntotal_cmd = 0\n\nfor cmd in raw_commands:\n    if cmd > 255:\n        safe_cmd = 255\n    elif cmd < 0:\n        safe_cmd = 0\n    else:\n        safe_cmd = cmd\n    clamped_commands.append(safe_cmd)\n    total_cmd = total_cmd + safe_cmd\n\nmean_cmd = total_cmd / len(raw_commands)\nprint(f\"Clamped list: {clamped_commands}\")\nprint(f\"First={raw_commands[0]} | Last={raw_commands[5]} | Mean Clamped Cmd={mean_cmd:.2f}\")",
     "expectedOutput": "Clamped list: [0, 0, 64, 128, 200, 255]\nFirst=-30 | Last=310 | Mean Clamped Cmd=107.83"
   },
   {
-    "id": "track-p/P.5-functions-and-while-loops.md",
+    "id": "P.5",
     "title": "Reusable Functions (def/return) and while Loops",
     "track": "track-p",
     "path": "track-p/P.5-functions-and-while-loops.md",
@@ -78,12 +90,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Condition-controlled while loops"
     ],
     "starterCode": "def step_position(pos_m, vel_m_s, dt_s):\n    # TODO 1: Return the updated position: pos_m + (vel_m_s * dt_s)\n    return pos_m\n\n\npos_m = 0.0\nvel_m_s = 1.5\ndt_s = 0.2\nstep = 0\n\n# TODO 2: Inside the while loop, update pos_m by calling step_position(pos_m, vel_m_s, dt_s),\n#         and increment step by 1 so the loop runs exactly 4 times.\nwhile step < 4:\n    pos_m = step_position(pos_m, vel_m_s, dt_s)\n    step = 4\n\nprint(f\"After {step} steps: pos_m = {pos_m:.2f} m\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, use `return pos_m + (vel_m_s * dt_s)`. In `TODO 2`, replace `step = 4` with `step = step + 1` so the `while step < 4:` loop counts `0 -> 1 -> 2 -> 3 -> 4`.",
+      "```python def step_position(pos_m, vel_m_s, dt_s): return pos_m + (vel_m_s * dt_s) while step < 4: pos_m = step_position(pos_m, vel_m_s, dt_s) step = step + 1 ```"
+    ],
     "fullSolution": "def step_position(pos_m, vel_m_s, dt_s):\n    return pos_m + (vel_m_s * dt_s)\n\n\npos_m = 0.0\nvel_m_s = 1.5\ndt_s = 0.2\nstep = 0\n\nwhile step < 4:\n    pos_m = step_position(pos_m, vel_m_s, dt_s)\n    step = step + 1\n\nprint(f\"After {step} steps: pos_m = {pos_m:.2f} m\")",
     "expectedOutput": "After 4 steps: pos_m = 1.20 m"
   },
   {
-    "id": "track-p/P.6-modules-and-automated-asserts.md",
+    "id": "P.6",
     "title": "Loading Modules (import) and Automated Self-Checks (assert)",
     "track": "track-p",
     "path": "track-p/P.6-modules-and-automated-asserts.md",
@@ -92,12 +107,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Automated self-checks with assert"
     ],
     "starterCode": "import math\n\n\ndef distance_2d(x_m, y_m):\n    # TODO 1: Return math.sqrt((x_m ** 2) + (y_m ** 2))\n    return 5.0\n\n\ndef clamp_cmd(cmd):\n    # TODO 2: Clamp cmd into [0, 255] and return the clamped integer\n    return 255\n\n\nd1 = distance_2d(3.0, 4.0)\nd2 = distance_2d(0.6, 0.8)\n\n# TODO 3: Verify that all assertions pass once TODO 1 and TODO 2 are implemented!\nassert round(d1, 4) == 5.0\nassert clamp_cmd(300) == 255\n\nprint(f\"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m\")\nprint(f\"Clamped(-20)={clamp_cmd(-20)} | Clamped(128)={clamp_cmd(128)} | Clamped(300)={clamp_cmd(300)}\")\nprint(\"All assert checks passed!\")",
-    "hints": [],
+    "hints": [
+      "In `distance_2d`, pass `(x_m ** 2) + (y_m ** 2)` inside `math.sqrt(...)`. In `clamp_cmd`, use `if cmd > 255: return 255` and `elif cmd < 0: return 0`, followed by `return cmd`.",
+      "```python def distance_2d(x_m, y_m): return math.sqrt((x_m ** 2) + (y_m ** 2)) def clamp_cmd(cmd): if cmd > 255: return 255 elif cmd < 0: return 0 return cmd ```"
+    ],
     "fullSolution": "import math\n\n\ndef distance_2d(x_m, y_m):\n    return math.sqrt((x_m ** 2) + (y_m ** 2))\n\n\ndef clamp_cmd(cmd):\n    if cmd > 255:\n        return 255\n    elif cmd < 0:\n        return 0\n    return cmd\n\n\nd1 = distance_2d(3.0, 4.0)\nd2 = distance_2d(0.6, 0.8)\n\nassert round(d1, 4) == 5.0\nassert round(d2, 4) == 1.0\nassert clamp_cmd(-20) == 0\nassert clamp_cmd(128) == 128\nassert clamp_cmd(300) == 255\n\nprint(f\"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m\")\nprint(f\"Clamped(-20)={clamp_cmd(-20)} | Clamped(128)={clamp_cmd(128)} | Clamped(300)={clamp_cmd(300)}\")\nprint(\"All assert checks passed!\")",
     "expectedOutput": "Distance (3, 4): 5.00 m | Distance (0.6, 0.8): 1.00 m\nClamped(-20)=0 | Clamped(128)=128 | Clamped(300)=255\nAll assert checks passed!"
   },
   {
-    "id": "track-p/P.7-si-units-and-metric-prefixes.md",
+    "id": "P.7",
     "title": "Base SI Units and Metric Prefixes (M, k, m, \u00b5)",
     "track": "track-p",
     "path": "track-p/P.7-si-units-and-metric-prefixes.md",
@@ -106,12 +124,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Metric prefixes (M, k, m, \u00b5)"
     ],
     "starterCode": "def ma_to_amps(val_ma):\n    # TODO 1: Convert milliamps (mA) to Amperes (A) by dividing by 1000.0 (or * 1e-3)\n    return 0.0\n\n\ndef kohms_to_ohms(r_kohms):\n    # TODO 2: Convert kilo-ohms (k\u03a9) to Ohms (\u03a9) by multiplying by 1000.0 (or * 1e3)\n    return 0.0\n\n\ndef us_to_seconds(time_us):\n    # TODO 3: Convert microseconds (\u00b5s) to seconds (s) by dividing by 1_000_000.0 (or * 1e-6)\n    return 0.0\n\n\ni_a = ma_to_amps(15.0)\nr_ohm = kohms_to_ohms(0.22)\nv_drop = i_a * r_ohm\nt_sec = us_to_seconds(500.0)\n\nprint(f\"15.0 mA = {i_a:.4f} A | 0.22 kOhm = {r_ohm:.1f} Ohm | V = {v_drop:.2f} V\")\nprint(f\"500.0 us = {t_sec:.6f} s\")",
-    "hints": [],
+    "hints": [
+      "`milli` (`m`) divides by `1000.0`, `kilo` (`k`) multiplies by `1000.0`, and `micro` (`\u00b5`) divides by `1000000.0`.",
+      "```python def ma_to_amps(val_ma): return val_ma / 1000.0 def kohms_to_ohms(r_kohms): return r_kohms * 1000.0 def us_to_seconds(time_us): return time_us / 1000000.0 ```"
+    ],
     "fullSolution": "def ma_to_amps(val_ma):\n    return val_ma / 1000.0\n\n\ndef kohms_to_ohms(r_kohms):\n    return r_kohms * 1000.0\n\n\ndef us_to_seconds(time_us):\n    return time_us / 1000000.0\n\n\ni_a = ma_to_amps(15.0)\nr_ohm = kohms_to_ohms(0.22)\nv_drop = i_a * r_ohm\nt_sec = us_to_seconds(500.0)\n\nassert round(i_a, 4) == 0.0150\nassert round(r_ohm, 1) == 220.0\nassert round(v_drop, 2) == 3.30\nassert round(t_sec, 6) == 0.000500\n\nprint(f\"15.0 mA = {i_a:.4f} A | 0.22 kOhm = {r_ohm:.1f} Ohm | V = {v_drop:.2f} V\")\nprint(f\"500.0 us = {t_sec:.6f} s\")",
     "expectedOutput": "15.0 mA = 0.0150 A | 0.22 kOhm = 220.0 Ohm | V = 3.30 V\n500.0 us = 0.000500 s"
   },
   {
-    "id": "track-p/P.8-frequency-and-binary-bits.md",
+    "id": "P.8",
     "title": "Cycle Frequency (Hz), Period (T = 1/f) and Binary Bits (2^N)",
     "track": "track-p",
     "path": "track-p/P.8-frequency-and-binary-bits.md",
@@ -120,12 +141,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Binary bits and powers of 2 (2^N)"
     ],
     "starterCode": "def freq_to_period_ms(freq_hz):\n    # TODO 1: Compute period_s = 1.0 / freq_hz in seconds,\n    #         then multiply by 1000.0 to return milliseconds (ms).\n    return 0.0\n\n\ndef max_unsigned_int(n_bits):\n    # TODO 2: Return (2 ** n_bits) - 1\n    return 0\n\n\nprint(f\"50 Hz period: {freq_to_period_ms(50.0):.2f} ms | 490 Hz period: {freq_to_period_ms(490.0):.3f} ms\")\nprint(f\"8-bit max: {max_unsigned_int(8)} | 10-bit max: {max_unsigned_int(10)} | 12-bit max: {max_unsigned_int(12)}\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, `1.0 / freq_hz` gives seconds, and multiplying by `1000.0` converts seconds to milliseconds (`ms`). In `TODO 2`, use `**` for powers of 2: `(2 ** n_bits) - 1`.",
+      "```python def freq_to_period_ms(freq_hz): return (1.0 / freq_hz) * 1000.0 def max_unsigned_int(n_bits): return (2 ** n_bits) - 1 ```"
+    ],
     "fullSolution": "def freq_to_period_ms(freq_hz):\n    return (1.0 / freq_hz) * 1000.0\n\n\ndef max_unsigned_int(n_bits):\n    return (2 ** n_bits) - 1\n\n\nassert round(freq_to_period_ms(50.0), 2) == 20.00\nassert round(freq_to_period_ms(490.0), 3) == 2.041\nassert max_unsigned_int(8) == 255\nassert max_unsigned_int(10) == 1023\nassert max_unsigned_int(12) == 4095\n\nprint(f\"50 Hz period: {freq_to_period_ms(50.0):.2f} ms | 490 Hz period: {freq_to_period_ms(490.0):.3f} ms\")\nprint(f\"8-bit max: {max_unsigned_int(8)} | 10-bit max: {max_unsigned_int(10)} | 12-bit max: {max_unsigned_int(12)}\")",
     "expectedOutput": "50 Hz period: 20.00 ms | 490 Hz period: 2.041 ms\n8-bit max: 255 | 10-bit max: 1023 | 12-bit max: 4095"
   },
   {
-    "id": "track-p/P.9-rearranging-formulas-and-scaling.md",
+    "id": "P.9",
     "title": "Rearranging Physics Formulas and Linear Range Scaling",
     "track": "track-p",
     "path": "track-p/P.9-rearranging-formulas-and-scaling.md",
@@ -134,12 +158,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Linear range scaling"
     ],
     "starterCode": "def solve_for_speed(x_final, x_start, time_s):\n    # TODO 1: Rearrange x_final = (speed * time_s) + x_start to solve for speed:\n    #         speed = (x_final - x_start) / time_s\n    return 0.0\n\n\ndef scale10_to_five(raw_10bit):\n    # TODO 2: Scale raw_10bit from [0, 1023] to [0.0, 5.0]:\n    #         (raw_10bit / 1023.0) * 5.0\n    return 0.0\n\n\ndef scale10_to_cmd8(raw_10bit):\n    # TODO 3: Scale raw_10bit from [0, 1023] to [0.0, 255.0]:\n    #         (raw_10bit / 1023.0) * 255.0\n    return 0.0\n\n\nspeed_val = solve_for_speed(5.0, 2.0, 0.015)\nout_mid = scale10_to_five(511.5)\ncmd_mid = scale10_to_cmd8(511.5)\n\nprint(f\"Solved Speed: {speed_val:.1f} m/s\")\nprint(f\"Count 511.5 -> {out_mid:.2f} units | Cmd = {cmd_mid:.1f}\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, wrap `(x_final - x_start)` in parentheses before dividing by `time_s`. In `TODO 2` and `TODO 3`, compute the fraction `raw_10bit / 1023.0` first, then multiply by `5.0` or `255.0`.",
+      "```python def solve_for_speed(x_final, x_start, time_s): return (x_final - x_start) / time_s def scale10_to_five(raw_10bit): return (raw_10bit / 1023.0) * 5.0 def scale10_to_cmd8(raw_10bit): return (raw_10bit / 1023.0) * 255.0 ```"
+    ],
     "fullSolution": "def solve_for_speed(x_final, x_start, time_s):\n    return (x_final - x_start) / time_s\n\n\ndef scale10_to_five(raw_10bit):\n    return (raw_10bit / 1023.0) * 5.0\n\n\ndef scale10_to_cmd8(raw_10bit):\n    return (raw_10bit / 1023.0) * 255.0\n\n\nspeed_val = solve_for_speed(5.0, 2.0, 0.015)\nout_mid = scale10_to_five(511.5)\ncmd_mid = scale10_to_cmd8(511.5)\n\nassert round(speed_val, 1) == 200.0\nassert round(out_mid, 2) == 2.50\nassert round(cmd_mid, 1) == 127.5\n\nprint(f\"Solved Speed: {speed_val:.1f} m/s\")\nprint(f\"Count 511.5 -> {out_mid:.2f} units | Cmd = {cmd_mid:.1f}\")",
     "expectedOutput": "Solved Speed: 200.0 m/s\nCount 511.5 -> 2.50 units | Cmd = 127.5"
   },
   {
-    "id": "track-p/P.10-radians-and-right-triangle-trig.md",
+    "id": "P.10",
     "title": "Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry",
     "track": "track-p",
     "path": "track-p/P.10-radians-and-right-triangle-trig.md",
@@ -148,12 +175,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Right-triangle trigonometry (cos, sin, atan2)"
     ],
     "starterCode": "import math\n\n\ndef rpm_to_rad_s(rpm):\n    # TODO 1: Convert RPM to rad/s by multiplying rpm by ((2.0 * math.pi) / 60.0)\n    return 0.0\n\n\ndef arm_tip_xy(length_m, angle_deg):\n    # TODO 2: Convert angle_deg to radians using math.radians(angle_deg),\n    #         then return [length_m * math.cos(rad), length_m * math.sin(rad)]\n    return [0.0, 0.0]\n\n\ndef target_angle_deg(x_m, y_m):\n    # TODO 3: Use math.atan2(y_m, x_m) (note: y_m first!) and convert to degrees with math.degrees(...)\n    return 0.0\n\n\nomega = rpm_to_rad_s(60.0)\ntip = arm_tip_xy(0.20, 60.0)\nang = target_angle_deg(-0.10, 0.10)\n\nprint(f\"60.0 RPM = {omega:.4f} rad/s\")\nprint(f\"Arm tip at 60 deg: x={tip[0]:.4f} m, y={tip[1]:.4f} m\")\nprint(f\"Angle to (-0.10, 0.10): {ang:.1f} deg\")",
-    "hints": [],
+    "hints": [
+      "At `60.0 RPM` (1 revolution per second), `rpm_to_rad_s(60.0)` should return $2\\pi \\approx 6.2832\\text{ rad/s}$. In `arm_tip_xy`, convert `rad = math.radians(angle_deg)` before calling `math.cos(rad)` and `math.sin(rad)`.",
+      "```python def rpm_to_rad_s(rpm): return rpm * ((2.0 * math.pi) / 60.0) def arm_tip_xy(length_m, angle_deg): rad = math.radians(angle_deg) return [length_m * math.cos(rad), length_m * math.sin(rad)] def target_angle_deg(x_m, y_m): return math.degrees(math.atan2(y_m, x_m)) ```"
+    ],
     "fullSolution": "import math\n\n\ndef rpm_to_rad_s(rpm):\n    return rpm * ((2.0 * math.pi) / 60.0)\n\n\ndef arm_tip_xy(length_m, angle_deg):\n    rad = math.radians(angle_deg)\n    return [length_m * math.cos(rad), length_m * math.sin(rad)]\n\n\ndef target_angle_deg(x_m, y_m):\n    return math.degrees(math.atan2(y_m, x_m))\n\n\nomega = rpm_to_rad_s(60.0)\ntip = arm_tip_xy(0.20, 60.0)\nang = target_angle_deg(-0.10, 0.10)\n\nassert round(omega, 4) == 6.2832\nassert round(tip[0], 4) == 0.1000\nassert round(tip[1], 4) == 0.1732\nassert round(ang, 1) == 135.0\n\nprint(f\"60.0 RPM = {omega:.4f} rad/s\")\nprint(f\"Arm tip at 60 deg: x={tip[0]:.4f} m, y={tip[1]:.4f} m\")\nprint(f\"Angle to (-0.10, 0.10): {ang:.1f} deg\")",
     "expectedOutput": "60.0 RPM = 6.2832 rad/s\nArm tip at 60 deg: x=0.1000 m, y=0.1732 m\nAngle to (-0.10, 0.10): 135.0 deg"
   },
   {
-    "id": "track-p/P.11-reading-time-series-graphs.md",
+    "id": "P.11",
     "title": "Reading Time-Series Graphs \u2014 Slope and Area",
     "track": "track-p",
     "path": "track-p/P.11-reading-time-series-graphs.md",
@@ -162,12 +192,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Area under a curve as accumulated change"
     ],
     "starterCode": "def slope_velocity(pos_prev_m, pos_now_m, dt_s):\n    # TODO 1: Return the slope (pos_now_m - pos_prev_m) / dt_s\n    return 0.0\n\n\ndef accumulate_positions(velocities_m_s, dt_s):\n    pos_m = 0.0\n    history = []\n    for v in velocities_m_s:\n        # TODO 2: Add the rectangle area (v * dt_s) to pos_m,\n        #         then append round(pos_m, 2) to history.\n        history.append(round(pos_m, 2))\n    return history\n\n\nv_est = slope_velocity(1.20, 2.20, 0.5)\npos_trace = accumulate_positions([2.0, 2.0, 4.0, 0.0, -2.0], 0.5)\n\nprint(f\"Estimated velocity: {v_est:.1f} m/s\")\nprint(f\"Position trace: {pos_trace} | Final pos: {pos_trace[4]:.2f} m\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, subtract `pos_now_m - pos_prev_m` in parentheses before dividing by `dt_s`. In `TODO 2`, update `pos_m = pos_m + (v * dt_s)` before calling `history.append(round(pos_m, 2))`.",
+      "```python def slope_velocity(pos_prev_m, pos_now_m, dt_s): return (pos_now_m - pos_prev_m) / dt_s def accumulate_positions(velocities_m_s, dt_s): pos_m = 0.0 history = [] for v in velocities_m_s: pos_m = pos_m + (v * dt_s) history.append(round(pos_m, 2)) return history ```"
+    ],
     "fullSolution": "def slope_velocity(pos_prev_m, pos_now_m, dt_s):\n    return (pos_now_m - pos_prev_m) / dt_s\n\n\ndef accumulate_positions(velocities_m_s, dt_s):\n    pos_m = 0.0\n    history = []\n    for v in velocities_m_s:\n        pos_m = pos_m + (v * dt_s)\n        history.append(round(pos_m, 2))\n    return history\n\n\nv_est = slope_velocity(1.20, 2.20, 0.5)\npos_trace = accumulate_positions([2.0, 2.0, 4.0, 0.0, -2.0], 0.5)\n\nassert round(v_est, 1) == 2.0\nassert pos_trace == [1.0, 2.0, 4.0, 4.0, 3.0]\n\nprint(f\"Estimated velocity: {v_est:.1f} m/s\")\nprint(f\"Position trace: {pos_trace} | Final pos: {pos_trace[4]:.2f} m\")",
     "expectedOutput": "Estimated velocity: 2.0 m/s\nPosition trace: [1.0, 2.0, 4.0, 4.0, 3.0] | Final pos: 3.00 m"
   },
   {
-    "id": "track-p/P.12-forces-and-lever-torque.md",
+    "id": "P.12",
     "title": "Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta))",
     "track": "track-p",
     "path": "track-p/P.12-forces-and-lever-torque.md",
@@ -176,12 +209,15 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Lever torque from horizontal arm angle (tau = m*g*L*cos(theta))"
     ],
     "starterCode": "import math\n\n\ndef weight_newtons(mass_kg):\n    # TODO 1: Return downward gravitational force W = mass_kg * 9.81 (in Newtons)\n    return 0.0\n\n\ndef gravity_torque_nm(mass_kg, length_m, angle_from_horiz_deg):\n    # TODO 2:\n    # 1. Compute w_n = weight_newtons(mass_kg)\n    # 2. Compute perpendicular horizontal lever arm: r_perp_m = length_m * math.cos(math.radians(angle_from_horiz_deg))\n    # 3. Return w_n * r_perp_m\n    return 0.0\n\n\nfor angle_deg in [0.0, 60.0, 90.0]:\n    tau = gravity_torque_nm(0.50, 0.30, angle_deg)\n    print(f\"Angle from horizontal = {angle_deg:4.1f} deg -> Gravity Torque = {tau:.4f} N*m\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, multiply `mass_kg * 9.81`. In `TODO 2`, convert `angle_from_horiz_deg` to radians with `math.radians(...)` before calling `math.cos(...)`, then multiply `weight_newtons(mass_kg) * length_m * math.cos(rad)`.",
+      "```python def weight_newtons(mass_kg): return mass_kg * 9.81 def gravity_torque_nm(mass_kg, length_m, angle_from_horiz_deg): w_n = weight_newtons(mass_kg) r_perp_m = length_m * math.cos(math.radians(angle_from_horiz_deg)) return w_n * r_perp_m ```"
+    ],
     "fullSolution": "import math\n\n\ndef weight_newtons(mass_kg):\n    return mass_kg * 9.81\n\n\ndef gravity_torque_nm(mass_kg, length_m, angle_from_horiz_deg):\n    w_n = weight_newtons(mass_kg)\n    r_perp_m = length_m * math.cos(math.radians(angle_from_horiz_deg))\n    return w_n * r_perp_m\n\n\nassert round(weight_newtons(0.50), 4) == 4.9050\nassert round(gravity_torque_nm(0.50, 0.30, 0.0), 4) == 1.4715\nassert round(gravity_torque_nm(0.50, 0.30, 60.0), 4) == 0.7358\nassert round(gravity_torque_nm(0.50, 0.30, 90.0), 4) == 0.0000\n\nfor angle_deg in [0.0, 60.0, 90.0]:\n    tau = gravity_torque_nm(0.50, 0.30, angle_deg)\n    print(f\"Angle from horizontal = {angle_deg:4.1f} deg -> Gravity Torque = {tau:.4f} N*m\")",
     "expectedOutput": "Angle from horizontal =  0.0 deg -> Gravity Torque = 1.4715 N*m\nAngle from horizontal = 60.0 deg -> Gravity Torque = 0.7358 N*m\nAngle from horizontal = 90.0 deg -> Gravity Torque = 0.0000 N*m"
   },
   {
-    "id": "track-p/P.M-track-p-milestone.md",
+    "id": "P.M",
     "title": "Track P Milestone \u2014 Gravity-Holding Robot Arm Link Simulator",
     "track": "track-p",
     "path": "track-p/P.M-track-p-milestone.md",
@@ -189,7 +225,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "End-to-end sense-compute-simulate loop"
     ],
     "starterCode": "import math\n\n\ndef cmd10_to_torque(cmd_10bit, max_torque_nm):\n    # TODO 1: Clamp cmd_10bit into [0, 1023], then scale linearly to [0.0, max_torque_nm]:\n    #         (clamped_cmd / 1023.0) * max_torque_nm\n    return 0.0\n\n\ndef holding_torque_nm(length_m, mass_kg, angle_from_horiz_rad):\n    # TODO 2: Gravity pulls straight down on the perpendicular horizontal lever arm (length_m * cos(angle)).\n    #         Return (mass_kg * 9.81) * length_m * math.cos(angle_from_horiz_rad)\n    return 0.0\n\n\n# Arm parameters (convert 250 mm and 100 ms to base SI units!)\n# TODO 3: Convert 250.0 mm to meters (length_m) and 100.0 ms to seconds (dt_s),\n#         and convert 30.0 RPM to rad/s: omega_rad_s = 30.0 * ((2.0 * math.pi) / 60.0)\nlength_m = 0.0\ndt_s = 0.0\nomega_rad_s = 0.0\nmass_kg = 0.40\n\nmotor_tau = cmd10_to_torque(767.25, 2.0)\ngrav_tau_0 = holding_torque_nm(length_m, mass_kg, 0.0)\ncan_lift = motor_tau > grav_tau_0\nprint(f\"Motor torque: {motor_tau:.2f} N*m | Gravity at 0 deg: {grav_tau_0:.4f} N*m | Can lift: {can_lift}\")\n\nangle_rad = 0.0\nfor step in range(3):\n    # TODO 4: Advance angle_rad by (omega_rad_s * dt_s) using rectangle-area accumulation\n    angle_rad = angle_rad\n    tip_x = length_m * math.cos(angle_rad)\n    tip_y = length_m * math.sin(angle_rad)\n    tau_g = holding_torque_nm(length_m, mass_kg, angle_rad)\n    print(f\"Step {step}: angle={math.degrees(angle_rad):.1f} deg | tip=({tip_x:.4f}, {tip_y:.4f}) m | tau_g={tau_g:.4f} N*m\")",
-    "hints": [],
+    "hints": [
+      "For `TODO 1`, use an `if / elif` block to clamp `cmd_10bit` between `0` and `1023`, then return `(cmd_10bit / 1023.0) * max_torque_nm`. For `TODO 3`, `250.0 mm / 1000.0` is `0.25 m`, and `100.0 ms / 1000.0` is `0.10 s`.",
+      "Check your `TODO 3` and `TODO 4` lines: ```python length_m = 250.0 / 1000.0 dt_s = 100.0 / 1000.0 omega_rad_s = 30.0 * ((2.0 * math.pi) / 60.0) ``` And inside the `for` loop (`TODO 4`): ```python angle_rad = angle_rad + (omega_rad_s * dt_s) ```"
+    ],
     "fullSolution": "import math\n\n\ndef cmd10_to_torque(cmd_10bit, max_torque_nm):\n    if cmd_10bit < 0:\n        cmd_10bit = 0\n    elif cmd_10bit > 1023:\n        cmd_10bit = 1023\n    return (cmd_10bit / 1023.0) * max_torque_nm\n\n\ndef holding_torque_nm(length_m, mass_kg, angle_from_horiz_rad):\n    return (mass_kg * 9.81) * length_m * math.cos(angle_from_horiz_rad)\n\n\nlength_m = 250.0 / 1000.0\ndt_s = 100.0 / 1000.0\nomega_rad_s = 30.0 * ((2.0 * math.pi) / 60.0)\nmass_kg = 0.40\n\nmotor_tau = cmd10_to_torque(767.25, 2.0)\ngrav_tau_0 = holding_torque_nm(length_m, mass_kg, 0.0)\ncan_lift = motor_tau > grav_tau_0\nassert round(motor_tau, 2) == 1.50\nassert round(grav_tau_0, 4) == 0.9810\nassert can_lift is True\nprint(f\"Motor torque: {motor_tau:.2f} N*m | Gravity at 0 deg: {grav_tau_0:.4f} N*m | Can lift: {can_lift}\")\n\nangle_rad = 0.0\nfor step in range(3):\n    angle_rad = angle_rad + (omega_rad_s * dt_s)\n    tip_x = length_m * math.cos(angle_rad)\n    tip_y = length_m * math.sin(angle_rad)\n    tau_g = holding_torque_nm(length_m, mass_kg, angle_rad)\n    print(f\"Step {step}: angle={math.degrees(angle_rad):.1f} deg | tip=({tip_x:.4f}, {tip_y:.4f}) m | tau_g={tau_g:.4f} N*m\")\n\nassert round(math.degrees(angle_rad), 1) == 54.0",
     "expectedOutput": "Motor torque: 1.50 N*m | Gravity at 0 deg: 0.9810 N*m | Can lift: True\nStep 0: angle=18.0 deg | tip=(0.2378, 0.0773) m | tau_g=0.9330 N*m\nStep 1: angle=36.0 deg | tip=(0.2023, 0.1469) m | tau_g=0.7936 N*m\nStep 2: angle=54.0 deg | tip=(0.1469, 0.2023) m | tau_g=0.5766 N*m"
   },
@@ -203,7 +242,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "First-order lag step response and time constant tau (63.2% at 1*tau, 99.3% at 5*tau)"
     ],
     "starterCode": "import math\n\n\ndef cross_domain_power(volts, amps, torque_nm, omega_rad_s):\n    # TODO 1: Compute p_elec = volts * amps, p_mech = torque_nm * omega_rad_s,\n    #         and efficiency_pct = (p_mech / p_elec) * 100.0\n    p_elec = 0.0\n    p_mech = 0.0\n    efficiency_pct = 0.0\n    return p_elec, p_mech, efficiency_pct\n\n\ndef simulate_first_order_lag(target, tau_s, duration_s, dt=0.001):\n    y = 0.0\n    steps = int(round(duration_s / dt))\n    for _ in range(steps):\n        # TODO 2: Compute rate = (target - y) / tau_s and update y = y + rate * dt\n        rate = 0.0\n        y = y + rate * dt\n    return y\n\n\np_in, p_out, eff = cross_domain_power(12.0, 2.0, 0.18, 100.0)\ny_1tau = simulate_first_order_lag(target=100.0, tau_s=0.5, duration_s=0.5)\ny_5tau = simulate_first_order_lag(target=100.0, tau_s=0.5, duration_s=2.5)\n\nprint(f\"P_elec={p_in:.2f} W | P_mech={p_out:.2f} W | Efficiency={eff:.1f}%\")\nprint(f\"First-order lag at 1*tau (0.5 s): {y_1tau:.1f}%\")\nprint(f\"First-order lag at 5*tau (2.5 s): {y_5tau:.1f}%\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, electrical power is `volts * amps` (`24.00 W`) and rotational mechanical power is `torque_nm * omega_rad_s` (`18.00 W`). In `TODO 2`, inside the `for` loop, compute `rate = (target - y) / tau_s` and update `y = y + rate * dt`.",
+      "```python def cross_domain_power(volts, amps, torque_nm, omega_rad_s): p_elec = volts * amps p_mech = torque_nm * omega_rad_s efficiency_pct = (p_mech / p_elec) * 100.0 return p_elec, p_mech, efficiency_pct ```"
+    ],
     "fullSolution": "import math\n\n\ndef cross_domain_power(volts, amps, torque_nm, omega_rad_s):\n    p_elec = volts * amps\n    p_mech = torque_nm * omega_rad_s\n    efficiency_pct = (p_mech / p_elec) * 100.0\n    return p_elec, p_mech, efficiency_pct\n\n\ndef simulate_first_order_lag(target, tau_s, duration_s, dt=0.001):\n    y = 0.0\n    steps = int(round(duration_s / dt))\n    for _ in range(steps):\n        rate = (target - y) / tau_s\n        y = y + rate * dt\n    return y\n\n\np_in, p_out, eff = cross_domain_power(12.0, 2.0, 0.18, 100.0)\ny_1tau = simulate_first_order_lag(target=100.0, tau_s=0.5, duration_s=0.5)\ny_5tau = simulate_first_order_lag(target=100.0, tau_s=0.5, duration_s=2.5)\n\nprint(f\"P_elec={p_in:.2f} W | P_mech={p_out:.2f} W | Efficiency={eff:.1f}%\")\nprint(f\"First-order lag at 1*tau (0.5 s): {y_1tau:.1f}%\")\nprint(f\"First-order lag at 5*tau (2.5 s): {y_5tau:.1f}%\")",
     "expectedOutput": "P_elec=24.00 W | P_mech=18.00 W | Efficiency=75.0%\nFirst-order lag at 1*tau (0.5 s): 63.2%\nFirst-order lag at 5*tau (2.5 s): 99.3%"
   },
@@ -213,11 +255,14 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "track": "00-foundations",
     "path": "00-foundations/00.2-mass-spring-damper-oscillations.md",
     "ideas": [
-      "Hooke's Law spring restoring force (F_s = -k*x) and viscous damping force (F_d = -b*v)",
+      "Hooke",
       "Natural frequency (omega_n = sqrt(k/m)), damping ratio (zeta), and underdamped vs. critically damped vs. overdamped motion"
     ],
     "starterCode": "import math\n\n\ndef damping_metrics(m_kg, k_n_per_m, b_ns_per_m):\n    # TODO 1: Compute omega_n = math.sqrt(k_n_per_m / m_kg) and\n    #         zeta = b_ns_per_m / (2.0 * math.sqrt(m_kg * k_n_per_m)).\n    #         Set regime to \"underdamped\" if zeta < 0.999,\n    #         \"critically_damped\" if abs(zeta - 1.0) <= 0.001, else \"overdamped\".\n    omega_n = 0.0\n    zeta = 0.0\n    regime = \"unknown\"\n    return omega_n, zeta, regime\n\n\ndef simulate_spring_damper(m_kg, k_n_per_m, b_ns_per_m, x0=1.0, duration_s=2.0, dt=0.001):\n    x = x0\n    v = 0.0\n    min_x = x0\n    steps = int(round(duration_s / dt))\n    for _ in range(steps):\n        # TODO 2: With f_cmd = 0.0 (releasing from x0 = 1.0 m back toward 0.0 m),\n        #         compute a = (-b_ns_per_m * v - k_n_per_m * x) / m_kg,\n        #         update v = v + a * dt, and update x = x + v * dt.\n        a = 0.0\n        v = v + a * dt\n        x = x + v * dt\n        if x < min_x:\n            min_x = x\n    overshoot_past_zero = max(0.0, -min_x)\n    return x, overshoot_past_zero\n\n\nfor b_val in [4.0, 20.0, 40.0]:\n    wn, zeta, reg = damping_metrics(m_kg=1.0, k_n_per_m=100.0, b_ns_per_m=b_val)\n    x_end, os_peak = simulate_spring_damper(1.0, 100.0, b_val)\n    print(f\"b={b_val:4.1f} -> omega_n={wn:.1f} rad/s | zeta={zeta:.2f} ({reg}) | overshoot={os_peak:.2f} m | x_end={x_end:.3f} m\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, `omega_n = math.sqrt(k_n_per_m / m_kg)` (`10.0 rad/s` for $k=100, m=1$) and `zeta = b_ns_per_m / (2.0 * math.sqrt(m_kg * k_n_per_m))`. In `TODO 2`, compute `a = (-b_ns_per_m * v - k_n_per_m * x) / m_kg`, then `v = v + a * dt`, then `x = x + v * dt`.",
+      "```python def damping_metrics(m_kg, k_n_per_m, b_ns_per_m): omega_n = math.sqrt(k_n_per_m / m_kg) zeta = b_ns_per_m / (2.0 * math.sqrt(m_kg * k_n_per_m)) if zeta < 0.999: regime = \"underdamped\" elif abs(zeta - 1.0) <= 0.001: regime = \"critically_damped\" else: regime = \"overdamped\" return omega_n, zeta, regime ```"
+    ],
     "fullSolution": "import math\n\n\ndef damping_metrics(m_kg, k_n_per_m, b_ns_per_m):\n    omega_n = math.sqrt(k_n_per_m / m_kg)\n    zeta = b_ns_per_m / (2.0 * math.sqrt(m_kg * k_n_per_m))\n    if zeta < 0.999:\n        regime = \"underdamped\"\n    elif abs(zeta - 1.0) <= 0.001:\n        regime = \"critically_damped\"\n    else:\n        regime = \"overdamped\"\n    return omega_n, zeta, regime\n\n\ndef simulate_spring_damper(m_kg, k_n_per_m, b_ns_per_m, x0=1.0, duration_s=2.0, dt=0.001):\n    x = x0\n    v = 0.0\n    min_x = x0\n    steps = int(round(duration_s / dt))\n    for _ in range(steps):\n        a = (-b_ns_per_m * v - k_n_per_m * x) / m_kg\n        v = v + a * dt\n        x = x + v * dt\n        if x < min_x:\n            min_x = x\n    overshoot_past_zero = max(0.0, -min_x)\n    return x, overshoot_past_zero\n\n\nfor b_val in [4.0, 20.0, 40.0]:\n    wn, zeta, reg = damping_metrics(m_kg=1.0, k_n_per_m=100.0, b_ns_per_m=b_val)\n    x_end, os_peak = simulate_spring_damper(1.0, 100.0, b_val)\n    print(f\"b={b_val:4.1f} -> omega_n={wn:.1f} rad/s | zeta={zeta:.2f} ({reg}) | overshoot={os_peak:.2f} m | x_end={x_end:.3f} m\")",
     "expectedOutput": "b= 4.0 -> omega_n=10.0 rad/s | zeta=0.20 (underdamped) | overshoot=0.53 m | x_end=0.016 m\nb=20.0 -> omega_n=10.0 rad/s | zeta=1.00 (critically_damped) | overshoot=0.00 m | x_end=0.000 m\nb=40.0 -> omega_n=10.0 rad/s | zeta=2.00 (overdamped) | overshoot=0.00 m | x_end=0.005 m"
   },
@@ -231,7 +276,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Dimensional unit consistency and extreme-case sign checks (theta = 0 deg vs. 90 deg)"
     ],
     "starterCode": "import math\n\n\ndef holding_torque_nm(mass_kg, length_mm, angle_deg, g=9.81):\n    # TODO 1: Convert length_mm to meters (length_m = length_mm / 1000.0) and\n    #         angle_deg to radians (theta_rad = math.radians(angle_deg)), then return\n    #         +mass_kg * g * length_m * math.cos(theta_rad)\n    return 0.0\n\n\ndef run_sanity_checks():\n    t_horiz = holding_torque_nm(mass_kg=0.5, length_mm=400.0, angle_deg=0.0)\n    t_60deg = holding_torque_nm(mass_kg=0.5, length_mm=400.0, angle_deg=60.0)\n    t_vert = holding_torque_nm(mass_kg=0.5, length_mm=400.0, angle_deg=90.0)\n\n    # TODO 2: Add two assert statements checking:\n    #         1) t_horiz > 0.0 and abs(t_horiz - 1.962) < 1e-4  (positive +CCW torque at 0 deg)\n    #         2) abs(t_vert - 0.0) < 1e-6                       (zero torque at 90 deg vertical)\n    return t_horiz, t_60deg, t_vert\n\n\nt0, t60, t90 = run_sanity_checks()\nprint(f\"Boundary 0 deg (horizontal): tau_hold = +{t0:.3f} N*m\")\nprint(f\"Midpoint 60 deg            : tau_hold = +{t60:.3f} N*m\")\nprint(f\"Boundary 90 deg (vertical) : tau_hold = +{t90:.3f} N*m\")\nprint(\"All dimensional and extreme-case sign checks PASSED!\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, convert `length_mm` to meters first (`length_m = length_mm / 1000.0`) so the units are `kg * (m/s^2) * m = N*m` (not `N*mm`, which would be $1{,}000\\times$ too large!). Then convert `angle_deg` to radians with `math.radians(angle_deg)` and multiply by `math.cos(theta_rad)`.",
+      "```python def holding_torque_nm(mass_kg, length_mm, angle_deg, g=9.81): length_m = length_mm / 1000.0 theta_rad = math.radians(angle_deg) return mass_kg * g * length_m * math.cos(theta_rad) ```"
+    ],
     "fullSolution": "import math\n\n\ndef holding_torque_nm(mass_kg, length_mm, angle_deg, g=9.81):\n    length_m = length_mm / 1000.0\n    theta_rad = math.radians(angle_deg)\n    return mass_kg * g * length_m * math.cos(theta_rad)\n\n\ndef run_sanity_checks():\n    t_horiz = holding_torque_nm(mass_kg=0.5, length_mm=400.0, angle_deg=0.0)\n    t_60deg = holding_torque_nm(mass_kg=0.5, length_mm=400.0, angle_deg=60.0)\n    t_vert = holding_torque_nm(mass_kg=0.5, length_mm=400.0, angle_deg=90.0)\n\n    assert t_horiz > 0.0 and abs(t_horiz - 1.962) < 1e-4\n    assert abs(t_vert - 0.0) < 1e-6\n    return t_horiz, t_60deg, t_vert\n\n\nt0, t60, t90 = run_sanity_checks()\nprint(f\"Boundary 0 deg (horizontal): tau_hold = +{t0:.3f} N*m\")\nprint(f\"Midpoint 60 deg            : tau_hold = +{t60:.3f} N*m\")\nprint(f\"Boundary 90 deg (vertical) : tau_hold = +{t90:.3f} N*m\")\nprint(\"All dimensional and extreme-case sign checks PASSED!\")",
     "expectedOutput": "Boundary 0 deg (horizontal): tau_hold = +1.962 N*m\nMidpoint 60 deg            : tau_hold = +0.981 N*m\nBoundary 90 deg (vertical) : tau_hold = +0.000 N*m\nAll dimensional and extreme-case sign checks PASSED!"
   },
@@ -245,7 +293,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "System worst-case power budgeting and separate motor vs. logic voltage rails"
     ],
     "starterCode": "def compare_ldo_vs_buck(v_in, v_out, i_load, buck_eff=0.90):\n    # TODO 1: Compute:\n    #   p_ldo_heat = (v_in - v_out) * i_load\n    #   i_buck_in  = (v_out * i_load) / (buck_eff * v_in)\n    #   p_buck_heat = (v_in * i_buck_in) - (v_out * i_load)\n    p_ldo_heat = 0.0\n    i_buck_in = 0.0\n    p_buck_heat = 0.0\n    return p_ldo_heat, i_buck_in, p_buck_heat\n\n\ndef worst_case_battery_budget(i_motor_stall, i_buck_in, safety_factor=1.25):\n    # TODO 2: Compute i_total_peak = i_motor_stall + i_buck_in and\n    #         fuse_rating_a = i_total_peak * safety_factor\n    i_total_peak = 0.0\n    fuse_rating_a = 0.0\n    return i_total_peak, fuse_rating_a\n\n\np_ldo, i_buck, p_buck = compare_ldo_vs_buck(12.0, 5.0, 0.50, buck_eff=0.90)\ni_peak, fuse_a = worst_case_battery_budget(i_motor_stall=3.00, i_buck_in=i_buck)\n\nprint(f\"LDO heat loss : {p_ldo:.2f} W (at 12V -> 5V, 0.50 A)\")\nprint(f\"Buck input    : {i_buck:.3f} A | Buck heat loss: {p_buck:.2f} W\")\nprint(f\"Battery peak  : {i_peak:.3f} A | Recommended fuse (1.25x): {fuse_a:.2f} A\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, the LDO drops `v_in - v_out = 7.0 V` at `i_load = 0.50 A`, wasting `7.0 * 0.50 = 3.50 W`. The buck converter delivers `p_out = v_out * i_load = 2.50 W` at `90%` efficiency, so `p_in = (v_out * i_load) / buck_eff` and `i_buck_in = p_in / v_in`.",
+      "```python def compare_ldo_vs_buck(v_in, v_out, i_load, buck_eff=0.90): p_ldo_heat = (v_in - v_out) * i_load i_buck_in = (v_out * i_load) / (buck_eff * v_in) p_buck_heat = (v_in * i_buck_in) - (v_out * i_load) return p_ldo_heat, i_buck_in, p_buck_heat ```"
+    ],
     "fullSolution": "def compare_ldo_vs_buck(v_in, v_out, i_load, buck_eff=0.90):\n    p_ldo_heat = (v_in - v_out) * i_load\n    i_buck_in = (v_out * i_load) / (buck_eff * v_in)\n    p_buck_heat = (v_in * i_buck_in) - (v_out * i_load)\n    return p_ldo_heat, i_buck_in, p_buck_heat\n\n\ndef worst_case_battery_budget(i_motor_stall, i_buck_in, safety_factor=1.25):\n    i_total_peak = i_motor_stall + i_buck_in\n    fuse_rating_a = i_total_peak * safety_factor\n    return i_total_peak, fuse_rating_a\n\n\np_ldo, i_buck, p_buck = compare_ldo_vs_buck(12.0, 5.0, 0.50, buck_eff=0.90)\ni_peak, fuse_a = worst_case_battery_budget(i_motor_stall=3.00, i_buck_in=i_buck)\n\nprint(f\"LDO heat loss : {p_ldo:.2f} W (at 12V -> 5V, 0.50 A)\")\nprint(f\"Buck input    : {i_buck:.3f} A | Buck heat loss: {p_buck:.2f} W\")\nprint(f\"Battery peak  : {i_peak:.3f} A | Recommended fuse (1.25x): {fuse_a:.2f} A\")",
     "expectedOutput": "LDO heat loss : 3.50 W (at 12V -> 5V, 0.50 A)\nBuck input    : 0.231 A | Buck heat loss: 0.28 W\nBattery peak  : 3.231 A | Recommended fuse (1.25x): 4.04 A"
   },
@@ -259,7 +310,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Passive RC low-pass filter cutoff frequency (f_c = 1/(2*pi*R*C)) and high-frequency noise attenuation"
     ],
     "starterCode": "import math\n\n\ndef ground_bounce_adc_error(i_motor_a, r_shared_ohm, v_ref=5.0):\n    # TODO 1: Compute v_bounce = i_motor_a * r_shared_ohm and\n    #         adc_count_error = (v_bounce / v_ref) * 1023.0\n    v_bounce = 0.0\n    adc_count_error = 0.0\n    return v_bounce, adc_count_error\n\n\ndef rc_lowpass_response(r_ohm, c_farad, f_signal_hz):\n    # TODO 2: Compute f_c = 1.0 / (2.0 * math.pi * r_ohm * c_farad) and\n    #         amplitude_ratio = 1.0 / math.sqrt(1.0 + (f_signal_hz / f_c) ** 2)\n    f_c = 0.0\n    amplitude_ratio = 0.0\n    return f_c, amplitude_ratio\n\n\nv_err, adc_err = ground_bounce_adc_error(i_motor_a=3.0, r_shared_ohm=0.15)\nfc, ratio_at_fc = rc_lowpass_response(1000.0, 1e-6, 159.1549)\n_, ratio_at_20khz = rc_lowpass_response(1000.0, 1e-6, 20000.0)\n\nprint(f\"Daisy-chain ground bounce: {v_err:.2f} V ({adc_err:.1f} ADC counts error!)\")\nprint(f\"RC cutoff f_c = {fc:.2f} Hz | Ratio at f_c = {ratio_at_fc * 100.0:.1f}% | Ratio at 20 kHz = {ratio_at_20khz * 100.0:.2f}%\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, `v_bounce = i_motor_a * r_shared_ohm` (`0.45 V`) and `adc_count_error = (v_bounce / v_ref) * 1023.0` (`92.1` counts). In `TODO 2`, `f_c = 1.0 / (2.0 * math.pi * r_ohm * c_farad)` and `amplitude_ratio = 1.0 / math.sqrt(1.0 + (f_signal_hz / f_c) ** 2)`.",
+      "```python def rc_lowpass_response(r_ohm, c_farad, f_signal_hz): f_c = 1.0 / (2.0 * math.pi * r_ohm * c_farad) amplitude_ratio = 1.0 / math.sqrt(1.0 + (f_signal_hz / f_c) ** 2) return f_c, amplitude_ratio ```"
+    ],
     "fullSolution": "import math\n\n\ndef ground_bounce_adc_error(i_motor_a, r_shared_ohm, v_ref=5.0):\n    v_bounce = i_motor_a * r_shared_ohm\n    adc_count_error = (v_bounce / v_ref) * 1023.0\n    return v_bounce, adc_count_error\n\n\ndef rc_lowpass_response(r_ohm, c_farad, f_signal_hz):\n    f_c = 1.0 / (2.0 * math.pi * r_ohm * c_farad)\n    amplitude_ratio = 1.0 / math.sqrt(1.0 + (f_signal_hz / f_c) ** 2)\n    return f_c, amplitude_ratio\n\n\nv_err, adc_err = ground_bounce_adc_error(i_motor_a=3.0, r_shared_ohm=0.15)\nfc, ratio_at_fc = rc_lowpass_response(1000.0, 1e-6, 159.1549)\n_, ratio_at_20khz = rc_lowpass_response(1000.0, 1e-6, 20000.0)\n\nprint(f\"Daisy-chain ground bounce: {v_err:.2f} V ({adc_err:.1f} ADC counts error!)\")\nprint(f\"RC cutoff f_c = {fc:.2f} Hz | Ratio at f_c = {ratio_at_fc * 100.0:.1f}% | Ratio at 20 kHz = {ratio_at_20khz * 100.0:.2f}%\")",
     "expectedOutput": "Daisy-chain ground bounce: 0.45 V (92.1 ADC counts error!)\nRC cutoff f_c = 159.15 Hz | Ratio at f_c = 70.7% | Ratio at 20 kHz = 0.80%"
   },
@@ -273,7 +327,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "1-link planar forward kinematics (x = L1*cos(theta1), y = L1*sin(theta1)) and circular workspace boundary"
     ],
     "starterCode": "import math\n\n\ndef fk_1link(l1_m, theta1_deg):\n    # TODO 1: Convert theta1_deg to radians (t1_rad = math.radians(theta1_deg))\n    #         and return (l1_m * math.cos(t1_rad), l1_m * math.sin(t1_rad))\n    return 0.0, 0.0\n\n\ndef verify_circular_workspace(l1_m, angle_list_deg):\n    results = []\n    for deg in angle_list_deg:\n        x, y = fk_1link(l1_m, deg)\n        r = math.sqrt(x * x + y * y)\n        # TODO 2: Assert that abs(r - l1_m) < 1e-6 so every point lies on the circle r = l1_m\n        results.append((deg, x, y, r))\n    return results\n\n\nsamples = verify_circular_workspace(0.25, [0.0, 60.0, 90.0, 180.0])\nfor deg, x_m, y_m, r_m in samples:\n    print(f\"theta1={deg:5.1f} deg -> x={x_m:+6.3f} m, y={y_m:+6.3f} m (radius={r_m:.3f} m)\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, convert degrees to radians first (`t1_rad = math.radians(theta1_deg)`), then compute `x = l1_m * math.cos(t1_rad)` and `y = l1_m * math.sin(t1_rad)`. In `TODO 2`, write `assert abs(r - l1_m) < 1e-6`.",
+      "```python def fk_1link(l1_m, theta1_deg): t1_rad = math.radians(theta1_deg) return l1_m * math.cos(t1_rad), l1_m * math.sin(t1_rad) ```"
+    ],
     "fullSolution": "import math\n\n\ndef fk_1link(l1_m, theta1_deg):\n    t1_rad = math.radians(theta1_deg)\n    return l1_m * math.cos(t1_rad), l1_m * math.sin(t1_rad)\n\n\ndef verify_circular_workspace(l1_m, angle_list_deg):\n    results = []\n    for deg in angle_list_deg:\n        x, y = fk_1link(l1_m, deg)\n        r = math.sqrt(x * x + y * y)\n        assert abs(r - l1_m) < 1e-6\n        results.append((deg, x, y, r))\n    return results\n\n\nsamples = verify_circular_workspace(0.25, [0.0, 60.0, 90.0, 180.0])\nfor deg, x_m, y_m, r_m in samples:\n    print(f\"theta1={deg:5.1f} deg -> x={x_m:+6.3f} m, y={y_m:+6.3f} m (radius={r_m:.3f} m)\")",
     "expectedOutput": "theta1=  0.0 deg -> x=+0.250 m, y=+0.000 m (radius=0.250 m)\ntheta1= 60.0 deg -> x=+0.125 m, y=+0.217 m (radius=0.250 m)\ntheta1= 90.0 deg -> x=+0.000 m, y=+0.250 m (radius=0.250 m)\ntheta1=180.0 deg -> x=-0.250 m, y=+0.000 m (radius=0.250 m)"
   },
@@ -287,7 +344,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Chaining tip-to-tail vectors for 2-link forward kinematics"
     ],
     "starterCode": "import math\n\n\ndef fk_2link(l1_m, l2_m, theta1_deg, theta2_deg):\n    # TODO 1: Convert theta1_deg and theta2_deg to radians (t1, t2) and compute\n    #         the absolute forearm angle t12 = t1 + t2\n    t1 = 0.0\n    t12 = 0.0\n\n    # TODO 2: Compute elbow coordinates (x1, y1) and end-effector tip coordinates (x, y)\n    x1 = 0.0\n    y1 = 0.0\n    x = 0.0\n    y = 0.0\n    return x1, y1, x, y\n\n\npostures = [\n    (\"Straight Right\", 0.0, 0.0),\n    (\"L-Bend Up     \", 0.0, 90.0),\n    (\"Straight Up   \", 90.0, 0.0),\n    (\"Reach Diagonal\", 30.0, 60.0),\n]\n\nfor label, q1_deg, q2_deg in postures:\n    ex, ey, tx, ty = fk_2link(0.15, 0.15, q1_deg, q2_deg)\n    print(f\"{label} (q1={q1_deg:4.0f}, q2={q2_deg:4.0f}) -> elbow=({ex:+.3f}, {ey:+.3f}) m | tip=({tx:+.3f}, {ty:+.3f}) m\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, convert both angles with `math.radians` and set `t12 = t1 + t2`. In `TODO 2`, the elbow is at `(l1_m * math.cos(t1), l1_m * math.sin(t1))` and the end-effector adds `(l2_m * math.cos(t12), l2_m * math.sin(t12))` to the elbow coordinates.",
+      "```python def fk_2link(l1_m, l2_m, theta1_deg, theta2_deg): t1 = math.radians(theta1_deg) t2 = math.radians(theta2_deg) t12 = t1 + t2 x1 = l1_m * math.cos(t1) y1 = l1_m * math.sin(t1) x = x1 + l2_m * math.cos(t12) y = y1 + l2_m * math.sin(t12) return x1, y1, x, y ```"
+    ],
     "fullSolution": "import math\n\n\ndef fk_2link(l1_m, l2_m, theta1_deg, theta2_deg):\n    t1 = math.radians(theta1_deg)\n    t2 = math.radians(theta2_deg)\n    t12 = t1 + t2\n    x1 = l1_m * math.cos(t1)\n    y1 = l1_m * math.sin(t1)\n    x = x1 + l2_m * math.cos(t12)\n    y = y1 + l2_m * math.sin(t12)\n    return x1, y1, x, y\n\n\npostures = [\n    (\"Straight Right\", 0.0, 0.0),\n    (\"L-Bend Up     \", 0.0, 90.0),\n    (\"Straight Up   \", 90.0, 0.0),\n    (\"Reach Diagonal\", 30.0, 60.0),\n]\n\nfor label, q1_deg, q2_deg in postures:\n    ex, ey, tx, ty = fk_2link(0.15, 0.15, q1_deg, q2_deg)\n    print(f\"{label} (q1={q1_deg:4.0f}, q2={q2_deg:4.0f}) -> elbow=({ex:+.3f}, {ey:+.3f}) m | tip=({tx:+.3f}, {ty:+.3f}) m\")",
     "expectedOutput": "Straight Right (q1=   0, q2=   0) -> elbow=(+0.150, +0.000) m | tip=(+0.300, +0.000) m\nL-Bend Up      (q1=   0, q2=  90) -> elbow=(+0.150, +0.000) m | tip=(+0.150, +0.150) m\nStraight Up    (q1=  90, q2=   0) -> elbow=(+0.000, +0.150) m | tip=(+0.000, +0.300) m\nReach Diagonal (q1=  30, q2=  60) -> elbow=(+0.130, +0.075) m | tip=(+0.130, +0.225) m"
   },
@@ -301,7 +361,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Elbow-down vs. elbow-up geometric solutions and shoulder angle via math.atan2(y, x)"
     ],
     "starterCode": "import math\n\n\ndef fk_2link(l1_m, l2_m, theta1_deg, theta2_deg):\n    t1 = math.radians(theta1_deg)\n    t12 = t1 + math.radians(theta2_deg)\n    x = l1_m * math.cos(t1) + l2_m * math.cos(t12)\n    y = l1_m * math.sin(t1) + l2_m * math.sin(t12)\n    return x, y\n\n\ndef ik_2link_elbow_down(x_m, y_m, l1_m=0.15, l2_m=0.15):\n    # TODO 1: Compute raw_cos_t2 = (x_m**2 + y_m**2 - l1_m**2 - l2_m**2) / (2.0 * l1_m * l2_m),\n    #         clamp cos_t2 into [-1.0, 1.0], and compute t2_rad = math.acos(cos_t2)\n    t2_rad = 0.0\n\n    # TODO 2: Compute t1_rad = math.atan2(y_m, x_m) - math.atan2(l2_m * math.sin(t2_rad), l1_m + l2_m * math.cos(t2_rad))\n    #         and return (math.degrees(t1_rad), math.degrees(t2_rad))\n    t1_rad = 0.0\n    return math.degrees(t1_rad), math.degrees(t2_rad)\n\n\ntargets = [(0.15, 0.15), (0.130, 0.225), (0.30, 0.00)]\nfor tx, ty in targets:\n    q1_deg, q2_deg = ik_2link_elbow_down(tx, ty, 0.15, 0.15)\n    fk_x, fk_y = fk_2link(0.15, 0.15, q1_deg, q2_deg)\n    err_mm = math.hypot(fk_x - tx, fk_y - ty) * 1000.0\n    print(f\"Target=({tx:.3f}, {ty:.3f}) m -> IK=(q1={q1_deg:+6.2f} deg, q2={q2_deg:+6.2f} deg) | FK_err={err_mm:.4f} mm\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, clamp `raw_cos_t2` using `cos_t2 = max(-1.0, min(1.0, raw_cos_t2))` before calling `t2_rad = math.acos(cos_t2)`. In `TODO 2`, subtract `math.atan2(l2_m * math.sin(t2_rad), l1_m + l2_m * math.cos(t2_rad))` from `math.atan2(y_m, x_m)`.",
+      "```python def ik_2link_elbow_down(x_m, y_m, l1_m=0.15, l2_m=0.15): raw_cos_t2 = (x_m**2 + y_m**2 - l1_m**2 - l2_m**2) / (2.0 * l1_m * l2_m) cos_t2 = max(-1.0, min(1.0, raw_cos_t2)) t2_rad = math.acos(cos_t2) t1_rad = math.atan2(y_m, x_m) - math.atan2( l2_m * math.sin(t2_rad), l1_m + l2_m * math.cos(t2_rad) ) return math.degrees(t1_rad), math.degrees(t2_rad) ```"
+    ],
     "fullSolution": "import math\n\n\ndef fk_2link(l1_m, l2_m, theta1_deg, theta2_deg):\n    t1 = math.radians(theta1_deg)\n    t12 = t1 + math.radians(theta2_deg)\n    x = l1_m * math.cos(t1) + l2_m * math.cos(t12)\n    y = l1_m * math.sin(t1) + l2_m * math.sin(t12)\n    return x, y\n\n\ndef ik_2link_elbow_down(x_m, y_m, l1_m=0.15, l2_m=0.15):\n    raw_cos_t2 = (x_m**2 + y_m**2 - l1_m**2 - l2_m**2) / (2.0 * l1_m * l2_m)\n    cos_t2 = max(-1.0, min(1.0, raw_cos_t2))\n    t2_rad = math.acos(cos_t2)\n    t1_rad = math.atan2(y_m, x_m) - math.atan2(\n        l2_m * math.sin(t2_rad), l1_m + l2_m * math.cos(t2_rad)\n    )\n    return math.degrees(t1_rad), math.degrees(t2_rad)\n\n\ntargets = [(0.15, 0.15), (0.130, 0.225), (0.30, 0.00)]\nfor tx, ty in targets:\n    q1_deg, q2_deg = ik_2link_elbow_down(tx, ty, 0.15, 0.15)\n    fk_x, fk_y = fk_2link(0.15, 0.15, q1_deg, q2_deg)\n    err_mm = math.hypot(fk_x - tx, fk_y - ty) * 1000.0\n    print(f\"Target=({tx:.3f}, {ty:.3f}) m -> IK=(q1={q1_deg:+6.2f} deg, q2={q2_deg:+6.2f} deg) | FK_err={err_mm:.4f} mm\")",
     "expectedOutput": "Target=(0.150, 0.150) m -> IK=(q1= +0.00 deg, q2=+90.00 deg) | FK_err=0.0000 mm\nTarget=(0.130, 0.225) m -> IK=(q1=+30.00 deg, q2=+59.96 deg) | FK_err=0.0000 mm\nTarget=(0.300, 0.000) m -> IK=(q1= +0.00 deg, q2= +0.00 deg) | FK_err=0.0000 mm"
   },
@@ -311,11 +374,14 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
     "track": "02-mechanics-kinematics-dynamics",
     "path": "02-mechanics-kinematics-dynamics/02.4-rotational-inertia-and-gear-ratios.md",
     "ideas": [
-      "Rotational Newton's Second Law (tau_net = I_rot * alpha) and moment of inertia (I_rot = m * r^2)",
+      "Rotational Newton",
       "Gear reduction ratio (N): torque multiplication, speed division, and N^2 reflected inertia"
     ],
     "starterCode": "def point_mass_inertia_and_accel(mass_kg, radius_m, net_torque_nm):\n    # TODO 1: Compute i_rot = mass_kg * (radius_m ** 2) and alpha_rads2 = net_torque_nm / i_rot\n    i_rot = 0.0\n    alpha_rads2 = 0.0\n    return i_rot, alpha_rads2\n\n\ndef gearmotor_output(tau_motor_nm, omega_motor_rads, i_load_kgm2, gear_ratio_n, eff=0.85):\n    # TODO 2: Compute:\n    #   tau_out_nm   = eff * gear_ratio_n * tau_motor_nm\n    #   omega_out    = omega_motor_rads / gear_ratio_n\n    #   i_refl_motor = i_load_kgm2 / (gear_ratio_n ** 2)\n    tau_out_nm = 0.0\n    omega_out = 0.0\n    i_refl_motor = 0.0\n    return tau_out_nm, omega_out, i_refl_motor\n\n\ni_load, alpha = point_mass_inertia_and_accel(mass_kg=0.50, radius_m=0.40, net_torque_nm=2.00)\nt_out, w_out, i_refl = gearmotor_output(0.05, 300.0, i_load, gear_ratio_n=50.0, eff=0.85)\n\nprint(f\"Load inertia I_rot = {i_load:.3f} kg*m^2 | Angular accel alpha = {alpha:.1f} rad/s^2\")\nprint(f\"50:1 Gearbox -> tau_out = {t_out:.3f} N*m | omega_out = {w_out:.1f} rad/s\")\nprint(f\"Reflected load inertia at motor shaft (I_load / N^2) = {i_refl:.6f} kg*m^2\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, `i_rot = mass_kg * (radius_m ** 2)` (`0.50 * 0.16 = 0.080 kg*m^2`) and `alpha_rads2 = net_torque_nm / i_rot` (`2.00 / 0.080 = 25.0 rad/s^2`). In `TODO 2`, divide `i_load_kgm2` by `gear_ratio_n ** 2` (`50.0 ** 2 = 2500.0`).",
+      "```python def gearmotor_output(tau_motor_nm, omega_motor_rads, i_load_kgm2, gear_ratio_n, eff=0.85): tau_out_nm = eff * gear_ratio_n * tau_motor_nm omega_out = omega_motor_rads / gear_ratio_n i_refl_motor = i_load_kgm2 / (gear_ratio_n ** 2) return tau_out_nm, omega_out, i_refl_motor ```"
+    ],
     "fullSolution": "def point_mass_inertia_and_accel(mass_kg, radius_m, net_torque_nm):\n    i_rot = mass_kg * (radius_m ** 2)\n    alpha_rads2 = net_torque_nm / i_rot\n    return i_rot, alpha_rads2\n\n\ndef gearmotor_output(tau_motor_nm, omega_motor_rads, i_load_kgm2, gear_ratio_n, eff=0.85):\n    tau_out_nm = eff * gear_ratio_n * tau_motor_nm\n    omega_out = omega_motor_rads / gear_ratio_n\n    i_refl_motor = i_load_kgm2 / (gear_ratio_n ** 2)\n    return tau_out_nm, omega_out, i_refl_motor\n\n\ni_load, alpha = point_mass_inertia_and_accel(mass_kg=0.50, radius_m=0.40, net_torque_nm=2.00)\nt_out, w_out, i_refl = gearmotor_output(0.05, 300.0, i_load, gear_ratio_n=50.0, eff=0.85)\n\nprint(f\"Load inertia I_rot = {i_load:.3f} kg*m^2 | Angular accel alpha = {alpha:.1f} rad/s^2\")\nprint(f\"50:1 Gearbox -> tau_out = {t_out:.3f} N*m | omega_out = {w_out:.1f} rad/s\")\nprint(f\"Reflected load inertia at motor shaft (I_load / N^2) = {i_refl:.6f} kg*m^2\")",
     "expectedOutput": "Load inertia I_rot = 0.080 kg*m^2 | Angular accel alpha = 25.0 rad/s^2\n50:1 Gearbox -> tau_out = 2.125 N*m | omega_out = 6.0 rad/s\nReflected load inertia at motor shaft (I_load / N^2) = 0.000032 kg*m^2"
   },
@@ -329,7 +395,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "GT2 timing belt pulley ratios and 3D-print layer-line load orientation (0.20 mm clearance)"
     ],
     "starterCode": "import math\n\n\ndef gt2_belt_drive(n_driver_teeth, n_driven_teeth, tau_out_nm, pitch_mm=2.0):\n    # TODO 1: Compute:\n    #   ratio_n = n_driven_teeth / n_driver_teeth\n    #   r_driven_mm = (n_driven_teeth * pitch_mm) / (2.0 * math.pi)\n    #   r_driven_m  = r_driven_mm / 1000.0\n    #   belt_force_n = tau_out_nm / r_driven_m\n    ratio_n = 0.0\n    r_driven_mm = 0.0\n    belt_force_n = 0.0\n    return ratio_n, r_driven_mm, belt_force_n\n\n\ndef cad_hole_diameters_mm(bearing_od_mm=22.0, bolt_od_mm=3.0):\n    # TODO 2: Add +0.10 mm for a 3D-printed bearing press-fit bore and\n    #         +0.20 mm for a free-sliding M3 bolt clearance fit\n    bearing_bore_mm = 0.0\n    bolt_clearance_hole_mm = 0.0\n    return bearing_bore_mm, bolt_clearance_hole_mm\n\n\nratio, r_mm, f_belt = gt2_belt_drive(20, 60, tau_out_nm=1.50)\nbore_608, hole_m3 = cad_hole_diameters_mm(22.0, 3.0)\n\nprint(f\"GT2 20T->60T ratio = {ratio:.1f}:1 | Driven pitch radius = {r_mm:.2f} mm | Belt pull = {f_belt:.1f} N\")\nprint(f\"CAD 608 bearing bore = {bore_608:.2f} mm | CAD M3 clearance hole = {hole_m3:.2f} mm\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, the driven pulley's circumference is `n_driven_teeth * pitch_mm` (`60 * 2.0 = 120.0 mm`), so its pitch radius is `120.0 / (2 * math.pi) = 19.0986 mm` (`0.0190986 m`). Divide `tau_out_nm` (`1.50 N*m`) by `r_driven_m` in meters to get `78.5 N`.",
+      "```python def gt2_belt_drive(n_driver_teeth, n_driven_teeth, tau_out_nm, pitch_mm=2.0): ratio_n = n_driven_teeth / n_driver_teeth r_driven_mm = (n_driven_teeth * pitch_mm) / (2.0 * math.pi) r_driven_m = r_driven_mm / 1000.0 belt_force_n = tau_out_nm / r_driven_m return ratio_n, r_driven_mm, belt_force_n ```"
+    ],
     "fullSolution": "import math\n\n\ndef gt2_belt_drive(n_driver_teeth, n_driven_teeth, tau_out_nm, pitch_mm=2.0):\n    ratio_n = n_driven_teeth / n_driver_teeth\n    r_driven_mm = (n_driven_teeth * pitch_mm) / (2.0 * math.pi)\n    r_driven_m = r_driven_mm / 1000.0\n    belt_force_n = tau_out_nm / r_driven_m\n    return ratio_n, r_driven_mm, belt_force_n\n\n\ndef cad_hole_diameters_mm(bearing_od_mm=22.0, bolt_od_mm=3.0):\n    bearing_bore_mm = bearing_od_mm + 0.10\n    bolt_clearance_hole_mm = bolt_od_mm + 0.20\n    return bearing_bore_mm, bolt_clearance_hole_mm\n\n\nratio, r_mm, f_belt = gt2_belt_drive(20, 60, tau_out_nm=1.50)\nbore_608, hole_m3 = cad_hole_diameters_mm(22.0, 3.0)\n\nprint(f\"GT2 20T->60T ratio = {ratio:.1f}:1 | Driven pitch radius = {r_mm:.2f} mm | Belt pull = {f_belt:.1f} N\")\nprint(f\"CAD 608 bearing bore = {bore_608:.2f} mm | CAD M3 clearance hole = {hole_m3:.2f} mm\")",
     "expectedOutput": "GT2 20T->60T ratio = 3.0:1 | Driven pitch radius = 19.10 mm | Belt pull = 78.5 N\nCAD 608 bearing bore = 22.10 mm | CAD M3 clearance hole = 3.20 mm"
   },
@@ -343,7 +412,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "12-bit absolute magnetic encoders (AS5600 0..4095 counts to radians and degrees)"
     ],
     "starterCode": "import math\n\n\ndef quadrature_resolution(disk_lines, gear_ratio):\n    # TODO 1: Compute cpr_out = 4 * disk_lines * gear_ratio\n    #         and deg_per_count = 360.0 / cpr_out\n    cpr_out = 1\n    deg_per_count = 0.0\n    return cpr_out, deg_per_count\n\n\ndef as5600_to_angle(raw_count):\n    # TODO 2: Convert 12-bit raw_count (0..4095, with 4096 counts per full turn)\n    #         to angle_deg = (raw_count / 4096.0) * 360.0\n    #         and angle_rad = (raw_count / 4096.0) * (2.0 * math.pi)\n    angle_deg = 0.0\n    angle_rad = 0.0\n    return angle_deg, angle_rad\n\n\ncpr, res_deg = quadrature_resolution(disk_lines=500, gear_ratio=10)\nprint(f\"Quadrature 4x output CPR: {cpr} counts/rev | Resolution: {res_deg:.4f} deg/count\")\n\nfor raw in [0, 1024, 2048, 3072]:\n    deg, rad = as5600_to_angle(raw)\n    print(f\"AS5600 raw={raw:4d} -> {deg:6.1f} deg ({rad:.4f} rad)\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, multiply `4 * disk_lines * gear_ratio` to get `cpr_out`, then divide `360.0 / cpr_out`. In `TODO 2`, divide `raw_count` by `4096.0` (since count `4096` wraps back to `0` at $360^\\circ$) and multiply by `360.0` or `2.0 * math.pi`.",
+      "```python def quadrature_resolution(disk_lines, gear_ratio): cpr_out = 4 * disk_lines * gear_ratio deg_per_count = 360.0 / cpr_out return cpr_out, deg_per_count ```"
+    ],
     "fullSolution": "import math\n\n\ndef quadrature_resolution(disk_lines, gear_ratio):\n    cpr_out = 4 * disk_lines * gear_ratio\n    deg_per_count = 360.0 / cpr_out\n    return cpr_out, deg_per_count\n\n\ndef as5600_to_angle(raw_count):\n    angle_deg = (raw_count / 4096.0) * 360.0\n    angle_rad = (raw_count / 4096.0) * (2.0 * math.pi)\n    return angle_deg, angle_rad\n\n\ncpr, res_deg = quadrature_resolution(disk_lines=500, gear_ratio=10)\nprint(f\"Quadrature 4x output CPR: {cpr} counts/rev | Resolution: {res_deg:.4f} deg/count\")\n\nfor raw in [0, 1024, 2048, 3072]:\n    deg, rad = as5600_to_angle(raw)\n    print(f\"AS5600 raw={raw:4d} -> {deg:6.1f} deg ({rad:.4f} rad)\")",
     "expectedOutput": "Quadrature 4x output CPR: 20000 counts/rev | Resolution: 0.0180 deg/count\nAS5600 raw=   0 ->    0.0 deg (0.0000 rad)\nAS5600 raw=1024 ->   90.0 deg (1.5708 rad)\nAS5600 raw=2048 ->  180.0 deg (3.1416 rad)\nAS5600 raw=3072 ->  270.0 deg (4.7124 rad)"
   },
@@ -357,7 +429,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "3-phase sinusoidal commutation and 90-degree electrical torque lead"
     ],
     "starterCode": "import math\n\n\ndef mech_to_elec_deg(mech_deg, pole_pairs):\n    # TODO 1: Compute elec_deg = (mech_deg * pole_pairs) % 360.0\n    elec_deg = 0.0\n    return elec_deg\n\n\ndef three_phase_voltages(theta_e_rad, v_q):\n    # TODO 2: Set drive_rad = theta_e_rad + (math.pi / 2.0) for +90 deg torque lead,\n    #         then compute va, vb (-2*pi/3), and vc (-4*pi/3) using v_q * math.cos(...)\n    va = 0.0\n    vb = 0.0\n    vc = 0.0\n    return va, vb, vc\n\n\nfor m_deg in [0.0, 10.0, 25.7143]:\n    e_deg = mech_to_elec_deg(m_deg, pole_pairs=7)\n    print(f\"Mech={m_deg:7.4f} deg (Np=7) -> Elec={e_deg:5.1f} deg\")\n\nva, vb, vc = three_phase_voltages(theta_e_rad=0.0, v_q=6.0)\nprint(f\"At theta_e=0.0 rad (vq=6.0 V): va={va:+.2f} V, vb={vb:+.2f} V, vc={vc:+.2f} V (sum={va+vb+vc:+.2f} V)\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, multiply `mech_deg * pole_pairs` and wrap into `[0, 360)` with `% 360.0`. In `TODO 2`, add `math.pi / 2.0` to `theta_e_rad`, then evaluate `v_q * math.cos(drive_rad)`, `v_q * math.cos(drive_rad - 2.0 * math.pi / 3.0)`, and `v_q * math.cos(drive_rad - 4.0 * math.pi / 3.0)`.",
+      "```python def three_phase_voltages(theta_e_rad, v_q): drive_rad = theta_e_rad + (math.pi / 2.0) va = v_q * math.cos(drive_rad) vb = v_q * math.cos(drive_rad - 2.0 * math.pi / 3.0) vc = v_q * math.cos(drive_rad - 4.0 * math.pi / 3.0) return va, vb, vc ```"
+    ],
     "fullSolution": "import math\n\n\ndef mech_to_elec_deg(mech_deg, pole_pairs):\n    elec_deg = (mech_deg * pole_pairs) % 360.0\n    return elec_deg\n\n\ndef three_phase_voltages(theta_e_rad, v_q):\n    drive_rad = theta_e_rad + (math.pi / 2.0)\n    va = v_q * math.cos(drive_rad)\n    vb = v_q * math.cos(drive_rad - 2.0 * math.pi / 3.0)\n    vc = v_q * math.cos(drive_rad - 4.0 * math.pi / 3.0)\n    return va, vb, vc\n\n\nfor m_deg in [0.0, 10.0, 25.7143]:\n    e_deg = mech_to_elec_deg(m_deg, pole_pairs=7)\n    print(f\"Mech={m_deg:7.4f} deg (Np=7) -> Elec={e_deg:5.1f} deg\")\n\nva, vb, vc = three_phase_voltages(theta_e_rad=0.0, v_q=6.0)\nprint(f\"At theta_e=0.0 rad (vq=6.0 V): va={va:+.2f} V, vb={vb:+.2f} V, vc={vc:+.2f} V (sum={va+vb+vc:+.2f} V)\")",
     "expectedOutput": "Mech= 0.0000 deg (Np=7) -> Elec=  0.0 deg\nMech=10.0000 deg (Np=7) -> Elec= 70.0 deg\nMech=25.7143 deg (Np=7) -> Elec=180.0 deg\nAt theta_e=0.0 rad (vq=6.0 V): va=+0.00 V, vb=+5.20 V, vc=-5.20 V (sum=+0.00 V)"
   },
@@ -371,7 +446,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Hardware timer Interrupt Service Routines (1 kHz ISR), volatile flags, and why delay() ruins dt"
     ],
     "starterCode": "def uint16_tick_delta(now_u16, prev_u16):\n    # TODO 1: Return the 16-bit unsigned difference (now_u16 - prev_u16) & 0xFFFF\n    return 0\n\n\ndef velocity_from_step(true_omega_rad_s, actual_dt_s, assumed_dt_s=0.001):\n    # TODO 2: The shaft rotates by d_theta = true_omega_rad_s * actual_dt_s during actual_dt_s,\n    #         but naive code divides d_theta by assumed_dt_s. Return d_theta / assumed_dt_s.\n    return 0.0\n\n\nfor prev_t, now_t in [(1000, 1250), (65530, 4)]:\n    dt_ticks = uint16_tick_delta(now_t, prev_t)\n    print(f\"uint16 prev={prev_t:5d}, now={now_t:5d} -> delta={dt_ticks:3d} ticks\")\n\nw_isr = velocity_from_step(true_omega_rad_s=20.0, actual_dt_s=0.001, assumed_dt_s=0.001)\nw_stalled = velocity_from_step(true_omega_rad_s=20.0, actual_dt_s=0.005, assumed_dt_s=0.001)\nprint(f\"1 kHz Timer ISR (dt=1.0 ms): measured omega = {w_isr:.1f} rad/s\")\nprint(f\"Blocking Serial stall (dt=5.0 ms): measured omega = {w_stalled:.1f} rad/s (5x JITTER SPIKE!)\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, mask the difference with `& 0xFFFF` so negative differences wrap modulo $65536$ just like a C `uint16_t`. In `TODO 2`, compute `d_theta = true_omega_rad_s * actual_dt_s` and divide by `assumed_dt_s`.",
+      "```python def uint16_tick_delta(now_u16, prev_u16): return (now_u16 - prev_u16) & 0xFFFF ```"
+    ],
     "fullSolution": "def uint16_tick_delta(now_u16, prev_u16):\n    return (now_u16 - prev_u16) & 0xFFFF\n\n\ndef velocity_from_step(true_omega_rad_s, actual_dt_s, assumed_dt_s=0.001):\n    d_theta = true_omega_rad_s * actual_dt_s\n    return d_theta / assumed_dt_s\n\n\nfor prev_t, now_t in [(1000, 1250), (65530, 4)]:\n    dt_ticks = uint16_tick_delta(now_t, prev_t)\n    print(f\"uint16 prev={prev_t:5d}, now={now_t:5d} -> delta={dt_ticks:3d} ticks\")\n\nw_isr = velocity_from_step(true_omega_rad_s=20.0, actual_dt_s=0.001, assumed_dt_s=0.001)\nw_stalled = velocity_from_step(true_omega_rad_s=20.0, actual_dt_s=0.005, assumed_dt_s=0.001)\nprint(f\"1 kHz Timer ISR (dt=1.0 ms): measured omega = {w_isr:.1f} rad/s\")\nprint(f\"Blocking Serial stall (dt=5.0 ms): measured omega = {w_stalled:.1f} rad/s (5x JITTER SPIKE!)\")",
     "expectedOutput": "uint16 prev= 1000, now= 1250 -> delta=250 ticks\nuint16 prev=65530, now=    4 -> delta= 10 ticks\n1 kHz Timer ISR (dt=1.0 ms): measured omega = 20.0 rad/s\nBlocking Serial stall (dt=5.0 ms): measured omega = 100.0 rad/s (5x JITTER SPIKE!)"
   },
@@ -385,7 +463,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Sync headers (0xAA) and 8-bit XOR checksums (crc8) for corrupted-frame rejection"
     ],
     "starterCode": "import struct\n\n\ndef xor_checksum(data_bytes):\n    # TODO 1: XOR every byte b in data_bytes into crc (starting from crc = 0) and return crc\n    crc = 0\n    return crc\n\n\ndef pack_telemetry_10b(tick_ms, enc_raw, vel_rad_s):\n    # TODO 2: Pack the 9-byte body using struct.pack(\"<BHHf\", 0xAA, tick_ms, enc_raw, vel_rad_s),\n    #         compute crc = xor_checksum(body), and return body + struct.pack(\"<B\", crc)\n    return b\"\\x00\" * 10\n\n\ndef unpack_and_verify_10b(frame_10b):\n    # TODO 3: Unpack sync, tick_ms, enc_raw, vel_rad_s, rx_crc = struct.unpack(\"<BHHfB\", frame_10b)\n    #         Check ok = (sync == 0xAA) and (rx_crc == xor_checksum(frame_10b[:9]))\n    return False, 0, 0, 0.0\n\n\nframe = pack_telemetry_10b(tick_ms=1000, enc_raw=2048, vel_rad_s=3.25)\nok_clean, tick, enc, vel = unpack_and_verify_10b(frame)\nprint(f\"Frame size: {len(frame)} bytes | Clean frame valid: {ok_clean} | tick={tick}, enc={enc}, vel={vel:.2f} rad/s\")\n\ncorrupted = bytearray(frame)\ncorrupted[4] ^= 0x01  # Flip 1 bit in payload\nok_bad, _, _, _ = unpack_and_verify_10b(bytes(corrupted))\nprint(f\"Corrupted frame (1 bit flipped) valid: {ok_bad}\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, loop `for b in data_bytes: crc ^= b`. In `TODO 2`, pack the first 4 fields with `\"<BHHf\"`, compute `crc = xor_checksum(body)`, and append `struct.pack(\"<B\", crc)`. In `TODO 3`, unpack all 5 fields with `\"<BHHfB\"` and check `(sync == 0xAA) and (rx_crc == xor_checksum(frame_10b[:9]))`.",
+      "```python def pack_telemetry_10b(tick_ms, enc_raw, vel_rad_s): body = struct.pack(\"<BHHf\", 0xAA, tick_ms, enc_raw, vel_rad_s) crc = xor_checksum(body) return body + struct.pack(\"<B\", crc) ```"
+    ],
     "fullSolution": "import struct\n\n\ndef xor_checksum(data_bytes):\n    crc = 0\n    for b in data_bytes:\n        crc ^= b\n    return crc\n\n\ndef pack_telemetry_10b(tick_ms, enc_raw, vel_rad_s):\n    body = struct.pack(\"<BHHf\", 0xAA, tick_ms, enc_raw, vel_rad_s)\n    crc = xor_checksum(body)\n    return body + struct.pack(\"<B\", crc)\n\n\ndef unpack_and_verify_10b(frame_10b):\n    sync, tick_ms, enc_raw, vel_rad_s, rx_crc = struct.unpack(\"<BHHfB\", frame_10b)\n    ok = (sync == 0xAA) and (rx_crc == xor_checksum(frame_10b[:9]))\n    return ok, tick_ms, enc_raw, vel_rad_s\n\n\nframe = pack_telemetry_10b(tick_ms=1000, enc_raw=2048, vel_rad_s=3.25)\nok_clean, tick, enc, vel = unpack_and_verify_10b(frame)\nprint(f\"Frame size: {len(frame)} bytes | Clean frame valid: {ok_clean} | tick={tick}, enc={enc}, vel={vel:.2f} rad/s\")\n\ncorrupted = bytearray(frame)\ncorrupted[4] ^= 0x01  # Flip 1 bit in payload\nok_bad, _, _, _ = unpack_and_verify_10b(bytes(corrupted))\nprint(f\"Corrupted frame (1 bit flipped) valid: {ok_bad}\")",
     "expectedOutput": "Frame size: 10 bytes | Clean frame valid: True | tick=1000, enc=2048, vel=3.25 rad/s\nCorrupted frame (1 bit flipped) valid: False"
   },
@@ -399,7 +480,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Integral gravity sag elimination (K_i) and anti-windup clamping under actuator saturation"
     ],
     "starterCode": "def sim_pid_arm(kp, ki, kd, anti_windup):\n    J, b, tau_g, u_max, dt = 0.02, 0.05, 0.60, 1.20, 0.001\n    q, dq, i_term, max_q = 0.0, 0.0, 0.0, 0.0\n    r = 1.0\n    for _ in range(3000):\n        e = r - q\n        i_candidate = i_term + ki * e * dt\n        if anti_windup:\n            i_candidate = max(-u_max, min(u_max, i_candidate))\n        # TODO 1: Compute u_raw = kp * e - kd * dq + i_candidate\n        u_raw = 0.0\n        # TODO 2: If anti_windup and abs(u_raw) > u_max and (e * u_raw > 0.0),\n        #         recompute u_raw = kp * e - kd * dq + i_term (freeze i_term);\n        #         otherwise set i_term = i_candidate.\n        i_term = i_candidate\n        u = max(-u_max, min(u_max, u_raw))\n        ddq = (u - b * dq - tau_g) / J\n        dq += ddq * dt\n        q += dq * dt\n        max_q = max(max_q, q)\n    return q, max(0.0, max_q - r)\n\n\nq_pd, _ = sim_pid_arm(kp=4.0, ki=0.0, kd=0.4, anti_windup=False)\nq_wu, os_wu = sim_pid_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=False)\nq_aw, os_aw = sim_pid_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=True)\n\nprint(f\"Pure PD (Ki=0): final q={q_pd:.3f} rad (gravity sag={1.0 - q_pd:.3f} rad)\")\nprint(f\"Unclamped PID:  final q={q_wu:.3f} rad | Overshoot={os_wu:.3f} rad (WINDUP!)\")\nprint(f\"Anti-windup PID: final q={q_aw:.3f} rad | Overshoot={os_aw:.3f} rad (CLEAN!)\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, combine the virtual spring `kp * e`, virtual damper `-kd * dq`, and integral candidate `+ i_candidate`. In `TODO 2`, freeze `i_term` (do not update it to `i_candidate`) whenever `anti_windup` is `True`, `abs(u_raw) > u_max`, and `e * u_raw > 0.0`.",
+      "```python u_raw = kp * e - kd * dq + i_candidate if anti_windup and abs(u_raw) > u_max and (e * u_raw > 0.0): u_raw = kp * e - kd * dq + i_term else: i_term = i_candidate ```"
+    ],
     "fullSolution": "def sim_pid_arm(kp, ki, kd, anti_windup):\n    J, b, tau_g, u_max, dt = 0.02, 0.05, 0.60, 1.20, 0.001\n    q, dq, i_term, max_q = 0.0, 0.0, 0.0, 0.0\n    r = 1.0\n    for _ in range(3000):\n        e = r - q\n        i_candidate = i_term + ki * e * dt\n        if anti_windup:\n            i_candidate = max(-u_max, min(u_max, i_candidate))\n        u_raw = kp * e - kd * dq + i_candidate\n        if anti_windup and abs(u_raw) > u_max and (e * u_raw > 0.0):\n            u_raw = kp * e - kd * dq + i_term\n        else:\n            i_term = i_candidate\n        u = max(-u_max, min(u_max, u_raw))\n        ddq = (u - b * dq - tau_g) / J\n        dq += ddq * dt\n        q += dq * dt\n        max_q = max(max_q, q)\n    return q, max(0.0, max_q - r)\n\n\nq_pd, _ = sim_pid_arm(kp=4.0, ki=0.0, kd=0.4, anti_windup=False)\nq_wu, os_wu = sim_pid_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=False)\nq_aw, os_aw = sim_pid_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=True)\n\nprint(f\"Pure PD (Ki=0): final q={q_pd:.3f} rad (gravity sag={1.0 - q_pd:.3f} rad)\")\nprint(f\"Unclamped PID:  final q={q_wu:.3f} rad | Overshoot={os_wu:.3f} rad (WINDUP!)\")\nprint(f\"Anti-windup PID: final q={q_aw:.3f} rad | Overshoot={os_aw:.3f} rad (CLEAN!)\")",
     "expectedOutput": "Pure PD (Ki=0): final q=0.850 rad (gravity sag=0.150 rad)\nUnclamped PID:  final q=1.000 rad | Overshoot=0.372 rad (WINDUP!)\nAnti-windup PID: final q=1.000 rad | Overshoot=0.047 rad (CLEAN!)"
   },
@@ -413,7 +497,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Complementary IMU filter fusion (alpha * gyro_pred + (1 - alpha) * theta_acc)"
     ],
     "starterCode": "import math\n\n\ndef accel_tilt_rad(ay_m_s2, az_m_s2):\n    # TODO 1: Return tilt angle in radians using math.atan2(ay_m_s2, az_m_s2)\n    return 0.0\n\n\ndef run_complementary_imu(steps=1000, dt=0.01, gyro_bias=0.05, alpha=0.98):\n    theta_gyro_only = 0.0\n    theta_comp = 0.0\n    for k in range(steps):\n        # True tilt is 0.0 rad, but accelerometer has +/-0.10 rad high-freq vibration\n        vib = 0.10 if (k % 2 == 0) else -0.10\n        theta_acc = vib\n        omega_meas = 0.0 + gyro_bias\n        # TODO 2: Update theta_gyro_only += omega_meas * dt\n        #         and theta_comp = alpha * (theta_comp + omega_meas * dt) + (1.0 - alpha) * theta_acc\n    return theta_gyro_only, theta_comp\n\n\ntilt_0 = accel_tilt_rad(0.0, 9.81)\ntilt_45 = accel_tilt_rad(6.9367, 6.9367)\ng_end, c_end = run_complementary_imu()\ntau_c = (0.98 * 0.01) / (1.0 - 0.98)\n\nprint(f\"Accel tilt at (ay=0, az=9.81): {tilt_0:.3f} rad | at (ay=az): {tilt_45:.4f} rad\")\nprint(f\"After 10.0 s with +0.05 rad/s gyro bias: Gyro-only={g_end:.3f} rad | Complementary={c_end:.3f} rad (tau_c={tau_c:.3f} s)\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, call `math.atan2(ay_m_s2, az_m_s2)`. In `TODO 2`, update `theta_gyro_only = theta_gyro_only + omega_meas * dt` and `theta_comp = alpha * (theta_comp + omega_meas * dt) + (1.0 - alpha) * theta_acc`.",
+      "```python theta_gyro_only += omega_meas * dt theta_comp = alpha * (theta_comp + omega_meas * dt) + (1.0 - alpha) * theta_acc ```"
+    ],
     "fullSolution": "import math\n\n\ndef accel_tilt_rad(ay_m_s2, az_m_s2):\n    return math.atan2(ay_m_s2, az_m_s2)\n\n\ndef run_complementary_imu(steps=1000, dt=0.01, gyro_bias=0.05, alpha=0.98):\n    theta_gyro_only = 0.0\n    theta_comp = 0.0\n    for k in range(steps):\n        vib = 0.10 if (k % 2 == 0) else -0.10\n        theta_acc = vib\n        omega_meas = 0.0 + gyro_bias\n        theta_gyro_only += omega_meas * dt\n        theta_comp = alpha * (theta_comp + omega_meas * dt) + (1.0 - alpha) * theta_acc\n    return theta_gyro_only, theta_comp\n\n\ntilt_0 = accel_tilt_rad(0.0, 9.81)\ntilt_45 = accel_tilt_rad(6.9367, 6.9367)\ng_end, c_end = run_complementary_imu()\ntau_c = (0.98 * 0.01) / (1.0 - 0.98)\n\nprint(f\"Accel tilt at (ay=0, az=9.81): {tilt_0:.3f} rad | at (ay=az): {tilt_45:.4f} rad\")\nprint(f\"After 10.0 s with +0.05 rad/s gyro bias: Gyro-only={g_end:.3f} rad | Complementary={c_end:.3f} rad (tau_c={tau_c:.3f} s)\")",
     "expectedOutput": "Accel tilt at (ay=0, az=9.81): 0.000 rad | at (ay=az): 0.7854 rad\nAfter 10.0 s with +0.05 rad/s gyro bias: Gyro-only=0.500 rad | Complementary=0.023 rad (tau_c=0.490 s)"
   },
@@ -427,7 +514,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Joint-space compliant PD control with gravity feedforward (tau = K_p*e - K_d*dq + m*g*L*cos(q))"
     ],
     "starterCode": "import math\n\n\ndef cubic_trajectory(q0, qf, duration_T, t):\n    s = max(0.0, min(1.0, t / duration_T))\n    dq = qf - q0\n    # TODO 1: Compute q_d = q0 + (3.0 * s**2 - 2.0 * s**3) * dq\n    #         and dq_d = (6.0 * s * (1.0 - s) / duration_T) * dq\n    q_d = 0.0\n    dq_d = 0.0\n    return q_d, dq_d\n\n\ndef compliant_gravity_command(q_des, dq_des, q, dq, kp, kd, mass_kg, l_com_m):\n    # TODO 2: Compute tau_pd = kp * (q_des - q) + kd * (dq_des - dq),\n    #         tau_ff = mass_kg * 9.81 * l_com_m * math.cos(q), and return tau_pd + tau_ff\n    return 0.0\n\n\nfor t_s in [0.0, 0.5, 1.0]:\n    pos, vel = cubic_trajectory(q0=0.0, qf=1.20, duration_T=1.0, t=t_s)\n    print(f\"Cubic t={t_s:.1f} s -> q_d={pos:.3f} rad | dq_d={vel:.3f} rad/s\")\n\ntau_hold = compliant_gravity_command(\n    q_des=0.0, dq_des=0.0, q=0.0, dq=0.0, kp=2.0, kd=0.2, mass_kg=0.50, l_com_m=0.20\n)\nprint(f\"Compliant hold at horizontal q=0.0 rad (e=0): tau_cmd={tau_hold:.4f} N*m (exact gravity balance!)\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, use `(3.0 * s**2 - 2.0 * s**3) * dq` for position offset and `(6.0 * s * (1.0 - s) / duration_T) * dq` for velocity. In `TODO 2`, add `kp * (q_des - q) + kd * (dq_des - dq)` and `mass_kg * 9.81 * l_com_m * math.cos(q)`.",
+      "```python def cubic_trajectory(q0, qf, duration_T, t): s = max(0.0, min(1.0, t / duration_T)) dq = qf - q0 q_d = q0 + (3.0 * s**2 - 2.0 * s**3) * dq dq_d = (6.0 * s * (1.0 - s) / duration_T) * dq return q_d, dq_d ```"
+    ],
     "fullSolution": "import math\n\n\ndef cubic_trajectory(q0, qf, duration_T, t):\n    s = max(0.0, min(1.0, t / duration_T))\n    dq = qf - q0\n    q_d = q0 + (3.0 * s**2 - 2.0 * s**3) * dq\n    dq_d = (6.0 * s * (1.0 - s) / duration_T) * dq\n    return q_d, dq_d\n\n\ndef compliant_gravity_command(q_des, dq_des, q, dq, kp, kd, mass_kg, l_com_m):\n    tau_pd = kp * (q_des - q) + kd * (dq_des - dq)\n    tau_ff = mass_kg * 9.81 * l_com_m * math.cos(q)\n    return tau_pd + tau_ff\n\n\nfor t_s in [0.0, 0.5, 1.0]:\n    pos, vel = cubic_trajectory(q0=0.0, qf=1.20, duration_T=1.0, t=t_s)\n    print(f\"Cubic t={t_s:.1f} s -> q_d={pos:.3f} rad | dq_d={vel:.3f} rad/s\")\n\ntau_hold = compliant_gravity_command(\n    q_des=0.0, dq_des=0.0, q=0.0, dq=0.0, kp=2.0, kd=0.2, mass_kg=0.50, l_com_m=0.20\n)\nprint(f\"Compliant hold at horizontal q=0.0 rad (e=0): tau_cmd={tau_hold:.4f} N*m (exact gravity balance!)\")",
     "expectedOutput": "Cubic t=0.0 s -> q_d=0.000 rad | dq_d=0.000 rad/s\nCubic t=0.5 s -> q_d=0.600 rad | dq_d=1.800 rad/s\nCubic t=1.0 s -> q_d=1.200 rad | dq_d=0.000 rad/s\nCompliant hold at horizontal q=0.0 rad (e=0): tau_cmd=0.9810 N*m (exact gravity balance!)"
   },
@@ -441,7 +531,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Single-tone sine-sweep system identification to measure viscous friction (b) and rotational inertia (J)"
     ],
     "starterCode": "import math\n\n\ndef verify_bringup_safety(rail_ohms, psu_limit_a, u_test, dtheta_meas):\n    # TODO 1: Return \"PASS_READY_FOR_CLOSED_LOOP\" if rail_ohms >= 100.0, psu_limit_a <= 0.50,\n    #         and (u_test * dtheta_meas) > 0.0; if (u_test * dtheta_meas) <= 0.0 return \"ABORT_INVERTED_ENCODER_SIGN\"\n    return \"UNKNOWN\"\n\n\ndef identify_b_and_j(amp_nm, f1_hz, omega1_amp, f2_hz, omega2_amp):\n    # TODO 2: Estimate b_est = amp_nm / omega1_amp, z2 = amp_nm / omega2_amp,\n    #         and j_est = math.sqrt(z2**2 - b_est**2) / (2.0 * math.pi * f2_hz)\n    b_est = 0.0\n    j_est = 0.0\n    return b_est, j_est\n\n\nprint(\"Bring-up check 1 (+u -> +dtheta):\", verify_bringup_safety(1200.0, 0.20, +0.10, +0.05))\nprint(\"Bring-up check 2 (+u -> -dtheta):\", verify_bringup_safety(1200.0, 0.20, +0.10, -0.05))\n\n# True plant: b = 0.05 N*m*s/rad, J = 0.02 kg*m^2 driven with A = 0.20 N*m at f1->0 and f2=5.0 Hz\nw1 = 0.20 / 0.05\nw2 = 0.20 / math.sqrt(0.05**2 + (2.0 * math.pi * 5.0 * 0.02) ** 2)\nb_hat, j_hat = identify_b_and_j(0.20, 0.05, w1, 5.0, w2)\nprint(f\"Sine-Sweep SysID -> b_hat={b_hat:.4f} N*m*s/rad | J_hat={j_hat:.4f} kg*m^2\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, check `if (u_test * dtheta_meas) <= 0.0: return \"ABORT_INVERTED_ENCODER_SIGN\"`, then check `if rail_ohms >= 100.0 and psu_limit_a <= 0.50: return \"PASS_READY_FOR_CLOSED_LOOP\"`. In `TODO 2`, compute `b_est = amp_nm / omega1_amp`, `z2 = amp_nm / omega2_amp`, and `j_est = math.sqrt(z2**2 - b_est**2) / (2.0 * math.pi * f2_hz)`.",
+      "```python def identify_b_and_j(amp_nm, f1_hz, omega1_amp, f2_hz, omega2_amp): b_est = amp_nm / omega1_amp z2 = amp_nm / omega2_amp j_est = math.sqrt(z2**2 - b_est**2) / (2.0 * math.pi * f2_hz) return b_est, j_est ```"
+    ],
     "fullSolution": "import math\n\n\ndef verify_bringup_safety(rail_ohms, psu_limit_a, u_test, dtheta_meas):\n    if (u_test * dtheta_meas) <= 0.0:\n        return \"ABORT_INVERTED_ENCODER_SIGN\"\n    if rail_ohms >= 100.0 and psu_limit_a <= 0.50:\n        return \"PASS_READY_FOR_CLOSED_LOOP\"\n    return \"ABORT_RAIL_OR_CURRENT_LIMIT\"\n\n\ndef identify_b_and_j(amp_nm, f1_hz, omega1_amp, f2_hz, omega2_amp):\n    b_est = amp_nm / omega1_amp\n    z2 = amp_nm / omega2_amp\n    j_est = math.sqrt(z2**2 - b_est**2) / (2.0 * math.pi * f2_hz)\n    return b_est, j_est\n\n\nprint(\"Bring-up check 1 (+u -> +dtheta):\", verify_bringup_safety(1200.0, 0.20, +0.10, +0.05))\nprint(\"Bring-up check 2 (+u -> -dtheta):\", verify_bringup_safety(1200.0, 0.20, +0.10, -0.05))\n\nw1 = 0.20 / 0.05\nw2 = 0.20 / math.sqrt(0.05**2 + (2.0 * math.pi * 5.0 * 0.02) ** 2)\nb_hat, j_hat = identify_b_and_j(0.20, 0.05, w1, 5.0, w2)\nprint(f\"Sine-Sweep SysID -> b_hat={b_hat:.4f} N*m*s/rad | J_hat={j_hat:.4f} kg*m^2\")",
     "expectedOutput": "Bring-up check 1 (+u -> +dtheta): PASS_READY_FOR_CLOSED_LOOP\nBring-up check 2 (+u -> -dtheta): ABORT_INVERTED_ENCODER_SIGN\nSine-Sweep SysID -> b_hat=0.0500 N*m*s/rad | J_hat=0.0200 kg*m^2"
   },
@@ -455,7 +548,10 @@ export const PYTHON_LESSONS: PythonLessonItem[] = [
       "Dual-joint compliant PD control with 2-link gravity feedforward and telemetry packing"
     ],
     "starterCode": "import math\nimport struct\n\n\ndef fk_2link(q1, q2, l1=0.10, l2=0.10):\n    x = l1 * math.cos(q1) + l2 * math.cos(q1 + q2)\n    y = l1 * math.sin(q1) + l2 * math.sin(q1 + q2)\n    return x, y\n\n\ndef ik_2link(xd, yd, l1=0.10, l2=0.10):\n    # TODO 1: Compute cos_q2 = (xd**2 + yd**2 - l1**2 - l2**2) / (2.0 * l1 * l2),\n    #         clamp cos_q2 to [-1.0, 1.0], set q2 = math.acos(cos_q2),\n    #         and q1 = math.atan2(yd, xd) - math.atan2(l2 * math.sin(q2), l1 + l2 * math.cos(q2))\n    q1 = 0.0\n    q2 = 0.0\n    return q1, q2\n\n\ndef gravity_ff_2link(q1, q2, m1=0.20, m2=0.15, l1=0.10, lc1=0.05, lc2=0.05):\n    g = 9.81\n    # TODO 2: Compute tau_g2 = m2 * g * lc2 * math.cos(q1 + q2)\n    #         and tau_g1 = (m1 * lc1 + m2 * l1) * g * math.cos(q1) + tau_g2\n    tau_g1 = 0.0\n    tau_g2 = 0.0\n    return tau_g1, tau_g2\n\n\ndef pack_boss_telemetry(tick_ms, q1, q2, tau1, tau2):\n    # TODO 3: Pack body = struct.pack(\"<BHffff\", 0xAA, tick_ms, q1, q2, tau1, tau2),\n    #         compute xor_crc across body bytes, and return body + struct.pack(\"<B\", xor_crc)\n    return b\"\\x00\" * 20\n\n\nmax_fk_err_mm = 0.0\nfor step in range(4):\n    t = step * 0.25\n    xd = 0.12 + 0.03 * math.sin(2.0 * math.pi * 0.5 * t)\n    yd = 0.04 * math.sin(4.0 * math.pi * 0.5 * t)\n    q1_d, q2_d = ik_2link(xd, yd)\n    x_chk, y_chk = fk_2link(q1_d, q2_d)\n    err_mm = math.hypot(xd - x_chk, yd - y_chk) * 1000.0\n    max_fk_err_mm = max(max_fk_err_mm, err_mm)\n\ntg1, tg2 = gravity_ff_2link(q1=0.0, q2=0.0)\npkt = pack_boss_telemetry(1000, q1_d, q2_d, tg1, tg2)\ncrc_check = 0\nfor b in pkt[:-1]:\n    crc_check ^= b\n\nprint(f\"Figure-8 IK->FK max tracking error: {max_fk_err_mm:.4f} mm\")\nprint(f\"Horizontal 2-link gravity FF (q1=0, q2=0): tau_g1={tg1:.4f} N*m | tau_g2={tg2:.4f} N*m\")\nprint(f\"Boss telemetry packet: {len(pkt)} bytes | Sync=0x{pkt[0]:02X} | CRC valid={pkt[-1] == crc_check}\")",
-    "hints": [],
+    "hints": [
+      "In `TODO 1`, review `Lesson 02.3` for Law-of-Cosines 2-link IK. In `TODO 2`, compute `tau_g2 = m2 * g * lc2 * math.cos(q1 + q2)` and add `(m1 * lc1 + m2 * l1) * g * math.cos(q1)` for `tau_g1`. In `TODO 3`, pack `\"<BHffff\"` ($19\\text{ bytes}$) and append the 1-byte XOR checksum.",
+      "```python def ik_2link(xd, yd, l1=0.10, l2=0.10): cos_q2 = (xd**2 + yd**2 - l1**2 - l2**2) / (2.0 * l1 * l2) cos_q2 = max(-1.0, min(1.0, cos_q2)) q2 = math.acos(cos_q2) q1 = math.atan2(yd, xd) - math.atan2(l2 * math.sin(q2), l1 + l2 * math.cos(q2)) return q1, q2 ```"
+    ],
     "fullSolution": "import math\nimport struct\n\n\ndef fk_2link(q1, q2, l1=0.10, l2=0.10):\n    x = l1 * math.cos(q1) + l2 * math.cos(q1 + q2)\n    y = l1 * math.sin(q1) + l2 * math.sin(q1 + q2)\n    return x, y\n\n\ndef ik_2link(xd, yd, l1=0.10, l2=0.10):\n    cos_q2 = (xd**2 + yd**2 - l1**2 - l2**2) / (2.0 * l1 * l2)\n    cos_q2 = max(-1.0, min(1.0, cos_q2))\n    q2 = math.acos(cos_q2)\n    q1 = math.atan2(yd, xd) - math.atan2(l2 * math.sin(q2), l1 + l2 * math.cos(q2))\n    return q1, q2\n\n\ndef gravity_ff_2link(q1, q2, m1=0.20, m2=0.15, l1=0.10, lc1=0.05, lc2=0.05):\n    g = 9.81\n    tau_g2 = m2 * g * lc2 * math.cos(q1 + q2)\n    tau_g1 = (m1 * lc1 + m2 * l1) * g * math.cos(q1) + tau_g2\n    return tau_g1, tau_g2\n\n\ndef pack_boss_telemetry(tick_ms, q1, q2, tau1, tau2):\n    body = struct.pack(\"<BHffff\", 0xAA, tick_ms, q1, q2, tau1, tau2)\n    crc = 0\n    for b in body:\n        crc ^= b\n    return body + struct.pack(\"<B\", crc)\n\n\nmax_fk_err_mm = 0.0\nfor step in range(4):\n    t = step * 0.25\n    xd = 0.12 + 0.03 * math.sin(2.0 * math.pi * 0.5 * t)\n    yd = 0.04 * math.sin(4.0 * math.pi * 0.5 * t)\n    q1_d, q2_d = ik_2link(xd, yd)\n    x_chk, y_chk = fk_2link(q1_d, q2_d)\n    err_mm = math.hypot(xd - x_chk, yd - y_chk) * 1000.0\n    max_fk_err_mm = max(max_fk_err_mm, err_mm)\n\ntg1, tg2 = gravity_ff_2link(q1=0.0, q2=0.0)\npkt = pack_boss_telemetry(1000, q1_d, q2_d, tg1, tg2)\ncrc_check = 0\nfor b in pkt[:-1]:\n    crc_check ^= b\n\nprint(f\"Figure-8 IK->FK max tracking error: {max_fk_err_mm:.4f} mm\")\nprint(f\"Horizontal 2-link gravity FF (q1=0, q2=0): tau_g1={tg1:.4f} N*m | tau_g2={tg2:.4f} N*m\")\nprint(f\"Boss telemetry packet: {len(pkt)} bytes | Sync=0x{pkt[0]:02X} | CRC valid={pkt[-1] == crc_check}\")",
     "expectedOutput": "Figure-8 IK->FK max tracking error: 0.0000 mm\nHorizontal 2-link gravity FF (q1=0, q2=0): tau_g1=0.3188 N*m | tau_g2=0.0736 N*m\nBoss telemetry packet: 20 bytes | Sync=0xAA | CRC valid=True"
   }

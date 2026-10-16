@@ -278,12 +278,34 @@ for p in sorted(ROOT.glob("*.md")):
     if "fbswiki.org" in p.read_text(encoding="utf-8"):
         bad.append(f"{p}: contains stale 'fbswiki.org' reference (use 'fbsbook.org' consistently)")
 
+for script_rel in (
+    "scripts/lint_lessons.py",
+    "scripts/density_report.py",
+    "scripts/check_term_order.py",
+    "tests/test_exercises.py",
+):
+    sp = pathlib.Path(script_rel)
+    if sp.exists():
+        stxt = sp.read_text(encoding="utf-8")
+        if f"all {lesson_cnt} beginner lessons" not in stxt:
+            bad.append(
+                f"{script_rel}: docstring lesson count out of sync (expected 'all {lesson_cnt} beginner lessons')"
+            )
+        if "35 beginner" in stxt or "23 Python" in stxt:
+            bad.append(f"{script_rel}: contains stale '35 beginner' or '23 Python' count")
+
+ci_wf_path = pathlib.Path(".github/workflows/ci.yml")
+if ci_wf_path.exists():
+    citxt = ci_wf_path.read_text(encoding="utf-8")
+    if "test:smoke" not in citxt:
+        bad.append(".github/workflows/ci.yml: missing 'npm run test:smoke' UI smoke test step")
+
 if bad:
     print("\n".join(bad))
     sys.exit(1)
 
 print(
     f"OK ({len(nodes)} modules: {legacy_cnt} legacy, {bridge_cnt} bridge [{t1_bridge_cnt} Tier 1] across {len(ladders)} ladders; "
-    f"{lesson_cnt} beginner lessons; all {bridge_cnt} Expected output blocks diffed & verified)"
+    f"{lesson_cnt} beginner lessons; all {bridge_cnt} Expected output blocks & script docstrings verified)"
 )
 

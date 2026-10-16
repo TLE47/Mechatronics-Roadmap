@@ -74,6 +74,9 @@ jobs:
       - name: Typecheck and build the production bundle (base /Mechatronics-Roadmap/)
         run: npm run build
 
+      - name: Run automated Workbench UI smoke tests (Beginner/Advanced mode, Runner, Placement Quiz & Progress Export)
+        run: npm run test:smoke
+
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/configure-pages@v5

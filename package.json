@@ -9,7 +9,8 @@
     "prebuild": "python3 scripts/generate_python_lessons_data.py",
     "build": "tsc -b && vite build",
     "lint": "tsc -b",
-    "check:lessons": "python3 scripts/generate_python_lessons_data.py --check"
+    "check:lessons": "python3 scripts/generate_python_lessons_data.py --check",
+    "test:smoke": "node scripts/smoke_test_workbench.mjs"
   },
   "dependencies": {
     "katex": "^0.16.21",

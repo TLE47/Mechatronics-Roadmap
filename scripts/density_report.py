@@ -2,7 +2,7 @@
 """
 scripts/density_report.py — Per-lesson cognitive density analyzer for the beginner path.
 
-Computes per lesson across all 35 beginner lessons (`Track P`, `Stage 0`, `Track 00`, `Track 01`, `Track 02`):
+Computes per lesson across all 44 beginner lessons (`Track P`, `Stage 0`, `Tracks 00–08 Tier 1`):
 - `words`: Total prose & markdown word count (excluding YAML front matter)
 - `new_terms`: Number of new glossary terms defined in this lesson (from `resources/glossary.md`)
 - `resources`: Number of `Primary resource:` and `Alternative resource:` links in `## Learn`
@@ -12,7 +12,7 @@ Computes per lesson across all 35 beginner lessons (`Track P`, `Stage 0`, `Track
 
 Usage:
     python3 scripts/density_report.py          # Prints top 5 densest lessons
-    python3 scripts/density_report.py --all    # Prints all 35 lessons sorted by density
+    python3 scripts/density_report.py --all    # Prints all 44 lessons sorted by density
 """
 
 from __future__ import annotations

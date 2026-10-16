@@ -28,6 +28,7 @@ interface TabArchitectureProps {
   onSelectTierPass: (pass: ActiveTierPass) => void;
   completedMilestones: Record<string, boolean>;
   onToggleMilestone: (id: string) => void;
+  onOpenPyodideLesson?: (lessonId: string) => void;
 }
 
 export const TabArchitecture: React.FC<TabArchitectureProps> = ({
@@ -38,6 +39,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   onToggleMilestone,
 }) => {
   const [viewMode, setViewMode] = useState<'linear' | 'matrix'>('linear');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const getPassSteps = (pass: ActiveTierPass): LinearTrackStep[] => {
     if (pass === 'level0') return LEVEL_0_STEPS;
@@ -151,9 +153,9 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
         </div>
       </div>
 
-      {/* 2. Active Pass Summary Banner */}
+      {/* 2. Active Pass Summary Banner + Search Filter */}
       {viewMode === 'linear' && (
-        <div className="bg-[#111827] border border-[#334155] border-l-4 border-l-[#34d399] rounded-xl p-5">
+        <div className="bg-[#111827] border border-[#334155] rounded-xl p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1.5 max-w-4xl">
               <div className="flex items-center gap-2 text-xs font-mono text-[#34d399]">
@@ -195,14 +197,44 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
               <span className="text-[#38bdf8] font-medium">{activeMeta.mathDepth}</span>
             </div>
           </div>
+          <div className="mt-4 pt-3 border-t border-[#1e293b] flex flex-wrap items-center justify-between gap-3">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter tracks, lessons, bridge modules, or concepts in this pass..."
+              data-testid="input-roadmap-search"
+              className="w-full sm:w-96 px-3 py-1.5 rounded-lg bg-[#0b0f19] border border-[#334155] text-xs text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#38bdf8]"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-xs font-mono text-[#38bdf8] hover:underline cursor-pointer"
+              >
+                Clear filter
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       {/* 3A. LINEAR PASS VIEW (Step-by-Step Track 00 -> Track 08 in Current Tier) */}
       {viewMode === 'linear' && (
         <div className="space-y-4">
-          {activeSteps.map((step, index) => {
-            const isChecked = !!completedMilestones[step.milestoneId];
+          {activeSteps
+            .filter((step) => {
+              if (!searchQuery.trim()) return true;
+              const q = searchQuery.toLowerCase();
+              return (
+                step.trackCode.toLowerCase().includes(q) ||
+                step.trackTitle.toLowerCase().includes(q) ||
+                step.headline.toLowerCase().includes(q) ||
+                step.coreWhy.toLowerCase().includes(q) ||
+                step.topics.some((t) => t.toLowerCase().includes(q))
+              );
+            })
+            .map((step, index) => {
+              const isChecked = !!completedMilestones[step.milestoneId];
 
             return (
               <div
@@ -298,7 +330,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       <div className="text-[0.72rem] font-mono uppercase text-[#94a3b8] mb-1">
                         Governing Equation ({step.tierBadge})
                       </div>
-                      <div className="bg-[#080d1a] border border-[#1e293b] border-l-2 border-l-[#38bdf8] rounded-md p-3 overflow-x-auto text-xs">
+                      <div className="bg-[#080d1a] border border-[#1e293b] rounded-md p-3 overflow-x-auto text-xs">
                         <MathView math={step.equation} block={true} />
                       </div>
 

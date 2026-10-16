@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Automated test suite for all 35 Beginner Roadmap lessons:
+Automated test suite for all 44 beginner lessons:
 - Track P (`P.1` through `P.12` + `P.M`: 13 Python lessons)
 - Stage 0 (`S0.1` through `S0.6`: 6 Falstad circuit lessons; `S0.7` through `S0.M`: 4 Arduino Uno Wokwi lessons)
 - Track 00 (`00.1` through `00.3`: 3 Python physics-modeling lessons)
 - Track 01 (`01.1`: 1 Falstad circuit lesson; `01.2`: 1 Wokwi Arduino + Falstad lesson; `01.3` and `01.4`: 2 Python electronics-modeling lessons)
 - Track 02 (`02.1` through `02.5`: 5 Python mechanics-modeling lessons)
+- Tracks 03–08 (`03.1`, `03.2`, `04.1`, `04.2`, `05.1`, `05.2`, `06.1`, `07.1`, `08.1`: 9 Python sensors, embedded, control, robotics, SysID & capstone lessons)
 
-1. Dynamically extracts every Python `Starter Code` and `Full Solution` from all 23 Python-based lessons,
+1. Dynamically extracts every Python `Starter Code` and `Full Solution` from all 32 Python lessons,
    executes them, and verifies exact `Expected Output` matches.
 2. Executes the Python numerical mirrors for the 7 Falstad-only circuit lessons (`S0.1`–`S0.6`, `01.1`)
    (moved out of the lesson markdown files into `tests/` per Part A.5 so learners only build/probe in Falstad)
