@@ -49,10 +49,11 @@ mention of "predict" is not a Predict step:
 - `6_break_it` — a `### Break it on purpose` heading whose bullets are `**Inject**`, `**Symptom**`,
   `**Diagnose**` and `**Fix**`.
 
-`scripts/lint_modules.py` deliberately stays looser (it reports `\bpredict\b` and a
-`fault|diagnos|miswir` alternation) so its numbers answer a different question — "does the file touch
-this stage at all?" — and both are published. When they disagree, the parity number is the stricter
-and the honest one.
+`scripts/lint_modules.py` reports these **same two markers**, so a published ladder number means one
+thing. They did not start out that way: the linter's first read was a keyword alternation
+(`\bpredict\b`, `fault|diagnos|miswir`) and it published 12/44 and 20/44 where the named markers find
+**7/44** — a read that flatters the content, which is the greenwashing this section exists to
+prevent. The loose read is gone, and both tools now print the named-marker counts.
 
 **A scaffold is not a module.** `scripts/new_module.py` writes the marker `TODO-AUTHOR` into every
 hole it leaves; a module still carrying it scores **0** on every item, and `scripts/lint_modules.py`

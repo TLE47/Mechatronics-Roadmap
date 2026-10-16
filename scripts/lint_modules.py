@@ -71,15 +71,23 @@ SCAFFOLD_MARKER = "TODO-AUTHOR"
 
 REQUIRED_QUESTION_TAGS = ("[Recall]", "[Apply]", "[Transfer]")
 
-# Ladder stage -> structural marker. Reported for every stage, gated only for the ones at 44/44.
+# Ladder stage -> content marker, shared with `scripts/module_parity.py` so both tools publish the
+# same coverage number. It has to be the marker a learner needs, not a bare mention: the loose
+# `\bpredict\b` read counted 12 modules and `\bdiagnos\w*` counted 20, against the 7 that carry the
+# committed prediction and the worked fault. Reported for every stage, gated only for the ones at
+# 44/44.
 LADDER_MARKERS: dict[str, str] = {
     "1 Recall": r"\[Recall\]",
     "2 See it": r"^##\s*2\.\s*Intuition first",
-    "3 Predict": r"\bpredict(?:ion|ed|s)?\b",
+    "3 Predict": r"\*\*Predict first \(before you run it\):\*\*",
     "4 Work through": r"^##\s*4\.\s*Worked example",
     "5 Practice (host)": r"^##\s*5\.\s*Exercise",
     "5 Practice (scaffold)": r"`TODO|\bhints?\b|Step 1[:.]",
-    "6 Break it": r"\bfaults?\b|\bdiagnos\w*|\bmiswir\w*|\binverted\b|\bwrong sign\b",
+    "6 Break it": (
+        r"^###\s*Break it on purpose"
+        r"(?=[\s\S]*\*\*Inject)(?=[\s\S]*\*\*Symptom)"
+        r"(?=[\s\S]*\*\*Diagnose)(?=[\s\S]*\*\*Fix)"
+    ),
     "7 Transfer": r"\[Transfer\]",
     "8 Integrate": r"^##\s*10\.\s*Next modules",
 }
