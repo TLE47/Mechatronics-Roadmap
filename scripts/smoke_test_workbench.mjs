@@ -51,7 +51,7 @@ async function runSmokeTests() {
       STORAGE_KEY_VIEW_MODE,
       STORAGE_KEY_MILESTONES,
     } = appMod;
-    const { TabPyodideRunner, STORAGE_KEY_COMPLETED } = runnerMod;
+    const { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } = runnerMod;
     const { TabPlacementQuiz, PLACEMENT_QUESTIONS } = quizMod;
     const { PYTHON_LESSONS } = lessonsMod;
 
@@ -112,11 +112,22 @@ async function runSmokeTests() {
       assert(lesson.hints.length >= 1, `Lesson ${lesson.id} missing progressive hints`);
     }
 
+    // Ensure TabPyodideRunner never awards a fallback text pass without Pyodide WASM execution
+    const runnerSrc = fs.readFileSync(
+      path.join(repoRoot, 'app', 'src', 'components', 'tabs', 'TabPyodideRunner.tsx'),
+      'utf-8'
+    );
+    assert(
+      !runnerSrc.includes('normalizeCode') && !runnerSrc.includes("setPyodideStatus('fallback')"),
+      'TabPyodideRunner must never award an execution pass from fallback text without executing in Pyodide'
+    );
+
     const htmlRunner = cleanSsr(
       ReactDOMServer.renderToString(
         React.createElement(TabPyodideRunner, {
           initialLessonId: '05.1',
-          completedLessons: { 'P.1': true, '05.1': true },
+          verifiedLessons: { 'P.1': true, '05.1': true },
+          completedLessons: { 'P.1': true, 'P.2': true, '05.1': true },
         })
       )
     );
@@ -125,8 +136,12 @@ async function runSmokeTests() {
       'TabPyodideRunner must render the lesson search input'
     );
     assert(
-      htmlRunner.includes('2 / 32 Passed'),
-      'TabPyodideRunner must display accurate completed lesson tally (2 / 32 Passed)'
+      htmlRunner.includes('2 / 32 Verified'),
+      'TabPyodideRunner must display accurate Pyodide execution-verified lesson tally (2 / 32 Verified)'
+    );
+    assert(
+      htmlRunner.includes('3 / 32 Marked'),
+      'TabPyodideRunner must display separate self-marked lesson tally (3 / 32 Marked)'
     );
     assert(
       htmlRunner.includes('Progressive 3-Step Hint Ladder'),
@@ -173,6 +188,10 @@ async function runSmokeTests() {
 
     // 4. Verify localStorage progress persistence & Markdown Portfolio export
     globalThis.localStorage.setItem(
+      STORAGE_KEY_VERIFIED,
+      JSON.stringify({ 'P.1': true, '05.1': true })
+    );
+    globalThis.localStorage.setItem(
       STORAGE_KEY_COMPLETED,
       JSON.stringify({ 'P.1': true, '00.1': true, '05.1': true, '08.1': true })
     );
@@ -182,8 +201,13 @@ async function runSmokeTests() {
     );
     const htmlWithProgress = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
     assert(
-      htmlWithProgress.includes('Python Lessons: 4/32'),
-      'App toolbar must reflect persisted Python lesson completions from localStorage (4/32)'
+      htmlWithProgress.includes('Executed &amp; Passed: 2/32') ||
+        htmlWithProgress.includes('Executed & Passed: 2/32'),
+      'App toolbar must reflect persisted Execution-Verified Python lessons from localStorage (2/32)'
+    );
+    assert(
+      htmlWithProgress.includes('Self-Marked: 4/32'),
+      'App toolbar must reflect persisted Self-Marked Python lessons from localStorage (4/32)'
     );
     assert(
       htmlWithProgress.includes('Track Milestones: 3/27'),
@@ -191,15 +215,20 @@ async function runSmokeTests() {
     );
 
     const portfolioMd = buildPortfolioMarkdown(
+      { 'P.1': true, '05.1': true },
       { 'P.1': true, '00.1': true, '05.1': true, '08.1': true },
       { l0_m1: true, l0_m2: true, t1_tr00: true }
     );
     assert(
-      portfolioMd.includes('# MechaLab — Learner Progress & Verified Portfolio Summary') &&
-        portfolioMd.includes('**Verified In-Browser Python Lessons Passed:** 4 / 32') &&
-        portfolioMd.includes('**Roadmap Track Milestones Completed:** 3 / 27') &&
+      portfolioMd.includes('# MechaLab — Learner Progress & Portfolio Summary') &&
+        portfolioMd.includes(
+          '**Execution-Verified In-Browser Python Lessons (Executed & Passed in Pyodide WASM):** 2 / 32'
+        ) &&
+        portfolioMd.includes('**Self-Marked Completed Python Lessons (Manual Checklist):** 4 / 32') &&
+        portfolioMd.includes('**Self-Reported Roadmap Track Milestones:** 3 / 27') &&
+        portfolioMd.includes('Lesson 05.1') &&
         portfolioMd.includes('Lesson 08.1'),
-      'buildPortfolioMarkdown must generate a complete Markdown certificate with passed lessons and milestones'
+      'buildPortfolioMarkdown must strictly separate Execution-Verified lessons from Self-Marked lessons and milestones'
     );
 
     // 5. If production bundle dist/index.html exists, verify asset integrity

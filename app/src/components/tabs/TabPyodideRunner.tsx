@@ -25,17 +25,22 @@ declare global {
 }
 
 const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
+export const STORAGE_KEY_VERIFIED = 'mechalab_pyodide_verified_v1';
 export const STORAGE_KEY_COMPLETED = 'mechalab_pyodide_completed_v1';
 
 interface TabPyodideRunnerProps {
   initialLessonId?: string;
+  verifiedLessons?: Record<string, boolean>;
   completedLessons?: Record<string, boolean>;
+  onMarkLessonVerified?: (lessonId: string) => void;
   onToggleLessonCompleted?: (lessonId: string, forceValue?: boolean) => void;
 }
 
 export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   initialLessonId,
+  verifiedLessons: externalVerified,
   completedLessons: externalCompleted,
+  onMarkLessonVerified,
   onToggleLessonCompleted,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
@@ -46,8 +51,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [stdout, setStdout] = useState<string>('');
   const [stderr, setStderr] = useState<string>('');
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [pyodideStatus, setPyodideStatus] = useState<'idle' | 'loading' | 'ready' | 'fallback'>('idle');
+  const [pyodideStatus, setPyodideStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [passStatus, setPassStatus] = useState<'untested' | 'passed' | 'mismatch' | 'error'>('untested');
+
+  const [localVerified, setLocalVerified] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_VERIFIED);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const [localCompleted, setLocalCompleted] = useState<Record<string, boolean>>(() => {
     try {
@@ -58,9 +72,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   });
 
+  const verifiedLessons = externalVerified || localVerified;
   const completedLessons = externalCompleted || localCompleted;
 
-  const markLessonCompleted = (lessonId: string, forceValue?: boolean) => {
+  const markLessonVerified = (lessonId: string) => {
+    if (onMarkLessonVerified) {
+      onMarkLessonVerified(lessonId);
+    } else {
+      const next = { ...localVerified, [lessonId]: true };
+      setLocalVerified(next);
+      try {
+        localStorage.setItem(STORAGE_KEY_VERIFIED, JSON.stringify(next));
+      } catch {
+        // ignore storage quota errors
+      }
+    }
+  };
+
+  const toggleLessonSelfMarked = (lessonId: string, forceValue?: boolean) => {
     if (onToggleLessonCompleted) {
       onToggleLessonCompleted(lessonId, forceValue);
     } else {
@@ -130,48 +159,38 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     return py;
   };
 
-  const normalizeCode = (s: string) =>
-    s
-      .split('\n')
-      .map((line) => line.replace(/#.*$/, '').trim())
-      .filter(Boolean)
-      .join('\n');
-
   const runPythonCode = async (sourceCode: string) => {
     setIsRunning(true);
     setStdout('');
     setStderr('');
     setPassStatus('untested');
     try {
-      let actualOut = '';
-      let actualErr = '';
+      let py: any;
       try {
-        const py = await ensurePyodide();
-        const capturedOut: string[] = [];
-        const capturedErr: string[] = [];
-        py.setStdout({
-          batched: (msg: string) => {
-            capturedOut.push(msg);
-          },
-        });
-        py.setStderr({
-          batched: (msg: string) => {
-            capturedErr.push(msg);
-          },
-        });
-
-        await py.runPythonAsync(sourceCode);
-        actualOut = capturedOut.join('\n').trim();
-        actualErr = capturedErr.join('\n').trim();
-      } catch (wasmErr: any) {
-        // Offline / sandboxed fallback evaluator when CDN is unreachable:
-        if (normalizeCode(sourceCode) === normalizeCode(currentLesson.fullSolution)) {
-          setPyodideStatus('fallback');
-          actualOut = currentLesson.expectedOutput.trim();
-        } else {
-          throw wasmErr;
-        }
+        py = await ensurePyodide();
+      } catch (loadErr: any) {
+        setPyodideStatus('error');
+        throw new Error(
+          `Pyodide WebAssembly runtime could not be loaded (${loadErr?.message || String(loadErr)}). Execution verification requires Pyodide WASM.`
+        );
       }
+
+      const capturedOut: string[] = [];
+      const capturedErr: string[] = [];
+      py.setStdout({
+        batched: (msg: string) => {
+          capturedOut.push(msg);
+        },
+      });
+      py.setStderr({
+        batched: (msg: string) => {
+          capturedErr.push(msg);
+        },
+      });
+
+      await py.runPythonAsync(sourceCode);
+      const actualOut = capturedOut.join('\n').trim();
+      const actualErr = capturedErr.join('\n').trim();
 
       setStdout(actualOut);
       setStderr(actualErr);
@@ -187,9 +206,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         .join('\n')
         .trim();
 
-      if (actualNorm === expectedNorm) {
+      if (!actualErr && actualNorm === expectedNorm) {
         setPassStatus('passed');
-        markLessonCompleted(currentLesson.id, true);
+        markLessonVerified(currentLesson.id);
       } else {
         setPassStatus('mismatch');
       }
@@ -234,8 +253,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       ? PYTHON_LESSONS[currentIdx + 1]
       : null;
 
+  const verifiedCount = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]).length;
   const completedCount = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
-  const isCurrentCompleted = !!completedLessons[currentLesson.id];
+  const isCurrentVerified = !!verifiedLessons[currentLesson.id];
+  const isCurrentSelfMarked = !!completedLessons[currentLesson.id];
 
   return (
     <div className="space-y-5">
@@ -250,15 +271,22 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             Run Track P (`P.1–P.M`) &amp; Pass 1 (`00.1–08.1`) Starter Code, Progressive Hints &amp; Assert Checks
           </h2>
           <p className="text-xs text-[#94a3b8] mt-0.5">
-            Complete the `TODO` lines, unlock hints one step at a time, and click <b>Run &amp; Verify Output</b> to execute Python 3.12 and automatically save your lesson completion.
+            Complete the `TODO` lines, unlock hints one step at a time, and click <b>Run &amp; Verify Output</b> to execute Python 3.12 in WebAssembly. Only real Pyodide execution awards <b>Executed &amp; Passed</b> status; manual checkboxes are tracked separately as <b>Self-Marked</b>.
           </p>
         </div>
 
         <div className="flex items-center gap-3 bg-[#0b0f19] border border-[#1e293b] px-4 py-2.5 rounded-lg font-mono tabular-nums">
           <div>
-            <div className="text-[11px] text-[#94a3b8]">Verified Lessons</div>
+            <div className="text-[11px] text-[#94a3b8]">Executed &amp; Passed (WASM)</div>
             <div className="text-sm font-bold text-[#34d399]" data-testid="runner-verified-count">
-              {`${completedCount} / ${PYTHON_LESSONS.length} Passed`}
+              {`${verifiedCount} / ${PYTHON_LESSONS.length} Verified`}
+            </div>
+          </div>
+          <div className="h-7 w-[1px] bg-[#1e293b]" />
+          <div>
+            <div className="text-[11px] text-[#94a3b8]">Self-Marked</div>
+            <div className="text-sm font-bold text-[#cbd5e1]" data-testid="runner-self-marked-count">
+              {`${completedCount} / ${PYTHON_LESSONS.length} Marked`}
             </div>
           </div>
           <div className="h-7 w-[1px] bg-[#1e293b]" />
@@ -269,8 +297,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 ? 'Ready (Pyodide 3.12)'
                 : pyodideStatus === 'loading'
                 ? 'Loading WASM...'
-                : pyodideStatus === 'fallback'
-                ? 'Verified Mirror Active'
+                : pyodideStatus === 'error'
+                ? 'WASM Load Error'
                 : 'Loads on First Run'}
             </div>
           </div>
@@ -322,7 +350,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div className="overflow-y-auto space-y-1.5 pr-1 flex-1">
             {filteredLessons.map((lesson) => {
               const isSelected = lesson.id === currentLesson.id;
-              const isDone = !!completedLessons[lesson.id];
+              const isVerified = !!verifiedLessons[lesson.id];
+              const isSelfMarked = !!completedLessons[lesson.id];
               return (
                 <button
                   key={lesson.id}
@@ -343,10 +372,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     <div className="text-xs font-medium mt-0.5 line-clamp-1">{lesson.title}</div>
                   </div>
                   <div className="shrink-0 mt-0.5">
-                    {isDone ? (
+                    {isVerified ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#34d399]">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Verified</span>
+                      </span>
+                    ) : isSelfMarked ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#38bdf8]">
                         <Check className="w-3.5 h-3.5" />
-                        <span>Done</span>
+                        <span>Marked</span>
                       </span>
                     ) : (
                       <ChevronRight className="w-4 h-4 text-[#475569]" />
@@ -368,26 +402,32 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <span className="text-[#38bdf8] font-bold">Lesson {currentLesson.id}</span>
                   <span aria-hidden="true">·</span>
                   <span>{currentLesson.path}</span>
+                  {isCurrentVerified && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span className="text-[#34d399] font-semibold">Executed &amp; Passed (WASM)</span>
+                    </>
+                  )}
                 </div>
                 <h3 className="text-base font-bold text-[#f1f5f9] mt-1">{currentLesson.title}</h3>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <button
-                  onClick={() => markLessonCompleted(currentLesson.id)}
+                  onClick={() => toggleLessonSelfMarked(currentLesson.id)}
                   data-testid="btn-toggle-lesson-complete"
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-mono border flex items-center gap-1.5 cursor-pointer ${
-                    isCurrentCompleted
-                      ? 'bg-[#34d399]/20 border-[#34d399] text-[#34d399]'
+                    isCurrentSelfMarked
+                      ? 'bg-[#38bdf8]/20 border-[#38bdf8] text-[#38bdf8]'
                       : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1] hover:border-[#38bdf8]'
                   }`}
                 >
-                  {isCurrentCompleted ? (
+                  {isCurrentSelfMarked ? (
                     <CheckSquare className="w-3.5 h-3.5" />
                   ) : (
                     <Square className="w-3.5 h-3.5" />
                   )}
-                  <span>{isCurrentCompleted ? 'Completed' : 'Mark Complete'}</span>
+                  <span>{isCurrentSelfMarked ? 'Self-Marked Complete' : 'Self-Mark Complete'}</span>
                 </button>
                 <button
                   onClick={() => {

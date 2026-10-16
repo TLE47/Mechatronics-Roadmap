@@ -32,7 +32,7 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
 | Lesson | Title | New Ideas ($\le 2$) | Est. Time |
 | :--- | :--- | :--- | :--- |
 | **[04.1](04.1-c-types-and-hardware-timer-isr.md)** | **Fixed-Width C/C++ Types (`uint16_t`), `volatile` ISR Flags and $1\text{ kHz}$ Timer Loops** | 1. Fixed-width C/C++ integers (`uint8_t`, `uint16_t`, `int16_t`) and modular rollover subtraction<br>2. Hardware timer ISRs, the `volatile` keyword, and why `delay()` ruins control loops | 45–60 min |
-| **[04.2](04.2-packed-structs-and-crc8-telemetry.md)** | **Packed Binary Telemetry Structs (`struct.pack`) and 8-Bit XOR Checksums** | 1. Packed binary C structs (`__attribute__((packed))` and Python `struct.pack`/`unpack`) vs. slow ASCII text<br>2. Sync headers (`0xAA`) and 8-bit XOR checksums for framing over UART | 45–60 min |
+| **[04.2](04.2-packed-structs-and-crc8-telemetry.md)** | **Packed Binary Telemetry Structs (`struct.pack`), CRC-8 & UART Bandwidth Budgets** | 1. Packed binary C structs (`__attribute__((packed))` and Python `struct.pack`/`unpack`) and 8N1 UART bandwidth budgets<br>2. Sync headers (`0xAA`), byte-wise XOR checksums, and polynomial CRC-8 (`0x07`) for corrupted-frame rejection | 45–60 min |
 
 ### 1.1 Why `delay()` and `Serial.print()` Destroy Control Loops
 - **Core Summary:** A discrete feedback controller (`PID`) assumes every sample occurs at an exact, fixed time step $\Delta t$ (e.g., $1.000\text{ ms}$). Calling `delay()` halts the CPU, while `Serial.println("q=" + String(q))` triggers heap fragmentation and blocks on slow UART TX buffers—stretching $\Delta t$ randomly and causing the derivative term $K_d \frac{\Delta e}{\Delta t}$ to explode with jitter noise.
@@ -90,21 +90,23 @@ struct __attribute__((packed)) TelemetryPacket {
   - 🔗 [Ben Eater (YouTube): Cyclic Redundancy Check (CRC) Error Detection Explained](https://www.youtube.com/watch?v=izG7qT0EpBw) — *Best visual explanation of how an 8-bit CRC catches corrupted serial bits on noisy motor wires.*
   - 🔗 [GCC Documentation: Common Type Attributes (`packed` and `aligned`)](https://gcc.gnu.org/onlinedocs/gcc/Common-Type-Attributes.html) — *Explains how compiler struct padding works and how `__attribute__((packed))` ensures exact byte layout across MCU and PC.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Write a 20-line Python `struct.unpack('<BIfffB', raw_bytes)` receiver script that decodes the 18-byte `TelemetryPacket` above, verifies `sync_head == 0xAA` and `crc8`, and plots live $1\text{ kHz}$ motor telemetry without dropping a single frame:
+  - *Task:* Write a 20-line Python `struct.unpack('<BIfffB', raw_bytes)` receiver script that decodes the 18-byte `TelemetryPacket` above, verifies `sync_head == 0xAA` and polynomial `crc8_ccitt` (`0x07`), and checks that the 8N1 wire rate ($18 \times 10 \times 1000 = 180\text{ kbit/s}$) runs on a $\ge 230.4\text{ kbaud}$ or $500\text{ kbaud}$ link without dropping frames:
     ```python
     import struct
 
-    def xor_crc8(payload_17b: bytes) -> int:
-        c = 0
-        for b in payload_17b:
+    def crc8_ccitt(payload: bytes) -> int:
+        c = 0x00
+        for b in payload:
             c ^= b
+            for _ in range(8):
+                c = ((c << 1) ^ 0x07) & 0xFF if (c & 0x80) else (c << 1) & 0xFF
         return c
 
     # Pack 18-byte frame (< = little-endian, B = uint8, I = uint32, fff = 3x float32, B = uint8 crc8):
     body = struct.pack("<BIfff", 0xAA, 1000, 1.57, -0.25, 12.0)
-    raw_bytes = body + struct.pack("<B", xor_crc8(body))
+    raw_bytes = body + struct.pack("<B", crc8_ccitt(body))
     sync, ts_us, q_rad, dq_rads, u_volts, rx_crc = struct.unpack("<BIfffB", raw_bytes)
-    assert len(raw_bytes) == 18 and sync == 0xAA and rx_crc == xor_crc8(raw_bytes[:17])
+    assert len(raw_bytes) == 18 and sync == 0xAA and rx_crc == crc8_ccitt(raw_bytes[:17])
     ```
   - *📚 What to Learn & Resource Links for This Exercise:* Study Python arrays and Matplotlib plotting in Foundations [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), bitwise shifts/masks in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), and binary telemetry framing + `struct.pack`/`unpack` + `PlatformIO` upload (`pio run -t upload`) in [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) and [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup), plus the [Python `struct` Module Documentation](https://docs.python.org/3/library/struct.html).
 - **🧠 Knowledge Check:**

@@ -5,6 +5,8 @@
 [![Live Browser Workbench](https://img.shields.io/badge/Live_Workbench-Open_in_Browser-38bdf8?logo=githubpages&logoColor=white)](https://tle47.github.io/Mechatronics-Roadmap/)
 [![Curriculum](https://img.shields.io/badge/Curriculum-44_Beginner_Lessons_%C2%B7_68_Modules-34d399)](track-p/README.md)
 [![License: CC BY 4.0 + MIT](https://img.shields.io/badge/License-CC_BY_4.0_(Docs)_%2B_MIT_(Code)-fbbf24)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/TLE47/Mechatronics-Roadmap?style=flat&color=38bdf8)](https://github.com/TLE47/Mechatronics-Roadmap/stargazers)
+[![Last Commit](https://img.shields.io/github/last-commit/TLE47/Mechatronics-Roadmap?color=34d399)](https://github.com/TLE47/Mechatronics-Roadmap/commits/main)
 
 > **Welcome! Never studied electronics, mechanics, or control before? Only know basic school math? You are in the right place.**
 >

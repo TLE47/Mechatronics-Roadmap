@@ -11,7 +11,7 @@ import { TabModels } from './components/tabs/TabModels';
 import { TabCadPcb } from './components/tabs/TabCadPcb';
 import { TabSysId } from './components/tabs/TabSysId';
 import { TabEskf } from './components/tabs/TabEskf';
-import { TabPyodideRunner, STORAGE_KEY_COMPLETED } from './components/tabs/TabPyodideRunner';
+import { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } from './components/tabs/TabPyodideRunner';
 import { TabPlacementQuiz } from './components/tabs/TabPlacementQuiz';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
@@ -163,6 +163,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
 ];
 
 export function buildPortfolioMarkdown(
+  verifiedLessons: Record<string, boolean>,
   completedLessons: Record<string, boolean>,
   completedMilestones: Record<string, boolean>
 ): string {
@@ -172,29 +173,41 @@ export function buildPortfolioMarkdown(
     ...TIER_2_LINEAR_PASS,
     ...TIER_3_LINEAR_PASS,
   ];
-  const passedPy = PYTHON_LESSONS.filter((l) => completedLessons[l.id]);
+  const verifiedPy = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]);
+  const selfMarkedPy = PYTHON_LESSONS.filter((l) => completedLessons[l.id] && !verifiedLessons[l.id]);
+  const totalSelfMarkedPy = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
   const passedMilestones = allSteps.filter((s) => completedMilestones[s.milestoneId]);
 
   const lines: string[] = [
-    '# MechaLab — Learner Progress & Verified Portfolio Summary',
+    '# MechaLab — Learner Progress & Portfolio Summary',
     '',
     `- **Generated:** ${new Date().toISOString().slice(0, 10)}`,
-    `- **Verified In-Browser Python Lessons Passed:** ${passedPy.length} / ${PYTHON_LESSONS.length}`,
-    `- **Roadmap Track Milestones Completed:** ${passedMilestones.length} / ${allSteps.length}`,
+    `- **Execution-Verified In-Browser Python Lessons (Executed & Passed in Pyodide WASM):** ${verifiedPy.length} / ${PYTHON_LESSONS.length}`,
+    `- **Self-Marked Completed Python Lessons (Manual Checklist):** ${totalSelfMarkedPy} / ${PYTHON_LESSONS.length}`,
+    `- **Self-Reported Roadmap Track Milestones:** ${passedMilestones.length} / ${allSteps.length}`,
     '',
-    '## 1. Completed Python Exercises (`assert`-Verified)',
+    '## 1. Execution-Verified Python Exercises (Executed & Passed in Pyodide WASM)',
     '',
   ];
 
-  if (passedPy.length === 0) {
-    lines.push('_No Python lessons marked complete yet. Open Tab 2 (Run Python Lessons) to verify your first exercise!_');
+  if (verifiedPy.length === 0) {
+    lines.push('_No Python lessons have been executed and passed in Pyodide WASM yet. Open Tab 2 (Run Python Lessons) and click "Run & Verify Output" to execute your first exercise._');
   } else {
-    for (const l of passedPy) {
-      lines.push(`- [x] **Lesson ${l.id} (${l.title})** — \`${l.path}\``);
+    for (const l of verifiedPy) {
+      lines.push(`- [x] **Lesson ${l.id} (${l.title})** — \`${l.path}\` *(Executed & Passed in Pyodide WASM)*`);
     }
   }
 
-  lines.push('', '## 2. Completed Multi-Pass Track Milestones', '');
+  lines.push('', '## 2. Self-Marked Completed Python Lessons (Manual Checklist, Not Yet Executed in WASM)', '');
+  if (selfMarkedPy.length === 0) {
+    lines.push('_No additional lessons self-marked complete without Pyodide execution._');
+  } else {
+    for (const l of selfMarkedPy) {
+      lines.push(`- [x] **Lesson ${l.id} (${l.title})** — \`${l.path}\` *(Self-Marked Complete)*`);
+    }
+  }
+
+  lines.push('', '## 3. Self-Reported Multi-Pass Track Milestones', '');
   if (passedMilestones.length === 0) {
     lines.push('_No track milestones checked off yet. Use the Roadmap & Progress tab to track your pass completion._');
   } else {
@@ -252,6 +265,15 @@ export const App: React.FC = () => {
     }
   });
 
+  const [verifiedLessons, setVerifiedLessons] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_VERIFIED);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_COMPLETED);
@@ -287,6 +309,14 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     try {
+      localStorage.setItem(STORAGE_KEY_VERIFIED, JSON.stringify(verifiedLessons));
+    } catch {
+      // ignore
+    }
+  }, [verifiedLessons]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedLessons));
     } catch {
       // ignore
@@ -297,6 +327,13 @@ export const App: React.FC = () => {
     setCompletedMilestones((prev) => ({
       ...prev,
       [id]: !prev[id],
+    }));
+  };
+
+  const handleMarkLessonVerified = (lessonId: string) => {
+    setVerifiedLessons((prev) => ({
+      ...prev,
+      [lessonId]: true,
     }));
   };
 
@@ -315,6 +352,7 @@ export const App: React.FC = () => {
   ].map((s) => s.milestoneId);
 
   const totalCompletedMilestones = allMilestoneIds.filter((id) => completedMilestones[id]).length;
+  const totalVerifiedLessons = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]).length;
   const totalCompletedLessons = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
 
   const [pyodideLessonId, setPyodideLessonId] = useState<string>('P.1');
@@ -369,7 +407,7 @@ export const App: React.FC = () => {
     }
   };
 
-  const portfolioMarkdown = buildPortfolioMarkdown(completedLessons, completedMilestones);
+  const portfolioMarkdown = buildPortfolioMarkdown(verifiedLessons, completedLessons, completedMilestones);
 
   const handleDownloadPortfolioFile = () => {
     const blob = new Blob([portfolioMarkdown], { type: 'text/markdown;charset=utf-8' });
@@ -443,8 +481,12 @@ export const App: React.FC = () => {
 
         {/* Unboxed tabular-nums progress summary */}
         <div className="flex items-center gap-2 text-xs font-mono tabular-nums text-[#cbd5e1]">
-          <span className="text-[#34d399]" data-testid="progress-lessons-count">
-            Python Lessons: {totalCompletedLessons}/{PYTHON_LESSONS.length}
+          <span className="text-[#34d399]" data-testid="progress-verified-count">
+            Executed &amp; Passed: {totalVerifiedLessons}/{PYTHON_LESSONS.length}
+          </span>
+          <span aria-hidden="true" className="text-[#475569]">·</span>
+          <span className="text-[#cbd5e1]" data-testid="progress-lessons-count">
+            Self-Marked: {totalCompletedLessons}/{PYTHON_LESSONS.length}
           </span>
           <span aria-hidden="true" className="text-[#475569]">·</span>
           <span className="text-[#38bdf8]" data-testid="progress-milestones-count">
@@ -533,7 +575,9 @@ export const App: React.FC = () => {
         {activeTab === 'tab-pyodide' && (
           <TabPyodideRunner
             initialLessonId={pyodideLessonId}
+            verifiedLessons={verifiedLessons}
             completedLessons={completedLessons}
+            onMarkLessonVerified={handleMarkLessonVerified}
             onToggleLessonCompleted={handleToggleLessonCompleted}
           />
         )}
