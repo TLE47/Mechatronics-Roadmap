@@ -13,8 +13,10 @@ Four layers, weighted as the spec says:
     Structure 25%  front-matter contract, the numbered sections, the checkpoint tests, the
                    difficulty label (and, for Tier 3, the two levels a Tier 3 module must carry)
     Executable 30% the worked example runs and is diffed, the exercise is self-checked by its
-                   answer key, a learner-facing scaffold exists, and a `verification:` route is
-                   declared for work that cannot run in a browser
+                   answer key, a learner-facing scaffold exists, a `verification:` route is
+                   declared for work that cannot run in a browser, and the module says which plant
+                   it runs on (`plant: tier1_arm_motor` with a real `import mechalab_plant`, or
+                   `plant: none` with a `plant_note:` reason)
     Ladder 30%     the eight named steps of the syllabus ladder, each measured by its own marker
     Validated 15%  the module has been done by the author and logged in `docs/dogfood-log.md`
 
@@ -25,7 +27,11 @@ mistaken for parity.
 
 Two gates, deliberately separate:
   * the **ratchet** (`docs/parity-baseline.json`) - no track or module may drop below its recorded
-    score. Update it on purpose with `--update-baseline` when a score rises.
+    score. Update it on purpose with `--update-baseline` when a score rises. The baseline also
+    records which **items were instrumented** when it was taken, because adding a measured item
+    moves every score down: `--check` fails with `the scored item set changed` instead of letting a
+    new requirement slide in as if the content had regressed. Re-record it deliberately, in a
+    commit that says why.
   * the **level** (`tracks: <track>: lint_level:` in `modules/_index.yaml`) - `report` (default),
     `warn`, or `error`. A track flips to `error` once it reaches 100%, and then any missing item
     fails the build. That flip is the visible "this track is done" signal.
@@ -66,6 +72,12 @@ INDEX_PATH = os.path.join(ROOT, "modules", "_index.yaml")
 
 SCAFFOLD_MARKER = "TODO-AUTHOR"
 LINT_LEVELS = ("report", "warn", "error")
+PLANT_DECISIONS = ("tier1_arm_motor", "none")
+PLANT_IMPORT = "import mechalab_plant"
+PLANT_NOTE_MIN_CHARS = 20
+PLANT_LABELS = ("arm", "exempt", "unhooked", "undeclared")
+# Python fences, so a declared import has to be *code the learner runs*, not a mention in prose.
+PYTHON_BLOCK = re.compile(r"```python\n(.*?)```", re.DOTALL)
 VERIFICATION_ROUTES = ("browser", "ci-native", "artifact", "rubric")
 HARDWARE_RISKS = ("low", "medium", "high")
 SIMULATION_LEVELS = ("full", "partial", "none")
@@ -119,6 +131,29 @@ def difficulty_findings(front_matter: str) -> list[str]:
         elif match.group(1) not in allowed:
             findings.append(f"`difficulty.{field}: {match.group(1)}` is not one of {list(allowed)}")
     return findings
+
+
+def plant_decision(plant: str, note: str, text: str) -> tuple[bool, str]:
+    """The plan's "uses the shared plant where relevant" item, with its published label.
+
+    Two honest ways to satisfy it, and nothing else:
+      * `plant: tier1_arm_motor` - and the module really imports the shared model, so the exercise
+        runs on the same arm every other exercise does. A declaration with no import is not use.
+      * `plant: none` with a `plant_note:` reason - a module about, say, a CAD file or a ROS 2 topic
+        need not run on the arm, but it has to say so where a reviewer can read it.
+    A bare mention in prose, `plant: none` with no reason, an unknown value and a missing key all
+    score zero, which is what makes ignoring the plant visible in the published score.
+    """
+    if plant == "tier1_arm_motor":
+        for block in PYTHON_BLOCK.findall(text):
+            if PLANT_IMPORT in block:
+                return (True, "arm")
+        return (False, "unhooked")
+    if plant == "none":
+        if len(note) >= PLANT_NOTE_MIN_CHARS:
+            return (True, "exempt")
+        return (False, "unhooked")
+    return (False, "undeclared")
 
 
 def read_track_lint_levels() -> tuple[dict[str, str], list[str]]:
@@ -194,6 +229,13 @@ def score_module(path: str, dogfooded: set[str]) -> dict[str, object]:
         r"^verification:\s*(\S+)", front_matter, flags=re.MULTILINE
     )
     verification = verification_match.group(1) if verification_match else ""
+    plant_match = re.search(r"^plant:\s*(\S+)", front_matter, flags=re.MULTILINE)
+    plant = plant_match.group(1).strip() if plant_match else ""
+    plant_note_match = re.search(r"^plant_note:\s*(.+)$", front_matter, flags=re.MULTILINE)
+    plant_note = (
+        plant_note_match.group(1).strip().strip('"').strip("'") if plant_note_match else ""
+    )
+    plant_ok, plant_label = plant_decision(plant, plant_note, text)
 
     structure = {
         "front_matter_contract": not parse_front_matter(text),
@@ -228,6 +270,9 @@ def score_module(path: str, dogfooded: set[str]) -> dict[str, object]:
             and "Full Solution" in exercise
         ),
         "verification_route_declared": verification in VERIFICATION_ROUTES,
+        # The plan's Definition of Done: "uses the shared plant where relevant, with values matching
+        # the plant file" - see resources/plants/README.md.
+        "shared_plant": plant_ok,
     }
 
     ladder = {
@@ -272,6 +317,8 @@ def score_module(path: str, dogfooded: set[str]) -> dict[str, object]:
         "tier": tier,
         "scaffolded": scaffolded,
         "verification": verification,
+        "plant": plant_label,
+        "plant_value": plant,
         "layers": layers,
         "score": parity_score(layers),
     }
@@ -303,6 +350,17 @@ def missing_items(row: dict[str, object]) -> list[str]:
 
 
 def render_table(rows: list[dict[str, object]], levels: dict[str, str]) -> str:
+    def plant_cell(row: dict[str, object]) -> str:
+        label = str(row.get("plant", "undeclared"))
+        value = str(row.get("plant_value", ""))
+        if label == "arm":
+            return "`arm`"
+        if label == "exempt":
+            return "`none` (reasoned)"
+        if label == "unhooked":
+            return "**declared, no import**" if value == "tier1_arm_motor" else "**none, no reason**"
+        return "**undeclared**"
+
     tracks: dict[str, list[dict[str, object]]] = {}
     tiers: dict[int, list[dict[str, object]]] = {}
     for row in rows:
@@ -336,16 +394,24 @@ def render_table(rows: list[dict[str, object]], levels: dict[str, str]) -> str:
         "## By track",
         "",
     ]
-    header = "| Track | Modules | Structure | Executable | Ladder | Validated | Parity | Level |"
-    lines += [header, "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |"]
+    header = (
+        "| Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |"
+    )
+    lines += [
+        header,
+        "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |",
+    ]
     for track in sorted(tracks, key=lambda value: (len(value), value)):
         group = tracks[track]
         layer_cells = " | ".join(
             f"{round(100 * sum(layer_fraction(row['layers'], layer) for row in group) / len(group))}%"  # type: ignore[arg-type]
             for layer in ("structure", "executable", "ladder", "validated")
         )
+        counts = {label: sum(1 for row in group if str(row.get("plant")) == label) for label in PLANT_LABELS}
         lines.append(
             f"| `{track}` | {len(group)} | {layer_cells} | **{100 * mean(group):.1f}%** | "
+            f"{counts['arm']} arm · {counts['exempt']} exempt · {counts['unhooked']} unhooked · "
+            f"{counts['undeclared']} undeclared | "
             f"`{levels.get(track, 'report')}` |"
         )
 
@@ -353,12 +419,16 @@ def render_table(rows: list[dict[str, object]], levels: dict[str, str]) -> str:
     for tier in sorted(tiers):
         lines.append(f"| Tier {tier} | {len(tiers[tier])} | **{100 * mean(tiers[tier]):.1f}%** |")
 
+    plant_counts = {
+        label: sum(1 for row in rows if str(row.get("plant")) == label) for label in PLANT_LABELS
+    }
+
     lines += [
         "",
         f"## Per module ({len(rows)} modules, overall **{100 * mean(rows):.1f}%**)",
         "",
-        "| Module | Tier | Structure | Executable | Ladder | Validated | Parity | Missing |",
-        "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |",
+        "| Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |",
+        "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |",
     ]
     for row in sorted(rows, key=lambda item: str(item["module"])):
         cells = " | ".join(
@@ -368,7 +438,7 @@ def render_table(rows: list[dict[str, object]], levels: dict[str, str]) -> str:
         missing = missing_items(row)
         lines.append(
             f"| `{row['module']}` | {row['tier']} | {cells} | **{100 * float(row['score']):.1f}%** | "
-            f"{len(missing)} item(s) |"
+            f"{plant_cell(row)} | {len(missing)} item(s) |"
         )
 
     stage_totals = {stage: 0 for stage in next(iter(rows))["layers"]["ladder"]}  # type: ignore[index]
@@ -387,7 +457,28 @@ def render_table(rows: list[dict[str, object]], levels: dict[str, str]) -> str:
         gate = "gated by `lint_modules.py`" if carried == len(rows) else "**gap**"
         lines.append(f"| `{stage}` | {carried}/{len(rows)} | {gate} |")
 
+    on_the_arm = sorted(str(row["module"]) for row in rows if str(row.get("plant")) == "arm")
     lines += [
+        "",
+        "## Shared plant",
+        "",
+        "The plan's Definition of Done asks every module to use the shared plant *where relevant*, and",
+        "that is now a **scored** item in the Executable layer rather than a promise: `plant:",
+        "tier1_arm_motor` **and** an `import mechalab_plant` inside a python block (`arm`), or `plant:",
+        "none` with a `plant_note:` reason (`none`, reasoned). A bare mention in prose, a declaration",
+        "with no import, an unexplained exemption and a missing key all score zero - `unhooked` and",
+        "`undeclared` below - so a module that ignores the arm is visible in its own score instead of",
+        "being implied by silence.",
+        "",
+        f"- On the shared arm: **{plant_counts['arm']}/{len(rows)}**"
+        + (f" - {', '.join('`' + module + '`' for module in on_the_arm)}" if on_the_arm else ""),
+        f"- Declared exempt, with a reason: **{plant_counts['exempt']}/{len(rows)}**",
+        f"- Declared but not hooked up (`plant: tier1_arm_motor` with no `import mechalab_plant` in a",
+        f"  python block, or `plant: none` with no reason): **{plant_counts['unhooked']}/{len(rows)}**",
+        f"- Undeclared: **{plant_counts['undeclared']}/{len(rows)}**",
+        "",
+        "The plant itself, its provenance rule and the workbench import contract:",
+        "[`resources/plants/README.md`](../resources/plants/README.md).",
         "",
         "## Not yet instrumented",
         "",
@@ -416,6 +507,24 @@ def build() -> tuple[int, list[dict[str, object]], dict[str, str], list[str]]:
     rows = [score_module(path, dogfooded) for path in files]
     levels, index_errors = read_track_lint_levels()
     return 0, rows, levels, index_errors
+
+
+def instrumented_items(rows: list[dict[str, object]]) -> list[str]:
+    """Every scored item id, unioned across modules (Tier 3 carries one extra structure item).
+
+    The baseline records this list. Adding a measured item lowers every score without any content
+    changing, which is a different event from a regression - so `--check` refuses to compare a score
+    whose item set has moved until someone re-records the floor and says why.
+    """
+    items: set[str] = set()
+    for row in rows:
+        for layer, layer_items in row["layers"].items():  # type: ignore[union-attr]
+            items.update(f"{layer}:{item}" for item in layer_items)
+    return sorted(items)
+
+
+def plant_label_counts(rows: list[dict[str, object]]) -> dict[str, int]:
+    return {label: sum(1 for row in rows if str(row.get("plant")) == label) for label in PLANT_LABELS}
 
 
 def track_scores(rows: list[dict[str, object]]) -> dict[str, float]:
@@ -465,8 +574,21 @@ def main() -> int:
                     "tiers": tiers,
                     "tracks": tracks,
                     "lint_levels": levels,
+                    "instrumented_items": instrumented_items(rows),
+                    "plant": {
+                        label: sorted(str(row["module"]) for row in rows if str(row.get("plant")) == label)
+                        for label in PLANT_LABELS
+                    },
                     "modules": [
-                        {"module": row["module"], "track": row["track"], "tier": row["tier"], "score": row["score"], "missing": missing_items(row)}
+                        {
+                            "module": row["module"],
+                            "track": row["track"],
+                            "tier": row["tier"],
+                            "score": row["score"],
+                            "plant": row["plant"],
+                            "plant_value": row["plant_value"],
+                            "missing": missing_items(row),
+                        }
                         for row in rows
                     ],
                 },
@@ -479,11 +601,20 @@ def main() -> int:
 
     if args.update_baseline:
         baseline = {
-            "schema": 1,
+            "schema": 2,
             "note": (
                 "Ratchet for scripts/module_parity.py: --check fails if any track or module drops below "
-                "the value recorded here. Raise it deliberately with --update-baseline."
+                "the value recorded here. Raise it deliberately with --update-baseline. `recorded_note` "
+                "says why the last re-record happened; `instrumented_items` is the set of scored items "
+                "at that moment, so adding a new item is a deliberate re-record, never a silent drop."
             ),
+            "recorded_note": (
+                "Re-recorded when `executable:shared_plant` was instrumented: the plant decision is now "
+                "measured, so every module's Executable layer gained a fifth item and the scores of the "
+                "44 modules fell without any content changing. This is a measurement change, not a "
+                "regression - see docs/coverage-table.md, 'Shared plant'."
+            ),
+            "instrumented_items": instrumented_items(rows),
             "overall": overall,
             "tiers": tiers,
             "tracks": tracks,
@@ -509,6 +640,17 @@ def main() -> int:
     if os.path.exists(BASELINE_PATH):
         with open(BASELINE_PATH, "r", encoding="utf-8") as handle:
             baseline = json.load(handle)
+        recorded_items = list(baseline.get("instrumented_items") or [])
+        current_items = instrumented_items(rows)
+        if recorded_items != current_items:
+            added = [item for item in current_items if item not in recorded_items]
+            removed = [item for item in recorded_items if item not in current_items]
+            findings.append(
+                "the scored item set changed (added: %s; removed: %s) - an instrumented requirement "
+                "moves every score down, so re-record the floor with `--update-baseline` in a commit "
+                "that says the drop is a measurement change, not content regression"
+                % (", ".join(added) or "-", ", ".join(removed) or "-")
+            )
         if round(float(baseline.get("overall", 0)) - overall, 4) > PARITY_TOLERANCE:
             findings.append(
                 f"overall parity dropped {100 * (float(baseline['overall']) - overall):.1f} points "
@@ -563,7 +705,11 @@ def main() -> int:
     if args.check:
         print(
             f"OK: parity table in sync, ratchet held, no `error` track below 100% "
-            f"(overall {100 * overall:.1f}% across {len(rows)} modules)"
+            f"(overall {100 * overall:.1f}% across {len(rows)} modules; "
+            f"shared plant: {plant_label_counts(rows)['arm']} arm, "
+            f"{plant_label_counts(rows)['exempt']} exempt, "
+            f"{plant_label_counts(rows)['unhooked']} unhooked, "
+            f"{plant_label_counts(rows)['undeclared']} undeclared)"
         )
     elif args.quiet:
         print(f"parity {100 * overall:.1f}% across {len(rows)} modules")

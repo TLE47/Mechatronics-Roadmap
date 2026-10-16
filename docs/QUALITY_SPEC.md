@@ -38,6 +38,7 @@ measurable in this repository today. Each layer is scored as the fraction of its
 | Executable | `checkpoint_answer_key` | A `**Answer key:**` block that asserts the exercise's numbers |
 | Executable | `learner_exercise_scaffold` | A `python` scaffold with `TODO`s for the learner, plus a full solution in `## 5. Exercise` |
 | Executable | `verification_route_declared` | The `verification:` key of §2 |
+| Executable | `shared_plant` | The `plant:` decision of §2: `tier1_arm_motor` **and** a real `import mechalab_plant` in the module, or `none` with a `plant_note:` reason |
 | Ladder | the eight stages | `1_recall`, `2_see_it`, `3_predict`, `4_worked_example`, `5_practice_host`, `6_break_it`, `7_transfer`, `8_integrate` |
 | Validated | `dogfood_logged` | A row for the module in [`docs/dogfood-log.md`](dogfood-log.md) |
 
@@ -65,7 +66,9 @@ rejects it outright.
 `import mechalab_plant` works in the browser runner. `tests/test_plant.py` proves the YAML and the
 module agree, that every value cites a lesson, and that the plant reproduces the capstone's published
 numbers (0.0000 mm IK→FK, 2.40 mm peak / 0.91 mm RMS tracking error, 412 dropped frames at
-115.2 kbaud). **Not yet instrumented:** whether a given module actually uses it — see
+115.2 kbaud). Whether a given module uses it is scored as **`executable:shared_plant`** (§1 and §2)
+and published per module and per track in [`docs/coverage-table.md`](coverage-table.md); the plant,
+its provenance rule and the workbench import contract are documented in
 [`resources/plants/README.md`](../resources/plants/README.md).
 
 ## 2. The two metadata blocks
@@ -80,6 +83,9 @@ difficulty:
   hardware_risk: low    # low | medium | high  (high = supervised bench work only)
   simulation: full      # full | partial | none — can this be done without hardware?
 verification: browser   # browser | ci-native | artifact | rubric
+plant: tier1_arm_motor  # tier1_arm_motor | none — this exercise runs on the shared plant,
+                        # or says why it does not (see `plant_note:`)
+plant_note: "…"         # required when `plant: none`: the reason, in a sentence, for a reviewer
 ```
 
 `verification` is how this module's work is actually checked, so coverage stays honest when the work
@@ -90,11 +96,24 @@ KiCad ERC/DRC, a URDF), `rubric` (a supervised or tool-lab checklist).
 **Every module must carry at least one `browser` or `ci-native` exercise**, whatever its main lab is,
 so the concept stays gradable when the tool work is not.
 
+`plant` is the plan's "uses the shared plant where relevant" rule, made checkable, and it is the one
+item here that is scored but **not** optional-by-omission:
+
+- `plant: tier1_arm_motor` scores only when the module really imports the shared model
+  (`import mechalab_plant`, i.e. the exercise runs on the arm every other exercise runs on); a
+declaration with no import is a mention, not use, and scores zero.
+- `plant: none` scores when `plant_note:` carries at least a sentence of reason, because a module
+  about a KiCad file, a URDF or a ROS 2 topic need not run on the arm — but it has to say so where a
+  reviewer can read it.
+- A missing key, an unknown value and an unexplained `none` all score zero, so a module that ignores
+  the plant is visible in its own score and in the `Shared plant` column of
+  [`docs/coverage-table.md`](coverage-table.md) rather than implied by silence.
+
 ## 3. The two gates
 
 | Gate | File | What it does |
 | :--- | :--- | :--- |
-| **Ratchet** | [`docs/parity-baseline.json`](parity-baseline.json) | `--check` fails if any track or module drops below its recorded score. Raise it deliberately with `--update-baseline`; it cannot fall by accident. |
+| **Ratchet** | [`docs/parity-baseline.json`](parity-baseline.json) | `--check` fails if any track or module drops below its recorded score. Raise it deliberately with `--update-baseline`; it cannot fall by accident. The baseline also records `instrumented_items`, the measured items at the moment it was taken: when the item set changes, `--check` says *the scored item set changed* and names what was added, because a newly instrumented requirement lowers every score without any content moving — that is a re-record, not a regression, and it should be one deliberate commit with the reason written into `recorded_note`. |
 | **Level** | `modules/_index.yaml` → `tracks: <track>: lint_level:` | `report` (default), `warn` (missing items print a warning), `error` (any module below 100% fails the build). |
 
 Flipping a track to `lint_level: error` is the plan's visible **"this track is done"** signal. Do it

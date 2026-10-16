@@ -177,6 +177,11 @@ def module_text(
             f"  hardware_risk: {difficulty['hardware_risk']}",
             f"  simulation: {difficulty['simulation']}",
             f"verification: {difficulty['verification']}",
+            # The parity scorer counts `executable:shared_plant` down when this line is left as it is
+            # (and lint_modules rejects any module still carrying TODO-AUTHOR), so a new module has
+            # to make the decision rather than inherit a default.
+            "plant: TODO-AUTHOR",
+            "plant_note: TODO-AUTHOR - keep this line and say why only if plant: none",
             "---",
         ]
     )

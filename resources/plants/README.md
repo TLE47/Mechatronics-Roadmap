@@ -96,6 +96,9 @@ is the plant the Tier 1 learner finished with.
 - **No learner scaffold.** The 44 bridge modules still ship no starter exercise that imports this
   (that is the parity table's biggest Layer 2 gap); the import works today, the exercises that use it
   come next.
-- **Not a scored parity item.** `scripts/module_parity.py` does not yet measure "uses the shared
-  plant", so nothing fails when a module ignores it. When the first exercise uses it, that item goes
-  in the scorer and the ratchet holds it.
+- **Scored, and currently unused.** `scripts/module_parity.py` scores `executable:shared_plant` for
+  every bridge module: `plant: tier1_arm_motor` only counts with a real `import mechalab_plant` in
+  the module, and `plant: none` only counts with a `plant_note:` reason. As of the last run that is
+  **0 arm, 0 exempt, 44 undeclared** — the gap is published in its own column rather than implied,
+  and the ratchet refuses to let any of those scores fall once an author improves them. The
+  front-matter contract is in [`docs/QUALITY_SPEC.md`](../../docs/QUALITY_SPEC.md) §1–§2.
