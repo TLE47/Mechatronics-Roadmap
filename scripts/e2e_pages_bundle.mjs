@@ -1,0 +1,208 @@
+#!/usr/bin/env node
+/**
+ * Production Bundle (GitHub Pages) End-to-End Checks — `scripts/e2e_pages_bundle.mjs`
+ *
+ * `scripts/e2e_browser_workbench.mjs` drives the *Vite dev server* with lesson P.6, so nothing in CI
+ * ever proved what learners actually open: https://tle47.github.io/Mechatronics-Roadmap/ — a *built*
+ * bundle served from a sub-path. This script closes that gap:
+ *
+ * 1. `dist/index.html` must reference every local asset under the Pages base path (`PAGES_BASE`,
+ *    default `/Mechatronics-Roadmap/`). A bundle built for `/` is exactly the failure that shipped
+ *    once before: Pages serves the repo root and nothing loads.
+ * 2. The built bundle is served at that base path — the same URL shape Pages uses, not a dev server —
+ *    and must mount React with no page errors.
+ * 3. Representative *later-track* lessons (03.3 sensors+F, 06.1 robotics, 08.1 capstone) must load in
+ *    the in-browser Python runner, so the suite is no longer a single-lesson check.
+ * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable.
+ *
+ * Chromium always runs; Firefox runs when its browser build is present (`npx playwright-core install
+ * firefox`, which CI does). `PLAYWRIGHT_BROWSERS=chromium|firefox|both` selects them; a browser that is
+ * not installed is reported as SKIP with the reason, never as a pass.
+ *
+ * Usage:  PAGES_BASE=/Mechatronics-Roadmap/ node scripts/e2e_pages_bundle.mjs
+ */
+
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { chromium, firefox } from 'playwright-core';
+
+const repoRoot = process.cwd();
+const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
+const distDir = path.join(repoRoot, 'dist');
+const LATER_TRACK_LESSONS = ['03.3', '06.1', '08.1'];
+const TABLET_VIEWPORT = { width: 834, height: 1112 };
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.woff2': 'font/woff2',
+  '.txt': 'text/plain; charset=utf-8',
+};
+
+function ensureBuilt() {
+  if (fs.existsSync(path.join(distDir, 'index.html'))) return;
+  console.log('[build] dist/index.html is missing - running `npm run build` first');
+  execFileSync('npm', ['run', 'build'], { stdio: 'inherit', cwd: repoRoot });
+  assert.ok(fs.existsSync(path.join(distDir, 'index.html')), 'npm run build produced no dist/index.html');
+}
+
+/** Serve `dist/` under the Pages base path, the way GitHub Pages does for a project site. */
+function startStaticServer() {
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+    let rel = url.pathname;
+    if (!rel.startsWith(BASE)) {
+      res.writeHead(404, { 'content-type': 'text/plain' });
+      res.end(`outside the Pages base ${BASE}`);
+      return;
+    }
+    rel = decodeURIComponent(rel.slice(BASE.length));
+    const target = path.join(distDir, rel);
+    if (!target.startsWith(distDir)) {
+      res.writeHead(403);
+      res.end('forbidden');
+      return;
+    }
+    let file = target;
+    if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
+    if (!fs.existsSync(file) && !path.extname(rel)) file = path.join(distDir, 'index.html'); // SPA route
+    if (!fs.existsSync(file)) {
+      res.writeHead(404, { 'content-type': 'text/plain' });
+      res.end('not found');
+      return;
+    }
+    res.writeHead(200, { 'content-type': MIME[path.extname(file)] ?? 'application/octet-stream' });
+    res.end(fs.readFileSync(file));
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => resolve({ server, port: server.address().port }));
+  });
+}
+
+function checkBuiltHtml() {
+  const html = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
+  assert.match(html, /<div id="root"/, 'the built index.html must contain the React root');
+  const localRefs = [...html.matchAll(/(?:src|href)="(\/[^"]*)"/g)].map((m) => m[1]);
+  assert.ok(localRefs.length >= 2, `expected bundled JS+CSS references, found ${localRefs.length}`);
+  const offBase = localRefs.filter((ref) => !ref.startsWith(BASE));
+  assert.equal(
+    offBase.length,
+    0,
+    `assets are not under the Pages base ${BASE}: ${offBase.join(', ')} - build with PAGES_BASE set`
+  );
+  console.log(`  ok dist/index.html references ${localRefs.length} assets under ${BASE}`);
+  return localRefs;
+}
+
+async function checkServed(baseUrl, refs) {
+  const index = await fetch(baseUrl);
+  assert.equal(index.status, 200, `GET ${baseUrl} -> ${index.status}`);
+  assert.match(await index.text(), /<div id="root"/, 'served index.html must contain the React root');
+  for (const ref of refs) {
+    const response = await fetch(new URL(ref, baseUrl));
+    assert.equal(response.status, 200, `GET ${ref} -> ${response.status}`);
+    const type = response.headers.get('content-type') ?? '';
+    if (ref.endsWith('.js')) assert.match(type, /javascript/, `${ref} served as ${type}`);
+    if (ref.endsWith('.css')) assert.match(type, /css/, `${ref} served as ${type}`);
+  }
+  console.log(`  ok every built asset answers 200 with the right content type at ${BASE}`);
+}
+
+async function checkInBrowser(name, launcher, baseUrl) {
+  let browser;
+  const envPath = process.env[`PLAYWRIGHT_${name.toUpperCase()}_EXECUTABLE_PATH`];
+  const executablePath = envPath && fs.existsSync(envPath) ? envPath : undefined;
+  try {
+    browser = await launcher.launch({ ...(executablePath ? { executablePath } : {}), headless: true });
+  } catch (error) {
+    console.log(`  SKIP ${name}: ${String(error.message).split('\n')[0].slice(0, 140)}`);
+    return 'skip';
+  }
+  try {
+    const page = await (await browser.newContext()).newPage();
+    const pageErrors = [];
+    page.on('pageerror', (error) => pageErrors.push(String(error)));
+
+    await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
+    await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
+    assert.equal(pageErrors.length, 0, `${name}: page errors after mount: ${pageErrors.join(' | ')}`);
+
+    // The Beginner/Advanced view switch must work on the built bundle too.
+    await page.getByTestId('btn-mode-advanced').click();
+    await page.getByTestId('btn-mode-beginner').click();
+
+    await page.getByTestId('tab-btn-tab-pyodide').click();
+    for (const lesson of LATER_TRACK_LESSONS) {
+      const item = page.getByTestId(`lesson-item-${lesson}`);
+      await item.scrollIntoViewIfNeeded();
+      await item.click();
+      const starter = await page.getByTestId('textarea-python-code').inputValue();
+      assert.ok(starter.trim().length > 40, `${name}: lesson ${lesson} starter code is empty`);
+      const expected = (await page.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
+      assert.ok(expected.length > 0, `${name}: lesson ${lesson} has no expected output to grade against`);
+      assert.ok(
+        starter.includes('TODO'),
+        `${name}: lesson ${lesson} starter code carries no TODO for the learner to complete`
+      );
+      console.log(`  ok ${name}: lesson ${lesson} loads ${starter.length} chars of starter code + expected output`);
+    }
+
+    // Tablet viewport: the tab bar, lesson list and editor must all stay reachable.
+    const tablet = await (await browser.newContext({ viewport: TABLET_VIEWPORT })).newPage();
+    await tablet.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
+    await tablet.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
+    await tablet.getByTestId('tab-btn-tab-pyodide').click();
+    const lesson = tablet.getByTestId('lesson-item-06.1');
+    await lesson.scrollIntoViewIfNeeded();
+    assert.ok(await lesson.isVisible(), `${name}: at ${TABLET_VIEWPORT.width}px the lesson list is not usable`);
+    await lesson.click();
+    await tablet.getByTestId('textarea-python-code').waitFor({ state: 'visible', timeout: 10000 });
+    assert.ok(await tablet.getByTestId('btn-run-verify').isVisible(), `${name}: Run & Verify is not visible on a tablet`);
+    assert.ok(await tablet.getByTestId('btn-export-portfolio').isVisible(), `${name}: Export Progress is not visible on a tablet`);
+    const overflow = await tablet.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    console.log(`  ok ${name}: tablet ${TABLET_VIEWPORT.width}x${TABLET_VIEWPORT.height} keeps nav, lesson list and runner usable (horizontal overflow ${overflow}px)`);
+    await tablet.close();
+    return 'pass';
+  } finally {
+    await browser.close();
+  }
+}
+
+async function main() {
+  ensureBuilt();
+  const refs = checkBuiltHtml();
+  const { server, port } = await startStaticServer();
+  const baseUrl = `http://127.0.0.1:${port}${BASE}`;
+  try {
+    await checkServed(baseUrl, refs);
+    const wanted = (process.env.PLAYWRIGHT_BROWSERS ?? 'both').toLowerCase();
+    const results = {};
+    if (wanted === 'chromium' || wanted === 'both') results.chromium = await checkInBrowser('chromium', chromium, baseUrl);
+    if (wanted === 'firefox' || wanted === 'both') results.firefox = await checkInBrowser('firefox', firefox, baseUrl);
+    if (!Object.keys(results).length) throw new Error(`PLAYWRIGHT_BROWSERS=${wanted} selects no browser`);
+    if (Object.values(results).every((value) => value === 'skip')) {
+      throw new Error('no requested browser is installed - run `npx playwright-core install chromium firefox`');
+    }
+    const ran = Object.entries(results).filter(([, value]) => value === 'pass').map(([name]) => name);
+    const skipped = Object.entries(results).filter(([, value]) => value === 'skip').map(([name]) => name);
+    console.log(
+      `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
+        `${LATER_TRACK_LESSONS.join(', ')} and stays usable at tablet width in: ${ran.join(', ')}` +
+        (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
+    );
+  } finally {
+    server.close();
+  }
+}
+
+main().catch((error) => {
+  console.error('[FAIL] Pages bundle checks failed:', error.message);
+  process.exit(1);
+});

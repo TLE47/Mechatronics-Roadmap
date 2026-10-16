@@ -80,8 +80,11 @@ jobs:
 
       - name: Install Playwright Chromium & run real-browser End-to-End (E2E) Workbench tests
         run: |
-          npx playwright-core install --with-deps chromium
+          npx playwright-core install --with-deps chromium firefox
           npm run test:e2e
+
+      - name: Check the built Pages bundle at its real base path (later-track lessons, tablet width, Chromium + Firefox)
+        run: npm run test:e2e:pages
 
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
