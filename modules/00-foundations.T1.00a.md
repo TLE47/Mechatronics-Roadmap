@@ -38,9 +38,17 @@ $$
    Substituting $x_k = 0.0\text{ m}$, $v = 0.5\text{ m/s}$, and $\Delta t = 0.25\text{ s}$ yields $x_1 = 0.0\text{ m} + (0.5\text{ m/s})(0.25\text{ s}) = 0.125\text{ m}$.
 3. **Reading Tracebacks:** When an expression divides a distance $\Delta x = 1.0\text{ m}$ by a zero time step $\Delta t = 0.0\text{ s}$ ($v = \Delta x / \Delta t$), Python halts and prints a traceback whose bottom line states the exception type (`ZeroDivisionError` or `NameError`) and the exact offending line number.
 4. **Running Your First `.py` Script & Worked-Example Syntax Reader:**
-   - **Terminal & Script File Bootstrap (Core Environment — Ubuntu 24.04 LTS / Windows 11 WSL2; see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):** Open your terminal application, create a workspace directory with `mkdir -p ~/mechalab && cd ~/mechalab`, save the code block below into a plain-text file named `step01.py`, and execute it by typing `python3 step01.py` and pressing `Enter`.
+   - **Canonical Repository Clone & `.venv` Bootstrap (Core Environment — Ubuntu 24.04 LTS / Windows 11 WSL2; see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):** Open your terminal application, clone this repository into `mechalab`, create and activate your local Python virtual environment `.venv`, save the code block below into `step01.py`, and run it:
+     ```bash
+     git clone https://github.com/TLE47/Mechatronics-Roadmap.git mechalab
+     cd mechalab
+     python3 -m venv .venv
+     source .venv/bin/activate          # Windows PowerShell: .\.venv\Scripts\Activate.ps1
+     python3 step01.py
+     ```
    - **Worked-Example Syntax Key:**
      - `import math` loads Python's built-in mathematical library (giving access to `math.isclose(a, b, rel_tol=1e-9)` for safe floating-point comparison).
+     - `def step_position(pos_m: float, vel_m_s: float, dt_s: float) -> float:`: The `: float` after each parameter name and `-> float` before the colon are **optional Python type annotations (type hints)** that document that the inputs and returned result are floating-point decimal numbers (`float`); `return` sends the computed number back to the caller, and `steps += 1` is shorthand for `steps = steps + 1`.
      - Scientific notation `1e-9` means $1.0 \times 10^{-9} = 0.000000001$.
      - `assert <condition>` automatically verifies that `<condition>` is `True`; if it is `False`, Python immediately halts with an `AssertionError` so bugs are caught on the exact line they occur.
      - `try: ... except ZeroDivisionError as exc:` catches an expected error cleanly so you can inspect `type(exc).__name__` without crashing the script.

@@ -135,8 +135,16 @@ In the `tf2` tree above (`T_b_l1 = urdf_revolute_z((0, 0, 0.10), q1)` and `T_l1_
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).
-- **Canonical First-Use `ROS 2 Jazzy` + `colcon` Workspace Walkthrough (Ubuntu 24.04 / WSL2):**
+- **One-Time `ROS 2 Jazzy` & `colcon` Installation + First-Use Workspace Walkthrough (Ubuntu 24.04 / WSL2 — see [`resources/open-source-toolchains.md` §0.4b](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):**
   ```bash
+  # 1. One-time APT repository setup & installation (skip if already installed in §0.4b):
+  sudo apt update && sudo apt install -y software-properties-common curl locales
+  sudo locale-gen en_US en_US.UTF-8 && sudo add-apt-repository universe -y
+  sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+  sudo apt update && sudo apt install -y ros-jazzy-desktop python3-colcon-common-extensions python3-rosdep ros-jazzy-ros2-control ros-jazzy-ros2-controllers ros-jazzy-rosbag2-storage-mcap
+
+  # 2. Source ROS 2 Jazzy, create ~/ros2_ws, build with colcon, and inspect TF2:
   source /opt/ros/jazzy/setup.bash
   mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
   ros2 pkg create --build-type ament_python my_arm_bringup --dependencies rclpy sensor_msgs geometry_msgs tf2_ros

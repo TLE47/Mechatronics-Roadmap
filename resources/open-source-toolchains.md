@@ -15,25 +15,25 @@ If this is your very first engineering roadmap, set up your computer **once** he
 1. **Core Supported Environment (Primary Recommended Path):**
    - **Primary OS:** **Ubuntu 24.04 LTS** (native) or **Windows 11 with WSL2 (`wsl --install -d Ubuntu-24.04`)**. Using Ubuntu 24.04 (native or WSL2) guarantees that every command across Python, C++20, `PlatformIO`, `KiCad`, `Zephyr RTOS`, and `ROS 2 Jazzy` works identically with zero OS mismatch.
    - **Secondary OS Notes:** On **macOS**, install [Homebrew (`brew.sh`)](https://brew.sh/) (`brew install python git gcc cmake platformio`) and use [Robostack (`conda`/`mamba`)](https://robostack.github.io/) for ROS 2. On **Windows 11 WSL2**, pass physical USB microcontroller/ST-LINK devices into WSL2 using [`usbipd-win`](https://learn.microsoft.com/en-us/windows/wsl/connect-usb) (`usbipd bind --busid <ID>` and `usbipd attach --wsl --busid <ID>`).
-2. **Terminal & Git Survival Commands (First 5 Minutes):**
+2. **Canonical Repository Clone, Python `.venv` Bootstrap & Git Survival Commands (First 5 Minutes):**
+   Clone this repository once and create your local Python virtual environment (`.venv`) inside the repo root so every module script, `git` command, and `npm run dev` workbench launch runs from the same folder (avoiding Ubuntu 24.04 / Debian `PEP 668: externally-managed-environment` errors):
    ```bash
-   pwd                                  # Print current working folder path
-   ls -la                               # List files (including hidden .venv or .git folders)
-   mkdir -p ~/workspace && cd ~/workspace  # Create a workspace folder and enter it
-   git clone <repo-url> mechalab && cd mechalab
-   git status                           # Inspect modified or untracked files
-   git diff                             # Inspect exact line-by-line code changes
-   ```
-3. **Python 3 Virtual Environment (`.venv`) & Avoiding `PEP 668` Errors:**
-   Modern Ubuntu/Debian systems block global `pip install` (`error: externally-managed-environment`). Always create a local `.venv` inside the repository root:
-   ```bash
-   sudo apt update && sudo apt install -y python3 python3-venv python3-pip build-essential git
+   sudo apt update && sudo apt install -y python3 python3-venv python3-pip build-essential git curl
+   git clone https://github.com/TLE47/Mechatronics-Roadmap.git mechalab
+   cd mechalab
    python3 -m venv .venv
    source .venv/bin/activate            # Prompt now shows (.venv); on Windows PowerShell: .\.venv\Scripts\Activate.ps1
    pip install --upgrade pip
    pip install numpy scipy matplotlib pyserial pytest
    ```
-4. **Canonical Microcontroller Build/Flash CLI (`PlatformIO`) & Linux USB `udev` Rules:**
+   Essential terminal & Git commands inside `mechalab/`:
+   ```bash
+   pwd                                  # Print current working folder path (.../mechalab)
+   ls -la                               # List files (including hidden .venv and .git folders)
+   git status                           # Inspect modified or untracked files
+   git diff                             # Inspect exact line-by-line code changes
+   ```
+3. **Canonical Microcontroller Build/Flash CLI (`PlatformIO`) & Linux USB `udev` Rules (Tier 1 & Tier 2):**
    When you reach Track 03/04 hardware labs (`ESP32-S3` or `STM32 Nucleo-G474RE`), install `PlatformIO` inside your `.venv` and grant your Linux user non-root USB serial/SWD permissions so uploads never fail with `Permission denied: '/dev/ttyACM0'`:
    ```bash
    pip install platformio
@@ -43,6 +43,50 @@ If this is your very first engineering roadmap, set up your computer **once** he
    # Build, flash over USB, and open serial monitor at 115200 bps:
    pio run -t upload && pio device monitor -b 115200
    ```
+4. **Canonical Tier-2 RTOS & Robotics Stack Installation (`Zephyr RTOS / west`, `ROS 2 Jazzy`, `colcon` & `micro_ros_agent`):**
+   Before running `west build`, `source /opt/ros/jazzy/setup.bash`, `colcon build`, or `ros2 run micro_ros_agent` in Pass 2 (`04-embedded.T2.04c`–`T2.04d` and `06-robotics.T2.06a`–`T2.06b`), install the Tier-2 stack once on **Ubuntu 24.04 LTS / Windows 11 WSL2**:
+   - **4a. Zephyr RTOS (`west`) & Zephyr SDK (`native_sim` + ARM Cortex-M Toolchain for `04-embedded.T2.04c`):**
+     ```bash
+     sudo apt update && sudo apt install -y --no-install-recommends \
+       git cmake ninja-build gperf ccache dfu-util device-tree-compiler wget \
+       xz-utils file make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1
+     source ~/mechalab/.venv/bin/activate
+     pip install west
+     west init ~/zephyrproject && cd ~/zephyrproject && west update
+     west zephyr-export
+     west packages pip --install
+     west sdk install                     # Downloads & registers Zephyr ARM/POSIX toolchains
+     west --version                       # Verify west CLI is ready
+     ```
+   - **4b. ROS 2 Jazzy Jalisco, `colcon`, `ros2_control` & `MCAP` Bag Tools (`06-robotics.T2.06a`–`T2.06b`):**
+     ```bash
+     sudo apt update && sudo apt install -y software-properties-common curl locales
+     sudo locale-gen en_US en_US.UTF-8 && sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+     sudo add-apt-repository universe -y
+     sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+     sudo apt update && sudo apt install -y \
+       ros-jazzy-desktop python3-colcon-common-extensions python3-rosdep \
+       ros-jazzy-ros2-control ros-jazzy-ros2-controllers ros-jazzy-rosbag2-storage-mcap
+     sudo rosdep init || true && rosdep update
+     source /opt/ros/jazzy/setup.bash
+     ros2 --version && colcon version-check
+     ```
+   - **4c. `micro_ros_agent` Bridge (`04-embedded.T2.04d` — Native `colcon` Build OR Zero-Install Docker 1-Liner):**
+     ```bash
+     # Option 1 — Build micro_ros_agent natively in ~/microros_ws with colcon:
+     source /opt/ros/jazzy/setup.bash
+     mkdir -p ~/microros_ws/src && cd ~/microros_ws
+     git clone -b jazzy https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
+     sudo apt update && rosdep install --from-paths src --ignore-src -y
+     colcon build && source install/local_setup.bash
+     ros2 run micro_ros_setup create_agent_ws.sh
+     ros2 run micro_ros_setup build_agent.sh
+     source ~/microros_ws/install/local_setup.bash
+
+     # Option 2 — Run official prebuilt Docker image directly (zero compilation):
+     docker run -it --rm --net=host microros/micro-ros-agent:jazzy udp4 --port 8888
+     ```
 
 ---
 

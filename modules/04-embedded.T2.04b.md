@@ -103,10 +103,10 @@ Suppose a 12-bit (`0..4095`) MIT-mode torque command encodes $\tau \in [-18.0\te
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Python Dictionaries, CLI & Clock Frequency Units*).
-  - **Prerequisite Bridge Modules:** [`04-embedded.T1.04a`](04-embedded.T1.04a.md) (*C Structs & Macros*) and [`04-embedded.T2.04a`](04-embedded.T2.04a.md) (*DMA & Peripherals*).
-  - **Core Concepts to Review First:** Zephyr `west build` hermetic pipeline, Devicetree (`.dts`/`.overlay`) compile-time macro resolution (`DT_NODELABEL`, `GPIO_DT_SPEC_GET`, `SPI_DT_SPEC_GET`), and `prj.conf` Kconfig validation in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [Zephyr Project Official Devicetree & Kconfig Guide (`docs.zephyrproject.org`)](https://docs.zephyrproject.org/latest/build/dts/index.html) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
+  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Python Loops, Lists, Timing Units & Linear Range Scaling*).
+  - **Prerequisite Bridge Modules:** [`04-embedded.T1.04a`](04-embedded.T1.04a.md) (*Fixed-Width Integers & Bitwise Masks*) and [`04-embedded.T2.04a`](04-embedded.T2.04a.md) (*Non-Blocking Tick Schedulers & DMA*).
+  - **Core Concepts to Review First:** Rate-Monotonic CPU utilization $U = \sum C_i / T_i$ with `vTaskDelayUntil()`, FreeRTOS Priority Inheritance mutexes (`xSemaphoreCreateMutex()`, bounding blocking time to $R_H = C_H + B_i$), and MIT Cheetah fixed-point quantization $u = \operatorname{round}\!\left(\frac{x - x_{\min}}{x_{\max} - x_{\min}}(2^N - 1)\right)$ in `## 3. Formalization` and `## 4. Worked example` above.
+  - **Study Links & Resources:** [Mastering the FreeRTOS Real Time Kernel (`freertos.org`)](https://www.freertos.org/Documentation/02-Kernel/03-Supported-devices/02-FreeRTOS-Documentation-and-Books) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
 
 ## 6. Simulation path
 Open **Tab 8 (Real-Time Concurrency, Scheduling & CAN Framing)** in the MechaLab Workbench (`npm run dev`) to inspect preemptive task timelines and priority inheritance mutex behavior.

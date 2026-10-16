@@ -119,19 +119,32 @@ Suppose a micro-ROS node communicates with `micro_ros_agent` over an `8N1` UART 
 
 ## 6. Simulation path
 You can run a complete **micro-ROS Client + `micro_ros_agent`** loop on Linux using Zephyr's `native_sim` target or the host UDP transport **with zero physical microcontroller hardware**, or bridge a physical `STM32G4`/`ESP32` over USB-UART:
+- **One-Time `micro_ros_agent` Setup (Ubuntu 24.04 / WSL2 — see [`resources/open-source-toolchains.md` §0.4b–4c](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):**
+  `micro_ros_agent` is not installed by default in `ros-jazzy-desktop`; build it once in `~/microros_ws` with `colcon` (after installing ROS 2 Jazzy + `python3-colcon-common-extensions` per `resources/open-source-toolchains.md` §0.4b) **or** run the official Docker container directly:
+  ```bash
+  # One-Time Native Build of micro_ros_agent (Option 1):
+  source /opt/ros/jazzy/setup.bash
+  mkdir -p ~/microros_ws/src && cd ~/microros_ws
+  git clone -b jazzy https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
+  sudo apt update && rosdep install --from-paths src --ignore-src -y
+  colcon build && source install/local_setup.bash
+  ros2 run micro_ros_setup create_agent_ws.sh
+  ros2 run micro_ros_setup build_agent.sh
+  source ~/microros_ws/install/local_setup.bash
+  ```
 ```bash
 # Path A — 100% Hardware-Free Host Simulation (UDP port 8888):
 ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+# (Or zero-build Docker equivalent: docker run -it --rm --net=host microros/micro-ros-agent:jazzy udp4 --port 8888)
 # In Terminal 2: run the Zephyr native_sim or host micro-ROS client binary
 ./build/zephyr/zephyr.exe
 
 # Path B — Physical Microcontroller over USB-UART (/dev/ttyACM0 at 921600 bps):
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 921600
 # In Terminal 2: verify live MCU topics on the ROS 2 graph
-ros2 topic list
-ros2 topic echo /joint_states
+source /opt/ros/jazzy/setup.bash && ros2 topic list && ros2 topic echo /joint_states
 ```
-Or inspect the MCU-to-host packet framing and real-time scheduling budgets in **Tab 8** of the MechaLab Workbench (`npm run dev`).
+Or inspect the MCU-to-host packet framing and real-time scheduling budgets in **Tab 8 (Attitude ESKF & SeqLock)** of the MechaLab Workbench (`npm run dev`).
 ```text
 [MCU Task_Ctrl (1 kHz)] --(k_mutex / Queue)--> [MCU Task_uROS: rclc_executor (500 Hz)]
                                                         || (XRCE-DDS over CAN-FD / UART DMA / UDP)

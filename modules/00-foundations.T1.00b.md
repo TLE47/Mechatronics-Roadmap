@@ -40,12 +40,12 @@ $$
 
    For $y = [0.5, 0.8, 1.1, 1.4, 1.7]\text{ V}$ ($N = 5$), $\bar{y} = \frac{5.5\text{ V}}{5} = 1.10\text{ V}$ and $\Delta y_{\text{pp}} = 1.7\text{ V} - 0.5\text{ V} = 1.20\text{ V}$. To iterate over two lists in parallel (such as `target` and `measured` in the Exercise below), `zip(target, measured)` pairs corresponding items `(target[0], measured[0]), (target[1], measured[1]), ...`. In interactive desktop scripts, `numpy` arrays (`np.array(t_s)`) and `matplotlib.pyplot` (`plt.plot(t_s, y_v); plt.xlabel("Time [s]"); plt.savefig("plot.png")`) plot these arrays in 3 lines.
 3. **Python Virtual Environments (`venv` / `PEP 668`), Terminal & Git Workflow:**
-   - **One-Time Virtual Environment Setup (`venv`):** Modern Linux (`Ubuntu 24.04`) and macOS block system-wide `pip install` with `error: externally-managed-environment (PEP 668)`. Create and activate a local `.venv` once in your workspace (see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):
+   - **Activate Your Cloned Repository `.venv` & Install Scientific Packages:** Modern Linux (`Ubuntu 24.04`) and macOS block system-wide `pip install` with `error: externally-managed-environment (PEP 668)`. Inside the `mechalab` repository you cloned in [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (`git clone https://github.com/TLE47/Mechatronics-Roadmap.git mechalab && cd mechalab`, see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)), activate `.venv` and install `numpy`, `matplotlib`, and `scipy`:
      ```bash
-     python3 -m venv .venv && source .venv/bin/activate   # Windows PowerShell: .venv\Scripts\Activate.ps1
+     cd mechalab && source .venv/bin/activate   # Windows PowerShell: .\.venv\Scripts\Activate.ps1
      pip install --upgrade pip numpy matplotlib scipy
      ```
-   - **CLI & Git Commands:** `pwd` prints the current folder, `ls` lists files, `cd <dir>` changes folder, `python3 script.py` executes the file, `git status` inspects modified files, `git diff` displays line-by-line edits, and `git commit -am "msg"` records a versioned snapshot.
+   - **CLI & Git Commands:** `pwd` prints the current folder, `ls` lists files, `cd <dir>` changes folder, `python3 script.py` executes the file, `git status` inspects modified files in your cloned `mechalab` repo, `git diff` displays line-by-line edits, and `git commit -am "msg"` records a versioned snapshot.
 
 ## 4. Worked example
 Generate $N = 5$ timestamps $t = [0.0, 0.1, 0.2, 0.3, 0.4]\text{ s}$, evaluate sensor readings $y = 3.0 t + 0.5\text{ V}$ using parameters stored in a dictionary, and verify the first/last elements, mean ($1.10\text{ V}$), and peak-to-peak span ($1.20\text{ V}$).

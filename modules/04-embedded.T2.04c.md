@@ -124,13 +124,24 @@ A Zephyr application defines two preemptible threads via `K_THREAD_DEFINE`: `thr
 
 ## 6. Simulation path
 You can build and run Zephyr RTOS applications natively on any Linux workstation or CI container **without physical microcontroller hardware** using Zephyr's POSIX architecture target (`native_sim`), or flash an `STM32G4` board (`nucleo_g474re`) using the exact same 4-file project layout:
+- **One-Time `Zephyr RTOS` + `west` + `Zephyr SDK` Installation (Ubuntu 24.04 / WSL2 — see [`resources/open-source-toolchains.md` §0.4a](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):**
+  ```bash
+  sudo apt update && sudo apt install -y --no-install-recommends \
+    git cmake ninja-build gperf ccache dfu-util device-tree-compiler wget \
+    xz-utils file make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1
+  source ~/mechalab/.venv/bin/activate
+  pip install west
+  west init ~/zephyrproject && cd ~/zephyrproject && west update
+  west zephyr-export && west packages pip --install && west sdk install
+  ```
 - **Canonical 4-File Zephyr Application Layout (`my_actuator_app/`):**
   1. `CMakeLists.txt`: `cmake_minimum_required(VERSION 3.20.0)` / `find_package(Zephyr REQUIRED HINTS ENV{ZEPHYR_BASE})` / `project(actuator)` / `target_sources(app PRIVATE src/main.c)`
   2. `prj.conf`: `CONFIG_CAN=y` and `CONFIG_SPI=y`
   3. `app.overlay`: `&fdcan1 { status = "okay"; bus-speed = <1000000>; bus-speed-data = <5000000>; };`
   4. `src/main.c`: Defines static threads (`K_THREAD_DEFINE`), priority-inheritance mutex (`K_MUTEX_DEFINE`), and checks `device_is_ready(DEVICE_DT_GET(DT_NODELABEL(fdcan1)))`.
 ```bash
-# Path A — 100% Hardware-Free Linux Simulation (native_sim):
+# Path A — 100% Hardware-Free Linux Simulation (native_sim inside ~/zephyrproject/zephyr):
+cd ~/zephyrproject/zephyr
 west build -b native_sim samples/synchronization
 ./build/zephyr/zephyr.exe
 
@@ -138,7 +149,8 @@ west build -b native_sim samples/synchronization
 west build -b nucleo_g474re my_actuator_app -- -DDTC_OVERLAY_FILE=app.overlay
 west flash
 ```
-Or open **Tab 8 (Real-Time Concurrency & Scheduling)** in the MechaLab Workbench (`npm run dev`) to compare priority inheritance vs. priority inversion timelines.
+*(If `west: command not found` occurs, activate your virtual environment with `source ~/mechalab/.venv/bin/activate`.)*
+Or open **Tab 8 (Attitude ESKF & SeqLock)** in the MechaLab Workbench (`npm run dev`) to compare priority inheritance vs. priority inversion timelines.
 ```text
 [app.overlay (.dts) + prj.conf (Kconfig)] ==(west build -b native_sim / nucleo_g474re)==> [Static Zephyr ELF: K_THREAD_DEFINE + K_MUTEX_DEFINE]
 ```
