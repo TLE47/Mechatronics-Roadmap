@@ -1,0 +1,203 @@
+---
+lesson_id: P.7
+title: "Base SI Units and Metric Prefixes (M, k, m, µ)"
+ideas:
+  - "Base SI units for mechatronics"
+  - "Metric prefixes (M, k, m, µ)"
+typical_hours: "1.0-1.5"
+slow_learner_hours: "2.0-2.5"
+---
+
+# Lesson P.7: Base SI Units and Metric Prefixes (`M`, `k`, `m`, `µ`)
+
+## Goal
+Identify the base SI units used in mechatronics (`m`, `kg`, `s`, `A`, `V`, `Ω`) and convert values with metric prefixes (`M`, `k`, `m`, `µ`) into base units before plugging them into physics or circuit equations.
+
+- **New ideas (max 2):**
+  1. **Base SI units for mechatronics**: Why physics and electronics formulas require standard base units (meters `m`, kilograms `kg`, seconds `s`, Amperes `A`, Volts `V`, Ohms `Ω`).
+  2. **Metric prefixes (`M`, `k`, `m`, `µ`)**: Scaling numbers by powers of $1{,}000$ (`mega` $= 10^6$, `kilo` $= 10^3$, `milli` $= 10^{-3}$, `micro` $= 10^{-6}$).
+- **New syntax:** Python scientific notation `1e6`, `1e3`, `1e-3`, `1e-6`.
+- **Estimated time (untimed guesses):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
+
+---
+
+## Prerequisites
+- [Lesson P.2: Computer Arithmetic and Order of Operations](P.2-arithmetic-and-order-of-operations.md)
+- [Lesson P.6: Loading Modules (`import`) & Automated Self-Checks (`assert`)](P.6-modules-and-automated-asserts.md)
+
+```mermaid
+flowchart LR
+    P6["P.6: Modules & Automated Asserts"] --> P7["P.7: SI Units & Metric Prefixes"]
+    P7 --> P8["P.8: Frequency (Hz) & Binary Bits"]
+```
+
+---
+
+## Learn
+
+### Idea 1: Base SI units for mechatronics
+- **Primary resource:** [MathsIsFun — Metric System of Measurement](https://www.mathsisfun.com/measure/metric-system.html) `[HTTP 200 — Verified by scripts/check_links.py]`
+  - **What to read:** Read exact headings **`Metric System of Measurement`**, **`Meter`**, **`Kilogram`**, and **`Second`**.
+  - **What to skip:** Skip **`Volume`** (liters) and **`Temperature`**.
+  - **Key takeaway:** Every equation in physics and electronics assumes your numbers are expressed in **base SI units**: length in **meters (`m`)**, mass in **kilograms (`kg`)**, time in **seconds (`s`)**, current in **Amperes (`A`)**, voltage in **Volts (`V`)**, and resistance in **Ohms (`Ω`)**.
+
+### Idea 2: Metric prefixes (`M`, `k`, `m`, `µ`)
+- **Primary resource:** [MathsIsFun — Metric Numbers (Kilo, Mega, Milli, Micro)](https://www.mathsisfun.com/metric-numbers.html) `[HTTP 200 — Verified by scripts/check_links.py]`
+  - **What to read:** Read exact headings **`Metric Numbers`**, **`Common Big and Small Numbers`**, and **`Much Bigger and Smaller`**.
+  - **What to skip:** Skip `tera`, `peta`, `exa`, and `femto`—in beginner mechatronics you primarily use `M`, `k`, `m`, and `µ` (plus `n` for small capacitors).
+  - **Key takeaway:** A **metric prefix** is a multiplier placed in front of a unit: **mega (`M`)** $= \times 1{,}000{,}000$ ($10^6$), **kilo (`k`)** $= \times 1{,}000$ ($10^3$), **milli (`m`)** $= \div 1{,}000$ ($10^{-3}$), and **micro (`µ` or `u`)** $= \div 1{,}000{,}000$ ($10^{-6}$). Always convert prefixed numbers into base SI units *before* multiplying or dividing!
+
+### Bridge Notes
+Mixing un-converted prefixes into an equation is the #1 calculation error in beginner electronics and robotics. Every law you will meet in this roadmap—such as Ohm's Law ($V = I \cdot R$), electrical power ($P = V \cdot I$), capacitor charging time ($\tau = R \cdot C$), and lever torque ($\tau = m \cdot g \cdot L \cdot \cos\theta$)—strictly expects **un-prefixed base SI units**: Volts (`V`), Amperes (`A`), Ohms (`Ω`), Farads (`F`), seconds (`s`), kilograms (`kg`), and meters (`m`).
+
+For example, if a datasheet says an LED draws $15\text{ mA}$ (milliamps) through a $220\ \Omega$ resistor and you forget to convert milliamps to Amperes before multiplying $15 \times 220 = 3{,}300\text{ V}$, your answer is off by a factor of **$1{,}000\times$**! Instead, follow a two-step habit on every problem:
+1. **Convert all inputs to base SI units on the very first line of code** (so $15\text{ mA} \rightarrow 0.015\text{ A}$, $4.7\text{ k}\Omega \rightarrow 4{,}700\ \Omega$, and $250\text{ mm} \rightarrow 0.25\text{ m}$).
+2. **Run the physics formula purely in base SI units**, and only convert back to `mA`, `ms`, or `mm` at the end if a human-friendly display label needs it. In Python, scientific notation (`1e-3` for $10^{-3} = 0.001$ and `1e-6` for $10^{-6} = 0.000001$) makes prefix conversion clean and typo-proof:
+
+| Prefix | Symbol | Multiplier | Power of 10 | Python Shorthand | Hardware Example |
+| :--- | :---: | :--- | :---: | :---: | :--- |
+| **mega** | `M` | $\times 1{,}000{,}000$ | $10^{6}$ | `* 1e6` | $1\text{ M}\Omega = 1{,}000{,}000\ \Omega$ |
+| **kilo** | `k` | $\times 1{,}000$ | $10^{3}$ | `* 1e3` | $4.7\text{ k}\Omega = 4{,}700\ \Omega$ |
+| **milli** | `m` | $\div 1{,}000$ | $10^{-3}$ | `* 1e-3` | $20\text{ mA} = 0.020\text{ A}$, $5\text{ ms} = 0.005\text{ s}$ |
+| **micro** | `µ` (`u`) | $\div 1{,}000{,}000$ | $10^{-6}$ | `* 1e-6` | $100\ \mu\text{F} = 0.000100\text{ F}$, $500\ \mu\text{s} = 0.0005\text{ s}$ |
+
+---
+
+## Do it yourself
+
+- **What is simulated and in which tool:** Runs 100% in Python (zero-install in [futurecoder.io](https://futurecoder.io/course/) `[verify in-app]` or locally via `python3`).
+- **What is real-hardware only:** Nothing in this lesson requires hardware.
+
+### Starter Code (runs as-is — fill in the TODOs)
+Complete `ma_to_amps` (`TODO 1`), `kohms_to_ohms` (`TODO 2`), and `us_to_seconds` (`TODO 3`) to convert prefixed hardware values into base SI units:
+
+```python
+def ma_to_amps(current_ma):
+    # TODO 1: Convert milliamps (mA) to Amperes (A) by dividing by 1000.0 (or * 1e-3)
+    return 0.0
+
+
+def kohms_to_ohms(r_kohms):
+    # TODO 2: Convert kilo-ohms (kΩ) to Ohms (Ω) by multiplying by 1000.0 (or * 1e3)
+    return 0.0
+
+
+def us_to_seconds(time_us):
+    # TODO 3: Convert microseconds (µs) to seconds (s) by dividing by 1_000_000.0 (or * 1e-6)
+    return 0.0
+
+
+i_a = ma_to_amps(15.0)
+r_ohm = kohms_to_ohms(0.22)
+v_drop = i_a * r_ohm
+t_sec = us_to_seconds(500.0)
+
+print(f"15.0 mA = {i_a:.4f} A | 0.22 kOhm = {r_ohm:.1f} Ohm | V = {v_drop:.2f} V")
+print(f"500.0 us = {t_sec:.6f} s")
+```
+
+### Expected Output
+When all three `TODO`s are completed, running the script prints:
+
+```text
+15.0 mA = 0.0150 A | 0.22 kOhm = 220.0 Ohm | V = 3.30 V
+500.0 us = 0.000500 s
+```
+
+### Hint Ladder
+
+<details>
+<summary><strong>Hint 1 (Concept nudge)</strong></summary>
+
+`milli` (`m`) divides by `1000.0`, `kilo` (`k`) multiplies by `1000.0`, and `micro` (`µ`) divides by `1000000.0`.
+</details>
+
+<details>
+<summary><strong>Hint 2 (Formula / structure)</strong></summary>
+
+```python
+def ma_to_amps(current_ma):
+    return current_ma / 1000.0
+
+def kohms_to_ohms(r_kohms):
+    return r_kohms * 1000.0
+
+def us_to_seconds(time_us):
+    return time_us / 1000000.0
+```
+</details>
+
+<details>
+<summary><strong>Full Solution</strong></summary>
+
+```python
+def ma_to_amps(current_ma):
+    return current_ma / 1000.0
+
+
+def kohms_to_ohms(r_kohms):
+    return r_kohms * 1000.0
+
+
+def us_to_seconds(time_us):
+    return time_us / 1000000.0
+
+
+i_a = ma_to_amps(15.0)
+r_ohm = kohms_to_ohms(0.22)
+v_drop = i_a * r_ohm
+t_sec = us_to_seconds(500.0)
+
+assert round(i_a, 4) == 0.0150
+assert round(r_ohm, 1) == 220.0
+assert round(v_drop, 2) == 3.30
+assert round(t_sec, 6) == 0.000500
+
+print(f"15.0 mA = {i_a:.4f} A | 0.22 kOhm = {r_ohm:.1f} Ohm | V = {v_drop:.2f} V")
+print(f"500.0 us = {t_sec:.6f} s")
+```
+</details>
+
+---
+
+## Common mistakes & troubleshooting
+- **Confusing lowercase `m` (`milli` $= 10^{-3}$) with uppercase `M` (`mega` $= 10^6$):** Those two letters differ by a factor of **one billion ($10^9$)**! A $10\text{ m}\Omega$ current shunt is $0.01\ \Omega$, whereas a $10\text{ M}\Omega$ multimeter input is $10{,}000{,}000\ \Omega$.
+- **Multiplying instead of dividing for `milli` or `micro`:** Ask yourself: *"Is a millimeter smaller or larger than a meter?"* Smaller—so $250\text{ mm} = 0.25\text{ m}$, never $250{,}000\text{ m}$.
+
+---
+
+## Check yourself
+
+1. **Prefix conversion drill:** Convert each measurement into its base SI unit: (a) $250\text{ mm}$ to `m`, (b) $4.7\text{ k}\Omega$ to `Ω`, and (c) $100\ \mu\text{F}$ to `F`.
+   <details>
+   <summary><strong>Answer</strong></summary>
+
+   - (a) $250\text{ mm} = 250 \div 1000 = \mathbf{0.25\text{ m}}$
+   - (b) $4.7\text{ k}\Omega = 4.7 \times 1000 = \mathbf{4{,}700\ \Omega}$
+   - (c) $100\ \mu\text{F} = 100 \div 1{,}000{,}000 = \mathbf{0.0001\text{ F}}$ (`100e-6`)
+   </details>
+
+2. **Ohm's Law with prefixes:** How many Volts ($V = I \cdot R$) appear across a $10\text{ k}\Omega$ resistor carrying $0.5\text{ mA}$ of current?
+   <details>
+   <summary><strong>Answer</strong></summary>
+
+   Convert first: $I = 0.5\text{ mA} = 0.0005\text{ A}$ and $R = 10\text{ k}\Omega = 10{,}000\ \Omega$. Then $V = 0.0005\text{ A} \times 10{,}000\ \Omega = \mathbf{5.0\text{ V}}$.
+   </details>
+
+3. **Time conversion:** How many milliseconds (`ms`) and how many microseconds (`µs`) are in $0.002\text{ s}$?
+   <details>
+   <summary><strong>Answer</strong></summary>
+
+   $0.002\text{ s} \times 1000 = \mathbf{2.0\text{ ms}}$, and $0.002\text{ s} \times 1{,}000{,}000 = \mathbf{2{,}000\ \mu\text{s}}$.
+   </details>
+
+---
+
+## Recap
+- Always convert measurements into **base SI units** (`m`, `kg`, `s`, `A`, `V`, `Ω`, `F`) before plugging them into formulas.
+- **Mega (`M`)** $= 10^6$, **kilo (`k`)** $= 10^3$, **milli (`m`)** $= 10^{-3}$, and **micro (`µ`)** $= 10^{-6}$.
+
+### You're ready to move on when...
+- [ ] You can convert `mm`, `mA`, `ms`, `µs`, `µF`, and `kΩ` into base SI units without guessing whether to multiply or divide.
+- [ ] Your **Do it yourself** script passes all assertions and prints `V = 3.30 V`.
+- **Next lesson:** [Lesson P.8: Cycle Frequency (`Hz`), Period & Binary Bits](P.8-frequency-and-binary-bits.md)

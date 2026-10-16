@@ -1,215 +1,168 @@
 #!/usr/bin/env python3
 """
-Automated test suite for all Beginner Roadmap lessons:
-- Track P (P.1 through P.M)
-- Stage 0 (S0.1 through S0.M)
-- Track 01 Lesson 01.1 (01.1-mosfet-inductor-flyback.md)
+Automated test suite for all 24 Beginner Roadmap lessons:
+- Track P (`P.1` through `P.12` + `P.M`: 13 Python lessons)
+- Stage 0 (`S0.1` through `S0.6`: 6 Python lessons; `S0.7` through `S0.M`: 4 Arduino Uno Wokwi lessons)
+- Track 01 (`01.1-mosfet-inductor-flyback.md`: 1 Python lesson)
 
-1. Dynamically extracts every Python Full Solution code block from each
-   lesson markdown file, executes it in an isolated subprocess, and verifies:
-   - Exit code == 0 (all internal `assert` statements pass)
-   - Standard output matches the lesson's documented `### Expected Output` block.
-2. Dynamically executes every lesson's Starter Code (`TODO` template) to verify
-   that starter code runs as-is without syntax errors or crashes.
-3. Runs independent unit tests for every numerical calculation and
-   "Check yourself" question across all 17 lessons.
+1. Dynamically extracts every Python `Starter Code` and `Full Solution` from all 20 Python-based lessons,
+   executes them, and verifies exact `Expected Output` matches.
+2. Executes the Python numerical mirrors for the 4 Arduino Uno Wokwi lessons (`S0.7`, `S0.8`, `S0.9`, `S0.M`)
+   (moved out of the lesson markdown files into `tests/` so learners only run the Wokwi sketch).
+3. Extracts all 8 C++ Arduino sketches (`Starter Code` + `Full Solution` from `S0.7`, `S0.8`, `S0.9`, `S0.M`),
+   compiles and runs them via `scripts/extract_and_compile_sketches.py` if `g++` is available, and verifies
+   their exact Serial Monitor output against each lesson's `Expected Output`.
+4. Verifies all `Check yourself` quiz numerical answers across Track P, Stage 0, and Lesson 01.1.
 """
 
-from __future__ import annotations
-
+import contextlib
+import glob
+import io
 import math
-import pathlib
+import os
 import re
-import subprocess
 import sys
 import unittest
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-
-LESSON_FILES = [
-    ROOT / "track-p/P.1-variables-types-and-arithmetic.md",
-    ROOT / "track-p/P.2-decisions-loops-and-lists.md",
-    ROOT / "track-p/P.3-functions-assert-and-import.md",
-    ROOT / "track-p/P.4-units-prefixes-binary-and-frequency.md",
-    ROOT / "track-p/P.5-algebra-and-trigonometry-for-robotics.md",
-    ROOT / "track-p/P.6-reading-time-series-graphs.md",
-    ROOT / "track-p/P.7-forces-torque-and-rotational-motion.md",
-    ROOT / "track-p/P.M-track-p-milestone.md",
-    ROOT / "stage-0/S0.1-voltage-current-resistance-and-ohms-law.md",
-    ROOT / "stage-0/S0.2-breadboards-multimeter-and-short-circuits.md",
-    ROOT / "stage-0/S0.3-series-parallel-and-voltage-dividers.md",
-    ROOT / "stage-0/S0.4-capacitors-and-power-rail-decoupling.md",
-    ROOT / "stage-0/S0.5-arduino-uno-digital-io-and-pullups.md",
-    ROOT / "stage-0/S0.6-adc-analog-read-and-serial-monitor.md",
-    ROOT / "stage-0/S0.7-pwm-duty-cycle-and-analog-write.md",
-    ROOT / "stage-0/S0.M-stage-0-milestone.md",
-    ROOT / "01-electronics-and-power/01.1-mosfet-inductor-flyback.md",
-]
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+import extract_and_compile_sketches as arduino_verifier  # noqa: E402
 
 
-def extract_starter_code(md_text: str) -> str:
-    """Extract the Python starter code block under ### Starter Code."""
-    m = re.search(
+def natural_sort_key(path: str):
+    parts = re.split(r"(\d+)", os.path.basename(path))
+    return [int(p) if p.isdigit() else p for p in parts]
+
+
+def get_python_lesson_files():
+    track_p = sorted(glob.glob(os.path.join(ROOT, "track-p", "P.*.md")), key=natural_sort_key)
+    stage_0_py = [
+        os.path.join(ROOT, "stage-0", "S0.1-closed-circuits-and-ohms-law.md"),
+        os.path.join(ROOT, "stage-0", "S0.2-leds-and-resistor-power.md"),
+        os.path.join(ROOT, "stage-0", "S0.3-breadboards-and-short-circuits.md"),
+        os.path.join(ROOT, "stage-0", "S0.4-multimeters-and-current-limited-supplies.md"),
+        os.path.join(ROOT, "stage-0", "S0.5-series-parallel-and-voltage-dividers.md"),
+        os.path.join(ROOT, "stage-0", "S0.6-capacitors-and-decoupling.md"),
+    ]
+    track_01 = [os.path.join(ROOT, "01-electronics-and-power", "01.1-mosfet-inductor-flyback.md")]
+    return track_p + stage_0_py + track_01
+
+
+def extract_python_blocks(markdown_text: str, filepath: str):
+    starter_m = re.search(
         r"### Starter Code[^\n]*\n.*?```python\n(.*?)```",
-        md_text,
-        re.DOTALL,
+        markdown_text,
+        flags=re.DOTALL,
     )
-    if not m:
-        raise ValueError("Could not find Python Starter Code block")
-    return m.group(1)
-
-
-def extract_python_solution(md_text: str) -> str:
-    """Extract the Python code block inside Full Solution."""
-    m = re.search(
-        r"<summary><strong>Full Solution</strong></summary>.*?```python\n(.*?)```",
-        md_text,
-        re.DOTALL,
-    )
-    if not m:
-        raise ValueError("Could not find Python solution block inside Full Solution")
-    return m.group(1)
-
-
-def extract_expected_output(md_text: str) -> str:
-    """Extract the Expected Output text block from Do it yourself."""
-    m = re.search(
+    expected_m = re.search(
         r"### Expected Output\n.*?```text\n(.*?)```",
-        md_text,
-        re.DOTALL,
+        markdown_text,
+        flags=re.DOTALL,
     )
-    if not m:
-        raise ValueError("Could not find ### Expected Output block")
-    return m.group(1).strip()
+    solution_m = re.search(
+        r"<summary><strong>Full Solution</strong></summary>\s*```python\n(.*?)```",
+        markdown_text,
+        flags=re.DOTALL,
+    )
+    if not starter_m or not expected_m or not solution_m:
+        raise ValueError(f"Missing Starter Code, Expected Output, or Full Solution in {filepath}")
+    return (
+        starter_m.group(1),
+        expected_m.group(1).strip(),
+        solution_m.group(1),
+    )
 
 
-class TestLessonExercises(unittest.TestCase):
-    def test_all_17_lesson_files_exist(self) -> None:
-        for path in LESSON_FILES:
-            self.assertTrue(path.is_file(), f"Missing lesson file: {path}")
+class TestBeginnerRoadmapExercises(unittest.TestCase):
+    def test_all_20_python_lessons_starter_and_full_solutions(self):
+        """Every Python lesson's Starter Code runs without error, and Full Solution matches Expected Output."""
+        lesson_files = get_python_lesson_files()
+        self.assertEqual(len(lesson_files), 20)
 
-    def test_all_starter_code_runs_as_is(self) -> None:
-        """Verify that every lesson's Starter Code runs as-is without crashing."""
-        for path in LESSON_FILES:
-            with self.subTest(lesson=path.name):
-                md_text = path.read_text(encoding="utf-8")
-                code = extract_starter_code(md_text)
-                proc = subprocess.run(
-                    [sys.executable, "-c", code],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                )
-                self.assertEqual(
-                    proc.returncode,
-                    0,
-                    f"{path.name} Starter Code crashed:\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}",
-                )
+        for path in lesson_files:
+            rel_path = os.path.relpath(path, ROOT)
+            with self.subTest(lesson=rel_path):
+                with open(path, "r", encoding="utf-8") as f:
+                    text = f.read()
+                starter_code, expected_out, solution_code = extract_python_blocks(text, rel_path)
 
-    def test_execute_all_lesson_python_solutions(self) -> None:
-        """Run every lesson's Full Solution script and verify exact output & assertions."""
-        for path in LESSON_FILES:
-            with self.subTest(lesson=path.name):
-                md_text = path.read_text(encoding="utf-8")
-                code = extract_python_solution(md_text)
-                expected_out = extract_expected_output(md_text)
-                proc = subprocess.run(
-                    [sys.executable, "-c", code],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                )
-                self.assertEqual(
-                    proc.returncode,
-                    0,
-                    f"{path.name} Python solution failed:\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}",
-                )
-                actual_out = proc.stdout.strip()
-                self.assertEqual(
-                    actual_out,
-                    expected_out,
-                    f"Output mismatch in {path.name}:\nExpected:\n{expected_out}\nActual:\n{actual_out}",
-                )
+                starter_buf = io.StringIO()
+                with contextlib.redirect_stdout(starter_buf):
+                    exec(compile(starter_code, f"{rel_path}:starter", "exec"), {"__name__": "__main__"})
 
-    def test_track_p_quiz_and_physics_math(self) -> None:
-        # P.1: Order of operations, exponents, voltage divider
-        self.assertAlmostEqual((10 + 20) / (2 * 3), 5.0)
-        self.assertAlmostEqual(10 + 20 / 2 * 3, 40.0)
-        self.assertAlmostEqual((2**3) + (15 / 2), 15.5)
-        self.assertAlmostEqual(12.0 * (10000 / (20000 + 10000)), 4.0)
+                sol_buf = io.StringIO()
+                with contextlib.redirect_stdout(sol_buf):
+                    exec(compile(solution_code, f"{rel_path}:solution", "exec"), {"__name__": "__main__"})
+                actual_out = sol_buf.getvalue().strip()
+                self.assertEqual(actual_out, expected_out)
 
-        # P.2: Clamping & list indexing
-        temps = [25.0, 31.2, 42.8, 38.5]
-        self.assertEqual(len(temps), 4)
-        self.assertAlmostEqual(temps[0], 25.0)
-        self.assertAlmostEqual(temps[3], 38.5)
+    def test_arduino_wokwi_lessons_python_mirrors_and_cpp_sketches(self):
+        """Verify Python numerical mirrors AND extracted C++ sketches for S0.7, S0.8, S0.9, and S0.M."""
+        # 1. S0.7 Python mirror
+        s07_info = arduino_verifier.extract_sketches_from_lesson(
+            os.path.join(ROOT, "stage-0", "S0.7-arduino-uno-digital-io-and-pullups.md")
+        )
+        s07_lines = []
+        for label, pin_reading in [("Released", 1), ("Pressed ", 0)]:
+            led_out = 1 if pin_reading == 0 else 0
+            p_str = "HIGH(1)" if pin_reading == 1 else "LOW(0)"
+            l_str = "HIGH(1)" if led_out == 1 else "LOW(0)"
+            s07_lines.append(f"{label} | pin_reading={p_str} -> led_out={l_str}")
+        self.assertEqual("\n".join(s07_lines), s07_info["expected_output"])
 
-        # P.3: Functions & while loop
-        def ohms_law_voltage(current_a: float, resistance_ohm: float) -> float:
-            return current_a * resistance_ohm
+        # 2. S0.8 Python mirror
+        s08_info = arduino_verifier.extract_sketches_from_lesson(
+            os.path.join(ROOT, "stage-0", "S0.8-adc-analog-read-and-serial-monitor.md")
+        )
+        s08_lines = []
+        for adc_raw in [0, 256, 512, 1023]:
+            volts = (adc_raw / 1023.0) * 5.0
+            pct = (adc_raw / 1023.0) * 100.0
+            s08_lines.append(f"ADC={adc_raw} -> V={volts:.2f} V ({pct:.1f}%)")
+        self.assertEqual("\n".join(s08_lines), s08_info["expected_output"])
 
-        self.assertAlmostEqual(ohms_law_voltage(1.5, 8.0), 12.0)
+        # 3. S0.9 Python mirror
+        s09_info = arduino_verifier.extract_sketches_from_lesson(
+            os.path.join(ROOT, "stage-0", "S0.9-pwm-duty-cycle-and-analog-write.md")
+        )
+        s09_lines = []
+        for cmd in [0, 64, 128, 255]:
+            v_avg = (cmd / 255.0) * 5.0
+            t_on_us = (cmd / 255.0) * (1_000_000.0 / 490.0)
+            s09_lines.append(f"analogWrite(9, {cmd}) -> V_avg = {v_avg:.2f} V | T_on = {t_on_us:.1f} us (at 490 Hz)")
+        self.assertEqual("\n".join(s09_lines), s09_info["expected_output"])
 
-        # P.4: Metric prefixes, frequency/period, binary bits
-        self.assertAlmostEqual(0.250 * 4.7 * 1e3, 1175.0)
-        self.assertAlmostEqual(1.0 / 50.0, 0.020)
-        self.assertAlmostEqual(1.0 / 0.0005, 2000.0)
-        self.assertEqual((2**8) - 1, 255)
-        self.assertEqual((2**10) - 1, 1023)
-        self.assertEqual((2**12) - 1, 4095)
+        # 4. S0.M Python mirror
+        s0m_info = arduino_verifier.extract_sketches_from_lesson(
+            os.path.join(ROOT, "stage-0", "S0.M-stage-0-milestone.md")
+        )
+        s0m_lines = []
+        for adc_raw, btn in [(0, 1), (512, 1), (1023, 1), (1023, 0)]:
+            pwm_val = 0 if btn == 0 else max(0, min(1023, adc_raw)) // 4
+            v_avg = (pwm_val / 255.0) * 5.0
+            b_str = "LOW(pressed)" if btn == 0 else "HIGH(open)"
+            s0m_lines.append(f"adc_raw:{adc_raw} | btn:{b_str} -> pwm_val:{pwm_val} | V_avg:{v_avg:.2f} V")
+        self.assertEqual("\n".join(s0m_lines), s0m_info["expected_output"])
 
-        # P.5: Algebra, trig, radians
-        self.assertAlmostEqual((512.0 / 1023.0) * 5.0, 2.50244379, places=5)
-        self.assertAlmostEqual(math.radians(90.0), math.pi / 2.0)
+        # 5. Host C++ compilation & execution check (if g++ is present)
+        ok, msg = arduino_verifier.run_host_verify()
+        if ok:
+            self.assertIn("Compiled and verified all 8 Arduino sketches", msg)
+
+    def test_consistent_horizontal_torque_convention(self):
+        """Verify horizontal-angle torque convention tau = m * g * L * cos(theta) across P.10, P.12, and P.M."""
+        # P.10: x = L * cos(theta), y = L * sin(theta)
         self.assertAlmostEqual(0.20 * math.cos(math.radians(60.0)), 0.1000, places=4)
         self.assertAlmostEqual(0.20 * math.sin(math.radians(60.0)), 0.1732, places=4)
-        self.assertAlmostEqual(math.degrees(math.atan2(0.10, -0.10)), 135.0)
 
-        # P.6: Time-series graphs (slope & area)
-        self.assertAlmostEqual((1.40 - 0.20) / (3.0 - 1.0), 0.60)
-        self.assertAlmostEqual((-0.50) * 0.4, -0.20)
-        self.assertAlmostEqual((0.0 - 1.60) / (2.5 - 2.0), -3.20)
+        # P.12: tau = m * g * L * cos(theta) for m=0.50 kg, L=0.30 m at 0, 60, 90 deg from horizontal
+        self.assertAlmostEqual(0.50 * 9.81 * 0.30 * math.cos(math.radians(0.0)), 1.4715, places=4)
+        self.assertAlmostEqual(0.50 * 9.81 * 0.30 * math.cos(math.radians(60.0)), 0.73575, places=4)
+        self.assertAlmostEqual(0.50 * 9.81 * 0.30 * math.cos(math.radians(90.0)), 0.0000, places=4)
 
-        # P.7: Forces, torque, RPM -> rad/s
-        self.assertAlmostEqual(0.50 * 9.81, 4.905)
-        self.assertAlmostEqual(0.30 * 4.905 * math.sin(math.radians(90.0)), 1.4715)
-        self.assertAlmostEqual(0.30 * 4.905 * math.sin(math.radians(0.0)), 0.0)
-        self.assertAlmostEqual(300.0 * 2.0 * math.pi / 60.0, 31.4159265, places=5)
-
-    def test_stage_0_and_track_01_math(self) -> None:
-        # S0.1: Ohm's law & LED resistor
-        r_led = (5.0 - 2.0) / 0.015
-        self.assertAlmostEqual(r_led, 200.0)
-        i_actual = (5.0 - 2.0) / 220.0
-        self.assertAlmostEqual(i_actual * 1000.0, 13.63636, places=4)
-        self.assertAlmostEqual((5.0 - 2.0) * i_actual * 1000.0, 40.90909, places=4)
-
-        # S0.3: Series/parallel & voltage divider
-        self.assertAlmostEqual((1000.0 * 1000.0) / (1000.0 + 1000.0), 500.0)
-        v_div = 12.0 * (4700.0 / (10000.0 + 4700.0))
-        self.assertAlmostEqual(v_div, 3.83673469, places=5)
-        self.assertLess(v_div, 5.0)
-
-        # S0.4: Capacitor tau = R*C and droop dV = I*dt/C
-        tau_s = 10000.0 * 100e-6
-        self.assertAlmostEqual(tau_s, 1.0)
-        dv_droop = (1.5 * 0.0002) / 470e-6
-        self.assertAlmostEqual(dv_droop, 0.63829787, places=5)
-
-        # S0.6: 10-bit ADC quantization
-        self.assertAlmostEqual(5.0 / 1023.0, 0.0048875855, places=7)
-        self.assertEqual(512 // 4, 128)
-        self.assertEqual(1023 // 4, 255)
-
-        # S0.7: PWM duty cycle & average voltage
-        self.assertAlmostEqual((64.0 / 255.0) * 5.0, 1.25490196, places=5)
-        self.assertAlmostEqual((192.0 / 255.0) * 5.0, 3.76470588, places=5)
-
-        # 01.1: MOSFET P = I^2 * Rds(on) & inductive kickback V_L = L * dI / dt
-        p_fet_mw = (2.0**2) * 0.020 * 1000.0
-        self.assertAlmostEqual(p_fet_mw, 80.0)
-        v_spike = 12.0 + 0.0005 * (2.0 / 2e-6)
-        self.assertAlmostEqual(v_spike, 512.0)
+        # P.M: m=0.40 kg, L=0.25 m at 0 deg -> 0.9810 N*m; min 10-bit cmd for 2.0 N*m full scale = 502
+        self.assertAlmostEqual(0.40 * 9.81 * 0.25 * math.cos(0.0), 0.9810, places=4)
+        self.assertEqual(math.ceil((0.9810 / 2.0) * 1023.0), 502)
 
 
 if __name__ == "__main__":

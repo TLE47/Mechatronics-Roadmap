@@ -5,14 +5,14 @@
 > Everything in our **Beginner Path (`Track P` $\to$ `Stage 0` $\to$ `Pass 1`)** runs **first in 100% free browser simulators** ([futurecoder.io](https://futurecoder.io/course/), [Falstad Circuit Simulator](https://www.falstad.com/circuit/circuitjs.html), and [Wokwi Arduino Uno Simulator](https://wokwi.com/projects/new/arduino-uno)) with zero hardware required—and optional \$15–\$25 desktop hardware upgrades after your simulation works.
 >
 > **How to Use This Roadmap:**
-> 1. **[Track P — Prerequisites (`track-p/`, 8 Lessons, ~14–19 hrs typical)](#track-p-prerequisites-zero-background-entry-ramp):** Learn only the exact Python, SI units, binary bits, algebra, right-triangle trigonometry, time-series graphs (slope & area), and torque ($F=ma$, $\tau=rF\sin\theta$) used in this roadmap—max 2 new ideas per lesson.
-> 2. **[Stage 0 — Electronics & Arduino Uno Foundations (`stage-0/`, 8 Lessons, ~11.5–15.5 hrs typical)](#stage-0-global-level-0-prerequisite-on-ramp):** Master voltage, current, Ohm's Law, breadboards, short circuits (in Falstad), voltage dividers, capacitors, and your first **Arduino Uno (`5.0 V`, 10-bit ADC `0..1023`, 8-bit PWM `0..255`)** loops in Wokwi.
+> 1. **[Track P — Prerequisites (`track-p/`, 12 Lessons + Milestone, 16.0–22.5 hrs typical / 29.0–40.5 hrs slow-learner)](#track-p-prerequisites-zero-background-entry-ramp):** Learn only the exact Python, SI units, binary bits, algebra, right-triangle trigonometry, time-series graphs (slope & area), and lever torque ($F=ma$, $\tau=mgL\cos\theta$) used in this roadmap—strictly at most 2 new ideas per lesson.
+> 2. **[Stage 0 — Electronics & Arduino Uno Foundations (`stage-0/`, 9 Lessons + Milestone, 12.5–17.0 hrs typical / 22.0–30.5 hrs slow-learner)](#stage-0-global-level-0-prerequisite-on-ramp):** Master voltage, current, Ohm's Law, LEDs, breadboards, short circuits (in Falstad), multimeters, current-limited (`CC/CV`) bench supplies, voltage dividers, capacitors, and your first **Arduino Uno (`5.0 V`, 10-bit ADC `0..1023`, 8-bit PWM `0..255`)** loops in Wokwi.
 > 3. **[Pass 1 — Tier 1 Beginner Path (`Track 00` → `Track 08`)](#pass-1-tier-1-linear-roadmap-beginner--intuitive-pass-track-00--track-08):** Start with **[Track 01 Lesson 01.1 (MOSFETs, Inductors & Flyback Diodes)](01-electronics-and-power/01.1-mosfet-inductor-flyback.md)** and progress linearly across Tracks 00–08 using simulation-first models and off-the-shelf breakout modules.
 > 4. **[Advanced (Later) — Pass 2 (Tier 2) & Pass 3 (Tier 3)](#advanced-later):** Once you finish the Beginner Path, scroll past the **Advanced (Later)** divider to level up to 4-layer/6-layer KiCad PCBs, FreeRTOS/Zephyr, ROS 2, $SO(3)$ Lie groups, and $40\text{ kHz}$ bare-metal FOC.
 
 ### 🛟 Always-At-Hand Beginner Guides
 * 📖 **[Beginner Glossary (`resources/glossary.md`)](resources/glossary.md):** Plain-English definitions for every term, unit, and symbol in Track P, Stage 0, and Track 01.
-* 🦺 **[Beginner Safety Guide (`resources/safety.md`)](resources/safety.md):** Essential rules for continuity checks, multimeter fuses, polarized electrolytic capacitors, and flyback diodes.
+* 🦺 **[Beginner Safety Guide (`resources/safety.md`)](resources/safety.md):** Essential rules for continuity checks, `CC/CV` current-limited bench supplies, multimeter fuses, polarized electrolytic capacitors, and flyback diodes.
 * 🔧 **[Troubleshooting Guide (`resources/troubleshooting.md`)](resources/troubleshooting.md):** Instant symptom-to-fix tables for Python, Falstad, Wokwi, and breadboards.
 * 📝 **[Changelog (`CHANGELOG.md`)](CHANGELOG.md)** & 🔗 **[Automated Link Verification Report (`LINK_REPORT.md`)](LINK_REPORT.md)**
 
@@ -20,18 +20,23 @@
 
 ## TRACK P: Prerequisites (Zero-Background Entry Ramp)
 
-Start here if you are new to Python programming, metric prefixes, binary numbers, trigonometry, or physics graphs. Every lesson introduces **at most 2 new ideas**, includes runnable starter code with a 3-step hint ladder, and requires zero installation:
+Start here if you are new to Python programming, metric prefixes, binary numbers, trigonometry, or physics graphs. Every lesson introduces **at most 2 new ideas** (enforced in YAML front matter by `scripts/lint_lessons.py`), includes runnable starter code with a 3-step hint ladder, and requires zero installation:
 
-| Lesson | Topic | New Ideas (Max 2) | Typical Time | Slow-Learner Time |
+| Lesson | Topic | New Ideas (Max 2, Enforced in Front Matter) | Typical Time | Slow-Learner Time |
 | :--- | :--- | :--- | :--- | :--- |
-| **[Lesson P.1](track-p/P.1-variables-types-and-arithmetic.md)** | **Variables, Data Types & Arithmetic Expressions** | 1. Variables & types (`int`, `float`, `str`, `bool`)<br>2. Computer arithmetic & parentheses `()` | 2.0–2.5 hrs | 3.5–4.5 hrs |
-| **[Lesson P.2](track-p/P.2-decisions-loops-and-lists.md)** | **Decisions (`if/else`), `for` Loops & Lists** | 1. Conditional branching (`if/elif/else`)<br>2. Zero-indexed `list` & `for` loops | 2.5–3.5 hrs | 4.5–6.0 hrs |
-| **[Lesson P.3](track-p/P.3-functions-assert-and-import.md)** | **Reusable Functions (`def`/`return`), Self-Tests (`assert`) & `import`** | 1. Functions (`def`/`return`) & `while` loops<br>2. Automated checks (`assert`) & `import math` | 2.0–3.0 hrs | 4.0–5.0 hrs |
-| **[Lesson P.4](track-p/P.4-units-prefixes-binary-and-frequency.md)** | **SI Units, Metric Prefixes, Binary Bits & Frequency (`Hz`)** | 1. SI units, prefixes (`m`, `µ`, `k`, `M`) & $f = 1/T$<br>2. Binary bits (`0`/`1`) & powers of 2 ($2^N$) | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson P.5](track-p/P.5-algebra-and-trigonometry-for-robotics.md)** | **Rearranging Formulas, Right-Triangle Trig & Radians** | 1. Rearranging equations & linear scaling<br>2. Right-triangle trig (`sin`, `cos`, `atan2`) & radians | 2.0–2.5 hrs | 3.5–4.5 hrs |
-| **[Lesson P.6](track-p/P.6-reading-time-series-graphs.md)** | **Reading Time-Series Graphs — Slope & Area** | 1. Graph slope as rate of change ($\Delta y / \Delta t$)<br>2. Area under curve as accumulation ($v \cdot \Delta t$) | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson P.7](track-p/P.7-forces-torque-and-rotational-motion.md)** | **Forces ($F = ma$), Lever Torque ($\tau = rF\sin\theta$) & Rotational Speed** | 1. Force, weight ($W = mg$) & $F_{\text{net}} = ma$<br>2. Torque ($\tau = rF\sin\theta$) & `RPM` $\to$ `rad/s` | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson P.M](track-p/P.M-track-p-milestone.md)** | **Track P Milestone — Gravity-Holding Robot Arm Link Simulator** | 1. End-to-end sense-compute-simulate loop | 1.0–1.5 hrs | 2.0–2.5 hrs |
+| **[Lesson P.1](track-p/P.1-variables-and-data-types.md)** | **Variables & Fundamental Data Types** | 1. Storing values in named variables<br>2. Fundamental data types (`int`, `float`, `str`, `bool`) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson P.2](track-p/P.2-arithmetic-and-order-of-operations.md)** | **Computer Arithmetic & Order of Operations** | 1. Computer arithmetic operators<br>2. Parentheses and order of operations | 1.0–1.5 hrs | 2.0–2.5 hrs |
+| **[Lesson P.3](track-p/P.3-decisions-and-clamping.md)** | **Conditional Decisions (`if/elif/else`) & Clamping** | 1. Conditional branching (`if/elif/else`)<br>2. Clamping actuator commands within safe limits | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.4](track-p/P.4-lists-and-for-loops.md)** | **Ordered Lists & Repeating Actions with `for` Loops** | 1. Ordered lists with zero-based indexing<br>2. Repeating actions with `for` loops | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.5](track-p/P.5-functions-and-while-loops.md)** | **Reusable Functions (`def`/`return`) & `while` Loops** | 1. Reusable functions (`def` and `return`)<br>2. Condition-controlled `while` loops | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.6](track-p/P.6-modules-and-automated-asserts.md)** | **Loading Modules (`import`) & Self-Checks (`assert`)** | 1. Loading standard-library modules (`import`)<br>2. Automated self-checks (`assert`) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson P.7](track-p/P.7-si-units-and-metric-prefixes.md)** | **Base SI Units & Metric Prefixes (`M`, `k`, `m`, `µ`)** | 1. Base SI units for mechatronics<br>2. Metric prefixes (`M`, `k`, `m`, `µ`) | 1.0–1.5 hrs | 2.0–2.5 hrs |
+| **[Lesson P.8](track-p/P.8-frequency-and-binary-bits.md)** | **Cycle Frequency (`Hz`), Period ($T=1/f$) & Binary Bits ($2^N$)** | 1. Cycle frequency (`Hz`) and period ($T = 1/f$)<br>2. Binary bits and powers of 2 ($2^N$) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson P.9](track-p/P.9-rearranging-formulas-and-scaling.md)** | **Rearranging Physics Formulas & Linear Range Scaling** | 1. Rearranging three-variable physics formulas<br>2. Linear range scaling | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson P.10](track-p/P.10-radians-and-right-triangle-trig.md)** | **Radians, Rotational Speed (`rad/s`) & Right-Triangle Trig** | 1. Measuring angles in radians & `rad/s`<br>2. Right-triangle trigonometry (`cos`, `sin`, `atan2`) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.11](track-p/P.11-reading-time-series-graphs.md)** | **Reading Time-Series Graphs — Slope & Area** | 1. Graph slope as rate of change<br>2. Area under a curve as accumulated change | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.12](track-p/P.12-forces-and-lever-torque.md)** | **Linear Forces ($F = ma$) & Lever Torque ($\tau = mgL\cos\theta$)** | 1. Linear force ($F = ma$) & weight ($W = mg$)<br>2. Lever torque from horizontal arm angle ($\tau = mgL\cos\theta$) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.M](track-p/P.M-track-p-milestone.md)** | **Track P Milestone — Gravity-Holding Robot Arm Simulator** | 1. End-to-end sense-compute-simulate loop | 1.0–1.5 hrs | 2.0–2.5 hrs |
 
 👉 **[Open Track P Overview (`track-p/README.md`)](track-p/README.md)**
 
@@ -41,16 +46,18 @@ Start here if you are new to Python programming, metric prefixes, binary numbers
 
 All Stage 0 lessons are standardized on the **Arduino Uno (`5.0 V` logic, 10-bit ADC `0..1023`, 8-bit PWM `0..255`)** using **Falstad** (for analog circuits, short-circuit visualization, and live oscilloscope waveforms) and **Wokwi** (for Arduino Uno sketches):
 
-| Lesson | Topic | Simulator Used | Typical Time | Slow-Learner Time |
-| :--- | :--- | :--- | :--- | :--- |
-| **[Lesson S0.1](stage-0/S0.1-voltage-current-resistance-and-ohms-law.md)** | **Charge, Voltage ($V$), Current ($I$), Resistance ($R$) & Ohm's Law** | Falstad + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson S0.2](stage-0/S0.2-breadboards-multimeter-and-short-circuits.md)** | **Reading Schematics, Breadboards, Virtual Multimeters & Short Circuits** | Falstad + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson S0.3](stage-0/S0.3-series-parallel-and-voltage-dividers.md)** | **Series vs. Parallel Circuits, Voltage Dividers & Potentiometers** | Falstad + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson S0.4](stage-0/S0.4-capacitors-and-power-rail-decoupling.md)** | **Capacitors — Storing Charge & Smoothing Power-Rail Drops** | Falstad + Python | 1.5–2.0 hrs | 2.5–3.0 hrs |
-| **[Lesson S0.5](stage-0/S0.5-arduino-uno-digital-io-and-pullups.md)** | **Meet the Microcontroller (Arduino Uno `5 V`) — Digital I/O, Buttons & Pull-Ups** | Wokwi + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson S0.6](stage-0/S0.6-adc-analog-read-and-serial-monitor.md)** | **Reading Analog Sensors — The 10-Bit ADC (`analogRead`) & Serial Monitor** | Wokwi + Python | 1.5–2.0 hrs | 2.5–3.0 hrs |
-| **[Lesson S0.7](stage-0/S0.7-pwm-duty-cycle-and-analog-write.md)** | **Switching Power Smoothly — PWM Duty Cycle & `analogWrite()`** | Falstad Scope + Wokwi | 1.5–2.0 hrs | 2.5–3.0 hrs |
-| **[Lesson S0.M](stage-0/S0.M-stage-0-milestone.md)** | **Stage 0 Milestone — Potentiometer LED Dimmer with Safety Kill-Switch** | Wokwi + Python | 1.0–1.5 hrs | 2.0–2.5 hrs |
+| Lesson | Topic | New Ideas (Max 2, Enforced in Front Matter) | Simulator Used | Typical Time | Slow-Learner Time |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **[Lesson S0.1](stage-0/S0.1-closed-circuits-and-ohms-law.md)** | **Closed DC Circuits, Ground (`0 V`) & Ohm's Law** | 1. Closed DC circuit loop & ground (`0 V`)<br>2. Voltage ($V$), current ($I$), resistance ($R$) & Ohm's Law | Falstad + Python | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson S0.2](stage-0/S0.2-leds-and-resistor-power.md)** | **Diodes, LEDs ($V_f$) & Resistor Power ($P = VI$)** | 1. Diodes & LEDs ($V_f$ & series resistor)<br>2. Electrical power dissipation ($P = VI = I^2R$) | Falstad + Python | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson S0.3](stage-0/S0.3-breadboards-and-short-circuits.md)** | **Reading Schematics, Breadboards & Short Circuits** | 1. Schematic symbols & breadboard connections<br>2. Short circuits ($R \to 0\ \Omega$) & why Falstad is used | Falstad + Python | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson S0.4](stage-0/S0.4-multimeters-and-current-limited-supplies.md)** | **Multimeters (`V`/`A`/`Ω`) & `CC/CV` Bench Supplies** | 1. Parallel voltmeter vs. series ammeter probing<br>2. Current-limited (`CC/CV`) bench power supplies | Falstad + Python | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson S0.5](stage-0/S0.5-series-parallel-and-voltage-dividers.md)** | **Series/Parallel Networks, Dividers & Potentiometers** | 1. Series vs. parallel resistor networks<br>2. Resistor voltage dividers & potentiometers | Falstad + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson S0.6](stage-0/S0.6-capacitors-and-decoupling.md)** | **Capacitors ($\tau = RC$) & Power-Rail Decoupling** | 1. Capacitor charge storage & $\tau = RC$<br>2. Power-rail decoupling (bypass) capacitors | Falstad + Python | 1.5–2.0 hrs | 2.5–3.0 hrs |
+| **[Lesson S0.7](stage-0/S0.7-arduino-uno-digital-io-and-pullups.md)** | **Arduino Uno (`5 V`) — Digital I/O & `INPUT_PULLUP`** | 1. `setup()`/`loop()` & digital output (`digitalWrite`)<br>2. Digital input (`digitalRead`) & `INPUT_PULLUP` | Wokwi (Arduino Uno) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson S0.8](stage-0/S0.8-adc-analog-read-and-serial-monitor.md)** | **10-Bit ADC (`analogRead`) & Serial Monitor** | 1. 10-bit ADC (`analogRead` `0..1023` at $5.0\text{ V}$)<br>2. Serial UART telemetry (`Serial.begin`/`println`) | Wokwi (Arduino Uno) | 1.5–2.0 hrs | 2.5–3.0 hrs |
+| **[Lesson S0.9](stage-0/S0.9-pwm-duty-cycle-and-analog-write.md)** | **PWM Duty Cycle & `analogWrite()`** | 1. PWM duty cycle & average voltage ($V_{\text{avg}}$)<br>2. 8-bit `analogWrite` (`0..255`) & carrier frequency | Falstad Scope + Wokwi | 1.5–2.0 hrs | 2.5–3.0 hrs |
+| **[Lesson S0.M](stage-0/S0.M-stage-0-milestone.md)** | **Stage 0 Milestone — LED Dimmer with Kill-Switch** | 1. Hardware-software safety override loop | Wokwi (Arduino Uno) | 1.0–1.5 hrs | 2.0–2.5 hrs |
 
 👉 **[Open Stage 0 Overview (`stage-0/README.md`)](stage-0/README.md)** | 👉 **[Start Track 01 Lesson 01.1: MOSFETs, Inductors & Flyback Diodes (`01-electronics-and-power/01.1-mosfet-inductor-flyback.md`)](01-electronics-and-power/01.1-mosfet-inductor-flyback.md)**
 
@@ -61,9 +68,9 @@ All Stage 0 lessons are standardized on the **Arduino Uno (`5.0 V` logic, 10-bit
 `00-foundations` remains Track 00 internally for file organization, **but you never complete all of `00-foundations` upfront as a separate standalone course.** Instead, **Foundations is integrated directly into the start of each Tier** so you learn only the exact math, physics, and computing tools needed for your current hardware pass before building that Tier's domain modules and Boss Capstone:
 
 ```text
-Beginner Entry Ramp (Track P + Stage 0: 16 lessons, 25.5–34.5 hrs typical / 44.5–58.5 hrs slow-learner)
-├── Track P: Prerequisites      (Lessons P.1 → P.2 → P.3 → P.4 → P.5 → P.6 → P.7 → P.M Milestone)
-└── Stage 0: Circuit & MCU      (Lessons S0.1 → S0.2 → S0.3 → S0.4 → S0.5 → S0.6 → S0.7 → S0.M Milestone)
+Beginner Entry Ramp (Track P + Stage 0: 23 lessons, 28.5–39.5 hrs typical / 51.0–71.0 hrs slow-learner)
+├── Track P: Prerequisites      (Lessons P.1 → P.2 → ... → P.12 → P.M Milestone)
+└── Stage 0: Circuit & MCU      (Lessons S0.1 → S0.2 → ... → S0.9 → S0.M Milestone)
 
 Tier 1 (Pass 1 — Beginner / Breakout Pass: Track 00 → Track 08)
 ├── Tier 1 Foundations          (Bridge: T1.00a → T1.00b → T1.00c → T1.00d → T1.00e ──► Step 1.1: 00-foundations.T1.01)
@@ -114,11 +121,11 @@ Every track below links into the **8-tab interactive workbench** (two-mass reson
 ```mermaid
 flowchart TB
     subgraph TP["TRACK P: Prerequisites (Zero-Background Entry Ramp)"]
-        TP_1["P.1–P.3: Python Basics<br/>Variables, Loops, Lists, Functions, Assert"] --> TP_2["P.4–P.5: Hardware Math<br/>SI Units, Binary, Trig & Radians"] --> TP_3["P.6–P.M: Physics & Milestone<br/>Time Graphs, Torque & Robot Arm Sim"]
+        TP_1["P.1–P.6: Python Basics<br/>Variables, Math, Clamping, Loops, Functions, Assert"] --> TP_2["P.7–P.10: Hardware Math<br/>SI Units, Hz/Binary, Scaling, Radians/Trig"] --> TP_3["P.11–P.M: Physics & Milestone<br/>Time Graphs, Lever Torque & Robot Arm Sim"]
     end
 
     subgraph L0["STAGE 0: Electronics & Arduino Uno Foundations (5.0 V)"]
-        L0_1["S0.1–S0.4: Analog Circuits in Falstad<br/>Ohm's Law, Breadboard Shorts, Dividers, Caps"] --> L0_2["S0.5–S0.7: Arduino Uno in Wokwi<br/>Digital Pull-Ups, 10-Bit ADC, 8-Bit PWM"] --> L0_3["🏆 S0.M Milestone<br/>Potentiometer LED Dimmer + Kill-Switch"]
+        L0_1["S0.1–S0.6: Analog Circuits in Falstad<br/>Ohm's Law, LEDs, Shorts, CC/CV, Dividers, Caps"] --> L0_2["S0.7–S0.9: Arduino Uno in Wokwi<br/>Digital Pull-Ups, 10-Bit ADC, 8-Bit PWM"] --> L0_3["🏆 S0.M Milestone<br/>Potentiometer LED Dimmer + Kill-Switch"]
     end
 
     subgraph P1["PASS 1: TIER 1 (Beginner / Intuitive Pass: Track 00 → Track 08)"]

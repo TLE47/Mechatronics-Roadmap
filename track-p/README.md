@@ -1,30 +1,38 @@
 # Track P: Prerequisites (Zero-Background Entry Ramp)
 
-Welcome to **Track P**! If you have never written a line of code, never wired a circuit, and only remember basic school arithmetic, **start right here**. Track P teaches *only* the exact Python, units, algebra, trigonometry, graph-reading, and mechanics concepts actually used in Stage 0 and Pass 1—maximum 2 new ideas per lesson, zero hardware required.
+Welcome to **Track P**! If you have never written a line of code, never wired a circuit, and only remember basic school arithmetic, **start right here**. Track P teaches *only* the exact Python, units, binary numbers, algebra, trigonometry, time-series graph reading, and lever torque ($\tau = mgL\cos\theta$) used in this roadmap—with **at most 2 new ideas per lesson** and zero software installation required.
 
 ```mermaid
 flowchart LR
-    P1["P.1: Variables & Arithmetic"] --> P2["P.2: Decisions, Loops & Lists"]
-    P2 --> P3["P.3: Functions, Assert & Import"]
-    P3 --> P4["P.4: Units, Binary & Frequency"]
-    P4 --> P5["P.5: Algebra, Trig & Radians"]
-    P5 --> P6["P.6: Reading Time-Series Graphs"]
-    P6 --> P7["P.7: Forces, Torque & Rotation"]
-    P7 --> PM["P.M: Track P Milestone"]
+    Py["P.1–P.6: Python Foundations<br/>Variables, Math, Clamping, Loops, Functions, Assert"] --> Math["P.7–P.10: Hardware Math<br/>SI Prefixes, Hz/Binary, Scaling, Radians/Trig"]
+    Math --> Phys["P.11–P.M: Physics & Milestone<br/>Time Graphs, Lever Torque & Robot Arm Sim"]
 ```
 
-## Lesson List & Time Estimates (Untimed Guesses)
+---
 
-| Lesson | Title | New Ideas (Max 2) | Typical Time | Slow-Learner Time |
+## Lesson Map & Time Estimates (Untimed Guesses)
+
+| Lesson | Title | New Ideas (Max 2, Enforced in YAML Front Matter) | Typical Time | Slow-Learner Time |
 | :--- | :--- | :--- | :--- | :--- |
-| **[P.1](P.1-variables-types-and-arithmetic.md)** | **Variables, Data Types & Arithmetic Expressions** | 1. Variables & types (`int`, `float`, `str`, `bool`)<br>2. Computer arithmetic & order of operations `()` | 2.0–2.5 hrs | 3.5–4.5 hrs |
-| **[P.2](P.2-decisions-loops-and-lists.md)** | **Decisions (`if/else`), `for` Loops & Lists** | 1. Conditional branching (`if/elif/else`)<br>2. Zero-indexed `list` & `for` loops | 2.5–3.5 hrs | 4.5–6.0 hrs |
-| **[P.3](P.3-functions-assert-and-import.md)** | **Reusable Functions (`def`/`return`), Self-Tests (`assert`) & `import`** | 1. Functions (`def`/`return`) & `while` loops<br>2. Automated checks (`assert`) & `import math` | 2.0–3.0 hrs | 4.0–5.0 hrs |
-| **[P.4](P.4-units-prefixes-binary-and-frequency.md)** | **SI Units, Metric Prefixes, Binary Bits & Frequency (`Hz`)** | 1. SI units, prefixes (`m`, `µ`, `k`, `M`) & $f = 1/T$<br>2. Binary bits (`0`/`1`) & powers of 2 ($2^N$) | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[P.5](P.5-algebra-and-trigonometry-for-robotics.md)** | **Rearranging Formulas, Right-Triangle Trig & Radians** | 1. Rearranging equations & linear scaling<br>2. Right-triangle trig (`sin`, `cos`, `atan2`) & radians | 2.0–2.5 hrs | 3.5–4.5 hrs |
-| **[P.6](P.6-reading-time-series-graphs.md)** | **Reading Time-Series Graphs — Slope & Area** | 1. Graph slope as rate of change ($\Delta y / \Delta t$)<br>2. Area under curve as accumulation ($v \cdot \Delta t$) | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[P.7](P.7-forces-torque-and-rotational-motion.md)** | **Forces ($F = ma$), Lever Torque ($\tau = rF\sin\theta$) & Rotational Speed** | 1. Force, weight ($W = mg$) & $F_{\text{net}} = ma$<br>2. Torque ($\tau = rF\sin\theta$) & `RPM` $\to$ `rad/s` | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[P.M](P.M-track-p-milestone.md)** | **Track P Milestone — Gravity-Holding Robot Arm Link Simulator** | 1. End-to-end sense-compute-simulate loop | 1.0–1.5 hrs | 2.0–2.5 hrs |
-| **Total** | **8 Lessons** | **Zero-install browser Python (`futurecoder.io`)** | **14.0–19.0 hrs** | **25.0–33.0 hrs** |
+| **[Lesson P.1](P.1-variables-and-data-types.md)** | **Variables & Fundamental Data Types** | 1. Storing values in named variables<br>2. Fundamental data types (`int`, `float`, `str`, `bool`) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson P.2](P.2-arithmetic-and-order-of-operations.md)** | **Computer Arithmetic & Order of Operations** | 1. Computer arithmetic operators<br>2. Parentheses and order of operations | 1.0–1.5 hrs | 2.0–2.5 hrs |
+| **[Lesson P.3](P.3-decisions-and-clamping.md)** | **Conditional Decisions (`if/elif/else`) & Command Clamping** | 1. Conditional branching (`if/elif/else`)<br>2. Clamping actuator commands within safe limits | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.4](P.4-lists-and-for-loops.md)** | **Ordered Lists & Repeating Actions with `for` Loops** | 1. Ordered lists with zero-based indexing<br>2. Repeating actions with `for` loops | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.5](P.5-functions-and-while-loops.md)** | **Reusable Functions (`def`/`return`) & `while` Loops** | 1. Reusable functions (`def` and `return`)<br>2. Condition-controlled `while` loops | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.6](P.6-modules-and-automated-asserts.md)** | **Loading Modules (`import`) & Automated Self-Checks (`assert`)** | 1. Loading standard-library modules with `import`<br>2. Automated self-checks with `assert` | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson P.7](P.7-si-units-and-metric-prefixes.md)** | **Base SI Units & Metric Prefixes (`M`, `k`, `m`, `µ`)** | 1. Base SI units for mechatronics<br>2. Metric prefixes (`M`, `k`, `m`, `µ`) | 1.0–1.5 hrs | 2.0–2.5 hrs |
+| **[Lesson P.8](P.8-frequency-and-binary-bits.md)** | **Cycle Frequency (`Hz`), Period ($T=1/f$) & Binary Bits ($2^N$)** | 1. Cycle frequency (`Hz`) and period ($T = 1/f$)<br>2. Binary bits and powers of 2 ($2^N$) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson P.9](P.9-rearranging-formulas-and-scaling.md)** | **Rearranging Physics Formulas & Linear Range Scaling** | 1. Rearranging three-variable physics formulas<br>2. Linear range scaling | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson P.10](P.10-radians-and-right-triangle-trig.md)** | **Radians, Rotational Speed (`rad/s`) & Right-Triangle Trig** | 1. Measuring angles in radians and rotational speed (`rad/s`)<br>2. Right-triangle trigonometry (`cos`, `sin`, `atan2`) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.11](P.11-reading-time-series-graphs.md)** | **Reading Time-Series Graphs — Slope & Area** | 1. Graph slope as rate of change<br>2. Area under a curve as accumulated change | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.12](P.12-forces-and-lever-torque.md)** | **Linear Forces ($F = ma$) & Lever Torque ($\tau = mgL\cos\theta$)** | 1. Linear force ($F = ma$) and gravitational weight ($W = mg$)<br>2. Lever torque from horizontal arm angle ($\tau = mgL\cos\theta$) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.M](P.M-track-p-milestone.md)** | **Track P Milestone — Gravity-Holding Robot Arm Simulator** | 1. End-to-end sense-compute-simulate loop | 1.0–1.5 hrs | 2.0–2.5 hrs |
+| **Total Track P** | **12 Lessons + 1 Milestone** | **25 Ideas Total ($\le 2$ per lesson)** | **16.0–22.5 hrs** | **29.0–40.5 hrs** |
 
-- **Next Stage:** [Stage 0: Electronics & Microcontroller Foundations (`stage-0/README.md`)](../stage-0/README.md)
+---
+
+## How to Run the Exercises (Zero Installation Required)
+1. **In your browser:** Open [futurecoder.io](https://futurecoder.io/course/) `[verify in-app]` and paste any lesson's **Starter Code** into the editor pane.
+2. **Or locally:** Run `python3 tests/test_exercises.py` to execute all automated exercise and math tests across the roadmap.
+
+👉 **Start now:** [Lesson P.1: Variables and Fundamental Data Types (`int`, `float`, `str`, `bool`)](P.1-variables-and-data-types.md)

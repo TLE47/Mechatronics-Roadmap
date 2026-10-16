@@ -1,27 +1,52 @@
-name: Weekly Link & Lesson Verification
+name: Weekly Link, Lesson & Arduino Uno Sketch Verification
 
 on:
+  push:
+    branches: [main]
+  pull_request:
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
 jobs:
-  verify-links-and-lessons:
+  verify-lessons-and-links:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
-      - name: Lint Beginner Lessons (Template & Word Counts)
+      - name: Lint all 24 beginner lessons (enforce YAML ideas <= 2 & template rules)
         run: python3 scripts/lint_lessons.py
 
-      - name: Run All Lesson Exercise Solutions & Quiz Unit Tests
-        run: python3 -m unittest discover -s tests -p "test_*.py" -v
+      - name: Run all Python & host C++ exercise unit tests
+        run: python3 tests/test_exercises.py
 
-      - name: Check External Resource Links
-        run: python3 scripts/check_links.py
+      - name: Verify all external URLs and static-page HTML headings
+        run: python3 scripts/check_links.py --write-report
+
+  compile-arduino-uno-sketches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install arduino-cli and arduino:avr core
+         uses: arduino/setup-arduino-cli@v2
+
+      - name: Install Arduino AVR Boards (Arduino Uno)
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+
+      - name: Extract and compile all 8 Stage 0 Arduino Uno sketches (Starter + Full Solution)
+        run: python3 scripts/extract_and_compile_sketches.py --compile-arduino-cli

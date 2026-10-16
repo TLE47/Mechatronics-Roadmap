@@ -1,49 +1,38 @@
-# Mechatronics Beginner Safety Guide (`Stage 0` & `Pass 1`)
+# Mechatronics Beginner Safety Guide (`Stage 0` → `Track 01`)
 
-Even when you start 100% in browser simulators (**Falstad**, **Wokwi**, and **Python**), building safe habits now ensures that when you upgrade to a \$15–\$25 desktop hardware kit, you never damage your microcontroller, pop a capacitor, blow a multimeter fuse, or injure your hands or eyes.
+Even when you start in browser simulators (**Falstad** and **Wokwi**) and later move to a \$15–\$25 desktop breadboard kit, building safe habits from Day 1 protects your components, your USB ports, and yourself.
 
 ```mermaid
 flowchart LR
-    Off["1. Power OFF: Check Continuity & Polarity"] --> Limit["2. Set Current Limit & Safety Gating"]
-    Limit --> StandBack["3. Glasses On: First Power-Up"]
-    StandBack --> EStop["4. Keep Hardware E-Stop in Reach"]
+    Off["1. Power OFF: Build & Inspect"] --> Cont["2. Continuity Check: 5V-to-GND Not Shorted"]
+    Cont --> CCCV["3. Set CC/CV Supply Current Limit"]
+    CCCV --> On["4. Power ON & Monitor Temperatures"]
 ```
 
 ---
 
-## 1. Power-Off Pre-Flight Checks (Before Connecting USB or a Battery)
-
-1. **Continuity Check Between Power (`5V` / `12V`) and `GND` ([Lesson S0.2](../stage-0/S0.2-breadboards-multimeter-and-short-circuits.md)):**
-   - Before plugging in your USB cable or battery, set your multimeter to **Continuity / Resistance ($\Omega$)** and touch the probes between `5V` and `GND` (and between `12V` and `GND`).
-   - If the meter beeps ($R \approx 0\ \Omega$), you have a **dead short circuit** on your breadboard! Find and fix the misplaced wire before applying power.
-2. **Never Rely on Wokwi to Catch Breadboard Shorts ([Lesson S0.2](../stage-0/S0.2-breadboards-multimeter-and-short-circuits.md)):**
-   - Wokwi's breadboard only routes digital logic states and will **not** warn you if you wire `5V` directly to `GND`. Test analog power/ground layouts in **Falstad** (`https://www.falstad.com/circuit/circuitjs.html`) and always trace physical breadboard rows (`a–e` vs. `f–j`) by eye and with a multimeter.
-3. **Multimeter Red Lead Rule ([Lesson S0.2](../stage-0/S0.2-breadboards-multimeter-and-short-circuits.md)):**
-   - Keep your multimeter's red probe plugged into the **`V / Ω` socket** at all times.
-   - The **`10A` / `mA` current socket** is a near-zero-ohm wire inside the meter: if you leave the red lead in the current socket and touch the probes across a battery or `5V` rail to "measure voltage," you create a direct short circuit through the meter and blow its internal fuse!
+## 1. Power-Off Continuity Check & Current-Limited (`CC/CV`) Bench Supplies ([Lesson S0.3](../stage-0/S0.3-breadboards-and-short-circuits.md), [Lesson S0.4](../stage-0/S0.4-multimeters-and-current-limited-supplies.md))
+- **Never wire or re-wire a circuit while power is connected.** Always unplug the USB cable or switch off the power supply before moving jumper wires.
+- **Run a 5-second Continuity Test before applying power:** Set your multimeter to **Continuity mode** (the sound-wave icon) with power **OFF**, and touch the probes between your **`5V` (or `+12V`) rail and `GND`**. The meter should **stay silent** (open or high resistance). If it beeps ($R \approx 0\ \Omega$), you have a dead **short circuit** between power and ground—find and remove the misplaced wire before plugging in!
+- **Use a Current-Limited (`CC/CV`) Bench Power Supply whenever possible:** Set your target voltage ($V_{\text{set}}$, e.g., $5.0\text{ V}$) and a conservative **current limit** ($I_{\text{limit}}$, e.g., $0.10\text{ A}$ for logic breadboards) before enabling output. Under normal load ($I < I_{\text{limit}}$), the supply operates in **Constant-Voltage (`CV`)** mode. If an accidental short circuit occurs, the supply automatically switches into **Constant-Current (`CC`)** mode—clamping current at $I_{\text{limit}}$ and folding terminal voltage down to $V_{\text{out}} = I_{\text{limit}} \cdot R_{\text{short}} \approx 0\text{ V}$ so wires and chips never burn!
 
 ---
 
-## 2. Component Polarity & Overvoltage Rules
-
-1. **Electrolytic Capacitors Are Polarized — Wear Safety Glasses ([Lesson S0.4](../stage-0/S0.4-capacitors-and-power-rail-decoupling.md)):**
-   - Cylindrical aluminum electrolytic capacitors (e.g., $100\ \mu\text{F}$) have a painted **negative stripe (`-`)** and a shorter negative leg.
-   - Connecting an electrolytic capacitor backward (`-` stripe to $+5\text{ V}$ or $+12\text{ V}$, and `+` leg to `GND`) boils the internal liquid electrolyte into gas and can cause the metal can to **burst violently with hot vapor and debris**. Always double-check the `-` stripe faces `GND` and wear safety glasses on first power-up.
-2. **Flyback Diode Orientation Across Motor Coils ([Lesson 01.1](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md)):**
-   - Every inductive load (motor coil, solenoid, relay) switched by a single MOSFET **must** have a parallel flyback diode to clamp the $V_L = L \frac{\Delta I}{\Delta t}$ inductive kickback spike.
-   - The flyback diode's **cathode stripe (`-`) MUST connect to $+V_{\text{supply}}$** (`+12 V`), and its **anode (`+`) to the MOSFET Drain** (reverse-biased during normal running). Installing the diode upside down creates a direct short circuit through the diode and MOSFET the instant the MOSFET turns on!
-3. **Respect the Arduino Uno's `20 mA` & `5.0 V` Pin Limits ([Lesson S0.5](../stage-0/S0.5-arduino-uno-digital-io-and-pullups.md), [S0.6](../stage-0/S0.6-adc-analog-read-and-serial-monitor.md)):**
-   - Never connect a motor, solenoid, or relay coil directly to an Arduino GPIO pin (safe continuous limit: **$20\text{ mA}$**; absolute max: $40\text{ mA}$). Always use a MOSFET (`Lesson 01.1`) or H-bridge driver (`Track 01`).
-   - Never apply more than **$5.0\text{ V}$** to an Arduino Uno pin (or more than **$3.3\text{ V}$** when using $3.3\text{ V}$ boards like the ESP32 or STM32 in later tracks). When monitoring a $12\text{ V}$ battery with an ADC pin, scale the voltage down first with a resistor voltage divider (`Lesson S0.3`) and measure the midpoint with a voltmeter *before* connecting it to `A0`.
+## 2. Multimeter Probing Safety: Voltage in Parallel, Current in Series ([Lesson S0.4](../stage-0/S0.4-multimeters-and-current-limited-supplies.md))
+- **Measuring Voltage (`V`):** Keep the red lead in the **`V / Ω` socket**. Touch the probes **in parallel** (across the component). A voltmeter has huge internal resistance ($\approx 10\text{ M}\Omega$), so touching it across `5V` and `GND` is completely safe.
+- **Measuring Current (`mA` / `A`):** An ammeter has **near-zero internal resistance** ($\approx 0.1\ \Omega$). You **must** break the circuit and wire the ammeter **in series** so current flows through the meter to the load. **Never touch ammeter probes in parallel across a battery or `5V`/`GND` rails**—doing so creates a dead short straight through the multimeter and immediately blows its internal fuse!
 
 ---
 
-## 3. Power-Supply & Mechanical Motion Safety
+## 3. Component Polarity & Current Limits ([Lesson S0.2](../stage-0/S0.2-leds-and-resistor-power.md), [Lesson S0.6](../stage-0/S0.6-capacitors-and-decoupling.md), [Lesson S0.7](../stage-0/S0.7-arduino-uno-digital-io-and-pullups.md))
+- **LEDs Always Need a Series Resistor:** Never connect an LED directly across `5V` and `GND` or directly from an Arduino pin to `GND`. Always include a series resistor ($220\ \Omega$ to $1\text{ k}\Omega$) and check its power dissipation ($P = V_R \cdot I \le 0.125\text{ W}$ for a $0.25\text{ W}$ resistor).
+- **Electrolytic Capacitors Are Polarized (`-` Stripe to `GND`):** Cylindrical aluminum electrolytic capacitors ($10\ \mu\text{F}$, $100\ \mu\text{F}$, $470\ \mu\text{F}$) have a white or black stripe marked **`-`** along one side (with a shorter leg). That **`-` cathode leg MUST connect to `GND`**. Connecting an electrolytic capacitor backward across a power supply causes its internal electrolyte to boil and burst the metal can!
+- **Respect the Arduino Uno $20\text{ mA}$ Pin Limit:** An Arduino Uno GPIO pin (`0`–`13`, `A0`–`A5`) can safely source or sink **$20\text{ mA}$ continuous** ($40\text{ mA}$ absolute maximum) and only tolerates voltages between **$0.0\text{ V}$ and $5.0\text{ V}$**. Never connect a motor, solenoid, or relay coil directly to an Arduino pin, and never feed $> 5.0\text{ V}$ into `A0` without a verified voltage divider ([Lesson S0.5](../stage-0/S0.5-series-parallel-and-voltage-dividers.md)).
 
-1. **Always Tie Common Ground (`GND`), Never Tie Positive Supplies Together ([Lesson 01.1](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md)):**
-   - Connect the negative (`GND`) terminal of your $12\text{ V}$ motor power supply to the Arduino Uno's `GND` pin so gate signals share a $0.0\text{ V}$ reference.
-   - **Never** connect the $+12\text{ V}$ rail to the Arduino's `5V` pin!
-2. **Add a $10\text{ k}\Omega$ Gate Pull-Down Resistor ([Lesson 01.1](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md)):**
-   - Connect a $10\text{ k}\Omega$ resistor between every N-Channel MOSFET Gate and `GND` so the motor cannot jerk unexpectedly while the microcontroller is booting or resetting.
-3. **Clamp Propellers, Wheels, and Robot Links Before Enabling Loops ([Lesson S0.M](../stage-0/S0.M-stage-0-milestone.md)):**
-   - Remove propellers/arms or elevate wheels off the desk during initial firmware testing, and always wire and test an active-low **kill-switch (`INPUT_PULLUP`)** or power cutoff switch within arm's reach before commanding motion.
+---
+
+## 4. Inductive Loads, Flyback Diodes & Motor Safety ([Lesson 01.1](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md))
+- **Every Inductive Load Needs a Flyback Diode:** Whenever you switch a motor coil, relay, or solenoid with a MOSFET, wire a **flyback diode** in parallel across the coil with its **cathode stripe (`-`) connected to $+V_{\text{supply}}$** and its **anode (`+`) connected to the MOSFET Drain**.
+  - Without the diode, turning the MOSFET off produces a hundred-volt inductive kickback spike ($V_L = L \frac{\Delta I}{\Delta t}$) that destroys the MOSFET.
+  - Installed upside down (cathode stripe toward `GND`), the diode creates a dead short across the power supply the instant the MOSFET turns on!
+- **Keep a Hardware Kill-Switch Within Reach:** Before spinning any motor or actuator on your desk, clamp the motor body down so it cannot jump off the table, keep fingers and loose sleeves clear of gears/propellers, and always wire an accessible **kill-switch** ([Lesson S0.M](../stage-0/S0.M-stage-0-milestone.md)) or power cutoff switch.
