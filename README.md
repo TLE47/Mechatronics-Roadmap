@@ -1,22 +1,73 @@
-# ⚡ MechaLab — Multi-Pass Tiered Mechatronics & Robotics Roadmap
+# ⚡ MechaLab — Beginner-First Mechatronics & Robotics Roadmap
 
-> **Built for Software Engineers & Self-Learners Transitioning into Hardware, Mixed-Signal Electronics, and Real-Time Robotics.**
+> **Welcome! Never studied electronics, mechanics, or control before? Only know basic school math? You are in the right place.**
 >
-> **How This Roadmap Works (Linear "Level-Up" Spiral Architecture):**
-> Instead of getting stuck in graduate-level $SO(3)$ Lie groups on Track 00 before ever spinning a motor, you traverse the entire curriculum in **three horizontal "Level-Up" passes** from **Track 00 $\to$ Track 08**:
-> 1. **[Stage 0 — Level 0 Prerequisite On-Ramp](#stage-0-global-level-0-prerequisite-on-ramp):** Hydraulic/software analogies for voltage, current, capacitance, and inductance; smoke-free breadboard, multimeter, and bench PSU habits; and your first `ESP32`/`Arduino`/`STM32` GPIO, PWM, and ADC loops.
-> 2. **[Pass 1 — Tier 1 (Beginner / Intuitive Pass: Track 00 → Track 08)](#pass-1-tier-1-linear-roadmap-beginner--intuitive-pass-track-00--track-08):** Go linearly from Track 00 to Track 08 using breadboards, off-the-shelf breakout modules (`DRV8833`, `SimpleFOCMini`, `AS5600`), and high-level code to build your first 2-DOF compliant desktop robot.
-> 3. **[Pass 2 — Tier 2 (Intermediate / Applied Pass: Track 00 → Track 08)](#pass-2-tier-2-linear-roadmap-intermediate--applied-pass-track-00--track-08):** Loop back to Track 00 and upgrade every subsystem from maker breakouts to custom engineering: 4-layer KiCad PCBs, SMD soldering, Kelvin current shunts, URDF/MuJoCo models, Clarke/Park + PLL observers, FreeRTOS + DMA, CAN-FD, and LQR.
-> 4. **[Pass 3 — Tier 3 (Advanced / Production Pass: Track 00 → Track 08)](#pass-3-tier-3-linear-roadmap-advanced--production-pass-track-00--track-08):** Loop back to Track 00 for final production mastery: $SO(3)/SE(3)$ Lie groups, $<2\text{ nH}$ 6-layer $48\text{ V}/30\text{ A}$ inverters, SAR charge buckets, $O(n)$ spatial RNEA, $40\text{ kHz}$ bare-metal `STM32G474` FOC, C++20 `WaitFreeSeqLock`, Joseph-form ESKF, CBF-QP safety walls, and $<1\ \mu\text{s}$ dual-channel hardware STO.
+> Everything in our **Beginner Path (`Track P` $\to$ `Stage 0` $\to$ `Pass 1`)** runs **first in 100% free browser simulators** ([futurecoder.io](https://futurecoder.io/course/), [Falstad Circuit Simulator](https://www.falstad.com/circuit/circuitjs.html), and [Wokwi Arduino Uno Simulator](https://wokwi.com/projects/new/arduino-uno)) with zero hardware required—and optional \$15–\$25 desktop hardware upgrades after your simulation works.
+>
+> **How to Use This Roadmap:**
+> 1. **[Track P — Prerequisites (`track-p/`, 8 Lessons, ~14–19 hrs typical)](#track-p-prerequisites-zero-background-entry-ramp):** Learn only the exact Python, SI units, binary bits, algebra, right-triangle trigonometry, time-series graphs (slope & area), and torque ($F=ma$, $\tau=rF\sin\theta$) used in this roadmap—max 2 new ideas per lesson.
+> 2. **[Stage 0 — Electronics & Arduino Uno Foundations (`stage-0/`, 8 Lessons, ~11.5–15.5 hrs typical)](#stage-0-global-level-0-prerequisite-on-ramp):** Master voltage, current, Ohm's Law, breadboards, short circuits (in Falstad), voltage dividers, capacitors, and your first **Arduino Uno (`5.0 V`, 10-bit ADC `0..1023`, 8-bit PWM `0..255`)** loops in Wokwi.
+> 3. **[Pass 1 — Tier 1 Beginner Path (`Track 00` → `Track 08`)](#pass-1-tier-1-linear-roadmap-beginner--intuitive-pass-track-00--track-08):** Start with **[Track 01 Lesson 01.1 (MOSFETs, Inductors & Flyback Diodes)](01-electronics-and-power/01.1-mosfet-inductor-flyback.md)** and progress linearly across Tracks 00–08 using simulation-first models and off-the-shelf breakout modules.
+> 4. **[Advanced (Later) — Pass 2 (Tier 2) & Pass 3 (Tier 3)](#advanced-later):** Once you finish the Beginner Path, scroll past the **Advanced (Later)** divider to level up to 4-layer/6-layer KiCad PCBs, FreeRTOS/Zephyr, ROS 2, $SO(3)$ Lie groups, and $40\text{ kHz}$ bare-metal FOC.
+
+### 🛟 Always-At-Hand Beginner Guides
+* 📖 **[Beginner Glossary (`resources/glossary.md`)](resources/glossary.md):** Plain-English definitions for every term, unit, and symbol in Track P, Stage 0, and Track 01.
+* 🦺 **[Beginner Safety Guide (`resources/safety.md`)](resources/safety.md):** Essential rules for continuity checks, multimeter fuses, polarized electrolytic capacitors, and flyback diodes.
+* 🔧 **[Troubleshooting Guide (`resources/troubleshooting.md`)](resources/troubleshooting.md):** Instant symptom-to-fix tables for Python, Falstad, Wokwi, and breadboards.
+* 📝 **[Changelog (`CHANGELOG.md`)](CHANGELOG.md)** & 🔗 **[Automated Link Verification Report (`LINK_REPORT.md`)](LINK_REPORT.md)**
+
+---
+
+## TRACK P: Prerequisites (Zero-Background Entry Ramp)
+
+Start here if you are new to Python programming, metric prefixes, binary numbers, trigonometry, or physics graphs. Every lesson introduces **at most 2 new ideas**, includes runnable starter code with a 3-step hint ladder, and requires zero installation:
+
+| Lesson | Topic | New Ideas (Max 2) | Typical Time | Slow-Learner Time |
+| :--- | :--- | :--- | :--- | :--- |
+| **[Lesson P.1](track-p/P.1-variables-types-and-arithmetic.md)** | **Variables, Data Types & Arithmetic Expressions** | 1. Variables & types (`int`, `float`, `str`, `bool`)<br>2. Computer arithmetic & parentheses `()` | 2.0–2.5 hrs | 3.5–4.5 hrs |
+| **[Lesson P.2](track-p/P.2-decisions-loops-and-lists.md)** | **Decisions (`if/else`), `for` Loops & Lists** | 1. Conditional branching (`if/elif/else`)<br>2. Zero-indexed `list` & `for` loops | 2.5–3.5 hrs | 4.5–6.0 hrs |
+| **[Lesson P.3](track-p/P.3-functions-assert-and-import.md)** | **Reusable Functions (`def`/`return`), Self-Tests (`assert`) & `import`** | 1. Functions (`def`/`return`) & `while` loops<br>2. Automated checks (`assert`) & `import math` | 2.0–3.0 hrs | 4.0–5.0 hrs |
+| **[Lesson P.4](track-p/P.4-units-prefixes-binary-and-frequency.md)** | **SI Units, Metric Prefixes, Binary Bits & Frequency (`Hz`)** | 1. SI units, prefixes (`m`, `µ`, `k`, `M`) & $f = 1/T$<br>2. Binary bits (`0`/`1`) & powers of 2 ($2^N$) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.5](track-p/P.5-algebra-and-trigonometry-for-robotics.md)** | **Rearranging Formulas, Right-Triangle Trig & Radians** | 1. Rearranging equations & linear scaling<br>2. Right-triangle trig (`sin`, `cos`, `atan2`) & radians | 2.0–2.5 hrs | 3.5–4.5 hrs |
+| **[Lesson P.6](track-p/P.6-reading-time-series-graphs.md)** | **Reading Time-Series Graphs — Slope & Area** | 1. Graph slope as rate of change ($\Delta y / \Delta t$)<br>2. Area under curve as accumulation ($v \cdot \Delta t$) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.7](track-p/P.7-forces-torque-and-rotational-motion.md)** | **Forces ($F = ma$), Lever Torque ($\tau = rF\sin\theta$) & Rotational Speed** | 1. Force, weight ($W = mg$) & $F_{\text{net}} = ma$<br>2. Torque ($\tau = rF\sin\theta$) & `RPM` $\to$ `rad/s` | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson P.M](track-p/P.M-track-p-milestone.md)** | **Track P Milestone — Gravity-Holding Robot Arm Link Simulator** | 1. End-to-end sense-compute-simulate loop | 1.0–1.5 hrs | 2.0–2.5 hrs |
+
+👉 **[Open Track P Overview (`track-p/README.md`)](track-p/README.md)**
+
+---
+
+## STAGE 0: Global "Level 0" Prerequisite On-Ramp
+
+All Stage 0 lessons are standardized on the **Arduino Uno (`5.0 V` logic, 10-bit ADC `0..1023`, 8-bit PWM `0..255`)** using **Falstad** (for analog circuits, short-circuit visualization, and live oscilloscope waveforms) and **Wokwi** (for Arduino Uno sketches):
+
+| Lesson | Topic | Simulator Used | Typical Time | Slow-Learner Time |
+| :--- | :--- | :--- | :--- | :--- |
+| **[Lesson S0.1](stage-0/S0.1-voltage-current-resistance-and-ohms-law.md)** | **Charge, Voltage ($V$), Current ($I$), Resistance ($R$) & Ohm's Law** | Falstad + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson S0.2](stage-0/S0.2-breadboards-multimeter-and-short-circuits.md)** | **Reading Schematics, Breadboards, Virtual Multimeters & Short Circuits** | Falstad + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson S0.3](stage-0/S0.3-series-parallel-and-voltage-dividers.md)** | **Series vs. Parallel Circuits, Voltage Dividers & Potentiometers** | Falstad + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson S0.4](stage-0/S0.4-capacitors-and-power-rail-decoupling.md)** | **Capacitors — Storing Charge & Smoothing Power-Rail Drops** | Falstad + Python | 1.5–2.0 hrs | 2.5–3.0 hrs |
+| **[Lesson S0.5](stage-0/S0.5-arduino-uno-digital-io-and-pullups.md)** | **Meet the Microcontroller (Arduino Uno `5 V`) — Digital I/O, Buttons & Pull-Ups** | Wokwi + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson S0.6](stage-0/S0.6-adc-analog-read-and-serial-monitor.md)** | **Reading Analog Sensors — The 10-Bit ADC (`analogRead`) & Serial Monitor** | Wokwi + Python | 1.5–2.0 hrs | 2.5–3.0 hrs |
+| **[Lesson S0.7](stage-0/S0.7-pwm-duty-cycle-and-analog-write.md)** | **Switching Power Smoothly — PWM Duty Cycle & `analogWrite()`** | Falstad Scope + Wokwi | 1.5–2.0 hrs | 2.5–3.0 hrs |
+| **[Lesson S0.M](stage-0/S0.M-stage-0-milestone.md)** | **Stage 0 Milestone — Potentiometer LED Dimmer with Safety Kill-Switch** | Wokwi + Python | 1.0–1.5 hrs | 2.0–2.5 hrs |
+
+👉 **[Open Stage 0 Overview (`stage-0/README.md`)](stage-0/README.md)** | 👉 **[Start Track 01 Lesson 01.1: MOSFETs, Inductors & Flyback Diodes (`01-electronics-and-power/01.1-mosfet-inductor-flyback.md`)](01-electronics-and-power/01.1-mosfet-inductor-flyback.md)**
+
+---
 
 ### 🧭 Tier-First Recommended Learning Experience (Foundations Integrated into Each Tier)
 
 `00-foundations` remains Track 00 internally for file organization, **but you never complete all of `00-foundations` upfront as a separate standalone course.** Instead, **Foundations is integrated directly into the start of each Tier** so you learn only the exact math, physics, and computing tools needed for your current hardware pass before building that Tier's domain modules and Boss Capstone:
 
 ```text
-Tier 1 (Pass 1 — Beginner / Breakout Pass: 24 modules, 84.0 hrs)
+Beginner Entry Ramp (Track P + Stage 0: 16 lessons, 25.5–34.5 hrs typical / 44.5–58.5 hrs slow-learner)
+├── Track P: Prerequisites      (Lessons P.1 → P.2 → P.3 → P.4 → P.5 → P.6 → P.7 → P.M Milestone)
+└── Stage 0: Circuit & MCU      (Lessons S0.1 → S0.2 → S0.3 → S0.4 → S0.5 → S0.6 → S0.7 → S0.M Milestone)
+
+Tier 1 (Pass 1 — Beginner / Breakout Pass: Track 00 → Track 08)
 ├── Tier 1 Foundations          (Bridge: T1.00a → T1.00b → T1.00c → T1.00d → T1.00e ──► Step 1.1: 00-foundations.T1.01)
-├── Electronics & Power         (Bridge: T1.01a → T1.01c → T1.01d → T1.01b          ──► Step 1.2: 01-electronics.T1.02)
+├── Electronics & Power         (Lesson 01.1 + Bridge: T1.01a → T1.01c → T1.01d → T1.01b ──► Step 1.2: 01-electronics.T1.02)
 ├── Mechanics                   (Bridge: T1.02a                                     ──► Step 1.3: 02-mechanics.T1.03)
 ├── Sensors & Actuators         (Bridge: T1.03a                                     ──► Step 1.4: 03-sensors.T1.04)
 ├── Embedded & Realtime         (Bridge: T1.04a → T1.04b                            ──► Step 1.5: 04-embedded.T1.05)
@@ -24,40 +75,18 @@ Tier 1 (Pass 1 — Beginner / Breakout Pass: 24 modules, 84.0 hrs)
 ├── Robotics & Autonomy         (Bridge: T1.06a                                     ──► Step 1.7: 06-robotics.T1.07)
 ├── Systems / Production        (Bridge: T1.07a                                     ──► Step 1.8 Safety & SysID Prep)
 └── Tier 1 integration step     (Step 1.8 Boss: 07-systems.T1.08 — Breadboard/Breakout 2-DOF Compliant Desktop Robot)
-
-Tier 2 (Pass 2 — Intermediate / Applied Pass: 26 modules, 122.5 hrs)
-├── Tier 2 Foundations          (Bridge: T2.00a → T2.00b → T2.00c → T2.00d → T2.00e → T2.00f ──► Step 2.1: 00-foundations.T2.01)
-├── Electronics & Power         (Bridge: T2.01a → T2.01b                                     ──► Step 2.2: 01-electronics.T2.02)
-├── Mechanics                   (Bridge: T2.02a                                              ──► Step 2.3: 02-mechanics.T2.03)
-├── Sensors & Actuators         (Bridge: T2.03a                                              ──► Step 2.4: 03-sensors.T2.04)
-├── Embedded & Realtime         (Bridge: T2.04a → T2.04b → T2.04c (Zephyr) → T2.04d (uROS)   ──► Step 2.5: 04-embedded.T2.05)
-├── Control & Estimation        (Bridge: T2.05a                                              ──► Step 2.6: 05-control.T2.06)
-├── Robotics & Autonomy         (Bridge: T2.06a (ROS 2 Core) → T2.06b (Launch/Bag/Sim)       ──► Step 2.7: 06-robotics.T2.07)
-├── Systems / Production        (Bridge: T2.07a (Regen Chopper, CAN-FD Watchdog & HIL)       ──► Step 2.8 Systems & HIL Prep)
-└── Tier 2 integration step     (Step 2.8 Boss: 07-systems.T2.08 — Custom 4-Layer CAN Servo + LQR/MuJoCo Digital Twin)
-
-Tier 3 (Pass 3 — Advanced / Production Pass: 18 modules, 117.0 hrs)
-├── Tier 3 Foundations          (Bridge: T3.00a                     ──► Step 3.1: 00-foundations.T3.01)
-├── Electronics & Power         (Bridge: T3.01a                     ──► Step 3.2: 01-electronics.T3.02)
-├── Mechanics                   (Bridge: T3.02a                     ──► Step 3.3: 02-mechanics.T3.03)
-├── Sensors & Actuators         (Bridge: T3.03a                     ──► Step 3.4: 03-sensors.T3.04)
-├── Embedded & Realtime         (Bridge: T3.04a                     ──► Step 3.5: 04-embedded.T3.05)
-├── Control & Estimation        (Bridge: T3.05a                     ──► Step 3.6: 05-control.T3.06)
-├── Robotics & Autonomy         (Bridge: T3.06a → T3.06b            ──► Step 3.7: 06-robotics.T3.07)
-├── Systems / Production        (Bridge: T3.06a (OPC UA / AAS / PLd)──► Step 3.7 Industrial & Safety Qualification)
-└── Tier 3 integration step     (Bridge: T3.07a ──► Step 3.8 Boss: 08-capstones.T3.08 — Production Capstones I–V)
 ```
 
 ---
 
 ## 🗺️ Master Multi-Pass Navigation Matrix (Tracks 00–08 × Tiers 1–3)
 
-Read **down a column** to execute a linear pass from Track 00 to Track 08, or read **across a row** to see how a single discipline levels up from breadboards to production hardware:
+Read **down the Pass 1 column** to execute the Beginner Pass from Track 00 to Track 08, or inspect the later Advanced columns (Pass 2 & Pass 3) once you finish Pass 1:
 
 | Track Folder & Module | Pass 1: Tier 1 (Beginner / Intuitive) | Pass 2: Tier 2 (Intermediate / Applied) | Pass 3: Tier 3 (Advanced / Production) | Bridge Concept (Maker $\to$ Custom) |
 | :--- | :--- | :--- | :--- | :--- |
 | **[Track 00: Foundations](00-foundations/README.md)** | [Calculus as `while` Loops, 2D Rotations & RC Smoothing](00-foundations/README.md#tier-1-beginner--intuitive) | [State-Space Matrices, Quaternions & Tustin Biquads](00-foundations/README.md#tier-2-intermediate--applied) | [Lie Groups SO(3)/SE(3) & Symplectic Port-Hamiltonian](00-foundations/README.md#tier-3-advanced--production) | [Moving Average → Pre-Warped TDF-II Biquad Notch](00-foundations/README.md#bridging-the-gap-maker-to-custom) |
-| **[Track 01: Electronics & Power](01-electronics-and-power/README.md)** | [Breadboard H-Bridges (`DRV8833`), Logic Levels & Decoupling](01-electronics-and-power/README.md#tier-1-beginner--intuitive) | [4-Layer KiCad PCBs, Gate Drivers & Kelvin Shunts](01-electronics-and-power/README.md#tier-2-intermediate--applied) | [6-Layer <2 nH 48 V/30 A Inverter & SAR Charge Buckets](01-electronics-and-power/README.md#tier-3-advanced--production) | [`L298N`/`INA219` Breakouts → `DRV8353` + `INA240` Kelvin PCB](01-electronics-and-power/README.md#bridging-the-gap-maker-to-custom) |
+| **[Track 01: Electronics & Power](01-electronics-and-power/README.md)** | [Lesson 01.1 (MOSFET/Flyback)](01-electronics-and-power/01.1-mosfet-inductor-flyback.md) & [Breadboard H-Bridges (`DRV8833`)](01-electronics-and-power/README.md#tier-1-beginner--intuitive) | [4-Layer KiCad PCBs, Gate Drivers & Kelvin Shunts](01-electronics-and-power/README.md#tier-2-intermediate--applied) | [6-Layer <2 nH 48 V/30 A Inverter & SAR Charge Buckets](01-electronics-and-power/README.md#tier-3-advanced--production) | [`L298N`/`INA219` Breakouts → `DRV8353` + `INA240` Kelvin PCB](01-electronics-and-power/README.md#bridging-the-gap-maker-to-custom) |
 | **[Track 02: Mechanics & Dynamics](02-mechanics-kinematics-dynamics/README.md)** | [2D Planar Kinematics, Gear Ratios (N² Inertia) & Bearings](02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive) | [Maxwell Exact Constraint, `CadQuery` & URDF/MuJoCo](02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied) | [Screw PoE, `Ti-6Al-4V` Flexures & Featherstone O(n) RNEA](02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) | [200:1 Hobby Servos → 8:1 Backdrivable QDD Planetary Actuator](02-mechanics-kinematics-dynamics/README.md#bridging-the-gap-maker-to-custom) |
 | **[Track 03: Sensors & Actuators](03-sensors-and-actuators/README.md)** | [Quadrature/Magnetic Encoders & Open-Loop BLDC (`SimpleFOC`)](03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) | [Clarke/Park Transforms, Type-II PLLs & Allan Variance](03-sensors-and-actuators/README.md#tier-2-intermediate--applied) | [25–40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT](03-sensors-and-actuators/README.md#tier-3-advanced--production) | [Hobby ESC / Voltage Mode → Center-Aligned ADC Current FOC](03-sensors-and-actuators/README.md#bridging-the-gap-maker-to-custom) |
 | **[Track 04: Embedded & Real-Time](04-embedded-and-realtime/README.md)** | [Killing `delay()`, 1 kHz Timer ISRs & Binary Serial](04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) | [FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (`MIT Mode`)](04-embedded-and-realtime/README.md#tier-2-intermediate--applied) | [Bare-Metal `TIM1`→`ADC`, CORDIC & C++20 `WaitFreeSeqLock`](04-embedded-and-realtime/README.md#tier-3-advanced--production) | [Global Structs / `mutex` → DMA Pipelines & `WaitFreeSeqLock`](04-embedded-and-realtime/README.md#bridging-the-gap-maker-to-custom) |
@@ -67,6 +96,7 @@ Read **down a column** to execute a linear pass from Track 00 to Track 08, or re
 | **[Track 08: Capstone Projects](08-capstone-projects/README.md)** | [Tier 1 Boss: Breakout 2-DOF Arm / `SO-101` / `LeKiwi`](08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass) | [Tier 2 Boss: Custom 4-Layer CAN Servo + LQR/MuJoCo / `Pupper` / `UMI`](08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass) | [Tier 3 Boss: Capstones I–V (`48V` FOC, Furuta, 6-DOF, `ODRI` Hopper, `ALOHA 2` / `Reachy 2`)](08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass) | [Progressive 3-Pass Hardware/Software Capstone Evolution](08-capstone-projects/README.md#bridging-the-gap-maker-to-custom) |
 
 ### 📚 Supporting Reference & Lab Setup Guides (Merged with [`engyasin/awesome-mechatronics`](https://github.com/engyasin/awesome-mechatronics))
+* **[Beginner Glossary (`resources/glossary.md`)](resources/glossary.md)** | **[Beginner Safety Guide (`resources/safety.md`)](resources/safety.md)** | **[Beginner Troubleshooting Guide (`resources/troubleshooting.md`)](resources/troubleshooting.md)**
 * **[Tiered Hardware Lab & Workbench BOM (`resources/lab-workbench-bom.md`)](resources/lab-workbench-bom.md):** Exact shopping lists for **Level 0 / Tier 1 (\$150 Starter Bench)**, **Tier 2 (\$600 Custom PCB & CAN Bench)**, and **Tier 3 (\$3,500+ Production Metrology & HIL Lab)**, plus open-source actuators (`SimpleFOCMini`, `ODrive`, `VESC`, `mjbots moteus`) and open robot platforms (`SO-101`, `LeKiwi`, `UMI`, `ALOHA 2`, `Open-Duck-Mini`, `Stanford Pupper`, `ODRI`, `Reachy 2`).
 * **[1-Page Production Engineering Cheat Sheet (`resources/mechatronics-cheatsheet.md`)](resources/mechatronics-cheatsheet.md)**
 * **[Open-Source Toolchains, Simulators & Robotics Stacks (`resources/open-source-toolchains.md`)](resources/open-source-toolchains.md)** & **[Curated Textbooks, Papers, Courses & Standards (`resources/textbooks-and-papers.md`)](resources/textbooks-and-papers.md)**
@@ -79,104 +109,41 @@ Every track below links into the **8-tab interactive workbench** (two-mass reson
 
 ---
 
-## 🔄 Visual Progression Architecture: The 3-Pass Level-Up Loop
+## 🔄 Visual Progression Architecture: The Beginner Ramp + 3-Pass Level-Up Loop
 
 ```mermaid
 flowchart TB
-    subgraph L0["STAGE 0: Level 0 Prerequisite On-Ramp (No Prior EE)"]
-        L0_1["L0.1 Hydraulic & Software Analogies<br/>(V, I, R, C, L, State Structs)"] --> L0_2["L0.2 Practical Bench Tools<br/>(Breadboard, DMM, CC/CV PSU, Scope)"] --> L0_3["L0.3 Starter MCU Loops<br/>(ESP32/STM32 GPIO, 20kHz PWM, ADC)"]
+    subgraph TP["TRACK P: Prerequisites (Zero-Background Entry Ramp)"]
+        TP_1["P.1–P.3: Python Basics<br/>Variables, Loops, Lists, Functions, Assert"] --> TP_2["P.4–P.5: Hardware Math<br/>SI Units, Binary, Trig & Radians"] --> TP_3["P.6–P.M: Physics & Milestone<br/>Time Graphs, Torque & Robot Arm Sim"]
+    end
+
+    subgraph L0["STAGE 0: Electronics & Arduino Uno Foundations (5.0 V)"]
+        L0_1["S0.1–S0.4: Analog Circuits in Falstad<br/>Ohm's Law, Breadboard Shorts, Dividers, Caps"] --> L0_2["S0.5–S0.7: Arduino Uno in Wokwi<br/>Digital Pull-Ups, 10-Bit ADC, 8-Bit PWM"] --> L0_3["🏆 S0.M Milestone<br/>Potentiometer LED Dimmer + Kill-Switch"]
     end
 
     subgraph P1["PASS 1: TIER 1 (Beginner / Intuitive Pass: Track 00 → Track 08)"]
-        T1_0["Track 00 (T1)<br/>Finite-Diff Sims & RC Filters"] --> T1_1["Track 01 (T1)<br/>Breadboard H-Bridge & Decoupling"] --> T1_2["Track 02 (T1)<br/>2D Planar IK & Gear Ratios"] --> T1_3["Track 03 (T1)<br/>Encoders & SimpleFOC Sine"] --> T1_4["Track 04 (T1)<br/>1kHz Timer ISR & Binary Serial"] --> T1_5["Track 05 (T1)<br/>PID Spring-Damper & Comp IMU"] --> T1_6["Track 06/07 (T1)<br/>Cubic Paths & Bring-Up Checklist"] --> T1_8["🏆 Track 08 (T1 Boss)<br/>Breakout 2-DOF Desktop Arm"]
+        T1_0["Track 00 (T1)<br/>Finite-Diff Sims & RC Filters"] --> T1_1["Track 01 (T1)<br/>01.1 MOSFET/Flyback & H-Bridge"] --> T1_2["Track 02 (T1)<br/>2D Planar IK & Gear Ratios"] --> T1_3["Track 03 (T1)<br/>Encoders & Actuators"] --> T1_4["Track 04 (T1)<br/>1kHz Timer ISR & Binary Serial"] --> T1_5["Track 05 (T1)<br/>PID Spring-Damper & Comp IMU"] --> T1_6["Track 06/07 (T1)<br/>Cubic Paths & Bring-Up Checklist"] --> T1_8["🏆 Track 08 (T1 Boss)<br/>Breakout Desktop Robot"]
     end
 
-    subgraph P2["PASS 2: TIER 2 (Intermediate / Applied Pass: Track 00 → Track 08)"]
-        T2_0["Track 00 (T2)<br/>State-Space & Tustin Biquad Notch"] --> T2_1["Track 01 (T2)<br/>4-Layer KiCad PCB & Kelvin Shunts"] --> T2_2["Track 02 (T2)<br/>Exact Constraint, CadQuery & MuJoCo"] --> T2_3["Track 03 (T2)<br/>Clarke/Park & Type-II Velocity PLL"] --> T2_4["Track 04 (T2)<br/>FreeRTOS, DMA & CAN-FD MIT Mode"] --> T2_5["Track 05 (T2)<br/>Loop Shaping, Swing-Up LQR & KF"] --> T2_6["Track 06/07 (T2)<br/>Jacobian Transpose, S-Curves & Regen"] --> T2_8["🏆 Track 08 (T2 Boss)<br/>Custom 4-Layer CAN Servo + LQR"]
+    subgraph P2["ADVANCED (LATER) — PASS 2 & PASS 3 (Tiers 2 & 3)"]
+        T2_0["Pass 2 (Tier 2)<br/>4-Layer KiCad PCB, FreeRTOS, ROS 2, LQR"] --> T3_0["Pass 3 (Tier 3)<br/>SO(3), 6-Layer 48V/30A FOC, ESKF, CBF-QP"]
     end
 
-    subgraph P3["PASS 3: TIER 3 (Advanced / Production Pass: Track 00 → Track 08)"]
-        T3_0["Track 00 (T3)<br/>SO(3)/SE(3) Lie Groups & Symplectic"] --> T3_1["Track 01 (T3)<br/><2nH 48V/30A PCB & SAR Buckets"] --> T3_2["Track 02 (T3)<br/>Screw PoE, Ti Flexures & O(n) RNEA"] --> T3_3["Track 03 (T3)<br/>40kHz Decoupled FOC & SVPWM"] --> T3_4["Track 04 (T3)<br/>TIM1->ADC, CORDIC & WaitFreeSeqLock"] --> T3_5["Track 05 (T3)<br/>Joseph ESKF, MPC & CBF-QP Walls"] --> T3_6["Track 06/07 (T3)<br/>Khatib WBC, Schroeder SysID & <1µs STO"] --> T3_8["🏆 Track 08 (T3 Mastery)<br/>Full Production Capstones I–V"]
-    end
-
+    TP_3 ==>|"Unlock Stage 0"| L0_1
     L0_3 ==>|"Unlock Pass 1"| T1_0
-    T1_8 ==>|"Loop Back & Level Up to Tier 2"| T2_0
-    T2_8 ==>|"Loop Back & Level Up to Tier 3"| T3_0
+    T1_8 ==>|"Advanced (Later)"| T2_0
 
+    style TP fill:#064e3b,stroke:#34d399,color:#f1f5f9
     style L0 fill:#0f172a,stroke:#38bdf8,color:#f1f5f9
     style P1 fill:#064e3b,stroke:#34d399,color:#f1f5f9
-    style P2 fill:#1e1b4b,stroke:#38bdf8,color:#f1f5f9
-    style P3 fill:#3b0764,stroke:#c084fc,color:#f1f5f9
+    style P2 fill:#3b0764,stroke:#c084fc,color:#f1f5f9
 ```
-
----
-
-## STAGE 0: Global "Level 0" Prerequisite On-Ramp
-
-If you come from a pure software background, start here before opening Track 00.
-
-### L0.1 Everyday Analogies (Hydraulic & Software Mental Models)
-- **Core Summary:** Maps invisible electrical quantities—Voltage ($V$), Current ($I$), Resistance ($R$), Capacitance ($C$), Inductance ($L$), and State Vectors ($x$)—to tangible hydraulic pressure/flow mechanics and computer architecture primitives (`L1 cache`, `state structs`).
-- **Curated Free Resources:**
-  - 🔗 [Falstad Interactive Circuit Simulator Applet](https://www.falstad.com/circuit/) — *Browser-based real-time animated visualization of current flow, voltage pressure colors, RC diaphragms, and inductive kickback.*
-  - 🔗 [SparkFun: Voltage, Current, Resistance, and Ohm's Law](https://learn.sparkfun.com/tutorials/voltage-current-resistance-and-ohms-law) — *Illustrated water-tank and pipe analogies tailored for absolute hardware beginners.*
-  - 🔗 [All About Circuits — Volume I (DC) Open Textbook](https://www.allaboutcircuits.com/textbook/direct-current/) — *Free open-access reference covering passive components, KVL/KCL, capacitance, and inductance.*
-- **🧪 Hands-On Exercise:**
-  - *Task:* Open the [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`Circuits -> Basics -> Inductors`) and build a $12\text{ V}$ source, a switch, and a $10\text{ mH}$ inductor + $4\ \Omega$ resistor in series. Close the switch until current settles at $3\text{ A}$, then open the switch with and without a parallel flyback diode. Compute the theoretical voltage spike $V_L = L \frac{\Delta I}{\Delta t}$ if $3\text{ A}$ interrupts in $\Delta t = 100\text{ ns}$ ($V_L = 300,000\text{ V}$!) and observe how the diode clamps it to $\sim 0.7\text{ V}$.
-- **🧠 Knowledge Check:**
-  <details>
-  <summary><b>Click to toggle quiz questions & answers</b></summary>
-  
-  **Q1:** Why does placing a $100\text{ nF}$ ceramic capacitor within $1\text{–}2\text{ mm}$ of a microcontroller's `VCC` pin prevent random CPU crashes, even when a large $1000\ \mu\text{F}$ capacitor sits $10\text{ cm}$ away at the power plug?
-  * **Answer / Explanation:** Every $10\text{ cm}$ of wire/trace has $\sim 80\text{–}100\text{ nH}$ of series inductance ($V = L\frac{dI}{dt}$), which blocks nanosecond current surges when millions of CPU transistors switch on a clock edge. The local $100\text{ nF}$ capacitor acts like an L1 RAM cache right at the pin, supplying instant nanosecond charge before the distant power supply can react.
-  
-  **Q2:** Which physical components in a DC motor joint add variables to the system's **State Vector** $x$: (a) Winding resistance $R_a$, (b) Winding inductance $L_a$, (c) Rotor inertia $J_m$, (d) Viscous friction $b_m$, (e) Torsional shaft spring $k_s$?
-  * **Answer & Explanation:** **(b) $L_a$, (c) $J_m$, and (e) $k_s$**. Only components that **store energy** ($\frac{1}{2}L_a i^2$, $\frac{1}{2}J_m \omega^2$, $\frac{1}{2}k_s \Delta\theta^2$) require state variables ($i_a, \omega_m, \Delta\theta$). Purely dissipative elements ($R_a, b_m$) turn energy into heat instantaneously and have no memory of past states.
-  </details>
-
-### L0.2 Practical Bench Tools (Solderless First)
-- **Core Summary:** Introduces smoke-free bench habits using solderless breadboards, a Digital Multimeter (DMM) continuity test, a Constant-Current/Constant-Voltage (CC/CV) bench power supply as a hardware `try/catch` block, and USB logic analyzers vs. oscilloscopes.
-- **Curated Free Resources:**
-  - 🔗 [SparkFun: How to Use a Breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard) — *X-ray photos of internal 5-pin spring clips, power bus rails, and common short-circuit mistakes.*
-  - 🔗 [Adafruit: Multimeters Guide — Continuity, Voltage & Current](https://learn.adafruit.com/multimeters) — *Step-by-step guide to continuity beep checks and why measuring voltage with probes in the Amps jack blows the DMM fuse.*
-  - 🔗 [PulseView & sigrok Open-Source Logic Analyzer Manual](https://sigrok.org/wiki/PulseView) — *Free open-source protocol decoder documentation for \$15 USB logic analyzers (`I2C`, `SPI`, `UART`, `PWM`).*
-- **🧪 Hands-On Exercise:**
-  - *Task:* Wire a $1\text{ k}\Omega$ resistor and $100\text{ nF}$ capacitor as a low-pass filter on a breadboard. (1) Perform an unpowered DMM Continuity Beep Check between `VCC` and `GND`. (2) Set your bench PSU to $5.0\text{ V}$ and a **$50\text{ mA}$ Constant-Current (CC) limit** before enabling output. (3) Feed a $1\text{ kHz}$ square wave into the RC input and measure the $10\%\to 90\%$ rise time ($t_r \approx 2.2 R C = 220\ \mu\text{s}$) on your oscilloscope.
-- **🧠 Knowledge Check:**
-  <details>
-  <summary><b>Click to toggle quiz questions & answers</b></summary>
-  
-  **Q1:** Why should you never run $5\text{ A}$ of motor phase current or a $25\text{ MHz}$ SPI clock through a solderless breadboard?
-  * **Answer / Explanation:** Breadboard spring clips have $\sim 0.1\ \Omega$ contact resistance ($P = I^2 R = 25 \times 0.1 = 2.5\text{ W}$ per pin, melting the ABS plastic housing!) and $\sim 5\text{–}10\text{ pF}$ of stray row-to-row capacitance that rounds off and cross-couples $25\text{ MHz}$ digital edges.
-  
-  **Q2:** You connect a new microcontroller board to a bench supply set to $12.0\text{ V}$ and $100\text{ mA}$ current limit. When you press Output ON, the supply's red `CC` (Constant Current) LED lights up and the display reads $0.9\text{ V}$ at $100\text{ mA}$. What happened, and why didn't the board burn?
-  * **Answer & Explanation:** Your board has a short circuit (or reversed diode/IC), attempting to draw $>100\text{ mA}$. Because the PSU's `CC` foldback loop clamped current to $100\text{ mA}$ by automatically dropping the output voltage to $0.9\text{ V}$, total power dissipated in the fault is only $0.9\text{ V} \times 0.1\text{ A} = 0.09\text{ W}$—saving your components!
-  </details>
-
-### L0.3 Starter Hardware (`ESP32` / `Arduino` / `STM32 Nucleo`)
-- **Core Summary:** Bridges software variables to physical voltages using the three core microcontroller peripherals: digital GPIO with pull-up resistors, $20\text{ kHz}$ hardware timer PWM driving a low-side MOSFET + flyback diode, and 12-bit ADC potentiometer reading.
-- **Curated Free Resources:**
-  - 🔗 [Wokwi Online ESP32 / STM32 / Arduino Simulator](https://wokwi.com/) — *Free browser-based microcontroller + circuit simulator with virtual logic analyzer, potentiometer, PWM LED/motor, and C++ compiler.*
-  - 🔗 [STM32 Step-by-Step Official Wiki Tutorials](https://wiki.st.com/stm32mcu/wiki/STM32StepByStep:STM32_step_by_step_overview) — *Official STMicroelectronics beginner curriculum covering GPIO, Timers, PWM, and ADC on Nucleo boards.*
-  - 🔗 [Espressif ESP-IDF MCPWM & ADC Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/mcpwm.html) — *Official documentation for hardware motor-control PWM and 12-bit SAR ADC calibration on ESP32.*
-- **🧪 Hands-On Exercise:**
-  - *Task:* Build (on hardware or in [Wokwi](https://wokwi.com/)) a $10\text{ k}\Omega$ potentiometer voltage divider connected to a 12-bit ADC pin (`0..4095`) and configure a $20\text{ kHz}$ hardware timer PWM channel driving a logic-level N-MOSFET (`IRLZ44N`/`AO3400`) + Schottky flyback diode (`1N5819`) to control a $12\text{ V}$ DC fan/motor from $0\%$ to $100\%$ duty cycle with zero `delay()` calls.
-- **🧠 Knowledge Check:**
-  <details>
-  <summary><b>Click to toggle quiz questions & answers</b></summary>
-  
-  **Q1:** A 12-bit ADC powered from a $3.30\text{ V}$ reference reads a raw integer code of `2048`. What is the physical voltage on the pin, and what is the smallest voltage step ($1\text{ LSB}$) the ADC can resolve?
-  * **Answer / Explanation:** $V_{\text{in}} = 3.30\text{ V} \times \frac{2048}{4095} = 1.650\text{ V}$. The resolution is $1\text{ LSB} = \frac{3.30\text{ V}}{4096} \approx 0.806\text{ mV}$.
-  
-  **Q2:** Why do we configure motor PWM at $20\text{ kHz}$ instead of Arduino's default $490\text{ Hz}$ `analogWrite()` frequency?
-  * **Answer & Explanation:** (1) Human hearing extends to $\sim 20\text{ kHz}$, so $490\text{ Hz}$ makes the motor coils emit a loud, annoying $490\text{ Hz}$ acoustic screech. (2) For a small motor with inductance $L = 0.5\text{ mH}$, $490\text{ Hz}$ ($T = 2.04\text{ ms}$) is longer than the electrical time constant $L/R$, causing massive current ripple and heating instead of smooth current averaging.
-  </details>
 
 ---
 
 ## PASS 1: Tier 1 Linear Roadmap (`Beginner / Intuitive Pass: Track 00 → Track 08`)
 
-Complete all 8 steps below in order using breadboards, breakout modules, and high-level libraries:
+Complete all 8 steps below in order using Python simulations, Wokwi/Falstad, breadboards, and breakout modules:
 
 ### Step 1.1 — [Track 00 (Tier 1): Calculus as `while` Loops, 2D Rotations & RC Smoothing](00-foundations/README.md#tier-1-beginner--intuitive)
 - **Tier 1 Foundations Bridge Ladder (`modules/`):** [`00-foundations.T1.00a`](modules/00-foundations.T1.00a.md) → [`00-foundations.T1.00b`](modules/00-foundations.T1.00b.md) → [`00-foundations.T1.00c`](modules/00-foundations.T1.00c.md) → [`00-foundations.T1.00d`](modules/00-foundations.T1.00d.md) → [`00-foundations.T1.00e`](modules/00-foundations.T1.00e.md) *(Ladder Gate Test)*
@@ -198,9 +165,10 @@ Complete all 8 steps below in order using breadboards, breakout modules, and hig
   * **Answer & Explanation:** $\alpha = \frac{0.001}{0.010 + 0.001} = 0.0909$. At the $-3\text{ dB}$ cutoff frequency $f = f_c$, every first-order low-pass filter introduces exactly **$-45^\circ$ of phase lag**.
   </details>
 
-### Step 1.2 — [Track 01 (Tier 1): Breadboard H-Bridges (`DRV8833`), Logic Levels & Decoupling](01-electronics-and-power/README.md#tier-1-beginner--intuitive)
+### Step 1.2 — [Track 01 (Tier 1): MOSFET Switching (`Lesson 01.1`), Breadboard H-Bridges (`DRV8833`), Logic Levels & Decoupling](01-electronics-and-power/README.md#tier-1-beginner--intuitive)
+- **Start with Lesson 01.1:** **[Lesson 01.1: High-Current Switching — MOSFETs, Inductors (Motor Coils) & Flyback Diodes](01-electronics-and-power/01.1-mosfet-inductor-flyback.md)**
 - **Tier 1 Electronics Bridge Ladder (`modules/`):** [`01-electronics.T1.01a`](modules/01-electronics.T1.01a.md) → [`01-electronics.T1.01c`](modules/01-electronics.T1.01c.md) → [`01-electronics.T1.01d`](modules/01-electronics.T1.01d.md) → [`01-electronics.T1.01b`](modules/01-electronics.T1.01b.md) *(Ladder Gate Test)*
-- **Core Summary:** Explains how 4 MOSFETs in an H-bridge reverse motor polarity, why $3.3\text{ V}$ MCU pins need protection from $5\text{ V}$ logic, and how bulk electrolytic + $100\text{ nF}$ ceramic decoupling capacitors + star grounding prevent motor reversals from resetting the microcontroller.
+- **Core Summary:** Explains low-side MOSFET switching and flyback diodes (`Lesson 01.1`), how 4 MOSFETs in an H-bridge reverse motor polarity, why $3.3\text{ V}$ MCU pins need protection from $5\text{ V}$ logic, and how bulk electrolytic + $100\text{ nF}$ ceramic decoupling capacitors + star grounding prevent motor reversals from resetting the microcontroller.
 - **Curated Free Resources:**
   - 🔗 [Texas Instruments: H-Bridge Motor Driver Basics (SLVA959)](https://www.ti.com/lit/pdf/slva959) — *Clear application note explaining H-bridge quadrants, drive/coast vs. drive/brake modes, and shoot-through.*
   - 🔗 [Pololu DRV8833 Dual Motor Driver Carrier Guide](https://www.pololu.com/product/2130) — *Pinout, current-limiting wiring, and breadboard decoupling best practices.*
@@ -338,7 +306,12 @@ Complete all 8 steps below in order using breadboards, breakout modules, and hig
 
 ---
 
-## PASS 2: Tier 2 Linear Roadmap (`Intermediate / Applied Pass: Track 00 → Track 08`)
+## Advanced (Later)
+
+> **Stop here until you have finished Track P, Stage 0, and Pass 1 (Tier 1) above!**
+> The sections below (**Pass 2: Tier 2** and **Pass 3: Tier 3**) are preserved for intermediate and advanced builders moving into custom 4-layer/6-layer PCBs, RTOS/Zephyr firmware, ROS 2, state-space control, and $SO(3)$ manifolds.
+
+### PASS 2: Tier 2 Linear Roadmap (`Intermediate / Applied Pass: Track 00 → Track 08`)
 
 Loop back to Track 00 and level up every module from breadboard breakouts to custom engineering:
 

@@ -23,6 +23,7 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 ## Tier 1 (Beginner / Intuitive)
 
 > **Goal of Pass 1 (Track 01):** Learn how low-voltage logic safely controls higher-voltage motor power without browning out or frying your microcontroller, using breadboard-friendly MOSFETs and modern H-bridge breakout modules (`DRV8833` / `TB6612FNG`).
+> **🟢 Start Here (Track 01 Lesson 01.1):** Begin with **[Lesson 01.1: High-Current Switching — MOSFETs, Inductors (Motor Coils) & Flyback Diodes](01.1-mosfet-inductor-flyback.md)** (right after completing [Stage 0](../stage-0/README.md)) before building a full 4-MOSFET H-bridge.
 > **📚 Required Foundations & Bridge Modules for Pass 1 (Track 01):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (especially SI units in [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) and energy in [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md)) plus the Track 01 Tier 1 Bridge Ladder [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md) → [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) → [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) → [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md).
 
 ### 1.1 Logic Levels ($3.3\text{ V}$ vs. $5\text{ V}$) & Open-Drain Pull-Ups
