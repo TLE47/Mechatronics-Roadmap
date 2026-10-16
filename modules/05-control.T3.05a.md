@@ -25,7 +25,7 @@ This is the final bridge module in the Track 05 Tier 3 ladder before Step 3.6 (`
 
 ## 2. Intuition first
 Three geometric and optimization concepts form the backbone of Tier 3 estimation and control:
-- **Why $(I - KH)P^-$ Fails & Why Joseph Form Never Goes Negative:** In floating-point arithmetic, subtracting $K H P^-$ from $P^-$ when measurements are very accurate ($K H \approx I$) can produce tiny negative eigenvalues due to roundoff, causing the Kalman filter to diverge explosively! The **Joseph-form update** $P^+ = (I - KH)P^-(I - KH)^\top + K R K^\top$ is a sum of two symmetric positive semi-definite quadratic forms ($A P A^\top + B R B^\top \succeq 0$): even if $K$ is suboptimal or rounded to 32-bit `float`, $P^+$ is mathematically guaranteed to remain symmetric and positive definite!
+- **Why $(I - KH)P^-$ Fails & Why Joseph Form Never Goes Negative:** In floating-point arithmetic, subtracting $K H P^-$ from $P^-$ when measurements are very accurate ($K H \approx I$) can produce tiny negative eigenvalues due to roundoff, causing the Kalman filter to diverge explosively! The **Joseph-form update** $P^+ = (I - KH)P^-(I - KH)^\top + K R K^\top$ is a sum of two symmetric positive semi-definite quadratic forms ($A P A^\top + B R B^\top \succeq 0$): even if $K$ is suboptimal or rounded to 32-bit `float`, $P^+$ is guaranteed to remain symmetric and **positive semi-definite** ($P^+ \succeq 0$). The stronger claim — positive definite, $P^+ \succ 0$ — needs an assumption, not just the Joseph form: take $P^- = 0$ with a bug that leaves $K = 0$, and the update returns exactly $P^+ = 0$, which is semi-definite but singular. Stated assumptions: $P^- \succeq 0$, $R \succ 0$, and $K R K^\top \succ 0$ (a gain with full row rank), which is what makes every eigenvalue strictly positive.
 - **Why the Error-State Kalman Filter (`ESKF`) Lives in 3D Tangent Space:** You cannot add Gaussian noise to a rotation matrix $R_1 + \Delta R$ without leaving $SO(3)$. Instead, the **ESKF** splits orientation into a noise-free **nominal orientation** $R \in SO(3)$ (integrated at $1\text{–}2\text{ kHz}$ from the IMU gyro via $R_{k+1} = R_k \exp([\omega_m \Delta t]_\times)$) and a small **3D tangent-space error vector** $\delta\theta \in \mathbb{R}^3$ with a well-conditioned $3\times 3$ covariance $P_{\theta\theta}$. Whenever a camera, LiDAR, or gravity measurement arrives, the Kalman update computes $\delta\hat{\theta}^+$, folds it into the nominal rotation via $R \leftarrow R \exp([\delta\hat{\theta}^+]_\times)$, and resets $\delta\hat{\theta} \leftarrow 0$!
 - **Control Barrier Functions (`CBF-QP`) as an Active Safety Wall:** Suppose $h(x) = q_{\max} - q \ge 0$ defines the distance to a hard joint or obstacle limit. Instead of slamming on the brakes only *after* hitting $h(x) = 0$, a **Control Barrier Function** enforces $\dot{h}(x, u) + \alpha h(x) \ge 0$ (for rate constant $\alpha > 0$). That bounds the approach speed by $\dot{h}(x) \ge -\alpha h(x)$—just like an exponential landing flare $h(t) \ge h(0)e^{-\alpha t} > 0$ that smoothly decelerates the robot so it can never cross $h(x) = 0$!
 
@@ -33,7 +33,7 @@ Three geometric and optimization concepts form the backbone of Tier 3 estimation
 1. **Joseph-Form Stabilized Kalman Covariance Update:** For prior covariance $P^- \succeq 0$, measurement Jacobian $H$, measurement noise covariance $R \succ 0$, and any gain matrix $K$ (including optimal $K = P^- H^\top (H P^- H^\top + R)^{-1}$), the posterior covariance is:
 
 $$
-P^+ = (I - K H) P^- (I - K H)^\top + K R K^\top = (P^+)^\top \succ 0
+P^+ = (I - K H) P^- (I - K H)^\top + K R K^\top = (P^+)^\top \succeq 0 \qquad (\succ 0 \ \text{iff} \ K R K^\top \succ 0)
 $$
 
 2. **Manifold Error-State Kalman Filter (`ESKF`) Injection & Reset on $SO(3)$:**
@@ -53,7 +53,7 @@ $$
    For a 1D scalar input with $L_g h(x) \ne 0$, the exact closed-form solution projects $u_{\text{nom}}$ onto the admissible half-space and actuator bounds $[u_{\min}, u_{\max}]$.
 
 ## 4. Worked example
-Verify (1) that the Joseph-form covariance update preserves exact symmetry and positive variance even under a perturbed suboptimal Kalman gain $K$, (2) execute a 3D $SO(3)$ ESKF measurement injection $R^+ = R^- \exp([\delta\hat{\theta}^+]_\times)$ with $\det(R^+) = 1$, and (3) solve a 1D CBF-QP safety filter that smoothly brakes an actuator approaching a wall at $x_{\max} = 0.50\text{ m}$.
+Verify (1) that the Joseph-form covariance update preserves exact symmetry and non-negative variance even under a perturbed suboptimal Kalman gain $K$, (2) execute a 3D $SO(3)$ ESKF measurement injection $R^+ = R^- \exp([\delta\hat{\theta}^+]_\times)$ with $\det(R^+) = 1$, and (3) solve a 1D CBF-QP safety filter that smoothly brakes an actuator approaching a wall at $x_{\max} = 0.50\text{ m}$.
 
 ```python
 import math
@@ -152,7 +152,7 @@ assert q4_choice == "A"
 Covers the complete Track 05 Tier 3 bridge ladder (`05-control.T3.05a`) before Step 3.6 (`05-control.T3.06`):
 1. `[Concept: joseph_stabilized_covariance_update]` Suppose a scalar filter has prior variance $P^- = 10.0$, $H = 1.0$, $R = 1.0$, and a bug sets the gain to $K = 1.20$. Compute the naive update $(1 - KH)P^-$ (which becomes negative!) vs. the Joseph-form update $(1 - KH)^2 P^- + K^2 R$. Report the **Joseph-form** posterior variance $P^+$ (tolerance $\pm 10^{-9}$).
 2. `[Concept: joseph_stabilized_covariance_update]` Why is the Joseph-form covariance update $P^+ = (I - KH)P^-(I - KH)^\top + KRK^\top$ mandatory in 32-bit `float` embedded navigation filters?
-   - **A.** Because it is the sum of two symmetric positive semi-definite quadratic forms, preserving symmetry and positive definiteness even under floating-point roundoff or suboptimal gains.
+   - **A.** Because it is the sum of two symmetric positive semi-definite quadratic forms, preserving symmetry and positive semi-definiteness even under floating-point roundoff or suboptimal gains (and positive definiteness whenever $K R K^\top$ has full rank).
    - **B.** Because it avoids using measurement noise $R$.
    - **C.** Because it sets $P^+ = 0$ after one step.
    - **D.** Because it does not use the measurement matrix $H$.
