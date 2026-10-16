@@ -11,7 +11,7 @@ slow_learner_hours: "2.0-3.0"
 # Lesson P.1: Variables and Fundamental Data Types (`int`, `float`, `str`, `bool`)
 
 ## Goal
-Store robot measurements such as battery voltage, encoder pulse counts, and safety status flags in named Python variables, and distinguish the four fundamental data types (`int`, `float`, `str`, `bool`).
+Store robot measurements such as battery charge level, wheel pulse counts, and safety status flags in named Python variables, and distinguish the four fundamental data types (`int`, `float`, `str`, `bool`).
 
 - **New ideas (max 2):**
   1. **Storing values in named variables**: Using the assignment operator (`=`) to evaluate the right-hand side first and store the result inside a named memory box on the left.
@@ -40,7 +40,7 @@ flowchart LR
   - **What to complete:** Complete **Chapter 1 (`The Shell`)** and **Chapter 3 (`Variables`)** `[verify in-app]`.
   - **What to skip:** Skip Chapter 2 for a moment (covered in Idea 2 below) and skip Chapters 4–12.
   - **Key takeaway:** A **variable** is a named storage box in computer memory. In Python, the single equals sign `=` is the **assignment** action—not a math equation: Python calculates the value on the right side of `=` first, and copies that result into the variable name on the left (`count = count + 1` increases `count` by `1`).
-  - **Alternative resource:** [Harvard CS50P Lecture 0 Notes](https://cs50.harvard.edu/python/2022/notes/0/) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact headings **`Functions`**, **`Variables`**, and **`Comments`** (skip **`Def`**).
+  - **Alternative resource:** [Harvard CS50P Lecture 0 Notes](https://cs50.harvard.edu/python/2022/notes/0/) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact headings **`Variables`** and **`Comments`**.
 
 ### Idea 2: Fundamental data types (`int`, `float`, `str`, `bool`)
 - **Primary resource:** [Harvard CS50P Lecture 0 Notes](https://cs50.harvard.edu/python/2022/notes/0/) `[HTTP 200 — Verified by scripts/check_links.py]`
@@ -50,9 +50,9 @@ flowchart LR
   - **Alternative resource:** [futurecoder.io — Chapter 2 (`String Basics`) and Chapter 7 (`f-strings`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 2 (`String Basics`)** and the **`f-strings`** page in **Chapter 7 (`A Bit More About Strings`)** `[verify in-app]`.
 
 ### Bridge Notes
-In mechatronics, every value inside your **program** (an ordered list of instructions executed top-to-bottom) represents a physical measurement or hardware state. When you write `battery_voltage = 12.0`, the **assignment** operator (`=`) creates a variable named `battery_voltage` holding the **float** (floating-point decimal number) `12.0`. Because Python always evaluates the right-hand side of `=` before storing it into the name on the left, writing `encoder_ticks = encoder_ticks + 25` reads the current **int** (integer whole number) stored in `encoder_ticks`, adds `25`, and saves the updated total back into `encoder_ticks`.
+In mechatronics, every value inside your **program** (an ordered list of instructions executed top-to-bottom) represents a physical measurement or hardware state. When you write `battery_level = 12.60`, the **assignment** operator (`=`) creates a variable named `battery_level` holding the **float** (floating-point decimal number) `12.60`. Because Python always evaluates the right-hand side of `=` before storing it into the name on the left, writing `wheel_ticks = wheel_ticks + 25` reads the stored **int** (integer whole number) in `wheel_ticks`, adds `25`, and saves the updated total back into `wheel_ticks`.
 
-Text wrapped in quotes like `"ARMED"` is a **str** (string), whereas a safety switch state like `is_estop_active = False` is a **bool** (boolean, written strictly `True` or `False` with capital first letters). Never put quotation marks around numbers you plan to use in calculations: `12 + 5` adds two integers to give `17`, whereas `"12" + "5"` glues two strings together into `"125"`. Finally, use a **comment** (`#`) to write human-readable unit reminders that Python ignores, and use an **f-string** (`f"Voltage: {battery_voltage:.2f} V"`) inside `print()` to display values cleanly with their units.
+Text wrapped in quotes like `"ARMED"` is a **str** (string), whereas a safety switch state like `is_estop_active = False` is a **bool** (boolean, written strictly `True` or `False` with capital first letters). Never put quotation marks around numbers you plan to use in calculations: `12 + 5` adds two integers to give `17`, whereas `"12" + "5"` glues two strings together into `"125"`. Finally, use a **comment** (`#`) to write human-readable unit reminders that Python ignores, and use an **f-string** (`f"Battery: {battery_level:.2f}"`) inside `print()` to display values cleanly.
 
 ---
 
@@ -66,21 +66,21 @@ Copy this starter script into your Python editor. It runs right now without cras
 
 ```python
 # Robot state variables (units documented in comments)
-battery_voltage = 12.60      # float: battery voltage in Volts
+battery_level = 12.60        # float: battery reading
 encoder_ticks = 400          # int: wheel sensor pulse count
-robot_mode = "STANDBY"       # str: current status label
+robot_mode = "STANDBY"       # str: active status label
 is_estop_active = False      # bool: emergency stop switch state
 
-# TODO 1: Update encoder_ticks by adding 25 to its current value,
-#         and update battery_voltage by subtracting 0.45 from its current value.
+# TODO 1: Update encoder_ticks by adding 25 to its existing value,
+#         and update battery_level by subtracting 0.45 from its existing value.
 encoder_ticks = encoder_ticks
-battery_voltage = battery_voltage
+battery_level = battery_level
 
 # TODO 2: Change robot_mode to "ACTIVE" (a string) and keep is_estop_active as False.
 robot_mode = robot_mode
 
 print(f"Mode: {robot_mode} | E-Stop: {is_estop_active}")
-print(f"Encoder Ticks: {encoder_ticks} | Battery: {battery_voltage:.2f} V")
+print(f"Encoder Ticks: {encoder_ticks} | Battery: {battery_level:.2f} V")
 ```
 
 ### Expected Output
@@ -105,7 +105,7 @@ In `TODO 1`, remember that `variable = variable + change` reads the old value on
 Replace the three `TODO` assignment lines with:
 ```python
 encoder_ticks = encoder_ticks + 25
-battery_voltage = battery_voltage - 0.45
+battery_level = battery_level - 0.45
 robot_mode = "ACTIVE"
 ```
 </details>
@@ -114,17 +114,17 @@ robot_mode = "ACTIVE"
 <summary><strong>Full Solution</strong></summary>
 
 ```python
-battery_voltage = 12.60
+battery_level = 12.60
 encoder_ticks = 400
 robot_mode = "STANDBY"
 is_estop_active = False
 
 encoder_ticks = encoder_ticks + 25
-battery_voltage = battery_voltage - 0.45
+battery_level = battery_level - 0.45
 robot_mode = "ACTIVE"
 
 print(f"Mode: {robot_mode} | E-Stop: {is_estop_active}")
-print(f"Encoder Ticks: {encoder_ticks} | Battery: {battery_voltage:.2f} V")
+print(f"Encoder Ticks: {encoder_ticks} | Battery: {battery_level:.2f} V")
 ```
 </details>
 
@@ -133,7 +133,7 @@ print(f"Encoder Ticks: {encoder_ticks} | Battery: {battery_voltage:.2f} V")
 ## Common mistakes & troubleshooting
 - **`NameError: name 'false' is not defined`:** Booleans in Python must begin with a capital letter: `True` and `False`, never `true` or `false`.
 - **`NameError: name 'ACTIVE' is not defined`:** Text strings must be wrapped in quotes (`"ACTIVE"`). Without quotes, Python looks for a variable named `ACTIVE`.
-- **Missing `f` before quotes:** If `print("{battery_voltage:.2f}")` prints literal curly braces `{battery_voltage:.2f}`, put the letter `f` immediately before the opening quote: `print(f"{battery_voltage:.2f}")`.
+- **Missing `f` before quotes:** If `print("{battery_level:.2f}")` prints literal curly braces `{battery_level:.2f}`, put the letter `f` immediately before the opening quote: `print(f"{battery_level:.2f}")`.
 
 ---
 

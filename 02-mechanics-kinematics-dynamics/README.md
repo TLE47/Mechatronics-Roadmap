@@ -22,11 +22,22 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 02):** Master 2D planar robot arm kinematics (Forward & Inverse Kinematics using basic trigonometry), understand how gear ratios scale torque vs. reflected inertia ($N^2$), and learn how to support rotating shafts properly with radial ball bearings and timing belts.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 02):** Complete Tier 1 Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians, Unit-Circle Trig & `atan2`*) and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (Kinematics, $F=ma$ & Mechanical Energy) plus the Track 02 Tier 1 Bridge [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md).
+> **Goal of Pass 1 (Track 02):** Ramp smoothly from **1-Link Planar Forward Kinematics (`02.1`)** $\to$ **2-Link Planar Forward Kinematics (`02.2`)** $\to$ **2-Link Planar Inverse Kinematics (`02.3`)**, then master **Rotational Inertia & Gear Ratios ($N^2$ reflected inertia, `02.4`)** and **Double-Shear Bearings, Timing Belts & 3D-Printed Parts (`02.5`)**.
 
-### [1.1 2-Link Planar Forward & Inverse Kinematics (Law of Cosines)]
-- **Core Summary:** Solves 2-DOF planar robot arm Forward Kinematics (`joint angles -> tip x, y`) and closed-form Inverse Kinematics (`target x, y -> shoulder/elbow angles`) using the Law of Cosines and two-argument `atan2(y, x)`.
+### 🟢 Track 02 — Tier 1 Beginner Lessons (`02.1`–`02.5`)
+
+| Lesson | Topic | New Ideas (Max 2, Enforced in Front Matter) | Simulator / Tool | Typical Time | Slow-Learner Time |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **[Lesson 02.1](02.1-1d-link-fk-and-coord-frames.md)** | **2D Coordinate Frames & 1-Link Planar Arm Forward Kinematics** | 1. World vs. joint coordinate frames & right-hand CCW angle sign convention<br>2. 1-link planar forward kinematics ($x = L\cos\theta$, $y = L\sin\theta$) & circular workspace | Python (futurecoder.io) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+| **[Lesson 02.2](02.2-2link-planar-forward-kinematics.md)** | **2-Link Planar Arm Forward Kinematics ($\theta_1, \theta_2 \to x, y$)** | 1. Absolute link angle ($\theta_{12} = \theta_1 + \theta_2$) from relative elbow angle $\theta_2$<br>2. Chaining tip-to-tail vectors for 2-link forward kinematics & annular reach envelope | Python (futurecoder.io) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson 02.3](02.3-2link-planar-inverse-kinematics.md)** | **2-Link Planar Arm Inverse Kinematics ($x, y \to \theta_1, \theta_2$) & Reachability** | 1. Law of Cosines for elbow angle & reachability clamping<br>2. Elbow-down vs. elbow-up geometric solutions & shoulder angle via `math.atan2` | Python (futurecoder.io) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson 02.4](02.4-rotational-inertia-and-gear-ratios.md)** | **Rotational Dynamics ($\tau_{\text{net}} = I_{\text{rot}}\alpha$), Gear Ratios ($N$) & Reflected Inertia** | 1. Rotational Newton's Second Law ($\tau_{\text{net}} = I_{\text{rot}}\alpha$) & moment of inertia ($I_{\text{rot}} = mr^2$)<br>2. Gear reduction ratio ($N$) & reflected rotor inertia ($I_{\text{reflected}} = N^2 I_{\text{motor}}$) | Python (futurecoder.io) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson 02.5](02.5-bearings-belts-and-3d-printing.md)** | **Practical Robot Mechanisms — Double-Shear Bearings, Timing Belts & 3D Printing** | 1. Cantilevered vs. double-shear shaft support<br>2. GT2 timing belt pulley ratios ($N = N_{\text{driven}}/N_{\text{driver}}$) & 3D-printed layer orientation | Python (futurecoder.io) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+
+---
+
+### [1.1 1-Link FK to 2-Link Planar Forward & Inverse Kinematics (Law of Cosines)]
+- **Core Summary:** Ramps from a single rotating link ($x = L_1\cos q_1, y = L_1\sin q_1$ in **[Lesson 02.1](02.1-1d-link-fk-and-coord-frames.md)**) to chaining a second link at cumulative angle $q_{12} = q_1 + q_2$ (**[Lesson 02.2](02.2-2link-planar-forward-kinematics.md)**), and then solves closed-form Inverse Kinematics (`target x, y -> shoulder/elbow angles` in **[Lesson 02.3](02.3-2link-planar-inverse-kinematics.md)**) using the Law of Cosines and two-argument `atan2(y, x)`.
 
 $$
 x = L_1 \cos(q_1) + L_2 \cos(q_1 + q_2), \qquad y = L_1 \sin(q_1) + L_2 \sin(q_1 + q_2)
@@ -38,11 +49,11 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [Modern Robotics — Ch. 1, 2 & 6: Planar Kinematics & Inverse Kinematics (Lynch & Park Free PDF & Videos)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Clear geometric derivations of 2R planar forward/inverse kinematics and elbow-up vs. elbow-down solutions.*
-  - 🔗 [John J. Craig: Introduction to Robotics — Mechanics and Control (4th Ed. Companion Resources)](https://www.pearson.com/) — *Classic foundation for spatial descriptions, Denavit-Hartenberg (DH) parameters, and 2D/3D manipulator kinematics.*
+  - 🔗 [MathsIsFun: Law of Cosines](https://www.mathsisfun.com/algebra/trig-cosine-law.html) — *Step-by-step geometric derivation of the Law of Cosines used for the elbow angle* $q_2$.
   - 🔗 [Red Blob Games: Interactive 2D Coordinate Transforms & Kinematics](https://www.redblobgames.com/) — *Browser-based visual tutorials for trigonometry and linkage reachability.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Write a Python function `ik_2dof(x, y, L1=0.15, L2=0.15)` that clamps `cos_q2 = np.clip(cos_q2, -1.0, 1.0)` before calling `np.arccos()` so floating-point roundoff at full arm extension ($r = L_1 + L_2$) never throws a `NaN` runtime crash, and command a figure-8 path.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study radians, unit-circle trigonometry, and four-quadrant `math.atan2(y, x)` in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), 2D rotation matrices in Foundations **Step 1.1 (`00-foundations.T1.01`)**, and 2-link planar FK/IK in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), plus [Lynch & Park *Modern Robotics* Ch. 3 & Ch. 6](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
+  - *Task:* Complete **[Lesson 02.1](02.1-1d-link-fk-and-coord-frames.md)**, **[Lesson 02.2](02.2-2link-planar-forward-kinematics.md)**, and **[Lesson 02.3](02.3-2link-planar-inverse-kinematics.md)**—clamping `cos_q2 = max(-1.0, min(1.0, raw_cos_q2))` before calling `math.acos()` so floating-point roundoff at full arm extension ($r = L_1 + L_2$) never throws a `ValueError: math domain error`.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study radians, unit-circle trigonometry, and four-quadrant `math.atan2(y, x)` in **[Lesson P.10](../track-p/P.10-radians-and-right-triangle-trig.md)** and [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -67,51 +78,51 @@ $$
   - 🔗 [MIT 2.007 Design and Manufacturing I — Gear Ratios & Transmission Matching (MIT OCW)](https://ocw.mit.edu/courses/2-007-design-and-manufacturing-i-spring-2009/) — *Introductory mechanical engineering course notes on speed-torque trade-offs and inertia matching.*
   - 🔗 [Underactuated Robotics — Appendix: Actuators & Reflected Inertia (Russ Tedrake, MIT)](https://underactuated.mit.edu/) — *Explains why high-* $N$ *gearboxes dominate joint dynamics and ruin impact robustness.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Compare the reflected inertia $J_{\text{refl}} = N^2 J_{\text{rotor}}$ of a $J_{\text{rotor}} = 0.2\text{ kg}\cdot\text{cm}^2$ motor paired with (a) an $8:1$ QDD planetary gearbox ($12.8\text{ kg}\cdot\text{cm}^2$) vs. (b) a $150:1$ worm/spur gearbox ($4,500\text{ kg}\cdot\text{cm}^2$) in **Tab 5: Capstones & Safety**.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study SI rotational unit conversions ($\text{kg}\cdot\text{cm}^2 \to \text{kg}\cdot\text{m}^2$, RPM $\to \text{rad/s}$) in Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), kinetic energy conservation in [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md), and lever torque + gear ratio $N^2$ reflected inertia in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), plus [MIT 2.75 Precision Machine Design Lecture Notes](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/).
+  - *Task:* Complete **[Lesson 02.4 (`02.4-rotational-inertia-and-gear-ratios.md`)](02.4-rotational-inertia-and-gear-ratios.md)** and compare the reflected inertia $J_{\text{refl}} = N^2 J_{\text{rotor}}$ across $N \in \{1, 10, 100\}$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study lever torque in **[Lesson P.12](../track-p/P.12-forces-and-lever-torque.md)** and rotational dynamics + $N^2$ reflected inertia in **[Lesson 02.4](02.4-rotational-inertia-and-gear-ratios.md)** and [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
-  **Q1:** If a robot arm link has inertia $J_{\text{load}} = 0.02\text{ kg}\cdot\text{m}^2$ and the motor rotor has inertia $J_m = 2 \times 10^{-4}\text{ kg}\cdot\text{m}^2$, what gear ratio $N^*$ maximizes the peak angular acceleration $\ddot{q}\kern0pt_{\text{load}}$ of the output link for a given peak motor torque $\tau_m$?
-  * **Answer / Explanation:** Output acceleration is $\ddot{q}\kern0pt_L = \frac{N\tau_m}{J_{\text{load}} + N^2 J_m}$. Differentiating with respect to $N$ and setting to zero yields the classic **Inertia Matching Condition**: $N^2 J_m = J_{\text{load}} \implies N^* = \sqrt{\frac{J_{\text{load}}}{J_m}} = \sqrt{\frac{0.02}{2\times 10^{-4}}} = \sqrt{100} = 10:1$. Above $N=10$, almost all motor torque is wasted accelerating the motor's own rotor!
+  **Q1:** If a robot arm link has inertia $J_{\text{load}} = 0.02\text{ kg}\cdot\text{m}^2$ and the motor rotor has inertia $J_m = 2 \times 10^{-4}\text{ kg}\cdot\text{m}^2$, what gear ratio $N^*$ balances reflected motor inertia against load inertia ($N^2 J_m = J_{\text{load}}$) to maximize peak output angular acceleration?
+  * **Answer / Explanation:** Output acceleration is $\alpha_L = \frac{N\tau_m}{J_{\text{load}} + N^2 J_m}$. Peak acceleration occurs at the **Inertia Matching Condition** where reflected rotor inertia equals load inertia: $N^2 J_m = J_{\text{load}} \implies N^* = \sqrt{\frac{J_{\text{load}}}{J_m}} = \sqrt{\frac{0.02}{2\times 10^{-4}}} = \sqrt{100} = 10:1$. Above $N=10$, most of the motor's torque is spent accelerating its own spinning rotor!
   
   **Q2:** Why does a high-ratio ($200:1$) geared servo strip its teeth when the robot's leg hits the ground at $2\text{ m/s}$, even if the motor power is turned completely OFF?
-  * **Answer & Explanation:** When the foot hits the ground, the output shaft stops instantaneously ($\ddot{q}\kern0pt_L$ is huge), which requires decelerating the motor rotor at $\ddot{\theta}\kern0pt_m = 200\,\ddot{q}\kern0pt_L$. The reflected inertial reaction torque across the gear teeth is $\tau_{\text{impact}} = N^2 J_m \ddot{q}\kern0pt_L = 40,000\,J_m \ddot{q}\kern0pt_L$, which easily exceeds the shear strength of the output gear teeth regardless of electrical current!
+  * **Answer & Explanation:** When the foot hits the ground, the output shaft stops abruptly, which requires decelerating the motor rotor $200\times$ faster. The reflected inertial reaction torque across the gear teeth scales by $N^2 = 200^2 = 40,000\times J_m$, easily exceeding the strength of small gear teeth regardless of electrical current!
   </details>
 
 ---
 
 ### [1.3 Practical 3D-Printed Joints, Radial Bearings & GT2 Timing Belts]
-- **Core Summary:** Teaches foundational mechanical assembly rules for makers: supporting joint shafts in **double shear** with two spaced radial ball bearings (`608` / `6804`), tensioning `GT2` fiberglass-core timing belts, and orienting 3D-printed FDM layer lines perpendicular to bending loads.
+- **Core Summary:** Teaches foundational mechanical assembly rules for makers (**[Lesson 02.5](02.5-bearings-belts-and-3d-printing.md)**): supporting joint shafts in **double shear** with two spaced radial ball bearings (`608` / `6804`), calculating `GT2` timing-belt tooth ratios and center distances, and orienting 3D-printed FDM layer lines so tensile loads pull along continuous filament strands.
 
 $$
-F_{\text{radial}\_\text{bearing}} = T_{\text{belt}\_\text{preload}} + \frac{\tau_{\text{pulley}}}{r_{\text{pitch}}}, \qquad \delta_{\text{cantilever}} = \frac{F L^3}{3 E I} \gg \delta_{\text{double}\_\text{shear}} = \frac{F L^3}{192 E I}
+\tau_{\text{bending}} = F_{\text{load}} \cdot d_{\text{overhang}}, \qquad N_{\text{belt}} = \frac{N_{\text{driven}}}{N_{\text{driver}}}, \qquad p_{\text{GT2}} = 2.0\text{ mm/tooth}
 $$
 
 - **Curated Free Resources:**
   - 🔗 [MIT FUNdaMENTALS of Design — Topic 3 & 8: Structural Loops, Shafts & Bearings (Prof. Alex Slocum)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Illustrated golden rules for supporting shafts in double shear vs. cantilevered overhang.*
-  - 🔗 [Budynas & Nisbett: Shigley's Mechanical Engineering Design (11th Ed. Reference)](https://www.mheducation.com/) — *Industry-standard machine design reference for shaft fatigue, radial/angular-contact bearing* $L_{10}$ *life, Spur/Helical gear tooth bending, and bolted joint preload.*
-  - 🔗 [Gates GT2 / PowerGrip Timing Belt Design Manual](https://www.gates.com/) — *Covers minimum pulley tooth engagement (* $\ge 6$ *teeth in mesh) and preload tensioning.*
+  - 🔗 [Wikipedia: Fused Filament Fabrication (Process & Layer Adhesion)](https://en.wikipedia.org/wiki/Fused_filament_fabrication) — *Shows why FDM parts are strongest along continuous X-Y filament loops.*
+  - 🔗 [Gates GT2 / PowerGrip Timing Belt Design Manual](https://www.gates.com/) — *Covers minimum pulley tooth engagement (*$\ge 6$ *teeth in mesh) and preload tensioning.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Compare the shaft tip deflection ratio between a cantilevered shaft of overhang $L$ ($\delta = \frac{FL^3}{3EI}$) and a double-shear shaft supported at both ends ($\delta = \frac{FL^3}{48EI}$ for pin-pin or $\delta = \frac{FL^3}{192EI}$ for fixed-fixed)—confirming a $16\times$ to $64\times$ stiffness increase simply by capturing the far end of the pin in a second bearing!
+  - *Task:* Complete **[Lesson 02.5 (`02.5-bearings-belts-and-3d-printing.md`)](02.5-bearings-belts-and-3d-printing.md)** to compare the parasitic bending torque $\tau_{\text{bend}} = F \cdot d_{\text{overhang}}$ on a cantilevered motor shaft against a double-shear bearing mount (which splits radial load $F/2$ per bearing and eliminates shaft overhang bending), and size an $80$-tooth `GT2` closed-loop belt for a $20\text{T} \to 60\text{T}$ ($3:1$) pulley stage.
   - *Canonical First-Use 3D Slicing (`OrcaSlicer` / `PrusaSlicer`) & Bearing Fit Recipe (for Tier 1 3D-Printed Links):*
     - **Slicer Settings:** Orient the link flat on the build plate ($X\text{-}Y$ plane perpendicular to the joint rotation axis); set **$0.20\text{ mm}$ layer height**, **$4$ perimeter wall loops** (wall thickness dominates bending stiffness much more than infill!), **$5$ top/bottom shell layers**, and **$40\%$ Gyroid infill** in `PLA+` or `PETG`.
     - **Dimensional Fit Clearances:** FDM holes shrink slightly inward. For a `608` radial ball bearing ($22.00\text{ mm}$ OD, $8.00\text{ mm}$ ID, $7.00\text{ mm}$ width), model the housing bore at **$22.10\text{ mm}$ (`+0.10 mm` radial press-fit)** with a $0.5\text{ mm} \times 45^\circ$ lead-in chamfer, model the rotating shaft pin at **$7.95\text{ mm}$ (`-0.05 mm` snug fit)**, and model free-running M3 clearance holes at **$3.25\text{ mm}$ (`+0.25 mm`)**.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study free-body diagrams and static equilibrium ($\sum F = 0, \sum \tau = 0$) in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) (`## 3. Formalization` Item 2) and [Shigley's Mechanical Engineering Design / MIT 2.001 Beam Deflection Tables](https://ocw.mit.edu/courses/2-001-mechanics-materials-i-fall-2006/).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study lever torque in **[Lesson P.12](../track-p/P.12-forces-and-lever-torque.md)** and double-shear bearings + `GT2` timing belts in **[Lesson 02.5](02.5-bearings-belts-and-3d-printing.md)** and [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
-  **Q1:** When 3D-printing a structural robot arm link or motor bracket on an FDM printer (`PLA`/`PETG`/`PA-CF`), how should you orient the part on the build plate relative to the primary tension/bending forces?
+  **Q1:** When 3D-printing a structural robot arm link or motor bracket on an FDM printer (`PLA`/`PETG`), how should you orient the part on the build plate relative to the primary tension/bending forces?
   * **Answer / Explanation:** FDM prints are anisotropic: inter-layer adhesion along the vertical $Z$-axis is $40\text{–}60\%$ weaker than continuous filament strands in the $X\text{-}Y$ plane, and delaminates brittlely under tension. Always orient the part so tensile and bending stresses run **parallel to the $X\text{-}Y$ filament perimeters**, and use steel bolts/dowels across $Z$-layers for shear compression.
   
   **Q2:** Why do `GT2` timing belts used in robotics have internal **fiberglass cords** rather than stretchy polyurethane/rubber alone, and why shouldn't you bend them backward over a tiny $<10\text{ mm}$ idler roller?
-  * **Answer / Explanation:** Fiberglass tensile cords give the belt high axial stiffness ($EA$) with near-zero creep so belt stretch doesn't introduce position hysteresis. However, fiberglass filaments fracture under tight reverse-bending radii, causing the belt to snap suddenly after a few thousand cycles.
+  * **Answer / Explanation:** Fiberglass tensile cords give the belt high axial stiffness with near-zero stretch so belt tension doesn't introduce position slop. However, fiberglass filaments fracture under tight reverse-bending radii, causing the belt to snap prematurely.
   </details>
 
 ### ✅ Tier 1 Milestone Gate (`Track 02 · Pass 1`)
-* Verify your 2-DOF planar inverse kinematics trajectory tracker and workspace bounds check.
+* Complete **[Lesson 02.1](02.1-1d-link-fk-and-coord-frames.md)** through **[Lesson 02.5](02.5-bearings-belts-and-3d-printing.md)** and verify your 2-DOF planar inverse kinematics trajectory tracker and workspace bounds check.
 * **Next Linear Step in Pass 1:** [**Proceed to Track 03 (Tier 1: Encoders & Open-Loop BLDC with `SimpleFOC`) →**](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive)
 
 ---

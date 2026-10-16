@@ -33,13 +33,14 @@ flowchart LR
 ## Learn
 
 ### Idea 1: End-to-end sense-compute-simulate loop
-- **Primary resource:** [The Physics Classroom — Determining the Area on a v-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-4/Determining-the-Area-on-a-v-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]` & [HyperPhysics — Torque](http://hyperphysics.phy-astr.gsu.edu/hbase/torq.html) `[HTTP 200 — Verified by scripts/check_links.py]`
-  - **What to read:** Review exact headings **`Calculating the Area of a Rectangle`** on the Physics Classroom page and **`Torque = Force applied x lever arm`** on HyperPhysics.
+- **Primary resource:** [The Physics Classroom — Determining the Area on a v-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-4/Determining-the-Area-on-a-v-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]`
+  - **What to read:** Review exact heading **`Calculating the Area of a Rectangle`**.
   - **What to skip:** No new external chapters required—this milestone synthesizes the ideas you already practiced in Lessons P.1–P.12.
   - **Key takeaway:** A physical simulation is a loop that repeats three simple steps at every time slice $\Delta t$: (1) convert commands and geometry into base SI units (`m`, `kg`, `s`, `rad`, `N·m`), (2) compare motor torque against gravity torque $\tau_{\text{grav}} = mgL\cos\theta$, and (3) advance angle and tip $(x, y) = (L\cos\theta, L\sin\theta)$ over $\Delta t$.
+  - **Alternative resource:** [HyperPhysics — Torque](http://hyperphysics.phy-astr.gsu.edu/hbase/torq.html) `[HTTP 200 — Verified by scripts/check_links.py]` — Review exact heading **`Torque = Force applied x lever arm`**.
 
 ### Bridge Notes
-Congratulations on reaching the **Track P Milestone**! Before moving on to electronics and microcontrollers in Stage 0, you will build a complete miniature simulation in Python to prove you can read, write, and debug every prerequisite concept without guessing.
+Congratulations on reaching the **Track P Milestone**! Before moving on to electronics and microcontrollers in Stage 0, you will build a complete **end-to-end sense-compute-simulate loop** in Python to prove you can read, write, and debug every prerequisite concept without guessing.
 
 Here is the physical system you are modeling using our consistent horizontal-angle convention:
 - A single robot arm link has length $L = 250\text{ mm}$ ($0.25\text{ m}$) and carries a tip mass $m = 0.40\text{ kg}$ ($g = 9.81\text{ m/s}^2$).
@@ -212,4 +213,4 @@ assert round(math.degrees(angle_rad), 1) == 54.0
 ### You're done with Track P when...
 - [ ] Your milestone script prints the exact 4 expected lines and passes all `assert` checks.
 - [ ] You can explain every single line of the milestone solution in plain English without looking anything up.
-- **Next stage:** [Stage 0 (Lesson S0.1): Closed DC Circuits, Ground Reference & Ohm's Law](../stage-0/S0.1-closed-circuits-and-ohms-law.md)
+- **Next lesson:** [Stage 0 (Lesson S0.1): Closed DC Circuits, Ground Reference & Ohm's Law](../stage-0/S0.1-closed-circuits-and-ohms-law.md)

@@ -31,6 +31,7 @@ ARDUINO_LESSON_FILES = [
     os.path.join(ROOT, "stage-0", "S0.8-adc-analog-read-and-serial-monitor.md"),
     os.path.join(ROOT, "stage-0", "S0.9-pwm-duty-cycle-and-analog-write.md"),
     os.path.join(ROOT, "stage-0", "S0.M-stage-0-milestone.md"),
+    os.path.join(ROOT, "01-electronics-and-power", "01.2-h-bridge-and-stall-current.md"),
 ]
 
 HOST_ARDUINO_MOCK_H = r"""

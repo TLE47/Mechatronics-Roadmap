@@ -22,9 +22,18 @@ Complete **only your current Tier section** below, verify its hands-on milestone
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 01):** Learn how low-voltage logic safely controls higher-voltage motor power without browning out or frying your microcontroller, using breadboard-friendly MOSFETs and modern H-bridge breakout modules (`DRV8833` / `TB6612FNG`).
-> **🟢 Start Here (Track 01 Lesson 01.1):** Begin with **[Lesson 01.1: High-Current Switching — MOSFETs, Inductors (Motor Coils) & Flyback Diodes](01.1-mosfet-inductor-flyback.md)** (right after completing [Stage 0](../stage-0/README.md)) before building a full 4-MOSFET H-bridge.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 01):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (especially SI units in [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) and energy in [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md)) plus the Track 01 Tier 1 Bridge Ladder [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md) → [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) → [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) → [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md).
+> **Goal of Pass 1 (Track 01):** Learn how low-voltage logic safely controls higher-voltage motor power without browning out or frying your microcontroller, using MOSFETs, flyback diodes, 4-switch H-bridges, buck/LDO regulators, star grounding, and passive RC low-pass filters in 4 self-contained lessons (`01.1`–`01.4`).
+
+### 🟢 Track 01 — Tier 1 Beginner Lessons (`01.1`–`01.4`)
+
+| Lesson | Topic | New Ideas (Max 2, Enforced in Front Matter) | Simulator / Tool | Typical Time | Slow-Learner Time |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **[Lesson 01.1](01.1-mosfet-inductor-flyback.md)** | **High-Current Switching — MOSFETs, Inductors & Flyback Diodes** | 1. Low-side N-channel MOSFET switch ($R_{\text{DS(on)}}$)<br>2. Inductor kickback ($V_L = L\frac{\Delta I}{\Delta t}$) & flyback diode protection | Falstad (`falstad/01.1-mosfet-flyback.txt`) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson 01.2](01.2-h-bridge-and-stall-current.md)** | **Bidirectional DC Motor Control — H-Bridges, Shoot-Through & Stall Current** | 1. H-Bridge 4-switch topology (Forward, Reverse, Coast, Brake) & shoot-through prevention<br>2. DC motor back-EMF ($V_{\text{emf}} = K_e\omega$) & stall current ($I_{\text{stall}} = V_s/R_a$) | Falstad (`falstad/01.2-h-bridge.txt`) + Wokwi (Arduino Uno `IN1/IN2/PWM`, no motor in Wokwi) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson 01.3](01.3-power-regulators-and-power-budget.md)** | **Multi-Rail Robot Power — Linear (`LDO`) vs. Switching (`Buck`) & Power Budgets** | 1. Linear (`LDO`) regulator heat loss vs. switching (`Buck`) power conservation<br>2. System worst-case power budget & separate motor vs. logic rails | Python (futurecoder.io) | 1.5–2.0 hrs | 2.5–3.0 hrs |
+| **[Lesson 01.4](01.4-grounding-and-rc-lowpass-filters.md)** | **Quiet Sensor Signals — Star Grounding & Passive RC Low-Pass Filters** | 1. High-current ground bounce ($V_{\text{ground}} = I_{\text{motor}}R_{\text{wire}}$) & star-ground wiring<br>2. Passive RC low-pass filter cutoff frequency ($f_c = \frac{1}{2\pi RC}$) | Falstad (`falstad/01.4-rc-lowpass.txt`) + Python | 1.5–2.0 hrs | 2.5–3.5 hrs |
+
+---
 
 ### 1.1 Logic Levels ($3.3\text{ V}$ vs. $5\text{ V}$) & Open-Drain Pull-Ups
 - **Core Summary:** Explains why applying $5\text{ V}$ signals to non-$5\text{V}$-tolerant $3.3\text{ V}$ microcontroller pins (`ESP32`, `RP2040`, `STM32` analog pins) forward-biases internal ESD protection diodes to `VDD`, and how open-drain buses (`I2C`) and `BSS138` level shifters safely bridge voltage domains.

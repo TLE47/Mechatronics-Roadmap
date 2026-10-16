@@ -49,15 +49,15 @@ flowchart LR
   - **Alternative resource:** [Official Python 3 Tutorial — Section 3.1.1: Numbers](https://docs.python.org/3/tutorial/introduction.html) `[HTTP 200 — Verified by scripts/check_links.py]` — Review the parentheses examples under **`3.1.1. Numbers`**.
 
 ### Bridge Notes
-On paper, engineers write multiplication by placing letters side by side ($F = ma$) and write fractions with a horizontal bar:
+On paper, engineers write multiplication by placing letters side by side ($d = s \cdot t$) and write fractions with a horizontal bar:
 
 $$
-V_{\text{out}} = V_{\text{in}} \cdot \frac{R_2}{R_1 + R_2}
+y_{\text{out}} = y_{\text{in}} \cdot \frac{b}{a + b}
 $$
 
-When you type that formula on a single line of code, the horizontal fraction bar disappears! If you type `v_in * r2 / r1 + r2`, Python's **order of operations** performs `v_in * r2 / r1` first and then adds `r2` at the very end—producing a completely wrong voltage. Wrapping the denominator in **parentheses** (`v_in * (r2 / (r1 + r2))`) forces Python to add `r1 + r2` first, just like the horizontal bar on paper.
+When you translate equations into **computer arithmetic operators** (`+`, `-`, `*`, `/`, `**`) on a single line of code, the horizontal fraction bar disappears! You must always write `*` explicitly for multiplication, `/` for floating-point division, and `**` for exponents. If you type `y_in * b / a + b` without parentheses, Python's **order of operations** (`PEMDAS`) performs `y_in * b / a` first and then adds `b` at the very end—producing a completely wrong answer. Wrapping the denominator in **parentheses** (`y_in * (b / (a + b))`) forces Python to add `a + b` first, just like the horizontal bar on paper.
 
-Similarly, when computing kinetic energy $E_k = \frac{1}{2} m v^2$ in Python, write `0.5 * mass_kg * (vel_m_s ** 2)` using `**` for the **exponent** (never `^`, which is a bitwise operator in Python). Whenever you are unsure which operation happens first, add parentheses `()`—extra parentheses never slow down your code and make your intent unmistakable.
+Similarly, when squaring a speed in $E_k = \frac{1}{2} m s^2$ in Python, write `0.5 * cart_mass * (cart_speed ** 2)` using `**` for the **exponent** (never `^`, which is a bitwise operator in Python). Whenever you are unsure which operation happens first, add parentheses `()`—extra parentheses never slow down your code and make your intent unmistakable.
 
 ---
 
@@ -67,32 +67,32 @@ Similarly, when computing kinetic energy $E_k = \frac{1}{2} m v^2$ in Python, wr
 - **What is real-hardware only:** Nothing in this lesson requires hardware.
 
 ### Starter Code (runs as-is — fill in the TODOs)
-Complete `TODO 1`, `TODO 2`, and `TODO 3` to calculate a robot's updated position, a battery voltage-divider reading, and the kinetic energy of a moving cart:
+Complete `TODO 1`, `TODO 2`, and `TODO 3` to calculate a robot's updated position, a scaled sensor reading, and the motion energy of a moving cart:
 
 ```python
-wheel_speed_m_s = 1.25
-dt_s = 0.05
+wheel_speed = 1.25
+elapsed_sec = 0.05
 start_pos_m = 2.0
 
-v_battery = 12.0
-r1_ohms = 20000
-r2_ohms = 10000
+supply_level = 12.0
+part_a = 20000
+part_b = 10000
 
-cart_mass_kg = 2.0
-cart_vel_m_s = 3.0
+cart_mass = 2.0
+cart_speed = 3.0
 
-# TODO 1: Compute new_pos_m = start_pos_m + (wheel_speed_m_s * dt_s)
+# TODO 1: Compute new_pos_m = start_pos_m + (wheel_speed * elapsed_sec)
 new_pos_m = 0.0
 
-# TODO 2: Compute v_sensor_pin = v_battery * (r2_ohms / (r1_ohms + r2_ohms))
-#         Keep parentheses around (r1_ohms + r2_ohms)!
-v_sensor_pin = 0.0
+# TODO 2: Compute sensor_pin = supply_level * (part_b / (part_a + part_b))
+#         Keep parentheses around (part_a + part_b)!
+sensor_pin = 0.0
 
-# TODO 3: Compute kinetic_energy_j = 0.5 * cart_mass_kg * (cart_vel_m_s ** 2)
+# TODO 3: Compute kinetic_energy_j = 0.5 * cart_mass * (cart_speed ** 2)
 kinetic_energy_j = 0.0
 
 print(f"New Position: {new_pos_m:.4f} m")
-print(f"Sensor Pin Voltage: {v_sensor_pin:.2f} V")
+print(f"Scaled Sensor Output: {sensor_pin:.2f} V")
 print(f"Kinetic Energy: {kinetic_energy_j:.2f} J")
 ```
 
@@ -101,7 +101,7 @@ When all three `TODO`s are completed, running the script prints:
 
 ```text
 New Position: 2.0625 m
-Sensor Pin Voltage: 4.00 V
+Scaled Sensor Output: 4.00 V
 Kinetic Energy: 9.00 J
 ```
 
@@ -110,16 +110,16 @@ Kinetic Energy: 9.00 J
 <details>
 <summary><strong>Hint 1 (Concept nudge)</strong></summary>
 
-Use `*` for multiplication, `/` for division, and `** 2` to square `cart_vel_m_s`. Make sure `r1_ohms + r2_ohms` is inside parentheses `(r1_ohms + r2_ohms)`.
+Use `*` for multiplication, `/` for division, and `** 2` to square `cart_speed`. Make sure `part_a + part_b` is inside parentheses `(part_a + part_b)`.
 </details>
 
 <details>
 <summary><strong>Hint 2 (Formula / structure)</strong></summary>
 
 ```python
-new_pos_m = start_pos_m + (wheel_speed_m_s * dt_s)
-v_sensor_pin = v_battery * (r2_ohms / (r1_ohms + r2_ohms))
-kinetic_energy_j = 0.5 * cart_mass_kg * (cart_vel_m_s ** 2)
+new_pos_m = start_pos_m + (wheel_speed * elapsed_sec)
+sensor_pin = supply_level * (part_b / (part_a + part_b))
+kinetic_energy_j = 0.5 * cart_mass * (cart_speed ** 2)
 ```
 </details>
 
@@ -127,23 +127,23 @@ kinetic_energy_j = 0.5 * cart_mass_kg * (cart_vel_m_s ** 2)
 <summary><strong>Full Solution</strong></summary>
 
 ```python
-wheel_speed_m_s = 1.25
-dt_s = 0.05
+wheel_speed = 1.25
+elapsed_sec = 0.05
 start_pos_m = 2.0
 
-v_battery = 12.0
-r1_ohms = 20000
-r2_ohms = 10000
+supply_level = 12.0
+part_a = 20000
+part_b = 10000
 
-cart_mass_kg = 2.0
-cart_vel_m_s = 3.0
+cart_mass = 2.0
+cart_speed = 3.0
 
-new_pos_m = start_pos_m + (wheel_speed_m_s * dt_s)
-v_sensor_pin = v_battery * (r2_ohms / (r1_ohms + r2_ohms))
-kinetic_energy_j = 0.5 * cart_mass_kg * (cart_vel_m_s ** 2)
+new_pos_m = start_pos_m + (wheel_speed * elapsed_sec)
+sensor_pin = supply_level * (part_b / (part_a + part_b))
+kinetic_energy_j = 0.5 * cart_mass * (cart_speed ** 2)
 
 print(f"New Position: {new_pos_m:.4f} m")
-print(f"Sensor Pin Voltage: {v_sensor_pin:.2f} V")
+print(f"Scaled Sensor Output: {sensor_pin:.2f} V")
 print(f"Kinetic Energy: {kinetic_energy_j:.2f} J")
 ```
 </details>

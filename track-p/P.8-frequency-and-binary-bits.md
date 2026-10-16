@@ -39,7 +39,7 @@ flowchart LR
 - **Primary resource:** [The Physics Classroom — Frequency and Period of a Wave](https://www.physicsclassroom.com/class/waves/Lesson-2/Frequency-and-Period-of-a-Wave) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact heading **`Frequency and Period of a Wave`** (specifically the reciprocal formulas $f = 1/T$ and $T = 1/f$).
   - **What to skip:** Skip the bottom pendulum/mass-on-a-spring practice questions once $T = 1/f$ is clear.
-  - **Key takeaway:** **Frequency** ($f$, measured in **Hertz `Hz`**, where $1\text{ Hz} = 1\text{ cycle per second}$) counts how many times a control loop or PWM wave repeats each second. **Period** ($T$, measured in seconds `s`) is the time duration of *one* cycle. They are exact reciprocals: $T = \frac{1}{f}$ and $f = \frac{1}{T}$.
+  - **Key takeaway:** **Frequency** ($f$, measured in **Hertz `Hz`**, where $1\text{ Hz} = 1\text{ cycle per second}$) counts how many times a control loop or switching signal repeats each second. **Period** ($T$, measured in seconds `s`) is the time duration of *one* cycle. They are exact reciprocals: $T = \frac{1}{f}$ and $f = \frac{1}{T}$.
 
 ### Idea 2: Binary bits and powers of 2 ($2^N$)
 - **Primary resource:** [SparkFun — Binary](https://learn.sparkfun.com/tutorials/binary) `[HTTP 200 — Verified by scripts/check_links.py]`
@@ -57,13 +57,13 @@ $$
 T = \frac{1}{f}, \qquad f = \frac{1}{T}
 $$
 
-- A hobby servo pulse repeats at $f = 50\text{ Hz}$, so each cycle lasts $T = \frac{1}{50\text{ Hz}} = 0.020\text{ s} = 20\text{ ms}$.
+- A standard hobby pulse repeats at $f = 50\text{ Hz}$, so each cycle lasts $T = \frac{1}{50\text{ Hz}} = 0.020\text{ s} = 20\text{ ms}$.
 - A fast robot control loop runs at $f = 1\text{ kHz}$ ($1{,}000\text{ Hz}$), so each time step is $T = \frac{1}{1000\text{ Hz}} = 0.001\text{ s} = 1.0\text{ ms}$.
 
 Second, **binary bits ($2^N$)** explain why microcontrollers use seemingly strange maximum numbers like `255` and `1023` instead of `100` or `1000`:
-- **8-bit register** (1 **byte**, used by Arduino Uno `analogWrite()` PWM): $2^8 = 256$ states $\rightarrow$ integers **`0` to `255`** ($2^8 - 1$).
-- **10-bit register** (used by Arduino Uno `analogRead()` ADC): $2^{10} = 1{,}024$ states $\rightarrow$ integers **`0` to `1023`** ($2^{10} - 1$).
-- **12-bit register** (used by 32-bit ADCs in later tracks): $2^{12} = 4{,}096$ states $\rightarrow$ integers **`0` to `4095`** ($2^{12} - 1$).
+- **8-bit register** (1 **byte**, used by 8-bit output commands): $2^8 = 256$ states $\rightarrow$ integers **`0` to `255`** ($2^8 - 1$).
+- **10-bit register** (used by 10-bit sensor inputs): $2^{10} = 1{,}024$ states $\rightarrow$ integers **`0` to `1023`** ($2^{10} - 1$).
+- **12-bit register** (used by 12-bit sensor inputs in later tracks): $2^{12} = 4{,}096$ states $\rightarrow$ integers **`0` to `4095`** ($2^{12} - 1$).
 
 Because counting starts at `0`, the maximum integer is always **$2^N - 1$**.
 
@@ -148,7 +148,7 @@ print(f"8-bit max: {max_unsigned_int(8)} | 10-bit max: {max_unsigned_int(10)} | 
 
 ## Common mistakes & troubleshooting
 - **Saying an 8-bit register goes up to `256` instead of `255`:** There are $2^8 = 256$ total values, but because `0` uses the first slot, the highest number is $256 - 1 = \mathbf{255}$.
-- **Forgetting to convert `kHz` to `Hz` before taking $1/f$:** For a $20\text{ kHz}$ motor PWM wave, convert $20\text{ kHz} = 20{,}000\text{ Hz}$ first so $T = \frac{1}{20{,}000} = 0.00005\text{ s} = 50\ \mu\text{s}$.
+- **Forgetting to convert `kHz` to `Hz` before taking $1/f$:** For a $20\text{ kHz}$ switching wave, convert $20\text{ kHz} = 20{,}000\text{ Hz}$ first so $T = \frac{1}{20{,}000} = 0.00005\text{ s} = 50\ \mu\text{s}$.
 
 ---
 
@@ -161,11 +161,11 @@ print(f"8-bit max: {max_unsigned_int(8)} | 10-bit max: {max_unsigned_int(10)} | 
    $f = \frac{1}{0.0005\text{ s}} = \mathbf{2{,}000\text{ Hz}} = \mathbf{2.0\text{ kHz}}$.
    </details>
 
-2. **Why `1023`?** In one sentence, explain why Arduino's 10-bit `analogRead()` returns a maximum of `1023` instead of `1000`.
+2. **Why `1023`?** In one sentence, explain why a 10-bit sensor register returns a maximum of `1023` instead of `1000`.
    <details>
    <summary><strong>Answer</strong></summary>
 
-   Because a 10-bit binary converter has $2^{10} = 1{,}024$ possible states, and starting the count at `0` makes the highest state $1024 - 1 = \mathbf{1023}$.
+   Because a 10-bit binary register has $2^{10} = 1{,}024$ possible states, and starting the count at `0` makes the highest state $1024 - 1 = \mathbf{1023}$.
    </details>
 
 3. **4-bit range:** How many total states does a 4-bit binary number have, and what is its maximum integer value?

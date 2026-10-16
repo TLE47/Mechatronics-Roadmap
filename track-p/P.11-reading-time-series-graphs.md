@@ -36,10 +36,11 @@ flowchart LR
 ## Learn
 
 ### Idea 1: Graph slope as rate of change
-- **Primary resource:** [The Physics Classroom — Meaning of Slope for a p-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-3/Meaning-of-Slope-for-a-p-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]` & [Determining the Slope on a p-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-3/Determining-the-Slope-on-a-p-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]`
-  - **What to read:** Read exact headings **`Meaning of Slope for a p-t Graph`** and **`Calculating the Slope of a p-t Graph`**.
+- **Primary resource:** [The Physics Classroom — Meaning of Slope for a p-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-3/Meaning-of-Slope-for-a-p-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]`
+  - **What to read:** Read exact heading **`Meaning of Slope for a p-t Graph`**.
   - **What to skip:** Skip the bottom "Check Your Understanding" widgets if the rise-over-run example is clear.
   - **Key takeaway:** On any **time-series graph** (where horizontal axis = time $t$), the **slope** ($\frac{\text{rise}}{\text{run}} = \frac{\Delta y}{\Delta t}$) is the **rate of change** of the vertical quantity. On a position-vs-time graph, slope is **velocity** ($v = \frac{x_{\text{now}} - x_{\text{prev}}}{\Delta t}$); on a velocity-vs-time graph, slope is **acceleration** ($a = \frac{v_{\text{now}} - v_{\text{prev}}}{\Delta t}$).
+  - **Alternative resource:** [The Physics Classroom — Determining the Slope on a p-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-3/Determining-the-Slope-on-a-p-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]` — Read exact heading **`Using the Slope Equation`**.
 
 ### Idea 2: Area under a curve as accumulated change
 - **Primary resource:** [The Physics Classroom — Determining the Area on a v-t Graph](https://www.physicsclassroom.com/class/1DKin/Lesson-4/Determining-the-Area-on-a-v-t-Graph) `[HTTP 200 — Verified by scripts/check_links.py]`

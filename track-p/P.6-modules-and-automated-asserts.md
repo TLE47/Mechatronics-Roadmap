@@ -65,7 +65,7 @@ runs an automatic safety check every time the script starts. When comparing deci
 - **What is real-hardware only:** Nothing in this lesson requires hardware.
 
 ### Starter Code (runs as-is — fill in the TODOs)
-Complete `distance_2d` (`TODO 1`) using `math.sqrt` and `clamp_pwm` (`TODO 2`), then uncomment or keep the `assert` self-checks in `TODO 3`:
+Complete `distance_2d` (`TODO 1`) using `math.sqrt` and `clamp_cmd` (`TODO 2`), then uncomment or keep the `assert` self-checks in `TODO 3`:
 
 ```python
 import math
@@ -76,7 +76,7 @@ def distance_2d(x_m, y_m):
     return 5.0
 
 
-def clamp_pwm(cmd):
+def clamp_cmd(cmd):
     # TODO 2: Clamp cmd into [0, 255] and return the clamped integer
     return 255
 
@@ -86,10 +86,10 @@ d2 = distance_2d(0.6, 0.8)
 
 # TODO 3: Verify that all assertions pass once TODO 1 and TODO 2 are implemented!
 assert round(d1, 4) == 5.0
-assert clamp_pwm(300) == 255
+assert clamp_cmd(300) == 255
 
 print(f"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m")
-print(f"Clamped(-20)={clamp_pwm(-20)} | Clamped(128)={clamp_pwm(128)} | Clamped(300)={clamp_pwm(300)}")
+print(f"Clamped(-20)={clamp_cmd(-20)} | Clamped(128)={clamp_cmd(128)} | Clamped(300)={clamp_cmd(300)}")
 print("All assert checks passed!")
 ```
 
@@ -107,7 +107,7 @@ All assert checks passed!
 <details>
 <summary><strong>Hint 1 (Concept nudge)</strong></summary>
 
-In `distance_2d`, pass `(x_m ** 2) + (y_m ** 2)` inside `math.sqrt(...)`. In `clamp_pwm`, use `if cmd > 255: return 255` and `elif cmd < 0: return 0`, followed by `return cmd`.
+In `distance_2d`, pass `(x_m ** 2) + (y_m ** 2)` inside `math.sqrt(...)`. In `clamp_cmd`, use `if cmd > 255: return 255` and `elif cmd < 0: return 0`, followed by `return cmd`.
 </details>
 
 <details>
@@ -117,7 +117,7 @@ In `distance_2d`, pass `(x_m ** 2) + (y_m ** 2)` inside `math.sqrt(...)`. In `cl
 def distance_2d(x_m, y_m):
     return math.sqrt((x_m ** 2) + (y_m ** 2))
 
-def clamp_pwm(cmd):
+def clamp_cmd(cmd):
     if cmd > 255:
         return 255
     elif cmd < 0:
@@ -137,7 +137,7 @@ def distance_2d(x_m, y_m):
     return math.sqrt((x_m ** 2) + (y_m ** 2))
 
 
-def clamp_pwm(cmd):
+def clamp_cmd(cmd):
     if cmd > 255:
         return 255
     elif cmd < 0:
@@ -150,12 +150,12 @@ d2 = distance_2d(0.6, 0.8)
 
 assert round(d1, 4) == 5.0
 assert round(d2, 4) == 1.0
-assert clamp_pwm(-20) == 0
-assert clamp_pwm(128) == 128
-assert clamp_pwm(300) == 255
+assert clamp_cmd(-20) == 0
+assert clamp_cmd(128) == 128
+assert clamp_cmd(300) == 255
 
 print(f"Distance (3, 4): {d1:.2f} m | Distance (0.6, 0.8): {d2:.2f} m")
-print(f"Clamped(-20)={clamp_pwm(-20)} | Clamped(128)={clamp_pwm(128)} | Clamped(300)={clamp_pwm(300)}")
+print(f"Clamped(-20)={clamp_cmd(-20)} | Clamped(128)={clamp_cmd(128)} | Clamped(300)={clamp_cmd(300)}")
 print("All assert checks passed!")
 ```
 </details>
@@ -189,7 +189,7 @@ print("All assert checks passed!")
    <details>
    <summary><strong>Answer</strong></summary>
 
-   Because binary floating-point numbers store `0.1 + 0.2` as `0.30000000000000004`, so exact `== 0.3` fails! Rounding with `round(..., 4)` compares to 4 decimal places (`0.3 == 0.3`).
+   Because computer floating-point numbers store `0.1 + 0.2` as `0.30000000000000004`, so exact `== 0.3` fails! Rounding with `round(..., 4)` compares to 4 decimal places (`0.3 == 0.3`).
    </details>
 
 ---

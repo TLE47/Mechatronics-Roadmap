@@ -59,7 +59,7 @@ $$
 $$
 
 Across this entire roadmap, we measure a robot arm link's angle $\theta$ upward from the **horizontal $x$-axis** ($\theta = 0^\circ$ = horizontal pointing right; $\theta = 90^\circ = \pi/2\text{ rad}$ = pointing straight up):
-- **Horizontal distance from pivot (and perpendicular gravity lever arm):** $x = L \cdot \cos(\theta)$
+- **Horizontal distance from pivot:** $x = L \cdot \cos(\theta)$
 - **Vertical height above pivot:** $y = L \cdot \sin(\theta)$
 - **Angle from target $(x, y)$:** $\theta = \text{atan2}(y, x)$ (`math.atan2(y, x)` in Python, which takes `y` first and safely handles $x = 0$ and all four quadrants).
 

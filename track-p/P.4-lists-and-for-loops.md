@@ -38,7 +38,7 @@ flowchart LR
 - **Primary resource:** [Official Python 3 Tutorial — Section 3.1.3: Lists](https://docs.python.org/3/tutorial/introduction.html) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Read exact heading **`3.1.3. Lists`** (creating lists with square brackets, indexing with `[0]`, `.append()`, and `len()`).
   - **What to skip:** Skip nested lists at the very end of the section.
-  - **Key takeaway:** A **list** stores an ordered sequence of values inside square brackets, such as `voltages = [12.1, 11.9, 11.8]`. Python uses **zero-based indexing**: the first item is at index `0` (`voltages[0]` is `12.1`), the second is at index `1`, and the last item in a list of length `len(voltages)` (`3`) is at index `2`.
+  - **Key takeaway:** A **list** stores an ordered sequence of values inside square brackets, such as `distances = [12.1, 11.9, 11.8]`. Python uses **zero-based indexing**: the first item is at index `0` (`distances[0]` is `12.1`), the second is at index `1`, and the last item in a list of length `len(distances)` (`3`) is at index `2`.
   - **Alternative resource:** [futurecoder.io — Chapter 6 (`Lists`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 6 (`Lists`)** `[verify in-app]`.
 
 ### Idea 2: Repeating actions with `for` loops
@@ -49,12 +49,12 @@ flowchart LR
   - **Alternative resource:** [futurecoder.io — Chapter 4 (`For Loops`)](https://futurecoder.io/course/#toc) `[verify in-app]` — Complete **Chapter 4 (`For Loops`)** `[verify in-app]`.
 
 ### Bridge Notes
-Sensors on a robot produce streams of measurements over time. Instead of inventing separate variable names like `v0`, `v1`, `v2`, `v3`, we store a sequence inside a **list**: `samples = [12.2, 12.0, 11.8, 11.6]`. Because computers count offsets from the beginning of memory, **zero-based indexing** means:
+Sensors on a robot produce streams of measurements over time. Instead of inventing separate variable names like `s0`, `s1`, `s2`, `s3`, we store a sequence inside a **list**: `samples = [12.2, 12.0, 11.8, 11.6]`. Because computers count offsets from the beginning of memory, **zero-based indexing** means:
 - `samples[0]` is the 1st item (`12.2`),
 - `samples[3]` is the 4th (last) item (`11.6`),
 - `len(samples)` returns the count of items (`4`), and `samples.append(11.5)` adds a new item to the end.
 
-Pairing a list with a **`for` loop** lets you filter, clamp, or average thousands of sensor readings in four lines of code. To accumulate a running sum (for example, to compute the average of a list of sensor readings), create an accumulator variable `total = 0.0` *before* the `for` loop, add each item inside the indented loop (`total = total + x`), and divide `total / len(samples)` after the loop finishes.
+**Repeating actions with `for` loops** (`for x in samples:`) lets you filter, clamp, or average thousands of sensor readings in four lines of code without copy-pasting. To accumulate a running sum (for example, to compute the average of a list of sensor readings), create an accumulator variable `total = 0.0` *before* the `for` loop, add each item inside the indented loop (`total = total + x`), and divide `total / len(samples)` after the loop finishes.
 
 ---
 
@@ -64,24 +64,24 @@ Pairing a list with a **`for` loop** lets you filter, clamp, or average thousand
 - **What is real-hardware only:** Nothing in this lesson requires hardware.
 
 ### Starter Code (runs as-is — fill in the TODOs)
-Complete `TODO 1` and `TODO 2` to loop through `raw_pwm_commands`, clamp each value into `[0, 255]`, append it to `clamped_commands`, and compute `total_pwm`:
+Complete `TODO 1` and `TODO 2` to loop through `raw_commands`, clamp each value into `[0, 255]`, append it to `clamped_commands`, and compute `total_cmd`:
 
 ```python
-raw_pwm_commands = [-30, 0, 64, 128, 200, 310]
+raw_commands = [-30, 0, 64, 128, 200, 310]
 clamped_commands = []
-total_pwm = 0
+total_cmd = 0
 
-for cmd in raw_pwm_commands:
+for cmd in raw_commands:
     # TODO 1: Clamp cmd into [0, 255] using if / elif / else,
     #         storing the result in safe_cmd.
     safe_cmd = cmd
 
     # TODO 2: Append safe_cmd to clamped_commands using clamped_commands.append(safe_cmd)
-    #         and add safe_cmd to total_pwm.
+    #         and add safe_cmd to total_cmd.
 
-mean_pwm = total_pwm / len(raw_pwm_commands)
+mean_cmd = total_cmd / len(raw_commands)
 print(f"Clamped list: {clamped_commands}")
-print(f"First={raw_pwm_commands[0]} | Last={raw_pwm_commands[5]} | Mean Clamped PWM={mean_pwm:.2f}")
+print(f"First={raw_commands[0]} | Last={raw_commands[5]} | Mean Clamped Cmd={mean_cmd:.2f}")
 ```
 
 ### Expected Output
@@ -89,7 +89,7 @@ When `TODO 1` and `TODO 2` are completed, running the script prints:
 
 ```text
 Clamped list: [0, 0, 64, 128, 200, 255]
-First=-30 | Last=310 | Mean Clamped PWM=107.83
+First=-30 | Last=310 | Mean Clamped Cmd=107.83
 ```
 
 ### Hint Ladder
@@ -97,14 +97,14 @@ First=-30 | Last=310 | Mean Clamped PWM=107.83
 <details>
 <summary><strong>Hint 1 (Concept nudge)</strong></summary>
 
-Inside the `for cmd in raw_pwm_commands:` loop, use the exact same `if cmd > 255:` / `elif cmd < 0:` clamping logic from Lesson P.3, then call `clamped_commands.append(safe_cmd)` and `total_pwm = total_pwm + safe_cmd`.
+Inside the `for cmd in raw_commands:` loop, use the exact same `if cmd > 255:` / `elif cmd < 0:` clamping logic from Lesson P.3, then call `clamped_commands.append(safe_cmd)` and `total_cmd = total_cmd + safe_cmd`.
 </details>
 
 <details>
 <summary><strong>Hint 2 (Formula / structure)</strong></summary>
 
 ```python
-for cmd in raw_pwm_commands:
+for cmd in raw_commands:
     if cmd > 255:
         safe_cmd = 255
     elif cmd < 0:
@@ -112,7 +112,7 @@ for cmd in raw_pwm_commands:
     else:
         safe_cmd = cmd
     clamped_commands.append(safe_cmd)
-    total_pwm = total_pwm + safe_cmd
+    total_cmd = total_cmd + safe_cmd
 ```
 </details>
 
@@ -120,11 +120,11 @@ for cmd in raw_pwm_commands:
 <summary><strong>Full Solution</strong></summary>
 
 ```python
-raw_pwm_commands = [-30, 0, 64, 128, 200, 310]
+raw_commands = [-30, 0, 64, 128, 200, 310]
 clamped_commands = []
-total_pwm = 0
+total_cmd = 0
 
-for cmd in raw_pwm_commands:
+for cmd in raw_commands:
     if cmd > 255:
         safe_cmd = 255
     elif cmd < 0:
@@ -132,11 +132,11 @@ for cmd in raw_pwm_commands:
     else:
         safe_cmd = cmd
     clamped_commands.append(safe_cmd)
-    total_pwm = total_pwm + safe_cmd
+    total_cmd = total_cmd + safe_cmd
 
-mean_pwm = total_pwm / len(raw_pwm_commands)
+mean_cmd = total_cmd / len(raw_commands)
 print(f"Clamped list: {clamped_commands}")
-print(f"First={raw_pwm_commands[0]} | Last={raw_pwm_commands[5]} | Mean Clamped PWM={mean_pwm:.2f}")
+print(f"First={raw_commands[0]} | Last={raw_commands[5]} | Mean Clamped Cmd={mean_cmd:.2f}")
 ```
 </details>
 
@@ -144,7 +144,7 @@ print(f"First={raw_pwm_commands[0]} | Last={raw_pwm_commands[5]} | Mean Clamped 
 
 ## Common mistakes & troubleshooting
 - **`IndexError: list index out of range`:** In a 4-item list, valid indices are `0, 1, 2, 3`. Asking for index `4` crashes because index counting starts at `0`.
-- **Resetting `total_pwm = 0` inside the `for` loop:** If you put `total_pwm = 0` inside the indented loop body, it erases the sum on every iteration! Always initialize accumulators *above* the `for` line.
+- **Resetting `total_cmd = 0` inside the `for` loop:** If you put `total_cmd = 0` inside the indented loop body, it erases the sum on every iteration! Always initialize accumulators *above* the `for` line.
 - **Expecting `range(5)` to include `5`:** `range(5)` generates `0, 1, 2, 3, 4` (5 numbers total, stopping *before* `5`).
 
 ---
@@ -181,5 +181,5 @@ print(f"First={raw_pwm_commands[0]} | Last={raw_pwm_commands[5]} | Mean Clamped 
 ### You're ready to move on when...
 - [ ] You can read the first and last element of any list using zero-based indices.
 - [ ] You can use a `for` loop to clamp or sum a list of sensor values.
-- [ ] Your **Do it yourself** script prints `Clamped list: [0, 0, 64, 128, 200, 255]` and `Mean Clamped PWM=107.83`.
+- [ ] Your **Do it yourself** script prints `Clamped list: [0, 0, 64, 128, 200, 255]` and `Mean Clamped Cmd=107.83`.
 - **Next lesson:** [Lesson P.5: Reusable Functions (`def`/`return`) & `while` Loops](P.5-functions-and-while-loops.md)

@@ -46,7 +46,7 @@ flowchart LR
 - **Primary resource:** [Harvard CS50P Lecture 1 Notes](https://cs50.harvard.edu/python/2022/notes/1/) `[HTTP 200 — Verified by scripts/check_links.py]`
   - **What to read:** Review **`Control Flow, elif, and else`** and trace how mutually exclusive `<` and `>` checks bound a number.
   - **What to skip:** Skip **`match`** statements.
-  - **Key takeaway:** Real hardware outputs only accept a finite range of numbers—for example, an Arduino Uno's 8-bit PWM command only accepts integers from `0` to `255`. **Clamping** (also called **saturation**) uses `if cmd > 255: cmd = 255` and `elif cmd < 0: cmd = 0` so out-of-bounds math can never wrap around or cause hardware faults.
+  - **Key takeaway:** Real hardware outputs only accept a finite range of numbers—for example, a standard motor command register only accepts whole numbers from `0` to `255`. **Clamping** (also called **saturation**) uses `if cmd > 255: cmd = 255` and `elif cmd < 0: cmd = 0` so out-of-bounds math can never wrap around or cause hardware faults.
 
 ### Bridge Notes
 Look closely at the difference between a single equals sign `=` and a double equals sign `==`:
@@ -55,7 +55,7 @@ Look closely at the difference between a single equals sign `=` and a double equ
 
 In Python, every `if`, `elif`, and `else` header ends with a colon `:`, and the lines that belong inside that decision branch must be **indented** by 4 spaces.
 
-Why is **clamping** the most common `if/elif` pattern in robotics? Suppose your controller calculates a motor command of `310` when trying to catch a falling robot arm, or `-40` when braking. If you pass `310` or `-40` directly to an 8-bit hardware register that only holds `0` to `255`, the register overflows (`310` wraps around to `54`—suddenly cutting motor power when you needed maximum torque!). Clamping the command with `if pwm_cmd > 255: pwm_cmd = 255` and `elif pwm_cmd < 0: pwm_cmd = 0` guarantees safe behavior at the physical limits.
+Why is **clamping** the most common `if/elif` pattern in robotics? Suppose your controller calculates a motor command of `310` when trying to catch a falling robot arm, or `-40` when braking. If you pass `310` or `-40` directly to a hardware output register that only holds `0` to `255`, the register overflows (`310` wraps around to `54`—suddenly cutting motor power when you needed maximum effort!). Clamping the command with `if motor_cmd > 255: motor_cmd = 255` and `elif motor_cmd < 0: motor_cmd = 0` guarantees safe behavior at the physical limits.
 
 ---
 
@@ -65,25 +65,25 @@ Why is **clamping** the most common `if/elif` pattern in robotics? Suppose your 
 - **What is real-hardware only:** Nothing in this lesson requires hardware.
 
 ### Starter Code (runs as-is — fill in the TODOs)
-Complete `TODO 1` and `TODO 2` to clamp `raw_pwm_high` (`310`) and `raw_pwm_low` (`-45`) into `[0, 255]`, and force the final output to `0` when `is_estop_pressed` is `True`:
+Complete `TODO 1` and `TODO 2` to clamp `raw_cmd_high` (`310`) and `raw_cmd_low` (`-45`) into `[0, 255]`, and force the final output to `0` when `is_estop_pressed` is `True`:
 
 ```python
-raw_pwm_high = 310
-raw_pwm_low = -45
-raw_pwm_normal = 180
+raw_cmd_high = 310
+raw_cmd_low = -45
+raw_cmd_normal = 180
 is_estop_pressed = True
 
-# TODO 1: Clamp raw_pwm_high into [0, 255] using if / elif:
-#         if raw_pwm_high > 255, set clamped_high = 255;
-#         elif raw_pwm_high < 0, set clamped_high = 0; else set clamped_high = raw_pwm_high.
-clamped_high = raw_pwm_high
+# TODO 1: Clamp raw_cmd_high into [0, 255] using if / elif:
+#         if raw_cmd_high > 255, set clamped_high = 255;
+#         elif raw_cmd_high < 0, set clamped_high = 0; else set clamped_high = raw_cmd_high.
+clamped_high = raw_cmd_high
 
-# Clamp raw_pwm_low into [0, 255] the same way:
-clamped_low = raw_pwm_low
+# Clamp raw_cmd_low into [0, 255] the same way:
+clamped_low = raw_cmd_low
 
 # TODO 2: If is_estop_pressed is True, set safe_output = 0;
-#         else set safe_output = raw_pwm_normal.
-safe_output = raw_pwm_normal
+#         else set safe_output = raw_cmd_normal.
+safe_output = raw_cmd_normal
 
 print(f"310 clamped -> {clamped_high} | -45 clamped -> {clamped_low}")
 print(f"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}")
@@ -102,50 +102,50 @@ E-Stop=True -> Safe Output: 0
 <details>
 <summary><strong>Hint 1 (Concept nudge)</strong></summary>
 
-Check `if raw_pwm_high > 255:` first, then `elif raw_pwm_high < 0:`, and `else:`. Remember the colon `:` at the end of each `if`/`elif`/`else` line and 4 spaces of indentation on the line below it.
+Check `if raw_cmd_high > 255:` first, then `elif raw_cmd_high < 0:`, and `else:`. Remember the colon `:` at the end of each `if`/`elif`/`else` line and 4 spaces of indentation on the line below it.
 </details>
 
 <details>
 <summary><strong>Hint 2 (Formula / structure)</strong></summary>
 
 ```python
-if raw_pwm_high > 255:
+if raw_cmd_high > 255:
     clamped_high = 255
-elif raw_pwm_high < 0:
+elif raw_cmd_high < 0:
     clamped_high = 0
 else:
-    clamped_high = raw_pwm_high
+    clamped_high = raw_cmd_high
 ```
-Apply the same pattern to `raw_pwm_low` -> `clamped_low`, and use `if is_estop_pressed:` to set `safe_output = 0`.
+Apply the same pattern to `raw_cmd_low` -> `clamped_low`, and use `if is_estop_pressed:` to set `safe_output = 0`.
 </details>
 
 <details>
 <summary><strong>Full Solution</strong></summary>
 
 ```python
-raw_pwm_high = 310
-raw_pwm_low = -45
-raw_pwm_normal = 180
+raw_cmd_high = 310
+raw_cmd_low = -45
+raw_cmd_normal = 180
 is_estop_pressed = True
 
-if raw_pwm_high > 255:
+if raw_cmd_high > 255:
     clamped_high = 255
-elif raw_pwm_high < 0:
+elif raw_cmd_high < 0:
     clamped_high = 0
 else:
-    clamped_high = raw_pwm_high
+    clamped_high = raw_cmd_high
 
-if raw_pwm_low > 255:
+if raw_cmd_low > 255:
     clamped_low = 255
-elif raw_pwm_low < 0:
+elif raw_cmd_low < 0:
     clamped_low = 0
 else:
-    clamped_low = raw_pwm_low
+    clamped_low = raw_cmd_low
 
 if is_estop_pressed:
     safe_output = 0
 else:
-    safe_output = raw_pwm_normal
+    safe_output = raw_cmd_normal
 
 print(f"310 clamped -> {clamped_high} | -45 clamped -> {clamped_low}")
 print(f"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}")

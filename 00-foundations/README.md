@@ -117,10 +117,20 @@ $$
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 00):** Translate continuous calculus and physics into familiar software loops (`x += v * dt`), 2D geometry, and a 1-line digital low-pass filter so you can immediately move to **Track 01 (Tier 1)** and spin motors.
+> **Goal of Pass 1 (Track 00):** Master cross-domain power ($P = \text{Effort} \times \text{Flow}$), first-order lag ($\tau$), second-order spring-damper motion ($\omega_n, \zeta$), and the 4-step engineering modeling discipline in 3 self-contained Python lessons (`00.1`–`00.3`) before moving to **Track 01 (Tier 1)**.
+
+### 🟢 Track 00 — Tier 1 Beginner Lessons (`00.1`–`00.3`)
+
+| Lesson | Topic | New Ideas (Max 2, Enforced in Front Matter) | Simulator / Tool | Typical Time | Slow-Learner Time |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **[Lesson 00.1](00.1-effort-flow-and-first-order-lag.md)** | **Cross-Domain Power (`P = Effort * Flow`) & First-Order Lag** | 1. Effort, flow & universal instantaneous power ($P = V \cdot I = F \cdot v = \tau \cdot \omega$)<br>2. First-order lag step response & time constant $\tau$ ($63.2\%$ at $1\tau$, $99.3\%$ at $5\tau$) | Python (futurecoder.io) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson 00.2](00.2-mass-spring-damper-oscillations.md)** | **Second-Order Motion — Springs, Dampers & Damping Regimes** | 1. Hooke's Law spring restoring force ($F_s = -k \cdot x$) & viscous damping ($F_d = -b \cdot v$)<br>2. Natural frequency ($\omega_n = \sqrt{k/m}$) & damping ratio ($\zeta$): underdamped, critically damped, overdamped | Python (futurecoder.io) | 1.5–2.0 hrs | 2.5–3.5 hrs |
+| **[Lesson 00.3](00.3-modeling-discipline-and-sanity-checks.md)** | **Engineering Modeling Discipline — 4-Step Workflow & Sanity Checks** | 1. The 4-step workflow (Diagram $\to$ Symbolic Equations $\to$ Code $\to$ Sanity Check)<br>2. Dimensional homogeneity, limiting-case tests ($0$, $\infty$) & sign conventions | Python (futurecoder.io) | 1.0–1.5 hrs | 2.0–3.0 hrs |
+
+---
 
 ### [1.1 Differential Equations as Discrete `while` Loops]
-- **Core Summary:** Shows that any physical Ordinary Differential Equation (ODE) $\dot{x} = f(x, u)$ is simply a discrete software `while` loop updating a state struct by $\Delta t$, where updating velocity before position (Semi-Implicit / Symplectic Euler) preserves mechanical energy:
+- **Core Summary:** Shows that any physical Ordinary Differential Equation (ODE) $\dot{x} = f(x, u)$ is simply a discrete software `while` loop updating a state struct by $\Delta t$, where updating velocity before position (Semi-Implicit Euler) keeps mechanical oscillations bounded:
 
 $$
 m\ddot{x} + b\dot{x} + kx = F_{\text{cmd}}, \qquad a_k = \frac{F_{\text{cmd}} - b\,v_k - k\,x_k}{m}, \quad v_{k+1} = v_k + a_k \Delta t, \quad x_{k+1} = x_k + v_{k+1} \Delta t
@@ -129,21 +139,21 @@ $$
   ```python
   # 1-DOF Mass-Spring-Damper in 3 Lines of Code (m*x_ddot + b*x_dot + k*x = F_cmd)
   a = (F_cmd - b * v - k * x) / m   # Newton's 2nd Law: F_net / m
-  v = v + a * dt                    # Semi-implicit (symplectic) Euler velocity step
+  v = v + a * dt                    # Semi-implicit Euler velocity step
   x = x + v * dt                    # Position update using NEW velocity
   ```
 - **Curated Free Resources:**
   - 🔗 [myPhysicsLab Interactive Spring-Mass & ODE Simulations (myphysicslab.com)](https://www.myphysicslab.com/) — *Interactive browser physics simulations with complete open-source equations and time-stepping solvers.*
-  - 🔗 [3Blue1Brown: Differential Equations Overview (3blue1brown.com)](https://www.3blue1brown.com/topics/differential-equations) — *Visualizes phase portraits, state vectors, and discrete time-stepping trajectories.*
+  - 🔗 [3Blue1Brown: Differential Equations Overview (3blue1brown.com)](https://www.3blue1brown.com/topics/differential-equations) — *Visualizes state vectors and discrete time-stepping trajectories.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Write a 25-line Python script simulating an undamped spring-mass oscillator ($m=1\text{ kg}, k=100\text{ N/m}, b=0, \Delta t = 0.01\text{ s}$) for $1,000$ steps using **Explicit Euler** (`x_new = x + v_old * dt`) vs. **Semi-Implicit Euler** (`x_new = x + v_new * dt`), and plot total mechanical energy $E = \frac{1}{2}mv^2 + \frac{1}{2}kx^2$ for both. (Note: When running the Track 00 reference suite `python3 00-foundations/lab/lab00_two_mass_and_so3.py`, note that the script bundles tests for all three passes—Section 2 covers Tier 2 two-mass ODE energy conservation, Section 3 covers Tier 2 digital biquad notch filtering, and Section 1 covers Tier 3 $SO(3)$ 3D rotations—so in Pass 1 you only need to write the 25-line 1-DOF Euler script above!)
-  - *📚 What to Learn & Resource Links for This Exercise:* Complete the Tier 1 Foundations Bridge Ladder [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Python `while` Loops*), [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) (*NumPy & Matplotlib Plotting*), and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (Discrete Kinematics, $F=ma$ & Spring Energy), and review [myPhysicsLab Spring-Mass Energy Derivations](https://www.myphysicslab.com/springs/single-spring-en.html).
+  - *Task:* Complete **[Lesson 00.2 (`00.2-mass-spring-damper-oscillations.md`)](00.2-mass-spring-damper-oscillations.md)** and write a 25-line Python script simulating a spring-mass-damper ($m=1\text{ kg}, k=100\text{ N/m}$) across $b \in \{4, 20, 40\}\text{ N}\cdot\text{s/m}$ ($\zeta \in \{0.20, 1.00, 2.00\}$) using Semi-Implicit Euler (`v += a * dt; x += v * dt`).
+  - *📚 What to Learn & Resource Links for This Exercise:* Complete **[Lesson 00.1](00.1-effort-flow-and-first-order-lag.md)** and **[Lesson 00.2](00.2-mass-spring-damper-oscillations.md)** (plus the Tier 1 Foundations Bridge Ladder [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md)), and review [myPhysicsLab Spring-Mass Energy Derivations](https://www.myphysicslab.com/springs/single-spring-en.html).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
-  **Q1:** In your Python simulation above, why does Explicit Euler's total mechanical energy grow exponentially until the oscillation explodes, whereas Semi-Implicit Euler's energy stays bounded forever?
-  * **Answer / Explanation:** Explicit Euler steps along the tangent line of the constant-energy ellipse in $(x, v)$ phase space, stepping slightly *outside* the ellipse on every tick with Jacobian determinant $\det(J) = 1 + \frac{k}{m}\Delta t^2 > 1$. Semi-Implicit Euler uses the updated velocity $v_{k+1}$ to step $x_{k+1}$, yielding $\det(J) \equiv 1$ (area-preserving / symplectic).
+  **Q1:** In a discrete time-stepping loop for a spring-mass oscillator, why should you update velocity first (`v = v + a * dt`) and then update position using that new velocity (`x = x + v * dt`), rather than updating position with the old velocity?
+  * **Answer / Explanation:** Using the old velocity (`x_new = x + v_old * dt`) overshoots slightly on every single time step, pumping artificial energy into the simulation until the oscillation amplitude grows without bound. Updating velocity first and using `v_new` to step position (`x = x + v * dt`) balances the step across the turn-around point so total mechanical energy $E = \frac{1}{2}mv^2 + \frac{1}{2}kx^2$ stays bounded.
   
   **Q2:** If a spring-mass joint has mass $m = 0.5\text{ kg}$ and stiffness $k = 200\text{ N/m}$, what is its natural oscillation frequency in radians/sec ($\omega_n$) and in Hertz ($f_n$)?
   * **Answer & Explanation:** $\omega_n = \sqrt{\frac{k}{m}} = \sqrt{\frac{200}{0.5}} = 20\text{ rad/s}$, which corresponds to $f_n = \frac{\omega_n}{2\pi} = \frac{20}{6.2832} \approx 3.18\text{ Hz}$.
@@ -151,34 +161,34 @@ $$
 
 ---
 
-### 1.2 2D Coordinate Frames & Rotation Matrices ($SO(2)$)
-- **Core Summary:** Introduces 2D rigid transformations using orthogonal $2\times 2$ rotation matrices $R(\theta)$ where $R(\theta)^{-1} = R(\theta)^\top$, and enforces safe angular error wrapping across the $\pm 180^\circ$ ($\pm\pi$) boundary via `atan2(sin(err), cos(err))`.
+### 1.2 2D Coordinate Frames & Angle Wrapping (`atan2`)
+- **Core Summary:** Introduces 2D right-hand coordinate frames and enforces safe angular error wrapping across the $\pm 180^\circ$ ($\pm\pi$) boundary via `atan2(sin(err), cos(err))`.
 
 $$
-R(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}, \qquad e_\theta = \text{atan2}\big(\sin(\theta_{\text{ref}} - \theta_{\text{meas}}), \cos(\theta_{\text{ref}} - \theta_{\text{meas}})\big) \in (-\pi, \pi]
+x = L\cos\theta, \quad y = L\sin\theta, \qquad e_\theta = \text{atan2}\big(\sin(\theta_{\text{ref}} - \theta_{\text{meas}}), \cos(\theta_{\text{ref}} - \theta_{\text{meas}})\big) \in (-\pi, \pi]
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [3Blue1Brown: Linear Transformations and Matrices (Essence of Linear Algebra)](https://www.3blue1brown.com/lessons/linear-transformations) — *Builds instant visual intuition for how the columns of* $R(\theta)$ *track where the basis vectors* $\hat{i}$ *and* $\hat{j}$ *land.*
-  - 🔗 [Modern Robotics Ch. 3.1–3.2: Rigid-Body Motions in the Plane (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Free textbook chapter and video introducing* $SO(2)$ *rotation matrices and homogeneous transforms.*
+  - 🔗 [MathsIsFun: Sine, Cosine, Tangent & Unit Circle](https://www.mathsisfun.com/sine-cosine-tangent.html) — *Interactive unit circle showing how* $(\cos\theta, \sin\theta)$ *tracks coordinates in all four quadrants.*
+  - 🔗 [Modern Robotics Ch. 3.1–3.2: Rigid-Body Motions in the Plane (Lynch & Park)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) — *Free textbook chapter and video introducing 2D coordinate frames.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Write a 10-line test comparing naive angle subtraction `err = ref - meas` against `err = math.atan2(math.sin(ref - meas), math.cos(ref - meas))` when `ref = +179°` ($+3.124\text{ rad}$) and the encoder crosses $180^\circ$ to `meas = -179°` ($-3.124\text{ rad}$).
-  - *📚 What to Learn & Resource Links for This Exercise:* Study radians, unit-circle trigonometry, and four-quadrant `math.atan2(y, x)` in [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), plus [3Blue1Brown Linear Transformations](https://www.3blue1brown.com/lessons/linear-transformations) and [Lynch & Park *Modern Robotics* Ch. 3.1–3.2](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study radians, unit-circle trigonometry, and four-quadrant `math.atan2(y, x)` in **[Lesson P.10](../track-p/P.10-radians-and-right-triangle-trig.md)** and [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
   **Q1:** In the scenario above (`ref = +179°`, `meas = -179°`), what angular error is produced by naive subtraction `ref - meas` versus `atan2(sin(ref - meas), cos(ref - meas))`, and what happens to a physical motor?
-  * **Answer / Explanation:** Physically, the rotor is only $2^\circ$ away from the target (`-179°` is $2^\circ$ past `+179°`). Naive subtraction computes $+179^\circ - (-179^\circ) = +358^\circ$, commanding the motor to spin violent full speed the wrong way all the way around a $358^\circ$ circle! `atan2(sin(358°), cos(358°))` returns the shortest signed angular distance: $-2^\circ$.
+  * **Answer / Explanation:** Physically, the rotor is only $2^\circ$ away from the target (`-179°` is $2^\circ$ past `+179°`). Naive subtraction computes $+179^\circ - (-179^\circ) = +358^\circ$, commanding the motor to spin full speed the wrong way all the way around a $358^\circ$ circle! `atan2(sin(358°), cos(358°))` returns the shortest signed angular distance: $-2^\circ$.
   
-  **Q2:** Why does the inverse of any valid rotation matrix $R$ equal its transpose $R^\top$ without needing `numpy.linalg.inv()`?
-  * **Answer & Explanation:** The columns of $R$ are mutually perpendicular unit vectors (orthonormal basis), so their dot products satisfy $R^\top R = I \implies R^{-1} = R^\top$. Transposing a $2\times 2$ or $3\times 3$ matrix takes zero divisions and never suffers from matrix inversion singularities.
+  **Q2:** Why should you check limiting cases ($\theta = 0^\circ$ and $\theta = 90^\circ$) before trusting a newly written coordinate-frame formula in code?
+  * **Answer & Explanation:** As taught in **[Lesson 00.3](00.3-modeling-discipline-and-sanity-checks.md)**, plugging in $\theta = 0^\circ$ ($\cos 0^\circ = 1, \sin 0^\circ = 0$) and $\theta = 90^\circ$ ($\cos 90^\circ = 0, \sin 90^\circ = 1$) immediately catches swapped `sin`/`cos` calls or degree-vs-radian bugs before hardware moves.
   </details>
 
 ---
 
 ### [1.3 Time vs. Frequency Intuition & First-Order RC Smoothing]
-- **Core Summary:** Connects hardware RC low-pass filters ($\tau = RC, f_c = \frac{1}{2\pi RC}$) to the 1-line software Exponential Moving Average (`y_filt += alpha * (x_raw - y_filt)`), highlighting the fundamental trade-off between noise attenuation and phase lag inside a feedback loop.
+- **Core Summary:** Connects hardware RC low-pass filters ($\tau = RC, f_c = \frac{1}{2\pi RC}$) to the 1-line software Exponential Moving Average (`y_filt += alpha * (x_raw - y_filt)`), highlighting the trade-off between noise smoothing and response delay ($1\tau$ vs. $5\tau$).
 
 $$
 y_k = y_{k-1} + \alpha(u_k - y_{k-1}), \qquad \alpha = \frac{\Delta t}{\tau + \Delta t} = \frac{2\pi f_c \Delta t}{1 + 2\pi f_c \Delta t}
@@ -186,24 +196,24 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [The Scientist and Engineer's Guide to DSP — Ch. 19: Recursive Filters (dspguide.com)](https://www.dspguide.com/ch19/2.htm) — *Free online chapter deriving single-pole recursive smoothing filters and time constants.*
-  - 🔗 [Interactive Digital Low-Pass Filter Frequency & Phase Applet (Falstad)](https://www.falstad.com/afepsilon/) — *Explore how lowering cutoff frequency* $f_c$ *increases phase lag.*
+  - 🔗 [Wikipedia: Low-Pass Filter (RC Filter & Time Response)](https://en.wikipedia.org/wiki/Low-pass_filter) — *Explains how cutoff frequency* $f_c = \frac{1}{2\pi RC}$ *passes slow signals and attenuates rapid noise.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 2: Two-Mass & Notch Bode** in the MechaLab Workbench (or write a Python script) to inject a noisy $10\text{ Hz}$ sine wave + $200\text{ Hz}$ vibration into an exponential filter with $f_c = 15\text{ Hz}$, and measure the time delay (phase lag in degrees) between the clean $10\text{ Hz}$ input and filtered output.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study Python time-series arrays in [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), RC cutoff frequency $f_c = \frac{1}{2\pi RC}$ in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), and [The Scientist and Engineer's Guide to DSP Ch. 19 (Recursive Filters)](https://www.dspguide.com/ch19/2.htm).
+  - *Task:* Complete **[Lesson 00.1 (`00.1-effort-flow-and-first-order-lag.md`)](00.1-effort-flow-and-first-order-lag.md)** (and **[Lesson 01.4](../01-electronics-and-power/01.4-grounding-and-rc-lowpass-filters.md)**) to simulate a first-order lag step response and verify that the output reaches $63.2\%$ of its step change at $t = 1\tau$ and $99.3\%$ at $t = 5\tau$.
+  - *📚 What to Learn & Resource Links for This Exercise:* Study first-order time constants in **[Lesson 00.1](00.1-effort-flow-and-first-order-lag.md)**, Python time-series arrays in [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), and RC cutoff frequency $f_c = \frac{1}{2\pi RC}$ in **[Lesson 01.4](../01-electronics-and-power/01.4-grounding-and-rc-lowpass-filters.md)**.
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
   
-  **Q1:** Exactly how many degrees of phase lag does a 1st-order RC low-pass filter introduce right at its $-3\text{ dB}$ cutoff frequency $f = f_c$?
-  * **Answer / Explanation:** Since $H(jf_c) = \frac{1}{1 + j(f_c/f_c)} = \frac{1}{1 + j}$, the magnitude is $\frac{1}{\sqrt{2}} \approx 0.707$ ($-3.01\text{ dB}$) and the phase angle is $-\arctan(1) = -45^\circ$. If you place a low-pass filter with $f_c$ near your PID loop's crossover frequency, that $-45^\circ$ of phase lag will wipe out your phase margin and cause sustained oscillation!
+  **Q1:** Right at the cutoff frequency $f = f_c = \frac{1}{2\pi R C}$, what fraction of an input sine wave's amplitude passes through a first-order RC low-pass filter, and what happens if you make $f_c$ too low inside a feedback loop?
+  * **Answer / Explanation:** At $f = f_c$, the output amplitude is reduced to $\frac{1}{\sqrt{2}} \approx 0.707$ ($70.7\%$) of the input amplitude, and the filtered signal lags behind the input by one-eighth of a cycle ($45^\circ$). If you set $f_c$ too low, the filter delays the sensor measurement so much that the controller reacts to stale history and oscillates!
   
   **Q2:** You sample an analog thermistor at $f_s = 100\text{ Hz}$ ($\Delta t = 0.01\text{ s}$) and want a smoothing cutoff frequency of $f_c = 1.59\text{ Hz}$ ($\tau = \frac{1}{2\pi f_c} = 0.10\text{ s}$). What value of $\alpha$ should you use in `y += alpha * (x - y)`?
   * **Answer & Explanation:** $\alpha = \frac{\Delta t}{\tau + \Delta t} = \frac{0.01}{0.10 + 0.01} = \frac{1}{11} \approx 0.0909$.
   </details>
 
 ### ✅ Tier 1 Milestone Gate (`Track 00 · Pass 1`)
-* Complete the 3 exercises above (or verify the **Two-Mass Resonance** preset in **Tab 2** of the interactive workbench).
-* **Next Linear Step in Pass 1:** [**Proceed to Track 01 (Tier 1: Breadboard H-Bridges, Logic Levels & Decoupling) →**](../01-electronics-and-power/README.md#tier-1-beginner--intuitive)
+* Complete **[Lesson 00.1](00.1-effort-flow-and-first-order-lag.md)**, **[Lesson 00.2](00.2-mass-spring-damper-oscillations.md)**, and **[Lesson 00.3](00.3-modeling-discipline-and-sanity-checks.md)** (and optionally explore the interactive workbench).
+* **Next Linear Step in Pass 1:** [**Proceed to Track 01 (Tier 1: MOSFETs, H-Bridges, Power Budgets & RC Filters) →**](../01-electronics-and-power/README.md#tier-1-beginner--intuitive)
 
 ---
 
