@@ -77,6 +77,11 @@ jobs:
       - name: Run automated Workbench UI smoke tests (Beginner/Advanced mode, Runner, Placement Quiz & Progress Export)
         run: npm run test:smoke
 
+      - name: Install Playwright Chromium & run real-browser End-to-End (E2E) Workbench tests
+        run: |
+          npx playwright-core install --with-deps chromium
+          npm run test:e2e
+
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/configure-pages@v5

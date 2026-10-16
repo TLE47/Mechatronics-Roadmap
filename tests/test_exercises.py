@@ -30,6 +30,7 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import extract_and_compile_sketches as arduino_verifier  # noqa: E402
+from generate_python_lessons_data import INSTRUCTOR_TESTS  # noqa: E402
 
 
 def natural_sort_key(path: str):
@@ -96,7 +97,7 @@ def extract_expected_output(filepath: str) -> str:
 
 class TestBeginnerRoadmapExercises(unittest.TestCase):
     def test_all_32_python_lessons_starter_and_full_solutions(self):
-        """Every Python lesson's Starter Code runs without error, and Full Solution matches Expected Output."""
+        """Every Python lesson's Starter Code runs without error, Full Solution matches Expected Output + Instructor Behavioral Tests, and print-only spoofing fails."""
         lesson_files = get_python_lesson_files()
         self.assertEqual(len(lesson_files), 32)
 
@@ -105,17 +106,49 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             with self.subTest(lesson=rel_path):
                 with open(path, "r", encoding="utf-8") as f:
                     text = f.read()
+                fm_block = text.split("---")[1] if text.startswith("---") else text
+                lid_m = re.search(r'^lesson_id:\s*["\']?([^"\'\n]+)["\']?', fm_block, re.MULTILINE)
+                lesson_id = lid_m.group(1).strip() if lid_m else rel_path
+                self.assertIn(lesson_id, INSTRUCTOR_TESTS, f"Missing INSTRUCTOR_TESTS for {lesson_id}")
+                _, instructor_test_code = INSTRUCTOR_TESTS[lesson_id]
+
                 starter_code, expected_out, solution_code = extract_python_blocks(text, rel_path)
 
+                starter_ns = {"__name__": "__main__", "__mechalab_student_source__": starter_code}
                 starter_buf = io.StringIO()
                 with contextlib.redirect_stdout(starter_buf):
-                    exec(compile(starter_code, f"{rel_path}:starter", "exec"), {"__name__": "__main__"})
+                    exec(compile(starter_code, f"{rel_path}:starter", "exec"), starter_ns)
 
+                # Starter code must NOT pass both behavioral instructor tests and output match
+                starter_passed_behavior = True
+                try:
+                    exec(compile(instructor_test_code, f"{rel_path}:instructor_test", "exec"), starter_ns)
+                except Exception:
+                    starter_passed_behavior = False
+                self.assertFalse(
+                    starter_passed_behavior and starter_buf.getvalue().strip() == expected_out,
+                    f"Starter code for {lesson_id} must not pass full verification before solving TODOs",
+                )
+
+                # Spoofed print-only solution must ALWAYS fail instructor behavioral tests
+                spoof_code = f"print({expected_out!r})\n"
+                spoof_ns = {"__name__": "__main__", "__mechalab_student_source__": spoof_code}
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exec(compile(spoof_code, f"{rel_path}:spoof", "exec"), spoof_ns)
+                with self.assertRaises(
+                    Exception,
+                    msg=f"Lesson {lesson_id} instructorTests failed to reject a print-only spoofed program!",
+                ):
+                    exec(compile(instructor_test_code, f"{rel_path}:instructor_test", "exec"), spoof_ns)
+
+                # Full solution must pass both Expected Output and Instructor Behavioral Tests
+                sol_ns = {"__name__": "__main__", "__mechalab_student_source__": solution_code}
                 sol_buf = io.StringIO()
                 with contextlib.redirect_stdout(sol_buf):
-                    exec(compile(solution_code, f"{rel_path}:solution", "exec"), {"__name__": "__main__"})
+                    exec(compile(solution_code, f"{rel_path}:solution", "exec"), sol_ns)
                 actual_out = sol_buf.getvalue().strip()
                 self.assertEqual(actual_out, expected_out)
+                exec(compile(instructor_test_code, f"{rel_path}:instructor_test", "exec"), sol_ns)
 
     def test_falstad_lessons_ci_python_mirrors_and_netlists(self):
         """Verify CI Python mirrors (moved out of S0.1–S0.6 and 01.1 into tests/) and Falstad netlist files."""

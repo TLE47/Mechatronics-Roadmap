@@ -110,9 +110,17 @@ async function runSmokeTests() {
       assert(lesson.fullSolution.length > 10, `Lesson ${lesson.id} missing fullSolution`);
       assert(lesson.expectedOutput.length > 0, `Lesson ${lesson.id} missing expectedOutput`);
       assert(lesson.hints.length >= 1, `Lesson ${lesson.id} missing progressive hints`);
+      assert(
+        lesson.instructorTests && lesson.instructorTests.length > 20,
+        `Lesson ${lesson.id} missing instructor-owned behavioral tests`
+      );
+      assert(
+        Array.isArray(lesson.instructorTestSummary) && lesson.instructorTestSummary.length >= 1,
+        `Lesson ${lesson.id} missing instructorTestSummary`
+      );
     }
 
-    // Ensure TabPyodideRunner never awards a fallback text pass without Pyodide WASM execution
+    // Ensure TabPyodideRunner executes inside a Web Worker and never awards a fallback text pass
     const runnerSrc = fs.readFileSync(
       path.join(repoRoot, 'app', 'src', 'components', 'tabs', 'TabPyodideRunner.tsx'),
       'utf-8'
@@ -120,6 +128,10 @@ async function runSmokeTests() {
     assert(
       !runnerSrc.includes('normalizeCode') && !runnerSrc.includes("setPyodideStatus('fallback')"),
       'TabPyodideRunner must never award an execution pass from fallback text without executing in Pyodide'
+    );
+    assert(
+      runnerSrc.includes('new Worker(') && runnerSrc.includes('.terminate()'),
+      'TabPyodideRunner must isolate Python execution inside a terminable Web Worker'
     );
 
     const htmlRunner = cleanSsr(
@@ -134,6 +146,14 @@ async function runSmokeTests() {
     assert(
       htmlRunner.includes('data-testid="input-lesson-search"'),
       'TabPyodideRunner must render the lesson search input'
+    );
+    assert(
+      htmlRunner.includes('data-testid="btn-reset-runtime"'),
+      'TabPyodideRunner must render the Reset Runtime control'
+    );
+    assert(
+      htmlRunner.includes('data-testid="panel-instructor-tests"'),
+      'TabPyodideRunner must render the Instructor Behavioral Assessment panel'
     );
     assert(
       htmlRunner.includes('2 / 32 Verified'),

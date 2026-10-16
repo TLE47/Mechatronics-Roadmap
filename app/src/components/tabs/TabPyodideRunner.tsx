@@ -15,18 +15,214 @@ import {
   Search,
   CheckSquare,
   Square,
+  OctagonX,
+  RefreshCw,
+  ShieldCheck,
 } from 'lucide-react';
 
 declare global {
   interface Window {
-    loadPyodide?: (config: { indexURL: string }) => Promise<any>;
-    __mechalabPyodide?: any;
+    __mechalabPyodideCdnUrl?: string;
+    __mechalabExecutionTimeoutMs?: number;
+    __mechalabMaxTraceSteps?: number;
   }
 }
 
-const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
+const DEFAULT_PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
+const DEFAULT_EXECUTION_TIMEOUT_MS = 6000;
+const DEFAULT_MAX_TRACE_STEPS = 400000;
+
 export const STORAGE_KEY_VERIFIED = 'mechalab_pyodide_verified_v1';
 export const STORAGE_KEY_COMPLETED = 'mechalab_pyodide_completed_v1';
+
+const PYODIDE_WORKER_SOURCE = `
+let pyodideInstance = null;
+let loadedCdnUrl = null;
+
+async function ensurePyodideLoaded(cdnUrl) {
+  if (pyodideInstance && loadedCdnUrl === cdnUrl) {
+    return pyodideInstance;
+  }
+  self.postMessage({ type: 'status', status: 'loading' });
+  try {
+    importScripts(cdnUrl + 'pyodide.js');
+    if (typeof self.loadPyodide !== 'function') {
+      throw new Error('loadPyodide not exposed by pyodide.js');
+    }
+    pyodideInstance = await self.loadPyodide({ indexURL: cdnUrl });
+    loadedCdnUrl = cdnUrl;
+    self.postMessage({ type: 'status', status: 'ready' });
+    return pyodideInstance;
+  } catch (err) {
+    self.postMessage({ type: 'status', status: 'error' });
+    throw new Error(
+      'Pyodide WebAssembly runtime could not be loaded from CDN (' +
+        (err && err.message ? err.message : String(err)) +
+        '). Execution verification requires Pyodide WASM.'
+    );
+  }
+}
+
+self.onmessage = async (event) => {
+  const msg = event.data || {};
+  if (msg.type === 'run') {
+    const {
+      runId,
+      studentCode,
+      instructorTests,
+      cdnUrl,
+      maxSteps = 400000,
+      timeoutSec = 4.0,
+    } = msg;
+
+    try {
+      const py = await ensurePyodideLoaded(cdnUrl);
+      const capturedOut = [];
+      const capturedErr = [];
+      let captureEnabled = true;
+
+      py.setStdout({
+        batched: (line) => {
+          if (captureEnabled) capturedOut.push(line);
+        },
+      });
+      py.setStderr({
+        batched: (line) => {
+          if (captureEnabled) capturedErr.push(line);
+        },
+      });
+
+      py.globals.set('__mechalab_student_code__', studentCode);
+      py.globals.set('__mechalab_instructor_code__', instructorTests || '');
+      py.globals.set('__mechalab_max_steps__', maxSteps);
+      py.globals.set('__mechalab_timeout_sec__', timeoutSec);
+
+      const runnerHarness = \`
+import sys, time, traceback
+
+def __mechalab_execute():
+    ns = {
+        "__name__": "__main__",
+        "__mechalab_student_source__": __mechalab_student_code__,
+    }
+    t0 = time.monotonic()
+    steps = 0
+    max_s = int(__mechalab_max_steps__)
+    max_t = float(__mechalab_timeout_sec__)
+
+    def _trace_guard(frame, event, arg):
+        nonlocal steps
+        if event == "line":
+            steps += 1
+            if steps > max_s or (time.monotonic() - t0) > max_t:
+                raise TimeoutError(
+                    f"ExecutionTimeoutError: Loop exceeded execution limit ({steps} line steps / {max_t:.1f}s). "
+                    "Possible infinite loop (such as 'while True:'). Your editor code is preserved — check your loop condition and try again."
+                )
+        return _trace_guard
+
+    student_err = ""
+    timed_out = False
+    try:
+        compiled_student = compile(__mechalab_student_code__, "<lesson_editor>", "exec")
+        sys.settrace(_trace_guard)
+        exec(compiled_student, ns)
+    except TimeoutError as te:
+        timed_out = True
+        student_err = str(te)
+    except SyntaxError as se:
+        student_err = f"SyntaxError (line {se.lineno}): {se.msg}"
+    except Exception as ex:
+        tb_lines = traceback.format_exception_only(type(ex), ex)
+        student_err = "".join(tb_lines).strip()
+    finally:
+        sys.settrace(None)
+
+    return ns, student_err, timed_out
+
+__mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__ = __mechalab_execute()
+\`;
+
+      await py.runPythonAsync(runnerHarness);
+      const studentErr = py.globals.get('__mechalab_student_err__') || '';
+      const timedOut = Boolean(py.globals.get('__mechalab_timed_out__'));
+
+      captureEnabled = false;
+      const stdoutText = capturedOut.join('\\n').trim();
+      const stderrText = capturedErr.join('\\n').trim();
+
+      if (timedOut) {
+        self.postMessage({
+          type: 'result',
+          runId,
+          stdout: stdoutText,
+          stderr: studentErr,
+          timedOut: true,
+          runtimeError: false,
+          instructorPassed: false,
+          instructorError: '',
+        });
+        return;
+      }
+
+      if (studentErr) {
+        self.postMessage({
+          type: 'result',
+          runId,
+          stdout: stdoutText,
+          stderr: stderrText ? stderrText + '\\n' + studentErr : studentErr,
+          timedOut: false,
+          runtimeError: true,
+          instructorPassed: false,
+          instructorError: '',
+        });
+        return;
+      }
+
+      const instructorHarness = \`
+import traceback
+
+def __mechalab_run_instructor():
+    if not __mechalab_instructor_code__.strip():
+        return True, ""
+    try:
+        compiled_tests = compile(__mechalab_instructor_code__, "<instructor_tests>", "exec")
+        exec(compiled_tests, __mechalab_ns__)
+        return True, ""
+    except AssertionError as ae:
+        msg = str(ae).strip() or "Instructor behavioral test assertion failed on boundary or unseen input."
+        return False, f"AssertionError: {msg}"
+    except Exception as ex:
+        tb_lines = traceback.format_exception_only(type(ex), ex)
+        return False, "".join(tb_lines).strip()
+
+__mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
+\`;
+
+      await py.runPythonAsync(instructorHarness);
+      const instructorPassed = Boolean(py.globals.get('__mechalab_inst_ok__'));
+      const instructorError = py.globals.get('__mechalab_inst_err__') || '';
+
+      self.postMessage({
+        type: 'result',
+        runId,
+        stdout: stdoutText,
+        stderr: stderrText,
+        timedOut: false,
+        runtimeError: false,
+        instructorPassed,
+        instructorError,
+      });
+    } catch (err) {
+      self.postMessage({
+        type: 'error',
+        runId,
+        error: err && err.message ? err.message : String(err),
+      });
+    }
+  }
+};
+`;
 
 interface TabPyodideRunnerProps {
   initialLessonId?: string;
@@ -50,9 +246,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [revealedHints, setRevealedHints] = useState<number>(0);
   const [stdout, setStdout] = useState<string>('');
   const [stderr, setStderr] = useState<string>('');
+  const [instructorError, setInstructorError] = useState<string>('');
+  const [behaviorCheck, setBehaviorCheck] = useState<'untested' | 'passed' | 'failed'>('untested');
+  const [outputCheck, setOutputCheck] = useState<'untested' | 'matched' | 'differs'>('untested');
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [pyodideStatus, setPyodideStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [passStatus, setPassStatus] = useState<'untested' | 'passed' | 'mismatch' | 'error'>('untested');
+  const [passStatus, setPassStatus] = useState<
+    'untested' | 'passed' | 'behavior_failed' | 'mismatch' | 'stopped' | 'error'
+  >('untested');
 
   const [localVerified, setLocalVerified] = useState<Record<string, boolean>>(() => {
     try {
@@ -104,7 +305,44 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   };
 
-  const pyodideRef = useRef<any>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const workerBlobUrlRef = useRef<string | null>(null);
+  const activeRunIdRef = useRef<number>(0);
+  const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeResolveRef = useRef<((val: any) => void) | null>(null);
+
+  const clearRunWatchdog = () => {
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+  };
+
+  const destroyWorker = () => {
+    clearRunWatchdog();
+    if (workerRef.current) {
+      try {
+        workerRef.current.terminate();
+      } catch {
+        // ignore termination errors
+      }
+      workerRef.current = null;
+    }
+    if (workerBlobUrlRef.current) {
+      try {
+        URL.revokeObjectURL(workerBlobUrlRef.current);
+      } catch {
+        // ignore revoke errors
+      }
+      workerBlobUrlRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      destroyWorker();
+    };
+  }, []);
 
   useEffect(() => {
     if (initialLessonId && PYTHON_LESSONS.some((l) => l.id === initialLessonId)) {
@@ -123,90 +361,204 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setRevealedHints(0);
     setStdout('');
     setStderr('');
+    setInstructorError('');
+    setBehaviorCheck('untested');
+    setOutputCheck('untested');
     setPassStatus('untested');
   };
 
-  const ensurePyodide = async () => {
-    if (window.__mechalabPyodide) {
-      pyodideRef.current = window.__mechalabPyodide;
-      setPyodideStatus('ready');
-      return window.__mechalabPyodide;
+  const getOrCreateWorker = (): Worker => {
+    if (workerRef.current) {
+      return workerRef.current;
     }
-    setPyodideStatus('loading');
-    if (!window.loadPyodide) {
-      await new Promise<void>((resolve, reject) => {
-        const existing = document.querySelector(`script[src="${PYODIDE_CDN}pyodide.js"]`);
-        if (existing) {
-          existing.addEventListener('load', () => resolve());
-          existing.addEventListener('error', () => reject(new Error('Failed to load Pyodide script')));
-          return;
-        }
-        const script = document.createElement('script');
-        script.src = `${PYODIDE_CDN}pyodide.js`;
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Failed to load Pyodide from CDN'));
-        document.head.appendChild(script);
-      });
+    const blob = new Blob([PYODIDE_WORKER_SOURCE], { type: 'application/javascript' });
+    const blobUrl = URL.createObjectURL(blob);
+    workerBlobUrlRef.current = blobUrl;
+    const worker = new Worker(blobUrl);
+    workerRef.current = worker;
+    return worker;
+  };
+
+  const stopExecution = (customMessage?: string) => {
+    activeRunIdRef.current += 1;
+    destroyWorker();
+    setIsRunning(false);
+    setPyodideStatus('idle');
+    setBehaviorCheck('failed');
+    setPassStatus('stopped');
+    const stopMsg =
+      customMessage ||
+      'Execution stopped by user. Background Python Web Worker was terminated and your editor code is preserved.';
+    setStderr(stopMsg);
+    if (activeResolveRef.current) {
+      activeResolveRef.current({ stopped: true, message: stopMsg });
+      activeResolveRef.current = null;
     }
-    if (!window.loadPyodide) {
-      throw new Error('window.loadPyodide not available');
+  };
+
+  const resetRuntime = () => {
+    activeRunIdRef.current += 1;
+    destroyWorker();
+    setIsRunning(false);
+    setPyodideStatus('idle');
+    setStdout('');
+    setStderr('Python Web Worker runtime reset. Your editor code is preserved — click "Run & Verify" to start a fresh session.');
+    setInstructorError('');
+    setBehaviorCheck('untested');
+    setOutputCheck('untested');
+    setPassStatus('untested');
+    if (activeResolveRef.current) {
+      activeResolveRef.current({ stopped: true, message: 'Runtime reset' });
+      activeResolveRef.current = null;
     }
-    const py = await window.loadPyodide({ indexURL: PYODIDE_CDN });
-    window.__mechalabPyodide = py;
-    pyodideRef.current = py;
-    setPyodideStatus('ready');
-    return py;
   };
 
   const runPythonCode = async (sourceCode: string) => {
+    const runId = activeRunIdRef.current + 1;
+    activeRunIdRef.current = runId;
+
     setIsRunning(true);
     setStdout('');
     setStderr('');
+    setInstructorError('');
+    setBehaviorCheck('untested');
+    setOutputCheck('untested');
     setPassStatus('untested');
+
+    const cdnUrl =
+      (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) || DEFAULT_PYODIDE_CDN;
+    const timeoutMs =
+      (typeof window !== 'undefined' && window.__mechalabExecutionTimeoutMs) ||
+      DEFAULT_EXECUTION_TIMEOUT_MS;
+    const maxSteps =
+      (typeof window !== 'undefined' && window.__mechalabMaxTraceSteps) || DEFAULT_MAX_TRACE_STEPS;
+
     try {
-      let py: any;
-      try {
-        py = await ensurePyodide();
-      } catch (loadErr: any) {
-        setPyodideStatus('error');
-        throw new Error(
-          `Pyodide WebAssembly runtime could not be loaded (${loadErr?.message || String(loadErr)}). Execution verification requires Pyodide WASM.`
-        );
+      const worker = getOrCreateWorker();
+
+      const workerOutcome: any = await new Promise((resolve) => {
+        activeResolveRef.current = resolve;
+
+        const armExecutionWatchdog = (ms: number, label: string) => {
+          clearRunWatchdog();
+          timeoutIdRef.current = setTimeout(() => {
+            if (activeRunIdRef.current === runId) {
+              destroyWorker();
+              resolve({
+                watchdogTimedOut: true,
+                message: `ExecutionTimeoutError: ${label} exceeded ${(ms / 1000).toFixed(
+                  1
+                )}s limit and the background Web Worker was terminated (possible infinite loop such as 'while True:'). Your editor code is preserved — fix the loop condition or click Reset Runtime.`,
+              });
+            }
+          }, ms);
+        };
+
+        // Initial watchdog allows up to 25s for first-time CDN WASM download, then switches to timeoutMs once ready
+        armExecutionWatchdog(Math.max(timeoutMs, 25000), 'Initial WASM load + execution');
+
+        worker.onmessage = (ev: MessageEvent) => {
+          const data = ev.data || {};
+          if (data.type === 'status') {
+            if (data.status === 'loading') {
+              setPyodideStatus('loading');
+            } else if (data.status === 'ready') {
+              setPyodideStatus('ready');
+              armExecutionWatchdog(timeoutMs, 'Python execution');
+            } else if (data.status === 'error') {
+              setPyodideStatus('error');
+            }
+            return;
+          }
+          if (data.runId !== runId) return;
+          clearRunWatchdog();
+          resolve(data);
+        };
+
+        worker.onerror = (err: ErrorEvent) => {
+          clearRunWatchdog();
+          destroyWorker();
+          setPyodideStatus('error');
+          resolve({
+            type: 'error',
+            error:
+              err?.message ||
+              'Pyodide Web Worker failed to initialize or load from CDN. Execution verification requires Pyodide WASM.',
+          });
+        };
+
+        worker.postMessage({
+          type: 'run',
+          runId,
+          studentCode: sourceCode,
+          instructorTests: currentLesson.instructorTests,
+          cdnUrl,
+          maxSteps,
+          timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
+        });
+      });
+
+      activeResolveRef.current = null;
+      if (activeRunIdRef.current !== runId) return;
+
+      if (workerOutcome?.stopped) {
+        return;
       }
 
-      const capturedOut: string[] = [];
-      const capturedErr: string[] = [];
-      py.setStdout({
-        batched: (msg: string) => {
-          capturedOut.push(msg);
-        },
-      });
-      py.setStderr({
-        batched: (msg: string) => {
-          capturedErr.push(msg);
-        },
-      });
+      if (workerOutcome?.watchdogTimedOut || workerOutcome?.timedOut) {
+        if (workerOutcome?.stdout) setStdout(workerOutcome.stdout);
+        setStderr(workerOutcome.message || workerOutcome.stderr || 'Execution timed out.');
+        setBehaviorCheck('failed');
+        setPassStatus('stopped');
+        return;
+      }
 
-      await py.runPythonAsync(sourceCode);
-      const actualOut = capturedOut.join('\n').trim();
-      const actualErr = capturedErr.join('\n').trim();
+      if (workerOutcome?.type === 'error') {
+        setPyodideStatus('error');
+        setStderr(workerOutcome.error || 'Execution error');
+        setBehaviorCheck('failed');
+        setPassStatus('error');
+        return;
+      }
 
+      const actualOut: string = String(workerOutcome?.stdout || '').trim();
+      const actualErr: string = String(workerOutcome?.stderr || '').trim();
       setStdout(actualOut);
       setStderr(actualErr);
 
+      if (workerOutcome?.runtimeError) {
+        setBehaviorCheck('failed');
+        setPassStatus('error');
+        return;
+      }
+
       const expectedNorm = currentLesson.expectedOutput
         .split('\n')
-        .map((s) => s.trimEnd())
+        .map((s: string) => s.trimEnd())
         .join('\n')
         .trim();
       const actualNorm = actualOut
         .split('\n')
-        .map((s) => s.trimEnd())
+        .map((s: string) => s.trimEnd())
         .join('\n')
         .trim();
 
-      if (!actualErr && actualNorm === expectedNorm) {
+      const isOutputMatched = !actualErr && actualNorm === expectedNorm;
+      const isBehaviorPassed = Boolean(workerOutcome?.instructorPassed);
+
+      setOutputCheck(isOutputMatched ? 'matched' : 'differs');
+      setBehaviorCheck(isBehaviorPassed ? 'passed' : 'failed');
+
+      if (!isBehaviorPassed) {
+        setInstructorError(
+          workerOutcome?.instructorError ||
+            'Instructor behavioral tests failed on unseen or boundary inputs.'
+        );
+        setPassStatus('behavior_failed');
+        return;
+      }
+
+      if (isBehaviorPassed && isOutputMatched) {
         setPassStatus('passed');
         markLessonVerified(currentLesson.id);
       } else {
@@ -216,7 +568,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       setStderr(err?.message || String(err));
       setPassStatus('error');
     } finally {
-      setIsRunning(false);
+      if (activeRunIdRef.current === runId) {
+        setIsRunning(false);
+      }
     }
   };
 
@@ -265,13 +619,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         <div>
           <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
             <Terminal className="w-3.5 h-3.5" />
-            <span>Zero-Install In-Browser Python 3.12 Runner · 32 Beginner Lessons</span>
+            <span>Isolated Web Worker Python 3.12 Runner · 32 Beginner Lessons</span>
           </div>
           <h2 className="text-lg font-bold text-[#f1f5f9] mt-0.5">
-            Run Track P (`P.1–P.M`) &amp; Pass 1 (`00.1–08.1`) Starter Code, Progressive Hints &amp; Assert Checks
+            Run Track P (`P.1–P.M`) &amp; Pass 1 (`00.1–08.1`) Starter Code, Progressive Hints &amp; Behavioral Tests
           </h2>
           <p className="text-xs text-[#94a3b8] mt-0.5">
-            Complete the `TODO` lines, unlock hints one step at a time, and click <b>Run &amp; Verify Output</b> to execute Python 3.12 in WebAssembly. Only real Pyodide execution awards <b>Executed &amp; Passed</b> status; manual checkboxes are tracked separately as <b>Self-Marked</b>.
+            Complete the `TODO` lines, unlock hints one step at a time, and click <b>Run &amp; Verify Output</b>. Code executes inside an isolated <b>Web Worker</b> with infinite-loop protection and is graded by <b>Instructor Behavioral Tests</b> (multi-input &amp; boundary checks) plus output presentation.
           </p>
         </div>
 
@@ -291,15 +645,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </div>
           <div className="h-7 w-[1px] bg-[#1e293b]" />
           <div>
-            <div className="text-[11px] text-[#94a3b8]">Python Runtime</div>
-            <div className="text-xs font-semibold text-[#38bdf8]">
+            <div className="text-[11px] text-[#94a3b8]">Worker Runtime</div>
+            <div className="text-xs font-semibold text-[#38bdf8]" data-testid="runner-runtime-status">
               {pyodideStatus === 'ready'
-                ? 'Ready (Pyodide 3.12)'
+                ? 'Ready (Worker WASM)'
                 : pyodideStatus === 'loading'
                 ? 'Loading WASM...'
                 : pyodideStatus === 'error'
                 ? 'WASM Load Error'
-                : 'Loads on First Run'}
+                : 'Isolated Worker Ready'}
             </div>
           </div>
         </div>
@@ -433,11 +787,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   onClick={() => {
                     setCode(currentLesson.starterCode);
                     setPassStatus('untested');
+                    setBehaviorCheck('untested');
+                    setOutputCheck('untested');
+                    setInstructorError('');
                   }}
+                  data-testid="btn-reset-starter"
                   className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#cbd5e1] border border-[#334155] flex items-center gap-1.5 cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset Starter</span>
+                </button>
+                <button
+                  onClick={resetRuntime}
+                  data-testid="btn-reset-runtime"
+                  title="Terminate and restart the background Python Web Worker without losing editor code"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#38bdf8] border border-[#38bdf8]/40 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Reset Runtime</span>
                 </button>
                 <button
                   onClick={() => {
@@ -449,6 +816,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <Eye className="w-3.5 h-3.5" />
                   <span>Load Solution</span>
                 </button>
+                {isRunning && (
+                  <button
+                    onClick={() => stopExecution()}
+                    data-testid="btn-stop-execution"
+                    className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#f43f5e] hover:bg-[#e11d48] text-white flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <OctagonX className="w-3.5 h-3.5" />
+                    <span>Stop</span>
+                  </button>
+                )}
                 <button
                   onClick={() => runPythonCode(code)}
                   disabled={isRunning}
@@ -456,7 +833,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   className="px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>{isRunning ? 'Running Python...' : 'Run & Verify Output'}</span>
+                  <span>{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
                 </button>
               </div>
             </div>
@@ -520,7 +897,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div className="bg-[#111827] border border-[#334155] rounded-xl overflow-hidden">
             <div className="bg-[#0b0f19] px-4 py-2 border-b border-[#1e293b] flex items-center justify-between">
               <span className="text-xs font-mono text-[#94a3b8]">
-                Python 3 Editor — Edit TODOs and press &quot;Run &amp; Verify Output&quot;
+                Python 3 Editor — Edit TODOs and press &quot;Run &amp; Verify Output&quot; (Web Worker Isolated)
               </span>
               <span className="text-[11px] font-mono text-[#64748b] tabular-nums">
                 {code.split('\n').length} lines
@@ -533,6 +910,72 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               data-testid="textarea-python-code"
               className="w-full h-72 p-4 bg-[#0b0f19] text-[#f1f5f9] font-mono text-xs leading-relaxed focus:outline-none resize-y"
             />
+          </div>
+
+          {/* Instructor Behavioral Assessment Panel */}
+          <div
+            data-testid="panel-instructor-tests"
+            className="bg-[#111827] border border-[#334155] rounded-xl p-4"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-mono text-[#38bdf8] flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4" />
+                <span>Instructor Behavioral Assessment (Multi-Input, Boundary &amp; Tolerance Checks)</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+                <span
+                  data-testid="badge-behavior-check"
+                  className={
+                    behaviorCheck === 'passed'
+                      ? 'text-[#34d399] font-bold'
+                      : behaviorCheck === 'failed'
+                      ? 'text-[#f43f5e] font-bold'
+                      : 'text-[#94a3b8]'
+                  }
+                >
+                  Behavior Tests:{' '}
+                  {behaviorCheck === 'passed'
+                    ? 'PASSED'
+                    : behaviorCheck === 'failed'
+                    ? 'FAILED'
+                    : 'UNTESTED'}
+                </span>
+                <span aria-hidden="true" className="text-[#475569]">·</span>
+                <span
+                  data-testid="badge-output-check"
+                  className={
+                    outputCheck === 'matched'
+                      ? 'text-[#34d399] font-bold'
+                      : outputCheck === 'differs'
+                      ? 'text-[#fbbf24] font-bold'
+                      : 'text-[#94a3b8]'
+                  }
+                >
+                  Presentation (`stdout`):{' '}
+                  {outputCheck === 'matched'
+                    ? 'MATCHED'
+                    : outputCheck === 'differs'
+                    ? 'DIFFERS'
+                    : 'UNTESTED'}
+                </span>
+              </div>
+            </div>
+            <ul className="mt-2.5 space-y-1 text-xs text-[#cbd5e1] font-mono">
+              {(currentLesson.instructorTestSummary || []).map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-[#38bdf8]">•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            {instructorError && (
+              <div
+                data-testid="pre-instructor-error"
+                className="mt-2.5 p-2.5 rounded-lg bg-[#0b0f19] border border-[#f43f5e]/50 font-mono text-xs text-[#f43f5e]"
+              >
+                {instructorError}
+              </div>
+            )}
           </div>
 
           {/* Output & Expected Output Side-by-Side Diff */}
@@ -548,19 +991,43 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     className="text-xs font-mono font-bold text-[#34d399] flex items-center gap-1"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>PASS · Exact Match &amp; Asserts Verified</span>
+                    <span>PASS · Behavior &amp; Output Verified</span>
+                  </span>
+                )}
+                {passStatus === 'behavior_failed' && (
+                  <span
+                    data-testid="status-behavior-failed"
+                    className="text-xs font-mono font-bold text-[#f43f5e] flex items-center gap-1"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>BEHAVIOR FAILED · Instructor Tests Failed</span>
                   </span>
                 )}
                 {passStatus === 'mismatch' && (
-                  <span className="text-xs font-mono font-bold text-[#fbbf24] flex items-center gap-1">
+                  <span
+                    data-testid="status-output-mismatch"
+                    className="text-xs font-mono font-bold text-[#fbbf24] flex items-center gap-1"
+                  >
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>DIFF · Output Differs from Expected</span>
+                    <span>BEHAVIOR PASSED · Output Format Differs</span>
+                  </span>
+                )}
+                {passStatus === 'stopped' && (
+                  <span
+                    data-testid="status-execution-stopped"
+                    className="text-xs font-mono font-bold text-[#fbbf24] flex items-center gap-1"
+                  >
+                    <OctagonX className="w-3.5 h-3.5" />
+                    <span>STOPPED · Loop Limit / Cancelled</span>
                   </span>
                 )}
                 {passStatus === 'error' && (
-                  <span className="text-xs font-mono font-bold text-[#f43f5e] flex items-center gap-1">
+                  <span
+                    data-testid="status-execution-error"
+                    className="text-xs font-mono font-bold text-[#f43f5e] flex items-center gap-1"
+                  >
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>ERROR · Assertion / Runtime Error</span>
+                    <span>ERROR · Syntax / Runtime Error</span>
                   </span>
                 )}
               </div>
@@ -576,7 +1043,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-mono text-[#94a3b8]">
-                  Expected Output (Verified in CI)
+                  Expected Output (Presentation Check)
                 </span>
                 {passStatus === 'passed' && nextLesson && (
                   <button
