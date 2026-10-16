@@ -41,6 +41,7 @@ $$
    Substituting $V_{\text{set}} = 12.0\text{ V}$, $I_{\text{limit}} = 0.20\text{ A}$, and a wiring short $R_{\text{load}} = 0.5\ \Omega$ folds output voltage down to $V_{\text{out}} = 0.20 \times 0.5 = 0.10\text{ V}$ and caps fault power at $P = I_{\text{limit}}^2 R_{\text{load}} = 0.020\text{ W}$ instead of $288\text{ W}$!
 
 ## 4. Worked example
+**Predict first (before you run it):** commit to three numbers before the code runs. With the limit at $I_{\text{limit}} = 0.20\text{ A}$, is the supply in `"CV"` or `"CC"` on the $R_{\text{short}} = 0.25\ \Omega$ miswire, and is the fault power nearer $0.01\text{ W}$ or $576\text{ W}$? Then estimate the DMM short current from the $0.010\ \Omega$ shunt — an order of magnitude is enough ($\approx 1\text{ A}$ or $\approx 1000\text{ A}$?). Write both down. If your two fault powers come out within a factor of $100$ of each other, you ran the battery case in `"CC"` as well: a $50\text{ A}$ source does **not** clamp at $0.25\ \Omega$. If the DMM number lands in microamps, you divided by the voltmeter's $10\text{ M}\Omega$ input instead of the current shunt.
 Compare the fault power dissipated in a $R_{\text{short}} = 0.25\ \Omega$ breadboard miswire across a $12.0\text{ V}$ rail when powered by (a) a bench supply with $I_{\text{limit}} = 0.20\text{ A}$ versus (b) an unprotected $12\text{ V}$ battery capable of $50\text{ A}$, and compute the DMM current-jack short current.
 
 ```python
@@ -82,6 +83,13 @@ Your circuit has normal quiescent resistance $R_{\text{idle}} = 240\ \Omega$ at 
   - **Prerequisite Bridge Module:** [`01-electronics.T1.01a`](01-electronics.T1.01a.md) (*Ohm's Law & Short-Circuit Current*).
   - **Core Concepts to Review First:** Breadboard 5-pin spring-clip topology, DMM continuity vs. current-jack hazards, and CC/CV power supply current clamping $V_{\text{out}} = \min(V_{\text{set}}, I_{\text{limit}} R_{\text{load}})$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [SparkFun How to Use a Breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard), [SparkFun How to Use a Multimeter](https://learn.sparkfun.com/tutorials/how-to-use-a-multimeter), and [Track 00 §0.2 (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools).
+
+### Break it on purpose
+This is the classic first-power-on mistake, and it is a **fault you inject on purpose** so you can recognise the symptom later:
+- **Inject:** the same $R_{\text{short}} = 0.25\ \Omega$ miswire across a $12.0\text{ V}$ rail, but the current limit raised to $I_{\text{limit}} = 2.0\text{ A}$ because the $0.20\text{ A}$ setting kept folding back during bring-up.
+- **Symptom:** the supply still sits in `"CC"` and its voltmeter reads $V_{\text{out}} = 2.0 \times 0.25 = 0.50\text{ V}$ — but the fault now dissipates $P = I_{\text{limit}}^2 R_{\text{short}} = (2.0)^2 (0.25) = 1.0\text{ W}$, one hundred times the $0.01\text{ W}$ the protected setting allowed, through a spring clip rated for $\le 1.0\text{ A}$.
+- **Diagnose:** read the two displays together. The *current* reads exactly your limit ($2.0\text{ A}$) while the *voltage* sags far below $V_{\text{set}}$, so the supply is in Constant-Current foldback and the load is resistive — a short or a half-wired build, not an open circuit (an open would read $V_{\text{set}}$ at $0\text{ A}$). If the current sits at the limit and the clip is warm, the limit is the thing that decided how much heat you made.
+- **Fix:** drop the limit back to $0.10\text{–}0.20\text{ A}$ for logic builds, treat foldback as the signal to power **off** and hunt the short, and prove the fix by measuring $V_{\text{bus}}$-to-$\text{GND}$ resistance in $\Omega$ mode: $\ge 240\ \Omega$ (the healthy $R_{\text{idle}}$) means the miswire is gone, $< 10\ \Omega$ means it is still there.
 
 ## 6. Simulation path
 Simulate a current-limited voltage source and breadboard layout in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or [Wokwi](https://wokwi.com/) (`resources/open-source-toolchains.md`).

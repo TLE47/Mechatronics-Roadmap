@@ -55,6 +55,8 @@ $$
      - `nFAULT` (`FLT`): Open-drain active-low fault output (pulls `LOW` on overcurrent, thermal shutdown, or undervoltage lockout).
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to two numbers. (1) The same $I_D = 4.0\text{ A}$ is either switched by a MOSFET ($R_{DS(\text{on})} = 0.020\ \Omega$) or dropped linearly across the remaining $6.0\text{ V}$ at $D = 0.50$ — is the linear-drop loss tens of times or hundreds of times worse than the conduction loss? (2) Both FETs of one leg ON across $V_{\text{bus}} = 12.0\text{ V}$ with $0.020\ \Omega$ each: commit to the shoot-through current in amperes. Write both down, then run the block. If your second answer sits in the tens of amperes — the same order as the $4.0\text{ A}$ load you are switching — you have let the bus voltage fall across a load instead of across two milliohm-scale on-resistances in series, and the real number is an order of magnitude larger.
+
 Compare MOSFET conduction loss at $I_D = 4.0\text{ A}$, $R_{DS(\text{on})} = 0.020\ \Omega$ against linear drop loss at $V_{\text{bus}} = 12.0\text{ V}$, $D = 0.50$, and compute the catastrophic shoot-through current if both FETs in one leg turn on across $12.0\text{ V}$.
 
 ```python
@@ -91,6 +93,13 @@ Using the **Canonical `TI DRV8833` Datasheet Walkthrough** in `## 3. Formalizati
   - **Prerequisite Bridge Modules:** [`01-electronics.T1.01a`](01-electronics.T1.01a.md) (*DC Circuits*), [`01-electronics.T1.01c`](01-electronics.T1.01c.md) (*CC/CV Bench Safety*), and [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*Capacitor/Inductor Transients*).
   - **Core Concepts to Review First:** PWM average voltage $V_{\text{avg}} = D V_{\text{bus}}$, MOSFET $R_{\text{DS(on)}}$ conduction loss, H-bridge bidirectional truth table, and star-grounding in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [TI SLVA959 (Brushed DC Motor Driver H-Bridge Basics)](https://www.ti.com/lit/pdf/slva959), [Analog Devices MT-101 (Decoupling Techniques)](https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf), and [Track 01 §1.2–1.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+Inject one realistic H-bridge analysis slip and diagnose it from the number alone:
+- **Inject:** recompute the exercise's conduction loss with a single switch's $R = 0.18\ \Omega$ instead of the series pair $R_{\text{high}} + R_{\text{low}} = 0.36\ \Omega$, keeping $I = 1.2\text{ A}$ at $D = 1.0$.
+- **Symptom:** $P_{\text{loss}} = (1.2\text{ A})^2 \times 0.18\ \Omega = 0.2592\text{ W}$ — exactly half the verified $0.5184\text{ W}$, which reads as a cooler, safer board than the part actually allows.
+- **Diagnose:** a clean factor of two is the tell. Conduction loss scales with the *number of switches in the current loop*, so trace the truth-table path (leg A high-side $\to$ motor $\to$ leg B low-side) and count the on-resistances the motor current crosses before you believe any thermal margin.
+- **Fix:** use the combined $R_{\text{high}} + R_{\text{low}} = 0.36\ \Omega$, which reproduces $P_{\text{loss}} = (1.2\text{ A})^2 \times 0.36\ \Omega = 0.5184\text{ W}$. Prove the fix by printing both loop models side by side: the ratio must be exactly the count of switches in the path (two), and any other ratio means the loop is not the one you think it is.
 
 ## 6. Simulation path
 Simulate a low-side MOSFET PWM switch and 4-FET H-bridge in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or inspect **Tab 3 (25 kHz PMSM FOC)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`).

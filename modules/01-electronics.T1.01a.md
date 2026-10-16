@@ -49,6 +49,8 @@ $$
    Substituting $I = 5.0\text{ A}$ through $R_m = 2.4\ \Omega$ gives $P = (5.0\text{ A})^2 (2.4\ \Omega) = 60.0\text{ W}$ of heat.
 
 ## 4. Worked example
+**Predict first (before you run it):** $R_1 = 68\text{ k}\Omega$ over $R_2 = 10\text{ k}\Omega$ on a $24.0\text{ V}$ rail — commit to a number now. Roughly what fraction of $24\text{ V}$ does the $10\text{ k}\Omega$ bottom leg see, is that fraction safely under $3.3\text{ V}$, and which way must $V_{\text{out}}$ move once the ADC's finite $R_L = 100\text{ k}\Omega$ loads that leg? Write it down before you scroll, then check yourself against the printout: a *loaded* output reading higher than the unloaded one means your parallel bottom branch is inverted.
+
 Design a battery-voltage sensing divider that scales a $V_{\text{bat}} = 24.0\text{ V}$ supply down using $R_1 = 68\text{ k}\Omega$ and $R_2 = 10\text{ k}\Omega$ for a $3.3\text{ V}$ ADC pin, and compute both the unloaded output voltage and the loaded output voltage when the ADC input has finite input resistance $R_L = 100\text{ k}\Omega$.
 
 ```python
@@ -82,6 +84,13 @@ Calculate the current-limiting resistor $R$ required to run a status LED ($V_{\t
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Python Variables & Functions*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (SI Prefixes $\text{k}\Omega, \text{mA}, \text{mW}$ & Joule Heating $P = I^2 R$).
   - **Core Concepts to Review First:** Ohm's law ($V = IR$), Kirchhoff's Voltage/Current Laws (KVL/KCL), and loaded voltage dividers in `## 3. Formalization` (Items 1–3) and `## 4. Worked example` above.
   - **Study Links & Resources:** [SparkFun Voltage Dividers Tutorial (`learn.sparkfun.com`)](https://learn.sparkfun.com/tutorials/voltage-dividers), [All About Circuits Vol. I (`allaboutcircuits.com`)](https://www.allaboutcircuits.com/textbook/direct-current/), and [Track 01 Tier 1 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+Inject one realistic bench fault and diagnose it from the symptom alone:
+- **Inject:** swap the legs — put $R_1 = 10\text{ k}\Omega$ on top and $R_2 = 68\text{ k}\Omega$ on the bottom, leaving everything else alone.
+- **Symptom:** the midpoint now reads $V_{\text{out}} = 24.0 \times \frac{68}{78} = 20.92\text{ V}$ — a number that would destroy the $3.3\text{ V}$ ADC pin it was meant to protect.
+- **Diagnose:** the ratio is $R_2 / (R_1 + R_2)$, so the **bottom** resistor sets the fraction, not the top one. A midpoint near the full supply always means the bottom leg is the larger resistor.
+- **Fix:** restore the $68\text{ k}\Omega$ / $10\text{ k}\Omega$ order, then prove the pin is safe before wiring it: $V_{\text{out}} = 3.077\text{ V} < 3.3\text{ V}$ and $P_{R_1} = (24.0 - 3.077)^2 / 68\text{ k}\Omega = 6.44\text{ mW}$.
 
 ## 6. Simulation path
 Simulate the voltage divider and LED resistor in the browser using [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`resources/open-source-toolchains.md`) or run the Python verification script above.
