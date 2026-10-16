@@ -13,7 +13,8 @@
  *    and must mount React with no page errors.
  * 3. Representative *later-track* lessons (03.3 sensors+F, 06.1 robotics, 08.1 capstone) must load in
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
- * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable.
+ * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
+ *    viewport: zero horizontal overflow, asserted rather than reported.
  *
  * Chromium always runs; Firefox runs when its browser build is present (`npx playwright-core install
  * firefox`, which CI does). `PLAYWRIGHT_BROWSERS=chromium|firefox|both` selects them; a browser that is
@@ -154,7 +155,9 @@ async function checkInBrowser(name, launcher, baseUrl) {
       console.log(`  ok ${name}: lesson ${lesson} loads ${starter.length} chars of starter code + expected output`);
     }
 
-    // Tablet viewport: the tab bar, lesson list and editor must all stay reachable.
+    // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
+    // must fit the viewport - the header used to push a 249px horizontal overflow here, so a page
+    // that scrolls sideways is a failure, not a note.
     const tablet = await (await browser.newContext({ viewport: TABLET_VIEWPORT })).newPage();
     await tablet.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await tablet.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
@@ -166,8 +169,33 @@ async function checkInBrowser(name, launcher, baseUrl) {
     await tablet.getByTestId('textarea-python-code').waitFor({ state: 'visible', timeout: 10000 });
     assert.ok(await tablet.getByTestId('btn-run-verify').isVisible(), `${name}: Run & Verify is not visible on a tablet`);
     assert.ok(await tablet.getByTestId('btn-export-portfolio').isVisible(), `${name}: Export Progress is not visible on a tablet`);
-    const overflow = await tablet.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    console.log(`  ok ${name}: tablet ${TABLET_VIEWPORT.width}x${TABLET_VIEWPORT.height} keeps nav, lesson list and runner usable (horizontal overflow ${overflow}px)`);
+    const layout = await tablet.evaluate(() => {
+      const doc = document.documentElement;
+      const viewportWidth = window.innerWidth;
+      const spilled = [...document.querySelectorAll('body *')]
+        .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+        .filter(({ rect }) => rect.width > 0 && rect.height > 0 && rect.right - viewportWidth > 1)
+        .sort((a, b) => b.rect.right - a.rect.right);
+      const worst = spilled[0];
+      return {
+        overflow: doc.scrollWidth - doc.clientWidth,
+        scrollWidth: doc.scrollWidth,
+        clientWidth: doc.clientWidth,
+        spilled: spilled.length,
+        worst: worst
+          ? `${worst.element.tagName.toLowerCase()}${worst.element.dataset?.testid ? `[data-testid=${worst.element.dataset.testid}]` : ''} runs to ${Math.round(worst.rect.right)}px`
+          : '',
+      };
+    });
+    assert.ok(
+      layout.overflow <= 0 && layout.spilled === 0,
+      `${name}: at ${TABLET_VIEWPORT.width}px the workbench scrolls sideways by ${layout.overflow}px ` +
+        `(scrollWidth ${layout.scrollWidth} > clientWidth ${layout.clientWidth}); ${layout.spilled} element(s) past the viewport` +
+        (layout.worst ? `, worst: ${layout.worst}` : '')
+    );
+    console.log(
+      `  ok ${name}: tablet ${TABLET_VIEWPORT.width}x${TABLET_VIEWPORT.height} keeps nav, lesson list and runner usable within the viewport (horizontal overflow ${layout.overflow}px)`
+    );
     await tablet.close();
     return 'pass';
   } finally {

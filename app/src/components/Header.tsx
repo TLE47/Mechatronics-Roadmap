@@ -23,7 +23,9 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="bg-[#0f172a] border-b border-[#334155] px-6 py-3.5 flex items-center justify-between gap-8">
+    // Wraps instead of overflowing: at tablet width (~834px) the four nav links stay on the
+    // wordmark's row and the action group drops to its own row, right-aligned by `ml-auto`.
+    <header className="bg-[#0f172a] border-b border-[#334155] px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2.5">
       {/* Zone 1: Single-line Brand Wordmark */}
       <a
         href="#top"
@@ -35,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Zone 2: 4 concise single-line navigation links */}
       <nav
         aria-label="Learning Pass Navigation"
-        className="hidden md:flex items-center gap-6 text-xs font-medium text-[#94a3b8]"
+        className="hidden md:flex flex-wrap items-center gap-x-6 gap-y-1 text-xs font-medium text-[#94a3b8]"
       >
         {passLinks.map((item) => {
           const isActive = activeTierPass === item.id;
@@ -56,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
       </nav>
 
       {/* Zone 3: Primary Action */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      <div className="flex flex-wrap items-center justify-end gap-2.5 ml-auto">
         <button
           onClick={onExportPortfolio}
           data-testid="btn-export-portfolio"

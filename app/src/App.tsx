@@ -446,7 +446,7 @@ export const App: React.FC = () => {
           <div
             role="group"
             aria-label="Workbench Complexity Mode"
-            className="flex items-center gap-1 bg-[#0b0f19] p-1 rounded-lg border border-[#334155]"
+            className="flex flex-wrap items-center gap-1 bg-[#0b0f19] p-1 rounded-lg border border-[#334155]"
           >
             <button
               onClick={() => setViewMode('beginner')}
