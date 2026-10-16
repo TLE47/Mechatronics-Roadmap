@@ -4,9 +4,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "predev": "python3 scripts/generate_python_lessons_data.py",
     "dev": "vite --host 0.0.0.0 --port 3000",
+    "prebuild": "python3 scripts/generate_python_lessons_data.py",
     "build": "tsc -b && vite build",
-    "lint": "tsc -b"
+    "lint": "tsc -b",
+    "check:lessons": "python3 scripts/generate_python_lessons_data.py --check"
   },
   "dependencies": {
     "katex": "^0.16.21",

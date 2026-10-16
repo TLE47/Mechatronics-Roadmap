@@ -17,7 +17,7 @@ Load built-in math tools (`math.sqrt`, `math.pi`) using `import math`, and write
   1. **Loading standard-library modules with `import`**: Using `import math` at the top of a script to unlock square roots (`math.sqrt`), $\pi$ (`math.pi`), and trigonometry.
   2. **Automated self-checks with `assert`**: Writing `assert condition` so Python immediately flags an `AssertionError` if a function returns the wrong number.
 - **New syntax:** `import math`, `math.sqrt(x)`, `round(val, digits)`, `assert condition`.
-- **Estimated time (untimed guesses):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
 
 ---
 

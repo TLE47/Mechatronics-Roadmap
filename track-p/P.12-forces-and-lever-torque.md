@@ -17,7 +17,7 @@ Calculate linear forces ($F = ma$) and gravitational weight ($W = mg$), and comp
   1. **Linear force ($F = ma$) and gravitational weight ($W = mg$)**: Distinguishing mass (`kg`) from downward gravitational force in Newtons (`N`, $W = m \cdot 9.81$), and relating net force to acceleration ($F_{\text{net}} = m \cdot a$).
   2. **Lever torque from horizontal arm angle ($\tau = mgL\cos\theta$)**: Computing rotational twisting effort in Newton-meters (`N·m`) as downward weight $W = mg$ times the **perpendicular horizontal lever arm** $r_\perp = L\cos\theta$.
 - **New syntax:** None (uses `math.cos(math.radians(theta_deg))` from Lesson P.10).
-- **Estimated time (untimed guesses):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
 ---
 

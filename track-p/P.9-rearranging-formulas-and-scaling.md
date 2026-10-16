@@ -17,7 +17,7 @@ Rearrange physics formulas to isolate any unknown variable on the left side of `
   1. **Rearranging three-variable physics formulas**: Doing the exact same opposite operation to both sides of an equation to solve for any unknown variable ($d = s \cdot t \leftrightarrow s = d/t \leftrightarrow t = d/s$).
   2. **Linear range scaling**: Converting a number from an input interval $[0, X_{\max}]$ to an output interval $[0, Y_{\max}]$ via the fraction of full scale $\left(\frac{x}{X_{\max}}\right) \times Y_{\max}$.
 - **New syntax:** None (uses Python functions and arithmetic from Lessons P.2 and P.5).
-- **Estimated time (untimed guesses):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
 
 ---
 

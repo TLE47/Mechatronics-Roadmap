@@ -20,8 +20,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Lint all 24 beginner lessons (enforce YAML ideas <= 2 & template rules)
+      - name: Lint all 44 beginner lessons (enforce YAML ideas <= 2 & template rules)
         run: python3 scripts/lint_lessons.py
+
+      - name: Verify in-browser Python lesson data is in sync with markdown lessons
+        run: python3 scripts/generate_python_lessons_data.py --check
 
       - name: Run all Python & host C++ exercise unit tests
         run: python3 tests/test_exercises.py

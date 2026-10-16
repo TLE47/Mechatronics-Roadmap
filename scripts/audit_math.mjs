@@ -35,13 +35,16 @@ function check(tex, where, display = false) {
 
 // ---- the workbench curriculum: `equation: '...'` string literals ----------------------
 const dataFiles = [];
+const srcRoot = fs.existsSync(path.join(ROOT, 'app', 'src'))
+  ? path.join(ROOT, 'app', 'src')
+  : path.join(ROOT, 'src');
 (function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(p);
     else if (/\.tsx?$/.test(entry.name)) dataFiles.push(p);
   }
-})(path.join(ROOT, 'src'));
+})(srcRoot);
 
 const EQUATION = /equation:\s*'((?:[^'\\]|\\.)*)'/g;
 const JSX_MATH = /math=(?:"([^"]*)"|\{`([^`]*)`\}|\{'([^']*)'\})/g;
@@ -72,7 +75,14 @@ const INLINE_CODE = /`[^`\n]*`/g;
 
 for (const entry of fs.readdirSync(ROOT, { recursive: true })) {
   const rel = String(entry);
-  if (!rel.endsWith('.md') || rel.startsWith('.git') || rel.startsWith('node_modules')) continue;
+  if (
+    !rel.endsWith('.md') ||
+    rel.startsWith('.git') ||
+    rel.startsWith('.aistudio') ||
+    rel.startsWith('node_modules') ||
+    rel.startsWith('dist')
+  )
+    continue;
   const lines = fs.readFileSync(path.join(ROOT, rel), 'utf8').split('\n');
   let fence = false;
   let display = false;

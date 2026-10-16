@@ -203,7 +203,7 @@ assert math.isclose(g8_di, 0.005, rel_tol=1e-9)
 | Motor buzzes and chatters loudly when $K_d$ is increased | Unfiltered finite-difference velocity $(\theta_k - \theta_{k-1})/\Delta t$ amplifies encoder quantization noise by $1/\Delta t = 1000\times$. | Low-pass filter the velocity estimate before multiplying by $K_d$ (Step 1.6). |
 
 ## 9. Resources
-- **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 11 PID Control, `resources/textbooks-and-papers.md`):** Free textbook chapter on PID physical intuition, derivative filtering, and integrator anti-windup `[VERIFIED 2026-10-15]`.
+- **Åström & Murray — *Feedback Systems* ([`fbsbook.org`](https://www.fbsbook.org/), Ch. 11 PID Control, `resources/textbooks-and-papers.md`):** Free textbook chapter on PID physical intuition, derivative filtering, and integrator anti-windup `[VERIFIED 2026-10-15]`.
 - **Track 05 (`05-control-and-estimation/README.md`):** Directly continues into Step 1.6 (`05-control.T1.06`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 - Proceed to legacy **Step 1.6 (`05-control.T1.06`)** in [`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-1-beginner--intuitive).

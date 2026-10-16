@@ -17,7 +17,7 @@ Convert angles between degrees and **radians** ($\pi\text{ rad} = 180^\circ$) an
   1. **Measuring angles in radians and rotational speed (`rad/s`)**: Why one full turn ($360^\circ$) equals $2\pi\text{ radians}$, and how to convert revolutions per minute (`RPM`) into radians per second (`rad/s`).
   2. **Right-triangle trigonometry (`cos`, `sin`, `atan2`)**: Finding a robot link's horizontal reach $x = L\cos\theta$ and vertical height $y = L\sin\theta$, and recovering $\theta = \text{atan2}(y, x)$ in any quadrant.
 - **New syntax:** `math.pi`, `math.radians(deg)`, `math.degrees(rad)`, `math.cos(rad)`, `math.sin(rad)`, `math.atan2(y, x)`.
-- **Estimated time (untimed guesses):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
 ---
 

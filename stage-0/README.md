@@ -11,21 +11,23 @@ flowchart LR
 
 ---
 
-## Lesson Map & Time Estimates (Untimed Guesses)
+## Lesson Map & Unmeasured Target Times
 
-| Lesson | Title | New Ideas (Max 2, Enforced in YAML Front Matter) | Primary Simulator | Typical Time | Slow-Learner Time |
+> **Note on Timing:** Per-lesson times below (`~45–90 min` target per lesson) are **unmeasured author targets**, not empirical averages. Please help us calibrate Stage 0 by submitting your completion times via our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
+
+| Lesson | Title | New Ideas (Max 2, Enforced in YAML Front Matter) | Primary Simulator | Unmeasured Target | Unmeasured Slow-Paced Target |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **[Lesson S0.1](S0.1-closed-circuits-and-ohms-law.md)** | **Closed DC Circuits, Ground (`0 V`) & Ohm's Law** | 1. Closed DC circuit loop & ground (`0 V`)<br>2. Voltage ($V$), current ($I$), resistance ($R$) & Ohm's Law | Falstad | 1.0–1.5 hrs | 2.0–3.0 hrs |
-| **[Lesson S0.2](S0.2-series-parallel-and-voltage-dividers.md)** | **Series/Parallel Networks, Dividers & Potentiometers** | 1. Series vs. parallel resistor networks<br>2. Resistor voltage dividers & potentiometers | Falstad | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson S0.3](S0.3-breadboards-and-short-circuits.md)** | **Reading Schematics, Breadboards & Short Circuits** | 1. Schematic symbols & breadboard connections<br>2. Short circuits ($R \to 0\ \Omega$) & why Falstad is used | Falstad | 1.0–1.5 hrs | 2.0–3.0 hrs |
-| **[Lesson S0.4](S0.4-leds-and-resistor-power.md)** | **Diodes, LEDs ($V_f$) & Resistor Power ($P = VI$)** | 1. Diodes & LEDs ($V_f$ & current-limiting resistor)<br>2. Electrical power dissipation ($P = VI = I^2R$) | Falstad | 1.0–1.5 hrs | 2.0–3.0 hrs |
-| **[Lesson S0.5](S0.5-multimeters-and-current-limited-supplies.md)** | **Multimeters (`V`/`A`/`Ω`) & `CC/CV` Bench Supplies** | 1. Parallel voltmeter vs. series ammeter probing<br>2. Current-limited (`CC/CV`) bench power supplies | Falstad | 1.0–1.5 hrs | 2.0–3.0 hrs |
-| **[Lesson S0.6](S0.6-capacitors-and-decoupling.md)** | **Capacitors ($\tau = RC$) & Power-Rail Decoupling** | 1. Capacitor charge storage & $\tau = RC$<br>2. Power-rail decoupling (bypass) capacitors | Falstad | 1.5–2.0 hrs | 2.5–3.0 hrs |
-| **[Lesson S0.7](S0.7-arduino-uno-digital-io-and-pullups.md)** | **Arduino Uno (`5 V`) — Digital I/O & `INPUT_PULLUP`** | 1. `setup()`/`loop()` & digital output (`digitalWrite`)<br>2. Digital input (`digitalRead`) & `INPUT_PULLUP` | Wokwi (Arduino Uno) | 1.5–2.0 hrs | 2.5–3.5 hrs |
-| **[Lesson S0.8](S0.8-adc-analog-read-and-serial-monitor.md)** | **10-Bit ADC (`analogRead`) & Serial Monitor** | 1. 10-bit ADC (`analogRead` `0..1023` at $5.0\text{ V}$)<br>2. Serial UART telemetry (`Serial.begin`/`println`) | Wokwi (Arduino Uno) | 1.5–2.0 hrs | 2.5–3.0 hrs |
-| **[Lesson S0.9](S0.9-pwm-duty-cycle-and-analog-write.md)** | **PWM Duty Cycle & `analogWrite()`** | 1. PWM duty cycle & average voltage ($V_{\text{avg}}$)<br>2. 8-bit `analogWrite` (`0..255`) & carrier frequency | Falstad Scope + Wokwi | 1.5–2.0 hrs | 2.5–3.0 hrs |
-| **[Lesson S0.M](S0.M-stage-0-milestone.md)** | **Stage 0 Milestone — LED Dimmer with Kill-Switch** | 1. Hardware-software safety override loop | Wokwi (Arduino Uno) | 1.0–1.5 hrs | 2.0–2.5 hrs |
-| **Total Stage 0** | **9 Lessons + 1 Milestone** | **19 Ideas Total ($\le 2$ per lesson)** | **Falstad + Wokwi** | **12.5–17.0 hrs** | **22.0–30.5 hrs** |
+| **[Lesson S0.1](S0.1-closed-circuits-and-ohms-law.md)** | **Closed DC Circuits, Ground (`0 V`) & Ohm's Law** | 1. Closed DC circuit loop & ground (`0 V`)<br>2. Voltage ($V$), current ($I$), resistance ($R$) & Ohm's Law | Falstad | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
+| **[Lesson S0.2](S0.2-series-parallel-and-voltage-dividers.md)** | **Series/Parallel Networks, Dividers & Potentiometers** | 1. Series vs. parallel resistor networks<br>2. Resistor voltage dividers & potentiometers | Falstad | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
+| **[Lesson S0.3](S0.3-breadboards-and-short-circuits.md)** | **Reading Schematics, Breadboards & Short Circuits** | 1. Schematic symbols & breadboard connections<br>2. Short circuits ($R \to 0\ \Omega$) & why Falstad is used | Falstad | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
+| **[Lesson S0.4](S0.4-leds-and-resistor-power.md)** | **Diodes, LEDs ($V_f$) & Resistor Power ($P = VI$)** | 1. Diodes & LEDs ($V_f$ & current-limiting resistor)<br>2. Electrical power dissipation ($P = VI = I^2R$) | Falstad | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
+| **[Lesson S0.5](S0.5-multimeters-and-current-limited-supplies.md)** | **Multimeters (`V`/`A`/`Ω`) & `CC/CV` Bench Supplies** | 1. Parallel voltmeter vs. series ammeter probing<br>2. Current-limited (`CC/CV`) bench power supplies | Falstad | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
+| **[Lesson S0.6](S0.6-capacitors-and-decoupling.md)** | **Capacitors ($\tau = RC$) & Power-Rail Decoupling** | 1. Capacitor charge storage & $\tau = RC$<br>2. Power-rail decoupling (bypass) capacitors | Falstad | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
+| **[Lesson S0.7](S0.7-arduino-uno-digital-io-and-pullups.md)** | **Arduino Uno (`5 V`) — Digital I/O & `INPUT_PULLUP`** | 1. `setup()`/`loop()` & digital output (`digitalWrite`)<br>2. Digital input (`digitalRead`) & `INPUT_PULLUP` | Wokwi (Arduino Uno) | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
+| **[Lesson S0.8](S0.8-adc-analog-read-and-serial-monitor.md)** | **10-Bit ADC (`analogRead`) & Serial Monitor** | 1. 10-bit ADC (`analogRead` `0..1023` at $5.0\text{ V}$)<br>2. Serial UART telemetry (`Serial.begin`/`println`) | Wokwi (Arduino Uno) | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
+| **[Lesson S0.9](S0.9-pwm-duty-cycle-and-analog-write.md)** | **PWM Duty Cycle & `analogWrite()`** | 1. PWM duty cycle & average voltage ($V_{\text{avg}}$)<br>2. 8-bit `analogWrite` (`0..255`) & carrier frequency | Falstad Scope + Wokwi | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
+| **[Lesson S0.M](S0.M-stage-0-milestone.md)** | **Stage 0 Milestone — LED Dimmer with Kill-Switch** | 1. Hardware-software safety override loop | Wokwi (Arduino Uno) | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
+| **Total Stage 0** | **9 Lessons + 1 Milestone (10 Files)** | **19 Ideas Total ($\le 2$ per lesson)** | **Falstad + Wokwi** | **Unmeasured (~45–90 min/lesson target)** | **Submit logs via Issue Template** |
 
 ---
 
@@ -33,4 +35,4 @@ flowchart LR
 - In the Stage 0 sequence (`S0.1`–`S0.9`), **Series/Parallel Resistor Networks & Voltage Dividers (`S0.2`)** are introduced immediately after single-loop Ohm's Law (`S0.1`).
 - This ensures learners understand **series** vs. **parallel** connections before sizing a **series** current-limiting resistor for an LED (`S0.4`) and before probing voltage in **parallel** vs. current in **series** with a multimeter (`S0.5`).
 
-👉 **Next Step After Stage 0:** [Track 00, Lesson 00.1: Cross-Domain Power (`P = Effort * Flow`) & First-Order Lag](../00-foundations/00.1-effort-flow-and-first-order-lag.md) (or jump straight to [Track 01, Lesson 01.1: High-Current Switching — MOSFETs, Inductors & Flyback Diodes](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md))
+👉 **Next Step After Stage 0:** [Track 00, Lesson 00.1: Cross-Domain Power (`P = Effort * Flow`) & First-Order Lag](../00-foundations/00.1-effort-flow-and-first-order-lag.md)

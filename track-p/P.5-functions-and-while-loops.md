@@ -17,7 +17,7 @@ Package repeatable engineering calculations into named functions using `def` and
   1. **Reusable functions (`def` and `return`)**: Defining a named block of code that accepts input parameters, performs a calculation, and hands the numerical answer back via `return`.
   2. **Condition-controlled `while` loops**: Repeating an indented simulation step for as long as a condition (`step < total_steps`) remains `True`.
 - **New syntax:** `def func_name(param1, param2):`, `return value`, `while condition:`.
-- **Estimated time (untimed guesses):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
 ---
 

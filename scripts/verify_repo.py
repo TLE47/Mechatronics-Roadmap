@@ -21,7 +21,7 @@ VERSION = "1.0.0"
 
 EXPECTED_FILES = [
     "README.md",
-    "index.html",
+    "app/index.html",
     "00-foundations/README.md",
     "00-foundations/lab/lab00_two_mass_and_so3.py",
     "01-electronics-and-power/README.md",
@@ -70,9 +70,9 @@ EXPECTED_FILES = [
     "package.json",
     "package-lock.json",
     "vite.config.ts",
-    "src/main.tsx",
-    "src/App.tsx",
-    "src/curriculumData.ts",
+    "app/src/main.tsx",
+    "app/src/App.tsx",
+    "app/src/curriculumData.ts",
     ".github/workflows/ci.yml",
 ]
 
@@ -419,7 +419,7 @@ MATH_ONLY_COMMANDS = frozenset(
 
 # Shell pages that host math. The workbench's own formulas live in `src/**` (checked by
 # `find_source_math_issues`), and the old static `web/` pages were replaced by the Vite app.
-MATH_HTML_FILES = ("index.html",)
+MATH_HTML_FILES = ("app/index.html",)
 
 _TEXT_GROUP_RE = re.compile(r"\\(?:" + "|".join(TEXT_MODE_GROUPS) + r")\s*\{")
 _MATH_CMD_RE = re.compile(r"\\([a-zA-Z]+)")
@@ -734,7 +734,7 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
 
     # The workbench app typesets its own math with KaTeX, where a bad formula shows as a
     # red parse-error box inside the tab instead of a formula.
-    src_dir = repo_root / "src"
+    src_dir = repo_root / "app" / "src"
     if src_dir.is_dir():
         for src_path in sorted(src_dir.rglob("*")):
             if src_path.suffix not in {".ts", ".tsx"}:

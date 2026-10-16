@@ -9,8 +9,13 @@ const PAGES_BASE = process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
+  root: 'app',
   base: command === 'build' ? PAGES_BASE : '/',
   plugins: [react(), tailwindcss()],
+  build: {
+    outDir: '../dist',
+    emptyOutDir: true,
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,

@@ -17,7 +17,7 @@ Translate multi-step physics and circuit formulas into bug-free Python arithmeti
   1. **Computer arithmetic operators**: Performing addition (`+`), subtraction (`-`), multiplication (`*`), float division (`/`), integer floor division (`//`), and exponents (`**`).
   2. **Parentheses and order of operations**: Using parentheses `()` around numerators and denominators so multi-term engineering fractions evaluate in the exact intended order.
 - **New syntax:** `+`, `-`, `*`, `/`, `//`, `**`, `()`.
-- **Estimated time (untimed guesses):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
 
 ---
 

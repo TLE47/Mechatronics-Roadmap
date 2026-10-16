@@ -21,3 +21,6 @@ dist/
 *.swp
 .vscode/
 .idea/
+.aistudio/
+LINK_REPORT.md
+

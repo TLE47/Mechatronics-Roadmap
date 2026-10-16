@@ -17,7 +17,7 @@ Store robot measurements such as battery charge level, wheel pulse counts, and s
   1. **Storing values in named variables**: Using the assignment operator (`=`) to evaluate the right-hand side first and store the result inside a named memory box on the left.
   2. **Fundamental data types (`int`, `float`, `str`, `bool`)**: Distinguishing whole numbers (`int`), decimal measurements (`float`), quoted text (`str`), and truth flags (`bool`).
 - **New syntax:** `=`, `#` comments, `print()`, `f"{value:.2f}"` formatted strings (`f-strings`).
-- **Estimated time (untimed guesses):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
 
 ---
 

@@ -15,7 +15,7 @@ Combine everything from Track P (variables, clamping, loops, functions, `assert`
 - **New ideas (max 2):**
   1. **End-to-end sense-compute-simulate loop**: Connecting a 10-bit digital command (`0..1023`), linear torque scaling, horizontal-angle gravity torque ($\tau_{\text{grav}} = mgL\cos\theta$), and discrete time-stepping (`angle = angle + omega * dt`) in one script.
 - **New syntax:** None (integrates Lessons P.1 through P.12).
-- **Estimated time (untimed guesses):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
 
 ---
 

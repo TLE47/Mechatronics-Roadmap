@@ -17,7 +17,7 @@ Use comparison operators and `if / elif / else` statements to make safety decisi
   1. **Conditional branching (`if/elif/else`)**: Testing conditions that evaluate to `True` or `False` and running indented blocks of code only when a condition matches.
   2. **Clamping actuator commands within safe limits**: Using `if / elif` bounds checks so a calculated command never exceeds a hardware maximum or drops below a minimum.
 - **New syntax:** `==`, `!=`, `<`, `<=`, `>`, `>=`, `if`, `elif`, `else`, colon `:`, 4-space block indentation.
-- **Estimated time (untimed guesses):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
 ---
 

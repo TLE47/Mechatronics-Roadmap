@@ -17,7 +17,7 @@ Convert between a repeating signal's **frequency** ($f$, in Hertz `Hz`) and its 
   1. **Cycle frequency (`Hz`) and period ($T = 1/f$)**: Relating how many cycles happen per second (`Hz`) to the time duration of a single cycle ($T = \frac{1}{f}$).
   2. **Binary bits and powers of 2 ($2^N$)**: Why $N$ digital bits (`0` or `1`) represent $2^N$ distinct integers from `0` to $2^N - 1$ (explaining `0..255` for 8-bit and `0..1023` for 10-bit).
 - **New syntax:** `1.0 / freq_hz`, `(2 ** n_bits) - 1`.
-- **Estimated time (untimed guesses):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–3.0 hours
 
 ---
 

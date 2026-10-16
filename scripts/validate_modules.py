@@ -198,6 +198,22 @@ for m, d in nodes.items():
 
 legacy_cnt = sum(1 for d in nodes.values() if d["legacy"])
 bridge_cnt = sum(1 for d in nodes.values() if not d["legacy"])
+t1_bridge_cnt = sum(1 for m, d in nodes.items() if not d["legacy"] and ".T1." in m)
+
+lesson_dirs = [
+    ("track-p", "P.*.md"),
+    ("stage-0", "S0.*.md"),
+    ("00-foundations", "00.*.md"),
+    ("01-electronics-and-power", "01.*.md"),
+    ("02-mechanics-kinematics-dynamics", "02.*.md"),
+    ("03-sensors-and-actuators", "03.*.md"),
+    ("04-embedded-and-realtime", "04.*.md"),
+    ("05-control-and-estimation", "05.*.md"),
+    ("06-robotics-and-autonomy", "06.*.md"),
+    ("07-systems-hil-and-production", "07.*.md"),
+    ("08-capstone-projects", "08.*.md"),
+]
+lesson_cnt = sum(len(list(pathlib.Path(d).glob(pat))) for d, pat in lesson_dirs)
 
 readme_path = pathlib.Path("README.md")
 if readme_path.exists():
@@ -210,13 +226,64 @@ if readme_path.exists():
         bad.append(
             f"README.md: module count summary out of sync with _index.yaml (expected '{expected_summary}')"
         )
+    if f"{t1_bridge_cnt} Tier 1 Bridge Modules" not in rtxt:
+        bad.append(
+            f"README.md: Tier 1 bridge count out of sync (expected '{t1_bridge_cnt} Tier 1 Bridge Modules')"
+        )
+    if f"+ {t1_bridge_cnt} Bridge Modules" not in rtxt:
+        bad.append(
+            f"README.md: Mermaid diagram bridge count out of sync (expected '+ {t1_bridge_cnt} Bridge Modules')"
+        )
+    if f"**{lesson_cnt} beginner lessons**" not in rtxt or f"**{lesson_cnt} beginner-first lessons**" not in rtxt:
+        bad.append(
+            f"README.md: beginner lesson count out of sync (expected {lesson_cnt} beginner lessons)"
+        )
+    if "Unmeasured target:" not in rtxt or "untimed" in rtxt.lower():
+        bad.append("README.md: must use 'Unmeasured target:' labels and not 'untimed'")
+
+link_wf_path = pathlib.Path(".github/workflows/link-check.yml")
+if link_wf_path.exists():
+    lwtxt = link_wf_path.read_text(encoding="utf-8")
+    if f"Lint all {lesson_cnt} beginner lessons" not in lwtxt:
+        bad.append(
+            f".github/workflows/link-check.yml: lesson count out of sync (expected 'Lint all {lesson_cnt} beginner lessons')"
+        )
+    if "generate_python_lessons_data.py --check" not in lwtxt:
+        bad.append(
+            ".github/workflows/link-check.yml: missing 'generate_python_lessons_data.py --check' step"
+        )
+
+changelog_path = pathlib.Path("CHANGELOG.md")
+issue_tmpl_dir = pathlib.Path(".github/ISSUE_TEMPLATE")
+if changelog_path.exists() and readme_path.exists() and issue_tmpl_dir.is_dir():
+    ctxt = changelog_path.read_text(encoding="utf-8")
+    readme_kb = round(readme_path.stat().st_size / 1000)
+    expected_kb_str = f"111 KB $\\to$ {readme_kb} KB"
+    if expected_kb_str not in ctxt:
+        bad.append(
+            f"CHANGELOG.md: README size out of sync (expected '{expected_kb_str}')"
+        )
+    tmpl_files = sorted(p.name for p in issue_tmpl_dir.iterdir() if p.is_file())
+    for tf in tmpl_files:
+        if tf not in ctxt:
+            bad.append(f"CHANGELOG.md: missing issue template '{tf}' from .github/ISSUE_TEMPLATE/")
+
+gitignore_path = pathlib.Path(".gitignore")
+if gitignore_path.exists():
+    gitxt = gitignore_path.read_text(encoding="utf-8")
+    if ".aistudio/" not in gitxt:
+        bad.append(".gitignore: missing '.aistudio/' exclusion")
+
+for p in sorted(ROOT.glob("*.md")):
+    if "fbswiki.org" in p.read_text(encoding="utf-8"):
+        bad.append(f"{p}: contains stale 'fbswiki.org' reference (use 'fbsbook.org' consistently)")
 
 if bad:
     print("\n".join(bad))
     sys.exit(1)
 
 print(
-    f"OK ({len(nodes)} modules: {legacy_cnt} legacy, {bridge_cnt} bridge across {len(ladders)} ladders; "
-    f"all {bridge_cnt} Expected output blocks diffed & verified)"
+    f"OK ({len(nodes)} modules: {legacy_cnt} legacy, {bridge_cnt} bridge [{t1_bridge_cnt} Tier 1] across {len(ladders)} ladders; "
+    f"{lesson_cnt} beginner lessons; all {bridge_cnt} Expected output blocks diffed & verified)"
 )
 

@@ -17,7 +17,7 @@ Identify the base SI units (`m`, `kg`, `s`) and unit symbols (`A`, `V`, `Ω`) us
   1. **Base SI units for mechatronics**: Why engineering formulas require standard base units (meters `m`, kilograms `kg`, seconds `s`, plus electrical unit symbols `A`, `V`, `Ω`).
   2. **Metric prefixes (`M`, `k`, `m`, `µ`)**: Scaling numbers by powers of $1{,}000$ (`mega` $= 10^6$, `kilo` $= 10^3$, `milli` $= 10^{-3}$, `micro` $= 10^{-6}$).
 - **New syntax:** Python scientific notation `1e6`, `1e3`, `1e-3`, `1e-6`.
-- **Estimated time (untimed guesses):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.0–1.5 hours | Slow-learner: 2.0–2.5 hours
 
 ---
 

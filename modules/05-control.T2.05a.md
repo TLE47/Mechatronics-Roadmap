@@ -213,7 +213,7 @@ assert g8_choice == "A"
 | Set $Q = I_4$ without Bryson normalization on a state vector mixing millimeters and radians | A $1\text{ mm}$ error and a $1\text{ rad}$ ($57.3^\circ$) error received identical weight! | Always express states in consistent SI units ($\text{m}, \text{rad}, \text{m/s}, \text{rad/s}$) and normalize $Q_{ii} = 1/x_{i,\max}^2$ via Bryson's Rule. |
 
 ## 9. Resources
-- **Åström & Murray — *Feedback Systems* (`fbswiki.org`, Ch. 7–8 & 10–12, `resources/textbooks-and-papers.md`):** Free textbook on observers, LQR, Bode loop shaping, and the Gang of Four `[VERIFIED 2026-10-15]`.
+- **Åström & Murray — *Feedback Systems* ([`fbsbook.org`](https://www.fbsbook.org/), Ch. 7–8 & 10–12, `resources/textbooks-and-papers.md`):** Free textbook on observers, LQR, Bode loop shaping, and the Gang of Four `[VERIFIED 2026-10-15]`.
 - **Track 05 (`05-control-and-estimation/README.md`):** Directly continues into Step 2.6 (`05-control.T2.06`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
 - Proceed to legacy **Step 2.6 (`05-control.T2.06`)** in [`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-2-intermediate--applied).

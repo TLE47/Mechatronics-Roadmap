@@ -17,7 +17,7 @@ Read position-vs-time and velocity-vs-time telemetry plots by connecting **slope
   1. **Graph slope as rate of change**: Computing $\text{slope} = \frac{y_{\text{now}} - y_{\text{prev}}}{\Delta t}$ to find velocity from a position graph or acceleration from a velocity graph.
   2. **Area under a curve as accumulated change**: Multiplying height by time step ($v \cdot \Delta t$) to accumulate change in position (`pos = pos + vel * dt`).
 - **New syntax:** None (uses Python `for` loops and functions from Lessons P.4 and P.5).
-- **Estimated time (untimed guesses):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
 ---
 

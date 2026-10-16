@@ -17,7 +17,7 @@ Store sequences of sensor readings in zero-indexed Python `lists` (`[a, b, c]`) 
   1. **Ordered lists with zero-based indexing**: Grouping multiple values in square brackets `[...]` where position counting starts at index `0`.
   2. **Repeating actions with `for` loops**: Stepping through every element of a list (`for item in my_list:`) or a fixed number of ticks (`for step in range(n):`).
 - **New syntax:** `[a, b, c]`, `items[0]`, `items.append(x)`, `len(items)`, `for x in items:`, `range(n)`.
-- **Estimated time (untimed guesses):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 1.5–2.0 hours | Slow-learner: 2.5–3.5 hours
 
 ---
 
