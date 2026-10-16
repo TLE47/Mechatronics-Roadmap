@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
+import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import {
   Play,
   RotateCcw,
@@ -353,6 +354,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
 
+  // Formatting and behaviour are graded separately: the lesson declares how strictly its `stdout` is
+  // compared (`normalized` unless its Expected Output is a column-aligned table), and the note under
+  // the Expected Output panel always describes the verdict that is on screen.
+  const outputMatchMode: OutputMatchMode = asOutputMatchMode(currentLesson.outputMatch);
+  const outputComparison = compareStdout(stdout, currentLesson.expectedOutput, outputMatchMode);
+  const lessonDowngradesFormatting = outputMatchMode !== 'exact';
+
   const selectLesson = (id: string) => {
     const found = PYTHON_LESSONS.find((l) => l.id === id);
     if (!found) return;
@@ -537,18 +545,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         return;
       }
 
-      const expectedNorm = currentLesson.expectedOutput
-        .split('\n')
-        .map((s: string) => s.trimEnd())
-        .join('\n')
-        .trim();
-      const actualNorm = actualOut
-        .split('\n')
-        .map((s: string) => s.trimEnd())
-        .join('\n')
-        .trim();
-
-      const isOutputMatched = !actualErr && actualNorm === expectedNorm;
+      const isOutputMatched =
+        !actualErr &&
+        compareStdout(actualOut, currentLesson.expectedOutput, outputMatchMode).matched;
       const isBehaviorPassed = Boolean(workerOutcome?.instructorPassed);
 
       setOutputCheck(isOutputMatched ? 'matched' : 'differs');
@@ -956,12 +955,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       : 'text-[#94a3b8]'
                   }
                 >
-                  Presentation (`stdout`):{' '}
+                  Presentation (`stdout`, {outputMatchMode} match):{' '}
                   {outputCheck === 'matched'
                     ? 'MATCHED'
                     : outputCheck === 'differs'
                     ? 'DIFFERS'
                     : 'UNTESTED'}
+                </span>
+                <span aria-hidden="true" className="text-[#475569]">·</span>
+                <span data-testid="note-output-match-mode" className="text-[11px] text-[#94a3b8]">
+                  {lessonDowngradesFormatting
+                    ? 'Formatting is ignored: indentation, column padding and blank lines cannot block a correct solution.'
+                    : 'This lesson grades exact formatting: its table columns are part of the answer.'}
                 </span>
               </div>
             </div>
@@ -1066,6 +1071,26 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               >
                 {currentLesson.expectedOutput}
               </pre>
+              {outputCheck === 'matched' && outputComparison.formattingDiffers && (
+                <p
+                  data-testid="note-formatting-normalized"
+                  className="mt-2 text-[11px] font-mono text-[#34d399]"
+                >
+                  Matched with formatting ignored — your numbers and words are identical to the
+                  Expected Output; only whitespace differs, and this lesson does not grade it.
+                </p>
+              )}
+              {outputCheck === 'differs' && outputComparison.firstDiffLine !== null && (
+                <p
+                  data-testid="note-output-diff-line"
+                  className="mt-2 text-[11px] font-mono text-[#fbbf24]"
+                >
+                  First difference: line {outputComparison.firstDiffLine}
+                  {lessonDowngradesFormatting
+                    ? ' (words and numbers are compared here, not spacing)'
+                    : ' (this lesson also compares spacing exactly)'}
+                </p>
+              )}
             </div>
           </div>
         </div>

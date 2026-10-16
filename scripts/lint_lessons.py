@@ -89,6 +89,35 @@ BANNED_TIER1_JARGON = [
 ]
 
 
+OUTPUT_MATCH_MODES = ("normalized", "exact")
+# A lesson grades exact stdout formatting only when its Expected Output is a padded table - two or more
+# lines carrying a run of interior spaces that lines columns up. Everywhere else the runner ignores
+# indentation, padding and blank lines (app/src/outputMatch.ts), so a correct solution is never blocked
+# by ragged spacing; `scripts/smoke_test_workbench.mjs` asserts the same rule against the built data.
+PADDED_LINE = re.compile(r"\S {2,}\S")
+
+
+def check_output_match(fm: dict, diy_sec: str) -> list[str]:
+    declared = fm.get("output_match", "normalized")
+    if declared not in OUTPUT_MATCH_MODES:
+        return [f"Front matter `output_match: {declared}` must be one of {list(OUTPUT_MATCH_MODES)}"]
+    m = re.search(r"### Expected Output\b.*?```text\n(.*?)```", diy_sec, re.DOTALL)
+    if not m:
+        return []
+    padded = [ln for ln in m.group(1).split("\n") if PADDED_LINE.search(ln)]
+    if len(padded) >= 2 and declared != "exact":
+        return [
+            f"`### Expected Output` is a padded table ({len(padded)} aligned rows), so the front matter must "
+            'declare `output_match: "exact"` — otherwise the runner ignores that alignment'
+        ]
+    if len(padded) < 2 and declared == "exact":
+        return [
+            f"Front matter declares `output_match: \"exact\"` but only {len(padded)} expected-output line(s) "
+            "are column-aligned; incidental spacing must grade `normalized` (the default)"
+        ]
+    return []
+
+
 def natural_sort_key(path: str):
     parts = re.split(r"(\d+)", os.path.basename(path))
     return [int(p) if p.isdigit() else p for p in parts]
@@ -302,6 +331,8 @@ def lint_file(filepath: str, glossary_entries: list[tuple[str, str, str]]) -> li
         errors.append("## Do it yourself missing `What is real-hardware only:`")
     if "### Expected Output" not in diy_sec:
         errors.append("## Do it yourself missing `### Expected Output`")
+    if basename not in ARDUINO_ONLY_LESSONS and basename not in FALSTAD_ONLY_LESSONS:
+        errors.extend(check_output_match(fm, diy_sec))
     for hint_tag in ("Hint 1", "Hint 2", "Full Solution"):
         if hint_tag not in diy_sec:
             errors.append(f"## Do it yourself missing `{hint_tag}`")

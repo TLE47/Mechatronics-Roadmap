@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
-"""Generate src/data/pythonLessonsData.ts from all 32 Python beginner lessons."""
+"""Generate app/src/data/pythonLessonsData.ts from all 32 Python beginner lessons.
+
+Each lesson's `output_match:` front-matter key decides how the workbench compares the learner's
+`stdout` with the lesson's Expected Output: `normalized` (default - whitespace is ignored, so a
+behaviourally correct solution is not blocked by indentation, column padding or blank lines) or
+`exact` (for the lessons whose Expected Output is a column-aligned table, where the format is part
+of the answer). See app/src/outputMatch.ts.
+"""
 
 import glob
 import json
 import os
 import re
+
+OUTPUT_MATCH_MODES = ("normalized", "exact")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -636,6 +645,17 @@ def extract_fenced(text: str, heading_pattern: str, lang: str) -> str:
     return cm.group(1)
 
 
+def extract_output_match(fm_block: str, lesson_id: str) -> str:
+    """Read the lesson's presentation-check mode, defaulting to `normalized`."""
+    m = re.search(r'^output_match:\s*["\']?([A-Za-z_]+)', fm_block, re.MULTILINE)
+    mode = m.group(1).strip().lower() if m else "normalized"
+    if mode not in OUTPUT_MATCH_MODES:
+        raise ValueError(
+            f"Lesson {lesson_id}: output_match must be one of {OUTPUT_MATCH_MODES}, got {mode!r}"
+        )
+    return mode
+
+
 def extract_hints(text: str) -> list[str]:
     diy_m = re.search(r"^## Do it yourself\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
     diy_sec = diy_m.group(1) if diy_m else text
@@ -676,6 +696,7 @@ def main():
         hints = extract_hints(txt)
 
         lesson_id = lid_m.group(1).strip() if lid_m else rel
+        output_match = extract_output_match(fm_block, lesson_id)
         if lesson_id not in INSTRUCTOR_TESTS:
             raise ValueError(f"Missing INSTRUCTOR_TESTS definition for lesson {lesson_id}")
         test_summary, test_code = INSTRUCTOR_TESTS[lesson_id]
@@ -691,6 +712,7 @@ def main():
                 "hints": hints,
                 "fullSolution": solution,
                 "expectedOutput": expected.strip(),
+                "outputMatch": output_match,
                 "instructorTestSummary": test_summary,
                 "instructorTests": test_code.strip(),
             }
@@ -712,6 +734,7 @@ def main():
         "  hints: string[];\n"
         "  fullSolution: string;\n"
         "  expectedOutput: string;\n"
+        "  outputMatch: 'normalized' | 'exact';\n"
         "  instructorTestSummary: string[];\n"
         "  instructorTests: string;\n"
         "}\n\n"

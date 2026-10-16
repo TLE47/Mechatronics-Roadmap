@@ -309,8 +309,96 @@ async function runRealBrowserE2ETests() {
     await page.getByTestId('tab-tier1-exit-review').click();
     await page.getByTestId('panel-tier1-exit-review').waitFor({ timeout: 5000 });
 
+    // 10. Formatting is graded separately from behaviour: a behaviourally correct run must not be blocked
+    // by harmless whitespace, while a lesson whose Expected Output is a padded table still grades its
+    // columns. A fresh context keeps this scenario out of the progress counts asserted above.
+    const formattingContext = await browser.newContext();
+    const formattingPage = await formattingContext.newPage();
+    try {
+      await formattingPage.goto(baseUrl, { waitUntil: 'networkidle' });
+      await formattingPage.getByTestId('tab-btn-tab-pyodide').click();
+
+      // 10a. Lesson 03.1 declares exact formatting and still fails when its table columns lose their padding.
+      await formattingPage.getByTestId('lesson-item-03.1').click();
+      const exactModeNote = await formattingPage.getByTestId('note-output-match-mode').textContent();
+      assert(
+        exactModeNote?.includes('grades exact formatting'),
+        `Lesson 03.1 must say it grades exact formatting, got: ${exactModeNote}`
+      );
+      await formattingPage.getByTestId('btn-load-solution').click();
+      const tableSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+      const unpadded = tableSolution.replace(/:(?:[<>^=])?\d+(\.\d+)?([fdegsx%])/g, ':$1$2');
+      assert.notEqual(unpadded, tableSolution, 'the 03.1 solution must pad its table with field widths');
+      await formattingPage.getByTestId('textarea-python-code').fill(unpadded);
+      await formattingPage.getByTestId('btn-run-verify').click();
+      await formattingPage.getByTestId('status-output-mismatch').waitFor({ timeout: 30000 });
+      assert(
+        (await formattingPage.getByTestId('badge-behavior-check').textContent())?.includes('PASSED'),
+        'Dropping field widths must not change the behavioural verdict'
+      );
+      assert(
+        (await formattingPage.getByTestId('badge-output-check').textContent())?.includes('DIFFERS'),
+        'Lesson 03.1 must still fail presentation when its table columns are unpadded'
+      );
+      assert.equal(
+        (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+        '0 / 36 Verified',
+        'A formatting-only difference must never award lesson verification'
+      );
+      await formattingPage.getByTestId('btn-load-solution').click();
+      await formattingPage.getByTestId('btn-run-verify').click();
+      await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
+      assert.equal(
+        (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+        '1 / 36 Verified',
+        'The unmodified 03.1 solution must still verify'
+      );
+
+      // 10b. Lesson P.6 keeps the numbers but changes every harmless whitespace, and must still verify.
+      await formattingPage.getByTestId('lesson-item-P.6').click();
+      const plainModeNote = await formattingPage.getByTestId('note-output-match-mode').textContent();
+      assert(
+        plainModeNote?.includes('Formatting is ignored'),
+        `Lesson P.6 must say that whitespace is ignored, got: ${plainModeNote}`
+      );
+      await formattingPage.getByTestId('btn-load-solution').click();
+      const plainSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+      const rewrapped = [
+        'import contextlib, io',
+        '_buffer = io.StringIO()',
+        'with contextlib.redirect_stdout(_buffer):',
+        ...plainSolution.split('\n').map((line) => (line ? `    ${line}` : line)),
+        "print('')",
+        'for _line in _buffer.getvalue().splitlines():',
+        '    print("   " + _line.replace(" | ", "   |   "))',
+        "print('')",
+      ].join('\n');
+      await formattingPage.getByTestId('textarea-python-code').fill(rewrapped);
+      await formattingPage.getByTestId('btn-run-verify').click();
+      await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
+      assert(
+        (await formattingPage.getByTestId('badge-behavior-check').textContent())?.includes('PASSED'),
+        'A re-indented, re-spaced solution must still pass the behavioural tests'
+      );
+      assert(
+        (await formattingPage.getByTestId('badge-output-check').textContent())?.includes('MATCHED'),
+        'A whitespace-only difference must not fail a lesson that does not grade formatting'
+      );
+      await formattingPage.getByTestId('note-formatting-normalized').waitFor({ timeout: 5000 });
+      assert.equal(
+        (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+        '2 / 36 Verified',
+        'A behaviourally correct run with different whitespace must award lesson verification'
+      );
+      console.log(
+        '  ok formatting is graded separately from behaviour: 03.1 keeps its padded table, P.6 accepts re-spaced output'
+      );
+    } finally {
+      await formattingContext.close();
+    }
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories & Diagnostic/Exit Review tabs).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs & whitespace-vs-formatting grading).'
     );
   } finally {
     await browser.close();

@@ -129,6 +129,97 @@ async function runSmokeTests() {
       );
     }
 
+    // 2b. Formatting is graded separately from behaviour (app/src/outputMatch.ts): a behaviourally
+    // correct solution must not be blocked by harmless whitespace, and only the lessons whose Expected
+    // Output is a padded table compare spacing exactly.
+    const { compareStdout, normalizeStdout } = await vite.ssrLoadModule('/src/outputMatch.ts');
+    const paddedLine = /[^\s]\s{2,}[^\s]/;
+    for (const lesson of PYTHON_LESSONS) {
+      const alignedRows = lesson.expectedOutput
+        .split('\n')
+        .filter((line) => paddedLine.test(line)).length;
+      const expectedMode = alignedRows >= 2 ? 'exact' : 'normalized';
+      assert.equal(
+        lesson.outputMatch,
+        expectedMode,
+        `Lesson ${lesson.id} declares outputMatch=${lesson.outputMatch} but its Expected Output has ` +
+          `${alignedRows} column-aligned row(s), which means \`${expectedMode}\``
+      );
+    }
+    const exactLesson = PYTHON_LESSONS.find((l) => l.outputMatch === 'exact');
+    const plainLesson = PYTHON_LESSONS.find((l) => l.outputMatch === 'normalized');
+    assert(exactLesson && plainLesson, 'the dataset must carry both presentation-check modes');
+
+    // Whitespace-only differences: rejected where the lesson grades its table, ignored where it does not.
+    const indent = (text) => text.split('\n').map((line) => `    ${line}`).join('\n');
+    assert.equal(
+      compareStdout(indent(exactLesson.expectedOutput), exactLesson.expectedOutput, 'exact').matched,
+      false,
+      `Lesson ${exactLesson.id} must still reject a re-indented table`
+    );
+    const whitespaceOnly = compareStdout(
+      indent(plainLesson.expectedOutput),
+      plainLesson.expectedOutput,
+      'normalized'
+    );
+    assert.equal(
+      whitespaceOnly.matched,
+      true,
+      `Lesson ${plainLesson.id} must accept a correctly-valued run with different whitespace`
+    );
+    assert.equal(
+      whitespaceOnly.formattingDiffers,
+      true,
+      'a whitespace-only match must be reported as such so the runner can say formatting was ignored'
+    );
+    assert.equal(
+      compareStdout(
+        plainLesson.expectedOutput.replace(/\n/g, '\n\n'),
+        plainLesson.expectedOutput,
+        'normalized'
+      ).matched,
+      true,
+      'blank lines inside the run must not fail a normalized lesson'
+    );
+
+    // Numbers are never relaxed by either mode.
+    const plainLines = plainLesson.expectedOutput.split('\n');
+    const digitLineIndex = plainLines.findIndex((line) => /\d/.test(line));
+    assert(digitLineIndex >= 0, `Lesson ${plainLesson.id} fixture must carry a number to mutate`);
+    const changedLines = [...plainLines];
+    changedLines[digitLineIndex] = changedLines[digitLineIndex].replace(/\d/, (d) =>
+      String((Number(d) + 1) % 10)
+    );
+    const oneDigitChanged = changedLines.join('\n');
+    assert.notEqual(oneDigitChanged, plainLesson.expectedOutput, 'fixture must change the run');
+    const numberDiff = compareStdout(oneDigitChanged, plainLesson.expectedOutput, 'normalized');
+    assert.equal(numberDiff.matched, false, 'a wrong number must fail even in normalized mode');
+    assert.equal(
+      numberDiff.firstDiffLine,
+      digitLineIndex + 1,
+      'the first differing line must be reported'
+    );
+    assert.equal(
+      normalizeStdout('  a  b \n\n', 'normalized'),
+      'ab',
+      'normalization must ignore whitespace, padding and blank lines'
+    );
+    assert.equal(
+      compareStdout('raw=   0 ->    0.0 deg', 'raw=0 -> 0.0 deg', 'normalized').matched,
+      true,
+      'a run whose only difference is a dropped pad must still match in normalized mode'
+    );
+    assert.equal(
+      compareStdout('raw=   0 ->    0.0 deg', 'raw=0 -> 0.0 deg', 'exact').matched,
+      false,
+      'a dropped pad must still fail an exact lesson'
+    );
+    assert.equal(
+      normalizeStdout('  a  b \n\n', 'exact'),
+      '  a  b',
+      'exact mode must keep interior spacing and indentation'
+    );
+
     // Ensure TabPyodideRunner executes inside a Web Worker and never awards a fallback text pass
     const runnerSrc = fs.readFileSync(
       path.join(repoRoot, 'app', 'src', 'components', 'tabs', 'TabPyodideRunner.tsx'),
@@ -175,6 +266,20 @@ async function runSmokeTests() {
     assert(
       htmlRunner.includes('Progressive 3-Step Hint Ladder'),
       'TabPyodideRunner must render the 3-step progressive hint ladder'
+    );
+    assert(
+      htmlRunner.includes('data-testid="note-output-match-mode"') &&
+        htmlRunner.includes('Formatting is ignored'),
+      'TabPyodideRunner must state that a normalized lesson ignores whitespace'
+    );
+    const htmlExactLesson = cleanSsr(
+      ReactDOMServer.renderToString(
+        React.createElement(TabPyodideRunner, { initialLessonId: exactLesson.id })
+      )
+    );
+    assert(
+      htmlExactLesson.includes('grades exact formatting'),
+      `TabPyodideRunner must state that ${exactLesson.id} grades exact formatting`
     );
 
     // 3. Verify Placement Quiz, School-Math Diagnostic & Tier 1 -> Tier 2 Exit Readiness Review
