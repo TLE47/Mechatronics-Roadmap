@@ -122,7 +122,18 @@ async function runRealBrowserE2ETests() {
     const spoofedPython = `print(${JSON.stringify((expectedText || '').trim())})\n`;
     await page.getByTestId('textarea-python-code').fill(spoofedPython);
     await page.getByTestId('btn-run-verify').click();
-    await page.getByTestId('status-behavior-failed').waitFor({ timeout: 15000 });
+    await page.waitForFunction(
+      () => {
+        const outBadge = document.querySelector('[data-testid="badge-output-check"]');
+        const behBadge = document.querySelector('[data-testid="badge-behavior-check"]');
+        return (
+          outBadge?.textContent?.includes('MATCHED') &&
+          behBadge?.textContent?.includes('FAILED')
+        );
+      },
+      { timeout: 15000 }
+    );
+    await page.getByTestId('status-behavior-failed').waitFor({ timeout: 5000 });
 
     const behaviorBadgeSpoof = await page.getByTestId('badge-behavior-check').textContent();
     const outputBadgeSpoof = await page.getByTestId('badge-output-check').textContent();
@@ -290,8 +301,16 @@ async function runRealBrowserE2ETests() {
       'Portfolio export must list Lesson P.7 under Self-Marked Completed Python Lessons'
     );
 
+    // 9. Verify School-Math Diagnostic & Tier 1 -> Tier 2 Exit Readiness Review interactive sub-tabs
+    await page.getByLabel('Close export modal').click();
+    await page.getByTestId('tab-btn-tab-placement').click();
+    await page.getByTestId('tab-math-diagnostic').click();
+    await page.getByTestId('panel-school-math-diagnostic').waitFor({ timeout: 5000 });
+    await page.getByTestId('tab-tier1-exit-review').click();
+    await page.getByTestId('panel-tier1-exit-review').waitFor({ timeout: 5000 });
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence & Portfolio export categories).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories & Diagnostic/Exit Review tabs).'
     );
   } finally {
     await browser.close();

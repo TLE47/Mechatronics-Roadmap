@@ -52,7 +52,12 @@ async function runSmokeTests() {
       STORAGE_KEY_MILESTONES,
     } = appMod;
     const { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } = runnerMod;
-    const { TabPlacementQuiz, PLACEMENT_QUESTIONS } = quizMod;
+    const {
+      TabPlacementQuiz,
+      PLACEMENT_QUESTIONS,
+      SCHOOL_MATH_DIAGNOSTIC,
+      TIER1_EXIT_GATES,
+    } = quizMod;
     const { PYTHON_LESSONS } = lessonsMod;
 
     // 1. Verify Beginner View (default) vs. Advanced View (all 10 technical labs)
@@ -62,6 +67,10 @@ async function runSmokeTests() {
     assert(
       htmlBeginner.includes('Beginner View (Plain-English Path)'),
       'Workbench must render the Beginner View toggle button'
+    );
+    assert(
+      htmlBeginner.includes('data-testid="panel-completion-routes-spine"'),
+      'Tab 1 Roadmap must render the 3 Completion Routes, Recurring Arm Spine & Tier 2/3 Scope banner'
     );
     assert(
       htmlBeginner.includes('1. Start Here: Roadmap &amp; Progress') ||
@@ -168,11 +177,21 @@ async function runSmokeTests() {
       'TabPyodideRunner must render the 3-step progressive hint ladder'
     );
 
-    // 3. Verify Placement Quiz (TabPlacementQuiz) & dependency-graph routing
+    // 3. Verify Placement Quiz, School-Math Diagnostic & Tier 1 -> Tier 2 Exit Readiness Review
     assert.equal(
       PLACEMENT_QUESTIONS.length,
       8,
       'PLACEMENT_QUESTIONS must contain 8 skip-gate checkpoints'
+    );
+    assert.equal(
+      SCHOOL_MATH_DIAGNOSTIC.length,
+      6,
+      'SCHOOL_MATH_DIAGNOSTIC must contain 6 just-in-time school-math topics'
+    );
+    assert.equal(
+      TIER1_EXIT_GATES.length,
+      6,
+      'TIER1_EXIT_GATES must contain 6 practical Tier 1 -> Tier 2 exit readiness gates'
     );
     const validLessonIds = new Set([
       ...PYTHON_LESSONS.map((l) => l.id),
@@ -192,6 +211,18 @@ async function runSmokeTests() {
         `Placement question ${q.id} references unknown lessonId ${q.lessonId}`
       );
     }
+    for (const m of SCHOOL_MATH_DIAGNOSTIC) {
+      assert(
+        validLessonIds.has(m.lessonId),
+        `School-math diagnostic ${m.id} references unknown lessonId ${m.lessonId}`
+      );
+    }
+    for (const g of TIER1_EXIT_GATES) {
+      assert(
+        validLessonIds.has(g.refresherLessonId),
+        `Tier 1 exit gate ${g.id} references unknown refresherLessonId ${g.refresherLessonId}`
+      );
+    }
 
     const htmlQuiz = cleanSsr(
       ReactDOMServer.renderToString(
@@ -202,8 +233,10 @@ async function runSmokeTests() {
       )
     );
     assert(
-      htmlQuiz.includes('0 / 8 Answered'),
-      'TabPlacementQuiz must render initial 0 / 8 Answered progress counter'
+      htmlQuiz.includes('0 / 8 Answered') &&
+        htmlQuiz.includes('data-testid="tab-math-diagnostic"') &&
+        htmlQuiz.includes('data-testid="tab-tier1-exit-review"'),
+      'TabPlacementQuiz must render 0 / 8 Answered counter plus School-Math Diagnostic and Tier 1 Exit Review tabs'
     );
 
     // 4. Verify localStorage progress persistence & Markdown Portfolio export

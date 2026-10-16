@@ -151,6 +151,48 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             );
           })}
         </div>
+
+        {/* 3 Completion Routes, Recurring Arm Spine & Tier 2/3 Transition Boundaries */}
+        <div
+          data-testid="panel-completion-routes-spine"
+          className="mt-4 pt-4 border-t border-[#1e293b] grid grid-cols-1 lg:grid-cols-3 gap-3 text-xs"
+        >
+          <div className="p-3.5 rounded-lg bg-[#0b0f19] border border-[#1e293b] space-y-1.5">
+            <div className="font-mono font-bold text-[#34d399]">
+              1. THREE COMPLETION ROUTES &amp; PROVISIONAL TIMES
+            </div>
+            <p className="text-[#cbd5e1] leading-relaxed">
+              <b>Learn &amp; Simulate ($0):</b> Complete all lessons, behavioral tests, and capstones in browser/software tools (built-in hints suffice).{' '}
+              <b>Build ($15–$150):</b> Optional low-voltage (&le;12 V) bench hardware.{' '}
+              <b>Production Practice:</b> High-power 24 V/15 A &amp; 48 V/30 A builds require experienced review &amp; safety sign-off.
+            </p>
+            <p className="text-[11px] font-mono text-[#94a3b8]">
+              Provisional targets: 323.5 h (68 modules, Passes 1–3) · ~341.5–346.5 h incl. Track P + Stage 0 entry ramp.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-[#0b0f19] border border-[#1e293b] space-y-1.5">
+            <div className="font-mono font-bold text-[#38bdf8]">
+              2. RECURRING 2-DOF ARM SPINE &amp; 8-STEP LADDER
+            </div>
+            <p className="text-[#cbd5e1] leading-relaxed">
+              One familiar robot joint/arm evolves from a scalar lag model (Track 00) &rarr; H-bridge drive (Track 01) &rarr; 2-link FK/IK (Track 02) &rarr; encoder + 1 kHz ISR (Tracks 03–04) &rarr; PID + gravity FF (Tracks 05–06) &rarr; safe bring-up &amp; 2-DOF Figure-8 Boss (Tracks 07–08).
+            </p>
+            <p className="text-[11px] font-mono text-[#94a3b8]">
+              8-Step Ladder: Recall &rarr; See it &rarr; Predict &rarr; Work through &rarr; Practice &rarr; Break it &rarr; Transfer &rarr; Integrate.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-[#0b0f19] border border-[#1e293b] space-y-1.5">
+            <div className="font-mono font-bold text-[#c084fc]">
+              3. TIER 2 ROUTES &amp; TIER 3 CAPSTONE SCOPE
+            </div>
+            <p className="text-[#cbd5e1] leading-relaxed">
+              <b>Tier 2:</b> Teaches ODE/Bode/State-Space on the <i>same</i> Tier 1 arm, adds standalone first-run labs (`KiCad`, `URDF`, `RTOS`, `ROS 2`), and offers <b>3 Evidence Routes</b> (<i>Simulation</i>, <i>Reference-Board</i>, or <i>Custom-PCB</i>).{' '}
+              <b>Tier 3:</b> Splits into <i>Use &amp; Understand</i> vs. <i>Derive &amp; Extend</i>; Step 3.8 (9.5 h) requires <b>choosing 1 of Capstones I–V</b>.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* 2. Active Pass Summary Banner + Search Filter */}

@@ -11,9 +11,28 @@ flowchart LR
 
 ---
 
-## Lesson Map & Unmeasured Target Times
+## 1. The Deliberate 8-Step `"Simulate → Measure → Build"` Sequence & Demonstrated Safety Checks
 
-> **Note on Timing:** Per-lesson times below (`~45–90 min` target per lesson) are **unmeasured author targets**, not empirical averages. Please help us calibrate Stage 0 by submitting your completion times via our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
+Every Stage 0 lesson follows the same 8-step engineering discipline so that safety practices become **demonstrated habits**, not just rules on a page:
+1. **Inspect or draw the schematic:** Trace the closed loop from supply positive ($+V$), through the load, back to ground (`0 V`).
+2. **Predict voltage and current first:** Write down your expected $V$ and $I$ using Ohm's Law or the voltage-divider ratio *before* clicking Run.
+3. **Run the supplied simulator setup:** Open the pre-built `falstad/*.txt` circuit or Wokwi project and compare the simulated meters against your prediction.
+4. **Change one component value:** Double or halve one resistor, capacitor, or PWM duty cycle and verify that the direction of change matches physical intuition.
+5. **If following the optional Hardware Build Route (\$15–\$25), wire unpowered first:** Never move breadboard jumpers while the supply or USB cable is energized.
+6. **Complete the 3 Demonstrated Safety Checks before power-up:**
+   - **Check A (Continuity / Short Check):** Measure resistance between $+5\text{ V}$ and `GND` with the multimeter in $\Omega$ mode ($R > 100\ \Omega$, never $0\ \Omega$).
+   - **Check B (Current Limit Set):** If using a `CC/CV` bench supply (`S0.5`), set voltage to $5.0\text{ V}$ and current limit to $\le 100\text{ mA}$ before connecting the load.
+   - **Check C (Meter Lead & Mode Verification):** Confirm the red lead is in the `V/Ω` jack (never the `10A` shunt jack) before probing voltage in parallel.
+7. **Power up and compare actual vs. predicted measurements.**
+8. **Diagnose one deliberately introduced fault:** Every lesson includes a "Break It on Purpose" check (e.g., bridging the same breadboard row in `S0.3`, omitting the ballast resistor in `S0.4`, floating an input pin without `INPUT_PULLUP` in `S0.7`, or inverting the active-low kill switch in `S0.M`).
+
+For the **[Stage 0 Milestone (`S0.M`)](S0.M-stage-0-milestone.md)**, completion requires more than dimming an LED: you trace the complete 5-stage signal path (`Potentiometer wiper voltage -> 10-bit ADC count 0..1023 -> C++ clamping & active-low kill-switch override -> 8-bit PWM duty cycle 0..255 -> Average LED voltage`) and diagnose a planted wiring/code fault.
+
+---
+
+## 2. Lesson Map & Unmeasured Target Times
+
+> **Note on Timing:** Per-lesson times below (`~45–90 min` target per lesson, `~8–10 hours` total for Stage 0) are **unmeasured author targets**, not empirical averages. Please help us calibrate Stage 0 by submitting your completion times via our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
 
 | Lesson | Title | New Ideas (Max 2, Enforced in YAML Front Matter) | Primary Simulator | Unmeasured Target | Unmeasured Slow-Paced Target |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -27,11 +46,11 @@ flowchart LR
 | **[Lesson S0.8](S0.8-adc-analog-read-and-serial-monitor.md)** | **10-Bit ADC (`analogRead`) & Serial Monitor** | 1. 10-bit ADC (`analogRead` `0..1023` at $5.0\text{ V}$)<br>2. Serial UART telemetry (`Serial.begin`/`println`) | Wokwi (Arduino Uno) | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
 | **[Lesson S0.9](S0.9-pwm-duty-cycle-and-analog-write.md)** | **PWM Duty Cycle & `analogWrite()`** | 1. PWM duty cycle & average voltage ($V_{\text{avg}}$)<br>2. 8-bit `analogWrite` (`0..255`) & carrier frequency | Falstad Scope + Wokwi | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
 | **[Lesson S0.M](S0.M-stage-0-milestone.md)** | **Stage 0 Milestone — LED Dimmer with Kill-Switch** | 1. Hardware-software safety override loop | Wokwi (Arduino Uno) | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
-| **Total Stage 0** | **9 Lessons + 1 Milestone (10 Files)** | **19 Ideas Total ($\le 2$ per lesson)** | **Falstad + Wokwi** | **Unmeasured (~45–90 min/lesson target)** | **Submit logs via Issue Template** |
+| **Total Stage 0** | **9 Lessons + 1 Milestone (10 Files)** | **19 Ideas Total ($\le 2$ per lesson)** | **Falstad + Wokwi** | **Unmeasured (~8–10 hrs total target)** | **Submit logs via Issue Template** |
 
 ---
 
-## Term-Order Discipline (Why Series/Parallel Networks (`S0.2`) Come Before LEDs (`S0.4`) & Multimeters (`S0.5`))
+## 3. Term-Order Discipline (Why Series/Parallel Networks (`S0.2`) Come Before LEDs (`S0.4`) & Multimeters (`S0.5`))
 - In the Stage 0 sequence (`S0.1`–`S0.9`), **Series/Parallel Resistor Networks & Voltage Dividers (`S0.2`)** are introduced immediately after single-loop Ohm's Law (`S0.1`).
 - This ensures learners understand **series** vs. **parallel** connections before sizing a **series** current-limiting resistor for an LED (`S0.4`) and before probing voltage in **parallel** vs. current in **series** with a multimeter (`S0.5`).
 

@@ -276,6 +276,215 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
   },
 ];
 
+export interface SchoolMathTopic {
+  id: string;
+  title: string;
+  checkQuestion: string;
+  refresherText: string;
+  lessonId: string;
+  lessonTitle: string;
+}
+
+export const SCHOOL_MATH_DIAGNOSTIC: SchoolMathTopic[] = [
+  {
+    id: 'math-1-ratios',
+    title: '1. Negative Numbers, Fractions, Percentages & Ratios',
+    checkQuestion: 'Can you evaluate -15 + 40 = +25 and compute a voltage-divider ratio 10 / (10 + 20) = 0.3333 (33.3%)?',
+    refresherText:
+      'Adding a positive number to a negative moves right on the number line (-15 + 40 = +25). A ratio part / whole = 10 / 30 = 1/3 ≈ 0.3333; multiply by 100 to express as 33.3%. Used in voltage dividers (P.2, S0.2) and signed command clamping (P.3).',
+    lessonId: 'P.2',
+    lessonTitle: 'Lesson P.2: Computer Arithmetic & Order of Operations',
+  },
+  {
+    id: 'math-2-powers',
+    title: '2. Powers, Square Roots & Scientific Notation',
+    checkQuestion: 'Do you know why 2**10 = 1024, sqrt(3² + 4²) = 5.0, and 1.5e-3 = 0.0015?',
+    refresherText:
+      'An exponent 2**N multiplies 2 by itself N times (10-bit ADC has 2**10 = 1024 levels, 0..1023). The Pythagorean distance is sqrt(x² + y²). Scientific notation 1.5e-3 shifts the decimal 3 places left (0.0015).',
+    lessonId: 'P.8',
+    lessonTitle: 'Lesson P.8: Cycle Frequency (Hz) & Binary Bits (2^N)',
+  },
+  {
+    id: 'math-3-units',
+    title: '3. Unit Conversion & Metric Prefixes (M, k, m, µ)',
+    checkQuestion: 'Can you convert 15 mA to 0.015 A, 0.22 kΩ to 220 Ω, and 500 µs to 0.0005 s without guessing whether to multiply or divide?',
+    refresherText:
+      'kilo (k) = ×1,000; Mega (M) = ×1,000,000; milli (m) = ÷1,000; micro (µ) = ÷1,000,000. Always convert to base SI units (Volts, Amps, Ohms, Seconds, Meters, Kilograms) before plugging into physics formulas.',
+    lessonId: 'P.7',
+    lessonTitle: 'Lesson P.7: Base SI Units & Metric Prefixes',
+  },
+  {
+    id: 'math-4-rearrange',
+    title: '4. Rearranging a Simple Formula & Linear Scaling',
+    checkQuestion: 'Given Δx = v · Δt, can you isolate v = Δx / Δt and map a 0..1023 ADC reading to 0.0..5.0 V?',
+    refresherText:
+      'To isolate v in Δx = v · Δt, divide both sides by Δt: v = (x_final - x_start) / Δt. To scale a raw count in [0, 1023] to [0, Y_max], compute (raw / 1023.0) * Y_max.',
+    lessonId: 'P.9',
+    lessonTitle: 'Lesson P.9: Rearranging Physics Formulas & Linear Range Scaling',
+  },
+  {
+    id: 'math-5-graphs',
+    title: '5. Reading a Graph & Estimating Slope or Area',
+    checkQuestion: 'On a position-vs-time plot, can you find velocity from the slope (Δx/Δt) and distance from the area under a velocity curve (v · Δt)?',
+    refresherText:
+      'Slope = rise / run = (pos_now - pos_prev) / dt_s gives rate of change (velocity, or derivative in PID). Area of each time slice = vel_m_s * dt_s gives accumulated change (position, or integral in PID).',
+    lessonId: 'P.11',
+    lessonTitle: 'Lesson P.11: Reading Time-Series Graphs — Slope & Area',
+  },
+  {
+    id: 'math-6-trig',
+    title: '6. Radians & Basic Sine / Cosine',
+    checkQuestion: 'Can you convert 180° = π rad and use (L·cos θ, L·sin θ) for arm tip position and τ = m·g·L·cos θ for horizontal lever torque?',
+    refresherText:
+      '1full turn = 360° = 2π rad (so 60 RPM = 2π rad/s). Measured from horizontal (+x), cos(θ) gives horizontal reach (1 at 0°, 0 at 90°) and sin(θ) gives vertical height (0 at 0°, 1 at 90°).',
+    lessonId: 'P.10',
+    lessonTitle: 'Lesson P.10: Radians, Rotational Speed & Right-Triangle Trig',
+  },
+];
+
+export interface Tier1ExitGate {
+  id: string;
+  title: string;
+  skillDomain: string;
+  scenarioQuestion: string;
+  options: {
+    label: string;
+    isReady: boolean;
+    feedback: string;
+  }[];
+  refresherLessonId: string;
+  refresherTitle: string;
+}
+
+export const TIER1_EXIT_GATES: Tier1ExitGate[] = [
+  {
+    id: 'exit-1-block-diagram',
+    title: 'Exit Gate 1: Explain the Closed-Loop Arm / Motor Block Diagram',
+    skillDomain: 'System Architecture & Signal Flow',
+    scenarioQuestion:
+      'In the Tier 1 2-DOF compliant robot arm (Lesson 08.1), what is the exact signal and physical power sequence inside each 1 kHz control tick?',
+    options: [
+      {
+        label: 'Cartesian trajectory (xd, yd) -> Law-of-Cosines IK (q_d) -> PD + gravity feedforward torque (tau) -> clamped actuator command -> arm dynamics (ddq) -> encoder feedback (q)',
+        isReady: true,
+        feedback: 'Ready for Tier 2! You can trace reference generation, inverse kinematics, feedforward + feedback control, saturation, plant dynamics, and sensing.',
+      },
+      {
+        label: 'Encoder reading -> Forward Kinematics -> open-loop delay(10) PWM -> gravity torque sensor',
+        isReady: false,
+        feedback: 'Review how closed-loop effort/flow and PD + gravity feedforward combine before jumping to Tier 2 state-space models.',
+      },
+    ],
+    refresherLessonId: '00.1',
+    refresherTitle: 'Lesson 00.1 & 05.1: Effort/Flow Power & Closed-Loop PID Control',
+  },
+  {
+    id: 'exit-2-param-prediction',
+    title: 'Exit Gate 2: Change a Model Parameter & Predict the Direction of Effect',
+    skillDomain: 'Physical Intuition & Scaling Laws',
+    scenarioQuestion:
+      'If you double the gearbox ratio N from 10:1 to 20:1 on a joint while keeping the load inertia I_load constant, how does the load inertia reflected to the motor shaft (I_refl = I_load / N²) change?',
+    options: [
+      {
+        label: 'Reflected load inertia at the motor shaft drops by a factor of 2² = 4× (to 1/4 of its previous value)',
+        isReady: true,
+        feedback: 'Ready for Tier 2! You understand N² impedance scaling and can predict how mechanical parameters shift dynamic response.',
+      },
+      {
+        label: 'Reflected load inertia doubles by 2× at the motor shaft',
+        isReady: false,
+        feedback: 'Review rotational inertia and N² gearbox scaling in Lesson 02.4 before starting Tier 2 Lagrangian/Newton-Euler mechanics.',
+      },
+    ],
+    refresherLessonId: '02.4',
+    refresherTitle: 'Lesson 02.4: Rotational Inertia & N² Gear Ratio Scaling',
+  },
+  {
+    id: 'exit-3-error-isolation',
+    title: 'Exit Gate 3: Read an Error or Telemetry Fault & Isolate the Software Problem',
+    skillDomain: 'Debugging & Embedded Telemetry',
+    scenarioQuestion:
+      'A 1 kHz control loop transmits a 20-byte packed telemetry frame (200 kbit/s on an 8N1 UART link), and the receiver logs frequent frame drops when the port is set to 115,200 baud. What is the root cause?',
+    options: [
+      {
+        label: '20 bytes × 10 bits/byte × 1000 Hz = 200,000 bit/s exceeds a 115,200 baud link (173.6% utilization), overflowing the TX ring buffer; raise baud rate to ≥ 500,000 baud',
+        isReady: true,
+        feedback: 'Ready for Tier 2! You can diagnose real-time bandwidth bottlenecks, buffer overflows, and binary framing.',
+      },
+      {
+        label: 'struct.pack("<BHIffffB") adds 100 bytes of ASCII padding that corrupts the CRC-8 polynomial',
+        isReady: false,
+        feedback: 'Review packed binary telemetry structs, CRC-8, and 8N1 UART bandwidth budgets in Lesson 04.2.',
+      },
+    ],
+    refresherLessonId: '04.2',
+    refresherTitle: 'Lesson 04.2: Packed Structs, CRC-8 & 8N1 UART Bandwidth Budgets',
+  },
+  {
+    id: 'exit-4-graph-interpretation',
+    title: 'Exit Gate 4: Interpret a Sensor Data Graph (Drift vs. High-Frequency Noise)',
+    skillDomain: 'Signal Processing & Estimation',
+    scenarioQuestion:
+      'Looking at a 10-second plot of tilt angle where the raw accelerometer trace has ±0.10 rad high-frequency chatter around 0 rad, while the integrated gyro trace smoothly climbs from 0.00 rad to +0.50 rad, what fault is shown on each sensor?',
+    options: [
+      {
+        label: 'Accelerometer has zero-mean mechanical vibration noise; gyroscope has a +0.05 rad/s constant bias whose integral ramps linearly with time (cured by a complementary filter)',
+        isReady: true,
+        feedback: 'Ready for Tier 2! You are ready for Bode frequency-domain filters (T2.00d/f) and Kalman covariance estimation (T2.05a).',
+      },
+      {
+        label: 'Accelerometer has integral windup; gyroscope has Nyquist aliasing at 10 kHz',
+        isReady: false,
+        feedback: 'Review time-series slope/area (P.11) and complementary IMU sensor fusion (05.2).',
+      },
+    ],
+    refresherLessonId: '05.2',
+    refresherTitle: 'Lesson 05.2: Complementary IMU Sensor Fusion (Low-Pass Accel + High-Pass Gyro)',
+  },
+  {
+    id: 'exit-5-safety-checks',
+    title: 'Exit Gate 5: Explain the Purpose of Demonstrated Pre-Power Safety Checks',
+    skillDomain: 'Hardware Bring-Up & Protection',
+    scenarioQuestion:
+      'During the 10-step bring-up (Lesson 07.1), applying a small positive test torque (+0.10 N·m) causes the encoder angle to decrease (-0.05 rad). Why must you abort immediately before enabling closed-loop PID?',
+    options: [
+      {
+        label: 'Inverted encoder/motor sign turns negative feedback into positive feedback, driving the actuator to full-scale runaway against the hard stops',
+        isReady: true,
+        feedback: 'Ready for Tier 2! You understand why open-loop sign verification and CC/CV current limits precede every closed-loop test.',
+      },
+      {
+        label: 'Negative encoder change only slows convergence slightly and can be fixed by increasing Ki',
+        isReady: false,
+        feedback: 'Review the 10-step safe bring-up checklist and positive-feedback runaway prevention in Lesson 07.1.',
+      },
+    ],
+    refresherLessonId: '07.1',
+    refresherTitle: 'Lesson 07.1: 10-Step Safe Bring-Up & Sine-Sweep SysID',
+  },
+  {
+    id: 'exit-6-capstone-transfer',
+    title: 'Exit Gate 6: Solve a Modified-Parameter Transfer Variation on the Capstone',
+    skillDomain: 'Transfer & Synthesis',
+    scenarioQuestion:
+      'In the 2-DOF arm capstone (Lesson 08.1), if link 1 is held vertical (q1 = +90° = π/2 rad) and link 2 is straight out along link 1 (q2 = 0 rad), what is the gravity feedforward torque (tau_g1, tau_g2)?',
+    options: [
+      {
+        label: 'Both tau_g1 = 0.0 N·m and tau_g2 = 0.0 N·m because cos(π/2) = 0 and both centers of mass lie directly above the shoulder pivot with zero horizontal lever arm',
+        isReady: true,
+        feedback: 'Ready for Tier 2! You can transfer the kinematic and gravity model to new postures without relying on memorized numbers.',
+      },
+      {
+        label: 'Gravity torque is maximum at q1 = 90° because sin(π/2) = 1.0',
+        isReady: false,
+        feedback: 'Review horizontal lever-arm gravity torque (cos θ convention) in Lessons 00.3, 06.1, and 08.1.',
+      },
+    ],
+    refresherLessonId: '08.1',
+    refresherTitle: 'Lesson 08.1: Tier 1 Boss 2-DOF Compliant Arm Plant & PD + Gravity Control',
+  },
+];
+
 interface TabPlacementQuizProps {
   onOpenPyodideLesson: (lessonId: string) => void;
   onSwitchSimulatorTab: (tabIdx: number) => void;
@@ -285,8 +494,15 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
   onOpenPyodideLesson,
   onSwitchSimulatorTab,
 }) => {
+  const [diagnosticMode, setDiagnosticMode] = useState<'placement' | 'school-math' | 'tier1-exit'>(
+    'placement'
+  );
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [mathRoutes, setMathRoutes] = useState<
+    Record<string, 'known' | 'refresher' | 'teach'>
+  >({});
+  const [exitAnswers, setExitAnswers] = useState<Record<string, number>>({});
 
   const selectOption = (qId: string, optIdx: number) => {
     setAnswers((prev) => ({ ...prev, [qId]: optIdx }));
@@ -295,6 +511,8 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
   const resetQuiz = () => {
     setAnswers({});
     setSubmitted(false);
+    setMathRoutes({});
+    setExitAnswers({});
   };
 
   const answeredCount = Object.keys(answers).length;
@@ -311,6 +529,11 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
     return idx !== undefined && q.options[idx]?.isCorrect;
   }).length;
 
+  const exitReadyCount = TIER1_EXIT_GATES.filter((g) => {
+    const idx = exitAnswers[g.id];
+    return idx !== undefined && g.options[idx]?.isReady;
+  }).length;
+
   return (
     <div className="space-y-5">
       {/* Header Banner */}
@@ -318,35 +541,236 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
         <div>
           <div className="text-xs font-mono uppercase tracking-wider text-[#c084fc] flex items-center gap-2">
             <Compass className="w-3.5 h-3.5" />
-            PREREQUISITE DEPENDENCY GRAPH PLACEMENT DIAGNOSTIC · MODULE SKIP-TEST GATES
+            <span>DIAGNOSTIC &amp; TIER-TRANSITION TOOLKIT · PLACEMENT, SCHOOL MATH &amp; TIER 1 EXIT REVIEW</span>
           </div>
           <h2 className="text-lg font-bold text-[#f1f5f9] mt-0.5">
-            Find Your Exact Starting Module & Beginner Lesson from the Curriculum Dependency Graph
+            Find Your Starting Point, Refresh Assumed School Math Just-In-Time, or Verify Tier 1 &rarr; Tier 2 Readiness
           </h2>
           <p className="text-xs text-[#94a3b8] mt-0.5">
-            Answer the 8 skip-gate questions below (covering Track P, Stage 0, and Tracks 00–08 Tier 1). We trace the first unmastered node in <code className="text-[#38bdf8]">modules/_index.yaml</code> to recommend your exact entry point.
+            Switch between the <b>8-Gate Prerequisite Placement Quiz</b>, the no-penalty <b>Track P School-Math Diagnostic</b>, and the <b>6-Gate Tier 1 &rarr; Tier 2 Exit Readiness Review</b>.
           </p>
+
+          {/* 3-Mode Sub-Tab Switcher */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            <button
+              onClick={() => setDiagnosticMode('placement')}
+              data-testid="tab-mode-placement"
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
+                diagnosticMode === 'placement'
+                  ? 'bg-[#38bdf8] text-[#0b0f19] border-[#38bdf8]'
+                  : 'bg-[#0b0f19] text-[#cbd5e1] border-[#334155] hover:border-[#38bdf8]'
+              }`}
+            >
+              1. Skip-Gate Placement Quiz (8 Gates)
+            </button>
+            <button
+              onClick={() => setDiagnosticMode('school-math')}
+              data-testid="tab-math-diagnostic"
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
+                diagnosticMode === 'school-math'
+                  ? 'bg-[#34d399] text-[#0b0f19] border-[#34d399]'
+                  : 'bg-[#0b0f19] text-[#cbd5e1] border-[#334155] hover:border-[#34d399]'
+              }`}
+            >
+              2. Track P School-Math Diagnostic (6 Topics)
+            </button>
+            <button
+              onClick={() => setDiagnosticMode('tier1-exit')}
+              data-testid="tab-tier1-exit-review"
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
+                diagnosticMode === 'tier1-exit'
+                  ? 'bg-[#c084fc] text-[#0b0f19] border-[#c084fc]'
+                  : 'bg-[#0b0f19] text-[#cbd5e1] border-[#334155] hover:border-[#c084fc]'
+              }`}
+            >
+              3. Tier 1 &rarr; Tier 2 Exit Readiness Review (6 Gates)
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="bg-[#0b0f19] border border-[#1e293b] px-3.5 py-2 rounded-lg text-right">
             <div className="text-[10px] font-mono uppercase text-[#94a3b8]">Progress</div>
             <div className="text-sm font-mono font-bold text-[#f1f5f9]">
-              {answeredCount} / {PLACEMENT_QUESTIONS.length} Answered
+              {`${answeredCount} / ${PLACEMENT_QUESTIONS.length} Answered`}
             </div>
           </div>
           <button
             onClick={resetQuiz}
-            className="px-3 py-2 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#cbd5e1] border border-[#334155] flex items-center gap-1.5"
+            className="px-3 py-2 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#cbd5e1] border border-[#334155] flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Reset
+            <span>Reset</span>
           </button>
         </div>
       </div>
 
-      {/* Placement Recommendation Card (shown when submitted or at least 1 answer selected) */}
-      {(submitted || answeredCount > 0) && (
+      {/* MODE 2: Track P Explicit School-Math Diagnostic (3 Routes per Topic) */}
+      {diagnosticMode === 'school-math' && (
+        <div className="space-y-4" data-testid="panel-school-math-diagnostic">
+          <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
+            <h3 className="text-sm font-bold text-[#34d399]">
+              No-Penalty School-Math Diagnostic — Choose &ldquo;I know this&rdquo;, &ldquo;Show me a refresher&rdquo;, or &ldquo;Teach it from scratch&rdquo;
+            </h3>
+            <p className="text-xs text-[#94a3b8] mt-1">
+              You do not need to take an entire math course before starting robotics. Check each of the 6 school-math skills below and pick the route you need right when a lesson uses it.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {SCHOOL_MATH_DIAGNOSTIC.map((item) => {
+              const selectedRoute = mathRoutes[item.id];
+              return (
+                <div
+                  key={item.id}
+                  className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between space-y-3"
+                >
+                  <div className="space-y-1.5">
+                    <div className="text-xs font-mono font-bold text-[#38bdf8]">{item.title}</div>
+                    <p className="text-xs text-[#f1f5f9] leading-relaxed">{item.checkQuestion}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() =>
+                          setMathRoutes((prev) => ({ ...prev, [item.id]: 'known' }))
+                        }
+                        className={`px-2.5 py-1.5 rounded text-xs font-mono border cursor-pointer ${
+                          selectedRoute === 'known'
+                            ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
+                            : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1] hover:border-emerald-500/50'
+                        }`}
+                      >
+                        I know this
+                      </button>
+                      <button
+                        onClick={() =>
+                          setMathRoutes((prev) => ({ ...prev, [item.id]: 'refresher' }))
+                        }
+                        className={`px-2.5 py-1.5 rounded text-xs font-mono border cursor-pointer ${
+                          selectedRoute === 'refresher'
+                            ? 'bg-amber-950/60 border-amber-500 text-amber-300 font-bold'
+                            : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1] hover:border-amber-500/50'
+                        }`}
+                      >
+                        Show me a refresher
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMathRoutes((prev) => ({ ...prev, [item.id]: 'teach' }));
+                          onOpenPyodideLesson(item.lessonId);
+                        }}
+                        className="px-2.5 py-1.5 rounded text-xs font-mono border bg-[#0b0f19] border-[#38bdf8]/50 text-[#38bdf8] hover:bg-[#38bdf8]/15 cursor-pointer"
+                      >
+                        Teach it from scratch ({item.lessonId}) &rarr;
+                      </button>
+                    </div>
+
+                    {selectedRoute === 'refresher' && (
+                      <div className="p-3 rounded-lg bg-[#0b0f19] border border-amber-500/40 text-xs text-amber-200 leading-relaxed">
+                        <span className="font-mono font-bold text-amber-400">2-Minute Refresher: </span>
+                        {item.refresherText}
+                      </div>
+                    )}
+                    {selectedRoute === 'known' && (
+                      <div className="p-2 rounded bg-emerald-950/30 border border-emerald-500/30 text-[11px] font-mono text-emerald-300">
+                        Marked ready — you can skip directly to the code check in {item.lessonTitle}.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* MODE 3: Tier 1 -> Tier 2 Exit Readiness Review (6 Practical Gates + Targeted Refreshers) */}
+      {diagnosticMode === 'tier1-exit' && (
+        <div className="space-y-4" data-testid="panel-tier1-exit-review">
+          <div className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-[#c084fc]">
+                Tier 1 &rarr; Tier 2 Exit Readiness Review ({exitReadyCount} / {TIER1_EXIT_GATES.length} Practical Gates Verified)
+              </h3>
+              <p className="text-xs text-[#94a3b8] mt-1">
+                Before starting Tier 2 (`00-foundations.T2.00a` State-Space &amp; ODEs on the recurring arm), verify that you can explain the system diagram, predict parameter changes, isolate faults, interpret sensor graphs, verify safety checks, and handle a capstone transfer variation. Any missed gate links directly to its targeted refresher lesson.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {TIER1_EXIT_GATES.map((gate) => {
+              const picked = exitAnswers[gate.id];
+              return (
+                <div
+                  key={gate.id}
+                  className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between space-y-3"
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-[#c084fc] font-bold">{gate.skillDomain}</span>
+                      <span className="text-[#94a3b8]">Refresher: Lesson {gate.refresherLessonId}</span>
+                    </div>
+                    <h4 className="text-xs font-bold text-[#f1f5f9]">{gate.title}</h4>
+                    <p className="text-xs text-[#cbd5e1] leading-relaxed">{gate.scenarioQuestion}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    {gate.options.map((opt, oIdx) => {
+                      const isSelected = picked === oIdx;
+                      return (
+                        <div key={oIdx} className="space-y-1.5">
+                          <button
+                            onClick={() =>
+                              setExitAnswers((prev) => ({ ...prev, [gate.id]: oIdx }))
+                            }
+                            className={`w-full text-left p-2.5 rounded-lg border text-xs transition-all flex items-start gap-2 cursor-pointer ${
+                              isSelected
+                                ? opt.isReady
+                                  ? 'bg-emerald-950/50 border-emerald-500/60 text-emerald-200'
+                                  : 'bg-rose-950/50 border-rose-500/60 text-rose-200'
+                                : 'bg-[#0b0f19] border-[#1e293b] text-[#cbd5e1] hover:border-[#475569]'
+                            }`}
+                          >
+                            <span className="font-mono font-bold shrink-0">
+                              {String.fromCharCode(65 + oIdx)}.
+                            </span>
+                            <span className="flex-1">{opt.label}</span>
+                          </button>
+                          {isSelected && (
+                            <div
+                              className={`p-2.5 rounded text-[11px] flex flex-wrap items-center justify-between gap-2 ${
+                                opt.isReady
+                                  ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/30'
+                                  : 'bg-rose-950/30 text-rose-300 border border-rose-500/30'
+                              }`}
+                            >
+                              <span>{opt.feedback}</span>
+                              {!opt.isReady && (
+                                <button
+                                  onClick={() => onOpenPyodideLesson(gate.refresherLessonId)}
+                                  className="px-2.5 py-1 rounded font-mono font-bold bg-[#38bdf8] text-[#0b0f19] cursor-pointer"
+                                >
+                                  Open Targeted Refresher ({gate.refresherLessonId}) &rarr;
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* MODE 1: Placement Recommendation Card & 8 Skip-Gate Questions */}
+      {diagnosticMode === 'placement' && (submitted || answeredCount > 0) && (
         <div className="bg-gradient-to-r from-[#0f172a] via-[#111827] to-[#1e1b4b] border border-[#38bdf8]/50 rounded-xl p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1.5 max-w-3xl">
@@ -391,7 +815,7 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                 onClick={() =>
                   onOpenPyodideLesson(firstGapQuestion ? firstGapQuestion.lessonId : '08.1')
                 }
-                className="px-3.5 py-2 rounded-lg text-xs font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-lg text-xs font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] flex items-center gap-1.5 cursor-pointer"
               >
                 <Terminal className="w-3.5 h-3.5" />
                 Open Lesson {firstGapQuestion ? firstGapQuestion.lessonId : '08.1'} in Python Runner
@@ -401,7 +825,7 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                 onClick={() =>
                   onSwitchSimulatorTab(firstGapQuestion?.recommendedTab ?? 3)
                 }
-                className="px-3.5 py-2 rounded-lg text-xs font-mono font-semibold bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 text-[#38bdf8] border border-[#38bdf8]/40 flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-lg text-xs font-mono font-semibold bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 text-[#38bdf8] border border-[#38bdf8]/40 flex items-center gap-1.5 cursor-pointer"
               >
                 <Cpu className="w-3.5 h-3.5" />
                 Open Matched Simulator Tab
@@ -411,91 +835,96 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
         </div>
       )}
 
-      {/* 8 Diagnostic Gate Questions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {PLACEMENT_QUESTIONS.map((q, qIdx) => {
-          const picked = answers[q.id];
-          return (
-            <div
-              key={q.id}
-              className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between space-y-3"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#0b0f19] text-[#38bdf8] border border-[#1e293b]">
-                    Gate {qIdx + 1} · {q.stageBadge}
-                  </span>
-                  <span className="text-[10px] font-mono text-[#94a3b8] flex items-center gap-1">
-                    <BookOpen className="w-3 h-3 text-[#c084fc]" />
-                    {q.moduleId}
-                  </span>
-                </div>
-
-                <h4 className="text-xs font-bold text-[#f1f5f9] leading-relaxed">{q.question}</h4>
-
-                {q.codeSnippet && (
-                  <pre className="p-2.5 rounded bg-[#0b0f19] border border-[#1e293b] font-mono text-[11px] text-[#38bdf8] overflow-x-auto">
-                    {q.codeSnippet}
-                  </pre>
-                )}
-              </div>
-
-              <div className="space-y-1.5 pt-1">
-                {q.options.map((opt, oIdx) => {
-                  const isSelected = picked === oIdx;
-                  const showFeedback = isSelected;
-                  return (
-                    <div key={oIdx} className="space-y-1">
-                      <button
-                        onClick={() => selectOption(q.id, oIdx)}
-                        className={`w-full text-left p-2.5 rounded-lg border text-xs transition-all flex items-start gap-2 ${
-                          isSelected
-                            ? opt.isCorrect
-                              ? 'bg-emerald-950/50 border-emerald-500/60 text-emerald-200'
-                              : 'bg-rose-950/50 border-rose-500/60 text-rose-200'
-                            : 'bg-[#0b0f19] border-[#1e293b] text-[#cbd5e1] hover:border-[#475569]'
-                        }`}
-                      >
-                        <span className="font-mono font-bold shrink-0 mt-0.5">
-                          {String.fromCharCode(65 + oIdx)}.
-                        </span>
-                        <span className="flex-1">{opt.label}</span>
-                        {showFeedback &&
-                          (opt.isCorrect ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                          ))}
-                      </button>
-                      {showFeedback && (
-                        <div
-                          className={`px-3 py-1.5 rounded text-[11px] ${
-                            opt.isCorrect
-                              ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/30'
-                              : 'bg-rose-950/30 text-rose-300 border border-rose-500/30'
-                          }`}
-                        >
-                          {opt.explanation}
-                        </div>
-                      )}
+      {diagnosticMode === 'placement' && (
+        <>
+          {/* 8 Diagnostic Gate Questions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {PLACEMENT_QUESTIONS.map((q, qIdx) => {
+              const picked = answers[q.id];
+              return (
+                <div
+                  key={q.id}
+                  className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between space-y-3"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#0b0f19] text-[#38bdf8] border border-[#1e293b]">
+                        Gate {qIdx + 1} · {q.stageBadge}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#94a3b8] flex items-center gap-1">
+                        <BookOpen className="w-3 h-3 text-[#c084fc]" />
+                        {q.moduleId}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={() => setSubmitted(true)}
-          className="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-[#38bdf8] hover:bg-[#0284c7] text-[#0b0f19] flex items-center gap-1.5"
-        >
-          <ShieldCheck className="w-4 h-4" />
-          Compute Final Placement Recommendation
-        </button>
-      </div>
+                    <h4 className="text-xs font-bold text-[#f1f5f9] leading-relaxed">{q.question}</h4>
+
+                    {q.codeSnippet && (
+                      <pre className="p-2.5 rounded bg-[#0b0f19] border border-[#1e293b] font-mono text-[11px] text-[#38bdf8] overflow-x-auto">
+                        {q.codeSnippet}
+                      </pre>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5 pt-1">
+                    {q.options.map((opt, oIdx) => {
+                      const isSelected = picked === oIdx;
+                      const showFeedback = isSelected;
+                      return (
+                        <div key={oIdx} className="space-y-1">
+                          <button
+                            onClick={() => selectOption(q.id, oIdx)}
+                            className={`w-full text-left p-2.5 rounded-lg border text-xs transition-all flex items-start gap-2 cursor-pointer ${
+                              isSelected
+                                ? opt.isCorrect
+                                  ? 'bg-emerald-950/50 border-emerald-500/60 text-emerald-200'
+                                  : 'bg-rose-950/50 border-rose-500/60 text-rose-200'
+                                : 'bg-[#0b0f19] border-[#1e293b] text-[#cbd5e1] hover:border-[#475569]'
+                            }`}
+                          >
+                            <span className="font-mono font-bold shrink-0 mt-0.5">
+                              {String.fromCharCode(65 + oIdx)}.
+                            </span>
+                            <span className="flex-1">{opt.label}</span>
+                            {showFeedback &&
+                              (opt.isCorrect ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                              ) : (
+                                <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                              ))}
+                          </button>
+                          {showFeedback && (
+                            <div
+                              className={`px-3 py-1.5 rounded text-[11px] ${
+                                opt.isCorrect
+                                  ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/30'
+                                  : 'bg-rose-950/30 text-rose-300 border border-rose-500/30'
+                              }`}
+                            >
+                              {opt.explanation}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => setSubmitted(true)}
+              className="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-[#38bdf8] hover:bg-[#0284c7] text-[#0b0f19] flex items-center gap-1.5 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Compute Final Placement Recommendation
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
+

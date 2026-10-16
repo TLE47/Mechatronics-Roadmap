@@ -454,8 +454,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           }, ms);
         };
 
-        // Initial watchdog allows up to 25s for first-time CDN WASM download, then switches to timeoutMs once ready
-        armExecutionWatchdog(Math.max(timeoutMs, 25000), 'Initial WASM load + execution');
+        // Initial watchdog allows up to 45s for first-time CDN WASM download, then switches to timeoutMs once ready
+        armExecutionWatchdog(Math.max(timeoutMs, 45000), 'Initial WASM load + execution');
 
         worker.onmessage = (ev: MessageEvent) => {
           const data = ev.data || {};
@@ -528,7 +528,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
       if (workerOutcome?.runtimeError) {
         setBehaviorCheck('failed');
-        setPassStatus('error');
+        if (actualErr.startsWith('AssertionError')) {
+          setInstructorError(actualErr);
+          setPassStatus('behavior_failed');
+        } else {
+          setPassStatus('error');
+        }
         return;
       }
 
