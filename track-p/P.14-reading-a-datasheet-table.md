@@ -45,7 +45,7 @@ flowchart LR
 
 ### Idea 2: Recommended operating bounds (Min/Typ/Max) versus Absolute Maximum Ratings
 - **Primary resource:** [Wikipedia — Safe operating area](https://en.wikipedia.org/wiki/Safe_operating_area) `[HTTP 200 — Verified by scripts/check_links.py]`
-  - **What to read:** Read the lead section defining the voltage/current envelope a part survives without self-damage, and the exact heading **`Limits of the safe operating area`** — the same boundary an **Absolute Maximum Rating (`AMR`)** marks, well outside the **Recommended Operating Conditions (`ROC`)** you must design inside.
+  - **What to read:** Read the lead section, which defines the electrical operating envelope a part survives without self-damage, and the exact heading **`Limits of the safe operating area`** — the same boundary an **Absolute Maximum Rating (`AMR`)** marks, well outside the **Recommended Operating Conditions (`ROC`)** you must design inside.
   - **What to skip:** Skip military MIL-STD qualification tables.
   - **Key takeaway:** **Absolute Maximum Ratings** are the stress threshold beyond which permanent physical destruction occurs; manufacturers explicitly state that reliable operation is *not* implied at those limits. Your design must stay strictly inside the **Recommended Operating Conditions (`Min` $\le x \le$ `Max`)** with safety margin:
 
