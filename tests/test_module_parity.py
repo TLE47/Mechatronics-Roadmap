@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""Regression tests for the tier-parity scorer, `scripts/module_parity.py`.
+
+Three jobs:
+
+1. **The spec's own metadata example must pass the parser.** `docs/QUALITY_SPEC.md` §2 writes its
+   `difficulty:` block with a trailing `# comment` on each value, which is ordinary YAML. The parser
+   required the line to end at the number, so a module written to the spec failed the Structure
+   layer - dogfooding the reference module is how it surfaced. Both halves are asserted here so the
+   fix cannot become a silent loosening: the commented form is accepted, and out-of-range values,
+   unknown enum values and a missing block are still findings.
+2. **The shared-plant item keeps its teeth.** `plant: tier1_arm_motor` scores only with a real
+   `import mechalab_plant` inside a python block; `plant: none` only with a reason of its own.
+3. **The reference module stays the reference.** `02-mechanics.T2.02a` is the module every later one
+   copies, so its published score is asserted at 100% and the baseline's recorded item set is
+   asserted to be today's - a newly instrumented item must be a deliberate re-record, not a silent
+   drop.
+
+Run: `python3 tests/test_module_parity.py` (also wired into the CI verify step).
+"""
+
+import json
+import os
+import sys
+import unittest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+
+import module_parity as parity  # noqa: E402  (path set up above)
+
+REFERENCE_MODULE = "02-mechanics.T2.02a"
+
+# `docs/QUALITY_SPEC.md` §2, verbatim in style: a trailing comment after every value.
+SPEC_STYLE_FRONT_MATTER = """id: 02-mechanics.T2.99z
+title: "A metadata block written the way docs/QUALITY_SPEC.md writes one"
+track: "02"
+tier: 2
+difficulty:
+  math: 3           # 1..5 - new mathematical objects this module introduces
+  coding: 3         # 1..5 - new code/SDK surface
+  tools: 2          # 0..5 - new tools (0 = none)
+  hardware_risk: low    # low | medium | high
+  simulation: full      # full | partial | none
+verification: browser
+plant: tier1_arm_motor
+"""
+
+
+class TestDifficultyLabel(unittest.TestCase):
+    def test_the_specs_own_example_parses(self):
+        self.assertEqual(parity.difficulty_findings(SPEC_STYLE_FRONT_MATTER), [])
+
+    def test_a_missing_block_is_still_a_finding(self):
+        self.assertEqual(parity.difficulty_findings("id: x\ntitle: y\n"), ["no `difficulty:` block"])
+
+    def test_out_of_range_and_unknown_values_are_still_findings(self):
+        broken = SPEC_STYLE_FRONT_MATTER.replace("math: 3", "math: 6").replace(
+            "hardware_risk: low", "hardware_risk: extreme"
+        )
+        findings = parity.difficulty_findings(broken)
+        self.assertIn("`difficulty.math: 6` is outside 1..5", findings)
+        self.assertTrue(any("hardware_risk" in finding for finding in findings), findings)
+
+    def test_a_boolean_where_a_value_belongs_is_not_read_as_a_number(self):
+        broken = SPEC_STYLE_FRONT_MATTER.replace("coding: 3", "coding: high")
+        self.assertIn("`difficulty.coding:` is missing", parity.difficulty_findings(broken))
+
+
+class TestSharedPlantItem(unittest.TestCase):
+    def test_a_declaration_without_an_import_is_not_use(self):
+        text = "```python\nimport math\nprint(1.0)\n```\n"
+        self.assertEqual(parity.plant_decision("tier1_arm_motor", "", text), (False, "unhooked"))
+
+    def test_a_prose_mention_is_not_use(self):
+        text = "Then the module runs `import mechalab_plant` in a sentence.\n"
+        self.assertEqual(parity.plant_decision("tier1_arm_motor", "", text), (False, "unhooked"))
+
+    def test_an_import_inside_a_python_block_is_use(self):
+        text = "```python\nimport mechalab_plant as plant\nprint(plant.L1)\n```\n"
+        self.assertEqual(parity.plant_decision("tier1_arm_motor", "", text), (True, "arm"))
+
+    def test_none_needs_a_reason_of_its_own(self):
+        self.assertEqual(parity.plant_decision("none", "", ""), (False, "unhooked"))
+        self.assertEqual(parity.plant_decision("none", "too short", ""), (False, "unhooked"))
+        reason = "This module is about a KiCad file: there is no arm to run it on."
+        self.assertEqual(parity.plant_decision("none", reason, ""), (True, "exempt"))
+
+    def test_a_missing_or_unknown_value_is_undeclared(self):
+        self.assertEqual(parity.plant_decision("", "", ""), (False, "undeclared"))
+        self.assertEqual(parity.plant_decision("tier2_quadruped", "", ""), (False, "undeclared"))
+
+
+class TestScoredItemsAndTheReferenceModule(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        status, rows, _, errors = parity.build()
+        if status != 0:
+            raise AssertionError("module_parity.build() failed: %s" % errors)
+        cls.rows = rows
+
+    def test_the_shared_plant_is_an_instrumented_item(self):
+        self.assertIn("executable:shared_plant", parity.instrumented_items(self.rows))
+
+    def test_the_reference_module_is_at_one_hundred_percent(self):
+        """The module every later module copies, held to the whole contract."""
+        row = next((item for item in self.rows if item["module"] == REFERENCE_MODULE), None)
+        self.assertIsNotNone(row, "%s is missing from modules/" % REFERENCE_MODULE)
+        self.assertEqual(row["plant"], "arm", "the reference module must run on the shared plant")
+        self.assertIn(row["verification"], parity.VERIFICATION_ROUTES)
+        self.assertEqual(row["score"], 1.0, "missing: %s" % parity.missing_items(row))
+
+    def test_the_baseline_records_todays_item_set(self):
+        with open(parity.BASELINE_PATH, encoding="utf-8") as handle:
+            baseline = json.load(handle)
+        self.assertEqual(
+            baseline.get("instrumented_items"),
+            parity.instrumented_items(self.rows),
+            "the scored item set moved - re-record the floor deliberately with --update-baseline",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

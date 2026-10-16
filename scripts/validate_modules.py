@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import pathlib
 import re
-import sys
+import sys  # noqa: F401  (also used to put the shared plant on `sys.path` below)
 
 try:
     import yaml
@@ -56,6 +56,13 @@ except ImportError:
         return data
 
 ROOT = pathlib.Path("modules")
+# A module's worked example runs on the shared plant (`import mechalab_plant`), the same arm every
+# Tier 2/3 exercise uses. The browser workbench ships that one file into Pyodide and puts `/` on
+# `sys.path` before learner code runs, so these scripts put that one directory on the path too and
+# a module block needs no path juggling of its own.
+PLANT_DIR = pathlib.Path("resources", "plants").resolve()
+if PLANT_DIR.is_dir() and str(PLANT_DIR) not in sys.path:
+    sys.path.insert(0, str(PLANT_DIR))
 ID_RE = re.compile(r"^\d{2}-[a-z0-9-]+\.T[123]\.\d{2}[a-z]?$")
 REQ_SECTIONS = [
     ("Why it matters", r"^##\s+.*(?:Why it matters|Why This Matters)"),

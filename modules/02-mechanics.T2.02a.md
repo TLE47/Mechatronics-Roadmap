@@ -18,109 +18,359 @@ est_hours: 4.5
 hardware_required: false
 safety_level: none
 resources_verified: true
+difficulty:
+  math: 4            # three new objects: constraint counting, SE(3), the Jacobian and its transpose
+  coding: 3          # 4x4 helpers by hand, then the shared plant's own API
+  tools: 0           # nothing to install; the in-page Python runner and the plant are enough
+  hardware_risk: low # simulation only - nothing on this module moves with the arm powered
+  simulation: full   # every number below comes from `import mechalab_plant`
+verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
-This is the bridge module before Step 2.3 (`02-mechanics.T2.03`) and Step 2.7 (`06-robotics.T2.07`). Moving from 2D planar links to 3D CAD (`CadQuery`), kinematic couplings, and `URDF`/`MuJoCo` physics requires four core tools: counting **6-DOF spatial degrees of freedom** ($3$ translations + $3$ rotations), combining 3D rotation $R \in SO(3)$ and translation $p \in \mathbb{R}^3$ into a single $4\times 4$ **homogeneous transformation matrix** $T \in SE(3)$, mapping joint speeds $\dot{q}$ to tip velocity $\dot{x} = J(q)\dot{q}$ via the **Jacobian matrix** (which also transforms tip forces into joint torques via $\tau = J^\top F$), and shifting 3D inertia tensors from the Center of Mass to a joint axis via the **Parallel-Axis Theorem**. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
+This is the bridge module before Step 2.3 (`02-mechanics.T2.03`) and Step 2.7 (`06-robotics.T2.07`). Moving from 2D links to 3D CAD, kinematic couplings and `URDF`/`MuJoCo` physics takes four tools: counting **6-DOF spatial degrees of freedom**, combining rotation $R \in SO(3)$ and translation $p \in \mathbb{R}^3$ into one $4\times 4$ **homogeneous transform** $T \in SE(3)$, mapping joint speeds to tip speed with the **Jacobian** $\dot{x} = J(q)\dot{q}$ (and tip forces to joint torques with its transpose, $\tau = J^\top F$), and shifting an inertia tensor to a joint axis with the **Parallel-Axis Theorem**.
+
+It is also where the course stops inventing numbers. Every figure below comes from the arm you already built in the Tier 1 capstone (`08-capstone-projects/08.1`), through one import:
+
+```text
+import mechalab_plant as plant      # L1 = L2 = 0.10 m, m1 = 0.20 kg, m2 = 0.15 kg, 1 kHz, 4096 cpr
+```
+
+So the chain you build here is the chain the arm's own controller runs, `plant.fk` is what that chain computes, and `plant.gravity_torque` is the same transpose $\tau = J^\top F$ applied to each link's weight. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 
 ## 2. Intuition first
-An unconstrained rigid part floating in 3D space has **6 Degrees of Freedom (DOF)**: it can slide along $X, Y, Z$ and pitch, roll, or yaw about those three axes. Every ideal point contact removes exactly $1\text{ DOF}$ along its surface normal—so removing all $6\text{ DOF}$ without over-constraining the part takes exactly $6$ non-redundant contact points (**Maxwell's exact-constraint principle** in Step 2.3). Next, why do robotics engineers love $4\times 4$ **homogeneous matrices** $T = \begin{bmatrix} R & p \\ 0 & 1 \end{bmatrix}$? Because adding a `1` at the bottom of a 3D position vector $[x, y, z, 1]^\top$ turns "rotate by $R$, then add offset $p$" into a single matrix multiplication $T_{\text{base}\to\text{tip}} = T_{01} T_{12} \cdots T_{n-1,n}$! Next, the **Jacobian matrix** $J(q)$ acts as a multi-dimensional gear ratio that depends on posture $q$: it maps joint velocities to tip velocity ($\dot{x} = J(q)\dot{q}$), and by conservation of virtual work ($\tau^\top \dot{q} = F^\top \dot{x}$), its transpose maps tip forces directly to joint torques ($\tau = J(q)^\top F$). Finally, swinging a heavy hammer by the end of its handle feels much heavier than spinning the hammerhead in your palm—the **Parallel-Axis Theorem** ($I_{\text{pivot}} = I_{\text{com}} + m d^2$) quantifies that extra $m d^2$ inertia when a link's mass is offset by distance $d$ from the joint axis.
+A part floating in space has **6 Degrees of Freedom** - slide along $X, Y, Z$ and roll, pitch, yaw about them. Every ideal point contact removes exactly $1$ along its surface normal, so fixing a part completely without over-constraining it takes exactly $6$ non-redundant contacts (**Maxwell's exact-constraint principle**, Step 2.3). A fourth contact on three legs preloads the part instead of holding it: over-constraint is a manufacturing problem, not a rigidity win.
+
+Why do robotics engineers love $4\times 4$ matrices $T = \begin{bmatrix} R & p \\ 0 & 1 \end{bmatrix}$? Because a `1` appended to a 3D point turns "rotate by $R$, then add $p$" into one matrix multiply, and a chain of links becomes one product, $T_{02} = T_{01}T_{12}$ - which is exactly how a `URDF` states a robot and exactly what the plant's `fk` evaluates for two planar links.
+
+The **Jacobian** $J(q)$ is a posture-dependent multi-dimensional gear ratio. It tells you how much tip speed one rad/s of shoulder buys at the current pose, and by conservation of virtual work ($\tau^\top \dot{q} = F^\top \dot{x}$) its transpose tells you what tip force costs in joint torque: $\tau = J(q)^\top F$. Read that as a promise: **you never invert $J$**. The inverse exists only away from $\det J(q) = 0$, and near a singularity the tip speed for a given joint speed goes to zero while $J^{-1}$ blows up. The transpose has no such trap, which is why a Cartesian virtual spring-damper (Step 2.7) is written with $J^\top$ and not $J^{-1}$.
+
+For the plant's equal-length arm, $\det J(q) = L_1L_2\sin q_2$ depends on the **elbow angle alone**: the arm is singular folded back ($q_2 = \pi$) and stretched straight ($q_2 = 0$). Reach for the boundary with `plant.ik(0.20, 0.0)` and you get $q_2 = 0$ exactly - the pose where pushing the tip radially outward buys nothing.
+
+The same transpose carries gravity. Each link's weight is a wrench at its centre of mass, so the torque that holds the arm up is $\tau_g = \sum_i J_{i}^{\top} w_i$ over the link CoM Jacobians - which is precisely the feedforward term in `plant.pd_gravity_torque`, and it comes out of `plant.gravity_torque` to machine precision. Finally, the **Parallel-Axis Theorem** ($I_{\text{joint}} = I_{\text{com}} + md^2$ for the scalar case) is what turns a CAD inertia tensor about a part's centre of mass into the `<inertial>` a `URDF` needs about its joint axis. The plant's elbow inertia, $I_2 = 0.003\ \text{kg}\cdot\text{m}^2$, is **not** a bare rod: a $0.15\ \text{kg}$, $0.10\ \text{m}$ rod about its own end is $mL^2/3 = 0.0005\ \text{kg}\cdot\text{m}^2$, so the reflected rotor and gearbox are $6\times$ the link. Guessing the rod would be wrong by a factor of six, in the direction that makes a simulator explode.
 
 ## 3. Formalization
-1. **Spatial 6-DOF Constraint Counting:** A free rigid body in $\mathbb{R}^3$ has $6\text{ DOF}$. If $c \le 6$ independent point constraints are applied, remaining mobility is $M = 6 - c$. If $c > 6$ (over-constraint, such as a 4-legged table on an uneven floor), internal preload stress depends on manufacturing tolerances rather than static equilibrium.
-2. **3D Homogeneous Transformation Matrix ($T \in SE(3)$):** Combining rotation $R \in SO(3)$ ($3\times 3$) and translation $p \in \mathbb{R}^3$ ($3\times 1$) forms:
+1. **Spatial mobility (Gruebler-Kutzbach).** For $N$ links (ground included) and $J$ joints with $f_i$ DOF each:
 
 $$
-T = \begin{bmatrix} R & p \\ 0_{1\times 3} & 1 \end{bmatrix} \in \mathbb{R}^{4\times 4}, \quad T^{-1} = \begin{bmatrix} R^\top & -R^\top p \\ 0_{1\times 3} & 1 \end{bmatrix}
+M = 6(N - 1 - J) + \sum_{i=1}^{J} f_i
 $$
 
-   Chaining frames $\{0\} \to \{1\} \to \{2\}$ multiplies $T_{02} = T_{01} T_{12}$.
-3. **Planar/3D Velocity Jacobian ($J(q)$), Force Duality ($\tau = J^\top F$) & Parallel-Axis Theorem:**
-   - **What a Partial Derivative ($\frac{\partial x}{\partial q_i}$) Means:** When tip position $x(q_1, q_2)$ depends on two joint angles, the **partial derivative** $\frac{\partial x}{\partial q_1}$ simply means taking the ordinary derivative (`00-foundations.T2.00b`) with respect to $q_1$ while treating all other joint angles ($q_2$) as frozen constants! Differentiating planar 2-link forward kinematics $x = L_1\cos q_1 + L_2\cos(q_1+q_2),\ y = L_1\sin q_1 + L_2\sin(q_1+q_2)$ with respect to $q = [q_1, q_2]^\top$ gives the $2\times 2$ Jacobian:
+   The plant's arm: $N = 3$, $J = 2$ revolute joints ($f_i = 1$) gives $M = 6(3 - 1 - 2) + 2 = 2$ - the two joints it is driven by. A free body in $\mathbb{R}^3$ has $6$ DOF; $c \le 6$ independent point constraints leave $M = 6 - c$; $c > 6$ is over-constraint, with internal preload set by tolerances rather than statics.
+2. **Homogeneous transforms ($T \in SE(3)$).** Combining $R \in SO(3)$ and $p \in \mathbb{R}^3$:
 
 $$
-J(q) = \begin{bmatrix} \frac{\partial x}{\partial q_1} & \frac{\partial x}{\partial q_2} \\ \frac{\partial y}{\partial q_1} & \frac{\partial y}{\partial q_2} \end{bmatrix} = \begin{bmatrix} -L_1 s_1 - L_2 s_{12} & -L_2 s_{12} \\ L_1 c_1 + L_2 c_{12} & L_2 c_{12} \end{bmatrix}, \quad \dot{x} = J(q)\dot{q}, \quad \tau = J(q)^\top F
+T = \begin{bmatrix} R & p \\ 0_{1\times3} & 1 \end{bmatrix} \in \mathbb{R}^{4\times4}, \qquad T^{-1} = \begin{bmatrix} R^\top & -R^\top p \\ 0_{1\times3} & 1 \end{bmatrix}
 $$
 
-     At $q_2 = 0$ (arm stretched straight) or $q_2 = \pi$ (arm folded back), $\det J(q) = L_1 L_2 \sin q_2 = 0$ (**kinematic singularity**).
-   - **3D Parallel-Axis Theorem (Steiner's Theorem):** Shifting inertia tensor $I_{\text{com}} \in \mathbb{R}^{3\times 3}$ of mass $m$ ($\text{kg}$) by displacement vector $d \in \mathbb{R}^3$ ($\text{m}$) yields:
+   Chaining frames multiplies: $T_{02} = T_{01}T_{12}$. The inverse's translation is $-R^\top p$ and **not** $-p$, because $-p$ is expressed in the parent frame and has to be rotated into the child frame for $TT^{-1} = I_4$.
+3. **Velocity Jacobian, force duality, and gravity through the same transpose.** With $x = L_1\cos q_1 + L_2\cos(q_1 + q_2),\ y = L_1\sin q_1 + L_2\sin(q_1 + q_2)$:
 
 $$
-I_{\text{joint}} = I_{\text{com}} + m\left((d^\top d) I_3 - d d^\top\right)
+J(q) = \begin{bmatrix} -L_1 s_1 - L_2 s_{12} & -L_2 s_{12} \\ L_1 c_1 + L_2 c_{12} & L_2 c_{12} \end{bmatrix}, \quad \dot{x} = J(q)\dot{q}, \quad \tau = J(q)^\top F, \quad \det J(q) = L_1 L_2 \sin q_2
 $$
 
-     For scalar rotation about $z$ with planar offset $d = [L_{\text{com}}, 0, 0]^\top$, $I_{zz,\text{joint}} = I_{zz,\text{com}} + m L_{\text{com}}^2$.
+   The determinant vanishes at $q_2 = 0$ (stretched) and $q_2 = \pi$ (folded back). The gravity torque is the same transpose, one call per link, with $w_i = (0,\ m_i g)$ in the world frame:
+
+$$
+\tau_g = \sum_i J_{\text{com},i}(q)^\top w_i, \qquad J_{\text{com},1} = \begin{bmatrix} -L_{c1}s_1 & 0 \\ L_{c1}c_1 & 0 \end{bmatrix}, \qquad J_{\text{com},2} = \begin{bmatrix} -L_1 s_1 - L_{c2}s_{12} & -L_{c2}s_{12} \\ L_1 c_1 + L_{c2}c_{12} & L_{c2}c_{12} \end{bmatrix}
+$$
+
+   Note $c_{12} = \cos(q_1 + q_2)$, a **world**-frame angle: the elbow link hangs off the shoulder, so its weight lever arm is set by the angle of the world, not by its own joint. That single subscript is where the fault in section 5 lives.
+4. **Parallel-Axis Theorem (Steiner).** Shifting inertia $I_{\text{com}}$ of mass $m$ by $d \in \mathbb{R}^3$:
+
+$$
+I_{\text{joint}} = I_{\text{com}} + m\left((d^\top d)I_3 - d d^\top\right) \qquad \xrightarrow{\ d = [L_{\text{com}}, 0, 0]^\top\ } \qquad I_{zz,\text{joint}} = I_{zz,\text{com}} + m L_{\text{com}}^2
+$$
+
+   For the plant's second link as a rod, $I_{\text{com}} = mL^2/12 = 0.000125$ and $I_{\text{end}} = 0.0005\ \text{kg}\cdot\text{m}^2$ - one sixth of the plant's reflected $I_2 = 0.003$, the gap the next section prints.
 
 ## 4. Worked example
-Chain two $SE(3)$ link transforms, compute the 2-link Jacobian $J(q)$ and joint torque $\tau = J(q)^\top F$ at $q_1 = 0\text{ rad}, q_2 = \pi/2\text{ rad}$ ($L_1 = L_2 = 0.20\text{ m}$) for a tip force $F = [10.0, 20.0]^\top\text{ N}$, and verify the 3D Parallel-Axis Theorem on a uniform slender rod ($m = 0.60\text{ kg}, L = 0.40\text{ m}$).
+Take the plant's arm at $q = (0.30, 0.60)$ rad - a pose where nothing is accidentally special - and do the four checks in order: chain the two $SE(3)$ transforms and compare the tip with `plant.fk`, build $J$ from its partial derivatives and check $\det J = L_1L_2\sin q_2$, map a tip force $F = (1.20, -0.40)$ N to joint torques with $J^\top$, and rebuild the plant's own gravity torque through the two link CoM Jacobians.
+
+**Predict first (before you run it):** write down your four answers - the tip $(x, y)$ to 4 decimals, $\det J$ to 6 decimals in $\text{m}^2$, $\tau = J^\top F$ on both joints in $\text{N}\cdot\text{m}$, and the ratio of the plant's elbow inertia to a bare rod of the same link. Commit to them before you scroll; a prediction you did not write down is not a prediction.
 
 ```python
 import math
+import mechalab_plant as plant      # the one arm every Tier 2/3 exercise runs on
 
-def se3_rz_tx(theta: float, tx: float) -> list[list[float]]:
+def rz(theta):
     c, s = math.cos(theta), math.sin(theta)
-    return [[c, -s, 0.0, tx * c],
-            [s,  c, 0.0, tx * s],
-            [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0]]
+    return [[c, -s, 0.0, 0.0], [s, c, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
 
-def mat4_mul(A: list[list[float]], B: list[list[float]]) -> list[list[float]]:
+def translate(x, y):
+    return [[1.0, 0.0, 0.0, x], [0.0, 1.0, 0.0, y], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
+
+def mat4_mul(A, B):
     return [[sum(A[i][k] * B[k][j] for k in range(4)) for j in range(4)] for i in range(4)]
 
-L1, L2 = 0.20, 0.20
-q1, q2 = 0.0, math.pi / 2.0
-T02 = mat4_mul(se3_rz_tx(q1, L1), se3_rz_tx(q2, L2))
-tip_xy = [T02[0][3], T02[1][3]]
-assert math.isclose(tip_xy[0], 0.20, abs_tol=1e-9) and math.isclose(tip_xy[1], 0.20, abs_tol=1e-9)
+def jacobian(q1, q2, l1=plant.L1, l2=plant.L2):
+    s1, c1 = math.sin(q1), math.cos(q1)
+    s12, c12 = math.sin(q1 + q2), math.cos(q1 + q2)
+    return [[-l1 * s1 - l2 * s12, -l2 * s12],
+            [ l1 * c1 + l2 * c12,  l2 * c12]]
 
+def joint_torques(J, force):
+    """tau = J^T F, written out: no matrix library, and no inverse of J anywhere."""
+    return (J[0][0] * force[0] + J[1][0] * force[1],
+            J[0][1] * force[0] + J[1][1] * force[1])
+
+q1, q2 = 0.30, 0.60
+T02 = mat4_mul(mat4_mul(rz(q1), translate(plant.L1, 0.0)),
+               mat4_mul(rz(q2), translate(plant.L2, 0.0)))      # the URDF chain, multiplied out
+tip = (T02[0][3], T02[1][3])
+assert math.dist(tip, plant.fk(q1, q2)) < 1e-12                 # the chain and the plant agree
+
+J = jacobian(q1, q2)
+det_J = J[0][0] * J[1][1] - J[0][1] * J[1][0]
+assert math.isclose(det_J, plant.L1 * plant.L2 * math.sin(q2), rel_tol=1e-12)
+
+tau_F = joint_torques(J, (1.20, -0.40))
+
+# Gravity, through the same transpose: one CoM Jacobian per link, weight (0, m * g) pointing down
 s1, c1 = math.sin(q1), math.cos(q1)
 s12, c12 = math.sin(q1 + q2), math.cos(q1 + q2)
-J = [[-L1 * s1 - L2 * s12, -L2 * s12],
-     [ L1 * c1 + L2 * c12,  L2 * c12]]
-F_tip = [10.0, 20.0]
-tau_joints = [J[0][0] * F_tip[0] + J[1][0] * F_tip[1], J[0][1] * F_tip[0] + J[1][1] * F_tip[1]]
-det_J = J[0][0] * J[1][1] - J[0][1] * J[1][0]
-assert math.isclose(det_J, L1 * L2 * math.sin(q2), rel_tol=1e-9)
-assert math.isclose(tau_joints[0], 2.0, abs_tol=1e-9) and math.isclose(tau_joints[1], -2.0, abs_tol=1e-9)
+J_link1 = [[-plant.LC1 * s1, 0.0], [plant.LC1 * c1, 0.0]]
+J_link2 = [[-plant.L1 * s1 - plant.LC2 * s12, -plant.LC2 * s12],
+           [ plant.L1 * c1 + plant.LC2 * c12,  plant.LC2 * c12]]
+tau_g = [0.0, 0.0]
+for J_com, mass in ((J_link1, plant.M1), (J_link2, plant.M2)):
+    held = joint_torques(J_com, (0.0, mass * plant.G))
+    tau_g[0] += held[0]
+    tau_g[1] += held[1]
+reference = plant.gravity_torque(q1, q2)
+assert math.isclose(tau_g[0], reference[0], abs_tol=1e-12)
+assert math.isclose(tau_g[1], reference[1], abs_tol=1e-12)
 
-# Parallel-Axis Theorem: rod m=0.6 kg, L=0.4 m -> I_com = (1/12)mL^2, I_end = I_com + m(L/2)^2 = (1/3)mL^2
-m, L = 0.60, 0.40
-I_com = (1.0 / 12.0) * m * (L ** 2)
-I_end = I_com + m * ((L / 2.0) ** 2)
-assert math.isclose(I_end, (1.0 / 3.0) * m * (L ** 2), rel_tol=1e-9)
-print(f"tip={[round(x, 4) for x in tip_xy]}, det(J)={det_J:.4f}, tau={[round(x, 4) for x in tau_joints]} N*m, I_end={I_end:.4f} kg*m^2")
+# Parallel axis on the plant's own second link: a rod about its centre, shifted to the joint axis
+rod_com = plant.M2 * plant.L2 ** 2 / 12.0                  # (1/12) m L^2
+rod_end = rod_com + plant.M2 * (plant.L2 / 2.0) ** 2       # + m d^2
+assert math.isclose(rod_end, plant.M2 * plant.L2 ** 2 / 3.0, rel_tol=1e-12)
+
+print(
+    "tip=(%.4f, %.4f) m | det J=%.6f m^2 | tau=J^T F=(%.4f, %.4f) N*m | "
+    "gravity via CoM Jacobians=(%.4f, %.4f) N*m | I2 = %.1f x rod"
+    % (tip[0], tip[1], det_J, tau_F[0], tau_F[1], tau_g[0], tau_g[1], plant.I2 / rod_end)
+)
 ```
 Expected output:
 ```text
-tip=[0.2, 0.2], det(J)=0.0400, tau=[2.0, -2.0] N*m, I_end=0.0320 kg*m^2
+tip=(0.1577, 0.1079) m | det J=0.005646 m^2 | tau=J^T F=(-0.1925, -0.1189) N*m | gravity via CoM Jacobians=(0.2800, 0.0457) N*m | I2 = 6.0 x rod
 ```
+
+What to notice, in the order the checks ran:
+- `plant.fk` and the matrix chain agree to $3\times10^{-17}$ m, i.e. to the last bit a double can carry. Your URDF and your Python now say the same thing about where the tip is.
+- $\det J = 0.005646\ \text{m}^2$ and the closed form $L_1L_2\sin(0.60) = 0.005646$ agree: the determinant is a function of the elbow alone, so no pose of the shoulder can rescue a singular elbow.
+- $\tau = J^\top F = (-0.1925, -0.1189)\ \text{N}\cdot\text{m}$: a modest $1.3\ \text{N}$ push at the tip loads the shoulder with $0.19\ \text{N}\cdot\text{m}$, comfortably inside the plant's $\pm 2.5\ \text{N}\cdot\text{m}$ clamp - but check it at the stretched pose before you assume that always holds.
+- The gravity sum through the two CoM Jacobians matches `plant.gravity_torque` to $6\times10^{-17}\ \text{N}\cdot\text{m}$. That is not a coincidence to admire; it is the reason the plant's feedforward is one line, and it is the identity section 5 breaks on purpose.
+- $I_2$ is $6.0\times$ a bare rod. The plant's joint inertias are reflected rotor-plus-gearbox-plus-link values measured at Tier 1, so a rod model of that link would be wrong by a factor of six.
 
 ## 5. Exercise
-For the 2-link planar arm ($L_1 = 0.25\text{ m}, L_2 = 0.20\text{ m}$), compute the Jacobian determinant $\det J(q) = L_1 L_2 \sin q_2$ at (a) $q_2 = \pi/6\text{ rad}$ ($30^\circ$) and (b) the stretched-out boundary singularity $q_2 = 0\text{ rad}$. Verify $\det J(\pi/6) = 0.025\text{ m}^2$ and $\det J(0) = 0.0\text{ m}^2$.
-- **If your result differs:** Check that $\det J(q)$ for a 2-link planar arm depends only on the elbow angle $q_2$: $L_1 L_2 \sin(\pi/6) = 0.25 \times 0.20 \times 0.5 = 0.025\text{ m}^2$.
+Do the same three checks at the pose where the tip sits at $(0.10, 0.10)$ m, then one that uses the plant as a *measuring device* rather than a formula.
 
+1. `q = plant.ik(0.10, 0.10)` - report the two joint angles to 4 decimals. (Note what they are.)
+2. Build $J(q)$ and report $\det J$ to 6 decimals, plus the closed form $L_1L_2\sin q_2$. Explain in one line why they can only agree at this pose.
+3. Report $\tau = J^\top F$ for $F = (1.0, 2.0)$ N to 4 decimals, and say what is special about the pair.
+4. Sum the two link CoM Jacobians' contributions and check the result against `plant.gravity_torque(q)` at this pose. Report both torques to 4 decimals.
+5. **Independent route.** Give a tip point mass $m_p = 0.05$ kg at the tip and compute $\partial U/\partial q$ by central differences of the plant's own potential energy $U(q) = m_p g \cdot y_{\text{tip}}(q)$, where $y_{\text{tip}}$ is `plant.fk(q1, q2)[1]`; compare against $J^\top(0, m_p g)$. Report the worst disagreement in $\text{N}\cdot\text{m}$. Never accept a torque formula on the strength of the formula alone - this is a second, independent way to the same numbers.
+6. Report the elbow angles in $[0, \pi]$ at which the arm loses a Cartesian direction.
 
-- **📚 What to Learn & Resources to Solve This Exercise:**
-  - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) ($2\times 2$ Matrices, Transpose & Determinants) and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Orthogonal Frames).
-  - **Prerequisite Bridge Module:** [`02-mechanics.T1.02a`](02-mechanics.T1.02a.md) and Legacy **Step 1.3 (`02-mechanics.T1.03`)**.
-  - **Core Concepts to Review First:** 2-link velocity Jacobian $J(q)$, static virtual-work torque $\tau = J(q)^\top F_{\text{tip}}$, parallel-axis theorem $I_O = I_{\text{com}} + m d^2$, and physical triangle-inequality validation in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 5 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [CadQuery Docs (`cadquery.readthedocs.io`)](https://cadquery.readthedocs.io/), and [Track 02 Tier 2 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then run the self-checks in the full solution below ---
+import math
+import mechalab_plant as plant
+
+def jacobian(q1, q2, l1=plant.L1, l2=plant.L2):
+    """The 2x2 Jacobian of the plant's arm, as [[J11, J12], [J21, J22]]."""
+    # TODO: take the partial derivatives of the plant's fk in section 3:
+    #       J11 = -l1*sin(q1) - l2*sin(q1+q2),  J12 = -l2*sin(q1+q2)
+    #       J21 =  l1*cos(q1) + l2*cos(q1+q2),  J22 =  l2*cos(q1+q2)
+    ...
+
+def joint_torques(J, force):
+    """(tau1, tau2) = J^T F for a tip force `force` = (Fx, Fy) in N."""
+    # TODO: transpose the 2x2 by hand - no library, and never invert J
+    ...
+
+def gravity_from_com_jacobians(q1, q2):
+    """The (tau_g1, tau_g2) that holds the arm up, built from the two link CoM Jacobians."""
+    # TODO: one J_com per link (plant.LC1, plant.LC2), weight (0, m_i * plant.G), summed.
+    #       The elbow link's angle is q1 + q2 - it hangs off the shoulder.
+    ...
+
+def singular_elbow_angles():
+    """The elbow angles in [0, pi] where det J = l1*l2*sin(q2) is zero."""
+    # TODO: solve sin(q2) = 0 on [0, pi]
+    ...
+
+def potential_gradient(q1, q2, m_p=0.05, h=1e-6):
+    """(dU/dq1, dU/dq2) by central differences of U = m_p * g * y_tip(q)."""
+    # TODO: y_tip is plant.fk(q1, q2)[1]; central difference in each angle, one at a time
+    ...
+
+print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $q = (0.0000, 1.5708)$ rad; $\det J = 0.010000\ \text{m}^2$; $\tau = (0.1000, -0.1000)\ \text{N}\cdot\text{m}$; $\tau_g = (0.2453, 0.0000)\ \text{N}\cdot\text{m}$; worst finite-difference gap below $10^{-9}\ \text{N}\cdot\text{m}$; singular at $q_2 = 0$ and $q_2 = \pi$.
+
+### Hint ladder
+1. **Which partial derivative is which.** $J$'s first row is $\partial x/\partial q$ and its second is $\partial y/\partial q$; each column is one joint. Only the elbow differentiates $L_2$, which is why both entries of the second column carry $s_{12}$ or $c_{12}$.
+2. **Why the exercise pose is clean.** At the tip $(0.10, 0.10)$ the law of cosines gives $\cos q_2 = (x^2 + y^2 - L_1^2 - L_2^2)/(2L_1L_2) = 0$, so $q_2 = \pi/2$ exactly and $q_1 = \operatorname{atan2}(y, x) - \operatorname{atan2}(L_2, L_1) = 0$ exactly: $\det J = L_1L_2$ with no rounding, and the elbow is horizontal, so the elbow's gravity term is exactly $0$.
+3. **The finite-difference check.** Perturb one angle at a time by $\pm h$ with $h = 10^{-6}$, difference the two potentials, divide by $2h$, and use `plant.fk` for the height $y$. A central difference is accurate to $O(h^2)$, so the gap should sit near $10^{-12}$, not $10^{-3}$; if yours is large, you likely differenced both angles at once or reused a stale $q$.
+
+### Full Solution
+```python
+import math
+import mechalab_plant as plant
+
+def jacobian(q1, q2, l1=plant.L1, l2=plant.L2):
+    s1, c1 = math.sin(q1), math.cos(q1)
+    s12, c12 = math.sin(q1 + q2), math.cos(q1 + q2)
+    return [[-l1 * s1 - l2 * s12, -l2 * s12], [l1 * c1 + l2 * c12, l2 * c12]]
+
+def joint_torques(J, force):
+    return (J[0][0] * force[0] + J[1][0] * force[1], J[0][1] * force[0] + J[1][1] * force[1])
+
+def gravity_from_com_jacobians(q1, q2):
+    s1, c1 = math.sin(q1), math.cos(q1)
+    s12, c12 = math.sin(q1 + q2), math.cos(q1 + q2)          # world frame: q1 + q2, not q2
+    J_link1 = [[-plant.LC1 * s1, 0.0], [plant.LC1 * c1, 0.0]]
+    J_link2 = [[-plant.L1 * s1 - plant.LC2 * s12, -plant.LC2 * s12],
+               [plant.L1 * c1 + plant.LC2 * c12, plant.LC2 * c12]]
+    tau1 = sum(joint_torques(J, (0.0, m * plant.G))[0] for J, m in ((J_link1, plant.M1), (J_link2, plant.M2)))
+    tau2 = sum(joint_torques(J, (0.0, m * plant.G))[1] for J, m in ((J_link1, plant.M1), (J_link2, plant.M2)))
+    return tau1, tau2
+
+def singular_elbow_angles():
+    return (0.0, math.pi)                                     # sin(q2) = 0 on [0, pi]
+
+def potential_gradient(q1, q2, m_p=0.05, h=1e-6):
+    def potential(a1, a2):
+        return m_p * plant.G * plant.fk(a1, a2)[1]
+    return ((potential(q1 + h, q2) - potential(q1 - h, q2)) / (2.0 * h),
+            (potential(q1, q2 + h) - potential(q1, q2 - h)) / (2.0 * h))
+
+q = plant.ik(0.10, 0.10)
+J = jacobian(*q)
+det_J = J[0][0] * J[1][1] - J[0][1] * J[1][0]
+tau_F = joint_torques(J, (1.0, 2.0))
+tau_g = gravity_from_com_jacobians(*q)
+reference = plant.gravity_torque(*q)
+
+assert math.isclose(q[0], 0.0, abs_tol=1e-15) and math.isclose(q[1], math.pi / 2.0, abs_tol=1e-15)
+assert math.isclose(det_J, plant.L1 * plant.L2, rel_tol=1e-12)
+assert math.isclose(tau_F[0], 0.1, abs_tol=1e-12) and math.isclose(tau_F[1], -0.1, abs_tol=1e-12)
+assert math.isclose(tau_g[0], reference[0], abs_tol=1e-12)
+assert math.isclose(tau_g[1], reference[1], abs_tol=1e-12)
+assert singular_elbow_angles() == (0.0, math.pi)
+
+# The independent route: a 0.05 kg point mass at the tip, dU/dq against J^T (0, m g)
+m_p = 0.05
+worst = 0.0
+for pose in ((0.0, math.pi / 2.0), (0.30, 0.60), (-1.10, 1.40)):
+    by_jacobian = joint_torques(jacobian(*pose), (0.0, m_p * plant.G))
+    by_energy = potential_gradient(*pose)
+    worst = max(worst, abs(by_jacobian[0] - by_energy[0]), abs(by_jacobian[1] - by_energy[1]))
+assert worst < 1e-9, worst
+
+print("q=(%.4f, %.4f) rad | det J=%.6f m^2 | tau=(%.4f, %.4f) N*m" % (q[0], q[1], det_J, tau_F[0], tau_F[1]))
+print("tau_g=(%.4f, %.4f) N*m | plant reference=(%.4f, %.4f) N*m | worst dU/dq gap=%.2e N*m"
+      % (tau_g[0], tau_g[1], reference[0], reference[1], worst))
+```
+
+Printed: `q=(0.0000, 1.5708) rad | det J=0.010000 m^2 | tau=(0.1000, -0.1000) N*m`, then `tau_g=(0.2453, 0.0000) N*m | plant reference=(0.2453, 0.0000) N*m | worst dU/dq gap=6.16e-12 N*m`.
+
+### Transfer task - a payload, graded by behaviour
+The capstone's disturbance pulse is a joint torque; a real payload is a **tip force**. Put a $0.20\ \text{kg}$ mass at the tip and run the capstone's own figure-8 with it, twice: once with the payload fed forward as $\tau = J^\top(0, -m_p g)$ and once without. Report both RMS and peak tip errors, and the ratio. Grade yourself on the numbers only, not on how the code reads.
+
+```python
+import math
+import mechalab_plant as plant
+
+def jacobian(q1, q2, l1=plant.L1, l2=plant.L2):
+    s1, c1 = math.sin(q1), math.cos(q1)
+    s12, c12 = math.sin(q1 + q2), math.cos(q1 + q2)
+    return [[-l1 * s1 - l2 * s12, -l2 * s12], [l1 * c1 + l2 * c12, l2 * c12]]
+
+def joint_torques(J, force):
+    return (J[0][0] * force[0] + J[1][0] * force[1], J[0][1] * force[0] + J[1][1] * force[1])
+
+def run_with_payload(m_payload, compensate):
+    """The plant's figure-8 with a point mass at the tip.
+
+    A payload is a tip force, so its joint-torque effect is exactly J(q)^T (0, -m g): the whole
+    point of the transpose is that you write that down instead of measuring it. `step_arm`'s `dist`
+    is where the plant takes an external torque, and `compensate` decides whether the controller
+    also feeds the same wrench forward.
+    """
+    q_des = plant.ik(*plant.figure8_target(0.0))
+    state = (q_des[0], q_des[1], 0.0, 0.0)
+    previous = q_des
+    rms_sum = 0.0
+    peak_mm = 0.0
+    for step in range(plant.TICKS):
+        t = step * plant.DT
+        x_des, y_des = plant.figure8_target(t)
+        q_des = plant.ik(x_des, y_des)
+        dq_des = ((q_des[0] - previous[0]) / plant.DT, (q_des[1] - previous[1]) / plant.DT) if step else (0.0, 0.0)
+        previous = q_des
+        tau_g = plant.gravity_torque(state[0], state[1])
+        payload = joint_torques(jacobian(state[0], state[1]), (0.0, m_payload * plant.G))
+        feed = payload if compensate else (0.0, 0.0)
+        tau1 = plant.KP1 * (q_des[0] - state[0]) + plant.KD1 * (dq_des[0] - state[2]) + tau_g[0] + feed[0]
+        tau2 = plant.KP2 * (q_des[1] - state[1]) + plant.KD2 * (dq_des[1] - state[3]) + tau_g[1] + feed[1]
+        tau = (max(-plant.TAU_LIMIT, min(plant.TAU_LIMIT, tau1)),
+               max(-plant.TAU_LIMIT, min(plant.TAU_LIMIT, tau2)))
+        pulse = plant.disturbance_torque(t)
+        state = plant.step_arm(state, tau, dist=(pulse[0] - payload[0], pulse[1] - payload[1]))
+        error_mm = math.dist((x_des, y_des), plant.fk(state[0], state[1])) * 1000.0
+        rms_sum += error_mm * error_mm
+        peak_mm = max(peak_mm, error_mm)
+    return math.sqrt(rms_sum / plant.TICKS), peak_mm
+
+for compensate in (True, False):
+    rms_mm, peak_mm = run_with_payload(0.20, compensate)
+    print("0.20 kg payload | J^T feedforward %-3s: RMS=%.2f mm, peak=%.2f mm"
+          % ("on" if compensate else "off", rms_mm, peak_mm))
+```
+
+Printed:
+```text
+0.20 kg payload | J^T feedforward on : RMS=0.91 mm, peak=2.40 mm
+0.20 kg payload | J^T feedforward off: RMS=3.59 mm, peak=5.41 mm
+```
+
+With an empty `m_payload` the same loop reproduces the capstone's `0.9130 mm` RMS and `2.4016 mm` peak exactly, so the comparison is against the module's own baseline, not a remembered one. With the payload and the feedforward, the run is **bit-identical** to the capstone's payload-free run - the compensation is exact, not approximately right - and without it the RMS is $3.9\times$ worse. That factor is the entire argument for $\tau = J^\top F$ in a controller.
+
+### Break it on purpose
+Build the elbow link's CoM Jacobian from the elbow's **own** angle instead of the world angle: replace `s12, c12 = sin(q1 + q2), cos(q1 + q2)` with `sin(q2), cos(q2)` in `gravity_from_com_jacobians`. This is the mistake a link-local URDF frame hands you, and it is one token wide.
+
+- **Inject:** that single substitution - and nothing else. Keep the shoulder branch, the gains and the trajectory exactly as they were.
+- **Symptom:** at the vertical pose $q = (\pi/2, 0)$, where the arm needs no elbow torque at all, the law now commands $0.0736\ \text{N}\cdot\text{m}$ and the PD holds the elbow $0.3549^\circ$ off target (the correct law holds it to $0.000000^\circ$). Along the capstone's figure-8, where $q_1$ stays small, the worst mismatch is only $0.0677\ \text{N}\cdot\text{m}$, and the run degrades from RMS $0.91\ \text{mm}$ to $1.43\ \text{mm}$ - visible, but easy to dismiss as noise.
+- **Diagnose:** the mismatch is **exactly zero at $q_1 = 0$** and maximal at $q_1 = \pi/2$. No gain error behaves that way: a wrong $K_p$ is wrong everywhere, and a wrong sign is wrong everywhere. A fault that vanishes at one angle and is largest $90^\circ$ away is a **frame** error - an angle measured from the wrong origin - and the plant names the culprit for you: the elbow term must use $\cos(q_1 + q_2)$ because the elbow link hangs off the shoulder. The determinant cannot see this fault at all; `det J` only depends on $q_2$, and the bad term is a torque, not a velocity.
+- **Fix:** use the world angle $q_1 + q_2$ for the second link, then re-run the identity at several poses, not just the one you were testing: `plant.gravity_torque` is the oracle and the agreement must hold to $10^{-12}$ everywhere on the trajectory.
 
 ## 6. Simulation path
-Open **Tab 5 (URDF / MuJoCo & STO)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`) and drag the end-effector to the workspace boundary ($q_2 \to 0$) to watch $\det J(q) \to 0$ (for `cadquery` STEP export installation and verification, see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)).
+Every block above runs in the workbench's Python runner (`npm run dev`, Tab 2), where `import mechalab_plant` needs no setup: the runner writes the shared plant into Pyodide's filesystem before your code runs. On your own machine, put that one directory on the path and run the same code with the host interpreter:
 
-No hardware required for this module (`hardware_required: false`). In Step 2.3 (`02-mechanics.T2.03`) and Step 2.7 (`06-robotics.T2.07`), `tau = J(q).T @ F_cartesian` runs at $1\text{ kHz}$ to turn the 2-link arm into a Cartesian virtual spring-damper without ever inverting $J(q)$:
-```text
-[Cartesian Error dx = x_d - FK(q)] ---> [F = K_x * dx - D_x * (J * dq)] ---> [tau = J(q)^T * F] ---> [Motors]
+```bash
+PYTHONPATH=resources/plants python3 your_script.py
 ```
-Pass/fail verification in simulation: `tip_xy == [0.20, 0.20]`, `det_J == 0.0400`, `tau_joints == [2.0, -2.0] N*m`, and `I_end == 0.0320 kg*m^2`.
 
+`verification: ci-native` records how this module is actually checked: `scripts/validate_modules.py` and `scripts/run_all_labs.py` execute the worked example on the runner and diff its stdout against the `Expected output:` block, and every other block in this module - the scaffold, the full solution, the transfer run, both answer keys - is executed too, so a broken number fails the build rather than sitting in the page. No hardware is required (`hardware_required: false`): this module is `simulation: full`.
+
+The plant's contract, its provenance rule and its values live in [`resources/plants/README.md`](../resources/plants/README.md); the tier-parity contract this module is scored against is [`docs/QUALITY_SPEC.md`](../docs/QUALITY_SPEC.md).
 
 ```mermaid
 flowchart LR
-    A["02-mechanics.T2.02a: six_dof_gruebler_constraint_counting"] --> B["se3_homogeneous_transformation_matrix"]
-    B --> C["geometric_jacobian_and_parallel_axis_theorem"]
-    C --> D["Verified Simulation & Checkpoint Pass"]
+    I["plant.ik(x, y)<br/>joint angles"] --> C["T01 T12<br/>SE(3) link chain"]
+    C --> F["plant.fk(q1, q2)<br/>tip, to 1e-17 m"]
+    C --> J["J(q)<br/>partial derivatives"]
+    J --> V["x_dot = J q_dot<br/>det J = L1 L2 sin q2"]
+    J --> T["tau = J^T F<br/>tip force to joint torque"]
+    T --> G["sum of J_i^T w_i<br/>= plant.gravity_torque"]
 ```
 
 ## 7. Checkpoint
@@ -153,6 +403,7 @@ assert math.isclose(q3_tau1, 2.0, rel_tol=1e-9)
 assert math.isclose(q4_i_joint, 0.035, rel_tol=1e-9)
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+
 ### Gate test
 Covers the complete Track 02 Tier 2 bridge ladder (`02-mechanics.T2.02a`) before Step 2.3 (`02-mechanics.T2.03`):
 1. `[Concept: six_dof_gruebler_constraint_counting]` A rigid sphere rests in a V-groove (2 contact points). How many spatial degrees of freedom $M = 6 - 2$ remain unconstrained?
@@ -202,17 +453,27 @@ assert math.isclose(g6_q2_sing, 0.0, abs_tol=1e-9)
 assert g7_choice == "A"
 assert math.isclose(g8_izz_joint, 0.024, rel_tol=1e-9)
 ```
-- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q8 $\to$ `## 3. Formalization` item 3.
+- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1-Q2 $\to$ `## 3. Formalization` item 1; Q3-Q4 $\to$ `## 3. Formalization` item 2; Q5-Q8 $\to$ `## 3. Formalization` item 3.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
-| MuJoCo / Gazebo simulation explodes with `Non-positive definite inertia` or unrealistic swing dynamics | Exported CAD inertia tensor about the CAD world origin instead of the URDF `<inertial>` frame origin without applying the Parallel-Axis Theorem. | Set the URDF `<inertial>` origin at the link's Center of Mass (or shift $I_{\text{com}}$ via $I + m((d^\top d)I_3 - d d^\top)$) and verify $I_{xx} + I_{yy} \ge I_{zz}$ (triangle inequality). |
-| Used $\tau = J(q) F$ instead of $\tau = J(q)^\top F$ | Forgot the transpose on $J(q)$ when mapping Cartesian forces to joint torques. | Always transpose: velocities map forward via $\dot{x} = J\dot{q}$, wrenches map backward via $\tau = J^\top F$. |
-| Inverted $T \in SE(3)$ using `[R.T, -p]` | Forgot to rotate $-p$ by $R^\top$ in the top-right $3\times 1$ block of $T^{-1}$. | Use `-R.T @ p` for the translation part of $T^{-1}$ and verify `mat_mul4(T, T_inv) == I_4` within $10^{-14}$. |
+| MuJoCo or Gazebo explodes with `Non-positive definite inertia`, or the link swings with the wrong dynamics | The exported inertia tensor is about the CAD origin, not the URDF `<inertial>` frame, and the shift was never applied | Move `<inertial>` to the link's centre of mass, or shift $I$ with $I_{\text{com}} + m((d^\top d)I_3 - d d^\top)$; then check the triangle inequality $I_{xx} + I_{yy} \ge I_{zz}$ and the plant's own scale (a rod is $6\times$ too light here) |
+| Used $\tau = J(q) F$ instead of $\tau = J(q)^\top F$ | Forgot the transpose when mapping a Cartesian force to joint torques | Velocities map forward with $\dot{x} = J\dot{q}$, wrenches map backward with $\tau = J^\top F$; the tell is that the torques are right in magnitude but wrong in distribution, and $F^\top \dot{x} \ne \tau^\top \dot{q}$ |
+| The torch reading matches but the arm pushes the wrong way, only at some poses | The elbow link's angle was measured in its own frame (`cos q2`) instead of the world frame (`cos(q1 + q2)`) | Use $q_1 + q_2$ for the second link and re-check against the oracle: `plant.gravity_torque` must agree to $10^{-12}$ at every pose, not just the one you tested |
+| Inverted $T \in SE(3)$ with `[R.T, -p]` | Forgot to rotate $-p$ by $R^\top$ in the top-right block of $T^{-1}$ | Use `-R.T @ p` and assert `mat4_mul(T, T_inv)` equals $I_4$ within $10^{-14}$ |
 
 ## 9. Resources
-- **Kevin Lynch & Frank Park — *Modern Robotics* (`modernrobotics.org`, Ch. 3, 5 & 8, `resources/textbooks-and-papers.md`):** Free textbook on $SE(3)$ transforms, Jacobians, and spatial inertia matrices `[VERIFIED 2026-10-15]`.
-- **Track 02 (`02-mechanics-kinematics-dynamics/README.md`):** Directly continues into Step 2.3 (`02-mechanics.T2.03`) `[VERIFIED 2026-10-15]`.
+- **Kevin Lynch & Frank Park - *Modern Robotics* (`modernrobotics.org`, Ch. 3, 5 and 8, `resources/textbooks-and-papers.md`):** the free textbook behind section 3 here: $SE(3)$ transforms, Jacobians, spatial inertia `[VERIFIED 2026-10-15]`.
+- **The shared plant - [`resources/plants/README.md`](../resources/plants/README.md):** the arm every exercise in this module runs on, its values, and the provenance rule that keeps them honest `[VERIFIED 2026-10-15]`.
+- **The Tier 1 capstone - [`08-capstone-projects/08.1`](../08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md):** where this arm's numbers, gains and figure-8 come from `[VERIFIED 2026-10-15]`.
+- **The parity contract - [`docs/QUALITY_SPEC.md`](../docs/QUALITY_SPEC.md):** what "done" means for this module, item by item `[VERIFIED 2026-10-15]`.
+- **Track 02 (`02-mechanics-kinematics-dynamics/README.md`):** continues into Step 2.3 (`02-mechanics.T2.03`) `[VERIFIED 2026-10-15]`.
+
 ## 10. Next modules
 - Proceed to legacy **Step 2.3 (`02-mechanics.T2.03`)** in [`02-mechanics-kinematics-dynamics/README.md`](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
+- Then Step 2.7 (`06-robotics.T2.07`), where $\tau = J(q)^\top F$ runs at $1\ \text{kHz}$ to make the same arm a Cartesian virtual spring-damper:
+```text
+[x_d - plant.fk(q1, q2)] -> [F = K_x * dx - D_x * (J * dq)] -> [tau = J(q)^T * F] -> [plant.step_arm]
+```
+- Keep the plant in every later exercise: `import mechalab_plant` is what makes your Step 2.7 controller act on the arm you already tuned here, and `plant.gravity_torque` stays the oracle you check any new feedforward term against.

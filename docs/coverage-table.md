@@ -24,7 +24,7 @@ flowchart LR
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
 | `00` | 12 | 55% | 40% | 75% | 0% | **48.2%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
 | `01` | 7 | 59% | 40% | 100% | 0% | **56.6%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
-| `02` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `02` | 3 | 78% | 60% | 83% | 33% | **67.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
 | `03` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `04` | 7 | 59% | 40% | 75% | 0% | **49.1%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `05` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **50.6%** |
+| Tier 2 | 18 | **53.2%** |
 | Tier 3 | 10 | **49.8%** |
 
-## Per module (44 modules, overall **50.9%**)
+## Per module (44 modules, overall **52.0%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -64,7 +64,7 @@ flowchart LR
 | `01-electronics.T2.01b` | 2 | 75% | 40% | 100% | 0% | **60.8%** | **undeclared** | 5 item(s) |
 | `01-electronics.T3.01a` | 3 | 60% | 40% | 100% | 0% | **57.0%** | **undeclared** | 6 item(s) |
 | `02-mechanics.T1.02a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 7 item(s) |
-| `02-mechanics.T2.02a` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 7 item(s) |
+| `02-mechanics.T2.02a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `02-mechanics.T3.02a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 8 item(s) |
 | `03-sensors.T1.03a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 7 item(s) |
 | `03-sensors.T2.03a` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 7 item(s) |
@@ -95,10 +95,10 @@ flowchart LR
 | :--- | :---: | :--- |
 | `1_recall` | 44/44 | gated by `lint_modules.py` |
 | `2_see_it` | 44/44 | gated by `lint_modules.py` |
-| `3_predict` | 7/44 | **gap** |
+| `3_predict` | 8/44 | **gap** |
 | `4_worked_example` | 44/44 | gated by `lint_modules.py` |
 | `5_practice_host` | 44/44 | gated by `lint_modules.py` |
-| `6_break_it` | 7/44 | **gap** |
+| `6_break_it` | 8/44 | **gap** |
 | `7_transfer` | 44/44 | gated by `lint_modules.py` |
 | `8_integrate` | 44/44 | gated by `lint_modules.py` |
 
@@ -112,11 +112,11 @@ with no import, an unexplained exemption and a missing key all score zero - `unh
 `undeclared` below - so a module that ignores the arm is visible in its own score instead of
 being implied by silence.
 
-- On the shared arm: **0/44**
+- On the shared arm: **1/44** - `02-mechanics.T2.02a`
 - Declared exempt, with a reason: **0/44**
 - Declared but not hooked up (`plant: tier1_arm_motor` with no `import mechalab_plant` in a
   python block, or `plant: none` with no reason): **0/44**
-- Undeclared: **44/44**
+- Undeclared: **43/44**
 
 The plant itself, its provenance rule and the workbench import contract:
 [`resources/plants/README.md`](../resources/plants/README.md).
@@ -127,8 +127,8 @@ The plan asks for these too. No artifact exists for them yet, so they are listed
 scored - each one is a piece of work, not a zero:
 
 - **Behavioural tests for module exercises:** `INSTRUCTOR_TESTS` in
-  `scripts/generate_python_lessons_data.py` covers the 36 beginner lessons only; module
-  exercises have no equivalent harness yet.
+  `scripts/generate_python_lessons_data.py` covers the beginner lessons only (the count lives
+  in the lesson directories, not here); module exercises have no equivalent harness yet.
 - **Module exercises in the workbench:** only lessons are generated into the app, so no module
   exercise runs in the browser today, and the Pages E2E suite therefore tests no T2/T3 exercise.
 - **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)

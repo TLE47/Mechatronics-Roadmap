@@ -203,6 +203,12 @@ def run_suite(repo_root: Path) -> dict[str, Any]:
     import re
 
     mod_dir = repo_root / "modules"
+    # Every Tier 2/3 module's worked example imports the shared plant (`import mechalab_plant`),
+    # which the workbench also ships into Pyodide before learner code runs. Put that one directory
+    # on `sys.path` so the module's block runs here exactly as it does in the browser.
+    plant_dir = repo_root / "resources" / "plants"
+    if plant_dir.is_dir() and str(plant_dir) not in sys.path:
+        sys.path.insert(0, str(plant_dir))
     mod_mismatches: list[str] = []
     mod_count = 0
     if mod_dir.is_dir():

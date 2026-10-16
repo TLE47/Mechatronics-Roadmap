@@ -14,8 +14,11 @@ Two jobs, in this order:
 Run: `python3 tests/test_plant.py` (also wired into the CI verify step).
 """
 
+import contextlib
+import io
 import math
 import os
+import re
 import sys
 import unittest
 
@@ -27,6 +30,10 @@ sys.dont_write_bytecode = True
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLANT_DIR = os.path.join(ROOT, "resources", "plants")
 PLANT_YAML = os.path.join(PLANT_DIR, "tier1_arm_motor.yaml")
+# The reference module is the template every later module copies, so what it publishes about the
+# plant is asserted here: if the plant moves, that module is wrong and this fails.
+REFERENCE_MODULE = os.path.join(ROOT, "modules", "02-mechanics.T2.02a.md")
+PYTHON_BLOCK = re.compile(r"```python\n(.*?)```", re.DOTALL)
 sys.path.insert(0, PLANT_DIR)
 
 import mechalab_plant as plant  # noqa: E402  (path set up above)
@@ -289,6 +296,107 @@ class TestMotorTool(unittest.TestCase):
     def test_motor_records_a_trace_when_asked(self):
         run = plant.simulate_motor(6.0, 10.0, 0.05, 0.05, 0.05, 2.0e-5, 1.0e-3, steps=7, record=True)
         self.assertEqual(len(run["trace"]), 7)
+
+
+def reference_module_text():
+    with open(REFERENCE_MODULE, encoding="utf-8") as handle:
+        return handle.read()
+
+
+def elbow_frame_gravity(q1, q2):
+    """The section 5 fault, exactly as the module injects it: the elbow link's angle measured in
+    its own frame (`cos q2`) where the world frame (`cos(q1 + q2)`) belongs."""
+    s1, c1 = math.sin(q1), math.cos(q1)
+    s2, c2 = math.sin(q2), math.cos(q2)
+    com_jacobians = (
+        ([[-plant.LC1 * s1, 0.0], [plant.LC1 * c1, 0.0]], plant.M1),
+        ([[-plant.L1 * s1 - plant.LC2 * s2, -plant.LC2 * s2],
+          [plant.L1 * c1 + plant.LC2 * c2, plant.LC2 * c2]], plant.M2),
+    )
+    tau1 = 0.0
+    tau2 = 0.0
+    for J_com, mass in com_jacobians:
+        tau1 += J_com[0][0] * 0.0 + J_com[1][0] * mass * plant.G
+        tau2 += J_com[0][1] * 0.0 + J_com[1][1] * mass * plant.G
+    return tau1, tau2
+
+
+def elbow_frame_controller(q, dq, q_des, dq_des):
+    """The plant's shipped law with the fault above replacing its gravity feedforward."""
+    tau_g = elbow_frame_gravity(q[0], q[1])
+    tau1 = plant.KP1 * (q_des[0] - q[0]) + plant.KD1 * (dq_des[0] - dq[0]) + tau_g[0]
+    tau2 = plant.KP2 * (q_des[1] - q[1]) + plant.KD2 * (dq_des[1] - dq[1]) + tau_g[1]
+    return (
+        max(-plant.TAU_LIMIT, min(plant.TAU_LIMIT, tau1)),
+        max(-plant.TAU_LIMIT, min(plant.TAU_LIMIT, tau2)),
+    )
+
+
+class TestReferenceModuleClaims(unittest.TestCase):
+    """Every number the reference module states about this arm has to be reproducible now.
+
+    `scripts/validate_modules.py` already executes the module's worked example and diffs its output,
+    but it does not diff the exercise, the transfer run or the Break-it symptoms - and those are
+    published claims too. This class recomputes them from the plant and checks the module still
+    writes the same numbers, so the template cannot quietly drift away from the model it teaches.
+    """
+
+    def test_the_quoted_arm_values_are_the_plants(self):
+        text = reference_module_text()
+        for fragment in (
+            "L1 = L2 = %.2f m" % plant.L1,
+            "m1 = %.2f kg" % plant.M1,
+            "m2 = %.2f kg" % plant.M2,
+            "import mechalab_plant",
+        ):
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, text, "the module no longer states %r" % fragment)
+
+    def test_the_rod_ratio_the_module_publishes_is_the_plants(self):
+        rod_about_its_end = plant.M2 * plant.L2 ** 2 / 3.0
+        self.assertAlmostEqual(plant.I2 / rod_about_its_end, 6.0, places=9)
+        self.assertIn("I2 = 6.0 x rod", reference_module_text())
+
+    def test_the_elbow_frame_fault_reproduces_the_published_symptoms(self):
+        text = reference_module_text()
+
+        invented = elbow_frame_gravity(math.pi / 2.0, 0.0)[1]          # the vertical pose needs none
+        self.assertAlmostEqual(invented, 0.0736, places=4)
+        self.assertIn("0.0736", text)
+
+        hold = (math.pi / 2.0, 0.0)
+        state = (hold[0], hold[1], 0.0, 0.0)
+        for _ in range(4000):
+            state = plant.step_arm(
+                state, elbow_frame_controller((state[0], state[1]), (state[2], state[3]), hold, (0.0, 0.0))
+            )
+        self.assertAlmostEqual(math.degrees(state[1] - hold[1]), 0.3549, places=3)
+        self.assertIn("0.3549", text)
+
+        run = plant.simulate_arm(controller=elbow_frame_controller)
+        self.assertAlmostEqual(run["rms_dyn_err_mm"], 1.43, delta=0.01)
+        self.assertIn("1.43", text)
+
+        worst = 0.0
+        for step in range(plant.TICKS):
+            q1_d, q2_d = plant.ik(*plant.figure8_target(step * plant.DT))
+            bad = elbow_frame_gravity(q1_d, q2_d)
+            good = plant.gravity_torque(q1_d, q2_d)
+            worst = max(worst, abs(bad[0] - good[0]), abs(bad[1] - good[1]))
+        self.assertAlmostEqual(worst, 0.0677, delta=1e-3)
+        self.assertIn("0.0677", text)
+
+    def test_the_transfer_block_prints_the_numbers_the_module_publishes(self):
+        """Run the module's own transfer code and require the output it claims, so a payload claim
+        cannot be edited (or the plant changed) without one of the two failing here."""
+        blocks = [block for block in PYTHON_BLOCK.findall(reference_module_text()) if "run_with_payload" in block]
+        self.assertEqual(len(blocks), 1, "expected exactly one transfer block in the module")
+        captured = io.StringIO()
+        with contextlib.redirect_stdout(captured):
+            exec(blocks[0], {})
+        printed = captured.getvalue()
+        self.assertIn("0.20 kg payload | J^T feedforward on : RMS=0.91 mm, peak=2.40 mm", printed)
+        self.assertIn("0.20 kg payload | J^T feedforward off: RMS=3.59 mm, peak=5.41 mm", printed)
 
 
 if __name__ == "__main__":

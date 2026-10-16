@@ -41,3 +41,12 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 
 | Module | Date | Minutes | Hints (0-3) | Stuck | Course bug? | Transfer later |
 | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
+| `02-mechanics.T2.02a` | 2026-10-16 | 13 | 0 | none | yes | - |
+
+Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
+only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference
+module (the template every later module copies). Its `yes` in *course bug?* covers two fixes the run
+found, both with a test: the two CI scripts that execute module python blocks had the shared plant
+nowhere on `sys.path`, so a plant-wired module could not run on the runner at all, and the parity
+scorer's `difficulty:` parser rejected the trailing `# comment` that `docs/QUALITY_SPEC.md` §2 writes
+in its own example (`tests/test_module_parity.py` holds both halves).

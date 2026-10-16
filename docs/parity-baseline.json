@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "note": "Ratchet for scripts/module_parity.py: --check fails if any track or module drops below the value recorded here. Raise it deliberately with --update-baseline. `recorded_note` says why the last re-record happened; `instrumented_items` is the set of scored items at that moment, so adding a new item is a deliberate re-record, never a silent drop.",
-  "recorded_note": "Re-recorded when `executable:shared_plant` was instrumented: the plant decision is now measured, so every module's Executable layer gained a fifth item and the scores of the 44 modules fell without any content changing. This is a measurement change, not a regression - see docs/coverage-table.md, 'Shared plant'.",
+  "recorded_note": "Re-recorded when the reference module (02-mechanics.T2.02a, docs/QUALITY_SPEC.md \u00a77) reached a genuine 100% on the shared plant: every other score is unchanged, and the floor is raised so the gained points cannot be given back. The previous re-record was the instrumentation of `executable:shared_plant`, which is why the set of scored items in this file already contains it.",
   "instrumented_items": [
     "executable:checkpoint_answer_key",
     "executable:learner_exercise_scaffold",
@@ -23,16 +23,16 @@
     "structure:tier3_two_levels",
     "validated:dogfood_logged"
   ],
-  "overall": 0.5092,
+  "overall": 0.5198,
   "tiers": {
     "1": 0.52,
-    "2": 0.5061,
+    "2": 0.5321,
     "3": 0.4975
   },
   "tracks": {
     "00": 0.4825,
     "01": 0.5664,
-    "02": 0.52,
+    "02": 0.6758,
     "03": 0.52,
     "04": 0.4914,
     "05": 0.52,
@@ -61,7 +61,7 @@
     "01-electronics.T2.01b": 0.6075,
     "01-electronics.T3.01a": 0.57,
     "02-mechanics.T1.02a": 0.5325,
-    "02-mechanics.T2.02a": 0.5325,
+    "02-mechanics.T2.02a": 1.0,
     "02-mechanics.T3.02a": 0.495,
     "03-sensors.T1.03a": 0.5325,
     "03-sensors.T2.03a": 0.5325,

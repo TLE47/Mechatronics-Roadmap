@@ -107,13 +107,19 @@ def front_matter_block(text: str) -> str:
 
 
 def difficulty_findings(front_matter: str) -> list[str]:
-    """The plan's difficulty label: maths/coding/tools/hardware risk/simulatable."""
-    if not re.search(r"^difficulty:\s*$", front_matter, flags=re.MULTILINE):
+    """The plan's difficulty label: maths/coding/tools/hardware risk/simulatable.
+
+    A trailing `# ...` comment on a value is ordinary YAML and the spec's own §2 example writes its
+    block that way, so the value is what is matched - the comment is allowed to follow it. (It used
+    to be rejected, which made the spec's own example fail: a course bug, fixed with the test in
+    `tests/test_module_parity.py`.)
+    """
+    if not re.search(r"^difficulty:\s*(?:#.*)?$", front_matter, flags=re.MULTILINE):
         return ["no `difficulty:` block"]
 
     findings = []
     for field in ("math", "coding", "tools"):
-        match = re.search(rf"^  {field}:\s*(\d+)\s*$", front_matter, flags=re.MULTILINE)
+        match = re.search(rf"^  {field}:\s*(\d+)\s*(?:#.*)?$", front_matter, flags=re.MULTILINE)
         if not match:
             findings.append(f"`difficulty.{field}:` is missing")
             continue
@@ -125,7 +131,7 @@ def difficulty_findings(front_matter: str) -> list[str]:
         ("hardware_risk", HARDWARE_RISKS),
         ("simulation", SIMULATION_LEVELS),
     ):
-        match = re.search(rf"^  {field}:\s*(\S+)\s*$", front_matter, flags=re.MULTILINE)
+        match = re.search(rf"^  {field}:\s*(\S+)\s*(?:#.*)?$", front_matter, flags=re.MULTILINE)
         if not match:
             findings.append(f"`difficulty.{field}:` is missing")
         elif match.group(1) not in allowed:
@@ -486,8 +492,8 @@ def render_table(rows: list[dict[str, object]], levels: dict[str, str]) -> str:
         "scored - each one is a piece of work, not a zero:",
         "",
         "- **Behavioural tests for module exercises:** `INSTRUCTOR_TESTS` in",
-        "  `scripts/generate_python_lessons_data.py` covers the 36 beginner lessons only; module",
-        "  exercises have no equivalent harness yet.",
+        "  `scripts/generate_python_lessons_data.py` covers the beginner lessons only (the count lives",
+        "  in the lesson directories, not here); module exercises have no equivalent harness yet.",
         "- **Module exercises in the workbench:** only lessons are generated into the app, so no module",
         "  exercise runs in the browser today, and the Pages E2E suite therefore tests no T2/T3 exercise.",
         "- **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)",
@@ -609,10 +615,11 @@ def main() -> int:
                 "at that moment, so adding a new item is a deliberate re-record, never a silent drop."
             ),
             "recorded_note": (
-                "Re-recorded when `executable:shared_plant` was instrumented: the plant decision is now "
-                "measured, so every module's Executable layer gained a fifth item and the scores of the "
-                "44 modules fell without any content changing. This is a measurement change, not a "
-                "regression - see docs/coverage-table.md, 'Shared plant'."
+                "Re-recorded when the reference module (02-mechanics.T2.02a, docs/QUALITY_SPEC.md §7) "
+                "reached a genuine 100% on the shared plant: every other score is unchanged, and the "
+                "floor is raised so the gained points cannot be given back. The previous re-record was "
+                "the instrumentation of `executable:shared_plant`, which is why the set of scored items "
+                "in this file already contains it."
             ),
             "instrumented_items": instrumented_items(rows),
             "overall": overall,

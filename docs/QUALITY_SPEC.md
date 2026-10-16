@@ -132,9 +132,11 @@ These are part of the plan and are **listed, not scored** — no artifact exists
 scoring them zero would hide the work behind a number:
 
 - **Behavioural tests for module exercises.** `INSTRUCTOR_TESTS` in
-  `scripts/generate_python_lessons_data.py` covers the 36 beginner lessons only; module exercises have
-  no equivalent multi-input/boundary harness, and no three-way gate (starter fails, solution passes,
-  spoof fails) runs against them.
+  `scripts/generate_python_lessons_data.py` covers the beginner lessons only (48 of them today; the
+  count lives in the lesson directories, not in this file); module exercises have no equivalent
+  multi-input/boundary harness, and no three-way gate (starter fails, solution passes, spoof fails)
+  runs against them. What the reference module does have is its own published claims re-derived from
+  the plant in `tests/test_plant.py`, which is a guard, not that harness.
 - **Module exercises in the workbench.** Only lessons are generated into the app, so no module exercise
   runs in a browser and the Pages E2E suite tests no Tier 2/3 exercise.
 - **Maths-claims audit.** Absolute claims (`guaranteed`, `always`, `never`, `positive definite`) with
@@ -160,6 +162,8 @@ score cannot do.
 - [ ] You have done the module yourself, logged it in `docs/dogfood-log.md`, and fixed what broke
 - [ ] The track is still at or above its ratchet, and `scripts/module_parity.py --check` is green
 
+The reference module that satisfies all of these today is `02-mechanics.T2.02a` — see §7.
+
 ## 6. Working a track
 
 1. `python3 scripts/module_parity.py` — read the missing items per module.
@@ -170,6 +174,39 @@ score cannot do.
    the two ladder stages, then the learner scaffold, then the dogfood row.
 4. `--update-baseline` when the scores rise, so the ratchet follows you up.
 5. Flip the track to `lint_level: error` when it reaches 100%.
+
+## 7. The reference module — `02-mechanics.T2.02a`
+
+`modules/02-mechanics.T2.02a.md` (6-DOF counting, `SE(3)`, the Jacobian and parallel-axis inertia) is
+the first module at a genuine **100%**, and it is the template every later module copies — not because
+it is long, but because every scored item in it has a real artifact and every number it publishes is
+reproducible on demand.
+
+| Item | What it looks like there |
+| :--- | :--- |
+| `front_matter_contract`, `numbered_sections`, `checkpoint_tests` | the ten numbered sections, a `### Skip test` and a `### Gate test`, and the `[Recall]` / `[Apply]` / `[Transfer]` tags |
+| `difficulty_label` | `math: 4`, `coding: 3`, `tools: 0`, `hardware_risk: low`, `simulation: full` — a trailing `# comment` on each value is fine, because that is how the block is written here in §2 |
+| `worked_example_runs` | §4 multiplies two `T ∈ SE(3)` by hand, checks the tip against `plant.fk`, checks `det J` against `L1 L2 sin q2`, maps a tip force with `Jᵀ`, and rebuilds the plant's gravity torque from the link CoM Jacobians |
+| `checkpoint_answer_key` | both answer keys are python blocks whose `assert`s are the pass mark |
+| `learner_exercise_scaffold` | §5's scaffold carries five `TODO`s with `...` bodies, so it runs and grades nothing until you write it |
+| `verification_route_declared` | `verification: ci-native`, with §6 naming the two scripts that execute and diff it |
+| `shared_plant` | `plant: tier1_arm_motor` **and** a real `import mechalab_plant`: the arm's own links, inertias and figure-8 |
+| the eight ladder stages | a `**Predict first (before you run it):**` asking for four committed numbers, and a `### Break it on purpose` whose fault is one token wide with a measured symptom and a stated tell |
+| `dogfood_logged` | a row in [`docs/dogfood-log.md`](dogfood-log.md), with the two course bugs the run found |
+
+What keeps it honest, and what a later module inherits:
+
+- **Its numbers are executed, never remembered.** `scripts/validate_modules.py` and
+  `scripts/run_all_labs.py` execute the worked example on the runner and diff its stdout;
+  `tests/test_module_parity.py` asserts it still scores 100%, and that the baseline records today's
+  item set; `tests/test_plant.py` re-derives its published claims from the plant (the fault's
+  `0.0736 N·m`, its `0.3549°` hold error, the `0.0677 N·m` worst mismatch) and re-runs its Transfer
+  block, requiring the output the module prints.
+- **Copy the shape, not the numbers.** A later module answers its own `plant:` decision
+  (`tier1_arm_motor` with a real import, or `none` with a reason), writes its own scaffold and its own
+  planted fault, and changes parameters or requirements in its own Transfer task.
+- **Finishing one module does not finish a track.** `02` stays at `lint_level: report`: two of its
+  three modules are still far below 100%, which is exactly what a per-module score is for.
 
 Effort, as a guide only (the plan's estimate): a micro-lesson built to this standard, with tests, is
 **4-8 hours** of writing and verifying, plus the time to do it yourself as a learner.
