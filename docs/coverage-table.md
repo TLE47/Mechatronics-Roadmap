@@ -26,7 +26,7 @@ flowchart LR
 | `01` | 7 | 59% | 40% | 100% | 0% | **56.6%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `02` | 3 | 78% | 60% | 83% | 33% | **67.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
 | `03` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
-| `04` | 7 | 59% | 40% | 75% | 0% | **49.1%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
+| `04` | 7 | 59% | 40% | 75% | 7% | **50.2%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `05` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `06` | 5 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
 | `07` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **56.5%** |
+| Tier 2 | 18 | **57.0%** |
 | Tier 3 | 10 | **50.5%** |
 
-## Per module (44 modules, overall **53.5%**)
+## Per module (44 modules, overall **53.7%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -74,7 +74,7 @@ flowchart LR
 | `04-embedded.T2.04a` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `04-embedded.T2.04b` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `04-embedded.T2.04c` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
-| `04-embedded.T2.04d` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
+| `04-embedded.T2.04d` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
 | `04-embedded.T3.04a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `05-control.T1.05a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
 | `05-control.T2.05a` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
@@ -161,7 +161,7 @@ not demonstrated learner mastery.
 | `04-embedded.T2.04a` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T2.04b` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T2.04c` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `04-embedded.T2.04d` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `04-embedded.T2.04d` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T3.04a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `05-control.T1.05a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `05-control.T2.05a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |

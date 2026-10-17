@@ -110,6 +110,16 @@ u_link=8.32%, H_total=4, spin_WCET=185.0 us, offset=499000.0 us
 Suppose a micro-ROS node communicates with `micro_ros_agent` over an `8N1` UART DMA link ($10\text{ bits/byte}$) at $R_{\text{baud}} = 921{,}600\text{ bps}$, publishing a serialized payload of $B_{\text{cdr}} = 32\text{ bytes}$ with an `XRCE-DDS` header of $B_{\text{xrce}} = 14\text{ bytes}$. Compute (a) the total wire frame size $B_{\text{total}} = B_{\text{cdr}} + B_{\text{xrce}}$ in bytes, (b) the UART wire transmission time $t_{\text{wire}} = \frac{10 \cdot B_{\text{total}}}{R_{\text{baud}}} \times 10^6$ in microseconds ($\mu\text{s}$), and (c) the clock offset $\theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}$ when $t_1 = 200\ \mu\text{s}, t_2 = 10{,}300\ \mu\text{s}, t_3 = 10{,}340\ \mu\text{s}, t_4 = 440\ \mu\text{s}$. Verify $B_{\text{total}} = 46\text{ B}$, $t_{\text{wire}} \approx 499.1319\ \mu\text{s}$ ($\pm 10^{-4}$), and $\theta_{\text{offset}} = 10{,}000.0\ \mu\text{s}$.
 - **If your result differs:** Remember that `8N1` UART adds 1 start bit + 1 stop bit per byte ($10\text{ bits/byte}$ total, so $46\text{ B} = 460\text{ bits}$ at $921{,}600\text{ bps}$ takes $460 / 921{,}600 \approx 499.13\ \mu\text{s}$).
 
+### Graded package - the plant's own telemetry link
+[`exercises/04-embedded.T2.04d/`](../exercises/04-embedded.T2.04d/) turns this section into a test. `starter.py` holds seven holes: `wire_time_us` (header included, 10 bits per byte on 8N1 and 8 on CAN-FD), `link_utilization`, `handle_total`, `spin_wcet_us`, `ntp_rtt_us`, `ntp_offset_us` and `rtos_utilization`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/04-embedded.T2.04d/starter.py \
+  python3 -m unittest discover -s exercises/04-embedded.T2.04d -p 'test_*.py'
+```
+
+The tests are behavioural: the $46\text{ B}$ frame must take $499.1319\ \mu\text{s}$ (an 8-bit-per-byte budget is 20% optimistic); the worked CAN-FD budget must be 8.32%; a three-stream link at 3 kHz must cross unity; the handle count must be exact; the spin WCET must count **every** callback; the four-timestamp exchange must give 240 and 499 000, and a symmetric link must recover a planted offset exactly while an asymmetric one is biased by half the difference; and the RTOS load must be a sum of ratios, not a mean. Four planted faults - `wire_no_header`, `uart_eight_bits`, `util_mean_freq`, `offset_one_way` - each fail the test named for them. The transfer suite is the **shared plant's 20-byte telemetry frame at 1 kHz**: utilisation must exceed one on 115.2 kbaud and stay below it at 500 kbaud, the submission's unity crossing must land on the same baud rate where `plant.simulate_uart_tx` stops dropping frames, the NTP offset over that link must be exact when symmetric and biased by half the congestion when not, and the audited 185 µs spin must fit the plant's 1 ms tick.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Linear Regression*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Baud Rate, Bits/Bytes & Nanosecond Clock Offsets*).
@@ -119,6 +129,8 @@ Suppose a micro-ROS node communicates with `micro_ros_agent` over an `8N1` UART 
 
 ## 6. Simulation path
 You can run a complete **micro-ROS Client + `micro_ros_agent`** loop on Linux using Zephyr's `native_sim` target or the host UDP transport **with zero physical microcontroller hardware**, or bridge a physical `STM32G4`/`ESP32` over USB-UART:
+
+The graded package is also a workbench entry: **Modules -> `EX.04-embedded.T2.04d`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 - **One-Time `micro_ros_agent` Setup (Ubuntu 24.04 / WSL2 — see [`resources/open-source-toolchains.md` §0.4b–4c](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):**
   `micro_ros_agent` is not installed by default in `ros-jazzy-desktop`; build it once in `~/microros_ws` with `colcon` (after installing ROS 2 Jazzy + `python3-colcon-common-extensions` per `resources/open-source-toolchains.md` §0.4b) **or** run the official Docker container directly:
   ```bash

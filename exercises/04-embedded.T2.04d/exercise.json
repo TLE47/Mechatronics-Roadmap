@@ -1,0 +1,30 @@
+{
+  "id": "04-embedded.T2.04d",
+  "module": "modules/04-embedded.T2.04d.md",
+  "title": "Wire budget, executor handles, the spin WCET and the NTP offset",
+  "requires": [
+    "wire_time_us(payload_bytes, xrce_bytes, bits_per_byte, bit_rate) -> us",
+    "link_utilization(streams, bits_per_byte, bit_rate) -> fraction of the link",
+    "handle_total(timers, subs, srvs, clients) -> int",
+    "spin_wcet_us(t_io_us, callbacks_us) -> us",
+    "ntp_rtt_us(t1, t2, t3, t4) -> us",
+    "ntp_offset_us(t1, t2, t3, t4) -> us",
+    "rtos_utilization(tasks) -> sum of C/T"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "wire_no_header": ["test_behavior.WireTests.test_the_header_is_part_of_the_frame"],
+    "uart_eight_bits": ["test_behavior.WireTests.test_the_uart_exercise"],
+    "util_mean_freq": ["test_behavior.UtilisationTests.test_the_worked_can_budget"],
+    "offset_one_way": ["test_behavior.ClockTests.test_the_worked_sync_session"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.04-embedded.T2.04d",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/04-embedded.T2.04d/starter.py python3 -m unittest discover -s exercises/04-embedded.T2.04d -p 'test_*.py'"
+  }
+}
