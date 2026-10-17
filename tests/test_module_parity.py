@@ -260,5 +260,67 @@ def introduced_concepts(module: str) -> set[str]:
     return set(re.findall(r"^\s+-\s*(\S+)", block.group(1), re.MULTILINE)) if block else set()
 
 
+class TestTier3CarriesBothLevels(unittest.TestCase):
+    """A Tier 3 module is a supported-entry level and a derivation, not one article.
+
+    `docs/SYLLABUS.md` splits Tier 3 into Level A (*Use & Understand*: what the method does, when to
+    reach for it, how to check it is physically sane) and Level B (*Derive & Extend*: the derivation
+    from first principles and one step past it). Parity scored the two headings; a heading with a
+    sentence under it would pass that, so this pins the depth too - both sections carry real prose,
+    and the derivation carries actual maths.
+    """
+
+    def test_every_tier3_module_has_both_levels(self):
+        findings = []
+        for row in _module_rows():
+            if row["tier"] != 3:
+                continue
+            with open(os.path.join(ROOT, row["path"]), encoding="utf-8") as handle:
+                findings += level_findings(handle.read(), row["module"])
+        self.assertEqual(findings, [], "\n".join(findings))
+
+    def test_the_check_catches_stub_headings(self):
+        """The negative path: two bare headings are not two levels."""
+        stub = level_findings(
+            "## 3. Formalization\n### Use & Understand\nRun it.\n"
+            "### Derive & Extend\nDo the algebra.\n\n## 4. Worked example\n",
+            "fixture.T3.99z",
+        )
+        self.assertEqual(len(stub), 2, stub)
+        self.assertTrue(all("too thin" in finding for finding in stub), stub)
+        # Long enough to pass the depth check, but prose where a derivation belongs.
+        prose = "This paragraph is prose about the method and its assumptions. " * 8
+        findings = level_findings(
+            "### Use & Understand\n" + prose + "\n### Derive & Extend\n" + prose + "\n## 4. Worked example\n",
+            "fixture.T3.99z",
+        )
+        self.assertEqual(findings, ["fixture.T3.99z: `### Derive & Extend` carries no maths"], findings)
+
+
+MIN_LEVEL_CHARS = 400
+
+
+def level_findings(text: str, module: str) -> list[str]:
+    """What a Tier 3 module's two levels are missing, as plain statements."""
+    findings = []
+    for heading in ("### Use & Understand", "### Derive & Extend"):
+        body = _bounded_section(text, heading)
+        if not body:
+            findings.append("%s: no `%s`" % (module, heading))
+        elif len(body.strip()) < MIN_LEVEL_CHARS:
+            findings.append("%s: `%s` is too thin (%d chars, %d expected)"
+                            % (module, heading, len(body.strip()), MIN_LEVEL_CHARS))
+    derive = _bounded_section(text, "### Derive & Extend")
+    if derive and len(derive.strip()) >= MIN_LEVEL_CHARS and not re.search(r"\$[^$\n]+\$", derive):
+        findings.append("%s: `### Derive & Extend` carries no maths" % module)
+    return findings
+
+
+def _bounded_section(text: str, heading: str) -> str:
+    """The body under an H3 heading, ending at the next H2 or H3."""
+    match = re.search(re.escape(heading) + r"\n(.*?)(?=\n##+ |\Z)", text, re.DOTALL)
+    return match.group(1) if match else ""
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

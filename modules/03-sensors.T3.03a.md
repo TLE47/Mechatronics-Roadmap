@@ -60,6 +60,40 @@ $$
 $$
 
 
+### Use & Understand
+Level A is the supported entry. Reach for the $d$-$q$ decoupling when a current loop must track at $1\text{–}25\ \text{kHz}$ and the back-EMF would otherwise arrive as an unmodelled disturbance; reach for min-max SVPWM when the bus is fixed and you want $15.47\%$ more fundamental voltage than sine PWM; reach for the harmonic fit when an encoder's error repeats once or twice per turn and can be subtracted from a lookup table. Run the worked case and check the physics:
+- $v_{d,\text{ff}} = -3.60\ \text{V}$ uses the *other* axis's inductance, $-\omega_e L_q i_q$, while $v_{q,\text{ff}} = 12.00\ \text{V}$ is pure back-EMF at $i_d = 0$. A $0.00\ \text{V}$ $q$-axis term means $\psi_m$ was dropped, not that the machine is ideal.
+- $V_{\text{bus}}/\sqrt3 = 27.71\ \text{V}$ on a $48\ \text{V}$ bus is $15.47\%$ above the $24\ \text{V}$ sine limit; the duties must stay in $[0, 1]$ while $d_a - d_b = (v_a^* - v_b^*)/V_{\text{bus}}$ is preserved to $10^{-12}$.
+- $v_0 = -6.0\ \text{V}$ turns $(+24, -12, -12)\ \text{V}$ into $(0.875, 0.125, 0.125)$. The mean would give $v_0 = 0$ and pin phase A at $d_a = 1.0$.
+- $a_1 = 0.012$ rad and $b_2 = -0.005$ rad return with their signs, and the amplitude is $\sqrt{a^2 + b^2} = 0.013$ rad in quadrature - adding the coefficients gives $0.007$, which is not an amplitude at all.
+
+### Derive & Extend
+**1. Why the inscribed circle is $V_{\text{bus}}/\sqrt3$.** A balanced command with phase peak $V_p$ has the space vector
+
+$$
+\vec{v} = \frac{2}{3}\left(v_a + v_b e^{j2\pi/3} + v_c e^{j4\pi/3}\right), \qquad \lvert\vec{v}\rvert = V_p .
+$$
+
+The inverter can apply only the six active states, each of magnitude $\frac{2}{3}V_{\text{bus}}$ and spaced $60^\circ$ apart, so the reachable set is a hexagon. A sinusoid of amplitude $V_p$ stays inside it at every angle only while $V_p$ fits the inscribed circle:
+
+$$
+V_{\phi,\max} = \frac{2}{3}V_{\text{bus}}\cos 30^\circ = \frac{V_{\text{bus}}}{\sqrt3} = \frac{2}{\sqrt3}\cdot\frac{V_{\text{bus}}}{2},
+$$
+
+which is exactly the $1.1547$ gain over sine PWM.
+
+**2. What the min-max offset buys.** With $v_0 = -\frac12(\max v^* + \min v^*)$ the shifted set is symmetric about zero,
+
+$$
+\max(v^* + v_0) = \frac{\max - \min}{2}, \qquad \min(v^* + v_0) = -\frac{\max - \min}{2},
+$$
+
+so every duty lies in $\left[\frac12 - \frac{\max-\min}{2V_{\text{bus}}}, \frac12 + \frac{\max-\min}{2V_{\text{bus}}}\right]$. The duties fit in $[0,1]$ whenever $\max - \min \le V_{\text{bus}}$, and because the offset is common to all three legs every line-to-line voltage is unchanged. The mean would leave $v_0 = 0$, put $d_a$ on the upper rail, and buy nothing.
+
+**3. Where $2/N$ comes from.** Sampling at $\theta_k = 2\pi k/N$, the discrete sums obey $\sum_k \cos(h\theta_k)\cos(g\theta_k) = \frac{N}{2}\delta_{hg}$ for $h, g < N/2$, while every sine-cosine sum vanishes. Projecting $\Delta\theta = \sum_h (a_h\cos h\theta + b_h\sin h\theta)$ onto $\cos(h\theta_k)$ therefore returns $\frac{N}{2}a_h$, so $a_h = \frac{2}{N}\sum_k e_k\cos(h\theta_k)$: the factor is two because a cosine has no DC term to spread over the basis, not a normalisation convention.
+
+**Extend.** Add a 5th harmonic $0.004\cos 5\theta$ to the worked error and re-fit at $N = 64$: the 1st and 2nd coefficients must be unchanged to machine precision, because the harmonics are orthogonal while $2h < N$. Then find the smallest $N$ at which a 5th harmonic aliases into the 1st, and say what that bound implies for the $4096$-count encoder's calibration table.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to five numbers before the code runs. (1) At $\omega_e = 1500\text{ rad/s}$, $L_d = L_q = 120\ \mu\text{H}$, $\psi_m = 0.008\text{ Wb}$, $i_d = 0\text{ A}$ and $i_q = 20.0\text{ A}$, what are $v_{d,\text{ff}}$ and $v_{q,\text{ff}}$ — and which one carries the back-EMF? (2) On a $48.0\text{ V}$ bus, does a phase peak of $V_{\text{bus}}/\sqrt{3}$ keep all three duties inside $[0, 1]$, and what is the largest peak SPWM can reach before it clips? (3) For an error built from $0.012\cos\theta - 0.005\sin 2\theta$ sampled at $64$ points, what do $a_1$ and $b_2$ come out to, with which signs? Two tells that your result is wrong rather than the module: a $v_{q,\text{ff}}$ of $0.00\text{ V}$ means the $\omega_e \psi_m$ back-EMF term was dropped (the inductance term is zero at $i_d = 0$), and a $d_a$ that lands above $1.0$ on a command the inscribed circle can hold means the zero-sequence offset was never added.
 

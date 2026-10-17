@@ -54,6 +54,45 @@ $$
 $$
 
 
+### Use & Understand
+Reach for this module whenever a 3D orientation has to be integrated or a linear model has to be discretized exactly: robot joints, IMU frames, camera extrinsics. The habit it installs is that a rotation is applied by multiplying matrices, never by adding angles, and that an increment is a tangent vector pushed through $\exp$.
+
+Run the worked example once and read four facts off it. A quarter turn about $Z$ sends $[1,0,0]^\top$ to $[0,1,0]^\top$; a rotation vector of length $10^{-9}\,\text{rad}$ still returns $\det(R)=1$ exactly, because the small-angle guard replaces the $0/0$; $\operatorname{tr}([\hat{u}]_\times^2)=-2$ for any unit axis, since the eigenvalues are $0,\pm i$; and $v^\top[\omega]_\times v=0$ for every $v$, which is the algebraic statement that a cross product cannot do work.
+
+Plausibility checks that catch most mistakes before a control loop ever sees the result:
+- $R^\top R=I_3$ to $10^{-12}$ and $\det R=+1$ — a $-1$ means a reflection slipped into the series.
+- $\|Rv\|=\|v\|$, and the hat map's sign: $[\omega]_\times v$ must equal $\omega\times v$, not $v\times\omega$.
+- In the energy balance $\dot H\le u^\top y$, with equality only when $R_d=0$; a positive $\dot H$ on a passive system is a sign error in $J$ or $R_d$, not a discovery.
+- For the discretization, $e^{AT_s}$ must agree with a fine-grained simulation as $T_s\to0$, and $\|e^{AT_s}\|$ must stay bounded for a stable $A$.
+
+Section 6 names the workbench tab (Tab 8) and the graded package that run these numbers; nothing here needs hardware.
+
+### Derive & Extend
+Where Rodrigues' formula comes from, in five steps.
+1. **The differential equation.** A body rotating at constant $\omega=\theta\hat{u}$ satisfies $\dot R=[\omega]_\times R$; with $R(0)=I$ its unique solution is $R(t)=\exp(t[\omega]_\times)$.
+2. **The cubic identity.** Write $K=[\hat{u}]_\times$. Then $K^2=\hat{u}\hat{u}^\top-I$, so $K\hat{u}=\hat{u}\times\hat{u}=0$ and
+
+$$
+K^3=K(\hat{u}\hat{u}^\top-I)=0-K=-K .
+$$
+
+3. **Collapsing the series.** Odd powers repeat as $K^{2m+1}=(-1)^mK$ and even ones as $K^{2m+2}=(-1)^mK^2$, so the exponential splits into two scalar series:
+
+$$
+\exp(\theta K)=I+\Big(\sum_{m\ge0}\frac{(-1)^m\theta^{2m+1}}{(2m+1)!}\Big)K+\Big(\sum_{m\ge0}\frac{(-1)^m\theta^{2m+2}}{(2m+2)!}\Big)K^2
+=I+\sin\theta\,K+(1-\cos\theta)\,K^2 ,
+$$
+
+which is §3 item 2 once $\theta K=[\phi]_\times$ is factored back in.
+4. **Why the determinant is one.** $\theta K$ is skew, so its eigenvalues are $0$ and $\pm i\theta$ and $\operatorname{tr}(\theta K)=0$. Therefore $\det\exp(\theta K)=e^{\operatorname{tr}(\theta K)}=1$, and $\exp(\theta K)^\top\exp(\theta K)=\exp(-\theta K)\exp(\theta K)=I$ because the two commute. The small-angle truncation $R\approx I+\theta K$ therefore drifts off $SO(3)$ by $O(\theta^2)$, never into a reflection.
+5. **Extend.** A screw motion adds translation. For the $4\times4$ twist $\xi=(v,\omega)$, the exponential keeps the same Rodrigues block for $R$ and returns $V(\theta)v$ for the position, with
+
+$$
+V(\theta)=I+\frac{1-\cos\theta}{\theta^2}[\phi]_\times+\frac{\theta-\sin\theta}{\theta^3}[\phi]_\times^2 .
+$$
+
+Derive $V(\theta)$ by integrating $\dot p=R(t)v$ over $[0,\theta]$, and confirm that $v=0$ reduces the twist to the four numbers the worked example computes. Then show that a screw of pitch $h$ about an axis through $q$ uses $v=-\omega\times q+h\omega$, so the pitch and the axis offset enter the same exponential rather than a separate translation.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to three numbers before the code runs: which basis vector $\exp([0, 0, \pi/2]_\times)$ sends $[1, 0, 0]^\top$ to, $\det(R)$ for a rotation vector of length $10^{-9}\text{ rad}$, and $\operatorname{tr}([\hat{u}]_\times^2)$ for a unit axis $\hat{u}$. Two tells: a result of $[0, -1, 0]^\top$ instead of $[0, 1, 0]^\top$ means the hat map is transposed (so it computes $v \times \omega$); and a determinant of `nan` or $0$ at $\theta = 10^{-9}$ means the small-angle branch was skipped, leaving $\frac{1-\cos\theta}{\theta^2}$ to divide `0.0 / 0.0`.
 

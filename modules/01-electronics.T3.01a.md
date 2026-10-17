@@ -64,6 +64,36 @@ T_J(t_p) = T_{\text{amb}} + P_{\text{loss}} \sum_{k=1}^{K} R_{\theta,k}\left(1 -
 $$
 
 
+### Use & Understand
+Open this module when a 48 V power stage has to survive its own switching, or when a measurement has to be trusted at the exact sample instant. Four numbers decide three separate designs, and all four are cheap enough to compute before anything is ordered.
+
+Read the worked example as a design review. The 6-layer stackup ($h=0.10\text{ mm}$ prepreg, $w=12\text{ mm}$, $\ell=15\text{ mm}$) gives $L_\text{loop}=0.157\text{ nH}$ and a $48.47\text{ V}$ turn-off peak, so an $80\text{ V}$ MOSFET keeps $31\text{ V}$ of headroom; the 2-layer board's $25.13\text{ nH}$ produces $123.40\text{ V}$ and avalanches the same part. The 2nd-order Bessel at $\omega_0=2\pi\times250\text{ kHz}$ delays every low frequency by $0.6366\ \mu\text{s}$ — the phase the current loop must not spend. The 12-bit SAR bucket settles to $0.0000\text{ LSB}$ in $150\text{ ns}$ with $R_f=33\ \Omega$ and $C_f=180\text{ pF}$, while the exercise's $34.2\text{ ns}$ window is the case that does *not* settle ($0.5076\text{ LSB}$). And a $10\text{ ms}$, $120\text{ W}$ stall moves the die $+46.7\ {^\circ}\text{C}$ while the heatsink moves $+0.1\ {^\circ}\text{C}$, which is why the die and not the heatsink sets $T_J=71.8\ {^\circ}\text{C}$.
+
+Plausibility checks worth applying to any answer here:
+- Units: $\text{nH}\times\text{A/ns}$ is already volts — a factor of $10^9$ in the peak means the prefix was applied twice.
+- The bucket's residual must be under $0.5\text{ LSB}$; a fractional LSB in the hundreds means the droop term was dropped.
+- $\tau_{g,0}$ must scale as $1/\omega_0$; a delay near $4.0\ \mu\text{s}$ at $250\text{ kHz}$ is $1/f_0$ with the $2\pi$ missing.
+- A die-to-heatsink rise anywhere near half-and-half used the $30\text{ s}$ time constant where the $5\text{ ms}$ one belongs.
+
+### Derive & Extend
+**The thermal ladder.** (1) Heat in a slab obeys $\partial T/\partial t=\alpha\,\partial^2T/\partial x^2$ with $\alpha=1/(R'C')$ per unit length. (2) In the Laplace domain $d^2\hat T/dx^2=(s/\alpha)\hat T$, so $\hat T(x)=\hat T(0)\cosh\!\big(x\sqrt{s/\alpha}\big)$. (3) A slab of length $\ell$ therefore presents the driving-point impedance
+
+$$
+Z_\theta(s)=\sqrt{\frac{R'}{C's}}\,\tanh\!\big(\ell\sqrt{sR'C'}\big).
+$$
+
+(4) Expanding $\tanh x=x/(1+x^2/(3+x^2/(5+\cdots)))$ and inverting turns that into a continued fraction of alternating series resistors and shunt capacitors,
+
+$$
+Z_\theta(s)=R_{\theta,1}+\frac{1}{C_{\theta,1}s+\dfrac{1}{R_{\theta,2}+\dfrac{1}{C_{\theta,2}s+\cdots}}},
+$$
+
+whose truncation after $K$ rungs is the Cauer network of §3 item 3. (5) Each rung is first order, so a power step $P$ produces $P\sum_k R_{\theta,k}(1-e^{-t/\tau_{\theta,k}})$ with $\tau_k=R_{\theta,k}C_{\theta,k}$, which is exactly the $T_J(t_p)$ the module evaluates — the $5\text{ ms}$ die stage is rung one, the $30\text{ s}$ heatsink rung two.
+
+**Where $Q=1/\sqrt3$ comes from.** For $H(s)=\omega_c^2/(s^2+2\zeta\omega_c s+\omega_c^2)$, the group delay at DC is $\tau_g(0)=2\zeta/\omega_c$ and the next term in $\tau_g(\omega)$ is proportional to $4\zeta^2-3$. Flat delay to second order therefore needs $\zeta=\sqrt3/2$, hence $Q=1/(2\zeta)=1/\sqrt3$. Matching the module's normalisation $H=3/((s/\omega_0)^2+3(s/\omega_0)+3)$ gives $\omega_c=\sqrt3\,\omega_0$ and $\tau_g(0)=1/\omega_0$, the $0.6366\ \mu\text{s}$ of §4.
+
+**Extend.** The next rung costs design margin, not just a term. The 3rd-order Bessel polynomial is $\theta_3(s)=s^3+6s^2+15s+15$; derive the condition on its $\omega^4$ group-delay coefficient that keeps the delay flat to the next order, then add that stage to the Cauer ladder and recompute $T_J$ for the same $10\text{ ms}$, $120\text{ W}$ burst. Show whether the extra thermal mass lowers the die peak or merely delays it.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to the following before you touch the code, and write each number down. (1) With $L_{\text{loop}} \approx \mu_0 \frac{h}{w}\ell$ and $\mu_0 = 4\pi \times 10^{-7}\text{ H/m}$, what is $L_{\text{loop}}$ in nanohenries for the 6-layer board ($h = 0.10\text{ mm}$ prepreg, $w = 12\text{ mm}$ plane, $\ell = 15\text{ mm}$) and for the 2-layer board ($h = 1.60\text{ mm}$ core, $w = 2.0\text{ mm}$ trace, $\ell = 25\text{ mm}$), how many times smaller is the 6-layer loop, and which board survives an $80\text{ V}$ MOSFET on a $V_{\text{bus}} = 48.0\text{ V}$ rail at $di/dt = 3.0\text{ A/ns}$ ($V_{\text{DS,peak}} = V_{\text{bus}} + L_{\text{loop}}\,di/dt$)? (2) What is the low-frequency group delay $\tau_{g,0} = 1/\omega_0$ in microseconds for a 2nd-order Bessel filter with $\omega_0 = 2\pi \times 250\text{ kHz}$? (3) In a $t_p = 10\text{ ms}$ stall burst of $P_{\text{loss}} = 120\text{ W}$ at $T_{\text{amb}} = 25.0\ {^\circ}\text{C}$, how far does the silicon die rise ($R_{\theta 1} = 0.45\ {^\circ}\text{C/W}$, $\tau_{\theta 1} = 5\text{ ms}$), how far does the heatsink ($R_{\theta 2} = 2.5\ {^\circ}\text{C/W}$, $\tau_{\theta 2} = 30\text{ s}$), and does $T_J$ stay inside $125\ {^\circ}\text{C}$? Three tells that a value is wrong rather than the module: a 6-layer loop in the tens of nanohenries means $h$ and $w$ were read off the 2-layer stackup ($1.60\text{ mm}$ of core instead of $0.10\text{ mm}$ of prepreg); a $\tau_{g,0}$ near $636.6\text{ ns}$ or $636.6\ \mu\text{s}$ is a metric prefix slipped one way or the other, while one near $4.0\ \mu\text{s}$ is $1/f_0$ with the $2\pi$ dropped; and a die-to-heatsink split anywhere near half-and-half means $5\text{ s}$ was used where $\tau_{\theta 1} = 5\text{ ms}$ belongs - the die has to carry more than $99\%$ of a $10\text{ ms}$ rise, $1 - e^{-2} = 0.865$ of its $120 \times 0.45 = 54.0\ {^\circ}\text{C}$ steady rise against $1 - e^{-3.3 \times 10^{-4}} = 3.3 \times 10^{-4}$ of the heatsink's $120 \times 2.5 = 300.0\ {^\circ}\text{C}$.
 Compute (1) the net commutation loop inductance $L_{\text{loop}}$ and peak turn-off voltage $V_{\text{DS,peak}}$ on a 6-layer PCB with $h = 0.10\text{ mm}$ prepreg vs. a 2-layer PCB with $h = 1.60\text{ mm}$ core at $di/dt = 3.0\text{ A/ns}$, (2) the low-frequency group delay $\tau_{g,0}$ of a 2nd-order Bessel filter with $\omega_0 = 2\pi \times 250\text{ kHz}$, (3) the 12-bit SAR ADC charge-bucket settling error in LSBs after $t_{\text{acq}} = 150\text{ ns}$, and (4) the silicon junction temperature $T_J$ during a $10\text{ ms}$ $120\text{ W}$ stall burst.

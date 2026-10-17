@@ -61,6 +61,46 @@ $$
 $$
 
 
+### Use & Understand
+Three primitives, three reasons to reach for them, and a check for each that costs one line:
+- **Centre-aligned midpoint sampling** is what you do when the loop period is short enough that a context switch is a measurable fraction of it - $25\ \mu\text{s}$ here - and the shunt is only meaningful away from a switching edge. Sampling at `CNT == ARR` costs no CPU time and removes the ringing that a free-running trigger would digitise.
+- **Q1.31** is what a hardware `CORDIC` or a fixed-point DSP wants: the normalised angle $\theta_e/\pi$ and the trig result are 32-bit integers, so a $\sin/\cos$ pair comes back in clock cycles rather than a soft-float library call.
+- **A `SeqLock`** is what you do when a $40\text{ kHz}$ ISR must publish a struct and must never wait for the $1\text{ kHz}$ reader. The writer bumps the sequence counter twice and never blocks; the reader validates the pair and retries.
+
+Run the module's own numbers once: $\text{ARR} = 170\text{ MHz} / (2 \times 40\text{ kHz}) = 2125$ ticks, so $T_{\text{PWM}} = 25\ \mu\text{s}$; at $d_{\max} = 0.88$ with $250\text{ ns}$ of dead time at each edge the low-side window is $0.12 \times 25\,000 - 2 \times 250 = 2500\text{ ns}$, well clear of the $250\text{ ns}$ ringing plus $150\text{ ns}$ acquisition; $\cos(\pi/3) = 0.5$ encodes to `0x40000000`; and a reader that saw $s_1 = 4, s_2 = 6$ retries instead of using the snapshot.
+
+The checks: `ARR` a positive integer (a value near $4250$ means the factor of two was dropped), $t_{\text{low,min}} > t_{\text{ring}} + t_{\text{acq}}$, a decoded word within half a step of the value it came from, and a valid snapshot whose $s_1$ is even **and** equal to $s_2$.
+
+### Derive & Extend
+1. **The period comes from the counter's own path.** In up-down mode the counter walks $0 \to \text{ARR}$ in `ARR` ticks and back in `ARR` ticks, so a full PWM period costs $2\,\text{ARR}$ timer ticks:
+
+$$
+T_{\text{PWM}} = \frac{2\,\text{ARR}}{f_{\text{tim}}} \quad\Longrightarrow\quad f_{\text{PWM}} = \frac{f_{\text{tim}}}{2\,\text{ARR}}, \qquad \text{ARR} = \frac{f_{\text{tim}}}{2 f_{\text{PWM}}}
+$$
+
+   At $f_{\text{tim}} = 170\text{ MHz}$ and $f_{\text{PWM}} = 40\text{ kHz}$ this is $2125$, an exact integer, which is why the carrier comes out at precisely $40\text{ kHz}$.
+2. **The low-side window is what is left of the period.** One period is the high-side on-time $d\,T_{\text{PWM}}$, two dead-time gaps of $t_{\text{dead}}$ (one at each edge), and the low-side conduction that remains:
+
+$$
+t_{\text{low}} = T_{\text{PWM}} - d\,T_{\text{PWM}} - 2t_{\text{dead}} = (1 - d)\,T_{\text{PWM}} - 2t_{\text{dead}}
+$$
+
+   At $d_{\max} = 0.88$, $T_{\text{PWM}} = 25\ \mu\text{s}$ and $t_{\text{dead}} = 250\text{ ns}$: $0.12 \times 25\,000 - 500 = 2500\text{ ns}$. Subtracting one dead time instead of two gives $2750\text{ ns}$ - the worked example's own tell.
+3. **The Q1.31 step and its rounding error.** Encoding is $X = \operatorname{round}(x \cdot 2^{31})$ and decoding is $\hat{x} = X/2^{31}$, so the representable step is $2^{-31}$ and rounding can move a value by at most half a step:
+
+$$
+\lvert\hat{x} - x\rvert \;\le\; \frac{1}{2 \cdot 2^{31}} = 2^{-32}
+$$
+
+   The upper end of the range is $2^{31} - 1$, so $+1.0$ itself is not representable and saturates at $1 - 2^{-31}$; the clamp is asymmetric on purpose, because wrapping $+1.0$ would read back as $-1.0$.
+4. **Extend.** A reader copy takes $t_c$ and the writer republishes every $T_w$. A copy is torn exactly when a write begins inside it, which in steady state happens on a fraction $t_c/T_w$ of attempts, so attempts are geometric with success probability $1 - t_c/T_w$ and the expected number of attempts is
+
+$$
+\mathbb{E}[\text{attempts}] = \frac{1}{1 - t_c/T_w} = \frac{T_w}{T_w - t_c}
+$$
+
+   With $t_c = 2\ \mu\text{s}$ and $T_w = 25\ \mu\text{s}$ that is $25/23 \approx 1.09$ - one extra attempt in roughly eleven reads - and the reader's worst case is unbounded even though its expected cost is not. Work out the copy time at which the reader would spend more than five per cent of its own period retrying, and what a double-buffered SPSC queue would change about that bound.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to four values before the script runs. (1) What is `ARR` for $f_{\text{tim}} = 170\text{ MHz}$ and $f_{\text{PWM}} = 40\text{ kHz}$ in center-aligned mode, and what is $t_{\text{low,min}}$ at $d_{\max} = 0.88$ with $250\text{ ns}$ of dead time at each edge? (2) What `Q1.31` word encodes $\cos(\pi/3) = 0.5$? (3) Is a snapshot taken at $s_1 = 4, s_2 = 6$ valid? Two tells: an `ARR` of $4250$ means the up-down counter's factor of two was dropped, and $t_{\text{low,min}} = 2750\text{ ns}$ means dead time was subtracted at one edge instead of both.
 Compute (1) the center-aligned `TIM1->ARR` register value and minimum low-side shunt conduction window $t_{\text{low,min}}$ at $f_{\text{tim}} = 170\text{ MHz}$ and $f_{\text{PWM}} = 40\text{ kHz}$, (2) `Q1.31` fixed-point encoding/decoding of $\theta_e = \pi/3\text{ rad}$ and $\cos(\pi/3) = 0.5$, and (3) prove that a `SeqLock` reader detects a mid-read ISR preemption (torn read) and succeeds on the immediate retry.

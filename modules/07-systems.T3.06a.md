@@ -49,6 +49,29 @@ $$
 
    - **Category 3 Requirements:** (i) Redundant 2-channel hardware path ($I_1 \to L_1 \to O_1$ and $I_2 \to L_2 \to O_2$) so **any single fault does not lead to the loss of the safety function** ($\text{STO} = \text{STO}_A \lor \text{STO}_B$ removes torque even if one channel fails closed), and (ii) **Cross-Monitoring Discrepancy Check**: if $\text{Ch}_A \ne \text{Ch}_B$ for longer than discrepancy filter time $t_{\text{disc}}$ (e.g., $20\text{ ms}$), the safety logic latches `FAULT_LOCKOUT` and prevents restart until both channels return to the safe state and are repaired.
 
+### Use & Understand
+Reach for these three standards the moment a workcell leaves the lab: OPC UA when another system must read the machine's live values with their units attached, AAS when an ERP or MES has to find the machine's identity, payload and maintenance data without a human translating field names, and ISO 13849-1 Category 3 when a single welded contact must not be able to keep the motor energised.
+
+One run on this module's own numbers:
+- Publish eight `Double`s at $250\text{ Hz}$ behind a $14\text{-byte}$ NetworkMessage header: $R = (14 + 8 \times 8) \times 250 = 19\,500\text{ B/s}$. That is not a baud rate yet - 8N1 spends $10$ bits per byte, so $195\text{ kbaud}$: it fits the plant's $500\text{ kbaud}$ link and not the $115.2\text{ kbaud}$ one, which is why that link drops frames.
+- The AAS `TechnicalData` submodel carries `MaxPayloadKg = 3.0` and `SupplyVoltageV = 48.0`, each mapped to an `ns=2;s=...` NodeId, and $\text{DC}_{\text{avg}} = 100 \times 95.0/(95.0 + 5.0) = 95\%$.
+- An E-stop press that opens Channel A at $t = 0$ removes torque on that tick even with Channel B welded closed; a $12\text{ ms}$ skew is contact bounce and does not latch, while $25\text{ ms}$ exceeds $t_{\text{disc,max}} = 20\text{ ms}$ and locks the drive out.
+
+Checks that catch most mistakes: a byte rate becomes a baud rate only after multiplying by ten bits; `DC` is a percentage in $[0, 100]$, not a fraction; the `PLd` band is half-open at $10^{-6}\text{ h}^{-1}$; and a discrepancy window is only credible if it is longer than the $2\text{–}8\text{ ms}$ mechanical bounce and shorter than the machine's stopping budget - torque removal itself never waits for it.
+
+### Derive & Extend
+**From channel failure rates to $\text{PFH}_d$.** A channel fails dangerously at $\lambda_{DU}$ per hour. With diagnostic coverage $DC$, the detectable share is $\lambda_{DD} = DC\,\lambda_{DU}$ and the share that can hide until the next demand is $\lambda_{DU}(1 - DC)$. Category 3 tolerates one fault, so the safety function survives one channel's undetected dangerous failure and the hazardous event needs both channels to fail; summing the two single-fault paths and adding the common-cause share $\beta\lambda_{DU}$ - one cause, such as a shared supply, defeating both channels at once - gives the simplified
+
+$$
+\text{PFH}_d \;\approx\; 2\,\lambda_{DU}\,(1 - DC) \;+\; \beta\,\lambda_{DU}
+$$
+
+With the module's $\lambda_{DU} = 2.0\times10^{-7}\text{ h}^{-1}$, medium $DC = 60\%$ and $\beta = 0.02$, the single-fault term is $2(2.0\times10^{-7})(0.4) = 1.6\times10^{-7}$ and the common-cause term is $4.0\times10^{-9}$, so $\text{PFH}_d = 1.64\times10^{-7}\text{ h}^{-1}$ - inside $[10^{-7}, 10^{-6})$ and therefore `PLd`. The inequality is what makes the architecture safe by construction: the single-fault term is fixed by $\lambda_{DU}$, so the levers are $DC$ and $\beta$, not the number of relays. The module's exercise instance lands at $4.5\times10^{-7}\text{ h}^{-1}$ and passes the same band test.
+
+**From an AAS path to a NodeId.** A SubmodelElement is addressed by a path, `aas://<globalAssetId>/submodels/<idShort>/submodelElements/<idShort>`, and the OPC UA side addresses the same value as `ns=<n>;i=|s=|g=<id>`. The two strings are a bijection on the element set: each element carries exactly one `opcUaNodeId`, and an element without one is a property no client can read. That is why the package validates `ns=<n>;` plus the `i=`/`s=`/`g=` discriminator for **every** element rather than the first.
+
+**Extend.** Add a third channel and a 2-of-3 vote: derive the new single-fault and common-cause terms, then argue why the discrepancy filter must still latch on a *pairwise* mismatch instead of waiting for all three channels to disagree.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to three booleans and one number. (1) With Channel A in the safe state and Channel B welded closed for $25\text{ ms}$, is motor torque removed - and may the drive re-enable? (2) At a $12\text{ ms}$ skew with $t_{\text{disc,max}} = 20\text{ ms}$, does the discrepancy latch? (3) Is $\text{PFH}_d = 2.4\times10^{-7}\text{ h}^{-1}$ inside `PLd`? (4) Does a PubSub stream of $8$ doubles plus a $14$-byte header at $250\text{ Hz}$ fit a $115.2\text{ kbaud}$ 8N1 link? Two tells that a wrong answer is a mistake rather than a different reading: a latch at $12\text{ ms}$ means the discrepancy filter was dropped entirely (normal contact skew is $2\text{–}8\text{ ms}$, which is exactly why the window exists), and `can_enable = True` with one channel in the safe state means the two channel states were combined with OR where the enable path needs AND.
 

@@ -57,6 +57,36 @@ $$
 $$
 
 
+### Use & Understand
+Reach for these three budgets at design freeze, and again after any subsystem swap, before a multi-DOF build is energised for the first time: the error budget says which source is worth money, the latency budget says whether the loop is still stable at its crossover, and the sign-off gate says whether it may move at all.
+
+One run on this module's own numbers:
+- The biases $0.01 + 0.04 + 0.03 + 0.02 = 0.10\text{ mm}$ add linearly; the random terms give $\sqrt{0.03^2 + 0.06^2 + 0.08^2 + 0.03^2} = 0.1086\text{ mm}$, so $e_{3\sigma} = 0.10 + 3(0.1086) = 0.4259\text{ mm} \le 0.50\text{ mm}$. Structural link deflection owns $0.08^2/0.0118 = 54\%$ of the variance and is the only source worth re-engineering.
+- The delays $20 + 180 + 250 + 150\ \mu\text{s}$ plus half a $1\text{ kHz}$ tick are $\tau_{\text{total}} = 1.10\text{ ms}$, which erodes $150 \times 0.0011 \times 180/\pi = 9.45^\circ$ and leaves $52.55^\circ$: the verdict is `GO`.
+- Swap in a 10-tap average ($2550\ \mu\text{s}$) and the same chain is $3.40\text{ ms}$ and $32.78^\circ$; the margin alone fails, so the verdict is `NO-GO` whatever the other four gates say.
+
+Checks that catch most mistakes: an RSS sum is never larger than the sum of magnitudes; a larger delay must lower the margin; the $3\sigma$ factor multiplies only the quadrature sum and never the biases; the zero-order hold is half a tick, not zero; and a five-way gate is a conjunction - four green lights and one red is red.
+
+### Derive & Extend
+**Why RSS, and why biases do not cancel.** With independent zero-mean errors $\epsilon_i$ mapped to the tip by sensitivity $s_i$, the combined displacement is $e = \sum_i s_i\epsilon_i + \sum_i s_i b_i$. Independence makes every cross term vanish in expectation, so the variance is additive:
+
+$$
+\operatorname{Var}(e) = \sum_{i=1}^{M} s_i^2 \sigma_i^2, \qquad
+e_{3\sigma} = \sum_{i=1}^{M} |s_i b_i| + 3\sqrt{\sum_{i=1}^{M} s_i^2 \sigma_i^2}
+$$
+
+The systematic part takes magnitudes because a bias does not average out with more samples: two offsets on opposite sides still move the tip by their sum in the worst case. The factor $3$ is a coverage factor ($99.73\%$ of a normal source), so it belongs on the random term alone. The variance share $w_i = s_i^2\sigma_i^2 / \sum_j s_j^2\sigma_j^2$ is what makes the budget actionable - at $w = 0.54$ a better encoder buys at most the remaining $46\%$.
+
+**Why half a tick, and why it becomes degrees.** A sample taken at $kTs$ is held until $(k+1)Ts$, so on average it describes the signal $Ts/2$ late; in the frequency domain the hold $(1 - e^{-sTs})/(sTs)$ is $e^{-sTs/2}$ to first order in $s$. A pure delay $\tau$ contributes phase $-\omega\tau$ radians, so at crossover it subtracts directly:
+
+$$
+\text{PM}_{\text{net}} = \text{PM}_0 - \omega_{gc}\left(\sum_k \tau_k + \tfrac{1}{2}Ts\right)\frac{180^\circ}{\pi}
+$$
+
+The $17^\circ$ between $62^\circ$ and the $45^\circ$ floor therefore buys $\tau_{\max} = (17\pi/180)/150 = 1.978\text{ ms}$, which the $3.40\text{ ms}$ chain spends nearly twice over.
+
+**Extend.** Add a vision pipeline and a second encoder to the same capstone: allocate the fixed $0.50\text{ mm}$ and the $17^\circ$ of margin between the new sources, then derive the largest delay the vision stage may add while `capstone_signoff` still returns `GO`.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to four numbers, a dominant source and one verdict. (1) For $1\sigma$ sources of $0.03, 0.06, 0.08, 0.03\text{ mm}$, is $\sigma_{\text{rss}}$ nearer $0.10$ or $0.14\text{ mm}$? (2) With $20 + 180 + 250 + 150\ \mu\text{s}$ plus the zero-order hold, is $\tau_{\text{total}}$ nearer $0.6$ or $1.1\text{ ms}$? (3) At $\omega_{gc} = 150\text{ rad/s}$ and $\text{PM}_0 = 62.0^\circ$, does the loop keep the $45^\circ$ floor? (4) Which source owns most of the variance? Then answer the exercise's verdict after a $10$-tap filter pushes $\tau_{\text{total}}$ to $3.40\text{ ms}$: GO or NO-GO? Two tells that a wrong answer is a mistake rather than a convention: a systematic term of $0.0548\text{ mm}$ instead of $0.10\text{ mm}$ means the four biases were Root-Sum-Squared like the random errors (they add linearly); and a net margin above $62.0^\circ$ means the erosion was added to the nominal margin instead of subtracted from it.
 

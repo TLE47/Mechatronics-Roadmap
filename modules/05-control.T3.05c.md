@@ -54,6 +54,35 @@ $$
 
    With $u_{\text{nom}} = 0.80\,\text{m/s}$, $h = 0.04\,\text{m}$ and $\alpha = 5.0\,\text{s}^{-1}$ the cap is $0.20\,\text{m/s}$ and $u^\ast = 0.20$; with $u_{\text{nom}} = -0.40$ and the same cap it is $-0.40$, untouched. The guaranteed margin under the condition is $h(t) \ge h_0e^{-\alpha t}$, so $h_0 = 0.20$ at $\alpha = 2.0$ is still $0.0736\,\text{m}$ after $0.50\,\text{s}$.
 
+### Use & Understand
+Reach for a CBF filter whenever a nominal controller is good at the task and ignorant of a hard limit: an LQR that does not know the hard stop, an MPC whose horizon is shorter than the braking distance, a learned policy with no model of the clamp. You add one inequality between the controller and the actuator and leave the controller alone.
+
+- **Compute the ceiling, then clip.** With $\dot{h} = -u$ the condition $\dot{h} \ge -\alpha h$ is $u \le \alpha h$ - a ceiling. At $h = 0.04\,\text{m}$, $\alpha = 5.0\,\text{s}^{-1}$ it is $0.20\,\text{m/s}$, so a $0.80$ request comes out at $0.20$; at $h = 0.10\,\text{rad}$, $\alpha = 8.0$ it is $0.80$ against a $1.20$ request.
+- **Check that a retreat is untouched.** At $h = 0.05$, $\alpha = 6.0$ the ceiling is $0.30$ and a $-0.40$ command passes through exactly: the filter only ever pushes one way.
+- **Past the stop, expect a reversal, not a zero.** At $h = -0.05$ with $\alpha = 8.0$ the ceiling is $-0.40$: the filter commands a retreat that drives $h$ back up. A returned $0$ means the constraint was imposed as an equality, which is the bug to look for.
+- **Know when to declare infeasible.** At $h = -0.50$ the ceiling is $-4.0$, below $u_{\min} = -2.0$; no admissible command exists, and the honest response is to raise and fall back to braking rather than clamp and silently disobey the barrier.
+- **Check the margin decay.** $h(t) \ge h_0e^{-\alpha t}$: $h_0 = 0.20\,\text{m}$ at $\alpha = 2.0\,\text{s}^{-1}$ leaves $0.073576\,\text{m}$ after $0.50\,\text{s}$. On the shared shoulder a $1\,\text{ms}$ tick at the $2.5\,\text{N}\cdot\text{m}$ clamp removes $0.3125\,\text{rad/s}$ over $1.5625\times10^{-4}\,\text{rad}$, and a $1000\,\text{s}^{-1}$ barrier admits only $0.15625\,\text{rad/s}$ at that margin.
+
+If the arm tracks perfectly in free space and overshoots the stop at full speed, the barrier term is missing from the return value. If a retreat changes but an approach does not, the inequality is a floor. If the filter raises the moment the joint gets fast, the barrier has the wrong relative degree.
+
+### Derive & Extend
+1. **Write the QP and its Lagrangian.** The filter solves $\min_u \tfrac12 (u - u_{\text{nom}})^2$ subject to $u - \alpha h \le 0$, $u_{\min} - u \le 0$ and $u - u_{\max} \le 0$. With multipliers $\lambda, \mu_1, \mu_2 \ge 0$,
+
+$$
+\mathcal{L} = \tfrac12 (u - u_{\text{nom}})^2 + \lambda (u - \alpha h) + \mu_1 (u_{\min} - u) + \mu_2 (u - u_{\max})
+$$
+
+2. **Stationarity gives the projection rule.** $\partial \mathcal{L}/\partial u = u - u_{\text{nom}} + \lambda - \mu_1 + \mu_2 = 0$. If no constraint is active, $\lambda = \mu_1 = \mu_2 = 0$ and $u^\ast = u_{\text{nom}}$. If only the barrier binds, $\lambda = u_{\text{nom}} - \alpha h > 0$ and $u^\ast = \alpha h$; if only the lower bound binds, $\mu_1 > 0$ and $u^\ast = u_{\min}$. Complementary slackness then says the solution is the *nearest admissible* value, which is the nested clip
+
+$$
+u^\ast = \min\big(\max(u_{\text{nom}}, u_{\min}),\ \min(u_{\max}, \alpha h)\big)
+$$
+
+3. **The barrier condition gives the exponential bound.** Let $v(t) = h(t)e^{\alpha t}$. Differentiating, $\dot{v} = e^{\alpha t}(\dot{h} + \alpha h) \ge 0$, so $v$ is non-decreasing and $h(t)e^{\alpha t} \ge h_0$ - that is $h(t) \ge h_0 e^{-\alpha t}$ by Grönwall's inequality in its simplest form. The set $\{h \ge 0\}$ is therefore forward invariant: a margin that starts non-negative can decay toward zero but never crosses it.
+4. **Feasibility is a separate question.** The barrier and the actuator bound are both ceilings here, so the feasible interval is $[u_{\min}, \min(u_{\max}, \alpha h)]$, which is non-empty exactly when $\alpha h \ge u_{\min}$. When it is empty, the QP has no primal solution; the dual grows without bound, and no amount of clipping produces a command that satisfies both.
+
+**Extend.** Take the infeasible case $\alpha h = -4.0$ with $u_{\min} = -2.0$ and show that the dual problem is unbounded, then replace the relative-degree-1 barrier with the stopping-distance form $h(q, \dot{q}) = (q_{\max} - q) - \frac{\dot{q}\lvert\dot{q}\rvert}{2a_{\max}}$, $a_{\max} = \tau_{\max}/J$. Compute the margin the plant's $2.5\,\text{N}\cdot\text{m}$ clamp over `I1` leaves at $\dot{q} = 0.3125\,\text{rad/s}$ and say why that barrier is feasible where the first one was not.
+
 ## 4. Worked example
 **Predict first (before you run it):** commit to four numbers before the block runs: (1) the cap $\alpha h$ at $h = 0.04\,\text{m}$ and $\alpha = 5.0\,\text{s}^{-1}$, and whether a $0.80\,\text{m/s}$ request survives it; (2) $u^\ast$ for the exercise's $h = 0.10\,\text{rad}$ and $\alpha = 8.0\,\text{s}^{-1}$ against a $1.20\,\text{rad/s}$ request; (3) whether a $-0.40\,\text{rad/s}$ retreat at $h = 0.05\,\text{rad}$ is modified at all; (4) the margin left after $0.50\,\text{s}$ from $h_0 = 0.20\,\text{m}$ at $\alpha = 2.0\,\text{s}^{-1}$. Two tells that a wrong answer is a mistake rather than a surprise: a command *above* $\alpha h$ means the inequality was solved with the sign flipped, and a retreat that changes means the cap was applied as a floor.
 

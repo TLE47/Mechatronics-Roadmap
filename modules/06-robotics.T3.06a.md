@@ -48,6 +48,46 @@ $$
    Each parameter updates with learning rate $\eta > 0$: $W_k \leftarrow W_k - \eta \frac{\partial \mathcal{L}}{\partial W_k}$.
 3. **Behavior Cloning (BC) Observation Normalization & Covariate Shift:** Normalizing inputs via z-score $\tilde{o} = (o - \mu_o)/\sigma_o$ prevents high-magnitude states (e.g., velocities in $\text{rad/s}$) from dominating gradients over small position errors. Because single-step BC errors compound over horizon $H_{\text{steps}}$ as $\mathcal{O}(\epsilon H_{\text{steps}}^2)$ when the robot drifts slightly off the expert demonstration track (**covariate shift**), modern policies predict multi-step **action chunks** ($k = 16\text{–}50$ future waypoints, `ACT` / `LeRobot` in `06-robotics.T3.06b`).
 
+### Use & Understand
+This level is for the learner who has to *run* a learned policy, not derive `autograd` again. A two-layer `tanh` network maps an observation $o_t = [q_t, \dot{q}_t, x_{\text{goal}}]^\top$ to an action; behaviour cloning fits it to logged $(o_t, a_t^{*})$ pairs by minimising the mean-squared error of section 3, and one gradient step is $\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}$. Reach for it when you already have demonstrations of the motion you want and the action is a smooth function of the observation; do not reach for it when the behaviour you need (recovery from a fall, contact) appears in no demonstration - that is the covariate-shift failure of section 3 item 3, and the reason the next module adds reinforcement learning.
+
+Running it is the section 4 script: the batch of demonstrations of the expert $\tau^{*}(q, \dot{q}) = 4.0(0.5 - q) - 0.8\dot{q} + 1.5\cos q$, 12 hidden units, $\eta = 0.05$, 400 steps, which takes the loss from $18.2258$ to $0.00817$. Four checks tell you the run is sane before you trust the policy:
+- the loss falls monotonically - any rise means the step ascended, i.e. the sign or the subtraction is wrong;
+- the analytic gradient agrees with a central finite difference to better than $10^{-7}$ (the run reports $5.52 \times 10^{-10}$), and a mismatch near $10^{-2}$ is the dropped $(1 - H^2)$;
+- `predict` returns newton-metres, the units of the demonstrations, not z-scores;
+- on held-out poses the error stays under $1\%$ of the $2.5\,\text{N}\cdot\text{m}$ torque limit, and the cloned feedforward tracks the plant's figure-8 within $5\%$ of the analytic $0.91\,\text{mm}$ RMS.
+
+### Derive & Extend
+Level B earns the backward pass that section 3 item 2 states. Start from the forward pass $z = xW_1 + b_1$, $h = \tanh(z)$, $\hat{y} = hW_2 + b_2$ and the loss $\mathcal{L} = \frac{1}{N}\sum_i \lVert \hat{y}_i - y_i^{*} \rVert^2$.
+
+1. **Output error.** Differentiating the square gives the residual scaled by the batch size:
+
+$$
+\frac{\partial \mathcal{L}}{\partial \hat{Y}} = \frac{2}{N}(\hat{Y} - Y^{*}) = \frac{2}{N}E
+$$
+
+2. **Output layer.** Since $\hat{y} = hW_2 + b_2$ is linear, $\partial \hat{y}/\partial W_2 = h$, so the weight gradient is an outer product summed over the batch:
+
+$$
+\frac{\partial \mathcal{L}}{\partial W_2} = H^\top \frac{\partial \mathcal{L}}{\partial \hat{Y}}, \qquad \frac{\partial \mathcal{L}}{\partial b_2} = \mathbf{1}^\top \frac{\partial \mathcal{L}}{\partial \hat{Y}}
+$$
+
+3. **Back to the hidden layer.** The same linearity, transposed, carries the error onto $H$:
+
+$$
+\frac{\partial \mathcal{L}}{\partial H} = \frac{\partial \mathcal{L}}{\partial \hat{Y}} W_2^\top
+$$
+
+4. **Through the nonlinearity.** $\tanh$ acts elementwise, so the chain rule multiplies by its derivative evaluated at the forward value, $\frac{d}{dz}\tanh z = 1 - \tanh^2 z = 1 - H^2$:
+
+$$
+\frac{\partial \mathcal{L}}{\partial Z} = \left( \frac{\partial \mathcal{L}}{\partial \hat{Y}} W_2^\top \right) \odot \left(1 - H^2\right)
+$$
+
+5. **Into the hidden weights.** $Z = XW_1 + b_1$ is linear, so $\partial \mathcal{L}/\partial W_1 = X^\top \partial \mathcal{L}/\partial Z$ - exactly the fourth expression in section 3 item 2. The scalar case checks the constant: $\hat{y} = wx$ gives $\partial \mathcal{L}/\partial w = 2(\hat{y} - y^{*})x = 2(-4.0)(3.0) = -24.0$ at $w = 2.0$, $x = 3.0$, $y^{*} = 10.0$, and the descent step $2.0 - 0.05(-24.0) = 3.20$ matches section 4.
+
+**Extend.** Add a second hidden unit and write the gradient as a sum over the two paths from the output to $W_1$; then show, by the same chain rule, why deleting the $1 - H^2$ factor leaves $\partial \mathcal{L}/\partial W_2$ correct while $\partial \mathcal{L}/\partial W_1$ disagrees with a finite difference - the signature the Break-it drill relies on.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to three outcomes before the code runs. (1) Is the initial MSE of this $12$-hidden-unit tanh net nearer $1$ or $20$? (2) Which parameter block carries the $(1 - H^2)$ factor in the backward pass - the hidden weights $W_1$ or the output weights $W_2$? (3) After $400$ steps at $\eta = 0.05$, does the loss fall below $1\%$ of its first value? Two tells: a finite-difference mismatch near $10^{-2}$ where the correct pass agrees to $10^{-10}$ means the tanh derivative was dropped, and a loss that does not move at all means the step used the pre-update gradient or the wrong sign.
 

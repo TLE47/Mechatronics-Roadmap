@@ -54,6 +54,39 @@ $$
 
    With $e = [0.20, 0, 0]^\top$ and variances $0.04$ it is $0.04/0.04 = 1.0$; dividing by a *smaller* claimed variance reports a larger NEES, which is how an overconfident filter flags itself.
 
+### Use & Understand
+The covariance you publish is a claim about how wrong you are, and these two tools are how the claim is kept honest:
+- **Joseph form** is what you write whenever the posterior is computed in single precision, or with a gain that is not the optimal one - a frozen gain, a gain borrowed from a different sensor set, a gain a scheduler handed you from two frames ago. The naive $(I - KH)P^-$ subtracts and can return a negative variance; the Joseph form is a sum of two squares and cannot.
+- **NEES** is what you compute while tuning $Q$ and $R$, or when a filter starts rejecting good measurements: it asks whether the error is the size the covariance said it would be. For $n$ states, a consistent filter has expectation exactly $n$.
+
+Run the module's own numbers: with $P^- = 4.0$, $H = 1.0$, $R = 1.0$ the gain is $K = 0.8$ and the posterior is $0.80$ in both forms; at the corrupted gain $K = 1.5$ the naive form gives $-2.0$ while the Joseph form gives $3.25$; an error of $0.20$ against a claimed variance of $0.04$ scores a NEES of $1.0$, which for one state is exactly what consistency predicts.
+
+The checks: $P^+ \ge 0$ and symmetric, the two forms agreeing **at the optimal gain** (a disagreement there is a sign or scaling bug, not a stabilisation), and a NEES near $n$ over many runs - far above $n$ means the claimed covariance is too small, far below means it is too pessimistic and the filter is ignoring the sensor.
+
+### Derive & Extend
+1. **The Joseph form is the covariance of the error, written out.** Suppose the update has the form $\hat{x}^+ = \hat{x}^- + K\nu$ with innovation $\nu = z - H\hat{x}^-$. The error then propagates as $e^+ = (I - KH)e^- - Kv$, where $v$ is the measurement noise. With $e^-$ independent of $v$, $\mathbb{E}[e^-v^\top] = 0$, and $\mathbb{E}[vv^\top] = R$:
+
+$$
+P^+ = \mathbb{E}[e^+ (e^+)^\top] = (I - KH)\,P^-\,(I - KH)^\top + K R K^\top
+$$
+
+   Every term is a quadratic form in a matrix times its own transpose, so $P^+$ is symmetric and positive semi-definite for **any** $K$ - including a $K$ that no one derived.
+2. **At the optimal gain it is the subtraction.** Expand the first term and collect the gain-dependent pieces:
+
+$$
+P^+ = P^- - KHP^- - P^-H^\top K^\top + K\left(H P^- H^\top + R\right)K^\top
+$$
+
+   With $K = P^-H^\top S^{-1}$ and $S = HP^-H^\top + R$, the last term is $P^-H^\top S^{-1} S S^{-1} H P^- = K H P^-$, so it cancels the second term and leaves $P^+ = P^- - P^-H^\top K^\top = (I - KH)P^-$. At $P^- = 4.0$, $R = 1.0$, $H = 1.0$ and $K = 0.8$ that is $(1 - 0.8) \times 4.0 = 0.80$, the same number the Joseph line gives.
+3. **NEES is a chi-square, which is why its expectation is $n$.** If the filter is consistent then $e \sim \mathcal{N}(0, P)$ with the same $P$ it publishes. Whiten by the symmetric square root, $z = P^{-1/2}e$, so $z \sim \mathcal{N}(0, I)$ and
+
+$$
+\text{NEES} = \sum_{i=1}^{n} z_i^2 \;\sim\; \chi^2_n, \qquad \mathbb{E}[\text{NEES}] = n, \qquad \operatorname{Var}[\text{NEES}] = 2n
+$$
+
+   For one state the 95 per cent band is $[0.00098, 5.02]$, which is why the exercise's single score of $1.0$ is unremarkable and a single score of $4.0$ is not evidence on its own: one draw from a $\chi^2_1$ lands above $4$ about five per cent of the time. Consistency is judged over a run, not over a sample.
+4. **Extend.** Both derivations assumed the gain is independent of the current innovation. A filter that recomputes $K$ from the same $z$ it is about to use - or one whose $R$ has off-diagonal terms - breaks that assumption: the cross term $\mathbb{E}[e^-v^\top]$ no longer vanishes, and the Joseph form still returns a positive matrix but no longer the error's true covariance. Derive the cross term for a gain that is one frame stale, $K_k = K_{k-1}$, and say what the published covariance would need to be for NEES to keep expectation $n$.
+
 ## 4. Worked example
 **Predict first (before you run it):** commit to four numbers before the block runs: (1) the gain $K$ for $P^- = 4.0$, $H = 1.0$, $R = 1.0$ - nearer $0.2$, $0.8$ or $2.0$; (2) the Joseph posterior at that gain, which must equal the naive one; (3) what the naive update returns at the corrupted gain $K = 1.5$, and whether the Joseph form can share its sign; (4) the NEES of an error of $0.20$ against a claimed variance of $0.04$. Two tells that a wrong answer is a mistake rather than a surprise: a negative posterior from the *Joseph* line means the squared term was written as a subtraction, and a NEES of $0.0008$ means the variance was multiplied by the squared error instead of dividing by it.
 

@@ -60,6 +60,36 @@ $$
    - **Inward wrench balance ($i = n \dots 1$):** $\mathcal{F}_i = \mathcal{G}_i \dot{\mathcal{V}}_i - \text{ad}_{\mathcal{V}_i}^\top (\mathcal{G}_i \mathcal{V}_i) + \text{Ad}_{T_{i+1,i}}^\top \mathcal{F}_{i+1}$, $\;\tau_i = \mathcal{S}_i^\top \mathcal{F}_i$.
    - **Christoffel Skew-Symmetry (Passivity):** For any joint velocity $\dot{q} \in \mathbb{R}^n$, $N(q, \dot{q}) = \dot{M}(q) - 2C(q, \dot{q}) = -N(q, \dot{q})^\top \implies \dot{q}^\top (\dot{M} - 2C)\dot{q} \equiv 0$.
 
+### Use & Understand
+Level A is the supported entry. Reach for this module's three tools in three situations: you need the pose of a chain whose joint axes you can measure once (PoE, with no per-link frame conventions), you are sizing a monolithic hinge that must add no backlash (Paros-Weisbord), or a controller needs exact $\tau = M\ddot{q} + C\dot{q} + g$ inside a $1\text{–}4\text{ kHz}$ tick (RNEA). Run the worked numbers and read the four results as a physical check:
+- $\mathcal{S}_2 = [0, 0, 1, 0, -0.30, 0]^\top$: a rotation about $+Z$ through $(0.30, 0, 0)$ moves the base origin at $-0.30\ \text{m/rad}$ along $+Y$. The minus is the physics of $v = -\omega \times q$, not a sign convention.
+- $K_\theta = 54.09\ \text{N}\cdot\text{m/rad}$: at the $0.50^\circ$ stroke the moment is $K_\theta\theta = 0.47\ \text{N}\cdot\text{m}$, and $\sigma_{\max} = 207.7\ \text{MPa}$ is $24\%$ of Ti-6Al-4V's $880\ \text{MPa}$ yield - inside the $30\%$ fatigue budget the module sets.
+- $\tau = (0.16, 0.06)\ \text{N}\cdot\text{m}$ for $\ddot{q} = (2.0, 1.0)\ \text{rad/s}^2$: the elbow's $0.06$ is $I_2(\ddot{q}_1 + \ddot{q}_2)$, so a shoulder-independent value there is a symptom, not a rounding.
+- $\dot{q}^\top(\dot{M} - 2C)\dot{q} = 0$ is the energy identity; a non-zero number means $C$ came from the wrong convention.
+
+Units first: $K_\theta$ in $\text{N}\cdot\text{m/rad}$, power in $\text{W}$, and stress in $\text{MPa}$ catch most sign and exponent errors before any test does.
+
+### Derive & Extend
+**1. The flexure from Euler–Bernoulli.** A beam bent to curvature $\kappa = \theta/L$ carries moment
+
+$$
+M_b = E I \kappa, \qquad I = \frac{b t^3}{12},
+$$
+
+so its end stiffness is $K = EI/L$. A circular notch is not a straight beam: the moment concentrates over the thin web, whose effective length scales as $\sqrt{Rt}$ because the cutout radius varies from $R$ to $R + t$ across the web. To first order that length is $L_{\text{eff}} = \frac{3\pi}{8}\sqrt{Rt}$, and substituting it recovers the published constant exactly:
+
+$$
+K_\theta = \frac{E b t^3}{12} \cdot \frac{8}{3\pi\sqrt{Rt}} = \frac{2Ebt^{5/2}}{9\pi\sqrt{R}} .
+$$
+
+The surface stress follows from the same assumptions: $\sigma_{\max} = M_b c/I$ with $c = t/2$ gives $6M_b/(bt^2)$, and the fillet factor $K_t = 1 + t/(2R)$ is what turns $188.8$ into $207.7\ \text{MPa}$.
+
+**2. The screw axis is a point velocity.** A body rotating at $\omega$ about an axis through $q$ moves a point $x$ at $\dot{x} = \omega \times (x - q)$. At the base origin $x = 0$ this is $\dot{x} = -\omega \times q$ - the linear half of $\mathcal{S}$, which is why a joint whose axis passes through the origin has $v = 0$.
+
+**3. Passivity is skew-symmetry.** With $T = \frac12\dot{q}^\top M\dot{q}$, $\dot{T} = \dot{q}^\top M\ddot{q} + \frac12\dot{q}^\top\dot{M}\dot{q}$. Euler–Lagrange gives $M\ddot{q} + C\dot{q} + g = \tau$, so the power balance reads $\dot{T} = \dot{q}^\top(\tau - g) + \dot{q}^\top(\tfrac12\dot{M} - C)\dot{q}$. Internal forces do no net work, so the last term must vanish for every $\dot{q}$, which holds only if $\dot{M} - 2C$ is skew-symmetric.
+
+**Extend.** Put two identical notches in series: compliances add, $1/K_{\text{eq}} = 2/K_\theta$, so $K_{\text{eq}} = K_\theta/2$ at the same stroke angle. Because $K \propto t^{5/2}$, halving $t$ cuts $K$ by $5.66$, not $4$. Compute the series stiffness for $t = 0.8\ \text{mm}$, $b = 0.015\ \text{m}$, $R = 5\ \text{mm}$, and say which effect - the series split or the thinner web - moves the $207.7\ \text{MPa}$ stress margin more.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to four numbers before the code runs: the linear part $v_2$ of the elbow's screw axis, the flexure stiffness $K_\theta$ in $\text{N}\cdot\text{m/rad}$, the peak surface stress at a $0.50^\circ$ stroke in $\text{MPa}$, and both joint torques from the two-pass recursion. Two tells: $v_2 = [0, +0.30, 0]^\top$ instead of $[0, -0.30, 0]^\top$ means the minus in $v = -\omega \times q$ was dropped; and a stress near $188.8\text{ MPa}$ instead of $207.7\text{ MPa}$ means the stress-concentration factor $K_t = 1 + t/(2R)$ was left out.
 

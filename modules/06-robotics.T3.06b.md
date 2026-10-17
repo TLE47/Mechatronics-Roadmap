@@ -61,6 +61,42 @@ $$
 
      followed by torque saturation $|\tau| \le \tau_{\max}$ and CBF barrier enforcement (`05-control.T3.06`).
 
+### Use & Understand
+This level is for the learner deploying a policy, not deriving PPO. Four tools, each with a clear moment: the **discounted return** turns a reward sequence into one score per step; **PPO's clipped surrogate** raises the probability of actions whose advantage $\hat{A}_t = G_t - V(s_t)$ beat the value estimate, but never by more than the trust region allows; **action chunking with temporal ensembling** keeps the $1\,\text{kHz}$ controller fed while a $30$–$50\,\text{Hz}$ vision model thinks; and the **safety shield** is the deterministic wrapper that runs whether or not the policy is sane. Reach for RL when no demonstration shows the behaviour but a reward can score it; reach for chunking whenever inference latency exceeds one control tick; never deploy without the shield.
+
+Run the section 4 block and check four things:
+- rewards $[1.0, 2.0, 4.0]$ at $\gamma = 0.90$ give $G_0 = 6.04$, which must lie between the undiscounted sum $7.0$ and the last reward $4.0$;
+- a ratio $\rho = 1.50$ against $\hat{A} = +2.0$ at $\epsilon = 0.20$ returns $2.40$, the clipped product - an unclipped $3.00$ means the clip was skipped;
+- blending $[0.52, 0.50, 0.46]$ at $m = 0.5$ gives $0.5027\,\text{rad}$, inside the hull of its chunks and closer to the newest - at $m = 0$ it must equal the plain mean;
+- the shield at $q = 0.50\,\text{rad}$ with $\Delta q_{\max} = 0.08$ turns a $+2.80\,\text{rad}$ command into $0.58\,\text{rad}$, exactly one clamped step from where the joint is, and never outside $[-1.50, +1.50]$.
+
+The watchdog is part of the same check: strictly past $100\,\text{ms}$ of silence is a trip, exactly at it is still alive.
+
+### Derive & Extend
+Level B earns the three formulas section 3 states.
+
+1. **The return recursion is the geometric series, factored.** By definition, and then by re-indexing the tail:
+
+$$
+G_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k} = r_t + \gamma \sum_{k=1}^{T-t-1} \gamma^{k-1} r_{t+k} = r_t + \gamma G_{t+1}
+$$
+
+With $G_T = 0$, evaluating from the last reward backwards is exact and costs one multiply-add per step, which is why no rollout sum is ever computed forwards.
+
+2. **Generalised advantage estimation is that recursion with a bootstrapped tail.** With the temporal-difference error $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ and trace parameter $\lambda \in [0, 1]$, define $\hat{A}_t = \delta_t + \gamma\lambda \hat{A}_{t+1}$. Unrolling $L$ steps gives $\hat{A}_t = \sum_{l=0}^{L-1} (\gamma\lambda)^l \delta_{t+l}$, so at $\lambda = 0$ only the first term survives and $\hat{A}_t = \delta_t$ - the one-step TD error - while at $\lambda = 1$ the telescoping sum collapses to $\sum_l \gamma^l r_{t+l} - V(s_t) = G_t - V(s_t)$, the Monte-Carlo advantage of section 3 item 1. Every intermediate $\lambda$ is a variance-bias dial between the two.
+
+3. **The clipped objective's gradient vanishes where the clip binds.** Write $\rho_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\theta_{\text{old}}}(a_t \mid s_t)$ and hold $\hat{A}_t$ fixed. Since $\operatorname{clip}(\rho, 1-\epsilon, 1+\epsilon)$ is constant outside its band, its derivative is zero there, and for $\hat{A}_t > 0$ the pessimistic $\min$ selects the clipped branch once $\rho > 1+\epsilon$; for $\hat{A}_t < 0$ it selects it once $\rho < 1-\epsilon$. Hence
+
+$$
+\frac{\partial L^{\text{CLIP}}}{\partial \rho_t} = \begin{cases} \hat{A}_t, & \lvert \rho_t - 1 \rvert \le \epsilon, \\ 0, & \text{otherwise}, \end{cases}
+$$
+
+so a step that would leave the trust region contributes no gradient at all, and the update is driven only by in-band ratios times $\partial \log \pi_\theta / \partial \theta$.
+
+4. **Temporal ensembling is a convex combination.** The weights $w_i = \exp(-m i)$ are positive for every $m \ge 0$, so the coefficients $w_i / \sum_j w_j$ are non-negative and sum to $1$, and $a_t^{\text{ens}} = \sum_i w_i \hat{a}_{t \mid t-i} / \sum_i w_i$ is a convex combination; therefore $\min_i \hat{a}_{t \mid t-i} \le a_t^{\text{ens}} \le \max_i \hat{a}_{t \mid t-i}$, and at $m = 0$ every weight is $1$ and the formula reduces to the arithmetic mean. This is why the ensemble cannot invent an action no chunk predicted - a property the safety shield still has to enforce on the joint.
+
+**Extend.** Real-time chunking re-plans while the previous chunk is still executing. Write the ensemble with the window cut at $K - d$ for a delay of $d$ ticks, and show how the weights shift when a fresh age-zero prediction replaces the oldest weight $\exp(-m(M-1))$; then state the condition on $m$ under which the newest chunk still dominates.
+
 ## 4. Worked example
 **Predict first (before you run it):** Commit to four numbers before the code runs. (1) With rewards $[1.0, 2.0, 4.0]$ and $\gamma = 0.90$, is $G_0$ closer to $7.0$ or to $4.0$ - and what is $G_1$? (2) For $\rho = 1.50$, $\hat{A} = +2.0$ and $\epsilon = 0.20$, does the pessimistic $\min$ return $3.00$ or $2.40$? (3) Blending $[0.52, 0.50, 0.46]$ with $m = 0.5$: does the result land closer to the newest or to the oldest prediction? (4) With $q = 0.50\text{ rad}$, $\Delta q_{\max} = 0.08\text{ rad}$ and $q_{\max} = 1.5\text{ rad}$, what does the shield output for a policy asking $+2.80\text{ rad}$? Two tells that a wrong answer is a mistake rather than a different convention: a ratio of $1.50$ may not survive as a multiplier once it is outside $[0.80, 1.20]$, so an unclipped $3.00$ means the clip was skipped; and the shield output must be exactly $\Delta q_{\max}$ from the measured $q$, so an answer that jumps to $2.80$ or slides to $1.50$ applied the rate limit on the wrong side or skipped the joint-limit clamp.
 

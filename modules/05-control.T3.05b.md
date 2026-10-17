@@ -55,6 +55,37 @@ $$
 
    and the next update starts from zero. With the reset, a $0.05$ rad correction followed by a **zero** innovation holds $0.05$ rad; without it the stale mean injects another $0.05$ and the frame reads $0.10$ rad. Two *non-zero* corrections of $0.05$ compose to $0.10$ either way - which is why the discriminating test must use a zero innovation, not two equal ones.
 
+### Use & Understand
+Reach for this the moment a filter's state is a rotation and its covariance lives in a vector: an IMU attitude estimate, a camera's pose, a joint frame fed by two encoders. You do not need the Lie-algebra derivation to use it - you need three habits, and each has a check you can run in one line.
+
+- **Build the step with both coefficients.** $\exp([\phi]_\times) = I + \frac{\sin\theta}{\theta}[\phi]_\times + \frac{1-\cos\theta}{\theta^2}[\phi]_\times^2$, and use $\theta = 0.05$ rad about $+z$: the $(1,0)$ entry is $\sin(0.05) = 0.049979$ and $\det R = 1$ to $10^{-15}$. A determinant that is not exactly $1$ means the $K^2$ term was dropped, not that the angle is wrong.
+- **Multiply on the right.** $R^+ = R^-\exp([\delta\hat{\theta}]_\times)$ puts the step in the body frame. The cheap check is a frame that does not commute: build the case from a $90^\circ$ rotation about $+x$, because a $+z$-only frame commutes and a left multiplication hides there.
+- **Zero the mean after folding it in.** With the reset, a $0.05$ rad correction followed by a zero-innovation measurement holds $0.05$ rad (the entry stays $0.049979$); a real $0.02$ rad innovation then reaches $0.07$. Without the reset the zero innovation turns the frame again and it reads $0.10$ - a perfect rotation of the wrong pose.
+- **Sanity checks that cost nothing.** Read the angle back with $\theta = \arccos((\operatorname{tr}R - 1)/2)$, confirm $R^\top R = I$, and confirm one encoder count is $2\pi/4096 = 0.0015339808$ rad and that injecting it leaves the determinant at $1$.
+
+If the arm corrects in the wrong direction only when it is away from the origin, the injection is on the left; if every correction is applied twice, the reset is missing. Neither fault shows up in a determinant test.
+
+### Derive & Extend
+1. **Define the error where the correction lives.** Let $R$ be the true attitude and $\hat{R}$ the nominal one the filter carries. The body-frame error is defined by
+
+$$
+R = \hat{R}\,\exp\big([\delta\theta]_\times\big)
+$$
+
+   so $\delta\theta \in \mathbb{R}^3$ is the rotation that takes the nominal into the truth, expressed in the body frame. This is a definition, not a modelling choice.
+2. **The update is the definition, rearranged.** A measurement produces a posterior error $\delta\hat{\theta}^+$; substituting it into the same definition with the new nominal gives $R^+ = \hat{R}\,\exp([\delta\hat{\theta}^+]_\times)$ at once. Nothing was approximated.
+3. **Left multiplication is a different error.** If instead one writes $R = \exp([\delta\theta]_\times)\,\hat{R}$, the step is a *spatial* rotation, and the two agree only when they commute. Conjugating shows the difference exactly:
+
+$$
+\exp([\delta]_\times)\,\hat{R} = \hat{R}\,\exp\big([\hat{R}^\top \delta]_\times\big)
+$$
+
+   so the left form injects $\hat{R}^\top\delta$ into the body - the same magnitude, a rotated axis. At $\hat{R} = I$ the two coincide, which is why only a non-commuting frame exposes the fault.
+4. **The reset follows from consuming the state.** After the injection the nominal *is* the posterior, so the error it already contains is zero. If the mean is not cleared, the next posterior $\delta'$ is applied to a nominal that has already absorbed $\delta\hat{\theta}^+$, and two equal steps about a common axis compose as $\exp([\delta]_\times)\exp([\delta]_\times) = \exp([2\delta]_\times)$: $0.10$ rad for $\delta = 0.05$.
+5. **Check the algebra against the trace.** $\operatorname{tr}\exp([\theta \hat{n}]_\times) = 1 + 2\cos\theta$ for any unit axis, so $R^+$ from step 2 must read $\theta = 0.05$ rad back. That single identity catches a sign error, a missing term and a double count.
+
+**Extend.** Take a measurement whose innovation is not zero and inject $\delta + Ke$ in one step. Expand both exponentials to second order and show that $\exp([a]_\times)\exp([b]_\times) \ne \exp([a+b]_\times)$ whenever $a \times b \ne 0$, with the leading error term $\tfrac12[a,b]$ - then compute that commutator for the module's two in-plane cases ($a = 0.05\hat{z}$, $b = 0.02\hat{z}$, which is zero, and $a = 0.05\hat{z}$, $b = 0.02\hat{x}$, which is not) and say which one a scalar-angle test can still catch.
+
 ## 4. Worked example
 **Predict first (before you run it):** commit to four things before the block runs: (1) the two entries of `exp_so3([0, 0, 0.05])` that carry $\sin$ and $\cos$; (2) whether injecting the zero vector returns the nominal matrix exactly; (3) the angle left after a $0.05$ rad correction followed by a **zero-innovation** update - $0.05$ or $0.10$; (4) the angle after a real $0.02$ rad innovation follows it - $0.07$ or $0.12$. Two tells that a wrong answer is a mistake rather than a surprise: a determinant other than exactly $1$ means the exponential was truncated (the $K^2$ term is missing), and a zero-innovation result of $0.10$ is the missing reset, not a gain error.
 
