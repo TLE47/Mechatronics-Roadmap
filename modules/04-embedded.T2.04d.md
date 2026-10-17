@@ -67,6 +67,7 @@ $$
 
 
 ## 4. Worked example
+**Predict first (before you run it):** Write down three numbers before running the audit. (1) What is the wire time of the $48 + 16 = 64\text{ B}$ joint-state frame over $5\text{ Mbps}$ CAN-FD at $500\text{ Hz}$, and what is $U_{\text{link}}$ for that publisher plus the $24 + 16 = 40\text{ B}$ command at $500\text{ Hz}$? (2) What is the spin WCET for $t_{\text{io}} = 35\ \mu\text{s}$ and four callbacks totalling $150\ \mu\text{s}$, as a percentage of the $2000\ \mu\text{s}$ thread? (3) What clock offset does the four-timestamp exchange report? Two tells: a utilisation of $10.4\%$ means the CAN-FD frame was charged $10$ bits per byte instead of $8$, and an offset of $-499000\ \mu\text{s}$ means $t_2 - t_1$ and $t_3 - t_4$ were subtracted in the wrong order.
 Audit a micro-ROS actuator node running inside a $500\text{ Hz}$ ($T_{\text{spin}} = 2000\ \mu\text{s}$) Zephyr/FreeRTOS thread: (1) compute the `XRCE-DDS` wire time and link utilization for a $48\text{-byte}$ joint state payload ($+16\text{-byte}$ XRCE header) at $500\text{ Hz}$ and a $24\text{-byte}$ command subscription ($+16\text{-byte}$ XRCE header) at $500\text{ Hz}$ over $5\text{ Mbps}$ CAN-FD, (2) verify the static `rclc_executor` handle count and spin WCET budget, and (3) compute the NTP clock offset $\theta_{\text{offset}}$ and round-trip delay $\delta_{\text{rtt}}$ from a `rmw_uros_sync_session()` exchange.
 
 ```python
@@ -127,6 +128,13 @@ The tests are behavioural: the $46\text{ B}$ frame must take $499.1319\ \mu\text
   - **Prerequisite Bridge Modules:** [`04-embedded.T1.04b`](04-embedded.T1.04b.md) (*Binary Framing*) and [`04-embedded.T2.04c`](04-embedded.T2.04c.md) (*Zephyr Static Threads*).
   - **Core Concepts to Review First:** XRCE-DDS wire framing overhead & baud-rate link utilization, static memory budgets (`sizeof(handle) * N <= arena`) with deterministic `rclc_executor` handle ordering, and NTP-style four-timestamp clock offset $\theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Official micro-ROS Documentation & Zephyr Tutorials (`micro.ros.org`)](https://micro.ros.org/docs/tutorials/core/first_application_rtos/zephyr/) and [eProsima Micro XRCE-DDS Docs (`micro-xrce-dds.docs.eprosima.com`)](https://micro-xrce-dds.docs.eprosima.com/).
+
+### Break it on purpose
+Inject the byte-width fault the exercise plants (`uart_eight_bits`), keeping the exercise's $46\text{ B}$ frame at $921{,}600\text{ bps}$:
+- **Inject:** budget the `8N1` UART link as $8\text{ bits/byte}$ — the CAN-FD constant — instead of $10\text{ bits/byte}$.
+- **Symptom:** the $46\text{ B}$ frame reads $399.31\ \mu\text{s}$ instead of $499.13\ \mu\text{s}$, exactly $20\%$ optimistic, so a $2\text{ kHz}$ stream that is $99.8\%$ of the link reports $79.9\%$: a link that drops frames looks healthy until the agent's receive buffer overruns.
+- **Diagnose:** the error is confined to the UART path and is exactly the ratio $10/8 = 1.25$, while the CAN-FD budgets, which genuinely carry $8$ bits per byte, stay correct. A baud-rate typo would move both paths and would not land on $1.25$; a missing XRCE header would shorten the frame by $14\text{ B}$ instead of scaling it.
+- **Fix:** charge $10$ bits per byte on 8N1 ($1$ start $+ 8$ data $+ 1$ stop), re-measure $499.1319\ \mu\text{s}$, and confirm the crossing against `plant.simulate_uart_tx`: $115.2\text{ kbaud}$ must still drop frames and $500\text{ kbaud}$ must drop none.
 
 ## 6. Simulation path
 You can run a complete **micro-ROS Client + `micro_ros_agent`** loop on Linux using Zephyr's `native_sim` target or the host UDP transport **with zero physical microcontroller hardware**, or bridge a physical `STM32G4`/`ESP32` over USB-UART:

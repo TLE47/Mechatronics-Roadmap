@@ -60,6 +60,8 @@ $$
 
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to five numbers before the code runs. (1) What is $U$ for the three tasks $120/1000$, $250/2000$ and $800/10000\ \mu\text{s}$, and is it under the $0.7798$ three-task Liu-Layland bound? (2) What is $H$'s worst-case response with a priority-inheriting mutex, and what does it become with a plain binary semaphore while a $600\ \mu\text{s}$ medium task is ready? (3) Of $\{0x105, 0x012, 0x04A\}$, which identifier wins arbitration? (4) What is the 16-bit code for $0.0\text{ rad}$ over $[-12.5, +12.5]\text{ rad}$? Two tells that your result is wrong rather than the module: $U = 325$ means microseconds were divided by microseconds without the unit conversion, and a winner of $0x105$ means you picked the highest identifier — dominance makes the *lowest* number win.
+
 Compute total CPU utilization $U$ for a 3-task FreeRTOS actuator node, compare worst-case high-priority response time with and without Priority Inheritance during mutex contention, and verify CAN bus arbitration + 16-bit MIT fixed-point quantization.
 
 ```python
@@ -111,6 +113,12 @@ EXERCISE_TARGET=exercises/04-embedded.T2.04b/starter.py \
 
 **45 tests.** The utilisation sum is checked at the worked example's $0.325$ and the Skip test's $0.40$, so a microsecond/millisecond mix-up fails at once; the response time is checked with the mutex ($140\ \mu\text{s}$) and without it ($740\ \mu\text{s}$), so ignoring the flag fails; arbitration is checked on $\{0x105, 0x012, 0x04A\}$ in both orders, so picking the highest identifier fails; and the pack is checked at the exercise's $3071$, at both ends ($0$ and $4095$), and at the zero command's half-step straddle, so a $2^N$ scale fails. The transfer suite runs **the plant as the node**: its $1\text{ ms}$ tick is the worked example's $1000\ \mu\text{s}$ period, its $2.5\text{ N}\cdot\text{m}$ clamp packs to code $2332$ and both disturbance pulses survive the $12$-bit $[-18, +18]\text{ N}\cdot\text{m}$ frame within half a count, and its $4096$-count encoder is exactly one count finer than a 12-bit pack's $4095$ intervals. Five planted faults - `utilization_counts_milliseconds`, `response_time_always_inherits`, `can_winner_picks_highest`, `pack_uses_2_to_the_bits`, `quantization_step_uses_2_to_the_bits` - each fail the test named for them.
 
+### Break it on purpose
+Keep the worked example's numbers — $C_H = 100\ \mu\text{s}$, $B_i = 40\ \mu\text{s}$, $C_M = 600\ \mu\text{s}$ — and plant the fault the `## 8. Common mistakes` table calls out:
+- **Inject:** guard the shared struct with `xSemaphoreCreateBinary()` instead of `xSemaphoreCreateMutex()`, so the lock-holder inherits nothing.
+- **Symptom:** $H$'s worst-case response jumps from $140\ \mu\text{s}$ to $740\ \mu\text{s}$ — $C_H + B_i + C_M$ — even though $U = 0.325$ never changed and the control task is still the highest priority. At a $1\text{ kHz}$ period that blocking is $74\%$ of the tick.
+- **Diagnose:** the utilisation is unchanged, so the task set was and is schedulable by the Liu-Layland bound; what grew is the *blocking* term, and it grew by exactly the medium task's execution time, which no amount of priority assignment can fix — only a lock that hands the low-priority task the high-priority task's priority can.
+- **Fix:** replace it with `xSemaphoreCreateMutex()` so $L$ inherits $P_H$ and blocks $M$; prove it the way the suite does, with $R_H = 140\ \mu\text{s}$ **while** the $600\ \mu\text{s}$ medium task is ready, and the binary-semaphore variant still reporting $740\ \mu\text{s}$.
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Python Loops, Lists, Timing Units & Linear Range Scaling*).

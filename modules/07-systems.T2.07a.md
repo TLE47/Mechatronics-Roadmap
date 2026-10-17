@@ -57,6 +57,8 @@ $$
    - Across a catalog of $F_{\text{total}}$ required fault modes (Over-Voltage, Over-Current, Encoder SPI CRC Loss, CAN Watchdog Timeout, Thermal $I^2t$ Derating), fault-injection coverage is $C_{\text{hil}} = F_{\text{passed}} / F_{\text{total}}$, and every fault $i$ must satisfy measured reaction latency $t_{\text{react},i} \le t_{\text{budget},i}$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers and one ordering. (1) With $J = 0.04\text{ kg}\cdot\text{m}^2$, $\omega_0 = 30.0\text{ rad/s}$ and $\eta = 0.75$, how much energy reaches the bus - near $13.5\text{ J}$ or near $18.0\text{ J}$? (2) Dumped into $C_{\text{bus}} = 1000\ \mu\text{F}$ from $24.0\text{ V}$, does that push the bus to roughly $166\text{ V}$ or to roughly $40\text{ V}$? (3) Is $R_{\text{brake,max}}$ an upper bound or a target, and does a $4.0\ \Omega$ part sit inside it? (4) Which is the more serious protocol fault, a duplicate frame ($4 \to 4$) or a five-count jump ($4 \to 10$)? Two tells that a wrong answer is a mistake rather than a different convention: an unclamped voltage below $48\text{ V}$ means the $\frac{1}{2}J\omega^2$ term was divided instead of added under the square root (the surge can only *raise* the bus); and a resistor bound below $4.0\ \Omega$ means $\eta$ was applied twice, since $P_{\text{regen,peak}} = \eta|\tau_{\max}\omega_0| = 180.0\text{ W}$ already contains it.
+
 Size a regenerative shunt brake chopper for a $24\text{ V}$ custom servo decelerating $J = 0.04\text{ kg}\cdot\text{m}^2$ from $\omega_0 = 30.0\text{ rad/s}$ ($\tau_{\max} = 8.0\text{ N}\cdot\text{m}, \eta = 0.75, C_{\text{bus}} = 1000\ \mu\text{F}$) so the bus stays clamped at $V_{\text{clamp}} = 28.0\text{ V}$, and verify the 4-bit rolling-counter + watchdog detector across normal, dropped, and frozen CAN-FD frames.
 
 ```python
@@ -115,6 +117,13 @@ EXERCISE_TARGET=exercises/07-systems.T2.07a/starter.py \
 ```
 
 The tests are behavioural: the worked $13.5\text{ J}$ and $166.06\text{ V}$; the resistor bound of $4.3556\ \Omega$ with $4.0$ inside it and $4.5$ outside; every counter outcome including the rollover and a three-frame jump; the watchdog as **frames times period**; and the HIL ratio with a refusal for an empty catalog. Four planted faults - `regen_no_eta`, `bus_linear`, `counter_plain_delta`, `watchdog_uses_period` - each fail the test named for them. The transfer suite sizes the chopper from the **shared plant**: the elbow is spun up under `plant.TAU_LIMIT`, its measured kinetic energy drives the bus surge past $28\text{ V}$, the resistor bound is tight at the peak, and the rolling counter runs over the plant's 1 kHz frame cadence, where a frame dropped every seven is a `WARN_DROPPED_1` and a stuck transmitter is a `FAULT_FROZEN`.
+
+### Break it on purpose
+Inject the `counter_plain_delta` fault and diagnose it from the frame log alone, keeping the $1\text{ kHz}$ command cadence:
+- **Inject:** compute the counter step as plain signed subtraction, `delta = curr_c - prev_c`, instead of modulo-16 arithmetic `(curr_c - prev_c) % 16` (the wrap bug in `## 8. Common mistakes`).
+- **Symptom:** the clean wrap $15 \to 0$ yields $-15$, which is `<= max_drop` in a naive `delta - 1 <= max_drop` test, so a perfectly healthy frame stream is reported as `WARN_DROPPED_-16`; with the guard written the other way it is reported as `FAULT_SEQ_JUMP` instead. Either way the fault appears once every $16\text{ ms}$ at $1\text{ kHz}$, i.e. $62.5$ times per second, so a drive that latches on any non-`OK` verdict trips continuously while the transmitter is behaving correctly.
+- **Diagnose:** the wrap is the only place the two arithmetics disagree. A frozen frame $4 \to 4$ gives $0$ both ways and a one-frame drop $4 \to 6$ gives $2$ both ways, so a verdict that is correct for every non-wrapping pair and wrong only at $15 \to 0$ localises the bug to the missing modulus - not to the CRC, the watchdog window, or a genuinely stuck node.
+- **Fix:** restore the modular step `(curr_c - prev_c) % 16` (or `& 0x0F`) and prove it on the four cases the worked example already asserts: $15 \to 0$ is `OK`, $4 \to 4$ is `FAULT_FROZEN`, $4 \to 6$ is `WARN_DROPPED_1`, and $4 \to 10$ is `FAULT_SEQ_JUMP`. The planted fault must fail `test_behavior`, and the plant-cadence transfer check must pass.
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**

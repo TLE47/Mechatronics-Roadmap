@@ -44,6 +44,7 @@ $$
    Substituting $m = 1.0\text{ kg}$, $k = 100.0\text{ N/m}$, $b = 10.0\text{ N}\cdot\text{s/m}$, $\Delta t = 0.01\text{ s}$, $\vec{x}_0 = [0.10\text{ m},\; 0.0\text{ m/s}]^T$, and $u_0 = 5.0\text{ N}$ yields $x_1 = (1.0)(0.10\text{ m}) + (0.01\text{ s})(0.0\text{ m/s}) = 0.1000\text{ m}$ and $v_1 = (-1.0\text{ s}^{-1})(0.10\text{ m}) + (0.90)(0.0\text{ m/s}) + (0.01\text{ kg}^{-1}\text{s})(5.0\text{ N}) = -0.0500\text{ m/s}$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to two numbers before running the block. (1) With $m = 1.0\text{ kg}$, $k = 100.0\text{ N/m}$, $b = 10.0\text{ N}\cdot\text{s/m}$, $\Delta t = 0.01\text{ s}$, $\vec{x}_0 = [0.10\text{ m},\; 0.0\text{ m/s}]^T$ and $u_0 = 5.0\text{ N}$, what are $x_1$ and $v_1$ after one step? (2) The 500-step loop with the same $u_0$ settles at $x_{\text{eq}} = u_0/k$ — is that above or below $0.10\text{ m}$, and what value does it reach? Two tells that a wrong result is a mistake rather than a surprise: $x_1$ must still read $0.1000\text{ m}$, because the first step has no velocity to move it, so any change there means the position row consumed the *new* velocity; and $v_1$ must come out at exactly $-0.0500\text{ m/s}$, whose magnitude is $\Delta t \cdot u_0 / m$, so $+0.0500$ means a sign slipped in the force row.
 Build the $2\times 2$ discrete transition matrix $A_d$ and input matrix $B_d$ for $m = 1.0\text{ kg}$, $k = 100.0\text{ N/m}$, $b = 10.0\text{ N}\cdot\text{s/m}$, $\Delta t = 0.01\text{ s}$, and verify that one matrix step from $\vec{x}_0 = [0.10, 0.00]^T$ with $u_0 = 5.0\text{ N}$ matches the scalar update identically.
 
 ```python
@@ -94,6 +95,13 @@ The tests are behavioural: the velocity estimate must change by exactly 10 when 
   - **Core Concepts to Review First:** $2\times 2$ matrix-vector multiplication $A_d x_k + B_d u_k$ and simultaneous state update in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
   - **Linear Algebra & State-Space Study Links:** [3Blue1Brown: Linear Transformations and Matrices (`3blue1brown.com`)](https://www.3blue1brown.com/lessons/linear-transformations) and [Brunton & Kutz *Data-Driven Science and Engineering* (`databookuw.com`)](https://databookuw.com/).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md).
+
+### Break it on purpose
+Inject the `## 8. Common mistakes` row about a $B_d$ that skipped $\Delta t$, and diagnose it from the numbers alone, keeping $m = 1.0\text{ kg}$ and $\Delta t = 0.01\text{ s}$:
+- **Inject:** form the input column as $B_d = [0,\; 1/m]^T$ instead of $[0,\; \Delta t/m]^T$, so the force enters the update as an acceleration but is added to a velocity.
+- **Symptom:** $x_1$ is still $0.1000\text{ m}$, but $v_1$ jumps to $-1.0(0.10) + 1.0(5.0) = +4.9000\text{ m/s}$ instead of $-0.0500\text{ m/s}$, and the 500-step loop no longer converges to $x_{\text{eq}} = 0.0500\text{ m}$: each tick adds $5.0\text{ m/s}$ to the velocity where the correct column adds $\Delta t \cdot 5.0 = 0.05\text{ m/s}$, so the state runs away.
+- **Diagnose:** the units localise it. $B_d u_k$ sits in the velocity row, so it must carry $\text{m/s}$; $(1/m)u_0 = 5.0\text{ m/s}^2$ is an acceleration, while $\Delta t u_0/m = 0.05\text{ m/s}$ is a velocity increment. The position row is untouched ($x_1$ still $0.1000\text{ m}$), which rules out $A_d$ and points only at the input column.
+- **Fix:** multiply the force row by $\Delta t$, so $B_d = [0,\; 0.01]^T$; then $v_1 = -0.0500\text{ m/s}$ matches the scalar update to $10^{-12}$, and the 500-step loop lands on $x_{\text{eq}} = 0.0500\text{ m}$ within $\pm 10^{-3}\text{ m}$ with velocity under $10^{-4}\text{ m/s}$.
 
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to see a 4-state matrix updater driving a motor + flexible shaft + load plant.

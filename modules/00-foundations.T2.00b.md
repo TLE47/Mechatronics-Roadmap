@@ -44,6 +44,7 @@ $$
 3. **Linear Independence & Basis Determinant:** Two 2D column vectors $\vec{b}_1 = [a, c]^T$ and $\vec{b}_2 = [b, d]^T$ form an invertible basis matrix $B$ iff $\det(B) = a d - b c \neq 0$. For $B = \begin{bmatrix} 1.0 & 2.0 \\ 2.0 & 4.0 \end{bmatrix}$, $\det(B) = (1.0)(4.0) - (2.0)(2.0) = 0.0$ (collinear/singular).
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers and one ordering before the block runs. For $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ and $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$: (1) what is $\|\vec{r}\|$, and which component of $\vec{F}$ contributes to the axial projection? (2) What are the three components of $\vec{\tau} = \vec{r}\times\vec{F}$, and which of them has the largest magnitude? Two tells that a wrong answer is a mistake: $F_{\text{axial}}$ must be $-16.0\text{ N}$, and $-20.0\text{ N}$ means you dotted $\vec{F}$ with $\vec{r}$ itself instead of the unit vector $\hat{u}_r = [0.60, 0.80, 0.00]^T$; and $\vec{\tau}\cdot\vec{r}$ must be exactly $0.0\text{ N}\cdot\text{m}^2$, so a non-zero dot product means the middle ($y$) component was formed as $r_x F_z - r_z F_x$ instead of $r_z F_x - r_x F_z$.
 Compute the axial force projection $F_{\text{axial}} = \vec{F}\cdot\hat{u}_r$ and 3D shoulder torque $\vec{\tau} = \vec{r}\times\vec{F}$ for lever arm $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ and wrist force $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$, and assert orthogonality $\vec{\tau}\cdot\vec{r} = 0$.
 
 ```python
@@ -97,6 +98,13 @@ The tests are behavioural: the projection must not grow when the lever gets long
   - **Core Concepts to Review First:** 3D dot product $\vec{a}\cdot\vec{b} = \sum a_i b_i$ and 3D right-hand cross product $\vec{\tau} = \vec{r}\times\vec{F}$ in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
   - **Dot/Cross Product & Basis Change Study Links:** [3Blue1Brown: Dot Products and Cross Products (`3blue1brown.com`)](https://www.3blue1brown.com/lessons/cross-products) and [Lynch & Park *Modern Robotics* Ch. 3 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [Track 02 Tier 2 (`02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied`)](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
+
+### Break it on purpose
+Inject the anti-commutation slip from the `## 8. Common mistakes` table and diagnose it without looking at the code, keeping $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ and $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$:
+- **Inject:** swap the operands, so the moment is computed as $\vec{F}\times\vec{r}$ instead of $\vec{r}\times\vec{F}$.
+- **Symptom:** every component flips sign - $\vec{\tau} = [-6.0, +4.5, +6.0]^T\text{ N}\cdot\text{m}$ instead of $[6.0, -4.5, -6.0]^T$ - while $\vec{\tau}\cdot\vec{r}$ still reads $0.0\text{ N}\cdot\text{m}^2$ and $\|\vec{\tau}\|$ is still $9.60\text{ N}\cdot\text{m}$.
+- **Diagnose:** orthogonality and magnitude are blind to the swap, so the usual assert cannot catch it; only the sign does. A $0.20\text{ kg}$ payload hanging at $x = 0.10\text{ m}$ must produce a moment about the shoulder of $-m g x = -0.1962\text{ N}\cdot\text{m}$ (a sagging, clockwise torque), and the swapped product returns $+0.1962\text{ N}\cdot\text{m}$, which would command the joint to lift instead of hold.
+- **Fix:** put the lever arm first, $\vec{\tau} = \vec{r}\times\vec{F}$, then prove the sign on a case whose answer is known independently: the payload moment must come out $-0.1962\text{ N}\cdot\text{m}$ and $\vec{\tau}\cdot\vec{F}$ must vanish, so both orthogonality checks and the physical sign agree.
 
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench to inspect how 3D joint axes and link lever arms produce spatial torques across the 6-DOF arm.

@@ -50,6 +50,8 @@ $$
    Substituting $A = \begin{bmatrix} 1 & 0.1 \\ 0 & 1 \end{bmatrix}$, $\Sigma_x = \begin{bmatrix} 1 & 0 \\ 0 & 4 \end{bmatrix}$, and $Q = 0$ gives $\Sigma_y = \begin{bmatrix} 1.04 & 0.4 \\ 0.4 & 4.0 \end{bmatrix}$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers before running it: where unwarped Tustin lands an $850\text{ Hz}$ target sampled at $f_s = 4000\text{ Hz}$, how many hertz it misses by, the pre-warped analog frequency $\omega_a$ in $\text{rad/s}$, and the off-diagonal entry of $\Sigma_y$ for $A = \begin{bmatrix} 1 & 0.1 \\ 0 & 1 \end{bmatrix}$, $\Sigma_x = \operatorname{diag}(0.01, 0.25)$ and $Q = \operatorname{diag}(0.001, 0.002)$. Two tells: an unwarped prototype that lands exactly on $850.00\text{ Hz}$ means the pre-warp was applied twice, because the unwarped map is the one that misses; and a covariance whose off-diagonal comes out $0$ even though $A$ has an off-diagonal entry means $A \Sigma_x A^\top$ was computed as $A \Sigma_x$, dropping the transpose.
+
 Compare an unwarped vs. pre-warped Tustin notch filter targeting $f_0 = 850\text{ Hz}$ at $f_s = 4000\text{ Hz}$ ($Q_{\text{notch}} = 5$), and verify the covariance propagation $\Sigma_y = A \Sigma_x A^\top + Q$.
 
 ```python
@@ -106,6 +108,13 @@ The tests are behavioural: 3150 Hz at 4 kHz must alias to 850 Hz and 9000 Hz to 
   - **Core Concepts to Review First:** Nyquist folding $f_{\text{alias}} = |f_{\text{sig}} - k f_s|$ and Tustin frequency pre-warping $\omega_a = \frac{2}{T_s}\tan\!\left(\frac{\pi f_0}{f_s}\right)$ in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
   - **DSP, Biquad & Pre-Warping Study Links:** [The Scientist and Engineer's Guide to DSP (`dspguide.com`, Ch. 3 Sampling & Aliasing)](https://www.dspguide.com/), [Audio EQ Cookbook Biquad Formulas (`w3.org/TR/audio-eq-cookbook`)](https://www.w3.org/TR/audio-eq-cookbook/), and [Roger Labbe *Kalman and Bayesian Filters in Python* (Gaussian Covariance)](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (Step 2.1 Pre-Warped TDF-II Biquad Notch).
+
+### Break it on purpose
+Inject the `prewarp_unwarped` fault on purpose: design the $850\text{ Hz}$ notch from $\omega_0 = 2\pi f_0$ instead of the pre-warped prototype, and leave the biquad normalization alone.
+- **Inject:** pass the target frequency straight into the Tustin substitution, as if the analog and digital frequency axes were the same line.
+- **Symptom:** the notch centre lands at $749.48\text{ Hz}$ - a $100.52\text{ Hz}$ miss - so a true $850\text{ Hz}$ resonance is left almost unattenuated while a $749.5\text{ Hz}$ component is nulled instead. Symmetry and unity DC gain still hold, so every coefficient check except the landing frequency passes.
+- **Diagnose:** the landing frequency is exactly the unwarped map's output: `tustin_hz(2 * math.pi * f0, fs)` returns $749.48\text{ Hz}$, while `tustin_hz(prewarp_omega(f0, fs), fs)` returns $850.00\text{ Hz}$ - the round trip is an identity only when the pre-warp is applied first, which localises the fault to the prototype frequency. A normalization error would move the DC gain and break the $b_0 = b_2$, $a_1 = b_1$ symmetry; a coefficient sign error would null nothing at all, including the target tone.
+- **Fix:** pre-warp with $\omega_a = \frac{2}{T_s}\tan(\pi f_0/f_s) = 6306.69\text{ rad/s}$ at $850/4000$, then prove it twice: `tustin_hz(omega_a, fs)` returns $850.00\text{ Hz}$ to $10^{-9}$, and a sampled $850\text{ Hz}$ tone loses more than $99.9\%$ of its energy (RMS ratio below $10^{-3}$) while a $200\text{ Hz}$ tone passes through.
 
 ## 6. Simulation path
 Open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench (`npm run dev`) and toggle pre-warping ON vs. OFF at $f_0 = 850\text{ Hz}$, $f_s = 4000\text{ Hz}$ to watch the notch center shift from $749.5\text{ Hz}$ right onto the $850\text{ Hz}$ resonance peak.

@@ -45,6 +45,8 @@ $$
    - **Transfer-Complete (`TC`) ISR (`HAL_ADC_ConvCpltCallback`)** fires when DMA wraps at $2N \to 0$: CPU reads slice `[N : 2N]` while DMA writes `[0 : N]`.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to three numbers before the code runs. (1) A 16-bit SPI frame at $10\text{ MHz}$ plus $0.4\ \mu\text{s}$ of chip-select takes how long, and what fraction of a $50\ \mu\text{s}$ loop is that? (2) Sending $320$ UART bits at $1\text{ Mbps}$ by polling costs how many microseconds, and how many times over is that of the $50\ \mu\text{s}$ loop? (3) With two DMA setups at $0.25\ \mu\text{s}$ each, what percentage of the loop does the CPU still spend? Two tells that your result is wrong rather than the module: a polled total near $42\ \mu\text{s}$ means you divided the $320$ bits by $8$ and charged one stall per byte instead of per bit — a mistake that would hide the overflow, since it squeezes under the $50\ \mu\text{s}$ budget; and a ping-pong window of $160\ \mu\text{s}$ means you sized it with $2N = 32$ samples instead of the half-buffer's $N = 16$.
+
 Compare CPU time blocked when reading a 16-bit encoder + sending a 32-byte telemetry frame (`320` UART bits at $1\text{ Mbps}$) using blocking polling vs. DMA offload inside a $20\text{ kHz}$ ($50\ \mu\text{s}$) control loop, and simulate a $2N = 8$ ping-pong circular DMA buffer over $16$ incoming ADC samples.
 
 ```python
@@ -94,6 +96,12 @@ EXERCISE_TARGET=exercises/04-embedded.T2.04a/starter.py \
 
 **34 tests.** The frame is checked at the worked example's $2.0\ \mu\text{s}$ and at the skip test's $2.0\ \mu\text{s}$ of pure shift, so a dropped chip-select shows up as $1.6$; the polled write is checked at the skip test's $500\ \mu\text{s}$ ($500$ bits, not $50$ bytes), so a per-byte division reports $62.5$; the window is checked at the exercise's $80.0\ \mu\text{s}$, so a $2N$ window reports $160$; the HT rate is checked at $2000\ \text{Hz}$, so a $2N$ divisor reports $1000$; and the ping-pong replay grades the worked example's sixteen samples arriving in order, with HT reading Ping and mid-half positions refused. The transfer suite runs the plant's own clock: a $2.0\ \mu\text{s}$ encoder frame is $0.2\%$ of the $1\ \text{ms}$ tick, its encoder is a $12$-bit, $4096$-count word ($1.2\ \mu\text{s}$ of shift), a four-sample half fires HT at $250\ \text{Hz}$ - $250$ reads per second of plant time - and a $320\ \mu\text{s}$ telemetry frame fits one tick at $32\%$ but overflows a $50\ \mu\text{s}$ loop by $6.44\times$. Five planted faults - `spi_frame_drops_cs`, `uart_poll_per_byte`, `window_uses_full_buffer`, `ht_frequency_uses_total`, `slice_reads_written_half` - each fail the test named for them.
 
+### Break it on purpose
+Use the worked example's $2N = 8$ buffer ($N = 4$ samples per half) and plant the `slice_reads_written_half` fault:
+- **Inject:** in the Half-Transfer callback, read the half the DMA is currently writing — `dma_buf[N:2N]` on `HT` — instead of the completed `dma_buf[0:N]`.
+- **Symptom:** the sixteen samples $10, 20, \dots, 160$ no longer arrive in order. The first `HT` reads four untouched zeros and the next one re-reads the previous half, so the stream comes out $0, 0, 0, 0, 50, 60, 70, 80, 50, 60, 70, 80, 130, 140, 150, 160$: samples $10\text{–}40$ and $90\text{–}120$ are never processed and two halves are delivered twice.
+- **Diagnose:** the sample *rate* is right and `HT` still fires at $f_{\text{sample}}/N$, so a DMA configuration or clock fault is ruled out; what changes is which half each ISR reads, and the tell is that exactly one half of every pair is stale while the other is current.
+- **Fix:** `HT` reads `dma_buf[0:N]` and `TC` reads `dma_buf[N:2N]`, never the half being written; prove it with the worked example's sixteen-sample replay arriving in exact order, then confirm the exercise's $80.0\ \mu\text{s}$ window still holds at $N = 16$ and $f_{\text{adc}} = 200\text{ kHz}$.
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Fixed-Point Iteration Loops*), [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Clock Cycle & Microsecond Units*), and [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Affine Range Mapping*).

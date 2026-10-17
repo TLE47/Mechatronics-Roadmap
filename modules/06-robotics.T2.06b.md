@@ -61,6 +61,8 @@ $$
 
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers before the code runs. (1) With the three topics at $1\text{ kHz}$/$128\text{ B}$, $200\text{ Hz}$/$96\text{ B}$ and $30\text{ Hz}$/$150{,}000\text{ B}$, $32\text{ B}$ of metadata per message and `zstd` at $c = 0.40$, what sustained disk rate and what $10$-minute file size do you expect? (2) Does the estimated $\dot{q}$ change when the same bag is replayed at `--rate 4.0` instead of `--rate 0.5`? (3) After $20$ steps of $1\text{ ms}$ with $k_p = 25.0$, $k_d = 2.5$, $J = 0.05$ and $b = 0.20$, roughly how far has the joint moved? Two tells: a derivative that changes with the playback rate means wall-clock time leaked into the estimate, and a file size that ignores the $32\text{ B}$ metadata is short by exactly $f_m \cdot 32$ bytes per second on every topic.
+
 Simulate a complete ROS 2 operational workflow in Python: (1) compute the `rosbag2` MCAP write throughput and 10-minute file size for a robot recording $1\text{ kHz}$ `/joint_states` ($128\text{ B}$), $200\text{ Hz}$ `/imu/data` ($96\text{ B}$), and $30\text{ Hz}$ `/camera/depth` ($150{,}000\text{ B}$) with `zstd` compression ($c = 0.40$), (2) verify deterministic `--rate 4.0` replay derivative invariance using `/clock` timestamps, and (3) run a 20-step closed-loop `MuJoCo / Gazebo` $\leftrightarrow$ `ros2_control` (`read -> update -> write`) + `robot_state_publisher` (`/joint_states` $\to$ `/tf`) simulation loop.
 
 ```python
@@ -134,6 +136,13 @@ The tests are behavioural: a $2.5$-step timer must wait $3$ (rounding and floori
   - **Prerequisite Bridge Modules:** [`02-mechanics.T2.02a`](02-mechanics.T2.02a.md) (*Manipulator Jacobians*) and [`06-robotics.T2.06a`](06-robotics.T2.06a.md) (*ROS 2 Nodes, QoS & TF2*).
   - **Core Concepts to Review First:** `rosbag2` MCAP throughput $R_{\text{disk}} = \frac{1}{c}\sum f_i(B_i + 32)$ and replay scaling $T_{\text{wall}} = T_{\text{rec}}/r$, `ros2_control` `CommandInterface`/`StateInterface` exclusivity, and Cartesian task-space impedance $\tau = J(q)^\top [K_x(x_d - x) - D_x J(q)\dot{q}]$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Official `ros2_control` Documentation (`control.ros.org`)](https://control.ros.org/), [ROS 2 `rosbag2` & Launch Tutorials (`docs.ros.org`)](https://docs.ros.org/en/jazzy/Tutorials.html), and [Track 06 Tier 2 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied).
+
+### Break it on purpose
+Inject the first row of the `## 8. Common mistakes` table: replay the bag without `--clock` while every downstream node runs `use_sim_time:=true`, keeping the exercise's $100\text{ s}$ recording and `--rate 2.5`.
+- **Inject:** run `ros2 bag play arm_test_bag --rate 2.5` and omit the `--clock` flag, leaving `robot_state_publisher` and the estimator on simulated time.
+- **Symptom:** the bag reports $40.0\text{ s}$ of wall-clock playback, but every node's `now()` stays at $0$ simulation seconds; timers that should fire every $K = \lceil 1\text{ ms}/1\text{ ms} \rceil = 1$ step never fire, and `tf2` throws `Lookup would require extrapolation` because it holds a $12\text{ s}$ sim-time transform while a wall-clock node queries at $1.7 \times 10^9\text{ s}$.
+- **Diagnose:** the file plays and `/joint_states` messages exist, so the bag, the rate factor and the MCAP index are all healthy; a frozen `now()` on a bag that is visibly advancing can only be a missing `/clock` publisher, not a decimation or timer-period error.
+- **Fix:** add `--clock`, then prove it by `ros2 topic hz /clock` reporting $1\text{ kHz}$ and `ros2 topic echo /clock` advancing $0.001\text{ s}$ per message, with the estimator's $\dot{q}$ back at $20\text{ rad/s}$ at $0.25\times$, $1\times$ and $4\times$.
 
 ## 6. Simulation path
 Inspect the reference URDF and MuJoCo XML scene in `08-capstone-projects/urdf-mujoco-capstone3-6dof/` or open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`). In a local ROS 2 + Gazebo Harmonic / MuJoCo workspace (see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)), launch `robot_state_publisher` with the repository's reference URDF and record an MCAP bag:

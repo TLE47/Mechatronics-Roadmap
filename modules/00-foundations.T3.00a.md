@@ -49,6 +49,8 @@ $$
 
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to three numbers before the code runs: which basis vector $\exp([0, 0, \pi/2]_\times)$ sends $[1, 0, 0]^\top$ to, $\det(R)$ for a rotation vector of length $10^{-9}\text{ rad}$, and $\operatorname{tr}([\hat{u}]_\times^2)$ for a unit axis $\hat{u}$. Two tells: a result of $[0, -1, 0]^\top$ instead of $[0, 1, 0]^\top$ means the hat map is transposed (so it computes $v \times \omega$); and a determinant of `nan` or $0$ at $\theta = 10^{-9}$ means the small-angle branch was skipped, leaving $\frac{1-\cos\theta}{\theta^2}$ to divide `0.0 / 0.0`.
+
 Verify that $[\omega]_\times v = \omega \times v$ and $v^\top [\omega]_\times v = 0$, compute $R = \exp([\phi]_\times)$ via Rodrigues' formula for both a normal angle ($\theta = \pi/2\text{ rad}$ about $Z$) and a tiny angle ($\theta = 10^{-9}\text{ rad}$), and verify $x^\top J x = 0$ on a coupled electromechanical motor-inertia system.
 
 ```python
@@ -124,6 +126,13 @@ The tests are behavioural: `[w]_x v` must equal `w x v` on three pairs (a transp
   - **Core Concepts to Review First:** Skew-symmetric hat matrix $[\hat{u}]_\times$, cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ for unit axis $\|\hat{u}\| = 1$, and Rodrigues' rotation formula in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
   - **Lie Theory & $SO(3)$ Study Links:** [Joan Solà et al., *A Micro Lie Theory for State Estimation in Robotics* (`arXiv:1812.01537`, §II.A–II.B)](https://arxiv.org/abs/1812.01537), [Lynch & Park *Modern Robotics* Ch. 3.2 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), and [Sophus C++ Lie Groups Library (`github.com/strasdat/Sophus`)](https://github.com/strasdat/Sophus).
   - **Curriculum Reference:** [Track 00 Tier 3 (`00-foundations/README.md#tier-3-advanced--production`)](../00-foundations/README.md#tier-3-advanced--production) (Step 3.1 Lie Groups $SO(3)/SE(3)$).
+
+### Break it on purpose
+Inject the `rodrigues_over_rotates` fault on purpose: apply the unit-axis form $I + \sin\theta\,[\phi]_\times + (1-\cos\theta)[\phi]_\times^2$ to a rotation *vector* $\phi$, instead of dividing the coefficients by $\theta$ and $\theta^2$. It is exact at $\|\phi\| = 1\text{ rad}$, where both normalisations are $1$.
+- **Inject:** set $c_1 = \sin\theta$ and $c_2 = 1-\cos\theta$ rather than $c_1 = \frac{\sin\theta}{\theta}$ and $c_2 = \frac{1-\cos\theta}{\theta^2}$, keeping the small-angle branch unchanged.
+- **Symptom:** for the $\pi/2$ rotation about $Z$ the matrix stops being a rotation: $R = \begin{bmatrix} -1.4674 & -1.5708 & 0 \\ 1.5708 & -1.4674 & 0 \\ 0 & 0 & 1 \end{bmatrix}$, so $\det(R) = 4.6207$ instead of $1$ and $\max\lvert R^\top R - I\rvert = 3.6207$ (measured on the planted fault). The nanoradian case is unaffected - the small-angle branch catches it - so a suite that only tests tiny angles sees nothing.
+- **Diagnose:** the tell is that the same code is *exact* at $\|\phi\| = 1\text{ rad}$ ($R[0][0] = \cos 1 = 0.5403$, $R[0][1] = -\sin 1 = -0.8415$), where $1/\theta = 1/\theta^2 = 1$. A transposed hat map or a wrong sign would fail at $1\text{ rad}$ too, and the small-angle branch only covers $\theta < 10^{-7}$; an error that appears only away from $\theta = 1$ and grows with $\theta$ is the missing normalisation.
+- **Fix:** divide both coefficients by the angle, $c_1 = \frac{\sin\theta}{\theta}$ and $c_2 = \frac{1-\cos\theta}{\theta^2}$ (or use $1 - \theta^2/6$ and $\tfrac{1}{2} - \theta^2/24$ below $10^{-7}\text{ rad}$), then prove it at the hard end: $R^\top R = I$ to $10^{-14}$ and $\det(R) = 1$ for a rotation vector of length $\pi$, plus the nanoradian case equal to $I + [\phi]_\times$ to $10^{-17}$.
 
 ## 6. Simulation path
 Open **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`) to watch how `exp_so3(omega * dt)` integrates 3D gyroscope measurements on $SO(3)$ without gimbal lock or loss of orthogonality.

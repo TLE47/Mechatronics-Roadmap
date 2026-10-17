@@ -47,6 +47,8 @@ $$
    - Integrating zero-mean white gyro noise of spectral density $\sigma_g$ ($\text{rad/s}/\sqrt{\text{Hz}}$) over averaging window $\tau$ ($\text{s}$) reduces rate standard deviation as $\sigma_{\bar{\omega}}(\tau) = \frac{\sigma_g}{\sqrt{\tau}}$ (slope $-1/2$ on a log-log Allan deviation plot).
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to three numbers before the code runs. (1) With $I_{\text{pk}} = 10.0\text{ A}$ and $\theta_e = 0.85\text{ rad}$, what are $(i_\alpha, i_\beta)$ for the pure $q$-axis current set? (2) What must $\sqrt{i_\alpha^2 + i_\beta^2}$ come out to, whatever the angle? (3) If the averaging window grows from $1.0\text{ s}$ to $100\text{ s}$, by what factor does the averaged rate noise fall? Two tells that your result is wrong rather than the module: a vector magnitude that drifts away from $10.00\text{ A}$ means the $2$ in $i_\beta = (i_a + 2 i_b)/\sqrt{3}$ is misplaced, and a $i_d$ of $0.00\text{ A}$ is the correct answer while a $i_d$ of $10.00\text{ A}$ means you swapped the $d$ and $q$ rows of the Park matrix.
+
 Verify that balanced 3-phase currents of peak amplitude $I_{\text{pk}} = 10.0\text{ A}$ phased $90^\circ$ ahead of rotor angle $\theta_e = 0.85\text{ rad}$ map via Clarke + Park to $i_d = 0.0\text{ A}, i_q = 10.0\text{ A}$, and verify the $\tau^{-1/2}$ white-noise averaging law.
 
 ```python
@@ -98,6 +100,12 @@ EXERCISE_TARGET=exercises/03-sensors.T2.03a/starter.py \
 
 The tests are behavioural: a balanced set at **four** angles must project to the same amplitude (a Clarke with the 2 misplaced agrees at $\theta = 0$ and nowhere else); the quarter turn must give $i_q = -5$ (a Park at $+\theta$ gives $+5$); quadrature current must demodulate to constant DC at five angles; the inverse must undo the rotation; the two-shunt exercise must give $i_c = -4$ A and $6.110101$ A; a PLL must lock onto $350\text{ Hz}$ electrical, hold its speed with zero residual, and **not** spike when the estimate sits just below $-\pi$ and the measurement just above it; and the averaging law must be $\tau^{-1/2}$ (the $1/\tau$ version fails on the first pair). Four planted faults - `clarke_wrong_scale`, `park_plus_theta`, `pll_raw_residual`, `allan_linear` - each fail the test named for them. The transfer suite tracks the **shared arm's elbow**: its velocity estimate must beat a one-tick finite difference on the same quantized samples, a three-phase set built from the joint's own angle must demodulate to constant $i_q$ tick after tick, and the plant's seeded white noise must average down as predicted within 12%.
 
+### Break it on purpose
+Keep the worked example's $350\text{ Hz}$ electrical angle ($p = 7$ at $3000\text{ RPM}$) and break the PLL the way the `## 8. Common mistakes` table warns, using the `pll_raw_residual` fault the package plants:
+- **Inject:** feed the residual to the PLL gains as raw $\theta_{\text{meas}} - \hat{\theta}$, with no wrap into $[-\pi, \pi)$.
+- **Symptom:** the loop locks and the angle trace looks clean, then each time the wrapped angle crosses the seam — $350$ times a second at this electrical speed — the estimate jumps by a full $2\pi$ and the velocity output spikes for a tick, while the quantized encoder input itself never moves discontinuously.
+- **Diagnose:** the spike period is the tell. A gain error or a noisy measurement gives a spike every sample, and a wrong Clarke scale changes $i_\alpha$ and $i_\beta$ without moving the PLL at all; a disturbance that arrives exactly at the $2\pi \to 0$ rollover, once per revolution, can only come from the unwrapped subtraction.
+- **Fix:** wrap with `math.atan2(math.sin(err), math.cos(err))` before the gains, then prove it the way the suite does: lock onto $350\text{ Hz}$ electrical, hold the speed estimate with zero residual, and confirm no spike as the estimate sits just below $-\pi$ and the measurement just above it.
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*2D Rotation Matrix Multiplication*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Critically Damped 2nd-Order Poles*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Variance & Noise Density*).

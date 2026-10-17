@@ -56,6 +56,8 @@ $$
      followed by torque saturation $|\tau| \le \tau_{\max}$ and CBF barrier enforcement (`05-control.T3.06`).
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers before the code runs. (1) With rewards $[1.0, 2.0, 4.0]$ and $\gamma = 0.90$, is $G_0$ closer to $7.0$ or to $4.0$ - and what is $G_1$? (2) For $\rho = 1.50$, $\hat{A} = +2.0$ and $\epsilon = 0.20$, does the pessimistic $\min$ return $3.00$ or $2.40$? (3) Blending $[0.52, 0.50, 0.46]$ with $m = 0.5$: does the result land closer to the newest or to the oldest prediction? (4) With $q = 0.50\text{ rad}$, $\Delta q_{\max} = 0.08\text{ rad}$ and $q_{\max} = 1.5\text{ rad}$, what does the shield output for a policy asking $+2.80\text{ rad}$? Two tells that a wrong answer is a mistake rather than a different convention: a ratio of $1.50$ may not survive as a multiplier once it is outside $[0.80, 1.20]$, so an unclipped $3.00$ means the clip was skipped; and the shield output must be exactly $\Delta q_{\max}$ from the measured $q$, so an answer that jumps to $2.80$ or slides to $1.50$ applied the rate limit on the wrong side or skipped the joint-limit clamp.
+
 Compute the discounted return $G_0$, evaluate the PPO clipped objective for an overly large probability ratio $\rho = 1.50$ ($\epsilon = 0.20$), blend 3 overlapping action chunks via Temporal Ensembling ($m = 0.5$), and verify that the Sim-to-Real Safety Wrapper clamps an out-of-distribution policy spike before it can jerk the joint.
 
 ```python
@@ -112,6 +114,13 @@ EXERCISE_TARGET=exercises/06-robotics.T3.06b/starter.py \
 ```
 
 **28 tests.** The returns are checked at more than $G_0$ - $G_1$ and $G_2$ catch a discount taken from the start of the rollout; the PPO term is checked on a **negative** advantage, where the correct $\min$ is the more pessimistic number and a `max` silently doubles the step; the ensemble is checked at zero decay (the plain mean) and at large decay (the newest prediction dominates); the shield is checked where the step clamp would walk past a joint limit; and the watchdog is checked at exactly the timeout and after a long run that keeps sending chunks. The transfer suite scores **the plant's own run**: the discounted return of its tracking errors must equal a brute-force sum at $t = 0, 1, 7$ and halfway; the plant's own targets pass through the shield with $<2\%$ RMS change; and a hostile policy commanding $+3\text{ rad}$ through the shield leaves the arm inside its joint range, slow, and never more than $\Delta q_{\max}$ from where it is. Five planted faults - `gamma_from_zero`, `ppo_max_not_min`, `ensemble_uniform`, `shield_no_joint_limit`, `watchdog_compares_absolute_time` - each fail the test named for them.
+
+### Break it on purpose
+Inject the `ppo_max_not_min` fault and diagnose it from the loss alone, keeping $\epsilon = 0.20$ and $\hat{A} = +2.0$ for the positive case:
+- **Inject:** replace the pessimistic `min` in the clipped surrogate with `max`, i.e. `max(rho * adv, rho_clipped * adv)`, which is the single most common transcription slip in PPO code.
+- **Symptom:** the positive-advantage case silently grows from $2.40$ to $3.00$ - a $25\%$ larger step for a ratio the clip was meant to reject - and the negative-advantage exercise case with $\rho_0 = 0.60$ and $\hat{A}_0 = -3.0$ returns $-1.80$ instead of $-2.40$, so the policy is punished $0.60$ less for a ratio outside the trust region. Training still runs and the loss still falls, which is why the fault survives a smoke test.
+- **Diagnose:** the sign of the advantage separates it from a discount or ensemble bug. With $\hat{A} > 0$ the `max` equals the raw product whenever $\rho > 1.20$, and with $\hat{A} < 0$ it equals the raw product whenever $\rho < 0.80$ - in both cases the term stops tracking the clipped product exactly where the clip should bind, while the returns $G_0$ and $G_1$ remain correct.
+- **Fix:** restore `min(rho * adv, rho_clipped * adv)` and prove it on the two cases that disagree: $(1.50, +2.0)$ must give $2.40$, and $(0.60, -3.0)$ must give $-2.40$ rather than $-1.80$. `test_behavior`'s negative-advantage case and `test_transfer`'s return check must both pass, and the planted fault must fail the test named for it.
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**

@@ -55,6 +55,7 @@ $$
 
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four values before the script runs. (1) What is `ARR` for $f_{\text{tim}} = 170\text{ MHz}$ and $f_{\text{PWM}} = 40\text{ kHz}$ in center-aligned mode, and what is $t_{\text{low,min}}$ at $d_{\max} = 0.88$ with $250\text{ ns}$ of dead time at each edge? (2) What `Q1.31` word encodes $\cos(\pi/3) = 0.5$? (3) Is a snapshot taken at $s_1 = 4, s_2 = 6$ valid? Two tells: an `ARR` of $4250$ means the up-down counter's factor of two was dropped, and $t_{\text{low,min}} = 2750\text{ ns}$ means dead time was subtracted at one edge instead of both.
 Compute (1) the center-aligned `TIM1->ARR` register value and minimum low-side shunt conduction window $t_{\text{low,min}}$ at $f_{\text{tim}} = 170\text{ MHz}$ and $f_{\text{PWM}} = 40\text{ kHz}$, (2) `Q1.31` fixed-point encoding/decoding of $\theta_e = \pi/3\text{ rad}$ and $\cos(\pi/3) = 0.5$, and (3) prove that a `SeqLock` reader detects a mid-read ISR preemption (torn read) and succeeds on the immediate retry.
 
 ```python
@@ -112,6 +113,13 @@ EXERCISE_TARGET=exercises/04-embedded.T3.04a/starter.py \
   - **Prerequisite Bridge Modules:** [`04-embedded.T2.04a`](04-embedded.T2.04a.md)–[`04-embedded.T2.04d`](04-embedded.T2.04d.md) and Legacy **Step 2.5 (`04-embedded.T2.05`)**.
   - **Core Concepts to Review First:** C++20 `WaitFreeSeqLock<T>` even/odd sequence retry protocol, EtherCAT Distributed Clocks (`DC`) propagation-compensated clock offset + PI drift discipline, and Hogenauer `sinc³` $\Sigma\Delta$ decimation ($G = \text{OSR}^3$, group delay $\tau_g = \frac{3(\text{OSR}-1)}{2 f_{\text{mod}}}$) in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Hans Boehm *Seqlocks Paper*](https://dl.acm.org/doi/10.1145/2247684.2247688), [Hogenauer CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535), and [Track 04 Tier 3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-3-advanced--production) (**Tab 8: Attitude ESKF & SeqLock**).
+
+### Break it on purpose
+Inject the parity slip the exercise plants (`seqlock_ignores_parity`), keeping the writer at $40\text{ kHz}$ and the reader at $1\text{ kHz}$:
+- **Inject:** implement `seqlock_valid(s1, s2)` as `s1 == s2` only, dropping the even-parity test.
+- **Symptom:** `valid(5, 5)` now returns `True` although the writer was mid-update, so the reader accepts a 32-byte telemetry struct whose first fields are from the previous tick and whose last fields are from the current one. `valid(4, 6)` is still rejected, which is why the bug survives a test that only ever starts on an even counter.
+- **Diagnose:** the first read's parity is the only signal that separates "the writer finished before $s_1$" from "the writer had already started at $s_1$"; equality alone cannot see the difference, because a completed write returns the counter to an even value. A missing `acquire`/`release` fence produces a different symptom — fields that never change at all — and dropping the $s_1 = s_2$ check admits $4 \to 6$, not $5 \to 5$.
+- **Fix:** restore `(s1 & 1) == 0 and s1 == s2`, then re-run the $100{,}000$-preemption stress test in **Tab 8 (Attitude ESKF & SeqLock)**: every torn copy must retry, and the retries per reader must stay bounded as the writer rate rises.
 
 ## 6. Simulation path
 Open **Tab 8 (Attitude ESKF & SeqLock — C++20 `WaitFreeSeqLock`, `TIM1_TRGO2` Timing & `ITCM/DTCM` Budget)** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to stress-test the `SeqLock` across $100{,}000$ simulated preemptions.

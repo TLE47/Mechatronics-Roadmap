@@ -65,6 +65,8 @@ $$
    - **Step C (`write`):** `SystemInterface::write(time, period)` packs $\tau_{i,\text{cmd}}$ into CAN-FD MIT frames and transmits them to the actuators, satisfying $t_{\text{read}} + t_{\text{update}} + t_{\text{write}} \le \Delta t$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to three outcomes before the code runs. (1) Of the $16$ QoS `(Reliability, Durability)` combinations, how many connect under `offered >= requested`, and does `Best-Effort` into `Reliable` connect? (2) With $q_1 = 0$ and $q_2 = \pi/2$, where does $p_{\text{in,tool}} = [0.15, 0.0, 0.0, 1]^\top$ land in `base_link`? (3) Between $t_a = 1.000\text{ s}$ ($x = 0.20\text{ m}$) and $t_b = 1.010\text{ s}$ ($x = 0.25\text{ m}$), what does `tf2` return at $t = 1.004\text{ s}$? Two tells: a count of $16$ means you tested equality instead of $\ge$, so the two failing rows went unnoticed; a point that lands at $[0.25, -0.15, 0.10]$ means the joint turned backwards, and an interpolated value that equals either endpoint means $\alpha$ was divided by the wrong interval.
+
 Simulate a complete ROS 2 + `tf2` + `ros2_control` pipeline in pure Python: (1) verify the full 2D QoS `(Reliability, Durability)` compatibility matrix and compute camera topic bandwidth, (2) run `robot_state_publisher` forward kinematics and `tf2` temporal interpolation on a 2-DOF URDF chain (`base_link -> link_1 -> tool0`), and (3) execute one $1\text{ kHz}$ `ros2_control` `read() -> update() -> write()` tick.
 
 ```python
@@ -143,6 +145,13 @@ The tests are behavioural: all **16** QoS combinations must match the `offered >
   - **Prerequisite Bridge Modules:** [`02-mechanics.T1.03`](../02-mechanics-kinematics-dynamics/README.md), [`04-embedded.T1.05`](../04-embedded-and-realtime/README.md), [`05-control.T1.06`](../05-control-and-estimation/README.md), and [`06-robotics.T1.06a`](06-robotics.T1.06a.md).
   - **Core Concepts to Review First:** ROS 2 DDS QoS compatibility truth table (`RELIABLE` vs. `BEST_EFFORT`) and deadline period, `SingleThreadedExecutor` deterministic ready-set priority (Timers $\to$ Subscriptions $\to$ Services $\to$ Clients), and `tf2` homogeneous rigid-body transform chaining ${}^W T_C = {}^W T_B \, {}^B T_C$ and inverse ${}^C T_W = ({}^W T_C)^{-1}$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Official ROS 2 Jazzy/Humble Tutorials: QoS, Executors & TF2 (`docs.ros.org`)](https://docs.ros.org/en/jazzy/Tutorials.html) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
+
+### Break it on purpose
+Inject the first row of the `## 8. Common mistakes` table: subscribe to the camera stream with the default `Reliable` profile while the publisher offers `Best-Effort`, keeping the worked example's $250{,}000\text{ B}$ frames at $60\text{ Hz}$ to two subscribers.
+- **Inject:** build the `/camera/depth` subscriber with `rclpy.qos.QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)` instead of `SensorDataQoS()`.
+- **Symptom:** `ros2 topic list` shows the topic and the publisher reports $60\text{ Hz}$, which is $30\text{ MB/s}$ of offered traffic, yet the subscriber's callback never fires - $0$ messages, no exception, no timeout.
+- **Diagnose:** the publisher is running, so the transport, the domain id and the message type are all fine; `ros2 topic info -v` shows offered `BEST_EFFORT` against requested `RELIABLE`, and the rule fails on Reliability alone - durability matches, so it is not the `Volatile`/`Transient Local` row.
+- **Fix:** request `SensorDataQoS()` (Best-Effort) on the subscriber, and prove it by counting $60$ callbacks in one wall-clock second with `ros2 topic hz` reporting $60.000$.
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).

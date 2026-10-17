@@ -60,6 +60,7 @@ $$
 
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers before the script runs. (1) What phase margin does $L(s) = \frac{100}{s(0.01s + 1)}$ have at $\omega_{gc} = 78.615\text{ rad/s}$? (2) What is $|S(j\omega_{gc})|$ there, and is it above or below $1$? (3) What are Bryson's weights for $x_{\max} = 0.05\text{ m}$, $\theta_{\max} = 0.10\text{ rad}$ and $u_{\max} = 5.0\text{ N}$ — and what is the observer's spectral radius for $A_d = [[1, 0.001], [0, 0.99]]$, $C = [1, 0]$, $L = [[0.19], [9.0]]$? Two tells: a margin of $-128.17^\circ$ means the $+180^\circ$ was dropped, and $Q = [20, 10]$ means the maximum deviations were not squared.
 Compute the Phase Margin $\text{PM}$ and peak sensitivity $M_s$ of an open-loop servo transfer function $L(s) = \frac{100}{s(0.01s + 1)}$ at its gain crossover $\omega_{gc} = 78.615\text{ rad/s}$, verify $S(j\omega) + T(j\omega) = 1$, construct Bryson's LQR weights $(Q, R)$ for a cart-pendulum ($x_{\max} = 0.05\text{ m}, \theta_{\max} = 0.10\text{ rad}, u_{\max} = 5.0\text{ N}$), and verify Luenberger observer convergence.
 
 ```python
@@ -119,6 +120,13 @@ The tests are behavioural: the worked loop's margin must be $51.8273^\circ$ whil
   - **Prerequisite Bridge Module:** [`05-control.T1.05a`](05-control.T1.05a.md) and Legacy **Step 1.6 (`05-control.T1.06`)**.
   - **Core Concepts to Review First:** Sensitivity peak $M_s = \max|S(j\omega)|$ and phase margin with pure time delay ($\text{PM} - \omega_{gc}\tau_d$), discrete LQR Riccati recursion, and 1D/MIMO Linear Kalman Filter predict-innovation-update equations in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Åström & Murray *Feedback Systems* Ch. 10–12 (`fbsbook.org`)](https://www.fbsbook.org/), [Roger Labbe *Kalman and Bayesian Filters in Python*](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python), and [Track 05 Tier 2 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-2-intermediate--applied).
+
+### Break it on purpose
+Inject the phase-wrap slip the exercise plants (`pm_no_unwrap`), keeping the same loop and $\omega_{gc}$:
+- **Inject:** compute the margin as `180 + degrees(cmath.phase(L))` on the principal value, without unwrapping the loop's lag into $(-180^\circ, 180^\circ]$.
+- **Symptom:** a loop lagging $200^\circ$ at crossover reports $\text{PM} = +340^\circ$ instead of $-20^\circ$, while the worked loop's own $51.83^\circ$ still comes out right because its lag is only $-128.17^\circ$ — the fault hides until a margin is actually negative, which is exactly when it matters.
+- **Diagnose:** $+340^\circ = -20^\circ + 360^\circ$, so the reported margin is a full turn away and exceeds the $180^\circ$ a margin can physically reach. A gain error or a misplaced $\omega_{gc}$ would move the number inside the $0\text{–}180^\circ$ band instead of out of it, and the delay sweep would jump by $360^\circ$ at the moment the loop crosses $-180^\circ$.
+- **Fix:** wrap the lag to $(-180^\circ, 180^\circ]$ before adding $180^\circ$, then prove it on both sides: the $200^\circ$ loop must read $-20^\circ$, and the worked loop with $\tau_d = 5\text{ ms}$ must still read $\text{PM}_{\text{new}} = 29.31^\circ$.
 
 ## 6. Simulation path
 Open **Tab 2 (Two-Mass & Notch Bode — Loop Shaping & Gang of Four)** and **Tab 4 (Furuta Pendulum + LQR + CBF)** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.

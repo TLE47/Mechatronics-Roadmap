@@ -64,6 +64,7 @@ $$
      preventing any intermediate preemptible thread ($p_M \in \{2, 3, 4\}$) from preempting $L$, bounding $H$'s worst-case response time to $R_H = C_H + B_L$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers before the script runs. (1) With stacks of $2048$, $1536$ and $1020\text{ B}$, a $128\text{ B}$ TCB each, and one $16 \times 72\text{ B}$ queue, what is $\text{RAM}_{\text{static}}$ in bytes — and how many bytes does the $1020$ stack actually contribute? (2) With $p_H = 1$, $p_M = 3$ and $p_L = 5$, what is the owner's elevated priority, and is $R_H$ $120\ \mu\text{s}$ (`k_mutex`) or $570\ \mu\text{s}$ (`k_sem`)? (3) Which of `fdcan1` and `i2c2` is device-ready at boot? Two tells that a wrong answer is a mistake rather than the module: a total of $6140\text{ B}$ means the $1020$-byte stack was never rounded up to the $8$-byte boundary ($1024$), and a `k_mutex` response of $570\ \mu\text{s}$ means the medium thread was left inside the critical section, which inheritance forbids.
 Simulate Zephyr's compile-time Devicetree + Kconfig binding validator, compute the static RAM footprint of a 3-thread Zephyr actuator firmware image (`K_THREAD_DEFINE` + `K_MSGQ_DEFINE`), and trace Zephyr's numerical priority scheduler ($p_A < p_B$) with `k_mutex` priority inheritance when a high-urgency thread ($p_H = 1$) contends with a low-urgency thread ($p_L = 5$) while a medium-urgency thread ($p_M = 3$) is ready.
 
 ```python
@@ -131,6 +132,13 @@ EXERCISE_TARGET=exercises/04-embedded.T2.04c/starter.py \
   - **Prerequisite Bridge Modules:** [`04-embedded.T2.04a`](04-embedded.T2.04a.md) (*Rate-Monotonic RTA*) and [`04-embedded.T2.04b`](04-embedded.T2.04b.md) (*Zephyr Build & Devicetree*).
   - **Core Concepts to Review First:** Zephyr static thread allocation (`K_THREAD_DEFINE`) with cooperative vs. preemptive priority bands, `k_mutex` Priority Inheritance Protocol ($R_H = C_H + B_H$ vs. unbounded priority inversion), and zero-copy `k_msgq` ring buffers in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Zephyr Kernel Services: Threads, Mutexes & Message Queues (`docs.zephyrproject.org`)](https://docs.zephyrproject.org/latest/kernel/services/index.html) and [Track 04 Tier 2 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied).
+
+### Break it on purpose
+Inject the common-mistakes row that swaps a mutex for a semaphore, keeping $p_H = 1$, $p_M = 3$, $p_L = 5$, $C_H = 90\ \mu\text{s}$, $C_M = 450\ \mu\text{s}$ and $B_L = 30\ \mu\text{s}$:
+- **Inject:** replace `K_MUTEX_DEFINE(bus_lock)` with `K_SEM_DEFINE(bus_lock, 1, 1)` and guard the shared SPI bus with `k_sem_take` / `k_sem_give`.
+- **Symptom:** $R_H$ rises from $120\ \mu\text{s}$ to $570\ \mu\text{s}$ — $4.75\times$ the inherited bound — because $p_L$ stays at $5$, so the ready $p_M = 3$ thread preempts it for its full $C_M = 450\ \mu\text{s}$ while it holds the bus. A trace shows the priority-$1$ thread waiting through the telemetry thread's entire run.
+- **Diagnose:** the size of the excess localises it. A wrong priority-numbering convention would mis-order *who* runs first but would not add exactly $C_M = 450\ \mu\text{s}$ to one bounded wait; a longer critical section would scale $R_H$ with $B_L$, not with $C_M$. Only a primitive that does not track ownership lets every medium thread in.
+- **Fix:** restore the `K_MUTEX_DEFINE`, then prove it twice in the trace: $p_{L,\text{eff}}$ must read $1$ while the mutex is held, and $R_H$ must return to $120\ \mu\text{s}$ with no telemetry execution inside the critical section.
 
 ## 6. Simulation path
 You can build and run Zephyr RTOS applications natively on any Linux workstation or CI container **without physical microcontroller hardware** using Zephyr's POSIX architecture target (`native_sim`), or flash an `STM32G4` board (`nucleo_g474re`) using the exact same 4-file project layout:

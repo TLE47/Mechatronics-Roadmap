@@ -44,6 +44,7 @@ $$
    For $\omega_n = 20.0\text{ rad/s}$ and $\zeta = 0.50$, $\omega_d = 20.0\sqrt{0.75} = 17.3205\text{ rad/s}$ and $M_p = \exp(-\pi \times 0.50 / \sqrt{0.75}) = 0.16303$ ($16.30\%$ overshoot).
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers before the code runs, for $J = 0.02\text{ kg}\cdot\text{m}^2$, $k = 8.0\text{ N}\cdot\text{m/rad}$ and $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$: (1) $\omega_n$ and $\zeta$; (2) the analytic overshoot $M_p$; (3) will the numerical loop report a few hundredths of a percent *more* or *less* than the formula? Two tells that a wrong answer is a mistake: $\zeta$ must be $0.50$, exactly half of $b_{\text{crit}} = 0.80\text{ N}\cdot\text{m}\cdot\text{s/rad}$, so $0.25$ means the factor $2$ was dropped from $b/(2\sqrt{Jk})$; and $\omega_d = \omega_n\sqrt{1-\zeta^2}$ must come out *below* $\omega_n = 20.0\text{ rad/s}$, so $\omega_d > \omega_n$ means the $\sqrt{1-\zeta^2}$ was left out.
 Compute $\omega_n$, $\zeta$, $\omega_d$, and analytical step overshoot $M_p$ for $J = 0.02\text{ kg}\cdot\text{m}^2$, $k = 8.0\text{ N}\cdot\text{m/rad}$, and $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$, and verify that a numerical time-stepping simulation matches $M_p = 16.30\%$.
 
 ```python
@@ -99,6 +100,13 @@ The tests are behavioural: the first-order response must be $1 - e^{-1}$ at $t =
   - **Core Concepts to Review First:** Standard second-order ODE $\ddot{q} + 2\zeta\omega_n\dot{q} + \omega_n^2 q = \omega_n^2 q_{\text{ref}}$, natural frequency $\omega_n = \sqrt{k/J}$, damping ratio $\zeta = \frac{b}{2\sqrt{Jk}}$, and critical damping $b_{\text{crit}} = 2\sqrt{Jk}$ ($\zeta = 1.0$) in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
   - **ODEs & Damping Study Links:** [Åström & Murray *Feedback Systems* Ch. 6 (`fbsbook.org`)](https://www.fbsbook.org/), [Paul's Online Math Notes: Second-Order Differential Equations & Mechanical Vibrations](https://tutorial.math.lamar.edu/Classes/DE/Vibrations.aspx), and [MIT OCW 18.03 Differential Equations](https://ocw.mit.edu/courses/18-03sc-differential-equations-fall-2011/).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [Track 05 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md).
+
+### Break it on purpose
+Inject the square-root slip the exercise warns about - $b_{\text{crit}} = 2 J k$ instead of $2\sqrt{Jk}$ - and diagnose it from the step response alone, keeping $J = 0.02\text{ kg}\cdot\text{m}^2$ and $k = 8.0\text{ N}\cdot\text{m/rad}$:
+- **Inject:** set $b = 2 J k = 0.32\text{ N}\cdot\text{m}\cdot\text{s/rad}$ and call it critical damping.
+- **Symptom:** the response is underdamped, not critical: $\zeta = 0.32 / (2\sqrt{0.02 \times 8.0}) = 0.40$, so the simulation overshoots by $M_p = \exp(-\pi(0.40)/\sqrt{0.84}) \approx 25.4\%$ instead of the $< 10^{-6}$ the exercise requires.
+- **Diagnose:** a 25% overshoot cannot be critical damping at any $J$ or $k$, so the fault is in $b_{\text{crit}}$, not in the integrator - the same loop at $b = 0.80$ gives no overshoot, which rules out the step size and the initial condition. The giveaway is numerical: $2 J k = 0.32$ is *smaller* than $2\sqrt{Jk} = 0.80$ whenever $Jk < 1$ in these units, so the "critical" value always lands underdamped.
+- **Fix:** use $b_{\text{crit}} = 2\sqrt{Jk} = 0.80\text{ N}\cdot\text{m}\cdot\text{s/rad}$; then $\zeta = 1.00$ and the same loop reports `mp_sim < 1e-6`, which is the proof the repair worked.
 
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to watch how low structural damping $\zeta$ creates a sharp time-domain ringing transient.

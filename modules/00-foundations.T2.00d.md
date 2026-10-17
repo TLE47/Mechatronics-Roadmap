@@ -50,6 +50,7 @@ $$
    Substituting $|H(j\omega_c)| = 1/\sqrt{2} \approx 0.7071$ gives $20\log_{10}(1/\sqrt{2}) = -3.0103\text{ dB}$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to three numbers and one ordering before the block runs, for the second-order structure with $\omega_n = 100\text{ rad/s}$ and $\zeta = 0.05$: (1) $|G(j\omega_n)|$ and its value in $\text{dB}$; (2) $\angle G(j\omega_n)$; (3) is $|G(j1000)|$ above or below the DC gain of $1.0$, and is that phase nearer $-90^\circ$ or $-180^\circ$? Two tells that a wrong answer is a mistake: the resonance peak must be exactly $1/(2\zeta) = 10.0$ ($+20.0\text{ dB}$), so a peak of $1.0$ means $\omega = 0$ was evaluated instead of $\omega_n$; and a reading of $+10.0\text{ dB}$ for that same peak means $10\log_{10}|G|$ (power decibels) was used instead of $20\log_{10}|G|$ (amplitude decibels).
 Evaluate a second-order structural transfer function $G(j\omega) = \frac{\omega_n^2}{(j\omega)^2 + 2\zeta\omega_n(j\omega) + \omega_n^2}$ with natural frequency $\omega_n = 100\text{ rad/s}$ and damping ratio $\zeta = 0.05$ when excited right at resonance $\omega = \omega_n = 100\text{ rad/s}$:
 
 $$
@@ -104,6 +105,13 @@ The tests are behavioural: the first-order corner must be $-3.0103$ dB and $-45^
   - **Core Concepts to Review First:** Evaluating complex transfer function $G(j\omega) = \frac{\omega_n^2}{(\omega_n^2 - \omega^2) + j(2\zeta\omega_n\omega)}$, magnitude in decibels $20\log_{10}|G(j\omega)|$, and phase angle $\operatorname{atan2}(\operatorname{Im}, \operatorname{Re})$ in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
   - **Bode Plot & Phasor Study Links:** [Brian Douglas: Bode Plots by Hand & Frequency Response (YouTube)](https://www.youtube.com/user/ControlLectures), [CTMS Frequency Response Tutorial (`ctms.engin.umich.edu`)](https://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=ControlFrequency), and [Python `cmath` Documentation](https://docs.python.org/3/library/cmath.html).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (**Tab 2: Two-Mass & Notch Bode**).
+
+### Break it on purpose
+Inject the decibel-convention fault from the `## 8. Common mistakes` table and diagnose it from two readings, keeping $\omega_n = 100\text{ rad/s}$ and $\zeta = 0.05$:
+- **Inject:** compute the magnitude as `10.0 * math.log10(mag)` instead of `20.0 * math.log10(mag)`.
+- **Symptom:** the resonance still sits at $\omega = 100\text{ rad/s}$ but reads $+10.0\text{ dB}$ instead of $+20.0\text{ dB}$, and the first-order corner that must be $-3.0103\text{ dB}$ reads $-1.505\text{ dB}$ - every decibel value is exactly half of the truth.
+- **Diagnose:** a uniform factor of two across two different circuits rules out a wrong $\zeta$ (which would move the peak height and the $\omega_r$ location, not halve every reading) and a wrong $\omega_n$ (which would shift where the features sit, not their height). The constant half says the log is the power form, because $10\log_{10}|H|^2 = 20\log_{10}|H|$ for an amplitude ratio.
+- **Fix:** use $20\log_{10}|G|$; then the peak reads $+20.0\text{ dB}$ and the RC corner $-3.0103\text{ dB}$ to within $10^{-4}\text{ dB}$, and the $\omega = 1000\text{ rad/s}$ point lands on $-39.9127\text{ dB}$.
 
 ## 6. Simulation path
 Open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench (`npm run dev`) to inspect how a lightly damped resonance peak ($+20\text{ dB}$) and $-180^\circ$ phase drop appear on an interactive Bode magnitude and phase plot.

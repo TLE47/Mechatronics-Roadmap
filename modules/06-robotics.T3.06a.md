@@ -43,6 +43,8 @@ $$
 3. **Behavior Cloning (BC) Observation Normalization & Covariate Shift:** Normalizing inputs via z-score $\tilde{o} = (o - \mu_o)/\sigma_o$ prevents high-magnitude states (e.g., velocities in $\text{rad/s}$) from dominating gradients over small position errors. Because single-step BC errors compound over horizon $H_{\text{steps}}$ as $\mathcal{O}(\epsilon H_{\text{steps}}^2)$ when the robot drifts slightly off the expert demonstration track (**covariate shift**), modern policies predict multi-step **action chunks** ($k = 16\text{–}50$ future waypoints, `ACT` / `LeRobot` in `06-robotics.T3.06b`).
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to three outcomes before the code runs. (1) Is the initial MSE of this $12$-hidden-unit tanh net nearer $1$ or $20$? (2) Which parameter block carries the $(1 - H^2)$ factor in the backward pass - the hidden weights $W_1$ or the output weights $W_2$? (3) After $400$ steps at $\eta = 0.05$, does the loss fall below $1\%$ of its first value? Two tells: a finite-difference mismatch near $10^{-2}$ where the correct pass agrees to $10^{-10}$ means the tanh derivative was dropped, and a loss that does not move at all means the step used the pre-update gradient or the wrong sign.
+
 Train a 2-layer nonlinear Behavior Cloning policy in pure standard-library Python (verifying analytical backpropagation gradients against finite differences to $10^{-8}$) to imitate an expert nonlinear PD + gravity-compensation controller $\tau^*(q, \dot{q}) = 4.0(0.5 - q) - 0.8\dot{q} + 1.5\cos(q)$ across 100 robot arm states.
 
 ```python
@@ -127,6 +129,13 @@ EXERCISE_TARGET=exercises/06-robotics.T3.06a/starter.py \
   - **Prerequisite Bridge Module:** [`06-robotics.T2.06b`](06-robotics.T2.06b.md) and Legacy **Step 2.7 (`06-robotics.T2.07`)**.
   - **Core Concepts to Review First:** Khatib operational-space inertia $\Lambda(q) = (J M^{-1} J^\top)^{-1}$, linearized friction-cone contact constraints, Forster's $SO(3)$ IMU preintegration bias Jacobian update, and Behavior Cloning MSE loss + chain-rule gradient step in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Khatib (1987) Operational-Space Paper](https://ieeexplore.ieee.org/document/1087068), [Forster et al. On-Manifold Preintegration (`arXiv:1512.02363`)](https://arxiv.org/abs/1512.02363), [Capuano et al. *Robot Learning Tutorial* (`arXiv:2510.12403`)](https://arxiv.org/abs/2510.12403), and [Track 06 Tier 3 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-3-advanced--production).
+
+### Break it on purpose
+Inject the `no_tanh_derivative` fault from the graded package: drop the $(1 - H^2)$ factor from $dH$ in the backward pass and leave every other line alone.
+- **Inject:** compute `dh_j = dy * W2[j]` instead of `dh_j = dy * W2[j] * (1.0 - h_j * h_j)`.
+- **Symptom:** training still starts from $18.2258$ and still falls, so the run looks healthy, but the central finite difference disagrees near $10^{-2}$ where the correct backward pass agrees to $5.52 \times 10^{-10}$; the mismatch is largest for hidden units near $h_j = 0$ and shrinks as they saturate.
+- **Diagnose:** the forward pass and the loss are untouched, so a sum-for-mean MSE or an ascending step would move the loss rather than the gradient check; the signature is that only the analytic $dW_1$ and $db_1$ disagree with their finite differences while $dW_2$ still matches.
+- **Fix:** multiply $dH$ by $(1 - H^2)$ per hidden unit, and prove it by re-running the central difference on every parameter and requiring agreement below $10^{-7}$ again.
 
 ## 6. Simulation path
 Run the Python Behavior Cloning script above or inspect how learned policies interface with the $1\text{ kHz}$ Operational-Space & CBF safety layer in **Tab 4 (Furuta Pendulum + LQR + CBF)** and **Tab 5 (URDF / MuJoCo & STO)** of the MechaLab Workbench (`npm run dev`).

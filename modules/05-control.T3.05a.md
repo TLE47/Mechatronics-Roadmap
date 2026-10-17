@@ -53,6 +53,8 @@ $$
    For a 1D scalar input with $L_g h(x) \ne 0$, the exact closed-form solution projects $u_{\text{nom}}$ onto the admissible half-space and actuator bounds $[u_{\min}, u_{\max}]$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers before the code runs. (1) With $P^- = 4.0$, $H = 1.0$, $R = 1.0$, what gain does the Riccati formula return, and what posterior variance does the Joseph form give at that gain? (2) If a bug sets $K = 1.5$ instead, what does the naive $(1 - KH)P^-$ return, and can the Joseph form return the same sign? (3) At $x = 0.46\text{ m}$ against the wall at $x_{\max} = 0.50\text{ m}$ with $\alpha = 5.0\text{ s}^{-1}$, what is the largest admissible $u$, and does $u_{\text{nom}} = 0.80\text{ m/s}$ survive it? Two tells: at the *optimal* gain the Joseph and naive posteriors must agree exactly, so a disagreement means an algebra slip in $(1 - KH)^2$; and a barrier command that comes out above $5.0 \times 0.04 = 0.20\text{ m/s}$ means the inequality was solved with the sign flipped.
+
 Verify (1) that the Joseph-form covariance update preserves exact symmetry and non-negative variance even under a perturbed suboptimal Kalman gain $K$, (2) execute a 3D $SO(3)$ ESKF measurement injection $R^+ = R^- \exp([\delta\hat{\theta}^+]_\times)$ with $\det(R^+) = 1$, and (3) solve a 1D CBF-QP safety filter that smoothly brakes an actuator approaching a wall at $x_{\max} = 0.50\text{ m}$.
 
 ```python
@@ -111,6 +113,13 @@ EXERCISE_TARGET=exercises/05-control.T3.05a/starter.py \
   - **Prerequisite Bridge Module:** [`05-control.T2.05a`](05-control.T2.05a.md) and Legacy **Step 2.6 (`05-control.T2.06`)**.
   - **Core Concepts to Review First:** Joseph-form covariance update $P^+ = (I-KH)P^-(I-KH)^\top + KRK^\top$ & $SO(3)$ ESKF multiplicative injection, condensed single-shooting linear MPC Hessian $(G^\top \bar{Q} G + \bar{R})$, and Control Barrier Function (CBF) 1D safety clamp $\dot{h}(x,u) + \gamma h(x) \ge 0$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the ESKF* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508), [Ames et al. *Control Barrier Functions* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199), and [Track 05 Tier 3 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 4 & Tab 8**).
+
+### Break it on purpose
+Inject the mistake from the `## 8. Common mistakes` table: apply $R^+ = R^-\exp([\delta\hat{\theta}^+]_\times)$ and forget to reset $\delta\hat{\theta} \leftarrow 0$ afterwards, keeping the worked example's $\delta\theta_z = 0.05\text{ rad}$.
+- **Inject:** apply the same $0.05\text{ rad}$ correction twice in a row without zeroing the error-state mean between updates, as a filter that never resets its posterior mean does.
+- **Symptom:** the nominal orientation turns $0.10\text{ rad}$ instead of $0.05\text{ rad}$ - twice the correction the innovation asked for - while $\det(R^+) = 1.000000$ and $R^\top R = I$ stay perfect, because both updates are valid rotations.
+- **Diagnose:** the determinant and orthogonality checks cannot see this, so they rule out a bad $\exp$ or a non-orthonormal matrix; the giveaway is that the rotation error doubles on every measurement, which only a retained error-state mean can cause.
+- **Fix:** reset $\delta\hat{\theta} \leftarrow 0$ immediately after injecting, and prove it by feeding two identical corrections and asserting the composed rotation is $0.05\text{ rad}$, not $0.10\text{ rad}$.
 
 ## 6. Simulation path
 Open **Tab 4 (Swing-Up, LQR & Predictive Control Barrier Function QP)** and **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`), or run `05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py` to verify Joseph-form ESKF NEES consistency and CBF-QP state-limit invariance.

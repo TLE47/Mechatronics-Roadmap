@@ -54,6 +54,8 @@ $$
    - **Christoffel Skew-Symmetry (Passivity):** For any joint velocity $\dot{q} \in \mathbb{R}^n$, $N(q, \dot{q}) = \dot{M}(q) - 2C(q, \dot{q}) = -N(q, \dot{q})^\top \implies \dot{q}^\top (\dot{M} - 2C)\dot{q} \equiv 0$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to four numbers before the code runs: the linear part $v_2$ of the elbow's screw axis, the flexure stiffness $K_\theta$ in $\text{N}\cdot\text{m/rad}$, the peak surface stress at a $0.50^\circ$ stroke in $\text{MPa}$, and both joint torques from the two-pass recursion. Two tells: $v_2 = [0, +0.30, 0]^\top$ instead of $[0, -0.30, 0]^\top$ means the minus in $v = -\omega \times q$ was dropped; and a stress near $188.8\text{ MPa}$ instead of $207.7\text{ MPa}$ means the stress-concentration factor $K_t = 1 + t/(2R)$ was left out.
+
 Compute (1) the 6D screw axis $\mathcal{S}_2 = [\omega_2^\top, (-\omega_2 \times q_2)^\top]^\top$ and PoE forward kinematics for a 2-link arm, (2) the Paros-Weisbord rotational stiffness $K_\theta$ and safety factor of a `Ti-6Al-4V` ($E = 114\text{ GPa}$, $\sigma_y = 880\text{ MPa}$) circular notch flexure, and (3) two-pass outward/inward inverse dynamics + passivity verification.
 
 ```python
@@ -116,6 +118,13 @@ EXERCISE_TARGET=exercises/02-mechanics.T3.02a/starter.py \
   - **Prerequisite Bridge Module:** [`02-mechanics.T2.02a`](02-mechanics.T2.02a.md) and Legacy **Step 2.3 (`02-mechanics.T2.03`)**.
   - **Core Concepts to Review First:** Paros-Weisbord notch flexure stiffness $K_\theta = \frac{2 E b t^{5/2}}{9\pi R^{1/2}}$, Screw Theory Product of Exponentials (PoE) forward kinematics, and two-pass $\mathcal{O}(n)$ Recursive Newton-Euler (RNEA) inverse dynamics in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 4 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [Featherstone *Rigid Body Dynamics Algorithms*](https://royfeatherstone.org/spatial/), and [Track 02 Tier 3 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production).
+
+### Break it on purpose
+Inject the `rnea_uncoupled_second_link` fault on purpose: in the outward pass treat the elbow's absolute angular acceleration as $\ddot{q}_2$ alone instead of $\ddot{q}_1 + \ddot{q}_2$.
+- **Inject:** give link 2 its local joint acceleration as if the shoulder were not moving, keeping the same inertias $I_1 = 0.05$ and $I_2 = 0.02\text{ kg}\cdot\text{m}^2$ and the same $\ddot{q} = [2.0, 1.0]^\top\text{ rad/s}^2$.
+- **Symptom:** the elbow torque reads $0.02\text{ N}\cdot\text{m}$ instead of $0.06\text{ N}\cdot\text{m}$ and the shoulder reads $0.12\text{ N}\cdot\text{m}$ instead of $0.16\text{ N}\cdot\text{m}$ - both short by exactly $0.04\text{ N}\cdot\text{m} = I_2\ddot{q}_1$.
+- **Diagnose:** with gravity and velocity zero, a deficit that is identical on both joints can only be the elbow's inertia failing to ride the shoulder's acceleration. A wrong inertia would scale with $\ddot{q}_2$, leaving the shoulder correct and the elbow wrong; a gravity-sign error would be non-zero at rest, and a transposed wrench would not produce the same $0.04\text{ N}\cdot\text{m}$ on both rows.
+- **Fix:** set $\alpha_2 = \alpha_1 + \ddot{q}_2$ in the outward pass before projecting the inward wrench onto each axis, then prove it at the worked $(0.16, 0.06)\text{ N}\cdot\text{m}$ and at the Gate test's $(0.17, 0.09)\text{ N}\cdot\text{m}$ for $I_1 = 0.08$, $I_2 = 0.03$ and $\ddot{q} = [1.0, 2.0]^\top$.
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to verify $O(n)$ RNEA against closed-form Lagrangian equations and `Christoffel` skew-symmetry (see [`02-mechanics-kinematics-dynamics/README.md` §3.1–3.2](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) and [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)).

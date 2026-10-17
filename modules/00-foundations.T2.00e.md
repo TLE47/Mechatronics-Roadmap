@@ -46,6 +46,8 @@ $$
    At $T_s = 0.001\text{ s}$ on the above $A$, $|\lambda(A_{d,\text{Tustin}})| = 0.998002 < 1.0$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to six numbers before the code runs. For $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$, what are the real part and the imaginary part of its eigenvalues (they are the roots of $s^2 + 4s + 100 = 0$), and what are $\operatorname{tr}(A)$ and $\det(A)$? Then, at $T_s = 0.05\text{ s}$, which of Forward Euler and Tustin has a spectral radius above $1.0$, and what are the two radii? Two tells that a wrong answer comes from a mistake rather than the module: a **positive** real part means row 2's signs were flipped, because the diagonal entries are $-k/J$ and $-b/J$ and both are negative, so a trace of $+4\text{ s}^{-1}$ instead of $-4\text{ s}^{-1}$ is the tell; and a Tustin radius above $1.0$ on a stable continuous pole means $(I - \frac{T_s}{2}A)^{-1}$ was replaced by an elementwise division.
+
 For $J=1\text{ kg}\cdot\text{m}^2$, $b=4\text{ N}\cdot\text{m}\cdot\text{s/rad}$, $k=100\text{ N}\cdot\text{m/rad}$, verify that the eigenvalues of $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ match the roots of $s^2 + 4s + 100 = 0$ ($\lambda = -2 \pm j\sqrt{96}\text{ s}^{-1}$) and compare Forward Euler vs. Tustin discretization at $T_s = 0.05\text{ s}$.
 
 ```python
@@ -105,6 +107,13 @@ The tests are behavioural: the worked matrix's eigenvalues must be $-2 \pm j\sqr
   - **Core Concepts to Review First:** Bilinear (Tustin) state matrix $A_{d,\text{Tustin}} = (I - \frac{T_s}{2}A)^{-1}(I + \frac{T_s}{2}A)$ and $2\times 2$ eigenvalue formula $\lambda_{1,2} = \frac{\operatorname{tr}(A_d) \pm \sqrt{\operatorname{tr}(A_d)^2 - 4\det(A_d)}}{2}$ in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
   - **State-Space & Discretization Study Links:** [Åström & Murray *Feedback Systems* Ch. 6–7 (`fbsbook.org`)](https://www.fbsbook.org/), [Python Control Library `control.c2d` Docs (`python-control.readthedocs.io`)](https://python-control.readthedocs.io/), and [Steve Brunton Control Bootcamp (`youtube.com/c/Eigensteve`)](https://www.youtube.com/c/Eigensteve).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md).
+
+### Break it on purpose
+Inject the sign error from the common-mistakes table on purpose: build $A$ with $+k/J$ in row 2, `[[0.0, 1.0], [100.0, -4.0]]`, and leave every other line of the worked example untouched.
+- **Inject:** flip the sign of the stiffness term in the companion matrix, as if $\ddot{\theta} = +(k/J)\theta - (b/J)\dot{\theta}$ had been read off the ODE without moving $k\theta$ to the right-hand side.
+- **Symptom:** the eigenvalues become $+8.198$ and $-12.198\text{ s}^{-1}$ instead of $-2 \pm j\sqrt{96}$, the determinant becomes $-100\text{ s}^{-2}$ instead of $+100\text{ s}^{-2}$, and the Forward Euler radius at $T_s = 0.05\text{ s}$ reads $1.4099$ instead of $1.0247$. The trace still reads $-4\text{ s}^{-1}$, so a check that only compares trace passes.
+- **Diagnose:** the trace is unchanged while the determinant changes sign, which localises the fault to the $k$ term: a sign error in $b$ would have moved the trace to $+4\text{ s}^{-1}$, and a wrong $T_s$ would leave the continuous eigenvalues at $-2 \pm j\sqrt{96}$ and move only the discrete radii. A positive real part on a passive spring-mass-damper is not physics, it is a bookkeeping error.
+- **Fix:** restore $-k/J$ and $-b/J$ in row 2, then prove it twice: $\det(A) = +100\text{ s}^{-2}$ with $\operatorname{tr}(A) = -4\text{ s}^{-1}$, and the worked example's two radii return to `rho_euler=1.0247` (outside the unit circle) and `rho_tustin=0.9099` (inside it).
 
 ## 6. Simulation path
 Open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum + LQR + CBF)** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
