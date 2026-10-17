@@ -17,6 +17,7 @@
     "test:models": "python3 tests/test_model_levels.py",
     "check:exercises": "python3 scripts/run_exercise.py",
     "test:exercise": "python3 tests/test_exercise_package.py",
+    "check:native": "node scripts/check_native_deps.mjs",
     "test:smoke": "node scripts/smoke_test_workbench.mjs",
     "test:e2e": "node scripts/e2e_browser_workbench.mjs",
     "test:e2e:pages": "node scripts/e2e_pages_bundle.mjs"

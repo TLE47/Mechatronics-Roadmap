@@ -63,6 +63,38 @@ jobs:
       - name: Run all 13 Python & C++20 Reference Simulations, Module Expected-Output Diffs, CAD, PCB EDA & Firmware Tests
         run: python3 scripts/run_all_labs.py --verbose
 
+  native-install-macos:
+    # A lockfile resolved on Linux records only Linux's optional binaries, so `npm ci` on a
+    # Mac installs none of the natives rollup/esbuild/Tailwind/Lightning CSS need, and the
+    # failure surfaces later as `Cannot find module '@rollup/rollup-darwin-arm64'`.
+    # This job installs from scratch on macOS and proves the binaries actually load.
+    name: Fresh install on macOS (npm ci) has every native binary the build needs
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Python 3.12 (the build's prebuild step generates lesson data)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the locked dependencies from scratch
+        run: npm ci
+
+      - name: Assert npm ci installed every optional binary the lockfile owes this platform
+        run: npm run check:native
+
+      - name: Build the workbench (rollup, esbuild, Tailwind oxide & Lightning CSS all run natively)
+        run: npm run build
+
   build-workbench:
     name: Typecheck & build the Vite workbench bundle
     needs: verify-and-test
@@ -80,6 +112,9 @@ jobs:
 
       - name: Install the locked dependencies
         run: npm ci
+
+      - name: Assert npm ci installed every optional binary recorded for linux/x64
+        run: npm run check:native
 
       - name: Typecheck and build the production bundle (base /Mechatronics-Roadmap/)
         run: npm run build
