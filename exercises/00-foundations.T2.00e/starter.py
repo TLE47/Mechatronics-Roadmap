@@ -14,8 +14,14 @@ import mechalab_plant as plant
 
 
 def companion_state_matrices(j, k, b):
-    """(A, B) for J theta'' + b theta' + k theta = u, state [theta, theta']."""
-    raise NotImplementedError("TODO 1: rows [0, 1] and [-k/J, -b/J]; B = [0, 1/J]")
+    """(A, B) for J theta'' + b theta' + k theta = u, state [theta, theta'].
+
+    B is a COLUMN, a list of rows: [[0.0], [1.0/J]] - the tests index B[1][0], so a flat
+    [0.0, 1.0/J] comes back as "'float' object is not subscriptable".
+    """
+    raise NotImplementedError(
+        "TODO 1: rows [0, 1] and [-k/J, -b/J]; B is the column [[0.0], [1.0/J]]"
+    )
 
 
 def eigvals_2x2(a):

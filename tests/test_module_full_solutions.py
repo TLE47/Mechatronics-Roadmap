@@ -1,9 +1,10 @@
 """The Full Solution a module page prints must pass the package it introduces.
 
-Dogfooding `00-foundations.T1.00a`-`e` found four pages whose pasted Full Solution had drifted from
+Dogfooding the Track 00 ladders found pages whose pasted Full Solution had drifted from
 `exercises/<id>/solution.py`: the page omitted every input guard the suite checks (an empty trace, a
-missing calibration key, a negative resistance, a zero inertia) and one page had lost `loop_total`
-altogether, so a learner who copied the page failed tests the page never mentioned.
+missing calibration key, a negative resistance, a zero inertia), one page had lost `loop_total`
+altogether, and `00-foundations.T2.00f` printed no `simulate_discrete`, so a learner who copied the
+page failed tests the page never mentioned.
 
 This test makes the page and the package agree: it extracts the `### Full Solution` python block,
 writes it to a temporary submission, and runs the package's own `test_*.py` against it through the
@@ -25,6 +26,12 @@ LADDER = [
     "00-foundations.T1.00c",
     "00-foundations.T1.00d",
     "00-foundations.T1.00e",
+    "00-foundations.T2.00a",
+    "00-foundations.T2.00b",
+    "00-foundations.T2.00c",
+    "00-foundations.T2.00d",
+    "00-foundations.T2.00e",
+    "00-foundations.T2.00f",
 ]
 
 

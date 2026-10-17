@@ -47,6 +47,11 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `00-foundations.T1.00c` | 2026-10-17 | 2 | 0 | none | yes | - |
 | `00-foundations.T1.00d` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `00-foundations.T1.00e` | 2026-10-17 | 2 | 0 | none | yes | - |
+| `00-foundations.T2.00a` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `00-foundations.T2.00b` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `00-foundations.T2.00c` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `00-foundations.T2.00d` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `00-foundations.T2.00e` | 2026-10-17 | 1 | 0 | none | yes | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -89,6 +94,36 @@ run, and pinned by `tests/test_module_full_solutions.py`, which extracts every p
 and runs the package's `test_*.py` against it through `EXERCISE_TARGET`. Run against the previous
 revision of `00-foundations.T1.00b` it fails with `1 failure, 6 errors`; on the repaired pages all
 five pass.
+
+### The Track 00 Tier 2 ladder
+
+Five more bridge modules, each with its own six-to-seven-hole package and its own Gate paper:
+
+| Standard | `T2.00a` | `T2.00b` | `T2.00c` | `T2.00d` | `T2.00e` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Reference solution tested | met (17 cases) | met (17) | met (19) | met (17) | met (16) |
+| Learner attempt passes from the hints alone | met after one fix | met | met | met | met after one fix |
+| Gate score | 11/11 | 11/11 | 11/11 | 12/12 | 12/12 |
+| Author first pass | met, 0 hints | met, 0 hints | met, 0 hints | met, 0 hints | met, 0 hints |
+| Browser workflow tested | not re-run | not re-run | not re-run | not re-run | not re-run |
+| Delayed transfer | pending | pending | pending | pending | pending |
+
+Worked in one sitting, so the per-module figures round to the minute (nine minutes including the
+Gate papers and the re-runs).
+
+**What the dogfood found.** Two of the five attempts failed for a printed reason, and both were the
+docstring disagreeing with the tests:
+
+- `T2.00a`'s `running_integral` promised `out[k] = out[k-1] + values[k]*dt, out[-1] = 0`; the suite
+  requires the first sample to be carried (`out[0] = values[0]*dt`), so an attempt written to the
+  docstring failed two tests. The docstring now states the first entry explicitly.
+- `T2.00e`'s `companion_state_matrices` said `B = [0, 1/J]`; the tests index `B[1][0]`, so `B` must be
+  a column (`[[0.0], [1.0/J]]`). The flat form raised `'float' object is not subscriptable` eight
+  times. Starter and page comment now spell out the nesting.
+
+Extending the page-vs-package test to Tier 2 caught a third, in a module not yet dogfooded: the
+`00-foundations.T2.00f` page printed no `simulate_discrete` at all. Its block now carries the
+reference implementation, and all eleven Track 00 ladder pages pass their packages.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

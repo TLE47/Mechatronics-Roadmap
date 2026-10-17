@@ -123,7 +123,7 @@ import math
 
 def companion_state_matrices(j, k, b):
     """(A, B) for J theta'' + b theta' + k theta = u, state [theta, theta']."""
-    # TODO: rows [0, 1] and [-k/J, -b/J]; B is the column [0, 1/J]
+    # TODO: rows [0, 1] and [-k/J, -b/J]; B is the column [[0.0], [1.0/J]]
     ...
 
 def eigvals_2x2(a):

@@ -22,7 +22,7 @@ flowchart LR
 
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `00` | 12 | 100% | 100% | 100% | 71% | **95.6%** | 12 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `00` | 12 | 100% | 100% | 100% | 92% | **98.8%** | 12 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `01` | 7 | 100% | 100% | 100% | 50% | **92.5%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `02` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `03` | 3 | 100% | 100% | 100% | 50% | **92.5%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **94.8%** |
-| Tier 2 | 18 | **92.9%** |
+| Tier 2 | 18 | **95.0%** |
 | Tier 3 | 12 | **92.5%** |
 
-## Per module (46 modules, overall **93.5%**)
+## Per module (46 modules, overall **94.3%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -49,11 +49,11 @@ flowchart LR
 | `00-foundations.T1.00c` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T1.00d` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T1.00e` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `00-foundations.T2.00a` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `00-foundations.T2.00b` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `00-foundations.T2.00c` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `00-foundations.T2.00d` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `00-foundations.T2.00e` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `00-foundations.T2.00a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `00-foundations.T2.00b` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `00-foundations.T2.00c` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `00-foundations.T2.00d` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `00-foundations.T2.00e` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T2.00f` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `00-foundations.T3.00a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `01-electronics.T1.01a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
@@ -138,11 +138,11 @@ not demonstrated learner mastery.
 | `00-foundations.T1.00c` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `00-foundations.T1.00d` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `00-foundations.T1.00e` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
-| `00-foundations.T2.00a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00b` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00c` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00d` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00e` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
+| `00-foundations.T2.00b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
+| `00-foundations.T2.00c` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
+| `00-foundations.T2.00d` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
+| `00-foundations.T2.00e` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `00-foundations.T2.00f` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T3.00a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T1.01a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
