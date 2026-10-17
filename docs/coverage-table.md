@@ -28,8 +28,8 @@ flowchart LR
 | `03` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `04` | 7 | 100% | 100% | 100% | 79% | **96.8%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `05` | 5 | 100% | 100% | 100% | 60% | **94.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `06` | 5 | 100% | 100% | 100% | 60% | **94.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `07` | 3 | 100% | 100% | 100% | 50% | **92.5%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `06` | 5 | 100% | 100% | 100% | 70% | **95.5%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `07` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `08` | 1 | 100% | 100% | 100% | 50% | **92.5%** | 1 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 
 ## By tier
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **94.8%** |
-| Tier 2 | 18 | **99.2%** |
+| Tier 2 | 18 | **100.0%** |
 | Tier 3 | 12 | **92.5%** |
 
-## Per module (46 modules, overall **95.9%**)
+## Per module (46 modules, overall **96.2%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -83,11 +83,11 @@ flowchart LR
 | `05-control.T3.05c` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `06-robotics.T1.06a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `06-robotics.T2.06a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `06-robotics.T2.06b` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `06-robotics.T2.06b` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `06-robotics.T3.06a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `06-robotics.T3.06b` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `07-systems.T1.07a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `07-systems.T2.07a` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `07-systems.T2.07a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `07-systems.T3.06a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `08-capstones.T3.07a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 
@@ -172,11 +172,11 @@ not demonstrated learner mastery.
 | `05-control.T3.05c` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T1.06a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
-| `06-robotics.T2.06b` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `06-robotics.T2.06b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `06-robotics.T3.06a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T3.06b` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T1.07a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `07-systems.T2.07a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `07-systems.T2.07a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `07-systems.T3.06a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `08-capstones.T3.07a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 

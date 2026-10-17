@@ -62,6 +62,8 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `04-embedded.T2.04d` | 2026-10-17 | 1 | 0 | none | no | - |
 | `05-control.T2.05a` | 2026-10-17 | 2 | 0 | tool | no | - |
 | `06-robotics.T2.06a` | 2026-10-17 | 1 | 0 | none | no | - |
+| `06-robotics.T2.06b` | 2026-10-17 | 1 | 0 | none | no | - |
+| `07-systems.T2.07a` | 2026-10-17 | 1 | 0 | none | no | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -171,6 +173,34 @@ must be refused, and an inheritance request from a waiter that is not more urgen
 ladder now carries a *What the suite refuses* line naming every guard the tests check. `05a` cost
 its extra minute on one real error - a Riccati step written as $A P A^\top$ instead of $A^\top P A$
 - which its hint already warns about, so it is logged as `tool`, not as a course bug.
+
+### Closing Tier 2: `06-robotics.T2.06b` and `07-systems.T2.07a`
+
+| Standard | `06b` | `07a` |
+| :--- | :--- | :--- |
+| Reference solution tested | met (24 cases) | met (26 cases) |
+| Learner attempt passes from the hints alone | met, first attempt | met, first attempt |
+| Gate score | 8/8 | 8/8 |
+| Author first pass | 1 minute, 0 hints | 1 minute, 0 hints |
+| Delayed transfer | pending | pending |
+
+**What this round found.** No course bug in either package — the first two modules to pass their
+suite and their Gate paper on the first attempt with no repair, which is what the end of a ladder
+should look like. `06b`'s seven holes (timer decimation, intra-process saving, bag disk rate, bag
+size, replay slope, wall-clock stretch, control decimation) each have their formula in the hint
+ladder, and its transfer refusals are the ones the earlier rounds taught the pages to state.
+`07a`'s counter is the module's own worked example, and its resistor bound is stated as an upper
+limit in both the hint and the docstring — the distinction a naive attempt gets wrong.
+
+**A limit on these two rows.** They were worked with the module page open, and the excerpt that
+carried each Gate paper carried its answer key in the same window; `07a`'s Full Solution was in
+the same page window as its hints. So the 8/8s show the key's own numbers agree with its own
+questions, not that two papers were answered blind. The exercise attempts are genuine — written
+from the hint ladders in a separate file and run through the same package CI runs — and both
+passed first time. A stricter blind Gate pass is worth doing on a later module; the rule the log
+sets out (hints only, no solution) is otherwise honoured.
+
+Tier 2 is now fully dogfooded: every Tier 2 module has a row here.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

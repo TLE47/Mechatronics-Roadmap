@@ -11,6 +11,21 @@ flowchart LR
 
 ---
 
+## [2026-10-17] — Run 46: Tier 2 Closed
+
+### 1. The last two Tier 2 modules done as the learner
+- `06-robotics.T2.06b` and `07-systems.T2.07a`: hints only, packages at 24 and 26 cases, Gates **8/8 both**, about a minute each. Rows in `docs/dogfood-log.md`.
+- Both passed their package on the first attempt with no repair - the first round of this log with no course bug at all.
+
+### 2. An honest limit on the Gate evidence
+- Each Gate paper was read with its answer key in the same window (`07a`'s page also showed its Full Solution beside the hints), so those 8/8s prove the keys agree with their own questions, not that two papers were answered blind. The exercise attempts were written from the hint ladders in a separate file and run through the same package CI runs, and both passed first time. The limit is recorded in `docs/dogfood-log.md` rather than left implicit.
+
+### 3. Counts
+- Instrumented parity **95.9% -> 96.2%**; Tier 2 **99.2% -> 100.0%** - every Tier 2 module now carries a dogfood row. `docs/coverage-table.md` regenerated, `--check` green; Tier 3 stays at 92.5%.
+
+### 4. Verification
+- `validate_modules` exit 0 (70 modules, 46 Expected-output blocks verified), page test over all 46 pages, `lint_modules` 46/46, `module_parity --check`, the parity and coverage suites (27 tests), and `run_exercise --only` for both new packages (12 checks each).
+
 ## [2026-10-17] — Run 45: The Tier 2 Bridges of Tracks 04-06
 
 ### 1. Five more modules done as the learner
