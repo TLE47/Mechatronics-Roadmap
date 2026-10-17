@@ -83,6 +83,16 @@ wn=20.0 rad/s, zeta=0.50, Mp_analytic=16.30%, Mp_sim=16.28%
 For the same inertia $J = 0.02\text{ kg}\cdot\text{m}^2$ and stiffness $k = 8.0\text{ N}\cdot\text{m/rad}$, compute the critical damping coefficient $b_{\text{crit}} = 2\sqrt{Jk}$ ($\zeta = 1.0$) and verify in the simulation loop that `mp_sim < 1e-6` ($0.0\%$ overshoot). Expected result: `b_crit = 0.80 N*m*s/rad`.
 - **If your result differs:** Check that you took the square root of the product $\sqrt{J k} = \sqrt{0.16} = 0.40$ before multiplying by $2$, rather than computing $2 J k = 0.32$.
 
+### Graded package - two orders, and the step size that lies
+[`exercises/00-foundations.T2.00c/`](../exercises/00-foundations.T2.00c/) turns this section into a test. `starter.py` holds six holes: `first_order_response`, `second_order_params` (`wn`, `zeta`, `wd`, `mp`), `critical_damping`, `settling_time` (refusing an undamped system), `simulate_step` (semi-implicit, velocity first) and `max_stable_dt`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T2.00c/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T2.00c -p 'test_*.py'
+```
+
+The tests are behavioural: the first-order response must be $1 - e^{-1}$ at $t = \tau$ and must change when $\tau$ changes; `zeta` must be `b / (2 sqrt(J k))` at a plant that is not the worked one; the overshoot formula is checked at $\zeta = 0.3$, where dropping the $\sqrt{1-\zeta^2}$ is visible; a critically damped simulation must overshoot by less than $10^{-6}$; and the scheme must stay bounded at $0.9$ of its limit and diverge at $1.5$ - the integrator's property, not the physics. The transfer suite runs the plant's own elbow (whose viscous damping `plant.B2` is part of `b`, not a free parameter) and the plant's motor, where the current must reach 63.2% of steady at $t = L/R$. Four planted faults - `zeta_no_two`, `linear_bcrit`, `wrong_mp`, `hardcoded_params` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Spring-Mass-Damper Loop*) and [`00-foundations.T2.00b`](00-foundations.T2.00b.md).
   - **Core Concepts to Review First:** Standard second-order ODE $\ddot{q} + 2\zeta\omega_n\dot{q} + \omega_n^2 q = \omega_n^2 q_{\text{ref}}$, natural frequency $\omega_n = \sqrt{k/J}$, damping ratio $\zeta = \frac{b}{2\sqrt{Jk}}$, and critical damping $b_{\text{crit}} = 2\sqrt{Jk}$ ($\zeta = 1.0$) in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
@@ -91,6 +101,8 @@ For the same inertia $J = 0.02\text{ kg}\cdot\text{m}^2$ and stiffness $k = 8.0\
 
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to watch how low structural damping $\zeta$ creates a sharp time-domain ringing transient.
+
+The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00c`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). On a physical servo joint in Track 05 (`Step 1.6`), proportional gain $K_p$ sets $k$ and derivative gain $K_d$ sets $b$:
 ```text

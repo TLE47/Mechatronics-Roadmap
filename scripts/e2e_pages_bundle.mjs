@@ -15,7 +15,7 @@
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
  * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
  *    viewport: zero horizontal overflow, asserted rather than reported.
- * 5. Every exercise entry (`EX.02-mechanics.T2.02a`, `EX.00-foundations.T2.00a`) is generated from its
+ * 5. Every exercise entry (`EX.02-mechanics.T2.02a`, `EX.00-foundations.T2.00a`-`c`) is generated from its
  *    package: the starter fails on its `NotImplementedError`, the reference solution passes the
  *    appended self-check, and the output badge reads MATCHED - the browser path, on the built bundle.
  *
@@ -41,6 +41,7 @@ const EXERCISE_IDS = [
   'EX.02-mechanics.T2.02a',
   'EX.00-foundations.T2.00a',
   'EX.00-foundations.T2.00b',
+  'EX.00-foundations.T2.00c',
 ];
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
 const MIME = {

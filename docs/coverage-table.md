@@ -22,7 +22,7 @@ flowchart LR
 
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `00` | 12 | 55% | 40% | 75% | 8% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
+| `00` | 12 | 55% | 40% | 75% | 12% | **50.1%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
 | `01` | 7 | 59% | 40% | 100% | 0% | **56.6%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `02` | 3 | 78% | 60% | 83% | 33% | **67.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
 | `03` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **54.0%** |
+| Tier 2 | 18 | **54.5%** |
 | Tier 3 | 10 | **49.8%** |
 
-## Per module (44 modules, overall **52.3%**)
+## Per module (44 modules, overall **52.5%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -51,7 +51,7 @@ flowchart LR
 | `00-foundations.T1.00e` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
 | `00-foundations.T2.00a` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
 | `00-foundations.T2.00b` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T2.00c` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
+| `00-foundations.T2.00c` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
 | `00-foundations.T2.00d` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `00-foundations.T2.00e` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `00-foundations.T2.00f` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
@@ -138,7 +138,7 @@ not demonstrated learner mastery.
 | `00-foundations.T1.00e` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `00-foundations.T2.00a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00b` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00c` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `00-foundations.T2.00c` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00d` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `00-foundations.T2.00e` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `00-foundations.T2.00f` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |

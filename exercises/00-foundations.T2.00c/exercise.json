@@ -1,0 +1,29 @@
+{
+  "id": "00-foundations.T2.00c",
+  "module": "modules/00-foundations.T2.00c.md",
+  "title": "First- and second-order response, damping and the stability limit",
+  "requires": [
+    "first_order_response(t, tau) -> float",
+    "second_order_params(j, k, b) -> {wn, zeta, wd, mp}",
+    "critical_damping(j, k) -> float",
+    "settling_time(wn, zeta, tolerance=0.02) -> float",
+    "simulate_step(j, k, b, dt, steps) -> {theta, max_theta, mp}",
+    "max_stable_dt(j, k) -> float"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "zeta_no_two": ["test_behavior.ParameterTests.test_a_different_joint"],
+    "linear_bcrit": ["test_behavior.CriticalDampingTests.test_returns_zeta_one"],
+    "wrong_mp": ["test_behavior.ParameterTests.test_overshoot_formula_is_not_exp_minus_pi_zeta"],
+    "hardcoded_params": ["test_behavior.ParameterTests.test_a_different_joint"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T2.00c",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T2.00c/starter.py python3 -m unittest discover -s exercises/00-foundations.T2.00c -p 'test_*.py'"
+  }
+}
