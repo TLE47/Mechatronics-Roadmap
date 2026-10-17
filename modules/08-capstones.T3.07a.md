@@ -108,6 +108,117 @@ EXERCISE_TARGET=exercises/08-capstones.T3.07a/starter.py \
 
 **38 tests.** The $3\sigma$ budget is checked at the worked example's $0.4259\text{ mm}$ and the Gate test's $0.35\text{ mm}$, and a $-0.02\text{ mm}$ bias must still add $0.02\text{ mm}$ rather than cancel, so a linear sum or a signed sum each fail; the latency chain is checked at $1100\ \mu\text{s}$ and at the 10-tap filter's $3400\ \mu\text{s}$, so a chain that forgets the $500\ \mu\text{s}$ zero-order hold fails; the phase subtraction is checked in degrees at $52.55^\circ$, $32.78^\circ$ and $48.54^\circ$, so a raw radian result fails; and the sign-off is checked at the 4-of-5 `STO` case, an out-of-window $50\ \Omega$ bus, and the inclusive boundaries of all five limits. The transfer suite runs **the plant**: one count of its 12-bit encoder seen at the full $0.20\text{ m}$ reach is $0.3068\text{ mm}$, so $3\sigma$ is $0.9204\text{ mm}$ and the $0.50\text{ mm}$ capstone spec is already lost before any other source is counted; its $1\text{ kHz}$ tick is the worked $1000\ \mu\text{s}$ period and erodes $8.59^\circ$ at $150\text{ rad/s}$; and the $17^\circ$ between the nominal margin and the $45^\circ$ floor buys $1.978\text{ ms}$, which the module's filter swap spends nearly twice over. Five planted faults - `rss_adds_linearly`, `systematic_forgets_abs`, `latency_forgets_zoh`, `phase_margin_forgets_radians`, `signoff_ignores_sto` - each fail the test named for them.
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+import math
+
+
+def rss(sigmas):
+    """The root-sum-square of independent 1-sigma contributions."""
+    # TODO: square each value, sum, then one square root - not the sum itself
+    ...
+
+
+def systematic_sum(biases):
+    """Deterministic offsets add linearly."""
+    # TODO: abs() first - a bias on the other side is not a credit
+    ...
+
+
+def error_budget_3sigma(biases, sigmas, nsig=3.0):
+    """e = sum |b_i| + nsig * sqrt(sum sigma_i^2)."""
+    # TODO: systematic terms add as magnitudes, random terms in quadrature, then scale
+    ...
+
+
+def total_latency_s(tau_sens_us, tau_bus_us, tau_filt_us, tau_comp_us, ts_us):
+    """Every delay plus the zero-order hold, in seconds."""
+    # TODO: four measured delays PLUS half a tick, then microseconds to seconds
+    ...
+
+
+def net_phase_margin_deg(pm0_deg, w_gc_rad_s, tau_total_s):
+    """PM_net = PM_0 - omega_gc * tau_total, in degrees."""
+    # TODO: the product is in RADIANS - multiply by 180/pi before subtracting
+    ...
+
+
+def capstone_signoff(e_3sig_mm, pm_net_deg, cpu_u, can_ohm, sto_cat3_ok,
+                     e_spec_mm=0.50, pm_min_deg=45.0, cpu_max=0.70,
+                     can_min_ohm=55.0, can_max_ohm=65.0):
+    """GO only when every one of the five domains passes."""
+    # TODO: four gates AND the STO - each limit inclusive at its own boundary
+    ...
+
+
+print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $\tau_{\text{total}} = 3.40\ \text{ms}$, $\text{PM}_{\text{net}} = 32.779^\circ < 45.0^\circ$, `capstone_signoff == False`.
+
+### Hint ladder
+1. **The ZOH is half a tick.** Six delays, not five: $20 + 180 + 2550 + 150\ \mu\text{s}$ of measured latency *plus* $\frac{1}{2}T_s = 500\ \mu\text{s}$, which is $3400\ \mu\text{s}$ and not the $2900\ \mu\text{s}$ the measured chain alone gives.
+2. **Radians before degrees.** $150.0\ \text{rad/s} \times 0.0034\ \text{s} = 0.51\ \text{rad}$ of lag; subtract $0.51 \times 180/\pi = 29.2208^\circ$ from $62.0^\circ$. A net margin near $61.5^\circ$ means the product was treated as degrees already.
+3. **Four out of five is NO-GO.** The gate is a conjunction: the $3\sigma$ budget ($0.4259\ \text{mm} \le 0.50$), the margin ($32.78^\circ < 45^\circ$), CPU, termination and STO. Here the margin alone already fails, so the verdict is `False` whatever the other four say.
+4. **The $3\sigma$ budget is a magnitude budget.** Biases add linearly, so two offsets on opposite sides still add their sizes; only the independent random terms add in quadrature, and only then is the $3\sigma$ factor applied to that quadrature sum.
+
+### Full Solution
+```python
+import math
+
+
+def rss(sigmas):
+    return math.sqrt(sum(s * s for s in sigmas))
+
+
+def systematic_sum(biases):
+    return sum(abs(b) for b in biases)
+
+
+def error_budget_3sigma(biases, sigmas, nsig=3.0):
+    return systematic_sum(biases) + nsig * rss(sigmas)
+
+
+def total_latency_s(tau_sens_us, tau_bus_us, tau_filt_us, tau_comp_us, ts_us):
+    return (tau_sens_us + tau_bus_us + tau_filt_us + tau_comp_us + 0.5 * ts_us) * 1e-6
+
+
+def net_phase_margin_deg(pm0_deg, w_gc_rad_s, tau_total_s):
+    return pm0_deg - w_gc_rad_s * tau_total_s * (180.0 / math.pi)
+
+
+def capstone_signoff(e_3sig_mm, pm_net_deg, cpu_u, can_ohm, sto_cat3_ok,
+                    e_spec_mm=0.50, pm_min_deg=45.0, cpu_max=0.70,
+                    can_min_ohm=55.0, can_max_ohm=65.0):
+    return (e_3sig_mm <= e_spec_mm
+            and pm_net_deg >= pm_min_deg
+            and cpu_u <= cpu_max
+            and can_min_ohm <= can_ohm <= can_max_ohm
+            and sto_cat3_ok)
+
+
+e_3sig = error_budget_3sigma([0.01, 0.04, 0.03, 0.02], [0.03, 0.06, 0.08, 0.03])
+tau_nominal = total_latency_s(20.0, 180.0, 250.0, 150.0, 1000.0)
+pm_nominal = net_phase_margin_deg(62.0, 150.0, tau_nominal)
+tau_filtered = total_latency_s(20.0, 180.0, 2550.0, 150.0, 1000.0)
+pm_filtered = net_phase_margin_deg(62.0, 150.0, tau_filtered)
+go = capstone_signoff(e_3sig, pm_filtered, 0.42, 60.0, True)
+
+assert math.isclose(e_3sig, 0.425883, abs_tol=1e-6)
+assert math.isclose(tau_nominal, 0.0011, rel_tol=1e-12)
+assert math.isclose(pm_nominal, 52.5462, abs_tol=1e-3)
+assert math.isclose(tau_filtered, 0.0034, rel_tol=1e-12)
+assert math.isclose(pm_filtered, 32.7791, abs_tol=1e-3)
+assert go is False
+
+print("PM_net=%.2f deg at tau=%.2f ms | signoff=%s" % (pm_filtered, tau_filtered * 1e3, go))
+print("nominal: tau=%.2f ms, PM_net=%.2f deg, e_3sigma=%.3f mm"
+      % (tau_nominal * 1e3, pm_nominal, e_3sig))
+```
+
+Printed: `PM_net=32.78 deg at tau=3.40 ms | signoff=False`, then `nominal: tau=1.10 ms, PM_net=52.55 deg, e_3sigma=0.426 mm`.
+
 ### Break it on purpose
 Inject the `latency_forgets_zoh` fault and diagnose it from the budget alone, keeping $T_s = 1000\ \mu\text{s}$ and $\omega_{gc} = 150\text{ rad/s}$:
 - **Inject:** sum the four measured delays and drop the zero-order hold term, i.e. `tau_total_s = (tau_sens_us + tau_bus_us + tau_filt_us + tau_comp_us) * 1e-6` instead of adding `0.5 * ts_us`.

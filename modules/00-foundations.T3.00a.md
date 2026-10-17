@@ -127,6 +127,111 @@ The tests are behavioural: `[w]_x v` must equal `w x v` on three pairs (a transp
   - **Lie Theory & $SO(3)$ Study Links:** [Joan Solà et al., *A Micro Lie Theory for State Estimation in Robotics* (`arXiv:1812.01537`, §II.A–II.B)](https://arxiv.org/abs/1812.01537), [Lynch & Park *Modern Robotics* Ch. 3.2 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), and [Sophus C++ Lie Groups Library (`github.com/strasdat/Sophus`)](https://github.com/strasdat/Sophus).
   - **Curriculum Reference:** [Track 00 Tier 3 (`00-foundations/README.md#tier-3-advanced--production`)](../00-foundations/README.md#tier-3-advanced--production) (Step 3.1 Lie Groups $SO(3)/SE(3)$).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import math
+
+def hat(w):
+    """The 3x3 skew matrix with `[w]_x v == w x v`."""
+    # TODO: rows [0, -wz, wy], [wz, 0, -wx], [-wy, wx, 0] - the signs are the cross product
+    ...
+
+def vee(m):
+    """Inverse of `hat`; raise ValueError when `m` is not skew-symmetric."""
+    # TODO: check the three off-diagonal pairs and the zero diagonal first, then read the vector
+    ...
+
+def mat3_mul(a, b):
+    """Row-by-column product of two 3x3 matrices."""
+    # TODO: a[i][k] * b[k][j] summed over k - never a Hadamard product
+    ...
+
+def mat3_vec(a, v):
+    """Matrix times vector."""
+    # TODO: one row at a time
+    ...
+
+def exp_so3(phi):
+    """`exp([phi]_x)` by Rodrigues' formula, for a rotation vector of any length."""
+    # TODO: I + (sin t / t) K + ((1 - cos t) / t^2) K^2, with the Taylor branch below t = 1e-7
+    ...
+
+def energy_rate(h_grad, x_dot, dissipation=0.0):
+    """Power balance `dH/dt = grad(H) . x_dot - dissipation`."""
+    # TODO: a dot product, with the dissipation subtracted
+    ...
+
+print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the full solution")
+```
+**Expected numbers (the answer):** $\max\lvert[\hat{u}]_\times^3 + [\hat{u}]_\times\rvert < 10^{-15}$ for the unit axis $\hat{u} = [1/\sqrt{3}, -1/\sqrt{3}, 1/\sqrt{3}]^\top$.
+
+### Hint ladder
+1. **The hat map is the cross product in matrix form.** Row 0 is $(0, -\omega_z, \omega_y)$; check it on one pair before anything else, because a transposed hat map still passes every skew-symmetry check and fails only `[w]v == w x v`.
+2. **Unit axis is what makes the cube collapse.** For $\|\hat{u}\| = 1$, $[\hat{u}]_\times^2 = \hat{u}\hat{u}^\top - I$ and $[\hat{u}]_\times^3 = -[\hat{u}]_\times$; for a general $\phi$ of length $\theta$, the same line reads $[\phi]_\times^3 = -\theta^2[\phi]_\times$, which is why Rodrigues divides by $\theta$ and $\theta^2$.
+3. **Keep the small-angle branch.** Below $\theta = 10^{-7}$ use $1 - \theta^2/6$ and $\tfrac{1}{2} - \theta^2/24$; computing $(1-\cos\theta)/\theta^2$ directly at a nanoradian subtracts two nearly equal numbers and the matrix stops being orthogonal.
+4. **Test the exponent at the hard end.** After filling the holes, $R = $ `exp_so3([0, 0, math.pi/2])` should send $[1,0,0]^\top$ to $[0,1,0]^\top$ and have $\det R = 1$; if it is exact at $\|\phi\| = 1$ but wrong at $\pi/2$, the coefficients are missing their $1/\theta$ and $1/\theta^2$.
+
+### Full Solution
+```python
+import math
+
+def hat(w):
+    wx, wy, wz = w[0], w[1], w[2]
+    return [[0.0, -wz, wy], [wz, 0.0, -wx], [-wy, wx, 0.0]]
+
+def vee(m):
+    if any(abs(m[i][i]) > 1e-12 for i in range(3)) or any(
+            abs(m[i][j] + m[j][i]) > 1e-12 for i in range(3) for j in range(i + 1, 3)):
+        raise ValueError("vee needs a skew-symmetric matrix")
+    return [m[2][1], m[0][2], m[1][0]]
+
+def mat3_mul(a, b):
+    return [[sum(a[i][k] * b[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
+
+def mat3_vec(a, v):
+    return [sum(a[i][j] * v[j] for j in range(3)) for i in range(3)]
+
+def exp_so3(phi):
+    theta = math.sqrt(sum(value * value for value in phi))
+    k = hat(phi)
+    k2 = mat3_mul(k, k)
+    if theta < 1e-7:
+        c1, c2 = 1.0 - theta * theta / 6.0, 0.5 - theta * theta / 24.0
+    else:
+        c1, c2 = math.sin(theta) / theta, (1.0 - math.cos(theta)) / (theta * theta)
+    return [[(1.0 if i == j else 0.0) + c1 * k[i][j] + c2 * k2[i][j] for j in range(3)]
+            for i in range(3)]
+
+def energy_rate(h_grad, x_dot, dissipation=0.0):
+    return sum(g * v for g, v in zip(h_grad, x_dot)) - dissipation
+
+unit = [1.0 / math.sqrt(3.0), -1.0 / math.sqrt(3.0), 1.0 / math.sqrt(3.0)]
+k = hat(unit)
+k3 = mat3_mul(k, mat3_mul(k, k))
+residual = max(abs(k3[r][c] + k[r][c]) for r in range(3) for c in range(3))
+assert residual < 1e-15
+assert all(math.isclose(a, b, abs_tol=1e-12) for a, b in zip(vee(k), unit))
+
+r_z90 = exp_so3([0.0, 0.0, math.pi / 2.0])
+rotated = mat3_vec(r_z90, [1.0, 0.0, 0.0])
+det = (r_z90[0][0] * (r_z90[1][1] * r_z90[2][2] - r_z90[1][2] * r_z90[2][1])
+       - r_z90[0][1] * (r_z90[1][0] * r_z90[2][2] - r_z90[1][2] * r_z90[2][0])
+       + r_z90[0][2] * (r_z90[1][0] * r_z90[2][1] - r_z90[1][1] * r_z90[2][0]))
+assert math.isclose(det, 1.0, abs_tol=1e-12)
+assert all(math.isclose(rotated[i], [0.0, 1.0, 0.0][i], abs_tol=1e-12) for i in range(3))
+
+# A skew-symmetric coupling does no work: x_dot = J grad(H) has grad(H) . x_dot = 0.
+grad_h = [0.4, -0.8, 0.5]
+power = energy_rate(grad_h, mat3_vec(hat([1.0, 2.0, 3.0]), grad_h))
+assert abs(power) < 1e-15
+print("cubic identity holds: True | vee round trip: True")
+print("R_z90 * [1,0,0] = [%.1f, %.1f, %.1f] | det = %.12f | skew power = %.1f W"
+      % (rotated[0], rotated[1], rotated[2], det, round(power, 12)))
+```
+
+Printed: `cubic identity holds: True | vee round trip: True`, then `R_z90 * [1,0,0] = [0.0, 1.0, 0.0] | det = 1.000000000000 | skew power = 0.0 W`.
+
 ### Break it on purpose
 Inject the `rodrigues_over_rotates` fault on purpose: apply the unit-axis form $I + \sin\theta\,[\phi]_\times + (1-\cos\theta)[\phi]_\times^2$ to a rotation *vector* $\phi$, instead of dividing the coefficients by $\theta$ and $\theta^2$. It is exact at $\|\phi\| = 1\text{ rad}$, where both normalisations are $1$.
 - **Inject:** set $c_1 = \sin\theta$ and $c_2 = 1-\cos\theta$ rather than $c_1 = \frac{\sin\theta}{\theta}$ and $c_2 = \frac{1-\cos\theta}{\theta^2}$, keeping the small-angle branch unchanged.

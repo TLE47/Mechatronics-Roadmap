@@ -93,6 +93,126 @@ EXERCISE_TARGET=exercises/04-embedded.T1.04a/starter.py \
   - **Core Concepts to Review First:** Fixed-width `<stdint.h>` integer types (`uint8_t`, `uint16_t`, `uint32_t`), bitwise set/clear/toggle/extract idioms (`|= (1U << n)`, `&= ~(1U << n)`), and C structs/pointers in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Barr Group *Embedded C Coding Standard* (`barrgroup.com`)](https://barrgroup.com/embedded-systems/books/embedded-c-coding-standard) and [Track 04 Tier 1 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import struct
+
+
+def int_range(bits, signed=False):
+    """The (low, high) a fixed-width C integer holds - `int16_t` is (-32768, 32767)."""
+    # TODO 1: unsigned is 0..2**bits - 1; signed is -2**(bits-1)..2**(bits-1) - 1
+    ...
+
+
+def wrap_uint(value, bits):
+    """What a `uintN_t` keeps when it is assigned `value`."""
+    # TODO 2: mask with 2**bits - 1 - the mask is the width, not always 0xFF
+    ...
+
+
+def elapsed_unsigned(now, prev, bits):
+    """`(uintN_t)(now - prev)` - the tick difference that survives a counter rollover."""
+    # TODO 3: subtract first, then mask - the raw difference across the wrap is negative
+    ...
+
+
+def apply_bits(reg, set_mask=0, clear_mask=0):
+    """`(reg | set_mask) & ~clear_mask`."""
+    # TODO 4: `|` the set mask on, then `& ~` the clear mask off - forgetting the `~` wipes
+    #         every neighbouring bit
+    ...
+
+
+def bit_is_set(reg, bit):
+    """One flag read as 0 or 1."""
+    # TODO 5: shift the bit down to position 0, then `& 1`
+    ...
+
+
+def pack_telemetry(tick, count, vel):
+    """The MCU's 8-byte `<Hhf` frame: uint16 tick, int16 count, float velocity."""
+    # TODO 6: struct.pack('<Hhf', ...) - `<` is little-endian, the UART's byte order
+    ...
+
+
+def unpack_telemetry(raw):
+    """The same frame read back as (tick, count, vel)."""
+    # TODO 7: refuse anything that is not exactly 8 bytes, then struct.unpack('<Hhf', raw)
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** `0x5A` with bit `6` set and bit `3` cleared is `0x52` (`82`); the Skip test's `0x0F` with bit `2` cleared is `11`; `(uint16_t)(4 - 65530) = 10`; the 12-bit encoder's `8 - 4088` is `16` counts; the `<Hhf` frame of `(1000, -512, 3.25)` is 8 bytes, `e8 03 00 fe 00 00 50 40`.
+
+### Hint ladder
+1. **Width first, value second.** `uint16_t` holds `0..65535` and `int16_t` holds `-32768..32767`; both bounds come from `bits` alone, so write them as shifts of `1`, not as remembered constants.
+2. **The mask is the width.** `2**16 - 1` is `0xFFFF` and `2**12 - 1` is `0x0FFF`, so `& (2**bits - 1)` keeps exactly the bits a `uintN_t` keeps - hard-coding `0xFF` makes the 12-bit encoder `4096` come back as `0`.
+3. **Subtract before you mask.** `4 - 65530` is `-65526` in Python; `-65526 & 0xFFFF` is the `10` ticks that actually elapsed. Masking each reading first and then subtracting gives the same `10`, but subtracting and never masking gives `-65526`.
+4. **Clearing is an AND with an inverted mask.** `~(1 << 3)` is `0xF7`, so `0x5A & 0xF7` keeps bits 1, 4, 6 and clears only bit 3 - `0x5A & 0x08` instead keeps bit 3 and wipes the rest.
+
+### Full Solution
+```python
+import struct
+
+
+def int_range(bits, signed=False):
+    if signed:
+        return -(2 ** (bits - 1)), 2 ** (bits - 1) - 1
+    return 0, 2 ** bits - 1
+
+
+def wrap_uint(value, bits):
+    return value & (2 ** bits - 1)
+
+
+def elapsed_unsigned(now, prev, bits):
+    return (now - prev) & (2 ** bits - 1)
+
+
+def apply_bits(reg, set_mask=0, clear_mask=0):
+    return (reg | set_mask) & ~clear_mask
+
+
+def bit_is_set(reg, bit):
+    return (reg >> bit) & 1
+
+
+def pack_telemetry(tick, count, vel):
+    return struct.pack("<Hhf", tick, count, float(vel))
+
+
+def unpack_telemetry(raw):
+    if len(raw) != 8:
+        raise ValueError("a telemetry frame is exactly 8 bytes, not %d" % len(raw))
+    return struct.unpack("<Hhf", bytes(raw))
+
+
+reg = apply_bits(0x5A, 1 << 6, 1 << 3)
+skip_reg = apply_bits(0x0F, 0, 1 << 2)
+frame = pack_telemetry(1000, -512, 3.25)
+tick, count, vel = unpack_telemetry(frame)
+
+assert int_range(8) == (0, 255)
+assert int_range(16, signed=True) == (-32768, 32767)
+assert wrap_uint(65536 + 5, 16) == 5
+assert elapsed_unsigned(4, 65530, 16) == 10
+assert elapsed_unsigned(8, 4088, 12) == 16
+assert reg == 0x52 and bit_is_set(reg, 6) == 1 and bit_is_set(reg, 3) == 0
+assert skip_reg == 11
+assert len(frame) == 8 and frame.hex(" ") == "e8 03 00 fe 00 00 50 40"
+assert (tick, count) == (1000, -512) and abs(vel - 3.25) < 1e-6
+
+print("reg=0x%02X (bit6=%d, bit3=%d) | skip reg=%d | u16 delta=%d | 12-bit encoder delta=%d"
+      % (reg, bit_is_set(reg, 6), bit_is_set(reg, 3), skip_reg,
+         elapsed_unsigned(4, 65530, 16), elapsed_unsigned(8, 4088, 12)))
+print("frame=%s | tick=%d count=%d vel=%.2f rad/s" % (frame.hex(" "), tick, count, vel))
+```
+
+Printed: `reg=0x52 (bit6=1, bit3=0) | skip reg=11 | u16 delta=10 | 12-bit encoder delta=16`, then `frame=e8 03 00 fe 00 00 50 40 | tick=1000 count=-512 vel=3.25 rad/s`.
+
 ### Break it on purpose
 Inject the `clear_forgets_the_tilde` fault the graded package names, and diagnose it from the register value alone:
 - **Inject:** drop the `~` — write `reg &= (1 << 3)` to clear bit `3` of the exercise's `reg = 0x5A` (`0b01011010`) instead of `reg &= ~(1 << 3)`.

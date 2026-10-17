@@ -113,6 +113,132 @@ EXERCISE_TARGET=exercises/04-embedded.T2.04b/starter.py \
 
 **45 tests.** The utilisation sum is checked at the worked example's $0.325$ and the Skip test's $0.40$, so a microsecond/millisecond mix-up fails at once; the response time is checked with the mutex ($140\ \mu\text{s}$) and without it ($740\ \mu\text{s}$), so ignoring the flag fails; arbitration is checked on $\{0x105, 0x012, 0x04A\}$ in both orders, so picking the highest identifier fails; and the pack is checked at the exercise's $3071$, at both ends ($0$ and $4095$), and at the zero command's half-step straddle, so a $2^N$ scale fails. The transfer suite runs **the plant as the node**: its $1\text{ ms}$ tick is the worked example's $1000\ \mu\text{s}$ period, its $2.5\text{ N}\cdot\text{m}$ clamp packs to code $2332$ and both disturbance pulses survive the $12$-bit $[-18, +18]\text{ N}\cdot\text{m}$ frame within half a count, and its $4096$-count encoder is exactly one count finer than a 12-bit pack's $4095$ intervals. Five planted faults - `utilization_counts_milliseconds`, `response_time_always_inherits`, `can_winner_picks_highest`, `pack_uses_2_to_the_bits`, `quantization_step_uses_2_to_the_bits` - each fail the test named for them.
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+def cpu_utilization(tasks):
+    """U = sum C_i / T_i. Each task is (name, c_us, t_us) or (c_us, t_us)."""
+    # TODO 1: a ratio, so C and T must be in the same unit; refuse a task whose C exceeds its T
+    ...
+
+
+def liu_layland_bound(n):
+    """The sufficient Rate-Monotonic bound U <= n (2^(1/n) - 1)."""
+    # TODO 2: the exponent is 1/n, and for one task the bound is 1.0
+    ...
+
+
+def response_time_us(c_h_us, b_i_us, c_m_us=0.0, inheritance=True):
+    """Worst-case response of the high-priority task, with and without priority inheritance."""
+    # TODO 3: with the mutex the medium task is kept out, so C_M is added only without it
+    ...
+
+
+def can_winner(ids):
+    """The identifier that wins CAN bitwise arbitration."""
+    # TODO 4: bit 0 is dominant, so the lowest number wins - not the first frame sent
+    ...
+
+
+def encode_fixed(x, x_min, x_max, bits):
+    """u = round((x - x_min) / (x_max - x_min) * (2^bits - 1))."""
+    # TODO 5: the scale is 2^bits - 1, the number of intervals, not 2^bits
+    ...
+
+
+def decode_fixed(u, x_min, x_max, bits):
+    """The inverse pack."""
+    # TODO 6: the offset goes back on after the scale, and the divisor is 2^bits - 1 again
+    ...
+
+
+def quantization_step(x_min, x_max, bits):
+    """One count of the packed field, in the field's own units."""
+    # TODO 7: span over 2^bits - 1, so a 12-bit 36 N*m field steps by 8.79 mN*m
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $+9.0\ \text{N}\cdot\text{m}$ over $[-18, +18]$ packs to `3071` and one count is $36/4095 = 0.0087912\ \text{N}\cdot\text{m}$; the worked task set gives $U = 0.325$ against a bound of $0.7798$; $\{0x105, 0x012, 0x04A\}$ is won by `0x012`; the plant's $2.5\ \text{N}\cdot\text{m}$ clamp packs to `2332`.
+
+### Hint ladder
+1. **Utilisation is a ratio, not a sum.** `120/1000 + 500/4000 + 400/5000 = 0.12 + 0.125 + 0.08 = 0.325`; adding microseconds would give `1020`, and dividing one task in ms by a period in µs gives `1000×` too much.
+2. **The bound is not 1.0.** For $n = 3$ it is $3(2^{1/3} - 1) = 0.7798$; the exponent is $1/n$, so a task set at $U = 0.325$ is provably schedulable under Rate Monotonic and one at $0.9$ is merely *not proven*.
+3. **Priority inheritance removes the medium task's contribution.** $C_H + B_i = 140\ \mu\text{s}$ with the mutex; without it the medium task preempts inside the critical section and the same response becomes $140 + 600 = 740\ \mu\text{s}$.
+4. **$2^N - 1$ is the number of intervals, not $2^N$.** The 12-bit field has `4095` steps across `36` N·m, so `9.0` sits at `(9 + 18)/36 × 4095 = 3071.25`, and rounding - not truncating - gives `3071`.
+
+### Full Solution
+```python
+def _task_pair(task):
+    if len(task) == 2:
+        c_us, t_us = task
+    else:
+        _name, c_us, t_us = task
+    return float(c_us), float(t_us)
+
+
+def cpu_utilization(tasks):
+    total = 0.0
+    for task in tasks:
+        c_us, t_us = _task_pair(task)
+        if c_us > t_us:
+            raise ValueError("a task whose worst case exceeds its period cannot be scheduled")
+        total += c_us / t_us
+    return total
+
+
+def liu_layland_bound(n):
+    return n * (2.0 ** (1.0 / n) - 1.0)
+
+
+def response_time_us(c_h_us, b_i_us, c_m_us=0.0, inheritance=True):
+    return c_h_us + b_i_us + (0.0 if inheritance else c_m_us)
+
+
+def can_winner(ids):
+    return min(ids)
+
+
+def encode_fixed(x, x_min, x_max, bits):
+    return int(round((x - x_min) / (x_max - x_min) * ((1 << bits) - 1)))
+
+
+def decode_fixed(u, x_min, x_max, bits):
+    return x_min + (u / float((1 << bits) - 1)) * (x_max - x_min)
+
+
+def quantization_step(x_min, x_max, bits):
+    return (x_max - x_min) / float((1 << bits) - 1)
+
+
+tasks = (("sensor", 120.0, 1000.0), ("control", 500.0, 4000.0), ("telemetry", 400.0, 5000.0))
+u = encode_fixed(9.0, -18.0, 18.0, 12)
+step = quantization_step(-18.0, 18.0, 12)
+
+assert abs(cpu_utilization(tasks) - 0.325) < 1e-12
+assert abs(liu_layland_bound(3) - 3 * (2 ** (1 / 3) - 1)) < 1e-12
+assert abs(response_time_us(140, 0, 600, inheritance=True) - 140.0) < 1e-12
+assert abs(response_time_us(140, 0, 600, inheritance=False) - 740.0) < 1e-12
+assert can_winner([0x105, 0x012, 0x04A]) == 0x012
+assert can_winner([0x04A, 0x012, 0x105]) == 0x012
+assert u == 3071 and encode_fixed(-18.0, -18.0, 18.0, 12) == 0
+assert encode_fixed(18.0, -18.0, 18.0, 12) == 4095
+assert abs(step - 36.0 / 4095) < 1e-15
+assert abs(decode_fixed(u, -18.0, 18.0, 12) - 9.0) < step / 2
+assert encode_fixed(2.5, -18.0, 18.0, 12) == 2332
+
+print("U=%.3f (bound %.4f) | R_H with PI=%.0f us, without=%.0f us | CAN winner=0x%03X"
+      % (cpu_utilization(tasks), liu_layland_bound(3),
+         response_time_us(140, 0, 600, True), response_time_us(140, 0, 600, False),
+         can_winner([0x105, 0x012, 0x04A])))
+print("MIT pack: 9.0 N*m -> code %d, step=%.6f N*m/count | plant clamp 2.5 N*m -> %d"
+      % (u, step, encode_fixed(2.5, -18.0, 18.0, 12)))
+```
+
+Printed: `U=0.325 (bound 0.7798) | R_H with PI=140 us, without=740 us | CAN winner=0x012`, then `MIT pack: 9.0 N*m -> code 3071, step=0.008791 N*m/count | plant clamp 2.5 N*m -> 2332`.
+
 ### Break it on purpose
 Keep the worked example's numbers — $C_H = 100\ \mu\text{s}$, $B_i = 40\ \mu\text{s}$, $C_M = 600\ \mu\text{s}$ — and plant the fault the `## 8. Common mistakes` table calls out:
 - **Inject:** guard the shared struct with `xSemaphoreCreateBinary()` instead of `xSemaphoreCreateMutex()`, so the lock-holder inherits nothing.

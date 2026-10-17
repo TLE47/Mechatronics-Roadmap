@@ -106,6 +106,107 @@ The tests are behavioural: the first-order corner must be $-3.0103$ dB and $-45^
   - **Bode Plot & Phasor Study Links:** [Brian Douglas: Bode Plots by Hand & Frequency Response (YouTube)](https://www.youtube.com/user/ControlLectures), [CTMS Frequency Response Tutorial (`ctms.engin.umich.edu`)](https://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=ControlFrequency), and [Python `cmath` Documentation](https://docs.python.org/3/library/cmath.html).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (**Tab 2: Two-Mass & Notch Bode**).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import cmath
+import math
+
+def to_polar(z):
+    """(magnitude, phase_rad) of a complex number - Euler's formula, read backwards."""
+    # TODO: `abs(z)` and `cmath.phase(z)`, no quadrant fix-ups
+    ...
+
+def to_rect(magnitude, phase_rad):
+    """The complex number m e^{j phi}."""
+    # TODO: `cmath.rect(m, phi)` - Euler's formula, not a cos/sin pair retyped here
+    ...
+
+def first_order_response(tau, omega):
+    """H(jw) = 1 / (1 + j w tau), i.e. `d/dt` becomes `j*omega`."""
+    # TODO: substitute j*omega for the derivative and divide
+    ...
+
+def second_order_response(wn, zeta, omega):
+    """G(jw) = wn^2 / ((jw)^2 + 2 zeta wn (jw) + wn^2)."""
+    # TODO: s = 1j*omega first, then evaluate the denominator on that complex s
+    ...
+
+def magnitude_db(h):
+    """Amplitude in decibels."""
+    # TODO: 20 log10 |h| - power decibels (10 log10) halve every reading
+    ...
+
+def phase_deg(h):
+    """Phase of h in degrees."""
+    # TODO: radians out of cmath.phase converted to degrees
+    ...
+
+def resonance_peak(wn, zeta):
+    """(omega_r, peak_magnitude), or (0.0, 1.0) when |G| never rises above 1."""
+    # TODO: omega_r = wn sqrt(1 - 2 zeta^2) only while zeta < 1/sqrt(2);
+    #       peak = 1 / (2 zeta sqrt(1 - zeta^2)); otherwise return the flat pair
+    ...
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+**Expected numbers (the answer):** at $\omega = 1000\text{ rad/s}$: $-39.9127\text{ dB}$ and $-179.4213^\circ$.
+
+### Hint ladder
+1. **`d/dt -> j omega` is the whole trick.** A first-order filter $\tau\dot{y} + y = u$ becomes $j\omega\tau H + H = 1$, so $H = 1/(1 + j\omega\tau)$ - divide, never subtract.
+2. **The denominator is complex, not a length.** For the second-order plant write `s = 1j*omega` and evaluate `s*s + 2*zeta*wn*s + wn*wn`; taking `abs()` of the parts separately before that division is what turns $-39.9\text{ dB}$ into a wrong sign.
+3. **Decibels use 20, phase uses degrees.** `20*math.log10(abs(G))` and `math.degrees(cmath.phase(G))`; at $\omega = 1000$ the plant is almost $180^\circ$ away from the drive, so the phase you get should sit just above $-180^\circ$, not near $-90^\circ$.
+4. **The peak is not at $\omega_n$.** Differentiating $|G|$ gives $\omega_r = \omega_n\sqrt{1 - 2\zeta^2}$: for $\zeta = 0.05$ that is $99.7497\text{ rad/s}$, a little *below* $\omega_n$, and the peak height $1/(2\zeta\sqrt{1-\zeta^2})$ is a little *above* the $1/(2\zeta) = 10$ you read at $\omega_n$ itself.
+
+### Full Solution
+```python
+import cmath
+import math
+
+def to_polar(z):
+    return abs(z), cmath.phase(z)
+
+def to_rect(magnitude, phase_rad):
+    return cmath.rect(magnitude, phase_rad)
+
+def first_order_response(tau, omega):
+    return 1.0 / (1.0 + 1j * omega * tau)
+
+def second_order_response(wn, zeta, omega):
+    s = 1j * omega
+    return (wn * wn) / (s * s + 2.0 * zeta * wn * s + wn * wn)
+
+def magnitude_db(h):
+    return 20.0 * math.log10(abs(h))
+
+def phase_deg(h):
+    return math.degrees(cmath.phase(h))
+
+def resonance_peak(wn, zeta):
+    if zeta <= 0.0 or zeta >= 1.0 / math.sqrt(2.0):
+        return 0.0, 1.0
+    root = math.sqrt(1.0 - 2.0 * zeta * zeta)
+    return wn * root, 1.0 / (2.0 * zeta * math.sqrt(1.0 - zeta * zeta))
+
+wn, zeta = 100.0, 0.05
+g = second_order_response(wn, zeta, 1000.0)
+g_db = magnitude_db(g)
+g_phase = phase_deg(g)
+omega_r, peak = resonance_peak(wn, zeta)
+corner = first_order_response(0.01, 100.0)
+
+assert math.isclose(g_db, -39.9127, abs_tol=1e-3)
+assert math.isclose(g_phase, -179.4213, abs_tol=1e-3)
+assert math.isclose(magnitude_db(corner), -3.0103, abs_tol=1e-4)
+assert math.isclose(phase_deg(corner), -45.0, abs_tol=1e-9)
+assert math.isclose(omega_r, wn * math.sqrt(1.0 - 2.0 * zeta ** 2), rel_tol=1e-12)
+assert math.isclose(abs(second_order_response(wn, zeta, omega_r)), peak, rel_tol=1e-9)
+print("G(j1000): %.4f dB, %.4f deg" % (g_db, g_phase))
+print("resonance: %.4f rad/s at %.4fx (%.4f dB)" % (omega_r, peak, magnitude_db(peak)))
+```
+
+Printed: `G(j1000): -39.9127 dB, -179.4213 deg`, then `resonance: 99.7497 rad/s at 10.0125x (20.0109 dB)`.
+
 ### Break it on purpose
 Inject the decibel-convention fault from the `## 8. Common mistakes` table and diagnose it from two readings, keeping $\omega_n = 100\text{ rad/s}$ and $\zeta = 0.05$:
 - **Inject:** compute the magnitude as `10.0 * math.log10(mag)` instead of `20.0 * math.log10(mag)`.

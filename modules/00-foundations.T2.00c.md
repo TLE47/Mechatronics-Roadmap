@@ -101,6 +101,129 @@ The tests are behavioural: the first-order response must be $1 - e^{-1}$ at $t =
   - **ODEs & Damping Study Links:** [Åström & Murray *Feedback Systems* Ch. 6 (`fbsbook.org`)](https://www.fbsbook.org/), [Paul's Online Math Notes: Second-Order Differential Equations & Mechanical Vibrations](https://tutorial.math.lamar.edu/Classes/DE/Vibrations.aspx), and [MIT OCW 18.03 Differential Equations](https://ocw.mit.edu/courses/18-03sc-differential-equations-fall-2011/).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [Track 05 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then compare against the numbers in the full solution ---
+import math
+
+
+def first_order_response(t, tau):
+    """Unit-step response; at t = tau it must read 0.6321."""
+    # TODO 1: 1 - exp(-t/tau)
+    ...
+
+
+def second_order_params(j, k, b):
+    """{"wn", "zeta", "wd", "mp"} for J theta'' + b theta' + k theta = k u."""
+    # TODO 2: wn = sqrt(k/J); zeta = b/(2 sqrt(J k)); wd = wn sqrt(1-zeta^2);
+    #         mp = exp(-pi zeta / sqrt(1-zeta^2)); at zeta >= 1, mp = 0 and wd = 0
+    ...
+
+
+def critical_damping(j, k):
+    """The b that makes zeta exactly 1.0."""
+    # TODO 3: 2 sqrt(J k) - a square root, not 2 J k
+    ...
+
+
+def settling_time(wn, zeta, tolerance=0.02):
+    """The 2% settling time, and a ValueError when the system never settles."""
+    # TODO 4: 4/(zeta wn), refusing zeta <= 0
+    ...
+
+
+def simulate_step(j, k, b, dt, steps, theta0=0.0, omega0=0.0):
+    """Semi-implicit Euler on J theta'' = k(1 - theta) - b theta'; return theta, max_theta, mp."""
+    # TODO 5: alpha from the current theta and omega, update omega, then theta with the NEW omega
+    ...
+
+
+def max_stable_dt(j, k):
+    """Largest dt the semi-implicit scheme tolerates for an undamped joint."""
+    # TODO 6: 2/wn - the integrator's limit, not a guess
+    ...
+
+
+print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $b_{\text{crit}} = 2\sqrt{0.02 \times 8.0} = 0.80\text{ N}\cdot\text{m}\cdot\text{s/rad}$; at $b = 0.80$ the $20,000$-step run of $1\text{ ms}$ ticks overshoots by less than $10^{-6}$; the worked $b = 0.40$ joint reads $\omega_n = 20.0$, $\zeta = 0.50$, $M_p = 0.16303$.
+
+### Hint ladder
+1. **$\zeta$ carries a factor of two.** $\zeta = b/(2\sqrt{Jk})$, so $b = 0.40$, $J = 0.02$, $k = 8.0$ gives $\zeta = 0.40/(2 \times 0.40) = 0.50$. Dropping the 2 doubles every damping ratio you report, and the module's $M_p$ check at $\zeta = 0.3$ is where that shows up.
+2. **Overshoot needs the damped frequency.** $M_p = e^{-\pi\zeta/\sqrt{1-\zeta^2}}$, not $e^{-\pi\zeta}$: at $\zeta = 0.50$ the former is $0.16303$, the latter $0.2079$. Above $\zeta = 1$ there is no oscillation at all, so the block returns $M_p = 0$ and $\omega_d = 0$ rather than a complex number.
+3. **Critical damping is a square root.** $b_{\text{crit}} = 2\sqrt{Jk} = 2\sqrt{0.16} = 0.80$, while $2Jk = 0.32$ is underdamped ($\zeta = 0.40$) and overshoots by about $25.4\%$ - the exercise's own "if your result differs" case.
+4. **The stability limit belongs to the integrator.** With velocity updated first, the map stays bounded while $\Delta t \omega_n < 2$, so $\Delta t_{\max} = 0.10\text{ s}$ at $\omega_n = 20$. At $0.9\Delta t_{\max}$ the response is bounded; at $1.5\Delta t_{\max}$ it diverges, and no physical damping saves it.
+
+### Full Solution
+```python
+import math
+
+
+def first_order_response(t, tau):
+    return 1.0 - math.exp(-t / tau)
+
+
+def second_order_params(j, k, b):
+    wn = math.sqrt(k / j)
+    zeta = b / (2.0 * math.sqrt(j * k))
+    if zeta >= 1.0:
+        return {"wn": wn, "zeta": zeta, "wd": 0.0, "mp": 0.0}
+    root = math.sqrt(1.0 - zeta * zeta)
+    return {"wn": wn, "zeta": zeta, "wd": wn * root, "mp": math.exp(-math.pi * zeta / root)}
+
+
+def critical_damping(j, k):
+    return 2.0 * math.sqrt(j * k)
+
+
+def settling_time(wn, zeta, tolerance=0.02):
+    if zeta <= 0.0:
+        raise ValueError("an undamped or unstable system never settles")
+    return 4.0 / (zeta * wn)
+
+
+def simulate_step(j, k, b, dt, steps, theta0=0.0, omega0=0.0):
+    theta, omega = theta0, omega0
+    max_theta = theta
+    for _ in range(steps):
+        alpha = (k * (1.0 - theta) - b * omega) / j
+        omega += alpha * dt
+        theta += omega * dt
+        if theta > max_theta:
+            max_theta = theta
+    return {"theta": theta, "max_theta": max_theta, "mp": max(0.0, max_theta - 1.0)}
+
+
+def max_stable_dt(j, k):
+    return 2.0 / math.sqrt(k / j)
+
+
+# The exercise: critical damping at J = 0.02, k = 8.0, then the same loop at b = 0.40.
+j, k = 0.02, 8.0
+b_crit = critical_damping(j, k)
+critical = simulate_step(j, k, b_crit, 1e-4, 20000)
+worked = second_order_params(j, k, 0.40)
+worked_run = simulate_step(j, k, 0.40, 1e-4, 10000)
+
+assert math.isclose(b_crit, 0.80, abs_tol=1e-12)
+assert math.isclose(second_order_params(j, k, b_crit)["zeta"], 1.0, abs_tol=1e-12)
+assert critical["mp"] < 1e-6, critical
+assert math.isclose(worked["wn"], 20.0, abs_tol=1e-9)
+assert math.isclose(worked["zeta"], 0.50, abs_tol=1e-9)
+assert math.isclose(worked["wd"], 20.0 * math.sqrt(0.75), abs_tol=1e-9)
+assert math.isclose(worked["mp"], 0.16303, abs_tol=1e-5)
+assert abs(worked_run["mp"] - worked["mp"]) < 1e-3, worked_run
+assert math.isclose(max_stable_dt(j, k), 0.10, abs_tol=1e-12)
+assert math.isclose(first_order_response(0.010, 0.010), 1.0 - math.exp(-1.0), abs_tol=1e-12)
+
+print("b_crit=%.2f -> zeta=%.1f, overshoot %.2e | worked: wn=%.1f, zeta=%.2f, Mp=%.5f, Ts=%.4f s"
+      % (b_crit, 1.0, critical["mp"], worked["wn"], worked["zeta"], worked["mp"],
+         settling_time(worked["wn"], worked["zeta"])))
+```
+
+Printed: `b_crit=0.80 -> zeta=1.0, overshoot 0.00e+00 | worked: wn=20.0, zeta=0.50, Mp=0.16303, Ts=0.4000 s` - the critical coefficient with its near-zero overshoot, then the worked joint's four numbers and its $4/(\zeta\omega_n) = 0.4000\text{ s}$ settling time.
+
 ### Break it on purpose
 Inject the square-root slip the exercise warns about - $b_{\text{crit}} = 2 J k$ instead of $2\sqrt{Jk}$ - and diagnose it from the step response alone, keeping $J = 0.02\text{ kg}\cdot\text{m}^2$ and $k = 8.0\text{ N}\cdot\text{m/rad}$:
 - **Inject:** set $b = 2 J k = 0.32\text{ N}\cdot\text{m}\cdot\text{s/rad}$ and call it critical damping.

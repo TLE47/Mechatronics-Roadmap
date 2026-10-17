@@ -107,6 +107,83 @@ EXERCISE_TARGET=exercises/05-control.T3.05a/starter.py \
   - **Core Concepts to Review First:** the optimal scalar gain, the Joseph-form posterior and NEES in `## 3. Formalization` (Items 1-3) and the bad-gain comparison in `## 4. Worked example` above.
   - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the ESKF* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 8**).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import math
+
+
+def optimal_gain(p_minus, h, r):
+    """K = P^- H / (H P^- H + R) for one scalar measurement."""
+    # TODO 1: the denominator carries R as well as the prior term
+    ...
+
+
+def joseph_variance(p_minus, h, r, k):
+    """P^+ = (1 - K H) P^- (1 - K H) + K R K: a sum of squares, never a subtraction."""
+    # TODO 2: square the (1 - k * h) factor and add k^2 * r
+    ...
+
+
+def nees_diagonal(error, variances):
+    """NEES = sum(e_i^2 / v_i) for a diagonal covariance."""
+    # TODO 3: divide each squared error by its own variance - not the other way round
+    ...
+
+
+print("scaffold ready: 3 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $K = 0.50$ at $P^- = 2.0$, $R = 2.0$ gives $P^+ = 1.0$; the corrupted gain $K = 1.20$ on $P^- = 10.0$, $R = 1.0$ gives $-2.0$ naively and $1.84$ in Joseph form; the NEES of $0.20$ against $0.04$ is $1.0$.
+
+### Hint ladder
+1. **The gain at $P^- = 2.0$, $R = 2.0$.** $K = HP^-/(HP^-H + R) = 2.0/4.0 = 0.50$, i.e. the sensor and the prior are equally trusted.
+2. **The two terms of the Joseph form.** $(1 - KH) = 0.50$, so the prior term is $0.25 \times 2.0 = 0.50$ and the noise term is $0.25 \times 2.0 = 0.50$; they sum to $1.0$, which is also what the naive $(1 - 0.5)\times 2.0$ gives - agreement is a property of the *optimal* gain only.
+3. **Why the corrupted case cannot go negative.** At $K = 1.20$ the factor is $-0.20$; squared it is $+0.04$, so $0.04 \times 10.0 + 1.44 \times 1.0 = 1.84$ while the unsigned $(1 - KH)P^-$ reads $-2.0$. A negative Joseph result means a sign was kept inside the square.
+4. **NEES as a misfit score.** $0.20^2 / 0.04 = 1.0$ is a perfectly calibrated filter; the same error against a claimed $0.01$ reports $4$, which is an overconfident covariance flagging itself.
+
+### Full Solution
+```python
+import math
+
+
+def optimal_gain(p_minus, h, r):
+    return p_minus * h / (h * p_minus * h + r)
+
+
+def joseph_variance(p_minus, h, r, k):
+    a = 1.0 - k * h
+    return a * a * p_minus + k * k * r
+
+
+def nees_diagonal(error, variances):
+    return sum(e * e / v for e, v in zip(error, variances))
+
+
+k = optimal_gain(2.0, 1.0, 2.0)
+p_plus = joseph_variance(2.0, 1.0, 2.0, k)
+naive_same = (1.0 - k) * 2.0
+
+k_bad = 1.20
+naive_bad = (1.0 - k_bad) * 10.0
+joseph_bad = joseph_variance(10.0, 1.0, 1.0, k_bad)
+
+nees = nees_diagonal([0.20], [0.04])
+overconfident = nees_diagonal([0.20], [0.01])
+
+assert math.isclose(k, 0.50, rel_tol=1e-12)
+assert math.isclose(p_plus, 1.0, abs_tol=1e-9)
+assert math.isclose(p_plus, naive_same, rel_tol=1e-12)
+assert math.isclose(naive_bad, -2.0, rel_tol=1e-12)
+assert math.isclose(joseph_bad, 1.84, abs_tol=1e-9)
+assert math.isclose(nees, 1.0, rel_tol=1e-12)
+assert math.isclose(overconfident, 4.0, rel_tol=1e-12)
+print(f"K={k:.5f}, P_plus={p_plus:.5f}, naive_bad={naive_bad:.5f}, "
+      f"joseph_bad={joseph_bad:.5f}, nees={nees:.5f}, overconfident={overconfident:.5f}")
+```
+
+Printed: `K=0.50000, P_plus=1.00000, naive_bad=-2.00000, joseph_bad=1.84000, nees=1.00000, overconfident=4.00000`
+
 ### Break it on purpose
 Inject the `## 8. Common mistakes` row about the naive subtraction, keeping the worked example's $P^- = 4.0$, $H = 1.0$, $R = 1.0$ and $K = 1.5$:
 - **Inject:** write `p_plus = (1.0 - k * h) * p_minus` instead of the squared Joseph form, so the posterior is a subtraction with no $K^2R$ term.

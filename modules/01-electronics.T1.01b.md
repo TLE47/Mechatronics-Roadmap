@@ -105,6 +105,142 @@ EXERCISE_TARGET=exercises/01-electronics.T1.01b/starter.py \
   - **Core Concepts to Review First:** PWM average voltage $V_{\text{avg}} = D V_{\text{bus}}$, MOSFET $R_{\text{DS(on)}}$ conduction loss, H-bridge bidirectional truth table, and star-grounding in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [TI SLVA959 (Brushed DC Motor Driver H-Bridge Basics)](https://www.ti.com/lit/pdf/slva959), [Analog Devices MT-101 (Decoupling Techniques)](https://www.analog.com/media/en/training-seminars/tutorials/MT-101.pdf), and [Track 01 §1.2–1.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+The exercise reads the `DRV8833` datasheet twice: once for its recommended supply window, once for the pair of on-resistances the motor current actually crosses. Fill the seven TODOs, then compare against the full solution below.
+
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded package here imports it)
+
+
+def conduction_loss(current, rds_on, duty=1.0):
+    """P = I^2 R_DS(on) D over one PWM period."""
+    # TODO 1: square the current, then scale by the duty - the average, not the peak
+    ...
+
+
+def pwm_effective_voltage(v_bus, duty):
+    """V_eff = D * V_bus."""
+    # TODO 2: duty is a fraction in [0, 1] - refuse a percentage such as 65
+    ...
+
+
+def shoot_through_current(v_bus, rds_on):
+    """The leg's short-circuit current with both switches on."""
+    # TODO 3: TWO switches in series, so divide by 2 * rds_on
+    ...
+
+
+def h_bridge_voltage(v_bus, duty_a, duty_b):
+    """The average signed terminal voltage."""
+    # TODO 4: subtract the two duties BEFORE scaling by the bus
+    ...
+
+
+def bridge_conduction_loss(current, r_high, r_low, duty=1.0):
+    """Motor current crosses two switches."""
+    # TODO 5: add BOTH on-resistances - a single switch reads half the real loss
+    ...
+
+
+def within_recommended(v_supply, v_min=2.7, v_max=10.8):
+    """True inside the datasheet's Recommended Operating Conditions."""
+    # TODO 6: inclusive at both ends, and 11.8 V is the absolute maximum, not this window
+    ...
+
+
+def duty_for_effective_voltage(v_eff, v_bus):
+    """D = V_eff / V_bus."""
+    # TODO 7: refuse a demand the bus cannot deliver instead of returning D > 1
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **Conduction loss counts the switches in the loop.** In a bridge, motor current crosses one high-side FET in leg A and one low-side FET in leg B, so $P = I^2 (R_{\text{high}} + R_{\text{low}}) D$ — with a single $0.18\ \Omega$ the answer is exactly half of $0.5184\text{ W}$.
+2. **Shoot-through is two switches as well.** Both FETs of one leg are in series across the bus, so with $0.020\ \Omega$ each the current is $9.0/(2 \times 0.020)$; dividing by one $R$ doubles it.
+3. **The differential drive subtracts.** $V_{AB} = (D_A - D_B)V_{\text{bus}}$, so equal duties give $0\text{ V}$ (brake/coast) and $D_A = 0.25$, $D_B = 0.75$ at $24\text{ V}$ is $-12.0\text{ V}$, not $+24.0$.
+4. **Read the window, not the ceiling.** $11.8\text{ V}$ is the Absolute Maximum; the Recommended Operating Conditions stop at $10.8\text{ V}$, which is why $9.0\text{ V}$ is inside and $11.8\text{ V}$ is not.
+
+### Full Solution
+```python
+import math
+
+import mechalab_plant as plant  # noqa: F401  (kept so the submission imports what the module uses)
+
+
+def conduction_loss(current, rds_on, duty=1.0):
+    if rds_on < 0.0:
+        raise ValueError("an on-resistance cannot be negative")
+    if not 0.0 <= duty <= 1.0:
+        raise ValueError("duty is a fraction in [0, 1]")
+    return current * current * rds_on * duty
+
+
+def pwm_effective_voltage(v_bus, duty):
+    if not 0.0 <= duty <= 1.0:
+        raise ValueError("duty is a fraction in [0, 1], not a percentage")
+    return duty * v_bus
+
+
+def shoot_through_current(v_bus, rds_on):
+    if rds_on <= 0.0:
+        raise ValueError("an on-resistance must be positive")
+    return v_bus / (2.0 * rds_on)
+
+
+def h_bridge_voltage(v_bus, duty_a, duty_b):
+    for duty in (duty_a, duty_b):
+        if not 0.0 <= duty <= 1.0:
+            raise ValueError("each leg's duty is a fraction in [0, 1]")
+    return (duty_a - duty_b) * v_bus
+
+
+def bridge_conduction_loss(current, r_high, r_low, duty=1.0):
+    if r_high < 0.0 or r_low < 0.0:
+        raise ValueError("on-resistances cannot be negative")
+    if not 0.0 <= duty <= 1.0:
+        raise ValueError("duty is a fraction in [0, 1]")
+    return current * current * (r_high + r_low) * duty
+
+
+def within_recommended(v_supply, v_min=2.7, v_max=10.8):
+    if v_min <= 0.0 or v_max <= v_min:
+        raise ValueError("the recommended window is a positive, increasing interval")
+    return v_min <= v_supply <= v_max
+
+
+def duty_for_effective_voltage(v_eff, v_bus):
+    if v_bus <= 0.0:
+        raise ValueError("the bus voltage must be positive")
+    duty = v_eff / v_bus
+    if not 0.0 <= duty <= 1.0:
+        raise ValueError("that average voltage is outside what this bus can produce")
+    return duty
+
+
+# The exercise: the DRV8833's 0.36 ohm path at 1.2 A, and a 9.0 V bus in its window.
+p_loss = bridge_conduction_loss(1.2, 0.18, 0.18, 1.0)
+inside = within_recommended(9.0)
+at_ceiling = within_recommended(11.8)
+duty = duty_for_effective_voltage(9.0, 12.0)
+i_shoot = shoot_through_current(9.0, 0.18)
+v_reverse = h_bridge_voltage(24.0, 0.25, 0.75)
+
+assert math.isclose(p_loss, 0.5184, abs_tol=1e-4)
+assert inside and not at_ceiling
+assert math.isclose(duty, 0.75, rel_tol=1e-12)
+assert math.isclose(i_shoot, 25.0, rel_tol=1e-12)
+assert math.isclose(v_reverse, -12.0, rel_tol=1e-12)
+
+print(f"P_loss={p_loss:.4f} W at I=1.2 A, R_high+R_low=0.36 ohm; 9.0 V recommended={inside}; "
+      f"D(9.0 V on a 12.0 V bus)={duty:.2f}; shoot-through at 9.0 V={i_shoot:.0f} A")
+```
+
+Printed: `P_loss=0.5184 W at I=1.2 A, R_high+R_low=0.36 ohm; 9.0 V recommended=True; D(9.0 V on a 12.0 V bus)=0.75; shoot-through at 9.0 V=25 A`
+
 ### Break it on purpose
 Inject one realistic H-bridge analysis slip and diagnose it from the number alone:
 - **Inject:** recompute the exercise's conduction loss with a single switch's $R = 0.18\ \Omega$ instead of the series pair $R_{\text{high}} + R_{\text{low}} = 0.36\ \Omega$, keeping $I = 1.2\text{ A}$ at $D = 1.0$.

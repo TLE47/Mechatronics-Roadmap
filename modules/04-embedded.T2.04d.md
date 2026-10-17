@@ -129,6 +129,102 @@ The tests are behavioural: the $46\text{ B}$ frame must take $499.1319\ \mu\text
   - **Core Concepts to Review First:** XRCE-DDS wire framing overhead & baud-rate link utilization, static memory budgets (`sizeof(handle) * N <= arena`) with deterministic `rclc_executor` handle ordering, and NTP-style four-timestamp clock offset $\theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Official micro-ROS Documentation & Zephyr Tutorials (`micro.ros.org`)](https://micro.ros.org/docs/tutorials/core/first_application_rtos/zephyr/) and [eProsima Micro XRCE-DDS Docs (`micro-xrce-dds.docs.eprosima.com`)](https://micro-xrce-dds.docs.eprosima.com/).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then compare against the numbers in the full solution below ---
+import math
+
+def wire_time_us(payload_bytes, xrce_bytes, bits_per_byte, bit_rate):
+    """Wire time for one message, in microseconds, framing included."""
+    # TODO 1: 10 bits/byte on 8N1 and 8 on CAN-FD, and the XRCE header rides along
+    ...
+
+def link_utilization(streams, bits_per_byte, bit_rate):
+    """Sum of `frequency * wire_time` over `(frequency, payload, xrce)` streams, as a fraction."""
+    # TODO 2: weight every stream by its frequency - a mean of the wire times is not a load
+    ...
+
+def handle_total(n_timers, n_subs, n_srvs, n_clients):
+    """The exact static capacity `rclc_executor_init` needs."""
+    # TODO 3: one handle per entity, no slack
+    ...
+
+def spin_wcet_us(t_io_us, callbacks_us):
+    """Worst-case time for one `rclc_executor_spin_some`."""
+    # TODO 4: transport I/O plus EVERY registered callback
+    ...
+
+def ntp_rtt_us(t1_mcu, t2_host, t3_host, t4_mcu):
+    """Round-trip delay from the four timestamps."""
+    # TODO 5: subtract the host's own processing time (t3 - t2) from the elapsed time
+    ...
+
+def ntp_offset_us(t1_mcu, t2_host, t3_host, t4_mcu):
+    """Clock offset `t_ros2 - t_mcu` from the NTP midpoint."""
+    # TODO 6: average the forward leg (t2 - t1) and the backward leg (t3 - t4)
+    ...
+
+def rtos_utilization(tasks):
+    """`sum(C_i / T_i)` over `(execution_us, period_us)` tasks."""
+    # TODO 7: execution over period, summed - never the mean across tasks
+    ...
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $B_{\text{total}} = 46\text{ B}$; $t_{\text{wire}} \approx 499.1319\ \mu\text{s}$; $\theta_{\text{offset}} = 10{,}000.0\ \mu\text{s}$.
+
+### Hint ladder
+1. **Count the bytes, then the bits.** $B_{\text{total}} = 32 + 14 = 46\text{ B}$; an `8N1` frame charges $10$ bits for each of them, so $460$ bits at $921{,}600\text{ bps}$ is $460/921{,}600\ \text{s} = 499.1319\ \mu\text{s}$ - using $8$ bits/byte gives $399.31\ \mu\text{s}$, exactly $20\%$ optimistic.
+2. **The offset averages two legs.** Forward is $t_2 - t_1 = 10{,}300 - 200 = 10{,}100\ \mu\text{s}$; backward is $t_3 - t_4 = 10{,}340 - 440 = 9{,}900\ \mu\text{s}$; their mean is the offset, and the $200\ \mu\text{s}$ between them is the asymmetry that the midpoint cannot see.
+3. **The round trip is what is left after the host's own work.** $\delta_{\text{rtt}} = (t_4 - t_1) - (t_3 - t_2) = 240 - 40 = 200\ \mu\text{s}$, so the link is symmetric at $100\ \mu\text{s}$ each way.
+4. **Utilisation is a sum of ratios.** A stream's share is its frequency times its wire time, so $500\ \text{Hz}$ on a $499\ \mu\text{s}$ frame would already be $25\%$ of the link - keep it as a fraction of one, never as a mean of milliseconds.
+
+### Full Solution
+```python
+import math
+
+def wire_time_us(payload_bytes, xrce_bytes, bits_per_byte, bit_rate):
+    return 1e6 * bits_per_byte * (payload_bytes + xrce_bytes) / bit_rate
+
+def link_utilization(streams, bits_per_byte, bit_rate):
+    return sum(f * wire_time_us(payload, xrce, bits_per_byte, bit_rate)
+               for f, payload, xrce in streams) / 1e6
+
+def handle_total(n_timers, n_subs, n_srvs, n_clients):
+    return n_timers + n_subs + n_srvs + n_clients
+
+def spin_wcet_us(t_io_us, callbacks_us):
+    return t_io_us + sum(callbacks_us)
+
+def ntp_rtt_us(t1_mcu, t2_host, t3_host, t4_mcu):
+    return (t4_mcu - t1_mcu) - (t3_host - t2_host)
+
+def ntp_offset_us(t1_mcu, t2_host, t3_host, t4_mcu):
+    return ((t2_host - t1_mcu) + (t3_host - t4_mcu)) / 2.0
+
+def rtos_utilization(tasks):
+    return sum(execution / period for execution, period in tasks)
+
+b_total = 32 + 14
+t_wire = wire_time_us(32, 14, 10, 921_600)
+offset = ntp_offset_us(200.0, 10_300.0, 10_340.0, 440.0)
+rtt = ntp_rtt_us(200.0, 10_300.0, 10_340.0, 440.0)
+
+assert b_total == 46
+assert math.isclose(t_wire, 499.1319, abs_tol=1e-4)
+assert math.isclose(offset, 10_000.0, rel_tol=1e-12)
+assert math.isclose(rtt, 200.0, rel_tol=1e-12)
+assert handle_total(1, 2, 1, 0) == 4
+assert math.isclose(spin_wcet_us(35.0, [45.0, 30.0, 25.0, 50.0]), 185.0, rel_tol=1e-12)
+assert math.isclose(link_utilization([(500.0, 48, 16), (500.0, 24, 16)], 8, 5_000_000.0), 0.0832, rel_tol=1e-9)
+assert math.isclose(rtos_utilization([(100.0, 500.0), (300.0, 2000.0), (1000.0, 10000.0)]), 0.45, rel_tol=1e-12)
+
+print(f"B_total={b_total} B | t_wire={t_wire:.4f} us | rtt={rtt:.1f} us | offset={offset:.1f} us")
+```
+
+Printed: `B_total=46 B | t_wire=499.1319 us | rtt=200.0 us | offset=10000.0 us`
+
 ### Break it on purpose
 Inject the byte-width fault the exercise plants (`uart_eight_bits`), keeping the exercise's $46\text{ B}$ frame at $921{,}600\text{ bps}$:
 - **Inject:** budget the `8N1` UART link as $8\text{ bits/byte}$ — the CAN-FD constant — instead of $10\text{ bits/byte}$.

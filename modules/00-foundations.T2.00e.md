@@ -108,6 +108,113 @@ The tests are behavioural: the worked matrix's eigenvalues must be $-2 \pm j\sqr
   - **State-Space & Discretization Study Links:** [Åström & Murray *Feedback Systems* Ch. 6–7 (`fbsbook.org`)](https://www.fbsbook.org/), [Python Control Library `control.c2d` Docs (`python-control.readthedocs.io`)](https://python-control.readthedocs.io/), and [Steve Brunton Control Bootcamp (`youtube.com/c/Eigensteve`)](https://www.youtube.com/c/Eigensteve).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import cmath
+import math
+
+def companion_state_matrices(j, k, b):
+    """(A, B) for J theta'' + b theta' + k theta = u, state [theta, theta']."""
+    # TODO: rows [0, 1] and [-k/J, -b/J]; B is the column [0, 1/J]
+    ...
+
+def eigvals_2x2(a):
+    """The two eigenvalues of a 2x2 matrix, as complex numbers."""
+    # TODO: trace and determinant from the entries, then cmath.sqrt of trace^2 - 4 det
+    ...
+
+def is_stable(a):
+    """True only when both eigenvalues have strictly negative real parts."""
+    # TODO: a marginal pole (real part exactly 0) is not stable
+    ...
+
+def discretize_euler(a, b, ts):
+    """Ad = I + A Ts, Bd = B Ts."""
+    # TODO: the simplest map - and the one that can leave the unit circle
+    ...
+
+def discretize_tustin(a, b, ts):
+    """Ad = (I - Ts/2 A)^-1 (I + Ts/2 A), Bd = (I - Ts/2 A)^-1 B Ts."""
+    # TODO: a real 2x2 inverse (det, swap, negate), never an elementwise division
+    ...
+
+def simulate_discrete(ad, bd, x0, u, steps):
+    """Iterate x_{k+1} = Ad x_k + Bd u with constant u; return the final state."""
+    # TODO: both rows must read the same old x, then the loop replaces it
+    ...
+
+print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the full solution")
+```
+**Expected numbers (the answer):** $\rho(A_{d,\text{Tustin}}) = 0.998002$ at $T_s = 0.001\text{ s}$.
+
+### Hint ladder
+1. **The matrix is the physics, not the parameters.** Row 2 of $A$ is $(-k/J,\ -b/J)$ because $\ddot{\theta} = -(k/J)\theta - (b/J)\dot{\theta} + (1/J)u$; a plus sign there gives a spring that pushes the joint away from zero, and the module's Break-it shows exactly that signature.
+2. **Eigenvalues come from the matrix.** $\lambda_{1,2} = \frac{\operatorname{tr}\pm\sqrt{\operatorname{tr}^2 - 4\det}}{2}$, and the discriminant is negative here, so `cmath.sqrt` (not `math.sqrt`) is what keeps $\pm j\sqrt{96}$ instead of raising.
+3. **Tustin inverts once and multiplies twice.** Form $I - \frac{T_s}{2}A$ and $I + \frac{T_s}{2}A$, invert the first with $\det = a_{00}a_{11} - a_{01}a_{10}$ and the swapped/negated cofactors, then multiply `inverse @ plus` row-by-column. Dividing elementwise gives a matrix whose eigenvalues still happen to look stable at small $T_s$, which is why the transfer test checks $B_d$ too.
+4. **The radius, not the entries, is the answer.** At $T_s = 0.001\text{ s}$ your Tustin $A_d$ should have $\operatorname{tr}\approx 1.9960$ and $\det\approx 0.9980$; $\max(|\lambda_1|, |\lambda_2|)$ evaluates to $0.998002$, i.e. the pole sits just inside the unit circle, not on it.
+
+### Full Solution
+```python
+import cmath
+import math
+
+def companion_state_matrices(j, k, b):
+    return [[0.0, 1.0], [-k / j, -b / j]], [[0.0], [1.0 / j]]
+
+def eigvals_2x2(a):
+    tr = a[0][0] + a[1][1]
+    det = a[0][0] * a[1][1] - a[0][1] * a[1][0]
+    disc = cmath.sqrt(tr * tr - 4.0 * det)
+    return (0.5 * (tr + disc), 0.5 * (tr - disc))
+
+def is_stable(a):
+    return all(value.real < 0.0 for value in eigvals_2x2(a))
+
+def matmul(a, b):
+    return [[sum(a[i][k] * b[k][j] for k in range(len(b))) for j in range(len(b[0]))]
+            for i in range(len(a))]
+
+def inverse_2x2(m):
+    det = m[0][0] * m[1][1] - m[0][1] * m[1][0]
+    return [[m[1][1] / det, -m[0][1] / det], [-m[1][0] / det, m[0][0] / det]]
+
+def discretize_euler(a, b, ts):
+    ad = [[(1.0 if i == j else 0.0) + ts * a[i][j] for j in range(2)] for i in range(2)]
+    return ad, [[ts * b[i][0]] for i in range(2)]
+
+def discretize_tustin(a, b, ts):
+    minus = [[(1.0 if i == j else 0.0) - 0.5 * ts * a[i][j] for j in range(2)] for i in range(2)]
+    plus = [[(1.0 if i == j else 0.0) + 0.5 * ts * a[i][j] for j in range(2)] for i in range(2)]
+    inv = inverse_2x2(minus)
+    return matmul(inv, plus), [[ts * sum(inv[i][k] * b[k][0] for k in range(2))] for i in range(2)]
+
+def simulate_discrete(ad, bd, x0, u, steps):
+    x = list(x0)
+    for _ in range(steps):
+        x = [sum(ad[i][j] * x[j] for j in range(2)) + bd[i][0] * u for i in range(2)]
+    return x
+
+a, b = companion_state_matrices(1.0, 100.0, 4.0)
+assert is_stable(a)
+
+def spectral_radius(m):
+    return max(abs(value) for value in eigvals_2x2(m))
+
+ad_tustin, _ = discretize_tustin(a, b, 0.001)
+rho = spectral_radius(ad_tustin)
+rho_euler = spectral_radius(discretize_euler(a, b, 0.05)[0])
+
+assert math.isclose(rho, 0.998002, abs_tol=1e-6)
+assert rho < 1.0
+assert math.isclose(rho_euler, 1.0247, abs_tol=1e-3)
+assert rho_euler > 1.0
+print("rho_tustin(Ts=1 ms)=%.6f, inside the unit circle" % rho)
+print("rho_euler(Ts=50 ms)=%.4f, outside the unit circle" % rho_euler)
+```
+
+Printed: `rho_tustin(Ts=1 ms)=0.998002, inside the unit circle`, then `rho_euler(Ts=50 ms)=1.0247, outside the unit circle`.
+
 ### Break it on purpose
 Inject the sign error from the common-mistakes table on purpose: build $A$ with $+k/J$ in row 2, `[[0.0, 1.0], [100.0, -4.0]]`, and leave every other line of the worked example untouched.
 - **Inject:** flip the sign of the stiffness term in the companion matrix, as if $\ddot{\theta} = +(k/J)\theta - (b/J)\dot{\theta}$ had been read off the ODE without moving $k\theta$ to the right-hand side.

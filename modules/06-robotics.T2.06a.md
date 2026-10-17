@@ -146,6 +146,136 @@ The tests are behavioural: all **16** QoS combinations must match the `offered >
   - **Core Concepts to Review First:** ROS 2 DDS QoS compatibility truth table (`RELIABLE` vs. `BEST_EFFORT`) and deadline period, `SingleThreadedExecutor` deterministic ready-set priority (Timers $\to$ Subscriptions $\to$ Services $\to$ Clients), and `tf2` homogeneous rigid-body transform chaining ${}^W T_C = {}^W T_B \, {}^B T_C$ and inverse ${}^C T_W = ({}^W T_C)^{-1}$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Official ROS 2 Jazzy/Humble Tutorials: QoS, Executors & TF2 (`docs.ros.org`)](https://docs.ros.org/en/jazzy/Tutorials.html) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import math
+
+
+def qos_compatible(pub_reliable, pub_transient_local, sub_reliable, sub_transient_local):
+    """True when the publisher's offer satisfies the subscriber's request on both policies."""
+    # TODO: two independent inequalities (Reliable >= Best-Effort, TransientLocal >= Volatile), not a match
+    ...
+
+
+def urdf_revolute_z(xyz, q_rad):
+    """`[Rz(q), xyz; 0, 1]` for a revolute joint about +Z."""
+    # TODO: the rotation in the top-left 3x3, the offset in the last column, 1 in the corner
+    ...
+
+
+def mat4_mul(a, b):
+    """Product of two 4x4 homogeneous transforms."""
+    # TODO: row-by-column over four, in the order A then B
+    ...
+
+
+def transform_point(t, p):
+    """Apply a homogeneous transform to a 3-vector."""
+    # TODO: rotate, then add the translation column
+    ...
+
+
+def invert_rigid(t):
+    """Inverse of a rigid transform."""
+    # TODO: R^T for the rotation and -R^T p for the offset - never a general 4x4 inverse
+    ...
+
+
+def interpolate(t_a, value_a, t_b, value_b, t_query):
+    """Linear interpolation in time; raise ValueError outside the buffer."""
+    # TODO: compute alpha = (t_query - t_a) / (t_b - t_a), then refuse a query outside the two stamps
+    ...
+
+
+def topic_bandwidth_mb_s(n_subs, size_bytes, rate_hz):
+    """Unicast bandwidth to `n_subs` subscribers, in MB/s."""
+    # TODO: subscribers x bytes x hertz, over 1e6
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **QoS is two inequalities, not a match.** Score Reliable $= 1$, Best-Effort $= 0$, Transient Local $= 1$ and Volatile $= 0$, then require *both* `offered >= requested`. Of the $16$ `(Reliability, Durability)` pairs, $9$ connect: the two that fail this exercise's eye are Best-Effort into Reliable and Volatile into Transient Local.
+2. **One joint, then the chain.** `urdf_revolute_z(xyz, q)` is $\begin{bmatrix} R_z(q) & xyz \\ 0 & 1\end{bmatrix}$, so a zero $q$ is pure translation and a quarter turn sends $+X$ to $+Y$. With $q_1 = \pi/2$ the $0.25\ \text{m}$ link offset itself lands at $[0, 0.25, 0]$, and the $0.15\ \text{m}$ tool offset is rotated by the *same* $R_z(\pi/2)$: $[0, 0.15, 0]$. Adding the $0.10\ \text{m}$ base height gives $[0, 0.40, 0.10]$.
+3. **Interpolation is a fraction of the buffer.** $\alpha = (2.006 - 2.000)/(2.010 - 2.000) = 0.60$, so $q = 0.50 + 0.60(0.70 - 0.50) = 0.62\ \text{rad}$; a $t_{\text{query}}$ outside $[t_a, t_b]$ must raise, exactly as `tf2` throws `ExtrapolationException` instead of guessing.
+4. **Bandwidth counts subscribers.** $R = N_{\text{sub}} B_{\text{msg}} f_{\text{pub}}/10^6$, so $2 \times 250{,}000 \times 60 = 30.0\ \text{MB/s}$ - a single-subscriber answer is short by exactly the subscriber count.
+
+### Full Solution
+```python
+import math
+
+
+def qos_compatible(pub_reliable, pub_transient_local, sub_reliable, sub_transient_local):
+    reliable_ok = int(bool(pub_reliable)) >= int(bool(sub_reliable))
+    durability_ok = int(bool(pub_transient_local)) >= int(bool(sub_transient_local))
+    return reliable_ok and durability_ok
+
+
+def urdf_revolute_z(xyz, q_rad):
+    c, s = math.cos(q_rad), math.sin(q_rad)
+    return [[c, -s, 0.0, xyz[0]],
+            [s, c, 0.0, xyz[1]],
+            [0.0, 0.0, 1.0, xyz[2]],
+            [0.0, 0.0, 0.0, 1.0]]
+
+
+def mat4_mul(a, b):
+    return [[sum(a[i][k] * b[k][j] for k in range(4)) for j in range(4)] for i in range(4)]
+
+
+def transform_point(t, p):
+    return [sum(t[i][j] * p[j] for j in range(3)) + t[i][3] for i in range(3)]
+
+
+def invert_rigid(t):
+    r_t = [[t[j][i] for j in range(3)] for i in range(3)]
+    inverse = [[r_t[i][0], r_t[i][1], r_t[i][2],
+                -(r_t[i][0] * t[0][3] + r_t[i][1] * t[1][3] + r_t[i][2] * t[2][3])]
+               for i in range(3)]
+    inverse.append([0.0, 0.0, 0.0, 1.0])
+    return inverse
+
+
+def interpolate(t_a, value_a, t_b, value_b, t_query):
+    if t_b == t_a:
+        raise ValueError("the buffer's two stamps must differ")
+    if t_query < min(t_a, t_b) or t_query > max(t_a, t_b):
+        raise ValueError("extrapolation: %.6f is outside the buffer" % t_query)
+    alpha = (t_query - t_a) / (t_b - t_a)
+    return (1.0 - alpha) * value_a + alpha * value_b
+
+
+def topic_bandwidth_mb_s(n_subs, size_bytes, rate_hz):
+    return n_subs * size_bytes * rate_hz / 1e6
+
+
+# The exercise's tf2 chain: base_link --(joint1 at z=0.10, q1=pi/2)--> link_1 --(joint2 at x=0.25, q2=0)--> tool0
+t_chain = mat4_mul(urdf_revolute_z((0.0, 0.0, 0.10), math.pi / 2.0),
+                   urdf_revolute_z((0.25, 0.0, 0.0), 0.0))
+p_in_base = transform_point(t_chain, [0.15, 0.0, 0.0])
+q_query = interpolate(2.000, 0.50, 2.010, 0.70, 2.006)
+bandwidth = topic_bandwidth_mb_s(2, 250_000, 60.0)
+
+assert all(math.isclose(p_in_base[i], [0.0, 0.40, 0.10][i], abs_tol=1e-9) for i in range(3))
+assert math.isclose(q_query, 0.62, rel_tol=1e-12)
+assert math.isclose(bandwidth, 30.0, rel_tol=1e-12)
+assert qos_compatible(True, True, True, True) and qos_compatible(False, False, False, False)
+assert not qos_compatible(False, False, True, False)
+assert not qos_compatible(True, False, True, True)
+
+# The inverse must round-trip a point back to where it started.
+p_tool = [0.15, 0.05, 0.02]
+back = transform_point(invert_rigid(t_chain), transform_point(t_chain, p_tool))
+assert all(math.isclose(back[i], p_tool[i], abs_tol=1e-12) for i in range(3))
+
+print(f"p_in_base={[round(x, 4) for x in p_in_base]} m | q(2.006 s)={q_query:.6f} rad | "
+      f"bandwidth={bandwidth:.3f} MB/s")
+```
+Printed: `p_in_base=[0.0, 0.4, 0.1] m | q(2.006 s)=0.620000 rad | bandwidth=30.000 MB/s`
+
 ### Break it on purpose
 Inject the first row of the `## 8. Common mistakes` table: subscribe to the camera stream with the default `Reliable` profile while the publisher offers `Best-Effort`, keeping the worked example's $250{,}000\text{ B}$ frames at $60\text{ Hz}$ to two subscribers.
 - **Inject:** build the `/camera/depth` subscriber with `rclpy.qos.QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)` instead of `SensorDataQoS()`.

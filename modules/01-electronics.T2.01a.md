@@ -90,6 +90,115 @@ EXERCISE_TARGET=exercises/01-electronics.T2.01a/starter.py \
   - **Core Concepts to Review First:** 4-terminal Kelvin sense connections, differential op-amp output $V_{\text{out}} = V_{\text{ref}}/2 + G(I_{\text{phase}}R_{\text{shunt}})$, and active RC anti-aliasing filter sizing in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [TI INA240 Current-Sense Amplifier Datasheet (`ti.com/lit/gpn/ina240`)](https://www.ti.com/lit/gpn/ina240), [TI Op Amps for Everyone (SLOD006)](https://www.ti.com/lit/pdf/slod006), and [Track 01 §2.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+
+
+def shunt_adc_voltage(i_amp, r_shunt, gain=20.0, v_ref=1.65):
+    """The ADC voltage for a phase current: V_ref + G I R_shunt."""
+    # TODO 1: the reference is an offset, not a divisor - and the sign of I must survive
+    ...
+
+
+def shunt_current_from_adc(v_adc, r_shunt, gain=20.0, v_ref=1.65):
+    """The current the ADC voltage reports: the inverse of the stage above."""
+    # TODO 2: subtract the reference FIRST, then divide by G * R_shunt
+    ...
+
+
+def max_measurable_current(v_ref, v_rail, gain, r_shunt):
+    """The positive current at which the output just reaches the rail."""
+    # TODO 3: the half-scale swing is V_rail - V_ref, not the whole rail
+    ...
+
+
+def kelvin_gain_error_pct(r_shunt, r_trace):
+    """The percentage gain error a 2-terminal (non-Kelvin) layout adds."""
+    # TODO 4: both pads carry copper - the factor of 2 - and the answer is a percentage
+    ...
+
+
+def cmrr_input_error_v(delta_v_cm, cmrr_db):
+    """A common-mode step, referred back to the amplifier input."""
+    # TODO 5: dB is a power ratio, so 10^(-CMRR/20) - not 10^(-CMRR)
+    ...
+
+
+def cmrr_current_error_a(delta_v_cm, cmrr_db, r_shunt):
+    """The same residue expressed as a misread current."""
+    # TODO 6: an INPUT-referred volt is divided by R_shunt, not by G * R_shunt
+    ...
+
+
+def adc_code(v_adc, v_rail=3.3, bits=12):
+    """The unipolar ADC code, rounded and clamped to full scale."""
+    # TODO 7: full scale is 2**bits - 1, and a negative input clips to code 0
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **Which quantity the exercise asks for.** The rail is symmetric about $V_{\text{ref}}$, so the positive swing left is $3.30 - 1.65 = 1.65\text{ V}$; dividing that by the stage's $\text{V/A}$ figure, $G R_{\text{shunt}} = 50.0 \times 0.001 = 0.050\text{ V/A}$, gives the current at the boundary.
+2. **Why the answer is not $66\text{ A}$.** Measuring the swing from $\text{GND}$ instead of from $V_{\text{ref}}$ doubles the numerator; the amplifier's output can only rise $1.65\text{ V}$ above its zero-current point before it saturates at the $3.30\text{ V}$ rail.
+3. **The check that catches both mistakes.** Feed $I_{\max}$ back through `shunt_adc_voltage`: it must land exactly on $3.30\text{ V}$, and $-I_{\max}$ must land exactly on $0.00\text{ V}$, because the two endpoints mirror about $1.65\text{ V}$.
+4. **Keep the sign.** `shunt_current_from_adc` is the inverse of the stage, so the recovered current at $0.00\text{ V}$ is $-33.0\text{ A}$, not $+33.0\text{ A}$.
+
+### Full Solution
+```python
+import math
+
+
+def shunt_adc_voltage(i_amp, r_shunt, gain=20.0, v_ref=1.65):
+    return v_ref + gain * i_amp * r_shunt
+
+
+def shunt_current_from_adc(v_adc, r_shunt, gain=20.0, v_ref=1.65):
+    return (v_adc - v_ref) / (gain * r_shunt)
+
+
+def max_measurable_current(v_ref, v_rail, gain, r_shunt):
+    return (v_rail - v_ref) / (gain * r_shunt)
+
+
+def kelvin_gain_error_pct(r_shunt, r_trace):
+    return 100.0 * 2.0 * r_trace / r_shunt
+
+
+def cmrr_input_error_v(delta_v_cm, cmrr_db):
+    return delta_v_cm * 10.0 ** (-cmrr_db / 20.0)
+
+
+def cmrr_current_error_a(delta_v_cm, cmrr_db, r_shunt):
+    return cmrr_input_error_v(delta_v_cm, cmrr_db) / r_shunt
+
+
+def adc_code(v_adc, v_rail=3.3, bits=12):
+    full_scale = 2 ** bits - 1
+    return max(0, min(full_scale, int(round(v_adc / v_rail * full_scale))))
+
+
+i_max = max_measurable_current(1.65, 3.30, 50.0, 0.001)
+v_at_max = shunt_adc_voltage(i_max, 0.001, 50.0)
+v_at_min = shunt_adc_voltage(-i_max, 0.001, 50.0)
+
+assert math.isclose(i_max, 33.0, abs_tol=1e-9)
+assert math.isclose(v_at_max, 3.30, abs_tol=1e-12)
+assert math.isclose(v_at_min, 0.0, abs_tol=1e-12)
+assert math.isclose(shunt_current_from_adc(3.30, 0.001, 50.0), 33.0, abs_tol=1e-9)
+assert math.isclose(kelvin_gain_error_pct(0.002, 0.0006), 60.0, abs_tol=1e-9)
+assert math.isclose(cmrr_current_error_a(48.0, 93.0, 0.003), 0.358195382, abs_tol=1e-9)
+assert adc_code(3.15) == 3909
+
+print(f"V_ADC={v_at_max:.4f} V at I_max={i_max:.2f} A; V_ADC={abs(v_at_min):.2f} V at -I_max")
+print(f"recovered I={shunt_current_from_adc(3.30, 0.001, 50.0):.2f} A | "
+      f"2-terminal error={kelvin_gain_error_pct(0.002, 0.0006):.1f}% | adc_code(3.15 V)={adc_code(3.15)}")
+```
+
+Printed: `V_ADC=3.3000 V at I_max=33.00 A; V_ADC=0.00 V at -I_max`, then `recovered I=33.00 A | 2-terminal error=60.0% | adc_code(3.15 V)=3909`.
+
 ### Break it on purpose
 Inject one realistic bring-up fault and diagnose it from the symptom alone, keeping $G = 20\text{ V/V}$ and $R_{\text{shunt}} = 3\text{ m}\Omega$:
 - **Inject:** leave the `INA240` reference pin tied to $\text{GND}$ instead of the $V_{\text{ref}} = 1.65\text{ V}$ mid-rail reference (the mistake in the `## 8. Common mistakes` table, made on purpose).

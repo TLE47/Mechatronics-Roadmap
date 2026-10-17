@@ -109,6 +109,146 @@ EXERCISE_TARGET=exercises/03-sensors.T3.03a/starter.py \
 
 **34 tests.** The feedforward is checked at the worked example's $-3.60\text{ V}$ and $12.00\text{ V}$, the Skip test's $-4.50\text{ V}$, the Gate test's $18.0\text{ V}$, and on a salient machine whose two axes have different inductances, so a swapped axis fails; the offset and duties are checked at the exercise's $-6.0\text{ V}$ and $(0.875, 0.125, 0.125)$, the Skip test's $-3.0\text{ V}$, the Gate test's $0.875$, at the hexagon limit where $d_a = 1.0$ exactly, and at a command outside the inscribed circle, which must be refused rather than clamped leg by leg; the $27.7128\text{ V}$ limit and the $+15.47\%$ gain are pinned; and the Fourier fit is checked at the worked example's $a_1 = 0.012$ and $b_2 = -0.005$ and the Gate test's $0.010\text{ rad}$ amplitude. The transfer suite runs **the plant's own 12-bit encoder**: an ideal encoder must fit to zero error, one count is $2\pi/4096 = 0.001534\text{ rad}$, the module's $0.012\text{ rad}$ eccentricity is $7.82$ counts and cancels to machine precision, a 2nd harmonic leaks nothing into the 1st at $4096$ samples, and the 25 kHz loop of Tab 3 executes $25$ updates inside one $1\text{ ms}$ plant tick. Five planted faults - `feedforward_swaps_axes`, `svpwm_offset_uses_mean`, `duties_ignore_offset`, `hexagon_uses_half_bus`, `harmonic_amplitude_sums` - each fail the test named for them.
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+import math
+
+
+def dq_feedforward(omega_e_rad_s, ld_h, lq_h, id_a, iq_a, psi_m_wb):
+    """Return (v_d_ff, v_q_ff) in V."""
+    # TODO 1: v_d = -omega_e * L_q * i_q (the OTHER axis's inductance); v_q = +omega_e (L_d i_d + psi_m)
+    ...
+
+
+def svpwm_offset(va_v, vb_v, vc_v):
+    """Return the Min-Max zero-sequence voltage v_0 in V."""
+    # TODO 2: minus HALF the sum of the extremes - not the mean
+    ...
+
+
+def svpwm_duties(va_v, vb_v, vc_v, vbus_v):
+    """Return the three leg duties (d_a, d_b, d_c), each in [0, 1]."""
+    # TODO 3: add the same v_0 to every leg, divide by V_bus; refuse a vector outside the circle
+    ...
+
+
+def hexagon_limit(vbus_v):
+    """Return the largest unclipped fundamental phase peak for Min-Max SVPWM, in V."""
+    # TODO 4: V_bus / sqrt(3), not V_bus / 2
+    ...
+
+
+def hexagon_gain():
+    """Return SVPWM's linear-range gain over sine PWM."""
+    # TODO 5: 2 / sqrt(3); the quoted percentage boost is 100 * (gain - 1)
+    ...
+
+
+def harmonic_coefficients(errors_rad, harmonic):
+    """Return (a_h, b_h) for one harmonic, from samples spread evenly over one mechanical turn."""
+    # TODO 6: a_h = 2/N sum e cos(h theta), b_h = 2/N sum e sin(h theta) - two separate sums
+    ...
+
+
+def harmonic_amplitude(a_h, b_h):
+    """Return the peak-to-zero amplitude of one harmonic, in rad."""
+    # TODO 7: amplitudes add in quadrature
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** for $v_a^* = +24.0\text{ V}$, $v_b^* = v_c^* = -12.0\text{ V}$ on a $48.0\text{ V}$ bus, $v_0 = -6.0\text{ V}$ and $(d_a, d_b, d_c) = (0.875, 0.125, 0.125)$; the inscribed-circle limit is $48.0/\sqrt{3} = 27.7128\text{ V}$ and SVPWM's gain over SPWM is $2/\sqrt{3} = 1.1547$ ($+15.47\%$).
+
+### Hint ladder
+1. **The $d$-axis term uses $L_q$.** A flux on the $q$-axis sweeps into the $d$-axis as the frame turns, so $v_{d,\text{ff}} = -\omega_e L_q i_q$, while $v_{q,\text{ff}} = \omega_e(L_d i_d + \psi_m)$ carries both its own-inductance term and the back-EMF. At the worked $1500\text{ rad/s}$, $i_d = 0$ and $i_q = 20\text{ A}$, the two terms are $-3.60\text{ V}$ and $12.00\text{ V}$.
+2. **Mid-range, not mean.** Here the three commands already sum to zero, so the mean would give $v_0 = 0$ and phase A pinned on the rail; the mid-range $-\tfrac{1}{2}(\max + \min) = -\tfrac{1}{2}(24.0 - 12.0) = -6.0\text{ V}$ centers the envelope and drops $d_a$ to $0.875$. Every leg gets that same offset - that is what keeps $d_a - d_b$ equal to $(v_a^* - v_b^*)/V_{\text{bus}}$.
+3. **Two thirds of a bus, not half.** The hexagon's inscribed circle is $V_{\text{bus}}/\sqrt{3} = 0.5774\,V_{\text{bus}}$, which is $2/\sqrt{3} = 1.1547$ times SPWM's $V_{\text{bus}}/2$; the percentage quote is $100 \times 0.1547 = 15.47\%$. A command whose envelope exceeds $V_{\text{bus}}$ does not fit and must be refused, not clamped leg by leg.
+4. **The factor of two is real.** $a_h = \frac{2}{N}\sum e_k\cos(h\theta_k)$ and $b_h = \frac{2}{N}\sum e_k\sin(h\theta_k)$: the $2/N$ normalizes a full-turn projection, and the amplitude is $\sqrt{a_h^2 + b_h^2}$ - adding the coefficients instead can even give a negative "amplitude".
+
+### Full Solution
+```python
+import math
+
+
+def dq_feedforward(omega_e_rad_s, ld_h, lq_h, id_a, iq_a, psi_m_wb):
+    return -omega_e_rad_s * lq_h * iq_a, omega_e_rad_s * (ld_h * id_a + psi_m_wb)
+
+
+def svpwm_offset(va_v, vb_v, vc_v):
+    return -0.5 * (max(va_v, vb_v, vc_v) + min(va_v, vb_v, vc_v))
+
+
+def svpwm_duties(va_v, vb_v, vc_v, vbus_v):
+    v0 = svpwm_offset(va_v, vb_v, vc_v)
+    duties = tuple(0.5 + (v + v0) / vbus_v for v in (va_v, vb_v, vc_v))
+    for duty in duties:
+        if duty < -1e-12 or duty > 1.0 + 1e-12:
+            raise ValueError("outside the inscribed circle: scale (v_alpha, v_beta) first")
+    return duties
+
+
+def hexagon_limit(vbus_v):
+    return vbus_v / math.sqrt(3.0)
+
+
+def hexagon_gain():
+    return 2.0 / math.sqrt(3.0)
+
+
+def harmonic_coefficients(errors_rad, harmonic):
+    count = len(errors_rad)
+    a_h = 0.0
+    b_h = 0.0
+    for k, error in enumerate(errors_rad):
+        angle = 2.0 * math.pi * k / count
+        a_h += error * math.cos(harmonic * angle)
+        b_h += error * math.sin(harmonic * angle)
+    return (2.0 / count) * a_h, (2.0 / count) * b_h
+
+
+def harmonic_amplitude(a_h, b_h):
+    return math.hypot(a_h, b_h)
+
+
+va, vb, vc, vbus = 24.0, -12.0, -12.0, 48.0
+v0_exercise = svpwm_offset(va, vb, vc)
+duties = svpwm_duties(va, vb, vc, vbus)
+
+v_d_ff, v_q_ff = dq_feedforward(1500.0, 120e-6, 120e-6, 0.0, 20.0, 0.008)
+v_peak = hexagon_limit(vbus)
+theta = [2.0 * math.pi * k / 64 for k in range(64)]
+errors = [0.012 * math.cos(t) - 0.005 * math.sin(2.0 * t) for t in theta]
+a1, b1 = harmonic_coefficients(errors, 1)
+a2, b2 = harmonic_coefficients(errors, 2)
+try:
+    svpwm_duties(30.0, -30.0, 0.0, vbus)
+    refused = False
+except ValueError:
+    refused = True
+
+assert math.isclose(v0_exercise, -6.0, rel_tol=1e-12)
+assert all(math.isclose(d, want, abs_tol=1e-12) for d, want in zip(duties, (0.875, 0.125, 0.125)))
+assert math.isclose(duties[0] - duties[1], (va - vb) / vbus, rel_tol=1e-12)
+assert math.isclose(v_d_ff, -3.60, rel_tol=1e-12) and math.isclose(v_q_ff, 12.0, rel_tol=1e-12)
+assert math.isclose(v_peak, 27.7128129, abs_tol=1e-6)
+assert math.isclose(100.0 * (hexagon_gain() - 1.0), 15.4700538, abs_tol=1e-6)
+assert math.isclose(a1, 0.012, rel_tol=1e-9) and math.isclose(b2, -0.005, rel_tol=1e-9)
+assert math.isclose(harmonic_amplitude(0.008, -0.006), 0.010, rel_tol=1e-9)
+assert math.isclose(a2, 0.0, abs_tol=1e-9) and math.isclose(b1, 0.0, abs_tol=1e-9)
+assert refused
+
+print("v0=%.1f V | duties=(%.3f, %.3f, %.3f) | limit=%.4f V | gain=%.4f (+%.2f%%)"
+      % (v0_exercise, duties[0], duties[1], duties[2], v_peak, hexagon_gain(),
+         100.0 * (hexagon_gain() - 1.0)))
+print("feedforward=(%.2f, %.2f) V | a1=%.4f rad, b2=%.4f rad | gate |(a1,b1)|=%.4f rad"
+      % (v_d_ff, v_q_ff, a1, b2, harmonic_amplitude(0.008, -0.006)))
+```
+
+Printed: `v0=-6.0 V | duties=(0.875, 0.125, 0.125) | limit=27.7128 V | gain=1.1547 (+15.47%)`, then `feedforward=(-3.60, 12.00) V | a1=0.0120 rad, b2=-0.0050 rad | gate |(a1,b1)|=0.0100 rad`.
+
 ### Break it on purpose
 Use the exercise's own commands $v_a^* = +24.0\text{ V}$, $v_b^* = v_c^* = -12.0\text{ V}$ on $V_{\text{bus}} = 48.0\text{ V}$ and plant the `svpwm_offset_uses_mean` fault:
 - **Inject:** compute the zero sequence as $v_0 = -\tfrac{1}{3}(v_a^* + v_b^* + v_c^*)$, the mean, instead of the mid-range $-\tfrac{1}{2}(\max + \min)$.

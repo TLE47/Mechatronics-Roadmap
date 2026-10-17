@@ -107,6 +107,126 @@ The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T1
   - **Physics & Simulation Study Links:** [MyPhysicsLab: Interactive Mass-Spring-Damper Simulation & Equations (`myphysicslab.com`)](https://www.myphysicslab.com/springs/single-spring-en.html) and [R. H. Bishop *The Mechatronics Handbook* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md).
   - **Curriculum Reference:** [Track 00 Tier 1 (`00-foundations/README.md#tier-1-beginner--intuitive`)](../00-foundations/README.md#tier-1-beginner--intuitive) (Step 1.1 Calculus as `while` Loops).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then compare against the numbers in the full solution ---
+import math
+
+
+def spring_force(k_nm, x_m):
+    """Hooke's law: the force that always pulls the cart back toward x = 0."""
+    # TODO 1: F = -k*x - the minus sign is the whole spring
+    ...
+
+
+def acceleration(force_n, mass_kg):
+    """Newton's second law."""
+    # TODO 2: divide the net force by the mass
+    ...
+
+
+def euler_step(x_m, v_ms, k_nm, b_nsm, m_kg, dt_s):
+    """One symplectic Euler tick of the damped spring: return (x_new, v_new)."""
+    # TODO 3: build a = (-k*x - b*v)/m, update v with it, then move x with the NEW v
+    ...
+
+
+def mechanical_energy(m_kg, v_ms, k_nm, x_m):
+    """Kinetic plus spring potential energy, in joules."""
+    # TODO 4: half the mass times v squared PLUS half the stiffness times x squared
+    ...
+
+
+def peak_speed(energy_j, m_kg):
+    """The speed at the unstretched centre."""
+    # TODO 5: v = sqrt(2E/m) - do not lose the 2
+    ...
+
+
+def torque(force_n, r_m, phi_rad):
+    """Lever torque, with phi the angle between the arm and the force."""
+    # TODO 6: sine, not cosine
+    ...
+
+
+def angular_acceleration(torque_nm, inertia_kg_m2):
+    """tau = J alpha, so alpha = tau / J."""
+    # TODO 7: divide by the inertia; do not invert the fraction
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $E_0 = 0.2500\text{ J}$; the $4,000$-step damped run of $2.0\text{ s}$ ends under $0.0125\text{ J}$ (more than $95\%$ dissipated); the Skip test's $5.886\text{ N}\cdot\text{m}$, $2.20\text{ J}$, $0.198\text{ m}$ and $30\text{ rad/s}^2$ still have to come out.
+
+### Hint ladder
+1. **Order of the two updates.** Update $v$ from the current $x$ and the current $v$, then move $x$ with the *new* $v$. A position updated with the old velocity is plain forward Euler: it gains energy every step instead of losing it, and at $\Delta t = 0.02\text{ s}$ it grows to $144\times$ the release energy in $500$ steps.
+2. **Why the damper is $-bv$ and not $+bv$.** The damper always opposes motion, so the force changes sign with $v$; writing `+b*v` gives the cart a tailwind and the oscillation explodes. At $x = 0$, $v = 0.5\text{ m/s}$, $b = 4.0$ and $m = 2.0\text{ kg}$ the acceleration is $-1.0\text{ m/s}^2$, so one $1\text{ ms}$ tick turns $v = 0.5$ into $0.499$.
+3. **The exercise check is an inequality.** The undamped worked example conserves energy to four decimals; the damped run must *lose* it. The envelope decays as $e^{-(b/m)t} = e^{-4} \approx 0.0183$, so $E(2.0\text{ s}) \approx 0.25 \times 0.0183 \approx 0.0046\text{ J}$, comfortably under the $0.0125\text{ J}$ pass mark - if yours sits above it, the damper sign or the update order is wrong, not the threshold.
+4. **Units are the check.** $k x$ is newtons, $b v$ is $\text{N}\cdot\text{s/m} \times \text{m/s} = \text{N}$, and dividing their sum by kilograms leaves $\text{m/s}^2$ - the right thing to add to $v$ after multiplying by $\Delta t$, and the wrong thing to add to $x$.
+
+### Full Solution
+```python
+import math
+
+
+def spring_force(k_nm, x_m):
+    return -k_nm * x_m
+
+
+def acceleration(force_n, mass_kg):
+    return force_n / mass_kg
+
+
+def euler_step(x_m, v_ms, k_nm, b_nsm, m_kg, dt_s):
+    a_ms2 = (spring_force(k_nm, x_m) - b_nsm * v_ms) / m_kg
+    v_new = v_ms + a_ms2 * dt_s
+    return x_m + v_new * dt_s, v_new
+
+
+def mechanical_energy(m_kg, v_ms, k_nm, x_m):
+    return 0.5 * m_kg * v_ms ** 2 + 0.5 * k_nm * x_m ** 2
+
+
+def peak_speed(energy_j, m_kg):
+    return math.sqrt(2.0 * energy_j / m_kg)
+
+
+def torque(force_n, r_m, phi_rad):
+    return r_m * force_n * math.sin(phi_rad)
+
+
+def angular_acceleration(torque_nm, inertia_kg_m2):
+    return torque_nm / inertia_kg_m2
+
+
+# The exercise: b = 4.0 N*s/m, 4000 steps of 0.5 ms = 2.0 s.
+m, k, b, dt = 2.0, 50.0, 4.0, 0.0005
+x, v = 0.10, 0.0
+e_initial = mechanical_energy(m, v, k, x)
+for _ in range(4000):
+    x, v = euler_step(x, v, k, b, m, dt)
+e_final = mechanical_energy(m, v, k, x)
+
+assert math.isclose(e_initial, 0.25, rel_tol=1e-12)
+assert e_final < 0.0125, e_final                 # > 95% of the release energy is gone
+assert e_final > 0.0
+# The undamped checks from the worked example and the Skip test still hold.
+assert math.isclose(spring_force(50.0, 0.10), -5.0, abs_tol=1e-12)
+assert math.isclose(acceleration(-5.0, 2.0), -2.5, abs_tol=1e-15)
+x1, v1 = euler_step(0.20, 0.0, 100.0, 0.0, 1.0, 0.01)
+assert math.isclose(v1, -0.2, abs_tol=1e-12) and math.isclose(x1, 0.198, abs_tol=1e-12)
+assert math.isclose(peak_speed(0.25, 2.0), 0.5, abs_tol=1e-15)
+assert math.isclose(torque(2.0 * 9.81, 0.30, math.pi / 2.0), 5.886, abs_tol=1e-9)
+assert math.isclose(angular_acceleration(1.5, 0.05), 30.0, abs_tol=1e-9)
+
+print("E0=%.4f J | damped 2.0 s: E_final=%.4f J, dissipated %.1f%% | under 0.0125 J: %s"
+      % (e_initial, e_final, 100.0 * (1.0 - e_final / e_initial), e_final < 0.0125))
+```
+
+Printed: `E0=0.2500 J | damped 2.0 s: E_final=... J, dissipated ...% | under 0.0125 J: True` - the release energy, then the run's own final energy and the share of it that heating removed. The final energy sits near the $0.25e^{-4} \approx 0.0046\text{ J}$ envelope, so the last field reads `True`.
+
 ### Break it on purpose
 Inject the `spring_force_sign_dropped` fault the graded package names, and diagnose it from the first step alone:
 - **Inject:** drop the minus sign in Hooke's law — write `f_net_n = k_nm * x_m` instead of `f_net_n = -k_nm * x_m`, leaving the damper, the mass and $\Delta t = 0.0005\text{ s}$ alone.

@@ -15,6 +15,11 @@ Three jobs:
    copies, so its published score is asserted at 100% and the baseline's recorded item set is
    asserted to be today's - a newly instrumented item must be a deliberate re-record, not a silent
    drop.
+4. **The learner scaffold is a scaffold, not a word.** Parity scores `learner_exercise_scaffold` on
+   a `TODO` and the two words "Full Solution" anywhere in §5. This pins the shape the reference
+   module publishes, for every module that ships a package: a `### Starter code` block with at least
+   three `...`-bodied TODOs, a `### Hint ladder` with at least three numbered hints, and a
+   `### Full Solution` block.
 
 Run: `python3 tests/test_module_parity.py` (also wired into the CI verify step).
 """
@@ -118,6 +123,80 @@ class TestScoredItemsAndTheReferenceModule(unittest.TestCase):
             parity.instrumented_items(self.rows),
             "the scored item set moved - re-record the floor deliberately with --update-baseline",
         )
+
+
+class TestTheLearnerScaffoldIsARealOne(unittest.TestCase):
+    """Every module with a graded package must open from a scaffold a beginner can start.
+
+    `learner_exercise_scaffold` scores a `TODO` plus the words "Full Solution" anywhere in §5, which
+    a two-line stub satisfies without teaching anything. The reference module's shape - `### Starter
+    code` with `...` bodies, a `### Hint ladder` of numbered hints, then `### Full Solution` - is the
+    contract here, checked for every module rather than asserted one module at a time.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        status, rows, _, errors = parity.build()
+        if status != 0:
+            raise AssertionError("module_parity.build() failed: %s" % errors)
+        cls.rows = rows
+
+    def test_every_bridge_module_opens_from_a_scaffold(self):
+        findings = []
+        for row in self.rows:
+            with open(os.path.join(ROOT, row["path"]), encoding="utf-8") as handle:
+                exercise = parity.section_bodies(handle.read()).get(5, "")
+            findings += ["%s: %s" % (row["module"], finding)
+                         for finding in scaffold_findings(exercise)]
+        self.assertEqual(findings, [], "\n".join(findings))
+
+    def test_the_check_catches_a_stub_with_no_todos_or_hints(self):
+        """The negative path: the words alone must not pass, or the test above is theatre."""
+        words_only = scaffold_findings("### Full Solution\n```python\nprint('TODO')\n```\n")
+        self.assertEqual(words_only, ["no `### Starter code`", "no `### Hint ladder`"])
+        # Headings present, but a one-`...` stub and a single hint: still not a scaffold.
+        thin = scaffold_findings(
+            "### Starter code\n```python\n# TODO: fill it in\n...\n```\n"
+            "### Hint ladder\n1. try the formula\n"
+            "### Full Solution\n```python\nprint(1)\n```\n"
+        )
+        self.assertEqual(len(thin), 2, thin)
+        self.assertIn("at least 3 expected", thin[0])
+
+
+import re  # noqa: E402  (used by `scaffold_findings`, kept next to it for readability)
+
+SCAFFOLD_SECTIONS = ("### Starter code", "### Hint ladder", "### Full Solution")
+MIN_TODOS = 3
+MIN_HINTS = 3
+
+
+def scaffold_findings(exercise: str) -> list[str]:
+    """What §5 is missing before its scaffold can be handed to a learner, as plain statements."""
+    findings = []
+    for heading in SCAFFOLD_SECTIONS:
+        if heading not in exercise:
+            findings.append("no `%s`" % heading)
+    starter = _section(exercise, "### Starter code")
+    full = _section(exercise, "### Full Solution")
+    hints = _section(exercise, "### Hint ladder")
+    if starter:
+        todos = len(re.findall(r"#\s*TODO", starter))
+        if todos < MIN_TODOS:
+            findings.append("%d TODO(s) in the starter, at least %d expected" % (todos, MIN_TODOS))
+    if full and "```python" not in full:
+        findings.append("the full solution carries no python block")
+    if hints and len(re.findall(r"^\d+\.\s", hints, flags=re.MULTILINE)) < MIN_HINTS:
+        findings.append("fewer than %d numbered hints" % MIN_HINTS)
+    return findings
+
+
+def _section(text: str, heading: str) -> str:
+    start = text.find(heading)
+    if start < 0:
+        return ""
+    end = text.find("\n### ", start + len(heading))
+    return text[start : end if end >= 0 else len(text)]
 
 
 if __name__ == "__main__":

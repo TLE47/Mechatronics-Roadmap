@@ -109,6 +109,106 @@ EXERCISE_TARGET=exercises/05-control.T1.05a/starter.py \
   - **Core Concepts to Review First:** Discrete PID virtual spring-damper control, integrator windup clamping & derivative-on-measurement (`-Kd * (y[k] - y[k-1]) / dt`), and complementary IMU sensor fusion $\hat{\theta}_k = \alpha(\hat{\theta}_{k-1} + \omega_{\text{gyro}}\Delta t) + (1-\alpha)\theta_{\text{acc},k}$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Åström & Murray *Feedback Systems* Ch. 11 (`fbsbook.org`)](https://www.fbsbook.org/), [Brian Douglas PID Control Lectures](https://www.youtube.com/user/ControlLectures), and [Track 05 Tier 1 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then compare against the numbers in the full solution below ---
+
+def tracking_error(r, y):
+    """e = r - y."""
+    # TODO 1: the reference minus the measurement - the sign is what makes the loop stable
+    ...
+
+def control_effort(r, y, dy, i_term, kp, kd):
+    """u_raw = Kp (r - y) - Kd dy + I."""
+    # TODO 2: the damper SUBTRACTS Kd dy - it opposes velocity, not error
+    ...
+
+def integral_step(i_prev, ki, e, dt):
+    """I_k = I_{k-1} + Ki e dt."""
+    # TODO 3: the tick includes dt - without it the bias grows a thousandfold at 1 kHz
+    ...
+
+def anti_windup_integral(i_prev, ki, e, dt, u_raw, u_max, i_max=None):
+    """The integral this tick may keep, frozen while the demand is past a rail."""
+    # TODO 4: freeze only when |u_raw| > u_max AND e pushes the same way as u_raw
+    ...
+
+def saturate(u_raw, u_max):
+    """clip(u_raw, -u_max, +u_max)."""
+    # TODO 5: both rails - a one-sided clip lets a large negative demand through
+    ...
+
+def steady_state_sag(tau_g, kp):
+    """e_ss = tau_g / Kp."""
+    # TODO 6: at rest the spring supplies all of tau_g, so the sag is tau_g / Kp
+    ...
+
+def arm_acceleration(torque, dq, tau_g, j, b):
+    """ddq = (u - b dq - tau_g) / J."""
+    # TODO 7: damping and gravity come OFF the torque before dividing by J
+    ...
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $e_{\text{ss}} = 0.075\ \text{rad}$; $q_{\text{ss}} = 0.925\ \text{rad}$.
+
+### Hint ladder
+1. **Steady state is a spring balance.** At rest $\dot q = 0$, so the damper and the integral are both zero and $K_p e_{\text{ss}} = \tau_g$: $e_{\text{ss}} = 0.60/8.0 = 0.075\ \text{rad}$, which puts $q_{\text{ss}}$ at $1.0 - 0.075 = 0.925\ \text{rad}$.
+2. **The sign of the sag is a check on the whole loop.** A settling angle *above* $1.0\ \text{rad}$ means the feedback sign is inverted; below it by exactly $\tau_g/K_p$ means the loop is right and only the spring is carrying the load.
+3. **The damper subtracts velocity, not error.** `u_raw = kp * (r - y) - kd * dy + i` reproduces the worked example's $3.8\ \text{N}\cdot\text{m}$; adding `+ kd * dy` would give $5.8$ and would drive the joint away from the target as it speeds up.
+4. **One tick is one millisecond.** With $\Delta t = 0.001$ the integral gains $K_i e \Delta t$ per step; leaving $\Delta t$ out multiplies the accumulator by $1000$ and is the windup the next module is about.
+
+### Full Solution
+```python
+def tracking_error(r, y):
+    return r - y
+
+def control_effort(r, y, dy, i_term, kp, kd):
+    return kp * (r - y) - kd * dy + i_term
+
+def integral_step(i_prev, ki, e, dt):
+    return i_prev + ki * e * dt
+
+def anti_windup_integral(i_prev, ki, e, dt, u_raw, u_max, i_max=None):
+    candidate = integral_step(i_prev, ki, e, dt)
+    if i_max is not None:
+        candidate = max(-i_max, min(i_max, candidate))
+    if abs(u_raw) > u_max and e * u_raw > 0.0:
+        return i_prev
+    return candidate
+
+def saturate(u_raw, u_max):
+    return max(-u_max, min(u_max, u_raw))
+
+def steady_state_sag(tau_g, kp):
+    return tau_g / kp
+
+def arm_acceleration(torque, dq, tau_g, j, b):
+    return (torque - b * dq - tau_g) / j
+
+u_worked = control_effort(1.0, 0.6, 0.5, 0.8, 10.0, 2.0)
+sag = steady_state_sag(0.60, 8.0)
+
+q, dq, i_term, dt = 0.0, 0.0, 0.0, 0.001
+for _ in range(3000):
+    e = tracking_error(1.0, q)
+    u = saturate(control_effort(1.0, q, dq, i_term, 8.0, 0.4), 1.20)
+    dq += arm_acceleration(u, dq, 0.60, 0.02, 0.05) * dt
+    q += dq * dt
+
+assert abs(u_worked - 3.8) < 1e-12
+assert abs(sag - 0.075) < 1e-12
+assert abs((1.0 - q) - sag) < 1e-3
+assert abs(saturate(-15.0, 12.0) + 12.0) < 1e-12
+assert abs(integral_step(0.0, 20.0, 0.25, 0.001) - 0.005) < 1e-12
+assert anti_windup_integral(0.5, 12.0, 0.4, 0.001, 15.0, 12.0) == 0.5
+
+print(f"u_raw={u_worked:.2f} N*m | e_ss={sag:.4f} rad | q_ss={q:.3f} rad")
+```
+
+Printed: `u_raw=3.80 N*m | e_ss=0.0750 rad | q_ss=0.925 rad`
+
 ### Break it on purpose
 - **Inject:** run `sim_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=False)` — the worked example's PID with the clamp and the freeze removed, so $I_k$ keeps adding $K_i e\Delta t$ while the demand sits past the $1.20\ \text{N}\cdot\text{m}$ rail.
 - **Symptom:** the run reaches the target and sails on to a peak $0.372\ \text{rad}$ above $1.0\ \text{rad}$ instead of the clamped run's $0.047\ \text{rad}$; the pure-P run in the same script is untouched at its $0.150\ \text{rad}$ sag.

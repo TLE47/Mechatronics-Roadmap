@@ -114,6 +114,115 @@ EXERCISE_TARGET=exercises/04-embedded.T3.04a/starter.py \
   - **Core Concepts to Review First:** C++20 `WaitFreeSeqLock<T>` even/odd sequence retry protocol, EtherCAT Distributed Clocks (`DC`) propagation-compensated clock offset + PI drift discipline, and Hogenauer `sinc³` $\Sigma\Delta$ decimation ($G = \text{OSR}^3$, group delay $\tau_g = \frac{3(\text{OSR}-1)}{2 f_{\text{mod}}}$) in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Hans Boehm *Seqlocks Paper*](https://dl.acm.org/doi/10.1145/2247684.2247688), [Hogenauer CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535), and [Track 04 Tier 3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-3-advanced--production) (**Tab 8: Attitude ESKF & SeqLock**).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then compare against the numbers in the full solution below ---
+import math
+
+Q31_SCALE = 1 << 31
+Q31_MIN = -(1 << 31)
+Q31_MAX = (1 << 31) - 1
+
+def center_aligned_arr(f_tim_hz, f_pwm_hz):
+    """ARR = f_tim / (2 f_pwm)."""
+    # TODO 1: up-down mode spends TWO timer ticks per PWM period
+    ...
+
+def pwm_frequency(f_tim_hz, arr):
+    """f_pwm = f_tim / (2 ARR)."""
+    # TODO 2: the same factor of two, solved for the frequency
+    ...
+
+def low_side_window_ns(d_max, t_dead_ns, f_pwm_hz):
+    """t_low,min = (1 - d_max) T_pwm - 2 t_dead."""
+    # TODO 3: there is a dead time at BOTH switching edges, so subtract two of them
+    ...
+
+def q31_encode(x):
+    """X = clamp(round(x * 2^31), -2^31, 2^31 - 1)."""
+    # TODO 4: the scale is 2 to the 31, and +1.0 clamps to 0x7FFFFFFF instead of wrapping
+    ...
+
+def q31_decode(word):
+    """x_hat = X / 2^31."""
+    # TODO 5: divide by the same 2^31 - by 2^30 would read every word at double its value
+    ...
+
+def angle_to_q31(theta_rad):
+    """x = theta / pi, then encoded."""
+    # TODO 6: divide by PI first; the CORDIC format is the normalised angle
+    ...
+
+def seqlock_valid(s1, s2):
+    """Tear-free iff s1 is even and s1 == s2."""
+    # TODO 7: an odd s1 means a write was in flight, even when s1 == s2
+    ...
+
+def isr_cpu_percent(wcet_us, period_us):
+    """100 * WCET / T_pwm."""
+    # TODO 8: a percentage needs the multiply by 100
+    ...
+
+print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $\text{ARR} = 3200$; $X_{Q31} = -1{,}073{,}741{,}824$ (`-2**30`).
+
+### Hint ladder
+1. **One PWM period is two counter sweeps.** $160\ \text{MHz} / (2 \times 25\ \text{kHz}) = 3200$ ticks; the same factor of two turns $\text{ARR}$ back into a frequency, so verify $25{,}000\ \text{Hz}$ with it before moving on.
+2. **Two edges, two dead times.** At $d_{\max} = 0.88$ over a $40\ \mu\text{s}$ carrier the low-side window is $0.12 \times 40{,}000 - 2 \times 250 = 4300\ \text{ns}$; subtracting one dead time reports $4550$, which is the worked example's own tell.
+3. **$x = -0.50$ sits exactly on $-2^{30}$.** $\text{round}(-0.5 \times 2^{31}) = -1{,}073{,}741{,}824$, and decoding divides by $2^{31}$ to give back $-0.5$ with no residue.
+4. **Parity, then equality.** `seqlock_valid(4, 4)` is true, `(5, 5)` is false because the writer was mid-update, and `(4, 6)` is false because the counter moved: both conditions are required.
+
+### Full Solution
+```python
+import math
+
+Q31_SCALE = 1 << 31
+Q31_MIN = -(1 << 31)
+Q31_MAX = (1 << 31) - 1
+
+def center_aligned_arr(f_tim_hz, f_pwm_hz):
+    return int(round(f_tim_hz / (2.0 * f_pwm_hz)))
+
+def pwm_frequency(f_tim_hz, arr):
+    return f_tim_hz / (2.0 * float(arr))
+
+def low_side_window_ns(d_max, t_dead_ns, f_pwm_hz):
+    return (1.0 - d_max) * (1e9 / f_pwm_hz) - 2.0 * t_dead_ns
+
+def q31_encode(x):
+    return max(Q31_MIN, min(Q31_MAX, int(round(x * Q31_SCALE))))
+
+def q31_decode(word):
+    return word / float(Q31_SCALE)
+
+def angle_to_q31(theta_rad):
+    return q31_encode(theta_rad / math.pi)
+
+def seqlock_valid(s1, s2):
+    return (s1 % 2 == 0) and s1 == s2
+
+def isr_cpu_percent(wcet_us, period_us):
+    return 100.0 * wcet_us / period_us
+
+arr = center_aligned_arr(160_000_000.0, 25_000.0)
+word = q31_encode(-0.50)
+assert arr == 3200
+assert math.isclose(pwm_frequency(160_000_000.0, 3200), 25_000.0, rel_tol=1e-12)
+assert math.isclose(low_side_window_ns(0.88, 250.0, 25_000.0), 4300.0, rel_tol=1e-12)
+assert word == -1073741824
+assert math.isclose(q31_decode(word), -0.50, rel_tol=1e-12)
+# The worked example's exact 2^30 word is cos(pi/3), i.e. 0.5 in Q1.31.
+assert q31_encode(math.cos(math.pi / 3.0)) == 1073741824
+assert seqlock_valid(4, 4) is True and seqlock_valid(5, 5) is False and seqlock_valid(4, 6) is False
+assert math.isclose(isr_cpu_percent(3.0, 25.0), 12.0, rel_tol=1e-12)
+
+print(f"ARR={arr} | f_pwm={pwm_frequency(160_000_000.0, arr):.1f} Hz | q31(-0.50)={word} | valid(5,5)={seqlock_valid(5, 5)}")
+```
+
+Printed: `ARR=3200 | f_pwm=25000.0 Hz | q31(-0.50)=-1073741824 | valid(5,5)=False`
+
 ### Break it on purpose
 Inject the parity slip the exercise plants (`seqlock_ignores_parity`), keeping the writer at $40\text{ kHz}$ and the reader at $1\text{ kHz}$:
 - **Inject:** implement `seqlock_valid(s1, s2)` as `s1 == s2` only, dropping the even-parity test.

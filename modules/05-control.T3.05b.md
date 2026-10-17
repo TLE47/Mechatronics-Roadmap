@@ -119,6 +119,100 @@ EXERCISE_TARGET=exercises/05-control.T3.05b/starter.py \
   - **Core Concepts to Review First:** Rodrigues' exponential, right-multiplicative injection and the reset in `## 3. Formalization` (Items 1-3) and the zero-innovation comparison in `## 4. Worked example` above.
   - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the Error-State Kalman Filter* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 8**).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import math
+
+
+def exp_so3(rotvec):
+    """Rodrigues' formula for exp([rotvec]_x), returning a 3x3 list of lists."""
+    # TODO 1: theta = |rotvec|; build the skew matrix K, then I + (sin t / t) K + ((1 - cos t) / t^2) K^2
+    ...
+
+
+def inject_rotation(r_nominal, d_theta):
+    """R^+ = R^- exp([d_theta]_x): the correction multiplies the nominal rotation on the right."""
+    # TODO 2: matrix-multiply r_nominal by exp_so3(d_theta) - order matters
+    ...
+
+
+def eskf_rotation_update(r_nominal, d_theta, innovation):
+    """Inject d_theta, reset the error-state mean to zero, then apply the next innovation."""
+    # TODO 3: inject, reset the mean to [0, 0, 0], then inject `innovation` - not d_theta again
+    ...
+
+
+print("scaffold ready: 3 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** a $0.05$ rad correction followed by a zero innovation holds $0.05$ rad (a stale mean composes to $0.10$); a real $0.02$ rad innovation reaches $0.07$ rad; one encoder count is $2\pi/4096 = 0.0015339808$ rad and its exponential has determinant $1$.
+
+### Hint ladder
+1. **The exponential's three coefficients.** With $\theta = |\delta\theta|$ the rotation is $I + \frac{\sin\theta}{\theta}K + \frac{1-\cos\theta}{\theta^2}K^2$; dropping the $K^2$ term makes a $0.10$ rad step about $+x$ land too small, which is what the package's second test measures.
+2. **Why the injection is on the right.** $R^+ = R^-\exp([\delta\theta]_\times)$ perturbs the *body* frame. Building the case from a $90^\circ$ frame is what exposes a left-multiplication, because a pure $+z$ frame commutes and hides it.
+3. **The reset is the exercise.** The injection has just consumed the posterior error, so the mean must go back to $[0, 0, 0]$ before the next measurement. Leave it set and a zero innovation applies the same $0.05$ rad a second time: the frame reads $0.10$ with the determinant still $1$ - a perfect rotation of the wrong pose.
+4. **Reading the angle back.** $\operatorname{tr}R = 1 + 2\cos\theta$, so $\theta = \arccos((\operatorname{tr}R - 1)/2)$; one count is $2\pi/4096$, and $\det R = 1$ to $10^{-15}$ is the cheap $SO(3)$ check.
+
+### Full Solution
+```python
+import math
+
+
+def exp_so3(rotvec):
+    w = [float(item) for item in rotvec]
+    theta = math.sqrt(w[0] * w[0] + w[1] * w[1] + w[2] * w[2])
+    k = [[0.0, -w[2], w[1]], [w[2], 0.0, -w[0]], [-w[1], w[0], 0.0]]
+    k2 = [[sum(k[i][m] * k[m][j] for m in range(3)) for j in range(3)] for i in range(3)]
+    if theta < 1e-8:
+        a, b = 1.0, 0.5
+    else:
+        a, b = math.sin(theta) / theta, 2.0 * math.sin(0.5 * theta) ** 2 / (theta * theta)
+    return [[(1.0 if i == j else 0.0) + a * k[i][j] + b * k2[i][j] for j in range(3)]
+            for i in range(3)]
+
+
+def inject_rotation(r_nominal, d_theta):
+    step = exp_so3(d_theta)
+    return [[sum(r_nominal[i][m] * step[m][j] for m in range(3)) for j in range(3)]
+            for i in range(3)]
+
+
+def eskf_rotation_update(r_nominal, d_theta, innovation):
+    r_plus = inject_rotation(r_nominal, d_theta)
+    r_reset = inject_rotation(r_plus, [0.0, 0.0, 0.0])
+    return inject_rotation(r_reset, innovation)
+
+
+def angle_of(r):
+    return math.acos(max(-1.0, min(1.0, (r[0][0] + r[1][1] + r[2][2] - 1.0) / 2.0)))
+
+
+def determinant(r):
+    return (r[0][0] * (r[1][1] * r[2][2] - r[1][2] * r[2][1])
+            - r[0][1] * (r[1][0] * r[2][2] - r[1][2] * r[2][0])
+            + r[0][2] * (r[1][0] * r[2][1] - r[1][1] * r[2][0]))
+
+
+identity = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+step = exp_so3([0.0, 0.0, 0.05])
+held = eskf_rotation_update(identity, [0.0, 0.0, 0.05], [0.0, 0.0, 0.0])
+real = eskf_rotation_update(identity, [0.0, 0.0, 0.05], [0.0, 0.0, 0.02])
+count = 2.0 * math.pi / 4096.0
+one_count = exp_so3([0.0, 0.0, count])
+
+assert math.isclose(step[1][0], math.sin(0.05), abs_tol=1e-15)
+assert math.isclose(determinant(step), 1.0, abs_tol=1e-15)
+assert math.isclose(angle_of(held), 0.05, abs_tol=1e-12)
+assert math.isclose(angle_of(real), 0.07, abs_tol=1e-12)
+assert math.isclose(count, 0.0015339808, abs_tol=1e-10)
+assert math.isclose(determinant(one_count), 1.0, abs_tol=1e-15)
+print(f"R10={step[1][0]:.5f}, held={angle_of(held):.6f} rad, real={angle_of(real):.6f} rad, "
+      f"count={count:.10f} rad, det={determinant(step):.6f}")
+```
+
+Printed: `R10=0.04998, held=0.050000 rad, real=0.070000 rad, count=0.0015339808 rad, det=1.000000`
+
 ### Break it on purpose
 Inject the `## 8. Common mistakes` row about the missing reset, keeping the worked example's $0.05$ rad correction and its zero-innovation follow-up:
 - **Inject:** inject the correction, then run the next update with a **zero innovation** while leaving the error-state mean set - a filter that patches the nominal rotation but never zeroes $\delta\hat{\theta}$.

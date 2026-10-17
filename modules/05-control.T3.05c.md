@@ -119,6 +119,100 @@ EXERCISE_TARGET=exercises/05-control.T3.05c/starter.py \
   - **Core Concepts to Review First:** the safe set, the CBF condition $\dot{h} \ge -\alpha h$ and the closed-form projection in `## 3. Formalization` (Items 1-3) and the four commands in `## 4. Worked example` above.
   - **Study Links & Resources:** [Ames et al. *Control Barrier Functions: Theory and Applications* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 4**).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import math
+
+
+def cbf_command(u_nom, h_value, alpha, u_min=-2.0, u_max=2.0):
+    """Project u_nom onto `u <= alpha h` and the actuator bounds, minimally."""
+    # TODO 1: the barrier caps the command at alpha * h (hdot = -u), so take the smaller cap
+    # TODO 2: clip u_nom into [u_min, upper]; refuse an interval where upper < u_min
+    ...
+
+
+def barrier_lower_bound(h0, alpha, t):
+    """The guaranteed margin h0 exp(-alpha t) under the CBF condition."""
+    # TODO 3: exponential decay, not a straight line - the gain alpha is the rate
+    ...
+
+
+def stopping_speed(tau_limit, inertia, dt):
+    """How much speed one tick of the torque clamp can remove: (tau / I) * dt."""
+    # TODO 4: the plant's own numbers put this at 0.3125 rad/s for 2.5 N*m over I1 = 0.008
+    ...
+
+
+def stopping_distance(tau_limit, inertia, dt):
+    """The distance covered while that tick of deceleration acts: 1/2 a dt^2."""
+    # TODO 5: constant acceleration, so the 1/2 matters - it is 1.5625e-4 rad here
+    ...
+
+
+print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $h = 0.10$, $\alpha = 8.0$ caps $1.20$ at $0.80\,\text{rad/s}$; $h = -0.05$ reverses the command to $-0.40$; $h = -0.50$ admits only $-4.0$ and is infeasible; $h_0 = 0.20$ at $\alpha = 2.0$ is $0.073576\,\text{m}$ after $0.50\,\text{s}$; one tick removes $0.3125\,\text{rad/s}$ over $1.5625\times10^{-4}\,\text{rad}$.
+
+### Hint ladder
+1. **Sign of the inequality.** With $\dot{h} = -u$, the condition $\dot{h} \ge -\alpha h$ is $u \le \alpha h$ - a **ceiling**, not a floor. At $h = 0.10$, $\alpha = 8.0$ the ceiling is $0.80$, so the $1.20$ request lands exactly on it.
+2. **Past the stop.** At $h = -0.05$ the ceiling is $-0.40$: the filter does not clamp to zero, it commands a retreat that drives $h$ back up. A result of $0$ means the constraint was imposed as an equality.
+3. **The infeasible case.** At $h = -0.50$ the ceiling is $-4.0$, below $u_{\min} = -2.0$; there is no admissible command and clamping to $-2.0$ would silently disobey the barrier, so raise instead.
+4. **Braking distance, on the plant.** $a = 2.5/0.008 = 312.5\,\text{rad/s}^2$, so one $1\,\text{ms}$ tick removes $0.3125\,\text{rad/s}$ over $\tfrac12 a\Delta t^2 = 1.5625\times10^{-4}\,\text{rad}$; at that margin a $1000\,\text{s}^{-1}$ barrier admits only $0.15625\,\text{rad/s}$.
+
+### Full Solution
+```python
+import math
+
+
+def cbf_command(u_nom, h_value, alpha, u_min=-2.0, u_max=2.0):
+    upper = min(u_max, alpha * h_value)
+    if upper < u_min:
+        raise ValueError("infeasible: the barrier allows at most %r, below u_min %r" % (upper, u_min))
+    return min(max(u_nom, u_min), upper)
+
+
+def barrier_lower_bound(h0, alpha, t):
+    return h0 * math.exp(-alpha * t)
+
+
+def stopping_speed(tau_limit, inertia, dt):
+    return (tau_limit / inertia) * dt
+
+
+def stopping_distance(tau_limit, inertia, dt):
+    return 0.5 * (tau_limit / inertia) * dt * dt
+
+
+u_ex = cbf_command(1.20, 0.10, 8.0)
+retreat = cbf_command(-0.40, 0.05, 6.0)
+u_work = cbf_command(0.80, 0.04, 5.0)
+h_min = barrier_lower_bound(0.20, 2.0, 0.50)
+speed = stopping_speed(2.5, 0.008, 1e-3)
+distance = stopping_distance(2.5, 0.008, 1e-3)
+one_tick = cbf_command(speed, distance, 1.0 / 1e-3)
+
+assert math.isclose(u_ex, 0.80, abs_tol=1e-9)
+assert math.isclose(retreat, -0.40, abs_tol=1e-15)
+assert math.isclose(u_work, 0.20, abs_tol=1e-12)
+assert math.isclose(h_min, 0.20 * math.exp(-1.0), rel_tol=1e-12)
+assert math.isclose(speed, 0.3125, abs_tol=1e-15)
+assert math.isclose(distance, 1.5625e-4, rel_tol=1e-12)
+assert math.isclose(one_tick, 0.15625, abs_tol=1e-12)
+try:
+    cbf_command(0.0, -0.50, 8.0)
+except ValueError:
+    infeasible = True
+else:
+    infeasible = False
+assert infeasible
+print(f"u_ex={u_ex:.2f}, retreat={retreat:.2f}, u_work={u_work:.2f}, h_min={h_min:.6f}, "
+      f"one_tick={one_tick:.5f}, infeasible={infeasible}")
+```
+
+Printed: `u_ex=0.80, retreat=-0.40, u_work=0.20, h_min=0.073576, one_tick=0.15625, infeasible=True`
+
 ### Break it on purpose
 Inject the `## 8. Common mistakes` row about ignoring the barrier, keeping the worked example's $u_{\text{nom}} = 0.80\,\text{m/s}$, $h = 0.04\,\text{m}$ and $\alpha = 5.0\,\text{s}^{-1}$:
 - **Inject:** delete the cap - `return min(max(u_nom, u_min), u_max)` - so the filter is only an actuator clamp and the barrier inequality never enters.

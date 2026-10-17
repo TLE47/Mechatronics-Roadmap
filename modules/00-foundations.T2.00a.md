@@ -96,6 +96,137 @@ The tests are behavioural: the velocity estimate must change by exactly 10 when 
   - **Linear Algebra & State-Space Study Links:** [3Blue1Brown: Linear Transformations and Matrices (`3blue1brown.com`)](https://www.3blue1brown.com/lessons/linear-transformations) and [Brunton & Kutz *Data-Driven Science and Engineering* (`databookuw.com`)](https://databookuw.com/).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then compare against the numbers in the full solution ---
+import math
+
+TWO_PI = 2.0 * math.pi
+
+
+def joint_velocity(counts, dt, cpr=4096):
+    """Joint speed in rad/s from consecutive encoder counts, one sample per `dt`.
+
+    TODO 1: difference consecutive samples, turn counts into radians, divide by dt.
+    TODO 2: wrap each difference into (-pi, pi] - 4095 -> 0 is +1 count, not -4095.
+    Return one value per sample; the first has no previous sample, so 0.0.
+    """
+    ...
+
+
+def running_integral(values, dt):
+    """out[k] = out[k-1] + values[k]*dt, one entry per input value."""
+    # TODO 3: accumulate in one variable; never restart the sum at zero
+    ...
+
+
+def state_matrices(m, k, b, dt):
+    """(Ad, Bd) for the mass-spring-damper Euler update, as [[...], [...]] and [...]."""
+    # TODO 4: Ad = [[1, dt], [-k/m*dt, 1 - b/m*dt]], Bd = [0, dt/m]
+    ...
+
+
+def one_step(Ad, Bd, x, u):
+    """One matrix step [x1, v1] from the OLD state `x`."""
+    # TODO 5: compute both components before you write either one back
+    ...
+
+
+def simulate(Ad, Bd, x0, u, steps):
+    """Run `steps` matrix steps with constant input `u`; return the final [x, v]."""
+    # TODO 6: copy x0, then loop one_step
+    ...
+
+
+def encoder_trace_angle(counts, dt, cpr=4096):
+    """counts -> velocity -> running integral, added back onto the first sample's angle."""
+    # TODO 7: this must land on the encoder's own angle, to within one count
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $m = 1.0\text{ kg}$, $k = 100\text{ N/m}$, $b = 10$, $\Delta t = 0.01\text{ s}$ give $x_{\text{eq}} = 0.0500\text{ m}$ after $500$ steps ($\pm 10^{-3}\text{ m}$) with $v \to 0.0000\text{ m/s}$ ($\pm 10^{-4}$); one encoder count per $1\text{ ms}$ sample is $1.534\text{ rad/s}$ on the capstone's $4096$-count encoder.
+
+### Hint ladder
+1. **The wrap is one modulo, not a special case.** Turn the raw difference into radians, then `(delta + math.pi) % TWO_PI - math.pi`. At `4095 -> 0` the raw difference is $-4095$ counts; wrapping it gives the $+1$ count the physical shaft actually moved, which is why the velocity is one count's worth and not $-4095\times$.
+2. **Why the integral must be running.** `out[k] = out[k-1] + values[k]*dt` telescopes against the backward difference: summing the diffs returns the last count minus the first, so counts -> velocity -> integral lands back on the encoder angle. Re-integrating each step from zero gives a sawtooth, and the round-trip test fails everywhere except the first sample.
+3. **$B_d$ carries $\Delta t$.** $B_d u$ is added to the velocity row, so it must be a velocity: $\Delta t u / m = 0.01 \times 5.0 / 1.0 = 0.05\text{ m/s}$ per step. Writing $1/m$ instead adds $5.0\text{ m/s}$ per step, which is an acceleration sitting in a velocity's slot, and no equilibrium is ever reached.
+4. **Simultaneous means simultaneous.** In `one_step`, compute `x1` and `v1` into new names first; assigning back into `x[0]` before computing `v1` feeds the new position into the old state, and the test's state $[0.10, 0.20]$ separates the two answers by more than $10^{-2}$.
+
+### Full Solution
+```python
+import math
+
+TWO_PI = 2.0 * math.pi
+
+
+def joint_velocity(counts, dt, cpr=4096):
+    per_count = TWO_PI / cpr
+    velocities = [0.0]
+    for k in range(1, len(counts)):
+        delta = (counts[k] - counts[k - 1]) * per_count
+        delta = (delta + math.pi) % TWO_PI - math.pi
+        velocities.append(delta / dt)
+    return velocities
+
+
+def running_integral(values, dt):
+    out = []
+    total = 0.0
+    for value in values:
+        total += value * dt
+        out.append(total)
+    return out
+
+
+def state_matrices(m, k, b, dt):
+    Ad = [[1.0, dt], [-(k / m) * dt, 1.0 - (b / m) * dt]]
+    Bd = [0.0, dt / m]
+    return Ad, Bd
+
+
+def one_step(Ad, Bd, x, u):
+    x1 = Ad[0][0] * x[0] + Ad[0][1] * x[1] + Bd[0] * u
+    v1 = Ad[1][0] * x[0] + Ad[1][1] * x[1] + Bd[1] * u
+    return [x1, v1]
+
+
+def simulate(Ad, Bd, x0, u, steps):
+    x = [x0[0], x0[1]]
+    for _ in range(steps):
+        x = one_step(Ad, Bd, x, u)
+    return x
+
+
+def encoder_trace_angle(counts, dt, cpr=4096):
+    start = counts[0] * TWO_PI / cpr
+    return [start + value for value in running_integral(joint_velocity(counts, dt, cpr), dt)]
+
+
+# The exercise: 500 steps of 0.01 s with a constant 5.0 N pull.
+Ad, Bd = state_matrices(1.0, 100.0, 10.0, 0.01)
+x_final = simulate(Ad, Bd, [0.10, 0.0], 5.0, 500)
+
+assert math.isclose(x_final[0], 0.05, abs_tol=1e-3), x_final
+assert math.isclose(x_final[1], 0.0, abs_tol=1e-4), x_final
+assert math.isclose(Ad[0][1], 0.01, abs_tol=1e-12) and math.isclose(Ad[1][0], -1.0, abs_tol=1e-12)
+assert math.isclose(Ad[1][1], 0.90, abs_tol=1e-12) and math.isclose(Bd[1], 0.01, abs_tol=1e-12)
+assert math.isclose(one_step(Ad, Bd, [0.0, 1.0], 0.0)[0], 0.01, abs_tol=1e-12)
+
+# One count per 1 ms sample, and the 4095 -> 0 step that must not read as a full turn.
+one_count_speed = joint_velocity([0, 1, 2, 3], 1e-3)[1]
+wrapped = joint_velocity([4094, 4095, 0, 1], 1e-3)
+assert math.isclose(one_count_speed, TWO_PI / 4096 / 1e-3, abs_tol=1e-6)
+assert all(math.isclose(value, one_count_speed, abs_tol=1e-6) for value in wrapped[1:])
+
+print("500 steps of 0.01 s -> x=%.4f m, v=%.4f m/s | one count per ms = %.3f rad/s"
+      % (x_final[0], x_final[1], one_count_speed))
+```
+
+Printed: `500 steps of 0.01 s -> x=0.0500 m, v=... m/s | one count per ms = 1.534 rad/s` - the position settles on $u_0/k = 0.0500\text{ m}$, and the velocity is within $10^{-4}\text{ m/s}$ of rest.
+
 ### Break it on purpose
 Inject the `## 8. Common mistakes` row about a $B_d$ that skipped $\Delta t$, and diagnose it from the numbers alone, keeping $m = 1.0\text{ kg}$ and $\Delta t = 0.01\text{ s}$:
 - **Inject:** form the input column as $B_d = [0,\; 1/m]^T$ instead of $[0,\; \Delta t/m]^T$, so the force enters the update as an acceleration but is added to a velocity.

@@ -96,6 +96,124 @@ EXERCISE_TARGET=exercises/04-embedded.T2.04a/starter.py \
 
 **34 tests.** The frame is checked at the worked example's $2.0\ \mu\text{s}$ and at the skip test's $2.0\ \mu\text{s}$ of pure shift, so a dropped chip-select shows up as $1.6$; the polled write is checked at the skip test's $500\ \mu\text{s}$ ($500$ bits, not $50$ bytes), so a per-byte division reports $62.5$; the window is checked at the exercise's $80.0\ \mu\text{s}$, so a $2N$ window reports $160$; the HT rate is checked at $2000\ \text{Hz}$, so a $2N$ divisor reports $1000$; and the ping-pong replay grades the worked example's sixteen samples arriving in order, with HT reading Ping and mid-half positions refused. The transfer suite runs the plant's own clock: a $2.0\ \mu\text{s}$ encoder frame is $0.2\%$ of the $1\ \text{ms}$ tick, its encoder is a $12$-bit, $4096$-count word ($1.2\ \mu\text{s}$ of shift), a four-sample half fires HT at $250\ \text{Hz}$ - $250$ reads per second of plant time - and a $320\ \mu\text{s}$ telemetry frame fits one tick at $32\%$ but overflows a $50\ \mu\text{s}$ loop by $6.44\times$. Five planted faults - `spi_frame_drops_cs`, `uart_poll_per_byte`, `window_uses_full_buffer`, `ht_frequency_uses_total`, `slice_reads_written_half` - each fail the test named for them.
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+DEFAULT_CS_US = 0.4
+
+
+def spi_shift_us(n_bits, f_sclk_hz):
+    """Clocks alone: B_bits / f_sclk, in microseconds."""
+    # TODO 1: bits over clocks, then scale seconds to microseconds
+    ...
+
+
+def spi_frame_us(n_bits, f_sclk_hz, t_cs_us=DEFAULT_CS_US):
+    """The whole frame: the shift time plus the chip-select overhead."""
+    # TODO 2: the 0.4 us of chip-select is part of the frame
+    ...
+
+
+def uart_poll_us(n_bits, baud):
+    """The CPU time a blocking polled write wastes, in microseconds."""
+    # TODO 3: every bit stalls the loop - no division by 8
+    ...
+
+
+def cpu_load_fraction(t_busy_us, t_loop_us):
+    """Busy time as a fraction of the loop period."""
+    # TODO 4: busy over period, so 322 us in a 50 us loop is 6.44x
+    ...
+
+
+def ping_pong_window_us(n_half, f_adc_hz):
+    """The time the CPU has to read one half of the buffer, in microseconds."""
+    # TODO 5: N samples, not the 2N total
+    ...
+
+
+def ht_frequency_hz(f_sample_hz, n_half):
+    """How often the Half-Transfer interrupt fires."""
+    # TODO 6: one interrupt per N samples, so f_sample / N
+    ...
+
+
+def buffer_slice_for_position(write_pos, n_half):
+    """Return (start, stop) of the readable half, or None mid-half."""
+    # TODO 7: HT at write_pos == N-1 reads Ping [0, N); TC at 2N-1 reads Pong [N, 2N)
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $t_{\text{window}} = 16 / 200{,}000\ \text{s} = 80.0\ \mu\text{s}$; a 16-bit frame at $8\ \text{MHz}$ shifts in $2.0\ \mu\text{s}$ ($2.4\ \mu\text{s}$ with chip-select); 500 bits at $1\ \text{Mbaud}$ stall the loop for $500\ \mu\text{s}$; $322\ \mu\text{s}$ of busy time is $32\%$ of a $1\ \text{ms}$ tick and $6.44\times$ a $50\ \mu\text{s}$ loop.
+
+### Hint ladder
+1. **Seconds, then microseconds.** `n_bits / f_sclk` is in seconds, so multiply by `1e6`; the chip-select term is already in microseconds and is added, never scaled.
+2. **Polling stalls per bit.** A UART frame is one start bit, eight data bits and a stop bit, so 50 bytes is 500 bits at the baud rate - `500 / 1e6 * 1e6 = 500` µs. Dividing by 8 first reports `62.5` and hides the cost.
+3. **The window is one half, not the buffer.** HT fires when $N$ samples are in, so the CPU has $N/f_{\text{adc}}$ before TC: $16/200000 = 80\ \mu\text{s}$, while $2N$ would report $160$.
+4. **The half you may read is the one just finished.** At `write_pos == N - 1` the engine has filled `[0, N)` and moves to Pong, so Ping is safe: `(0, N)`. At `2N - 1` the roles swap: `(N, 2N)`. Anything else is mid-half, and the honest answer is `None`.
+
+### Full Solution
+```python
+DEFAULT_CS_US = 0.4
+
+
+def spi_shift_us(n_bits, f_sclk_hz):
+    return (n_bits / f_sclk_hz) * 1e6
+
+
+def spi_frame_us(n_bits, f_sclk_hz, t_cs_us=DEFAULT_CS_US):
+    return spi_shift_us(n_bits, f_sclk_hz) + t_cs_us
+
+
+def uart_poll_us(n_bits, baud):
+    return (n_bits / baud) * 1e6
+
+
+def cpu_load_fraction(t_busy_us, t_loop_us):
+    return t_busy_us / t_loop_us
+
+
+def ping_pong_window_us(n_half, f_adc_hz):
+    return (n_half / f_adc_hz) * 1e6
+
+
+def ht_frequency_hz(f_sample_hz, n_half):
+    return f_sample_hz / n_half
+
+
+def buffer_slice_for_position(write_pos, n_half):
+    total = 2 * n_half
+    if write_pos == n_half - 1:
+        return (0, n_half)
+    if write_pos == total - 1:
+        return (n_half, total)
+    return None
+
+
+assert abs(spi_shift_us(16, 8e6) - 2.0) < 1e-12
+assert abs(spi_frame_us(16, 8e6) - 2.4) < 1e-12
+assert abs(uart_poll_us(500, 1e6) - 500.0) < 1e-12
+assert abs(cpu_load_fraction(320, 1000) - 0.32) < 1e-12
+assert abs(cpu_load_fraction(322, 50) - 6.44) < 1e-12
+assert abs(ping_pong_window_us(16, 200e3) - 80.0) < 1e-12
+assert abs(ht_frequency_hz(1000, 4) - 250.0) < 1e-12
+assert buffer_slice_for_position(15, 16) == (0, 16)
+assert buffer_slice_for_position(31, 16) == (16, 32)
+assert buffer_slice_for_position(5, 16) is None
+
+print("spi: shift=%.1f us, frame=%.1f us | uart poll 500 bit @ 1 Mbaud=%.0f us"
+      % (spi_shift_us(16, 8e6), spi_frame_us(16, 8e6), uart_poll_us(500, 1e6)))
+print("dma: window=%.1f us | ht=%.1f Hz | ping=%s, pong=%s, mid-half=%r"
+      % (ping_pong_window_us(16, 200e3), ht_frequency_hz(1000, 4),
+         buffer_slice_for_position(15, 16), buffer_slice_for_position(31, 16),
+         buffer_slice_for_position(5, 16)))
+```
+
+Printed: `spi: shift=2.0 us, frame=2.4 us | uart poll 500 bit @ 1 Mbaud=500 us`, then `dma: window=80.0 us | ht=250.0 Hz | ping=(0, 16), pong=(16, 32), mid-half=None`.
+
 ### Break it on purpose
 Use the worked example's $2N = 8$ buffer ($N = 4$ samples per half) and plant the `slice_reads_written_half` fault:
 - **Inject:** in the Half-Transfer callback, read the half the DMA is currently writing — `dma_buf[N:2N]` on `HT` — instead of the completed `dma_buf[0:N]`.

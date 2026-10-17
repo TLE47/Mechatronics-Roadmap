@@ -106,6 +106,145 @@ The package is also a workbench entry: **Modules -> `EX.03-sensors.T1.03a`**, wh
   - **Core Concepts to Review First:** Quadrature $4\times$ decoding ($\text{CPR} = 4 N_{\text{lines}}$), SI motor constant identity $K_t = K_e$, brushed DC torque-speed line $\tau(\omega) = \tau_{\text{stall}}(1 - \omega/\omega_{\text{no-load}})$, and BLDC electrical angle $\theta_e = N_p \theta_m$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [SimpleFOC BLDC & Encoder Theory Docs (`docs.simplefoc.com`)](https://docs.simplefoc.com/) and [Track 03 Tier 1 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+import math
+
+TAU = 2.0 * math.pi
+
+
+def back_emf(ke_v_s_rad, omega_m_rad_s):
+    """v_bemf = Ke * omega_m in volts."""
+    # TODO 1: the EMF is the constant TIMES the speed
+    ...
+
+
+def winding_current(v_term_v, omega_m_rad_s, ke_v_s_rad, r_ohm):
+    """i = (V_term - Ke omega_m) / R in amperes."""
+    # TODO 2: subtract the back-EMF before dividing by R
+    ...
+
+
+def motor_torque(kt_nm_a, current_a):
+    """tau = Kt * i in N*m."""
+    # TODO 3: torque is the constant times the current
+    ...
+
+
+def pole_pairs(n_poles):
+    """Number of North-South magnet pairs."""
+    # TODO 4: 14P is 14 MAGNETS, so p = 14 / 2 = 7
+    ...
+
+
+def electrical_angle(theta_m_rad, p):
+    """theta_e = (p * theta_m) mod 2*pi, wrapped into [0, 2*pi)."""
+    # TODO 5: multiply by p, then wrap the result into one electrical cycle
+    ...
+
+
+def quadrature_cpr(n_lines):
+    """Counts per mechanical revolution, 4x decoded."""
+    # TODO 6: four edges per line, not one
+    ...
+
+
+def angle_resolution(counts_per_rev):
+    """(radians, degrees) per count."""
+    # TODO 7: 2*pi / CPR radians, 360 / CPR degrees
+    ...
+
+
+def quad_step(prev_ab, curr_ab):
+    """+1 forward, -1 reverse, 0 for no change or an invalid two-bit jump."""
+    # TODO 8: only ONE bit may change in a valid step
+    ...
+
+
+print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** for `12N14P`, $p = 7$; one electrical cycle spans $360^\circ/7 = 51.4286^\circ$ of shaft travel; the 14-bit encoder resolves $360^\circ/2^{14} = 0.02197^\circ$ per count, i.e. $16384$ counts per turn.
+
+### Hint ladder
+1. **Electrical angle is the mechanical angle times $p$.** $p$ counts North-South *pairs*, so a `12N14P` rotor has $p = 14/2 = 7$, and one full $2\pi$ electrical cycle fits in $360^\circ/7 = 51.4286^\circ$ of mechanical travel. Use $14$ and every angle comes out twice too large, which also collapses the formalization's $\theta_m = \pi/7$ answer from $\pi$ to $0$ after wrapping.
+2. **Wrap, don't clip.** $\theta_e = p\theta_m$ has to land in $[0, 2\pi)$, and the exercise's 14-bit answer is a *mechanical* resolution: $360/16384 = 0.0219727^\circ$ per count, which is spec'd from the count total, not from $p$.
+3. **One bit per edge.** A valid quadrature step changes exactly one of `A` and `B`: `00 -> 10 -> 11 -> 01 -> 00` forward, the reverse cycle backwards. A jump of two bits (`00 -> 11`) is a glitch or a sample rate below the edge rate, so it contributes $0$ - and the worked five-edge walk must total exactly $5$, not $10$.
+4. **The winding is one subtraction.** $i = (V_{\text{term}} - K_e\omega_m)/R$: at the worked $12.0\text{ V}$, $R = 4.0\ \Omega$, $K_e = 0.06$ and $\omega_m = 200\text{ rad/s}$ the back-EMF is $12.0\text{ V}$ and the current is zero, while at $\omega_m = 0$ it is the $3.0\text{ A}$ stall current.
+
+### Full Solution
+```python
+import math
+
+TAU = 2.0 * math.pi
+
+
+def back_emf(ke_v_s_rad, omega_m_rad_s):
+    return ke_v_s_rad * omega_m_rad_s
+
+
+def winding_current(v_term_v, omega_m_rad_s, ke_v_s_rad, r_ohm):
+    return (v_term_v - ke_v_s_rad * omega_m_rad_s) / r_ohm
+
+
+def motor_torque(kt_nm_a, current_a):
+    return kt_nm_a * current_a
+
+
+def pole_pairs(n_poles):
+    return n_poles // 2                          # 14 magnets are 7 North-South pairs
+
+
+def electrical_angle(theta_m_rad, p):
+    wrapped = math.fmod(p * theta_m_rad, TAU)
+    return wrapped + TAU if wrapped < 0.0 else wrapped
+
+
+def quadrature_cpr(n_lines):
+    return 4 * n_lines                           # both edges of both channels
+
+
+def angle_resolution(counts_per_rev):
+    return TAU / counts_per_rev, 360.0 / counts_per_rev
+
+
+def quad_step(prev_ab, curr_ab):
+    forward = {(0b00, 0b10): 1, (0b10, 0b11): 1, (0b11, 0b01): 1, (0b01, 0b00): 1}
+    reverse = {(0b00, 0b01): -1, (0b01, 0b11): -1, (0b11, 0b10): -1, (0b10, 0b00): -1}
+    return forward.get((prev_ab, curr_ab), reverse.get((prev_ab, curr_ab), 0))
+
+
+p_exercise = pole_pairs(14)
+theta_m_deg = 360.0 / p_exercise
+delta_rad, delta_deg = angle_resolution(2 ** 14)
+
+stall_a = winding_current(12.0, 0.0, 0.06, 4.0)
+noload_rad_s = 12.0 / 0.06
+walk = [0b00, 0b10, 0b11, 0b01, 0b00, 0b10]
+counts = sum(quad_step(walk[i], walk[i + 1]) for i in range(len(walk) - 1))
+
+assert p_exercise == 7
+assert math.isclose(theta_m_deg, 51.4286, abs_tol=1e-3)
+assert math.isclose(delta_deg, 0.0219727, abs_tol=1e-4)
+assert math.isclose(delta_rad, 2.0 * math.pi / 16384.0, rel_tol=1e-15)
+assert math.isclose(stall_a, 3.0, rel_tol=1e-12)
+assert math.isclose(back_emf(0.06, 200.0), 12.0, rel_tol=1e-12)
+assert math.isclose(winding_current(12.0, 200.0, 0.06, 4.0), 0.0, abs_tol=1e-12)
+assert math.isclose(motor_torque(0.08, 4.5), 0.36, rel_tol=1e-12)
+assert math.isclose(electrical_angle(1.0, 7), math.fmod(7.0, TAU), rel_tol=1e-12)
+assert quadrature_cpr(1024) == 4096 and counts == 5
+assert quad_step(0b00, 0b11) == 0
+
+print("p=%d | one electrical cycle=%.4f deg | 14-bit step=%.6f deg (%.8f rad)"
+      % (p_exercise, theta_m_deg, delta_deg, delta_rad))
+print("I_stall=%.1f A | v_bemf(200 rad/s)=%.1f V | i(200 rad/s)=%.1f A | tau(4.5 A)=%.2f N*m | walk=+%d"
+      % (stall_a, back_emf(0.06, 200.0), winding_current(12.0, 200.0, 0.06, 4.0),
+         motor_torque(0.08, 4.5), counts))
+```
+
+Printed: `p=7 | one electrical cycle=51.4286 deg | 14-bit step=0.021973 deg (0.00038350 rad)`, then `I_stall=3.0 A | v_bemf(200 rad/s)=12.0 V | i(200 rad/s)=0.0 A | tau(4.5 A)=0.36 N*m | walk=+5`.
+
 ### Break it on purpose
 Inject the `pole_pairs_counts_poles` fault the graded package names, and diagnose it from the angles alone:
 - **Inject:** set $p = N_{\text{poles}} = 14$ instead of $p = N_{\text{poles}}/2 = 7$ in the electrical-angle and electrical-speed terms, leaving $R$, $K_e$ and $V_{\text{term}}$ untouched.

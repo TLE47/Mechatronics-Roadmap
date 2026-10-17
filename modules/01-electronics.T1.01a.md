@@ -96,6 +96,141 @@ EXERCISE_TARGET=exercises/01-electronics.T1.01a/starter.py \
   - **Core Concepts to Review First:** Ohm's law ($V = IR$), Kirchhoff's Voltage/Current Laws (KVL/KCL), and loaded voltage dividers in `## 3. Formalization` (Items 1–3) and `## 4. Worked example` above.
   - **Study Links & Resources:** [SparkFun Voltage Dividers Tutorial (`learn.sparkfun.com`)](https://learn.sparkfun.com/tutorials/voltage-dividers), [All About Circuits Vol. I (`allaboutcircuits.com`)](https://www.allaboutcircuits.com/textbook/direct-current/), and [Track 01 Tier 1 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+The exercise above is the whole exercise: KVL for the LED's series resistor, then $P = I^2R$ for the heat it makes. Fill the seven TODOs, then compare against the full solution below.
+
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded package here imports it)
+
+
+def stall_current(v_supply, r_winding):
+    """I = V / R for a stalled winding; refuse a zero winding."""
+    # TODO 1: divide the supply by the winding resistance, and raise ValueError for R <= 0
+    ...
+
+
+def divider_unloaded(v_in, r1, r2):
+    """The midpoint of an unloaded divider."""
+    # TODO 2: the BOTTOM leg sets the fraction: v_in * r2 / (r1 + r2)
+    ...
+
+
+def divider_loaded(v_in, r1, r2, r_load):
+    """The midpoint with r_load in parallel with the bottom leg."""
+    # TODO 3: parallel r_load with r2 first, then reuse the unloaded formula
+    ...
+
+
+def joule_power(current, resistance):
+    """P = I^2 R."""
+    # TODO 4: square the current, then multiply by the resistance
+    ...
+
+
+def led_series_resistor(v_supply, v_led, i_target):
+    """KVL first: R = (V_supply - V_LED) / I_target."""
+    # TODO 5: subtract the LED's forward drop before dividing by the target current
+    ...
+
+
+def led_current(v_supply, v_led, resistance):
+    """The current an already-chosen series resistor allows."""
+    # TODO 6: the same KVL, solved for current, and never negative
+    ...
+
+
+def within_derating(p_dissipated, p_rated, derating=0.5):
+    """True when the part runs at or below `derating` of its rating."""
+    # TODO 7: compare against derating * p_rated, not against the full rating
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **The LED's resistor is a KVL problem, not an Ohm's-law problem.** The resistor only ever sees $V_R = 5.0 - 2.1 = 2.9\text{ V}$; dividing the *supply* by $10\text{ mA}$ gives $500\ \Omega$, which is $210\ \Omega$ too much and dims or kills the LED.
+2. **The divider is set by the bottom leg.** $V_{\text{out}} = V_{\text{in}} R_2/(R_1 + R_2)$, and a load in parallel with $R_2$ can only make the bottom leg smaller, so a loaded reading *higher* than the unloaded one means the parallel branch was inverted.
+3. **Heat is $I^2R$, not $IR$.** For the exercise's $10\text{ mA}$ through $290\ \Omega$, $P = (0.010)^2 \times 290 = 0.029\text{ W}$ — $11.6\%$ of a quarter-watt part, so the $50\%$ derating check passes with room to spare.
+4. **Close the loop.** Feed your $R$ back into `led_current`: $2.9\text{ V} / 290\ \Omega$ must read $10.0\text{ mA}$, so the two functions have to agree with each other.
+
+### Full Solution
+```python
+import math
+
+import mechalab_plant as plant  # noqa: F401  (kept so the submission imports what the module uses)
+
+
+def stall_current(v_supply, r_winding):
+    if r_winding <= 0.0:
+        raise ValueError("a winding needs a positive resistance")
+    return v_supply / r_winding
+
+
+def divider_unloaded(v_in, r1, r2):
+    if r1 <= 0.0 or r2 <= 0.0:
+        raise ValueError("both legs need a positive resistance")
+    return v_in * r2 / (r1 + r2)
+
+
+def divider_loaded(v_in, r1, r2, r_load):
+    if r_load <= 0.0:
+        raise ValueError("a load needs a positive resistance")
+    bottom = (r2 * r_load) / (r2 + r_load)
+    return divider_unloaded(v_in, r1, bottom)
+
+
+def joule_power(current, resistance):
+    if resistance < 0.0:
+        raise ValueError("a resistance cannot be negative")
+    return current * current * resistance
+
+
+def led_series_resistor(v_supply, v_led, i_target):
+    if i_target <= 0.0:
+        raise ValueError("an LED needs a positive target current")
+    if v_led > v_supply:
+        raise ValueError("the LED's forward voltage exceeds the supply - it will not light")
+    return (v_supply - v_led) / i_target
+
+
+def led_current(v_supply, v_led, resistance):
+    if resistance <= 0.0:
+        raise ValueError("the series resistance must be positive")
+    return max(0.0, (v_supply - v_led) / resistance)
+
+
+def within_derating(p_dissipated, p_rated, derating=0.5):
+    if p_rated <= 0.0:
+        raise ValueError("a resistor needs a positive rating")
+    if not 0.0 < derating <= 1.0:
+        raise ValueError("the derating fraction is in (0, 1]")
+    return p_dissipated <= derating * p_rated
+
+
+# The exercise: a 2.1 V LED at 10 mA from a 5.0 V rail.
+r_led = led_series_resistor(5.0, 2.1, 0.010)
+p_led = joule_power(0.010, r_led)
+i_back_ma = led_current(5.0, 2.1, r_led) * 1000.0
+
+# Two neighbouring laws, so a formula copied from the wrong row shows up.
+i_stall = stall_current(12.0, 2.4)
+v_loaded = divider_loaded(24.0, 68_000.0, 10_000.0, r_load=100_000.0)
+
+assert math.isclose(r_led, 290.0, rel_tol=1e-12)
+assert math.isclose(p_led, 0.029, rel_tol=1e-12)
+assert math.isclose(i_back_ma, 10.0, rel_tol=1e-9)
+assert within_derating(p_led, 0.25) and not within_derating(p_led, 0.05)
+assert math.isclose(i_stall, 5.0, rel_tol=1e-12)
+assert math.isclose(v_loaded, 2.830189, rel_tol=1e-6) and v_loaded < 3.3
+
+print(f"R_led={r_led:.1f} ohm, I_back={i_back_ma:.1f} mA, P_R={p_led * 1000.0:.1f} mW, "
+      f"derated={within_derating(p_led, 0.25)}")
+```
+
+Printed: `R_led=290.0 ohm, I_back=10.0 mA, P_R=29.0 mW, derated=True`
+
 ### Break it on purpose
 Inject one realistic bench fault and diagnose it from the symptom alone:
 - **Inject:** swap the legs — put $R_1 = 10\text{ k}\Omega$ on top and $R_2 = 68\text{ k}\Omega$ on the bottom, leaving everything else alone.

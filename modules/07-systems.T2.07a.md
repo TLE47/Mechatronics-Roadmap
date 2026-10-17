@@ -118,6 +118,139 @@ EXERCISE_TARGET=exercises/07-systems.T2.07a/starter.py \
 
 The tests are behavioural: the worked $13.5\text{ J}$ and $166.06\text{ V}$; the resistor bound of $4.3556\ \Omega$ with $4.0$ inside it and $4.5$ outside; every counter outcome including the rollover and a three-frame jump; the watchdog as **frames times period**; and the HIL ratio with a refusal for an empty catalog. Four planted faults - `regen_no_eta`, `bus_linear`, `counter_plain_delta`, `watchdog_uses_period` - each fail the test named for them. The transfer suite sizes the chopper from the **shared plant**: the elbow is spun up under `plant.TAU_LIMIT`, its measured kinetic energy drives the bus surge past $28\text{ V}$, the resistor bound is tight at the peak, and the rolling counter runs over the plant's 1 kHz frame cadence, where a frame dropped every seven is a `WARN_DROPPED_1` and a stuck transmitter is a `FAULT_FROZEN`.
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import math
+
+
+def regen_energy_j(j_kg_m2, omega0_rad_s, efficiency):
+    """Energy pushed back into the bus by a rotor slowing to rest."""
+    # TODO 1: one half J omega squared, times the efficiency
+    ...
+
+
+def unclamped_bus_v(v_nom, energy_j, c_bus_f):
+    """Bus voltage the same energy would reach with no chopper."""
+    # TODO 2: the capacitor energy is quadratic in voltage, so invert the square
+    ...
+
+
+def brake_resistor_max_ohm(v_clamp, p_peak_w):
+    """The largest resistor that can still dissipate `p_peak_w` at `v_clamp`."""
+    # TODO 3: P = V^2 / R solved for R - an upper bound, not a target
+    ...
+
+
+def brake_peak_current_a(v_clamp, r_ohm):
+    """Peak chopper current into the brake resistor."""
+    # TODO 4: Ohm's law, at the full clamp voltage
+    ...
+
+
+def rolling_counter_status(prev_count, curr_count, max_drop=2):
+    """Classify a 4-bit rolling counter step."""
+    # TODO 5: the step is modular (mod 16); 0 is frozen, 1 is OK, 2..max_drop+1 is a drop
+    ...
+
+
+def watchdog_timeout_s(n_miss, t_cmd_s):
+    """The window after which missed frames must trip the watchdog."""
+    # TODO 6: the budget is frames times the frame period
+    ...
+
+
+def hil_coverage(passed, total):
+    """Fraction of the required fault modes that were injected and passed."""
+    # TODO 7: a ratio - and refuse an empty catalogue
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $V_{\text{bus,unclamped}} = 169.9882\ \text{V}$ (printed as $170.0\ \text{V}$) for $48.0\ \text{V}$ plus $6.648\ \text{J}$ into $500\ \mu\text{F}$; $R_{\text{brake,max}} = 10.816\ \Omega$ at a $52.0\ \text{V}$ clamp and $250.0\ \text{W}$; a $15 \to 0$ counter step is `OK`, $4 \to 4$ is `FAULT_FROZEN`, $4 \to 6$ is `WARN_DROPPED_1`, $4 \to 10$ is `FAULT_SEQ_JUMP`.
+
+### Hint ladder
+1. **Energy first, then the square.** $48.0^2 = 2304$ and $2 \times 6.648 / 500\times10^{-6} = 26\,592$, so $\sqrt{28\,896} = 169.9882\ \text{V}$: the surge can only *raise* the bus, so a result below $48\ \text{V}$ means the energy term was divided instead of added.
+2. **The resistor bound is an upper limit.** $P = V^2/R$, so $R_{\max} = 52.0^2/250.0 = 10.816\ \Omega$; a *larger* resistor cannot absorb the peak power at the clamp voltage, which is why a $12\ \Omega$ part sits outside the bound while $8\ \Omega$ sits inside.
+3. **The counter is modulo 16, always.** `(curr - prev) % 16` maps $15 \to 0$ to $1$ (`OK`); plain subtraction gives $-15$ and turns a healthy wrap into a fault every sixteen frames at $1\ \text{kHz}$.
+4. **Read the three verdicts off the same step.** $\Delta = 0$ is frozen, $\Delta = 1$ is `OK`, and $\Delta - 1$ is the number of dropped frames: $4 \to 6$ gives $\Delta = 2$, one drop; $4 \to 10$ gives $\Delta = 6$, five drops, past `max_drop = 2`.
+5. **Watchdog and coverage are products and ratios.** $T_{\text{wdg}} = N_{\text{miss}} T_{\text{cmd}} = 3 \times 1.0\ \text{ms} = 3.0\ \text{ms}$; $C_{\text{HIL}} = F_{\text{passed}}/F_{\text{total}}$ and an empty catalogue must raise rather than divide by zero.
+
+### Full Solution
+```python
+import math
+
+
+def regen_energy_j(j_kg_m2, omega0_rad_s, efficiency):
+    return efficiency * 0.5 * j_kg_m2 * omega0_rad_s * omega0_rad_s
+
+
+def unclamped_bus_v(v_nom, energy_j, c_bus_f):
+    if c_bus_f <= 0.0:
+        raise ValueError("bus capacitance must be positive")
+    return math.sqrt(v_nom * v_nom + 2.0 * energy_j / c_bus_f)
+
+
+def brake_resistor_max_ohm(v_clamp, p_peak_w):
+    if p_peak_w <= 0.0:
+        raise ValueError("peak regenerative power must be positive")
+    return v_clamp * v_clamp / p_peak_w
+
+
+def brake_peak_current_a(v_clamp, r_ohm):
+    if r_ohm <= 0.0:
+        raise ValueError("the brake resistor must be positive")
+    return v_clamp / r_ohm
+
+
+def rolling_counter_status(prev_count, curr_count, max_drop=2):
+    delta = (curr_count - prev_count) % 16
+    if delta == 1:
+        return "OK"
+    if delta == 0:
+        return "FAULT_FROZEN"
+    if delta - 1 <= max_drop:
+        return "WARN_DROPPED_%d" % (delta - 1)
+    return "FAULT_SEQ_JUMP"
+
+
+def watchdog_timeout_s(n_miss, t_cmd_s):
+    return n_miss * t_cmd_s
+
+
+def hil_coverage(passed, total):
+    if total <= 0:
+        raise ValueError("the fault catalog cannot be empty")
+    return float(passed) / float(total)
+
+
+# The exercise: 48 V bus, 500 uF, 6.648 J back, 250 W peak, clamped at 52 V.
+v_unclamped = unclamped_bus_v(48.0, 6.648, 500e-6)
+r_max = brake_resistor_max_ohm(52.0, 250.0)
+r_sel = 8.0
+assert math.isclose(v_unclamped, 169.9882, abs_tol=1e-4)
+assert math.isclose(r_max, 10.816, rel_tol=1e-9)
+assert r_sel <= r_max
+assert math.isclose(brake_peak_current_a(52.0, r_sel), 6.5, rel_tol=1e-12)
+
+# The counter at 1 kHz, and the budget behind it.
+wrap = rolling_counter_status(15, 0)
+frozen = rolling_counter_status(4, 4)
+dropped = rolling_counter_status(4, 6)
+jump = rolling_counter_status(4, 10)
+assert (wrap, frozen, dropped, jump) == ("OK", "FAULT_FROZEN", "WARN_DROPPED_1", "FAULT_SEQ_JUMP")
+assert math.isclose(watchdog_timeout_s(3, 1e-3), 0.003, rel_tol=1e-12)
+assert math.isclose(hil_coverage(8, 8), 1.0, rel_tol=1e-12)
+assert math.isclose(regen_energy_j(0.04, 30.0, 0.75), 13.5, rel_tol=1e-12)
+
+print("V_unclamped=%.1f V | R_brake_max=%.3f Ohm | I_brake=%.2f A" % (v_unclamped, r_max, brake_peak_current_a(52.0, r_sel)))
+print("counter: wrap=%s frozen=%s drop=%s jump=%s | wdg=%.4f s | hil=%.0f%%" % (wrap, frozen, dropped, jump, watchdog_timeout_s(3, 1e-3), 100.0 * hil_coverage(8, 8)))
+```
+
+Printed: `V_unclamped=170.0 V | R_brake_max=10.816 Ohm | I_brake=6.50 A`, then `counter: wrap=OK frozen=FAULT_FROZEN drop=WARN_DROPPED_1 jump=FAULT_SEQ_JUMP | wdg=0.0030 s | hil=100%`.
+
 ### Break it on purpose
 Inject the `counter_plain_delta` fault and diagnose it from the frame log alone, keeping the $1\text{ kHz}$ command cadence:
 - **Inject:** compute the counter step as plain signed subtraction, `delta = curr_c - prev_c`, instead of modulo-16 arithmetic `(curr_c - prev_c) % 16` (the wrap bug in `## 8. Common mistakes`).

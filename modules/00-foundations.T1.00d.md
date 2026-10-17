@@ -92,6 +92,94 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00d/starter.py \
   python3 -m unittest discover -s exercises/00-foundations.T1.00d -p 'test_*.py'
 ```
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+import math
+
+def sensor_voltage(slope_v_per_a, current_a, offset_v=0.0):
+    """y = m x + b."""
+    # TODO 1: multiply the slope by the current, then add the zero-current offset
+    ...
+
+def sensor_current(slope_v_per_a, voltage_v, offset_v=0.0):
+    """x = (y - b) / m."""
+    # TODO 2: subtract the offset BEFORE dividing by the slope
+    ...
+
+def polar_to_cartesian(length_m, theta_rad):
+    """(L cos t, L sin t)."""
+    # TODO 3: cosine for x, sine for y, and theta is in RADIANS
+    ...
+
+def link_length(x_m, y_m):
+    """r = sqrt(x^2 + y^2)."""
+    # TODO 4: the diagonal, not the taxi ride |x| + |y|
+    ...
+
+def heading_rad(x_m, y_m):
+    """Four-quadrant atan2(y, x) in (-pi, pi]."""
+    # TODO 5: atan2 takes y FIRST; plain atan cannot see the quadrant
+    ...
+
+def heading_deg(x_m, y_m):
+    """The same heading in degrees."""
+    # TODO 6: reuse heading_rad, then convert with math.degrees
+    ...
+
+print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **The line and its inverse are two different orders.** `y = m x + b` adds the offset last; `x = (y - b)/m` subtracts it first. At $V = 1.7\text{ V}$ on the $0.5\text{ V}$-at-$0\text{ A}$, $2.5\text{ V}$-at-$10\text{ A}$ sensor, the slope is `(2.5 - 0.5)/(10 - 0)` $= 0.2\text{ V/A}$, so the current is `(1.7 - 0.5)/0.2 = 6.0 A`.
+2. **The projections are a cosine and a sine, in radians.** `polar_to_cartesian(0.40, math.radians(135.0))` gives `(-0.28284, 0.28284)`; passing degrees straight into `math.cos` is the `-0.448` row in the common-mistakes table.
+3. **The norm is the diagonal.** For the exercise's target, `math.hypot(-0.30, -0.40)` is `0.50`; `|-0.30| + |-0.40| = 0.70` is the taxi-cab sum, not a distance.
+4. **`atan2` takes `y` first, and that order is the whole four-quadrant trick.** `math.atan2(-0.40, -0.30)` is `-2.2143` rad $= -126.8699^\circ$; swapping the arguments gives $-143.13^\circ$, the mirrored heading the exercise warns about.
+
+### Full Solution
+```python
+import math
+
+def sensor_voltage(slope_v_per_a, current_a, offset_v=0.0):
+    return slope_v_per_a * current_a + offset_v
+
+def sensor_current(slope_v_per_a, voltage_v, offset_v=0.0):
+    if slope_v_per_a == 0.0:
+        raise ValueError("a zero slope has no inverse")
+    return (voltage_v - offset_v) / slope_v_per_a
+
+def polar_to_cartesian(length_m, theta_rad):
+    return (length_m * math.cos(theta_rad), length_m * math.sin(theta_rad))
+
+def link_length(x_m, y_m):
+    return math.hypot(x_m, y_m)
+
+def heading_rad(x_m, y_m):
+    return math.atan2(y_m, x_m)
+
+def heading_deg(x_m, y_m):
+    return math.degrees(heading_rad(x_m, y_m))
+
+def degrees_to_radians(deg):
+    return math.radians(deg)
+
+x_m, y_m = -0.30, -0.40
+distance_m = link_length(x_m, y_m)
+theta_deg = heading_deg(x_m, y_m)
+
+assert abs(distance_m - 0.50) <= 1e-12
+assert abs(theta_deg - (-126.8699)) <= 0.01
+assert abs(heading_deg(0.28284, 0.28284) - 45.0) <= 1e-4
+assert abs(sensor_current(0.20, 2.65, 1.65) - 5.0) <= 1e-12
+assert abs(polar_to_cartesian(0.40, degrees_to_radians(135.0))[1] - 0.28284) <= 1e-4
+
+print("d=%.4f m | theta=%.4f deg | atan(x, y) swap=%.2f deg | I(V=1.7)=%.2f A"
+      % (distance_m, theta_deg, math.degrees(math.atan2(-0.30, -0.40)),
+         sensor_current(0.2, 1.7, 0.5)))
+```
+
+Printed: `d=0.5000 m | theta=-126.8699 deg | atan(x, y) swap=-143.13 deg | I(V=1.7)=6.00 A`.
+
 ### Break it on purpose
 Inject the single-argument arctan the `## 8. Common mistakes` table warns about, keeping the worked example's tip at $(-0.28284\text{ m},\ +0.28284\text{ m})$:
 - **Inject:** replace `math.atan2(tip[1], tip[0])` with `math.atan(tip[1] / tip[0])` on those same coordinates.

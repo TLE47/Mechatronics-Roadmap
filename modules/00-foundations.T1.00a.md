@@ -110,6 +110,94 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00a/starter.py \
   - **Python Tutorial Links:** [Official Python Tutorial §3 (Numbers & Variables)](https://docs.python.org/3/tutorial/introduction.html) and [§4.2–4.7 (`for` Statements, `range()`, and Defining Functions)](https://docs.python.org/3/tutorial/controlflow.html).
   - **Curriculum & Toolchain Reference:** [Track 00 Level 0 On-Ramp (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools) and [Open-Source Toolchains (`resources/open-source-toolchains.md`)](../resources/open-source-toolchains.md).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+
+def step_position(pos_m, vel_m_s, dt_s):
+    """x_next = x + v * dt."""
+    # TODO 1: multiply the speed by the time step, then add the position
+    ...
+
+def steps_to_target(pos_0, vel_m_s, dt_s, target_m):
+    """How many ticks of the `while` loop it takes to reach target_m."""
+    # TODO 2: count the iterations of the loop in a variable that starts at 0
+    ...
+
+def battery_voltage_after_steps(v_start, drop_per_step, n_steps):
+    """Subtract drop_per_step from v_start n_steps times."""
+    # TODO 3: loop over `range(n_steps)` - `range(1, n_steps)` runs one drop too few
+    ...
+
+def clamp_pwm(u, u_max):
+    """One-sided ceiling: u_max when u is above it, u itself otherwise."""
+    # TODO 4: return u_max only when u > u_max, otherwise return u
+    ...
+
+def safe_divide(numerator, denominator):
+    """Return (value, error_name): the answer, and the traceback's exception type."""
+    # TODO 5: try/except ZeroDivisionError, then report type(exc).__name__ - not str(exc)
+    ...
+
+print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **A loop is not a step count.** `step_position` answers "where am I after one tick"; `steps_to_target` answers "how many ticks", so it needs its own counter incremented inside the body. Returning `pos_m` at the end is the classic mix-up - it reads `1.0` where the worked example prints `8`.
+2. **`range` runs a number of times, not to a number.** `range(n_steps)` yields `n_steps` values, so ten drops come from `range(10)`. `range(1, 10)` yields nine (1 through 9), which is exactly the `10.65` V the exercise warns about: $12.0 - 9 \times 0.15$.
+3. **A traceback's bottom line names a type.** `type(exc).__name__` is `"ZeroDivisionError"`; `str(exc)` is the message (`"float division by zero"`), which is not what the exercise asks you to report.
+4. **The format field does the rounding.** `f"{pos_m:.3f}"` turns `2/3` into `"0.667"`, while `str(2/3)` gives `"0.6666666666666666"`.
+
+### Full Solution
+```python
+def step_position(pos_m, vel_m_s, dt_s):
+    return pos_m + vel_m_s * dt_s
+
+def steps_to_target(pos_0, vel_m_s, dt_s, target_m):
+    steps = 0
+    pos_m = pos_0
+    while pos_m < target_m - 1e-9:
+        pos_m = step_position(pos_m, vel_m_s, dt_s)
+        steps += 1
+    return steps
+
+def battery_voltage_after_steps(v_start, drop_per_step, n_steps):
+    v_now = v_start
+    for _step in range(n_steps):
+        v_now -= drop_per_step
+    return v_now
+
+def clamp_pwm(u, u_max):
+    return u_max if u > u_max else u
+
+def safe_divide(numerator, denominator):
+    try:
+        return numerator / denominator, ""
+    except ZeroDivisionError as exc:
+        return None, type(exc).__name__
+
+def format_position(pos_m):
+    return f"{pos_m:.3f}"
+
+v_10 = battery_voltage_after_steps(12.0, 0.15, 10)
+v_9 = battery_voltage_after_steps(12.0, 0.15, 9)
+ticks = steps_to_target(0.0, 0.5, 0.25, 1.0)
+clamped = clamp_pwm(1.35, 1.0)
+value, error = safe_divide(1.0, 0.0)
+
+assert abs(v_10 - 10.5) <= 1e-6
+assert abs(v_9 - 10.65) <= 1e-6
+assert ticks == 8
+assert abs(clamped - 1.0) <= 1e-12
+assert (value, error) == (None, "ZeroDivisionError")
+assert format_position(2.0 / 3.0) == "0.667"
+
+print("v_10=%.3f V | nine drops=%.3f V | ticks=%d | clamp=%.3f | error=%s"
+      % (v_10, v_9, ticks, clamped, error))
+```
+
+Printed: `v_10=10.500 V | nine drops=10.650 V | ticks=8 | clamp=1.000 | error=ZeroDivisionError`.
+
 ### Break it on purpose
 Inject the `range` fault the exercise hint warns about, keeping $V_{\text{start}} = 12.0\text{ V}$, `drop_per_step = 0.15` V and `n_steps = 10`:
 - **Inject:** write `for _ in range(1, n_steps):` instead of `for _ in range(n_steps):`.

@@ -102,6 +102,158 @@ EXERCISE_TARGET=exercises/07-systems.T3.06a/starter.py \
 
 **31 tests.** The rate is checked at one variable and at eight, so a per-variable header shows; coverage is checked against two different failure mixes, so a fraction fails; the common-cause term is checked against $\beta\lambda_{DU}$ exactly, so doubling it fails; $10^{-6}$ is refused and $9.9\times10^{-7}$ accepted; a $12\text{ ms}$ skew must **not** latch while $25\text{ ms}$ must; a bare string is not a NodeId; and a cleared fault still refuses to restart without a press. The transfer suite runs **the plant's own numbers**: its $20\text{ B} / 1\text{ kHz}$ frame as a PubSub stream is $30000\text{ B/s}$ (and fits the 500 kbaud link that already proves zero drops, while exceeding the 115.2 kbaud one that drops 412 frames), the STO decision is evaluated on **every tick** of the $1\text{ kHz}$ loop - torque gone on the tick Channel A opens, a latch exactly one tick after the $20\text{ ms}$ window - and the reset interlock is checked after that latch. Five planted faults - `rate_charges_header_per_variable`, `dc_as_fraction`, `ccf_doubles_channels`, `sto_no_filter`, `reset_auto_restarts` - each fail the test named for them.
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import math
+
+
+def opc_ua_pubsub_rate_bps(n_vars, f_pub, header_bytes=14, value_bytes=8):
+    """Cyclic PubSub payload byte rate."""
+    # TODO 1: the 14-byte header is per FRAME, not per variable
+    ...
+
+
+def diagnostic_coverage_pct(lambda_dd, lambda_du):
+    """DC_avg in percent."""
+    # TODO 2: a ratio of detected to total dangerous failures, times 100
+    ...
+
+
+def pfh_common_cause(lambda_du, beta):
+    """beta * lambda_du, in failures per hour."""
+    # TODO 3: the CCF term is per channel - do not double it for two channels
+    ...
+
+
+def pld_ok(pfh_d):
+    """True inside the PLd band [1e-7, 1e-6)."""
+    # TODO 4: the upper bound is exclusive
+    ...
+
+
+def sto_evaluate(ch_a_safe, ch_b_safe, discrepancy_ms, t_disc_max_ms=20.0):
+    """The Category 3 STO decision for one sample."""
+    # TODO 5: either channel cuts torque; a skew under t_disc is bounce, not a fault
+    ...
+
+
+def aas_opcua_nodes(shell):
+    """Every SubmodelElement's NodeId, validated."""
+    # TODO 6: check `ns=<n>;` then `i=`, `s=` or `g=` for every element
+    ...
+
+
+def reset_interlock(ch_a_safe, ch_b_safe, fault_latched, reset_pressed):
+    """Whether a restart may be granted."""
+    # TODO 7: no automatic restart, and never past a latched fault
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $R = (14 + 8 \times 8) \times 250 = 19\,500\ \text{B/s}$; $\text{DC}_{\text{avg}} = 95.0\%$ at $95.0/100.0$ FIT; $\text{PFH}_{d,\text{CCF}} = 4.0 \times 10^{-9}\ \text{h}^{-1}$; $\text{PFH}_d = 4.5\times10^{-7}\ \text{h}^{-1}$ is inside `PLd`. The $12\ \text{ms}$ skew does **not** latch, the $25\ \text{ms}$ one does, and torque is removed at $t = 0$ either way.
+
+### Hint ladder
+1. **The header is per frame.** Eight doubles are $64$ bytes, plus $14$ bytes of NetworkMessage header, is $78$ bytes every frame; at $250\ \text{Hz}$ that is $19\,500\ \text{B/s}$ - charging the header per variable gives $8 \times 78 \times 250$ instead.
+2. **`DC` is a percentage of the dangerous failures you can see.** $100 \times 95.0/(95.0 + 5.0) = 95.0\%$; returning $0.95$ fails the audit even though the ratio is right.
+3. **The CCF term is not doubled.** $\beta \lambda_{DU} = 0.02 \times 2.0\times10^{-7} = 4.0\times10^{-9}\ \text{h}^{-1}$ is the common-cause share of the *subsystem*; multiplying by two counts the same cause twice.
+4. **`PLd` has an exclusive top end.** $[10^{-7}, 10^{-6})$ accepts $9.9\times10^{-7}$ and rejects exactly $10^{-6}$ - the boundary is where an audit fails a design that merely rounds to `PLd`.
+5. **Two channels, one filter.** `torque_removed = ch_a_safe or ch_b_safe` is immediate; only `discrepancy_fault` waits for `discrepancy_ms > t_disc_max_ms`, so $12\ \text{ms}$ is normal contact skew and $25\ \text{ms}$ is a welded pole.
+
+### Full Solution
+```python
+import math
+
+
+def opc_ua_pubsub_rate_bps(n_vars, f_pub, header_bytes=14, value_bytes=8):
+    return (header_bytes + n_vars * value_bytes) * f_pub
+
+
+def diagnostic_coverage_pct(lambda_dd, lambda_du):
+    total = lambda_dd + lambda_du
+    if total == 0.0:
+        raise ValueError("a subsystem with no failures has no diagnostic coverage")
+    return 100.0 * lambda_dd / total
+
+
+def pfh_common_cause(lambda_du, beta):
+    if not 0.0 <= beta <= 1.0:
+        raise ValueError("the common-cause factor is a fraction in [0, 1]")
+    return beta * lambda_du
+
+
+def pld_ok(pfh_d):
+    return 1e-7 <= pfh_d < 1e-6
+
+
+def sto_evaluate(ch_a_safe, ch_b_safe, discrepancy_ms, t_disc_max_ms=20.0):
+    torque_removed = ch_a_safe or ch_b_safe
+    discrepancy_fault = (ch_a_safe != ch_b_safe) and (discrepancy_ms > t_disc_max_ms)
+    can_enable = (not ch_a_safe) and (not ch_b_safe) and (not discrepancy_fault)
+    return {"torque_removed": torque_removed,
+            "discrepancy_fault": discrepancy_fault,
+            "can_enable": can_enable}
+
+
+def aas_opcua_nodes(shell):
+    nodes = []
+    for submodel in shell["submodels"]:
+        for element in submodel.get("submodelElements", []):
+            node_id = element.get("opcUaNodeId")
+            if not isinstance(node_id, str) or not node_id.startswith("ns=") or ";" not in node_id:
+                raise ValueError("every mapped element needs an `ns=<index>;<type>=<id>` NodeId")
+            namespace, _, rest = node_id[3:].partition(";")
+            if not namespace.isdigit() or rest[:2] not in ("i=", "s=", "g="):
+                raise ValueError("NodeId %r is not `ns=<n>;i=|s=|g=<id>`" % node_id)
+            nodes.append(node_id)
+    return nodes
+
+
+def reset_interlock(ch_a_safe, ch_b_safe, fault_latched, reset_pressed):
+    if ch_a_safe != ch_b_safe:
+        return False
+    if ch_a_safe:
+        return False
+    return bool(reset_pressed) and not fault_latched
+
+
+# The exercise: a 12 ms oblique press, and the 25 ms welded-pole case.
+rate = opc_ua_pubsub_rate_bps(8, 250.0)
+dc = diagnostic_coverage_pct(95.0, 5.0)
+ccf = pfh_common_cause(2.0e-7, 0.02)
+assert math.isclose(rate, 19500.0, rel_tol=1e-12)
+assert math.isclose(dc, 95.0, rel_tol=1e-12)
+assert math.isclose(ccf, 4.0e-9, rel_tol=1e-12)
+assert pld_ok(4.5e-7) and not pld_ok(1e-6) and pld_ok(9.9e-7)
+
+skew12 = sto_evaluate(True, False, 12.0)
+skew25 = sto_evaluate(True, False, 25.0)
+settled = sto_evaluate(True, True, 0.0)
+for case in (skew12, skew25, settled):
+    assert case["torque_removed"] is True and case["can_enable"] is False
+assert skew12["discrepancy_fault"] is False
+assert skew25["discrepancy_fault"] is True and settled["discrepancy_fault"] is False
+
+shell = {"submodels": [{"submodelElements": [
+    {"idShort": "MaxPayloadKg", "opcUaNodeId": "ns=2;s=Arm.MaxPayloadKg"},
+    {"idShort": "SupplyVoltageV", "opcUaNodeId": "ns=2;s=Arm.SupplyVoltageV"},
+]}]}
+nodes = aas_opcua_nodes(shell)
+assert nodes == ["ns=2;s=Arm.MaxPayloadKg", "ns=2;s=Arm.SupplyVoltageV"]
+assert reset_interlock(False, False, False, True) is True
+assert reset_interlock(True, True, True, True) is False
+assert reset_interlock(False, False, False, False) is False
+
+print("rate=%.0f B/s | DC=%.1f%% | CCF=%.0e | pld_ok=%s" % (rate, dc, ccf, pld_ok(4.5e-7)))
+print("sto12=%s | sto25=%s | settled=%s | reset=%s"
+      % (tuple(skew12.values()), tuple(skew25.values()), tuple(settled.values()),
+         reset_interlock(False, False, False, True)))
+```
+
+Printed: `rate=19500 B/s | DC=95.0% | CCF=4e-09 | pld_ok=True`, then `sto12=(True, False, False) | sto25=(True, True, False) | settled=(True, False, False) | reset=True`.
+
 ### Break it on purpose
 Inject the `sto_no_filter` fault and diagnose it from the restart behaviour alone, keeping $t_{\text{disc,max}} = 20\text{ ms}$:
 - **Inject:** decide the discrepancy on the channel states alone, `discrepancy_fault = (ch_a_safe != ch_b_safe)`, deleting the `discrepancy_ms > t_disc_max_ms` comparison.

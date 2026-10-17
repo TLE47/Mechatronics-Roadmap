@@ -106,6 +106,144 @@ EXERCISE_TARGET=exercises/04-embedded.T1.04b/starter.py \
   - **Core Concepts to Review First:** Non-blocking timer ISR execution vs. `delay()`, `enum` finite-state machines (`IDLE`, `HOMING`, `CLOSED_LOOP`, `FAULT_STOP`), and packed binary telemetry (`struct.pack`/`unpack` + XOR checksum) in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Python `struct` Binary Packing Docs (`docs.python.org`)](https://docs.python.org/3/library/struct.html), [Samek *Practical UML Statecharts in C/C++*](https://www.state-machine.com/psicc2), and [Track 04 §1.1–1.3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+STATE_NAMES = ("IDLE", "HOMING", "RUN", "FAULT")
+UINT32_MASK = 0xFFFFFFFF
+HOMING_PWM = 0.2
+
+
+def elapsed_us(now_us, last_us, bits=32):
+    """Unsigned elapsed ticks between two timer readings `bits` wide, wrap included."""
+    # TODO 1: subtract first, then mask to (1 << bits) - 1
+    ...
+
+
+def tick_due(now_us, last_us, period_us):
+    """True when another whole period has elapsed."""
+    # TODO 2: at exactly one period the answer is already True - compare with >=
+    ...
+
+
+def next_deadline_us(last_us, period_us):
+    """Advance the deadline on its own grid, so a late check never accumulates drift."""
+    # TODO 3: add the period to the old deadline, then mask - never resynchronise to now
+    ...
+
+
+def isr_utilization_pct(t_exec_us, f_isr_hz):
+    """The CPU fraction an ISR costs, in percent."""
+    # TODO 4: microseconds are 1e-6 seconds - forgetting that reports 4.5 million percent
+    ...
+
+
+def max_isr_exec_us(u_max_pct, f_isr_hz):
+    """The longest an ISR may run inside its budget."""
+    # TODO 5: the budget arrives as a percentage, so divide it by 100 before using it
+    ...
+
+
+def fault_latency_us(n_debounce, f_isr_hz):
+    """How long N consecutive samples take at the ISR rate."""
+    # TODO 6: seconds to microseconds is 1e6, not 1e3
+    ...
+
+
+def ticks_in(duration_us, period_us):
+    """Complete ticks of `period_us` inside `duration_us`."""
+    # TODO 7: integer division - a partial tick has not run
+    ...
+
+
+def fsm_step(state, current_a, i_max_a, pos_rad, pwm_cmd):
+    """One control tick of the actuator FSM: (next_state, pwm)."""
+    # TODO 8: FAULT is a latch, not a measurement - it must survive a current that has recovered
+    ...
+
+
+print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $t_{\text{exec,max}} = 25.0\ \mu\text{s}$ at $25\%$ of a $10\text{ kHz}$ period; a $45\ \mu\text{s}$ ISR at $1\text{ kHz}$ costs $4.5\%$ ($3.5\%$ at $30\ \mu\text{s}$); three samples at $20\text{ kHz}$ debounce in $150\ \mu\text{s}$; $3015 - 2000 = 1015\ \mu\text{s}$; the same $12 - 65520$ difference is $28$ on a 16-bit counter and $4294901788$ on a 32-bit one.
+
+### Hint ladder
+1. **Mask after subtracting, not before.** `12 - 65520` is `-65508`; `-65508 & 0xFFFF` is `28`, and `-65508 & 0xFFFFFFFF` is `4294901788`. The mask belongs to the *counter width*, so `bits` is an argument, not a constant 32.
+2. **A deadline advances on its own grid.** `next_deadline_us(1000, 1000)` is `2000`, not `now + period`: resynchronising to the late reading is what lets a 1 kHz loop drift to 999 Hz.
+3. **Percentages and microseconds cancel cleanly.** $100 \times t_{\text{exec}}/T_{\text{isr}} = 100 \times t_{\text{exec}}\times 10^{-6}\times f_{\text{isr}}$; the budget comes back with `u_max_pct / 100` because `25` means $0.25$.
+4. **FAULT is latched.** Once `current_a > i_max_a` has set it, the next tick - current recovered, PWM requested - still returns `("FAULT", 0.0)`. Only `HOMING` waits on `pos_rad < 0.0`; the others advance.
+
+### Full Solution
+```python
+STATE_NAMES = ("IDLE", "HOMING", "RUN", "FAULT")
+UINT32_MASK = 0xFFFFFFFF
+HOMING_PWM = 0.2
+
+
+def elapsed_us(now_us, last_us, bits=32):
+    return (now_us - last_us) & ((1 << bits) - 1)
+
+
+def tick_due(now_us, last_us, period_us):
+    return elapsed_us(now_us, last_us) >= period_us
+
+
+def next_deadline_us(last_us, period_us):
+    return (last_us + period_us) & UINT32_MASK
+
+
+def isr_utilization_pct(t_exec_us, f_isr_hz):
+    return 100.0 * t_exec_us * 1e-6 * f_isr_hz
+
+
+def max_isr_exec_us(u_max_pct, f_isr_hz):
+    return (u_max_pct / 100.0) * (1e6 / f_isr_hz)
+
+
+def fault_latency_us(n_debounce, f_isr_hz):
+    return (n_debounce / f_isr_hz) * 1e6
+
+
+def ticks_in(duration_us, period_us):
+    return duration_us // period_us
+
+
+def fsm_step(state, current_a, i_max_a, pos_rad, pwm_cmd):
+    if state == "FAULT":
+        return "FAULT", 0.0
+    if current_a > i_max_a:
+        return "FAULT", 0.0
+    if state == "IDLE":
+        return "HOMING", HOMING_PWM
+    if state == "HOMING":
+        return ("HOMING" if pos_rad < 0.0 else "RUN"), HOMING_PWM
+    return "RUN", pwm_cmd
+
+
+assert elapsed_us(3015, 2000) == 1015
+assert elapsed_us(12, 65520, 16) == 28
+assert elapsed_us(12, 65520, 32) == 4294901788
+assert tick_due(2000, 1000, 1000) and not tick_due(1999, 1000, 1000)
+assert next_deadline_us(1000, 1000) == 2000
+assert abs(isr_utilization_pct(45, 1000) - 4.5) < 1e-12
+assert abs(isr_utilization_pct(30, 1000) - 3.0) < 1e-12
+assert abs(max_isr_exec_us(25, 10000) - 25.0) < 1e-12
+assert abs(fault_latency_us(3, 20000) - 150.0) < 1e-12
+assert ticks_in(1000, 1000) == 1 and ticks_in(1999, 1000) == 1
+assert fsm_step("IDLE", 0.5, 2.0, 0.3, 0.4) == ("HOMING", HOMING_PWM)
+assert fsm_step("HOMING", 0.5, 2.0, 0.0, 0.4) == ("RUN", HOMING_PWM)
+assert fsm_step("RUN", 2.5, 2.0, 0.3, 0.6) == ("FAULT", 0.0)
+assert fsm_step("FAULT", 0.2, 2.0, 0.3, 0.6) == ("FAULT", 0.0)
+
+print("budget=%.1f us at 10 kHz (25%%) | util(45 us @ 1 kHz)=%.1f%% | debounce(3 @ 20 kHz)=%.0f us"
+      % (max_isr_exec_us(25, 10000), isr_utilization_pct(45, 1000), fault_latency_us(3, 20000)))
+print("elapsed(3015-2000)=%d us | 16-bit wrap(12-65520)=%d | IDLE->%s | over-limit->%s"
+      % (elapsed_us(3015, 2000), elapsed_us(12, 65520, 16),
+         fsm_step("IDLE", 0.5, 2.0, 0.3, 0.4)[0], fsm_step("RUN", 2.5, 2.0, 0.3, 0.6)[0]))
+```
+
+Printed: `budget=25.0 us at 10 kHz (25%) | util(45 us @ 1 kHz)=4.5% | debounce(3 @ 20 kHz)=150 us`, then `elapsed(3015-2000)=1015 us | 16-bit wrap(12-65520)=28 | IDLE->HOMING | over-limit->FAULT`.
+
 ### Break it on purpose
 - **Inject:** replace the rollover-safe comparison with an absolute one, `if now_us >= last_us + 1000:`, keeping `last_us += 1000` and the $1000\ \mu\text{s}$ period.
 - **Symptom:** everything is correct for the first $2^{32}\ \mu\text{s} = 4294.97\ \text{s} \approx 71.6\ \text{min}$, then the control task stops dead: with `last_us = 4_294_966_000` and the counter wrapped to `now_us = 1200`, the two stamps are $2496\ \mu\text{s}$ apart, yet `1200 >= 4294967000` is false, so the task goes silent for the rest of that $71.6\ \text{min}$ window.

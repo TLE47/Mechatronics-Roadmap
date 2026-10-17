@@ -95,6 +95,153 @@ EXERCISE_TARGET=exercises/01-electronics.T1.01c/starter.py \
   - **Core Concepts to Review First:** Breadboard 5-pin spring-clip topology, DMM continuity vs. current-jack hazards, and CC/CV power supply current clamping $V_{\text{out}} = \min(V_{\text{set}}, I_{\text{limit}} R_{\text{load}})$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [SparkFun How to Use a Breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard), [SparkFun How to Use a Multimeter](https://learn.sparkfun.com/tutorials/how-to-use-a-multimeter), and [Track 00 §0.2 (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools).
 
+### Starter code
+The exercise is one question asked twice: is the supply still in CV at $240\ \Omega$, and where is the exact resistance at which it stops being CV? Fill the seven TODOs, then compare against the full solution below.
+
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded package here imports it)
+
+
+def psu_output(v_set, i_limit, r_load):
+    """(v_out, i_out, p_out, mode) for a CV/CC bench supply."""
+    # TODO 1: compare V_set / R_load with the limit; above it, fold back to I_limit * R_load
+    ...
+
+
+def critical_resistance(v_set, i_limit):
+    """R_crit = V_set / I_limit: below this the supply enters CC."""
+    # TODO 2: the limit is a current, so divide the voltage by it (do not multiply)
+    ...
+
+
+def dmm_voltage_loading_current(v_rail, r_in=10_000_000.0):
+    """Current a voltmeter steals from the rail it probes."""
+    # TODO 3: V / R_in - the 10 Mohm input barely loads anything
+    ...
+
+
+def dmm_short_current(v_rail, r_shunt=0.010, r_leads=0.0):
+    """The surge from a lead left in the current jack."""
+    # TODO 4: the SHUNT is the resistance here, not the 10 Mohm voltmeter input
+    ...
+
+
+def clip_power(current, r_clip):
+    """P = I^2 R in one breadboard spring clip."""
+    # TODO 5: square the current before scaling by the contact resistance
+    ...
+
+
+def led_current_ma(v_supply, v_f, resistance):
+    """Series LED current in milliamps."""
+    # TODO 6: subtract the forward drop, divide by R, then scale to mA
+    ...
+
+
+def is_short(resistance, threshold=10.0):
+    """True when the power-off resistance check reads below the threshold."""
+    # TODO 7: BELOW the threshold is a short - do not power on
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **Foldback is a comparison, not a formula to memorise.** Compute the current the load *would* draw at $V_{\text{set}}$; if that is above $I_{\text{limit}}$, the supply gives up voltage until the current equals the limit, so $V_{\text{out}} = I_{\text{limit}} R_{\text{load}}$.
+2. **The threshold is $V_{\text{set}}/I_{\text{limit}}$.** $12.0/0.10 = 120\ \Omega$: at exactly $120\ \Omega$ the unclamped current equals the limit and the supply is still in CV, and $119\ \Omega$ is already in CC at $0.10 \times 119 = 11.9\text{ V}$.
+3. **Two DMM jacks, two resistances.** In voltage mode the rail sees $10\text{ M}\Omega$ ($12.0/10^7 = 1.2\ \mu\text{A}$); in the current jack the rail sees the shunt ($12.0/(0.010 + 0.010) = 600\text{ A}$) — dividing by $10\text{ M}\Omega$ there gives microamps and hides the destroyed fuse.
+4. **The power-off check compares the other way.** A healthy $240\ \Omega$ build must return `False` from `is_short`; only a reading *below* $10\ \Omega$ is the short you are hunting.
+
+### Full Solution
+```python
+import math
+
+import mechalab_plant as plant  # noqa: F401  (kept so the submission imports what the module uses)
+
+
+def psu_output(v_set, i_limit, r_load):
+    if v_set < 0.0:
+        raise ValueError("the voltage setting cannot be negative")
+    if i_limit <= 0.0:
+        raise ValueError("the current limit must be positive - it is the whole safety feature")
+    if r_load <= 0.0:
+        raise ValueError("a load resistance must be positive")
+    unclamped = v_set / r_load
+    if unclamped <= i_limit:
+        return v_set, unclamped, v_set * unclamped, "CV"
+    v_out = i_limit * r_load
+    return v_out, i_limit, v_out * i_limit, "CC"
+
+
+def critical_resistance(v_set, i_limit):
+    if v_set < 0.0:
+        raise ValueError("the voltage setting cannot be negative")
+    if i_limit <= 0.0:
+        raise ValueError("the current limit must be positive")
+    return v_set / i_limit
+
+
+def dmm_voltage_loading_current(v_rail, r_in=10_000_000.0):
+    if r_in <= 0.0:
+        raise ValueError("a voltmeter needs a positive input resistance")
+    return v_rail / r_in
+
+
+def dmm_short_current(v_rail, r_shunt=0.010, r_leads=0.0):
+    if r_shunt <= 0.0:
+        raise ValueError("a current shunt must be positive")
+    if r_leads < 0.0:
+        raise ValueError("lead resistance cannot be negative")
+    return v_rail / (r_shunt + r_leads)
+
+
+def clip_power(current, r_clip):
+    if r_clip < 0.0:
+        raise ValueError("a contact resistance cannot be negative")
+    return current * current * r_clip
+
+
+def led_current_ma(v_supply, v_f, resistance):
+    if resistance <= 0.0:
+        raise ValueError("the series resistance must be positive")
+    return max(0.0, (v_supply - v_f) / resistance) * 1000.0
+
+
+def is_short(resistance, threshold=10.0):
+    if resistance < 0.0:
+        raise ValueError("a resistance cannot be negative")
+    if threshold <= 0.0:
+        raise ValueError("the short threshold must be positive")
+    return resistance < threshold
+
+
+# The exercise: 240 ohm at 12.0 V draws 50 mA, under the 100 mA limit.
+v_out, i_out, p_out, mode = psu_output(12.0, 0.10, 240.0)
+r_crit = critical_resistance(12.0, 0.10)
+v_cc, i_cc, p_cc, mode_cc = psu_output(12.0, 0.10, r_crit - 1.0)
+
+# The two jack modes, and the clip that melts at 5 A.
+steal_ua = dmm_voltage_loading_current(12.0) * 1e6
+i_surge = dmm_short_current(12.0, 0.010, 0.010)
+p_clip = clip_power(5.0, 0.12)
+
+assert mode == "CV" and math.isclose(v_out, 12.0, rel_tol=1e-12)
+assert math.isclose(i_out, 0.05, rel_tol=1e-12) and math.isclose(p_out, 0.6, rel_tol=1e-12)
+assert math.isclose(r_crit, 120.0, rel_tol=1e-12)
+assert mode_cc == "CC" and math.isclose(v_cc, 11.9, rel_tol=1e-12)
+assert math.isclose(steal_ua, 1.2, rel_tol=1e-9)
+assert math.isclose(i_surge, 600.0, rel_tol=1e-12)
+assert math.isclose(p_clip, 3.0, rel_tol=1e-12)
+assert not is_short(240.0) and is_short(5.0)
+
+print(f"mode={mode}, V_out={v_out:.2f} V, I_out={i_out * 1000.0:.1f} mA, P={p_out * 1000.0:.1f} mW; "
+      f"R_crit={r_crit:.1f} ohm; {r_crit - 1.0:.0f} ohm -> {mode_cc} at {v_cc:.2f} V")
+```
+
+Printed: `mode=CV, V_out=12.00 V, I_out=50.0 mA, P=600.0 mW; R_crit=120.0 ohm; 119 ohm -> CC at 11.90 V`
+
 ### Break it on purpose
 This is the classic first-power-on mistake, and it is a **fault you inject on purpose** so you can recognise the symptom later:
 - **Inject:** the same $R_{\text{short}} = 0.25\ \Omega$ miswire across a $12.0\text{ V}$ rail, but the current limit raised to $I_{\text{limit}} = 2.0\text{ A}$ because the $0.20\text{ A}$ setting kept folding back during bring-up.

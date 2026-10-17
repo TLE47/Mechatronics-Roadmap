@@ -109,6 +109,118 @@ The tests are behavioural: 3150 Hz at 4 kHz must alias to 850 Hz and 9000 Hz to 
   - **DSP, Biquad & Pre-Warping Study Links:** [The Scientist and Engineer's Guide to DSP (`dspguide.com`, Ch. 3 Sampling & Aliasing)](https://www.dspguide.com/), [Audio EQ Cookbook Biquad Formulas (`w3.org/TR/audio-eq-cookbook`)](https://www.w3.org/TR/audio-eq-cookbook/), and [Roger Labbe *Kalman and Bayesian Filters in Python* (Gaussian Covariance)](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (Step 2.1 Pre-Warped TDF-II Biquad Notch).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import math
+
+def nyquist_hz(fs):
+    """The highest frequency a sample rate `fs` can represent, in Hz."""
+    # TODO: fs / 2
+    ...
+
+def alias_hz(f_sig, fs):
+    """The frequency in [0, fs/2] that `f_sig` appears as after sampling at `fs`."""
+    # TODO: fold with fmod, then mirror anything above fs/2 back down (fs - folded)
+    ...
+
+def tustin_hz(omega_rad_s, fs):
+    """Where unwarped Tustin actually places an analog frequency, in Hz."""
+    # TODO: the digital angle is 2 atan(omega Ts / 2); divide by 2 pi Ts to get hertz
+    ...
+
+def prewarp_omega(f0_hz, fs):
+    """Analog prototype frequency that lands a Tustin filter exactly on f0_hz."""
+    # TODO: (2 / Ts) tan(pi f0 / fs) - the exact inverse of the function above
+    ...
+
+def notch_coeffs(f0_hz, fs, q):
+    """(b0, b1, b2, a1, a2) for a unity-gain notch at f0_hz with quality factor q."""
+    # TODO: w0 = 2 pi f0 / fs, alpha = sin(w0) / (2 q), normalize every coefficient by 1 + alpha
+    ...
+
+def apply_biquad(coeffs, samples):
+    """Run the TDF-II biquad over `samples` and return one output sample per input."""
+    # TODO: two delay states w1, w2; y = b0 x + w1, then update w1 with y, then w2
+    ...
+
+def covariance_propagate(a, sigma, q):
+    """One predict step: A Sigma A^T + Q, for 2x2 matrices."""
+    # TODO: multiply on both sides of Sigma - A Sigma first, then that times A^T
+    ...
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+**Expected numbers (the answer):** $f_{\text{alias}} = 700.0\text{ Hz}$ and $\omega_a = 5505.5277\text{ rad/s}$.
+
+### Hint ladder
+1. **Aliasing is folding, then mirroring.** `math.fmod(2700, 2000)` already gives $700$, but a case like $1300\text{ Hz}$ at $2000\text{ Hz}$ lands on $700$ too and a case like $3150$ at $4000$ gives $3150$, which is above Nyquist - so subtract from $f_s$ whenever the remainder exceeds $f_s/2$.
+2. **Pre-warping is the inverse map, not a correction factor.** Unwarped Tustin maps $\omega_a$ to $f = \frac{1}{\pi T_s}\arctan(\omega_a T_s/2)$; invert it and you get $\omega_a = \frac{2}{T_s}\tan(\pi f_0/f_s)$. At $600\text{ Hz}$ on $2000\text{ Hz}$ the tangent argument is $0.3\pi$ radians, and `math.tan` takes radians, never degrees.
+3. **Check the round trip, not the number.** `tustin_hz(prewarp_omega(600.0, 2000.0), 2000.0)` must return $600.0$ to $10^{-9}$; if it returns something like $520\text{ Hz}$, the tangent was applied to a frequency already divided by $f_s$.
+4. **The sandwich has two multiplications.** $A\Sigma$ then $(A\Sigma)A^\top$; dropping the transpose leaves a non-symmetric matrix, which the module's Transfer test rejects on symmetry alone before it even compares entries.
+
+### Full Solution
+```python
+import math
+
+def nyquist_hz(fs):
+    return 0.5 * fs
+
+def alias_hz(f_sig, fs):
+    folded = math.fmod(abs(f_sig), fs)
+    return fs - folded if folded > 0.5 * fs else folded
+
+def tustin_hz(omega_rad_s, fs):
+    ts = 1.0 / fs
+    return math.atan(omega_rad_s * ts / 2.0) / (math.pi * ts)
+
+def prewarp_omega(f0_hz, fs):
+    ts = 1.0 / fs
+    return (2.0 / ts) * math.tan(math.pi * f0_hz / fs)
+
+def notch_coeffs(f0_hz, fs, q):
+    w0 = 2.0 * math.pi * f0_hz / fs
+    alpha = math.sin(w0) / (2.0 * q)
+    norm = 1.0 / (1.0 + alpha)
+    b0 = norm
+    b1 = -2.0 * math.cos(w0) * norm
+    return (b0, b1, b0, b1, (1.0 - alpha) * norm)
+
+def apply_biquad(coeffs, samples):
+    b0, b1, b2, a1, a2 = coeffs
+    w1 = w2 = 0.0
+    out = []
+    for x in samples:
+        y = b0 * x + w1
+        w1 = b1 * x - a1 * y + w2
+        w2 = b2 * x - a2 * y
+        out.append(y)
+    return out
+
+def covariance_propagate(a, sigma, q):
+    asigma = [[sum(a[i][k] * sigma[k][j] for k in range(2)) for j in range(2)] for i in range(2)]
+    return [[sum(asigma[i][k] * a[j][k] for k in range(2)) + q[i][j] for j in range(2)]
+            for i in range(2)]
+
+f_alias = alias_hz(2700.0, 2000.0)
+wa = prewarp_omega(600.0, 2000.0)
+round_trip = tustin_hz(wa, 2000.0)
+sigma_y = covariance_propagate([[1.0, 0.1], [0.0, 1.0]], [[1.0, 0.0], [0.0, 4.0]],
+                               [[0.0, 0.0], [0.0, 0.0]])
+
+assert math.isclose(f_alias, 700.0, abs_tol=1e-3)
+assert math.isclose(wa, 5505.5277, abs_tol=1e-3)
+assert math.isclose(round_trip, 600.0, abs_tol=1e-9)
+assert math.isclose(sigma_y[0][0], 1.04, abs_tol=1e-12)
+assert math.isclose(sigma_y[0][1], 0.4, abs_tol=1e-12) and math.isclose(sigma_y[1][0], 0.4, abs_tol=1e-12)
+assert math.isclose(sigma_y[1][1], 4.0, abs_tol=1e-12)
+print("alias(2700 Hz @ 2 kHz)=%.1f Hz | prewarp(600 Hz @ 2 kHz)=%.4f rad/s (round trip %.6f Hz)"
+      % (f_alias, wa, round_trip))
+print("Sigma_y=[[%.4f, %.4f], [%.4f, %.4f]]" % (sigma_y[0][0], sigma_y[0][1], sigma_y[1][0], sigma_y[1][1]))
+```
+
+Printed: `alias(2700 Hz @ 2 kHz)=700.0 Hz | prewarp(600 Hz @ 2 kHz)=5505.5277 rad/s (round trip 600.000000 Hz)`, then `Sigma_y=[[1.0400, 0.4000], [0.4000, 4.0000]]`.
+
 ### Break it on purpose
 Inject the `prewarp_unwarped` fault on purpose: design the $850\text{ Hz}$ notch from $\omega_0 = 2\pi f_0$ instead of the pre-warped prototype, and leave the biquad normalization alone.
 - **Inject:** pass the target frequency straight into the Tustin substitution, as if the analog and digital frequency axes were the same line.

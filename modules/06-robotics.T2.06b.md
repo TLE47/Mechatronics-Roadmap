@@ -137,6 +137,129 @@ The tests are behavioural: a $2.5$-step timer must wait $3$ (rounding and floori
   - **Core Concepts to Review First:** `rosbag2` MCAP throughput $R_{\text{disk}} = \frac{1}{c}\sum f_i(B_i + 32)$ and replay scaling $T_{\text{wall}} = T_{\text{rec}}/r$, `ros2_control` `CommandInterface`/`StateInterface` exclusivity, and Cartesian task-space impedance $\tau = J(q)^\top [K_x(x_d - x) - D_x J(q)\dot{q}]$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Official `ros2_control` Documentation (`control.ros.org`)](https://control.ros.org/), [ROS 2 `rosbag2` & Launch Tutorials (`docs.ros.org`)](https://docs.ros.org/en/jazzy/Tutorials.html), and [Track 06 Tier 2 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import math
+
+
+def timer_steps(t_timer_s, dt_sim_s):
+    """Simulation steps between timer firings."""
+    # TODO: a ceiling, not a rounded quotient - a 2.5-step period must wait 3 steps
+    ...
+
+
+def intra_process_saving_mb_s(n_subs, msg_bytes, rate_hz):
+    """Bandwidth not copied by composable subscribers, in MB/s."""
+    # TODO: multiply by the subscriber count, not by one
+    ...
+
+
+def disk_rate_mb_s(topics, meta_bytes=32, compression=1.0):
+    """Sustained write rate for `(name, frequency, payload_bytes)` topics."""
+    # TODO: add the per-message metadata BEFORE summing, then scale the total by the compression
+    ...
+
+
+def bag_size_mb(disk_rate, duration_s):
+    """File size of a recording."""
+    # TODO: rate times duration
+    ...
+
+
+def replay_derivative(t_a, value_a, t_b, value_b):
+    """Derivative from the message's own timestamps."""
+    # TODO: divide by the MESSAGE gap t_b - t_a, never by the wall-clock gap
+    ...
+
+
+def wall_delay_s(t_a, t_b, rate):
+    """Wall-clock delay a `--rate r` replay sleeps for a message gap."""
+    # TODO: the message gap divided by the rate
+    ...
+
+
+def control_decimation(f_sim_hz, f_ctrl_hz):
+    """Integer decimation `D = f_sim / f_ctrl`."""
+    # TODO: refuse a ratio that is not a whole number instead of rounding it
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **The recording budget is a sum of rates, each with its metadata.** $500 \times (168 + 32) = 100{,}000\ \text{B/s}$ and $20 \times (99{,}968 + 32) = 2{,}000{,}000\ \text{B/s}$, so $R_{\text{disk}} = 2{,}100{,}000/10^6 = 2.10\ \text{MB/s}$ at $c = 1.0$. Adding the $32\ \text{B}$ once per topic instead of once per message is the classic slip: it would give $2.0834\ \text{MB/s}$.
+2. **Size and replay are two different multiplications.** $S_{\text{bag}} = R_{\text{disk}} T_{\text{rec}} = 2.10 \times 100 = 210.0\ \text{MB}$, while the replay only divides time: $T_{\text{wall}} = 100/2.5 = 40.0\ \text{s}$. The bag does not shrink because you played it faster.
+3. **Simulated time is what makes replay deterministic.** $\dot{q}$ is $(q_b - q_a)/(t_b - t_a)$ on the message stamps - $20\ \text{rad/s}$ at $0.5\times$, $1\times$ and $4\times$ - so a derivative that changes with `--rate` proves wall-clock time leaked into the estimator. And a timer of $2.5$ simulation steps must fire on step $3$: `ceil`, and at least one step.
+4. **Decimation is exact or refused.** $1000/250 = 4$ is a whole number; $1000/300 = 3.33$ is not, and returning $3$ silently runs the controller at $300\ \text{Hz}$ while claiming $2\bar{3}\ \text{Hz}$ - so raise instead.
+
+### Full Solution
+```python
+import math
+
+
+def timer_steps(t_timer_s, dt_sim_s):
+    if t_timer_s <= 0.0 or dt_sim_s <= 0.0:
+        raise ValueError("timer period and simulation step must both be positive")
+    return int(math.ceil(t_timer_s / dt_sim_s - 1e-12))
+
+
+def intra_process_saving_mb_s(n_subs, msg_bytes, rate_hz):
+    return n_subs * msg_bytes * rate_hz / 1e6
+
+
+def disk_rate_mb_s(topics, meta_bytes=32, compression=1.0):
+    raw = sum(frequency * (payload + meta_bytes) for _, frequency, payload in topics)
+    return compression * raw / 1e6
+
+
+def bag_size_mb(disk_rate, duration_s):
+    return disk_rate * duration_s
+
+
+def replay_derivative(t_a, value_a, t_b, value_b):
+    if t_b == t_a:
+        raise ValueError("two identical stamps have no derivative")
+    return (value_b - value_a) / (t_b - t_a)
+
+
+def wall_delay_s(t_a, t_b, rate):
+    if rate <= 0.0:
+        raise ValueError("playback rate must be positive")
+    return (t_b - t_a) / rate
+
+
+def control_decimation(f_sim_hz, f_ctrl_hz):
+    if f_ctrl_hz <= 0.0:
+        raise ValueError("controller rate must be positive")
+    ratio = f_sim_hz / f_ctrl_hz
+    if abs(ratio - round(ratio)) > 1e-9:
+        raise ValueError("the controller rate must divide the simulation rate exactly")
+    return int(round(ratio))
+
+
+topics = [("/joint_states", 500.0, 168), ("/camera/image_raw", 20.0, 99_968)]
+R_disk = disk_rate_mb_s(topics, meta_bytes=32, compression=1.0)
+S_bag = bag_size_mb(R_disk, 100.0)
+T_wall = wall_delay_s(0.0, 100.0, 2.5)
+steps = timer_steps(0.0025, 0.001)
+D = control_decimation(1000.0, 250.0)
+rate_invariance = [replay_derivative(10.000, 0.50, 10.002, 0.54) for _ in (0.5, 1.0, 4.0)]
+
+assert math.isclose(R_disk, 2.10, rel_tol=1e-12)
+assert math.isclose(S_bag, 210.0, rel_tol=1e-12)
+assert math.isclose(T_wall, 40.0, rel_tol=1e-12)
+assert steps == 3 and D == 4
+assert all(math.isclose(dq, 20.0, rel_tol=1e-12) for dq in rate_invariance)
+assert math.isclose(wall_delay_s(10.000, 10.002, 4.0), 0.0005, rel_tol=1e-12)
+assert math.isclose(intra_process_saving_mb_s(2, 250_000, 60.0), 30.0, rel_tol=1e-12)
+
+print(f"R_disk={R_disk:.3f} MB/s | S_bag={S_bag:.1f} MB | T_wall={T_wall:.1f} s | "
+      f"timer={steps} steps | D={D}")
+```
+Printed: `R_disk=2.100 MB/s | S_bag=210.0 MB | T_wall=40.0 s | timer=3 steps | D=4`
+
 ### Break it on purpose
 Inject the first row of the `## 8. Common mistakes` table: replay the bag without `--clock` while every downstream node runs `use_sim_time:=true`, keeping the exercise's $100\text{ s}$ recording and `--rate 2.5`.
 - **Inject:** run `ros2 bag play arm_test_bag --rate 2.5` and omit the `--clock` flag, leaving `robot_state_publisher` and the estimator on simulated time.

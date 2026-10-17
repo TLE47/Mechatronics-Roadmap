@@ -130,6 +130,195 @@ EXERCISE_TARGET=exercises/06-robotics.T3.06a/starter.py \
   - **Core Concepts to Review First:** Khatib operational-space inertia $\Lambda(q) = (J M^{-1} J^\top)^{-1}$, linearized friction-cone contact constraints, Forster's $SO(3)$ IMU preintegration bias Jacobian update, and Behavior Cloning MSE loss + chain-rule gradient step in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Khatib (1987) Operational-Space Paper](https://ieeexplore.ieee.org/document/1087068), [Forster et al. On-Manifold Preintegration (`arXiv:1512.02363`)](https://arxiv.org/abs/1512.02363), [Capuano et al. *Robot Learning Tutorial* (`arXiv:2510.12403`)](https://arxiv.org/abs/2510.12403), and [Track 06 Tier 3 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-3-advanced--production).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import math
+import random
+
+
+def mse_loss(y_hat, y_true):
+    """Mean squared error over samples: (1/N) sum ||y_hat_i - y_i||^2."""
+    # TODO: divide by the number of SAMPLES, not by the number of elements
+    ...
+
+
+def forward(X, params):
+    """(H, Y_hat): tanh hidden layer, linear output layer."""
+    # TODO: tanh(X W1 + b1), then H W2 + b2 - the output layer has no activation
+    ...
+
+
+def backward(X, Y, params, H, Y_hat):
+    """The chain rule, as a dict of dW1, db1, dW2, db2."""
+    # TODO: dY = (2/N)(Y_hat - Y); dH = (dY W2^T) * (1 - H^2); then X^T dH and H^T dY
+    ...
+
+
+def apply_gradients(params, grads, lr):
+    """One descent step: theta <- theta - lr * grad, as a new dict."""
+    # TODO: subtract (adding is ascent, and the loss grows); do not mutate the input dict
+    ...
+
+
+def z_score(values):
+    """(normalised, mean, sigma) for one column; a constant column is refused."""
+    # TODO: sigma = sqrt(mean((v - mean)^2)); raise when sigma == 0, and return the mean and sigma
+    ...
+
+
+def train_bc(X, Y, hidden=8, lr=0.05, steps=200, seed=0):
+    """Fit a policy to demonstrations; returns (params, loss per step)."""
+    # TODO: normalise X and Y, seed the weights, then loop forward -> mse_loss -> backward -> apply_gradients
+    ...
+
+
+def predict(params, X):
+    """Policy output in the units the demonstrations used."""
+    # TODO: normalise the observation with mu_x/sigma_x, then undo the action's z-score
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **The loss the exercise asks for.** $\hat{y} = wx = 2.0 \times 3.0 = 6.0$, so $\mathcal{L} = (6.0 - 10.0)^2 = 16.0$ - one sample, so the $1/N$ is $1/1$ and invisible here; the mean matters the moment $X$ has two rows.
+2. **One scalar gradient, then the whole chain.** $\partial\mathcal{L}/\partial w = 2(\hat{y} - y^*)x = 2(-4.0)(3.0) = -24.0$. The same chain-rule ordering in the net: $dY = \frac{2}{N}(\hat{Y} - Y)$, $dW_2 = H^\top dY$, $dH = (dY\,W_2^\top) \odot (1 - H^2)$, $dW_1 = X^\top dH$. Drop the $1 - H^2$ and only the hidden-layer gradients disagree with a finite difference.
+3. **Descent, not ascent.** $w_{\text{new}} = w - \eta\,\partial\mathcal{L}/\partial w = 2.0 - 0.05(-24.0) = 3.20$, and the new prediction $9.60$ is closer to $10.0$ - if your loss grows, the sign or the `lr` subtraction is wrong. Return a new parameter dict; mutating the input makes the "original unchanged" test fail.
+4. **Normalise in, denormalise out.** `z_score` returns `(values, mean, sigma)` with $\sigma = \sqrt{\text{mean}((v - \mu)^2)}$ and raises on a constant column (a feature with no spread has no z-score). `train_bc` must store the four statistics, and `predict` must apply $\mu_x,\sigma_x$ on the way in and $\mu_y,\sigma_y$ on the way out, or the learned policy speaks normalized units.
+
+### Full Solution
+```python
+import math
+import random
+
+
+def mse_loss(y_hat, y_true):
+    total = 0.0
+    for row_hat, row_true in zip(y_hat, y_true):
+        total += sum((a - b) ** 2 for a, b in zip(row_hat, row_true))
+    return total / len(y_hat)
+
+
+def forward(X, params):
+    w1, b1, w2, b2 = params["W1"], params["b1"], params["W2"], params["b2"]
+    n_in, hidden, n_out = len(w1), len(b1), len(b2)
+    h_out, y_out = [], []
+    for x in X:
+        h = [math.tanh(sum(x[k] * w1[k][j] for k in range(n_in)) + b1[j]) for j in range(hidden)]
+        h_out.append(h)
+        y_out.append([sum(h[j] * w2[j][m] for j in range(hidden)) + b2[m] for m in range(n_out)])
+    return h_out, y_out
+
+
+def backward(X, Y, params, H, Y_hat):
+    w2 = params["W2"]
+    n = len(X)
+    n_in, hidden, n_out = len(params["W1"]), len(params["b1"]), len(params["b2"])
+    scale = 2.0 / n
+    d_w1 = [[0.0] * hidden for _ in range(n_in)]
+    d_b1 = [0.0] * hidden
+    d_w2 = [[0.0] * n_out for _ in range(hidden)]
+    d_b2 = [0.0] * n_out
+    for i in range(n):
+        err = [scale * (Y_hat[i][m] - Y[i][m]) for m in range(n_out)]
+        for m in range(n_out):
+            d_b2[m] += err[m]
+        for j in range(hidden):
+            h = H[i][j]
+            for m in range(n_out):
+                d_w2[j][m] += h * err[m]
+            d_h = sum(err[m] * w2[j][m] for m in range(n_out)) * (1.0 - h * h)
+            d_b1[j] += d_h
+            for k in range(n_in):
+                d_w1[k][j] += X[i][k] * d_h
+    return {"dW1": d_w1, "db1": d_b1, "dW2": d_w2, "db2": d_b2}
+
+
+def apply_gradients(params, grads, lr):
+    updated = {}
+    for name, grad in (("W1", "dW1"), ("b1", "db1"), ("W2", "dW2"), ("b2", "db2")):
+        value = params[name]
+        if value and isinstance(value[0], list):
+            updated[name] = [[v - lr * g for v, g in zip(row_v, row_g)]
+                             for row_v, row_g in zip(value, grads[grad])]
+        else:
+            updated[name] = [v - lr * g for v, g in zip(value, grads[grad])]
+    return updated
+
+
+def z_score(values):
+    n = len(values)
+    mean = sum(values) / n
+    sigma = math.sqrt(sum((v - mean) ** 2 for v in values) / n)
+    if sigma == 0.0:
+        raise ValueError("a feature with no spread has no z-score")
+    return [(v - mean) / sigma for v in values], mean, sigma
+
+
+def _normalise(X, Y):
+    stats_x = [z_score([row[j] for row in X]) for j in range(len(X[0]))]
+    stats_y = [z_score([row[j] for row in Y]) for j in range(len(Y[0]))]
+    Xn = [[stats[0][i] for stats in stats_x] for i in range(len(X))]
+    Yn = [[stats[0][i] for stats in stats_y] for i in range(len(Y))]
+    return Xn, Yn, stats_x, stats_y
+
+
+def train_bc(X, Y, hidden=8, lr=0.05, steps=200, seed=0):
+    Xn, Yn, stats_x, stats_y = _normalise(X, Y)
+    n_in, n_out = len(Xn[0]), len(Yn[0])
+    rng = random.Random(seed)
+    params = {
+        "W1": [[rng.gauss(0.0, 0.3) for _ in range(hidden)] for _ in range(n_in)],
+        "b1": [0.0] * hidden,
+        "W2": [[rng.gauss(0.0, 0.3) for _ in range(n_out)] for _ in range(hidden)],
+        "b2": [0.0] * n_out,
+    }
+    losses = []
+    for _ in range(steps):
+        H, Y_hat = forward(Xn, params)
+        losses.append(mse_loss(Y_hat, Yn))
+        params = apply_gradients(params, backward(Xn, Yn, params, H, Y_hat), lr)
+    params["mu_x"] = [stats[1] for stats in stats_x]
+    params["sigma_x"] = [stats[2] for stats in stats_x]
+    params["mu_y"] = [stats[1] for stats in stats_y]
+    params["sigma_y"] = [stats[2] for stats in stats_y]
+    return params, losses
+
+
+def predict(params, X):
+    mu_x, sigma_x = params.get("mu_x"), params.get("sigma_x")
+    if mu_x is None:
+        _, y_hat = forward(X, params)
+        return y_hat
+    Xn = [[(x[k] - mu_x[k]) / sigma_x[k] for k in range(len(x))] for x in X]
+    _, y_hat = forward(Xn, params)
+    mu_y, sigma_y = params["mu_y"], params["sigma_y"]
+    return [[y_hat[i][m] * sigma_y[m] + mu_y[m] for m in range(len(mu_y))] for i in range(len(y_hat))]
+
+
+# The exercise's scalar case: w = 2.0, x = 3.0, y_hat = 6.0 against y* = 10.0, eta = 0.05.
+loss = mse_loss([[6.0]], [[10.0]])
+grad = 2.0 * (6.0 - 10.0) * 3.0
+w_new = 2.0 - 0.05 * grad
+
+assert math.isclose(loss, 16.0, rel_tol=1e-12)
+assert math.isclose(grad, -24.0, rel_tol=1e-12)
+assert math.isclose(w_new, 3.20, rel_tol=1e-12)
+
+# The same rules on a small net: five demonstrations of y = 2x, and the loss must fall.
+X = [[-1.0], [-0.5], [0.0], [0.5], [1.0]]
+Y = [[2.0 * x[0]] for x in X]
+params, losses = train_bc(X, Y, hidden=8, lr=0.05, steps=200, seed=0)
+assert len(losses) == 200 and losses[-1] < losses[0]
+predictions = predict(params, X)
+assert len(predictions) == 5 and all(len(row) == 1 for row in predictions)
+
+print(f"L={loss:.4f} | dL/dw={grad:.4f} | w_new={w_new:.3f}")
+```
+Printed: `L=16.0000 | dL/dw=-24.0000 | w_new=3.200`
+
 ### Break it on purpose
 Inject the `no_tanh_derivative` fault from the graded package: drop the $(1 - H^2)$ factor from $dH$ in the backward pass and leave every other line alone.
 - **Inject:** compute `dh_j = dy * W2[j]` instead of `dh_j = dy * W2[j] * (1.0 - h_j * h_j)`.

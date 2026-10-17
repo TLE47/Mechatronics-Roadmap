@@ -100,6 +100,138 @@ EXERCISE_TARGET=exercises/03-sensors.T2.03a/starter.py \
 
 The tests are behavioural: a balanced set at **four** angles must project to the same amplitude (a Clarke with the 2 misplaced agrees at $\theta = 0$ and nowhere else); the quarter turn must give $i_q = -5$ (a Park at $+\theta$ gives $+5$); quadrature current must demodulate to constant DC at five angles; the inverse must undo the rotation; the two-shunt exercise must give $i_c = -4$ A and $6.110101$ A; a PLL must lock onto $350\text{ Hz}$ electrical, hold its speed with zero residual, and **not** spike when the estimate sits just below $-\pi$ and the measurement just above it; and the averaging law must be $\tau^{-1/2}$ (the $1/\tau$ version fails on the first pair). Four planted faults - `clarke_wrong_scale`, `park_plus_theta`, `pll_raw_residual`, `allan_linear` - each fail the test named for them. The transfer suite tracks the **shared arm's elbow**: its velocity estimate must beat a one-tick finite difference on the same quantized samples, a three-phase set built from the joint's own angle must demodulate to constant $i_q$ tick after tick, and the plant's seeded white noise must average down as predicted within 12%.
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+import math
+
+
+def wrap_pi(angle):
+    """Wrap an angle into (-pi, pi]."""
+    # TODO 1: fmod into one turn, then shift by pi
+    ...
+
+
+def third_phase(i_a, i_b):
+    """The third current, from the neutral point."""
+    # TODO 2: Kirchhoff, not 120 degrees of phase
+    ...
+
+
+def clarke(i_a, i_b):
+    """Amplitude-invariant Clarke: (i_alpha, i_beta) from two phase currents."""
+    # TODO 3: i_alpha = i_a, i_beta = (i_a + 2 i_b)/sqrt(3)
+    ...
+
+
+def park(i_alpha, i_beta, theta_e):
+    """(i_d, i_q) in the rotor frame."""
+    # TODO 4: rotate by -theta_e: [c, s; -s, c]
+    ...
+
+
+def inverse_park(i_d, i_q, theta_e):
+    """(i_alpha, i_beta) back in the stationary frame."""
+    # TODO 5: the transpose of the Park rotation
+    ...
+
+
+def pll_step(theta_hat, omega_hat, theta_meas, kp, ki, dt):
+    """One Type-II PLL step; returns (theta_hat, omega_hat)."""
+    # TODO 6: wrap the residual BEFORE the gains; ki integrates it, kp corrects the angle
+    ...
+
+
+def allan_deviation(sigma_density, tau):
+    """Rate standard deviation after averaging white noise for `tau` seconds."""
+    # TODO 7: the law is sigma / sqrt(tau), not sigma / tau
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** for $i_a = 6.0\text{ A}$ and $i_b = -2.0\text{ A}$, $i_c = -4.0\text{ A}$, $(i_\alpha, i_\beta) = (6.0, 1.154701)\text{ A}$, and $\sqrt{i_\alpha^2 + i_\beta^2} = 6.110101\text{ A}$.
+
+### Hint ladder
+1. **KCL gives the third shunt for free.** The star point floats, so $i_c = -(i_a + i_b) = -4.0\text{ A}$ - no $120^\circ$ phase factor, and no need for a third amplifier.
+2. **Clarke keeps the peak amplitude.** $i_\alpha = i_a$ and $i_\beta = (i_a + 2i_b)/\sqrt{3} = (6.0 - 4.0)/\sqrt{3} = 1.154701\text{ A}$: the $2$ multiplies $i_b$ only, which is why the magnitude $6.110101\text{ A}$ is slightly above $6.0$ rather than exactly $I_{\text{pk}}$ - these two measurements are not a balanced set at one instant.
+3. **Park rotates the other way.** The frame turns *with* the rotor, so the matrix is $[\cos\theta_e, \sin\theta_e;\ -\sin\theta_e, \cos\theta_e]$ and its transpose (inverse, determinant $1$) takes $(d, q)$ back out. Driving pure $q$ current then gives $i_d = 0$ and $i_q = I_{\text{pk}}$ at every angle.
+4. **Wrap before the gains.** $\theta_{\text{meas}} - \hat{\theta}$ is a difference of two points on a circle: unwrapped, it reads $2\pi$ once per turn and the velocity estimate spikes at exactly the rollover. Then the integral law: averaging white noise for $\tau$ scales the rate deviation as $\tau^{-1/2}$, so $\tau = 100\text{ s}$ cuts it by $10$, not $100$.
+
+### Full Solution
+```python
+import math
+
+
+def wrap_pi(angle):
+    wrapped = math.fmod(angle + math.pi, 2.0 * math.pi)
+    if wrapped <= 0.0:
+        wrapped += 2.0 * math.pi
+    return wrapped - math.pi
+
+
+def third_phase(i_a, i_b):
+    return -(i_a + i_b)
+
+
+def clarke(i_a, i_b):
+    return i_a, (i_a + 2.0 * i_b) / math.sqrt(3.0)
+
+
+def park(i_alpha, i_beta, theta_e):
+    c, s = math.cos(theta_e), math.sin(theta_e)
+    return c * i_alpha + s * i_beta, -s * i_alpha + c * i_beta
+
+
+def inverse_park(i_d, i_q, theta_e):
+    c, s = math.cos(theta_e), math.sin(theta_e)
+    return c * i_d - s * i_q, s * i_d + c * i_q
+
+
+def pll_step(theta_hat, omega_hat, theta_meas, kp, ki, dt):
+    error = wrap_pi(theta_meas - theta_hat)          # the seam must not reach the gains
+    omega_hat = omega_hat + ki * error * dt
+    theta_hat = wrap_pi(theta_hat + (omega_hat + kp * error) * dt)
+    return theta_hat, omega_hat
+
+
+def allan_deviation(sigma_density, tau):
+    return sigma_density / math.sqrt(tau)
+
+
+i_a, i_b = 6.0, -2.0
+i_c = third_phase(i_a, i_b)
+i_alpha, i_beta = clarke(i_a, i_b)
+magnitude = math.hypot(i_alpha, i_beta)
+
+I_pk, theta_e = 10.0, 0.85
+pure_q = (-I_pk * math.sin(theta_e), -I_pk * math.sin(theta_e - 2.0 * math.pi / 3.0))
+alpha_beta = clarke(*pure_q)
+i_d, i_q = park(alpha_beta[0], alpha_beta[1], theta_e)
+i_d_clean = 0.0 if abs(i_d) < 1e-9 else i_d    # the residual is rounding, not torque
+back = inverse_park(i_d, i_q, theta_e)
+# The seam: an estimate just below -pi and a measurement just above +pi differ by ~2e-9, not 2pi.
+seam = wrap_pi((math.pi - 1e-9) - (-math.pi + 1e-9))
+theta_locked, omega_locked = pll_step(2.0 * math.pi - 1e-3, 350.0 * 2.0 * math.pi, 1e-3, 40.0, 400.0, 1e-4)
+
+assert math.isclose(i_c, -4.0, rel_tol=1e-12)
+assert math.isclose(i_alpha, 6.0, rel_tol=1e-12)
+assert math.isclose(i_beta, 1.154701, abs_tol=1e-6)
+assert math.isclose(magnitude, 6.110101, abs_tol=1e-5)
+assert math.isclose(i_d, 0.0, abs_tol=1e-9) and math.isclose(i_q, I_pk, rel_tol=1e-9)
+assert math.isclose(back[0], alpha_beta[0], rel_tol=1e-9) and math.isclose(back[1], alpha_beta[1], rel_tol=1e-9)
+assert math.isclose(seam, -2e-9, abs_tol=1e-12)
+assert math.isclose(allan_deviation(0.02, 100.0), 0.002, rel_tol=1e-12)
+assert -math.pi < theta_locked <= math.pi
+
+print("i_c=%.1f A | (i_alpha, i_beta)=(%.6f, %.6f) A | |i|=%.6f A" % (i_c, i_alpha, i_beta, magnitude))
+print("pure-q -> i_d=%.2f A, i_q=%.2f A | inverse-park exact | seam error=%.1e rad | sigma(tau=100 s)=%.3f rad/s"
+      % (i_d_clean, i_q, seam, allan_deviation(0.02, 100.0)))
+```
+
+Printed: `i_c=-4.0 A | (i_alpha, i_beta)=(6.000000, 1.154701) A | |i|=6.110101 A`, then `pure-q -> i_d=0.00 A, i_q=10.00 A | inverse-park exact | seam error=-2.0e-09 rad | sigma(tau=100 s)=0.002 rad/s`.
+
 ### Break it on purpose
 Keep the worked example's $350\text{ Hz}$ electrical angle ($p = 7$ at $3000\text{ RPM}$) and break the PLL the way the `## 8. Common mistakes` table warns, using the `pll_raw_residual` fault the package plants:
 - **Inject:** feed the residual to the PLL gains as raw $\theta_{\text{meas}} - \hat{\theta}$, with no wrap into $[-\pi, \pi)$.

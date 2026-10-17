@@ -121,6 +121,110 @@ The tests are behavioural: the worked loop's margin must be $51.8273^\circ$ whil
   - **Core Concepts to Review First:** Sensitivity peak $M_s = \max|S(j\omega)|$ and phase margin with pure time delay ($\text{PM} - \omega_{gc}\tau_d$), discrete LQR Riccati recursion, and 1D/MIMO Linear Kalman Filter predict-innovation-update equations in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Åström & Murray *Feedback Systems* Ch. 10–12 (`fbsbook.org`)](https://www.fbsbook.org/), [Roger Labbe *Kalman and Bayesian Filters in Python*](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python), and [Track 05 Tier 2 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-2-intermediate--applied).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import cmath
+import math
+
+
+def phase_margin_deg(loop):
+    """PM = 180 + the loop's phase in degrees, unwrapped so a 200 degree lag reads -20."""
+    # TODO 1: math.degrees(cmath.phase(loop)); subtract 360 when it comes back positive
+    ...
+
+
+def phase_loss_deg(omega_gc, tau_d):
+    """Degrees of phase a pure transport delay eats at the gain crossover."""
+    # TODO 2: the delay angle is omega_gc * tau_d radians - convert it, do not add it
+    ...
+
+
+def st(loop):
+    """(S, T) = (1/(1+L), L/(1+L)); the two sum to one at every frequency."""
+    # TODO 3: both share the same denominator 1 + L (T is not 1/S)
+    ...
+
+
+def bryson_weights(x_max, u_max):
+    """Bryson's rule: Q_ii = 1/x_max_i^2 and R = 1/u_max^2."""
+    # TODO 4: square every maximum, or metres and newtons never cancel
+    ...
+
+
+def observer_spectral_radius(ad, c, l):
+    """max |eig(Ad - L C)| for two states and one measurement."""
+    # TODO 5: build Ad - L C, then take its trace and determinant and solve s^2 - tr s + det = 0
+    ...
+
+
+print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $\Delta\phi = 22.5216^\circ$ at $\tau_d = 5\,\text{ms}$, so $\text{PM}_{\text{new}} = 29.3057^\circ$; $|S(j\omega_{gc})| = 1.144$; Bryson $(Q, R) = ([400, 100], 0.04)$; observer radius $0.9005$.
+
+### Hint ladder
+1. **The 5 ms delay in degrees.** $\omega_{gc}\tau_d = 78.61514 \times 0.005 = 0.393076\,\text{rad}$, and $0.393076 \times 180/\pi = 22.52^\circ$. A pure delay leaves $|L(j\omega_{gc})|$ at $1$, so $\omega_{gc}$ itself does not move.
+2. **Why the new margin is a subtraction.** The delay adds lag, so it *subtracts* from the margin: $51.8273^\circ - 22.5216^\circ = 29.3057^\circ$. Still positive, so the loop is stable - and now below the $45^\circ$ floor, which is why $5\,\text{ms}$ of filter lag is not a detail on a $78.6\,\text{rad/s}$ loop.
+3. **The unwrap, if you also want the general function.** `cmath.phase` returns $+160^\circ$ for a $-200^\circ$ lag; subtract $360$ before adding $180$, or a loop past the critical point reports $340^\circ$ of safety instead of $-20^\circ$.
+4. **The other numbers in the block.** $S + T \equiv 1$ holds at any $L$, including the crossover's $1.144$; Bryson over $0.05\,\text{m}$, $0.10\,\text{rad}$ and $5\,\text{N}$ is $[400, 100]$ and $0.04$; and the observer's error matrix $A_d - LC$ has radius $0.9005 < 1$.
+
+### Full Solution
+```python
+import cmath
+import math
+
+
+def phase_margin_deg(loop):
+    phase = math.degrees(cmath.phase(loop))
+    return 180.0 + (phase - 360.0 if phase > 0.0 else phase)
+
+
+def phase_loss_deg(omega_gc, tau_d):
+    return math.degrees(omega_gc * tau_d)
+
+
+def st(loop):
+    return 1.0 / (1.0 + loop), loop / (1.0 + loop)
+
+
+def bryson_weights(x_max, u_max):
+    return [1.0 / (value * value) for value in x_max], 1.0 / (u_max * u_max)
+
+
+def observer_spectral_radius(ad, c, l):
+    m = [[ad[i][j] - l[i] * c[j] for j in range(2)] for i in range(2)]
+    tr = m[0][0] + m[1][1]
+    det = m[0][0] * m[1][1] - m[0][1] * m[1][0]
+    disc = cmath.sqrt(tr * tr - 4.0 * det)
+    return max(abs(0.5 * (tr + disc)), abs(0.5 * (tr - disc)))
+
+
+w_gc = 78.61513777574233
+loop_gc = 100.0 / ((1j * w_gc) * (0.01 * (1j * w_gc) + 1.0))
+pm = phase_margin_deg(loop_gc)
+loss = phase_loss_deg(w_gc, 0.005)
+pm_new = pm - loss
+s_gc, t_gc = st(loop_gc)
+q_diag, r_weight = bryson_weights([0.05, 0.10], 5.0)
+radius = observer_spectral_radius([[1.0, 0.001], [0.0, 0.99]], [1.0, 0.0], [0.19, 9.0])
+
+assert math.isclose(pm, 51.8273, abs_tol=1e-3)
+assert math.isclose(loss, 22.5216, abs_tol=1e-3)
+assert math.isclose(pm_new, 29.3057, abs_tol=1e-2)
+assert math.isclose((s_gc + t_gc).real, 1.0, abs_tol=1e-12)
+assert math.isclose((s_gc + t_gc).imag, 0.0, abs_tol=1e-12)
+assert math.isclose(abs(s_gc), 1.1441, abs_tol=1e-3)
+assert math.isclose(q_diag[0], 400.0, rel_tol=1e-12)
+assert math.isclose(q_diag[1], 100.0, rel_tol=1e-12)
+assert math.isclose(r_weight, 0.04, rel_tol=1e-12)
+assert math.isclose(radius, math.sqrt(0.8109), abs_tol=1e-3)
+print(f"PM={pm:.2f} deg, delay={loss:.2f} deg -> PM_new={pm_new:.2f} deg, "
+      f"|S(jw_gc)|={abs(s_gc):.3f}, rho_obs={radius:.4f}")
+```
+
+Printed: `PM=51.83 deg, delay=22.52 deg -> PM_new=29.31 deg, |S(jw_gc)|=1.144, rho_obs=0.9005`
+
 ### Break it on purpose
 Inject the phase-wrap slip the exercise plants (`pm_no_unwrap`), keeping the same loop and $\omega_{gc}$:
 - **Inject:** compute the margin as `180 + degrees(cmath.phase(L))` on the principal value, without unwrapping the loop's lag into $(-180^\circ, 180^\circ]$.

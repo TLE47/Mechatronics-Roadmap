@@ -98,6 +98,127 @@ EXERCISE_TARGET=exercises/06-robotics.T1.06a/starter.py \
   - **Core Concepts to Review First:** Rest-to-rest cubic polynomial interpolation $q(t) = q_0 + (3s^2 - 2s^3)\Delta q$ (peak velocity $\frac{3\Delta q}{2T}$), symmetric trapezoidal velocity profiles, and joint-space compliant PD + gravity compensation $\tau = K_p(q_d - q) - K_d\dot{q} + m g L_{\text{com}}\cos q$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 9 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 06 Tier 1 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import math
+
+
+def cubic_rest_to_rest(t, q0, qf, T):
+    """(q, qd, qdd) at time t for a rest-to-rest cubic."""
+    # TODO: s = t/T clamped to [0, 1] through 3s^2 - 2s^3, and hold the final pose, still, once t >= T
+    ...
+
+
+def cubic_coefficients(q0, qf, T):
+    """(a0, a1, a2, a3) with zero endpoint velocities."""
+    # TODO: a0 = q0, a1 = 0, a2 = 3dq/T^2, a3 = -2dq/T^3
+    ...
+
+
+def peak_velocity(dq, T):
+    """Peak speed of a rest-to-rest cubic."""
+    # TODO: 1.5x the average speed dq/T, not the average itself
+    ...
+
+
+def min_duration_s(dq, qd_max):
+    """Shortest move inside a speed limit."""
+    # TODO: solve 1.5|dq|/T = qd_max for T
+    ...
+
+
+def min_duration_for_acceleration(dq, qdd_max):
+    """Shortest move inside an acceleration limit."""
+    # TODO: the peak acceleration is 6|dq|/T^2 at the endpoints; solve for T
+    ...
+
+
+def spring_damper_torque(q_d, q, dq_d, dq, kp, kd, tau_g=0.0):
+    """tau = kp (q_d - q) + kd (dq_d - dq) + tau_g."""
+    # TODO: stiffness multiplies the POSITION error, damping the VELOCITY error
+    ...
+
+
+def compliance_deflection(tau_ext, kp):
+    """Steady yield under a hand push."""
+    # TODO: a stiffer spring yields less, so divide
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **The four coefficients.** $q(0) = q_0$ and $\dot{q}(0) = 0$ give $a_0 = q_0$, $a_1 = 0$; the two conditions at $t = T$ then give $a_2 = 3\Delta q/T^2$, $a_3 = -2\Delta q/T^3$. For the exercise's $\Delta q = 2.0\ \text{rad}$, $T = 1.0\ \text{s}$ that is $a_2 = 6.0$ and $a_3 = -4.0$, and $q(0.5) = 6(0.25) - 4(0.125) = 1.0\ \text{rad}$ - exactly halfway, as every rest-to-rest cubic is.
+2. **Peak speed.** $\dot{q}_d = (6\Delta q/T)(s - s^2)$ is a parabola in $s$ with its maximum at $s = 0.5$, where it equals $(6\Delta q/T)(0.25) = 1.5\Delta q/T$. So the same move peaks at $3.0\ \text{rad/s}$, and the $3.0\ \text{rad/s}$ actuator limit is reached by $T_{\min} = 1.5 \times 2.0 / 3.0 = 1.0\ \text{s}$.
+3. **When the limit is acceleration.** $|\ddot{q}_d|$ is largest at the endpoints, $\ddot{q}_d(0) = -\ddot{q}_d(T) = 6\Delta q/T^2$, so the duration is the square root, $T = \sqrt{6\Delta q/\ddot{q}_{\max}}$ - not $6\Delta q/\ddot{q}_{\max}$.
+4. **Holding still, and the spring.** Clamping $s$ to $1$ returns $q_f$ with $\dot{q}_d = \ddot{q}_d = 0$; without the clamp $3s^2 - 2s^3$ turns over past $s = 1$ and the arm swings back through its start. For the torque, $K_p$ multiplies the position error and $K_d$ the velocity error, so a $0.80\ \text{N}\cdot\text{m}$ push against $K_p = 4.0\ \text{N}\cdot\text{m/rad}$ yields $0.20\ \text{rad}$.
+
+### Full Solution
+```python
+import math
+
+
+def cubic_rest_to_rest(t, q0, qf, T):
+    """(q, qd, qdd) at time t for a rest-to-rest cubic, clamped outside [0, T]."""
+    if T <= 0.0:
+        raise ValueError("a move needs a positive duration")
+    if t > T:
+        return qf, 0.0, 0.0
+    s = min(1.0, max(0.0, t / T))
+    dq = qf - q0
+    q = q0 + dq * (3.0 * s * s - 2.0 * s * s * s)
+    qd = (6.0 * dq / T) * (s - s * s)
+    qdd = (6.0 * dq / (T * T)) * (1.0 - 2.0 * s)
+    return q, qd, qdd
+
+
+def cubic_coefficients(q0, qf, T):
+    dq = qf - q0
+    return q0, 0.0, 3.0 * dq / (T * T), -2.0 * dq / (T * T * T)
+
+
+def peak_velocity(dq, T):
+    return 1.5 * dq / T
+
+
+def min_duration_s(dq, qd_max):
+    return 1.5 * abs(dq) / qd_max
+
+
+def min_duration_for_acceleration(dq, qdd_max):
+    return math.sqrt(6.0 * abs(dq) / qdd_max)
+
+
+def spring_damper_torque(q_d, q, dq_d, dq, kp, kd, tau_g=0.0):
+    return kp * (q_d - q) + kd * (dq_d - dq) + tau_g
+
+
+def compliance_deflection(tau_ext, kp):
+    return tau_ext / kp
+
+
+q_mid, qd_mid, qdd_mid = cubic_rest_to_rest(0.5, 0.0, 2.0, 1.0)
+q_held, qd_held, _ = cubic_rest_to_rest(1.5, 0.0, 2.0, 1.0)
+T_min = min_duration_s(2.0, 3.0)
+T_acc = min_duration_for_acceleration(2.0, 12.0)
+tau = spring_damper_torque(0.8, 0.7, 0.5, 0.2, 10.0, 1.0, 0.4)
+yield_rad = compliance_deflection(0.80, 4.0)
+
+assert math.isclose(q_mid, 1.0, rel_tol=1e-12) and math.isclose(qd_mid, 3.0, rel_tol=1e-12)
+assert math.isclose(qdd_mid, 0.0, abs_tol=1e-12)
+assert math.isclose(q_held, 2.0, rel_tol=1e-12) and math.isclose(qd_held, 0.0, abs_tol=1e-12)
+assert math.isclose(T_min, 1.0, rel_tol=1e-12) and math.isclose(T_acc, 1.0, rel_tol=1e-12)
+assert math.isclose(peak_velocity(2.0, 1.0), 3.0, rel_tol=1e-12)
+assert cubic_coefficients(0.0, 2.0, 1.0) == (0.0, 0.0, 6.0, -4.0)
+assert math.isclose(tau, 1.7, rel_tol=1e-12) and math.isclose(yield_rad, 0.20, rel_tol=1e-12)
+
+print(f"T_min={T_min:.3f} s | q(T/2)={q_mid:.4f} rad, qd_max={qd_mid:.4f} rad/s | "
+      f"tau={tau:.3f} N*m | yield={yield_rad:.4f} rad")
+```
+Printed: `T_min=1.000 s | q(T/2)=1.0000 rad, qd_max=3.0000 rad/s | tau=1.700 N*m | yield=0.2000 rad`
+
 ### Break it on purpose
 - **Inject:** delete the clamp inside `cubic_rest_to_rest` so it reads `s = t / T`, and evaluate the $T = 2.0\ \text{s}$ profile half a second past arrival, at $t = 3.0\ \text{s}$.
 - **Symptom:** the arm is no longer at $q_f = 1.2\ \text{rad}$: with $s = 1.5$, $3s^2 - 2s^3 = 6.75 - 6.75 = 0$, so the position reads $0.0\ \text{rad}$ and the velocity $(6 \times 1.2 / 2)(1.5 - 2.25) = -2.7\ \text{rad/s}$ — it swings back through the start at speed instead of holding still.

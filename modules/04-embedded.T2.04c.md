@@ -133,6 +133,104 @@ EXERCISE_TARGET=exercises/04-embedded.T2.04c/starter.py \
   - **Core Concepts to Review First:** Zephyr static thread allocation (`K_THREAD_DEFINE`) with cooperative vs. preemptive priority bands, `k_mutex` Priority Inheritance Protocol ($R_H = C_H + B_H$ vs. unbounded priority inversion), and zero-copy `k_msgq` ring buffers in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Zephyr Kernel Services: Threads, Mutexes & Message Queues (`docs.zephyrproject.org`)](https://docs.zephyrproject.org/latest/kernel/services/index.html) and [Track 04 Tier 2 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then compare against the numbers in the full solution below ---
+import math
+
+def align_stack(size_b, align=8):
+    """Round a requested `K_THREAD_DEFINE` stack size up to the next `align`-byte boundary."""
+    # TODO 1: round UP with ceil - never down, and never to the nearest multiple (1020 -> 1024)
+    ...
+
+def static_ram_bytes(stacks, tcb_bytes=128, msgq=None):
+    """Aligned stacks + one TCB per thread + every static queue's payload."""
+    # TODO 2: every thread pays a TCB *and* its queue's M x B payload counts too
+    ...
+
+def device_dt_ready(node, prj_conf):
+    """True only when the node is `status = "okay"` and its Kconfig driver symbol is on."""
+    # TODO 3: two independent conditions - the status string AND the Kconfig entry,
+    #         which defaults to off when the node names a symbol prj.conf never sets
+    ...
+
+def binding_problems(nodes, prj_conf):
+    """Sorted labels of the devicetree nodes that would not come up."""
+    # TODO 4: filter the labels through device_dt_ready, then sort them
+    ...
+
+def outranks(priority_a, priority_b):
+    """True when thread A preempts thread B."""
+    # TODO 5: Zephyr is not FreeRTOS - the winning number is the smaller one
+    ...
+
+def effective_priority(priority_owner, priority_waiter):
+    """The owner's priority while a more urgent thread waits on its `k_mutex`."""
+    # TODO 6: min(owner, waiter) - a waiter that is not more urgent never raises the owner
+    ...
+
+def worst_case_response_us(c_high, b_holder, c_intermediate=0.0):
+    """Worst-case response time of the high-urgency thread, in microseconds."""
+    # TODO 7: add all three terms - the middle thread only runs when the primitive
+    #         does not inherit priority (k_sem), so it contributes 0 under k_mutex
+    ...
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $p_{\text{slow,eff}} = 2$; $R_{\text{fast}} = 145.0\ \mu\text{s}$; $R_{\text{fast,sem}} = 445.0\ \mu\text{s}$.
+
+### Hint ladder
+1. **Zephyr's number runs the other way.** $p_{\text{fast}} = 2$ outranks $p_{\text{mid}} = 4$, which outranks $p_{\text{slow}} = 6$; so the owner at $6$ waiting under a $2$ is elevated to $\min(6, 2) = 2$, not to $6$.
+2. **The inherited bound has exactly two terms.** While the mutex is held, $p_{\text{slow,eff}} = 2 < 4$ keeps `thread_mid` out, so $R_{\text{fast}} = C_{\text{fast}} + B_{\text{slow}} = 110 + 35 = 145\ \mu\text{s}$.
+3. **The semaphore adds the middle thread's whole run.** With no ownership tracking, $p_{\text{slow}}$ stays at $6$, `thread_mid` preempts it for $C_{\text{mid}} = 300\ \mu\text{s}$, and $R_{\text{fast,sem}} = 110 + 35 + 300 = 445\ \mu\text{s}$.
+4. **Check the ordering, not just the arithmetic.** $445/145 \approx 3.07$ is the whole point of the module: the same critical section costs three times as much without inheritance.
+
+### Full Solution
+```python
+import math
+
+def align_stack(size_b, align=8):
+    return int(math.ceil(float(size_b) / align)) * align
+
+def static_ram_bytes(stacks, tcb_bytes=128, msgq=None):
+    return sum(align_stack(s) + tcb_bytes for s in stacks) + sum(m * b for m, b in (msgq or []))
+
+def device_dt_ready(node, prj_conf):
+    return node["status"] == "okay" and bool(prj_conf.get(node["kconfig"], False))
+
+def binding_problems(nodes, prj_conf):
+    return sorted(label for label, node in nodes.items() if not device_dt_ready(node, prj_conf))
+
+def outranks(priority_a, priority_b):
+    return priority_a < priority_b
+
+def effective_priority(priority_owner, priority_waiter):
+    return min(priority_owner, priority_waiter)
+
+def worst_case_response_us(c_high, b_holder, c_intermediate=0.0):
+    return c_high + b_holder + c_intermediate
+
+p_fast, c_fast, p_mid, c_mid, p_slow, b_slow = 2, 110.0, 4, 300.0, 6, 35.0
+p_slow_eff = effective_priority(p_slow, p_fast)
+r_fast = worst_case_response_us(c_fast, b_slow)
+r_fast_sem = worst_case_response_us(c_fast, b_slow, c_mid)
+
+assert p_slow_eff == 2
+assert math.isclose(r_fast, 145.0, rel_tol=1e-12)
+assert math.isclose(r_fast_sem, 445.0, rel_tol=1e-12)
+assert outranks(p_fast, p_mid) and not outranks(p_mid, p_fast)
+assert align_stack(1020) == 1024
+assert static_ram_bytes([2048, 1536, 1020], msgq=[(16, 72)]) == 6144
+nodes = {"fdcan1": {"status": "okay", "kconfig": "CONFIG_CAN"},
+         "i2c2": {"status": "disabled", "kconfig": "CONFIG_I2C"}}
+assert binding_problems(nodes, {"CONFIG_CAN": True, "CONFIG_I2C": True}) == ["i2c2"]
+
+print(f"p_slow_eff={p_slow_eff} | R_fast={r_fast:.1f} us | R_fast_sem={r_fast_sem:.1f} us")
+```
+
+Printed: `p_slow_eff=2 | R_fast=145.0 us | R_fast_sem=445.0 us`
+
 ### Break it on purpose
 Inject the common-mistakes row that swaps a mutex for a semaphore, keeping $p_H = 1$, $p_M = 3$, $p_L = 5$, $C_H = 90\ \mu\text{s}$, $C_M = 450\ \mu\text{s}$ and $B_L = 30\ \mu\text{s}$:
 - **Inject:** replace `K_MUTEX_DEFINE(bus_lock)` with `K_SEM_DEFINE(bus_lock, 1, 1)` and guard the shared SPI bus with `k_sem_take` / `k_sem_give`.

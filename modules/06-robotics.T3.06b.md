@@ -115,6 +115,148 @@ EXERCISE_TARGET=exercises/06-robotics.T3.06b/starter.py \
 
 **28 tests.** The returns are checked at more than $G_0$ - $G_1$ and $G_2$ catch a discount taken from the start of the rollout; the PPO term is checked on a **negative** advantage, where the correct $\min$ is the more pessimistic number and a `max` silently doubles the step; the ensemble is checked at zero decay (the plain mean) and at large decay (the newest prediction dominates); the shield is checked where the step clamp would walk past a joint limit; and the watchdog is checked at exactly the timeout and after a long run that keeps sending chunks. The transfer suite scores **the plant's own run**: the discounted return of its tracking errors must equal a brute-force sum at $t = 0, 1, 7$ and halfway; the plant's own targets pass through the shield with $<2\%$ RMS change; and a hostile policy commanding $+3\text{ rad}$ through the shield leaves the arm inside its joint range, slow, and never more than $\Delta q_{\max}$ from where it is. Five planted faults - `gamma_from_zero`, `ppo_max_not_min`, `ensemble_uniform`, `shield_no_joint_limit`, `watchdog_compares_absolute_time` - each fail the test named for them.
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import math
+
+
+def discounted_returns(rewards, gamma=0.9):
+    """G_t for every step, by the backward recursion."""
+    # TODO 1: walk BACKWARDS from the last reward: G_t = r_t + gamma * G_{t+1}
+    ...
+
+
+def advantages(returns, values):
+    """A_hat_t = G_t - V(s_t)."""
+    # TODO 2: subtract each value estimate from its return
+    ...
+
+
+def ppo_clip_term(rho, advantage, eps=0.2):
+    """The clipped surrogate term for one step."""
+    # TODO 3: clip rho to [1 - eps, 1 + eps], then take the PESSIMISTIC min of the two products
+    ...
+
+
+def ppo_loss(ratios, advantages_, eps=0.2):
+    """Mean clipped surrogate term over a batch."""
+    # TODO 4: average the per-step terms
+    ...
+
+
+def temporal_ensemble(predictions, decay=0.5):
+    """Exponentially weighted blend; index 0 is the newest prediction."""
+    # TODO 5: weights exp(-decay * i), normalised by their sum
+    ...
+
+
+def safety_shield(a_policy, q, dq_max=0.08, q_min=-1.5, q_max=1.5):
+    """Rate-limit around q, then clamp to the joint limits."""
+    # TODO 6: clamp the step around q first, then the hard joint limits
+    ...
+
+
+def watchdog_trip(last_chunk_s, now_s, timeout_s=0.1):
+    """True when the policy has been silent for longer than the timeout."""
+    # TODO 7: strictly longer - exactly at the timeout is still alive
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $G_0 = 9.025$, $G_1 = 9.500$, $G_2 = 10.0$; $L^{\text{CLIP}}_0 = -2.40$; the worked ensemble $0.5027\ \text{rad}$; the wild $+2.80\ \text{rad}$ command shielded at $q = 0.50$ to $0.58\ \text{rad}$.
+
+### Hint ladder
+1. **Discount from the step, not the start.** $G_t = r_t + \gamma G_{t+1}$ run from $t = 2$ backwards gives $G_2 = 10.0$, $G_1 = 9.5$, $G_0 = 0.95 \times 9.5 = 9.025$ - discounting $[0, 0, 10]$ from $t = 0$ instead gives $10 \times 0.95^2$ for every entry and hides the bug.
+2. **Why the pessimistic `min` binds only outside the trust region.** With $\rho = 0.60$ and $\hat{A} = -3.0$: the raw product is $-1.80$, the clipped ratio $0.80$ gives $-2.40$, and `min` keeps $-2.40$. For a *negative* advantage the pessimistic choice is the more negative number, which is why `max` looks harmless on the worked positive case.
+3. **Weights are newest-first and normalised.** $w_i = e^{-m i}$ starts at $1$ for `predictions[0]`; dividing by $\sum w_i$ is what makes a zero decay reduce to the plain mean, and a large decay let the newest prediction dominate.
+4. **Order matters in the shield.** Step-clamp around the *measured* $q$ first, then apply the joint limits: at $q = -1.45$, $\Delta q_{\max} = 0.10$ and a $-2.00$ command the rate limit already reaches $-1.55$, so only the second clamp keeps you inside $[-1.50, +1.50]$.
+
+### Full Solution
+```python
+import math
+
+
+def discounted_returns(rewards, gamma=0.9):
+    if not rewards:
+        raise ValueError("a rollout needs at least one reward")
+    if not 0.0 <= gamma < 1.0:
+        raise ValueError("the discount factor must be in [0, 1)")
+    returns = [0.0] * len(rewards)
+    running = 0.0
+    for t in range(len(rewards) - 1, -1, -1):
+        running = rewards[t] + gamma * running
+        returns[t] = running
+    return returns
+
+
+def advantages(returns, values):
+    if len(returns) != len(values):
+        raise ValueError("every return needs one value estimate")
+    return [g - v for g, v in zip(returns, values)]
+
+
+def ppo_clip_term(rho, advantage, eps=0.2):
+    if eps <= 0.0:
+        raise ValueError("the clip range must be positive")
+    if rho < 0.0:
+        raise ValueError("a probability ratio cannot be negative")
+    clipped = max(1.0 - eps, min(1.0 + eps, rho))
+    return min(rho * advantage, clipped * advantage)
+
+
+def ppo_loss(ratios, advantages_, eps=0.2):
+    if not ratios or len(ratios) != len(advantages_):
+        raise ValueError("ratios and advantages must be non-empty and the same length")
+    return sum(ppo_clip_term(r, a, eps) for r, a in zip(ratios, advantages_)) / len(ratios)
+
+
+def temporal_ensemble(predictions, decay=0.5):
+    if not predictions:
+        raise ValueError("there is nothing to ensemble")
+    if decay < 0.0:
+        raise ValueError("the decay rate cannot be negative")
+    weights = [math.exp(-decay * i) for i in range(len(predictions))]
+    total = sum(weights)
+    return sum(w * p for w, p in zip(weights, predictions)) / total
+
+
+def safety_shield(a_policy, q, dq_max=0.08, q_min=-1.5, q_max=1.5):
+    if dq_max <= 0.0:
+        raise ValueError("the step clamp must be positive")
+    if q_min > q_max:
+        raise ValueError("the joint limits are inverted")
+    rate_limited = max(q - dq_max, min(q + dq_max, a_policy))
+    return max(q_min, min(q_max, rate_limited))
+
+
+def watchdog_trip(last_chunk_s, now_s, timeout_s=0.1):
+    if timeout_s <= 0.0:
+        raise ValueError("the watchdog timeout must be positive")
+    return (now_s - last_chunk_s) > timeout_s
+
+
+# The exercise: r = [0, 0, 10] at gamma = 0.95, and a ratio 0.60 with a negative advantage.
+G = discounted_returns([0.0, 0.0, 10.0], gamma=0.95)
+term = ppo_clip_term(0.60, -3.0, eps=0.20)
+a_ens = temporal_ensemble([0.52, 0.50, 0.46], decay=0.5)
+q_safe = safety_shield(2.80, 0.50, dq_max=0.08)
+
+assert math.isclose(G[0], 9.025, rel_tol=1e-12) and math.isclose(G[1], 9.5, rel_tol=1e-12)
+assert math.isclose(G[2], 10.0, rel_tol=1e-12)
+assert math.isclose(term, -2.40, rel_tol=1e-12)
+assert math.isclose(a_ens, 0.5026767, abs_tol=1e-6)
+assert math.isclose(q_safe, 0.58, rel_tol=1e-12)
+assert watchdog_trip(1.000, 1.101, timeout_s=0.1) and not watchdog_trip(1.0, 1.5, timeout_s=0.5)
+
+print("G=(%.3f, %.3f, %.1f) | PPO_clip=%.2f" % (G[0], G[1], G[2], term))
+print("a_ens=%.4f rad | q_safe=%.2f rad | trips=%s" % (a_ens, q_safe, watchdog_trip(1.000, 1.101)))
+```
+
+Printed: `G=(9.025, 9.500, 10.0) | PPO_clip=-2.40`, then `a_ens=0.5027 rad | q_safe=0.58 rad | trips=True`.
+
 ### Break it on purpose
 Inject the `ppo_max_not_min` fault and diagnose it from the loss alone, keeping $\epsilon = 0.20$ and $\hat{A} = +2.0$ for the positive case:
 - **Inject:** replace the pessimistic `min` in the clipped surrogate with `max`, i.e. `max(rho * adv, rho_clipped * adv)`, which is the single most common transcription slip in PPO code.

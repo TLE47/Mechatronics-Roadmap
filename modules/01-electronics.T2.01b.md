@@ -95,6 +95,115 @@ EXERCISE_TARGET=exercises/01-electronics.T2.01b/starter.py \
   - **Core Concepts to Review First:** 4-layer KiCad stackup (`L2 Solid GND`), gate-driver bootstrap charge $I_g = Q_g/t_{sw}$ and shoot-through dead-time, and $48\text{ V}$ RC pre-charge sizing ($t_{\text{pre}} \approx 5 R_{\text{pre}} C_{\text{bus}}$) in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [KiCad Official Documentation (`docs.kicad.org`)](https://docs.kicad.org/), [TI SLUA887 (Gate Drive & Dead-Time Design)](https://www.ti.com/lit/pdf/slua887), and [Track 01 §2.1–2.2 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+
+
+def v_peak_turnoff(v_bus, l_loop_nh, di_amp, dt_ns):
+    """The peak drain-source voltage at turn-off: V_bus + L dI/dt."""
+    # TODO 1: nH/ns is already 1 ohm, so L[nH] * dI[A] / dt[ns] is already a volt
+    ...
+
+
+def max_loop_inductance_nh(v_bus, v_peak_max, di_amp, dt_ns):
+    """The largest loop inductance that keeps the spike under a ceiling."""
+    # TODO 2: only the HEADROOM (ceiling minus bus) drives the overshoot - rearrange TODO 1
+    ...
+
+
+def gate_drive_current_a(qg_nc, tr_ns):
+    """The average gate drive current: I_G = Q_g / t_r."""
+    # TODO 3: nC/ns = A already; no 1e-9 factors anywhere in this one
+    ...
+
+
+def bootstrap_gate_v(v_sw, v_drv):
+    """The absolute gate voltage of a high-side N-MOSFET."""
+    # TODO 4: the bootstrap capacitor rides ON TOP of the phase node
+    ...
+
+
+def precharge_peak_a(v_bus, r_pre):
+    """The t = 0 inrush into an uncharged bank."""
+    # TODO 5: an uncharged bank is a short, so Ohm's law is the whole answer
+    ...
+
+
+def precharge_time_s(r_pre, c_bus, taus=5.0):
+    """The pre-charge settle time."""
+    # TODO 6: five time constants, not one
+    ...
+
+
+def bus_energy_j(c_bus, v_bus):
+    """The energy stored in the capacitor bank."""
+    # TODO 7: 1/2 C V^2 - the half is not optional
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **The budget is a headroom, not a ceiling.** The $60.0\text{ V}$ limit is the *peak*, so only $60.0 - 48.0 = 12.0\text{ V}$ of it may come from the $L\,dI/dt$ term; budgeting the whole $60\text{ V}$ gives $12.5\text{ nH}$ and ships a board that overshoots.
+2. **Units by inspection.** $\text{nH}/\text{ns} = 1\ \Omega$, so $\Delta V = L_{\text{nH}} \cdot \frac{\Delta I}{\Delta t_{\text{ns}}}$ needs no $10^{-9}$ anywhere; solving for $L$ gives $L_{\text{nH}} = \Delta V \cdot \frac{\Delta t_{\text{ns}}}{\Delta I}$.
+3. **The check that proves it.** Feed $6.0\text{ nH}$ back into `v_peak_turnoff` at $\Delta I = 30.0\text{ A}$, $\Delta t = 15\text{ ns}$: it must land exactly on $60.0\text{ V}$, and $6.5\text{ nH}$ must land above it.
+4. **Do not mix the other two answers in.** The bootstrap gate ($48 + 12 = 60\text{ V}$) and the pre-charge inrush ($48/48 = 1.0\text{ A}$) are separate helpers with their own units; only the inductance budget uses the $12\text{ V}$ headroom.
+
+### Full Solution
+```python
+import math
+
+
+def v_peak_turnoff(v_bus, l_loop_nh, di_amp, dt_ns):
+    return v_bus + l_loop_nh * (di_amp / dt_ns)
+
+
+def max_loop_inductance_nh(v_bus, v_peak_max, di_amp, dt_ns):
+    return (v_peak_max - v_bus) * dt_ns / di_amp
+
+
+def gate_drive_current_a(qg_nc, tr_ns):
+    return qg_nc / tr_ns
+
+
+def bootstrap_gate_v(v_sw, v_drv):
+    return v_sw + v_drv
+
+
+def precharge_peak_a(v_bus, r_pre):
+    return v_bus / r_pre
+
+
+def precharge_time_s(r_pre, c_bus, taus=5.0):
+    return taus * r_pre * c_bus
+
+
+def bus_energy_j(c_bus, v_bus):
+    return 0.5 * c_bus * v_bus * v_bus
+
+
+l_max = max_loop_inductance_nh(48.0, 60.0, 30.0, 15.0)
+v_at_max = v_peak_turnoff(48.0, l_max, 30.0, 15.0)
+v_over = v_peak_turnoff(48.0, 6.5, 30.0, 15.0)
+
+assert math.isclose(l_max, 6.0, abs_tol=1e-9)
+assert math.isclose(v_at_max, 60.0, abs_tol=1e-12)
+assert v_over > 60.0
+assert math.isclose(gate_drive_current_a(45.0, 30.0), 1.5, abs_tol=1e-12)
+assert math.isclose(bootstrap_gate_v(48.0, 12.0), 60.0, abs_tol=1e-12)
+assert math.isclose(precharge_peak_a(48.0, 48.0), 1.0, abs_tol=1e-12)
+assert math.isclose(precharge_time_s(48.0, 1000e-6), 0.24, abs_tol=1e-12)
+assert math.isclose(bus_energy_j(1000e-6, 48.0), 1.152, abs_tol=1e-12)
+
+print(f"L_loop_max={l_max:.2f} nH | V_peak at the ceiling={v_at_max:.2f} V | V_peak at 6.5 nH={v_over:.2f} V")
+print(f"gate I={gate_drive_current_a(45.0, 30.0):.2f} A | bootstrap V_G={bootstrap_gate_v(48.0, 12.0):.0f} V")
+print(f"inrush={precharge_peak_a(48.0, 48.0):.2f} A | 5tau={precharge_time_s(48.0, 1000e-6):.2f} s | E={bus_energy_j(1000e-6, 48.0):.3f} J")
+```
+
+Printed: `L_loop_max=6.00 nH | V_peak at the ceiling=60.00 V | V_peak at 6.5 nH=61.00 V`, then `gate I=1.50 A | bootstrap V_G=60 V`, then `inrush=1.00 A | 5tau=0.24 s | E=1.152 J`.
+
 ### Break it on purpose
 - **Inject:** the timing bug that ships real boards — hand the overshoot helper a time in microseconds instead of seconds (`dt_s = 20e-6` where the transition is really $\Delta t_{\text{sw}} = 20\text{ ns} = 20 \times 10^{-9}\text{ s}$), then re-run the $20\text{ nH}$ 2-layer case.
 - **Symptom:** $V_{\text{peak}} = 48.0 + (20 \times 10^{-9}) \frac{30.0}{20 \times 10^{-6}} = 48.0 + 0.03 = 48.03\text{ V}$ — a $0.03\text{ V}$ overshoot where the physics says $30.0\text{ V}$. The check now reads "comfortably under $75\text{ V}$" and the $20\text{ nH}$ board ships with a real $78.0\text{ V}$ spike into FETs rated $75\text{ V}$.

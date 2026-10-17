@@ -119,6 +119,136 @@ EXERCISE_TARGET=exercises/02-mechanics.T3.02a/starter.py \
   - **Core Concepts to Review First:** Paros-Weisbord notch flexure stiffness $K_\theta = \frac{2 E b t^{5/2}}{9\pi R^{1/2}}$, Screw Theory Product of Exponentials (PoE) forward kinematics, and two-pass $\mathcal{O}(n)$ Recursive Newton-Euler (RNEA) inverse dynamics in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 4 & Ch. 8 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics), [Featherstone *Rigid Body Dynamics Algorithms*](https://royfeatherstone.org/spatial/), and [Track 02 Tier 3 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+import math
+
+
+def screw_axis(omega, q):
+    """The unit screw axis S = [omega, -omega x q] of a joint through the point q."""
+    # TODO 1: cross omega with q and NEGATE it - v = -omega x q, sign included
+    ...
+
+
+def spatial_power(twist, wrench):
+    """P = V^T F, in watts."""
+    # TODO 2: both halves of the dot product - omega . m AND v . f
+    ...
+
+
+def flexure_stiffness(e_pa, b_m, t_m, r_m):
+    """Paros-Weisbord K_theta = 2 E b t^(5/2) / (9 pi sqrt(R)), in N*m/rad."""
+    # TODO 3: t to the power 2.5, and 9*pi*sqrt(R) underneath
+    ...
+
+
+def flexure_stress(k_theta, theta_rad, b_m, t_m, r_m):
+    """Peak surface bending stress in Pa, with Kt = 1 + t/(2R)."""
+    # TODO 4: M_b = K_theta * theta, then sigma = 6 Kt M_b / (b t^2)
+    ...
+
+
+def thickness_scale(factor):
+    """How K_theta scales when the web thickness is multiplied by `factor`."""
+    # TODO 5: the exponent is 5/2
+    ...
+
+
+def rnea_2link(i1, i2, ddq1, ddq2):
+    """Two-pass RNEA: (tau_1, tau_2) for the joint accelerations."""
+    # TODO 6: link 2's absolute acceleration is ddq1 + ddq2; the inward pass adds the outboard torque
+    ...
+
+
+def passivity_quadratic_form(m_dot, c, dq):
+    """dq^T (Mdot - 2C) dq."""
+    # TODO 7: Mdot MINUS twice C, then the double sum over both indices
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** for the $+Y$ joint through $[0.40, 0.0, 0.10]^\top$, $v = [-0.10, 0.0, 0.40]^\top\ \text{m/rad}$; doubling $t$ scales $K_\theta$ by $2^{5/2} = 5.656854$; the worked notch is $54.0940\ \text{N}\cdot\text{m/rad}$ and $207.7\ \text{MPa}$ at $0.50^\circ$; the worked two-pass torques are $(0.16, 0.06)\ \text{N}\cdot\text{m}$.
+
+### Hint ladder
+1. **The minus is the whole point.** For a revolute joint, $v = -\omega \times q$ at the *origin*, not at $q$: with $\omega = [0, 1, 0]^\top$ and $q = [0.40, 0, 0.10]^\top$, the cross product is $[0.10, 0, -0.40]^\top$, so negating it gives $[-0.10, 0, 0.40]^\top$. A result with the signs the other way round means the negation is missing, not that the point is wrong.
+2. **The stiffness scales as $t^{5/2}$, not $t^2$.** Keep the exponent fractional: doubling the web thickness multiplies $K_\theta$ by $2^{2.5} = 4\sqrt{2} \approx 5.656854$, while any implementation that squares $t$ returns $4$ and silently under-reports the stiffening by $41\%$.
+3. **The elbow rides the shoulder.** In the outward pass the second link's absolute angular acceleration is $\alpha_2 = \ddot{q}_1 + \ddot{q}_2$, so at the worked point $\alpha_2 = 3.0\ \text{rad/s}^2$, $\tau_2 = I_2\alpha_2 = 0.06$, and the inward pass adds it to the first link's own $I_1\alpha_1 = 0.10$ for $\tau_1 = 0.16$. The Gate test's $(I_1, I_2) = (0.08, 0.03)$ gives $(0.17, 0.09)$ by the same two lines.
+4. **Where the passivity form comes from.** $\dot{M} - 2C$ is skew-symmetric for Christoffel-consistent dynamics, so the scalar $\dot{q}^\top(\dot{M} - 2C)\dot{q}$ is exactly $0$ for any $\dot{q}$ - a result your own sum must reproduce, and one a sign slip in the $2C$ term turns into a non-zero number.
+
+### Full Solution
+```python
+import math
+
+
+def screw_axis(omega, q):
+    w = [float(x) for x in omega]
+    point = [float(x) for x in q]
+    cross = [w[1] * point[2] - w[2] * point[1],
+             w[2] * point[0] - w[0] * point[2],
+             w[0] * point[1] - w[1] * point[0]]
+    return w + [-cross[0], -cross[1], -cross[2]]        # v = -omega x q
+
+
+def spatial_power(twist, wrench):
+    return sum(a * b for a, b in zip(twist, wrench))     # omega . m + v . f in one sum
+
+
+def flexure_stiffness(e_pa, b_m, t_m, r_m):
+    return (2.0 * e_pa * b_m * (t_m ** 2.5)) / (9.0 * math.pi * math.sqrt(r_m))
+
+
+def flexure_stress(k_theta, theta_rad, b_m, t_m, r_m):
+    concentration = 1.0 + t_m / (2.0 * r_m)             # Kt, the factor a dropped term omits
+    return 6.0 * concentration * (k_theta * theta_rad) / (b_m * t_m * t_m)
+
+
+def thickness_scale(factor):
+    return factor ** 2.5                                # K ~ t^(5/2)
+
+
+def rnea_2link(i1, i2, ddq1, ddq2):
+    alpha1 = ddq1
+    alpha2 = alpha1 + ddq2                              # the elbow carries the shoulder's motion
+    tau2 = i2 * alpha2
+    tau1 = i1 * alpha1 + tau2                           # inward pass
+    return tau1, tau2
+
+
+def passivity_quadratic_form(m_dot, c, dq):
+    n = len(dq)
+    return sum(dq[i] * (m_dot[i][j] - 2.0 * c[i][j]) * dq[j]
+               for i in range(n) for j in range(n))
+
+
+S_exercise = screw_axis([0.0, 1.0, 0.0], [0.40, 0.0, 0.10])
+S_worked = screw_axis([0.0, 0.0, 1.0], [0.30, 0.0, 0.0])
+power = spatial_power([0.0, 0.0, 2.0, 0.5, 0.0, 0.0], [0.0, 0.0, 3.0, 10.0, 0.0, 0.0])
+k_theta = flexure_stiffness(114e9, 0.015, 0.0010, 0.0050)
+sigma_mpa = flexure_stress(k_theta, math.radians(0.50), 0.015, 0.0010, 0.0050) / 1e6
+tau = rnea_2link(0.05, 0.02, 2.0, 1.0)
+passive = passivity_quadratic_form([[2.0, 0.0], [0.0, 2.0]], [[1.0, 0.0], [0.0, 1.0]], [1.5, -2.5])
+
+assert all(math.isclose(a, b, abs_tol=1e-12) for a, b in zip(S_exercise, [0.0, 1.0, 0.0, -0.10, 0.0, 0.40]))
+assert all(math.isclose(a, b, abs_tol=1e-12) for a, b in zip(S_worked, [0.0, 0.0, 1.0, 0.0, -0.30, 0.0]))
+assert math.isclose(power, 11.0, rel_tol=1e-12)
+assert math.isclose(k_theta, 54.0940, rel_tol=1e-4)
+assert math.isclose(sigma_mpa, 207.7, abs_tol=0.1)
+assert math.isclose(thickness_scale(2.0), 5.656854, abs_tol=1e-6)
+assert math.isclose(tau[0], 0.16, rel_tol=1e-12) and math.isclose(tau[1], 0.06, rel_tol=1e-12)
+assert math.isclose(passive, 0.0, abs_tol=1e-12)
+
+print("S=([%.2f, %.2f, %.2f], [%.2f, %.2f, %.2f]) | power=%.1f W | K_theta=%.2f N*m/rad | K(2t)/K(t)=%.6f"
+      % (S_exercise[0], S_exercise[1], S_exercise[2], S_exercise[3], S_exercise[4], S_exercise[5],
+         power, k_theta, thickness_scale(2.0)))
+print("sigma(0.50 deg)=%.1f MPa | tau=[%.2f, %.2f] N*m | dq^T(Mdot-2C)dq=%.1f"
+      % (sigma_mpa, tau[0], tau[1], passive))
+```
+
+Printed: `S=([0.00, 1.00, 0.00], [-0.10, 0.00, 0.40]) | power=11.0 W | K_theta=54.09 N*m/rad | K(2t)/K(t)=5.656854`, then `sigma(0.50 deg)=207.7 MPa | tau=[0.16, 0.06] N*m | dq^T(Mdot-2C)dq=0.0`.
+
 ### Break it on purpose
 Inject the `rnea_uncoupled_second_link` fault on purpose: in the outward pass treat the elbow's absolute angular acceleration as $\ddot{q}_2$ alone instead of $\ddot{q}_1 + \ddot{q}_2$.
 - **Inject:** give link 2 its local joint acceleration as if the shoulder were not moving, keeping the same inertias $I_1 = 0.05$ and $I_2 = 0.02\text{ kg}\cdot\text{m}^2$ and the same $\ddot{q} = [2.0, 1.0]^\top\text{ rad/s}^2$.

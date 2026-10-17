@@ -93,6 +93,96 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00c/starter.py \
   - **SI Units & Dimensional Analysis Study Links:** [NIST Guide to the SI: Metric Prefixes & Unit Conversions (`nist.gov`)](https://www.nist.gov/pml/owm/metric-si/si-units) and [SparkFun: Metric Prefixes & Scientific Notation Tutorial](https://learn.sparkfun.com/tutorials/metric-prefixes-and-si-units).
   - **Curriculum Reference:** [Track 00 Level 0 (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools) and [Textbooks & Papers (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+import math
+
+PREFIXES = {"": 1.0, "k": 1e3, "M": 1e6, "m": 1e-3, "u": 1e-6, "n": 1e-9}
+
+def rpm_to_rad_s(rpm):
+    """Revolutions per minute to radians per second."""
+    # TODO 1: 2*pi rad per revolution and 60 s per minute - so multiply by 2*pi/60
+    ...
+
+def prefix_scale(value, prefix):
+    """A prefixed quantity in base SI units."""
+    # TODO 2: look the factor up in PREFIXES; refuse a prefix that is not there
+    ...
+
+def trace_drop_v(current_a, resistance_ohm):
+    """Voltage drop across a resistance."""
+    # TODO 3: Ohm's law, I * R
+    ...
+
+def trace_loss_w(current_a, resistance_ohm):
+    """Heat dissipated in a resistance."""
+    # TODO 4: I SQUARED R - 15 A through 12 mOhm is 2.7 W, not 0.18 W
+    ...
+
+def rc_time_constant_s(resistance_ohm, capacitance_f):
+    """RC time constant in seconds."""
+    # TODO 5: R * C, with the farads already converted (100 nF = 100e-9)
+    ...
+
+print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **Every prefixed number becomes base SI before it is used.** $12\text{ m}\Omega$ is `12e-3` ohms, not `12`; $450\text{ mN}\cdot\text{m}$ is `0.45` N·m. `prefix_scale` is that conversion in one place, and the exercise's trace is `12 * 1e-3`.
+2. **The RPM factor is fixed, not fitted.** $1\text{ rev} = 2\pi\text{ rad}$ and $1\text{ min} = 60\text{ s}$, so `rpm_to_rad_s` multiplies by `2*math.pi/60`. Using `60` instead is the planted fault: $2400 \times 60 = 144000$ rad/s instead of $251.3274$.
+3. **Two powers, two formulas.** $V_{\text{drop}} = IR = 15 \times 0.012 = 0.18\text{ V}$; $P_{\text{loss}} = I^2R = 225 \times 0.012 = 2.70\text{ W}$. If both come back `0.18`, the square is missing from the loss.
+4. **Seconds in, microseconds out is a factor of $10^6$.** $1/f$ is in seconds, so a $25\text{ kHz}$ loop's $4\times10^{-5}\text{ s}$ is `40` µs; multiplying by $10^3$ reports `0.04`, which is milliseconds mislabelled.
+
+### Full Solution
+```python
+import math
+
+PREFIXES = {"": 1.0, "k": 1e3, "M": 1e6, "m": 1e-3, "u": 1e-6, "n": 1e-9}
+
+def rpm_to_rad_s(rpm):
+    return rpm * (2.0 * math.pi / 60.0)
+
+def prefix_scale(value, prefix):
+    if prefix not in PREFIXES:
+        raise ValueError("unknown SI prefix %r" % (prefix,))
+    return value * PREFIXES[prefix]
+
+def trace_drop_v(current_a, resistance_ohm):
+    return current_a * resistance_ohm
+
+def trace_loss_w(current_a, resistance_ohm):
+    return current_a * current_a * resistance_ohm
+
+def rc_time_constant_s(resistance_ohm, capacitance_f):
+    return resistance_ohm * capacitance_f
+
+def shaft_power_w(torque_nm, omega_rad_s):
+    return torque_nm * omega_rad_s
+
+def loop_period_us(frequency_hz):
+    return 1e6 / frequency_hz
+
+r_ohm = prefix_scale(12.0, "m")
+v_drop = trace_drop_v(15.0, r_ohm)
+p_loss = trace_loss_w(15.0, r_ohm)
+omega = rpm_to_rad_s(2400.0)
+tau_rc = rc_time_constant_s(prefix_scale(10.0, "k"), prefix_scale(100.0, "n"))
+
+assert abs(r_ohm - 0.012) <= 1e-15
+assert abs(v_drop - 0.18) <= 1e-6
+assert abs(p_loss - 2.70) <= 1e-6
+assert abs(omega - 80.0 * math.pi) <= 1e-9
+assert abs(shaft_power_w(0.45, omega) - 113.0973355) <= 1e-6
+assert abs(tau_rc - 1.0e-3) <= 1e-12
+assert abs(loop_period_us(25000.0) - 40.0) <= 1e-9
+
+print("R=%.4f ohm | V_drop=%.2f V | P_loss=%.2f W | omega=%.4f rad/s | tau_RC=%.2f ms | T_s=%.1f us"
+      % (r_ohm, v_drop, p_loss, omega, tau_rc * 1e3, loop_period_us(25000.0)))
+```
+
+Printed: `R=0.0120 ohm | V_drop=0.18 V | P_loss=2.70 W | omega=251.3274 rad/s | tau_RC=1.00 ms | T_s=40.0 us`.
+
 ### Break it on purpose
 Inject the `## 8. Common mistakes` row about multiplying torque straight by RPM, keeping $\tau = 0.45\text{ N}\cdot\text{m}$ and $N = 2400\text{ RPM}$:
 - **Inject:** compute `power_w = tau_nm * 2400.0`, feeding RPM into $P = \tau\omega$ in place of the converted $\omega$.

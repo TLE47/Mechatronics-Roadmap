@@ -125,6 +125,133 @@ The transfer suite runs **the plant this course already built**: a Bessel corner
   - **Core Concepts to Review First:** 6-layer planar loop inductance $L_{\text{loop}} = \mu_0 \frac{h}{w}\ell$, SAR ADC charge-bucket acquisition settling $t_{\text{acq}} = \ln(2^{N+1})R_{\text{filt}}C_{\text{sh}}$, and Cauer RC thermal network steady-state junction rise in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [TI SBAA586 (Charge-Bucket Circuit Design for SAR ADCs)](https://www.ti.com/lit/pdf/sbaa586), [Infineon MOSFET Power Losses Application Note](https://www.infineon.com/dgdl/Infineon-ApplicationNote_MOSFET_Power_Losses_Calculation_Using_the_DataSheet_Parameters-AN-v01_00-EN.pdf?fileId=db3a30431add1d95011ae08005a90294), and [Track 01 Tier 3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-3-advanced--production).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import math
+
+MU0 = 4.0 * math.pi * 1e-7  # H/m
+
+
+def loop_inductance_nh(h_m, w_m, length_m, mu0=MU0):
+    """The parallel-plate commutation loop inductance of a plane pair, in nH."""
+    # TODO 1: height OVER width, then the length, then 1e9 for the nano prefix
+    ...
+
+
+def flux_cancelled_nh(l1_nh, l2_nh, m_nh):
+    """The net loop inductance when supply and return carry anti-parallel currents."""
+    # TODO 2: the mutual term is counted TWICE and SUBTRACTED
+    ...
+
+
+def turn_off_peak_v(v_bus, l_loop_nh, di_dt_a_per_ns):
+    """The peak drain-source voltage at turn-off."""
+    # TODO 3: nH times A/ns is already volts - no 1e-9 or 1e9 anywhere here
+    ...
+
+
+def bessel_group_delay_us(f0_hz):
+    """The low-frequency group delay of a 2nd-order Bessel filter, in microseconds."""
+    # TODO 4: the 2 pi and the micro prefix are both easy to drop
+    ...
+
+
+def bessel_q():
+    """The Q of a 2nd-order Bessel filter."""
+    # TODO 5: 1/sqrt(3), about 0.577 - not 1/sqrt(2)
+    ...
+
+
+def charge_droop_fraction(c_sample_f, c_filt_f):
+    """The t = 0+ droop fraction when the SAR switch closes."""
+    # TODO 6: the bucket and the sampling capacitor SHARE the step
+    ...
+
+
+def charge_settling_lsb(bits, c_sample_f, c_filt_f, r_filt_ohm, t_acq_s):
+    """The residual settling error at the end of acquisition, in LSBs."""
+    # TODO 7: 2**bits times the droop, decayed by exp(-t / (R_filt * C_filt))
+    ...
+
+
+def cauer_junction_c(t_amb_c, p_loss_w, stages, t_s):
+    """The junction temperature of a Cauer ladder under a rectangular pulse."""
+    # TODO 8: each stage is R (1 - exp(-t / tau)); add the rises, then add T_amb
+    ...
+
+
+print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **The droop is a capacitor divider, not a settling result.** $C_{\text{sample}} = 6.0\text{ pF}$ and $C_{\text{filt}} = 114.0\text{ pF}$ share one step, so the fraction is $6/(114+6) = 0.050$; no resistor appears until the next part.
+2. **The time constant uses the bucket, not the sum.** $\tau = R_{\text{filt}} C_{\text{filt}} = 50.0 \times 114\text{ pF} = 5.70\text{ ns}$, so $t_{\text{acq}} = 34.2\text{ ns}$ is exactly six time constants and the exponential is $e^{-6.0} = 0.00247875$.
+3. **The error is in LSBs of the full scale, not volts.** Multiply the droop by $2^{12} = 4096$ first, then by the exponential: $4096 \times 0.050 \times 0.00247875 = 0.5076\text{ LSB}$, just over the half-LSB budget.
+4. **The fix the numbers point at.** Solving $4096 \times 0.050 \times e^{-t/\tau} = 0.5$ gives $t = 5.70\text{ ns} \times \ln(409.6) = 34.29\text{ ns}$, which is why the module recommends a $35\text{ ns}$ window ($0.4412\text{ LSB}$).
+
+### Full Solution
+```python
+import math
+
+MU0 = 4.0 * math.pi * 1e-7  # H/m
+
+
+def loop_inductance_nh(h_m, w_m, length_m, mu0=MU0):
+    return mu0 * (h_m / w_m) * length_m * 1e9
+
+
+def flux_cancelled_nh(l1_nh, l2_nh, m_nh):
+    return l1_nh + l2_nh - 2.0 * m_nh
+
+
+def turn_off_peak_v(v_bus, l_loop_nh, di_dt_a_per_ns):
+    return v_bus + l_loop_nh * di_dt_a_per_ns
+
+
+def bessel_group_delay_us(f0_hz):
+    return 1e6 / (2.0 * math.pi * f0_hz)
+
+
+def bessel_q():
+    return 1.0 / math.sqrt(3.0)
+
+
+def charge_droop_fraction(c_sample_f, c_filt_f):
+    return c_sample_f / (c_filt_f + c_sample_f)
+
+
+def charge_settling_lsb(bits, c_sample_f, c_filt_f, r_filt_ohm, t_acq_s):
+    tau_s = r_filt_ohm * c_filt_f
+    return (2.0 ** bits) * charge_droop_fraction(c_sample_f, c_filt_f) * math.exp(-t_acq_s / tau_s)
+
+
+def cauer_junction_c(t_amb_c, p_loss_w, stages, t_s):
+    return t_amb_c + p_loss_w * sum(r * (1.0 - math.exp(-t_s / tau)) for r, tau in stages)
+
+
+droop = charge_droop_fraction(6.0e-12, 114.0e-12)
+lsb_34 = charge_settling_lsb(12, 6.0e-12, 114.0e-12, 50.0, 34.2e-9)
+lsb_35 = charge_settling_lsb(12, 6.0e-12, 114.0e-12, 50.0, 35.0e-9)
+
+assert math.isclose(droop, 0.050, abs_tol=1e-12)
+assert math.isclose(lsb_34, 0.5076, abs_tol=5e-4)
+assert math.isclose(lsb_35, 0.4412, abs_tol=5e-4)
+assert math.isclose(turn_off_peak_v(48.0, 0.15708, 3.0), 48.47124, abs_tol=1e-4)
+assert math.isclose(flux_cancelled_nh(6.0, 6.0, 5.2), 1.6, abs_tol=1e-12)
+assert math.isclose(bessel_group_delay_us(250_000.0), 0.63661977, abs_tol=1e-6)
+assert math.isclose(bessel_q(), 0.57735027, abs_tol=1e-6)
+
+t_j = cauer_junction_c(25.0, 120.0, ((0.45, 0.005), (2.5, 30.0)), 0.010)
+assert math.isclose(t_j, 71.79, abs_tol=0.02)
+
+print(f"droop={droop:.4f} | residual at 34.2 ns={lsb_34:.4f} LSB | at 35 ns={lsb_35:.4f} LSB")
+print(f"L_6L={loop_inductance_nh(1e-4, 0.012, 0.015):.3f} nH | V_peak={turn_off_peak_v(48.0, 0.15708, 3.0):.2f} V | "
+      f"tau_g={bessel_group_delay_us(250_000.0):.4f} us | T_J={t_j:.1f} C")
+```
+
+Printed: `droop=0.0500 | residual at 34.2 ns=0.5076 LSB | at 35 ns=0.4412 LSB`, then `L_6L=0.157 nH | V_peak=48.47 V | tau_g=0.6366 us | T_J=71.8 C`.
+
 ### Break it on purpose
 Inject one realistic bring-up fault into this module's own exercise (12-bit SAR ADC, $C_{\text{sample}} = 6.0\text{ pF}$, $C_{\text{filt}} = 114.0\text{ pF}$, $R_{\text{filt}} = 50.0\ \Omega$, $t_{\text{acq}} = 34.2\text{ ns}$) and diagnose it from the symptom alone:
 - **Inject:** a leftover current-limiting resistor stays in series with the ADC pin, so $R_{\text{filt}} = 10.0\text{ k}\Omega$ instead of $50.0\ \Omega$; both capacitors are untouched (the $10\text{ k}\Omega$ series resistor row in `## 8. Common mistakes`, made on purpose).

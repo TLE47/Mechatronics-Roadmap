@@ -94,6 +94,89 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00b/starter.py \
   - **Python & NumPy Study Links:** [Python Tutorial §3.1.3 (Lists)](https://docs.python.org/3/tutorial/introduction.html#lists), [NumPy Absolute Beginners Tutorial (`numpy.org`)](https://numpy.org/doc/stable/user/absolute_beginners.html), [Matplotlib Pyplot Tutorial (`matplotlib.org`)](https://matplotlib.org/stable/tutorials/pyplot.html), and [Pro Git Book Ch. 1–2 (`git-scm.com`)](https://git-scm.com/book/en/v2).
   - **Curriculum Reference:** [Track 00 Tier 1 (`00-foundations/README.md`)](../00-foundations/README.md#tier-1-beginner--intuitive) and [Open-Source Toolchains (`resources/open-source-toolchains.md`)](../resources/open-source-toolchains.md).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+import math
+
+def timestamps(t0_s, dt_s, n):
+    """t_i = t0 + i*dt for i = 0 .. n-1."""
+    # TODO 1: start at i = 0, so n samples end at index n - 1
+    ...
+
+def scaled_readings(values, config):
+    """y_i = slope * x_i + offset, both constants looked up by name."""
+    # TODO 2: read config["slope"] and config["offset"], then m*x + b
+    ...
+
+def mean_of(values):
+    """The sample mean."""
+    # TODO 3: sum the values, then divide by how many there are
+    ...
+
+def errors(target, measured):
+    """e_i = target_i - measured_i, paired by zip()."""
+    # TODO 4: target minus measured, sample by sample, same length
+    ...
+
+def rmse(target, measured):
+    """sqrt(mean(e_i^2))."""
+    # TODO 5: SQUARE each error before averaging - signed errors cancel to 0.0
+    ...
+
+print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **Zero-index, so `n` samples stop one short of `n`.** `timestamps(0.0, 0.1, 5)` must end at `0.4`, not `0.5`: `range(n)` gives `i = 0..n-1`. The Skip test's $t_{500}$ is `0.0 + 500 * 0.002 = 1.0 s`.
+2. **The dictionary is the calibration.** Both constants arrive by name in `config`; a `KeyError` on `"Kp"` when the key is `"kp"` is the module's own common-mistake row, so read `config["slope"]` and `config["offset"]` exactly.
+3. **Order the pairs before you subtract.** `zip(target, measured)` yields `(1.0, 0.9)`, then `(2.0, 2.1)`; target minus measured gives `+0.1, -0.1, +0.2, -0.2` rad. If your errors come back all positive, you zipped the lists in the other order.
+4. **Square before you average.** `sum(err) / 4` is exactly `0.0` here - the signs cancel - while `sum(e*e for e in err) / 4` is `0.025`, and `math.sqrt` of that is `0.1581139` rad.
+
+### Full Solution
+```python
+import math
+
+def timestamps(t0_s, dt_s, n):
+    return [t0_s + i * dt_s for i in range(n)]
+
+def scaled_readings(values, config):
+    return [config["slope"] * value + config["offset"] for value in values]
+
+def mean_of(values):
+    return sum(values) / len(values)
+
+def peak_to_peak(values):
+    return max(values) - min(values)
+
+def errors(target, measured):
+    if len(target) != len(measured):
+        raise ValueError("target and measured must hold the same number of samples")
+    return [want - got for want, got in zip(target, measured)]
+
+def rmse(target, measured):
+    per_sample = errors(target, measured)
+    return math.sqrt(sum(error * error for error in per_sample) / len(per_sample))
+
+config = {"slope": 3.0, "offset": 0.5}
+t_s = timestamps(0.0, 0.1, 5)
+y_v = scaled_readings(t_s, config)
+target = [1.0, 2.0, 3.0, 4.0]
+measured = [0.9, 2.1, 2.8, 4.2]
+err = errors(target, measured)
+
+assert len(y_v) == 5 and abs(y_v[-1] - 1.7) <= 1e-9
+assert abs(mean_of(y_v) - 1.10) <= 1e-9
+assert abs(peak_to_peak(y_v) - 1.20) <= 1e-9
+assert abs(sum(err) / len(err) - 0.0) <= 1e-12
+assert abs(rmse(target, measured) - 0.1581139) <= 1e-6
+
+print("mean=%.2f V | span=%.2f V | signed mean=%.1f rad | RMSE=%.7f rad"
+      % (mean_of(y_v), peak_to_peak(y_v), sum(err) / len(err), rmse(target, measured)))
+```
+
+Printed: `mean=1.10 V | span=1.20 V | signed mean=0.0 rad | RMSE=0.1581139 rad`.
+
 ### Break it on purpose
 Inject the error the exercise hint warns about, on the exercise's own lists `target = [1.0, 2.0, 3.0, 4.0]` and `measured = [0.9, 2.1, 2.8, 4.2]`:
 - **Inject:** replace `sum(e * e for e in err) / len(err)` with `sum(err) / len(err)` — average the signed errors, then take the square root as if they had been squared.

@@ -105,6 +105,151 @@ EXERCISE_TARGET=exercises/01-electronics.T1.01d/starter.py \
   - **Core Concepts to Review First:** Capacitor current $I = C\frac{dV}{dt}$, RC time constant $\tau = RC$ and $-3\text{ dB}$ cutoff $f_c = \frac{1}{2\pi RC}$, and inductor voltage spike $V_L = L\frac{dI}{dt}$ with flyback clamping in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Falstad Interactive Circuit Simulator (`falstad.com/circuit`)](https://www.falstad.com/circuit/), [All About Circuits RC & L/R Time Constants](https://www.allaboutcircuits.com/textbook/direct-current/), and [Track 01 §1.1–1.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+The exercise is one droop budget: how much charge the transient moves, divided by how much sag you are willing to accept. Fill the seven TODOs, then compare against the full solution below.
+
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+import math
+
+import mechalab_plant as plant  # noqa: F401  (the shared arm, as every graded package here imports it)
+
+
+def rc_time_constant(r_ohm, c_farad):
+    """tau = R C, in seconds."""
+    # TODO 1: multiply resistance by capacitance; the farads are already farads
+    ...
+
+
+def rc_voltage(t_s, v_in, r_ohm, c_farad):
+    """V_C(t) for a capacitor charging from zero."""
+    # TODO 2: 1 - exp(-t / tau) - a straight ramp is the classic wrong answer
+    ...
+
+
+def rc_cutoff_hz(r_ohm, c_farad):
+    """fc = 1 / (2 pi R C): the -3 dB corner."""
+    # TODO 3: the 2 pi belongs in the denominator, with tau = R C
+    ...
+
+
+def bulk_capacitance_f(delta_i, delta_t, delta_v):
+    """C >= delta_I * delta_t / delta_V, in farads."""
+    # TODO 4: the transient TIME is in the numerator, not the droop budget
+    ...
+
+
+def capacitor_energy(v_cap, c_farad):
+    """E_C = 1/2 C V^2, in joules."""
+    # TODO 5: the half, and the voltage squared
+    ...
+
+
+def inductor_energy(inductance_h, current):
+    """E_L = 1/2 L I^2, in joules."""
+    # TODO 6: the half, and the current squared
+    ...
+
+
+def flyback_voltage(inductance_h, current, dt_open_s):
+    """The unclamped spike when the coil's current is interrupted."""
+    # TODO 7: L * I / dt, with dt in SECONDS - 0.5 us is 0.5e-6, not 0.5
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **A capacitor is charge per volt.** The transient moves $Q = \Delta I\,\Delta t = 3.0 \times 20\ \mu\text{s} = 60\ \mu\text{C}$; spreading that over a $0.25\text{ V}$ budget needs $60\ \mu\text{C} / 0.25\text{ V} = 240\ \mu\text{F}$. Dropping $\Delta t$ leaves $12\text{ F}$, which no parts bin has.
+2. **Convert once, at the end.** $240\ \mu\text{F} = 240 \times 10^{-6} = 0.00024\text{ F}$; do the arithmetic in farads and multiply by $10^6$ only for the printed answer.
+3. **Droop falls as $1/C$.** With the same transient, $100\ \mu\text{F}$ sags $0.60\text{ V}$ ($2.4\times$ the budget) and $470\ \mu\text{F}$ sags $0.128\text{ V}$ — so the fix is a bigger reservoir, not a slower transient.
+4. **The two energies both carry the $\tfrac12$, and the spike is a unit trap.** $E_C = \tfrac12 C V^2$, $E_L = \tfrac12 L I^2$, and $V_L = L\Delta I/\Delta t$ with $\Delta t = 0.5\ \mu\text{s} = 0.5 \times 10^{-6}\text{ s}$; entering $0.5$ makes the $12\text{ kV}$ spike read $12\text{ V}$.
+
+### Full Solution
+```python
+import math
+
+import mechalab_plant as plant  # noqa: F401  (kept so the submission imports what the module uses)
+
+
+def rc_time_constant(r_ohm, c_farad):
+    if r_ohm <= 0.0 or c_farad <= 0.0:
+        raise ValueError("a time constant needs a positive resistance and capacitance")
+    return r_ohm * c_farad
+
+
+def rc_voltage(t_s, v_in, r_ohm, c_farad):
+    if t_s < 0.0:
+        raise ValueError("time does not run backwards")
+    return v_in * (1.0 - math.exp(-t_s / rc_time_constant(r_ohm, c_farad)))
+
+
+def rc_cutoff_hz(r_ohm, c_farad):
+    return 1.0 / (2.0 * math.pi * rc_time_constant(r_ohm, c_farad))
+
+
+def bulk_capacitance_f(delta_i, delta_t, delta_v):
+    if delta_v <= 0.0:
+        raise ValueError("a droop budget must be positive")
+    if delta_t < 0.0:
+        raise ValueError("the transient duration cannot be negative")
+    return delta_i * delta_t / delta_v
+
+
+def capacitor_energy(v_cap, c_farad):
+    if c_farad < 0.0:
+        raise ValueError("a capacitance cannot be negative")
+    return 0.5 * c_farad * v_cap * v_cap
+
+
+def inductor_energy(inductance_h, current):
+    if inductance_h < 0.0:
+        raise ValueError("an inductance cannot be negative")
+    return 0.5 * inductance_h * current * current
+
+
+def flyback_voltage(inductance_h, current, dt_open_s):
+    if dt_open_s <= 0.0:
+        raise ValueError("interrupting a current takes a positive time")
+    if inductance_h < 0.0:
+        raise ValueError("an inductance cannot be negative")
+    return inductance_h * current / dt_open_s
+
+
+# The exercise: 3.0 A for 20 us, allowed to sag 0.25 V.
+delta_i, delta_t, delta_v = 3.0, 20e-6, 0.25
+c_min_f = bulk_capacitance_f(delta_i, delta_t, delta_v)
+c_min_uf = c_min_f * 1e6
+
+# The same transient through the parts-bin alternatives: droop = Q / C, so it falls as 1/C.
+def droop(c_farad):
+    return delta_i * delta_t / c_farad
+
+
+# And the laws either side of it: the corner, and the energy both parts store.
+tau = rc_time_constant(1_000.0, 1e-6)
+fc = rc_cutoff_hz(1_000.0, 1e-6)
+e_cap = capacitor_energy(12.0, 240e-6)
+e_coil = inductor_energy(2e-3, 3.0)
+v_spike = flyback_voltage(2e-3, 3.0, 0.5e-6)
+
+assert math.isclose(c_min_f, 240e-6, rel_tol=1e-12)
+assert math.isclose(c_min_uf, 240.0, rel_tol=1e-12)
+assert math.isclose(droop(100e-6), 0.60, rel_tol=1e-9)
+assert math.isclose(droop(470e-6), 0.127660, rel_tol=1e-5)
+assert math.isclose(tau, 1e-3, rel_tol=1e-12)
+assert math.isclose(fc, 159.154943, rel_tol=1e-6)
+assert math.isclose(rc_voltage(tau, 3.3, 1_000.0, 1e-6), 3.3 * (1.0 - math.exp(-1.0)), rel_tol=1e-12)
+assert math.isclose(e_cap, 0.01728, rel_tol=1e-12) and math.isclose(e_coil, 0.009, rel_tol=1e-12)
+assert math.isclose(v_spike, 12_000.0, rel_tol=1e-12)
+
+print(f"C_min={c_min_uf:.1f} uF; 100 uF droops {droop(100e-6):.3f} V, 470 uF droops "
+      f"{droop(470e-6):.3f} V; tau={tau * 1e3:.3f} ms, fc={fc:.2f} Hz")
+```
+
+Printed: `C_min=240.0 uF; 100 uF droops 0.600 V, 470 uF droops 0.128 V; tau=1.000 ms, fc=159.15 Hz`
+
 ### Break it on purpose
 Swap the bulk reservoir for the wrong part and diagnose the droop from the measurement alone:
 - **Inject:** build the same $12.0\text{ V}$ bus but fit the $100\ \mu\text{F}$ electrolytic you had in the parts bin instead of the $240\ \mu\text{F}$ the droop budget demanded, leaving $\Delta I = 3.0\text{ A}$ and $\Delta t = 20\ \mu\text{s}$ unchanged.

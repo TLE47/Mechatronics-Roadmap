@@ -99,6 +99,136 @@ The tests are behavioural: the projection must not grow when the lever gets long
   - **Dot/Cross Product & Basis Change Study Links:** [3Blue1Brown: Dot Products and Cross Products (`3blue1brown.com`)](https://www.3blue1brown.com/lessons/cross-products) and [Lynch & Park *Modern Robotics* Ch. 3 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics).
   - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) and [Track 02 Tier 2 (`02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied`)](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then compare against the numbers in the full solution ---
+import math
+
+
+def dot3(a, b):
+    """The 3D dot product."""
+    # TODO 1: a_x b_x + a_y b_y + a_z b_z
+    ...
+
+
+def cross3(a, b):
+    """The 3D cross product a x b, right-handed."""
+    # TODO 2: three components, each a 2x2 difference
+    ...
+
+
+def axial_force(force, lever):
+    """The component of `force` along the lever arm, in newtons."""
+    # TODO 3: project onto the lever's UNIT direction - a longer lever must not multiply the force
+    ...
+
+
+def moment(lever, force):
+    """The moment vector r x F in N*m."""
+    # TODO 4: order matters - r x F is not F x r
+    ...
+
+
+def det2(b1, b2):
+    """Determinant of the matrix whose columns are b1 = [a, c] and b2 = [b, d]."""
+    # TODO 5: ad - bc; zero means the two directions are collinear
+    ...
+
+
+def coordinates_in_basis(vector, b1, b2):
+    """(c1, c2) with c1*b1 + c2*b2 == vector; ValueError when the basis is singular."""
+    # TODO 6: Cramer's rule, and refuse |det| < 1e-12 instead of returning inf or nan
+    ...
+
+
+def in_basis(vector, b1, b2):
+    """Rebuild the vector from its coordinates."""
+    # TODO 7: c1*b1 + c2*b2
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+**Expected numbers (the answer):** $\vec{r} = [0.25, 0.00, 0.10]^T\text{ m}$ and $\vec{F} = [10.0, 30.0, -20.0]^T\text{ N}$ give $\vec{\tau} = [-3.0, 6.0, 7.5]^T\text{ N}\cdot\text{m}$ with $\vec{\tau}\cdot\vec{F} = 0.0$; the worked projection is $-16.0\text{ N}$; $\det([3.0, 1.5],[2.0, 4.0]) = 9.0$.
+
+### Hint ladder
+1. **The cross product is three copies of one $2\times2$ determinant.** $\tau_x = r_yF_z - r_zF_y$, $\tau_y = r_zF_x - r_xF_z$, $\tau_z = r_xF_y - r_yF_x$. The middle term's sign is the one people flip: with $r_x = 0.25$, $r_z = 0.10$ and $F_z = -20.0$ it is $0.10(10.0) - 0.25(-20.0) = +6.0$, not $-6.0$.
+2. **Normalise before projecting, or length leaks into force.** $\lVert r\rVert = \sqrt{0.30^2 + 0.40^2} = 0.50$, so the unit lever is $(0.6, 0.8, 0)$ and $\vec{F}\cdot\hat{r} = 0(-0.6) + (-20)(0.8) + 15(0) = -16.0\text{ N}$. Projecting on the raw lever gives $-12.8$, and doubling the lever to $(3.0, 4.0, 0)$ would double it again - a wrench whose force grows with the handle.
+3. **A basis is invertible exactly when its determinant is not zero.** For columns $b_1 = [a, c]$ and $b_2 = [b, d]$, $\det = ad - bc$ is the signed area they span; $b_1 = [1,2]$, $b_2 = [2,4]$ gives $4 - 4 = 0$ and the pair cannot reach every vector, so `coordinates_in_basis` must raise rather than divide by roughly zero.
+4. **Check the round trip, not the arithmetic.** Rebuilding $c_1b_1 + c_2b_2$ from your own coordinates and comparing with the input vector catches a swapped Cramer numerator faster than re-deriving it: for $b_1 = [2,0]$, $b_2 = [1,1]$ and $v = [5,3]$ the answers are $c_1 = 1$, $c_2 = 3$.
+
+### Full Solution
+```python
+import math
+
+
+def dot3(a, b):
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+
+def cross3(a, b):
+    return [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
+
+
+def axial_force(force, lever):
+    length = math.sqrt(dot3(lever, lever))
+    if length == 0.0:
+        raise ValueError("a zero-length lever has no direction to project onto")
+    return dot3(force, [component / length for component in lever])
+
+
+def moment(lever, force):
+    return cross3(lever, force)
+
+
+def det2(b1, b2):
+    return b1[0] * b2[1] - b2[0] * b1[1]
+
+
+def coordinates_in_basis(vector, b1, b2):
+    det = det2(b1, b2)
+    if abs(det) < 1e-12:
+        raise ValueError("singular basis: det = %.3e" % det)
+    return ((vector[0] * b2[1] - b2[0] * vector[1]) / det,
+            (b1[0] * vector[1] - vector[0] * b1[1]) / det)
+
+
+def in_basis(vector, b1, b2):
+    c1, c2 = coordinates_in_basis(vector, b1, b2)
+    return [c1 * b1[0] + c2 * b2[0], c1 * b1[1] + c2 * b2[1]]
+
+
+# The exercise: the lever arm and payload force from section 5.
+r = [0.25, 0.00, 0.10]
+F = [10.0, 30.0, -20.0]
+tau = moment(r, F)
+
+assert all(math.isclose(got, want, abs_tol=1e-9) for got, want in zip(tau, [-3.0, 6.0, 7.5]))
+assert math.isclose(dot3(tau, F), 0.0, abs_tol=1e-9)
+assert math.isclose(axial_force([0.0, -20.0, 15.0], [0.30, 0.40, 0.00]), -16.0, abs_tol=1e-9)
+assert math.isclose(det2([3.0, 1.5], [2.0, 4.0]), 9.0, abs_tol=1e-12)
+assert math.isclose(det2([1.0, 2.0], [2.0, 4.0]), 0.0, abs_tol=1e-12)
+rebuild = in_basis([5.0, 3.0], [2.0, 0.0], [1.0, 1.0])
+assert all(math.isclose(got, want, abs_tol=1e-12) for got, want in zip(rebuild, [5.0, 3.0]))
+try:
+    coordinates_in_basis([1.0, 1.0], [1.0, 2.0], [2.0, 4.0])
+except ValueError:
+    pass
+else:
+    raise AssertionError("a collinear basis must be refused, not inverted")
+
+print("tau=(%.1f, %.1f, %.1f) N*m | tau.F=%.1f | F_axial=%.1f N | det=%.1f"
+      % (tau[0], tau[1], tau[2], dot3(tau, F), axial_force([0.0, -20.0, 15.0], [0.30, 0.40, 0.00]),
+         det2([3.0, 1.5], [2.0, 4.0])))
+```
+
+Printed: `tau=(-3.0, 6.0, 7.5) N*m | tau.F=0.0 | F_axial=-16.0 N | det=9.0` - the moment, the orthogonality check that a sign flip survives, the projection that must not scale with the lever, and the determinant that decides invertibility.
+
 ### Break it on purpose
 Inject the anti-commutation slip from the `## 8. Common mistakes` table and diagnose it without looking at the code, keeping $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ and $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$:
 - **Inject:** swap the operands, so the moment is computed as $\vec{F}\times\vec{r}$ instead of $\vec{r}\times\vec{F}$.

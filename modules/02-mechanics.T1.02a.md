@@ -91,6 +91,116 @@ EXERCISE_TARGET=exercises/02-mechanics.T1.02a/starter.py \
   - **Core Concepts to Review First:** Lever torque $\tau = r F \sin\theta$, static equilibrium ($\sum F = 0, \sum \tau = 0$), gear ratio torque/speed scaling and reflected inertia $J_{\text{refl}} = N^2 J_{\text{motor}}$, and 2-link planar FK/IK in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 3 & Ch. 6 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 02 Tier 1 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive).
 
+### Starter code
+```python
+# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
+import math
+
+
+def gravity_torque(theta_rad, m_link, l_com, m_tip=0.0, l_total=0.0, g=9.81):
+    """The shoulder torque that holds a link plus a tip payload at angle theta."""
+    # TODO 1: the lever arm is the HORIZONTAL distance, so the angle factor is a cosine
+    ...
+
+
+def balance_force(force_1, x_1, x_2):
+    """The upward force at x_2 that balances F_1 at x_1 about the pivot."""
+    # TODO 2: a longer lever needs less force, so divide by x_2
+    ...
+
+
+def gear_ratio(z_driven, z_driver):
+    """The reduction ratio N of two pulleys."""
+    # TODO 3: the DRIVEN pulley is on top of the fraction
+    ...
+
+
+def gear_output_speed(omega_motor, ratio):
+    """The joint speed behind a reducer."""
+    # TODO 4: a reducer divides the speed by N
+    ...
+
+
+def gear_output_torque(tau_motor, ratio, eta=1.0):
+    """The joint torque behind a reducer."""
+    # TODO 5: eta * N * tau_motor - the efficiency is part of the lever
+    ...
+
+
+def mechanical_power(torque, omega):
+    """P = tau * omega."""
+    # TODO 6: multiply them
+    ...
+
+
+def reflected_inertia(j_motor, ratio):
+    """The motor inertia as the joint feels it."""
+    # TODO 7: the ratio is SQUARED
+    ...
+
+
+print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the full solution")
+```
+
+### Hint ladder
+1. **The ratio comes from the teeth, in the right order.** The joint pulley is the driven one, so $N = 72/16 = 4.5$; writing $16/72$ gives $0.222$ and every downstream number inherits it.
+2. **A reducer slows and strengthens.** $\omega_{\text{joint}} = 90/4.5 = 20.0\text{ rad/s}$ and $\tau_{\text{joint}} = 0.95 \times 4.5 \times 0.40 = 1.71\text{ N}\cdot\text{m}$ — speed divided by $N$, torque multiplied by $N$.
+3. **The efficiency belongs on the torque, not the speed.** $\eta = 0.95$ costs $5\%$ of the torque ($1.80\text{ N}\cdot\text{m}$ without it) and none of the speed.
+4. **Power is the check that the two sides agree.** $\tau_{\text{joint}}\omega_{\text{joint}} = 1.71 \times 20.0 = 34.2\text{ W}$ equals $\eta \tau_{\text{motor}}\omega_{\text{motor}} = 0.95 \times 0.40 \times 90 = 34.2\text{ W}$; if the two differ, the speed or the torque was scaled the wrong way.
+
+### Full Solution
+```python
+import math
+
+
+def gravity_torque(theta_rad, m_link, l_com, m_tip=0.0, l_total=0.0, g=9.81):
+    return (m_link * l_com + m_tip * l_total) * g * math.cos(theta_rad)
+
+
+def balance_force(force_1, x_1, x_2):
+    return force_1 * x_1 / x_2
+
+
+def gear_ratio(z_driven, z_driver):
+    return z_driven / z_driver
+
+
+def gear_output_speed(omega_motor, ratio):
+    return omega_motor / ratio
+
+
+def gear_output_torque(tau_motor, ratio, eta=1.0):
+    return eta * ratio * tau_motor
+
+
+def mechanical_power(torque, omega):
+    return torque * omega
+
+
+def reflected_inertia(j_motor, ratio):
+    return ratio * ratio * j_motor
+
+
+ratio = gear_ratio(72, 16)
+omega_joint = gear_output_speed(90.0, ratio)
+tau_joint = gear_output_torque(0.40, ratio, 0.95)
+p_joint = mechanical_power(tau_joint, omega_joint)
+p_motor = 0.95 * mechanical_power(0.40, 90.0)
+
+assert math.isclose(ratio, 4.5, abs_tol=1e-12)
+assert math.isclose(omega_joint, 20.0, abs_tol=1e-12)
+assert math.isclose(tau_joint, 1.71, abs_tol=1e-12)
+assert math.isclose(p_joint, p_motor, abs_tol=1e-12)
+assert math.isclose(gravity_torque(0.0, 0.40, 0.10, 0.50, 0.20), 1.3734, abs_tol=1e-12)
+assert math.isclose(reflected_inertia(0.008, 4.0), 0.128, abs_tol=1e-12)
+assert math.isclose(balance_force(30.0, 0.20, 0.10), 60.0, abs_tol=1e-12)
+
+print(f"N={ratio:.2f} | omega_joint={omega_joint:.2f} rad/s | tau_joint={tau_joint:.4f} N*m")
+print(f"P_joint={p_joint:.2f} W | P_motor*eta={p_motor:.2f} W | J_reflected(4:1)={reflected_inertia(0.008, 4.0):.3f} kg*m^2")
+```
+
+Printed: `N=4.50 | omega_joint=20.00 rad/s | tau_joint=1.7100 N*m`, then `P_joint=34.20 W | P_motor*eta=34.20 W | J_reflected(4:1)=0.128 kg*m^2`.
+
 ### Break it on purpose
 Inject the `gravity_uses_sine` fault the graded package names, and diagnose it from the two poses in the worked example:
 - **Inject:** replace `math.cos(theta_rad)` with `math.sin(theta_rad)` inside `arm_gravity_torque`, leaving the masses, the lever arms and $g = 9.81\text{ m/s}^2$ untouched.
