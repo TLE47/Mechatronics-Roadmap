@@ -18,6 +18,7 @@ est_hours: 3.5
 hardware_required: false
 safety_level: none
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -78,6 +79,16 @@ Midpoint: q=0.60 rad, qd_max=0.90 rad/s, deflection=0.10 rad
 Compute the minimum move duration $T_{\min}$ in seconds ($\text{s}$) required for a rest-to-rest cubic trajectory covering $\Delta q = 2.0\text{ rad}$ if the actuator's maximum speed is $\dot{q}_{\max} = 3.0\text{ rad/s}$ ($\dot{q}_{\max} = \frac{1.5\Delta q}{T_{\min}}$). Verify $T_{\min} = \frac{1.5 \times 2.0}{3.0} = 1.0\text{ s}$ and check that `cubic_rest_to_rest(0.5, 0.0, 2.0, 1.0)[1]` equals `3.0` $\text{rad/s}$.
 - **If your result differs:** Recall that a cubic rest-to-rest profile has peak velocity $1.5\times$ the average velocity ($\frac{1.5\Delta q}{T}$, not $\frac{\Delta q}{T}$) because it spends the first and last halves accelerating and decelerating.
 
+### Graded package - the moving ghost cab and the spring
+[`exercises/06-robotics.T1.06a/`](../exercises/06-robotics.T1.06a/) turns this section into a test. `starter.py` holds seven holes: `cubic_rest_to_rest` (the clamped cubic, held still past $T$), `cubic_coefficients`, `peak_velocity`, `min_duration_s`, `min_duration_for_acceleration`, `spring_damper_torque` and `compliance_deflection`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/06-robotics.T1.06a/starter.py \
+  python3 -m unittest discover -s exercises/06-robotics.T1.06a -p 'test_*.py'
+```
+
+**27 tests.** The cubic is checked at **all four** boundary conditions, at the midpoint, at $t > T$ (held still, not extrapolated) and across 101 samples for overshoot, so a parabola in $s$ fails on arrival speed; the coefficients are evaluated at three times and their endpoint derivatives must vanish; the peak is checked against $1.5\Delta q/T$; both duration limits are checked by substituting the duration back into the profile; the spring-damper is checked at the Gate test's numbers and with the damping acting only on velocity; and the compliance yield is checked against a stiffer spring. The transfer suite feeds the submission **the plant's own gains**: its spring-damper must equal `plant.pd_gravity_torque` at three states to $10^{-12}$, a cubic from the plant's current figure-8 pose must land on the next target with zero speed and a $1.5\Delta q/T$ peak, the $1\text{ kHz}$ step setpoint is shown to demand $1000\text{ rad/s}$ where the cubic peaks at $1.5$, and the yield must be the plant's static equilibrium $\tau/K_p$. Five planted faults - `cubic_s_squared_only`, `peak_is_average_speed`, `min_duration_uses_average`, `spring_damper_gain_swapped`, `deflection_times_stiffness` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Functions & Loops*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Cosine Gravity Projection*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Kinematics & Spring Energy*).
@@ -87,6 +98,8 @@ Compute the minimum move duration $T_{\min}$ in seconds ($\text{s}$) required fo
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`) to compare step setpoints against cubic, trapezoidal, and minimum-jerk profiles interactively.
+
+The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T1.06a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Step 1.7 (`06-robotics.T1.07`), `cubic_rest_to_rest(t, q0, qf, T)` runs at $1\text{ kHz}$ on the microcontroller to feed $(q_d(t), \dot{q}_d(t))$ into the joint PD + gravity compensation loop:
 ```text

@@ -56,6 +56,7 @@ const EXERCISE_IDS = [
   'EX.07-systems.T2.07a',
   'EX.07-systems.T3.06a',
   'EX.07-systems.T1.07a',
+  'EX.06-robotics.T1.06a',
 ];
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
 const MIME = {

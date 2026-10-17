@@ -28,7 +28,7 @@ flowchart LR
 | `03` | 3 | 70% | 47% | 75% | 17% | **56.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `04` | 7 | 59% | 43% | 75% | 7% | **51.1%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `05` | 3 | 70% | 47% | 75% | 17% | **56.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
-| `06` | 5 | 60% | 56% | 75% | 40% | **60.3%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
+| `06` | 5 | 60% | 60% | 75% | 50% | **63.0%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
 | `07` | 3 | 70% | 60% | 75% | 50% | **65.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `08` | 1 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 1 undeclared | `report` |
 
@@ -36,11 +36,11 @@ flowchart LR
 
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
-| Tier 1 | 16 | **52.8%** |
+| Tier 1 | 16 | **53.7%** |
 | Tier 2 | 18 | **62.2%** |
 | Tier 3 | 10 | **55.1%** |
 
-## Per module (44 modules, overall **57.2%**)
+## Per module (44 modules, overall **57.5%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -79,7 +79,7 @@ flowchart LR
 | `05-control.T1.05a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
 | `05-control.T2.05a` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
 | `05-control.T3.05a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
-| `06-robotics.T1.06a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
+| `06-robotics.T1.06a` | 1 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
 | `06-robotics.T2.06a` | 2 | 50% | 60% | 75% | 50% | **60.5%** | **undeclared** | 7 item(s) |
 | `06-robotics.T2.06b` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
 | `06-robotics.T3.06a` | 3 | 40% | 60% | 75% | 50% | **58.0%** | **undeclared** | 8 item(s) |
@@ -166,7 +166,7 @@ not demonstrated learner mastery.
 | `05-control.T1.05a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `05-control.T2.05a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T3.05a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `06-robotics.T1.06a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `06-robotics.T1.06a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06a` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06b` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T3.06a` | **58.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
@@ -186,16 +186,16 @@ test that names it. The tests the harness runs are the same ones CI runs.
 The plan asks for these too. No artifact exists for them yet, so they are listed rather than
 scored - each one is a piece of work, not a zero:
 
-- **Behavioural tests for the other 26 modules:** 18 exercise packages exist
+- **Behavioural tests for the other 25 modules:** 19 exercise packages exist
   (`00-foundations.T2.00a`-`T2.00f`, `02-mechanics.T2.02a`, `03-sensors.T2.03a`,
   `04-embedded.T2.04d`, `05-control.T2.05a`, `06-robotics.T2.06a`-`T2.06b` and
   `07-systems.T2.07a`), and they are the template. `INSTRUCTOR_TESTS` in
   `scripts/generate_python_lessons_data.py` covers the beginner lessons only, so the remaining
   bridge modules ship no graded exercise of their own and their rows read `-` in the
   Behaviour-graded column.
-- **Module exercises in the workbench:** each of those 18 packages is generated into the app
+- **Module exercises in the workbench:** each of those 19 packages is generated into the app
   as a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives all of them on the built
-  bundle, so the browser path is measured on 18 exercises, not assumed from one.
+  bundle, so the browser path is measured on 19 exercises, not assumed from one.
 - **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)
   with their stated assumptions, and a counterexample test where a claim is easy to get wrong.
 - **Transfer-task retention:** whether the Transfer task still passes 1-2 weeks later, and

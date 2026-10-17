@@ -1,0 +1,31 @@
+{
+  "id": "06-robotics.T1.06a",
+  "module": "modules/06-robotics.T1.06a.md",
+  "title": "Rest-to-rest cubic trajectory, actuator duration budget and the virtual spring-damper",
+  "requires": [
+    "cubic_rest_to_rest(t, q0, qf, T) -> (q, qd, qdd)",
+    "cubic_coefficients(q0, qf, T) -> (a0, a1, a2, a3)",
+    "peak_velocity(dq, T) -> rad/s",
+    "min_duration_s(dq, qd_max) -> s",
+    "min_duration_for_acceleration(dq, qdd_max) -> s",
+    "spring_damper_torque(q_d, q, dq_d, dq, kp, kd, tau_g=0.0) -> N*m",
+    "compliance_deflection(tau_ext, kp) -> rad"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "cubic_s_squared_only": ["test_behavior.CubicTests.test_the_midpoint"],
+    "peak_is_average_speed": ["test_behavior.SpeedAndDurationTests.test_the_peak_is_one_and_a_half_times_the_average"],
+    "min_duration_uses_average": ["test_behavior.SpeedAndDurationTests.test_the_exercise_minimum_duration"],
+    "spring_damper_gain_swapped": ["test_behavior.SpringDamperTests.test_the_gate_test_torque"],
+    "deflection_times_stiffness": ["test_behavior.ComplianceTests.test_the_worked_deflection"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.06-robotics.T1.06a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/06-robotics.T1.06a/starter.py python3 -m unittest discover -s exercises/06-robotics.T1.06a -p 'test_*.py'"
+  }
+}
