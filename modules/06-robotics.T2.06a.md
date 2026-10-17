@@ -126,6 +126,16 @@ p_in_base=[0.25, 0.15, 0.1], x_tf2=0.220 m, effort_cmd=1.70 N*m
 In the `tf2` tree above (`T_b_l1 = urdf_revolute_z((0, 0, 0.10), q1)` and `T_l1_tool = urdf_revolute_z((0.25, 0, 0), q2)`), compute (a) the 3D position of `p_in_tool = [0.15, 0.0, 0.0, 1.0]` in `base_link` when $q_1 = \pi/2\text{ rad}$ and $q_2 = 0.0\text{ rad}$, and (b) the interpolated `tf2` joint angle $q(t_{\text{query}})$ at $t_{\text{query}} = 2.006\text{ s}$ between buffered samples $(t_a = 2.000\text{ s}, q_a = 0.50\text{ rad})$ and $(t_b = 2.010\text{ s}, q_b = 0.70\text{ rad})$. Verify that `p_in_base` equals `[0.0, 0.40, 0.10]` $\text{m}$ ($\pm 10^{-9}\text{ m}$) and $q(2.006\text{ s}) = 0.62\text{ rad}$ ($\pm 10^{-9}\text{ rad}$).
 - **If your result differs:** When $q_1 = \pi/2\text{ rad}$ and $q_2 = 0\text{ rad}$, both the $0.25\text{ m}$ `link_1` offset and the $0.15\text{ m}$ `tool0` offset point along the $+Y$ axis of `base_link` ($0.25 + 0.15 = 0.40\text{ m}$); and $\alpha = \frac{2.006 - 2.000}{0.010} = 0.60 \implies 0.50 + 0.60(0.20) = 0.62\text{ rad}$.
 
+### Graded package - the graph's promises and the arm's chain
+[`exercises/06-robotics.T2.06a/`](../exercises/06-robotics.T2.06a/) turns this section into a test. `starter.py` holds seven holes: `qos_compatible` (two inequalities, not a match), `urdf_revolute_z`, `mat4_mul`, `transform_point`, `invert_rigid` (`R^T`, `-R^T p`), `interpolate` (refusing extrapolation the way tf2 does) and `topic_bandwidth_mb_s`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/06-robotics.T2.06a/starter.py \
+  python3 -m unittest discover -s exercises/06-robotics.T2.06a -p 'test_*.py'
+```
+
+The tests are behavioural: all **16** QoS combinations must match the `offered >= requested` rule, including the two that fail (Best-Effort into Reliable, Volatile into Transient Local); a zero joint must be a pure translation and a quarter turn must send $+X$ to $+Y$; two product orders must land the origin at **absolute** positions ($(0.1, 0.1)$ and $(0.2, 0)$), because comparing the two products to each other is symmetric and passes a reversed multiply; the rigid inverse must round-trip a point and undo a translation; a query outside the buffer must **raise**; and the bandwidth must scale with the subscriber count. The transfer suite builds the plant's own arm as a tf2 chain - `Rz(q1) Trans(L1) Rz(q2) Trans(L2)` from `plant.L1`/`plant.L2` - and requires it to reproduce `plant.fk` at five poses, to keep a tool point at the plant's own tip plus `d` along the tool axis, and to invert into the base seen from the tool at the tip's distance. Four planted faults - `qos_equality`, `joint_turns_backwards`, `product_reversed`, `interpolate_extrapolates` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*2D Rotation Angles*), **Step 1.1 (`00-foundations.T1.01`)** ($SO(2)$ Rotation Matrices), [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Multiplication & Transpose*), and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*3D Coordinate Frames*).
@@ -135,6 +145,8 @@ In the `tf2` tree above (`T_b_l1 = urdf_revolute_z((0, 0, 0.10), q1)` and `T_l1_
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).
+
+The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T2.06a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 - **One-Time `ROS 2 Jazzy` & `colcon` Installation + First-Use Workspace Walkthrough (Ubuntu 24.04 / WSL2 — see [`resources/open-source-toolchains.md` §0.4b](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):**
   ```bash
   # 1. One-time APT repository setup & installation (skip if already installed in §0.4b):

@@ -1,0 +1,30 @@
+{
+  "id": "06-robotics.T2.06a",
+  "module": "modules/06-robotics.T2.06a.md",
+  "title": "QoS compatibility, a tf2 chain, its inverse and the buffer",
+  "requires": [
+    "qos_compatible(pub_reliable, pub_durability, sub_reliable, sub_durability) -> bool",
+    "urdf_revolute_z(xyz, q_rad) -> 4x4",
+    "mat4_mul(A, B) -> 4x4 product",
+    "transform_point(T, p) -> 3-vector",
+    "invert_rigid(T) -> 4x4 inverse",
+    "interpolate(t_a, v_a, t_b, v_b, t_query) -> value, ValueError outside the buffer",
+    "topic_bandwidth_mb_s(n_subs, size_bytes, rate_hz) -> MB/s"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "qos_equality": ["test_behavior.QosTests.test_the_whole_matrix"],
+    "joint_turns_backwards": ["test_behavior.JointTests.test_a_quarter_turn_turns_the_right_way"],
+    "product_reversed": ["test_behavior.ChainTests.test_order_matters"],
+    "interpolate_extrapolates": ["test_behavior.InterpolationTests.test_extrapolation_is_refused"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.06-robotics.T2.06a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/06-robotics.T2.06a/starter.py python3 -m unittest discover -s exercises/06-robotics.T2.06a -p 'test_*.py'"
+  }
+}

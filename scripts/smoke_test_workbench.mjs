@@ -5,7 +5,7 @@
  *
  * Uses Vite's SSR module loader + ReactDOMServer to mount and verify:
  * 1. Beginner View (default plain-English 6-tab navigation) vs. Advanced View (all 10 technical labs).
- * 2. In-Browser Python Lesson Runner (`TabPyodideRunner`): 47-lesson dataset, starter code,
+ * 2. In-Browser Python Lesson Runner (`TabPyodideRunner`): 48-lesson dataset, starter code,
  *    3-step hint ladder, search/filter UI, and completion state rendering.
  * 3. Prerequisite Placement Quiz (`TabPlacementQuiz`): 8 skip-gate checkpoints, dependency-graph
  *    first-gap recommendation logic, and valid lesson/tab routing targets.
@@ -78,7 +78,7 @@ async function runSmokeTests() {
       'Beginner View must display plain-English primary label for Tab 1'
     );
     assert(
-      htmlBeginner.includes('2. Run Python Lessons (47 Exercises)'),
+      htmlBeginner.includes('2. Run Python Lessons (48 Exercises)'),
       'Beginner View must display plain-English primary label for the Python Runner'
     );
     assert(
@@ -107,8 +107,8 @@ async function runSmokeTests() {
       'Advanced View must surface technical tab titles'
     );
 
-    // 2. Verify In-Browser Python Runner (TabPyodideRunner) & 47-lesson dataset
-    assert.equal(PYTHON_LESSONS.length, 47, 'PYTHON_LESSONS must contain all 47 Python lessons');
+    // 2. Verify In-Browser Python Runner (TabPyodideRunner) & 48-lesson dataset
+    assert.equal(PYTHON_LESSONS.length, 48, 'PYTHON_LESSONS must contain all 48 Python lessons');
     for (const lesson of PYTHON_LESSONS) {
       assert(lesson.id && lesson.title, `Lesson missing id/title: ${JSON.stringify(lesson)}`);
       assert(
@@ -256,12 +256,12 @@ async function runSmokeTests() {
       'TabPyodideRunner must render the Instructor Behavioral Assessment panel'
     );
     assert(
-      htmlRunner.includes('2 / 47 Verified'),
-      'TabPyodideRunner must display accurate Pyodide execution-verified lesson tally (2 / 47 Verified)'
+      htmlRunner.includes('2 / 48 Verified'),
+      'TabPyodideRunner must display accurate Pyodide execution-verified lesson tally (2 / 48 Verified)'
     );
     assert(
-      htmlRunner.includes('3 / 47 Marked'),
-      'TabPyodideRunner must display separate self-marked lesson tally (3 / 47 Marked)'
+      htmlRunner.includes('3 / 48 Marked'),
+      'TabPyodideRunner must display separate self-marked lesson tally (3 / 48 Marked)'
     );
     assert(
       htmlRunner.includes('Progressive 3-Step Hint Ladder'),
@@ -359,13 +359,13 @@ async function runSmokeTests() {
     );
     const htmlWithProgress = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
     assert(
-      htmlWithProgress.includes('Executed &amp; Passed: 2/47') ||
-        htmlWithProgress.includes('Executed & Passed: 2/47'),
-      'App toolbar must reflect persisted Execution-Verified Python lessons from localStorage (2/47)'
+      htmlWithProgress.includes('Executed &amp; Passed: 2/48') ||
+        htmlWithProgress.includes('Executed & Passed: 2/48'),
+      'App toolbar must reflect persisted Execution-Verified Python lessons from localStorage (2/48)'
     );
     assert(
-      htmlWithProgress.includes('Self-Marked: 4/47'),
-      'App toolbar must reflect persisted Self-Marked Python lessons from localStorage (4/47)'
+      htmlWithProgress.includes('Self-Marked: 4/48'),
+      'App toolbar must reflect persisted Self-Marked Python lessons from localStorage (4/48)'
     );
     assert(
       htmlWithProgress.includes('Track Milestones: 3/27'),
@@ -380,9 +380,9 @@ async function runSmokeTests() {
     assert(
       portfolioMd.includes('# MechaLab — Learner Progress & Portfolio Summary') &&
         portfolioMd.includes(
-          '**Execution-Verified In-Browser Python Lessons (Executed & Passed in Pyodide WASM):** 2 / 47'
+          '**Execution-Verified In-Browser Python Lessons (Executed & Passed in Pyodide WASM):** 2 / 48'
         ) &&
-        portfolioMd.includes('**Self-Marked Completed Python Lessons (Manual Checklist):** 4 / 47') &&
+        portfolioMd.includes('**Self-Marked Completed Python Lessons (Manual Checklist):** 4 / 48') &&
         portfolioMd.includes('**Self-Reported Roadmap Track Milestones:** 3 / 27') &&
         portfolioMd.includes('Lesson 05.1') &&
         portfolioMd.includes('Lesson 08.1'),
@@ -400,7 +400,7 @@ async function runSmokeTests() {
     }
 
     console.log(
-      '[PASS] Workbench UI smoke tests passed (Beginner/Advanced views, 47-lesson Runner, 8-gate Placement Quiz, localStorage persistence & Markdown Portfolio export).'
+      '[PASS] Workbench UI smoke tests passed (Beginner/Advanced views, 48-lesson Runner, 8-gate Placement Quiz, localStorage persistence & Markdown Portfolio export).'
     );
   } finally {
     await vite.close();

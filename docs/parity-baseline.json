@@ -24,10 +24,10 @@
     "validated:behavioural_grading",
     "validated:dogfood_logged"
   ],
-  "overall": 0.5369,
+  "overall": 0.5386,
   "tiers": {
     "1": 0.52,
-    "2": 0.5696,
+    "2": 0.5737,
     "3": 0.505
   },
   "tracks": {
@@ -37,7 +37,7 @@
     "03": 0.545,
     "04": 0.5021,
     "05": 0.545,
-    "06": 0.495,
+    "06": 0.51,
     "07": 0.52,
     "08": 0.495
   },
@@ -78,7 +78,7 @@
     "05-control.T2.05a": 0.6075,
     "05-control.T3.05a": 0.495,
     "06-robotics.T1.06a": 0.5325,
-    "06-robotics.T2.06a": 0.47,
+    "06-robotics.T2.06a": 0.545,
     "06-robotics.T2.06b": 0.5325,
     "06-robotics.T3.06a": 0.445,
     "06-robotics.T3.06b": 0.495,

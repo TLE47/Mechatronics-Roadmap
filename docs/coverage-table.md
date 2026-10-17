@@ -28,7 +28,7 @@ flowchart LR
 | `03` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `04` | 7 | 59% | 40% | 75% | 7% | **50.2%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `05` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
-| `06` | 5 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
+| `06` | 5 | 60% | 40% | 75% | 10% | **51.0%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
 | `07` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `08` | 1 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 1 undeclared | `report` |
 
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **57.0%** |
+| Tier 2 | 18 | **57.4%** |
 | Tier 3 | 10 | **50.5%** |
 
-## Per module (44 modules, overall **53.7%**)
+## Per module (44 modules, overall **53.9%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -80,7 +80,7 @@ flowchart LR
 | `05-control.T2.05a` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
 | `05-control.T3.05a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `06-robotics.T1.06a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
-| `06-robotics.T2.06a` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
+| `06-robotics.T2.06a` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
 | `06-robotics.T2.06b` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
 | `06-robotics.T3.06a` | 3 | 40% | 40% | 75% | 0% | **44.5%** | **undeclared** | 10 item(s) |
 | `06-robotics.T3.06b` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
@@ -167,7 +167,7 @@ not demonstrated learner mastery.
 | `05-control.T2.05a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T3.05a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `06-robotics.T1.06a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `06-robotics.T2.06a` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `06-robotics.T2.06a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06b` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `06-robotics.T3.06a` | **44.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `06-robotics.T3.06b` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
