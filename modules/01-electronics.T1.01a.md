@@ -17,6 +17,12 @@ est_hours: 3.0
 hardware_required: false
 safety_level: low
 resources_verified: true
+difficulty:
+  math: 2
+  coding: 3
+  tools: 2
+  hardware_risk: medium
+  simulation: full
 verification: ci-native
 ---
 

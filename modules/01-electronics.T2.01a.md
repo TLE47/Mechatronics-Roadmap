@@ -18,6 +18,13 @@ est_hours: 4.0
 hardware_required: false
 safety_level: low
 resources_verified: true
+difficulty:
+  math: 3
+  coding: 3
+  tools: 3
+  hardware_risk: medium
+  simulation: full
+verification: ci-native
 ---
 
 ## 1. Why it matters

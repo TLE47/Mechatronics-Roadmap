@@ -15,6 +15,12 @@ est_hours: 2.0
 hardware_required: false
 safety_level: none
 resources_verified: true
+difficulty:
+  math: 4
+  coding: 3
+  tools: 1
+  hardware_risk: low
+  simulation: full
 verification: ci-native
 plant: tier1_arm_motor
 ---
