@@ -57,6 +57,11 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `01-electronics.T2.01b` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `03-sensors.T2.03a` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `04-embedded.T2.04a` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `04-embedded.T2.04b` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `04-embedded.T2.04c` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `04-embedded.T2.04d` | 2026-10-17 | 1 | 0 | none | no | - |
+| `05-control.T2.05a` | 2026-10-17 | 2 | 0 | tool | no | - |
+| `06-robotics.T2.06a` | 2026-10-17 | 1 | 0 | none | no | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -150,6 +155,22 @@ than only the one being eaten gave the real size: **26 of the 46 bridge pages fa
 The four in this round were repaired first; a follow-up pass repaired the remaining 22 the same way,
 and `tests/test_module_full_solutions.py` now discovers every package instead of carrying a list, so
 all **46** pages are checked. All 46 pass.
+
+### Tracks 04, 05 and 06: the Tier 2 bridges
+
+| Standard | `04b` | `04c` | `04d` | `05a` | `06a` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Reference solution tested | met (45) | met (46) | met (26) | met (28) | met (23) |
+| Learner attempt passes from the hints alone | met after one fix | met after one fix | met | met after one fix | met |
+| Gate score | 10/10 | 12/12 | 8/8 | 8/8 | 9/9 |
+| Delayed transfer | pending | pending | pending | pending | pending |
+
+**What this round found.** Two modules (`04b`, `04c`) test a refusal contract the hints never stated:
+encode must refuse a value outside the field's range rather than clip it, a code outside the field
+must be refused, and an inheritance request from a waiter that is not more urgent must raise. Each
+ladder now carries a *What the suite refuses* line naming every guard the tests check. `05a` cost
+its extra minute on one real error - a Riccati step written as $A P A^\top$ instead of $A^\top P A$
+- which its hint already warns about, so it is logged as `tool`, not as a course bug.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

@@ -193,6 +193,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 2. **The inherited bound has exactly two terms.** While the mutex is held, $p_{\text{slow,eff}} = 2 < 4$ keeps `thread_mid` out, so $R_{\text{fast}} = C_{\text{fast}} + B_{\text{slow}} = 110 + 35 = 145\ \mu\text{s}$.
 3. **The semaphore adds the middle thread's whole run.** With no ownership tracking, $p_{\text{slow}}$ stays at $6$, `thread_mid` preempts it for $C_{\text{mid}} = 300\ \mu\text{s}$, and $R_{\text{fast,sem}} = 110 + 35 + 300 = 445\ \mu\text{s}$.
 4. **Check the ordering, not just the arithmetic.** $445/145 \approx 3.07$ is the whole point of the module: the same critical section costs three times as much without inheritance.
+5. **What the suite refuses.** A stack size or alignment that is not positive, a negative TCB size, a negative queue count or item size, a Devicetree node missing `status` or `kconfig`, a waiter that is not more urgent than the owner, and a negative time all raise `ValueError`. `outranks` is the only comparison that answers instead of refusing.
 
 ### Full Solution
 ```python
