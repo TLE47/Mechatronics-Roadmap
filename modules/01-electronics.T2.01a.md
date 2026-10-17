@@ -257,6 +257,59 @@ assert q4_choice == "A"
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 2; if you missed Q2 or Q4, study `## 3. Formalization` item 3; if you missed Q3, study `## 3. Formalization` item 1 & 2. On pass, proceed to `## 10. Next modules`.
 
 
+### Gate test
+Covers the complete Track 01 Tier 2 bridge ladder (`01-electronics.T2.01a` $\to$ `01-electronics.T2.01b`) before Step 2.2 (`01-electronics.T2.02`):
+1. `[Concept: opamp_negative_feedback_virtual_short]` In an op-amp held in negative feedback and not saturated, compute the ideal differential input voltage $V_+ - V_-$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$).
+2. `[Concept: differential_shunt_gain_and_cmrr]` Compute the ADC voltage $V_{\text{ADC}} = V_{\text{ref}} + G I R_{\text{shunt}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for $V_{\text{ref}} = 1.65\text{ V}$, $G = 25.0\text{ V/V}$, $R_{\text{shunt}} = 0.002\ \Omega$ and $I = +4.0\text{ A}$.
+3. `[Concept: kelvin_four_terminal_sense_routing]` A $1.0\text{ m}\Omega$ shunt is tapped at its power pads, adding $0.15\text{ m}\Omega$ of trace on each pad ($2 R_{\text{trace}} = 0.30\text{ m}\Omega$). Compute the percentage gain error $100 \times 2 R_{\text{trace}}/R_{\text{shunt}}$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: opamp_negative_feedback_virtual_short]` Why is the virtual short an approximation rather than a law?
+   - **A.** Because the op-amp's finite open-loop gain $A_{OL}$ leaves $V_+ - V_- = V_{\text{out}}/A_{OL}$; with $A_{OL} = 10^6$ and $V_{\text{out}} = 2\text{ V}$ the residual is about $2\ \mu\text{V}$, small only because the gain is enormous.
+   - **B.** Because the inputs draw microamps through $10\text{ M}\Omega$ resistors.
+   - **C.** Because negative feedback removes the input stage.
+   - **D.** Because it only holds when $V_{\text{out}} = 0$.
+5. `[Concept: differential_shunt_gain_and_cmrr]` A $12\text{ V}$ common-mode step shifts both inputs by the same $12\text{ V}$. What keeps it out of the measured current?
+   - **A.** The shunt is grounded, so common mode cannot enter.
+   - **B.** A differential amplifier rejects the common part in proportion to its CMRR - the matched input network and the amplifier's own rejection turn a $12\text{ V}$ shift into an output error of microvolts-to-millivolts, which is why resistor matching and an in-amp with specified CMRR both matter.
+   - **C.** The ADC subtracts $12\text{ V}$ in software.
+   - **D.** Common-mode voltage is a myth.
+6. `[Concept: kelvin_four_terminal_sense_routing]` Why do the two Kelvin sense wires carry almost no current?
+   - **A.** They are wound around a ferrite bead.
+   - **B.** They terminate in the amplifier's high input impedance, so the $I R$ drop across their own copper and solder joints is negligible: only the shunt's own $I R$ appears across the sense pair.
+   - **C.** They are made of superconducting wire.
+   - **D.** The shunt is an open circuit to them.
+7. `[Concept: parasitic_loop_inductance_voltage_overshoot]` Compute the overshoot $\Delta V = L_{\text{loop}}\,\Delta I/\Delta t$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) for $L_{\text{loop}} = 4.0\text{ nH}$, $\Delta I = 25.0\text{ A}$ and $\Delta t = 20.0\text{ ns}$.
+8. `[Concept: bootstrap_high_side_gate_driver_and_deadtime]` The switching node sits at $V_{\text{SW}} = 36.0\text{ V}$ and the driver's bootstrap capacitor supplies $12.0\text{ V}$ above it. Compute the high-side gate voltage relative to $\text{GND}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$).
+9. `[Concept: precharge_resistor_inrush_and_tvs_clamp]` Compute the initial pre-charge current $V_{\text{bus}}/R_{\text{pre}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$) for a $60.0\text{ V}$ bus and $R_{\text{pre}} = 150\ \Omega$.
+10. `[SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]` Compute the stored energy $E = \frac{1}{2} C_{\text{bus}} V_{\text{bus}}^2$ in joules ($\text{J}$, tolerance $\pm 10^{-9}$) for $C_{\text{bus}} = 1000\ \mu\text{F}$ at $V_{\text{bus}} = 60.0\text{ V}$.
+
+**Gate answer key:**
+```python
+import math
+
+g1_vdiff = 0.0
+g2_vadc = 1.65 + 25.0 * 4.0 * 0.002
+g3_err_pct = 100.0 * (2.0 * 0.15) / 1.0
+g4_choice = "A"
+g5_choice = "B"
+g6_choice = "B"
+g7_dv = 4.0e-9 * (25.0 / 20.0e-9)
+g8_vg = 36.0 + 12.0
+g9_ipre = 60.0 / 150.0
+g10_safety_energy = 0.5 * 1000e-6 * (60.0 ** 2)
+
+assert math.isclose(g1_vdiff, 0.0, abs_tol=1e-6)
+assert math.isclose(g2_vadc, 1.85, rel_tol=1e-9)
+assert math.isclose(g3_err_pct, 30.0, rel_tol=1e-9)
+assert g4_choice == "A"
+assert g5_choice == "B"
+assert g6_choice == "B"
+assert math.isclose(g7_dv, 5.0, rel_tol=1e-6)
+assert math.isclose(g8_vg, 48.0, rel_tol=1e-6)
+assert math.isclose(g9_ipre, 0.40, rel_tol=1e-9)
+assert math.isclose(g10_safety_energy, 1.8, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required
+```
+- **Pass mark:** $8/10$ overall ($80\%+$) AND $1/1$ ($100\%$) on Q10 (`[SAFETY]`). Remediation: Q1–Q6 $\to$ `01-electronics.T2.01a`; Q7–Q10 $\to$ `01-electronics.T2.01b`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

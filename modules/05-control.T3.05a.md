@@ -213,7 +213,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($3/4$) on the Skip test below.
+Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($3/4$) on the Skip test below and $\ge 80\%$ ($5/6$) on the ladder's Gate test.
 
 ### Skip test
 1. `[Recall] [Concept: joseph_stabilized_covariance_update]` For a 1D Kalman update with $P^- = 2.0$, $H = 1.0$, $R = 2.0$ and $K = 0.50$, compute the Joseph posterior $P^+ = (1 - KH)^2 P^- + K^2 R$ (tolerance $\pm 10^{-9}$).
@@ -241,7 +241,38 @@ assert q4_choice == "A"
 ```
 - **Pass mark:** $3/4$ ($80\%+$). If you missed Q1 or Q3, study `## 3. Formalization` item 2; if you missed Q2, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`. On pass, proceed to `05-control.T3.05b`.
 
-The ladder's Gate test lives at the end of the ladder, in [`05-control.T3.05c`](05-control.T3.05c.md), and examines all three bridges together; this module's own checkpoint is the Skip test above and the graded package.
+### Gate test
+Covers the complete Track 05 Tier 3 ladder ([`05-control.T3.05a`](05-control.T3.05a.md) $\to$ [`05-control.T3.05b`](05-control.T3.05b.md) $\to$ [`05-control.T3.05c`](05-control.T3.05c.md)) before Step 3.6 (`05-control.T3.06`):
+1. `[Concept: joseph_stabilized_covariance_update]` A scalar update carries $P^- = 6.0$, $H = 1.0$, $R = 2.0$ and a buggy gain $K = 1.25$. Compute the Joseph posterior $(1 - KH)^2 P^- + K^2 R$ (tolerance $\pm 10^{-9}$).
+2. `[Concept: joseph_stabilized_covariance_update]` Why can the Joseph posterior never go negative, even at a gain nobody tuned?
+   - **A.** Because it is the sum of two squares, each non-negative whatever $K$ is, while the textbook $(1 - KH)P^-$ can change sign.
+   - **B.** Because it replaces $R$ with zero.
+   - **C.** Because it clamps the result at zero afterwards.
+   - **D.** Because it only runs at the optimal gain.
+3. `[Concept: tangent_space_eskf_error_injection]` A filter injects a $0.04$ rad correction, resets the error-state mean, then takes one measurement whose innovation is exactly zero. What angle has the frame turned in total (tolerance $\pm 10^{-12}$ rad)?
+4. `[Concept: tangent_space_eskf_error_injection]` One count of an $8192$-count-per-revolution encoder is $2\pi/8192$ rad. Compute that tangent-space step (tolerance $\pm 10^{-12}$ rad).
+5. `[Concept: control_barrier_forward_invariance_qp]` At $h = -0.03\,\text{rad}$, $\alpha = 6.0\,\text{s}^{-1}$, $u_{\text{nom}} = 0$ and $u \in [-2, +2]\,\text{rad/s}$, what command does the CBF-QP return (tolerance $\pm 10^{-9}\,\text{rad/s}$)?
+6. `[Concept: control_barrier_forward_invariance_qp]` At $h = -0.40\,\text{rad}$, $\alpha = 6.0\,\text{s}^{-1}$ and $u \in [-2, +2]\,\text{rad/s}$, is the QP feasible? Answer `True` or `False`.
+
+**Gate answer key:**
+```python
+import math
+
+g1_p_joseph = ((1.0 - 1.25 * 1.0) ** 2) * 6.0 + (1.25 ** 2) * 2.0
+g2_choice = "A"
+g3_angle = 0.04
+g4_count = 2.0 * math.pi / 8192.0
+g5_u = min(max(0.0, -2.0), min(2.0, 6.0 * -0.03))
+g6_feasible = (6.0 * -0.40) >= -2.0
+
+assert math.isclose(g1_p_joseph, 3.5, rel_tol=1e-9)
+assert g2_choice == "A"
+assert math.isclose(g3_angle, 0.04, abs_tol=1e-12)
+assert math.isclose(g4_count, 7.669903939428206e-04, rel_tol=1e-12)
+assert math.isclose(g5_u, -0.18, rel_tol=1e-9)
+assert g6_feasible is False
+```
+- **Pass mark:** $\ge 80\%$ ($5/6$ on the Gate test). Missed Q1–Q2: study `05-control.T3.05a`; Q3–Q4: `05-control.T3.05b`; Q5–Q6: `05-control.T3.05c`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

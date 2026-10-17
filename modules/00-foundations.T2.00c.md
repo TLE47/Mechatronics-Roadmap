@@ -282,6 +282,55 @@ assert math.isclose(q5_dot, 0.0, abs_tol=1e-9)
 ```
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, Q2, or Q3, study `## 3. Formalization`; if you missed Q4, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T2.00b`). On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`). Questions 1-6 are this module's own three tools; 7-11 recap one module each.
+1. `[Concept: first_order_ode_time_constant]` A winding with $\tau = 2.0\,\text{ms}$ is driven by a unit step. Compute the fraction of the steady-state value reached at $t = 6.0\,\text{ms}$, $1 - e^{-t/\tau}$ (tolerance $\pm 10^{-6}$).
+2. `[Concept: first_order_ode_time_constant]` What does the time constant $\tau$ mean for a first-order system?
+   - **A.** The time to reach $1 - e^{-1} \approx 63.2\%$ of a step, not the time to settle.
+   - **B.** The time to reach $99\%$ of a step.
+   - **C.** The period of the response's ringing.
+   - **D.** The delay before the output starts moving at all.
+3. `[Concept: second_order_ode_wn_zeta]` For $J = 0.02\,\text{kg}\cdot\text{m}^2$ and $k = 8.0\,\text{N}\cdot\text{m/rad}$, compute $\omega_n = \sqrt{k/J}$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: second_order_ode_wn_zeta]` With $\zeta = 0.50$ and $\omega_n = 20.0\,\text{rad/s}$, compute the damped frequency $\omega_d = \omega_n\sqrt{1 - \zeta^2}$ in $\text{rad/s}$ (tolerance $\pm 10^{-6}$).
+5. `[Concept: characteristic_polynomial_roots]` The characteristic polynomial $s^2 + 4s + 100 = 0$ has a complex pair. Compute the real part of each root, $\operatorname{Re}(s) = -\zeta\omega_n$, in $\text{s}^{-1}$ (tolerance $\pm 10^{-9}$).
+6. `[Concept: second_order_ode_wn_zeta]` At $\zeta = 0.50$, compute the fractional overshoot $M_p = e^{-\pi\zeta/\sqrt{1-\zeta^2}}$ (tolerance $\pm 10^{-5}$).
+7. `[Concept: finite_difference_derivative_and_integral] [Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` For `00-foundations.T2.00a`'s running integral, from $I_0 = 0.25\,\text{m}\cdot\text{s}$ add one sample $x_k = 0.08\,\text{m}$ at $\Delta t = 0.02\,\text{s}$. Compute $I_1$ (tolerance $\pm 10^{-9}$).
+8. `[Concept: dot_product_projection] [Concept: cross_product_3d_moment] [Concept: basis_change_and_invertibility]` For `00-foundations.T2.00b`'s $\vec{r} = [0.30,\; 0.40,\; 0.00]^\top\text{m}$ and $\vec{F} = [0.0,\; -20.0,\; 15.0]^\top\text{N}$, compute $\tau_x = r_y F_z - r_z F_y$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
+9. `[Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function] [Concept: bode_magnitude_db_and_phase]` For `00-foundations.T2.00d`'s $z = -1.0 - j1.0$, compute its phase $\angle z = \operatorname{atan2}(y, x)$ in degrees (tolerance $\pm 10^{-6}$).
+10. `[Concept: laplace_poles_and_zeros] [Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` For `00-foundations.T2.00e`'s $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ at $T_s = 0.001\,\text{s}$, compute the spectral radius of $A_d = I + A T_s$ (tolerance $\pm 10^{-6}$).
+11. `[Concept: nyquist_sampling_and_aliasing] [Concept: tustin_frequency_prewarping_and_biquad] [Concept: gaussian_variance_and_covariance_matrix]` For `00-foundations.T2.00f`'s pre-warped Tustin with $f_0 = 500\,\text{Hz}$ and $f_s = 4000\,\text{Hz}$, compute $\omega_a = \frac{2}{T_s}\tan(\pi f_0/f_s)$ in $\text{rad/s}$ (tolerance $\pm 10^{-3}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_frac = 1.0 - math.exp(-6.0 / 2.0)
+g2_choice = "A"
+g3_wn = math.sqrt(8.0 / 0.02)
+g4_wd = 20.0 * math.sqrt(1.0 - 0.50 ** 2)
+g5_real = -0.5 * 4.0
+g6_mp = math.exp(-math.pi * 0.50 / math.sqrt(1.0 - 0.50 ** 2))
+g7_int = 0.25 + 0.08 * 0.02
+g8_tau_x = 0.40 * 15.0 - 0.0 * (-20.0)
+g9_phase_deg = math.degrees(math.atan2(-1.0, -1.0))
+Ad_euler = [[1.0, 0.001], [-0.1, 0.996]]
+g10_radius = math.sqrt(Ad_euler[0][0] * Ad_euler[1][1] - Ad_euler[0][1] * Ad_euler[1][0])
+g11_omega_a = (2.0 / 0.00025) * math.tan(math.pi * 500.0 / 4000.0)
+
+assert math.isclose(g1_frac, 0.950213, abs_tol=1e-6)
+assert g2_choice == "A"
+assert math.isclose(g3_wn, 20.0, rel_tol=1e-9)
+assert math.isclose(g4_wd, 17.320508, abs_tol=1e-6)
+assert math.isclose(g5_real, -2.0, rel_tol=1e-9)
+assert math.isclose(g6_mp, 0.16303, abs_tol=1e-5)
+assert math.isclose(g7_int, 0.2516, rel_tol=1e-9)
+assert math.isclose(g8_tau_x, 6.0, rel_tol=1e-9)
+assert math.isclose(g9_phase_deg, -135.0, abs_tol=1e-6)
+assert math.isclose(g10_radius, 0.998048, abs_tol=1e-6)
+assert math.isclose(g11_omega_a, 3313.7085, abs_tol=1e-3)
+```
+- **Pass mark:** $\ge 80\%$ ($4/5$ on Skip test; $\ge 9/11$ on Gate test). Missed Gate Q1-Q2: study `00-foundations.T2.00c`; Q3-Q6: `00-foundations.T2.00c`; Q7: `00-foundations.T2.00a`; Q8: `00-foundations.T2.00b`; Q9: `00-foundations.T2.00d`; Q10: `00-foundations.T2.00e`; Q11: `00-foundations.T2.00f`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

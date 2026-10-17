@@ -259,6 +259,77 @@ assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization`; Q2 or Q3, study `## 4. Worked example`; Q4, study `## 2. Intuition first`. On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 00 Tier 1 bridge ladder (`00-foundations.T1.00a` $\to$ `00-foundations.T1.00b` $\to$ `00-foundations.T1.00c` $\to$ `00-foundations.T1.00d` $\to$ `00-foundations.T1.00e`) before Step 1.1 (`00-foundations.T1.01`):
+1. `[Concept: python_variables_and_types]` Trace `val = 5.0; val -= 1.5; val *= 2.0` and compute the final `val` (tolerance $\pm 10^{-9}$).
+2. `[Concept: python_variables_and_types]` A script's first line is `pos = pos + 1.0`. Which statement is correct?
+   - **A.** It raises `NameError`, because the right-hand side `pos` is read before any value was bound to the name.
+   - **B.** `pos` starts at `0.0`, so the line is equivalent to `pos = 1.0`.
+   - **C.** Python binds the left-hand side first, so the line leaves `pos` at `1.0`.
+   - **D.** It is a syntax error and the file never runs.
+3. `[Concept: for_while_loops_and_functions]` Compute the integer returned by `sum(k * k for k in range(1, 6))`.
+4. `[Concept: for_while_loops_and_functions]` In `for _ in range(1, 10):`, how many times does the loop body run?
+   - **A.** 9
+   - **B.** 10
+   - **C.** 8
+   - **D.** 11
+5. `[Concept: traceback_error_reading]` A script evaluates `1.0 / 0.0`. Which exception class does the bottom line of the traceback name?
+   - **A.** `ZeroDivisionError`
+   - **B.** `NameError`
+   - **C.** `TypeError`
+   - **D.** `ValueError`
+6. `[Concept: lists_dicts_and_numpy_arrays] [Concept: matplotlib_time_series_plotting]` For `arr = [3.0, 5.0, 7.0, 9.0]`, compute `sum(arr) / len(arr) + arr[-1]` (tolerance $\pm 10^{-9}$).
+7. `[Concept: terminal_and_git_basics]` Which command shows the line-by-line changes you have made but not yet staged?
+   - **A.** `git diff`
+   - **B.** `git init`
+   - **C.** `git clone`
+   - **D.** `git log`
+8. `[Concept: si_base_and_derived_units] [Concept: dimensional_analysis_unit_checks] [Concept: scientific_notation_and_prefixes]` A $4.7\ \text{k}\Omega$ resistor carries $2.0\ \text{mA}$. Report the voltage across it in volts and the power it dissipates in milliwatts (tolerance $\pm 10^{-9}$).
+9. `[Concept: radians_unit_circle_and_atan2] [Concept: linear_functions_and_slope] [Concept: 2d_vectors_and_components]` A displacement vector has components $x = -0.40\ \text{m}$ and $y = 0.30\ \text{m}$. Report its magnitude in metres, its heading `math.degrees(math.atan2(y, x))` in degrees, and its slope $y/x$ (tolerance $\pm 10^{-9}$).
+10. `[Concept: newtons_second_law_and_torque] [Concept: discrete_kinematics_pos_vel_acc] [Concept: spring_energy_and_power]` A $m = 0.50\ \text{kg}$ carriage moves at $v = 2.0\ \text{m/s}$ while a spring of stiffness $k = 40.0\ \text{N/m}$ is stretched by $x = 0.050\ \text{m}$. Compute (a) the total mechanical energy $E = \tfrac{1}{2}mv^2 + \tfrac{1}{2}kx^2$ in joules, (b) the spring force magnitude $kx$ in newtons, and (c) the position after one $\Delta t = 0.010\ \text{s}$ tick of `a = -k*x/m; v += a*dt; x += v*dt` (all tolerances $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1 = 5.0
+g1 -= 1.5
+g1 *= 2.0
+g2_choice = "A"
+g3 = sum(k * k for k in range(1, 6))
+g4_choice = "A"
+g5_choice = "A"
+arr = [3.0, 5.0, 7.0, 9.0]
+g6 = sum(arr) / len(arr) + arr[-1]
+g7_choice = "A"
+g8_v = 4.7e3 * 2.0e-3
+g8_p_mw = g8_v * 2.0e-3 * 1e3
+g9_mag = math.hypot(-0.40, 0.30)
+g9_heading = math.degrees(math.atan2(0.30, -0.40))
+g9_slope = 0.30 / -0.40
+g10_e = 0.5 * 0.50 * (2.0 ** 2) + 0.5 * 40.0 * (0.050 ** 2)
+g10_force = 40.0 * 0.050
+g10_v1 = 2.0 + (-40.0 * 0.050 / 0.50) * 0.010
+g10_x1 = 0.050 + g10_v1 * 0.010
+
+assert math.isclose(g1, 7.0, rel_tol=1e-9)
+assert g2_choice == "A"
+assert g3 == 55
+assert g4_choice == "A"
+assert g5_choice == "A"
+assert math.isclose(g6, 15.0, rel_tol=1e-9)
+assert g7_choice == "A"
+assert math.isclose(g8_v, 9.4, rel_tol=1e-9)
+assert math.isclose(g8_p_mw, 18.8, rel_tol=1e-9)
+assert math.isclose(g9_mag, 0.5, rel_tol=1e-9)
+assert math.isclose(g9_heading, 143.13010235415598, rel_tol=1e-12)
+assert math.isclose(g9_slope, -0.75, rel_tol=1e-9)
+assert math.isclose(g10_e, 1.05, rel_tol=1e-9)
+assert math.isclose(g10_force, 2.0, rel_tol=1e-9)
+assert math.isclose(g10_x1, 0.0696, rel_tol=1e-9)
+```
+- **Pass mark:** $\ge 80\%$ ($4/4$ on Skip test; $\ge 8/10$ on Gate test). Missed Gate Q1-Q2: study `00-foundations.T1.00a`; Q3-Q5: `00-foundations.T1.00a`; Q6: `00-foundations.T1.00b`; Q7: `00-foundations.T1.00b`; Q8: `00-foundations.T1.00c`; Q9: `00-foundations.T1.00d`; Q10: `00-foundations.T1.00e` and this module's `## 3. Formalization`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

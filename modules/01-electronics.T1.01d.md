@@ -309,6 +309,68 @@ assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3; Q4, study `## 3. Formalization` item 1. On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 01 Tier 1 bridge ladder (`01-electronics.T1.01a` $\to$ `01-electronics.T1.01c` $\to$ `01-electronics.T1.01d` $\to$ `01-electronics.T1.01b`) before Step 1.2 (`01-electronics.T1.02`):
+1. `[Concept: capacitor_charge_storage_and_decoupling]` Compute the stored energy $E = \frac{1}{2} C V^2$ in joules ($\text{J}$, tolerance $\pm 10^{-9}$) in a $470\ \mu\text{F}$ capacitor charged to $12.0\text{ V}$.
+2. `[Concept: rc_time_constant_and_filtering]` Compute $\tau = R C$ in seconds ($\text{s}$, tolerance $\pm 10^{-12}$) for $R = 4.7\text{ k}\Omega$ and $C = 0.10\ \mu\text{F}$.
+3. `[Concept: inductor_flyback_and_freewheeling_diode]` A $2.0\text{ mH}$ coil carrying $6.0\text{ A}$ is interrupted in $4.0\ \mu\text{s}$ without a freewheeling diode. Compute the peak spike $|V_L| = L\,\Delta I/\Delta t$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$).
+4. `[SAFETY] [Concept: inductor_flyback_and_freewheeling_diode]` Where does a freewheeling diode go across an inductive load switched by a low-side N-MOSFET, and why there?
+   - **A.** From Drain to $V_{\text{bus}}$, so the coil current keeps circulating through the diode instead of forcing the Drain node hundreds of volts above the bus.
+   - **B.** From Gate to Source, so the gate capacitance discharges faster.
+   - **C.** In series with the coil, so current can only flow one way.
+   - **D.** From Drain to $\text{GND}$, which shorts the supply while the FET is on.
+5. `[Concept: voltage_current_resistance_ohms_law]` Compute the current in amperes ($\text{A}$, tolerance $\pm 10^{-9}$) through a $45\ \Omega$ resistor with $9.0\text{ V}$ across it.
+6. `[Concept: kvl_kcl_and_voltage_divider]` Compute the unloaded midpoint voltage in volts ($\text{V}$, tolerance $\pm 10^{-6}$) of a $15\text{ k}\Omega$ (top) / $5.0\text{ k}\Omega$ (bottom) divider on an $18.0\text{ V}$ rail.
+7. `[Concept: electrical_power_i2r_dissipation]` Compute the power in watts ($\text{W}$, tolerance $\pm 10^{-9}$) dissipated by a $0.06\ \Omega$ trace carrying $3.5\text{ A}$.
+8. `[Concept: breadboard_internal_bus_connectivity]` You place a $100\text{ nF}$ decoupling capacitor with one leg in `a10` and the other in `b10`. What have you built?
+   - **A.** A working decoupling capacitor.
+   - **B.** A short: both holes are one node, so the capacitor is bypassed and the rail is tied to whatever `a10`–`b10` connects.
+   - **C.** A $200\text{ nF}$ capacitor.
+   - **D.** An open circuit, because the row is split.
+9. `[Concept: multimeter_and_current_limited_psu_safety]` A supply is set to $24.0\text{ V}$ with $I_{\text{limit}} = 0.25\text{ A}$ and wired across $8.0\ \Omega$. Compute the clamped output voltage in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
+10. `[Concept: esd_and_short_circuit_prevention]` Why is a $10\text{ M}\Omega$ resistor built into a wrist strap's ground lead?
+   - **A.** To limit the current through your body if you touch a live conductor, while still bleeding static charge away.
+   - **B.** To measure your pulse through the strap.
+   - **C.** To keep the strap from working at all.
+   - **D.** To increase the static charge on your hands.
+11. `[Concept: mosfet_low_side_rds_on_switch]` Compute the conduction loss $P = I_D^2 R_{DS(\text{on})}$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) for $I_D = 4.0\text{ A}$ and $R_{DS(\text{on})} = 15\text{ m}\Omega$.
+12. `[Concept: pwm_duty_cycle_effective_voltage]` Compute the average voltage $V_{\text{eff}} = D V_{\text{bus}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for $V_{\text{bus}} = 24.0\text{ V}$ at $D = 0.60$.
+13. `[Concept: h_bridge_four_switch_polarity_and_shoot_through]` An H-bridge runs $D_A = 0.50$ and $D_B = 0.90$ from $V_{\text{bus}} = 12.0\text{ V}$. Compute the average signed motor voltage in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_energy = 0.5 * 470e-6 * (12.0 ** 2)
+g2_tau = 4_700.0 * 0.10e-6
+g3_vl = 2.0e-3 * (6.0 / 4.0e-6)
+g4_safety_choice = "A"
+g5_i = 9.0 / 45.0
+g6_vdiv = 18.0 * (5_000.0 / (15_000.0 + 5_000.0))
+g7_p = (3.5 ** 2) * 0.06
+g8_choice = "B"
+g9_vout = min(24.0, 0.25 * 8.0)
+g10_choice = "A"
+g11_pcond = (4.0 ** 2) * 0.015
+g12_veff = 0.60 * 24.0
+g13_vab = (0.50 - 0.90) * 12.0
+
+assert math.isclose(g1_energy, 0.03384, rel_tol=1e-9)
+assert math.isclose(g2_tau, 4.7e-4, rel_tol=1e-12)
+assert math.isclose(g3_vl, 3000.0, rel_tol=1e-6)
+assert g4_safety_choice == "A"  # Mandatory [SAFETY] 100% required
+assert math.isclose(g5_i, 0.20, rel_tol=1e-9)
+assert math.isclose(g6_vdiv, 4.5, rel_tol=1e-6)
+assert math.isclose(g7_p, 0.735, rel_tol=1e-9)
+assert g8_choice == "B"
+assert math.isclose(g9_vout, 2.0, rel_tol=1e-9)
+assert g10_choice == "A"
+assert math.isclose(g11_pcond, 0.24, rel_tol=1e-9)
+assert math.isclose(g12_veff, 14.4, rel_tol=1e-9)
+assert math.isclose(g13_vab, -4.8, rel_tol=1e-9)
+```
+- **Pass mark:** $11/13$ overall ($80\%+$) AND $1/1$ ($100\%$) on Q4 (`[SAFETY]`). Remediation: Q1–Q4 $\to$ `## 3. Formalization` and `01-electronics.T1.01d`; Q5–Q7 $\to$ `01-electronics.T1.01a`; Q8–Q10 $\to$ `01-electronics.T1.01c`; Q11–Q13 $\to$ `01-electronics.T1.01b`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

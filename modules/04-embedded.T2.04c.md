@@ -309,6 +309,61 @@ assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 3; if you missed Q4, study `## 3. Formalization` item 2. On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `04-embedded.T2.04b` $\to$ `04-embedded.T2.04c` $\to$ `04-embedded.T2.04d`) before Step 2.5 (`04-embedded.T2.05`):
+1. `[Concept: zephyr_west_and_kconfig_build]` Two `K_THREAD_DEFINE` threads have $1024\text{ B}$ and $768\text{ B}$ stacks with a $128\text{ B}$ TCB each, plus one `K_MSGQ_DEFINE` queue of $4 \times 32\text{ B}$. Compute $\text{RAM}_{\text{static}}$ in bytes (exact integer).
+2. `[Concept: zephyr_west_and_kconfig_build]` What does `west build -b native_sim app/` produce, and which file selects the compiled-in features?
+   - **A.** A host executable built from the same sources, with Kconfig turning `prj.conf` symbols into `CONFIG_*` macros compiled into the image.
+   - **B.** A `.dts` file that is flashed to the board.
+   - **C.** A CAN bus trace for the host.
+   - **D.** A Python package for the host.
+3. `[Concept: zephyr_devicetree_hardware_binding]` `spi1` is `status = "disabled"` in the board `.dts` and the overlay never enables it, yet `main.c` calls `DEVICE_DT_GET(DT_NODELABEL(spi1))`. What happens?
+   - **A.** The build fails at compile/link time: the Devicetree macro does not exist, so the missing hardware is caught before flashing.
+   - **B.** The call returns `NULL` and the bus is skipped at runtime.
+   - **C.** Zephyr enables any disabled node automatically.
+   - **D.** The pin mux is guessed at runtime.
+4. `[Concept: zephyr_devicetree_hardware_binding]` Two nodes are `status = "okay"` - `fdcan1` (driver symbol `CONFIG_CAN`) and `spi1` (driver symbol `CONFIG_SPI`) - but `prj.conf` sets only `CONFIG_CAN`. How many devices fail the binding test (exact integer)?
+5. `[Concept: zephyr_static_threads_and_k_mutex]` Three preemptible threads have numerical priorities $7$, $2$ and $5$. Report the priority with the highest scheduling urgency (exact integer).
+6. `[Concept: zephyr_static_threads_and_k_mutex]` A `k_mutex` is held by the priority-$8$ thread when the priority-$3$ thread calls `k_mutex_lock`. What is the owner's effective priority while it holds the lock (exact integer)?
+7. `[Concept: zephyr_static_threads_and_k_mutex]` $C_H = 95\ \mu\text{s}$, the holder has $B = 20\ \mu\text{s}$ of its critical section left, and an intermediate priority-$4$ thread with $C_M = 400\ \mu\text{s}$ is ready. Compute $R_H$ under `K_MUTEX_DEFINE` in microseconds (tolerance $\pm 10^{-9}$).
+8. `[Concept: spi_full_duplex_clock_polarity_phase] [Concept: dma_zero_cpu_memory_transfer]` Compute the CPU time in microseconds for a $12\text{-bit}$ SPI frame at $4\text{ MHz}$ plus a blocking $240$-bit UART write at $1.2\text{ Mbaud}$ (tolerance $\pm 10^{-9}$).
+9. `[Concept: double_buffered_ping_pong_half_complete_isr]` A circular DMA buffer has $N = 12$ samples per half at $f_{\text{adc}} = 60\text{ kHz}$. Compute the reading window between HT and TC in microseconds (tolerance $\pm 10^{-9}$).
+10. `[Concept: rtos_preemptive_scheduling_and_cpu_utilization] [Concept: unbounded_priority_inversion_and_inheritance]` Two tasks run at $(C_1, T_1) = (250, 1000)$ and $(C_2, T_2) = (400, 2000)\ \mu\text{s}$. Compute $U = C_1/T_1 + C_2/T_2$ (tolerance $\pm 10^{-9}$).
+11. `[Concept: can_bitwise_arbitration_and_mit_packing]` Pack $x = 0.0\text{ rad}$ over $[-10.0, +10.0]\text{ rad}$ into an unsigned 12-bit field (exact integer).
+12. `[Concept: rclc_static_lifecycle_and_executor] [Concept: microros_xrcedds_client_agent_bridge] [Concept: mcu_to_ros2_deterministic_transport]` Compute the worst-case `rclc_executor_spin_some` pass in microseconds when XRCE-DDS I/O costs $25\ \mu\text{s}$, the timer callback $40\ \mu\text{s}$ and the subscription callback $35\ \mu\text{s}$ (tolerance $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_ram_bytes = (1024 + 128) + (768 + 128) + 4 * 32
+g2_choice = "A"
+g3_choice = "A"
+g4_not_ready = 1
+g5_top_prio = min(7, 2, 5)
+g6_eff_prio = min(8, 3)
+g7_rh_us = 95.0 + 20.0
+g8_total_us = (12.0 / 4e6) * 1e6 + (240.0 / 1.2e6) * 1e6
+g9_window_us = (12.0 / 60e3) * 1e6
+g10_util = (250.0 / 1000.0) + (400.0 / 2000.0)
+g11_u12 = round((0.0 - (-10.0)) / 20.0 * ((1 << 12) - 1))
+g12_spin_us = 25.0 + 40.0 + 35.0
+
+assert g1_ram_bytes == 2176
+assert g2_choice == "A"
+assert g3_choice == "A"
+assert g4_not_ready == 1
+assert g5_top_prio == 2
+assert g6_eff_prio == 3
+assert math.isclose(g7_rh_us, 115.0, rel_tol=1e-9)
+assert math.isclose(g8_total_us, 203.0, rel_tol=1e-9)
+assert math.isclose(g9_window_us, 200.0, rel_tol=1e-9)
+assert math.isclose(g10_util, 0.45, rel_tol=1e-9)
+assert g11_u12 == 2048
+assert math.isclose(g12_spin_us, 100.0, rel_tol=1e-9)
+```
+- **Pass mark:** $10/12$ ($80\%+$). Remediation: Q1–Q3, Q5–Q7 $\to$ `04-embedded.T2.04c`; Q4 $\to$ `04-embedded.T2.04c` (`## 3. Formalization` item 2); Q8–Q9 $\to$ `04-embedded.T2.04a`; Q10–Q11 $\to$ `04-embedded.T2.04b`; Q12 $\to$ `04-embedded.T2.04d`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

@@ -267,6 +267,58 @@ assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`):
+1. `[Concept: complex_numbers_and_euler_formula]` Compute the magnitude $|z|$ of $z = 2 - j2$ (tolerance $\pm 10^{-9}$).
+2. `[Concept: complex_numbers_and_euler_formula]` Multiplying a phasor by $j$ leaves its amplitude alone and does what to its phase?
+   - **A.** Advances it by $+90^\circ$.
+   - **B.** Delays it by $90^\circ$.
+   - **C.** Doubles the amplitude and leaves the phase.
+   - **D.** Negates the phasor and doubles its amplitude.
+3. `[Concept: complex_impedance_and_transfer_function]` A motor winding is modelled as $Z(j\omega) = R + j\omega L$ with $R = 4.0\ \Omega$, $L = 2.0\text{ mH}$ and $\omega = 2000\text{ rad/s}$. Compute $|Z|$ in ohms (tolerance $\pm 10^{-6}$).
+4. `[Concept: bode_magnitude_db_and_phase]` Convert a linear amplitude gain of $|H| = 0.01$ into decibels ($\text{dB}$, tolerance $\pm 10^{-9}$).
+5. `[Concept: bode_magnitude_db_and_phase] [Concept: complex_impedance_and_transfer_function] [Concept: complex_numbers_and_euler_formula]` A first-order low-pass $H(j\omega) = \frac{1}{1 + j\omega\tau}$ is evaluated exactly at its corner $\omega = 1/\tau$. Compute $20\log_{10}|H|$ in decibels (tolerance $\pm 10^{-4}$).
+6. `[Concept: laplace_poles_and_zeros] [Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` For the companion matrix $A = \begin{bmatrix} 0 & 1 \\ -400 & -8 \end{bmatrix}$, compute $\det(A)$ (tolerance $\pm 10^{-9}$).
+7. `[Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` With $A_d = \begin{bmatrix} 1.0 & 0.01 \\ -1.0 & 0.90 \end{bmatrix}$, $B_d = \begin{bmatrix} 0 \\ 0.01 \end{bmatrix}$, $\vec{x}_0 = \begin{bmatrix} 0.5 \\ 0.0 \end{bmatrix}$ and $u_0 = 0$, compute the updated position $x_1$ (tolerance $\pm 10^{-9}\text{ m}$).
+8. `[Concept: finite_difference_derivative_and_integral] [Concept: first_order_ode_time_constant]` An RC filter uses $R = 2.2\text{ k}\Omega$ and $C = 10\ \mu\text{F}$. Compute its time constant $\tau = RC$ in milliseconds (tolerance $\pm 10^{-9}\text{ ms}$).
+9. `[Concept: dot_product_projection] [Concept: cross_product_3d_moment] [Concept: basis_change_and_invertibility]` For lever arm $\vec{r} = [0.0, 0.50, 0.0]^T\text{ m}$ and force $\vec{F} = [30.0, 0.0, 0.0]^T\text{ N}$, compute the $z$-component of the moment $\tau_z = (\vec{r}\times\vec{F})_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
+10. `[Concept: second_order_ode_wn_zeta] [Concept: characteristic_polynomial_roots]` For $\ddot{x} + 6\dot{x} + 25x = 0$, compute the damping ratio $\zeta$ (tolerance $\pm 10^{-9}$).
+11. `[Concept: nyquist_sampling_and_aliasing] [Concept: tustin_frequency_prewarping_and_biquad]` A $2600\text{ Hz}$ vibration is sampled at $f_s = 2000\text{ Hz}$. Compute the alias frequency in $\text{Hz}$ (tolerance $\pm 10^{-9}$).
+12. `[Concept: gaussian_variance_and_covariance_matrix]` Given $\Sigma_x = \begin{bmatrix} 1.0 & 0.0 \\ 0.0 & 4.0 \end{bmatrix}$, $A = \begin{bmatrix} 1.0 & 0.25 \\ 0.0 & 1.0 \end{bmatrix}$ and $Q = 0$, compute the $(0,0)$ entry of $\Sigma_y = A\Sigma_xA^\top + Q$ (tolerance $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import cmath
+import math
+
+g1_mag = abs(2.0 - 2.0j)
+g2_choice = "A"
+g3_z_ohm = abs(4.0 + 1j * 2000.0 * 0.002)
+g4_db = 20.0 * math.log10(0.01)
+g5_corner_db = 20.0 * math.log10(abs(1.0 / (1.0 + 1.0j)))
+g6_det = 0.0 * (-8.0) - 1.0 * (-400.0)
+g7_x1 = 1.0 * 0.5 + 0.01 * 0.0
+g8_tau_ms = (2.2e3 * 10.0e-6) * 1e3
+g9_tau_z = 0.0 * 0.0 - 0.50 * 30.0
+g10_zeta = 6.0 / (2.0 * math.sqrt(25.0))
+g11_alias_hz = abs(2600.0 - 2000.0)
+g12_sigma00 = 1.0 * 1.0 * 1.0 + 0.25 * 4.0 * 0.25
+
+assert math.isclose(g1_mag, 2.8284271247461903, rel_tol=1e-9)
+assert g2_choice == "A"
+assert math.isclose(g3_z_ohm, 5.656854249492381, rel_tol=1e-9)
+assert math.isclose(g4_db, -40.0, rel_tol=1e-9)
+assert math.isclose(g5_corner_db, -3.0103, abs_tol=1e-4)
+assert math.isclose(g6_det, 400.0, rel_tol=1e-9)
+assert math.isclose(g7_x1, 0.5, rel_tol=1e-9)
+assert math.isclose(g8_tau_ms, 22.0, rel_tol=1e-9)
+assert math.isclose(g9_tau_z, -15.0, rel_tol=1e-9)
+assert math.isclose(g10_zeta, 0.6, rel_tol=1e-9)
+assert math.isclose(g11_alias_hz, 600.0, rel_tol=1e-9)
+assert math.isclose(g12_sigma00, 1.25, rel_tol=1e-9)
+```
+- **Pass mark:** $\ge 80\%$ ($4/4$ on Skip test; $\ge 10/12$ on Gate test). Remediation: Q1–Q5 $\to$ this module's `## 3. Formalization`; Q6 $\to$ `00-foundations.T2.00e`; Q7 $\to$ `00-foundations.T2.00a`; Q8 $\to$ `00-foundations.T2.00c`; Q9 $\to$ `00-foundations.T2.00b`; Q10 $\to$ `00-foundations.T2.00c`; Q11–Q12 $\to$ `00-foundations.T2.00f`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

@@ -243,6 +243,80 @@ assert q5_sum == 10
 ```
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization`; if you missed Q3, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`; if you missed Q5, study `## 4. Worked example` (and review `00-foundations.T1.00a`). On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 00 Tier 1 bridge ladder (`00-foundations.T1.00a` $\to$ `00-foundations.T1.00b` $\to$ `00-foundations.T1.00c` $\to$ `00-foundations.T1.00d` $\to$ `00-foundations.T1.00e`) before Step 1.1 (`00-foundations.T1.01`):
+1. `[Concept: lists_dicts_and_numpy_arrays]` For `samples = [4.0, 8.0, 15.0, 16.0, 23.0, 42.0]`, compute `samples[-1] - samples[2]` (tolerance $\pm 10^{-9}$).
+2. `[Concept: lists_dicts_and_numpy_arrays]` What does `[1.0, 2.0] * 2` evaluate to?
+   - **A.** `[2.0, 4.0]`
+   - **B.** `[1.0, 2.0, 1.0, 2.0]`
+   - **C.** `[1.0, 2.0, 2.0]`
+   - **D.** `TypeError`
+3. `[Concept: matplotlib_time_series_plotting]` A recording holds $N = 500$ samples at $\Delta t = 0.004\ \text{s}$ starting at $t_0 = 0.0\ \text{s}$. Report the timestamp at index `499` in seconds (tolerance $\pm 10^{-9}$).
+4. `[Concept: matplotlib_time_series_plotting]` `plt.plot(t, y)` raises `ValueError: x and y must have same first dimension`. Which cause matches that traceback?
+   - **A.** `t` holds $N+1$ samples while `y` holds $N$, because one list was appended to once more than the other.
+   - **B.** Both lists are empty.
+   - **C.** `y` was scaled by a float.
+   - **D.** The figure was never saved with `plt.savefig`.
+5. `[Concept: terminal_and_git_basics]` Which single command records a versioned snapshot of every already-tracked change, with a message?
+   - **A.** `git commit -am "msg"`
+   - **B.** `git status`
+   - **C.** `git diff`
+   - **D.** `git clone`
+6. `[Concept: python_variables_and_types] [Concept: for_while_loops_and_functions]` Trace the loop below and compute the final value of `total` (tolerance $\pm 10^{-9}$):
+```python
+total = 0.0
+for k in range(3):
+    total = total + 0.5 * k
+```
+7. `[Concept: traceback_error_reading]` A config dictionary was written with the key `"kp"`, but the code reads `config["Kp"]`. Which exception class does the traceback name?
+   - **A.** `KeyError`
+   - **B.** `IndexError`
+   - **C.** `NameError`
+   - **D.** `ZeroDivisionError`
+8. `[Concept: si_base_and_derived_units] [Concept: dimensional_analysis_unit_checks] [Concept: scientific_notation_and_prefixes]` An RC filter has $R = 3.3\ \text{k}\Omega$ and $C = 2.2\ \mu\text{F}$. Report its time constant $\tau = RC$ in milliseconds (tolerance $\pm 10^{-9}$).
+9. `[Concept: radians_unit_circle_and_atan2] [Concept: linear_functions_and_slope] [Concept: 2d_vectors_and_components]` A displacement has components $x = 0.60\ \text{m}$ and $y = -0.80\ \text{m}$. Report its magnitude in metres, its heading in degrees from `math.degrees(math.atan2(y, x))`, and its slope $y/x$ (tolerance $\pm 10^{-9}$).
+10. `[Concept: newtons_second_law_and_torque] [Concept: discrete_kinematics_pos_vel_acc] [Concept: spring_energy_and_power]` A joint with inertia $J = 0.020\ \text{kg}\cdot\text{m}^2$ carries a net torque $\tau = 0.50\ \text{N}\cdot\text{m}$. Compute (a) its angular acceleration $\alpha = \tau/J$ in $\text{rad/s}^2$, (b) its angular speed after one $\Delta t = 0.002\ \text{s}$ tick from rest, and (c) the energy stored in a spring of stiffness $k = 25.0\ \text{N/m}$ stretched by $x = 0.080\ \text{m}$, in joules (all tolerances $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import math
+
+samples = [4.0, 8.0, 15.0, 16.0, 23.0, 42.0]
+g1 = samples[-1] - samples[2]
+g2_choice = "B"
+g3 = 499 * 0.004
+g4_choice = "A"
+g5_choice = "A"
+total = 0.0
+for k in range(3):
+    total = total + 0.5 * k
+g6 = total
+g7_choice = "A"
+g8_ms = 3.3e3 * 2.2e-6 * 1e3
+g9_mag = math.hypot(0.60, -0.80)
+g9_heading = math.degrees(math.atan2(-0.80, 0.60))
+g9_slope = -0.80 / 0.60
+g10_alpha = 0.50 / 0.020
+g10_omega = 0.0 + g10_alpha * 0.002
+g10_energy = 0.5 * 25.0 * (0.080 ** 2)
+
+assert math.isclose(g1, 27.0, rel_tol=1e-9)
+assert g2_choice == "B"
+assert math.isclose(g3, 1.996, rel_tol=1e-9)
+assert g4_choice == "A"
+assert g5_choice == "A"
+assert math.isclose(g6, 1.5, rel_tol=1e-9)
+assert g7_choice == "A"
+assert math.isclose(g8_ms, 7.26, rel_tol=1e-9)
+assert math.isclose(g9_mag, 1.0, rel_tol=1e-9)
+assert math.isclose(g9_heading, -53.13010235415598, rel_tol=1e-12)
+assert math.isclose(g9_slope, -1.3333333333333333, rel_tol=1e-12)
+assert math.isclose(g10_alpha, 25.0, rel_tol=1e-9)
+assert math.isclose(g10_omega, 0.05, rel_tol=1e-9)
+assert math.isclose(g10_energy, 0.08, rel_tol=1e-9)
+```
+- **Pass mark:** $\ge 80\%$ ($4/5$ on Skip test; $\ge 8/10$ on Gate test). Missed Gate Q1-Q2: study `00-foundations.T1.00b` and `## 3. Formalization`; Q3-Q4: `00-foundations.T1.00b` and `## 4. Worked example`; Q5: `00-foundations.T1.00b` and `## 6. Simulation path`; Q6: `00-foundations.T1.00a`; Q7: `00-foundations.T1.00a`; Q8: `00-foundations.T1.00c`; Q9: `00-foundations.T1.00d`; Q10: `00-foundations.T1.00e`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

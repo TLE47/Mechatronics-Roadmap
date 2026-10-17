@@ -322,7 +322,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below and $\ge 80\%$ ($8/9$) on the ladder's Gate test.
 
 ### Skip test
 1. `[Recall] [Concept: ros2_nodes_topics_services_and_qos]` A stereo camera node publishes depth frames of size $B_{\text{msg}} = 250{,}000\text{ bytes}$ at $f_{\text{pub}} = 60.0\text{ Hz}$ to $N_{\text{sub}} = 2$ unicast subscribers. Compute the total network data rate $R_{\text{MB/s}} = \frac{N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}}{10^6}$ in $\text{MB/s}$ (tolerance $\pm 10^{-6}\text{ MB/s}$).
@@ -350,6 +350,49 @@ assert math.isclose(q3_dist_m, 0.50, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+
+### Gate test
+Covers the complete Track 06 Tier 2 bridge ladder ([`06-robotics.T2.06a`](06-robotics.T2.06a.md) $\to$ [`06-robotics.T2.06b`](06-robotics.T2.06b.md)) before Step 2.7 (`06-robotics.T2.07`):
+1. `[Concept: ros2_nodes_topics_services_and_qos]` A depth camera publishes $B_{\text{msg}} = 120{,}000\text{ bytes}$ frames at $f_{\text{pub}} = 50.0\text{ Hz}$ to $N_{\text{sub}} = 3$ unicast subscribers. Compute $R_{\text{MB/s}} = N_{\text{sub}} B_{\text{msg}} f_{\text{pub}} / 10^6$ (tolerance $\pm 10^{-9}\text{ MB/s}$).
+2. `[Concept: ros2_nodes_topics_services_and_qos]` A `Best-Effort` publisher offers to a `Reliable` subscriber. Does the connection form under the `offered >= requested` rule? Answer `True` or `False`.
+3. `[Concept: tf2_transform_tree_and_urdf_kinematics]` A `tf2` buffer holds $x = 0.10\text{ m}$ at $t_a = 3.000\text{ s}$ and $x = 0.14\text{ m}$ at $t_b = 3.020\text{ s}$. Compute the interpolated $x(t_{\text{query}})$ at $t_{\text{query}} = 3.005\text{ s}$ in metres (tolerance $\pm 10^{-9}\text{ m}$).
+4. `[Concept: tf2_transform_tree_and_urdf_kinematics]` A chain translates $+0.20\text{ m}$ along $Z$, then $+0.30\text{ m}$ along $X$, both with zero rotation. Compute the base-frame $x$ coordinate of the tool origin in metres (tolerance $\pm 10^{-9}\text{ m}$).
+5. `[Concept: ros2_control_hardware_interface_read_write]` What is the exact order of the three calls `controller_manager` makes on every real-time tick?
+   - **A.** `read(time, period)` $\to$ `update(time, period)` $\to$ `write(time, period)`
+   - **B.** `write()` $\to$ `read()` $\to$ `sleep()`
+   - **C.** `update()` $\to$ `compile()` $\to$ `reboot()`
+   - **D.** `write()` only
+6. `[Concept: ros2_control_hardware_interface_read_write]` At a $1.0\text{ ms}$ period, `read()` takes $0.30\text{ ms}$, `update()` $0.20\text{ ms}$ and `write()` $0.25\text{ ms}$. Compute the remaining margin $t_{\text{margin}} = 1.0 - (0.30 + 0.20 + 0.25)$ in milliseconds (tolerance $\pm 10^{-9}\text{ ms}$).
+7. `[Concept: ros2_launch_parameters_and_composition]` One intra-process `ComposableNode` subscriber receives $2{,}000{,}000\text{ byte}$ images at $25.0\text{ Hz}$ with zero copies. Compute the bandwidth $\Delta R_{\text{saved}} = N_{\text{sub}} B_{\text{msg}} f_{\text{pub}} / 10^6$ that copying would have cost (tolerance $\pm 10^{-9}\text{ MB/s}$).
+8. `[Concept: rosbag2_mcap_recording_and_deterministic_replay]` Compute the uncompressed `rosbag2` disk rate $R_{\text{MB/s}} = f B_{\text{framed}} / 10^6$ for $f = 250\text{ Hz}$ and $B_{\text{framed}} = 640\text{ bytes/msg}$ (tolerance $\pm 10^{-9}\text{ MB/s}$).
+9. `[Concept: ros2_simulator_bridge_and_joint_state_loop]` A simulator steps at $f_{\text{sim}} = 4000\text{ Hz}$ with `ros2_control` decimation $D = 4$. Compute the controller frequency $f_{\text{ctrl}} = f_{\text{sim}} / D$ in Hz (tolerance $\pm 10^{-9}\text{ Hz}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_rate_mbs = (3.0 * 120_000.0 * 50.0) / 1e6
+g2_connects = int(False) >= int(True)
+alpha_g3 = (3.005 - 3.000) / (3.020 - 3.000)
+g3_x_m = (1.0 - alpha_g3) * 0.10 + alpha_g3 * 0.14
+g4_x_m = 0.30
+g5_choice = "A"
+g6_margin_ms = 1.0 - (0.30 + 0.20 + 0.25)
+g7_saved_mbs = (1.0 * 2_000_000.0 * 25.0) / 1e6
+g8_rate_mbs = (250.0 * 640.0) / 1e6
+g9_fctrl_hz = 4000.0 / 4.0
+
+assert math.isclose(g1_rate_mbs, 18.0, rel_tol=1e-9)
+assert g2_connects is False
+assert math.isclose(g3_x_m, 0.11, rel_tol=1e-9)
+assert math.isclose(g4_x_m, 0.30, rel_tol=1e-9)
+assert g5_choice == "A"
+assert math.isclose(g6_margin_ms, 0.25, rel_tol=1e-9)
+assert math.isclose(g7_saved_mbs, 50.0, rel_tol=1e-9)
+assert math.isclose(g8_rate_mbs, 0.16, rel_tol=1e-9)
+assert math.isclose(g9_fctrl_hz, 1000.0, rel_tol=1e-9)
+```
+- **Pass mark:** $\ge 80\%$ ($8/9$ on the Gate test). Missed Q1–Q6: study `06-robotics.T2.06a`; Q7–Q9: `06-robotics.T2.06b`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

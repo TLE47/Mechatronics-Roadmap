@@ -348,7 +348,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below and $\ge 80\%$ ($8/10$, with $2/2$ on `[SAFETY]`) on the ladder's Gate test.
 
 ### Skip test
 1. `[Recall] [Concept: neural_network_forward_pass_and_mse_loss]` Given predictions $\hat{y} = [1.0, 3.0]^\top$ and expert targets $y^{*} = [2.0, 1.0]^\top$ ($N = 2$), compute the Mean-Squared Error $\mathcal{L} = \frac{1}{2}\sum_{i=1}^2 (\hat{y}_i - y_i^{*})^2$ (tolerance $\pm 10^{-9}$).
@@ -375,6 +375,62 @@ assert math.isclose(q3_wnew, 2.6, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+
+### Gate test
+Covers the complete Track 06 Tier 3 Embodied AI bridge ladder ([`06-robotics.T3.06a`](06-robotics.T3.06a.md) $\to$ [`06-robotics.T3.06b`](06-robotics.T3.06b.md)) before Step 3.7 (`06-robotics.T3.07`):
+1. `[Concept: neural_network_forward_pass_and_mse_loss]` With predictions $\hat{y} = [2.0, 4.0]^\top$ and expert targets $y^{*} = [3.0, 1.0]^\top$ ($N = 2$), compute $\mathcal{L} = \frac{1}{2}\sum_i (\hat{y}_i - y_i^{*})^2$ (tolerance $\pm 10^{-9}$).
+2. `[Concept: neural_network_forward_pass_and_mse_loss]` Why does the hidden layer need a nonlinearity such as $\tanh$ at all?
+   - **A.** Without it, a stack of linear layers collapses to a single linear map $W_2 W_1$, so the policy cannot represent a curved observation-to-action relation.
+   - **B.** Because $\tanh$ makes the loss convex.
+   - **C.** Because the encoder needs a bounded signal.
+   - **D.** Because otherwise the gradient is exactly zero.
+3. `[Concept: chain_rule_backpropagation_and_gradient_descent]` For $\mathcal{L}(w) = (w x - y^{*})^2$ with $w = 2.0$, $x = 3.0$ and $y^{*} = 8.0$, compute $\partial\mathcal{L}/\partial w = 2(wx - y^{*})x$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: chain_rule_backpropagation_and_gradient_descent]` Using Q3's gradient and $\eta = 0.05$, compute $w_{\text{new}} = w - \eta\,\partial\mathcal{L}/\partial w$ (tolerance $\pm 10^{-9}$).
+5. `[Concept: behavior_cloning_expert_demonstration_fit]` What is covariate shift (compounding error) in single-step Behaviour Cloning?
+   - **A.** Small prediction errors move the arm into states the expert never visited, where the policy has no data and errs further, so the error compounds along the trajectory.
+   - **B.** The GPU clock drifting during training.
+   - **C.** A learning rate of zero.
+   - **D.** Two demonstrations with the same action.
+6. `[Concept: behavior_cloning_expert_demonstration_fit]` A feature takes the values $[1.0, 3.0, 5.0]$ and is z-scored with the population standard deviation. Compute the z-score of $5.0$ (tolerance $\pm 10^{-6}$).
+7. `[Concept: mdp_discounted_return_and_policy_gradient]` Compute $G_0 = r_0 + \gamma r_1 + \gamma^2 r_2$ for rewards $[4.0, 2.0, 1.0]$ and $\gamma = 0.90$ (tolerance $\pm 10^{-9}$).
+8. `[Concept: action_chunking_temporal_ensembling_rtc]` Two overlapping action chunks predict $\hat{a}_0 = 0.80\text{ rad}$ with weight $w_0 = 1.0$ and $\hat{a}_1 = 0.40\text{ rad}$ with weight $w_1 = 0.4$. Compute the temporally ensembled action $(w_0\hat{a}_0 + w_1\hat{a}_1)/(w_0 + w_1)$ (tolerance $\pm 10^{-9}$).
+9. `[SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]` The arm sits at $q = 0.30\text{ rad}$ with step clamp $\Delta q_{\max} = 0.08\text{ rad}$ and joint limits $[-1.50, +1.50]\text{ rad}$; the policy asks for $2.00\text{ rad}$. Compute the shield's output $q_d$ (tolerance $\pm 10^{-9}$).
+10. `[SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]` What must the $1\text{ kHz}$ controller do when the policy process stops sending chunks for longer than the $100\text{ ms}$ watchdog?
+   - **A.** Hold the last action and hope the process returns.
+   - **B.** Move to a damped stop or safe hold and raise a communication-timeout fault (STO on hardware).
+   - **C.** Apply random PWM to shake the joint loose.
+   - **D.** Disable the current limit so the arm can be moved by hand.
+
+**Gate answer key:**
+```python
+import math
+
+g1_mse = 0.5 * ((2.0 - 3.0) ** 2 + (4.0 - 1.0) ** 2)
+g2_choice = "A"
+g3_grad = 2.0 * (2.0 * 3.0 - 8.0) * 3.0
+g4_wnew = 2.0 - 0.05 * g3_grad
+g5_choice = "A"
+values = [1.0, 3.0, 5.0]
+mean = sum(values) / 3.0
+sigma = math.sqrt(sum((v - mean) ** 2 for v in values) / 3.0)
+g6_z = (5.0 - mean) / sigma
+g7_g0 = 4.0 + 0.90 * 2.0 + (0.90 ** 2) * 1.0
+g8_aens = (1.0 * 0.80 + 0.4 * 0.40) / (1.0 + 0.4)
+g9_safety_qd = max(-1.50, min(1.50, max(0.30 - 0.08, min(0.30 + 0.08, 2.00))))
+g10_safety_choice = "B"
+
+assert math.isclose(g1_mse, 5.0, rel_tol=1e-9)
+assert g2_choice == "A"
+assert math.isclose(g3_grad, -12.0, rel_tol=1e-9)
+assert math.isclose(g4_wnew, 2.6, rel_tol=1e-9)
+assert g5_choice == "A"
+assert math.isclose(g6_z, 1.224744871391589, rel_tol=1e-6)
+assert math.isclose(g7_g0, 6.61, rel_tol=1e-9)
+assert math.isclose(g8_aens, 0.96 / 1.4, rel_tol=1e-9)
+assert math.isclose(g9_safety_qd, 0.38, rel_tol=1e-9)   # Mandatory [SAFETY] 100% required
+assert g10_safety_choice == "B"                        # Mandatory [SAFETY] 100% required
+```
+- **Pass mark:** $\ge 80\%$ ($8/10$) **and** $2/2$ on the `[SAFETY]` pair, Q9–Q10. Missed Q1–Q6: study `06-robotics.T3.06a`; Q7–Q10: `06-robotics.T3.06b`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

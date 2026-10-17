@@ -266,6 +266,49 @@ assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3 or Q4, study `## 3. Formalization` item 2. On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 04 Tier 1 bridge ladder (`04-embedded.T1.04a` $\to$ `04-embedded.T1.04b`) before Step 1.5 (`04-embedded.T1.05`):
+1. `[Concept: c_fixed_width_integer_types_and_overflow]` Compute the unsigned 8-bit elapsed tick difference `(now - prev) & 0xFF` when `now = 9` and `prev = 250` (exact integer, tolerance $\pm 0$).
+2. `[Concept: c_fixed_width_integer_types_and_overflow]` How many bytes does a packed struct `{ uint32_t stamp_ms; int16_t counts; uint8_t flags; }` occupy in memory (exact integer)?
+3. `[Concept: bitwise_masks_and_shifts]` Starting from `reg = 0x00`, compute the decimal value of `reg` after setting bits `2` and `5` (`reg |= (1 << 2) | (1 << 5)`).
+4. `[Concept: bitwise_masks_and_shifts]` Starting from `reg = 0xB4` (`180`), compute the decimal value of `reg` after clearing bit `2` (`reg &= ~(1 << 2)`).
+5. `[Concept: c_structs_and_pointers_pass_by_reference]` Why does `s->count += 1` inside `void bump(MotorState *s)` update the caller's struct?
+   - **A.** Because the pointer carries the struct's address, so the increment writes through to the caller's own memory instead of to a stack copy.
+   - **B.** Because C copies every struct back to the caller after each call.
+   - **C.** Because `->` dereferences a copy of the struct.
+   - **D.** Because `int16_t` fields are always global.
+6. `[Concept: non_blocking_tick_scheduler]` A $1\text{ kHz}$ control task last ran at $t_{\text{last}} = 4{,}000\ \mu\text{s}$. Compute how many complete ticks of its own $1000\ \mu\text{s}$ grid have come due at $t_{\text{now}} = 6{,}500\ \mu\text{s}$ (exact integer).
+7. `[Concept: finite_state_machine_switch_enum]` A `FAULT` state latched after an over-current trip. On the next tick the measured current has recovered to $0.4\text{ A}$ under the $2.0\text{ A}$ limit and the supervisor requests full PWM. What does the FSM return?
+   - **A.** `("FAULT", 0.0)` - the fault is latched, so it survives a recovered measurement.
+   - **B.** `("RUN", pwm_cmd)` as soon as the current is below the limit.
+   - **C.** `("HOMING", 0.2)` because the position is unknown.
+   - **D.** `("IDLE", 0.0)` because the trip reset the state.
+8. `[Concept: hardware_isr_and_volatile_contract]` A timer ISR takes $t_{\text{exec}} = 28\ \mu\text{s}$ and fires at $f_{\text{isr}} = 2\text{ kHz}$. Compute its CPU utilisation in percent (tolerance $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_u8 = (9 - 250) & 0xFF
+g2_bytes = 4 + 2 + 1
+g3_set = (1 << 2) | (1 << 5)
+g4_clear = 0xB4 & ~(1 << 2)
+g5_choice = "A"
+g6_due = (6_500 - 4_000) // 1_000
+g7_choice = "A"
+g8_pct = 100.0 * 28.0 * 1e-6 * 2_000.0
+
+assert g1_u8 == 15
+assert g2_bytes == 7
+assert g3_set == 36
+assert g4_clear == 176
+assert g5_choice == "A"
+assert g6_due == 2
+assert g7_choice == "A"
+assert math.isclose(g8_pct, 5.6, rel_tol=1e-9)
+```
+- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q5 $\to$ `04-embedded.T1.04a`; Q6–Q8 $\to$ `04-embedded.T1.04b`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

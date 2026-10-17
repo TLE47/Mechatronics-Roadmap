@@ -239,6 +239,67 @@ assert math.isclose(q5_mean_a, 1.5, rel_tol=1e-9)
 ```
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2 or Q3, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T1.00b`). On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 00 Tier 1 bridge ladder (`00-foundations.T1.00a` $\to$ `00-foundations.T1.00b` $\to$ `00-foundations.T1.00c` $\to$ `00-foundations.T1.00d` $\to$ `00-foundations.T1.00e`) before Step 1.1 (`00-foundations.T2.00a`):
+1. `[Concept: si_base_and_derived_units]` A joint delivers $\tau = 0.32\ \text{N}\cdot\text{m}$ at $1500\ \text{RPM}$. Compute the shaft power $P = \tau\omega$ in watts (tolerance $\pm 10^{-3}\ \text{W}$).
+2. `[Concept: scientific_notation_and_prefixes]` A $4.7\ \text{k}\Omega$ resistor and a $47\ \text{nF}$ capacitor form an RC filter. Compute $\tau_{RC} = RC$ in microseconds (tolerance $\pm 10^{-6}\ \mu\text{s}$).
+3. `[Concept: dimensional_analysis_unit_checks]` Convert $900\ \text{RPM}$ into angular velocity in $\text{rad/s}$ (tolerance $\pm 10^{-4}\ \text{rad/s}$).
+4. `[Concept: si_base_and_derived_units]` Which expression is dimensionally a kinetic energy in joules?
+   - **A.** $E = \tfrac{1}{2} m v^2$
+   - **B.** $E = m v / 2$
+   - **C.** $E = m g / h$
+   - **D.** $E = m v^2 / g$
+5. `[Concept: scientific_notation_and_prefixes] [Concept: dimensional_analysis_unit_checks]` A $12\ \text{V}$ supply drives $2.2\ \text{k}\Omega$ in series with $330\ \Omega$. Compute the current in milliamperes (tolerance $\pm 10^{-3}\ \text{mA}$).
+6. `[Concept: dimensional_analysis_unit_checks]` Which unit is identical to $\text{N}\cdot\text{m/s}$?
+   - **A.** the watt ($\text{W}$)
+   - **B.** the joule ($\text{J}$)
+   - **C.** the newton ($\text{N}$)
+   - **D.** the pascal ($\text{Pa}$)
+7. `[Concept: python_variables_and_types] [Concept: traceback_error_reading]` Trace `gain = 2.5; gain *= 3.0; gain -= 0.5` and compute the final `gain` (tolerance $\pm 10^{-9}$).
+8. `[Concept: for_while_loops_and_functions]` Compute the integer returned by `sum(k * k for k in range(1, 6))`.
+9. `[Concept: lists_dicts_and_numpy_arrays] [Concept: matplotlib_time_series_plotting] [Concept: terminal_and_git_basics]` For `arr = [3.0, 5.0, 9.0, 11.0]`, compute `sum(arr) / len(arr) + arr[0]` (tolerance $\pm 10^{-9}$).
+10. `[Concept: linear_functions_and_slope]` A sensor obeys $y = 0.25x + 0.4$ volts. Compute $y$ at $x = 8.0\ \text{A}$ (tolerance $\pm 10^{-9}\ \text{V}$).
+11. `[Concept: radians_unit_circle_and_atan2] [Concept: 2d_vectors_and_components]` Compute `math.degrees(math.atan2(-0.5, 0.5))` in degrees (tolerance $\pm 10^{-9}$ degrees).
+12. `[Concept: discrete_kinematics_pos_vel_acc] [Concept: newtons_second_law_and_torque] [Concept: spring_energy_and_power]` A $1.5\ \text{kg}$ carriage at rest is pushed by a constant $4.5\ \text{N}$ for $0.4\ \text{s}$. Compute its kinetic energy $\tfrac{1}{2} m v^2$ at the end, in joules (tolerance $\pm 10^{-9}\ \text{J}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_power_w = 0.32 * (1500.0 * 2.0 * math.pi / 60.0)
+g2_rc_us = (4.7e3 * 47e-9) * 1e6
+g3_omega = 900.0 * (2.0 * math.pi / 60.0)
+g4_choice = "A"
+g5_current_ma = 12.0 / (2.2e3 + 330.0) * 1e3
+g6_choice = "A"
+gain = 2.5
+gain *= 3.0
+gain -= 0.5
+g7_gain = gain
+g8_total = sum(k * k for k in range(1, 6))
+arr = [3.0, 5.0, 9.0, 11.0]
+g9_stat = sum(arr) / len(arr) + arr[0]
+g10_v = 0.25 * 8.0 + 0.4
+g11_deg = math.degrees(math.atan2(-0.5, 0.5))
+force_n, mass_kg, dt_s = 4.5, 1.5, 0.4
+v_ms = (force_n / mass_kg) * dt_s
+g12_energy_j = 0.5 * mass_kg * v_ms ** 2
+
+assert math.isclose(g1_power_w, 50.2655, abs_tol=1e-3)
+assert math.isclose(g2_rc_us, 220.9, abs_tol=1e-6)
+assert math.isclose(g3_omega, 94.2478, abs_tol=1e-4)
+assert g4_choice == "A"
+assert math.isclose(g5_current_ma, 4.743083, abs_tol=1e-3)
+assert g6_choice == "A"
+assert math.isclose(g7_gain, 7.0, rel_tol=1e-12)
+assert g8_total == 55
+assert math.isclose(g9_stat, 10.0, rel_tol=1e-12)
+assert math.isclose(g10_v, 2.4, rel_tol=1e-12)
+assert math.isclose(g11_deg, -45.0, rel_tol=1e-12)
+assert math.isclose(g12_energy_j, 1.08, rel_tol=1e-9)
+```
+- **Pass mark:** $\ge 80\%$ ($4/5$ on Skip test; $\ge 10/12$ on Gate test). Missed Gate Q1-Q6: study this module's `## 3. Formalization`; Q7-Q8: `00-foundations.T1.00a`; Q9: `00-foundations.T1.00b`; Q10-Q11: `00-foundations.T1.00d`; Q12: `00-foundations.T1.00e`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

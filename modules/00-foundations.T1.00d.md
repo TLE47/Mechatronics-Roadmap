@@ -237,6 +237,71 @@ assert math.isclose(q5_rad_s, math.pi, rel_tol=1e-9)
 ```
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, Q2, or Q3, study `## 3. Formalization`; if you missed Q4, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T1.00c`). On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 00 Tier 1 bridge ladder (`00-foundations.T1.00a` $\to$ `00-foundations.T1.00b` $\to$ `00-foundations.T1.00c` $\to$ `00-foundations.T1.00d` $\to$ `00-foundations.T1.00e`) before Step 1.1 (`00-foundations.T2.00a`):
+1. `[Concept: linear_functions_and_slope]` A current sensor is calibrated as $V = 0.15\,I + 0.8$ volts. Compute the output at $I = 6.0\ \text{A}$ (tolerance $\pm 10^{-9}\ \text{V}$).
+2. `[Concept: linear_functions_and_slope]` The same sensor reads $2.3\ \text{V}$. Compute the current in amperes (tolerance $\pm 10^{-9}\ \text{A}$).
+3. `[Concept: radians_unit_circle_and_atan2] [Concept: 2d_vectors_and_components]` Compute `math.degrees(math.atan2(0.5, -0.5))` in degrees (tolerance $\pm 10^{-9}$ degrees).
+4. `[Concept: radians_unit_circle_and_atan2]` A tip sits at $(-0.30\ \text{m}, -0.40\ \text{m})$. Why must the code call `atan2(y, x)` instead of `atan(y / x)`?
+   - **A.** Because `atan` always returns radians and `atan2` returns degrees.
+   - **B.** Because $y/x$ is the same fraction for $(-0.30, -0.40)$ and $(+0.30, +0.40)$, so the one-argument `atan` cannot recover the $180^\circ$ difference; `atan2` inspects both signs.
+   - **C.** Because `atan` rejects negative arguments with a `ValueError`.
+   - **D.** Because `atan2` is numerically faster.
+5. `[Concept: radians_unit_circle_and_atan2]` Convert $150^\circ$ into radians (tolerance $\pm 10^{-9}\ \text{rad}$).
+6. `[Concept: 2d_vectors_and_components]` A $L = 0.30\ \text{m}$ link points at $210^\circ$. Compute its $x$ coordinate in metres (tolerance $\pm 10^{-4}\ \text{m}$).
+7. `[Concept: 2d_vectors_and_components]` Compute the Euclidean length of the vector $(0.18\ \text{m}, 0.24\ \text{m})$ in metres (tolerance $\pm 10^{-12}\ \text{m}$).
+8. `[Concept: si_base_and_derived_units] [Concept: dimensional_analysis_unit_checks]` A joint delivers $0.6\ \text{N}\cdot\text{m}$ at $50\ \text{rad/s}$. Compute $P = \tau\omega$ in watts (tolerance $\pm 10^{-9}\ \text{W}$).
+9. `[Concept: scientific_notation_and_prefixes]` A $2.2\ \text{k}\Omega$ resistor with a $470\ \text{nF}$ capacitor has $\tau_{RC} = RC$. Compute it in milliseconds (tolerance $\pm 10^{-9}\ \text{ms}$).
+10. `[Concept: python_variables_and_types] [Concept: traceback_error_reading]` Trace `x = 2.0; x **= 2; x -= 1` and compute the final `x` (tolerance $\pm 10^{-9}$).
+11. `[Concept: for_while_loops_and_functions]` Compute the integer returned by `sum(2 ** i for i in range(4))`.
+12. `[Concept: lists_dicts_and_numpy_arrays] [Concept: matplotlib_time_series_plotting] [Concept: terminal_and_git_basics]` For `arr = [0.2, 0.9, 0.4, 0.7]`, compute `max(arr) - min(arr)` (tolerance $\pm 10^{-12}$).
+13. `[Concept: discrete_kinematics_pos_vel_acc] [Concept: newtons_second_law_and_torque]` A $1.5\ \text{kg}$ carriage moving at $2.0\ \text{m/s}$ is pushed by $6.0\ \text{N}$ for $0.25\ \text{s}$. Compute its final speed in $\text{m/s}$ (tolerance $\pm 10^{-9}\ \text{m/s}$).
+14. `[Concept: spring_energy_and_power]` You double a carriage's speed from $1.2\ \text{m/s}$ to $2.4\ \text{m/s}$. By what factor does its kinetic energy $\tfrac{1}{2} m v^2$ change?
+   - **A.** $2\times$
+   - **B.** $4\times$
+   - **C.** $\sqrt{2}\times$
+   - **D.** unchanged
+
+**Gate answer key:**
+```python
+import math
+
+g1_v = 0.15 * 6.0 + 0.8
+g2_i = (2.3 - 0.8) / 0.15
+g3_deg = math.degrees(math.atan2(0.5, -0.5))
+g4_choice = "B"
+g5_rad = math.radians(150.0)
+g6_x = 0.30 * math.cos(math.radians(210.0))
+g7_length = math.hypot(0.18, 0.24)
+g8_power_w = 0.6 * 50.0
+g9_tau_ms = (2.2e3 * 470e-9) * 1e3
+x = 2.0
+x **= 2
+x -= 1
+g10_x = x
+g11_total = sum(2 ** i for i in range(4))
+arr = [0.2, 0.9, 0.4, 0.7]
+g12_span = max(arr) - min(arr)
+g13_v = 2.0 + (6.0 / 1.5) * 0.25
+g14_choice = "B"
+
+assert math.isclose(g1_v, 1.7, rel_tol=1e-12)
+assert math.isclose(g2_i, 10.0, rel_tol=1e-12)
+assert math.isclose(g3_deg, 135.0, rel_tol=1e-12)
+assert g4_choice == "B"
+assert math.isclose(g5_rad, 2.617993878, abs_tol=1e-9)
+assert math.isclose(g6_x, -0.2598, abs_tol=1e-4)
+assert math.isclose(g7_length, 0.30, rel_tol=1e-12)
+assert math.isclose(g8_power_w, 30.0, rel_tol=1e-12)
+assert math.isclose(g9_tau_ms, 1.034, rel_tol=1e-9)
+assert math.isclose(g10_x, 3.0, rel_tol=1e-12)
+assert g11_total == 15
+assert math.isclose(g12_span, 0.7, abs_tol=1e-12)
+assert math.isclose(g13_v, 3.0, rel_tol=1e-12)
+assert g14_choice == "B"
+```
+- **Pass mark:** $\ge 80\%$ ($4/5$ on Skip test; $\ge 12/14$ on Gate test). Missed Gate Q1-Q7: study this module's `## 3. Formalization`; Q8-Q9: `00-foundations.T1.00c`; Q10-Q12: `00-foundations.T1.00a` and `00-foundations.T1.00b`; Q13-Q14: `00-foundations.T1.00e`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

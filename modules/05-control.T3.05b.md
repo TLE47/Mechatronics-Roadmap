@@ -243,7 +243,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($3/4$) on the Skip test below.
+Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($3/4$) on the Skip test below and $\ge 80\%$ ($6/7$) on the ladder's Gate test.
 
 ### Skip test
 1. `[Recall] [Concept: tangent_space_eskf_error_injection]` Compute $\exp([0, 0, 0.05]_\times)_{10}$ - the $(1,0)$ entry, i.e. $\sin(0.05)$ - to $\pm 10^{-9}$.
@@ -272,7 +272,37 @@ assert q4_choice == "A"
 ```
 - **Pass mark:** $3/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, item 3; if you missed Q3, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`. On pass, proceed to `05-control.T3.05c`.
 
-The ladder's Gate test lives at the end of the ladder, in [`05-control.T3.05c`](05-control.T3.05c.md), and examines all three bridges together; this module's own checkpoint is the Skip test above and the graded package.
+### Gate test
+Covers the complete Track 05 Tier 3 ladder ([`05-control.T3.05a`](05-control.T3.05a.md) $\to$ this module $\to$ [`05-control.T3.05c`](05-control.T3.05c.md)) before Step 3.6 (`05-control.T3.06`):
+1. `[Concept: tangent_space_eskf_error_injection]` Compute the $(1,0)$ entry of $\exp([0, 0, 0.04]_\times)$, i.e. $\sin(0.04)$ (tolerance $\pm 10^{-12}$).
+2. `[Concept: tangent_space_eskf_error_injection]` A filter injects a $0.03$ rad correction, resets the error-state mean, and then runs a measurement whose innovation is zero. What angle has the frame turned in total (tolerance $\pm 10^{-12}$ rad)?
+3. `[Concept: tangent_space_eskf_error_injection]` One encoder count of the plant's $4096$-count encoder is $2\pi/4096$ rad. Compute that tangent-space step (tolerance $\pm 10^{-12}$ rad).
+4. `[Concept: joseph_stabilized_covariance_update]` A scalar update has $P^- = 8.0$, $H = 1.0$, $R = 2.0$ and the optimal gain $K = 0.80$. Compute the Joseph posterior $(1 - KH)^2 P^- + K^2 R$ (tolerance $\pm 10^{-9}$).
+5. `[Concept: joseph_stabilized_covariance_update]` Repeat the update of Q4 with a gain $K = 1.10$ instead. Compute the Joseph posterior (tolerance $\pm 10^{-9}$) - the naive $(1 - KH)P^-$ reads $-0.50$ here.
+6. `[Concept: control_barrier_forward_invariance_qp]` At $h = 0.05\,\text{rad}$, $\alpha = 10.0\,\text{s}^{-1}$, $u_{\text{nom}} = +0.60\,\text{rad/s}$ and $u \in [-2, +2]\,\text{rad/s}$, what command does the CBF-QP return (tolerance $\pm 10^{-9}\,\text{rad/s}$)?
+7. `[Concept: control_barrier_forward_invariance_qp]` At the same $h$ and $\alpha$, a retreat asks for $u_{\text{nom}} = -0.60\,\text{rad/s}$. What command does the filter return (tolerance $\pm 10^{-9}\,\text{rad/s}$)?
+
+**Gate answer key:**
+```python
+import math
+
+g1_sin = math.sin(0.04)
+g2_held = 0.03
+g3_count = 2.0 * math.pi / 4096.0
+g4_p_joseph = ((1.0 - 0.80 * 1.0) ** 2) * 8.0 + (0.80 ** 2) * 2.0
+g5_p_joseph_bad = ((1.0 - 1.10 * 1.0) ** 2) * 8.0 + (1.10 ** 2) * 2.0
+g6_u = min(max(0.60, -2.0), min(2.0, 10.0 * 0.05))
+g7_u_retreat = min(max(-0.60, -2.0), min(2.0, 10.0 * 0.05))
+
+assert math.isclose(g1_sin, 0.03998933418663416, rel_tol=1e-12)
+assert math.isclose(g2_held, 0.03, abs_tol=1e-12)
+assert math.isclose(g3_count, 0.0015339807878856412, rel_tol=1e-12)
+assert math.isclose(g4_p_joseph, 1.6, rel_tol=1e-9)
+assert math.isclose(g5_p_joseph_bad, 0.08 + 2.42, rel_tol=1e-9)
+assert math.isclose(g6_u, 0.50, rel_tol=1e-9)
+assert math.isclose(g7_u_retreat, -0.60, rel_tol=1e-9)
+```
+- **Pass mark:** $\ge 80\%$ ($6/7$ on the Gate test). Missed Q1–Q3: study `05-control.T3.05b`; Q4–Q5: `05-control.T3.05a`; Q6–Q7: `05-control.T3.05c`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

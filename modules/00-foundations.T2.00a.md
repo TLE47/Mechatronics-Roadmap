@@ -285,6 +285,67 @@ assert q5_choice == "B"
 ```
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization`; if you missed Q2, Q3, or Q4, study `## 4. Worked example`; if you missed Q5, study `## 2. Intuition first` (and review `00-foundations.T1.01`). On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`). Questions 1-6 are this module's own three tools; 7-11 recap each later module once, so nothing on the ladder goes unexamined.
+1. `[Concept: finite_difference_derivative_and_integral]` An encoder reads $x_{k-1} = 0.24\,\text{rad}$ and $x_k = 0.30\,\text{rad}$ at $\Delta t = 0.002\,\text{s}$. Compute the backward-difference velocity $v_k = (x_k - x_{k-1})/\Delta t$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
+2. `[Concept: finite_difference_derivative_and_integral]` From $I_0 = 0.50\,\text{m}\cdot\text{s}$, one more sample $x_k = 0.12\,\text{m}$ at $\Delta t = 0.01\,\text{s}$ gives $I_1 = I_0 + x_k\Delta t$. Compute $I_1$ (tolerance $\pm 10^{-9}$).
+3. `[Concept: matrix_vector_multiplication]` For $A = \begin{bmatrix} 3.0 & -2.0 \\ 1.0 & 4.0 \end{bmatrix}$ and $\vec{x} = [1.5,\; 2.5]^\top$, compute $(A\vec{x})_0$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: matrix_vector_multiplication]` Why does $A\vec{x}$ come out as a column of length $2$ rather than a $2\times 2$ matrix?
+   - **A.** Each output entry is one row of $A$ dotted with $\vec{x}$, so there is one output per row.
+   - **B.** $A\vec{x}$ is the elementwise product of $A$ and $\vec{x}$, which keeps $A$'s shape.
+   - **C.** Python reshapes $A$ into a column before multiplying.
+   - **D.** $\vec{x}$ is transposed into a row first.
+5. `[Concept: state_vector_one_step_update]` One step of $A_d = \begin{bmatrix} 1.0 & 0.02 \\ -2.0 & 0.80 \end{bmatrix}$, $B_d = [0.0,\; 0.02]^\top$, from $\vec{x}_0 = [0.50,\; 0.0]^\top$ with $u_0 = 10.0\,\text{N}$ gives $v_1$. Compute $v_1$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
+6. `[Concept: state_vector_one_step_update]` Why must both new components be computed before either is written back into $\vec{x}$?
+   - **A.** Every row of $A_d$ uses the *old* state; writing $x_{k+1}$ into `x[0]` first feeds the new position into the velocity row.
+   - **B.** NumPy forbids in-place assignment.
+   - **C.** The velocity row is by definition computed from the new position.
+   - **D.** Because $B_d$ has a zero in the position row.
+7. `[Concept: dot_product_projection] [Concept: cross_product_3d_moment] [Concept: basis_change_and_invertibility]` Which triple is correct for `00-foundations.T2.00b`?
+   - **A.** The projection uses the lever's *unit* direction, the moment is $\vec{r}\times\vec{F}$ (anti-commutative), and a zero determinant means the two columns are collinear.
+   - **B.** The projection uses the raw lever so force grows with its length, $\vec{r}\times\vec{F} = \vec{F}\times\vec{r}$, and a zero determinant means a valid basis.
+   - **C.** The projection divides by $\|\vec{r}\|$ twice, the moment is a scalar, and the determinant is always positive.
+   - **D.** The dot product returns a vector, the cross product is symmetric, and the determinant equals the trace.
+8. `[Concept: first_order_ode_time_constant] [Concept: second_order_ode_wn_zeta] [Concept: characteristic_polynomial_roots]` For `00-foundations.T2.00c`'s joint with $J = 0.02\,\text{kg}\cdot\text{m}^2$, $k = 8.0\,\text{N}\cdot\text{m/rad}$ and $b = 0.60\,\text{N}\cdot\text{m}\cdot\text{s/rad}$, compute the damping ratio $\zeta = b/(2\sqrt{Jk})$ (tolerance $\pm 10^{-9}$).
+9. `[Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function] [Concept: bode_magnitude_db_and_phase]` For `00-foundations.T2.00d`'s first-order filter $H(j\omega) = 1/(1 + j\omega\tau)$, compute $|H|$ in decibels at the cutoff $\omega = 1/\tau$ (tolerance $\pm 10^{-4}\,\text{dB}$).
+10. `[Concept: laplace_poles_and_zeros] [Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` For `00-foundations.T2.00e`'s $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ sampled at $T_s = 0.05\,\text{s}$, compute the spectral radius of the Forward-Euler map $A_d = I + A T_s$ (tolerance $\pm 10^{-6}$).
+11. `[Concept: nyquist_sampling_and_aliasing] [Concept: tustin_frequency_prewarping_and_biquad] [Concept: gaussian_variance_and_covariance_matrix]` Which triple is correct for `00-foundations.T2.00f`?
+   - **A.** Sampling represents only frequencies up to $f_s/2$, a faster tone folds to $|f - k f_s|$, and pre-warping lifts the analog target so the digital notch lands on $f_0$.
+   - **B.** Sampling represents any frequency, aliasing affects only DC, and Tustin never warps.
+   - **C.** The Nyquist frequency is $f_s$, aliasing doubles the frequency, and pre-warping is a gain correction.
+   - **D.** Covariance is a scalar, the sample rate is irrelevant to stability, and every bilinear pole lands outside the unit circle.
+
+**Gate answer key:**
+```python
+import math
+
+g1_velocity = (0.30 - 0.24) / 0.002
+g2_integral = 0.50 + 0.12 * 0.01
+g3_ax0 = 3.0 * 1.5 + (-2.0) * 2.5
+g4_choice = "A"
+g5_v1 = -2.0 * 0.50 + 0.80 * 0.0 + 0.02 * 10.0
+g6_choice = "A"
+g7_choice = "A"
+g8_zeta = 0.60 / (2.0 * math.sqrt(0.02 * 8.0))
+g9_db = 20.0 * math.log10(1.0 / math.sqrt(2.0))
+Ad_euler = [[1.0, 0.05], [-5.0, 0.80]]
+g10_radius = math.sqrt(Ad_euler[0][0] * Ad_euler[1][1] - Ad_euler[0][1] * Ad_euler[1][0])
+g11_choice = "A"
+
+assert math.isclose(g1_velocity, 30.0, rel_tol=1e-9)
+assert math.isclose(g2_integral, 0.5012, rel_tol=1e-9)
+assert math.isclose(g3_ax0, -0.5, rel_tol=1e-9)
+assert g4_choice == "A"
+assert math.isclose(g5_v1, -0.80, rel_tol=1e-9)
+assert g6_choice == "A"
+assert g7_choice == "A"
+assert math.isclose(g8_zeta, 0.75, rel_tol=1e-9)
+assert math.isclose(g9_db, -3.0103, abs_tol=1e-4)
+assert math.isclose(g10_radius, 1.024695, abs_tol=1e-6)
+assert g11_choice == "A"
+```
+- **Pass mark:** $\ge 80\%$ ($4/5$ on Skip test; $\ge 9/11$ on Gate test). Missed Gate Q1-Q2: study `00-foundations.T2.00a`; Q3-Q6: `00-foundations.T2.00a`; Q7: `00-foundations.T2.00b`; Q8: `00-foundations.T2.00c`; Q9: `00-foundations.T2.00d`; Q10: `00-foundations.T2.00e`; Q11: `00-foundations.T2.00f`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

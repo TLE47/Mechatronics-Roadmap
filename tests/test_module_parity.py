@@ -24,13 +24,17 @@ Three jobs:
 Run: `python3 tests/test_module_parity.py` (also wired into the CI verify step).
 """
 
+import contextlib
+import io
 import json
 import os
+import re
 import sys
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
+sys.path.insert(0, os.path.join(ROOT, "resources", "plants"))
 
 import module_parity as parity  # noqa: E402  (path set up above)
 
@@ -164,8 +168,6 @@ class TestTheLearnerScaffoldIsARealOne(unittest.TestCase):
         self.assertIn("at least 3 expected", thin[0])
 
 
-import re  # noqa: E402  (used by `scaffold_findings`, kept next to it for readability)
-
 SCAFFOLD_SECTIONS = ("### Starter code", "### Hint ladder", "### Full Solution")
 MIN_TODOS = 3
 MIN_HINTS = 3
@@ -197,6 +199,65 @@ def _section(text: str, heading: str) -> str:
         return ""
     end = text.find("\n### ", start + len(heading))
     return text[start : end if end >= 0 else len(text)]
+
+
+class TestEveryBridgeModuleClosesItsLadder(unittest.TestCase):
+    """Each module's Gate test is the experiment for its whole track-tier ladder.
+
+    `scripts/validate_modules.py` checks the tags of a Gate test that exists, so a module with no
+    Gate test passes that check by carrying nothing. This turns the parity item `checkpoint_tests`
+    into a guarantee: every bridge module publishes a `### Gate test`, it tags exactly the concepts
+    its ladder introduces - no gap and no straggler - and its answer key runs to the last assert.
+    """
+
+    def test_every_module_has_a_gate_that_covers_its_ladder(self):
+        findings = []
+        ladders = {}
+        for row in _module_rows():
+            module = row["module"]
+            ladders.setdefault(ladder_of(module), set()).update(introduced_concepts(module))
+        for row in _module_rows():
+            module = row["module"]
+            with open(os.path.join(ROOT, row["path"]), encoding="utf-8") as handle:
+                started = re.search(r"### Gate test(.*?)(?=\n## |\Z)", handle.read(), re.DOTALL)
+            gate = started.group(1) if started else ""
+            if not gate:
+                findings.append("%s: no `### Gate test`" % module)
+                continue
+            tagged = set(re.findall(r"\[Concept:\s*([^\]]+)\]", gate))
+            expected = ladders[ladder_of(module)]
+            findings += ["%s: Gate test misses `%s`" % (module, c) for c in sorted(expected - tagged)]
+            findings += ["%s: Gate test tags unknown `%s`" % (module, c) for c in sorted(tagged - expected)]
+            key = re.search(r"```python\n(.*?)```", gate, re.DOTALL)
+            if not key:
+                findings.append("%s: Gate test has no answer-key python block" % module)
+                continue
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exec(key.group(1), {})
+            except Exception as exc:  # noqa: BLE001 - the point is to name the module that breaks
+                findings.append("%s: Gate answer key raised %r" % (module, exc))
+        self.assertEqual(findings, [], "\n".join(findings))
+
+
+def _module_rows():
+    status, rows, _, errors = parity.build()
+    if status != 0:
+        raise AssertionError("module_parity.build() failed: %s" % errors)
+    return rows
+
+
+def ladder_of(module: str) -> str:
+    """The track-tier a module belongs to: the scope a Gate test must cover."""
+    return ".".join(module.split(".")[:2])
+
+
+def introduced_concepts(module: str) -> set[str]:
+    """The `new_concepts:` list from a module's own front matter."""
+    path = os.path.join(ROOT, "modules", module + ".md")
+    with open(path, encoding="utf-8") as handle:
+        block = re.search(r"^new_concepts:\n((?:\s+- .+\n)+)", handle.read(), re.MULTILINE)
+    return set(re.findall(r"^\s+-\s*(\S+)", block.group(1), re.MULTILINE)) if block else set()
 
 
 if __name__ == "__main__":

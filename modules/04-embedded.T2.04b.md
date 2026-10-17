@@ -297,6 +297,55 @@ assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `04-embedded.T2.04b` $\to$ `04-embedded.T2.04c` $\to$ `04-embedded.T2.04d`) before Step 2.5 (`04-embedded.T2.05`):
+1. `[Concept: rtos_preemptive_scheduling_and_cpu_utilization]` Three tasks run at $(C_1, T_1) = (150, 1000)$, $(C_2, T_2) = (300, 2000)$ and $(C_3, T_3) = (600, 6000)\ \mu\text{s}$. Compute $U = \sum C_i/T_i$ (tolerance $\pm 10^{-9}$).
+2. `[Concept: rtos_preemptive_scheduling_and_cpu_utilization]` What is the Liu-Layland sufficient bound for $n = 3$ tasks, and is $U = 0.40$ provably schedulable under Rate Monotonic?
+   - **A.** $3(2^{1/3} - 1) = 0.7798$; yes, $0.40 < 0.7798$.
+   - **B.** $1.0$; yes, because $0.40 < 1.0$.
+   - **C.** $0.5$; no.
+   - **D.** $n^2 = 9$; yes.
+3. `[Concept: unbounded_priority_inversion_and_inheritance]` $C_H = 80\ \mu\text{s}$ and the holder has $B = 35\ \mu\text{s}$ of its critical section left. Compute $R_H$ in microseconds with a priority-inheritance mutex (tolerance $\pm 10^{-9}$).
+4. `[Concept: unbounded_priority_inversion_and_inheritance]` Same numbers, but the lock is a binary semaphore and $M$ ($C_M = 500\ \mu\text{s}$) is ready. Compute $R_H$ in microseconds (tolerance $\pm 10^{-9}$).
+5. `[Concept: can_bitwise_arbitration_and_mit_packing]` Three nodes start transmitting at the same instant with identifiers `0x210`, `0x0A4` and `0x180`. Report the identifier that wins arbitration, in hex (use Python's `0x` literal form).
+6. `[Concept: can_bitwise_arbitration_and_mit_packing]` Pack $\tau = +6.0\ \text{N}\cdot\text{m}$ over $[-18.0, +18.0]\ \text{N}\cdot\text{m}$ into an unsigned 12-bit field with $u = \operatorname{round}\!\left(\frac{\tau - \tau_{\min}}{\tau_{\max} - \tau_{\min}}(2^{12} - 1)\right)$ (exact integer).
+7. `[Concept: spi_full_duplex_clock_polarity_phase] [Concept: dma_zero_cpu_memory_transfer]` A $20\text{-byte}$ telemetry frame is $200$ bits. Compute the total CPU time in microseconds to shift a $16\text{-bit}$ SPI frame at $8\text{ MHz}$ ($2.0\ \mu\text{s}$) **plus** a blocking $200$-bit UART write at $1\text{ Mbaud}$ (tolerance $\pm 10^{-9}$).
+8. `[Concept: double_buffered_ping_pong_half_complete_isr]` A circular DMA buffer has $N = 8$ samples per half and $f_{\text{adc}} = 80\text{ kHz}$. Compute the reading window between HT and TC in microseconds (tolerance $\pm 10^{-9}$).
+9. `[Concept: zephyr_static_threads_and_k_mutex] [Concept: zephyr_west_and_kconfig_build] [Concept: zephyr_devicetree_hardware_binding]` Two `K_THREAD_DEFINE` threads have $1024\text{ B}$ and $512\text{ B}$ stacks, each with a $128\text{ B}$ TCB, and no static queues. Compute $\text{RAM}_{\text{static}}$ in bytes (exact integer).
+10. `[Concept: rclc_static_lifecycle_and_executor] [Concept: microros_xrcedds_client_agent_bridge] [Concept: mcu_to_ros2_deterministic_transport]` Which statement is true of a static `rclc_executor` on an MCU?
+   - **A.** Timers, subscriptions and the executor are allocated at compile time, and one `rclc_executor_spin_some` services them in a bounded pass over XRCE-DDS transport I/O, so the worst-case pass time can be bounded.
+   - **B.** It creates a new thread per subscription at runtime, so the pass time is unbounded.
+   - **C.** It needs a full ROS 2 node with DDS discovery running on the MCU.
+   - **D.** It cannot carry timer callbacks.
+
+**Gate answer key:**
+```python
+import math
+
+g1_util = (150.0 / 1000.0) + (300.0 / 2000.0) + (600.0 / 6000.0)
+g2_choice = "A"
+g3_rh_pi_us = 80.0 + 35.0
+g4_rh_sem_us = 80.0 + 35.0 + 500.0
+g5_winner = 0x0A4
+g6_u12 = round((6.0 - (-18.0)) / 36.0 * ((1 << 12) - 1))
+g7_total_us = 2.0 + (200.0 / 1e6) * 1e6
+g8_window_us = (8.0 / 80e3) * 1e6
+g9_ram_bytes = (1024 + 128) + (512 + 128)
+g10_choice = "A"
+
+assert math.isclose(g1_util, 0.40, rel_tol=1e-9)
+assert g2_choice == "A"
+assert math.isclose(g3_rh_pi_us, 115.0, rel_tol=1e-9)
+assert math.isclose(g4_rh_sem_us, 615.0, rel_tol=1e-9)
+assert g5_winner == 0x0A4
+assert g6_u12 == 2730
+assert math.isclose(g7_total_us, 202.0, rel_tol=1e-9)
+assert math.isclose(g8_window_us, 100.0, rel_tol=1e-9)
+assert g9_ram_bytes == 1792
+assert g10_choice == "A"
+```
+- **Pass mark:** $9/10$ ($80\%+$). Remediation: Q1–Q4, Q7–Q8 $\to$ `04-embedded.T2.04a`/`04-embedded.T2.04b`; Q5–Q6 $\to$ `04-embedded.T2.04b`; Q9 $\to$ `04-embedded.T2.04c`; Q10 $\to$ `04-embedded.T2.04d`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

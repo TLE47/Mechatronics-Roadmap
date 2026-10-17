@@ -293,6 +293,58 @@ assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+Covers the complete Track 01 Tier 1 bridge ladder (`01-electronics.T1.01a` $\to$ `01-electronics.T1.01c` $\to$ `01-electronics.T1.01d` $\to$ `01-electronics.T1.01b`) before Step 1.2 (`01-electronics.T1.02`):
+1. `[Concept: voltage_current_resistance_ohms_law]` Compute the current $I$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$) when $24.0\text{ V}$ is applied across an $8.0\ \Omega$ resistor.
+2. `[Concept: kvl_kcl_and_voltage_divider]` Compute the unloaded output voltage $V_{\text{out}}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) of a divider with $V_{\text{in}} = 15.0\text{ V}$, $R_1 = 30\text{ k}\Omega$ (top) and $R_2 = 10\text{ k}\Omega$ (bottom).
+3. `[Concept: electrical_power_i2r_dissipation]` Compute the heat power $P = I^2 R$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) dissipated in a $0.08\ \Omega$ wire carrying $2.5\text{ A}$.
+4. `[SAFETY] [Concept: multimeter_and_current_limited_psu_safety]` Your DMM's red lead is in the `10A` jack ($R_{\text{shunt}} = 0.010\ \Omega$) and you touch the probes across a $15.0\text{ V}$ rail. Compute the short-circuit current in amperes ($\text{A}$, tolerance $\pm 10^{-6}$).
+5. `[Concept: breadboard_internal_bus_connectivity]` A resistor's two legs are both pressed into row 12 (holes `a12` and `b12`). What does the rest of the circuit see between those two legs?
+   - **A.** A short circuit: `a12`–`b12` are the same copper clip, so the resistor is bypassed and the node is a plain wire.
+   - **B.** The full resistance, because holes in one row are isolated from each other.
+   - **C.** Twice the resistance, because the clips are in series.
+   - **D.** An open circuit, because the center ravine separates every row.
+6. `[Concept: rc_time_constant_and_filtering] [Concept: capacitor_charge_storage_and_decoupling]` Compute the time constant $\tau = R C$ in seconds ($\text{s}$, tolerance $\pm 10^{-12}$) for $R = 2.2\text{ k}\Omega$ and $C = 0.10\ \mu\text{F}$.
+7. `[Concept: inductor_flyback_and_freewheeling_diode]` A $5.0\text{ mH}$ coil carrying $2.0\text{ A}$ is interrupted in $2.0\ \mu\text{s}$ with no freewheeling diode. Compute the flyback spike $|V_L| = L\,\Delta I/\Delta t$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$).
+8. `[Concept: mosfet_low_side_rds_on_switch]` Compute the conduction loss $P = I_D^2 R_{DS(\text{on})}$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) for $I_D = 3.0\text{ A}$ and $R_{DS(\text{on})} = 25\text{ m}\Omega$.
+9. `[Concept: pwm_duty_cycle_effective_voltage]` Compute the average motor voltage $V_{\text{eff}} = D V_{\text{bus}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for $V_{\text{bus}} = 18.0\text{ V}$ at $D = 0.40$.
+10. `[Concept: h_bridge_four_switch_polarity_and_shoot_through]` An H-bridge runs Leg A at $D_A = 0.60$ and Leg B at $D_B = 0.20$ from $V_{\text{bus}} = 20.0\text{ V}$. Compute the average signed motor voltage $V_{AB} = (D_A - D_B)V_{\text{bus}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
+11. `[SAFETY] [Concept: esd_and_short_circuit_prevention]` Before you pick up a bare motor-driver breakout on a dry winter day, what is the correct ESD precaution?
+   - **A.** Touch the $3.3\text{ V}$ pin first so the static discharges through the regulator.
+   - **B.** Wear a wrist strap bonded to a grounded mat, or touch a grounded metal chassis first, so your body charge equalises before it can arc into a gate oxide.
+   - **C.** Hold the board by its pins to maximise contact area.
+   - **D.** Nothing: CMOS inputs are protected against any static voltage.
+
+**Gate answer key:**
+```python
+import math
+
+g1_i = 24.0 / 8.0
+g2_vout = 15.0 * (10_000.0 / (30_000.0 + 10_000.0))
+g3_p = (2.5 ** 2) * 0.08
+g4_safety_ishort = 15.0 / 0.010
+g5_choice = "A"
+g6_tau = 2_200.0 * 0.10e-6
+g7_vl = 5.0e-3 * (2.0 / 2.0e-6)
+g8_pcond = (3.0 ** 2) * 0.025
+g9_veff = 0.40 * 18.0
+g10_vab = (0.60 - 0.20) * 20.0
+g11_safety_choice = "B"
+
+assert math.isclose(g1_i, 3.0, rel_tol=1e-9)
+assert math.isclose(g2_vout, 3.75, rel_tol=1e-6)
+assert math.isclose(g3_p, 0.50, rel_tol=1e-9)
+assert math.isclose(g4_safety_ishort, 1500.0, rel_tol=1e-6)  # Mandatory [SAFETY] 100% required
+assert g5_choice == "A"
+assert math.isclose(g6_tau, 2.2e-4, rel_tol=1e-12)
+assert math.isclose(g7_vl, 5000.0, rel_tol=1e-6)
+assert math.isclose(g8_pcond, 0.225, rel_tol=1e-9)
+assert math.isclose(g9_veff, 7.2, rel_tol=1e-9)
+assert math.isclose(g10_vab, 8.0, rel_tol=1e-9)
+assert g11_safety_choice == "B"  # Mandatory [SAFETY] 100% required
+```
+- **Pass mark:** $9/11$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q11 (`[SAFETY]`). Remediation: Q1–Q3 $\to$ `01-electronics.T1.01a`; Q4–Q5, Q11 $\to$ `01-electronics.T1.01c`; Q6–Q7 $\to$ `01-electronics.T1.01d`; Q8–Q10 $\to$ `01-electronics.T1.01b`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

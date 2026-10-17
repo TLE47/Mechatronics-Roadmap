@@ -301,6 +301,68 @@ assert math.isclose(q5_i_ma, 10.0, rel_tol=1e-9)
 - **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 2–3; if you missed Q4, study `### Safety notes`. On pass, proceed to `## 10. Next modules`.
 
 
+### Gate test
+Covers the complete Track 01 Tier 1 bridge ladder (`01-electronics.T1.01a` $\to$ `01-electronics.T1.01c` $\to$ `01-electronics.T1.01d` $\to$ `01-electronics.T1.01b`) before Step 1.2 (`01-electronics.T1.02`):
+1. `[Concept: breadboard_internal_bus_connectivity]` Compute the heat $P = I^2 R_{\text{clip}}$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) in a breadboard clip of $R_{\text{clip}} = 0.08\ \Omega$ carrying $3.0\text{ A}$.
+2. `[Concept: multimeter_and_current_limited_psu_safety]` A bench supply is set to $V_{\text{set}} = 15.0\text{ V}$ with $I_{\text{limit}} = 0.30\text{ A}$ and is wired across $R_{\text{load}} = 20.0\ \Omega$. Compute the clamped output voltage $V_{\text{out}} = \min(V_{\text{set}}, I_{\text{limit}} R_{\text{load}})$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
+3. `[SAFETY] [Concept: multimeter_and_current_limited_psu_safety]` With the red lead still in the `10A` jack ($R_{\text{shunt}} = 0.010\ \Omega$) and $0.008\ \Omega$ of probe lead, you probe across an $18.0\text{ V}$ battery. Compute the surge current in amperes ($\text{A}$, tolerance $\pm 10^{-6}$).
+4. `[SAFETY] [Concept: esd_and_short_circuit_prevention]` Why does a grounded wrist strap protect a MOSFET gate oxide that a voltmeter never seems to damage?
+   - **A.** The gate oxide is hundreds of volts thick, so only the DMM can break it.
+   - **B.** A charged human body is a capacitor of roughly $100\text{ pF}$ at several kilovolts; the strap bleeds that charge to ground through a resistor before it can discharge through the gate's nanometre-thin oxide, which a $10\text{ M}\Omega$ voltmeter never stresses.
+   - **C.** The strap increases the gate threshold voltage.
+   - **D.** Static charge only damages bipolar transistors.
+5. `[Concept: breadboard_internal_bus_connectivity]` Which statement about a solderless breadboard's internal wiring is true?
+   - **A.** Every hole in a column `a1`–`j1` is connected.
+   - **B.** The two `+`/`-` side strips run the full board height as separate buses, while each row of five holes is one node and the centre ravine separates `a–e` from `f–j`.
+   - **C.** All holes on the board are one node until a wire is inserted.
+   - **D.** The centre ravine is a low-resistance link between the two halves.
+6. `[Concept: voltage_current_resistance_ohms_law]` Compute the current in amperes ($\text{A}$, tolerance $\pm 10^{-9}$) through a $75\ \Omega$ resistor with $15.0\text{ V}$ across it.
+7. `[Concept: kvl_kcl_and_voltage_divider]` Compute the unloaded midpoint voltage in volts ($\text{V}$, tolerance $\pm 10^{-6}$) of a $20\text{ k}\Omega$ (top) / $10\text{ k}\Omega$ (bottom) divider on a $15.0\text{ V}$ rail.
+8. `[Concept: electrical_power_i2r_dissipation]` Compute the power in watts ($\text{W}$, tolerance $\pm 10^{-9}$) dissipated by a $0.24\ \Omega$ shunt carrying $1.5\text{ A}$.
+9. `[Concept: rc_time_constant_and_filtering]` Compute $\tau = R C$ in seconds ($\text{s}$, tolerance $\pm 10^{-12}$) for $R = 3.3\text{ k}\Omega$ and $C = 22\ \mu\text{F}$.
+10. `[Concept: capacitor_charge_storage_and_decoupling]` Why does a motor-driver board carry a $100\text{ nF}$ ceramic **and** a $470\ \mu\text{F}$ electrolytic across $V_{\text{bus}}$?
+   - **A.** The ceramic shunts the nanosecond switching edge and the electrolytic supplies the millisecond current surge, because no single capacitor has both low inductance and large charge storage.
+   - **B.** The two capacitances add to $570\text{ nF}$, which is the only value the driver accepts.
+   - **C.** The electrolytic blocks DC while the ceramic passes it.
+   - **D.** They are decorative; the regulator alone is sufficient.
+11. `[Concept: inductor_flyback_and_freewheeling_diode]` A $3.0\text{ mH}$ winding carrying $4.0\text{ A}$ is switched off in $1.5\ \mu\text{s}$ with no freewheeling path. Compute the spike $|V_L| = L\,\Delta I/\Delta t$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$).
+12. `[Concept: mosfet_low_side_rds_on_switch] [Concept: pwm_duty_cycle_effective_voltage]` A low-side FET with $R_{DS(\text{on})} = 45\text{ m}\Omega$ switches $2.0\text{ A}$ at $D = 0.80$. Compute its average conduction loss $P = D I^2 R_{DS(\text{on})}$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$).
+13. `[Concept: h_bridge_four_switch_polarity_and_shoot_through]` An H-bridge runs $D_A = 0.90$ and $D_B = 0.30$ from $V_{\text{bus}} = 10.0\text{ V}$. Compute the average signed motor voltage in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_pclip = (3.0 ** 2) * 0.08
+g2_vout = min(15.0, 0.30 * 20.0)
+g3_safety_ishort = 18.0 / (0.010 + 0.008)
+g4_safety_choice = "B"
+g5_choice = "B"
+g6_i = 15.0 / 75.0
+g7_vdiv = 15.0 * (10_000.0 / (20_000.0 + 10_000.0))
+g8_p = (1.5 ** 2) * 0.24
+g9_tau = 3_300.0 * 22e-6
+g10_choice = "A"
+g11_vl = 3.0e-3 * (4.0 / 1.5e-6)
+g12_ploss = 0.80 * (2.0 ** 2) * 0.045
+g13_vab = (0.90 - 0.30) * 10.0
+
+assert math.isclose(g1_pclip, 0.72, rel_tol=1e-9)
+assert math.isclose(g2_vout, 6.0, rel_tol=1e-9)
+assert math.isclose(g3_safety_ishort, 1000.0, rel_tol=1e-6)  # Mandatory [SAFETY] 100% required
+assert g4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
+assert g5_choice == "B"
+assert math.isclose(g6_i, 0.20, rel_tol=1e-9)
+assert math.isclose(g7_vdiv, 5.0, rel_tol=1e-6)
+assert math.isclose(g8_p, 0.54, rel_tol=1e-9)
+assert math.isclose(g9_tau, 0.0726, rel_tol=1e-12)
+assert g10_choice == "A"
+assert math.isclose(g11_vl, 8000.0, rel_tol=1e-6)
+assert math.isclose(g12_ploss, 0.144, rel_tol=1e-9)
+assert math.isclose(g13_vab, 6.0, rel_tol=1e-9)
+```
+- **Pass mark:** $11/13$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q3 and Q4 (`[SAFETY]`). Remediation: Q1, Q5, Q8 $\to$ `## 3. Formalization` and `01-electronics.T1.01c`; Q2 $\to$ `## 3. Formalization` item 3; Q3–Q4 $\to$ `### Safety notes`; Q6–Q7 $\to$ `01-electronics.T1.01a`; Q9–Q11 $\to$ `01-electronics.T1.01d`; Q12–Q13 $\to$ `01-electronics.T1.01b`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

@@ -22,13 +22,13 @@ Every bridge module in `modules/*.md` contains a standardized `## 7. Checkpoint`
 | Assessment Type | Location | Question Count & Format | Pass Threshold | What Passing Unlocks |
 | :--- | :--- | :--- | :--- | :--- |
 | **1. Module Skip Test** (`### Skip test`) | Present in **every** bridge module (`modules/*.md`, 46/46 modules) | **4–6 questions** covering `[Recall]`, `[Apply]`, `[Transfer]`, and `[Spaced review -> prior_module_id]` (for non-root modules). At least **75% (3/4 or 4/5)** are numerical calculation problems with explicit units and tolerances; every `new_concepts` item is tested at least once. | **$\ge 80\%$** ($4/4$ on 4-Q tests, $\ge 4/5$ on 5-Q tests) **AND $100\%$ on all safety items** in `safety_level: high` modules (after reading `### Safety notes`). | Skips the remainder of that individual bridge module and advances directly to `## 10. Next modules`. |
-| **2. Ladder Gate Test** (`### Gate test`) | Present **only** in the **final module of each bridge ladder** (25/44 modules, covering all **24/24 legacy transitions**) | **8 questions** spanning **every** concept introduced across the entire multi-module bridge ladder (`[Concept: ...]` tags), with a complete executable Python `assert` answer key and per-question module remediation pointers. | **$\ge 80\%$** ($\ge 7/8$) **AND $100\%$ on all safety items**. | Skips the entire bridge ladder and unlocks the target Legacy Step (`Step 1.1`–`Step 3.8`). |
+| **2. Ladder Gate Test** (`### Gate test`) | Present in **every** bridge module (**46/46**, across **25 ladders** and all **24/24 legacy transitions**): each module publishes its ladder's exam, led by its own concepts | **4–14 questions** spanning **every** concept introduced across the entire multi-module bridge ladder (`[Concept: ...]` tags, checked by `scripts/validate_modules.py`), with a complete executable Python `assert` answer key and per-question module remediation pointers. | **$\ge 80\%$** on that exam's own mark **AND $100\%$ on all safety items**. | Skips the entire bridge ladder and unlocks the target Legacy Step (`Step 1.1`–`Step 3.8`). |
 
 ---
 
 ## 2. Complete Index of All 25 Ladder Gate Tests (`modules/*.md`, Organized Tier-First)
 
-Every one of the **24 Legacy Steps (`1.1`–`3.8`)** is preceded by a dedicated Bridge Ladder ending in an 8-question **Ladder Gate Test** (`25` Gate Tests total across Tiers 1–3, as Step 3.7 `06-robotics.T3.07` unites the Track 06 Embodied AI ladder and Track 07 Industrial Safety ladder):
+Every one of the **24 Legacy Steps (`1.1`–`3.8`)** is preceded by a dedicated Bridge Ladder whose **Ladder Gate Test** every module in that ladder publishes (`46` Gate Tests across `25` ladders; Step 3.7 `06-robotics.T3.07` unites the Track 06 Embodied AI ladder and the Track 07 Industrial Safety ladder). The table names the ladder-final module, whose copy is the canonical one; a module earlier in the ladder leads with its own concepts and recaps the rest, so the exam can be taken at any stopping point:
 
 ### Tier 1 Gate Tests (8 Ladders → Legacy Steps `1.1`–`1.8`)
 

@@ -277,6 +277,62 @@ assert q4_choice == "B"
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
 
+### Gate test
+Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `04-embedded.T2.04b` $\to$ `04-embedded.T2.04c` $\to$ `04-embedded.T2.04d`) before Step 2.5 (`04-embedded.T2.05`):
+1. `[Concept: spi_full_duplex_clock_polarity_phase]` Compute the pure clock-shift time in microseconds for a $24\text{-bit}$ frame at $f_{\text{sclk}} = 6\text{ MHz}$ (tolerance $\pm 10^{-9}\ \mu\text{s}$).
+2. `[Concept: spi_full_duplex_clock_polarity_phase]` An `AS5048A` encoder needs SPI Mode 1. With `CPOL = 0` and `CPHA = 1`, when does the master sample `MISO`?
+   - **A.** `SCLK` idles LOW, data shifts on the rising edge and is sampled on the falling edge.
+   - **B.** `SCLK` idles HIGH and both edges sample.
+   - **C.** `SCLK` idles LOW and data is sampled on the rising edge.
+   - **D.** `SCLK` idles HIGH and data is sampled on the rising edge.
+3. `[Concept: dma_zero_cpu_memory_transfer]` A $40\text{-byte}$ UART packet is $400$ bits in `8N1`. Compute the CPU time a blocking polled write wastes at $2\text{ Mbaud}$ in microseconds (tolerance $\pm 10^{-9}$).
+4. `[Concept: dma_zero_cpu_memory_transfer]` What does the CPU actually do to start an RX DMA transfer?
+   - **A.** It writes the peripheral address, buffer address and count into `CPAR`/`CMAR`/`CNDTR`, enables the channel and returns - the silicon moves the bytes.
+   - **B.** It copies every byte into SRAM in a loop, one interrupt per byte.
+   - **C.** It busy-waits on the peripheral flag for the whole frame.
+   - **D.** It disables interrupts for the whole frame.
+5. `[Concept: double_buffered_ping_pong_half_complete_isr]` A circular DMA buffer has $N = 20$ samples per half and an ADC sampling at $f_{\text{adc}} = 100\text{ kHz}$. Compute the CPU's reading window between HT and TC in microseconds (tolerance $\pm 10^{-9}$).
+6. `[Concept: double_buffered_ping_pong_half_complete_isr]` For $f_{\text{sample}} = 120\text{ kHz}$ and $N = 30$ samples per half, compute the Half-Transfer interrupt frequency in Hz (tolerance $\pm 10^{-9}$).
+7. `[Concept: rtos_preemptive_scheduling_and_cpu_utilization]` Two FreeRTOS tasks run at $(C_1, T_1) = (100, 500)\ \mu\text{s}$ and $(C_2, T_2) = (200, 1000)\ \mu\text{s}$. Compute $U = C_1/T_1 + C_2/T_2$ (tolerance $\pm 10^{-9}$).
+8. `[Concept: can_bitwise_arbitration_and_mit_packing]` Pack $x = 0.0\text{ rad}$ over $[-12.0, +12.0]\text{ rad}$ into an unsigned 12-bit field with $u = \operatorname{round}\!\left(\frac{x - x_{\min}}{x_{\max} - x_{\min}}(2^{12} - 1)\right)$ (exact integer).
+9. `[Concept: unbounded_priority_inversion_and_inheritance]` Task $H$ ($C_H = 60\ \mu\text{s}$) blocks on a mutex held by $L$ with $B = 25\ \mu\text{s}$ of its critical section left, while $M$ ($C_M = 500\ \mu\text{s}$) is ready. Compute $R_H$ in microseconds under priority inheritance (tolerance $\pm 10^{-9}$).
+10. `[Concept: zephyr_devicetree_hardware_binding] [Concept: zephyr_west_and_kconfig_build] [Concept: zephyr_static_threads_and_k_mutex]` A board overlay marks `spi1` `status = "okay"` while `prj.conf` leaves `CONFIG_SPI` unset. What breaks, and when?
+   - **A.** The link fails: the driver is not compiled in, so `DEVICE_DT_GET` has no device to bind, and the build stops before flashing.
+   - **B.** Nothing: the Devicetree node alone is enough to instantiate the driver.
+   - **C.** The bus runs at the wrong clock, which `device_is_ready` fixes at runtime.
+   - **D.** Zephyr silently bit-bangs the bus on any spare GPIO.
+11. `[Concept: rclc_static_lifecycle_and_executor] [Concept: microros_xrcedds_client_agent_bridge] [Concept: mcu_to_ros2_deterministic_transport]` Compute one `rclc_executor_spin_some` worst-case pass in microseconds when XRCE-DDS transport I/O costs $30\ \mu\text{s}$, the timer callback $45\ \mu\text{s}$ and the subscription callback $25\ \mu\text{s}$ (tolerance $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_shift_us = (24.0 / 6e6) * 1e6
+g2_choice = "A"
+g3_poll_us = (400.0 / 2e6) * 1e6
+g4_choice = "A"
+g5_window_us = (20.0 / 100e3) * 1e6
+g6_ht_hz = 120_000.0 / 30.0
+g7_util = (100.0 / 500.0) + (200.0 / 1000.0)
+g8_u12 = round((0.0 - (-12.0)) / 24.0 * ((1 << 12) - 1))
+g9_rh_us = 60.0 + 25.0
+g10_choice = "A"
+g11_spin_us = 30.0 + 45.0 + 25.0
+
+assert math.isclose(g1_shift_us, 4.0, rel_tol=1e-9)
+assert g2_choice == "A"
+assert math.isclose(g3_poll_us, 200.0, rel_tol=1e-9)
+assert g4_choice == "A"
+assert math.isclose(g5_window_us, 200.0, rel_tol=1e-9)
+assert math.isclose(g6_ht_hz, 4000.0, rel_tol=1e-9)
+assert math.isclose(g7_util, 0.40, rel_tol=1e-9)
+assert g8_u12 == 2048
+assert math.isclose(g9_rh_us, 85.0, rel_tol=1e-9)
+assert g10_choice == "A"
+assert math.isclose(g11_spin_us, 100.0, rel_tol=1e-9)
+```
+- **Pass mark:** $9/11$ ($80\%+$). Remediation: Q1–Q6 $\to$ `04-embedded.T2.04a`; Q7–Q9 $\to$ `04-embedded.T2.04b`; Q10 $\to$ `04-embedded.T2.04c`; Q11 $\to$ `04-embedded.T2.04d`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |

@@ -97,7 +97,7 @@ Tier 3 (Phase 3 — Advanced / Production Pass: 20 modules, 118.0 hrs provisiona
 ## 2. Fast-Track Skip Paths & TierTransition Readiness Reviews
 
 ### A. Experienced Learner Skip Paths
-Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`§7 Checkpoint -> ### Skip test`), and the final module of each of the 25 bridge ladders includes an **8-question Ladder Gate Test** (`§7 Checkpoint -> ### Gate test`). Passing any Gate Test with $\ge 80\%$ ($100\%$ on safety items after reading `## Safety notes`) skips that entire bridge ladder:
+Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`§7 Checkpoint -> ### Skip test`) and its ladder's **Ladder Gate Test** (`§7 Checkpoint -> ### Gate test`), 46 gate exams across 25 ladders: each spans every concept the ladder introduces, led by the module's own, and the final module's copy is the canonical one. Passing a Gate Test with $\ge 80\%$ ($100\%$ on safety items after reading `## Safety notes`) skips that entire bridge ladder:
 
 1. **Software / CS Engineer Entry (Already fluent in Python, Git, C pointers & Linux):**
    - Pass the Gate Test in [`00-foundations.T1.00e.md`](../modules/00-foundations.T1.00e.md) (or skip `T1.00a` and `T1.00b` via their Skip Tests) and `04-embedded.T1.04a.md` $\implies$ **saves ~10.0 hours** in Tier 1.

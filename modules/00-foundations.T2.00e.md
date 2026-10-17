@@ -272,6 +272,57 @@ assert math.isclose(q4_ad, 1.0 / 3.0, rel_tol=1e-6)
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
+### Gate test
+This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`):
+1. `[Concept: laplace_poles_and_zeros]` For $G(s) = \frac{s^2 + 900}{(s + 2)(s^2 + 6s + 25)}$, compute the anti-resonance zero frequency $\omega_{\text{ar}} > 0$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$) where $G(j\omega_{\text{ar}}) = 0$.
+2. `[Concept: laplace_poles_and_zeros]` What does a zero of $G(s)$ mean physically, when the input is shaken at that frequency?
+   - **A.** The two internal pathways cancel, so the sensor sees almost nothing even though the actuator is moving.
+   - **B.** The system has an unstable pole there.
+   - **C.** The DC gain is exactly zero.
+   - **D.** The state matrix loses rank.
+3. `[Concept: continuous_state_space_matrices]` For $A = \begin{bmatrix} 0 & 1 \\ -64 & -10 \end{bmatrix}$, compute $\det(A)$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: discrete_state_transition_euler_tustin]` Compute the scalar Tustin discrete pole $a_d = \frac{1 + s_p T_s/2}{1 - s_p T_s/2}$ for a continuous pole $s_p = -50\text{ s}^{-1}$ at $T_s = 0.02\text{ s}$ (tolerance $\pm 10^{-9}$).
+5. `[Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` Forward Euler discretizes $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ at $T_s = 0.2\text{ s}$ as $A_d = I + AT_s$. Compute its spectral radius $\max(|\lambda_1|, |\lambda_2|)$ (tolerance $\pm 10^{-4}$).
+6. `[Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` With $A_d = \begin{bmatrix} 1.0 & 0.10 \\ 0.0 & 1.0 \end{bmatrix}$, $B_d = \begin{bmatrix} 0 \\ 0.1 \end{bmatrix}$, $\vec{x}_0 = \begin{bmatrix} 0.20 \\ 0.50 \end{bmatrix}$ and $u_0 = 0$, compute the updated position $x_1$ (tolerance $\pm 10^{-9}\text{ m}$).
+7. `[Concept: finite_difference_derivative_and_integral] [Concept: first_order_ode_time_constant]` An encoder reads $x_{k-1} = 1.00\text{ m}$ and $x_k = 1.08\text{ m}$ at $\Delta t = 0.01\text{ s}$. Compute the backward-difference velocity $v_k$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
+8. `[Concept: dot_product_projection] [Concept: cross_product_3d_moment] [Concept: basis_change_and_invertibility]` For lever arm $\vec{r} = [0.10, 0.0, 0.20]^T\text{ m}$ and force $\vec{F} = [0.0, 10.0, 0.0]^T\text{ N}$, compute the $z$-component of the moment $\tau_z = (\vec{r}\times\vec{F})_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
+9. `[Concept: second_order_ode_wn_zeta] [Concept: characteristic_polynomial_roots]` For $J = 0.50\text{ kg}\cdot\text{m}^2$, $k = 50.0\text{ N}\cdot\text{m/rad}$ and $b = 2.0\text{ N}\cdot\text{m}\cdot\text{s/rad}$, compute the damping ratio $\zeta = b/(2\sqrt{Jk})$ (tolerance $\pm 10^{-9}$).
+10. `[Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function] [Concept: bode_magnitude_db_and_phase]` Convert a linear amplitude gain of $|H| = 0.50$ into decibels ($\text{dB}$, tolerance $\pm 10^{-4}$).
+11. `[Concept: nyquist_sampling_and_aliasing] [Concept: tustin_frequency_prewarping_and_biquad]` A $1300\text{ Hz}$ tone is sampled at $f_s = 1000\text{ Hz}$. Compute the alias frequency in $\text{Hz}$ (tolerance $\pm 10^{-9}$).
+12. `[Concept: gaussian_variance_and_covariance_matrix]` Given $\Sigma_x = \begin{bmatrix} 0.25 & 0.0 \\ 0.0 & 1.0 \end{bmatrix}$, $A = \begin{bmatrix} 1.0 & 0.20 \\ 0.0 & 1.0 \end{bmatrix}$ and $Q = 0$, compute the $(0,0)$ entry of $\Sigma_y = A\Sigma_xA^\top + Q$ (tolerance $\pm 10^{-9}$).
+
+**Gate answer key:**
+```python
+import math
+
+g1_w_ar = math.sqrt(900.0)
+g2_choice = "A"
+g3_det = 0.0 * (-10.0) - 1.0 * (-64.0)
+g4_ad = (1.0 + (-50.0) * 0.02 / 2.0) / (1.0 - (-50.0) * 0.02 / 2.0)
+g5_rho_euler = math.sqrt(4.2)
+g6_x1 = 1.0 * 0.20 + 0.10 * 0.50
+g7_vel = (1.08 - 1.00) / 0.01
+g8_tau_z = 0.10 * 10.0 - 0.0 * 0.0
+g9_zeta = 2.0 / (2.0 * math.sqrt(0.50 * 50.0))
+g10_db = 20.0 * math.log10(0.50)
+g11_alias_hz = abs(1300.0 - 1000.0)
+g12_sigma00 = 0.25 + 0.20 * 1.0 * 0.20
+
+assert math.isclose(g1_w_ar, 30.0, rel_tol=1e-9)
+assert g2_choice == "A"
+assert math.isclose(g3_det, 64.0, rel_tol=1e-9)
+assert math.isclose(g4_ad, 1.0 / 3.0, rel_tol=1e-9)
+assert math.isclose(g5_rho_euler, 2.04939015319192, rel_tol=1e-9)
+assert math.isclose(g6_x1, 0.25, rel_tol=1e-9)
+assert math.isclose(g7_vel, 8.0, rel_tol=1e-9)
+assert math.isclose(g8_tau_z, 1.0, rel_tol=1e-9)
+assert math.isclose(g9_zeta, 0.2, rel_tol=1e-9)
+assert math.isclose(g10_db, -6.0206, abs_tol=1e-4)
+assert math.isclose(g11_alias_hz, 300.0, rel_tol=1e-9)
+assert math.isclose(g12_sigma00, 0.29, rel_tol=1e-9)
+```
+- **Pass mark:** $\ge 80\%$ ($4/4$ on Skip test; $\ge 10/12$ on Gate test). Remediation: Q1–Q5 $\to$ this module's `## 3. Formalization`; Q6–Q7 $\to$ `00-foundations.T2.00a`; Q8 $\to$ `00-foundations.T2.00b`; Q9 $\to$ `00-foundations.T2.00c`; Q10 $\to$ `00-foundations.T2.00d`; Q11–Q12 $\to$ `00-foundations.T2.00f`.
+
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
