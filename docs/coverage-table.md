@@ -23,7 +23,7 @@ flowchart LR
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
 | `00` | 12 | 55% | 52% | 75% | 29% | **56.1%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
-| `01` | 7 | 59% | 43% | 100% | 7% | **58.6%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
+| `01` | 7 | 59% | 46% | 100% | 14% | **60.5%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `02` | 3 | 78% | 60% | 83% | 33% | **67.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
 | `03` | 3 | 70% | 47% | 75% | 17% | **56.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `04` | 7 | 59% | 43% | 75% | 7% | **51.1%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
@@ -36,11 +36,11 @@ flowchart LR
 
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
-| Tier 1 | 16 | **54.5%** |
+| Tier 1 | 16 | **55.4%** |
 | Tier 2 | 18 | **62.2%** |
 | Tier 3 | 10 | **55.1%** |
 
-## Per module (44 modules, overall **57.8%**)
+## Per module (44 modules, overall **58.1%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -57,7 +57,7 @@ flowchart LR
 | `00-foundations.T2.00f` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
 | `00-foundations.T3.00a` | 3 | 60% | 60% | 75% | 50% | **63.0%** | **undeclared** | 7 item(s) |
 | `01-electronics.T1.01a` | 1 | 50% | 60% | 100% | 50% | **68.0%** | **undeclared** | 5 item(s) |
-| `01-electronics.T1.01b` | 1 | 75% | 40% | 100% | 0% | **60.8%** | **undeclared** | 6 item(s) |
+| `01-electronics.T1.01b` | 1 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `01-electronics.T1.01c` | 1 | 50% | 40% | 100% | 0% | **54.5%** | **undeclared** | 7 item(s) |
 | `01-electronics.T1.01d` | 1 | 50% | 40% | 100% | 0% | **54.5%** | **undeclared** | 7 item(s) |
 | `01-electronics.T2.01a` | 2 | 50% | 40% | 100% | 0% | **54.5%** | **undeclared** | 7 item(s) |
@@ -144,7 +144,7 @@ not demonstrated learner mastery.
 | `00-foundations.T2.00f` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T3.00a` | **63.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T1.01a` | **68.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `01-electronics.T1.01b` | **60.8%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `01-electronics.T1.01b` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T1.01c` | **54.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `01-electronics.T1.01d` | **54.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `01-electronics.T2.01a` | **54.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
@@ -186,16 +186,16 @@ test that names it. The tests the harness runs are the same ones CI runs.
 The plan asks for these too. No artifact exists for them yet, so they are listed rather than
 scored - each one is a piece of work, not a zero:
 
-- **Behavioural tests for the other 24 modules:** 20 exercise packages exist
+- **Behavioural tests for the other 23 modules:** 21 exercise packages exist
   (`00-foundations.T2.00a`-`T2.00f`, `02-mechanics.T2.02a`, `03-sensors.T2.03a`,
   `04-embedded.T2.04d`, `05-control.T2.05a`, `06-robotics.T2.06a`-`T2.06b` and
   `07-systems.T2.07a`), and they are the template. `INSTRUCTOR_TESTS` in
   `scripts/generate_python_lessons_data.py` covers the beginner lessons only, so the remaining
   bridge modules ship no graded exercise of their own and their rows read `-` in the
   Behaviour-graded column.
-- **Module exercises in the workbench:** each of those 20 packages is generated into the app
+- **Module exercises in the workbench:** each of those 21 packages is generated into the app
   as a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives all of them on the built
-  bundle, so the browser path is measured on 20 exercises, not assumed from one.
+  bundle, so the browser path is measured on 21 exercises, not assumed from one.
 - **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)
   with their stated assumptions, and a counterexample test where a claim is easy to get wrong.
 - **Transfer-task retention:** whether the Transfer task still passes 1-2 weeks later, and

@@ -19,6 +19,7 @@ est_hours: 3.5
 hardware_required: false
 safety_level: high
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -87,6 +88,16 @@ V_eff=6.0 V, P_PWM=0.16 W vs P_linear=24.0 W, I_shoot=300 A
 Using the **Canonical `TI DRV8833` Datasheet Walkthrough** in `## 3. Formalization` Item 3 above, (a) extract the maximum Recommended Operating supply voltage $V_{\text{VM,rec,max}}$ ($10.8\text{ V}$) vs. the Absolute Maximum destruction ceiling $V_{\text{VM,abs,max}}$ ($11.8\text{ V}$) and verify that a $V_{\text{bus}} = 9.0\text{ V}$ supply is safely inside the recommended operating window (`2.7 <= 9.0 <= 10.8`), and (b) extract the combined high-side + low-side path on-resistance $R_{DS(\text{on, high})} + R_{DS(\text{on, low})} = 0.36\ \Omega$ to compute the total H-bridge conduction power loss $P_{\text{loss}} = I^2 (R_{\text{high}} + R_{\text{low}})$ in watts ($\text{W}$) when driving $I = 1.2\text{ A}$ continuously at $D = 1.0$. Verify $P_{\text{loss}} = 0.5184\text{ W}$ ($\pm 10^{-4}\text{ W}$).
 - **If your result differs:** Remember that in an H-bridge, motor current flows through **two** switches in series (one high-side FET in leg A and one low-side FET in leg B), so you must multiply $I^2$ by the combined high+low resistance ($0.36\ \Omega$).
 
+### Graded package - the switch, the duty and the leg
+[`exercises/01-electronics.T1.01b/`](../exercises/01-electronics.T1.01b/) turns this section into a test. `starter.py` holds seven holes: `conduction_loss`, `pwm_effective_voltage`, `shoot_through_current` (two switches, not one), `h_bridge_voltage` (the difference, not the sum), `bridge_conduction_loss`, `within_recommended` and `duty_for_effective_voltage`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/01-electronics.T1.01b/starter.py \
+  python3 -m unittest discover -s exercises/01-electronics.T1.01b -p 'test_*.py'
+```
+
+**25 tests.** The loss is checked at the module's $5\text{ A} / 10\text{ m}\Omega$ and at $6\text{ A} / 15\text{ m}\Omega$; the worked example's $150\times$ advantage over a linear drop is asserted as a ratio, not a constant; the shoot-through is checked at both the worked and the Skip-test buses, so one switch fails; the H-bridge is checked forward, reverse and at equal duties, so adding the duties fails; the bridge loss is checked against **one switch** ($2\times$ ratio) and against the datasheet pair; a $65\%$ command must raise rather than produce $780\text{ V}$; and $11.8\text{ V}$ (the absolute maximum) must fail the recommended window. The transfer suite **drives the plant at 70% duty**: a square wave switching its $2.5\text{ N}\cdot\text{m}$ clamp must average exactly $0.7 \times 2.5$, the schedule never exceeds the clamp, and full duty travels further than 70%; the two-switch bridge loss is exactly twice the one-switch loss. Five planted faults - `conduction_without_square`, `shoot_through_one_switch`, `bridge_counts_one_switch`, `h_bridge_adds_duties`, `duty_accepts_percentage` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Clamping Functions*), [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Units & Power Dissipation*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Energy Balance*).
@@ -103,6 +114,8 @@ Inject one realistic H-bridge analysis slip and diagnose it from the number alon
 
 ## 6. Simulation path
 Simulate a low-side MOSFET PWM switch and 4-FET H-bridge in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or inspect **Tab 3 (25 kHz PMSM FOC)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`).
+
+The graded package is also a workbench entry: **Modules -> `EX.01-electronics.T1.01b`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**

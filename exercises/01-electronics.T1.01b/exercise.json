@@ -1,0 +1,31 @@
+{
+  "id": "01-electronics.T1.01b",
+  "module": "modules/01-electronics.T1.01b.md",
+  "title": "MOSFET conduction loss, PWM duty, shoot-through and the H-bridge",
+  "requires": [
+    "conduction_loss(current, rds_on, duty=1.0) -> W",
+    "pwm_effective_voltage(v_bus, duty) -> V",
+    "shoot_through_current(v_bus, rds_on) -> A",
+    "h_bridge_voltage(v_bus, duty_a, duty_b) -> V",
+    "bridge_conduction_loss(current, r_high, r_low, duty=1.0) -> W",
+    "within_recommended(v_supply, v_min=2.7, v_max=10.8) -> bool",
+    "duty_for_effective_voltage(v_eff, v_bus) -> duty"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "conduction_without_square": ["test_behavior.ConductionTests.test_the_formalisation_loss"],
+    "shoot_through_one_switch": ["test_behavior.ShootThroughTests.test_the_worked_300_amps"],
+    "bridge_counts_one_switch": ["test_behavior.BridgeLossTests.test_the_exercise_518_milliwatts"],
+    "h_bridge_adds_duties": ["test_behavior.HBridgeTests.test_the_skip_test_differential"],
+    "duty_accepts_percentage": ["test_behavior.PwmTests.test_a_percentage_is_refused_not_scaled"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.01-electronics.T1.01b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/01-electronics.T1.01b/starter.py python3 -m unittest discover -s exercises/01-electronics.T1.01b -p 'test_*.py'"
+  }
+}
