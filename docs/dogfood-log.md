@@ -72,6 +72,10 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `05-control.T3.05a` | 2026-10-17 | 1 | 0 | none | no | - |
 | `05-control.T3.05b` | 2026-10-17 | 2 | 0 | none | yes | - |
 | `05-control.T3.05c` | 2026-10-17 | 1 | 0 | none | no | - |
+| `00-foundations.T3.00a` | 2026-10-17 | 2 | 0 | none | no | - |
+| `02-mechanics.T3.02a` | 2026-10-17 | 3 | 0 | none | no | - |
+| `06-robotics.T3.06a` | 2026-10-17 | 5 | 0 | none | yes | - |
+| `07-systems.T3.06a` | 2026-10-17 | 2 | 0 | none | no | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -374,6 +378,26 @@ matrix raised `IndexError` from the matrix multiply instead of `ValueError`. The
 with the reason (a $2 \times 2$ matrix is a different problem, not a smaller rotation). `05a` and
 `05c` needed nothing: their items covered every guard the suites check, including the infeasible
 barrier case that is the whole point of `05c`'s section 3.
+
+### The four Tier 3 rows that closed the tier
+
+| Standard | `00-foundations.T3.00a` | `02-mechanics.T3.02a` | `06-robotics.T3.06a` | `07-systems.T3.06a` |
+| :--- | :--- | :--- | :--- | :--- |
+| Package cases | met (22) | met (45) | met (20) | met (31) |
+| Learner attempt passes from the hints alone | met | met | met after one retry | met |
+| Gate score | 8/8 | 8/8 | 10/10 (2/2 `[SAFETY]`) | 8/8 (2/2 `[SAFETY]`) |
+| Author first pass | met, 0 hints | met, 0 hints | met, 0 hints | met, 0 hints |
+| Delayed transfer | pending | pending | pending | pending |
+
+**What this round found.** Three packages passed first try, and their ladders already stated every
+guard (`vee` refusing a non-skew matrix, a non-unit screw axis and a web as thick as the radius, the
+discrepancy filter and the no-auto-restart interlock). `06a` failed one test first time, and it is
+the kind of gap the ladder had been hiding: the suite asks the loss to fall below **1% of its first
+value**, a bar that is *relative to wherever `train_bc` starts*. The page never said what sweep to
+start from, so a learner can pick a perfectly correct init (`gauss(0.4)` weights, `gauss(0.1)`
+biases) whose loss begins lower - $0.423$ instead of $1.95$ - and lands at the same $0.0060$, i.e.
+1.4% instead of 0.31%, even though every gradient matches a finite difference. Item 5 of the ladder
+now names the course init and both measured trajectories. No assertion was touched.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference
