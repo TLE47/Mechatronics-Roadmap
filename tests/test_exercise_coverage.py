@@ -139,13 +139,13 @@ class CoverageGateTests(unittest.TestCase):
         write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
-        self.assertIn("never names", err)
+        self.assertIn("What the suite refuses", err)
         self.assertIn("alpha", err)
         self.assertIn("beta", err)
 
     def test_naming_only_one_of_two_refused_functions_is_still_a_finding(self):
         self.module("01-electronics.T1.01c",
-                    self.page("A zero limit in `alpha` raises `ValueError`."))
+                    self.page("5. **What the suite refuses.** `alpha` raises on a zero limit."))
         write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
@@ -154,20 +154,32 @@ class CoverageGateTests(unittest.TestCase):
 
     def test_a_page_that_names_every_refused_function_passes(self):
         self.module("01-electronics.T1.01c",
-                    self.page("`alpha` raises `ValueError` on a zero limit; `beta` refuses a "
-                              "negative one."))
+                    self.page("5. **What the suite refuses.** `alpha` raises on a zero limit; "
+                              "`beta` refuses a negative one."))
         write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
         self.assertEqual(self.run_gate()[0], 0)
+
+    def test_a_refusal_mentioned_in_prose_is_not_the_item(self):
+        # Found by dogfooding 04-embedded.T3.04a: its package introduction said "the refusal to take
+        # an angle outside it" and named every hole, so a word-based rule passed a ladder that never
+        # stated a single guard. Only the dedicated item counts.
+        self.module("01-electronics.T1.01c",
+                    self.page("The package's `alpha` has a refusal for a zero limit and `beta` "
+                              "refuses a negative one."))
+        write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
+        code, _out, err = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("What the suite refuses", err)
 
     def test_a_refusal_only_under_the_solution_does_not_count(self):
         # The point of reading above `### Full Solution`: the answer block is not the teaching.
         self.module("01-electronics.T1.01c",
                     self.page("Compute the droop.",
-                              solution_tail="`alpha` and `beta` raise `ValueError`."))
+                              solution_tail="5. **What the suite refuses.** `alpha` and `beta` raise."))
         write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
-        self.assertIn("never names", err)
+        self.assertIn("What the suite refuses", err)
 
     def test_a_package_whose_suite_does_not_refuse_input_is_not_held_to_the_rule(self):
         self.module("01-electronics.T1.01c", self.page("Compute the droop."))

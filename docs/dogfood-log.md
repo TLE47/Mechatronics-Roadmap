@@ -65,6 +65,7 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `06-robotics.T2.06b` | 2026-10-17 | 1 | 0 | none | no | - |
 | `07-systems.T2.07a` | 2026-10-17 | 1 | 0 | none | no | - |
 | `01-electronics.T3.01a` | 2026-10-17 | 2 | 0 | none | yes | - |
+| `04-embedded.T3.04a` | 2026-10-17 | 2 | 0 | none | yes | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -236,17 +237,46 @@ inventory rather than a shared template: `00-foundations.T1.00b`, `T1.00d`, `T1.
 function the suite refuses on is named by name, with its condition (see the next paragraph).
 
 **The check that keeps it green.** `scripts/check_exercise_coverage.py` gained a fourth job: for
-every function a behaviour suite puts inside `with self.assertRaises(ValueError):`, the page's
-`## 5. Exercise` section - the lines above `### Full Solution` that speak of refusing, so the answer
-block cannot be the only place it is said - must name that function. The rule started as "state a
-refusal somewhere" and was tightened once all 41 pages stated one: naming is the checkable half of
-the contract, and a page that says "some inputs are refused" teaches nothing. What the gate cannot
-check is whether each named condition is the right one; the dogfood rows are where that is read.
-Five cases in `tests/test_exercise_coverage.py` pin it - a silent page fails, a page naming only one
-of two refused functions is still a finding, a page naming both passes, a mention that sits only
-under the Full Solution does not count, and a suite that refuses nothing is not held to the rule.
-Run against `00-foundations.T1.00a` as it stood before the sweep, the gate fails with the exact
-five names it was missing.
+every function a behaviour suite puts inside `with self.assertRaises(ValueError):`, the **dedicated
+ladder item** `N. **What the suite refuses.**` in `## 5. Exercise`, above `### Full Solution`, must
+name that function. The rule has been narrowed twice and the second narrowing matters: the first
+version read every line that spoke of refusing, and dogfooding `04-embedded.T3.04a` showed a single
+phrase - "the refusal to take an angle outside it" in the package introduction, which names every
+hole by design - satisfied it for a page that stated no guard at all. Instances of the word are not
+the contract; the item is. What the gate still cannot check is whether each named condition is the
+right one; the dogfood rows are where that is read. Six cases in `tests/test_exercise_coverage.py`
+pin it - a silent page fails, a page naming only one of two refused functions is still a finding, a
+page naming both passes, a passing mention in prose does not count, a mention only under the Full
+Solution does not count, and a suite that refuses nothing is exempt. Run against
+`00-foundations.T1.00a` as it stood before the sweep, the gate fails naming all five functions.
+
+### The second Tier 3 module, and a hole in the gate that was supposed to catch this
+
+| Standard | Value |
+| :--- | :--- |
+| Reference solution tested | met (40 cases: 32 behaviour, 8 transfer) |
+| Learner attempt passes from the hints alone | met after one fix |
+| Gate score | 8/8, answered blind |
+| Author first pass | 2 minutes, 0 hints |
+| Delayed transfer | pending |
+
+**What this round found.** Eight of the forty tests failed on refusals, and the page had no refusal
+item at all: `center_aligned_arr` (non-positive clock or carrier, a carrier too fast for one tick
+per half period), `pwm_frequency` (a zero ARR), `low_side_window_ns` (a duty outside `[0, 1]`, a
+negative dead time, a zero carrier), `angle_to_q31`, `q31_decode`, `seqlock_valid` and
+`isr_cpu_percent`. Writing the item surfaced one detail the tests pin and a summary would miss: the
+normalised angle range is `[-1, 1)`, not `[-1, 1]`, because `+pi` maps to the one value `Q1.31`
+cannot hold while `-pi` encodes exactly as `-2^31`.
+
+**The bigger finding is that the gate let this page through.** Run 49's rule asked whether the
+page's *lines that speak of refusing* named each refused function - and this page's package
+introduction ends "...and the refusal to take an angle outside it", naming every hole in the same
+paragraph. One passing use of the word "refusal" made the whole paragraph the statement. The rule
+now requires the dedicated ladder item (`N. **What the suite refuses.**`) and reads only that, and a
+case in `tests/test_exercise_coverage.py` reproduces this page's exact shape: an introduction that
+mentions a refusal and names both functions still fails. Eight pages had no dedicated item at all
+(`00-foundations.T1.00c`, `T2.00b`, `T2.00c`, `T3.00a`, `04-embedded.T3.04a`, `06-robotics.T2.06a`,
+`T2.06b`, `T3.06a`) and were given one, each from its own suite's refusal calls.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

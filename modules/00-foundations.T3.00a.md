@@ -218,6 +218,8 @@ print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the 
 3. **Keep the small-angle branch.** Below $\theta = 10^{-7}$ use $1 - \theta^2/6$ and $\tfrac{1}{2} - \theta^2/24$; computing $(1-\cos\theta)/\theta^2$ directly at a nanoradian subtracts two nearly equal numbers and the matrix stops being orthogonal.
 4. **Test the exponent at the hard end.** After filling the holes, $R = $ `exp_so3([0, 0, math.pi/2])` should send $[1,0,0]^\top$ to $[0,1,0]^\top$ and have $\det R = 1$; if it is exact at $\|\phi\| = 1$ but wrong at $\pi/2$, the coefficients are missing their $1/\theta$ and $1/\theta^2$.
 
+5. **What the suite refuses.** `vee` refuses a matrix that is not skew-symmetric: the inverse of the hat map exists only there, so it raises `ValueError` rather than returning the upper triangle and calling it a vector.
+
 ### Full Solution
 ```python
 import math

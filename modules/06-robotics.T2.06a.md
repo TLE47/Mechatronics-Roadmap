@@ -210,6 +210,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **Interpolation is a fraction of the buffer.** $\alpha = (2.006 - 2.000)/(2.010 - 2.000) = 0.60$, so $q = 0.50 + 0.60(0.70 - 0.50) = 0.62\ \text{rad}$; a $t_{\text{query}}$ outside $[t_a, t_b]$ must raise, exactly as `tf2` throws `ExtrapolationException` instead of guessing.
 4. **Bandwidth counts subscribers.** $R = N_{\text{sub}} B_{\text{msg}} f_{\text{pub}}/10^6$, so $2 \times 250{,}000 \times 60 = 30.0\ \text{MB/s}$ - a single-subscriber answer is short by exactly the subscriber count.
 
+5. **What the suite refuses.** `interpolate` refuses a query outside the two samples' span: extrapolating is a different model, not a longer line, so it raises `ValueError` rather than inventing a value.
+
 ### Full Solution
 ```python
 import math

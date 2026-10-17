@@ -222,6 +222,8 @@ print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the 
 3. **$x = -0.50$ sits exactly on $-2^{30}$.** $\text{round}(-0.5 \times 2^{31}) = -1{,}073{,}741{,}824$, and decoding divides by $2^{31}$ to give back $-0.5$ with no residue.
 4. **Parity, then equality.** `seqlock_valid(4, 4)` is true, `(5, 5)` is false because the writer was mid-update, and `(4, 6)` is false because the counter moved: both conditions are required.
 
+5. **What the suite refuses.** `center_aligned_arr` refuses a non-positive timer clock or carrier, and a carrier too fast to give one tick per half period; `pwm_frequency` refuses a zero ARR; `low_side_window_ns` refuses a duty outside `[0, 1]`, a negative dead time and a zero carrier; `angle_to_q31` refuses `theta >= pi` or `theta < -pi` (the normalised range is `[-1, 1)`: `+pi` collides with the one value it excludes, while `-pi` encodes exactly); `q31_decode` refuses a word outside int32; `seqlock_valid` refuses a negative sequence; and `isr_cpu_percent` refuses a zero period or a negative execution time - each raises `ValueError`.
+
 ### Full Solution
 ```python
 import math

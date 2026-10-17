@@ -162,6 +162,8 @@ print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the 
 3. **Critical damping is a square root.** $b_{\text{crit}} = 2\sqrt{Jk} = 2\sqrt{0.16} = 0.80$, while $2Jk = 0.32$ is underdamped ($\zeta = 0.40$) and overshoots by about $25.4\%$ - the exercise's own "if your result differs" case.
 4. **The stability limit belongs to the integrator.** With velocity updated first, the map stays bounded while $\Delta t \omega_n < 2$, so $\Delta t_{\max} = 0.10\text{ s}$ at $\omega_n = 20$. At $0.9\Delta t_{\max}$ the response is bounded; at $1.5\Delta t_{\max}$ it diverges, and no physical damping saves it.
 
+5. **What the suite refuses.** `settling_time` refuses a system that never settles - a zero or negative time constant, or an envelope the decay can never reach - because its settling time would be infinite; it raises `ValueError`.
+
 ### Full Solution
 ```python
 import math

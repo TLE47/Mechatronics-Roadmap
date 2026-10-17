@@ -235,6 +235,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **Descent, not ascent.** $w_{\text{new}} = w - \eta\,\partial\mathcal{L}/\partial w = 2.0 - 0.05(-24.0) = 3.20$, and the new prediction $9.60$ is closer to $10.0$ - if your loss grows, the sign or the `lr` subtraction is wrong. Return a new parameter dict; mutating the input makes the "original unchanged" test fail.
 4. **Normalise in, denormalise out.** `z_score` returns `(values, mean, sigma)` with $\sigma = \sqrt{\text{mean}((v - \mu)^2)}$ and raises on a constant column (a feature with no spread has no z-score). `train_bc` must store the four statistics, and `predict` must apply $\mu_x,\sigma_x$ on the way in and $\mu_y,\sigma_y$ on the way out, or the learned policy speaks normalized units.
 
+5. **What the suite refuses.** `mse_loss` refuses a shape mismatch between prediction and target, `forward` refuses an observation whose width does not match the first weight matrix, `apply_gradients` refuses a non-positive learning rate, and `z_score` refuses a constant column - each raises `ValueError`.
+
 ### Full Solution
 ```python
 import math

@@ -54,7 +54,10 @@ MIN_FAULTS = 1
 EXERCISE_SECTION = re.compile(
     r"^##\s*5\.\s*Exercise\b(.*?)(?=^###\s*Full Solution)", re.MULTILINE | re.DOTALL
 )
-REFUSAL_CUE = re.compile(r"refus\w*|\braise[sd]?\b|\braising\b", re.IGNORECASE)
+# The dedicated ladder item. A page can mention a refusal in passing - "...and the refusal to take
+# an angle outside it" inside the package introduction - and still teach nothing, so the statement
+# is the item a learner reads as the contract, not any sentence that happens to use the word.
+REFUSAL_ITEM = re.compile(r"^\d+\.\s*\*\*What the suite refuses", re.IGNORECASE | re.MULTILINE)
 SUITE_REFUSAL = "assertRaises(ValueError)"
 
 
@@ -132,7 +135,7 @@ def refused_functions(module):
 
 
 def refusal_statement(module):
-    """The lines of the exercise section, above the solution block, that speak of refusing."""
+    """The `N. **What the suite refuses.**` item(s) above the solution block."""
     path = os.path.join(MODULES_DIR, module + ".md")
     if not os.path.exists(path):
         return ""
@@ -141,7 +144,7 @@ def refusal_statement(module):
     match = EXERCISE_SECTION.search(text)
     if not match:
         return ""
-    return "\n".join(line for line in match.group(1).splitlines() if REFUSAL_CUE.search(line))
+    return "\n".join(line for line in match.group(1).splitlines() if REFUSAL_ITEM.match(line))
 
 
 def unstated_refusals(module):
@@ -174,9 +177,9 @@ def check():
     findings += ["%s ships no graded exercise package" % m for m in missing]
     findings += ["incomplete package %s: %s" % (m, "; ".join(p))
                  for m, p in sorted(incomplete.items())]
-    findings += ["%s: the behaviour suite refuses bad input in %s, but `## 5. Exercise` never "
-                 "names %s above `### Full Solution`" % (m, ", ".join(names),
-                                                             "it" if len(names) == 1 else "them")
+    findings += ["%s: the behaviour suite refuses bad input in %s, but no `**What the suite "
+                 "refuses.**` item above `### Full Solution` names %s" % (
+                     m, ", ".join(names), "it" if len(names) == 1 else "them")
                  for m, names in unstated]
     return {
         "modules": len(ids),

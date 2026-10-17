@@ -11,6 +11,22 @@ flowchart LR
 
 ---
 
+## [2026-10-17] — Run 50: The Gate Reads the Item, Not the Word
+
+### 1. `04-embedded.T3.04a` dogfooded
+- 40 cases (32 behaviour, 8 transfer), Gate **8/8 answered blind**, 2 minutes, 0 hints. Eight failures on the first pass, all refusals the page never stated. Row in `docs/dogfood-log.md`.
+- Writing its refusal item pinned the normalised angle range the tests enforce: `[-1, 1)`, because `+pi` collides with the one value `Q1.31` excludes while `-pi` is exactly `-2^31`.
+
+### 2. Run 49's rule was satisfiable by a passing phrase
+- That gate matched *lines that speak of refusing*, and this page's package introduction ends "...and the refusal to take an angle outside it" while naming every hole. One such word made the whole paragraph the statement, so a page with no guard stated passed.
+- The rule now matches the dedicated item `N. **What the suite refuses.**` and reads only that. A test reproduces the page's exact shape - an introduction that mentions a refusal and names both functions still fails.
+
+### 3. Eight pages had no dedicated item
+- `00-foundations.T1.00c`, `T2.00b`, `T2.00c`, `T3.00a`, `04-embedded.T3.04a`, `06-robotics.T2.06a`, `T2.06b`, `T3.06a`: each given one, written from its own suite's refusal calls.
+
+### 4. Verification
+- Gate 46/46 with `unstated: 0`, 14 cases in `tests/test_exercise_coverage.py`, `validate_modules` exit 0, page test 46/46, `lint_modules` 46/46, `module_parity --check`.
+
 ## [2026-10-17] — Run 49: Every Refused Function Is Named
 
 ### 1. The rule is now naming, not just mentioning

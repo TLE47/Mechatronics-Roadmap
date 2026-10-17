@@ -142,6 +142,8 @@ print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the 
 3. **Two powers, two formulas.** $V_{\text{drop}} = IR = 15 \times 0.012 = 0.18\text{ V}$; $P_{\text{loss}} = I^2R = 225 \times 0.012 = 2.70\text{ W}$. If both come back `0.18`, the square is missing from the loss.
 4. **Seconds in, microseconds out is a factor of $10^6$.** $1/f$ is in seconds, so a $25\text{ kHz}$ loop's $4\times10^{-5}\text{ s}$ is `40` µs; multiplying by $10^3$ reports `0.04`, which is milliseconds mislabelled.
 
+5. **What the suite refuses.** `prefix_scale` refuses a prefix that is not in its table, `trace_drop_v` and `trace_loss_w` refuse a negative resistance, `rc_time_constant_s` refuses a non-positive resistance or capacitance, and `loop_period_us` refuses a non-positive frequency - each raises `ValueError`.
+
 ### Full Solution
 ```python
 import math

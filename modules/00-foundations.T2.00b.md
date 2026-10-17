@@ -165,6 +165,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **A basis is invertible exactly when its determinant is not zero.** For columns $b_1 = [a, c]$ and $b_2 = [b, d]$, $\det = ad - bc$ is the signed area they span; $b_1 = [1,2]$, $b_2 = [2,4]$ gives $4 - 4 = 0$ and the pair cannot reach every vector, so `coordinates_in_basis` must raise rather than divide by roughly zero.
 4. **Check the round trip, not the arithmetic.** Rebuilding $c_1b_1 + c_2b_2$ from your own coordinates and comparing with the input vector catches a swapped Cramer numerator faster than re-deriving it: for $b_1 = [2,0]$, $b_2 = [1,1]$ and $v = [5,3]$ the answers are $c_1 = 1$, $c_2 = 3$.
 
+5. **What the suite refuses.** `coordinates_in_basis` refuses a singular basis (parallel basis vectors): the coordinates are not unique there, so it raises `ValueError` instead of dividing by a zero determinant.
+
 ### Full Solution
 ```python
 import math

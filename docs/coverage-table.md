@@ -26,7 +26,7 @@ flowchart LR
 | `01` | 7 | 100% | 100% | 100% | 71% | **95.7%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `02` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `03` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `04` | 7 | 100% | 100% | 100% | 79% | **96.8%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `04` | 7 | 100% | 100% | 100% | 86% | **97.9%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `05` | 5 | 100% | 100% | 100% | 60% | **94.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `06` | 5 | 100% | 100% | 100% | 70% | **95.5%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `07` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
@@ -38,9 +38,9 @@ flowchart LR
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **94.8%** |
 | Tier 2 | 18 | **100.0%** |
-| Tier 3 | 12 | **93.1%** |
+| Tier 3 | 12 | **93.8%** |
 
-## Per module (46 modules, overall **96.4%**)
+## Per module (46 modules, overall **96.6%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -75,7 +75,7 @@ flowchart LR
 | `04-embedded.T2.04b` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `04-embedded.T2.04c` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `04-embedded.T2.04d` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `04-embedded.T3.04a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `04-embedded.T3.04a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `05-control.T1.05a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `05-control.T2.05a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `05-control.T3.05a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
@@ -164,7 +164,7 @@ not demonstrated learner mastery.
 | `04-embedded.T2.04b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `04-embedded.T2.04c` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `04-embedded.T2.04d` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
-| `04-embedded.T3.04a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T3.04a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `05-control.T1.05a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T2.05a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `05-control.T3.05a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |

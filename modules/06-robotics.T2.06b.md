@@ -201,6 +201,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **Simulated time is what makes replay deterministic.** $\dot{q}$ is $(q_b - q_a)/(t_b - t_a)$ on the message stamps - $20\ \text{rad/s}$ at $0.5\times$, $1\times$ and $4\times$ - so a derivative that changes with `--rate` proves wall-clock time leaked into the estimator. And a timer of $2.5$ simulation steps must fire on step $3$: `ceil`, and at least one step.
 4. **Decimation is exact or refused.** $1000/250 = 4$ is a whole number; $1000/300 = 3.33$ is not, and returning $3$ silently runs the controller at $300\ \text{Hz}$ while claiming $2\bar{3}\ \text{Hz}$ - so raise instead.
 
+5. **What the suite refuses.** `timer_steps` refuses a non-positive timer period or simulation step, `wall_delay_s` refuses a non-positive replay rate, `replay_derivative` refuses two samples on the same stamp, and `control_decimation` refuses a zero controller rate or a ratio that is not a whole number - each raises `ValueError`.
+
 ### Full Solution
 ```python
 import math
