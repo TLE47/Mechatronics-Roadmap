@@ -180,6 +180,7 @@ print("scaffold ready: 3 TODOs to fill, then compare against the numbers in the 
 2. **The two terms of the Joseph form.** $(1 - KH) = 0.50$, so the prior term is $0.25 \times 2.0 = 0.50$ and the noise term is $0.25 \times 2.0 = 0.50$; they sum to $1.0$, which is also what the naive $(1 - 0.5)\times 2.0$ gives - agreement is a property of the *optimal* gain only.
 3. **Why the corrupted case cannot go negative.** At $K = 1.20$ the factor is $-0.20$; squared it is $+0.04$, so $0.04 \times 10.0 + 1.44 \times 1.0 = 1.84$ while the unsigned $(1 - KH)P^-$ reads $-2.0$. A negative Joseph result means a sign was kept inside the square.
 4. **NEES as a misfit score.** $0.20^2 / 0.04 = 1.0$ is a perfectly calibrated filter; the same error against a claimed $0.01$ reports $4$, which is an overconfident covariance flagging itself.
+5. **What the suite refuses.** `optimal_gain` and `joseph_variance` refuse a negative prior variance, a zero Jacobian and zero measurement noise - a negative variance is not a covariance, and the other two make the update meaningless - and `nees_diagonal` refuses a zero claimed variance and any length mismatch between the error list and the covariance list, which is unanswerable rather than a shorter score. All raise `ValueError`.
 
 ### Full Solution
 ```python

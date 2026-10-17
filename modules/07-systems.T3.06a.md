@@ -191,6 +191,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The CCF term is not doubled.** $\beta \lambda_{DU} = 0.02 \times 2.0\times10^{-7} = 4.0\times10^{-9}\ \text{h}^{-1}$ is the common-cause share of the *subsystem*; multiplying by two counts the same cause twice.
 4. **`PLd` has an exclusive top end.** $[10^{-7}, 10^{-6})$ accepts $9.9\times10^{-7}$ and rejects exactly $10^{-6}$ - the boundary is where an audit fails a design that merely rounds to `PLd`.
 5. **Two channels, one filter.** `torque_removed = ch_a_safe or ch_b_safe` is immediate; only `discrepancy_fault` waits for `discrepancy_ms > t_disc_max_ms`, so $12\ \text{ms}$ is normal contact skew and $25\ \text{ms}$ is a welded pole.
+6. **What the suite refuses.** `opc_ua_pubsub_rate_bps` refuses a negative variable count or frame rate, `diagnostic_coverage_pct` refuses a subsystem with no dangerous failures (the ratio is `0/0`), `pfh_common_cause` refuses a beta factor outside `[0, 1]`, `sto_evaluate` refuses a negative discrepancy window, and `aas_opcua_nodes` refuses a shell with no submodels and a node id that is a bare string or carries an empty namespace - each with `ValueError`.
 
 ### Full Solution
 ```python

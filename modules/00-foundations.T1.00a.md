@@ -155,6 +155,7 @@ print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the 
 2. **`range` runs a number of times, not to a number.** `range(n_steps)` yields `n_steps` values, so ten drops come from `range(10)`. `range(1, 10)` yields nine (1 through 9), which is exactly the `10.65` V the exercise warns about: $12.0 - 9 \times 0.15$.
 3. **A traceback's bottom line names a type.** `type(exc).__name__` is `"ZeroDivisionError"`; `str(exc)` is the message (`"float division by zero"`), which is not what the exercise asks you to report.
 4. **The format field does the rounding.** `f"{pos_m:.3f}"` turns `2/3` into `"0.667"`, while `str(2/3)` gives `"0.6666666666666666"`.
+5. **What the suite refuses.** `steps_to_target` raises on a non-positive time step and on a velocity that is not positive (a stationary robot never arrives), `step_position` raises on a negative time step, `battery_voltage_after_steps` and `loop_total` raise on a negative count, and `clamp_pwm` raises on a non-positive ceiling - all `ValueError`, so a guard is part of the answer rather than defensive padding.
 
 ### Full Solution
 ```python

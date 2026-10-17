@@ -160,6 +160,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 2. **The mask is the width.** `2**16 - 1` is `0xFFFF` and `2**12 - 1` is `0x0FFF`, so `& (2**bits - 1)` keeps exactly the bits a `uintN_t` keeps - hard-coding `0xFF` makes the 12-bit encoder `4096` come back as `0`.
 3. **Subtract before you mask.** `4 - 65530` is `-65526` in Python; `-65526 & 0xFFFF` is the `10` ticks that actually elapsed. Masking each reading first and then subtracting gives the same `10`, but subtracting and never masking gives `-65526`.
 4. **Clearing is an AND with an inverted mask.** `~(1 << 3)` is `0xF7`, so `0x5A & 0xF7` keeps bits 1, 4, 6 and clears only bit 3 - `0x5A & 0x08` instead keeps bit 3 and wipes the rest.
+5. **What the suite refuses.** A width of zero, or past 64 bits, in `int_range` and a zero-width `elapsed_unsigned`; a negative mask in `apply_bits`; a bit index past 31 in `bit_is_set`; a tick past 65535 or a count past 32767 in `pack_telemetry`, which has no room for them; and an `unpack_telemetry` frame that is not exactly 8 bytes - each raises `ValueError` instead of masking the overflow away.
 
 ### Full Solution
 ```python

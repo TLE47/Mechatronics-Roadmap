@@ -184,6 +184,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The counter is modulo 16, always.** `(curr - prev) % 16` maps $15 \to 0$ to $1$ (`OK`); plain subtraction gives $-15$ and turns a healthy wrap into a fault every sixteen frames at $1\ \text{kHz}$.
 4. **Read the three verdicts off the same step.** $\Delta = 0$ is frozen, $\Delta = 1$ is `OK`, and $\Delta - 1$ is the number of dropped frames: $4 \to 6$ gives $\Delta = 2$, one drop; $4 \to 10$ gives $\Delta = 6$, five drops, past `max_drop = 2`.
 5. **Watchdog and coverage are products and ratios.** $T_{\text{wdg}} = N_{\text{miss}} T_{\text{cmd}} = 3 \times 1.0\ \text{ms} = 3.0\ \text{ms}$; $C_{\text{HIL}} = F_{\text{passed}}/F_{\text{total}}$ and an empty catalogue must raise rather than divide by zero.
+6. **What the suite refuses.** `unclamped_bus_v` refuses a zero bus capacitance, `brake_resistor_max_ohm` refuses a peak power of zero (with no power there is no bound a resistor could meet), and `hil_coverage` refuses an empty fault catalogue - the case item 5 warns about, checked by the suite - each with `ValueError`.
 
 ### Full Solution
 ```python

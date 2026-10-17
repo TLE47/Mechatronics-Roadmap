@@ -178,6 +178,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The latch is a state, not a flag.** After a trip, `state == "ESTOP_LATCHED"` must ignore a held Start button; only `reset_btn_no and not start_btn_no` returns `IDLE`, and even that scan keeps `pwr = False`.
 4. **Decibels and the lag sign.** $20\log_{10}(0.10/0.20) = -6.0206\ \text{dB}$ (the $10\log_{10}$ form would give $-3.0103$), and $-360^\circ \times 8.0 \times 0.03125 = -90^\circ$ is a quarter of the $0.125\ \text{s}$ period, so a positive number means the sign of $\Delta t$ was dropped.
 
+5. **What the suite refuses.** `scan_frequency_hz` refuses a zero or negative phase budget (a scan with no period has no rate), `safety_chain_ok` refuses an empty chain and any contact that is not `1`/`0`, `plc_scan_step` refuses a state name it does not know, `gain_db` refuses a zero input amplitude or a negative one, `phase_lag_deg` refuses a negative delay, and `sine_amplitude` refuses an empty sample list - each with `ValueError`.
+
 ### Full Solution
 ```python
 import math

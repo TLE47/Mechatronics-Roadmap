@@ -154,7 +154,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The check that catches both mistakes.** Feed $I_{\max}$ back through `shunt_adc_voltage`: it must land exactly on $3.30\text{ V}$, and $-I_{\max}$ must land exactly on $0.00\text{ V}$, because the two endpoints mirror about $1.65\text{ V}$.
 4. **Keep the sign.** `shunt_current_from_adc` is the inverse of the stage, so the recovered current at $0.00\text{ V}$ is $-33.0\text{ A}$, not $+33.0\text{ A}$.
 
-5. **What the suite refuses.** A zero shunt, gain or rail, a zero CMRR in `cmrr_current_error_a`, a zero-bit or zero-rail `adc_code`, and a `max_measurable_current` whose widths cannot be resolved all raise `ValueError`.
+5. **What the suite refuses.** `shunt_adc_voltage` and `shunt_current_from_adc` raise on a non-positive shunt or gain, `kelvin_gain_error_pct` on a non-positive shunt or a negative trace and `cmrr_current_error_a` on a zero CMRR, `max_measurable_current` on a zero gain, zero shunt, non-positive rail or a reference outside it, and `adc_code` on a zero-bit or zero-rail converter - all `ValueError`.
 
 ### Full Solution
 ```python

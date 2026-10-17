@@ -170,6 +170,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 2. **Shoot-through is two switches as well.** Both FETs of one leg are in series across the bus, so with $0.020\ \Omega$ each the current is $9.0/(2 \times 0.020)$; dividing by one $R$ doubles it.
 3. **The differential drive subtracts.** $V_{AB} = (D_A - D_B)V_{\text{bus}}$, so equal duties give $0\text{ V}$ (brake/coast) and $D_A = 0.25$, $D_B = 0.75$ at $24\text{ V}$ is $-12.0\text{ V}$, not $+24.0$.
 4. **Read the window, not the ceiling.** $11.8\text{ V}$ is the Absolute Maximum; the Recommended Operating Conditions stop at $10.8\text{ V}$, which is why $9.0\text{ V}$ is inside and $11.8\text{ V}$ is not.
+5. **What the suite refuses.** `conduction_loss` and `h_bridge_voltage` raise on a duty outside $[0, 1]$, `pwm_effective_voltage` raises on a percentage such as `65.0` instead of scaling it silently, `duty_for_effective_voltage` raises on a demand the bus cannot deliver, `shoot_through_current` raises on a zero resistance, and `within_recommended` raises on an inverted window with `v_min > v_max` - all `ValueError`.
 
 ### Full Solution
 ```python

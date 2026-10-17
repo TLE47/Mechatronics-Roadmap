@@ -162,6 +162,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 2. **Polling stalls per bit.** A UART frame is one start bit, eight data bits and a stop bit, so 50 bytes is 500 bits at the baud rate - `500 / 1e6 * 1e6 = 500` µs. Dividing by 8 first reports `62.5` and hides the cost.
 3. **The window is one half, not the buffer.** HT fires when $N$ samples are in, so the CPU has $N/f_{\text{adc}}$ before TC: $16/200000 = 80\ \mu\text{s}$, while $2N$ would report $160$.
 4. **The half you may read is the one just finished.** At `write_pos == N - 1` the engine has filled `[0, N)` and moves to Pong, so Ping is safe: `(0, N)`. At `2N - 1` the roles swap: `(N, 2N)`. Anything else is mid-half, and the honest answer is `None`.
+5. **What the suite refuses.** Zero frames or a zero clock in `spi_shift_us`; a negative chip-select time in `spi_frame_us`; a negative busy time or a zero period in `cpu_load_fraction`; a zero bit count in `uart_poll_us`; and a `buffer_slice_for_position` that is out of range or has no half to read (`n_half <= 0`) - each raises `ValueError` instead of reporting a plausible-looking zero.
 
 ### Full Solution
 ```python

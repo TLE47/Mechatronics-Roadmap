@@ -195,6 +195,7 @@ print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the 
 2. **Past the stop.** At $h = -0.05$ the ceiling is $-0.40$: the filter does not clamp to zero, it commands a retreat that drives $h$ back up. A result of $0$ means the constraint was imposed as an equality.
 3. **The infeasible case.** At $h = -0.50$ the ceiling is $-4.0$, below $u_{\min} = -2.0$; there is no admissible command and clamping to $-2.0$ would silently disobey the barrier, so raise instead.
 4. **Braking distance, on the plant.** $a = 2.5/0.008 = 312.5\,\text{rad/s}^2$, so one $1\,\text{ms}$ tick removes $0.3125\,\text{rad/s}$ over $\tfrac12 a\Delta t^2 = 1.5625\times10^{-4}\,\text{rad}$; at that margin a $1000\,\text{s}^{-1}$ barrier admits only $0.15625\,\text{rad/s}$.
+5. **What the suite refuses.** `cbf_command` refuses the infeasible barrier (a ceiling below `u_min`, as at $h = -0.50$), a zero or negative barrier gain, and a window whose `u_min` is not below `u_max`; `barrier_lower_bound` refuses a negative margin, a non-positive gain and a negative time. All raise `ValueError` rather than clamping or extrapolating.
 
 ### Full Solution
 ```python

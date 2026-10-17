@@ -181,7 +181,7 @@ print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the 
 3. **Percentages and microseconds cancel cleanly.** $100 \times t_{\text{exec}}/T_{\text{isr}} = 100 \times t_{\text{exec}}\times 10^{-6}\times f_{\text{isr}}$; the budget comes back with `u_max_pct / 100` because `25` means $0.25$.
 4. **FAULT is latched.** Once `current_a > i_max_a` has set it, the next tick - current recovered, PWM requested - still returns `("FAULT", 0.0)`. Only `HOMING` waits on `pos_rad < 0.0`; the others advance.
 
-5. **What the suite refuses.** A zero period (`tick_due`, `next_deadline_us`, `ticks_in`, the FSM), a timer width outside `1..32` bits, an ISR longer than its period or a budget outside `0..100` percent, a zero frequency, a zero debounce, an unknown FSM state, a duty above one and a negative duration all raise `ValueError`.
+5. **What the suite refuses.** A zero period in `tick_due`, `next_deadline_us` or `ticks_in`; a timer width outside `1..32` bits in `elapsed_us`; a submission budget outside `0..100` percent in `max_isr_exec_us`; an `isr_utilization_pct` whose ISR is longer than its period, or whose frequency is zero; a zero debounce in `fault_latency_us`; an unknown state or a duty above one in `fsm_step`; and a negative duration anywhere - each raises `ValueError`.
 
 ### Full Solution
 ```python

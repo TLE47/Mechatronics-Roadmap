@@ -3,7 +3,7 @@
 The gate has four jobs, and each one has a case here:
   * a bridge module with no package fails the build;
   * a package missing one of its required files fails the build;
-  * a page whose suite refuses bad input must say so above its solution block;
+  * every function a suite refuses on must be named on the page, above its solution block;
   * a complete set of packages passes, and `--dry-run` reports without failing.
 """
 
@@ -42,7 +42,13 @@ def write_package(exercises, module, complete=True, refusal=False):
     for name in names:
         body = "# fixture\n"
         if name == "test_behavior.py" and refusal:
-            body += "\n    with self.assertRaises(ValueError):\n        pass\n"
+            # Two refused functions, so a page that names only one is still a finding.
+            body += ("\nclass Fake(unittest.TestCase):\n"
+                     "    def test_refusals(self):\n"
+                     "        with self.assertRaises(ValueError):\n"
+                     "            submission.alpha(0.0)\n"
+                     "        with self.assertRaises(ValueError):\n"
+                     "            submission.beta(-1.0)\n")
         with open(os.path.join(directory, name), "w") as handle:
             handle.write(body)
     with open(os.path.join(directory, "faults", "broken.py"), "w") as handle:
@@ -128,27 +134,40 @@ class CoverageGateTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("faults/ holds no planted fault", err)
 
-    def test_a_suite_that_refuses_input_needs_the_page_to_say_so(self):
+    def test_a_suite_that_refuses_input_needs_the_page_to_name_it(self):
         self.module("01-electronics.T1.01c", self.page("Compute the droop."))
         write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
-        self.assertIn("never says", err)
+        self.assertIn("never names", err)
+        self.assertIn("alpha", err)
+        self.assertIn("beta", err)
 
-    def test_a_page_that_states_its_refusals_passes(self):
+    def test_naming_only_one_of_two_refused_functions_is_still_a_finding(self):
         self.module("01-electronics.T1.01c",
-                    self.page("A zero limit raises `ValueError`; a negative one is refused."))
+                    self.page("A zero limit in `alpha` raises `ValueError`."))
+        write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
+        code, _out, err = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("beta", err)
+        self.assertNotIn("alpha,", err)
+
+    def test_a_page_that_names_every_refused_function_passes(self):
+        self.module("01-electronics.T1.01c",
+                    self.page("`alpha` raises `ValueError` on a zero limit; `beta` refuses a "
+                              "negative one."))
         write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
         self.assertEqual(self.run_gate()[0], 0)
 
     def test_a_refusal_only_under_the_solution_does_not_count(self):
         # The point of reading above `### Full Solution`: the answer block is not the teaching.
         self.module("01-electronics.T1.01c",
-                    self.page("Compute the droop.", solution_tail="A zero limit raises `ValueError`."))
+                    self.page("Compute the droop.",
+                              solution_tail="`alpha` and `beta` raise `ValueError`."))
         write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
-        self.assertIn("never says", err)
+        self.assertIn("never names", err)
 
     def test_a_package_whose_suite_does_not_refuse_input_is_not_held_to_the_rule(self):
         self.module("01-electronics.T1.01c", self.page("Compute the droop."))

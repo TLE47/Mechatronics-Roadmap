@@ -11,13 +11,13 @@ package fails the build, and so does a package missing any required file, a mani
 valid JSON or does not carry the module's own id, and a package that plants no fault. Adding a
 module without its exercise is therefore a red build, not a silent gap.
 
-It also holds the page to its suite. When a behaviour suite checks that bad input raises
-(`with self.assertRaises(ValueError):`), the module's `## 5. Exercise` section - everything above
-`### Full Solution`, so the answer cannot be the only place it is said - must state at least one
-refusal in prose (`refuses`, `raise`). Three dogfood rounds found the same defect: a suite testing
-a contract the hint ladder never mentioned, leaving a correct formula that still fails. This gate
-is a floor, not a proof - it cannot check that every guard is named; the dogfood rows are that
-proof - but it makes total silence a red build.
+It also holds the page to its suite. Every function a behaviour suite puts inside
+`with self.assertRaises(ValueError):` must be **named** in the refusal statement of the module's
+`## 5. Exercise` section - the lines above `### Full Solution` that speak of refusing or raising,
+so the answer block cannot be the only place it is said. Three dogfood rounds found the same
+defect: a suite testing a contract the hint ladder never mentioned, leaving a correct formula that
+still fails. Naming is the checkable half of that contract; whether each named condition is the
+right one is still a human read, and the dogfood rows are where that happens.
 
 Usage:
     python3 scripts/check_exercise_coverage.py             # check (default)
@@ -28,6 +28,7 @@ Exit-code family: typed (0 pass, 1 findings, 2 usage).
 """
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -101,24 +102,53 @@ def package_problems(module):
     return problems
 
 
-def suite_refuses_input(module):
-    """Whether the behaviour suite checks that bad input raises `ValueError`."""
+def refused_functions(module):
+    """The submission functions the behaviour suite puts inside an `assertRaises` block.
+
+    Read from the test source rather than a list here, so the gate follows the suite: a new
+    refusal test on a function that is not named on the page fails the build with its own name.
+    """
     path = os.path.join(EXERCISES_DIR, module, "test_behavior.py")
     if not os.path.exists(path):
-        return False
+        return []
     with open(path, "r", encoding="utf-8") as handle:
-        return SUITE_REFUSAL in handle.read()
+        source = handle.read()
+    if SUITE_REFUSAL not in source:
+        return []
+    names = []
+    for node in ast.walk(ast.parse(source)):
+        if not isinstance(node, ast.With):
+            continue
+        context = node.items[0].context_expr
+        if not (isinstance(context, ast.Call) and isinstance(context.func, ast.Attribute)
+                and context.func.attr == "assertRaises"):
+            continue
+        for child in ast.walk(node):
+            if (isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute)
+                    and isinstance(child.func.value, ast.Name) and child.func.value.id == "submission"
+                    and child.func.attr not in names):
+                names.append(child.func.attr)
+    return names
 
 
-def page_states_refusals(module):
-    """Whether the exercise section, above the solution block, says something is refused or raises."""
+def refusal_statement(module):
+    """The lines of the exercise section, above the solution block, that speak of refusing."""
     path = os.path.join(MODULES_DIR, module + ".md")
     if not os.path.exists(path):
-        return False
+        return ""
     with open(path, "r", encoding="utf-8") as handle:
         text = handle.read()
     match = EXERCISE_SECTION.search(text)
-    return bool(match and REFUSAL_CUE.search(match.group(1)))
+    if not match:
+        return ""
+    return "\n".join(line for line in match.group(1).splitlines() if REFUSAL_CUE.search(line))
+
+
+def unstated_refusals(module):
+    """The refused functions the page never names in its refusal statement."""
+    statement = refusal_statement(module)
+    return [name for name in refused_functions(module)
+            if not re.search(r"\b%s\b" % re.escape(name), statement)]
 
 
 def scan():
@@ -132,8 +162,9 @@ def scan():
             incomplete[module] = problems
         else:
             graded.append(module)
-            if suite_refuses_input(module) and not page_states_refusals(module):
-                unstated.append(module)
+            missing_names = unstated_refusals(module)
+            if missing_names:
+                unstated.append((module, missing_names))
     return ids, missing, incomplete, graded, unstated
 
 
@@ -143,8 +174,10 @@ def check():
     findings += ["%s ships no graded exercise package" % m for m in missing]
     findings += ["incomplete package %s: %s" % (m, "; ".join(p))
                  for m, p in sorted(incomplete.items())]
-    findings += ["%s: the behaviour suite refuses bad input, but `## 5. Exercise` never says "
-                 "what raises - state the refusals above `### Full Solution`" % m for m in unstated]
+    findings += ["%s: the behaviour suite refuses bad input in %s, but `## 5. Exercise` never "
+                 "names %s above `### Full Solution`" % (m, ", ".join(names),
+                                                             "it" if len(names) == 1 else "them")
+                 for m, names in unstated]
     return {
         "modules": len(ids),
         "graded": len(graded),

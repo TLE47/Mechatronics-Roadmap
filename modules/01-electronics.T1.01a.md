@@ -161,6 +161,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 2. **The divider is set by the bottom leg.** $V_{\text{out}} = V_{\text{in}} R_2/(R_1 + R_2)$, and a load in parallel with $R_2$ can only make the bottom leg smaller, so a loaded reading *higher* than the unloaded one means the parallel branch was inverted.
 3. **Heat is $I^2R$, not $IR$.** For the exercise's $10\text{ mA}$ through $290\ \Omega$, $P = (0.010)^2 \times 290 = 0.029\text{ W}$ — $11.6\%$ of a quarter-watt part, so the $50\%$ derating check passes with room to spare.
 4. **Close the loop.** Feed your $R$ back into `led_current`: $2.9\text{ V} / 290\ \Omega$ must read $10.0\text{ mA}$, so the two functions have to agree with each other.
+5. **What the suite refuses.** `stall_current` raises on a zero winding resistance, `divider_unloaded` and `divider_loaded` on a zero leg, `joule_power` on a negative resistance, `led_series_resistor` on a supply at or below the LED's forward drop or on a zero current, and `within_derating` on a derating fraction of zero - all `ValueError`, because each one would otherwise divide by zero or report a part that cannot exist.
 
 ### Full Solution
 ```python

@@ -175,6 +175,7 @@ print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the 
 2. **Why the new margin is a subtraction.** The delay adds lag, so it *subtracts* from the margin: $51.8273^\circ - 22.5216^\circ = 29.3057^\circ$. Still positive, so the loop is stable - and now below the $45^\circ$ floor, which is why $5\,\text{ms}$ of filter lag is not a detail on a $78.6\,\text{rad/s}$ loop.
 3. **The unwrap, if you also want the general function.** `cmath.phase` returns $+160^\circ$ for a $-200^\circ$ lag; subtract $360$ before adding $180$, or a loop past the critical point reports $340^\circ$ of safety instead of $-20^\circ$.
 4. **The other numbers in the block.** $S + T \equiv 1$ holds at any $L$, including the crossover's $1.144$; Bryson over $0.05\,\text{m}$, $0.10\,\text{rad}$ and $5\,\text{N}$ is $[400, 100]$ and $0.04$; and the observer's error matrix $A_d - LC$ has radius $0.9005 < 1$.
+5. **What the suite refuses.** `gain_crossover` raises `ValueError` when the loop has no crossover to report: a magnitude that never crosses unity (a constant $10$) and a first-order low-pass that only reaches it at $\omega = 0$ are both refused rather than given an invented frequency.
 
 ### Full Solution
 ```python

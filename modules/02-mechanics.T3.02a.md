@@ -216,7 +216,7 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The elbow rides the shoulder.** In the outward pass the second link's absolute angular acceleration is $\alpha_2 = \ddot{q}_1 + \ddot{q}_2$, so at the worked point $\alpha_2 = 3.0\ \text{rad/s}^2$, $\tau_2 = I_2\alpha_2 = 0.06$, and the inward pass adds it to the first link's own $I_1\alpha_1 = 0.10$ for $\tau_1 = 0.16$. The Gate test's $(I_1, I_2) = (0.08, 0.03)$ gives $(0.17, 0.09)$ by the same two lines.
 4. **Where the passivity form comes from.** $\dot{M} - 2C$ is skew-symmetric for Christoffel-consistent dynamics, so the scalar $\dot{q}^\top(\dot{M} - 2C)\dot{q}$ is exactly $0$ for any $\dot{q}$ - a result your own sum must reproduce, and one a sign slip in the $2C$ term turns into a non-zero number.
 
-5. **What the suite refuses.** A screw axis that is not unit length, a twist or wrench that is not six components, a flexure web as thick as its radius, a negative modulus or inertia, a zero thickness factor, and a `passivity_quadratic_form` shape mismatch all raise `ValueError`.
+5. **What the suite refuses.** `screw_axis` raises on an axis that is not unit length or a twist that is not six components; `spatial_power` raises on a five-component vector; `flexure_stiffness` raises on a flexure web as thick as its radius or a negative modulus; `thickness_scale` raises on a zero factor; `rnea_2link` raises on a negative inertia; and `passivity_quadratic_form` raises on a shape mismatch - each a `ValueError`, since every one of these is a physical impossibility rather than a small number.
 
 ### Full Solution
 ```python
