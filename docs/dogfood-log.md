@@ -66,6 +66,7 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `07-systems.T2.07a` | 2026-10-17 | 1 | 0 | none | no | - |
 | `01-electronics.T3.01a` | 2026-10-17 | 2 | 0 | none | yes | - |
 | `04-embedded.T3.04a` | 2026-10-17 | 2 | 0 | none | yes | - |
+| `06-robotics.T3.06b` | 2026-10-17 | 1 | 0 | none | no | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -277,6 +278,25 @@ case in `tests/test_exercise_coverage.py` reproduces this page's exact shape: an
 mentions a refusal and names both functions still fails. Eight pages had no dedicated item at all
 (`00-foundations.T1.00c`, `T2.00b`, `T2.00c`, `T3.00a`, `04-embedded.T3.04a`, `06-robotics.T2.06a`,
 `T2.06b`, `T3.06a`) and were given one, each from its own suite's refusal calls.
+
+### The third Tier 3 module: the refusal item pays for itself
+
+| Standard | Value |
+| :--- | :--- |
+| Reference solution tested | met (28 cases: 22 behaviour, 6 transfer) |
+| Learner attempt passes from the hints alone | met, first attempt |
+| Gate score | 8/8, answered blind |
+| Author first pass | 1 minute, 0 hints |
+| Delayed transfer | pending |
+
+**What this round found.** No course bug, and the reason is worth recording: this is the first Tier 3
+page to pass its package on the first attempt, and the difference is that it already carried the
+refusal item added in the previous round. Seven guards that cost the two modules before it a repair
+round - an empty rollout, a discount of one, an inverted clip range, a non-positive ratio, a zero
+step clamp, inverted joint limits, a non-positive timeout - were read as part of the ladder and
+written into the attempt, so the first run was green. The seven holes themselves (backward return
+recursion, the pessimistic `min` that only binds for a negative advantage, the newest-first
+ensemble weights, rate-limit-before-joint-limit) were all covered by the ladder's formulas.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference
