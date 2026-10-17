@@ -187,7 +187,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 05):** Production mastery of modern optimal, nonlinear, and manifold control: Joseph-form Error-State Kalman Filters (ESKF) on $SO(3)\times\mathbb{R}^n$, Slotine-Li passivity-based adaptive control, CLF-CBF-QP safety filters, and Real-Time Iteration Nonlinear Model Predictive Control (RTI-NMPC).
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 05):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Exponential & Hamiltonian Passivity) and **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*) plus the Track 05 Tier 3 Bridge [`05-control.T3.05a`](../modules/05-control.T3.05a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 05):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Exponential & Hamiltonian Passivity) and **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*) plus the three Track 05 Tier 3 bridges: [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (Joseph-form covariance), [`05-control.T3.05b`](../modules/05-control.T3.05b.md) (tangent-space injection and reset) and [`05-control.T3.05c`](../modules/05-control.T3.05c.md) (the CBF-QP safety filter).
 > * [**Next Linear Step in Pass 3 → Track 06 (Tier 3: Khatib Operational Inertia Λ(q) & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production)
 
 ### 4.1 Two-Degree-of-Freedom (2-DOF) Control & State Estimation Architecture
@@ -294,7 +294,7 @@ struct IndustrialPID {
   - 🔗 [Skogestad & Postlethwaite: Multivariable Feedback Control — Chapter 5: Fundamental Limitations](https://folk.ntnu.no/skoge/book.html) — *Derives exact bandwidth bounds imposed by right-half-plane zeros, unstable poles, and time delays.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py` to inspect how 2-DOF feedforward + feedback reduces trajectory tracking error by $> 10\times$ compared to feedback alone without increasing the sensitivity peak $M_s$.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study sensitivity $S(s)$ vs. complementary sensitivity $T(s)$ in [`05-control.T2.05a`](../modules/05-control.T2.05a.md) and Slotine-Li passivity-based feedforward + PD tracking in [`05-control.T3.05a`](../modules/05-control.T3.05a.md), plus [`05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py`](lab/lab05_eskf_mpc_and_cbf.py).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study sensitivity $S(s)$ vs. complementary sensitivity $T(s)$ in [`05-control.T2.05a`](../modules/05-control.T2.05a.md), plus [`05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py`](lab/lab05_eskf_mpc_and_cbf.py).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -326,7 +326,7 @@ $$
   - 🔗 [Paul Groves: Principles of GNSS, Inertial, and Multisensor Integrated Navigation Systems](https://www.artechhouse.com/) / [Tab 8: Attitude ESKF & SeqLock Simulator](../README.md) — *Interactive verification of Joseph-form ESKF convergence and Normalized Estimation Error Squared (NEES) consistency.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 8: Attitude ESKF & SeqLock** in the interactive workbench, inject a large initial gyro bias $b_g$ and attitude error, and verify that the 6-state $SO(3)$ ESKF converges while keeping its **Normalized Estimation Error Squared (NEES)** $\epsilon_k = \delta x_k^\top P_k^{-1} \delta x_k$ inside the $95\%$ $\chi^2$ consistency bounds.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)$ hat/vee maps and Rodrigues' rotation formula in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) and Joseph-form covariance update + $SO(3)$ Error-State Kalman Filter injection/reset in [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Joan Solà *Quaternion Kinematics for the Error-State Kalman Filter* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)$ hat/vee maps and Rodrigues' rotation formula in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), the Joseph-form covariance update in [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (`## 3. Formalization` Item 2), and the $SO(3)$ Error-State Kalman Filter injection/reset in [`05-control.T3.05b`](../modules/05-control.T3.05b.md) (`## 3. Formalization` Items 1-3), plus [Joan Solà *Quaternion Kinematics for the Error-State Kalman Filter* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -360,7 +360,7 @@ $$
   - 🔗 [OSQP (Operator Splitting Quadratic Program Solver) Documentation](https://osqp.org/) — *Zero-allocation embedded C/C++ QP solver used across production MPC and CBF controllers.*
 - **🧪 Hands-On Exercise:**
   - *Task:* In **Tab 4: Furuta Pendulum + LQR + CBF**, toggle the **CBF Safety Filter ON vs. OFF** and apply repeated $+3.2\text{ rad/s}$ impulse pushes toward the rail limit $x_{\max}$. Verify that with CBF ON, $\min_t h(x(t)) \ge 0$ and the carriage never crosses the red safety wall.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study Control Barrier Function forward invariance ($\dot{h}(x,u) + \gamma h(x) \ge 0$) and active-set 1D QP safety filtering in [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus [Ames et al., *Control Barrier Functions: Theory and Applications* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Control Barrier Function forward invariance ($\dot{h}(x,u) + \gamma h(x) \ge 0$) and closed-form 1D CBF-QP safety filtering in [`05-control.T3.05c`](../modules/05-control.T3.05c.md) (`## 3. Formalization` Items 2-3 & `## 4. Worked example`), plus [Ames et al., *Control Barrier Functions: Theory and Applications* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -397,5 +397,7 @@ $$
 
 - **Tier 1 (Open vs. Closed Loop, P/I/D Physical Roles & Integrator Windup → Step 1.6):** [`05-control.T1.05a`](../modules/05-control.T1.05a.md) *(Ladder Gate Test)*
 - **Tier 2 (Gain/Phase Margins, Luenberger Observers & Bryson LQR → Step 2.6):** [`05-control.T2.05a`](../modules/05-control.T2.05a.md) *(Ladder Gate Test)*
-- **Tier 3 (Joseph-Form Covariance, Tangent-Space ESKF & Second-Order CBF-QP → Step 3.6):** [`05-control.T3.05a`](../modules/05-control.T3.05a.md) *(Ladder Gate Test)*
+- **Tier 3, part 1 (Joseph-Form Covariance & NEES → Step 3.6):** [`05-control.T3.05a`](../modules/05-control.T3.05a.md)
+- **Tier 3, part 2 (Rodrigues, Tangent-Space Injection & the ESKF Reset → Step 3.6):** [`05-control.T3.05b`](../modules/05-control.T3.05b.md)
+- **Tier 3, part 3 (Control Barrier Functions & the 1D CBF-QP Safety Filter → Step 3.6):** [`05-control.T3.05c`](../modules/05-control.T3.05c.md) *(Ladder Gate Test - the ladder's exit examination)*
 

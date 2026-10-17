@@ -10,6 +10,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -131,7 +132,13 @@ class CoverageGateTests(unittest.TestCase):
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             self.assertEqual(gate.main([]), 0)
-        self.assertIn("44/44 bridge modules graded", out.getvalue())
+        # The count is the repository's own, read from the output rather than written here: it moves
+        # whenever the ladder gains (or splits into) a module, and a hard-coded 44 is how this test
+        # would go red for the wrong reason each time.
+        graded = re.search(r"(\d+)/(\d+) bridge modules graded", out.getvalue())
+        self.assertIsNotNone(graded, out.getvalue())
+        self.assertEqual(graded.group(1), graded.group(2), out.getvalue())
+        self.assertIn("0 missing, 0 incomplete", out.getvalue())
 
 
 if __name__ == "__main__":

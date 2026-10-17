@@ -21,7 +21,7 @@ Every bridge module in `modules/*.md` contains a standardized `## 7. Checkpoint`
 
 | Assessment Type | Location | Question Count & Format | Pass Threshold | What Passing Unlocks |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Module Skip Test** (`### Skip test`) | Present in **every** bridge module (`modules/*.md`, 44/44 modules) | **4–6 questions** covering `[Recall]`, `[Apply]`, `[Transfer]`, and `[Spaced review -> prior_module_id]` (for non-root modules). At least **75% (3/4 or 4/5)** are numerical calculation problems with explicit units and tolerances; every `new_concepts` item is tested at least once. | **$\ge 80\%$** ($4/4$ on 4-Q tests, $\ge 4/5$ on 5-Q tests) **AND $100\%$ on all safety items** in `safety_level: high` modules (after reading `### Safety notes`). | Skips the remainder of that individual bridge module and advances directly to `## 10. Next modules`. |
+| **1. Module Skip Test** (`### Skip test`) | Present in **every** bridge module (`modules/*.md`, 46/46 modules) | **4–6 questions** covering `[Recall]`, `[Apply]`, `[Transfer]`, and `[Spaced review -> prior_module_id]` (for non-root modules). At least **75% (3/4 or 4/5)** are numerical calculation problems with explicit units and tolerances; every `new_concepts` item is tested at least once. | **$\ge 80\%$** ($4/4$ on 4-Q tests, $\ge 4/5$ on 5-Q tests) **AND $100\%$ on all safety items** in `safety_level: high` modules (after reading `### Safety notes`). | Skips the remainder of that individual bridge module and advances directly to `## 10. Next modules`. |
 | **2. Ladder Gate Test** (`### Gate test`) | Present **only** in the **final module of each bridge ladder** (25/44 modules, covering all **24/24 legacy transitions**) | **8 questions** spanning **every** concept introduced across the entire multi-module bridge ladder (`[Concept: ...]` tags), with a complete executable Python `assert` answer key and per-question module remediation pointers. | **$\ge 80\%$** ($\ge 7/8$) **AND $100\%$ on all safety items**. | Skips the entire bridge ladder and unlocks the target Legacy Step (`Step 1.1`–`Step 3.8`). |
 
 ---
@@ -92,7 +92,7 @@ Three additional electronics modules carry `safety_level: low` with dedicated `#
 
 ## 4. Automated Verification Command
 
-To validate the entire 68-module DAG (24 legacy + 44 bridge modules) and execute all 114 embedded Python blocks (113 assertion blocks: worked examples, Skip Test answer keys, and Gate Test answer keys):
+To validate the entire 70-module DAG (24 legacy + 46 bridge modules) and execute all 121 embedded Python blocks (worked examples, Skip Test answer keys, and Gate Test answer keys):
 
 ```bash
 python3 scripts/validate_modules.py

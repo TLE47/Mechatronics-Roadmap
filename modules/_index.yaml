@@ -106,7 +106,7 @@ legacy:
 
   - id: 05-control.T3.06
     title: "Track 05 (Tier 3): Joseph-Form Manifold ESKF, Embedded MPC (acados/TinyMPC) & Control Barrier QPs"
-    prereqs: [00-foundations.T3.01, 05-control.T2.06, 05-control.T3.05a]
+    prereqs: [00-foundations.T3.01, 05-control.T2.06, 05-control.T3.05c]
     introduces: [joseph_form_so3_manifold_eskf, chi_squared_nees_nis_consistency, receding_horizon_embedded_mpc, control_barrier_function_qp_safety_filter]
 
   - id: 06-robotics.T3.07
@@ -563,18 +563,44 @@ bridges:
     resources_verified: true
     path: modules/05-control.T2.05a.md
   - id: 05-control.T3.05a
-    title: "Joseph-Form Covariance Symmetry, Tangent-Space Error-State Reset on SO(3) & Control Barrier Function QPs"
+    title: "Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency"
     track: 05
     tier: 3
-    est_hours: 5.0
+    est_hours: 2.0
     prereqs: [00-foundations.T3.01, 05-control.T2.06]
-    introduces: [joseph_stabilized_covariance_update, tangent_space_eskf_error_injection, control_barrier_forward_invariance_qp]
-    uses: [rodrigues_so3_se3_exp_log_maps, discrete_infinite_horizon_lqr, augmented_kalman_disturbance_observer]
-    feeds_into: [05-control.T3.06]
+    introduces: [joseph_stabilized_covariance_update]
+    uses: [discrete_infinite_horizon_lqr, augmented_kalman_disturbance_observer]
+    feeds_into: [05-control.T3.05b]
     safety_level: none
     hardware_required: false
     resources_verified: true
     path: modules/05-control.T3.05a.md
+  - id: 05-control.T3.05b
+    title: "Rodrigues on SO(3), Multiplicative Error Injection & the ESKF Reset"
+    track: 05
+    tier: 3
+    est_hours: 2.0
+    prereqs: [05-control.T3.05a, 00-foundations.T3.00a]
+    introduces: [tangent_space_eskf_error_injection]
+    uses: [joseph_stabilized_covariance_update, rodrigues_so3_se3_exp_log_maps, discrete_infinite_horizon_lqr]
+    feeds_into: [05-control.T3.05c]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/05-control.T3.05b.md
+  - id: 05-control.T3.05c
+    title: "Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter"
+    track: 05
+    tier: 3
+    est_hours: 2.0
+    prereqs: [05-control.T3.05b]
+    introduces: [control_barrier_forward_invariance_qp]
+    uses: [tangent_space_eskf_error_injection, discrete_infinite_horizon_lqr, continuous_state_space_matrices]
+    feeds_into: [05-control.T3.06]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/05-control.T3.05c.md
   - id: 06-robotics.T1.06a
     title: "1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper"
     track: 06

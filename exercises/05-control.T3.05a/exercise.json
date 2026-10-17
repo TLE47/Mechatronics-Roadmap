@@ -1,14 +1,10 @@
 {
   "id": "05-control.T3.05a",
   "module": "modules/05-control.T3.05a.md",
-  "title": "Joseph-form covariance, the SO(3) error-state injection and the CBF-QP safety filter",
+  "title": "Joseph-form covariance update and NEES consistency",
   "requires": [
     "optimal_gain(p_minus, h, r) -> K",
     "joseph_variance(p_minus, h, r, k) -> P^+ (never negative)",
-    "cbf_command(u_nom, h_value, alpha, u_min=-2.0, u_max=2.0) -> u*",
-    "barrier_lower_bound(h0, alpha, t) -> guaranteed margin",
-    "exp_so3(rotvec) -> 3x3 rotation matrix",
-    "inject_rotation(r_nominal, d_theta) -> 3x3 rotation matrix",
     "nees_diagonal(error, variances) -> e^T P^-1 e"
   ],
   "checks": {
@@ -18,10 +14,9 @@
   "faults": {
     "joseph_uses_naive_subtraction": ["test_behavior.JosephTests.test_a_double_sized_gain_keeps_the_variance_positive"],
     "optimal_gain_forgets_r": ["test_behavior.JosephTests.test_the_optimal_gain"],
-    "cbf_ignores_barrier": ["test_behavior.CbfTests.test_the_exercise_command"],
-    "cbf_limit_sign_flipped": ["test_behavior.CbfTests.test_a_command_away_from_the_stop_passes_through"],
-    "rotation_wrong_sign": ["test_behavior.RotationTests.test_the_worked_rotation"],
-    "barrier_bound_ignores_alpha": ["test_behavior.BarrierBoundTests.test_the_gate_test_margin"]
+    "joseph_ignores_noise": ["test_behavior.JosephTests.test_the_worked_posterior"],
+    "joseph_forgets_prior": ["test_behavior.JosephTests.test_the_very_noisy_case_stays_positive"],
+    "nees_uses_difference": ["test_behavior.NeesTests.test_the_gate_test_nees"]
   },
   "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
   "delivery": {

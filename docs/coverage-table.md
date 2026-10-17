@@ -27,7 +27,7 @@ flowchart LR
 | `02` | 3 | 78% | 67% | 100% | 67% | **79.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
 | `03` | 3 | 70% | 47% | 100% | 50% | **69.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `04` | 7 | 59% | 43% | 100% | 50% | **65.0%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
-| `05` | 3 | 70% | 47% | 100% | 50% | **69.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `05` | 5 | 58% | 68% | 100% | 50% | **72.4%** | 3 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
 | `06` | 5 | 60% | 60% | 100% | 50% | **70.5%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
 | `07` | 3 | 70% | 60% | 100% | 50% | **73.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `08` | 1 | 60% | 40% | 100% | 50% | **64.5%** | 0 arm · 0 exempt · 0 unhooked · 1 undeclared | `report` |
@@ -38,9 +38,9 @@ flowchart LR
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **67.8%** |
 | Tier 2 | 18 | **70.5%** |
-| Tier 3 | 10 | **66.4%** |
+| Tier 3 | 12 | **68.2%** |
 
-## Per module (44 modules, overall **68.6%**)
+## Per module (46 modules, overall **69.0%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -78,7 +78,9 @@ flowchart LR
 | `04-embedded.T3.04a` | 3 | 60% | 40% | 100% | 50% | **64.5%** | **undeclared** | 6 item(s) |
 | `05-control.T1.05a` | 1 | 75% | 40% | 100% | 50% | **68.2%** | **undeclared** | 5 item(s) |
 | `05-control.T2.05a` | 2 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
-| `05-control.T3.05a` | 3 | 60% | 40% | 100% | 50% | **64.5%** | **undeclared** | 6 item(s) |
+| `05-control.T3.05a` | 3 | 40% | 80% | 100% | 50% | **71.5%** | `arm` | 5 item(s) |
+| `05-control.T3.05b` | 3 | 40% | 80% | 100% | 50% | **71.5%** | `arm` | 5 item(s) |
+| `05-control.T3.05c` | 3 | 60% | 80% | 100% | 50% | **76.5%** | `arm` | 4 item(s) |
 | `06-robotics.T1.06a` | 1 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `06-robotics.T2.06a` | 2 | 50% | 60% | 100% | 50% | **68.0%** | **undeclared** | 5 item(s) |
 | `06-robotics.T2.06b` | 2 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
@@ -93,14 +95,14 @@ flowchart LR
 
 | Stage | Modules carrying it | Gate |
 | :--- | :---: | :--- |
-| `1_recall` | 44/44 | gated by `lint_modules.py` |
-| `2_see_it` | 44/44 | gated by `lint_modules.py` |
-| `3_predict` | 44/44 | gated by `lint_modules.py` |
-| `4_worked_example` | 44/44 | gated by `lint_modules.py` |
-| `5_practice_host` | 44/44 | gated by `lint_modules.py` |
-| `6_break_it` | 44/44 | gated by `lint_modules.py` |
-| `7_transfer` | 44/44 | gated by `lint_modules.py` |
-| `8_integrate` | 44/44 | gated by `lint_modules.py` |
+| `1_recall` | 46/46 | gated by `lint_modules.py` |
+| `2_see_it` | 46/46 | gated by `lint_modules.py` |
+| `3_predict` | 46/46 | gated by `lint_modules.py` |
+| `4_worked_example` | 46/46 | gated by `lint_modules.py` |
+| `5_practice_host` | 46/46 | gated by `lint_modules.py` |
+| `6_break_it` | 46/46 | gated by `lint_modules.py` |
+| `7_transfer` | 46/46 | gated by `lint_modules.py` |
+| `8_integrate` | 46/46 | gated by `lint_modules.py` |
 
 ## Shared plant
 
@@ -112,11 +114,11 @@ with no import, an unexplained exemption and a missing key all score zero - `unh
 `undeclared` below - so a module that ignores the arm is visible in its own score instead of
 being implied by silence.
 
-- On the shared arm: **1/44** - `02-mechanics.T2.02a`
-- Declared exempt, with a reason: **0/44**
+- On the shared arm: **4/46** - `02-mechanics.T2.02a`, `05-control.T3.05a`, `05-control.T3.05b`, `05-control.T3.05c`
+- Declared exempt, with a reason: **0/46**
 - Declared but not hooked up (`plant: tier1_arm_motor` with no `import mechalab_plant` in a
-  python block, or `plant: none` with no reason): **0/44**
-- Undeclared: **43/44**
+  python block, or `plant: none` with no reason): **0/46**
+- Undeclared: **42/46**
 
 The plant itself, its provenance rule and the workbench import contract:
 [`resources/plants/README.md`](../resources/plants/README.md).
@@ -165,7 +167,9 @@ not demonstrated learner mastery.
 | `04-embedded.T3.04a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T1.05a` | **68.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T2.05a` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `05-control.T3.05a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `05-control.T3.05a` | **71.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `05-control.T3.05b` | **71.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `05-control.T3.05c` | **76.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T1.06a` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06a` | **68.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06b` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
@@ -186,9 +190,9 @@ test that names it. The tests the harness runs are the same ones CI runs.
 Read from `exercises/` when this file is generated, so the counts cannot drift from the table
 above:
 
-- **Graded packages: 44 of 44 modules**, every bridge module.
-- **Browser-driven: 44 of 44 graded packages**, each discovered from its manifest by `scripts/e2e_pages_bundle.mjs`.
-- **Behaviour-graded rows:** 44 of 44 read `yes` in the table above.
+- **Graded packages: 46 of 46 modules**, every bridge module.
+- **Browser-driven: 46 of 46 graded packages**, each discovered from its manifest by `scripts/e2e_pages_bundle.mjs`.
+- **Behaviour-graded rows:** 46 of 46 read `yes` in the table above.
 
 ## Not yet instrumented
 

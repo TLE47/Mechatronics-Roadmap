@@ -1,0 +1,26 @@
+{
+  "id": "05-control.T3.05c",
+  "module": "modules/05-control.T3.05c.md",
+  "title": "Control Barrier Function QP safety filter",
+  "requires": [
+    "cbf_command(u_nom, h_value, alpha, u_min=-2.0, u_max=2.0) -> u*",
+    "barrier_lower_bound(h0, alpha, t) -> guaranteed margin"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "cbf_ignores_barrier": ["test_behavior.CbfTests.test_the_exercise_command"],
+    "cbf_limit_sign_flipped": ["test_behavior.CbfTests.test_a_command_away_from_the_stop_passes_through"],
+    "barrier_bound_ignores_alpha": ["test_behavior.BarrierBoundTests.test_the_gate_test_margin"],
+    "cbf_ignores_actuator_max": ["test_behavior.CbfTests.test_the_actuator_bound_still_applies"],
+    "cbf_ignores_infeasibility": ["test_behavior.CbfTests.test_an_infeasible_barrier_is_refused"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.05-control.T3.05c",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/05-control.T3.05c/starter.py python3 -m unittest discover -s exercises/05-control.T3.05c -p 'test_*.py'"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "05-control.T3.05b",
+  "module": "modules/05-control.T3.05b.md",
+  "title": "Tangent-space error injection on SO(3) and the ESKF reset",
+  "requires": [
+    "exp_so3(rotvec) -> 3x3 rotation matrix",
+    "inject_rotation(r_nominal, d_theta) -> 3x3 rotation matrix",
+    "eskf_rotation_update(r_nominal, d_theta, innovation) -> rotation after inject, reset, next step"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "rotation_wrong_sign": ["test_behavior.RotationTests.test_the_worked_rotation"],
+    "rodrigues_drops_the_square_term": ["test_behavior.RotationTests.test_a_correction_about_x_rotates_y_into_z"],
+    "inject_multiplies_on_the_left": ["test_behavior.RotationTests.test_the_injection_is_a_right_multiplication"],
+    "no_reset_double_counts": ["test_behavior.ResetTests.test_a_zero_innovation_step_does_not_reapply_the_consumed_correction"],
+    "reset_drops_the_innovation": ["test_behavior.ResetTests.test_a_real_next_innovation_is_applied"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.05-control.T3.05b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/05-control.T3.05b/starter.py python3 -m unittest discover -s exercises/05-control.T3.05b -p 'test_*.py'"
+  }
+}

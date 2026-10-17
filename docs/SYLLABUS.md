@@ -27,8 +27,8 @@ All hour estimates in this syllabus are **provisional engineering targets** pend
 | **Entry Ramp: Stage 0 (`stage-0/`)** | 11 Lessons (`S0.0` Python + `S0.1–S0.M` Falstad/Wokwi) | **~8.5–11.0 hrs** *(unmeasured target)* | Pre-teaches `Effort × Flow` water analogies (`S0.0`), 5-min Falstad twins before every Arduino sketch, and a 4-row C-from-Python sidebar (`S0.7`). |
 | **🟢 Pass 1: Tier 1 (`modules/` + `00.1–08.1`)** | 16 Bridge Modules (`53.0 h`) + 8 Legacy Steps (`31.0 h`) = **24 Modules** *(paired with 23 Pass 1 Beginner Lessons)* | **84.0 hrs** *(provisional)* | **Weeks 1–11** · Includes `03.3` FK/Encoder Micro-Lab, 3-part Python→C bridge (`04.1–04.3`), 4-Stage `08.1` Boss & **Gate 1→2 Exit Project**. |
 | **🔵 Pass 2: Tier 2 (`modules/` + Track T2)** | 18 Bridge Modules (`77.5 h`) + 8 Legacy Steps (`45.0 h`) = **26 Modules** | **122.5 hrs** *(provisional)* | **Weeks 12–26** · Includes recurring arm math ladder, 4 Tool First-Run Labs & 3 Hardware Evidence Routes. |
-| **🟣 Pass 3: Tier 3 (`modules/` + Track T3)** | 10 Bridge Modules (`49.0 h`) + 8 Legacy Steps (`68.0 h`) = **18 Modules** | **117.0 hrs** *(provisional)* | **Weeks 27–41** · Two-level study (*Use & Understand* vs. *Derive & Extend*); **Step 3.8 (`9.5 h`) requires choosing 1 of Capstones I–V**. |
-| **Formal 3-Pass Module Total** | **44 Bridge + 24 Legacy = 68 Modules** | **323.5 hrs** *(provisional)* | **~41 Weeks** (at ~8 hrs/wk; **`~342.5–348.5 hrs` / ~43–44 Weeks** including `Track P` + `Stage 0`). |
+| **🟣 Pass 3: Tier 3 (`modules/` + Track T3)** | 12 Bridge Modules (`50.0 h`) + 8 Legacy Steps (`68.0 h`) = **20 Modules** | **118.0 hrs** *(provisional)* | **Weeks 27–41** · Two-level study (*Use & Understand* vs. *Derive & Extend*); **Step 3.8 (`9.5 h`) requires choosing 1 of Capstones I–V**. |
+| **Formal 3-Pass Module Total** | **46 Bridge + 24 Legacy = 70 Modules** | **324.5 hrs** *(provisional)* | **~41 Weeks** (at ~8 hrs/wk; **`~343.5–349.5 hrs` / ~43–44 Weeks** including `Track P` + `Stage 0`). |
 
 ### C. Unified 8-Step Teaching Ladder & 5-Dimension Difficulty Labels
 
@@ -52,7 +52,7 @@ In addition to the $\le 2$ new ideas rule (beginner lessons) and $\le 3$ new con
 flowchart LR
     T1["Pass 1: Tier 1 (84.0 h provisional)<br/>Tier 1 Foundations -> Tracks 01-07 -> Step 1.8 2-DOF Boss"] --> EXIT["Tier 1 -> Tier 2<br/>6-Gate Exit Readiness Review"]
     EXIT --> T2["Pass 2: Tier 2 (122.5 h provisional)<br/>Recurring Arm Math + Tool Labs -> Step 2.8 Boss (3 Routes)"]
-    T2 --> T3["Pass 3: Tier 3 (117.0 h provisional)<br/>Use/Understand vs Derive/Extend -> Step 3.8 (Choose 1 of 5)"]
+    T2 --> T3["Pass 3: Tier 3 (118.0 h provisional)<br/>Use/Understand vs Derive/Extend -> Step 3.8 (Choose 1 of 5)"]
 ```
 
 Although `00-foundations` is stored in Track 00 for repository organization, **learners never study all of Track 00 upfront as a standalone course.** Instead, the curriculum is strictly **Tier-First**: you start each Tier with that Tier's **Foundations Ladder** applied to the recurring robot arm/joint, use those exact tools across **Tracks 01–07** in the same Tier, and complete that Tier's **Integration Boss Capstone** before leveling up:
@@ -80,13 +80,13 @@ Tier 2 (Phase 2 — Intermediate / Applied Pass: 26 modules, 122.5 hrs provision
 ├── Systems / Production        (T2.07a (Regen Chopper, CAN-FD Watchdog & HIL)       ──► Step 2.8 Systems & HIL Prep)
 └── Tier 2 integration step     (Step 2.8 Boss: 07-systems.T2.08 — CAN Servo + LQR/MuJoCo Twin via Sim / Ref-Board / Custom PCB)
 
-Tier 3 (Phase 3 — Advanced / Production Pass: 18 modules, 117.0 hrs provisional)
+Tier 3 (Phase 3 — Advanced / Production Pass: 20 modules, 118.0 hrs provisional)
 ├── Tier 3 Foundations          (T3.00a                     ──► Step 3.1: 00-foundations.T3.01)
 ├── Electronics & Power         (T3.01a                     ──► Step 3.2: 01-electronics.T3.02)
 ├── Mechanics                   (T3.02a                     ──► Step 3.3: 02-mechanics.T3.03)
 ├── Sensors & Actuators         (T3.03a                     ──► Step 3.4: 03-sensors.T3.04)
 ├── Embedded & Realtime         (T3.04a                     ──► Step 3.5: 04-embedded.T3.05)
-├── Control & Estimation        (T3.05a                     ──► Step 3.6: 05-control.T3.06)
+├── Control & Estimation        (T3.05a–c                  ──► Step 3.6: 05-control.T3.06)
 ├── Robotics & Autonomy         (T3.06a → T3.06b            ──► Step 3.7: 06-robotics.T3.07)
 ├── Systems / Production        (T3.06a (OPC UA / AAS / PLd)──► Step 3.7 Industrial & Safety Qualification)
 └── Tier 3 integration step     (T3.07a ──► Step 3.8 Boss: 08-capstones.T3.08 — Choose 1 of Capstones I–V)
@@ -150,8 +150,8 @@ Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`�
    - **Level B — Derive & Extend (Full Mathematical & Production Depth):** Work through the full Lie-algebra/Riccati/QP derivations, fixed-point `Q1.31` / wait-free `SeqLock` implementation details, and worst-case WCET/thermal bounds.
 2. **Five Incremental Concept Ladders:**
    - **Rotations (`T3.00a`):** 2D rotation (`02.1`) $\to$ 3D rotation matrix $\to$ frame composition $\to$ unit quaternion $\to$ skew-symmetric hat map $[\omega]_\times$ & matrix exponential $\to$ $SE(3)$ rigid motion.
-   - **State Estimation (`T3.05a`):** Noisy sensor sample $\to$ mean & variance $\to$ 1D complementary/exponential filter (`05.2`) $\to$ linear Kalman filter (`T2.05a`) $\to$ 3D orientation error $\to$ Joseph-form manifold ESKF.
-   - **Safety Constraints (`T3.05a`):** Clamp a 1D command (`P.3`) $\to$ keep a 1D point away from a wall $\to$ write a 1D barrier inequality $\dot{h}(x) + \gamma h(x) \ge 0$ $\to$ solve a 1-variable box QP $\to$ apply `CBF-QP` to the 2-DOF arm.
+   - **State Estimation (`T3.05a`–`T3.05b`):** Noisy sensor sample $\to$ mean & variance $\to$ 1D complementary/exponential filter (`05.2`) $\to$ linear Kalman filter (`T2.05a`) $\to$ 3D orientation error $\to$ Joseph-form manifold ESKF.
+   - **Safety Constraints (`T3.05c`):** Clamp a 1D command (`P.3`) $\to$ keep a 1D point away from a wall $\to$ write a 1D barrier inequality $\dot{h}(x) + \gamma h(x) \ge 0$ $\to$ solve a 1-variable box QP $\to$ apply `CBF-QP` to the 2-DOF arm.
    - **Field-Oriented Control (`T3.03a`):** 3-phase sine waves (`03.2`) $\to$ rotating stator vector animation $\to$ Clarke/Park transform prediction + phase-swap fault diagnosis (`T2.03a`) $\to$ decoupled $d$-$q$ PI current loop $\to$ SVPWM & ADC midpoint trigger.
    - **Real-Time Concurrency (`T3.04a`):** Timed `while` loop (`P.5`) $\to$ $1\text{ kHz}$ timer ISR + `volatile` (`04.1`) $\to$ RTOS task priority (`T2.04b`) $\to$ DMA ping-pong buffer $\to$ torn-read race condition diagnosis $\to$ wait-free `SeqLock`.
 3. **Explicit Step 3.8 Capstone Scope (`Choose 1 of 5 Capstones`):**
@@ -225,7 +225,7 @@ Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`�
 
 ---
 
-### 🟣 PHASE 3: Tier 3 — Advanced / Production Pass (Weeks 27–41 · 117.0 Hours Provisional)
+### 🟣 PHASE 3: Tier 3 — Advanced / Production Pass (Weeks 27–41 · 118.0 Hours Provisional)
 
 | Week | Module ID & File | Title & Core Concepts Taught *(Each Offers Level A: Use & Understand + Level B: Derive & Extend)* | Est. Hours | Prereqs |
 | :--- | :--- | :--- | :--- | :--- |
@@ -239,8 +239,10 @@ Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`�
 | **Wk 34** | [`03-sensors.T3.04`](../03-sensors-and-actuators/README.md#tier-3-advanced--production) | **Legacy Step 3.4:** $25\text{–}40\text{ kHz}$ Decoupled $d$-$q$ FOC, SVPWM & Harmonic LUT | 8.0 h | `T3.02, T2.04, T3.03a` |
 | **Wk 35** | [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) | **Track 04 T3 Bridge (Real-Time Ladder):** Center-Aligned PWM Midpoint ADC Triggering, Q1.31 CORDIC & Wait-Free `SeqLock` *(Gate Test 21)* | 5.0 h | `T3.04, T2.05` |
 | **Wk 36** | [`04-embedded.T3.05`](../04-embedded-and-realtime/README.md#tier-3-advanced--production) | **Legacy Step 3.5:** Bare-Metal `TIM1`$\to$`ADC`, CORDIC, Embedded Rust (`Embassy`/`RTIC`) & C++20 `WaitFreeSeqLock` | 8.5 h | `T3.04, T2.05, T3.04a` |
-| **Wk 37** | [`05-control.T3.05a`](../modules/05-control.T3.05a.md) | **Track 05 T3 Bridge (Estimation & Safety Ladders):** Joseph-Form Covariance, Tangent-Space ESKF Reset, Box QP & CBFs *(Gate Test 22)* | 5.0 h | `T3.01, T2.06` |
-| **Wk 38** | [`05-control.T3.06`](../05-control-and-estimation/README.md#tier-3-advanced--production) | **Legacy Step 3.6:** Joseph-Form Manifold ESKF, Embedded MPC (`acados`/`TinyMPC`) & Control Barrier QPs | 8.5 h | `T3.01, T2.06, T3.05a` |
+| **Wk 37** | [`05-control.T3.05a`](../modules/05-control.T3.05a.md) | **Track 05 T3 Bridge (Covariance Ladder):** Joseph-Form Covariance, Suboptimal Gains & NEES Consistency | 2.0 h | `T3.01, T2.06` |
+| **Wk 37** | [`05-control.T3.05b`](../modules/05-control.T3.05b.md) | **Track 05 T3 Bridge (Rotation Ladder):** Rodrigues on $SO(3)$, Multiplicative Injection & the ESKF Reset | 2.0 h | `T3.05a` |
+| **Wk 37** | [`05-control.T3.05c`](../modules/05-control.T3.05c.md) | **Track 05 T3 Bridge (Safety Ladder):** Barrier Inequalities, Forward Invariance & the 1D CBF-QP *(Gate Test 22)* | 2.0 h | `T3.05b` |
+| **Wk 38** | [`05-control.T3.06`](../05-control-and-estimation/README.md#tier-3-advanced--production) | **Legacy Step 3.6:** Joseph-Form Manifold ESKF, Embedded MPC (`acados`/`TinyMPC`) & Control Barrier QPs | 8.5 h | `T3.01, T2.06, T3.05c` |
 | **Wk 39** | [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) | **Track 06 T3 Bridge 1:** PyTorch Tensors, Automatic Differentiation (`autograd`), Loss Functions & Behavior Cloning | 5.0 h | `T2.07` |
 | **Wk 39** | [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) | **Track 06 T3 Bridge 2:** MDPs, Policy Gradient / PPO, Action Chunking & Sim-to-Real Safety Wrappers *(Gate Test 23)* | 5.5 h | `T3.06a` |
 | **Wk 40** | [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) | **Track 07 T3 Bridge:** OPC UA Information Models, IEC 63278 AAS Submodels & ISO 13849-1 PLd *(Gate Test 24)* | 4.5 h | `T3.06b, T2.08` |
