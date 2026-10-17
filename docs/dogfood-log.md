@@ -42,6 +42,11 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | Module | Date | Minutes | Hints (0-3) | Stuck | Course bug? | Transfer later |
 | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
 | `02-mechanics.T2.02a` | 2026-10-16 | 13 | 0 | none | yes | - |
+| `00-foundations.T1.00a` | 2026-10-17 | 2 | 0 | none | yes | - |
+| `00-foundations.T1.00b` | 2026-10-17 | 2 | 0 | none | yes | - |
+| `00-foundations.T1.00c` | 2026-10-17 | 2 | 0 | none | yes | - |
+| `00-foundations.T1.00d` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `00-foundations.T1.00e` | 2026-10-17 | 2 | 0 | none | yes | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -56,6 +61,34 @@ strong as its weakest measured column:
 | Author first pass | met | the row above, 13 min, 0 hints |
 | Delayed transfer | **pending** | `transfer later` is `-` until the 1-2 week retry |
 | Independent learner | **not run** | no beginner pilot yet |
+
+### The Track 00 Tier 1 ladder
+
+The five bridge modules were dogfooded in one sitting, each with its own package and Gate paper:
+
+| Standard | `00a` | `00b` | `00c` | `00d` | `00e` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Reference solution tested | met (34 cases) | met (31) | met (31) | met (33) | met (34) |
+| Learner attempt passes from the hints alone | met | met | met | met | met |
+| Gate score | 10/10 | 9/10 | 12/12 | 14/14 | 8/8 |
+| Author first pass | met, 0 hints | met, 0 hints | met, 0 hints | met, 0 hints | met, 0 hints |
+| Browser workflow tested | not re-run | not re-run | not re-run | not re-run | not re-run |
+| Delayed transfer | pending | pending | pending | pending | pending |
+
+**What the dogfood found.** Every one of the five attempts failed its package on the first run, and
+the cause was the same each time: the page's `### Full Solution` had drifted from
+`exercises/<id>/solution.py`. The pages printed functions with no input guards, while the suites
+test those guards (`timestamps(0.0, 0.1, 0)`, `mean_of([])`, a calibration missing `"offset"`, a
+negative resistance, a zero inertia, a negative link length, a heading at the origin, a negative
+stiffness). `00-foundations.T1.00a`'s page had also lost `loop_total` entirely - six of the seven
+holes - so copying it could never pass. One prose claim was wrong too: the same page said a late
+start from `0.25 m` takes "three" ticks where its own test asserts six.
+
+Fixed by replacing each page block with the reference implementation the package tests actually
+run, and pinned by `tests/test_module_full_solutions.py`, which extracts every page's Full Solution
+and runs the package's `test_*.py` against it through `EXERCISE_TARGET`. Run against the previous
+revision of `00-foundations.T1.00b` it fails with `1 failure, 6 errors`; on the repaired pages all
+five pass.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

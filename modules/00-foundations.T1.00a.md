@@ -111,7 +111,7 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00a/starter.py \
   python3 -m unittest discover -s exercises/00-foundations.T1.00a -p 'test_*.py'
 ```
 
-**34 tests.** The battery is checked at the exercise's $10.5\text{ V}$ and at the $10.65\text{ V}$ that nine drops give, so `range(1, n_steps)` fails on the exact number the module warns about; the step counter is checked at the worked example's eight ticks and at a late start's three, so returning the position instead of the count fails; the clamp is checked at the Skip test's $1.35 \to 1.0$ and exactly on the limit; the caught exception must come back named `ZeroDivisionError` rather than swallowed; and $2/3$ must print as `0.667`. The transfer suite runs the plant's own numbers: at its $1\text{ kHz}$ tick a $0.08\text{ m/s}$ move takes exactly $1000$ ticks of $8 \times 10^{-5}\text{ m}$, `range(1000)` accumulates $999000$, the $2.5\text{ N}\cdot\text{m}$ joint clamp is the same one-sided clamp, and a zero tick is refused before it can divide by zero. Five planted faults - `battery_off_by_one`, `steps_returns_position`, `clamp_inverted`, `divide_swallows`, `format_ignores_precision` - each fail the test named for them.
+**34 tests.** The battery is checked at the exercise's $10.5\text{ V}$ and at the $10.65\text{ V}$ that nine drops give, so `range(1, n_steps)` fails on the exact number the module warns about; the step counter is checked at the worked example's eight ticks and at a late start's six, so returning the position instead of the count fails; the clamp is checked at the Skip test's $1.35 \to 1.0$ and exactly on the limit; the caught exception must come back named `ZeroDivisionError` rather than swallowed; and $2/3$ must print as `0.667`. The transfer suite runs the plant's own numbers: at its $1\text{ kHz}$ tick a $0.08\text{ m/s}$ move takes exactly $1000$ ticks of $8 \times 10^{-5}\text{ m}$, `range(1000)` accumulates $999000$, the $2.5\text{ N}\cdot\text{m}$ joint clamp is the same one-sided clamp, and a zero tick is refused before it can divide by zero. Five planted faults - `battery_off_by_one`, `steps_returns_position`, `clamp_inverted`, `divide_swallows`, `format_ignores_precision` - each fail the test named for them.
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Core Concepts to Review First:** Variable assignment (`=`), `for i in range(n_steps):` loops, and `def` functions with `return` in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
@@ -159,9 +159,18 @@ print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the 
 ### Full Solution
 ```python
 def step_position(pos_m, vel_m_s, dt_s):
+    """x_next = x + v * dt. Negative time would run the simulator backwards."""
+    if dt_s < 0.0:
+        raise ValueError("time only runs forwards in this simulator")
     return pos_m + vel_m_s * dt_s
 
+
 def steps_to_target(pos_0, vel_m_s, dt_s, target_m):
+    """How many ticks of the loop the worked example takes to reach target_m."""
+    if dt_s <= 0.0:
+        raise ValueError("a zero time step never advances the position")
+    if vel_m_s <= 0.0:
+        raise ValueError("a robot that is not moving forward never reaches the target")
     steps = 0
     pos_m = pos_0
     while pos_m < target_m - 1e-9:
@@ -169,23 +178,49 @@ def steps_to_target(pos_0, vel_m_s, dt_s, target_m):
         steps += 1
     return steps
 
+
 def battery_voltage_after_steps(v_start, drop_per_step, n_steps):
+    """Subtract drop_per_step from v_start exactly n_steps times - range(n) has n terms."""
+    if n_steps < 0:
+        raise ValueError("a loop cannot run a negative number of times")
     v_now = v_start
     for _step in range(n_steps):
         v_now -= drop_per_step
     return v_now
 
+
+def loop_total(n_steps):
+    """The Skip test's accumulator: sum of i*2 for i in range(n_steps)."""
+    if n_steps < 0:
+        raise ValueError("a loop cannot run a negative number of times")
+    total = 0
+    for i in range(n_steps):
+        total += i * 2
+    return total
+
+
 def clamp_pwm(u, u_max):
+    """One-sided ceiling: u_max when u is above it, u itself otherwise."""
+    if u_max <= 0.0:
+        raise ValueError("a PWM ceiling must be positive")
     return u_max if u > u_max else u
 
+
 def safe_divide(numerator, denominator):
+    """Return (value, error_name) - a clean division reports an empty name."""
     try:
         return numerator / denominator, ""
     except ZeroDivisionError as exc:
         return None, type(exc).__name__
 
+
 def format_position(pos_m):
+    """The worked example's `{pos_m:.3f}` field, on its own."""
     return f"{pos_m:.3f}"
+
+
+# No `__main__` block on purpose: the browser grades this file's stdout against the appended
+# self-check's single PASS line, and a second print here would be a mismatch for a correct answer.
 
 v_10 = battery_voltage_after_steps(12.0, 0.15, 10)
 v_9 = battery_voltage_after_steps(12.0, 0.15, 9)
