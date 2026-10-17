@@ -87,6 +87,16 @@ i_alpha=-7.51 A, i_beta=6.60 A -> i_d=-0.00 A, i_q=10.00 A
 Suppose you only measure two phase currents $i_a = +6.0\text{ A}$ and $i_b = -2.0\text{ A}$ using two low-side shunt amplifiers in an isolated neutral star-wound motor. Compute (a) the third phase current $i_c = -(i_a + i_b)$, (b) the Clarke stationary components $(i_\alpha, i_\beta)$, and (c) the vector magnitude $\sqrt{i_\alpha^2 + i_\beta^2}$. Verify $i_c = -4.0\text{ A}$, $i_\alpha = 6.0\text{ A}$, $i_\beta = \frac{2.0}{\sqrt{3}} \approx 1.154701\text{ A}$, and magnitude $\approx 6.110101\text{ A}$ ($\pm 10^{-5}\text{ A}$).
 - **If your result differs:** Substitute $i_a = 6.0$ and $i_b = -2.0$ into $i_\beta = (i_a + 2i_b)/\sqrt{3} = (6.0 - 4.0)/\sqrt{3} = 2.0/\sqrt{3}\text{ A}$.
 
+### Graded package - the elbow, demodulated and tracked
+[`exercises/03-sensors.T2.03a/`](../exercises/03-sensors.T2.03a/) turns this section into a test. `starter.py` holds seven holes: `wrap_pi`, `third_phase`, `clarke`, `park`, `inverse_park`, `pll_step` (the residual wrapped **before** the gains) and `allan_deviation`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/03-sensors.T2.03a/starter.py \
+  python3 -m unittest discover -s exercises/03-sensors.T2.03a -p 'test_*.py'
+```
+
+The tests are behavioural: a balanced set at **four** angles must project to the same amplitude (a Clarke with the 2 misplaced agrees at $\theta = 0$ and nowhere else); the quarter turn must give $i_q = -5$ (a Park at $+\theta$ gives $+5$); quadrature current must demodulate to constant DC at five angles; the inverse must undo the rotation; the two-shunt exercise must give $i_c = -4$ A and $6.110101$ A; a PLL must lock onto $350\text{ Hz}$ electrical, hold its speed with zero residual, and **not** spike when the estimate sits just below $-\pi$ and the measurement just above it; and the averaging law must be $\tau^{-1/2}$ (the $1/\tau$ version fails on the first pair). Four planted faults - `clarke_wrong_scale`, `park_plus_theta`, `pll_raw_residual`, `allan_linear` - each fail the test named for them. The transfer suite tracks the **shared arm's elbow**: its velocity estimate must beat a one-tick finite difference on the same quantized samples, a three-phase set built from the joint's own angle must demodulate to constant $i_q$ tick after tick, and the plant's seeded white noise must average down as predicted within 12%.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*2D Rotation Matrix Multiplication*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Critically Damped 2nd-Order Poles*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Variance & Noise Density*).
@@ -96,6 +106,8 @@ Suppose you only measure two phase currents $i_a = +6.0\text{ A}$ and $i_b = -2.
 
 ## 6. Simulation path
 Open **Tab 3 (25 kHz PMSM FOC: Clarke & Park Transforms)** in the MechaLab Workbench (`npm run dev`) to watch the 3-phase AC waveforms $(i_a, i_b, i_c)$ collapse into flat DC lines $(i_d, i_q)$ in real time.
+
+The graded package is also a workbench entry: **Modules -> `EX.03-sensors.T2.03a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Step 2.4 (`03-sensors.T2.04`), `clarke_park(ia, ib, theta_e)` runs inside the microcontroller's $20\text{ kHz}$ ADC interrupt immediately after reading the `INA240` shunts and SPI magnetic encoder:
 ```text

@@ -1,0 +1,30 @@
+{
+  "id": "03-sensors.T2.03a",
+  "module": "modules/03-sensors.T2.03a.md",
+  "title": "Clarke, Park, a tracking PLL and the averaging law",
+  "requires": [
+    "wrap_pi(angle) -> angle in (-pi, pi]",
+    "third_phase(i_a, i_b) -> i_c from the neutral point",
+    "clarke(i_a, i_b) -> (i_alpha, i_beta), amplitude-invariant",
+    "park(i_alpha, i_beta, theta_e) -> (i_d, i_q)",
+    "inverse_park(i_d, i_q, theta_e) -> (i_alpha, i_beta)",
+    "pll_step(theta_hat, omega_hat, theta_meas, kp, ki, dt) -> (theta_hat, omega_hat)",
+    "allan_deviation(sigma_density, tau) -> averaged rate standard deviation"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "clarke_wrong_scale": ["test_behavior.ClarkeTests.test_balanced_projection_preserves_amplitude"],
+    "park_plus_theta": ["test_behavior.ParkTests.test_quarter_turn"],
+    "pll_raw_residual": ["test_behavior.PllTests.test_a_rollover_does_not_spike_the_velocity"],
+    "allan_linear": ["test_behavior.AllanTests.test_the_law_is_inverse_sqrt"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.03-sensors.T2.03a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/03-sensors.T2.03a/starter.py python3 -m unittest discover -s exercises/03-sensors.T2.03a -p 'test_*.py'"
+  }
+}

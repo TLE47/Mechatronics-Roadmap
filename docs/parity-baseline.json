@@ -24,17 +24,17 @@
     "validated:behavioural_grading",
     "validated:dogfood_logged"
   ],
-  "overall": 0.5335,
+  "overall": 0.5352,
   "tiers": {
     "1": 0.52,
-    "2": 0.5613,
+    "2": 0.5654,
     "3": 0.505
   },
   "tracks": {
     "00": 0.5262,
     "01": 0.5664,
     "02": 0.6758,
-    "03": 0.52,
+    "03": 0.545,
     "04": 0.4914,
     "05": 0.545,
     "06": 0.495,
@@ -65,7 +65,7 @@
     "02-mechanics.T2.02a": 1.0,
     "02-mechanics.T3.02a": 0.495,
     "03-sensors.T1.03a": 0.5325,
-    "03-sensors.T2.03a": 0.5325,
+    "03-sensors.T2.03a": 0.6075,
     "03-sensors.T3.03a": 0.495,
     "04-embedded.T1.04a": 0.47,
     "04-embedded.T1.04b": 0.5325,

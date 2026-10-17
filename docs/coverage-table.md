@@ -25,7 +25,7 @@ flowchart LR
 | `00` | 12 | 55% | 40% | 75% | 29% | **52.6%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
 | `01` | 7 | 59% | 40% | 100% | 0% | **56.6%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `02` | 3 | 78% | 60% | 83% | 33% | **67.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
-| `03` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `03` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `04` | 7 | 59% | 40% | 75% | 0% | **49.1%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `05` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `06` | 5 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **56.1%** |
+| Tier 2 | 18 | **56.5%** |
 | Tier 3 | 10 | **50.5%** |
 
-## Per module (44 modules, overall **53.3%**)
+## Per module (44 modules, overall **53.5%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -67,7 +67,7 @@ flowchart LR
 | `02-mechanics.T2.02a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `02-mechanics.T3.02a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `03-sensors.T1.03a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
-| `03-sensors.T2.03a` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
+| `03-sensors.T2.03a` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
 | `03-sensors.T3.03a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `04-embedded.T1.04a` | 1 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `04-embedded.T1.04b` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
@@ -154,7 +154,7 @@ not demonstrated learner mastery.
 | `02-mechanics.T2.02a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-16, 13 min, 0 hints | - | `-` |
 | `02-mechanics.T3.02a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `03-sensors.T1.03a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `03-sensors.T2.03a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `03-sensors.T2.03a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `03-sensors.T3.03a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T1.04a` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T1.04b` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
