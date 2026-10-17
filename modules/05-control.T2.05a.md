@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -230,6 +231,20 @@ print(f"PM={pm:.2f} deg, delay={loss:.2f} deg -> PM_new={pm_new:.2f} deg, "
 ```
 
 Printed: `PM=51.83 deg, delay=22.52 deg -> PM_new=29.31 deg, |S(jw_gc)|=1.144, rho_obs=0.9005`
+
+**On the shared arm.** The Transfer suite finds the elbow's gain crossover on the plant's own inertia and damping, then charges one sample of the plant's 1 kHz clock for the phase it costs:
+
+```python
+import math
+import mechalab_plant as plant
+
+w_gc = 393.08                                 # rad/s, the module's own crossover
+loss = w_gc * plant.DT * (180.0 / math.pi)    # one tick of delay at that frequency
+
+assert abs(loss - 22.52) < 0.01
+print("one %.0f ms tick at %.2f rad/s costs %.2f deg of phase"
+      % (plant.DT * 1e3, w_gc, loss))
+```
 
 ### Break it on purpose
 Inject the phase-wrap slip the exercise plants (`pm_no_unwrap`), keeping the same loop and $\omega_{gc}$:

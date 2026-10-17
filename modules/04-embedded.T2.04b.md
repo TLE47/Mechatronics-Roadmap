@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -245,6 +246,25 @@ print("MIT pack: 9.0 N*m -> code %d, step=%.6f N*m/count | plant clamp 2.5 N*m -
 ```
 
 Printed: `U=0.325 (bound 0.7798) | R_H with PI=140 us, without=740 us | CAN winner=0x012`, then `MIT pack: 9.0 N*m -> code 3071, step=0.008791 N*m/count | plant clamp 2.5 N*m -> 2332`.
+
+**On the shared arm.** The package's Transfer suite runs the actuator node as the plant: its clamp and disturbance pulses are the frames a real joint receives.
+```python
+import mechalab_plant as plant
+
+
+def pack_12bit(torque, t_min=-18.0, t_max=18.0):
+    return int(round((torque - t_min) / (t_max - t_min) * 4095))
+
+
+# Its 1 ms tick is the worked example's 1000 us period.
+assert abs(plant.DT * 1e6 - 1000.0) < 1e-9
+# Its 2.5 N*m clamp packs to 2332 and the -0.15 N*m shoulder pulse to 2030.
+assert pack_12bit(plant.TAU_LIMIT) == 2332
+assert pack_12bit(plant.DIST_TAU1) == 2030
+print("plant: tick=%.0f us | clamp %.1f N*m -> code %d | pulse %.2f N*m -> code %d"
+      % (plant.DT * 1e6, plant.TAU_LIMIT, pack_12bit(plant.TAU_LIMIT),
+         plant.DIST_TAU1, pack_12bit(plant.DIST_TAU1)))
+```
 
 ### Break it on purpose
 Keep the worked example's numbers — $C_H = 100\ \mu\text{s}$, $B_i = 40\ \mu\text{s}$, $C_M = 600\ \mu\text{s}$ — and plant the fault the `## 8. Common mistakes` table calls out:

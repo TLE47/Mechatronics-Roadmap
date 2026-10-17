@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -255,6 +256,21 @@ print("nominal: tau=%.2f ms, PM_net=%.2f deg, e_3sigma=%.3f mm"
 ```
 
 Printed: `PM_net=32.78 deg at tau=3.40 ms | signoff=False`, then `nominal: tau=1.10 ms, PM_net=52.55 deg, e_3sigma=0.426 mm`.
+
+**On the shared arm.** The Transfer suite prices the plant's own 12-bit encoder and 1 kHz sample period against the capstone's 0.50 mm and $45^\circ$ budgets:
+
+```python
+import math
+import mechalab_plant as plant
+
+one_count_mm = (2.0 * math.pi / plant.ENCODER_CPR) * 0.20 * 1e3  # one count at the 0.20 m reach
+assert math.isclose(one_count_mm, 0.3067961575771282, rel_tol=1e-12)
+assert math.isclose(plant.DT * 1e6, 1000.0, rel_tol=1e-12)
+margin = 62.0 - 150.0 * plant.DT * (180.0 / math.pi)  # 150 rad/s crossover, one tick of delay
+assert math.isclose(margin, 53.405633073, abs_tol=1e-9)
+assert 3.0 * one_count_mm > 0.50  # the encoder alone already blows the spec at 3 sigma
+print("one count=%.4f mm | tick=%.1f us | PM=%.4f deg" % (one_count_mm, plant.DT * 1e6, margin))
+```
 
 ### Break it on purpose
 Inject the `latency_forgets_zoh` fault and diagnose it from the budget alone, keeping $T_s = 1000\ \mu\text{s}$ and $\omega_{gc} = 150\text{ rad/s}$:

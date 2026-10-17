@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -230,6 +231,23 @@ print(f"B_total={b_total} B | t_wire={t_wire:.4f} us | rtt={rtt:.1f} us | offset
 ```
 
 Printed: `B_total=46 B | t_wire=499.1319 us | rtt=200.0 us | offset=10000.0 us`
+
+**On the shared arm.** The package's Transfer suite runs the plant's own telemetry link, where the frame size and the baud rate are the plant's constants:
+```python
+import mechalab_plant as plant
+
+# 20 bytes every 1 ms is 200 kbaud of 8N1 traffic: it saturates 115.2 kbaud, not 500 kbaud.
+per_second = plant.FRAME_BYTES / plant.DT
+assert per_second * 10.0 > plant.BAUD_OVERFLOWS
+assert per_second * 10.0 < plant.BAUD_FITS
+# The plant's UART model agrees: frames drop at the slow rate and none at the fast one.
+assert plant.simulate_uart_tx(plant.TICKS, plant.FRAME_BYTES, plant.DT, plant.BAUD_OVERFLOWS) > 0
+assert plant.simulate_uart_tx(plant.TICKS, plant.FRAME_BYTES, plant.DT, plant.BAUD_FITS) == 0
+print("plant: %.0f B/s | 115.2 kbaud drops %d frames | 500 kbaud drops %d"
+      % (per_second,
+         plant.simulate_uart_tx(plant.TICKS, plant.FRAME_BYTES, plant.DT, plant.BAUD_OVERFLOWS),
+         plant.simulate_uart_tx(plant.TICKS, plant.FRAME_BYTES, plant.DT, plant.BAUD_FITS)))
+```
 
 ### Break it on purpose
 Inject the byte-width fault the exercise plants (`uart_eight_bits`), keeping the exercise's $46\text{ B}$ frame at $921{,}600\text{ bps}$:

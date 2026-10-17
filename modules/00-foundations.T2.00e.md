@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -220,6 +221,22 @@ print("rho_euler(Ts=50 ms)=%.4f, outside the unit circle" % rho_euler)
 ```
 
 Printed: `rho_tustin(Ts=1 ms)=0.998002, inside the unit circle`, then `rho_euler(Ts=50 ms)=1.0247, outside the unit circle`.
+
+**On the shared arm.** The Transfer suite builds the plant elbow's companion matrix from `I2`, `B2` and its own stiffness, and checks where Euler and Tustin put those poles at a real control step:
+
+```python
+import math
+import mechalab_plant as plant
+
+k = 8.0
+wn = math.sqrt(k / plant.I2)
+zeta = plant.B2 / (2.0 * math.sqrt(plant.I2 * k))
+wd = wn * math.sqrt(1.0 - zeta * zeta)
+assert math.isclose(plant.B2, 2.0 * zeta * math.sqrt(plant.I2 * k), rel_tol=1e-12)
+assert 0.0 < wd < wn
+print("plant elbow poles: %.3f +/- %.3fj rad/s | damping B2=%.3f N*m*s/rad"
+      % (-zeta * wn, wd, plant.B2))
+```
 
 ### Break it on purpose
 Inject the sign error from the common-mistakes table on purpose: build $A$ with $+k/J$ in row 2, `[[0.0, 1.0], [100.0, -4.0]]`, and leave every other line of the worked example untouched.

@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -251,6 +252,23 @@ print("I_stall=%.1f A | v_bemf(200 rad/s)=%.1f V | i(200 rad/s)=%.1f A | tau(4.5
 ```
 
 Printed: `p=7 | one electrical cycle=51.4286 deg | 14-bit step=0.021973 deg (0.00038350 rad)`, then `I_stall=3.0 A | v_bemf(200 rad/s)=12.0 V | i(200 rad/s)=0.0 A | tau(4.5 A)=0.36 N*m | walk=+5`.
+
+**On the shared arm.** The Transfer suite in `exercises/03-sensors.T1.03a/` counts the plant's 12-bit encoder and drives the same winding this module sizes:
+
+```python
+import math
+import mechalab_plant as plant
+
+one_count = 2.0 * math.pi / plant.ENCODER_CPR
+stall_current = 12.0 / 4.0
+stall_torque = 0.06 * stall_current
+
+assert plant.ENCODER_CPR == 4096 and plant.ENCODER_BITS == 12
+assert math.isclose(one_count / plant.DT, 1.5339807878856412, rel_tol=1e-12)
+assert plant.TAU_LIMIT > 10.0 * stall_torque
+print("plant: %d counts/rev | one count=%.9f rad | %.4f rad/s per tick | clamp %.1f N*m vs %.2f N*m stall"
+      % (plant.ENCODER_CPR, one_count, one_count / plant.DT, plant.TAU_LIMIT, stall_torque))
+```
 
 ### Break it on purpose
 Inject the `pole_pairs_counts_poles` fault the graded package names, and diagnose it from the angles alone:

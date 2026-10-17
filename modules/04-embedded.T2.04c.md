@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -237,6 +238,19 @@ print(f"p_slow_eff={p_slow_eff} | R_fast={r_fast:.1f} us | R_fast_sem={r_fast_se
 ```
 
 Printed: `p_slow_eff=2 | R_fast=145.0 us | R_fast_sem=445.0 us`
+
+**On the shared arm.** The package's Transfer suite reads both bounds against the plant's 1 ms control step:
+```python
+import mechalab_plant as plant
+
+tick_us = plant.DT * 1e6
+# 145 us is 14.5% of one tick; the semaphore's 445 us is 44.5% - both inside the deadline.
+assert abs(tick_us - 1000.0) < 1e-9
+assert abs(145.0 / tick_us - 0.145) < 1e-12
+assert abs(445.0 / tick_us - 0.445) < 1e-12
+print("plant: tick=%.0f us | k_mutex R=145 us (%.1f%%) | k_sem R=445 us (%.1f%%)"
+      % (tick_us, 100.0 * 145.0 / tick_us, 100.0 * 445.0 / tick_us))
+```
 
 ### Break it on purpose
 Inject the common-mistakes row that swaps a mutex for a semaphore, keeping $p_H = 1$, $p_M = 3$, $p_L = 5$, $C_H = 90\ \mu\text{s}$, $C_M = 450\ \mu\text{s}$ and $B_L = 30\ \mu\text{s}$:

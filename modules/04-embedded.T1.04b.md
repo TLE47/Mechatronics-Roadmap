@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -250,6 +251,19 @@ print("elapsed(3015-2000)=%d us | 16-bit wrap(12-65520)=%d | IDLE->%s | over-lim
 ```
 
 Printed: `budget=25.0 us at 10 kHz (25%) | util(45 us @ 1 kHz)=4.5% | debounce(3 @ 20 kHz)=150 us`, then `elapsed(3015-2000)=1015 us | 16-bit wrap(12-65520)=28 | IDLE->HOMING | over-limit->FAULT`.
+
+**On the shared arm.** The package's Transfer suite schedules the plant's own clock:
+```python
+import mechalab_plant as plant
+
+# Its 1 ms tick is the 1 kHz ISR period, and one second of plant time is a thousand ticks.
+assert abs(1.0 / plant.DT - 1000.0) < 1e-9
+assert abs(plant.TICKS * plant.DT - 1.0) < 1e-12
+# The worked example's 45 us ISR costs 4.5% of that tick.
+assert abs(100.0 * 45.0e-6 * (1.0 / plant.DT) - 4.5) < 1e-12
+print("plant: tick=%.3f ms | 1 s = %d ticks | 45 us ISR at the plant rate = %.1f%%"
+      % (plant.DT * 1e3, plant.TICKS, 100.0 * 45.0e-6 * (1.0 / plant.DT)))
+```
 
 ### Break it on purpose
 - **Inject:** replace the rollover-safe comparison with an absolute one, `if now_us >= last_us + 1000:`, keeping `last_us += 1000` and the $1000\ \mu\text{s}$ period.

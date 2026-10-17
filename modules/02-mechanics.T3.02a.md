@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -285,6 +286,25 @@ print("sigma(0.50 deg)=%.1f MPa | tau=[%.2f, %.2f] N*m | dq^T(Mdot-2C)dq=%.1f"
 ```
 
 Printed: `S=([0.00, 1.00, 0.00], [-0.10, 0.00, 0.40]) | power=11.0 W | K_theta=54.09 N*m/rad | K(2t)/K(t)=5.656854`, then `sigma(0.50 deg)=207.7 MPa | tau=[0.16, 0.06] N*m | dq^T(Mdot-2C)dq=0.0`.
+
+**On the shared arm.** The Transfer suite in `exercises/02-mechanics.T3.02a/` turns the plant's own joints into screw axes and its own weight into spatial power:
+
+```python
+import math
+import mechalab_plant as plant
+
+# The elbow turns about +Z through (L1, 0, 0): its linear part is -(0, 0, 1) x (L1, 0, 0).
+elbow_linear_y = -plant.L1
+weight = (plant.M1 + plant.M2) * plant.G
+descent_power = weight * 0.40
+
+assert math.isclose(elbow_linear_y, -0.10, rel_tol=1e-12)
+assert math.isclose(weight, 3.4335, rel_tol=1e-12)
+assert math.isclose(descent_power, 1.3734, rel_tol=1e-12)
+assert math.isclose(plant.I1 + plant.I2, 0.011, rel_tol=1e-12)
+print("plant: elbow linear part=%.2f m | weight=%.4f N | descent power=%.4f W"
+      % (elbow_linear_y, weight, descent_power))
+```
 
 ### Break it on purpose
 Inject the `rnea_uncoupled_second_link` fault on purpose: in the outward pass treat the elbow's absolute angular acceleration as $\ddot{q}_2$ alone instead of $\ddot{q}_1 + \ddot{q}_2$.

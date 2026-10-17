@@ -26,6 +26,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -256,6 +257,22 @@ print("counter: wrap=%s frozen=%s drop=%s jump=%s | wdg=%.4f s | hil=%.0f%%" % (
 ```
 
 Printed: `V_unclamped=170.0 V | R_brake_max=10.816 Ohm | I_brake=6.50 A`, then `counter: wrap=OK frozen=FAULT_FROZEN drop=WARN_DROPPED_1 jump=FAULT_SEQ_JUMP | wdg=0.0030 s | hil=100%`.
+
+**On the shared arm.** The Transfer suite spins the plant's elbow up to speed under the capstone's 2.5 N$\cdot$m limit and sizes the chopper from the energy it actually holds:
+
+```python
+import math
+import mechalab_plant as plant
+
+q, dq = 0.0, 0.0
+for _ in range(50):  # 50 ms at the plant's 1 kHz tick, at the capstone's torque limit
+    q, dq = plant.step_arm((0.0, q, 0.0, dq), (0.0, plant.TAU_LIMIT),
+                           dist=(0.0, 0.0), dt=plant.DT, gravity=False)[1::2]
+energy = 0.5 * 0.75 * plant.I2 * dq * dq  # 75 % recovery into the bus
+assert dq > 1.0 and energy > 0.0
+assert math.isclose(3 * plant.DT, 0.003, rel_tol=1e-12)
+print("elbow=%.3f rad/s | E_regen=%.4f J | wdg=%.4f s" % (dq, energy, 3 * plant.DT))
+```
 
 ### Break it on purpose
 Inject the `counter_plain_delta` fault and diagnose it from the frame log alone, keeping the $1\text{ kHz}$ command cadence:

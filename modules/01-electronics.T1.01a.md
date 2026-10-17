@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: medium
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -236,6 +237,21 @@ print(f"R_led={r_led:.1f} ohm, I_back={i_back_ma:.1f} mA, P_R={p_led * 1000.0:.1
 ```
 
 Printed: `R_led=290.0 ohm, I_back=10.0 mA, P_R=29.0 mW, derated=True`
+
+**On the shared arm.** The Transfer suite measures this module's link budget on the plant's own telemetry frame:
+
+```python
+import mechalab_plant as plant
+
+# A 20-byte frame at 8N1 on the plant's 1 kHz tick needs 200 kbit/s: over the 115.2 kbaud link,
+# inside the 500 kbaud one.
+bits_per_second = plant.FRAME_BYTES * 10 * (1.0 / plant.DT)
+assert bits_per_second == 200_000
+assert plant.BAUD_OVERFLOWS < bits_per_second < plant.BAUD_FITS
+print("plant link: %d B/frame at %d Hz = %d bit/s vs %d / %d baud"
+      % (plant.FRAME_BYTES, int(1.0 / plant.DT), bits_per_second,
+         plant.BAUD_OVERFLOWS, plant.BAUD_FITS))
+```
 
 ### Break it on purpose
 Inject one realistic bench fault and diagnose it from the symptom alone:

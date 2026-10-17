@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: medium
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -205,6 +206,20 @@ print(f"recovered I={shunt_current_from_adc(3.30, 0.001, 50.0):.2f} A | "
 ```
 
 Printed: `V_ADC=3.3000 V at I_max=33.00 A; V_ADC=0.00 V at -I_max`, then `recovered I=33.00 A | 2-terminal error=60.0% | adc_code(3.15 V)=3909`.
+
+**On the shared arm.** The Transfer suite resolves this module's shunt stage on the plant's own control cadence:
+
+```python
+import mechalab_plant as plant
+
+# One count of the 3.30 V, 12-bit ADC on a 3 mOhm shunt at 20 V/V is 13.4 mA, and the plant gets
+# exactly one such decision per 1 ms tick.
+lsb_a = (3.30 / 4095.0) / (20.0 * 0.003)
+assert abs(lsb_a - 0.0134310) < 1e-7
+assert 1.0 / plant.DT == 1000.0
+print("plant cadence: one shunt decision per %.1f ms = %.4f A per ADC count"
+      % (plant.DT * 1e3, lsb_a))
+```
 
 ### Break it on purpose
 Inject one realistic bring-up fault and diagnose it from the symptom alone, keeping $G = 20\text{ V/V}$ and $R_{\text{shunt}} = 3\text{ m}\Omega$:

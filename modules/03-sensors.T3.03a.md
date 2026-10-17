@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -289,6 +290,25 @@ print("feedforward=(%.2f, %.2f) V | a1=%.4f rad, b2=%.4f rad | gate |(a1,b1)|=%.
 ```
 
 Printed: `v0=-6.0 V | duties=(0.875, 0.125, 0.125) | limit=27.7128 V | gain=1.1547 (+15.47%)`, then `feedforward=(-3.60, 12.00) V | a1=0.0120 rad, b2=-0.0050 rad | gate |(a1,b1)|=0.0100 rad`.
+
+**On the shared arm.** The Transfer suite in `exercises/03-sensors.T3.03a/` fits the plant's encoder error with this module's Fourier projection, at the plant's own 4096 counts:
+
+```python
+import math
+import mechalab_plant as plant
+
+one_count = 2.0 * math.pi / plant.ENCODER_CPR
+angles = [2.0 * math.pi * k / plant.ENCODER_CPR for k in range(plant.ENCODER_CPR)]
+errors = [one_count * math.cos(a) for a in angles]
+a1 = (2.0 / plant.ENCODER_CPR) * sum(e * math.cos(a) for e, a in zip(errors, angles))
+b1 = (2.0 / plant.ENCODER_CPR) * sum(e * math.sin(a) for e, a in zip(errors, angles))
+
+assert math.isclose(a1, one_count, rel_tol=1e-12)
+assert abs(b1) < 1e-12                     # a cosine error has no sine component
+assert math.isclose(plant.DT * 25000.0, 25.0, rel_tol=1e-12)
+print("plant: one count=%.9f rad | fitted a1=%.9f rad, b1=%.1e | 25 kHz loop = %.0f updates per tick"
+      % (one_count, a1, b1, plant.DT * 25000.0))
+```
 
 ### Break it on purpose
 Use the exercise's own commands $v_a^* = +24.0\text{ V}$, $v_b^* = v_c^* = -12.0\text{ V}$ on $V_{\text{bus}} = 48.0\text{ V}$ and plant the `svpwm_offset_uses_mean` fault:

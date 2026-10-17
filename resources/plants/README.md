@@ -98,12 +98,13 @@ is the plant the Tier 1 learner finished with.
 ## What this is not (yet)
 
 - **No numpy, no URDF, no 3-D.** The 2-link arm is planar, as it is in Track 02.
-- **No learner scaffold.** The 44 bridge modules still ship no starter exercise that imports this
-  (that is the parity table's biggest Layer 2 gap); the import works today, the exercises that use it
-  come next.
-- **Scored, and currently unused.** `scripts/module_parity.py` scores `executable:shared_plant` for
-  every bridge module: `plant: tier1_arm_motor` only counts with a real `import mechalab_plant` in
-  the module, and `plant: none` only counts with a `plant_note:` reason. As of the last run that is
-  **0 arm, 0 exempt, 44 undeclared** — the gap is published in its own column rather than implied,
-  and the ratchet refuses to let any of those scores fall once an author improves them. The
-  front-matter contract is in [`docs/QUALITY_SPEC.md`](../../docs/QUALITY_SPEC.md) §1–§2.
+- **Used by every bridge module.** All 46 bridge modules ship a learner scaffold, and every one of
+  them runs its Transfer suite on this arm: each module declares `plant: tier1_arm_motor` and carries
+  a runnable block that asserts one of its own Transfer figures against the constants here.
+- **Scored for every module, and now settled.** `scripts/module_parity.py` scores
+  `executable:shared_plant` for every bridge module: `plant: tier1_arm_motor` only counts with a real
+  `import mechalab_plant` in the module, and `plant: none` only counts with a `plant_note:` reason.
+  The published state is **46 arm, 0 exempt, 0 unhooked, 0 undeclared** — a module either runs on the
+  arm or says in its own front matter why it does not, and the ratchet refuses to let any of those
+  scores fall. The front-matter contract is in
+  [`docs/QUALITY_SPEC.md`](../../docs/QUALITY_SPEC.md) §1–§2.

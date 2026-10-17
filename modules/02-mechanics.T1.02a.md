@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -206,6 +207,23 @@ print(f"P_joint={p_joint:.2f} W | P_motor*eta={p_motor:.2f} W | J_reflected(4:1)
 ```
 
 Printed: `N=4.50 | omega_joint=20.00 rad/s | tau_joint=1.7100 N*m`, then `P_joint=34.20 W | P_motor*eta=34.20 W | J_reflected(4:1)=0.128 kg*m^2`.
+
+**On the shared arm.** The Transfer suite in `exercises/02-mechanics.T1.02a/` drives the plant's own lever arms and its 2.5 N·m clamp through this module's gearbox maths:
+
+```python
+import math
+import mechalab_plant as plant
+
+ratio, eta = 8.0, 0.9
+motor_torque = plant.TAU_LIMIT / (eta * ratio)
+
+assert math.isclose(motor_torque * ratio * eta, plant.TAU_LIMIT, rel_tol=1e-12)
+assert math.isclose(4.0 ** 2 * plant.I1, 16.0 * plant.I1, rel_tol=1e-15)  # 4:1 -> N^2
+assert plant.gravity_torque(0.0, 0.0)[0] > 0.0
+assert math.isclose(plant.gravity_torque(math.pi / 2.0, 0.0)[0], 0.0, abs_tol=1e-12)
+print("plant: clamp %.1f N*m -> %.4f N*m at the motor (8:1, 90%%) | 4:1 reflected I1=%.3f kg*m^2"
+      % (plant.TAU_LIMIT, motor_torque, 16.0 * plant.I1))
+```
 
 ### Break it on purpose
 Inject the `gravity_uses_sine` fault the graded package names, and diagnose it from the two poses in the worked example:

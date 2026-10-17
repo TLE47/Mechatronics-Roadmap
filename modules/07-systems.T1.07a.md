@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -259,6 +260,27 @@ print("gain=%.4f dB | phase=%.1f deg | sine_amp=%.4f rad | ratio=%.4f" % (gain, 
 ```
 
 Printed: `scan=500.0 Hz | chain=False | state=ESTOP_LATCHED pwr=False`, then `gain=-6.0206 dB | phase=-90.0 deg | sine_amp=1.0000 rad | ratio=0.5000`.
+
+**On the shared arm.** The Transfer suite lock-in-recovers the figure-8's published amplitudes from the plant's own target function, and takes the 1 kHz scan straight from its tick:
+
+```python
+import math
+import mechalab_plant as plant
+
+dt = plant.DT
+steps = 4000  # four seconds at the plant's 1 ms tick
+xs = [plant.figure8_target(k * dt)[0] for k in range(steps)]
+ys = [plant.figure8_target(k * dt)[1] for k in range(steps)]
+
+def amplitude(samples, freq_hz):
+    i_sum = sum(s * math.cos(2.0 * math.pi * freq_hz * k * dt) for k, s in enumerate(samples))
+    q_sum = sum(s * math.sin(2.0 * math.pi * freq_hz * k * dt) for k, s in enumerate(samples))
+    return 2.0 * math.hypot(i_sum, q_sum) / len(samples)
+
+assert math.isclose(amplitude(xs, plant.FREQ_HZ), plant.AX, abs_tol=1e-6)
+assert math.isclose(amplitude(ys, 2.0 * plant.FREQ_HZ), plant.AY, abs_tol=1e-6)
+print("scan=%.1f Hz | A_x=%.6f m | A_y=%.6f m" % (1.0 / dt, plant.AX, plant.AY))
+```
 
 ### Break it on purpose
 - **Inject:** delete the `if state == "ESTOP_LATCHED"` branch from `plc_scan_step`, so a healthy chain and a held Start button fall straight through to the `state == "IDLE"` rule.

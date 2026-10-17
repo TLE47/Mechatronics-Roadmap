@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -210,6 +211,22 @@ print(f"inrush={precharge_peak_a(48.0, 48.0):.2f} A | 5tau={precharge_time_s(48.
 ```
 
 Printed: `L_loop_max=6.00 nH | V_peak at the ceiling=60.00 V | V_peak at 6.5 nH=61.00 V`, then `gate I=1.50 A | bootstrap V_G=60 V`, then `inrush=1.00 A | 5tau=0.24 s | E=1.152 J`.
+
+**On the shared arm.** The Transfer suite puts this module's pre-charge and bus energy on the plant's clock and its torque clamp:
+
+```python
+import mechalab_plant as plant
+
+# The 0.24 s pre-charge is 240 plant ticks, and the 1.152 J bank would hold the arm's 2.5 N*m
+# clamp for 460.8 ticks - the bank outlasts the window that filled it.
+precharge_ticks = 0.24 / plant.DT
+per_tick_j = plant.TAU_LIMIT * plant.DT
+assert abs(precharge_ticks - 240.0) < 1e-9
+assert abs(1.152 / per_tick_j - 460.8) < 1e-9
+assert 1.152 / per_tick_j > precharge_ticks
+print("plant tick=%.0f ms | pre-charge=%.0f ticks | 1.152 J holds the clamp for %.1f ticks"
+      % (plant.DT * 1e3, precharge_ticks, 1.152 / per_tick_j))
+```
 
 ### Break it on purpose
 - **Inject:** the timing bug that ships real boards — hand the overshoot helper a time in microseconds instead of seconds (`dt_s = 20e-6` where the transition is really $\Delta t_{\text{sw}} = 20\text{ ns} = 20 \times 10^{-9}\text{ s}$), then re-run the $20\text{ nH}$ 2-layer case.

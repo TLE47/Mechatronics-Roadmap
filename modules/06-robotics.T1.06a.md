@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -224,6 +225,22 @@ print(f"T_min={T_min:.3f} s | q(T/2)={q_mid:.4f} rad, qd_max={qd_mid:.4f} rad/s 
       f"tau={tau:.3f} N*m | yield={yield_rad:.4f} rad")
 ```
 Printed: `T_min=1.000 s | q(T/2)=1.0000 rad, qd_max=3.0000 rad/s | tau=1.700 N*m | yield=0.2000 rad`
+
+**On the shared arm.** The Transfer suite checks this spring against the plant's own shipped PD+gravity law, term for term, at the plant's gains:
+
+```python
+import mechalab_plant as plant
+
+q, dq, q_des, dq_des = (0.4, -0.7), (0.2, -0.3), (0.5, 0.3), (0.1, 0.0)
+tau_plant = plant.pd_gravity_torque(q, dq, q_des, dq_des, limit=1e9)
+tau_g = plant.gravity_torque(*q)
+tau_mine = (plant.KP1 * (q_des[0] - q[0]) + plant.KD1 * (dq_des[0] - dq[0]) + tau_g[0],
+            plant.KP2 * (q_des[1] - q[1]) + plant.KD2 * (dq_des[1] - dq[1]) + tau_g[1])
+
+assert abs(tau_mine[0] - tau_plant[0]) < 1e-9
+assert abs(tau_mine[1] - tau_plant[1]) < 1e-9
+print("plant PD+gravity=(%.4f, %.4f) N*m = spring+damping+feedforward" % tau_plant)
+```
 
 ### Break it on purpose
 - **Inject:** delete the clamp inside `cubic_rest_to_rest` so it reads `s = t / T`, and evaluate the $T = 2.0\ \text{s}$ profile half a second past arrival, at $t = 3.0\ \text{s}$.

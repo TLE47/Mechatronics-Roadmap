@@ -26,6 +26,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -246,6 +247,21 @@ print(f"P_loss={p_loss:.4f} W at I=1.2 A, R_high+R_low=0.36 ohm; 9.0 V recommend
 ```
 
 Printed: `P_loss=0.5184 W at I=1.2 A, R_high+R_low=0.36 ohm; 9.0 V recommended=True; D(9.0 V on a 12.0 V bus)=0.75; shoot-through at 9.0 V=25 A`
+
+**On the shared arm.** The Transfer suite switches the plant's own torque clamp at a duty cycle and measures the average it delivers:
+
+```python
+import mechalab_plant as plant
+
+# 70% duty on the plant's 2.5 N*m clamp delivers 70% of it on average - the same arithmetic as
+# a PWM'ed bus voltage, and never more than the clamp itself.
+duty = 0.70
+average_torque = duty * plant.TAU_LIMIT
+assert abs(average_torque - 1.75) < 1e-12
+assert average_torque < plant.TAU_LIMIT
+print("plant clamp: %.1f N*m at %.0f%% duty averages %.3f N*m"
+      % (plant.TAU_LIMIT, duty * 100.0, average_torque))
+```
 
 ### Break it on purpose
 Inject one realistic H-bridge analysis slip and diagnose it from the number alone:

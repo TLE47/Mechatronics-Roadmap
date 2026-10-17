@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -212,6 +213,21 @@ print("resonance: %.4f rad/s at %.4fx (%.4f dB)" % (omega_r, peak, magnitude_db(
 ```
 
 Printed: `G(j1000): -39.9127 dB, -179.4213 deg`, then `resonance: 99.7497 rad/s at 10.0125x (20.0109 dB)`.
+
+**On the shared arm.** The Transfer suite sine-sweeps the plant's elbow and reads gain and phase back by lock-in, so $\omega_n$ and $\zeta$ below are the arm's own:
+
+```python
+import math
+import mechalab_plant as plant
+
+k = 8.0
+wn = math.sqrt(k / plant.I2)
+zeta = plant.B2 / (2.0 * math.sqrt(plant.I2 * k))
+assert math.isclose(wn * wn * plant.I2, k, rel_tol=1e-12)
+assert 0.0 < zeta < 1.0
+omega_r = wn * math.sqrt(1.0 - 2.0 * zeta * zeta)
+print("plant elbow: wn=%.3f rad/s, zeta=%.4f, resonance=%.3f rad/s" % (wn, zeta, omega_r))
+```
 
 ### Break it on purpose
 Inject the decibel-convention fault from the `## 8. Common mistakes` table and diagnose it from two readings, keeping $\omega_n = 100\text{ rad/s}$ and $\zeta = 0.05$:

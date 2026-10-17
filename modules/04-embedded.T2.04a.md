@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -220,6 +221,20 @@ print("dma: window=%.1f us | ht=%.1f Hz | ping=%s, pong=%s, mid-half=%r"
 ```
 
 Printed: `spi: shift=2.0 us, frame=2.4 us | uart poll 500 bit @ 1 Mbaud=500 us`, then `dma: window=80.0 us | ht=250.0 Hz | ping=(0, 16), pong=(16, 32), mid-half=None`.
+
+**On the shared arm.** The package's Transfer suite times the frame and the half-buffer on the plant's own clock:
+```python
+import mechalab_plant as plant
+
+# Its 12-bit encoder word is 1.2 us of shift at 10 MHz, 0.12% of the 1 ms tick.
+assert plant.ENCODER_CPR == 2 ** plant.ENCODER_BITS
+assert abs((plant.ENCODER_BITS / 10e6) * 1e6 - 1.2) < 1e-12
+# At the plant's 1 kHz sample rate a four-sample half fires Half-Transfer at 250 Hz.
+assert abs((1.0 / plant.DT) / 4.0 - 250.0) < 1e-9
+print("plant: encoder=%d counts | %d-bit shift=%.1f us | tick=%.0f us | HT(4)=%.0f Hz"
+      % (plant.ENCODER_CPR, plant.ENCODER_BITS, (plant.ENCODER_BITS / 10e6) * 1e6,
+         plant.DT * 1e6, (1.0 / plant.DT) / 4.0))
+```
 
 ### Break it on purpose
 Use the worked example's $2N = 8$ buffer ($N = 4$ samples per half) and plant the `slice_reads_written_half` fault:

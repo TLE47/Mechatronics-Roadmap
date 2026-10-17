@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -364,6 +365,22 @@ assert len(predictions) == 5 and all(len(row) == 1 for row in predictions)
 print(f"L={loss:.4f} | dL/dw={grad:.4f} | w_new={w_new:.3f}")
 ```
 Printed: `L=16.0000 | dL/dw=-24.0000 | w_new=3.200`
+
+**On the shared arm.** The Transfer suite fits this map from `plant.gravity_torque`, then puts the learned policy inside the plant's own PD loop on the figure-8:
+
+```python
+import math
+import mechalab_plant as plant
+
+# The gravity map the policy has to learn, read off the arm at the zero pose.
+tau_g = plant.gravity_torque(0.0, 0.0)
+assert math.isclose(tau_g[0], 0.318825, rel_tol=1e-12)
+assert math.isclose(tau_g[1], plant.M2 * plant.LC2 * plant.G, rel_tol=1e-12)
+run = plant.simulate_arm()
+assert run["rms_dyn_err_mm"] < 1.0
+print("gravity(0,0)=(%.6f, %.6f) N*m | analytic figure-8 RMS=%.4f mm"
+      % (tau_g[0], tau_g[1], run["rms_dyn_err_mm"]))
+```
 
 ### Break it on purpose
 Inject the `no_tanh_derivative` fault from the graded package: drop the $(1 - H^2)$ factor from $dH$ in the backward pass and leave every other line alone.

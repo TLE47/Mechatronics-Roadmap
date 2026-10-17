@@ -26,6 +26,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -281,6 +282,20 @@ print(f"p_in_base={[round(x, 4) for x in p_in_base]} m | q(2.006 s)={q_query:.6f
       f"bandwidth={bandwidth:.3f} MB/s")
 ```
 Printed: `p_in_base=[0.0, 0.4, 0.1] m | q(2.006 s)=0.620000 rad | bandwidth=30.000 MB/s`
+
+**On the shared arm.** The Transfer suite builds the `base_link -> link_1 -> tool0` chain from the plant's own link lengths and compares it with `plant.fk` at five poses:
+
+```python
+import mechalab_plant as plant
+
+tip = plant.fk(0.0, 0.0)
+bandwidth = 3 * plant.FRAME_BYTES * (1.0 / plant.DT) / 1e6
+
+assert abs(tip[0] - (plant.L1 + plant.L2)) < 1e-12 and abs(tip[1]) < 1e-12
+assert abs(bandwidth - 0.06) < 1e-12
+print("fk(0,0)=(%.2f, 0.00) m = L1+L2 | three %d-byte frames at 1 kHz=%.3f MB/s"
+      % (tip[0], plant.FRAME_BYTES, bandwidth))
+```
 
 ### Break it on purpose
 Inject the first row of the `## 8. Common mistakes` table: subscribe to the camera stream with the default `Reliable` profile while the publisher offers `Best-Effort`, keeping the worked example's $250{,}000\text{ B}$ frames at $60\text{ Hz}$ to two subscribers.

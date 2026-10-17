@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -298,6 +299,25 @@ print("a_ens=%.4f rad | q_safe=%.2f rad | trips=%s" % (a_ens, q_safe, watchdog_t
 ```
 
 Printed: `G=(9.025, 9.500, 10.0) | PPO_clip=-2.40`, then `a_ens=0.5027 rad | q_safe=0.58 rad | trips=True`.
+
+**On the shared arm.** The Transfer suite scores the plant's own tracking errors with the return recursion, and runs a hostile policy through the shield on its 1 kHz loop:
+
+```python
+import math
+import mechalab_plant as plant
+
+run = plant.simulate_arm(steps=200, record=True)
+rewards = [1.0 if abs(xa - xd) * 1e3 + abs(ya - yd) * 1e3 < 5.0
+           else -math.hypot(xa - xd, ya - yd) * 1e3
+           for _, xd, yd, xa, ya, _, _ in run["trace"]]
+gamma = 0.97
+G = [0.0] * len(rewards)
+for t in range(len(rewards) - 1, -1, -1):
+    G[t] = rewards[t] + gamma * (G[t + 1] if t + 1 < len(rewards) else 0.0)
+assert len(rewards) == 200 and math.isfinite(G[0])
+assert math.isclose(G[0], rewards[0] + gamma * G[1], rel_tol=1e-12)
+print("G_0=%.3f over %d plant ticks | shield step=%.2f rad" % (G[0], len(rewards), 0.08))
+```
 
 ### Break it on purpose
 Inject the `ppo_max_not_min` fault and diagnose it from the loss alone, keeping $\epsilon = 0.20$ and $\hat{A} = +2.0$ for the positive case:

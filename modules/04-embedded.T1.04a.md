@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -219,6 +220,20 @@ print("frame=%s | tick=%d count=%d vel=%.2f rad/s" % (frame.hex(" "), tick, coun
 ```
 
 Printed: `reg=0x52 (bit6=1, bit3=0) | skip reg=11 | u16 delta=10 | 12-bit encoder delta=16`, then `frame=e8 03 00 fe 00 00 50 40 | tick=1000 count=-512 vel=3.25 rad/s`.
+
+**On the shared arm.** The package's Transfer suite runs the same wrapping on the plant's own encoder and clamp:
+```python
+import mechalab_plant as plant
+
+# Its 12-bit encoder is a `uint12_t`: 4096 counts wrap, and a 4090 -> 10 rollover is 16 counts.
+assert plant.ENCODER_CPR == 2 ** plant.ENCODER_BITS == 4096
+assert (10 - 4090) & (plant.ENCODER_CPR - 1) == 16
+# Its 2.5 N*m clamp is 2500 mN*m, which fits the int16 the frame carries.
+assert int(plant.TAU_LIMIT * 1000) == 2500
+print("plant: encoder=%d counts (%d bits) | 4090->10 wrap=%d counts | clamp=%d mN*m"
+      % (plant.ENCODER_CPR, plant.ENCODER_BITS, (10 - 4090) & (plant.ENCODER_CPR - 1),
+         int(plant.TAU_LIMIT * 1000)))
+```
 
 ### Break it on purpose
 Inject the `clear_forgets_the_tilde` fault the graded package names, and diagnose it from the register value alone:

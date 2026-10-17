@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -234,6 +235,22 @@ print("tau=(%.1f, %.1f, %.1f) N*m | tau.F=%.1f | F_axial=%.1f N | det=%.1f"
 ```
 
 Printed: `tau=(-3.0, 6.0, 7.5) N*m | tau.F=0.0 | F_axial=-16.0 N | det=9.0` - the moment, the orthogonality check that a sign flip survives, the projection that must not scale with the lever, and the determinant that decides invertibility.
+
+**On the shared arm.** The Transfer suite hangs a $0.20\text{ kg}$ payload at the arm's own tip and checks the moment against the plant's tip position:
+
+```python
+import math
+import mechalab_plant as plant
+
+q = plant.ik(0.08, 0.05)
+x, y = plant.fk(*q)
+assert math.isclose(math.hypot(x, y), math.hypot(0.08, 0.05), rel_tol=1e-12)
+force = (0.0, -0.20 * plant.G)
+moment_z = x * force[1] - y * force[0]          # the cross-product expansion
+assert math.isclose(moment_z, -0.20 * plant.G * x, rel_tol=1e-15)
+print("tip=(%.6f, %.6f) m | payload moment=%.6f N*m | reach=%.2f m"
+      % (x, y, moment_z, plant.L1 + plant.L2))
+```
 
 ### Break it on purpose
 Inject the anti-commutation slip from the `## 8. Common mistakes` table and diagnose it without looking at the code, keeping $\vec{r} = [0.30, 0.40, 0.00]^T\text{ m}$ and $\vec{F} = [0.0, -20.0, 15.0]^T\text{ N}$:

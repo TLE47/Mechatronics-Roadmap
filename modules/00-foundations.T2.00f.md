@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -226,6 +227,23 @@ print("Sigma_y=[[%.4f, %.4f], [%.4f, %.4f]]" % (sigma_y[0][0], sigma_y[0][1], si
 ```
 
 Printed: `alias(2700 Hz @ 2 kHz)=700.0 Hz | prewarp(600 Hz @ 2 kHz)=5505.5277 rad/s (round trip 600.000000 Hz)`, then `Sigma_y=[[1.0400, 0.4000], [0.4000, 4.0000]]`.
+
+**On the shared arm.** The Transfer suite samples the plant's elbow: its damped mode against the 1 kHz tick and a 12 Hz loop, and the encoder's quantisation as a covariance:
+
+```python
+import math
+import mechalab_plant as plant
+
+k = 8.0
+wn = math.sqrt(k / plant.I2)
+zeta = plant.B2 / (2.0 * math.sqrt(plant.I2 * k))
+f_damped = wn * math.sqrt(1.0 - zeta * zeta) / (2.0 * math.pi)
+assert f_damped > 6.0                                   # the 12 Hz test's Nyquist limit
+assert math.isclose(1.0 / plant.DT, 1000.0, rel_tol=1e-15)
+sigma_q = (2.0 * math.pi / plant.ENCODER_CPR) / math.sqrt(12.0)
+print("damped mode=%.3f Hz | fs=%.0f Hz | one-count sigma=%.3e rad"
+      % (f_damped, 1.0 / plant.DT, sigma_q))
+```
 
 ### Break it on purpose
 Inject the `prewarp_unwarped` fault on purpose: design the $850\text{ Hz}$ notch from $\omega_0 = 2\pi f_0$ instead of the pre-warped prototype, and leave the biquad normalization alone.

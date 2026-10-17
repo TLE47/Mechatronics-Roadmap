@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -247,6 +248,22 @@ print(f"mode={mode}, V_out={v_out:.2f} V, I_out={i_out * 1000.0:.1f} mA, P={p_ou
 ```
 
 Printed: `mode=CV, V_out=12.00 V, I_out=50.0 mA, P=600.0 mW; R_crit=120.0 ohm; 119 ohm -> CC at 11.90 V`
+
+**On the shared arm.** The Transfer suite puts this module's bench fault on the plant's own one-second run:
+
+```python
+import mechalab_plant as plant
+
+# A 0.20 A foldback into a 0.25 ohm miswire burns 0.01 W; over the plant's one-second run that is
+# 0.01 J, where an unlimited battery would have deposited 576 J.
+run_s = plant.TICKS * plant.DT
+folded_w = 0.20 * 0.20 * 0.25
+assert abs(run_s - 1.0) < 1e-12
+assert folded_w * run_s < 0.02
+assert 576.0 / folded_w > 10_000.0
+print("plant run=%.0f ms | folded-back fault=%.3f W -> %.3f J vs 576 J from a battery"
+      % (run_s * 1e3, folded_w, folded_w * run_s))
+```
 
 ### Break it on purpose
 This is the classic first-power-on mistake, and it is a **fault you inject on purpose** so you can recognise the symptom later:

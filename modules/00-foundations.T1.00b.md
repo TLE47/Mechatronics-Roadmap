@@ -23,6 +23,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -183,6 +184,19 @@ print("mean=%.2f V | span=%.2f V | signed mean=%.1f rad | RMSE=%.7f rad"
 ```
 
 Printed: `mean=1.10 V | span=1.20 V | signed mean=0.0 rad | RMSE=0.1581139 rad`.
+
+**On the shared arm.** The Transfer suite builds its timestamp grid from the plant's `TICKS + 1` samples at `DT`, which is a one-second window:
+
+```python
+import mechalab_plant as plant
+
+window = [k * plant.DT for k in range(plant.TICKS + 1)]
+assert len(window) == 1001
+assert abs(window[-1] - 1.0) < 1e-12
+assert abs(sum(window) / len(window) - 0.5) < 1e-12
+print("plant window: %d samples, mean %.3f s, span %.3f s"
+      % (len(window), sum(window) / len(window), window[-1] - window[0]))
+```
 
 ### Break it on purpose
 Inject the error the exercise hint warns about, on the exercise's own lists `target = [1.0, 2.0, 3.0, 4.0]` and `measured = [0.9, 2.1, 2.8, 4.2]`:

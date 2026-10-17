@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: medium
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -255,6 +256,22 @@ print(f"C_min={c_min_uf:.1f} uF; 100 uF droops {droop(100e-6):.3f} V, 470 uF dro
 ```
 
 Printed: `C_min=240.0 uF; 100 uF droops 0.600 V, 470 uF droops 0.128 V; tau=1.000 ms, fc=159.15 Hz`
+
+**On the shared arm.** The Transfer suite reads the arm's mechanical lag as the same first-order charging law:
+
+```python
+import math
+import mechalab_plant as plant
+
+# The shoulder's inertia over damping is a time constant, and it charges like an RC: 63.2% after
+# one tau, 99.3% after five.
+tau_mech = plant.I1 / plant.B1
+assert abs(tau_mech - 0.2) < 1e-12
+assert abs((1.0 - math.exp(-1.0)) - 0.6321205588) < 1e-9
+assert 1.0 - math.exp(-5.0) > 0.99
+print("plant shoulder tau=I1/B1=%.3f s | 1 tau=%.1f%%, 5 tau=%.3f%%"
+      % (tau_mech, 100.0 * (1.0 - math.exp(-1.0)), 100.0 * (1.0 - math.exp(-5.0))))
+```
 
 ### Break it on purpose
 Swap the bulk reservoir for the wrong part and diagnose the droop from the measurement alone:

@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -232,6 +233,23 @@ print("500 steps of 0.01 s -> x=%.4f m, v=%.4f m/s | one count per ms = %.3f rad
 ```
 
 Printed: `500 steps of 0.01 s -> x=0.0500 m, v=... m/s | one count per ms = 1.534 rad/s` - the position settles on $u_0/k = 0.0500\text{ m}$, and the velocity is within $10^{-4}\text{ m/s}$ of rest.
+
+**On the shared arm.** The Transfer suite differentiates the plant's own figure-8 joint trace through this module's state-space estimate, so one encoder count at 1 kHz sets its velocity noise floor:
+
+```python
+import math
+import mechalab_plant as plant
+
+count_rad = 2.0 * math.pi / plant.ENCODER_CPR
+assert abs(count_rad / plant.DT - 1.5339807878856412) < 1e-12
+target = plant.figure8_target(0.25)
+q1, q2 = plant.ik(*target)
+tip = plant.fk(q1, q2)
+assert abs(tip[0] - target[0]) < 1e-9
+assert abs(tip[1] - target[1]) < 1e-9
+print("plant: one count at 1 kHz = %.4f rad/s | figure-8 at t=0.25 s round-trips to (%.4f, %.4f) m"
+      % (count_rad / plant.DT, tip[0], tip[1]))
+```
 
 ### Break it on purpose
 Inject the `## 8. Common mistakes` row about a $B_d$ that skipped $\Delta t$, and diagnose it from the numbers alone, keeping $m = 1.0\text{ kg}$ and $\Delta t = 0.01\text{ s}$:

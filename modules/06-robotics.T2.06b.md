@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -265,6 +266,21 @@ print(f"R_disk={R_disk:.3f} MB/s | S_bag={S_bag:.1f} MB | T_wall={T_wall:.1f} s 
       f"timer={steps} steps | D={D}")
 ```
 Printed: `R_disk=2.100 MB/s | S_bag=210.0 MB | T_wall=40.0 s | timer=3 steps | D=4`
+
+**On the shared arm.** The Transfer suite records the plant's own 20-byte frame at 1 kHz, prices the per-message metadata, and replays the run at a different rate:
+
+```python
+import mechalab_plant as plant
+
+steps = int(round(0.004 / plant.DT))
+firings = sum(1 for tick in range(plant.TICKS) if tick % steps == 0)
+rate = (plant.FRAME_BYTES + 32) * (1.0 / plant.DT) / 1e6
+
+assert steps == 4 and firings == 250
+assert abs(rate - 0.052) < 1e-12
+print("250 Hz = every %d ticks, %d firings in %d | one topic with 32 B metadata=%.3f MB/s"
+      % (steps, firings, plant.TICKS, rate))
+```
 
 ### Break it on purpose
 Inject the first row of the `## 8. Common mistakes` table: replay the bag without `--clock` while every downstream node runs `use_sim_time:=true`, keeping the exercise's $100\text{ s}$ recording and `--rate 2.5`.

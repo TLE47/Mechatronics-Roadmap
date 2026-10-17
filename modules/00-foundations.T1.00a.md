@@ -20,6 +20,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -204,6 +205,18 @@ print("v_10=%.3f V | nine drops=%.3f V | ticks=%d | clamp=%.3f | error=%s"
 ```
 
 Printed: `v_10=10.500 V | nine drops=10.650 V | ticks=8 | clamp=1.000 | error=ZeroDivisionError`.
+
+**On the shared arm.** The Transfer suite runs this module's loop on the plant's 1 ms tick, so one 0.08 m/s step is 8e-5 m and 0.08 m is exactly 1000 ticks:
+
+```python
+import mechalab_plant as plant
+
+tick_m = 0.08 * plant.DT
+assert abs(tick_m - 8e-05) < 1e-15
+assert round(0.08 / tick_m) == 1000
+print("plant: tick=%.0f us, 0.08 m/s moves %.1e m per tick, %d ticks to 0.08 m"
+      % (plant.DT * 1e6, tick_m, 1000))
+```
 
 ### Break it on purpose
 Inject the `range` fault the exercise hint warns about, keeping $V_{\text{start}} = 12.0\text{ V}$, `drop_per_step = 0.15` V and `n_steps = 10`:

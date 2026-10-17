@@ -23,6 +23,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -189,6 +190,20 @@ print("R=%.4f ohm | V_drop=%.2f V | P_loss=%.2f W | omega=%.4f rad/s | tau_RC=%.
 ```
 
 Printed: `R=0.0120 ohm | V_drop=0.18 V | P_loss=2.70 W | omega=251.3274 rad/s | tau_RC=1.00 ms | T_s=40.0 us`.
+
+**On the shared arm.** The Transfer suite checks that the plant's 1 ms tick is the RC time constant of a 10 kOhm / 100 nF filter, and prices the plant's torque clamp at 100 RPM:
+
+```python
+import math
+import mechalab_plant as plant
+
+rc_s = 10e3 * 100e-9
+assert abs(rc_s - plant.DT) < 1e-15
+power_w = plant.TAU_LIMIT * (100.0 * 2.0 * math.pi / 60.0)
+assert abs(power_w - 26.1799387799) < 1e-9
+print("plant: RC=%.3f ms = one tick | 100 rpm at the %.1f N*m clamp = %.4f W"
+      % (rc_s * 1e3, plant.TAU_LIMIT, power_w))
+```
 
 ### Break it on purpose
 Inject the `## 8. Common mistakes` row about multiplying torque straight by RPM, keeping $\tau = 0.45\text{ N}\cdot\text{m}$ and $N = 2400\text{ RPM}$:

@@ -26,6 +26,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -282,6 +283,19 @@ print("sto12=%s | sto25=%s | settled=%s | reset=%s"
 ```
 
 Printed: `rate=19500 B/s | DC=95.0% | CCF=4e-09 | pld_ok=True`, then `sto12=(True, False, False) | sto25=(True, True, False) | settled=(True, False, False) | reset=True`.
+
+**On the shared arm.** The Transfer suite pushes the plant's 20-byte, 1 kHz telemetry frame through the OPC UA PubSub header and runs the dual-channel STO on the plant's own tick clock:
+
+```python
+import math
+import mechalab_plant as plant
+
+tick_hz = 1.0 / plant.DT
+rate_bps = (2 * 8 + 14) * tick_hz  # two doubles plus the 14-byte NetworkMessage header
+assert rate_bps * 10 < plant.BAUD_FITS and rate_bps * 10 > plant.BAUD_OVERFLOWS
+assert math.isclose(plant.DT * 1e3, 1.0, rel_tol=1e-12)
+print("pubsub=%.0f B/s | 8N1=%.0f baud | tick=%.1f ms" % (rate_bps, rate_bps * 10.0, plant.DT * 1e3))
+```
 
 ### Break it on purpose
 Inject the `sto_no_filter` fault and diagnose it from the restart behaviour alone, keeping $t_{\text{disc,max}} = 20\text{ ms}$:

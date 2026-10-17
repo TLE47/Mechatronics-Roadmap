@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -237,6 +238,24 @@ print("pure-q -> i_d=%.2f A, i_q=%.2f A | inverse-park exact | seam error=%.1e r
 ```
 
 Printed: `i_c=-4.0 A | (i_alpha, i_beta)=(6.000000, 1.154701) A | |i|=6.110101 A`, then `pure-q -> i_d=0.00 A, i_q=10.00 A | inverse-park exact | seam error=-2.0e-09 rad | sigma(tau=100 s)=0.002 rad/s`.
+
+**On the shared arm.** The Transfer suite in `exercises/03-sensors.T2.03a/` demodulates a balanced three-phase set built from the plant's own elbow angle, tick after tick:
+
+```python
+import math
+import mechalab_plant as plant
+
+theta = 0.40                      # an elbow angle the plant resolves in ~261 counts
+i_alpha, i_beta = 10.0 * math.cos(theta), 10.0 * math.sin(theta)
+i_d = i_alpha * math.cos(theta) + i_beta * math.sin(theta)
+i_q = -i_alpha * math.sin(theta) + i_beta * math.cos(theta)
+
+assert math.isclose(i_d, 10.0, rel_tol=1e-12)
+assert math.isclose(i_q, 0.0, abs_tol=1e-12)
+assert math.isclose(math.hypot(i_alpha, i_beta), 10.0, rel_tol=1e-12)
+print("plant: elbow angle %.2f rad = %.1f counts | Park -> (i_d, i_q)=(%.1f, %.1f) A"
+      % (theta, theta / (2.0 * math.pi / plant.ENCODER_CPR), i_d, i_q))
+```
 
 ### Break it on purpose
 Keep the worked example's $350\text{ Hz}$ electrical angle ($p = 7$ at $3000\text{ RPM}$) and break the PLL the way the `## 8. Common mistakes` table warns, using the `pll_raw_residual` fault the package plants:

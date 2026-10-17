@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -276,6 +277,24 @@ print("R_z90 * [1,0,0] = [%.1f, %.1f, %.1f] | det = %.12f | skew power = %.1f W"
 ```
 
 Printed: `cubic identity holds: True | vee round trip: True`, then `R_z90 * [1,0,0] = [0.0, 1.0, 0.0] | det = 1.000000000000 | skew power = 0.0 W`.
+
+**On the shared arm.** The Transfer suite rotates the plant's own tip about the base axis and checks that $e^{[0,0,\theta]}$ agrees with advancing $q_1$ by $\theta$:
+
+```python
+import math
+import mechalab_plant as plant
+
+q1, q2, theta = 0.30, 0.40, 0.90
+x, y = plant.fk(q1 + theta, q2)
+tip_x, tip_y = plant.fk(q1, q2)
+c, s = math.cos(theta), math.sin(theta)
+turned_x, turned_y = c * tip_x - s * tip_y, s * tip_x + c * tip_y
+assert math.isclose(turned_x, x, abs_tol=1e-12)
+assert math.isclose(turned_y, y, abs_tol=1e-12)
+assert math.isclose(math.hypot(turned_x, turned_y), math.hypot(tip_x, tip_y), rel_tol=1e-12)
+print("base rotation of %.2f rad takes the tip to (%.6f, %.6f) m, norm preserved"
+      % (theta, turned_x, turned_y))
+```
 
 ### Break it on purpose
 Inject the `rodrigues_over_rotates` fault on purpose: apply the unit-axis form $I + \sin\theta\,[\phi]_\times + (1-\cos\theta)[\phi]_\times^2$ to a rotation *vector* $\phi$, instead of dividing the coefficients by $\theta$ and $\theta^2$. It is exact at $\|\phi\| = 1\text{ rad}$, where both normalisations are $1$.

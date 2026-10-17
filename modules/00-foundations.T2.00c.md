@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -229,6 +230,20 @@ print("b_crit=%.2f -> zeta=%.1f, overshoot %.2e | worked: wn=%.1f, zeta=%.2f, Mp
 ```
 
 Printed: `b_crit=0.80 -> zeta=1.0, overshoot 0.00e+00 | worked: wn=20.0, zeta=0.50, Mp=0.16303, Ts=0.4000 s` - the critical coefficient with its near-zero overshoot, then the worked joint's four numbers and its $4/(\zeta\omega_n) = 0.4000\text{ s}$ settling time.
+
+**On the shared arm.** The Transfer suite measures the plant's elbow joint under a PD law and finds this module's first-order time constant in the plant's own tick:
+
+```python
+import math
+import mechalab_plant as plant
+
+assert math.isclose(10e3 * 100e-9, plant.DT, rel_tol=0.0, abs_tol=1e-15)
+assert math.isclose(1.0 / plant.DT, 1000.0, rel_tol=1e-15)
+elbow_k = 8.0
+wn = math.sqrt(elbow_k / plant.I2)
+print("plant tick=%.3f ms is the 10 kOhm / 100 nF RC constant | elbow wn=%.3f rad/s"
+      % (plant.DT * 1e3, wn))
+```
 
 ### Break it on purpose
 Inject the square-root slip the exercise warns about - $b_{\text{crit}} = 2 J k$ instead of $2\sqrt{Jk}$ - and diagnose it from the step response alone, keeping $J = 0.02\text{ kg}\cdot\text{m}^2$ and $k = 8.0\text{ N}\cdot\text{m/rad}$:

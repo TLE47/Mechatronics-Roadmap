@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -186,6 +187,22 @@ print("d=%.4f m | theta=%.4f deg | atan(x, y) swap=%.2f deg | I(V=1.7)=%.2f A"
 ```
 
 Printed: `d=0.5000 m | theta=-126.8699 deg | atan(x, y) swap=-143.13 deg | I(V=1.7)=6.00 A`.
+
+**On the shared arm.** The Transfer suite builds the plant's tip as this module's two projections and checks its heading against the plant's own `wrap_pi`:
+
+```python
+import math
+import mechalab_plant as plant
+
+q1, q2 = 0.4, -0.7
+tip_x = plant.L1 * math.cos(q1) + plant.L2 * math.cos(q1 + q2)
+tip_y = plant.L1 * math.sin(q1) + plant.L2 * math.sin(q1 + q2)
+assert abs(tip_x - plant.fk(q1, q2)[0]) < 1e-15
+assert abs(tip_y - plant.fk(q1, q2)[1]) < 1e-15
+assert abs(math.hypot(*plant.fk(0.0, 0.0)) - (plant.L1 + plant.L2)) < 1e-15
+print("plant tip at (0.4, -0.7) = (%.4f, %.4f) m | full reach %.2f m"
+      % (tip_x, tip_y, plant.L1 + plant.L2))
+```
 
 ### Break it on purpose
 Inject the single-argument arctan the `## 8. Common mistakes` table warns about, keeping the worked example's tip at $(-0.28284\text{ m},\ +0.28284\text{ m})$:

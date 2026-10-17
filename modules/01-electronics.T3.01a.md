@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: high
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -288,6 +289,24 @@ print(f"L_6L={loop_inductance_nh(1e-4, 0.012, 0.015):.3f} nH | V_peak={turn_off_
 ```
 
 Printed: `droop=0.0500 | residual at 34.2 ns=0.5076 LSB | at 35 ns=0.4412 LSB`, then `L_6L=0.157 nH | V_peak=48.47 V | tau_g=0.6366 us | T_J=71.8 C`.
+
+**On the shared arm.** The Transfer suite in `exercises/01-electronics.T3.01a/` measures this on the same `mechalab_plant` arm the capstone builds - its 1 kHz tick is the filter's own corner, and its inertia over damping is the same first-order time constant the die stage obeys:
+
+```python
+import math
+import mechalab_plant as plant
+
+tick_hz = 1.0 / plant.DT
+bessel_delay_us = 1e6 / (2.0 * math.pi * tick_hz)
+tau_s = plant.I1 / plant.B1
+
+assert math.isclose(tick_hz, 1000.0, rel_tol=1e-12)
+assert math.isclose(bessel_delay_us, 159.154943, abs_tol=1e-6)
+assert bessel_delay_us < plant.DT * 1e6          # the AFE delays less than one tick
+assert math.isclose(tau_s, 0.2, rel_tol=1e-12)
+print("plant: tick=%.0f Hz | Bessel delay=%.3f us (%.3f of a tick) | I1/B1=%.2f s"
+      % (tick_hz, bessel_delay_us, bessel_delay_us / (plant.DT * 1e6), tau_s))
+```
 
 ### Break it on purpose
 Inject one realistic bring-up fault into this module's own exercise (12-bit SAR ADC, $C_{\text{sample}} = 6.0\text{ pF}$, $C_{\text{filt}} = 114.0\text{ pF}$, $R_{\text{filt}} = 50.0\ \Omega$, $t_{\text{acq}} = 34.2\text{ ns}$) and diagnose it from the symptom alone:

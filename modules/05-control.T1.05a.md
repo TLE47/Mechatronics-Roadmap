@@ -25,6 +25,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -215,6 +216,23 @@ print(f"u_raw={u_worked:.2f} N*m | e_ss={sag:.4f} rad | q_ss={q:.3f} rad")
 ```
 
 Printed: `u_raw=3.80 N*m | e_ss=0.0750 rad | q_ss=0.925 rad`
+
+**On the shared arm.** The Transfer suite closes this loop on the plant's own shoulder inertia and damping, and reads one encoder count the way the module does:
+
+```python
+import math
+import mechalab_plant as plant
+
+clamp_accel = plant.TAU_LIMIT / plant.I1          # 2.5 N*m over 0.008 kg*m^2
+sag = plant.gravity_torque(0.0, 0.0)[0] / 10.0   # the horizontal shoulder at Kp = 10
+one_count = (2.0 * math.pi / plant.ENCODER_CPR) / plant.DT
+
+assert abs(clamp_accel - 312.5) < 1e-12
+assert abs(sag - 0.0318825) < 1e-12
+assert abs(one_count - 1.5339807878856412) < 1e-9
+print("clamp=%.1f rad/s^2 | sag(Kp=10)=%.7f rad | one count=%.4f rad/s"
+      % (clamp_accel, sag, one_count))
+```
 
 ### Break it on purpose
 - **Inject:** run `sim_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=False)` — the worked example's PID with the clamp and the freeze removed, so $I_k$ keeps adding $K_i e\Delta t$ while the demand sits past the $1.20\ \text{N}\cdot\text{m}$ rail.

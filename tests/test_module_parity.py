@@ -322,5 +322,29 @@ def _bounded_section(text: str, heading: str) -> str:
     return match.group(1) if match else ""
 
 
+class TestNoModuleLeavesThePlantUndecided(unittest.TestCase):
+    """`plant:` is the one scored item that is not optional-by-omission.
+
+    A module either runs on the shared arm - `plant: tier1_arm_motor` with a real
+    `import mechalab_plant` inside one of its python blocks, so the exercise is provably on the same
+    arm every other exercise uses - or it says, in `plant_note:`, why it does not. Silence scores
+    zero in parity and is invisible in a diff, so this names every module that is still silent.
+    """
+
+    def test_every_bridge_module_settles_the_plant_question(self):
+        undecided = [row["module"] for row in _module_rows() if row["plant"] in ("undeclared", "unhooked")]
+        self.assertEqual(undecided, [], "%d module(s) still silent about the plant: %s"
+                         % (len(undecided), ", ".join(undecided)))
+
+    def test_the_two_honest_answers_are_the_only_ones_scored(self):
+        """The negative path: a declaration with no import, and a `none` with no reason."""
+        self.assertEqual(parity.plant_decision("tier1_arm_motor", "", "plant: tier1_arm_motor"),
+                         (False, "unhooked"))
+        self.assertEqual(parity.plant_decision("none", "too short", "plant: none"),
+                         (False, "unhooked"))
+        self.assertEqual(parity.plant_decision("tier1_arm_motor", "",
+                                               "```python\nimport mechalab_plant\n```"), (True, "arm"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

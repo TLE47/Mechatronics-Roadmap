@@ -24,6 +24,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -233,6 +234,19 @@ print("E0=%.4f J | damped 2.0 s: E_final=%.4f J, dissipated %.1f%% | under 0.012
 ```
 
 Printed: `E0=0.2500 J | damped 2.0 s: E_final=... J, dissipated ...% | under 0.0125 J: True` - the release energy, then the run's own final energy and the share of it that heating removed. The final energy sits near the $0.25e^{-4} \approx 0.0046\text{ J}$ envelope, so the last field reads `True`.
+
+**On the shared arm.** The Transfer suite prices the plant's clamp against each joint's own inertia and checks the shoulder's horizontal gravity torque:
+
+```python
+import mechalab_plant as plant
+
+shoulder_accel = plant.TAU_LIMIT / plant.I1
+assert abs(shoulder_accel - 312.5) < 1e-12
+assert abs(plant.I1 / plant.B1 - 0.2) < 1e-15
+assert abs(plant.gravity_torque(0.0, 0.0)[0] - 0.318825) < 1e-12
+print("plant: clamp/I1=%.1f rad/s^2 | I1/B1=%.2f s | horizontal shoulder torque=%.6f N*m"
+      % (shoulder_accel, plant.I1 / plant.B1, plant.gravity_torque(0.0, 0.0)[0]))
+```
 
 ### Break it on purpose
 Inject the `spring_force_sign_dropped` fault the graded package names, and diagnose it from the first step alone:

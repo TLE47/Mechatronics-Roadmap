@@ -26,6 +26,7 @@ difficulty:
   hardware_risk: low
   simulation: full
 verification: ci-native
+plant: tier1_arm_motor
 ---
 
 ## 1. Why it matters
@@ -269,6 +270,21 @@ print(f"ARR={arr} | f_pwm={pwm_frequency(160_000_000.0, arr):.1f} Hz | q31(-0.50
 ```
 
 Printed: `ARR=3200 | f_pwm=25000.0 Hz | q31(-0.50)=-1073741824 | valid(5,5)=False`
+
+**On the shared arm.** The package's Transfer suite measures this module's 40 kHz carrier against the plant's own 1 ms tick, and the Q1.31 word against the plant's 2.5 N*m clamp:
+
+```python
+import mechalab_plant as plant
+
+carrier_hz = 170_000_000.0 / (2.0 * 2125)               # the module's own ARR
+periods_per_tick = carrier_hz * plant.DT
+word = round((plant.TAU_LIMIT / 10.0) * (1 << 31))
+
+assert abs(periods_per_tick - 40.0) < 1e-9
+assert word == 1 << 29
+print("carrier=%.0f Hz -> %.0f periods in one %.0f ms tick | 2.5 N*m over 10 -> %d"
+      % (carrier_hz, periods_per_tick, plant.DT * 1e3, word))
+```
 
 ### Break it on purpose
 Inject the parity slip the exercise plants (`seqlock_ignores_parity`), keeping the writer at $40\text{ kHz}$ and the reader at $1\text{ kHz}$:
