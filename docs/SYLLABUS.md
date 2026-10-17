@@ -125,13 +125,15 @@ Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`�
 | **6. Capstone Transfer Variation** | Complete the 4-Stage `Lesson 08.1` 2-DOF arm capstone (*Predict → R2 Retarget → R4 3 Broken Versions → R5 Trajectory Spec*) and pass all behavioral assertions. | [`Lesson 03.3`](../03-sensors-and-actuators/03.3-encoder-to-fk-integration-microlab.md), [`Lesson 06.1`](../06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md) & [`Lesson 08.1`](../08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md) |
 
 ### C. Tier 2 Transitions: Recurring Arm Math Spine, Tool First-Run Labs & 3 Hardware Evidence Routes
-1. **Recurring Motor/Arm Example Across `T2.00a–T2.00f`:** All six Tier 2 Foundations modules use the **same Tier 1 robot joint** ($J = 0.02\text{ kg}\cdot\text{m}^2$, $b = 0.05\text{ N}\cdot\text{m}\cdot\text{s/rad}$, $m = 0.35\text{ kg}$, $1\text{ kHz}$ encoder):
-   - `T2.00a` estimates joint velocity $\dot{q}$ and integrated position error from the joint's encoder samples.
-   - `T2.00b` packs `[q, dq]` into a 2D state vector and updates it via matrix multiplication.
-   - `T2.00c` solves the joint's 2nd-order ODE $J\ddot{q} + b\dot{q} + K_p q = \tau$ to predict oscillation and settling.
-   - `T2.00d` drives the joint with a sinusoidal torque sweep (`Lesson 07.1` data) to construct its phasor and Bode magnitude/phase plot.
-   - `T2.00e` writes the continuous state-space model $\dot{x} = Ax + Bu$ and discretizes it ($x_{k+1} = A_d x_k + B_d u_k$) at $\Delta t = 1\text{ ms}$.
-   - `T2.00f` filters noisy/aliased encoder data on that exact joint using a pre-warped Tustin biquad notch filter and state covariance $P$.
+1. **Two rigs on purpose: a small teaching model per module, then the shared arm in every graded package.** The six Tier 2 Foundations modules each open on the smallest rig that isolates the new idea — a cart on a spring in `T2.00a`, a lever-and-force cross product in `T2.00b`, a $J = 0.02\text{ kg}\cdot\text{m}^2$ shaft with $k = 8.0\text{ N}\cdot\text{m/rad}$ and $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$ in `T2.00c`, a $\omega_n = 100\text{ rad/s}$, $\zeta = 0.05$ structure in `T2.00d`, a $J = 1\text{ kg}\cdot\text{m}^2$, $b = 4$, $k = 100$ model at $T_s = 0.05\text{ s}$ in `T2.00e`, and an $850\text{ Hz}$ notch at $f_s = 4\text{ kHz}$ in `T2.00f`.
+   - Those numbers are **not** the capstone joint, and this is deliberate: [`tier1_arm_motor.yaml`](../resources/plants/tier1_arm_motor.yaml) records joint inertias $I_1 = 0.008$, $I_2 = 0.003\text{ kg}\cdot\text{m}^2$ with damping $b_1 = 0.04$, $b_2 = 0.02\text{ N}\cdot\text{m}\cdot\text{s/rad}$. `T2.00c`'s $J = 0.02$ is a teaching shaft chosen so $\omega_n$ and $\zeta$ come out to $20.0\text{ rad/s}$ and $0.50$; reading it as the plant's shoulder inertia is wrong by a factor of $2.5$.
+   - What *is* shared is the exercise: every one of the six graded packages ends in a transfer suite that runs the capstone arm, so the learner meets the plant the Tier 1 capstone built even though the worked example is a smaller rig.
+   - `T2.00a` estimates joint velocity $\dot{q}$ and integrated position error, then replays the arm's 12-bit AS5600 trace (4096 counts/rev, wrapped across zero).
+   - `T2.00b` packs `[q, dq]` into a 2D state vector, updates it via matrix multiplication, and takes the arm's own moment and Jacobian.
+   - `T2.00c` solves the 2nd-order ODE $J\ddot{q} + b\dot{q} + K_p q = \tau$ to predict oscillation and settling, then drives the plant's elbow and its motor ($L/R$).
+   - `T2.00d` constructs phasor and Bode magnitude/phase numbers, then *measures* the plant's elbow response by lock-in projection rather than reusing its own transfer function.
+   - `T2.00e` writes $\dot{x} = Ax + Bu$ and discretizes it as $x_{k+1} = A_d x_k + B_d u_k$, with the plant's elbow damping counted in its poles and step size.
+   - `T2.00f` designs a pre-warped Tustin biquad notch and propagates the state covariance $P$ on the plant's encoder stream.
 2. **Decoupled Tool First-Run Labs (Learn the Tool Before the Engineering Assessment):**
    - **KiCad First-Run (`T2.01b`):** Open a supplied known-good schematic, run ERC/DRC, change one silkscreen/test-point label, and inspect the 4-layer 3D PCB viewer before designing current-sense layouts.
    - **CAD & URDF First-Run (`T2.02a`):** Change one link length parameter (`l1_m = 0.10 -> 0.15 m`) in the supplied `CadQuery`/URDF file and observe the workspace change in the simulator before deriving $6\times n$ Jacobians.

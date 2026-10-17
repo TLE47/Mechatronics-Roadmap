@@ -80,7 +80,7 @@ Iterate `x = [Ad[0][0]*x[0] + Ad[0][1]*x[1] + Bd[0]*u0, Ad[1][0]*x[0] + Ad[1][1]
 - **If your result differs:** Make sure you compute both new components `x_next` and `v_next` from the *previous* step's `x[0]` and `x[1]` before overwriting `x`.
 
 ### Graded package - the same six steps on the arm's encoder
-[`exercises/00-foundations.T2.00a/`](../exercises/00-foundations.T2.00a/) turns this section into a test. `starter.py` holds six holes: `joint_velocity` (backward difference of the capstone's 12-bit AS5600 counts, wrapped across zero), `running_integral`, `state_matrices`, `one_step`, `simulate`, and `encoder_trace_angle` (counts -> velocity -> integral, which must land back on the encoder's own angle). Edit it, then run the tests the way CI does:
+[`exercises/00-foundations.T2.00a/`](../exercises/00-foundations.T2.00a/) turns this section into a test. It runs on the shared capstone arm (`resources/plants/`), not on the $m = 1.0\text{ kg}$ cart above: the cart isolates the matrix update, and the arm is the plant Tier 1 built - so its transfer suite is where the two meet on purpose. `starter.py` holds six holes: `joint_velocity` (backward difference of the capstone's 12-bit AS5600 counts, wrapped across zero), `running_integral`, `state_matrices`, `one_step`, `simulate`, and `encoder_trace_angle` (counts -> velocity -> integral, which must land back on the encoder's own angle). Edit it, then run the tests the way CI does:
 
 ```bash
 EXERCISE_TARGET=exercises/00-foundations.T2.00a/starter.py \

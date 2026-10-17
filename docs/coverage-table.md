@@ -181,21 +181,20 @@ not demonstrated learner mastery.
 reference solution passes the behaviour and transfer suites, and every planted fault fails the
 test that names it. The tests the harness runs are the same ones CI runs.
 
+## The exercise registry
+
+Read from `exercises/` when this file is generated, so the counts cannot drift from the table
+above:
+
+- **Graded packages: 44 of 44 modules**, every bridge module.
+- **Browser-driven: 44 of 44 graded packages**, each discovered from its manifest by `scripts/e2e_pages_bundle.mjs`.
+- **Behaviour-graded rows:** 44 of 44 read `yes` in the table above.
+
 ## Not yet instrumented
 
 The plan asks for these too. No artifact exists for them yet, so they are listed rather than
 scored - each one is a piece of work, not a zero:
 
-- **Behavioural tests for the other 0 modules:** 44 exercise packages exist
-  (`00-foundations.T2.00a`-`T2.00f`, `02-mechanics.T2.02a`, `03-sensors.T2.03a`,
-  `04-embedded.T2.04d`, `05-control.T2.05a`, `06-robotics.T2.06a`-`T2.06b` and
-  `07-systems.T2.07a`), and they are the template. `INSTRUCTOR_TESTS` in
-  `scripts/generate_python_lessons_data.py` covers the beginner lessons only, so the remaining
-  bridge modules ship no graded exercise of their own and their rows read `-` in the
-  Behaviour-graded column.
-- **Module exercises in the workbench:** each of those 44 packages is generated into the app
-  as a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives all of them on the built
-  bundle, so the browser path is measured on 44 exercises, not assumed from one.
 - **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)
   with their stated assumptions, and a counterexample test where a claim is easy to get wrong.
 - **Transfer-task retention:** whether the Transfer task still passes 1-2 weeks later, and
