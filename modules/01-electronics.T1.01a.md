@@ -17,6 +17,7 @@ est_hours: 3.0
 hardware_required: false
 safety_level: low
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -79,6 +80,16 @@ V_unloaded=3.077 V, V_loaded=2.830 V, P_R1=6.44 mW
 Calculate the current-limiting resistor $R$ required to run a status LED ($V_{\text{LED}} = 2.1\text{ V}$, target current $I = 10\text{ mA} = 0.010\text{ A}$) from a $V_{\text{supply}} = 5.0\text{ V}$ rail using KVL ($V_R = V_{\text{supply}} - V_{\text{LED}}$), and compute the power $P_R = I^2 R$ dissipated in the resistor. Verify $R = 290.0\ \Omega$ and $P_R = 0.029\text{ W}$ ($29.0\text{ mW}$, safely within a $0.25\text{ W}$ resistor rating).
 - **If your result differs:** Make sure you subtracted $V_{\text{LED}} = 2.1\text{ V}$ from $5.0\text{ V}$ before dividing by $0.010\text{ A}$ ($2.9\text{ V} / 0.010\text{ A} = 290\ \Omega$, not $5.0 / 0.010 = 500\ \Omega$).
 
+### Graded package - the three laws on the bench
+[`exercises/01-electronics.T1.01a/`](../exercises/01-electronics.T1.01a/) turns this section into a test. `starter.py` holds seven holes: `stall_current`, `divider_unloaded`, `divider_loaded`, `joule_power`, `led_series_resistor`, `led_current` and `within_derating`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/01-electronics.T1.01a/starter.py \
+  python3 -m unittest discover -s exercises/01-electronics.T1.01a -p 'test_*.py'
+```
+
+**25 tests.** The divider is checked unloaded, loaded and **with its legs swapped** ($20.9\text{ V}$ into a $3.3\text{ V}$ pin, the module's own destroyed-pin case); the loaded case must come out **lower**, and a shorting load must pull it to zero; the power is checked on a $5\text{ A}$ stall; the LED resistor is checked at the exercise's $2.1\text{ V} / 10\text{ mA}$ and its current round-trips back; and the derating rule is checked at 50% of a quarter-watt part, so a full-rating check fails. The transfer suite takes **the plant's numbers**: the shoulder damper's $B_1\dot{q}^2$ is the same $I^2R$ form at a measured peak of $0.36\text{ W}$ (a quarter-watt part is out, a one-watt part at half rating is in), the $24\text{ V}$ sensing divider must still protect a $3.3\text{ V}$ ADC when a $100\text{ k}\Omega$ input loads it, and the $20$-byte $1\text{ kHz}$ frame at 8N1 is $200\text{ kbit/s}$ - above the 115.2 kbaud link that drops frames, below the 500 kbaud one that does not. Five planted faults - `divider_swaps_legs`, `loaded_ignores_load`, `power_without_square`, `led_resistor_divides_supply`, `derating_uses_full_rating` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Python Variables & Functions*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (SI Prefixes $\text{k}\Omega, \text{mA}, \text{mW}$ & Joule Heating $P = I^2 R$).
@@ -94,6 +105,8 @@ Inject one realistic bench fault and diagnose it from the symptom alone:
 
 ## 6. Simulation path
 Simulate the voltage divider and LED resistor in the browser using [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`resources/open-source-toolchains.md`) or run the Python verification script above.
+
+The graded package is also a workbench entry: **Modules -> `EX.01-electronics.T1.01a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 Optional Tier 1 breadboard check (`hardware_required: false`): place a $68\text{ k}\Omega$ and $10\text{ k}\Omega$ resistor in series on a solderless breadboard powered from a $5.0\text{ V}$ USB rail and probe the midpoint with a digital multimeter:
 ```text
