@@ -1,0 +1,30 @@
+{
+  "id": "06-robotics.T2.06b",
+  "module": "modules/06-robotics.T2.06b.md",
+  "title": "Simulated clock, recording budget, replay scaling and decimation",
+  "requires": [
+    "timer_steps(T_timer, dt_sim) -> int (ceiling)",
+    "intra_process_saving_mb_s(n_subs, msg_bytes, rate_hz) -> MB/s",
+    "disk_rate_mb_s(topics, meta_bytes=32, compression=1.0) -> MB/s",
+    "bag_size_mb(disk_rate, duration_s) -> MB",
+    "replay_derivative(t_a, v_a, t_b, v_b) -> value/s",
+    "wall_delay_s(t_a, t_b, rate) -> s",
+    "control_decimation(f_sim, f_ctrl) -> int, ValueError when not integral"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "timer_rounds": ["test_behavior.TimerTests.test_the_ratio_is_a_ceiling"],
+    "disk_ignores_meta": ["test_behavior.RecordingTests.test_the_metadata_is_per_message"],
+    "replay_assumed_dt": ["test_behavior.ReplayTests.test_the_derivative_is_rate_invariant"],
+    "decimation_rounds": ["test_behavior.DecimationTests.test_a_non_integral_ratio_is_refused"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.06-robotics.T2.06b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/06-robotics.T2.06b/starter.py python3 -m unittest discover -s exercises/06-robotics.T2.06b -p 'test_*.py'"
+  }
+}

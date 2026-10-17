@@ -28,7 +28,7 @@ flowchart LR
 | `03` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `04` | 7 | 59% | 40% | 75% | 7% | **50.2%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `05` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
-| `06` | 5 | 60% | 40% | 75% | 10% | **51.0%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
+| `06` | 5 | 60% | 40% | 75% | 20% | **52.5%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
 | `07` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `08` | 1 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 1 undeclared | `report` |
 
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **57.8%** |
+| Tier 2 | 18 | **58.2%** |
 | Tier 3 | 10 | **50.5%** |
 
-## Per module (44 modules, overall **54.0%**)
+## Per module (44 modules, overall **54.2%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -81,7 +81,7 @@ flowchart LR
 | `05-control.T3.05a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `06-robotics.T1.06a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
 | `06-robotics.T2.06a` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `06-robotics.T2.06b` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
+| `06-robotics.T2.06b` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
 | `06-robotics.T3.06a` | 3 | 40% | 40% | 75% | 0% | **44.5%** | **undeclared** | 10 item(s) |
 | `06-robotics.T3.06b` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `07-systems.T1.07a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
@@ -168,7 +168,7 @@ not demonstrated learner mastery.
 | `05-control.T3.05a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `06-robotics.T1.06a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `06-robotics.T2.06a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `06-robotics.T2.06b` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `06-robotics.T2.06b` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T3.06a` | **44.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `06-robotics.T3.06b` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `07-systems.T1.07a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
@@ -186,14 +186,16 @@ test that names it. The tests the harness runs are the same ones CI runs.
 The plan asks for these too. No artifact exists for them yet, so they are listed rather than
 scored - each one is a piece of work, not a zero:
 
-- **Behavioural tests for the other 37 modules:** seven exercise packages exist
-  (`02-mechanics.T2.02a` and the whole `00-foundations.T2.00a`-`T2.00f` ladder), and they are
-  the template. `INSTRUCTOR_TESTS` in `scripts/generate_python_lessons_data.py` covers the
-  beginner lessons only, so the remaining bridge modules ship no graded exercise of their own
-  and their rows read `-` in the Behaviour-graded column.
-- **Module exercises in the workbench:** each of those seven packages is generated into the app
+- **Behavioural tests for the other 30 modules:** 14 exercise packages exist
+  (`00-foundations.T2.00a`-`T2.00f`, `02-mechanics.T2.02a`, `03-sensors.T2.03a`,
+  `04-embedded.T2.04d`, `05-control.T2.05a`, `06-robotics.T2.06a`-`T2.06b` and
+  `07-systems.T2.07a`), and they are the template. `INSTRUCTOR_TESTS` in
+  `scripts/generate_python_lessons_data.py` covers the beginner lessons only, so the remaining
+  bridge modules ship no graded exercise of their own and their rows read `-` in the
+  Behaviour-graded column.
+- **Module exercises in the workbench:** each of those 14 packages is generated into the app
   as a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives all of them on the built
-  bundle, so the browser path is measured on seven T2 exercises, not assumed from one.
+  bundle, so the browser path is measured on 14 exercises, not assumed from one.
 - **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)
   with their stated assumptions, and a counterexample test where a claim is easy to get wrong.
 - **Transfer-task retention:** whether the Transfer task still passes 1-2 weeks later, and

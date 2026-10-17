@@ -117,6 +117,16 @@ disk_rate=1.875 MB/s, bag_10m=1124.8 MB, q_sim(20ms)=0.0752 rad
 You record a `rosbag2` MCAP log containing two topics: `/joint_states` at $f_1 = 500\text{ Hz}$ with message size $B_1 = 168\text{ B}$ ($+32\text{ B}$ MCAP metadata $= 200\text{ B/msg}$) and `/camera/image_raw` at $f_2 = 20\text{ Hz}$ with message size $B_2 = 99{,}968\text{ B}$ ($+32\text{ B}$ metadata $= 100{,}000\text{ B/msg}$), uncompressed ($c = 1.0$). Compute (a) the total uncompressed write rate $R_{\text{disk}}$ in $\text{MB/s}$ ($\frac{f_1(B_1+32) + f_2(B_2+32)}{10^6}$), (b) the total bag file size $S_{\text{bag}}$ in $\text{MB}$ for a $T_{\text{rec}} = 100\text{ s}$ run, and (c) the wall-clock duration $T_{\text{wall}} = T_{\text{rec}} / r$ in seconds when replaying the $100\text{ s}$ bag at `--rate 2.5`. Verify $R_{\text{disk}} = 2.10\text{ MB/s}$, $S_{\text{bag}} = 210.0\text{ MB}$, and $T_{\text{wall}} = 40.0\text{ s}$.
 - **If your result differs:** Check that $500 \times 200 = 100{,}000\text{ B/s}$ ($0.10\text{ MB/s}$) and $20 \times 100{,}000 = 2{,}000{,}000\text{ B/s}$ ($2.00\text{ MB/s}$), summing to $2.10\text{ MB/s}$.
 
+### Graded package - a recording budget, a replay clock and a decimation
+[`exercises/06-robotics.T2.06b/`](../exercises/06-robotics.T2.06b/) turns this section into a test. `starter.py` holds seven holes: `timer_steps` (a ceiling, and at least one step), `intra_process_saving_mb_s`, `disk_rate_mb_s` (per-message metadata before compression), `bag_size_mb`, `replay_derivative` (on the message stamps), `wall_delay_s` (`/rate`) and `control_decimation` (refusing a ratio that does not divide). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/06-robotics.T2.06b/starter.py \
+  python3 -m unittest discover -s exercises/06-robotics.T2.06b -p 'test_*.py'
+```
+
+The tests are behavioural: a $2.5$-step timer must wait $3$ (rounding and flooring both drift), an exact multiple must not round up from float error, the $0.40$ `zstd` budget must be $1.874624\text{ MB/s}$ and $1124.7744\text{ MB}$ for ten minutes, the $32\text{ B}$ per-message index must show as $0.128 \to 0.160\text{ MB/s}$ on one joint-state topic, compression must scale the rate rather than the size, the replay derivative must stay $20\text{ rad/s}$ at $0.25\times$, $1\times$ and $4\times$, and $1000/300$ must **raise** instead of becoming $3$. The transfer suite records the plant's own $20\text{ B}$ telemetry frame at $1\text{ kHz}$ for a minute and requires the budget to be a few megabytes, shows the $32\text{ B}$ metadata multiplying that frame's rate, puts a $250\text{ Hz}$ task on the plant's $1\text{ kHz}$ clock (four ticks apart, $250$ firings in a $1000$-tick run), and takes the figure-8 tip velocity off the plant's recorded stamps at $1\times$ and $4\times$ so the two must agree to $10^{-15}$. Four planted faults - `timer_rounds`, `disk_ignores_meta`, `replay_assumed_dt`, `decimation_rounds` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (Bandwidth & Storage Units $\text{B}, \text{MB/s}$), [`00-foundations.T2.00a`](00-foundations.T2.00a.md) ($2\times 2$ Jacobian Transpose), and [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*Structural Resonance*).
@@ -142,6 +152,8 @@ ros2 bag info arm_test_bag && ros2 bag play arm_test_bag --clock --rate 1.0
                                                                        [rosbag2 MCAP Recorder]
 ```
 Pass/fail verification in simulation: `disk_rate_mbs == 1.874624 MB/s`, `dq_est == 20.0 rad/s` across all playback rates, and `q_sim(20ms) == 0.0825 rad`.
+
+The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T2.06b`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 
 ```mermaid
