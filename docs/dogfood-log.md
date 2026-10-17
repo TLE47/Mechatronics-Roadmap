@@ -76,6 +76,17 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `02-mechanics.T3.02a` | 2026-10-17 | 3 | 0 | none | no | - |
 | `06-robotics.T3.06a` | 2026-10-17 | 5 | 0 | none | yes | - |
 | `07-systems.T3.06a` | 2026-10-17 | 2 | 0 | none | no | - |
+| `01-electronics.T1.01a` | 2026-10-17 | 2 | 0 | none | no | - |
+| `01-electronics.T1.01b` | 2026-10-17 | 2 | 0 | none | no | - |
+| `01-electronics.T1.01c` | 2026-10-17 | 2 | 0 | none | no | - |
+| `01-electronics.T1.01d` | 2026-10-17 | 2 | 0 | none | no | - |
+| `02-mechanics.T1.02a` | 2026-10-17 | 2 | 0 | none | no | - |
+| `03-sensors.T1.03a` | 2026-10-17 | 2 | 0 | none | no | - |
+| `04-embedded.T1.04a` | 2026-10-17 | 3 | 0 | none | no | - |
+| `04-embedded.T1.04b` | 2026-10-17 | 2 | 0 | none | no | - |
+| `05-control.T1.05a` | 2026-10-17 | 2 | 0 | none | no | - |
+| `06-robotics.T1.06a` | 2026-10-17 | 3 | 0 | none | yes | - |
+| `07-systems.T1.07a` | 2026-10-17 | 2 | 0 | none | yes | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -378,6 +389,31 @@ matrix raised `IndexError` from the matrix multiply instead of `ValueError`. The
 with the reason (a $2 \times 2$ matrix is a different problem, not a smaller rotation). `05a` and
 `05c` needed nothing: their items covered every guard the suites check, including the infeasible
 barrier case that is the whole point of `05c`'s section 3.
+
+### The Track 01–07 Tier 1 bridges
+
+| Standard | `01a` | `01b` | `01c` | `01d` | `02a` | `03a` | `04a` | `04b` | `05a` | `06a` | `07a` |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Package cases | met (25) | met (25) | met (30) | met (29) | met (29) | met (49) | met (38) | met (45) | met (48) | met (27) | met (32) |
+| Learner attempt from the hints alone | met | met | met | met | met | met | met | met | met | met after one fix | met after one fix |
+| Gate score | 11/11 | 8/8 | 13/13 | 13/13 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 (3/3 `[SAFETY]`) |
+| Delayed transfer | pending | pending | pending | pending | pending | pending | pending | pending | pending | pending | pending |
+
+**What this round found.** Nine of the eleven packages passed first try, and their ladders already
+stated every guard the suites check. The two that did not were both **prose that contradicted its
+own package**, not missing code:
+
+- `06-robotics.T1.06a`'s hint said to hold the final pose "once $t \ge T$", while its own suite asks
+  for the cubic's terminal deceleration $-6\Delta q/T^2$ at exactly $t = T$ (and the clamp only past
+  it). The full solution already used `t > T`, so the page contradicted itself in two places - the
+  Starter TODO and the Common-mistakes row - and both now say `t > T`, with the terminal value named.
+- `07-systems.T1.07a`'s refusal item said `scan_frequency_hz` refuses a "zero or negative phase
+  budget", which reads as the total; the suite also passes `(-1.0, 1.0, 1.0)`, where the sum is
+  positive and only one stage is impossible. The item now names the negative stage explicitly.
+
+Neither fix needed a new assertion: in both cases the suite already tested the behaviour, the
+page's full solution already implemented it, and only the ladder was wrong - which is exactly the
+class of defect an author reads past, because they wrote the code first.
 
 ### The four Tier 3 rows that closed the tier
 

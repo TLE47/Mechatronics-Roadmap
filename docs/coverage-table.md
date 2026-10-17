@@ -23,24 +23,24 @@ flowchart LR
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
 | `00` | 12 | 100% | 100% | 100% | 100% | **100.0%** | 12 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `01` | 7 | 100% | 100% | 100% | 71% | **95.7%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `02` | 3 | 100% | 100% | 100% | 83% | **97.5%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `03` | 3 | 100% | 100% | 100% | 83% | **97.5%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `04` | 7 | 100% | 100% | 100% | 86% | **97.9%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `05` | 5 | 100% | 100% | 100% | 90% | **98.5%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `06` | 5 | 100% | 100% | 100% | 90% | **98.5%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `07` | 3 | 100% | 100% | 100% | 83% | **97.5%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `01` | 7 | 100% | 100% | 100% | 100% | **100.0%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `02` | 3 | 100% | 100% | 100% | 100% | **100.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `03` | 3 | 100% | 100% | 100% | 100% | **100.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `04` | 7 | 100% | 100% | 100% | 100% | **100.0%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `05` | 5 | 100% | 100% | 100% | 100% | **100.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `06` | 5 | 100% | 100% | 100% | 100% | **100.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `07` | 3 | 100% | 100% | 100% | 100% | **100.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `08` | 1 | 100% | 100% | 100% | 100% | **100.0%** | 1 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 
 ## By tier
 
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
-| Tier 1 | 16 | **94.8%** |
+| Tier 1 | 16 | **100.0%** |
 | Tier 2 | 18 | **100.0%** |
 | Tier 3 | 12 | **100.0%** |
 
-## Per module (46 modules, overall **98.2%**)
+## Per module (46 modules, overall **100.0%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -56,37 +56,37 @@ flowchart LR
 | `00-foundations.T2.00e` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T2.00f` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T3.00a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `01-electronics.T1.01a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `01-electronics.T1.01b` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `01-electronics.T1.01c` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `01-electronics.T1.01d` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `01-electronics.T1.01a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `01-electronics.T1.01b` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `01-electronics.T1.01c` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `01-electronics.T1.01d` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `01-electronics.T2.01a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `01-electronics.T2.01b` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `01-electronics.T3.01a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `02-mechanics.T1.02a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `02-mechanics.T1.02a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `02-mechanics.T2.02a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `02-mechanics.T3.02a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `03-sensors.T1.03a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `03-sensors.T1.03a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `03-sensors.T2.03a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `03-sensors.T3.03a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `04-embedded.T1.04a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `04-embedded.T1.04b` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `04-embedded.T1.04a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `04-embedded.T1.04b` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `04-embedded.T2.04a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `04-embedded.T2.04b` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `04-embedded.T2.04c` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `04-embedded.T2.04d` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `04-embedded.T3.04a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `05-control.T1.05a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `05-control.T1.05a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `05-control.T2.05a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `05-control.T3.05a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `05-control.T3.05b` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `05-control.T3.05c` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `06-robotics.T1.06a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `06-robotics.T1.06a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `06-robotics.T2.06a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `06-robotics.T2.06b` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `06-robotics.T3.06a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `06-robotics.T3.06b` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `07-systems.T1.07a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `07-systems.T1.07a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `07-systems.T2.07a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `07-systems.T3.06a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `08-capstones.T3.07a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
@@ -145,37 +145,37 @@ not demonstrated learner mastery.
 | `00-foundations.T2.00e` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `00-foundations.T2.00f` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `00-foundations.T3.00a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
-| `01-electronics.T1.01a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `01-electronics.T1.01b` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `01-electronics.T1.01c` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `01-electronics.T1.01d` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `01-electronics.T1.01a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
+| `01-electronics.T1.01b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
+| `01-electronics.T1.01c` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
+| `01-electronics.T1.01d` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `01-electronics.T2.01a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `01-electronics.T2.01b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `01-electronics.T3.01a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
-| `02-mechanics.T1.02a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `02-mechanics.T1.02a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `02-mechanics.T2.02a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-16, 13 min, 0 hints | - | `-` |
 | `02-mechanics.T3.02a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 3 min, 0 hints | - | `-` |
-| `03-sensors.T1.03a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `03-sensors.T1.03a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `03-sensors.T2.03a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `03-sensors.T3.03a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
-| `04-embedded.T1.04a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `04-embedded.T1.04b` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T1.04a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 3 min, 0 hints | - | `-` |
+| `04-embedded.T1.04b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `04-embedded.T2.04a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `04-embedded.T2.04b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `04-embedded.T2.04c` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `04-embedded.T2.04d` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `04-embedded.T3.04a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
-| `05-control.T1.05a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `05-control.T1.05a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `05-control.T2.05a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `05-control.T3.05a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `05-control.T3.05b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `05-control.T3.05c` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
-| `06-robotics.T1.06a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `06-robotics.T1.06a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 3 min, 0 hints | - | `-` |
 | `06-robotics.T2.06a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `06-robotics.T2.06b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `06-robotics.T3.06a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 5 min, 0 hints | - | `-` |
 | `06-robotics.T3.06b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
-| `07-systems.T1.07a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `07-systems.T1.07a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `07-systems.T2.07a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `07-systems.T3.06a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `08-capstones.T3.07a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 3 min, 0 hints | - | `-` |

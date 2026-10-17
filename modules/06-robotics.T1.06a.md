@@ -113,7 +113,7 @@ import math
 
 def cubic_rest_to_rest(t, q0, qf, T):
     """(q, qd, qdd) at time t for a rest-to-rest cubic."""
-    # TODO: s = t/T clamped to [0, 1] through 3s^2 - 2s^3, and hold the final pose, still, once t >= T
+    # TODO: s = t/T clamped to [0, 1] through 3s^2 - 2s^3, and hold the final pose, still, once t > T (at exactly t = T the cubic still carries its terminal deceleration, -6 dq / T^2)
     ...
 
 
@@ -371,7 +371,7 @@ assert g8_choice == "A"
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Arm lurches violently at $t=0$ when starting a trajectory | Initialized $q_0$ to `0.0` instead of reading the encoder's *actual* current angle `q_actual` at the start of the move. | Always latch `q0 = read_encoder_rad()` at $t = 0$ so initial tracking error $q_d(0) - q(0)$ is strictly zero. |
-| Position overshoots or runs away after $t > T$ | Evaluated $3s^2 - 2s^3$ for $s = t/T > 1.0$ without clamping $s \in [0, 1]$. | Clamp `s = min(1.0, max(0.0, t / T))` and set $\dot{q}_d = \ddot{q}_d = 0$ for $t \ge T$. |
+| Position overshoots or runs away after $t > T$ | Evaluated $3s^2 - 2s^3$ for $s = t/T > 1.0$ without clamping $s \in [0, 1]$. | Clamp `s = min(1.0, max(0.0, t / T))` and set $\dot{q}_d = \ddot{q}_d = 0$ for $t > T$ - at exactly $t = T$ the cubic itself is still the reference, with $\ddot{q}_d = -6\Delta q/T^2$. |
 | Compliant arm sags when $K_p$ is lowered | Omitted the gravity feedforward term $\tau_g(q)$ in $\tau = K_p(q_d - q) + K_d(\dot{q}_d - \dot{q}) + \tau_g(q)$. | Add model-based gravity compensation $\tau_g(q)$ so $K_p$ only handles tracking stiffness, not static weight support. |
 
 ## 9. Resources

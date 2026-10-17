@@ -11,6 +11,20 @@ flowchart LR
 
 ---
 
+## [2026-10-17] — Run 56: Every Tier at 100%
+
+### 1. The eleven Tier 1 rows
+- `01-electronics.T1.01a`/`b`/`c`/`d` (25/25/30/29 cases, Gates 11/11, 8/8, 13/13, 13/13), `02-mechanics.T1.02a` (29, 8/8), `03-sensors.T1.03a` (49, 8/8), `04-embedded.T1.04a`/`b` (38/45, 8/8 each), `05-control.T1.05a` (48, 8/8), `06-robotics.T1.06a` (27, 8/8) and `07-systems.T1.07a` (32, 8/8 with 3/3 `[SAFETY]`), every Gate answered before its key was read.
+- Tier 1 parity **94.8% -> 100.0%**; all three tiers and all 46 modules now report **100.0%**.
+
+### 2. Two ladders contradicted their own packages
+- `06-robotics.T1.06a` said to hold the final pose "once $t \ge T$", but its suite asks for the cubic's terminal deceleration at exactly $t = T$ and the page's own full solution clamps only for $t > T$. The Starter TODO and the Common-mistakes row now say $t > T$ and name $-6\Delta q/T^2$.
+- `07-systems.T1.07a`'s refusal item covered a "zero or negative phase budget" (readable as the total); the suite also rejects `(-1.0, 1.0, 1.0)`, a negative stage whose sum is positive. The item now names the negative stage.
+- Neither package needed a code fix beyond those spec details, and no assertion changed: the suites already tested both behaviours.
+
+### 3. Verification
+- `module_parity --check` green after regenerating `docs/coverage-table.md` (100.0% overall, ratchet held), `validate_modules` exit 0, coverage gate 46/46 `unstated: 0`, `lint_modules` 46/46, `run_exercise --only` green for all eleven packages.
+
 ## [2026-10-17] — Run 55: Tier 3 Closed at 100%
 
 ### 1. The last four rows
