@@ -25,7 +25,7 @@ flowchart LR
 | `00` | 12 | 100% | 100% | 100% | 96% | **99.4%** | 12 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `01` | 7 | 100% | 100% | 100% | 71% | **95.7%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `02` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `03` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `03` | 3 | 100% | 100% | 100% | 83% | **97.5%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `04` | 7 | 100% | 100% | 100% | 86% | **97.9%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `05` | 5 | 100% | 100% | 100% | 60% | **94.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `06` | 5 | 100% | 100% | 100% | 80% | **97.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
@@ -38,9 +38,9 @@ flowchart LR
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **94.8%** |
 | Tier 2 | 18 | **100.0%** |
-| Tier 3 | 12 | **95.0%** |
+| Tier 3 | 12 | **95.6%** |
 
-## Per module (46 modules, overall **96.9%**)
+## Per module (46 modules, overall **97.1%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -68,7 +68,7 @@ flowchart LR
 | `02-mechanics.T3.02a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `03-sensors.T1.03a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `03-sensors.T2.03a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `03-sensors.T3.03a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `03-sensors.T3.03a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `04-embedded.T1.04a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `04-embedded.T1.04b` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `04-embedded.T2.04a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
@@ -157,7 +157,7 @@ not demonstrated learner mastery.
 | `02-mechanics.T3.02a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `03-sensors.T1.03a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `03-sensors.T2.03a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
-| `03-sensors.T3.03a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `03-sensors.T3.03a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `04-embedded.T1.04a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T1.04b` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T2.04a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |

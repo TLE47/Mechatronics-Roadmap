@@ -68,6 +68,7 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `04-embedded.T3.04a` | 2026-10-17 | 2 | 0 | none | yes | - |
 | `06-robotics.T3.06b` | 2026-10-17 | 1 | 0 | none | no | - |
 | `08-capstones.T3.07a` | 2026-10-17 | 3 | 0 | tool | yes | - |
+| `03-sensors.T3.03a` | 2026-10-17 | 2 | 0 | none | yes | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -330,6 +331,25 @@ page's block by one name makes the validator report it by name.
 read the two lists as paired sums when the docstring says they are separate (`e = sum |b_i| + nsig
 sqrt(sum sigma_i^2)`), and my empty-budget guard tested for *both* lists empty when either one is
 refused. Both facts were on the page already; the correction took one round.
+
+### `03-sensors.T3.03a`: the rail check needs the tests' slack
+
+| Standard | Value |
+| :--- | :--- |
+| Reference solution tested | met (34 cases: 27 behaviour, 7 transfer) |
+| Learner attempt passes from the hints alone | met after one fix |
+| Gate score | 8/8, answered blind |
+| Author first pass | 2 minutes, 0 hints |
+| Delayed transfer | pending |
+
+**What this round found.** One failure, and it is a nice one: `svpwm_duties` refuses a command that
+does not fit in the rail, so the natural guard is `0 <= d <= 1`. But $V_{\text{bus}}/\sqrt{3}$ places a
+leg *exactly* on $1.0$, and the sinusoid sampled at that limit lands on $1.0 \pm 10^{-16}$, so the
+strict guard refused a command that genuinely fits - the transfer test "the hexagon limit holds all
+the way round" caught it, and it allows $\pm 10^{-9}$. The refusal item said "a command whose envelope
+does not fit" without saying how to compare at the boundary; a sixth ladder item now states it, with
+the counterexample that must still raise (a $25\text{ V}$ envelope on a $24\text{ V}$ bus). Every guard
+in item 5 was otherwise written straight from the page.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

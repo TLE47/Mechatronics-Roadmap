@@ -11,6 +11,17 @@ flowchart LR
 
 ---
 
+## [2026-10-17] — Run 53: `03-sensors.T3.03a` and the Rail Boundary
+
+### 1. The module dogfooded
+- `03-sensors.T3.03a`: 34 cases (27 behaviour, 7 transfer), Gate **8/8 answered blind**, 2 minutes, 0 hints. Row and section in `docs/dogfood-log.md`.
+
+### 2. A guard that was right in form and wrong at the boundary
+- `svpwm_duties` must refuse a command past the rail, so `0 <= d <= 1` reads correct - but $V_{\text{bus}}/\sqrt{3}$ sits a leg exactly on $1.0$ and the sampled sinusoid lands on $1.0 \pm 10^{-16}$. The transfer test allows $\pm 10^{-9}$ and caught the strict guard. A sixth ladder item states the slack and the counterexample that must still raise (25 V on a 24 V bus).
+
+### 3. Verification
+- `validate_modules` exit 0, gate `unstated: 0`, page test 46/46, `lint_modules` 46/46, `module_parity --check`, `run_exercise --only 03-sensors.T3.03a`.
+
 ## [2026-10-17] — Run 52: The Page's Scaffold Was Stale, Across Nine Pages
 
 ### 1. `08-capstones.T3.07a` dogfooded
