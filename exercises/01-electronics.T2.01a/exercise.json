@@ -1,0 +1,31 @@
+{
+  "id": "01-electronics.T2.01a",
+  "module": "modules/01-electronics.T2.01a.md",
+  "title": "The bidirectional shunt stage, its clipping current, Kelvin gain error and CMRR",
+  "requires": [
+    "shunt_adc_voltage(i_amp, r_shunt, gain=20.0, v_ref=1.65) -> V",
+    "shunt_current_from_adc(v_adc, r_shunt, gain=20.0, v_ref=1.65) -> A",
+    "max_measurable_current(v_ref, v_rail, gain, r_shunt) -> A",
+    "kelvin_gain_error_pct(r_shunt, r_trace) -> %",
+    "cmrr_input_error_v(delta_v_cm, cmrr_db) -> V",
+    "cmrr_current_error_a(delta_v_cm, cmrr_db, r_shunt) -> A",
+    "adc_code(v_adc, v_rail=3.3, bits=12) -> counts"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "reference_dropped": ["test_behavior.ShuntStageTests.test_the_worked_plus_25_amps"],
+    "kelvin_charges_one_pad": ["test_behavior.KelvinTests.test_the_worked_40_percent"],
+    "cmrr_amplifies": ["test_behavior.CmrrTests.test_the_93_db_48_volt_residue"],
+    "max_current_uses_rail_only": ["test_behavior.ShuntStageTests.test_the_exercise_33_amps"],
+    "adc_code_uses_4096": ["test_behavior.AdcTests.test_the_worked_code_3909"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.01-electronics.T2.01a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/01-electronics.T2.01a/starter.py python3 -m unittest discover -s exercises/01-electronics.T2.01a -p 'test_*.py'"
+  }
+}

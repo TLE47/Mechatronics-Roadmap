@@ -75,6 +75,16 @@ omega=251.33 rad/s, P=113.10 W, tau_RC=1.00 ms
 A $48\text{ V}$ supply delivers $I = 15\text{ A}$ through a PCB trace of resistance $R = 12\text{ m}\Omega$ ($12\times 10^{-3}\,\Omega$). Compute the voltage drop $V_{\text{drop}} = I R$ in volts ($\text{V}$) and the trace heat dissipation $P_{\text{loss}} = I^2 R$ in watts ($\text{W}$). Expected result: `V_drop = 0.18 V` and `P_loss = 2.70 W` (tolerance $\pm 10^{-6}$).
 - **If your result differs:** Check that you converted $12\text{ m}\Omega$ to $0.012\,\Omega$ (`12e-3`) before multiplying by $15^2 = 225\text{ A}^2$.
 
+### Graded package - prefixes, the trace and the unit algebra
+[`exercises/00-foundations.T1.00c/`](../exercises/00-foundations.T1.00c/) turns this section into a test. `starter.py` holds seven holes: `rpm_to_rad_s` (the $2\pi/60$ factor), `prefix_scale` (milli, micro, nano, kilo, mega, and a refusal for a prefix that is not in the table), `trace_drop_v` ($IR$), `trace_loss_w` ($I^2R$), `rc_time_constant_s` ($RC$, in seconds), `shaft_power_w` ($\tau\omega$) and `loop_period_us` ($1/f$ in microseconds). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T1.00c/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T1.00c -p 'test_*.py'
+```
+
+**31 tests.** The conversion is checked at the worked example's $2400\text{ RPM}$, at the Skip test's $3000\text{ RPM}$ and at $60\text{ RPM} = 2\pi\text{ rad/s}$, so a factor of $60$ fails; the trace is checked at the exercise's $0.18\text{ V}$ and $2.7\text{ W}$ and at the Skip test's $100\text{ mV}$ shunt, so a loss computed as $IR$ fails; the prefix table is checked at $450\text{ mN}\cdot\text{m}$, $100\text{ nF}$ and $1\,\mu = 10^{-6}$, so nano mapped to $10^{-6}$ fails; the filter is checked at the worked example's $1\text{ ms}$; and the loop period at the Skip test's $40\,\mu\text{s}$. The transfer suite runs the plant's own constants: its $1\text{ ms}$ tick is exactly the $10\text{ k}\Omega$/$100\text{ nF}$ time constant, its $4096$-count encoder at one turn per second is $60\text{ RPM}$, its $2.5\text{ N}\cdot\text{m}$ clamp is $2500\text{ mN}\cdot\text{m}$, and the clamp at $100\text{ RPM}$ delivers $26.179939\text{ W}$. Five planted faults - `rpm_multiplies_by_60`, `nano_is_micro`, `loss_forgets_the_square`, `time_constant_in_milliseconds`, `period_in_milliseconds` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Python Arithmetic & Functions*) and [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Lists & Arrays*).
   - **Core Concepts to Review First:** SI prefix powers of ten ($\text{milli} = 10^{-3}, \text{micro} = 10^{-6}, \text{kilo} = 10^3$) and RPM-to-$\text{rad/s}$ factor-label cancellation ($\omega = \text{RPM} \times \frac{2\pi}{60}$) in `## 3. Formalization` (Items 1–3) and `## 4. Worked example` above.

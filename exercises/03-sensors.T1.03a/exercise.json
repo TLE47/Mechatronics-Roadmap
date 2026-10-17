@@ -1,0 +1,32 @@
+{
+  "id": "03-sensors.T1.03a",
+  "module": "modules/03-sensors.T1.03a.md",
+  "title": "Back-EMF, pole pairs and the quadrature encoder",
+  "requires": [
+    "back_emf(ke_v_s_rad, omega_m_rad_s) -> V",
+    "winding_current(v_term_v, omega_m_rad_s, ke_v_s_rad, r_ohm) -> A",
+    "motor_torque(kt_nm_a, current_a) -> N*m",
+    "pole_pairs(n_poles) -> p",
+    "electrical_angle(theta_m_rad, p) -> rad in [0, 2*pi)",
+    "quadrature_cpr(n_lines) -> counts/rev",
+    "angle_resolution(counts_per_rev) -> (rad, deg) per count",
+    "quad_step(prev_ab, curr_ab) -> +1 | -1 | 0"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "winding_current_ignores_bemf": ["test_behavior.CurrentTests.test_the_formalization_current"],
+    "pole_pairs_counts_poles": ["test_behavior.PolePairTests.test_the_worked_pole_pairs"],
+    "electrical_angle_unwrapped": ["test_behavior.ElectricalAngleTests.test_the_gate_test_electrical_angle"],
+    "cpr_equals_lines": ["test_behavior.EncoderTests.test_the_worked_quadrature_cpr"],
+    "quad_step_accepts_a_two_bit_jump": ["test_behavior.QuadratureTests.test_a_two_bit_jump_is_not_a_step"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.03-sensors.T1.03a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/03-sensors.T1.03a/starter.py python3 -m unittest discover -s exercises/03-sensors.T1.03a -p 'test_*.py'"
+  }
+}

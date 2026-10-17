@@ -17,6 +17,7 @@ est_hours: 3.0
 hardware_required: false
 safety_level: low
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -87,6 +88,16 @@ tau=1.0 ms, fc=159.15 Hz, Unclamped flyback=12000 V vs Clamped=12.7 V
 Calculate the minimum bulk decoupling capacitance $C_{\min}$ in microfarads ($\mu\text{F}$) needed to keep a $12.0\text{ V}$ motor bus from drooping by more than $\Delta V = 0.25\text{ V}$ during a $\Delta I = 3.0\text{ A}$ current transient lasting $\Delta t = 20\ \mu\text{s}$ ($20 \times 10^{-6}\text{ s}$). Verify $C_{\min} = \frac{\Delta I \cdot \Delta t}{\Delta V} = 240.0\ \mu\text{F}$.
 - **If your result differs:** Check your unit conversion from farads to microfarads: $\frac{3.0 \times 20\times 10^{-6}}{0.25} = 0.00024\text{ F} = 240.0\ \mu\text{F}$.
 
+### Graded package - the time constant, the droop and the spike
+[`exercises/01-electronics.T1.01d/`](../exercises/01-electronics.T1.01d/) turns this section into a test. `starter.py` holds seven holes: `rc_time_constant`, `rc_voltage`, `rc_cutoff_hz` (the $2\pi$), `bulk_capacitance_f` (the transient time), `capacitor_energy` (the half), `inductor_energy` and `flyback_voltage` ($L\Delta I/\Delta t$, in volts not millivolts). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/01-electronics.T1.01d/starter.py \
+  python3 -m unittest discover -s exercises/01-electronics.T1.01d -p 'test_*.py'
+```
+
+**29 tests.** The charging curve is checked at one time constant ($63.2\%$), five ($99.3\%$) and at the Break-it droop ($100\ \mu\text{F}$ sags $0.60\text{ V}$, $470\ \mu\text{F}$ $0.128\text{ V}$), so a linear ramp fails; the cutoff is checked against $1/(2\pi RC)$, so a missing $2\pi$ fails by $6.28\times$; the bulk value is checked at the exercise's $240\ \mu\text{F}$; the energies carry the $\tfrac12$; and the unclamped $12\text{ kV}$ spike is checked against a $12.7\text{ V}$ clamped node. The transfer suite puts **the plant's own constants** through the same laws: a $1\ \mu\text{F}$ capacitor with $159.155\ \Omega$ has its corner exactly on the plant's $1\text{ kHz}$ tick, the shoulder's $I_1/B_1 = 0.2\text{ s}$ mechanical lag obeys the same $63.2\% / 99.3\%$ law, and the elbow's $I_2/B_2$ is quicker. Five planted faults - `cutoff_forgets_2pi`, `charging_linear_ramp`, `bulk_missing_time`, `capacitor_energy_forgets_half`, `flyback_milli_dropped` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (SI Prefixes $\mu\text{F}, \text{mH}, \text{ns}$) and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Stored Energy*).
@@ -103,6 +114,8 @@ Swap the bulk reservoir for the wrong part and diagnose the droop from the measu
 
 ## 6. Simulation path
 Simulate an RC step response and an inductive coil turn-off with and without a flyback diode in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) (`Circuits -> Inductors -> Inductive Kickback`).
+
+The graded package is also a workbench entry: **Modules -> `EX.01-electronics.T1.01d`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). When wiring Electrolytic bulk capacitors ($100\text{–}470\ \mu\text{F}$) in Step 1.2 (`01-electronics.T1.02`), always align the negative stripe (`-`) with $\text{GND}$ and choose a voltage rating $\ge 2\times V_{\text{bus}}$ (e.g., $\ge 25\text{ V}$ capacitor for a $12\text{ V}$ bus):
 ```text

@@ -86,6 +86,17 @@ I_stall=3.0 A, w_noload=200 rad/s, w_e=1400 rad/s, quad_count=5
 A $2208$ gimbal BLDC motor has $12$ stator slots and $14$ rotor magnet poles (`12N14P`). Compute (a) the number of pole pairs $p = N_{\text{poles}} / 2$, (b) the mechanical angle $\theta_m$ in degrees corresponding to one full $360^\circ$ electrical cycle ($360^\circ / p$), and (c) the encoder angle resolution $\Delta\theta_{\text{deg}} = 360^\circ / 2^{14}$ of a 14-bit (`16384` counts/rev) `AS5048A` magnetic encoder. Verify $p = 7$, $\theta_m = 51.4286^\circ$ ($\pm 10^{-3}$), and $\Delta\theta_{\text{deg}} = 0.02197^\circ$ ($\pm 10^{-4}$).
 - **If your result differs:** Remember that `12N14P` means `12` stator teeth and `14` rotor magnets ($7$ North + $7$ South), so $p = 14 / 2 = 7$ pole pairs (not $14$).
 
+### Graded package - back-EMF, pole pairs and the quadrature count
+[`exercises/03-sensors.T1.03a/`](../exercises/03-sensors.T1.03a/) turns this section into a test. `starter.py` holds eight holes: `back_emf` (`Ke * omega`), `winding_current` (`(V_term - Ke omega) / R`, negative when generating), `motor_torque`, `pole_pairs` (`N_poles / 2`, not `N_poles`), `electrical_angle` (wrapped into one electrical cycle), `quadrature_cpr` (`4 N_lines`), `angle_resolution` and `quad_step` (one bit per edge, and a two-bit jump is not a step). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/03-sensors.T1.03a/starter.py \
+  python3 -m unittest discover -s exercises/03-sensors.T1.03a -p 'test_*.py'
+```
+
+**48 tests.** The exercise's $p = 7$, $51.4286^\circ$ and $0.02197^\circ$ are checked alongside the worked example's 3.0 A stall current, 200 rad/s no-load speed and 5-count quadrature walk, the Skip test's 2.4 A and 2000 CPR, and the Gate test's 0.36 N*m, 300 rad/s and wrapped 0.7168 rad. The transfer suite runs **the plant's own encoder and actuator**: its 12-bit AS5600 is exactly a 1024-line encoder decoded $4\times$ ($4096$ counts, $2\pi/4096$ rad per count), at the plant's 1 kHz tick a single count lasts only 1.534 rad/s of shaft speed while the module's 200 rad/s passes ~130 counts per tick, the plant's `wrap_pi` is the same angle as one pole pair, the $-0.15\text{ N}\cdot\text{m}$ disturbance pulse is 2.5 A of braking current inside the 3.0 A stall, and the 2.5 N*m clamp needs 41.7 A that a 12 V / 4 $\Omega$ winding cannot supply. Five planted faults - `winding_current_ignores_bemf`, `pole_pairs_counts_poles`, `electrical_angle_unwrapped`, `cpr_equals_lines`, `quad_step_accepts_a_two_bit_jump` - each fail the test named for them.
+
+The package is also a workbench entry: **Modules -> `EX.03-sensors.T1.03a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line.
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (SI Units & RPM-to-$\text{rad/s}$), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Radians & Trigonometry*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Electromechanical Power*).

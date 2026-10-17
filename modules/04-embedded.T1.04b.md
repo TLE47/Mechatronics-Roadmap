@@ -87,6 +87,16 @@ ctrl_runs=10, telem_runs=1, final_state=FAULT
 Calculate the maximum allowable ISR execution time $t_{\text{exec,max}}$ in microseconds ($\mu\text{s}$) if a $f_{\text{isr}} = 10\text{ kHz}$ ($T_{\text{isr}} = 100\ \mu\text{s}$) current-loop ISR must consume no more than $U_{\max} = 25\%$ ($0.25$) of total CPU time so that $75\%$ remains for telemetry and state machines. Verify $t_{\text{exec,max}} = 25.0\ \mu\text{s}$.
 - **If your result differs:** Multiply the period $T_{\text{isr}} = 10^6 / 10000 = 100\ \mu\text{s}$ by $0.25$ ($100 \times 0.25 = 25.0\ \mu\text{s}$).
 
+### Graded package - the scheduler, the ISR budget and the latched fault
+[`exercises/04-embedded.T1.04b/`](../exercises/04-embedded.T1.04b/) turns this section into a test. `starter.py` holds eight holes: `elapsed_us` (subtract first, *then* mask to the timer width), `tick_due`, `next_deadline_us` (advance on the grid, never resynchronise to `now`), `isr_utilization_pct` (the $10^{-6}$), `max_isr_exec_us`, `fault_latency_us`, `ticks_in` and `fsm_step` (FAULT latches and forces `pwm = 0`). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/04-embedded.T1.04b/starter.py \
+  python3 -m unittest discover -s exercises/04-embedded.T1.04b -p 'test_*.py'
+```
+
+**39 tests.** The elapsed time is checked at the $3015 - 2000 = 1015\ \mu\text{s}$ worked example and across both wraps ($12 - 65520$ is $28$ on a 16-bit counter and $4294901788$ on a 32-bit one), so a difference taken without the mask fails; the deadline is checked at exactly one period, so `>` instead of `>=` loses that tick; the $45\ \mu\text{s}$/$1\text{ kHz}$ utilization, the $3.5\%$ Skip test, the $25\ \mu\text{s}$ exercise budget and the $150\ \mu\text{s}$ debounce latency each fail on a dropped $10^{-6}$ or a percentage read as a fraction; and the FSM is checked at `IDLE -> HOMING -> RUN`, at the current limit itself (no fault) and after the current recovers, so a FAULT that clears itself fails. The transfer suite runs **the plant's own clock**: `plant.DT` is the $1\text{ kHz}$ period, one second is `plant.TICKS` ticks, a $10\text{ kHz}$ loop fits ten times per tick with $975\ \mu\text{s}$ left over, and the uint32 wrap lands back on the same $1000\ \mu\text{s}$ grid. Five planted faults - `rollover_not_masked`, `tick_due_uses_greater_than`, `isr_microseconds_dropped`, `isr_budget_ignores_percent`, `fsm_fault_not_latched` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Loops, Arrays & SI Timing Units*).

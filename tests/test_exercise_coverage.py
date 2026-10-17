@@ -1,10 +1,9 @@
-"""Tests for `scripts/check_exercise_coverage.py` - the ratchet that keeps the gap from reopening.
+"""Tests for `scripts/check_exercise_coverage.py` - the wall that keeps the gap from reopening.
 
-The gate has exactly four jobs, and each one has a case here:
-  * a bridge module with no package and no baseline entry fails the build;
-  * the same module passes while it is recorded in the baseline;
-  * a baseline entry that has since gained a package fails until it is removed;
-  * a package missing one of its required files fails, and cannot be recorded as "allowed".
+The gate has exactly three jobs, and each one has a case here:
+  * a bridge module with no package fails the build;
+  * a package missing one of its required files fails the build;
+  * a complete set of packages passes, and `--dry-run` reports without failing.
 """
 
 import contextlib
@@ -50,26 +49,20 @@ class CoverageGateTests(unittest.TestCase):
         self.tmp = tempfile.mkdtemp()
         self.modules = os.path.join(self.tmp, "modules")
         self.exercises = os.path.join(self.tmp, "exercises")
-        self.docs = os.path.join(self.tmp, "docs")
-        for path in (self.modules, self.exercises, self.docs):
+        for path in (self.modules, self.exercises):
             os.makedirs(path)
-        self.saved = (gate.MODULES_DIR, gate.EXERCISES_DIR, gate.BASELINE)
+        self.saved = (gate.MODULES_DIR, gate.EXERCISES_DIR)
         gate.MODULES_DIR = self.modules
         gate.EXERCISES_DIR = self.exercises
-        gate.BASELINE = os.path.join(self.docs, "exercise-baseline.json")
         self.addCleanup(self._restore)
 
     def _restore(self):
-        gate.MODULES_DIR, gate.EXERCISES_DIR, gate.BASELINE = self.saved
+        gate.MODULES_DIR, gate.EXERCISES_DIR = self.saved
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def module(self, module_id):
         with open(os.path.join(self.modules, module_id + ".md"), "w") as handle:
             handle.write("# fixture\n")
-
-    def baseline(self, ids):
-        with open(gate.BASELINE, "w") as handle:
-            json.dump({"allowed_missing": ids}, handle)
 
     def run_gate(self, *args):
         out, err = io.StringIO(), io.StringIO()
@@ -77,64 +70,68 @@ class CoverageGateTests(unittest.TestCase):
             code = gate.main(list(args))
         return code, out.getvalue(), err.getvalue()
 
-    def test_a_new_gap_fails(self):
+    def test_a_module_with_no_package_fails(self):
         self.module("01-electronics.T1.01c")
-        self.baseline([])
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
-        self.assertIn("new gap: 01-electronics.T1.01c", err)
+        self.assertIn("01-electronics.T1.01c ships no graded exercise package", err)
 
-    def test_a_baselined_gap_passes(self):
-        self.module("01-electronics.T1.01c")
-        self.baseline(["01-electronics.T1.01c"])
-        self.assertEqual(self.run_gate()[0], 0)
-
-    def test_a_stale_baseline_entry_fails(self):
+    def test_a_complete_package_passes(self):
         self.module("01-electronics.T1.01c")
         write_package(self.exercises, "01-electronics.T1.01c")
-        self.baseline(["01-electronics.T1.01c"])
-        code, _out, err = self.run_gate()
-        self.assertEqual(code, 1)
-        self.assertIn("stale baseline entry", err)
+        self.assertEqual(self.run_gate()[0], 0)
 
-    def test_an_incomplete_package_fails_even_when_baselined(self):
+    def test_an_incomplete_package_fails(self):
         self.module("01-electronics.T1.01c")
         write_package(self.exercises, "01-electronics.T1.01c", complete=False)
-        self.baseline(["01-electronics.T1.01c"])
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
         self.assertIn("missing test_transfer.py", err)
 
-    def test_update_baseline_refuses_an_incomplete_package(self):
+    def test_one_gap_among_many_graded_modules_still_fails(self):
+        for module_id in ("01-electronics.T1.01a", "01-electronics.T1.01b"):
+            self.module(module_id)
+            write_package(self.exercises, module_id)
         self.module("01-electronics.T1.01c")
-        write_package(self.exercises, "01-electronics.T1.01c", complete=False)
-        self.baseline([])
-        code, _out, err = self.run_gate("--update-baseline")
-        self.assertEqual(code, 2)
-        self.assertIn("refusing", err)
+        code, out, err = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("2/3 bridge modules graded", out)
+        self.assertIn("01-electronics.T1.01c", err)
 
-    def test_update_baseline_records_only_the_real_gaps(self):
+    def test_a_manifest_with_the_wrong_id_fails(self):
         self.module("01-electronics.T1.01c")
-        self.module("02-mechanics.T1.02a")
-        write_package(self.exercises, "02-mechanics.T1.02a")
-        self.baseline([])
-        code, _out, _err = self.run_gate("--update-baseline")
-        self.assertEqual(code, 0)
-        with open(gate.BASELINE) as handle:
-            recorded = json.load(handle)["allowed_missing"]
-        self.assertEqual(recorded, ["01-electronics.T1.01c"])
-
-    def test_a_baseline_entry_for_a_missing_module_fails(self):
-        self.module("01-electronics.T1.01c")
-        self.baseline(["01-electronics.T1.01c", "99-ghost.T1.99z"])
+        write_package(self.exercises, "01-electronics.T1.01c")
+        path = os.path.join(self.exercises, "01-electronics.T1.01c", "exercise.json")
+        with open(path) as handle:
+            manifest = json.load(handle)
+        manifest["id"] = "01-electronics.T1.99z"
+        with open(path, "w") as handle:
+            json.dump(manifest, handle)
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
-        self.assertIn("does not exist", err)
+        self.assertIn("not the module id", err)
+
+    def test_a_package_with_no_planted_fault_fails(self):
+        self.module("01-electronics.T1.01c")
+        write_package(self.exercises, "01-electronics.T1.01c")
+        os.remove(os.path.join(self.exercises, "01-electronics.T1.01c", "faults", "broken.py"))
+        code, _out, err = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("faults/ holds no planted fault", err)
+
+    def test_dry_run_reports_the_gap_without_failing(self):
+        self.module("01-electronics.T1.01c")
+        code, _out, err = self.run_gate("--dry-run")
+        self.assertEqual(code, 0)
+        self.assertIn("would fail: 1 finding(s)", err)
 
     def test_the_repository_itself_passes(self):
+        gate.MODULES_DIR = os.path.join(ROOT, "modules")
+        gate.EXERCISES_DIR = os.path.join(ROOT, "exercises")
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             self.assertEqual(gate.main([]), 0)
+        self.assertIn("44/44 bridge modules graded", out.getvalue())
 
 
 if __name__ == "__main__":

@@ -1,0 +1,31 @@
+{
+  "id": "02-mechanics.T3.02a",
+  "module": "modules/02-mechanics.T3.02a.md",
+  "title": "Screw axes, the notch flexure and the two-pass Newton-Euler recursion",
+  "requires": [
+    "screw_axis(omega, q) -> [omega, v] with v = -omega x q",
+    "spatial_power(twist, wrench) -> W",
+    "flexure_stiffness(e_pa, b_m, t_m, r_m) -> N*m/rad",
+    "flexure_stress(k_theta, theta_rad, b_m, t_m, r_m) -> Pa",
+    "thickness_scale(factor) -> K_theta ratio",
+    "rnea_2link(i1, i2, ddq1, ddq2) -> (tau_1, tau_2) in N*m",
+    "passivity_quadratic_form(m_dot, c, dq) -> dq^T (Mdot - 2C) dq"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "screw_axis_forgets_minus": ["test_behavior.ScrewAxisTests.test_the_exercise_axis"],
+    "power_uses_linear_only": ["test_behavior.PowerTests.test_pure_rotation_does_work"],
+    "stiffness_exponent_is_t2": ["test_behavior.FlexureTests.test_the_worked_stiffness"],
+    "stress_drops_concentration": ["test_behavior.FlexureTests.test_the_worked_stress"],
+    "rnea_uncoupled_second_link": ["test_behavior.RneaTests.test_the_worked_two_link_torques"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.02-mechanics.T3.02a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/02-mechanics.T3.02a/starter.py python3 -m unittest discover -s exercises/02-mechanics.T3.02a -p 'test_*.py'"
+  }
+}

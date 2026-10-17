@@ -1,0 +1,32 @@
+{
+  "id": "04-embedded.T3.04a",
+  "module": "modules/04-embedded.T3.04a.md",
+  "title": "Center-aligned ARR, the Q1.31 CORDIC word and a wait-free seqlock",
+  "requires": [
+    "center_aligned_arr(f_tim_hz, f_pwm_hz) -> int",
+    "pwm_frequency(f_tim_hz, arr) -> Hz",
+    "low_side_window_ns(d_max, t_dead_ns, f_pwm_hz) -> ns",
+    "q31_encode(x) -> int32",
+    "q31_decode(word) -> float",
+    "angle_to_q31(theta_rad) -> int32",
+    "seqlock_valid(s1, s2) -> bool",
+    "isr_cpu_percent(wcet_us, period_us) -> %"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "arr_forgets_the_half_period": ["test_behavior.TimerTests.test_the_worked_arr"],
+    "dead_time_counted_once": ["test_behavior.WindowTests.test_the_worked_window"],
+    "q31_scale_is_2_pow_30": ["test_behavior.Q31Tests.test_the_exercise_minus_half"],
+    "seqlock_ignores_parity": ["test_behavior.SeqLockTests.test_an_odd_snapshot_is_torn"],
+    "cpu_percent_forgets_the_hundred": ["test_behavior.CpuTests.test_the_gate_cpu_percentage"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.04-embedded.T3.04a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/04-embedded.T3.04a/starter.py python3 -m unittest discover -s exercises/04-embedded.T3.04a -p 'test_*.py'"
+  }
+}

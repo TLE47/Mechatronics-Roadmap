@@ -1,0 +1,33 @@
+{
+  "id": "01-electronics.T2.01b",
+  "module": "modules/01-electronics.T2.01b.md",
+  "title": "Parasitic loop inductance, bootstrap gate drive and the 48 V pre-charge",
+  "requires": [
+    "v_peak_turnoff(v_bus, l_loop_nh, di_amp, dt_ns) -> V",
+    "max_loop_inductance_nh(v_bus, v_peak_max, di_amp, dt_ns) -> nH",
+    "gate_drive_current_a(qg_nc, tr_ns) -> A",
+    "bootstrap_gate_v(v_sw, v_drv) -> V",
+    "precharge_peak_a(v_bus, r_pre) -> A",
+    "precharge_time_s(r_pre, c_bus, taus=5.0) -> s",
+    "bus_energy_j(c_bus, v_bus) -> J"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "dt_in_microseconds": ["test_behavior.TurnOffTests.test_the_worked_sloppy_board"],
+    "inductance_scale_dropped": ["test_behavior.TurnOffTests.test_the_gate_test_spike"],
+    "max_inductance_ignores_headroom": ["test_behavior.HeadroomTests.test_the_exercise_six_nanohenries"],
+    "gate_current_milli": ["test_behavior.GateDriveTests.test_the_skip_test_one_and_a_half"],
+    "bootstrap_forgets_swing": ["test_behavior.GateDriveTests.test_the_bootstrap_rides_the_phase_node"],
+    "bus_energy_forgets_half": ["test_behavior.EnergyTests.test_the_skip_test_bus_energy"],
+    "precharge_one_tau": ["test_behavior.PrechargeTests.test_the_worked_settle_time"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.01-electronics.T2.01b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/01-electronics.T2.01b/starter.py python3 -m unittest discover -s exercises/01-electronics.T2.01b -p 'test_*.py'"
+  }
+}

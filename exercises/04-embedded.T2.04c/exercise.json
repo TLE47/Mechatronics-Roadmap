@@ -1,0 +1,32 @@
+{
+  "id": "04-embedded.T2.04c",
+  "module": "modules/04-embedded.T2.04c.md",
+  "title": "Zephyr static RAM, devicetree binding, priority order and k_mutex inheritance",
+  "requires": [
+    "align_stack(size_b, align=8) -> aligned bytes",
+    "static_ram_bytes(stacks, tcb_bytes=128, msgq=None) -> B",
+    "device_dt_ready(node, prj_conf) -> bool",
+    "binding_problems(nodes, prj_conf) -> [label]",
+    "outranks(priority_a, priority_b) -> bool",
+    "effective_priority(priority_owner, priority_waiter) -> int",
+    "worst_case_response_us(c_high, b_holder, c_intermediate=0.0) -> us"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "stack_align_floor": ["test_behavior.AlignmentTests.test_rounding_is_up_never_down"],
+    "msgq_not_counted": ["test_behavior.StaticRamTests.test_the_worked_example_static_ram"],
+    "dt_ignores_kconfig": ["test_behavior.BindingTests.test_an_okay_node_with_its_driver_off_is_not_ready"],
+    "priority_higher_number_wins": ["test_behavior.PriorityTests.test_the_comparison_is_not_reversed"],
+    "inheritance_uses_max": ["test_behavior.InheritanceTests.test_the_exercise_elevation"],
+    "response_ignores_intermediate": ["test_behavior.ResponseTests.test_the_exercise_response_with_a_semaphore"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.04-embedded.T2.04c",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/04-embedded.T2.04c/starter.py python3 -m unittest discover -s exercises/04-embedded.T2.04c -p 'test_*.py'"
+  }
+}

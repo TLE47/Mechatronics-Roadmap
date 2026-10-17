@@ -1,0 +1,33 @@
+{
+  "id": "08-capstones.T3.07a",
+  "module": "modules/08-capstones.T3.07a.md",
+  "title": "RSS spatial error budget, end-to-end latency as phase margin, and the five-domain bring-up sign-off",
+  "requires": [
+    "rss(sigmas) -> mm",
+    "systematic_sum(biases) -> mm",
+    "error_budget_3sigma(biases, sigmas, sensitivities=None, nsig=3.0) -> mm",
+    "variance_fraction(index, sigmas, sensitivities=None) -> 0..1",
+    "zoh_delay_us(ts_us) -> us",
+    "total_latency_s(tau_sens_us, tau_bus_us, tau_filt_us, tau_comp_us, ts_us) -> s",
+    "net_phase_margin_deg(pm0_deg, w_gc_rad_s, tau_total_s) -> deg",
+    "max_allowable_delay_ms(dphi_max_rad, w_gc_rad_s) -> ms",
+    "capstone_signoff(e_3sig_mm, pm_net_deg, cpu_u, can_ohm, sto_cat3_ok) -> bool"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "rss_adds_linearly": ["test_behavior.SpatialBudgetTests.test_the_worked_rss"],
+    "systematic_forgets_abs": ["test_behavior.SpatialBudgetTests.test_a_negative_bias_still_costs_accuracy"],
+    "latency_forgets_zoh": ["test_behavior.LatencyTests.test_the_worked_total_delay"],
+    "phase_margin_forgets_radians": ["test_behavior.PhaseMarginTests.test_the_worked_net_margin"],
+    "signoff_ignores_sto": ["test_behavior.SignoffTests.test_the_sto_gate_is_mandatory"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.08-capstones.T3.07a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/08-capstones.T3.07a/starter.py python3 -m unittest discover -s exercises/08-capstones.T3.07a -p 'test_*.py'"
+  }
+}

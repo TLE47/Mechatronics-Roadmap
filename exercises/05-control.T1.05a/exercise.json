@@ -1,0 +1,31 @@
+{
+  "id": "05-control.T1.05a",
+  "module": "modules/05-control.T1.05a.md",
+  "title": "PID as a virtual spring, damper and bias, with saturation and anti-windup",
+  "requires": [
+    "tracking_error(r, y) -> rad",
+    "control_effort(r, y, dy, i_term, kp, kd) -> N*m",
+    "integral_step(i_prev, ki, e, dt) -> N*m",
+    "anti_windup_integral(i_prev, ki, e, dt, u_raw, u_max, i_max=None) -> N*m",
+    "saturate(u_raw, u_max) -> N*m",
+    "steady_state_sag(tau_g, kp) -> rad",
+    "arm_acceleration(torque, dq, tau_g, j, b) -> rad/s^2"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "effort_adds_the_damping": ["test_behavior.ControlEffortTests.test_the_worked_demand"],
+    "sag_multiplies_the_gain": ["test_behavior.SagTests.test_the_exercise_sag_and_angle"],
+    "integral_missing_dt": ["test_behavior.IntegralTests.test_the_gate_integral_update"],
+    "anti_windup_never_freezes": ["test_behavior.AntiWindupTests.test_the_gate_freeze"],
+    "saturate_clips_one_rail": ["test_behavior.SaturationTests.test_the_negative_rail_clips_too"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.05-control.T1.05a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/05-control.T1.05a/starter.py python3 -m unittest discover -s exercises/05-control.T1.05a -p 'test_*.py'"
+  }
+}

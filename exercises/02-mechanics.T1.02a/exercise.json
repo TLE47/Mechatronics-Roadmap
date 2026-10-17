@@ -1,0 +1,31 @@
+{
+  "id": "02-mechanics.T1.02a",
+  "module": "modules/02-mechanics.T1.02a.md",
+  "title": "Lever-arm gravity torque, static balance and the gear stage",
+  "requires": [
+    "gravity_torque(theta_rad, m_link, l_com, m_tip=0.0, l_total=0.0, g=9.81) -> N*m",
+    "balance_force(force_1, x_1, x_2) -> N",
+    "gear_ratio(z_driven, z_driver) -> N",
+    "gear_output_speed(omega_motor, ratio) -> rad/s",
+    "gear_output_torque(tau_motor, ratio, eta=1.0) -> N*m",
+    "mechanical_power(torque, omega) -> W",
+    "reflected_inertia(j_motor, ratio) -> kg*m^2"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "gravity_uses_sine": ["test_behavior.GravityTests.test_the_worked_horizontal_torque"],
+    "balance_divides_wrong": ["test_behavior.BalanceTests.test_the_skip_test_balancing_force"],
+    "gear_ratio_inverted": ["test_behavior.GearTests.test_the_exercise_ratio"],
+    "output_speed_multiplies": ["test_behavior.GearTests.test_the_exercise_output_speed"],
+    "torque_ignores_efficiency": ["test_behavior.GearTests.test_the_exercise_output_torque"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.02-mechanics.T1.02a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/02-mechanics.T1.02a/starter.py python3 -m unittest discover -s exercises/02-mechanics.T1.02a -p 'test_*.py'"
+  }
+}

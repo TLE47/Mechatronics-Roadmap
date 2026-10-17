@@ -50,10 +50,12 @@ separate columns alongside the delayed-transfer and independent-learner columns,
 empty. So a module at 100% means **100% of the requirements instrumented today**, not demonstrated
 learner retention, and a green number cannot be read as one.
 
-**Existence is gated too.** `scripts/check_exercise_coverage.py` fails the build when a bridge
-module ships no `exercises/<module>/` package, or ships an incomplete one, or when
-`docs/exercise-baseline.json` still lists a module that has since gained a package. The baseline is
-a ratchet: it can only shrink, and `--update-baseline` is the deliberate act of removing an entry.
+**Existence is gated too.** `scripts/check_exercise_coverage.py` fails the build when any bridge
+module ships no `exercises/<module>/` package, or ships one missing a required file, a valid
+manifest carrying the module's own id, or a planted fault. There is no baseline and no allow-list:
+all 44 bridge modules are graded today, and the count can only go up, because adding a module
+without its exercise is a red build rather than a silent gap. The gate is two orders of magnitude
+cheaper than the three-way check it guards — it reads the tree, it does not run the packages.
 
 Two ladder stages are measured by their **named marker**, not by a loose keyword, because a bare
 mention of "predict" is not a Predict step:

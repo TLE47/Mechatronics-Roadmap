@@ -96,6 +96,16 @@ Suppose an engineer replaces the $250\ \mu\text{s}$ low-pass filter in the $1\te
 - **If your result differs:** Multiply $150.0\text{ rad/s} \times 0.0034\text{ s} = 0.51\text{ rad}$, convert to degrees ($0.51 \times 180/\pi = 29.2208^\circ$), and subtract from $62.0^\circ$ ($32.78^\circ < 45^\circ \implies \text{NO-GO}$).
 
 
+### Graded package - the error budget, the delay and the sign-off
+[`exercises/08-capstones.T3.07a/`](../exercises/08-capstones.T3.07a/) turns this section into a test. `starter.py` holds nine holes: `rss`, `systematic_sum`, `error_budget_3sigma`, `variance_fraction`, `zoh_delay_us`, `total_latency_s`, `net_phase_margin_deg`, `max_allowable_delay_ms` and `capstone_signoff`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/08-capstones.T3.07a/starter.py \
+  python3 -m unittest discover -s exercises/08-capstones.T3.07a -p 'test_*.py'
+```
+
+**38 tests.** The $3\sigma$ budget is checked at the worked example's $0.4259\text{ mm}$ and the Gate test's $0.35\text{ mm}$, and a $-0.02\text{ mm}$ bias must still add $0.02\text{ mm}$ rather than cancel, so a linear sum or a signed sum each fail; the latency chain is checked at $1100\ \mu\text{s}$ and at the 10-tap filter's $3400\ \mu\text{s}$, so a chain that forgets the $500\ \mu\text{s}$ zero-order hold fails; the phase subtraction is checked in degrees at $52.55^\circ$, $32.78^\circ$ and $48.54^\circ$, so a raw radian result fails; and the sign-off is checked at the 4-of-5 `STO` case, an out-of-window $50\ \Omega$ bus, and the inclusive boundaries of all five limits. The transfer suite runs **the plant**: one count of its 12-bit encoder seen at the full $0.20\text{ m}$ reach is $0.3068\text{ mm}$, so $3\sigma$ is $0.9204\text{ mm}$ and the $0.50\text{ mm}$ capstone spec is already lost before any other source is counted; its $1\text{ kHz}$ tick is the worked $1000\ \mu\text{s}$ period and erodes $8.59^\circ$ at $150\text{ rad/s}$; and the $17^\circ$ between the nominal margin and the $45^\circ$ floor buys $1.978\text{ ms}$, which the module's filter swap spends nearly twice over. Five planted faults - `rss_adds_linearly`, `systematic_forgets_abs`, `latency_forgets_zoh`, `phase_margin_forgets_radians`, `signoff_ignores_sto` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Bode Phase Margin*), [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Root-Sum-Square Variance Summation*), and [`00-foundations.T3.00a`](00-foundations.T3.00a.md) (*Multi-Domain Power & Energy Balance*).
   - **Prerequisite Tier 3 Modules:** [`01-electronics.T3.02`](../01-electronics-and-power/README.md), [`02-mechanics.T3.03`](../02-mechanics-kinematics-dynamics/README.md), [`03-sensors.T3.04`](../03-sensors-and-actuators/README.md), [`04-embedded.T3.05`](../04-embedded-and-realtime/README.md), [`05-control.T3.06`](../05-control-and-estimation/README.md), and [`06-robotics.T3.07`](../06-robotics-and-autonomy/README.md).

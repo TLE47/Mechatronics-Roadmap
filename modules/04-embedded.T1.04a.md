@@ -72,9 +72,19 @@ Rollover delta=10, reg=0x08, struct_size=8 bytes
 ```
 
 ## 5. Exercise
-Start with register value `reg = 0x5A` (`0b01011010`). Write a Python expression that sets bit `6` (`1 << 6`) and clears bit `3` (`~(1 << 3)`), and verify the resulting integer is `0x72` (`114` in decimal, `0b01110010`).
+Start with register value `reg = 0x5A` (`0b01011010`). Write a Python expression that sets bit `6` (`1 << 6`) and clears bit `3` (`~(1 << 3)`), and verify the resulting integer is `0x52` (`82` in decimal, `0b01010010`). Bit `6` is already set in `0x5A`, so setting it changes nothing - the read-modify-write form has to keep that neighbour, not toggle it.
 - **If your result differs:** Check that bit indices are 0-based from the least-significant (rightmost) bit: bit `0` has weight $2^0 = 1$, bit `3` has weight $2^3 = 8$, and bit `6` has weight $2^6 = 64$.
 
+
+### Graded package - the width, the mask and the frame
+[`exercises/04-embedded.T1.04a/`](../exercises/04-embedded.T1.04a/) turns this section into a test. `starter.py` holds seven holes: `int_range` (the signed and unsigned bounds), `wrap_uint` (the width mask), `elapsed_unsigned` (subtract, then mask), `apply_bits` ($W \mid \text{set} \mathbin{\&} \sim\text{clear}$), `bit_is_set`, and `pack_telemetry`/`unpack_telemetry` for the 8-byte `<Hhf` frame. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/04-embedded.T1.04a/starter.py \
+  python3 -m unittest discover -s exercises/04-embedded.T1.04a -p 'test_*.py'
+```
+
+**38 tests.** The register edit is checked at the exercise's `0x5A -> 0x52` and the Skip test's `0x0F -> 11`, the rollover at the worked example's `10` and the Skip test's `9`, the frame at its exact little-endian bytes (`e8 03 00 fe 00 00 50 40`), and every guard at the boundary one past its own range. The transfer suite runs **the plant's own numbers**: its 12-bit encoder wraps at 4096 counts and the difference across that wrap is 16 counts, its 1 kHz tick is a uint16 millisecond counter where the 1000-tick run is 1000 ms, its $2.5\text{ N}\cdot\text{m}$ clamp is 2500 mN$\cdot$m inside an `int16_t`, and a config word keeps its neighbours when only the low twelve bits move. Five planted faults - `elapsed_no_mask`, `clear_forgets_the_tilde`, `int_range_signed_off_by_one`, `wrap_masks_a_byte`, `pack_big_endian` - each fail the test named for them.
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Variables, Loops & Functions*) and [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Indexing*).

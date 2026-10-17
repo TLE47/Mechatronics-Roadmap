@@ -1,0 +1,31 @@
+{
+  "id": "00-foundations.T1.00c",
+  "module": "modules/00-foundations.T1.00c.md",
+  "title": "SI prefixes, the RPM-to-rad/s factor and the unit algebra of a PCB trace",
+  "requires": [
+    "rpm_to_rad_s(rpm) -> rad/s",
+    "prefix_scale(value, prefix) -> base SI",
+    "trace_drop_v(current_a, resistance_ohm) -> V",
+    "trace_loss_w(current_a, resistance_ohm) -> W",
+    "rc_time_constant_s(resistance_ohm, capacitance_f) -> s",
+    "shaft_power_w(torque_nm, omega_rad_s) -> W",
+    "loop_period_us(frequency_hz) -> us"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "rpm_multiplies_by_60": ["test_behavior.SpeedTests.test_the_worked_example_speed"],
+    "nano_is_micro": ["test_behavior.PrefixTests.test_nano_is_a_billionth"],
+    "loss_forgets_the_square": ["test_behavior.TraceTests.test_the_exercise_loss"],
+    "time_constant_in_milliseconds": ["test_behavior.FilterTests.test_the_worked_example_time_constant"],
+    "period_in_milliseconds": ["test_behavior.PeriodTests.test_the_skip_test_period"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T1.00c",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T1.00c/starter.py python3 -m unittest discover -s exercises/00-foundations.T1.00c -p 'test_*.py'"
+  }
+}

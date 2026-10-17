@@ -87,6 +87,18 @@ E_init=0.2500 J, E_final=0.2502 J, v_peak=0.5000 m/s
 Add viscous damping $F_{\text{damp}} = -b v$ with $b = 4.0\text{ N}\cdot\text{s/m}$ to the loop (`f_net_n = -k_nm * x_m - b * v_ms`) and run for `4000` steps ($2.0\text{ s}$). Verify that $> 95\%$ of the initial $0.25\text{ J}$ energy is dissipated as heat (`e_final_j < 0.0125`).
 - **If your result differs:** Check the sign on `-b * v_ms`; writing `+b * v_ms` injects energy (negative damping) and causes the oscillation to explode instead of decay.
 
+### Graded package - the loop, its energy and its torque
+[`exercises/00-foundations.T1.00e/`](../exercises/00-foundations.T1.00e/) turns this section into a test. `starter.py` holds seven holes: `spring_force` (Hooke's law, with the minus sign), `acceleration` ($F/m$), `euler_step` (velocity first, then position, with the damper), `mechanical_energy` (both stores), `peak_speed` ($\sqrt{2E/m}$), `torque` ($r F \sin\phi$) and `angular_acceleration` ($\tau/J$). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T1.00e/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T1.00e -p 'test_*.py'
+```
+
+**33 tests.** The behaviour suite checks the worked example's $-5.0\text{ N}$, $-2.5\text{ m/s}^2$, $0.2500\text{ J}$ and $0.5000\text{ m/s}$, the exercise's 4000-step damped run (final energy under $0.0125\text{ J}$, with a 500-step coarse-step run that catches a position updated from the old velocity: forward Euler grows to $144\times$ where the new-velocity ordering stays within a few percent), and both Skip-test and Gate-test values - $5.886\text{ N}\cdot\text{m}$, $2.20\text{ J}$, $0.198\text{ m}$ and $30\text{ rad/s}^2$. Five planted faults - `spring_force_sign_dropped`, `damping_sign_flipped`, `forward_euler_position`, `energy_forgets_the_spring`, `torque_uses_cosine` - each fail the test named for them. The transfer suite then runs **the plant's own numbers**: the submission's $r F \sin\phi$ reproduces `plant.gravity_torque`'s cosine lever at four shoulder poses, the $2.5\text{ N}\cdot\text{m}$ clamp over `plant.I1` and `plant.I2` gives $312.5$ and $833.3\text{ rad/s}^2$, the plant's $1\text{ ms}$ tick is $1257\times$ finer than the spring's $1.26\text{ s}$ period (so one second of the loop holds $0.25\text{ J}$), and a coasting joint decays with the plant's $I_1/B_1 = 0.2\text{ s}$ time constant.
+
+The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T1.00e`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Loops, SI Units & 2D Vectors*).
   - **Core Concepts to Review First:** Newton's second law $a = F_{\text{net}}/m$ with viscous damping $F_{\text{damp}} = -b v$, symplectic Euler updates (`v += a*dt; x += v*dt`), and total mechanical energy $E = \frac{1}{2}mv^2 + \frac{1}{2}kx^2$ in `## 3. Formalization` (Items 1–3) and `## 4. Worked example` above.

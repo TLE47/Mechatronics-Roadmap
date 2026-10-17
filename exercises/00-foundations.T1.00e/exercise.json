@@ -1,0 +1,31 @@
+{
+  "id": "00-foundations.T1.00e",
+  "module": "modules/00-foundations.T1.00e.md",
+  "title": "Symplectic Euler on a spring-mass-damper, energy and lever torque",
+  "requires": [
+    "spring_force(k_nm, x_m) -> N",
+    "acceleration(force_n, mass_kg) -> m/s^2",
+    "euler_step(x_m, v_ms, k_nm, b_nsm, m_kg, dt_s) -> (x_new_m, v_new_ms)",
+    "mechanical_energy(m_kg, v_ms, k_nm, x_m) -> J",
+    "peak_speed(energy_j, m_kg) -> m/s",
+    "torque(force_n, r_m, phi_rad) -> N*m",
+    "angular_acceleration(torque_nm, inertia_kg_m2) -> rad/s^2"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "spring_force_sign_dropped": ["test_behavior.SpringLawTests.test_the_worked_spring_force"],
+    "damping_sign_flipped": ["test_behavior.StepTests.test_the_damping_run_dissipates_the_energy"],
+    "forward_euler_position": ["test_behavior.StepTests.test_symplectic_euler_keeps_the_energy_bounded"],
+    "energy_forgets_the_spring": ["test_behavior.EnergyTests.test_the_skip_test_energy"],
+    "torque_uses_cosine": ["test_behavior.TorqueTests.test_the_skip_test_holding_torque"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T1.00e",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T1.00e/starter.py python3 -m unittest discover -s exercises/00-foundations.T1.00e -p 'test_*.py'"
+  }
+}

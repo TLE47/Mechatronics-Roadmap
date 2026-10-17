@@ -94,8 +94,18 @@ vd_ff=-3.60V, vq_ff=12.00V, SVPWM da=0.9330, a1=0.0120 rad, b2=-0.0050 rad
 ```
 
 ## 5. Exercise
-For a 3-phase inverter with $V_{\text{bus}} = 48.0\text{ V}$ and instantaneous phase voltage references $v_a^ = +24.0\text{ V}$, $v_b^ = -12.0\text{ V}$, and $v_c^ = -12.0\text{ V}$, compute (a) the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_{abc}^) + \min(v_{abc}^))$, and (b) the three SVPWM duty cycles $(d_a, d_b, d_c)$ using $d_x = 0.5 + (v_x^ + v_0)/V_{\text{bus}}$. Verify that $v_0 = -6.0\text{ V}$ and $(d_a, d_b, d_c) = (0.875, 0.125, 0.125)$ ($\pm 10^{-9}$), compared to SPWM $(1.000, 0.250, 0.250)$ which is already hitting the upper saturation rail!
+For a 3-phase inverter with $V_{\text{bus}} = 48.0\text{ V}$ and instantaneous phase voltage references $v_a^* = +24.0\text{ V}$, $v_b^* = -12.0\text{ V}$, and $v_c^* = -12.0\text{ V}$, compute (a) the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_{abc}^) + \min(v_{abc}^))$, and (b) the three SVPWM duty cycles $(d_a, d_b, d_c)$ using $d_x = 0.5 + (v_x^ + v_0)/V_{\text{bus}}$. Verify that $v_0 = -6.0\text{ V}$ and $(d_a, d_b, d_c) = (0.875, 0.125, 0.125)$ ($\pm 10^{-9}$), compared to SPWM $(1.000, 0.250, 0.250)$ which is already hitting the upper saturation rail!
 - **If your result differs:** Check that $\max = +24.0\text{ V}$ and $\min = -12.0\text{ V}$, so $v_0 = -0.5 \times (24.0 - 12.0) = -6.0\text{ V}$ and $v_a^* + v_0 = +18.0\text{ V}$.
+
+### Graded package - the decoupling voltage, the saddle wave and the encoder LUT
+[`exercises/03-sensors.T3.03a/`](../exercises/03-sensors.T3.03a/) turns this section into a test. `starter.py` holds seven holes: `dq_feedforward` ($-\omega_e L_q i_q$ on $d$, $\omega_e(L_d i_d + \psi_m)$ on $q$), `svpwm_offset`, `svpwm_duties`, `hexagon_limit`, `hexagon_gain`, `harmonic_coefficients` and `harmonic_amplitude`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/03-sensors.T3.03a/starter.py \
+  python3 -m unittest discover -s exercises/03-sensors.T3.03a -p 'test_*.py'
+```
+
+**34 tests.** The feedforward is checked at the worked example's $-3.60\text{ V}$ and $12.00\text{ V}$, the Skip test's $-4.50\text{ V}$, the Gate test's $18.0\text{ V}$, and on a salient machine whose two axes have different inductances, so a swapped axis fails; the offset and duties are checked at the exercise's $-6.0\text{ V}$ and $(0.875, 0.125, 0.125)$, the Skip test's $-3.0\text{ V}$, the Gate test's $0.875$, at the hexagon limit where $d_a = 1.0$ exactly, and at a command outside the inscribed circle, which must be refused rather than clamped leg by leg; the $27.7128\text{ V}$ limit and the $+15.47\%$ gain are pinned; and the Fourier fit is checked at the worked example's $a_1 = 0.012$ and $b_2 = -0.005$ and the Gate test's $0.010\text{ rad}$ amplitude. The transfer suite runs **the plant's own 12-bit encoder**: an ideal encoder must fit to zero error, one count is $2\pi/4096 = 0.001534\text{ rad}$, the module's $0.012\text{ rad}$ eccentricity is $7.82$ counts and cancels to machine precision, a 2nd harmonic leaks nothing into the 1st at $4096$ samples, and the 25 kHz loop of Tab 3 executes $25$ updates inside one $1\text{ ms}$ plant tick. Five planted faults - `feedforward_swaps_axes`, `svpwm_offset_uses_mean`, `duties_ignore_offset`, `hexagon_uses_half_bus`, `harmonic_amplitude_sums` - each fail the test named for them.
 
 
 - **📚 What to Learn & Resources to Solve This Exercise:**

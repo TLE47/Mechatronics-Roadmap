@@ -1,0 +1,31 @@
+{
+  "id": "03-sensors.T3.03a",
+  "module": "modules/03-sensors.T3.03a.md",
+  "title": "Rotating-frame decoupling, Min-Max SVPWM and the Fourier encoder fit",
+  "requires": [
+    "dq_feedforward(omega_e_rad_s, ld_h, lq_h, id_a, iq_a, psi_m_wb) -> (v_d_ff, v_q_ff) in V",
+    "svpwm_offset(va_v, vb_v, vc_v) -> V",
+    "svpwm_duties(va_v, vb_v, vc_v, vbus_v) -> (d_a, d_b, d_c) in [0, 1]",
+    "hexagon_limit(vbus_v) -> V",
+    "hexagon_gain() -> 2/sqrt(3)",
+    "harmonic_coefficients(errors_rad, harmonic) -> (a_h, b_h) in rad",
+    "harmonic_amplitude(a_h, b_h) -> rad"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "feedforward_swaps_axes": ["test_behavior.FeedforwardTests.test_the_worked_d_axis_term"],
+    "svpwm_offset_uses_mean": ["test_behavior.MinMaxTests.test_the_exercise_offset"],
+    "duties_ignore_offset": ["test_behavior.MinMaxTests.test_the_exercise_duties"],
+    "hexagon_uses_half_bus": ["test_behavior.LimitTests.test_the_skip_test_hexagon_limit"],
+    "harmonic_amplitude_sums": ["test_behavior.HarmonicTests.test_the_gate_test_amplitude"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.03-sensors.T3.03a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/03-sensors.T3.03a/starter.py python3 -m unittest discover -s exercises/03-sensors.T3.03a -p 'test_*.py'"
+  }
+}

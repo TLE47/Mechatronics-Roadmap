@@ -1,0 +1,31 @@
+{
+  "id": "01-electronics.T1.01d",
+  "module": "modules/01-electronics.T1.01d.md",
+  "title": "RC time constants, the -3 dB corner, bulk decoupling, stored energy and inductive flyback",
+  "requires": [
+    "rc_time_constant(r_ohm, c_farad) -> s",
+    "rc_voltage(t_s, v_in, r_ohm, c_farad) -> V",
+    "rc_cutoff_hz(r_ohm, c_farad) -> Hz",
+    "bulk_capacitance_f(delta_i, delta_t, delta_v) -> F",
+    "capacitor_energy(v_cap, c_farad) -> J",
+    "inductor_energy(inductance_h, current) -> J",
+    "flyback_voltage(inductance_h, current, dt_open_s) -> V"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "cutoff_forgets_2pi": ["test_behavior.TimingTests.test_the_worked_cutoff"],
+    "charging_linear_ramp": ["test_behavior.ChargingTests.test_one_time_constant_reaches_63_percent"],
+    "bulk_missing_time": ["test_behavior.BulkTests.test_the_exercise_240_microfarads"],
+    "capacitor_energy_forgets_half": ["test_behavior.EnergyTests.test_the_worked_capacitor_energy"],
+    "flyback_milli_dropped": ["test_behavior.FlybackTests.test_the_worked_12000_volts"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.01-electronics.T1.01d",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/01-electronics.T1.01d/starter.py python3 -m unittest discover -s exercises/01-electronics.T1.01d -p 'test_*.py'"
+  }
+}

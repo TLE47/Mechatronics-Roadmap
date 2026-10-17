@@ -82,6 +82,14 @@ A robot base at $(0, 0)$ observes a target at $(x, y) = (-0.30\text{ m}, -0.40\t
   - **Trigonometry & 2D Vectors Study Links:** [3Blue1Brown: Essence of Linear Algebra — Vectors (`3blue1brown.com`)](https://www.3blue1brown.com/topics/linear-algebra), [Red Blob Games: Interactive 2D Trigonometry & `atan2` Guide](https://www.redblobgames.com/), and [Python `math.atan2` Documentation](https://docs.python.org/3/library/math.html#math.atan2).
   - **Curriculum Reference:** [Track 00 Tier 1 (`00-foundations/README.md`)](../00-foundations/README.md#tier-1-beginner--intuitive) and [Lynch & Park *Modern Robotics* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md).
 
+### Graded package - the line, the norm and the heading
+[`exercises/00-foundations.T1.00d/`](../exercises/00-foundations.T1.00d/) turns this section into a test. `starter.py` holds seven holes: `sensor_voltage` (the calibration line), `sensor_current` (subtract the offset *before* dividing), `polar_to_cartesian` ($\cos$ for $x$, $\sin$ for $y$, radians), `link_length` (the diagonal, not $|x| + |y|$), `heading_rad` (four-quadrant `atan2(y, x)`), `heading_deg` and `degrees_to_radians` ($\pi/180$). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T1.00d/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T1.00d -p 'test_*.py'
+```
+
 ## 6. Simulation path
 Run the worked example in Python and open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench to watch planar and 3D link angles map to tip $(x, y, z)$ coordinates in real time.
 

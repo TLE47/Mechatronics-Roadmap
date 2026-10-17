@@ -17,6 +17,7 @@ est_hours: 3.5
 hardware_required: false
 safety_level: none
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -72,6 +73,16 @@ tau_load(0 deg)=1.3734 N*m, tau_load(60 deg)=0.6867 N*m, tau_motor=0.2543 N*m
 A timing-belt reduction connects a motor pulley with $Z_{\text{motor}} = 16$ teeth to a joint pulley with $Z_{\text{joint}} = 72$ teeth ($\eta = 0.95$). Compute the gear ratio $N = Z_{\text{joint}} / Z_{\text{motor}}$, the output speed $\omega_{\text{joint}}$ when $\omega_{\text{motor}} = 90\text{ rad/s}$, and the output torque $\tau_{\text{joint}}$ when $\tau_{\text{motor}} = 0.40\text{ N}\cdot\text{m}$. Verify $N = 4.5$, $\omega_{\text{joint}} = 20.0\text{ rad/s}$, and $\tau_{\text{joint}} = 1.71\text{ N}\cdot\text{m}$ ($\pm 10^{-6}$).
 - **If your result differs:** Check that the driven pulley tooth count ($72$) is divided by the driving motor pulley tooth count ($16$): $72 / 16 = 4.5$, and multiply $\tau_{\text{motor}} \times N \times \eta = 0.40 \times 4.5 \times 0.95 = 1.71\text{ N}\cdot\text{m}$.
 
+### Graded package - the lever, the gearbox and the reflected inertia
+[`exercises/02-mechanics.T1.02a/`](../exercises/02-mechanics.T1.02a/) turns this section into a test. `starter.py` holds seven holes: `gravity_torque` (the cosine lever arm, link plus tip), `balance_force`, `gear_ratio`, `gear_output_speed`, `gear_output_torque` ($\eta N \tau$), `mechanical_power` and `reflected_inertia` ($N^2$). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/02-mechanics.T1.02a/starter.py \
+  python3 -m unittest discover -s exercises/02-mechanics.T1.02a -p 'test_*.py'
+```
+
+**29 tests.** The torque is checked at the worked example, at the horizontal maximum and at vertical poses, so a sine where the cosine belongs fails; the balance force is checked at the Skip test's $60\text{ N}$; the belt drive is checked at the exercise's $4.5$, $20\text{ rad/s}$ and $1.71\text{ N}\cdot\text{m}$, so an inverted ratio, a multiplied output speed or a dropped efficiency each fail; and the reflected inertia is checked at $N^2$ rather than $N$. The transfer suite runs **the plant's own arm**: the submission's shoulder term must reproduce `plant.gravity_torque`'s difference between the two links at four poses, the folded elbow's full lever arm is checked (the pose that looks vertical is not the zero-torque one), the $2.5\text{ N}\cdot\text{m}$ clamp is pushed back through an $8{:}1$ belt, and `plant.I1` reflected through $4{:}1$ is $0.128\text{ kg}\cdot\text{m}^2$. Five planted faults - `gravity_uses_sine`, `balance_divides_wrong`, `gear_ratio_inverted`, `output_speed_multiplies`, `torque_ignores_efficiency` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Rotational Units*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Radians, Cosine Law & `math.atan2`*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Rotational Kinetic Energy*).
@@ -80,6 +91,8 @@ A timing-belt reduction connects a motor pulley with $Z_{\text{motor}} = 16$ tee
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`) to visualize how link lengths and joint angles change the horizontal moment arm of a planar robot arm.
+
+The graded package is also a workbench entry: **Modules -> `EX.02-mechanics.T1.02a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Step 1.3 (`02-mechanics.T1.03`) and Step 1.7 (`06-robotics.T1.07`), your gravity torque equation $\tau_g(\theta) = M g L_{\text{eff}}\cos\theta$ becomes the exact **gravity feedforward compensation term** added to the PID controller output:
 ```text

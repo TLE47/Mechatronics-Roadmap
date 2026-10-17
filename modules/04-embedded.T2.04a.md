@@ -84,6 +84,16 @@ Polling CPU=322.0 us (OVERFLOW) vs DMA CPU=0.50 us; Ping-Pong items=16
 Calculate the available CPU processing window $t_{\text{window}} = N / f_{\text{adc}}$ in microseconds ($\mu\text{s}$) between Half-Transfer (`HT`) and Transfer-Complete (`TC`) interrupts when a circular DMA buffer with half-size $N = 16$ samples is fed by an ADC sampling at $f_{\text{adc}} = 200\text{ kHz}$ ($5\ \mu\text{s}$ per sample). Verify $t_{\text{window}} = 16 / 200{,}000 = 80.0\ \mu\text{s}$.
 - **If your result differs:** Multiply the half-buffer length $N = 16$ (not $2N = 32$) by the sample period $T_{\text{adc}} = 5.0\ \mu\text{s}$ ($16 \times 5.0 = 80.0\ \mu\text{s}$).
 
+### Graded package - the frame, the polled loop and the ping-pong half
+[`exercises/04-embedded.T2.04a/`](../exercises/04-embedded.T2.04a/) turns this section into a test. `starter.py` holds seven holes: `spi_shift_us` (bits over clocks), `spi_frame_us` (the 0.4 µs of chip-select is part of it), `uart_poll_us` (every bit stalls the loop, not every byte), `cpu_load_fraction` (busy over period), `ping_pong_window_us` ($N$ samples, not the $2N$ total), `ht_frequency_hz` ($f_{\text{sample}}/N$) and `buffer_slice_for_position` (HT reads Ping, TC reads Pong, mid-half is `None`). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/04-embedded.T2.04a/starter.py \
+  python3 -m unittest discover -s exercises/04-embedded.T2.04a -p 'test_*.py'
+```
+
+**34 tests.** The frame is checked at the worked example's $2.0\ \mu\text{s}$ and at the skip test's $2.0\ \mu\text{s}$ of pure shift, so a dropped chip-select shows up as $1.6$; the polled write is checked at the skip test's $500\ \mu\text{s}$ ($500$ bits, not $50$ bytes), so a per-byte division reports $62.5$; the window is checked at the exercise's $80.0\ \mu\text{s}$, so a $2N$ window reports $160$; the HT rate is checked at $2000\ \text{Hz}$, so a $2N$ divisor reports $1000$; and the ping-pong replay grades the worked example's sixteen samples arriving in order, with HT reading Ping and mid-half positions refused. The transfer suite runs the plant's own clock: a $2.0\ \mu\text{s}$ encoder frame is $0.2\%$ of the $1\ \text{ms}$ tick, its encoder is a $12$-bit, $4096$-count word ($1.2\ \mu\text{s}$ of shift), a four-sample half fires HT at $250\ \text{Hz}$ - $250$ reads per second of plant time - and a $320\ \mu\text{s}$ telemetry frame fits one tick at $32\%$ but overflows a $50\ \mu\text{s}$ loop by $6.44\times$. Five planted faults - `spi_frame_drops_cs`, `uart_poll_per_byte`, `window_uses_full_buffer`, `ht_frequency_uses_total`, `slice_reads_written_half` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Fixed-Point Iteration Loops*), [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Clock Cycle & Microsecond Units*), and [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Affine Range Mapping*).

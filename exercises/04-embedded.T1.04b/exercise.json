@@ -1,0 +1,32 @@
+{
+  "id": "04-embedded.T1.04b",
+  "module": "modules/04-embedded.T1.04b.md",
+  "title": "The non-blocking tick scheduler, the ISR budget and the latched fault state",
+  "requires": [
+    "elapsed_us(now_us, last_us, bits=32) -> unsigned ticks, wrap included",
+    "tick_due(now_us, last_us, period_us) -> bool",
+    "next_deadline_us(last_us, period_us) -> the next grid deadline, masked to 32 bits",
+    "isr_utilization_pct(t_exec_us, f_isr_hz) -> %",
+    "max_isr_exec_us(u_max_pct, f_isr_hz) -> us",
+    "fault_latency_us(n_debounce, f_isr_hz) -> us",
+    "ticks_in(duration_us, period_us) -> whole ticks",
+    "fsm_step(state, current_a, i_max_a, pos_rad, pwm_cmd) -> (next_state, pwm)"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "rollover_not_masked": ["test_behavior.SchedulerTests.test_the_unsigned_16_bit_difference_survives_the_wrap"],
+    "tick_due_uses_greater_than": ["test_behavior.SchedulerTests.test_a_deadline_that_lands_exactly_on_the_tick_fires"],
+    "isr_microseconds_dropped": ["test_behavior.IsrTests.test_the_worked_example_utilization"],
+    "isr_budget_ignores_percent": ["test_behavior.IsrTests.test_the_exercise_budget"],
+    "fsm_fault_not_latched": ["test_behavior.FsmTests.test_a_fault_stays_latched_after_the_current_recovers"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.04-embedded.T1.04b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/04-embedded.T1.04b/starter.py python3 -m unittest discover -s exercises/04-embedded.T1.04b -p 'test_*.py'"
+  }
+}

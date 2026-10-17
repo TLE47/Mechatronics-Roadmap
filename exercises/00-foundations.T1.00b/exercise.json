@@ -1,0 +1,32 @@
+{
+  "id": "00-foundations.T1.00b",
+  "module": "modules/00-foundations.T1.00b.md",
+  "title": "A recorded window: timestamps, calibrated traces, RMS error and the Git lookup",
+  "requires": [
+    "timestamps(t0_s, dt_s, n) -> list[float]",
+    "scaled_readings(values, config) -> list[float]",
+    "mean_of(values) -> float",
+    "peak_to_peak(values) -> float",
+    "errors(target, measured) -> list[float]",
+    "rmse(target, measured) -> float",
+    "git_command(task) -> str"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "timestamps_off_by_one": ["test_behavior.TimestampsTests.test_the_skip_test_timestamp_500"],
+    "scale_swaps_slope_offset": ["test_behavior.ReadingTests.test_the_worked_readings"],
+    "peak_to_peak_half_span": ["test_behavior.ReadingTests.test_the_worked_span"],
+    "rmse_averages_signed_errors": ["test_behavior.ErrorTests.test_the_exercise_rmse"],
+    "errors_silently_zips": ["test_behavior.ErrorTests.test_a_length_mismatch_is_refused"],
+    "git_defaults_to_status": ["test_behavior.GitTests.test_an_unknown_task_is_refused"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T1.00b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T1.00b/starter.py python3 -m unittest discover -s exercises/00-foundations.T1.00b -p 'test_*.py'"
+  }
+}

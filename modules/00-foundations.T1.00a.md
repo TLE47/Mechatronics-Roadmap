@@ -93,6 +93,16 @@ steps=8, pos_m=1.000 m, caught=ZeroDivisionError
 Write a Python function `battery_voltage_after_steps(v_start, drop_per_step, n_steps)` that uses a `for` loop to subtract `drop_per_step` from `v_start` `n_steps` times. Verify that starting at $12.0\text{ V}$ with a drop of $0.15\text{ V}$ per step over $10$ steps returns `10.5` ($\pm 10^{-6}\text{ V}$).
 - **If your result differs:** Check that you passed `range(n_steps)` (which runs `10` times) rather than `range(1, n_steps)` (which only runs `9` times and leaves `10.65` V).
 
+### Graded package - the loop, the traceback and the formatting
+[`exercises/00-foundations.T1.00a/`](../exercises/00-foundations.T1.00a/) turns this section into a test. `starter.py` holds seven holes: `step_position` ($x + v\Delta t$), `steps_to_target` (the counted `while` loop), `battery_voltage_after_steps` (the exercise, over `range(n_steps)`), `loop_total` (the Skip test's accumulator), `clamp_pwm` (the one-sided ceiling), `safe_divide` (which reports `type(exc).__name__` instead of crashing) and `format_position` (the `.3f` field). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T1.00a/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T1.00a -p 'test_*.py'
+```
+
+**34 tests.** The battery is checked at the exercise's $10.5\text{ V}$ and at the $10.65\text{ V}$ that nine drops give, so `range(1, n_steps)` fails on the exact number the module warns about; the step counter is checked at the worked example's eight ticks and at a late start's three, so returning the position instead of the count fails; the clamp is checked at the Skip test's $1.35 \to 1.0$ and exactly on the limit; the caught exception must come back named `ZeroDivisionError` rather than swallowed; and $2/3$ must print as `0.667`. The transfer suite runs the plant's own numbers: at its $1\text{ kHz}$ tick a $0.08\text{ m/s}$ move takes exactly $1000$ ticks of $8 \times 10^{-5}\text{ m}$, `range(1000)` accumulates $999000$, the $2.5\text{ N}\cdot\text{m}$ joint clamp is the same one-sided clamp, and a zero tick is refused before it can divide by zero. Five planted faults - `battery_off_by_one`, `steps_returns_position`, `clamp_inverted`, `divide_swallows`, `format_ignores_precision` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Core Concepts to Review First:** Variable assignment (`=`), `for i in range(n_steps):` loops, and `def` functions with `return` in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
   - **Python Tutorial Links:** [Official Python Tutorial §3 (Numbers & Variables)](https://docs.python.org/3/tutorial/introduction.html) and [§4.2–4.7 (`for` Statements, `range()`, and Defining Functions)](https://docs.python.org/3/tutorial/controlflow.html).

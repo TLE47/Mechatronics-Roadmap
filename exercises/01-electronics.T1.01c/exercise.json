@@ -1,0 +1,31 @@
+{
+  "id": "01-electronics.T1.01c",
+  "module": "modules/01-electronics.T1.01c.md",
+  "title": "Current-limited bench supply foldback, DMM modes, breadboard heat and the short check",
+  "requires": [
+    "psu_output(v_set, i_limit, r_load) -> (v_out, i_out, p_out, mode)",
+    "critical_resistance(v_set, i_limit) -> ohm",
+    "dmm_voltage_loading_current(v_rail, r_in=10_000_000.0) -> A",
+    "dmm_short_current(v_rail, r_shunt=0.010, r_leads=0.0) -> A",
+    "clip_power(current, r_clip) -> W",
+    "led_current_ma(v_supply, v_f, resistance) -> mA",
+    "is_short(resistance, threshold=10.0) -> bool"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "psu_ignores_limit": ["test_behavior.PsuTests.test_the_worked_example_folds_back"],
+    "critical_resistance_multiplies": ["test_behavior.CriticalResistanceTests.test_the_exercise_threshold"],
+    "dmm_uses_voltmeter_input": ["test_behavior.DmmTests.test_the_current_jack_short"],
+    "clip_power_without_square": ["test_behavior.ClipTests.test_the_skip_test_clip_heat"],
+    "is_short_inverted": ["test_behavior.ShortCheckTests.test_a_healthy_build_is_not_a_short"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.01-electronics.T1.01c",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/01-electronics.T1.01c/starter.py python3 -m unittest discover -s exercises/01-electronics.T1.01c -p 'test_*.py'"
+  }
+}

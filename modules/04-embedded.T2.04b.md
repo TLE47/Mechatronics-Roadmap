@@ -101,6 +101,16 @@ U=0.325, R_inv=740 us vs R_inh=140 us, CAN_win=0x012, u_zero=32768
 Suppose a 12-bit (`0..4095`) MIT-mode torque command encodes $\tau \in [-18.0\text{ N}\cdot\text{m}, +18.0\text{ N}\cdot\text{m}]$. Compute (a) the integer code $u$ for $\tau = +9.0\text{ N}\cdot\text{m}$ ($\frac{9.0 - (-18.0)}{36.0} \times 4095$) rounded to the nearest integer, and (b) the quantization step size $\Delta\tau = \frac{36.0}{4095}$ in $\text{N}\cdot\text{m}$. Verify $u = 3071$ and $\Delta\tau \approx 0.0087912\text{ N}\cdot\text{m}$ ($\pm 10^{-6}$).
 - **If your result differs:** Check that the full span is $18.0 - (-18.0) = 36.0\text{ N}\cdot\text{m}$, so $+9.0\text{ N}\cdot\text{m}$ sits at $75\%$ of full scale ($0.75 \times 4095 = 3071.25 \to 3071$).
 
+### Graded package - the scheduler, the mutex and the CAN frame
+[`exercises/04-embedded.T2.04b/`](../exercises/04-embedded.T2.04b/) turns this section into a test. `starter.py` holds seven holes: `cpu_utilization` ($\sum C_i / T_i$), `liu_layland_bound` ($n(2^{1/n} - 1)$), `response_time_us` (with and without priority inheritance), `can_winner` (the lowest 11-bit identifier), and `encode_fixed` / `decode_fixed` / `quantization_step` (the $2^N - 1$ MIT pack). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/04-embedded.T2.04b/starter.py \
+  python3 -m unittest discover -s exercises/04-embedded.T2.04b -p 'test_*.py'
+```
+
+**45 tests.** The utilisation sum is checked at the worked example's $0.325$ and the Skip test's $0.40$, so a microsecond/millisecond mix-up fails at once; the response time is checked with the mutex ($140\ \mu\text{s}$) and without it ($740\ \mu\text{s}$), so ignoring the flag fails; arbitration is checked on $\{0x105, 0x012, 0x04A\}$ in both orders, so picking the highest identifier fails; and the pack is checked at the exercise's $3071$, at both ends ($0$ and $4095$), and at the zero command's half-step straddle, so a $2^N$ scale fails. The transfer suite runs **the plant as the node**: its $1\text{ ms}$ tick is the worked example's $1000\ \mu\text{s}$ period, its $2.5\text{ N}\cdot\text{m}$ clamp packs to code $2332$ and both disturbance pulses survive the $12$-bit $[-18, +18]\text{ N}\cdot\text{m}$ frame within half a count, and its $4096$-count encoder is exactly one count finer than a 12-bit pack's $4095$ intervals. Five planted faults - `utilization_counts_milliseconds`, `response_time_always_inherits`, `can_winner_picks_highest`, `pack_uses_2_to_the_bits`, `quantization_step_uses_2_to_the_bits` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Python Loops, Lists, Timing Units & Linear Range Scaling*).

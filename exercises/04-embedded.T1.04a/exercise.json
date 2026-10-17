@@ -1,0 +1,31 @@
+{
+  "id": "04-embedded.T1.04a",
+  "module": "modules/04-embedded.T1.04a.md",
+  "title": "Fixed-width integers, bit masks and the 8-byte telemetry frame",
+  "requires": [
+    "int_range(bits, signed=False) -> (low, high)",
+    "wrap_uint(value, bits) -> int",
+    "elapsed_unsigned(now, prev, bits) -> int ticks",
+    "apply_bits(reg, set_mask=0, clear_mask=0) -> int",
+    "bit_is_set(reg, bit) -> 0 | 1",
+    "pack_telemetry(tick, count, vel) -> bytes (8, '<Hhf')",
+    "unpack_telemetry(raw) -> (tick, count, vel)"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "elapsed_no_mask": ["test_behavior.WrapTests.test_the_worked_rollover_elapsed"],
+    "clear_forgets_the_tilde": ["test_behavior.MaskTests.test_the_exercise_register"],
+    "int_range_signed_off_by_one": ["test_behavior.IntegerRangeTests.test_the_int16_bounds"],
+    "wrap_masks_a_byte": ["test_behavior.WrapTests.test_a_uint16_keeps_sixteen_bits"],
+    "pack_big_endian": ["test_behavior.TelemetryTests.test_the_frame_bytes_are_little_endian"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.04-embedded.T1.04a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/04-embedded.T1.04a/starter.py python3 -m unittest discover -s exercises/04-embedded.T1.04a -p 'test_*.py'"
+  }
+}

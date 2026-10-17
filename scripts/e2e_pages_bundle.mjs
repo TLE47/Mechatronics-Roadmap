@@ -59,6 +59,9 @@ const EXERCISE_IDS = [
   'EX.06-robotics.T1.06a',
   'EX.01-electronics.T1.01a',
   'EX.01-electronics.T1.01b',
+  'EX.01-electronics.T1.01c',
+  'EX.01-electronics.T1.01d',
+  'EX.02-mechanics.T1.02a',
 ];
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
 const MIME = {

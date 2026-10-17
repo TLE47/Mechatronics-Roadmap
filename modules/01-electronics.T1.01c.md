@@ -17,6 +17,7 @@ est_hours: 2.5
 hardware_required: false
 safety_level: high
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -77,6 +78,16 @@ Bench PSU: mode=CC, V=0.05 V, P=0.010 W vs Battery fault P=576 W
 Your circuit has normal quiescent resistance $R_{\text{idle}} = 240\ \Omega$ at $V_{\text{set}} = 12.0\text{ V}$ (drawing $50\text{ mA}$). If you set the bench supply current limit to $I_{\text{limit}} = 0.10\text{ A}$ ($100\text{ mA}$), verify using `psu_output(12.0, 0.10, 240.0)` that normal operation stays in `"CV"` mode at $12.0\text{ V}$, and compute the exact threshold resistance $R_{\text{crit}} = V_{\text{set}} / I_{\text{limit}}$ below which the supply drops into `"CC"` mode ($R_{\text{crit}} = 120.0\ \Omega$).
 - **If your result differs:** Divide $V_{\text{set}} = 12.0\text{ V}$ by $I_{\text{limit}} = 0.10\text{ A}$ to get $R_{\text{crit}} = 120.0\ \Omega$.
 
+### Graded package - the supply's two modes and the DMM's two jacks
+[`exercises/01-electronics.T1.01c/`](../exercises/01-electronics.T1.01c/) turns this section into a test. `starter.py` holds seven holes: `psu_output` (the CC/CV foldback, returning voltage, current, power and mode), `critical_resistance`, `dmm_voltage_loading_current`, `dmm_short_current`, `clip_power`, `led_current_ma` and `is_short`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/01-electronics.T1.01c/starter.py \
+  python3 -m unittest discover -s exercises/01-electronics.T1.01c -p 'test_*.py'
+```
+
+**30 tests.** The foldback is checked on both sides of the $120\ \Omega$ threshold, so a supply that ignores its limit fails; the DMM is checked in the **current jack** across a $0.020\ \Omega$ shunt ($1200\text{ A}$ of available fault current) and in the voltage mode across $10\text{ M}\Omega$ ($1.2\ \mu\text{A}$); the clip's heat is checked as $I^2R$ (so a missing square fails); the LED's $10\text{ mA}$ is checked; and `is_short` is checked either side of $10\ \Omega$, so an inverted comparison fails. The transfer suite compares **the protected supply against a bare battery** on the same $0.25\ \Omega$ miswire - $0.01\text{ W}$ against $576\text{ W}$ - computes the one-second run energy on the plant's own `TICKS * DT`, and proves the foldback is memoryless at the plant's $1\text{ ms}$ tick. Five planted faults - `psu_ignores_limit`, `critical_resistance_multiplies`, `dmm_uses_voltmeter_input`, `clip_power_without_square`, `is_short_inverted` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Conditional Logic*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (SI Units & Power $P = VI$).
@@ -93,6 +104,8 @@ This is the classic first-power-on mistake, and it is a **fault you inject on pu
 
 ## 6. Simulation path
 Simulate a current-limited voltage source and breadboard layout in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or [Wokwi](https://wokwi.com/) (`resources/open-source-toolchains.md`).
+
+The graded package is also a workbench entry: **Modules -> `EX.01-electronics.T1.01c`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip test):**

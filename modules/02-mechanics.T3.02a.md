@@ -100,6 +100,16 @@ S2=[0.0, 0.0, 1.0, 0.0, -0.3, 0.0], K_theta=54.09 N*m/rad, sigma_max=207.7 MPa, 
 For a revolute joint whose axis points along $+Y$ ($\omega = [0.0, 1.0, 0.0]^\top$) and passes through point $q = [0.40, 0.0, 0.10]^\top\text{ m}$ in the base frame, compute the linear velocity part $v = -\omega \times q$ of its 6D unit screw axis $\mathcal{S} = (\omega, v)$. Verify that $v = [-0.10, 0.0, 0.40]^\top\text{ m/rad}$ ($\pm 10^{-9}$). Next, compute how the Paros-Weisbord flexural stiffness $K_\theta \propto t^{5/2}$ scales if you double the web thickness $t \to 2t$ while keeping $E, b, R$ fixed: verify $2^{2.5} = 4\sqrt{2} \approx 5.656854$.
 - **If your result differs:** Check the cross product $-\omega \times q = [0, -1, 0]^\top \times [0.40, 0, 0.10]^\top = [-0.10, 0.0, 0.40]^\top$.
 
+### Graded package - the screw, the notch and the two passes
+[`exercises/02-mechanics.T3.02a/`](../exercises/02-mechanics.T3.02a/) turns this section into a test. `starter.py` holds seven holes: `screw_axis` ($v = -\omega \times q$, sign included), `spatial_power` ($\omega \cdot m + v \cdot f$), `flexure_stiffness` (Paros-Weisbord), `flexure_stress` (with $K_t = 1 + t/2R$), `thickness_scale` ($t^{5/2}$), `rnea_2link` (outward velocity, inward wrench) and `passivity_quadratic_form` ($\dot{q}^\top(\dot{M} - 2C)\dot{q}$). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/02-mechanics.T3.02a/starter.py \
+  python3 -m unittest discover -s exercises/02-mechanics.T3.02a -p 'test_*.py'
+```
+
+**33 tests.** The axis is checked at the worked example, at this exercise's $+Y$ joint and at the Skip test, so a forgotten minus sign fails; the power is checked on a rotation driving a pure moment, so a $v \cdot f$ shortcut fails; the stiffness is checked at the worked $54.0940\text{ N}\cdot\text{m/rad}$ and at the $2^{5/2}$ scaling, so $t^2$ fails; the stress is checked at $207.7\text{ MPa}$, so a dropped $K_t$ fails; and the two-pass recursion is checked at the worked $(0.16, 0.06)$ and the Gate test's $(0.17, 0.09)$, so treating the elbow's acceleration as local fails. The transfer suite runs **the plant's own arm**: the shoulder's axis through the origin, the elbow's through $(L_1, 0, 0)$, the 3.4335 N weight at $0.40\text{ m/s}$ doing $1.3734\text{ W}$, the plant inertias through both passes, the disturbance pulses' negative power, and the finding that the 1 mm notch would need $2.65^\circ$ and $1.1\text{ GPa}$ to hold the plant's $2.5\text{ N}\cdot\text{m}$ clamp - past Ti-6Al-4V yield, so the stroke is what gets rated. Five planted faults - `screw_axis_forgets_minus`, `power_uses_linear_only`, `stiffness_exponent_is_t2`, `stress_drops_concentration`, `rnea_uncoupled_second_link` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (Natural Frequency $\omega_n = \sqrt{k/m}$), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps & Rodrigues' Formula), and Legacy **Step 3.1 (`00-foundations.T3.01`)** ($SE(3)$ Screw Axes & Adjoints).

@@ -76,6 +76,16 @@ t=[0.0, 0.1, 0.2, 0.3, 0.4], y=[0.5, 0.8, 1.1, 1.4, 1.7], mean=1.10, span=1.20
 Given target angles `target = [1.0, 2.0, 3.0, 4.0]` rad and measured angles `measured = [0.9, 2.1, 2.8, 4.2]` rad, compute the per-sample error list `err = [t - m for t, m in zip(target, measured)]` and the Root-Mean-Square Error $\text{RMSE} = \sqrt{\frac{1}{N}\sum e_i^2}$. Verify that $\text{RMSE} \approx 0.1581139\text{ rad}$ ($\sqrt{0.025}\text{ rad}$, tolerance $\pm 10^{-6}\text{ rad}$).
 - **If your result differs:** Make sure you square each error $e_i^2$ *before* averaging (`sum(e*e for e in err) / len(err)`), because averaging signed errors directly cancels $+0.1$ against $-0.1$ to give $0.0$.
 
+### Graded package - a recorded window, an RMS error and a Git lookup
+[`exercises/00-foundations.T1.00b/`](../exercises/00-foundations.T1.00b/) turns this section into a test. `starter.py` holds seven holes: `timestamps` (the zero-indexed $t_0 + i\Delta t$ grid), `scaled_readings` (the `"slope"`/`"offset"` dictionary), `mean_of`, `peak_to_peak`, `errors` (paired by `zip()` and length-checked), `rmse` and `git_command` (the task-to-command lookup). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T1.00b/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T1.00b -p 'test_*.py'
+```
+
+**29 tests.** The worked trace is checked at its mean $1.10\text{ V}$ and span $1.20\text{ V}$, the Skip test's $t_{500} = 1.0\text{ s}$, and the exercise at $\text{RMSE} = 0.1581139\text{ rad}$ with a signed mean of exactly $0.0\text{ rad}$ - so an averaged signed error fails where a squared one passes. The transfer suite runs the plant's own recording: its $1\text{ kHz}$ tick for `plant.TICKS` is $1{,}001$ samples from $0.0$ to $1.0\text{ s}$, the 12-bit encoder's count ramp scales to $2047.5/4096$ turns, and the gravity torque over a $90^{\circ}$ sweep spans $0.318825\text{ N}\cdot\text{m}$. Six planted faults - `timestamps_off_by_one`, `scale_swaps_slope_offset`, `peak_to_peak_half_span`, `rmse_averages_signed_errors`, `errors_silently_zips`, `git_defaults_to_status` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Module:** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Variables, Loops & Functions*).
   - **Core Concepts to Review First:** Python list indexing, `zip(target, measured)`, `sum(samples) / len(samples)`, and `max(samples) - min(samples)` in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.

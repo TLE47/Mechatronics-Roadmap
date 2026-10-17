@@ -1,0 +1,31 @@
+{
+  "id": "00-foundations.T1.00d",
+  "module": "modules/00-foundations.T1.00d.md",
+  "title": "The calibration line, the unit circle and the four-quadrant heading",
+  "requires": [
+    "sensor_voltage(slope_v_per_a, current_a, offset_v=0.0) -> V",
+    "sensor_current(slope_v_per_a, voltage_v, offset_v=0.0) -> A",
+    "polar_to_cartesian(length_m, theta_rad) -> (x_m, y_m)",
+    "link_length(x_m, y_m) -> m",
+    "heading_rad(x_m, y_m) -> rad in (-pi, pi]",
+    "heading_deg(x_m, y_m) -> deg",
+    "degrees_to_radians(deg) -> rad"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "heading_uses_atan": ["test_behavior.HeadingTests.test_the_worked_quadrant_two_heading"],
+    "atan2_swaps_axes": ["test_behavior.HeadingTests.test_the_exercise_quadrant_three_heading"],
+    "cartesian_sine_cosine_swapped": ["test_behavior.CartesianTests.test_the_skip_test_x_coordinate"],
+    "norm_is_manhattan": ["test_behavior.CartesianTests.test_the_exercise_distance"],
+    "inverse_ignores_offset": ["test_behavior.CalibrationTests.test_the_skip_test_current"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T1.00d",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T1.00d/starter.py python3 -m unittest discover -s exercises/00-foundations.T1.00d -p 'test_*.py'"
+  }
+}

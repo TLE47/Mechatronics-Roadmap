@@ -91,6 +91,16 @@ PD final q=0.850 rad (sag=0.150), Unclamped OS=0.372 rad, Anti-windup OS=0.047 r
 For the arm above with constant gravity load $\tau_g = 0.60\text{ N}\cdot\text{m}$ under PD control ($K_i = 0$), derive and verify the exact steady-state angle sag $e_{\text{ss}} = \tau_g / K_p$ when $K_p = 8.0\text{ N}\cdot\text{m/rad}$. Confirm that `sim_arm(kp=8.0, ki=0.0, kd=0.4, anti_windup=False)` settles to $q_{\text{ss}} = 0.925\text{ rad}$ ($e_{\text{ss}} = 0.075\text{ rad} \pm 10^{-3}\text{ rad}$).
 - **If your result differs:** At steady state ($\dot{q} = \ddot{q} = 0$), the spring torque balances gravity: $K_p e_{\text{ss}} = \tau_g \implies e_{\text{ss}} = 0.60 / 8.0 = 0.075\text{ rad}$.
 
+### Graded package - the spring, the damper, the bias and the rail
+[`exercises/05-control.T1.05a/`](../exercises/05-control.T1.05a/) turns this section into a test. `starter.py` holds seven holes: `tracking_error`, `control_effort` (the spring, the damper on measured velocity, and the integral bias), `integral_step`, `anti_windup_integral` (frozen while the demand is past a rail *and* the error still pushes that way), `saturate`, `steady_state_sag` and `arm_acceleration`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/05-control.T1.05a/starter.py \
+  python3 -m unittest discover -s exercises/05-control.T1.05a -p 'test_*.py'
+```
+
+**48 tests.** The demand is checked at the section-3 worked $3.8\text{ N}\cdot\text{m}$ and at the Skip test's $4.0$, in both velocity directions, so a derivative term added instead of subtracted fails; the sag is checked at the exercise's $0.075\text{ rad}$ and $0.925\text{ rad}$, so a sag that multiplies the gain fails; the integral tick is checked at the Gate test's $0.005$, so a missing $\Delta t$ fails; the freeze is checked at $+15\text{ V}$ past a $12\text{ V}$ rail, so an anti-windup that never freezes fails; and the clamp is checked on **both** rails, so a one-sided clip fails. A closed-loop simulation assembled only from the submission's functions reproduces the section-4 output - PD resting at $0.850\text{ rad}$ (sag $0.150$), anti-windup PID at $<10^{-3}\text{ rad}$ of error with under $0.05\text{ rad}$ of overshoot, and the unclamped integrator overshooting by more than a further $0.10\text{ rad}$. The transfer suite drives **the plant's own shoulder**: its $0.318825\text{ N}\cdot\text{m}$ horizontal load sags $0.0319\text{ rad}$ at $K_p = 10$, the $2.5\text{ N}\cdot\text{m}$ clamp is $312.5\text{ rad/s}^2$ over `plant.I1`, the clamp freezes the integral while the unclamped tick still adds $0.0048$, and one encoder count at the $1\text{ kHz}$ tick is $1.534\text{ rad/s}$, which $K_d = 0.4$ turns into $24.5\%$ of the torque budget. Five planted faults - `effort_adds_the_damping`, `sag_multiplies_the_gain`, `integral_missing_dt`, `anti_windup_never_freezes`, `saturate_clips_one_rail` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Time-Stepping Loops & Clamping*), [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Plotting*), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Mass-Spring-Damper Dynamics*), and Legacy **Step 1.1 (`00-foundations.T1.01`)** (*1st-Order EMA Filtering*).

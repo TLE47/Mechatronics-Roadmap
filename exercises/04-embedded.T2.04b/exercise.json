@@ -1,0 +1,31 @@
+{
+  "id": "04-embedded.T2.04b",
+  "module": "modules/04-embedded.T2.04b.md",
+  "title": "RTOS utilisation, priority inheritance, CAN arbitration and the MIT fixed-point frame",
+  "requires": [
+    "cpu_utilization(tasks) -> fraction of one core, tasks as (name, c_us, t_us) or (c_us, t_us)",
+    "liu_layland_bound(n) -> U bound",
+    "response_time_us(c_h_us, b_i_us, c_m_us=0.0, inheritance=True) -> us",
+    "can_winner(ids) -> the lowest 11-bit identifier",
+    "encode_fixed(x, x_min, x_max, bits) -> int code",
+    "decode_fixed(u, x_min, x_max, bits) -> value",
+    "quantization_step(x_min, x_max, bits) -> value per count"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "utilization_counts_milliseconds": ["test_behavior.UtilizationTests.test_the_worked_utilisation"],
+    "response_time_always_inherits": ["test_behavior.ResponseTests.test_the_unbounded_inversion_response"],
+    "can_winner_picks_highest": ["test_behavior.ArbitrationTests.test_the_worked_arbitration"],
+    "pack_uses_2_to_the_bits": ["test_behavior.PackTests.test_the_exercise_code"],
+    "quantization_step_uses_2_to_the_bits": ["test_behavior.StepTests.test_the_exercise_step"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.04-embedded.T2.04b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/04-embedded.T2.04b/starter.py python3 -m unittest discover -s exercises/04-embedded.T2.04b -p 'test_*.py'"
+  }
+}

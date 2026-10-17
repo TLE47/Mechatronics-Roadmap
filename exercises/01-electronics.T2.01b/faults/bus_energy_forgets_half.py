@@ -1,0 +1,63 @@
+"""Planted fault: the bus energy is missing its half."""
+
+import math  # noqa: F401
+
+import mechalab_plant as plant  # noqa: F401
+
+
+def v_peak_turnoff(v_bus, l_loop_nh, di_amp, dt_ns):
+    if v_bus < 0.0:
+        raise ValueError("the bus voltage cannot be negative")
+    if l_loop_nh < 0.0:
+        raise ValueError("a loop inductance cannot be negative")
+    if dt_ns <= 0.0:
+        raise ValueError("a commutation takes a positive time")
+    return v_bus + l_loop_nh * (di_amp / dt_ns)
+
+
+def max_loop_inductance_nh(v_bus, v_peak_max, di_amp, dt_ns):
+    if dt_ns <= 0.0:
+        raise ValueError("a commutation takes a positive time")
+    if di_amp <= 0.0:
+        raise ValueError("there is no overshoot without a current change")
+    headroom = v_peak_max - v_bus
+    if headroom <= 0.0:
+        raise ValueError("a ceiling at or below the bus leaves no headroom")
+    return headroom * dt_ns / di_amp
+
+
+def gate_drive_current_a(qg_nc, tr_ns):
+    if qg_nc < 0.0:
+        raise ValueError("a gate charge cannot be negative")
+    if tr_ns <= 0.0:
+        raise ValueError("a rise time must be positive")
+    return qg_nc / tr_ns
+
+
+def bootstrap_gate_v(v_sw, v_drv):
+    if v_drv <= 0.0:
+        raise ValueError("a gate driver needs a positive supply")
+    return v_sw + v_drv
+
+
+def precharge_peak_a(v_bus, r_pre):
+    if v_bus < 0.0:
+        raise ValueError("the bus voltage cannot be negative")
+    if r_pre <= 0.0:
+        raise ValueError("pre-charging needs a resistor, not a short")
+    return v_bus / r_pre
+
+
+def precharge_time_s(r_pre, c_bus, taus=5.0):
+    if r_pre <= 0.0 or c_bus <= 0.0:
+        raise ValueError("a time constant needs a positive resistance and capacitance")
+    if taus <= 0.0:
+        raise ValueError("a settle time needs a positive number of time constants")
+    return taus * r_pre * c_bus
+
+
+def bus_energy_j(c_bus, v_bus):
+    if c_bus < 0.0:
+        raise ValueError("a capacitance cannot be negative")
+    # BUG: C V^2 instead of 1/2 C V^2 - double the energy, double the pre-charge heating.
+    return c_bus * v_bus * v_bus

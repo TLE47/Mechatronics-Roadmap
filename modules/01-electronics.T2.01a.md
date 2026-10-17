@@ -73,6 +73,16 @@ V_ADC(+25A)=3.15 V, V_ADC(-25A)=0.15 V, Non-Kelvin error=40.0%
 Calculate the maximum measurable current magnitude $I_{\max}$ in amperes ($\text{A}$) before clipping a $0\text{–}3.30\text{ V}$ ADC centered at $V_{\text{ref}} = 1.65\text{ V}$ when using an amplifier with gain $G = 50.0\text{ V/V}$ and a $R_{\text{shunt}} = 0.001\ \Omega$ ($1\text{ m}\Omega$) Kelvin shunt. Verify $I_{\max} = \frac{1.65}{50.0 \times 0.001} = 33.0\text{ A}$ ($\pm 10^{-6}\text{ A}$).
 - **If your result differs:** Available half-scale voltage swing around $1.65\text{ V}$ is $3.30 - 1.65 = 1.65\text{ V}$; divide $1.65\text{ V}$ by $(G \cdot R_{\text{shunt}}) = 0.050\text{ V/A}$ to get $33.0\text{ A}$.
 
+### Graded package - the shunt stage, its clip point and the Kelvin error
+[`exercises/01-electronics.T2.01a/`](../exercises/01-electronics.T2.01a/) turns this section into a test. `starter.py` holds seven holes: `shunt_adc_voltage` ($V_{\text{ref}} + GIR$), `shunt_current_from_adc` (its inverse, sign kept), `max_measurable_current` ($(V_{\text{rail}} - V_{\text{ref}})/(GR)$), `kelvin_gain_error_pct` ($100 \cdot 2 R_{\text{trace}}/R_{\text{shunt}}$), `cmrr_input_error_v` ($\Delta V_{\text{CM}} 10^{-\text{CMRR}/20}$), `cmrr_current_error_a` (the same residue over the shunt) and `adc_code` (a 12-bit, clamped unipolar code). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/01-electronics.T2.01a/starter.py \
+  python3 -m unittest discover -s exercises/01-electronics.T2.01a -p 'test_*.py'
+```
+
+**34 tests.** The stage is checked at the worked example's $+3.15\text{ V}$ and $0.15\text{ V}$, at the mirror point about $1.65\text{ V}$, at $60\text{ mV/A}$, and at the exercise's $33.0\text{ A}$ with its $3.30\text{ V}$ boundary, so a dropped reference, a headroom measured from the rail, one-pad Kelvin copper, a voltage-ratio CMRR or a $4096$-count ADC each fail their own test. The transfer suite runs the stage on the workbench's own hardware: one count of the 12-bit ADC is $13.4\text{ mA}$ through a $3\text{ m}\Omega$ shunt and the plant only gets one decision per $1\text{ kHz}$ tick; the $50\text{ V/V}$ variant clips at $11\text{ A}$; the $40\%$ non-Kelvin error is worth $10\text{ A}$ at $25\text{ A}$ against the $93\text{ dB}$ residue's $0.36\text{ A}$ (and $1.33$ ADC counts); the module's $2\text{ m}\Omega$ shunt spends only $36\%$ of the $\pm 15\text{ A}$ range; and a REF tied to GND reports $0.00\text{ V}$ at zero current and clips every negative sample to code $0$. Five planted faults - `reference_dropped`, `kelvin_charges_one_pad`, `cmrr_amplifies`, `max_current_uses_rail_only`, `adc_code_uses_4096` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) ($\text{m}\Omega$ Shunt Scaling), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Affine Range Mapping*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Frequency Response*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Nyquist Aliasing & Anti-Aliasing Cutoff*).

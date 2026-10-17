@@ -96,6 +96,16 @@ ARR=2125, t_low_min=2500 ns, q31_cos=0x40000000, valid(4,4)=True, valid(4,6)=Fal
 Suppose `TIM1` runs at $f_{\text{tim}} = 160\text{ MHz}$ in center-aligned up-down mode to generate a $f_{\text{PWM}} = 25\text{ kHz}$ carrier ($T_{\text{PWM}} = 40{,}000\text{ ns}$). Compute (a) the integer auto-reload value $\text{ARR} = \frac{f_{\text{tim}}}{2 f_{\text{PWM}}}$, and (b) the signed `Q1.31` integer representation $\operatorname{round}(x \cdot 2^{31})$ for $x = -0.50$. Verify that $\text{ARR} = 3200$ and $X_{Q31} = -1073741824$ (`-2**30`, tolerance $\pm 0$).
 - **If your result differs:** Remember that center-aligned mode counts both up (`0 -> ARR`) and down (`ARR -> 0`) in each PWM period, dividing $f_{\text{tim}}$ by $2 \cdot \text{ARR}$.
 
+### Graded package - the register, the word and the sequence counter
+[`exercises/04-embedded.T3.04a/`](../exercises/04-embedded.T3.04a/) turns this section into a test. `starter.py` holds eight holes: `center_aligned_arr` and `pwm_frequency` (the up-down counter's factor of two, both ways round), `low_side_window_ns` (a dead time at each edge), `q31_encode` and `q31_decode` (the 2⁻³¹ scale with its asymmetric clamp), `angle_to_q31` (the $\theta_e/\pi$ normalisation, and the refusal to take an angle outside it), `seqlock_valid` (even **and** unchanged) and `isr_cpu_percent`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/04-embedded.T3.04a/starter.py \
+  python3 -m unittest discover -s exercises/04-embedded.T3.04a -p 'test_*.py'
+```
+
+**39 tests.** The register is checked at the worked example's $2125$, the exercise's $3200$, the Skip test's $3000$ and the Gate test's $50\text{ kHz}$, so a missing factor of two fails; the window is checked at $2500\text{ ns}$ and $2100\text{ ns}$ and at a 99% duty where it correctly goes negative, so a single dead-time subtraction fails; the Q1.31 word is checked at $\cos(\pi/3) = 2^{30}$, at $-0.50 = -2^{30}$, at the Skip test's $2^{29}$, and at $+1.0$ clamping to `0x7FFFFFFF` instead of wrapping to $-2^{31}$; the sequence check rejects an odd snapshot even when $s_1 = s_2$, which is the case a bare equality test lets through; and the ISR load is checked at the Gate test's $12\%$. The transfer suite runs the **plant's own timing**: the 40 kHz carrier is exactly 40 periods inside one 1 ms plant tick, the same register arithmetic at the plant's rate gives ARR $= 85\,000$ and a $119.5\ \mu\text{s}$ low-side window, and a second of 1 kHz writes leaves `seq = 2000`. Five planted faults - `arr_forgets_the_half_period`, `dead_time_counted_once`, `q31_scale_is_2_pow_30`, `seqlock_ignores_parity`, `cpu_percent_forgets_the_hundred` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Filter Group Delay*) and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Sampling, Aliasing & Decimation*).

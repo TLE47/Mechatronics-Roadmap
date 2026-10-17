@@ -1,0 +1,31 @@
+{
+  "id": "00-foundations.T1.00a",
+  "module": "modules/00-foundations.T1.00a.md",
+  "title": "Variables, loops, functions and the traceback that names its own exception",
+  "requires": [
+    "step_position(pos_m, vel_m_s, dt_s) -> m",
+    "steps_to_target(pos_0, vel_m_s, dt_s, target_m) -> int",
+    "battery_voltage_after_steps(v_start, drop_per_step, n_steps) -> V",
+    "loop_total(n_steps) -> int",
+    "clamp_pwm(u, u_max) -> float",
+    "safe_divide(numerator, denominator) -> (float | None, str)",
+    "format_position(pos_m) -> str"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "battery_off_by_one": ["test_behavior.BatteryTests.test_the_exercise_battery_sag"],
+    "steps_returns_position": ["test_behavior.WorkedExampleTests.test_the_worked_example_step_count"],
+    "clamp_inverted": ["test_behavior.ClampTests.test_the_skip_test_clamp"],
+    "divide_swallows": ["test_behavior.TracebackTests.test_a_zero_denominator_reports_its_exception"],
+    "format_ignores_precision": ["test_behavior.FormatTests.test_the_three_decimal_format"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T1.00a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T1.00a/starter.py python3 -m unittest discover -s exercises/00-foundations.T1.00a -p 'test_*.py'"
+  }
+}

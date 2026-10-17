@@ -1,0 +1,32 @@
+{
+  "id": "01-electronics.T3.01a",
+  "module": "modules/01-electronics.T3.01a.md",
+  "title": "Flux-cancelling loop inductance, Bessel group delay, the SAR charge bucket and the Cauer thermal ladder",
+  "requires": [
+    "loop_inductance_nh(h_m, w_m, length_m, mu0=4*pi*1e-7) -> nH",
+    "flux_cancelled_nh(l1_nh, l2_nh, m_nh) -> nH",
+    "turn_off_peak_v(v_bus, l_loop_nh, di_dt_a_per_ns) -> V",
+    "bessel_group_delay_us(f0_hz) -> us",
+    "bessel_q() -> dimensionless",
+    "charge_droop_fraction(c_sample_f, c_filt_f) -> fraction",
+    "charge_settling_lsb(bits, c_sample_f, c_filt_f, r_filt_ohm, t_acq_s) -> LSB",
+    "cauer_junction_c(t_amb_c, p_loss_w, stages, t_s) -> degC"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "loop_uses_width_over_height": ["test_behavior.LoopTests.test_the_worked_six_layer_loop"],
+    "flux_adds_mutual_twice": ["test_behavior.FluxTests.test_the_skip_test_is_1_6_nanohenries"],
+    "group_delay_drops_2pi": ["test_behavior.BesselTests.test_the_worked_group_delay"],
+    "settling_forgets_droop": ["test_behavior.SarTests.test_the_exercise_settles_to_half_an_lsb"],
+    "cauer_ignores_tau": ["test_behavior.ThermalTests.test_the_worked_die_rise"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.01-electronics.T3.01a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/01-electronics.T3.01a/starter.py python3 -m unittest discover -s exercises/01-electronics.T3.01a -p 'test_*.py'"
+  }
+}

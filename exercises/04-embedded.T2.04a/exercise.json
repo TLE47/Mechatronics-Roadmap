@@ -1,0 +1,31 @@
+{
+  "id": "04-embedded.T2.04a",
+  "module": "modules/04-embedded.T2.04a.md",
+  "title": "SPI frame time, polled-versus-DMA CPU load and the ping-pong half an ISR may read",
+  "requires": [
+    "spi_shift_us(n_bits, f_sclk_hz) -> us of clocks",
+    "spi_frame_us(n_bits, f_sclk_hz, t_cs_us=0.4) -> us with chip-select",
+    "uart_poll_us(n_bits, baud) -> us of stalled CPU",
+    "cpu_load_fraction(t_busy_us, t_loop_us) -> fraction of the loop",
+    "ping_pong_window_us(n_half, f_adc_hz) -> us to read one half",
+    "ht_frequency_hz(f_sample_hz, n_half) -> Hz of Half-Transfer interrupts",
+    "buffer_slice_for_position(write_pos, n_half) -> (start, stop) or None"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "spi_frame_drops_cs": ["test_behavior.SpiTests.test_the_worked_spi_frame"],
+    "uart_poll_per_byte": ["test_behavior.PollingTests.test_the_skip_test_uart_poll"],
+    "window_uses_full_buffer": ["test_behavior.PingPongTests.test_the_exercise_window"],
+    "ht_frequency_uses_total": ["test_behavior.PingPongTests.test_the_skip_test_ht_rate"],
+    "slice_reads_written_half": ["test_behavior.PingPongTests.test_the_half_transfer_reads_ping"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.04-embedded.T2.04a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/04-embedded.T2.04a/starter.py python3 -m unittest discover -s exercises/04-embedded.T2.04a -p 'test_*.py'"
+  }
+}
