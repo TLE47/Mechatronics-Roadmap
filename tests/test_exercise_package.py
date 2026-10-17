@@ -21,6 +21,7 @@ EXERCISES = os.path.join(ROOT, "exercises")
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 import exercise_bundle  # noqa: E402
+import generate_python_lessons_data  # noqa: E402
 
 
 def packages():
@@ -72,6 +73,41 @@ class PackageContract(unittest.TestCase):
             expected = exercise_bundle.expected_output(directory, root=ROOT)
             self.assertIn(expected, generated,
                           "the generated expected output is not the self-check's PASS line")
+
+    def test_instructor_tests_come_from_the_package_not_the_editor(self):
+        """The workbench grades with a copy of `selfcheck.py` read at build time, not the editor one.
+
+        The appended copy is visible and learner-editable on purpose. If the entry carried a comment
+        there instead, the browser's instructor check would pass for any submission that executed,
+        and a program that merely printed the expected PASS line would be verified.
+        """
+        entries = {entry["id"]: entry for entry in generate_python_lessons_data.exercise_lessons()}
+        self.assertTrue(entries, "no exercise entries were generated")
+        for directory in packages():
+            with open(os.path.join(directory, "exercise.json"), "r", encoding="utf-8") as handle:
+                manifest = json.load(handle)
+            entry = entries[manifest["delivery"]["workbench_id"]]
+            source = exercise_bundle.selfcheck_source(directory)
+            self.assertEqual(entry["instructorTests"], source,
+                             "%s: instructorTests is not the package's selfcheck.py" % manifest["id"])
+            self.assertIn("assert ", source,
+                          "%s: the self-check carries no assertion to grade with" % manifest["id"])
+            self.assertFalse(source.lstrip().startswith("#"),
+                             "%s: instructorTests is a comment, not executable tests" % manifest["id"])
+
+    def test_print_only_submission_fails_the_instructor_tests(self):
+        """A submission that only prints the expected PASS line must not pass the grader.
+
+        This mirrors the workbench: the learner namespace is empty apart from the source string, so
+        a print-only program exposes none of the functions `selfcheck.py` asserts on. The browser
+        regression is `scripts/e2e_browser_workbench.mjs` step 2b.
+        """
+        spoof = 'print("SELF-CHECK PASS: spoofed")\n'
+        for directory in packages():
+            source = exercise_bundle.selfcheck_source(directory)
+            namespace = {"__name__": "__main__", "__mechalab_student_source__": spoof}
+            with self.assertRaises(Exception, msg=os.path.basename(directory)):
+                exec(compile(source, "<instructor_tests>", "exec"), namespace)
 
     def test_workbench_starter_fails_and_solution_passes(self):
         for directory in packages():

@@ -193,14 +193,28 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__ = __mechalab_e
       }
 
       const instructorHarness = \`
-import traceback
+import builtins, traceback
+
+def __mechalab_instructor_namespace():
+    # The grader gets the submission's own names, but not the ones that could rewrite the grade:
+    # nothing underscore-prefixed, and no shadow of a builtin the assertions call (abs, len, round,
+    # ...). A submission that only prints the expected PASS line exports nothing to assert on, so the
+    # instructor tests fail with NameError instead of agreeing with it.
+    ns = {
+        name: value
+        for name, value in __mechalab_ns__.items()
+        if not name.startswith("_") and name not in builtins.__dict__
+    }
+    ns["__name__"] = "__main__"
+    ns["__mechalab_student_source__"] = __mechalab_student_code__
+    return ns
 
 def __mechalab_run_instructor():
     if not __mechalab_instructor_code__.strip():
         return True, ""
     try:
         compiled_tests = compile(__mechalab_instructor_code__, "<instructor_tests>", "exec")
-        exec(compiled_tests, __mechalab_ns__)
+        exec(compiled_tests, __mechalab_instructor_namespace())
         return True, ""
     except AssertionError as ae:
         msg = str(ae).strip() or "Instructor behavioral test assertion failed on boundary or unseen input."

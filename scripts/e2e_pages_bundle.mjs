@@ -245,6 +245,11 @@ async function checkInBrowser(name, launcher, baseUrl) {
         /MATCHED/i,
         `${name}: ${exerciseId} starter must not be graded as a match`
       );
+      assert.match(
+        (await page.getByTestId('badge-behavior-check').textContent()) ?? '',
+        /FAILED/i,
+        `${name}: ${exerciseId} starter must fail the instructor behavioural tests`
+      );
       await page.getByTestId('btn-load-solution').click();
       await page.getByTestId('btn-run-verify').click();
       await page.waitForFunction(
@@ -259,6 +264,13 @@ async function checkInBrowser(name, launcher, baseUrl) {
         (await page.getByTestId('badge-output-check').textContent()) ?? '',
         /MATCHED/i,
         `${name}: ${exerciseId} reference must match its expected output`
+      );
+      // The registry's copy of the package's selfcheck.py, run after the program, is what awards
+      // verification: a reference that only printed the PASS line would fail this badge.
+      assert.match(
+        (await page.getByTestId('badge-behavior-check').textContent()) ?? '',
+        /PASSED/i,
+        `${name}: ${exerciseId} reference must pass the instructor behavioural tests`
       );
     }
     console.log(

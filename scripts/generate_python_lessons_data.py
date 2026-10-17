@@ -687,6 +687,13 @@ def exercise_lessons():
     three-way contract `scripts/run_exercise.py` enforces in CI, so the browser and the runner
     cannot disagree about what passing means. `selfcheck.py` is appended verbatim from the package;
     nothing here re-implements a check.
+
+    The entry's `instructorTests` is that same `selfcheck.py` source, so the workbench runs the
+    assertions itself, from the registry, after the learner's program has finished. The appended
+    copy stays visible and runnable in the editor, but it is not what awards verification: a
+    submission that only prints the expected PASS line has none of the functions the instructor
+    copy calls, so it fails the behavioural check (all 44 packages are covered by
+    `tests/test_exercise_package.py::test_print_only_submission_fails_the_instructor_tests`).
     """
     if not os.path.isdir(EXERCISES):
         return []
@@ -699,6 +706,7 @@ def exercise_lessons():
         with open(manifest_path, "r", encoding="utf-8") as handle:
             manifest = json.load(handle)
         delivery = manifest.get("delivery", {})
+        checker = exercise_bundle.selfcheck_source(directory)
         entries.append(
             {
                 "id": delivery.get("workbench_id", "EX." + manifest["id"]),
@@ -718,13 +726,14 @@ def exercise_lessons():
                 "expectedOutput": exercise_bundle.expected_output(directory, root=ROOT),
                 "outputMatch": "normalized",
                 "instructorTestSummary": [
-                    "Browser: the appended self-check asserts the Jacobian against finite "
-                    "differences at 5 poses, J^T against virtual work, gravity against the plant, "
-                    "and the payload run against the capstone's own error.",
-                    "CI: scripts/run_exercise.py runs the same package's 14 unittest cases - starter "
-                    "fails, reference passes, four planted faults each fail their named test.",
+                    "Browser: this package's own `selfcheck.py` runs again as the Instructor "
+                    "Behavioral Tests, from the workbench registry rather than from the editor - "
+                    "editing the appended copy, deleting it, or printing its PASS line does not "
+                    "verify the exercise.",
+                    "CI: scripts/run_exercise.py runs the same package's unittest cases - the starter "
+                    "fails, the reference passes, and every planted fault fails its named test.",
                 ],
-                "instructorTests": "# Graded by the appended self-check (exercise_bundle.py); the full suite is scripts/run_exercise.py.",
+                "instructorTests": checker,
             }
         )
     return entries

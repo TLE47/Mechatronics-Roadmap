@@ -7,7 +7,8 @@
  * via Playwright (`playwright-core`) with Web Worker Pyodide WASM execution to verify:
  * 1. Starter code fails verification (`0 / N Verified`, N read from the page's own tally).
  * 2. Print-only spoofing (`print(expectedOutput)`) passes presentation check but FAILS
- *    Instructor Behavioral Tests and never awards verification.
+ *    Instructor Behavioral Tests and never awards verification — on a beginner lesson and, in 2b,
+ *    on a graded exercise whose self-check is appended to the editable program.
  * 3. Invalid Python syntax produces an understandable SyntaxError with line number.
  * 4. Accidental infinite loops (`while True:`) are stopped/recoverable via Worker step/time
  *    limits, Stop button, and Reset Runtime without losing editor code.
@@ -164,6 +165,51 @@ async function runRealBrowserE2ETests() {
       verified(0),
       'Print-only spoof must NEVER award lesson verification'
     );
+
+    // 2b. The same spoof on a graded exercise entry, where the grader is the package's own
+    // `selfcheck.py` executed from the registry. The appended copy is visible and learner-editable,
+    // so printing its PASS line must satisfy the presentation check and fail the behavioural one.
+    const exerciseLesson = 'EX.05-control.T3.05a';
+    await page.getByTestId(`lesson-item-${exerciseLesson}`).scrollIntoViewIfNeeded();
+    await page.getByTestId(`lesson-item-${exerciseLesson}`).click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
+          'NotImplementedError'
+        ),
+      undefined,
+      { timeout: 15000 }
+    );
+    const exerciseExpectedText = await page.getByTestId('pre-expected-stdout').textContent();
+    assert.match(
+      exerciseExpectedText ?? '',
+      /SELF-CHECK PASS/,
+      `${exerciseLesson} must publish its self-check PASS line as the expected output`
+    );
+    await page
+      .getByTestId('textarea-python-code')
+      .fill(`print(${JSON.stringify((exerciseExpectedText || '').trim())})\n`);
+    await page.getByTestId('btn-run-verify').click();
+    await page.waitForFunction(
+      () => {
+        const outBadge = document.querySelector('[data-testid="badge-output-check"]');
+        const behBadge = document.querySelector('[data-testid="badge-behavior-check"]');
+        return (
+          outBadge?.textContent?.includes('MATCHED') &&
+          behBadge?.textContent?.includes('FAILED')
+        );
+      },
+      { timeout: 30000 }
+    );
+    await page.getByTestId('status-behavior-failed').waitFor({ timeout: 5000 });
+    assert.equal(
+      (await page.getByTestId('runner-verified-count').textContent())?.trim(),
+      verified(0),
+      `Printing ${exerciseLesson}'s PASS line must never verify a graded exercise`
+    );
+
+    // Back to P.6: the steps below load its solution and expect it in the portfolio export.
+    await page.getByTestId('lesson-item-P.6').click();
 
     // 3. Invalid Python syntax produces an understandable error
     await page.getByTestId('textarea-python-code').fill('def broken_syntax(\n    x = \n');

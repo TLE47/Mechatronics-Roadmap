@@ -10,6 +10,12 @@ The appended block is visible in the editor - that is the point. It is not a hid
 the same `selfcheck.py` the repository keeps, and CI runs it against the starter (must fail) and the
 solution (must pass) before the generated entry is allowed to claim anything.
 
+Visible is not the same as trusted. The editor copy is learner-editable, so it cannot be the thing
+that awards verification: `scripts/generate_python_lessons_data.py` also puts this source in the
+entry's `instructorTests`, and the workbench runs *that* copy - read from disk at build time, in a
+namespace the submission cannot rewrite - before a lesson counts as passed. Editing or deleting the
+appended copy, or printing its `SELF-CHECK PASS:` line, changes the presentation check at most.
+
 Both `scripts/generate_python_lessons_data.py` and `scripts/run_exercise.py` use this module, so the
 browser entry and the CI check cannot drift into two different programs.
 """
@@ -21,14 +27,18 @@ import sys
 HEADER = "# --- browser self-check, appended by scripts/exercise_bundle.py; do not edit here ---\n"
 
 
+def selfcheck_source(directory):
+    """The package's instructor-owned self-check, read from disk rather than from the editor."""
+    with open(os.path.join(directory, "selfcheck.py"), "r", encoding="utf-8") as handle:
+        return handle.read()
+
+
 def browser_program(directory, which="solution"):
     """The single-file program the workbench runs for `which` ('starter' or 'solution')."""
     path = os.path.join(directory, which + ".py")
     with open(path, "r", encoding="utf-8") as handle:
         learner_source = handle.read()
-    with open(os.path.join(directory, "selfcheck.py"), "r", encoding="utf-8") as handle:
-        checker = handle.read()
-    return learner_source.rstrip() + "\n\n\n" + HEADER + checker
+    return learner_source.rstrip() + "\n\n\n" + HEADER + selfcheck_source(directory)
 
 
 def run_browser_program(directory, which="solution", root=None):
