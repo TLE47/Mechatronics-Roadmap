@@ -81,6 +81,16 @@ F_axial=-16.0 N, tau=[6.0, -4.5, -6.0] N*m
 Given lever arm $\vec{r} = [0.25, 0.00, 0.10]^T\text{ m}$ and payload force $\vec{F} = [10.0, 30.0, -20.0]^T\text{ N}$, compute $\vec{\tau} = \vec{r}\times\vec{F}$ and verify that $\vec{\tau}\cdot\vec{F} = 0.0\text{ N}^2\cdot\text{m}$. Expected result: `tau = [-3.0, 6.0, 7.5] N*m` (tolerance $\pm 10^{-6}\text{ N}\cdot\text{m}$).
 - **If your result differs:** Check the middle ($y$) component sign of the cross product: $\tau_y = r_z F_x - r_x F_z = (0.10)(10.0) - (0.25)(-20.0) = +6.0\text{ N}\cdot\text{m}$, not $-6.0\text{ N}\cdot\text{m}$.
 
+### Graded package - three tools, then the arm's own Jacobian
+[`exercises/00-foundations.T2.00b/`](../exercises/00-foundations.T2.00b/) turns this section into a test. `starter.py` holds seven holes: `dot3`, `cross3`, `axial_force` (projection onto the lever's UNIT direction), `moment`, `det2`, `coordinates_in_basis` (Cramer's rule, refusing a singular pair), and `in_basis`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T2.00b/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T2.00b -p 'test_*.py'
+```
+
+The tests are behavioural: the projection must not grow when the lever gets longer, the cross product must be antisymmetric and orthogonal to both inputs, the determinant must be zero for a collinear pair, a singular basis must raise `ValueError` rather than return infinities, and moments are checked at several levers. The transfer suite then uses the shared plant: a 0.20 kg payload's moment about the shoulder must equal `-m g x` *and* the shoulder torque from a finite-difference Jacobian, and the arm's Jacobian columns are used as a basis - tip velocity to joint rates and back, with the stretched pose refusing the inversion. Four planted faults - `flipped_cross`, `not_normalised`, `det_plus`, `hardcoded_moment` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*2D Vectors*) and [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix-Vector Multiplication*).
   - **Core Concepts to Review First:** 3D dot product $\vec{a}\cdot\vec{b} = \sum a_i b_i$ and 3D right-hand cross product $\vec{\tau} = \vec{r}\times\vec{F}$ in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
@@ -89,6 +99,8 @@ Given lever arm $\vec{r} = [0.25, 0.00, 0.10]^T\text{ m}$ and payload force $\ve
 
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench to inspect how 3D joint axes and link lever arms produce spatial torques across the 6-DOF arm.
+
+The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00b`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Track 03 (`Step 2.4`), the Clarke transform changes basis from three $120^\circ$-spaced stator coil axes $(a, b, c)$ into two orthogonal $(\alpha, \beta)$ axes via this exact projection:
 ```text

@@ -37,6 +37,11 @@ const repoRoot = process.cwd();
 const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
 const distDir = path.join(repoRoot, 'dist');
 const LATER_TRACK_LESSONS = ['03.3', '06.1', '08.1'];
+const EXERCISE_IDS = [
+  'EX.02-mechanics.T2.02a',
+  'EX.00-foundations.T2.00a',
+  'EX.00-foundations.T2.00b',
+];
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -161,8 +166,7 @@ async function checkInBrowser(name, launcher, baseUrl) {
     // A Tier 2 exercise is generated from its package, not hand-written into the registry: it must
     // appear in the same list, fail on its own holes, and pass once the reference is loaded. That is
     // the whole delivery claim, checked on the bundle learners actually open.
-    const exerciseIds = ['EX.02-mechanics.T2.02a', 'EX.00-foundations.T2.00a'];
-    for (const exerciseId of exerciseIds) {
+    for (const exerciseId of EXERCISE_IDS) {
     const exercise = page.getByTestId(`lesson-item-${exerciseId}`);
     await exercise.scrollIntoViewIfNeeded();
     await exercise.click();
@@ -277,7 +281,7 @@ async function main() {
     const ran = Object.entries(results).filter(([, value]) => value === 'pass').map(([name]) => name);
     const skipped = Object.entries(results).filter(([, value]) => value === 'skip').map(([name]) => name);
     console.log(        `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
-        `${LATER_TRACK_LESSONS.join(', ')}, grades exercises ${['EX.02-mechanics.T2.02a', 'EX.00-foundations.T2.00a'].join(', ')} end to end and stays ` +
+        `${LATER_TRACK_LESSONS.join(', ')}, grades exercises ${EXERCISE_IDS.join(', ')} end to end and stays ` +
         `usable at tablet width in: ${ran.join(', ')}` +
         (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
     );

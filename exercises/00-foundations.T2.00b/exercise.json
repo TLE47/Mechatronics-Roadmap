@@ -1,0 +1,30 @@
+{
+  "id": "00-foundations.T2.00b",
+  "module": "modules/00-foundations.T2.00b.md",
+  "title": "Dot and cross products, independence, and change of basis",
+  "requires": [
+    "dot3(a, b) -> float",
+    "cross3(a, b) -> [x, y, z]",
+    "axial_force(force, lever) -> float",
+    "moment(lever, force) -> [x, y, z]",
+    "det2(b1, b2) -> float",
+    "coordinates_in_basis(vector, b1, b2) -> (c1, c2), ValueError when singular",
+    "in_basis(vector, b1, b2) -> [x, y]"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "flipped_cross": ["test_behavior.CrossTests.test_worked_moment"],
+    "not_normalised": ["test_behavior.DotTests.test_projection_does_not_scale_with_lever_length"],
+    "det_plus": ["test_behavior.BasisTests.test_determinant_and_singular_pair"],
+    "hardcoded_moment": ["test_behavior.MomentPoseTests.test_several_levers_not_one_hardcoded_answer"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T2.00b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T2.00b/starter.py python3 -m unittest discover -s exercises/00-foundations.T2.00b -p 'test_*.py'"
+  }
+}
