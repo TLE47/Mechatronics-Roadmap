@@ -166,6 +166,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **Park rotates the other way.** The frame turns *with* the rotor, so the matrix is $[\cos\theta_e, \sin\theta_e;\ -\sin\theta_e, \cos\theta_e]$ and its transpose (inverse, determinant $1$) takes $(d, q)$ back out. Driving pure $q$ current then gives $i_d = 0$ and $i_q = I_{\text{pk}}$ at every angle.
 4. **Wrap before the gains.** $\theta_{\text{meas}} - \hat{\theta}$ is a difference of two points on a circle: unwrapped, it reads $2\pi$ once per turn and the velocity estimate spikes at exactly the rollover. Then the integral law: averaging white noise for $\tau$ scales the rate deviation as $\tau^{-1/2}$, so $\tau = 100\text{ s}$ cuts it by $10$, not $100$.
 
+5. **What the suite refuses.** `allan_deviation` refuses a window of zero samples: there is no deviation to average over, so a zero window raises `ValueError` rather than reporting `0.0`.
+
 ### Full Solution
 ```python
 import math

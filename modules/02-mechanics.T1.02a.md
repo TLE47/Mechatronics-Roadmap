@@ -155,6 +155,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The efficiency belongs on the torque, not the speed.** $\eta = 0.95$ costs $5\%$ of the torque ($1.80\text{ N}\cdot\text{m}$ without it) and none of the speed.
 4. **Power is the check that the two sides agree.** $\tau_{\text{joint}}\omega_{\text{joint}} = 1.71 \times 20.0 = 34.2\text{ W}$ equals $\eta \tau_{\text{motor}}\omega_{\text{motor}} = 0.95 \times 0.40 \times 90 = 34.2\text{ W}$; if the two differ, the speed or the torque was scaled the wrong way.
 
+5. **What the suite refuses.** A negative mass, a lever arm at the pivot (which balances nothing), a zero gear tooth count or zero ratio, and a gear efficiency outside `(0, 1]` all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

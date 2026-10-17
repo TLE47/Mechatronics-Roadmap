@@ -173,6 +173,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **Droop falls as $1/C$.** With the same transient, $100\ \mu\text{F}$ sags $0.60\text{ V}$ ($2.4\times$ the budget) and $470\ \mu\text{F}$ sags $0.128\text{ V}$ — so the fix is a bigger reservoir, not a slower transient.
 4. **The two energies both carry the $\tfrac12$, and the spike is a unit trap.** $E_C = \tfrac12 C V^2$, $E_L = \tfrac12 L I^2$, and $V_L = L\Delta I/\Delta t$ with $\Delta t = 0.5\ \mu\text{s} = 0.5 \times 10^{-6}\text{ s}$; entering $0.5$ makes the $12\text{ kV}$ spike read $12\text{ V}$.
 
+5. **What the suite refuses.** A negative time in `rc_voltage`, a zero droop in `bulk_capacitance_f`, a negative capacitance or inductance in the energy functions, a zero opening time in `flyback_voltage`, and a negative part in `rc_time_constant` or `rc_cutoff_hz` all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

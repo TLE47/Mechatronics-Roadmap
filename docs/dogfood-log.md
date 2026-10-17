@@ -225,14 +225,23 @@ bucket capacitor or a zero/negative acquisition window (`charge_droop_fraction`,
 which is the signature of a missing contract rather than a wrong formula. The ladder now carries a
 fifth *What the suite refuses* item naming all of them, including the thermal ladder's four guards.
 
-**How widespread it is.** The same question asked of every package (behaviour suite asserts
-`ValueError`, page's exercise section before `### Full Solution` never says "refuses" or "raises")
-finds that before this fix **19 of 41** pages were silent about refusals their own suite checks;
-**18 remain** after it: `00-foundations.T1.00b`,
-`T1.00d`, `T1.00e`, `01-electronics.T1.01c`, `T1.01d`, `T2.01a`, `T2.01b`, `02-mechanics.T1.02a`,
-`T3.02a`, `03-sensors.T1.03a`, `T2.03a`, `04-embedded.T1.04b`, `T2.04d`, `05-control.T1.05a`,
-`T3.05b`, `06-robotics.T1.06a`, `T3.06b`, `08-capstones.T3.07a`. It is one sentence per page, but each sentence has to match that page's own guards, so it is the
-next queued job rather than a sweep done here.
+**How widespread it was, and what closed it.** The same question asked of every package (behaviour
+suite asserts `ValueError`, page's exercise section before `### Full Solution` never says "refuses"
+or "raises") found **19 of 41** pages silent about refusals their own suite checks - this module
+being one of them. The other 18 are now repaired, each sentence built from that page's own guard
+inventory rather than a shared template: `00-foundations.T1.00b`, `T1.00d`, `T1.00e`,
+`01-electronics.T1.01c`, `T1.01d`, `T2.01a`, `T2.01b`, `02-mechanics.T1.02a`, `T3.02a`,
+`03-sensors.T1.03a`, `T2.03a`, `04-embedded.T1.04b`, `T2.04d`, `05-control.T1.05a`, `T3.05b`,
+`06-robotics.T1.06a`, `T3.06b`, `08-capstones.T3.07a`. All **41 of 41** now state their refusals.
+
+**The check that keeps it green.** `scripts/check_exercise_coverage.py` gained a fourth job: when a
+behaviour suite contains `with self.assertRaises(ValueError):`, the page's `## 5. Exercise` section
+- everything above `### Full Solution`, so the answer block cannot be the only place it is said -
+must contain a refusal (`refuses`, `raise`). It is a floor, not a proof: it cannot verify that
+every guard is named, which is what the dogfood rows are for, but it makes total silence a red
+build. Four cases in `tests/test_exercise_coverage.py` pin it - a silent page fails, a stated one
+passes, a mention that sits only under the Full Solution does not count, and a suite that refuses
+nothing is not held to the rule.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

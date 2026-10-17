@@ -1,8 +1,9 @@
 """Tests for `scripts/check_exercise_coverage.py` - the wall that keeps the gap from reopening.
 
-The gate has exactly three jobs, and each one has a case here:
+The gate has four jobs, and each one has a case here:
   * a bridge module with no package fails the build;
   * a package missing one of its required files fails the build;
+  * a page whose suite refuses bad input must say so above its solution block;
   * a complete set of packages passes, and `--dry-run` reports without failing.
 """
 
@@ -22,7 +23,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import check_exercise_coverage as gate  # noqa: E402
 
 
-def write_package(exercises, module, complete=True):
+def write_package(exercises, module, complete=True, refusal=False):
     directory = os.path.join(exercises, module)
     os.makedirs(os.path.join(directory, "faults"), exist_ok=True)
     manifest = {
@@ -39,8 +40,11 @@ def write_package(exercises, module, complete=True):
     if not complete:
         names.remove("test_transfer.py")
     for name in names:
+        body = "# fixture\n"
+        if name == "test_behavior.py" and refusal:
+            body += "\n    with self.assertRaises(ValueError):\n        pass\n"
         with open(os.path.join(directory, name), "w") as handle:
-            handle.write("# fixture\n")
+            handle.write(body)
     with open(os.path.join(directory, "faults", "broken.py"), "w") as handle:
         handle.write("# fixture\n")
 
@@ -61,9 +65,13 @@ class CoverageGateTests(unittest.TestCase):
         gate.MODULES_DIR, gate.EXERCISES_DIR = self.saved
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def module(self, module_id):
+    def module(self, module_id, body="# fixture\n"):
         with open(os.path.join(self.modules, module_id + ".md"), "w") as handle:
-            handle.write("# fixture\n")
+            handle.write(body)
+
+    def page(self, exercise, solution_tail=""):
+        """A page with a real exercise section, so the refusal rule has something to read."""
+        return "# fixture\n\n## 5. Exercise\n\n" + exercise + "\n\n### Full Solution\n" + solution_tail + "\n"
 
     def run_gate(self, *args):
         out, err = io.StringIO(), io.StringIO()
@@ -119,6 +127,33 @@ class CoverageGateTests(unittest.TestCase):
         code, _out, err = self.run_gate()
         self.assertEqual(code, 1)
         self.assertIn("faults/ holds no planted fault", err)
+
+    def test_a_suite_that_refuses_input_needs_the_page_to_say_so(self):
+        self.module("01-electronics.T1.01c", self.page("Compute the droop."))
+        write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
+        code, _out, err = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("never says", err)
+
+    def test_a_page_that_states_its_refusals_passes(self):
+        self.module("01-electronics.T1.01c",
+                    self.page("A zero limit raises `ValueError`; a negative one is refused."))
+        write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
+        self.assertEqual(self.run_gate()[0], 0)
+
+    def test_a_refusal_only_under_the_solution_does_not_count(self):
+        # The point of reading above `### Full Solution`: the answer block is not the teaching.
+        self.module("01-electronics.T1.01c",
+                    self.page("Compute the droop.", solution_tail="A zero limit raises `ValueError`."))
+        write_package(self.exercises, "01-electronics.T1.01c", refusal=True)
+        code, _out, err = self.run_gate()
+        self.assertEqual(code, 1)
+        self.assertIn("never says", err)
+
+    def test_a_package_whose_suite_does_not_refuse_input_is_not_held_to_the_rule(self):
+        self.module("01-electronics.T1.01c", self.page("Compute the droop."))
+        write_package(self.exercises, "01-electronics.T1.01c")
+        self.assertEqual(self.run_gate()[0], 0)
 
     def test_dry_run_reports_the_gap_without_failing(self):
         self.module("01-electronics.T1.01c")

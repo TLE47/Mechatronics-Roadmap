@@ -191,6 +191,8 @@ print("scaffold ready: 3 TODOs to fill, then compare against the numbers in the 
 3. **The reset is the exercise.** The injection has just consumed the posterior error, so the mean must go back to $[0, 0, 0]$ before the next measurement. Leave it set and a zero innovation applies the same $0.05$ rad a second time: the frame reads $0.10$ with the determinant still $1$ - a perfect rotation of the wrong pose.
 4. **Reading the angle back.** $\operatorname{tr}R = 1 + 2\cos\theta$, so $\theta = \arccos((\operatorname{tr}R - 1)/2)$; one count is $2\pi/4096$, and $\det R = 1$ to $10^{-15}$ is the cheap $SO(3)$ check.
 
+5. **What the suite refuses.** `exp_so3` and `inject_rotation` refuse a two-component correction: a rotation vector is three numbers, and a short one is a typo rather than a smaller rotation, so it raises `ValueError`.
+
 ### Full Solution
 ```python
 import math

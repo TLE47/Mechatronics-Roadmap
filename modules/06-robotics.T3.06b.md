@@ -217,6 +217,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **Weights are newest-first and normalised.** $w_i = e^{-m i}$ starts at $1$ for `predictions[0]`; dividing by $\sum w_i$ is what makes a zero decay reduce to the plain mean, and a large decay let the newest prediction dominate.
 4. **Order matters in the shield.** Step-clamp around the *measured* $q$ first, then apply the joint limits: at $q = -1.45$, $\Delta q_{\max} = 0.10$ and a $-2.00$ command the rate limit already reaches $-1.55$, so only the second clamp keeps you inside $[-1.50, +1.50]$.
 
+5. **What the suite refuses.** A discount of one, an empty rollout or chunk, a reward/advantage length mismatch, a clip range without `low < high` or a non-positive ratio, a negative temporal-ensemble decay, a `safety_shield` clamp of zero or inverted position limits, and a non-positive watchdog timeout all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

@@ -141,6 +141,8 @@ print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the 
 3. **Order the pairs before you subtract.** `zip(target, measured)` yields `(1.0, 0.9)`, then `(2.0, 2.1)`; target minus measured gives `+0.1, -0.1, +0.2, -0.2` rad. If your errors come back all positive, you zipped the lists in the other order.
 4. **Square before you average.** `sum(err) / 4` is exactly `0.0` here - the signs cancel - while `sum(e*e for e in err) / 4` is `0.025`, and `math.sqrt` of that is `0.1581139` rad.
 
+5. **What the suite refuses.** An empty trace (`mean_of`, `peak_to_peak`, `rmse`), a pair of traces of different lengths (`errors`, `rmse`), a `timestamps` call with a non-positive step or fewer than one sample, a `git_command` task other than the two it knows, and a `scaled_readings` config missing a key it needs all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

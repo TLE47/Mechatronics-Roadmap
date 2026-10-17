@@ -159,6 +159,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The check that proves it.** Feed $6.0\text{ nH}$ back into `v_peak_turnoff` at $\Delta I = 30.0\text{ A}$, $\Delta t = 15\text{ ns}$: it must land exactly on $60.0\text{ V}$, and $6.5\text{ nH}$ must land above it.
 4. **Do not mix the other two answers in.** The bootstrap gate ($48 + 12 = 60\text{ V}$) and the pre-charge inrush ($48/48 = 1.0\text{ A}$) are separate helpers with their own units; only the inductance budget uses the $12\text{ V}$ headroom.
 
+5. **What the suite refuses.** A negative loop inductance, a zero commutation time or gate rise time, a clamp ceiling at the bus, a zero current change, a dead driver, a bare wire (no bootstrap capacitance) and a negative capacitance all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math  # noqa: F401  (kept so the submission imports what the module uses)

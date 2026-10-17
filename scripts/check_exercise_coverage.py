@@ -11,6 +11,14 @@ package fails the build, and so does a package missing any required file, a mani
 valid JSON or does not carry the module's own id, and a package that plants no fault. Adding a
 module without its exercise is therefore a red build, not a silent gap.
 
+It also holds the page to its suite. When a behaviour suite checks that bad input raises
+(`with self.assertRaises(ValueError):`), the module's `## 5. Exercise` section - everything above
+`### Full Solution`, so the answer cannot be the only place it is said - must state at least one
+refusal in prose (`refuses`, `raise`). Three dogfood rounds found the same defect: a suite testing
+a contract the hint ladder never mentioned, leaving a correct formula that still fails. This gate
+is a floor, not a proof - it cannot check that every guard is named; the dogfood rows are that
+proof - but it makes total silence a red build.
+
 Usage:
     python3 scripts/check_exercise_coverage.py             # check (default)
     python3 scripts/check_exercise_coverage.py --json
@@ -40,6 +48,13 @@ REQUIRED_FILES = (
     "harness.py",
 )
 MIN_FAULTS = 1
+
+# `## 5. Exercise` up to (not including) `### Full Solution`: the page's teaching, not its answer.
+EXERCISE_SECTION = re.compile(
+    r"^##\s*5\.\s*Exercise\b(.*?)(?=^###\s*Full Solution)", re.MULTILINE | re.DOTALL
+)
+REFUSAL_CUE = re.compile(r"refus\w*|\braise[sd]?\b|\braising\b", re.IGNORECASE)
+SUITE_REFUSAL = "assertRaises(ValueError)"
 
 
 def module_ids():
@@ -86,9 +101,29 @@ def package_problems(module):
     return problems
 
 
+def suite_refuses_input(module):
+    """Whether the behaviour suite checks that bad input raises `ValueError`."""
+    path = os.path.join(EXERCISES_DIR, module, "test_behavior.py")
+    if not os.path.exists(path):
+        return False
+    with open(path, "r", encoding="utf-8") as handle:
+        return SUITE_REFUSAL in handle.read()
+
+
+def page_states_refusals(module):
+    """Whether the exercise section, above the solution block, says something is refused or raises."""
+    path = os.path.join(MODULES_DIR, module + ".md")
+    if not os.path.exists(path):
+        return False
+    with open(path, "r", encoding="utf-8") as handle:
+        text = handle.read()
+    match = EXERCISE_SECTION.search(text)
+    return bool(match and REFUSAL_CUE.search(match.group(1)))
+
+
 def scan():
     ids = module_ids()
-    missing, incomplete, graded = [], {}, []
+    missing, incomplete, graded, unstated = [], {}, [], []
     for module in ids:
         problems = package_problems(module)
         if problems is None:
@@ -97,20 +132,25 @@ def scan():
             incomplete[module] = problems
         else:
             graded.append(module)
-    return ids, missing, incomplete, graded
+            if suite_refuses_input(module) and not page_states_refusals(module):
+                unstated.append(module)
+    return ids, missing, incomplete, graded, unstated
 
 
 def check():
-    ids, missing, incomplete, graded = scan()
+    ids, missing, incomplete, graded, unstated = scan()
     findings = []
     findings += ["%s ships no graded exercise package" % m for m in missing]
     findings += ["incomplete package %s: %s" % (m, "; ".join(p))
                  for m, p in sorted(incomplete.items())]
+    findings += ["%s: the behaviour suite refuses bad input, but `## 5. Exercise` never says "
+                 "what raises - state the refusals above `### Full Solution`" % m for m in unstated]
     return {
         "modules": len(ids),
         "graded": len(graded),
         "missing": len(missing),
         "incomplete": len(incomplete),
+        "unstated": len(unstated),
         "findings": findings,
     }
 

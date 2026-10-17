@@ -161,6 +161,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **Two DMM jacks, two resistances.** In voltage mode the rail sees $10\text{ M}\Omega$ ($12.0/10^7 = 1.2\ \mu\text{A}$); in the current jack the rail sees the shunt ($12.0/(0.010 + 0.010) = 600\text{ A}$) — dividing by $10\text{ M}\Omega$ there gives microamps and hides the destroyed fuse.
 4. **The power-off check compares the other way.** A healthy $240\ \Omega$ build must return `False` from `is_short`; only a reading *below* $10\ \Omega$ is the short you are hunting.
 
+5. **What the suite refuses.** A zero current limit or zero load in `psu_output`, a zero power in `critical_resistance`, a zero or negative resistance in `dmm_short_current`, a negative ceiling in `clip_power`, a zero forward drop in `led_current_ma`, and an `is_short` threshold of zero all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

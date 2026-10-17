@@ -174,6 +174,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The exercise check is an inequality.** The undamped worked example conserves energy to four decimals; the damped run must *lose* it. The envelope decays as $e^{-(b/m)t} = e^{-4} \approx 0.0183$, so $E(2.0\text{ s}) \approx 0.25 \times 0.0183 \approx 0.0046\text{ J}$, comfortably under the $0.0125\text{ J}$ pass mark - if yours sits above it, the damper sign or the update order is wrong, not the threshold.
 4. **Units are the check.** $k x$ is newtons, $b v$ is $\text{N}\cdot\text{s/m} \times \text{m/s} = \text{N}$, and dividing their sum by kilograms leaves $\text{m/s}^2$ - the right thing to add to $v$ after multiplying by $\Delta t$, and the wrong thing to add to $x$.
 
+5. **What the suite refuses.** A zero mass, a zero inertia, a zero or negative stiffness, a negative lever arm in `torque`, and an `euler_step` whose arguments cannot be used all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

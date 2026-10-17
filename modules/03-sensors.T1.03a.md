@@ -181,6 +181,8 @@ print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the 
 3. **One bit per edge.** A valid quadrature step changes exactly one of `A` and `B`: `00 -> 10 -> 11 -> 01 -> 00` forward, the reverse cycle backwards. A jump of two bits (`00 -> 11`) is a glitch or a sample rate below the edge rate, so it contributes $0$ - and the worked five-edge walk must total exactly $5$, not $10$.
 4. **The winding is one subtraction.** $i = (V_{\text{term}} - K_e\omega_m)/R$: at the worked $12.0\text{ V}$, $R = 4.0\ \Omega$, $K_e = 0.06$ and $\omega_m = 200\text{ rad/s}$ the back-EMF is $12.0\text{ V}$ and the current is zero, while at $\omega_m = 0$ it is the $3.0\text{ A}$ stall current.
 
+5. **What the suite refuses.** A bad winding in `winding_current`, a zero torque or back-EMF constant, a pole-pair count below one, an odd magnet count or no magnets at all, an empty encoder in `quadrature_cpr` or `angle_resolution`, and a `quad_step` code wider than two bits all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

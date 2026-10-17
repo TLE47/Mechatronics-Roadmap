@@ -144,6 +144,8 @@ print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the 
 3. **The norm is the diagonal.** For the exercise's target, `math.hypot(-0.30, -0.40)` is `0.50`; `|-0.30| + |-0.40| = 0.70` is the taxi-cab sum, not a distance.
 4. **`atan2` takes `y` first, and that order is the whole four-quadrant trick.** `math.atan2(-0.40, -0.30)` is `-2.2143` rad $= -126.8699^\circ$; swapping the arguments gives $-143.13^\circ$, the mirrored heading the exercise warns about.
 
+5. **What the suite refuses.** A zero readout where `sensor_current` divides by the slope, a negative radius passed to `polar_to_cartesian`, and the origin passed to `heading_rad` - where no heading exists - all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

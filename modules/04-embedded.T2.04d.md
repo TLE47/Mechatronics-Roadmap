@@ -187,6 +187,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The round trip is what is left after the host's own work.** $\delta_{\text{rtt}} = (t_4 - t_1) - (t_3 - t_2) = 240 - 40 = 200\ \mu\text{s}$, so the link is symmetric at $100\ \mu\text{s}$ each way.
 4. **Utilisation is a sum of ratios.** A stream's share is its frequency times its wire time, so $500\ \text{Hz}$ on a $499\ \mu\text{s}$ frame would already be $25\%$ of the link - keep it as a fraction of one, never as a mean of milliseconds.
 
+5. **What the suite refuses.** A zero wire rate in `wire_time_us` and a zero task period in `rtos_utilization` - including a task set that carries one - both raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

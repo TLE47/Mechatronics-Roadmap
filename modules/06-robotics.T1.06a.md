@@ -162,6 +162,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **When the limit is acceleration.** $|\ddot{q}_d|$ is largest at the endpoints, $\ddot{q}_d(0) = -\ddot{q}_d(T) = 6\Delta q/T^2$, so the duration is the square root, $T = \sqrt{6\Delta q/\ddot{q}_{\max}}$ - not $6\Delta q/\ddot{q}_{\max}$.
 4. **Holding still, and the spring.** Clamping $s$ to $1$ returns $q_f$ with $\dot{q}_d = \ddot{q}_d = 0$; without the clamp $3s^2 - 2s^3$ turns over past $s = 1$ and the arm swings back through its start. For the torque, $K_p$ multiplies the position error and $K_d$ the velocity error, so a $0.80\ \text{N}\cdot\text{m}$ push against $K_p = 4.0\ \text{N}\cdot\text{m/rad}$ yields $0.20\ \text{rad}$.
 
+5. **What the suite refuses.** A zero move duration, a velocity or acceleration limit at or below zero, a negative spring-damper gain, and a zero stiffness in `compliance_deflection` all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math

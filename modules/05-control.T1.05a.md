@@ -167,6 +167,8 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 3. **The damper subtracts velocity, not error.** `u_raw = kp * (r - y) - kd * dy + i` reproduces the worked example's $3.8\ \text{N}\cdot\text{m}$; adding `+ kd * dy` would give $5.8$ and would drive the joint away from the target as it speeds up.
 4. **One tick is one millisecond.** With $\Delta t = 0.001$ the integral gains $K_i e \Delta t$ per step; leaving $\Delta t$ out multiplies the accumulator by $1000$ and is the windup the next module is about.
 
+5. **What the suite refuses.** Negative gains, a zero or negative rail, a zero control period, a zero gain in `steady_state_sag`, and a non-positive inertia or damping in `arm_acceleration` all raise `ValueError`.
+
 ### Full Solution
 ```python
 def tracking_error(r, y):

@@ -201,6 +201,8 @@ print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the 
 3. **Four out of five is NO-GO.** The gate is a conjunction: the $3\sigma$ budget ($0.4259\ \text{mm} \le 0.50$), the margin ($32.78^\circ < 45^\circ$), CPU, termination and STO. Here the margin alone already fails, so the verdict is `False` whatever the other four say.
 4. **The $3\sigma$ budget is a magnitude budget.** Biases add linearly, so two offsets on opposite sides still add their sizes; only the independent random terms add in quadrature, and only then is the $3\sigma$ factor applied to that quadrature sum.
 
+5. **What the suite refuses.** An empty error budget, a sensitivity list whose lengths cannot pair, a negative sigma, a variance budget summing to zero, a negative delay, a zero sample period, a zero crossover in `max_allowable_delay_ms`, and a `capstone_signoff` STO flag that is not a bool all raise `ValueError`.
+
 ### Full Solution
 ```python
 import math
