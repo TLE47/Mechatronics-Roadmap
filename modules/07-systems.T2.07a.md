@@ -105,6 +105,16 @@ V_unclamped=166.1 V, R_brake_max=4.36 Ohm, I_brake=7.0 A
 A $48.0\text{ V}$ actuator bus ($C_{\text{bus}} = 500\ \mu\text{F}$) absorbs $\Delta E_{\text{regen}} = 6.648\text{ J}$ of net regenerative braking energy with peak regenerative power $P_{\text{regen,peak}} = 250.0\text{ W}$, and the active brake chopper clamps at $V_{\text{clamp}} = 52.0\text{ V}$. Compute (a) the unclamped peak bus voltage $V_{\text{bus,unclamped}} = \sqrt{48.0^2 + \frac{2 \times 6.648}{500 \times 10^{-6}}}$ in Volts ($\text{V}$), and (b) the maximum allowable brake resistance $R_{\text{brake,max}} = \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}$ in Ohms ($\Omega$). Verify $V_{\text{bus,unclamped}} = 170.0\text{ V}$ and $R_{\text{brake,max}} = 10.816\ \Omega$.
 - **If your result differs:** Check that $48.0^2 = 2304$ and $\frac{2 \times 6.648}{0.0005} = 26{,}592$, so $\sqrt{2304 + 26592} = \sqrt{28896} = 170.0\text{ V}$, and $52.0^2 / 250.0 = 2704.0 / 250.0 = 10.816\ \Omega$.
 
+### Graded package - the elbow as a regenerative load
+[`exercises/07-systems.T2.07a/`](../exercises/07-systems.T2.07a/) turns this section into a test. `starter.py` holds seven holes: `regen_energy_j` (efficiency included), `unclamped_bus_v` (the square-root form), `brake_resistor_max_ohm` (an **upper bound**, not a target), `brake_peak_current_a`, `rolling_counter_status` (modular, so $15 \to 0$ is a normal step), `watchdog_timeout_s` and `hil_coverage`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/07-systems.T2.07a/starter.py \
+  python3 -m unittest discover -s exercises/07-systems.T2.07a -p 'test_*.py'
+```
+
+The tests are behavioural: the worked $13.5\text{ J}$ and $166.06\text{ V}$; the resistor bound of $4.3556\ \Omega$ with $4.0$ inside it and $4.5$ outside; every counter outcome including the rollover and a three-frame jump; the watchdog as **frames times period**; and the HIL ratio with a refusal for an empty catalog. Four planted faults - `regen_no_eta`, `bus_linear`, `counter_plain_delta`, `watchdog_uses_period` - each fail the test named for them. The transfer suite sizes the chopper from the **shared plant**: the elbow is spun up under `plant.TAU_LIMIT`, its measured kinetic energy drives the bus surge past $28\text{ V}$, the resistor bound is tight at the peak, and the rolling counter runs over the plant's 1 kHz frame cadence, where a frame dropped every seven is a `WARN_DROPPED_1` and a stuck transmitter is a `FAULT_FROZEN`.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) ($\mu\text{F}$, Joules & Watts), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (Rotational Kinetic Energy $\frac{1}{2}J\omega^2$), and [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (Capacitor Energy $\frac{1}{2}C V^2$).
@@ -114,6 +124,8 @@ A $48.0\text{ V}$ actuator bus ($C_{\text{bus}} = 500\ \mu\text{F}$) absorbs $\D
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo Digital Twin & Fault Injection)** and **Tab 8 (CAN Framing & Watchdog)** in the MechaLab Workbench (`npm run dev`) to test regenerative braking bus clamping and fault injection recovery before connecting physical Tier 2 hardware.
+
+The graded package is also a workbench entry: **Modules -> `EX.07-systems.T2.07a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 ```text
 [Regen Braking: tau*omega < 0] ==> [V_bus >= 27.5 V Comparator/ADC] ==> [Shunt Chopper MOSFET + 4.0 Ohm Resistor]
 [CAN-FD Command Stream 1 kHz]  ==> [CRC-16 + 4-Bit Counter + 3 ms WDG] ==> [Fault Latch: Pure Viscous Damping]

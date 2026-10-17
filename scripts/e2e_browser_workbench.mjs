@@ -5,14 +5,14 @@
  *
  * Launches a real Vite HTTP server and drives a real Headless Chromium browser
  * via Playwright (`playwright-core`) with Web Worker Pyodide WASM execution to verify:
- * 1. Starter code fails verification (`0 / 48 Verified`).
+ * 1. Starter code fails verification (`0 / 49 Verified`).
  * 2. Print-only spoofing (`print(expectedOutput)`) passes presentation check but FAILS
  *    Instructor Behavioral Tests and never awards verification.
  * 3. Invalid Python syntax produces an understandable SyntaxError with line number.
  * 4. Accidental infinite loops (`while True:`) are stopped/recoverable via Worker step/time
  *    limits, Stop button, and Reset Runtime without losing editor code.
  * 5. Correct full solution passes both Instructor Behavioral Tests and Output Presentation
- *    check, awarding `1 / 48 Verified`.
+ *    check, awarding `1 / 49 Verified`.
  * 6. CDN failure (even when running the full solution) never awards verification.
  * 7. Progress survives a full browser reload (`page.reload()`).
  * 8. Portfolio export (`buildPortfolioMarkdown` modal preview) contains the exact, strictly
@@ -100,8 +100,8 @@ async function runRealBrowserE2ETests() {
 
     assert.equal(
       (await page.getByTestId('runner-verified-count').textContent())?.trim(),
-      '0 / 48 Verified',
-      'Initial verified count must be 0 / 48 Verified'
+      '0 / 49 Verified',
+      'Initial verified count must be 0 / 49 Verified'
     );
 
     // 1. Starter code fails verification (caught by Instructor Behavioral Tests / assertions)
@@ -113,8 +113,8 @@ async function runRealBrowserE2ETests() {
     );
     assert.equal(
       (await page.getByTestId('runner-verified-count').textContent())?.trim(),
-      '0 / 48 Verified',
-      'Starter code must fail and keep verified count at 0 / 48 Verified'
+      '0 / 49 Verified',
+      'Starter code must fail and keep verified count at 0 / 49 Verified'
     );
 
     // 2. Print-only spoofing passes presentation check but FAILS Instructor Behavioral Tests
@@ -147,7 +147,7 @@ async function runRealBrowserE2ETests() {
     );
     assert.equal(
       (await page.getByTestId('runner-verified-count').textContent())?.trim(),
-      '0 / 48 Verified',
+      '0 / 49 Verified',
       'Print-only spoof must NEVER award lesson verification'
     );
 
@@ -162,7 +162,7 @@ async function runRealBrowserE2ETests() {
     );
     assert.equal(
       (await page.getByTestId('runner-verified-count').textContent())?.trim(),
-      '0 / 48 Verified',
+      '0 / 49 Verified',
       'Invalid Python must never award verification'
     );
 
@@ -226,8 +226,8 @@ async function runRealBrowserE2ETests() {
     );
     assert.equal(
       (await page.getByTestId('runner-verified-count').textContent())?.trim(),
-      '1 / 48 Verified',
-      'Passing solution must increment verified count to 1 / 48 Verified'
+      '1 / 49 Verified',
+      'Passing solution must increment verified count to 1 / 49 Verified'
     );
 
     // 6. CDN failure never awards verification (even with full solution loaded)
@@ -247,7 +247,7 @@ async function runRealBrowserE2ETests() {
     );
     assert.equal(
       (await page.getByTestId('runner-verified-count').textContent())?.trim(),
-      '1 / 48 Verified',
+      '1 / 49 Verified',
       'CDN failure must NEVER award verification even when the full solution is in the editor'
     );
 
@@ -259,20 +259,20 @@ async function runRealBrowserE2ETests() {
     await page.getByTestId('btn-toggle-lesson-complete').click();
     assert.equal(
       (await page.getByTestId('runner-self-marked-count').textContent())?.trim(),
-      '1 / 48 Marked',
-      'Self-marking P.7 must update self-marked count to 1 / 48 Marked'
+      '1 / 49 Marked',
+      'Self-marking P.7 must update self-marked count to 1 / 49 Marked'
     );
 
     // 7. Progress survives full browser reload
     await page.reload({ waitUntil: 'networkidle' });
     const bodyAfterReload = await page.locator('body').textContent();
     assert(
-      bodyAfterReload?.includes('Executed & Passed: 1/48'),
-      'Executed & Passed count (1/48) must survive full browser reload'
+      bodyAfterReload?.includes('Executed & Passed: 1/49'),
+      'Executed & Passed count (1/49) must survive full browser reload'
     );
     assert(
-      bodyAfterReload?.includes('Self-Marked: 1/48'),
-      'Self-Marked count (1/48) must survive full browser reload'
+      bodyAfterReload?.includes('Self-Marked: 1/49'),
+      'Self-Marked count (1/49) must survive full browser reload'
     );
 
     // 8. Portfolio export contains the correct completion categories
@@ -280,15 +280,15 @@ async function runRealBrowserE2ETests() {
     const portfolioPreview = await page.getByTestId('portfolio-markdown-preview').textContent();
     assert(
       portfolioPreview?.includes(
-        '**Execution-Verified In-Browser Python Lessons (Executed & Passed in Pyodide WASM):** 1 / 48'
+        '**Execution-Verified In-Browser Python Lessons (Executed & Passed in Pyodide WASM):** 1 / 49'
       ),
-      'Portfolio export must report 1 / 48 Execution-Verified lessons'
+      'Portfolio export must report 1 / 49 Execution-Verified lessons'
     );
     assert(
       portfolioPreview?.includes(
-        '**Self-Marked Completed Python Lessons (Manual Checklist):** 1 / 48'
+        '**Self-Marked Completed Python Lessons (Manual Checklist):** 1 / 49'
       ),
-      'Portfolio export must report 1 / 48 Self-Marked lessons'
+      'Portfolio export must report 1 / 49 Self-Marked lessons'
     );
     assert(
       portfolioPreview?.includes('Lesson P.6') &&
@@ -342,7 +342,7 @@ async function runRealBrowserE2ETests() {
       );
       assert.equal(
         (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
-        '0 / 48 Verified',
+        '0 / 49 Verified',
         'A formatting-only difference must never award lesson verification'
       );
       await formattingPage.getByTestId('btn-load-solution').click();
@@ -350,7 +350,7 @@ async function runRealBrowserE2ETests() {
       await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
       assert.equal(
         (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
-        '1 / 48 Verified',
+        '1 / 49 Verified',
         'The unmodified 03.1 solution must still verify'
       );
 
@@ -387,7 +387,7 @@ async function runRealBrowserE2ETests() {
       await formattingPage.getByTestId('note-formatting-normalized').waitFor({ timeout: 5000 });
       assert.equal(
         (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
-        '2 / 48 Verified',
+        '2 / 49 Verified',
         'A behaviourally correct run with different whitespace must award lesson verification'
       );
       console.log(
@@ -438,7 +438,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       );
       assert.equal(
         (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
-        '2 / 48 Verified',
+        '2 / 49 Verified',
         'Using the shared plant must not award lesson verification on its own'
       );
       console.log(

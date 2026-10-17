@@ -24,10 +24,10 @@
     "validated:behavioural_grading",
     "validated:dogfood_logged"
   ],
-  "overall": 0.5386,
+  "overall": 0.5403,
   "tiers": {
     "1": 0.52,
-    "2": 0.5737,
+    "2": 0.5779,
     "3": 0.505
   },
   "tracks": {
@@ -38,7 +38,7 @@
     "04": 0.5021,
     "05": 0.545,
     "06": 0.51,
-    "07": 0.52,
+    "07": 0.545,
     "08": 0.495
   },
   "modules": {
@@ -83,7 +83,7 @@
     "06-robotics.T3.06a": 0.445,
     "06-robotics.T3.06b": 0.495,
     "07-systems.T1.07a": 0.5325,
-    "07-systems.T2.07a": 0.5325,
+    "07-systems.T2.07a": 0.6075,
     "07-systems.T3.06a": 0.495,
     "08-capstones.T3.07a": 0.495
   }

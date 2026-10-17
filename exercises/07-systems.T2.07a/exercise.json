@@ -1,0 +1,30 @@
+{
+  "id": "07-systems.T2.07a",
+  "module": "modules/07-systems.T2.07a.md",
+  "title": "Regenerative energy, the chopper bound, the counter and the watchdog",
+  "requires": [
+    "regen_energy_j(J, omega0, eta) -> joules",
+    "unclamped_bus_v(V_nom, E, C_bus) -> volts",
+    "brake_resistor_max_ohm(V_clamp, P_peak) -> ohms (an upper bound)",
+    "brake_peak_current_a(V_clamp, R) -> amperes",
+    "rolling_counter_status(prev, curr, max_drop=2) -> OK / FAULT_FROZEN / WARN_DROPPED_n / FAULT_SEQ_JUMP",
+    "watchdog_timeout_s(n_miss, T_cmd) -> seconds",
+    "hil_coverage(passed, total) -> fraction"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "regen_no_eta": ["test_behavior.RegenEnergyTests.test_the_worked_numbers"],
+    "bus_linear": ["test_behavior.BusVoltageTests.test_the_unclamped_bus_is_166_volts"],
+    "counter_plain_delta": ["test_behavior.CounterTests.test_a_rollover_is_not_a_jump"],
+    "watchdog_uses_period": ["test_behavior.WatchdogTests.test_the_window"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.07-systems.T2.07a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/07-systems.T2.07a/starter.py python3 -m unittest discover -s exercises/07-systems.T2.07a -p 'test_*.py'"
+  }
+}

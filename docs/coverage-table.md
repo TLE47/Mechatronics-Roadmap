@@ -29,7 +29,7 @@ flowchart LR
 | `04` | 7 | 59% | 40% | 75% | 7% | **50.2%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `05` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `06` | 5 | 60% | 40% | 75% | 10% | **51.0%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
-| `07` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `07` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `08` | 1 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 1 undeclared | `report` |
 
 ## By tier
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **57.4%** |
+| Tier 2 | 18 | **57.8%** |
 | Tier 3 | 10 | **50.5%** |
 
-## Per module (44 modules, overall **53.9%**)
+## Per module (44 modules, overall **54.0%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -85,7 +85,7 @@ flowchart LR
 | `06-robotics.T3.06a` | 3 | 40% | 40% | 75% | 0% | **44.5%** | **undeclared** | 10 item(s) |
 | `06-robotics.T3.06b` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `07-systems.T1.07a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
-| `07-systems.T2.07a` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
+| `07-systems.T2.07a` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
 | `07-systems.T3.06a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `08-capstones.T3.07a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 
@@ -172,7 +172,7 @@ not demonstrated learner mastery.
 | `06-robotics.T3.06a` | **44.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `06-robotics.T3.06b` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `07-systems.T1.07a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `07-systems.T2.07a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `07-systems.T2.07a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T3.06a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `08-capstones.T3.07a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 
