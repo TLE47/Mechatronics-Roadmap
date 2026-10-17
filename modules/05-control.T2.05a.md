@@ -102,6 +102,16 @@ PM=51.83 deg, |S(jw_gc)|=1.144, Q_diag=[399.99999999999994, 99.99999999999999], 
 Suppose your servo loop has Phase Margin $\text{PM} = 51.83^\circ$ at gain crossover $\omega_{gc} = 78.615\text{ rad/s}$, and you add a communication/filtering transport delay of $\tau_d = 0.005\text{ s}$ ($5.0\text{ ms}$), which subtracts $\Delta\phi = \omega_{gc}\tau_d \cdot \frac{180^\circ}{\pi}$ degrees of phase without changing $|L(j\omega_{gc})|$. Compute the phase loss $\Delta\phi$ in degrees and the new Phase Margin $\text{PM}_{\text{new}} = \text{PM} - \Delta\phi$. Verify $\Delta\phi = 22.5216^\circ$ and $\text{PM}_{\text{new}} = 29.3057^\circ$ ($\pm 10^{-2}$).
 - **If your result differs:** Convert $\omega_{gc}\tau_d = 78.61514 \times 0.005 = 0.393076\text{ rad}$ into degrees by multiplying by $180 / \pi$ ($22.52^\circ$).
 
+### Graded package - the elbow's margins, observer and regulator
+[`exercises/05-control.T2.05a/`](../exercises/05-control.T2.05a/) turns this section into a test. `starter.py` holds seven holes: `phase_margin_deg` (with the loop's lag **unwrapped** - `cmath.phase` reports +160 for a 200 degree lag), `phase_loss_deg`, `st`, `gain_crossover` (bisection, and a `ValueError` when the bracket never crosses), `bryson_weights` (squared), `observer_spectral_radius`, and `lqr_gain` from the Riccati fixed point. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/05-control.T2.05a/starter.py \
+  python3 -m unittest discover -s exercises/05-control.T2.05a -p 'test_*.py'
+```
+
+The tests are behavioural: the worked loop's margin must be $51.8273^\circ$ while a loop lagging $200^\circ$ must report **−20** (the naive principal value reports +340); `S + T = 1` at four frequencies; the crossover must bisect to $78.615\text{ rad/s}$ and refuse a loop that never crosses; Bryson's weights must be $[400, 100]$ and $0.04$; the observer radius must be $0.9005 < 1$; and the LQR gain must stabilise a model whose open loop already sits at $0.99$. The transfer suite shapes the **shared arm's elbow** with a PD law on its real inertia and damping, checks the crossover is a true $|L| = 1$, prices one plant tick of delay against the margin it carries, places an observer's error poles at $0.8$ and $0.9$ and **measures** the error falling at $0.9$ per tick, and runs a Bryson-weighted LQR gain until the joint comes to rest. Five planted faults - `pm_no_unwrap`, `pm_no_complement`, `st_t_inverse`, `bryson_linear`, `lqr_ap_at` - each fail the test named for them; `lqr_ap_at` is the transposed-Riccati slip that leaves the closed-loop radius at $0.99999$ and is only visible when the loop is run.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Operations*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*2nd-Order Poles*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (State-Space $\dot{x} = Ax + Bu$), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Covariance Propagation*).
@@ -111,6 +121,8 @@ Suppose your servo loop has Phase Margin $\text{PM} = 51.83^\circ$ at gain cross
 
 ## 6. Simulation path
 Open **Tab 2 (Two-Mass & Notch Bode — Loop Shaping & Gang of Four)** and **Tab 4 (Furuta Pendulum + LQR + CBF)** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.
+
+The graded package is also a workbench entry: **Modules -> `EX.05-control.T2.05a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Step 2.6 (`05-control.T2.06`), the offline Python solver (`scipy.linalg.solve_discrete_are`) computes the steady-state LQR gain row vector $K_{\text{lqr}}$ from Bryson's $(Q, R)$ matrices, and you paste those 4 floats directly into the microcontroller's $1\text{ kHz}$ ISR (`u = -K_lqr @ x_hat`):
 ```text

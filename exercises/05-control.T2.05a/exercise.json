@@ -1,0 +1,31 @@
+{
+  "id": "05-control.T2.05a",
+  "module": "modules/05-control.T2.05a.md",
+  "title": "Margins, sensitivity, an observer and an LQR gain",
+  "requires": [
+    "phase_margin_deg(loop) -> degrees, with the loop's lag unwrapped",
+    "phase_loss_deg(omega_gc, tau_d) -> degrees",
+    "st(loop) -> (S, T) with S + T == 1",
+    "gain_crossover(loop_fn) -> omega where |L| == 1, ValueError when it never crosses",
+    "bryson_weights(x_max, u_max) -> (Q_diag, R)",
+    "observer_spectral_radius(Ad, C, L) -> max |eig(Ad - LC)|",
+    "lqr_gain(Ad, Bd, Q_diag, R) -> K from the Riccati fixed point"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "pm_no_unwrap": ["test_behavior.PhaseMarginTests.test_a_loop_past_180_has_a_negative_margin"],
+    "pm_no_complement": ["test_behavior.PhaseMarginTests.test_worked_example"],
+    "st_t_inverse": ["test_behavior.SensitivityTests.test_s_plus_t_is_one"],
+    "bryson_linear": ["test_behavior.BrysonTests.test_module_weights"],
+    "lqr_ap_at": ["test_transfer.LqrOnTheElbowTests.test_bryson_weighted_gain_drives_the_joint_to_rest"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.05-control.T2.05a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/05-control.T2.05a/starter.py python3 -m unittest discover -s exercises/05-control.T2.05a -p 'test_*.py'"
+  }
+}

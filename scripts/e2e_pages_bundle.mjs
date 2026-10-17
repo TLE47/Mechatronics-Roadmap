@@ -46,6 +46,7 @@ const EXERCISE_IDS = [
   'EX.00-foundations.T2.00e',
   'EX.00-foundations.T2.00f',
   'EX.00-foundations.T3.00a',
+  'EX.05-control.T2.05a',
 ];
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
 const MIME = {
