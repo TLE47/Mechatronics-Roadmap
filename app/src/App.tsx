@@ -99,7 +99,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   },
   {
     id: 'tab-pyodide',
-    beginnerLabel: '2. Run Python Lessons (36 Lessons)',
+    beginnerLabel: `2. Run Python Lessons (${PYTHON_LESSONS.length} Exercises)`,
     technicalLabel: '9. In-Browser Python Runner (36 Lessons)',
     technicalSubtitle: 'Pyodide WASM · 3-Step Hints · Asserts',
     isBeginnerCore: true,

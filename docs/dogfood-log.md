@@ -43,6 +43,20 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
 | `02-mechanics.T2.02a` | 2026-10-16 | 13 | 0 | none | yes | - |
 
+### Evidence, item by item
+One "validated" flag hid four different claims. This table separates them, and a row is only as
+strong as its weakest measured column:
+
+| Standard | `02-mechanics.T2.02a` | Evidence |
+| :--- | :--- | :--- |
+| Content complete | met | 100% of the requirements instrumented today (`docs/coverage-table.md`) |
+| Reference solution tested | met | `exercises/02-mechanics.T2.02a/solution.py` passes 14 unittest cases |
+| Learner exercise behaviour-graded | met | `scripts/run_exercise.py` 12/12: starter fails, solution passes, 4 faults each fail their named test, print-only passes nothing |
+| Browser workflow tested | met (browser) | `scripts/e2e_pages_bundle.mjs` drives `EX.02-mechanics.T2.02a` on the built bundle: starter fails on its hole, reference prints the PASS line, output badge MATCHED |
+| Author first pass | met | the row above, 13 min, 0 hints |
+| Delayed transfer | **pending** | `transfer later` is `-` until the 1-2 week retry |
+| Independent learner | **not run** | no beginner pilot yet |
+
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference
 module (the template every later module copies). Its `yes` in *course bug?* covers two fixes the run

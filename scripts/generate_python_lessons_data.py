@@ -12,10 +12,14 @@ import glob
 import json
 import os
 import re
+import sys
+
+import exercise_bundle
 
 OUTPUT_MATCH_MODES = ("normalized", "exact")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EXERCISES = os.path.join(ROOT, "exercises")
 
 
 def natural_sort_key(path: str):
@@ -674,6 +678,58 @@ def extract_hints(text: str) -> list[str]:
     return cleaned
 
 
+def exercise_lessons():
+    """Tier 2/3 exercise packages, flattened into the same registry as the beginner lessons.
+
+    An exercise entry is a *program*, not a page: the learner's file plus `selfcheck.py` appended,
+    graded by stdout exactly like a lesson. The starter fails visibly (NotImplementedError), the
+    solution prints one PASS line, and a common wrong implementation fails a named check - the same
+    three-way contract `scripts/run_exercise.py` enforces in CI, so the browser and the runner
+    cannot disagree about what passing means. `selfcheck.py` is appended verbatim from the package;
+    nothing here re-implements a check.
+    """
+    if not os.path.isdir(EXERCISES):
+        return []
+    entries = []
+    for name in sorted(os.listdir(EXERCISES)):
+        directory = os.path.join(EXERCISES, name)
+        manifest_path = os.path.join(directory, "exercise.json")
+        if not os.path.isfile(manifest_path):
+            continue
+        with open(manifest_path, "r", encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        delivery = manifest.get("delivery", {})
+        entries.append(
+            {
+                "id": delivery.get("workbench_id", "EX." + manifest["id"]),
+                "title": "%s - graded exercise" % manifest["title"],
+                "track": "modules",
+                "path": os.path.relpath(os.path.join(directory, "solution.py"), ROOT),
+                # An exercise is one learning objective, not a list of its functions: the ideas
+                # count is a beginner-lesson rule and the workbench enforces <= 2.
+                "ideas": [manifest["title"]],
+                "starterCode": exercise_bundle.browser_program(directory, "starter"),
+                "hints": [
+                    "Open the module, section 5 (`## 5. Exercise`): the hint ladder and the worked "
+                    "solution are there. The self-check at the bottom of this file names what it "
+                    "tests; run it as often as you like.",
+                ],
+                "fullSolution": exercise_bundle.browser_program(directory, "solution"),
+                "expectedOutput": exercise_bundle.expected_output(directory, root=ROOT),
+                "outputMatch": "normalized",
+                "instructorTestSummary": [
+                    "Browser: the appended self-check asserts the Jacobian against finite "
+                    "differences at 5 poses, J^T against virtual work, gravity against the plant, "
+                    "and the payload run against the capstone's own error.",
+                    "CI: scripts/run_exercise.py runs the same package's 14 unittest cases - starter "
+                    "fails, reference passes, four planted faults each fail their named test.",
+                ],
+                "instructorTests": "# Graded by the appended self-check (exercise_bundle.py); the full suite is scripts/run_exercise.py.",
+            }
+        )
+    return entries
+
+
 def main():
     files = get_python_lesson_files()
     lessons = []
@@ -718,6 +774,8 @@ def main():
             }
         )
 
+    lessons.extend(exercise_lessons())
+
     out_dir = os.path.join(ROOT, "app", "src", "data")
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "pythonLessonsData.ts")
@@ -755,7 +813,7 @@ def main():
                 "Run `python3 scripts/generate_python_lessons_data.py`."
             )
             os.sys.exit(1)
-        print(f"OK: {out_path} is in sync with all {len(lessons)} Python lessons.")
+        print(f"OK: {out_path} is in sync with all {len(lessons)} Python lessons and exercises.")
         return
 
     with open(out_path, "w", encoding="utf-8") as f:

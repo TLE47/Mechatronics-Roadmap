@@ -210,13 +210,79 @@ def dogfooded_modules() -> set[str]:
             if not line.startswith("|"):
                 continue
             cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-            if not cells or not cells[0] or cells[0].startswith(":") or cells[0].lower().startswith("module"):
+            if not cells or not MODULE_ID_CELL.match(cells[0].strip("`")):
                 continue
             done.add(cells[0].strip("`"))
     return done
 
 
-def score_module(path: str, dogfooded: set[str]) -> dict[str, object]:
+MODULE_ID_CELL = re.compile(r"^\d{2}-[a-z-]+\.T\d\.\d+[a-z]?$")
+
+
+def dogfood_rows() -> dict[str, list[str]]:
+    """The dogfood table's cells by module id, so the evidence section can quote them."""
+    rows: dict[str, list[str]] = {}
+    if not os.path.exists(DOGFOOD_PATH):
+        return rows
+    with open(DOGFOOD_PATH, "r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.startswith("|"):
+                continue
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            # Only module-id rows: the log now also carries an evidence table whose first column is
+            # a standard, and a prose table is not a dogfood row.
+            if not cells or not MODULE_ID_CELL.match(cells[0].strip("`")):
+                continue
+            rows[cells[0].strip("`")] = cells
+    return rows
+
+
+def behaviourally_graded_modules() -> set[str]:
+    """Module ids that ship an exercise package under `exercises/` (layer 4, item 2).
+
+The package is only evidence because `scripts/run_exercise.py` proves it: the starter fails, the
+reference solution passes behaviour *and* transfer tests, and every planted fault fails the test
+that names it. A directory of markdown that calls itself an exercise is not this item.
+"""
+    root = os.path.join(ROOT, "exercises")
+    graded: set[str] = set()
+    if not os.path.isdir(root):
+        return graded
+    for name in os.listdir(root):
+        manifest = os.path.join(root, name, "exercise.json")
+        if os.path.isfile(manifest):
+            graded.add(name)
+    return graded
+
+
+def browser_tested_modules() -> dict[str, str]:
+    """Modules whose exercise entry a browser E2E script actually drives.
+
+Claimed from the manifest, not from the `verification:` label: the script named under
+`delivery.browser_e2e` must exist and mention the entry id, otherwise the column stays `-`. A
+label saying "browser" is not a browser test.
+"""
+    root = os.path.join(ROOT, "exercises")
+    tested: dict[str, str] = {}
+    if not os.path.isdir(root):
+        return tested
+    for name in os.listdir(root):
+        manifest_path = os.path.join(root, name, "exercise.json")
+        if not os.path.isfile(manifest_path):
+            continue
+        with open(manifest_path, "r", encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        delivery = manifest.get("delivery", {})
+        script = delivery.get("browser_e2e")
+        if not script or not os.path.isfile(os.path.join(ROOT, script)):
+            continue
+        with open(os.path.join(ROOT, script), "r", encoding="utf-8") as handle:
+            if delivery.get("workbench_id", "") in handle.read():
+                tested[name] = os.path.basename(script)
+    return tested
+
+
+def score_module(path: str, dogfooded: set[str], behaviourally_graded: set[str]) -> dict[str, object]:
     with open(path, "r", encoding="utf-8") as handle:
         text = handle.read()
 
@@ -303,7 +369,10 @@ def score_module(path: str, dogfooded: set[str]) -> dict[str, object]:
         ),
     }
 
-    validated = {"dogfood_logged": module_id in dogfooded}
+    validated = {
+        "dogfood_logged": module_id in dogfooded,
+        "behavioural_grading": module_id in behaviourally_graded,
+    }
 
     layers = {
         "structure": structure,
@@ -486,16 +555,57 @@ def render_table(rows: list[dict[str, object]], levels: dict[str, str]) -> str:
         "The plant itself, its provenance rule and the workbench import contract:",
         "[`resources/plants/README.md`](../resources/plants/README.md).",
         "",
+        "## Validation evidence",
+        "",
+        "A percentage cannot say *what kind* of evidence stands behind it, so this table does. The",
+        "columns are deliberately separate: a module can be content-complete and author-tested while",
+        "its transfer retention is still unmeasured, and collapsing those into one *validated* flag is",
+        "what this section exists to stop. **100% means 100% of the requirements instrumented today,**",
+        "not demonstrated learner mastery.",
+        "",
+        "| Module | Parity | Reference solution tested | Behaviour-graded | Browser E2E | Author dogfood | Delayed transfer | Independent learner |",
+        "| :--- | :---: | :---: | :---: | :---: | :--- | :---: | :---: |",
+    ]
+    log_rows = dogfood_rows()
+    graded_ids = behaviourally_graded_modules()
+    browser_ids = browser_tested_modules()
+    for row in sorted(rows, key=lambda item: str(item["module"])):
+        module = str(row["module"])
+        layers = row["layers"]  # type: ignore[assignment]
+        validated = layers["validated"]  # type: ignore[index]
+        dogfood = log_rows.get(module)
+        lines.append(
+            "| `%s` | **%.1f%%** | %s | %s | %s | %s | %s | %s |"
+            % (
+                module,
+                100 * float(row["score"]),
+                "yes" if module in graded_ids else "`-`",
+                "yes" if validated.get("behavioural_grading") else "`-`",
+                ("yes (`%s`)" % browser_ids[module]) if module in browser_ids else "`-`",
+                ("%s, %s min, %s hints" % (dogfood[1], dogfood[2], dogfood[3])) if dogfood else "`-`",
+                dogfood[6] if dogfood and len(dogfood) > 6 else "`-`",
+                "`-`",
+            )
+        )
+    lines += [
+        "",
+        "**Behaviour-graded** means `exercises/<module>/exercise.json` exists *and*",
+        "`scripts/run_exercise.py` passes: the starter fails on its own `NotImplementedError`, the",
+        "reference solution passes the behaviour and transfer suites, and every planted fault fails the",
+        "test that names it. The tests the harness runs are the same ones CI runs.",
+        "",
         "## Not yet instrumented",
         "",
         "The plan asks for these too. No artifact exists for them yet, so they are listed rather than",
         "scored - each one is a piece of work, not a zero:",
         "",
-        "- **Behavioural tests for module exercises:** `INSTRUCTOR_TESTS` in",
-        "  `scripts/generate_python_lessons_data.py` covers the beginner lessons only (the count lives",
-        "  in the lesson directories, not here); module exercises have no equivalent harness yet.",
-        "- **Module exercises in the workbench:** only lessons are generated into the app, so no module",
-        "  exercise runs in the browser today, and the Pages E2E suite therefore tests no T2/T3 exercise.",
+        "- **Behavioural tests for the other 43 modules:** one exercise package exists",
+        "  (`02-mechanics.T2.02a`), and it is the template. `INSTRUCTOR_TESTS` in",
+        "  `scripts/generate_python_lessons_data.py` covers the beginner lessons only, so the",
+        "  remaining bridge modules ship no graded exercise of their own yet.",
+        "- **Module exercises in the workbench:** the reference exercise is generated into the app as",
+        "  a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, but",
+        "  it is still the only module with a browser entry, so the E2E suite covers one T2 exercise.",
         "- **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)",
         "  with their stated assumptions, and a counterexample test where a claim is easy to get wrong.",
         "- **Transfer-task retention:** whether the Transfer task still passes 1-2 weeks later, and",
@@ -510,7 +620,8 @@ def build() -> tuple[int, list[dict[str, object]], dict[str, str], list[str]]:
     if not files:
         return 2, [], {}, ["no modules/*.md found"]
     dogfooded = dogfooded_modules()
-    rows = [score_module(path, dogfooded) for path in files]
+    graded = behaviourally_graded_modules()
+    rows = [score_module(path, dogfooded, graded) for path in files]
     levels, index_errors = read_track_lint_levels()
     return 0, rows, levels, index_errors
 

@@ -40,7 +40,15 @@ measurable in this repository today. Each layer is scored as the fraction of its
 | Executable | `verification_route_declared` | The `verification:` key of §2 |
 | Executable | `shared_plant` | The `plant:` decision of §2: `tier1_arm_motor` **and** a real `import mechalab_plant` in the module, or `none` with a `plant_note:` reason |
 | Ladder | the eight stages | `1_recall`, `2_see_it`, `3_predict`, `4_worked_example`, `5_practice_host`, `6_break_it`, `7_transfer`, `8_integrate` |
-| Validated | `dogfood_logged` | A row for the module in [`docs/dogfood-log.md`](dogfood-log.md) |
+| Validated | `dogfood_logged` | A row for the module in [`docs/dogfood-log.md`](dogfood-log.md) — the author's first pass |
+| Validated | `behavioural_grading` | An `exercises/<module>/exercise.json` package whose three-way check passes (`scripts/run_exercise.py`) |
+
+The two Validated items are deliberately separate, and neither implies mastery. A dogfood row is the
+author doing the exercise once; an exercise package is the *grading* being real — starter fails,
+reference passes, common wrong implementations fail. `docs/coverage-table.md` publishes them as
+separate columns alongside the delayed-transfer and independent-learner columns, which are still
+empty. So a module at 100% means **100% of the requirements instrumented today**, not demonstrated
+learner retention, and a green number cannot be read as one.
 
 Two ladder stages are measured by their **named marker**, not by a loose keyword, because a bare
 mention of "predict" is not a Predict step:

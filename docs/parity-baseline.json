@@ -21,6 +21,7 @@
     "structure:front_matter_contract",
     "structure:numbered_sections",
     "structure:tier3_two_levels",
+    "validated:behavioural_grading",
     "validated:dogfood_logged"
   ],
   "overall": 0.5198,

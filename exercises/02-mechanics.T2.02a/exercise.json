@@ -1,0 +1,29 @@
+{
+  "id": "02-mechanics.T2.02a",
+  "module": "modules/02-mechanics.T2.02a.md",
+  "title": "Jacobians, J^T forces and gravity from CoM Jacobians",
+  "requires": [
+    "jacobian(q1, q2, l1=0.10, l2=0.10) -> [[dx/dq1, dx/dq2], [dy/dq1, dy/dq2]]",
+    "joint_torques(J, force) -> (tau1, tau2)",
+    "gravity_from_com_jacobians(q1, q2) -> (tau1, tau2)",
+    "singular_elbow_angles() -> tuple of floats in [0, pi]",
+    "potential_gradient(q1, q2, m_p=0.05, h=1e-6) -> (dU/dq1, dU/dq2)",
+    "payload_run(m_payload, compensate) -> {\"rms_mm\": float, \"peak_mm\": float}"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "wrong_frame": ["test_behavior.GravityTests.test_matches_the_plant_oracle"],
+    "wrong_transpose": ["test_behavior.ForceTests.test_torque_is_the_transpose_not_the_matrix"],
+    "hardcoded_pose": ["test_behavior.JacobianTests.test_matches_numerical_derivative_at_many_poses"],
+    "ignored_lengths": ["test_behavior.JacobianTests.test_uses_the_link_lengths_it_is_given"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.02-mechanics.T2.02a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/02-mechanics.T2.02a/starter.py python3 -m unittest discover -s exercises/02-mechanics.T2.02a -p 'test_*.py'"
+  }
+}

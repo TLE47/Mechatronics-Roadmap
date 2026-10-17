@@ -253,7 +253,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onToggleLessonCompleted,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
-  const [trackFilter, setTrackFilter] = useState<'all' | 'track-p' | 't00-02' | 't03-08'>('all');
+  const [trackFilter, setTrackFilter] = useState<'all' | 'advanced' | 'track-p' | 't00-02' | 't03-08'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [code, setCode] = useState<string>(PYTHON_LESSONS[0].starterCode);
   const [revealedHints, setRevealedHints] = useState<number>(0);
@@ -595,6 +595,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const filteredLessons = PYTHON_LESSONS.filter((l) => {
     const matchesTrack =
       trackFilter === 'all' ||
+      (trackFilter === 'advanced' && l.track === 'modules') ||
       (trackFilter === 'track-p' && l.track === 'track-p') ||
       (trackFilter === 't00-02' &&
         (l.track === '00-foundations' ||
@@ -687,7 +688,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 32 lessons by ID, title, or topic..."
+              placeholder={`Search ${PYTHON_LESSONS.length} lessons and exercises by ID, title, or topic...`}
               data-testid="input-lesson-search"
               className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0b0f19] border border-[#334155] text-xs text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#38bdf8]"
             />
@@ -699,10 +700,27 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </span>
             <div className="flex gap-1">
               {[
-                { id: 'all', label: 'All (32)' },
-                { id: 'track-p', label: 'Track P (13)' },
-                { id: 't00-02', label: 'T00–02 (10)' },
-                { id: 't03-08', label: 'T03–08 (9)' },
+                { id: 'all', label: `All (${PYTHON_LESSONS.length})` },
+                {
+                  id: 'advanced',
+                  label: `Modules (${PYTHON_LESSONS.filter((l) => l.track === 'modules').length})`,
+                },
+                {
+                  id: 'track-p',
+                  label: `Track P (${PYTHON_LESSONS.filter((l) => l.track === 'track-p').length})`,
+                },
+                {
+                  id: 't00-02',
+                  label: `T00–02 (${PYTHON_LESSONS.filter((l) =>
+                    ['00-foundations', '01-electronics-and-power', '02-mechanics-kinematics-dynamics'].includes(l.track)
+                  ).length})`,
+                },
+                {
+                  id: 't03-08',
+                  label: `T03–08 (${PYTHON_LESSONS.filter((l) =>
+                    ['03-sensors-and-actuators', '04-embedded-and-realtime', '05-control-and-estimation', '06-robotics-and-autonomy', '07-systems-hil-and-production', '08-capstone-projects'].includes(l.track)
+                  ).length})`,
+                },
               ].map((tab) => (
                 <button
                   key={tab.id}

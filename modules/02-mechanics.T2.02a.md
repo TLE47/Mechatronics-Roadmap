@@ -220,6 +220,16 @@ print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the 
 2. **Why the exercise pose is clean.** At the tip $(0.10, 0.10)$ the law of cosines gives $\cos q_2 = (x^2 + y^2 - L_1^2 - L_2^2)/(2L_1L_2) = 0$, so $q_2 = \pi/2$ exactly and $q_1 = \operatorname{atan2}(y, x) - \operatorname{atan2}(L_2, L_1) = 0$ exactly: $\det J = L_1L_2$ with no rounding, and the elbow is horizontal, so the elbow's gravity term is exactly $0$.
 3. **The finite-difference check.** Perturb one angle at a time by $\pm h$ with $h = 10^{-6}$, difference the two potentials, divide by $2h$, and use `plant.fk` for the height $y$. A central difference is accurate to $O(h^2)$, so the gap should sit near $10^{-12}$, not $10^{-3}$; if yours is large, you likely differenced both angles at once or reused a stale $q$.
 
+### Submit it as a graded exercise
+This section is a real exercise package, not a page: [`exercises/02-mechanics.T2.02a/`](../exercises/02-mechanics.T2.02a/) holds `starter.py` (the scaffold above plus the `payload_run` hole, six in all), `solution.py`, `test_behavior.py` (11 cases), `test_transfer.py` (3 cases), four planted faults and a browser self-check. Edit the starter in place, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/02-mechanics.T2.02a/starter.py \
+  python3 -m unittest discover -s exercises/02-mechanics.T2.02a -p 'test_*.py'
+```
+
+The grading is behavioural, and each test names the mistake it catches: the Jacobian is compared with a finite difference of the plant's `fk` at five poses (not only the worked one), the force map with virtual work (so $J F$ fails where $J^\top F$ passes), gravity with `plant.gravity_torque` at five poses, and the singular poses with a finite result. The transfer suite then moves the payload to 0.35 kg so a submission tuned to 0.20 kg does not pass. `scripts/run_exercise.py` is the gate: starter fails on its `NotImplementedError`, the reference passes both suites, and `wrong_frame`, `wrong_transpose`, `hardcoded_pose` and `ignored_lengths` each fail the test named for them - a print-only file that recites the numbers passes nothing.
+
 ### Full Solution
 ```python
 import math
@@ -358,6 +368,8 @@ Every block above runs in the workbench's Python runner (`npm run dev`, Tab 2), 
 ```bash
 PYTHONPATH=resources/plants python3 your_script.py
 ```
+
+The graded exercise also has a browser entry: **Modules -> `EX.02-mechanics.T2.02a`** in the workbench list. The starter is preloaded with `selfcheck.py` appended, so **Run** shows the first hole it hits and **Verify** compares the `SELF-CHECK PASS:` line - the same checks as the native tests, in the same program shape `scripts/exercise_bundle.py` builds for CI. That path is tested on the built bundle, not just promised: `scripts/e2e_pages_bundle.mjs` selects this entry, asserts the starter fails on its `NotImplementedError`, loads the reference, waits for the PASS line and checks the output badge reads MATCHED.
 
 `verification: ci-native` records how this module is actually checked: `scripts/validate_modules.py` and `scripts/run_all_labs.py` execute the worked example on the runner and diff its stdout against the `Expected output:` block, and every other block in this module - the scaffold, the full solution, the transfer run, both answer keys - is executed too, so a broken number fails the build rather than sitting in the page. No hardware is required (`hardware_required: false`): this module is `simulation: full`.
 
