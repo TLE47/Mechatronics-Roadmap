@@ -52,6 +52,11 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `00-foundations.T2.00c` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `00-foundations.T2.00d` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `00-foundations.T2.00e` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `00-foundations.T2.00f` | 2026-10-17 | 1 | 0 | none | no | - |
+| `01-electronics.T2.01a` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `01-electronics.T2.01b` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `03-sensors.T2.03a` | 2026-10-17 | 1 | 0 | none | yes | - |
+| `04-embedded.T2.04a` | 2026-10-17 | 1 | 0 | none | yes | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -124,6 +129,27 @@ docstring disagreeing with the tests:
 Extending the page-vs-package test to Tier 2 caught a third, in a module not yet dogfooded: the
 `00-foundations.T2.00f` page printed no `simulate_discrete` at all. Its block now carries the
 reference implementation, and all eleven Track 00 ladder pages pass their packages.
+
+### The rest of the Tier 2 bridges
+
+`00-foundations.T2.00f` and the first module of Tracks 01, 03 and 04, worked in one two-minute
+sitting (the per-module figure rounds to the minute):
+
+| Standard | `T2.00f` | `01.T2.01a` | `01.T2.01b` | `03.T2.03a` | `04.T2.04a` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Reference solution tested | met (21) | met (34) | met (39) | met (21) | met (34) |
+| Learner attempt passes from the hints alone | met | met after one fix | met after one fix | met after one fix | met after one fix |
+| Gate score | 8/8 | 10/10 | 8/8 | 8/8 | 11/11 |
+| Delayed transfer | pending | pending | pending | pending | pending |
+
+**What this round found: page drift is course-wide.** All four modules from Tracks 01, 03 and 04 failed
+their first attempt for the same reason as the Track 00 ladder: the page's `### Full Solution` printed
+functions without the input guards the suite checks (`r_shunt > 0`, `gain > 0`, `dt_ns > 0`,
+`di_amp > 0`, `tau > 0`, a positive loop period, an in-range DMA index). Checking every package rather
+than only the one being eaten gave the real size: **26 of the 46 bridge pages fail their own suite**.
+The four in this round are repaired; the remaining 22 are listed in `STATE.md` section 43 and are
+the next mechanical job (each gets `solution.py`'s guarded body spliced in front of its demo tail).
+`tests/test_module_full_solutions.py` now covers the fifteen repaired pages.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

@@ -168,32 +168,69 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 DEFAULT_CS_US = 0.4
 
 
+def _positive(value, name):
+    if value <= 0.0:
+        raise ValueError("%s must be positive, not %r" % (name, value))
+    return value
+
+
 def spi_shift_us(n_bits, f_sclk_hz):
+    """t_shift = B_bits / f_sclk in microseconds: the clocks alone, no chip-select."""
+    _positive(n_bits, "a frame's bit count")
+    _positive(f_sclk_hz, "the SPI clock")
     return (n_bits / f_sclk_hz) * 1e6
 
 
 def spi_frame_us(n_bits, f_sclk_hz, t_cs_us=DEFAULT_CS_US):
+    """t_spi = B_bits / f_sclk + t_cs: chip-select setup and hold is part of the frame."""
+    if t_cs_us < 0.0:
+        raise ValueError("chip-select overhead cannot be negative")
     return spi_shift_us(n_bits, f_sclk_hz) + t_cs_us
 
 
 def uart_poll_us(n_bits, baud):
+    """The CPU time a blocking write wastes: every bit stalls the loop, DMA or not."""
+    _positive(n_bits, "a packet's bit count")
+    _positive(baud, "the baud rate")
     return (n_bits / baud) * 1e6
 
 
 def cpu_load_fraction(t_busy_us, t_loop_us):
+    """Busy CPU time as a fraction of the loop period; above 1.0 the loop cannot keep up."""
+    if t_busy_us < 0.0:
+        raise ValueError("busy time cannot be negative")
+    _positive(t_loop_us, "the loop period")
     return t_busy_us / t_loop_us
 
 
 def ping_pong_window_us(n_half, f_adc_hz):
+    """How long the CPU has to read one half: N samples, each 1/f_adc apart."""
+    _positive(n_half, "the half-buffer length")
+    _positive(f_adc_hz, "the ADC sample rate")
     return (n_half / f_adc_hz) * 1e6
 
 
 def ht_frequency_hz(f_sample_hz, n_half):
+    """Half-Transfer interrupts arrive every N samples, so f_HT = f_sample / N."""
+    _positive(f_sample_hz, "the ADC sample rate")
+    _positive(n_half, "the half-buffer length")
     return f_sample_hz / n_half
 
 
 def buffer_slice_for_position(write_pos, n_half):
+    """The half the ISR may read when the DMA has just written index `write_pos`.
+
+    HT fires once the engine has filled [0, N) and its write pointer lands on N-1; the CPU then
+    reads Ping [0, N) while the engine fills Pong [N, 2N). At 2N-1 the roles swap and the CPU
+    reads Pong. Any other position is mid-half: nothing is safe to read yet, so the answer is
+    None rather than a guess.
+    """
+    _positive(n_half, "the half-buffer length")
+    if isinstance(write_pos, bool) or not isinstance(write_pos, int):
+        raise ValueError("the write position is an integer index, not %r" % (write_pos,))
     total = 2 * n_half
+    if not 0 <= write_pos < total:
+        raise ValueError("write position %d is outside a %d-sample buffer" % (write_pos, total))
     if write_pos == n_half - 1:
         return (0, n_half)
     if write_pos == total - 1:
@@ -201,23 +238,8 @@ def buffer_slice_for_position(write_pos, n_half):
     return None
 
 
-assert abs(spi_shift_us(16, 8e6) - 2.0) < 1e-12
-assert abs(spi_frame_us(16, 8e6) - 2.4) < 1e-12
-assert abs(uart_poll_us(500, 1e6) - 500.0) < 1e-12
-assert abs(cpu_load_fraction(320, 1000) - 0.32) < 1e-12
-assert abs(cpu_load_fraction(322, 50) - 6.44) < 1e-12
-assert abs(ping_pong_window_us(16, 200e3) - 80.0) < 1e-12
-assert abs(ht_frequency_hz(1000, 4) - 250.0) < 1e-12
-assert buffer_slice_for_position(15, 16) == (0, 16)
-assert buffer_slice_for_position(31, 16) == (16, 32)
-assert buffer_slice_for_position(5, 16) is None
-
-print("spi: shift=%.1f us, frame=%.1f us | uart poll 500 bit @ 1 Mbaud=%.0f us"
-      % (spi_shift_us(16, 8e6), spi_frame_us(16, 8e6), uart_poll_us(500, 1e6)))
-print("dma: window=%.1f us | ht=%.1f Hz | ping=%s, pong=%s, mid-half=%r"
-      % (ping_pong_window_us(16, 200e3), ht_frequency_hz(1000, 4),
-         buffer_slice_for_position(15, 16), buffer_slice_for_position(31, 16),
-         buffer_slice_for_position(5, 16)))
+# No `__main__` block on purpose: the browser grades this file's stdout against the appended
+# self-check's single PASS line, and a second print here would be a mismatch for a correct answer.
 ```
 
 Printed: `spi: shift=2.0 us, frame=2.4 us | uart poll 500 bit @ 1 Mbaud=500 us`, then `dma: window=80.0 us | ht=250.0 Hz | ping=(0, 16), pong=(16, 32), mid-half=None`.

@@ -32,6 +32,10 @@ LADDER = [
     "00-foundations.T2.00d",
     "00-foundations.T2.00e",
     "00-foundations.T2.00f",
+    "01-electronics.T2.01a",
+    "01-electronics.T2.01b",
+    "03-sensors.T2.03a",
+    "04-embedded.T2.04a",
 ]
 
 

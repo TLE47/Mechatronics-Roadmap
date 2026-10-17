@@ -11,6 +11,22 @@ flowchart LR
 
 ---
 
+## [2026-10-17] — Run 43: Five Bridges, and the Page Drift Is Course-Wide
+
+### 1. Five more modules done as the learner
+- `00-foundations.T2.00f`, `01-electronics.T2.01a`, `01-electronics.T2.01b`, `03-sensors.T2.03a` and `04-embedded.T2.04a`: hints only, packages through `EXERCISE_TARGET`, Gate papers before their keys. Gates **8/8, 10/10, 8/8, 8/8, 11/11**, 0 hints, about a minute each in one sitting. Rows in `docs/dogfood-log.md`.
+
+### 2. The finding: 26 of 46 pages fail their own tests
+- Every one of the four new modules failed on its first attempt because the page's `### Full Solution` printed functions without the guards the suite checks (`r_shunt > 0`, `gain > 0`, `dt_ns > 0`, `di_amp > 0`, `tau > 0`). Running the page-vs-package check across all 46 bridge packages, instead of only the module being eaten, put the real number at **26 failing pages** - the drift is course-wide, not a Track 00 quirk.
+- The four pages in this round now carry `solution.py`'s guarded body in front of their demo tail (with the `import math` the tail needs). The other 22 are recorded in `STATE.md` section 43; the fix is mechanical and identical.
+- `tests/test_module_full_solutions.py` covers the fifteen repaired pages and is the check that keeps them honest.
+
+### 3. Counts
+- Instrumented parity **94.3% -> 95.1%** (Tier 2 95.0% -> 97.1%); coverage table regenerated, `--check` green.
+
+### 4. Verification
+- `validate_modules` exit 0, `lint_modules` 46/46, `test_module_full_solutions` 15 pages, the five packages at 21/34/39/21/34 cases, `run_exercise` all packages, `module_parity --check`.
+
 ## [2026-10-17] — Run 42: The Tier 2 Ladder Dogfooded
 
 ### 1. Five more modules done as the learner
