@@ -78,6 +78,16 @@ x1=0.1000 m, v1=-0.0500 m/s
 Iterate `x = [Ad[0][0]*x[0] + Ad[0][1]*x[1] + Bd[0]*u0, Ad[1][0]*x[0] + Ad[1][1]*x[1] + Bd[1]*u0]` for `500` steps ($5.0\text{ s}$) with constant force $u_0 = 5.0\text{ N}$ and verify that position converges to static Hooke equilibrium $x_{\text{eq}} = u_0 / k = 0.0500\text{ m}$ (tolerance $\pm 10^{-3}\text{ m}$) and velocity converges to $0.0000\text{ m/s}$ (tolerance $\pm 10^{-4}\text{ m/s}$).
 - **If your result differs:** Make sure you compute both new components `x_next` and `v_next` from the *previous* step's `x[0]` and `x[1]` before overwriting `x`.
 
+### Graded package - the same six steps on the arm's encoder
+[`exercises/00-foundations.T2.00a/`](../exercises/00-foundations.T2.00a/) turns this section into a test. `starter.py` holds six holes: `joint_velocity` (backward difference of the capstone's 12-bit AS5600 counts, wrapped across zero), `running_integral`, `state_matrices`, `one_step`, `simulate`, and `encoder_trace_angle` (counts -> velocity -> integral, which must land back on the encoder's own angle). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T2.00a/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T2.00a -p 'test_*.py'
+```
+
+The tests are behavioural: the velocity estimate must change by exactly 10 when $\Delta t$ changes by 10, must use the `cpr` it is given, and must treat the `4095 -> 0` step as +1 count; the integral must be running, not restarted; the one-step test uses a state that *carries velocity*, where computing `v` from the new `x` is wrong by $10^{-2}$; the transfer suite moves the exercise onto the arm's own figure-8 encoder trace and a second plant with $m = 2.5$ kg. Four planted faults - `missing_dt`, `no_wrap`, `hardcoded_counts`, `sequential_update` - each fail the test named for them, and a print-only file passes nothing (`scripts/run_exercise.py`).
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Module:** [`00-foundations.T1.00e`](00-foundations.T1.00e.md) and Legacy **Step 1.1 (`00-foundations.T1.01`)** in [`00-foundations/README.md`](../00-foundations/README.md#tier-1-beginner--intuitive).
   - **Core Concepts to Review First:** $2\times 2$ matrix-vector multiplication $A_d x_k + B_d u_k$ and simultaneous state update in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
@@ -86,6 +96,8 @@ Iterate `x = [Ad[0][0]*x[0] + Ad[0][1]*x[1] + Bd[0]*u0, Ad[1][0]*x[0] + Ad[1][1]
 
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to see a 4-state matrix updater driving a motor + flexible shaft + load plant.
+
+The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). On the STM32/ESP32 in Pass 2 (`Track 05`), this exact matrix-vector product executes inside the $1\text{ kHz}$ Kalman filter prediction step:
 ```text

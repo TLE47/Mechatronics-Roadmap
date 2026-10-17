@@ -726,11 +726,11 @@ def main() -> int:
                 "at that moment, so adding a new item is a deliberate re-record, never a silent drop."
             ),
             "recorded_note": (
-                "Re-recorded when the reference module (02-mechanics.T2.02a, docs/QUALITY_SPEC.md §7) "
-                "reached a genuine 100% on the shared plant: every other score is unchanged, and the "
-                "floor is raised so the gained points cannot be given back. The previous re-record was "
-                "the instrumentation of `executable:shared_plant`, which is why the set of scored items "
-                "in this file already contains it."
+                "Re-recorded when 00-foundations.T2.00a gained the second exercise package: its "
+                "validated layer now earns `behavioural_grading`, so its score rises and no other "
+                "module moves. The floor is raised so that point cannot be given back; the previous "
+                "re-record was the reference module (02-mechanics.T2.02a) reaching a genuine 100% on "
+                "the shared plant."
             ),
             "instrumented_items": instrumented_items(rows),
             "overall": overall,

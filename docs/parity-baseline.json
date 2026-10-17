@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "note": "Ratchet for scripts/module_parity.py: --check fails if any track or module drops below the value recorded here. Raise it deliberately with --update-baseline. `recorded_note` says why the last re-record happened; `instrumented_items` is the set of scored items at that moment, so adding a new item is a deliberate re-record, never a silent drop.",
-  "recorded_note": "Re-recorded when the reference module (02-mechanics.T2.02a, docs/QUALITY_SPEC.md \u00a77) reached a genuine 100% on the shared plant: every other score is unchanged, and the floor is raised so the gained points cannot be given back. The previous re-record was the instrumentation of `executable:shared_plant`, which is why the set of scored items in this file already contains it.",
+  "recorded_note": "Re-recorded when 00-foundations.T2.00a gained the second exercise package: its validated layer now earns `behavioural_grading`, so its score rises and no other module moves. The floor is raised so that point cannot be given back; the previous re-record was the reference module (02-mechanics.T2.02a) reaching a genuine 100% on the shared plant.",
   "instrumented_items": [
     "executable:checkpoint_answer_key",
     "executable:learner_exercise_scaffold",
@@ -24,14 +24,14 @@
     "validated:behavioural_grading",
     "validated:dogfood_logged"
   ],
-  "overall": 0.5198,
+  "overall": 0.5215,
   "tiers": {
     "1": 0.52,
-    "2": 0.5321,
+    "2": 0.5363,
     "3": 0.4975
   },
   "tracks": {
-    "00": 0.4825,
+    "00": 0.4887,
     "01": 0.5664,
     "02": 0.6758,
     "03": 0.52,
@@ -47,7 +47,7 @@
     "00-foundations.T1.00c": 0.47,
     "00-foundations.T1.00d": 0.47,
     "00-foundations.T1.00e": 0.5325,
-    "00-foundations.T2.00a": 0.47,
+    "00-foundations.T2.00a": 0.545,
     "00-foundations.T2.00b": 0.47,
     "00-foundations.T2.00c": 0.47,
     "00-foundations.T2.00d": 0.47,

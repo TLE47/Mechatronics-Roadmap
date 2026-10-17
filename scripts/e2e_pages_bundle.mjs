@@ -15,9 +15,9 @@
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
  * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
  *    viewport: zero horizontal overflow, asserted rather than reported.
- * 5. The Tier 2 exercise entry `EX.02-mechanics.T2.02a` is generated from its package: the starter
- *    fails on its `NotImplementedError`, the reference solution passes the appended self-check, and
- *    the output badge reads MATCHED - the browser path, on the built bundle.
+ * 5. Every exercise entry (`EX.02-mechanics.T2.02a`, `EX.00-foundations.T2.00a`) is generated from its
+ *    package: the starter fails on its `NotImplementedError`, the reference solution passes the
+ *    appended self-check, and the output badge reads MATCHED - the browser path, on the built bundle.
  *
  * Chromium always runs; Firefox runs when its browser build is present (`npx playwright-core install
  * firefox`, which CI does). `PLAYWRIGHT_BROWSERS=chromium|firefox|both` selects them; a browser that is
@@ -161,7 +161,8 @@ async function checkInBrowser(name, launcher, baseUrl) {
     // A Tier 2 exercise is generated from its package, not hand-written into the registry: it must
     // appear in the same list, fail on its own holes, and pass once the reference is loaded. That is
     // the whole delivery claim, checked on the bundle learners actually open.
-    const exerciseId = 'EX.02-mechanics.T2.02a';
+    const exerciseIds = ['EX.02-mechanics.T2.02a', 'EX.00-foundations.T2.00a'];
+    for (const exerciseId of exerciseIds) {
     const exercise = page.getByTestId(`lesson-item-${exerciseId}`);
     await exercise.scrollIntoViewIfNeeded();
     await exercise.click();
@@ -208,6 +209,7 @@ async function checkInBrowser(name, launcher, baseUrl) {
       `${name}: ${exerciseId} reference must match its expected output`
     );
     console.log(`  ok ${name}: ${exerciseId} starter fails on its hole, reference passes its self-check, output MATCHED`);
+    }
 
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
     // must fit the viewport - the header used to push a 249px horizontal overflow here, so a page
@@ -275,7 +277,7 @@ async function main() {
     const ran = Object.entries(results).filter(([, value]) => value === 'pass').map(([name]) => name);
     const skipped = Object.entries(results).filter(([, value]) => value === 'skip').map(([name]) => name);
     console.log(        `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
-        `${LATER_TRACK_LESSONS.join(', ')}, grades exercise EX.02-mechanics.T2.02a end to end and stays ` +
+        `${LATER_TRACK_LESSONS.join(', ')}, grades exercises ${['EX.02-mechanics.T2.02a', 'EX.00-foundations.T2.00a'].join(', ')} end to end and stays ` +
         `usable at tablet width in: ${ran.join(', ')}` +
         (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
     );
