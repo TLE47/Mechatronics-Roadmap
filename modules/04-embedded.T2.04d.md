@@ -191,27 +191,54 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 ```python
 import math
 
+import mechalab_plant as plant  # noqa: F401  (kept so the submission imports what the module uses)
+
+
 def wire_time_us(payload_bytes, xrce_bytes, bits_per_byte, bit_rate):
-    return 1e6 * bits_per_byte * (payload_bytes + xrce_bytes) / bit_rate
+    """Wire time for one message, in microseconds, framing included."""
+    if bit_rate <= 0.0:
+        raise ValueError("bit rate must be positive")
+    bits = bits_per_byte * (payload_bytes + xrce_bytes)
+    return 1e6 * bits / bit_rate
+
 
 def link_utilization(streams, bits_per_byte, bit_rate):
-    return sum(f * wire_time_us(payload, xrce, bits_per_byte, bit_rate)
-               for f, payload, xrce in streams) / 1e6
+    """Sum over `(frequency_hz, payload_bytes, xrce_bytes)` streams of `f * t_wire`."""
+    total = 0.0
+    for frequency, payload, xrce in streams:
+        total += frequency * wire_time_us(payload, xrce, bits_per_byte, bit_rate)
+    return total / 1e6
+
 
 def handle_total(n_timers, n_subs, n_srvs, n_clients):
+    """The exact static capacity `rclc_executor_init` needs."""
     return n_timers + n_subs + n_srvs + n_clients
 
+
 def spin_wcet_us(t_io_us, callbacks_us):
+    """Worst-case time for one `rclc_executor_spin_some`: transport I/O plus every callback."""
     return t_io_us + sum(callbacks_us)
 
+
 def ntp_rtt_us(t1_mcu, t2_host, t3_host, t4_mcu):
+    """Round-trip delay: the four timestamps minus the host's own processing time."""
     return (t4_mcu - t1_mcu) - (t3_host - t2_host)
 
+
 def ntp_offset_us(t1_mcu, t2_host, t3_host, t4_mcu):
+    """Clock offset such that `t_ros2 ~= t_mcu + offset`, from the NTP midpoint."""
     return ((t2_host - t1_mcu) + (t3_host - t4_mcu)) / 2.0
 
+
 def rtos_utilization(tasks):
+    """`sum(C_i / T_i)` over `(execution_us, period_us)` tasks."""
+    if any(period <= 0.0 for _, period in tasks):
+        raise ValueError("every period must be positive")
     return sum(execution / period for execution, period in tasks)
+
+
+# No `__main__` block on purpose: the browser grades this file's stdout against the appended
+# self-check's single PASS line, and a second print here would be a mismatch for a correct answer.
 
 b_total = 32 + 14
 t_wire = wire_time_us(32, 14, 10, 921_600)
@@ -228,6 +255,7 @@ assert math.isclose(link_utilization([(500.0, 48, 16), (500.0, 24, 16)], 8, 5_00
 assert math.isclose(rtos_utilization([(100.0, 500.0), (300.0, 2000.0), (1000.0, 10000.0)]), 0.45, rel_tol=1e-12)
 
 print(f"B_total={b_total} B | t_wire={t_wire:.4f} us | rtt={rtt:.1f} us | offset={offset:.1f} us")
+
 ```
 
 Printed: `B_total=46 B | t_wire=499.1319 us | rtt=200.0 us | offset=10000.0 us`

@@ -1,16 +1,17 @@
 """The Full Solution a module page prints must pass the package it introduces.
 
-Dogfooding the Track 00 ladders found pages whose pasted Full Solution had drifted from
+Dogfooding found pages whose pasted Full Solution had drifted from
 `exercises/<id>/solution.py`: the page omitted every input guard the suite checks (an empty trace, a
-missing calibration key, a negative resistance, a zero inertia), one page had lost `loop_total`
-altogether, and `00-foundations.T2.00f` printed no `simulate_discrete`, so a learner who copied the
-page failed tests the page never mentioned.
+missing calibration key, a negative resistance, a zero inertia), some pages had lost a function
+altogether, and one printed no `simulate_discrete`. A learner who copies the page then fails tests
+the page never mentions - so the page is checked against the same suite the learner runs.
 
-This test makes the page and the package agree: it extracts the `### Full Solution` python block,
-writes it to a temporary submission, and runs the package's own `test_*.py` against it through the
-same `EXERCISE_TARGET` interface CI uses.
+The list is discovered, not typed: every exercise package with a module page that prints a
+`### Full Solution` block is checked. That is how the drift was measured at 26 of 46 pages and then
+repaired; a new module joins the check the moment its page gets a solution block.
 """
 
+import json
 import os
 import pathlib
 import re
@@ -20,29 +21,26 @@ import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-LADDER = [
-    "00-foundations.T1.00a",
-    "00-foundations.T1.00b",
-    "00-foundations.T1.00c",
-    "00-foundations.T1.00d",
-    "00-foundations.T1.00e",
-    "00-foundations.T2.00a",
-    "00-foundations.T2.00b",
-    "00-foundations.T2.00c",
-    "00-foundations.T2.00d",
-    "00-foundations.T2.00e",
-    "00-foundations.T2.00f",
-    "01-electronics.T2.01a",
-    "01-electronics.T2.01b",
-    "03-sensors.T2.03a",
-    "04-embedded.T2.04a",
-]
 
 
-def full_solution_block(module_id):
+def pages_with_solutions():
+    """(module id, page text) for every package whose page prints a Full Solution block."""
+    for manifest in sorted((ROOT / "exercises").glob("*/exercise.json")):
+        module_id = json.loads(manifest.read_text(encoding="utf-8"))["id"]
+        page = ROOT / "modules" / (module_id + ".md")
+        if not page.exists():
+            continue
+        text = page.read_text(encoding="utf-8")
+        if "### Full Solution" not in text:
+            continue
+        if not re.search(r"```python\n.*?\n```", text.split("### Full Solution", 1)[1], re.S):
+            continue
+        yield module_id, text
+
+
+def full_solution_block(page_text, module_id):
     """The first ```python block after `### Full Solution` in the module page."""
-    page = (ROOT / "modules" / (module_id + ".md")).read_text(encoding="utf-8")
-    tail = page.split("### Full Solution", 1)[1]
+    tail = page_text.split("### Full Solution", 1)[1]
     match = re.search(r"```python\n(.*?)\n```", tail, re.S)
     if match is None:
         raise AssertionError("no python block after '### Full Solution' in " + module_id)
@@ -50,10 +48,15 @@ def full_solution_block(module_id):
 
 
 class PageSolutionTests(unittest.TestCase):
+    def test_the_check_covers_the_whole_course(self):
+        # A rename that empties the discovery would otherwise pass silently.
+        found = [module_id for module_id, _text in pages_with_solutions()]
+        self.assertGreaterEqual(len(found), 40, found)
+
     def test_each_page_full_solution_passes_its_package(self):
-        for module_id in LADDER:
+        for module_id, page_text in pages_with_solutions():
             with self.subTest(module=module_id):
-                code = full_solution_block(module_id)
+                code = full_solution_block(page_text, module_id)
                 with tempfile.TemporaryDirectory() as scratch:
                     submission = pathlib.Path(scratch) / "page_solution.py"
                     submission.write_text(code, encoding="utf-8")

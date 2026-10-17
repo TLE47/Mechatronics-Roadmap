@@ -187,17 +187,36 @@ import math
 
 
 def optimal_gain(p_minus, h, r):
+    """The scalar Kalman gain K = P^- H / (H P^- H + R)."""
+    if p_minus < 0.0:
+        raise ValueError("a variance cannot be negative")
+    if h <= 0.0:
+        raise ValueError("a zero measurement Jacobian carries no information")
+    if r <= 0.0:
+        raise ValueError("measurement noise variance is strictly positive")
     return p_minus * h / (h * p_minus * h + r)
 
 
 def joseph_variance(p_minus, h, r, k):
+    """P^+ = (1 - K H) P^- (1 - K H) + K R K: a sum of two squares, so never negative."""
+    if p_minus < 0.0:
+        raise ValueError("a variance cannot be negative")
+    if r <= 0.0:
+        raise ValueError("measurement noise variance is strictly positive")
     a = 1.0 - k * h
     return a * a * p_minus + k * k * r
 
 
 def nees_diagonal(error, variances):
-    return sum(e * e / v for e, v in zip(error, variances))
-
+    """NEES = e^T P^-1 e for a diagonal covariance: the sum of each error over its own variance."""
+    e = [float(item) for item in error]
+    v = [float(item) for item in variances]
+    if not e or len(e) != len(v):
+        raise ValueError("the error and its variances must be non-empty and the same length")
+    for item in v:
+        if item <= 0.0:
+            raise ValueError("a variance must be strictly positive to be inverted")
+    return sum(item * item / var for item, var in zip(e, v))
 
 k = optimal_gain(2.0, 1.0, 2.0)
 p_plus = joseph_variance(2.0, 1.0, 2.0, k)
@@ -219,6 +238,7 @@ assert math.isclose(nees, 1.0, rel_tol=1e-12)
 assert math.isclose(overconfident, 4.0, rel_tol=1e-12)
 print(f"K={k:.5f}, P_plus={p_plus:.5f}, naive_bad={naive_bad:.5f}, "
       f"joseph_bad={joseph_bad:.5f}, nees={nees:.5f}, overconfident={overconfident:.5f}")
+
 ```
 
 Printed: `K=0.50000, P_plus=1.00000, naive_bad=-2.00000, joseph_bad=1.84000, nees=1.00000, overconfident=4.00000`

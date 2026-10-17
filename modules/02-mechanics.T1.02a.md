@@ -159,34 +159,66 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 ```python
 import math
 
+import mechalab_plant as plant  # noqa: F401  (kept so the submission imports what the module uses)
+
 
 def gravity_torque(theta_rad, m_link, l_com, m_tip=0.0, l_total=0.0, g=9.81):
+    """tau_g = (m_link l_com + m_tip l_total) g cos(theta), theta measured from horizontal."""
+    if m_link < 0.0 or m_tip < 0.0:
+        raise ValueError("a mass cannot be negative")
+    if l_com < 0.0 or l_total < 0.0:
+        raise ValueError("a lever arm cannot be negative")
+    if g <= 0.0:
+        raise ValueError("gravity must point somewhere")
     return (m_link * l_com + m_tip * l_total) * g * math.cos(theta_rad)
 
 
 def balance_force(force_1, x_1, x_2):
+    """The upward force at x_2 that balances F_1 at x_1: F_2 = F_1 x_1 / x_2."""
+    if x_2 <= 0.0:
+        raise ValueError("a balance point must be a positive distance from the pivot")
     return force_1 * x_1 / x_2
 
 
 def gear_ratio(z_driven, z_driver):
+    """N = driven teeth / driver teeth; a reducer has N > 1."""
+    if z_driver <= 0.0 or z_driven <= 0.0:
+        raise ValueError("tooth counts are positive integers")
     return z_driven / z_driver
 
 
 def gear_output_speed(omega_motor, ratio):
+    """A reducer slows the output: omega_load = omega_motor / N."""
+    if ratio <= 0.0:
+        raise ValueError("the ratio must be positive")
     return omega_motor / ratio
 
 
 def gear_output_torque(tau_motor, ratio, eta=1.0):
+    """A reducer multiplies torque by eta * N, where eta is the efficiency in (0, 1]."""
+    if ratio <= 0.0:
+        raise ValueError("the ratio must be positive")
+    if not 0.0 < eta <= 1.0:
+        raise ValueError("efficiency is a fraction in (0, 1]")
     return eta * ratio * tau_motor
 
 
 def mechanical_power(torque, omega):
+    """P = tau * omega."""
     return torque * omega
 
 
 def reflected_inertia(j_motor, ratio):
+    """Inertia seen at the output: J_refl = N^2 J_motor."""
+    if j_motor < 0.0:
+        raise ValueError("an inertia cannot be negative")
+    if ratio <= 0.0:
+        raise ValueError("the ratio must be positive")
     return ratio * ratio * j_motor
 
+
+# No `__main__` block on purpose: the browser grades this file's stdout against the appended
+# self-check's single PASS line, and a second print here would be a mismatch for a correct answer.
 
 ratio = gear_ratio(72, 16)
 omega_joint = gear_output_speed(90.0, ratio)
@@ -204,6 +236,7 @@ assert math.isclose(balance_force(30.0, 0.20, 0.10), 60.0, abs_tol=1e-12)
 
 print(f"N={ratio:.2f} | omega_joint={omega_joint:.2f} rad/s | tau_joint={tau_joint:.4f} N*m")
 print(f"P_joint={p_joint:.2f} W | P_motor*eta={p_motor:.2f} W | J_reflected(4:1)={reflected_inertia(0.008, 4.0):.3f} kg*m^2")
+
 ```
 
 Printed: `N=4.50 | omega_joint=20.00 rad/s | tau_joint=1.7100 N*m`, then `P_joint=34.20 W | P_motor*eta=34.20 W | J_reflected(4:1)=0.128 kg*m^2`.

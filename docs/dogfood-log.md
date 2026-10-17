@@ -147,9 +147,9 @@ their first attempt for the same reason as the Track 00 ladder: the page's `### 
 functions without the input guards the suite checks (`r_shunt > 0`, `gain > 0`, `dt_ns > 0`,
 `di_amp > 0`, `tau > 0`, a positive loop period, an in-range DMA index). Checking every package rather
 than only the one being eaten gave the real size: **26 of the 46 bridge pages fail their own suite**.
-The four in this round are repaired; the remaining 22 are listed in `STATE.md` section 43 and are
-the next mechanical job (each gets `solution.py`'s guarded body spliced in front of its demo tail).
-`tests/test_module_full_solutions.py` now covers the fifteen repaired pages.
+The four in this round were repaired first; a follow-up pass repaired the remaining 22 the same way,
+and `tests/test_module_full_solutions.py` now discovers every package instead of carrying a list, so
+all **46** pages are checked. All 46 pass.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

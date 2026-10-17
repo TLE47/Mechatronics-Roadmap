@@ -182,22 +182,33 @@ print("scaffold ready: 7 TODOs to fill, then compare against the numbers in the 
 ```python
 import math
 
+import mechalab_plant as plant  # noqa: F401  (kept so the submission imports what the module uses)
+
 
 def scan_frequency_hz(t_read_ms, t_exec_ms, t_write_ms):
+    """The scan rate a Read -> Execute -> Write budget allows, in Hz."""
     total_ms = t_read_ms + t_exec_ms + t_write_ms
     if total_ms <= 0.0:
         raise ValueError("a scan needs a positive period")
+    if min(t_read_ms, t_exec_ms, t_write_ms) < 0.0:
+        raise ValueError("no phase of a scan can take negative time")
     return 1000.0 / total_ms
 
 
 def safety_chain_ok(*contacts):
+    """True only when every series NC contact is closed (1) - one open contact drops the enable."""
     if not contacts:
         raise ValueError("a safety chain needs at least one contact")
+    for contact in contacts:
+        if contact not in (0, 1, True, False):
+            raise ValueError("a contact is healthy (1/True) or open (0/False)")
     return all(bool(contact) for contact in contacts)
 
 
 def plc_scan_step(state, estop1_nc, estop2_nc, door_nc, start_btn_no, reset_btn_no):
-    if not safety_chain_ok(estop1_nc, estop2_nc, door_nc):
+    """One cyclic scan: (next state, power enable). A trip latches until an explicit reset."""
+    chain = safety_chain_ok(estop1_nc, estop2_nc, door_nc)
+    if not chain:
         return "ESTOP_LATCHED", False
     if state == "ESTOP_LATCHED":
         if reset_btn_no and not start_btn_no:
@@ -211,20 +222,31 @@ def plc_scan_step(state, estop1_nc, estop2_nc, door_nc, start_btn_no, reset_btn_
 
 
 def gain_db(amplitude_out, amplitude_in):
+    """Empirical magnitude: 20 log10(B / A)."""
     if amplitude_in <= 0.0:
         raise ValueError("the input amplitude must be positive")
+    if amplitude_out < 0.0:
+        raise ValueError("an amplitude cannot be negative")
+    if amplitude_out == 0.0:
+        return float("-inf")
     return 20.0 * math.log10(amplitude_out / amplitude_in)
 
 
 def phase_lag_deg(f_hz, delay_s):
-    if f_hz < 0.0 or delay_s < 0.0:
-        raise ValueError("frequency and delay cannot be negative")
+    """Phase lag for a peak delayed by `delay_s`: -360 * f * dt."""
+    if f_hz < 0.0:
+        raise ValueError("frequency cannot be negative")
+    if delay_s < 0.0:
+        raise ValueError("a lag cannot be negative")
     return -360.0 * f_hz * delay_s
 
 
 def sine_amplitude(samples, f_hz, dt_s):
+    """Lock-in amplitude: 2 * |mean(y e^{-j w t})|, which rejects every other frequency."""
     if not samples:
         raise ValueError("a measurement needs samples")
+    if f_hz <= 0.0 or dt_s <= 0.0:
+        raise ValueError("frequency and sample interval must be positive")
     omega = 2.0 * math.pi * f_hz
     n = len(samples)
     re = sum(y * math.cos(omega * k * dt_s) for k, y in enumerate(samples)) / n
@@ -233,10 +255,13 @@ def sine_amplitude(samples, f_hz, dt_s):
 
 
 def db_to_ratio(db):
+    """Invert the decibel scale: B/A = 10^(dB / 20)."""
     return 10.0 ** (db / 20.0)
 
 
-# The exercise: 8 Hz at 0.20 rad in, 0.10 rad out, peaks 0.03125 s late.
+# No `__main__` block on purpose: the browser grades this file's stdout against the appended
+# self-check's single PASS line, and a second print here would be a mismatch for a correct answer.
+
 f_scan = scan_frequency_hz(0.40, 1.10, 0.50)
 gain = gain_db(0.10, 0.20)
 phase = phase_lag_deg(8.0, 0.03125)
@@ -257,6 +282,7 @@ assert math.isclose(db_to_ratio(gain), 0.5, abs_tol=1e-6)
 
 print("scan=%.1f Hz | chain=%s | state=%s pwr=%s" % (f_scan, chain, state, pwr))
 print("gain=%.4f dB | phase=%.1f deg | sine_amp=%.4f rad | ratio=%.4f" % (gain, phase, amp, db_to_ratio(gain)))
+
 ```
 
 Printed: `scan=500.0 Hz | chain=False | state=ESTOP_LATCHED pwr=False`, then `gain=-6.0206 dB | phase=-90.0 deg | sine_amp=1.0000 rad | ratio=0.5000`.
