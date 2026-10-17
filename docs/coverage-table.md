@@ -29,7 +29,7 @@ flowchart LR
 | `04` | 7 | 59% | 43% | 75% | 7% | **51.1%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `05` | 3 | 70% | 47% | 75% | 17% | **56.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `06` | 5 | 60% | 56% | 75% | 40% | **60.3%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
-| `07` | 3 | 70% | 47% | 75% | 17% | **56.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `07` | 3 | 70% | 53% | 75% | 33% | **61.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `08` | 1 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 1 undeclared | `report` |
 
 ## By tier
@@ -38,9 +38,9 @@ flowchart LR
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
 | Tier 2 | 18 | **62.2%** |
-| Tier 3 | 10 | **53.8%** |
+| Tier 3 | 10 | **55.1%** |
 
-## Per module (44 modules, overall **56.6%**)
+## Per module (44 modules, overall **56.9%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -86,7 +86,7 @@ flowchart LR
 | `06-robotics.T3.06b` | 3 | 60% | 60% | 75% | 50% | **63.0%** | **undeclared** | 7 item(s) |
 | `07-systems.T1.07a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
 | `07-systems.T2.07a` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
-| `07-systems.T3.06a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
+| `07-systems.T3.06a` | 3 | 60% | 60% | 75% | 50% | **63.0%** | **undeclared** | 7 item(s) |
 | `08-capstones.T3.07a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 
 ## Ladder stages (named markers, all modules)
@@ -173,7 +173,7 @@ not demonstrated learner mastery.
 | `06-robotics.T3.06b` | **63.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T1.07a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `07-systems.T2.07a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `07-systems.T3.06a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `07-systems.T3.06a` | **63.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `08-capstones.T3.07a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 
 **Behaviour-graded** means `exercises/<module>/exercise.json` exists *and*
@@ -186,16 +186,16 @@ test that names it. The tests the harness runs are the same ones CI runs.
 The plan asks for these too. No artifact exists for them yet, so they are listed rather than
 scored - each one is a piece of work, not a zero:
 
-- **Behavioural tests for the other 28 modules:** 16 exercise packages exist
+- **Behavioural tests for the other 27 modules:** 17 exercise packages exist
   (`00-foundations.T2.00a`-`T2.00f`, `02-mechanics.T2.02a`, `03-sensors.T2.03a`,
   `04-embedded.T2.04d`, `05-control.T2.05a`, `06-robotics.T2.06a`-`T2.06b` and
   `07-systems.T2.07a`), and they are the template. `INSTRUCTOR_TESTS` in
   `scripts/generate_python_lessons_data.py` covers the beginner lessons only, so the remaining
   bridge modules ship no graded exercise of their own and their rows read `-` in the
   Behaviour-graded column.
-- **Module exercises in the workbench:** each of those 16 packages is generated into the app
+- **Module exercises in the workbench:** each of those 17 packages is generated into the app
   as a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives all of them on the built
-  bundle, so the browser path is measured on 16 exercises, not assumed from one.
+  bundle, so the browser path is measured on 17 exercises, not assumed from one.
 - **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)
   with their stated assumptions, and a counterexample test where a claim is easy to get wrong.
 - **Transfer-task retention:** whether the Transfer task still passes 1-2 weeks later, and

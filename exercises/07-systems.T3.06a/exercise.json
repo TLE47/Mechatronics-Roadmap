@@ -1,0 +1,31 @@
+{
+  "id": "07-systems.T3.06a",
+  "module": "modules/07-systems.T3.06a.md",
+  "title": "OPC UA PubSub rate, AAS NodeId map, PLd and the Category 3 STO evaluator",
+  "requires": [
+    "opc_ua_pubsub_rate_bps(n_vars, f_pub, header_bytes=14, value_bytes=8) -> int",
+    "diagnostic_coverage_pct(lambda_dd, lambda_du) -> percent",
+    "pfh_common_cause(lambda_du, beta) -> h^-1",
+    "pld_ok(pfh_d) -> bool",
+    "sto_evaluate(ch_a_safe, ch_b_safe, discrepancy_ms, t_disc_max_ms=20.0) -> dict",
+    "aas_opcua_nodes(shell) -> list of NodeIds",
+    "reset_interlock(ch_a_safe, ch_b_safe, fault_latched, reset_pressed) -> bool"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "rate_charges_header_per_variable": ["test_behavior.OpcUaRateTests.test_the_skip_test_rate"],
+    "dc_as_fraction": ["test_behavior.DiagnosticCoverageTests.test_the_result_is_a_percentage"],
+    "ccf_doubles_channels": ["test_behavior.CommonCauseTests.test_the_ccf_is_not_doubled"],
+    "sto_no_filter": ["test_behavior.StoEvaluatorTests.test_normal_contact_skew_is_not_a_fault"],
+    "reset_auto_restarts": ["test_behavior.ResetTests.test_no_automatic_restart"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.07-systems.T3.06a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/07-systems.T3.06a/starter.py python3 -m unittest discover -s exercises/07-systems.T3.06a -p 'test_*.py'"
+  }
+}

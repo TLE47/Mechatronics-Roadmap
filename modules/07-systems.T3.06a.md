@@ -19,6 +19,7 @@ est_hours: 4.5
 hardware_required: false
 safety_level: high
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -89,6 +90,16 @@ AAS=MechaArm6DOF_AAS, Cat3 Single-Fault TorqueRemoved=True, FaultLatched=True
 Suppose a dual-channel E-stop switch has Channel A and Channel B inputs sampled every $1\text{ ms}$, with a mechanical contact bounce discrepancy tolerance of $t_{\text{disc,max}} = 20\text{ ms}$. If an operator presses the E-stop slightly obliquely so Channel A opens at $t = 0\text{ ms}$ (`ch_a_safe = True`) and Channel B opens at $t = 12\text{ ms}$ (`ch_b_safe = True`), evaluate `cat3_sto_evaluator(True, False, discrepancy_ms=12.0)` at $t = 12\text{ ms}$ and `cat3_sto_evaluator(True, True, discrepancy_ms=0.0)` at $t = 13\text{ ms}$. Verify that `torque_removed` is `True` immediately at $t=0\text{ ms}$ and `discrepancy_fault` remains `False` because $12.0\text{ ms} \le 20.0\text{ ms}$.
 - **If your result differs:** Check the inequality `discrepancy_ms > t_disc_max_ms` ($12.0 > 20.0$ is `False`); the $20\text{ ms}$ window prevents nuisance lockout from normal mechanical switch skew while catching permanently stuck contacts.
 
+### Graded package - the audit arithmetic and the dual channel
+[`exercises/07-systems.T3.06a/`](../exercises/07-systems.T3.06a/) turns this section into a test. `starter.py` holds seven holes: `opc_ua_pubsub_rate_bps` (the header once per frame), `diagnostic_coverage_pct` (a percentage), `pfh_common_cause` (not doubled), `pld_ok` (the exclusive upper bound), `sto_evaluate` (the filtered discrepancy), `aas_opcua_nodes` (the `ns=<n>;i=|s=|g=` form) and `reset_interlock` (manual, never automatic). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/07-systems.T3.06a/starter.py \
+  python3 -m unittest discover -s exercises/07-systems.T3.06a -p 'test_*.py'
+```
+
+**31 tests.** The rate is checked at one variable and at eight, so a per-variable header shows; coverage is checked against two different failure mixes, so a fraction fails; the common-cause term is checked against $\beta\lambda_{DU}$ exactly, so doubling it fails; $10^{-6}$ is refused and $9.9\times10^{-7}$ accepted; a $12\text{ ms}$ skew must **not** latch while $25\text{ ms}$ must; a bare string is not a NodeId; and a cleared fault still refuses to restart without a press. The transfer suite runs **the plant's own numbers**: its $20\text{ B} / 1\text{ kHz}$ frame as a PubSub stream is $30000\text{ B/s}$ (and fits the 500 kbaud link that already proves zero drops, while exceeding the 115.2 kbaud one that drops 412 frames), the STO decision is evaluated on **every tick** of the $1\text{ kHz}$ loop - torque gone on the tick Channel A opens, a latch exactly one tick after the $20\text{ ms}$ window - and the reset interlock is checked after that latch. Five planted faults - `rate_charges_header_per_variable`, `dc_as_fraction`, `ccf_doubles_channels`, `sto_no_filter`, `reset_auto_restarts` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Spectral Estimation*).
@@ -98,6 +109,8 @@ Suppose a dual-channel E-stop switch has Channel A and Channel B inputs sampled 
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO — Dual-Channel Hardware STO)** and **Tab 7 (Schroeder Multisine SysID)** in the MechaLab Workbench (`npm run dev`), or explore open-source OPC UA / AAS tools (`open62541`, `python-opcua`, `Eclipse BaSyx`, `AASX Package Explorer`) in `resources/open-source-toolchains.md`.
+
+The graded package is also a workbench entry: **Modules -> `EX.07-systems.T3.06a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before wiring industrial E-stop/STO chains or taking the Skip/Gate test):**
