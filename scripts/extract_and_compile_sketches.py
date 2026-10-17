@@ -126,10 +126,50 @@ def write_sketches_to_dir(out_dir: str) -> list[tuple[str, str]]:
     return written
 
 
+def _compiler_has_cstdio(compiler: str, extra_dir: str | None = None) -> bool:
+    """True when `compiler` can see `<cstdio>` with the given include directory (or none)."""
+    command = [compiler, "-std=c++17", "-fsyntax-only", "-x", "c++", "-"]
+    if extra_dir:
+        command[3:3] = ["-isystem", extra_dir]
+    probe = subprocess.run(command, input="#include <cstdio>\nint main() { return 0; }\n",
+                           capture_output=True, text=True)
+    return probe.returncode == 0
+
+
+def libcxx_search_dirs() -> list[str]:
+    """Where a macOS SDK keeps its own copy of the C++ standard library headers."""
+    dirs = []
+    sdk = subprocess.run(["xcrun", "--show-sdk-path"], capture_output=True, text=True)
+    if sdk.returncode == 0 and sdk.stdout.strip():
+        dirs.append(os.path.join(sdk.stdout.strip(), "usr", "include", "c++", "v1"))
+    dirs.append("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1")
+    return dirs
+
+
+def cxx_include_flags(compiler: str, candidates: list[str] | None = None) -> list[str]:
+    """Include flags `compiler` needs to find the C++ standard library, if any.
+
+    Some Command Line Tools installs leave `<CLT>/usr/include/c++/v1` holding only
+    `__cxx_version`, while the active SDK ships the real libc++ - so `<cstdio>` is missing
+    even though the toolchain is otherwise complete (`fatal error: 'cstdio' file not found`).
+    The SDK's own copy is added with `-isystem` only when a probe says the default search
+    fails, so a healthy toolchain gets no extra flags and no behaviour change.
+    """
+    if _compiler_has_cstdio(compiler):
+        return []
+    for directory in (candidates if candidates is not None else libcxx_search_dirs()):
+        if not os.path.isfile(os.path.join(directory, "cstdio")):
+            continue
+        if _compiler_has_cstdio(compiler, directory):
+            return ["-isystem", directory]
+    return []
+
+
 def run_host_verify() -> tuple[bool, str]:
     gpp = shutil.which("g++")
     if not gpp:
         return False, "g++ not installed in container"
+    include_flags = cxx_include_flags(gpp)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         for path in ARDUINO_LESSON_FILES:
@@ -139,14 +179,16 @@ def run_host_verify() -> tuple[bool, str]:
             starter_bin = os.path.join(tmpdir, f"{info['slug']}_starter.out")
             with open(starter_src, "w", encoding="utf-8") as f:
                 f.write(HOST_ARDUINO_MOCK_H + "\n" + info["starter_cpp"] + "\nint main() { setup(); return 0; }\n")
-            subprocess.run([gpp, "-std=c++17", "-Wall", "-Wextra", starter_src, "-o", starter_bin], check=True)
+            subprocess.run([gpp, "-std=c++17", "-Wall", "-Wextra", *include_flags,
+                            starter_src, "-o", starter_bin], check=True)
 
             # 2. Compile & Run Full Solution with g++ and verify Serial output matches Expected Output!
             sol_src = os.path.join(tmpdir, f"{info['slug']}_solution.cpp")
             sol_bin = os.path.join(tmpdir, f"{info['slug']}_solution.out")
             with open(sol_src, "w", encoding="utf-8") as f:
                 f.write(HOST_ARDUINO_MOCK_H + "\n" + info["solution_cpp"] + "\nint main() { setup(); return 0; }\n")
-            subprocess.run([gpp, "-std=c++17", "-Wall", "-Wextra", sol_src, "-o", sol_bin], check=True)
+            subprocess.run([gpp, "-std=c++17", "-Wall", "-Wextra", *include_flags,
+                            sol_src, "-o", sol_bin], check=True)
             proc = subprocess.run([sol_bin], capture_output=True, text=True, check=True)
             actual = proc.stdout.strip()
             if actual != info["expected_output"]:
