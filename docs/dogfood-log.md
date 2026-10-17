@@ -69,6 +69,9 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `06-robotics.T3.06b` | 2026-10-17 | 1 | 0 | none | no | - |
 | `08-capstones.T3.07a` | 2026-10-17 | 3 | 0 | tool | yes | - |
 | `03-sensors.T3.03a` | 2026-10-17 | 2 | 0 | none | yes | - |
+| `05-control.T3.05a` | 2026-10-17 | 1 | 0 | none | no | - |
+| `05-control.T3.05b` | 2026-10-17 | 2 | 0 | none | yes | - |
+| `05-control.T3.05c` | 2026-10-17 | 1 | 0 | none | no | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -350,6 +353,27 @@ the way round" caught it, and it allows $\pm 10^{-9}$. The refusal item said "a 
 does not fit" without saying how to compare at the boundary; a sixth ladder item now states it, with
 the counterexample that must still raise (a $25\text{ V}$ envelope on a $24\text{ V}$ bus). Every guard
 in item 5 was otherwise written straight from the page.
+
+### The `05-control` Tier 3 trio, in one sitting
+
+| Standard | `T3.05a` | `T3.05b` | `T3.05c` |
+| :--- | :--- | :--- | :--- |
+| Reference solution tested | met (17 cases) | met (14) | met (16) |
+| Learner attempt passes from the hints alone | met, first attempt | met after one fix | met, first attempt |
+| Gate score | 6/6 | 7/7 | 6/6 |
+| Delayed transfer | pending | pending | pending |
+
+The three build on each other - the Joseph form, the tangent-space injection and the CBF projection
+- so they were done in one sitting, and the Gate papers mix the three concepts deliberately (each
+one asks about all three, `05a`'s about the CBF it does not teach, `05c`'s about the Joseph form it
+inherits). Two of the three passed their package first try.
+
+**What this round found.** `05b`'s `inject_rotation` also refuses a nominal rotation that is not
+$3 \times 3$, and the refusal item only named the two-component correction; a $2 \times 2$ nominal
+matrix raised `IndexError` from the matrix multiply instead of `ValueError`. The item now says both,
+with the reason (a $2 \times 2$ matrix is a different problem, not a smaller rotation). `05a` and
+`05c` needed nothing: their items covered every guard the suites check, including the infeasible
+barrier case that is the whole point of `05c`'s section 3.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference
