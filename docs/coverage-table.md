@@ -23,7 +23,7 @@ flowchart LR
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
 | `00` | 12 | 100% | 100% | 100% | 96% | **99.4%** | 12 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `01` | 7 | 100% | 100% | 100% | 64% | **94.6%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `01` | 7 | 100% | 100% | 100% | 71% | **95.7%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `02` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `03` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `04` | 7 | 100% | 100% | 100% | 79% | **96.8%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
@@ -38,9 +38,9 @@ flowchart LR
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **94.8%** |
 | Tier 2 | 18 | **100.0%** |
-| Tier 3 | 12 | **92.5%** |
+| Tier 3 | 12 | **93.1%** |
 
-## Per module (46 modules, overall **96.2%**)
+## Per module (46 modules, overall **96.4%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -62,7 +62,7 @@ flowchart LR
 | `01-electronics.T1.01d` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `01-electronics.T2.01a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `01-electronics.T2.01b` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `01-electronics.T3.01a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `01-electronics.T3.01a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `02-mechanics.T1.02a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `02-mechanics.T2.02a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `02-mechanics.T3.02a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
@@ -151,7 +151,7 @@ not demonstrated learner mastery.
 | `01-electronics.T1.01d` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T2.01a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `01-electronics.T2.01b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
-| `01-electronics.T3.01a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `01-electronics.T3.01a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `02-mechanics.T1.02a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `02-mechanics.T2.02a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-16, 13 min, 0 hints | - | `-` |
 | `02-mechanics.T3.02a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |

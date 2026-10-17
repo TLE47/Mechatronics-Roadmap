@@ -64,6 +64,7 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `06-robotics.T2.06a` | 2026-10-17 | 1 | 0 | none | no | - |
 | `06-robotics.T2.06b` | 2026-10-17 | 1 | 0 | none | no | - |
 | `07-systems.T2.07a` | 2026-10-17 | 1 | 0 | none | no | - |
+| `01-electronics.T3.01a` | 2026-10-17 | 2 | 0 | none | yes | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -201,6 +202,37 @@ passed first time. A stricter blind Gate pass is worth doing on a later module; 
 sets out (hints only, no solution) is otherwise honoured.
 
 Tier 2 is now fully dogfooded: every Tier 2 module has a row here.
+
+### Tier 3 opens: `01-electronics.T3.01a`, the riskiest page
+
+The Tier 3 modules were ranked by their own front-matter difficulty before any was picked, and this
+one tops the list on every axis but coding alone: `math 5, coding 4, tools 4, hardware_risk high,
+safety_level high`, 5 estimated hours, 39 cases in its package.
+
+| Standard | Value |
+| :--- | :--- |
+| Reference solution tested | met (39 cases: 31 behaviour, 8 transfer) |
+| Learner attempt passes from the hints alone | met after one fix |
+| Gate score | 8/8, answered blind |
+| Author first pass | 2 minutes, 0 hints |
+| Delayed transfer | pending |
+
+**What this round found.** Three of the eight holes refused input the ladder never said they would:
+a zero plane dimension or a negative slew rate (`loop_inductance_nh`, `turn_off_peak_v`), a mutual
+term larger than the self-inductance it is supposed to be part of (`flux_cancelled_nh`), and a zero
+bucket capacitor or a zero/negative acquisition window (`charge_droop_fraction`,
+`charge_settling_lsb`). The first attempt failed exactly those three tests and passed the other 36,
+which is the signature of a missing contract rather than a wrong formula. The ladder now carries a
+fifth *What the suite refuses* item naming all of them, including the thermal ladder's four guards.
+
+**How widespread it is.** The same question asked of every package (behaviour suite asserts
+`ValueError`, page's exercise section before `### Full Solution` never says "refuses" or "raises")
+finds that before this fix **19 of 41** pages were silent about refusals their own suite checks;
+**18 remain** after it: `00-foundations.T1.00b`,
+`T1.00d`, `T1.00e`, `01-electronics.T1.01c`, `T1.01d`, `T2.01a`, `T2.01b`, `02-mechanics.T1.02a`,
+`T3.02a`, `03-sensors.T1.03a`, `T2.03a`, `04-embedded.T1.04b`, `T2.04d`, `05-control.T1.05a`,
+`T3.05b`, `06-robotics.T1.06a`, `T3.06b`, `08-capstones.T3.07a`. It is one sentence per page, but each sentence has to match that page's own guards, so it is the
+next queued job rather than a sweep done here.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

@@ -227,6 +227,7 @@ print("scaffold ready: 8 TODOs to fill, then compare against the numbers in the 
 2. **The time constant uses the bucket, not the sum.** $\tau = R_{\text{filt}} C_{\text{filt}} = 50.0 \times 114\text{ pF} = 5.70\text{ ns}$, so $t_{\text{acq}} = 34.2\text{ ns}$ is exactly six time constants and the exponential is $e^{-6.0} = 0.00247875$.
 3. **The error is in LSBs of the full scale, not volts.** Multiply the droop by $2^{12} = 4096$ first, then by the exponential: $4096 \times 0.050 \times 0.00247875 = 0.5076\text{ LSB}$, just over the half-LSB budget.
 4. **The fix the numbers point at.** Solving $4096 \times 0.050 \times e^{-t/\tau} = 0.5$ gives $t = 5.70\text{ ns} \times \ln(409.6) = 34.29\text{ ns}$, which is why the module recommends a $35\text{ ns}$ window ($0.4412\text{ LSB}$).
+5. **What the suite refuses.** The guards are part of the contract, not defensive padding: a non-positive plane height, width or length raises, and so does a negative loop inductance or slew rate at turn-off; a negative self- or mutual inductance raises, and so does a mutual term larger than *either* self-inductance (nothing physical couples that hard); a zero corner frequency raises; both bucket capacitors must be strictly positive; the ADC needs `bits >= 1`, `R_filt > 0` and a non-negative `t_acq`; and the thermal ladder refuses an empty rung list, a non-positive rung time constant, negative dissipation and a negative time.
 
 ### Full Solution
 ```python
