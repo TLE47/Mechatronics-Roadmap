@@ -17,6 +17,7 @@ est_hours: 5.5
 hardware_required: false
 safety_level: high
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -102,6 +103,16 @@ G_0=6.04, PPO_clip=2.40, a_ens=0.5027 rad, q_safe=0.58 rad
 Suppose a reward sequence is $r = [0.0, 0.0, 10.0]$ over 3 steps with discount factor $\gamma = 0.95$, and at step $t=0$ the PPO probability ratio is $\rho_0 = 0.60$ with negative advantage $\hat{A}_0 = -3.0$ and clip range $\epsilon = 0.20$. Compute $G_0 = \gamma^2 (10.0)$ and the clipped PPO objective $\min(\rho_0 \hat{A}_0,\ \operatorname{clip}(\rho_0, 0.8, 1.2)\hat{A}_0)$. Verify $G_0 = 9.025$ and $L^{\text{CLIP}}_0 = \min(-1.80, -2.40) = -2.40$ ($\pm 10^{-9}$).
 - **If your result differs:** When $\hat{A}_0 < 0$ and $\rho_0 = 0.60 < 0.80$, $\rho_0 \hat{A}_0 = -1.80$ while the clipped term is $0.80 \times (-3.0) = -2.40$; taking the pessimistic $\min(-1.80, -2.40)$ gives $-2.40$.
 
+### Graded package - the scoreboard, the blender and the shield
+[`exercises/06-robotics.T3.06b/`](../exercises/06-robotics.T3.06b/) turns this section into a test. `starter.py` holds seven holes: `discounted_returns` (the backward recursion), `advantages`, `ppo_clip_term` (the pessimistic minimum), `ppo_loss` (its batch mean), `temporal_ensemble` (exponential weights, newest first), `safety_shield` (step clamp then joint limit) and `watchdog_trip` (strictly past the timeout). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/06-robotics.T3.06b/starter.py \
+  python3 -m unittest discover -s exercises/06-robotics.T3.06b -p 'test_*.py'
+```
+
+**28 tests.** The returns are checked at more than $G_0$ - $G_1$ and $G_2$ catch a discount taken from the start of the rollout; the PPO term is checked on a **negative** advantage, where the correct $\min$ is the more pessimistic number and a `max` silently doubles the step; the ensemble is checked at zero decay (the plain mean) and at large decay (the newest prediction dominates); the shield is checked where the step clamp would walk past a joint limit; and the watchdog is checked at exactly the timeout and after a long run that keeps sending chunks. The transfer suite scores **the plant's own run**: the discounted return of its tracking errors must equal a brute-force sum at $t = 0, 1, 7$ and halfway; the plant's own targets pass through the shield with $<2\%$ RMS change; and a hostile policy commanding $+3\text{ rad}$ through the shield leaves the arm inside its joint range, slow, and never more than $\Delta q_{\max}$ from where it is. Five planted faults - `gamma_from_zero`, `ppo_max_not_min`, `ensemble_uniform`, `shield_no_joint_limit`, `watchdog_compares_absolute_time` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Weighted Array Sums*), [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Gaussian Noise & Randomization*), and [`00-foundations.T3.00a`](00-foundations.T3.00a.md).
@@ -111,6 +122,8 @@ Suppose a reward sequence is $r = [0.0, 0.0, 10.0]$ over 3 steps with discount f
 
 ## 6. Simulation path
 Open **Tab 4 (Furuta Pendulum + LQR + CBF)** and **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
+
+The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T3.06b`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before deploying any learned policy on hardware or taking the Skip/Gate test):**

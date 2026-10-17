@@ -1,0 +1,31 @@
+{
+  "id": "06-robotics.T3.06b",
+  "module": "modules/06-robotics.T3.06b.md",
+  "title": "Discounted returns, PPO clipping, temporal ensembling and the safety shield",
+  "requires": [
+    "discounted_returns(rewards, gamma=0.9) -> list of G_t",
+    "advantages(returns, values) -> list of A_hat",
+    "ppo_clip_term(rho, advantage, eps=0.2) -> float",
+    "ppo_loss(ratios, advantages_, eps=0.2) -> float (mean)",
+    "temporal_ensemble(predictions, decay=0.5) -> float",
+    "safety_shield(a_policy, q, dq_max=0.08, q_min=-1.5, q_max=1.5) -> float",
+    "watchdog_trip(last_chunk_s, now_s, timeout_s=0.1) -> bool"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "gamma_from_zero": ["test_behavior.ReturnTests.test_each_step_is_discounted_from_its_own_time"],
+    "ppo_max_not_min": ["test_behavior.PPOTests.test_a_negative_advantage_is_clipped_pessimistically"],
+    "ensemble_uniform": ["test_behavior.EnsembleTests.test_the_newest_prediction_dominates"],
+    "shield_no_joint_limit": ["test_behavior.ShieldTests.test_the_hard_limit_wins_at_the_edge"],
+    "watchdog_compares_absolute_time": ["test_behavior.WatchdogTests.test_exactly_at_the_timeout_is_still_alive"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.06-robotics.T3.06b",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/06-robotics.T3.06b/starter.py python3 -m unittest discover -s exercises/06-robotics.T3.06b -p 'test_*.py'"
+  }
+}
