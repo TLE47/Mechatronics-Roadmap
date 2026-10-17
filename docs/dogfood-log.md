@@ -67,6 +67,7 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `01-electronics.T3.01a` | 2026-10-17 | 2 | 0 | none | yes | - |
 | `04-embedded.T3.04a` | 2026-10-17 | 2 | 0 | none | yes | - |
 | `06-robotics.T3.06b` | 2026-10-17 | 1 | 0 | none | no | - |
+| `08-capstones.T3.07a` | 2026-10-17 | 3 | 0 | tool | yes | - |
 
 ### Evidence, item by item
 One "validated" flag hid four different claims. This table separates them, and a row is only as
@@ -297,6 +298,38 @@ step clamp, inverted joint limits, a non-positive timeout - were read as part of
 written into the attempt, so the first run was green. The seven holes themselves (backward return
 recursion, the pessimistic `min` that only binds for a negative advantage, the newest-first
 ensemble weights, rate-limit-before-joint-limit) were all covered by the ladder's formulas.
+
+### The last high-safety Tier 3 module: the page's own scaffold was stale
+
+| Standard | Value |
+| :--- | :--- |
+| Reference solution tested | met (42 cases: 34 behaviour, 8 transfer) |
+| Learner attempt passes from the hints alone | met after one fix, two of the three failures mine |
+| Gate score | 8/8, answered blind |
+| Author first pass | 3 minutes, 0 hints |
+| Delayed transfer | pending |
+
+**What this round found.** The page's `### Starter code` block listed **6 of the package's 9 holes** -
+`variance_fraction`, `zoh_delay_us` and `max_allowable_delay_ms` were missing - and its
+`error_budget_3sigma` signature omitted the `sensitivities` argument, so a learner who wrote to the
+page could not have passed the suite however carefully they read. The block also announced
+"6 TODOs" while the prose beside it said nine, and the page claimed "38 tests" against a 42-test
+suite. Fixed by replacing the block with `exercises/08-capstones.T3.07a/starter.py` verbatim and
+correcting the count.
+
+**The drift was not unique to this page.** The same comparison across all 46 packages found **9
+pages whose Starter block defined a different set of functions from their `starter.py`**
+(`00-foundations.T1.00a/b/c/d`, `T2.00f`, `02-mechanics.T2.02a`, `05-control.T2.05a`, `T3.05c`, this
+one) and **7 stale test counts** (`00-foundations.T1.00b`, `T1.00e`, `02-mechanics.T3.02a`,
+`03-sensors.T1.03a`, `04-embedded.T1.04b`, `T3.04a`, this one). All were repaired, and
+`scripts/validate_modules.py` now fails either drift: the page's scaffold must define exactly the
+functions `starter.py` defines, and any "N tests" claim must count the whole suite. Breaking this
+page's block by one name makes the validator report it by name.
+
+**Two of the three first-pass failures were mine, not the page's**, and the row says `tool` for it: I
+read the two lists as paired sums when the docstring says they are separate (`e = sum |b_i| + nsig
+sqrt(sum sigma_i^2)`), and my empty-budget guard tested for *both* lists empty when either one is
+refused. Both facts were on the page already; the correction took one round.
 
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference

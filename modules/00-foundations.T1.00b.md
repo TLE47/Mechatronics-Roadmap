@@ -94,7 +94,7 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00b/starter.py \
   python3 -m unittest discover -s exercises/00-foundations.T1.00b -p 'test_*.py'
 ```
 
-**29 tests.** The worked trace is checked at its mean $1.10\text{ V}$ and span $1.20\text{ V}$, the Skip test's $t_{500} = 1.0\text{ s}$, and the exercise at $\text{RMSE} = 0.1581139\text{ rad}$ with a signed mean of exactly $0.0\text{ rad}$ - so an averaged signed error fails where a squared one passes. The transfer suite runs the plant's own recording: its $1\text{ kHz}$ tick for `plant.TICKS` is $1{,}001$ samples from $0.0$ to $1.0\text{ s}$, the 12-bit encoder's count ramp scales to $2047.5/4096$ turns, and the gravity torque over a $90^{\circ}$ sweep spans $0.318825\text{ N}\cdot\text{m}$. Six planted faults - `timestamps_off_by_one`, `scale_swaps_slope_offset`, `peak_to_peak_half_span`, `rmse_averages_signed_errors`, `errors_silently_zips`, `git_defaults_to_status` - each fail the test named for them.
+**31 tests.** The worked trace is checked at its mean $1.10\text{ V}$ and span $1.20\text{ V}$, the Skip test's $t_{500} = 1.0\text{ s}$, and the exercise at $\text{RMSE} = 0.1581139\text{ rad}$ with a signed mean of exactly $0.0\text{ rad}$ - so an averaged signed error fails where a squared one passes. The transfer suite runs the plant's own recording: its $1\text{ kHz}$ tick for `plant.TICKS` is $1{,}001$ samples from $0.0$ to $1.0\text{ s}$, the 12-bit encoder's count ramp scales to $2047.5/4096$ turns, and the gravity torque over a $90^{\circ}$ sweep spans $0.318825\text{ N}\cdot\text{m}$. Six planted faults - `timestamps_off_by_one`, `scale_swaps_slope_offset`, `peak_to_peak_half_span`, `rmse_averages_signed_errors`, `errors_silently_zips`, `git_defaults_to_status` - each fail the test named for them.
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Module:** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Variables, Loops & Functions*).
@@ -104,35 +104,54 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00b/starter.py \
 
 ### Starter code
 ```python
-# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+"""Exercise 00-foundations.T1.00b - the learner's file.
+
+A recorded window, a scaled sensor trace, the two summary statistics, the per-sample tracking
+error with its RMS, and the Git command behind a task. Fill the seven TODOs:
+
+    EXERCISE_TARGET=exercises/00-foundations.T1.00b/starter.py \
+        python3 -m unittest discover -s exercises/00-foundations.T1.00b -p 'test_*.py'
+"""
+
 import math
+
 
 def timestamps(t0_s, dt_s, n):
     """t_i = t0 + i*dt for i = 0 .. n-1."""
-    # TODO 1: start at i = 0, so n samples end at index n - 1
-    ...
+    raise NotImplementedError("TODO 1: start at i = 0, so the last index is n - 1")
+
 
 def scaled_readings(values, config):
     """y_i = slope * x_i + offset, both constants looked up by name."""
-    # TODO 2: read config["slope"] and config["offset"], then m*x + b
-    ...
+    raise NotImplementedError("TODO 2: read config['slope'] and config['offset'], then m*x + b")
+
 
 def mean_of(values):
     """The sample mean."""
-    # TODO 3: sum the values, then divide by how many there are
-    ...
+    raise NotImplementedError("TODO 3: sum the values, then divide by how many there are")
+
+
+def peak_to_peak(values):
+    """max - min, the span a plot has to cover."""
+    raise NotImplementedError("TODO 4: the span is a MAXIMUM minus a MINIMUM, not a half-span")
+
 
 def errors(target, measured):
     """e_i = target_i - measured_i, paired by zip()."""
-    # TODO 4: target minus measured, sample by sample, same length
-    ...
+    raise NotImplementedError("TODO 5: target minus measured, sample by sample, same length")
+
 
 def rmse(target, measured):
     """sqrt(mean(e_i^2))."""
-    # TODO 5: SQUARE each error before averaging - signed errors cancel to 0.0
-    ...
+    raise NotImplementedError("TODO 6: SQUARE each error before averaging - signed errors cancel")
 
-print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+
+def git_command(task):
+    """The command for a task."""
+    raise NotImplementedError("TODO 7: a dictionary lookup by task name, and refuse a miss")
+
+
+# The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.
 ```
 
 ### Hint ladder

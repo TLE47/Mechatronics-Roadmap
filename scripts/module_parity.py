@@ -343,8 +343,11 @@ def score_module(path: str, dogfooded: set[str], behaviourally_graded: set[str])
         ),
         # The biggest Layer 2 gap today: no module ships a learner-facing starter scaffold, so no
         # module exercise can be attempted (or graded) the way a Tier 1 lesson exercise is.
+        # Either hole marker counts: the pages that carry the package's `starter.py` verbatim use
+        # `raise NotImplementedError(...)` where its docstring has no `TODO` comment, and that is
+        # the same scaffold a learner fills.
         "learner_exercise_scaffold": bool(
-            re.search(r"```python\n.*?\bTODO", exercise, flags=re.DOTALL)
+            re.search(r"```python\n.*?(\bTODO|NotImplementedError)", exercise, flags=re.DOTALL)
             and "Full Solution" in exercise
         ),
         "verification_route_declared": verification in VERIFICATION_ROUTES,

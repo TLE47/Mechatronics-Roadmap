@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import ast
+import json
+import os
 import pathlib
 import re
 import sys  # noqa: F401  (also used to put the shared plant on `sys.path` below)
@@ -56,6 +59,7 @@ except ImportError:
         return data
 
 ROOT = pathlib.Path("modules")
+EXERCISES = pathlib.Path("exercises")
 # A module's worked example runs on the shared plant (`import mechalab_plant`), the same arm every
 # Tier 2/3 exercise uses. The browser workbench ships that one file into Pyodide and puts `/` on
 # `sys.path` before learner code runs, so these scripts put that one directory on the path too and
@@ -139,6 +143,32 @@ for p in sorted(ROOT.glob("*.md")):
             exp_out = exp_match.group(2).strip()
             if got_out != exp_out:
                 bad.append(f"{mid}: Expected output mismatch:\n  expected: {exp_out}\n  actual:   {got_out}")
+
+    # The page's scaffold and its test count are claims about the package, and both drift when the
+    # package changes and the page is not edited with it. Dogfooding 08-capstones.T3.07a found a
+    # Starter block listing 6 of its 9 holes and a "38 tests" claim against a 42-test suite.
+    starter_match = re.search(r"### Starter code.*?```python\n(.*?)```", body, re.S)
+    starter_path = EXERCISES / mid / "starter.py"
+    if starter_match and os.path.isfile(starter_path):
+        page_fns = [n.name for n in ast.parse(starter_match.group(1)).body
+                    if isinstance(n, ast.FunctionDef)]
+        with open(starter_path, "r", encoding="utf-8") as handle:
+            package_fns = [n.name for n in ast.parse(handle.read()).body
+                           if isinstance(n, ast.FunctionDef)]
+        if page_fns != package_fns:
+            bad.append(f"{mid}: page Starter code defines {page_fns}, starter.py defines {package_fns}")
+        manifest_path = EXERCISES / mid / "exercise.json"
+        count_match = re.search(r"\*\*(\d+) tests\.\*\*", body)
+        if count_match and os.path.isfile(manifest_path):
+            manifest = json.load(open(manifest_path, encoding="utf-8"))
+            total = 0
+            for name in manifest.get("checks", {}).values():
+                test_path = os.path.join(os.path.dirname(manifest_path), name)
+                if os.path.isfile(test_path):
+                    with open(test_path, "r", encoding="utf-8") as handle:
+                        total += len(re.findall(r"^    def test_", handle.read(), re.M))
+            if int(count_match.group(1)) != total:
+                bad.append(f"{mid}: page claims {count_match.group(1)} tests, the suite has {total}")
 
     nodes[mid] = {
         "prereqs": fm.get("prereqs", []),

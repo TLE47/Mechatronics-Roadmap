@@ -11,6 +11,21 @@ flowchart LR
 
 ---
 
+## [2026-10-17] — Run 52: The Page's Scaffold Was Stale, Across Nine Pages
+
+### 1. `08-capstones.T3.07a` dogfooded
+- 42 cases (34 behaviour, 8 transfer), Gate **8/8 answered blind**, 3 minutes, 0 hints. Row and section in `docs/dogfood-log.md`.
+
+### 2. Its Starter block listed 6 of the 9 holes
+- The page showed a six-hole scaffold with an `error_budget_3sigma` signature missing `sensitivities`, a "6 TODOs" print, and a "38 tests" claim against a 42-test suite. A learner writing to the page could not have passed. The block is now `starter.py` verbatim and the count is corrected.
+
+### 3. Measured across all 46 packages, then gated
+- **9 pages** defined a different function set from their `starter.py` (`00-foundations.T1.00a/b/c/d`, `T2.00f`, `02-mechanics.T2.02a`, `05-control.T2.05a`, `T3.05c`, `08-capstones.T3.07a`) and **7 pages** carried a stale test count. All repaired.
+- `scripts/validate_modules.py` gained both checks: the page's scaffold must define the same functions as the package's `starter.py`, and a stated test count must equal the behaviour plus transfer tests. Breaking a block by one name makes the validator report both lists.
+
+### 4. Verification
+- `validate_modules` exit 0, gate `unstated: 0`, page test 46/46, `lint_modules` 46/46, `module_parity --check`, `run_exercise --only 08-capstones.T3.07a`.
+
 ## [2026-10-17] — Run 51: `06-robotics.T3.06b` Passes First Time
 
 ### 1. The third Tier 3 module dogfooded

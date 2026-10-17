@@ -156,36 +156,32 @@ EXERCISE_TARGET=exercises/05-control.T3.05c/starter.py \
 
 ### Starter code
 ```python
-# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+"""Exercise 05-control.T3.05c - your implementation.
+
+Two holes, one per idea the module promised: the CBF-QP projection that caps a velocity command at
+`alpha h` inside the actuator interval, and the exponential margin it guarantees afterwards.
+
+Fill each one in, then run the tests the way CI does:
+
+    EXERCISE_TARGET=exercises/05-control.T3.05c/starter.py \
+      python3 -m unittest discover -s exercises/05-control.T3.05c -p 'test_*.py'
+"""
+
 import math
 
 
 def cbf_command(u_nom, h_value, alpha, u_min=-2.0, u_max=2.0):
-    """Project u_nom onto `u <= alpha h` and the actuator bounds, minimally."""
-    # TODO 1: the barrier caps the command at alpha * h (hdot = -u), so take the smaller cap
-    # TODO 2: clip u_nom into [u_min, upper]; refuse an interval where upper < u_min
-    ...
+    """Project u_nom onto `u <= alpha * h` and the actuator bounds, minimally.
+
+    Hint: `hdot = -u`, so the CBF inequality `hdot + alpha h >= 0` caps the command, it does not
+    floor it. Refuse an empty admissible interval instead of clamping to nonsense.
+    """
+    raise NotImplementedError("cbf_command: upper = min(u_max, alpha * h_value), then clip")
 
 
 def barrier_lower_bound(h0, alpha, t):
-    """The guaranteed margin h0 exp(-alpha t) under the CBF condition."""
-    # TODO 3: exponential decay, not a straight line - the gain alpha is the rate
-    ...
-
-
-def stopping_speed(tau_limit, inertia, dt):
-    """How much speed one tick of the torque clamp can remove: (tau / I) * dt."""
-    # TODO 4: the plant's own numbers put this at 0.3125 rad/s for 2.5 N*m over I1 = 0.008
-    ...
-
-
-def stopping_distance(tau_limit, inertia, dt):
-    """The distance covered while that tick of deceleration acts: 1/2 a dt^2."""
-    # TODO 5: constant acceleration, so the 1/2 matters - it is 1.5625e-4 rad here
-    ...
-
-
-print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+    """The guaranteed margin h0 exp(-alpha t). Hint: no alpha means a straight horizontal line."""
+    raise NotImplementedError("barrier_lower_bound: h0 * math.exp(-alpha * t)")
 ```
 
 **Expected numbers (the answer):** $h = 0.10$, $\alpha = 8.0$ caps $1.20$ at $0.80\,\text{rad/s}$; $h = -0.05$ reverses the command to $-0.40$; $h = -0.50$ admits only $-4.0$ and is infeasible; $h_0 = 0.20$ at $\alpha = 2.0$ is $0.073576\,\text{m}$ after $0.50\,\text{s}$; one tick removes $0.3125\,\text{rad/s}$ over $1.5625\times10^{-4}\,\text{rad}$.

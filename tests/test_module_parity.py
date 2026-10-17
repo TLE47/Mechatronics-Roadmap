@@ -160,7 +160,8 @@ class TestTheLearnerScaffoldIsARealOne(unittest.TestCase):
         self.assertEqual(words_only, ["no `### Starter code`", "no `### Hint ladder`"])
         # Headings present, but a one-`...` stub and a single hint: still not a scaffold.
         thin = scaffold_findings(
-            "### Starter code\n```python\n# TODO: fill it in\n...\n```\n"
+            "### Starter code\n```python\n# TODO: fill it in\ndef a():\n    ...\n\n"
+            "def b():\n    ...\n\ndef c():\n    ...\n```\n"
             "### Hint ladder\n1. try the formula\n"
             "### Full Solution\n```python\nprint(1)\n```\n"
         )
@@ -183,9 +184,17 @@ def scaffold_findings(exercise: str) -> list[str]:
     full = _section(exercise, "### Full Solution")
     hints = _section(exercise, "### Hint ladder")
     if starter:
-        todos = len(re.findall(r"#\s*TODO", starter))
-        if todos < MIN_TODOS:
-            findings.append("%d TODO(s) in the starter, at least %d expected" % (todos, MIN_TODOS))
+        # A hole is marked either way: `# TODO` in a page's own scaffold, or the
+        # `raise NotImplementedError(...)` the package's `starter.py` ships (several pages carry that
+        # file verbatim, so their scaffold has no `# TODO` line and is no less a scaffold).
+        # The floor is the package's own hole count: every function the scaffold defines must be a
+        # hole, which is at least `MIN_TODOS` for every package that ships that many functions.
+        holes = len(re.findall(r"#\s*TODO|raise\s+NotImplementedError", starter))
+        functions = len(re.findall(r"^def ", starter, re.M))
+        expected = max(min(MIN_TODOS, functions), functions and 1 or 0)
+        if holes < expected:
+            findings.append("%d hole(s) for %d function(s) in the starter, at least %d expected"
+                            % (holes, functions, expected))
     if full and "```python" not in full:
         findings.append("the full solution carries no python block")
     if hints and len(re.findall(r"^\d+\.\s", hints, flags=re.MULTILINE)) < MIN_HINTS:

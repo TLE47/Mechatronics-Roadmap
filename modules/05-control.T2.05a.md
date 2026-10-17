@@ -130,42 +130,57 @@ The tests are behavioural: the worked loop's margin must be $51.8273^\circ$ whil
 
 ### Starter code
 ```python
-# --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution ---
+"""Exercise 05-control.T2.05a - the learner's file.
+
+Margins, the sensitivity pair, Bryson's weights, an observer's error matrix and a discrete LQR
+gain. Fill the seven TODOs:
+
+    EXERCISE_TARGET=exercises/05-control.T2.05a/starter.py \
+        python3 -m unittest discover -s exercises/05-control.T2.05a -p 'test_*.py'
+"""
+
 import cmath
 import math
 
+import mechalab_plant as plant
+
 
 def phase_margin_deg(loop):
-    """PM = 180 + the loop's phase in degrees, unwrapped so a 200 degree lag reads -20."""
-    # TODO 1: math.degrees(cmath.phase(loop)); subtract 360 when it comes back positive
-    ...
+    """Phase margin at a gain crossover, with the loop's lag unwrapped into (-360, 0]."""
+    raise NotImplementedError("TODO 1: 180 + the phase in degrees, after unwrapping a positive angle")
 
 
 def phase_loss_deg(omega_gc, tau_d):
-    """Degrees of phase a pure transport delay eats at the gain crossover."""
-    # TODO 2: the delay angle is omega_gc * tau_d radians - convert it, do not add it
-    ...
+    """Degrees of phase a transport delay eats at the gain crossover."""
+    raise NotImplementedError("TODO 2: the delay angle is omega * tau, in radians -> degrees")
 
 
 def st(loop):
-    """(S, T) = (1/(1+L), L/(1+L)); the two sum to one at every frequency."""
-    # TODO 3: both share the same denominator 1 + L (T is not 1/S)
-    ...
+    """`S = 1/(1+L)` and `T = L/(1+L)`; their sum is one at every frequency."""
+    raise NotImplementedError("TODO 3: both share the denominator; T is not 1/S")
+
+
+def gain_crossover(loop_fn, w_lo=1e-3, w_hi=1e4, iterations=200):
+    """Bisect for the frequency where |L(jw)| = 1; raise ValueError when the bracket has no crossing."""
+    raise NotImplementedError("TODO 4: check the bracket's signs first, then halve it")
 
 
 def bryson_weights(x_max, u_max):
-    """Bryson's rule: Q_ii = 1/x_max_i^2 and R = 1/u_max^2."""
-    # TODO 4: square every maximum, or metres and newtons never cancel
-    ...
+    """Bryson's rule: `Q_ii = 1/x_max_i^2`, `R = 1/u_max^2`."""
+    raise NotImplementedError("TODO 5: squared, not linear - the units have to cancel")
 
 
 def observer_spectral_radius(ad, c, l):
-    """max |eig(Ad - L C)| for two states and one measurement."""
-    # TODO 5: build Ad - L C, then take its trace and determinant and solve s^2 - tr s + det = 0
-    ...
+    """Spectral radius of `Ad - L C` (two states, one measurement)."""
+    raise NotImplementedError("TODO 6: build Ad - L C, then its eigenvalues from trace and determinant")
 
 
-print("scaffold ready: 5 TODOs to fill, then compare against the numbers in the full solution")
+def lqr_gain(ad, bd, q_diag, r):
+    """Discrete LQR gain for `u = -K x`, from the Riccati fixed point."""
+    raise NotImplementedError("TODO 7: iterate P <- A'PA - A'PB (R + B'PB)^-1 B'PA + Q to its fixed point")
+
+
+# The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.
 ```
 
 **Expected numbers (the answer):** $\Delta\phi = 22.5216^\circ$ at $\tau_d = 5\,\text{ms}$, so $\text{PM}_{\text{new}} = 29.3057^\circ$; $|S(j\omega_{gc})| = 1.144$; Bryson $(Q, R) = ([400, 100], 0.04)$; observer radius $0.9005$.

@@ -144,53 +144,74 @@ EXERCISE_TARGET=exercises/08-capstones.T3.07a/starter.py \
   python3 -m unittest discover -s exercises/08-capstones.T3.07a -p 'test_*.py'
 ```
 
-**38 tests.** The $3\sigma$ budget is checked at the worked example's $0.4259\text{ mm}$ and the Gate test's $0.35\text{ mm}$, and a $-0.02\text{ mm}$ bias must still add $0.02\text{ mm}$ rather than cancel, so a linear sum or a signed sum each fail; the latency chain is checked at $1100\ \mu\text{s}$ and at the 10-tap filter's $3400\ \mu\text{s}$, so a chain that forgets the $500\ \mu\text{s}$ zero-order hold fails; the phase subtraction is checked in degrees at $52.55^\circ$, $32.78^\circ$ and $48.54^\circ$, so a raw radian result fails; and the sign-off is checked at the 4-of-5 `STO` case, an out-of-window $50\ \Omega$ bus, and the inclusive boundaries of all five limits. The transfer suite runs **the plant**: one count of its 12-bit encoder seen at the full $0.20\text{ m}$ reach is $0.3068\text{ mm}$, so $3\sigma$ is $0.9204\text{ mm}$ and the $0.50\text{ mm}$ capstone spec is already lost before any other source is counted; its $1\text{ kHz}$ tick is the worked $1000\ \mu\text{s}$ period and erodes $8.59^\circ$ at $150\text{ rad/s}$; and the $17^\circ$ between the nominal margin and the $45^\circ$ floor buys $1.978\text{ ms}$, which the module's filter swap spends nearly twice over. Five planted faults - `rss_adds_linearly`, `systematic_forgets_abs`, `latency_forgets_zoh`, `phase_margin_forgets_radians`, `signoff_ignores_sto` - each fail the test named for them.
+**42 tests.** The $3\sigma$ budget is checked at the worked example's $0.4259\text{ mm}$ and the Gate test's $0.35\text{ mm}$, and a $-0.02\text{ mm}$ bias must still add $0.02\text{ mm}$ rather than cancel, so a linear sum or a signed sum each fail; the latency chain is checked at $1100\ \mu\text{s}$ and at the 10-tap filter's $3400\ \mu\text{s}$, so a chain that forgets the $500\ \mu\text{s}$ zero-order hold fails; the phase subtraction is checked in degrees at $52.55^\circ$, $32.78^\circ$ and $48.54^\circ$, so a raw radian result fails; and the sign-off is checked at the 4-of-5 `STO` case, an out-of-window $50\ \Omega$ bus, and the inclusive boundaries of all five limits. The transfer suite runs **the plant**: one count of its 12-bit encoder seen at the full $0.20\text{ m}$ reach is $0.3068\text{ mm}$, so $3\sigma$ is $0.9204\text{ mm}$ and the $0.50\text{ mm}$ capstone spec is already lost before any other source is counted; its $1\text{ kHz}$ tick is the worked $1000\ \mu\text{s}$ period and erodes $8.59^\circ$ at $150\text{ rad/s}$; and the $17^\circ$ between the nominal margin and the $45^\circ$ floor buys $1.978\text{ ms}$, which the module's filter swap spends nearly twice over. Five planted faults - `rss_adds_linearly`, `systematic_forgets_abs`, `latency_forgets_zoh`, `phase_margin_forgets_radians`, `signoff_ignores_sto` - each fail the test named for them.
 
 ### Starter code
 ```python
-# --- Exercise scaffold: fill in each TODO, then check against the full solution below ---
+"""Exercise 08-capstones.T3.07a - the learner's file.
+
+Three budgets and one gate: the RSS spatial error budget, the end-to-end latency that becomes
+phase margin, and the five-domain Go/No-Go sign-off. Fill the nine TODOs:
+
+    EXERCISE_TARGET=exercises/08-capstones.T3.07a/starter.py \
+        python3 -m unittest discover -s exercises/08-capstones.T3.07a -p 'test_*.py'
+"""
+
 import math
 
 
 def rss(sigmas):
     """The root-sum-square of independent 1-sigma contributions."""
-    # TODO: square each value, sum, then one square root - not the sum itself
-    ...
+    raise NotImplementedError("TODO 1: square, sum, then ONE square root - not the sum itself")
 
 
 def systematic_sum(biases):
     """Deterministic offsets add linearly."""
-    # TODO: abs() first - a bias on the other side is not a credit
-    ...
+    raise NotImplementedError("TODO 2: abs() first, either - a bias on the other side is not a credit")
 
 
-def error_budget_3sigma(biases, sigmas, nsig=3.0):
-    """e = sum |b_i| + nsig * sqrt(sum sigma_i^2)."""
-    # TODO: systematic terms add as magnitudes, random terms in quadrature, then scale
-    ...
+def error_budget_3sigma(biases, sigmas, sensitivities=None, nsig=3.0):
+    """e = sum |s_i b_i| + nsig * sqrt(sum (s_i sigma_i)^2)."""
+    raise NotImplementedError(
+        "TODO 3: systematic terms add as magnitudes, random terms add in quadrature, then scale"
+    )
+
+
+def variance_fraction(index, sigmas, sensitivities=None):
+    """w_i = (s_i sigma_i)^2 / sum_j (s_j sigma_j)^2."""
+    raise NotImplementedError("TODO 4: variance, not sigma - the squares are what add to one")
+
+
+def zoh_delay_us(ts_us):
+    """The zero-order hold delay, in microseconds."""
+    raise NotImplementedError("TODO 5: half a sample period, not a whole one")
 
 
 def total_latency_s(tau_sens_us, tau_bus_us, tau_filt_us, tau_comp_us, ts_us):
-    """Every delay plus the zero-order hold, in seconds."""
-    # TODO: four measured delays PLUS half a tick, then microseconds to seconds
-    ...
+    """Every delay plus the ZOH, in seconds."""
+    raise NotImplementedError("TODO 6: four delays PLUS half a tick, then microseconds to seconds")
 
 
 def net_phase_margin_deg(pm0_deg, w_gc_rad_s, tau_total_s):
     """PM_net = PM_0 - omega_gc * tau_total, in degrees."""
-    # TODO: the product is in RADIANS - multiply by 180/pi before subtracting
-    ...
+    raise NotImplementedError("TODO 7: the product is in RADIANS - multiply by 180/pi")
+
+
+def max_allowable_delay_ms(dphi_max_rad, w_gc_rad_s):
+    """The delay a phase budget buys, in milliseconds."""
+    raise NotImplementedError("TODO 8: divide the phase budget by crossover, then scale to ms")
 
 
 def capstone_signoff(e_3sig_mm, pm_net_deg, cpu_u, can_ohm, sto_cat3_ok,
                      e_spec_mm=0.50, pm_min_deg=45.0, cpu_max=0.70,
                      can_min_ohm=55.0, can_max_ohm=65.0):
     """GO only when every one of the five domains passes."""
-    # TODO: four gates AND the STO - each limit inclusive at its own boundary
-    ...
+    raise NotImplementedError(
+        "TODO 9: four gates AND the STO - and the limits are inclusive at their own boundary"
+    )
 
 
-print("scaffold ready: 6 TODOs to fill, then compare against the numbers in the full solution")
+# The browser entry appends `selfcheck.py` below this line; on its own this file prints nothing.
 ```
 
 **Expected numbers (the answer):** $\tau_{\text{total}} = 3.40\ \text{ms}$, $\text{PM}_{\text{net}} = 32.779^\circ < 45.0^\circ$, `capstone_signoff == False`.

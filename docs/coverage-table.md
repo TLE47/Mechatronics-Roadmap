@@ -30,7 +30,7 @@ flowchart LR
 | `05` | 5 | 100% | 100% | 100% | 60% | **94.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `06` | 5 | 100% | 100% | 100% | 80% | **97.0%** | 5 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `07` | 3 | 100% | 100% | 100% | 67% | **95.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
-| `08` | 1 | 100% | 100% | 100% | 50% | **92.5%** | 1 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `08` | 1 | 100% | 100% | 100% | 100% | **100.0%** | 1 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 
 ## By tier
 
@@ -38,9 +38,9 @@ flowchart LR
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **94.8%** |
 | Tier 2 | 18 | **100.0%** |
-| Tier 3 | 12 | **94.4%** |
+| Tier 3 | 12 | **95.0%** |
 
-## Per module (46 modules, overall **96.7%**)
+## Per module (46 modules, overall **96.9%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -89,7 +89,7 @@ flowchart LR
 | `07-systems.T1.07a` | 1 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `07-systems.T2.07a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `07-systems.T3.06a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `08-capstones.T3.07a` | 3 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `08-capstones.T3.07a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 
 ## Ladder stages (named markers, all modules)
 
@@ -178,7 +178,7 @@ not demonstrated learner mastery.
 | `07-systems.T1.07a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T2.07a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `07-systems.T3.06a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `08-capstones.T3.07a` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `08-capstones.T3.07a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 3 min, 0 hints | - | `-` |
 
 **Behaviour-graded** means `exercises/<module>/exercise.json` exists *and*
 `scripts/run_exercise.py` passes: the starter fails on its own `NotImplementedError`, the
