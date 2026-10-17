@@ -17,6 +17,7 @@ est_hours: 3.5
 hardware_required: false
 safety_level: high
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -92,6 +93,16 @@ Safety state=ESTOP_LATCHED, pwr=False, Sine-sweep @ 5Hz: -3.01 dB, -45.0 deg
 During a single-tone sine sweep at $f = 8.0\text{ Hz}$ ($T = 0.125\text{ s}$) with input amplitude $A = 0.20\text{ rad}$, the joint encoder output has steady-state amplitude $B = 0.10\text{ rad}$ and its peaks lag the input peaks by $\Delta t = 0.03125\text{ s}$. Compute $\lvert G(j2\pi f)\rvert_{\text{dB}}$ and $\angle G(j2\pi f)$ in degrees. Verify $|G|_{\text{dB}} = -6.0206\text{ dB}$ ($\pm 10^{-3}$) and $\angle G = -90.0^\circ$ ($\pm 10^{-6}$).
 - **If your result differs:** Check that $-360^\circ \times 8.0\text{ Hz} \times 0.03125\text{ s} = -90.0^\circ$ (a quarter period of $0.125\text{ s}$) and $20\log_{10}(0.10 / 0.20) = -6.0206\text{ dB}$.
 
+### Graded package - the scan, the chain and the sweep
+[`exercises/07-systems.T1.07a/`](../exercises/07-systems.T1.07a/) turns this section into a test. `starter.py` holds seven holes: `scan_frequency_hz`, `safety_chain_ok` (all contacts, never any), `plc_scan_step` (the latch and the reset), `gain_db` (20 log10), `phase_lag_deg` (negative), `sine_amplitude` (the lock-in) and `db_to_ratio`. Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/07-systems.T1.07a/starter.py \
+  python3 -m unittest discover -s exercises/07-systems.T1.07a -p 'test_*.py'
+```
+
+**32 tests.** The scan rate is checked against two different budgets, so seconds-for-milliseconds shows; the chain is checked with one open contact among three, so `any` fails; the state machine is checked with the chain healthy and Start still held, so a latch that clears itself fails; the gain is checked at half amplitude ($-6.02\text{ dB}$) and at one tenth ($-20\text{ dB}$), so `10 log10` fails; the phase is checked at a quarter period, so a positive lead fails; and the lock-in must recover a known amplitude through a $37\text{ Hz}$ interferer and a DC offset. The transfer suite measures **the plant's own figure-8**: `sine_amplitude` must return `plant.AX` and `plant.AY` from samples of `plant.figure8_target` to $10^{-6}$, reject the neighbouring frequency, read the plant's $1\text{ ms}$ budget as its $1\text{ kHz}$ tick, and drop the power enable on the very next scan after a wire break while refusing to restart without a reset. Five planted faults - `scan_in_seconds`, `chain_uses_any`, `phase_positive_lead`, `gain_10log`, `plc_no_latch` - each fail the test named for them.
+
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Loops, Trigonometry & SI Units*), plus the self-contained inline logarithm and decibel primer in `## 3. Formalization` item 3 above (which previews Pass 2 [`00-foundations.T2.00d`](00-foundations.T2.00d.md)).
@@ -101,6 +112,8 @@ During a single-tone sine sweep at $f = 8.0\text{ Hz}$ ($T = 0.125\text{ s}$) wi
 
 ## 6. Simulation path
 Test the cyclic PLC logic in [OpenPLC Editor](https://autonomylogic.com/) (`resources/open-source-toolchains.md`) or open **Tab 5 (Functional Safety & STO)** and **Tab 7 (System Identification)** in the MechaLab Workbench (`npm run dev`).
+
+The graded package is also a workbench entry: **Modules -> `EX.07-systems.T1.07a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**

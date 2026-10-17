@@ -1,0 +1,31 @@
+{
+  "id": "07-systems.T1.07a",
+  "module": "modules/07-systems.T1.07a.md",
+  "title": "Cyclic PLC scan, series NC E-stop chain, latching state machine and sine-sweep gain/phase",
+  "requires": [
+    "scan_frequency_hz(t_read_ms, t_exec_ms, t_write_ms) -> Hz",
+    "safety_chain_ok(*contacts) -> bool (all closed)",
+    "plc_scan_step(state, estop1_nc, estop2_nc, door_nc, start_btn_no, reset_btn_no) -> (state, power)",
+    "gain_db(amplitude_out, amplitude_in) -> dB",
+    "phase_lag_deg(f_hz, delay_s) -> degrees",
+    "sine_amplitude(samples, f_hz, dt_s) -> amplitude",
+    "db_to_ratio(db) -> ratio"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "scan_in_seconds": ["test_behavior.ScanTests.test_the_skip_test_scan"],
+    "chain_uses_any": ["test_behavior.ChainTests.test_one_open_contact_drops_power"],
+    "phase_positive_lead": ["test_behavior.PhaseTests.test_the_worked_quarter_period"],
+    "gain_10log": ["test_behavior.GainTests.test_the_worked_half_amplitude"],
+    "plc_no_latch": ["test_behavior.PlcTests.test_releasing_the_estop_does_not_restart"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.07-systems.T1.07a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/07-systems.T1.07a/starter.py python3 -m unittest discover -s exercises/07-systems.T1.07a -p 'test_*.py'"
+  }
+}
