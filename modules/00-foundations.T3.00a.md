@@ -108,6 +108,16 @@ R_z90*[1,0,0]=[0.0, 1.0, 0.0], det(R_tiny)=1.000000000000
 Verify the cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ in Python for the unit vector $\hat{u} = [1/\sqrt{3},\ -1/\sqrt{3},\ 1/\sqrt{3}]^\top$ by computing `K = hat(u)` and asserting `max(abs(K3[r][c] + K[r][c]) for r in range(3) for c in range(3)) < 1e-15`.
 - **If your result differs:** Make sure $\hat{u}$ is normalized to unit length ($\|\hat{u}\| = 1$) first; for a non-unit vector $\phi$ of length $\theta$, the identity is $[\phi]_\times^3 = -\theta^2 [\phi]_\times$.
 
+### Graded package - the arm turned about its base
+[`exercises/00-foundations.T3.00a/`](../exercises/00-foundations.T3.00a/) turns this section into a test. `starter.py` holds six holes: `hat`, `vee` (which must **refuse** a matrix that is not skew), `mat3_mul`, `mat3_vec`, `exp_so3` (Rodrigues with its small-angle branch) and `energy_rate` (the power balance, dissipation included). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T3.00a/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T3.00a -p 'test_*.py'
+```
+
+The tests are behavioural: `[w]_x v` must equal `w x v` on three pairs (a transposed sign passes every skew and orthogonality check and fails only this one); `R^T R = I` and `det R = 1` for four rotation vectors, including one of length $\pi$; a rotation vector of **any** length must work, so `sin(theta) K` without the `/theta` is exposed; the nanoradian case must still be `I + [phi]_x` to $10^{-17}$; and a skew coupling must do no work. The transfer suite rotates the shared arm: `exp_so3([0, 0, theta])` applied to the tip must equal `fk(q1 + theta, q2)` to $10^{-12}$, a full turn must return the arm to itself, and the plant's published `gravity_torque` must equal the central-difference gradient of the arm's potential energy - with the damping term lowering the energy by exactly $b_1 \dot q_1^2 + b_2 \dot q_2^2$. Four planted faults - `hat_transposed`, `rodrigues_over_rotates`, `small_angle_identity`, `vee_no_check` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*3D Cross Product*), [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Matrix Exponential*), and Legacy **Step 2.1 (`00-foundations.T2.01`)**.
   - **Core Concepts to Review First:** Skew-symmetric hat matrix $[\hat{u}]_\times$, cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ for unit axis $\|\hat{u}\| = 1$, and Rodrigues' rotation formula in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
@@ -116,6 +126,8 @@ Verify the cubic identity $[\hat{u}]_\times^3 = -[\hat{u}]_\times$ in Python for
 
 ## 6. Simulation path
 Open **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`) to watch how `exp_so3(omega * dt)` integrates 3D gyroscope measurements on $SO(3)$ without gimbal lock or loss of orthogonality.
+
+The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T3.00a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Step 3.1 (`00-foundations.T3.01`) and Step 3.6 (`05-control.T3.06`), `exp_so3` executes at $1\text{ kHz}$ inside the microcontroller's Joseph-form Error-State Kalman Filter to inject attitude error $\delta\theta \in \mathbb{R}^3$ back onto the nominal orientation manifold:
 ```text

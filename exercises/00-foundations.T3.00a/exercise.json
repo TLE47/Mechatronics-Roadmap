@@ -1,0 +1,29 @@
+{
+  "id": "00-foundations.T3.00a",
+  "module": "modules/00-foundations.T3.00a.md",
+  "title": "The hat map, Rodrigues' formula and the power balance",
+  "requires": [
+    "hat(w) -> 3x3 skew matrix with [w]_x v == w x v",
+    "vee(M) -> w, raising ValueError when M is not skew",
+    "mat3_mul(A, B) -> 3x3 product",
+    "mat3_vec(A, v) -> 3-vector",
+    "exp_so3(phi) -> exp([phi]_x), small-angle branch included",
+    "energy_rate(grad_H, x_dot, dissipation=0.0) -> dH/dt"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "hat_transposed": ["test_behavior.HatTests.test_hat_matches_the_cross_product"],
+    "rodrigues_over_rotates": ["test_behavior.RotationTests.test_rotations_are_orthogonal_and_proper"],
+    "small_angle_identity": ["test_behavior.RotationTests.test_tiny_angle_is_still_a_rotation"],
+    "vee_no_check": ["test_behavior.HatTests.test_vee_rejects_a_non_skew_matrix"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T3.00a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T3.00a/starter.py python3 -m unittest discover -s exercises/00-foundations.T3.00a -p 'test_*.py'"
+  }
+}
