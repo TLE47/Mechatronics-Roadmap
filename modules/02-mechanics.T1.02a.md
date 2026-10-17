@@ -44,6 +44,8 @@ $$
    Substituting $N = 8.0$, $\eta = 1.0$, $\tau_{\text{motor}} = 0.25\text{ N}\cdot\text{m}$, and $\omega_{\text{motor}} = 160\text{ rad/s}$ gives $\tau_{\text{load}} = 2.0\text{ N}\cdot\text{m}$, $\omega_{\text{load}} = 20\text{ rad/s}$, and $P = 40.0\text{ W}$ on both sides.
 
 ## 4. Worked example
+**Predict first (before you run it):** The link is $m = 0.40\text{ kg}$ with its center of mass at $L_{\text{com}} = 0.10\text{ m}$, the payload is $m_{\text{tip}} = 0.50\text{ kg}$ at $L = 0.20\text{ m}$, and the motor sits behind an $N = 6.0$, $\eta = 0.90$ planetary gearbox. Commit to three numbers before the block runs: (1) the holding torque at the horizontal pose, in $\text{N}\cdot\text{m}$ — nearer $1$ or nearer $2$; (2) whether the torque at $60^\circ$ is exactly half the horizontal value; (3) whether the motor torque $\tau_{\text{motor}}$ comes out above or below $\tau_{\text{load}}(0)/N$, and why. Two tells that a wrong answer is a mistake rather than a surprise: a horizontal torque near $0.9\text{ N}\cdot\text{m}$ means the link's own mass at $L_{\text{com}}$ was left out, leaving only the payload's $0.50 \times 0.20 \times 9.81$; and a motor torque larger than the load torque means $N$ was multiplied where it should have been divided.
+
 Size the motor torque $\tau_{\text{motor}}$ required to hold a horizontal single-link robot arm ($m_{\text{link}} = 0.40\text{ kg}, L_{\text{com}} = 0.10\text{ m}, L = 0.20\text{ m}$) carrying a tip payload $m_{\text{tip}} = 0.50\text{ kg}$ at $\theta = 0\text{ rad}$ and $\theta = \pi/3\text{ rad}$ ($60^\circ$) through an $N = 6.0$, $\eta = 0.90$ planetary gearbox.
 
 ```python
@@ -88,6 +90,13 @@ EXERCISE_TARGET=exercises/02-mechanics.T1.02a/starter.py \
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*SI Rotational Units*), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Radians, Cosine Law & `math.atan2`*), and [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Rotational Kinetic Energy*).
   - **Core Concepts to Review First:** Lever torque $\tau = r F \sin\theta$, static equilibrium ($\sum F = 0, \sum \tau = 0$), gear ratio torque/speed scaling and reflected inertia $J_{\text{refl}} = N^2 J_{\text{motor}}$, and 2-link planar FK/IK in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 3 & Ch. 6 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 02 Tier 1 (`02-mechanics-kinematics-dynamics/README.md`)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+Inject the `gravity_uses_sine` fault the graded package names, and diagnose it from the two poses in the worked example:
+- **Inject:** replace `math.cos(theta_rad)` with `math.sin(theta_rad)` inside `arm_gravity_torque`, leaving the masses, the lever arms and $g = 9.81\text{ m/s}^2$ untouched.
+- **Symptom:** the horizontal pose now reads $\tau_0 = 0.0000\text{ N}\cdot\text{m}$ — an arm that hangs out flat and needs no holding torque — while $60^\circ$ reads $1.3734 \times 0.8660 = 1.1894\text{ N}\cdot\text{m}$ instead of $0.6867\text{ N}\cdot\text{m}$, so the printed order is reversed and the motor is sized at $1.1894 / (0.90 \times 6.0) = 0.2203\text{ N}\cdot\text{m}$ instead of $0.2543\text{ N}\cdot\text{m}$.
+- **Diagnose:** the amplitude $1.3734\text{ N}\cdot\text{m}$ still appears in the output, just at the wrong angle, so $(m L_{\text{com}} + m_{\text{tip}} L)g$ and the unit chain are correct and only the angle factor can be wrong. Gravity's lever arm is the horizontal distance $L_{\text{com}}\cos\theta$ from the pivot: largest when the link lies along the horizon, zero when it points straight up. A sine factor peaks at $90^\circ$ from the horizontal — the vertical pose, where the arm balances over its own pivot — and that is the one symptom a mass error cannot produce.
+- **Fix:** put `math.cos` back. Then $\tau_0 = 1.3734\text{ N}\cdot\text{m}$, $\tau_{60} = 0.6867\text{ N}\cdot\text{m}$, and $\tau_{\text{motor}} = 1.3734 / (0.90 \times 6.0) = 0.2543\text{ N}\cdot\text{m}$ — the worst-case gravity load the gearbox must hold, which is the number a motor is sized on.
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`) to visualize how link lengths and joint angles change the horizontal moment arm of a planar robot arm.

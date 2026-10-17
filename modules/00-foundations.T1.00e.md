@@ -49,6 +49,8 @@ $$
    At release ($x_0 = 0.10\text{ m}, v_0 = 0.0\text{ m/s}$), $E_0 = 0 + 0.5(50.0\text{ N/m})(0.10\text{ m})^2 = 0.2500\text{ J}$, so peak speed at $x = 0$ is $v_{\max} = \sqrt{2 E_0 / m} = \sqrt{0.50\text{ J} / 2.0\text{ kg}} = 0.5000\text{ m/s}$.
 
 ## 4. Worked example
+**Predict first (before you run it):** With $m = 2.0\text{ kg}$, $k = 50.0\text{ N/m}$ and $\Delta t = 0.0005\text{ s}$, the $2,000$-step run covers $1.0\text{ s}$ — less than one full oscillation. Commit to three things before you run it: (1) the oscillation period $T = 2\pi\sqrt{m/k}$, and so what fraction of a cycle $1.0\text{ s}$ is; (2) where the cart ends up, nearer the release point $x_0 = 0.10\text{ m}$ or nearer the center $x = 0$, and which way it is moving; (3) the size of the drift in total energy, $E_{\text{final}} - E_0$ — exactly zero, a few $10^{-4}\text{ J}$, or a few $10^{-2}\text{ J}$? Two tells that a wrong answer is a mistake rather than a surprise: a drift of $10^{-2}\text{ J}$ (4% of $0.2500\text{ J}$) means $\Delta t$ is far too coarse for a $1.26\text{ s}$ period, and an $E_{\text{final}}$ that matches $E_0$ to four decimals means the energy was computed before the loop rather than after it.
+
 Simulate a $m = 2.0\text{ kg}$ mass on a $k = 50.0\text{ N/m}$ spring released from $x_0 = 0.10\text{ m}$, $v_0 = 0.0\text{ m/s}$ for $2,000$ steps of $\Delta t = 0.0005\text{ s}$ ($1.0\text{ s}$ total) and verify that total energy stays conserved at $0.2500\text{ J}$ and peak speed reaches $0.5000\text{ m/s}$.
 
 ```python
@@ -104,6 +106,13 @@ The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T1
   - **Core Concepts to Review First:** Newton's second law $a = F_{\text{net}}/m$ with viscous damping $F_{\text{damp}} = -b v$, symplectic Euler updates (`v += a*dt; x += v*dt`), and total mechanical energy $E = \frac{1}{2}mv^2 + \frac{1}{2}kx^2$ in `## 3. Formalization` (Items 1–3) and `## 4. Worked example` above.
   - **Physics & Simulation Study Links:** [MyPhysicsLab: Interactive Mass-Spring-Damper Simulation & Equations (`myphysicslab.com`)](https://www.myphysicslab.com/springs/single-spring-en.html) and [R. H. Bishop *The Mechatronics Handbook* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md).
   - **Curriculum Reference:** [Track 00 Tier 1 (`00-foundations/README.md#tier-1-beginner--intuitive`)](../00-foundations/README.md#tier-1-beginner--intuitive) (Step 1.1 Calculus as `while` Loops).
+
+### Break it on purpose
+Inject the `spring_force_sign_dropped` fault the graded package names, and diagnose it from the first step alone:
+- **Inject:** drop the minus sign in Hooke's law — write `f_net_n = k_nm * x_m` instead of `f_net_n = -k_nm * x_m`, leaving the damper, the mass and $\Delta t = 0.0005\text{ s}$ alone.
+- **Symptom:** at release the force is $+5.0\text{ N}$ and $a = +2.5\text{ m/s}^2$, so after one step $v = +0.00125\text{ m/s}$ and $x = 0.100000625\text{ m}$: the cart is pushed away from the center instead of pulled toward it. Every step adds energy, so the $2,000$-step run ends at $2,756.74\text{ J}$ — four orders of magnitude above $0.2500\text{ J}$ — and `assert math.isclose(e_final_j, e_initial_j, rel_tol=1e-3)` fails.
+- **Diagnose:** $E_0 = 0.2500\text{ J}$ and $v_0 = 0.0\text{ m/s}$ are both still right, so neither the initial condition nor the energy sum is at fault, and the sign appears only in the first acceleration. A spring that pushes harder the further it is stretched is a repulsive spring, not the one in `## 3. Formalization`; the energy check rules the rest out, because a restoring spring trades potential for kinetic and back while a repulsive one adds energy on every step.
+- **Fix:** restore `f_net_n = -k_nm * x_m`. The first step then gives $v = -0.00125\text{ m/s}$ and $x = 0.099999375\text{ m}$, and the run closes at $E_{\text{final}} = 0.2502\text{ J}$ with $v_{\text{peak}} = 0.5000\text{ m/s}$ — energy held within $10^{-3}$ relative, and the release energy recovered at the center.
 
 ## 6. Simulation path
 Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum)** in the MechaLab Workbench to see coupled spring-mass-damper and pendulum energy loops in action.

@@ -49,6 +49,8 @@ $$
    By contrast, single-argument $\arctan(y/x) = \arctan(-1.0) = -0.78540\text{ rad} = -45.0^\circ$ (wrong quadrant by $180^\circ$).
 
 ## 4. Worked example
+**Predict first (before you run it):** Before running the block, commit to four results for $L = 0.40\text{ m}$ at $\theta = 135.0^\circ$: the sign of each tip coordinate; the Euclidean length $r$ (is it $0.40\text{ m}$, or the $|x| + |y|$ shortcut?); the degrees `math.atan2(y, x)` reports; and the degrees `math.atan(y / x)` reports instead of that. Two tells that a wrong result is a mistake rather than a surprise: a positive $x$ is impossible at $135^\circ$, since the angle sits in Quadrant II, and an `atan` reading of $135.0^\circ$ means the block never exercised the single-argument version at all.
+
 Project a $L = 0.40\text{ m}$ link at $\theta = 135.0^\circ$ into $(x, y)$ coordinates, verify its length $r = 0.40\text{ m}$, and compare four-quadrant `math.atan2(y, x)` against `math.atan(y / x)`.
 
 ```python
@@ -74,7 +76,7 @@ tip=(-0.2828, 0.2828) m, atan2=135.0 deg, atan=-45.0 deg
 
 ## 5. Exercise
 A robot base at $(0, 0)$ observes a target at $(x, y) = (-0.30\text{ m}, -0.40\text{ m})$ in Quadrant III. Compute the Euclidean distance $d = \sqrt{x^2 + y^2}$ in meters and the heading angle in degrees using `math.degrees(math.atan2(y, x))`. Expected result: `d = 0.50 m` and `theta = -126.8699 deg` (tolerance $\pm 0.01^\circ$).
-- **If your result differs:** Check that you passed `y` first and `x` second in `math.atan2(y, x)`; passing `atan2(x, y)` swaps the axes and returns $-36.87^\circ$.
+- **If your result differs:** Check that you passed `y` first and `x` second in `math.atan2(y, x)`; passing `atan2(x, y)` swaps the axes and returns $-143.13^\circ$.
 
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Python Functions, Arrays & SI Units*).
@@ -89,6 +91,13 @@ A robot base at $(0, 0)$ observes a target at $(x, y) = (-0.30\text{ m}, -0.40\t
 EXERCISE_TARGET=exercises/00-foundations.T1.00d/starter.py \
   python3 -m unittest discover -s exercises/00-foundations.T1.00d -p 'test_*.py'
 ```
+
+### Break it on purpose
+Inject the single-argument arctan the `## 8. Common mistakes` table warns about, keeping the worked example's tip at $(-0.28284\text{ m},\ +0.28284\text{ m})$:
+- **Inject:** replace `math.atan2(tip[1], tip[0])` with `math.atan(tip[1] / tip[0])` on those same coordinates.
+- **Symptom:** the recovered heading prints `-45.0 deg` instead of `135.0 deg` — a $180^\circ$ error, while the tip is unchanged and the length still reads `0.40 m`.
+- **Diagnose:** the projections and the norm survived, so $\cos$, $\sin$ and `hypot` are right and only the angle recovery is wrong. `atan` cannot return anything outside $(-90^\circ, +90^\circ)$, so $135^\circ$ was impossible before the code ran; the ratio $y/x = -1.0$ is identical for the correct tip and its $180^\circ$ mirror image, which is exactly the information the sign of $x$ supplies.
+- **Fix:** pass both coordinates to `math.atan2(tip[1], tip[0])`, which returns `135.0 deg` to within $10^{-9}$ degrees, and check the exercise's target $(-0.30\text{ m},\ -0.40\text{ m})$ comes back `-126.8699 deg` rather than its $180^\circ$ mirror.
 
 ## 6. Simulation path
 Run the worked example in Python and open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench to watch planar and 3D link angles map to tip $(x, y, z)$ coordinates in real time.

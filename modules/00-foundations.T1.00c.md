@@ -47,6 +47,8 @@ $$
    For $N = 2400\text{ RPM}$, $\omega = 2400 \times \frac{2\pi}{60}\text{ rad/s} = 80\pi\text{ rad/s} \approx 251.3274\text{ rad/s}$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Commit to three numbers before running the block: $\omega$ for $N = 2400\text{ RPM}$ (decide first whether it should sit near $40$, $250$ or $2500\text{ rad/s}$); the shaft power from $\tau = 450\text{ mN}\cdot\text{m}$ at that speed; and $\tau_{RC}$ for the $10\text{ k}\Omega$ / $100\text{ nF}$ pair, in milliseconds. Two tells that a wrong result is a mistake rather than a surprise: a power near $113\text{ kW}$ means the torque entered as `450` instead of `0.45`, a factor of exactly $1000$; and a time constant of $1.0\text{ s}$ means the capacitance was read as $100\,\mu\text{F}$ ($10^{-6}$) rather than $100\text{ nF}$ ($10^{-9}$).
+
 Convert $N = 2400\text{ RPM}$ and $\tau = 450\text{ mN}\cdot\text{m}$ into base SI units to compute mechanical shaft power $P$ in watts, and compute the time constant $\tau_{RC}$ of a $10\text{ k}\Omega$, $100\text{ nF}$ filter.
 
 ```python
@@ -90,6 +92,13 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00c/starter.py \
   - **Core Concepts to Review First:** SI prefix powers of ten ($\text{milli} = 10^{-3}, \text{micro} = 10^{-6}, \text{kilo} = 10^3$) and RPM-to-$\text{rad/s}$ factor-label cancellation ($\omega = \text{RPM} \times \frac{2\pi}{60}$) in `## 3. Formalization` (Items 1–3) and `## 4. Worked example` above.
   - **SI Units & Dimensional Analysis Study Links:** [NIST Guide to the SI: Metric Prefixes & Unit Conversions (`nist.gov`)](https://www.nist.gov/pml/owm/metric-si/si-units) and [SparkFun: Metric Prefixes & Scientific Notation Tutorial](https://learn.sparkfun.com/tutorials/metric-prefixes-and-si-units).
   - **Curriculum Reference:** [Track 00 Level 0 (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools) and [Textbooks & Papers (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md).
+
+### Break it on purpose
+Inject the `## 8. Common mistakes` row about multiplying torque straight by RPM, keeping $\tau = 0.45\text{ N}\cdot\text{m}$ and $N = 2400\text{ RPM}$:
+- **Inject:** compute `power_w = tau_nm * 2400.0`, feeding RPM into $P = \tau\omega$ in place of the converted $\omega$.
+- **Symptom:** `P = 1080.00 W` instead of `113.10 W`, a factor of $9.549$ too high — the table rounds it to $9.55\times$.
+- **Diagnose:** that ratio is exactly $60 / 2\pi$, the RPM-to-$\text{rad/s}$ factor itself, so the torque is right and only the speed unit is wrong. A prefix slip would be $1000\times$ off, not $9.5\times$, and a wrong radius would not leave a pure constant factor — only an unconverted $\omega$ explains it.
+- **Fix:** multiply the torque by `omega_rad_s` $= 2400 \times 2\pi/60 = 251.3274\text{ rad/s}$, which returns $113.10\text{ W}$ to $\pm 10^{-6}\text{ W}$ — the number the worked example asserts.
 
 ## 6. Simulation path
 Run the worked example script in Python, then open **Tab 3 (25 kHz PMSM FOC)** in the MechaLab Workbench to see how rotor speed in $\text{RPM}$ ($2800\text{ RPM}$) converts to electrical $\text{rad/s}$ and shaft power in watts.

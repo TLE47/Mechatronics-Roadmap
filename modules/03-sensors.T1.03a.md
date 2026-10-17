@@ -49,6 +49,8 @@ $$
    Substituting $N_{\text{lines}} = 1024$ gives $\text{CPR} = 4096\text{ counts/rev}$ and $\Delta\theta_{\text{rad}} = \frac{2\pi}{4096} \approx 0.001534\text{ rad}$ ($0.0879^\circ$).
 
 ## 4. Worked example
+**Predict first (before you run it):** The gimbal motor has $R = 4.0\ \Omega$ and $K_e = 0.06\text{ V}\cdot\text{s/rad}$ on a $12.0\text{ V}$ supply with $p = 7$ pole pairs, and the decode walks $(A, B)$ through five forward edges. Commit to four numbers before the block runs: (1) the stall current $I_{\text{stall}}$ in amperes; (2) the no-load speed $\omega_{\text{no-load}}$ in $\text{rad/s}$; (3) the electrical frequency $\omega_e$ at that speed; (4) the count the five-edge walk adds. Two tells that a wrong answer is a mistake rather than a surprise: $\omega_e$ must come out exactly $7\times$ the mechanical speed, so any other ratio means poles and pole pairs were confused; and a quadrature total of $10$ after five edges means both edges of each transition were counted, when each forward transition contributes exactly one count.
+
 Compute the no-load speed $\omega_{\text{no-load}}$, stall current $I_{\text{stall}}$, electrical frequency $\omega_e$ for a $14$-pole ($p=7$) gimbal motor with $R = 4.0\ \Omega, K_e = 0.06\text{ V}\cdot\text{s/rad}$ driven at $V_{\text{term}} = 12.0\text{ V}$, and decode a sequence of quadrature $(A, B)$ state transitions.
 
 ```python
@@ -103,6 +105,13 @@ The package is also a workbench entry: **Modules -> `EX.03-sensors.T1.03a`**, wh
   - **Prerequisite Bridge Module:** [`01-electronics.T1.01b`](01-electronics.T1.01b.md) (*PWM H-Bridges*).
   - **Core Concepts to Review First:** Quadrature $4\times$ decoding ($\text{CPR} = 4 N_{\text{lines}}$), SI motor constant identity $K_t = K_e$, brushed DC torque-speed line $\tau(\omega) = \tau_{\text{stall}}(1 - \omega/\omega_{\text{no-load}})$, and BLDC electrical angle $\theta_e = N_p \theta_m$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [SimpleFOC BLDC & Encoder Theory Docs (`docs.simplefoc.com`)](https://docs.simplefoc.com/) and [Track 03 Tier 1 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+Inject the `pole_pairs_counts_poles` fault the graded package names, and diagnose it from the angles alone:
+- **Inject:** set $p = N_{\text{poles}} = 14$ instead of $p = N_{\text{poles}}/2 = 7$ in the electrical-angle and electrical-speed terms, leaving $R$, $K_e$ and $V_{\text{term}}$ untouched.
+- **Symptom:** the no-load electrical frequency doubles from $1400\text{ rad/s}$ to $2800\text{ rad/s}$, and the rotor angle $\theta_m = \pi/7\text{ rad}$ from `## 3. Formalization` reports $\theta_e = 14\pi/7 = 2\pi\text{ rad}$, which wraps to $0$ instead of $\pi$: the current vector is a full magnet step away from where the rotor actually is.
+- **Diagnose:** stall current and no-load speed still match, so the winding and the constants are fine; the error appears only once the shaft turns, which localises it to the angle-scaling factor rather than the electrical model. Fourteen magnets are seven North–South pairs, so one electrical cycle fits in $360^\circ/7 = 51.4286^\circ$ of shaft travel — the exercise's own answer — not in $25.7143^\circ$, and the reported angle collapsing to zero exactly where it should read $\pi$ is the half-step that gives it away.
+- **Fix:** restore $p = N_{\text{poles}}/2 = 7$. Then $\omega_e = 7 \times 200 = 1400\text{ rad/s}$ and $\theta_m = \pi/7$ maps to $\theta_e = \pi\text{ rad}$, half an electrical cycle, where the five-edge walk still adds $5$ counts.
 
 ## 6. Simulation path
 Open **Tab 3 (25 kHz PMSM FOC)** in the MechaLab Workbench (`npm run dev`) to see how mechanical rotor angle $\theta_m$ multiplies by pole pairs $p$ into electrical commutation angle $\theta_e = p\theta_m$.

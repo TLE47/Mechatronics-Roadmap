@@ -48,6 +48,8 @@ $$
    - **CLI & Git Commands:** `pwd` prints the current folder, `ls` lists files, `cd <dir>` changes folder, `python3 script.py` executes the file, `git status` inspects modified files in your cloned `mechalab` repo, `git diff` displays line-by-line edits, and `git commit -am "msg"` records a versioned snapshot.
 
 ## 4. Worked example
+**Predict first (before you run it):** Before running the block, commit to three numbers: `y_v[0]` and `y_v[-1]` for `"slope": 3.0` and `"offset": 0.5` over $t = 0.0$ to $0.4\text{ s}$; the mean $\bar{y}$ of those five readings (decide first where the middle of an evenly spaced ramp must sit); and the peak-to-peak span. Two tells that a wrong result is a mistake rather than a surprise: a mean of `0.50` or `1.70` means an endpoint was reported instead of the average, and a span of `1.70` means `min()` was replaced by `0` rather than by the first reading.
+
 Generate $N = 5$ timestamps $t = [0.0, 0.1, 0.2, 0.3, 0.4]\text{ s}$, evaluate sensor readings $y = 3.0 t + 0.5\text{ V}$ using parameters stored in a dictionary, and verify the first/last elements, mean ($1.10\text{ V}$), and peak-to-peak span ($1.20\text{ V}$).
 
 ```python
@@ -91,6 +93,13 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00b/starter.py \
   - **Core Concepts to Review First:** Python list indexing, `zip(target, measured)`, `sum(samples) / len(samples)`, and `max(samples) - min(samples)` in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
   - **Python & NumPy Study Links:** [Python Tutorial §3.1.3 (Lists)](https://docs.python.org/3/tutorial/introduction.html#lists), [NumPy Absolute Beginners Tutorial (`numpy.org`)](https://numpy.org/doc/stable/user/absolute_beginners.html), [Matplotlib Pyplot Tutorial (`matplotlib.org`)](https://matplotlib.org/stable/tutorials/pyplot.html), and [Pro Git Book Ch. 1–2 (`git-scm.com`)](https://git-scm.com/book/en/v2).
   - **Curriculum Reference:** [Track 00 Tier 1 (`00-foundations/README.md`)](../00-foundations/README.md#tier-1-beginner--intuitive) and [Open-Source Toolchains (`resources/open-source-toolchains.md`)](../resources/open-source-toolchains.md).
+
+### Break it on purpose
+Inject the error the exercise hint warns about, on the exercise's own lists `target = [1.0, 2.0, 3.0, 4.0]` and `measured = [0.9, 2.1, 2.8, 4.2]`:
+- **Inject:** replace `sum(e * e for e in err) / len(err)` with `sum(err) / len(err)` — average the signed errors, then take the square root as if they had been squared.
+- **Symptom:** `err` is `[0.1, -0.1, 0.2, -0.2]` rad, yet `rmse` prints `0.0000000` rad instead of `0.1581139` rad, because the four samples cancel in pairs and the sum is exactly `0.0`.
+- **Diagnose:** a reported error of zero on four visibly non-zero samples can only mean the signs were let into the sum; a genuinely perfect controller would show `err` all zeros, which it does not. Squaring first gives $0.01 + 0.01 + 0.04 + 0.04 = 0.10$, then $0.10 / 4 = 0.025$ and $\sqrt{0.025} = 0.1581139$.
+- **Fix:** square each error inside the sum, `sum(e * e for e in err) / len(err)`, and confirm $\text{RMSE} = 0.1581139\text{ rad}$ to $\pm 10^{-6}\text{ rad}$ — while the *mean* of the signed errors, a different quantity, is the one that comes back `0.0`.
 
 ## 6. Simulation path
 Run the worked-example script in your terminal with `python3` (inside your `.venv`), or inspect how time-series arrays (`t`, `q`, `i_q`) are plotted across **Tab 2 (Two-Mass & Notch Bode)** and **Tab 3 (25 kHz PMSM FOC)** of the MechaLab Workbench (`resources/open-source-toolchains.md`).

@@ -50,6 +50,8 @@ $$
    Substituting $A = 1.0\text{ rad}$, $B = 0.7071\text{ rad}$, $f = 5.0\text{ Hz}$, and peak delay $\Delta t = 0.025\text{ s}$ gives $|G|_{\text{dB}} = -3.01\text{ dB}$ and $\angle G = -360^\circ \times 5.0 \times 0.025 = -45.0^\circ$.
 
 ## 4. Worked example
+**Predict first (before you run it):** Two things happen in one block: a cyclic PLC scan walking `IDLE -> RUNNING -> ESTOP_LATCHED` on a break in `estop2_nc`, and a $5.0\ \text{Hz}$ sine sweep with input amplitude $A = 1.0\ \text{rad}$, output $B = 0.7071\ \text{rad}$ and a peak delay $\Delta t = 0.025\ \text{s}$. Before you run it, commit to three numbers: the lag in degrees, the gain in decibels, and whether re-closing the snipped wire while Start is still held returns power. Two tells that a wrong answer is a mistake rather than a surprise: the lag must be negative, because a peak that arrives *after* the input is lag, so a positive number means the sign of $\Delta t$ was dropped; and the gain must be negative, because $B < A$, so a positive decibel value means the ratio was inverted or the $20$ became a $10$.
+
 Simulate a cyclic PLC scan controlling a workcell with two series NC E-stop buttons and a guard door interlock (verifying that a broken wire immediately drops motor power and latches `FAULT`), and compute the empirical Bode gain and phase from a $5.0\text{ Hz}$ sine-sweep measurement.
 
 ```python
@@ -109,6 +111,12 @@ EXERCISE_TARGET=exercises/07-systems.T1.07a/starter.py \
   - **Prerequisite Bridge Modules:** [`01-electronics.T1.01c`](01-electronics.T1.01c.md) (*CC/CV Bench Safety*), [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*RC Cutoff*), and [`05-control.T1.05a`](05-control.T1.05a.md) (*PID Control*).
   - **Core Concepts to Review First:** Deterministic `IEC 61131-3` PLC cyclic scan (`Read -> Execute -> Write`), single-tone sine-sweep System Identification ($|G|_{\text{dB}} = 20\log_{10}(B/A)$ and $\angle G = -360^\circ f \Delta t$), and the 10-step smoke-free hardware bring-up checklist in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [OpenPLC IEC 61131-3 Documentation (`autonomylogic.com`)](https://autonomylogic.com/) and [Track 07 Tier 1 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+- **Inject:** delete the `if state == "ESTOP_LATCHED"` branch from `plc_scan_step`, so a healthy chain and a held Start button fall straight through to the `state == "IDLE"` rule.
+- **Symptom:** the worked example's third assertion fails — after the broken-wire scan the state is `ESTOP_LATCHED` with `pwr = False`, but the next scan, with `estop2_nc` repaired and `start_btn_no=True, reset_btn_no=False`, returns `("RUNNING", True)` instead of staying inhibited, so the motor re-energises the instant the mushroom is twisted out.
+- **Diagnose:** the fault scan itself still drops power correctly, since $\text{PWR-ENABLE} = E_1 \land E_2 \land E_3$, and the sine-sweep numbers are untouched; the only scan that misbehaves is the one whose input state is `ESTOP_LATCHED`, which localises the fault to the missing latch branch.
+- **Fix:** restore the branch so `ESTOP_LATCHED` leaves only on `reset_btn_no and not start_btn_no`; that scan then returns `("ESTOP_LATCHED", False)` and the third assertion passes, with `pwr` False as the expected output shows.
 
 ## 6. Simulation path
 Test the cyclic PLC logic in [OpenPLC Editor](https://autonomylogic.com/) (`resources/open-source-toolchains.md`) or open **Tab 5 (Functional Safety & STO)** and **Tab 7 (System Identification)** in the MechaLab Workbench (`npm run dev`).

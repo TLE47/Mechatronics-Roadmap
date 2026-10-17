@@ -47,6 +47,8 @@ $$
    Clamping anti-windup freezes $I_k$ whenever $|u_{\text{raw},k}| > u_{\max}$ and $\operatorname{sign}(e_k) = \operatorname{sign}(u_{\text{raw},k})$ (or clamps $|I_k| \le I_{\max}$).
 
 ## 4. Worked example
+**Predict first (before you run it):** The loop below runs $3000$ ticks of $1\ \text{ms}$ on an arm with $J = 0.02\ \text{kg}\cdot\text{m}^2$, $b = 0.05\ \text{N}\cdot\text{m}\cdot\text{s/rad}$, a gravity load $\tau_g = 0.60\ \text{N}\cdot\text{m}$, a $u_{\max} = 1.20\ \text{N}\cdot\text{m}$ rail and target $r = 1.0\ \text{rad}$. Before you run it, commit to three numbers: where the pure-P run ($K_p = 4.0$, $K_i = 0$) comes to rest, which of the two $K_i = 12.0$ runs overshoots more, and how far past $1.0\ \text{rad}$ the worse one peaks. Two tells that a wrong answer is a mistake rather than a surprise: the PD resting angle must sit *below* $1.0\ \text{rad}$ with a shortfall that multiplies back to exactly $\tau_g = 0.60\ \text{N}\cdot\text{m}$, so resting above the target means the feedback sign is inverted; and the two PID peaks must differ, because equal peaks mean the anti-windup branch never engaged.
+
 Simulate a 1-DOF rotational arm ($J = 0.02\text{ kg}\cdot\text{m}^2$, $b = 0.05\text{ N}\cdot\text{m}\cdot\text{s/rad}$) lifting against a constant gravity torque $\tau_g = 0.60\text{ N}\cdot\text{m}$ under actuator limit $u_{\max} = 1.20\text{ N}\cdot\text{m}$ to compare (1) pure P control (leaves steady-state sag), (2) unclamped PID (suffers huge windup overshoot), and (3) anti-windup PID (zero steady-state error and minimal overshoot).
 
 ```python
@@ -106,6 +108,12 @@ EXERCISE_TARGET=exercises/05-control.T1.05a/starter.py \
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Time-Stepping Loops & Clamping*), [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Plotting*), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Mass-Spring-Damper Dynamics*), and Legacy **Step 1.1 (`00-foundations.T1.01`)** (*1st-Order EMA Filtering*).
   - **Core Concepts to Review First:** Discrete PID virtual spring-damper control, integrator windup clamping & derivative-on-measurement (`-Kd * (y[k] - y[k-1]) / dt`), and complementary IMU sensor fusion $\hat{\theta}_k = \alpha(\hat{\theta}_{k-1} + \omega_{\text{gyro}}\Delta t) + (1-\alpha)\theta_{\text{acc},k}$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Åström & Murray *Feedback Systems* Ch. 11 (`fbsbook.org`)](https://www.fbsbook.org/), [Brian Douglas PID Control Lectures](https://www.youtube.com/user/ControlLectures), and [Track 05 Tier 1 (`05-control-and-estimation/README.md`)](../05-control-and-estimation/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+- **Inject:** run `sim_arm(kp=4.0, ki=12.0, kd=0.4, anti_windup=False)` — the worked example's PID with the clamp and the freeze removed, so $I_k$ keeps adding $K_i e\Delta t$ while the demand sits past the $1.20\ \text{N}\cdot\text{m}$ rail.
+- **Symptom:** the run reaches the target and sails on to a peak $0.372\ \text{rad}$ above $1.0\ \text{rad}$ instead of the clamped run's $0.047\ \text{rad}$; the pure-P run in the same script is untouched at its $0.150\ \text{rad}$ sag.
+- **Diagnose:** only the $K_i = 12.0$ runs are affected, and the two of them differ solely in the clamp and freeze, so the plant, $K_p$ and $K_d$ are ruled out; the PD run still rests $0.150\ \text{rad}$ short, exactly $\tau_g / K_p$, which says the damage is stored in $I_k$ and not in the spring.
+- **Fix:** restore `anti_windup=True`, which clips $\lvert I_k\rvert \le u_{\max}$ and freezes the accumulator while $\lvert u_{\text{raw}}\rvert > u_{\max}$ and $e_k$ still pushes that way; the overshoot then reads $0.047\ \text{rad}$ and the steady-state error falls under $10^{-3}\ \text{rad}$.
 
 ## 6. Simulation path
 Run the Python simulation script above or open **Tab 4 (Control Loop & Saturation)** in the MechaLab Workbench (`npm run dev`) to observe how actuator saturation interacts with closed-loop feedback gains.

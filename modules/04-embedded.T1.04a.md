@@ -43,6 +43,8 @@ When you transition from desktop Python to microcontroller firmware, you first m
 3. **Structs and Pass-by-Pointer (`*` and `->`):** Grouping fields in `struct MotorState { int16_t count; float vel_rad_s; };` and passing `MotorState *s` passes a single memory address (`4` or `8` bytes) so `s->count += 1` (`->` dereferences a struct pointer, equivalent to `(*s).count`) mutates the caller's struct in-place and packs cleanly into binary frames (`struct.pack("<Hhf", ...)`).
 
 ## 4. Worked example
+**Predict first (before you run it):** The block starts a `uint16_t` counter at `65530` and reads `4` after the rollover, starts a register at `0b0000_0001`, sets bit `3`, then clears bit `0`, and packs `(1000, -512, 3.25)` with `struct.pack("<Hhf", ...)`. Commit before you run it: (1) how many ticks elapsed across the wrap; (2) the register's decimal value after those two edits, and what the bit-`3` test returns; (3) the packed frame's length in bytes, and whether `1000`, `-512` and `3.25` survive the round trip. Two tells that a wrong answer is a mistake rather than a surprise: an elapsed count of $-65526$ is the raw Python difference before the $2^{16}$ mask, which is exactly the bug `elapsed_unsigned` exists to catch; and a register value of $9$ after the clear means the `~` was dropped, leaving `reg &= (1 << 0)` as a no-op.
+
 Simulate 16-bit encoder counter wrap-around, bitwise GPIO register set/clear operations, and packing an 8-byte C telemetry struct (`<Hhf`: `uint16_t`, `int16_t`, `float`) using Python's `struct` module.
 
 ```python
@@ -90,6 +92,13 @@ EXERCISE_TARGET=exercises/04-embedded.T1.04a/starter.py \
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md) (*Variables, Loops & Functions*) and [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Indexing*).
   - **Core Concepts to Review First:** Fixed-width `<stdint.h>` integer types (`uint8_t`, `uint16_t`, `uint32_t`), bitwise set/clear/toggle/extract idioms (`|= (1U << n)`, `&= ~(1U << n)`), and C structs/pointers in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Barr Group *Embedded C Coding Standard* (`barrgroup.com`)](https://barrgroup.com/embedded-systems/books/embedded-c-coding-standard) and [Track 04 Tier 1 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+Inject the `clear_forgets_the_tilde` fault the graded package names, and diagnose it from the register value alone:
+- **Inject:** drop the `~` — write `reg &= (1 << 3)` to clear bit `3` of the exercise's `reg = 0x5A` (`0b01011010`) instead of `reg &= ~(1 << 3)`.
+- **Symptom:** the register reads `0x5A & 0x08 = 0x08` — decimal `8`, not `82` — so bit `3` is still set and the other three set bits (`1`, `4`, `6`) have been wiped out. On a live peripheral register the same line silently clears every other configuration bit in the word.
+- **Diagnose:** the symptom is always "too many bits changed", never "the wrong bit". `& (1 << n)` keeps bit $n$ and discards the rest, while `& ~(1 << n)` keeps everything except bit $n$; an answer in the single digits where a two-digit value was expected therefore means the mask was never inverted, and it rules out a wrong bit index, which would disturb exactly one bit and leave the others alone.
+- **Fix:** restore `reg &= ~(1 << 3)`, which gives `0x5A & 0xF7 = 0x52` = `82`, with the bit-`6` neighbour still set and bit `3` cleared — the exercise's assertion passing, and the same guarantee a live read-modify-write needs.
 
 ## 6. Simulation path
 Test the C equivalent directly in the browser on the [Wokwi ESP32/STM32 Simulator](https://wokwi.com/) (`resources/open-source-toolchains.md`), run the Python bit-exact verification script above, or compile and run native C++20 on your workstation using the **canonical host `g++` command** (taught once here and used for all C++ labs):

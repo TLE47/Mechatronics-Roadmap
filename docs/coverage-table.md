@@ -22,33 +22,33 @@ flowchart LR
 
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `00` | 12 | 55% | 52% | 90% | 50% | **63.6%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
+| `00` | 12 | 55% | 52% | 100% | 50% | **66.8%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
 | `01` | 7 | 59% | 51% | 100% | 50% | **67.6%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
-| `02` | 3 | 78% | 67% | 92% | 67% | **77.1%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
-| `03` | 3 | 70% | 47% | 92% | 50% | **66.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
-| `04` | 7 | 59% | 43% | 93% | 50% | **62.9%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
-| `05` | 3 | 70% | 47% | 92% | 50% | **66.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
-| `06` | 5 | 60% | 60% | 95% | 50% | **69.0%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
-| `07` | 3 | 70% | 60% | 92% | 50% | **70.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `02` | 3 | 78% | 67% | 100% | 67% | **79.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
+| `03` | 3 | 70% | 47% | 100% | 50% | **69.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `04` | 7 | 59% | 43% | 100% | 50% | **65.0%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
+| `05` | 3 | 70% | 47% | 100% | 50% | **69.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `06` | 5 | 60% | 60% | 100% | 50% | **70.5%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
+| `07` | 3 | 70% | 60% | 100% | 50% | **73.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `08` | 1 | 60% | 40% | 100% | 50% | **64.5%** | 0 arm · 0 exempt · 0 unhooked · 1 undeclared | `report` |
 
 ## By tier
 
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
-| Tier 1 | 16 | **62.1%** |
+| Tier 1 | 16 | **67.8%** |
 | Tier 2 | 18 | **70.5%** |
 | Tier 3 | 10 | **66.4%** |
 
-## Per module (44 modules, overall **66.5%**)
+## Per module (44 modules, overall **68.6%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `00-foundations.T1.00a` | 1 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T1.00b` | 1 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T1.00c` | 1 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T1.00d` | 1 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T1.00e` | 1 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
+| `00-foundations.T1.00a` | 1 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
+| `00-foundations.T1.00b` | 1 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
+| `00-foundations.T1.00c` | 1 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
+| `00-foundations.T1.00d` | 1 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
+| `00-foundations.T1.00e` | 1 | 75% | 40% | 100% | 50% | **68.2%** | **undeclared** | 5 item(s) |
 | `00-foundations.T2.00a` | 2 | 50% | 60% | 100% | 50% | **68.0%** | **undeclared** | 5 item(s) |
 | `00-foundations.T2.00b` | 2 | 50% | 60% | 100% | 50% | **68.0%** | **undeclared** | 5 item(s) |
 | `00-foundations.T2.00c` | 2 | 50% | 60% | 100% | 50% | **68.0%** | **undeclared** | 5 item(s) |
@@ -63,28 +63,28 @@ flowchart LR
 | `01-electronics.T2.01a` | 2 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
 | `01-electronics.T2.01b` | 2 | 75% | 40% | 100% | 50% | **68.2%** | **undeclared** | 5 item(s) |
 | `01-electronics.T3.01a` | 3 | 60% | 40% | 100% | 50% | **64.5%** | **undeclared** | 6 item(s) |
-| `02-mechanics.T1.02a` | 1 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
+| `02-mechanics.T1.02a` | 1 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `02-mechanics.T2.02a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `02-mechanics.T3.02a` | 3 | 60% | 40% | 100% | 50% | **64.5%** | **undeclared** | 6 item(s) |
-| `03-sensors.T1.03a` | 1 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
+| `03-sensors.T1.03a` | 1 | 75% | 40% | 100% | 50% | **68.2%** | **undeclared** | 5 item(s) |
 | `03-sensors.T2.03a` | 2 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `03-sensors.T3.03a` | 3 | 60% | 40% | 100% | 50% | **64.5%** | **undeclared** | 6 item(s) |
-| `04-embedded.T1.04a` | 1 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `04-embedded.T1.04b` | 1 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
+| `04-embedded.T1.04a` | 1 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
+| `04-embedded.T1.04b` | 1 | 75% | 40% | 100% | 50% | **68.2%** | **undeclared** | 5 item(s) |
 | `04-embedded.T2.04a` | 2 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
 | `04-embedded.T2.04b` | 2 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
 | `04-embedded.T2.04c` | 2 | 50% | 40% | 100% | 50% | **62.0%** | **undeclared** | 6 item(s) |
 | `04-embedded.T2.04d` | 2 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `04-embedded.T3.04a` | 3 | 60% | 40% | 100% | 50% | **64.5%** | **undeclared** | 6 item(s) |
-| `05-control.T1.05a` | 1 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
+| `05-control.T1.05a` | 1 | 75% | 40% | 100% | 50% | **68.2%** | **undeclared** | 5 item(s) |
 | `05-control.T2.05a` | 2 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `05-control.T3.05a` | 3 | 60% | 40% | 100% | 50% | **64.5%** | **undeclared** | 6 item(s) |
-| `06-robotics.T1.06a` | 1 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
+| `06-robotics.T1.06a` | 1 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `06-robotics.T2.06a` | 2 | 50% | 60% | 100% | 50% | **68.0%** | **undeclared** | 5 item(s) |
 | `06-robotics.T2.06b` | 2 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `06-robotics.T3.06a` | 3 | 40% | 60% | 100% | 50% | **65.5%** | **undeclared** | 6 item(s) |
 | `06-robotics.T3.06b` | 3 | 60% | 60% | 100% | 50% | **70.5%** | **undeclared** | 5 item(s) |
-| `07-systems.T1.07a` | 1 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
+| `07-systems.T1.07a` | 1 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `07-systems.T2.07a` | 2 | 75% | 60% | 100% | 50% | **74.2%** | **undeclared** | 4 item(s) |
 | `07-systems.T3.06a` | 3 | 60% | 60% | 100% | 50% | **70.5%** | **undeclared** | 5 item(s) |
 | `08-capstones.T3.07a` | 3 | 60% | 40% | 100% | 50% | **64.5%** | **undeclared** | 6 item(s) |
@@ -95,10 +95,10 @@ flowchart LR
 | :--- | :---: | :--- |
 | `1_recall` | 44/44 | gated by `lint_modules.py` |
 | `2_see_it` | 44/44 | gated by `lint_modules.py` |
-| `3_predict` | 32/44 | **gap** |
+| `3_predict` | 44/44 | gated by `lint_modules.py` |
 | `4_worked_example` | 44/44 | gated by `lint_modules.py` |
 | `5_practice_host` | 44/44 | gated by `lint_modules.py` |
-| `6_break_it` | 32/44 | **gap** |
+| `6_break_it` | 44/44 | gated by `lint_modules.py` |
 | `7_transfer` | 44/44 | gated by `lint_modules.py` |
 | `8_integrate` | 44/44 | gated by `lint_modules.py` |
 
@@ -131,11 +131,11 @@ not demonstrated learner mastery.
 
 | Module | Parity | Reference solution tested | Behaviour-graded | Browser E2E | Author dogfood | Delayed transfer | Independent learner |
 | :--- | :---: | :---: | :---: | :---: | :--- | :---: | :---: |
-| `00-foundations.T1.00a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T1.00b` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T1.00c` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T1.00d` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T1.00e` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00a` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00b` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00c` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00d` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00e` | **68.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00a` | **68.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00b` | **68.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00c` | **68.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
@@ -150,28 +150,28 @@ not demonstrated learner mastery.
 | `01-electronics.T2.01a` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T2.01b` | **68.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T3.01a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `02-mechanics.T1.02a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `02-mechanics.T1.02a` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `02-mechanics.T2.02a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-16, 13 min, 0 hints | - | `-` |
 | `02-mechanics.T3.02a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `03-sensors.T1.03a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `03-sensors.T1.03a` | **68.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `03-sensors.T2.03a` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `03-sensors.T3.03a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `04-embedded.T1.04a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `04-embedded.T1.04b` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T1.04a` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T1.04b` | **68.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T2.04a` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T2.04b` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T2.04c` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T2.04d` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T3.04a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `05-control.T1.05a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `05-control.T1.05a` | **68.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T2.05a` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T3.05a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `06-robotics.T1.06a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `06-robotics.T1.06a` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06a` | **68.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06b` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T3.06a` | **65.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T3.06b` | **70.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `07-systems.T1.07a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `07-systems.T1.07a` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T2.07a` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T3.06a` | **70.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `08-capstones.T3.07a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |

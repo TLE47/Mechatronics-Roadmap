@@ -45,6 +45,8 @@ $$
    Under an external hand push torque $\tau_{\text{ext}}$ at rest ($\dot{q} = \dot{q}_d = 0$), the joint yields like a physical torsion spring by $\Delta q = \tau_{\text{ext}} / K_p$.
 
 ## 4. Worked example
+**Predict first (before you run it):** The block sweeps $q_0 = 0.0\ \text{rad}$ to $q_f = 1.2\ \text{rad}$ in $T = 2.0\ \text{s}$, then computes the yield under a $\tau_{\text{ext}} = 0.50\ \text{N}\cdot\text{m}$ hand push with $K_p = 5.0\ \text{N}\cdot\text{m/rad}$. Before you run it, commit to three numbers: the position at the midpoint $t = 1.0\ \text{s}$, the peak speed of the move, and the angle the joint gives up to the push. Two tells that a wrong answer is a mistake rather than a surprise: the midpoint must be exactly half of $\Delta q$, since $3s^2 - 2s^3 = 0.5$ at $s = 0.5$, so a midpoint near a third means the cubic term was dropped; and the peak speed must be $1.5\times$ the average $\Delta q / T$, so a peak of $0.60\ \text{rad/s}$ means you divided by $T$ and lost the $1.5$.
+
 Generate a rest-to-rest cubic trajectory from $q_0 = 0.0\text{ rad}$ to $q_f = 1.2\text{ rad}$ over $T = 2.0\text{ s}$, verify all four endpoint boundary conditions and the midpoint peak velocity, and compute the compliant deflection under a $\tau_{\text{ext}} = 0.50\text{ N}\cdot\text{m}$ hand push when $K_p = 5.0\text{ N}\cdot\text{m/rad}$.
 
 ```python
@@ -95,6 +97,12 @@ EXERCISE_TARGET=exercises/06-robotics.T1.06a/starter.py \
   - **Prerequisite Bridge Modules:** [`02-mechanics.T1.02a`](02-mechanics.T1.02a.md) (*2-Link Arm & Lever Torque*) and [`05-control.T1.05a`](05-control.T1.05a.md) (*PD Virtual Spring-Damper*).
   - **Core Concepts to Review First:** Rest-to-rest cubic polynomial interpolation $q(t) = q_0 + (3s^2 - 2s^3)\Delta q$ (peak velocity $\frac{3\Delta q}{2T}$), symmetric trapezoidal velocity profiles, and joint-space compliant PD + gravity compensation $\tau = K_p(q_d - q) - K_d\dot{q} + m g L_{\text{com}}\cos q$ in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Lynch & Park *Modern Robotics* Ch. 9 (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) and [Track 06 Tier 1 (`06-robotics-and-autonomy/README.md`)](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+- **Inject:** delete the clamp inside `cubic_rest_to_rest` so it reads `s = t / T`, and evaluate the $T = 2.0\ \text{s}$ profile half a second past arrival, at $t = 3.0\ \text{s}$.
+- **Symptom:** the arm is no longer at $q_f = 1.2\ \text{rad}$: with $s = 1.5$, $3s^2 - 2s^3 = 6.75 - 6.75 = 0$, so the position reads $0.0\ \text{rad}$ and the velocity $(6 \times 1.2 / 2)(1.5 - 2.25) = -2.7\ \text{rad/s}$ — it swings back through the start at speed instead of holding still.
+- **Diagnose:** every sample up to $t = 2.0\ \text{s}$ still matches the worked example (midpoint $0.60\ \text{rad}$, peak $0.90\ \text{rad/s}$), so the coefficients and the gains are right and only the region $t > T$ is wrong; $3s^2 - 2s^3$ stops being monotone past $s = 1$, which localises the fault to the missing clamp rather than to the spring.
+- **Fix:** clamp `s = max(0.0, min(1.0, t / T))`, then re-check the same sample: at $t = 3.0\ \text{s}$ the profile holds $q = 1.2\ \text{rad}$ with $\dot{q}_d = 0.0\ \text{rad/s}$, and the midpoint and peak values are unchanged.
 
 ## 6. Simulation path
 Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`) to compare step setpoints against cubic, trapezoidal, and minimum-jerk profiles interactively.

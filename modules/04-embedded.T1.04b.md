@@ -43,6 +43,8 @@ $$
    Substituting $t_{\text{exec}} = 45\ \mu\text{s}$ at $f_{\text{isr}} = 1000\text{ Hz}$ ($T_{\text{isr}} = 1000\ \mu\text{s}$) gives $U_{\text{isr}} = 45 / 1000 = 4.5\%$. Any variable written inside an ISR and read in `loop()` must be declared `volatile`.
 
 ## 4. Worked example
+**Predict first (before you run it):** The loop below runs $10{,}000\ \mu\text{s}$ of a $1\text{ kHz}$ control task and a $100\text{ Hz}$ telemetry task, with the state machine starting at `IDLE` and `pos_rad = -0.05`, gaining $0.01$ on every `HOMING` tick. Before you run it, commit to three numbers: how many control runs and how many telemetry runs fire in that window, and which tick carries the `HOMING -> RUN` switch. Two tells that a wrong answer is a mistake rather than a surprise: the control count must be the window divided by the $1000\ \mu\text{s}$ period and not one more, so $11$ means the deadline at $t = 0$ was counted as a run, and the telemetry count cannot be the same as the control count because its period is ten times longer; and the switch to `RUN` cannot happen in the same pass that leaves `IDLE`, so a `RUN` on the first tick means two transitions ran in one pass.
+
 Simulate $10\text{ ms}$ ($10{,}000\ \mu\text{s}$) of a microcontroller running a $1\text{ kHz}$ ($1000\ \mu\text{s}$) control task and a $100\text{ Hz}$ ($10{,}000\ \mu\text{s}$) telemetry task concurrently alongside an `IDLE -> HOMING -> RUN -> FAULT` state machine with zero `delay()` calls.
 
 ```python
@@ -103,6 +105,12 @@ EXERCISE_TARGET=exercises/04-embedded.T1.04b/starter.py \
   - **Prerequisite Bridge Modules:** [`01-electronics.T1.01b`](01-electronics.T1.01b.md) (*PWM Control*) and [`04-embedded.T1.04a`](04-embedded.T1.04a.md) (*Bitwise Masks & `volatile`*).
   - **Core Concepts to Review First:** Non-blocking timer ISR execution vs. `delay()`, `enum` finite-state machines (`IDLE`, `HOMING`, `CLOSED_LOOP`, `FAULT_STOP`), and packed binary telemetry (`struct.pack`/`unpack` + XOR checksum) in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Python `struct` Binary Packing Docs (`docs.python.org`)](https://docs.python.org/3/library/struct.html), [Samek *Practical UML Statecharts in C/C++*](https://www.state-machine.com/psicc2), and [Track 04 §1.1–1.3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
+
+### Break it on purpose
+- **Inject:** replace the rollover-safe comparison with an absolute one, `if now_us >= last_us + 1000:`, keeping `last_us += 1000` and the $1000\ \mu\text{s}$ period.
+- **Symptom:** everything is correct for the first $2^{32}\ \mu\text{s} = 4294.97\ \text{s} \approx 71.6\ \text{min}$, then the control task stops dead: with `last_us = 4_294_966_000` and the counter wrapped to `now_us = 1200`, the two stamps are $2496\ \mu\text{s}$ apart, yet `1200 >= 4294967000` is false, so the task goes silent for the rest of that $71.6\ \text{min}$ window.
+- **Diagnose:** the failure starts at one specific moment since boot and only when the two timestamps straddle the wrap, so the period, the ISR and the state machine are all ruled out; the comparison assumes `micros()` never wraps, which holds for the first $71.6$ minutes and then stops holding.
+- **Fix:** subtract first in unsigned 32-bit arithmetic, `if ((now_us - last_us) & 0xFFFFFFFF) >= 1000:`, and advance `last_us` by the period. The pair $4{,}294{,}966{,}000 \to 1200$ then reads $2496\ \mu\text{s}$, fires, and moves the deadline to $4{,}294{,}967{,}000$, so the $1000\ \mu\text{s}$ grid survives the wrap and a $10{,}000\ \mu\text{s}$ window still yields the ten control ticks the worked example asserts.
 
 ## 6. Simulation path
 Open **Tab 8 (Real-Time Concurrency & ISR Preemption)** in the MechaLab Workbench (`npm run dev`) or run a non-blocking `micros()` sketch on the [Wokwi Simulator](https://wokwi.com/).

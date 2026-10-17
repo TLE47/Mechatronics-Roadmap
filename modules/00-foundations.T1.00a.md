@@ -55,6 +55,8 @@ $$
      - `f"steps={steps}, pos_m={pos_m:.3f} m"` is a formatted **f-string** that substitutes variables directly into text and formats `pos_m` to `3` decimal places (`.3f`).
 
 ## 4. Worked example
+**Predict first (before you run it):** Write down three numbers before you run the block: how far one $0.25\text{ s}$ tick moves the slider at $v = 0.5\text{ m/s}$; how many ticks the `while` loop needs to reach $1.0\text{ m}$ from $x_0 = 0.0\text{ m}$; and the exact exception class name printed at the bottom of the traceback for `1.0 / 0.0`. Two tells that a wrong result is a mistake rather than a surprise: a final `pos_m` above $1.0\text{ m}$ means the loop body ran once more than the condition allowed, and any position that is not a whole multiple of the per-tick distance means `dt_s` or `vel_m_s` carried a wrong value.
+
 A robot slider starts at $x_0 = 0.0\text{ m}$ and moves at constant velocity $v = 0.5\text{ m/s}$ with time step $\Delta t = 0.25\text{ s}$ until reaching $1.0\text{ m}$ ($8$ steps of $0.125\text{ m}$), and then tests catching a `ZeroDivisionError`.
 
 ```python
@@ -107,6 +109,13 @@ EXERCISE_TARGET=exercises/00-foundations.T1.00a/starter.py \
   - **Core Concepts to Review First:** Variable assignment (`=`), `for i in range(n_steps):` loops, and `def` functions with `return` in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
   - **Python Tutorial Links:** [Official Python Tutorial §3 (Numbers & Variables)](https://docs.python.org/3/tutorial/introduction.html) and [§4.2–4.7 (`for` Statements, `range()`, and Defining Functions)](https://docs.python.org/3/tutorial/controlflow.html).
   - **Curriculum & Toolchain Reference:** [Track 00 Level 0 On-Ramp (`00-foundations/README.md`)](../00-foundations/README.md#level-0-global-prerequisite-on-ramp-intuition--bench-tools) and [Open-Source Toolchains (`resources/open-source-toolchains.md`)](../resources/open-source-toolchains.md).
+
+### Break it on purpose
+Inject the `range` fault the exercise hint warns about, keeping $V_{\text{start}} = 12.0\text{ V}$, `drop_per_step = 0.15` V and `n_steps = 10`:
+- **Inject:** write `for _ in range(1, n_steps):` instead of `for _ in range(n_steps):`.
+- **Symptom:** the function returns `10.65` V instead of `10.5` V — exactly one `drop_per_step` high, because the loop body ran `9` times.
+- **Diagnose:** the gap is $0.15\text{ V}$, the size of a single drop, so the subtraction inside the loop is right and the count is wrong. A sign error would read $12.0 + 1.35 = 13.35\text{ V}$, and a drop typed as `0.015` would land near $11.85\text{ V}$; neither matches, which leaves the `range` bounds.
+- **Fix:** use `range(n_steps)`, then confirm $12.0 - 10 \times 0.15 = 10.50\text{ V}$ to $\pm 10^{-6}\text{ V}$, and cross-check the count against the worked example's `8` ticks of $0.125\text{ m}$ for $1.0\text{ m}$.
 
 ## 6. Simulation path
 Run the Worked example script directly with `python3 step01.py` in your terminal (following the canonical environment bootstrap in [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)), or open **Tab 1 (Architecture & Roadmap)** of the MechaLab Workbench (`npm run dev`) to inspect how discrete simulation steps drive every interactive physics plot in the browser with zero hardware.
