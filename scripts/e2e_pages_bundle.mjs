@@ -15,9 +15,11 @@
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
  * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
  *    viewport: zero horizontal overflow, asserted rather than reported.
- * 5. Every exercise entry (`EX.02-mechanics.T2.02a`, `EX.00-foundations.T2.00a`-`c`) is generated from its
- *    package: the starter fails on its `NotImplementedError`, the reference solution passes the
+ * 5. *Every* graded exercise entry is driven, discovered from each `exercises/<package>/exercise.json` rather than
+ *    listed by hand: the starter fails on its `NotImplementedError`, the reference solution passes the
  *    appended self-check, and the output badge reads MATCHED - the browser path, on the built bundle.
+ *    A package added to `exercises/` is in this suite the next run, and a package whose entry the
+ *    bundle does not carry fails the count, so the sample can never fall behind the registry again.
  *
  * Chromium always runs; Firefox runs when its browser build is present (`npx playwright-core install
  * firefox`, which CI does). `PLAYWRIGHT_BROWSERS=chromium|firefox|both` selects them; a browser that is
@@ -37,32 +39,6 @@ const repoRoot = process.cwd();
 const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
 const distDir = path.join(repoRoot, 'dist');
 const LATER_TRACK_LESSONS = ['03.3', '06.1', '08.1'];
-const EXERCISE_IDS = [
-  'EX.02-mechanics.T2.02a',
-  'EX.00-foundations.T2.00a',
-  'EX.00-foundations.T2.00b',
-  'EX.00-foundations.T2.00c',
-  'EX.00-foundations.T2.00d',
-  'EX.00-foundations.T2.00e',
-  'EX.00-foundations.T2.00f',
-  'EX.00-foundations.T3.00a',
-  'EX.05-control.T2.05a',
-  'EX.03-sensors.T2.03a',
-  'EX.04-embedded.T2.04d',
-  'EX.06-robotics.T2.06a',
-  'EX.06-robotics.T2.06b',
-  'EX.06-robotics.T3.06a',
-  'EX.06-robotics.T3.06b',
-  'EX.07-systems.T2.07a',
-  'EX.07-systems.T3.06a',
-  'EX.07-systems.T1.07a',
-  'EX.06-robotics.T1.06a',
-  'EX.01-electronics.T1.01a',
-  'EX.01-electronics.T1.01b',
-  'EX.01-electronics.T1.01c',
-  'EX.01-electronics.T1.01d',
-  'EX.02-mechanics.T1.02a',
-];
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -75,6 +51,35 @@ const MIME = {
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
 };
+
+/**
+ * Every graded exercise, read from its package manifest - the registry is generated from these same
+ * files (`scripts/generate_python_lessons_data.py`), so discovering them here means a new package is
+ * driven in the browser as soon as it exists, with no second list to forget to update.
+ */
+function discoverExerciseIds() {
+  const exercisesDir = path.join(repoRoot, 'exercises');
+  assert.ok(fs.existsSync(exercisesDir), `no exercises/ directory at ${exercisesDir}`);
+  const entries = fs
+    .readdirSync(exercisesDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+  const ids = [];
+  for (const name of entries) {
+    const manifestPath = path.join(exercisesDir, name, 'exercise.json');
+    if (!fs.existsSync(manifestPath)) continue;
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    ids.push(manifest.delivery?.workbench_id ?? `EX.${manifest.id ?? name}`);
+  }
+  assert.ok(ids.length > 0, 'exercises/ carries no exercise.json manifests');
+  assert.equal(
+    new Set(ids).size,
+    ids.length,
+    `two exercise packages claim the same workbench id: ${ids.filter((id, i) => ids.indexOf(id) !== i).join(', ')}`
+  );
+  return ids;
+}
 
 function ensureBuilt() {
   if (fs.existsSync(path.join(distDir, 'index.html'))) return;
@@ -169,6 +174,13 @@ async function checkInBrowser(name, launcher, baseUrl) {
     await page.getByTestId('btn-mode-beginner').click();
 
     await page.getByTestId('tab-btn-tab-pyodide').click();
+    const exerciseIds = discoverExerciseIds();
+    const bundledExercises = await page.locator('[data-testid^="lesson-item-EX."]').count();
+    assert.equal(
+      bundledExercises,
+      exerciseIds.length,
+      `${name}: the bundle carries ${bundledExercises} EX.* entries but exercises/ has ${exerciseIds.length} packages`
+    );
     for (const lesson of LATER_TRACK_LESSONS) {
       const item = page.getByTestId(`lesson-item-${lesson}`);
       await item.scrollIntoViewIfNeeded();
@@ -184,57 +196,75 @@ async function checkInBrowser(name, launcher, baseUrl) {
       console.log(`  ok ${name}: lesson ${lesson} loads ${starter.length} chars of starter code + expected output`);
     }
 
-    // A Tier 2 exercise is generated from its package, not hand-written into the registry: it must
-    // appear in the same list, fail on its own holes, and pass once the reference is loaded. That is
-    // the whole delivery claim, checked on the bundle learners actually open.
-    for (const exerciseId of EXERCISE_IDS) {
-    const exercise = page.getByTestId(`lesson-item-${exerciseId}`);
-    await exercise.scrollIntoViewIfNeeded();
-    await exercise.click();
-    const exerciseStarter = await page.getByTestId('textarea-python-code').inputValue();
-    assert.ok(
-      exerciseStarter.includes('raise NotImplementedError') && exerciseStarter.includes('_selfcheck()'),
-      `${name}: ${exerciseId} must ship its holes and its self-check together`
-    );
-    const exerciseExpected = (await page.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
-    assert.match(
-      exerciseExpected,
-      /SELF-CHECK PASS/,
-      `${name}: ${exerciseId} expected output is not its self-check PASS line`
-    );
-    await page.getByTestId('btn-run-verify').click();
-    await page.waitForFunction(
-      () => {
-        const text = document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '';
-        return text.length > 0 && !text.includes('Click "Run & Verify Output"');
-      },
-      undefined,
-      { timeout: 90000 }
-    );
-    const starterStdout = await page.getByTestId('pre-actual-stdout').textContent();
-    assert.ok(
-      starterStdout?.includes('NotImplementedError'),
-      `${name}: ${exerciseId} starter must fail on a hole, got: ${starterStdout}`
-    );
-    assert.doesNotMatch(
-      (await page.getByTestId('badge-output-check').textContent()) ?? '',
-      /MATCHED/i,
-      `${name}: ${exerciseId} starter must not be graded as a match`
-    );
-    await page.getByTestId('btn-load-solution').click();
-    await page.getByTestId('btn-run-verify').click();
-    await page.waitForFunction(
-      () => (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes('SELF-CHECK PASS'),
-      undefined,
-      { timeout: 90000 }
-    );
-    assert.match(
-      (await page.getByTestId('badge-output-check').textContent()) ?? '',
-      /MATCHED/i,
-      `${name}: ${exerciseId} reference must match its expected output`
-    );
-    console.log(`  ok ${name}: ${exerciseId} starter fails on its hole, reference passes its self-check, output MATCHED`);
+    // Every exercise entry is generated from its package, not hand-written into the registry: each
+    // must appear in the same list, fail on its own holes, and pass once the reference is loaded.
+    // That is the whole delivery claim, checked on the bundle learners actually open - for each of
+    // the packages in `exercises/`, not a sample of them.
+    const exercisePassStarted = Date.now();
+    for (const exerciseId of exerciseIds) {
+      const exercise = page.getByTestId(`lesson-item-${exerciseId}`);
+      await exercise.scrollIntoViewIfNeeded();
+      await exercise.click();
+      // Wait for *this* entry's starter to land in the editor: after the previous exercise loaded its
+      // reference, the editor holds that program for a beat, and reading it would grade the wrong lesson.
+      await page.waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
+            'raise NotImplementedError'
+          ),
+        undefined,
+        { timeout: 15000 }
+      );
+      const exerciseStarter = await page.getByTestId('textarea-python-code').inputValue();
+      assert.ok(
+        exerciseStarter.includes('raise NotImplementedError') && exerciseStarter.includes('_selfcheck()'),
+        `${name}: ${exerciseId} must ship its holes and its self-check together`
+      );
+      const exerciseExpected = (await page.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
+      assert.match(
+        exerciseExpected,
+        /SELF-CHECK PASS/,
+        `${name}: ${exerciseId} expected output is not its self-check PASS line`
+      );
+      await page.getByTestId('btn-run-verify').click();
+      await page.waitForFunction(
+        () => {
+          const text = document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '';
+          return text.length > 0 && !text.includes('Click "Run & Verify Output"');
+        },
+        undefined,
+        { timeout: 90000 }
+      );
+      const starterStdout = await page.getByTestId('pre-actual-stdout').textContent();
+      assert.ok(
+        starterStdout?.includes('NotImplementedError'),
+        `${name}: ${exerciseId} starter must fail on a hole, got: ${starterStdout}`
+      );
+      assert.doesNotMatch(
+        (await page.getByTestId('badge-output-check').textContent()) ?? '',
+        /MATCHED/i,
+        `${name}: ${exerciseId} starter must not be graded as a match`
+      );
+      await page.getByTestId('btn-load-solution').click();
+      await page.getByTestId('btn-run-verify').click();
+      await page.waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes(
+            'SELF-CHECK PASS'
+          ),
+        undefined,
+        { timeout: 90000 }
+      );
+      assert.match(
+        (await page.getByTestId('badge-output-check').textContent()) ?? '',
+        /MATCHED/i,
+        `${name}: ${exerciseId} reference must match its expected output`
+      );
     }
+    console.log(
+      `  ok ${name}: all ${exerciseIds.length} graded exercise entries (${exerciseIds[0]} .. ${exerciseIds[exerciseIds.length - 1]}) ` +
+        `failed their starter on a hole and matched on their reference in ${((Date.now() - exercisePassStarted) / 1000).toFixed(1)}s`
+    );
 
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
     // must fit the viewport - the header used to push a 249px horizontal overflow here, so a page
@@ -302,8 +332,8 @@ async function main() {
     const ran = Object.entries(results).filter(([, value]) => value === 'pass').map(([name]) => name);
     const skipped = Object.entries(results).filter(([, value]) => value === 'skip').map(([name]) => name);
     console.log(        `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
-        `${LATER_TRACK_LESSONS.join(', ')}, grades exercises ${EXERCISE_IDS.join(', ')} end to end and stays ` +
-        `usable at tablet width in: ${ran.join(', ')}` +
+        `${LATER_TRACK_LESSONS.join(', ')}, grades all ${discoverExerciseIds().length} exercise entries end to end ` +
+        `and stays usable at tablet width in: ${ran.join(', ')}` +
         (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
     );
   } finally {

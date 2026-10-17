@@ -57,6 +57,13 @@ all 44 bridge modules are graded today, and the count can only go up, because ad
 without its exercise is a red build rather than a silent gap. The gate is two orders of magnitude
 cheaper than the three-way check it guards — it reads the tree, it does not run the packages.
 
+**The browser list is the same list.** `scripts/e2e_pages_bundle.mjs` reads every
+`exercises/<package>/exercise.json` and drives all 44 entries on the built Pages bundle, in Chromium
+and in Firefox: the bundle must carry one `EX.*` entry per package, each starter must fail on its own
+`NotImplementedError`, and each reference must print its `SELF-CHECK PASS:` line and grade MATCHED.
+There is no hand-kept sample to fall behind, so a package cannot be graded natively and absent from
+the browser.
+
 Two ladder stages are measured by their **named marker**, not by a loose keyword, because a bare
 mention of "predict" is not a Predict step:
 
@@ -149,14 +156,6 @@ python3 scripts/module_parity.py --update-baseline   # record today's scores as 
 These are part of the plan and are **listed, not scored** — no artifact exists for them yet, and
 scoring them zero would hide the work behind a number:
 
-- **Behavioural tests for module exercises.** `INSTRUCTOR_TESTS` in
-  `scripts/generate_python_lessons_data.py` covers the beginner lessons only (48 of them today; the
-  count lives in the lesson directories, not in this file); module exercises have no equivalent
-  multi-input/boundary harness, and no three-way gate (starter fails, solution passes, spoof fails)
-  runs against them. What the reference module does have is its own published claims re-derived from
-  the plant in `tests/test_plant.py`, which is a guard, not that harness.
-- **Module exercises in the workbench.** Only lessons are generated into the app, so no module exercise
-  runs in a browser and the Pages E2E suite tests no Tier 2/3 exercise.
 - **Maths-claims audit.** Absolute claims (`guaranteed`, `always`, `never`, `positive definite`) with
   their stated assumptions, and a counterexample test where a claim is easy to get wrong.
 - **Retention and arrival times.** Whether a Transfer task still passes 1-2 weeks later, and how long

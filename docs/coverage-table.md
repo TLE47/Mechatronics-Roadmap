@@ -131,11 +131,11 @@ not demonstrated learner mastery.
 
 | Module | Parity | Reference solution tested | Behaviour-graded | Browser E2E | Author dogfood | Delayed transfer | Independent learner |
 | :--- | :---: | :---: | :---: | :---: | :--- | :---: | :---: |
-| `00-foundations.T1.00a` | **54.5%** | yes | yes | `-` | `-` | `-` | `-` |
-| `00-foundations.T1.00b` | **54.5%** | yes | yes | `-` | `-` | `-` | `-` |
-| `00-foundations.T1.00c` | **54.5%** | yes | yes | `-` | `-` | `-` | `-` |
-| `00-foundations.T1.00d` | **54.5%** | yes | yes | `-` | `-` | `-` | `-` |
-| `00-foundations.T1.00e` | **60.8%** | yes | yes | `-` | `-` | `-` | `-` |
+| `00-foundations.T1.00a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00b` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00c` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00d` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T1.00e` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00a` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00b` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00c` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
@@ -147,25 +147,25 @@ not demonstrated learner mastery.
 | `01-electronics.T1.01b` | **74.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T1.01c` | **68.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T1.01d` | **68.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `01-electronics.T2.01a` | **62.0%** | yes | yes | `-` | `-` | `-` | `-` |
-| `01-electronics.T2.01b` | **68.2%** | yes | yes | `-` | `-` | `-` | `-` |
-| `01-electronics.T3.01a` | **64.5%** | yes | yes | `-` | `-` | `-` | `-` |
+| `01-electronics.T2.01a` | **62.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `01-electronics.T2.01b` | **68.2%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `01-electronics.T3.01a` | **64.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `02-mechanics.T1.02a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `02-mechanics.T2.02a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-16, 13 min, 0 hints | - | `-` |
-| `02-mechanics.T3.02a` | **57.0%** | yes | yes | `-` | `-` | `-` | `-` |
-| `03-sensors.T1.03a` | **60.8%** | yes | yes | `-` | `-` | `-` | `-` |
+| `02-mechanics.T3.02a` | **57.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `03-sensors.T1.03a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `03-sensors.T2.03a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `03-sensors.T3.03a` | **57.0%** | yes | yes | `-` | `-` | `-` | `-` |
-| `04-embedded.T1.04a` | **54.5%** | yes | yes | `-` | `-` | `-` | `-` |
-| `04-embedded.T1.04b` | **60.8%** | yes | yes | `-` | `-` | `-` | `-` |
-| `04-embedded.T2.04a` | **54.5%** | yes | yes | `-` | `-` | `-` | `-` |
-| `04-embedded.T2.04b` | **54.5%** | yes | yes | `-` | `-` | `-` | `-` |
-| `04-embedded.T2.04c` | **54.5%** | yes | yes | `-` | `-` | `-` | `-` |
+| `03-sensors.T3.03a` | **57.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T1.04a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T1.04b` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T2.04a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T2.04b` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T2.04c` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T2.04d` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `04-embedded.T3.04a` | **57.0%** | yes | yes | `-` | `-` | `-` | `-` |
-| `05-control.T1.05a` | **60.8%** | yes | yes | `-` | `-` | `-` | `-` |
+| `04-embedded.T3.04a` | **57.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `05-control.T1.05a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T2.05a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `05-control.T3.05a` | **57.0%** | yes | yes | `-` | `-` | `-` | `-` |
+| `05-control.T3.05a` | **57.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T1.06a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06a` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T2.06b` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
@@ -174,7 +174,7 @@ not demonstrated learner mastery.
 | `07-systems.T1.07a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T2.07a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T3.06a` | **63.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `08-capstones.T3.07a` | **57.0%** | yes | yes | `-` | `-` | `-` | `-` |
+| `08-capstones.T3.07a` | **57.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 
 **Behaviour-graded** means `exercises/<module>/exercise.json` exists *and*
 `scripts/run_exercise.py` passes: the starter fails on its own `NotImplementedError`, the

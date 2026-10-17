@@ -259,9 +259,12 @@ def browser_tested_modules() -> dict[str, str]:
     """Modules whose exercise entry a browser E2E script actually drives.
 
 Claimed from the manifest, not from the `verification:` label: the script named under
-`delivery.browser_e2e` must exist and mention the entry id, otherwise the column stays `-`. A
-label saying "browser" is not a browser test.
+`delivery.browser_e2e` must exist, and must either name the entry id or discover every package from
+`exercises/<package>/exercise.json` (the way `scripts/e2e_pages_bundle.mjs` does, so the browser list
+is the package list rather than a sample someone must remember to extend). A label saying "browser"
+is not a browser test.
 """
+    discovery_markers = ("readdirSync(exercisesDir", "exercise.json", "workbench_id")
     root = os.path.join(ROOT, "exercises")
     tested: dict[str, str] = {}
     if not os.path.isdir(root):
@@ -277,8 +280,11 @@ label saying "browser" is not a browser test.
         if not script or not os.path.isfile(os.path.join(ROOT, script)):
             continue
         with open(os.path.join(ROOT, script), "r", encoding="utf-8") as handle:
-            if delivery.get("workbench_id", "") in handle.read():
-                tested[name] = os.path.basename(script)
+            source = handle.read()
+        if delivery.get("workbench_id", "") in source or all(
+            marker in source for marker in discovery_markers
+        ):
+            tested[name] = os.path.basename(script)
     return tested
 
 
