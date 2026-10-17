@@ -22,7 +22,7 @@ flowchart LR
 
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `00` | 12 | 55% | 40% | 75% | 12% | **50.1%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
+| `00` | 12 | 55% | 40% | 75% | 25% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
 | `01` | 7 | 59% | 40% | 100% | 0% | **56.6%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `02` | 3 | 78% | 60% | 83% | 33% | **67.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
 | `03` | 3 | 70% | 40% | 75% | 0% | **52.0%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **54.5%** |
+| Tier 2 | 18 | **55.7%** |
 | Tier 3 | 10 | **49.8%** |
 
-## Per module (44 modules, overall **52.5%**)
+## Per module (44 modules, overall **53.0%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -52,9 +52,9 @@ flowchart LR
 | `00-foundations.T2.00a` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
 | `00-foundations.T2.00b` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
 | `00-foundations.T2.00c` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T2.00d` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
-| `00-foundations.T2.00e` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
-| `00-foundations.T2.00f` | 2 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
+| `00-foundations.T2.00d` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
+| `00-foundations.T2.00e` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
+| `00-foundations.T2.00f` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
 | `00-foundations.T3.00a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `01-electronics.T1.01a` | 1 | 50% | 40% | 100% | 0% | **54.5%** | **undeclared** | 7 item(s) |
 | `01-electronics.T1.01b` | 1 | 75% | 40% | 100% | 0% | **60.8%** | **undeclared** | 6 item(s) |
@@ -139,9 +139,9 @@ not demonstrated learner mastery.
 | `00-foundations.T2.00a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00b` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T2.00c` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00d` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `00-foundations.T2.00e` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `00-foundations.T2.00f` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `00-foundations.T2.00d` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00e` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00f` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T3.00a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `01-electronics.T1.01a` | **54.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `01-electronics.T1.01b` | **60.8%** | `-` | `-` | `-` | `-` | `-` | `-` |
@@ -186,13 +186,14 @@ test that names it. The tests the harness runs are the same ones CI runs.
 The plan asks for these too. No artifact exists for them yet, so they are listed rather than
 scored - each one is a piece of work, not a zero:
 
-- **Behavioural tests for the other 43 modules:** one exercise package exists
-  (`02-mechanics.T2.02a`), and it is the template. `INSTRUCTOR_TESTS` in
-  `scripts/generate_python_lessons_data.py` covers the beginner lessons only, so the
-  remaining bridge modules ship no graded exercise of their own yet.
-- **Module exercises in the workbench:** the reference exercise is generated into the app as
-  a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, but
-  it is still the only module with a browser entry, so the E2E suite covers one T2 exercise.
+- **Behavioural tests for the other 37 modules:** seven exercise packages exist
+  (`02-mechanics.T2.02a` and the whole `00-foundations.T2.00a`-`T2.00f` ladder), and they are
+  the template. `INSTRUCTOR_TESTS` in `scripts/generate_python_lessons_data.py` covers the
+  beginner lessons only, so the remaining bridge modules ship no graded exercise of their own
+  and their rows read `-` in the Behaviour-graded column.
+- **Module exercises in the workbench:** each of those seven packages is generated into the app
+  as a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives all of them on the built
+  bundle, so the browser path is measured on seven T2 exercises, not assumed from one.
 - **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)
   with their stated assumptions, and a counterexample test where a claim is easy to get wrong.
 - **Transfer-task retention:** whether the Transfer task still passes 1-2 weeks later, and

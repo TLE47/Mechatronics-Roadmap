@@ -88,6 +88,16 @@ Resonance mag=10.0x (20.0 dB), phase=-90.0 deg
 For the same second-order plant ($\omega_n = 100\text{ rad/s}$, $\zeta = 0.05$), call `second_order_freq_response(100.0, 0.05, 1000.0)` at $\omega = 1000\text{ rad/s}$ ($10\times$ above resonance) and verify that $|G(j1000)|_{\text{dB}} = -39.9127\text{ dB}$ ($\pm 10^{-3}\text{ dB}$, rolling off at $-40\text{ dB/decade}$) and $\angle G(j1000) = -179.4213^\circ$ ($\pm 10^{-3}\text{ deg}$).
 - **If your result differs:** Make sure you used `20.0 * math.log10(abs(G))` (amplitude decibels) rather than `10.0 * math.log10(abs(G))` (power decibels, which would give `-19.96 dB`).
 
+### Graded package - a Bode plot measured on the arm
+[`exercises/00-foundations.T2.00d/`](../exercises/00-foundations.T2.00d/) turns this section into a test. `starter.py` holds seven holes: `to_polar`, `to_rect`, `first_order_response`, `second_order_response`, `magnitude_db` (20 log10, not 10), `phase_deg`, and `resonance_peak` (its location and height, or no peak at all). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T2.00d/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T2.00d -p 'test_*.py'
+```
+
+The tests are behavioural: the first-order corner must be $-3.0103$ dB and $-45^\circ$; the second-order DC gain must be 1 at every damping and the gain at $\omega_n$ must be $1/(2\zeta)$; `magnitude_db` is checked at 10 and 0.1 so power decibels fail; the phase is checked in degrees; and the reported resonance peak must be a point **on the reported curve**, which is what exposes `omega_r = omega_n` at $\zeta = 0.3$. The transfer suite measures the arm's elbow with a sine torque and a sine/cosine projection (a lock-in, like a bench sweep) and compares gain and phase with the submission's transfer function at three frequencies, then checks that the measured peak sits below $\omega_n$ - with `plant.B2` counted as part of the damping. Four planted faults - `ten_log`, `phase_radians`, `peak_at_natural`, `hardcoded_response` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Module:** [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (Natural Frequency $\omega_n$ & Damping Ratio $\zeta$).
   - **Core Concepts to Review First:** Evaluating complex transfer function $G(j\omega) = \frac{\omega_n^2}{(\omega_n^2 - \omega^2) + j(2\zeta\omega_n\omega)}$, magnitude in decibels $20\log_{10}|G(j\omega)|$, and phase angle $\operatorname{atan2}(\operatorname{Im}, \operatorname{Re})$ in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
@@ -96,6 +106,8 @@ For the same second-order plant ($\omega_n = 100\text{ rad/s}$, $\zeta = 0.05$),
 
 ## 6. Simulation path
 Open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench (`npm run dev`) to inspect how a lightly damped resonance peak ($+20\text{ dB}$) and $-180^\circ$ phase drop appear on an interactive Bode magnitude and phase plot.
+
+The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00d`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Track 01 and Track 07, the exact same complex ratio $H(j\omega) = Y(j\omega)/U(j\omega)$ is measured on real actuators by injecting sinusoidal current commands and comparing encoder output amplitude and phase lag:
 ```text

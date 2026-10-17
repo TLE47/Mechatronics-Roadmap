@@ -39,7 +39,7 @@ $$
 \omega_a = \frac{2}{T_s}\tan\left(\frac{\pi f_0}{f_s}\right)
 $$
 
-   At $f_0 = 850\text{ Hz}$ and $f_s = 4000\text{ Hz}$ ($T_s = 0.00025\text{ s}$), unwarped Tustin lands at $f_{\text{actual}} = \frac{4000}{\pi}\arctan\left(\frac{\pi\cdot 850}{4000}\right) = 749.49\text{ Hz}$ (missing by $100.51\text{ Hz}$!), whereas pre-warping uses $\omega_a = 8000\tan(0.2125\pi) = 6297.25\text{ rad/s}$ ($1002.24\text{ Hz}$) so the digital notch lands on $850.00\text{ Hz}$. The resulting $z$-domain biquad $H(z) = \frac{b_0 + b_1 z^{-1} + b_2 z^{-2}}{1 + a_1 z^{-1} + a_2 z^{-2}}$ executes in 2 delay states ($w_1, w_2$) via Transposed Direct Form II (`TDF-II`).
+   At $f_0 = 850\text{ Hz}$ and $f_s = 4000\text{ Hz}$ ($T_s = 0.00025\text{ s}$), unwarped Tustin lands at $f_{\text{actual}} = \frac{4000}{\pi}\arctan\left(\frac{\pi\cdot 850}{4000}\right) = 749.49\text{ Hz}$ (missing by $100.51\text{ Hz}$!), whereas pre-warping uses $\omega_a = 8000\tan(0.2125\pi) = 6306.69\text{ rad/s}$ ($1003.74\text{ Hz}$) so the digital notch lands on $850.00\text{ Hz}$. The resulting $z$-domain biquad $H(z) = \frac{b_0 + b_1 z^{-1} + b_2 z^{-2}}{1 + a_1 z^{-1} + a_2 z^{-2}}$ executes in 2 delay states ($w_1, w_2$) via Transposed Direct Form II (`TDF-II`).
 3. **Gaussian Variance and Covariance Matrix ($\Sigma$):** A scalar sensor with standard deviation $\sigma$ has variance $\sigma^2$. For a state vector $x \in \mathbb{R}^n$ with mean $\mu$, the symmetric positive semi-definite covariance matrix is $\Sigma = \mathbb{E}[(x - \mu)(x - \mu)^\top]$. Propagating $y = A x + w$ (where $w$ has covariance $Q$) updates the covariance via the quadratic sandwich rule:
 
 $$
@@ -90,6 +90,16 @@ Unwarped lands at 749.48 Hz (misses by 100.52 Hz); pre-warped lands at 850.00 Hz
 Compute the alias frequency $f_{\text{alias}} \in [0, f_s/2]$ when a $2700\text{ Hz}$ structural resonance is sampled at $f_s = 2000\text{ Hz}$ without an analog anti-aliasing filter, and compute the pre-warped analog frequency $\omega_a$ ($\text{rad/s}$) required to place a digital notch at $f_0 = 600\text{ Hz}$ when $f_s = 2000\text{ Hz}$. Verify $f_{\text{alias}} = 700.0\text{ Hz}$ and $\omega_a = 5505.5277\text{ rad/s}$ ($\pm 10^{-3}$).
 - **If your result differs:** For aliasing, subtract the nearest integer multiple of $f_s$ ($|2700 - 1 \times 2000| = 700\text{ Hz}$). For pre-warping, check that $\tan(\pi f_0 / f_s)$ is evaluated in radians ($\pi \times 600 / 2000 = 0.3\pi\text{ rad}$).
 
+### Graded package - sampling and estimating the arm's elbow
+[`exercises/00-foundations.T2.00f/`](../exercises/00-foundations.T2.00f/) turns this section into a test. `starter.py` holds seven holes: `nyquist_hz`, `alias_hz` (fold **and** mirror), `tustin_hz` (where an analog frequency really lands), `prewarp_omega` (the exact inverse of that map), `notch_coeffs`, `apply_biquad` (Transposed Direct Form II) and `covariance_propagate` (the sandwich rule). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T2.00f/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T2.00f -p 'test_*.py'
+```
+
+The tests are behavioural: 3150 Hz at 4 kHz must alias to 850 Hz and 9000 Hz to 1000 Hz; 100 Hz and Nyquist itself must pass through; the pre-warp must land 850 Hz at 6306.69 rad/s and the round trip through `tustin_hz` must be an identity at four sample-rate pairs, while the unwarped prototype misses by 100.52 Hz; the notch must be symmetric, unity at DC, and actually null a sampled 850 Hz tone (RMS ratio below $10^{-3}$) while passing a 200 Hz one; and the covariance must reproduce `[[1.04, 0.4], [0.4, 4.0]]`. The transfer suite drives the plant itself: one closed-loop Euler step of the elbow must equal a `step_arm` tick to the plant's $O(T_s^2)$ ordering term and **not** to machine precision, the $8.2\text{ Hz}$ damped mode must alias to $3.8\text{ Hz}$ at a $12\text{ Hz}$ sample rate, and a 4000-sample Monte-Carlo of plant ticks must match the predicted covariance. Four planted faults - `alias_no_mirror`, `prewarp_unwarped`, `notch_unnormalized`, `covariance_no_transpose` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Bode Plots*) and [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Tustin Discretization*).
   - **Core Concepts to Review First:** Nyquist folding $f_{\text{alias}} = |f_{\text{sig}} - k f_s|$ and Tustin frequency pre-warping $\omega_a = \frac{2}{T_s}\tan\!\left(\frac{\pi f_0}{f_s}\right)$ in `## 3. Formalization` (Items 1–2) and `## 4. Worked example` above.
@@ -98,6 +108,8 @@ Compute the alias frequency $f_{\text{alias}} \in [0, f_s/2]$ when a $2700\text{
 
 ## 6. Simulation path
 Open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench (`npm run dev`) and toggle pre-warping ON vs. OFF at $f_0 = 850\text{ Hz}$, $f_s = 4000\text{ Hz}$ to watch the notch center shift from $749.5\text{ Hz}$ right onto the $850\text{ Hz}$ resonance peak.
+
+The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00f`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Step 2.1 (`00-foundations.T2.01`) and Step 2.4 (`03-sensors.T2.04`), the 5 pre-warped biquad coefficients $(b_0, b_1, b_2, a_1, a_2)$ execute inside the microcontroller's `TDF-II` filter loop on every ADC/encoder sample:
 ```text

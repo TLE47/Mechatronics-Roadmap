@@ -24,14 +24,14 @@
     "validated:behavioural_grading",
     "validated:dogfood_logged"
   ],
-  "overall": 0.5249,
+  "overall": 0.5301,
   "tiers": {
     "1": 0.52,
-    "2": 0.5446,
+    "2": 0.5571,
     "3": 0.4975
   },
   "tracks": {
-    "00": 0.5012,
+    "00": 0.52,
     "01": 0.5664,
     "02": 0.6758,
     "03": 0.52,
@@ -50,9 +50,9 @@
     "00-foundations.T2.00a": 0.545,
     "00-foundations.T2.00b": 0.545,
     "00-foundations.T2.00c": 0.545,
-    "00-foundations.T2.00d": 0.47,
-    "00-foundations.T2.00e": 0.47,
-    "00-foundations.T2.00f": 0.5325,
+    "00-foundations.T2.00d": 0.545,
+    "00-foundations.T2.00e": 0.545,
+    "00-foundations.T2.00f": 0.6075,
     "00-foundations.T3.00a": 0.495,
     "01-electronics.T1.01a": 0.545,
     "01-electronics.T1.01b": 0.6075,

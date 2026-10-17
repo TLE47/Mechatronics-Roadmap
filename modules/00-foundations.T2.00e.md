@@ -89,6 +89,16 @@ rho_euler=1.0247 (unstable), rho_tustin=0.9099 (stable)
 Compute the spectral radius $\rho(A_{d,\text{Tustin}})$ of the same system at $T_s = 0.001\text{ s}$ ($1\text{ kHz}$ servo loop) and verify using `trace = Ad[0][0] + Ad[1][1]`, `det = Ad[0][0]*Ad[1][1] - Ad[0][1]*Ad[1][0]`, and `cmath.sqrt(trace**2 - 4*det)` that the spectral radius $\max(|\lambda_1|, |\lambda_2|)$ equals `0.998002` ($\pm 10^{-6}$, strictly inside the unit circle).
 - **If your result differs:** Check that you inverted `(I - 0.5 * Ts * A)` and multiplied by `(I + 0.5 * Ts * A)` rather than swapping the plus and minus signs (which places the poles outside the unit circle at `1.002002`).
 
+### Graded package - the elbow's poles, in both coordinates
+[`exercises/00-foundations.T2.00e/`](../exercises/00-foundations.T2.00e/) turns this section into a test. `starter.py` holds six holes: `companion_state_matrices` (rows `[0, 1]` and `[-k/J, -b/J]`), `eigvals_2x2` (trace and determinant, never a hard-coded pair), `is_stable` (strictly negative real parts), `discretize_euler`, `discretize_tustin` (the matrix inverse, not an elementwise division) and `simulate_discrete` (the loop a controller actually runs). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/00-foundations.T2.00e/starter.py \
+  python3 -m unittest discover -s exercises/00-foundations.T2.00e -p 'test_*.py'
+```
+
+The tests are behavioural: the worked matrix's eigenvalues must be $-2 \pm j\sqrt{96}$ and their sum and product must equal trace and determinant; a saddle with a **negative trace** must be rejected (so `trace < 0` alone fails); a marginal pole must be rejected; at $T_s = 0.2\text{ s}$ Euler's poles must leave the unit circle while Tustin's stay inside it; the Tustin input matrix must match `(I - Ts A / 2)^-1 B Ts`; and one step of the loop must start both rows from the old state. The transfer suite builds the arm's elbow from `plant.I2`, `plant.B2` and the $8\text{ N}\cdot\text{m/rad}$ stiffness, checks the poles against $\zeta$ and $\omega_n$ from 00c, and finds Tustin stable at $T_s = 0.4\text{ s}$ where Euler is not. Four planted faults - `euler_minus`, `trace_only`, `forgot_damping`, `tustin_elementwise` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Prerequisite Foundations Modules:** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*State Matrices*), [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*ODE Roots*), and [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Transfer Functions*).
   - **Core Concepts to Review First:** Bilinear (Tustin) state matrix $A_{d,\text{Tustin}} = (I - \frac{T_s}{2}A)^{-1}(I + \frac{T_s}{2}A)$ and $2\times 2$ eigenvalue formula $\lambda_{1,2} = \frac{\operatorname{tr}(A_d) \pm \sqrt{\operatorname{tr}(A_d)^2 - 4\det(A_d)}}{2}$ in `## 3. Formalization` (Items 2–3) and `## 4. Worked example` above.
@@ -97,6 +107,8 @@ Compute the spectral radius $\rho(A_{d,\text{Tustin}})$ of the same system at $T
 
 ## 6. Simulation path
 Open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum + LQR + CBF)** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
+
+The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00e`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 No hardware required for this module (`hardware_required: false`). In Track 05 (`05-control.T2.06` and `05-control.T3.06`), the discretized matrices $(A_d, B_d)$ run inside the microcontroller's $1\text{ kHz}$ Kalman filter prediction step:
 ```text

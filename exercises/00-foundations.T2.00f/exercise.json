@@ -1,0 +1,30 @@
+{
+  "id": "00-foundations.T2.00f",
+  "module": "modules/00-foundations.T2.00f.md",
+  "title": "Sampling, pre-warped notches and covariance",
+  "requires": [
+    "nyquist_hz(fs) -> float",
+    "alias_hz(f_sig, fs) -> float in [0, fs/2]",
+    "tustin_hz(omega_rad_s, fs) -> float (where unwarped Tustin lands)",
+    "prewarp_omega(f0_hz, fs) -> analog prototype frequency",
+    "notch_coeffs(f0_hz, fs, q) -> (b0, b1, b2, a1, a2)",
+    "apply_biquad(coeffs, samples) -> list of outputs (TDF-II)",
+    "covariance_propagate(A, Sigma, Q) -> A Sigma A^T + Q"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "alias_no_mirror": ["test_behavior.AliasingTests.test_worked_examples"],
+    "prewarp_unwarped": ["test_behavior.WarpingTests.test_prewarp_round_trips"],
+    "notch_unnormalized": ["test_behavior.BiquadTests.test_dc_gain_is_one"],
+    "covariance_no_transpose": ["test_behavior.CovarianceTests.test_matches_the_module_example"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T2.00f",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T2.00f/starter.py python3 -m unittest discover -s exercises/00-foundations.T2.00f -p 'test_*.py'"
+  }
+}

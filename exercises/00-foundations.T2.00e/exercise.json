@@ -1,0 +1,29 @@
+{
+  "id": "00-foundations.T2.00e",
+  "module": "modules/00-foundations.T2.00e.md",
+  "title": "State space, poles and the two discretisations",
+  "requires": [
+    "companion_state_matrices(j, k, b) -> (A, B)",
+    "eigvals_2x2(A) -> (complex, complex)",
+    "is_stable(A) -> bool",
+    "discretize_euler(A, B, Ts) -> (Ad, Bd)",
+    "discretize_tustin(A, B, Ts) -> (Ad, Bd)",
+    "simulate_discrete(Ad, Bd, x0, u, steps) -> final state"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "euler_minus": ["test_behavior.DiscretisationTests.test_euler_is_identity_plus_a_ts"],
+    "trace_only": ["test_behavior.StabilityTests.test_a_saddle_is_not_stable"],
+    "forgot_damping": ["test_behavior.CompanionTests.test_uses_every_parameter"],
+    "tustin_elementwise": ["test_behavior.DiscretisationTests.test_tustin_bd_matches_the_map"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T2.00e",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T2.00e/starter.py python3 -m unittest discover -s exercises/00-foundations.T2.00e -p 'test_*.py'"
+  }
+}
