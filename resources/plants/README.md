@@ -10,7 +10,9 @@ Kalman filter and a controller all act on the same numbers.
 | [`mechalab_plant.py`](mechalab_plant.py) | **The executable model.** Stdlib only, Python 3.8+, Pyodide-compatible. This is the single source of truth. |
 | [`tier1_arm_motor.yaml`](tier1_arm_motor.yaml) | The same values with the lesson that states each one. Documentation and provenance; the module is what runs. |
 | [`../../scripts/generate_plant_data.py`](../../scripts/generate_plant_data.py) | Embeds both into `app/src/data/mechalabPlant.ts` so the browser can have them. `--check` in CI. |
+| [`mechalab_models.py`](mechalab_models.py) | **Level B**: `linearize`, `discretize`, `simulate_linear`, `compare_to_plant`, plus the A-D level table. See [`docs/MODEL_LEVELS.md`](../../docs/MODEL_LEVELS.md). |
 | [`../../tests/test_plant.py`](../../tests/test_plant.py) | Provenance agreement plus the physics properties, including the capstone's own published numbers. |
+| [`../../tests/test_model_levels.py`](../../tests/test_model_levels.py) | Level B against Level A, the three discretisations, and the integration order. |
 
 The loop every advanced exercise works on is the capstone's, unchanged:
 
@@ -70,9 +72,12 @@ domega/dt = (Kt*i - b*omega - load) / J
    required arguments with no defaults: those come off your own bench (Tier 1 lesson 07.1's
    sine-sweep identification, or the datasheet), and a plausible invented value would hide the
    measurement. In SI, `Kt == Ke`.
-5. **Say when the step is too big.** `simulate_motor` refuses a `dt` past the explicit-Euler
-   stability limit of either pole (`dt < 2*L/R`, `dt < 2*J/b`) instead of returning `nan`. The limit
-   is itself a Tier 2 lesson, not a nuisance to be silenced.
+5. **Say when the step is too big.** `simulate_motor` refuses a `dt` past the Euler stability limit
+   of either pole (`dt < 2*L/R`, `dt < 2*J/b`) instead of returning `nan`. The limit is itself a
+   Tier 2 lesson, not a nuisance to be silenced. Both `step_arm` and `simulate_motor` integrate
+   **semi-implicitly** (velocity/current first, then position using the new value), and the plant
+   says so: see [`docs/MODEL_LEVELS.md`](../../docs/MODEL_LEVELS.md) for the scheme, and for levels
+   B-D that build on this one.
 6. **After any change**: `python3 scripts/generate_plant_data.py`, then
    `python3 tests/test_plant.py` and `python3 scripts/generate_plant_data.py --check`.
 

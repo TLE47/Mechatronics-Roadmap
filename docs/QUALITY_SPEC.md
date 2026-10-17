@@ -77,7 +77,10 @@ numbers (0.0000 mm IK→FK, 2.40 mm peak / 0.91 mm RMS tracking error, 412 dropp
 115.2 kbaud). Whether a given module uses it is scored as **`executable:shared_plant`** (§1 and §2)
 and published per module and per track in [`docs/coverage-table.md`](coverage-table.md); the plant,
 its provenance rule and the workbench import contract are documented in
-[`resources/plants/README.md`](../resources/plants/README.md).
+[`resources/plants/README.md`](../resources/plants/README.md), and its named model levels — A the
+joint-space arm, B the local linear model, C coupled dynamics (specified only), D actuator/sensor
+primitives — in [`docs/MODEL_LEVELS.md`](MODEL_LEVELS.md). A richer lesson adds a level; it does not
+replace the one whose numbers are published.
 
 ## 2. The two metadata blocks
 

@@ -176,7 +176,14 @@ def motor_dynamics(q1, q2, dq1, dq2, tau1, tau2, dist=(0.0, 0.0), gravity=True):
 
 
 def step_arm(state, tau, dist=(0.0, 0.0), dt=DT, gravity=True):
-    """One explicit-Euler plant step. `state` is (q1, q2, dq1, dq2); returns the next state."""
+    """One semi-implicit (symplectic) Euler step. `state` is (q1, q2, dq1, dq2).
+
+    The order matters and is not forward Euler: velocity is updated first, then position uses the
+    NEW velocity (`q += dq_new * dt`). That is why the arm's oscillatory modes stay bounded where
+    forward Euler would inject energy. `docs/MODEL_LEVELS.md` records the scheme; the same order is
+    what `00-foundations.T2.00a` teaches, so a lesson implementing forward Euler here really does
+    disagree with the plant - and should.
+    """
     q1, q2, dq1, dq2 = state
     ddq1, ddq2 = motor_dynamics(q1, q2, dq1, dq2, tau[0], tau[1], dist=dist, gravity=gravity)
     dq1 += ddq1 * dt
@@ -278,9 +285,11 @@ def simulate_motor(
     invented value would hide the missing measurement - the same reason the Tier 1 capstone states
     its own joint inertias instead of deriving them here. In SI, Kt == Ke.
 
-    Explicit Euler is only stable inside `dt < 2 * (pole time constant)`, so the two poles are
-    checked before stepping: silently returning `nan` from a discretisation mistake is the least
-    useful thing this library could do, and the limit is itself a Tier 2 lesson (the `dt` slider).
+    The loop is the same semi-implicit Euler as `step_arm`: current first, then speed from the NEW
+    current, then angle from the NEW speed. That scheme is only stable inside
+    `dt < 2 * (pole time constant)`, so the two poles are checked before stepping: silently
+    returning `nan` from a discretisation mistake is the least useful thing this library could do,
+    and the limit is itself a Tier 2 lesson (the `dt` slider).
 
     Returns a dict: final current, speed, angle, plus the trace when `record` is true. The joint-space
     plant above is what the arm exercises use; this is for the electrical and current-loop lessons.
@@ -291,7 +300,7 @@ def simulate_motor(
         pole = "electrical (2*L/R)" if dt > electrical_limit else "mechanical (2*J/b)"
         limit = min(electrical_limit, mechanical_limit)
         raise ValueError(
-            "dt=%.6g s is past the explicit-Euler stability limit for the %s pole "
+            "dt=%.6g s is past the Euler stability limit for the %s pole "
             "(dt must be < %.6g s here); use a smaller dt, or integrate that pole exactly"
             % (dt, pole, limit)
         )

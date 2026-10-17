@@ -41,6 +41,7 @@ jobs:
           python3 tests/test_module_parity.py
           python3 scripts/generate_plant_data.py --check
           python3 tests/test_plant.py
+          python3 tests/test_model_levels.py
           python3 scripts/check_term_order.py
           python3 scripts/generate_python_lessons_data.py --check
           python3 tests/test_exercises.py

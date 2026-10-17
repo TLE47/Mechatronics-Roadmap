@@ -14,6 +14,7 @@
     "test:parity": "python3 tests/test_module_parity.py",
     "check:plant": "python3 scripts/generate_plant_data.py --check",
     "test:plant": "python3 tests/test_plant.py",
+    "test:models": "python3 tests/test_model_levels.py",
     "check:exercises": "python3 scripts/run_exercise.py",
     "test:exercise": "python3 tests/test_exercise_package.py",
     "test:smoke": "node scripts/smoke_test_workbench.mjs",
