@@ -17,6 +17,7 @@ est_hours: 4.0
 hardware_required: false
 safety_level: none
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters

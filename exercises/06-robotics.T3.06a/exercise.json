@@ -1,0 +1,31 @@
+{
+  "id": "06-robotics.T3.06a",
+  "module": "modules/06-robotics.T3.06a.md",
+  "title": "MSE, hand-written backpropagation, gradient descent and behaviour cloning",
+  "requires": [
+    "mse_loss(y_hat, y_true) -> float (mean over samples)",
+    "forward(X, params) -> (H, Y_hat), tanh hidden layer",
+    "backward(X, Y, params, H, Y_hat) -> {dW1, db1, dW2, db2}",
+    "apply_gradients(params, grads, lr) -> new params, lr > 0",
+    "z_score(values) -> (normalised, mean, sigma), ValueError on no spread",
+    "train_bc(X, Y, hidden=8, lr=0.05, steps=200, seed=0) -> (params, losses)",
+    "predict(params, X) -> rows in demonstration units"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "mse_sum_not_mean": ["test_behavior.LossTests.test_the_loss_is_a_mean_over_samples"],
+    "no_tanh_derivative": ["test_behavior.BackwardTests.test_every_gradient_matches_finite_differences"],
+    "gradient_ascends": ["test_behavior.StepTests.test_one_step_at_a_small_rate_lowers_the_loss"],
+    "zscore_divides_by_zero": ["test_behavior.NormalisationTests.test_a_constant_column_is_refused"],
+    "w1_frozen": ["test_transfer.ClonedGravityTests.test_the_policy_is_accurate_on_held_out_states"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.06-robotics.T3.06a",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/06-robotics.T3.06a/starter.py python3 -m unittest discover -s exercises/06-robotics.T3.06a -p 'test_*.py'"
+  }
+}

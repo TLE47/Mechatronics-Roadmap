@@ -17,6 +17,7 @@ est_hours: 5.0
 hardware_required: false
 safety_level: none
 resources_verified: true
+verification: ci-native
 ---
 
 ## 1. Why it matters
@@ -111,6 +112,16 @@ For a single scalar weight $w = 2.0$, input $x = 3.0$, prediction $\hat{y} = w x
 - **If your result differs:** Check the sign of $\hat{y} - y^{*} = 6.0 - 10.0 = -4.0$, so $\frac{\partial \mathcal{L}}{\partial w} = 2(-4.0)(3.0) = -24.0$, and subtracting $\eta(-24.0)$ increases $w$ from $2.0$ to $3.20$ (moving $\hat{y} = 3.20 \times 3.0 = 9.60$ much closer to $y^{*} = 10.0$!).
 
 
+### Graded package - backpropagation by hand, checked by finite difference
+[`exercises/06-robotics.T3.06a/`](../exercises/06-robotics.T3.06a/) turns this section into a test. `starter.py` holds seven holes: `mse_loss` (a mean over samples, not a sum), `forward` (tanh hidden layer, linear output), `backward` (the whole chain rule, including the $2/N$ and the $1-H^2$), `apply_gradients` (descent, and a new dict rather than a mutated one), `z_score` (refusing a column with no spread), `train_bc` (normalise, seed, iterate) and `predict` (normalise in, denormalise out). Edit it, then run the tests the way CI does:
+
+```bash
+EXERCISE_TARGET=exercises/06-robotics.T3.06a/starter.py \
+  python3 -m unittest discover -s exercises/06-robotics.T3.06a -p 'test_*.py'
+```
+
+**20 tests.** The decisive one is a **central finite difference on every parameter** of a small net ($\pm 10^{-6}$, agreeing to $10^{-7}$), which no shape-correct but derivative-wrong backward pass survives; the rest pin the mean, the tanh, the descent direction, the unchanged original dict, the zero-mean/unit-spread z-score and its guard, a loss that falls below $1\%$ of its first value, a policy that predicts in demonstration units, and identical policies from identical seeds. The transfer suite trains on `plant.gravity_torque` across the arm's workspace, requires the held-out error to stay under **1% of the $2.5\text{ N}\cdot\text{m}$ limit**, checks the learned map at the poses where the gravity cosine bends, and then **puts the policy in the plant's PD loop**: the cloned feedforward must track the figure-8 within $5\%$ of the analytic model's $0.91\text{ mm}$ RMS. Five planted faults - `mse_sum_not_mean`, `no_tanh_derivative`, `gradient_ascends`, `zscore_divides_by_zero`, `w1_frozen` - each fail the test named for them.
+
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00a`](00-foundations.T2.00a.md) (*Matrix Inversion & Multiplication*), [`00-foundations.T3.00a`](00-foundations.T3.00a.md) ($SO(3)$ Exponential Map $\operatorname{Exp}(\phi)$), and Legacy **Step 3.1 (`00-foundations.T3.01`)**.
   - **Prerequisite Bridge Module:** [`06-robotics.T2.06b`](06-robotics.T2.06b.md) and Legacy **Step 2.7 (`06-robotics.T2.07`)**.
@@ -127,6 +138,8 @@ No hardware required for this module (`hardware_required: false`). In Step 3.7 (
                                                                     [1 kHz Impedance + CBF Safety Filter]
 ```
 Pass/fail verification in simulation: finite-difference gradient check matches analytical backprop within $< 10^{-7}$ and Behavior Cloning MSE drops from `13.57` to `< 0.01`.
+
+The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T3.06a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 
 
 ```mermaid

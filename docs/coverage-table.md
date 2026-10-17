@@ -22,14 +22,14 @@ flowchart LR
 
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `00` | 12 | 55% | 40% | 75% | 29% | **52.6%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
+| `00` | 12 | 55% | 52% | 75% | 29% | **56.1%** | 0 arm · 0 exempt · 0 unhooked · 12 undeclared | `report` |
 | `01` | 7 | 59% | 40% | 100% | 0% | **56.6%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
 | `02` | 3 | 78% | 60% | 83% | 33% | **67.6%** | 1 arm · 0 exempt · 0 unhooked · 2 undeclared | `report` |
-| `03` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
-| `04` | 7 | 59% | 40% | 75% | 7% | **50.2%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
-| `05` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
-| `06` | 5 | 60% | 40% | 75% | 20% | **52.5%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
-| `07` | 3 | 70% | 40% | 75% | 17% | **54.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `03` | 3 | 70% | 47% | 75% | 17% | **56.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `04` | 7 | 59% | 43% | 75% | 7% | **51.1%** | 0 arm · 0 exempt · 0 unhooked · 7 undeclared | `report` |
+| `05` | 3 | 70% | 47% | 75% | 17% | **56.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
+| `06` | 5 | 60% | 52% | 75% | 30% | **57.6%** | 0 arm · 0 exempt · 0 unhooked · 5 undeclared | `report` |
+| `07` | 3 | 70% | 47% | 75% | 17% | **56.5%** | 0 arm · 0 exempt · 0 unhooked · 3 undeclared | `report` |
 | `08` | 1 | 60% | 40% | 75% | 0% | **49.5%** | 0 arm · 0 exempt · 0 unhooked · 1 undeclared | `report` |
 
 ## By tier
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **52.0%** |
-| Tier 2 | 18 | **58.2%** |
-| Tier 3 | 10 | **50.5%** |
+| Tier 2 | 18 | **62.2%** |
+| Tier 3 | 10 | **52.4%** |
 
-## Per module (44 modules, overall **54.2%**)
+## Per module (44 modules, overall **56.3%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -49,13 +49,13 @@ flowchart LR
 | `00-foundations.T1.00c` | 1 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `00-foundations.T1.00d` | 1 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `00-foundations.T1.00e` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
-| `00-foundations.T2.00a` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T2.00b` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T2.00c` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T2.00d` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T2.00e` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `00-foundations.T2.00f` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
-| `00-foundations.T3.00a` | 3 | 60% | 40% | 75% | 50% | **57.0%** | **undeclared** | 8 item(s) |
+| `00-foundations.T2.00a` | 2 | 50% | 60% | 75% | 50% | **60.5%** | **undeclared** | 7 item(s) |
+| `00-foundations.T2.00b` | 2 | 50% | 60% | 75% | 50% | **60.5%** | **undeclared** | 7 item(s) |
+| `00-foundations.T2.00c` | 2 | 50% | 60% | 75% | 50% | **60.5%** | **undeclared** | 7 item(s) |
+| `00-foundations.T2.00d` | 2 | 50% | 60% | 75% | 50% | **60.5%** | **undeclared** | 7 item(s) |
+| `00-foundations.T2.00e` | 2 | 50% | 60% | 75% | 50% | **60.5%** | **undeclared** | 7 item(s) |
+| `00-foundations.T2.00f` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
+| `00-foundations.T3.00a` | 3 | 60% | 60% | 75% | 50% | **63.0%** | **undeclared** | 7 item(s) |
 | `01-electronics.T1.01a` | 1 | 50% | 40% | 100% | 0% | **54.5%** | **undeclared** | 7 item(s) |
 | `01-electronics.T1.01b` | 1 | 75% | 40% | 100% | 0% | **60.8%** | **undeclared** | 6 item(s) |
 | `01-electronics.T1.01c` | 1 | 50% | 40% | 100% | 0% | **54.5%** | **undeclared** | 7 item(s) |
@@ -67,25 +67,25 @@ flowchart LR
 | `02-mechanics.T2.02a` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `02-mechanics.T3.02a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `03-sensors.T1.03a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
-| `03-sensors.T2.03a` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
+| `03-sensors.T2.03a` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
 | `03-sensors.T3.03a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `04-embedded.T1.04a` | 1 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `04-embedded.T1.04b` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
 | `04-embedded.T2.04a` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `04-embedded.T2.04b` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
 | `04-embedded.T2.04c` | 2 | 50% | 40% | 75% | 0% | **47.0%** | **undeclared** | 9 item(s) |
-| `04-embedded.T2.04d` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
+| `04-embedded.T2.04d` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
 | `04-embedded.T3.04a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `05-control.T1.05a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
-| `05-control.T2.05a` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
+| `05-control.T2.05a` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
 | `05-control.T3.05a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `06-robotics.T1.06a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
-| `06-robotics.T2.06a` | 2 | 50% | 40% | 75% | 50% | **54.5%** | **undeclared** | 8 item(s) |
-| `06-robotics.T2.06b` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
-| `06-robotics.T3.06a` | 3 | 40% | 40% | 75% | 0% | **44.5%** | **undeclared** | 10 item(s) |
+| `06-robotics.T2.06a` | 2 | 50% | 60% | 75% | 50% | **60.5%** | **undeclared** | 7 item(s) |
+| `06-robotics.T2.06b` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
+| `06-robotics.T3.06a` | 3 | 40% | 60% | 75% | 50% | **58.0%** | **undeclared** | 8 item(s) |
 | `06-robotics.T3.06b` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `07-systems.T1.07a` | 1 | 75% | 40% | 75% | 0% | **53.2%** | **undeclared** | 8 item(s) |
-| `07-systems.T2.07a` | 2 | 75% | 40% | 75% | 50% | **60.8%** | **undeclared** | 7 item(s) |
+| `07-systems.T2.07a` | 2 | 75% | 60% | 75% | 50% | **66.8%** | **undeclared** | 6 item(s) |
 | `07-systems.T3.06a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 | `08-capstones.T3.07a` | 3 | 60% | 40% | 75% | 0% | **49.5%** | **undeclared** | 9 item(s) |
 
@@ -136,13 +136,13 @@ not demonstrated learner mastery.
 | `00-foundations.T1.00c` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `00-foundations.T1.00d` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `00-foundations.T1.00e` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `00-foundations.T2.00a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00b` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00c` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00d` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00e` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00f` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T3.00a` | **57.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00a` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00b` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00c` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00d` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00e` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00f` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T3.00a` | **63.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `01-electronics.T1.01a` | **54.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `01-electronics.T1.01b` | **60.8%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `01-electronics.T1.01c` | **54.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
@@ -154,25 +154,25 @@ not demonstrated learner mastery.
 | `02-mechanics.T2.02a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-16, 13 min, 0 hints | - | `-` |
 | `02-mechanics.T3.02a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `03-sensors.T1.03a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `03-sensors.T2.03a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `03-sensors.T2.03a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `03-sensors.T3.03a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T1.04a` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T1.04b` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T2.04a` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T2.04b` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `04-embedded.T2.04c` | **47.0%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `04-embedded.T2.04d` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `04-embedded.T2.04d` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `04-embedded.T3.04a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `05-control.T1.05a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `05-control.T2.05a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `05-control.T2.05a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `05-control.T3.05a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `06-robotics.T1.06a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `06-robotics.T2.06a` | **54.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `06-robotics.T2.06b` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `06-robotics.T3.06a` | **44.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
+| `06-robotics.T2.06a` | **60.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `06-robotics.T2.06b` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `06-robotics.T3.06a` | **58.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `06-robotics.T3.06b` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `07-systems.T1.07a` | **53.2%** | `-` | `-` | `-` | `-` | `-` | `-` |
-| `07-systems.T2.07a` | **60.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `07-systems.T2.07a` | **66.8%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `07-systems.T3.06a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 | `08-capstones.T3.07a` | **49.5%** | `-` | `-` | `-` | `-` | `-` | `-` |
 
@@ -186,16 +186,16 @@ test that names it. The tests the harness runs are the same ones CI runs.
 The plan asks for these too. No artifact exists for them yet, so they are listed rather than
 scored - each one is a piece of work, not a zero:
 
-- **Behavioural tests for the other 30 modules:** 14 exercise packages exist
+- **Behavioural tests for the other 29 modules:** 15 exercise packages exist
   (`00-foundations.T2.00a`-`T2.00f`, `02-mechanics.T2.02a`, `03-sensors.T2.03a`,
   `04-embedded.T2.04d`, `05-control.T2.05a`, `06-robotics.T2.06a`-`T2.06b` and
   `07-systems.T2.07a`), and they are the template. `INSTRUCTOR_TESTS` in
   `scripts/generate_python_lessons_data.py` covers the beginner lessons only, so the remaining
   bridge modules ship no graded exercise of their own and their rows read `-` in the
   Behaviour-graded column.
-- **Module exercises in the workbench:** each of those 14 packages is generated into the app
+- **Module exercises in the workbench:** each of those 15 packages is generated into the app
   as a self-checking entry and `scripts/e2e_pages_bundle.mjs` drives all of them on the built
-  bundle, so the browser path is measured on 14 exercises, not assumed from one.
+  bundle, so the browser path is measured on 15 exercises, not assumed from one.
 - **Maths-claims audit:** absolute claims (`guaranteed`, `always`, `never`, `positive definite`)
   with their stated assumptions, and a counterexample test where a claim is easy to get wrong.
 - **Transfer-task retention:** whether the Transfer task still passes 1-2 weeks later, and
