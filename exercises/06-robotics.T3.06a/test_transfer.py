@@ -48,11 +48,23 @@ class ClonedGravityTests(unittest.TestCase):
         predicted = submission.predict(self.params, self.X_test)
         errors = [math.hypot(a[0] - b[0], a[1] - b[1])
                   for a, b in zip(predicted, self.Y_test)]
-        self.assertLess(sum(errors) / len(errors), 0.02,
-                        "mean error must stay under 0.02 N*m (0.8%% of the %.1f N*m limit)"
-                        % plant.TAU_LIMIT)
-        self.assertLess(max(errors), 0.10)
-        self.assertLess(self.losses[-1], 0.02 * self.losses[0])
+        self.assertLess(
+            sum(errors) / len(errors), 0.02,
+            msg="expected the cloned gravity map to hold its mean error under 0.02 N*m, 0.8 "
+                "percent of the plant's 2.5 N*m limit; a larger error means the fit settled in "
+                "a poorer minimum - check the hidden width and step count",
+        )
+        self.assertLess(
+            max(errors), 0.10,
+            msg="expected the worst held-out state to stay within 0.10 N*m, so no pose is badly "
+                "served; a larger value means one corner of the workspace was never "
+                "demonstrated - check the sample range",
+        )
+        self.assertLess(
+            self.losses[-1], 0.02 * self.losses[0],
+            msg="expected 1200 steps to cut the training loss fiftyfold; a smaller fall means "
+                "the optimiser stalled early - check the learning rate and the gradient sign",
+        )
 
     def test_the_gravity_map_is_a_cosine_of_the_shoulder(self):
         # The plant's gravity torque is a cosine in q1 and q1+q2; the policy has to have found it.
@@ -60,8 +72,18 @@ class ClonedGravityTests(unittest.TestCase):
         predicted = submission.predict(self.params, grid)
         for q, p in zip(grid, predicted):
             truth = plant.gravity_torque(q[0], q[1])
-            self.assertAlmostEqual(p[0], truth[0], delta=0.08)
-            self.assertAlmostEqual(p[1], truth[1], delta=0.08)
+            self.assertAlmostEqual(
+                p[0], truth[0], delta=0.08,
+                msg="expected the learned shoulder torque to follow the plant's cosine in q1 and "
+                    "q1 + q2 across the grid; a larger gap means the network smoothed the "
+                    "cosine away - check the hidden width against the data",
+            )
+            self.assertAlmostEqual(
+                p[1], truth[1], delta=0.08,
+                msg="expected the learned elbow torque to follow the plant's own gravity map; a "
+                    "larger gap means the second output was trained on the first joint's "
+                    "angle - check the demonstration labels",
+            )
 
     def test_the_cloned_map_tracks_the_figure_eight(self):
         analytic = plant.simulate_arm()
@@ -75,9 +97,23 @@ class ClonedGravityTests(unittest.TestCase):
                     max(-plant.TAU_LIMIT, min(plant.TAU_LIMIT, tau[1])))
 
         learned = plant.simulate_arm(controller=controller)
-        self.assertLess(learned["rms_dyn_err_mm"], 1.05 * analytic["rms_dyn_err_mm"])
-        self.assertLess(learned["max_dyn_err_mm"], 1.10 * analytic["max_dyn_err_mm"])
-        self.assertLess(learned["max_ik_fk_err_mm"], 1e-9)
+        self.assertLess(
+            learned["rms_dyn_err_mm"], 1.05 * analytic["rms_dyn_err_mm"],
+            msg="expected the cloned feedforward to track the figure-8 within 5 percent of the "
+                "analytic model's RMS error; a larger gap means the policy's error is exciting "
+                "the loop - check the held-out accuracy first",
+        )
+        self.assertLess(
+            learned["max_dyn_err_mm"], 1.10 * analytic["max_dyn_err_mm"],
+            msg="expected the cloned feedforward's worst excursion to stay within 10 percent of "
+                "the analytic model's; a larger peak means one pose's torque is far off",
+        )
+        self.assertLess(
+            learned["max_ik_fk_err_mm"], 1e-9,
+            msg="expected the plant's own kinematics to stay self-consistent whatever the "
+                "controller asks, error under a nanometre; a larger value means the "
+                "controller mutated the plant's state - check for shared references",
+        )
 
     def test_the_gradient_is_exact_on_the_plants_states(self):
         X = self.X_train[:6]
@@ -99,7 +135,12 @@ class ClonedGravityTests(unittest.TestCase):
                 plus["W1"][i][j] += eps
                 minus["W1"][i][j] -= eps
                 fd = (loss_of(plus) - loss_of(minus)) / (2.0 * eps)
-                self.assertAlmostEqual(grads["dW1"][i][j], fd, delta=1e-7)
+                self.assertAlmostEqual(
+                    grads["dW1"][i][j], fd, delta=1e-7,
+                    msg="expected every first-layer weight gradient to match the finite "
+                        "difference on the plant's own states; a mismatch means a chain-rule "
+                        "term or the 2/N scale is wrong - check the backward pass",
+                )
 
 
 if __name__ == "__main__":

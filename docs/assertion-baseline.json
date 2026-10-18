@@ -6,24 +6,17 @@
     "likely",
     "expected"
   ],
-  "total": 459,
+  "total": 273,
   "files": {
-    "exercises/00-foundations.T1.00c/test_behavior.py": 21,
-    "exercises/00-foundations.T1.00c/test_transfer.py": 10,
     "exercises/00-foundations.T1.00e/test_transfer.py": 12,
     "exercises/00-foundations.T2.00a/test_behavior.py": 13,
     "exercises/00-foundations.T2.00a/test_transfer.py": 3,
     "exercises/00-foundations.T2.00b/test_behavior.py": 1,
     "exercises/00-foundations.T2.00b/test_transfer.py": 8,
-    "exercises/00-foundations.T2.00d/test_behavior.py": 23,
-    "exercises/00-foundations.T2.00d/test_transfer.py": 7,
     "exercises/00-foundations.T2.00f/test_behavior.py": 1,
     "exercises/00-foundations.T2.00f/test_transfer.py": 16,
-    "exercises/02-mechanics.T1.02a/test_behavior.py": 21,
-    "exercises/02-mechanics.T1.02a/test_transfer.py": 12,
     "exercises/02-mechanics.T2.02a/test_behavior.py": 19,
     "exercises/02-mechanics.T2.02a/test_transfer.py": 6,
-    "exercises/03-sensors.T1.03a/test_transfer.py": 28,
     "exercises/03-sensors.T2.03a/test_transfer.py": 10,
     "exercises/03-sensors.T3.03a/test_transfer.py": 20,
     "exercises/04-embedded.T2.04b/test_transfer.py": 27,
@@ -36,17 +29,9 @@
     "exercises/05-control.T3.05b/test_transfer.py": 5,
     "exercises/05-control.T3.05c/test_behavior.py": 14,
     "exercises/05-control.T3.05c/test_transfer.py": 8,
-    "exercises/06-robotics.T3.06a/test_behavior.py": 21,
-    "exercises/06-robotics.T3.06a/test_transfer.py": 9,
-    "exercises/07-systems.T1.07a/test_behavior.py": 22,
-    "exercises/07-systems.T1.07a/test_transfer.py": 12,
     "exercises/08-capstones.T3.07a/test_transfer.py": 18
   },
   "tracks": {
-    "00-foundations": {
-      "total": 115,
-      "files": 11
-    },
     "05-control": {
       "total": 82,
       "files": 7
@@ -55,20 +40,16 @@
       "total": 64,
       "files": 3
     },
-    "02-mechanics": {
-      "total": 58,
-      "files": 4
+    "00-foundations": {
+      "total": 54,
+      "files": 7
     },
     "03-sensors": {
-      "total": 58,
-      "files": 3
-    },
-    "07-systems": {
-      "total": 34,
+      "total": 30,
       "files": 2
     },
-    "06-robotics": {
-      "total": 30,
+    "02-mechanics": {
+      "total": 25,
       "files": 2
     },
     "08-capstones": {
