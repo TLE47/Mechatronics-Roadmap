@@ -35,15 +35,37 @@ class RotatingTheArmTests(unittest.TestCase):
             tip = list(plant.fk(q[0], q[1])) + [0.0]
             turned = matvec(submission.exp_so3([theta * value for value in z]), tip)
             expected = plant.fk(q[0] + theta, q[1])
-            self.assertAlmostEqual(turned[0], expected[0], delta=1e-12)
-            self.assertAlmostEqual(turned[1], expected[1], delta=1e-12)
-            self.assertAlmostEqual(turned[2], 0.0, delta=1e-12)
+            self.assertAlmostEqual(
+                turned[0], expected[0], delta=1e-12,
+                msg="expected rotating the tip about z to match advancing the shoulder by theta "
+                    "at every pose in this loop; a mismatch likely rotated the point but "
+                    "recomputed the target wrongly",
+            )
+            self.assertAlmostEqual(
+                turned[1], expected[1], delta=1e-12,
+                msg="expected the rotated y to match the plant's forward kinematics at q1 + "
+                    "theta for every pose in this loop; a sign error likely turned the arm the "
+                    "other way",
+            )
+            self.assertAlmostEqual(
+                turned[2], 0.0, delta=1e-12,
+                msg="expected the planar tip to stay at z = 0 after a base rotation; a nonzero "
+                    "value likely used a rotation vector off the z axis",
+            )
 
     def test_a_full_turn_returns_the_arm_to_itself(self):
         tip = list(plant.fk(0.2, 0.8)) + [0.0]
         turned = matvec(submission.exp_so3([0.0, 0.0, 2.0 * math.pi]), tip)
-        self.assertAlmostEqual(turned[0], tip[0], delta=1e-12)
-        self.assertAlmostEqual(turned[1], tip[1], delta=1e-12)
+        self.assertAlmostEqual(
+            turned[0], tip[0], delta=1e-12,
+            msg="expected a full turn to return the tip's x unchanged; a small offset likely "
+                "came from dropping the (1 - cos)/theta^2 coefficient",
+        )
+        self.assertAlmostEqual(
+            turned[1], tip[1], delta=1e-12,
+            msg="expected the tip's y to return unchanged after 2 pi; a residual large enough "
+                "to see means the rotation matrix lost orthogonality",
+        )
 
 
 class EnergyBalanceTests(unittest.TestCase):
@@ -55,8 +77,17 @@ class EnergyBalanceTests(unittest.TestCase):
                 (potential([q[0], q[1] + h]) - potential([q[0], q[1] - h])) / (2.0 * h),
             ]
             tau_g = plant.gravity_torque(q[0], q[1])
-            self.assertAlmostEqual(grad[0], tau_g[0], delta=1e-8, msg="dH/dq1 must be tau_g1")
-            self.assertAlmostEqual(grad[1], tau_g[1], delta=1e-8, msg="dH/dq2 must be tau_g2")
+            self.assertAlmostEqual(
+                grad[0], tau_g[0], delta=1e-8,
+                msg="expected the finite-difference dH/dq1 to equal the plant's gravity torque "
+                    "at every pose in this loop; a sign mismatch likely defined H with the "
+                    "wrong vertical direction - check G and sin",
+            )
+            self.assertAlmostEqual(
+                grad[1], tau_g[1], delta=1e-8,
+                msg="expected dH/dq2 to equal the second gravity torque at every pose in this "
+                    "loop; a mismatch likely omitted the elbow's own centre of mass - check LC2",
+            )
 
     def test_the_power_balance_matches_a_central_difference(self):
         q = [0.4, 0.9]
@@ -65,7 +96,12 @@ class EnergyBalanceTests(unittest.TestCase):
         numerical = (potential([q[0] + h * q_dot[0], q[1] + h * q_dot[1]])
                      - potential([q[0] - h * q_dot[0], q[1] - h * q_dot[1]])) / (2.0 * h)
         rate = submission.energy_rate(list(plant.gravity_torque(q[0], q[1])), q_dot)
-        self.assertAlmostEqual(rate, numerical, delta=1e-9)
+        self.assertAlmostEqual(
+            rate, numerical, delta=1e-9,
+            msg="expected the submission's power balance to match the central-difference rate "
+                "of the arm's energy; a mismatch likely forgot that the torque is the gradient "
+                "of H - check the dot product",
+        )
 
     def test_damping_only_ever_removes_energy(self):
         q, q_dot = (0.4, 0.9), (0.3, -0.2)
@@ -74,9 +110,17 @@ class EnergyBalanceTests(unittest.TestCase):
             list(plant.gravity_torque(*q)), list(q_dot),
             plant.B1 * q_dot[0] ** 2 + plant.B2 * q_dot[1] ** 2,
         )
-        self.assertLess(damped, rate)
-        self.assertAlmostEqual(rate - damped,
-                               plant.B1 * q_dot[0] ** 2 + plant.B2 * q_dot[1] ** 2, delta=1e-12)
+        self.assertLess(
+            damped, rate,
+            msg="expected adding joint damping to lower the energy rate, never raise it; a "
+                "larger value means the dissipation sign is inverted",
+        )
+        self.assertAlmostEqual(
+            rate - damped,
+            plant.B1 * q_dot[0] ** 2 + plant.B2 * q_dot[1] ** 2, delta=1e-12,
+            msg="expected the rate drop to equal the plant's own b dq^2 losses; another value "
+                "likely used b dq rather than b dq^2 - check the units are watts",
+        )
 
 
 if __name__ == "__main__":

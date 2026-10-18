@@ -39,14 +39,27 @@ class ElbowJointTests(unittest.TestCase):
         total_b = b_command + plant.B2
         predicted = submission.second_order_params(j, k, total_b)["mp"]
         measured = max(0.0, run_elbow(k, b_command)["max_theta"] - 1.0)
-        self.assertAlmostEqual(measured, predicted, delta=0.01)
+        self.assertAlmostEqual(
+            measured, predicted, delta=0.01,
+            msg="expected the plant's measured overshoot to match the formula within 1 percent at "
+                "zeta = 0.35; a mismatch likely means the plant's own B2 was left out of the "
+                "predicted damping",
+        )
 
     def test_critical_damping_kills_the_overshoot(self):
         j, k = plant.I2, 8.0
         b = submission.critical_damping(j, k)
         measured = max(0.0, run_elbow(k, b)["max_theta"] - 1.0)
-        self.assertLess(measured, 1e-3)
-        self.assertAlmostEqual(submission.second_order_params(j, k, b)["zeta"], 1.0, delta=1e-12)
+        self.assertLess(
+            measured, 1e-3,
+            msg="expected critical damping to keep the plant's overshoot under 0.1 percent; a "
+                "visible overshoot means b fell short of 2 sqrt(Jk)",
+        )
+        self.assertAlmostEqual(
+            submission.second_order_params(j, k, b)["zeta"], 1.0, delta=1e-12,
+            msg="expected the critical b to evaluate to zeta = 1 exactly; another value means "
+                "critical_damping and the parameter function disagree",
+        )
 
     def test_settling_time_is_in_the_right_ballpark_on_the_plant(self):
         j, k = plant.I2, 8.0
@@ -55,10 +68,18 @@ class ElbowJointTests(unittest.TestCase):
         b_command = total_b - plant.B2
         params = submission.second_order_params(j, k, total_b)
         ts = submission.settling_time(params["wn"], params["zeta"])
-        self.assertGreater(ts, 0.0)
+        self.assertGreater(
+            ts, 0.0,
+            msg="expected a positive settling time at zeta = 0.5; a negative or zero value "
+                "likely came from an inverted envelope - check 4 / (zeta wn)",
+        )
         # At 1.3 x the predicted 2% time the plant must be inside 3% of target.
         final = run_elbow(k, b_command, steps=int(1.3 * ts / 1e-5), dt=1e-5)["theta"]
-        self.assertLess(abs(final - 1.0), 0.03)
+        self.assertLess(
+            abs(final - 1.0), 0.03,
+            msg="expected the plant to be within 3 percent of target at 1.3 times the predicted "
+                "settling time; a larger error means the formula understated the transient",
+        )
 
 
 class MotorTests(unittest.TestCase):
@@ -80,9 +101,21 @@ class MotorTests(unittest.TestCase):
         trace = run["trace"]
         steady = trace[-1][1]
         at_tau = min(trace, key=lambda row: abs(row[0] - tau))[1]
-        self.assertAlmostEqual(steady, 2.0, delta=0.02)          # V / R
-        self.assertAlmostEqual(at_tau / steady, 1.0 - math.exp(-1), delta=0.02)
-        self.assertAlmostEqual(at_tau / steady, submission.first_order_response(tau, tau), delta=0.02)
+        self.assertAlmostEqual(
+            steady, 2.0, delta=0.02,
+            msg="expected the motor's current to settle at V/R = 2.0 A; 1.0 likely used the "
+                "back-EMF as if the shaft were stalled elsewhere - check the steady state",
+        )
+        self.assertAlmostEqual(
+            at_tau / steady, 1.0 - math.exp(-1), delta=0.02,
+            msg="expected 63.2 percent of the steady current at t = L/R; a much lower fraction "
+                "means the electrical time constant was not the one the trace is sampled at",
+        )
+        self.assertAlmostEqual(
+            at_tau / steady, submission.first_order_response(tau, tau), delta=0.02,
+            msg="expected the measured fraction to match the submission's own first-order "
+                "answer at one tau; a mismatch means the two disagree about what tau is",
+        )
 
 
 if __name__ == "__main__":
