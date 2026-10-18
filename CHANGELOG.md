@@ -11,6 +11,34 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 85: Fifth Burn-Down Round — Foundations First, 975 → 737
+
+### 1. Four foundations packages and two more, both graded files each
+- `00-foundations.T1.00d` (41), `00-foundations.T2.00e` (41), `01-electronics.T2.01b` (40),
+  `00-foundations.T2.00g` (39), `06-robotics.T3.06b` (39) and `00-foundations.T2.00h` (38) now carry
+  a message on every graded assertion in both `test_behavior.py` and `test_transfer.py`.
+- **238 messages**, baseline **975 → 737** weak assertions across **61 → 49** files.
+
+### 2. What the foundations messages teach
+- The four traps that share one page family get their own words: `atan(y/x)` losing the quadrant,
+  a companion matrix whose poles are the physics, a PPO clip that must stay pessimistic for negative
+  advantages, and a resonance peak that sits below wn. Each message names the wrong number the bug
+  produces, not just the right one.
+- Assertions inside measurement loops (the plant's lock-in Bode sweep, the shield's per-tick
+  callback) carry a sentence about the whole loop, so no `%`-interpolated message re-enters the file.
+
+### 3. Verification
+- All six packages re-graded with `run_exercise.py --only <id>`: starter fails, solution passes, every
+  fault fails its named test — exit 0 for all six.
+- `git diff -U0 -- exercises | grep '^-.*def test_'` is empty: no test deleted, renamed or loosened.
+- `lint_assertions` clean at the new floor (737 / 49); 17/17 `tests/test_*.py`, plus `verify_repo`,
+  `validate_modules`, `lint_lessons`, `check_term_order`, `audit_math`, `run_all_labs`, `npm run lint`
+  and `npm run build`.
+- Remaining worst packages: `00-foundations.T3.00a` and `06-robotics.T2.06b` (37 each), then
+  `00-foundations.T1.00a`, `00-foundations.T2.00c` and `01-electronics.T1.01d` (35 each).
+
+---
+
 ## [2026-10-18] — Run 84: Fourth Burn-Down Round — The Next Six, 1247 → 975
 
 ### 1. The six worst packages, both graded files each
