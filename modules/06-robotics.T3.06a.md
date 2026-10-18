@@ -453,17 +453,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below and $\ge 80\%$ ($8/10$, with $2/2$ on `[SAFETY]`) on the ladder's Gate test.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below and $\ge 80\%$ ($8/10$, with $2/2$ on `[SAFETY]`) on the ladder's Gate test.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: neural_network_forward_pass_and_mse_loss]` Given predictions $\hat{y} = [1.0, 3.0]^\top$ and expert targets $y^{*} = [2.0, 1.0]^\top$ ($N = 2$), compute the Mean-Squared Error $\mathcal{L} = \frac{1}{2}\sum_{i=1}^2 (\hat{y}_i - y_i^{*})^2$ (tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: chain_rule_backpropagation_and_gradient_descent]` For loss $\mathcal{L}(w) = (w x - y^{*})^2$ with $w = 1.0$, $x = 2.0$, and $y^{*} = 6.0$, compute the gradient $\frac{\partial \mathcal{L}}{\partial w} = 2(w x - y^*)x$ (tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: chain_rule_backpropagation_and_gradient_descent]` Using the gradient $\frac{\partial \mathcal{L}}{\partial w} = -16.0$ from Q2 and learning rate $\eta = 0.10$, compute the updated weight $w_{\text{new}} = w - \eta \frac{\partial \mathcal{L}}{\partial w}$ (tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 06-robotics.T2.07 — Concept: matrix_vector_multiplication] [Concept: behavior_cloning_expert_demonstration_fit]` What is **covariate shift (compounding error)** in naive single-step Behavior Cloning?
+4. `[Concept: behavior_cloning_expert_demonstration_fit]` What is **covariate shift (compounding error)** in naive single-step Behavior Cloning?
    - **A.** When the GPU clock frequency changes during training.
    - **B.** When small prediction errors push the robot into states slightly outside the expert's demonstration distribution, where the policy has no training data and makes larger errors that compound quadratically over the trajectory.
    - **C.** When the learning rate $\eta$ is set to zero.
    - **D.** When the encoder wire is unplugged.
+5. `[Spaced review -> 06-robotics.T2.06b — Concept: rosbag2_mcap_recording_and_deterministic_replay]` A bag records a topic at $30\,\text{Hz}$ for $10.0\,\text{s}$. Compute the number of messages (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -478,8 +480,11 @@ assert math.isclose(q1_mse, 2.5, rel_tol=1e-9)
 assert math.isclose(q2_grad, -16.0, rel_tol=1e-9)
 assert math.isclose(q3_wnew, 2.6, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = 30.0 * 10.0
+assert math.isclose(q5_review, 300.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `06-robotics.T2.06b`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 06 Tier 3 Embodied AI bridge ladder ([`06-robotics.T3.06a`](06-robotics.T3.06a.md) $\to$ [`06-robotics.T3.06b`](06-robotics.T3.06b.md)) before Step 3.7 (`06-robotics.T3.07`):

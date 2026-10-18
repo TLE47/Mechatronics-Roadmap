@@ -1,0 +1,30 @@
+{
+  "id": "00-foundations.T2.00h",
+  "module": "modules/00-foundations.T2.00h.md",
+  "title": "Winding impedance, transfer functions, decibels and the resonance peak",
+  "requires": [
+    "impedance_rl(r_ohm, l_h, omega) -> complex ohms",
+    "first_order_response(tau, omega) -> complex",
+    "second_order_response(wn, zeta, omega) -> complex",
+    "magnitude_db(h) -> float (20 log10)",
+    "phase_deg(h) -> float (degrees)",
+    "resonance_peak(wn, zeta) -> (omega_r, peak)"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "series_impedance_adds_magnitudes": ["test_behavior.ImpedanceTests.test_magnitude_is_the_hypotenuse"],
+    "ten_log": ["test_behavior.BodeTests.test_decibels_are_amplitude_decibels"],
+    "phase_radians": ["test_behavior.BodeTests.test_phase_is_in_degrees"],
+    "peak_at_natural": ["test_behavior.ResonanceTests.test_the_peak_is_on_the_curve"],
+    "hardcoded_response": ["test_behavior.SecondOrderTests.test_dc_gain_is_one_for_any_damping"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T2.00h",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T2.00h/starter.py python3 -m unittest discover -s exercises/00-foundations.T2.00h -p 'test_*.py'"
+  }
+}

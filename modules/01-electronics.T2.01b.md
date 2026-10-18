@@ -296,13 +296,14 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 2.2 (`01-electronics.T2.02`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($5/6$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 2.2 (`01-electronics.T2.02`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: parasitic_loop_inductance_voltage_overshoot]` Compute the peak Drain-to-Source voltage $V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{\Delta I}{\Delta t}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) when $V_{\text{bus}} = 48.0\text{ V}$, $L_{\text{loop}} = 5.0\text{ nH}$, and $\Delta I = 24.0\text{ A}$ turns off in $\Delta t = 15.0\text{ ns}$.
 2. `[Apply] [Concept: bootstrap_high_side_gate_driver_and_deadtime]` Compute the average gate drive current $I_G = Q_g / t_r$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) required to charge a MOSFET gate with $Q_g = 45\text{ nC}$ in $t_r = 30\text{ ns}$.
 3. `[Transfer] [Concept: precharge_resistor_inrush_and_tvs_clamp]` Compute the stored bus energy $E_{\text{cap}} = \frac{1}{2} C_{\text{bus}} V_{\text{bus}}^2$ in joules ($\text{J}$, tolerance $\pm 10^{-6}$) in a $C_{\text{bus}} = 1500\ \mu\text{F}$ ($0.0015\text{ F}$) inverter capacitor bank charged to $V_{\text{bus}} = 48.0\text{ V}$.
-4. `[Spaced review -> 01-electronics.T2.01a — Concept: mosfet_low_side_rds_on_switch] [SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]` What happens if you hot-plug a $48\text{ V}$ LiPo battery ($R_{\text{internal}} = 15\text{ m}\Omega$) directly into an uncharged $1500\ \mu\text{F}$ inverter capacitor bank without a pre-charge resistor?
+4. `[SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]` What happens if you hot-plug a $48\text{ V}$ LiPo battery ($R_{\text{internal}} = 15\text{ m}\Omega$) directly into an uncharged $1500\ \mu\text{F}$ inverter capacitor bank without a pre-charge resistor?
    - **A.** Nothing; capacitors block inrush current.
    - **B.** The uncharged capacitor bank acts as a $0\text{ V}$ short at $t=0$, drawing an instantaneous inrush surge of $>1000\text{ A}$ that vaporizes connector pins, welds relays shut, and can avalanche the MOSFETs via $L\,di/dt$ ringing.
    - **C.** The battery voltage drops permanently to $12\text{ V}$.
@@ -312,6 +313,7 @@ Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SA
    - **B.** Because cutting the return plane forces high-frequency return current to detour around the slot, dramatically expanding magnetic loop area, increasing $L_{\text{loop}}$ voltage spikes, and injecting common-mode noise into ADC signals.
    - **C.** Because KiCad cannot export Gerbers with slots.
    - **D.** Because copper planes only conduct DC.
+6. `[Spaced review -> 01-electronics.T2.01a — Concept: differential_shunt_gain_and_cmrr]` A differential amplifier has a gain of $20.0$ and a differential input of $50.0\,\text{mV}$. Compute its output in volts (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -327,9 +329,11 @@ assert math.isclose(q2_ig, 1.5, rel_tol=1e-6)
 assert math.isclose(q3_ecap, 1.728, rel_tol=1e-9)
 assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"  # Mandatory [SAFETY] 100% required
+q6_review = 20.0 * 50.0e-3
+assert math.isclose(q6_review, 1.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
-
+- **Pass mark:** $5/6$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `01-electronics.T2.01a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 01 Tier 2 bridge ladder (`01-electronics.T2.01a` $\to$ `01-electronics.T2.01b`) before Step 2.2 (`01-electronics.T2.02`):

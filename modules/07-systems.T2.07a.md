@@ -312,17 +312,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.8 (`07-systems.T2.08`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.8 (`07-systems.T2.08`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: regenerative_bus_energy_and_chopper_sizing]` Compute the maximum brake resistor value $R_{\text{brake,max}} = \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}$ in Ohms ($\Omega$, tolerance $\pm 10^{-6}\ \Omega$) required to dissipate $P_{\text{regen,peak}} = 200.0\text{ W}$ at a clamping voltage of $V_{\text{clamp}} = 30.0\text{ V}$.
 2. `[Apply] [Concept: regenerative_bus_energy_and_chopper_sizing]` Compute the peak unclamped DC bus voltage $V_{\text{peak}} = \sqrt{V_{\text{nom}}^2 + \frac{2 \, \Delta E_{\text{regen}}}{C_{\text{bus}}}}$ in Volts ($\text{V}$, tolerance $\pm 10^{-6}\text{ V}$) when $\Delta E_{\text{regen}} = 3.0\text{ J}$ is dumped into a $C_{\text{bus}} = 1000\ \mu\text{F}$ ($0.001\text{ F}$) bus starting at $V_{\text{nom}} = 20.0\text{ V}$.
 3. `[Transfer] [Concept: can_fd_crc16_and_rolling_counter_watchdog]` A $1\text{ kHz}$ ($T_{\text{cmd}} = 1.0\text{ ms}$) CAN-FD actuator node triggers a watchdog fault after $N_{\text{miss}} = 4$ consecutive missed frames, and its 4-bit rolling counter wraps modulo $16$ from $c_{k-1} = 14$ to $c_k = 1$. Compute the number of dropped frames $\Delta_{\text{dropped}} = ((c_k - c_{k-1}) \bmod 16) - 1$ between $c_{k-1}=14$ and $c_k=1$ (exact integer, tolerance $\pm 0$).
-4. `[Spaced review -> 01-electronics.T2.01b — Concept: precharge_resistor_inrush_and_tvs_clamp] [Concept: sil_hil_fault_injection_verification]` Why does a bench power supply fail to prevent DC bus over-voltage during rapid motor deceleration, requiring an active shunt brake chopper on the inverter PCB?
+4. `[Concept: sil_hil_fault_injection_verification]` Why does a bench power supply fail to prevent DC bus over-voltage during rapid motor deceleration, requiring an active shunt brake chopper on the inverter PCB?
    - **A.** Because bench power supplies have series output protection diodes/transistors that only source positive current and cannot sink reverse regenerative current from the motor.
    - **B.** Because bench power supplies have infinite capacitance.
    - **C.** Because motors absorb electrical energy during braking.
    - **D.** Because CAN-FD cables carry the braking energy back to the laptop.
+5. `[Spaced review -> 01-electronics.T2.01b — Concept: precharge_resistor_inrush_and_tvs_clamp]` A $1000\ \mu\text{F}$ bus capacitor is charged to $48.0\,\text{V}$. Compute the stored energy $\tfrac12 C V^2$ in joules (tolerance $\pm 10^{-6}$).
 
 **Answer key:**
 ```python
@@ -337,8 +339,11 @@ assert math.isclose(q1_rbrake_ohm, 4.5, rel_tol=1e-9)
 assert math.isclose(q2_vpeak_v, 80.0, rel_tol=1e-9)
 assert q3_dropped == 2
 assert q4_choice == "A"
+q5_review = 0.5 * 1000e-6 * 48.0 ** 2
+assert math.isclose(q5_review, 1.152, rel_tol=1e-9, abs_tol=1e-06)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, Q2, or Q4, study `## 3. Formalization` item 1; if you missed Q3, study `## 3. Formalization` item 2. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, Q2, or Q4, study `## 3. Formalization` item 1; if you missed Q3, study `## 3. Formalization` item 2. If you missed  Q5, review `01-electronics.T2.01b`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the Track 07 Tier 2 bridge ladder (`07-systems.T2.07a`) and cross-domain integration prerequisites before Step 2.8 (`07-systems.T2.08`, Tier 2 Boss Capstone):

@@ -393,17 +393,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.3 (`02-mechanics.T3.03`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.3 (`02-mechanics.T3.03`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: spatial_twist_wrench_and_screw_axis]` Given spatial twist $\mathcal{V} = [\omega^\top, v^\top]^\top = [0.0, 0.0, 2.0,\ 0.5, 0.0, 0.0]^\top$ ($\text{rad/s}, \text{m/s}$) and spatial wrench $\mathcal{F} = [m^\top, f^\top]^\top = [0.0, 0.0, 3.0,\ 10.0, 0.0, 0.0]^\top$ ($\text{N}\cdot\text{m}, \text{N}$) in the same frame, compute the instantaneous mechanical power $P = \mathcal{V}^\top \mathcal{F} = \omega \cdot m + v \cdot f$ in watts ($\text{W}$, tolerance $\pm 10^{-9}\text{ W}$).
 2. `[Apply] [Concept: spatial_twist_wrench_and_screw_axis]` A revolute joint rotates about $+Z$ ($\omega = [0.0, 0.0, 1.0]^\top$) and passes through point $q = [0.50, 0.20, 0.0]^\top\text{ m}$. Compute the $x$-component $v_x$ of the screw linear term $v = -\omega \times q$ in $\text{m/rad}$ (tolerance $\pm 10^{-9}\text{ m/rad}$).
-3. `[Transfer] [Concept: circular_notch_flexure_stiffness_stress]` In the Paros-Weisbord circular notch flexure stiffness formula $K_\theta = \frac{2 E b t^{5/2}}{9\pi \sqrt{R}}$, by what multiplicative factor $2^{5/2}$ (tolerance $\pm 10^{-4}$) does $K_\theta$ increase if you double the web thickness $t$ while keeping $E, b, R$ constant?
-4. `[Spaced review -> 00-foundations.T3.01 — Concept: rodrigues_so3_se3_exp_log_maps] [Concept: recursive_forward_velocity_backward_wrench]` In the two-pass Recursive Newton-Euler Algorithm (`RNEA`) for a serial open-chain robot arm, in what directions do the two passes traverse the kinematic tree, and what is the computational complexity in terms of the number of joints $n$?
+3. `[Transfer] [Concept: circular_notch_flexure_stiffness_stress]` In the Paros-Weisbord circular notch flexure stiffness formula $K_\theta = \frac{2 E b t^{5/2}}{9\pi \sqrt{R}}$, by what multiplicative factor (tolerance $\pm 10^{-4}$) does $K_\theta$ increase if you double the web thickness $t$ while keeping $E, b, R$ constant?
+4. `[Concept: recursive_forward_velocity_backward_wrench]` In the two-pass Recursive Newton-Euler Algorithm (`RNEA`) for a serial open-chain robot arm, in what directions do the two passes traverse the kinematic tree, and what is the computational complexity in terms of the number of joints $n$?
    - **A.** Pass 1 (velocities/accelerations) goes outward from base $1 \to n$, Pass 2 (wrenches/torques) goes inward from tip $n \to 1$, achieving linear $O(n)$ complexity.
    - **B.** Both passes go from tip to base with $O(n^4)$ complexity.
    - **C.** Only a single pass is used and gravity is ignored.
    - **D.** It requires inverting $M(q)$ at every step.
+5. `[Spaced review -> 02-mechanics.T2.02a — Concept: se3_homogeneous_transformation_matrix]` A planar point $p = (0.10,\; 0.20)\,\text{m}$ is rotated by $\theta = 90^\circ$ about the origin. Compute its $x$ coordinate in metres (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -420,8 +422,11 @@ assert math.isclose(q1_power_w, 11.0, rel_tol=1e-9)
 assert math.isclose(q2_vx, 0.20, rel_tol=1e-9)
 assert math.isclose(q3_scale, 5.65685425, abs_tol=1e-4)
 assert q4_choice == "A"
+q5_review = math.cos(math.pi/2) * 0.10 - math.sin(math.pi/2) * 0.20
+assert math.isclose(q5_review, -0.2, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `02-mechanics.T2.02a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 02 Tier 3 bridge ladder (`02-mechanics.T3.02a`) before Step 3.3 (`02-mechanics.T3.03`):

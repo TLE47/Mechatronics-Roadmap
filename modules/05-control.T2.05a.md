@@ -375,17 +375,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 2.6 (`05-control.T2.06`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 2.6 (`05-control.T2.06`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: loop_transfer_gain_and_phase_margin]` At the gain crossover frequency $\omega_{gc}$ where $|L(j\omega_{gc})| = 0\text{ dB}$, the open-loop phase is $\angle L(j\omega_{gc}) = -125.0^\circ$. Compute the Phase Margin $\text{PM} = 180^\circ + \angle L(j\omega_{gc})$ in degrees (tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: sensitivity_complementary_waterbed_tradeoff]` At a high-frequency waterbed peak $\omega_p$ where the open-loop return ratio is $L(j\omega_p) = -0.60 + j0.0$, compute the sensitivity magnitude $M_s = |S(j\omega_p)| = \frac{1}{|1 + L(j\omega_p)|}$ (dimensionless, tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: luenberger_observer_and_brysons_lqr_weights]` Using Bryson's Rule $Q_{ii} = 1 / x_{i,\max}^2$, compute the diagonal weight $Q_{11}$ (in $\text{rad}^{-2}$, tolerance $\pm 10^{-9}$) for a pendulum angle state whose maximum acceptable deviation is $\theta_{\max} = 0.20\text{ rad}$.
-4. `[Spaced review -> 00-foundations.T2.01 — Concept: bode_magnitude_db_and_phase] [Concept: luenberger_observer_and_brysons_lqr_weights]` What happens to the optimal LQR feedback gains $K$ and actuator effort $u = -Kx$ if you multiply **both** cost matrices $Q$ and $R$ by the same positive scalar $\alpha = 10$ ($J = \sum x^\top (10Q) x + u^\top (10R) u$)?
+4. `[Concept: luenberger_observer_and_brysons_lqr_weights]` What happens to the optimal LQR feedback gains $K$ and actuator effort $u = -Kx$ if you multiply **both** cost matrices $Q$ and $R$ by the same positive scalar $\alpha = 10$ ($J = \sum x^\top (10Q) x + u^\top (10R) u$)?
    - **A.** The gain $K$ increases by $10\times$.
    - **B.** The optimal gain $K$ is **completely unchanged**, because scaling the entire cost function $J$ by a positive constant $10$ does not change the location of its minimum; only the *ratio* of $Q$ to $R$ matters!
    - **C.** The system becomes unstable.
    - **D.** The observer stops updating.
+5. `[Spaced review -> 00-foundations.T2.00e — Concept: discrete_state_transition_euler_tustin]` For $A = \begin{bmatrix} 0 & 1 \\ -4 & -2 \end{bmatrix}$ and $T_s = 0.10\,\text{s}$, compute $\operatorname{tr}(I + A T_s)$ (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -400,8 +402,12 @@ assert math.isclose(q1_pm_deg, 55.0, rel_tol=1e-9)
 assert math.isclose(q2_ms, 2.5, rel_tol=1e-9)
 assert math.isclose(q3_q11, 25.0, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = (1.0 + 0.0) + (1.0 + (-2.0) * 0.10)
+assert math.isclose(q5_review, 1.8, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T2.00e`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
+
 ### Gate test
 Covers the complete Track 05 Tier 2 bridge ladder (`05-control.T2.05a`) before Step 2.6 (`05-control.T2.06`):
 1. `[Concept: loop_transfer_gain_and_phase_margin]` At the phase crossover frequency $\omega_{pc}$ where $\angle L(j\omega_{pc}) = -180^\circ$, the open-loop magnitude is $|L(j\omega_{pc})| = 0.25$. Compute the Gain Margin $\text{GM}_{\text{dB}} = -20\log_{10}(0.25)$ in decibels ($\text{dB}$, tolerance $\pm 10^{-3}\text{ dB}$).

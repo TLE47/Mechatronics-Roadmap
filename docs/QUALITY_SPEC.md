@@ -31,7 +31,7 @@ measurable in this repository today. Each layer is scored as the fraction of its
 | :--- | :--- | :--- |
 | Structure | `front_matter_contract` | The keys `lint_modules.REQUIRED_FRONT_MATTER` demands |
 | Structure | `numbered_sections` | `## 1. Why it matters` … `## 10. Next modules`, exact titles, in order |
-| Structure | `checkpoint_tests` | `### Skip test` **and** `### Gate test`, with `[Recall]`, `[Apply]`, `[Transfer]` |
+| Structure | `checkpoint_tests` | `### Skip test` **and** `### Gate test`, with `[Recall]`, `[Apply]`, `[Transfer]` — both are rendered from a store (`resources/skip-tests.json`, `scripts/generate_ladder_gate.py`), never typed per page |
 | Structure | `difficulty_label` | The block in §2 below, complete and in range |
 | Structure | `tier3_two_levels` | Tier 3 only: `### Use & Understand` **and** `### Derive & Extend` |
 | Executable | `worked_example_runs` | A `python` block in `## 4. Worked example` with an `Expected output:` block — the pair `scripts/validate_modules.py` executes and diffs in CI |

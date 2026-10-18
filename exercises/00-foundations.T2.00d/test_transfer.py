@@ -1,15 +1,12 @@
-"""Transfer tests for 00-foundations.T2.00d - measure the Bode plot on the plant itself.
+"""Transfer tests for 00-foundations.T2.00d - the plant's commanded trajectory, read as phasors.
 
-The elbow joint is driven with a sine torque reference and the response is read back by projecting
-the position onto the excitation's sine and cosine - a lock-in measurement, the same thing a bench
-sine-sweep does. Nothing here reuses the submission's transfer function to produce the "measured"
-number: the measurement comes from `plant.step_arm`, the prediction from the submission.
-
-The plant's own viscous damping `plant.B2` is part of the damping, so `b_command` is what is left
-for the PD law after the plant's share.
+The figure-8 command is two sinusoids at two frequencies. Each channel is projected onto its own
+excitation's sine and cosine (a lock-in, the same arithmetic a bench sweep does), which leaves a
+pair of coefficients `(a, b)`; that pair *is* a complex number, and `to_polar` reads its amplitude
+and phase. Nothing here uses the submission to produce the "measured" value - the measurement
+comes from `plant.figure8_target`, the phasor form from the submission.
 """
 
-import cmath
 import math
 import unittest
 
@@ -19,59 +16,52 @@ submission = harness.load_submission()
 plant = harness.plant
 
 
-def elbow_setup(zeta, k=8.0):
-    j = plant.I2
-    wn = math.sqrt(k / j)
-    b_total = 2.0 * zeta * math.sqrt(j * k)
-    return j, wn, b_total, b_total - plant.B2
+def project(samples, omega, dt):
+    """(a, b) such that the signal is approximately a*sin(w t) + b*cos(w t)."""
+    n = len(samples)
+    a = 2.0 * sum(value * math.sin(omega * k * dt) for k, value in enumerate(samples)) / n
+    b = 2.0 * sum(value * math.cos(omega * k * dt) for k, value in enumerate(samples)) / n
+    return a, b
 
 
-def measure(wn, zeta, omega, cycles=20, dt=2e-5):
-    """Gain and phase (degrees) of the plant's elbow at `omega`, by sine/cosine projection."""
-    j, _, _, b_command = elbow_setup(zeta)
-    k = 8.0
-    period = 2.0 * math.pi / omega
-    steps = int((cycles + 3) * period / dt)
-    skip = steps - int(cycles * period / dt)
-    state = (0.0, 0.0, 0.0, 0.0)
-    sum_th_sin = 0.0
-    sum_th_cos = 0.0
-    t = 0.0
-    used = 0
-    for n in range(steps):
-        reference = math.sin(omega * t)
-        tau2 = k * (reference - state[1]) - b_command * state[3]
-        state = plant.step_arm(state, (0.0, tau2), dt=dt, gravity=False)
-        t += dt
-        if n >= skip:
-            sum_th_sin += state[1] * reference
-            sum_th_cos += state[1] * math.cos(omega * t)
-            used += 1
-    a = 2.0 * sum_th_sin / used
-    b = 2.0 * sum_th_cos / used
-    return math.hypot(a, b), math.degrees(math.atan2(b, a))
+def x_channel(periods=1):
+    omega = 2.0 * math.pi * plant.FREQ_HZ
+    n = int(round(periods / (plant.FREQ_HZ * plant.DT))) * periods
+    return omega, [plant.figure8_target(k * plant.DT)[0] - plant.X0 for k in range(n)]
 
 
-class PlantBodeTests(unittest.TestCase):
-    def test_gain_and_phase_follow_the_transfer_function(self):
-        zeta = 0.35
-        _, wn, b_total, _ = elbow_setup(zeta)
-        for ratio in (0.5, 1.0, 1.5):
-            omega = ratio * wn
-            predicted = submission.second_order_response(wn, zeta, omega)
-            mag, phase = measure(wn, zeta, omega)
-            self.assertAlmostEqual(mag, abs(predicted), delta=0.02 * abs(predicted))
-            self.assertAlmostEqual(phase, submission.phase_deg(predicted), delta=1.5)
+def y_channel(periods=1):
+    omega = 4.0 * math.pi * plant.FREQ_HZ
+    n = int(round(periods / (2.0 * plant.FREQ_HZ * plant.DT))) * periods
+    return omega, [plant.figure8_target(k * plant.DT)[1] - plant.Y0 for k in range(n)]
 
-    def test_the_peak_is_where_the_formula_says(self):
-        zeta = 0.2
-        _, wn, _, _ = elbow_setup(zeta)
-        omega_r, peak = submission.resonance_peak(wn, zeta)
-        at_peak, _ = measure(wn, zeta, omega_r)
-        at_natural, _ = measure(wn, zeta, wn)
-        self.assertAlmostEqual(at_peak, peak, delta=0.03 * peak)
-        self.assertGreater(at_peak, at_natural + 0.05,
-                           "the peak must sit below wn for zeta < 1/sqrt(2)")
+
+class Figure8PhasorTests(unittest.TestCase):
+    def test_the_x_channel_fits_as_a_phasor_of_the_plants_own_amplitude(self):
+        omega, samples = x_channel()
+        a, b = project(samples, omega, plant.DT)
+        mag, phase = submission.to_polar(complex(a, b))
+        self.assertAlmostEqual(mag, plant.AX, delta=1e-9)
+        self.assertAlmostEqual(phase, 0.0, delta=1e-9)
+        # Resynthesis through Euler's formula must give the samples back.
+        rebuilt = [plant.X0 + mag * math.sin(omega * k * plant.DT + phase) for k in range(50)]
+        for index, value in enumerate(rebuilt):
+            self.assertAlmostEqual(value, plant.figure8_target(index * plant.DT)[0], delta=1e-9)
+
+    def test_the_two_channels_add_like_phasors(self):
+        omega_x, x_samples = x_channel()
+        omega_y, y_samples = y_channel()
+        x_mag, x_phase = submission.to_polar(complex(*project(x_samples, omega_x, plant.DT)))
+        y_mag, y_phase = submission.to_polar(complex(*project(y_samples, omega_y, plant.DT)))
+        self.assertAlmostEqual(x_mag, plant.AX, delta=1e-9)
+        self.assertAlmostEqual(y_mag, plant.AY, delta=1e-9)
+        total = submission.add_phasors(
+            submission.to_rect(x_mag, x_phase), submission.to_rect(y_mag, y_phase)
+        )
+        # Two sinusoids at different frequencies do not add to a sinusoid, but their phasors still
+        # obey the triangle inequality - the check that catches a magnitude-only sum.
+        self.assertLessEqual(abs(total), plant.AX + plant.AY + 1e-12)
+        self.assertGreaterEqual(abs(total), abs(plant.AX - plant.AY) - 1e-12)
 
 
 if __name__ == "__main__":

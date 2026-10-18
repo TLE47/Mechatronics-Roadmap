@@ -271,9 +271,10 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($3/4$) on the Skip test below and $\ge 80\%$ ($5/6$) on the ladder's Gate test.
+Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($4/5$) on the Skip test below and $\ge 80\%$ ($5/6$) on the ladder's Gate test.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: joseph_stabilized_covariance_update]` For a 1D Kalman update with $P^- = 2.0$, $H = 1.0$, $R = 2.0$ and $K = 0.50$, compute the Joseph posterior $P^+ = (1 - KH)^2 P^- + K^2 R$ (tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: joseph_stabilized_covariance_update]` At the optimal gain, does the Joseph form equal the naive $(1 - KH)P^-$? Answer `True` or `False`.
 3. `[Transfer] [Concept: joseph_stabilized_covariance_update]` With $P^- = 10.0$, $H = 1.0$, $R = 1.0$ and a buggy gain $K = 1.20$, compute the **Joseph** posterior (tolerance $\pm 10^{-9}$) - the naive form is $-2.0$ here.
@@ -282,6 +283,7 @@ Pass criteria: run the worked example and the exercise asserts clean, or score $
    - **B.** Because it does not use the measurement noise $R$.
    - **C.** Because it sets $P^+ = 0$ after one step.
    - **D.** Because it avoids the Kalman gain entirely.
+5. `[Spaced review -> 05-control.T2.05a — Concept: luenberger_observer_and_brysons_lqr_weights]` A state-feedback law is $u = -Kx$ with $K = [2.0,\; 1.0]$ and $x = [0.50,\; 1.0]^\top$. Compute $u$ (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -296,8 +298,11 @@ assert math.isclose(q1_p_plus, 1.0, rel_tol=1e-9)
 assert q2_equal is True
 assert math.isclose(q3_p_joseph, 1.84, rel_tol=1e-9)
 assert q4_choice == "A"
+q5_review = -(2.0 * 0.50 + 1.0 * 1.0)
+assert math.isclose(q5_review, -2.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $3/4$ ($80\%+$). If you missed Q1 or Q3, study `## 3. Formalization` item 2; if you missed Q2, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`. On pass, proceed to `05-control.T3.05b`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q3, study `## 3. Formalization` item 2; if you missed Q2, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`. If you missed  Q5, review `05-control.T2.05a`. On pass, proceed to `05-control.T3.05b`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 05 Tier 3 ladder ([`05-control.T3.05a`](05-control.T3.05a.md) $\to$ [`05-control.T3.05b`](05-control.T3.05b.md) $\to$ [`05-control.T3.05c`](05-control.T3.05c.md)) before Step 3.6 (`05-control.T3.06`):

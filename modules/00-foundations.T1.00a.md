@@ -301,6 +301,7 @@ flowchart LR
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: python_variables_and_types]` Compute the final numeric value of `x` (tolerance $\pm 10^{-9}$) after executing `x = 4.0; x = x + 1.5; x = x * 2.0`.
 2. `[Apply] [Concept: for_while_loops_and_functions]` Trace this loop and compute the final integer value of `total` (tolerance $\pm 10^{-9}$) after it finishes:
 ```python
@@ -333,6 +334,7 @@ assert math.isclose(q3_clamped, 1.0, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization`; Q2 or Q3, study `## 4. Worked example`; Q4, study `## 2. Intuition first`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 00 Tier 1 bridge ladder (`00-foundations.T1.00a` $\to$ `00-foundations.T1.00b` $\to$ `00-foundations.T1.00c` $\to$ `00-foundations.T1.00d` $\to$ `00-foundations.T1.00e`) before Step 1.1 (`00-foundations.T1.01`):

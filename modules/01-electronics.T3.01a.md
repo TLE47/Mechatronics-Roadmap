@@ -389,18 +389,20 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test below to unlock Step 3.2 (`01-electronics.T3.02`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($5/6$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test below to unlock Step 3.2 (`01-electronics.T3.02`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: mutual_inductance_flux_cancellation]` Two coupled traces have self-inductances $L_1 = 6.0\text{ nH}$ and $L_2 = 6.0\text{ nH}$ and mutual inductance $M = 5.2\text{ nH}$ when carrying anti-parallel supply and return currents. Compute the net commutation loop inductance $L_{\text{loop}} = L_1 + L_2 - 2M$ in nanohenries ($\text{nH}$, tolerance $\pm 10^{-9}\text{ nH}$).
 2. `[Apply] [Concept: bessel_constant_group_delay_afe]` Compute the quality factor $Q = 1 / \sqrt{3}$ (tolerance $\pm 10^{-4}$) of a maximally flat group-delay 2nd-order Bessel low-pass filter.
 3. `[Transfer] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` A SAR ADC has internal sampling capacitor $C_{\text{sample}} = 5.0\text{ pF}$ and external charge-bucket capacitor $C_{\text{filt}} = 95.0\text{ pF}$. For a full-scale step $V_{\text{FS}} = 3.30\text{ V}$, compute the instantaneous charge-sharing voltage droop $\Delta V_0 = V_{\text{FS}} \frac{C_{\text{sample}}}{C_{\text{filt}} + C_{\text{sample}}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}\text{ V}$) at the moment the sampling switch closes.
-4. `[Spaced review -> 01-electronics.T2.02 — Concept: parasitic_loop_inductance_voltage_overshoot] [SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` During a $t_p = 0.005\text{ s}$ ($5\text{ ms}$) locked-rotor fault dissipating $P_{\text{loss}} = 200.0\text{ W}$ in a MOSFET whose junction-to-case thermal stage has $R_{\theta 1} = 0.50\ {^\circ}\text{C/W}$ and $\tau_{\theta 1} = 0.005\text{ s}$, compute the transient junction temperature rise $\Delta T_J = P_{\text{loss}} R_{\theta 1} (1 - e^{-t_p / \tau_{\theta 1}})$ in ${^\circ}\text{C}$ (tolerance $\pm 0.01\ {^\circ}\text{C}$).
+4. `[SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` During a $t_p = 0.005\text{ s}$ ($5\text{ ms}$) locked-rotor fault dissipating $P_{\text{loss}} = 200.0\text{ W}$ in a MOSFET whose junction-to-case thermal stage has $R_{\theta 1} = 0.50\ {^\circ}\text{C/W}$ and $\tau_{\theta 1} = 0.005\text{ s}$, compute the transient junction temperature rise $\Delta T_J = P_{\text{loss}} R_{\theta 1} (1 - e^{-t_p / \tau_{\theta 1}})$ in ${^\circ}\text{C}$ (tolerance $\pm 0.01\ {^\circ}\text{C}$).
 5. `[SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]` Why can an NTC thermistor mounted on the aluminum motor housing **never** be used as the sole protection against a locked-rotor MOSFET over-current fault?
    - **A.** Because NTC thermistors only work below $0\ {^\circ}\text{C}$.
    - **B.** Because the silicon die has a millisecond thermal time constant ($\tau_{\text{die}} \approx 2\text{–}10\text{ ms}$) and reaches its $175\ {^\circ}\text{C}$ destruction limit in milliseconds, whereas the aluminum housing has a multi-second thermal time constant ($\tau_{\text{sink}} \approx 20\text{–}60\text{ s}$) and barely warms up before the MOSFET explodes.
    - **C.** Because aluminum is a thermal insulator.
    - **D.** Because thermistors block PWM signals.
+6. `[Spaced review -> 01-electronics.T2.01b — Concept: parasitic_loop_inductance_voltage_overshoot]` A $20.0\,\text{nH}$ commutation loop interrupts $30.0\,\text{A}$ in $20.0\,\text{ns}$. Compute the overshoot $L\,di/dt$ in volts (tolerance $\pm 10^{-6}$).
 
 **Answer key:**
 ```python
@@ -417,8 +419,11 @@ assert math.isclose(q2_q_bessel, 0.57735027, abs_tol=1e-4)
 assert math.isclose(q3_dv0, 0.165, rel_tol=1e-9)
 assert math.isclose(q4_safety_dtj, 63.212056, abs_tol=1e-2)  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"                                # Mandatory [SAFETY] 100% required
+q6_review = 20.0e-9 * 30.0 / 20.0e-9
+assert math.isclose(q6_review, 30.0, rel_tol=1e-9, abs_tol=1e-06)
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, Q4, or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $5/6$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, Q4, or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `01-electronics.T2.01b`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 01 Tier 3 bridge ladder (`01-electronics.T3.01a`) before Step 3.2 (`01-electronics.T3.02`):

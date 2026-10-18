@@ -46,6 +46,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from audit_step_size import load_index, parse_front_matter  # noqa: E402
+from page_body import strip_generated  # noqa: E402
 
 MODULES = os.path.join(ROOT, "modules")
 OUT = os.path.join(ROOT, "docs", "PASSING_MENTIONS.md")
@@ -59,7 +60,7 @@ def pages() -> dict[str, dict]:
     for name in sorted(os.listdir(MODULES)):
         if name.endswith(".md"):
             with open(os.path.join(MODULES, name), encoding="utf-8") as handle:
-                raw = handle.read()
+                raw = strip_generated(handle.read())
             out[name[:-3]] = {"raw": raw, "fm": parse_front_matter(raw)}
     return out
 

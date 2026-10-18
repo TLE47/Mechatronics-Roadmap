@@ -360,13 +360,14 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($5/6$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: opc_ua_address_space_nodes_and_pub_sub]` An OPC UA PubSub UDP cyclic frame carries a $14\text{-byte}$ NetworkMessage header plus $N_{\text{var}} = 8$ `Double` ($8\text{-byte}$) telemetry variables published at $f_{\text{pub}} = 250\text{ Hz}$. Compute the total payload byte rate $R_{\text{B/s}} = (14 + 8 N_{\text{var}}) f_{\text{pub}}$ in bytes per second ($\text{B/s}$, exact integer, tolerance $\pm 0$).
 2. `[Apply] [Concept: iec_63278_aas_submodel_digital_nameplate]` An IEC 63278 AAS `SafetySubmodel` reports detected dangerous failure rate $\lambda_{DD} = 95.0\text{ FIT}$ and undetected dangerous failure rate $\lambda_{DU} = 5.0\text{ FIT}$. Compute the Diagnostic Coverage percentage $\text{DC}_{\text{avg}}\% = 100 \times \frac{\lambda_{DD}}{\lambda_{DD} + \lambda_{DU}}$ (tolerance $\pm 10^{-6}$).
 3. `[Transfer] [Concept: iso_13849_category3_pld_dual_channel_sto]` In an ISO 13849-1 Category 3 dual-channel Safe Torque Off (`STO`) subsystem, the undetected dangerous failure rate per channel is $\lambda_{DU} = 2.0 \times 10^{-7}\text{ h}^{-1}$ and the common-cause failure factor is $\beta = 0.02$. Compute the common-cause dangerous failure contribution $\text{PFH}_{d,\text{CCF}} = \beta \lambda_{DU}$ in $\text{h}^{-1}$ (tolerance $\pm 10^{-11}\text{ h}^{-1}$).
-4. `[Spaced review -> 06-robotics.T3.06b — Concept: opc_ua_industrial_telemetry] [SAFETY] [Concept: iso_13849_category3_pld_dual_channel_sto]` Under ISO 13849-1 Category 3 / `PLd`, if Channel A of a dual-channel Safe Torque Off (`STO`) circuit opens properly when E-Stop is pressed, but Channel B's transistor fails shorted, what must happen to the motor torque and the restart interlock?
+4. `[SAFETY] [Concept: iso_13849_category3_pld_dual_channel_sto]` Under ISO 13849-1 Category 3 / `PLd`, if Channel A of a dual-channel Safe Torque Off (`STO`) circuit opens properly when E-Stop is pressed, but Channel B's transistor fails shorted, what must happen to the motor torque and the restart interlock?
    - **A.** The motor keeps spinning at half speed.
    - **B.** Motor torque is **still immediately removed** by Channel A (single-fault tolerance), AND the cross-monitoring diagnostics detect the `Ch_A != Ch_B` discrepancy and **lock out** any future restart until Channel B is repaired.
    - **C.** The firmware ignores Channel A and keeps running.
@@ -376,6 +377,7 @@ Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SA
    - **B.** Remain in the safe stopped (`STO`) state; releasing the E-stop actuator **must never** automatically restart motion without a separate, deliberate manual reset command once all safety conditions are verified.
    - **C.** Spin all joints to `0.0 rad` at maximum torque.
    - **D.** Disable the E-stop monitoring relay.
+6. `[Spaced review -> 07-systems.T2.07a — Concept: can_fd_crc16_and_rolling_counter_watchdog]` A rolling counter counts $0$–$15$ and wraps. Compute its value after $19$ increments from $0$ (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -391,9 +393,11 @@ assert math.isclose(q2_dc_pct, 95.0, rel_tol=1e-9)
 assert math.isclose(q3_pfh_ccf, 4.0e-9, rel_tol=1e-9)
 assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"  # Mandatory [SAFETY] 100% required
+q6_review = float(19 % 16)
+assert math.isclose(q6_review, 3.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3–Q5, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
-
+- **Pass mark:** $5/6$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3–Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `07-systems.T2.07a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 07 Tier 3 bridge ladder (`07-systems.T3.06a`) before Step 3.7 (`06-robotics.T3.07`):

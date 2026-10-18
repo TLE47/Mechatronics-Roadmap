@@ -295,10 +295,11 @@ flowchart LR
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.7 (`06-robotics.T1.07`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: polynomial_endpoint_boundary_conditions]` For a rest-to-rest cubic trajectory from $q_0 = 0.0\text{ rad}$ to $q_f = 2.0\text{ rad}$ in $T = 4.0\text{ s}$, compute the midpoint position $q_d(2.0)$ in $\text{rad}$ and peak velocity $\dot{q}_d(2.0) = \frac{1.5\Delta q}{T}$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: polynomial_endpoint_boundary_conditions]` Compute the initial acceleration $\ddot{q}_d(0) = \frac{6\Delta q}{T^2}$ in $\text{rad/s}^2$ (tolerance $\pm 10^{-9}$) for $\Delta q = 2.0\text{ rad}$ and $T = 2.0\text{ s}$.
 3. `[Transfer] [Concept: virtual_joint_compliance_stiffness]` A compliant joint controller $\tau = K_p(q_d - q) - K_d\dot{q} + \tau_g(q)$ with $K_p = 4.0\text{ N}\cdot\text{m/rad}$ is pushed by an external human hand torque of $\tau_{\text{ext}} = 0.80\text{ N}\cdot\text{m}$ at rest. By what angle $\Delta q = \tau_{\text{ext}} / K_p$ in radians (tolerance $\pm 10^{-9}$) does the joint yield?
-4. `[Spaced review -> 02-mechanics.T1.03 — Concept: discrete_pid_controller] [Concept: trajectory_vs_step_setpoint]` Why do collaborative robots omit the integral term ($K_i = 0$, using PD + gravity feedforward instead) when operating in compliant human-interaction mode?
+4. `[Spaced review -> 05-control.T1.05a — Concept: discrete_pid_controller] [Concept: trajectory_vs_step_setpoint]` Why do collaborative robots omit the integral term ($K_i = 0$, using PD + gravity feedforward instead) when operating in compliant human-interaction mode?
    - **A.** Because $K_i$ is difficult to program in C.
    - **B.** Because if a human pushes and holds the arm away from $q_d$, an integral term would wind up to maximum stall torque fighting the human, whereas PD + gravity feedforward yields like a gentle mechanical spring!
    - **C.** Because gravity feedforward eliminates inertia.
@@ -321,6 +322,8 @@ assert math.isclose(q3_deflection, 0.20, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 1 & 3. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
+
 ### Gate test
 Covers the complete Track 06 Tier 1 bridge ladder (`06-robotics.T1.06a`) before Step 1.7 (`06-robotics.T1.07`):
 1. `[Concept: trajectory_vs_step_setpoint]` What is the initial tracking error $e(0) = q_d(0) - q(0)$ at $t = 0\text{ s}$ when a rest-to-rest trajectory starts from the robot's current position $q(0) = q_0$ (tolerance $\pm 10^{-9}$)?

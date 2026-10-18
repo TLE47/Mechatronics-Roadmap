@@ -40,7 +40,7 @@ Before submitting a Pull Request, run the verification scripts from the reposito
 python3 scripts/verify_repo.py
 node scripts/audit_math.mjs
 
-# 2. Verify all 68 modules, prerequisite DAG, index counts, and exact Expected Output stdout diffs
+# 2. Verify all 72 modules, prerequisite DAG, index counts, and exact Expected Output stdout diffs
 python3 scripts/validate_modules.py
 
 # 3. Verify all beginner lessons (<=2 ideas, template sections, glossary term order, and exercise solutions)

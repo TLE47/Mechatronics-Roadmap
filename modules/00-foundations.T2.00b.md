@@ -284,6 +284,7 @@ flowchart LR
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: dot_product_projection]` Compute the dot product $\vec{a}\cdot\vec{b}$ (tolerance $\pm 10^{-9}$) for $\vec{a} = [2.0, -3.0, 1.0]^T$ and $\vec{b} = [4.0, 1.0, -2.0]^T$.
 2. `[Apply] [Concept: cross_product_3d_moment]` Compute the $z$-component $\tau_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$) of $\vec{\tau} = \vec{r}\times\vec{F}$ for $\vec{r} = [0.20, 0.10, 0.0]^T\text{ m}$ and $\vec{F} = [5.0, 25.0, 0.0]^T\text{ N}$.
 3. `[Transfer] [Concept: basis_change_and_invertibility]` Compute the determinant $\det(B) = a d - b c$ (tolerance $\pm 10^{-9}$) of $B = \begin{bmatrix} 3.0 & 2.0 \\ 1.5 & 4.0 \end{bmatrix}$.
@@ -292,7 +293,7 @@ Pass criteria: run the worked example and exercise asserts with zero errors, or 
    - **B.** The vectors are perpendicular ($90^\circ$ apart).
    - **C.** The cross product $\vec{a}\times\vec{b}$ is also zero.
    - **D.** The vectors point in opposite directions ($180^\circ$ apart).
-5. `[Spaced review -> 00-foundations.T2.00a — Concept: matrix_vector_multiplication] [Concept: basis_change_and_invertibility]` Compute the first entry $(B\vec{v})_0$ (tolerance $\pm 10^{-9}$) for $B = \begin{bmatrix} 3.0 & 2.0 \\ 1.5 & 4.0 \end{bmatrix}$ and $\vec{v} = \begin{bmatrix} 2.0 \\ -1.0 \end{bmatrix}$.
+5. `[Spaced review -> 00-foundations.T2.00g — Concept: matrix_vector_multiplication] [Concept: basis_change_and_invertibility]` Compute the first entry $(B\vec{v})_0$ (tolerance $\pm 10^{-9}$) for $B = \begin{bmatrix} 3.0 & 2.0 \\ 1.5 & 4.0 \end{bmatrix}$ and $\vec{v} = \begin{bmatrix} 2.0 \\ -1.0 \end{bmatrix}$.
 
 **Answer key:**
 ```python
@@ -311,63 +312,87 @@ assert q4_choice == "B"
 assert math.isclose(q5_row0, 4.0, rel_tol=1e-9)
 ```
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2 or Q3, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T2.00a`). On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
-This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md), [`00-foundations.T2.00g`](00-foundations.T2.00g.md), and this page through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`). Questions 1-6 are this module's own three tools; 7-11 recap one module each, so the whole ladder is examined.
-1. `[Concept: dot_product_projection]` Compute $\vec{a}\cdot\vec{b}$ (tolerance $\pm 10^{-9}$) for $\vec{a} = [2.0,\; -3.0,\; 1.0]^\top$ and $\vec{b} = [4.0,\; 1.0,\; -2.0]^\top$.
-2. `[Concept: dot_product_projection]` A $\vec{r} = [0.30,\; 0.40,\; 0.00]^\top\text{m}$ lever carries $\vec{F} = [0.0,\; -20.0,\; 15.0]^\top\text{N}$. Compute the axial projection $\vec{F}\cdot\hat{u}_r$ in $\text{N}$ (tolerance $\pm 10^{-9}$), where $\hat{u}_r$ is the unit lever.
-3. `[Concept: cross_product_3d_moment]` For $\vec{r} = [0.25,\; 0.00,\; 0.10]^\top\text{m}$ and $\vec{F} = [10.0,\; 30.0,\; -20.0]^\top\text{N}$, compute $\tau_y = r_z F_x - r_x F_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
-4. `[Concept: cross_product_3d_moment]` Which statement about the moment vector is true?
-   - **A.** $\vec{r}\times\vec{F} = -(\vec{F}\times\vec{r})$, and the result is orthogonal to both $\vec{r}$ and $\vec{F}$.
-   - **B.** $\vec{r}\times\vec{F} = \vec{F}\times\vec{r}$, so the order does not matter.
-   - **C.** The moment is parallel to $\vec{r}$ whenever the force is perpendicular to the lever.
-   - **D.** The magnitude of the moment depends only on $\|\vec{F}\|$.
-5. `[Concept: basis_change_and_invertibility]` Compute $\det(B) = ad - bc$ (tolerance $\pm 10^{-9}$) for $B = \begin{bmatrix} 3.0 & 2.0 \\ 1.5 & 4.0 \end{bmatrix}$ whose columns are $[3.0, 1.5]^\top$ and $[2.0, 4.0]^\top$.
-6. `[Concept: basis_change_and_invertibility]` A pair of basis columns has $\det(B) = 0$. What must `coordinates_in_basis` do?
-   - **A.** Raise `ValueError`: the columns are collinear, so the pair cannot span the plane and the coordinates do not exist.
-   - **B.** Return $(0.0, 0.0)$ and let the caller notice.
-   - **C.** Divide by the determinant anyway; the infinities are informative.
-   - **D.** Transpose the basis and retry.
-7. `[Concept: finite_difference_derivative_and_integral] [Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` For `00-foundations.T2.00g`'s $A_d = \begin{bmatrix} 1.0 & 0.01 \\ -1.0 & 0.90 \end{bmatrix}$ and $B_d = [0.0,\; 0.01]^\top$, one step from $\vec{x} = [0.20,\; 1.00]^\top$ with $u = 0$ gives $x_1$. Compute $x_1$ in $\text{m}$ (tolerance $\pm 10^{-9}$).
-8. `[Concept: first_order_ode_time_constant] [Concept: second_order_ode_wn_zeta] [Concept: characteristic_polynomial_roots]` For `00-foundations.T2.00c`'s oscillator with $m = 0.50\,\text{kg}$ and $k = 200.0\,\text{N/m}$, compute $\omega_n = \sqrt{k/m}$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
-9. `[Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function] [Concept: bode_magnitude_db_and_phase]` For `00-foundations.T2.00d`'s complex number $z = 3.0 + j4.0$, compute $|z| = \sqrt{x^2 + y^2}$ (tolerance $\pm 10^{-9}$).
-10. `[Concept: laplace_poles_and_zeros] [Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` For `00-foundations.T2.00e`'s companion form with $J = 2.0\,\text{kg}\cdot\text{m}^2$ and $k = 50.0\,\text{N}\cdot\text{m/rad}$ (any damping), compute $\det(A) = k/J$ in $\text{s}^{-2}$ (tolerance $\pm 10^{-9}$).
-11. `[Concept: nyquist_sampling_and_aliasing] [Concept: tustin_frequency_prewarping_and_biquad] [Concept: gaussian_variance_and_covariance_matrix]` Which triple is correct for `00-foundations.T2.00f`?
-   - **A.** Sampling represents only frequencies up to $f_s/2$, a faster tone folds to $|f - k f_s|$, and a propagated covariance is a sandwich $A\Sigma A^\top + Q$.
-   - **B.** Sampling represents any frequency, aliasing only shifts phase, and covariance is a scalar variance.
-   - **C.** The Nyquist frequency is $2f_s$, aliasing doubles the amplitude, and pre-warping is unnecessary below $1\,\text{kHz}$.
-   - **D.** Bilinear discretization is exact at every frequency, so no pre-warping is ever needed.
+<!-- ladder-gate:start -->
+This is the exit examination for the whole Track 00 Tier 2 ladder - every `00-foundations.T2.*` page in [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) - before Step 2.1 (`00-foundations.T2.01`). Every Tier 2 page renders this same paper, so take it once after the last of them; the page you are on is only where you found it. Questions 1-6 are the matrix page's own tools; 7-12 recap each other page once, so nothing on the ladder goes unexamined.
+
+1. `[Concept: matrix_vector_multiplication]` For $A = \begin{bmatrix} 3.0 & -2.0 \\ 1.0 & 4.0 \end{bmatrix}$ and $\vec{x} = [1.5,\; 2.5]^\top$, compute **both** entries of $A\vec{x}$: the first and the second (tolerances $\pm 10^{-9}$).
+2. `[Concept: matrix_vector_multiplication]` Why does a $2\times2$ matrix times a length-2 column come out as a column of length $2$ rather than a $2\times2$ matrix?
+   - **A.** $A\vec{x}$ is the elementwise product of $A$ and $\vec{x}$, which keeps $A$'s shape.
+   - **B.** Python reshapes $A$ into a column before multiplying.
+   - **C.** Each output entry is one row of $A$ dotted with $\vec{x}$, so there is one output per row.
+   - **D.** $\vec{x}$ is transposed into a row first.
+3. `[Concept: state_vector_one_step_update]` One step of $A_d = \begin{bmatrix} 1.0 & 0.02 \\ -2.0 & 0.80 \end{bmatrix}$, $B_d = [0.0,\; 0.02]^\top$, from $\vec{x}_0 = [0.50,\; 0.0]^\top$ with $u_0 = 10.0\,\text{N}$ gives $v_1$. Compute $v_1$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: state_vector_one_step_update]` In the same step, if the position row were evaluated using the *new* velocity, what would $x_1$ be (tolerance $\pm 10^{-9}\,\text{m}$)?
+5. `[Concept: state_vector_one_step_update]` For the two-mass matrix with $m_1 = 1.0\,\text{kg}$, $m_2 = 2.0\,\text{kg}$, $k = 50.0\,\text{N/m}$, $b = 0$ and $\Delta t = 0.01\,\text{s}$, compute the first entry of its **fourth** row - the row that updates $v_2$ (tolerance $\pm 10^{-9}$).
+6. `[Concept: state_vector_one_step_update]` Why do the diagonal $2\times2$ blocks of the 4-state matrix equal the single-mass update for each body when $k = b = 0$?
+   - **A.** Because the 4-state matrix is always block-diagonal.
+   - **B.** Because each mass then obeys the same mass-spring-damper form with its own mass and damping, and the coupling terms vanish.
+   - **C.** Because $B_d$ only pushes $m_1$.
+   - **D.** Because the Euler update is exact.
+7. `[Concept: finite_difference_derivative_and_integral]` An encoder reads $x_{k-1} = 0.24\,\text{rad}$ and $x_k = 0.30\,\text{rad}$ at $\Delta t = 0.002\,\text{s}$. Compute the backward-difference velocity in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
+8. `[Concept: dot_product_projection] [Concept: cross_product_3d_moment] [Concept: basis_change_and_invertibility]` Which triple is correct for `00-foundations.T2.00b`?
+   - **A.** The projection uses the raw lever so force grows with its length, $\vec{r}\times\vec{F} = \vec{F}\times\vec{r}$, and a zero determinant means a valid basis.
+   - **B.** The projection divides by $\|\vec{r}\|$ twice, the moment is a scalar, and the determinant is always positive.
+   - **C.** The dot product returns a vector, the cross product is symmetric, and the determinant equals the trace.
+   - **D.** The projection uses the lever's *unit* direction, the moment is $\vec{r}\times\vec{F}$ (anti-commutative), and a zero determinant means the two columns are collinear.
+9. `[Concept: first_order_ode_time_constant] [Concept: second_order_ode_wn_zeta] [Concept: characteristic_polynomial_roots]` For `00-foundations.T2.00c`'s joint with $J = 0.02\,\text{kg}\cdot\text{m}^2$, $k = 8.0\,\text{N}\cdot\text{m/rad}$ and $b = 0.60\,\text{N}\cdot\text{m}\cdot\text{s/rad}$, compute the damping ratio $\zeta = b/(2\sqrt{Jk})$ (tolerance $\pm 10^{-9}$).
+10. `[Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function] [Concept: bode_magnitude_db_and_phase]` A series RL winding has $R = 4.0\ \Omega$ and $L = 2.0\,\text{mH}$ and is driven at $\omega = 2000\,\text{rad/s}$. Compute $|Z|$ in ohms, then $20\log_{10}|H|$ at the corner $\omega = 1/\tau$ of a first-order filter (tolerances $\pm 10^{-9}\,\Omega$ and $\pm 10^{-4}\,\text{dB}$).
+11. `[Concept: laplace_poles_and_zeros] [Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` For `00-foundations.T2.00e`'s $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ sampled at $T_s = 0.05\,\text{s}$, compute the spectral radius of the Forward-Euler map $A_d = I + A T_s$ (tolerance $\pm 10^{-6}$).
+12. `[Concept: nyquist_sampling_and_aliasing] [Concept: tustin_frequency_prewarping_and_biquad] [Concept: gaussian_variance_and_covariance_matrix]` Which triple is correct for `00-foundations.T2.00f`?
+   - **A.** Sampling represents any frequency, aliasing affects only DC, and Tustin never warps.
+   - **B.** Sampling represents only frequencies up to $f_s/2$, a faster tone folds to $|f - k f_s|$, and pre-warping lifts the analog target so the digital notch lands on $f_0$.
+   - **C.** The Nyquist frequency is $f_s$, aliasing doubles the frequency, and pre-warping is a gain correction.
+   - **D.** Covariance is a scalar, the sample rate is irrelevant to stability, and every bilinear pole lands outside the unit circle.
 
 **Gate answer key:**
 ```python
 import math
 
-g1_dot = 2.0 * 4.0 + (-3.0) * 1.0 + 1.0 * (-2.0)
-r, F = [0.30, 0.40, 0.0], [0.0, -20.0, 15.0]
-g2_axial = sum(f * c for f, c in zip(F, [component / math.sqrt(sum(v * v for v in r)) for component in r]))
-g3_tau_y = 0.10 * 10.0 - 0.25 * (-20.0)
-g4_choice = "A"
-g5_det = 3.0 * 4.0 - 2.0 * 1.5
-g6_choice = "A"
-g7_x1 = 1.0 * 0.20 + 0.01 * 1.00 + 0.0 * 0.0
-g8_wn = math.sqrt(200.0 / 0.50)
-g9_mag = math.sqrt(3.0 * 3.0 + 4.0 * 4.0)
-g10_det_A = 50.0 / 2.0
-g11_choice = "A"
+# Q1-Q6: the matrix page. Two entries, evaluated one row at a time: the paper asks for both so a
+# reader who reads the maths (1-indexed) and one who reads Python (0-indexed) agree on the answer.
+g1_ax_first = 3.0 * 1.5 + (-2.0) * 2.5
+g1_ax_second = 1.0 * 1.5 + 4.0 * 2.5
+g2_choice = "C"
+g3_v1 = -2.0 * 0.50 + 0.80 * 0.0 + 0.02 * 10.0
+g4_x1_new_v = 1.0 * 0.50 + 0.02 * (-0.80)
+g5_row4_first = (50.0 / 2.0) * 0.01
+g6_choice = "B"
 
-assert math.isclose(g1_dot, 3.0, rel_tol=1e-9)
-assert math.isclose(g2_axial, -16.0, rel_tol=1e-9)
-assert math.isclose(g3_tau_y, 6.0, rel_tol=1e-9)
-assert g4_choice == "A"
-assert math.isclose(g5_det, 9.0, rel_tol=1e-9)
-assert g6_choice == "A"
-assert math.isclose(g7_x1, 0.21, rel_tol=1e-9)
-assert math.isclose(g8_wn, 20.0, rel_tol=1e-9)
-assert math.isclose(g9_mag, 5.0, rel_tol=1e-9)
-assert math.isclose(g10_det_A, 25.0, rel_tol=1e-9)
-assert g11_choice == "A"
+# Q7: the derivative page.
+g7_velocity = (0.30 - 0.24) / 0.002
+
+# Q8-Q12: one question per remaining page.
+g8_choice = "D"
+g9_zeta = 0.60 / (2.0 * math.sqrt(0.02 * 8.0))
+g10_z_ohm = abs(4.0 + 1j * 2000.0 * 0.002)
+g10_corner_db = 20.0 * math.log10(1.0 / math.sqrt(2.0))
+Ad_euler = [[1.0, 0.05], [-5.0, 0.80]]
+g11_radius = math.sqrt(Ad_euler[0][0] * Ad_euler[1][1] - Ad_euler[0][1] * Ad_euler[1][0])
+g12_choice = "B"
+
+assert math.isclose(g1_ax_first, -0.5, rel_tol=1e-9)
+assert math.isclose(g1_ax_second, 11.5, rel_tol=1e-9)
+assert g2_choice == "C"
+assert math.isclose(g3_v1, -0.80, rel_tol=1e-9)
+assert math.isclose(g4_x1_new_v, 0.484, rel_tol=1e-9)
+assert math.isclose(g5_row4_first, 0.25, rel_tol=1e-9)
+assert g6_choice == "B"
+assert math.isclose(g7_velocity, 30.0, rel_tol=1e-9)
+assert g8_choice == "D"
+assert math.isclose(g9_zeta, 0.75, rel_tol=1e-9)
+assert math.isclose(g10_z_ohm, 5.656854249492381, rel_tol=1e-9)
+assert math.isclose(g10_corner_db, -3.0103, abs_tol=1e-4)
+assert math.isclose(g11_radius, 1.024695, abs_tol=1e-6)
+assert g12_choice == "B"
+
+print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
+      % (g1_ax_first, g1_ax_second, g3_v1, g4_x1_new_v, g11_radius))
 ```
-- **Pass mark:** $\ge 80\%$ ($4/5$ on Skip test; $\ge 9/11$ on Gate test). Missed Gate Q1-Q2: study `00-foundations.T2.00b`; Q3-Q6: `00-foundations.T2.00b`; Q7: `00-foundations.T2.00g`; Q8: `00-foundations.T2.00c`; Q9: `00-foundations.T2.00d`; Q10: `00-foundations.T2.00e`; Q11: `00-foundations.T2.00f`.
+- **Pass mark:** $\ge 10/12$. Every question is answered by the page named in its tags; the ladder is closed when this paper is passed once, after the last Tier 2 page.
+<!-- ladder-gate:end -->
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

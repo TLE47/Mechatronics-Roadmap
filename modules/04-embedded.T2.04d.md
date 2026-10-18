@@ -335,6 +335,7 @@ flowchart LR
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.5 (`04-embedded.T2.05`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: microros_xrcedds_client_agent_bridge]` Compute the wire transmission time $t_{\text{wire}} = \frac{8(B_{\text{cdr}} + B_{\text{xrce}})}{R_{\text{can}}} \times 10^6$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) for a micro-ROS message with payload $B_{\text{cdr}} = 36\text{ B}$ and XRCE header $B_{\text{xrce}} = 14\text{ B}$ over a $R_{\text{can}} = 4.0\text{ Mbps}$ ($4 \times 10^6\text{ bps}$) CAN-FD bus.
 2. `[Apply] [Concept: rclc_static_lifecycle_and_executor]` You initialize a micro-ROS `rclc_executor` for a node with $N_{\text{timers}} = 2$ periodic timers, $N_{\text{subs}} = 3$ topic subscriptions, and $N_{\text{srvs}} = 1$ calibration service ($N_{\text{clients}} = 0$). Compute the exact static handle count $H_{\text{total}}$ to pass to `rclc_executor_init()` (exact integer, tolerance $\pm 0$).
 3. `[Transfer] [Concept: mcu_to_ros2_deterministic_transport]` During `rmw_uros_sync_session()`, the MCU sends a sync packet at local time $t_1 = 500.0\ \mu\text{s}$, the host Agent receives it at $t_2 = 200{,}600.0\ \mu\text{s}$ and replies at $t_3 = 200{,}640.0\ \mu\text{s}$, and the MCU receives the reply at $t_4 = 740.0\ \mu\text{s}$. Compute the clock offset $\theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-6}$).
@@ -359,6 +360,7 @@ assert math.isclose(q3_offset_us, 200_000.0, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `04-embedded.T2.04b` $\to$ `04-embedded.T2.04c` $\to$ `04-embedded.T2.04d`) before Step 2.5 (`04-embedded.T2.05`):

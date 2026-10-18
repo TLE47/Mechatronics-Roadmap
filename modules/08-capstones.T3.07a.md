@@ -432,18 +432,20 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.8 (`08-capstones.T3.08`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($5/6$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.8 (`08-capstones.T3.08`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: rss_and_worst_case_spatial_error_budget]` Three independent random error sources have $1\sigma$ end-effector contributions $\sigma_1 = 0.03\text{ mm}$, $\sigma_2 = 0.04\text{ mm}$, and $\sigma_3 = 0.12\text{ mm}$. Compute the combined Root-Sum-Square (RSS) $1\sigma$ error $\sigma_{\text{rss}} = \sqrt{\sigma_1^2 + \sigma_2^2 + \sigma_3^2}$ in millimeters ($\text{mm}$, tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: rss_and_worst_case_spatial_error_budget]` In Q1 ($\sigma_1 = 0.03, \sigma_2 = 0.04, \sigma_3 = 0.12\text{ mm}$, so $\sigma_{\text{rss}} = 0.13\text{ mm}$), what fraction of the total error variance $\sigma_3^2 / \sigma_{\text{rss}}^2$ comes from source 3 alone (tolerance $\pm 10^{-4}$)?
 3. `[Transfer] [Concept: end_to_end_latency_and_phase_margin_erosion_budget]` A servo loop has crossover $\omega_{gc} = 200\text{ rad/s}$, delay-free Phase Margin $\text{PM}_0 = 60.0^\circ$, and total end-to-end loop delay $\tau_{\text{total}} = 0.001\text{ s}$ ($1.0\text{ ms}$). Compute the net Phase Margin $\text{PM}_{\text{net}} = \text{PM}_0 - \omega_{gc}\tau_{\text{total}}\frac{180^\circ}{\pi}$ in degrees (tolerance $\pm 0.01^\circ$).
-4. `[Spaced review -> 06-robotics.T3.07 — Concept: loop_transfer_gain_and_phase_margin] [SAFETY] [Concept: pre_bring_up_interface_and_safety_signoff_gate]` During **Stage 3** of progressive bring-up on a 6-DOF robot arm (before enabling stiff position trajectories), you set $K_p = 0$, $K_d = 1.5\text{ N}\cdot\text{m}\cdot\text{s/rad}$, and $\tau_{\text{ff}} = g(q)$ at a $20\%$ torque limit and gently push Joint 2 by hand. Why is this test mandatory before enabling $K_p > 0$?
+4. `[SAFETY] [Concept: pre_bring_up_interface_and_safety_signoff_gate]` During **Stage 3** of progressive bring-up on a 6-DOF robot arm (before enabling stiff position trajectories), you set $K_p = 0$, $K_d = 1.5\text{ N}\cdot\text{m}\cdot\text{s/rad}$, and $\tau_{\text{ff}} = g(q)$ at a $20\%$ torque limit and gently push Joint 2 by hand. Why is this test mandatory before enabling $K_p > 0$?
    - **A.** To polish the aluminum links.
    - **B.** It safely verifies at low torque that encoder direction, motor phase sequence, velocity sign ($-K_d\dot{q}$), and gravity vector $g(q)$ all oppose external disturbances rather than accelerating into positive-feedback runaway!
    - **C.** Because $K_p$ is never used in robotics.
    - **D.** To discharge the battery.
 5. `[SAFETY] [Concept: pre_bring_up_interface_and_safety_signoff_gate]` If 4 out of 5 pre-bring-up gates pass (`e_3sigma <= spec`, `PM_net >= 45 deg`, `CPU_Util <= 0.70`, `CAN_Term == 60 Ohm`), but the dual-channel Category 3 `STO` test has **not** been verified (`sto_cat3_ok = False`), what integer value must `int(all(gates))` return (`0` for `False / NO-GO`, `1` for `True / GO`, exact integer, tolerance $\pm 0$)?
+6. `[Spaced review -> 07-systems.T2.07a — Concept: regenerative_bus_energy_and_chopper_sizing]` A $1000\ \mu\text{F}$ bus at $48.0\,\text{V}$ is pushed to $60.0\,\text{V}$ by regeneration. Compute the added energy $\tfrac12 C (V_2^2 - V_1^2)$ in joules (tolerance $\pm 10^{-6}$).
 
 **Answer key:**
 ```python
@@ -460,8 +462,12 @@ assert math.isclose(q2_var_frac, 144.0 / 169.0, rel_tol=1e-4)
 assert math.isclose(q3_pm_net, 48.540844, abs_tol=1e-2)
 assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert q5_safety_go == 0         # Mandatory [SAFETY] 100% required
+q6_review = 0.5 * 1000e-6 * (60.0 ** 2 - 48.0 ** 2)
+assert math.isclose(q6_review, 0.648, rel_tol=1e-9, abs_tol=1e-06)
 ```
-- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $5/6$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `07-systems.T2.07a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
+
 ### Gate test
 Covers the complete Track 08 Tier 3 Capstone Engineering bridge ladder (`08-capstones.T3.07a`) before Step 3.8 (`08-capstones.T3.08`):
 1. `[Concept: rss_and_worst_case_spatial_error_budget]` Compute the $3\sigma$ total error $e_{3\sigma} = |b| + 3\sqrt{\sigma_1^2 + \sigma_2^2}$ in millimeters ($\text{mm}$, tolerance $\pm 10^{-9}$) for systematic bias $b = 0.05\text{ mm}$ and independent random errors $\sigma_1 = 0.06\text{ mm}, \sigma_2 = 0.08\text{ mm}$.

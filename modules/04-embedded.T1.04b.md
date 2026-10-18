@@ -340,17 +340,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test to pass this module, or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.5 (`04-embedded.T1.05`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test to pass this module, or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.5 (`04-embedded.T1.05`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: non_blocking_tick_scheduler]` If a main loop calls `delay(50)` ($50\text{ ms}$) for an LED blink and `delay(20)` ($20\text{ ms}$) for a sensor wait, what is the maximum loop execution frequency $f_{\text{loop}} = \frac{1}{0.050 + 0.020}$ in $\text{Hz}$ (tolerance $\pm 0.01\text{ Hz}$)?
 2. `[Apply] [Concept: hardware_isr_and_volatile_contract]` Compute the CPU utilization percentage $U_{\text{isr}}\% = 100 \times \frac{t_{\text{exec}}}{T_{\text{isr}}}$ (tolerance $\pm 10^{-6}$) for a $1\text{ kHz}$ ($1000\ \mu\text{s}$) timer ISR that takes $t_{\text{exec}} = 35\ \mu\text{s}$.
 3. `[Transfer] [Concept: finite_state_machine_switch_enum]` An actuator FSM running inside a $f_{\text{isr}} = 20\text{ kHz}$ ($T_{\text{isr}} = 50\ \mu\text{s}$) timer ISR transitions from `RUN` to `FAULT` (forcing `pwm_cmd = 0.0`) after $N_{\text{debounce}} = 3$ consecutive overcurrent samples. Compute the total fault-detection latency $t_{\text{fault}} = N_{\text{debounce}} / f_{\text{isr}}$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 04-embedded.T1.04a — Concept: c_fixed_width_integer_types_and_overflow] [Concept: hardware_isr_and_volatile_contract]` Why must a global flag `bool tick_ready` written inside a hardware timer ISR and polled inside `main()` be declared `volatile bool tick_ready` in C/C++?
+4. `[Concept: hardware_isr_and_volatile_contract]` Why must a global flag `bool tick_ready` written inside a hardware timer ISR and polled inside `main()` be declared `volatile bool tick_ready` in C/C++?
    - **A.** To make the variable use flash memory instead of RAM.
    - **B.** To prevent the compiler optimizer (`-O2`/`-O3`) from caching `tick_ready` in a CPU register and turning `while (!tick_ready)` into an infinite loop.
    - **C.** To automatically disable interrupts during math operations.
    - **D.** To convert the boolean into a 32-bit float.
+5. `[Spaced review -> 04-embedded.T1.04a — Concept: bitwise_masks_and_shifts]` Compute the mask `1U << 5` as a decimal integer (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -364,9 +366,11 @@ assert math.isclose(q1_floop_hz, 14.2857, abs_tol=1e-2)
 assert math.isclose(q2_cpu_pct, 3.5, rel_tol=1e-9)
 assert math.isclose(q3_tfault_us, 150.0, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = float(1 << 5)
+assert math.isclose(q5_review, 32.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 3; if you missed Q3, study `## 3. Formalization` item 2. On pass, proceed to `## 10. Next modules`.
-
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 3; if you missed Q3, study `## 3. Formalization` item 2. If you missed  Q5, review `04-embedded.T1.04a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 04 Tier 1 bridge ladder (`04-embedded.T1.04a` $\to$ `04-embedded.T1.04b`) before Step 1.5 (`04-embedded.T1.05`):

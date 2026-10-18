@@ -403,10 +403,11 @@ flowchart LR
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.4 (`03-sensors.T3.04`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: dq_inductive_cross_coupling_feedforward]` A PMSM with $L_q = 150\ \mu\text{H}$ ($1.5 \times 10^{-4}\text{ H}$) operates at electrical speed $\omega_e = 2000.0\text{ rad/s}$ and quadrature current $i_q = 15.0\text{ A}$. Compute the $d$-axis inductive cross-coupling feedforward term $v_{d,\text{ff}} = -\omega_e L_q i_q$ in volts ($\text{V}$, tolerance $\pm 10^{-9}\text{ V}$).
 2. `[Apply] [Concept: svpwm_zero_sequence_hexagonal_limit]` Compute the maximum unclipped fundamental phase peak voltage $V_{\phi,\max} = V_{\text{bus}} / \sqrt{3}$ in volts ($\text{V}$, tolerance $\pm 0.01\text{ V}$) achievable with Min-Max SVPWM on a $V_{\text{bus}} = 48.0\text{ V}$ DC bus.
-3. `[Transfer] [Concept: svpwm_zero_sequence_hexagonal_limit]` Given instantaneous phase voltage commands $v_a^ = 18.0\text{ V}$, $v_b^ = -6.0\text{ V}$, and $v_c^ = -12.0\text{ V}$, compute the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_a^, v_b^*, v_c^*) + \min(v_a^*, v_b^*, v_c^*))$ in volts ($\text{V}$, tolerance $\pm 10^{-9}\text{ V}$).
-4. `[Spaced review -> 03-sensors.T2.04 — Concept: synchronous_dq_foc_current_loop] [Concept: encoder_spatial_harmonic_error_fit]` Why does adding the same zero-sequence voltage $v_0(t)$ to all three inverter leg commands $(v_a^* + v_0, v_b^* + v_0, v_c^* + v_0)$ produce **zero** zero-sequence phase current in a 3-phase star-connected motor with an isolated (floating) neutral point?
+3. `[Transfer] [Concept: svpwm_zero_sequence_hexagonal_limit]` Given instantaneous phase voltage commands $v_a^* = 18.0\text{ V}$, $v_b^* = -6.0\text{ V}$, and $v_c^* = -12.0\text{ V}$, compute the Min-Max zero-sequence offset $v_0 = -\frac{1}{2}(\max(v_a^*, v_b^*, v_c^*) + \min(v_a^*, v_b^*, v_c^*))$ in volts ($\text{V}$, tolerance $\pm 10^{-9}\text{ V}$).
+4. `[Spaced review -> 03-sensors.T2.03a — Concept: synchronous_dq_foc_current_loop] [Concept: encoder_spatial_harmonic_error_fit]` Why does adding the same zero-sequence voltage $v_0(t)$ to all three inverter leg commands $(v_a^* + v_0, v_b^* + v_0, v_c^* + v_0)$ produce **zero** zero-sequence phase current in a 3-phase star-connected motor with an isolated (floating) neutral point?
    - **A.** Because the motor windings only respond to line-to-line voltage differences (such as $(v_a^* + v_0) - (v_b^* + v_0) = v_a^* - v_b^*$), so the common-mode offset $v_0(t)$ shifts the neutral potential without driving any current ($i_a + i_b + i_c \equiv 0$).
    - **B.** Because $v_0(t)$ is always zero at every angle.
    - **C.** Because the MOSFETs block common-mode voltages.
@@ -427,6 +428,7 @@ assert math.isclose(q3_v0, -3.0, rel_tol=1e-9)
 assert q4_choice == "A"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` items 2–3. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 03 Tier 3 bridge ladder (`03-sensors.T3.03a`) before Step 3.4 (`03-sensors.T3.04`):

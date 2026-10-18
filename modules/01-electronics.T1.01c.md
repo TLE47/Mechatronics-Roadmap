@@ -298,15 +298,16 @@ flowchart LR
 Pass criteria: read `### Safety notes`, run the worked example and exercise asserts, or score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ required on `[SAFETY]` questions).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: breadboard_internal_bus_connectivity]` A solderless breadboard spring clip has contact resistance $R_{\text{clip}} = 0.12\ \Omega$. If you mistakenly route $I = 5.0\text{ A}$ of motor current through that clip, compute the localized heat power $P = I^2 R_{\text{clip}}$ in watts ($\text{W}$, tolerance $\pm 10^{-6}\text{ W}$) that melts the ABS plastic housing.
 2. `[Apply] [Concept: multimeter_and_current_limited_psu_safety]` A bench power supply is configured to $V_{\text{set}} = 12.0\text{ V}$ and current limit $I_{\text{lim}} = 0.25\text{ A}$. If you connect it across a $R_{\text{load}} = 4.0\ \Omega$ resistor, the supply enters Constant-Current (CC) foldback. Compute the clamped output voltage $V_{\text{out}} = \min(V_{\text{set}}, I_{\text{lim}} R_{\text{load}})$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$).
 3. `[Transfer] [SAFETY] [Concept: multimeter_and_current_limited_psu_safety]` If you leave the red multimeter lead plugged into the current-shunt jack ($R_{\text{shunt}} = 0.010\ \Omega$ internal resistance, $R_{\text{leads}} = 0.010\ \Omega$ probe resistance, total $0.020\ \Omega$) and touch the probes in parallel across an un-current-limited $24.0\text{ V}$ battery rail, compute the instantaneous short-circuit surge current $I_{\text{short}} = \frac{24.0}{R_{\text{shunt}} + R_{\text{leads}}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}\text{ A}$).
-4. `[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law] [SAFETY] [Concept: esd_and_short_circuit_prevention]` Before turning ON the output of your bench power supply on a freshly wired breadboard circuit, what two steps are mandatory?
+4. `[SAFETY] [Concept: esd_and_short_circuit_prevention]` Before turning ON the output of your bench power supply on a freshly wired breadboard circuit, what two steps are mandatory?
    - **A.** Connect a LiPo battery in parallel and set current limit to maximum.
    - **B.** With power OFF, verify $V_{\text{bus}}$-to-$\text{GND}$ resistance is not a short using a DMM in $\Omega$ mode, and pre-configure the bench PSU to target voltage with a low Constant-Current limit ($0.1\text{–}0.2\text{ A}$).
    - **C.** Touch the $12\text{ V}$ wire to the MCU `3.3V` pin to test ESD protection.
    - **D.** Remove all ground wires.
-5. `[Concept: breadboard_internal_bus_connectivity]` A $5.0\text{ V}$ rail powers an LED ($V_f = 2.0\text{ V}$) through a $R = 300\ \Omega$ series resistor placed across the breadboard center ravine (`e10` to `f10`). Compute the series LED current $I = \frac{V_{\text{sup}} - V_f}{R} \times 1000$ in milliamperes ($\text{mA}$, tolerance $\pm 10^{-6}$).
+5. `[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law]` A $5.0\text{ V}$ rail powers an LED ($V_f = 2.0\text{ V}$) through a $R = 300\ \Omega$ series resistor placed across the breadboard center ravine (`e10` to `f10`). Compute the series LED current $I = \frac{V_{\text{sup}} - V_f}{R} \times 1000$ in milliamperes ($\text{mA}$, tolerance $\pm 10^{-6}$).
 
 **Answer key:**
 ```python
@@ -324,7 +325,7 @@ assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert math.isclose(q5_i_ma, 10.0, rel_tol=1e-9)
 ```
 - **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 2–3; if you missed Q4, study `### Safety notes`. On pass, proceed to `## 10. Next modules`.
-
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 01 Tier 1 bridge ladder (`01-electronics.T1.01a` $\to$ `01-electronics.T1.01c` $\to$ `01-electronics.T1.01d` $\to$ `01-electronics.T1.01b`) before Step 1.2 (`01-electronics.T1.02`):

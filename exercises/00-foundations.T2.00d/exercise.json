@@ -1,25 +1,20 @@
 {
   "id": "00-foundations.T2.00d",
   "module": "modules/00-foundations.T2.00d.md",
-  "title": "Complex response, decibels and the resonance peak",
+  "title": "Complex numbers, Euler's formula and phasor sums",
   "requires": [
     "to_polar(z) -> (magnitude, phase_rad)",
     "to_rect(magnitude, phase_rad) -> complex",
-    "first_order_response(tau, omega) -> complex",
-    "second_order_response(wn, zeta, omega) -> complex",
-    "magnitude_db(h) -> float (20 log10)",
-    "phase_deg(h) -> float (degrees)",
-    "resonance_peak(wn, zeta) -> (omega_r, peak)"
+    "add_phasors(z1, z2) -> complex"
   ],
   "checks": {
     "behaviour": "test_behavior.py",
     "transfer": "test_transfer.py"
   },
   "faults": {
-    "ten_log": ["test_behavior.BodeTests.test_decibels_are_amplitude_decibels"],
-    "phase_radians": ["test_behavior.BodeTests.test_phase_is_in_degrees"],
-    "peak_at_natural": ["test_behavior.ResonanceTests.test_the_peak_is_on_the_curve"],
-    "hardcoded_response": ["test_behavior.SecondOrderTests.test_dc_gain_is_one_for_any_damping"]
+    "polar_drops_quadrant": ["test_behavior.PolarTests.test_phase_covers_all_four_quadrants"],
+    "rect_in_degrees": ["test_behavior.RectTests.test_euler_identity"],
+    "add_magnitudes": ["test_behavior.PhasorSumTests.test_opposite_phasors_cancel"]
   },
   "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
   "delivery": {

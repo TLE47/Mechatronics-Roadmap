@@ -380,17 +380,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 3.5 (`04-embedded.T3.05`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 3.5 (`04-embedded.T3.05`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: center_aligned_pwm_midpoint_adc_sampling]` A microcontroller advanced timer clocked at $f_{\text{tim}} = 180\text{ MHz}$ ($1.8 \times 10^8\text{ Hz}$) operates in center-aligned (up-down) mode to generate a $f_{\text{PWM}} = 30\text{ kHz}$ ($3.0 \times 10^4\text{ Hz}$) carrier. Compute the auto-reload register value $\text{ARR} = \frac{f_{\text{tim}}}{2 \, f_{\text{PWM}}}$ (tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: center_aligned_pwm_midpoint_adc_sampling]` For a $f_{\text{PWM}} = 40\text{ kHz}$ carrier ($T_{\text{PWM}} = 25{,}000\text{ ns}$) with maximum phase duty cycle $d_{\max} = 0.90$ and dead-time $t_{\text{dead}} = 200\text{ ns}$, compute the minimum low-side shunt conduction window $t_{\text{low,min}} = (1 - d_{\max})T_{\text{PWM}} - 2 t_{\text{dead}}$ in nanoseconds ($\text{ns}$, tolerance $\pm 10^{-6}\text{ ns}$).
 3. `[Transfer] [Concept: q131_fixed_point_trig_scaling]` Convert the normalized real value $x = +0.25$ into its signed 32-bit `Q1.31` integer representation $X_{Q31} = \operatorname{round}(x \cdot 2^{31})$ (tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 04-embedded.T2.05 — Concept: dma_double_buffered_ping_pong_isr] [Concept: seqlock_optimistic_even_odd_versioning]` In a Wait-Free Sequence Lock (`SeqLock`), a $1\text{ kHz}$ reader task reads `s1 = 12` before copying the shared struct and reads `s2 = 14` immediately after copying the struct. What happened during the copy, and what must the reader do?
+4. `[Concept: seqlock_optimistic_even_odd_versioning]` In a Wait-Free Sequence Lock (`SeqLock`), a $1\text{ kHz}$ reader task reads `s1 = 12` before copying the shared struct and reads `s2 = 14` immediately after copying the struct. What happened during the copy, and what must the reader do?
    - **A.** The $40\text{ kHz}$ writer ISR preempted the reader mid-copy and completed a write (`12 -> 13 -> 14`), so the copied struct may be torn and the reader must discard it and retry the read loop immediately.
    - **B.** The copy succeeded without interruption; use the data.
    - **C.** The CPU clock stopped working.
    - **D.** The writer task is deadlocked waiting for the reader.
+5. `[Spaced review -> 04-embedded.T2.04c — Concept: zephyr_static_threads_and_k_mutex]` Four static threads each reserve a $1024\,\text{byte}$ stack. Compute the total stack in bytes (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -405,8 +407,11 @@ assert math.isclose(q1_arr, 3000.0, rel_tol=1e-9)
 assert math.isclose(q2_tlow_ns, 2100.0, rel_tol=1e-9)
 assert math.isclose(q3_q31, 536870912.0, rel_tol=1e-9)
 assert q4_choice == "A"
+q5_review = 4.0 * 1024.0
+assert math.isclose(q5_review, 4096.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `04-embedded.T2.04c`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 04 Tier 3 bridge ladder (`04-embedded.T3.04a`) before Step 3.5 (`04-embedded.T3.05`):

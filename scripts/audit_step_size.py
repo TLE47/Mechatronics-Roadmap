@@ -44,6 +44,11 @@ MODULES = os.path.join(ROOT, "modules")
 INDEX = os.path.join(MODULES, "_index.yaml")
 CROSSWALK = os.path.join(ROOT, "resources", "legacy-prereq-map.json")
 
+# The generated ladder-gate block names every ladder concept on every page, so it is not evidence of
+# what a page teaches: strip it wherever page text is searched.
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from page_body import page_body, strip_generated  # noqa: E402
+
 FLOOR = 8.0
 # Weights are a stated opinion, not a measurement: a declared concept costs 2 (the curriculum's own
 # unit), a bundled pair 2 more (two jumps sold as one), a first-use notation command 0.5 (many are
@@ -150,8 +155,11 @@ def audit() -> list[dict]:
     previous_by_track: dict[str, int] = {}
 
     for ident in core:
-        text = open(os.path.join(MODULES, ident + ".md"), encoding="utf-8").read()
-        fm = parse_front_matter(text)
+        raw = open(os.path.join(MODULES, ident + ".md"), encoding="utf-8").read()
+        fm = parse_front_matter(raw)
+        # The generated gate block is identical on every page, so its LaTeX and TODOs are nobody's
+        # step: the first page that carried it would wear the whole paper as its own notation.
+        text = strip_generated(raw)
         track = ident.split(".")[0]
         tier = int(fm.get("tier", "0") or 0)
         math_now = int(fm["difficulty"].get("math", "0") or 0)
@@ -256,7 +264,7 @@ def crosswalk_rows(rows: list[dict]) -> tuple[list[dict], list[str]]:
             continue
         page = record["page"]
         evidence = record.get("evidence", [])
-        text = open(os.path.join(MODULES, page + ".md"), encoding="utf-8").read().lower() if page in pages else ""
+        text = page_body(os.path.join(MODULES, page + ".md")).lower() if page in pages else ""
         missing = [term for term in evidence if term.lower() not in text]
         still_cited = cited_by.get(legacy_id, [])
         if page not in pages:

@@ -11,6 +11,244 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 76: The README's Main Claim Is the Core Route
+
+### 1. What the front page used to say
+- `README.md` section 1 offered three equal "completion routes" (learn & simulate / build / production
+  practice) and never said which one was the requirement, so "complete" meant whatever a reader
+  assumed. Section 2 then quoted `326.5 hours`, `84.0 h` / `124.5 h` / `118.0 h` and
+  `~345.5–351.5 hours` from the pre-split syllabus - a course that disagreed with
+  `docs/SIM_ROUTE.md` (Core `182.5–226 h`) and that nobody had to finish.
+- Section 1 now makes one claim: **complete = the Core route**, `42 modules plus the prose tracks`,
+  `182.5–226 hours`, summed from each page's own `est_hours` / `typical_hours` /
+  `slow_learner_hours`. The six Tier 3 Extensions (`29.5 h`) are stated as **optional**, still
+  graded and still badgeable. Hardware became *how you take* the Core route rather than a second
+  curriculum, so the safety boundaries survive without pretending to be requirements.
+- Section 2 carries one total only and points per-stage figures at `docs/SIM_ROUTE.md`; Steps 3-4
+  name module counts instead of stale hours. The validation list now runs
+  `generate_sim_route.py --check` and `tests/test_sim_route.py`.
+
+### 2. The guard, so the claim cannot drift again
+- `tests/test_sim_route.py` gained `test_the_readme_main_claim_is_the_core_route`: it reads the Core
+  and Extensions totals **out of `docs/SIM_ROUTE.md`** and requires the README to quote both
+  exactly, link the page, and call the Extensions optional. The test duplicates no number, so a
+  regenerated route moves the assertion with it.
+- Two stale counts fixed while there: the header badge said `68 Modules` (real: 72 formal modules)
+  and `CONTRIBUTING.md` said "all 68 modules".
+
+### 3. Verification
+- `tests/test_sim_route.py` 6/6 OK; negative path: a README edited to `183.5–226` fails with
+  `'182.5–226 hours' not found in ...`, then passes again once restored.
+- `generate_sim_route.py --check` current; `validate_modules.py` OK (72 modules: 24 legacy, 48
+  bridge [16 Tier 1] across 25 ladders; 48 beginner lessons); `verify_repo.py` PASS 136 files / 137
+  diagrams / 1804 links / 0 errors.
+- The full CI chain was run locally on Python 3.12: **34 steps, all green** - the 27-command verify
+  step, `audit_math`, `run_all_labs`, `npm run build`, `test:smoke`, `test:e2e` (Chromium +
+  Firefox) and `test:e2e:pages`.
+- The browser run re-proved the grading claim from fresh code rather than a commit message:
+  `a Tier 2 and a Tier 3 entry print their own PASS line and stay unverified`.
+
+---
+
+## [2026-10-18] — Run 75: A Real Spaced-Review Question on Every Non-Root Page
+
+### 1. The gap Run 74 left is closed
+- Run 74 removed 28 decoration arrows and left 30 pages with no spaced-review item, recorded rather
+  than hidden. **All 29 remaining non-root pages now carry one**, each written against the earlier
+  page that teaches the concept, with its own key line, assert, pass-mark move and remediation
+  pointer. The generator now prints
+  `spaced reviews: 47 arrow(s) on 47 page(s); 1 page(s) carry none.`
+- The one page without a review is `00-foundations.T1.00a`, the root: no earlier page exists to
+  review, which is the exemption `docs/ASSESSMENTS.md` already states ("for non-root modules").
+- Each question is answered **by** the concept its arrow names - a rotation of a point reviews SE(3)
+  homogeneous transforms, a priority-inheritance question asks the priority the holder actually runs
+  at, a rolling counter asks the wrapped value. The full table is in `docs/dogfood-log.md` Run 75.
+
+### 2. What moved in the pages
+- `resources/skip-tests.json`: 29 questions, 29 key lines, 29 pass marks. Marks move 4/4 -> 4/5 on 20 page(s); 3/4 -> 4/5 on 3 page(s); 4/5 -> 5/6 on 6 page(s);
+  the bar stays $\lceil 0.8 \times N \rceil$, so no page's standard was lowered.
+- Each `## 7. Checkpoint` sentence states the same fraction, and each pass mark names the review
+  target for a reader who misses the new question. Safety-gated pages keep `100\%` on their
+  `[SAFETY]` items; the added question sits after those items.
+- `00-foundations.T2.00a`'s pass mark still read "($75\%$ rounded to the $80\%$ bar means all four;
+  treat $3/4$ as a retry)" - a sentence about the old count. It now reads "($80\%$ of five is four;
+  treat $3/5$ as a retry)".
+
+### 3. Two defects the authoring exposed
+- `04-embedded.T1.04a`'s answer key had no `import math`; it ran only because nothing in it used
+  `math`. The first key line that did (`math.isclose`) crashed the page's key, and the store's
+  "every key runs" check caught it. Fixed at the source.
+- Three tests in `tests/test_skip_tests.py` hard-coded the fixture page's `$3/4$` and a comment
+  reading "3/5 against four questions". A hard-coded count is the same defect the store was built
+  to remove, so all three now derive the fixture from the store. A new test asserts the invariant
+  the spec actually states: every page with prerequisites carries a spaced review, and the root is
+  the only page allowed not to.
+
+### 4. A third defect, found by asking what the bar means
+- Auditing every page against the 80% floor `docs/ASSESSMENTS.md` states turned up
+  `05-control.T3.05b`, whose Checkpoint promised `$\ge 80\%$` while asking `$3/4$` - 75%. Raised to
+  `$4/4$`, and the generator now reports a mark under the floor as a finding, so the next such page
+  fails the check instead of sitting quietly at 75%.
+- The bar's arithmetic is spelled out for every count now: `$4/4$` on 4-Q tests, `$\ge 4/5$` on
+  5-Q, `$\ge 5/6$` on 6-Q, with the `75%` numerical-question floor covering `5/6` too.
+
+### 5. Verification
+- `generate_skip_tests.py --check` - 48 pages, 236 questions, every key runs; 47 arrows on 47 pages.
+- `verify_repo` (1803 links), `lint_modules`, `lint_lessons`, `validate_modules`, `audit_step_size`,
+  `legacy_crosswalk`, `mentions_audit`, `module_parity` - all green after the page rewrites.
+- `tests/test_*.py` - 19 skip-test tests and the rest of the suite green.
+
+---
+
+## [2026-10-18] — Run 74: The Spaced-Review Arrows, Judged One by One
+
+### 1. The audit
+- All 46 `[Spaced review -> ...]` arrows were judged against one rule: answering the question must
+  **require** the named concept, not merely sit next to it. Fifteen were honest, three are borderline
+  keeps (recorded with reasons in `docs/dogfood-log.md` Run 74), and **28 were decoration**.
+- Every one of the 28 had the same shape: a good question about its own page's concept, carrying an
+  arrow to a prior concept that never appears in the answer path. Examples: a devicetree `status =
+  "disabled"` question reviewing priority inversion; a SeqLock question reviewing DMA ping-pong;
+  a $Q$/$R$ scaling question reviewing Bode magnitude.
+
+### 2. The repair is removal, not repointing
+- No earlier page teaches the machinery those questions use, so moving the arrow would only relocate
+  the lie. The arrows were removed; the questions keep their own `[Concept: ...]` tag and their keys.
+- 18 arrows remain on 18 pages. **30 pages now carry no spaced-review item** — a real gap, printed on
+  every run (`spaced reviews: 18 arrow(s) on 18 page(s); 30 page(s) carry none.`) and carried in the
+  dogfood log, but deliberately not a failing check: failing would only push a false tag back.
+  Writing 30 genuine review questions is the next authoring pass.
+
+### 3. What the audit also proved about the pointer rule
+- Two of the removed arrows had passed Run 73's pointer check because the crosswalk resolved them to
+  pages whose *body* mentions the term (`04-embedded.T2.04b` for DMA, `07-systems.T2.07a` for OPC
+  UA). A body mention is evidence a page references an idea, not that it teaches it as a tool; the
+  rule is kept as a floor, and honesty is judged by reading.
+- `tests/test_skip_tests.py` grew to 18 tests: the remaining arrows must still satisfy the pointer
+  rule, and the spaced-review report must be computed from the store (no hard-coded counts).
+
+---
+
+## [2026-10-18] — Run 73: All 48 Skip Tests Sat, and What It Exposed
+
+### 1. The sitting
+- Every one of the 207 questions in `resources/skip-tests.json` was re-derived from its own numbers
+  and compared with its key; every multiple-choice letter was read against the option it names.
+  **207/207 agree after the fixes below** — one key was wrong inside its own tolerance, the rest were
+  wording or structure.
+
+### 2. Five content defects fixed
+- `02-mechanics.T3.02a` Q3 printed the answer in the question ("by what multiplicative factor
+  $2^{5/2}$…"); the prompt no longer names it.
+- `03-sensors.T3.03a` Q3 had four phase commands missing their `*` (`$v_a^ = 18.0$`), which renders as
+  a dangling caret; restored.
+- `00-foundations.T2.00a` Q4's keyed option justified the missing start sample as "the first velocity
+  is $0$ by definition" — a convention dressed as a definition. Rewritten to the telescoping reason.
+- `01-electronics.T1.01c` Q5 was tagged `breadboard_internal_bus_connectivity` while computing an LED
+  current; retagged as a spaced review of the Ohm/KVL page it actually tests.
+- `00-foundations.T2.00f` Q2 asserted $749.4867\text{ Hz}$ where its own formula gives $749.48034$;
+  the error sat inside the $\pm0.01$ Hz tolerance, so nothing caught it. Key corrected.
+
+### 3. Thirty spaced-review arrows repointed
+- 18 named legacy step ids (`00-foundations.T1.01`, `02-mechanics.T1.03`, `07-systems.T2.08`, …),
+  which are not pages a reader can open; 12 more named a module that does not teach the tagged
+  concept. All now point at the page that declares the concept, or - for legacy-only concepts - at
+  the page `resources/legacy-prereq-map.json` proves carries its terms.
+- The generator refuses an arrow that is not a page, and one whose target neither declares nor
+  teaches the concept (`concepts_declared_by` / `concepts_map`).
+
+### 4. A structural blind spot the sitting found
+- All 51 multiple-choice questions kept their A-D lines in the store's free-form `extra` array, so
+  the four-option check never ran and nothing compared the key's letter with the option text - a key
+  naming `C` over the correct text at `B` would have passed. Options are structured now; the check
+  counts them, requires the key to name a letter, and requires that letter to be asserted.
+- `tests/test_skip_tests.py` grew to 16 tests (four-option rule, keyed letter, spaced-review target).
+
+### 5. Verification
+- `verify_repo`, `clean_tex`, `validate_modules`, `lint_modules`, both generators (`--check`), the
+  step-size/crosswalk/mentions/parity audits, `generate_python_lessons_data`, `generate_sim_route`,
+  `check_term_order`, every `tests/test_*.py` - all green; 48 pages render the store again.
+- `docs/dogfood-log.md` carries the sitting as Run 73 with the defect table.
+
+---
+
+## [2026-10-18] — Run 72: Every Skip Test Is Generated From One Store
+
+### 1. `resources/skip-tests.json` + `scripts/generate_skip_tests.py`
+- All 48 bridge modules' Skip tests (207 questions, 48 executable keys) move into one store and are
+  rendered between `<!-- skip-test:start -->` / `<!-- skip-test:end -->`. The extraction proved the
+  render byte-identical to the hand-written sections before it wrote the store: only the markers
+  were added, plus one blank line on the 8 pages that had none before the next heading and the
+  collapse of a double blank on 18 that had two. No question, key or mark changed content.
+- Five checks, all structural: the store and the pages agree on which modules exist; every page
+  renders the store; the pass fraction's denominator equals the question count **and** any
+  `(e/o)` the Checkpoint attaches to the Skip test matches the entry; every `new_concepts:` entry is
+  named by at least one of the module's own questions (spaced review excepted, since it names an
+  earlier page's concept on purpose); every key executes, evaluates a `qN` for each question and
+  contains an assert.
+- `tests/test_skip_tests.py`, 14 tests, including the negative paths: a drifted mark, a Checkpoint
+  promise that disagrees, a foreign concept tag, an untagged concept, a key that skips a question,
+  a key that raises, a missing role class, and a missing marker.
+
+### 2. What the checks found on the way in
+- `03-sensors.T2.03a` promised `($4/4$)` on a five-question Skip test whose mark is `4/5`; the
+  Checkpoint now says `4/5`. That mismatch had been invisible because the checker's own regex
+  matched only `(4/5)` and not the `($4/5$)` form every page actually uses — caught by the test that
+  asserts the check fires on drift, not by reading the pages.
+- `new_module.py` no longer scaffolds a hand-written Skip test; it points at the store, since a
+  hand-typed section would be overwritten on the next render (and `--check` reports the module as
+  having a Skip test with no entry until one is added).
+
+### 3. Wiring
+- `npm run check:skip` / `test:skip`, and both commands added to `.github/workflows/ci.yml` beside
+  the ladder-gate pair. `docs/ASSESSMENTS.md` and `docs/QUALITY_SPEC.md` now say the Skip tests are
+  generated from the store rather than typed per page.
+
+---
+
+## [2026-10-18] — Run 71: The Ladder Gate Becomes One Generated Paper
+
+### 1. `scripts/generate_ladder_gate.py` owns the paper
+- The Track 00 Tier 2 exit exam existed eight times, once per page, copied by hand: a renumbered
+  question or a fixed answer key had to be repeated eight times and could silently disagree. The
+  twelve questions, their options and the executable answer key now live in one file and are
+  rendered byte for byte between `<!-- ladder-gate:start -->` / `<!-- ladder-gate:end -->` on every
+  `00-foundations.T2.*` page.
+- Four structural checks: a Tier 2 page on disk with no ladder entry (and the reverse) fails, a page
+  whose block differs from the render fails, the question tags must equal the union of every ladder
+  page's `new_concepts:`, and the key is executed before anything is rendered. A fifth refuses a page
+  that attaches a score to the gate outside the block - `00f` still promised `$7/8$` after the paper
+  became twelve questions.
+- `tests/test_ladder_gate.py`, 12 tests: same-bytes-everywhere, the ladder is fully tagged, the key
+  runs, the render is idempotent, one character of drift is caught, a marker-less page is a finding,
+  the right answer is not always `A`, and the generated block is not page evidence.
+
+### 2. The audits stop reading the paper as if each page taught it
+- New `scripts/page_body.py`: the generated block is identical on all eight pages, so it cannot be
+  evidence of what any one page teaches. The crosswalk, the step-size audit and the mention audit now
+  strip it before searching. The first version of the step audit counted the paper's LaTeX as the
+  first ladder page's new notation, and the first crosswalk run "confirmed" a concept on every page.
+- The crosswalk's `00-foundations.T2.01` module entry now points at `T2.00f` (Tustin, notch, biquad,
+  resonance) and `two_mass_torsional_resonance_anti_resonance` at `T2.00h`, the page that actually
+  teaches it after the Run 70 split; `T2.00d` was standing in for content it no longer carries.
+- Regenerated: `docs/STEP_SIZE_AUDIT.md` (26 pages, 8 flagged, 0 broken prerequisites),
+  `docs/PASSING_MENTIONS.md` and `resources/mentions-decisions.json` (41 pairs: 18 dropped, 3 owned,
+  20 kept), `resources/legacy-prereq-map.json` (102 concepts resolved, 0 unresolved).
+
+### 3. `docs/dogfood-log.md` Run 71 - the paper sat once, as a learner
+- Row `00-foundations.T2.00g`, 20 min, 0 hints, no stuck category, course bug `yes`.
+- Five defects fixed, all in the paper or its copies: Q1 asked for $(A\vec{x})_1$ (the maths subscript
+  is the first entry, the key evaluated the second); Q5's Run 70 rewording pointed at the third row
+  (the $\vec x_2$ row, first entry $0$) while the key kept the fourth row's $0.25$; `00f` restated a
+  `$7/8$` gate score; all four multiple-choice questions keyed `A`, now C, B, D, B; the preamble no
+  longer claims a page's own tools are on the paper.
+- The answers were re-derived independently of the key (`Ax = [-0.5, 11.5]`, $v_1 = -0.80$,
+  $x_1 = 0.484$, row-4 entry $0.25$, $30\,\text{rad/s}$, $\zeta = 0.75$, $|Z| = 5.6569\ \Omega$,
+  $-3.0103\,\text{dB}$, $\rho(A_d) = 1.024695$), and `docs/ASSESSMENTS.md` now describes the generated
+  paper and the eight-page Step 2.1 ladder instead of an `8 Q` exam with a `7/8` pass mark.
+
+---
+
 ## [2026-10-18] — Run 70: The Tier 2 Opener Splits, and Matrices Get Their Own Page
 
 ### 1. `00-foundations.T2.00a` now teaches one thing
@@ -185,7 +423,7 @@ Totals: **100 resolved, 2 recorded unresolved** (the quaternion id joins `q131_c
 ### 3. Verification
 - `python3 scripts/audit_step_size.py --check` exit 0 (`24 pages, 8 flagged, 0 broken prerequisites`); exit 1 with `00-foundations.T1.01: still cited by 00-foundations.T2.00a` when a legacy id is pasted back, and exit 1 with `does not contain ['notpresent']` when one evidence term is wrong (both restored).
 - `python3 scripts/legacy_crosswalk.py --check` exit 0 (`101 legacy concepts resolve to pages that contain their terms; 1 recorded as unresolved`).
-- `/opt/homebrew/bin/python3.12 scripts/validate_modules.py` exit 0 — `OK (70 modules: 24 legacy, 46 bridge [16 Tier 1] across 25 ladders; 48 beginner lessons; all 46 Expected output blocks & script docstrings verified)`. The default `python3` on this Mac is 3.9, where `float | None` in a page block raises `unsupported operand type(s) for |`; that is the interpreter, not the page, and 3.12 is what CI uses. This entry also restores the README-size claim the validator expects (`111 KB $\to$ 31 KB`).
+- `/opt/homebrew/bin/python3.12 scripts/validate_modules.py` exit 0 — `OK (70 modules: 24 legacy, 46 bridge [16 Tier 1] across 25 ladders; 48 beginner lessons; all 46 Expected output blocks & script docstrings verified)`. The default `python3` on this Mac is 3.9, where `float | None` in a page block raises `unsupported operand type(s) for |`; that is the interpreter, not the page, and 3.12 is what CI uses. This entry also restores the README-size claim the validator expects (`111 KB $\to$ 32 KB`).
 - Wired into `npm run check:crosswalk` and the CI verify step, and named in `README.md`'s validation list.
 
 ## [2026-10-17] — Run 61: Six Step-Size Signals, Eight Pages That Jump, and 100 Concepts Nobody Teaches

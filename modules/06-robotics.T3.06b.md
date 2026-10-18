@@ -355,9 +355,10 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
+Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($5/6$, $100\%$ on `[SAFETY]` items) on the Skip test, or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock Step 3.7 (`06-robotics.T3.07`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: mdp_discounted_return_and_policy_gradient]` Compute the discounted return $G_0 = r_0 + \gamma r_1 + \gamma^2 r_2$ (tolerance $\pm 10^{-9}$) for rewards $[2.0, 0.0, 5.0]$ and discount factor $\gamma = 0.80$.
 2. `[Apply] [Concept: mdp_discounted_return_and_policy_gradient]` In PPO with clip parameter $\epsilon = 0.20$, if advantage is $\hat{A}_t = +4.0$ and probability ratio is $\rho_t = 1.60$, compute the clipped surrogate value $\min(\rho_t \hat{A}_t,\ \operatorname{clip}(\rho_t, 0.8, 1.2)\hat{A}_t)$ (tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: action_chunking_temporal_ensembling_rtc]` Why do modern visuomotor policies (`ACT`, `Diffusion Policy`, `π₀` with Real-Time Chunking `RTC`) predict a chunk of $K = 16\text{–}50$ future actions at once and blend overlapping chunks rather than predicting a single action $a_t$ independently at each frame?
@@ -365,12 +366,13 @@ Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$, $100\%$ on `[SA
    - **B.** To eliminate non-Markovian human pauses, smooth out high-frequency action jitter across frames, and maintain continuous $1\text{ kHz}$ execution even while the next vision inference takes $30\text{–}80\text{ ms}$.
    - **C.** Because cameras only capture 1 image per minute.
    - **D.** To disable the joint encoders.
-4. `[Spaced review -> 06-robotics.T3.06a — Concept: neural_network_forward_pass_and_mse_loss] [SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]` A vision-language-action (`VLA`) policy running at $30\text{ Hz}$ suffers a camera glare and suddenly outputs a joint target of $q_{\text{policy}} = +3.14\text{ rad}$ while the robot arm is at $q = 0.20\text{ rad}$. If the $1\text{ kHz}$ safety shield enforces a maximum step clamp $\Delta q_{\max} = 0.06\text{ rad}$ around $q$, what safe target $q_d$ in radians (tolerance $\pm 10^{-9}$) is passed to the PD controller?
+4. `[SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]` A vision-language-action (`VLA`) policy running at $30\text{ Hz}$ suffers a camera glare and suddenly outputs a joint target of $q_{\text{policy}} = +3.14\text{ rad}$ while the robot arm is at $q = 0.20\text{ rad}$. If the $1\text{ kHz}$ safety shield enforces a maximum step clamp $\Delta q_{\max} = 0.06\text{ rad}$ around $q$, what safe target $q_d$ in radians (tolerance $\pm 10^{-9}$) is passed to the PD controller?
 5. `[SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]` What must the $1\text{ kHz}$ real-time motor controller do if the $30\text{ Hz}$ GPU policy process crashes or stops sending action chunks for more than the watchdog timeout ($100\text{ ms}$)?
    - **A.** Continue extrapolating the last velocity forever until the arm hits the table.
    - **B.** Immediately transition to a safe hold/damped-stop trajectory (`qd_des = 0`, hold current $q$ or engage STO) and raise a communication timeout fault.
    - **C.** Apply $100\%$ random PWM noise.
    - **D.** Disable the hardware current limit.
+6. `[Spaced review -> 06-robotics.T3.06a — Concept: neural_network_forward_pass_and_mse_loss]` Predictions $[2.0,\; 4.0]$ against targets $[1.0,\; 1.0]$. Compute the mean squared error (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -387,8 +389,12 @@ assert math.isclose(q2_ppo, 4.8, rel_tol=1e-9)
 assert q3_choice == "B"
 assert math.isclose(q4_safety_qd, 0.26, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required
 assert q5_safety_choice == "B"                          # Mandatory [SAFETY] 100% required
+q6_review = ((2.0 - 1.0) ** 2 + (4.0 - 1.0) ** 2) / 2.0
+assert math.isclose(q6_review, 5.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/5$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $5/6$ overall AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `06-robotics.T3.06a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
+
 ### Gate test
 Covers the complete Track 06 Tier 3 Embodied AI bridge ladder (`06-robotics.T3.06a` $\to$ `06-robotics.T3.06b`) before Step 3.7 (`06-robotics.T3.07`):
 1. `[Concept: neural_network_forward_pass_and_mse_loss]` Compute the Mean-Squared Error $\mathcal{L} = \frac{1}{2}\left((2.0 - 1.0)^2 + (4.0 - 1.0)^2\right)$ (tolerance $\pm 10^{-9}$).

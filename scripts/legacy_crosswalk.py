@@ -31,6 +31,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from audit_step_size import load_core_modules, load_index, parse_front_matter  # noqa: E402
+from page_body import page_body  # noqa: E402
 
 MAP_PATH = os.path.join(ROOT, "resources", "legacy-prereq-map.json")
 MODULES = os.path.join(ROOT, "modules")
@@ -45,14 +46,11 @@ def page_texts() -> dict[str, str]:
     and `augmented_kalman_disturbance_observer` both resolved this way to pages whose bodies never
     mentioned them.
     """
-    texts = {}
-    for name in sorted(os.listdir(MODULES)):
-        if name.endswith(".md"):
-            with open(os.path.join(MODULES, name), encoding="utf-8") as handle:
-                raw = handle.read()
-            match = re.match(r"---\n.*?\n---\n", raw, re.S)
-            texts[name[:-3]] = (raw[match.end():] if match else raw).lower()
-    return texts
+    return {
+        name[:-3]: page_body(os.path.join(MODULES, name)).lower()
+        for name in sorted(os.listdir(MODULES))
+        if name.endswith(".md")
+    }
 
 
 def tokens(concept: str) -> list[str]:

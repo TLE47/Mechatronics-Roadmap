@@ -64,6 +64,7 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `06-robotics.T2.06a` | 2026-10-17 | 1 | 0 | none | no | - |
 | `06-robotics.T2.06b` | 2026-10-17 | 1 | 0 | none | no | - |
 | `07-systems.T2.07a` | 2026-10-17 | 1 | 0 | none | no | - |
+| `00-foundations.T2.00g` | 2026-10-18 | 20 | 0 | none | yes | - |
 | `01-electronics.T3.01a` | 2026-10-17 | 2 | 0 | none | yes | - |
 | `04-embedded.T3.04a` | 2026-10-17 | 2 | 0 | none | yes | - |
 | `06-robotics.T3.06b` | 2026-10-17 | 1 | 0 | none | no | - |
@@ -435,6 +436,48 @@ biases) whose loss begins lower - $0.423$ instead of $1.95$ - and lands at the s
 1.4% instead of 0.31%, even though every gradient matches a finite difference. Item 5 of the ladder
 now names the course init and both measured trajectories. No assertion was touched.
 
+## Run 71 — the ladder gate, sat once as one paper
+
+The Tier 2 exit exam is now generated (`scripts/generate_ladder_gate.py`) and rendered identically
+on all eight Tier 2 pages, so this sitting is of the ladder's paper rather than of one page's copy.
+It was taken after the split of `T2.00d`/`T2.00h`, so its twelve questions are the twelve that ship.
+
+| Module | Package cases | Learner attempt from the hints | Gate score | Author first pass | Browser workflow | Delayed transfer |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `00-foundations.T2.00g` | met (19 unit tests; 12 grade groups in `run_exercise.py`, all OK) | not re-sat (the package's 19 tests and four faults are graded separately) | 12/12 | met, 0 hints, one sitting; five defects found and fixed (below) | not re-run: unchanged package, and both E2E suites grade all entries | pending |
+
+**What the sitting found.** Five defects, all in the paper or its copies rather than its arithmetic:
+
+- Q1 asked for $(A\vec{x})_1$ and the key evaluated $1.0(1.5) + 4.0(2.5) = 11.5$ - the **second**
+  entry. The maths subscript $1$ is the first entry ($3.0(1.5) - 2.0(2.5) = -0.5$), so a learner who
+  read the page's own $y_i = \sum_j A_{ij}x_j$ wrote $-0.5$ and was marked wrong against a key that
+  had silently switched to Python indexing. The question now asks for **both** entries, each with
+  its own tolerance, so the answer does not depend on which index base the reader brings.
+- Q5 pointed at the wrong row, twice. Run 71's fix turned "the entry in row 3, column 0" (one-indexed
+  row, zero-indexed column) into "the first entry of its third row" - which is the $\vec{x}_2$ row,
+  whose first entry is $0$, not the $0.25$ the key asserts. The row that updates $v_2$ is the fourth,
+  so a learner who read the 4-state matrix on the page and answered $0$ was marked wrong by a key
+  sitting one row below. The question now names it: "the first entry of its **fourth** row - the row
+  that updates $v_2$".
+- The per-page paper used to open with "Questions 1-6 are this module's own three tools", which on
+  `T2.00a` claimed six questions about matrices the reader had not reached yet. The generated paper
+  says the exam is the ladder's, and that it is taken once after the last page.
+- All four multiple-choice questions keyed **A**, so a learner who never opened the ladder could bank
+  four of the twelve marks on the letter alone. The distractors were rotated instead: the keys now
+  read C, B, D, B, and `tests/test_ladder_gate.py` holds the paper to more than one answer letter.
+- `00-foundations.T2.00f`'s Checkpoint still promised "$\ge 80\%$ ($7/8$) on the Ladder Gate test" -
+  a count from the hand-copied paper, carried into the generated one. The generator now refuses any
+  page that attaches a score to the gate outside its block (`score_restatements`), so the only copy
+  of the pass mark is the paper's own, and the page points at it without restating it.
+
+All four were fixed before the answers were checked, and the numbers never moved. One item is left as
+it is and noted here: Q10 asks two one-line evaluations ($|Z| = 5.6569\ \Omega$ and the corner
+$-3.0103\,\text{dB}$) because it is the question that ties the complex, impedance and Bode concepts
+together; splitting it would add a thirteenth row for no extra discrimination.
+
+Answers, worked by hand in the sitting: $-0.5$ and $11.5$; C; $-0.80\,\text{m/s}$; $0.484\,\text{m}$;
+$0.25$; B; $30\,\text{rad/s}$; D; $0.75$; $5.6569\ \Omega$ and $-3.0103\,\text{dB}$; $1.024695$; B.
+
 Rows above are **author-dogfood**: the author who wrote the module did its exercise and Gate test with
 only the in-course hints. `02-mechanics.T2.02a` is the first row, added when it became the reference
 module (the template every later module copies). Its `yes` in *course bug?* covers two fixes the run
@@ -442,3 +485,140 @@ found, both with a test: the two CI scripts that execute module python blocks ha
 nowhere on `sys.path`, so a plant-wired module could not run on the runner at all, and the parity
 scorer's `difficulty:` parser rejected the trailing `# comment` that `docs/QUALITY_SPEC.md` §2 writes
 in its own example (`tests/test_module_parity.py` holds both halves).
+
+## Run 73 — all 48 Skip tests sat, 207 questions
+
+The Skip tests are generated from [`resources/skip-tests.json`](../resources/skip-tests.json) as of
+Run 72, so this sitting is of the store rather than of 48 copies: every question was re-derived from
+its own numbers (three independent sittings of ~35 questions each, plus a fourth pass over the
+mismatches), and every multiple-choice letter was opened and read against the option it names.
+
+**Result: 207/207 answers agree with the keys after the five fixes below.** No wrong answer was
+found in any key except `T2.00f` Q2, where the key's constant was wrong but inside its own tolerance.
+
+| Where | Defect | Fix |
+| :--- | :--- | :--- |
+| `02-mechanics.T3.02a` Q3 | The question printed its own answer: "by what multiplicative factor $2^{5/2}$…" | the factor is gone from the prompt; the key still asserts $2^{5/2} = 5.65685425$ |
+| `03-sensors.T3.03a` Q3 | Four phase commands lost their `*`, leaving `$v_a^ = 18.0$` — a dangling caret that renders as a broken formula | `$v_a^*$, $v_b^*$, $v_c^*$` restored in all four places |
+| `00-foundations.T2.00a` Q4 | The keyed option explained the missing $x_0$ as "the first velocity is $0$ by definition" — a convention dressed as a definition, in a four-option question whose distractors are absurd | rewritten to the telescoping reason: the first correction is pinned to $0$ because no $x_{-1}$ sample exists |
+| `01-electronics.T1.01c` Q5 | Tagged `breadboard_internal_bus_connectivity` but asks for an LED current — the ravine is decoration | retagged as a spaced review of `01-electronics.T1.01a` (Ohm/KVL), which is the concept it does test |
+| `00-foundations.T2.00f` Q2 | Key asserted $749.4867\text{ Hz}$; the stated formula gives $749.48034$, inside the question's $\pm0.01$ Hz, so the assert passed while the number was wrong | key constant corrected to $749.48034$ |
+
+**Thirty spaced reviews pointed at nothing a learner can open.** Eighteen named legacy step ids
+(`00-foundations.T1.01`, `02-mechanics.T1.03`, …), which are not pages; twelve more named a module
+that does not teach the concept in the tag. Every one was repointed to the page that declares the
+concept, or — for a legacy-only concept with no declaring page — to the page
+[`legacy-prereq-map.json`](../resources/legacy-prereq-map.json) proves carries its terms. Example:
+`00-foundations.T3.00a`'s review of the cross product pointed at `07-systems.T2.08` and now points at
+`00-foundations.T2.00b`, the page that teaches it. The generator now refuses an arrow that names a
+non-page, and one whose target neither declares nor teaches the concept.
+
+**One structural blind spot, found by the sitting rather than by an answer.** All 51 multiple-choice
+questions kept their A–D lines in the store's free-form `extra` array, so the four-option check never
+ran and no check compared the key's letter with the option text — a key naming `C` while the correct
+text sat under `B` would have passed. Options are now structured, the check counts them, and every
+multiple-choice key must name a letter and assert it.
+
+## Run 74 — the 46 spaced-review arrows, judged one by one
+
+An arrow is honest only when answering the question **requires** the named concept, not when the
+concept is nearby. All 46 were read against that rule in six sittings, and the ones that survived
+were re-read by hand.
+
+**15 arrows were honest, 3 are borderline keeps, 28 were decoration and are gone.**
+
+| Kept as borderline, with the reason | Concept |
+| :--- | :--- |
+| `00-foundations.T2.00h` Q4 — “what phase lag at $\omega = 1/\tau$” is the argument of $1/(1+j)$, i.e. a complex number read back as an angle | `complex_numbers_and_euler_formula` |
+| `01-electronics.T2.01a` Q4 — “why do Kelvin sense traces carry ~no current” is $I = V/R$ with a huge $R$ | `voltage_current_resistance_ohms_law` |
+| `00-foundations.T1.00c` Q5 — the mean is taken over a list, which is the data structure the review names | `lists_dicts_and_numpy_arrays` |
+
+The 28 removed all had the same shape: the question is a good question about **its own page's**
+concept, and the review named a prior concept that never appears in the answer path. Examples —
+`04-embedded.T2.04c` Q4 asked about a `status = "disabled"` devicetree node while reviewing priority
+inversion; `04-embedded.T3.04a` Q4 asked why a SeqLock read is torn while reviewing DMA ping-pong;
+`05-control.T2.05a` Q4 asked why scaling $Q$ and $R$ together leaves $K$ unchanged while reviewing
+Bode magnitude. Repointing could not repair these — no earlier page teaches their machinery — so the
+arrow was removed rather than moved to another page that would have been just as wrong.
+
+**What that costs, recorded rather than hidden:** 18 arrows remain on 18 pages, so 30 pages now carry
+no spaced-review item. The generator prints that on every run —
+`spaced reviews: 18 arrow(s) on 18 page(s); 30 page(s) carry none.` — and does not fail on it,
+because failing would only push a fake tag back. Writing 30 real review questions (each needing a
+key line and an assert) is the next authoring pass, not something a check can invent.
+
+Two arrows also showed the pointer rule from Run 73 is weaker than it reads: `04-embedded.T2.04b`
+“declared” nothing about DMA and `07-systems.T2.07a` nothing about OPC UA, yet the crosswalk resolved
+those slugs to them because their bodies mention the terms. A body mention is evidence a page
+*references* an idea, not that it *teaches* it as one of its tools.
+
+## Run 75 — one genuine spaced-review question on each non-root page
+
+Run 74's cost was a recorded hole: 30 pages with no review. This pass writes 29 of them (the root
+page has no earlier page to review) and moves the pass marks to match.
+
+**The rule used for each one, unchanged from Run 74:** a reader who cannot use the named concept
+cannot produce the answer. So the question is the concept applied to fresh numbers, not a question
+about the current page that happens to mention it. Every entry below names the page that teaches the
+concept, and the answer is what that page's formula gives on the new numbers.
+
+| Page | Reviews | Concept | Answer |
+| :--- | :--- | :--- | :--- |
+| `00-foundations.T2.00a` Q5 | `00-foundations.T1.00e` | `newtons_second_law_and_torque` | $4.0$ |
+| `00-foundations.T2.00e` Q5 | `00-foundations.T2.00h` | `complex_impedance_and_transfer_function` | $10.0$ |
+| `00-foundations.T2.00f` Q5 | `00-foundations.T2.00e` | `continuous_state_space_matrices` | $-4.0$ |
+| `00-foundations.T3.00a` Q5 | `00-foundations.T2.00e` | `laplace_poles_and_zeros` | $-1.0$ |
+| `01-electronics.T1.01a` Q5 | `00-foundations.T1.00e` | `spring_energy_and_power` | $0.25$ |
+| `01-electronics.T1.01d` Q5 | `01-electronics.T1.01a` | `voltage_current_resistance_ohms_law` | $25.531914893617$ |
+| `01-electronics.T2.01b` Q6 | `01-electronics.T2.01a` | `differential_shunt_gain_and_cmrr` | $1.0$ |
+| `01-electronics.T3.01a` Q6 | `01-electronics.T2.01b` | `parasitic_loop_inductance_voltage_overshoot` | $30.0$ |
+| `02-mechanics.T2.02a` Q5 | `02-mechanics.T1.02a` | `gear_reduction_speed_torque_power_conservation` | $300.0$ |
+| `02-mechanics.T3.02a` Q5 | `02-mechanics.T2.02a` | `se` | $-0.2$ |
+| `03-sensors.T1.03a` Q5 | `01-electronics.T1.01b` | `pwm_duty_cycle_effective_voltage` | $6.0$ |
+| `03-sensors.T2.03a` Q6 | `03-sensors.T1.03a` | `mechanical_vs_electrical_angle_pole_pairs` | $360.0$ |
+| `04-embedded.T1.04a` Q5 | `00-foundations.T1.00b` | `lists_dicts_and_numpy_arrays` | $1.5$ |
+| `04-embedded.T1.04b` Q5 | `04-embedded.T1.04a` | `bitwise_masks_and_shifts` | $32.0$ |
+| `04-embedded.T2.04a` Q5 | `04-embedded.T1.04b` | `non_blocking_tick_scheduler` | $200.0$ |
+| `04-embedded.T2.04b` Q5 | `04-embedded.T2.04a` | `dma_zero_cpu_memory_transfer` | $512.0$ |
+| `04-embedded.T2.04c` Q5 | `04-embedded.T2.04b` | `unbounded_priority_inversion_and_inheritance` | $7.0$ |
+| `04-embedded.T3.04a` Q5 | `04-embedded.T2.04c` | `zephyr_static_threads_and_k_mutex` | $4096.0$ |
+| `05-control.T1.05a` Q5 | `00-foundations.T1.00e` | `discrete_kinematics_pos_vel_acc` | $1.0$ |
+| `05-control.T2.05a` Q5 | `00-foundations.T2.00e` | `discrete_state_transition_euler_tustin` | $1.8$ |
+| `05-control.T3.05a` Q5 | `05-control.T2.05a` | `luenberger_observer_and_brysons_lqr_weights` | $-2.0$ |
+| `05-control.T3.05c` Q5 | `05-control.T3.05b` | `tangent_space_eskf_error_injection` | $-0.02$ |
+| `06-robotics.T2.06a` Q5 | `02-mechanics.T2.02a` | `se` | $0.3$ |
+| `06-robotics.T2.06b` Q5 | `06-robotics.T2.06a` | `tf` | $0.8$ |
+| `06-robotics.T3.06a` Q5 | `06-robotics.T2.06b` | `rosbag` | $300.0$ |
+| `06-robotics.T3.06b` Q6 | `06-robotics.T3.06a` | `neural_network_forward_pass_and_mse_loss` | $5.0$ |
+| `07-systems.T2.07a` Q5 | `01-electronics.T2.01b` | `precharge_resistor_inrush_and_tvs_clamp` | $1.152$ |
+| `07-systems.T3.06a` Q6 | `07-systems.T2.07a` | `can_fd_crc` | $3.0$ |
+| `08-capstones.T3.07a` Q6 | `07-systems.T2.07a` | `regenerative_bus_energy_and_chopper_sizing` | $0.648$ |
+
+**Marks.** 4/4 -> 4/5 on 20 page(s); 3/4 -> 4/5 on 3 page(s); 4/5 -> 5/6 on 6 page(s), at the same $\lceil 0.8N \rceil$ bar as before, so a 4/4 page is now 4/5 and a 4/5
+page is 5/6 - the fraction a reader must reach grew with the count, never shrank. Each page's
+`## 7. Checkpoint` sentence carries the same fraction, and each pass mark names the review target
+for a reader who misses the new question.
+
+**What the pass exposed.**
+
+1. `04-embedded.T1.04a`'s key imported nothing it did not need, so `math.isclose` in the new assert
+   was the first use of `math` in that key and crashed it. The store's "every key runs" check found
+   it immediately; the fix is `import math` at the top of the key, not a looser assert.
+2. Three checks in `tests/test_skip_tests.py` had written the fixture page's `$3/4$` into the test
+   itself. They failed the moment a fifth question existed - the right outcome for a drift check,
+   but a hard-coded count is the defect the store exists to remove. They now read the fixture's mark
+   and question count; a new test holds the spec's own invariant (every page with prerequisites
+   carries a review, root excepted), so a future page that ships without one fails loudly.
+
+3. Asking what each page's bar *means* found a third one: `05-control.T3.05b` promised `$\ge 80\%$`
+   and asked `$3/4$`, which is 75%. Raised to `$4/4$`, and the generator now reports a mark below
+   the floor as a finding, so the arithmetic can no longer drift under a sentence that denies it.
+
+**What this pass does not claim.** These 29 are *honest but shallow*: each is a one-step numerical
+application of the concept, enough to prove a reader can use it, not enough to prove retention two
+weeks later. Nothing here measures whether spacing helps; that would need real learners. The shape is
+also uniform - one numeric question per page - because a page whose concept only admits a conceptual
+question would still need its key to be checkable.
+
+**The remaining hole, stated plainly:** `00-foundations.T1.00a` has no review and cannot get one
+honestly; the generator's report will keep printing `1 page(s) carry none` as long as that is true.

@@ -306,17 +306,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: rc_time_constant_and_filtering]` Compute the time constant $\tau = R C$ in seconds ($\text{s}$, tolerance $\pm 10^{-9}$) for $R = 4.7\text{ k}\Omega$ ($4700\ \Omega$) and $C = 10\ \mu\text{F}$ ($10 \times 10^{-6}\text{ F}$).
 2. `[Apply] [Concept: rc_time_constant_and_filtering]` What percentage of the step input voltage $V_{\text{in}}$ does an initially uncharged capacitor reach after exactly $t = 1\tau$ ($100 \times (1 - e^{-1})$, tolerance $\pm 0.01\%$)?
 3. `[Transfer] [Concept: inductor_flyback_and_freewheeling_diode]` Compute the stored magnetic energy $E_L = \frac{1}{2} L I^2$ in joules ($\text{J}$, tolerance $\pm 10^{-9}$) in a $L = 4.0\text{ mH}$ ($0.004\text{ H}$) motor phase winding carrying $I = 5.0\text{ A}$.
-4. `[Spaced review -> 01-electronics.T1.01c — Concept: voltage_current_resistance_ohms_law] [Concept: capacitor_charge_storage_and_decoupling]` Why do motor driver PCBs and breadboards place **both** a $100\text{ nF}$ ($0.1\ \mu\text{F}$) ceramic capacitor and a $100\text{–}470\ \mu\text{F}$ electrolytic bulk capacitor across $V_{\text{bus}}$ and $\text{GND}$ right at the driver IC?
+4. `[Concept: capacitor_charge_storage_and_decoupling]` Why do motor driver PCBs and breadboards place **both** a $100\text{ nF}$ ($0.1\ \mu\text{F}$) ceramic capacitor and a $100\text{–}470\ \mu\text{F}$ electrolytic bulk capacitor across $V_{\text{bus}}$ and $\text{GND}$ right at the driver IC?
    - **A.** Ceramic capacitors look nicer next to tall cylinders.
    - **B.** The small low-inductance $100\text{ nF}$ ceramic cap shunts nanosecond high-frequency switching edges, while the large $100\text{–}470\ \mu\text{F}$ electrolytic reservoir supplies millisecond motor current surges without bus droop.
    - **C.** Putting two capacitors in parallel divides the voltage in half.
    - **D.** The ceramic capacitor converts DC into AC.
+5. `[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law]` A $12.0\,\text{V}$ rail drives $470\ \Omega$. Compute the current in milliamperes (tolerance $\pm 10^{-6}$).
 
 **Answer key:**
 ```python
@@ -331,8 +333,11 @@ assert math.isclose(q1_tau_s, 0.047, rel_tol=1e-9)
 assert math.isclose(q2_pct_1tau, 63.21205588, abs_tol=1e-2)
 assert math.isclose(q3_energy_j, 0.05, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = 1000.0 * 12.0 / 470.0
+assert math.isclose(q5_review, 25.531914893617, rel_tol=1e-9, abs_tol=1e-06)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3; Q4, study `## 3. Formalization` item 1. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3; Q4, study `## 3. Formalization` item 1. If you missed  Q5, review `01-electronics.T1.01a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 01 Tier 1 bridge ladder (`01-electronics.T1.01a` $\to$ `01-electronics.T1.01c` $\to$ `01-electronics.T1.01d` $\to$ `01-electronics.T1.01b`) before Step 1.2 (`01-electronics.T1.02`):

@@ -42,7 +42,11 @@ jobs:
           python3 scripts/mentions_audit.py --check
           python3 scripts/lint_modules.py
           python3 scripts/module_parity.py --check
+          python3 scripts/generate_ladder_gate.py --check
           python3 tests/test_module_parity.py
+          python3 tests/test_ladder_gate.py
+          python3 scripts/generate_skip_tests.py --check
+          python3 tests/test_skip_tests.py
           python3 scripts/generate_plant_data.py --check
           python3 tests/test_plant.py
           python3 tests/test_model_levels.py

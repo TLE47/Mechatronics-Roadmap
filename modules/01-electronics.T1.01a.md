@@ -288,17 +288,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: voltage_current_resistance_ohms_law]` A $12.0\text{ V}$ supply drives a motor coil with resistance $R = 3.0\ \Omega$ while the rotor is stalled. Compute the stall current $I_{\text{stall}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: kvl_kcl_and_voltage_divider]` Compute the unloaded output voltage $V_{\text{out}}$ in volts ($\text{V}$, tolerance $\pm 10^{-6}$) of a divider with $V_{\text{in}} = 5.0\text{ V}$, top resistor $R_1 = 10\text{ k}\Omega$, and bottom resistor $R_2 = 20\text{ k}\Omega$.
 3. `[Transfer] [Concept: electrical_power_i2r_dissipation]` Compute the heat power $P = I^2 R$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) dissipated in a $0.050\ \Omega$ current-sense resistor carrying $I = 10.0\text{ A}$.
-4. `[Spaced review -> 00-foundations.T1.00e — Concept: si_base_and_derived_units] [Concept: kvl_kcl_and_voltage_divider]` Why can you **never** power a $3.3\text{ V}$ motor or microcontroller using a $10\text{ k}\Omega / 20\text{ k}\Omega$ resistor voltage divider from $5\text{ V}$?
+4. `[Concept: kvl_kcl_and_voltage_divider]` Why can you **never** power a $3.3\text{ V}$ motor or microcontroller using a $10\text{ k}\Omega / 20\text{ k}\Omega$ resistor voltage divider from $5\text{ V}$?
    - **A.** Because resistors only work with AC voltages.
    - **B.** Because the load draws significant current $I_{\text{load}}$ through $R_1$, causing a massive $I_{\text{load}} R_1$ voltage drop that collapses $V_{\text{out}}$ (a voltage divider is for high-impedance signal sensing, not power delivery).
    - **C.** Because KCL does not apply when a motor is connected.
    - **D.** Because $3.3\text{ V}$ exceeds the breakdown voltage of carbon film resistors.
+5. `[Spaced review -> 00-foundations.T1.00e — Concept: spring_energy_and_power]` A spring of stiffness $k = 200.0\,\text{N/m}$ is compressed by $0.050\,\text{m}$. Compute the stored energy $\tfrac12 k x^2$ in joules (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -313,8 +315,11 @@ assert math.isclose(q1_istall, 4.0, rel_tol=1e-9)
 assert math.isclose(q2_vout, 10.0 / 3.0, rel_tol=1e-6)
 assert math.isclose(q3_power_w, 5.0, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = 0.5 * 200.0 * 0.050 ** 2
+assert math.isclose(q5_review, 0.25, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T1.00e`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 01 Tier 1 bridge ladder (`01-electronics.T1.01a` $\to$ `01-electronics.T1.01c` $\to$ `01-electronics.T1.01d` $\to$ `01-electronics.T1.01b`) before Step 1.2 (`01-electronics.T1.02`):

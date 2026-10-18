@@ -294,10 +294,11 @@ flowchart LR
 Pass criteria: read `### Safety notes`, run the worked example and exercise asserts, or score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ required on `[SAFETY]` items). Passing the 8-question Ladder Gate test ($\ge 80\%$, $100\%$ on `[SAFETY]` items) unlocks Step 1.2 (`01-electronics.T1.02`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: pwm_duty_cycle_effective_voltage]` Compute the average effective motor voltage $V_{\text{eff}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for a $V_{\text{bus}} = 12.0\text{ V}$ supply switched at duty cycle $D = 0.65$ ($65\%$).
 2. `[Apply] [Concept: mosfet_low_side_rds_on_switch]` Compute the conduction heat dissipation $P_{\text{cond}} = I_D^2 R_{DS(\text{on})}$ in watts ($\text{W}$, tolerance $\pm 10^{-9}$) in a MOSFET with $R_{DS(\text{on})} = 0.015\ \Omega$ carrying $I_D = 6.0\text{ A}$ at $100\%$ duty cycle.
 3. `[Transfer] [Concept: h_bridge_four_switch_polarity_and_shoot_through]` An H-bridge powered from $V_{\text{bus}} = 24.0\text{ V}$ drives Leg A at PWM duty cycle $D_A = 0.25$ and Leg B at $D_B = 0.75$. Compute the average signed motor voltage $V_{\text{motor}} = (D_A - D_B) V_{\text{bus}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 01-electronics.T1.01d — Concept: voltage_current_resistance_ohms_law] [SAFETY] [Concept: h_bridge_four_switch_polarity_and_shoot_through]` If both $Q_{\text{AH}}$ and $Q_{\text{AL}}$ ($R_{DS(\text{on})} = 0.020\ \Omega$ each, total series resistance $0.040\ \Omega$) turn ON simultaneously across an un-current-limited $V_{\text{bus}} = 12.0\text{ V}$ battery because dead-time was omitted, compute the instantaneous shoot-through fault current $I_{\text{shoot}} = \frac{V_{\text{bus}}}{2 R_{DS(\text{on})}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}\text{ A}$).
+4. `[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law] [SAFETY] [Concept: h_bridge_four_switch_polarity_and_shoot_through]` If both $Q_{\text{AH}}$ and $Q_{\text{AL}}$ ($R_{DS(\text{on})} = 0.020\ \Omega$ each, total series resistance $0.040\ \Omega$) turn ON simultaneously across an un-current-limited $V_{\text{bus}} = 12.0\text{ V}$ battery because dead-time was omitted, compute the instantaneous shoot-through fault current $I_{\text{shoot}} = \frac{V_{\text{bus}}}{2 R_{DS(\text{on})}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}\text{ A}$).
 5. `[SAFETY] [Concept: mosfet_low_side_rds_on_switch]` Why must a discrete low-side N-MOSFET gate have a $10\text{ k}\Omega$ pull-down resistor to Source (`GND`)?
    - **A.** To increase the PWM frequency.
    - **B.** To bleed off gate charge and hold $V_{GS} = 0\text{ V}$ while the microcontroller GPIO pin is floating (high-Z) during boot or reset, preventing unintended motor runaway or linear-region overheating.
@@ -320,7 +321,7 @@ assert math.isclose(q4_safety_ishoot, 300.0, rel_tol=1e-9)  # Mandatory [SAFETY]
 assert q5_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 ```
 - **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 2; if you missed Q2 or Q5, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
-
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 01 Tier 1 bridge ladder (`01-electronics.T1.01a` $\to$ `01-electronics.T1.01c` $\to$ `01-electronics.T1.01d` $\to$ `01-electronics.T1.01b`) before Step 1.2 (`01-electronics.T1.02`):

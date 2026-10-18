@@ -292,17 +292,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: spi_full_duplex_clock_polarity_phase]` Compute the pure clock shifting time $t_{\text{shift}} = B_{\text{bits}} / f_{\text{sclk}}$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) to transfer a $24\text{-bit}$ SPI sensor frame at $f_{\text{sclk}} = 12\text{ MHz}$ ($12 \times 10^6\text{ Hz}$).
 2. `[Apply] [Concept: dma_zero_cpu_memory_transfer]` Compute the CPU blocking time $t_{\text{poll}} = \frac{B_{\text{bits}}}{f_{\text{baud}}} \times 10^6$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-6}$) wasted by polling a $50\text{-byte}$ ($500\text{-bit}$ in `8N1`) UART packet at $1\text{ Mbps}$ ($10^6\text{ bps}$) without DMA.
 3. `[Transfer] [Concept: double_buffered_ping_pong_half_complete_isr]` A circular DMA buffer of total length $2N = 64$ samples ($N = 32$ samples per half-buffer) is filled by an ADC at $f_{\text{sample}} = 64\text{ kHz}$. Compute the **Half-Transfer (`HT`)** interrupt firing frequency $f_{\text{HT}} = f_{\text{sample}} / N$ in $\text{Hz}$ (tolerance $\pm 10^{-6}\text{ Hz}$).
-4. `[Spaced review -> 04-embedded.T1.05 — Concept: hardware_timer_isr_and_jitter] [Concept: spi_full_duplex_clock_polarity_phase]` On an SPI bus sharing `SCLK`, `MOSI`, and `MISO` across three slave devices (an encoder, an IMU, and a gate driver), what hardware rule must be obeyed regarding the three Chip-Select (`CS_n`) pins?
+4. `[Concept: spi_full_duplex_clock_polarity_phase]` On an SPI bus sharing `SCLK`, `MOSI`, and `MISO` across three slave devices (an encoder, an IMU, and a gate driver), what hardware rule must be obeyed regarding the three Chip-Select (`CS_n`) pins?
    - **A.** Pull all three `CS_n` pins LOW at the same time so all three chips drive `MISO` together.
    - **B.** Assert (pull LOW) **at most one** slave's `CS_n` pin at a time while holding the other two HIGH (tri-stated on `MISO`) so two slaves never fight each other on the `MISO` line.
    - **C.** Leave all `CS_n` pins disconnected.
    - **D.** Connect `CS_n` to `SCLK`.
+5. `[Spaced review -> 04-embedded.T1.04b — Concept: non_blocking_tick_scheduler]` A $1\,\text{kHz}$ tick runs a task every $5$ ticks. Compute the task rate in hertz (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -316,9 +318,11 @@ assert math.isclose(q1_tshift_us, 2.0, rel_tol=1e-9)
 assert math.isclose(q2_tpoll_us, 500.0, rel_tol=1e-9)
 assert math.isclose(q3_f_ht_hz, 2000.0, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = 1000.0 / 5.0
+assert math.isclose(q5_review, 200.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
-
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. If you missed  Q5, review `04-embedded.T1.04b`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `04-embedded.T2.04b` $\to$ `04-embedded.T2.04c` $\to$ `04-embedded.T2.04d`) before Step 2.5 (`04-embedded.T2.05`):

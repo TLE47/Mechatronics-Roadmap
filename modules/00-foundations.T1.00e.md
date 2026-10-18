@@ -317,6 +317,7 @@ flowchart LR
 Pass criteria: complete the Skip test ($\ge 80\%$) to pass this module, or pass the 8-question Gate test ($\ge 80\%$) to test out of the entire Level -1 ladder (`00a`–`00e`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: newtons_second_law_and_torque]` Compute the holding torque $\tau$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 0.01\text{ N}\cdot\text{m}$) required at the shoulder to hold a $2.0\text{ kg}$ payload horizontally at lever arm $r = 0.30\text{ m}$ under gravity $g = 9.81\text{ m/s}^2$.
 2. `[Apply] [Concept: spring_energy_and_power]` Compute the total mechanical energy $E$ in joules (tolerance $\pm 10^{-4}\text{ J}$) of a $m = 1.0\text{ kg}$ mass moving at $v = 2.0\text{ m/s}$ while attached to a spring of stiffness $k = 40.0\text{ N/m}$ stretched by $x = 0.10\text{ m}$.
 3. `[Transfer] [Concept: discrete_kinematics_pos_vel_acc]` Trace one step ($\Delta t = 0.01\text{ s}$) starting from $x_0 = 0.20\text{ m}, v_0 = 0.0\text{ m/s}$ with $m = 1.0\text{ kg}, k = 100.0\text{ N/m}$ using `a = -k*x/m; v += a*dt; x += v*dt`, and report $x_1$ in meters (tolerance $\pm 10^{-6}\text{ m}$).
@@ -338,6 +339,7 @@ assert math.isclose(q3_x1, 0.198, rel_tol=1e-9)
 assert math.isclose(q4_tau, 2.0, rel_tol=1e-9)
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2, study `## 2. Intuition first` and `## 3. Formalization`; if you missed Q3, study `## 4. Worked example`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 1. `[Concept: python_variables_and_types] [Concept: traceback_error_reading]` Trace `val = 3.0; val += 2.0; val *= 4.0` and compute `val` (tolerance $\pm 10^{-9}$).

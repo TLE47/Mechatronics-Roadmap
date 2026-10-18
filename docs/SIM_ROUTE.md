@@ -65,7 +65,8 @@ flowchart LR
 | Tier 2 | `00-foundations.T2.00g` Matrix-Vector Multiplication & the One-Step State Update | 3 |
 | Tier 2 | `00-foundations.T2.00b` Vectors, Dot & Cross Products, Linear Independence & Change of Basis | 3.5 |
 | Tier 2 | `00-foundations.T2.00c` First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio | 4.5 |
-| Tier 2 | `00-foundations.T2.00d` Complex Numbers, Euler's Formula, Phasors, Impedance & Frequency Response (Bode Plots) | 4 |
+| Tier 2 | `00-foundations.T2.00d` Complex Numbers, Euler's Formula & Phasors | 2 |
+| Tier 2 | `00-foundations.T2.00h` Winding Impedance, Transfer Functions, Decibels & the Resonance Peak | 3 |
 | Tier 2 | `00-foundations.T2.00e` Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization | 4.5 |
 | Tier 2 | `00-foundations.T2.00f` Nyquist Sampling & Aliasing, Pre-Warped Tustin Biquad Filters & Gaussian Covariance | 4.5 |
 | Tier 2 | `01-electronics.T2.01a` Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing | 4 |
@@ -80,7 +81,7 @@ flowchart LR
 | Tier 2 | `06-robotics.T2.06a` ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, QoS), TF2 Frames, URDF & ros2_control | 5.5 |
 | Tier 2 | `06-robotics.T2.06b` ROS 2 Operations: Launch & Parameter Composition, Deterministic rosbag2 Recording/Replay & Simulator Integration (Gazebo / MuJoCo) | 4.5 |
 | Tier 2 | `07-systems.T2.07a` Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection | 4.5 |
-| Tier 2 | **19 modules, together** | 78.5 |
+| Tier 2 | **20 modules, together** | 79.5 |
 | Tier 3 | `00-foundations.T3.00a` Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation | 5 |
 | Tier 3 | `02-mechanics.T3.02a` 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | 5 |
 | Tier 3 | `05-control.T3.05a` Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency | 2 |
@@ -88,7 +89,7 @@ flowchart LR
 | Tier 3 | `05-control.T3.05c` Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | 2 |
 | Tier 3 | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off | 4.5 |
 | Tier 3 | **6 modules, together** | 20.5 |
-| **Core total** | **41 modules + the prose tracks above** | **181.5-225** |
+| **Core total** | **42 modules + the prose tracks above** | **182.5-226** |
 
 The low end is every page's `est_hours` / `typical_hours`; the high end is its
 `slow_learner_hours`. Nothing in this table is hand-entered, and `--check` fails when it

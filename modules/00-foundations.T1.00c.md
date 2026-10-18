@@ -302,6 +302,7 @@ flowchart LR
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: dimensional_analysis_unit_checks]` Convert $3000\text{ RPM}$ into angular velocity $\omega$ in $\text{rad/s}$ (tolerance $\pm 0.01\text{ rad/s}$).
 2. `[Apply] [Concept: scientific_notation_and_prefixes]` Compute the voltage drop in millivolts ($\text{mV}$, tolerance $\pm 0.01\text{ mV}$) across a $5\text{ m}\Omega$ shunt resistor carrying $20\text{ A}$.
 3. `[Transfer] [Concept: scientific_notation_and_prefixes]` What is the loop period $T_s = 1 / f_s$ in microseconds ($\mu\text{s}$, tolerance $\pm 0.01\,\mu\text{s}$) for a $25\text{ kHz}$ FOC control loop?
@@ -329,6 +330,7 @@ assert q4_choice == "B"
 assert math.isclose(q5_mean_a, 1.5, rel_tol=1e-9)
 ```
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2 or Q3, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T1.00b`). On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 00 Tier 1 bridge ladder (`00-foundations.T1.00a` $\to$ `00-foundations.T1.00b` $\to$ `00-foundations.T1.00c` $\to$ `00-foundations.T1.00d` $\to$ `00-foundations.T1.00e`) before Step 1.1 (`00-foundations.T2.00a`):

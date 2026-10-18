@@ -295,17 +295,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($3/4$) on the Skip test below.
+Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: control_barrier_forward_invariance_qp]` A joint at $q = 0.95\,\text{rad}$ approaches $q_{\max} = 1.00\,\text{rad}$ with $\alpha = 6.0\,\text{s}^{-1}$ and $u_{\text{nom}} = +0.80\,\text{rad/s}$. Compute $u^\ast$ (tolerance $\pm 10^{-9}\,\text{rad/s}$).
 2. `[Apply] [Concept: control_barrier_forward_invariance_qp]` With the same margin and gain, what does the filter return for $u_{\text{nom}} = -0.40\,\text{rad/s}$ (moving away from the stop)?
 3. `[Transfer] [Concept: control_barrier_forward_invariance_qp]` The guaranteed margin is $h_0e^{-\alpha t}$. Compute $h(0.50\,\text{s})$ from $h_0 = 0.20\,\text{m}$ at $\alpha = 2.0\,\text{s}^{-1}$ (tolerance $\pm 10^{-6}\,\text{m}$).
-4. `[Spaced review -> 05-control.T3.05b — Concept: tangent_space_eskf_error_injection] [Concept: control_barrier_forward_invariance_qp]` Why is the CBF-QP called *minimally invasive*?
+4. `[Concept: control_barrier_forward_invariance_qp]` Why is the CBF-QP called *minimally invasive*?
    - **A.** Because when the nominal command already satisfies $\dot{h} \ge -\alpha h$ the constraint is inactive and $u^\ast = u_{\text{nom}}$ exactly.
    - **B.** Because it turns the motors off near a wall.
    - **C.** Because it ignores the actuator limits.
    - **D.** Because it only runs at startup.
+5. `[Spaced review -> 05-control.T3.05b — Concept: tangent_space_eskf_error_injection]` A tangent-space error $\delta\theta = 0.020\,\text{rad}$ about $z$ is injected into $R = I$ as $R \approx I + [\delta\theta]_\times$. Compute the $(0,1)$ entry of the result (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -320,8 +322,11 @@ assert math.isclose(q1_u_star, 0.30, rel_tol=1e-9)
 assert math.isclose(q2_u_away, -0.40, rel_tol=1e-9)
 assert math.isclose(q3_h_min, 0.20 * math.exp(-1.0), rel_tol=1e-9)
 assert q4_choice == "A"
+q5_review = -0.020
+assert math.isclose(q5_review, -0.02, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $3/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 3; if you missed Q3, item 2; if you missed Q4, study `## 2. Intuition first`. On pass, proceed to Step 3.6 (`05-control.T3.06`).
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 3; if you missed Q3, item 2; if you missed Q4, study `## 2. Intuition first`. If you missed  Q5, review `05-control.T3.05b`. On pass, proceed to Step 3.6 (`05-control.T3.06`).
+<!-- skip-test:end -->
 
 ### Gate test
 This is the exit examination for the whole Track 05 Tier 3 ladder - the three bridges [`05-control.T3.05a`](05-control.T3.05a.md), [`05-control.T3.05b`](05-control.T3.05b.md) and this module - before Step 3.6 (`05-control.T3.06`).

@@ -492,9 +492,10 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.3 (`02-mechanics.T2.03`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.3 (`02-mechanics.T2.03`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: six_dof_gruebler_constraint_counting]` Using the spatial Gruebler-Kutzbach mobility formula $M = 6(N - 1 - J) + \sum_{i=1}^J f_i$, compute the spatial degrees of freedom $M$ (exact integer, tolerance $\pm 0$) of a serial robot arm with $N = 7$ total links ($1$ fixed base $+ 6$ moving links) connected by $J = 6$ single-DOF revolute joints ($f_i = 1$).
 2. `[Apply] [Concept: se3_homogeneous_transformation_matrix]` For a $4\times 4$ homogeneous transform $T = \begin{bmatrix} I_3 & p \\ 0 & 1 \end{bmatrix}$ with pure translation $p = [0.3, -0.1, 0.5]^\top\text{ m}$, what is the translation vector $p_{\text{inv}}$ of its inverse $T^{-1}$?
    - **A.** $[0.3, -0.1, 0.5]^\top\text{ m}$
@@ -502,7 +503,8 @@ Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7
    - **C.** $[0.0, 0.0, 0.0]^\top\text{ m}$
    - **D.** $[1.0, 1.0, 1.0]^\top\text{ m}$
 3. `[Transfer] [Concept: geometric_jacobian_and_parallel_axis_theorem]` Given Jacobian $J = \begin{bmatrix} 0.0 & -0.2 \\ 0.4 & 0.2 \end{bmatrix}\text{ m/rad}$ and Cartesian tip force $F = [10.0, 5.0]^\top\text{ N}$, compute the first joint torque $\tau_1 = (J^\top F)_0$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 02-mechanics.T1.03 — Concept: planar_2link_forward_kinematics] [Concept: geometric_jacobian_and_parallel_axis_theorem]` A link has mass $m = 2.0\text{ kg}$, center-of-mass inertia $I_{zz,\text{com}} = 0.015\text{ kg}\cdot\text{m}^2$, and center-of-mass offset $d = 0.10\text{ m}$ from the joint pivot. Compute $I_{zz,\text{joint}} = I_{zz,\text{com}} + m d^2$ in $\text{kg}\cdot\text{m}^2$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: geometric_jacobian_and_parallel_axis_theorem]` A link has mass $m = 2.0\text{ kg}$, center-of-mass inertia $I_{zz,\text{com}} = 0.015\text{ kg}\cdot\text{m}^2$, and center-of-mass offset $d = 0.10\text{ m}$ from the joint pivot. Compute $I_{zz,\text{joint}} = I_{zz,\text{com}} + m d^2$ in $\text{kg}\cdot\text{m}^2$ (tolerance $\pm 10^{-9}$).
+5. `[Spaced review -> 02-mechanics.T1.02a — Concept: gear_reduction_speed_torque_power_conservation]` A motor turns at $3000\,\text{rpm}$ through a $10{:}1$ reduction. Compute the output speed in $\text{rpm}$ (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -519,8 +521,11 @@ assert q1_mobility == 6
 assert q2_choice == "B"
 assert math.isclose(q3_tau1, 2.0, rel_tol=1e-9)
 assert math.isclose(q4_i_joint, 0.035, rel_tol=1e-9)
+q5_review = 3000.0 / 10.0
+assert math.isclose(q5_review, 300.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `02-mechanics.T1.02a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 02 Tier 2 bridge ladder (`02-mechanics.T2.02a`) before Step 2.3 (`02-mechanics.T2.03`):
