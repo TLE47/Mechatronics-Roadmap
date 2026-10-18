@@ -5,14 +5,15 @@
      file; `--check` fails when a decided change is not applied. -->
 
 41 page–concept pairs across 22 bridge pages name a legacy
-concept in `uses:`. Each was measured, not eyeballed: the concept's **core term** (its rarest token)
-plus its other tokens are searched in the page body, and the sections they land in decide the claim.
+concept in `uses:`. Each was measured, not eyeballed: a line engages the idea when it carries two
+of the concept's tokens or its **core term** (the rarest token across the course), and the
+sections those lines land in decide the claim.
 
 | Decision | Rule | Count |
 | :--- | :--- | ---: |
-| `own` | the page is the concept's crosswalk teacher, engages it in §3/§4/§5, and already tags it in its Gate test | 0 |
-| `keep` | the page genuinely applies the idea in a graded section | 27 |
-| `drop` | the page never engages it outside prose, or not at all | 14 |
+| `own` | the page is the concept's crosswalk teacher, engages it in §3/§4/§5, and already tags it in its Gate test | 2 |
+| `keep` | the page genuinely applies the idea in a graded section | 20 |
+| `drop` | the page never engages it outside prose, or not at all | 19 |
 
 ```mermaid
 flowchart LR
@@ -20,7 +21,7 @@ flowchart LR
     E --> Q{"engages it in 3/4/5?"}
     Q -->|no| D["drop the uses claim"]
     Q -->|yes| T{"crosswalk teacher and Gate-tagged?"}
-    T -->|yes| O["own: move to new_concepts"]
+    T -->|yes| O["own: move to owns"]
     T -->|no| K["keep as an assumption"]
 ```
 
@@ -28,6 +29,11 @@ flowchart LR
 
 | Page | Concept | Core term | Lines | Sections it does appear in |
 | :--- | :--- | :--- | ---: | :--- |
+| `00-foundations.T2.00a` | `symplectic_euler_integration` | `symplectic` | 2 | 7. Checkpoint |
+| `01-electronics.T2.01a` | `star_grounding` | `grounding` | 0 | — |
+| `04-embedded.T2.04a` | `hardware_timer_isr_and_jitter` | `jitter` | 3 | 6. Simulation path, 7. Checkpoint |
+| `04-embedded.T2.04a` | `packed_binary_telemetry_struct` | `packed` | 0 | — |
+| `05-control.T3.05a` | `augmented_kalman_disturbance_observer` | `observer` | 0 | — |
 | `00-foundations.T2.00a` | `so2_rotation_matrix` | `so2` | 0 | — |
 | `00-foundations.T3.00a` | `unit_quaternion_kinematics_slerp` | `slerp` | 0 | — |
 | `02-mechanics.T1.02a` | `so2_rotation_matrix` | `so2` | 0 | — |
@@ -43,49 +49,46 @@ flowchart LR
 | `07-systems.T2.07a` | `can_fd_mit_impedance_packet_packing` | `packet` | 5 | 2. Intuition first, 6. Simulation path, 7. Checkpoint |
 | `07-systems.T3.06a` | `can_fd_crc16_rolling_counter_watchdog` | `crc16` | 0 | — |
 
-## Owned (moved from `uses:` to `new_concepts:`)
+## Owned (moved from `uses:` to `owns:`)
 
 | Page | Concept | Lines | Sections |
 | :--- | :--- | ---: | :--- |
+| `03-sensors.T2.03a` | `so2_rotation_matrix` | 4 | 3. Formalization, 5. Exercise, 7. Checkpoint |
+| `07-systems.T2.07a` | `regenerative_braking_bus_voltage_surge` | 31 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
 
 ## Kept (the claim is real)
 
 | Page | Concept | Lines | Sections |
 | :--- | :--- | ---: | :--- |
-| `00-foundations.T2.00a` | `symplectic_euler_integration` | 8 | 3. Formalization, 5. Exercise, 7. Checkpoint |
-| `01-electronics.T2.01a` | `star_grounding` | 3 | 5. Exercise |
-| `01-electronics.T3.01a` | `four_layer_pcb_ground_plane_stackup` | 19 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 8. Common mistakes, 9. Resources |
-| `02-mechanics.T2.02a` | `planar_2link_forward_kinematics` | 3 | 2. Intuition first, 5. Exercise, 7. Checkpoint |
-| `02-mechanics.T3.02a` | `rodrigues_so3_se3_exp_log_maps` | 15 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
+| `01-electronics.T3.01a` | `four_layer_pcb_ground_plane_stackup` | 9 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 8. Common mistakes |
+| `02-mechanics.T2.02a` | `planar_2link_forward_kinematics` | 2 | 5. Exercise, 7. Checkpoint |
+| `02-mechanics.T3.02a` | `rodrigues_so3_se3_exp_log_maps` | 2 | 5. Exercise, 7. Checkpoint |
 | `02-mechanics.T3.02a` | `parallel_axis_urdf_inertia_tensor` | 4 | 1. Why it matters, 2. Intuition first, 5. Exercise |
 | `03-sensors.T2.03a` | `electrical_vs_mechanical_pole_pairs` | 4 | 2. Intuition first, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
 | `03-sensors.T2.03a` | `open_loop_three_phase_sine_modulation` | 11 | 1. Why it matters, 3. Formalization, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
-| `03-sensors.T2.03a` | `so2_rotation_matrix` | 2 | 5. Exercise, 7. Checkpoint |
 | `03-sensors.T3.03a` | `synchronous_dq_foc_current_loop` | 7 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 9. Resources |
-| `03-sensors.T3.03a` | `amplitude_invariant_clarke_park_transform` | 23 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
-| `04-embedded.T2.04a` | `hardware_timer_isr_and_jitter` | 15 | 2. Intuition first, 3. Formalization, 5. Exercise, 6. Simulation path, 7. Checkpoint |
-| `04-embedded.T2.04a` | `spi_magnetic_encoder_readout` | 38 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
-| `04-embedded.T2.04a` | `packed_binary_telemetry_struct` | 5 | 1. Why it matters, 2. Intuition first, 4. Worked example, 5. Exercise, 8. Common mistakes |
-| `04-embedded.T3.04a` | `dma_double_buffered_ping_pong_isr` | 24 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
+| `03-sensors.T3.03a` | `amplitude_invariant_clarke_park_transform` | 3 | 3. Formalization, 5. Exercise |
+| `04-embedded.T2.04a` | `spi_magnetic_encoder_readout` | 6 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
+| `04-embedded.T3.04a` | `dma_double_buffered_ping_pong_isr` | 8 | 2. Intuition first, 3. Formalization, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
 | `04-embedded.T3.04a` | `rate_monotonic_response_time_analysis` | 1 | 5. Exercise |
-| `04-embedded.T3.04a` | `minmax_zero_sequence_svpwm_injection` | 12 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
-| `05-control.T3.05a` | `augmented_kalman_disturbance_observer` | 6 | 2. Intuition first, 5. Exercise, 7. Checkpoint, 9. Resources |
-| `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps` | 49 | 1. Why it matters, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
-| `05-control.T3.05c` | `discrete_infinite_horizon_lqr` | 5 | 1. Why it matters, 3. Formalization, 5. Exercise, 6. Simulation path |
+| `04-embedded.T3.04a` | `minmax_zero_sequence_svpwm_injection` | 2 | 1. Why it matters, 5. Exercise |
+| `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps` | 21 | 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
+| `05-control.T3.05c` | `discrete_infinite_horizon_lqr` | 2 | 3. Formalization, 5. Exercise |
 | `06-robotics.T2.06a` | `parallel_axis_urdf_inertia_tensor` | 2 | 2. Intuition first, 3. Formalization |
 | `06-robotics.T2.06a` | `can_fd_mit_impedance_packet_packing` | 2 | 3. Formalization, 7. Checkpoint |
-| `06-robotics.T3.06a` | `jacobian_transpose_cartesian_impedance` | 3 | 3. Formalization, 5. Exercise, 8. Common mistakes |
-| `07-systems.T1.07a` | `ten_step_power_on_bringup` | 3 | 1. Why it matters, 3. Formalization, 5. Exercise |
-| `07-systems.T1.07a` | `rc_cutoff_phase_lag` | 19 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 7. Checkpoint |
-| `07-systems.T2.07a` | `regenerative_braking_bus_voltage_surge` | 33 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
-| `07-systems.T3.06a` | `opc_ua_industrial_telemetry` | 32 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
+| `06-robotics.T3.06a` | `jacobian_transpose_cartesian_impedance` | 2 | 5. Exercise, 8. Common mistakes |
+| `07-systems.T1.07a` | `ten_step_power_on_bringup` | 2 | 1. Why it matters, 5. Exercise |
+| `07-systems.T1.07a` | `rc_cutoff_phase_lag` | 17 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 7. Checkpoint |
+| `07-systems.T3.06a` | `opc_ua_industrial_telemetry` | 31 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
 
 ## What each decision changes
 
 - **Drop** removes the concept from `uses:`. The page may still mention it in prose; the claim that
   it *depends* on the idea is what was false. Nothing else moves, because the crosswalk keeps
   teaching-page links for every legacy concept.
-- **Own** moves the id from `uses:` to `new_concepts:`. This is the honest direction when the page
-  derives and tests the idea: an assumption it teaches is not an assumption.
+- **Own** moves the id from `uses:` to `owns:`. This is the honest direction when the page
+  derives and tests the idea: an assumption it teaches is not an assumption. `owns:` is a separate
+  block so the legacy id does not spend the page's three-`new_concepts` budget; `validate_modules`
+  accepts a Gate tag for an id this page owns, and still rejects one for any other legacy id.
 - **Keep** leaves the front matter untouched. The evidence column is already printed, so a reader
   can challenge a keep without re-running the analysis.

@@ -11,8 +11,9 @@ new_concepts:
   - regenerative_bus_energy_and_chopper_sizing
   - can_fd_crc16_and_rolling_counter_watchdog
   - sil_hil_fault_injection_verification
-uses:
+owns:
   - regenerative_braking_bus_voltage_surge
+uses:
   - precharge_resistor_inrush_and_tvs_clamp
 est_hours: 4.5
 hardware_required: false
@@ -311,7 +312,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.8 (`07-systems.T2.08`).
+Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.8 (`07-systems.T2.08`).
 
 ### Skip test
 1. `[Recall] [Concept: regenerative_bus_energy_and_chopper_sizing]` Compute the maximum brake resistor value $R_{\text{brake,max}} = \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}$ in Ohms ($\Omega$, tolerance $\pm 10^{-6}\ \Omega$) required to dissipate $P_{\text{regen,peak}} = 200.0\text{ W}$ at a clamping voltage of $V_{\text{clamp}} = 30.0\text{ V}$.
@@ -362,6 +363,8 @@ Covers the Track 07 Tier 2 bridge ladder (`07-systems.T2.07a`) and cross-domain 
    - **C.** Because physical encoders only work after MuJoCo deletes the firmware.
    - **D.** To bypass the 10-step bring-up checklist.
 
+9. `[Concept: regenerative_braking_bus_voltage_surge]` A $24.0\text{ V}$ bus with $C_{\text{bus}} = 1000\ \mu\text{F}$ absorbs $\Delta E_{\text{regen}} = 13.5\text{ J}$. Compute the unclamped bus voltage $V_{\text{bus,unclamped}} = \sqrt{V_{\text{nom}}^2 + \frac{2 \, \Delta E_{\text{regen}}}{C_{\text{bus}}}}$ in Volts ($\text{V}$, tolerance $\pm 10^{-6}\text{ V}$).
+
 **Gate answer key:**
 ```python
 import math
@@ -374,6 +377,7 @@ g5_choice = "A"
 g6_margin_us = 50.0 - 1.5
 g7_choice = "A"
 g8_choice = "A"
+g9_unclamped_v = math.sqrt(24.0 ** 2 + (2.0 * 13.5) / 1000e-6)
 
 assert math.isclose(g1_eregen_j, 8.0, rel_tol=1e-9)
 assert math.isclose(g2_ibrake_a, 5.5, rel_tol=1e-9)
@@ -383,8 +387,9 @@ assert g5_choice == "A"
 assert math.isclose(g6_margin_us, 48.5, rel_tol=1e-9)
 assert g7_choice == "A"
 assert g8_choice == "A"
+assert math.isclose(g9_unclamped_v, 166.060230, abs_tol=1e-6)
 ```
-- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q3 $\to$ `## 3. Formalization` item 1; Q4–Q5 $\to$ `## 3. Formalization` item 2; Q6–Q8 $\to$ `## 3. Formalization` item 3 & `06-robotics.T2.06b`.
+- **Pass mark:** $8/9$ ($80\%+$). Remediation: Q1–Q3, Q9 $\to$ `## 3. Formalization` item 1; Q4–Q5 $\to$ `## 3. Formalization` item 2; Q6–Q8 $\to$ `## 3. Formalization` item 3 & `06-robotics.T2.06b`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

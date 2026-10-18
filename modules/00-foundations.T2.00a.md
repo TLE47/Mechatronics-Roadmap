@@ -10,7 +10,6 @@ new_concepts:
   - matrix_vector_multiplication
   - state_vector_one_step_update
 uses:
-  - symplectic_euler_integration
   - discrete_kinematics_pos_vel_acc
 est_hours: 4.0
 hardware_required: false

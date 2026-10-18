@@ -107,7 +107,7 @@ def taught_concepts() -> dict[str, str]:
 
 def parse_front_matter(text: str) -> dict:
     match = re.match(r"---\n(.*?)\n---\n", text, re.DOTALL)
-    fm: dict = {"prereqs": [], "new_concepts": [], "uses": [], "difficulty": {}}
+    fm: dict = {"prereqs": [], "new_concepts": [], "uses": [], "owns": [], "difficulty": {}}
     if not match:
         return fm
     list_key = None
@@ -121,7 +121,7 @@ def parse_front_matter(text: str) -> dict:
             key, _, value = line.partition(":")
             value = value.split("#")[0].strip().strip('"')
             if value in ("", "[]"):
-                if key in ("prereqs", "new_concepts", "uses"):
+                if key in ("prereqs", "new_concepts", "uses", "owns"):
                     list_key = key
                 continue
             fm[key] = value

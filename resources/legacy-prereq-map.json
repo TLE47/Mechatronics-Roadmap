@@ -204,10 +204,11 @@
       ]
     },
     "augmented_kalman_disturbance_observer": {
-      "page": "05-control.T3.05a",
+      "page": "05-control.T2.05a",
       "evidence": [
-        "augmented",
-        "kalman"
+        "disturbance",
+        "kalman",
+        "observer"
       ]
     },
     "bond_graph_port_hamiltonian_passivity": {

@@ -262,11 +262,21 @@ def ladder_of(module: str) -> str:
 
 
 def introduced_concepts(module: str) -> set[str]:
-    """The `new_concepts:` list from a module's own front matter."""
+    """The `new_concepts:` and `owns:` lists from a module's own front matter.
+
+    `owns:` names the legacy concepts the page re-teaches (mentions_audit's `own` verdict). They sit
+    on the same ladder as a new concept - the Gate test must tag them - but they do not spend the
+    page's three-`new_concepts` budget, because the page already teaches the material.
+    """
     path = os.path.join(ROOT, "modules", module + ".md")
     with open(path, encoding="utf-8") as handle:
-        block = re.search(r"^new_concepts:\n((?:\s+- .+\n)+)", handle.read(), re.MULTILINE)
-    return set(re.findall(r"^\s+-\s*(\S+)", block.group(1), re.MULTILINE)) if block else set()
+        text = handle.read()
+    found: set[str] = set()
+    for key in ("new_concepts", "owns"):
+        block = re.search(r"^%s:\n((?:\s+- .+\n)+)" % key, text, re.MULTILINE)
+        if block:
+            found |= set(re.findall(r"^\s+-\s*(\S+)", block.group(1), re.MULTILINE))
+    return found
 
 
 class TestTier3CarriesBothLevels(unittest.TestCase):
