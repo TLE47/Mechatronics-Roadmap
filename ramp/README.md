@@ -34,6 +34,9 @@ flowchart LR
 - **It is not a prerequisite for reading Tier 2.** It is a prerequisite for *not stalling* in it: the
   check maps each miss to the lesson that repairs it, so you can skip the ramp entirely by passing the
   check cold.
+- **Coming back after a break?** [`docs/REENTRY.md`](../docs/REENTRY.md) is the twenty-minute version of this
+  page's job: five paper tasks drawn from the exit check, one repair lesson per miss, then back to the page
+  you left. Start there rather than at R.1.
 - **It is graded.** `python3 scripts/check_ramp_lessons.py` runs each lesson's full solution against its
   published Expected Output and verifies that every item in
   [`docs/TIER1_EXIT_CHECK.md`](../docs/TIER1_EXIT_CHECK.md) points at a lesson that exists, and that

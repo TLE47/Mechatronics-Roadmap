@@ -11,6 +11,50 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 79: Coming Back After a Break Gets a Twenty-Minute Path
+
+### 1. `docs/REENTRY.md` — five paper tasks, three landings, no rereading
+- The gap it closes: the ramp repairs a *first* learner, and the exit check tests one who is ready now.
+  Neither serves the person returning after weeks away, who can explain a rate and cannot get `18.408`
+  without a unit error. The page is a five-task, twenty-minute paper check drawn from exit items 1, 8,
+  11, 12, 13 and 14, and a score table that sends `5/5` back to the page you left, `3–4` to the one or
+  two ramp lessons for the misses, and `2 or fewer` to R.1–R.6 and then the exit check.
+- The five tasks touch **all six** ramp lessons between them: task 3 carries both halves of the state tick
+  (R.3) and the matrix form (R.4), because they are one operation and a learner who lost one has lost the
+  other. Between them the tasks sample every ramp lesson, which a link check cannot see.
+- `§3 Picking up the thread` names what to open from each stopping point (mid-lesson, between pages,
+  after Gate 1→2) with the rule underneath: **a page is re-entered by running its code, not by reading
+  it**. `§4 What to skip` argues the placement quiz, already-passing packages, the practical gates and the
+  bench are all out of scope for a return.
+
+### 2. The page is tested against the pages it borrows from
+- `tests/test_reentry.py` (6 tests) parses the task table and requires every cited exit item to exist, to
+  be repaired by the lesson the row claims, and every cited lesson to exist in `ramp/`. It requires the
+  union of cited lessons to equal the ramp's own lesson set, so a dropped task cannot silently stop
+  sampling an operation.
+- Every decimal in the answer key must appear in `docs/TIER1_EXIT_CHECK.md`: the key is prose, and a
+  change to item 11's answer fails this test until REENTRY moves with it. Four negative paths are asserted
+  in the test itself — a missing item, a lesson outside `ramp/`, a dropped task, a drifted number.
+- `README.md`, `docs/TIER1_EXIT_CHECK.md` and `ramp/README.md` all link the page, and the test fails if any
+  of the three stops: a returning learner arrives from the last page they finished.
+
+### 3. One repair outside the new page
+- Writing §4 meant running the command it names, and `python3 scripts/run_exercise.py <id>` **ignores a
+  bare id**: it re-graded all 47 packages instead of the one asked for. The flag is `--only`; §4 now
+  states it, says what the bare form does, and `tests/test_reentry.py` runs the documented command and
+  requires it to grade exactly one package in under a second (0.386 s, 11 checks for T2.00a).
+- The same check found `docs/ERROR_EXPLAINER.md` entry 13 telling readers to run
+  `python3 -m unittest discover -s exercises/<id> -p 'test_*.py'`, which fails with
+  `EXERCISE_TARGET is not set` on every package. Entry 13 now gives the `--only` form and says why the
+  discover form cannot work: the suite grades whichever submission it is pointed at.
+
+### 4. Verification
+- `tests/test_reentry.py` 7/7 including its four doctored-page negative paths and the live command check.
+- `verify_repo.py`, `clean_tex`, `audit_math`, `validate_modules.py`, `check_ramp_lessons.py` and
+  `lint_lessons.py` green; full local CI chain 37/37.
+
+---
+
 ## [2026-10-18] — Run 78: The Ramp Reaches Phasors and Frequency Response
 
 ### 1. R.5 and R.6 finish the six operations

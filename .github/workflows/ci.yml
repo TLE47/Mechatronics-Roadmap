@@ -55,6 +55,7 @@ jobs:
           python3 scripts/generate_sim_route.py --check
           python3 tests/test_sim_route.py
           python3 tests/test_lint_lessons.py
+          python3 tests/test_reentry.py
           python3 tests/test_error_explainer.py
           python3 tests/test_exercises.py
           python3 scripts/run_exercise.py --verbose

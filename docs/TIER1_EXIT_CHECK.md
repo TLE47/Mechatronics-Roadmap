@@ -12,6 +12,10 @@ Track 02–04 lessons that teach them.
 
 A miss is not a verdict on Tier 1. It is a named lesson to do before the first Tier 2 page.
 
+**Coming back after weeks away?** Do not retake all fourteen cold. [`docs/REENTRY.md`](REENTRY.md) is a
+five-task, twenty-minute subset of this check that sends each miss to its ramp lesson and then back to
+the page you left.
+
 ```mermaid
 flowchart LR
     Q{"Fourteen items,<br/>closed book"} --> A["14 / 14: start Tier 2"]

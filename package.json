@@ -19,6 +19,7 @@
     "check:skip": "python3 scripts/generate_skip_tests.py --check",
     "test:skip": "python3 tests/test_skip_tests.py",
     "test:lessonlint": "python3 tests/test_lint_lessons.py",
+    "test:reentry": "python3 tests/test_reentry.py",
     "check:route": "python3 scripts/generate_sim_route.py --check",
     "test:parity": "python3 tests/test_module_parity.py",
     "check:plant": "python3 scripts/generate_plant_data.py --check",
