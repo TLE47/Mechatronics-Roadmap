@@ -11,6 +11,51 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 81: Assertions That Explain Themselves, and a Validator That Runs Anywhere
+
+### 1. The assertion bar is a rule now (A4, first half)
+- `scripts/lint_assertions.py` reads `exercises/*/test_behavior.py`, `test_transfer.py` and `selfcheck.py`
+  with `ast`, and requires every graded assertion to carry a literal message of **at least 40 characters**
+  containing **check**, **likely** or **expected**. `assertRaises`/`assertWarns`/`assertLogs` are exempt:
+  their message is the exception and the test name already says what is refused.
+- The rule runs against `docs/assertion-baseline.json`, a ratchet that fails in three directions: a file
+  above its recorded count, a file with no entry at all (debt may not start), and a baseline *above* the
+  tree (so a burn-down must lower it). `--write-baseline` is the only way the floor moves, and it
+  regenerates the total in the same commit.
+- `tests/test_lint_assertions.py` (11 tests) proves each clause of the bar — missing, short, no cause,
+  non-literal, and the `assertRaises` exemption — plus each direction of the ratchet.
+
+### 2. Six packages burned down: 2014 → 1768
+- The six worst behaviour suites (`01-electronics.T3.01a`, `04-embedded.T2.04b`, `03-sensors.T1.03a`,
+  `04-embedded.T3.04a`, `08-capstones.T3.07a`, `00-foundations.T2.00f`) now carry a message on **every**
+  graded assertion — **246** added, each naming what was expected, what a different answer implies, the
+  likely cause from that file's own comments, and what to check.
+- Every package was re-graded with `run_exercise.py --only <id>`: starter still fails, solution still
+  passes, all faults still fail their named test. No assertion value, delta or test was changed.
+- The baseline records the new floor; CI fails if any of those six regains a bare assertion.
+
+### 3. `validate_modules.py` no longer crashes on real YAML (the follow-up request)
+- `scripts/frontmatter_lists.py`: `list_field(mapping, key)` normalises the four shapes an author can
+  write — missing, `key:` empty (`None` under PyYAML, `[]` under the fallback parser), a bare scalar, and
+  a list. `validate_modules.py` now reads every list-valued field through it (`legacy`, `prereqs`,
+  `introduces`, `new_concepts`, `uses`, `owns`).
+- The crash was environment-dependent, which is why CI never saw it: this Mac's Python 3.9 **has** PyYAML,
+  so `uses:` parsed to `None` and `set(None)` raised `TypeError`; the 3.12 runner has no PyYAML, so the
+  fallback parser returned `[]` and the same code passed.
+- `tests/test_frontmatter_lists.py` (9 tests) pins all four shapes, the scalar-wrap rule, the refusal of a
+  non-list, and asserts the validator has no remaining bare `.get(key, [])` on those fields. The script's
+  docstring now states the one real requirement left: its page bodies execute, so it needs **Python 3.10+**
+  for the pages' own `int | None` syntax (the front-matter handling itself is version-independent).
+
+### 4. Verification
+- `test_lint_assertions` 11/11, `test_frontmatter_lists` 9/9 on **both** interpreters (3.12 skips the
+  PyYAML-only case), `lint_assertions` clean at the new baseline, all 47 exercise packages re-graded.
+- `validate_modules.py` OK on 3.12; on 3.9 it now reaches page execution and stops only at the pages'
+  `int | None`, which is the documented 3.10+ requirement rather than a front-matter crash.
+- Full chain and CI results are recorded in the PR that lands this run.
+
+---
+
 ## [2026-10-18] — Run 80: A Claim About Evidence, a Smaller Required Set, and a Log That Measures Friction
 
 ### 1. `docs/SIM_ROUTE.md` says what its hours are worth (A1)
