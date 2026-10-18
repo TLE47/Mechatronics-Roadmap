@@ -16,6 +16,10 @@ flowchart LR
 
 ## Status
 
+**Participants (non-author): 0.** Counted here so `docs/SIM_ROUTE.md` can refuse a
+`pilot-validated` status without them; a participant is non-author when they are not the person who
+wrote the page.
+
 | Stage | Started | Finished | Notes |
 | :--- | ---: | ---: | :--- |
 | Smoke (Track P + Stage 0) | 0 | 0 | — |

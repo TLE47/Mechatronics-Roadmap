@@ -132,6 +132,21 @@ async function runRealBrowserE2ETests() {
       `Starter code must fail and keep verified count at ${verified(0)}`
     );
 
+    // 1b. The learning log is written by the UI itself, and a failed run keeps the first failing line
+    //     — the record a friction report is built from. Nothing leaves the browser to prove this.
+    const logged = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('mechalab.learningLog.v1') || '[]')
+    );
+    assert.ok(
+      logged.some((e) => e.kind === 'lesson_open' && e.lesson === 'P.6'),
+      'the learning log must record the lesson open'
+    );
+    const failedRun = logged.find((e) => e.kind === 'run' && e.lesson === 'P.6');
+    assert.ok(failedRun, 'the learning log must record the run');
+    assert.equal(failedRun.outcome, 'behavior_failed', 'a failed run must record its outcome');
+    assert.ok(failedRun.fail && failedRun.fail.length > 0, 'a failed run must record its first failing line');
+    assert.ok(typeof failedRun.ms === 'number', 'a run must record how long it took');
+
     // 2. Print-only spoofing passes presentation check but FAILS Instructor Behavioral Tests
     const expectedText = await page.getByTestId('pre-expected-stdout').textContent();
     const spoofedPython = `print(${JSON.stringify((expectedText || '').trim())})\n`;

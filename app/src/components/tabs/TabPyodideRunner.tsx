@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
+import { logEvent } from '../../learningLog';
 import {
   Play,
   RotateCcw,
@@ -379,6 +380,35 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
+
+  // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
+  useEffect(() => {
+    logEvent({ kind: 'lesson_open', lesson: selectedId });
+  }, [selectedId]);
+
+  // One `run` per execution, recorded where every path converges — the result state — rather than in
+  // each of the six branches that can set it. `pendingRun` stops a re-render from logging twice.
+  const pendingRunRef = useRef<boolean>(false);
+  const runStartedAtRef = useRef<number>(0);
+  useEffect(() => {
+    if (isRunning) {
+      pendingRunRef.current = true;
+      runStartedAtRef.current = performance.now();
+    }
+  }, [isRunning]);
+  useEffect(() => {
+    if (isRunning || !pendingRunRef.current || passStatus === 'untested') return;
+    pendingRunRef.current = false;
+    const failed = (instructorError || stderr || '').split('\n')[0];
+    logEvent({
+      kind: 'run',
+      lesson: selectedId,
+      outcome: passStatus,
+      fail: failed || undefined,
+      ms: Math.round(performance.now() - runStartedAtRef.current),
+    });
+    if (passStatus === 'passed') logEvent({ kind: 'verified', lesson: selectedId });
+  }, [isRunning, passStatus, selectedId, instructorError, stderr]);
 
   // Formatting and behaviour are graded separately: the lesson declares how strictly its `stdout` is
   // compared (`normalized` unless its Expected Output is a column-aligned table), and the note under
@@ -859,6 +889,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 <button
                   onClick={() => {
                     setCode(currentLesson.fullSolution);
+                    logEvent({ kind: 'solution_open', lesson: selectedId });
                   }}
                   data-testid="btn-load-solution"
                   className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#fbbf24] border border-[#fbbf24]/40 flex items-center gap-1.5 cursor-pointer"
@@ -917,7 +948,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </div>
                 {revealedHints < currentLesson.hints.length && (
                   <button
-                    onClick={() => setRevealedHints((h) => h + 1)}
+                    onClick={() =>
+                      setRevealedHints((h) => {
+                        logEvent({ kind: 'hint', lesson: selectedId, level: h + 1 });
+                        return h + 1;
+                      })
+                    }
                     data-testid="btn-reveal-hint"
                     className="px-2.5 py-1 rounded text-xs font-mono bg-[#fbbf24]/15 hover:bg-[#fbbf24]/25 text-[#fbbf24] border border-[#fbbf24]/40 cursor-pointer"
                   >
