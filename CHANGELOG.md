@@ -11,6 +11,32 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 93: The Sweep Is Latency, Not Python
+
+Measured the bundle suite's 48-package sweep before touching it, and the hypothesis did not survive:
+there is **no reload per package** — the sweep clicks through the lesson list in one page and reuses
+one warm Pyodide worker. Per package, 12 of them instrumented: select 77 ms, starter run 174 ms, load
+reference 37 ms, reference run 84 ms, reads 2 ms. The interpreter is a few tens of ms of that; the rest
+is Playwright/CDP round trips.
+
+| | before | after |
+| --- | --- | --- |
+| Chromium sweep, 48 packages | 13.9 s | **8.9 s** |
+| bundle suite, standalone | 19 s | **15 s** |
+| bundle suite, inside the combined run | 18-20 s | **16.3-18.0 s** |
+| `npm run test:workbench` | 19-21 s | **17-19 s** |
+
+- **Two pages, not one.** Each run is a warm round trip, so a second page of the same bundle grades the
+  other half of the list: 48 packages took 13.4 s on one page and 8.7-9.6 s on two (measured with the
+  page load included; three and four pages were no better, and the sample stays on one page where a
+  second load would cost more than it saves).
+- **One round trip per state.** The starter/expected text and each run's three badge/stdout readings
+  are now single `page.evaluate` calls instead of four `getByTestId(...)` calls, and the explicit
+  `scrollIntoViewIfNeeded` is gone (a locator click scrolls the entry into view itself).
+- Every assertion is unchanged: the starter still must carry its holes and self-check, fail on a
+  `NotImplementedError`, and not be graded MATCHED; the reference must match and pass the behavioural
+  badge. A doctored expected output still fails the two-page sweep, naming the package.
+
 ## [2026-10-18] — Run 92: The Dev-Server Suite Shares One Runtime
 
 Measured before changing anything, because the guess was wrong: a Pyodide boot costs **1.3-1.9 s**

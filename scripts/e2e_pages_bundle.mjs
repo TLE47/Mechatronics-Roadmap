@@ -20,6 +20,10 @@
  *    passes the appended self-check, and the output badge reads MATCHED, on the built bundle. A package
  *    added to `exercises/` is in this suite the next run, and a package whose entry the bundle does not
  *    carry fails the count in every browser, so the sweep cannot fall behind the registry.
+ *    The sweep itself is latency-bound: one page keeps one warm Pyodide worker, so a package costs a
+ *    few round trips and the interpreter barely shows up. Two pages of the same bundle grade two
+ *    slices at once (`gradeEntries`), and each page state is read in one `page.evaluate` rather than
+ *    four locator calls.
  * 6. A second browser grades a *sample* (`sampleExerciseIds`), not the whole list: the same bundle,
  *    Pyodide and packages had already been graded end to end once, so repeating 48 verdicts in Firefox
  *    bought no new signal for twice the interpreter runs. The sample keeps a real Firefox signal on
@@ -182,6 +186,98 @@ export async function checkServed(baseUrl, refs) {
   console.log(`  ok every built asset answers 200 with the right content type at ${BASE}`);
 }
 
+/**
+ * Grade `ids` on one page: the starter must fail on a hole, the reference must match and pass.
+ *
+ * Two things make this the suite's most expensive loop, and neither is the runtime: the app keeps one
+ * Pyodide worker per page, so a run is a warm ~50-130 ms round trip, and every `getByTestId(...)` is
+ * its own CDP call. So each state is read in *one* `page.evaluate` rather than four locator calls, the
+ * explicit `scrollIntoViewIfNeeded` is gone (a locator click scrolls the entry into view itself), and
+ * the sweep is split across pages by the caller. The assertions are unchanged.
+ */
+async function gradeEntries(page, ids, name) {
+  for (const exerciseId of ids) {
+    await page.getByTestId(`lesson-item-${exerciseId}`).click();
+    // Wait for *this* entry's starter to land in the editor: after the previous exercise loaded its
+    // reference, the editor holds that program for a beat, and reading it would grade the wrong lesson.
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
+          'raise NotImplementedError'
+        ),
+      undefined,
+      { timeout: 15000 }
+    );
+    const entry = await page.evaluate(() => ({
+      starter: document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '',
+      expected: document.querySelector('[data-testid="pre-expected-stdout"]')?.textContent ?? '',
+    }));
+    assert.ok(
+      entry.starter.includes('raise NotImplementedError') && entry.starter.includes('_selfcheck()'),
+      `${name}: ${exerciseId} must ship its holes and its self-check together`
+    );
+    assert.match(
+      entry.expected.trim(),
+      /SELF-CHECK PASS/,
+      `${name}: ${exerciseId} expected output is not its self-check PASS line`
+    );
+    await page.getByTestId('btn-run-verify').click();
+    await page.waitForFunction(
+      () => {
+        const text = document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '';
+        return text.length > 0 && !text.includes('Click "Run & Verify Output"');
+      },
+      undefined,
+      { timeout: 90000 }
+    );
+    const starterRun = await page.evaluate(() => ({
+      stdout: document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '',
+      output: document.querySelector('[data-testid="badge-output-check"]')?.textContent ?? '',
+      behaviour: document.querySelector('[data-testid="badge-behavior-check"]')?.textContent ?? '',
+    }));
+    assert.ok(
+      starterRun.stdout.includes('NotImplementedError'),
+      `${name}: ${exerciseId} starter must fail on a hole, got: ${starterRun.stdout}`
+    );
+    assert.doesNotMatch(
+      starterRun.output,
+      /MATCHED/i,
+      `${name}: ${exerciseId} starter must not be graded as a match`
+    );
+    assert.match(
+      starterRun.behaviour,
+      /FAILED/i,
+      `${name}: ${exerciseId} starter must fail the instructor behavioural tests`
+    );
+    await page.getByTestId('btn-load-solution').click();
+    await page.getByTestId('btn-run-verify').click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes(
+          'SELF-CHECK PASS'
+        ),
+      undefined,
+      { timeout: 90000 }
+    );
+    const referenceRun = await page.evaluate(() => ({
+      output: document.querySelector('[data-testid="badge-output-check"]')?.textContent ?? '',
+      behaviour: document.querySelector('[data-testid="badge-behavior-check"]')?.textContent ?? '',
+    }));
+    assert.match(
+      referenceRun.output,
+      /MATCHED/i,
+      `${name}: ${exerciseId} reference must match its expected output`
+    );
+    // The registry's copy of the package's selfcheck.py, run after the program, is what awards
+    // verification: a reference that only printed the PASS line would fail this badge.
+    assert.match(
+      referenceRun.behaviour,
+      /PASSED/i,
+      `${name}: ${exerciseId} reference must pass the instructor behavioural tests`
+    );
+  }
+}
+
 async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
   let browser;
   const envPath = process.env[`PLAYWRIGHT_${name.toUpperCase()}_EXECUTABLE_PATH`];
@@ -241,77 +337,25 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         ? `all ${exerciseIds.length} graded exercise entries`
         : `${gradingIds.length} of ${exerciseIds.length} graded exercise entries (one per track, plus both ends)`;
     const exercisePassStarted = Date.now();
-    for (const exerciseId of gradingIds) {
-      const exercise = page.getByTestId(`lesson-item-${exerciseId}`);
-      await exercise.scrollIntoViewIfNeeded();
-      await exercise.click();
-      // Wait for *this* entry's starter to land in the editor: after the previous exercise loaded its
-      // reference, the editor holds that program for a beat, and reading it would grade the wrong lesson.
-      await page.waitForFunction(
-        () =>
-          (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
-            'raise NotImplementedError'
-          ),
-        undefined,
-        { timeout: 15000 }
+    // The sweep is latency-bound, not CPU-bound: every run is a warm worker round trip, so two pages
+    // of the same bundle grade two slices at once (measured: 48 entries 13.4 s on one page, 8.7-9.6 s
+    // on two). Only for a long list - the 9-entry sample is cheaper on one page, where there is no
+    // second load and no second runtime to pay for.
+    const sweepPageCount = Math.min(2, Math.max(1, Math.floor(gradingIds.length / 24)));
+    const sweepPages = [page];
+    for (let index = 1; index < sweepPageCount; index += 1) {
+      const extra = await page.context().newPage();
+      await extra.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
+      await extra.getByTestId('tab-btn-tab-pyodide').click();
+      sweepPages.push(extra);
+    }
+    try {
+      const slices = sweepPages.map((_, index) =>
+        gradingIds.filter((__, position) => position % sweepPages.length === index)
       );
-      const exerciseStarter = await page.getByTestId('textarea-python-code').inputValue();
-      assert.ok(
-        exerciseStarter.includes('raise NotImplementedError') && exerciseStarter.includes('_selfcheck()'),
-        `${name}: ${exerciseId} must ship its holes and its self-check together`
-      );
-      const exerciseExpected = (await page.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
-      assert.match(
-        exerciseExpected,
-        /SELF-CHECK PASS/,
-        `${name}: ${exerciseId} expected output is not its self-check PASS line`
-      );
-      await page.getByTestId('btn-run-verify').click();
-      await page.waitForFunction(
-        () => {
-          const text = document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '';
-          return text.length > 0 && !text.includes('Click "Run & Verify Output"');
-        },
-        undefined,
-        { timeout: 90000 }
-      );
-      const starterStdout = await page.getByTestId('pre-actual-stdout').textContent();
-      assert.ok(
-        starterStdout?.includes('NotImplementedError'),
-        `${name}: ${exerciseId} starter must fail on a hole, got: ${starterStdout}`
-      );
-      assert.doesNotMatch(
-        (await page.getByTestId('badge-output-check').textContent()) ?? '',
-        /MATCHED/i,
-        `${name}: ${exerciseId} starter must not be graded as a match`
-      );
-      assert.match(
-        (await page.getByTestId('badge-behavior-check').textContent()) ?? '',
-        /FAILED/i,
-        `${name}: ${exerciseId} starter must fail the instructor behavioural tests`
-      );
-      await page.getByTestId('btn-load-solution').click();
-      await page.getByTestId('btn-run-verify').click();
-      await page.waitForFunction(
-        () =>
-          (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes(
-            'SELF-CHECK PASS'
-          ),
-        undefined,
-        { timeout: 90000 }
-      );
-      assert.match(
-        (await page.getByTestId('badge-output-check').textContent()) ?? '',
-        /MATCHED/i,
-        `${name}: ${exerciseId} reference must match its expected output`
-      );
-      // The registry's copy of the package's selfcheck.py, run after the program, is what awards
-      // verification: a reference that only printed the PASS line would fail this badge.
-      assert.match(
-        (await page.getByTestId('badge-behavior-check').textContent()) ?? '',
-        /PASSED/i,
-        `${name}: ${exerciseId} reference must pass the instructor behavioural tests`
-      );
+      await Promise.all(sweepPages.map((sweepPage, index) => gradeEntries(sweepPage, slices[index], name)));
+    } finally {
+      for (const extra of sweepPages.slice(1)) await extra.close();
     }
     console.log(
       `  ok ${name}: ${gradingScope} (${gradingIds[0]} .. ${gradingIds[gradingIds.length - 1]}) ` +
