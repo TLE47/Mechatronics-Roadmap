@@ -11,6 +11,31 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 92: The Dev-Server Suite Shares One Runtime
+
+Measured before changing anything, because the guess was wrong: a Pyodide boot costs **1.3-1.9 s**
+and a warm run **0.04-0.06 s**, so the suite pays for the number of *boots*, not runs - and the
+biggest single item in its 22-24 s was not a boot at all.
+
+| | before | after |
+| --- | --- | --- |
+| bad-CDN scenario (the runtime must fail to load) | 10.4 s | **0.1 s** |
+| formatting + shared-plant scenarios | own browser context (own page, own download, own boot) | same page, `mechalab*` keys cleared + reload |
+| `npm run test:e2e`, standalone | 22 s | **13 s** |
+| `npm run test:e2e`, inside the combined run | 23.8-24.7 s | **12.8-15.2 s** |
+| `npm run test:workbench` | 24-26 s | **19-21 s** |
+
+- **The CDN negative path pointed at an unresolvable host** (`invalid.cdn.mechalab.local`), so the
+  loader sat on DNS for ~10 s before reporting the failure the suite asserts. It now points at
+  `http://127.0.0.1:1/pyodide/` - a refused connection, the same "runtime could not be loaded"
+  failure, answered in ~0.1 s. That one line was most of the suite's wall clock.
+- **One page, one context.** The formatting and shared-plant scenarios used to open a second browser
+  context: a second page, a second Pyodide download and a second runtime, for two scenarios that only
+  needed the *progress counters* at zero. They clear every `mechalab*` key and reload instead.
+- The runtime is still re-booted where a scenario is about the runtime dying - the trace-step limit,
+  the Stop button, the load failure, and the reload that proves persistence - so those assertions are
+  untouched. The suite now hands the pole to the bundle suite: 12.8-15.2 s against its 18-20 s.
+
 ## [2026-10-18] — Run 91: Every Package Graded Once, the Second Browser Samples
 
 The built-bundle suite graded all 48 exercise packages in Chromium *and* again in Firefox: 96
