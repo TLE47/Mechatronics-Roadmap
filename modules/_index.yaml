@@ -186,24 +186,37 @@ bridges:
     resources_verified: true
     path: modules/00-foundations.T1.00e.md
   - id: 00-foundations.T2.00a
-    title: "Numerical Derivatives, Integrals & Matrices as One-Step State Updaters"
+    title: "Numerical Derivatives & Integrals: Backward Difference and the Running Sum"
     track: 00
     tier: 2
-    est_hours: 4.0
+    est_hours: 2.0
     prereqs: [00-foundations.T1.00e]
-    introduces: [finite_difference_derivative_and_integral, matrix_vector_multiplication, state_vector_one_step_update]
+    introduces: [finite_difference_derivative_and_integral]
     uses: [symplectic_euler_integration, so2_rotation_matrix, discrete_kinematics_pos_vel_acc]
-    feeds_into: [00-foundations.T2.00b]
+    feeds_into: [00-foundations.T2.00g]
     safety_level: none
     hardware_required: false
     resources_verified: false
     path: modules/00-foundations.T2.00a.md
+  - id: 00-foundations.T2.00g
+    title: "Matrix-Vector Multiplication & the One-Step State Update"
+    track: 00
+    tier: 2
+    est_hours: 3.0
+    prereqs: [00-foundations.T2.00a]
+    introduces: [matrix_vector_multiplication, state_vector_one_step_update]
+    uses: [finite_difference_derivative_and_integral, discrete_kinematics_pos_vel_acc]
+    feeds_into: [00-foundations.T2.00b]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T2.00g.md
   - id: 00-foundations.T2.00b
     title: "Vectors, Dot & Cross Products, Linear Independence & Change of Basis"
     track: 00
     tier: 2
     est_hours: 3.5
-    prereqs: [00-foundations.T2.00a]
+    prereqs: [00-foundations.T2.00g]
     introduces: [dot_product_projection, cross_product_3d_moment, basis_change_and_invertibility]
     uses: [matrix_vector_multiplication, radians_unit_circle_and_atan2, 2d_vectors_and_components]
     feeds_into: [00-foundations.T2.00c]

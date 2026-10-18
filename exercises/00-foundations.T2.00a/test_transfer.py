@@ -1,9 +1,8 @@
 """Transfer tests for 00-foundations.T2.00a - the arm's own encoder, not a made-up ramp.
 
-The module's worked example is a cart with a remembered `m = 1.0 kg, k = 100 N/m`. These tests move
-the exercise onto the shared plant and change the numbers: the capstone arm's figure-8 joint trace,
-quantised at 4096 cpr and sampled at 1 kHz, and a second mass-spring whose parameters are not the
-worked example's.
+The module's worked example is a four-sample wrap. These tests move onto the shared plant: the
+capstone arm's figure-8 joint trace, quantised at 4096 cpr and sampled at 1 kHz, where one count is
+1.53 rad/s of velocity quantisation and the derivative has to survive it.
 """
 
 import math
@@ -46,21 +45,6 @@ class ArmEncoderTests(unittest.TestCase):
         truth = plant.wrap_pi(plant.counts_to_rad(counts[-1]) - plant.counts_to_rad(counts[0]))
         self.assertAlmostEqual(integrated, truth, delta=1e-6)
         self.assertLess(abs(integrated - plant.wrap_pi(angles[-1] - angles[0])), 2 * math.pi / 4096)
-
-
-class ChangedPlantTests(unittest.TestCase):
-    def test_a_heavier_softer_plant_still_settles_at_u_over_k(self):
-        m, k, b, dt = 2.5, 40.0, 6.0, 0.002
-        Ad, Bd = submission.state_matrices(m, k, b, dt)
-        final = submission.simulate(Ad, Bd, [0.0, 0.0], 4.0, 4000)
-        self.assertAlmostEqual(final[0], 4.0 / k, delta=2e-3)
-        self.assertAlmostEqual(final[1], 0.0, delta=2e-4)
-
-    def test_a_shorter_sample_time_changes_the_matrices(self):
-        slow = submission.state_matrices(1.0, 100.0, 10.0, 0.01)
-        fast = submission.state_matrices(1.0, 100.0, 10.0, 0.001)
-        self.assertAlmostEqual(slow[0][0][1] / fast[0][0][1], 10.0, delta=1e-9)
-        self.assertAlmostEqual(slow[1][1] / fast[1][1], 10.0, delta=1e-9)
 
 
 if __name__ == "__main__":

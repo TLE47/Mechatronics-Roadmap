@@ -4,8 +4,6 @@ Each test names the mistake it catches:
   * a velocity that never divided by `dt`, or one that ignores `cpr`;
   * an unwrapped difference at the encoder's zero (a 4095 -> 0 step is +1 count, not -4095);
   * a running integral that is not running (re-integrating from zero each step);
-  * a matrix built from remembered numbers rather than the caller's m, k, b, dt;
-  * a one-step update that overwrites `x` before computing `v` - correct only when v is zero;
   * a round trip that does not land back on the encoder's angle.
 """
 
@@ -76,50 +74,6 @@ class IntegralTests(unittest.TestCase):
         for index, value in enumerate(integrated):
             expected = plant.counts_to_rad(counts[index]) - first
             self.assertAlmostEqual(value, expected, delta=1e-6)
-
-
-class MatrixTests(unittest.TestCase):
-    def test_matches_the_worked_example(self):
-        Ad, Bd = submission.state_matrices(1.0, 100.0, 10.0, 0.01)
-        self.assertAlmostEqual(Ad[0][0], 1.0, delta=1e-12)
-        self.assertAlmostEqual(Ad[0][1], 0.01, delta=1e-12)
-        self.assertAlmostEqual(Ad[1][0], -1.0, delta=1e-12)
-        self.assertAlmostEqual(Ad[1][1], 0.90, delta=1e-12)
-        self.assertAlmostEqual(Bd[0], 0.0, delta=1e-12)
-        self.assertAlmostEqual(Bd[1], 0.01, delta=1e-12)
-
-    def test_uses_every_parameter_it_is_given(self):
-        Ad, Bd = submission.state_matrices(2.0, 50.0, 4.0, 0.002)
-        self.assertAlmostEqual(Ad[0][1], 0.002, delta=1e-12)
-        self.assertAlmostEqual(Ad[1][0], -0.05, delta=1e-12)
-        self.assertAlmostEqual(Ad[1][1], 1.0 - 0.004, delta=1e-12)
-        self.assertAlmostEqual(Bd[1], 0.001, delta=1e-12)
-
-
-class StepTests(unittest.TestCase):
-    def test_simultaneous_update(self):
-        Ad, Bd = submission.state_matrices(1.0, 100.0, 10.0, 0.01)
-        got = submission.one_step(Ad, Bd, [0.10, 0.20], 0.0)
-        self.assertAlmostEqual(got[0], 0.10 + 0.01 * 0.20, delta=1e-12)
-        self.assertAlmostEqual(got[1], -1.0 * 0.10 + 0.90 * 0.20, delta=1e-12)
-        sequential_v = -1.0 * got[0] + 0.90 * 0.20
-        self.assertGreater(abs(got[1] - sequential_v), 1e-4,
-                           "this state separates a simultaneous update from an ordered one")
-
-    def test_matches_the_scalar_update(self):
-        m, k, b, dt = 1.0, 100.0, 10.0, 0.01
-        Ad, Bd = submission.state_matrices(m, k, b, dt)
-        x = [0.10, 0.35]
-        u = 5.0
-        got = submission.one_step(Ad, Bd, x, u)
-        self.assertAlmostEqual(got[0], x[0] + dt * x[1], delta=1e-12)
-        self.assertAlmostEqual(got[1], x[1] + dt * ((-k * x[0] - b * x[1] + u) / m), delta=1e-12)
-
-    def test_simulate_converges_to_static_equilibrium(self):
-        Ad, Bd = submission.state_matrices(1.0, 100.0, 10.0, 0.01)
-        final = submission.simulate(Ad, Bd, [0.10, 0.0], 5.0, 500)
-        self.assertAlmostEqual(final[0], 0.05, delta=1e-3)
-        self.assertAlmostEqual(final[1], 0.0, delta=1e-4)
 
 
 class TraceTests(unittest.TestCase):

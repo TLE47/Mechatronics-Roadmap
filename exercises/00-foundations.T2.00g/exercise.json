@@ -1,0 +1,29 @@
+{
+  "id": "00-foundations.T2.00g",
+  "module": "modules/00-foundations.T2.00g.md",
+  "title": "Matrix-vector multiplication and the one-step state update",
+  "requires": [
+    "mat_vec(A, x) -> list",
+    "state_matrices(m, k, b, dt) -> (Ad, Bd)",
+    "one_step(Ad, Bd, x, u) -> list",
+    "simulate(Ad, Bd, x0, u, steps) -> list",
+    "two_mass_matrices(m1, m2, k, b, dt) -> (Ad, Bd)",
+    "position_trace(Ad, Bd, x0, u, steps) -> list of positions"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "elementwise_product": ["test_behavior.MatrixTests.test_matches_the_hand_product"],
+    "sequential_update": ["test_behavior.StepTests.test_simultaneous_update"],
+    "hardcoded_matrices": ["test_behavior.PlantTests.test_state_matrices_use_every_parameter"],
+    "force_in_position_row": ["test_behavior.StepTests.test_matches_the_scalar_update"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T2.00g",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T2.00g/starter.py python3 -m unittest discover -s exercises/00-foundations.T2.00g -p 'test_*.py'"
+  }
+}

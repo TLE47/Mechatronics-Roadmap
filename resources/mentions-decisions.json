@@ -260,10 +260,8 @@
       "concept": "symplectic_euler_integration",
       "decision": "drop",
       "core": "symplectic",
-      "lines": 2,
-      "sections": [
-        "7. Checkpoint"
-      ]
+      "lines": 0,
+      "sections": []
     },
     {
       "page": "01-electronics.T2.01a",

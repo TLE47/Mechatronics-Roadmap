@@ -306,7 +306,7 @@ assert math.isclose(q5_dot, 0.0, abs_tol=1e-9)
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, Q2, or Q3, study `## 3. Formalization`; if you missed Q4, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T2.00b`). On pass, proceed to `## 10. Next modules`.
 
 ### Gate test
-This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`). Questions 1-6 are this module's own three tools; 7-11 recap one module each.
+This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md), [`00-foundations.T2.00g`](00-foundations.T2.00g.md), and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`). Questions 1-6 are this module's own three tools; 7-11 recap one module each.
 1. `[Concept: first_order_ode_time_constant]` A winding with $\tau = 2.0\,\text{ms}$ is driven by a unit step. Compute the fraction of the steady-state value reached at $t = 6.0\,\text{ms}$, $1 - e^{-t/\tau}$ (tolerance $\pm 10^{-6}$).
 2. `[Concept: first_order_ode_time_constant]` What does the time constant $\tau$ mean for a first-order system?
    - **A.** The time to reach $1 - e^{-1} \approx 63.2\%$ of a step, not the time to settle.

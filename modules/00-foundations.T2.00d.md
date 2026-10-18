@@ -290,7 +290,7 @@ assert q4_choice == "B"
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 
 ### Gate test
-This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`):
+This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md), [`00-foundations.T2.00g`](00-foundations.T2.00g.md), and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`):
 1. `[Concept: complex_numbers_and_euler_formula]` Compute the magnitude $|z|$ of $z = 2 - j2$ (tolerance $\pm 10^{-9}$).
 2. `[Concept: complex_numbers_and_euler_formula]` Multiplying a phasor by $j$ leaves its amplitude alone and does what to its phase?
    - **A.** Advances it by $+90^\circ$.

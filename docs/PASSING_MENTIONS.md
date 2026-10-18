@@ -29,7 +29,7 @@ flowchart LR
 
 | Page | Concept | Core term | Lines | Sections it does appear in |
 | :--- | :--- | :--- | ---: | :--- |
-| `00-foundations.T2.00a` | `symplectic_euler_integration` | `symplectic` | 2 | 7. Checkpoint |
+| `00-foundations.T2.00a` | `symplectic_euler_integration` | `symplectic` | 0 | — |
 | `01-electronics.T2.01a` | `star_grounding` | `grounding` | 0 | — |
 | `04-embedded.T2.04a` | `hardware_timer_isr_and_jitter` | `jitter` | 3 | 6. Simulation path, 7. Checkpoint |
 | `04-embedded.T2.04a` | `packed_binary_telemetry_struct` | `packed` | 0 | — |
