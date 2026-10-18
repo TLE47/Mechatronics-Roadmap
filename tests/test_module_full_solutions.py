@@ -51,7 +51,12 @@ class PageSolutionTests(unittest.TestCase):
     def test_the_check_covers_the_whole_course(self):
         # A rename that empties the discovery would otherwise pass silently.
         found = [module_id for module_id, _text in pages_with_solutions()]
-        self.assertGreaterEqual(len(found), 40, found)
+        self.assertGreaterEqual(
+            len(found), 40,
+            f"expected at least 40 module pages with a Full Solution block, found "
+            f"{len(found)}: {found} - check the exercises/*/exercise.json glob and the "
+            f"'### Full Solution' heading, which a retitled section would break",
+        )
 
     def test_each_page_full_solution_passes_its_package(self):
         for module_id, page_text in pages_with_solutions():
@@ -68,8 +73,9 @@ class PageSolutionTests(unittest.TestCase):
                     )
                 self.assertEqual(
                     proc.returncode, 0,
-                    "%s page solution fails its own suite:\n%s\n%s"
-                    % (module_id, proc.stdout[-1500:], proc.stderr[-1500:]),
+                    f"{module_id} page solution fails its own suite, so a learner copying the "
+                    f"page meets tests the page never mentions; check the block against "
+                    f"exercises/{module_id}/solution.py:\n{proc.stdout[-1500:]}\n{proc.stderr[-1500:]}",
                 )
 
 

@@ -58,46 +58,101 @@ plant: tier1_arm_motor
 
 class TestDifficultyLabel(unittest.TestCase):
     def test_the_specs_own_example_parses(self):
-        self.assertEqual(parity.difficulty_findings(SPEC_STYLE_FRONT_MATTER), [])
+        self.assertEqual(
+            parity.difficulty_findings(SPEC_STYLE_FRONT_MATTER), [],
+            f"expected the shape documented in docs/QUALITY_SPEC.md to parse clean; got "
+            f"{parity.difficulty_findings(SPEC_STYLE_FRONT_MATTER)} - an author copying the "
+            f"spec would now fail the gate",
+        )
 
     def test_a_missing_block_is_still_a_finding(self):
-        self.assertEqual(parity.difficulty_findings("id: x\ntitle: y\n"), ["no `difficulty:` block"])
+        self.assertEqual(
+            parity.difficulty_findings("id: x\ntitle: y\n"), ["no `difficulty:` block"],
+            "expected a page with no difficulty block to be reported in those words; a page "
+            "with no block has no step size and is exactly what the gate exists to catch",
+        )
 
     def test_out_of_range_and_unknown_values_are_still_findings(self):
         broken = SPEC_STYLE_FRONT_MATTER.replace("math: 3", "math: 6").replace(
             "hardware_risk: low", "hardware_risk: extreme"
         )
         findings = parity.difficulty_findings(broken)
-        self.assertIn("`difficulty.math: 6` is outside 1..5", findings)
-        self.assertTrue(any("hardware_risk" in finding for finding in findings), findings)
+        self.assertIn(
+            "`difficulty.math: 6` is outside 1..5", findings,
+            f"expected an out-of-range math score to be reported by name and range; got "
+            f"{findings} - the message is what tells an author which number to fix",
+        )
+        self.assertTrue(
+            any("hardware_risk" in finding for finding in findings),
+            f"expected the invented value 'extreme' to be reported under hardware_risk; got "
+            f"{findings} - an unknown value must not pass as a score",
+        )
 
     def test_a_boolean_where_a_value_belongs_is_not_read_as_a_number(self):
         broken = SPEC_STYLE_FRONT_MATTER.replace("coding: 3", "coding: high")
-        self.assertIn("`difficulty.coding:` is missing", parity.difficulty_findings(broken))
+        self.assertIn(
+            "`difficulty.coding:` is missing", parity.difficulty_findings(broken),
+            f"expected a non-numeric value ('high') to read as missing rather than as a score; "
+            f"got {parity.difficulty_findings(broken)} - a bool or word must never pass as 1..5",
+        )
 
 
 class TestSharedPlantItem(unittest.TestCase):
     def test_a_declaration_without_an_import_is_not_use(self):
         text = "```python\nimport math\nprint(1.0)\n```\n"
-        self.assertEqual(parity.plant_decision("tier1_arm_motor", "", text), (False, "unhooked"))
+        self.assertEqual(
+            parity.plant_decision("tier1_arm_motor", "", text), (False, "unhooked"),
+            "expected a decline plus a runnable block that never imports the plant to count as "
+            "unhooked; a Python block alone is not use",
+        )
 
     def test_a_prose_mention_is_not_use(self):
         text = "Then the module runs `import mechalab_plant` in a sentence.\n"
-        self.assertEqual(parity.plant_decision("tier1_arm_motor", "", text), (False, "unhooked"))
+        self.assertEqual(
+            parity.plant_decision("tier1_arm_motor", "", text), (False, "unhooked"),
+            "expected an import named in prose to count as unhooked; only a fenced python "
+            "block runs, and counting prose would let a page claim an instrumented item it "
+            "never executes",
+        )
 
     def test_an_import_inside_a_python_block_is_use(self):
         text = "```python\nimport mechalab_plant as plant\nprint(plant.L1)\n```\n"
-        self.assertEqual(parity.plant_decision("tier1_arm_motor", "", text), (True, "arm"))
+        self.assertEqual(
+            parity.plant_decision("tier1_arm_motor", "", text), (True, "arm"),
+            "expected an import inside a fenced python block to count as use of the shared "
+            "plant, with the decision named 'arm'; a False here would fail every page that "
+            "really does run the arm",
+        )
 
     def test_none_needs_a_reason_of_its_own(self):
-        self.assertEqual(parity.plant_decision("none", "", ""), (False, "unhooked"))
-        self.assertEqual(parity.plant_decision("none", "too short", ""), (False, "unhooked"))
+        self.assertEqual(
+            parity.plant_decision("none", "", ""), (False, "unhooked"),
+            "expected `plant: none` with no reason to be refused; otherwise every page can "
+            "exempt itself by declaring none",
+        )
+        self.assertEqual(
+            parity.plant_decision("none", "too short", ""), (False, "unhooked"),
+            "expected a two-word reason to be refused just like an empty one; check the "
+            "minimum length that makes an exemption checkable",
+        )
         reason = "This module is about a KiCad file: there is no arm to run it on."
-        self.assertEqual(parity.plant_decision("none", reason, ""), (True, "exempt"))
+        self.assertEqual(
+            parity.plant_decision("none", reason, ""), (True, "exempt"),
+            f"expected a stated reason for `plant: none` to be accepted as an exemption; got "
+            f"{parity.plant_decision('none', reason, '')} - the reason is the whole point of the field",
+        )
 
     def test_a_missing_or_unknown_value_is_undeclared(self):
-        self.assertEqual(parity.plant_decision("", "", ""), (False, "undeclared"))
-        self.assertEqual(parity.plant_decision("tier2_quadruped", "", ""), (False, "undeclared"))
+        self.assertEqual(
+            parity.plant_decision("", "", ""), (False, "undeclared"),
+            "expected a page with no `plant:` field to be reported as undeclared, distinct "
+            "from unhooked, since the two need different repairs",
+        )
+        self.assertEqual(
+            parity.plant_decision("tier2_quadruped", "", ""), (False, "undeclared"),
+            "expected an unknown plant name to be undeclared rather than silently accepted; "
+            "a typo in the field must not read as a declaration the module honours",
+        )
 
 
 class TestScoredItemsAndTheReferenceModule(unittest.TestCase):
@@ -109,15 +164,37 @@ class TestScoredItemsAndTheReferenceModule(unittest.TestCase):
         cls.rows = rows
 
     def test_the_shared_plant_is_an_instrumented_item(self):
-        self.assertIn("executable:shared_plant", parity.instrumented_items(self.rows))
+        self.assertIn(
+            "executable:shared_plant", parity.instrumented_items(self.rows),
+            f"expected executable:shared_plant to be one of the scored items; it is absent from "
+            f"{parity.instrumented_items(self.rows)} - without it a page can claim the shared "
+            f"plant without the item counting for or against it",
+        )
 
     def test_the_reference_module_is_at_one_hundred_percent(self):
         """The module every later module copies, held to the whole contract."""
         row = next((item for item in self.rows if item["module"] == REFERENCE_MODULE), None)
-        self.assertIsNotNone(row, "%s is missing from modules/" % REFERENCE_MODULE)
-        self.assertEqual(row["plant"], "arm", "the reference module must run on the shared plant")
-        self.assertIn(row["verification"], parity.VERIFICATION_ROUTES)
-        self.assertEqual(row["score"], 1.0, "missing: %s" % parity.missing_items(row))
+        self.assertIsNotNone(
+            row,
+            f"expected the reference module {REFERENCE_MODULE} to be in the built rows; it is "
+            f"missing from modules/ - check the page was not renamed without updating "
+            f"REFERENCE_MODULE, since every later module copies it",
+        )
+        self.assertEqual(
+            row["plant"], "arm",
+            f"expected the reference module to run on the shared arm; got {row['plant']!r} - "
+            f"the reference is the page that shows how to hook the plant up",
+        )
+        self.assertIn(
+            row["verification"], parity.VERIFICATION_ROUTES,
+            f"expected the reference module's verification route {row['verification']!r} to be "
+            f"one of {parity.VERIFICATION_ROUTES}; an unlisted route is one nothing grades",
+        )
+        self.assertEqual(
+            row["score"], 1.0,
+            f"expected the reference module to score 1.0, the whole contract; it is missing "
+            f"{parity.missing_items(row)} - check those items on the page",
+        )
 
     def test_the_baseline_records_todays_item_set(self):
         with open(parity.BASELINE_PATH, encoding="utf-8") as handle:
@@ -125,7 +202,11 @@ class TestScoredItemsAndTheReferenceModule(unittest.TestCase):
         self.assertEqual(
             baseline.get("instrumented_items"),
             parity.instrumented_items(self.rows),
-            "the scored item set moved - re-record the floor deliberately with --update-baseline",
+            f"expected the recorded scored-item set to match today's; it moved, so check each "
+            f"diff below and re-record the floor deliberately with "
+            f"`python3 scripts/module_parity.py --update-baseline` only if the move is intended. "
+            f"Recorded: {baseline.get('instrumented_items')}; now: "
+            f"{parity.instrumented_items(self.rows)}",
         )
 
 
@@ -152,12 +233,23 @@ class TestTheLearnerScaffoldIsARealOne(unittest.TestCase):
                 exercise = parity.section_bodies(handle.read()).get(5, "")
             findings += ["%s: %s" % (row["module"], finding)
                          for finding in scaffold_findings(exercise)]
-        self.assertEqual(findings, [], "\n".join(findings))
+        listed = "\n".join(findings)
+        self.assertEqual(
+            findings, [],
+            f"expected every module with a graded package to open from a starter scaffold with "
+            f"at least {MIN_TODOS} TODO holes and {MIN_HINTS} hints; check the page's section 5 "
+            f"against the package's starter.py, which the learner is handed:\n{listed}",
+        )
 
     def test_the_check_catches_a_stub_with_no_todos_or_hints(self):
         """The negative path: the words alone must not pass, or the test above is theatre."""
         words_only = scaffold_findings("### Full Solution\n```python\nprint('TODO')\n```\n")
-        self.assertEqual(words_only, ["no `### Starter code`", "no `### Hint ladder`"])
+        self.assertEqual(
+            words_only, ["no `### Starter code`", "no `### Hint ladder`"],
+            f"expected a page carrying only the words 'TODO' and 'Full Solution' to be refused "
+            f"for both missing headings; got {words_only} - the headings are what make it a "
+            f"scaffold rather than a solution with a comment",
+        )
         # Headings present, but a one-`...` stub and a single hint: still not a scaffold.
         thin = scaffold_findings(
             "### Starter code\n```python\n# TODO: fill it in\ndef a():\n    ...\n\n"
@@ -165,8 +257,16 @@ class TestTheLearnerScaffoldIsARealOne(unittest.TestCase):
             "### Hint ladder\n1. try the formula\n"
             "### Full Solution\n```python\nprint(1)\n```\n"
         )
-        self.assertEqual(len(thin), 2, thin)
-        self.assertIn("at least 3 expected", thin[0])
+        self.assertEqual(
+            len(thin), 2,
+            f"expected exactly two findings for a three-hole stub with one hint (too few "
+            f"hints, too few TODOs); got {len(thin)}: {thin} - check MIN_TODOS and MIN_HINTS",
+        )
+        self.assertIn(
+            "at least 3 expected", thin[0],
+            f"expected the first finding to name the required count of TODOs; got {thin[0]!r} - "
+            f"a message without the number leaves the author guessing",
+        )
 
 
 SCAFFOLD_SECTIONS = ("### Starter code", "### Hint ladder", "### Full Solution")
@@ -246,7 +346,12 @@ class TestEveryBridgeModuleClosesItsLadder(unittest.TestCase):
                     exec(key.group(1), {})
             except Exception as exc:  # noqa: BLE001 - the point is to name the module that breaks
                 findings.append("%s: Gate answer key raised %r" % (module, exc))
-        self.assertEqual(findings, [], "\n".join(findings))
+        listed = "\n".join(findings)
+        self.assertEqual(
+            findings, [],
+            f"expected every module's Gate answer key to run; the keys are what the learner's "
+            f"answers are graded against, so one that raises grades nothing:\n{listed}",
+        )
 
 
 def _module_rows():
@@ -296,7 +401,13 @@ class TestTier3CarriesBothLevels(unittest.TestCase):
                 continue
             with open(os.path.join(ROOT, row["path"]), encoding="utf-8") as handle:
                 findings += level_findings(handle.read(), row["module"])
-        self.assertEqual(findings, [], "\n".join(findings))
+        listed = "\n".join(findings)
+        self.assertEqual(
+            findings, [],
+            f"expected every Tier 3 page's section 3 to carry both a Use & Understand and a "
+            f"Derive & Extend level, each long enough and the second with maths; a two-level "
+            f"contract with a prose derivation is not a level:\n{listed}",
+        )
 
     def test_the_check_catches_stub_headings(self):
         """The negative path: two bare headings are not two levels."""
@@ -305,15 +416,28 @@ class TestTier3CarriesBothLevels(unittest.TestCase):
             "### Derive & Extend\nDo the algebra.\n\n## 4. Worked example\n",
             "fixture.T3.99z",
         )
-        self.assertEqual(len(stub), 2, stub)
-        self.assertTrue(all("too thin" in finding for finding in stub), stub)
+        self.assertEqual(
+            len(stub), 2,
+            f"expected exactly two findings for two headings with 3-4 words each; got "
+            f"{len(stub)}: {stub} - check MIN_LEVEL_CHARS",
+        )
+        self.assertTrue(
+            all("too thin" in finding for finding in stub),
+            f"expected both findings to say 'too thin'; got {stub} - a heading with no content "
+            f"must be reported as thin, not as something else",
+        )
         # Long enough to pass the depth check, but prose where a derivation belongs.
         prose = "This paragraph is prose about the method and its assumptions. " * 8
         findings = level_findings(
             "### Use & Understand\n" + prose + "\n### Derive & Extend\n" + prose + "\n## 4. Worked example\n",
             "fixture.T3.99z",
         )
-        self.assertEqual(findings, ["fixture.T3.99z: `### Derive & Extend` carries no maths"], findings)
+        self.assertEqual(
+            findings, ["fixture.T3.99z: `### Derive & Extend` carries no maths"],
+            f"expected long prose with no maths in Derive & Extend to be reported as carrying "
+            f"no maths; got {findings} - length alone would accept a paragraph where a "
+            f"derivation belongs",
+        )
 
 
 MIN_LEVEL_CHARS = 400
@@ -352,17 +476,34 @@ class TestNoModuleLeavesThePlantUndecided(unittest.TestCase):
 
     def test_every_bridge_module_settles_the_plant_question(self):
         undecided = [row["module"] for row in _module_rows() if row["plant"] in ("undeclared", "unhooked")]
-        self.assertEqual(undecided, [], "%d module(s) still silent about the plant: %s"
-                         % (len(undecided), ", ".join(undecided)))
+        self.assertEqual(
+            undecided, [],
+            f"expected every module to settle the plant question - either run the shared arm "
+            f"from a fenced python block or state why there is nothing to run; these "
+            f"{len(undecided)} are still silent: {', '.join(undecided)}",
+        )
 
     def test_the_two_honest_answers_are_the_only_ones_scored(self):
         """The negative path: a declaration with no import, and a `none` with no reason."""
-        self.assertEqual(parity.plant_decision("tier1_arm_motor", "", "plant: tier1_arm_motor"),
-                         (False, "unhooked"))
-        self.assertEqual(parity.plant_decision("none", "too short", "plant: none"),
-                         (False, "unhooked"))
-        self.assertEqual(parity.plant_decision("tier1_arm_motor", "",
-                                               "```python\nimport mechalab_plant\n```"), (True, "arm"))
+        self.assertEqual(
+            parity.plant_decision("tier1_arm_motor", "", "plant: tier1_arm_motor"),
+            (False, "unhooked"),
+            "expected a front-matter declaration with no import to count as unhooked; a page "
+            "that names the plant in its own metadata is exactly the case this checks",
+        )
+        self.assertEqual(
+            parity.plant_decision("none", "too short", "plant: none"),
+            (False, "unhooked"),
+            "expected `plant: none` with a two-word reason to be refused; the reason is what "
+            "makes the exemption reviewable",
+        )
+        self.assertEqual(
+            parity.plant_decision("tier1_arm_motor", "",
+                                  "```python\nimport mechalab_plant\n```"),
+            (True, "arm"),
+            "expected the honest case - declare the arm and import it in a python block - to be "
+            "scored as use; a False here would make the gate impossible to satisfy",
+        )
 
 
 if __name__ == "__main__":

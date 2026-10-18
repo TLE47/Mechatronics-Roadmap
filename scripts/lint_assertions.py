@@ -8,7 +8,8 @@ message says what was expected, what arrived, the likely cause, and what to chec
 the second person, next to the code that knows.
 
 The bar this script enforces for every graded assertion (`assertEqual`, `assertAlmostEqual`,
-`assertTrue`, ... in `exercises/*/test_behavior.py`, `test_transfer.py` and `selfcheck.py`):
+`assertTrue`, ... in `exercises/*/test_behavior.py`, `test_transfer.py`, `selfcheck.py` and the
+repository's own `tests/*.py` suites):
 
 1. it carries a message, positionally or as `msg=`;
 2. the message is a literal string of at least 40 characters;
@@ -17,9 +18,9 @@ The bar this script enforces for every graded assertion (`assertEqual`, `assertA
 `assertRaises` / `assertWarns` / `assertLogs` are exempt: their "message" is the exception, and the
 test name already says what is being refused.
 
-Two modes. The tree reached **zero** weak assertions on 2026-10-18, so `--check` is now a plain
-zero floor: every graded assertion in the repository carries a diagnostic, and the ratchet below
-only has to hold that line.
+Two modes. The exercise packages reached **zero** weak assertions on 2026-10-18; the `tests/`
+suites were added to the same ratchet that day at their measured count of 368, so `--check` is a
+floor over both trees: every graded assertion carries a diagnostic and no file may start with debt.
 
 - `--check` (default, and what CI runs) compares the tree against `docs/assertion-baseline.json` and
   fails on **any** file above its recorded count, on a file that is not recorded at all, and on a
@@ -79,6 +80,10 @@ def graded_files():
         os.path.join(ROOT, "exercises", "*", "test_behavior.py"),
         os.path.join(ROOT, "exercises", "*", "test_transfer.py"),
         os.path.join(ROOT, "exercises", "*", "selfcheck.py"),
+        # The repository's own 17 suites run in CI on every push, so a message-free assertion here
+        # fails a learner no click away from the defect the suite exists to catch. Leaving them out
+        # made the ratchet cover the graded packages and nothing that grades the packages.
+        os.path.join(ROOT, "tests", "*.py"),
     ]
     files = []
     for pattern in patterns:
@@ -86,18 +91,47 @@ def graded_files():
     return sorted(files)
 
 
+def literal_text(node):
+    """A string-valued node flattened to text, or None when it is not a string literal.
+
+    An f-string is literal enough to lint: its constant segments are what a reader sees, and each
+    `{hole}` becomes `{}` so a message built as `f"{name} must be positive"` still gets its length
+    and its keyword checked. Rejecting every f-string made the lint blind to the form most messages
+    in `tests/` are written in, which is why those files were outside the ratchet at all.
+    """
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr):
+        parts = []
+        for value in node.values:
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                parts.append(value.value)
+            elif isinstance(value, ast.FormattedValue):
+                parts.append("{}")
+            else:
+                return None
+        return "".join(parts)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        left = literal_text(node.left)
+        right = literal_text(node.right)
+        if left is None or right is None:
+            return None
+        return left + right
+    return None
+
+
 def message_of(call):
     """The message argument's source text, or None. Returns "" when the call has no message at all."""
     for keyword in call.keywords:
         if keyword.arg == "msg":
-            return keyword.value.value if isinstance(keyword.value, ast.Constant) else "<non-literal>"
+            text = literal_text(keyword.value)
+            return "<non-literal>" if text is None else text
     needed = MESSAGE_POSITION[call.func.attr]
     if len(call.args) < needed:
         return ""
     last = call.args[-1]
-    if isinstance(last, ast.Constant) and isinstance(last.value, str):
-        return last.value
-    return "<non-literal>"
+    text = literal_text(last)
+    return "<non-literal>" if text is None else text
 
 
 def problems_in(source, where="<source>"):
@@ -302,7 +336,11 @@ def main(argv=None):
         for finding in flat:
             print("  -", finding)
     if not problems:
-        print(f"OK: {len(flat)} weak assertions held at the baseline ({len(counts(results))} files)")
+        # stdout stays parseable JSON under --json; the human summary is a log line, so it goes to
+        # stderr where a `... | jq` pipeline cannot see it.
+        stream = sys.stderr if args.json else sys.stdout
+        print(f"OK: {len(flat)} weak assertions held at the baseline ({len(counts(results))} files)",
+              file=stream)
     return 1 if problems else 0
 
 

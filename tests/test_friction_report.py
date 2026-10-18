@@ -55,7 +55,9 @@ class FrictionReportTests(unittest.TestCase):
         self.assertEqual(
             fr.render(fr.summarize([]), ["no logs"]),
             published,
-            "docs/friction-report.md is stale; run python3 scripts/friction_report.py",
+            "expected the committed docs/friction-report.md to equal the empty-log render; "
+            "check the template in friction_report.py, which changed without the page being "
+            "regenerated - run python3 scripts/friction_report.py",
         )
 
     def test_attempts_are_the_runs_before_the_first_verify(self):
@@ -65,9 +67,21 @@ class FrictionReportTests(unittest.TestCase):
             events += [run(lesson, fail="AssertionError: boom") for _ in range(attempts - 1)]
             events += [run(lesson, outcome="passed"), verified(lesson)]
         summary = fr.summarize(events)
-        self.assertEqual(summary["attempts_p50"], 3)
-        self.assertEqual(summary["attempts_p80"], 4)
-        self.assertEqual(summary["verified"], 5)
+        self.assertEqual(
+            summary["attempts_p50"], 3,
+            f"expected attempts p50 to be 3 from the five lessons' 2/3/4/9/2 runs; got "
+            f"{summary['attempts_p50']} - check the percentile index, which must round up",
+        )
+        self.assertEqual(
+            summary["attempts_p80"], 4,
+            f"expected attempts p80 to be 4 from 2/3/4/9/2; got {summary['attempts_p80']} - "
+            f"check the interpolation, since a wrong p80 hides the long tail it exists to show",
+        )
+        self.assertEqual(
+            summary["verified"], 5,
+            f"expected all five lessons to count as verified, got {summary['verified']} - "
+            f"check that a verify event closes the lesson only once",
+        )
 
     def test_help_unfinished_and_first_failure_are_shares_with_counts(self):
         events = [
@@ -84,12 +98,36 @@ class FrictionReportTests(unittest.TestCase):
             run("E", fail="AssertionError: q0 missing"),
         ]
         summary = fr.summarize(events)
-        self.assertEqual(summary["opened"], 5)
-        self.assertEqual(summary["verified"], 0)
-        self.assertAlmostEqual(summary["help_share"], 2 / 5)
-        self.assertAlmostEqual(summary["unfinished_share"], 1.0)
-        self.assertAlmostEqual(summary["top_fail_share"], 3 / 4)
-        self.assertEqual(summary["top_fail_count"], 3)
+        self.assertEqual(
+            summary["opened"], 5,
+            f"expected five distinct lessons opened, got {summary['opened']} - check that "
+            f"summarize() counts lessons rather than lesson_open events",
+        )
+        self.assertEqual(
+            summary["verified"], 0,
+            f"expected zero verified lessons, since no verify event was emitted; got "
+            f"{summary['verified']} - check a run's passed outcome is not mistaken for a verify",
+        )
+        self.assertAlmostEqual(
+            summary["help_share"], 2 / 5,
+            msg=f"expected help_share 0.4 (a hint on A, a solution on B, of five opened); got "
+                f"{summary['help_share']:.6f} - check both help kinds are counted",
+        )
+        self.assertAlmostEqual(
+            summary["unfinished_share"], 1.0,
+            msg=f"expected unfinished_share 1.0, since no lesson verified; got "
+                f"{summary['unfinished_share']:.6f} - check the denominator is the opened count",
+        )
+        self.assertAlmostEqual(
+            summary["top_fail_share"], 3 / 4,
+            msg=f"expected the first-failure share to be 0.75 (three of four distinct failure "
+                f"lines); got {summary['top_fail_share']:.6f} - check the normalisation",
+        )
+        self.assertEqual(
+            summary["top_fail_count"], 3,
+            f"expected three lessons to fail first on the same line, got "
+            f"{summary['top_fail_count']} - check the failure text is keyed without the lesson",
+        )
 
     def test_every_limit_becomes_a_red_flag(self):
         events = []
@@ -106,10 +144,14 @@ class FrictionReportTests(unittest.TestCase):
             events.append(run(lesson, fail="AssertionError: same line"))
         summary = fr.summarize(events)
         flagged = "\n".join(fr.flags(summary))
-        self.assertIn("Attempts", flagged)
-        self.assertIn("Help", flagged)
-        self.assertIn("Unfinished", flagged)
-        self.assertIn("First failure", flagged)
+        for name, threshold in (("Attempts", "attempts p80 above 6"), ("Help", "help share above 0.3"),
+                                ("Unfinished", "unfinished share above 0.5"),
+                                ("First failure", "one line over half the failures")):
+            self.assertIn(
+                name, flagged,
+                f"expected a {name} red flag for a log built to cross the limit ({threshold}); "
+                f"got {flagged!r} - check that threshold and the flag label",
+            )
 
     def test_a_healthy_log_has_no_flags(self):
         events = []
@@ -118,10 +160,26 @@ class FrictionReportTests(unittest.TestCase):
             events.append(run(lesson, outcome="passed"))
             events.append(verified(lesson))
         summary = fr.summarize(events)
-        self.assertEqual(fr.flags(summary), [])
-        self.assertAlmostEqual(summary["unfinished_share"], 0.0)
-        self.assertAlmostEqual(summary["help_share"], 0.0)
-        self.assertEqual(summary["attempts_p80"], 1)
+        self.assertEqual(
+            fr.flags(summary), [],
+            f"expected no red flags for five one-run, hint-free, verified lessons; got "
+            f"{fr.flags(summary)} - check a threshold is not tripped by a healthy log",
+        )
+        self.assertAlmostEqual(
+            summary["unfinished_share"], 0.0,
+            msg=f"expected unfinished_share 0.0 when every lesson verified; got "
+                f"{summary['unfinished_share']:.6f} - check the verified set is applied",
+        )
+        self.assertAlmostEqual(
+            summary["help_share"], 0.0,
+            msg=f"expected help_share 0.0 with no hint or solution events; got "
+                f"{summary['help_share']:.6f} - check the event-kind match",
+        )
+        self.assertEqual(
+            summary["attempts_p80"], 1,
+            f"expected attempts p80 1 when every lesson passed first try; got "
+            f"{summary['attempts_p80']} - check the minimum attempt count is one, not zero",
+        )
 
     def test_a_foreign_schema_is_refused(self):
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
@@ -138,7 +196,12 @@ class FrictionReportTests(unittest.TestCase):
             {"t": 120 * MINUTE, "kind": "verified", "lesson": "A"},
             {"t": 121 * MINUTE, "kind": "lesson_open", "lesson": "B"},
         ]
-        self.assertAlmostEqual(fr.summarize(events)["active_minutes"], 3.0)
+        self.assertAlmostEqual(
+            fr.summarize(events)["active_minutes"], 3.0,
+            msg=f"expected 3.0 active minutes (2 before the run, 1 after, with the 118-minute idle "
+                f"gap dropped); got {fr.summarize(events)['active_minutes']:.6f} - check the "
+                f"idle-gap clamp",
+        )
 
 
 if __name__ == "__main__":

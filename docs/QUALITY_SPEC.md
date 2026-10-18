@@ -97,14 +97,16 @@ primitives — in [`docs/MODEL_LEVELS.md`](MODEL_LEVELS.md). A richer lesson add
 replace the one whose numbers are published.
 
 **A failing assertion is the mentor.** On the Core route a learner studies alone, so every graded
-assertion in `exercises/*/test_behavior.py`, `test_transfer.py` and `selfcheck.py` carries a message
-that names what was expected, what a different answer implies, the likely cause and what to check —
-one literal line, in the second person. `scripts/lint_assertions.py` enforces the bar (a literal string
-of at least 40 characters containing `check`, `likely` or `expected`) against
+assertion in `exercises/*/test_behavior.py`, `test_transfer.py`, `selfcheck.py` **and the repository's
+own `tests/*.py` suites** carries a message that names what was expected, what a different answer
+implies, the likely cause and what to check — one line, in the second person. `scripts/lint_assertions.py`
+enforces the bar (a string of at least 40 characters containing `check`, `likely` or `expected`, whether
+it is a literal, an f-string or a concatenation) against
 [`docs/assertion-baseline.json`](assertion-baseline.json), a ratchet that may only fall: the file
 fails on any file above its recorded count, on a file with no entry, and on a baseline that no longer
-matches the tree. `tests/test_lint_assertions.py` proves each clause of the bar and each direction of
-the ratchet.
+matches the tree. It is at zero across both trees, so a new graded file or a new bare assertion fails
+CI immediately. `tests/test_lint_assertions.py` proves each clause of the bar — including that an
+f-string counts as a message — and each direction of the ratchet.
 
 ## 2. The two metadata blocks
 

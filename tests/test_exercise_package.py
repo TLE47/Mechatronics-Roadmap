@@ -36,19 +36,34 @@ def packages():
 
 class PackageContract(unittest.TestCase):
     def test_every_package_is_complete(self):
-        self.assertTrue(packages(), "no exercise packages found")
+        self.assertTrue(
+            packages(),
+            f"expected at least one exercises/*/exercise.json under {EXERCISES}; found none - "
+            f"check the directory name and that the manifests were not moved with the packages",
+        )
         for directory in packages():
             with open(os.path.join(directory, "exercise.json"), "r", encoding="utf-8") as handle:
                 manifest = json.load(handle)
             for name in ["starter.py", "solution.py", "selfcheck.py", "harness.py"]:
-                self.assertTrue(os.path.isfile(os.path.join(directory, name)),
-                                "%s is missing %s" % (manifest["id"], name))
+                self.assertTrue(
+                    os.path.isfile(os.path.join(directory, name)),
+                    f"expected {manifest['id']} to ship {name}; check the package directory, "
+                    f"because run_exercise.py refuses a package missing any of the four",
+                )
             module_path = os.path.join(ROOT, manifest["module"])
-            self.assertTrue(os.path.isfile(module_path), manifest["module"])
+            self.assertTrue(
+                os.path.isfile(module_path),
+                f"expected the page {manifest['module']} to exist, since the manifest names it "
+                f"as the module this package belongs to; check the `module` field for a rename",
+            )
             with open(module_path, "r", encoding="utf-8") as handle:
                 module_text = handle.read()
-            self.assertIn("exercises/%s/" % manifest["id"], module_text,
-                          "the module does not point the learner at its graded package")
+            self.assertIn(
+                f"exercises/{manifest['id']}/", module_text,
+                f"expected the page to point the learner at its own package "
+                f"exercises/{manifest['id']}/; check the Exercise section, since a page with no "
+                f"link leaves the graded package unreachable from the lesson",
+            )
 
     def test_three_way_check_passes(self):
         proc = subprocess.run(
@@ -58,21 +73,38 @@ class PackageContract(unittest.TestCase):
             stderr=subprocess.STDOUT,
             universal_newlines=True,
         )
-        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertEqual(
+            proc.returncode, 0,
+            f"expected every package's starter/solution/fault/cheat checks to pass, got exit "
+            f"{proc.returncode}; the first failing package is named below - check its suite "
+            f"against solution.py:\n{proc.stdout[-2000:]}",
+        )
 
     def test_workbench_entry_matches_the_package(self):
         data_path = os.path.join(ROOT, "app", "src", "data", "pythonLessonsData.ts")
-        self.assertTrue(os.path.isfile(data_path), "run scripts/generate_python_lessons_data.py")
+        self.assertTrue(
+            os.path.isfile(data_path),
+            f"expected the generated {data_path}; check it exists by running "
+            f"scripts/generate_python_lessons_data.py, which the build's prebuild step also runs",
+        )
         with open(data_path, "r", encoding="utf-8") as handle:
             generated = handle.read()
         for directory in packages():
             with open(os.path.join(directory, "exercise.json"), "r", encoding="utf-8") as handle:
                 manifest = json.load(handle)
             entry_id = manifest["delivery"]["workbench_id"]
-            self.assertIn('"id": "%s"' % entry_id, generated)
+            self.assertIn(
+                f'"id": "{entry_id}"', generated,
+                f"expected the workbench data to carry an entry with id {entry_id!r}; check "
+                f"the manifest's delivery.workbench_id against the regenerated file",
+            )
             expected = exercise_bundle.expected_output(directory, root=ROOT)
-            self.assertIn(expected, generated,
-                          "the generated expected output is not the self-check's PASS line")
+            self.assertIn(
+                expected, generated,
+                f"expected the generated Expected Output for {entry_id} to be the self-check's "
+                f"own PASS line, {expected!r}; check the data file was regenerated after the "
+                f"self-check changed, or the browser grades stdout against the old line",
+            )
 
     def test_instructor_tests_come_from_the_package_not_the_editor(self):
         """The workbench grades with a copy of `selfcheck.py` read at build time, not the editor one.
@@ -82,18 +114,31 @@ class PackageContract(unittest.TestCase):
         and a program that merely printed the expected PASS line would be verified.
         """
         entries = {entry["id"]: entry for entry in generate_python_lessons_data.exercise_lessons()}
-        self.assertTrue(entries, "no exercise entries were generated")
+        self.assertTrue(
+            entries,
+            "expected generate_python_lessons_data.exercise_lessons() to yield one entry per "
+            "package; got none - check that the generator still walks exercises/*/exercise.json",
+        )
         for directory in packages():
             with open(os.path.join(directory, "exercise.json"), "r", encoding="utf-8") as handle:
                 manifest = json.load(handle)
             entry = entries[manifest["delivery"]["workbench_id"]]
             source = exercise_bundle.selfcheck_source(directory)
-            self.assertEqual(entry["instructorTests"], source,
-                             "%s: instructorTests is not the package's selfcheck.py" % manifest["id"])
-            self.assertIn("assert ", source,
-                          "%s: the self-check carries no assertion to grade with" % manifest["id"])
-            self.assertFalse(source.lstrip().startswith("#"),
-                             "%s: instructorTests is a comment, not executable tests" % manifest["id"])
+            self.assertEqual(
+                entry["instructorTests"], source,
+                f"expected {manifest['id']}'s instructorTests to be its selfcheck.py verbatim; "
+                f"check the generator copies the file rather than a comment standing in for it",
+            )
+            self.assertIn(
+                "assert ", source,
+                f"expected {manifest['id']}'s selfcheck.py to assert something; a self-check "
+                f"with no assertion cannot fail, so it grades every submission as correct",
+            )
+            self.assertFalse(
+                source.lstrip().startswith("#"),
+                f"expected {manifest['id']}'s instructorTests to be executable tests; a comment "
+                f"passes for any submission that executes - check the generator's source read",
+            )
 
     def test_print_only_submission_fails_the_instructor_tests(self):
         """A submission that only prints the expected PASS line must not pass the grader.
@@ -112,10 +157,24 @@ class PackageContract(unittest.TestCase):
     def test_workbench_starter_fails_and_solution_passes(self):
         for directory in packages():
             ok, output = exercise_bundle.run_browser_program(directory, "solution", root=ROOT)
-            self.assertTrue(ok and "SELF-CHECK PASS:" in output, output[-400:])
+            self.assertTrue(
+                ok and "SELF-CHECK PASS:" in output,
+                f"expected the browser entry for {os.path.basename(directory)} to pass and print "
+                f"its PASS line; the workbench grades this same program, so a failure here is a "
+                f"failure a learner would meet:\n{output[-400:]}",
+            )
             ok, output = exercise_bundle.run_browser_program(directory, "starter", root=ROOT)
-            self.assertFalse(ok, "the starter must not pass its own self-check")
-            self.assertIn("NotImplementedError", output)
+            self.assertFalse(
+                ok,
+                f"expected the starter for {os.path.basename(directory)} to fail its own "
+                f"self-check; a starter that passes means the holes were already filled",
+            )
+            self.assertIn(
+                "NotImplementedError", output,
+                f"expected the starter for {os.path.basename(directory)} to fail on a "
+                f"NotImplementedError hole, not an import error - check PYTHONPATH and the "
+                f"flattened entry, since only a TODO hole proves the package is unsolved",
+            )
 
 
 if __name__ == "__main__":

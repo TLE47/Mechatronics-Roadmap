@@ -11,6 +11,36 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 88: The Ratchet Now Covers the Suites That Grade the Rest
+
+### 1. `tests/` is inside the assertion ratchet, and it was an f-string blind spot
+- `scripts/lint_assertions.py` now reads `tests/*.py` as well as the graded exercise files. It had
+  been scoring those 17 suites at **368 weak assertions**, and the measurement was wrong: the lint
+  accepted only a bare string literal, so the f-string messages most of those suites already used
+  (`f"{os.path.relpath(path, ROOT)} must not count as a ramp lesson"`) were reported as
+  "not a literal string". An f-string is now flattened to its literal segments (each `{hole}`
+  becomes `{}`) and its length and keyword checked like any other message.
+- 368 → **0**, the same zero floor the exercise packages reached in Run 87, so a new test file or a
+  new bare assertion in an existing one fails CI on the first push. `docs/assertion-baseline.json`
+  stays at 0/0 files.
+- Messages name the number a plausible bug produces and the formula to check it against, in the
+  file's own terms: the plant's 2.40 mm peak error, the ladder paper's 0.3188 N.m holding torque,
+  the skip store's `ceil(0.8 * count)` pass floor, the parity gate's `executable:shared_plant` item.
+
+### 2. `--json` prints JSON and nothing else
+- The human summary line (`OK: ...`) used to follow the JSON object on stdout, so
+  `lint_assertions.py --json | jq` failed with "Extra data: line 6". It now goes to stderr, and
+  `tests/test_lint_assertions.py` asserts stdout parses on its own and that a `1` exit carries the
+  baseline problems that caused it.
+
+### 3. A merge that merged the wrong content
+- PR #16 was opened from a stale local branch, so it re-squashed the previous block's diff onto
+  `main`; #17 carries the real Block 1 commit and is the one that landed. `git push -u origin
+  <branch>` now names the refspec explicitly (`HEAD:refs/heads/<branch>`) so a reused branch name
+  cannot push an older tip.
+
+---
+
 ## [2026-10-18] — Run 87: Block 1 Closed — Every Graded Assertion Now Explains Itself
 
 ### 1. 593 → 0 weak assertions, 41 → 0 files
