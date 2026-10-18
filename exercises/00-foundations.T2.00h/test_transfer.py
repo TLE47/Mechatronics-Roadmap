@@ -59,8 +59,18 @@ class PlantBodeTests(unittest.TestCase):
             omega = ratio * wn
             predicted = submission.second_order_response(wn, zeta, omega)
             mag, phase = measure(wn, zeta, omega)
-            self.assertAlmostEqual(mag, abs(predicted), delta=0.02 * abs(predicted))
-            self.assertAlmostEqual(phase, submission.phase_deg(predicted), delta=1.5)
+            self.assertAlmostEqual(
+                mag, abs(predicted), delta=0.02 * abs(predicted),
+                msg="expected the plant's measured gain to match the submission's prediction "
+                    "within 2 percent at each frequency ratio in this loop; a mismatch likely "
+                    "means the damping was entered as b_total instead of b_command",
+            )
+            self.assertAlmostEqual(
+                phase, submission.phase_deg(predicted), delta=1.5,
+                msg="expected the measured phase to match the predicted phase within 1.5 deg at "
+                    "each frequency ratio in this loop; a large offset likely means radians "
+                    "were returned instead of degrees",
+            )
 
     def test_the_peak_is_where_the_formula_says(self):
         zeta = 0.2
@@ -68,9 +78,16 @@ class PlantBodeTests(unittest.TestCase):
         omega_r, peak = submission.resonance_peak(wn, zeta)
         at_peak, _ = measure(wn, zeta, omega_r)
         at_natural, _ = measure(wn, zeta, wn)
-        self.assertAlmostEqual(at_peak, peak, delta=0.03 * peak)
-        self.assertGreater(at_peak, at_natural + 0.05,
-                           "the peak must sit below wn for zeta < 1/sqrt(2)")
+        self.assertAlmostEqual(
+            at_peak, peak, delta=0.03 * peak,
+            msg="expected the measured gain at the predicted peak frequency to match the "
+                "formula within 3 percent; a mismatch likely means the peak was placed at wn",
+        )
+        self.assertGreater(
+            at_peak, at_natural + 0.05,
+            msg="expected the peak to sit measurably above the gain at wn for zeta = 0.2, which "
+                "is why the formula offsets it; equality means the offset was dropped",
+        )
 
 
 class WindingImpedanceTests(unittest.TestCase):
@@ -78,11 +95,23 @@ class WindingImpedanceTests(unittest.TestCase):
         # A 3 ohm, 4 mH winding at 1 krad/s is 3 + j4, i.e. 5 ohms at +53.13 degrees. Those are
         # the numbers the current loop's PI gains are tuned against.
         z = submission.impedance_rl(3.0, 0.004, 1000.0)
-        self.assertAlmostEqual(abs(z), 5.0, delta=1e-9)
-        self.assertAlmostEqual(submission.phase_deg(z), 53.13010235415598, delta=1e-9)
+        self.assertAlmostEqual(
+            abs(z), 5.0, delta=1e-9,
+            msg="expected the 3 ohm winding at 1 krad/s to present 5 ohm; 7 is R + wL and 1 is "
+                "their difference - check the magnitude",
+        )
+        self.assertAlmostEqual(
+            submission.phase_deg(z), 53.13010235415598, delta=1e-9,
+            msg="expected the winding's current to lag by 53.13 deg; 0.927 is radians - check "
+                "the phase conversion",
+        )
         # At a frequency where the reactance equals the resistance, the current lags by 45 degrees.
         z45 = submission.impedance_rl(plant.B2 * 1000.0, plant.B2, 1000.0)
-        self.assertAlmostEqual(submission.phase_deg(z45), 45.0, delta=1e-9)
+        self.assertAlmostEqual(
+            submission.phase_deg(z45), 45.0, delta=1e-9,
+            msg="expected equal resistance and reactance to give a 45 deg lag; 0.785 is radians "
+                "- check both terms use the plant's own values",
+        )
 
 
 if __name__ == "__main__":
