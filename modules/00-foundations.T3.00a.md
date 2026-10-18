@@ -335,17 +335,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 3.1 (`00-foundations.T3.01`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 3.1 (`00-foundations.T3.01`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: skew_symmetric_hat_vee_cross_product]` Given $\omega = [1.0, 2.0, 0.0]^\top\text{ rad/s}$ and $v = [0.0, 3.0, 0.0]^\top\text{ m}$, compute the $z$-component of $([\omega]_\times v) = \omega_x v_y - \omega_y v_x$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: skew_symmetric_hat_vee_cross_product]` Given $\omega = [0.0, 0.0, 4.0]^\top\text{ rad/s}$ and $v = [2.0, 0.0, 0.0]^\top\text{ m}$, compute the $y$-component of $([\omega]_\times v)$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: matrix_exponential_taylor_and_rodrigues]` Using the small-angle Taylor guard $c_2(\theta) = \frac{1}{2} - \frac{\theta^2}{24}$, compute $c_2(\theta)$ at $\theta = 0.24\text{ rad}$ (tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 07-systems.T2.08 — Concept: cross_product_3d_moment] [Concept: hamiltonian_energy_power_balance]` Why does the skew-symmetric interconnection matrix $J = -J^\top$ in a port-Hamiltonian system $\dot{x} = (J - R_d)\nabla H(x)$ contribute **zero** net power to $\dot{H} = (\nabla H)^\top \dot{x}$?
+4. `[Concept: hamiltonian_energy_power_balance]` Why does the skew-symmetric interconnection matrix $J = -J^\top$ in a port-Hamiltonian system $\dot{x} = (J - R_d)\nabla H(x)$ contribute **zero** net power to $\dot{H} = (\nabla H)^\top \dot{x}$?
    - **A.** Because $J$ is the zero matrix.
    - **B.** Because for any column vector $z = \nabla H$ and skew-symmetric matrix $J^\top = -J$, the scalar $s = z^\top J z$ equals its own transpose $s^\top = z^\top J^\top z = -z^\top J z = -s$, so $z^\top J z \equiv 0$ identically!
    - **C.** Because $\nabla H$ is always zero.
    - **D.** Because energy is not conserved in mechanics.
+5. `[Spaced review -> 00-foundations.T2.00e — Concept: laplace_poles_and_zeros]` The transfer function $1/(s^2 + 3s + 2)$ has two real poles. Compute the **slower** one - the pole closer to the origin - in $\text{s}^{-1}$ (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -361,8 +363,12 @@ assert math.isclose(q1_vz, 3.0, rel_tol=1e-9)
 assert math.isclose(q2_vy, 8.0, rel_tol=1e-9)
 assert math.isclose(q3_c2, 0.4976, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = (-3.0 + math.sqrt(9.0 - 8.0)) / 2.0
+assert math.isclose(q5_review, -1.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 4. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 4. If you missed  Q5, review `00-foundations.T2.00e`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
+
 ### Gate test
 Covers the complete Track 00 Tier 3 bridge ladder (`00-foundations.T3.00a`) before Step 3.1 (`00-foundations.T3.01`):
 1. `[Concept: skew_symmetric_hat_vee_cross_product]` For $\omega = [1.0, 2.0, 3.0]^\top$, what is the $(1, 0)$ entry (row 1, col 0, 0-indexed) of $[\omega]_\times = \begin{bmatrix} 0 & -\omega_z & \omega_y \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix}$ (tolerance $\pm 10^{-9}$)?

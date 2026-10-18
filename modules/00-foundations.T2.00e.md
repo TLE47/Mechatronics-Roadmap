@@ -4,7 +4,7 @@ title: "Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu)
 track: "00"
 tier: 2
 prereqs:
-  - 00-foundations.T2.00d
+  - 00-foundations.T2.00h
 new_concepts:
   - laplace_poles_and_zeros
   - continuous_state_space_matrices
@@ -265,9 +265,10 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: laplace_poles_and_zeros]` For the transfer function $G(s) = \frac{s^2 + 400}{(s + 5)(s^2 + 4s + 900)}$, compute the anti-resonance zero frequency $\omega_{\text{ar}} > 0$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$) where $G(j\omega_{\text{ar}}) = 0$.
 2. `[Apply] [Concept: continuous_state_space_matrices]` For $A = \begin{bmatrix} 0 & 1 \\ -25 & -6 \end{bmatrix}$, compute the trace $\operatorname{tr}(A)$ and determinant $\det(A)$ (tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: discrete_state_transition_euler_tustin]` What is the stability boundary for eigenvalues $\lambda_d$ of a discrete-time state matrix $A_d$ in $x_{k+1} = A_d x_k$?
@@ -275,7 +276,8 @@ Pass criteria: run the worked example and exercise asserts with zero errors, or 
    - **B.** $|\lambda_d| < 1$
    - **C.** $|\lambda_d| > 1$
    - **D.** $\operatorname{Im}(\lambda_d) = 0$
-4. `[Spaced review -> 00-foundations.T2.00d — Concept: matrix_vector_multiplication] [Concept: discrete_state_transition_euler_tustin]` Compute the scalar Tustin discrete pole $a_d = \frac{1 + s_p T_s / 2}{1 - s_p T_s / 2}$ for a continuous pole $s_p = -100\text{ s}^{-1}$ sampled at $T_s = 0.01\text{ s}$ (tolerance $\pm 10^{-6}$).
+4. `[Concept: discrete_state_transition_euler_tustin]` Compute the scalar Tustin discrete pole $a_d = \frac{1 + s_p T_s / 2}{1 - s_p T_s / 2}$ for a continuous pole $s_p = -100\text{ s}^{-1}$ sampled at $T_s = 0.01\text{ s}$ (tolerance $\pm 10^{-6}$).
+5. `[Spaced review -> 00-foundations.T2.00h — Concept: complex_impedance_and_transfer_function]` A series branch has $R = 6.0\ \Omega$ in series with a capacitive reactance of $-8.0\ \Omega$ at the drive frequency. Compute $|Z|$ in ohms (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -292,59 +294,91 @@ assert math.isclose(q2_trace, -6.0, rel_tol=1e-9)
 assert math.isclose(q2_det, 25.0, rel_tol=1e-9)
 assert q3_choice == "B"
 assert math.isclose(q4_ad, 1.0 / 3.0, rel_tol=1e-6)
+q5_review = abs(6.0 - 8.0j)
+assert math.isclose(q5_review, 10.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T2.00h`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
-This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md), [`00-foundations.T2.00g`](00-foundations.T2.00g.md), and [`00-foundations.T2.00b`](00-foundations.T2.00b.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`):
-1. `[Concept: laplace_poles_and_zeros]` For $G(s) = \frac{s^2 + 900}{(s + 2)(s^2 + 6s + 25)}$, compute the anti-resonance zero frequency $\omega_{\text{ar}} > 0$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$) where $G(j\omega_{\text{ar}}) = 0$.
-2. `[Concept: laplace_poles_and_zeros]` What does a zero of $G(s)$ mean physically, when the input is shaken at that frequency?
-   - **A.** The two internal pathways cancel, so the sensor sees almost nothing even though the actuator is moving.
-   - **B.** The system has an unstable pole there.
-   - **C.** The DC gain is exactly zero.
-   - **D.** The state matrix loses rank.
-3. `[Concept: continuous_state_space_matrices]` For $A = \begin{bmatrix} 0 & 1 \\ -64 & -10 \end{bmatrix}$, compute $\det(A)$ (tolerance $\pm 10^{-9}$).
-4. `[Concept: discrete_state_transition_euler_tustin]` Compute the scalar Tustin discrete pole $a_d = \frac{1 + s_p T_s/2}{1 - s_p T_s/2}$ for a continuous pole $s_p = -50\text{ s}^{-1}$ at $T_s = 0.02\text{ s}$ (tolerance $\pm 10^{-9}$).
-5. `[Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` Forward Euler discretizes $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ at $T_s = 0.2\text{ s}$ as $A_d = I + AT_s$. Compute its spectral radius $\max(|\lambda_1|, |\lambda_2|)$ (tolerance $\pm 10^{-4}$).
-6. `[Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` With $A_d = \begin{bmatrix} 1.0 & 0.10 \\ 0.0 & 1.0 \end{bmatrix}$, $B_d = \begin{bmatrix} 0 \\ 0.1 \end{bmatrix}$, $\vec{x}_0 = \begin{bmatrix} 0.20 \\ 0.50 \end{bmatrix}$ and $u_0 = 0$, compute the updated position $x_1$ (tolerance $\pm 10^{-9}\text{ m}$).
-7. `[Concept: finite_difference_derivative_and_integral] [Concept: first_order_ode_time_constant]` An encoder reads $x_{k-1} = 1.00\text{ m}$ and $x_k = 1.08\text{ m}$ at $\Delta t = 0.01\text{ s}$. Compute the backward-difference velocity $v_k$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
-8. `[Concept: dot_product_projection] [Concept: cross_product_3d_moment] [Concept: basis_change_and_invertibility]` For lever arm $\vec{r} = [0.10, 0.0, 0.20]^T\text{ m}$ and force $\vec{F} = [0.0, 10.0, 0.0]^T\text{ N}$, compute the $z$-component of the moment $\tau_z = (\vec{r}\times\vec{F})_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
-9. `[Concept: second_order_ode_wn_zeta] [Concept: characteristic_polynomial_roots]` For $J = 0.50\text{ kg}\cdot\text{m}^2$, $k = 50.0\text{ N}\cdot\text{m/rad}$ and $b = 2.0\text{ N}\cdot\text{m}\cdot\text{s/rad}$, compute the damping ratio $\zeta = b/(2\sqrt{Jk})$ (tolerance $\pm 10^{-9}$).
-10. `[Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function] [Concept: bode_magnitude_db_and_phase]` Convert a linear amplitude gain of $|H| = 0.50$ into decibels ($\text{dB}$, tolerance $\pm 10^{-4}$).
-11. `[Concept: nyquist_sampling_and_aliasing] [Concept: tustin_frequency_prewarping_and_biquad]` A $1300\text{ Hz}$ tone is sampled at $f_s = 1000\text{ Hz}$. Compute the alias frequency in $\text{Hz}$ (tolerance $\pm 10^{-9}$).
-12. `[Concept: gaussian_variance_and_covariance_matrix]` Given $\Sigma_x = \begin{bmatrix} 0.25 & 0.0 \\ 0.0 & 1.0 \end{bmatrix}$, $A = \begin{bmatrix} 1.0 & 0.20 \\ 0.0 & 1.0 \end{bmatrix}$ and $Q = 0$, compute the $(0,0)$ entry of $\Sigma_y = A\Sigma_xA^\top + Q$ (tolerance $\pm 10^{-9}$).
+<!-- ladder-gate:start -->
+This is the exit examination for the whole Track 00 Tier 2 ladder - every `00-foundations.T2.*` page in [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) - before Step 2.1 (`00-foundations.T2.01`). Every Tier 2 page renders this same paper, so take it once after the last of them; the page you are on is only where you found it. Questions 1-6 are the matrix page's own tools; 7-12 recap each other page once, so nothing on the ladder goes unexamined.
+
+1. `[Concept: matrix_vector_multiplication]` For $A = \begin{bmatrix} 3.0 & -2.0 \\ 1.0 & 4.0 \end{bmatrix}$ and $\vec{x} = [1.5,\; 2.5]^\top$, compute **both** entries of $A\vec{x}$: the first and the second (tolerances $\pm 10^{-9}$).
+2. `[Concept: matrix_vector_multiplication]` Why does a $2\times2$ matrix times a length-2 column come out as a column of length $2$ rather than a $2\times2$ matrix?
+   - **A.** $A\vec{x}$ is the elementwise product of $A$ and $\vec{x}$, which keeps $A$'s shape.
+   - **B.** Python reshapes $A$ into a column before multiplying.
+   - **C.** Each output entry is one row of $A$ dotted with $\vec{x}$, so there is one output per row.
+   - **D.** $\vec{x}$ is transposed into a row first.
+3. `[Concept: state_vector_one_step_update]` One step of $A_d = \begin{bmatrix} 1.0 & 0.02 \\ -2.0 & 0.80 \end{bmatrix}$, $B_d = [0.0,\; 0.02]^\top$, from $\vec{x}_0 = [0.50,\; 0.0]^\top$ with $u_0 = 10.0\,\text{N}$ gives $v_1$. Compute $v_1$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
+4. `[Concept: state_vector_one_step_update]` In the same step, if the position row were evaluated using the *new* velocity, what would $x_1$ be (tolerance $\pm 10^{-9}\,\text{m}$)?
+5. `[Concept: state_vector_one_step_update]` For the two-mass matrix with $m_1 = 1.0\,\text{kg}$, $m_2 = 2.0\,\text{kg}$, $k = 50.0\,\text{N/m}$, $b = 0$ and $\Delta t = 0.01\,\text{s}$, compute the first entry of its **fourth** row - the row that updates $v_2$ (tolerance $\pm 10^{-9}$).
+6. `[Concept: state_vector_one_step_update]` Why do the diagonal $2\times2$ blocks of the 4-state matrix equal the single-mass update for each body when $k = b = 0$?
+   - **A.** Because the 4-state matrix is always block-diagonal.
+   - **B.** Because each mass then obeys the same mass-spring-damper form with its own mass and damping, and the coupling terms vanish.
+   - **C.** Because $B_d$ only pushes $m_1$.
+   - **D.** Because the Euler update is exact.
+7. `[Concept: finite_difference_derivative_and_integral]` An encoder reads $x_{k-1} = 0.24\,\text{rad}$ and $x_k = 0.30\,\text{rad}$ at $\Delta t = 0.002\,\text{s}$. Compute the backward-difference velocity in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
+8. `[Concept: dot_product_projection] [Concept: cross_product_3d_moment] [Concept: basis_change_and_invertibility]` Which triple is correct for `00-foundations.T2.00b`?
+   - **A.** The projection uses the raw lever so force grows with its length, $\vec{r}\times\vec{F} = \vec{F}\times\vec{r}$, and a zero determinant means a valid basis.
+   - **B.** The projection divides by $\|\vec{r}\|$ twice, the moment is a scalar, and the determinant is always positive.
+   - **C.** The dot product returns a vector, the cross product is symmetric, and the determinant equals the trace.
+   - **D.** The projection uses the lever's *unit* direction, the moment is $\vec{r}\times\vec{F}$ (anti-commutative), and a zero determinant means the two columns are collinear.
+9. `[Concept: first_order_ode_time_constant] [Concept: second_order_ode_wn_zeta] [Concept: characteristic_polynomial_roots]` For `00-foundations.T2.00c`'s joint with $J = 0.02\,\text{kg}\cdot\text{m}^2$, $k = 8.0\,\text{N}\cdot\text{m/rad}$ and $b = 0.60\,\text{N}\cdot\text{m}\cdot\text{s/rad}$, compute the damping ratio $\zeta = b/(2\sqrt{Jk})$ (tolerance $\pm 10^{-9}$).
+10. `[Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function] [Concept: bode_magnitude_db_and_phase]` A series RL winding has $R = 4.0\ \Omega$ and $L = 2.0\,\text{mH}$ and is driven at $\omega = 2000\,\text{rad/s}$. Compute $|Z|$ in ohms, then $20\log_{10}|H|$ at the corner $\omega = 1/\tau$ of a first-order filter (tolerances $\pm 10^{-9}\,\Omega$ and $\pm 10^{-4}\,\text{dB}$).
+11. `[Concept: laplace_poles_and_zeros] [Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` For `00-foundations.T2.00e`'s $A = \begin{bmatrix} 0 & 1 \\ -100 & -4 \end{bmatrix}$ sampled at $T_s = 0.05\,\text{s}$, compute the spectral radius of the Forward-Euler map $A_d = I + A T_s$ (tolerance $\pm 10^{-6}$).
+12. `[Concept: nyquist_sampling_and_aliasing] [Concept: tustin_frequency_prewarping_and_biquad] [Concept: gaussian_variance_and_covariance_matrix]` Which triple is correct for `00-foundations.T2.00f`?
+   - **A.** Sampling represents any frequency, aliasing affects only DC, and Tustin never warps.
+   - **B.** Sampling represents only frequencies up to $f_s/2$, a faster tone folds to $|f - k f_s|$, and pre-warping lifts the analog target so the digital notch lands on $f_0$.
+   - **C.** The Nyquist frequency is $f_s$, aliasing doubles the frequency, and pre-warping is a gain correction.
+   - **D.** Covariance is a scalar, the sample rate is irrelevant to stability, and every bilinear pole lands outside the unit circle.
 
 **Gate answer key:**
 ```python
 import math
 
-g1_w_ar = math.sqrt(900.0)
-g2_choice = "A"
-g3_det = 0.0 * (-10.0) - 1.0 * (-64.0)
-g4_ad = (1.0 + (-50.0) * 0.02 / 2.0) / (1.0 - (-50.0) * 0.02 / 2.0)
-g5_rho_euler = math.sqrt(4.2)
-g6_x1 = 1.0 * 0.20 + 0.10 * 0.50
-g7_vel = (1.08 - 1.00) / 0.01
-g8_tau_z = 0.10 * 10.0 - 0.0 * 0.0
-g9_zeta = 2.0 / (2.0 * math.sqrt(0.50 * 50.0))
-g10_db = 20.0 * math.log10(0.50)
-g11_alias_hz = abs(1300.0 - 1000.0)
-g12_sigma00 = 0.25 + 0.20 * 1.0 * 0.20
+# Q1-Q6: the matrix page. Two entries, evaluated one row at a time: the paper asks for both so a
+# reader who reads the maths (1-indexed) and one who reads Python (0-indexed) agree on the answer.
+g1_ax_first = 3.0 * 1.5 + (-2.0) * 2.5
+g1_ax_second = 1.0 * 1.5 + 4.0 * 2.5
+g2_choice = "C"
+g3_v1 = -2.0 * 0.50 + 0.80 * 0.0 + 0.02 * 10.0
+g4_x1_new_v = 1.0 * 0.50 + 0.02 * (-0.80)
+g5_row4_first = (50.0 / 2.0) * 0.01
+g6_choice = "B"
 
-assert math.isclose(g1_w_ar, 30.0, rel_tol=1e-9)
-assert g2_choice == "A"
-assert math.isclose(g3_det, 64.0, rel_tol=1e-9)
-assert math.isclose(g4_ad, 1.0 / 3.0, rel_tol=1e-9)
-assert math.isclose(g5_rho_euler, 2.04939015319192, rel_tol=1e-9)
-assert math.isclose(g6_x1, 0.25, rel_tol=1e-9)
-assert math.isclose(g7_vel, 8.0, rel_tol=1e-9)
-assert math.isclose(g8_tau_z, 1.0, rel_tol=1e-9)
-assert math.isclose(g9_zeta, 0.2, rel_tol=1e-9)
-assert math.isclose(g10_db, -6.0206, abs_tol=1e-4)
-assert math.isclose(g11_alias_hz, 300.0, rel_tol=1e-9)
-assert math.isclose(g12_sigma00, 0.29, rel_tol=1e-9)
+# Q7: the derivative page.
+g7_velocity = (0.30 - 0.24) / 0.002
+
+# Q8-Q12: one question per remaining page.
+g8_choice = "D"
+g9_zeta = 0.60 / (2.0 * math.sqrt(0.02 * 8.0))
+g10_z_ohm = abs(4.0 + 1j * 2000.0 * 0.002)
+g10_corner_db = 20.0 * math.log10(1.0 / math.sqrt(2.0))
+Ad_euler = [[1.0, 0.05], [-5.0, 0.80]]
+g11_radius = math.sqrt(Ad_euler[0][0] * Ad_euler[1][1] - Ad_euler[0][1] * Ad_euler[1][0])
+g12_choice = "B"
+
+assert math.isclose(g1_ax_first, -0.5, rel_tol=1e-9)
+assert math.isclose(g1_ax_second, 11.5, rel_tol=1e-9)
+assert g2_choice == "C"
+assert math.isclose(g3_v1, -0.80, rel_tol=1e-9)
+assert math.isclose(g4_x1_new_v, 0.484, rel_tol=1e-9)
+assert math.isclose(g5_row4_first, 0.25, rel_tol=1e-9)
+assert g6_choice == "B"
+assert math.isclose(g7_velocity, 30.0, rel_tol=1e-9)
+assert g8_choice == "D"
+assert math.isclose(g9_zeta, 0.75, rel_tol=1e-9)
+assert math.isclose(g10_z_ohm, 5.656854249492381, rel_tol=1e-9)
+assert math.isclose(g10_corner_db, -3.0103, abs_tol=1e-4)
+assert math.isclose(g11_radius, 1.024695, abs_tol=1e-6)
+assert g12_choice == "B"
+
+print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
+      % (g1_ax_first, g1_ax_second, g3_v1, g4_x1_new_v, g11_radius))
 ```
-- **Pass mark:** $\ge 80\%$ ($4/4$ on Skip test; $\ge 10/12$ on Gate test). Remediation: Q1–Q5 $\to$ this module's `## 3. Formalization`; Q6–Q7 $\to$ `00-foundations.T2.00a`; Q8 $\to$ `00-foundations.T2.00b`; Q9 $\to$ `00-foundations.T2.00c`; Q10 $\to$ `00-foundations.T2.00d`; Q11–Q12 $\to$ `00-foundations.T2.00f`.
+- **Pass mark:** $\ge 10/12$. Every question is answered by the page named in its tags; the ladder is closed when this paper is passed once, after the last Tier 2 page.
+<!-- ladder-gate:end -->
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

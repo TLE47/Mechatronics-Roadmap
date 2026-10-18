@@ -304,17 +304,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.6 (`05-control.T1.06`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.6 (`05-control.T1.06`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: open_vs_closed_loop_tracking_error]` A pure proportional controller ($K_p = 5.0\text{ N}\cdot\text{m/rad}$, $K_i = 0$) holds an arm against a constant gravity torque $\tau_g = 0.50\text{ N}\cdot\text{m}$ at steady state ($\dot{q} = \ddot{q} = 0$). Compute the steady-state angle error $e_{\text{ss}} = \tau_g / K_p$ in radians ($\text{rad}$, tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: pid_spring_damper_integrator_intuition]` Given $r_k = 2.0\text{ rad}$, $y_k = 1.5\text{ rad}$, $\dot{y}_k = 0.4\text{ rad/s}$, $K_p = 10.0$, and $K_d = 2.5$ (with $I_k = 0$), compute the PD control effort $u_k = K_p(r_k - y_k) - K_d \dot{y}_k$ (tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: actuator_saturation_and_integrator_windup]` An actuator with voltage rails $\pm 12.0\text{ V}$ has proportional term $P_k = 9.5\text{ V}$, derivative term $D_k = 0.0\text{ V}$, and unclamped integral candidate $I_{\text{cand}} = 6.0\text{ V}$. With anti-windup clamping $I_k \in [-4.0\text{ V}, +4.0\text{ V}]$, compute the saturated actuator output $u_k = \operatorname{clip}(P_k + I_k + D_k, -12.0, +12.0)$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 00-foundations.T1.01 — Concept: symplectic_euler_integration] [Concept: pid_spring_damper_integrator_intuition]` Which PID term acts as a virtual viscous shock absorber that opposes velocity to damp out oscillations?
+4. `[Concept: pid_spring_damper_integrator_intuition]` Which PID term acts as a virtual viscous shock absorber that opposes velocity to damp out oscillations?
    - **A.** Proportional ($K_p$)
    - **B.** Integral ($K_i$)
    - **C.** Derivative ($K_d$)
    - **D.** Feedforward gravity torque
+5. `[Spaced review -> 00-foundations.T1.00e — Concept: discrete_kinematics_pos_vel_acc]` A cart moves at a constant $2.0\,\text{m/s}$ for $0.50\,\text{s}$. Compute the distance travelled in metres (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -328,9 +330,11 @@ assert math.isclose(q1_ess, 0.10, rel_tol=1e-9)
 assert math.isclose(q2_u, 4.0, rel_tol=1e-9)
 assert math.isclose(q3_u_sat, 12.0, rel_tol=1e-9)
 assert q4_choice == "C"
+q5_review = 2.0 * 0.50
+assert math.isclose(q5_review, 1.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
-
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T1.00e`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 05 Tier 1 bridge ladder (`05-control.T1.05a`) before Step 1.6 (`05-control.T1.06`):

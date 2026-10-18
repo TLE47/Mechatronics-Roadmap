@@ -31,13 +31,13 @@ flowchart LR
 | :--- | :--- | :--- | ---: | :--- |
 | `00-foundations.T2.00a` | `symplectic_euler_integration` | `symplectic` | 0 | — |
 | `01-electronics.T2.01a` | `star_grounding` | `grounding` | 0 | — |
-| `04-embedded.T2.04a` | `hardware_timer_isr_and_jitter` | `jitter` | 3 | 6. Simulation path, 7. Checkpoint |
+| `04-embedded.T2.04a` | `hardware_timer_isr_and_jitter` | `jitter` | 2 | 6. Simulation path |
 | `04-embedded.T2.04a` | `packed_binary_telemetry_struct` | `packed` | 0 | — |
 | `05-control.T3.05a` | `augmented_kalman_disturbance_observer` | `augmented` | 0 | — |
 | `00-foundations.T2.00a` | `so2_rotation_matrix` | `so2` | 0 | — |
 | `02-mechanics.T1.02a` | `so2_rotation_matrix` | `so2` | 0 | — |
 | `03-sensors.T3.03a` | `sar_adc_c0g_charge_bucket_design` | `c0g` | 0 | — |
-| `05-control.T1.05a` | `symplectic_euler_integration` | `symplectic` | 1 | 7. Checkpoint |
+| `05-control.T1.05a` | `symplectic_euler_integration` | `symplectic` | 0 | — |
 | `05-control.T1.05a` | `hardware_timer_isr_and_jitter` | `jitter` | 1 | 6. Simulation path |
 | `05-control.T2.05a` | `discrete_pid_controller` | `pid` | 1 | 1. Why it matters |
 | `05-control.T3.05a` | `discrete_infinite_horizon_lqr` | `horizon` | 0 | — |
@@ -46,7 +46,7 @@ flowchart LR
 | `06-robotics.T1.06a` | `planar_2link_forward_kinematics` | `2link` | 0 | — |
 | `06-robotics.T3.06a` | `ruckig_time_optimal_jerk_limited_scurve` | `jerk` | 1 | 8. Common mistakes |
 | `07-systems.T2.07a` | `can_fd_mit_impedance_packet_packing` | `packet` | 5 | 2. Intuition first, 6. Simulation path, 7. Checkpoint |
-| `07-systems.T3.06a` | `can_fd_crc16_rolling_counter_watchdog` | `crc16` | 0 | — |
+| `07-systems.T3.06a` | `can_fd_crc16_rolling_counter_watchdog` | `crc16` | 1 | 7. Checkpoint |
 
 ## Owned (moved from `uses:` to `owns:`)
 
@@ -61,15 +61,15 @@ flowchart LR
 | Page | Concept | Lines | Sections |
 | :--- | :--- | ---: | :--- |
 | `01-electronics.T3.01a` | `four_layer_pcb_ground_plane_stackup` | 9 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 8. Common mistakes |
-| `02-mechanics.T2.02a` | `planar_2link_forward_kinematics` | 2 | 5. Exercise, 7. Checkpoint |
-| `02-mechanics.T3.02a` | `rodrigues_so3_se3_exp_log_maps` | 2 | 5. Exercise, 7. Checkpoint |
+| `02-mechanics.T2.02a` | `planar_2link_forward_kinematics` | 1 | 5. Exercise |
+| `02-mechanics.T3.02a` | `rodrigues_so3_se3_exp_log_maps` | 1 | 5. Exercise |
 | `02-mechanics.T3.02a` | `parallel_axis_urdf_inertia_tensor` | 4 | 1. Why it matters, 2. Intuition first, 5. Exercise |
 | `03-sensors.T2.03a` | `electrical_vs_mechanical_pole_pairs` | 4 | 2. Intuition first, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
 | `03-sensors.T2.03a` | `open_loop_three_phase_sine_modulation` | 11 | 1. Why it matters, 3. Formalization, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
 | `03-sensors.T3.03a` | `synchronous_dq_foc_current_loop` | 7 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 9. Resources |
 | `03-sensors.T3.03a` | `amplitude_invariant_clarke_park_transform` | 3 | 3. Formalization, 5. Exercise |
 | `04-embedded.T2.04a` | `spi_magnetic_encoder_readout` | 6 | 1. Why it matters, 3. Formalization, 5. Exercise, 7. Checkpoint, 8. Common mistakes |
-| `04-embedded.T3.04a` | `dma_double_buffered_ping_pong_isr` | 8 | 2. Intuition first, 3. Formalization, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
+| `04-embedded.T3.04a` | `dma_double_buffered_ping_pong_isr` | 7 | 2. Intuition first, 3. Formalization, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
 | `04-embedded.T3.04a` | `rate_monotonic_response_time_analysis` | 1 | 5. Exercise |
 | `04-embedded.T3.04a` | `minmax_zero_sequence_svpwm_injection` | 2 | 1. Why it matters, 5. Exercise |
 | `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps` | 21 | 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes |
@@ -78,8 +78,8 @@ flowchart LR
 | `06-robotics.T2.06a` | `can_fd_mit_impedance_packet_packing` | 2 | 3. Formalization, 7. Checkpoint |
 | `06-robotics.T3.06a` | `jacobian_transpose_cartesian_impedance` | 2 | 5. Exercise, 8. Common mistakes |
 | `07-systems.T1.07a` | `ten_step_power_on_bringup` | 2 | 1. Why it matters, 5. Exercise |
-| `07-systems.T1.07a` | `rc_cutoff_phase_lag` | 17 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 7. Checkpoint |
-| `07-systems.T3.06a` | `opc_ua_industrial_telemetry` | 31 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
+| `07-systems.T1.07a` | `rc_cutoff_phase_lag` | 13 | 3. Formalization, 5. Exercise, 7. Checkpoint |
+| `07-systems.T3.06a` | `opc_ua_industrial_telemetry` | 30 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
 
 ## What each decision changes
 

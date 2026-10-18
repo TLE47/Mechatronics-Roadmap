@@ -326,9 +326,10 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($3/4$) on the Skip test below and $\ge 80\%$ ($6/7$) on the ladder's Gate test.
+Pass criteria: run the worked example and the exercise asserts clean, or score $\ge 80\%$ ($4/4$) on the Skip test below and $\ge 80\%$ ($6/7$) on the ladder's Gate test.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: tangent_space_eskf_error_injection]` Compute $\exp([0, 0, 0.05]_\times)_{10}$ - the $(1,0)$ entry, i.e. $\sin(0.05)$ - to $\pm 10^{-9}$.
 2. `[Apply] [Concept: tangent_space_eskf_error_injection]` A filter injects a $0.05$ rad correction and then runs a measurement whose innovation is zero. What angle has the frame turned in total (tolerance $\pm 10^{-9}$ rad)?
 3. `[Transfer] [Concept: tangent_space_eskf_error_injection]` The plant's encoder has $4096$ counts per revolution. Compute the tangent-space step of one count in radians (tolerance $\pm 10^{-12}$).
@@ -353,7 +354,8 @@ assert math.isclose(q3_count, 0.0015339807878856412, rel_tol=1e-12)
 q4_choice = "A"
 assert q4_choice == "A"
 ```
-- **Pass mark:** $3/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, item 3; if you missed Q3, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`. On pass, proceed to `05-control.T3.05c`.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, item 3; if you missed Q3, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`. On pass, proceed to `05-control.T3.05c`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 05 Tier 3 ladder ([`05-control.T3.05a`](05-control.T3.05a.md) $\to$ this module $\to$ [`05-control.T3.05c`](05-control.T3.05c.md)) before Step 3.6 (`05-control.T3.06`):

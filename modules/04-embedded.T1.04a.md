@@ -304,20 +304,23 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: c_fixed_width_integer_types_and_overflow]` Compute the maximum positive integer $2^{16-1} - 1$ representable by a signed 16-bit integer `int16_t` (exact integer, tolerance $\pm 0$).
 2. `[Apply] [Concept: c_fixed_width_integer_types_and_overflow]` Compute the unsigned 8-bit difference `(uint8_t)(now - prev)` (i.e. `(now - prev) & 0xFF`) when `now = 3` and `prev = 250` (exact integer, tolerance $\pm 0$).
 3. `[Transfer] [Concept: bitwise_masks_and_shifts]` Starting from `reg = 0x0F` (`15`), compute the decimal value of `reg` after clearing bit `2` (`reg &= ~(1 << 2)`, exact integer, tolerance $\pm 0$).
-4. `[Spaced review -> 00-foundations.T1.00b — Concept: python_variables_and_types] [Concept: c_structs_and_pointers_pass_by_reference]` Why does embedded C code write `REG &= ~(1U << 5)` instead of `REG = 0` when disabling peripheral bit 5?
+4. `[Concept: c_structs_and_pointers_pass_by_reference]` Why does embedded C code write `REG &= ~(1U << 5)` instead of `REG = 0` when disabling peripheral bit 5?
    - **A.** Because `REG = 0` does not compile in C.
    - **B.** Because `REG &= ~(1U << 5)` clears **only** bit 5 while preserving the state of all other 31 configuration bits in that hardware register.
    - **C.** Because `~` multiplies by two.
    - **D.** Because `REG = 0` sets all bits to `1`.
+5. `[Spaced review -> 00-foundations.T1.00b — Concept: lists_dicts_and_numpy_arrays]` Given `samples = [0.5, 1.5, 2.5]`, compute the mean (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
+import math
 q1_int16_max = (1 << 15) - 1
 q2_u8_delta = (3 - 250) & 0xFF
 q3_reg_cleared = 0x0F & ~(1 << 2)
@@ -327,8 +330,11 @@ assert q1_int16_max == 32767
 assert q2_u8_delta == 9
 assert q3_reg_cleared == 11
 assert q4_choice == "B"
+q5_review = (0.5 + 1.5 + 2.5) / 3.0
+assert math.isclose(q5_review, 1.5, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3 or Q4, study `## 3. Formalization` item 2. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3 or Q4, study `## 3. Formalization` item 2. If you missed  Q5, review `00-foundations.T1.00b`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 04 Tier 1 bridge ladder (`04-embedded.T1.04a` $\to$ `04-embedded.T1.04b`) before Step 1.5 (`04-embedded.T1.05`):

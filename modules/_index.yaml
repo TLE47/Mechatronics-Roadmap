@@ -238,24 +238,37 @@ bridges:
     resources_verified: true
     path: modules/00-foundations.T2.00c.md
   - id: 00-foundations.T2.00d
-    title: "Complex Numbers, Euler's Formula, Phasors, Impedance & Frequency Response (Bode Plots)"
+    title: "Complex Numbers, Euler's Formula & Phasors"
     track: 00
     tier: 2
-    est_hours: 4.0
+    est_hours: 2.0
     prereqs: [00-foundations.T2.00c]
-    introduces: [complex_numbers_and_euler_formula, complex_impedance_and_transfer_function, bode_magnitude_db_and_phase]
-    uses: [radians_unit_circle_and_atan2, first_order_ode_time_constant, second_order_ode_wn_zeta]
-    feeds_into: [00-foundations.T2.00e]
+    introduces: [complex_numbers_and_euler_formula]
+    uses: [radians_unit_circle_and_atan2, second_order_ode_wn_zeta]
+    feeds_into: [00-foundations.T2.00h]
     safety_level: none
     hardware_required: false
     resources_verified: false
     path: modules/00-foundations.T2.00d.md
+  - id: 00-foundations.T2.00h
+    title: "Winding Impedance, Transfer Functions, Decibels & the Resonance Peak"
+    track: 00
+    tier: 2
+    est_hours: 3.0
+    prereqs: [00-foundations.T2.00d]
+    introduces: [complex_impedance_and_transfer_function, bode_magnitude_db_and_phase]
+    uses: [complex_numbers_and_euler_formula, first_order_ode_time_constant, second_order_ode_wn_zeta, radians_unit_circle_and_atan2]
+    feeds_into: [00-foundations.T2.00e]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T2.00h.md
   - id: 00-foundations.T2.00e
     title: "Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization"
     track: 00
     tier: 2
     est_hours: 4.5
-    prereqs: [00-foundations.T2.00d]
+    prereqs: [00-foundations.T2.00h]
     introduces: [laplace_poles_and_zeros, continuous_state_space_matrices, discrete_state_transition_euler_tustin]
     uses: [matrix_vector_multiplication, second_order_ode_wn_zeta, complex_impedance_and_transfer_function]
     feeds_into: [00-foundations.T2.01, 00-foundations.T2.00f]

@@ -339,6 +339,7 @@ flowchart LR
 Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$) on the Skip test ($100\%$ on `[SAFETY]` items), or score $\ge 80\%$ ($7/8$, $100\%$ on `[SAFETY]` items) on the Ladder Gate test to unlock the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: single_tone_sine_sweep_gain_phase]` A $10.0\text{ Hz}$ sine sweep with input amplitude $A = 0.50\text{ rad}$ produces steady-state output amplitude $B = 0.25\text{ rad}$ with peak time delay $\Delta t = 0.0125\text{ s}$. Compute the phase lag $\angle G = -360^\circ f \Delta t$ in degrees (tolerance $\pm 10^{-6}$).
 2. `[Apply] [Concept: cyclic_plc_scan_read_execute_write]` An IEC 61131-3 PLC cyclic scan takes $t_{\text{read}} = 0.40\text{ ms}$ to freeze inputs, $t_{\text{exec}} = 1.10\text{ ms}$ to evaluate logic, and $t_{\text{write}} = 0.50\text{ ms}$ to latch outputs. Compute the deterministic scan frequency $f_{\text{scan}} = \frac{1000}{t_{\text{read}} + t_{\text{exec}} + t_{\text{write}}}$ in $\text{Hz}$ (tolerance $\pm 10^{-6}$).
 3. `[Transfer] [SAFETY] [Concept: normally_closed_hardware_estop_chain]` Why are industrial Emergency-Stop buttons wired with **Normally-Closed (NC)** contacts in series rather than Normally-Open (NO) contacts in parallel?
@@ -346,7 +347,7 @@ Pass criteria: read `### Safety notes`, score $\ge 80\%$ ($4/5$) on the Skip tes
    - **B.** Because in a series NC chain, continuous current is required to hold power enabled; pressing any E-stop **or** severing/unplugging any wire drops current to zero and fails safe immediately.
    - **C.** Because NO contacts cannot carry $3.3\text{ V}$.
    - **D.** To make the motor spin faster.
-4. `[Spaced review -> 06-robotics.T1.07 — Concept: finite_state_machine_switch_enum] [SAFETY] [Concept: normally_closed_hardware_estop_chain]` When an operator twists and releases a tripped E-stop button, what must the control state machine do?
+4. `[Spaced review -> 04-embedded.T1.04b — Concept: finite_state_machine_switch_enum] [SAFETY] [Concept: normally_closed_hardware_estop_chain]` When an operator twists and releases a tripped E-stop button, what must the control state machine do?
    - **A.** Immediately resume the interrupted trajectory at full speed.
    - **B.** Remain inhibited in a safe latched state (`ESTOP_LATCHED` / `IDLE`) with motor torque disabled until a deliberate Reset command is issued.
    - **C.** Apply $100\%$ reverse PWM.
@@ -369,7 +370,7 @@ assert q4_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 assert math.isclose(q5_ratio, 1.0 / math.sqrt(2.0), abs_tol=1e-3)
 ```
 - **Pass mark:** $4/5$ overall ($80\%+$) AND $2/2$ ($100\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 3; if you missed Q2, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 2 and `### Safety notes`. On pass, proceed to `## 10. Next modules`.
-
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 07 Tier 1 bridge ladder (`07-systems.T1.07a`) before Step 1.8 (`07-systems.T1.08`):

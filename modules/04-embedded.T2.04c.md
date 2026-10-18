@@ -351,17 +351,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: zephyr_west_and_kconfig_build]` A Zephyr firmware image defines $2$ threads with aligned stack sizes $S_1 = 2048\text{ B}$ and $S_2 = 1024\text{ B}$ (each with a $128\text{ B}$ thread control block) and one `K_MSGQ_DEFINE` queue holding $M = 8$ messages of $B = 64\text{ B}$ each. Compute the total static RAM $\text{RAM}_{\text{static}} = (S_1 + 128) + (S_2 + 128) + M \cdot B$ in bytes (exact integer, tolerance $\pm 0$).
 2. `[Apply] [Concept: zephyr_static_threads_and_k_mutex]` In Zephyr RTOS, three preemptible threads have numerical priorities $p_1 = 5$, $p_2 = 0$, and $p_3 = 3$. Which numerical priority value has the **highest** scheduling urgency (i.e. preempts the other two, $\min(p_1, p_2, p_3)$, exact integer, tolerance $\pm 0$)?
 3. `[Transfer] [Concept: zephyr_static_threads_and_k_mutex]` A high-urgency Zephyr thread ($p_H = 1, C_H = 85\ \mu\text{s}$) blocks on a `K_MUTEX_DEFINE` mutex held by a low-urgency thread ($p_L = 7$, remaining critical section $B_L = 25\ \mu\text{s}$) while a medium-urgency thread ($p_M = 4, C_M = 400\ \mu\text{s}$) is ready. Compute the worst-case response time $R_H = C_H + B_L$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-9}$) under Zephyr's `k_mutex` priority inheritance.
-4. `[Spaced review -> 04-embedded.T2.04b — Concept: unbounded_priority_inversion_and_inheritance] [Concept: zephyr_devicetree_hardware_binding]` In Zephyr RTOS, what happens if your C code calls `DEVICE_DT_GET(DT_NODELABEL(spi1))` when `spi1` has `status = "disabled";` in the board's Devicetree `.dts` file and you did not add `&spi1 { status = "okay"; };` in your `.overlay` file?
+4. `[Concept: zephyr_devicetree_hardware_binding]` In Zephyr RTOS, what happens if your C code calls `DEVICE_DT_GET(DT_NODELABEL(spi1))` when `spi1` has `status = "disabled";` in the board's Devicetree `.dts` file and you did not add `&spi1 { status = "okay"; };` in your `.overlay` file?
    - **A.** Zephyr silently guesses random GPIO pins at runtime.
    - **B.** The build fails at **compile/link time** with an undefined Devicetree symbol error, catching the missing hardware configuration before the firmware can ever be flashed!
    - **C.** The SPI clock runs at $100\text{ GHz}$.
    - **D.** FreeRTOS is installed automatically.
+5. `[Spaced review -> 04-embedded.T2.04b — Concept: unbounded_priority_inversion_and_inheritance]` Tasks run at priorities $3$ (holds a mutex), $5$ and $7$, and task $7$ blocks on that mutex. With priority inheritance, compute the priority task $3$ runs at while it holds it (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -376,8 +378,11 @@ assert q1_ram_bytes == 3840
 assert q2_top_prio == 0
 assert math.isclose(q3_rh_us, 110.0, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = float(7)
+assert math.isclose(q5_review, 7.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 3; if you missed Q4, study `## 3. Formalization` item 2. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 3; if you missed Q4, study `## 3. Formalization` item 2. If you missed  Q5, review `04-embedded.T2.04b`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `04-embedded.T2.04b` $\to$ `04-embedded.T2.04c` $\to$ `04-embedded.T2.04d`) before Step 2.5 (`04-embedded.T2.05`):

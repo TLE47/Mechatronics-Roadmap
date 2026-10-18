@@ -7,6 +7,8 @@ The route document is the one page a beginner is asked to follow, so the failure
 2. **Loss** - a module exists on disk but appears in neither the Core table nor Extensions, so a
    learner never sees it and the route silently claims to be complete.
 3. **Invention** - a Core total that is not the sum of the pages' own metadata.
+4. **Drift into the README** - the front page quoting a total, or a requirement, the route page
+   does not say: the README's main claim is the one place a beginner decides what to finish.
 
 Run: `python3 tests/test_sim_route.py` (also wired into the CI verify step).
 """
@@ -69,6 +71,36 @@ class SimRouteTests(unittest.TestCase):
         self.assertIsNotNone(match, "SIM_ROUTE.md has no Core total row")
         self.assertAlmostEqual(low, float(match.group(1)), places=2)
         self.assertAlmostEqual(high, float(match.group(2)), places=2)
+
+    def test_the_readme_main_claim_is_the_core_route(self):
+        """The README may not quote a route total that differs from the generated page, drop the
+        link to it, or make the Extensions sound required. Every number is read from SIM_ROUTE so
+        this test cannot go stale itself."""
+        with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as handle:
+            readme = handle.read()
+
+        core = re.search(r"\*\*Core total\*\*.*?\*\*([\d.]+)-([\d.]+)\*\*", self.doc)
+        self.assertIsNotNone(core, "SIM_ROUTE.md has no Core total row")
+        quoted = f"{float(core.group(1)):g}–{float(core.group(2)):g} hours"
+        self.assertIn(
+            quoted,
+            readme,
+            f"README.md must quote the generated Core total '{quoted}' from docs/SIM_ROUTE.md",
+        )
+
+        extensions = re.search(r"\*\*(\d+) modules\*\* \| \*\*([\d.]+)\*\*", self.doc)
+        self.assertIsNotNone(extensions, "SIM_ROUTE.md has no Extensions total row")
+        self.assertIn(
+            f"{float(extensions.group(2)):g} hours",
+            readme,
+            f"README.md must quote the generated Extensions total '{extensions.group(2)} hours'",
+        )
+        self.assertIn("docs/SIM_ROUTE.md", readme, "README.md must link the generated route page")
+        self.assertRegex(
+            readme,
+            r"(?s)Extensions.{0,400}?optional",
+            "README.md must say the Extensions are optional",
+        )
 
     def test_the_depth_line_is_required(self):
         """The four Tier 3 bridges and one capstone are the point of the Core route; losing any of

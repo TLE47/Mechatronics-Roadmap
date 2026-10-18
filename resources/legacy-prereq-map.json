@@ -62,7 +62,7 @@
     ]
   },
   "00-foundations.T2.01": {
-    "page": "00-foundations.T2.00d",
+    "page": "00-foundations.T2.00f",
     "evidence": [
       "resonance",
       "tustin",
@@ -945,7 +945,7 @@
       ]
     },
     "two_mass_torsional_resonance_anti_resonance": {
-      "page": "00-foundations.T2.00d",
+      "page": "00-foundations.T2.00h",
       "evidence": [
         "anti",
         "mass",

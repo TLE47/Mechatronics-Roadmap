@@ -356,17 +356,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: rtos_preemptive_scheduling_and_cpu_utilization]` Compute the total CPU utilization $U = \frac{C_1}{T_1} + \frac{C_2}{T_2}$ (tolerance $\pm 10^{-9}$) for two FreeRTOS tasks: Task 1 ($C_1 = 200\ \mu\text{s}, T_1 = 1000\ \mu\text{s}$) and Task 2 ($C_2 = 500\ \mu\text{s}, T_2 = 2500\ \mu\text{s}$).
 2. `[Apply] [Concept: unbounded_priority_inversion_and_inheritance]` A high-priority control task ($C_H = 100\ \mu\text{s}$) blocks on a FreeRTOS mutex (`xSemaphoreCreateMutex()`) held by a low-priority task ($B = 40\ \mu\text{s}$ remaining critical section) while a medium-priority task ($C_M = 600\ \mu\text{s}$) is ready. Compute the worst-case response time $R_H = C_H + B$ in microseconds ($\mu\text{s}$, tolerance $\pm 10^{-6}$) when **Priority Inheritance** is enabled.
 3. `[Transfer] [Concept: can_bitwise_arbitration_and_mit_packing]` Encode a target velocity of $x = +15.0\text{ rad/s}$ over symmetric range $[x_{\min}, x_{\max}] = [-30.0, +30.0]\text{ rad/s}$ into a 12-bit unsigned integer $u = \operatorname{round}\!\left(\frac{x - x_{\min}}{x_{\max} - x_{\min}} \cdot 4095\right)$ (tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 04-embedded.T2.04a — Concept: non_blocking_tick_scheduler] [Concept: can_bitwise_arbitration_and_mit_packing]` Why must a high-speed ($1\text{ Mbps}$ / $5\text{ Mbps}$ CAN-FD) twisted-pair differential bus have a $120\ \Omega$ termination resistor at **each physical end** of the trunk cable (giving $60\ \Omega$ DC resistance between `CAN_H` and `CAN_L` when powered off)?
+4. `[Concept: can_bitwise_arbitration_and_mit_packing]` Why must a high-speed ($1\text{ Mbps}$ / $5\text{ Mbps}$ CAN-FD) twisted-pair differential bus have a $120\ \Omega$ termination resistor at **each physical end** of the trunk cable (giving $60\ \Omega$ DC resistance between `CAN_H` and `CAN_L` when powered off)?
    - **A.** To warm up the cable in winter.
    - **B.** To match the $120\ \Omega$ characteristic impedance of the twisted pair at both ends, absorbing high-frequency signal edges so they do not reflect back and corrupt dominant/recessive arbitration bits.
    - **C.** To short `CAN_H` to $+48\text{ V}$.
    - **D.** To double the CAN ID range.
+5. `[Spaced review -> 04-embedded.T2.04a — Concept: dma_zero_cpu_memory_transfer]` A DMA transfer moves $1024$ bytes as $2$-byte halfword transfers. Compute the number of transfers (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -380,8 +382,11 @@ assert math.isclose(q1_u, 0.40, rel_tol=1e-9)
 assert math.isclose(q2_rh_us, 140.0, rel_tol=1e-9)
 assert math.isclose(q3_u12, 3071.0, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = 1024.0 / 2.0
+assert math.isclose(q5_review, 512.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `04-embedded.T2.04a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 04 Tier 2 bridge ladder (`04-embedded.T2.04a` $\to$ `04-embedded.T2.04b` $\to$ `04-embedded.T2.04c` $\to$ `04-embedded.T2.04d`) before Step 2.5 (`04-embedded.T2.05`):

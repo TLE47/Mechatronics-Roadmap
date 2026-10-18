@@ -105,17 +105,16 @@ SECTION_BODIES: tuple[tuple[str, str], ...] = (
         f"{SCAFFOLD_MARKER}: the pass criteria - which asserts must run clean, or the Skip-test score.\n\n"
         "### Gate test\n"
         f"{SCAFFOLD_MARKER}: the one task that proves this module before the next one starts.\n\n"
+        # The Skip test is generated, not typed: `scripts/generate_skip_tests.py` owns every one of
+        # them in `resources/skip-tests.json`. A scaffold that invited hand-writing here would be
+        # overwritten on the next render, so it points at the store instead.
         "### Skip test\n"
-        f"1. `[Recall] [Concept: <slug>]` {SCAFFOLD_MARKER}: a question on this module's own new concept.\n"
-        f"2. `[Apply] [Concept: <slug>]` {SCAFFOLD_MARKER}: a numerical question with a tolerance.\n"
-        f"3. `[Transfer] [Concept: <slug>]` {SCAFFOLD_MARKER}: the same idea at a changed parameter or "
-        "requirement.\n"
-        f"4. `[Spaced review -> <prereq id> - Concept: <slug>]` {SCAFFOLD_MARKER}: a four-option "
-        "question (A-D), one correct.\n\n"
-        "**Answer key:**\n"
-        "```python\n"
-        f"# {SCAFFOLD_MARKER}: one assert per question above.\n"
-        "```",
+        "<!-- skip-test:start -->\n"
+        f"{SCAFFOLD_MARKER}: add this module's entry to `resources/skip-tests.json` - four or five "
+        "tagged questions (`[Recall]`, `[Apply]`, `[Transfer]`, one spaced review), an executable "
+        "answer key and the pass mark - then run `python3 scripts/generate_skip_tests.py`. This "
+        "section is rendered from that store; never type it here directly.\n"
+        "<!-- skip-test:end -->",
     ),
     (
         "Common mistakes",

@@ -26,9 +26,9 @@ All hour estimates in this syllabus are **provisional engineering targets** pend
 | **Entry Ramp: Track P (`track-p/`)** | 14 Python Lessons (`P.1–P.14` + `P.M`) | **~10.5–14.0 hrs** *(unmeasured target)* | Overlaps & scaffolds `00-foundations.T1.00a–e`; includes `P.14` (`DRV8833` datasheet table) & **Gate P→0** 15-min check. |
 | **Entry Ramp: Stage 0 (`stage-0/`)** | 11 Lessons (`S0.0` Python + `S0.1–S0.M` Falstad/Wokwi) | **~8.5–11.0 hrs** *(unmeasured target)* | Pre-teaches `Effort × Flow` water analogies (`S0.0`), 5-min Falstad twins before every Arduino sketch, and a 4-row C-from-Python sidebar (`S0.7`). |
 | **🟢 Pass 1: Tier 1 (`modules/` + `00.1–08.1`)** | 16 Bridge Modules (`53.0 h`) + 8 Legacy Steps (`31.0 h`) = **24 Modules** *(paired with 23 Pass 1 Beginner Lessons)* | **84.0 hrs** *(provisional)* | **Weeks 1–11** · Includes `03.3` FK/Encoder Micro-Lab, 3-part Python→C bridge (`04.1–04.3`), 4-Stage `08.1` Boss & **Gate 1→2 Exit Project**. |
-| **🔵 Pass 2: Tier 2 (`modules/` + Track T2)** | 19 Bridge Modules (`78.5 h`) + 8 Legacy Steps (`45.0 h`) = **27 Modules** | **123.5 hrs** *(provisional)* | **Weeks 12–26** · Includes recurring arm math ladder, 4 Tool First-Run Labs & 3 Hardware Evidence Routes. |
+| **🔵 Pass 2: Tier 2 (`modules/` + Track T2)** | 20 Bridge Modules (`79.5 h`) + 8 Legacy Steps (`45.0 h`) = **28 Modules** | **124.5 hrs** *(provisional)* | **Weeks 12–26** · Includes recurring arm math ladder, 4 Tool First-Run Labs & 3 Hardware Evidence Routes. |
 | **🟣 Pass 3: Tier 3 (`modules/` + Track T3)** | 12 Bridge Modules (`50.0 h`) + 8 Legacy Steps (`68.0 h`) = **20 Modules** | **118.0 hrs** *(provisional)* | **Weeks 27–41** · Two-level study (*Use & Understand* vs. *Derive & Extend*); **Step 3.8 (`9.5 h`) requires choosing 1 of Capstones I–V**. |
-| **Formal 3-Pass Module Total** | **47 Bridge + 24 Legacy = 71 Modules** | **325.5 hrs** *(provisional)* | **~41 Weeks** (at ~8 hrs/wk; **`~344.5–350.5 hrs` / ~43–44 Weeks** including `Track P` + `Stage 0`). |
+| **Formal 3-Pass Module Total** | **48 Bridge + 24 Legacy = 72 Modules** | **326.5 hrs** *(provisional)* | **~41 Weeks** (at ~8 hrs/wk; **`~345.5–351.5 hrs` / ~43–44 Weeks** including `Track P` + `Stage 0`). |
 
 ### C. Unified 8-Step Teaching Ladder & 5-Dimension Difficulty Labels
 
@@ -51,7 +51,7 @@ In addition to the $\le 2$ new ideas rule (beginner lessons) and $\le 3$ new con
 ```mermaid
 flowchart LR
     T1["Pass 1: Tier 1 (84.0 h provisional)<br/>Tier 1 Foundations -> Tracks 01-07 -> Step 1.8 2-DOF Boss"] --> EXIT["Tier 1 -> Tier 2<br/>6-Gate Exit Readiness Review"]
-    EXIT --> T2["Pass 2: Tier 2 (123.5 h provisional)<br/>Recurring Arm Math + Tool Labs -> Step 2.8 Boss (3 Routes)"]
+    EXIT --> T2["Pass 2: Tier 2 (124.5 h provisional)<br/>Recurring Arm Math + Tool Labs -> Step 2.8 Boss (3 Routes)"]
     T2 --> T3["Pass 3: Tier 3 (118.0 h provisional)<br/>Use/Understand vs Derive/Extend -> Step 3.8 (Choose 1 of 5)"]
 ```
 
@@ -69,8 +69,8 @@ Tier 1 (Phase 1 — Beginner / Breakout Pass: 24 modules, 84.0 hrs provisional)
 ├── Systems / Production        (T1.07a                                     ──► Step 1.8 Safety & SysID Prep)
 └── Tier 1 integration step     (Step 1.8 Boss: 07-systems.T1.08 — Breadboard/Breakout 2-DOF Compliant Robot)
 
-Tier 2 (Phase 2 — Intermediate / Applied Pass: 27 modules, 123.5 hrs provisional)
-├── Tier 2 Foundations          (T2.00a → T2.00g → T2.00b → T2.00c → T2.00d → T2.00e → T2.00f ──► Step 2.1: 00-foundations.T2.01)
+Tier 2 (Phase 2 — Intermediate / Applied Pass: 28 modules, 124.5 hrs provisional)
+├── Tier 2 Foundations          (T2.00a → T2.00g → T2.00b → T2.00c → T2.00d → T2.00h → T2.00e → T2.00f ──► Step 2.1: 00-foundations.T2.01)
 ├── Electronics & Power         (T2.01a → T2.01b                                     ──► Step 2.2: 01-electronics.T2.02)
 ├── Mechanics                   (T2.02a                                              ──► Step 2.3: 02-mechanics.T2.03)
 ├── Sensors & Actuators         (T2.03a                                              ──► Step 2.4: 03-sensors.T2.04)
@@ -125,14 +125,15 @@ Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`�
 | **6. Capstone Transfer Variation** | Complete the 4-Stage `Lesson 08.1` 2-DOF arm capstone (*Predict → R2 Retarget → R4 3 Broken Versions → R5 Trajectory Spec*) and pass all behavioral assertions. | [`Lesson 03.3`](../03-sensors-and-actuators/03.3-encoder-to-fk-integration-microlab.md), [`Lesson 06.1`](../06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md) & [`Lesson 08.1`](../08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md) |
 
 ### C. Tier 2 Transitions: Recurring Arm Math Spine, Tool First-Run Labs & 3 Hardware Evidence Routes
-1. **Two rigs on purpose: a small teaching model per module, then the shared arm in every graded package.** The seven Tier 2 Foundations modules each open on the smallest rig that isolates the new idea — a four-sample encoder wrap in `T2.00a`, the same cart on a spring in `T2.00g`, a lever-and-force cross product in `T2.00b`, a $J = 0.02\text{ kg}\cdot\text{m}^2$ shaft with $k = 8.0\text{ N}\cdot\text{m/rad}$ and $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$ in `T2.00c`, a $\omega_n = 100\text{ rad/s}$, $\zeta = 0.05$ structure in `T2.00d`, a $J = 1\text{ kg}\cdot\text{m}^2$, $b = 4$, $k = 100$ model at $T_s = 0.05\text{ s}$ in `T2.00e`, and an $850\text{ Hz}$ notch at $f_s = 4\text{ kHz}$ in `T2.00f`.
+1. **Two rigs on purpose: a small teaching model per module, then the shared arm in every graded package.** The eight Tier 2 Foundations modules each open on the smallest rig that isolates the new idea — a four-sample encoder wrap in `T2.00a`, the same cart on a spring in `T2.00g`, a lever-and-force cross product in `T2.00b`, a $J = 0.02\text{ kg}\cdot\text{m}^2$ shaft with $k = 8.0\text{ N}\cdot\text{m/rad}$ and $b = 0.40\text{ N}\cdot\text{m}\cdot\text{s/rad}$ in `T2.00c`, a pair of unit phasors $60^\circ$ apart in `T2.00d`, a $3 + j4\ \Omega$ winding and a $\omega_n = 100\text{ rad/s}$, $\zeta = 0.05$ structure in `T2.00h`, a $J = 1\text{ kg}\cdot\text{m}^2$, $b = 4$, $k = 100$ model at $T_s = 0.05\text{ s}$ in `T2.00e`, and an $850\text{ Hz}$ notch at $f_s = 4\text{ kHz}$ in `T2.00f`.
    - Those numbers are **not** the capstone joint, and this is deliberate: [`tier1_arm_motor.yaml`](../resources/plants/tier1_arm_motor.yaml) records joint inertias $I_1 = 0.008$, $I_2 = 0.003\text{ kg}\cdot\text{m}^2$ with damping $b_1 = 0.04$, $b_2 = 0.02\text{ N}\cdot\text{m}\cdot\text{s/rad}$. `T2.00c`'s $J = 0.02$ is a teaching shaft chosen so $\omega_n$ and $\zeta$ come out to $20.0\text{ rad/s}$ and $0.50$; reading it as the plant's shoulder inertia is wrong by a factor of $2.5$.
-   - What *is* shared is the exercise: every one of the seven graded packages ends in a transfer suite that runs the capstone arm, so the learner meets the plant the Tier 1 capstone built even though the worked example is a smaller rig.
+   - What *is* shared is the exercise: every one of the eight graded packages ends in a transfer suite that runs the capstone arm, so the learner meets the plant the Tier 1 capstone built even though the worked example is a smaller rig.
    - `T2.00a` estimates joint velocity $\dot{q}$ and integrated position error, then replays the arm's 12-bit AS5600 trace (4096 counts/rev, wrapped across zero).
    - `T2.00g` packs `[q, dq]` into a 2D state vector, updates it via matrix multiplication, and scales the same code to a 4-state two-mass drivetrain.
    - `T2.00b` takes the arm's own moment and Jacobian through dot and cross products in a rotated basis.
    - `T2.00c` solves the 2nd-order ODE $J\ddot{q} + b\dot{q} + K_p q = \tau$ to predict oscillation and settling, then drives the plant's elbow and its motor ($L/R$).
-   - `T2.00d` constructs phasor and Bode magnitude/phase numbers, then *measures* the plant's elbow response by lock-in projection rather than reusing its own transfer function.
+   - `T2.00d` converts between polar and rectangular form and adds phasors, then fits the arm's figure-8 command by lock-in projection.
+   - `T2.00h` builds a winding impedance and a Bode magnitude/phase, then *measures* the plant's elbow response by lock-in projection rather than reusing its own transfer function.
    - `T2.00e` writes $\dot{x} = Ax + Bu$ and discretizes it as $x_{k+1} = A_d x_k + B_d u_k$, with the plant's elbow damping counted in its poles and step size.
    - `T2.00f` designs a pre-warped Tustin biquad notch and propagates the state covariance $P$ on the plant's encoder stream.
 2. **Decoupled Tool First-Run Labs (Learn the Tool Before the Engineering Assessment):**
@@ -193,7 +194,7 @@ Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`�
 
 ---
 
-### 🔵 PHASE 2: Tier 2 — Intermediate / Applied Pass (Weeks 12–26 · 123.5 Hours Provisional)
+### 🔵 PHASE 2: Tier 2 — Intermediate / Applied Pass (Weeks 12–26 · 124.5 Hours Provisional)
 
 | Week | Module ID & File | Title & Core Concepts Taught | Est. Hours | Prereqs |
 | :--- | :--- | :--- | :--- | :--- |
@@ -201,9 +202,10 @@ Every bridge module (`modules/*.md`) includes a **4–6 question Skip Test** (`�
 | **Wk 12** | [`00-foundations.T2.00g`](../modules/00-foundations.T2.00g.md) | **Tier 2 Foundations 2 (Recurring Arm Spine):** Matrix-Vector Multiplication & the One-Step State Update (2 and 4 states) | 3.0 h | `T2.00a` |
 | **Wk 12** | [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) | **Tier 2 Foundations 3 (Recurring Arm Spine):** Vectors, Dot & Cross Products, Linear Independence & Basis Change | 3.5 h | `T2.00g` |
 | **Wk 13** | [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) | **Tier 2 Foundations 4 (Recurring Arm Spine):** 1st- & 2nd-Order Joint ODEs, Characteristic Roots, $\omega_n$ & $\zeta$ | 4.5 h | `T2.00b` |
-| **Wk 13** | [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) | **Tier 2 Foundations 5 (Recurring Arm Spine):** Complex Numbers, Euler's Formula, Phasors & Joint Bode Plots | 4.0 h | `T2.00c` |
-| **Wk 14** | [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) | **Tier 2 Foundations 6 (Recurring Arm Spine):** Laplace Transform, Poles/Zeros, State-Space $\dot{x}=Ax+Bu$ & Discretization | 4.5 h | `T2.00d` |
-| **Wk 14** | [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) | **Tier 2 Foundations 7 (Recurring Arm Spine):** Sampling, Aliasing, z-Transform, Pre-Warped Tustin Biquads & Covariance *(Gate Test 9)* | 4.5 h | `T2.00e` |
+| **Wk 13** | [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) | **Tier 2 Foundations 5 (Recurring Arm Spine):** Complex Numbers, Euler's Formula & Phasors | 2.0 h | `T2.00c` |
+| **Wk 14** | [`00-foundations.T2.00h`](../modules/00-foundations.T2.00h.md) | **Tier 2 Foundations 6 (Recurring Arm Spine):** Winding Impedance, Transfer Functions, Decibels & the Resonance Peak | 3.0 h | `T2.00d` |
+| **Wk 14** | [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) | **Tier 2 Foundations 7 (Recurring Arm Spine):** Laplace Transform, Poles/Zeros, State-Space $\dot{x}=Ax+Bu$ & Discretization | 4.5 h | `T2.00d` |
+| **Wk 14** | [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) | **Tier 2 Foundations 8 (Recurring Arm Spine):** Sampling, Aliasing, z-Transform, Pre-Warped Tustin Biquads & Covariance *(Gate Test 9)* | 4.5 h | `T2.00e` |
 | **Wk 15** | [`00-foundations.T2.01`](../00-foundations/README.md#tier-2-intermediate--applied) | **Legacy Step 2.1 (Tier 2 Foundations):** State-Space Matrices, Two-Mass Resonance, Quaternions & Tustin Biquads | 5.5 h | `T1.08, T2.00e, T2.00f` |
 | **Wk 16** | [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) | **Track 01 T2 Bridge 1:** Op-Amps, Differential Shunt Amplification, CMRR & Kelvin Sensing | 4.0 h | `T1.02, T2.01` |
 | **Wk 16** | [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) | **Track 01 T2 Bridge 2 (+ KiCad First-Run Lab):** KiCad 4-Layer Stackup, $L\,di/dt$, Bootstrap Drivers & $48\text{ V}$ Pre-Charge *(Gate Test 10)* | 4.5 h | `T2.01a` |

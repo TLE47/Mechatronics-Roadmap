@@ -22,10 +22,9 @@
       "concept": "planar_2link_forward_kinematics",
       "decision": "keep",
       "core": "2link",
-      "lines": 2,
+      "lines": 1,
       "sections": [
-        "5. Exercise",
-        "7. Checkpoint"
+        "5. Exercise"
       ]
     },
     {
@@ -33,10 +32,9 @@
       "concept": "rodrigues_so3_se3_exp_log_maps",
       "decision": "keep",
       "core": "rodrigues",
-      "lines": 2,
+      "lines": 1,
       "sections": [
-        "5. Exercise",
-        "7. Checkpoint"
+        "5. Exercise"
       ]
     },
     {
@@ -123,7 +121,7 @@
       "concept": "dma_double_buffered_ping_pong_isr",
       "decision": "keep",
       "core": "ping",
-      "lines": 8,
+      "lines": 7,
       "sections": [
         "2. Intuition first",
         "3. Formalization",
@@ -227,12 +225,10 @@
       "page": "07-systems.T1.07a",
       "concept": "rc_cutoff_phase_lag",
       "decision": "keep",
-      "core": "lag",
-      "lines": 17,
+      "core": "cutoff",
+      "lines": 13,
       "sections": [
-        "2. Intuition first",
         "3. Formalization",
-        "4. Worked example",
         "5. Exercise",
         "7. Checkpoint"
       ]
@@ -242,7 +238,7 @@
       "concept": "opc_ua_industrial_telemetry",
       "decision": "keep",
       "core": "opc",
-      "lines": 31,
+      "lines": 30,
       "sections": [
         "1. Why it matters",
         "2. Intuition first",
@@ -288,10 +284,9 @@
       "concept": "hardware_timer_isr_and_jitter",
       "decision": "drop",
       "core": "jitter",
-      "lines": 3,
+      "lines": 2,
       "sections": [
-        "6. Simulation path",
-        "7. Checkpoint"
+        "6. Simulation path"
       ]
     },
     {
@@ -367,10 +362,8 @@
       "concept": "symplectic_euler_integration",
       "decision": "drop",
       "core": "symplectic",
-      "lines": 1,
-      "sections": [
-        "7. Checkpoint"
-      ]
+      "lines": 0,
+      "sections": []
     },
     {
       "page": "05-control.T1.05a",
@@ -453,8 +446,10 @@
       "concept": "can_fd_crc16_rolling_counter_watchdog",
       "decision": "drop",
       "core": "crc16",
-      "lines": 0,
-      "sections": []
+      "lines": 1,
+      "sections": [
+        "7. Checkpoint"
+      ]
     }
   ]
 }

@@ -355,17 +355,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below and $\ge 80\%$ ($8/10$) on the ladder's Gate test.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/5$) on the Skip test below and $\ge 80\%$ ($8/10$) on the ladder's Gate test.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: ros2_nodes_topics_services_and_qos]` A stereo camera node publishes depth frames of size $B_{\text{msg}} = 250{,}000\text{ bytes}$ at $f_{\text{pub}} = 60.0\text{ Hz}$ to $N_{\text{sub}} = 2$ unicast subscribers. Compute the total network data rate $R_{\text{MB/s}} = \frac{N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}}{10^6}$ in $\text{MB/s}$ (tolerance $\pm 10^{-6}\text{ MB/s}$).
 2. `[Apply] [Concept: tf2_transform_tree_and_urdf_kinematics]` A `tf2` buffer holds two consecutive transforms for `base_link -> tool0` at $t_a = 10.00\text{ s}$ ($z_a = 0.30\text{ m}$) and $t_b = 10.02\text{ s}$ ($z_b = 0.38\text{ m}$). Compute the linearly interpolated height $z(t_{\text{query}})$ in meters ($\text{m}$, tolerance $\pm 10^{-9}\text{ m}$) returned by `lookupTransform` at $t_{\text{query}} = 10.015\text{ s}$.
 3. `[Transfer] [Concept: tf2_transform_tree_and_urdf_kinematics]` Given `T_base_link1` translating $+0.30\text{ m}$ along $Z$ (zero rotation) and `T_link1_ee` translating $+0.40\text{ m}$ along $X$ (zero rotation), compute the Euclidean distance $\|p_{\text{ee}}\|$ from `base` origin to `ee` origin in meters ($\text{m}$, tolerance $\pm 10^{-9}\text{ m}$).
-4. `[Spaced review -> 02-mechanics.T2.03 — Concept: se3_homogeneous_transformation_matrix] [Concept: ros2_control_hardware_interface_read_write]` Why does `ros2_control` execute controllers (`update()`) and hardware drivers (`read()` / `write()`) inside the same real-time C++ process via shared double pointers instead of sending motor commands over standard ROS 2 DDS network topics?
+4. `[Concept: ros2_control_hardware_interface_read_write]` Why does `ros2_control` execute controllers (`update()`) and hardware drivers (`read()` / `write()`) inside the same real-time C++ process via shared double pointers instead of sending motor commands over standard ROS 2 DDS network topics?
    - **A.** Because DDS topics cannot send floating-point numbers.
    - **B.** To guarantee deterministic sub-millisecond ($1\text{ kHz}$) loop execution with zero network serialization latency, packet loss, or OS socket jitter inside the feedback loop.
    - **C.** Because `ros2_control` does not support URDF files.
    - **D.** To slow the control loop down to $10\text{ Hz}$.
+5. `[Spaced review -> 02-mechanics.T2.02a — Concept: se3_homogeneous_transformation_matrix]` A planar 2-link arm has $L_1 = 0.30\,\text{m}$ at $0^\circ$ and $L_2 = 0.20\,\text{m}$ at $90^\circ$. Compute the end-effector $x$ in metres (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -381,8 +383,11 @@ assert math.isclose(q1_rate_mbs, 30.0, rel_tol=1e-9)
 assert math.isclose(q2_z_interp, 0.36, rel_tol=1e-9)
 assert math.isclose(q3_dist_m, 0.50, rel_tol=1e-9)
 assert q4_choice == "B"
+q5_review = 0.30 * math.cos(0.0) + 0.20 * math.cos(math.pi / 2)
+assert math.isclose(q5_review, 0.3, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `02-mechanics.T2.02a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 06 Tier 2 bridge ladder ([`06-robotics.T2.06a`](06-robotics.T2.06a.md) $\to$ [`06-robotics.T2.06b`](06-robotics.T2.06b.md)) before Step 2.7 (`06-robotics.T2.07`):

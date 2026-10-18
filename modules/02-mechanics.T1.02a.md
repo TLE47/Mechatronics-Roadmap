@@ -289,10 +289,11 @@ flowchart LR
 Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.3 (`02-mechanics.T1.03`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: free_body_diagram_static_equilibrium]` A horizontal massless beam is pivoted at $x = 0\text{ m}$. A downward load of $F_1 = 30.0\text{ N}$ acts at $x_1 = 0.20\text{ m}$. What upward force $F_2$ in newtons ($\text{N}$, tolerance $\pm 10^{-9}$) must act at $x_2 = 0.10\text{ m}$ to maintain static torque equilibrium ($\sum \tau_z = 0$)?
 2. `[Apply] [Concept: gravity_lever_arm_cosine_torque]` Compute the gravity holding torque $\tau_g = m g L \cos\theta$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-6}$) for a point mass $m = 1.0\text{ kg}$ at arm length $L = 0.30\text{ m}$ with $g = 9.81\text{ m/s}^2$ when the arm is straight up ($\theta = \pi/2\text{ rad}$ from horizontal).
 3. `[Transfer] [Concept: gear_reduction_speed_torque_power_conservation]` An ideal ($\eta = 1.0$) planetary gearbox with ratio $N = 9.0$ is driven by a motor producing $\tau_m = 0.20\text{ N}\cdot\text{m}$ at $\omega_m = 90.0\text{ rad/s}$. Compute the output torque $\tau_{\text{load}}$ ($\text{N}\cdot\text{m}$) and output speed $\omega_{\text{load}}$ ($\text{rad/s}$, tolerance $\pm 10^{-9}$).
-4. `[Spaced review -> 00-foundations.T1.01 — Concept: radians_unit_circle_and_atan2] [Concept: gravity_lever_arm_cosine_torque]` At what shoulder angle $\theta$ (measured from the horizontal $+x$-axis) does a planar robot link experience the **maximum** gravity holding torque?
+4. `[Spaced review -> 00-foundations.T1.00d — Concept: radians_unit_circle_and_atan2] [Concept: gravity_lever_arm_cosine_torque]` At what shoulder angle $\theta$ (measured from the horizontal $+x$-axis) does a planar robot link experience the **maximum** gravity holding torque?
    - **A.** $\theta = 0\text{ rad}$ (horizontal)
    - **B.** $\theta = \pi/4\text{ rad}$ ($45^\circ$)
    - **C.** $\theta = \pi/2\text{ rad}$ (vertical overhead)
@@ -315,6 +316,8 @@ assert math.isclose(q3_w_load, 10.0, rel_tol=1e-9)
 assert q4_choice == "A"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
+
 ### Gate test
 Covers the complete Track 02 Tier 1 bridge ladder (`02-mechanics.T1.02a`) before Step 1.3 (`02-mechanics.T1.03`):
 1. `[Concept: free_body_diagram_static_equilibrium]` A $2.5\text{ kg}$ robot base rests stationary on a flat table ($g = 9.81\text{ m/s}^2$). Compute the upward normal force $F_N$ in newtons ($\text{N}$, tolerance $\pm 10^{-6}$) from $\sum F_y = F_N - m g = 0$.

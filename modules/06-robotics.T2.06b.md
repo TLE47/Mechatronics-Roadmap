@@ -322,17 +322,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.7 (`06-robotics.T2.07`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.7 (`06-robotics.T2.07`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: ros2_launch_parameters_and_composition]` A camera node publishes $B_{\text{msg}} = 1{,}000{,}000\text{ bytes}$ ($1.0\text{ MB}$) images at $f_{\text{pub}} = 30.0\text{ Hz}$ to $N_{\text{sub}} = 2$ intra-process `ComposableNode` subscribers inside the same `ComposableNodeContainer` (`use_intra_process_comms=True`, zero-copy `unique_ptr`). Compute the memory copy bandwidth $\Delta R_{\text{saved}} = \frac{N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}}{10^6}$ saved in $\text{MB/s}$ (tolerance $\pm 10^{-6}\text{ MB/s}$).
 2. `[Apply] [Concept: rosbag2_mcap_recording_and_deterministic_replay]` You record a single topic of total framed size $B_{\text{framed}} = 500\text{ bytes/msg}$ at $f = 1000.0\text{ Hz}$ for $T_{\text{rec}} = 60.0\text{ s}$ with `zstd` compression ratio $c = 0.50$. Compute the resulting `.mcap` file size $S_{\text{MB}} = \frac{c \cdot f \cdot B_{\text{framed}} \cdot T_{\text{rec}}}{10^6}$ in $\text{MB}$ (tolerance $\pm 10^{-6}\text{ MB}$).
 3. `[Transfer] [Concept: ros2_simulator_bridge_and_joint_state_loop]` A physics simulator (`MuJoCo` / `Gazebo`) steps at $f_{\text{sim}} = 2000\text{ Hz}$ ($\Delta t_{\text{sim}} = 0.5\text{ ms}$) and drives a `ros2_control` `controller_manager` configured with decimation factor $D = 2$ (so `update()` runs every $D$ physics steps). Compute the resulting `ros2_control` control loop frequency $f_{\text{ctrl}} = f_{\text{sim}} / D$ in $\text{Hz}$ (tolerance $\pm 10^{-6}\text{ Hz}$).
-4. `[Spaced review -> 06-robotics.T2.06a — Concept: ros2_nodes_topics_services_and_qos] [Concept: rosbag2_mcap_recording_and_deterministic_replay]` When replaying a recorded `rosbag2` archive with `ros2 bag play my_bag --clock` to test a Kalman filter node offline, what parameter must be set on the Kalman filter node so its timers and velocity derivatives use the bag's recorded timestamps instead of the computer's wall clock?
+4. `[Concept: rosbag2_mcap_recording_and_deterministic_replay]` When replaying a recorded `rosbag2` archive with `ros2 bag play my_bag --clock` to test a Kalman filter node offline, what parameter must be set on the Kalman filter node so its timers and velocity derivatives use the bag's recorded timestamps instead of the computer's wall clock?
    - **A.** `use_sim_time:=true`
    - **B.** `use_sim_time:=false`
    - **C.** `ROS_DOMAIN_ID=999`
    - **D.** `rm -rf build/`
+5. `[Spaced review -> 06-robotics.T2.06a — Concept: tf2_transform_tree_and_urdf_kinematics]` A transform tree has $A \to B$ at $0.50\,\text{m}$ and $B \to C$ at $0.30\,\text{m}$ along the same axis. Compute the $A \to C$ translation in metres (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -347,8 +349,11 @@ assert math.isclose(q1_saved_mbs, 60.0, rel_tol=1e-9)
 assert math.isclose(q2_bag_mb, 15.0, rel_tol=1e-9)
 assert math.isclose(q3_fctrl_hz, 1000.0, rel_tol=1e-9)
 assert q4_choice == "A"
+q5_review = 0.50 + 0.30
+assert math.isclose(q5_review, 0.8, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. If you missed  Q5, review `06-robotics.T2.06a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 06 Tier 2 bridge ladder (`06-robotics.T2.06a` $\to$ `06-robotics.T2.06b`) before Step 2.7 (`06-robotics.T2.07`):

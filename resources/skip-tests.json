@@ -1,0 +1,1739 @@
+{
+  "00-foundations.T1.00a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: python_variables_and_types]",
+        "text": "Compute the final numeric value of `x` (tolerance $\\pm 10^{-9}$) after executing `x = 4.0; x = x + 1.5; x = x * 2.0`."
+      },
+      {
+        "tag": "[Apply] [Concept: for_while_loops_and_functions]",
+        "text": "Trace this loop and compute the final integer value of `total` (tolerance $\\pm 10^{-9}$) after it finishes:",
+        "extra": [
+          "```python",
+          "total = 0",
+          "for i in range(4):",
+          "    total += i * 2",
+          "```"
+        ]
+      },
+      {
+        "tag": "[Transfer] [Concept: for_while_loops_and_functions]",
+        "text": "What value (tolerance $\\pm 10^{-9}$) does `clamp_pwm(1.35, 1.0)` return when defined as `def clamp_pwm(u, u_max): return u_max if u > u_max else u`?"
+      },
+      {
+        "tag": "[Concept: traceback_error_reading]",
+        "text": "You run a motor script and Python prints `NameError: name 'kp_gain' is not defined` at line 12. Which option identifies the root cause?",
+        "options": [
+          "`kp_gain` was set to `0.0` and caused a division by zero.",
+          "`kp_gain` was read before being assigned a value, or its variable name was misspelled.",
+          "The `math` module was not imported at the top of the file.",
+          "The `while` loop condition never became `False`."
+        ]
+      }
+    ],
+    "key": "import math\n\nx = 4.0\nx = x + 1.5\nx = x * 2.0\nq1_x = x\nq2_total = sum(i * 2 for i in range(4))\nq3_clamped = 1.0 if 1.35 > 1.0 else 1.35\nq4_choice = \"B\"\n\nassert math.isclose(q1_x, 11.0, rel_tol=1e-9)\nassert q2_total == 12\nassert math.isclose(q3_clamped, 1.0, rel_tol=1e-9)\nassert q4_choice == \"B\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization`; Q2 or Q3, study `## 4. Worked example`; Q4, study `## 2. Intuition first`. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T1.00b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: lists_dicts_and_numpy_arrays]",
+        "text": "For `samples = [10.0, 20.0, 30.0, 40.0]`, compute the numeric difference `samples[-1] - samples[0]` (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: lists_dicts_and_numpy_arrays]",
+        "text": "Evaluate `[2.5 * x - 1.0 for x in [0.0, 1.0, 2.0]]` and state the middle element (index `1`, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: matplotlib_time_series_plotting]",
+        "text": "You record $1,000$ samples over $2.0\\text{ s}$ starting at $t_0 = 0.0\\text{ s}$ with step $\\Delta t = 0.002\\text{ s}$. What is the timestamp $t_{500}$ at index `500` in seconds (tolerance $\\pm 10^{-9}\\text{ s}$)?"
+      },
+      {
+        "tag": "[Concept: terminal_and_git_basics]",
+        "text": "Which Git command shows the exact line-by-line code changes you have made since the last commit before staging them?",
+        "options": [
+          "`git init`",
+          "`git diff`",
+          "`git clone`",
+          "`git branch`"
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00a — Concept: for_while_loops_and_functions] [Concept: lists_dicts_and_numpy_arrays]",
+        "text": "Trace `s = sum([k for k in range(1, 5)])` (i.e. $1 + 2 + 3 + 4$) and state the final integer value of `s` (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nsamples = [10.0, 20.0, 30.0, 40.0]\nq1_diff = samples[-1] - samples[0]\nq2_mid = [2.5 * x - 1.0 for x in [0.0, 1.0, 2.0]][1]\nq3_t500 = 0.0 + 500 * 0.002\nq4_git = \"B\"\nq5_sum = sum([k for k in range(1, 5)])\n\nassert math.isclose(q1_diff, 30.0, rel_tol=1e-9)\nassert math.isclose(q2_mid, 1.5, rel_tol=1e-9)\nassert math.isclose(q3_t500, 1.0, rel_tol=1e-9)\nassert q4_git == \"B\"\nassert q5_sum == 10",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization`; if you missed Q3, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`; if you missed Q5, study `## 4. Worked example` (and review `00-foundations.T1.00a`). On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T1.00c": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: dimensional_analysis_unit_checks]",
+        "text": "Convert $3000\\text{ RPM}$ into angular velocity $\\omega$ in $\\text{rad/s}$ (tolerance $\\pm 0.01\\text{ rad/s}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: scientific_notation_and_prefixes]",
+        "text": "Compute the voltage drop in millivolts ($\\text{mV}$, tolerance $\\pm 0.01\\text{ mV}$) across a $5\\text{ m}\\Omega$ shunt resistor carrying $20\\text{ A}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: scientific_notation_and_prefixes]",
+        "text": "What is the loop period $T_s = 1 / f_s$ in microseconds ($\\mu\\text{s}$, tolerance $\\pm 0.01\\,\\mu\\text{s}$) for a $25\\text{ kHz}$ FOC control loop?"
+      },
+      {
+        "tag": "[Concept: si_base_and_derived_units]",
+        "text": "Given position $x$ in $\\text{m}$, velocity $v$ in $\\text{m/s}$, acceleration $a$ in $\\text{m/s}^2$, and time step $\\Delta t$ in $\\text{s}$, which expression is dimensionally valid?",
+        "options": [
+          "$x_{\\text{new}} = x + v + a\\,\\Delta t$",
+          "$x_{\\text{new}} = x + v\\,\\Delta t + 0.5\\,a\\,\\Delta t^2$",
+          "$x_{\\text{new}} = x\\,\\Delta t + v + a / \\Delta t$",
+          "$x_{\\text{new}} = x + v / \\Delta t$"
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00b — Concept: lists_dicts_and_numpy_arrays] [Concept: si_base_and_derived_units]",
+        "text": "Given `currents_ma = [500.0, 1500.0, 2500.0]`, compute the mean current in base amperes ($\\text{A}$, tolerance $\\pm 10^{-9}\\text{ A}$)."
+      }
+    ],
+    "key": "import math\n\nq1_omega = 3000.0 * (2.0 * math.pi / 60.0)\nq2_mv = (20.0 * 5.0e-3) * 1e3\nq3_us = (1.0 / 25_000.0) * 1e6\nq4_choice = \"B\"\nq5_mean_a = (sum([500.0, 1500.0, 2500.0]) / 3.0) * 1e-3\n\nassert math.isclose(q1_omega, 314.159265, rel_tol=1e-5)\nassert math.isclose(q2_mv, 100.0, rel_tol=1e-9)\nassert math.isclose(q3_us, 40.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nassert math.isclose(q5_mean_a, 1.5, rel_tol=1e-9)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2 or Q3, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T1.00b`). On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T1.00d": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: 2d_vectors_and_components]",
+        "text": "Compute the $x$-coordinate in meters (tolerance $\\pm 10^{-4}\\text{ m}$) of a $L = 0.20\\text{ m}$ link at angle $\\theta = 120^\\circ$ ($2\\pi/3\\text{ rad}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: radians_unit_circle_and_atan2]",
+        "text": "Compute the angle in degrees (tolerance $\\pm 0.01^\\circ$) returned by `math.degrees(math.atan2(-1.0, -1.0))` in Quadrant III."
+      },
+      {
+        "tag": "[Transfer] [Concept: linear_functions_and_slope]",
+        "text": "A current sensor outputs $0.5\\text{ V}$ at $0\\text{ A}$ and $2.5\\text{ V}$ at $10\\text{ A}$. Compute the current $I$ in amperes (tolerance $\\pm 0.01\\text{ A}$) when the sensor outputs $V = 1.7\\text{ V}$."
+      },
+      {
+        "tag": "[Concept: radians_unit_circle_and_atan2]",
+        "text": "What happens if your code evaluates `math.atan(y / x)` instead of `math.atan2(y, x)` when the robot arm points straight up along the $+y$ axis ($x = 0.0\\text{ m}, y = 0.25\\text{ m}$)?",
+        "options": [
+          "It returns $+\\pi/2\\text{ rad}$ ($+90^\\circ$).",
+          "It raises `ZeroDivisionError: float division by zero` before `atan` is even called.",
+          "It returns $0.0\\text{ rad}$.",
+          "It returns $-\\pi/2\\text{ rad}$ ($-90^\\circ$)."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00c — Concept: dimensional_analysis_unit_checks] [Concept: radians_unit_circle_and_atan2]",
+        "text": "Convert an angular speed of $180.0\\text{ deg/s}$ into $\\text{rad/s}$ (tolerance $\\pm 10^{-4}\\text{ rad/s}$)."
+      }
+    ],
+    "key": "import math\n\nq1_x = 0.20 * math.cos(math.radians(120.0))\nq2_deg = math.degrees(math.atan2(-1.0, -1.0))\nslope_a_per_v = (10.0 - 0.0) / (2.5 - 0.5)\nq3_current_a = slope_a_per_v * (1.7 - 0.5)\nq4_choice = \"B\"\nq5_rad_s = math.radians(180.0)\n\nassert math.isclose(q1_x, -0.10, rel_tol=1e-9)\nassert math.isclose(q2_deg, -135.0, rel_tol=1e-9)\nassert math.isclose(q3_current_a, 6.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nassert math.isclose(q5_rad_s, math.pi, rel_tol=1e-9)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, Q2, or Q3, study `## 3. Formalization`; if you missed Q4, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T1.00c`). On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T1.00e": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: newtons_second_law_and_torque]",
+        "text": "Compute the holding torque $\\tau$ in $\\text{N}\\cdot\\text{m}$ (tolerance $\\pm 0.01\\text{ N}\\cdot\\text{m}$) required at the shoulder to hold a $2.0\\text{ kg}$ payload horizontally at lever arm $r = 0.30\\text{ m}$ under gravity $g = 9.81\\text{ m/s}^2$."
+      },
+      {
+        "tag": "[Apply] [Concept: spring_energy_and_power]",
+        "text": "Compute the total mechanical energy $E$ in joules (tolerance $\\pm 10^{-4}\\text{ J}$) of a $m = 1.0\\text{ kg}$ mass moving at $v = 2.0\\text{ m/s}$ while attached to a spring of stiffness $k = 40.0\\text{ N/m}$ stretched by $x = 0.10\\text{ m}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: discrete_kinematics_pos_vel_acc]",
+        "text": "Trace one step ($\\Delta t = 0.01\\text{ s}$) starting from $x_0 = 0.20\\text{ m}, v_0 = 0.0\\text{ m/s}$ with $m = 1.0\\text{ kg}, k = 100.0\\text{ N/m}$ using `a = -k*x/m; v += a*dt; x += v*dt`, and report $x_1$ in meters (tolerance $\\pm 10^{-6}\\text{ m}$)."
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00d — Concept: radians_unit_circle_and_atan2] [Concept: newtons_second_law_and_torque]",
+        "text": "A force $F = 10.0\\text{ N}$ pulls at angle $\\phi = 30.0^\\circ$ relative to a $r = 0.40\\text{ m}$ link. Compute the torque $\\tau = r F \\sin\\phi$ in $\\text{N}\\cdot\\text{m}$ (tolerance $\\pm 10^{-4}\\text{ N}\\cdot\\text{m}$)."
+      }
+    ],
+    "key": "import math\n\nq1_tau = 0.30 * (2.0 * 9.81)\nq2_energy = 0.5 * 1.0 * (2.0**2) + 0.5 * 40.0 * (0.10**2)\nv1 = 0.0 + (-100.0 * 0.20 / 1.0) * 0.01\nq3_x1 = 0.20 + v1 * 0.01\nq4_tau = 0.40 * 10.0 * math.sin(math.radians(30.0))\n\nassert math.isclose(q1_tau, 5.886, rel_tol=1e-6)\nassert math.isclose(q2_energy, 2.20, rel_tol=1e-9)\nassert math.isclose(q3_x1, 0.198, rel_tol=1e-9)\nassert math.isclose(q4_tau, 2.0, rel_tol=1e-9)",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2, study `## 2. Intuition first` and `## 3. Formalization`; if you missed Q3, study `## 4. Worked example`. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: finite_difference_derivative_and_integral]",
+        "text": "An encoder reads $x_{k-1} = 1.20\\,\\text{rad}$ and $x_k = 1.26\\,\\text{rad}$ at $\\Delta t = 0.002\\,\\text{s}$. Compute the backward-difference velocity in $\\text{rad/s}$ (tolerance $\\pm 0.01\\,\\text{rad/s}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: finite_difference_derivative_and_integral]",
+        "text": "Given $I_0 = 0.0$, $x_1 = 2.5\\,\\text{rad}$ and $\\Delta t = 0.004\\,\\text{s}$, compute $I_1 = I_0 + x_1\\Delta t$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: finite_difference_derivative_and_integral]",
+        "text": "A $12$-bit encoder turns one count per $2\\,\\text{ms}$ sample. Compute the speed that reads as, in $\\text{rad/s}$ (tolerance $\\pm 10^{-3}$)."
+      },
+      {
+        "tag": "[Concept: finite_difference_derivative_and_integral]",
+        "text": "Why does a running integral of the velocity estimate return $x_k - x_0$ rather than $x_k$?",
+        "options": [
+          "The sum of differences telescopes to $x_k - x_0$: the first correction is pinned to $0$ because no $x_{-1}$ sample exists, so the starting position survives as a constant the sum cannot see.",
+          "The integral is always zero at the end.",
+          "The encoder zero is wrapped away.",
+          "Because $\\Delta t$ cancels."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00e — Concept: newtons_second_law_and_torque]",
+        "text": "A $12.0\\,\\text{N}$ force acts on a $3.0\\,\\text{kg}$ cart on a frictionless track. Compute its acceleration in $\\text{m/s}^2$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_vel = (1.26 - 1.20) / 0.002\nq2_int = 0.0 + 2.5 * 0.004\nq3_speed = (2.0 * math.pi / 4096) / 0.002\nq4_choice = \"A\"\n\nassert math.isclose(q1_vel, 30.0, rel_tol=1e-9)\nassert math.isclose(q2_int, 0.01, rel_tol=1e-9)\nassert math.isclose(q3_speed, 0.76699, abs_tol=1e-4)\nassert q4_choice == \"A\"\nq5_review = 12.0 / 3.0\nassert math.isclose(q5_review, 4.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%$ of five is four; treat $3/5$ as a retry). If you missed Q1-Q3, study `## 3. Formalization`; if you missed Q4, study `## 2. Intuition first` and the telescoping identity. If you missed Q5, review `00-foundations.T1.00e`."
+  },
+  "00-foundations.T2.00b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: dot_product_projection]",
+        "text": "Compute the dot product $\\vec{a}\\cdot\\vec{b}$ (tolerance $\\pm 10^{-9}$) for $\\vec{a} = [2.0, -3.0, 1.0]^T$ and $\\vec{b} = [4.0, 1.0, -2.0]^T$."
+      },
+      {
+        "tag": "[Apply] [Concept: cross_product_3d_moment]",
+        "text": "Compute the $z$-component $\\tau_z$ in $\\text{N}\\cdot\\text{m}$ (tolerance $\\pm 10^{-9}$) of $\\vec{\\tau} = \\vec{r}\\times\\vec{F}$ for $\\vec{r} = [0.20, 0.10, 0.0]^T\\text{ m}$ and $\\vec{F} = [5.0, 25.0, 0.0]^T\\text{ N}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: basis_change_and_invertibility]",
+        "text": "Compute the determinant $\\det(B) = a d - b c$ (tolerance $\\pm 10^{-9}$) of $B = \\begin{bmatrix} 3.0 & 2.0 \\\\ 1.5 & 4.0 \\end{bmatrix}$."
+      },
+      {
+        "tag": "[Concept: dot_product_projection]",
+        "text": "What does a dot product $\\vec{a}\\cdot\\vec{b} = 0$ between two non-zero 3D vectors tell you geometrically?",
+        "options": [
+          "The vectors are parallel and point in the same direction.",
+          "The vectors are perpendicular ($90^\\circ$ apart).",
+          "The cross product $\\vec{a}\\times\\vec{b}$ is also zero.",
+          "The vectors point in opposite directions ($180^\\circ$ apart)."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00g — Concept: matrix_vector_multiplication] [Concept: basis_change_and_invertibility]",
+        "text": "Compute the first entry $(B\\vec{v})_0$ (tolerance $\\pm 10^{-9}$) for $B = \\begin{bmatrix} 3.0 & 2.0 \\\\ 1.5 & 4.0 \\end{bmatrix}$ and $\\vec{v} = \\begin{bmatrix} 2.0 \\\\ -1.0 \\end{bmatrix}$."
+      }
+    ],
+    "key": "import math\n\nq1_dot = 2.0 * 4.0 + (-3.0) * 1.0 + 1.0 * (-2.0)\nq2_tau_z = 0.20 * 25.0 - 0.10 * 5.0\nq3_det = 3.0 * 4.0 - 2.0 * 1.5\nq4_choice = \"B\"\nq5_row0 = 3.0 * 2.0 + 2.0 * (-1.0)\n\nassert math.isclose(q1_dot, 3.0, rel_tol=1e-9)\nassert math.isclose(q2_tau_z, 4.5, rel_tol=1e-9)\nassert math.isclose(q3_det, 9.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nassert math.isclose(q5_row0, 4.0, rel_tol=1e-9)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2 or Q3, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T2.00a`). On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00c": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: first_order_ode_time_constant]",
+        "text": "A motor winding has inductance $L = 2.0\\text{ mH}$ and resistance $R = 0.50\\,\\Omega$, giving electrical time constant $\\tau_e = L / R = 4.0\\text{ ms}$. What fraction of steady-state current (tolerance $\\pm 0.005$) does it reach at $t = 4.0\\text{ ms}$ after a voltage step?"
+      },
+      {
+        "tag": "[Apply] [Concept: second_order_ode_wn_zeta]",
+        "text": "Compute the undamped natural frequency $\\omega_n = \\sqrt{k / m}$ in $\\text{rad/s}$ (tolerance $\\pm 0.01\\text{ rad/s}$) for $m = 0.50\\text{ kg}$ and $k = 200.0\\text{ N/m}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: second_order_ode_wn_zeta]",
+        "text": "For $m = 0.50\\text{ kg}$ and $k = 200.0\\text{ N/m}$, compute the damping ratio $\\zeta = \\frac{b}{2\\sqrt{mk}}$ (tolerance $\\pm 0.01$) when $b = 14.0\\text{ N}\\cdot\\text{s/m}$."
+      },
+      {
+        "tag": "[Concept: characteristic_polynomial_roots]",
+        "text": "Where do the roots of the characteristic polynomial $s^2 + 2\\zeta\\omega_n s + \\omega_n^2 = 0$ lie when a second-order system is unstable with growing oscillations?",
+        "options": [
+          "On the negative real axis ($s < 0$).",
+          "In the open right half-plane ($\\operatorname{Re}(s) > 0, \\operatorname{Im}(s) \\neq 0$).",
+          "In the open left half-plane ($\\operatorname{Re}(s) < 0, \\operatorname{Im}(s) \\neq 0$).",
+          "At $s = -\\omega_n$ (repeated negative real root)."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00b — Concept: dot_product_projection] [Concept: first_order_ode_time_constant]",
+        "text": "Compute $\\vec{u}\\cdot\\vec{v}$ (tolerance $\\pm 10^{-9}$) for $\\vec{u} = [1.0, 0.0, -2.0]^T$ and $\\vec{v} = [3.0, 5.0, 1.5]^T$."
+      }
+    ],
+    "key": "import math\n\nq1_frac = 1.0 - math.exp(-1.0)\nq2_wn = math.sqrt(200.0 / 0.50)\nq3_zeta = 14.0 / (2.0 * math.sqrt(0.50 * 200.0))\nq4_choice = \"B\"\nq5_dot = 1.0 * 3.0 + 0.0 * 5.0 + (-2.0) * 1.5\n\nassert math.isclose(q1_frac, 0.63212056, rel_tol=1e-5)\nassert math.isclose(q2_wn, 20.0, rel_tol=1e-9)\nassert math.isclose(q3_zeta, 0.70, rel_tol=1e-9)\nassert q4_choice == \"B\"\nassert math.isclose(q5_dot, 0.0, abs_tol=1e-9)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, Q2, or Q3, study `## 3. Formalization`; if you missed Q4, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T2.00b`). On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00d": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: complex_numbers_and_euler_formula]",
+        "text": "Compute the magnitude $|z|$ (tolerance $\\pm 10^{-9}$) and phase angle in degrees $\\angle z$ (tolerance $\\pm 10^{-9}$) of the complex number $z = 3 + j4$."
+      },
+      {
+        "tag": "[Apply] [Concept: complex_numbers_and_euler_formula]",
+        "text": "Evaluate $e^{j\\pi}$ as a complex number (real and imaginary parts, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: complex_numbers_and_euler_formula]",
+        "text": "Two unit phasors are $90^\\circ$ apart. Compute the magnitude of their sum (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00d — Concept: radians_unit_circle_and_atan2] [Concept: complex_numbers_and_euler_formula]",
+        "text": "Multiplying a phasor by $j$ does what to it?",
+        "options": [
+          "Advances its phase by $90^\\circ$ and leaves its magnitude alone.",
+          "Delays its phase by $90^\\circ$ and doubles its magnitude.",
+          "Doubles its magnitude and leaves the phase.",
+          "Negates it."
+        ]
+      }
+    ],
+    "key": "import cmath\nimport math\n\nq1_mag = abs(3.0 + 4.0j)\nq1_phase_deg = math.degrees(cmath.phase(3.0 + 4.0j))\nq2 = cmath.rect(1.0, math.pi)\nq3_mag = abs(cmath.rect(1.0, 0.0) + cmath.rect(1.0, math.pi / 2.0))\nq4_choice = \"A\"\n\nassert math.isclose(q1_phase_deg, 53.13010235415598, rel_tol=1e-9)\nassert math.isclose(q1_mag, 5.0, rel_tol=1e-9)\nassert math.isclose(q2.real, -1.0, abs_tol=1e-12) and math.isclose(q2.imag, 0.0, abs_tol=1e-12)\nassert math.isclose(q3_mag, math.sqrt(2.0), rel_tol=1e-9)\nassert q4_choice == \"A\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1-Q3, study `## 3. Formalization` items 1-3; if you missed Q4, study item 2. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00e": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: laplace_poles_and_zeros]",
+        "text": "For the transfer function $G(s) = \\frac{s^2 + 400}{(s + 5)(s^2 + 4s + 900)}$, compute the anti-resonance zero frequency $\\omega_{\\text{ar}} > 0$ in $\\text{rad/s}$ (tolerance $\\pm 10^{-9}$) where $G(j\\omega_{\\text{ar}}) = 0$."
+      },
+      {
+        "tag": "[Apply] [Concept: continuous_state_space_matrices]",
+        "text": "For $A = \\begin{bmatrix} 0 & 1 \\\\ -25 & -6 \\end{bmatrix}$, compute the trace $\\operatorname{tr}(A)$ and determinant $\\det(A)$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: discrete_state_transition_euler_tustin]",
+        "text": "What is the stability boundary for eigenvalues $\\lambda_d$ of a discrete-time state matrix $A_d$ in $x_{k+1} = A_d x_k$?",
+        "options": [
+          "$\\operatorname{Re}(\\lambda_d) < 0$",
+          "$|\\lambda_d| < 1$",
+          "$|\\lambda_d| > 1$",
+          "$\\operatorname{Im}(\\lambda_d) = 0$"
+        ]
+      },
+      {
+        "tag": "[Concept: discrete_state_transition_euler_tustin]",
+        "text": "Compute the scalar Tustin discrete pole $a_d = \\frac{1 + s_p T_s / 2}{1 - s_p T_s / 2}$ for a continuous pole $s_p = -100\\text{ s}^{-1}$ sampled at $T_s = 0.01\\text{ s}$ (tolerance $\\pm 10^{-6}$)."
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00h — Concept: complex_impedance_and_transfer_function]",
+        "text": "A series branch has $R = 6.0\\ \\Omega$ in series with a capacitive reactance of $-8.0\\ \\Omega$ at the drive frequency. Compute $|Z|$ in ohms (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_w_ar = math.sqrt(400.0)\nq2_trace = 0.0 + (-6.0)\nq2_det = 0.0 * (-6.0) - 1.0 * (-25.0)\nq3_choice = \"B\"\nq4_ad = (1.0 + (-100.0) * 0.01 / 2.0) / (1.0 - (-100.0) * 0.01 / 2.0)\n\nassert math.isclose(q1_w_ar, 20.0, rel_tol=1e-9)\nassert math.isclose(q2_trace, -6.0, rel_tol=1e-9)\nassert math.isclose(q2_det, 25.0, rel_tol=1e-9)\nassert q3_choice == \"B\"\nassert math.isclose(q4_ad, 1.0 / 3.0, rel_tol=1e-6)\nq5_review = abs(6.0 - 8.0j)\nassert math.isclose(q5_review, 10.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T2.00h`. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00f": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: nyquist_sampling_and_aliasing]",
+        "text": "A $3150\\text{ Hz}$ motor switching harmonic is sampled at $f_s = 4000\\text{ Hz}$ without an anti-aliasing filter. What alias frequency $f_{\\text{alias}} \\in [0, 2000]\\text{ Hz}$ (tolerance $\\pm 10^{-9}$) appears in the digital data?"
+      },
+      {
+        "tag": "[Apply] [Concept: tustin_frequency_prewarping_and_biquad]",
+        "text": "Compute the actual digital notch frequency $f_{\\text{unwarped}}$ in $\\text{Hz}$ (tolerance $\\pm 0.01\\text{ Hz}$) when an unwarped Tustin transform is applied to $f_0 = 850\\text{ Hz}$ at $f_s = 4000\\text{ Hz}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: tustin_frequency_prewarping_and_biquad]",
+        "text": "Why can a digital biquad notch filter **never** un-alias a signal that exceeded $f_s/2$ *before* the ADC sampled it?",
+        "options": [
+          "Because digital filters only work below $100\\text{ Hz}$.",
+          "Because once sampling folds $f > f_s/2$ into $[0, f_s/2]$, the aliased samples are mathematically indistinguishable from a true low-frequency signal; an **analog** anti-aliasing filter must precede the ADC.",
+          "Because TDF-II biquads require double-precision floating point.",
+          "Because Tustin pre-warping amplifies high frequencies."
+        ]
+      },
+      {
+        "tag": "[Concept: gaussian_variance_and_covariance_matrix]",
+        "text": "Given $\\Sigma_x = \\begin{bmatrix} 1.0 & 0.0 \\\\ 0.0 & 4.0 \\end{bmatrix}$ and $A = \\begin{bmatrix} 1.0 & 0.5 \\\\ 0.0 & 1.0 \\end{bmatrix}$, compute the $(0,0)$ entry of $\\Sigma_y = A \\Sigma_x A^\\top$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00e — Concept: continuous_state_space_matrices]",
+        "text": "For $A = \\begin{bmatrix} 0 & 1 \\\\ -100 & -4 \\end{bmatrix}$, compute $\\operatorname{tr}(A)$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_alias_hz = abs(3150.0 - 4000.0)\nq2_unwarped_hz = (4000.0 / math.pi) * math.atan(math.pi * 850.0 / 4000.0)\nq3_choice = \"B\"\nq4_sigma00 = 1.0 * 1.0 * 1.0 + 0.5 * 4.0 * 0.5\n\nassert math.isclose(q1_alias_hz, 850.0, rel_tol=1e-9)\nassert math.isclose(q2_unwarped_hz, 749.48034, abs_tol=1e-2)\nassert q3_choice == \"B\"\nassert math.isclose(q4_sigma00, 2.0, rel_tol=1e-9)\nq5_review = 0.0 + (-4.0)\nassert math.isclose(q5_review, -4.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T2.00e`. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00g": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: matrix_vector_multiplication]",
+        "text": "Multiply $A = \\begin{bmatrix} 2.0 & -1.0 \\\\ 0.5 & 3.0 \\end{bmatrix}$ by $\\vec{x} = [4.0,\\; 2.0]^\\top$ and report the second row entry $(A\\vec{x})_1$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: matrix_vector_multiplication]",
+        "text": "For $A = \\begin{bmatrix} 1.0 & 2.0 & 3.0 \\\\ -1.0 & 0.0 & 1.0 \\end{bmatrix}$ and $\\vec{x} = [1.0,\\; 2.0,\\; 3.0]^\\top$, compute $(A\\vec{x})_0$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: state_vector_one_step_update]",
+        "text": "With $A_d = \\begin{bmatrix} 1.0 & 0.01 \\\\ -1.0 & 0.90 \\end{bmatrix}$, $B_d = [0.0,\\; 0.01]^\\top$, $\\vec{x}_0 = [0.0,\\; 1.0]^\\top$ and $u_0 = 0$, compute $x_1$ (tolerance $\\pm 10^{-9}\\,\\text{m}$)."
+      },
+      {
+        "tag": "[Concept: state_vector_one_step_update]",
+        "text": "Why must both new components be computed before either is written back into $\\vec{x}$?",
+        "options": [
+          "Every row of $A_d$ multiplies the *old* state; writing $x_{k+1}$ into `x[0]` first feeds the new position into the velocity row.",
+          "Python lists cannot be assigned in place.",
+          "The velocity row is by definition computed from the new position.",
+          "Because $B_d$ has a zero in the position row."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00a — Concept: finite_difference_derivative_and_integral]",
+        "text": "From $I_0 = 0.50\\,\\text{m}\\cdot\\text{s}$, one more sample $x_k = 0.12\\,\\text{m}$ at $\\Delta t = 0.01\\,\\text{s}$ gives $I_1 = I_0 + x_k\\Delta t$. Compute $I_1$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_ax1 = 0.5 * 4.0 + 3.0 * 2.0\nq2_ax0 = 1.0 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0\nq3_x1 = 1.0 * 0.0 + 0.01 * 1.0\nq4_choice = \"A\"\nq5_integral = 0.50 + 0.12 * 0.01\n\nassert math.isclose(q1_ax1, 8.0, rel_tol=1e-9)\nassert math.isclose(q2_ax0, 14.0, rel_tol=1e-9)\nassert math.isclose(q3_x1, 0.01, rel_tol=1e-9)\nassert q4_choice == \"A\"\nassert math.isclose(q5_integral, 0.5012, rel_tol=1e-9)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` Items 1-2; if you missed Q3 or Q4, study `## 4. Worked example` and `## 5. Exercise` Hint 3; if you missed Q5, review `00-foundations.T2.00a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00h": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: complex_impedance_and_transfer_function]",
+        "text": "Compute the magnitude $|Z|$ in ohms ($\\Omega$, tolerance $\\pm 10^{-6}$) of a series RL winding $Z = R + j\\omega L$ with $R = 3.0\\ \\Omega$, $L = 0.004\\,\\text{H}$ and $\\omega = 1000\\,\\text{rad/s}$."
+      },
+      {
+        "tag": "[Apply] [Concept: complex_impedance_and_transfer_function]",
+        "text": "For the first-order filter $H(j\\omega) = 1/(1 + j\\omega\\tau)$ with $\\tau = 0.01\\,\\text{s}$, compute $|H|$ at $\\omega = 0$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: bode_magnitude_db_and_phase]",
+        "text": "Convert a linear amplitude gain of $|H| = 0.10$ into decibels ($\\text{dB}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00d — Concept: complex_numbers_and_euler_formula] [Concept: bode_magnitude_db_and_phase]",
+        "text": "At what phase lag (in degrees) does a first-order low-pass filter operate when $\\omega = 1/\\tau$?",
+        "options": [
+          "$0^\\circ$",
+          "$-45^\\circ$",
+          "$-90^\\circ$",
+          "$-180^\\circ$"
+        ]
+      }
+    ],
+    "key": "import math\n\nq1_z_ohm = abs(3.0 + 1j * 1000.0 * 0.004)\nq2_dc = abs(1.0 / (1.0 + 0.0j))\nq3_db = 20.0 * math.log10(0.10)\nq4_choice = \"B\"\n\nassert math.isclose(q1_z_ohm, 5.0, rel_tol=1e-9)\nassert math.isclose(q2_dc, 1.0, rel_tol=1e-9)\nassert math.isclose(q3_db, -20.0, rel_tol=1e-9)\nassert q4_choice == \"B\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` items 1-2; if you missed Q3 or Q4, study item 3. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T3.00a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: skew_symmetric_hat_vee_cross_product]",
+        "text": "Given $\\omega = [1.0, 2.0, 0.0]^\\top\\text{ rad/s}$ and $v = [0.0, 3.0, 0.0]^\\top\\text{ m}$, compute the $z$-component of $([\\omega]_\\times v) = \\omega_x v_y - \\omega_y v_x$ in $\\text{m/s}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: skew_symmetric_hat_vee_cross_product]",
+        "text": "Given $\\omega = [0.0, 0.0, 4.0]^\\top\\text{ rad/s}$ and $v = [2.0, 0.0, 0.0]^\\top\\text{ m}$, compute the $y$-component of $([\\omega]_\\times v)$ in $\\text{m/s}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: matrix_exponential_taylor_and_rodrigues]",
+        "text": "Using the small-angle Taylor guard $c_2(\\theta) = \\frac{1}{2} - \\frac{\\theta^2}{24}$, compute $c_2(\\theta)$ at $\\theta = 0.24\\text{ rad}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Concept: hamiltonian_energy_power_balance]",
+        "text": "Why does the skew-symmetric interconnection matrix $J = -J^\\top$ in a port-Hamiltonian system $\\dot{x} = (J - R_d)\\nabla H(x)$ contribute **zero** net power to $\\dot{H} = (\\nabla H)^\\top \\dot{x}$?",
+        "options": [
+          "Because $J$ is the zero matrix.",
+          "Because for any column vector $z = \\nabla H$ and skew-symmetric matrix $J^\\top = -J$, the scalar $s = z^\\top J z$ equals its own transpose $s^\\top = z^\\top J^\\top z = -z^\\top J z = -s$, so $z^\\top J z \\equiv 0$ identically!",
+          "Because $\\nabla H$ is always zero.",
+          "Because energy is not conserved in mechanics."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00e — Concept: laplace_poles_and_zeros]",
+        "text": "The transfer function $1/(s^2 + 3s + 2)$ has two real poles. Compute the **slower** one - the pole closer to the origin - in $\\text{s}^{-1}$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_vz = 1.0 * 3.0 - 2.0 * 0.0\n# (0, 0, 4) x (2, 0, 0) = (0, 8, 0)\nq2_vy = 4.0 * 2.0 - 0.0 * 0.0\nq3_c2 = 0.5 - (0.24 ** 2) / 24.0\nq4_choice = \"B\"\n\nassert math.isclose(q1_vz, 3.0, rel_tol=1e-9)\nassert math.isclose(q2_vy, 8.0, rel_tol=1e-9)\nassert math.isclose(q3_c2, 0.4976, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = (-3.0 + math.sqrt(9.0 - 8.0)) / 2.0\nassert math.isclose(q5_review, -1.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 4. If you missed  Q5, review `00-foundations.T2.00e`. On pass, proceed to `## 10. Next modules`."
+  },
+  "01-electronics.T1.01a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: voltage_current_resistance_ohms_law]",
+        "text": "A $12.0\\text{ V}$ supply drives a motor coil with resistance $R = 3.0\\ \\Omega$ while the rotor is stalled. Compute the stall current $I_{\\text{stall}}$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: kvl_kcl_and_voltage_divider]",
+        "text": "Compute the unloaded output voltage $V_{\\text{out}}$ in volts ($\\text{V}$, tolerance $\\pm 10^{-6}$) of a divider with $V_{\\text{in}} = 5.0\\text{ V}$, top resistor $R_1 = 10\\text{ k}\\Omega$, and bottom resistor $R_2 = 20\\text{ k}\\Omega$."
+      },
+      {
+        "tag": "[Transfer] [Concept: electrical_power_i2r_dissipation]",
+        "text": "Compute the heat power $P = I^2 R$ in watts ($\\text{W}$, tolerance $\\pm 10^{-9}$) dissipated in a $0.050\\ \\Omega$ current-sense resistor carrying $I = 10.0\\text{ A}$."
+      },
+      {
+        "tag": "[Concept: kvl_kcl_and_voltage_divider]",
+        "text": "Why can you **never** power a $3.3\\text{ V}$ motor or microcontroller using a $10\\text{ k}\\Omega / 20\\text{ k}\\Omega$ resistor voltage divider from $5\\text{ V}$?",
+        "options": [
+          "Because resistors only work with AC voltages.",
+          "Because the load draws significant current $I_{\\text{load}}$ through $R_1$, causing a massive $I_{\\text{load}} R_1$ voltage drop that collapses $V_{\\text{out}}$ (a voltage divider is for high-impedance signal sensing, not power delivery).",
+          "Because KCL does not apply when a motor is connected.",
+          "Because $3.3\\text{ V}$ exceeds the breakdown voltage of carbon film resistors."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00e — Concept: spring_energy_and_power]",
+        "text": "A spring of stiffness $k = 200.0\\,\\text{N/m}$ is compressed by $0.050\\,\\text{m}$. Compute the stored energy $\\tfrac12 k x^2$ in joules (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_istall = 12.0 / 3.0\nq2_vout = 5.0 * (20_000.0 / (10_000.0 + 20_000.0))\nq3_power_w = (10.0 ** 2) * 0.050\nq4_choice = \"B\"\n\nassert math.isclose(q1_istall, 4.0, rel_tol=1e-9)\nassert math.isclose(q2_vout, 10.0 / 3.0, rel_tol=1e-6)\nassert math.isclose(q3_power_w, 5.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = 0.5 * 200.0 * 0.050 ** 2\nassert math.isclose(q5_review, 0.25, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T1.00e`. On pass, proceed to `## 10. Next modules`."
+  },
+  "01-electronics.T1.01b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: pwm_duty_cycle_effective_voltage]",
+        "text": "Compute the average effective motor voltage $V_{\\text{eff}}$ in volts ($\\text{V}$, tolerance $\\pm 10^{-9}$) for a $V_{\\text{bus}} = 12.0\\text{ V}$ supply switched at duty cycle $D = 0.65$ ($65\\%$)."
+      },
+      {
+        "tag": "[Apply] [Concept: mosfet_low_side_rds_on_switch]",
+        "text": "Compute the conduction heat dissipation $P_{\\text{cond}} = I_D^2 R_{DS(\\text{on})}$ in watts ($\\text{W}$, tolerance $\\pm 10^{-9}$) in a MOSFET with $R_{DS(\\text{on})} = 0.015\\ \\Omega$ carrying $I_D = 6.0\\text{ A}$ at $100\\%$ duty cycle."
+      },
+      {
+        "tag": "[Transfer] [Concept: h_bridge_four_switch_polarity_and_shoot_through]",
+        "text": "An H-bridge powered from $V_{\\text{bus}} = 24.0\\text{ V}$ drives Leg A at PWM duty cycle $D_A = 0.25$ and Leg B at $D_B = 0.75$. Compute the average signed motor voltage $V_{\\text{motor}} = (D_A - D_B) V_{\\text{bus}}$ in volts ($\\text{V}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law] [SAFETY] [Concept: h_bridge_four_switch_polarity_and_shoot_through]",
+        "text": "If both $Q_{\\text{AH}}$ and $Q_{\\text{AL}}$ ($R_{DS(\\text{on})} = 0.020\\ \\Omega$ each, total series resistance $0.040\\ \\Omega$) turn ON simultaneously across an un-current-limited $V_{\\text{bus}} = 12.0\\text{ V}$ battery because dead-time was omitted, compute the instantaneous shoot-through fault current $I_{\\text{shoot}} = \\frac{V_{\\text{bus}}}{2 R_{DS(\\text{on})}}$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-6}\\text{ A}$)."
+      },
+      {
+        "tag": "[SAFETY] [Concept: mosfet_low_side_rds_on_switch]",
+        "text": "Why must a discrete low-side N-MOSFET gate have a $10\\text{ k}\\Omega$ pull-down resistor to Source (`GND`)?",
+        "options": [
+          "To increase the PWM frequency.",
+          "To bleed off gate charge and hold $V_{GS} = 0\\text{ V}$ while the microcontroller GPIO pin is floating (high-Z) during boot or reset, preventing unintended motor runaway or linear-region overheating.",
+          "To measure motor current.",
+          "To boost $3.3\\text{ V}$ to $12\\text{ V}$."
+        ]
+      }
+    ],
+    "key": "import math\n\nq1_veff = 0.65 * 12.0\nq2_pcond = (6.0 ** 2) * 0.015\nq3_vmotor = (0.25 - 0.75) * 24.0\nq4_safety_ishoot = 12.0 / (2.0 * 0.020)\nq5_safety_choice = \"B\"\nassert math.isclose(q1_veff, 7.8, rel_tol=1e-9)\nassert math.isclose(q2_pcond, 0.54, rel_tol=1e-9)\nassert math.isclose(q3_vmotor, -12.0, rel_tol=1e-9)\nassert math.isclose(q4_safety_ishoot, 300.0, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required\nassert q5_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " overall ($80\\%+$) AND $2/2$ ($100\\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 2; if you missed Q2 or Q5, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `### Safety notes`. On pass, proceed to `## 10. Next modules`."
+  },
+  "01-electronics.T1.01c": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: breadboard_internal_bus_connectivity]",
+        "text": "A solderless breadboard spring clip has contact resistance $R_{\\text{clip}} = 0.12\\ \\Omega$. If you mistakenly route $I = 5.0\\text{ A}$ of motor current through that clip, compute the localized heat power $P = I^2 R_{\\text{clip}}$ in watts ($\\text{W}$, tolerance $\\pm 10^{-6}\\text{ W}$) that melts the ABS plastic housing."
+      },
+      {
+        "tag": "[Apply] [Concept: multimeter_and_current_limited_psu_safety]",
+        "text": "A bench power supply is configured to $V_{\\text{set}} = 12.0\\text{ V}$ and current limit $I_{\\text{lim}} = 0.25\\text{ A}$. If you connect it across a $R_{\\text{load}} = 4.0\\ \\Omega$ resistor, the supply enters Constant-Current (CC) foldback. Compute the clamped output voltage $V_{\\text{out}} = \\min(V_{\\text{set}}, I_{\\text{lim}} R_{\\text{load}})$ in volts ($\\text{V}$, tolerance $\\pm 10^{-6}$)."
+      },
+      {
+        "tag": "[Transfer] [SAFETY] [Concept: multimeter_and_current_limited_psu_safety]",
+        "text": "If you leave the red multimeter lead plugged into the current-shunt jack ($R_{\\text{shunt}} = 0.010\\ \\Omega$ internal resistance, $R_{\\text{leads}} = 0.010\\ \\Omega$ probe resistance, total $0.020\\ \\Omega$) and touch the probes in parallel across an un-current-limited $24.0\\text{ V}$ battery rail, compute the instantaneous short-circuit surge current $I_{\\text{short}} = \\frac{24.0}{R_{\\text{shunt}} + R_{\\text{leads}}}$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-6}\\text{ A}$)."
+      },
+      {
+        "tag": "[SAFETY] [Concept: esd_and_short_circuit_prevention]",
+        "text": "Before turning ON the output of your bench power supply on a freshly wired breadboard circuit, what two steps are mandatory?",
+        "options": [
+          "Connect a LiPo battery in parallel and set current limit to maximum.",
+          "With power OFF, verify $V_{\\text{bus}}$-to-$\\text{GND}$ resistance is not a short using a DMM in $\\Omega$ mode, and pre-configure the bench PSU to target voltage with a low Constant-Current limit ($0.1\\text{–}0.2\\text{ A}$).",
+          "Touch the $12\\text{ V}$ wire to the MCU `3.3V` pin to test ESD protection.",
+          "Remove all ground wires."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law]",
+        "text": "A $5.0\\text{ V}$ rail powers an LED ($V_f = 2.0\\text{ V}$) through a $R = 300\\ \\Omega$ series resistor placed across the breadboard center ravine (`e10` to `f10`). Compute the series LED current $I = \\frac{V_{\\text{sup}} - V_f}{R} \\times 1000$ in milliamperes ($\\text{mA}$, tolerance $\\pm 10^{-6}$)."
+      }
+    ],
+    "key": "import math\n\nq1_p_clip = (5.0 ** 2) * 0.12\nq2_v_foldback = min(12.0, 0.25 * 4.0)\nq3_safety_ishort = 24.0 / (0.010 + 0.010)\nq4_safety_choice = \"B\"\nq5_i_ma = ((5.0 - 2.0) / 300.0) * 1000.0\nassert math.isclose(q1_p_clip, 3.0, rel_tol=1e-9)\nassert math.isclose(q2_v_foldback, 1.0, rel_tol=1e-9)\nassert math.isclose(q3_safety_ishort, 1200.0, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required\nassert q4_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required\nassert math.isclose(q5_i_ma, 10.0, rel_tol=1e-9)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " overall ($80\\%+$) AND $2/2$ ($100\\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 2–3; if you missed Q4, study `### Safety notes`. On pass, proceed to `## 10. Next modules`."
+  },
+  "01-electronics.T1.01d": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: rc_time_constant_and_filtering]",
+        "text": "Compute the time constant $\\tau = R C$ in seconds ($\\text{s}$, tolerance $\\pm 10^{-9}$) for $R = 4.7\\text{ k}\\Omega$ ($4700\\ \\Omega$) and $C = 10\\ \\mu\\text{F}$ ($10 \\times 10^{-6}\\text{ F}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: rc_time_constant_and_filtering]",
+        "text": "What percentage of the step input voltage $V_{\\text{in}}$ does an initially uncharged capacitor reach after exactly $t = 1\\tau$ ($100 \\times (1 - e^{-1})$, tolerance $\\pm 0.01\\%$)?"
+      },
+      {
+        "tag": "[Transfer] [Concept: inductor_flyback_and_freewheeling_diode]",
+        "text": "Compute the stored magnetic energy $E_L = \\frac{1}{2} L I^2$ in joules ($\\text{J}$, tolerance $\\pm 10^{-9}$) in a $L = 4.0\\text{ mH}$ ($0.004\\text{ H}$) motor phase winding carrying $I = 5.0\\text{ A}$."
+      },
+      {
+        "tag": "[Concept: capacitor_charge_storage_and_decoupling]",
+        "text": "Why do motor driver PCBs and breadboards place **both** a $100\\text{ nF}$ ($0.1\\ \\mu\\text{F}$) ceramic capacitor and a $100\\text{–}470\\ \\mu\\text{F}$ electrolytic bulk capacitor across $V_{\\text{bus}}$ and $\\text{GND}$ right at the driver IC?",
+        "options": [
+          "Ceramic capacitors look nicer next to tall cylinders.",
+          "The small low-inductance $100\\text{ nF}$ ceramic cap shunts nanosecond high-frequency switching edges, while the large $100\\text{–}470\\ \\mu\\text{F}$ electrolytic reservoir supplies millisecond motor current surges without bus droop.",
+          "Putting two capacitors in parallel divides the voltage in half.",
+          "The ceramic capacitor converts DC into AC."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law]",
+        "text": "A $12.0\\,\\text{V}$ rail drives $470\\ \\Omega$. Compute the current in milliamperes (tolerance $\\pm 10^{-6}$)."
+      }
+    ],
+    "key": "import math\n\nq1_tau_s = 4700.0 * 10e-6\nq2_pct_1tau = 100.0 * (1.0 - math.exp(-1.0))\nq3_energy_j = 0.5 * 0.004 * (5.0 ** 2)\nq4_choice = \"B\"\n\nassert math.isclose(q1_tau_s, 0.047, rel_tol=1e-9)\nassert math.isclose(q2_pct_1tau, 63.21205588, abs_tol=1e-2)\nassert math.isclose(q3_energy_j, 0.05, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = 1000.0 * 12.0 / 470.0\nassert math.isclose(q5_review, 25.531914893617, rel_tol=1e-9, abs_tol=1e-06)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3; Q4, study `## 3. Formalization` item 1. If you missed  Q5, review `01-electronics.T1.01a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "01-electronics.T2.01a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: differential_shunt_gain_and_cmrr]",
+        "text": "Compute the ADC voltage $V_{\\text{ADC}} = V_{\\text{ref}} + G \\cdot I \\cdot R_{\\text{shunt}}$ in volts ($\\text{V}$, tolerance $\\pm 10^{-9}$) for $V_{\\text{ref}} = 1.65\\text{ V}$, $G = 20.0\\text{ V/V}$, $R_{\\text{shunt}} = 0.005\\ \\Omega$ ($5\\text{ m}\\Omega$), and $I = -10.0\\text{ A}$."
+      },
+      {
+        "tag": "[Apply] [Concept: kelvin_four_terminal_sense_routing]",
+        "text": "A $2.0\\text{ m}\\Omega$ shunt is routed without Kelvin connections, adding $0.4\\text{ m}\\Omega$ of copper trace resistance in series with each of the two pads ($2 R_{\\text{trace}} = 0.8\\text{ m}\\Omega$). Compute the percentage gain error $100 \\times \\frac{2 R_{\\text{trace}}}{R_{\\text{shunt}}}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: opamp_negative_feedback_virtual_short]",
+        "text": "For a bidirectional current-sense amplifier biased at $V_{\\text{ref}} = 1.65\\text{ V}$ feeding a $0\\text{–}3.30\\text{ V}$ ADC with gain $G = 20.0\\text{ V/V}$ and $R_{\\text{shunt}} = 0.005\\ \\Omega$, compute the maximum positive current $I_{\\max} = \\frac{3.30 - V_{\\text{ref}}}{G \\cdot R_{\\text{shunt}}}$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-6}$) before the op-amp output saturates at $3.30\\text{ V}$."
+      },
+      {
+        "tag": "[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law] [Concept: kelvin_four_terminal_sense_routing]",
+        "text": "Why do the two inner Kelvin sense traces carry almost zero current ($I_{\\text{sense}} \\approx 0$)?",
+        "options": [
+          "Because they terminate into the very high input impedance of the differential amplifier, so virtually none of the $15\\text{ A}$ motor current flows through the sense traces or their solder joints.",
+          "Because the sense traces are made of plastic.",
+          "Because the shunt resistor is open circuit.",
+          "Because $V_{\\text{ref}}$ blocks current."
+        ]
+      }
+    ],
+    "key": "import math\n\nq1_vadc = 1.65 + 20.0 * (-10.0) * 0.005\nq2_err_pct = 100.0 * (2.0 * 0.4) / 2.0\nq3_imax = (3.30 - 1.65) / (20.0 * 0.005)\nq4_choice = \"A\"\nassert math.isclose(q1_vadc, 0.65, rel_tol=1e-9)\nassert math.isclose(q2_err_pct, 40.0, rel_tol=1e-9)\nassert math.isclose(q3_imax, 16.5, rel_tol=1e-9)\nassert q4_choice == \"A\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 2; if you missed Q2 or Q4, study `## 3. Formalization` item 3; if you missed Q3, study `## 3. Formalization` item 1 & 2. On pass, proceed to `## 10. Next modules`."
+  },
+  "01-electronics.T2.01b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: parasitic_loop_inductance_voltage_overshoot]",
+        "text": "Compute the peak Drain-to-Source voltage $V_{\\text{peak}} = V_{\\text{bus}} + L_{\\text{loop}}\\frac{\\Delta I}{\\Delta t}$ in volts ($\\text{V}$, tolerance $\\pm 10^{-6}$) when $V_{\\text{bus}} = 48.0\\text{ V}$, $L_{\\text{loop}} = 5.0\\text{ nH}$, and $\\Delta I = 24.0\\text{ A}$ turns off in $\\Delta t = 15.0\\text{ ns}$."
+      },
+      {
+        "tag": "[Apply] [Concept: bootstrap_high_side_gate_driver_and_deadtime]",
+        "text": "Compute the average gate drive current $I_G = Q_g / t_r$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-6}$) required to charge a MOSFET gate with $Q_g = 45\\text{ nC}$ in $t_r = 30\\text{ ns}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: precharge_resistor_inrush_and_tvs_clamp]",
+        "text": "Compute the stored bus energy $E_{\\text{cap}} = \\frac{1}{2} C_{\\text{bus}} V_{\\text{bus}}^2$ in joules ($\\text{J}$, tolerance $\\pm 10^{-6}$) in a $C_{\\text{bus}} = 1500\\ \\mu\\text{F}$ ($0.0015\\text{ F}$) inverter capacitor bank charged to $V_{\\text{bus}} = 48.0\\text{ V}$."
+      },
+      {
+        "tag": "[SAFETY] [Concept: precharge_resistor_inrush_and_tvs_clamp]",
+        "text": "What happens if you hot-plug a $48\\text{ V}$ LiPo battery ($R_{\\text{internal}} = 15\\text{ m}\\Omega$) directly into an uncharged $1500\\ \\mu\\text{F}$ inverter capacitor bank without a pre-charge resistor?",
+        "options": [
+          "Nothing; capacitors block inrush current.",
+          "The uncharged capacitor bank acts as a $0\\text{ V}$ short at $t=0$, drawing an instantaneous inrush surge of $>1000\\text{ A}$ that vaporizes connector pins, welds relays shut, and can avalanche the MOSFETs via $L\\,di/dt$ ringing.",
+          "The battery voltage drops permanently to $12\\text{ V}$.",
+          "The CAN bus baud rate doubles."
+        ]
+      },
+      {
+        "tag": "[SAFETY] [Concept: parasitic_loop_inductance_voltage_overshoot]",
+        "text": "On a 4-layer motor controller PCB (`L1: Signal/Power`, `L2: Solid GND`, `L3: Power/Signal`, `L4: Signal`), why must you **never** cut slots across the Layer-2 ground plane beneath the high-speed gate drive or commutation loop?",
+        "options": [
+          "Because slots make the PCB heavier.",
+          "Because cutting the return plane forces high-frequency return current to detour around the slot, dramatically expanding magnetic loop area, increasing $L_{\\text{loop}}$ voltage spikes, and injecting common-mode noise into ADC signals.",
+          "Because KiCad cannot export Gerbers with slots.",
+          "Because copper planes only conduct DC."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 01-electronics.T2.01a — Concept: differential_shunt_gain_and_cmrr]",
+        "text": "A differential amplifier has a gain of $20.0$ and a differential input of $50.0\\,\\text{mV}$. Compute its output in volts (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_vpeak = 48.0 + 5.0 * (24.0 / 15.0)\nq2_ig = 45.0 / 30.0\nq3_ecap = 0.5 * 0.0015 * (48.0 ** 2)\nq4_safety_choice = \"B\"\nq5_safety_choice = \"B\"\nassert math.isclose(q1_vpeak, 56.0, rel_tol=1e-6)\nassert math.isclose(q2_ig, 1.5, rel_tol=1e-6)\nassert math.isclose(q3_ecap, 1.728, rel_tol=1e-9)\nassert q4_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required\nassert q5_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required\nq6_review = 20.0 * 50.0e-3\nassert math.isclose(q6_review, 1.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      5,
+      6
+    ],
+    "note": " overall ($80\\%+$) AND $2/2$ ($100\\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `01-electronics.T2.01a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "01-electronics.T3.01a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: mutual_inductance_flux_cancellation]",
+        "text": "Two coupled traces have self-inductances $L_1 = 6.0\\text{ nH}$ and $L_2 = 6.0\\text{ nH}$ and mutual inductance $M = 5.2\\text{ nH}$ when carrying anti-parallel supply and return currents. Compute the net commutation loop inductance $L_{\\text{loop}} = L_1 + L_2 - 2M$ in nanohenries ($\\text{nH}$, tolerance $\\pm 10^{-9}\\text{ nH}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: bessel_constant_group_delay_afe]",
+        "text": "Compute the quality factor $Q = 1 / \\sqrt{3}$ (tolerance $\\pm 10^{-4}$) of a maximally flat group-delay 2nd-order Bessel low-pass filter."
+      },
+      {
+        "tag": "[Transfer] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]",
+        "text": "A SAR ADC has internal sampling capacitor $C_{\\text{sample}} = 5.0\\text{ pF}$ and external charge-bucket capacitor $C_{\\text{filt}} = 95.0\\text{ pF}$. For a full-scale step $V_{\\text{FS}} = 3.30\\text{ V}$, compute the instantaneous charge-sharing voltage droop $\\Delta V_0 = V_{\\text{FS}} \\frac{C_{\\text{sample}}}{C_{\\text{filt}} + C_{\\text{sample}}}$ in volts ($\\text{V}$, tolerance $\\pm 10^{-9}\\text{ V}$) at the moment the sampling switch closes."
+      },
+      {
+        "tag": "[SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]",
+        "text": "During a $t_p = 0.005\\text{ s}$ ($5\\text{ ms}$) locked-rotor fault dissipating $P_{\\text{loss}} = 200.0\\text{ W}$ in a MOSFET whose junction-to-case thermal stage has $R_{\\theta 1} = 0.50\\ {^\\circ}\\text{C/W}$ and $\\tau_{\\theta 1} = 0.005\\text{ s}$, compute the transient junction temperature rise $\\Delta T_J = P_{\\text{loss}} R_{\\theta 1} (1 - e^{-t_p / \\tau_{\\theta 1}})$ in ${^\\circ}\\text{C}$ (tolerance $\\pm 0.01\\ {^\\circ}\\text{C}$)."
+      },
+      {
+        "tag": "[SAFETY] [Concept: sar_adc_charge_bucket_and_cauer_thermal_rc]",
+        "text": "Why can an NTC thermistor mounted on the aluminum motor housing **never** be used as the sole protection against a locked-rotor MOSFET over-current fault?",
+        "options": [
+          "Because NTC thermistors only work below $0\\ {^\\circ}\\text{C}$.",
+          "Because the silicon die has a millisecond thermal time constant ($\\tau_{\\text{die}} \\approx 2\\text{–}10\\text{ ms}$) and reaches its $175\\ {^\\circ}\\text{C}$ destruction limit in milliseconds, whereas the aluminum housing has a multi-second thermal time constant ($\\tau_{\\text{sink}} \\approx 20\\text{–}60\\text{ s}$) and barely warms up before the MOSFET explodes.",
+          "Because aluminum is a thermal insulator.",
+          "Because thermistors block PWM signals."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 01-electronics.T2.01b — Concept: parasitic_loop_inductance_voltage_overshoot]",
+        "text": "A $20.0\\,\\text{nH}$ commutation loop interrupts $30.0\\,\\text{A}$ in $20.0\\,\\text{ns}$. Compute the overshoot $L\\,di/dt$ in volts (tolerance $\\pm 10^{-6}$)."
+      }
+    ],
+    "key": "import math\n\nq1_l_loop = 6.0 + 6.0 - 2.0 * 5.2\nq2_q_bessel = 1.0 / math.sqrt(3.0)\nq3_dv0 = 3.30 * (5.0 / (95.0 + 5.0))\nq4_safety_dtj = 200.0 * 0.50 * (1.0 - math.exp(-1.0))\nq5_safety_choice = \"B\"\n\nassert math.isclose(q1_l_loop, 1.6, rel_tol=1e-9)\nassert math.isclose(q2_q_bessel, 0.57735027, abs_tol=1e-4)\nassert math.isclose(q3_dv0, 0.165, rel_tol=1e-9)\nassert math.isclose(q4_safety_dtj, 63.212056, abs_tol=1e-2)  # Mandatory [SAFETY] 100% required\nassert q5_safety_choice == \"B\"                                # Mandatory [SAFETY] 100% required\nq6_review = 20.0e-9 * 30.0 / 20.0e-9\nassert math.isclose(q6_review, 30.0, rel_tol=1e-9, abs_tol=1e-06)",
+    "mark": [
+      5,
+      6
+    ],
+    "note": " overall ($80\\%+$) AND $2/2$ ($100\\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, Q4, or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `01-electronics.T2.01b`. On pass, proceed to `## 10. Next modules`."
+  },
+  "02-mechanics.T1.02a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: free_body_diagram_static_equilibrium]",
+        "text": "A horizontal massless beam is pivoted at $x = 0\\text{ m}$. A downward load of $F_1 = 30.0\\text{ N}$ acts at $x_1 = 0.20\\text{ m}$. What upward force $F_2$ in newtons ($\\text{N}$, tolerance $\\pm 10^{-9}$) must act at $x_2 = 0.10\\text{ m}$ to maintain static torque equilibrium ($\\sum \\tau_z = 0$)?"
+      },
+      {
+        "tag": "[Apply] [Concept: gravity_lever_arm_cosine_torque]",
+        "text": "Compute the gravity holding torque $\\tau_g = m g L \\cos\\theta$ in $\\text{N}\\cdot\\text{m}$ (tolerance $\\pm 10^{-6}$) for a point mass $m = 1.0\\text{ kg}$ at arm length $L = 0.30\\text{ m}$ with $g = 9.81\\text{ m/s}^2$ when the arm is straight up ($\\theta = \\pi/2\\text{ rad}$ from horizontal)."
+      },
+      {
+        "tag": "[Transfer] [Concept: gear_reduction_speed_torque_power_conservation]",
+        "text": "An ideal ($\\eta = 1.0$) planetary gearbox with ratio $N = 9.0$ is driven by a motor producing $\\tau_m = 0.20\\text{ N}\\cdot\\text{m}$ at $\\omega_m = 90.0\\text{ rad/s}$. Compute the output torque $\\tau_{\\text{load}}$ ($\\text{N}\\cdot\\text{m}$) and output speed $\\omega_{\\text{load}}$ ($\\text{rad/s}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00d — Concept: radians_unit_circle_and_atan2] [Concept: gravity_lever_arm_cosine_torque]",
+        "text": "At what shoulder angle $\\theta$ (measured from the horizontal $+x$-axis) does a planar robot link experience the **maximum** gravity holding torque?",
+        "options": [
+          "$\\theta = 0\\text{ rad}$ (horizontal)",
+          "$\\theta = \\pi/4\\text{ rad}$ ($45^\\circ$)",
+          "$\\theta = \\pi/2\\text{ rad}$ (vertical overhead)",
+          "Gravity torque is constant at all angles."
+        ]
+      }
+    ],
+    "key": "import math\n\nq1_f2 = (30.0 * 0.20) / 0.10\nq2_tau_90 = 1.0 * 9.81 * 0.30 * math.cos(math.pi / 2.0)\nq3_tau_load = 9.0 * 0.20\nq3_w_load = 90.0 / 9.0\nq4_choice = \"A\"\n\nassert math.isclose(q1_f2, 60.0, rel_tol=1e-9)\nassert math.isclose(q2_tau_90, 0.0, abs_tol=1e-9)\nassert math.isclose(q3_tau_load, 1.8, rel_tol=1e-9)\nassert math.isclose(q3_w_load, 10.0, rel_tol=1e-9)\nassert q4_choice == \"A\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q4, study `## 3. Formalization` item 2; Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`."
+  },
+  "02-mechanics.T2.02a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: six_dof_gruebler_constraint_counting]",
+        "text": "Using the spatial Gruebler-Kutzbach mobility formula $M = 6(N - 1 - J) + \\sum_{i=1}^J f_i$, compute the spatial degrees of freedom $M$ (exact integer, tolerance $\\pm 0$) of a serial robot arm with $N = 7$ total links ($1$ fixed base $+ 6$ moving links) connected by $J = 6$ single-DOF revolute joints ($f_i = 1$)."
+      },
+      {
+        "tag": "[Apply] [Concept: se3_homogeneous_transformation_matrix]",
+        "text": "For a $4\\times 4$ homogeneous transform $T = \\begin{bmatrix} I_3 & p \\\\ 0 & 1 \\end{bmatrix}$ with pure translation $p = [0.3, -0.1, 0.5]^\\top\\text{ m}$, what is the translation vector $p_{\\text{inv}}$ of its inverse $T^{-1}$?",
+        "options": [
+          "$[0.3, -0.1, 0.5]^\\top\\text{ m}$",
+          "$[-0.3, 0.1, -0.5]^\\top\\text{ m}$",
+          "$[0.0, 0.0, 0.0]^\\top\\text{ m}$",
+          "$[1.0, 1.0, 1.0]^\\top\\text{ m}$"
+        ]
+      },
+      {
+        "tag": "[Transfer] [Concept: geometric_jacobian_and_parallel_axis_theorem]",
+        "text": "Given Jacobian $J = \\begin{bmatrix} 0.0 & -0.2 \\\\ 0.4 & 0.2 \\end{bmatrix}\\text{ m/rad}$ and Cartesian tip force $F = [10.0, 5.0]^\\top\\text{ N}$, compute the first joint torque $\\tau_1 = (J^\\top F)_0$ in $\\text{N}\\cdot\\text{m}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Concept: geometric_jacobian_and_parallel_axis_theorem]",
+        "text": "A link has mass $m = 2.0\\text{ kg}$, center-of-mass inertia $I_{zz,\\text{com}} = 0.015\\text{ kg}\\cdot\\text{m}^2$, and center-of-mass offset $d = 0.10\\text{ m}$ from the joint pivot. Compute $I_{zz,\\text{joint}} = I_{zz,\\text{com}} + m d^2$ in $\\text{kg}\\cdot\\text{m}^2$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Spaced review -> 02-mechanics.T1.02a — Concept: gear_reduction_speed_torque_power_conservation]",
+        "text": "A motor turns at $3000\\,\\text{rpm}$ through a $10{:}1$ reduction. Compute the output speed in $\\text{rpm}$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_mobility = 6 * (7 - 1 - 6) + 6 * 1\nq2_choice = \"B\"\nJ = [[0.0, -0.2], [0.4, 0.2]]\nF = [10.0, 5.0]\nq3_tau1 = J[0][0] * F[0] + J[1][0] * F[1]\nq4_i_joint = 0.015 + 2.0 * (0.10 ** 2)\n\nassert q1_mobility == 6\nassert q2_choice == \"B\"\nassert math.isclose(q3_tau1, 2.0, rel_tol=1e-9)\nassert math.isclose(q4_i_joint, 0.035, rel_tol=1e-9)\nq5_review = 3000.0 / 10.0\nassert math.isclose(q5_review, 300.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `02-mechanics.T1.02a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "02-mechanics.T3.02a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: spatial_twist_wrench_and_screw_axis]",
+        "text": "Given spatial twist $\\mathcal{V} = [\\omega^\\top, v^\\top]^\\top = [0.0, 0.0, 2.0,\\ 0.5, 0.0, 0.0]^\\top$ ($\\text{rad/s}, \\text{m/s}$) and spatial wrench $\\mathcal{F} = [m^\\top, f^\\top]^\\top = [0.0, 0.0, 3.0,\\ 10.0, 0.0, 0.0]^\\top$ ($\\text{N}\\cdot\\text{m}, \\text{N}$) in the same frame, compute the instantaneous mechanical power $P = \\mathcal{V}^\\top \\mathcal{F} = \\omega \\cdot m + v \\cdot f$ in watts ($\\text{W}$, tolerance $\\pm 10^{-9}\\text{ W}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: spatial_twist_wrench_and_screw_axis]",
+        "text": "A revolute joint rotates about $+Z$ ($\\omega = [0.0, 0.0, 1.0]^\\top$) and passes through point $q = [0.50, 0.20, 0.0]^\\top\\text{ m}$. Compute the $x$-component $v_x$ of the screw linear term $v = -\\omega \\times q$ in $\\text{m/rad}$ (tolerance $\\pm 10^{-9}\\text{ m/rad}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: circular_notch_flexure_stiffness_stress]",
+        "text": "In the Paros-Weisbord circular notch flexure stiffness formula $K_\\theta = \\frac{2 E b t^{5/2}}{9\\pi \\sqrt{R}}$, by what multiplicative factor (tolerance $\\pm 10^{-4}$) does $K_\\theta$ increase if you double the web thickness $t$ while keeping $E, b, R$ constant?"
+      },
+      {
+        "tag": "[Concept: recursive_forward_velocity_backward_wrench]",
+        "text": "In the two-pass Recursive Newton-Euler Algorithm (`RNEA`) for a serial open-chain robot arm, in what directions do the two passes traverse the kinematic tree, and what is the computational complexity in terms of the number of joints $n$?",
+        "options": [
+          "Pass 1 (velocities/accelerations) goes outward from base $1 \\to n$, Pass 2 (wrenches/torques) goes inward from tip $n \\to 1$, achieving linear $O(n)$ complexity.",
+          "Both passes go from tip to base with $O(n^4)$ complexity.",
+          "Only a single pass is used and gravity is ignored.",
+          "It requires inverting $M(q)$ at every step."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 02-mechanics.T2.02a — Concept: se3_homogeneous_transformation_matrix]",
+        "text": "A planar point $p = (0.10,\\; 0.20)\\,\\text{m}$ is rotated by $\\theta = 90^\\circ$ about the origin. Compute its $x$ coordinate in metres (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_power_w = 2.0 * 3.0 + 0.5 * 10.0\n# -w x q = [0, 0, -1] x [0.50, 0.20, 0] = [0.20, -0.50, 0]\nw_z, q_y = 1.0, 0.20\nq2_vx = -(-w_z * q_y)\nq3_scale = 2.0 ** 2.5\nq4_choice = \"A\"\n\nassert math.isclose(q1_power_w, 11.0, rel_tol=1e-9)\nassert math.isclose(q2_vx, 0.20, rel_tol=1e-9)\nassert math.isclose(q3_scale, 5.65685425, abs_tol=1e-4)\nassert q4_choice == \"A\"\nq5_review = math.cos(math.pi/2) * 0.10 - math.sin(math.pi/2) * 0.20\nassert math.isclose(q5_review, -0.2, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `02-mechanics.T2.02a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "03-sensors.T1.03a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: lorentz_force_and_back_emf_constants]",
+        "text": "A DC motor with winding resistance $R = 2.5\\ \\Omega$ and back-EMF constant $K_e = 0.10\\text{ V}\\cdot\\text{s/rad}$ spins at $\\omega_m = 40.0\\text{ rad/s}$ while driven from $V_{\\text{term}} = 10.0\\text{ V}$. Compute the winding current $i = (V_{\\text{term}} - K_e\\omega_m)/R$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: mechanical_vs_electrical_angle_pole_pairs]",
+        "text": "A `24N28P` outrunner motor has $28$ permanent magnet poles ($14$ North, $14$ South). Compute its number of pole pairs $p$ and its electrical speed $\\omega_e = p\\omega_m$ in $\\text{rad/s}$ when $\\omega_m = 10.0\\text{ rad/s}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: quadrature_ab_gray_code_direction]",
+        "text": "An optical quadrature encoder disc has $N_{\\text{lines}} = 500$ lines per revolution and is decoded in $4\\times$ quadrature mode (counting rising and falling edges of both channels `A` and `B`). Compute the total counts per mechanical revolution ($\\text{CPR} = 4 N_{\\text{lines}}$, exact integer, tolerance $\\pm 0$)."
+      },
+      {
+        "tag": "[Concept: quadrature_ab_gray_code_direction]",
+        "text": "Why does a quadrature encoder require **two** channels (`A` and `B` shifted by $90^\\circ$ electrical) instead of a single pulse channel `A`?",
+        "options": [
+          "Because a single channel can only count up to 100.",
+          "Because a single pulse channel tells you speed (edge rate) but cannot distinguish clockwise from counter-clockwise rotation when the motor reverses direction.",
+          "To double the supply voltage.",
+          "Because channel `B` carries power."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 01-electronics.T1.01b — Concept: pwm_duty_cycle_effective_voltage]",
+        "text": "A $24.0\\,\\text{V}$ supply is chopped at $25\\%$ duty. Compute the average voltage across the load in volts (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_current = (10.0 - 0.10 * 40.0) / 2.5\nq2_p = 28 // 2\nq2_we = q2_p * 10.0\nq3_cpr = 4 * 500\nq4_choice = \"B\"\n\nassert math.isclose(q1_current, 2.4, rel_tol=1e-9)\nassert q2_p == 14\nassert math.isclose(q2_we, 140.0, rel_tol=1e-9)\nassert q3_cpr == 2000\nassert q4_choice == \"B\"\nq5_review = 0.25 * 24.0\nassert math.isclose(q5_review, 6.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `01-electronics.T1.01b`. On pass, proceed to `## 10. Next modules`."
+  },
+  "03-sensors.T2.03a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: three_phase_balanced_sum_and_clarke_projection]",
+        "text": "In a balanced 3-phase star-connected motor with floating neutral ($i_a + i_b + i_c = 0$), if $i_a = 8.0\\text{ A}$ and $i_b = -3.0\\text{ A}$, compute $i_c$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: three_phase_balanced_sum_and_clarke_projection]",
+        "text": "Using the amplitude-invariant Clarke formula $i_\\alpha = i_a,\\ i_\\beta = \\frac{i_a + 2i_b}{\\sqrt{3}}$, compute $i_\\beta$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-6}$) when $i_a = 0.0\\text{ A}$ and $i_b = \\sqrt{3}\\text{ A}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: park_rotating_frame_dc_demodulation]",
+        "text": "Using the Park rotation $i_d = i_\\alpha\\cos\\theta_e + i_\\beta\\sin\\theta_e$ and $i_q = -i_\\alpha\\sin\\theta_e + i_\\beta\\cos\\theta_e$, compute $i_q$ in amperes ($\\text{A}$, tolerance $\\pm 10^{-6}$) when $(i_\\alpha, i_\\beta) = (-6\\sqrt{3}, 6.0)\\text{ A}$ at electrical angle $\\theta_e = 60^\\circ$ ($\\pi/3\\text{ rad}$)."
+      },
+      {
+        "tag": "[Concept: park_rotating_frame_dc_demodulation]",
+        "text": "In surface-mounted PMSM Field-Oriented Control (FOC) below base speed, why do we command $i_d^{*} = 0\\text{ A}$ and put all current into $i_q^{*}$?",
+        "options": [
+          "Because $d$-axis current aligns with the rotor magnets and produces zero torque (only $I^2 R$ heat), whereas $q$-axis current is perpendicular ($90^\\circ$) to the rotor flux and maximizes torque per ampere ($\\tau = \\frac{3}{2} p \\psi_m i_q$).",
+          "Because $i_d$ cannot be measured.",
+          "Because $i_q$ does not flow through the stator windings.",
+          "Because $i_d$ reverses the encoder direction."
+        ]
+      },
+      {
+        "tag": "[Concept: pll_velocity_tracking_and_noise_random_walk]",
+        "text": "Integrating a gyroscope with white noise density $\\sigma_g = 0.02\\text{ rad/s}/\\sqrt{\\text{s}}$ over $t = 25.0\\text{ s}$ produces random-walk angle uncertainty $\\sigma_\\theta(t) = \\sigma_g \\sqrt{t}$. Compute $\\sigma_\\theta(25.0\\text{ s})$ in radians ($\\text{rad}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Spaced review -> 03-sensors.T1.03a — Concept: mechanical_vs_electrical_angle_pole_pairs]",
+        "text": "A motor has $4$ pole pairs. Compute the electrical angle in degrees for a mechanical angle of $90.0^\\circ$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_ic = -(8.0 + (-3.0))\nq2_ibeta = (0.0 + 2.0 * math.sqrt(3.0)) / math.sqrt(3.0)\ntheta_e = math.pi / 3.0\nq3_iq = -(-6.0 * math.sqrt(3.0)) * math.sin(theta_e) + 6.0 * math.cos(theta_e)\nq4_choice = \"A\"\nq5_sigma_theta = 0.02 * math.sqrt(25.0)\nassert math.isclose(q1_ic, -5.0, rel_tol=1e-9)\nassert math.isclose(q2_ibeta, 2.0, rel_tol=1e-6)\nassert math.isclose(q3_iq, 12.0, rel_tol=1e-6)\nassert q4_choice == \"A\"\nassert math.isclose(q5_sigma_theta, 0.10, rel_tol=1e-9)\nq6_review = 4.0 * 90.0\nassert math.isclose(q6_review, 360.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      5,
+      6
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 2; if you missed Q5, study `## 3. Formalization` item 3. If you missed  Q6, review `03-sensors.T1.03a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "03-sensors.T3.03a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: dq_inductive_cross_coupling_feedforward]",
+        "text": "A PMSM with $L_q = 150\\ \\mu\\text{H}$ ($1.5 \\times 10^{-4}\\text{ H}$) operates at electrical speed $\\omega_e = 2000.0\\text{ rad/s}$ and quadrature current $i_q = 15.0\\text{ A}$. Compute the $d$-axis inductive cross-coupling feedforward term $v_{d,\\text{ff}} = -\\omega_e L_q i_q$ in volts ($\\text{V}$, tolerance $\\pm 10^{-9}\\text{ V}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: svpwm_zero_sequence_hexagonal_limit]",
+        "text": "Compute the maximum unclipped fundamental phase peak voltage $V_{\\phi,\\max} = V_{\\text{bus}} / \\sqrt{3}$ in volts ($\\text{V}$, tolerance $\\pm 0.01\\text{ V}$) achievable with Min-Max SVPWM on a $V_{\\text{bus}} = 48.0\\text{ V}$ DC bus."
+      },
+      {
+        "tag": "[Transfer] [Concept: svpwm_zero_sequence_hexagonal_limit]",
+        "text": "Given instantaneous phase voltage commands $v_a^* = 18.0\\text{ V}$, $v_b^* = -6.0\\text{ V}$, and $v_c^* = -12.0\\text{ V}$, compute the Min-Max zero-sequence offset $v_0 = -\\frac{1}{2}(\\max(v_a^*, v_b^*, v_c^*) + \\min(v_a^*, v_b^*, v_c^*))$ in volts ($\\text{V}$, tolerance $\\pm 10^{-9}\\text{ V}$)."
+      },
+      {
+        "tag": "[Spaced review -> 03-sensors.T2.03a — Concept: synchronous_dq_foc_current_loop] [Concept: encoder_spatial_harmonic_error_fit]",
+        "text": "Why does adding the same zero-sequence voltage $v_0(t)$ to all three inverter leg commands $(v_a^* + v_0, v_b^* + v_0, v_c^* + v_0)$ produce **zero** zero-sequence phase current in a 3-phase star-connected motor with an isolated (floating) neutral point?",
+        "options": [
+          "Because the motor windings only respond to line-to-line voltage differences (such as $(v_a^* + v_0) - (v_b^* + v_0) = v_a^* - v_b^*$), so the common-mode offset $v_0(t)$ shifts the neutral potential without driving any current ($i_a + i_b + i_c \\equiv 0$).",
+          "Because $v_0(t)$ is always zero at every angle.",
+          "Because the MOSFETs block common-mode voltages.",
+          "Because the encoder cancels $v_0(t)$."
+        ]
+      }
+    ],
+    "key": "import math\n\nq1_vd_ff = -2000.0 * 150e-6 * 15.0\nq2_vmax_svpwm = 48.0 / math.sqrt(3.0)\nq3_v0 = -0.5 * (max(18.0, -6.0, -12.0) + min(18.0, -6.0, -12.0))\nq4_choice = \"A\"\n\nassert math.isclose(q1_vd_ff, -4.50, rel_tol=1e-9)\nassert math.isclose(q2_vmax_svpwm, 27.7128129, abs_tol=1e-2)\nassert math.isclose(q3_v0, -3.0, rel_tol=1e-9)\nassert q4_choice == \"A\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` items 2–3. On pass, proceed to `## 10. Next modules`."
+  },
+  "04-embedded.T1.04a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: c_fixed_width_integer_types_and_overflow]",
+        "text": "Compute the maximum positive integer $2^{16-1} - 1$ representable by a signed 16-bit integer `int16_t` (exact integer, tolerance $\\pm 0$)."
+      },
+      {
+        "tag": "[Apply] [Concept: c_fixed_width_integer_types_and_overflow]",
+        "text": "Compute the unsigned 8-bit difference `(uint8_t)(now - prev)` (i.e. `(now - prev) & 0xFF`) when `now = 3` and `prev = 250` (exact integer, tolerance $\\pm 0$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: bitwise_masks_and_shifts]",
+        "text": "Starting from `reg = 0x0F` (`15`), compute the decimal value of `reg` after clearing bit `2` (`reg &= ~(1 << 2)`, exact integer, tolerance $\\pm 0$)."
+      },
+      {
+        "tag": "[Concept: c_structs_and_pointers_pass_by_reference]",
+        "text": "Why does embedded C code write `REG &= ~(1U << 5)` instead of `REG = 0` when disabling peripheral bit 5?",
+        "options": [
+          "Because `REG = 0` does not compile in C.",
+          "Because `REG &= ~(1U << 5)` clears **only** bit 5 while preserving the state of all other 31 configuration bits in that hardware register.",
+          "Because `~` multiplies by two.",
+          "Because `REG = 0` sets all bits to `1`."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00b — Concept: lists_dicts_and_numpy_arrays]",
+        "text": "Given `samples = [0.5, 1.5, 2.5]`, compute the mean (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\nq1_int16_max = (1 << 15) - 1\nq2_u8_delta = (3 - 250) & 0xFF\nq3_reg_cleared = 0x0F & ~(1 << 2)\nq4_choice = \"B\"\n\nassert q1_int16_max == 32767\nassert q2_u8_delta == 9\nassert q3_reg_cleared == 11\nassert q4_choice == \"B\"\nq5_review = (0.5 + 1.5 + 2.5) / 3.0\nassert math.isclose(q5_review, 1.5, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3 or Q4, study `## 3. Formalization` item 2. If you missed  Q5, review `00-foundations.T1.00b`. On pass, proceed to `## 10. Next modules`."
+  },
+  "04-embedded.T1.04b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: non_blocking_tick_scheduler]",
+        "text": "If a main loop calls `delay(50)` ($50\\text{ ms}$) for an LED blink and `delay(20)` ($20\\text{ ms}$) for a sensor wait, what is the maximum loop execution frequency $f_{\\text{loop}} = \\frac{1}{0.050 + 0.020}$ in $\\text{Hz}$ (tolerance $\\pm 0.01\\text{ Hz}$)?"
+      },
+      {
+        "tag": "[Apply] [Concept: hardware_isr_and_volatile_contract]",
+        "text": "Compute the CPU utilization percentage $U_{\\text{isr}}\\% = 100 \\times \\frac{t_{\\text{exec}}}{T_{\\text{isr}}}$ (tolerance $\\pm 10^{-6}$) for a $1\\text{ kHz}$ ($1000\\ \\mu\\text{s}$) timer ISR that takes $t_{\\text{exec}} = 35\\ \\mu\\text{s}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: finite_state_machine_switch_enum]",
+        "text": "An actuator FSM running inside a $f_{\\text{isr}} = 20\\text{ kHz}$ ($T_{\\text{isr}} = 50\\ \\mu\\text{s}$) timer ISR transitions from `RUN` to `FAULT` (forcing `pwm_cmd = 0.0`) after $N_{\\text{debounce}} = 3$ consecutive overcurrent samples. Compute the total fault-detection latency $t_{\\text{fault}} = N_{\\text{debounce}} / f_{\\text{isr}}$ in microseconds ($\\mu\\text{s}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Concept: hardware_isr_and_volatile_contract]",
+        "text": "Why must a global flag `bool tick_ready` written inside a hardware timer ISR and polled inside `main()` be declared `volatile bool tick_ready` in C/C++?",
+        "options": [
+          "To make the variable use flash memory instead of RAM.",
+          "To prevent the compiler optimizer (`-O2`/`-O3`) from caching `tick_ready` in a CPU register and turning `while (!tick_ready)` into an infinite loop.",
+          "To automatically disable interrupts during math operations.",
+          "To convert the boolean into a 32-bit float."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 04-embedded.T1.04a — Concept: bitwise_masks_and_shifts]",
+        "text": "Compute the mask `1U << 5` as a decimal integer (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_floop_hz = 1.0 / (0.050 + 0.020)\nq2_cpu_pct = 100.0 * (35.0 / 1000.0)\nq3_tfault_us = (3.0 / 20_000.0) * 1e6\nq4_choice = \"B\"\nassert math.isclose(q1_floop_hz, 14.2857, abs_tol=1e-2)\nassert math.isclose(q2_cpu_pct, 3.5, rel_tol=1e-9)\nassert math.isclose(q3_tfault_us, 150.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = float(1 << 5)\nassert math.isclose(q5_review, 32.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 3; if you missed Q3, study `## 3. Formalization` item 2. If you missed  Q5, review `04-embedded.T1.04a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "04-embedded.T2.04a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: spi_full_duplex_clock_polarity_phase]",
+        "text": "Compute the pure clock shifting time $t_{\\text{shift}} = B_{\\text{bits}} / f_{\\text{sclk}}$ in microseconds ($\\mu\\text{s}$, tolerance $\\pm 10^{-9}$) to transfer a $24\\text{-bit}$ SPI sensor frame at $f_{\\text{sclk}} = 12\\text{ MHz}$ ($12 \\times 10^6\\text{ Hz}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: dma_zero_cpu_memory_transfer]",
+        "text": "Compute the CPU blocking time $t_{\\text{poll}} = \\frac{B_{\\text{bits}}}{f_{\\text{baud}}} \\times 10^6$ in microseconds ($\\mu\\text{s}$, tolerance $\\pm 10^{-6}$) wasted by polling a $50\\text{-byte}$ ($500\\text{-bit}$ in `8N1`) UART packet at $1\\text{ Mbps}$ ($10^6\\text{ bps}$) without DMA."
+      },
+      {
+        "tag": "[Transfer] [Concept: double_buffered_ping_pong_half_complete_isr]",
+        "text": "A circular DMA buffer of total length $2N = 64$ samples ($N = 32$ samples per half-buffer) is filled by an ADC at $f_{\\text{sample}} = 64\\text{ kHz}$. Compute the **Half-Transfer (`HT`)** interrupt firing frequency $f_{\\text{HT}} = f_{\\text{sample}} / N$ in $\\text{Hz}$ (tolerance $\\pm 10^{-6}\\text{ Hz}$)."
+      },
+      {
+        "tag": "[Concept: spi_full_duplex_clock_polarity_phase]",
+        "text": "On an SPI bus sharing `SCLK`, `MOSI`, and `MISO` across three slave devices (an encoder, an IMU, and a gate driver), what hardware rule must be obeyed regarding the three Chip-Select (`CS_n`) pins?",
+        "options": [
+          "Pull all three `CS_n` pins LOW at the same time so all three chips drive `MISO` together.",
+          "Assert (pull LOW) **at most one** slave's `CS_n` pin at a time while holding the other two HIGH (tri-stated on `MISO`) so two slaves never fight each other on the `MISO` line.",
+          "Leave all `CS_n` pins disconnected.",
+          "Connect `CS_n` to `SCLK`."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 04-embedded.T1.04b — Concept: non_blocking_tick_scheduler]",
+        "text": "A $1\\,\\text{kHz}$ tick runs a task every $5$ ticks. Compute the task rate in hertz (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_tshift_us = (24.0 / 12e6) * 1e6\nq2_tpoll_us = (500.0 / 1e6) * 1e6\nq3_f_ht_hz = 64_000.0 / 32.0\nq4_choice = \"B\"\nassert math.isclose(q1_tshift_us, 2.0, rel_tol=1e-9)\nassert math.isclose(q2_tpoll_us, 500.0, rel_tol=1e-9)\nassert math.isclose(q3_f_ht_hz, 2000.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = 1000.0 / 5.0\nassert math.isclose(q5_review, 200.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q4, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. If you missed  Q5, review `04-embedded.T1.04b`. On pass, proceed to `## 10. Next modules`."
+  },
+  "04-embedded.T2.04b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: rtos_preemptive_scheduling_and_cpu_utilization]",
+        "text": "Compute the total CPU utilization $U = \\frac{C_1}{T_1} + \\frac{C_2}{T_2}$ (tolerance $\\pm 10^{-9}$) for two FreeRTOS tasks: Task 1 ($C_1 = 200\\ \\mu\\text{s}, T_1 = 1000\\ \\mu\\text{s}$) and Task 2 ($C_2 = 500\\ \\mu\\text{s}, T_2 = 2500\\ \\mu\\text{s}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: unbounded_priority_inversion_and_inheritance]",
+        "text": "A high-priority control task ($C_H = 100\\ \\mu\\text{s}$) blocks on a FreeRTOS mutex (`xSemaphoreCreateMutex()`) held by a low-priority task ($B = 40\\ \\mu\\text{s}$ remaining critical section) while a medium-priority task ($C_M = 600\\ \\mu\\text{s}$) is ready. Compute the worst-case response time $R_H = C_H + B$ in microseconds ($\\mu\\text{s}$, tolerance $\\pm 10^{-6}$) when **Priority Inheritance** is enabled."
+      },
+      {
+        "tag": "[Transfer] [Concept: can_bitwise_arbitration_and_mit_packing]",
+        "text": "Encode a target velocity of $x = +15.0\\text{ rad/s}$ over symmetric range $[x_{\\min}, x_{\\max}] = [-30.0, +30.0]\\text{ rad/s}$ into a 12-bit unsigned integer $u = \\operatorname{round}\\!\\left(\\frac{x - x_{\\min}}{x_{\\max} - x_{\\min}} \\cdot 4095\\right)$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Concept: can_bitwise_arbitration_and_mit_packing]",
+        "text": "Why must a high-speed ($1\\text{ Mbps}$ / $5\\text{ Mbps}$ CAN-FD) twisted-pair differential bus have a $120\\ \\Omega$ termination resistor at **each physical end** of the trunk cable (giving $60\\ \\Omega$ DC resistance between `CAN_H` and `CAN_L` when powered off)?",
+        "options": [
+          "To warm up the cable in winter.",
+          "To match the $120\\ \\Omega$ characteristic impedance of the twisted pair at both ends, absorbing high-frequency signal edges so they do not reflect back and corrupt dominant/recessive arbitration bits.",
+          "To short `CAN_H` to $+48\\text{ V}$.",
+          "To double the CAN ID range."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 04-embedded.T2.04a — Concept: dma_zero_cpu_memory_transfer]",
+        "text": "A DMA transfer moves $1024$ bytes as $2$-byte halfword transfers. Compute the number of transfers (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_u = (200.0 / 1000.0) + (500.0 / 2500.0)\nq2_rh_us = 100.0 + 40.0\nq3_u12 = round((15.0 - (-30.0)) / 60.0 * 4095)\nq4_choice = \"B\"\nassert math.isclose(q1_u, 0.40, rel_tol=1e-9)\nassert math.isclose(q2_rh_us, 140.0, rel_tol=1e-9)\nassert math.isclose(q3_u12, 3071.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = 1024.0 / 2.0\nassert math.isclose(q5_review, 512.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `04-embedded.T2.04a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "04-embedded.T2.04c": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: zephyr_west_and_kconfig_build]",
+        "text": "A Zephyr firmware image defines $2$ threads with aligned stack sizes $S_1 = 2048\\text{ B}$ and $S_2 = 1024\\text{ B}$ (each with a $128\\text{ B}$ thread control block) and one `K_MSGQ_DEFINE` queue holding $M = 8$ messages of $B = 64\\text{ B}$ each. Compute the total static RAM $\\text{RAM}_{\\text{static}} = (S_1 + 128) + (S_2 + 128) + M \\cdot B$ in bytes (exact integer, tolerance $\\pm 0$)."
+      },
+      {
+        "tag": "[Apply] [Concept: zephyr_static_threads_and_k_mutex]",
+        "text": "In Zephyr RTOS, three preemptible threads have numerical priorities $p_1 = 5$, $p_2 = 0$, and $p_3 = 3$. Which numerical priority value has the **highest** scheduling urgency (i.e. preempts the other two, $\\min(p_1, p_2, p_3)$, exact integer, tolerance $\\pm 0$)?"
+      },
+      {
+        "tag": "[Transfer] [Concept: zephyr_static_threads_and_k_mutex]",
+        "text": "A high-urgency Zephyr thread ($p_H = 1, C_H = 85\\ \\mu\\text{s}$) blocks on a `K_MUTEX_DEFINE` mutex held by a low-urgency thread ($p_L = 7$, remaining critical section $B_L = 25\\ \\mu\\text{s}$) while a medium-urgency thread ($p_M = 4, C_M = 400\\ \\mu\\text{s}$) is ready. Compute the worst-case response time $R_H = C_H + B_L$ in microseconds ($\\mu\\text{s}$, tolerance $\\pm 10^{-9}$) under Zephyr's `k_mutex` priority inheritance."
+      },
+      {
+        "tag": "[Concept: zephyr_devicetree_hardware_binding]",
+        "text": "In Zephyr RTOS, what happens if your C code calls `DEVICE_DT_GET(DT_NODELABEL(spi1))` when `spi1` has `status = \"disabled\";` in the board's Devicetree `.dts` file and you did not add `&spi1 { status = \"okay\"; };` in your `.overlay` file?",
+        "options": [
+          "Zephyr silently guesses random GPIO pins at runtime.",
+          "The build fails at **compile/link time** with an undefined Devicetree symbol error, catching the missing hardware configuration before the firmware can ever be flashed!",
+          "The SPI clock runs at $100\\text{ GHz}$.",
+          "FreeRTOS is installed automatically."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 04-embedded.T2.04b — Concept: unbounded_priority_inversion_and_inheritance]",
+        "text": "Tasks run at priorities $3$ (holds a mutex), $5$ and $7$, and task $7$ blocks on that mutex. With priority inheritance, compute the priority task $3$ runs at while it holds it (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_ram_bytes = (2048 + 128) + (1024 + 128) + (8 * 64)\nq2_top_prio = min(5, 0, 3)\nq3_rh_us = 85.0 + 25.0\nq4_choice = \"B\"\n\nassert q1_ram_bytes == 3840\nassert q2_top_prio == 0\nassert math.isclose(q3_rh_us, 110.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = float(7)\nassert math.isclose(q5_review, 7.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q3, study `## 3. Formalization` item 3; if you missed Q4, study `## 3. Formalization` item 2. If you missed  Q5, review `04-embedded.T2.04b`. On pass, proceed to `## 10. Next modules`."
+  },
+  "04-embedded.T2.04d": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: microros_xrcedds_client_agent_bridge]",
+        "text": "Compute the wire transmission time $t_{\\text{wire}} = \\frac{8(B_{\\text{cdr}} + B_{\\text{xrce}})}{R_{\\text{can}}} \\times 10^6$ in microseconds ($\\mu\\text{s}$, tolerance $\\pm 10^{-9}$) for a micro-ROS message with payload $B_{\\text{cdr}} = 36\\text{ B}$ and XRCE header $B_{\\text{xrce}} = 14\\text{ B}$ over a $R_{\\text{can}} = 4.0\\text{ Mbps}$ ($4 \\times 10^6\\text{ bps}$) CAN-FD bus."
+      },
+      {
+        "tag": "[Apply] [Concept: rclc_static_lifecycle_and_executor]",
+        "text": "You initialize a micro-ROS `rclc_executor` for a node with $N_{\\text{timers}} = 2$ periodic timers, $N_{\\text{subs}} = 3$ topic subscriptions, and $N_{\\text{srvs}} = 1$ calibration service ($N_{\\text{clients}} = 0$). Compute the exact static handle count $H_{\\text{total}}$ to pass to `rclc_executor_init()` (exact integer, tolerance $\\pm 0$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: mcu_to_ros2_deterministic_transport]",
+        "text": "During `rmw_uros_sync_session()`, the MCU sends a sync packet at local time $t_1 = 500.0\\ \\mu\\text{s}$, the host Agent receives it at $t_2 = 200{,}600.0\\ \\mu\\text{s}$ and replies at $t_3 = 200{,}640.0\\ \\mu\\text{s}$, and the MCU receives the reply at $t_4 = 740.0\\ \\mu\\text{s}$. Compute the clock offset $\\theta_{\\text{offset}} = \\frac{(t_2 - t_1) + (t_3 - t_4)}{2}$ in microseconds ($\\mu\\text{s}$, tolerance $\\pm 10^{-6}$)."
+      },
+      {
+        "tag": "[Spaced review -> 04-embedded.T2.04c — Concept: zephyr_static_threads_and_k_mutex] [Concept: rclc_static_lifecycle_and_executor]",
+        "text": "Why do production Zephyr/FreeRTOS actuators separate the $10\\text{–}40\\text{ kHz}$ inner motor control ISR/thread from the $100\\text{–}500\\text{ Hz}$ `micro-ROS` `rclc_executor` thread, and why is dynamic heap allocation (`malloc`) forbidden inside `rclc_executor_spin_some()`?",
+        "options": [
+          "Because `malloc()` makes the motor spin faster.",
+          "Isolating the inner motor loop guarantees sub-microsecond control determinism even if serial/CAN transport frames are delayed, while pre-allocating all `rclc` entities statically prevents non-deterministic heap fragmentation and out-of-memory crashes during long missions.",
+          "Because `rclc_executor` can only run once per hour.",
+          "Because micro-ROS does not support publishers."
+        ]
+      }
+    ],
+    "key": "import math\n\nq1_twire_us = (8.0 * (36.0 + 14.0) / 4_000_000.0) * 1e6\nq2_handles = 2 + 3 + 1 + 0\nq3_offset_us = ((200_600.0 - 500.0) + (200_640.0 - 740.0)) / 2.0\nq4_choice = \"B\"\n\nassert math.isclose(q1_twire_us, 100.0, rel_tol=1e-9)\nassert q2_handles == 6\nassert math.isclose(q3_offset_us, 200_000.0, rel_tol=1e-9)\nassert q4_choice == \"B\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`."
+  },
+  "04-embedded.T3.04a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: center_aligned_pwm_midpoint_adc_sampling]",
+        "text": "A microcontroller advanced timer clocked at $f_{\\text{tim}} = 180\\text{ MHz}$ ($1.8 \\times 10^8\\text{ Hz}$) operates in center-aligned (up-down) mode to generate a $f_{\\text{PWM}} = 30\\text{ kHz}$ ($3.0 \\times 10^4\\text{ Hz}$) carrier. Compute the auto-reload register value $\\text{ARR} = \\frac{f_{\\text{tim}}}{2 \\, f_{\\text{PWM}}}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: center_aligned_pwm_midpoint_adc_sampling]",
+        "text": "For a $f_{\\text{PWM}} = 40\\text{ kHz}$ carrier ($T_{\\text{PWM}} = 25{,}000\\text{ ns}$) with maximum phase duty cycle $d_{\\max} = 0.90$ and dead-time $t_{\\text{dead}} = 200\\text{ ns}$, compute the minimum low-side shunt conduction window $t_{\\text{low,min}} = (1 - d_{\\max})T_{\\text{PWM}} - 2 t_{\\text{dead}}$ in nanoseconds ($\\text{ns}$, tolerance $\\pm 10^{-6}\\text{ ns}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: q131_fixed_point_trig_scaling]",
+        "text": "Convert the normalized real value $x = +0.25$ into its signed 32-bit `Q1.31` integer representation $X_{Q31} = \\operatorname{round}(x \\cdot 2^{31})$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Concept: seqlock_optimistic_even_odd_versioning]",
+        "text": "In a Wait-Free Sequence Lock (`SeqLock`), a $1\\text{ kHz}$ reader task reads `s1 = 12` before copying the shared struct and reads `s2 = 14` immediately after copying the struct. What happened during the copy, and what must the reader do?",
+        "options": [
+          "The $40\\text{ kHz}$ writer ISR preempted the reader mid-copy and completed a write (`12 -> 13 -> 14`), so the copied struct may be torn and the reader must discard it and retry the read loop immediately.",
+          "The copy succeeded without interruption; use the data.",
+          "The CPU clock stopped working.",
+          "The writer task is deadlocked waiting for the reader."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 04-embedded.T2.04c — Concept: zephyr_static_threads_and_k_mutex]",
+        "text": "Four static threads each reserve a $1024\\,\\text{byte}$ stack. Compute the total stack in bytes (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_arr = 180_000_000.0 / (2.0 * 30_000.0)\nq2_tlow_ns = (1.0 - 0.90) * 25_000.0 - 2.0 * 200.0\nq3_q31 = round(0.25 * (1 << 31))\nq4_choice = \"A\"\n\nassert math.isclose(q1_arr, 3000.0, rel_tol=1e-9)\nassert math.isclose(q2_tlow_ns, 2100.0, rel_tol=1e-9)\nassert math.isclose(q3_q31, 536870912.0, rel_tol=1e-9)\nassert q4_choice == \"A\"\nq5_review = 4.0 * 1024.0\nassert math.isclose(q5_review, 4096.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `04-embedded.T2.04c`. On pass, proceed to `## 10. Next modules`."
+  },
+  "05-control.T1.05a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: open_vs_closed_loop_tracking_error]",
+        "text": "A pure proportional controller ($K_p = 5.0\\text{ N}\\cdot\\text{m/rad}$, $K_i = 0$) holds an arm against a constant gravity torque $\\tau_g = 0.50\\text{ N}\\cdot\\text{m}$ at steady state ($\\dot{q} = \\ddot{q} = 0$). Compute the steady-state angle error $e_{\\text{ss}} = \\tau_g / K_p$ in radians ($\\text{rad}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: pid_spring_damper_integrator_intuition]",
+        "text": "Given $r_k = 2.0\\text{ rad}$, $y_k = 1.5\\text{ rad}$, $\\dot{y}_k = 0.4\\text{ rad/s}$, $K_p = 10.0$, and $K_d = 2.5$ (with $I_k = 0$), compute the PD control effort $u_k = K_p(r_k - y_k) - K_d \\dot{y}_k$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: actuator_saturation_and_integrator_windup]",
+        "text": "An actuator with voltage rails $\\pm 12.0\\text{ V}$ has proportional term $P_k = 9.5\\text{ V}$, derivative term $D_k = 0.0\\text{ V}$, and unclamped integral candidate $I_{\\text{cand}} = 6.0\\text{ V}$. With anti-windup clamping $I_k \\in [-4.0\\text{ V}, +4.0\\text{ V}]$, compute the saturated actuator output $u_k = \\operatorname{clip}(P_k + I_k + D_k, -12.0, +12.0)$ in volts ($\\text{V}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Concept: pid_spring_damper_integrator_intuition]",
+        "text": "Which PID term acts as a virtual viscous shock absorber that opposes velocity to damp out oscillations?",
+        "options": [
+          "Proportional ($K_p$)",
+          "Integral ($K_i$)",
+          "Derivative ($K_d$)",
+          "Feedforward gravity torque"
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T1.00e — Concept: discrete_kinematics_pos_vel_acc]",
+        "text": "A cart moves at a constant $2.0\\,\\text{m/s}$ for $0.50\\,\\text{s}$. Compute the distance travelled in metres (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_ess = 0.50 / 5.0\nq2_u = 10.0 * (2.0 - 1.5) - 2.5 * 0.4\nq3_u_sat = min(12.0, 9.5 + min(4.0, 6.0))\nq4_choice = \"C\"\nassert math.isclose(q1_ess, 0.10, rel_tol=1e-9)\nassert math.isclose(q2_u, 4.0, rel_tol=1e-9)\nassert math.isclose(q3_u_sat, 12.0, rel_tol=1e-9)\nassert q4_choice == \"C\"\nq5_review = 2.0 * 0.50\nassert math.isclose(q5_review, 1.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T1.00e`. On pass, proceed to `## 10. Next modules`."
+  },
+  "05-control.T2.05a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: loop_transfer_gain_and_phase_margin]",
+        "text": "At the gain crossover frequency $\\omega_{gc}$ where $|L(j\\omega_{gc})| = 0\\text{ dB}$, the open-loop phase is $\\angle L(j\\omega_{gc}) = -125.0^\\circ$. Compute the Phase Margin $\\text{PM} = 180^\\circ + \\angle L(j\\omega_{gc})$ in degrees (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: sensitivity_complementary_waterbed_tradeoff]",
+        "text": "At a high-frequency waterbed peak $\\omega_p$ where the open-loop return ratio is $L(j\\omega_p) = -0.60 + j0.0$, compute the sensitivity magnitude $M_s = |S(j\\omega_p)| = \\frac{1}{|1 + L(j\\omega_p)|}$ (dimensionless, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: luenberger_observer_and_brysons_lqr_weights]",
+        "text": "Using Bryson's Rule $Q_{ii} = 1 / x_{i,\\max}^2$, compute the diagonal weight $Q_{11}$ (in $\\text{rad}^{-2}$, tolerance $\\pm 10^{-9}$) for a pendulum angle state whose maximum acceptable deviation is $\\theta_{\\max} = 0.20\\text{ rad}$."
+      },
+      {
+        "tag": "[Concept: luenberger_observer_and_brysons_lqr_weights]",
+        "text": "What happens to the optimal LQR feedback gains $K$ and actuator effort $u = -Kx$ if you multiply **both** cost matrices $Q$ and $R$ by the same positive scalar $\\alpha = 10$ ($J = \\sum x^\\top (10Q) x + u^\\top (10R) u$)?",
+        "options": [
+          "The gain $K$ increases by $10\\times$.",
+          "The optimal gain $K$ is **completely unchanged**, because scaling the entire cost function $J$ by a positive constant $10$ does not change the location of its minimum; only the *ratio* of $Q$ to $R$ matters!",
+          "The system becomes unstable.",
+          "The observer stops updating."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00e — Concept: discrete_state_transition_euler_tustin]",
+        "text": "For $A = \\begin{bmatrix} 0 & 1 \\\\ -4 & -2 \\end{bmatrix}$ and $T_s = 0.10\\,\\text{s}$, compute $\\operatorname{tr}(I + A T_s)$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_pm_deg = 180.0 + (-125.0)\nq2_ms = 1.0 / abs(1.0 + (-0.60))\nq3_q11 = 1.0 / (0.20 ** 2)\nq4_choice = \"B\"\n\nassert math.isclose(q1_pm_deg, 55.0, rel_tol=1e-9)\nassert math.isclose(q2_ms, 2.5, rel_tol=1e-9)\nassert math.isclose(q3_q11, 25.0, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = (1.0 + 0.0) + (1.0 + (-2.0) * 0.10)\nassert math.isclose(q5_review, 1.8, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T2.00e`. On pass, proceed to `## 10. Next modules`."
+  },
+  "05-control.T3.05a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: joseph_stabilized_covariance_update]",
+        "text": "For a 1D Kalman update with $P^- = 2.0$, $H = 1.0$, $R = 2.0$ and $K = 0.50$, compute the Joseph posterior $P^+ = (1 - KH)^2 P^- + K^2 R$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: joseph_stabilized_covariance_update]",
+        "text": "At the optimal gain, does the Joseph form equal the naive $(1 - KH)P^-$? Answer `True` or `False`."
+      },
+      {
+        "tag": "[Transfer] [Concept: joseph_stabilized_covariance_update]",
+        "text": "With $P^- = 10.0$, $H = 1.0$, $R = 1.0$ and a buggy gain $K = 1.20$, compute the **Joseph** posterior (tolerance $\\pm 10^{-9}$) - the naive form is $-2.0$ here."
+      },
+      {
+        "tag": "[Concept: joseph_stabilized_covariance_update]",
+        "text": "Why is the Joseph form mandatory in a 32-bit embedded navigation filter?",
+        "options": [
+          "Because it is a sum of two positive semi-definite quadratic forms, so symmetry and non-negativity survive roundoff and suboptimal gains.",
+          "Because it does not use the measurement noise $R$.",
+          "Because it sets $P^+ = 0$ after one step.",
+          "Because it avoids the Kalman gain entirely."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 05-control.T2.05a — Concept: luenberger_observer_and_brysons_lqr_weights]",
+        "text": "A state-feedback law is $u = -Kx$ with $K = [2.0,\\; 1.0]$ and $x = [0.50,\\; 1.0]^\\top$. Compute $u$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_p_plus = ((1.0 - 0.50 * 1.0) ** 2) * 2.0 + (0.50 ** 2) * 2.0\nq2_equal = math.isclose(q1_p_plus, (1.0 - 0.50) * 2.0, rel_tol=1e-9)\nq3_p_joseph = ((1.0 - 1.20 * 1.0) ** 2) * 10.0 + (1.20 ** 2) * 1.0\nq4_choice = \"A\"\n\nassert math.isclose(q1_p_plus, 1.0, rel_tol=1e-9)\nassert q2_equal is True\nassert math.isclose(q3_p_joseph, 1.84, rel_tol=1e-9)\nassert q4_choice == \"A\"\nq5_review = -(2.0 * 0.50 + 1.0 * 1.0)\nassert math.isclose(q5_review, -2.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q3, study `## 3. Formalization` item 2; if you missed Q2, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`. If you missed  Q5, review `05-control.T2.05a`. On pass, proceed to `05-control.T3.05b`."
+  },
+  "05-control.T3.05b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: tangent_space_eskf_error_injection]",
+        "text": "Compute $\\exp([0, 0, 0.05]_\\times)_{10}$ - the $(1,0)$ entry, i.e. $\\sin(0.05)$ - to $\\pm 10^{-9}$."
+      },
+      {
+        "tag": "[Apply] [Concept: tangent_space_eskf_error_injection]",
+        "text": "A filter injects a $0.05$ rad correction and then runs a measurement whose innovation is zero. What angle has the frame turned in total (tolerance $\\pm 10^{-9}$ rad)?"
+      },
+      {
+        "tag": "[Transfer] [Concept: tangent_space_eskf_error_injection]",
+        "text": "The plant's encoder has $4096$ counts per revolution. Compute the tangent-space step of one count in radians (tolerance $\\pm 10^{-12}$)."
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T3.00a — Concept: rodrigues_so3_se3_exp_log_maps] [Concept: tangent_space_eskf_error_injection]",
+        "text": "Why does the ESKF multiply the correction on the right instead of adding it to the matrix?",
+        "options": [
+          "Because the correction is a body-frame tangent step, and $R\\exp([\\delta]_\\times)$ stays in $SO(3)$ while $R + \\delta$ does not.",
+          "Because matrix addition is slower than multiplication.",
+          "Because the correction is always zero.",
+          "Because a rotation matrix has only three entries."
+        ]
+      }
+    ],
+    "key": "import math\n\nq1_sin = math.sin(0.05)\nq2_held = 0.05\nq3_count = 2.0 * math.pi / 4096.0\n\nassert math.isclose(q1_sin, 0.049979169270678324, rel_tol=1e-12)\nassert math.isclose(q2_held, 0.05, abs_tol=1e-12)\nassert math.isclose(q3_count, 0.0015339807878856412, rel_tol=1e-12)\n\nq4_choice = \"A\"\nassert q4_choice == \"A\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, item 3; if you missed Q3, study `## 4. Worked example`; if you missed Q4, study `## 2. Intuition first`. On pass, proceed to `05-control.T3.05c`."
+  },
+  "05-control.T3.05c": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: control_barrier_forward_invariance_qp]",
+        "text": "A joint at $q = 0.95\\,\\text{rad}$ approaches $q_{\\max} = 1.00\\,\\text{rad}$ with $\\alpha = 6.0\\,\\text{s}^{-1}$ and $u_{\\text{nom}} = +0.80\\,\\text{rad/s}$. Compute $u^\\ast$ (tolerance $\\pm 10^{-9}\\,\\text{rad/s}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: control_barrier_forward_invariance_qp]",
+        "text": "With the same margin and gain, what does the filter return for $u_{\\text{nom}} = -0.40\\,\\text{rad/s}$ (moving away from the stop)?"
+      },
+      {
+        "tag": "[Transfer] [Concept: control_barrier_forward_invariance_qp]",
+        "text": "The guaranteed margin is $h_0e^{-\\alpha t}$. Compute $h(0.50\\,\\text{s})$ from $h_0 = 0.20\\,\\text{m}$ at $\\alpha = 2.0\\,\\text{s}^{-1}$ (tolerance $\\pm 10^{-6}\\,\\text{m}$)."
+      },
+      {
+        "tag": "[Concept: control_barrier_forward_invariance_qp]",
+        "text": "Why is the CBF-QP called *minimally invasive*?",
+        "options": [
+          "Because when the nominal command already satisfies $\\dot{h} \\ge -\\alpha h$ the constraint is inactive and $u^\\ast = u_{\\text{nom}}$ exactly.",
+          "Because it turns the motors off near a wall.",
+          "Because it ignores the actuator limits.",
+          "Because it only runs at startup."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 05-control.T3.05b — Concept: tangent_space_eskf_error_injection]",
+        "text": "A tangent-space error $\\delta\\theta = 0.020\\,\\text{rad}$ about $z$ is injected into $R = I$ as $R \\approx I + [\\delta\\theta]_\\times$. Compute the $(0,1)$ entry of the result (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_u_star = min(0.80, 6.0 * (1.00 - 0.95))\nq2_u_away = min(-0.40, 6.0 * 0.05)\nq3_h_min = 0.20 * math.exp(-2.0 * 0.50)\nq4_choice = \"A\"\n\nassert math.isclose(q1_u_star, 0.30, rel_tol=1e-9)\nassert math.isclose(q2_u_away, -0.40, rel_tol=1e-9)\nassert math.isclose(q3_h_min, 0.20 * math.exp(-1.0), rel_tol=1e-9)\nassert q4_choice == \"A\"\nq5_review = -0.020\nassert math.isclose(q5_review, -0.02, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 3; if you missed Q3, item 2; if you missed Q4, study `## 2. Intuition first`. If you missed  Q5, review `05-control.T3.05b`. On pass, proceed to Step 3.6 (`05-control.T3.06`)."
+  },
+  "06-robotics.T1.06a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: polynomial_endpoint_boundary_conditions]",
+        "text": "For a rest-to-rest cubic trajectory from $q_0 = 0.0\\text{ rad}$ to $q_f = 2.0\\text{ rad}$ in $T = 4.0\\text{ s}$, compute the midpoint position $q_d(2.0)$ in $\\text{rad}$ and peak velocity $\\dot{q}_d(2.0) = \\frac{1.5\\Delta q}{T}$ in $\\text{rad/s}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: polynomial_endpoint_boundary_conditions]",
+        "text": "Compute the initial acceleration $\\ddot{q}_d(0) = \\frac{6\\Delta q}{T^2}$ in $\\text{rad/s}^2$ (tolerance $\\pm 10^{-9}$) for $\\Delta q = 2.0\\text{ rad}$ and $T = 2.0\\text{ s}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: virtual_joint_compliance_stiffness]",
+        "text": "A compliant joint controller $\\tau = K_p(q_d - q) - K_d\\dot{q} + \\tau_g(q)$ with $K_p = 4.0\\text{ N}\\cdot\\text{m/rad}$ is pushed by an external human hand torque of $\\tau_{\\text{ext}} = 0.80\\text{ N}\\cdot\\text{m}$ at rest. By what angle $\\Delta q = \\tau_{\\text{ext}} / K_p$ in radians (tolerance $\\pm 10^{-9}$) does the joint yield?"
+      },
+      {
+        "tag": "[Spaced review -> 05-control.T1.05a — Concept: discrete_pid_controller] [Concept: trajectory_vs_step_setpoint]",
+        "text": "Why do collaborative robots omit the integral term ($K_i = 0$, using PD + gravity feedforward instead) when operating in compliant human-interaction mode?",
+        "options": [
+          "Because $K_i$ is difficult to program in C.",
+          "Because if a human pushes and holds the arm away from $q_d$, an integral term would wind up to maximum stall torque fighting the human, whereas PD + gravity feedforward yields like a gentle mechanical spring!",
+          "Because gravity feedforward eliminates inertia.",
+          "Because cubic trajectories have zero velocity everywhere."
+        ]
+      }
+    ],
+    "key": "import math\n\nq1_pos_mid = 1.0\nq1_vel_max = 1.5 * 2.0 / 4.0\nq2_acc_0 = 6.0 * 2.0 / (2.0 ** 2)\nq3_deflection = 0.80 / 4.0\nq4_choice = \"B\"\n\nassert math.isclose(q1_pos_mid, 1.0, rel_tol=1e-9)\nassert math.isclose(q1_vel_max, 0.75, rel_tol=1e-9)\nassert math.isclose(q2_acc_0, 3.0, rel_tol=1e-9)\nassert math.isclose(q3_deflection, 0.20, rel_tol=1e-9)\nassert q4_choice == \"B\"",
+    "mark": [
+      4,
+      4
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 1 & 3. On pass, proceed to `## 10. Next modules`."
+  },
+  "06-robotics.T2.06a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: ros2_nodes_topics_services_and_qos]",
+        "text": "A stereo camera node publishes depth frames of size $B_{\\text{msg}} = 250{,}000\\text{ bytes}$ at $f_{\\text{pub}} = 60.0\\text{ Hz}$ to $N_{\\text{sub}} = 2$ unicast subscribers. Compute the total network data rate $R_{\\text{MB/s}} = \\frac{N_{\\text{sub}} \\cdot B_{\\text{msg}} \\cdot f_{\\text{pub}}}{10^6}$ in $\\text{MB/s}$ (tolerance $\\pm 10^{-6}\\text{ MB/s}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: tf2_transform_tree_and_urdf_kinematics]",
+        "text": "A `tf2` buffer holds two consecutive transforms for `base_link -> tool0` at $t_a = 10.00\\text{ s}$ ($z_a = 0.30\\text{ m}$) and $t_b = 10.02\\text{ s}$ ($z_b = 0.38\\text{ m}$). Compute the linearly interpolated height $z(t_{\\text{query}})$ in meters ($\\text{m}$, tolerance $\\pm 10^{-9}\\text{ m}$) returned by `lookupTransform` at $t_{\\text{query}} = 10.015\\text{ s}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: tf2_transform_tree_and_urdf_kinematics]",
+        "text": "Given `T_base_link1` translating $+0.30\\text{ m}$ along $Z$ (zero rotation) and `T_link1_ee` translating $+0.40\\text{ m}$ along $X$ (zero rotation), compute the Euclidean distance $\\|p_{\\text{ee}}\\|$ from `base` origin to `ee` origin in meters ($\\text{m}$, tolerance $\\pm 10^{-9}\\text{ m}$)."
+      },
+      {
+        "tag": "[Concept: ros2_control_hardware_interface_read_write]",
+        "text": "Why does `ros2_control` execute controllers (`update()`) and hardware drivers (`read()` / `write()`) inside the same real-time C++ process via shared double pointers instead of sending motor commands over standard ROS 2 DDS network topics?",
+        "options": [
+          "Because DDS topics cannot send floating-point numbers.",
+          "To guarantee deterministic sub-millisecond ($1\\text{ kHz}$) loop execution with zero network serialization latency, packet loss, or OS socket jitter inside the feedback loop.",
+          "Because `ros2_control` does not support URDF files.",
+          "To slow the control loop down to $10\\text{ Hz}$."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 02-mechanics.T2.02a — Concept: se3_homogeneous_transformation_matrix]",
+        "text": "A planar 2-link arm has $L_1 = 0.30\\,\\text{m}$ at $0^\\circ$ and $L_2 = 0.20\\,\\text{m}$ at $90^\\circ$. Compute the end-effector $x$ in metres (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_rate_mbs = (2.0 * 250_000.0 * 60.0) / 1e6\nalpha_q2 = (10.015 - 10.00) / (10.02 - 10.00)\nq2_z_interp = (1.0 - alpha_q2) * 0.30 + alpha_q2 * 0.38\nq3_dist_m = math.sqrt(0.40**2 + 0.0**2 + 0.30**2)\nq4_choice = \"B\"\n\nassert math.isclose(q1_rate_mbs, 30.0, rel_tol=1e-9)\nassert math.isclose(q2_z_interp, 0.36, rel_tol=1e-9)\nassert math.isclose(q3_dist_m, 0.50, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = 0.30 * math.cos(0.0) + 0.20 * math.cos(math.pi / 2)\nassert math.isclose(q5_review, 0.3, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `02-mechanics.T2.02a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "06-robotics.T2.06b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: ros2_launch_parameters_and_composition]",
+        "text": "A camera node publishes $B_{\\text{msg}} = 1{,}000{,}000\\text{ bytes}$ ($1.0\\text{ MB}$) images at $f_{\\text{pub}} = 30.0\\text{ Hz}$ to $N_{\\text{sub}} = 2$ intra-process `ComposableNode` subscribers inside the same `ComposableNodeContainer` (`use_intra_process_comms=True`, zero-copy `unique_ptr`). Compute the memory copy bandwidth $\\Delta R_{\\text{saved}} = \\frac{N_{\\text{sub}} \\cdot B_{\\text{msg}} \\cdot f_{\\text{pub}}}{10^6}$ saved in $\\text{MB/s}$ (tolerance $\\pm 10^{-6}\\text{ MB/s}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: rosbag2_mcap_recording_and_deterministic_replay]",
+        "text": "You record a single topic of total framed size $B_{\\text{framed}} = 500\\text{ bytes/msg}$ at $f = 1000.0\\text{ Hz}$ for $T_{\\text{rec}} = 60.0\\text{ s}$ with `zstd` compression ratio $c = 0.50$. Compute the resulting `.mcap` file size $S_{\\text{MB}} = \\frac{c \\cdot f \\cdot B_{\\text{framed}} \\cdot T_{\\text{rec}}}{10^6}$ in $\\text{MB}$ (tolerance $\\pm 10^{-6}\\text{ MB}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: ros2_simulator_bridge_and_joint_state_loop]",
+        "text": "A physics simulator (`MuJoCo` / `Gazebo`) steps at $f_{\\text{sim}} = 2000\\text{ Hz}$ ($\\Delta t_{\\text{sim}} = 0.5\\text{ ms}$) and drives a `ros2_control` `controller_manager` configured with decimation factor $D = 2$ (so `update()` runs every $D$ physics steps). Compute the resulting `ros2_control` control loop frequency $f_{\\text{ctrl}} = f_{\\text{sim}} / D$ in $\\text{Hz}$ (tolerance $\\pm 10^{-6}\\text{ Hz}$)."
+      },
+      {
+        "tag": "[Concept: rosbag2_mcap_recording_and_deterministic_replay]",
+        "text": "When replaying a recorded `rosbag2` archive with `ros2 bag play my_bag --clock` to test a Kalman filter node offline, what parameter must be set on the Kalman filter node so its timers and velocity derivatives use the bag's recorded timestamps instead of the computer's wall clock?",
+        "options": [
+          "`use_sim_time:=true`",
+          "`use_sim_time:=false`",
+          "`ROS_DOMAIN_ID=999`",
+          "`rm -rf build/`"
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 06-robotics.T2.06a — Concept: tf2_transform_tree_and_urdf_kinematics]",
+        "text": "A transform tree has $A \\to B$ at $0.50\\,\\text{m}$ and $B \\to C$ at $0.30\\,\\text{m}$ along the same axis. Compute the $A \\to C$ translation in metres (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_saved_mbs = (2.0 * 1_000_000.0 * 30.0) / 1e6\nq2_bag_mb = (0.50 * 1000.0 * 500.0 * 60.0) / 1e6\nq3_fctrl_hz = 2000.0 / 2.0\nq4_choice = \"A\"\n\nassert math.isclose(q1_saved_mbs, 60.0, rel_tol=1e-9)\nassert math.isclose(q2_bag_mb, 15.0, rel_tol=1e-9)\nassert math.isclose(q3_fctrl_hz, 1000.0, rel_tol=1e-9)\nassert q4_choice == \"A\"\nq5_review = 0.50 + 0.30\nassert math.isclose(q5_review, 0.8, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2 or Q4, study `## 3. Formalization` item 2; if you missed Q3, study `## 3. Formalization` item 3. If you missed  Q5, review `06-robotics.T2.06a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "06-robotics.T3.06a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: neural_network_forward_pass_and_mse_loss]",
+        "text": "Given predictions $\\hat{y} = [1.0, 3.0]^\\top$ and expert targets $y^{*} = [2.0, 1.0]^\\top$ ($N = 2$), compute the Mean-Squared Error $\\mathcal{L} = \\frac{1}{2}\\sum_{i=1}^2 (\\hat{y}_i - y_i^{*})^2$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: chain_rule_backpropagation_and_gradient_descent]",
+        "text": "For loss $\\mathcal{L}(w) = (w x - y^{*})^2$ with $w = 1.0$, $x = 2.0$, and $y^{*} = 6.0$, compute the gradient $\\frac{\\partial \\mathcal{L}}{\\partial w} = 2(w x - y^*)x$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: chain_rule_backpropagation_and_gradient_descent]",
+        "text": "Using the gradient $\\frac{\\partial \\mathcal{L}}{\\partial w} = -16.0$ from Q2 and learning rate $\\eta = 0.10$, compute the updated weight $w_{\\text{new}} = w - \\eta \\frac{\\partial \\mathcal{L}}{\\partial w}$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Concept: behavior_cloning_expert_demonstration_fit]",
+        "text": "What is **covariate shift (compounding error)** in naive single-step Behavior Cloning?",
+        "options": [
+          "When the GPU clock frequency changes during training.",
+          "When small prediction errors push the robot into states slightly outside the expert's demonstration distribution, where the policy has no training data and makes larger errors that compound quadratically over the trajectory.",
+          "When the learning rate $\\eta$ is set to zero.",
+          "When the encoder wire is unplugged."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 06-robotics.T2.06b — Concept: rosbag2_mcap_recording_and_deterministic_replay]",
+        "text": "A bag records a topic at $30\\,\\text{Hz}$ for $10.0\\,\\text{s}$. Compute the number of messages (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_mse = 0.5 * ((1.0 - 2.0) ** 2 + (3.0 - 1.0) ** 2)\nq2_grad = 2.0 * (1.0 * 2.0 - 6.0) * 2.0\nq3_wnew = 1.0 - 0.10 * q2_grad\nq4_choice = \"B\"\n\nassert math.isclose(q1_mse, 2.5, rel_tol=1e-9)\nassert math.isclose(q2_grad, -16.0, rel_tol=1e-9)\nassert math.isclose(q3_wnew, 2.6, rel_tol=1e-9)\nassert q4_choice == \"B\"\nq5_review = 30.0 * 10.0\nassert math.isclose(q5_review, 300.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `06-robotics.T2.06b`. On pass, proceed to `## 10. Next modules`."
+  },
+  "06-robotics.T3.06b": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: mdp_discounted_return_and_policy_gradient]",
+        "text": "Compute the discounted return $G_0 = r_0 + \\gamma r_1 + \\gamma^2 r_2$ (tolerance $\\pm 10^{-9}$) for rewards $[2.0, 0.0, 5.0]$ and discount factor $\\gamma = 0.80$."
+      },
+      {
+        "tag": "[Apply] [Concept: mdp_discounted_return_and_policy_gradient]",
+        "text": "In PPO with clip parameter $\\epsilon = 0.20$, if advantage is $\\hat{A}_t = +4.0$ and probability ratio is $\\rho_t = 1.60$, compute the clipped surrogate value $\\min(\\rho_t \\hat{A}_t,\\ \\operatorname{clip}(\\rho_t, 0.8, 1.2)\\hat{A}_t)$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: action_chunking_temporal_ensembling_rtc]",
+        "text": "Why do modern visuomotor policies (`ACT`, `Diffusion Policy`, `π₀` with Real-Time Chunking `RTC`) predict a chunk of $K = 16\\text{–}50$ future actions at once and blend overlapping chunks rather than predicting a single action $a_t$ independently at each frame?",
+        "options": [
+          "To use more GPU memory.",
+          "To eliminate non-Markovian human pauses, smooth out high-frequency action jitter across frames, and maintain continuous $1\\text{ kHz}$ execution even while the next vision inference takes $30\\text{–}80\\text{ ms}$.",
+          "Because cameras only capture 1 image per minute.",
+          "To disable the joint encoders."
+        ]
+      },
+      {
+        "tag": "[SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]",
+        "text": "A vision-language-action (`VLA`) policy running at $30\\text{ Hz}$ suffers a camera glare and suddenly outputs a joint target of $q_{\\text{policy}} = +3.14\\text{ rad}$ while the robot arm is at $q = 0.20\\text{ rad}$. If the $1\\text{ kHz}$ safety shield enforces a maximum step clamp $\\Delta q_{\\max} = 0.06\\text{ rad}$ around $q$, what safe target $q_d$ in radians (tolerance $\\pm 10^{-9}$) is passed to the PD controller?"
+      },
+      {
+        "tag": "[SAFETY] [Concept: sim_to_real_domain_randomization_and_safety_shield]",
+        "text": "What must the $1\\text{ kHz}$ real-time motor controller do if the $30\\text{ Hz}$ GPU policy process crashes or stops sending action chunks for more than the watchdog timeout ($100\\text{ ms}$)?",
+        "options": [
+          "Continue extrapolating the last velocity forever until the arm hits the table.",
+          "Immediately transition to a safe hold/damped-stop trajectory (`qd_des = 0`, hold current $q$ or engage STO) and raise a communication timeout fault.",
+          "Apply $100\\%$ random PWM noise.",
+          "Disable the hardware current limit."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 06-robotics.T3.06a — Concept: neural_network_forward_pass_and_mse_loss]",
+        "text": "Predictions $[2.0,\\; 4.0]$ against targets $[1.0,\\; 1.0]$. Compute the mean squared error (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_g0 = 2.0 + 0.80 * 0.0 + (0.80 ** 2) * 5.0\nq2_ppo = min(1.60 * 4.0, 1.20 * 4.0)\nq3_choice = \"B\"\nq4_safety_qd = 0.20 + 0.06\nq5_safety_choice = \"B\"\n\nassert math.isclose(q1_g0, 5.2, rel_tol=1e-9)\nassert math.isclose(q2_ppo, 4.8, rel_tol=1e-9)\nassert q3_choice == \"B\"\nassert math.isclose(q4_safety_qd, 0.26, rel_tol=1e-9)  # Mandatory [SAFETY] 100% required\nassert q5_safety_choice == \"B\"                          # Mandatory [SAFETY] 100% required\nq6_review = ((2.0 - 1.0) ** 2 + (4.0 - 1.0) ** 2) / 2.0\nassert math.isclose(q6_review, 5.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      5,
+      6
+    ],
+    "note": " overall AND $2/2$ ($100\\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `06-robotics.T3.06a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "07-systems.T1.07a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: single_tone_sine_sweep_gain_phase]",
+        "text": "A $10.0\\text{ Hz}$ sine sweep with input amplitude $A = 0.50\\text{ rad}$ produces steady-state output amplitude $B = 0.25\\text{ rad}$ with peak time delay $\\Delta t = 0.0125\\text{ s}$. Compute the phase lag $\\angle G = -360^\\circ f \\Delta t$ in degrees (tolerance $\\pm 10^{-6}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: cyclic_plc_scan_read_execute_write]",
+        "text": "An IEC 61131-3 PLC cyclic scan takes $t_{\\text{read}} = 0.40\\text{ ms}$ to freeze inputs, $t_{\\text{exec}} = 1.10\\text{ ms}$ to evaluate logic, and $t_{\\text{write}} = 0.50\\text{ ms}$ to latch outputs. Compute the deterministic scan frequency $f_{\\text{scan}} = \\frac{1000}{t_{\\text{read}} + t_{\\text{exec}} + t_{\\text{write}}}$ in $\\text{Hz}$ (tolerance $\\pm 10^{-6}$)."
+      },
+      {
+        "tag": "[Transfer] [SAFETY] [Concept: normally_closed_hardware_estop_chain]",
+        "text": "Why are industrial Emergency-Stop buttons wired with **Normally-Closed (NC)** contacts in series rather than Normally-Open (NO) contacts in parallel?",
+        "options": [
+          "Because NC switches are cheaper.",
+          "Because in a series NC chain, continuous current is required to hold power enabled; pressing any E-stop **or** severing/unplugging any wire drops current to zero and fails safe immediately.",
+          "Because NO contacts cannot carry $3.3\\text{ V}$.",
+          "To make the motor spin faster."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 04-embedded.T1.04b — Concept: finite_state_machine_switch_enum] [SAFETY] [Concept: normally_closed_hardware_estop_chain]",
+        "text": "When an operator twists and releases a tripped E-stop button, what must the control state machine do?",
+        "options": [
+          "Immediately resume the interrupted trajectory at full speed.",
+          "Remain inhibited in a safe latched state (`ESTOP_LATCHED` / `IDLE`) with motor torque disabled until a deliberate Reset command is issued.",
+          "Apply $100\\%$ reverse PWM.",
+          "Bypass the current limit."
+        ]
+      },
+      {
+        "tag": "[Concept: single_tone_sine_sweep_gain_phase]",
+        "text": "What linear amplitude ratio $B/A$ (tolerance $\\pm 10^{-3}$) corresponds to the $-3.01\\text{ dB}$ closed-loop bandwidth frequency $f_{\\text{BW}}$?"
+      }
+    ],
+    "key": "import math\n\nq1_phase_deg = -360.0 * 10.0 * 0.0125\nq2_fscan_hz = 1000.0 / (0.40 + 1.10 + 0.50)\nq3_safety_choice = \"B\"\nq4_safety_choice = \"B\"\nq5_ratio = 10.0 ** (-3.0102999566 / 20.0)\nassert math.isclose(q1_phase_deg, -45.0, rel_tol=1e-6)\nassert math.isclose(q2_fscan_hz, 500.0, rel_tol=1e-9)\nassert q3_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required\nassert q4_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required\nassert math.isclose(q5_ratio, 1.0 / math.sqrt(2.0), abs_tol=1e-3)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " overall ($80\\%+$) AND $2/2$ ($100\\%$) on Q3 and Q4 (`[SAFETY]`). If you missed Q1 or Q5, study `## 3. Formalization` item 3; if you missed Q2, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 2 and `### Safety notes`. On pass, proceed to `## 10. Next modules`."
+  },
+  "07-systems.T2.07a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: regenerative_bus_energy_and_chopper_sizing]",
+        "text": "Compute the maximum brake resistor value $R_{\\text{brake,max}} = \\frac{V_{\\text{clamp}}^2}{P_{\\text{regen,peak}}}$ in Ohms ($\\Omega$, tolerance $\\pm 10^{-6}\\ \\Omega$) required to dissipate $P_{\\text{regen,peak}} = 200.0\\text{ W}$ at a clamping voltage of $V_{\\text{clamp}} = 30.0\\text{ V}$."
+      },
+      {
+        "tag": "[Apply] [Concept: regenerative_bus_energy_and_chopper_sizing]",
+        "text": "Compute the peak unclamped DC bus voltage $V_{\\text{peak}} = \\sqrt{V_{\\text{nom}}^2 + \\frac{2 \\, \\Delta E_{\\text{regen}}}{C_{\\text{bus}}}}$ in Volts ($\\text{V}$, tolerance $\\pm 10^{-6}\\text{ V}$) when $\\Delta E_{\\text{regen}} = 3.0\\text{ J}$ is dumped into a $C_{\\text{bus}} = 1000\\ \\mu\\text{F}$ ($0.001\\text{ F}$) bus starting at $V_{\\text{nom}} = 20.0\\text{ V}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: can_fd_crc16_and_rolling_counter_watchdog]",
+        "text": "A $1\\text{ kHz}$ ($T_{\\text{cmd}} = 1.0\\text{ ms}$) CAN-FD actuator node triggers a watchdog fault after $N_{\\text{miss}} = 4$ consecutive missed frames, and its 4-bit rolling counter wraps modulo $16$ from $c_{k-1} = 14$ to $c_k = 1$. Compute the number of dropped frames $\\Delta_{\\text{dropped}} = ((c_k - c_{k-1}) \\bmod 16) - 1$ between $c_{k-1}=14$ and $c_k=1$ (exact integer, tolerance $\\pm 0$)."
+      },
+      {
+        "tag": "[Concept: sil_hil_fault_injection_verification]",
+        "text": "Why does a bench power supply fail to prevent DC bus over-voltage during rapid motor deceleration, requiring an active shunt brake chopper on the inverter PCB?",
+        "options": [
+          "Because bench power supplies have series output protection diodes/transistors that only source positive current and cannot sink reverse regenerative current from the motor.",
+          "Because bench power supplies have infinite capacitance.",
+          "Because motors absorb electrical energy during braking.",
+          "Because CAN-FD cables carry the braking energy back to the laptop."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 01-electronics.T2.01b — Concept: precharge_resistor_inrush_and_tvs_clamp]",
+        "text": "A $1000\\ \\mu\\text{F}$ bus capacitor is charged to $48.0\\,\\text{V}$. Compute the stored energy $\\tfrac12 C V^2$ in joules (tolerance $\\pm 10^{-6}$)."
+      }
+    ],
+    "key": "import math\n\nq1_rbrake_ohm = (30.0 ** 2) / 200.0\nq2_vpeak_v = math.sqrt(20.0**2 + (2.0 * 3.0) / 0.001)\nq3_dropped = ((1 - 14) % 16) - 1\nq4_choice = \"A\"\n\nassert math.isclose(q1_rbrake_ohm, 4.5, rel_tol=1e-9)\nassert math.isclose(q2_vpeak_v, 80.0, rel_tol=1e-9)\nassert q3_dropped == 2\nassert q4_choice == \"A\"\nq5_review = 0.5 * 1000e-6 * 48.0 ** 2\nassert math.isclose(q5_review, 1.152, rel_tol=1e-9, abs_tol=1e-06)",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1, Q2, or Q4, study `## 3. Formalization` item 1; if you missed Q3, study `## 3. Formalization` item 2. If you missed  Q5, review `01-electronics.T2.01b`. On pass, proceed to `## 10. Next modules`."
+  },
+  "07-systems.T3.06a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: opc_ua_address_space_nodes_and_pub_sub]",
+        "text": "An OPC UA PubSub UDP cyclic frame carries a $14\\text{-byte}$ NetworkMessage header plus $N_{\\text{var}} = 8$ `Double` ($8\\text{-byte}$) telemetry variables published at $f_{\\text{pub}} = 250\\text{ Hz}$. Compute the total payload byte rate $R_{\\text{B/s}} = (14 + 8 N_{\\text{var}}) f_{\\text{pub}}$ in bytes per second ($\\text{B/s}$, exact integer, tolerance $\\pm 0$)."
+      },
+      {
+        "tag": "[Apply] [Concept: iec_63278_aas_submodel_digital_nameplate]",
+        "text": "An IEC 63278 AAS `SafetySubmodel` reports detected dangerous failure rate $\\lambda_{DD} = 95.0\\text{ FIT}$ and undetected dangerous failure rate $\\lambda_{DU} = 5.0\\text{ FIT}$. Compute the Diagnostic Coverage percentage $\\text{DC}_{\\text{avg}}\\% = 100 \\times \\frac{\\lambda_{DD}}{\\lambda_{DD} + \\lambda_{DU}}$ (tolerance $\\pm 10^{-6}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: iso_13849_category3_pld_dual_channel_sto]",
+        "text": "In an ISO 13849-1 Category 3 dual-channel Safe Torque Off (`STO`) subsystem, the undetected dangerous failure rate per channel is $\\lambda_{DU} = 2.0 \\times 10^{-7}\\text{ h}^{-1}$ and the common-cause failure factor is $\\beta = 0.02$. Compute the common-cause dangerous failure contribution $\\text{PFH}_{d,\\text{CCF}} = \\beta \\lambda_{DU}$ in $\\text{h}^{-1}$ (tolerance $\\pm 10^{-11}\\text{ h}^{-1}$)."
+      },
+      {
+        "tag": "[SAFETY] [Concept: iso_13849_category3_pld_dual_channel_sto]",
+        "text": "Under ISO 13849-1 Category 3 / `PLd`, if Channel A of a dual-channel Safe Torque Off (`STO`) circuit opens properly when E-Stop is pressed, but Channel B's transistor fails shorted, what must happen to the motor torque and the restart interlock?",
+        "options": [
+          "The motor keeps spinning at half speed.",
+          "Motor torque is **still immediately removed** by Channel A (single-fault tolerance), AND the cross-monitoring diagnostics detect the `Ch_A != Ch_B` discrepancy and **lock out** any future restart until Channel B is repaired.",
+          "The firmware ignores Channel A and keeps running.",
+          "The robot resets automatically."
+        ]
+      },
+      {
+        "tag": "[SAFETY] [Concept: iso_13849_category3_pld_dual_channel_sto]",
+        "text": "Under ISO 13850 and IEC 60204-1, when an operator twists and releases a latched mushroom E-stop button back to its unpressed position, what is the machine allowed to do immediately upon release?",
+        "options": [
+          "Immediately resume the interrupted trajectory at full speed.",
+          "Remain in the safe stopped (`STO`) state; releasing the E-stop actuator **must never** automatically restart motion without a separate, deliberate manual reset command once all safety conditions are verified.",
+          "Spin all joints to `0.0 rad` at maximum torque.",
+          "Disable the E-stop monitoring relay."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 07-systems.T2.07a — Concept: can_fd_crc16_and_rolling_counter_watchdog]",
+        "text": "A rolling counter counts $0$–$15$ and wraps. Compute its value after $19$ increments from $0$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_rate_bps = (14 + 8 * 8) * 250\nq2_dc_pct = 100.0 * (95.0 / (95.0 + 5.0))\nq3_pfh_ccf = 0.02 * 2.0e-7\nq4_safety_choice = \"B\"\nq5_safety_choice = \"B\"\nassert q1_rate_bps == 19500\nassert math.isclose(q2_dc_pct, 95.0, rel_tol=1e-9)\nassert math.isclose(q3_pfh_ccf, 4.0e-9, rel_tol=1e-9)\nassert q4_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required\nassert q5_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required\nq6_review = float(19 % 16)\nassert math.isclose(q6_review, 3.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "mark": [
+      5,
+      6
+    ],
+    "note": " overall ($80\\%+$) AND $2/2$ ($100\\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1, study `## 3. Formalization` item 1; if you missed Q2, study `## 3. Formalization` item 2; if you missed Q3–Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `07-systems.T2.07a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "08-capstones.T3.07a": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: rss_and_worst_case_spatial_error_budget]",
+        "text": "Three independent random error sources have $1\\sigma$ end-effector contributions $\\sigma_1 = 0.03\\text{ mm}$, $\\sigma_2 = 0.04\\text{ mm}$, and $\\sigma_3 = 0.12\\text{ mm}$. Compute the combined Root-Sum-Square (RSS) $1\\sigma$ error $\\sigma_{\\text{rss}} = \\sqrt{\\sigma_1^2 + \\sigma_2^2 + \\sigma_3^2}$ in millimeters ($\\text{mm}$, tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: rss_and_worst_case_spatial_error_budget]",
+        "text": "In Q1 ($\\sigma_1 = 0.03, \\sigma_2 = 0.04, \\sigma_3 = 0.12\\text{ mm}$, so $\\sigma_{\\text{rss}} = 0.13\\text{ mm}$), what fraction of the total error variance $\\sigma_3^2 / \\sigma_{\\text{rss}}^2$ comes from source 3 alone (tolerance $\\pm 10^{-4}$)?"
+      },
+      {
+        "tag": "[Transfer] [Concept: end_to_end_latency_and_phase_margin_erosion_budget]",
+        "text": "A servo loop has crossover $\\omega_{gc} = 200\\text{ rad/s}$, delay-free Phase Margin $\\text{PM}_0 = 60.0^\\circ$, and total end-to-end loop delay $\\tau_{\\text{total}} = 0.001\\text{ s}$ ($1.0\\text{ ms}$). Compute the net Phase Margin $\\text{PM}_{\\text{net}} = \\text{PM}_0 - \\omega_{gc}\\tau_{\\text{total}}\\frac{180^\\circ}{\\pi}$ in degrees (tolerance $\\pm 0.01^\\circ$)."
+      },
+      {
+        "tag": "[SAFETY] [Concept: pre_bring_up_interface_and_safety_signoff_gate]",
+        "text": "During **Stage 3** of progressive bring-up on a 6-DOF robot arm (before enabling stiff position trajectories), you set $K_p = 0$, $K_d = 1.5\\text{ N}\\cdot\\text{m}\\cdot\\text{s/rad}$, and $\\tau_{\\text{ff}} = g(q)$ at a $20\\%$ torque limit and gently push Joint 2 by hand. Why is this test mandatory before enabling $K_p > 0$?",
+        "options": [
+          "To polish the aluminum links.",
+          "It safely verifies at low torque that encoder direction, motor phase sequence, velocity sign ($-K_d\\dot{q}$), and gravity vector $g(q)$ all oppose external disturbances rather than accelerating into positive-feedback runaway!",
+          "Because $K_p$ is never used in robotics.",
+          "To discharge the battery."
+        ]
+      },
+      {
+        "tag": "[SAFETY] [Concept: pre_bring_up_interface_and_safety_signoff_gate]",
+        "text": "If 4 out of 5 pre-bring-up gates pass (`e_3sigma <= spec`, `PM_net >= 45 deg`, `CPU_Util <= 0.70`, `CAN_Term == 60 Ohm`), but the dual-channel Category 3 `STO` test has **not** been verified (`sto_cat3_ok = False`), what integer value must `int(all(gates))` return (`0` for `False / NO-GO`, `1` for `True / GO`, exact integer, tolerance $\\pm 0$)?"
+      },
+      {
+        "tag": "[Spaced review -> 07-systems.T2.07a — Concept: regenerative_bus_energy_and_chopper_sizing]",
+        "text": "A $1000\\ \\mu\\text{F}$ bus at $48.0\\,\\text{V}$ is pushed to $60.0\\,\\text{V}$ by regeneration. Compute the added energy $\\tfrac12 C (V_2^2 - V_1^2)$ in joules (tolerance $\\pm 10^{-6}$)."
+      }
+    ],
+    "key": "import math\n\nq1_rss_mm = math.sqrt(0.03**2 + 0.04**2 + 0.12**2)\nq2_var_frac = (0.12 ** 2) / (q1_rss_mm ** 2)\nq3_pm_net = 60.0 - 200.0 * 0.001 * (180.0 / math.pi)\nq4_safety_choice = \"B\"\nq5_safety_go = int(all([True, True, True, True, False]))\n\nassert math.isclose(q1_rss_mm, 0.13, rel_tol=1e-9)\nassert math.isclose(q2_var_frac, 144.0 / 169.0, rel_tol=1e-4)\nassert math.isclose(q3_pm_net, 48.540844, abs_tol=1e-2)\nassert q4_safety_choice == \"B\"  # Mandatory [SAFETY] 100% required\nassert q5_safety_go == 0         # Mandatory [SAFETY] 100% required\nq6_review = 0.5 * 1000e-6 * (60.0 ** 2 - 48.0 ** 2)\nassert math.isclose(q6_review, 0.648, rel_tol=1e-9, abs_tol=1e-06)",
+    "mark": [
+      5,
+      6
+    ],
+    "note": " overall AND $2/2$ ($100\\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `07-systems.T2.07a`. On pass, proceed to `## 10. Next modules`."
+  }
+}

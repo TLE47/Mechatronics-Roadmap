@@ -1,6 +1,6 @@
 # MechaLab Assessment, Skip Test & Ladder Gate Specification
 
-> **Purpose:** Defines the diagnostic **Module Skip Tests**, **Ladder Gate Tests**, **Mandatory Safety Gates**, and **Capstone Qualification Rubrics** across all **44 Bridge Modules (`modules/*.md`)** and **24 Legacy Track Steps** (**68 total modules** in `modules/_index.yaml`).
+> **Purpose:** Defines the diagnostic **Module Skip Tests**, **Ladder Gate Tests**, **Mandatory Safety Gates**, and **Capstone Qualification Rubrics** across all **48 Bridge Modules (`modules/*.md`)** and **24 Legacy Track Steps** (**72 total modules** in `modules/_index.yaml`).
 
 ---
 
@@ -11,8 +11,8 @@ flowchart LR
     A["Bridge Module Entry"] --> B["Read Safety Notes (if high/low)"]
     B --> C["4-5 Q Module Skip Test (>= 80% + 100% Safety)"]
     C -->|"Pass"| D["Advance to Next Bridge Module"]
-    D --> E["8 Q Ladder Gate Test (100% Ladder Concepts)"]
-    E -->|"Pass (>= 7/8 + 100% Safety)"| F["Unlock Target Legacy Step (1.1 - 3.8)"]
+    D --> E["Ladder Gate Test (100% Ladder Concepts)"]
+    E -->|"Pass (its own mark + 100% Safety)"| F["Unlock Target Legacy Step (1.1 - 3.8)"]
 ```
 
  (`Skip Test` vs. `Ladder Gate Test`)
@@ -21,14 +21,14 @@ Every bridge module in `modules/*.md` contains a standardized `## 7. Checkpoint`
 
 | Assessment Type | Location | Question Count & Format | Pass Threshold | What Passing Unlocks |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Module Skip Test** (`### Skip test`) | Present in **every** bridge module (`modules/*.md`, 46/46 modules) | **4–6 questions** covering `[Recall]`, `[Apply]`, `[Transfer]`, and `[Spaced review -> prior_module_id]` (for non-root modules). At least **75% (3/4 or 4/5)** are numerical calculation problems with explicit units and tolerances; every `new_concepts` item is tested at least once. | **$\ge 80\%$** ($4/4$ on 4-Q tests, $\ge 4/5$ on 5-Q tests) **AND $100\%$ on all safety items** in `safety_level: high` modules (after reading `### Safety notes`). | Skips the remainder of that individual bridge module and advances directly to `## 10. Next modules`. |
-| **2. Ladder Gate Test** (`### Gate test`) | Present in **every** bridge module (**46/46**, across **25 ladders** and all **24/24 legacy transitions**): each module publishes its ladder's exam, led by its own concepts | **4–14 questions** spanning **every** concept introduced across the entire multi-module bridge ladder (`[Concept: ...]` tags, checked by `scripts/validate_modules.py`), with a complete executable Python `assert` answer key and per-question module remediation pointers. | **$\ge 80\%$** on that exam's own mark **AND $100\%$ on all safety items**. | Skips the entire bridge ladder and unlocks the target Legacy Step (`Step 1.1`–`Step 3.8`). |
+| **1. Module Skip Test** (`### Skip test`) | Present in **every** bridge module (`modules/*.md`, 48/48 modules), **generated** from one store ([`resources/skip-tests.json`](../resources/skip-tests.json)) by [`scripts/generate_skip_tests.py`](../scripts/generate_skip_tests.py), which also proves each module's `new_concepts` are all examined and every key runs | **4–6 questions** covering `[Recall]`, `[Apply]`, `[Transfer]`, and `[Spaced review -> prior_module_id]` (for non-root modules). At least **75% (3/4, 4/5 or 5/6)** are numerical calculation problems with explicit units and tolerances; every `new_concepts` item is tested at least once. | **$\ge 80\%$** ($4/4$ on 4-Q tests, $\ge 4/5$ on 5-Q tests, $\ge 5/6$ on 6-Q tests) **AND $100\%$ on all safety items** in `safety_level: high` modules (after reading `### Safety notes`). | Skips the remainder of that individual bridge module and advances directly to `## 10. Next modules`. |
+| **2. Ladder Gate Test** (`### Gate test`) | Present in **every** bridge module (**48/48**, across **25 ladders** and all **24/24 legacy transitions**): each module publishes its ladder's exam, led by its own concepts - except the Track 00 Tier 2 ladder, whose exam is **generated** ([`scripts/generate_ladder_gate.py`](../scripts/generate_ladder_gate.py)) and rendered identically on all eight of its pages | **4–14 questions** spanning **every** concept introduced across the entire multi-module bridge ladder (`[Concept: ...]` tags, checked by `scripts/validate_modules.py`), with a complete executable Python `assert` answer key and per-question module remediation pointers. | **$\ge 80\%$** on that exam's own mark **AND $100\%$ on all safety items**. | Skips the entire bridge ladder and unlocks the target Legacy Step (`Step 1.1`–`Step 3.8`). |
 
 ---
 
 ## 2. Complete Index of All 25 Ladder Gate Tests (`modules/*.md`, Organized Tier-First)
 
-Every one of the **24 Legacy Steps (`1.1`–`3.8`)** is preceded by a dedicated Bridge Ladder whose **Ladder Gate Test** every module in that ladder publishes (`46` Gate Tests across `25` ladders; Step 3.7 `06-robotics.T3.07` unites the Track 06 Embodied AI ladder and the Track 07 Industrial Safety ladder). The table names the ladder-final module, whose copy is the canonical one; a module earlier in the ladder leads with its own concepts and recaps the rest, so the exam can be taken at any stopping point:
+Every one of the **24 Legacy Steps (`1.1`–`3.8`)** is preceded by a dedicated Bridge Ladder whose **Ladder Gate Test** every module in that ladder publishes (`48` Gate Tests across `25` ladders; Step 3.7 `06-robotics.T3.07` unites the Track 06 Embodied AI ladder and the Track 07 Industrial Safety ladder). The table names the ladder-final module, whose copy is the canonical one; a module earlier in the ladder leads with its own concepts and recaps the rest, so the exam can be taken at any stopping point. The Track 00 Tier 2 ladder is the exception: its eight pages render one generated paper byte for byte, so no page's copy can drift from another's:
 
 ### Tier 1 Gate Tests (8 Ladders → Legacy Steps `1.1`–`1.8`)
 
@@ -47,7 +47,7 @@ Every one of the **24 Legacy Steps (`1.1`–`3.8`)** is preceded by a dedicated 
 
 | # | Target Legacy Step | Bridge Ladder Sequence (`modules/`) | Ladder-Final Gate Test Module | Safety Level |
 | :--- | :--- | :--- | :--- | :--- |
-| **9** | **Step 2.1 (`00-foundations.T2.01`)** *(Tier 2 Foundations)* | `T2.00a` $\to$ `T2.00b` $\to$ `T2.00c` $\to$ `T2.00d` $\to$ `T2.00e` $\to$ `T2.00f` | [`modules/00-foundations.T2.00f.md`](../modules/00-foundations.T2.00f.md) | `none` |
+| **9** | **Step 2.1 (`00-foundations.T2.01`)** *(Tier 2 Foundations)* | `T2.00a` $\to$ `T2.00g` $\to$ `T2.00b` $\to$ `T2.00c` $\to$ `T2.00d` $\to$ `T2.00h` $\to$ `T2.00e` $\to$ `T2.00f` | One generated paper on **all eight** pages ([`scripts/generate_ladder_gate.py`](../scripts/generate_ladder_gate.py)) - no page's copy is canonical, because there is only one | `none` |
 | **10** | **Step 2.2 (`01-electronics.T2.02`)** | `T2.01a` $\to$ `T2.01b` | [`modules/01-electronics.T2.01b.md`](../modules/01-electronics.T2.01b.md) | `high` *(Mandatory Safety Gate)* |
 | **11** | **Step 2.3 (`02-mechanics.T2.03`)** | `T2.02a` | [`modules/02-mechanics.T2.02a.md`](../modules/02-mechanics.T2.02a.md) | `none` |
 | **12** | **Step 2.4 (`03-sensors.T2.04`)** | `T2.03a` | [`modules/03-sensors.T2.03a.md`](../modules/03-sensors.T2.03a.md) | `none` |
@@ -92,7 +92,7 @@ Three additional electronics modules carry `safety_level: low` with dedicated `#
 
 ## 4. Automated Verification Command
 
-To validate the entire 70-module DAG (24 legacy + 46 bridge modules) and execute all 121 embedded Python blocks (worked examples, Skip Test answer keys, and Gate Test answer keys):
+To validate the entire 72-module DAG (24 legacy + 48 bridge modules) and execute all 121 embedded Python blocks (worked examples, Skip Test answer keys, and Gate Test answer keys):
 
 ```bash
 python3 scripts/validate_modules.py

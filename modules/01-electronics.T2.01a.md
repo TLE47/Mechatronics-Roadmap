@@ -292,10 +292,11 @@ flowchart LR
 Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below.
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: differential_shunt_gain_and_cmrr]` Compute the ADC voltage $V_{\text{ADC}} = V_{\text{ref}} + G \cdot I \cdot R_{\text{shunt}}$ in volts ($\text{V}$, tolerance $\pm 10^{-9}$) for $V_{\text{ref}} = 1.65\text{ V}$, $G = 20.0\text{ V/V}$, $R_{\text{shunt}} = 0.005\ \Omega$ ($5\text{ m}\Omega$), and $I = -10.0\text{ A}$.
 2. `[Apply] [Concept: kelvin_four_terminal_sense_routing]` A $2.0\text{ m}\Omega$ shunt is routed without Kelvin connections, adding $0.4\text{ m}\Omega$ of copper trace resistance in series with each of the two pads ($2 R_{\text{trace}} = 0.8\text{ m}\Omega$). Compute the percentage gain error $100 \times \frac{2 R_{\text{trace}}}{R_{\text{shunt}}}$ (tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: opamp_negative_feedback_virtual_short]` For a bidirectional current-sense amplifier biased at $V_{\text{ref}} = 1.65\text{ V}$ feeding a $0\text{–}3.30\text{ V}$ ADC with gain $G = 20.0\text{ V/V}$ and $R_{\text{shunt}} = 0.005\ \Omega$, compute the maximum positive current $I_{\max} = \frac{3.30 - V_{\text{ref}}}{G \cdot R_{\text{shunt}}}$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) before the op-amp output saturates at $3.30\text{ V}$.
-4. `[Spaced review -> 01-electronics.T1.02 — Concept: voltage_current_resistance_ohms_law] [Concept: kelvin_four_terminal_sense_routing]` Why do the two inner Kelvin sense traces carry almost zero current ($I_{\text{sense}} \approx 0$)?
+4. `[Spaced review -> 01-electronics.T1.01a — Concept: voltage_current_resistance_ohms_law] [Concept: kelvin_four_terminal_sense_routing]` Why do the two inner Kelvin sense traces carry almost zero current ($I_{\text{sense}} \approx 0$)?
    - **A.** Because they terminate into the very high input impedance of the differential amplifier, so virtually none of the $15\text{ A}$ motor current flows through the sense traces or their solder joints.
    - **B.** Because the sense traces are made of plastic.
    - **C.** Because the shunt resistor is open circuit.
@@ -315,7 +316,7 @@ assert math.isclose(q3_imax, 16.5, rel_tol=1e-9)
 assert q4_choice == "A"
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 2; if you missed Q2 or Q4, study `## 3. Formalization` item 3; if you missed Q3, study `## 3. Formalization` item 1 & 2. On pass, proceed to `## 10. Next modules`.
-
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 01 Tier 2 bridge ladder (`01-electronics.T2.01a` $\to$ `01-electronics.T2.01b`) before Step 2.2 (`01-electronics.T2.02`):

@@ -315,18 +315,20 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.4 (`03-sensors.T2.04`).
+Pass criteria: score $\ge 80\%$ ($5/6$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.4 (`03-sensors.T2.04`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: three_phase_balanced_sum_and_clarke_projection]` In a balanced 3-phase star-connected motor with floating neutral ($i_a + i_b + i_c = 0$), if $i_a = 8.0\text{ A}$ and $i_b = -3.0\text{ A}$, compute $i_c$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: three_phase_balanced_sum_and_clarke_projection]` Using the amplitude-invariant Clarke formula $i_\alpha = i_a,\ i_\beta = \frac{i_a + 2i_b}{\sqrt{3}}$, compute $i_\beta$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) when $i_a = 0.0\text{ A}$ and $i_b = \sqrt{3}\text{ A}$.
 3. `[Transfer] [Concept: park_rotating_frame_dc_demodulation]` Using the Park rotation $i_d = i_\alpha\cos\theta_e + i_\beta\sin\theta_e$ and $i_q = -i_\alpha\sin\theta_e + i_\beta\cos\theta_e$, compute $i_q$ in amperes ($\text{A}$, tolerance $\pm 10^{-6}$) when $(i_\alpha, i_\beta) = (-6\sqrt{3}, 6.0)\text{ A}$ at electrical angle $\theta_e = 60^\circ$ ($\pi/3\text{ rad}$).
-4. `[Spaced review -> 01-electronics.T2.02 — Concept: electrical_vs_mechanical_pole_pairs] [Concept: park_rotating_frame_dc_demodulation]` In surface-mounted PMSM Field-Oriented Control (FOC) below base speed, why do we command $i_d^{*} = 0\text{ A}$ and put all current into $i_q^{*}$?
+4. `[Concept: park_rotating_frame_dc_demodulation]` In surface-mounted PMSM Field-Oriented Control (FOC) below base speed, why do we command $i_d^{*} = 0\text{ A}$ and put all current into $i_q^{*}$?
    - **A.** Because $d$-axis current aligns with the rotor magnets and produces zero torque (only $I^2 R$ heat), whereas $q$-axis current is perpendicular ($90^\circ$) to the rotor flux and maximizes torque per ampere ($\tau = \frac{3}{2} p \psi_m i_q$).
    - **B.** Because $i_d$ cannot be measured.
    - **C.** Because $i_q$ does not flow through the stator windings.
    - **D.** Because $i_d$ reverses the encoder direction.
 5. `[Concept: pll_velocity_tracking_and_noise_random_walk]` Integrating a gyroscope with white noise density $\sigma_g = 0.02\text{ rad/s}/\sqrt{\text{s}}$ over $t = 25.0\text{ s}$ produces random-walk angle uncertainty $\sigma_\theta(t) = \sigma_g \sqrt{t}$. Compute $\sigma_\theta(25.0\text{ s})$ in radians ($\text{rad}$, tolerance $\pm 10^{-9}$).
+6. `[Spaced review -> 03-sensors.T1.03a — Concept: mechanical_vs_electrical_angle_pole_pairs]` A motor has $4$ pole pairs. Compute the electrical angle in degrees for a mechanical angle of $90.0^\circ$ (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -343,9 +345,11 @@ assert math.isclose(q2_ibeta, 2.0, rel_tol=1e-6)
 assert math.isclose(q3_iq, 12.0, rel_tol=1e-6)
 assert q4_choice == "A"
 assert math.isclose(q5_sigma_theta, 0.10, rel_tol=1e-9)
+q6_review = 4.0 * 90.0
+assert math.isclose(q6_review, 360.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 2; if you missed Q5, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
-
+- **Pass mark:** $5/6$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; if you missed Q3 or Q4, study `## 3. Formalization` item 2; if you missed Q5, study `## 3. Formalization` item 3. If you missed  Q6, review `03-sensors.T1.03a`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
 
 ### Gate test
 Covers the complete Track 03 Tier 2 bridge ladder (`03-sensors.T2.03a`) before Step 2.4 (`03-sensors.T2.04`):

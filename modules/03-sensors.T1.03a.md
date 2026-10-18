@@ -345,17 +345,19 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.4 (`03-sensors.T1.04`).
+Pass criteria: score $\ge 80\%$ ($4/5$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 1.4 (`03-sensors.T1.04`).
 
 ### Skip test
+<!-- skip-test:start -->
 1. `[Recall] [Concept: lorentz_force_and_back_emf_constants]` A DC motor with winding resistance $R = 2.5\ \Omega$ and back-EMF constant $K_e = 0.10\text{ V}\cdot\text{s/rad}$ spins at $\omega_m = 40.0\text{ rad/s}$ while driven from $V_{\text{term}} = 10.0\text{ V}$. Compute the winding current $i = (V_{\text{term}} - K_e\omega_m)/R$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
 2. `[Apply] [Concept: mechanical_vs_electrical_angle_pole_pairs]` A `24N28P` outrunner motor has $28$ permanent magnet poles ($14$ North, $14$ South). Compute its number of pole pairs $p$ and its electrical speed $\omega_e = p\omega_m$ in $\text{rad/s}$ when $\omega_m = 10.0\text{ rad/s}$ (tolerance $\pm 10^{-9}$).
 3. `[Transfer] [Concept: quadrature_ab_gray_code_direction]` An optical quadrature encoder disc has $N_{\text{lines}} = 500$ lines per revolution and is decoded in $4\times$ quadrature mode (counting rising and falling edges of both channels `A` and `B`). Compute the total counts per mechanical revolution ($\text{CPR} = 4 N_{\text{lines}}$, exact integer, tolerance $\pm 0$).
-4. `[Spaced review -> 01-electronics.T1.02 — Concept: voltage_current_resistance_ohms_law] [Concept: quadrature_ab_gray_code_direction]` Why does a quadrature encoder require **two** channels (`A` and `B` shifted by $90^\circ$ electrical) instead of a single pulse channel `A`?
+4. `[Concept: quadrature_ab_gray_code_direction]` Why does a quadrature encoder require **two** channels (`A` and `B` shifted by $90^\circ$ electrical) instead of a single pulse channel `A`?
    - **A.** Because a single channel can only count up to 100.
    - **B.** Because a single pulse channel tells you speed (edge rate) but cannot distinguish clockwise from counter-clockwise rotation when the motor reverses direction.
    - **C.** To double the supply voltage.
    - **D.** Because channel `B` carries power.
+5. `[Spaced review -> 01-electronics.T1.01b — Concept: pwm_duty_cycle_effective_voltage]` A $24.0\,\text{V}$ supply is chopped at $25\%$ duty. Compute the average voltage across the load in volts (tolerance $\pm 10^{-9}$).
 
 **Answer key:**
 ```python
@@ -372,8 +374,12 @@ assert q2_p == 14
 assert math.isclose(q2_we, 140.0, rel_tol=1e-9)
 assert q3_cpr == 2000
 assert q4_choice == "B"
+q5_review = 0.25 * 24.0
+assert math.isclose(q5_review, 6.0, rel_tol=1e-9, abs_tol=1e-09)
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/5$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2, study `## 3. Formalization` item 2; Q3 or Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `01-electronics.T1.01b`. On pass, proceed to `## 10. Next modules`.
+<!-- skip-test:end -->
+
 ### Gate test
 Covers the complete Track 03 Tier 1 bridge ladder (`03-sensors.T1.03a`) before Step 1.4 (`03-sensors.T1.04`):
 1. `[Concept: lorentz_force_and_back_emf_constants]` Compute the electromagnetic torque $\tau = K_t i$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$) produced by a motor with $K_t = 0.08\text{ N}\cdot\text{m/A}$ carrying $i = 4.5\text{ A}$.
