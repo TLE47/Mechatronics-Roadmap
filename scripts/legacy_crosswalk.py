@@ -8,9 +8,10 @@ reachable has nothing to resolve against. This script writes that resolution dow
 concept id maps to a page, and the map is accepted only when the page's text actually contains the
 concept's distinctive tokens.
 
-Default page = the page its legacy module maps to in the same file's module map. When that page does
-not mention the concept, the page whose text mentions it most specifically wins; if no page does,
-the concept is reported (never silently mapped).
+Resolution reads **page bodies only** - front matter is excluded, so a page's own `uses:` line can
+never validate the claim it makes. A concept resolves to the committed page (or, failing that, the
+page its legacy module maps to) when that body carries two of the concept's tokens or its rarest
+one. Anything weaker is reported as unresolved, never silently mapped to a page that shares a word.
 
 Usage:
     python3 scripts/legacy_crosswalk.py            # rewrite the `concepts` block
@@ -23,7 +24,6 @@ Exit-code family: typed. Exit codes: 0 clean, 1 findings, 2 bad command line.
 from __future__ import annotations
 
 import json
-import math
 import os
 import re
 import sys
@@ -38,11 +38,20 @@ STOP = {"and", "of", "the", "to", "vs", "with", "for", "in", "a", "an", "on", "b
 
 
 def page_texts() -> dict[str, str]:
+    """Page bodies only - front matter is excluded deliberately.
+
+    A page's own `uses:` list names every legacy concept it claims to depend on, so counting the
+    front matter as evidence made the check confirm a claim with the claim itself: `so2_rotation_matrix`
+    and `augmented_kalman_disturbance_observer` both resolved this way to pages whose bodies never
+    mentioned them.
+    """
     texts = {}
     for name in sorted(os.listdir(MODULES)):
         if name.endswith(".md"):
             with open(os.path.join(MODULES, name), encoding="utf-8") as handle:
-                texts[name[:-3]] = handle.read().lower()
+                raw = handle.read()
+            match = re.match(r"---\n.*?\n---\n", raw, re.S)
+            texts[name[:-3]] = (raw[match.end():] if match else raw).lower()
     return texts
 
 
@@ -68,27 +77,27 @@ def resolve() -> tuple[dict[str, dict], list[str]]:
 
     concepts: dict[str, dict] = {}
     problems: list[str] = []
+    recorded = manifest.get("concepts", {})
     for legacy_id, record in legacy.items():
-        default = module_map.get(legacy_id)
         for concept in record.get("introduces", []):
-            if default and all(re.search(r"\b" + re.escape(t), texts[default]) for t in tokens(concept)[:1]):
-                page, evidence = default, [t for t in tokens(concept) if re.search(r"\b" + re.escape(t), texts[default])]
-            else:
-                scored = []
-                for ident in core:
-                    found = [t for t in tokens(concept) if re.search(r"\b" + re.escape(t), texts[ident])]
-                    if not found:
-                        continue
-                    rare = min(found, key=lambda t: df.get(t, len(core)))
-                    if df.get(rare, len(core)) > 12 and len(found) < 2:
-                        continue
-                    scored.append((math.log(max(2, len(core)) / max(1, df.get(rare, len(core)))), ident, found))
-                if not scored:
-                    problems.append(f"{concept} ({legacy_id}): no page mentions a distinctive token")
+            concept_tokens = tokens(concept)
+            core_token = min(concept_tokens, key=lambda t: df.get(t, len(core)))
+            page, found = None, []
+            # Two candidates, in order: the committed resolution, then the module map's declared
+            # home. Neither is trusted on its own - a page that never writes the idea down cannot
+            # be its teacher, whatever its front matter claims - and no third page is guessed at
+            # from a shared word, because that is how "furuta" once stood in for a swing-up.
+            for candidate in ((recorded.get(concept) or {}).get("page"), module_map.get(legacy_id)):
+                if not candidate or candidate not in texts:
                     continue
-                scored.sort(reverse=True)
-                _score, page, evidence = scored[0]
-            concepts[concept] = {"page": page, "evidence": sorted(set(evidence))}
+                hits = [t for t in concept_tokens if re.search(r"\b" + re.escape(t), texts[candidate])]
+                if len(hits) >= 2 or core_token in hits:
+                    page, found = candidate, hits
+                    break
+            if page is None:
+                problems.append(f"{concept} ({legacy_id}): no page body carries its distinctive tokens")
+                continue
+            concepts[concept] = {"page": page, "evidence": sorted(set(found))}
     return concepts, problems
 
 
@@ -122,7 +131,7 @@ def main(argv: list[str]) -> int:
         if stale:
             print("ERROR: the `concepts` block is stale — run python3 scripts/legacy_crosswalk.py")
             return 1
-        print(f"OK: {len(concepts)} legacy concepts resolve to pages that contain their terms; "
+        print(f"OK: {len(concepts)} legacy concepts resolve to pages whose bodies carry their terms; "
               f"{len(problems)} recorded as unresolved.")
         return 0
 

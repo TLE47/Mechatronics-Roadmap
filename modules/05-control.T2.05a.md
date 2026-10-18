@@ -11,6 +11,8 @@ new_concepts:
   - loop_transfer_gain_and_phase_margin
   - sensitivity_complementary_waterbed_tradeoff
   - luenberger_observer_and_brysons_lqr_weights
+owns:
+  - augmented_kalman_disturbance_observer
 uses:
   - bode_magnitude_db_and_phase
   - continuous_state_space_matrices
@@ -56,6 +58,8 @@ $$
 $$
 P_k^- = A_d P_{k-1} A_d^\top + Q_w, \qquad K_k = P_k^- C^\top \left(C P_k^- C^\top + R_v\right)^{-1}, \qquad P_k = (I - K_k C)P_k^-
 $$
+
+   - **Augmented Disturbance Observer:** A constant load torque is not in $(A_d, B_d, C)$, so an observer that models only the plant must trade steady-state bias against bandwidth. Append the disturbance as an extra state with $d_{k+1} = d_k$, giving $A_{\text{aug}} = \begin{bmatrix} A_d & B_d \\ 0 & 1 \end{bmatrix}$ and $C_{\text{aug}} = [C\ \ 0]$; the innovation then depends on $d$, so the disturbance is observable, its estimate follows $\hat d_{k+1} = \hat d_k + \ell_i r_k$ with $\ell_i$ the integral gain, and subtracting $\hat d_k$ leaves the nominal controller a plant that looks disturbance-free at steady state.
 
    - **Bryson's Rule & Discrete Algebraic Riccati Equation (`DARE`):** To minimize $J = \sum (x_k^\top Q x_k + u_k^\top R u_k)$ given maximum acceptable state deviations $x_{i,\max}$ and actuator limit $u_{j,\max}$:
 
@@ -371,7 +375,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.6 (`05-control.T2.06`).
+Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 2.6 (`05-control.T2.06`).
 
 ### Skip test
 1. `[Recall] [Concept: loop_transfer_gain_and_phase_margin]` At the gain crossover frequency $\omega_{gc}$ where $|L(j\omega_{gc})| = 0\text{ dB}$, the open-loop phase is $\angle L(j\omega_{gc}) = -125.0^\circ$. Compute the Phase Margin $\text{PM} = 180^\circ + \angle L(j\omega_{gc})$ in degrees (tolerance $\pm 10^{-9}$).
@@ -425,6 +429,13 @@ Covers the complete Track 05 Tier 2 bridge ladder (`05-control.T2.05a`) before S
    - **C.** Set $Q = 0$.
    - **D.** Invert the sign of $K$.
 
+9. `[Concept: augmented_kalman_disturbance_observer]` A constant load is appended as an extra state with $\hat d_{k+1} = \hat d_k + \ell_i r_k$. With $\ell_i = 40\ \text{s}^{-2}$, innovation $r_k = 5.0\times10^{-3}\ \text{m}$ and $dt = 1.0\ \text{ms}$, compute the per-tick change $\Delta\hat d = \ell_i r_k\,dt$ (tolerance $\pm 10^{-12}$).
+10. `[Concept: augmented_kalman_disturbance_observer]` Why does appending a constant-disturbance state reject a steady load better than an observer that models the plant alone?
+   - **A.** The augmented model makes the disturbance observable through the innovation, so its estimate converges to the true constant and is subtracted; an unaugmented observer has no state to hold that value and settles with a bias.
+   - **B.** Because adding a state increases the sample rate.
+   - **C.** Because $A_{\text{aug}}$ is always stable.
+   - **D.** Because the disturbance covariance replaces $Q_w$.
+
 **Gate answer key:**
 ```python
 import math
@@ -437,6 +448,8 @@ g5_choice = "A"
 g6_choice = "A"
 g7_r_weight = 1.0 / (2.0 ** 2)
 g8_choice = "A"
+g9_delta_d = 40.0 * 5.0e-3 * 1.0e-3
+g10_choice = "A"
 
 assert math.isclose(g1_gm_db, 12.0412, abs_tol=1e-3)
 assert math.isclose(g2_delay_deg, 11.459156, abs_tol=1e-2)
@@ -446,8 +459,10 @@ assert g5_choice == "A"
 assert g6_choice == "A"
 assert math.isclose(g7_r_weight, 0.25, rel_tol=1e-9)
 assert g8_choice == "A"
+assert math.isclose(g9_delta_d, 2.0e-4, rel_tol=1e-12)
+assert g10_choice == "A"
 ```
-- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q8 $\to$ `## 3. Formalization` item 3.
+- **Pass mark:** $8/10$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q10 $\to$ `## 3. Formalization` item 3.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

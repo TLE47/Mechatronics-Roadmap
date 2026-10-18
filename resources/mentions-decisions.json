@@ -308,7 +308,7 @@
       "page": "05-control.T3.05a",
       "concept": "augmented_kalman_disturbance_observer",
       "decision": "drop",
-      "core": "observer",
+      "core": "augmented",
       "lines": 0,
       "sections": []
     },

@@ -33,7 +33,7 @@ flowchart LR
 | `01-electronics.T2.01a` | `star_grounding` | `grounding` | 0 | — |
 | `04-embedded.T2.04a` | `hardware_timer_isr_and_jitter` | `jitter` | 3 | 6. Simulation path, 7. Checkpoint |
 | `04-embedded.T2.04a` | `packed_binary_telemetry_struct` | `packed` | 0 | — |
-| `05-control.T3.05a` | `augmented_kalman_disturbance_observer` | `observer` | 0 | — |
+| `05-control.T3.05a` | `augmented_kalman_disturbance_observer` | `augmented` | 0 | — |
 | `00-foundations.T2.00a` | `so2_rotation_matrix` | `so2` | 0 | — |
 | `00-foundations.T3.00a` | `unit_quaternion_kinematics_slerp` | `slerp` | 0 | — |
 | `02-mechanics.T1.02a` | `so2_rotation_matrix` | `so2` | 0 | — |
