@@ -18,7 +18,12 @@ submission = harness.load_submission()
 
 
 def close(test, got, want, delta=1e-9):
-    test.assertAlmostEqual(got, want, delta=delta)
+    test.assertAlmostEqual(
+        got, want, delta=delta,
+        msg="expected the computed value to match the worked number in this test at the stated "
+            "delta; a mismatch means the formula, a sign or the component order differs - check "
+            "the expression the assertion wraps",
+    )
 
 
 class DotTests(unittest.TestCase):

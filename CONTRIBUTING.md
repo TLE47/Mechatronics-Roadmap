@@ -48,7 +48,9 @@ python3 scripts/validate_modules.py
 # 3. Verify all beginner lessons (<=2 ideas, template sections, glossary term order, and exercise solutions)
 python3 scripts/lint_lessons.py
 python3 scripts/check_term_order.py
-python3 tests/test_exercises.py
+
+# Every suite in one run (add -v for the per-test list)
+python3 -m unittest discover -s tests
 
 # 4. Run all Python & C++20 reference labs (Labs 00–08)
 python3 scripts/run_all_labs.py
