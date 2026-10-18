@@ -123,6 +123,11 @@ def natural_sort_key(path: str):
     return [int(p) if p.isdigit() else p for p in parts]
 
 
+def get_ramp_files() -> list[str]:
+    """The maths-ramp lessons: same template, separate count, so the 48 beginner lessons stay 48."""
+    return sorted(glob.glob(os.path.join(ROOT, "ramp", "R.*.md")), key=natural_sort_key)
+
+
 def get_lesson_files() -> list[str]:
     track_p = sorted(glob.glob(os.path.join(ROOT, "track-p", "P.*.md")), key=natural_sort_key)
     stage_0 = sorted(glob.glob(os.path.join(ROOT, "stage-0", "S0.*.md")), key=natural_sort_key)
@@ -387,9 +392,14 @@ def main():
         )
         sys.exit(1)
 
+    ramp = get_ramp_files()
+    if len(ramp) < 2:
+        print(f"ERROR: Expected at least the two ramp lessons in ramp/R.*.md, found {len(ramp)}")
+        sys.exit(1)
+
     glossary_entries = parse_glossary()
     all_errors = []
-    for f in files:
+    for f in files + ramp:
         all_errors.extend(lint_file(f, glossary_entries))
 
     if all_errors:
@@ -399,7 +409,9 @@ def main():
         sys.exit(1)
 
     print(
-        f"OK: All {len(files)} beginner lessons passed template, YAML `ideas:` (<=2), Learn/Bridge Notes topic alignment, Bridge Notes word-count, and simulator separation checks."
+        f"OK: All {len(files)} beginner lessons and {len(ramp)} maths-ramp lessons passed template, "
+        "YAML `ideas:` (<=2), Learn/Bridge Notes topic alignment, Bridge Notes word-count, and simulator "
+        "separation checks."
     )
 
 
