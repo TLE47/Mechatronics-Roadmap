@@ -11,7 +11,6 @@ new_concepts:
   - state_vector_one_step_update
 uses:
   - symplectic_euler_integration
-  - so2_rotation_matrix
   - discrete_kinematics_pos_vel_acc
 est_hours: 4.0
 hardware_required: false

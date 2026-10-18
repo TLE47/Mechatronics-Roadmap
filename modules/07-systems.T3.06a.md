@@ -13,7 +13,6 @@ new_concepts:
   - iso_13849_category3_pld_dual_channel_sto
 uses:
   - opc_ua_industrial_telemetry
-  - can_fd_crc16_rolling_counter_watchdog
   - normally_closed_hardware_estop_chain
   - ros2_nodes_topics_services_and_qos
 est_hours: 4.5

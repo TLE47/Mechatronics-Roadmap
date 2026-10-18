@@ -13,7 +13,6 @@ new_concepts:
   - sil_hil_fault_injection_verification
 uses:
   - regenerative_braking_bus_voltage_surge
-  - can_fd_mit_impedance_packet_packing
   - precharge_resistor_inrush_and_tvs_clamp
 est_hours: 4.5
 hardware_required: false

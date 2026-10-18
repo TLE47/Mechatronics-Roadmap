@@ -14,7 +14,6 @@ new_concepts:
 uses:
   - bode_magnitude_db_and_phase
   - continuous_state_space_matrices
-  - discrete_pid_controller
 est_hours: 4.5
 hardware_required: false
 safety_level: none

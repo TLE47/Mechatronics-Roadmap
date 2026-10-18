@@ -9,7 +9,6 @@ prereqs:
 new_concepts:
   - joseph_stabilized_covariance_update
 uses:
-  - discrete_infinite_horizon_lqr
   - augmented_kalman_disturbance_observer
 est_hours: 2.0
 hardware_required: false

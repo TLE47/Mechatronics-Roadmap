@@ -39,6 +39,7 @@ jobs:
           python3 scripts/check_ramp_lessons.py
           python3 scripts/audit_step_size.py --check
           python3 scripts/legacy_crosswalk.py --check
+          python3 scripts/mentions_audit.py --check
           python3 scripts/lint_modules.py
           python3 scripts/module_parity.py --check
           python3 tests/test_module_parity.py

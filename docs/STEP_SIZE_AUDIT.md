@@ -167,7 +167,7 @@ exist. The same check fails `--check`, so a repointed prerequisite cannot silent
 | Page | Prereq cited | Legacy module |
 | :--- | :--- | :--- |
 
-## Assumptions no page teaches (13 pages)
+## Assumptions no page teaches (11 pages)
 
 A `uses:` entry is something the page assumes you can already do. Here it is a concept id that
 no bridge page's `new_concepts:` claims and that this page does not introduce either, so the
@@ -175,18 +175,16 @@ page relies on an idea with no owning page in the repository.
 
 | Page | Assumed but unowned |
 | :--- | :--- |
-| `00-foundations.T2.00a` | `symplectic_euler_integration`, `so2_rotation_matrix` |
+| `00-foundations.T2.00a` | `symplectic_euler_integration` |
 | `01-electronics.T2.01a` | `star_grounding` |
 | `02-mechanics.T2.02a` | `planar_2link_forward_kinematics` |
 | `03-sensors.T2.03a` | `electrical_vs_mechanical_pole_pairs`, `open_loop_three_phase_sine_modulation`, `so2_rotation_matrix` |
 | `04-embedded.T2.04a` | `hardware_timer_isr_and_jitter`, `spi_magnetic_encoder_readout`, `packed_binary_telemetry_struct` |
-| `05-control.T2.05a` | `discrete_pid_controller` |
 | `06-robotics.T2.06a` | `parallel_axis_urdf_inertia_tensor`, `can_fd_mit_impedance_packet_packing` |
-| `07-systems.T2.07a` | `regenerative_braking_bus_voltage_surge`, `can_fd_mit_impedance_packet_packing` |
-| `00-foundations.T3.00a` | `unit_quaternion_kinematics_slerp` |
+| `07-systems.T2.07a` | `regenerative_braking_bus_voltage_surge` |
 | `02-mechanics.T3.02a` | `rodrigues_so3_se3_exp_log_maps`, `parallel_axis_urdf_inertia_tensor` |
-| `05-control.T3.05a` | `discrete_infinite_horizon_lqr`, `augmented_kalman_disturbance_observer` |
-| `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps`, `discrete_infinite_horizon_lqr` |
+| `05-control.T3.05a` | `augmented_kalman_disturbance_observer` |
+| `05-control.T3.05b` | `rodrigues_so3_se3_exp_log_maps` |
 | `05-control.T3.05c` | `discrete_infinite_horizon_lqr` |
 
 ## The two-idea contract (21 of 24 pages over it)
