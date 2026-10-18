@@ -26,6 +26,8 @@ Two modes, because 1987 assertions start out below the bar:
 - `--tracks` reports the same numbers grouped by track (`00-foundations`, `04-embedded`, ...),
   so the next round's packages can be chosen from the data instead of recomputed by hand. The
   baseline carries the same breakdown under `tracks`, refreshed by `--write-baseline`.
+- `--plan [N]` prints the next N packages (default six) by weak-assertion count, both graded files
+  each, as a ready-to-paste task line. It is the same data `--tracks` shows, ranked per package.
 
 Exit codes: `0` ok, `1` findings, `2` wrong command line.
 Exit-code family: typed.
@@ -193,6 +195,37 @@ def track_totals(results):
     return dict(sorted(grouped.items(), key=lambda item: (-item[1]["total"], item[0])))
 
 
+PLAN_PACKAGES = 6
+
+
+def package_of(relative_path):
+    """`exercises/04-embedded.T1.04a/test_behavior.py` -> `04-embedded.T1.04a`."""
+    parts = relative_path.replace(os.sep, "/").split("/")
+    return parts[-2] if len(parts) >= 2 else "(ungrouped)"
+
+
+def package_totals(results):
+    """`[(package, weak), ...]` worst first, with packages that are already clean dropped."""
+    grouped = {}
+    for rel, count in counts(results).items():
+        name = package_of(rel)
+        grouped[name] = grouped.get(name, 0) + count
+    return sorted(((name, count) for name, count in grouped.items() if count),
+                  key=lambda item: (-item[1], item[0]))
+
+
+def plan_text(results, limit=PLAN_PACKAGES):
+    """The next round as a paste-ready task line plus the six package names and their sizes."""
+    packages = package_totals(results)[:limit]
+    total = sum(counts(results).values())
+    noun = "package" if len(packages) == 1 else "packages"
+    lines = [f"Burn down the next {len(packages)} {noun}, both graded files each:"]
+    for index, (name, weak) in enumerate(packages, 1):
+        lines.append(f"  {index}. {name} ({weak} weak assertions)")
+    lines.append(f"Round total: {sum(weak for _, weak in packages)} of {total} weak assertions.")
+    return "\n".join(lines)
+
+
 def write_baseline(results, path=BASELINE):
     payload = {
         "comment": "Ratchet for scripts/lint_assertions.py: per-file weak-assertion counts may only fall. Regenerate with --write-baseline after a burn-down.",
@@ -215,10 +248,24 @@ def main(argv=None):
     parser.add_argument("--json", action="store_true", help="print machine-readable findings")
     parser.add_argument("--tracks", action="store_true",
                         help="report weak assertions per track, worst first")
+    parser.add_argument("--plan", nargs="?", type=int, const=PLAN_PACKAGES, metavar="N",
+                        help="print the next N packages by weak-assertion count (default 6), "
+                             "ready to paste into a task")
     parser.add_argument("--quiet", action="store_true", help="print only the summary line")
     args = parser.parse_args(argv)
+    if args.plan is not None and args.plan < 1:
+        parser.error("--plan needs a positive package count")
 
     results = scan()
+    if args.plan is not None:
+        packages = package_totals(results)[:args.plan]
+        if args.json:
+            print(json.dumps({"packages": [{"package": name, "weak": weak}
+                                          for name, weak in packages],
+                              "total": sum(counts(results).values())}, indent=2))
+            return 0
+        print(plan_text(results, args.plan))
+        return 0
     if args.tracks:
         totals = track_totals(results)
         if args.json:
