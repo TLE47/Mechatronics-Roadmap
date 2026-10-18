@@ -11,6 +11,35 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 84: Fourth Burn-Down Round — The Next Six, 1247 → 975
+
+### 1. The six worst packages, both graded files each
+- `04-embedded.T1.04b` (48), `07-systems.T3.06a` (47), `04-embedded.T2.04a` (45),
+  `06-robotics.T2.06a` (45), `04-embedded.T2.04d` (44) and `07-systems.T2.07a` (43) now carry a message
+  on every graded assertion in both `test_behavior.py` and `test_transfer.py`.
+- **272 messages**, baseline **1247 → 975** weak assertions across **73 → 61** files — the first round
+  under a thousand, and all twelve touched files are at zero rather than merely lower.
+
+### 2. What each message says
+- Expected value with units, the wrong answer it stands against, the cause that usually produces it,
+  and the line to check: the uint32 mask on `micros()`, the 14-byte PubSub header paid per frame, the
+  half-buffer window built from N rather than 2N, the QoS offer-request inequality, the square-root
+  bus voltage, the modulo-16 counter step.
+- Loop assertions that used to interpolate the index with `%` now carry one literal sentence about the
+  whole loop; `lint_assertions` only accepts literal strings, and the position was never the lesson.
+
+### 3. Verification
+- All six packages re-graded with `run_exercise.py --only <id>`: starter fails, solution passes, every
+  fault fails its named test — exit 0 for all six.
+- `git diff -U0 -- exercises | grep '^-.*def test_'` is empty: no test deleted, renamed or loosened.
+- `lint_assertions` clean at the new floor (975 / 61); every `tests/test_*.py` green (17/17), plus
+  `verify_repo`, `validate_modules`, `lint_lessons`, `check_term_order`, `audit_math`, `run_all_labs`,
+  `npm run lint` and `npm run build`.
+- Remaining worst packages: `00-foundations.T1.00d` and `00-foundations.T2.00e` (41 each), then
+  `01-electronics.T2.01b` (40), then `00-foundations.T2.00g` and `06-robotics.T3.06b` (39 each).
+
+---
+
 ## [2026-10-18] — Run 83: Third Burn-Down Round — Whole Packages, 1549 → 1247
 
 ### 1. Six packages, every graded file in each
