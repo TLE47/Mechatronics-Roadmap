@@ -38,8 +38,18 @@ flowchart LR
 - `README.md`, `docs/TIER1_EXIT_CHECK.md` and `ramp/README.md` all link the page, and the test fails if any
   of the three stops: a returning learner arrives from the last page they finished.
 
-### 3. Verification
-- `tests/test_reentry.py` 6/6 including its four doctored-page negative paths.
+### 3. One repair outside the new page
+- Writing §4 meant running the command it names, and `python3 scripts/run_exercise.py <id>` **ignores a
+  bare id**: it re-graded all 47 packages instead of the one asked for. The flag is `--only`; §4 now
+  states it, says what the bare form does, and `tests/test_reentry.py` runs the documented command and
+  requires it to grade exactly one package in under a second (0.386 s, 11 checks for T2.00a).
+- The same check found `docs/ERROR_EXPLAINER.md` entry 13 telling readers to run
+  `python3 -m unittest discover -s exercises/<id> -p 'test_*.py'`, which fails with
+  `EXERCISE_TARGET is not set` on every package. Entry 13 now gives the `--only` form and says why the
+  discover form cannot work: the suite grades whichever submission it is pointed at.
+
+### 4. Verification
+- `tests/test_reentry.py` 7/7 including its four doctored-page negative paths and the live command check.
 - `verify_repo.py`, `clean_tex`, `audit_math`, `validate_modules.py`, `check_ramp_lessons.py` and
   `lint_lessons.py` green; full local CI chain 37/37.
 

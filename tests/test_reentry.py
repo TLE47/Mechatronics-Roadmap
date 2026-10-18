@@ -18,6 +18,8 @@ Run: `python3 tests/test_reentry.py` (also wired into the CI verify step).
 
 import os
 import re
+import shlex
+import subprocess
 import sys
 import unittest
 
@@ -222,6 +224,18 @@ class ReentryTests(unittest.TestCase):
             any("expected 5" in problem for problem in problems),
             f"a missing task row was not reported: {problems}",
         )
+
+    def test_the_documented_regrade_command_grades_one_package(self):
+        """§4 tells a returning learner to re-grade one package; the command has to do exactly that."""
+        commands = re.findall(r"`(python3 scripts/run_exercise\.py[^`]*)`", self.doc)
+        self.assertEqual(len(commands), 1, f"expected one run_exercise command, found {commands}")
+        self.assertIn("--only", commands[0], "without --only the command grades every package")
+        proc = subprocess.run(
+            shlex.split(commands[0]), cwd=ROOT, capture_output=True, text=True, timeout=300
+        )
+        self.assertEqual(proc.returncode, 0, f"{commands[0]} failed:\n{proc.stdout}{proc.stderr}")
+        graded = [line for line in proc.stdout.splitlines() if line and not line.startswith(" ")]
+        self.assertEqual(len(graded), 1, f"{commands[0]} graded {graded}, expected one package")
 
     def test_a_drifted_answer_fails(self):
         doctored = self.doc.replace("18.408 rad/s", "17.204 rad/s", 1)

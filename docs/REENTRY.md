@@ -78,9 +78,10 @@ from Expected Output, and the gap names itself.
 
 - **The placement quiz (`Gate P→0`)** — it places a beginner, and you are not one any more. Retake it only
   if you never finished Track P.
-- **Tier 1 pages whose packages still pass.** `python3 scripts/run_exercise.py 00-foundations.T2.00a`
-  re-grades a package in seconds; a passing run is better evidence than a reread, and a failing one tells
-  you the one page to open.
+- **Tier 1 pages whose packages still pass.** `python3 scripts/run_exercise.py --only 00-foundations.T2.00a`
+  re-grades that package in under a second; a passing run is better evidence than a reread, and a failing
+  one tells you the one page to open. Without `--only` the same command grades every package, which is
+  what you want at a milestone, not on the way back.
 - **The six practical gates** in the Workbench's Tier 1 Exit Review, unless you never sat them. The maths
   half is the half that rots; the practical half needs a bench and a person.
 - **The bench itself.** Nothing in this page needs hardware, and rebuilding a setup is the most reliable

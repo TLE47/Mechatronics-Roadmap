@@ -188,7 +188,9 @@ unverified on purpose.
 
 **Check first.**
 - Look at both badges: `MATCHED` alone means nothing; behaviour must pass.
-- Run the package's own tests: `python3 -m unittest discover -s exercises/<id> -p 'test_*.py'`.
+- Re-grade the package: `python3 scripts/run_exercise.py --only <id>` (the bare `unittest discover`
+  form fails with `EXERCISE_TARGET is not set`, because the tests grade whichever submission you point
+  them at).
 - If you wrote the check yourself, make it call the function — never assert on a string you printed.
 
 **Where it comes from.** [`docs/QUALITY_SPEC.md`](QUALITY_SPEC.md) ·
