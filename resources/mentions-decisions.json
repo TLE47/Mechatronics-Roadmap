@@ -340,10 +340,13 @@
     {
       "page": "00-foundations.T3.00a",
       "concept": "unit_quaternion_kinematics_slerp",
-      "decision": "drop",
+      "decision": "own",
       "core": "slerp",
-      "lines": 0,
-      "sections": []
+      "lines": 6,
+      "sections": [
+        "3. Formalization",
+        "7. Checkpoint"
+      ]
     },
     {
       "page": "02-mechanics.T1.02a",

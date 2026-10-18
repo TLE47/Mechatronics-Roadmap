@@ -11,16 +11,16 @@ sections those lines land in decide the claim.
 
 | Decision | Rule | Count |
 | :--- | :--- | ---: |
-| `own` | the page is the concept's crosswalk teacher, engages it in §3/§4/§5, and already tags it in its Gate test | 2 |
+| `own` | the page engages it in §3/§4/§5 and tags it in its Gate test (a concept may have more than one owning page) | 3 |
 | `keep` | the page genuinely applies the idea in a graded section | 20 |
-| `drop` | the page never engages it outside prose, or not at all | 19 |
+| `drop` | the page never engages it outside prose, or not at all | 18 |
 
 ```mermaid
 flowchart LR
     P["page + concept in uses"] --> E["evidence: core term, lines, sections"]
     E --> Q{"engages it in 3/4/5?"}
     Q -->|no| D["drop the uses claim"]
-    Q -->|yes| T{"crosswalk teacher and Gate-tagged?"}
+    Q -->|yes| T{"Gate-tagged?"}
     T -->|yes| O["own: move to owns"]
     T -->|no| K["keep as an assumption"]
 ```
@@ -35,7 +35,6 @@ flowchart LR
 | `04-embedded.T2.04a` | `packed_binary_telemetry_struct` | `packed` | 0 | — |
 | `05-control.T3.05a` | `augmented_kalman_disturbance_observer` | `augmented` | 0 | — |
 | `00-foundations.T2.00a` | `so2_rotation_matrix` | `so2` | 0 | — |
-| `00-foundations.T3.00a` | `unit_quaternion_kinematics_slerp` | `slerp` | 0 | — |
 | `02-mechanics.T1.02a` | `so2_rotation_matrix` | `so2` | 0 | — |
 | `03-sensors.T3.03a` | `sar_adc_c0g_charge_bucket_design` | `c0g` | 0 | — |
 | `05-control.T1.05a` | `symplectic_euler_integration` | `symplectic` | 1 | 7. Checkpoint |
@@ -55,6 +54,7 @@ flowchart LR
 | :--- | :--- | ---: | :--- |
 | `03-sensors.T2.03a` | `so2_rotation_matrix` | 4 | 3. Formalization, 5. Exercise, 7. Checkpoint |
 | `07-systems.T2.07a` | `regenerative_braking_bus_voltage_surge` | 31 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
+| `00-foundations.T3.00a` | `unit_quaternion_kinematics_slerp` | 6 | 3. Formalization, 7. Checkpoint |
 
 ## Kept (the claim is real)
 

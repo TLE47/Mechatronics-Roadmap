@@ -16,8 +16,10 @@ The evidence is counted, not judged by eye:
 Decisions are recorded in `resources/mentions-decisions.json`, one row per page–concept pair:
 
 - `keep` — the page engages the concept in §3 Formalization, §4 Worked example or §5 Exercise.
-- `own` — the page is the concept's crosswalk teacher and tags it in the Gate test: it re-teaches
-  the idea, so it moves from `uses:` into `owns:`. `owns:` is deliberately separate from
+- `own` — the page engages the idea in a graded section and tags it in the Gate test: it re-teaches
+  the concept, so it moves from `uses:` into `owns:`. A concept may have more than one owning page —
+  the crosswalk names one, but a second page that derives and gates the same idea is re-teaching it,
+  and the Gate tag is the claim `validate_modules` polices. `owns:` is deliberately separate from
   `new_concepts:` — a legacy id the page re-teaches is not new material, and it must not spend the
   three-new-concept budget a page is allowed.
 - `drop` — the page never engages it; the `uses:` claim is removed.
@@ -175,17 +177,23 @@ def crosswalk_pages() -> dict[str, str]:
 
 
 def suggestion(row: dict, teachers: dict[str, str]) -> str:
-    """Own when the page is the concept's crosswalk teacher, engages it in a graded section, and
-    already tags it in the Gate test; keep when it applies the idea; drop when neither.
+    """Own when the page engages the concept in a graded section and tags it in the Gate test;
+    keep when it only applies the idea; drop when neither.
 
     The Gate-test condition is what makes `own` an applied change rather than a declaration: a
     concept in `owns:` must be gated, and a page whose Gate test never names the idea is not yet the
     page that owns it. The concept goes to `owns:`, not `new_concepts:`, because a page may already
     spend its three-new-concept budget on material of its own - the legacy id is vocabulary the same
     content is re-teaching, not a fourth idea.
+
+    A concept may have more than one owner. `resources/legacy-prereq-map.json` names the single page
+    the legacy step maps to, but a second page that derives the same idea and gates it is
+    re-teaching it too, and forcing it back to `keep` would make an honest claim false. The Gate tag
+    is the claim that does the work, and `validate_modules` accepts a tag only for a concept the page
+    introduces or owns.
     """
     gated = f"[Concept: {row['concept']}]" in row.get("gate", "")
-    if row["substantive"] and gated and teachers.get(row["concept"]) == row["page"]:
+    if row["substantive"] and gated:
         return "own"
     if row["substantive"]:
         return "keep"
@@ -268,8 +276,8 @@ def render(data: list[dict]) -> str:
         "",
         "| Decision | Rule | Count |",
         "| :--- | :--- | ---: |",
-        "| `own` | the page is the concept's crosswalk teacher, engages it in §3/§4/§5, and already "
-        f"tags it in its Gate test | {len(owns)} |",
+        "| `own` | the page engages it in §3/§4/§5 and tags it in its Gate test (a concept may have "
+        f"more than one owning page) | {len(owns)} |",
         f"| `keep` | the page genuinely applies the idea in a graded section | {len(keeps)} |",
         f"| `drop` | the page never engages it outside prose, or not at all | {len(drops)} |",
         "",
@@ -278,7 +286,7 @@ def render(data: list[dict]) -> str:
         '    P["page + concept in uses"] --> E["evidence: core term, lines, sections"]',
         '    E --> Q{"engages it in 3/4/5?"}',
         '    Q -->|no| D["drop the uses claim"]',
-        '    Q -->|yes| T{"crosswalk teacher and Gate-tagged?"}',
+        '    Q -->|yes| T{"Gate-tagged?"}',
         '    T -->|yes| O["own: move to owns"]',
         '    T -->|no| K["keep as an assumption"]',
         "```",

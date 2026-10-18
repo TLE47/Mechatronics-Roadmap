@@ -10,6 +10,8 @@ new_concepts:
   - skew_symmetric_hat_vee_cross_product
   - matrix_exponential_taylor_and_rodrigues
   - hamiltonian_energy_power_balance
+owns:
+  - unit_quaternion_kinematics_slerp
 uses:
   - cross_product_3d_moment
   - continuous_state_space_matrices
@@ -48,7 +50,15 @@ R(\phi) = \exp([\phi]_\times) = I_3 + \frac{\sin\theta}{\theta}[\phi]_\times + \
 $$
 
    with small-angle Taylor guard $\frac{\sin\theta}{\theta} \approx 1 - \frac{\theta^2}{6}$ and $\frac{1 - \cos\theta}{\theta^2} \approx \frac{1}{2} - \frac{\theta^2}{24}$ for $\theta < 10^{-7}\text{ rad}$ to prevent $0/0$ `NaN`. Every output satisfies $R^\top R = I_3$ and $\det(R) = +1$.
-3. **Port-Hamiltonian Energy Balance ($\dot{x} = (J - R_d)\nabla H(x) + B u$):** With total stored energy $H(x) = \frac{1}{2}x^\top Q_H x \ge 0$, skew-symmetric interconnection $J = -J^\top$, and symmetric positive semi-definite damping $R_d = R_d^\top \succeq 0$, the rate of change of stored energy is:
+3. **Unit-Quaternion Kinematics & Spherical Linear Interpolation (SLERP):** A unit quaternion $q = (w, \vec{v})$ with $\|q\| = 1$ encodes the same rotation as $R = \exp([\phi]_\times)$ with half the angle: $q(\phi) = \left(\cos(\theta/2),\ \hat{u}\sin(\theta/2)\right)$ for $\phi = \theta\hat{u}$, so $q$ and $-q$ are the same attitude. For body-frame angular velocity $\omega$ ($\text{rad/s}$), the kinematics are $\dot q = \frac{1}{2} q \otimes (0, \omega)$, and $\|\dot q\| = \frac{1}{2}\|\omega\|$ - differentiating a unit quaternion only ever moves it tangentially to the unit sphere. Between two unit quaternions the constant-speed arc on $S^3$ is
+
+$$
+\operatorname{slerp}(q_0, q_1, t) = \frac{\sin((1-t)\Omega)}{\sin\Omega}\,q_0 + \frac{\sin(t\Omega)}{\sin\Omega}\,q_1, \qquad \Omega = \cos^{-1}(q_0 \cdot q_1)
+$$
+
+   with $q_1 \to -q_1$ whenever $q_0 \cdot q_1 < 0$: the two signs are the same attitude, but the unsigned dot product would interpolate the long way round the sphere.
+
+4. **Port-Hamiltonian Energy Balance ($\dot{x} = (J - R_d)\nabla H(x) + B u$):** With total stored energy $H(x) = \frac{1}{2}x^\top Q_H x \ge 0$, skew-symmetric interconnection $J = -J^\top$, and symmetric positive semi-definite damping $R_d = R_d^\top \succeq 0$, the rate of change of stored energy is:
 
 $$
 \dot{H} = (\nabla H)^\top \dot{x} = \underbrace{(\nabla H)^\top J (\nabla H)}_{=\,0} - \underbrace{(\nabla H)^\top R_d (\nabla H)}_{\ge\,0\text{ (dissipated heat)}} + \underbrace{u^\top y}_{\text{supplied power}} \le u^\top y
@@ -325,7 +335,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.1 (`00-foundations.T3.01`).
+Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 3.1 (`00-foundations.T3.01`).
 
 ### Skip test
 1. `[Recall] [Concept: skew_symmetric_hat_vee_cross_product]` Given $\omega = [1.0, 2.0, 0.0]^\top\text{ rad/s}$ and $v = [0.0, 3.0, 0.0]^\top\text{ m}$, compute the $z$-component of $([\omega]_\times v) = \omega_x v_y - \omega_y v_x$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
@@ -352,7 +362,7 @@ assert math.isclose(q2_vy, 8.0, rel_tol=1e-9)
 assert math.isclose(q3_c2, 0.4976, rel_tol=1e-9)
 assert q4_choice == "B"
 ```
-- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
+- **Pass mark:** $4/4$ ($80\%+$). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 4. On pass, proceed to `## 10. Next modules`.
 ### Gate test
 Covers the complete Track 00 Tier 3 bridge ladder (`00-foundations.T3.00a`) before Step 3.1 (`00-foundations.T3.01`):
 1. `[Concept: skew_symmetric_hat_vee_cross_product]` For $\omega = [1.0, 2.0, 3.0]^\top$, what is the $(1, 0)$ entry (row 1, col 0, 0-indexed) of $[\omega]_\times = \begin{bmatrix} 0 & -\omega_z & \omega_y \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix}$ (tolerance $\pm 10^{-9}$)?
@@ -372,6 +382,9 @@ Covers the complete Track 00 Tier 3 bridge ladder (`00-foundations.T3.00a`) befo
    - **C.** Because passive systems have infinite bandwidth.
    - **D.** Because $H(x)$ is always negative.
 
+9. `[Concept: unit_quaternion_kinematics_slerp]` $q_0 = (1, 0, 0, 0)$ and $q_1 = (0, 1, 0, 0)$ are a quarter-turn apart ($\Omega = \pi/2$). At $t = 0.5$ the SLERP weights are $\sin(\pi/4)/\sin(\pi/2)$ each. Compute the scalar part $w$ of $\operatorname{slerp}(q_0, q_1, 0.5)$ (tolerance $\pm 10^{-9}$).
+10. `[Concept: unit_quaternion_kinematics_slerp]` A body spins at $\omega = 3.0\ \text{rad/s}$ about one axis with $\|q\| = 1$. Compute $\|\dot q\| = \frac{1}{2}\|\omega\|$ in $\text{s}^{-1}$ (tolerance $\pm 10^{-12}$).
+
 **Gate answer key:**
 ```python
 import math
@@ -385,6 +398,8 @@ g5_x_rot = -1.0
 g6_tr_k2 = 0.0 + (-1.0) + (-1.0)
 g7_dissip_w = 2.0 * (3.0 ** 2) + 0.10 * (10.0 ** 2)
 g8_choice = "A"
+g9_slerp_w = math.cos(math.pi / 4.0)
+g10_qdot_norm = 0.5 * 3.0
 
 assert math.isclose(g1_entry10, 3.0, rel_tol=1e-9)
 assert math.isclose(g2_norm_cross_self, 0.0, abs_tol=1e-12)
@@ -394,8 +409,10 @@ assert math.isclose(g5_x_rot, -1.0, rel_tol=1e-9)
 assert math.isclose(g6_tr_k2, -2.0, rel_tol=1e-9)
 assert math.isclose(g7_dissip_w, 28.0, rel_tol=1e-9)
 assert g8_choice == "A"
+assert math.isclose(g9_slerp_w, 0.707106781, abs_tol=1e-9)
+assert math.isclose(g10_qdot_norm, 1.5, rel_tol=1e-12)
 ```
-- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q6 $\to$ `## 3. Formalization` item 2; Q7–Q8 $\to$ `## 3. Formalization` item 3.
+- **Pass mark:** $8/10$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q6 $\to$ `## 3. Formalization` item 2; Q7–Q8 $\to$ `## 3. Formalization` item 4; Q9–Q10 $\to$ `## 3. Formalization` item 3.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
