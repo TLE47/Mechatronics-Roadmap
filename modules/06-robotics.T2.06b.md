@@ -322,7 +322,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.7 (`06-robotics.T2.07`).
+Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.7 (`06-robotics.T2.07`).
 
 ### Skip test
 1. `[Recall] [Concept: ros2_launch_parameters_and_composition]` A camera node publishes $B_{\text{msg}} = 1{,}000{,}000\text{ bytes}$ ($1.0\text{ MB}$) images at $f_{\text{pub}} = 30.0\text{ Hz}$ to $N_{\text{sub}} = 2$ intra-process `ComposableNode` subscribers inside the same `ComposableNodeContainer` (`use_intra_process_comms=True`, zero-copy `unique_ptr`). Compute the memory copy bandwidth $\Delta R_{\text{saved}} = \frac{N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}}{10^6}$ saved in $\text{MB/s}$ (tolerance $\pm 10^{-6}\text{ MB/s}$).
@@ -377,6 +377,12 @@ Covers the complete Track 06 Tier 2 bridge ladder (`06-robotics.T2.06a` $\to$ `0
    - **C.** The URDF file directly drives the motors without `ros2_control`.
    - **D.** Simulator integration only works if `use_sim_time` is `false` and `/clock` is deleted.
 
+9. `[Concept: unit_quaternion_kinematics_slerp]` A `rosbag2` replay feeds two consecutive orientation samples whose quaternions satisfy $q_0 \cdot q_1 < 0$. Why must the replayer negate $q_1$ before interpolating?
+   - **A.** Because $q$ and $-q$ encode the same rotation, so a negative dot product means the stored signs are opposite and the naive slerp would sweep the long arc; flipping one sign takes the short one.
+   - **B.** Because the quaternion norm would otherwise exceed one.
+   - **C.** Because MCAP stores quaternions in $x, y, z, w$ order.
+   - **D.** Because the timestamp would otherwise extrapolate.
+
 **Gate answer key:**
 ```python
 import math
@@ -390,6 +396,7 @@ g5_margin_ms = 1.0 - (0.25 + 0.15 + 0.20)
 g6_choice = "A"
 g7_rate_mbs = (500.0 * 400.0) / 1e6
 g8_choice = "A"
+g9_choice = "A"
 
 assert g1_choice == "A"
 assert g2_delayed == 4
@@ -399,8 +406,9 @@ assert math.isclose(g5_margin_ms, 0.40, rel_tol=1e-9)
 assert g6_choice == "A"
 assert math.isclose(g7_rate_mbs, 0.20, rel_tol=1e-9)
 assert g8_choice == "A"
+assert g9_choice == "A"
 ```
-- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q5 $\to$ `06-robotics.T2.06a`; Q6–Q8 $\to$ `06-robotics.T2.06b`.
+- **Pass mark:** $8/9$ ($80\%+$). Remediation: Q1–Q5, Q9 $\to$ `06-robotics.T2.06a`; Q6–Q8 $\to$ `06-robotics.T2.06b`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |
