@@ -242,6 +242,22 @@ def main():
             sys.exit(1)
         with tempfile.TemporaryDirectory() as tmpdir:
             written = write_sketches_to_dir(tmpdir)
+            # One build alone, before the fan-out. Every sketch links against the compiled
+            # arduino:avr core, and the first build of that archive is the one piece of state all
+            # of them share: on a fresh runner with an empty cache, eight processes asking for it
+            # at once produced a bare `collect2: error: ld returned 1 exit status` in CI. Building
+            # a sketch first leaves the archive complete for the rest to read, and a broken
+            # toolchain fails here with one message instead of eight.
+            warm_dir = os.path.join(tmpdir, "core_warmup")
+            os.makedirs(warm_dir, exist_ok=True)
+            with open(os.path.join(warm_dir, "core_warmup.ino"), "w", encoding="utf-8") as handle:
+                handle.write("void setup() {}\nvoid loop() {}\n")
+            warmup = subprocess.run([cli, "compile", "--fqbn", "arduino:avr:uno", warm_dir],
+                                    capture_output=True, text=True)
+            if warmup.returncode != 0:
+                print(f"arduino-cli could not build the arduino:avr core:\n{warmup.stderr}",
+                      file=sys.stderr)
+                raise SystemExit(warmup.returncode)
             # Each sketch is its own directory and its own arduino-cli process: ten cold CLI starts
             # in series is the slowest step of the firmware job, so they run side by side. Verdicts
             # are read back in sketch order, so a failure names the same sketch it would have.

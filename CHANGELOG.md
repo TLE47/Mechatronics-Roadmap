@@ -44,6 +44,13 @@ One sample per side, and the macOS Python step ranged 24-40 s across the neighbo
 pushes, so 32 s is the fast end of that band rather than a new floor. Nothing was dropped: both legs
 ran the same 18 gates, the 194-test discovery run and the 48-package sweep.
 
+- **Firmware job:** `--compile-arduino-cli` now warms the `arduino:avr` core with one sketch before
+  fanning out over the ten. The separate Arduino Uno workflow went red once on a fresh runner with a
+  bare `collect2: error: ld returned 1 exit status`, and the rerun of that same job passed; the only
+  state those ten processes share is the first build of the core archive, so the warm build leaves it
+  complete for the rest to read (and a broken toolchain fails once, with one message). That is a
+  narrowed window rather than a proven fix - local cold-cache repeats (three script runs, four rounds
+  of all ten at once) never reproduced the failure.
 - `test:smoke`, `test:e2e` and `test:e2e:pages` still run standalone, creating their own servers.
 - **CI**: the KaTeX audit left the Python job to run in `build-workbench`, where `npm ci` has already
   installed `katex` from the lockfile - so neither `verify-and-test` leg sets up Node anymore, or
