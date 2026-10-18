@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
+"""Validate the 72 module pages, their ladders, and their Expected Output blocks.
+
+Front-matter lists are read through `scripts/frontmatter_lists.list_field`, because this page set is
+parsed by PyYAML where it is installed and by the fallback parser below where it is not, and the two
+disagree on an empty key (`None` vs `[]`). A bare `.get(key, [])` therefore only worked on the
+fallback: with PyYAML an empty `uses:` reached `set(None)`.
+
+The page bodies are executed to verify their Expected Output, so this script needs **Python 3.10+**
+for the pages' own syntax (`int | None`). The front-matter handling itself is version-independent.
+"""
 import ast
 import json
 import os
 import pathlib
 import re
 import sys  # noqa: F401  (also used to put the shared plant on `sys.path` below)
+
+from frontmatter_lists import list_field
 
 try:
     import yaml
@@ -86,10 +98,10 @@ bad = []
 
 idx = ROOT / "_index.yaml"
 if idx.exists():
-    for e in load_yaml(idx.read_text()).get("legacy", []):
+    for e in list_field(load_yaml(idx.read_text()), "legacy"):
         nodes[e["id"]] = {
-            "prereqs": e.get("prereqs", []),
-            "introduces": set(e.get("introduces", [])),
+            "prereqs": list_field(e, "prereqs"),
+            "introduces": set(list_field(e, "introduces")),
             "uses": set(),
             "legacy": True,
         }
@@ -103,7 +115,7 @@ for p in sorted(ROOT.glob("*.md")):
     mid = fm["id"]
     if not ID_RE.match(mid):
         bad.append(f"{mid}: bad id")
-    if len(fm.get("new_concepts", [])) > 3:
+    if len(list_field(fm, "new_concepts")) > 3:
         bad.append(f"{mid}: >3 new_concepts")
     if fm.get("est_hours", 99) > 6:
         bad.append(f"{mid}: >6 est_hours")
@@ -122,8 +134,11 @@ for p in sorted(ROOT.glob("*.md")):
     # `owns:` names the legacy concepts this page re-teaches (mentions_audit's `own` verdict).
     # It is a third relation, not a synonym for either neighbour: the concept is not assumed
     # (`uses:`) and it is not new material spending the three-concept budget (`new_concepts:`).
-    owned = set(fm.get("owns", []))
-    for other, label in ((set(fm.get("uses", [])), "uses"), (set(fm.get("new_concepts", [])), "new_concepts")):
+    owned = set(list_field(fm, "owns"))
+    for other, label in (
+        (set(list_field(fm, "uses")), "uses"),
+        (set(list_field(fm, "new_concepts")), "new_concepts"),
+    ):
         overlap = owned & other
         if overlap:
             bad.append(f"{mid}: concept in both owns and {label}: {sorted(overlap)}")
@@ -179,10 +194,10 @@ for p in sorted(ROOT.glob("*.md")):
                 bad.append(f"{mid}: page claims {count_match.group(1)} tests, the suite has {total}")
 
     nodes[mid] = {
-        "prereqs": fm.get("prereqs", []),
-        "introduces": set(fm.get("new_concepts", [])),
-        "uses": set(fm.get("uses", [])),
-        "owns": set(fm.get("owns", [])),
+        "prereqs": list_field(fm, "prereqs"),
+        "introduces": set(list_field(fm, "new_concepts")),
+        "uses": set(list_field(fm, "uses")),
+        "owns": set(list_field(fm, "owns")),
         "legacy": False,
         "body": body,
     }
