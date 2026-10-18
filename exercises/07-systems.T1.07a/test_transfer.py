@@ -25,53 +25,98 @@ class LockInTests(unittest.TestCase):
         steps = int(round(4.0 * (1.0 / dt)))  # four seconds at the plant's tick
         xs = [plant.figure8_target(k * dt)[0] for k in range(steps)]
         ys = [plant.figure8_target(k * dt)[1] for k in range(steps)]
-        self.assertAlmostEqual(submission.sine_amplitude(xs, plant.FREQ_HZ, dt), plant.AX,
-                               delta=1e-6)
-        self.assertAlmostEqual(submission.sine_amplitude(ys, 2.0 * plant.FREQ_HZ, dt), plant.AY,
-                               delta=1e-6)
+        self.assertAlmostEqual(
+            submission.sine_amplitude(xs, plant.FREQ_HZ, dt), plant.AX, delta=1e-6,
+            msg="expected the lock-in to recover the figure-8's published x amplitude; a smaller "
+                "reading means the demodulation missed the phase - check FREQ_HZ and dt",
+        )
+        self.assertAlmostEqual(
+            submission.sine_amplitude(ys, 2.0 * plant.FREQ_HZ, dt), plant.AY, delta=1e-6,
+            msg="expected the y axis to come back at twice the x frequency, its published "
+                "amplitude; a mismatch means the harmonic was not doubled - check 2 x FREQ_HZ",
+        )
 
     def test_the_neighbouring_frequency_is_rejected(self):
         dt = plant.DT
         steps = int(round(4.0 / dt))
         xs = [plant.figure8_target(k * dt)[0] for k in range(steps)]
         neighbour = submission.sine_amplitude(xs, 1.5 * plant.FREQ_HZ, dt)
-        self.assertLess(neighbour, 0.2 * plant.AX)
+        self.assertLess(
+            neighbour, 0.2 * plant.AX,
+            msg="expected the 1.5x frequency next door to read under 20 percent of AX; a larger "
+                "leakage means the record is too short - check the four-second window",
+        )
 
     def test_a_quarter_period_of_the_figure_eight_is_a_quarter_turn(self):
-        self.assertAlmostEqual(submission.phase_lag_deg(plant.FREQ_HZ, PERIOD_S / 4.0), -90.0,
-                               delta=1e-9)
+        self.assertAlmostEqual(
+            submission.phase_lag_deg(plant.FREQ_HZ, PERIOD_S / 4.0), -90.0, delta=1e-9,
+            msg="expected a quarter of the plant's own period to read -90 degrees; +90 means the "
+                "lag was reported as a lead - check the sign convention",
+        )
 
 
 class ScanTests(unittest.TestCase):
     def test_a_one_millisecond_budget_is_the_plants_tick(self):
-        self.assertAlmostEqual(submission.scan_frequency_hz(0.4, 0.4, 0.2), 1.0 / plant.DT,
-                               delta=1e-9)
+        self.assertAlmostEqual(
+            submission.scan_frequency_hz(0.4, 0.4, 0.2), 1.0 / plant.DT, delta=1e-9,
+            msg="expected a 1 ms budget to reproduce the plant's own 1 kHz tick exactly; a "
+                "different rate means the milliseconds were not converted - check the units",
+        )
 
     def test_the_plant_cannot_scan_faster_than_it_reads(self):
         # Even with the logic free, a 0.4 ms read plus 0.2 ms write caps the scan below 1.7 kHz.
-        self.assertLess(submission.scan_frequency_hz(0.4, 0.0, 0.2), 1700.0)
+        self.assertLess(
+            submission.scan_frequency_hz(0.4, 0.0, 0.2), 1700.0,
+            msg="expected a 0.6 ms floor to cap the scan under 1.7 kHz however fast the logic is; "
+                "a larger rate means the I/O time was dropped from the budget",
+        )
 
 
 class PlcOverThePlantClockTests(unittest.TestCase):
     def test_a_wire_break_drops_power_on_the_next_scan(self):
         state, power = submission.plc_scan_step("IDLE", 1, 1, 1, True, False)
-        self.assertEqual((state, power), ("RUNNING", True))
+        self.assertEqual(
+            (state, power), ("RUNNING", True),
+            msg="expected Start on a healthy chain to power the drive at the plant's cadence; "
+                "another state means the scan never left IDLE - check the first transition",
+        )
         broke_at = 100
         for tick in range(200):
             healthy = tick < broke_at
             state, power = submission.plc_scan_step(state, healthy, 1, 1, False, False)
             if tick >= broke_at:
-                self.assertFalse(power, "tick %d still powered" % tick)
-                self.assertEqual(state, "ESTOP_LATCHED")
+                self.assertFalse(
+                    power,
+                    msg="expected power to drop on the very scan after the break; a powered "
+                        "tick means the chain is sampled once at start-up instead of per scan",
+                )
+                self.assertEqual(
+                    state, "ESTOP_LATCHED",
+                    msg="expected the break to latch the trip, not merely drop power; another "
+                        "state means a transient fault clears itself - check the latch",
+                )
+
 
     def test_the_interlock_needs_a_reset_and_a_released_start(self):
         state = "ESTOP_LATCHED"
         state, power = submission.plc_scan_step(state, 1, 1, 1, True, True)
-        self.assertEqual((state, power), ("ESTOP_LATCHED", False))
+        self.assertEqual(
+            (state, power), ("ESTOP_LATCHED", False),
+            msg="expected a reset pressed with Start held to stay latched; IDLE here would let a "
+                "stuck Start button restart the robot - check the reset condition",
+        )
         state, power = submission.plc_scan_step(state, 1, 1, 1, False, True)
-        self.assertEqual((state, power), ("IDLE", False))
+        self.assertEqual(
+            (state, power), ("IDLE", False),
+            msg="expected the same reset with Start released to clear the latch; a latched state "
+                "means the button edge was never sampled - check the ordering",
+        )
         state, power = submission.plc_scan_step(state, 1, 1, 1, True, False)
-        self.assertEqual((state, power), ("RUNNING", True))
+        self.assertEqual(
+            (state, power), ("RUNNING", True),
+            msg="expected a fresh Start from IDLE to run again, the operator's deliberate "
+                "restart; another state means the latch could not be cleared at all",
+        )
 
 
 if __name__ == "__main__":
