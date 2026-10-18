@@ -11,6 +11,29 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 83: Third Burn-Down Round — Whole Packages, 1549 → 1247
+
+### 1. Six packages, every graded file in each
+- `05-control.T2.05a`, `01-electronics.T2.01a`, `02-mechanics.T3.02a`, `04-embedded.T1.04a`,
+  `00-foundations.T1.00b` and `06-robotics.T1.06a` are now **clean as packages**, not just as behaviour
+  suites: both `test_behavior.py` and `test_transfer.py` in each carry a message on every graded
+  assertion. That is the difference this round was asked for — the last two rounds left transfer suites
+  behind, so a "clean" file still sat next to a silent one.
+- **302 messages**, baseline **1549 → 1247** weak assertions across **85 → 73** files.
+- The cause in each message comes from the file it sits in (the `sqrt(1 - zeta^2)` factor, the
+  `1 + t/(2R)` stress concentration, the uint16 subtraction width, the `6dq/T²` coefficient, the
+  dropped Kelvin pad), so a learner who reads it is told where to look, not just that they were wrong.
+
+### 2. Verification
+- All six packages re-graded with `run_exercise.py --only <id>`: starter fails, solution passes, every
+  fault fails its named test — exit 0 for all six.
+- No test was removed or renamed in the diff (`grep '^-.*def test_'` over the changed files is empty),
+  so the messages did not ride on deleted coverage.
+- `lint_assertions` clean at the new floor; full local chain 42/42.
+- Remaining worst packages: `00-foundations.T2.00e` and `07-systems.T3.06a` at 33, then five at 31.
+
+---
+
 ## [2026-10-18] — Run 82: Second Burn-Down Round — 1768 → 1549
 
 ### 1. Six more suites, 219 more messages
