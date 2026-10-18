@@ -6,7 +6,7 @@
     "likely",
     "expected"
   ],
-  "total": 1247,
+  "total": 975,
   "files": {
     "exercises/00-foundations.T1.00a/test_behavior.py": 25,
     "exercises/00-foundations.T1.00a/test_transfer.py": 10,
@@ -50,14 +50,8 @@
     "exercises/03-sensors.T1.03a/test_transfer.py": 28,
     "exercises/03-sensors.T2.03a/test_transfer.py": 10,
     "exercises/03-sensors.T3.03a/test_transfer.py": 20,
-    "exercises/04-embedded.T1.04b/test_behavior.py": 30,
-    "exercises/04-embedded.T1.04b/test_transfer.py": 18,
-    "exercises/04-embedded.T2.04a/test_behavior.py": 24,
-    "exercises/04-embedded.T2.04a/test_transfer.py": 21,
     "exercises/04-embedded.T2.04b/test_transfer.py": 27,
     "exercises/04-embedded.T2.04c/test_transfer.py": 22,
-    "exercises/04-embedded.T2.04d/test_behavior.py": 27,
-    "exercises/04-embedded.T2.04d/test_transfer.py": 17,
     "exercises/04-embedded.T3.04a/test_transfer.py": 15,
     "exercises/05-control.T1.05a/test_transfer.py": 14,
     "exercises/05-control.T3.05a/test_behavior.py": 15,
@@ -66,8 +60,6 @@
     "exercises/05-control.T3.05b/test_transfer.py": 5,
     "exercises/05-control.T3.05c/test_behavior.py": 14,
     "exercises/05-control.T3.05c/test_transfer.py": 8,
-    "exercises/06-robotics.T2.06a/test_behavior.py": 31,
-    "exercises/06-robotics.T2.06a/test_transfer.py": 14,
     "exercises/06-robotics.T2.06b/test_behavior.py": 21,
     "exercises/06-robotics.T2.06b/test_transfer.py": 16,
     "exercises/06-robotics.T3.06a/test_behavior.py": 21,
@@ -76,10 +68,6 @@
     "exercises/06-robotics.T3.06b/test_transfer.py": 16,
     "exercises/07-systems.T1.07a/test_behavior.py": 22,
     "exercises/07-systems.T1.07a/test_transfer.py": 12,
-    "exercises/07-systems.T2.07a/test_behavior.py": 29,
-    "exercises/07-systems.T2.07a/test_transfer.py": 14,
-    "exercises/07-systems.T3.06a/test_behavior.py": 31,
-    "exercises/07-systems.T3.06a/test_transfer.py": 16,
     "exercises/08-capstones.T3.07a/test_transfer.py": 18
   }
 }
