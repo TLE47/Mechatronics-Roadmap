@@ -11,6 +11,27 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 82: Second Burn-Down Round — 1768 → 1549
+
+### 1. Six more suites, 219 more messages
+- `04-embedded.T2.04c` (36), `03-sensors.T3.03a` (38), `01-electronics.T1.01c` (36), `05-control.T1.05a`
+  (36), `03-sensors.T2.03a` (34) and `00-foundations.T1.00e` (35) now carry a message on every graded
+  assertion: expected value, what a different answer implies, the cause the file's own comments name,
+  and what to check.
+- Two pre-existing messages in `T1.00e` were replaced rather than kept — both lacked a
+  check/likely/expected keyword, and one was 39 characters, so the earlier `--write-baseline` had
+  already counted them as weak. Replacing them is the burn-down working, not a regression.
+- `docs/assertion-baseline.json` lowered: **1768 → 1549** weak assertions across **91 → 85** files.
+
+### 2. Verification
+- Each of the six packages re-graded with `run_exercise.py --only <id>`: starter fails, solution passes,
+  every fault fails its named test (exit 0 for all six).
+- `lint_assertions` clean at the new floor; full local chain **42/42, exit 0**.
+- Remaining worst: `00-foundations.T2.00e` and `06-robotics.T1.06a` at 33 each, then five files at 31 —
+  the next round's set.
+
+---
+
 ## [2026-10-18] — Run 81: Assertions That Explain Themselves, and a Validator That Runs Anywhere
 
 ### 1. The assertion bar is a rule now (A4, first half)
