@@ -20,10 +20,9 @@
  *    passes the appended self-check, and the output badge reads MATCHED, on the built bundle. A package
  *    added to `exercises/` is in this suite the next run, and a package whose entry the bundle does not
  *    carry fails the count in every browser, so the sweep cannot fall behind the registry.
- *    The sweep itself is latency-bound: one page keeps one warm Pyodide worker, so a package costs a
- *    few round trips and the interpreter barely shows up. Two pages of the same bundle grade two
- *    slices at once (`gradeEntries`), and each page state is read in one `page.evaluate` rather than
- *    four locator calls.
+ *    The sweep runs *inside* the page (`gradeInPage`): one `page.evaluate` clicks every lesson, runs the
+ *    starter and the reference, and reads the badges. Measured: a click-to-result cycle is 8-14 ms in
+ *    the page and ~100 ms through Playwright, so the harness, not the interpreter, was the cost.
  * 6. A second browser grades a *sample* (`sampleExerciseIds`), not the whole list: the same bundle,
  *    Pyodide and packages had already been graded end to end once, so repeating 48 verdicts in Firefox
  *    bought no new signal for twice the interpreter runs. The sample keeps a real Firefox signal on
@@ -195,87 +194,127 @@ export async function checkServed(baseUrl, refs) {
  * explicit `scrollIntoViewIfNeeded` is gone (a locator click scrolls the entry into view itself), and
  * the sweep is split across pages by the caller. The assertions are unchanged.
  */
-async function gradeEntries(page, ids, name) {
-  for (const exerciseId of ids) {
-    await page.getByTestId(`lesson-item-${exerciseId}`).click();
-    // Wait for *this* entry's starter to land in the editor: after the previous exercise loaded its
-    // reference, the editor holds that program for a beat, and reading it would grade the wrong lesson.
-    await page.waitForFunction(
-      () =>
-        (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
-          'raise NotImplementedError'
-        ),
-      undefined,
-      { timeout: 15000 }
-    );
-    const entry = await page.evaluate(() => ({
-      starter: document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '',
-      expected: document.querySelector('[data-testid="pre-expected-stdout"]')?.textContent ?? '',
-    }));
-    assert.ok(
-      entry.starter.includes('raise NotImplementedError') && entry.starter.includes('_selfcheck()'),
-      `${name}: ${exerciseId} must ship its holes and its self-check together`
-    );
-    assert.match(
-      entry.expected.trim(),
-      /SELF-CHECK PASS/,
-      `${name}: ${exerciseId} expected output is not its self-check PASS line`
-    );
-    await page.getByTestId('btn-run-verify').click();
-    await page.waitForFunction(
-      () => {
-        const text = document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '';
-        return text.length > 0 && !text.includes('Click "Run & Verify Output"');
-      },
-      undefined,
-      { timeout: 90000 }
-    );
-    const starterRun = await page.evaluate(() => ({
-      stdout: document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '',
-      output: document.querySelector('[data-testid="badge-output-check"]')?.textContent ?? '',
-      behaviour: document.querySelector('[data-testid="badge-behavior-check"]')?.textContent ?? '',
-    }));
-    assert.ok(
-      starterRun.stdout.includes('NotImplementedError'),
-      `${name}: ${exerciseId} starter must fail on a hole, got: ${starterRun.stdout}`
-    );
-    assert.doesNotMatch(
-      starterRun.output,
-      /MATCHED/i,
-      `${name}: ${exerciseId} starter must not be graded as a match`
-    );
-    assert.match(
-      starterRun.behaviour,
-      /FAILED/i,
-      `${name}: ${exerciseId} starter must fail the instructor behavioural tests`
-    );
-    await page.getByTestId('btn-load-solution').click();
-    await page.getByTestId('btn-run-verify').click();
-    await page.waitForFunction(
-      () =>
-        (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes(
-          'SELF-CHECK PASS'
-        ),
-      undefined,
-      { timeout: 90000 }
-    );
-    const referenceRun = await page.evaluate(() => ({
-      output: document.querySelector('[data-testid="badge-output-check"]')?.textContent ?? '',
-      behaviour: document.querySelector('[data-testid="badge-behavior-check"]')?.textContent ?? '',
-    }));
-    assert.match(
-      referenceRun.output,
-      /MATCHED/i,
-      `${name}: ${exerciseId} reference must match its expected output`
-    );
-    // The registry's copy of the package's selfcheck.py, run after the program, is what awards
-    // verification: a reference that only printed the PASS line would fail this badge.
-    assert.match(
-      referenceRun.behaviour,
-      /PASSED/i,
-      `${name}: ${exerciseId} reference must pass the instructor behavioural tests`
-    );
-  }
+/**
+ * Grade `ids` by driving the page from inside it: one `page.evaluate` clicks every lesson, runs the
+ * starter and the reference, and reads the badges the learner sees.
+ *
+ * Measured before writing this: one click-to-result cycle is **8-14 ms** in the page (no long tasks at
+ * all), while the same cycle costs **~100 ms** through Playwright - actionability checks, one IPC round
+ * trip per locator, and `waitForFunction` polling at rAF granularity. The interpreter is not the cost;
+ * the test harness is, and moving the loop into the page is what takes it out. Each wait is a 2 ms poll
+ * inside the page, so the runner's own timing is what shows up.
+ *
+ * Returns one record per id; `problem` is set (and the rest of the entry's fields may be missing) when
+ * a step did not arrive in time, so the failure names the package and the state it was stuck in.
+ */
+async function gradeInPage(page, ids) {
+  return page.evaluate(async (list) => {
+    const q = (sel) => document.querySelector(sel);
+    const text = (sel) => q(sel)?.textContent ?? '';
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const statusId = () => q('[data-testid^="status-"]')?.getAttribute('data-testid') ?? 'none';
+    const editor = () => q('[data-testid="textarea-python-code"]')?.value ?? '';
+    const waitFor = async (predicate, budgetMs) => {
+      const startedAt = performance.now();
+      while (performance.now() - startedAt < budgetMs) {
+        if (predicate()) return true;
+        await sleep(2);
+      }
+      return false;
+    };
+    const badges = () => [
+      text('[data-testid="badge-output-check"]').trim(),
+      text('[data-testid="badge-behavior-check"]').trim(),
+    ];
+    const results = [];
+    const deadline = performance.now() + 300000;
+    for (const id of list) {
+      const result = { id, problem: '' };
+      results.push(result);
+      if (performance.now() > deadline) {
+        result.problem = 'the sweep exceeded its five-minute budget before this entry';
+        break;
+      }
+      q(`[data-testid="lesson-item-${id}"]`)?.click();
+      // Wait for *this* entry's starter to land in the editor: after the previous exercise loaded its
+      // reference, the editor holds that program for a beat, and reading it would grade the wrong lesson.
+      if (!(await waitFor(() => editor().includes('raise NotImplementedError'), 15000))) {
+        result.problem = "its starter never landed in the editor";
+        continue;
+      }
+      result.starter = editor();
+      result.expected = text('[data-testid="pre-expected-stdout"]').trim();
+      const starterBefore = text('[data-testid="pre-actual-stdout"]');
+      q('[data-testid="btn-run-verify"]').click();
+      if (!(await waitFor(() => {
+        const out = text('[data-testid="pre-actual-stdout"]');
+        return out !== starterBefore && out.length > 0;
+      }, 90000))) {
+        result.problem = `its starter run never reported (status ${statusId()})`;
+        continue;
+      }
+      result.starterStdout = text('[data-testid="pre-actual-stdout"]');
+      result.starterBadges = badges();
+      q('[data-testid="btn-load-solution"]').click();
+      // React must commit the reference before Run is clicked: the handler captures the code it was
+      // rendered with, so both clicks in one task would run the starter a second time.
+      if (!(await waitFor(() => !editor().includes('raise NotImplementedError'), 15000))) {
+        result.problem = "its reference never landed in the editor";
+        continue;
+      }
+      const referenceBefore = text('[data-testid="pre-actual-stdout"]');
+      q('[data-testid="btn-run-verify"]').click();
+      if (!(await waitFor(() => {
+        const out = text('[data-testid="pre-actual-stdout"]');
+        return out !== referenceBefore && out.includes('SELF-CHECK PASS');
+      }, 90000))) {
+        result.problem = `its reference run never printed a PASS line (status ${statusId()})`;
+        continue;
+      }
+      result.referenceBadges = badges();
+    }
+    return results;
+  }, ids);
+}
+
+/** The delivery claim, asserted on what the page handed back for one package. */
+function assertGraded(result, name) {
+  assert.ok(result.starter?.includes('raise NotImplementedError'), `${name}: ${result.id} ${result.problem}`);
+  assert.ok(
+    result.starter.includes('_selfcheck()'),
+    `${name}: ${result.id} must ship its holes and its self-check together`
+  );
+  assert.match(
+    result.expected,
+    /SELF-CHECK PASS/,
+    `${name}: ${result.id} expected output is not its self-check PASS line`
+  );
+  assert.ok(
+    result.starterStdout.includes('NotImplementedError'),
+    `${name}: ${result.id} starter must fail on a hole, got: ${result.starterStdout}`
+  );
+  assert.doesNotMatch(
+    result.starterBadges[0],
+    /MATCHED/i,
+    `${name}: ${result.id} starter must not be graded as a match`
+  );
+  assert.match(
+    result.starterBadges[1],
+    /FAILED/i,
+    `${name}: ${result.id} starter must fail the instructor behavioural tests`
+  );
+  assert.match(
+    result.referenceBadges[0],
+    /MATCHED/i,
+    `${name}: ${result.id} reference must match its expected output`
+  );
+  // The registry's copy of the package's selfcheck.py, run after the program, is what awards
+  // verification: a reference that only printed the PASS line would fail this badge.
+  assert.match(
+    result.referenceBadges[1],
+    /PASSED/i,
+    `${name}: ${result.id} reference must pass the instructor behavioural tests`
+  );
 }
 
 async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
@@ -337,26 +376,15 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         ? `all ${exerciseIds.length} graded exercise entries`
         : `${gradingIds.length} of ${exerciseIds.length} graded exercise entries (one per track, plus both ends)`;
     const exercisePassStarted = Date.now();
-    // The sweep is latency-bound, not CPU-bound: every run is a warm worker round trip, so two pages
-    // of the same bundle grade two slices at once (measured: 48 entries 13.4 s on one page, 8.7-9.6 s
-    // on two). Only for a long list - the 9-entry sample is cheaper on one page, where there is no
-    // second load and no second runtime to pay for.
-    const sweepPageCount = Math.min(2, Math.max(1, Math.floor(gradingIds.length / 24)));
-    const sweepPages = [page];
-    for (let index = 1; index < sweepPageCount; index += 1) {
-      const extra = await page.context().newPage();
-      await extra.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
-      await extra.getByTestId('tab-btn-tab-pyodide').click();
-      sweepPages.push(extra);
-    }
-    try {
-      const slices = sweepPages.map((_, index) =>
-        gradingIds.filter((__, position) => position % sweepPages.length === index)
-      );
-      await Promise.all(sweepPages.map((sweepPage, index) => gradeEntries(sweepPage, slices[index], name)));
-    } finally {
-      for (const extra of sweepPages.slice(1)) await extra.close();
-    }
+    // One page, one pass: the loop lives in the page now (see `gradeInPage`), so there is nothing to
+    // parallelise - a second page only added its own load and runtime, measured at +0.2 s.
+    const results = await gradeInPage(page, gradingIds);
+    assert.equal(
+      results.length,
+      gradingIds.length,
+      `${name}: the sweep returned ${results.length} results for ${gradingIds.length} packages`
+    );
+    for (const result of results) assertGraded(result, name);
     console.log(
       `  ok ${name}: ${gradingScope} (${gradingIds[0]} .. ${gradingIds[gradingIds.length - 1]}) ` +
         `failed their starter on a hole and matched on their reference in ${((Date.now() - exercisePassStarted) / 1000).toFixed(1)}s`

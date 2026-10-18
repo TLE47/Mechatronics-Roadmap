@@ -11,6 +11,40 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 94: The ~100 ms Was the Harness, Not the Runner
+
+Measured the runner's click-to-result cycle from **inside the page** (a MutationObserver on the status
+and badges, `performance.now()` around a synthetic click) and from outside it:
+
+| | measured |
+| --- | --- |
+| click -> badges updated, in the page | **8-14 ms** |
+| long tasks during that cycle | **0** |
+| the same cycle through Playwright (click, `waitForFunction`, reads) | **~100-130 ms** |
+
+So there was nothing to cut in the runner: one run is two warm worker messages and a small React
+commit, and the browser reports no long task at all. The 100 ms was the *test harness* - actionability
+checks, an IPC round trip per locator, `waitForFunction` polling at rAF granularity.
+
+- **The sweep moved into the page.** `gradeInPage` is one `page.evaluate` that clicks each lesson, waits
+  for the editor to commit, runs the starter and the reference, and returns the stdout and badges it
+  saw. Waits are 2 ms polls in the page instead of CDP polls, and the assertions run in Node on exactly
+  the strings the page returned.
+- **Run 93's two-page fan-out is gone**: it existed to hide CDP chatter, and with the loop in the page
+  a second page measured +0.2 s (its own load and runtime) and buys nothing.
+- Same assertions, same messages, plus a five-minute sweep budget and a per-entry `problem` naming the
+  state it was stuck in, so a stuck app fails as `EX.… its starter run never reported (status …)`
+  rather than a generic timeout.
+- A real finding along the way: **Load Solution then Run in the same task runs the stale program** -
+  the click handler captures the code it was rendered with, so the suite now waits for the editor to
+  commit the reference before clicking Run. A human cannot click that fast; worth knowing anyway.
+
+| | before | after |
+| --- | --- | --- |
+| Chromium sweep, 48 packages | 8.9 s | **3.6 s** |
+| bundle suite, standalone | 15 s | **10 s** |
+| `npm run test:workbench` | 17-19 s | **12-16 s** |
+
 ## [2026-10-18] — Run 93: The Sweep Is Latency, Not Python
 
 Measured the bundle suite's 48-package sweep before touching it, and the hypothesis did not survive:
