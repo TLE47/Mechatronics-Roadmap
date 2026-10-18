@@ -11,6 +11,22 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 69: A Second Owner for Quaternion SLERP, and CORDIC Comes Home
+
+### 1. Shared ownership has a live example
+- `06-robotics.T2.06a` now states what `tf2` does with the orientations it buffers: each frame's rotation is a unit quaternion, a lookup interpolates with `slerp` (not a linear blend), and `tf2` negates `q_b` when `q_a . q_b < 0` to take the short arc. Gate Q10 computes the scalar part of a 90-degree slerp at `alpha = 0.25` (`0.923879533`).
+- The page declares `owns: [unit_quaternion_kinematics_slerp]`, so the concept now has **two owning pages** — `00-foundations.T3.00a` derives the chart, `06-robotics.T2.06a` applies and gates it — which is exactly what Run 68's rule change permits.
+- Because a Gate test covers its whole track tier, `06-robotics.T2.06b` gained Q9 as well: the bag-replay sign flip, tested conceptually. Gates: 06a `8/10`, 06b `8/9`.
+
+### 2. The last unresolved concept is closed
+- `04-embedded.T3.04a` already calls the hardware `CORDIC` block from its Q1.31 item, so it now derives it: the microrotation recurrence with `sigma_i = sign(z_i)`, the shift-and-add property, the accumulated gain `K = prod sqrt(1 + 2^-2i) ~ 1.646760` pre-divided out, the residual bound `atan(2^-(n-1))`, and the 99.9-degree coverage that forces a quadrant fold.
+- The page owns `q131_cordic_hardware_coprocessor` and gates it twice: `alpha_3 = atan(2^-3) = 0.124354995` and why no multiplier is needed. Gate `8/10`.
+- `resources/legacy-prereq-map.json` now resolves **102 concepts with 0 unresolved** — the first time the crosswalk has no recorded gaps.
+
+### 3. Verification
+- Full CI Python step (23 commands) exit 0: `validate_modules` (both new `owns:` lists accepted, both tiers' Gate tests tag them), `module_parity --check`, `tests/test_module_parity.py` 19 tests, `mentions --check` (41 pairs, 18/3/20), `crosswalk --check` (102 resolved, 0 unresolved), `stepsize --check`, `verify_repo` PASS.
+- `audit_math` PASS (markdown=16629, equations=27, mathviews=107, failures=0).
+
 ## [2026-10-18] — Run 68: Quaternion SLERP Gets a Home, and a Concept May Have Two Owners
 
 ### 1. The last substantive unresolved concept is taught, gated and resolved

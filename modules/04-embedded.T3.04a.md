@@ -11,6 +11,8 @@ new_concepts:
   - center_aligned_pwm_midpoint_adc_sampling
   - q131_fixed_point_trig_scaling
   - seqlock_optimistic_even_odd_versioning
+owns:
+  - q131_cordic_hardware_coprocessor
 uses:
   - dma_double_buffered_ping_pong_isr
   - rate_monotonic_response_time_analysis
@@ -56,6 +58,14 @@ X_{Q31} = \operatorname{ clamp }\!\left(\operatorname{round}\!\left(x \cdot 2^{3
 $$
 
    where an electrical angle $\theta_e \in [-\pi, +\pi)$ is normalized first to $x = \theta_e / \pi \in [-1.0, +1.0)$.
+
+   - **Hardware `CORDIC` Iteration:** The coprocessor evaluates $\sin\theta$ and $\cos\theta$ with no multiplier at all. Starting from $(x_0, y_0) = (1/K, 0)$ and $z_0 = \theta$, it applies $n$ microrotations by the precomputed angles $\alpha_i = \tan^{-1}(2^{-i})$, choosing the sign $\sigma_i = \operatorname{sign}(z_i)$ so that $z$ is driven to zero:
+
+$$
+x_{i+1} = x_i - \sigma_i 2^{-i} y_i, \qquad y_{i+1} = y_i + \sigma_i 2^{-i} x_i, \qquad z_{i+1} = z_i - \sigma_i \alpha_i
+$$
+
+     Every step is an arithmetic shift and an add, which is what makes it a hardware block rather than a library call. The rotation lengthens the vector by $\sqrt{1 + 2^{-2i}}$, so the accumulated gain $K = \prod_i \sqrt{1 + 2^{-2i}} \approx 1.646760$ is pre-divided out in $x_0$. After $n$ steps the residual angle is bounded by $\alpha_{n-1} = \tan^{-1}(2^{-(n-1)})$, and because $\sum_i \alpha_i \approx 1.743\ \text{rad}$ ($99.9^\circ$), a quadrant fold has to precede the iteration for a full-turn angle.
 3. **Wait-Free `SeqLock` Consistency Invariant:** Let $s_1$ be the sequence counter read before copying payload $P$ and $s_2$ be the sequence counter read after copying $P$. The snapshot $P$ is guaranteed tear-free iff:
 
 $$
@@ -370,7 +380,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 3.5 (`04-embedded.T3.05`).
+Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/10$) on the Ladder Gate test below to unlock Step 3.5 (`04-embedded.T3.05`).
 
 ### Skip test
 1. `[Recall] [Concept: center_aligned_pwm_midpoint_adc_sampling]` A microcontroller advanced timer clocked at $f_{\text{tim}} = 180\text{ MHz}$ ($1.8 \times 10^8\text{ Hz}$) operates in center-aligned (up-down) mode to generate a $f_{\text{PWM}} = 30\text{ kHz}$ ($3.0 \times 10^4\text{ Hz}$) carrier. Compute the auto-reload register value $\text{ARR} = \frac{f_{\text{tim}}}{2 \, f_{\text{PWM}}}$ (tolerance $\pm 10^{-9}$).
@@ -425,6 +435,13 @@ Covers the complete Track 04 Tier 3 bridge ladder (`04-embedded.T3.04a`) before 
    - **D.** Enable `malloc()` inside the DMA ISR.
 8. `[Concept: center_aligned_pwm_midpoint_adc_sampling]` If a $40\text{ kHz}$ ISR ($25.0\ \mu\text{s}$ period) has a measured worst-case execution time of $\text{WCET} = 3.0\ \mu\text{s}$ at $170\text{ MHz}$, compute the percentage of CPU time $100 \times \frac{\text{WCET}}{T_{\text{PWM}}}$ consumed by the fast ISR (tolerance $\pm 10^{-9}\%$).
 
+9. `[Concept: q131_cordic_hardware_coprocessor]` Compute the `CORDIC` microrotation angle $\alpha_3 = \tan^{-1}(2^{-3})$ in radians (tolerance $\pm 10^{-9}$).
+10. `[Concept: q131_cordic_hardware_coprocessor]` Why does a `CORDIC` microrotation need no multiplier?
+   - **A.** Because every factor is a power of two, so each product is an arithmetic shift of an integer, leaving only adds, shifts and a table of $\tan^{-1}$ constants.
+   - **B.** Because the coprocessor caches every sine value in flash.
+   - **C.** Because Q1.31 numbers are always integers.
+   - **D.** Because the rotation gain $K$ is applied to the angle instead of the vector.
+
 **Gate answer key:**
 ```python
 import math
@@ -437,6 +454,8 @@ g5_seq_after_3 = 3 * 2
 g6_choice = "A"
 g7_choice = "A"
 g8_cpu_pct = 100.0 * (3.0 / 25.0)
+g9_alpha3 = math.atan(2.0 ** -3)
+g10_choice = "A"
 
 assert g1_choice == "A"
 assert math.isclose(g2_fpwm_khz, 50.0, rel_tol=1e-9)
@@ -446,8 +465,10 @@ assert g5_seq_after_3 == 6
 assert g6_choice == "A"
 assert g7_choice == "A"
 assert math.isclose(g8_cpu_pct, 12.0, rel_tol=1e-9)
+assert math.isclose(g9_alpha3, 0.124354995, abs_tol=1e-9)
+assert g10_choice == "A"
 ```
-- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1, Q2, Q8 $\to$ `## 3. Formalization` item 1; Q3–Q4 $\to$ `## 3. Formalization` item 2; Q5–Q7 $\to$ `## 3. Formalization` item 3.
+- **Pass mark:** $8/10$ ($80\%+$). Remediation: Q1, Q2, Q8 $\to$ `## 3. Formalization` item 1; Q3–Q4, Q9–Q10 $\to$ `## 3. Formalization` item 2; Q5–Q7 $\to$ `## 3. Formalization` item 3.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

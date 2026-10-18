@@ -11,6 +11,8 @@ new_concepts:
   - ros2_nodes_topics_services_and_qos
   - tf2_transform_tree_and_urdf_kinematics
   - ros2_control_hardware_interface_read_write
+owns:
+  - unit_quaternion_kinematics_slerp
 uses:
   - se3_homogeneous_transformation_matrix
   - parallel_axis_urdf_inertia_tensor
@@ -66,6 +68,14 @@ $$
 $$
 
    (requesting $t_{\text{sensor}} > t_b$ throws `tf2::ExtrapolationException`).
+
+   - **Quaternion Orientation & SLERP in `tf2`:** Each frame's rotation is buffered as a **unit quaternion** $q = (w, x, y, z)$, and an orientation query interpolates the rotation with **SLERP**, not a linear blend:
+
+$$
+\operatorname{slerp}(q_a, q_b, \alpha) = \frac{\sin((1-\alpha)\Omega)}{\sin\Omega}\,q_a + \frac{\sin(\alpha\Omega)}{\sin\Omega}\,q_b, \qquad \Omega = \cos^{-1}(q_a \cdot q_b)
+$$
+
+     Because $q$ and $-q$ are the same attitude, `tf2` negates $q_b$ when $q_a \cdot q_b < 0$ so the interpolation takes the short arc; blending the four components linearly shortens the quaternion, and renormalizing it does not restore constant angular speed between the samples.
 3. **`ros2_control` Lifecycle & Real-Time `read -> update -> write` Loop:** Inside `controller_manager` running on a `SCHED_FIFO` real-time thread at period $\Delta t = 1/f_{\text{ctrl}}$ ($\text{s}$):
    - **Step A (`read`):** `hardware_interface::SystemInterface::read(time, period)` unpacks encoder/current feedback from SocketCAN (`04-embedded.T2.05`) or `micro-ROS` into exported `state_interfaces` $(q_i, \dot{q}_i, \tau_{i,\text{meas}})$.
    - **Step B (`update`):** Active controllers (`JointTrajectoryController`, Cartesian impedance) execute `update(time, period)` in-memory and write `command_interfaces` $(\tau_{i,\text{cmd}})$.
@@ -345,7 +355,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below and $\ge 80\%$ ($8/9$) on the ladder's Gate test.
+Pass criteria: run the worked example and exercise asserts with zero errors, or score $\ge 80\%$ ($4/4$) on the Skip test below and $\ge 80\%$ ($8/10$) on the ladder's Gate test.
 
 ### Skip test
 1. `[Recall] [Concept: ros2_nodes_topics_services_and_qos]` A stereo camera node publishes depth frames of size $B_{\text{msg}} = 250{,}000\text{ bytes}$ at $f_{\text{pub}} = 60.0\text{ Hz}$ to $N_{\text{sub}} = 2$ unicast subscribers. Compute the total network data rate $R_{\text{MB/s}} = \frac{N_{\text{sub}} \cdot B_{\text{msg}} \cdot f_{\text{pub}}}{10^6}$ in $\text{MB/s}$ (tolerance $\pm 10^{-6}\text{ MB/s}$).
@@ -390,6 +400,8 @@ Covers the complete Track 06 Tier 2 bridge ladder ([`06-robotics.T2.06a`](06-rob
 8. `[Concept: rosbag2_mcap_recording_and_deterministic_replay]` Compute the uncompressed `rosbag2` disk rate $R_{\text{MB/s}} = f B_{\text{framed}} / 10^6$ for $f = 250\text{ Hz}$ and $B_{\text{framed}} = 640\text{ bytes/msg}$ (tolerance $\pm 10^{-9}\text{ MB/s}$).
 9. `[Concept: ros2_simulator_bridge_and_joint_state_loop]` A simulator steps at $f_{\text{sim}} = 4000\text{ Hz}$ with `ros2_control` decimation $D = 4$. Compute the controller frequency $f_{\text{ctrl}} = f_{\text{sim}} / D$ in Hz (tolerance $\pm 10^{-9}\text{ Hz}$).
 
+10. `[Concept: unit_quaternion_kinematics_slerp]` A `tf2` buffer holds $q_a = (1, 0, 0, 0)$ and $q_b = (0, 1, 0, 0)$ - a quarter turn, so $\Omega = \pi/2$ - and must interpolate at $\alpha = 0.25$. Compute the scalar part $w$ of the slerp (tolerance $\pm 10^{-9}$).
+
 **Gate answer key:**
 ```python
 import math
@@ -404,6 +416,7 @@ g6_margin_ms = 1.0 - (0.30 + 0.20 + 0.25)
 g7_saved_mbs = (1.0 * 2_000_000.0 * 25.0) / 1e6
 g8_rate_mbs = (250.0 * 640.0) / 1e6
 g9_fctrl_hz = 4000.0 / 4.0
+g10_slerp_w = math.sin(0.75 * math.pi / 2.0)
 
 assert math.isclose(g1_rate_mbs, 18.0, rel_tol=1e-9)
 assert g2_connects is False
@@ -414,8 +427,9 @@ assert math.isclose(g6_margin_ms, 0.25, rel_tol=1e-9)
 assert math.isclose(g7_saved_mbs, 50.0, rel_tol=1e-9)
 assert math.isclose(g8_rate_mbs, 0.16, rel_tol=1e-9)
 assert math.isclose(g9_fctrl_hz, 1000.0, rel_tol=1e-9)
+assert math.isclose(g10_slerp_w, 0.923879533, abs_tol=1e-9)
 ```
-- **Pass mark:** $\ge 80\%$ ($8/9$ on the Gate test). Missed Q1–Q6: study `06-robotics.T2.06a`; Q7–Q9: `06-robotics.T2.06b`.
+- **Pass mark:** $\ge 80\%$ ($8/10$ on the Gate test). Missed Q1–Q6 and Q10: study `06-robotics.T2.06a`; Q7–Q9: `06-robotics.T2.06b`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

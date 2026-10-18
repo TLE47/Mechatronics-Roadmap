@@ -698,6 +698,15 @@
         "step"
       ]
     },
+    "q131_cordic_hardware_coprocessor": {
+      "page": "04-embedded.T3.04a",
+      "evidence": [
+        "coprocessor",
+        "cordic",
+        "hardware",
+        "q131"
+      ]
+    },
     "quadrature_optical_encoder_cpr": {
       "page": "03-sensors.T1.03a",
       "evidence": [
@@ -994,7 +1003,5 @@
       ]
     }
   },
-  "unresolved": [
-    "q131_cordic_hardware_coprocessor"
-  ]
+  "unresolved": []
 }
