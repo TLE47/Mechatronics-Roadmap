@@ -56,7 +56,7 @@ Tier 2 asks you to show the derivation.
 
 ## Ramp lessons
 
-The four lessons above are the ramp; the rule for adding a fifth is that a check item must exist whose
+The six lessons above are the ramp; the rule for adding a seventh is that a check item must exist whose
 miss has no lesson to repair it.
 
 | Lesson | Repairs items | Time (unmeasured target) |
