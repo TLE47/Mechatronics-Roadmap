@@ -11,9 +11,7 @@ new_concepts:
   - dma_zero_cpu_memory_transfer
   - double_buffered_ping_pong_half_complete_isr
 uses:
-  - hardware_timer_isr_and_jitter
   - spi_magnetic_encoder_readout
-  - packed_binary_telemetry_struct
 est_hours: 4.0
 hardware_required: false
 safety_level: none

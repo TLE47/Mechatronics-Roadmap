@@ -119,6 +119,14 @@ for p in sorted(ROOT.glob("*.md")):
         bad.append(f"{mid}: missing section 'Skip test'")
     if not fm.get("resources_verified", False):
         bad.append(f"{mid}: resources_verified is not true")
+    # `owns:` names the legacy concepts this page re-teaches (mentions_audit's `own` verdict).
+    # It is a third relation, not a synonym for either neighbour: the concept is not assumed
+    # (`uses:`) and it is not new material spending the three-concept budget (`new_concepts:`).
+    owned = set(fm.get("owns", []))
+    for other, label in ((set(fm.get("uses", [])), "uses"), (set(fm.get("new_concepts", [])), "new_concepts")):
+        overlap = owned & other
+        if overlap:
+            bad.append(f"{mid}: concept in both owns and {label}: {sorted(overlap)}")
     if "[UNVERIFIED]" in body or "[verify in-app]" in body:
         bad.append(f"{mid}: contains unverified resource tag ([UNVERIFIED] or [verify in-app])")
 
@@ -174,6 +182,7 @@ for p in sorted(ROOT.glob("*.md")):
         "prereqs": fm.get("prereqs", []),
         "introduces": set(fm.get("new_concepts", [])),
         "uses": set(fm.get("uses", [])),
+        "owns": set(fm.get("owns", [])),
         "legacy": False,
         "body": body,
     }
@@ -248,7 +257,7 @@ for m, d in nodes.items():
             ladder_concepts = set()
             for k, kd in nodes.items():
                 if not kd["legacy"] and k.startswith(track_tier):
-                    ladder_concepts |= kd["introduces"]
+                    ladder_concepts |= kd["introduces"] | kd.get("owns", set())
             for c in sorted(ladder_concepts - tagged):
                 bad.append(f"{m}: Gate test missing ladder concept '{c}'")
             for c in sorted(tagged - ladder_concepts):

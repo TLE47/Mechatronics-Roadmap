@@ -10,10 +10,11 @@ new_concepts:
   - three_phase_balanced_sum_and_clarke_projection
   - park_rotating_frame_dc_demodulation
   - pll_velocity_tracking_and_noise_random_walk
+owns:
+  - so2_rotation_matrix
 uses:
   - electrical_vs_mechanical_pole_pairs
   - open_loop_three_phase_sine_modulation
-  - so2_rotation_matrix
 est_hours: 4.5
 hardware_required: false
 safety_level: none
@@ -49,6 +50,8 @@ $$
 $$
 
    When current is driven $90^\circ$ ahead of the rotor flux ($i_\alpha = -I_{\text{pk}}\sin\theta_e,\ i_\beta = I_{\text{pk}}\cos\theta_e$), substituting into the Park matrix yields constant DC values $i_d = 0\text{ A}$ and $i_q = I_{\text{pk}}$ across all $\theta_e \in [0, 2\pi)$!
+
+   That matrix *is* the 2D rotation group: $R(\theta_e) = \begin{bmatrix} \cos\theta_e & \sin\theta_e \\ -\sin\theta_e & \cos\theta_e \end{bmatrix}$ is the $SO(2)$ member at this angle, so $\det R = 1$, $R(-\theta_e) = R(\theta_e)^\top = R(\theta_e)^{-1}$, and $R(\theta_a)R(\theta_b) = R(\theta_a + \theta_b)$. Those three facts are what make the inverse Park transform a transpose, why the forward Park rotation uses $-\theta_e$ rather than $+\theta_e$, and why two successive frame rotations compose by adding their angles.
 3. **Tracking Loop (PLL) & White Noise vs. Random Walk:**
    - A Type-II tracking PLL drives angle residual $e_\theta = \operatorname{wrap}(\theta_{\text{meas}} - \hat{\theta})$ to zero via $\dot{\hat{\omega}} = K_i e_\theta$ and $\dot{\hat{\theta}} = \hat{\omega} + K_p e_\theta$, extracting lag-free velocity $\hat{\omega}$ without finite-difference noise spikes.
    - Integrating zero-mean white gyro noise of spectral density $\sigma_g$ ($\text{rad/s}/\sqrt{\text{Hz}}$) over averaging window $\tau$ ($\text{s}$) reduces rate standard deviation as $\sigma_{\bar{\omega}}(\tau) = \frac{\sigma_g}{\sqrt{\tau}}$ (slope $-1/2$ on a log-log Allan deviation plot).
@@ -312,7 +315,7 @@ flowchart LR
 ```
 
 ## 7. Checkpoint
-Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($7/8$) on the Ladder Gate test below to unlock Step 2.4 (`03-sensors.T2.04`).
+Pass criteria: score $\ge 80\%$ ($4/4$) on the Skip test or score $\ge 80\%$ ($8/9$) on the Ladder Gate test below to unlock Step 2.4 (`03-sensors.T2.04`).
 
 ### Skip test
 1. `[Recall] [Concept: three_phase_balanced_sum_and_clarke_projection]` In a balanced 3-phase star-connected motor with floating neutral ($i_a + i_b + i_c = 0$), if $i_a = 8.0\text{ A}$ and $i_b = -3.0\text{ A}$, compute $i_c$ in amperes ($\text{A}$, tolerance $\pm 10^{-9}$).
@@ -367,6 +370,8 @@ Covers the complete Track 03 Tier 2 bridge ladder (`03-sensors.T2.03a`) before S
 7. `[Concept: pll_velocity_tracking_and_noise_random_walk]` If a gyroscope has Angle Random Walk white noise density $\sigma_g = 0.01\text{ rad/s}/\sqrt{\text{Hz}}$, compute the averaged rate standard deviation $\sigma_{\bar{\omega}}(\tau) = \sigma_g / \sqrt{\tau}$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$) over an averaging time $\tau = 4.0\text{ s}$.
 8. `[Concept: pll_velocity_tracking_and_noise_random_walk]` On a log-log Allan deviation plot $\log_{10}\sigma_A(\tau)$ vs. $\log_{10}\tau$, what slope corresponds to white rate noise ($\sigma_A(\tau) \propto \tau^{-1/2}$)? (Report the numeric slope, tolerance $\pm 10^{-9}$.)
 
+9. `[Concept: so2_rotation_matrix]` The Park matrix is a member of $SO(2)$, so two rotations compose by adding angles: $R(0.7)\,R(1.1) = R(\theta_a + \theta_b)$. Compute the angle of the product in radians (tolerance $\pm 10^{-12}$).
+
 **Gate answer key:**
 ```python
 import math
@@ -381,6 +386,7 @@ g5_choice = "A"
 g6_choice = "A"
 g7_sigma = 0.01 / math.sqrt(4.0)
 g8_slope = -0.5
+g9_angle = 0.7 + 1.1
 
 assert g1_choice == "A"
 assert math.isclose(g2_ialpha, 5.0, rel_tol=1e-9) and math.isclose(g2_ibeta, 0.0, abs_tol=1e-9)
@@ -390,8 +396,9 @@ assert g5_choice == "A"
 assert g6_choice == "A"
 assert math.isclose(g7_sigma, 0.005, rel_tol=1e-9)
 assert math.isclose(g8_slope, -0.5, rel_tol=1e-9)
+assert math.isclose(g9_angle, 1.8, rel_tol=1e-12)
 ```
-- **Pass mark:** $7/8$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q5 $\to$ `## 3. Formalization` item 2; Q6–Q8 $\to$ `## 3. Formalization` item 3.
+- **Pass mark:** $8/9$ ($80\%+$). Remediation: Q1–Q2 $\to$ `## 3. Formalization` item 1; Q3–Q5, Q9 $\to$ `## 3. Formalization` item 2; Q6–Q8 $\to$ `## 3. Formalization` item 3.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

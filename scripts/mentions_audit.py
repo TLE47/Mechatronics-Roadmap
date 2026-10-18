@@ -16,12 +16,14 @@ The evidence is counted, not judged by eye:
 Decisions are recorded in `resources/mentions-decisions.json`, one row per page–concept pair:
 
 - `keep` — the page engages the concept in §3 Formalization, §4 Worked example or §5 Exercise.
-- `own` — the page declares the concept in `new_concepts:`: it teaches the idea, so it should not
-  list it as an assumption.
+- `own` — the page is the concept's crosswalk teacher and tags it in the Gate test: it re-teaches
+  the idea, so it moves from `uses:` into `owns:`. `owns:` is deliberately separate from
+  `new_concepts:` — a legacy id the page re-teaches is not new material, and it must not spend the
+  three-new-concept budget a page is allowed.
 - `drop` — the page never engages it; the `uses:` claim is removed.
 
 `--check` fails when a pair has no decision, when a `drop` is still in `uses:`, or when an `own` is
-missing from `new_concepts:` — so a decision cannot be recorded without being applied.
+missing from `owns:` — so a decision cannot be recorded without being applied.
 
 Usage:
     python3 scripts/mentions_audit.py            # rewrite docs/PASSING_MENTIONS.md
@@ -81,13 +83,16 @@ def evidence(concept: str, sections: dict[str, str], df: dict[str, int], n_pages
     """Lines that engage the concept: two of its tokens, or its rarest token once."""
     toks = tokens(concept)
     core = min(toks, key=lambda t: df.get(t, n_pages))
-    rare = {t for t in toks if df.get(t, n_pages) <= max(3, n_pages // 4)}
     lines, where, found = [], [], set()
     for title, text in sections.items():
         for line in text.splitlines():
             low = normalize(line)
             present = {t for t in toks if re.search(r"\b" + re.escape(t), low)}
-            if len(present) >= 2 or (present & rare):
+            # Two tokens on one line is engagement with the idea; a single token is only the
+            # family word - `kalman` for the disturbance observer, `rotation` for SO(2) - and a
+            # module that never names the concept cannot be said to exercise it. The exception is
+            # the concept's rarest token, which is distinctive enough to stand on its own.
+            if len(present) >= 2 or core in present:
                 lines.append(line)
                 found |= present
                 if title not in where:
@@ -134,6 +139,7 @@ def rows() -> list[dict]:
                 "page": ident,
                 "concept": concept,
                 "declares": concept in record["fm"]["new_concepts"],
+                "owns_it": concept in record["fm"].get("owns", []),
                 "course_max": strongest.get(concept, ev["lines"]),
                 "gate": gate,
                 "applied": False,
@@ -153,6 +159,7 @@ def rows() -> list[dict]:
                 "page": rec["page"],
                 "concept": rec["concept"],
                 "declares": rec["concept"] in all_pages[rec["page"]]["fm"]["new_concepts"],
+                "owns_it": rec["concept"] in all_pages[rec["page"]]["fm"].get("owns", []),
                 "course_max": strongest.get(rec["concept"], ev["lines"]),
                 "applied": True,
                 **ev,
@@ -171,9 +178,11 @@ def suggestion(row: dict, teachers: dict[str, str]) -> str:
     """Own when the page is the concept's crosswalk teacher, engages it in a graded section, and
     already tags it in the Gate test; keep when it applies the idea; drop when neither.
 
-    The Gate-test condition is what makes `own` an applied change rather than a declaration: a concept
-    in `new_concepts:` must be gated, and a page whose Gate test never names the idea is not yet the
-    page that owns it.
+    The Gate-test condition is what makes `own` an applied change rather than a declaration: a
+    concept in `owns:` must be gated, and a page whose Gate test never names the idea is not yet the
+    page that owns it. The concept goes to `owns:`, not `new_concepts:`, because a page may already
+    spend its three-new-concept budget on material of its own - the legacy id is vocabulary the same
+    content is re-teaching, not a fourth idea.
     """
     gated = f"[Concept: {row['concept']}]" in row.get("gate", "")
     if row["substantive"] and gated and teachers.get(row["concept"]) == row["page"]:
@@ -183,8 +192,24 @@ def suggestion(row: dict, teachers: dict[str, str]) -> str:
     return "drop"
 
 
+def add_owns(head: str, own: list[str]) -> str:
+    """Append `own` ids to the `owns:` block, creating it after `new_concepts:` when absent."""
+    match = re.search(r"^owns:\n((?:  - .*\n)*)", head, re.M)
+    if match:
+        existing = {line[4:].strip() for line in match.group(1).splitlines() if line.startswith("  - ")}
+        add = [c for c in sorted(own) if c not in existing]
+        if not add:
+            return head
+        return head[: match.end()] + "".join("  - " + c + "\n" for c in add) + head[match.end():]
+    block = "owns:\n" + "".join("  - " + c + "\n" for c in sorted(own))
+    anchor = re.search(r"^new_concepts:\n((?:  - .*\n)*)", head, re.M)
+    if anchor:
+        return head[: anchor.end()] + block + head[anchor.end():]
+    return head + ("" if head.endswith("\n") else "\n") + block
+
+
 def rewrite_front_matter(ident: str, drop: list[str], own: list[str]) -> None:
-    """Remove `drop` ids from `uses:`; move `own` ids from `uses:` into `new_concepts:`."""
+    """Remove `drop` ids from `uses:`; move `own` ids from `uses:` into `owns:`."""
     path = os.path.join(MODULES, ident + ".md")
     with open(path, encoding="utf-8") as handle:
         text = handle.read()
@@ -205,7 +230,6 @@ def rewrite_front_matter(ident: str, drop: list[str], own: list[str]) -> None:
         if line.startswith("new_concepts:"):
             section = "new_concepts"
             out.append(line)
-            out.extend("  - " + c for c in sorted(own) if c not in present)
             continue
         if line.startswith("  - ") and section:
             ident_in_list = line[4:].strip()
@@ -219,8 +243,11 @@ def rewrite_front_matter(ident: str, drop: list[str], own: list[str]) -> None:
         if line and not line.startswith(" "):
             section = None
         out.append(line)
+    head_text = "\n".join(out)
+    if own:
+        head_text = add_owns(head_text, own)
     with open(path, "w", encoding="utf-8") as handle:
-        handle.write("---\n" + "\n".join(out) + "\n---\n" + rest)
+        handle.write("---\n" + head_text + "\n---\n" + rest)
 
 
 def render(data: list[dict]) -> str:
@@ -235,8 +262,9 @@ def render(data: list[dict]) -> str:
         "     file; `--check` fails when a decided change is not applied. -->",
         "",
         f"{len(data)} page–concept pairs across {len({r['page'] for r in data})} bridge pages name a legacy",
-        "concept in `uses:`. Each was measured, not eyeballed: the concept's **core term** (its rarest token)",
-        "plus its other tokens are searched in the page body, and the sections they land in decide the claim.",
+        "concept in `uses:`. Each was measured, not eyeballed: a line engages the idea when it carries two",
+        "of the concept's tokens or its **core term** (the rarest token across the course), and the",
+        "sections those lines land in decide the claim.",
         "",
         "| Decision | Rule | Count |",
         "| :--- | :--- | ---: |",
@@ -251,7 +279,7 @@ def render(data: list[dict]) -> str:
         '    E --> Q{"engages it in 3/4/5?"}',
         '    Q -->|no| D["drop the uses claim"]',
         '    Q -->|yes| T{"crosswalk teacher and Gate-tagged?"}',
-        '    T -->|yes| O["own: move to new_concepts"]',
+        '    T -->|yes| O["own: move to owns"]',
         '    T -->|no| K["keep as an assumption"]',
         "```",
         "",
@@ -265,7 +293,7 @@ def render(data: list[dict]) -> str:
             f"| `{r['page']}` | `{r['concept']}` | `{r['core']}` | {r['lines']} | "
             f"{', '.join(r['sections']) or '—'} |"
         )
-    lines += ["", "## Owned (moved from `uses:` to `new_concepts:`)", "",
+    lines += ["", "## Owned (moved from `uses:` to `owns:`)", "",
               "| Page | Concept | Lines | Sections |", "| :--- | :--- | ---: | :--- |"]
     for r in owns:
         lines.append(f"| `{r['page']}` | `{r['concept']}` | {r['lines']} | {', '.join(r['sections'])} |")
@@ -280,8 +308,10 @@ def render(data: list[dict]) -> str:
         "- **Drop** removes the concept from `uses:`. The page may still mention it in prose; the claim that",
         "  it *depends* on the idea is what was false. Nothing else moves, because the crosswalk keeps",
         "  teaching-page links for every legacy concept.",
-        "- **Own** moves the id from `uses:` to `new_concepts:`. This is the honest direction when the page",
-        "  derives and tests the idea: an assumption it teaches is not an assumption.",
+        "- **Own** moves the id from `uses:` to `owns:`. This is the honest direction when the page",
+        "  derives and tests the idea: an assumption it teaches is not an assumption. `owns:` is a separate",
+        "  block so the legacy id does not spend the page's three-`new_concepts` budget; `validate_modules`",
+        "  accepts a Gate tag for an id this page owns, and still rejects one for any other legacy id.",
         "- **Keep** leaves the front matter untouched. The evidence column is already printed, so a reader",
         "  can challenge a keep without re-running the analysis.",
         "",
@@ -362,8 +392,14 @@ def main(argv: list[str]) -> int:
                 still_used = row["concept"] in pages()[row["page"]]["fm"]["uses"]
                 if still_used:
                     findings.append(f"{row['page']} / {row['concept']}: decided {decision} but still in uses")
-                if decision == "own" and row["concept"] not in pages()[row["page"]]["fm"]["new_concepts"]:
-                    findings.append(f"{row['page']} / {row['concept']}: own decided but not in new_concepts")
+                if decision == "own":
+                    fm_now = pages()[row["page"]]["fm"]
+                    if row["concept"] not in fm_now.get("owns", []):
+                        findings.append(f"{row['page']} / {row['concept']}: own decided but not in owns")
+                    if row["concept"] in fm_now["new_concepts"]:
+                        findings.append(
+                            f"{row['page']} / {row['concept']}: owned concept must not also be in new_concepts"
+                        )
         current = open(OUT, encoding="utf-8").read() if os.path.exists(OUT) else ""
         if current != render(data):
             findings.append("docs/PASSING_MENTIONS.md is stale — run --apply")

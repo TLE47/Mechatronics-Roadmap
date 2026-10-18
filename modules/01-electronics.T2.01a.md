@@ -13,7 +13,6 @@ new_concepts:
 uses:
   - voltage_current_resistance_ohms_law
   - kvl_kcl_and_voltage_divider
-  - star_grounding
 est_hours: 4.0
 hardware_required: false
 safety_level: low
