@@ -229,7 +229,7 @@ def lint_file(filepath: str, glossary_entries: list[tuple[str, str, str]]) -> li
     # Check for banned Tier 2/3 jargon anywhere in a *beginner* lesson. The maths ramp is exempt by
     # construction: R.5 and R.6 introduce rotation/phasor sums and frequency response numerically
     # before Tier 2 names them, so the banned words are exactly those lessons' subject. The 48 beginner
-    # lessons keep the ban, and tests/test_error_explainer.py's sibling checks keep the ramp honest.
+    # lessons keep the ban, and tests/test_lint_lessons.py proves the waiver stops at the ramp/ directory.
     body_no_skip = re.sub(r"^.*?\*\*What to skip:\*\*.*$", "", text, flags=re.MULTILINE)
     if not is_ramp_lesson(filepath):
         for pat, label in BANNED_TIER1_JARGON:

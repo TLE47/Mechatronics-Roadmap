@@ -36,9 +36,10 @@ flowchart LR
   linted by the same function. R.5 exists to introduce exactly that vocabulary numerically before Tier 2
   names it, so the ban now skips `ramp/R.*.md` only; `is_ramp_lesson()` names the exemption and the 48
   beginner lessons keep the check.
-- Negative path: appending "Complex numbers are beyond this lesson." to `track-p/P.1` still fails with
-  `Contains banned Tier 2/3 jargon in Tier 1 lesson: complex numbers / j*omega`, and passes once
-  restored. The exemption did not weaken the rule it was carved out of.
+- Negative path, now automated in `tests/test_lint_lessons.py`: the same R.5 text copied one directory
+  out of `ramp/` still fails with `Contains banned Tier 2/3 jargon in Tier 1 lesson: complex numbers /
+  j*omega`. The test also asserts the waiver is load-bearing - that at least one ramp lesson really does
+  use a banned term - so it cannot pass by the exemption quietly waiving nothing.
 
 ### 4. Verification
 - `check_ramp_lessons.py` OK: 6 lessons print their Expected Output and every item points at one.
@@ -46,7 +47,9 @@ flowchart LR
 - `verify_repo.py` PASS 143 files / 144 diagrams / 1875 links / 0 errors; `clean_tex --check` OK;
   `audit_math` PASS; `validate_modules.py` OK (72 modules); `test_error_explainer` and `test_sim_route`
   green after the README edit that keeps the Core-route claim quoted from the generated page.
-- Full local CI chain (35 steps) plus build, smoke and both browser suites: see the run log.
+- `tests/test_lint_lessons.py` 5/5: the waiver covers the ramp, stops at its directory, and still has
+  something to waive.
+- Full local CI chain (36 steps) plus build, smoke and both browser suites: see the run log.
 
 ---
 
