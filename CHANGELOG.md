@@ -34,7 +34,14 @@ biggest single item in its 22-24 s was not a boot at all.
   needed the *progress counters* at zero. They clear every `mechalab*` key and reload instead.
 - The runtime is still re-booted where a scenario is about the runtime dying - the trace-step limit,
   the Stop button, the load failure, and the reload that proves persistence - so those assertions are
-  untouched. The suite now hands the pole to the bundle suite: 12.8-15.2 s against its 18-20 s.
+  untouched. Locally the suite now hands the pole to the bundle suite: 12.8-15.2 s against 18-20 s.
+
+**On the runners that win does not transfer**, and the log says why: the dev suite was 23.2 s before
+and 22.9 s after, and the Workbench step stayed at 29 s because the bundle suite (28.0-28.7 s) is the
+pole there. Most of my 10 s was a *local* macOS resolver sitting on the nonexistent CDN host for
+~10 s; GitHub's resolver answers NXDOMAIN immediately, so that scenario was already ~0.2 s on CI. The
+second context went too, for ~0.3 s. What this run buys on the runner is a simpler suite, not a
+shorter step - the next lever is the bundle suite's 48-package Chromium sweep.
 
 ## [2026-10-18] — Run 91: Every Package Graded Once, the Second Browser Samples
 
