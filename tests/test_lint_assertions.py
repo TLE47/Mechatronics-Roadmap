@@ -79,6 +79,51 @@ class AssertionLintTests(unittest.TestCase):
         self.assertTrue(any("gone.py" in p for p in problems))
 
 
+class PlanTests(unittest.TestCase):
+    """`--plan` names the next package to take, so a round does not need a one-off script."""
+
+    RESULTS = {
+        "exercises/01-electronics.T1.01a/test_behavior.py": ["a"] * 7,
+        "exercises/01-electronics.T1.01a/test_transfer.py": ["b"] * 3,
+        "exercises/05-control.T2.05a/test_behavior.py": ["c"] * 5,
+        "exercises/04-embedded.T1.04a/test_behavior.py": [],
+    }
+
+    def test_package_of_names_the_package_directory(self):
+        self.assertEqual(la.package_of("exercises/01-electronics.T1.01a/test_transfer.py"),
+                         "01-electronics.T1.01a")
+
+    def test_package_totals_sum_both_graded_files(self):
+        self.assertEqual(la.package_totals(self.RESULTS),
+                         [("01-electronics.T1.01a", 10), ("05-control.T2.05a", 5)])
+
+    def test_the_plan_is_paste_ready_and_ranked(self):
+        text = la.plan_text(self.RESULTS, limit=6)
+        self.assertIn("Burn down the next 2 packages", text)
+        self.assertIn("1. 01-electronics.T1.01a (10 weak assertions)", text)
+        self.assertIn("Round total: 15 of 15 weak assertions.", text)
+
+    def test_the_plan_truncates_to_the_limit(self):
+        self.assertEqual(len(la.package_totals(self.RESULTS)[:1]), 1)
+        self.assertNotIn("05-control.T2.05a", la.plan_text(self.RESULTS, limit=1))
+
+    def test_main_prints_the_plan_for_the_real_tree(self):
+        import io
+        import contextlib
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            self.assertEqual(la.main(["--plan", "1"]), 0)
+        self.assertEqual(buffer.getvalue().strip(), la.plan_text(la.scan(), limit=1))
+        self.assertIn("Burn down the next 1 package,", buffer.getvalue())
+
+    def test_a_non_positive_limit_is_a_usage_error(self):
+        import io
+        import contextlib
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
+            la.main(["--plan", "0"])
+        self.assertEqual(caught.exception.code, 2)
+
+
 class TrackReportTests(unittest.TestCase):
     """The per-track table a burn-down round picks its next packages from."""
 
