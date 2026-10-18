@@ -44,6 +44,8 @@ jobs:
           python3 tests/test_model_levels.py
           python3 scripts/check_term_order.py
           python3 scripts/generate_python_lessons_data.py --check
+          python3 scripts/generate_sim_route.py --check
+          python3 tests/test_sim_route.py
           python3 tests/test_exercises.py
           python3 scripts/run_exercise.py --verbose
           python3 tests/test_exercise_package.py

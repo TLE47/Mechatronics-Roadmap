@@ -11,6 +11,7 @@
     "lint": "tsc -b",
     "check:lessons": "python3 scripts/generate_python_lessons_data.py --check",
     "check:parity": "python3 scripts/module_parity.py --check",
+    "check:route": "python3 scripts/generate_sim_route.py --check",
     "test:parity": "python3 tests/test_module_parity.py",
     "check:plant": "python3 scripts/generate_plant_data.py --check",
     "test:plant": "python3 tests/test_plant.py",
