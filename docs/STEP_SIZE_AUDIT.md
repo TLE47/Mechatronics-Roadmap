@@ -42,35 +42,35 @@ published so a reader can reweigh them.
 
 | Page | Concepts | Bundled | New notation | Math | Δ | Prereqs | Legacy | Cross | TODOs | Step | Flag |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
-| `00-foundations.T2.00a` | 3 | 1 | 18 | 3 | +0 | 1 | 1 | 0 | 7 | 18.0 | **JUMP** |
+| `00-foundations.T2.00a` | 3 | 1 | 18 | 3 | +0 | 1 | 0 | 0 | 7 | 18.0 | **JUMP** |
 | `00-foundations.T2.00b` | 3 | 1 | 13 | 3 | +0 | 1 | 0 | 0 | 7 | 15.5 | **JUMP** |
 | `00-foundations.T2.00c` | 3 | 0 | 13 | 3 | +0 | 1 | 0 | 0 | 6 | 13.0 | — |
 | `00-foundations.T2.00d` | 3 | 3 | 8 | 3 | +0 | 1 | 0 | 0 | 7 | 17.0 | **JUMP** |
 | `00-foundations.T2.00e` | 3 | 1 | 4 | 3 | +0 | 1 | 0 | 0 | 6 | 10.5 | — |
 | `00-foundations.T2.00f` | 3 | 3 | 4 | 4 | +1 | 1 | 0 | 0 | 0 | 15.0 | **JUMP** |
-| `01-electronics.T2.01a` | 3 | 1 | 3 | 3 | +0 | 2 | 2 | 1 | 7 | 10.5 | — |
+| `01-electronics.T2.01a` | 3 | 1 | 3 | 3 | +0 | 2 | 0 | 1 | 7 | 10.5 | — |
 | `01-electronics.T2.01b` | 3 | 2 | 4 | 4 | +1 | 1 | 0 | 0 | 7 | 14.0 | — |
-| `02-mechanics.T2.02a` | 3 | 1 | 3 | 4 | +2 | 2 | 2 | 1 | 5 | 11.5 | **JUMP** |
-| `03-sensors.T2.03a` | 3 | 2 | 2 | 3 | +1 | 2 | 2 | 1 | 7 | 13.0 | — |
-| `04-embedded.T2.04a` | 3 | 0 | 1 | 4 | +1 | 2 | 2 | 1 | 7 | 8.5 | — |
+| `02-mechanics.T2.02a` | 3 | 1 | 3 | 4 | +2 | 2 | 0 | 1 | 5 | 11.5 | **JUMP** |
+| `03-sensors.T2.03a` | 3 | 2 | 2 | 3 | +1 | 2 | 0 | 1 | 7 | 13.0 | — |
+| `04-embedded.T2.04a` | 3 | 0 | 1 | 4 | +1 | 2 | 0 | 1 | 7 | 8.5 | — |
 | `04-embedded.T2.04b` | 3 | 3 | 3 | 3 | -1 | 1 | 0 | 0 | 7 | 14.5 | **JUMP** |
 | `04-embedded.T2.04c` | 3 | 2 | 0 | 4 | +1 | 1 | 0 | 0 | 7 | 12.0 | — |
 | `04-embedded.T2.04d` | 3 | 1 | 1 | 4 | +0 | 1 | 0 | 0 | 7 | 9.5 | — |
-| `05-control.T2.05a` | 3 | 2 | 1 | 4 | +1 | 2 | 2 | 2 | 0 | 11.5 | — |
-| `06-robotics.T2.06a` | 3 | 2 | 2 | 3 | +0 | 3 | 3 | 3 | 7 | 12.0 | — |
-| `06-robotics.T2.06b` | 3 | 3 | 4 | 3 | +0 | 1 | 0 | 0 | 7 | 15.0 | **JUMP** |
-| `07-systems.T2.07a` | 3 | 2 | 3 | 4 | +1 | 3 | 3 | 3 | 7 | 13.5 | — |
+| `05-control.T2.05a` | 3 | 2 | 1 | 4 | +1 | 3 | 0 | 3 | 0 | 11.5 | — |
+| `06-robotics.T2.06a` | 3 | 2 | 2 | 3 | +0 | 3 | 0 | 3 | 7 | 12.0 | — |
+| `06-robotics.T2.06b` | 3 | 3 | 4 | 3 | +0 | 2 | 0 | 1 | 7 | 15.0 | **JUMP** |
+| `07-systems.T2.07a` | 3 | 2 | 3 | 4 | +1 | 3 | 0 | 3 | 7 | 13.5 | — |
 
 ## Tier 3 — 6 pages, threshold **12.1**
 
 | Page | Concepts | Bundled | New notation | Math | Δ | Prereqs | Legacy | Cross | TODOs | Step | Flag |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
-| `00-foundations.T3.00a` | 3 | 1 | 7 | 4 | +0 | 1 | 1 | 1 | 6 | 12.0 | — |
-| `02-mechanics.T3.02a` | 3 | 1 | 2 | 4 | +0 | 2 | 2 | 1 | 7 | 10.0 | — |
-| `05-control.T3.05a` | 1 | 0 | 3 | 4 | +0 | 2 | 2 | 1 | 3 | 3.5 | — |
+| `00-foundations.T3.00a` | 3 | 1 | 7 | 4 | +0 | 2 | 0 | 1 | 6 | 12.0 | — |
+| `02-mechanics.T3.02a` | 3 | 1 | 2 | 4 | +0 | 2 | 0 | 1 | 7 | 10.0 | — |
+| `05-control.T3.05a` | 1 | 0 | 3 | 4 | +0 | 2 | 0 | 1 | 3 | 3.5 | — |
 | `05-control.T3.05b` | 1 | 0 | 2 | 5 | +1 | 2 | 0 | 1 | 3 | 4.0 | — |
-| `05-control.T3.05c` | 1 | 0 | 0 | 4 | -1 | 1 | 0 | 0 | 0 | 2.0 | — |
-| `08-capstones.T3.07a` | 3 | 3 | 1 | 4 | +0 | 2 | 1 | 2 | 0 | 12.5 | **JUMP** |
+| `05-control.T3.05c` | 1 | 0 | 0 | 4 | -1 | 2 | 0 | 1 | 0 | 2.0 | — |
+| `08-capstones.T3.07a` | 3 | 3 | 1 | 4 | +0 | 1 | 0 | 1 | 0 | 12.5 | **JUMP** |
 
 ## The pages that jump (8)
 
@@ -130,40 +130,42 @@ published so a reader can reweigh them.
 - 3 declared concepts; bundles `geometric_jacobian_and_parallel_axis_theorem`; 3 first-use notation commands (`ne`, `partial`, `xrightarrow`…); math 2 → 4 (+2); 5 scaffold TODOs, 4.5 h.
 - declares: `six_dof_gruebler_constraint_counting`, `se3_homogeneous_transformation_matrix`, `geometric_jacobian_and_parallel_axis_theorem`.
 
-## Broken bridges (23 prerequisite citations to pages that do not exist)
+## Resolved prerequisites (19 legacy ids, 0 findings)
 
-Each row is a page whose `prereqs:` names a module that exists only in
-`modules/_index.yaml`'s `legacy:` section — superseded, with no page on disk. The `taught`
-column asks whether any of the 46 bridge pages claims that legacy module's concepts in its own
-`new_concepts:`; the `used by` column counts the Core Tier 2/3 pages whose `uses:` names one
-of those concepts. A `0/5 taught` with users is the sharpest form of an unbridged jump: a
-required idea that no page teaches.
+Every superseded id in `modules/_index.yaml`'s `legacy:` section now has a page that teaches its
+content. The mapping lives in [`resources/legacy-prereq-map.json`](../resources/legacy-prereq-map.json)
+and is proved here rather than asserted: the page must exist, and every evidence term must appear
+in its text. `citations` counts the pages whose `prereqs:` now name that page.
 
-| Page | Prereq cited | Legacy module | Concepts taught by a bridge | Used by |
-| :--- | :--- | :--- | :--- | ---: |
-| `00-foundations.T2.00a` | `00-foundations.T1.01` | Track 00 (Tier 1): Calculus as while Loops, 2D Rotations & RC Smoothing | 0/5 | 2 |
-| `01-electronics.T2.01a` | `01-electronics.T1.02` | Track 01 (Tier 1): Breadboard H-Bridges (DRV8833), Logic Levels & Decoupling | 0/5 | 1 |
-| `01-electronics.T2.01a` | `00-foundations.T2.01` | Track 00 (Tier 2): State-Space Matrices, Two-Mass Resonance, Quaternions & Tustin Biquads | 0/3 | 1 |
-| `02-mechanics.T2.02a` | `02-mechanics.T1.03` | Track 02 (Tier 1): 2D Planar Kinematics, Gear Ratios (N^2 Inertia) & Bearings | 0/5 | 1 |
-| `02-mechanics.T2.02a` | `00-foundations.T2.01` | Track 00 (Tier 2): State-Space Matrices, Two-Mass Resonance, Quaternions & Tustin Biquads | 0/3 | 1 |
-| `03-sensors.T2.03a` | `01-electronics.T2.02` | Track 01 (Tier 2): 4-Layer KiCad PCBs, Bootstrap Gate Drivers & 4-Terminal Kelvin Shunts | 0/4 | 0 |
-| `03-sensors.T2.03a` | `03-sensors.T1.04` | Track 03 (Tier 1): Quadrature/Magnetic Encoders & Open-Loop BLDC (SimpleFOC) | 0/5 | 1 |
-| `04-embedded.T2.04a` | `04-embedded.T1.05` | Track 04 (Tier 1): Killing delay(), 1 kHz Timer ISRs & Binary Serial | 0/5 | 1 |
-| `04-embedded.T2.04a` | `03-sensors.T2.04` | Track 03 (Tier 2): Clarke/Park Transforms, Type-II PLLs & Allan Variance | 0/5 | 1 |
-| `05-control.T2.05a` | `00-foundations.T2.01` | Track 00 (Tier 2): State-Space Matrices, Two-Mass Resonance, Quaternions & Tustin Biquads | 0/3 | 1 |
-| `05-control.T2.05a` | `02-mechanics.T2.03` | Track 02 (Tier 2): Maxwell Exact Constraint, CadQuery & URDF/MuJoCo Validation | 0/5 | 2 |
-| `06-robotics.T2.06a` | `02-mechanics.T2.03` | Track 02 (Tier 2): Maxwell Exact Constraint, CadQuery & URDF/MuJoCo Validation | 0/5 | 2 |
-| `06-robotics.T2.06a` | `04-embedded.T2.05` | Track 04 (Tier 2): FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (MIT Mode) | 0/4 | 2 |
-| `06-robotics.T2.06a` | `05-control.T2.06` | Track 05 (Tier 2): Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF | 0/5 | 3 |
-| `07-systems.T2.07a` | `01-electronics.T2.02` | Track 01 (Tier 2): 4-Layer KiCad PCBs, Bootstrap Gate Drivers & 4-Terminal Kelvin Shunts | 0/4 | 0 |
-| `07-systems.T2.07a` | `04-embedded.T2.05` | Track 04 (Tier 2): FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (MIT Mode) | 0/4 | 2 |
-| `07-systems.T2.07a` | `06-robotics.T2.07` | Track 06 & 07 (Tier 2): Jacobian Transpose Compliance, Ruckig S-Curves & Regen Clamps | 0/3 | 1 |
-| `00-foundations.T3.00a` | `07-systems.T2.08` | Track 08 (Tier 2 Boss Capstone): Custom 4-Layer CAN Servo + LQR/MuJoCo Twin | 0/4 | 0 |
-| `02-mechanics.T3.02a` | `00-foundations.T3.01` | Track 00 (Tier 3): Lie Groups SO(3)/SE(3), Van Loan ZOH & Port-Hamiltonian Energy | 0/4 | 2 |
-| `02-mechanics.T3.02a` | `02-mechanics.T2.03` | Track 02 (Tier 2): Maxwell Exact Constraint, CadQuery & URDF/MuJoCo Validation | 0/5 | 2 |
-| `05-control.T3.05a` | `00-foundations.T3.01` | Track 00 (Tier 3): Lie Groups SO(3)/SE(3), Van Loan ZOH & Port-Hamiltonian Energy | 0/4 | 2 |
-| `05-control.T3.05a` | `05-control.T2.06` | Track 05 (Tier 2): Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF | 0/5 | 3 |
-| `08-capstones.T3.07a` | `06-robotics.T3.07` | Track 06 & 07 (Tier 3): Khatib WBC, Embodied AI (LeRobot, Diffusion, pi0/VLA), Schroeder SysID, AAS Digital Twins & <1 us STO | 0/5 | 0 |
+| Legacy id | Teaching page | Evidence in that page | Citations | Verified |
+| :--- | :--- | :--- | ---: | :--- |
+| `00-foundations.T1.01` | `00-foundations.T1.00e` | symplectic, euler, integration, atan2 | 4 | yes |
+| `00-foundations.T2.01` | `00-foundations.T2.00d` | resonance, tustin, notch, biquad | 4 | yes |
+| `00-foundations.T3.01` | `00-foundations.T3.00a` | rodrigues, so3, hamiltonian | 4 | yes |
+| `01-electronics.T1.02` | `01-electronics.T1.01b` | decay, grounding, decoupling, esd | 3 | yes |
+| `01-electronics.T2.02` | `01-electronics.T2.01b` | bootstrap, kelvin, shunt, deadtime | 3 | yes |
+| `01-electronics.T3.02` | `01-electronics.T3.01a` | bessel, sar, commutation | 1 | yes |
+| `02-mechanics.T1.03` | `02-mechanics.T1.02a` | elbow, planar, reflected, squared | 2 | yes |
+| `02-mechanics.T2.03` | `02-mechanics.T2.02a` | maxwell, constraint, coupling, urdf | 3 | yes |
+| `03-sensors.T1.04` | `03-sensors.T1.03a` | commutation, diametric, quadrature, cpr | 1 | yes |
+| `03-sensors.T2.04` | `03-sensors.T2.03a` | clarke, park, pll, allan | 2 | yes |
+| `03-sensors.T3.04` | `03-sensors.T3.03a` | svpwm, harmonic, zero-sequence | 1 | yes |
+| `04-embedded.T1.05` | `04-embedded.T1.04b` | volatile, isr, jitter, telemetry | 2 | yes |
+| `04-embedded.T2.05` | `04-embedded.T2.04b` | freertos, monotonic, mutex, dma | 4 | yes |
+| `05-control.T1.06` | `05-control.T1.05a` | pid, windup, complementary, imu | 1 | yes |
+| `05-control.T2.06` | `05-control.T2.05a` | bode, lqr, kalman, margin | 2 | yes |
+| `06-robotics.T1.07` | `06-robotics.T1.06a` | cubic, gravity | 1 | yes |
+| `06-robotics.T2.07` | `06-robotics.T2.06a` | impedance | 2 | yes |
+| `06-robotics.T3.07` | `07-systems.T3.06a` | sto, aas, opc | 1 | yes |
+| `07-systems.T2.08` | `07-systems.T2.07a` | chopper, watchdog, regenerative | 2 | yes |
+
+## Prerequisite citations with no page (0)
+
+Empty is the only passing state: a row here means a page still names a module that does not
+exist. The same check fails `--check`, so a repointed prerequisite cannot silently come back.
+
+| Page | Prereq cited | Legacy module |
+| :--- | :--- | :--- |
 
 ## Assumptions no page teaches (13 pages)
 

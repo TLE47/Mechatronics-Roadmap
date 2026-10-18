@@ -4,8 +4,8 @@ title: "Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & P
 track: "04"
 tier: 2
 prereqs:
-  - 04-embedded.T1.05
-  - 03-sensors.T2.04
+  - 04-embedded.T1.04b
+  - 03-sensors.T2.03a
 new_concepts:
   - spi_full_duplex_clock_polarity_phase
   - dma_zero_cpu_memory_transfer

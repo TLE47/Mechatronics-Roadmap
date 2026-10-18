@@ -1,0 +1,996 @@
+{
+  "_comment": "Every id here lives in modules/_index.yaml's `legacy:` section and has no page. The `page` is the real page that teaches that module's content, and `evidence` are terms that must literally appear in that page (scripts/audit_step_size.py fails when one does not). `prereqs:` may only cite the page, never the legacy id.",
+  "00-foundations.T1.01": {
+    "page": "00-foundations.T1.00e",
+    "evidence": [
+      "symplectic",
+      "euler",
+      "integration",
+      "atan2"
+    ]
+  },
+  "01-electronics.T1.02": {
+    "page": "01-electronics.T1.01b",
+    "evidence": [
+      "decay",
+      "grounding",
+      "decoupling",
+      "esd"
+    ]
+  },
+  "02-mechanics.T1.03": {
+    "page": "02-mechanics.T1.02a",
+    "evidence": [
+      "elbow",
+      "planar",
+      "reflected",
+      "squared"
+    ]
+  },
+  "03-sensors.T1.04": {
+    "page": "03-sensors.T1.03a",
+    "evidence": [
+      "commutation",
+      "diametric",
+      "quadrature",
+      "cpr"
+    ]
+  },
+  "04-embedded.T1.05": {
+    "page": "04-embedded.T1.04b",
+    "evidence": [
+      "volatile",
+      "isr",
+      "jitter",
+      "telemetry"
+    ]
+  },
+  "05-control.T1.06": {
+    "page": "05-control.T1.05a",
+    "evidence": [
+      "pid",
+      "windup",
+      "complementary",
+      "imu"
+    ]
+  },
+  "06-robotics.T1.07": {
+    "page": "06-robotics.T1.06a",
+    "evidence": [
+      "cubic",
+      "gravity"
+    ]
+  },
+  "00-foundations.T2.01": {
+    "page": "00-foundations.T2.00d",
+    "evidence": [
+      "resonance",
+      "tustin",
+      "notch",
+      "biquad"
+    ]
+  },
+  "01-electronics.T2.02": {
+    "page": "01-electronics.T2.01b",
+    "evidence": [
+      "bootstrap",
+      "kelvin",
+      "shunt",
+      "deadtime"
+    ]
+  },
+  "02-mechanics.T2.03": {
+    "page": "02-mechanics.T2.02a",
+    "evidence": [
+      "maxwell",
+      "constraint",
+      "coupling",
+      "urdf"
+    ]
+  },
+  "03-sensors.T2.04": {
+    "page": "03-sensors.T2.03a",
+    "evidence": [
+      "clarke",
+      "park",
+      "pll",
+      "allan"
+    ]
+  },
+  "04-embedded.T2.05": {
+    "page": "04-embedded.T2.04b",
+    "evidence": [
+      "freertos",
+      "monotonic",
+      "mutex",
+      "dma"
+    ]
+  },
+  "05-control.T2.06": {
+    "page": "05-control.T2.05a",
+    "evidence": [
+      "bode",
+      "lqr",
+      "kalman",
+      "margin"
+    ]
+  },
+  "06-robotics.T2.07": {
+    "page": "06-robotics.T2.06a",
+    "evidence": [
+      "impedance"
+    ]
+  },
+  "07-systems.T2.08": {
+    "page": "07-systems.T2.07a",
+    "evidence": [
+      "chopper",
+      "watchdog",
+      "regenerative"
+    ]
+  },
+  "00-foundations.T3.01": {
+    "page": "00-foundations.T3.00a",
+    "evidence": [
+      "rodrigues",
+      "so3",
+      "hamiltonian"
+    ]
+  },
+  "06-robotics.T3.07": {
+    "page": "07-systems.T3.06a",
+    "evidence": [
+      "sto",
+      "aas",
+      "opc"
+    ]
+  },
+  "01-electronics.T3.02": {
+    "page": "01-electronics.T3.01a",
+    "evidence": [
+      "bessel",
+      "sar",
+      "commutation"
+    ]
+  },
+  "03-sensors.T3.04": {
+    "page": "03-sensors.T3.03a",
+    "evidence": [
+      "svpwm",
+      "harmonic",
+      "zero-sequence"
+    ]
+  },
+  "concepts": {
+    "aas_iec63278_digital_twin_integration": {
+      "page": "07-systems.T3.06a",
+      "evidence": [
+        "aas",
+        "digital",
+        "twin"
+      ]
+    },
+    "allan_variance_imu_noise_extraction": {
+      "page": "03-sensors.T2.03a",
+      "evidence": [
+        "allan",
+        "imu",
+        "noise",
+        "variance"
+      ]
+    },
+    "amplitude_invariant_clarke_park_transform": {
+      "page": "03-sensors.T2.03a",
+      "evidence": [
+        "amplitude",
+        "clarke",
+        "invariant",
+        "park",
+        "transform"
+      ]
+    },
+    "astrom_furuta_energy_swingup": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "energy",
+        "furuta"
+      ]
+    },
+    "atan2_angle_wrapping": {
+      "page": "00-foundations.T1.00e",
+      "evidence": [
+        "angle",
+        "atan2"
+      ]
+    },
+    "augmented_kalman_disturbance_observer": {
+      "page": "05-control.T3.05a",
+      "evidence": [
+        "augmented",
+        "kalman"
+      ]
+    },
+    "bond_graph_port_hamiltonian_passivity": {
+      "page": "06-robotics.T2.06a",
+      "evidence": [
+        "graph"
+      ]
+    },
+    "bulk_vs_ceramic_decoupling": {
+      "page": "08-capstones.T3.07a",
+      "evidence": [
+        "bulk"
+      ]
+    },
+    "can_fd_crc16_rolling_counter_watchdog": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "can",
+        "counter",
+        "rolling",
+        "watchdog"
+      ]
+    },
+    "can_fd_mit_impedance_packet_packing": {
+      "page": "04-embedded.T2.04b",
+      "evidence": [
+        "can",
+        "impedance",
+        "mit",
+        "packet",
+        "packing"
+      ]
+    },
+    "capstone_1_to_5_qualification_signoff": {
+      "page": "08-capstones.T3.07a",
+      "evidence": [
+        "capstone",
+        "signoff"
+      ]
+    },
+    "cauer_foster_electro_thermal_network": {
+      "page": "01-electronics.T3.01a",
+      "evidence": [
+        "cauer",
+        "electro",
+        "foster",
+        "network",
+        "thermal"
+      ]
+    },
+    "chi_squared_nees_nis_consistency": {
+      "page": "06-robotics.T2.06a",
+      "evidence": [
+        "chi"
+      ]
+    },
+    "christoffel_passivity_skew_symmetry": {
+      "page": "02-mechanics.T3.02a",
+      "evidence": [
+        "christoffel",
+        "passivity",
+        "skew",
+        "symmetry"
+      ]
+    },
+    "cmos_logic_levels_esd_clamping": {
+      "page": "01-electronics.T1.01c",
+      "evidence": [
+        "clamping",
+        "cmos",
+        "esd",
+        "logic"
+      ]
+    },
+    "complementary_imu_attitude_filter": {
+      "page": "05-control.T1.05a",
+      "evidence": [
+        "complementary",
+        "filter",
+        "imu"
+      ]
+    },
+    "control_barrier_function_qp_safety_filter": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "barrier",
+        "control",
+        "safety"
+      ]
+    },
+    "cpp20_wait_free_seqlock": {
+      "page": "04-embedded.T2.04d",
+      "evidence": [
+        "free",
+        "seqlock"
+      ]
+    },
+    "cubic_polynomial_trajectory": {
+      "page": "06-robotics.T1.06a",
+      "evidence": [
+        "cubic",
+        "polynomial",
+        "trajectory"
+      ]
+    },
+    "diametric_hall_magnetic_encoder": {
+      "page": "03-sensors.T1.03a",
+      "evidence": [
+        "diametric",
+        "encoder",
+        "hall",
+        "magnetic"
+      ]
+    },
+    "differential_bessel_anti_aliasing_filter": {
+      "page": "01-electronics.T3.01a",
+      "evidence": [
+        "aliasing",
+        "anti",
+        "bessel",
+        "differential",
+        "filter"
+      ]
+    },
+    "discrete_infinite_horizon_lqr": {
+      "page": "05-control.T2.05a",
+      "evidence": [
+        "discrete",
+        "lqr"
+      ]
+    },
+    "discrete_pid_controller": {
+      "page": "05-control.T1.05a",
+      "evidence": [
+        "controller",
+        "discrete",
+        "pid"
+      ]
+    },
+    "dma_double_buffered_ping_pong_isr": {
+      "page": "04-embedded.T2.04b",
+      "evidence": [
+        "dma",
+        "double"
+      ]
+    },
+    "dual_channel_hardware_safe_torque_off": {
+      "page": "07-systems.T3.06a",
+      "evidence": [
+        "channel",
+        "dual",
+        "hardware",
+        "off",
+        "safe",
+        "torque"
+      ]
+    },
+    "elbow_up_down_branch_selection": {
+      "page": "02-mechanics.T1.02a",
+      "evidence": [
+        "down",
+        "elbow"
+      ]
+    },
+    "electrical_vs_mechanical_pole_pairs": {
+      "page": "03-sensors.T1.03a",
+      "evidence": [
+        "electrical",
+        "mechanical",
+        "pairs",
+        "pole"
+      ]
+    },
+    "embedded_rust_rtic_embassy_concurrency": {
+      "page": "04-embedded.T2.04b",
+      "evidence": [
+        "concurrency",
+        "embedded"
+      ]
+    },
+    "embodied_ai_vla_rtc_policy_deployment": {
+      "page": "08-capstones.T3.07a",
+      "evidence": [
+        "policy"
+      ]
+    },
+    "exponential_moving_average_filter": {
+      "page": "05-control.T3.05c",
+      "evidence": [
+        "exponential",
+        "filter",
+        "moving"
+      ]
+    },
+    "featherstone_on_rnea_inverse_dynamics": {
+      "page": "02-mechanics.T3.02a",
+      "evidence": [
+        "dynamics",
+        "featherstone",
+        "inverse",
+        "rnea"
+      ]
+    },
+    "filtered_derivative_on_measurement": {
+      "page": "05-control.T3.05c",
+      "evidence": [
+        "filtered",
+        "measurement"
+      ]
+    },
+    "four_layer_pcb_ground_plane_stackup": {
+      "page": "01-electronics.T2.01b",
+      "evidence": [
+        "ground",
+        "layer",
+        "pcb",
+        "plane",
+        "stackup"
+      ]
+    },
+    "four_terminal_kelvin_shunt_ina240": {
+      "page": "03-sensors.T2.03a",
+      "evidence": [
+        "four",
+        "ina240",
+        "shunt"
+      ]
+    },
+    "fourier_encoder_eccentricity_anticogging_lut": {
+      "page": "03-sensors.T3.03a",
+      "evidence": [
+        "anticogging",
+        "eccentricity",
+        "encoder",
+        "fourier",
+        "lut"
+      ]
+    },
+    "freertos_priority_inheritance_mutex": {
+      "page": "04-embedded.T2.04b",
+      "evidence": [
+        "freertos",
+        "inheritance",
+        "mutex",
+        "priority"
+      ]
+    },
+    "gang_of_four_sensitivity_waterbed": {
+      "page": "05-control.T2.05a",
+      "evidence": [
+        "four",
+        "gang",
+        "sensitivity",
+        "waterbed"
+      ]
+    },
+    "gpu_parallel_contact_simulation": {
+      "page": "04-embedded.T1.04b",
+      "evidence": [
+        "gpu",
+        "simulation"
+      ]
+    },
+    "gravity_compensation_feedforward": {
+      "page": "06-robotics.T1.06a",
+      "evidence": [
+        "compensation",
+        "feedforward",
+        "gravity"
+      ]
+    },
+    "h_bridge_decay_modes": {
+      "page": "01-electronics.T1.01b",
+      "evidence": [
+        "bridge",
+        "decay",
+        "modes"
+      ]
+    },
+    "hardware_emergency_stop_chain": {
+      "page": "07-systems.T1.07a",
+      "evidence": [
+        "chain",
+        "emergency",
+        "hardware",
+        "stop"
+      ]
+    },
+    "hardware_timer_isr_and_jitter": {
+      "page": "04-embedded.T1.04b",
+      "evidence": [
+        "hardware",
+        "isr",
+        "jitter",
+        "timer"
+      ]
+    },
+    "hertzian_contact_bearing_life": {
+      "page": "06-robotics.T2.06a",
+      "evidence": [
+        "life"
+      ]
+    },
+    "high_side_bootstrap_gate_driver_deadtime": {
+      "page": "01-electronics.T2.01b",
+      "evidence": [
+        "bootstrap",
+        "driver",
+        "gate",
+        "high",
+        "side"
+      ]
+    },
+    "hysteretic_stabilizing_handoff": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "hysteretic"
+      ]
+    },
+    "integrator_clamping_anti_windup": {
+      "page": "05-control.T1.05a",
+      "evidence": [
+        "anti",
+        "clamping",
+        "integrator",
+        "windup"
+      ]
+    },
+    "jacobian_transpose_cartesian_impedance": {
+      "page": "06-robotics.T2.06b",
+      "evidence": [
+        "cartesian",
+        "impedance",
+        "jacobian",
+        "transpose"
+      ]
+    },
+    "joint_space_virtual_spring_damper": {
+      "page": "06-robotics.T1.06a",
+      "evidence": [
+        "damper",
+        "joint",
+        "space",
+        "spring",
+        "virtual"
+      ]
+    },
+    "joseph_form_so3_manifold_eskf": {
+      "page": "05-control.T3.05c",
+      "evidence": [
+        "eskf",
+        "form",
+        "joseph",
+        "manifold"
+      ]
+    },
+    "kelvin_kinematic_coupling": {
+      "page": "02-mechanics.T2.02a",
+      "evidence": [
+        "coupling",
+        "kinematic"
+      ]
+    },
+    "khatib_operational_space_inertia_nullspace": {
+      "page": "06-robotics.T2.06b",
+      "evidence": [
+        "inertia",
+        "operational",
+        "space"
+      ]
+    },
+    "law_of_cosines_inverse_kinematics": {
+      "page": "02-mechanics.T1.02a",
+      "evidence": [
+        "kinematics",
+        "law"
+      ]
+    },
+    "maxwell_locating_exact_constraint": {
+      "page": "02-mechanics.T2.02a",
+      "evidence": [
+        "constraint",
+        "exact",
+        "maxwell"
+      ]
+    },
+    "minmax_zero_sequence_svpwm_injection": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "injection",
+        "zero"
+      ]
+    },
+    "opc_ua_industrial_telemetry": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "industrial"
+      ]
+    },
+    "open_drain_i2c_pullups": {
+      "page": "01-electronics.T1.01b",
+      "evidence": [
+        "drain",
+        "open"
+      ]
+    },
+    "open_loop_three_phase_sine_modulation": {
+      "page": "03-sensors.T1.03a",
+      "evidence": [
+        "open",
+        "phase",
+        "three"
+      ]
+    },
+    "open_robot_platform_integration": {
+      "page": "08-capstones.T3.07a",
+      "evidence": [
+        "integration",
+        "open",
+        "robot"
+      ]
+    },
+    "openplc_iec61131_cyclic_scan": {
+      "page": "07-systems.T1.07a",
+      "evidence": [
+        "cyclic",
+        "openplc",
+        "scan"
+      ]
+    },
+    "packed_binary_telemetry_struct": {
+      "page": "04-embedded.T1.04b",
+      "evidence": [
+        "binary",
+        "packed",
+        "struct",
+        "telemetry"
+      ]
+    },
+    "parallel_axis_urdf_inertia_tensor": {
+      "page": "02-mechanics.T2.02a",
+      "evidence": [
+        "axis",
+        "inertia",
+        "parallel",
+        "tensor",
+        "urdf"
+      ]
+    },
+    "paros_weisbord_circular_notch_flexure": {
+      "page": "02-mechanics.T3.02a",
+      "evidence": [
+        "circular",
+        "flexure",
+        "notch",
+        "paros",
+        "weisbord"
+      ]
+    },
+    "planar_2link_forward_kinematics": {
+      "page": "02-mechanics.T1.02a",
+      "evidence": [
+        "kinematics",
+        "planar"
+      ]
+    },
+    "prewarped_tustin_tdf2_biquad_notch": {
+      "page": "00-foundations.T2.00f",
+      "evidence": [
+        "biquad",
+        "notch",
+        "tustin"
+      ]
+    },
+    "product_of_exponentials_screw_kinematics": {
+      "page": "05-control.T3.05b",
+      "evidence": [
+        "exponentials",
+        "kinematics",
+        "product"
+      ]
+    },
+    "programmatic_cadquery_step_generation": {
+      "page": "06-robotics.T1.06a",
+      "evidence": [
+        "generation",
+        "step"
+      ]
+    },
+    "quadrature_optical_encoder_cpr": {
+      "page": "03-sensors.T1.03a",
+      "evidence": [
+        "cpr",
+        "encoder",
+        "optical",
+        "quadrature"
+      ]
+    },
+    "rate_monotonic_response_time_analysis": {
+      "page": "04-embedded.T2.04b",
+      "evidence": [
+        "analysis",
+        "monotonic",
+        "rate",
+        "response",
+        "time"
+      ]
+    },
+    "rc_cutoff_phase_lag": {
+      "page": "08-capstones.T3.07a",
+      "evidence": [
+        "lag",
+        "phase"
+      ]
+    },
+    "receding_horizon_embedded_mpc": {
+      "page": "05-control.T3.05c",
+      "evidence": [
+        "embedded",
+        "horizon",
+        "mpc"
+      ]
+    },
+    "reflected_inertia_n_squared_scaling": {
+      "page": "02-mechanics.T1.02a",
+      "evidence": [
+        "inertia",
+        "reflected",
+        "scaling",
+        "squared"
+      ]
+    },
+    "regenerative_braking_bus_voltage_surge": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "braking",
+        "bus",
+        "regenerative",
+        "surge",
+        "voltage"
+      ]
+    },
+    "regenerative_braking_shunt_chopper": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "braking",
+        "chopper",
+        "regenerative",
+        "shunt"
+      ]
+    },
+    "rodrigues_so3_se3_exp_log_maps": {
+      "page": "00-foundations.T3.00a",
+      "evidence": [
+        "exp",
+        "log",
+        "maps",
+        "rodrigues"
+      ]
+    },
+    "ruckig_time_optimal_jerk_limited_scurve": {
+      "page": "06-robotics.T1.06a",
+      "evidence": [
+        "jerk",
+        "time"
+      ]
+    },
+    "sar_adc_c0g_charge_bucket_design": {
+      "page": "01-electronics.T3.01a",
+      "evidence": [
+        "adc",
+        "bucket",
+        "c0g",
+        "charge",
+        "design",
+        "sar"
+      ]
+    },
+    "schroeder_multisine_closed_loop_sysid": {
+      "page": "07-systems.T3.06a",
+      "evidence": [
+        "closed",
+        "loop",
+        "multisine",
+        "schroeder",
+        "sysid"
+      ]
+    },
+    "single_tone_sine_sweep_sysid": {
+      "page": "07-systems.T1.07a",
+      "evidence": [
+        "sine",
+        "single",
+        "sweep",
+        "tone"
+      ]
+    },
+    "single_vs_double_shear_joint": {
+      "page": "02-mechanics.T1.02a",
+      "evidence": [
+        "joint",
+        "single"
+      ]
+    },
+    "six_step_trapezoidal_commutation": {
+      "page": "06-robotics.T1.06a",
+      "evidence": [
+        "step",
+        "trapezoidal"
+      ]
+    },
+    "small_angle_taylor_lie_guard": {
+      "page": "00-foundations.T3.00a",
+      "evidence": [
+        "angle",
+        "guard",
+        "lie",
+        "small",
+        "taylor"
+      ]
+    },
+    "so2_rotation_matrix": {
+      "page": "03-sensors.T2.03a",
+      "evidence": [
+        "matrix",
+        "rotation",
+        "so2"
+      ]
+    },
+    "spi_magnetic_encoder_readout": {
+      "page": "03-sensors.T2.03a",
+      "evidence": [
+        "encoder",
+        "magnetic",
+        "spi"
+      ]
+    },
+    "star_grounding": {
+      "page": "01-electronics.T1.01b",
+      "evidence": [
+        "grounding",
+        "star"
+      ]
+    },
+    "sub_2nh_six_layer_commutation_loop": {
+      "page": "01-electronics.T3.01a",
+      "evidence": [
+        "commutation",
+        "layer",
+        "loop",
+        "six",
+        "sub"
+      ]
+    },
+    "symplectic_euler_integration": {
+      "page": "00-foundations.T1.00e",
+      "evidence": [
+        "euler",
+        "integration",
+        "symplectic"
+      ]
+    },
+    "synchronous_dq_cross_coupling_decoupling": {
+      "page": "03-sensors.T3.03a",
+      "evidence": [
+        "coupling",
+        "cross",
+        "decoupling",
+        "synchronous"
+      ]
+    },
+    "synchronous_dq_foc_current_loop": {
+      "page": "03-sensors.T2.03a",
+      "evidence": [
+        "current",
+        "foc",
+        "loop",
+        "synchronous"
+      ]
+    },
+    "ten_step_power_on_bringup": {
+      "page": "06-robotics.T1.06a",
+      "evidence": [
+        "step",
+        "ten"
+      ]
+    },
+    "thermal_via_stitching": {
+      "page": "01-electronics.T2.01b",
+      "evidence": [
+        "thermal",
+        "via"
+      ]
+    },
+    "tier1_2dof_breakout_robot_integration": {
+      "page": "02-mechanics.T2.02a",
+      "evidence": [
+        "2dof",
+        "robot",
+        "tier1"
+      ]
+    },
+    "tier2_custom_pcb_furuta_capstone": {
+      "page": "07-systems.T2.07a",
+      "evidence": [
+        "capstone",
+        "custom",
+        "furuta",
+        "pcb"
+      ]
+    },
+    "tim1_trgo2_center_aligned_adc_trigger": {
+      "page": "04-embedded.T2.04c",
+      "evidence": [
+        "adc",
+        "aligned"
+      ]
+    },
+    "trapezoidal_velocity_profile": {
+      "page": "06-robotics.T1.06a",
+      "evidence": [
+        "profile",
+        "trapezoidal",
+        "velocity"
+      ]
+    },
+    "two_mass_torsional_resonance_anti_resonance": {
+      "page": "00-foundations.T2.00d",
+      "evidence": [
+        "anti",
+        "mass",
+        "resonance",
+        "torsional",
+        "two"
+      ]
+    },
+    "type2_tracking_pll_velocity_observer": {
+      "page": "03-sensors.T2.03a",
+      "evidence": [
+        "observer",
+        "pll",
+        "tracking",
+        "velocity"
+      ]
+    },
+    "uart_baud_serialization_budget": {
+      "page": "06-robotics.T2.06b",
+      "evidence": [
+        "budget",
+        "serialization"
+      ]
+    },
+    "unit_quaternion_kinematics_slerp": {
+      "page": "00-foundations.T2.00d",
+      "evidence": [
+        "unit"
+      ]
+    },
+    "van_loan_block_matrix_zoh": {
+      "page": "08-capstones.T3.07a",
+      "evidence": [
+        "block",
+        "van",
+        "zoh"
+      ]
+    },
+    "volatile_shared_isr_flag": {
+      "page": "04-embedded.T1.04b",
+      "evidence": [
+        "flag",
+        "isr",
+        "shared",
+        "volatile"
+      ]
+    },
+    "xor_crc8_packet_framing": {
+      "page": "04-embedded.T1.04b",
+      "evidence": [
+        "xor"
+      ]
+    }
+  },
+  "unresolved": [
+    "q131_cordic_hardware_coprocessor"
+  ]
+}

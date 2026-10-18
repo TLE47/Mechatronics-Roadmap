@@ -4,7 +4,7 @@ title: "Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep G
 track: "07"
 tier: 1
 prereqs:
-  - 06-robotics.T1.07
+  - 06-robotics.T1.06a
 new_concepts:
   - cyclic_plc_scan_read_execute_write
   - normally_closed_hardware_estop_chain

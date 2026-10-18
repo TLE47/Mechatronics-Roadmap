@@ -5,7 +5,8 @@ track: "07"
 tier: 3
 prereqs:
   - 06-robotics.T3.06b
-  - 07-systems.T2.08
+  - 07-systems.T2.07a
+  - 07-systems.T1.07a
 new_concepts:
   - opc_ua_address_space_nodes_and_pub_sub
   - iec_63278_aas_submodel_digital_nameplate

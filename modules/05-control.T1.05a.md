@@ -4,8 +4,9 @@ title: "Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Actuator Satu
 track: "05"
 tier: 1
 prereqs:
-  - 00-foundations.T1.01
-  - 04-embedded.T1.05
+  - 00-foundations.T1.00e
+  - 04-embedded.T1.04b
+  - 01-electronics.T1.01b
 new_concepts:
   - open_vs_closed_loop_tracking_error
   - pid_spring_damper_integrator_intuition

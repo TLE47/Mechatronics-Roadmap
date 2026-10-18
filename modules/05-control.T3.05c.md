@@ -5,6 +5,7 @@ track: "05"
 tier: 3
 prereqs:
   - 05-control.T3.05b
+  - 00-foundations.T2.00e
 new_concepts:
   - control_barrier_forward_invariance_qp
 uses:

@@ -190,7 +190,7 @@ bridges:
     track: 00
     tier: 2
     est_hours: 4.0
-    prereqs: [00-foundations.T1.01]
+    prereqs: [00-foundations.T1.00e]
     introduces: [finite_difference_derivative_and_integral, matrix_vector_multiplication, state_vector_one_step_update]
     uses: [symplectic_euler_integration, so2_rotation_matrix, discrete_kinematics_pos_vel_acc]
     feeds_into: [00-foundations.T2.00b]
@@ -268,7 +268,7 @@ bridges:
     track: 00
     tier: 3
     est_hours: 5.0
-    prereqs: [07-systems.T2.08]
+    prereqs: [07-systems.T2.07a]
     introduces: [skew_symmetric_hat_vee_cross_product, matrix_exponential_taylor_and_rodrigues, hamiltonian_energy_power_balance]
     uses: [cross_product_3d_moment, unit_quaternion_kinematics_slerp, continuous_state_space_matrices]
     feeds_into: [00-foundations.T3.01]
@@ -333,7 +333,7 @@ bridges:
     track: 01
     tier: 2
     est_hours: 4.0
-    prereqs: [01-electronics.T1.02, 00-foundations.T2.01]
+    prereqs: [01-electronics.T1.01b, 00-foundations.T2.00d]
     introduces: [opamp_negative_feedback_virtual_short, differential_shunt_gain_and_cmrr, kelvin_four_terminal_sense_routing]
     uses: [voltage_current_resistance_ohms_law, kvl_kcl_and_voltage_divider, star_grounding]
     feeds_into: [01-electronics.T2.01b]
@@ -359,7 +359,7 @@ bridges:
     track: 01
     tier: 3
     est_hours: 5.0
-    prereqs: [01-electronics.T2.02, 00-foundations.T3.01]
+    prereqs: [01-electronics.T2.01b, 00-foundations.T3.00a]
     introduces: [mutual_inductance_flux_cancellation, bessel_constant_group_delay_afe, sar_adc_charge_bucket_and_cauer_thermal_rc]
     uses: [four_layer_pcb_ground_plane_stackup, parasitic_loop_inductance_voltage_overshoot, differential_shunt_gain_and_cmrr]
     feeds_into: [01-electronics.T3.02]
@@ -372,7 +372,7 @@ bridges:
     track: 02
     tier: 1
     est_hours: 3.5
-    prereqs: [00-foundations.T1.01]
+    prereqs: [00-foundations.T1.00e]
     introduces: [free_body_diagram_static_equilibrium, gravity_lever_arm_cosine_torque, gear_reduction_speed_torque_power_conservation]
     uses: [radians_unit_circle_and_atan2, newtons_second_law_and_torque, so2_rotation_matrix]
     feeds_into: [02-mechanics.T1.03]
@@ -385,7 +385,7 @@ bridges:
     track: 02
     tier: 2
     est_hours: 4.5
-    prereqs: [02-mechanics.T1.03, 00-foundations.T2.01]
+    prereqs: [02-mechanics.T1.02a, 00-foundations.T2.00d]
     introduces: [six_dof_gruebler_constraint_counting, se3_homogeneous_transformation_matrix, geometric_jacobian_and_parallel_axis_theorem]
     uses: [planar_2link_forward_kinematics, matrix_vector_multiplication, cross_product_3d_moment]
     feeds_into: [02-mechanics.T2.03]
@@ -398,7 +398,7 @@ bridges:
     track: 02
     tier: 3
     est_hours: 5.0
-    prereqs: [00-foundations.T3.01, 02-mechanics.T2.03]
+    prereqs: [00-foundations.T3.00a, 02-mechanics.T2.02a]
     introduces: [spatial_twist_wrench_and_screw_axis, circular_notch_flexure_stiffness_stress, recursive_forward_velocity_backward_wrench]
     uses: [rodrigues_so3_se3_exp_log_maps, se3_homogeneous_transformation_matrix, parallel_axis_urdf_inertia_tensor]
     feeds_into: [02-mechanics.T3.03]
@@ -411,7 +411,7 @@ bridges:
     track: 03
     tier: 1
     est_hours: 3.5
-    prereqs: [01-electronics.T1.02]
+    prereqs: [01-electronics.T1.01b]
     introduces: [lorentz_force_and_back_emf_constants, mechanical_vs_electrical_angle_pole_pairs, quadrature_ab_gray_code_direction]
     uses: [voltage_current_resistance_ohms_law, radians_unit_circle_and_atan2, pwm_duty_cycle_effective_voltage]
     feeds_into: [03-sensors.T1.04]
@@ -424,7 +424,7 @@ bridges:
     track: 03
     tier: 2
     est_hours: 4.5
-    prereqs: [01-electronics.T2.02, 03-sensors.T1.04]
+    prereqs: [01-electronics.T2.01b, 03-sensors.T1.03a]
     introduces: [three_phase_balanced_sum_and_clarke_projection, park_rotating_frame_dc_demodulation, pll_velocity_tracking_and_noise_random_walk]
     uses: [electrical_vs_mechanical_pole_pairs, open_loop_three_phase_sine_modulation, so2_rotation_matrix]
     feeds_into: [03-sensors.T2.04]
@@ -437,7 +437,7 @@ bridges:
     track: 03
     tier: 3
     est_hours: 4.5
-    prereqs: [01-electronics.T3.02, 03-sensors.T2.04]
+    prereqs: [01-electronics.T3.02, 03-sensors.T2.03a]
     introduces: [dq_inductive_cross_coupling_feedforward, svpwm_zero_sequence_hexagonal_limit, encoder_spatial_harmonic_error_fit]
     uses: [synchronous_dq_foc_current_loop, amplitude_invariant_clarke_park_transform, sar_adc_c0g_charge_bucket_design]
     feeds_into: [03-sensors.T3.04]
@@ -476,7 +476,7 @@ bridges:
     track: 04
     tier: 2
     est_hours: 4.0
-    prereqs: [04-embedded.T1.05, 03-sensors.T2.04]
+    prereqs: [04-embedded.T1.04b, 03-sensors.T2.03a]
     introduces: [spi_full_duplex_clock_polarity_phase, dma_zero_cpu_memory_transfer, double_buffered_ping_pong_half_complete_isr]
     uses: [hardware_timer_isr_and_jitter, spi_magnetic_encoder_readout, packed_binary_telemetry_struct]
     feeds_into: [04-embedded.T2.04b]
@@ -528,7 +528,7 @@ bridges:
     track: 04
     tier: 3
     est_hours: 5.0
-    prereqs: [03-sensors.T3.04, 04-embedded.T2.05]
+    prereqs: [03-sensors.T3.04, 04-embedded.T2.04b]
     introduces: [center_aligned_pwm_midpoint_adc_sampling, q131_fixed_point_trig_scaling, seqlock_optimistic_even_odd_versioning]
     uses: [dma_double_buffered_ping_pong_isr, rate_monotonic_response_time_analysis, zephyr_static_threads_and_k_mutex, minmax_zero_sequence_svpwm_injection]
     feeds_into: [04-embedded.T3.05]
@@ -541,7 +541,7 @@ bridges:
     track: 05
     tier: 1
     est_hours: 3.5
-    prereqs: [00-foundations.T1.01, 04-embedded.T1.05]
+    prereqs: [00-foundations.T1.00e, 04-embedded.T1.04b]
     introduces: [open_vs_closed_loop_tracking_error, pid_spring_damper_integrator_intuition, actuator_saturation_and_integrator_windup]
     uses: [symplectic_euler_integration, hardware_timer_isr_and_jitter, pwm_duty_cycle_effective_voltage]
     feeds_into: [05-control.T1.06]
@@ -554,7 +554,7 @@ bridges:
     track: 05
     tier: 2
     est_hours: 4.5
-    prereqs: [00-foundations.T2.01, 02-mechanics.T2.03]
+    prereqs: [00-foundations.T2.00d, 02-mechanics.T2.02a]
     introduces: [loop_transfer_gain_and_phase_margin, sensitivity_complementary_waterbed_tradeoff, luenberger_observer_and_brysons_lqr_weights]
     uses: [bode_magnitude_db_and_phase, continuous_state_space_matrices, discrete_pid_controller]
     feeds_into: [05-control.T2.06]
@@ -567,7 +567,7 @@ bridges:
     track: 05
     tier: 3
     est_hours: 2.0
-    prereqs: [00-foundations.T3.01, 05-control.T2.06]
+    prereqs: [00-foundations.T3.00a, 05-control.T2.05a]
     introduces: [joseph_stabilized_covariance_update]
     uses: [discrete_infinite_horizon_lqr, augmented_kalman_disturbance_observer]
     feeds_into: [05-control.T3.05b]
@@ -606,7 +606,7 @@ bridges:
     track: 06
     tier: 1
     est_hours: 3.5
-    prereqs: [02-mechanics.T1.03, 05-control.T1.06]
+    prereqs: [02-mechanics.T1.02a, 05-control.T1.05a]
     introduces: [trajectory_vs_step_setpoint, polynomial_endpoint_boundary_conditions, virtual_joint_compliance_stiffness]
     uses: [discrete_pid_controller, planar_2link_forward_kinematics, gravity_lever_arm_cosine_torque]
     feeds_into: [06-robotics.T1.07]
@@ -619,7 +619,7 @@ bridges:
     track: 06
     tier: 2
     est_hours: 5.5
-    prereqs: [02-mechanics.T2.03, 04-embedded.T2.05, 05-control.T2.06]
+    prereqs: [02-mechanics.T2.02a, 04-embedded.T2.04b, 05-control.T2.05a]
     introduces: [ros2_nodes_topics_services_and_qos, tf2_transform_tree_and_urdf_kinematics, ros2_control_hardware_interface_read_write]
     uses: [se3_homogeneous_transformation_matrix, parallel_axis_urdf_inertia_tensor, can_fd_mit_impedance_packet_packing]
     feeds_into: [06-robotics.T2.07, 06-robotics.T2.06b]
@@ -645,7 +645,7 @@ bridges:
     track: 06
     tier: 3
     est_hours: 5.0
-    prereqs: [06-robotics.T2.07]
+    prereqs: [06-robotics.T2.06b]
     introduces: [neural_network_forward_pass_and_mse_loss, chain_rule_backpropagation_and_gradient_descent, behavior_cloning_expert_demonstration_fit]
     uses: [matrix_vector_multiplication, jacobian_transpose_cartesian_impedance, ruckig_time_optimal_jerk_limited_scurve]
     feeds_into: [06-robotics.T3.06b]
@@ -671,7 +671,7 @@ bridges:
     track: 07
     tier: 1
     est_hours: 3.5
-    prereqs: [06-robotics.T1.07]
+    prereqs: [06-robotics.T1.06a]
     introduces: [cyclic_plc_scan_read_execute_write, normally_closed_hardware_estop_chain, single_tone_sine_sweep_gain_phase]
     uses: [finite_state_machine_switch_enum, ten_step_power_on_bringup, rc_cutoff_phase_lag]
     feeds_into: [07-systems.T1.08]
@@ -684,7 +684,7 @@ bridges:
     track: 07
     tier: 2
     est_hours: 4.5
-    prereqs: [01-electronics.T2.02, 04-embedded.T2.05, 06-robotics.T2.07]
+    prereqs: [01-electronics.T2.01b, 04-embedded.T2.04b, 06-robotics.T2.06b]
     introduces: [regenerative_bus_energy_and_chopper_sizing, can_fd_crc16_and_rolling_counter_watchdog, sil_hil_fault_injection_verification]
     uses: [regenerative_braking_bus_voltage_surge, can_fd_mit_impedance_packet_packing, precharge_resistor_inrush_and_tvs_clamp]
     feeds_into: [07-systems.T2.08]
@@ -697,7 +697,7 @@ bridges:
     track: 07
     tier: 3
     est_hours: 4.5
-    prereqs: [06-robotics.T3.06b, 07-systems.T2.08]
+    prereqs: [06-robotics.T3.06b, 07-systems.T2.07a]
     introduces: [opc_ua_address_space_nodes_and_pub_sub, iec_63278_aas_submodel_digital_nameplate, iso_13849_category3_pld_dual_channel_sto]
     uses: [opc_ua_industrial_telemetry, can_fd_crc16_rolling_counter_watchdog, normally_closed_hardware_estop_chain, ros2_nodes_topics_services_and_qos]
     feeds_into: [06-robotics.T3.07, 08-capstones.T3.07a]
@@ -710,7 +710,7 @@ bridges:
     track: 08
     tier: 3
     est_hours: 4.5
-    prereqs: [06-robotics.T3.07, 07-systems.T3.06a]
+    prereqs: [07-systems.T3.06a]
     introduces: [rss_and_worst_case_spatial_error_budget, end_to_end_latency_and_phase_margin_erosion_budget, pre_bring_up_interface_and_safety_signoff_gate]
     uses: [loop_transfer_gain_and_phase_margin, iso_13849_category3_pld_dual_channel_sto, sim_to_real_domain_randomization_and_safety_shield]
     feeds_into: [08-capstones.T3.08]

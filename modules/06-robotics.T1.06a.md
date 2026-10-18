@@ -4,8 +4,8 @@ title: "1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Dam
 track: "06"
 tier: 1
 prereqs:
-  - 02-mechanics.T1.03
-  - 05-control.T1.06
+  - 02-mechanics.T1.02a
+  - 05-control.T1.05a
 new_concepts:
   - trajectory_vs_step_setpoint
   - polynomial_endpoint_boundary_conditions

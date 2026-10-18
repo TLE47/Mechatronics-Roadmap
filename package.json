@@ -12,6 +12,7 @@
     "check:lessons": "python3 scripts/generate_python_lessons_data.py --check",
     "check:ramp": "python3 scripts/check_ramp_lessons.py --json",
     "check:stepsize": "python3 scripts/audit_step_size.py --check",
+    "check:crosswalk": "python3 scripts/legacy_crosswalk.py --check",
     "check:parity": "python3 scripts/module_parity.py --check",
     "check:route": "python3 scripts/generate_sim_route.py --check",
     "test:parity": "python3 tests/test_module_parity.py",

@@ -4,7 +4,7 @@ title: "Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power S
 track: "02"
 tier: 1
 prereqs:
-  - 00-foundations.T1.01
+  - 00-foundations.T1.00e
 new_concepts:
   - free_body_diagram_static_equilibrium
   - gravity_lever_arm_cosine_torque

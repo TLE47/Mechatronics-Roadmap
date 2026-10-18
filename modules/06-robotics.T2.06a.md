@@ -4,9 +4,9 @@ title: "ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, 
 track: "06"
 tier: 2
 prereqs:
-  - 02-mechanics.T2.03
-  - 04-embedded.T2.05
-  - 05-control.T2.06
+  - 02-mechanics.T2.02a
+  - 04-embedded.T2.04b
+  - 05-control.T2.05a
 new_concepts:
   - ros2_nodes_topics_services_and_qos
   - tf2_transform_tree_and_urdf_kinematics

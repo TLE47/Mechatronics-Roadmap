@@ -4,7 +4,7 @@ title: "PyTorch Tensors, Automatic Differentiation (autograd), Loss Functions & 
 track: "06"
 tier: 3
 prereqs:
-  - 06-robotics.T2.07
+  - 06-robotics.T2.06b
 new_concepts:
   - neural_network_forward_pass_and_mse_loss
   - chain_rule_backpropagation_and_gradient_descent

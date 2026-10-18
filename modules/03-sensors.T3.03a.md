@@ -4,8 +4,8 @@ title: "Rotating-Frame Cross-Coupling (omega_e L i), Min-Max SVPWM Bus Utilizati
 track: "03"
 tier: 3
 prereqs:
-  - 01-electronics.T3.02
-  - 03-sensors.T2.04
+  - 01-electronics.T3.01a
+  - 03-sensors.T2.03a
 new_concepts:
   - dq_inductive_cross_coupling_feedforward
   - svpwm_zero_sequence_hexagonal_limit

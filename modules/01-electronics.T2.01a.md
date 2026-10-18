@@ -4,8 +4,8 @@ title: "Operational Amplifiers, Differential Shunt Amplification, Common-Mode Vo
 track: "01"
 tier: 2
 prereqs:
-  - 01-electronics.T1.02
-  - 00-foundations.T2.01
+  - 01-electronics.T1.01b
+  - 00-foundations.T2.00d
 new_concepts:
   - opamp_negative_feedback_virtual_short
   - differential_shunt_gain_and_cmrr

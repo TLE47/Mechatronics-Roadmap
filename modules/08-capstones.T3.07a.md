@@ -4,7 +4,6 @@ title: "System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-B
 track: "08"
 tier: 3
 prereqs:
-  - 06-robotics.T3.07
   - 07-systems.T3.06a
 new_concepts:
   - rss_and_worst_case_spatial_error_budget

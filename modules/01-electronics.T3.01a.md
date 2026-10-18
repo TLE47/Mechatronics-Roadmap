@@ -4,8 +4,8 @@ title: "6-Layer Flux-Canceling Return Planes, Constant Group-Delay Bessel Filter
 track: "01"
 tier: 3
 prereqs:
-  - 01-electronics.T2.02
-  - 00-foundations.T3.01
+  - 01-electronics.T2.01b
+  - 00-foundations.T3.00a
 new_concepts:
   - mutual_inductance_flux_cancellation
   - bessel_constant_group_delay_afe

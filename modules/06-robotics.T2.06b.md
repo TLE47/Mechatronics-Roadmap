@@ -5,6 +5,7 @@ track: "06"
 tier: 2
 prereqs:
   - 06-robotics.T2.06a
+  - 04-embedded.T2.04d
 new_concepts:
   - ros2_launch_parameters_and_composition
   - rosbag2_mcap_recording_and_deterministic_replay
