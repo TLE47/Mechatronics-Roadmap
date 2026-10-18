@@ -15,15 +15,21 @@
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
  * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
  *    viewport: zero horizontal overflow, asserted rather than reported.
- * 5. *Every* graded exercise entry is driven, discovered from each `exercises/<package>/exercise.json` rather than
- *    listed by hand: the starter fails on its `NotImplementedError`, the reference solution passes the
- *    appended self-check, and the output badge reads MATCHED - the browser path, on the built bundle.
- *    A package added to `exercises/` is in this suite the next run, and a package whose entry the
- *    bundle does not carry fails the count, so the sample can never fall behind the registry again.
+ * 5. *Every* graded exercise entry is graded - once - discovered from each `exercises/<package>/exercise.json`
+ *    rather than listed by hand: the starter fails on its `NotImplementedError`, the reference solution
+ *    passes the appended self-check, and the output badge reads MATCHED, on the built bundle. A package
+ *    added to `exercises/` is in this suite the next run, and a package whose entry the bundle does not
+ *    carry fails the count in every browser, so the sweep cannot fall behind the registry.
+ * 6. A second browser grades a *sample* (`sampleExerciseIds`), not the whole list: the same bundle,
+ *    Pyodide and packages had already been graded end to end once, so repeating 48 verdicts in Firefox
+ *    bought no new signal for twice the interpreter runs. The sample keeps a real Firefox signal on
+ *    every track and at both ends of the list, with the same assertions per entry, and its size is
+ *    logged and asserted.
  *
- * Chromium always runs; Firefox runs when its browser build is present (`npx playwright-core install
- * firefox`, which CI does). `PLAYWRIGHT_BROWSERS=chromium|firefox|both` selects them; a browser that is
- * not installed is reported as SKIP with the reason, never as a pass.
+ * Chromium always runs and carries the exhaustive pass; Firefox runs when its browser build is present
+ * (`npx playwright-core install firefox`, which CI does) and grades the sample. A browser selected on
+ * its own (`PLAYWRIGHT_BROWSERS=chromium|firefox`) still gets the exhaustive pass. A browser that is not
+ * installed is reported as SKIP with the reason, never as a pass.
  *
  * Usage:  PAGES_BASE=/Mechatronics-Roadmap/ node scripts/e2e_pages_bundle.mjs
  */
@@ -80,6 +86,31 @@ function discoverExerciseIds() {
     `two exercise packages claim the same workbench id: ${ids.filter((id, i) => ids.indexOf(id) !== i).join(', ')}`
   );
   return ids;
+}
+
+/**
+ * The entries the *second* browser grades. The exhaustive pass is the delivery claim - the registry and
+ * the bundle agree, every package ships a starter that fails and a reference that passes - and one
+ * browser establishes it. A second browser repeating all 48 verdicts adds no signal (same bundle, same
+ * Pyodide, same packages) at twice the interpreter runs, so it grades these instead: the first package
+ * of every track (a new track is in the sample the run after it lands), plus both ends of the list.
+ * Assertions per entry are unchanged; the count is logged and asserted so a shrunken sample cannot pass
+ * quietly.
+ */
+export function sampleExerciseIds(ids) {
+  assert.ok(ids.length > 0, 'no graded exercise packages to sample');
+  const trackOf = (id) => id.split('.')[1] ?? id;
+  const firstPerTrack = new Map();
+  for (const id of ids) if (!firstPerTrack.has(trackOf(id))) firstPerTrack.set(trackOf(id), id);
+  const wanted = new Set([ids[0], ids[ids.length - 1], ...firstPerTrack.values()]);
+  const sample = ids.filter((id) => wanted.has(id));
+  assert.ok(sample.length >= 3, `the second browser's sample collapsed to ${sample.length} entries`);
+  assert.equal(
+    new Set(sample.map(trackOf)).size,
+    firstPerTrack.size,
+    `the sample must grade at least one package from each of the ${firstPerTrack.size} tracks`
+  );
+  return sample;
 }
 
 function ensureBuilt() {
@@ -151,7 +182,7 @@ export async function checkServed(baseUrl, refs) {
   console.log(`  ok every built asset answers 200 with the right content type at ${BASE}`);
 }
 
-async function checkInBrowser(name, launcher, baseUrl) {
+async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
   let browser;
   const envPath = process.env[`PLAYWRIGHT_${name.toUpperCase()}_EXECUTABLE_PATH`];
   const executablePath = envPath && fs.existsSync(envPath) ? envPath : undefined;
@@ -199,10 +230,18 @@ async function checkInBrowser(name, launcher, baseUrl) {
 
     // Every exercise entry is generated from its package, not hand-written into the registry: each
     // must appear in the same list, fail on its own holes, and pass once the reference is loaded.
-    // That is the whole delivery claim, checked on the bundle learners actually open - for each of
-    // the packages in `exercises/`, not a sample of them.
+    // That is the whole delivery claim, checked on the bundle learners actually open. `gradingIds` is
+    // every package in this browser for the exhaustive pass, or the sample for a second browser.
+    assert.ok(
+      gradingIds.every((id) => exerciseIds.includes(id)),
+      `${name}: the grading list carries an id exercises/ does not have`
+    );
+    const gradingScope =
+      gradingIds.length === exerciseIds.length
+        ? `all ${exerciseIds.length} graded exercise entries`
+        : `${gradingIds.length} of ${exerciseIds.length} graded exercise entries (one per track, plus both ends)`;
     const exercisePassStarted = Date.now();
-    for (const exerciseId of exerciseIds) {
+    for (const exerciseId of gradingIds) {
       const exercise = page.getByTestId(`lesson-item-${exerciseId}`);
       await exercise.scrollIntoViewIfNeeded();
       await exercise.click();
@@ -275,7 +314,7 @@ async function checkInBrowser(name, launcher, baseUrl) {
       );
     }
     console.log(
-      `  ok ${name}: all ${exerciseIds.length} graded exercise entries (${exerciseIds[0]} .. ${exerciseIds[exerciseIds.length - 1]}) ` +
+      `  ok ${name}: ${gradingScope} (${gradingIds[0]} .. ${gradingIds[gradingIds.length - 1]}) ` +
         `failed their starter on a hole and matched on their reference in ${((Date.now() - exercisePassStarted) / 1000).toFixed(1)}s`
     );
 
@@ -391,15 +430,28 @@ async function main() {
       ['firefox', firefox],
     ].filter(([name]) => wanted === name || wanted === 'both');
     if (!selected.length) throw new Error(`PLAYWRIGHT_BROWSERS=${wanted} selects no browser`);
-    const settled = await Promise.all(selected.map(([name, launcher]) => checkInBrowser(name, launcher, baseUrl)));
+    // The first selected browser (Chromium, unless it was not asked for) takes the exhaustive pass;
+    // any browser after it grades the sample. So one browser always grades every package, and a
+    // single-browser run is still exhaustive.
+    const allExerciseIds = discoverExerciseIds();
+    const sample = sampleExerciseIds(allExerciseIds);
+    const settled = await Promise.all(
+      selected.map(([name, launcher], index) =>
+        checkInBrowser(name, launcher, baseUrl, index === 0 ? allExerciseIds : sample)
+      )
+    );
     const results = Object.fromEntries(selected.map(([name], index) => [name, settled[index]]));
     if (Object.values(results).every((value) => value === 'skip')) {
       throw new Error('no requested browser is installed - run `npx playwright-core install chromium firefox`');
     }
     const ran = Object.entries(results).filter(([, value]) => value === 'pass').map(([name]) => name);
     const skipped = Object.entries(results).filter(([, value]) => value === 'skip').map(([name]) => name);
+    const grading = selected.length > 1
+      ? `grades all ${allExerciseIds.length} exercise entries in ${selected[0][0]} and a ${sample.length}-entry sample in ` +
+        `${selected.slice(1).map(([name]) => name).join(', ')}`
+      : `grades all ${allExerciseIds.length} exercise entries in ${selected[0][0]}`;
     console.log(        `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
-        `${LATER_TRACK_LESSONS.join(', ')}, grades all ${discoverExerciseIds().length} exercise entries end to end ` +
+        `${LATER_TRACK_LESSONS.join(', ')}, ${grading}, ` +
         `and stays usable at tablet width in: ${ran.join(', ')}` +
         (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
     );

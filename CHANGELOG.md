@@ -11,6 +11,29 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 91: Every Package Graded Once, the Second Browser Samples
+
+The built-bundle suite graded all 48 exercise packages in Chromium *and* again in Firefox: 96
+gradings, and every one is two Pyodide runs (starter, then reference), so the same 48 verdicts were
+produced twice from the same bundle, the same interpreter and the same packages.
+
+- **The exhaustive pass is still exhaustive.** The first selected browser (Chromium) grades all 48:
+  starter fails on its `NotImplementedError`, the reference matches the expected output, and the
+  behavioural badge passes. A single-browser run (`PLAYWRIGHT_BROWSERS=chromium|firefox`) is
+  exhaustive too, so nobody loses the sweep by asking for one browser.
+- **The second browser grades a sample** (`sampleExerciseIds`): the first package of every track (a new
+  track is in the sample the run after it lands) plus both ends of the list - 9 of 48 here. Same
+  assertions per entry, and the size is asserted, so a shrunken sample fails rather than passing
+  quietly. The DOM count of `EX.*` entries is still the full 48 in *every* browser, so a bundle that
+  dropped an entry still fails there.
+- Gradings per workbench run: **96 -> 57**; Pyodide interpreter runs: **192 -> 114**.
+- Measured (8-core Mac): the bundle suite 24.5 -> 18.9 s inside the combined run (21 -> 19 s on its
+  own); Firefox's sweep 15.9 -> 4.1 s. The three-suite run itself stays ~24-26 s, because the
+dev-server suite (23.8 s) is now the longest of the three - the saved work was no longer on the
+  critical path.
+- Negative path: with one sampled package's expected output doctored, the Firefox pass fails naming
+  it (`firefox: EX.00-foundations.T1.00a reference must match its expected output`).
+
 ## [2026-10-18] — Run 90: One Workbench Run, One Server Pair
 
 Measured on an 8-core Mac; same suites, same verdicts, same coverage.

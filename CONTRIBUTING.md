@@ -61,6 +61,7 @@ npm run build
 
 # 6. Smoke test, dev-server browser E2E and built-bundle browser E2E, all three at once:
 #    one dev server, one served dist/, Chromium + Firefox. Needs `npx playwright-core install chromium firefox`.
+#    Chromium grades every exercise package on the bundle; Firefox grades one per track plus both ends.
 #    Each suite still runs alone as `npm run test:smoke`, `test:e2e` or `test:e2e:pages`.
 npm run test:workbench
 ```
