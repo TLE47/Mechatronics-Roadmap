@@ -961,6 +961,15 @@
         "serialization"
       ]
     },
+    "unit_quaternion_kinematics_slerp": {
+      "page": "00-foundations.T3.00a",
+      "evidence": [
+        "kinematics",
+        "quaternion",
+        "slerp",
+        "unit"
+      ]
+    },
     "van_loan_block_matrix_zoh": {
       "page": "08-capstones.T3.07a",
       "evidence": [
@@ -986,7 +995,6 @@
     }
   },
   "unresolved": [
-    "q131_cordic_hardware_coprocessor",
-    "unit_quaternion_kinematics_slerp"
+    "q131_cordic_hardware_coprocessor"
   ]
 }

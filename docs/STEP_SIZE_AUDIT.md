@@ -61,18 +61,18 @@ published so a reader can reweigh them.
 | `06-robotics.T2.06b` | 3 | 3 | 4 | 3 | +0 | 2 | 0 | 1 | 7 | 15.0 | **JUMP** |
 | `07-systems.T2.07a` | 3 | 2 | 3 | 4 | +1 | 3 | 0 | 3 | 7 | 13.5 | — |
 
-## Tier 3 — 6 pages, threshold **12.1**
+## Tier 3 — 6 pages, threshold **12.5**
 
 | Page | Concepts | Bundled | New notation | Math | Δ | Prereqs | Legacy | Cross | TODOs | Step | Flag |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
-| `00-foundations.T3.00a` | 3 | 1 | 7 | 4 | +0 | 2 | 0 | 1 | 6 | 12.0 | — |
+| `00-foundations.T3.00a` | 3 | 1 | 8 | 4 | +0 | 2 | 0 | 1 | 6 | 12.5 | **JUMP** |
 | `02-mechanics.T3.02a` | 3 | 1 | 2 | 4 | +0 | 2 | 0 | 1 | 7 | 10.0 | — |
 | `05-control.T3.05a` | 1 | 0 | 3 | 4 | +0 | 2 | 0 | 1 | 3 | 3.5 | — |
 | `05-control.T3.05b` | 1 | 0 | 2 | 5 | +1 | 2 | 0 | 1 | 3 | 4.0 | — |
 | `05-control.T3.05c` | 1 | 0 | 0 | 4 | -1 | 2 | 0 | 1 | 0 | 2.0 | — |
 | `08-capstones.T3.07a` | 3 | 3 | 1 | 4 | +0 | 1 | 0 | 1 | 0 | 12.5 | **JUMP** |
 
-## The pages that jump (8)
+## The pages that jump (9)
 
 ### `00-foundations.T2.00a` — step 18.0
 
@@ -115,6 +115,13 @@ published so a reader can reweigh them.
 
 - 3 declared concepts; bundles `rtos_preemptive_scheduling_and_cpu_utilization`, `unbounded_priority_inversion_and_inheritance`, `can_bitwise_arbitration_and_mit_packing`; 3 first-use notation commands (`infty`, `lceil`, `rceil`…); 7 scaffold TODOs, 4.0 h.
 - declares: `rtos_preemptive_scheduling_and_cpu_utilization`, `unbounded_priority_inversion_and_inheritance`, `can_bitwise_arbitration_and_mit_packing`.
+
+### `00-foundations.T3.00a` — step 12.5
+
+**Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation**
+
+- 3 declared concepts; bundles `matrix_exponential_taylor_and_rodrigues`; 8 first-use notation commands (`Big`, `cdots`, `mathfrak`, `nabla`, `otimes`, `succeq`…); 6 scaffold TODOs, 5.0 h.
+- declares: `skew_symmetric_hat_vee_cross_product`, `matrix_exponential_taylor_and_rodrigues`, `hamiltonian_energy_power_balance`.
 
 ### `08-capstones.T3.07a` — step 12.5
 
