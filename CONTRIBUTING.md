@@ -58,6 +58,11 @@ python3 scripts/run_all_labs.py
 # 5. Typecheck and build the interactive Vite workbench
 npm run lint
 npm run build
+
+# 6. Smoke test, dev-server browser E2E and built-bundle browser E2E, all three at once:
+#    one dev server, one served dist/, Chromium + Firefox. Needs `npx playwright-core install chromium firefox`.
+#    Each suite still runs alone as `npm run test:smoke`, `test:e2e` or `test:e2e:pages`.
+npm run test:workbench
 ```
 
 ---

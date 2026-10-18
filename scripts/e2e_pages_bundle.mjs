@@ -33,10 +33,11 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium, firefox } from 'playwright-core';
 
 const repoRoot = process.cwd();
-const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
+export const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
 const distDir = path.join(repoRoot, 'dist');
 const LATER_TRACK_LESSONS = ['03.3', '06.1', '08.1'];
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
@@ -89,7 +90,7 @@ function ensureBuilt() {
 }
 
 /** Serve `dist/` under the Pages base path, the way GitHub Pages does for a project site. */
-function startStaticServer() {
+export function startStaticServer() {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
     let rel = url.pathname;
@@ -121,7 +122,7 @@ function startStaticServer() {
   });
 }
 
-function checkBuiltHtml() {
+export function checkBuiltHtml() {
   const html = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
   assert.match(html, /<div id="root"/, 'the built index.html must contain the React root');
   const localRefs = [...html.matchAll(/(?:src|href)="(\/[^"]*)"/g)].map((m) => m[1]);
@@ -136,7 +137,7 @@ function checkBuiltHtml() {
   return localRefs;
 }
 
-async function checkServed(baseUrl, refs) {
+export async function checkServed(baseUrl, refs) {
   const index = await fetch(baseUrl);
   assert.equal(index.status, 200, `GET ${baseUrl} -> ${index.status}`);
   assert.match(await index.text(), /<div id="root"/, 'served index.html must contain the React root');
@@ -372,17 +373,26 @@ async function checkInBrowser(name, launcher, baseUrl) {
 }
 
 async function main() {
-  ensureBuilt();
+  // `PAGES_SERVER_URL` names a dist server the combined runner already started for all three
+  // suites, base path included; without it this script builds and serves the bundle itself.
+  const sharedBaseUrl = process.env.PAGES_SERVER_URL;
+  if (!sharedBaseUrl) ensureBuilt();
   const refs = checkBuiltHtml();
-  const { server, port } = await startStaticServer();
-  const baseUrl = `http://127.0.0.1:${port}${BASE}`;
+  const served = sharedBaseUrl ? null : await startStaticServer();
+  const baseUrl = sharedBaseUrl ? sharedBaseUrl.replace(/\/*$/, '/') : `http://127.0.0.1:${served.port}${BASE}`;
   try {
     await checkServed(baseUrl, refs);
     const wanted = (process.env.PLAYWRIGHT_BROWSERS ?? 'both').toLowerCase();
-    const results = {};
-    if (wanted === 'chromium' || wanted === 'both') results.chromium = await checkInBrowser('chromium', chromium, baseUrl);
-    if (wanted === 'firefox' || wanted === 'both') results.firefox = await checkInBrowser('firefox', firefox, baseUrl);
-    if (!Object.keys(results).length) throw new Error(`PLAYWRIGHT_BROWSERS=${wanted} selects no browser`);
+    // Each browser drives its own contexts against the same served bundle, so they run side by side:
+    // the suite's wall clock is the slower browser, not the sum of both. Verdicts are collected in the
+    // requested order, and each one is still SKIP-or-pass on its own.
+    const selected = [
+      ['chromium', chromium],
+      ['firefox', firefox],
+    ].filter(([name]) => wanted === name || wanted === 'both');
+    if (!selected.length) throw new Error(`PLAYWRIGHT_BROWSERS=${wanted} selects no browser`);
+    const settled = await Promise.all(selected.map(([name, launcher]) => checkInBrowser(name, launcher, baseUrl)));
+    const results = Object.fromEntries(selected.map(([name], index) => [name, settled[index]]));
     if (Object.values(results).every((value) => value === 'skip')) {
       throw new Error('no requested browser is installed - run `npx playwright-core install chromium firefox`');
     }
@@ -394,11 +404,13 @@ async function main() {
         (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
     );
   } finally {
-    server.close();
+    served?.server.close();
   }
 }
 
-main().catch((error) => {
-  console.error('[FAIL] Pages bundle checks failed:', error.message);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error('[FAIL] Pages bundle checks failed:', error.message);
+    process.exit(1);
+  });
+}

@@ -64,16 +64,10 @@ jobs:
           RUN_EXERCISE_REPORT="${RUNNER_TEMP:-/tmp}/run-exercise.json" \
             python3 -m unittest discover -s tests
 
-      - name: Set up Node 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Typeset every formula (Markdown modules + workbench curriculum) with KaTeX
-        run: |
-          npm install --no-save --no-audit --no-fund katex@0.16.21
-          node scripts/audit_math.mjs .
-
+      # The KaTeX audit used to live here, behind an `npm install --no-save katex` on both runners,
+      # to re-fetch a dependency the lockfile already pins. It is OS-independent text checking, so it
+      # runs in build-workbench instead, where `npm ci` has already put katex in node_modules. This
+      # job is Python only.
       - name: Run all 13 Python & C++20 Reference Simulations, Module Expected-Output Diffs, CAD, PCB EDA & Firmware Tests
         run: python3 scripts/run_all_labs.py --verbose
 
@@ -130,19 +124,21 @@ jobs:
       - name: Assert npm ci installed every optional binary recorded for linux/x64
         run: npm run check:native
 
+      - name: Typeset every formula (Markdown modules + workbench curriculum) with KaTeX
+        run: node scripts/audit_math.mjs .
+
       - name: Typecheck and build the production bundle (base /Mechatronics-Roadmap/)
         run: npm run build
 
-      - name: Run automated Workbench UI smoke tests (Beginner/Advanced mode, Runner, Placement Quiz & Progress Export)
-        run: npm run test:smoke
+      - name: Install Playwright Chromium & Firefox (once, for both browser suites)
+        run: npx playwright-core install --with-deps chromium firefox
 
-      - name: Install Playwright Chromium & run real-browser End-to-End (E2E) Workbench tests
-        run: |
-          npx playwright-core install --with-deps chromium firefox
-          npm run test:e2e
-
-      - name: Check the built Pages bundle at its real base path (later-track lessons, tablet width, Chromium + Firefox)
-        run: npm run test:e2e:pages
+      # One dev server, one built bundle, three suites side by side: the SSR smoke test, the
+      # dev-server E2E run and the built-bundle E2E run. Before, each of them booted its own server
+      # (and the bundle suite rebuilt when dist/ was absent), one after another. `npm run test:smoke`,
+      # `test:e2e` and `test:e2e:pages` still run standalone.
+      - name: Run the Workbench suites (SSR smoke, dev-server E2E, built-bundle E2E) on one server pair
+        run: npm run test:workbench
 
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

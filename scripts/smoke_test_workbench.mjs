@@ -16,28 +16,40 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { createServer } from 'vite';
 
-// Minimal DOM / localStorage polyfill for SSR smoke testing
-const storageMap = new Map();
-globalThis.localStorage = {
-  getItem: (key) => (storageMap.has(key) ? storageMap.get(key) : null),
-  setItem: (key, val) => storageMap.set(key, String(val)),
-  removeItem: (key) => storageMap.delete(key),
-  clear: () => storageMap.clear(),
-};
-globalThis.window = globalThis;
+/** Minimal DOM / localStorage polyfill for SSR smoke testing (installed, not imported for effect). */
+function installDomShim() {
+  const storageMap = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => (storageMap.has(key) ? storageMap.get(key) : null),
+    setItem: (key, val) => storageMap.set(key, String(val)),
+    removeItem: (key) => storageMap.delete(key),
+    clear: () => storageMap.clear(),
+  };
+  globalThis.window = globalThis;
+}
 
-async function runSmokeTests() {
+/**
+ * `viteServer` is optional. The combined runner (`scripts/test_workbench.mjs`) starts one dev
+ * server for all three suites and passes it in, so this suite transforms the app through the same
+ * module graph the browser suites use instead of booting a second Vite. Run on its own
+ * (`npm run test:smoke`) it creates and closes its own server, exactly as before.
+ */
+export async function runSmokeTests(viteServer) {
   const repoRoot = process.cwd();
-  const vite = await createServer({
-    root: path.join(repoRoot, 'app'),
-    server: { middlewareMode: true },
-    appType: 'custom',
-    logLevel: 'error',
-  });
+  installDomShim();
+  const vite =
+    viteServer ??
+    (await createServer({
+      root: path.join(repoRoot, 'app'),
+      server: { middlewareMode: true },
+      appType: 'custom',
+      logLevel: 'error',
+    }));
 
   try {
     const appMod = await vite.ssrLoadModule('/src/App.tsx');
@@ -413,11 +425,13 @@ async function runSmokeTests() {
       `[PASS] Workbench UI smoke tests passed (Beginner/Advanced views, ${TOTAL}-entry Runner, 8-gate Placement Quiz, localStorage persistence & Markdown Portfolio export).`
     );
   } finally {
-    await vite.close();
+    if (!viteServer) await vite.close();
   }
 }
 
-runSmokeTests().catch((err) => {
-  console.error('[FAIL] Workbench smoke test error:', err);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  runSmokeTests().catch((err) => {
+    console.error('[FAIL] Workbench smoke test error:', err);
+    process.exit(1);
+  });
+}

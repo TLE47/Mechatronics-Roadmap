@@ -23,8 +23,26 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { createServer } from 'vite';
+
+/**
+ * The dev server every workbench suite shares. `scripts/test_workbench.mjs` starts it once and hands
+ * the URL to this suite through `E2E_BASE_URL`, so the smoke test, this suite and the built-bundle
+ * suite do not each boot their own Vite.
+ */
+export async function startDevServer(repoRoot = process.cwd()) {
+  const viteServer = await createServer({
+    root: path.join(repoRoot, 'app'),
+    server: { port: 0, host: '127.0.0.1' },
+    logLevel: 'error',
+  });
+  await viteServer.listen();
+  const address = viteServer.httpServer?.address();
+  const port = typeof address === 'object' && address ? address.port : 4173;
+  return { viteServer, baseUrl: `http://127.0.0.1:${port}/Mechatronics-Roadmap/` };
+}
 
 function resolveChromiumExecutable() {
   if (
@@ -79,17 +97,17 @@ async function readTally(page) {
   return Number(match[2]);
 }
 
-async function runRealBrowserE2ETests() {
+/**
+ * `baseUrl` is the already-running dev server (from `startDevServer`, via `E2E_BASE_URL`, or passed
+ * by the combined runner). Without one this suite starts and closes its own, so `npm run test:e2e`
+ * keeps working on its own.
+ */
+export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) {
   const repoRoot = process.cwd();
-  const viteServer = await createServer({
-    root: path.join(repoRoot, 'app'),
-    server: { port: 0, host: '127.0.0.1' },
-    logLevel: 'error',
-  });
-  await viteServer.listen();
-  const address = viteServer.httpServer?.address();
-  const port = typeof address === 'object' && address ? address.port : 4173;
-  const baseUrl = `http://127.0.0.1:${port}/Mechatronics-Roadmap/`;
+  const own = externalBaseUrl ? null : await startDevServer(repoRoot);
+  const baseUrl = externalBaseUrl
+    ? externalBaseUrl.replace(/\/*$/, '/')
+    : own.baseUrl;
 
   const executablePath = resolveChromiumExecutable();
   const browser = await chromium.launch({
@@ -534,11 +552,13 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
   } finally {
     await browser.close();
-    await viteServer.close();
+    if (own) await own.viteServer.close();
   }
 }
 
-runRealBrowserE2ETests().catch((err) => {
-  console.error('[FAIL] Real-browser E2E test failed:', err);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  runRealBrowserE2ETests({ baseUrl: process.env.E2E_BASE_URL }).catch((err) => {
+    console.error('[FAIL] Real-browser E2E test failed:', err);
+    process.exit(1);
+  });
+}
