@@ -11,6 +11,52 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 80: A Claim About Evidence, a Smaller Required Set, and a Log That Measures Friction
+
+### 1. `docs/SIM_ROUTE.md` says what its hours are worth (A1)
+- A generated status line, `**Route status: `<value>`**`, with exactly three values: `unvalidated`,
+  `author-dogfood` (current), `pilot-validated`. `generate_sim_route.py` refuses to render the third unless
+  `docs/pilot-results.md` declares **5+ non-author participants**; that page now carries the machine-readable
+  count (`Participants (non-author): 0`), so the claim and the file that would justify it cannot drift apart.
+- `tests/test_sim_route.py` grew from 6 to 10 tests: one status line with an allowed value, the gate's own
+  negative case (four participants do not support `pilot-validated`), the declared count matching the
+  declared status, and the README quoting the generated **module count** and **Tier 2 count**, not just the
+  hours. A moved module was exactly the change that would have left "42 modules" standing while the table
+  said 40.
+- The 343-hour figure the plan asked to retire was already gone; the README and route doc agreed on
+  `182.5–226 h` before this run. What was missing was the evidence field, not the arithmetic.
+
+### 2. Two Tier 2 modules leave the required route (C1)
+- `04-embedded.T2.04c` (Zephyr) and `04-embedded.T2.04d` (micro-ROS) move to Extensions, with the reason
+  rendered next to them on the generated page: Zephyr is a second RTOS toolchain on top of the FreeRTOS unit
+  that already teaches preemption and priority inversion, and nothing on the required route consumes the
+  MCU-to-ROS-2 bridge. Both keep their ladder place, graded package and badge.
+- Core is now **40 modules / 174.5–218 h** (Tier 2: 18 modules / 71.5 h); Extensions are **8 modules /
+  37.5 h**. README, the generated route, the step-size audit (24 pages, regenerated) and the two sim-route
+  totals all moved together; `tests/test_sim_route.py` fails if any of them disagrees.
+
+### 3. The workbench records what a learner actually did (A3)
+- `app/src/learningLog.ts`: an append-only, capped (5000 events) localStorage log of `lesson_open`, `run`
+  (outcome, duration, first failing line), `verified`, `hint` (level), `solution_open` and `export`. No
+  network, no identity; a disabled or full storage never breaks the runner.
+- Wired into the runner at the points that matter: one event per lesson visit, one per execution recorded
+  where every result branch converges rather than in six places, hint level on each reveal, solution loads.
+- **Export Learning Log (.json)** button in the header. `scripts/friction_report.py` turns exports into
+  `docs/friction-report.md`: attempts-to-verify P50/P80 (nearest-rank, no interpolation), help share,
+  unfinished share, median minutes to first success, most common first failing assertion, active minutes
+  excluding gaps over 15 minutes — and the plan's four red flags at their stated limits.
+- The page is published empty and says N = 0; `tests/test_friction_report.py` (7 tests) proves the arithmetic
+  against synthetic logs, that each limit fires, that a healthy log has no flags, and that a foreign schema
+  is refused rather than averaged in. The browser E2E asserts the log was written by the real UI, including
+  the first failing line from a failed run.
+
+### 4. Verification
+- `test_sim_route` 10/10, `test_friction_report` 7/7, `check_ramp_lessons` OK, `lint_lessons` OK (48 + 6),
+  `generate_sim_route --check` and `friction_report --check` current, `validate_modules` OK on 3.12.
+- Local chain and CI results are recorded in the PR that lands this run.
+
+---
+
 ## [2026-10-18] — Run 79: Coming Back After a Break Gets a Twenty-Minute Path
 
 ### 1. `docs/REENTRY.md` — five paper tasks, three landings, no rereading

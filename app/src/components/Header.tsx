@@ -1,6 +1,7 @@
 import React from 'react';
-import { Printer, Download } from 'lucide-react';
+import { Printer, Download, FileJson } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
+import { downloadLearningLog } from '../learningLog';
 
 interface HeaderProps {
   onOpenCheatSheet: () => void;
@@ -59,6 +60,15 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Zone 3: Primary Action */}
       <div className="flex flex-wrap items-center justify-end gap-2.5 ml-auto">
+        <button
+          onClick={downloadLearningLog}
+          data-testid="btn-export-learning-log"
+          title="Download what you actually did — opens, runs, failed tests, hints — as JSON. It never leaves this browser unless you hand it over."
+          className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b0f19] hover:bg-[#1e293b] border border-[#334155] text-[#94a3b8] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+        >
+          <FileJson className="w-3.5 h-3.5" />
+          <span>Export Learning Log (.json)</span>
+        </button>
         <button
           onClick={onExportPortfolio}
           data-testid="btn-export-portfolio"

@@ -66,6 +66,13 @@ One row per module or lesson, in a private sheet during the pilot, published as 
 | `stuck` | `none` · `setup` · `tool` · `maths` · `instruction` · `bug` | The top-10 stuck-point table |
 | `course_bug` | `yes`/`no` + one line | Every `yes` becomes a fix **and** a regression test |
 | `transfer` | `-` until 7–14 days later, then `pass`/`fail` | Delayed understanding, not recall |
+| `export` | the participant's `mechalab-learning-log-*.json` | Machine-recorded opens, runs, failures, hints and verifies — the sheet's evidence, not its replacement |
+
+The workbench keeps its own log in the browser and the header's **Export Learning Log (.json)** button hands
+it over; nothing is sent anywhere. Run `python3 scripts/friction_report.py <exported logs...>` to turn those
+files into [`docs/friction-report.md`](friction-report.md): attempts-to-verify P50/P80, help share,
+unfinished share, and the most common first failing assertion per unit. That page is empty until logs
+exist and says so; it is the instrument the pilot's help budget is measured with.
 
 Publish only aggregates. Participant names stay out of the repository; a participant may be quoted with
 consent and initials.

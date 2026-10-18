@@ -9,6 +9,9 @@ The route document is the one page a beginner is asked to follow, so the failure
 3. **Invention** - a Core total that is not the sum of the pages' own metadata.
 4. **Drift into the README** - the front page quoting a total, or a requirement, the route page
    does not say: the README's main claim is the one place a beginner decides what to finish.
+5. **An unsupported evidence claim** - the route saying `pilot-validated` without the participants
+   that would justify it. The status field is the only place the page talks about evidence, so it
+   must not be typable ahead of the facts.
 
 Run: `python3 tests/test_sim_route.py` (also wired into the CI verify step).
 """
@@ -45,8 +48,14 @@ class SimRouteTests(unittest.TestCase):
         on_disk = sorted(row["id"] for row in gen.module_rows())
         self.assertEqual(len(on_disk), len(set(on_disk)), "two module pages share one id")
         for ident in on_disk:
-            occurrences = len(re.findall(r"`%s`" % re.escape(ident), self.doc))
-            self.assertEqual(occurrences, 1, f"{ident} appears {occurrences} times in SIM_ROUTE.md")
+            # Count table rows, not prose: the "why optional" section names a moved module a second
+            # time on purpose, and a duplicate *row* is what would confuse a learner's route.
+            rows = [
+                line
+                for line in self.doc.splitlines()
+                if line.startswith("|") and f"`{ident}`" in line
+            ]
+            self.assertEqual(len(rows), 1, f"{ident} is in {len(rows)} route table rows")
 
     def test_the_core_route_is_a_subset_of_the_modules(self):
         on_disk = {row["id"] for row in gen.module_rows()}
@@ -96,10 +105,60 @@ class SimRouteTests(unittest.TestCase):
             f"README.md must quote the generated Extensions total '{extensions.group(2)} hours'",
         )
         self.assertIn("docs/SIM_ROUTE.md", readme, "README.md must link the generated route page")
+
+        # The counts a newcomer reads must be the generated ones too: a moved module is exactly the
+        # change that leaves "42 modules" standing in the first paragraph while the table says 40.
+        self.assertIn(
+            f"**{len(gen.CORE_MODULES)} modules plus the prose tracks**",
+            readme,
+            f"README.md must state the generated Core module count ({len(gen.CORE_MODULES)})",
+        )
+        tier2 = sum(1 for row in gen.module_rows() if row["id"] in gen.CORE_MODULES and row["tier"] == "2")
+        self.assertIn(
+            f"{tier2} Tier 2 modules",
+            readme,
+            f"README.md must state the generated Core Tier 2 count ({tier2})",
+        )
+
         self.assertRegex(
             readme,
             r"(?s)Extensions.{0,400}?optional",
             "README.md must say the Extensions are optional",
+        )
+
+    def test_every_optional_module_is_real_and_justified(self):
+        """An exception to "Tier 2 is required" has to name a module that exists, is not in Core, and
+        comes with a reason long enough to be one — otherwise the exception is just a gap."""
+        on_disk = {row["id"] for row in gen.module_rows()}
+        for ident, reason in gen.OPTIONAL_REASONS.items():
+            self.assertIn(ident, on_disk, f"{ident} is listed as an optional exception but has no page")
+            self.assertNotIn(ident, gen.CORE_MODULES, f"{ident} is both required and optional")
+            self.assertGreater(len(reason.split()), 12, f"{ident}'s reason is too short to justify the move")
+            self.assertIn(f"`{ident}`", self.doc, f"{ident} is not rendered in SIM_ROUTE.md")
+
+    def test_the_status_field_is_one_of_three_values(self):
+        statuses = re.findall(r"\*\*Route status: `([^`]+)`\*\*", self.doc)
+        self.assertEqual(len(statuses), 1, f"expected one route status line, found {statuses}")
+        self.assertIn(statuses[0], gen.STATUS_LEVELS)
+        self.assertEqual(statuses[0], gen.ROUTE_STATUS, "the page and the generator disagree on status")
+
+    def test_pilot_validated_needs_five_outside_participants(self):
+        """The gate itself, including the negative case: the value may not be typed in early."""
+        self.assertTrue(
+            gen.status_findings("pilot-validated", gen.PILOT_MIN_PARTICIPANTS - 1),
+            "four participants must not support `pilot-validated`",
+        )
+        self.assertEqual(gen.status_findings("pilot-validated", gen.PILOT_MIN_PARTICIPANTS), [])
+        self.assertTrue(gen.status_findings("validated", 99), "the field may not invent a fourth value")
+        self.assertEqual(gen.status_findings("author-dogfood", 0), [])
+
+    def test_the_declared_participants_match_the_declared_status(self):
+        """Whatever the page claims now, docs/pilot-results.md has to back it."""
+        declared = gen.participants_from_results()
+        self.assertEqual(
+            gen.status_findings(gen.ROUTE_STATUS, declared),
+            [],
+            f"docs/SIM_ROUTE.md claims `{gen.ROUTE_STATUS}` while pilot-results.md declares {declared} participants",
         )
 
     def test_the_depth_line_is_required(self):

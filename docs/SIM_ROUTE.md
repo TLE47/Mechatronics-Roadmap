@@ -8,6 +8,8 @@ Finishing the course means finishing **the Core route** below. Everything under
 Extensions is real, graded and badgeable - it is simply not required, so a learner can
 stop at Core completion and still hold every skill the Core names.
 
+**Route status: `author-dogfood`** — the author has run every page and no outside learner has finished this route, so every hour is a target rather than a measurement.
+
 ```mermaid
 flowchart LR
     Core["Core route<br/>required"] --> Done["Course complete"]
@@ -75,13 +77,11 @@ flowchart LR
 | Tier 2 | `03-sensors.T2.03a` Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Locked Loops & Sensor Random Walk | 4.5 |
 | Tier 2 | `04-embedded.T2.04a` Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers | 4 |
 | Tier 2 | `04-embedded.T2.04b` RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration | 4 |
-| Tier 2 | `04-embedded.T2.04c` Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives | 4 |
-| Tier 2 | `04-embedded.T2.04d` micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging | 4 |
 | Tier 2 | `05-control.T2.05a` Gain/Phase Margin, Sensitivity Waterbed (S+T=1), Luenberger State Observers & Bryson's Rule for LQR | 4.5 |
 | Tier 2 | `06-robotics.T2.06a` ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, QoS), TF2 Frames, URDF & ros2_control | 5.5 |
 | Tier 2 | `06-robotics.T2.06b` ROS 2 Operations: Launch & Parameter Composition, Deterministic rosbag2 Recording/Replay & Simulator Integration (Gazebo / MuJoCo) | 4.5 |
 | Tier 2 | `07-systems.T2.07a` Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection | 4.5 |
-| Tier 2 | **20 modules, together** | 79.5 |
+| Tier 2 | **18 modules, together** | 71.5 |
 | Tier 3 | `00-foundations.T3.00a` Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation | 5 |
 | Tier 3 | `02-mechanics.T3.02a` 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | 5 |
 | Tier 3 | `05-control.T3.05a` Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency | 2 |
@@ -89,7 +89,7 @@ flowchart LR
 | Tier 3 | `05-control.T3.05c` Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | 2 |
 | Tier 3 | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off | 4.5 |
 | Tier 3 | **6 modules, together** | 20.5 |
-| **Core total** | **42 modules + the prose tracks above** | **182.5-226** |
+| **Core total** | **40 modules + the prose tracks above** | **174.5-218** |
 
 The low end is every page's `est_hours` / `typical_hours`; the high end is its
 `slow_learner_hours`. Nothing in this table is hand-entered, and `--check` fails when it
@@ -101,11 +101,13 @@ drifts from the pages.
 | :--- | :--- | ---: |
 | 3 | `01-electronics.T3.01a` 6-Layer Flux-Canceling Return Planes, Constant Group-Delay Bessel Filters, SAR ADC Charge-Bucket Settling & Cauer Thermal RC Networks | 5 |
 | 3 | `03-sensors.T3.03a` Rotating-Frame Cross-Coupling (omega_e L i), Min-Max SVPWM Bus Utilization (1/sqrt(3)) & Encoder Harmonic Calibration | 4.5 |
+| 2 | `04-embedded.T2.04c` Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives | 4 |
+| 2 | `04-embedded.T2.04d` micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging | 4 |
 | 3 | `04-embedded.T3.04a` Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic & Lock-Free SeqLock | 5 |
 | 3 | `06-robotics.T3.06a` PyTorch Tensors, Automatic Differentiation (autograd), Loss Functions & Behavior Cloning on Trajectory Logs | 5 |
 | 3 | `06-robotics.T3.06b` Markov Decision Processes (MDPs), Policy Gradient / PPO, Action Chunking & Sim-to-Real Safety Wrappers | 5.5 |
 | 3 | `07-systems.T3.06a` OPC UA Information Models, IEC 63278 Asset Administration Shell (AAS) Submodels & ISO 13849-1 Performance Level d (PLd) | 4.5 |
-| - | **6 modules** | **29.5** |
+| - | **8 modules** | **37.5** |
 
 Each extension keeps its own graded package, Break-it case and badge. Taking one adds
 hours; skipping one costs nothing on the Core route.
@@ -114,9 +116,18 @@ hours; skipping one costs nothing on the Core route.
 
 - Every Tier 1 bridge is required because each one supplies the plant, the units or the
   tool that Tier 2 assumes.
-- Every Tier 2 module is required because the Tier 3 depth line uses all of them: the
+- Every Tier 2 module on the route is required because the Tier 3 depth line uses it: the
   covariance and ESKF work sits on the linear-algebra and estimation ladder, and the
-  constrained-control module sits on the control ladder.
+  constrained-control module sits on the control ladder. The two exceptions are named below,
+  with the sentence that earns each one.
 - Tier 3 requires one depth line - rotation foundations, Joseph covariance, ESKF reset,
   constrained control, one simulation capstone - so a learner reaches a working
   estimation-and-safety stack without first finishing every capstone.
+
+## Why two Tier 2 modules are optional
+
+- **`04-embedded.T2.04c`** (Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives): Zephyr is a second RTOS toolchain (west, devicetree, Kconfig) on top of the FreeRTOS unit that already teaches preemption, priority inversion and a static kernel; the Core's timing work needs the concepts, not a second build system.
+- **`04-embedded.T2.04d`** (micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging): micro-ROS bridges a microcontroller to a ROS 2 graph, and the Core's integration checkpoint runs trajectory, estimator and controller on the plant in the browser; the bridge is real work but nothing on the required route consumes it.
+
+Both stay in their track's ladder, keep their graded package and their badge, and keep their
+browser-verifiable exercise - moving them changes what is required, not what exists.
