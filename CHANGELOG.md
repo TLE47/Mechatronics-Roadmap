@@ -30,6 +30,20 @@ Measured on an 8-core Mac; same suites, same verdicts, same coverage.
 - **The built-bundle suite drives Chromium and Firefox at the same time**: separate browser contexts
   against the same served bundle, verdicts collected in the requested order, a missing browser still
   reported as SKIP. That is most of its 38 s.
+On the GitHub runners, `main` at `8a6c8da` (run 39169605826) against this branch at `d3be7bd`
+(run 39173331743), same matrix and same gates:
+
+| job / step | before | after |
+| --- | --- | --- |
+| `verify-and-test`, macOS, Python step | 105 s | **32 s** |
+| `verify-and-test`, ubuntu, Python step | 59 s | **36 s** |
+| `build-workbench` | 89 s | **70 s** |
+| run start -> `build-workbench` done | 228 s | **127 s** |
+
+One sample per side, and the macOS Python step ranged 24-40 s across the neighbouring `main`
+pushes, so 32 s is the fast end of that band rather than a new floor. Nothing was dropped: both legs
+ran the same 18 gates, the 194-test discovery run and the 48-package sweep.
+
 - `test:smoke`, `test:e2e` and `test:e2e:pages` still run standalone, creating their own servers.
 - **CI**: the KaTeX audit left the Python job to run in `build-workbench`, where `npm ci` has already
   installed `katex` from the lockfile - so neither `verify-and-test` leg sets up Node anymore, or
