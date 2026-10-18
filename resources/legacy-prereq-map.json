@@ -206,6 +206,7 @@
     "augmented_kalman_disturbance_observer": {
       "page": "05-control.T2.05a",
       "evidence": [
+        "augmented",
         "disturbance",
         "kalman",
         "observer"
@@ -329,7 +330,6 @@
         "aliasing",
         "anti",
         "bessel",
-        "differential",
         "filter"
       ]
     },
@@ -961,12 +961,6 @@
         "serialization"
       ]
     },
-    "unit_quaternion_kinematics_slerp": {
-      "page": "00-foundations.T2.00d",
-      "evidence": [
-        "unit"
-      ]
-    },
     "van_loan_block_matrix_zoh": {
       "page": "08-capstones.T3.07a",
       "evidence": [
@@ -992,6 +986,7 @@
     }
   },
   "unresolved": [
-    "q131_cordic_hardware_coprocessor"
+    "q131_cordic_hardware_coprocessor",
+    "unit_quaternion_kinematics_slerp"
   ]
 }
