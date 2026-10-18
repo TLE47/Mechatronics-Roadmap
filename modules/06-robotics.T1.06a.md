@@ -11,8 +11,6 @@ new_concepts:
   - polynomial_endpoint_boundary_conditions
   - virtual_joint_compliance_stiffness
 uses:
-  - discrete_pid_controller
-  - planar_2link_forward_kinematics
   - gravity_lever_arm_cosine_torque
 est_hours: 3.5
 hardware_required: false

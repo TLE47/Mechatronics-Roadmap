@@ -12,7 +12,6 @@ new_concepts:
 uses:
   - matrix_vector_multiplication
   - jacobian_transpose_cartesian_impedance
-  - ruckig_time_optimal_jerk_limited_scurve
 est_hours: 5.0
 hardware_required: false
 safety_level: none

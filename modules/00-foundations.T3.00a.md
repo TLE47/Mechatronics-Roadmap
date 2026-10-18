@@ -12,7 +12,6 @@ new_concepts:
   - hamiltonian_energy_power_balance
 uses:
   - cross_product_3d_moment
-  - unit_quaternion_kinematics_slerp
   - continuous_state_space_matrices
 est_hours: 5.0
 hardware_required: false

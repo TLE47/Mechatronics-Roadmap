@@ -1,0 +1,504 @@
+{
+  "_comment": "One row per page\u2013concept pair. Regenerate with scripts/mentions_audit.py --apply; --check fails when a decision is not applied.",
+  "decisions": [
+    {
+      "page": "00-foundations.T2.00a",
+      "concept": "symplectic_euler_integration",
+      "decision": "keep",
+      "core": "symplectic",
+      "lines": 8,
+      "sections": [
+        "3. Formalization",
+        "5. Exercise",
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "01-electronics.T2.01a",
+      "concept": "star_grounding",
+      "decision": "keep",
+      "core": "grounding",
+      "lines": 3,
+      "sections": [
+        "5. Exercise"
+      ]
+    },
+    {
+      "page": "01-electronics.T3.01a",
+      "concept": "four_layer_pcb_ground_plane_stackup",
+      "decision": "keep",
+      "core": "stackup",
+      "lines": 19,
+      "sections": [
+        "1. Why it matters",
+        "2. Intuition first",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "6. Simulation path",
+        "8. Common mistakes",
+        "9. Resources"
+      ]
+    },
+    {
+      "page": "02-mechanics.T2.02a",
+      "concept": "planar_2link_forward_kinematics",
+      "decision": "keep",
+      "core": "2link",
+      "lines": 3,
+      "sections": [
+        "2. Intuition first",
+        "5. Exercise",
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "02-mechanics.T3.02a",
+      "concept": "rodrigues_so3_se3_exp_log_maps",
+      "decision": "keep",
+      "core": "rodrigues",
+      "lines": 15,
+      "sections": [
+        "1. Why it matters",
+        "2. Intuition first",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "7. Checkpoint",
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "02-mechanics.T3.02a",
+      "concept": "parallel_axis_urdf_inertia_tensor",
+      "decision": "keep",
+      "core": "tensor",
+      "lines": 4,
+      "sections": [
+        "1. Why it matters",
+        "2. Intuition first",
+        "5. Exercise"
+      ]
+    },
+    {
+      "page": "03-sensors.T2.03a",
+      "concept": "electrical_vs_mechanical_pole_pairs",
+      "decision": "keep",
+      "core": "pole",
+      "lines": 4,
+      "sections": [
+        "2. Intuition first",
+        "5. Exercise",
+        "7. Checkpoint",
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "03-sensors.T2.03a",
+      "concept": "open_loop_three_phase_sine_modulation",
+      "decision": "keep",
+      "core": "modulation",
+      "lines": 11,
+      "sections": [
+        "1. Why it matters",
+        "3. Formalization",
+        "5. Exercise",
+        "6. Simulation path",
+        "7. Checkpoint",
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "03-sensors.T2.03a",
+      "concept": "so2_rotation_matrix",
+      "decision": "keep",
+      "core": "so2",
+      "lines": 2,
+      "sections": [
+        "5. Exercise",
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "03-sensors.T3.03a",
+      "concept": "synchronous_dq_foc_current_loop",
+      "decision": "keep",
+      "core": "synchronous",
+      "lines": 7,
+      "sections": [
+        "1. Why it matters",
+        "3. Formalization",
+        "5. Exercise",
+        "7. Checkpoint",
+        "9. Resources"
+      ]
+    },
+    {
+      "page": "03-sensors.T3.03a",
+      "concept": "amplitude_invariant_clarke_park_transform",
+      "decision": "keep",
+      "core": "clarke",
+      "lines": 23,
+      "sections": [
+        "2. Intuition first",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "6. Simulation path",
+        "7. Checkpoint",
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "04-embedded.T2.04a",
+      "concept": "hardware_timer_isr_and_jitter",
+      "decision": "keep",
+      "core": "jitter",
+      "lines": 15,
+      "sections": [
+        "2. Intuition first",
+        "3. Formalization",
+        "5. Exercise",
+        "6. Simulation path",
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "04-embedded.T2.04a",
+      "concept": "spi_magnetic_encoder_readout",
+      "decision": "keep",
+      "core": "readout",
+      "lines": 38,
+      "sections": [
+        "1. Why it matters",
+        "2. Intuition first",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "6. Simulation path",
+        "7. Checkpoint",
+        "8. Common mistakes",
+        "9. Resources"
+      ]
+    },
+    {
+      "page": "04-embedded.T2.04a",
+      "concept": "packed_binary_telemetry_struct",
+      "decision": "keep",
+      "core": "packed",
+      "lines": 5,
+      "sections": [
+        "1. Why it matters",
+        "2. Intuition first",
+        "4. Worked example",
+        "5. Exercise",
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "04-embedded.T3.04a",
+      "concept": "dma_double_buffered_ping_pong_isr",
+      "decision": "keep",
+      "core": "ping",
+      "lines": 24,
+      "sections": [
+        "1. Why it matters",
+        "2. Intuition first",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "6. Simulation path",
+        "7. Checkpoint",
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "04-embedded.T3.04a",
+      "concept": "rate_monotonic_response_time_analysis",
+      "decision": "keep",
+      "core": "monotonic",
+      "lines": 1,
+      "sections": [
+        "5. Exercise"
+      ]
+    },
+    {
+      "page": "04-embedded.T3.04a",
+      "concept": "minmax_zero_sequence_svpwm_injection",
+      "decision": "keep",
+      "core": "minmax",
+      "lines": 12,
+      "sections": [
+        "1. Why it matters",
+        "3. Formalization",
+        "5. Exercise",
+        "7. Checkpoint",
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "05-control.T3.05a",
+      "concept": "augmented_kalman_disturbance_observer",
+      "decision": "keep",
+      "core": "augmented",
+      "lines": 6,
+      "sections": [
+        "2. Intuition first",
+        "5. Exercise",
+        "7. Checkpoint",
+        "9. Resources"
+      ]
+    },
+    {
+      "page": "05-control.T3.05b",
+      "concept": "rodrigues_so3_se3_exp_log_maps",
+      "decision": "keep",
+      "core": "rodrigues",
+      "lines": 49,
+      "sections": [
+        "1. Why it matters",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "6. Simulation path",
+        "7. Checkpoint",
+        "8. Common mistakes",
+        "9. Resources"
+      ]
+    },
+    {
+      "page": "05-control.T3.05c",
+      "concept": "discrete_infinite_horizon_lqr",
+      "decision": "keep",
+      "core": "horizon",
+      "lines": 5,
+      "sections": [
+        "1. Why it matters",
+        "3. Formalization",
+        "5. Exercise",
+        "6. Simulation path"
+      ]
+    },
+    {
+      "page": "06-robotics.T2.06a",
+      "concept": "parallel_axis_urdf_inertia_tensor",
+      "decision": "keep",
+      "core": "tensor",
+      "lines": 2,
+      "sections": [
+        "2. Intuition first",
+        "3. Formalization"
+      ]
+    },
+    {
+      "page": "06-robotics.T2.06a",
+      "concept": "can_fd_mit_impedance_packet_packing",
+      "decision": "keep",
+      "core": "packet",
+      "lines": 2,
+      "sections": [
+        "3. Formalization",
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "06-robotics.T3.06a",
+      "concept": "jacobian_transpose_cartesian_impedance",
+      "decision": "keep",
+      "core": "jacobian",
+      "lines": 3,
+      "sections": [
+        "3. Formalization",
+        "5. Exercise",
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "07-systems.T1.07a",
+      "concept": "ten_step_power_on_bringup",
+      "decision": "keep",
+      "core": "bringup",
+      "lines": 3,
+      "sections": [
+        "1. Why it matters",
+        "3. Formalization",
+        "5. Exercise"
+      ]
+    },
+    {
+      "page": "07-systems.T1.07a",
+      "concept": "rc_cutoff_phase_lag",
+      "decision": "keep",
+      "core": "lag",
+      "lines": 19,
+      "sections": [
+        "2. Intuition first",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "07-systems.T2.07a",
+      "concept": "regenerative_braking_bus_voltage_surge",
+      "decision": "keep",
+      "core": "regenerative",
+      "lines": 33,
+      "sections": [
+        "2. Intuition first",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "6. Simulation path",
+        "7. Checkpoint",
+        "8. Common mistakes",
+        "9. Resources"
+      ]
+    },
+    {
+      "page": "07-systems.T3.06a",
+      "concept": "opc_ua_industrial_telemetry",
+      "decision": "keep",
+      "core": "opc",
+      "lines": 32,
+      "sections": [
+        "1. Why it matters",
+        "2. Intuition first",
+        "3. Formalization",
+        "4. Worked example",
+        "5. Exercise",
+        "6. Simulation path",
+        "7. Checkpoint",
+        "8. Common mistakes",
+        "9. Resources"
+      ]
+    },
+    {
+      "page": "00-foundations.T2.00a",
+      "concept": "so2_rotation_matrix",
+      "decision": "drop",
+      "core": "so2",
+      "lines": 0,
+      "sections": []
+    },
+    {
+      "page": "00-foundations.T3.00a",
+      "concept": "unit_quaternion_kinematics_slerp",
+      "decision": "drop",
+      "core": "slerp",
+      "lines": 0,
+      "sections": []
+    },
+    {
+      "page": "02-mechanics.T1.02a",
+      "concept": "so2_rotation_matrix",
+      "decision": "drop",
+      "core": "so2",
+      "lines": 0,
+      "sections": []
+    },
+    {
+      "page": "03-sensors.T3.03a",
+      "concept": "sar_adc_c0g_charge_bucket_design",
+      "decision": "drop",
+      "core": "c0g",
+      "lines": 0,
+      "sections": []
+    },
+    {
+      "page": "05-control.T1.05a",
+      "concept": "symplectic_euler_integration",
+      "decision": "drop",
+      "core": "symplectic",
+      "lines": 1,
+      "sections": [
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "05-control.T1.05a",
+      "concept": "hardware_timer_isr_and_jitter",
+      "decision": "drop",
+      "core": "jitter",
+      "lines": 1,
+      "sections": [
+        "6. Simulation path"
+      ]
+    },
+    {
+      "page": "05-control.T2.05a",
+      "concept": "discrete_pid_controller",
+      "decision": "drop",
+      "core": "pid",
+      "lines": 1,
+      "sections": [
+        "1. Why it matters"
+      ]
+    },
+    {
+      "page": "05-control.T3.05a",
+      "concept": "discrete_infinite_horizon_lqr",
+      "decision": "drop",
+      "core": "horizon",
+      "lines": 0,
+      "sections": []
+    },
+    {
+      "page": "05-control.T3.05b",
+      "concept": "discrete_infinite_horizon_lqr",
+      "decision": "drop",
+      "core": "horizon",
+      "lines": 0,
+      "sections": []
+    },
+    {
+      "page": "06-robotics.T1.06a",
+      "concept": "discrete_pid_controller",
+      "decision": "drop",
+      "core": "pid",
+      "lines": 1,
+      "sections": [
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "06-robotics.T1.06a",
+      "concept": "planar_2link_forward_kinematics",
+      "decision": "drop",
+      "core": "2link",
+      "lines": 0,
+      "sections": []
+    },
+    {
+      "page": "06-robotics.T3.06a",
+      "concept": "ruckig_time_optimal_jerk_limited_scurve",
+      "decision": "drop",
+      "core": "jerk",
+      "lines": 1,
+      "sections": [
+        "8. Common mistakes"
+      ]
+    },
+    {
+      "page": "07-systems.T2.07a",
+      "concept": "can_fd_mit_impedance_packet_packing",
+      "decision": "drop",
+      "core": "packet",
+      "lines": 5,
+      "sections": [
+        "2. Intuition first",
+        "6. Simulation path",
+        "7. Checkpoint"
+      ]
+    },
+    {
+      "page": "07-systems.T3.06a",
+      "concept": "can_fd_crc16_rolling_counter_watchdog",
+      "decision": "drop",
+      "core": "crc16",
+      "lines": 0,
+      "sections": []
+    }
+  ]
+}

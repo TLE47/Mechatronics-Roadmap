@@ -12,8 +12,6 @@ new_concepts:
   - pid_spring_damper_integrator_intuition
   - actuator_saturation_and_integrator_windup
 uses:
-  - symplectic_euler_integration
-  - hardware_timer_isr_and_jitter
   - pwm_duty_cycle_effective_voltage
 est_hours: 3.5
 hardware_required: false

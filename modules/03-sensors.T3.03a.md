@@ -13,7 +13,6 @@ new_concepts:
 uses:
   - synchronous_dq_foc_current_loop
   - amplitude_invariant_clarke_park_transform
-  - sar_adc_c0g_charge_bucket_design
 est_hours: 4.5
 hardware_required: false
 safety_level: none

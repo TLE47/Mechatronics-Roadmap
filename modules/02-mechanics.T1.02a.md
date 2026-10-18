@@ -12,7 +12,6 @@ new_concepts:
 uses:
   - radians_unit_circle_and_atan2
   - newtons_second_law_and_torque
-  - so2_rotation_matrix
 est_hours: 3.5
 hardware_required: false
 safety_level: none

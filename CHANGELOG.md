@@ -31,6 +31,37 @@ flowchart LR
 - `npm run test:e2e` exit 0 - `[PASS] Real-browser Chromium E2E tests passed ...` with the new Tier 2 spoof in the loop.
 - `PLAYWRIGHT_BROWSERS=chromium npm run test:e2e:pages` exit 0 - all 46 entries graded, then `ok chromium: a Tier 2 and a Tier 3 entry print their own PASS line and stay unverified`.
 
+## [2026-10-18] — Run 63: Forty-One Legacy Claims in `uses:` Get a Verdict
+
+### 1. What was measured
+- `scripts/mentions_audit.py` reads every bridge page whose `uses:` names a legacy concept (41 pairs across 22 pages) and searches the body for the concept's **core term** (its rarest token, e.g. `so2`, `lqr`, `crc16`) plus its other tokens, requiring two tokens on a line or the rare one alone. It records the lines and the numbered sections they fall in, so "only in §1 Why it matters" and "used in §4 Worked example and §5 Exercise" are distinguishable claims.
+- Decisions live in `resources/mentions-decisions.json` and the report in `docs/PASSING_MENTIONS.md`: **14 dropped, 0 owned, 27 kept**.
+
+### 2. The 14 claims removed
+| Page | Concept | Evidence |
+| :--- | :--- | :--- |
+| `00-foundations.T2.00a` | `so2_rotation_matrix` | 0 lines, no `so2` anywhere |
+| `00-foundations.T3.00a` | `unit_quaternion_kinematics_slerp` | 0 lines, no `slerp` |
+| `02-mechanics.T1.02a` | `so2_rotation_matrix` | 0 lines |
+| `03-sensors.T3.03a` | `sar_adc_c0g_charge_bucket_design` | 0 lines, no `c0g` |
+| `05-control.T1.05a` | `symplectic_euler_integration` | 1 line, §7 only |
+| `05-control.T1.05a` | `hardware_timer_isr_and_jitter` | 1 line, §6 only |
+| `05-control.T2.05a` | `discrete_pid_controller` | 1 line, §1 only |
+| `05-control.T3.05a`, `05-control.T3.05b` | `discrete_infinite_horizon_lqr` | 0 lines, no `lqr` |
+| `06-robotics.T1.06a` | `discrete_pid_controller` | 1 line, §7 only |
+| `06-robotics.T1.06a` | `planar_2link_forward_kinematics` | 0 lines |
+| `06-robotics.T3.06a` | `ruckig_time_optimal_jerk_limited_scurve` | 1 line, §8 only |
+| `07-systems.T2.07a` | `can_fd_mit_impedance_packet_packing` | 5 lines, all prose (§2, §6, §7) |
+| `07-systems.T3.06a` | `can_fd_crc16_rolling_counter_watchdog` | 0 lines, no `crc16` |
+
+### 3. Why nothing was promoted to `new_concepts`
+- `own` requires three things together: the page is the concept's crosswalk teacher, it engages the idea in §3/§4/§5, and its Gate test already tags the concept. Three pages passed the first two (`03-sensors.T2.03a` for `so2`, `05-control.T3.05a` for the disturbance observer, `07-systems.T2.07a` for the regen surge) and none passed the third, so the honest decision is `keep`. Promoting without the gate tag failed `validate_modules` with `Gate test missing ladder concept` — the gate is what makes ownership real, and it is not something a rename can supply.
+
+### 4. Verification
+- `python3 scripts/mentions_audit.py --check` exit 0 (`41 pairs decided and applied; 14 dropped, 0 owned, 27 kept`); re-adding a dropped id to `uses:` exits 1 with the document stale against the decisions (restored immediately).
+- `python3 scripts/validate_modules.py` exit 0 under Python 3.12; `verify_repo.py` PASS (134 files, 135 diagrams, 1776 links, 0 errors); `module_parity --check`, `lint_modules`, `audit_step_size --check` (8 flagged, 0 broken prerequisites) and `legacy_crosswalk --check` (101 resolved) all exit 0.
+- Wired into `npm run check:mentions`, the CI verify step and `README.md`'s validation list.
+
 ## [2026-10-18] — Run 62: Every Superseded Prerequisite Now Points at a Real Page
 
 ### 1. 38 citations on 24 pages, repointed

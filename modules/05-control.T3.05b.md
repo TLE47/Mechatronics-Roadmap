@@ -11,7 +11,6 @@ new_concepts:
 uses:
   - joseph_stabilized_covariance_update
   - rodrigues_so3_se3_exp_log_maps
-  - discrete_infinite_horizon_lqr
 est_hours: 2.0
 hardware_required: false
 safety_level: none
