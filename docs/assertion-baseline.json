@@ -6,7 +6,7 @@
     "likely",
     "expected"
   ],
-  "total": 593,
+  "total": 459,
   "files": {
     "exercises/00-foundations.T1.00c/test_behavior.py": 21,
     "exercises/00-foundations.T1.00c/test_transfer.py": 10,
@@ -19,14 +19,6 @@
     "exercises/00-foundations.T2.00d/test_transfer.py": 7,
     "exercises/00-foundations.T2.00f/test_behavior.py": 1,
     "exercises/00-foundations.T2.00f/test_transfer.py": 16,
-    "exercises/01-electronics.T1.01a/test_behavior.py": 21,
-    "exercises/01-electronics.T1.01a/test_transfer.py": 12,
-    "exercises/01-electronics.T1.01b/test_behavior.py": 22,
-    "exercises/01-electronics.T1.01b/test_transfer.py": 7,
-    "exercises/01-electronics.T1.01c/test_transfer.py": 13,
-    "exercises/01-electronics.T1.01d/test_behavior.py": 24,
-    "exercises/01-electronics.T1.01d/test_transfer.py": 11,
-    "exercises/01-electronics.T3.01a/test_transfer.py": 24,
     "exercises/02-mechanics.T1.02a/test_behavior.py": 21,
     "exercises/02-mechanics.T1.02a/test_transfer.py": 12,
     "exercises/02-mechanics.T2.02a/test_behavior.py": 19,
@@ -51,10 +43,6 @@
     "exercises/08-capstones.T3.07a/test_transfer.py": 18
   },
   "tracks": {
-    "01-electronics": {
-      "total": 134,
-      "files": 8
-    },
     "00-foundations": {
       "total": 115,
       "files": 11
