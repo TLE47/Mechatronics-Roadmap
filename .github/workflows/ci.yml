@@ -36,6 +36,7 @@ jobs:
           python3 scripts/clean_tex.py --check
           python3 scripts/validate_modules.py
           python3 scripts/lint_lessons.py
+          python3 scripts/check_ramp_lessons.py
           python3 scripts/lint_modules.py
           python3 scripts/module_parity.py --check
           python3 tests/test_module_parity.py

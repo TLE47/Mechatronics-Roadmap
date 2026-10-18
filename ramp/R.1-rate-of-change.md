@@ -1,0 +1,256 @@
+---
+lesson_id: "R.1"
+title: "Rate of Change — Reading dq/dt From Two Samples, and Why the Interval Matters"
+ideas:
+  - "Reading a rate of change from two samples: the quotient, its units and its sign"
+  - "Average versus instantaneous rate: shrinking the interval until the average becomes the rate at one moment"
+typical_hours: "0.75-1.0"
+slow_learner_hours: "1.5-2.0"
+---
+
+# Lesson R.1: Rate of Change — Reading dq/dt From Two Samples, and Why the Interval Matters
+
+## Goal
+Turn two encoder samples into a **joint speed** (`dq/dt` in rad/s) without guessing the units, read the **sign** as direction, and see why the **average** over a window and the **rate at one moment** are different numbers — the difference Tier 2 writes as $\dot{q}$.
+
+- **New ideas (max 2):**
+  1. **Reading a rate of change from two samples: the quotient, its units and its sign.** A rate is a change divided by the time it took: $\frac{\Delta q}{\Delta t} = \frac{q(t_2) - q(t_1)}{t_2 - t_1}$. The unit of the answer is the unit of the top divided by the unit of the bottom (`counts/s` → `rad/s`), and a negative answer is motion in the $-q$ direction, not an error.
+  2. **Average versus instantaneous rate: shrinking the interval until the average becomes the rate at one moment.** One quotient over a long window reports what happened *on average*; the same quotient over a single tick either side of a sample reports the rate *there*. At a turning point the instantaneous rate is zero while the average over the whole motion is not.
+- **New syntax:** `enumerate`-free index windows — `samples[i - 1]`, `samples[i]`, `samples[i + 1]` — for reading a value together with its two neighbours.
+- **Target time (unmeasured — [log yours](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)):** Typical: 0.75–1.0 hours | Slow-learner: 1.5–2.0 hours
+
+---
+
+## Prerequisites
+- [Lesson P.11: Reading Time-Series Graphs — Slope & Area](../track-p/P.11-reading-time-series-graphs.md) — slope as rise over run
+- [Lesson P.7: Base SI Units & Metric Prefixes](../track-p/P.7-si-units-and-metric-prefixes.md) — `ms` → `s`, `counts` → `rad`
+- [Lesson 03.1: Quadrature & Magnetic Encoders](../03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md) — where the counts come from
+
+```mermaid
+flowchart LR
+    P11["P.11: slope = rise / run"] --> R1["R.1: dq/dt from two samples"]
+    P7["P.7: units and prefixes"] --> R1
+    R1 --> R2["R.2: accumulation (the reverse)"]
+    R1 --> T2["Tier 2: state-space, x-dot = A x + B u"]
+```
+
+---
+
+## Learn
+
+### Idea 1: Reading a rate of change from two samples: the quotient, its units and its sign
+- **Primary resource:** [Wikipedia — Derivative](https://en.wikipedia.org/wiki/Derivative)
+  - **What to read:** The lead section, and the subsection on *difference quotients* under `Definition` — the fraction of a change in the output over a change in the input.
+  - **What to skip:** Skip the sections on complex analysis, partial derivatives and higher-order derivatives.
+  - **Key takeaway:** A rate is a **difference quotient**, and it is a *measurement*, so it carries units and a sign. Two encoder reads of the same joint, `q_prev = 0` counts and `q_now = 120` counts, on a 40 Hz-shared encoder with 4096 counts per turn, give
+    $\frac{\Delta q}{\Delta t} = \frac{120 - 0}{0.01\ \text{s}} = 12{,}000\ \text{counts/s} = 12{,}000 \times \frac{2\pi}{4096}\ \text{rad/s} \approx 18.408\ \text{rad/s}$.
+    Divide by the *time between the samples*, never by the sample index: ten samples at 100 Hz span nine intervals (0.09 s), not 0.10 s.
+- **Alternative resource:** [OpenStax — College Physics 2e, §2.3 Time, Velocity, and Speed](https://openstax.org/books/college-physics-2e/pages/2-3-time-velocity-and-speed)
+  - **What to read:** Read the worked examples that divide a displacement by elapsed time; ignore the textbook's own unit conventions and keep the ones the encoder reports.
+
+### Idea 2: Average versus instantaneous rate: shrinking the interval until the average becomes the rate at one moment
+- **Primary resource:** [Wikipedia — Average and instantaneous velocity](https://en.wikipedia.org/wiki/Velocity#Average_velocity)
+  - **What to read:** The `Average velocity` section and the sentence that defines instantaneous velocity as the limit of the average as the time interval shrinks.
+  - **What to skip:** Skip the relativistic and four-vector sections.
+  - **Key takeaway:** On the 10-sample trace below (`COUNTS`, 100 Hz), the average over the whole 90 ms is **4.943 rad/s**, the first single step is **18.408 rad/s**, and one tick either side of the peak the rate is **−1.150 rad/s**. All three are correct answers to different questions. The average answers "how fast overall", the single step answers "how fast *just then*, measured coarsely", and the central difference answers "how fast *at that sample*, measured with the neighbours' help". At the peak itself the joint is instantaneously stopped even though it travelled 450 counts to get there — which is why a controller that only ever looks at long averages cannot see a reversal coming.
+
+### Bridge Notes
+Tier 2 begins with $\dot{x} = Ax + Bu$, and the dot is exactly the quotient you just computed: a change over a time you chose. Two habits carry over. First, **the interval is part of the answer.** A 10 ms window is a low-pass filter on your own measurement; a 1 ms window is noisy because one encoder count is $0.00153$ rad, and dividing that by 1 ms makes $1.53$ rad/s of quantisation noise. You will meet this trade-off again as a filter cut-off and as a derivative gain that amplifies encoder jitter. Second, **the sign is information.** A negative rate means the joint moved toward $-q$; feeding that sign through a controller and watching the actuator fight it is how reversed encoder polarity shows up as runaway instead of as a small offset. Finally, an average rate is what a logger can prove and an instantaneous rate is what a controller needs: the gap between them is a phase lag, and it is the reason a discrete control loop's derivative term must be filtered before it is used. In R.2 you will run the same two samples backwards and recover position from rates.
+
+---
+
+## Do it yourself
+
+- **What is simulated and in which tool:** Runs 100% in Python — the MechaLab Browser Runner or `python3` locally. The counts are a recorded 1-turn joint move sampled at 100 Hz, not a live encoder.
+- **What is real-hardware only:** Nothing. On a bench, the same function runs on `q_prev`/`q_now` from [`Lesson 03.1`](../03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md).
+
+### Starter Code (runs as-is — fill in the TODOs)
+Complete `counts_to_rad` (`TODO 1`), `rate_rad_s` (`TODO 2`), `average_rate_rad_s` (`TODO 3`) and `central_rate_rad_s` (`TODO 4`). `peak_index` and `reversal_tick` are given:
+
+```python
+import math
+
+COUNTS_PER_TURN = 4096.0
+DT_S = 0.01  # 100 Hz encoder samples
+
+COUNTS = [0, 120, 235, 330, 400, 440, 450, 425, 370, 290]
+
+
+def counts_to_rad(counts):
+    # TODO 1: one count is 2*pi / 4096 rad; multiply, do not divide by counts
+    return 0.0
+
+
+def rate_rad_s(now_counts, prev_counts, dt_s=DT_S):
+    # TODO 2: (rad_now - rad_prev) / dt_s - divide by the TIME, not by the sample index
+    return 0.0
+
+
+def average_rate_rad_s(samples, dt_s=DT_S):
+    # TODO 3: the whole trace in one quotient: (q_last - q_first) / ((n - 1) * dt_s)
+    return 0.0
+
+
+def central_rate_rad_s(samples, i, dt_s=DT_S):
+    # TODO 4: the neighbours on both sides: (q[i+1] - q[i-1]) / (2 * dt_s)
+    return 0.0
+
+
+def peak_index(samples):
+    """The sample where the joint reverses: the largest count."""
+    return samples.index(max(samples))
+
+
+def reversal_tick(samples):
+    """The tick pair across which the rate changes sign."""
+    for i in range(1, len(samples)):
+        if rate_rad_s(samples[i], samples[i - 1]) < 0.0:
+            return i - 1, i
+    return None
+
+
+first = rate_rad_s(COUNTS[1], COUNTS[0])
+last = rate_rad_s(COUNTS[-1], COUNTS[-2])
+whole = average_rate_rad_s(COUNTS)
+peak = peak_index(COUNTS)
+at_peak = central_rate_rad_s(COUNTS, peak)
+
+print(f"first step 0->1: {first:.3f} rad/s")
+print(f"last step 8->9: {last:.3f} rad/s")
+print(f"whole trace: {whole:.3f} rad/s over {len(COUNTS) - 1} ticks")
+print(f"peak at tick {peak}: {COUNTS[peak]} counts, central rate {at_peak:.3f} rad/s")
+print("rate changes sign between ticks %d and %d" % reversal_tick(COUNTS))
+```
+
+### Expected Output
+When the four TODOs are completed, running the script prints:
+
+```text
+first step 0->1: 18.408 rad/s
+last step 8->9: -12.272 rad/s
+whole trace: 4.943 rad/s over 9 ticks
+peak at tick 6: 450 counts, central rate -1.150 rad/s
+rate changes sign between ticks 6 and 7
+```
+
+### Hint Ladder
+
+<details>
+<summary><strong>Hint 1 (Concept nudge)</strong></summary>
+
+Every function here is `(a change in position) / (a change in time)`. `counts_to_rad` is a unit change only. `rate_rad_s` uses one interval, `average_rate_rad_s` uses all of them at once, and `central_rate_rad_s` uses one interval centred on `i` — so its denominator is **twice** `dt_s`.
+</details>
+
+<details>
+<summary><strong>Hint 2 (Formula / structure)</strong></summary>
+
+```python
+def counts_to_rad(counts):
+    return counts * 2.0 * math.pi / COUNTS_PER_TURN
+
+
+def rate_rad_s(now_counts, prev_counts, dt_s=DT_S):
+    return (counts_to_rad(now_counts) - counts_to_rad(prev_counts)) / dt_s
+
+
+def average_rate_rad_s(samples, dt_s=DT_S):
+    return (counts_to_rad(samples[-1]) - counts_to_rad(samples[0])) / ((len(samples) - 1) * dt_s)
+```
+</details>
+
+<details>
+<summary><strong>Full Solution</strong></summary>
+
+```python
+import math
+
+COUNTS_PER_TURN = 4096.0
+DT_S = 0.01
+
+COUNTS = [0, 120, 235, 330, 400, 440, 450, 425, 370, 290]
+
+
+def counts_to_rad(counts):
+    return counts * 2.0 * math.pi / COUNTS_PER_TURN
+
+
+def rate_rad_s(now_counts, prev_counts, dt_s=DT_S):
+    return (counts_to_rad(now_counts) - counts_to_rad(prev_counts)) / dt_s
+
+
+def average_rate_rad_s(samples, dt_s=DT_S):
+    if len(samples) < 2:
+        raise ValueError("a rate needs two samples")
+    return (counts_to_rad(samples[-1]) - counts_to_rad(samples[0])) / ((len(samples) - 1) * dt_s)
+
+
+def central_rate_rad_s(samples, i, dt_s=DT_S):
+    if not 0 < i < len(samples) - 1:
+        raise ValueError("a central difference needs a sample on each side")
+    return (counts_to_rad(samples[i + 1]) - counts_to_rad(samples[i - 1])) / (2.0 * dt_s)
+
+
+def peak_index(samples):
+    return samples.index(max(samples))
+
+
+def reversal_tick(samples):
+    for i in range(1, len(samples)):
+        if rate_rad_s(samples[i], samples[i - 1]) < 0.0:
+            return i - 1, i
+    return None
+
+
+first = rate_rad_s(COUNTS[1], COUNTS[0])
+last = rate_rad_s(COUNTS[-1], COUNTS[-2])
+whole = average_rate_rad_s(COUNTS)
+peak = peak_index(COUNTS)
+at_peak = central_rate_rad_s(COUNTS, peak)
+
+print(f"first step 0->1: {first:.3f} rad/s")
+print(f"last step 8->9: {last:.3f} rad/s")
+print(f"whole trace: {whole:.3f} rad/s over {len(COUNTS) - 1} ticks")
+print(f"peak at tick {peak}: {COUNTS[peak]} counts, central rate {at_peak:.3f} rad/s")
+print("rate changes sign between ticks %d and %d" % reversal_tick(COUNTS))
+
+assert abs(first - 18.408) < 0.001
+assert abs(last + 12.272) < 0.001
+assert peak == 6
+assert at_peak < 0.0
+```
+</details>
+
+---
+
+## Common mistakes & troubleshooting
+- **Dividing by the sample count instead of the elapsed time:** `(q_last - q_first) / len(samples)` divides counts by samples and yields a number with no physical unit. Ten samples at 100 Hz are **9** intervals, and the denominator is `9 * 0.01 = 0.09 s`; using `10 * 0.01` under-reports the rate by 10%.
+- **Reporting a negative rate as an error:** `-12.272 rad/s` is the joint moving toward $-q$. Clamp the *command*, never the measurement — a controller that takes `abs()` of its measured velocity cannot see a reversal.
+- **Using a central difference at the ends of the trace:** `central_rate_rad_s(samples, 0)` reads `samples[-1]`, which wraps to the end of the list and reports the rate of a completely different part of the motion. The guard raises instead; use `rate_rad_s` at the ends.
+
+---
+
+## Check yourself
+1. **Two samples taken 2 ms apart read 100 counts and 112 counts. What is the rate in rad/s, and what would a 10 ms window report if the joint moved at that same rate throughout?**
+   <details>
+   <summary><strong>Answer 1</strong></summary>
+   12 counts in 0.002 s is 6000 counts/s, and $6000 \times 2\pi/4096 = 9.204$ rad/s. Over 10 ms at the same rate the joint turns 0.0920 rad, i.e. $0.0920 \times 4096/(2\pi) = 60$ counts — the same rate, a longer ruler.
+   </details>
+2. **A trace's average rate over 90 ms is 4.943 rad/s, but the central rate at its peak is −1.150 rad/s. Are both correct?**
+   <details>
+   <summary><strong>Answer 2</strong></summary>
+   Yes. The average answers "how fast over the whole move" (290 counts in 0.09 s). The central rate answers "how fast at that sample" and it has already turned negative because the joint overshot and came back. Neither is the other's error; they are rates over different windows.
+   </details>
+3. **Why is `2 * dt_s` the correct denominator for a central difference?**
+   <details>
+   <summary><strong>Answer 3</strong></summary>
+   The numerator spans from sample `i-1` to `i+1`, which is two sample intervals. One tick either side means the elapsed time is twice the sample period.
+   </details>
+
+---
+
+## Recap
+- [ ] I can turn two encoder counts into `rad/s` by dividing the change in position by the **elapsed time**, and state the sign's meaning.
+- [ ] I can compute an average rate over a trace and a central rate at one sample, and explain why they disagree at a turning point.
+- [ ] I know why the window length trades noise against lag, and that ten samples hold nine intervals.
+
+👉 **Next lesson:** [Lesson R.2: Accumulation — Recovering Position From Rates, and Why a Small Bias Drifts](R.2-accumulation.md)

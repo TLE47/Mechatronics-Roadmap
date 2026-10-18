@@ -8,6 +8,12 @@ Finishing the course means finishing **the Core route** below. Everything under
 Extensions is real, graded and badgeable - it is simply not required, so a learner can
 stop at Core completion and still hold every skill the Core names.
 
+```mermaid
+flowchart LR
+    Core["Core route<br/>required"] --> Done["Course complete"]
+    Ext["Extensions<br/>optional, still graded"] -.->|"adds hours, costs no requirement"| Done
+```
+
 ## Core route (required)
 
 | Stage | Item | Hours |
