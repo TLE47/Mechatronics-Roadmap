@@ -37,8 +37,9 @@ CORE_MODULES = [
     "02-mechanics.T1.02a", "03-sensors.T1.03a", "04-embedded.T1.04a", "04-embedded.T1.04b",
     "05-control.T1.05a", "06-robotics.T1.06a", "07-systems.T1.07a",
     # Tier 2 - the foundations ladder on the arm plant, then control and estimation.
-    "00-foundations.T2.00a", "00-foundations.T2.00b", "00-foundations.T2.00c",
-    "00-foundations.T2.00d", "00-foundations.T2.00e", "00-foundations.T2.00f",
+    "00-foundations.T2.00a", "00-foundations.T2.00g", "00-foundations.T2.00b",
+    "00-foundations.T2.00c", "00-foundations.T2.00d", "00-foundations.T2.00e",
+    "00-foundations.T2.00f",
     "01-electronics.T2.01a", "01-electronics.T2.01b",
     "02-mechanics.T2.02a", "03-sensors.T2.03a",
     "04-embedded.T2.04a", "04-embedded.T2.04b", "04-embedded.T2.04c", "04-embedded.T2.04d",

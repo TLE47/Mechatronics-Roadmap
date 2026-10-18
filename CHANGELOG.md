@@ -11,6 +11,27 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 70: The Tier 2 Opener Splits, and Matrices Get Their Own Page
+
+### 1. `00-foundations.T2.00a` now teaches one thing
+- The page carried three concepts in a $4.0\text{ h}$ step: finite differences, matrix-vector multiplication, and the discrete state update. The step-size audit flagged it at 18.0, the largest in Tier 2. It is now **2.0 h and one concept** - backward difference, running integral, the telescoping identity, and the $1.534\text{ rad/s}$ quantisation floor of a 12-bit encoder at $1\text{ kHz}$.
+- Its graded package shrank with it: three holes (`joint_velocity`, `running_integral`, `encoder_trace_angle`), **10 tests**, three faults (`missing_dt`, `no_wrap`, `hardcoded_counts`). The matrix functions and the `sequential_update` fault moved to the new page.
+
+### 2. `00-foundations.T2.00g` - "Matrix-Vector Multiplication & the One-Step State Update"
+- New module between `T2.00a` and `T2.00b` (two new concepts, 3.0 h, the cart as the teaching rig, the arm as the transfer rig). `T2.00b`'s prerequisite is now `T2.00g`.
+- New package `exercises/00-foundations.T2.00g/`: six holes (`mat_vec` with a shape check, `state_matrices`, `one_step`, `simulate`, `two_mass_matrices`, `position_trace`), **19 tests**, four faults (`elementwise_product`, `sequential_update`, `hardcoded_matrices`, `force_in_position_row`), a browser self-check and a print-only cheat case.
+- The $4\times4$ two-mass matrix is the point of the page: the same `mat_vec`/`one_step` code carries four states, and the decoupled limit must reproduce the two $2\times2$ matrices exactly.
+- The transfer suite meets the plant twice: the arm's shoulder velocity decay matches `plant.step_arm` tick for tick to $10^{-12}$, and its two inertias run as a coupled drivetrain.
+
+### 3. Ladder and route bookkeeping, regenerated not typed
+- Every Tier 2 gate's ladder sentence names `T2.00g`; `00b`'s gate recaps the matrix page rather than `00a`.
+- `_index.yaml`, `00-foundations/README.md`, `docs/SYLLABUS.md` (27 Tier 2 modules, 123.5 h; 71 formal modules, 325.5 h), `docs/SIM_ROUTE.md` (**Core 41 modules, 181.5-225 h**), `docs/STEP_SIZE_AUDIT.md`, `docs/coverage-table.md` and `app/src/data/pythonLessonsData.ts` were all regenerated or updated. The audit now measures `T2.00a` at 14.0 (unflagged) and `T2.00g` at 5.0.
+
+### 4. Verification
+- `run_exercise.py` **12/12 checks** for `T2.00g` and **11/11** for the trimmed `T2.00a`; `tests/test_module_full_solutions.py` 2/2, so both pages' Full Solution blocks pass their own suites.
+- The full CI chain is green: `verify_repo` PASS (135 files, 136 diagrams, 1800 links, 0 errors), `validate_modules` (71 modules), `lint_modules`, `lint_lessons`, `check_ramp_lessons`, `check_term_order`, `clean_tex`, `mentions --check` (41 pairs: 18 dropped, 3 owned, 20 kept), `legacy_crosswalk --check` (102 resolved, 0 unresolved), `module_parity --check` (99.8% over 47 modules), `generate_sim_route --check`, `audit_step_size --check` (25 pages, 8 flagged, 0 broken), `test_plant`, `test_model_levels`, `test_sim_route`, `test_exercises`, `test_exercise_package`, `check_exercise_coverage` (47/47 graded), plus `audit_math` (0 failures) and `run_all_labs` (all tracks OK).
+- Browser path: `npm run build`, `test:smoke` (83-entry Runner) and both E2E suites - **all 47 graded entries** graded on the built Pages bundle in Chromium and Firefox.
+
 ## [2026-10-18] — Run 69: A Second Owner for Quaternion SLERP, and CORDIC Comes Home
 
 ### 1. Shared ownership has a live example

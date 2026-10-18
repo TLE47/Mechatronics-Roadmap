@@ -33,27 +33,13 @@ def _selfcheck():
     assert abs(integral[0] - 0.1) < 1e-12 and abs(integral[-1] - 0.6) < 1e-12, "running integral"
     checks += 1
 
-    Ad, Bd = state_matrices(1.0, 100.0, 10.0, 0.01)
-    assert abs(Ad[0][1] - 0.01) < 1e-12 and abs(Ad[1][0] + 1.0) < 1e-12, "Ad"
-    assert abs(Ad[1][1] - 0.9) < 1e-12 and abs(Bd[1] - 0.01) < 1e-12, "Bd"
-    checks += 1
-
-    stepped = one_step(Ad, Bd, [0.10, 0.20], 0.0)
-    assert abs(stepped[0] - 0.102) < 1e-12, "x uses the old velocity"
-    assert abs(stepped[1] - 0.08) < 1e-12, "v computed from the OLD x"
-    checks += 1
-
-    final = simulate(Ad, Bd, [0.10, 0.0], 5.0, 500)
-    assert abs(final[0] - 0.05) < 1e-3 and abs(final[1]) < 1e-4, "equilibrium is u/k = 0.05 m"
-    checks += 1
-
     trace = encoder_trace_angle(counts, 1e-3)
     for index, value in enumerate(trace):
         assert abs(value - plant.counts_to_rad(counts[index])) < one_count + 1e-9, "angle round trip"
     checks += 1
 
-    print("SELF-CHECK PASS: %d checks - encoder velocity, wrap, integral, matrices, step order, "
-          "equilibrium, round trip" % checks)
+    print("SELF-CHECK PASS: %d checks - encoder velocity, wrap, running integral, angle round trip"
+          % checks)
 
 
 _selfcheck()

@@ -22,7 +22,7 @@ flowchart LR
 
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `00` | 12 | 100% | 100% | 100% | 100% | **100.0%** | 12 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `00` | 13 | 100% | 100% | 100% | 96% | **99.4%** | 13 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `01` | 7 | 100% | 100% | 100% | 100% | **100.0%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `02` | 3 | 100% | 100% | 100% | 100% | **100.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `03` | 3 | 100% | 100% | 100% | 100% | **100.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **100.0%** |
-| Tier 2 | 18 | **100.0%** |
+| Tier 2 | 19 | **99.6%** |
 | Tier 3 | 12 | **100.0%** |
 
-## Per module (46 modules, overall **100.0%**)
+## Per module (47 modules, overall **99.8%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -55,6 +55,7 @@ flowchart LR
 | `00-foundations.T2.00d` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T2.00e` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T2.00f` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `00-foundations.T2.00g` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
 | `00-foundations.T3.00a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `01-electronics.T1.01a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `01-electronics.T1.01b` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
@@ -95,14 +96,14 @@ flowchart LR
 
 | Stage | Modules carrying it | Gate |
 | :--- | :---: | :--- |
-| `1_recall` | 46/46 | gated by `lint_modules.py` |
-| `2_see_it` | 46/46 | gated by `lint_modules.py` |
-| `3_predict` | 46/46 | gated by `lint_modules.py` |
-| `4_worked_example` | 46/46 | gated by `lint_modules.py` |
-| `5_practice_host` | 46/46 | gated by `lint_modules.py` |
-| `6_break_it` | 46/46 | gated by `lint_modules.py` |
-| `7_transfer` | 46/46 | gated by `lint_modules.py` |
-| `8_integrate` | 46/46 | gated by `lint_modules.py` |
+| `1_recall` | 47/47 | gated by `lint_modules.py` |
+| `2_see_it` | 47/47 | gated by `lint_modules.py` |
+| `3_predict` | 47/47 | gated by `lint_modules.py` |
+| `4_worked_example` | 47/47 | gated by `lint_modules.py` |
+| `5_practice_host` | 47/47 | gated by `lint_modules.py` |
+| `6_break_it` | 47/47 | gated by `lint_modules.py` |
+| `7_transfer` | 47/47 | gated by `lint_modules.py` |
+| `8_integrate` | 47/47 | gated by `lint_modules.py` |
 
 ## Shared plant
 
@@ -114,11 +115,11 @@ with no import, an unexplained exemption and a missing key all score zero - `unh
 `undeclared` below - so a module that ignores the arm is visible in its own score instead of
 being implied by silence.
 
-- On the shared arm: **46/46** - `00-foundations.T1.00a`, `00-foundations.T1.00b`, `00-foundations.T1.00c`, `00-foundations.T1.00d`, `00-foundations.T1.00e`, `00-foundations.T2.00a`, `00-foundations.T2.00b`, `00-foundations.T2.00c`, `00-foundations.T2.00d`, `00-foundations.T2.00e`, `00-foundations.T2.00f`, `00-foundations.T3.00a`, `01-electronics.T1.01a`, `01-electronics.T1.01b`, `01-electronics.T1.01c`, `01-electronics.T1.01d`, `01-electronics.T2.01a`, `01-electronics.T2.01b`, `01-electronics.T3.01a`, `02-mechanics.T1.02a`, `02-mechanics.T2.02a`, `02-mechanics.T3.02a`, `03-sensors.T1.03a`, `03-sensors.T2.03a`, `03-sensors.T3.03a`, `04-embedded.T1.04a`, `04-embedded.T1.04b`, `04-embedded.T2.04a`, `04-embedded.T2.04b`, `04-embedded.T2.04c`, `04-embedded.T2.04d`, `04-embedded.T3.04a`, `05-control.T1.05a`, `05-control.T2.05a`, `05-control.T3.05a`, `05-control.T3.05b`, `05-control.T3.05c`, `06-robotics.T1.06a`, `06-robotics.T2.06a`, `06-robotics.T2.06b`, `06-robotics.T3.06a`, `06-robotics.T3.06b`, `07-systems.T1.07a`, `07-systems.T2.07a`, `07-systems.T3.06a`, `08-capstones.T3.07a`
-- Declared exempt, with a reason: **0/46**
+- On the shared arm: **47/47** - `00-foundations.T1.00a`, `00-foundations.T1.00b`, `00-foundations.T1.00c`, `00-foundations.T1.00d`, `00-foundations.T1.00e`, `00-foundations.T2.00a`, `00-foundations.T2.00b`, `00-foundations.T2.00c`, `00-foundations.T2.00d`, `00-foundations.T2.00e`, `00-foundations.T2.00f`, `00-foundations.T2.00g`, `00-foundations.T3.00a`, `01-electronics.T1.01a`, `01-electronics.T1.01b`, `01-electronics.T1.01c`, `01-electronics.T1.01d`, `01-electronics.T2.01a`, `01-electronics.T2.01b`, `01-electronics.T3.01a`, `02-mechanics.T1.02a`, `02-mechanics.T2.02a`, `02-mechanics.T3.02a`, `03-sensors.T1.03a`, `03-sensors.T2.03a`, `03-sensors.T3.03a`, `04-embedded.T1.04a`, `04-embedded.T1.04b`, `04-embedded.T2.04a`, `04-embedded.T2.04b`, `04-embedded.T2.04c`, `04-embedded.T2.04d`, `04-embedded.T3.04a`, `05-control.T1.05a`, `05-control.T2.05a`, `05-control.T3.05a`, `05-control.T3.05b`, `05-control.T3.05c`, `06-robotics.T1.06a`, `06-robotics.T2.06a`, `06-robotics.T2.06b`, `06-robotics.T3.06a`, `06-robotics.T3.06b`, `07-systems.T1.07a`, `07-systems.T2.07a`, `07-systems.T3.06a`, `08-capstones.T3.07a`
+- Declared exempt, with a reason: **0/47**
 - Declared but not hooked up (`plant: tier1_arm_motor` with no `import mechalab_plant` in a
-  python block, or `plant: none` with no reason): **0/46**
-- Undeclared: **0/46**
+  python block, or `plant: none` with no reason): **0/47**
+- Undeclared: **0/47**
 
 The plant itself, its provenance rule and the workbench import contract:
 [`resources/plants/README.md`](../resources/plants/README.md).
@@ -144,6 +145,7 @@ not demonstrated learner mastery.
 | `00-foundations.T2.00d` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `00-foundations.T2.00e` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `00-foundations.T2.00f` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
+| `00-foundations.T2.00g` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
 | `00-foundations.T3.00a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `01-electronics.T1.01a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `01-electronics.T1.01b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
@@ -190,9 +192,9 @@ test that names it. The tests the harness runs are the same ones CI runs.
 Read from `exercises/` when this file is generated, so the counts cannot drift from the table
 above:
 
-- **Graded packages: 46 of 46 modules**, every bridge module.
-- **Browser-driven: 46 of 46 graded packages**, each discovered from its manifest by `scripts/e2e_pages_bundle.mjs`.
-- **Behaviour-graded rows:** 46 of 46 read `yes` in the table above.
+- **Graded packages: 47 of 47 modules**, every bridge module.
+- **Browser-driven: 47 of 47 graded packages**, each discovered from its manifest by `scripts/e2e_pages_bundle.mjs`.
+- **Behaviour-graded rows:** 47 of 47 read `yes` in the table above.
 
 ## Not yet instrumented
 

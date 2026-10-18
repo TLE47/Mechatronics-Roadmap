@@ -4,7 +4,7 @@ title: "Vectors, Dot & Cross Products, Linear Independence & Change of Basis"
 track: "00"
 tier: 2
 prereqs:
-  - 00-foundations.T2.00a
+  - 00-foundations.T2.00g
 new_concepts:
   - dot_product_projection
   - cross_product_3d_moment
@@ -313,7 +313,7 @@ assert math.isclose(q5_row0, 4.0, rel_tol=1e-9)
 - **Pass mark:** $4/5$ ($80\%+$). If you missed Q1 or Q4, study `## 3. Formalization`; if you missed Q2 or Q3, study `## 4. Worked example`; if you missed Q5, study `## 3. Formalization` (and review `00-foundations.T2.00a`). On pass, proceed to `## 10. Next modules`.
 
 ### Gate test
-This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md) through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`). Questions 1-6 are this module's own three tools; 7-11 recap one module each, so the whole ladder is examined.
+This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundations.T2.00a`](00-foundations.T2.00a.md), [`00-foundations.T2.00g`](00-foundations.T2.00g.md), and this page through [`00-foundations.T2.00f`](00-foundations.T2.00f.md) - before Step 2.1 (`00-foundations.T2.01`). Questions 1-6 are this module's own three tools; 7-11 recap one module each, so the whole ladder is examined.
 1. `[Concept: dot_product_projection]` Compute $\vec{a}\cdot\vec{b}$ (tolerance $\pm 10^{-9}$) for $\vec{a} = [2.0,\; -3.0,\; 1.0]^\top$ and $\vec{b} = [4.0,\; 1.0,\; -2.0]^\top$.
 2. `[Concept: dot_product_projection]` A $\vec{r} = [0.30,\; 0.40,\; 0.00]^\top\text{m}$ lever carries $\vec{F} = [0.0,\; -20.0,\; 15.0]^\top\text{N}$. Compute the axial projection $\vec{F}\cdot\hat{u}_r$ in $\text{N}$ (tolerance $\pm 10^{-9}$), where $\hat{u}_r$ is the unit lever.
 3. `[Concept: cross_product_3d_moment]` For $\vec{r} = [0.25,\; 0.00,\; 0.10]^\top\text{m}$ and $\vec{F} = [10.0,\; 30.0,\; -20.0]^\top\text{N}$, compute $\tau_y = r_z F_x - r_x F_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
@@ -328,7 +328,7 @@ This is the exit examination for the whole Track 00 Tier 2 ladder - [`00-foundat
    - **B.** Return $(0.0, 0.0)$ and let the caller notice.
    - **C.** Divide by the determinant anyway; the infinities are informative.
    - **D.** Transpose the basis and retry.
-7. `[Concept: finite_difference_derivative_and_integral] [Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` For `00-foundations.T2.00a`'s $A_d = \begin{bmatrix} 1.0 & 0.01 \\ -1.0 & 0.90 \end{bmatrix}$ and $B_d = [0.0,\; 0.01]^\top$, one step from $\vec{x} = [0.20,\; 1.00]^\top$ with $u = 0$ gives $x_1$. Compute $x_1$ in $\text{m}$ (tolerance $\pm 10^{-9}$).
+7. `[Concept: finite_difference_derivative_and_integral] [Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` For `00-foundations.T2.00g`'s $A_d = \begin{bmatrix} 1.0 & 0.01 \\ -1.0 & 0.90 \end{bmatrix}$ and $B_d = [0.0,\; 0.01]^\top$, one step from $\vec{x} = [0.20,\; 1.00]^\top$ with $u = 0$ gives $x_1$. Compute $x_1$ in $\text{m}$ (tolerance $\pm 10^{-9}$).
 8. `[Concept: first_order_ode_time_constant] [Concept: second_order_ode_wn_zeta] [Concept: characteristic_polynomial_roots]` For `00-foundations.T2.00c`'s oscillator with $m = 0.50\,\text{kg}$ and $k = 200.0\,\text{N/m}$, compute $\omega_n = \sqrt{k/m}$ in $\text{rad/s}$ (tolerance $\pm 10^{-9}$).
 9. `[Concept: complex_numbers_and_euler_formula] [Concept: complex_impedance_and_transfer_function] [Concept: bode_magnitude_db_and_phase]` For `00-foundations.T2.00d`'s complex number $z = 3.0 + j4.0$, compute $|z| = \sqrt{x^2 + y^2}$ (tolerance $\pm 10^{-9}$).
 10. `[Concept: laplace_poles_and_zeros] [Concept: continuous_state_space_matrices] [Concept: discrete_state_transition_euler_tustin]` For `00-foundations.T2.00e`'s companion form with $J = 2.0\,\text{kg}\cdot\text{m}^2$ and $k = 50.0\,\text{N}\cdot\text{m/rad}$ (any damping), compute $\det(A) = k/J$ in $\text{s}^{-2}$ (tolerance $\pm 10^{-9}$).
@@ -367,7 +367,7 @@ assert math.isclose(g9_mag, 5.0, rel_tol=1e-9)
 assert math.isclose(g10_det_A, 25.0, rel_tol=1e-9)
 assert g11_choice == "A"
 ```
-- **Pass mark:** $\ge 80\%$ ($4/5$ on Skip test; $\ge 9/11$ on Gate test). Missed Gate Q1-Q2: study `00-foundations.T2.00b`; Q3-Q6: `00-foundations.T2.00b`; Q7: `00-foundations.T2.00a`; Q8: `00-foundations.T2.00c`; Q9: `00-foundations.T2.00d`; Q10: `00-foundations.T2.00e`; Q11: `00-foundations.T2.00f`.
+- **Pass mark:** $\ge 80\%$ ($4/5$ on Skip test; $\ge 9/11$ on Gate test). Missed Gate Q1-Q2: study `00-foundations.T2.00b`; Q3-Q6: `00-foundations.T2.00b`; Q7: `00-foundations.T2.00g`; Q8: `00-foundations.T2.00c`; Q9: `00-foundations.T2.00d`; Q10: `00-foundations.T2.00e`; Q11: `00-foundations.T2.00f`.
 
 ## 8. Common mistakes
 | Symptom | Root cause | 2-minute fix |

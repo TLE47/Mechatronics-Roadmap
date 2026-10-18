@@ -359,7 +359,7 @@ assert math.isclose(q4_sigma00, 2.0, rel_tol=1e-9)
 ```
 - **Pass mark:** $4/4$ ($80\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. On pass, proceed to `## 10. Next modules`.
 ### Gate test
-Covers the complete Track 00 Tier 2 bridge ladder (`00-foundations.T2.00a` through `00-foundations.T2.00f`) before Step 2.1 (`00-foundations.T2.01`):
+Covers the complete Track 00 Tier 2 bridge ladder (`00-foundations.T2.00a`, `00-foundations.T2.00g`, and `00-foundations.T2.00b` through `00-foundations.T2.00f`) before Step 2.1 (`00-foundations.T2.01`):
 1. `[Concept: finite_difference_derivative_and_integral]` Given $x_{k-1} = 0.20\text{ m}$ and $x_k = 0.26\text{ m}$ sampled at $\Delta t = 0.02\text{ s}$, compute the backward-difference velocity $v_k$ in $\text{m/s}$ (tolerance $\pm 10^{-9}$).
 2. `[Concept: matrix_vector_multiplication] [Concept: state_vector_one_step_update]` Multiply $A = \begin{bmatrix} 1 & 0.05 \\ 0 & 1 \end{bmatrix}$ by $x = \begin{bmatrix} 2.0 \\ 4.0 \end{bmatrix}$ and report the first element $(Ax)_0$ (tolerance $\pm 10^{-9}$).
 3. `[Concept: cross_product_3d_moment] [Concept: dot_product_projection] [Concept: basis_change_and_invertibility]` For lever arm $r = [0.25, 0.0, 0.0]^\top\text{ m}$ and force $F = [0.0, 40.0, 0.0]^\top\text{ N}$, compute the $z$-component of torque $\tau_z = (r \times F)_z$ in $\text{N}\cdot\text{m}$ (tolerance $\pm 10^{-9}$).
