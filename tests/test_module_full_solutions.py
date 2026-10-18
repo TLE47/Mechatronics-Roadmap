@@ -11,6 +11,7 @@ The list is discovered, not typed: every exercise package with a module page tha
 repaired; a new module joins the check the moment its page gets a solution block.
 """
 
+import concurrent.futures
 import json
 import os
 import pathlib
@@ -21,6 +22,32 @@ import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+
+def workers():
+    """One per performance core, capped: each worker compiles nothing but spawns interpreters."""
+    try:
+        performance = int(subprocess.run(["sysctl", "-n", "hw.perflevel0.logicalcpu"],
+                                        capture_output=True, text=True).stdout)
+    except (OSError, ValueError):
+        performance = 0
+    return max(1, min(performance or os.cpu_count() or 1, 8))
+
+
+def run_page_solution(item):
+    """Run one page's Full Solution against its own package; returns (id, returncode, output)."""
+    module_id, page_text = item
+    code = full_solution_block(page_text, module_id)
+    with tempfile.TemporaryDirectory() as scratch:
+        submission = pathlib.Path(scratch) / "page_solution.py"
+        submission.write_text(code, encoding="utf-8")
+        env = dict(os.environ, EXERCISE_TARGET=str(submission))
+        proc = subprocess.run(
+            [sys.executable, "-m", "unittest", "discover",
+             "-s", str(ROOT / "exercises" / module_id), "-p", "test_*.py"],
+            cwd=str(ROOT), env=env, capture_output=True, text=True,
+        )
+    return module_id, proc.returncode, (proc.stdout + proc.stderr)[-1500:]
 
 
 def pages_with_solutions():
@@ -59,23 +86,22 @@ class PageSolutionTests(unittest.TestCase):
         )
 
     def test_each_page_full_solution_passes_its_package(self):
-        for module_id, page_text in pages_with_solutions():
+        """One subprocess per module, run in parallel: 48 packages, each an independent discover.
+
+        The verdicts are asserted in discovery order, so a failure report reads the same at any
+        worker count; `--jobs`-style parallelism lives here rather than in unittest, which runs
+        these tests in one process.
+        """
+        pages = list(pages_with_solutions())
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers()) as pool:
+            results = list(pool.map(run_page_solution, pages))
+        for module_id, returncode, output in results:
             with self.subTest(module=module_id):
-                code = full_solution_block(page_text, module_id)
-                with tempfile.TemporaryDirectory() as scratch:
-                    submission = pathlib.Path(scratch) / "page_solution.py"
-                    submission.write_text(code, encoding="utf-8")
-                    env = dict(os.environ, EXERCISE_TARGET=str(submission))
-                    proc = subprocess.run(
-                        [sys.executable, "-m", "unittest", "discover",
-                         "-s", str(ROOT / "exercises" / module_id), "-p", "test_*.py"],
-                        cwd=str(ROOT), env=env, capture_output=True, text=True,
-                    )
                 self.assertEqual(
-                    proc.returncode, 0,
+                    returncode, 0,
                     f"{module_id} page solution fails its own suite, so a learner copying the "
                     f"page meets tests the page never mentions; check the block against "
-                    f"exercises/{module_id}/solution.py:\n{proc.stdout[-1500:]}\n{proc.stderr[-1500:]}",
+                    f"exercises/{module_id}/solution.py:\n{output}",
                 )
 
 

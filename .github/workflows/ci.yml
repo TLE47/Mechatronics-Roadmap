@@ -50,13 +50,19 @@ jobs:
           python3 scripts/generate_sim_route.py --check
           python3 scripts/friction_report.py --check
           python3 scripts/lint_assertions.py
-          python3 scripts/run_exercise.py --verbose
+          # The 48-package sweep runs once: packages are checked in parallel workers, and this
+          # report is what tests/test_exercise_package.py reads instead of running it a second
+          # time. It refuses a report that does not name every package on disk, so the reuse
+          # cannot hide an unverified package.
+          python3 scripts/run_exercise.py --verbose \
+            --report-file "${RUNNER_TEMP:-/tmp}/run-exercise.json"
           python3 scripts/check_exercise_coverage.py
           # One discovery run covers all 17 suites in tests/ - including test_sketch_host_verify
           # and test_module_full_solutions, which the old per-file list never ran - and it is the
           # same command CONTRIBUTING gives a contributor. It needs Python >= 3.9-safe imports,
           # so every script a test imports must tolerate the system interpreter.
-          python3 -m unittest discover -s tests
+          RUN_EXERCISE_REPORT="${RUNNER_TEMP:-/tmp}/run-exercise.json" \
+            python3 -m unittest discover -s tests
 
       - name: Set up Node 22
         uses: actions/setup-node@v4

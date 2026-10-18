@@ -11,6 +11,40 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 89: The Verification Gates Run in Parallel
+
+Measured on an 8-core Mac (4 performance cores); every number is wall-clock for the same work and
+the same verdicts.
+
+| gate | before | after |
+| --- | --- | --- |
+| `scripts/run_exercise.py` (48 packages, ~340 interpreters) | 39 s | **15 s** |
+| `python3 -m unittest discover -s tests` (194 tests) | 57 s | **22 s** |
+| the same, reusing CI's report (`$RUN_EXERCISE_REPORT`) | 57 s | **15 s** |
+| the CI `verify-and-test` Python step, end to end | ~105 s | **40 s** |
+| `tests/test_module_full_solutions.py` (46 package discovers) | 6.3 s | **2.6 s** |
+| `tests/test_exercises.py` (20 g++ compiles + 10 runs) | 6.1 s | **2.9 s** |
+| `extract_and_compile_sketches.py --compile-arduino-cli` (10 sketches) | ~24 s | **4 s** |
+
+- **Packages are checked in parallel.** `run_exercise.py` takes `--jobs/-j` (default: one worker per
+  performance core, capped at 8); a package is an independent unit that spawns its own interpreters
+  and writes only inside a temp dir, so two workers cannot tread on each other. `-j 1` is the old
+  serial path, and the serial and parallel reports are byte-identical, ordered by package.
+- **The 48-package sweep runs once in CI.** `run_exercise.py --report-file` writes the machine-readable
+  report; `tests/test_exercise_package.py` reads it from `$RUN_EXERCISE_REPORT` instead of running the
+  sweep again, and refuses a report that does not name every package on disk, so a stale or partial
+  report cannot quietly shrink the coverage. A doctored report is proved to fail the suite.
+- **The other subprocess-heavy suites are parallel too**: the 46 per-module page-solution discovers in
+  `test_module_full_solutions.py` (thread pool, verdicts asserted in discovery order) and the 20
+  g++ compiles in `extract_and_compile_sketches.run_host_verify` (first failure in lesson order, so
+  the message does not depend on timing).
+- Nothing was dropped to get these numbers: 194 tests (2 new), every package still checked for its
+  starter, both suites, its faults, its cheat submission and both flattened browser programs. The
+  negative paths were re-run by hand: a broken sketch still fails the host g++ verify and still fails
+  `--compile-arduino-cli`, and a doctored report file still fails the package suite.
+
+---
+
 ## [2026-10-18] — Run 88: The Ratchet Now Covers the Suites That Grade the Rest
 
 ### 1. `tests/` is inside the assertion ratchet, and it was an f-string blind spot

@@ -14,7 +14,10 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
+
+sys.dont_write_bytecode = True
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXERCISES = os.path.join(ROOT, "exercises")
@@ -35,6 +38,42 @@ def packages():
 
 
 class PackageContract(unittest.TestCase):
+    """The package contract, checked against **one** run of `scripts/run_exercise.py`.
+
+    That script already spawns each package's behaviour and transfer suites, its faults, its cheat
+    submission and both flattened browser programs - about 340 interpreters for the 48 packages. The
+    workbench checks below used to spawn the browser programs a second time (96 more starts, ~10 s)
+    to reach the same verdicts, so they now read the run's own JSON report instead: one run, the same
+    coverage, and no second opinion to drift.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.three_way = None
+        cls.source = "its own run"
+        report_path = os.environ.get("RUN_EXERCISE_REPORT")
+        if report_path and os.path.isfile(report_path):
+            # CI runs the sweep once and points the suite at that report; the verdicts below are
+            # the same object either way, and test_a_report_file_is_believed_only_when_it_says_pass
+            # keeps the shortcut from hiding a failure.
+            cls.source = report_path
+            with open(report_path, encoding="utf-8") as handle:
+                cls.reports = json.load(handle)
+        else:
+            cls.three_way = subprocess.run(
+                [sys.executable, os.path.join(ROOT, "scripts", "run_exercise.py"), "--json"],
+                cwd=ROOT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            try:
+                cls.reports = json.loads(cls.three_way.stdout)
+            except ValueError:
+                cls.reports = []
+        cls.checks = {report["id"]: {check["name"]: check for check in report["checks"]}
+                      for report in cls.reports}
+
     def test_every_package_is_complete(self):
         self.assertTrue(
             packages(),
@@ -65,19 +104,85 @@ class PackageContract(unittest.TestCase):
                 f"link leaves the graded package unreachable from the lesson",
             )
 
+    def test_the_report_covers_every_package(self):
+        """A report is only evidence if it names every package on disk.
+
+        Without this, a stale or one-package report from `$RUN_EXERCISE_REPORT` would satisfy the
+        checks below while 47 packages went unchecked.
+        """
+        on_disk = set()
+        for directory in packages():
+            with open(os.path.join(directory, "exercise.json"), "r", encoding="utf-8") as handle:
+                on_disk.add(json.load(handle)["id"])
+        reported = {report["id"] for report in self.reports}
+        self.assertTrue(on_disk, "expected exercise manifests on disk; check exercises/*/exercise.json")
+        self.assertEqual(
+            reported, on_disk,
+            f"expected {self.source} to cover every package; unreported: "
+            f"{sorted(on_disk - reported)}, reported but not on disk: "
+            f"{sorted(reported - on_disk)} - a partial report would let the checks below pass "
+            f"while those packages went unverified",
+        )
+
     def test_three_way_check_passes(self):
-        proc = subprocess.run(
-            [sys.executable, os.path.join(ROOT, "scripts", "run_exercise.py")],
-            cwd=ROOT,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
+        proc = self.three_way
+        self.assertTrue(
+            self.reports or (proc is not None and proc.returncode == 0),
+            f"expected scripts/run_exercise.py --json to print one report per package; got no "
+            f"JSON at all, so the script itself failed to start - stderr: "
+            f"{proc.stderr[-2000:] if proc else 'read from $RUN_EXERCISE_REPORT instead'}",
+        )
+        failed = [report for report in self.reports if not report["ok"]]
+        detail = "\n".join(
+            "%s: %s" % (report["id"], "; ".join("%s (%s)" % (check["name"], check["detail"])
+                                                 for check in report["checks"] if not check["ok"]))
+            for report in failed
         )
         self.assertEqual(
-            proc.returncode, 0,
-            f"expected every package's starter/solution/fault/cheat checks to pass, got exit "
-            f"{proc.returncode}; the first failing package is named below - check its suite "
-            f"against solution.py:\n{proc.stdout[-2000:]}",
+            failed, [],
+            f"expected every package's starter/solution/fault/cheat/workbench checks to pass; "
+            f"{len(failed)} package(s) failed in {self.source} - check each suite against its "
+            f"solution.py:\n{detail}",
+        )
+        if proc is not None:
+            self.assertEqual(
+                proc.returncode, 0,
+                f"expected scripts/run_exercise.py to exit 0 when every report says ok; got "
+                f"exit {proc.returncode} - a nonzero exit with no failed report means the script "
+                f"crashed or a package was skipped",
+            )
+
+    def test_a_report_file_is_believed_only_when_it_says_pass(self):
+        """The `$RUN_EXERCISE_REPORT` shortcut must not be a way to skip the checks.
+
+        A doctored report with one failed check has to fail this suite, from the report alone.
+        """
+        with tempfile.TemporaryDirectory() as scratch:
+            report_path = os.path.join(scratch, "report.json")
+            reports = json.loads(json.dumps(self.reports)) if self.reports else []
+            if not reports:
+                self.skipTest("no report to doctor - run_exercise.py produced no packages")
+            reports[0]["ok"] = False
+            reports[0]["checks"][0]["ok"] = False
+            reports[0]["checks"][0]["detail"] = "doctored: this check did not pass"
+            with open(report_path, "w", encoding="utf-8") as handle:
+                json.dump(reports, handle)
+            proc = subprocess.run(
+                [sys.executable, os.path.join(ROOT, "tests", "test_exercise_package.py"),
+                 "PackageContract.test_three_way_check_passes"],
+                cwd=ROOT, capture_output=True, text=True,
+                env=dict(os.environ, RUN_EXERCISE_REPORT=report_path),
+            )
+        self.assertEqual(
+            proc.returncode, 1,
+            f"expected a doctored report to fail the three-way check; it exited "
+            f"{proc.returncode} - a report file that is trusted blindly would let CI pass on "
+            f"stale or edited verdicts. Output:\n{proc.stdout[-1500:]}{proc.stderr[-500:]}",
+        )
+        self.assertIn(
+            reports[0]["id"], proc.stdout + proc.stderr,
+            f"expected the failure to name the package whose report says it failed "
+            f"({reports[0]['id']}); got:\n{proc.stdout[-1500:]}{proc.stderr[-500:]}",
         )
 
     def test_workbench_entry_matches_the_package(self):
@@ -155,26 +260,35 @@ class PackageContract(unittest.TestCase):
                 exec(compile(source, "<instructor_tests>", "exec"), namespace)
 
     def test_workbench_starter_fails_and_solution_passes(self):
-        for directory in packages():
-            ok, output = exercise_bundle.run_browser_program(directory, "solution", root=ROOT)
-            self.assertTrue(
-                ok and "SELF-CHECK PASS:" in output,
-                f"expected the browser entry for {os.path.basename(directory)} to pass and print "
-                f"its PASS line; the workbench grades this same program, so a failure here is a "
-                f"failure a learner would meet:\n{output[-400:]}",
-            )
-            ok, output = exercise_bundle.run_browser_program(directory, "starter", root=ROOT)
-            self.assertFalse(
-                ok,
-                f"expected the starter for {os.path.basename(directory)} to fail its own "
-                f"self-check; a starter that passes means the holes were already filled",
-            )
-            self.assertIn(
-                "NotImplementedError", output,
-                f"expected the starter for {os.path.basename(directory)} to fail on a "
-                f"NotImplementedError hole, not an import error - check PYTHONPATH and the "
-                f"flattened entry, since only a TODO hole proves the package is unsolved",
-            )
+        """Read from the run's report: the flattened browser program is executed there, for both
+        the starter and the solution of every package, which is exactly what this check needs."""
+        self.assertTrue(
+            self.checks,
+            f"expected a report per package from {self.source}; got none, so the browser-entry "
+            f"verdicts below cannot be read - check the report file is this run's, or that "
+            f"scripts/run_exercise.py --json still prints one entry per package",
+        )
+        for module_id in sorted(self.checks):
+            checks = self.checks[module_id]
+            for name, explanation in (
+                ("workbench entry passes",
+                 "the workbench grades this same flattened program, so a failure here is a failure "
+                 "a learner would meet - check the package's solution.py and its selfcheck.py"),
+                ("workbench entry starter fails",
+                 "a starter that passes its own self-check means the holes were already filled, "
+                 "or the appended self-check never ran"),
+            ):
+                with self.subTest(module=module_id, check=name):
+                    self.assertIn(
+                        name, checks,
+                        f"expected {module_id}'s report to carry the check named '{name}'; "
+                        f"{explanation}",
+                    )
+                    self.assertTrue(
+                        checks[name]["ok"],
+                        f"expected {module_id} to pass '{name}', reported as "
+                        f"{checks[name]['detail']!r}; {explanation}",
+                    )
 
 
 if __name__ == "__main__":

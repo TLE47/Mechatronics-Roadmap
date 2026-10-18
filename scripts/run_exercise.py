@@ -17,8 +17,16 @@ Usage
     python3 scripts/run_exercise.py                 # every package
     python3 scripts/run_exercise.py --only 02-mechanics.T2.02a -v
     python3 scripts/run_exercise.py --json
+    python3 scripts/run_exercise.py --jobs 4        # default: one per performance core, max 8
+    python3 scripts/run_exercise.py --report-file /tmp/run-exercise.json   # machine-readable copy
+
+A package is an independent unit - its checks spawn interpreters and write nothing outside a temp
+dir - so packages are checked in parallel worker processes and reported in package order. Everything
+inside one package, and every verdict, is what a serial run produces: `--jobs 1` is the old path.
 """
 
+import concurrent.futures
+import functools
 import json
 import os
 import subprocess
@@ -69,15 +77,21 @@ def run(target, test_id, directory):
 
 
 def check_package(directory, verbose=False):
-    """Return a dict {ok, id, checks: [{name, ok, detail}]}."""
+    """Return a dict {ok, id, checks: [{name, ok, detail}], lines: [...]}.
+
+    The per-check lines are *collected*, not printed: this function may run in a worker process,
+    where printing would interleave with other packages. `main` prints them in package order.
+    """
     manifest = load_manifest(directory)
     ex_id = manifest["id"]
     checks = []
+    lines = []
 
     def record(name, ok, detail=""):
         checks.append({"name": name, "ok": ok, "detail": detail})
         if verbose:
-            print(("  PASS  " if ok else "  FAIL  ") + name + (("  " + detail) if detail and not ok else ""))
+            lines.append(("  PASS  " if ok else "  FAIL  ") + name
+                         + (("  " + detail) if detail and not ok else ""))
 
     # Package shape first: a missing file fails the package before anything runs.
     required = ["starter.py", "solution.py", "harness.py"] + list(manifest["checks"].values())
@@ -86,7 +100,7 @@ def check_package(directory, verbose=False):
     record("package files", not missing, "missing: " + ", ".join(missing) if missing else "")
     record("module exists", os.path.isfile(module_path), manifest["module"])
     if missing or not os.path.isfile(module_path):
-        return {"id": ex_id, "ok": False, "checks": checks}
+        return {"id": ex_id, "ok": False, "checks": checks, "lines": lines}
 
     solution = os.path.join(directory, "solution.py")
     for label, filename in manifest["checks"].items():
@@ -129,7 +143,56 @@ def check_package(directory, verbose=False):
         ok, _ = run(cheat_path, cheat_id, directory)
         record("print-only submission fails", not ok, "printed answers are not an implementation")
 
-    return {"id": ex_id, "ok": all(c["ok"] for c in checks), "checks": checks}
+    return {"id": ex_id, "ok": all(c["ok"] for c in checks), "checks": checks, "lines": lines}
+
+
+def default_jobs():
+    """One worker per performance core, capped: each worker spawns interpreters of its own."""
+    try:
+        performance = int(subprocess.run(["sysctl", "-n", "hw.perflevel0.logicalcpu"],
+                                         capture_output=True, text=True).stdout)
+    except (OSError, ValueError):
+        performance = 0
+    return max(1, min(performance or os.cpu_count() or 1, 8))
+
+
+def parse_report_file(argv):
+    """`--report-file PATH` / `--report-file=PATH`, or None. The tests read this instead of
+    re-running every package, so CI pays for the 48-package sweep once rather than twice."""
+    for index, token in enumerate(argv):
+        if token == "--report-file":
+            if index + 1 >= len(argv):
+                raise SystemExit("run_exercise.py: --report-file needs a path")
+            return argv[index + 1]
+        if token.startswith("--report-file="):
+            return token.split("=", 1)[1]
+    return None
+
+
+def parse_jobs(argv):
+    """`--jobs N` / `-j N`, or None for the default. A bad value is a usage error."""
+    for index, token in enumerate(argv):
+        if token in ("--jobs", "-j"):
+            if index + 1 >= len(argv):
+                raise SystemExit("run_exercise.py: %s needs a count" % token)
+            try:
+                jobs = int(argv[index + 1])
+            except ValueError:
+                raise SystemExit("run_exercise.py: %s needs an integer, not %r"
+                                 % (token, argv[index + 1]))
+            if jobs < 1:
+                raise SystemExit("run_exercise.py: --jobs must be at least 1")
+            return jobs
+        if token.startswith("--jobs="):
+            try:
+                jobs = int(token.split("=", 1)[1])
+            except ValueError:
+                raise SystemExit("run_exercise.py: --jobs needs an integer, not %r"
+                                 % token.split("=", 1)[1])
+            if jobs < 1:
+                raise SystemExit("run_exercise.py: --jobs must be at least 1")
+            return jobs
+    return None
 
 
 def main(argv=None):
@@ -142,6 +205,8 @@ def main(argv=None):
     if "-h" in argv or "--help" in argv:
         print(__doc__)
         return 0
+    jobs = parse_jobs(argv) or default_jobs()
+    report_file = parse_report_file(argv)
 
     directories = package_dirs()
     if only:
@@ -153,20 +218,33 @@ def main(argv=None):
         print("no exercise packages found under exercises/", file=sys.stderr)
         return 1
 
-    results = []
-    for directory in directories:
+    # A package is checked in one worker process: its checks spawn interpreters of their own and
+    # write nothing outside a temp dir, so two packages cannot tread on each other. `map` keeps the
+    # results in `directories` order, so the report reads the same at any job count.
+    work = functools.partial(check_package, verbose=verbose and not as_json)
+    if jobs == 1 or len(directories) == 1:
+        results = [work(directory) for directory in directories]
+    else:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=jobs) as pool:
+            results = list(pool.map(work, directories))
+
+    for directory, result in zip(directories, results):
         if not as_json:
             print("%s" % load_manifest(directory)["id"])
-        result = check_package(directory, verbose=verbose and not as_json)
-        results.append(result)
-        if not as_json:
+            for line in result["lines"]:
+                print(line)
             failed = [c for c in result["checks"] if not c["ok"]]
             print("  %s (%d checks)" % ("OK" if result["ok"] else "FAILED: %d" % len(failed), len(result["checks"])))
             for check in failed:
                 print("    - %s: %s" % (check["name"], check["detail"]))
 
+    report = [{k: v for k, v in result.items() if k != "lines"} for result in results]
     if as_json:
-        print(json.dumps(results, indent=2))
+        print(json.dumps(report, indent=2))
+    if report_file:
+        with open(report_file, "w", encoding="utf-8") as handle:
+            json.dump(report, handle, indent=2)
+            handle.write("\n")
 
     return 0 if all(r["ok"] for r in results) else 1
 
