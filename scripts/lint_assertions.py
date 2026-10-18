@@ -23,6 +23,9 @@ Two modes, because 1987 assertions start out below the bar:
   fails on **any** file above its recorded count, on a file that is not recorded at all, and on a
   baseline that is above the tree — a ratchet that cannot silently loosen.
 - `--write-baseline` rewrites the baseline from the tree, for use after a burn-down commit.
+- `--tracks` reports the same numbers grouped by track (`00-foundations`, `04-embedded`, ...),
+  so the next round's packages can be chosen from the data instead of recomputed by hand. The
+  baseline carries the same breakdown under `tracks`, refreshed by `--write-baseline`.
 
 Exit codes: `0` ok, `1` findings, `2` wrong command line.
 Exit-code family: typed.
@@ -172,6 +175,24 @@ def baseline_findings(results, baseline):
     return problems
 
 
+def track_of(relative_path):
+    """The track a graded file belongs to: `exercises/04-embedded.T1.04a/...` -> `04-embedded`."""
+    parts = relative_path.replace(os.sep, "/").split("/")
+    if len(parts) < 2:
+        return "(ungrouped)"
+    return parts[-2].split(".")[0] or "(ungrouped)"
+
+
+def track_totals(results):
+    """`{track: {"total": weak assertions, "files": files still above zero}}`, worst first."""
+    grouped = {}
+    for rel, count in counts(results).items():
+        entry = grouped.setdefault(track_of(rel), {"total": 0, "files": 0})
+        entry["total"] += count
+        entry["files"] += 1
+    return dict(sorted(grouped.items(), key=lambda item: (-item[1]["total"], item[0])))
+
+
 def write_baseline(results, path=BASELINE):
     payload = {
         "comment": "Ratchet for scripts/lint_assertions.py: per-file weak-assertion counts may only fall. Regenerate with --write-baseline after a burn-down.",
@@ -179,6 +200,7 @@ def write_baseline(results, path=BASELINE):
         "keywords": list(KEYWORDS),
         "total": sum(counts(results).values()),
         "files": dict(sorted(counts(results).items())),
+        "tracks": track_totals(results),
     }
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
@@ -191,10 +213,25 @@ def main(argv=None):
     parser.add_argument("--check", action="store_true", help="compare against docs/assertion-baseline.json (default)")
     parser.add_argument("--write-baseline", action="store_true", help="record the current tree as the new floor")
     parser.add_argument("--json", action="store_true", help="print machine-readable findings")
+    parser.add_argument("--tracks", action="store_true",
+                        help="report weak assertions per track, worst first")
     parser.add_argument("--quiet", action="store_true", help="print only the summary line")
     args = parser.parse_args(argv)
 
     results = scan()
+    if args.tracks:
+        totals = track_totals(results)
+        if args.json:
+            print(json.dumps({"tracks": totals, "total": sum(t["total"] for t in totals.values())},
+                             indent=2))
+            return 0
+        width = max([len(name) for name in totals] + [len("track")])
+        print(f"{'track':<{width}}  {'weak':>5}  {'files':>5}")
+        for name, entry in totals.items():
+            print(f"{name:<{width}}  {entry['total']:>5}  {entry['files']:>5}")
+        print(f"{'total':<{width}}  {sum(t['total'] for t in totals.values()):>5}  "
+              f"{sum(t['files'] for t in totals.values()):>5}")
+        return 0
     if args.write_baseline:
         total = write_baseline(results)
         print(f"wrote {os.path.relpath(BASELINE, ROOT)}: {total} weak assertions across {len(counts(results))} files")

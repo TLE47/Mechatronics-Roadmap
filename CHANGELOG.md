@@ -11,6 +11,37 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 86: Foundations Tail Closed, 737 → 593, and a Per-Track Report
+
+### 1. The last four 00-foundations packages, plus the robotics runner-up
+- `00-foundations.T3.00a` (37), `06-robotics.T2.06b` (37), `00-foundations.T1.00a` (35) and
+  `00-foundations.T2.00c` (35) now carry a message on every graded assertion in both graded files.
+  Every 00-foundations package is at zero.
+- **144 messages**, baseline **737 → 593** across **49 → 41** files.
+- The messages keep the theory where it belongs: R^T R must be the identity for long rotation
+  vectors (the missing `sin(theta)/theta`), the first-order coefficient at a nanoradian (the 0/0
+  branch), `range(n)` ending at n-1, and overshoot as `exp(-pi zeta / sqrt(1 - zeta^2))` rather
+  than the short form that is only close at zeta = 0.5.
+
+### 2. `lint_assertions --tracks`
+- The report groups the same counts by track, worst first, and `--write-baseline` records the same
+  breakdown under `tracks`, so the next round's packages are read off the data instead of
+  recomputed in a one-off script. The ratchet itself is unchanged: it still reads `files` and
+  `total` only, so the track table can never loosen the floor.
+- Current shape: `01-electronics` 134 / 8 files, `00-foundations` 115 / 11, `05-control` 82 / 7,
+  `04-embedded` 64 / 3, `02-mechanics` 58 / 4, `03-sensors` 58 / 3, `07-systems` 34 / 2,
+  `06-robotics` 30 / 2, `08-capstones` 18 / 1.
+
+### 3. Verification
+- All four packages re-graded with `run_exercise.py --only <id>`: starter fails, solution passes,
+  every fault fails its named test — exit 0 for all four.
+- `git diff -U0 -- exercises | grep '^-.*def test_'` is empty: no test deleted, renamed or loosened.
+- `lint_assertions` clean at the new floor (593 / 41); `test_lint_assertions` 15/15 including the
+  four new track tests; 17/17 `tests/test_*.py`, plus `verify_repo`, `validate_modules`,
+  `lint_lessons`, `check_term_order`, `audit_math`, `run_all_labs`, `npm run lint`, `npm run build`.
+
+---
+
 ## [2026-10-18] — Run 85: Fifth Burn-Down Round — Foundations First, 975 → 737
 
 ### 1. Four foundations packages and two more, both graded files each
