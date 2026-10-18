@@ -1,9 +1,10 @@
 # Gate 1→2: Tier 1 Exit Check — the maths half, mapped to the ramp lessons
 
-Twelve items, ~35–45 minutes, closed book and paper-only. This is the **maths** half of the Tier 1 exit:
-it checks the four operations every Tier 2 module assumes you can already do — read a rate off a trace,
-accumulate rates into a state, hold that state as a list advanced tick by tick, and write one tick as a
-matrix multiply — and every miss sends you to the exact ramp lesson that repairs it.
+Fourteen items, ~40–50 minutes, closed book and paper-only. This is the **maths** half of the Tier 1
+exit: it checks the six operations every Tier 2 module assumes you can already do — read a rate off a
+trace, accumulate rates into a state, hold that state as a list advanced tick by tick, write one tick as
+a matrix multiply, add two rotations as one number, and read a gain and a phase at one frequency — and
+every miss sends you to the exact ramp lesson that repairs it.
 The six **practical** gates (block diagram, parameter scaling, telemetry fault, units on a bench, a
 closed loop that settles, a bring-up you can explain) are the other half and live in the Workbench:
 **Tab 10 → Placement & Readiness → Tier 1 Exit Review**, whose gates point at the Track P, Track 00 and
@@ -13,12 +14,12 @@ A miss is not a verdict on Tier 1. It is a named lesson to do before the first T
 
 ```mermaid
 flowchart LR
-    Q{"Twelve items,<br/>closed book"} --> A["12 / 12: start Tier 2"]
-    Q --> B["10-11 / 12: do the missed<br/>item's ramp lesson"]
+    Q{"Fourteen items,<br/>closed book"} --> A["14 / 14: start Tier 2"]
+    Q --> B["12-13 / 14: do the missed<br/>item's ramp lesson"]
     B --> A
-    Q --> C["8-9 / 12: all four ramp<br/>lessons, then retake"]
+    Q --> C["9-10 / 14: all six ramp<br/>lessons, then retake"]
     C --> Q
-    Q --> D["under 8 / 12: the ramp,<br/>then the Track P pages"]
+    Q --> D["under 9 / 14: the ramp,<br/>then the Track P pages"]
     D --> Q
 ```
 
@@ -26,15 +27,15 @@ flowchart LR
 
 | Score | Reading | What to do next |
 | :--- | :--- | :--- |
-| 12 / 12 | Ready | Start [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) |
-| 10–11 / 12, at most one miss per lesson | Ready with a gap | Do the ramp lesson for the missed item, then start Tier 2 |
-| 8–9 / 12, or two misses in one lesson | Not yet | Do **all four** ramp lessons ([`R.1`](../ramp/R.1-rate-of-change.md) to [`R.4`](../ramp/R.4-matrix-updates.md)), then retake |
-| < 8 / 12 | Start at the ramp | R.1–R.4, then the Track P lessons they cite, then retake |
+| 14 / 14 | Ready | Start [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) |
+| 12–13 / 14, at most one miss per lesson | Ready with a gap | Do the ramp lesson for the missed item, then start Tier 2 |
+| 9–10 / 14, or two misses in one lesson | Not yet | Do **all six** ramp lessons ([`R.1`](../ramp/R.1-rate-of-change.md) to [`R.6`](../ramp/R.6-frequency-response.md)), then retake |
+| < 9 / 14 | Start at the ramp | R.1–R.6, then the Track P lessons they cite, then retake |
 
 Mark each item ✅ or ❌. Write the arithmetic down: a right answer with no working does not count, because
 Tier 2 asks you to show the derivation.
 
-## The twelve items
+## The fourteen items
 
 | # | Item | You pass if | If you miss it | Ramp lesson |
 | :--- | :--- | :--- | :--- | :--- |
@@ -50,10 +51,12 @@ Tier 2 asks you to show the derivation.
 | 10 | On one trace the left rule gives 0.300 rad, the right rule 0.280 rad. Give your best estimate and the error bar. | Trapezoid `0.290 rad`, with `±0.010 rad` spanned by left and right; name the rule in the code. | [R.2](../ramp/R.2-accumulation.md): pick and name the rule | R.2 |
 | 11 | A joint sits at `[q, qd] = [0.10 rad, 1.0 rad/s]`, `dt = 10 ms`, acceleration `20 rad/s²`. Give the next state, and say which speed the position line uses. | `q = 0.110 rad`, `qd = 1.2 rad/s`; position uses the **old** `qd`, so the new-speed answer `0.112 rad` is wrong by `0.002 rad`. | [R.3](../ramp/R.3-state-vectors.md): the state and its tick | R.3 |
 | 12 | Write the tick as `x_next = x + dt (A x + B u)` with `A = [[0, 1], [0, −2.5]]`, `B = [[0], [50]]`, `dt = 10 ms`, `u = 0.4`, `x = [0, 1]`. Give `A x` and say what row 1 means. | `A x = [1.0, −2.5]`; row 1 is the speed rate — `−2.5·qd` from friction plus `20` from the torque, with no position term. | [R.4](../ramp/R.4-matrix-updates.md): rows are rates | R.4 |
+| 13 | Add the arrows `3∠0°` and `4∠90°`: length, angle, and what adding the lengths would have given. | Length `5`, angle `53.130°`; adding lengths gives `7`, which is wrong because the arrows are not parallel. | [R.5](../ramp/R.5-phasors.md): add the parts, not the lengths | R.5 |
+| 14 | A first-order lag has `τ = 0.05 s`. Give its corner frequency in Hz, and the gain and phase there. | Corner `ω = 1/τ = 20 rad/s = 3.183099 Hz`; gain `1/√2 = 0.7071`, phase `−45°`. | [R.6](../ramp/R.6-frequency-response.md): the corner | R.6 |
 
 ## Ramp lessons
 
-The four lessons above are the ramp; the rule for adding a fifth is that a check item must exist whose
+The six lessons above are the ramp; the rule for adding a seventh is that a check item must exist whose
 miss has no lesson to repair it.
 
 | Lesson | Repairs items | Time (unmeasured target) |
@@ -62,6 +65,8 @@ miss has no lesson to repair it.
 | [R.2: Accumulation](../ramp/R.2-accumulation.md) | 6, 7, 8, 9, 10 | 0.75–1.0 h typical / 1.5–2.0 h slow |
 | [R.3: State Vectors](../ramp/R.3-state-vectors.md) | 11 | 0.75–1.0 h typical / 1.5–2.0 h slow |
 | [R.4: Matrix Updates](../ramp/R.4-matrix-updates.md) | 12 | 0.75–1.0 h typical / 1.5–2.0 h slow |
+| [R.5: Phasors](../ramp/R.5-phasors.md) | 13 | 0.75–1.0 h typical / 1.5–2.0 h slow |
+| [R.6: Frequency Response](../ramp/R.6-frequency-response.md) | 14 | 0.75–1.0 h typical / 1.5–2.0 h slow |
 
 The mapping above is enforced by [`scripts/check_ramp_lessons.py`](../scripts/check_ramp_lessons.py), which
 fails if a row points at a lesson that does not exist, if a lesson repairs no row, or if either lesson's
@@ -98,4 +103,13 @@ by hand — the script guards the map and the lessons' numbers, not your arithme
     new-speed variant gives `0.112 rad`, and the 0.002 rad gap repeats every tick.
 12. `A x = [1.0, −2.5]`; row 1 reads `0·q + (−2.5)·qd`, and with `B u = [0, 20]` the speed rate is
     `−2.5·qd + 20`. There is no `q` term, so position never feeds its own rate directly.
+</details>
+
+<details>
+<summary><strong>Items 13–14 (phasors and frequency response)</strong></summary>
+
+13. `3 + 4j` has length `√(3² + 4²) = 5` and angle `atan2(4, 3) = 53.130°`. The lengths sum to 7 only
+    if the arrows point the same way; these are at right angles.
+14. `ω = 1/0.05 = 20 rad/s`, and `20/(2π) = 3.183099 Hz`. Gain `1/√(1 + 1) = 0.7071`, phase
+    `−atan(1) = −45°`.
 </details>

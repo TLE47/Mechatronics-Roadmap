@@ -123,6 +123,11 @@ def natural_sort_key(path: str):
     return [int(p) if p.isdigit() else p for p in parts]
 
 
+def is_ramp_lesson(path: str) -> bool:
+    """The maths ramp is the bridge *into* Tier 2, so the Tier 1 vocabulary ban does not apply to it."""
+    return os.path.basename(os.path.dirname(os.path.abspath(path))) == "ramp"
+
+
 def get_ramp_files() -> list[str]:
     """The maths-ramp lessons: same template, separate count, so the 48 beginner lessons stay 48."""
     return sorted(glob.glob(os.path.join(ROOT, "ramp", "R.*.md")), key=natural_sort_key)
@@ -221,11 +226,15 @@ def lint_file(filepath: str, glossary_entries: list[tuple[str, str, str]]) -> li
     errors.extend(fm_errors)
     lid = fm.get("lesson_id", "")
 
-    # Check for banned Tier 2/3 jargon anywhere in the lesson
+    # Check for banned Tier 2/3 jargon anywhere in a *beginner* lesson. The maths ramp is exempt by
+    # construction: R.5 and R.6 introduce rotation/phasor sums and frequency response numerically
+    # before Tier 2 names them, so the banned words are exactly those lessons' subject. The 48 beginner
+    # lessons keep the ban, and tests/test_lint_lessons.py proves the waiver stops at the ramp/ directory.
     body_no_skip = re.sub(r"^.*?\*\*What to skip:\*\*.*$", "", text, flags=re.MULTILINE)
-    for pat, label in BANNED_TIER1_JARGON:
-        if re.search(pat, body_no_skip, flags=re.IGNORECASE):
-            errors.append(f"Contains banned Tier 2/3 jargon in Tier 1 lesson: {label}")
+    if not is_ramp_lesson(filepath):
+        for pat, label in BANNED_TIER1_JARGON:
+            if re.search(pat, body_no_skip, flags=re.IGNORECASE):
+                errors.append(f"Contains banned Tier 2/3 jargon in Tier 1 lesson: {label}")
 
     # 1. Check H2 headings order
     h2_matches = list(re.finditer(r"^##\s+(.+)$", text, flags=re.MULTILINE))

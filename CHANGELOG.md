@@ -11,6 +11,48 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 78: The Ramp Reaches Phasors and Frequency Response
+
+### 1. R.5 and R.6 finish the six operations
+- `ramp/R.5-phasors.md`: a rotation and a length in one number, turning by multiplying, and arrows adding
+  part by part. `3∠0° + 4∠90° = 3 + 4j` is `5` at `53.130°`, and three unit arrows 120° apart sum to
+  `4.003e-16` - the reason a balanced three-phase set carries no neutral current.
+- `ramp/R.6-frequency-response.md`: the joint shaken at `2`, `20` and `200 rad/s`, with gain and phase
+  measured from one steady period and compared against `1/sqrt(1 + (omega*tau)^2)` and
+  `-atan(omega*tau)`. The corner is `3.183099 Hz` (`tau = 0.05 s`), where the measured pair is `0.7074`
+  and `-44.426°` against the formula's `0.7071` and `-45.000°`. The `200 rad/s` row keeps the honest
+  discretisation gap (`-79.798°` measured vs `-84.289°` predicted) and explains it as the 1 ms hold.
+- `concepts` stay at two per lesson: `lint_lessons.py` passes with 48 beginner + 6 ramp lessons.
+
+### 2. The exit check is fourteen items
+- Items 13 (`3 + 4j` -> `5` at `53.130°`) and 14 (corner `20 rad/s = 3.183099 Hz`, gain `0.7071`,
+  phase `-45°`), each mapped to its lesson. Thresholds become `14/14`, `12-13`, `9-10`, `< 9`, and the
+  score table, mermaid and answer block move with them. `ramp/README.md` and the README's ramp row now
+  say six lessons / fourteen items, and the "deliberately absent" note is retired because nothing the
+  plan named is absent any more.
+
+### 3. One check change, and why
+- `lint_lessons.py` banned `complex numbers` and `j omega` in "Tier 1 lessons", and the ramp files are
+  linted by the same function. R.5 exists to introduce exactly that vocabulary numerically before Tier 2
+  names it, so the ban now skips `ramp/R.*.md` only; `is_ramp_lesson()` names the exemption and the 48
+  beginner lessons keep the check.
+- Negative path, now automated in `tests/test_lint_lessons.py`: the same R.5 text copied one directory
+  out of `ramp/` still fails with `Contains banned Tier 2/3 jargon in Tier 1 lesson: complex numbers /
+  j*omega`. The test also asserts the waiver is load-bearing - that at least one ramp lesson really does
+  use a banned term - so it cannot pass by the exemption quietly waiving nothing.
+
+### 4. Verification
+- `check_ramp_lessons.py` OK: 6 lessons print their Expected Output and every item points at one.
+- `lint_lessons.py` OK: 48 beginner + 6 ramp lessons.
+- `verify_repo.py` PASS 143 files / 144 diagrams / 1875 links / 0 errors; `clean_tex --check` OK;
+  `audit_math` PASS; `validate_modules.py` OK (72 modules); `test_error_explainer` and `test_sim_route`
+  green after the README edit that keeps the Core-route claim quoted from the generated page.
+- `tests/test_lint_lessons.py` 5/5: the waiver covers the ramp, stops at its directory, and still has
+  something to waive.
+- Full local CI chain (36 steps) plus build, smoke and both browser suites: see the run log.
+
+---
+
 ## [2026-10-18] — Run 77: The Ramp Gets Vectors and Matrices, and Every Open Limitation Gets an Artefact
 
 ### 1. R.3 and R.4 close the two ramp lessons the plan named
