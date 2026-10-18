@@ -37,6 +37,10 @@ is Playwright/CDP round trips.
   `NotImplementedError`, and not be graded MATCHED; the reference must match and pass the behavioural
   badge. A doctored expected output still fails the two-page sweep, naming the package.
 
+On the runners the sweep is too noisy to claim a number: 17.4 s and 23.0 s for the same code on two
+neighbouring runs, 18.4 s after. The Workbench step went 29 -> 26 s and the job 81 -> 74 s, which is
+one sample each and within that spread. The clean comparison is the local one above.
+
 ## [2026-10-18] — Run 92: The Dev-Server Suite Shares One Runtime
 
 Measured before changing anything, because the guess was wrong: a Pyodide boot costs **1.3-1.9 s**
