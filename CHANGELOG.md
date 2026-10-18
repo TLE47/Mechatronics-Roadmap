@@ -11,6 +11,61 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 77: The Ramp Gets Vectors and Matrices, and Every Open Limitation Gets an Artefact
+
+### 1. R.3 and R.4 close the two ramp lessons the plan named
+- `ramp/R.3-state-vectors.md`: the joint as `[q, qd]`, one 10 ms tick advanced with the **old** speed,
+  and `add`/`scale` slot by slot. Two 0.20 N m runs from rest add to the 0.40 N m run exactly
+  (`q = 0.697230 rad`, `qd = 4.256926 rad/s`, superposition error `0.000e+00`), which is the property
+  `A x` depends on.
+- `ramp/R.4-matrix-updates.md`: the same tick as `x + dt (A x + B u)` with
+  `A = [[0, 1], [0, -2.5]]`, `B = [[0], [50]]`. The matrix path and the two-line path agree to
+  `0.000e+00` over 30 ticks, so a transposed or mis-signed `A` shows up as a number on the first run.
+- Both lessons are written against the existing template, so `lint_lessons.py` (48 beginner + 4 ramp
+  lessons) and `check_ramp_lessons.py` (every Full Solution prints its Expected Output) hold them to
+  the same standard as R.1/R.2, with no exceptions carved.
+
+### 2. The exit check grows to twelve items
+- `docs/TIER1_EXIT_CHECK.md` adds item 11 (old-vs-new speed on one tick, `0.110` vs `0.112 rad`) and
+  item 12 (`A x = [1.0, -2.5]`, and what row 1 means), so each new lesson repairs a row. The score
+  table, thresholds (`12/12`, `10-11`, `8-9`, `< 8`), mermaid and answer block all move with it.
+- `ramp/README.md` and the README's maths-ramp row now say four lessons and twelve items. The
+  "deliberately absent" note no longer claims vectors are skipped, because they are not.
+
+### 3. `docs/ERROR_EXPLAINER.md` — fifteen failures, one sentence each
+- Built from the **author-dogfood** sittings and the modules' own Common-mistakes sections, labelled as
+  such on the page: there is still no beginner pilot, and the page says so rather than implying one.
+- Each entry is the message a learner actually sees (`ValueError: matrix columns must match vector
+  length`, `math.sin(30) = -0.988`, a counter wrapping at 65535, a print-only `SELF-CHECK PASS`),
+  one plain sentence, two or three concrete things to check first, and the page that teaches it.
+- `tests/test_error_explainer.py` guards it: fifteen or more numbered entries, each with the three
+  required sections and at least two checks, every cited page resolving on disk, and the README linking
+  the page. Wired into `ci.yml`'s verify step and named in the README's validation list.
+
+### 4. `docs/PILOT.md` + `docs/pilot-results.md` — the protocol, and a template that says N = 0
+- The pilot cannot be run by an agent, so what is missing is made explicit instead of implied: stages
+  (smoke, P1, P2, P3), the 15-minute rule, the help budget (< 1 in 3 lessons), the logging fields, and
+  the reporting rules (counts beside every percentage, medians and ranges, top-10 stuck points with the
+  change each caused, limitations per stage).
+- `docs/pilot-results.md` is published as an empty template with `N = 0` at every stage and no numbers
+  invented. `CONTRIBUTING.md` §2 now states that a beginner-completion claim needs a beginner sitting.
+
+### 5. The previous turn's open refs are gone
+- `main-pre-pr1` deleted and `origin/wip/split-t2-00a` removed after PR #1 merged; local `main` equals
+  `origin/main` and the working tree is clean.
+
+### 6. Verification
+- `check_ramp_lessons.py` OK: 4 lessons print their Expected Output and every exit-check item points at
+  one of them. `lint_lessons.py` OK: 48 beginner + 4 ramp lessons.
+- `tests/test_error_explainer.py` 5/5; negative path: pointing entry 1 at `R.9-missing.md` fails with
+  `points at ../ramp/R.9-missing.md, which does not exist`, restored.
+- `verify_repo.py` PASS 141 files / 142 diagrams / 1859 links / 0 errors, `clean_tex --check` OK,
+  `audit_math` PASS — the three new docs each needed a Mermaid diagram, which the first run caught.
+- Full local CI chain re-run on Python 3.12 after the fixes: see the run log; build, smoke and both
+  browser suites unchanged by docs-only edits but run anyway.
+
+---
+
 ## [2026-10-18] — Run 76: The README's Main Claim Is the Core Route
 
 ### 1. What the front page used to say
