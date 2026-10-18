@@ -1,8 +1,9 @@
 # Gate 1→2: Tier 1 Exit Check — the maths half, mapped to the ramp lessons
 
-Ten items, ~30–40 minutes, closed book and paper-only. This is the **maths** half of the Tier 1 exit:
-it checks the two operations every Tier 2 module assumes you can already do — read a rate off a trace,
-and accumulate rates into a state — and every miss sends you to the exact ramp lesson that repairs it.
+Twelve items, ~35–45 minutes, closed book and paper-only. This is the **maths** half of the Tier 1 exit:
+it checks the four operations every Tier 2 module assumes you can already do — read a rate off a trace,
+accumulate rates into a state, hold that state as a list advanced tick by tick, and write one tick as a
+matrix multiply — and every miss sends you to the exact ramp lesson that repairs it.
 The six **practical** gates (block diagram, parameter scaling, telemetry fault, units on a bench, a
 closed loop that settles, a bring-up you can explain) are the other half and live in the Workbench:
 **Tab 10 → Placement & Readiness → Tier 1 Exit Review**, whose gates point at the Track P, Track 00 and
@@ -12,12 +13,12 @@ A miss is not a verdict on Tier 1. It is a named lesson to do before the first T
 
 ```mermaid
 flowchart LR
-    Q{"Ten items,<br/>closed book"} --> A["10 / 10: start Tier 2"]
-    Q --> B["8-9 / 10: do the missed<br/>item's ramp lesson"]
+    Q{"Twelve items,<br/>closed book"} --> A["12 / 12: start Tier 2"]
+    Q --> B["10-11 / 12: do the missed<br/>item's ramp lesson"]
     B --> A
-    Q --> C["6-7 / 10: R.1 + R.2,<br/>then retake"]
+    Q --> C["8-9 / 12: all four ramp<br/>lessons, then retake"]
     C --> Q
-    Q --> D["under 6 / 10: R.1, R.2,<br/>then the Track P pages"]
+    Q --> D["under 8 / 12: the ramp,<br/>then the Track P pages"]
     D --> Q
 ```
 
@@ -25,15 +26,15 @@ flowchart LR
 
 | Score | Reading | What to do next |
 | :--- | :--- | :--- |
-| 10 / 10 | Ready | Start [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) |
-| 8–9 / 10, at most one miss in each half | Ready with a gap | Do the ramp lesson for the missed item, then start Tier 2 |
-| 6–7 / 10, or two misses in one half | Not yet | Do **both** [`R.1`](../ramp/R.1-rate-of-change.md) and [`R.2`](../ramp/R.2-accumulation.md), then retake |
-| < 6 / 10 | Start at the ramp | R.1, R.2, then the Track P lessons they cite, then retake |
+| 12 / 12 | Ready | Start [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) |
+| 10–11 / 12, at most one miss per lesson | Ready with a gap | Do the ramp lesson for the missed item, then start Tier 2 |
+| 8–9 / 12, or two misses in one lesson | Not yet | Do **all four** ramp lessons ([`R.1`](../ramp/R.1-rate-of-change.md) to [`R.4`](../ramp/R.4-matrix-updates.md)), then retake |
+| < 8 / 12 | Start at the ramp | R.1–R.4, then the Track P lessons they cite, then retake |
 
 Mark each item ✅ or ❌. Write the arithmetic down: a right answer with no working does not count, because
 Tier 2 asks you to show the derivation.
 
-## The ten items
+## The twelve items
 
 | # | Item | You pass if | If you miss it | Ramp lesson |
 | :--- | :--- | :--- | :--- | :--- |
@@ -47,16 +48,20 @@ Tier 2 asks you to show the derivation.
 | 8 | A joint starts at **1.2 rad** and the velocity trace accumulates **+0.9 rad**. Where is it, and what happens if the code drops `q0`? | `2.1 rad`; without `q0` the code reports `0.9 rad`, a 1.2 rad pose error with a correct area. | [R.2](../ramp/R.2-accumulation.md): the starting value | R.2 |
 | 9 | A gyroscope reads **0.01 rad/s** while the robot is still. How much heading error after **120 s**, and how would you catch it? | `1.2 rad` (69°); catch it with an absolute reference — complementary fusion, encoder index or a known pose — not with a bigger filter. | [R.2](../ramp/R.2-accumulation.md): bias drifts | R.2 |
 | 10 | On one trace the left rule gives 0.300 rad, the right rule 0.280 rad. Give your best estimate and the error bar. | Trapezoid `0.290 rad`, with `±0.010 rad` spanned by left and right; name the rule in the code. | [R.2](../ramp/R.2-accumulation.md): pick and name the rule | R.2 |
+| 11 | A joint sits at `[q, qd] = [0.10 rad, 1.0 rad/s]`, `dt = 10 ms`, acceleration `20 rad/s²`. Give the next state, and say which speed the position line uses. | `q = 0.110 rad`, `qd = 1.2 rad/s`; position uses the **old** `qd`, so the new-speed answer `0.112 rad` is wrong by `0.002 rad`. | [R.3](../ramp/R.3-state-vectors.md): the state and its tick | R.3 |
+| 12 | Write the tick as `x_next = x + dt (A x + B u)` with `A = [[0, 1], [0, −2.5]]`, `B = [[0], [50]]`, `dt = 10 ms`, `u = 0.4`, `x = [0, 1]`. Give `A x` and say what row 1 means. | `A x = [1.0, −2.5]`; row 1 is the speed rate — `−2.5·qd` from friction plus `20` from the torque, with no position term. | [R.4](../ramp/R.4-matrix-updates.md): rows are rates | R.4 |
 
 ## Ramp lessons
 
-The two lessons this check maps to are the first of the ramp; the rule for adding a third is that a
-check item must exist whose miss has no lesson to repair it.
+The four lessons above are the ramp; the rule for adding a fifth is that a check item must exist whose
+miss has no lesson to repair it.
 
 | Lesson | Repairs items | Time (unmeasured target) |
 | :--- | :--- | :--- |
 | [R.1: Rate of Change](../ramp/R.1-rate-of-change.md) | 1, 2, 3, 4, 5 | 0.75–1.0 h typical / 1.5–2.0 h slow |
 | [R.2: Accumulation](../ramp/R.2-accumulation.md) | 6, 7, 8, 9, 10 | 0.75–1.0 h typical / 1.5–2.0 h slow |
+| [R.3: State Vectors](../ramp/R.3-state-vectors.md) | 11 | 0.75–1.0 h typical / 1.5–2.0 h slow |
+| [R.4: Matrix Updates](../ramp/R.4-matrix-updates.md) | 12 | 0.75–1.0 h typical / 1.5–2.0 h slow |
 
 The mapping above is enforced by [`scripts/check_ramp_lessons.py`](../scripts/check_ramp_lessons.py), which
 fails if a row points at a lesson that does not exist, if a lesson repairs no row, or if either lesson's
@@ -84,4 +89,13 @@ by hand — the script guards the map and the lessons' numbers, not your arithme
 8. `1.2 + 0.9 = 2.1 rad`; dropping `q0` reports `0.9 rad`.
 9. `0.01 × 120 = 1.2 rad`; an absolute reference corrects it, a longer filter only delays it.
 10. Trapezoid `0.290 rad`, error bar `0.280–0.300 rad`; the rule has to be named in the function.
+</details>
+
+<details>
+<summary><strong>Items 11–12 (state vectors and matrix updates)</strong></summary>
+
+11. `qd = 1.0 + 20 × 0.01 = 1.2 rad/s`; `q = 0.10 + 1.0 × 0.01 = 0.110 rad` using the old speed. The
+    new-speed variant gives `0.112 rad`, and the 0.002 rad gap repeats every tick.
+12. `A x = [1.0, −2.5]`; row 1 reads `0·q + (−2.5)·qd`, and with `B u = [0, 20]` the speed rate is
+    `−2.5·qd + 20`. There is no `q` term, so position never feeds its own rate directly.
 </details>

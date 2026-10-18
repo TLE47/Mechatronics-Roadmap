@@ -16,6 +16,7 @@ flowchart LR
 Found a typo, a confusing explanation, a hardware rating discrepancy, or a numerical mismatch?
 - Open an issue using the **[Report an Error in a Lesson or Module](.github/ISSUE_TEMPLATE/lesson-error.md)** template.
 - Include the exact lesson/module ID (e.g., `Lesson 01.2`, `05-control.T1.05a`), the line or section heading, what the text currently says, and what you observed when running the code or checking the datasheet.
+- If the failure is a *learner* failure rather than a typo, check [`docs/ERROR_EXPLAINER.md`](docs/ERROR_EXPLAINER.md) first; if your failure is missing from its fifteen entries, that is a gap worth an issue, because the entry needs the page that teaches it.
 
 ---
 
@@ -28,6 +29,7 @@ All beginner lessons are enforced by `scripts/lint_lessons.py` and `scripts/chec
    - Every idea links to a free, static primary resource with verified HTML section headings (or marks client-rendered SPAs with `[verify in-app]`).
    - Every lesson includes runnable **Starter Code**, a 3-step **Progressive Hint Ladder**, a **Full Solution** that prints deterministic output matching the **Expected Output** block character-for-character, and a 3-question **Check yourself** quiz with worked answers.
 4. **Clean TeX Authoring:** Write standard, clean LaTeX (`$V_{\text{out}}$`, `$\tau = R C$`). Never insert `kern0pt` or raw `\_` underscore hacks inside math text groups; run `python3 scripts/clean_tex.py --check` and `node scripts/audit_math.mjs` to verify both GitHub MathJax and KaTeX rendering.
+5. **Beginner evidence:** a claim that beginners can finish needs a beginner sitting. The protocol is [`docs/PILOT.md`](docs/PILOT.md), the aggregate sheet is [`docs/pilot-results.md`](docs/pilot-results.md), and until a pilot runs both say N = 0 — author-dogfood finds bugs but cannot measure beginner difficulty.
 
 ---
 
