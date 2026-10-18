@@ -278,6 +278,51 @@ async function checkInBrowser(name, launcher, baseUrl) {
         `failed their starter on a hole and matched on their reference in ${((Date.now() - exercisePassStarted) / 1000).toFixed(1)}s`
     );
 
+    // The cheat case, on the bundle learners actually open: printing an entry's own PASS line
+    // matches the presentation check while the behavioural badge fails, so nothing is verified.
+    // One Tier 2 entry and one Tier 3 entry - a beginner's first graded package is Tier 2, and a
+    // Tier 3-only case would not notice a Tier 2 regression in how the self-check is attached.
+    for (const cheatId of ['EX.02-mechanics.T2.02a', 'EX.05-control.T3.05a']) {
+      const entry = page.getByTestId(`lesson-item-${cheatId}`);
+      await entry.scrollIntoViewIfNeeded();
+      await entry.click();
+      await page.waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
+            'raise NotImplementedError'
+          ),
+        undefined,
+        { timeout: 15000 }
+      );
+      const verifiedBefore = (await page.getByTestId('runner-verified-count').textContent())?.trim();
+      const cheatExpected = (await page.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
+      assert.match(
+        cheatExpected,
+        /SELF-CHECK PASS/,
+        `${name}: ${cheatId} expected output is not its self-check PASS line`
+      );
+      await page.getByTestId('textarea-python-code').fill(`print(${JSON.stringify(cheatExpected)})\n`);
+      await page.getByTestId('btn-run-verify').click();
+      await page.waitForFunction(
+        () => {
+          const outBadge = document.querySelector('[data-testid="badge-output-check"]');
+          const behBadge = document.querySelector('[data-testid="badge-behavior-check"]');
+          return (
+            outBadge?.textContent?.includes('MATCHED') &&
+            behBadge?.textContent?.includes('FAILED')
+          );
+        },
+        undefined,
+        { timeout: 90000 }
+      );
+      assert.equal(
+        (await page.getByTestId('runner-verified-count').textContent())?.trim(),
+        verifiedBefore,
+        `${name}: printing ${cheatId}'s PASS line must not change the verified count`
+      );
+    }
+    console.log(`  ok ${name}: a Tier 2 and a Tier 3 entry print their own PASS line and stay unverified`);
+
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
     // must fit the viewport - the header used to push a 249px horizontal overflow here, so a page
     // that scrolls sideways is a failure, not a note.
