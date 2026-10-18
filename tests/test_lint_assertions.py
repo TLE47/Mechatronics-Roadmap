@@ -114,7 +114,17 @@ class PlanTests(unittest.TestCase):
         with contextlib.redirect_stdout(buffer):
             self.assertEqual(la.main(["--plan", "1"]), 0)
         self.assertEqual(buffer.getvalue().strip(), la.plan_text(la.scan(), limit=1))
-        self.assertIn("Burn down the next 1 package,", buffer.getvalue())
+        # The tree is at zero, so the plan for the real tree is the empty-list message rather than
+        # a ranked list. If a bare assertion ever returns, this test fails before CI does.
+        self.assertIn("Nothing left to burn down: 0 weak assertions", buffer.getvalue())
+
+    def test_the_empty_plan_says_so_instead_of_listing_nothing(self):
+        clean = {"exercises/00-foundations.T1.00a/test_behavior.py": []}
+        self.assertEqual(
+            la.plan_text(clean, limit=6),
+            "Nothing left to burn down: 0 weak assertions in the tree. "
+            "`--check` is the floor that keeps it there.",
+        )
 
     def test_a_non_positive_limit_is_a_usage_error(self):
         import io

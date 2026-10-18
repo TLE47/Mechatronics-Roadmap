@@ -35,7 +35,12 @@ class ArmEncoderTests(unittest.TestCase):
             sum(true_velocity[k - window:k]) / window for k in range(window, len(estimate))
         ]
         worst = max(abs(a - b) for a, b in zip(smoothed, smoothed_truth))
-        self.assertLess(worst, 0.35, "50 ms mean of the encoder velocity is %.3f rad/s off" % worst)
+        self.assertLess(
+            worst, 0.35,
+            msg="expected the 50 ms moving average of the encoder velocity to sit within 0.35 "
+                "rad/s of the true joint speed; a larger gap means the differencing lost the "
+                "signal or the window is shorter than claimed - check dt and cpr",
+        )
 
     def test_total_angle_change_survives_quantisation(self):
         angles = arm_q1_trace(400)
@@ -43,8 +48,18 @@ class ArmEncoderTests(unittest.TestCase):
         estimate = submission.joint_velocity(counts, plant.DT)
         integrated = submission.running_integral(estimate, plant.DT)[-1]
         truth = plant.wrap_pi(plant.counts_to_rad(counts[-1]) - plant.counts_to_rad(counts[0]))
-        self.assertAlmostEqual(integrated, truth, delta=1e-6)
-        self.assertLess(abs(integrated - plant.wrap_pi(angles[-1] - angles[0])), 2 * math.pi / 4096)
+        self.assertAlmostEqual(
+            integrated, truth, delta=1e-6,
+            msg="expected the integral of the estimated velocity to reproduce the quantised "
+                "angle change exactly, since the pair are inverses; a drift means the cumsum "
+                "restarts or uses another dt - check every sample is accumulated once",
+        )
+        self.assertLess(
+            abs(integrated - plant.wrap_pi(angles[-1] - angles[0])), 2 * math.pi / 4096,
+            msg="expected that total to sit within one 4096-count of the true, unquantised angle "
+                "change; a larger error means the quantisation was not the only loss - check the "
+                "count conversion",
+        )
 
 
 if __name__ == "__main__":

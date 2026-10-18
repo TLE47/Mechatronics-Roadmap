@@ -45,12 +45,32 @@ class PlantMapTests(unittest.TestCase):
         tau = self.k * (q_des - q) - b_cmd * dq
         slow = self.plant_step(q, dq, tau)
         # The velocity row is identical; the position row differs only by the plant's dt^2 term.
-        self.assertAlmostEqual(fast[1], slow[1], delta=1e-15)
+        self.assertAlmostEqual(
+            fast[1], slow[1], delta=1e-15,
+            msg="expected the velocity row to match the plant's own step to machine precision, "
+                "since both use the same acceleration; a mismatch means the damping or the "
+                "stiffness entered the velocity row differently - check dt/J",
+        )
         ddq = (tau - self.b * dq) / self.j
-        self.assertAlmostEqual(fast[0] - slow[0], -self.dt * self.dt * ddq, delta=1e-12)
-        self.assertLess(abs(fast[0] - slow[0]), 1e-3)
+        self.assertAlmostEqual(
+            fast[0] - slow[0], -self.dt * self.dt * ddq, delta=1e-12,
+            msg="expected the position rows to differ by exactly -dt^2 times the acceleration, "
+                "the term the plant's semi-implicit ordering adds; another offset means the "
+                "matrix is not the plant's map - check which velocity the position update uses",
+        )
+        self.assertLess(
+            abs(fast[0] - slow[0]), 1e-3,
+            msg="expected that O(dt^2) discrepancy to stay under a milliradian at the 1 ms tick, "
+                "which is what makes the discrete model usable at all; a larger gap means the "
+                "step size or the stiffness is wrong",
+        )
         # Equal to machine precision would mean the plant steps forward Euler, not semi-implicit.
-        self.assertGreater(abs(fast[0] - slow[0]), 1e-6)
+        self.assertGreater(
+            abs(fast[0] - slow[0]), 1e-6,
+            msg="expected the two position rows to differ by more than a microradian, since the "
+                "plant advances position with the new velocity; exact equality means the plant "
+                "was rewritten to forward Euler - check step_arm",
+        )
 
 
 class AliasingAtTheJointTests(unittest.TestCase):
@@ -58,11 +78,25 @@ class AliasingAtTheJointTests(unittest.TestCase):
         wn = math.sqrt(K_ELBOW / plant.I2)
         zeta = plant.B2 / (2.0 * math.sqrt(plant.I2 * K_ELBOW))
         f_damped = wn * math.sqrt(1.0 - zeta * zeta) / (2.0 * math.pi)
-        self.assertGreater(f_damped, 6.0)
+        self.assertGreater(
+            f_damped, 6.0,
+            msg="expected the elbow's damped mode to sit above 6 Hz, which is why a 12 Hz "
+                "controller cannot see it; a lower figure means the stiffness or the inertia was "
+                "taken from the wrong joint",
+        )
         # At 12 Hz the damped mode sits above the 6 Hz Nyquist limit and folds to fs - f.
-        self.assertAlmostEqual(submission.alias_hz(f_damped, 12.0), 12.0 - f_damped, delta=1e-9)
+        self.assertAlmostEqual(
+            submission.alias_hz(f_damped, 12.0), 12.0 - f_damped, delta=1e-9,
+            msg="expected the mode above Nyquist to fold to fs - f at a 12 Hz sample rate; the "
+                "original frequency means no folding happened - check the comparison with fs/2",
+        )
         # At the capstone's 1 kHz tick it is nowhere near the limit.
-        self.assertAlmostEqual(submission.alias_hz(f_damped, 1000.0), f_damped, delta=1e-9)
+        self.assertAlmostEqual(
+            submission.alias_hz(f_damped, 1000.0), f_damped, delta=1e-9,
+            msg="expected the same mode to pass through unchanged at the capstone's 1 kHz tick, "
+                "since it is two orders below Nyquist; a different value means the fold is "
+                "applied unconditionally",
+        )
 
     def test_a_notch_at_the_joint_mode_lands_where_it_was_asked(self):
         fs = 1.0 / plant.DT
@@ -70,13 +104,33 @@ class AliasingAtTheJointTests(unittest.TestCase):
         zeta = plant.B2 / (2.0 * math.sqrt(plant.I2 * K_ELBOW))
         f_damped = wn * math.sqrt(1.0 - zeta * zeta) / (2.0 * math.pi)
         omega_a = submission.prewarp_omega(f_damped, fs)
-        self.assertAlmostEqual(submission.tustin_hz(omega_a, fs), f_damped, delta=1e-9)
+        self.assertAlmostEqual(
+            submission.tustin_hz(omega_a, fs), f_damped, delta=1e-9,
+            msg="expected the pre-warped prototype to map back to the requested notch frequency "
+                "at 1 kHz; a drift of a few hertz means the two maps disagree about the tangent "
+                "- check both formulas use fs/2",
+        )
         # The unwarped prototype is off by a fraction at 1 kHz, and by real hertz once fs drops.
-        self.assertGreater(submission.prewarp_omega(f_damped, fs), 2.0 * math.pi * f_damped)
+        self.assertGreater(
+            submission.prewarp_omega(f_damped, fs), 2.0 * math.pi * f_damped,
+            msg="expected the pre-warped analog frequency to exceed its own uncorrected value, "
+                "since warping stretches toward Nyquist; equality means the correction was not "
+                "applied - check the tangent term",
+        )
         coarse = 60.0
         on_target = submission.prewarp_omega(f_damped, coarse)
-        self.assertGreater(on_target, 2.0 * math.pi * f_damped * 1.02)
-        self.assertAlmostEqual(submission.tustin_hz(on_target, coarse), f_damped, delta=1e-9)
+        self.assertGreater(
+            on_target, 2.0 * math.pi * f_damped * 1.02,
+            msg="expected a 60 Hz sample rate to push the pre-warp more than two percent above "
+                "the uncorrected frequency, where the error becomes real hertz; a smaller "
+                "correction means the map ignored how close the notch sits to Nyquist",
+        )
+        self.assertAlmostEqual(
+            submission.tustin_hz(on_target, coarse), f_damped, delta=1e-9,
+            msg="expected the coarse-rate round trip to land back on the requested notch, which "
+                "is the only reason a 60 Hz controller could place it at all; a several-hertz "
+                "miss means the pair is not a true inverse at that rate",
+        )
 
 
 class CovarianceAtTheJointTests(unittest.TestCase):
@@ -114,11 +168,35 @@ class CovarianceAtTheJointTests(unittest.TestCase):
         cqq, cqv, cvv = sample_cov(moved)
         # 0.9% of sigma_v^2 is the coupling the plant's dt^2 position term adds; allow 15% for
         # 4000 samples, and a floor so a zero cannot pass this by luck.
-        self.assertLess(abs(predicted[0][0] - cqq), max(0.15 * predicted[0][0], 1e-12))
-        self.assertLess(abs(predicted[1][1] - cvv), max(0.15 * predicted[1][1], 1e-9))
-        self.assertLess(abs(predicted[0][1] - cqv), max(0.15 * predicted[1][1], 1e-9))
-        self.assertGreater(predicted[0][0], 0.0)
-        self.assertGreater(cvv, 0.0)
+        self.assertLess(
+            abs(predicted[0][0] - cqq), max(0.15 * predicted[0][0], 1e-12),
+            msg="expected the predicted position variance to match the Monte-Carlo sample within "
+                "15 percent at 4000 draws; a larger gap means the matrix or the two noise terms "
+                "were entered differently - check A P A^T plus Q",
+        )
+        self.assertLess(
+            abs(predicted[1][1] - cvv), max(0.15 * predicted[1][1], 1e-9),
+            msg="expected the predicted velocity variance to match the same sample; a mismatch "
+                "means the damping row of A does not match the plant's own B2 - check the matrix",
+        )
+        self.assertLess(
+            abs(predicted[0][1] - cqv), max(0.15 * predicted[1][1], 1e-9),
+            msg="expected the predicted position-velocity covariance to match the sample, the "
+                "cross term the plant's dt^2 ordering creates; a near-zero prediction means only "
+                "the diagonal was propagated",
+        )
+        self.assertGreater(
+            predicted[0][0], 0.0,
+            msg="expected the predicted position variance to be strictly positive, as any "
+                "covariance must be; zero means the position row of A was dropped or the noise "
+                "never propagated",
+        )
+        self.assertGreater(
+            cvv, 0.0,
+            msg="expected the Monte-Carlo velocity variance to be positive, so the comparison "
+                "above is not a fluke of identical zeros; a zero sample variance means the "
+                "simulated states never moved",
+        )
 
 
 if __name__ == "__main__":

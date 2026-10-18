@@ -43,30 +43,20 @@ jobs:
           python3 scripts/lint_modules.py
           python3 scripts/module_parity.py --check
           python3 scripts/generate_ladder_gate.py --check
-          python3 tests/test_module_parity.py
-          python3 tests/test_ladder_gate.py
           python3 scripts/generate_skip_tests.py --check
-          python3 tests/test_skip_tests.py
           python3 scripts/generate_plant_data.py --check
-          python3 tests/test_plant.py
-          python3 tests/test_model_levels.py
           python3 scripts/check_term_order.py
           python3 scripts/generate_python_lessons_data.py --check
           python3 scripts/generate_sim_route.py --check
           python3 scripts/friction_report.py --check
           python3 scripts/lint_assertions.py
-          python3 tests/test_sim_route.py
-          python3 tests/test_lint_lessons.py
-          python3 tests/test_reentry.py
-          python3 tests/test_friction_report.py
-          python3 tests/test_lint_assertions.py
-          python3 tests/test_frontmatter_lists.py
-          python3 tests/test_error_explainer.py
-          python3 tests/test_exercises.py
           python3 scripts/run_exercise.py --verbose
-          python3 tests/test_exercise_package.py
           python3 scripts/check_exercise_coverage.py
-          python3 tests/test_exercise_coverage.py
+          # One discovery run covers all 17 suites in tests/ - including test_sketch_host_verify
+          # and test_module_full_solutions, which the old per-file list never ran - and it is the
+          # same command CONTRIBUTING gives a contributor. It needs Python >= 3.9-safe imports,
+          # so every script a test imports must tolerate the system interpreter.
+          python3 -m unittest discover -s tests
 
       - name: Set up Node 22
         uses: actions/setup-node@v4

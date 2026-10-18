@@ -17,11 +17,14 @@ The bar this script enforces for every graded assertion (`assertEqual`, `assertA
 `assertRaises` / `assertWarns` / `assertLogs` are exempt: their "message" is the exception, and the
 test name already says what is being refused.
 
-Two modes, because 1987 assertions start out below the bar:
+Two modes. The tree reached **zero** weak assertions on 2026-10-18, so `--check` is now a plain
+zero floor: every graded assertion in the repository carries a diagnostic, and the ratchet below
+only has to hold that line.
 
 - `--check` (default, and what CI runs) compares the tree against `docs/assertion-baseline.json` and
   fails on **any** file above its recorded count, on a file that is not recorded at all, and on a
-  baseline that is above the tree — a ratchet that cannot silently loosen.
+  baseline that is above the tree — a ratchet that cannot silently loosen. With the baseline at
+  zero, the first two clauses mean a new graded file or a new bare assertion fails CI immediately.
 - `--write-baseline` rewrites the baseline from the tree, for use after a burn-down commit.
 - `--tracks` reports the same numbers grouped by track (`00-foundations`, `04-embedded`, ...),
   so the next round's packages can be chosen from the data instead of recomputed by hand. The
@@ -218,6 +221,9 @@ def plan_text(results, limit=PLAN_PACKAGES):
     """The next round as a paste-ready task line plus the six package names and their sizes."""
     packages = package_totals(results)[:limit]
     total = sum(counts(results).values())
+    if not packages:
+        return ("Nothing left to burn down: 0 weak assertions in the tree. "
+                "`--check` is the floor that keeps it there.")
     noun = "package" if len(packages) == 1 else "packages"
     lines = [f"Burn down the next {len(packages)} {noun}, both graded files each:"]
     for index, (name, weak) in enumerate(packages, 1):

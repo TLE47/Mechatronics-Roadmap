@@ -16,6 +16,8 @@ Modes:
    and verifies that its `setup()` output matches the lesson's `### Expected Output`!
 """
 
+from __future__ import annotations  # `str | None` annotations must import on Python 3.9, the macOS system interpreter
+
 import argparse
 import os
 import re

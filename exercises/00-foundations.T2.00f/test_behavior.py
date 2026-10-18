@@ -130,7 +130,10 @@ class WarpingTests(unittest.TestCase):
                 submission.tustin_hz(omega_a, fs),
                 f0,
                 delta=1e-9,
-                msg=f"expected a pre-warp/Tustin round trip at {f0} Hz to return {f0} Hz; a drift likely means the two use different conventions - check both formulas",
+                msg="expected every pre-warp/Tustin round trip to return the frequency it "
+                    "started from, at 4000, 2000, 1000 and 50 Hz alike; a drift at the coarse "
+                    "rates likely means the two use different conventions - check both "
+                    "formulas",
             )
 
     def test_the_map_approaches_nyquist(self):

@@ -11,6 +11,30 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 87: Block 1 Closed — Every Graded Assertion Now Explains Itself
+
+### 1. 593 → 0 weak assertions, 41 → 0 files
+- The remaining 593 bare assertions are gone across four burn-down rounds (this entry also covers
+  PRs #12–#15, which shipped without changelog entries of their own): the whole 01-electronics
+  track (134), then two rounds of six packages each (186 and 142), then the final 131 in 12 files.
+- Every graded assertion in `test_behavior.py`, `test_transfer.py` and `selfcheck.py` now carries a
+  message naming **what was expected**, the number a plausible bug produces, and the formula to
+  check — the Core-route learner studying alone has a mentor in the failure output.
+- The ratchet in `docs/assertion-baseline.json` is now a plain zero floor: a new graded file, or a
+  new bare assertion in an existing one, fails CI on the first push.
+
+### 2. `python3 -m unittest discover -s tests` is the test entry point
+- Discovery had been failing on the macOS system interpreter: `scripts/extract_and_compile_sketches.py`
+  annotated `extra_dir: str | None`, a PEP 604 union that raises `TypeError` at import on Python 3.9.
+  `from __future__ import annotations` makes the annotation a string, and 189 tests now pass on both
+  3.9.6 and 3.15.
+- CI's hand-maintained list of 15 `python3 tests/test_*.py` lines is replaced by one
+  `python3 -m unittest discover -s tests`, which runs all **17** suites — including
+  `test_sketch_host_verify.py` and `test_module_full_solutions.py`, which the old list never ran.
+  `CONTRIBUTING.md`'s runbook gives the same command.
+
+---
+
 ## [2026-10-18] — Run 86: Foundations Tail Closed, 737 → 593, and a Per-Track Report
 
 ### 1. The last four 00-foundations packages, plus the robotics runner-up
