@@ -4,9 +4,9 @@ title: "Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Wat
 track: "07"
 tier: 2
 prereqs:
-  - 01-electronics.T2.02
-  - 04-embedded.T2.05
-  - 06-robotics.T2.07
+  - 01-electronics.T2.01b
+  - 04-embedded.T2.04b
+  - 06-robotics.T2.06a
 new_concepts:
   - regenerative_bus_energy_and_chopper_sizing
   - can_fd_crc16_and_rolling_counter_watchdog

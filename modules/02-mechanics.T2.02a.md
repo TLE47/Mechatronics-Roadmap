@@ -4,8 +4,8 @@ title: "6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), 
 track: "02"
 tier: 2
 prereqs:
-  - 02-mechanics.T1.03
-  - 00-foundations.T2.01
+  - 02-mechanics.T1.02a
+  - 00-foundations.T2.00d
 new_concepts:
   - six_dof_gruebler_constraint_counting
   - se3_homogeneous_transformation_matrix

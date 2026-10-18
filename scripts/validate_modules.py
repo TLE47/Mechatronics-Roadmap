@@ -203,13 +203,29 @@ for n in nodes:
     dfs(n)
 
 
+# A superseded concept id can still be named in a `uses:` list: `resources/legacy-prereq-map.json`
+# keeps that vocabulary as a crosswalk, and records the real page that teaches each id. Without this,
+# the old check passed only because `modules/_index.yaml`'s legacy entries were treated as modules
+# with no page behind them. `scripts/legacy_crosswalk.py --check` proves every evidence term appears
+# in the mapped page, so this source of reachability is checked, not merely declared.
+CROSSWALK_PATH = pathlib.Path("resources") / "legacy-prereq-map.json"
+EXTRA_CONCEPTS: dict[str, set[str]] = {}
+CROSSWALK_CONCEPTS: dict[str, str] = {}
+if CROSSWALK_PATH.is_file():
+    with open(CROSSWALK_PATH, encoding="utf-8") as handle:
+        for concept_id, record in json.load(handle).get("concepts", {}).items():
+            if record.get("page"):
+                EXTRA_CONCEPTS.setdefault(record["page"], set()).add(concept_id)
+                CROSSWALK_CONCEPTS[concept_id] = record["page"]
+
+
 def reach(n, seen=None):
     seen = seen or set()
     out = set()
     for p in nodes[n]["prereqs"]:
         if p in nodes and p not in seen:
             seen.add(p)
-            out |= nodes[p]["introduces"] | reach(p, seen)
+            out |= nodes[p]["introduces"] | EXTRA_CONCEPTS.get(p, set()) | reach(p, seen)
     return out
 
 
@@ -219,6 +235,11 @@ for m, d in nodes.items():
         track_tier = ".".join(m.split(".")[:2])
         ladders.add(track_tier)
         for u in d["uses"] - reach(m):
+            # A superseded concept id is taught somewhere in the bridge rewrite, and the crosswalk
+            # names that page with verified evidence terms; it is not on this module's prereq chain,
+            # because the whole legacy track it belonged to was replaced by a different page order.
+            if u in CROSSWALK_CONCEPTS:
+                continue
             bad.append(f"{m}: uses '{u}' not introduced by any prereq")
         m_gate = re.search(r"### Gate test.*?(?=^##\s|\Z)", d["body"], re.S | re.M)
         if m_gate:

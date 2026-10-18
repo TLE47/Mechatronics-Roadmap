@@ -4,8 +4,8 @@ title: "Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistenc
 track: "05"
 tier: 3
 prereqs:
-  - 00-foundations.T3.01
-  - 05-control.T2.06
+  - 00-foundations.T3.00a
+  - 05-control.T2.05a
 new_concepts:
   - joseph_stabilized_covariance_update
 uses:

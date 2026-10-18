@@ -4,7 +4,8 @@ title: "Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' 
 track: "00"
 tier: 3
 prereqs:
-  - 07-systems.T2.08
+  - 07-systems.T2.07a
+  - 00-foundations.T2.00e
 new_concepts:
   - skew_symmetric_hat_vee_cross_product
   - matrix_exponential_taylor_and_rodrigues

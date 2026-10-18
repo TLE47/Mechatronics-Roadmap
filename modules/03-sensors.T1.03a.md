@@ -4,7 +4,7 @@ title: "Electromagnets, Permanent Magnets, Pole Pairs, Quadrature Pulses & Farad
 track: "03"
 tier: 1
 prereqs:
-  - 01-electronics.T1.02
+  - 01-electronics.T1.01b
 new_concepts:
   - lorentz_force_and_back_emf_constants
   - mechanical_vs_electrical_angle_pole_pairs

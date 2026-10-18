@@ -4,7 +4,7 @@ title: "Numerical Derivatives, Integrals & Matrices as One-Step State Updaters"
 track: "00"
 tier: 2
 prereqs:
-  - 00-foundations.T1.01
+  - 00-foundations.T1.00e
 new_concepts:
   - finite_difference_derivative_and_integral
   - matrix_vector_multiplication

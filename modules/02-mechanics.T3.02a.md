@@ -4,8 +4,8 @@ title: "6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffne
 track: "02"
 tier: 3
 prereqs:
-  - 00-foundations.T3.01
-  - 02-mechanics.T2.03
+  - 00-foundations.T3.00a
+  - 02-mechanics.T2.02a
 new_concepts:
   - spatial_twist_wrench_and_screw_axis
   - circular_notch_flexure_stiffness_stress

@@ -4,8 +4,9 @@ title: "Gain/Phase Margin, Sensitivity Waterbed (S+T=1), Luenberger State Observ
 track: "05"
 tier: 2
 prereqs:
-  - 00-foundations.T2.01
-  - 02-mechanics.T2.03
+  - 00-foundations.T2.00d
+  - 02-mechanics.T2.02a
+  - 00-foundations.T2.00e
 new_concepts:
   - loop_transfer_gain_and_phase_margin
   - sensitivity_complementary_waterbed_tradeoff

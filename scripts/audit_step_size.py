@@ -42,6 +42,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "STEP_SIZE_AUDIT.md")
 MODULES = os.path.join(ROOT, "modules")
 INDEX = os.path.join(MODULES, "_index.yaml")
+CROSSWALK = os.path.join(ROOT, "resources", "legacy-prereq-map.json")
 
 FLOOR = 8.0
 # Weights are a stated opinion, not a measurement: a declared concept costs 2 (the curriculum's own
@@ -119,7 +120,7 @@ def parse_front_matter(text: str) -> dict:
             list_key = None
             key, _, value = line.partition(":")
             value = value.split("#")[0].strip().strip('"')
-            if not value:
+            if value in ("", "[]"):
                 if key in ("prereqs", "new_concepts", "uses"):
                     list_key = key
                 continue
@@ -218,6 +219,60 @@ def audit() -> list[dict]:
                     or len(r["bundled"]) >= 3
                 )
     return rows
+
+
+def crosswalk_rows(rows: list[dict]) -> tuple[list[dict], list[str]]:
+    """Verify the legacy→page crosswalk: page exists, evidence terms appear in it, and no page still
+    cites the legacy id. Returns the proof rows and the findings that break them."""
+    if not os.path.exists(CROSSWALK):
+        return [], ["resources/legacy-prereq-map.json is missing"]
+    with open(CROSSWALK, encoding="utf-8") as handle:
+        manifest = json.load(handle)
+    pages = {name[:-3] for name in os.listdir(MODULES) if name.endswith(".md")}
+    # Every page is scanned, not just the Core rows: a legacy id left on a Tier 1 or extension page
+    # is the same broken bridge, and the proof has to cover where the repoint was applied.
+    cited_by: dict[str, list[str]] = {}
+    for name in sorted(os.listdir(MODULES)):
+        if not name.endswith(".md"):
+            continue
+        fm = parse_front_matter(open(os.path.join(MODULES, name), encoding="utf-8").read())
+        for prereq in fm["prereqs"]:
+            cited_by.setdefault(prereq, []).append(name[:-3])
+    proof, findings = [], []
+    legacy_ids = set(load_index()[0])
+    mapped = {k for k, v in manifest.items() if isinstance(v, dict) and "page" in v}
+    for legacy_id in sorted(legacy_ids - mapped):
+        cited = cited_by.get(legacy_id, [])
+        if cited:
+            findings.append(
+                f"{legacy_id}: cited by {', '.join(cited)} but missing from the crosswalk"
+            )
+    for page, cited_ids in cited_by.items():
+        for prereq in cited_ids:
+            if prereq not in pages and prereq not in legacy_ids:
+                findings.append(f"{prereq}: cited by a page but neither a page nor a legacy id")
+    for legacy_id, record in sorted(manifest.items()):
+        if legacy_id.startswith("_") or not isinstance(record, dict) or "page" not in record:
+            continue
+        page = record["page"]
+        evidence = record.get("evidence", [])
+        text = open(os.path.join(MODULES, page + ".md"), encoding="utf-8").read().lower() if page in pages else ""
+        missing = [term for term in evidence if term.lower() not in text]
+        still_cited = cited_by.get(legacy_id, [])
+        if page not in pages:
+            findings.append(f"{legacy_id}: mapped page `{page}` does not exist")
+        if missing:
+            findings.append(f"{legacy_id}: page `{page}` does not contain {missing}")
+        if still_cited:
+            findings.append(f"{legacy_id}: still cited by {', '.join(still_cited)}")
+        proof.append({
+            "legacy": legacy_id,
+            "page": page,
+            "evidence": evidence,
+            "citations": len(cited_by.get(page, [])),
+            "ok": page in pages and not missing,
+        })
+    return proof, findings
 
 
 def bridge_rows(rows: list[dict]) -> list[dict]:
@@ -346,24 +401,39 @@ def render(rows: list[dict]) -> str:
             "",
         ]
 
+    proof, findings = crosswalk_rows(rows)
     lines += [
-        f"## Broken bridges ({len(broken)} prerequisite citations to pages that do not exist)",
+        f"## Resolved prerequisites ({len(proof)} legacy ids, {len(findings)} findings)",
         "",
-        "Each row is a page whose `prereqs:` names a module that exists only in",
-        "`modules/_index.yaml`'s `legacy:` section — superseded, with no page on disk. The `taught`",
-        "column asks whether any of the 46 bridge pages claims that legacy module's concepts in its own",
-        "`new_concepts:`; the `used by` column counts the Core Tier 2/3 pages whose `uses:` names one",
-        "of those concepts. A `0/5 taught` with users is the sharpest form of an unbridged jump: a",
-        "required idea that no page teaches.",
+        "Every superseded id in `modules/_index.yaml`'s `legacy:` section now has a page that teaches its",
+        "content. The mapping lives in [`resources/legacy-prereq-map.json`](../resources/legacy-prereq-map.json)",
+        "and is proved here rather than asserted: the page must exist, and every evidence term must appear",
+        "in its text. `citations` counts the pages whose `prereqs:` now name that page.",
         "",
-        "| Page | Prereq cited | Legacy module | Concepts taught by a bridge | Used by |",
-        "| :--- | :--- | :--- | :--- | ---: |",
+        "| Legacy id | Teaching page | Evidence in that page | Citations | Verified |",
+        "| :--- | :--- | :--- | ---: | :--- |",
+    ]
+    for row in proof:
+        lines.append(
+            f"| `{row['legacy']}` | `{row['page']}` | {', '.join(row['evidence'])} | "
+            f"{row['citations']} | {'yes' if row['ok'] else '**NO**'} |"
+        )
+    if findings:
+        lines += ["", "Findings:", ""]
+        lines += [f"- {finding}" for finding in findings]
+
+    lines += [
+        "",
+        f"## Prerequisite citations with no page ({len(broken)})",
+        "",
+        "Empty is the only passing state: a row here means a page still names a module that does not",
+        "exist. The same check fails `--check`, so a repointed prerequisite cannot silently come back.",
+        "",
+        "| Page | Prereq cited | Legacy module |",
+        "| :--- | :--- | :--- |",
     ]
     for b in broken:
-        lines.append(
-            f"| `{b['page']}` | `{b['prereq']}` | {b['legacy_title']} | "
-            f"{b['taught']}/{b['concepts']} | {len(b['used_by'])} |"
-        )
+        lines.append(f"| `{b['page']}` | `{b['prereq']}` | {b['legacy_title']} |")
 
     unowned_pages = [r for r in rows if r["unowned"]]
     lines += [
@@ -425,6 +495,12 @@ def main(argv: list[str]) -> int:
         print(json.dumps({"pages": rows, "broken": bridge_rows(rows)}, indent=2))
         return 0
     rendered = render(rows)
+    _proof, findings = crosswalk_rows(rows)
+    if findings:
+        print("ERROR: a prerequisite does not resolve:")
+        for finding in findings:
+            print("  -", finding)
+        return 1
     if args.check:
         current = open(OUT, encoding="utf-8").read() if os.path.exists(OUT) else ""
         if current != rendered:

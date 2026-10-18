@@ -4,8 +4,8 @@ title: "Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Lo
 track: "03"
 tier: 2
 prereqs:
-  - 01-electronics.T2.02
-  - 03-sensors.T1.04
+  - 01-electronics.T2.01b
+  - 03-sensors.T1.03a
 new_concepts:
   - three_phase_balanced_sum_and_clarke_projection
   - park_rotating_frame_dc_demodulation

@@ -4,8 +4,9 @@ title: "Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic
 track: "04"
 tier: 3
 prereqs:
-  - 03-sensors.T3.04
-  - 04-embedded.T2.05
+  - 03-sensors.T3.03a
+  - 04-embedded.T2.04b
+  - 04-embedded.T2.04c
 new_concepts:
   - center_aligned_pwm_midpoint_adc_sampling
   - q131_fixed_point_trig_scaling
