@@ -11,6 +11,31 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 90: One Workbench Run, One Server Pair
+
+Measured on an 8-core Mac; same suites, same verdicts, same coverage.
+
+| Workbench suite | before (one after another) | after (`npm run test:workbench`) |
+| --- | --- | --- |
+| `test:smoke` (SSR: App, Runner, Quiz, export) | 2 s | 0.9 s |
+| `test:e2e` (dev server, Chromium, Pyodide) | 22 s | 23.5 s |
+| `test:e2e:pages` (built bundle, Chromium + Firefox) | 38 s | 24.5 s |
+| **the three, end to end** | **62 s** | **25 s** |
+
+- **`scripts/test_workbench.mjs`** builds `dist/` only when it is missing, starts one dev server and
+  one Pages-shaped static server, then runs the smoke suite in-process against that same dev server
+  (its SSR modules come out of the graph the browser suites load) and the two browser suites side by
+  side in child processes, each given a URL (`E2E_BASE_URL`, `PAGES_SERVER_URL`) instead of booting
+  its own. Output is prefixed per suite, and any suite failing fails the run.
+- **The built-bundle suite drives Chromium and Firefox at the same time**: separate browser contexts
+  against the same served bundle, verdicts collected in the requested order, a missing browser still
+  reported as SKIP. That is most of its 38 s.
+- `test:smoke`, `test:e2e` and `test:e2e:pages` still run standalone, creating their own servers.
+- **CI**: the KaTeX audit left the Python job to run in `build-workbench`, where `npm ci` has already
+  installed `katex` from the lockfile - so neither `verify-and-test` leg sets up Node anymore, or
+  re-fetches a pinned dependency with `npm install --no-save`. Playwright's browsers are installed in
+  their own step, once, for both browser suites.
+
 ## [2026-10-18] — Run 89: The Verification Gates Run in Parallel
 
 Measured on an 8-core Mac (4 performance cores); every number is wall-clock for the same work and
@@ -20,7 +45,7 @@ the same verdicts.
 | --- | --- | --- |
 | `scripts/run_exercise.py` (48 packages, ~340 interpreters) | 39 s | **15 s** |
 | `python3 -m unittest discover -s tests` (194 tests) | 57 s | **22 s** |
-| the same, reusing CI's report (`$RUN_EXERCISE_REPORT`) | 57 s | **15 s** |
+| the same, reusing CI's report (`RUN_EXERCISE_REPORT`) | 57 s | **15 s** |
 | the CI `verify-and-test` Python step, end to end | ~105 s | **40 s** |
 | `tests/test_module_full_solutions.py` (46 package discovers) | 6.3 s | **2.6 s** |
 | `tests/test_exercises.py` (20 g++ compiles + 10 runs) | 6.1 s | **2.9 s** |
@@ -31,7 +56,7 @@ the same verdicts.
   and writes only inside a temp dir, so two workers cannot tread on each other. `-j 1` is the old
   serial path, and the serial and parallel reports are byte-identical, ordered by package.
 - **The 48-package sweep runs once in CI.** `run_exercise.py --report-file` writes the machine-readable
-  report; `tests/test_exercise_package.py` reads it from `$RUN_EXERCISE_REPORT` instead of running the
+  report; `tests/test_exercise_package.py` reads it from `RUN_EXERCISE_REPORT` instead of running the
   sweep again, and refuses a report that does not name every package on disk, so a stale or partial
   report cannot quietly shrink the coverage. A doctored report is proved to fail the suite.
 - **The other subprocess-heavy suites are parallel too**: the 46 per-module page-solution discovers in
