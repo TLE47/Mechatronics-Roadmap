@@ -222,18 +222,43 @@ def route_facts() -> dict:
     """
     core = [row for row in module_rows() if row["id"] in set(CORE_MODULES)]
     low = high = 0.0
+    pages = slow_pages = 0
     for _label, pattern, stop_before in CORE_TRACKS:
         for row in track_rows(pattern, stop_before):
             if row["low"] is not None:
                 low += row["low"]
                 high += row["high"]
+            pages += 1
+            if row["low"] is not None and row["high"] > row["low"]:
+                slow_pages += 1
     tiers: dict[str, int] = {}
     for row in core:
         tier = str(row["tier"])
         tiers[tier] = tiers.get(tier, 0) + 1
         low += row["low"] or 0.0
         high += row["high"] or 0.0
-    return {"low": round(low, 2), "high": round(high, 2), "tiers": tiers}
+        pages += 1
+        if row["low"] is not None and row["high"] > row["low"]:
+            slow_pages += 1
+    return {"low": round(low, 2), "high": round(high, 2), "tiers": tiers,
+            "pages": pages, "slow_pages": slow_pages}
+
+
+def hours_basis(facts: dict) -> str:
+    """One clause, lowercase for mid-sentence use, saying what the high end of the range is made of.
+
+    A page with `slow_learner_hours` contributes a second estimate; a page with only `est_hours`
+    contributes the same number to both ends. Saying which is which, from the metadata itself, is
+    the difference between "the high end is a slow-learner figure" and the truth: a floor that will
+    rise as pages are measured.
+    """
+    missing = facts["pages"] - facts["slow_pages"]
+    if missing <= 0:
+        return ("the Core's high end is the slow-learner figure on every page, so it is the one to "
+                "plan a calendar against")
+    return (f"the Core's high end is a slow-learner figure on {facts['slow_pages']} of "
+            f"{facts['pages']} pages and a single estimate on the other {missing}, so plan against "
+            f"it as a floor and expect it to rise as those pages are measured")
 
 
 def _replace_marker(text: str, name: str, value: str) -> str:
@@ -261,6 +286,7 @@ def render_readme(text: str | None = None) -> str:
     hours = fmt(facts["low"], facts["high"]).replace("-", "–")
     text = _replace_marker(text, "hours", f"**{hours} hours**")
     text = _replace_marker(text, "tier2", str(facts["tiers"].get("2", 0)))
+    text = _replace_marker(text, "hours-basis", hours_basis(facts))
     return text
 
 
@@ -336,8 +362,11 @@ def render():
         f"**{fmt(facts['low'], facts['high'])}** |",
         "",
         "The low end is every page's `est_hours` / `typical_hours`; the high end is its",
-        "`slow_learner_hours`. Nothing in this table is hand-entered, and `--check` fails when it",
-        "drifts from the pages.",
+        "`slow_learner_hours` where the page states one.",
+        "",
+        f"**Estimate coverage:** {hours_basis(facts)[0].upper() + hours_basis(facts)[1:]}.",
+        "",
+        "Nothing in this table is hand-entered, and `--check` fails when it drifts from the pages.",
         "",
         "## Extensions (optional, still graded)",
         "",

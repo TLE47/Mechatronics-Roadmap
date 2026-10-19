@@ -95,8 +95,11 @@ flowchart LR
 | **Core total** | **42 modules + the prose tracks above** | **178-223** |
 
 The low end is every page's `est_hours` / `typical_hours`; the high end is its
-`slow_learner_hours`. Nothing in this table is hand-entered, and `--check` fails when it
-drifts from the pages.
+`slow_learner_hours` where the page states one.
+
+**Estimate coverage:** The Core's high end is a slow-learner figure on 25 of 67 pages and a single estimate on the other 42, so plan against it as a floor and expect it to rise as those pages are measured.
+
+Nothing in this table is hand-entered, and `--check` fails when it drifts from the pages.
 
 ## Extensions (optional, still graded)
 
