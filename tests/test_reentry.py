@@ -253,7 +253,7 @@ class ReentryTests(unittest.TestCase):
         self.assertIn(
             "--only", commands[0],
             f"expected the documented re-grade command to name one package with --only; "
-            f"without it the command grades all 46 and a returning learner waits for the course, "
+            f"without it the command grades all 48 and a returning learner waits for the course, "
             f"which is not what section 4 promises",
         )
         proc = subprocess.run(
