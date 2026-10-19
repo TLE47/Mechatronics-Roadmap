@@ -34,7 +34,7 @@ flowchart LR
 | Track P - programming from zero | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
 | Track P - programming from zero | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
 | Track P - programming from zero | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
-| Track P - programming from zero | **14 lessons, together** | 42.5 |
+| Track P - programming from zero | **14 lessons, together** | 16.75-42.5 |
 | Stage 0 - why electricity behaves like flow | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
 | Stage 0 - why electricity behaves like flow | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
 | Stage 0 - why electricity behaves like flow | `S0.2` Series vs. Parallel Resistor Networks, Voltage Dividers and Potentiometers | 1.5-3.5 |
@@ -46,7 +46,7 @@ flowchart LR
 | Stage 0 - why electricity behaves like flow | `S0.8` Reading Analog Sensors — The 10-Bit ADC (analogRead) and Serial Monitor | 1.5-3 |
 | Stage 0 - why electricity behaves like flow | `S0.9` Switching Power Smoothly — PWM Duty Cycle and analogWrite() | 1.5-3 |
 | Stage 0 - why electricity behaves like flow | `S0.M` Stage 0 Milestone — Potentiometer LED Dimmer with Safety Kill-Switch | 1-2.5 |
-| Stage 0 - why electricity behaves like flow | **11 lessons, together** | 33 |
+| Stage 0 - why electricity behaves like flow | **11 lessons, together** | 13.75-33 |
 | Tier 1 | `00-foundations.T1.00a` Running Python, Variables, Loops, Functions & Tracebacks | 3 |
 | Tier 1 | `00-foundations.T1.00b` Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics | 3.5 |
 | Tier 1 | `00-foundations.T1.00c` SI Units, Engineering Prefixes & Dimensional Analysis | 2.5 |

@@ -8,7 +8,7 @@ prerequisite graph.
 
 The evidence is counted, not judged by eye:
 
-1. the concept's **core term** — its rarest token across the 46 bridge pages (`so2`, `lqr`, `ruckig`);
+1. the concept's **core term** — its rarest token across the 48 bridge pages (`so2`, `lqr`, `ruckig`);
 2. `lines` — body lines containing that core term (front matter excluded);
 3. `sections` — which numbered sections those lines fall in, so "only in §1 Why it matters" and
    "used in §4 Worked example and §5 Exercise" are different claims.

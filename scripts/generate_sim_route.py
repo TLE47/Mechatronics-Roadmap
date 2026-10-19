@@ -237,14 +237,18 @@ def render():
     core_low = core_high = 0.0
     for label, pattern, stop_before in CORE_TRACKS:
         rows = track_rows(pattern, stop_before)
-        got = 0.0
+        got_low = got_high = 0.0
         for row in rows:
             lines.append(f"| {label} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
             if row["low"] is not None:
-                got += row["high"]
-                core_low += row["low"]
-        core_high += got
-        lines.append(f"| {label} | **{len(rows)} lessons, together** | {fmt(got, got)} |")
+                got_high += row["high"]
+                got_low += row["low"]
+        core_low += got_low
+        core_high += got_high
+        lines.append(
+            f"| {label} | **{len(rows)} lessons, together** | "
+            f"{fmt(round(got_low, 2), round(got_high, 2))} |"
+        )
 
     for stage in ("1", "2", "3"):
         rows = [row for row in core if row["tier"] == stage]

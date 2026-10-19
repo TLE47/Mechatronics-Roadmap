@@ -57,6 +57,8 @@ $$
 **Predict first (before you run it):** commit to two numbers. (1) With the values above and $\vec{x}_0 = [0.10,\; 0.20]^\top$, what are $x_1$ and $v_1$? (2) If you then read the velocity row as "use the **new** position," what would $v_1$ become instead? Two tells that a wrong result is a mistake rather than a surprise: $x_1$ must be slightly **larger** than $0.10\,\text{m}$ because the state already carries velocity, so a value below $0.10$ means the position row took the new velocity; and $v_1$ must be exactly $0.0800\,\text{m/s}$, so $+0.0700$ means the velocity row used the already-updated $x_1$.
 
 ```python
+import math
+
 m, k, b, dt = 1.0, 100.0, 10.0, 0.01
 Ad = [[1.0, dt], [-(k / m) * dt, 1.0 - (b / m) * dt]]
 Bd = [0.0, dt / m]
@@ -74,15 +76,21 @@ two_mass = [
     [1.0, dt, 0.0, 0.0],
     [-(k / m) * dt, 1.0 - (b / m) * dt, (k / m) * dt, (b / m) * dt],
     [0.0, 0.0, 1.0, dt],
-    [-(k / 2.0) * dt, -(b / 2.0) * dt, (k / 2.0) * dt, 1.0 - (b / 2.0) * dt],
+    [(k / 2.0) * dt, (b / 2.0) * dt, -(k / 2.0) * dt, 1.0 - (b / 2.0) * dt],  # m2 = 2.0 kg
 ]
 
-print("x1=%.4f m, v1=%.4f m/s | row 1 = %.2f | two-mass block is %dx%d"
-      % (x1[0], x1[1], v1_scalar, len(two_mass), len(two_mass[0])))
+# Numerical check of the second mass's row, and a sign check: with x1 = 0.10 m, x2 = 0 and both at rest,
+# the spring must accelerate m2 toward m1, so its velocity rises.
+assert math.isclose(two_mass[3][0], (k / 2.0) * dt) and math.isclose(two_mass[3][2], -(k / 2.0) * dt)
+push = mat_vec(two_mass, [0.10, 0.0, 0.0, 0.0])[3]
+assert math.isclose(push, 0.05) and push > 0.0
+
+print("x1=%.4f m, v1=%.4f m/s | row 1 = %.2f | m2 row = [%.2f, %.2f, %.2f, %.4f] | m2 push = %.2f m/s"
+      % (x1[0], x1[1], v1_scalar, *two_mass[3], push))
 ```
 Expected output:
 ```text
-x1=0.1020 m, v1=0.0800 m/s | row 1 = 0.08 | two-mass block is 4x4
+x1=0.1020 m, v1=0.0800 m/s | row 1 = 0.08 | m2 row = [0.50, 0.05, -0.50, 0.9500] | m2 push = 0.05 m/s
 ```
 
 ## 5. Exercise
