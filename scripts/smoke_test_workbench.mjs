@@ -162,6 +162,35 @@ export async function runSmokeTests(viteServer) {
       linkHtml.includes('data-testid="link-history-table"'),
       'Link Health must render the recent-runs table'
     );
+    assert(
+      linkHtml.includes('data-testid="rise-issues-panel"') && linkHtml.includes('Open rise issues'),
+      'Link Health must render the open rise issues panel'
+    );
+    assert(
+      linkHtml.includes('data-testid="link-history-hosts"'),
+      'Link Health must render the recurring-hosts table'
+    );
+
+    const { HOST_RECURRENCE, HOST_RECURRENCE_RUNS } = historyMod;
+    assert.ok(Array.isArray(HOST_RECURRENCE), 'linkHistoryData must export HOST_RECURRENCE as an array');
+    assert.ok(
+      Number.isInteger(HOST_RECURRENCE_RUNS) && HOST_RECURRENCE_RUNS <= LINK_HISTORY.length,
+      'HOST_RECURRENCE_RUNS cannot exceed the recorded runs; older rows without a URL list do not count'
+    );
+    for (const entry of HOST_RECURRENCE) {
+      assert.ok(entry.host && !entry.host.includes('/'), `host must be a bare hostname, got ${entry.host}`);
+      assert.ok(
+        Number.isInteger(entry.runs) && entry.runs >= 1 && entry.runs <= HOST_RECURRENCE_RUNS,
+        `runs for ${entry.host} must be between 1 and ${HOST_RECURRENCE_RUNS}`
+      );
+      assert.ok(Number.isInteger(entry.urls) && entry.urls >= 0, `urls for ${entry.host} must be a count`);
+    }
+    for (let i = 1; i < HOST_RECURRENCE.length; i += 1) {
+      assert.ok(
+        HOST_RECURRENCE[i - 1].runs >= HOST_RECURRENCE[i].runs,
+        'HOST_RECURRENCE must be ordered worst-first so the table reads as a ranking'
+      );
+    }
     if (LINK_HISTORY.length > 0) {
       const latest = LINK_HISTORY[LINK_HISTORY.length - 1];
       const rendered = linkHtml.match(/data-testid="link-history-latest-not-checked"[^>]*>(\d+)/);

@@ -93,3 +93,200 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
 
 /** History lines the generator could not plot (invalid JSON, missing date). */
 export const LINK_HISTORY_SKIPPED: string[] = [];
+
+/**
+ * A host the sweep could not verify, counted across runs. `runs` is how many runs listed at
+ * least one of its URLs as unverified; `urls` is how many it lists in the latest run.
+ */
+export interface HostRecurrence {
+  host: string;
+  runs: number;
+  urls: number;
+  lastSeen: string;
+}
+
+/** Runs whose record carried its unverified URL list; older rows cannot contribute. */
+export const HOST_RECURRENCE_RUNS: number = 3;
+
+export const HOST_RECURRENCE: HostRecurrence[] = [
+  {
+    "host": "st.com",
+    "runs": 3,
+    "urls": 5,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "link.springer.com",
+    "runs": 3,
+    "urls": 4,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "sciencedirect.com",
+    "runs": 3,
+    "urls": 4,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "analog.com",
+    "runs": 3,
+    "urls": 3,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "cds.caltech.edu",
+    "runs": 3,
+    "urls": 2,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "ctms.engin.umich.edu",
+    "runs": 3,
+    "urls": 2,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "doi.org",
+    "runs": 3,
+    "urls": 2,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "learn.sparkfun.com",
+    "runs": 3,
+    "urls": 2,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "mathworks.com",
+    "runs": 3,
+    "urls": 2,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "raspberrypi.com",
+    "runs": 3,
+    "urls": 2,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "wiki.st.com",
+    "runs": 3,
+    "urls": 2,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "advanced.onlinelibrary.wiley.com",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "allaboutcircuits.com",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "dl.acm.org",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "elmerfem.org",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "fbsbook.org",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "iso.org",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "journals.sagepub.com",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "libero-project.github.io",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "maxongroup.com",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "mitpress.mit.edu",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "ngspice.sourceforge.io",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "onlinelibrary.wiley.com",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "openmodelica.org",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "rug.nl",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "sapien.ucsd.edu",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "science.org",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "w3.org",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "wiki.linuxfoundation.org",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  },
+  {
+    "host": "ww1.microchip.com",
+    "runs": 3,
+    "urls": 1,
+    "lastSeen": "2026-10-19T22:24:26+00:00"
+  }
+];

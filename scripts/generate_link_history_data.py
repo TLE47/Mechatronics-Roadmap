@@ -24,6 +24,7 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
+from urllib.parse import urlsplit
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_HISTORY = os.path.join(ROOT, "docs", "link-check-history.jsonl")
@@ -53,6 +54,67 @@ def count(record: dict, key: str, where: str) -> int:
     if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
         raise HistoryError(f"{where}: `{key}` must be a non-negative number, got {value!r}")
     return int(round(value))
+
+
+def parse_unverified(record: dict, where: str) -> list[str] | None:
+    """The row's unverified URL list, or None for a row recorded before the field existed.
+
+    None is not an empty list: an old row says nothing about which hosts were walled, so it must
+    not contribute a zero to a recurrence count that claims to span every run.
+    """
+    raw = record.get("unverified")
+    if raw is None:
+        return None
+    if not isinstance(raw, list):
+        raise HistoryError(f"{where}: `unverified` must be a list, got {type(raw).__name__}")
+    return [str(url).strip() for url in raw if str(url).strip()]
+
+
+def host_of(url: str) -> str:
+    """The host a citation belongs to, with a leading `www.` removed so the two spellings agree."""
+    try:
+        host = (urlsplit(url).hostname or "").lower()
+    except ValueError:
+        return ""
+    return host[4:] if host.startswith("www.") else host
+
+
+def host_recurrence(rows: list[dict]) -> tuple[list[dict], int]:
+    """How often each host appears in the unverified pile, and in how many runs it could appear.
+
+    A host that walls one citation every week is a different problem from a page that broke once:
+    the first is the publisher's stance toward scripts, the second is a citation to fix. Counting
+    distinct runs, rather than URLs, keeps a host with ten blocked PDFs from looking ten times
+    flakier than one with a single blocked page.
+    """
+    hosts: dict[str, dict] = {}
+    runs_with_urls = 0
+    for row in rows:
+        urls = row.get("unverified")
+        if urls is None:
+            continue
+        runs_with_urls += 1
+        per_host: dict[str, set[str]] = {}
+        for url in urls:
+            host = host_of(url)
+            if host:
+                per_host.setdefault(host, set()).add(url)
+        for host in per_host:
+            entry = hosts.setdefault(host, {"host": host, "runs": 0, "urls": 0, "lastSeen": ""})
+            entry["runs"] += 1
+            entry["lastSeen"] = row["date"]
+
+    latest = next((row["unverified"] for row in reversed(rows) if row.get("unverified") is not None), [])
+    now: dict[str, int] = {}
+    for url in latest:
+        host = host_of(url)
+        if host:
+            now[host] = now.get(host, 0) + 1
+    for host, entry in hosts.items():
+        entry["urls"] = now.get(host, 0)
+
+    ordered = sorted(hosts.values(), key=lambda entry: (-entry["runs"], -entry["urls"], entry["host"]))
+    return ordered, runs_with_urls
 
 
 def verdicts_of(record: dict, where: str) -> dict[str, int]:
@@ -99,6 +161,7 @@ def load_history(path: str) -> tuple[list[dict], list[str]]:
                 row["unreachable"] = verdicts.get("UNREACHABLE", 0)
                 row["serverError"] = verdicts.get("SERVER_ERROR", 0)
                 row["verdicts"] = verdicts
+                row["unverified"] = parse_unverified(record, where)
             except HistoryError as exc:
                 skipped.append(str(exc))
                 continue
@@ -108,7 +171,8 @@ def load_history(path: str) -> tuple[list[dict], list[str]]:
     return rows, skipped
 
 
-def render_module(rows: list[dict], skipped: list[str], history_rel: str) -> str:
+def render_module(rows: list[dict], skipped: list[str], history_rel: str,
+                  recurrence: list[dict], recurrence_runs: int) -> str:
     points = []
     for row in rows:
         points.append(
@@ -155,6 +219,22 @@ def render_module(rows: list[dict], skipped: list[str], history_rel: str) -> str
         "/** History lines the generator could not plot (invalid JSON, missing date). */\n"
         "export const LINK_HISTORY_SKIPPED: string[] = "
         + json.dumps(skipped, indent=2, ensure_ascii=False)
+        + ";\n\n"
+        "/**\n"
+        " * A host the sweep could not verify, counted across runs. `runs` is how many runs listed at\n"
+        " * least one of its URLs as unverified; `urls` is how many it lists in the latest run.\n"
+        " */\n"
+        "export interface HostRecurrence {\n"
+        "  host: string;\n"
+        "  runs: number;\n"
+        "  urls: number;\n"
+        "  lastSeen: string;\n"
+        "}\n\n"
+        "/** Runs whose record carried its unverified URL list; older rows cannot contribute. */\n"
+        # Typed `number`, not a literal: the component pluralizes a count the next sweep changes.
+        f"export const HOST_RECURRENCE_RUNS: number = {recurrence_runs};\n\n"
+        "export const HOST_RECURRENCE: HostRecurrence[] = "
+        + json.dumps(recurrence, indent=2, ensure_ascii=False)
         + ";\n"
     )
 
@@ -174,7 +254,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    content = render_module(rows, skipped, history_rel)
+    recurrence, recurrence_runs = host_recurrence(rows)
+    content = render_module(rows, skipped, history_rel, recurrence, recurrence_runs)
     out_rel = os.path.relpath(args.out, ROOT)
 
     if args.check:

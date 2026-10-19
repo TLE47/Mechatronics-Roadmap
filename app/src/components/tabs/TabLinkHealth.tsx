@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { Activity, AlertTriangle, CheckCircle2, CircleSlash, Clock3 } from 'lucide-react';
 import {
+  HOST_RECURRENCE,
+  HOST_RECURRENCE_RUNS,
   LINK_HISTORY,
   LINK_HISTORY_SKIPPED,
   LINK_HISTORY_SOURCE,
   type LinkHistoryPoint,
 } from '../../data/linkHistoryData';
+import { RiseIssuesPanel } from '../RiseIssuesPanel';
 
 /**
  * Link Health — the one number the nightly citation check cannot fake.
@@ -362,6 +365,8 @@ export const TabLinkHealth: React.FC = () => {
         </div>
       </div>
 
+      <RiseIssuesPanel />
+
       {LINK_HISTORY_SKIPPED.length > 0 && (
         <div className="bg-[#fbbf24]/10 border border-[#fbbf24]/40 rounded-lg p-3 text-xs text-[#fbbf24]">
           <strong>{LINK_HISTORY_SKIPPED.length} history line(s) could not be plotted.</strong> Fix{' '}
@@ -395,6 +400,52 @@ export const TabLinkHealth: React.FC = () => {
           served + not checked + failed = citations, and a run whose <em>not checked</em> count jumps is usually a host starting
           to block the checker rather than new broken links — confirm with{' '}
           <span className="font-mono text-[#cbd5e1]">scripts/check_links.py</span> before editing citations.
+        </p>
+      </div>
+
+      {/* Recurring hosts: a wall that keeps coming back is a different problem from a one-off. */}
+      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4 overflow-x-auto">
+        <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
+          <h2 className="text-sm font-bold text-[#38bdf8]">Recurring unverified hosts</h2>
+          <span className="text-[0.7rem] text-[#94a3b8] font-mono">
+            {HOST_RECURRENCE_RUNS} run{HOST_RECURRENCE_RUNS === 1 ? '' : 's'} recorded the URL list
+          </span>
+        </div>
+        {HOST_RECURRENCE.length === 0 ? (
+          <p className="text-xs text-[#94a3b8] leading-relaxed">
+            No run has recorded which URLs it could not verify yet, so there is nothing to count per
+            host. The next sweep writes that list; this table fills from it.
+          </p>
+        ) : (
+          <table className="w-full text-left text-xs border-collapse" data-testid="link-history-hosts">
+            <thead>
+              <tr className="text-[#94a3b8] border-b border-[#334155]">
+                <th className="py-1.5 pr-3 font-semibold">Host</th>
+                <th className="py-1.5 pr-3 font-semibold text-right">Runs unverified</th>
+                <th className="py-1.5 pr-3 font-semibold text-right">URLs now</th>
+                <th className="py-1.5 font-semibold text-right">Last seen</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono text-[#cbd5e1]">
+              {HOST_RECURRENCE.map((entry) => (
+                <tr key={entry.host} className="border-b border-[#1e293b] last:border-0">
+                  <td className="py-1.5 pr-3 whitespace-nowrap">{entry.host}</td>
+                  <td className={`py-1.5 pr-3 text-right ${entry.runs >= 2 ? 'text-[#fbbf24]' : 'text-[#94a3b8]'}`}>
+                    {entry.runs} / {HOST_RECURRENCE_RUNS}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right">{entry.urls}</td>
+                  <td className="py-1.5 text-right text-[#94a3b8]">
+                    {entry.lastSeen ? formatDay(parseDate(entry.lastSeen)) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <p className="text-[0.7rem] text-[#94a3b8] mt-2 leading-relaxed">
+          A host that stays on this list across sweeps is a publisher that blocks scripts — keep the
+          citation and confirm it in a browser, or find a mirror. A host seen once is usually a
+          transient wall or an outage; the rise gate files an issue only for the URLs that are new.
         </p>
       </div>
 
