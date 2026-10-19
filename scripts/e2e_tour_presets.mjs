@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 /**
- * Guided-Tour Preset Suite — `scripts/e2e_tour_presets.mjs`
+ * Preset Suite — `scripts/e2e_tour_presets.mjs`
  *
- * Walks the guided tour from step 2 to step 8 in a real browser. At each step it:
- *   1. perturbs the simulator wherever the default state already equals the preset, so the
- *      preset has something to change (the tour's own copy describes the same drag);
- *   2. asserts the readout is NOT yet the preset's value (proves the perturbation took);
- *   3. clicks Apply Demo Preset and asserts the readout IS now the preset's value.
+ * Checks that every Apply Demo Preset a learner can reach changes its simulator's readouts. Two groups:
+ *
+ *   1. the guided tour, steps 2–8, clicked through with Next Step and Apply Demo Preset;
+ *   2. the architecture-card presets (the "Open …" buttons on the roadmap), one per curriculum step.
+ *      A card on a tier pass other than 1 is reached by selecting its pass first.
+ *
+ * Each case perturbs or primes the simulator where its default already equals the preset, asserts the
+ * readout is NOT yet the preset's value, applies the preset, and asserts the readout IS the value.
  * Step 1 (the roadmap) has no simulator, so its Apply is a deliberate no-op and is not asserted.
  *
- * The expected readouts are the ones each preset writes in `app/src/components/tabs/*`, and they
- * were measured in the browser when the presets were written: the notch at 547 Hz, the 5500 RPM
- * drone with decoupling off, the 0.45 m wall, the 42 A short tripping the STO, the 1.6 nH layout,
- * Schroeder crest factor 1.71, and the SeqLock with zero torn reads.
+ * The expected readouts are the ones each preset writes in `app/src/components/tabs/*`, measured in the
+ * browser: the notch at 547 Hz and 172 Hz, the 5500 RPM drone with decoupling off, the 0.45 m wall, the
+ * 42 A short tripping the STO, the 1.6 nH layout, the 2-layer 4.5 nH layout (V_DS 62.4 V), the 30 A
+ * solver (99.11% -> 98.55%, T_j 90.9 -> 206.1 °C), Schroeder crest factor 1.71, the SeqLock with zero
+ * torn reads, and the hopper knee at -100°.
  *
  * Usage:  node scripts/e2e_tour_presets.mjs
  *         E2E_BASE_URL=<dev server> when a suite runner already has one (scripts/test_workbench.mjs).
@@ -98,6 +102,100 @@ const TOUR_CASES = [
   },
 ];
 
+/**
+ * Architecture-card presets. `pass` selects the tier pass that shows the card (Pass 1 is the default).
+ * `prime` is set when the card's own simulator already defaults to the preset's value: another card
+ * on the same tab is applied first, its readout is checked to differ, and the roadmap is re-entered.
+ */
+const ARCH_CASES = [
+  {
+    preset: 'surgical_cable',
+    pass: /PASS 1 OF 3/,
+    card: 'Open Two-Mass Resonance Sim (Tab 2)',
+    name: 'Bode: low-stiffness cable drive, notch at 172 Hz',
+    shows: () => document.getElementById('sl-fn')?.value === '172',
+  },
+  {
+    preset: 'robot_hopper_crouch',
+    pass: /PASS 1 OF 3/,
+    card: 'Open Kinematic Chain Inspector (Tab 5)',
+    name: 'Models: hopper knee bent to -100°',
+    shows: () => document.getElementById('sl-rq2')?.value === '-100',
+  },
+  {
+    preset: 'robot_arm_polish',
+    pass: /PASS 1 OF 3/,
+    card: 'Launch Capstone Inspector (Tab 5)',
+    name: 'Models: 6-DOF serial arm selected',
+    shows: () => document.body.innerText.split('\n').some((s) => s.trim() === '6-DOF Serial Arm'),
+  },
+  {
+    preset: 'robot_furuta_bal',
+    pass: /PASS 2 OF 3/,
+    card: 'Inspect URDF/MuJoCo Models (Tab 5)',
+    name: 'Models: Furuta pendulum selected',
+    shows: () => document.body.innerText.split('\n').some((s) => s.trim() === 'Furuta Pendulum'),
+  },
+  {
+    preset: 'sto_enc_crc',
+    pass: /PASS 2 OF 3/,
+    card: 'Test HIL Fault Injection (Tab 5)',
+    name: 'Models: encoder CRC break trips the STO',
+    shows: () => document.body.innerText.includes('FAULT: ENC CRC'),
+  },
+  {
+    preset: 'pcb_2layer_bad',
+    pass: /PASS 2 OF 3/,
+    card: 'Inspect 2-Layer vs 6-Layer PCB (Tab 6)',
+    name: '2-layer 4.5 nH layout: turn-off V_DS 62.4 V breaches 60 V',
+    shows: () =>
+      [...document.querySelectorAll('div')].some(
+        (d) =>
+          d.children.length === 2 &&
+          d.children[0].textContent.trim().startsWith('Turn-Off') &&
+          d.children[1].textContent.trim() === '62.4 V'
+      ),
+  },
+  {
+    // Measured: 30 A moves efficiency 99.11% -> 98.55% and T_j 90.9 -> 206.1 °C. The milestone text asks
+    // for T_j < 110 °C, which this readout does not meet; the test pins the readout, the mismatch is reported.
+    preset: 'pcb_peak_30a',
+    pass: /PASS 3 OF 3/,
+    card: 'Run 30A Electro-Thermal Solver (Tab 6)',
+    name: '30 A solver: efficiency 98.55%, MOSFET T_j 206.1 °C',
+    shows: () => {
+      const valueOf = (label) => {
+        const row = [...document.querySelectorAll('div')].find(
+          (d) => d.children.length === 2 && d.children[0].textContent.trim().startsWith(label)
+        );
+        return row ? row.children[1].textContent.trim() : null;
+      };
+      return valueOf('Inverter Efficiency') === '98.55%' && valueOf('MOSFET') === '206.1 °C';
+    },
+  },
+  {
+    preset: 'cad_flexure_stage',
+    pass: /PASS 3 OF 3/,
+    card: 'Inspect Ti-6Al-4V Flexure CAD (Tab 6)',
+    prime: { pass: /PASS 2 OF 3/, card: 'Inspect QDD Actuator Design (Tab 6)' },
+    name: 'CAD: notch flexure part selected',
+    shows: () => {
+      const button = [...document.querySelectorAll('button')].find((b) => /Ti Notch Flexure/.test(b.innerText));
+      return Boolean(button && button.className.includes('bg-[#38bdf8]/25'));
+    },
+  },
+  {
+    preset: 'cad_qdd_carrier',
+    pass: /PASS 2 OF 3/,
+    card: 'Inspect QDD Actuator Design (Tab 6)',
+    name: 'CAD: 8:1 QDD carrier part selected',
+    shows: () => {
+      const button = [...document.querySelectorAll('button')].find((b) => /QDD Carrier/.test(b.innerText));
+      return Boolean(button && button.className.includes('bg-[#38bdf8]/25'));
+    },
+  },
+];
+
 async function setSlider(page, id, value) {
   await page.evaluate(
     ([sliderId, v]) => {
@@ -111,13 +209,31 @@ async function setSlider(page, id, value) {
   );
 }
 
-async function runTour(page, baseUrl, log) {
+/** Let two frames pass: readouts are derived in useEffect, which runs after React commits. */
+function settle(page) {
+  return page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 50))))
+  );
+}
+
+async function freshPage(context, baseUrl, pageErrors) {
+  const page = await context.newPage();
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') pageErrors.push(`console: ${message.text()}`);
+  });
+  page.on('response', (response) => {
+    if (response.status() >= 400) pageErrors.push(`HTTP ${response.status()} ${response.url()}`);
+  });
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('button', { timeout: 15000 });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'load' });
   await page.waitForSelector('button', { timeout: 15000 });
+  return page;
+}
 
+async function runTour(page, baseUrl, log) {
   // Real clicks on the tour's own controls: the same path a learner takes.
   const next = page.getByRole('button', { name: /^Next Step/ });
   const apply = page.getByRole('button', { name: 'Apply Demo Preset', exact: true });
@@ -137,13 +253,9 @@ async function runTour(page, baseUrl, log) {
       await setSlider(page, ...testCase.perturb.slider);
     }
     if (testCase.perturb?.button) {
-      await page.getByRole('button', { name: testCase.perturb.button }).click();
+      await page.getByRole('button', { name: testCase.perturb.button }).first().click();
     }
-    // Readouts are derived in useEffect, which runs after React commits, not inside the click.
-    // Let two frames pass (the same commit wait the pairs sweep uses) before reading anything.
-    await page.evaluate(
-      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 50))))
-    );
+    await settle(page);
 
     const before = await page.evaluate(testCase.shows);
     if (before !== false) {
@@ -164,6 +276,41 @@ async function runTour(page, baseUrl, log) {
   }
 }
 
+/** Open a card on the roadmap: select its tier pass, then press the card's preset button. */
+async function openCard(page, { pass, card }) {
+  await page.getByRole('button', { name: pass }).first().click({ timeout: 8000 });
+  await page.getByRole('button', { name: card, exact: true }).first().click({ timeout: 8000 });
+}
+
+async function runArchitecture(browser, baseUrl, pageErrors, log) {
+  for (const testCase of ARCH_CASES) {
+    const context = await browser.newContext();
+    try {
+      const page = await freshPage(context, baseUrl, pageErrors);
+      if (testCase.prime) {
+        // The default already matches the preset: show the tab on another card first, and prove it differs.
+        await openCard(page, testCase.prime);
+        await settle(page);
+        const primed = await page.evaluate(testCase.shows);
+        assert.equal(primed, false, `${testCase.preset}: the readout already matches before its own card is applied`);
+        await page.getByRole('button', { name: /^1\. Start Here/ }).first().click({ timeout: 8000 });
+      }
+      await openCard(page, testCase)
+        .catch((error) => {
+          throw new Error(`${testCase.preset}: could not open the card "${testCase.card}": ${error.message.split('\n')[0]}`);
+        });
+      await page.waitForFunction(testCase.shows, null, { timeout: 5000 }).catch(() => {
+        throw new Error(`${testCase.preset}: applying the card did not change the readout (${testCase.name})`);
+      });
+      await settle(page);
+      assert.equal(await page.evaluate(testCase.shows), true, `${testCase.preset}: readout not in its preset state`);
+      log(`  ok ${testCase.preset} ${testCase.name}`);
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 export async function runTourPresetTests({ baseUrl: externalBaseUrl } = {}) {
   const own = externalBaseUrl ? null : await startDevServer(process.cwd());
   const baseUrl = (externalBaseUrl ?? own.baseUrl).replace(/\/*$/, '/');
@@ -175,25 +322,23 @@ export async function runTourPresetTests({ baseUrl: externalBaseUrl } = {}) {
 
   const pageErrors = [];
   try {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    page.on('pageerror', (error) => pageErrors.push(error.message));
-    page.on('console', (message) => {
-      if (message.type() === 'error') pageErrors.push(`console: ${message.text()}`);
-    });
-    page.on('response', (response) => {
-      if (response.status() >= 400) pageErrors.push(`HTTP ${response.status()} ${response.url()}`);
-    });
-
-    await runTour(page, baseUrl, (line) => console.log(line));
+    const tourContext = await browser.newContext();
+    try {
+      const page = await freshPage(tourContext, baseUrl, pageErrors);
+      await runTour(page, baseUrl, (line) => console.log(line));
+    } finally {
+      await tourContext.close();
+    }
+    await runArchitecture(browser, baseUrl, pageErrors, (line) => console.log(line));
   } finally {
     await browser.close();
     if (own) await own.viteServer.close();
   }
 
-  assert.deepEqual(pageErrors, [], `the tour logged errors while it ran:\n  ${pageErrors.join('\n  ')}`);
-  console.log(`  ok ${TOUR_CASES.length} tour presets change their simulator's readouts`);
-  return TOUR_CASES.length;
+  assert.deepEqual(pageErrors, [], `the presets logged errors while they ran:\n  ${pageErrors.join('\n  ')}`);
+  const total = TOUR_CASES.length + ARCH_CASES.length;
+  console.log(`  ok ${total} presets change their simulator's readouts (${TOUR_CASES.length} tour, ${ARCH_CASES.length} architecture cards)`);
+  return total;
 }
 
 const invokedDirectly = process.argv[1] && process.argv[1].endsWith('e2e_tour_presets.mjs');
@@ -201,7 +346,7 @@ if (invokedDirectly) {
   runTourPresetTests({ baseUrl: process.env.E2E_BASE_URL })
     .then(() => process.exit(0))
     .catch((error) => {
-      console.error(`[FAIL] Guided-tour preset suite failed: ${error?.message ?? error}`);
+      console.error(`[FAIL] Preset suite failed: ${error?.message ?? error}`);
       process.exit(1);
     });
 }
