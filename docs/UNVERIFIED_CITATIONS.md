@@ -58,3 +58,9 @@ A failed gate also **files an issue** (`scripts/file_rise_issue.py`): the new UR
 verdicts and the files citing them, one issue per distinct set, deduplicated by a fingerprint in
 the body so a retried job cannot file twice. The issue is where the citation gets triaged; the
 workflow log stays the raw evidence.
+
+The tracker closes itself: each issue also records the URL list it tracks, and every scheduled run
+compares that list with the sweep's current unverified pile. When none of an issue's URLs is
+unverified any more, the run closes it with a comment naming the sweep — a wall that lifts needs no
+human action. A stale state file is refused rather than trusted, so a run that never finished
+cannot close an issue on evidence it did not collect.

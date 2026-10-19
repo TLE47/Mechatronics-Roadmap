@@ -213,13 +213,13 @@ class RecordCountTests(unittest.TestCase):
         )
 
 
-class RiseReportTests(unittest.TestCase):
+class SweepStateTests(unittest.TestCase):
     def record(self, unverified):
         return {"date": "2026-10-26T06:00:00+00:00", "urls": 512, "not_checked": len(unverified),
                 "unverified": unverified}
 
-    def test_the_report_names_only_the_new_urls_with_what_they_said(self):
-        report = check_links.rise_report(
+    def test_the_state_names_only_the_new_urls_with_what_they_said(self):
+        report = check_links.sweep_state(
             self.record(["https://old.example", "https://new.example"]),
             {"date": "2026-10-19T18:15:02+00:00"},
             ["https://new.example"],
@@ -243,25 +243,40 @@ class RiseReportTests(unittest.TestCase):
         )
 
     def test_an_empty_unverified_set_produces_no_rows(self):
-        report = check_links.rise_report(self.record([]), {}, [], {})
+        report = check_links.sweep_state(self.record([]), {}, [], {})
         self.assertEqual(
             report["new"], [],
-            "expected no rows when nothing is unverified; the caller passes None in that case, "
-            "but the builder must not invent a row from a missing detail entry",
+            "expected no rows when nothing is unverified; the caller passes an empty list in that "
+            "case, but the builder must not invent a row from a missing detail entry",
         )
 
-    def test_a_stale_report_is_removed_by_a_run_with_no_rise(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = os.path.join(tmp, "rise.json")
-            wrote = check_links.emit_rise_report(path, {"new": [{"url": "https://a.example"}]})
-            self.assertTrue(wrote, "expected the gate to write its report when it has new URLs")
-            wrote_again = check_links.emit_rise_report(path, None)
-            self.assertEqual(
-                (wrote_again, os.path.exists(path)),
-                (False, False),
-                "expected a passing run to delete the leftover report; otherwise a reused workspace "
-                "files last week's URLs as this week's news",
-            )
+    def test_the_state_lists_every_url_unverified_now_not_only_the_new_ones(self):
+        report = check_links.sweep_state(
+            self.record(["https://old.example", "https://new.example"]),
+            {},
+            ["https://new.example"],
+            {"https://old.example": (check_links.BLOCKED, 403, {"old.md"}),
+             "https://new.example": (check_links.BLOCKED, 403, {"new.md"})},
+        )
+        self.assertEqual(
+            report["unverified"], ["https://new.example", "https://old.example"],
+            "expected the full current pile, sorted, because the resolver decides whether an issue "
+            "can close from this list: a state carrying only the new URLs would close an issue "
+            "whose older wall is still standing",
+        )
+
+    def test_a_run_with_no_rise_still_records_a_usable_state(self):
+        report = check_links.sweep_state(
+            self.record(["https://old.example"]), {}, [],
+            {"https://old.example": (check_links.BLOCKED, 403, {"a.md"})},
+        )
+        self.assertEqual(
+            (report["new"], report["unverified"], report["date"]),
+            ([], ["https://old.example"], "2026-10-26T06:00:00+00:00"),
+            "expected a passing sweep to write a state with `new` empty but the date and the "
+            "unverified list intact; the resolver runs on the same file, and the filer's `new`-empty "
+            "path is what keeps it from filing anything",
+        )
 
 
 class CacheFileTests(unittest.TestCase):
