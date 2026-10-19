@@ -24,7 +24,7 @@ flowchart TD
 
 | Bucket | Count | What it is | Action |
 | :--- | ---: | :--- | :--- |
-| `BLOCKED` | 27 | The host answered **403** to a script: Wiley, ACM, SAGE, ScienceDirect, Springer, MathWorks, ISO, MIT Press, W3C, raspberrypi.com, maxongroup.com. These open in a browser; several were `HTTP 200` when the citations were written. | Keep the link. No page carries a `Verified by scripts/check_links.py` badge unless the checker served it, so nothing here claims otherwise. |
+| `BLOCKED` | 27 | The host answered **403** to a script: Wiley, ACM, SAGE, ScienceDirect, Springer, MathWorks, ISO, MIT Press, W3C, raspberrypi.com, maxongroup.com. | Keep the link. 15 of the 27 were confirmed in a real browser on 2026-10-19 (below); no page carries a `Verified by scripts/check_links.py` badge unless the checker served it, so nothing here claims otherwise. |
 | `UNREACHABLE` — timeouts | 19 | `st.com` app notes and wiki (10), Springer book pages (4), SparkFun tutorials (2), `openmodelica.org`, `sapien.ucsd.edu`, `libero-project.github.io`. Read/handshake timeouts, retried once each; these are CDNs that throttle scripted fetches, not dead pages. | Keep. The cache keeps an unverified verdict for only 6 hours, so a permanent change surfaces without a manual pass. |
 | `UNREACHABLE` — TLS | 2 | `cds.caltech.edu/~murray` PDFs: the server sends an incomplete chain, which `urllib` rejects. The files are live. | Keep; a browser accepts the chain. |
 | `SERVER_ERROR` | 1 | `fbsbook.org` answers 500 — the site's own outage, noted in the module that cites it. | Keep; already annotated in `05-control-and-estimation/05.1-…`. |
@@ -32,6 +32,28 @@ flowchart TD
 
 The four live buckets add to **49**, the `not_checked` figure in the recorded history row:
 27 + 19 + 2 + 1.
+
+## Browser check of the bot walls (2026-10-19)
+
+"These open in a browser" was an assertion, so `scripts/verify_bot_walls.mjs` now visits every
+`BLOCKED` URL in Chromium and records the status, title and final URL (`.browser-verdicts.json`,
+written by `npm run verify:walls`). On the 27 in the table:
+
+- **15 served a real page** — Wiley, ACM, MIT Press, ISO, MathWorks (both), maxon, Raspberry Pi
+  (both), Science.org, Microchip, All About Circuits and two more. Those citations are live; the
+  sweep will still say `BLOCKED`, which is a statement about scripts, not about the page.
+- **11 answered with a wall in a browser too** — six Cloudflare "Just a moment…" challenge pages
+  (SAGE, ngspice, the Linux Foundation wiki, elmerfem, rug.nl, w3.org), one doi.org "Security
+  Challenge" on the MDPI paper, and four ScienceDirect 403s. A human may clear the challenge; no
+  scripted check can, so the weekly sweep will keep reporting them.
+- **1 was genuinely broken** — `onlinelibrary.wiley.com/doi/book/10.1002/9781119505808` answered
+  **404**: the citation's DOI was wrong by a digit. Crossref gives the book's DOI as
+  `10.1002/9781119505730`, and the two pages that cite it now link that instead; in Chromium the
+  corrected DOI answers with the same Cloudflare challenge, so it joins the walled group rather
+  than the 15.
+
+This is evidence gathering, not a second checker: a page that renders in Chromium is still
+`BLOCKED` to `check_links.py`, and the sweep's verdicts and counts are unchanged.
 
 ## Repaired in the earlier pass
 

@@ -237,16 +237,51 @@ class SimRouteTests(unittest.TestCase):
         )
 
     def test_the_tier2_requirement_count_is_the_route_count(self):
+        """No pinned literal: the route is the only expectation, so moving a module needs one edit.
+
+        A test that also asserted `tier2 == 20` would force a second, manual update whenever a
+        module deliberately moves — and it would be the second place to get that edit wrong. The
+        marker comparison below is the real check: regenerate, and the README follows.
+        """
         tier2 = gen.route_facts()["tiers"].get("2", 0)
-        self.assertEqual(
-            tier2, 20,
-            "expected the Core route to hold 20 Tier 2 modules as the page lists them; if this "
-            "moved, the README's step-4 line moved with it",
-        )
         self.assertIn(
             f"<!-- sim-route:tier2 -->{tier2}<!-- /sim-route -->", self.readme,
             f"expected README.md's step-4 requirement to carry the route's own Tier 2 count "
             f"({tier2}); a hand-typed 18 is exactly the drift the marker exists to stop",
+        )
+
+    def test_the_hours_basis_sentence_is_generated_from_the_metadata(self):
+        facts = gen.route_facts()
+        expected = gen.hours_basis(facts)
+        self.assertIn(
+            f"<!-- sim-route:hours-basis -->{expected}<!-- /sim-route -->", self.readme,
+            "expected README.md's planning clause to be the generated one; a hand-written 'the "
+            "high end is the slow-learner figure' is false while any required page states a "
+            "single estimate, which is the majority of them",
+        )
+        self.assertIn(
+            f"**Estimate coverage:** {expected[0].upper() + expected[1:]}.", self.doc,
+            "expected docs/SIM_ROUTE.md to state the same coverage the README does, generated "
+            "from the page metadata rather than typed",
+        )
+
+    def test_the_coverage_counts_are_the_pages_own(self):
+        facts = gen.route_facts()
+        pages = slow = 0
+        for _label, pattern, stop_before in gen.CORE_TRACKS:
+            for row in gen.track_rows(pattern, stop_before):
+                pages += 1
+                slow += 1 if row["low"] is not None and row["high"] > row["low"] else 0
+        core = {row["id"] for row in gen.module_rows() if row["id"] in set(gen.CORE_MODULES)}
+        for row in gen.module_rows():
+            if row["id"] in core:
+                pages += 1
+                slow += 1 if row["low"] is not None and row["high"] > row["low"] else 0
+        self.assertEqual(
+            (facts["pages"], facts["slow_pages"]), (pages, slow),
+            f"expected route_facts to count the same {pages} required pages and {slow} with a "
+            f"slow-learner range as a walk of CORE_TRACKS plus CORE_MODULES does; otherwise the "
+            f"coverage sentence describes a route the page does not list",
         )
 
     def test_every_optional_module_is_real_and_justified(self):
