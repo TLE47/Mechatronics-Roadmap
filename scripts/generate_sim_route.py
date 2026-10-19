@@ -135,6 +135,11 @@ def module_rows():
     return rows
 
 
+def lesson_order(ident):
+    """Numeric-aware sort key: 'P.2' < 'P.10' and 'S0.7' < 'S0.10'. Plain string order puts P.10 first."""
+    return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", ident)]
+
+
 def track_rows(pattern, stop_before):
     rows = []
     for path in sorted(glob.glob(os.path.join(ROOT, pattern))):
@@ -152,6 +157,9 @@ def track_rows(pattern, stop_before):
                 "high": (slow[1] if slow else (typical[1] if typical else None)),
             }
         )
+    # Route order follows the lesson numbers, not the filenames, so each lesson sits after the one it
+    # hands to (P.2 -> P.3 ... P.9 -> P.10), whatever the files happen to be called.
+    rows.sort(key=lambda row: lesson_order(row["id"]))
     return rows
 
 

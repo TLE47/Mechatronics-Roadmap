@@ -98,7 +98,7 @@ is the plant the Tier 1 learner finished with.
 ## What this is not (yet)
 
 - **No numpy, no URDF, no 3-D.** The 2-link arm is planar, as it is in Track 02.
-- **Used by every bridge module.** All 46 bridge modules ship a learner scaffold, and every one of
+- **Used by every bridge module.** All 48 bridge modules ship a learner scaffold, and every one of
   them runs its Transfer suite on this arm: each module declares `plant: tier1_arm_motor` and carries
   a runnable block that asserts one of its own Transfer figures against the constants here.
 - **Scored for every module, and now settled.** `scripts/module_parity.py` scores

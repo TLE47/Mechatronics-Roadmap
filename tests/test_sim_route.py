@@ -16,6 +16,7 @@ The route document is the one page a beginner is asked to follow, so the failure
 Run: `python3 tests/test_sim_route.py` (also wired into the CI verify step).
 """
 
+import glob
 import importlib.util
 import os
 import re
@@ -276,6 +277,41 @@ class SimRouteTests(unittest.TestCase):
                 f"the Core route; moving it to Extensions leaves a learner with the setup half "
                 f"and no project to use it in",
             )
+
+    def test_track_p_follows_the_lesson_numbers_not_the_filenames(self):
+        """Plain filename order lists P.10 before P.2; the route has to follow the lesson numbers."""
+        ids = [row["id"] for row in gen.track_rows("track-p/*.md", "P.M")]
+        self.assertEqual(
+            ids, sorted(ids, key=gen.lesson_order),
+            f"expected Track P rows in lesson-number order, got {ids}",
+        )
+        self.assertLess(
+            self.doc.index("`P.2`"), self.doc.index("`P.10`"),
+            "expected P.2 before P.10 in docs/SIM_ROUTE.md; string order puts P.10 first",
+        )
+
+    def test_each_track_p_lesson_comes_before_the_one_it_hands_to(self):
+        """A lesson's `Next lesson` link names the lesson that depends on it, so the route must list the
+        dependent after it. Filename order breaks this at P.9 -> P.10."""
+        order = {row["id"]: i for i, row in enumerate(gen.track_rows("track-p/*.md", "P.M"))}
+        checked = 0
+        for path in sorted(glob.glob(os.path.join(ROOT, "track-p", "P.*.md"))):
+            source = gen.frontmatter(path).get("lesson_id", "")
+            with open(path, encoding="utf-8") as handle:
+                match = re.search(r"\*\*Next lesson:\*\*.*?\[Lesson (P\.\w+):", handle.read())
+            if not match or source not in order or match.group(1) not in order:
+                continue
+            checked += 1
+            self.assertLess(
+                order[source], order[match.group(1)],
+                f"expected {source} to come before {match.group(1)}, which it hands to; the route "
+                f"lists {match.group(1)} first, so a learner meets the dependent lesson too early",
+            )
+        self.assertGreaterEqual(
+            checked, 10,
+            f"expected at least 10 Track P hand-offs to check, found {checked}; the Next-lesson "
+            f"pattern may have changed",
+        )
 
 
 if __name__ == "__main__":

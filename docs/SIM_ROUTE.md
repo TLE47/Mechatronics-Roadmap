@@ -21,10 +21,6 @@ flowchart LR
 | Stage | Item | Hours |
 | :--- | :--- | ---: |
 | Track P - programming from zero | `P.1` Variables and Fundamental Data Types | 1-3 |
-| Track P - programming from zero | `P.10` Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry | 1.5-3.5 |
-| Track P - programming from zero | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
-| Track P - programming from zero | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
-| Track P - programming from zero | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
 | Track P - programming from zero | `P.2` Computer Arithmetic and Order of Operations | 1-2.5 |
 | Track P - programming from zero | `P.3` Conditional Decisions (if/elif/else) and Command Clamping | 1.5-3.5 |
 | Track P - programming from zero | `P.4` Ordered Lists and Repeating Actions with for Loops | 1.5-3.5 |
@@ -33,6 +29,10 @@ flowchart LR
 | Track P - programming from zero | `P.7` Base SI Units and Metric Prefixes (M, k, m, µ) | 1-2.5 |
 | Track P - programming from zero | `P.8` Cycle Frequency (Hz), Period (T = 1/f) and Binary Bits (2^N) | 1-3 |
 | Track P - programming from zero | `P.9` Rearranging Physics Formulas and Linear Range Scaling | 1-3 |
+| Track P - programming from zero | `P.10` Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry | 1.5-3.5 |
+| Track P - programming from zero | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
+| Track P - programming from zero | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
+| Track P - programming from zero | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
 | Track P - programming from zero | **13 lessons, together** | 40 |
 | Stage 0 - why electricity behaves like flow | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
 | Stage 0 - why electricity behaves like flow | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
