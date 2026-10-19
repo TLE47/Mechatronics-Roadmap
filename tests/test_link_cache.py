@@ -186,6 +186,33 @@ class HistoryTests(unittest.TestCase):
         )
 
 
+class RecordCountTests(unittest.TestCase):
+    def test_a_row_where_every_url_has_one_verdict_reconciles(self):
+        row = {"urls": 512, "served": 463, "not_checked": 49, "failed": 0}
+        self.assertTrue(
+            check_links.counts_reconcile(row),
+            "expected a row whose served, not-checked and failed counts add to the URL total to "
+            "reconcile; that is the shape every sweep records",
+        )
+
+    def test_a_row_that_mixes_two_runs_does_not_reconcile(self):
+        row = {"urls": 513, "served": 476, "not_checked": 51, "failed": 0}
+        self.assertFalse(
+            check_links.counts_reconcile(row),
+            "expected 476 served plus 51 not-checked against 513 URLs to be rejected: they sum "
+            "to 527, which is how a published triage ended up claiming 513 URLs in three "
+            "categories that total 527",
+        )
+
+    def test_a_row_whose_failed_count_is_missing_is_not_accepted(self):
+        row = {"urls": 10, "served": 10, "not_checked": 0}
+        self.assertTrue(
+            check_links.counts_reconcile(row),
+            "expected a missing `failed` key to read as zero rather than crash; an old row without "
+            "the field still reconciles when nothing failed",
+        )
+
+
 class RiseReportTests(unittest.TestCase):
     def record(self, unverified):
         return {"date": "2026-10-26T06:00:00+00:00", "urls": 512, "not_checked": len(unverified),

@@ -1,19 +1,24 @@
 # Unverified citations — triage after the 2026-10-19 sweep
 
-The sweep checked 513 URLs in 118 files on Python 3.12. It **served 476** and could not verify
-**51**. Those 51 are not one kind of problem, and this file records what each kind means and what
-to do about it.
+The sweep checked **512 URLs in 118 files** on Python 3.12: it **served 463**, could not verify
+**49**, and failed none. Those three numbers partition the 512 — every URL gets exactly one
+verdict, which is the identity the checker now refuses to record a history row without
+(`served + not_checked + failed == urls`).
+
+> An earlier draft of this page added the served count from the 18:15 row (476 of 513, 37
+> unverified) to the unverified count from a later local cache (51), so its figures summed to 527.
+> The buckets below are all from the recorded run above.
 
 ```mermaid
 flowchart TD
-    A[51 URLs not verified] --> B{What did the host say?}
+    A[49 URLs not verified] --> B{What did the host say?}
     B -->|403 or 429| C[Bot wall: the page is live, keep the link]
-    B -->|timeout or TLS| D[Scripted-fetch limit: keep, retry hourly]
+    B -->|timeout or TLS| D[Scripted-fetch limit: keep, retry within six hours]
     B -->|DNS no longer resolves| E[Dead: replace it or cite by title]
     B -->|5xx| F[Site outage: annotate, recheck next week]
     C --> G[The rise gate names any new wall]
     D --> G
-    E --> H[Fixed in this pass]
+    E --> H[Repaired in the earlier pass]
     F --> G
 ```
 
@@ -23,9 +28,12 @@ flowchart TD
 | `UNREACHABLE` — timeouts | 19 | `st.com` app notes and wiki (10), Springer book pages (4), SparkFun tutorials (2), `openmodelica.org`, `sapien.ucsd.edu`, `libero-project.github.io`. Read/handshake timeouts, retried once each; these are CDNs that throttle scripted fetches, not dead pages. | Keep. The cache keeps an unverified verdict for only 6 hours, so a permanent change surfaces without a manual pass. |
 | `UNREACHABLE` — TLS | 2 | `cds.caltech.edu/~murray` PDFs: the server sends an incomplete chain, which `urllib` rejects. The files are live. | Keep; a browser accepts the chain. |
 | `SERVER_ERROR` | 1 | `fbsbook.org` answers 500 — the site's own outage, noted in the module that cites it. | Keep; already annotated in `05-control-and-estimation/05.1-…`. |
-| **Dead** | 2 | `www.sze.hu` no longer resolves (the free *Mechatronics Handbook* PDF); `www.ulb.ac.be` no longer resolves (a Chinese-titled Preumont PDF). | Repaired below. |
+| **Dead** | 0 in this run | Two dead mirrors were found in the earlier 51-URL cache and removed from the tree; neither is cited any more, so neither appears above. | Done — see below. |
 
-## Repaired in this pass
+The four live buckets add to **49**, the `not_checked` figure in the recorded history row:
+27 + 19 + 2 + 1.
+
+## Repaired in the earlier pass
 
 - **The Mechatronics Handbook** — the `sze.hu` mirror is gone, so
   `resources/textbooks-and-papers.md` and `00-foundations/README.md` now link the
