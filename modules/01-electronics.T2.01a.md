@@ -95,7 +95,7 @@ EXERCISE_TARGET=exercises/01-electronics.T2.01a/starter.py \
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) ($\text{m}\Omega$ Shunt Scaling), [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Affine Range Mapping*), [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Frequency Response*), and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Nyquist Aliasing & Anti-Aliasing Cutoff*).
   - **Prerequisite Bridge Module:** [`01-electronics.T1.01b`](01-electronics.T1.01b.md) and Legacy **Step 1.2 (`01-electronics.T1.02`)**.
   - **Core Concepts to Review First:** 4-terminal Kelvin sense connections, differential op-amp output $V_{\text{out}} = V_{\text{ref}}/2 + G(I_{\text{phase}}R_{\text{shunt}})$, and active RC anti-aliasing filter sizing in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [TI INA240 Current-Sense Amplifier Datasheet (`ti.com/lit/gpn/ina240`)](https://www.ti.com/lit/gpn/ina240), [TI Op Amps for Everyone (SLOD006)](https://www.ti.com/lit/pdf/slod006), and [Track 01 §2.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
+  - **Study Links & Resources:** [TI INA240 Current-Sense Amplifier Datasheet (`ti.com/lit/gpn/ina240`)](https://www.ti.com/lit/gpn/ina240), [Op Amps for Everyone (TI SLOD006B, free PDF)](https://web.mit.edu/6.101/www/reference/op_amps_everyone.pdf), and [Track 01 §2.3 (`01-electronics-and-power/README.md`)](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
 
 ### Starter code
 ```python

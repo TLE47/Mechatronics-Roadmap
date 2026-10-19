@@ -11,6 +11,121 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 100: The Track Index Pages Are Checked Too
+
+`check_links.py` has named `00-foundations/README.md`, `01-…` and `02-…` in its external-scope
+logic since `416f2d9`, but none of the nine track index pages was ever in the file list — a dead
+branch for every one of them, so the pages a learner lands on first were the only ones whose links
+nothing checked.
+
+| change | effect |
+| --- | --- |
+| `TRACK_READMES` (nine paths) added to the scan set | all 113 scanned files now include every track index page |
+| the Tier 1 external window deleted | every external URL on those nine pages is fetched, including the Tier 2/3 resource lists the window used to skip |
+| sixteen dead or moved citations replaced | listed below |
+
+| page citation | was | now |
+| --- | --- | --- |
+| AS5600 datasheet | `look.ams-osram.com` 404 | the canonical `ams.com` PDF |
+| Hogan 1985 impedance control | `mec560sbu.github.io` 404 | the STIFF summer-school PDF |
+| PCB bring-up (Hackaday) | 404 | Altium's first-power-on guide |
+| Nav2 MPPI configuration | old docs path 404 | the versioned `jazzy` docs page |
+| ETH RSL Robot Dynamics | `robot-dynamics.html` 404 | `robotdynamics.html` |
+| Åström & Murray loop shaping | chapter PDF 404 | the free whole-book PDF |
+| Computer-Controlled Systems | Lund course page 404 | the book's Google Books record |
+| Piccoli & Yim anticogging | `seas.upenn.edu` 404 | the ModLab UPenn PDF |
+| Control of Mechatronic Systems | Wiley product page 404 | the Wiley DOI page |
+| System Identification (Pintelon) | IEEE Xplore book 418 | the Wiley DOI page |
+| Flexures (Stuart Smith) | Google Books volume 404 | the Google Books record for the same book |
+| Phil's Lab channel | `/c/PhilsLab` 404 | `@PhilsLab` |
+| Infineon AN-978 | `dgdl` PDF 404 | Infineon's community-hosted PDF |
+| Infineon MOSFET losses AN | `dgdl` PDF 404 | Infineon's application-note page |
+| NXP AN5087 Allan variance | `nxp.com` 404 | a mirrored copy of the same note |
+| LiteRT for microcontrollers | 302 to an OAuth challenge | the TFLite Micro repository |
+
+Measured with `python3.12 scripts/check_links.py`: 113 files, **352 unique URLs**, **322 served**, 30 not
+checked from this machine (14 bot walls, 1 server error, 15 timeouts or certificate failures),
+**0 broken relative links**, **0 failed URLs**, exit `0`. The unverified set includes
+`fbs-public_24Jul2020.pdf`, because `cds.caltech.edu` serves a chain this Python cannot validate; that
+is the checker's *could not be checked* verdict, not a failure.
+
+**The scan set is now guarded.** `tests/test_link_scan_set.py` derives the track index pages from disk
+(`NN-*/README.md`) and fails when one is missing from `get_target_markdown_files()`, when `TRACK_READMES`
+and the numbered track directories disagree (a new track nobody added, or a removed track's stale entry),
+and when a declared path does not exist — the third case matters because the file list silently drops
+missing paths rather than erroring. Proven by deleting `00-foundations` from the tuple: the suite exits
+`1` naming that page, then passes again after the restore. `from __future__ import annotations` in
+`check_links.py` keeps the module importable on the 3.9 interpreter CI's comment promises, so the test
+runs under `python3` here (0.005 s, five tests) as well as 3.12; `npm run test:linkscan` is the shortcut.
+
+## [2026-10-19] — Run 98: Every Track Is Fetched, and Parenthesised URLs Survive
+
+Run 97 put `modules/*.md` in the scan set; the six later tracks were still never fetched. Tracks `03`
+through `08` are now lesson globs too: **104 files / 195 URLs** (was 93 / 167), and the 41
+`[HTTP 200 — Verified …]` annotations those lessons carried are claims the checker can now test.
+
+The scan found a bug in the checker before it found anything in the curriculum. `link_re` was
+`\(([^)\s]+)\)`, so a target containing parentheses was cut at its first `)`: the Wikipedia links
+`Pointer_(computer_programming)` and `Struct_(C_programming_language)` were fetched as
+`…/Pointer_(computer_programming` and reported **404 twice** on pages that are fine. The target pattern
+now allows one balanced pair — `((?:[^()\s]|\([^()\s]*\))+)` — and both come back 200.
+
+Three citations were dead. Each is repointed at a live page that carries the same teaching:
+
+| lesson | was | now |
+| --- | --- | --- |
+| `03.1` | SparkFun *Rotary Encoder Hookup Guide* (retired) | Dynapar *Quadrature Encoder Overview* |
+| `03.3` | NI *Quadrature Encoder Fundamentals* (shop path gone; the docs replacement is client-rendered) | Dynapar, citing its quadrature-resolution section for the $4\times$ count |
+| `05.2` | SparkFun *Accelerometer, Gyro and IMU Buying Guide* (retired) | SparkFun *Accelerometer Basics* |
+
+Six quoted headings had drifted from the pages they name, and are now the pages' own words:
+
+| page | was quoted | now quoted |
+| --- | --- | --- |
+| Cubic Hermite spline | `Unit interval (0, 1)` | `Unit interval [0, 1]` |
+| Frequency response | `Estimation and plotting` | `Measurement and plotting` |
+| Impedance control | `Principles` | `Principle` |
+| Inertial measurement unit | `Disadvantages` | `Performance` |
+| How to Use a Multimeter | `Measuring Continuity` | `Continuity` |
+| struct (C programming language) | `Overview` | `Pointers` |
+
+Today's run: **186 of 195 URLs served, 0 broken relative links, 0 missing headings**, exit 0. Nine
+cannot be checked from this machine and are reported as `BLOCKED` / `SERVER_ERROR` / `UNREACHABLE`:
+four bot walls, `fbsbook.org`'s 500, `analog.com` twice, `st.com`, and `myphysicslab.com`'s TLS
+handshake. The tracks' own `README.md` index pages remain outside the scan, as the `00`–`02` ones
+already were.
+
+---
+
+## [2026-10-19] — Run 97: The Link Checker Reads the Module Pages
+
+`scripts/check_links.py` never opened a bridge module. Its scan set was the root `README.md`,
+`PLAN-batch-1.md`, the `track-p` and `stage-0` lessons, the three track READMEs and the three `resources`
+pages, so a module's `## 9. Resources` links were gated only by `validate_modules.py`'s
+`resources_verified: true` — a flag a human sets, not a check that the URL still resolves. Adding
+`modules/*.md` to `LESSON_GLOBS` takes the scan from 43 files / 91 URLs to 93 files / 167 URLs.
+
+Four citations were dead, and each is repointed at the same document:
+
+| module | was | now |
+| --- | --- | --- |
+| `04-embedded.T2.04d` | `micro.ros.org/docs/tutorials/core/first_application_rtos/zephyr/` | the same tutorial at `micro.vulcanexus.org` — micro.ros.org is now a redirect stub to the Vulcanexus docs |
+| `04-embedded.T2.04b` | `freertos.org/.../03-Supported-devices/02-FreeRTOS-Documentation-and-Books` | `freertos.org/.../07-Books-and-manual/01-RTOS_book` |
+| `01-electronics.T2.01a` | `ti.com/lit/pdf/slod006` — TI has withdrawn SLOD006 | the same SLOD006B PDF (byte-identical) on the MIT 6.101 reference shelf |
+| `01-electronics.T3.01a` | Infineon `dgdl/...MOSFET_Power_Losses...` (404) | AN 70-41484 on `application-notes.digchip.com` |
+
+The other eight failures were not rot, so the checker now says which instead of failing: **PASS**
+(2xx/3xx), **FAIL** (a 4xx naming a missing document — the only verdict that breaks the run),
+**BLOCKED** (401/403/429 bot wall: `w3.org`, `dl.acm.org`, `allaboutcircuits.com`,
+`ctms.engin.umich.edu`), **SERVER_ERROR** (5xx: `fbsbook.org` answers 500 while its move to
+`fbswiki.org` is half-done) and **UNREACHABLE** (connection error or timeout after one retry;
+`analog.com` and `st.com` do not answer this network). A heading is only reported missing from a page
+that was actually served, and the lesson that claimed `[HTTP 200 — Verified …]` for `fbsbook.org` now
+says the host is down. Today's run: 159 of 167 URLs served, 0 broken relative links, 0 missing
+headings. `LINK_REPORT.md` is regenerated but stays untracked (gitignored).
+
+---
+
 ## [2026-10-18] — Run 96: Two Controls in One Task, Audited Pair by Pair
 
 Run 95 fixed one instance of a class: a click handler that reads the state its last *render* captured, so

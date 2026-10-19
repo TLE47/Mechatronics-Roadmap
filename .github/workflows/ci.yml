@@ -57,7 +57,7 @@ jobs:
           python3 scripts/run_exercise.py --verbose \
             --report-file "${RUNNER_TEMP:-/tmp}/run-exercise.json"
           python3 scripts/check_exercise_coverage.py
-          # One discovery run covers all 17 suites in tests/ - including test_sketch_host_verify
+          # One discovery run covers all 19 suites in tests/ - including test_sketch_host_verify
           # and test_module_full_solutions, which the old per-file list never ran - and it is the
           # same command CONTRIBUTING gives a contributor. It needs Python >= 3.9-safe imports,
           # so every script a test imports must tolerate the system interpreter.

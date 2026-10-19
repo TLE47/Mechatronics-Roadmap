@@ -336,7 +336,7 @@ Keep the worked example's numbers — $C_H = 100\ \mu\text{s}$, $B_i = 40\ \mu\t
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00a`](00-foundations.T1.00a.md)–[`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Python Loops, Lists, Timing Units & Linear Range Scaling*).
   - **Prerequisite Bridge Modules:** [`04-embedded.T1.04a`](04-embedded.T1.04a.md) (*Fixed-Width Integers & Bitwise Masks*) and [`04-embedded.T2.04a`](04-embedded.T2.04a.md) (*Non-Blocking Tick Schedulers & DMA*).
   - **Core Concepts to Review First:** Rate-Monotonic CPU utilization $U = \sum C_i / T_i$ with `vTaskDelayUntil()`, FreeRTOS Priority Inheritance mutexes (`xSemaphoreCreateMutex()`, bounding blocking time to $R_H = C_H + B_i$), and MIT Cheetah fixed-point quantization $u = \operatorname{round}\!\left(\frac{x - x_{\min}}{x_{\max} - x_{\min}}(2^N - 1)\right)$ in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [Mastering the FreeRTOS Real Time Kernel (`freertos.org`)](https://www.freertos.org/Documentation/02-Kernel/03-Supported-devices/02-FreeRTOS-Documentation-and-Books) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
+  - **Study Links & Resources:** [Mastering the FreeRTOS Real Time Kernel (`freertos.org`)](https://www.freertos.org/Documentation/02-Kernel/07-Books-and-manual/01-RTOS_book) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
 
 ## 6. Simulation path
 Open **Tab 8 (Real-Time Concurrency, Scheduling & CAN Framing)** in the MechaLab Workbench (`npm run dev`) to inspect preemptive task timelines and priority inheritance mutex behavior.

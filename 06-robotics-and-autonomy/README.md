@@ -67,7 +67,7 @@ $$
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [Neville Hogan (1985 Seminal Paper): Impedance Control — An Approach to Manipulation](https://mec560sbu.github.io/2016/09/28/Hogan1985/) — *The foundational robotics paper explaining why robots interacting with the physical world must control mechanical impedance (stiffness & damping) rather than rigid position.*
+  - 🔗 [Neville Hogan (1985 Seminal Paper): Impedance Control — An Approach to Manipulation](https://summerschool.stiff-project.org/fileadmin/pdf/Hog1985.pdf) — *The foundational robotics paper explaining why robots interacting with the physical world must control mechanical impedance (stiffness & damping) rather than rigid position.*
   - 🔗 [Albu-Schäffer et al. (DLR): Soft Robotics & Joint-Level Torque/Impedance Control](https://ieeexplore.ieee.org/document/4543189) — *Shows how gravity compensation (* $K_p = 0, K_d = 0$ *) creates "zero-gravity lead-through teaching" on collaborative arms.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Set $K_p = 0$ and $K_d = 0.05\text{ N}\cdot\text{m}\cdot\text{s/rad}$ in your 1-DOF or 2-DOF arm simulation while keeping gravity feedforward $\tau = \hat{g}(q)$ active ("Zero-G Teaching Mode"). Verify that you can move the arm to any angle and it stays floating in place without falling!
@@ -247,7 +247,7 @@ $$
   3. Bridge `ros2_control` to DDS via lock-free `realtime_tools::RealtimeBuffer<T>` or `iceoryx` zero-copy shared memory.
 
 - **Curated Free Resources:**
-  - 🔗 [ETH Zurich Robotic Systems Lab (Marco Hutter): Quadrupedal Locomotion & Whole-Body Control Lecture Notes](https://rsl.ethz.ch/education-students/lectures/robot-dynamics.html) — *Industry-standard derivations of floating-base dynamics, friction pyramids, and hierarchical WBC-QP.*
+  - 🔗 [ETH Zurich Robotic Systems Lab (Marco Hutter): Quadrupedal Locomotion & Whole-Body Control Lecture Notes](https://rsl.ethz.ch/education-students/lectures/robotdynamics.html) — *Industry-standard derivations of floating-base dynamics, friction pyramids, and hierarchical WBC-QP.*
   - 🔗 [Linux Foundation Real-Time Linux Wiki: Configuring `PREEMPT_RT`, `mlockall`, and `cyclictest`](https://wiki.linuxfoundation.org/realtime/start) — *Production guide to eliminating page faults, CPU C-state wake latency, and scheduler jitter on Linux.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench, select the **3-DOF QDD Hopping Leg (`Capstone 4`)**, and inspect how stance phase enforces the unilateral friction cone $\sqrt{f_x^2 + f_y^2} \le \mu f_z$ ($f_z \ge 0$) before transitioning smoothly to flight-phase Raibert foot placement.
