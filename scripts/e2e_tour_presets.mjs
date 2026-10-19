@@ -163,7 +163,7 @@ const ARCH_CASES = [
     preset: 'pcb_peak_30a',
     pass: /PASS 3 OF 3/,
     card: 'Run 30A Electro-Thermal Solver (Tab 6)',
-    name: '30 A solver: efficiency 98.55%, MOSFET T_j 206.1 °C',
+    name: '30 A solver: efficiency 98.55%, MOSFET T_j 206.1 °C, 1 s pulse peak T_j 100.8 °C',
     shows: () => {
       const valueOf = (label) => {
         const row = [...document.querySelectorAll('div')].find(
@@ -171,7 +171,11 @@ const ARCH_CASES = [
         );
         return row ? row.children[1].textContent.trim() : null;
       };
-      return valueOf('Inverter Efficiency') === '98.55%' && valueOf('MOSFET') === '206.1 °C';
+      return (
+        valueOf('Inverter Efficiency') === '98.55%' &&
+        valueOf('MOSFET') === '206.1 °C' &&
+        valueOf('Pulse') === '100.8 °C'
+      );
     },
   },
   {
