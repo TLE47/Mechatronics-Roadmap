@@ -44,7 +44,7 @@ flowchart TB
 ### 💻 Tier 0A (\$0 USD): 100% Browser Simulator Path (`Track P` $\to$ `Stage 0` $\to$ `Pass 1` Sim Path)
 | Category | Browser Tools Included | Cost | Coverage |
 | :--- | :--- | :--- | :--- |
-| **In-Browser Python & Simulators** | Built-in **MechaLab Python (`Pyodide`) Runner**, [Falstad Circuit Simulator](https://www.falstad.com/circuit/circuitjs.html), [Wokwi Arduino/ESP32 Simulator](https://wokwi.com/), and the **8-Tab MechaLab Physics Workbench** | **\$0** | 100% of `Track P`, 100% of `Stage 0`, all 48 Bridge Modules (`hardware_required: false`), and the simulation path of every `Pass 1` lesson (`Tracks 00–08`). |
+| **In-Browser Python & Simulators** | Built-in **MechaLab Python (`Pyodide`) Runner**, [Falstad Circuit Simulator](https://www.falstad.com/circuit/circuitjs.html), [Wokwi Arduino/ESP32 Simulator](https://wokwi.com/), and the **8-Tab MechaLab Physics Workbench** | **\$0** | 100% of `Track P`, 100% of `Stage 0`, all 50 Bridge Modules (`hardware_required: false`), and the simulation path of every `Pass 1` lesson (`Tracks 00–08`). |
 
 ### 🔌 Tier 0B (~\$15 – \$25 USD): Optional Stage 0 Desktop Micro-Kit
 | Category | Recommended Starter Parts | Approx. Cost | Coverage |

@@ -355,34 +355,40 @@
         "text": "A $3150\\text{ Hz}$ motor switching harmonic is sampled at $f_s = 4000\\text{ Hz}$ without an anti-aliasing filter. What alias frequency $f_{\\text{alias}} \\in [0, 2000]\\text{ Hz}$ (tolerance $\\pm 10^{-9}$) appears in the digital data?"
       },
       {
-        "tag": "[Apply] [Concept: tustin_frequency_prewarping_and_biquad]",
-        "text": "Compute the actual digital notch frequency $f_{\\text{unwarped}}$ in $\\text{Hz}$ (tolerance $\\pm 0.01\\text{ Hz}$) when an unwarped Tustin transform is applied to $f_0 = 850\\text{ Hz}$ at $f_s = 4000\\text{ Hz}$."
+        "tag": "[Apply] [Concept: nyquist_sampling_and_aliasing]",
+        "text": "A $3900\\text{ Hz}$ tone is sampled at $f_s = 4000\\text{ Hz}$. Compute its alias in $\\text{Hz}$ (tolerance $\\pm 10^{-9}$)."
       },
       {
-        "tag": "[Transfer] [Concept: tustin_frequency_prewarping_and_biquad]",
-        "text": "Why can a digital biquad notch filter **never** un-alias a signal that exceeded $f_s/2$ *before* the ADC sampled it?",
+        "tag": "[Transfer] [Concept: nyquist_sampling_and_aliasing]",
+        "text": "Why can no digital filter recover a $3150\\text{ Hz}$ tone that was sampled at $4000\\text{ Hz}$ without an analog filter?",
         "options": [
           "Because digital filters only work below $100\\text{ Hz}$.",
-          "Because once sampling folds $f > f_s/2$ into $[0, f_s/2]$, the aliased samples are mathematically indistinguishable from a true low-frequency signal; an **analog** anti-aliasing filter must precede the ADC.",
-          "Because TDF-II biquads require double-precision floating point.",
-          "Because Tustin pre-warping amplifies high frequencies."
+          "Because the samples of the $3150\\text{ Hz}$ tone are identical to those of an $850\\text{ Hz}$ tone, so removing one removes the other; only an analog filter ahead of the ADC can tell them apart.",
+          "Because the ADC needs double-precision floating point.",
+          "Because folding amplifies high frequencies."
         ]
       },
       {
-        "tag": "[Concept: gaussian_variance_and_covariance_matrix]",
-        "text": "Given $\\Sigma_x = \\begin{bmatrix} 1.0 & 0.0 \\\\ 0.0 & 4.0 \\end{bmatrix}$ and $A = \\begin{bmatrix} 1.0 & 0.5 \\\\ 0.0 & 1.0 \\end{bmatrix}$, compute the $(0,0)$ entry of $\\Sigma_y = A \\Sigma_x A^\\top$ (tolerance $\\pm 10^{-9}$)."
+        "tag": "[Concept: nyquist_sampling_and_aliasing]",
+        "text": "A tone arrives at exactly $f_s/2$. What does the sampler report?",
+        "options": [
+          "Nothing: the converter refuses to digitise it.",
+          "Exactly $f_s/2$, but its phase is unrecoverable, so the reading is ambiguous.",
+          "Zero, because the tone sits on the seam.",
+          "$f_s$, because the mirror doubles it."
+        ]
       },
       {
         "tag": "[Spaced review -> 00-foundations.T2.00e — Concept: continuous_state_space_matrices]",
         "text": "For $A = \\begin{bmatrix} 0 & 1 \\\\ -100 & -4 \\end{bmatrix}$, compute $\\operatorname{tr}(A)$ (tolerance $\\pm 10^{-9}$)."
       }
     ],
-    "key": "import math\n\nq1_alias_hz = abs(3150.0 - 4000.0)\nq2_unwarped_hz = (4000.0 / math.pi) * math.atan(math.pi * 850.0 / 4000.0)\nq3_choice = \"B\"\nq4_sigma00 = 1.0 * 1.0 * 1.0 + 0.5 * 4.0 * 0.5\n\nassert math.isclose(q1_alias_hz, 850.0, rel_tol=1e-9)\nassert math.isclose(q2_unwarped_hz, 749.48034, abs_tol=1e-2)\nassert q3_choice == \"B\"\nassert math.isclose(q4_sigma00, 2.0, rel_tol=1e-9)\nq5_review = 0.0 + (-4.0)\nassert math.isclose(q5_review, -4.0, rel_tol=1e-9, abs_tol=1e-09)",
+    "key": "import math\n\nq1_alias_hz = abs(3150.0 - 4000.0)\nq2_alias_hz = 4000.0 - 3900.0\nq3_choice = \"B\"\nq4_choice = \"B\"\nq5_review = 0.0 + (-4.0)\n\nassert math.isclose(q1_alias_hz, 850.0, rel_tol=1e-9)\nassert math.isclose(q2_alias_hz, 100.0, rel_tol=1e-9)\nassert q3_choice == \"B\"\nassert q4_choice == \"B\"\nassert math.isclose(q5_review, -4.0, rel_tol=1e-9, abs_tol=1e-9)\n",
     "mark": [
       4,
       5
     ],
-    "note": " ($80\\%+$). If you missed Q1, study `## 3. Formalization` item 1; Q2 or Q3, study `## 3. Formalization` item 2; Q4, study `## 3. Formalization` item 3. If you missed  Q5, review `00-foundations.T2.00e`. On pass, proceed to `## 10. Next modules`."
+    "note": " ($80\\%+$). If you missed Q1 or Q4, study `## 3. Formalization` items 1-2; Q2, study item 2; Q3, study item 3. If you missed Q5, review `00-foundations.T2.00e`. On pass, proceed to `## 10. Next modules`."
   },
   "00-foundations.T2.00g": {
     "questions": [
@@ -1735,5 +1741,83 @@
       6
     ],
     "note": " overall AND $2/2$ ($100\\%$) on Q4 and Q5 (`[SAFETY]`). If you missed Q1 or Q2, study `## 3. Formalization` item 1; Q3, study `## 3. Formalization` item 2; Q4 or Q5, study `## 3. Formalization` item 3 and `### Safety notes`. If you missed  Q6, review `07-systems.T2.07a`. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00i": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: tustin_frequency_prewarping_and_biquad]",
+        "text": "Compute the actual digital notch frequency $f_{\\text{unwarped}}$ in $\\text{Hz}$ (tolerance $\\pm 0.01\\text{ Hz}$) when an unwarped Tustin transform is applied to $f_0 = 850\\text{ Hz}$ at $f_s = 4000\\text{ Hz}$."
+      },
+      {
+        "tag": "[Apply] [Concept: tustin_frequency_prewarping_and_biquad]",
+        "text": "Compute the pre-warped analog prototype frequency $\\omega_a$ in $\\text{rad/s}$ (tolerance $\\pm 10^{-3}$) that lands a Tustin notch on $f_0 = 600\\text{ Hz}$ at $f_s = 2000\\text{ Hz}$."
+      },
+      {
+        "tag": "[Transfer] [Concept: tustin_frequency_prewarping_and_biquad]",
+        "text": "Why does the pre-warped analog frequency exceed $2\\pi f_0$ rather than fall below it?",
+        "options": [
+          "Because the tangent term is a gain correction that always adds energy.",
+          "Because Tustin squeezes frequencies toward Nyquist, so the analog target must be placed above $f_0$ for the warped image to land on $f_0$.",
+          "Because the sample rate is doubled by the substitution.",
+          "Because the notch's quality factor scales the frequency."
+        ]
+      },
+      {
+        "tag": "[Concept: tustin_frequency_prewarping_and_biquad]",
+        "text": "In the unity-gain notch coefficients, why must $a_1 = b_1$ and $b_2 = b_0$?",
+        "options": [
+          "Because the filter is second order, and second-order filters are always symmetric.",
+          "Because the zeros sit in mirror-image pairs on the unit circle and the same normalization divides every coefficient, so the reflection makes the pairs equal.",
+          "Because the quality factor is fixed at 5.",
+          "Because $a_0$ is set to 1."
+        ]
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00f — Concept: nyquist_sampling_and_aliasing]",
+        "text": "A $3900\\text{ Hz}$ tone is sampled at $f_s = 4000\\text{ Hz}$. Compute its alias in $\\text{Hz}$ (tolerance $\\pm 10^{-9}$)."
+      }
+    ],
+    "key": "import math\n\nq1_unwarped_hz = (4000.0 / math.pi) * math.atan(math.pi * 850.0 / 4000.0)\nq2_wa = (2.0 / 0.0005) * math.tan(math.pi * 600.0 / 2000.0)\nq3_choice = \"B\"\nq4_choice = \"B\"\nq5_alias_hz = 4000.0 - 3900.0\n\nassert math.isclose(q1_unwarped_hz, 749.48034, abs_tol=1e-2)\nassert math.isclose(q2_wa, 5505.5277, abs_tol=1e-3)\nassert q3_choice == \"B\"\nassert q4_choice == \"B\"\nassert math.isclose(q5_alias_hz, 100.0, rel_tol=1e-9)\n",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q3, study `## 3. Formalization` items 1-2; Q2, study item 2; Q4, study item 3. If you missed Q5, review `00-foundations.T2.00f`. On pass, proceed to `## 10. Next modules`."
+  },
+  "00-foundations.T2.00j": {
+    "questions": [
+      {
+        "tag": "[Recall] [Concept: gaussian_variance_and_covariance_matrix]",
+        "text": "Given $\\Sigma_x = \\begin{bmatrix} 1.0 & 0.0 \\\\ 0.0 & 4.0 \\end{bmatrix}$ and $A = \\begin{bmatrix} 1.0 & 0.5 \\\\ 0.0 & 1.0 \\end{bmatrix}$, compute the $(0,0)$ entry of $\\Sigma_y = A \\Sigma_x A^\\top$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Apply] [Concept: gaussian_variance_and_covariance_matrix]",
+        "text": "For the same $A$ and $\\Sigma_x$, with $Q = \\operatorname{diag}(0.1, 0.2)$, compute the $(1,1)$ entry of $\\Sigma_y$ (tolerance $\\pm 10^{-9}$)."
+      },
+      {
+        "tag": "[Transfer] [Concept: gaussian_variance_and_covariance_matrix]",
+        "text": "Why must the covariance be multiplied by $A$ on both sides rather than once?",
+        "options": [
+          "Because the matrix has to be symmetric, and any single multiplication is asymmetric.",
+          "Because $A$ changes the shape the error lives in: it stretches each axis on the way in and the coupled error on the way out, so both factors carry the transformation.",
+          "Because $Q$ is always diagonal.",
+          "Because the state vector has two components."
+        ]
+      },
+      {
+        "tag": "[Concept: gaussian_variance_and_covariance_matrix]",
+        "text": "A counter quantises to $\\Delta = 2\\pi/4096$ radians, with the error uniform over one count. Compute the variance of one count's error in $\\text{rad}^2$ (tolerance $\\pm 10^{-3}$ relative)."
+      },
+      {
+        "tag": "[Spaced review -> 00-foundations.T2.00i — Concept: tustin_frequency_prewarping_and_biquad]",
+        "text": "Compute the pre-warped analog frequency $\\omega_a$ in $\\text{rad/s}$ that lands a Tustin notch on $600\\text{ Hz}$ at $f_s = 2000\\text{ Hz}$ (tolerance $\\pm 10^{-3}$)."
+      }
+    ],
+    "key": "import math\n\nq1_sigma00 = 1.0 * 1.0 * 1.0 + 0.5 * 4.0 * 0.5\nq2_sigma11 = 0.0 * 0.0 * 1.0 + 1.0 * 4.0 * 1.0 + 0.2\nq3_choice = \"B\"\nq4_variance = (2.0 * math.pi / 4096.0) ** 2 / 12.0\nq5_wa = (2.0 / 0.0005) * math.tan(math.pi * 600.0 / 2000.0)\n\nassert math.isclose(q1_sigma00, 2.0, rel_tol=1e-9)\nassert math.isclose(q2_sigma11, 4.2, rel_tol=1e-9)\nassert q3_choice == \"B\"\nassert math.isclose(q4_variance, 1.9609e-7, rel_tol=1e-3)\nassert math.isclose(q5_wa, 5505.5277, abs_tol=1e-3)\n",
+    "mark": [
+      4,
+      5
+    ],
+    "note": " ($80\\%+$). If you missed Q1 or Q3, study `## 3. Formalization` items 2-3; Q2, study item 3; Q4, study item 1. If you missed Q5, review `00-foundations.T2.00i`. On pass, proceed to `## 10. Next modules`."
   }
 }

@@ -6,7 +6,7 @@ ladder. "As good as Tier 1" is too vague to finish, so this file is the contract
 [`scripts/module_parity.py`](../scripts/module_parity.py) is the implementation. Run it, read
 [`docs/coverage-table.md`](coverage-table.md), and the question "how far is this module?" has a number.
 
-Applies to the **48 bridge modules** in `modules/` (16 Tier 1, 20 Tier 2, 12 Tier 3): the **40 Core** modules that the required route names in [`SIM_ROUTE.md`](SIM_ROUTE.md), and the **8 Extensions** that are optional but still graded. The 24 legacy
+Applies to the **50 bridge modules** in `modules/` (16 Tier 1, 22 Tier 2, 12 Tier 3): the **42 Core** modules that the required route names in [`SIM_ROUTE.md`](SIM_ROUTE.md), and the **8 Extensions** that are optional but still graded. The 24 legacy
 modules are superseded and out of scope.
 
 ```mermaid
@@ -53,7 +53,7 @@ learner retention, and a green number cannot be read as one.
 **Existence is gated too.** `scripts/check_exercise_coverage.py` fails the build when any bridge
 module ships no `exercises/<module>/` package, or ships one missing a required file, a valid
 manifest carrying the module's own id, or a planted fault. There is no baseline and no allow-list:
-all 48 bridge modules (Core and Extensions) are graded today, and the count can only go up, because adding a module
+all 50 bridge modules (Core and Extensions) are graded today, and the count can only go up, because adding a module
 without its exercise is a red build rather than a silent gap. The gate is two orders of magnitude
 cheaper than the three-way check it guards — it reads the tree, it does not run the packages.
 

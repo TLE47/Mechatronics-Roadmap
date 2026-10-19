@@ -3,7 +3,7 @@
 [![CI & Reference Labs](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml/badge.svg)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml)
 [![Weekly Link & Arduino Sketch Check](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/link-check.yml/badge.svg)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/link-check.yml)
 [![Live Browser Workbench](https://img.shields.io/badge/Live_Workbench-Open_in_Browser-38bdf8?logo=githubpages&logoColor=white)](https://tle47.github.io/Mechatronics-Roadmap/)
-[![Curriculum](https://img.shields.io/badge/Curriculum-48_Beginner_Lessons_%C2%B7_72_Modules-34d399)](track-p/README.md)
+[![Curriculum](https://img.shields.io/badge/Curriculum-48_Beginner_Lessons_%C2%B7_74_Modules-34d399)](track-p/README.md)
 [![License: CC BY 4.0 + MIT](https://img.shields.io/badge/License-CC_BY_4.0_(Docs)_%2B_MIT_(Code)-fbbf24)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/TLE47/Mechatronics-Roadmap?style=flat&color=38bdf8)](https://github.com/TLE47/Mechatronics-Roadmap/stargazers)
 [![Last Commit](https://img.shields.io/github/last-commit/TLE47/Mechatronics-Roadmap?color=34d399)](https://github.com/TLE47/Mechatronics-Roadmap/commits/main)
@@ -39,7 +39,7 @@ u_cmd = max(-u_max, min(u_max, u_raw))
 
 ## 1. What "Complete" Means: The Core Route
 
-**Course complete means the Core route.** It is **40 modules plus the prose tracks** (13 Track P lessons and the P.M milestone, 11 Stage 0 lessons, 16 Tier 1 bridges, 18 Tier 2 modules, and one Tier 3 depth line of 6) and it costs **175.5–220.5 hours**, summed from each page's own `est_hours` / `typical_hours` / `slow_learner_hours` metadata in **[`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md)** — the low end is each page's own `est_hours`/`typical_hours`, the high end its `slow_learner_hours`. That table is generated, and `python3 scripts/generate_sim_route.py --check` fails the moment it drifts from the pages.
+**Course complete means the Core route.** It is **42 modules plus the prose tracks** (13 Track P lessons and the P.M milestone, 11 Stage 0 lessons, 16 Tier 1 bridges, 20 Tier 2 modules, and one Tier 3 depth line of 6) and it costs **175.5–220.5 hours**, summed from each page's own `est_hours` / `typical_hours` / `slow_learner_hours` metadata in **[`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md)** — the low end is each page's own `est_hours`/`typical_hours`, the high end its `slow_learner_hours`. That table is generated, and `python3 scripts/generate_sim_route.py --check` fails the moment it drifts from the pages.
 
 The **8 Extensions** (**37.5 hours**: the 6 Tier 3 depth modules — 6-layer inverter and filter design, FOC/SVPWM depth, CORDIC and Q1.31 fixed point, behaviour cloning, PPO, OPC UA/AAS — plus the Zephyr and micro-ROS bridges, which teach the concepts a second time through a toolchain the Core route does not need) are **optional**. Each keeps its own graded package, Break-it case and badge, so taking one adds hours and skipping one costs nothing on the Core route. **Nothing below in this README is required except the Core route.**
 
@@ -55,7 +55,7 @@ Hardware is a separate choice, not a second curriculum — the same Core route r
 
 ## 2. How to Use This Roadmap & Provisional Time Estimates
 
-> **Note on Provisional Time Estimates:** Every hour figure is an **author target pending beginner pilot validation**, and exactly one total is the requirement: the Core route's **`175.5–220.5 hours`** in **[`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md)**. The optional Extensions add **`37.5 hours`** and change no requirement. Per-stage and per-module hours live only in that generated page, so there is one number to keep true; the Core's high end is the slow-learner figure, which is the one to plan a calendar against. Please log your real completion times via **[`beginner-timing-log.md`](.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
+> **Note on Provisional Time Estimates:** Every hour figure is an **author target pending beginner pilot validation**, and exactly one total is the requirement: the Core route's **`178–223 hours`** in **[`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md)**. The optional Extensions add **`37.5 hours`** and change no requirement. Per-stage and per-module hours live only in that generated page, so there is one number to keep true; the Core's high end is the slow-learner figure, which is the one to plan a calendar against. Please log your real completion times via **[`beginner-timing-log.md`](.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
 
 1. **[Step 1 — Track P: Zero-Background Prerequisites (`track-p/`, 14 Lessons — Unmeasured target: ~45–60 min/lesson, ~10.5–14 hrs total, help us calibrate!)](track-p/README.md):** Starts with a **no-penalty 6-topic School-Math Diagnostic** (*"I know this"*, *"Show me a refresher"*, or *"Teach it from scratch"*) and a **Computer-Tooling Orientation**, then teaches only the exact Python (`variables`, `if/else`, `for/while`, `def`, `assert`), SI prefixes (`M`, `k`, `m`, `µ`), binary bits ($2^N$), linear scaling, radians/trig (`cos`, `sin`, `atan2`), time-series graphs, lever torque ($\tau = m g L \cos\theta$), and **datasheet table reading (`P.14`: `DRV8833` $2.7\text{–}10.8\text{ V}$ vs. $11.8\text{ V}$ abs max)**—finishing with the 15-minute **Gate P→0** check.
 2. **[Step 2 — Stage 0: Circuit & Arduino Uno Foundations (`stage-0/`, 11 Lessons — Unmeasured target: ~45–60 min/lesson, ~8.5–11 hrs total, help us calibrate!)](stage-0/README.md):** Pre-teaches **`Effort × Flow` water-pipe analogies (`S0.0`)** before touching Falstad, pairs every Arduino Uno lesson (`S0.7–S0.M`) with a **5-minute Falstad "see it without code" twin** and a **4-row C-from-Python sidebar (`S0.7`)**, and follows an 8-step **`Simulate → Predict → Measure → Build → Diagnose Fault`** sequence culminating in the `S0.M` dimmer + kill-switch milestone.
@@ -144,7 +144,7 @@ Every Pass 1 step below pairs **self-contained Beginner Lessons ($\le 2$ new ide
 
 ## 7. Master Multi-Pass Navigation Matrix (Tracks 00-08 x Tiers 1-3)
 
-The curriculum spans **72 formal modules** (**24 legacy** modules and **48 bridge** modules across **25 ladders**, verified by `scripts/validate_modules.py` from `modules/_index.yaml`) plus **48 beginner-first lessons** (`14 Track P` + `11 Stage 0` + `23 Tracks 00–08 Tier 1`). Each Track's `README.md` is the single source of truth for its exercises, resource links, and knowledge checks:
+The curriculum spans **74 formal modules** (**24 legacy** modules and **50 bridge** modules across **25 ladders**, verified by `scripts/validate_modules.py` from `modules/_index.yaml`) plus **48 beginner-first lessons** (`14 Track P` + `11 Stage 0` + `23 Tracks 00–08 Tier 1`). Each Track's `README.md` is the single source of truth for its exercises, resource links, and knowledge checks:
 
 | Track Folder | Pass 1: Tier 1 (Beginner / Intuitive) | Pass 2: Tier 2 (Intermediate / Applied) | Pass 3: Tier 3 (Advanced / Production) | Bridge Concept (Maker $\to$ Custom) |
 | :--- | :--- | :--- | :--- | :--- |

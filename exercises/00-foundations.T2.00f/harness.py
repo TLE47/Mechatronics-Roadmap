@@ -1,7 +1,7 @@
 """Shared loader for this exercise's tests.
 
-    EXERCISE_TARGET=exercises/00-foundations.T2.00e/starter.py \
-        python3 -m unittest discover -s exercises/00-foundations.T2.00e -p 'test_*.py'
+    EXERCISE_TARGET=exercises/00-foundations.T2.00f/starter.py \
+        python3 -m unittest discover -s exercises/00-foundations.T2.00f -p 'test_*.py'
 """
 
 import importlib.util
@@ -23,7 +23,7 @@ def target_path():
     if not path:
         raise RuntimeError(
             "EXERCISE_TARGET is not set: point it at the file to grade, e.g. "
-            "EXERCISE_TARGET=exercises/00-foundations.T2.00e/solution.py"
+            "EXERCISE_TARGET=exercises/00-foundations.T2.00f/solution.py"
         )
     if not os.path.isabs(path):
         path = os.path.join(ROOT, path)

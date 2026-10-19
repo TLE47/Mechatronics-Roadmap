@@ -41,7 +41,7 @@ legacy:
 
   - id: 00-foundations.T2.01
     title: "Track 00 (Tier 2): State-Space Matrices, Two-Mass Resonance, Quaternions & Tustin Biquads"
-    prereqs: [07-systems.T1.08, 00-foundations.T2.00e, 00-foundations.T2.00f]
+    prereqs: [07-systems.T1.08, 00-foundations.T2.00e, 00-foundations.T2.00j]
     introduces: [two_mass_torsional_resonance_anti_resonance, unit_quaternion_kinematics_slerp, prewarped_tustin_tdf2_biquad_notch]
 
   - id: 01-electronics.T2.02
@@ -277,18 +277,44 @@ bridges:
     resources_verified: true
     path: modules/00-foundations.T2.00e.md
   - id: 00-foundations.T2.00f
-    title: "Nyquist Sampling & Aliasing, Pre-Warped Tustin Biquad Filters & Gaussian Covariance"
+    title: "Nyquist Sampling, Aliasing & the Analog Anti-Alias Filter"
     track: 00
     tier: 2
-    est_hours: 4.5
+    est_hours: 2.0
     prereqs: [00-foundations.T2.00e]
-    introduces: [nyquist_sampling_and_aliasing, tustin_frequency_prewarping_and_biquad, gaussian_variance_and_covariance_matrix]
-    uses: [bode_magnitude_db_and_phase, discrete_state_transition_euler_tustin, matrix_vector_multiplication]
+    introduces: [nyquist_sampling_and_aliasing]
+    uses: [bode_magnitude_db_and_phase, discrete_state_transition_euler_tustin]
+    feeds_into: [00-foundations.T2.00i]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T2.00f.md
+  - id: 00-foundations.T2.00i
+    title: "Pre-Warped Tustin Biquads: Where the Notch Really Lands"
+    track: 00
+    tier: 2
+    est_hours: 2.5
+    prereqs: [00-foundations.T2.00f]
+    introduces: [tustin_frequency_prewarping_and_biquad]
+    uses: [laplace_poles_and_zeros, continuous_state_space_matrices, discrete_state_transition_euler_tustin, complex_impedance_and_transfer_function, bode_magnitude_db_and_phase]
+    feeds_into: [00-foundations.T2.00j]
+    safety_level: none
+    hardware_required: false
+    resources_verified: true
+    path: modules/00-foundations.T2.00i.md
+  - id: 00-foundations.T2.00j
+    title: "Gaussian Variance, Covariance & the Predict Step"
+    track: 00
+    tier: 2
+    est_hours: 2.5
+    prereqs: [00-foundations.T2.00i]
+    introduces: [gaussian_variance_and_covariance_matrix]
+    uses: [matrix_vector_multiplication, continuous_state_space_matrices, state_vector_one_step_update]
     feeds_into: [00-foundations.T2.01]
     safety_level: none
     hardware_required: false
-    resources_verified: false
-    path: modules/00-foundations.T2.00f.md
+    resources_verified: true
+    path: modules/00-foundations.T2.00j.md
   - id: 00-foundations.T3.00a
     title: "Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation"
     track: 00
