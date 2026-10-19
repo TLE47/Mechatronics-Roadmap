@@ -125,6 +125,43 @@ missing paths rather than erroring. Proven by deleting `00-foundations` from the
 `check_links.py` keeps the module importable on the 3.9 interpreter CI's comment promises, so the test
 runs under `python3` here (0.005 s, five tests) as well as 3.12; `npm run test:linkscan` is the shortcut.
 
+## [2026-10-19] — Run 99: An Account, So Progress Outlives the Browser
+
+Progress lived in `localStorage` and nowhere else: clear the cache, open a second browser, and a
+learner's milestones, verified lessons and learning log were gone. The workbench is a static bundle on
+GitHub Pages, so there is no server of ours to log in against — this run adds optional email-link
+accounts and a one-row-per-learner cloud copy, and leaves the local-only build in charge when the two
+build variables are absent.
+
+| piece | what it does |
+| --- | --- |
+| `app/src/accounts.ts` | lazy `import('@supabase/supabase-js')`, send the magic link, subscribe to the session, sign out |
+| `app/src/progressMerge.ts` | the merge: a `true` on either side survives, the newer snapshot's `false` removes, logs are unioned and de-duplicated |
+| `app/src/cloudProgress.ts` | load and upsert one `jsonb` snapshot per `auth.uid()` |
+| `app/src/components/AccountPanel.tsx` + header button | **Sign in** → email → link; signed in shows the address, the sync state and sign-out |
+| `docs/ACCOUNTS.md` | the SQL, the redirect URL, the two repository variables, and what the row holds |
+
+**The anon key is public by design** — row-level security (`auth.uid() = user_id`) is the boundary,
+and the three policies ship as SQL in `docs/ACCOUNTS.md`. **A signed-out visitor downloads no SDK**:
+the import is dynamic, so the build without variables contains no Supabase code (one 1.55 MB chunk,
+unchanged) and a configured build adds a 228 KB chunk fetched on demand. **The merge never drops
+work**: completions from either side survive, while an un-tick made on the newer device still sticks.
+
+Verification: `npm run build` with and without the variables (both exit 0, the second emitting the
+separate SDK chunk); `npm run test:merge` **9/9** (fresh browser, uncheck wins, older false, equal
+stamps, no mutation, log union, malformed row refused); `npm run test:smoke` and `npm run test:pairs`
+**17/17**. In the dev server, the unconfigured panel explains local-only mode, the configured panel
+shows the email form, and a submit against an unreachable project reports "Could not reach the
+sign-in service" instead of a raw fetch error. A real magic-link round trip is the one thing that
+needs a live project: create one, run the SQL, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+as repository variables, and the next Pages build signs in.
+
+One test oracle changed with it: `scripts/e2e_same_task_pairs.mjs` compares the whole `mechalab*`
+storage after each pair, and the new "progress last changed" stamp is a wall clock that cannot match
+between two runs. It is excluded next to the learning log's event stamps, with the same reason.
+
+---
+
 ## [2026-10-19] — Run 98: Every Track Is Fetched, and Parenthesised URLs Survive
 
 Run 97 put `modules/*.md` in the scan set; the six later tracks were still never fetched. Tracks `03`
