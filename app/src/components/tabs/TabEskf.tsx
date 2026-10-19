@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles, ShieldCheck, AlertOctagon } from 'lucide-react';
+import { PresetRequest, claimPreset } from '../../demoPresets';
 
 interface TabEskfProps {
   onLoadPreset: (presetId: string) => void;
   highlightedId: string | null;
+  presetRequest: PresetRequest | null;
 }
 
-export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId }) => {
+const ESKF_PRESETS = ['eskf_seqlock_clean', 'eskf_torn_race'];
+
+export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, presetRequest }) => {
   const [seqLockEnabled, setSeqLockEnabled] = useState<boolean>(true);
   const [bgTrue, setBgTrue] = useState<number>(0.12);
   const [sigmaMeas, setSigmaMeas] = useState<number>(0.04);
@@ -19,6 +23,17 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId })
   const [stepLatNs, setStepLatNs] = useState<number>(29.6);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Apply Demo Preset: WaitFreeSeqLock on, with the calm bias and contention of the clean run.
+  useEffect(() => {
+    const id = claimPreset(presetRequest, ESKF_PRESETS);
+    if (id === 'eskf_seqlock_clean') {
+      setSeqLockEnabled(true); setBgTrue(0.12); setContentionPct(12);
+    } else if (id === 'eskf_torn_race') {
+      // Unprotected struct under heavy ISR contention: the torn-read race the SeqLock exists to prevent.
+      setSeqLockEnabled(false); setContentionPct(22);
+    }
+  }, [presetRequest]);
 
   const toggleSeqLock = () => {
     setSeqLockEnabled((prev) => !prev);

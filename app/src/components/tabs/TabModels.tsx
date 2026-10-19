@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { ShieldAlert, ShieldCheck, RefreshCw, Zap } from 'lucide-react';
+import { PresetRequest, claimPreset } from '../../demoPresets';
 
 interface TabModelsProps {
   onLoadPreset: (presetId: string) => void;
   highlightedId: string | null;
+  presetRequest: PresetRequest | null;
 }
 
-export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedId }) => {
+const MODELS_PRESETS = ['sto_desat_short', 'sto_enc_crc', 'robot_hopper_crouch', 'robot_arm_polish', 'robot_furuta_bal'];
+
+export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedId, presetRequest }) => {
   const [selectedModel, setSelectedModel] = useState<'hopper' | 'arm6' | 'furuta'>('hopper');
   const [q1, setQ1] = useState<number>(20);
   const [q2, setQ2] = useState<number>(-55);
@@ -39,6 +43,26 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
       setStoReactionUs('0.00 μs');
     }
   };
+
+  // Apply Demo Preset: hopper under a 42 A overcurrent short, or an encoder CRC break, so the STO trips.
+  useEffect(() => {
+    const id = claimPreset(presetRequest, MODELS_PRESETS);
+    if (id === 'sto_desat_short') {
+      setSelectedModel('hopper');
+      triggerSTOFault('OC_SHORT');
+    } else if (id === 'sto_enc_crc') {
+      setSelectedModel('hopper');
+      triggerSTOFault('ENC_CRC');
+    } else if (id === 'robot_hopper_crouch') {
+      // Hopper in a deep crouch: knee joint q2 bent well past its neutral pose.
+      setSelectedModel('hopper');
+      setQ2(-100);
+    } else if (id === 'robot_arm_polish') {
+      setSelectedModel('arm6');
+    } else if (id === 'robot_furuta_bal') {
+      setSelectedModel('furuta');
+    }
+  }, [presetRequest]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

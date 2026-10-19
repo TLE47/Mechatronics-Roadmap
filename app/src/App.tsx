@@ -13,6 +13,7 @@ import { TabSysId } from './components/tabs/TabSysId';
 import { TabEskf } from './components/tabs/TabEskf';
 import { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } from './components/tabs/TabPyodideRunner';
 import { TabPlacementQuiz } from './components/tabs/TabPlacementQuiz';
+import { PresetRequest } from './demoPresets';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
 import {
@@ -65,7 +66,7 @@ const TOUR_STEPS: TourStepInfo[] = [
     tab: 'tab-sysid',
     targetId: 'btn-sysmode-toggle',
     title: 'Step 7 / 8 — Sine-Sweep & Multisine System Identification',
-    desc: 'Notice how zero-phase cosines (φ_k = 0) create a giant impulse spike at t=0 (CF = 8.00) that clips the actuator! Click "Apply Demo Preset" to switch to Schroeder quadratic phasing—compressing Crest Factor to 1.66 and locking onto the true cyan plant curve.',
+    desc: 'Notice how zero-phase cosines (φ_k = 0) create a giant impulse spike at t=0 (CF = 8.00) that clips the actuator! Click "Apply Demo Preset" to switch to Schroeder quadratic phasing—compressing Crest Factor to 1.71 and locking onto the true cyan plant curve.',
   },
   {
     tab: 'tab-eskf',
@@ -231,6 +232,9 @@ export const App: React.FC = () => {
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
   const [portfolioCopied, setPortfolioCopied] = useState<boolean>(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  // Each preset click is a new request with a higher nonce; a simulator applies it once (see demoPresets.ts).
+  const [presetRequest, setPresetRequest] = useState<PresetRequest | null>(null);
+  const presetNonce = useRef<number>(0);
 
   const [viewMode, setViewMode] = useState<WorkbenchViewMode>(() => {
     try {
@@ -392,7 +396,7 @@ export const App: React.FC = () => {
   const handleApplyPreset = () => {
     const step = TOUR_STEPS[tourIndexRef.current];
     if (step.tab === 'tab-bode') handleLoadPreset('wafer_scanner');
-    else if (step.tab === 'tab-foc') handleLoadPreset('foc_cobot_joint');
+    else if (step.tab === 'tab-foc') handleLoadPreset('foc_drone_prop');
     else if (step.tab === 'tab-pend') handleLoadPreset('pend_swingup');
     else if (step.tab === 'tab-models') handleLoadPreset('sto_desat_short');
     else if (step.tab === 'tab-cadpcb') handleLoadPreset('pcb_6layer_opt');
@@ -401,6 +405,8 @@ export const App: React.FC = () => {
   };
 
   const handleLoadPreset = (presetId: string) => {
+    presetNonce.current += 1;
+    setPresetRequest({ presetId, nonce: presetNonce.current });
     if (presetId.startsWith('wafer') || presetId.startsWith('surgical') || presetId.startsWith('cnc')) {
       setActiveTab('tab-bode');
     } else if (presetId.startsWith('foc_')) {
@@ -576,13 +582,13 @@ export const App: React.FC = () => {
             }}
           />
         )}
-        {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
-        {activeTab === 'tab-foc' && <TabFOC onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
-        {activeTab === 'tab-pend' && <TabPendulum onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
-        {activeTab === 'tab-models' && <TabModels onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
-        {activeTab === 'tab-cadpcb' && <TabCadPcb onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
-        {activeTab === 'tab-sysid' && <TabSysId onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
-        {activeTab === 'tab-eskf' && <TabEskf onLoadPreset={handleLoadPreset} highlightedId={highlightedId} />}
+        {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+        {activeTab === 'tab-foc' && <TabFOC onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+        {activeTab === 'tab-pend' && <TabPendulum onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+        {activeTab === 'tab-models' && <TabModels onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+        {activeTab === 'tab-cadpcb' && <TabCadPcb onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+        {activeTab === 'tab-sysid' && <TabSysId onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+        {activeTab === 'tab-eskf' && <TabEskf onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
         {activeTab === 'tab-pyodide' && (
           <TabPyodideRunner
             initialLessonId={pyodideLessonId}

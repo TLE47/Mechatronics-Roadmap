@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useRef, useId } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles } from 'lucide-react';
+import { PresetRequest, claimPreset } from '../../demoPresets';
 
 interface TabBodeProps {
   onLoadPreset: (presetId: string) => void;
   highlightedId: string | null;
+  presetRequest: PresetRequest | null;
 }
 
-export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId }) => {
+const J_M = 4.5e-5; // motor-side inertia [kg·m²]
+
+// Resonance of the two-mass plant [Hz]: the notch centre that cancels its peak. Same formula as f_r below.
+const resonanceHz = (ks: number, jl: number) => Math.sqrt(ks * (1 / J_M + 1 / (jl * 1e-4))) / (2 * Math.PI);
+
+const BODE_PRESETS = ['wafer_scanner', 'cnc_ballscrew', 'surgical_cable'];
+
+export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, presetRequest }) => {
   const [ks, setKs] = useState<number>(120);
   const [jl, setJl] = useState<number>(1.8);
   const [bs, setBs] = useState<number>(0.002);
@@ -16,7 +25,19 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId })
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const J_M = 4.5e-5;
+  // Apply Demo Preset: set the plant and tune the notch onto its resonance, so the vibration peak is cancelled.
+  useEffect(() => {
+    const id = claimPreset(presetRequest, BODE_PRESETS);
+    if (id === 'wafer_scanner') {
+      setKs(340); setJl(0.8); setBs(0.001); setQn(6.5); setFn(Math.round(resonanceHz(340, 0.8)));
+    } else if (id === 'cnc_ballscrew') {
+      setKs(120); setJl(1.8); setBs(0.002); setQn(5.0); setFn(Math.round(resonanceHz(120, 1.8)));
+    } else if (id === 'surgical_cable') {
+      // Da Vinci-style low-stiffness cable drive: notch tuned to its (lower) resonance.
+      setKs(45); setJl(2.6); setBs(0.0015); setQn(4.0); setFn(Math.round(resonanceHz(45, 2.6)));
+    }
+  }, [presetRequest]);
+
   const jlVal = jl * 1e-4;
   const w_ar = Math.sqrt(ks / jlVal);
   const w_r = Math.sqrt(ks * (1.0 / J_M + 1.0 / jlVal));

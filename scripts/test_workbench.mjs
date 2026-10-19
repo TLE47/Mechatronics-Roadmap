@@ -2,12 +2,13 @@
 /**
  * The whole Workbench test surface, one run (`scripts/test_workbench.mjs`, `npm run test:workbench`)
  *
- * Four suites used to run one after another, each booting what it needed:
+ * Five suites used to run one after another, each booting what it needed:
  *
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
  *   test:e2e:pages   `npm run build` if `dist/` was missing, a static Pages server + Chromium, Firefox
  *   test:pairs       the same dev server + Chromium, for the same-task control-pair sweep
+ *   test:tour        the same dev server + Chromium, walking the guided tour's Apply Demo Presets
  *
  * Nothing they check depends on the others' timing, and the app is the same app. So this runner:
  *
@@ -16,9 +17,9 @@
  *     (`E2E_BASE_URL`, `PAGES_SERVER_URL`) so no suite boots a second one;
  *   - runs the smoke suite in this process, against that same dev server, so its SSR module graph
  *     is the graph the browser suites load - not a third transformation of the same sources;
- *   - runs the three browser suites side by side, each in its own process, output prefixed.
+ *   - runs the four browser suites side by side, each in its own process, output prefixed.
  *
- * Wall clock is the slowest suite rather than their sum, and the coverage is exactly what the three
+ * Wall clock is the slowest suite rather than their sum, and the coverage is exactly what the separate
  * scripts cover when run alone. Each one still passes standalone: they create their own servers when
  * no URL is given.
  */
@@ -100,6 +101,7 @@ async function main() {
     runSuite('e2e', 'e2e_browser_workbench.mjs', { E2E_BASE_URL: devUrl }),
     runSuite('pages', 'e2e_pages_bundle.mjs', { PAGES_SERVER_URL: pagesUrl }),
     runSuite('pairs', 'e2e_same_task_pairs.mjs', { E2E_BASE_URL: devUrl }),
+    runSuite('tour', 'e2e_tour_presets.mjs', { E2E_BASE_URL: devUrl }),
   ];
   // Ctrl-C must not leave a Vite server or two Chromium runs behind.
   const stop = () => {

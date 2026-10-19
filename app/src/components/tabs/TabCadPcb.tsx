@@ -2,11 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles } from 'lucide-react';
 import { BomItem } from '../../types';
+import { PresetRequest, claimPreset } from '../../demoPresets';
 
 interface TabCadPcbProps {
   onLoadPreset: (presetId: string) => void;
   highlightedId: string | null;
+  presetRequest: PresetRequest | null;
 }
+
+const PCB_PRESETS = ['pcb_6layer_opt', 'pcb_2layer_bad', 'pcb_peak_30a', 'cad_flexure_stage', 'cad_qdd_carrier'];
 
 const BOM_DATA: BomItem[] = [
   { refDes: 'U1', mpn: 'STM32G474RET6', functionDesc: '170MHz M4F + CORDIC', rating: '3.3V, 5x 4MSPS ADC' },
@@ -17,7 +21,7 @@ const BOM_DATA: BomItem[] = [
   { refDes: 'U6 / U7', mpn: 'MA732 / TCAN1044V', functionDesc: '16-bit SPI Enc + CAN-FD', rating: '16MHz SPI / 5Mbps' },
 ];
 
-export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedId }) => {
+export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedId, presetRequest }) => {
   const [activeCadPart, setActiveCadPart] = useState<'flexure' | 'kelvin' | 'carrier'>('flexure');
   const [tMm, setTMm] = useState<number>(0.50);
   const [iRms, setIRms] = useState<number>(15.0);
@@ -30,6 +34,16 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
   const [efficiency, setEfficiency] = useState<number>(99.11);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Apply Demo Preset: the 6-layer layout at 1.6 nH loop inductance, or a 4.5 nH layout that pushes V_DS past 60 V.
+  useEffect(() => {
+    const id = claimPreset(presetRequest, PCB_PRESETS);
+    if (id === 'pcb_6layer_opt') setLNh(1.6);
+    else if (id === 'pcb_2layer_bad') setLNh(4.5);
+    else if (id === 'pcb_peak_30a') setIRms(30.0);
+    else if (id === 'cad_flexure_stage') setActiveCadPart('flexure');
+    else if (id === 'cad_qdd_carrier') setActiveCadPart('carrier');
+  }, [presetRequest]);
 
   useEffect(() => {
     // Paros-Weisbord flexure rotational stiffness

@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles, RefreshCw, Zap } from 'lucide-react';
+import { PresetRequest, claimPreset } from '../../demoPresets';
 
 interface TabPendulumProps {
   onLoadPreset: (presetId: string) => void;
   highlightedId: string | null;
+  presetRequest: PresetRequest | null;
 }
 
-export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highlightedId }) => {
+const PENDULUM_PRESETS = ['pend_swingup', 'pend_cbf_wall'];
+
+export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highlightedId, presetRequest }) => {
   const [qth, setQth] = useState<number>(140);
   const [ke, setKe] = useState<number>(3.8);
   const [xmax, setXmax] = useState<number>(0.85);
@@ -38,6 +42,21 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
   const injectImpulse = (dw: number) => {
     pState.current.w += dw;
   };
+
+  // Apply Demo Preset: tighten the wall to 0.45 m (the CBF filter then engages and pins h(x) at 0 instead of
+  // leaving the cart far inside), restart from hanging, and kick it.
+  useEffect(() => {
+    const id = claimPreset(presetRequest, PENDULUM_PRESETS);
+    if (id === 'pend_swingup') {
+      setXmax(0.45);
+      resetPendulum(Math.PI - 0.08);
+      injectImpulse(3.2);
+    } else if (id === 'pend_cbf_wall') {
+      // Tight ±0.50 m wall, restart hanging, no kick: the swing-up has to stay inside it.
+      setXmax(0.5);
+      resetPendulum(Math.PI - 0.08);
+    }
+  }, [presetRequest]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

@@ -1,19 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles, Check, AlertTriangle } from 'lucide-react';
+import { PresetRequest, claimPreset } from '../../demoPresets';
 
 interface TabFOCProps {
   onLoadPreset: (presetId: string) => void;
   highlightedId: string | null;
+  presetRequest: PresetRequest | null;
 }
 
-export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId }) => {
+const FOC_PRESETS = ['foc_cobot_joint', 'foc_drone_prop', 'foc_qdd_jump'];
+
+export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, presetRequest }) => {
   const [fbw, setFbw] = useState<number>(2500);
   const [iqRef, setIqRef] = useState<number>(8.0);
   const [rpm, setRpm] = useState<number>(2500);
   const [decouplingEnabled, setDecouplingEnabled] = useState<boolean>(true);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Apply Demo Preset: a cobot joint at low speed (decoupling on), or a 5500 RPM drone with decoupling off
+  // so the rose i_d coupling error shows up.
+  useEffect(() => {
+    const id = claimPreset(presetRequest, FOC_PRESETS);
+    if (id === 'foc_cobot_joint') {
+      setFbw(2800); setIqRef(6.5); setRpm(1200); setDecouplingEnabled(true);
+    } else if (id === 'foc_drone_prop') {
+      setFbw(3200); setIqRef(14.0); setRpm(5500); setDecouplingEnabled(false);
+    } else if (id === 'foc_qdd_jump') {
+      // 24 A hopper jump at 2200 RPM, decoupling on: the high-current case, kept well-decoupled.
+      setFbw(3500); setIqRef(24.0); setRpm(2200); setDecouplingEnabled(true);
+    }
+  }, [presetRequest]);
 
   const rs = 0.25;
   const ld = 0.12e-3;

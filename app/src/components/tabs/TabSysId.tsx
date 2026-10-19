@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MathView, MathPanel } from '../MathView';
 import { Sparkles } from 'lucide-react';
+import { PresetRequest, claimPreset } from '../../demoPresets';
 
 interface TabSysIdProps {
   onLoadPreset: (presetId: string) => void;
   highlightedId: string | null;
+  presetRequest: PresetRequest | null;
 }
 
-export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId }) => {
+const SYSID_PRESETS = ['sysid_schroeder_clean', 'sysid_zero_clip'];
+
+export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId, presetRequest }) => {
   const [useSchroeder, setUseSchroeder] = useState<boolean>(true);
   const [harmonicM, setHarmonicM] = useState<number>(32);
   const [noiseSigma, setNoiseSigma] = useState<number>(0.05);
@@ -18,6 +22,17 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId 
   const [rmsErrDb, setRmsErrDb] = useState<number>(0.38);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Apply Demo Preset: Schroeder phasing with 32 harmonics: CF 1.71 vs. 8.00 for zero-phase (48 harmonics gives 1.74).
+  useEffect(() => {
+    const id = claimPreset(presetRequest, SYSID_PRESETS);
+    if (id === 'sysid_schroeder_clean') {
+      setUseSchroeder(true); setHarmonicM(32); setNoiseSigma(0.04); setNPeriods(12);
+    } else if (id === 'sysid_zero_clip') {
+      // Zero-phase cosines: the t = 0 spike that clips the actuator (CF 8.00 at 32 harmonics).
+      setUseSchroeder(false); setHarmonicM(32); setNoiseSigma(0.04); setNPeriods(8);
+    }
+  }, [presetRequest]);
 
   const togglePhaseMode = () => {
     setUseSchroeder((prev) => !prev);
