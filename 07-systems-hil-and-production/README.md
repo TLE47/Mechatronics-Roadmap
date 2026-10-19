@@ -90,7 +90,7 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
 ## Tier 2 (Intermediate / Applied)
 
 > **Goal of Pass 2 (Track 07):** Protect your custom 4-layer PCBs from **Regenerative Braking Over-Voltage Spikes** using an active shunt brake chopper, enforce **CRC-16 + Window Watchdog timeouts** on every CAN-FD frame, and automate **Software/Hardware-in-the-Loop (SIL/HIL) Fault Injection**.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 07):** Complete Tier 1/2 Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinetic & Capacitor Energy Balance*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Statistical Bounds*) plus the Track 07 Tier 2 Bridge [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 07):** Complete Tier 1/2 Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinetic & Capacitor Energy Balance*) and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Variance & Statistical Bounds*) plus the Track 07 Tier 2 Bridge [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md).
 
 ### 2.1 Why Fast Braking Blows Up Power Supplies (Regenerative Bus Clamping)
 - **Core Summary:** When a spinning robot joint decelerates rapidly ($\tau \cdot \omega < 0$), the brushless motor acts as a generator and pumps kinetic energy $\frac{1}{2}J\omega^2$ back into the DC bus capacitors. Because bench power supplies have output diodes and cannot sink reverse current, $V_{\text{bus}}$ spikes catastrophically unless an **active shunt brake chopper** (comparator/MCU-driven MOSFET + power resistor) clamps the rail whenever $V_{\text{bus}} > V_{\text{nom}} + 3\text{ V}$.
@@ -157,7 +157,7 @@ $$
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 07):** Master industrial V-Model qualification: Root-Sum-Square (RSS) multi-domain error budgets, **Schroeder-Phased Multisine Closed-Loop System Identification** ($\text{CF} \approx 1.66$), automated HIL fault-injection matrices, and **IEC 61508 / ISO 13849 / IEC 61800-5-2 Dual-Channel Safe Torque Off (STO)**.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 07):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Variance Addition & PSD*) plus the Track 07 Tier 3 Bridge [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 07):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Variance Addition & Covariance*) plus the Track 07 Tier 3 Bridge [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md).
 > * [**🏆 Next Linear Step in Pass 3 → Track 08 (Tier 3 Mastery: Full Production Capstones I–V)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass)
 
 ### 4.1 Mechatronic V-Model & Real-Time HIL Verification Architecture
@@ -210,7 +210,7 @@ $$
   - 🔗 [Heydemann (Applied Optics): Determination and Correction of Quadrature Fringe Measurement Errors in Interferometers](https://opg.optica.org/ao/abstract.cfm?uri=ao-20-19-3382) — *The classic least-squares ellipse-fitting algorithm used to remove sub-divisional error (SDE) from* $\sin/\cos$ *optical and magnetic encoders.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Verify the RSS table above in Python: notice that cutting the encoder error in half (from $3.0\ \mu\text{m}$ to $1.5\ \mu\text{m}$) without fixing the $6.90\ \mu\text{m}$ thermal drift barely changes the total RSS error! Always attack the largest squared term in $\sqrt{\sum \sigma_i^2}$ first.
-  - *📚 What to Learn & Resource Links for This Exercise:* Study uncorrelated variance summation $\sigma_{\text{total}}^2 = \sum (s_i \sigma_i)^2$ in Foundations [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), plus [Slocum *Precision Machine Design* Error Budgeting](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study uncorrelated variance summation $\sigma_{\text{total}}^2 = \sum (s_i \sigma_i)^2$ in Foundations [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md), plus [Slocum *Precision Machine Design* Error Budgeting](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
@@ -238,7 +238,7 @@ $$
   - 🔗 [Lab 07 Script: `07-systems-hil-and-production/lab/lab07_sysid_hil_and_sto.py`](./lab/lab07_sysid_hil_and_sto.py) — *Executable Python verification of Schroeder multisine Crest Factor reduction and closed-loop two-mass FRF identification.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 7: Schroeder Multisine SysID** in the interactive workbench, toggle between **Zero Phases ($\phi_k = 0$)** and **Schroeder Phases ($\phi_k = -\pi k(k-1)/M$)** to see the time-domain Crest Factor drop from $> 6.5$ down to $\sim 1.66$, and inspect how the extracted Bode plot pinpoints both the anti-resonance $f_{\text{ar}}$ and resonance $f_{\text{res}}$ so a Biquad Notch Filter can flatten the peak!
-  - *📚 What to Learn & Resource Links for This Exercise:* Study Bode plots in Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), pre-warped Tustin biquad notch filters in [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), and Schroeder-phased multisine Crest Factor minimization ($\phi_k = -\frac{\pi k(k-1)}{K}$) in [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`), plus [Pintelon & Schoukens *System Identification: A Frequency Domain Approach*](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118287422).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Bode plots in Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), pre-warped Tustin biquad notch filters in [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md), and Schroeder-phased multisine Crest Factor minimization ($\phi_k = -\frac{\pi k(k-1)}{K}$) in [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`), plus [Pintelon & Schoukens *System Identification: A Frequency Domain Approach*](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118287422).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

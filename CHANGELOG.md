@@ -11,6 +11,38 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 101: The T2.00f Split's Citations Follow It
+
+Splitting `00-foundations.T2.00f` into `T2.00i` (pre-warped Tustin biquads) and `T2.00j` (Gaussian
+variance, covariance and the predict step) rewrote Track 00's own ladder, but the other eight track
+index pages kept sending learners to `T2.00f` — now Nyquist sampling and aliasing only — for
+covariance, statistical bounds and notch design.
+
+| page | was | now |
+| --- | --- | --- |
+| 03 pass 2 prerequisites, 03 variance propagation | `T2.00f` (*Gaussian Noise Variance & PSD*) | `T2.00j` (*Gaussian Variance & Covariance*) |
+| 05 pass 2 prerequisites, 05 covariance propagation | `T2.00f` (*Gaussian Covariance Propagation*) | `T2.00j` (*Gaussian Covariance & the Predict Step*) |
+| 07 pass 2 prerequisites | `T2.00f` (*Statistical Bounds*) | `T2.00j` (*Variance & Statistical Bounds*) |
+| 07 pass 3 prerequisites | `T2.00f` (*Variance Addition & PSD*) | `T2.00j` (*Variance Addition & Covariance*) |
+| 07 error-budget study link | `T2.00f` | `T2.00j` |
+| 07 Tier 3 notch study link | `T2.00f` | `T2.00i` |
+| 08 pass 2 boss range | `T2.00a–T2.00f` | `T2.00a–T2.00j` |
+| 04 pass 3 prerequisites and Nyquist bullet | (*Sampling, Aliasing & Decimation*) | (*Nyquist Sampling & Aliasing*); decimation is `04-embedded.T3.04a` |
+
+**A content gap the relabel exposes:** with the split, no module mentions a power spectral density or
+Welch's method any more (`grep -ci 'PSD\|Welch'` is 0 in `T2.00f`, `T2.00i` and `T2.00j`), so the two
+labels that promised PSD now describe what `T2.00j` actually teaches. The Allan-deviation table in
+`03-sensors-and-actuators/README.md` still uses PSD language for white-noise densities, which is a
+physics fact there rather than a lesson pointer.
+
+The five citations that remain on `T2.00f` (three in Track 01, two in Track 04) all describe Nyquist
+sampling or anti-alias filtering, which is what the module now covers. `verify_repo.py` reports
+`links=1898 errors=0`.
+
+One more citation in the nine index pages moved: the Skogestad & Postlethwaite book link in Track 05
+pointed at `folk.ntnu.no/skoge/book.html`, which now answers `308` to `skoge.folk.ntnu.no`; it names
+the canonical host instead of leaning on a redirect.
+
 ## [2026-10-19] — Run 100: The Track Index Pages Are Checked Too
 
 `check_links.py` has named `00-foundations/README.md`, `01-…` and `02-…` in its external-scope

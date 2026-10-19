@@ -223,7 +223,7 @@ struct __attribute__((packed)) TelemetryPacket {
 ## Tier 3 (Advanced / Production)
 
 > **Goal of Pass 3 (Track 04):** Master zero-jitter bare-metal and heterogeneous real-time execution: Autonomous `TIM1_TRGO2` $\to$ `ADC1/2` $\to$ `DMA` hardware pipelines, Cortex-M7 `ITCM`/`DTCM` memory placement, `CORDIC` hardware trig co-processors, C++20 `WaitFreeSeqLock`, EtherCAT Distributed Clocks (`<50 ns`), and FPGA $\Sigma\Delta$ `sinc³` decimation filters.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 04):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Sampling, Aliasing & Decimation*) plus the Track 04 Tier 3 Bridge [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md).
+> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 04):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Nyquist Sampling & Aliasing*) plus the Track 04 Tier 3 Bridge [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md).
 > * [**Next Linear Step in Pass 3 → Track 05 (Tier 3: Joseph-Form Manifold ESKF, MPC & Control Barrier QPs)**](../05-control-and-estimation/README.md#tier-3-advanced--production)
 
 ### 4.1 Zero-Jitter Hardware-Triggered Control Execution Pipeline
@@ -358,7 +358,7 @@ private:
   - 🔗 [Texas Instruments SBAA230: Sinc Filter Design for ΣΔ Modulators in Motor Control](https://www.ti.com/lit/an/sbaa230/sbaa230.pdf) — *Derives the Hogenauer `sinc³` CIC filter architecture and shows why aligning the `sinc³` impulse response center with the PWM carrier peak cancels switching ripple.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp` to verify the fixed-point Hogenauer `sinc³` decimation filter response on a $20\text{ MHz}$ 1-bit $\Sigma\Delta$ modulator stream at $OSR = 128$ (16-bit current measurement) vs. $OSR = 16$ (fast overcurrent trip).
-  - *📚 What to Learn & Resource Links for This Exercise:* Study Nyquist sampling and decimation in Foundations [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) and Hogenauer `sinc³` $\Sigma\Delta$ decimation ($G = \text{OSR}^3$, $\tau_g = \frac{3(\text{OSR}-1)}{2 f_{\text{mod}}}$) + EtherCAT Distributed Clocks PI sync in [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) (`## 3. Formalization` Items 2–3), plus [Hogenauer's Classic CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Nyquist sampling and aliasing in Foundations [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) and Hogenauer `sinc³` $\Sigma\Delta$ decimation ($G = \text{OSR}^3$, $\tau_g = \frac{3(\text{OSR}-1)}{2 f_{\text{mod}}}$) + EtherCAT Distributed Clocks PI sync in [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) (`## 3. Formalization` Items 2–3), plus [Hogenauer's Classic CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>
