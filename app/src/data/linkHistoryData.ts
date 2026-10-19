@@ -71,6 +71,23 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
       "SERVER_ERROR": 1,
       "UNREACHABLE": 21
     }
+  },
+  {
+    "date": "2026-10-19T22:24:26+00:00",
+    "urls": 512,
+    "served": 463,
+    "notChecked": 49,
+    "failed": 0,
+    "blocked": 27,
+    "unreachable": 21,
+    "serverError": 1,
+    "verdicts": {
+      "BLOCKED": 27,
+      "FAIL": 0,
+      "PASS": 463,
+      "SERVER_ERROR": 1,
+      "UNREACHABLE": 21
+    }
   }
 ];
 

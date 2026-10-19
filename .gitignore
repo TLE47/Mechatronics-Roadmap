@@ -25,5 +25,6 @@ dist/
 LINK_REPORT.md
 .link_cache.json
 .sweep-state.json
+.browser-verdicts.json
 
 
