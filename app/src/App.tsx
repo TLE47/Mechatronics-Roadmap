@@ -14,6 +14,18 @@ import { TabEskf } from './components/tabs/TabEskf';
 import { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } from './components/tabs/TabPyodideRunner';
 import { TabPlacementQuiz } from './components/tabs/TabPlacementQuiz';
 import { PresetRequest } from './demoPresets';
+import { AccountPanel } from './components/AccountPanel';
+import {
+  accountsConfigured,
+  currentSession,
+  onSessionChange,
+  sendMagicLink,
+  signOutNow,
+} from './accounts';
+import { loadProgress, saveProgress } from './cloudProgress';
+import { mergeProgress, PROGRESS_SCHEMA, type ProgressSnapshot } from './progressMerge';
+import { readLearningLog, replaceLearningLog } from './learningLog';
+import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
 import {
@@ -79,6 +91,38 @@ const TOUR_STEPS: TourStepInfo[] = [
 export const STORAGE_KEY_MILESTONES = 'mechalab_linear_milestones_v1';
 export const STORAGE_KEY_TIER = 'mechalab_active_tier_pass_v1';
 export const STORAGE_KEY_VIEW_MODE = 'mechalab_view_mode_v1';
+// When the three progress maps last changed, so a cloud merge can tell which side is newer.
+const STORAGE_KEY_PROGRESS_UPDATED = 'mechalab.progress.updatedAt.v1';
+
+function readFlagMap(key: string): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function readProgressUpdatedAt(): number {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PROGRESS_UPDATED);
+    return raw ? Number(raw) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** What this browser would upload: the same three maps the UI reads, plus the learning log. */
+function localSnapshot(): ProgressSnapshot {
+  return {
+    schema: PROGRESS_SCHEMA,
+    updatedAt: readProgressUpdatedAt(),
+    verifiedLessons: readFlagMap(STORAGE_KEY_VERIFIED),
+    completedLessons: readFlagMap(STORAGE_KEY_COMPLETED),
+    completedMilestones: readFlagMap(STORAGE_KEY_MILESTONES),
+    learningLog: readLearningLog(),
+  };
+}
 
 export type WorkbenchViewMode = 'beginner' | 'advanced';
 
@@ -236,6 +280,16 @@ export const App: React.FC = () => {
   const [presetRequest, setPresetRequest] = useState<PresetRequest | null>(null);
   const presetNonce = useRef<number>(0);
 
+  // Accounts are optional: with no Supabase build variables nothing below ever fires.
+  const [isAccountOpen, setIsAccountOpen] = useState<boolean>(false);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [accountUserId, setAccountUserId] = useState<string | null>(null);
+  const [accountBusy, setAccountBusy] = useState<boolean>(false);
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [syncNote, setSyncNote] = useState<string>('');
+  // True only after the account's copy has been merged in; a save before that would overwrite it.
+  const syncReady = useRef<boolean>(false);
+
   const [viewMode, setViewMode] = useState<WorkbenchViewMode>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_VIEW_MODE) as WorkbenchViewMode | null;
@@ -326,6 +380,96 @@ export const App: React.FC = () => {
       // ignore
     }
   }, [completedLessons]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_PROGRESS_UPDATED, String(Date.now()));
+    } catch {
+      // ignore storage errors
+    }
+  }, [completedMilestones, verifiedLessons, completedLessons]);
+
+  useEffect(() => {
+    if (!accountsConfigured) return;
+    let cancelled = false;
+
+    const applySession = async (session: Session | null) => {
+      if (cancelled) return;
+      setAccountEmail(session?.user.email ?? null);
+      setAccountUserId(session?.user.id ?? null);
+      if (!session) {
+        syncReady.current = false;
+        setSyncNote('');
+        return;
+      }
+      setSyncNote('Loading your saved progress…');
+      const local = localSnapshot();
+      try {
+        const remote = await loadProgress(session.user.id);
+        const merged = remote ? mergeProgress(local, remote) : local;
+        setVerifiedLessons(merged.verifiedLessons);
+        setCompletedLessons(merged.completedLessons);
+        setCompletedMilestones(merged.completedMilestones);
+        replaceLearningLog(merged.learningLog);
+        syncReady.current = true;
+        await saveProgress(session.user.id, { ...merged, updatedAt: Date.now() });
+        if (!cancelled) setSyncNote(remote ? 'Progress merged with your account.' : 'Progress saved to your account.');
+      } catch (error) {
+        // Signed in but the row is unreachable: keep the learner working locally and say so.
+        syncReady.current = false;
+        if (!cancelled) {
+          setSyncNote(error instanceof Error ? `Cloud sync unavailable: ${error.message}` : 'Cloud sync unavailable.');
+        }
+      }
+    };
+
+    currentSession().then(applySession).catch(() => undefined);
+    let unsubscribe: (() => void) | null = null;
+    onSessionChange(applySession).then((stop) => {
+      // The effect may have been torn down while the SDK chunk was loading.
+      if (cancelled) stop();
+      else unsubscribe = stop;
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!accountsConfigured || !accountUserId || !syncReady.current) return;
+    const userId = accountUserId;
+    const timer = window.setTimeout(() => {
+      setSyncNote('Saving…');
+      saveProgress(userId, localSnapshot())
+        .then(() => setSyncNote('Saved to your account.'))
+        .catch((error) =>
+          setSyncNote(error instanceof Error ? `Sync failed: ${error.message}` : 'Sync failed.')
+        );
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [completedMilestones, verifiedLessons, completedLessons, accountUserId]);
+
+  const handleSendMagicLink = async (address: string) => {
+    setAccountBusy(true);
+    setAccountError(null);
+    const problem = await sendMagicLink(address);
+    setAccountBusy(false);
+    if (problem) setAccountError(problem);
+  };
+
+  const handleSignOut = async () => {
+    const problem = await signOutNow();
+    if (problem) {
+      setAccountError(problem);
+      return;
+    }
+    syncReady.current = false;
+    setAccountEmail(null);
+    setAccountUserId(null);
+    setSyncNote('');
+    setAccountError(null);
+  };
 
   const handleToggleMilestone = (id: string) => {
     setCompletedMilestones((prev) => ({
@@ -455,6 +599,8 @@ export const App: React.FC = () => {
         onExportPortfolio={() => setIsPortfolioModalOpen(true)}
         activeTierPass={activeTierPass}
         onSelectTierPass={setActiveTierPass}
+        accountEmail={accountEmail}
+        onOpenAccount={() => setIsAccountOpen(true)}
       />
 
       {/* Workspace Mode & Live Progress Toolbar */}
@@ -676,6 +822,18 @@ export const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      <AccountPanel
+        isOpen={isAccountOpen}
+        onClose={() => setIsAccountOpen(false)}
+        configured={accountsConfigured}
+        email={accountEmail}
+        note={syncNote}
+        error={accountError}
+        busy={accountBusy}
+        onSendLink={handleSendMagicLink}
+        onSignOut={handleSignOut}
+      />
 
       {/* Footer */}
       <footer className="border-t border-[#1e293b] bg-[#070b14] px-4 py-2.5 text-center text-xs text-[#64748b]">

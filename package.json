@@ -39,10 +39,12 @@
     "test:workbench": "node scripts/test_workbench.mjs",
     "test:e2e": "node scripts/e2e_browser_workbench.mjs",
     "test:e2e:pages": "node scripts/e2e_pages_bundle.mjs",
+    "test:merge": "node --experimental-strip-types scripts/test_progress_merge.mjs",
     "test:pairs": "node scripts/e2e_same_task_pairs.mjs",
     "test:tour": "node scripts/e2e_tour_presets.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "katex": "^0.16.21",
     "lucide-react": "^1.16.0",
     "react": "^19.0.0",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson } from 'lucide-react';
+import { Printer, Download, FileJson, User } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 
@@ -8,6 +8,9 @@ interface HeaderProps {
   onExportPortfolio: () => void;
   activeTierPass: ActiveTierPass;
   onSelectTierPass: (pass: ActiveTierPass) => void;
+  /** The signed-in address, or null when signed out (and when accounts are not configured). */
+  accountEmail: string | null;
+  onOpenAccount: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,6 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   onExportPortfolio,
   activeTierPass,
   onSelectTierPass,
+  accountEmail,
+  onOpenAccount,
 }) => {
   const passLinks: { id: ActiveTierPass; label: string }[] = [
     { id: 'level0', label: 'Stage 0: On-Ramp' },
@@ -60,6 +65,19 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Zone 3: Primary Action */}
       <div className="flex flex-wrap items-center justify-end gap-2.5 ml-auto">
+        <button
+          onClick={onOpenAccount}
+          data-testid="btn-account"
+          title={
+            accountEmail
+              ? `Signed in as ${accountEmail} — progress syncs to your account`
+              : 'Sign in to keep your progress across browsers, or keep it in this one'
+          }
+          className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b0f19] hover:bg-[#1e293b] border border-[#334155] text-[#cbd5e1] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer max-w-[16rem]"
+        >
+          <User className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">{accountEmail ?? 'Sign in'}</span>
+        </button>
         <button
           onClick={downloadLearningLog}
           data-testid="btn-export-learning-log"

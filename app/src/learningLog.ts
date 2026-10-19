@@ -65,6 +65,15 @@ export function logEvent(event: Omit<LearningEvent, 't'> & { t?: number }): void
   }
 }
 
+/** Replace the whole log, used after a cloud merge has unioned this browser's events with another's. */
+export function replaceLearningLog(events: LearningEvent[]): void {
+  try {
+    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
+  } catch {
+    // Storage disabled or over quota: the log keeps whatever it already held.
+  }
+}
+
 export function clearLearningLog(): void {
   try {
     localStorage.removeItem(LOG_STORAGE_KEY);
