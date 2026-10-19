@@ -279,6 +279,55 @@ def cache_entry_is_fresh(entry: object, expected: list[str], ttl_hours: float) -
     return all(heading in headings for heading in expected)
 
 
+def needs_fetch(
+    entry: object,
+    expected: list[str],
+    ttl_hours: float,
+    *,
+    refresh: bool = False,
+    revalidate_unverified: bool = False,
+) -> bool:
+    """Whether one URL has to be fetched, given the cache and the run's mode.
+
+    `--refresh` forces everything. `--revalidate-unverified` forces anything the cache does not
+    record as served - the daily job's whole point is to ask a host that answered 403, 5xx or nothing
+    whether it answers now, without re-paying for the 470 pages already known good.
+    """
+    if refresh:
+        return True
+    if revalidate_unverified and (not isinstance(entry, dict) or entry.get("verdict") != PASS):
+        return True
+    return not cache_entry_is_fresh(entry, expected, ttl_hours)
+
+
+def read_history(path: str) -> list[dict]:
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+    except OSError:
+        return []
+    rows = []
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict):
+            rows.append(row)
+    return rows
+
+
+def unchecked_rise(rows: list[dict], record: dict) -> int | None:
+    """How many more URLs are unverified than the last recorded row, or None without history."""
+    if not rows:
+        return None
+    previous = rows[-1].get("not_checked")
+    current = record.get("not_checked")
+    if not isinstance(previous, int) or not isinstance(current, int):
+        return None
+    return current - previous
+
+
 def fetch_many(urls: list[str], jobs: int) -> dict[str, tuple[str, int | str, str, str]]:
     """Fetch every URL with a bounded pool; one failure is a verdict, never a crash."""
     fetched: dict[str, tuple[str, int | str, str, str]] = {}
@@ -305,17 +354,7 @@ def append_history(path: str, record: dict) -> None:
 
 def print_history(path: str, window: int = 10) -> None:
     """Show the last sweeps, so a growing unverified pile is visible without opening the file."""
-    try:
-        with open(path, "r", encoding="utf-8") as handle:
-            lines = handle.read().splitlines()[-window:]
-    except OSError:
-        return
-    rows = []
-    for line in lines:
-        try:
-            rows.append(json.loads(line))
-        except ValueError:
-            continue
+    rows = read_history(path)[-window:]
     if not rows:
         return
     print("Not-checked over recent sweeps (oldest first):")
@@ -339,6 +378,16 @@ def main() -> int:
     )
     parser.add_argument(
         "--history", default=None, help="Append one JSON line per run here, and print the recent trend"
+    )
+    parser.add_argument(
+        "--fail-on-rise",
+        action="store_true",
+        help="Exit 1 when not_checked rises above the last row in --history",
+    )
+    parser.add_argument(
+        "--revalidate-unverified",
+        action="store_true",
+        help="Re-fetch every cached verdict that is not PASS, keeping served pages cached",
     )
     args = parser.parse_args()
     started = time.time()
@@ -426,7 +475,13 @@ def main() -> int:
     pending: list[str] = []
     for url in sorted_urls:
         expected_norm = [normalize_text(h) for h in url_expected_headings.get(url, set())]
-        if not args.refresh and cache_entry_is_fresh(cache.get(url), expected_norm, args.cache_ttl_hours):
+        if not needs_fetch(
+            cache.get(url),
+            expected_norm,
+            args.cache_ttl_hours,
+            refresh=args.refresh,
+            revalidate_unverified=args.revalidate_unverified,
+        ):
             continue
         pending.append(url)
 
@@ -565,9 +620,18 @@ def main() -> int:
         "elapsed_s": round(elapsed, 1),
         "verdicts": {v: sum(1 for r in results if r[1] == v) for v in (PASS, FAIL, BLOCKED, SERVER_ERROR, UNREACHABLE)},
     }
+    previous_rows = read_history(args.history) if args.history else []
+    rise = unchecked_rise(previous_rows, record) if args.fail_on_rise else None
     if args.history:
         append_history(args.history, record)
-        print_history(args.history, window=1)
+        print_history(args.history, window=10)
+    if rise is not None and rise > 0:
+        print(
+            f"UNVERIFIED RISE: {record['not_checked']} URL(s) not checked, {rise} more than the last "
+            f"recorded sweep ({previous_rows[-1].get('not_checked')}); open the NOT VERIFIED lines and "
+            f"either fix the citation or record why the host refuses scripts.",
+            file=sys.stderr,
+        )
     print(
         f"Swept {len(results)} URLs in {elapsed:.1f}s ({served_from_cache} cached, {len(pending)} fetched).",
         file=sys.stderr,
@@ -576,7 +640,7 @@ def main() -> int:
     for url, verdict, status, sources in unverified_urls:
         print(f"NOT VERIFIED: {url} -> {verdict} ({status}) ({sources})", file=sys.stderr)
 
-    if relative_errors or failed_urls or failed_headings:
+    if relative_errors or failed_urls or failed_headings or (rise is not None and rise > 0):
         for url, status, sources in failed_urls:
             print(f"FAILED URL: {url} -> {status} ({sources})", file=sys.stderr)
         for fh in failed_headings:

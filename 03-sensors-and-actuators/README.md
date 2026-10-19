@@ -359,3 +359,5 @@ $$
 - **Tier 2 (Stationary-to-Rotating Reference Frames: Clarke & Park → Step 2.4):** [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) *(Ladder Gate Test)*
 - **Tier 3 (Decoupled Synchronous $d$-$q$ FOC, Min-Max SVPWM & Harmonic LUT → Step 3.4):** [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md) *(Ladder Gate Test)*
 
+
+- **Handoff to Track 04 — first bridge page:** [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md)

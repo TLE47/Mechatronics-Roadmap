@@ -15,6 +15,9 @@ Run: `python3 tests/test_track_bridge_lists.py` (also picked up by `python3 -m u
 in CI).
 """
 
+# `str | None` below is annotation-only; the system 3.9 interpreter has no PEP 604 support otherwise.
+from __future__ import annotations
+
 import os
 import re
 import sys
@@ -68,6 +71,31 @@ def missing_ladder_pages(prefix: str, readme_text: str) -> list[str]:
     return [module for module in modules_by_track().get(prefix, []) if module not in linked]
 
 
+def bridge_section(readme_text: str) -> str:
+    """The bridge-module section a track README ends with, or the whole page when it has no heading."""
+    marker = re.search(r"^##+ .*Bridge Modules.*$", readme_text, flags=re.MULTILINE)
+    return readme_text[marker.end():] if marker else readme_text
+
+
+def next_track_first_bridge(prefix: str) -> str | None:
+    """The first Tier 2/3 bridge page of the next numbered track, or None for the last track."""
+    later = [key for key in sorted(track_readmes()) if key > prefix]
+    if not later:
+        return None
+    for module in modules_by_track().get(later[0], []):
+        if ".T2." in module or ".T3." in module:
+            return module
+    return None
+
+
+def missing_handoff(prefix: str, readme_text: str) -> str | None:
+    """The next track's first bridge page, when this README's bridge section never names it."""
+    target = next_track_first_bridge(prefix)
+    if target is None:
+        return None
+    return None if f"../modules/{target}.md" in bridge_section(readme_text) else target
+
+
 class TrackBridgeListTests(unittest.TestCase):
     def test_every_ladder_page_is_linked_from_its_track_readme(self):
         missing = {}
@@ -102,6 +130,43 @@ class TrackBridgeListTests(unittest.TestCase):
             [],
             "check that every numbered track owns at least one module page; expected a non-empty "
             "ladder per track, and an empty group means its bridge pages were renamed or moved",
+        )
+
+    def test_each_readme_hands_off_to_the_next_tracks_bridge_page(self):
+        missing = {}
+        for prefix, readme in track_readmes().items():
+            with open(os.path.join(ROOT, readme), encoding="utf-8") as handle:
+                target = missing_handoff(prefix, handle.read())
+            if target:
+                missing[readme] = target
+        self.assertEqual(
+            missing,
+            {},
+            "check the handoff line in each bridge section; expected every README before Track 08 to "
+            "link the next track's first Tier 2/3 bridge page, so a learner finishing a track has the "
+            "next step in the page they are already reading",
+        )
+
+    def test_the_handoff_detector_notices_a_dropped_line(self):
+        """A detector that only reads what the page already says would pass on any content."""
+        prefix = next(key for key in sorted(track_readmes()) if next_track_first_bridge(key))
+        with open(os.path.join(ROOT, track_readmes()[prefix]), encoding="utf-8") as handle:
+            text = handle.read()
+        target = next_track_first_bridge(prefix)
+        stripped = text.replace(f"../modules/{target}.md", f"../modules/{target}-missing.md")
+        self.assertEqual(
+            missing_handoff(prefix, stripped),
+            target,
+            f"check the handoff detector: expected {target} reported once its link is gone, otherwise "
+            f"a README could drop the handoff without failing anything",
+        )
+
+    def test_the_last_track_has_no_handoff(self):
+        last = sorted(track_readmes())[-1]
+        self.assertIsNone(
+            next_track_first_bridge(last),
+            "check the discovery: expected the last numbered track to have no successor, otherwise the "
+            "test would require a handoff to a track that does not exist",
         )
 
     def test_the_detector_notices_a_dropped_link(self):

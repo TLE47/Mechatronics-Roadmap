@@ -79,6 +79,94 @@ class CacheFreshnessTests(unittest.TestCase):
             )
 
 
+class NeedsFetchTests(unittest.TestCase):
+    def test_a_fresh_pass_is_not_fetched(self):
+        self.assertFalse(
+            check_links.needs_fetch(entry(check_links.PASS, headings={"a": True}), ["a"], 168),
+            "check the default path: expected a fresh PASS with its headings to be skipped, otherwise "
+            "the cache never saves a request",
+        )
+
+    def test_a_fresh_blocked_verdict_is_not_fetched_on_a_normal_run(self):
+        self.assertFalse(
+            check_links.needs_fetch(entry(check_links.BLOCKED, age_hours=1), [], 168),
+            "check the normal TTL path: expected a one-hour-old BLOCKED verdict to be reused, since a "
+            "weekly sweep should not re-pay for every bot wall",
+        )
+
+    def test_revalidation_retries_a_blocked_verdict_immediately(self):
+        self.assertTrue(
+            check_links.needs_fetch(
+                entry(check_links.BLOCKED, age_hours=1), [], 168, revalidate_unverified=True
+            ),
+            "check the revalidation mode: expected a fresh BLOCKED verdict to be fetched anyway, so a "
+            "bot wall that lifts is noticed the same day",
+        )
+
+    def test_revalidation_keeps_served_pages(self):
+        self.assertFalse(
+            check_links.needs_fetch(
+                entry(check_links.PASS, headings={"a": True}), ["a"], 168, revalidate_unverified=True
+            ),
+            "check the revalidation mode's other half: expected a fresh PASS to stay cached, otherwise "
+            "the daily job is a full sweep",
+        )
+
+    def test_refresh_forces_even_a_fresh_verdict(self):
+        self.assertTrue(
+            check_links.needs_fetch(entry(check_links.PASS, headings={"a": True}), ["a"], 168, refresh=True),
+            "check --refresh: expected a fresh PASS to be fetched when the flag is set, since that is "
+            "the only way to force a re-check",
+        )
+
+    def test_a_missing_entry_is_fetched(self):
+        self.assertTrue(
+            check_links.needs_fetch(None, [], 168),
+            "check the cold-cache path: expected an unknown URL to be fetched, otherwise a first run "
+            "would check nothing",
+        )
+
+
+class HistoryTests(unittest.TestCase):
+    def test_a_rise_is_reported_against_the_last_row(self):
+        rows = [{"not_checked": 30}, {"not_checked": 37}]
+        self.assertEqual(
+            check_links.unchecked_rise(rows, {"not_checked": 40}),
+            3,
+            "check the rise comparison: expected 40 against a last row of 37 to report 3, so the weekly "
+            "sweep can fail on a growing pile",
+        )
+
+    def test_a_flat_or_falling_count_is_not_a_rise(self):
+        for previous, current, expected in ((37, 37, 0), (37, 30, -7)):
+            self.assertEqual(
+                check_links.unchecked_rise([{"not_checked": previous}], {"not_checked": current}),
+                expected,
+                f"check the sign: expected {current} against {previous} to report {expected}, so only a "
+                f"real increase fails the run",
+            )
+
+    def test_no_history_means_no_comparison(self):
+        self.assertIsNone(
+            check_links.unchecked_rise([], {"not_checked": 37}),
+            "check the first-run path: expected None when there is no previous row, otherwise the first "
+            "sweep would compare against nothing and fail",
+        )
+
+    def test_read_history_skips_corrupt_lines(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "history.jsonl")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write('{"not_checked": 3}\nnot json\n{"not_checked": 4}\n')
+            rows = check_links.read_history(path)
+        self.assertEqual(
+            [row["not_checked"] for row in rows],
+            [3, 4],
+            "check the history parser: expected the corrupt line skipped and both real rows kept, so one "
+            "bad write cannot disable the rise gate",
+        )
+
+
 class CacheFileTests(unittest.TestCase):
     def test_save_then_load_round_trips(self):
         with tempfile.TemporaryDirectory() as directory:

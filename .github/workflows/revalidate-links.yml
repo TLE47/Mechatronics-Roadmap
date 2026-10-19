@@ -1,0 +1,47 @@
+name: Daily Revalidation of Unverified Links
+
+# The weekly sweep records what it could not check; this asks those hosts again the next morning, so a
+# bot wall or an outage that lifts is noticed within a day instead of waiting for the next sweep. Only
+# verdicts that are not PASS are re-fetched - the ~470 served pages stay cached.
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  revalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Same `link-cache-` prefix the weekly sweep restores, so the two workflows share one newest
+      # cache regardless of which ran last.
+      - name: Restore the URL verdict cache
+        uses: actions/cache@v4
+        with:
+          path: .link_cache.json
+          key: link-cache-revalidate-${{ github.run_id }}
+          restore-keys: |
+            link-cache-
+
+      - name: Ask every unverified host again
+        run: python3 scripts/check_links.py --revalidate-unverified --jobs 8
+
+      - name: Upload the revalidated cache for the sweep
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revalidated-link-cache
+          path: .link_cache.json
+          if-no-files-found: ignore
+          retention-days: 14

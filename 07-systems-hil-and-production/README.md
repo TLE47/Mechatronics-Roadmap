@@ -344,3 +344,5 @@ stateDiagram-v2
 - **Tier 2 (Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection → Step 2.8):** [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) *(Ladder Gate Test)*
 - **Tier 3 (OPC UA Information Models, IEC 63278-1 AAS Digital Twins & ISO 13849-1 PLd Safety → Step 3.7):** [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) *(Ladder Gate Test)*
 
+
+- **Handoff to Track 08 — first bridge page:** [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md)

@@ -11,6 +11,25 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 103: A Rising Pile Fails the Sweep, and the Ladder Hands Off
+
+The history file recorded `not_checked` but nothing acted on it, a bot wall that lifted waited a full
+week for the next sweep, and no track README pointed at the next track's first bridge page - a learner
+finishing Track 04 had to go back to the root index to find Track 05.
+
+| change | effect |
+| --- | --- |
+| `--fail-on-rise` on the weekly run | `not_checked` above the last committed row exits `1` with the delta, so a growing pile is a red job rather than a row nobody reads |
+| `--revalidate-unverified` + `npm run links:revalidate` | re-fetches only verdicts that are not `PASS`; the ~470 served pages stay cached |
+| `.github/workflows/revalidate-links.yml` (daily 07:00) | a lifted bot wall is re-checked the next morning, not the next Monday |
+| handoff line in the eight READMEs before Track 08 | each bridge section ends by naming the next track's first Tier 2/3 page |
+| `tests/test_track_bridge_lists.py` extended | fails when a handoff line is missing, with a negative control that proves the detector reports one |
+| `tests/test_link_cache.py` extended | covers `needs_fetch` (revalidation keeps served pages, retries blocked ones) and the rise comparison, including a corrupt history line |
+
+Measured with the cache restored from the weekly sweep: `--revalidate-unverified` re-fetched only the
+unverified verdicts instead of all 513 URLs, and a run against a history row of `not_checked: 0`
+exited `1` with `UNVERIFIED RISE`, while the same tree without the flag exited `0`.
+
 ## [2026-10-19] — Run 102: The Sweep Runs in Parallel, Remembers, and Reports Its Gap
 
 The checker fetched 513 URLs one after another, re-fetched every one of them on every run, and named

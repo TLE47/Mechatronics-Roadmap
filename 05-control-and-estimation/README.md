@@ -401,3 +401,5 @@ $$
 - **Tier 3, part 2 (Rodrigues, Tangent-Space Injection & the ESKF Reset → Step 3.6):** [`05-control.T3.05b`](../modules/05-control.T3.05b.md)
 - **Tier 3, part 3 (Control Barrier Functions & the 1D CBF-QP Safety Filter → Step 3.6):** [`05-control.T3.05c`](../modules/05-control.T3.05c.md) *(Ladder Gate Test - the ladder's exit examination)*
 
+
+- **Handoff to Track 06 — first bridge page:** [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md)

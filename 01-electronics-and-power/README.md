@@ -422,3 +422,5 @@ $$
 - **Tier 2 (Op-Amp Shunt Conditioning, KiCad & 48V Pre-Charge Safety → Step 2.2):** [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) · [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) *(Ladder Gate Test)*
 - **Tier 3 (6-Layer `<2 nH` Stackup, Bessel AFE, SAR Charge Buckets & Cauer Thermal RC → Step 3.2):** [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) *(Ladder Gate Test)*
 
+
+- **Handoff to Track 02 — first bridge page:** [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md)

@@ -523,3 +523,5 @@ $$
 - **Tier 2 (State-Space, ODEs, Bode & DSP → Step 2.1):** [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) · [`00-foundations.T2.00g`](../modules/00-foundations.T2.00g.md) · [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) · [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) · [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) · [`00-foundations.T2.00h`](../modules/00-foundations.T2.00h.md) · [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) · [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) · [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md) · [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) *(Ladder Gate Test)*
 - **Tier 3 ($SO(3)$ Hat/Vee & Matrix Exponential → Step 3.1):** [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) *(Ladder Gate Test)*
 
+
+- **Handoff to Track 01 — first bridge page:** [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md)
