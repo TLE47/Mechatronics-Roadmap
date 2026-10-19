@@ -317,15 +317,22 @@ def read_history(path: str) -> list[dict]:
     return rows
 
 
-def unchecked_rise(rows: list[dict], record: dict) -> int | None:
-    """How many more URLs are unverified than the last recorded row, or None without history."""
+def newly_unverified(rows: list[dict], record: dict) -> list[str] | None:
+    """URLs unverified now that the last recorded row did not list, or None when not comparable.
+
+    The gate used to compare counts, so one host recovering while another threw a transient 403 left
+    the number flat and hid the change, while a single new wall moved it and failed the run. Naming
+    the URLs makes the verdict about which citation needs a human: a wall that was already there last
+    week is not news, and a page that stopped being served is, whatever the totals do.
+    """
     if not rows:
         return None
-    previous = rows[-1].get("not_checked")
-    current = record.get("not_checked")
-    if not isinstance(previous, int) or not isinstance(current, int):
+    previous = rows[-1].get("unverified")
+    current = record.get("unverified")
+    if not isinstance(previous, list) or not isinstance(current, list):
         return None
-    return current - previous
+    known = {str(url) for url in previous}
+    return sorted(str(url) for url in current if str(url) not in known)
 
 
 def fetch_many(urls: list[str], jobs: int) -> dict[str, tuple[str, int | str, str, str]]:
@@ -382,7 +389,7 @@ def main() -> int:
     parser.add_argument(
         "--fail-on-rise",
         action="store_true",
-        help="Exit 1 when not_checked rises above the last row in --history",
+        help="Exit 1 when a URL unverified now was not unverified in the last --history row",
     )
     parser.add_argument(
         "--revalidate-unverified",
@@ -616,20 +623,22 @@ def main() -> int:
         "broken_relative": len(relative_errors),
         "cached": served_from_cache,
         "fetched": len(pending),
+        "unverified": sorted(url for url, _verdict, _status, _sources in unverified_urls),
         "jobs": max(1, args.jobs),
         "elapsed_s": round(elapsed, 1),
         "verdicts": {v: sum(1 for r in results if r[1] == v) for v in (PASS, FAIL, BLOCKED, SERVER_ERROR, UNREACHABLE)},
     }
     previous_rows = read_history(args.history) if args.history else []
-    rise = unchecked_rise(previous_rows, record) if args.fail_on_rise else None
+    new_unverified = newly_unverified(previous_rows, record) if args.fail_on_rise else None
     if args.history:
         append_history(args.history, record)
         print_history(args.history, window=10)
-    if rise is not None and rise > 0:
+    if new_unverified:
+        shown = ", ".join(new_unverified[:5]) + (" ..." if len(new_unverified) > 5 else "")
         print(
-            f"UNVERIFIED RISE: {record['not_checked']} URL(s) not checked, {rise} more than the last "
-            f"recorded sweep ({previous_rows[-1].get('not_checked')}); open the NOT VERIFIED lines and "
-            f"either fix the citation or record why the host refuses scripts.",
+            f"UNVERIFIED RISE: {len(new_unverified)} URL(s) are unverified now but not in the last "
+            f"recorded sweep: {shown}. Open each in a browser; a transient wall clears next run, a dead "
+            f"citation does not.",
             file=sys.stderr,
         )
     print(
@@ -640,7 +649,7 @@ def main() -> int:
     for url, verdict, status, sources in unverified_urls:
         print(f"NOT VERIFIED: {url} -> {verdict} ({status}) ({sources})", file=sys.stderr)
 
-    if relative_errors or failed_urls or failed_headings or (rise is not None and rise > 0):
+    if relative_errors or failed_urls or failed_headings or new_unverified:
         for url, status, sources in failed_urls:
             print(f"FAILED URL: {url} -> {status} ({sources})", file=sys.stderr)
         for fh in failed_headings:

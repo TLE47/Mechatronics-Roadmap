@@ -128,27 +128,46 @@ class NeedsFetchTests(unittest.TestCase):
 
 
 class HistoryTests(unittest.TestCase):
-    def test_a_rise_is_reported_against_the_last_row(self):
-        rows = [{"not_checked": 30}, {"not_checked": 37}]
+    def test_the_same_unverified_set_is_not_a_rise(self):
+        rows = [{"unverified": ["https://a", "https://b"]}]
         self.assertEqual(
-            check_links.unchecked_rise(rows, {"not_checked": 40}),
-            3,
-            "check the rise comparison: expected 40 against a last row of 37 to report 3, so the weekly "
-            "sweep can fail on a growing pile",
+            check_links.newly_unverified(rows, {"unverified": ["https://b", "https://a"]}),
+            [],
+            "check the set comparison: expected the same two URLs in another order to report nothing, "
+            "since a wall that was already there last week is not news",
         )
 
-    def test_a_flat_or_falling_count_is_not_a_rise(self):
-        for previous, current, expected in ((37, 37, 0), (37, 30, -7)):
-            self.assertEqual(
-                check_links.unchecked_rise([{"not_checked": previous}], {"not_checked": current}),
-                expected,
-                f"check the sign: expected {current} against {previous} to report {expected}, so only a "
-                f"real increase fails the run",
-            )
+    def test_a_recovery_plus_a_new_wall_names_only_the_new_wall(self):
+        rows = [{"unverified": ["https://a", "https://b", "https://c"]}]
+        self.assertEqual(
+            check_links.newly_unverified(
+                rows, {"unverified": ["https://b", "https://c", "https://d"]}
+            ),
+            ["https://d"],
+            "check the churn case: expected only the URL that is unverified now and was not before, so "
+            "a host recovering while another briefly walls still points at the one to open",
+        )
+
+    def test_a_smaller_set_is_not_a_rise(self):
+        rows = [{"unverified": ["https://a", "https://b", "https://c"]}]
+        self.assertEqual(
+            check_links.newly_unverified(rows, {"unverified": ["https://a"]}),
+            [],
+            "check the recovery path: expected a shrinking unverified set to report nothing, since the "
+            "pile got smaller and no citation needs attention",
+        )
+
+    def test_a_row_without_the_set_establishes_the_baseline(self):
+        rows = [{"not_checked": 0}]
+        self.assertIsNone(
+            check_links.newly_unverified(rows, {"unverified": ["https://a"]}),
+            "check the migration path: expected an older row with no `unverified` list to yield None, "
+            "so the first run after this change records the baseline instead of failing on all 37",
+        )
 
     def test_no_history_means_no_comparison(self):
         self.assertIsNone(
-            check_links.unchecked_rise([], {"not_checked": 37}),
+            check_links.newly_unverified([], {"unverified": ["https://a"]}),
             "check the first-run path: expected None when there is no previous row, otherwise the first "
             "sweep would compare against nothing and fail",
         )
