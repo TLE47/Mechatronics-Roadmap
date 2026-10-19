@@ -297,6 +297,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
 
                   <button
                     onClick={() => onToggleMilestone(step.milestoneId)}
+                    data-testid={`btn-milestone-${step.milestoneId}`}
                     className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 border transition-colors cursor-pointer ${
                       isChecked
                         ? 'bg-[#34d399]/20 border-[#34d399] text-[#34d399]'
