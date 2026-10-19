@@ -10,6 +10,8 @@
     "build": "tsc -b && vite build",
     "lint": "tsc -b",
     "check:lessons": "python3 scripts/generate_python_lessons_data.py --check",
+    "check:linkhistory": "python3 scripts/generate_link_history_data.py --check",
+    "test:linkhistory": "python3 tests/test_link_history_data.py",
     "check:ramp": "python3 scripts/check_ramp_lessons.py --json",
     "check:stepsize": "python3 scripts/audit_step_size.py --check",
     "check:crosswalk": "python3 scripts/legacy_crosswalk.py --check",

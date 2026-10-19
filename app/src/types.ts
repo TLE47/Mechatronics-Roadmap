@@ -7,6 +7,7 @@ export type TabId =
   | 'tab-cadpcb'
   | 'tab-sysid'
   | 'tab-eskf'
+  | 'tab-links'
   | 'tab-pyodide'
   | 'tab-placement';
 

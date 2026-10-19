@@ -87,7 +87,7 @@ All **48 beginner lessons** (`14 Track P` + `11 Stage 0` + `23 Tracks 00–08 Ti
 
 | Hardware Tier | Cost | What You Need & What It Covers |
 | :--- | :--- | :--- |
-| **Tier 0: 100% Simulator Path (`Learn & Simulate`)** | **\$0** | Browser + Python 3 (or in-app **Pyodide Runner**), [Falstad](https://www.falstad.com/circuit/circuitjs.html), [Wokwi](https://wokwi.com/projects/new/arduino-uno), and the 10-tab MechaLab Workbench. Covers **100% of Track P, Stage 0, Pass 1 (`00.1–08.1`), and Tier 2/3 simulation routes**. |
+| **Tier 0: 100% Simulator Path (`Learn & Simulate`)** | **\$0** | Browser + Python 3 (or in-app **Pyodide Runner**), [Falstad](https://www.falstad.com/circuit/circuitjs.html), [Wokwi](https://wokwi.com/projects/new/arduino-uno), and the 11-tab MechaLab Workbench (including the Link Health dashboard that charts the nightly citation sweep). Covers **100% of Track P, Stage 0, Pass 1 (`00.1–08.1`), and Tier 2/3 simulation routes**. |
 | **Tier 0+: Optional Breadboard Starter Kit (`Build`)** | **\$15–\$25** | Basic `Arduino Uno R3` / `ESP32` clone + breadboard + LEDs + resistors + $10\text{ k}\Omega$ potentiometer + pushbuttons. Covers physical breadboarding for **Stage 0 (`S0.1–S0.M`)** and low-voltage logic tests. |
 | **Tier 1: Physical Closed-Loop Motor Bench (`Build`)** | **~\$150** | Adds a $0\text{–}30\text{ V}$ `CC/CV` bench power supply, multimeter, USB logic analyzer, $6\text{–}9\text{ V}$ DC motor + **`DRV8833`** ($2.7\text{–}10.8\text{ V}$ operating, $11.8\text{ V}$ abs max) or $12\text{ V}$ motor + **`TB6612FNG`** ($4.5\text{–}13.5\text{ V}$), `SimpleFOCMini` + gimbal BLDC + `AS5600` magnetic encoder. Required **only** if you choose to build the physical Pass 1 motor labs and 2-DOF desktop robot arm. |
 
