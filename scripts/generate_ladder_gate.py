@@ -50,6 +50,8 @@ MODULE_IDS = [
     "00-foundations.T2.00h",
     "00-foundations.T2.00e",
     "00-foundations.T2.00f",
+    "00-foundations.T2.00i",
+    "00-foundations.T2.00j",
 ]
 
 PREAMBLE = (
@@ -57,7 +59,7 @@ PREAMBLE = (
     "`00-foundations.T2.*` page in [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) - before Step 2.1 "
     "(`00-foundations.T2.01`). Every Tier 2 page renders this same paper, so take it once after "
     "the last of them; the page you are on is only where you found it. Questions 1-6 are the "
-    "matrix page's own tools; 7-12 recap each other page once, so nothing on the ladder goes "
+    "matrix page's own tools; 7-14 recap each other page once, so nothing on the ladder goes "
     "unexamined."
 )
 
@@ -160,20 +162,30 @@ QUESTIONS = [
                 "the Forward-Euler map $A_d = I + A T_s$ (tolerance $\\pm 10^{-6}$).",
     },
     {
-        "tags": ["nyquist_sampling_and_aliasing", "tustin_frequency_prewarping_and_biquad",
-                 "gaussian_variance_and_covariance_matrix"],
-        "text": "Which triple is correct for `00-foundations.T2.00f`?",
+        "tags": ["nyquist_sampling_and_aliasing"],
+        "text": "Which statement is correct for `00-foundations.T2.00f`?",
         "options": [
-            "Sampling represents any frequency, aliasing affects only DC, and Tustin never warps.",
-            "Sampling represents only frequencies up to $f_s/2$, a faster tone folds to "
-            "$|f - k f_s|$, and pre-warping lifts the analog target so the digital notch lands on "
-            "$f_0$.",
-            "The Nyquist frequency is $f_s$, aliasing doubles the frequency, and pre-warping is a "
-            "gain correction.",
-            "Covariance is a scalar, the sample rate is irrelevant to stability, and every bilinear "
-            "pole lands outside the unit circle.",
+            "Sampling represents any frequency, and aliasing affects only DC.",
+            "Sampling represents only frequencies up to $f_s/2$, and a faster tone folds to "
+            "$|f - k f_s|$.",
+            "The Nyquist frequency is $f_s$, and aliasing doubles the frequency.",
+            "A digital low-pass filter placed after the ADC removes aliasing.",
         ],
         "answer": "B",
+    },
+    {
+        "tags": ["tustin_frequency_prewarping_and_biquad"],
+        "text": "Compute the pre-warped analog prototype $\\omega_a$ in $\\text{rad/s}$ that lands "
+                "a Tustin notch on $600\\,\\text{Hz}$ at $f_s = 2000\\,\\text{Hz}$, and the "
+                "frequency the *unwarped* prototype $2\\pi f_0$ would land on in $\\text{Hz}$ "
+                "(tolerances $\\pm 10^{-3}\\,\\text{rad/s}$ and $\\pm 0.01\\,\\text{Hz}$).",
+    },
+    {
+        "tags": ["gaussian_variance_and_covariance_matrix"],
+        "text": "For $A = \\begin{bmatrix} 1 & 0.1 \\\\ 0 & 1 \\end{bmatrix}$, "
+                "$\\Sigma_x = \\operatorname{diag}(0.01, 0.25)$ and "
+                "$Q = \\operatorname{diag}(0.001, 0.002)$, compute the $(0,0)$ entry of "
+                "$\\Sigma_y = A\\Sigma_x A^\\top + Q$ (tolerance $\\pm 10^{-9}$).",
     },
 ]
 
@@ -200,6 +212,9 @@ g10_corner_db = 20.0 * math.log10(1.0 / math.sqrt(2.0))
 Ad_euler = [[1.0, 0.05], [-5.0, 0.80]]
 g11_radius = math.sqrt(Ad_euler[0][0] * Ad_euler[1][1] - Ad_euler[0][1] * Ad_euler[1][0])
 g12_choice = "B"
+g13_wa = (2.0 / 0.0005) * math.tan(math.pi * 600.0 / 2000.0)
+g13_unwarped = (2000.0 / math.pi) * math.atan(math.pi * 600.0 / 2000.0)
+g14_sigma00 = 0.01 + 0.1 * 0.1 * 0.25 + 0.001
 
 assert math.isclose(g1_ax_first, -0.5, rel_tol=1e-9)
 assert math.isclose(g1_ax_second, 11.5, rel_tol=1e-9)
@@ -215,6 +230,9 @@ assert math.isclose(g10_z_ohm, 5.656854249492381, rel_tol=1e-9)
 assert math.isclose(g10_corner_db, -3.0103, abs_tol=1e-4)
 assert math.isclose(g11_radius, 1.024695, abs_tol=1e-6)
 assert g12_choice == "B"
+assert math.isclose(g13_wa, 5505.5277, abs_tol=1e-3)
+assert math.isclose(g13_unwarped, 481.1534, abs_tol=1e-2)
+assert math.isclose(g14_sigma00, 0.0135, rel_tol=1e-9)
 
 print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
       % (g1_ax_first, g1_ax_second, g3_v1, g4_x1_new_v, g11_radius))
@@ -259,7 +277,7 @@ def render():
             lines.append("   - **%s.** %s" % (letter, option))
     lines += ["", "**Gate answer key:**", "```python", ANSWER_KEY.rstrip("\n"), "```"]
     lines.append(
-        "- **Pass mark:** $\\ge 10/12$. Every question is answered by the page named in its tags; "
+        "- **Pass mark:** $\\ge 12/14$. Every question is answered by the page named in its tags; "
         "the ladder is closed when this paper is passed once, after the last Tier 2 page."
     )
     lines.append(END)

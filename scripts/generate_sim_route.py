@@ -54,7 +54,8 @@ CORE_MODULES = [
     # Tier 2 - the foundations ladder on the arm plant, then control and estimation.
     "00-foundations.T2.00a", "00-foundations.T2.00g", "00-foundations.T2.00b",
     "00-foundations.T2.00c", "00-foundations.T2.00d", "00-foundations.T2.00h",
-    "00-foundations.T2.00e", "00-foundations.T2.00f",
+    "00-foundations.T2.00e", "00-foundations.T2.00f", "00-foundations.T2.00i",
+    "00-foundations.T2.00j",
     "01-electronics.T2.01a", "01-electronics.T2.01b",
     "02-mechanics.T2.02a", "03-sensors.T2.03a",
     "04-embedded.T2.04a", "04-embedded.T2.04b",
@@ -83,9 +84,10 @@ OPTIONAL_REASONS = {
 }
 
 # Prose tracks that ship before any module: Python from zero, then the electricity intuition.
-# Order matters; ids are the lesson_id frontmatter values.
+# Order matters; ids are the lesson_id frontmatter values. The Track P milestone (P.M) is part of
+# the required route: it is the one lesson that ties the track together, so it is not skipped.
 CORE_TRACKS = [
-    ("Track P - programming from zero", "track-p/*.md", "P.M"),
+    ("Track P - programming from zero", "track-p/*.md", None),
     ("Stage 0 - why electricity behaves like flow", "stage-0/*.md", None),
 ]
 
@@ -135,6 +137,11 @@ def module_rows():
     return rows
 
 
+def lesson_order(ident):
+    """Numeric-aware sort key: 'P.2' < 'P.10' and 'S0.7' < 'S0.10'. Plain string order puts P.10 first."""
+    return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", ident)]
+
+
 def track_rows(pattern, stop_before):
     rows = []
     for path in sorted(glob.glob(os.path.join(ROOT, pattern))):
@@ -152,6 +159,9 @@ def track_rows(pattern, stop_before):
                 "high": (slow[1] if slow else (typical[1] if typical else None)),
             }
         )
+    # Route order follows the lesson numbers, not the filenames, so each lesson sits after the one it
+    # hands to (P.2 -> P.3 ... P.9 -> P.10), whatever the files happen to be called.
+    rows.sort(key=lambda row: lesson_order(row["id"]))
     return rows
 
 
@@ -228,14 +238,18 @@ def render():
     core_low = core_high = 0.0
     for label, pattern, stop_before in CORE_TRACKS:
         rows = track_rows(pattern, stop_before)
-        got = 0.0
+        got_low = got_high = 0.0
         for row in rows:
             lines.append(f"| {label} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
             if row["low"] is not None:
-                got += row["high"]
-                core_low += row["low"]
-        core_high += got
-        lines.append(f"| {label} | **{len(rows)} lessons, together** | {fmt(got, got)} |")
+                got_high += row["high"]
+                got_low += row["low"]
+        core_low += got_low
+        core_high += got_high
+        lines.append(
+            f"| {label} | **{len(rows)} lessons, together** | "
+            f"{fmt(round(got_low, 2), round(got_high, 2))} |"
+        )
 
     for stage in ("1", "2", "3"):
         rows = [row for row in core if row["tier"] == stage]

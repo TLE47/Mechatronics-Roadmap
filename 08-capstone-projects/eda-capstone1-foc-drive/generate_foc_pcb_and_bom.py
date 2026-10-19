@@ -30,7 +30,7 @@ import json
 import math
 import signal
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -243,6 +243,10 @@ class PowerStageOperatingPoint:
     l_loop_nh: float = 1.6              # 6-layer inner-plane return loop inductance (1.6 nH)
     di_dt_a_per_ns: float = 3.2         # Peak turn-off dI/dt at 30A
     r_theta_ja_board_k_per_w: float = 8.2   # 6-layer 2oz PCB + aluminum stator housing thermal interface pad
+    r_die_k_per_w: float = 0.45             # Die rung of the transient Cauer ladder (module worked value)
+    tau_die_s: float = 0.005                # Die rung time constant (5 ms)
+    tau_housing_s: float = 30.0             # Housing rung time constant (30 s); housing R = R_thJA - R_die
+    t_pulse_s: float = 1.0                  # Burst length at i_peak_a, checked against the 110 C gate
 
 
 def solve_power_stage_thermal(op: PowerStageOperatingPoint) -> dict[str, Any]:
@@ -318,6 +322,32 @@ def solve_power_stage_thermal(op: PowerStageOperatingPoint) -> dict[str, Any]:
         "v_ds_peak_turnoff_v": round(v_ds_peak_v, 2),
         "v_ds_limit_v": 60.0,
         "thermal_and_voltage_ok": (t_j < 110.0) and (v_ds_peak_v < 60.0) and (efficiency_pct > 97.0),
+    }
+
+
+def solve_pulse_thermal(op: PowerStageOperatingPoint) -> dict[str, Any]:
+    """Junction temperature at the end of a rectangular burst of i_peak_a lasting t_pulse_s, starting from the
+    continuous design point, through a Cauer two-rung ladder (die + housing, summing to r_theta_ja_board_k_per_w).
+
+    T_J(t_p) = T_design + dP * sum_k R_k (1 - exp(-t_p / tau_k)), with dP the steady loss at i_peak_a minus the
+    loss at the design point. The steady loss at i_peak_a is an upper bound: a short burst never reaches it.
+    """
+    base = solve_power_stage_thermal(op)
+    peak = solve_power_stage_thermal(replace(op, i_rms_cont_a=op.i_peak_a))
+    d_p = max(0.0, peak["p_total_loss_w"] - base["p_total_loss_w"])
+    r_housing = op.r_theta_ja_board_k_per_w - op.r_die_k_per_w
+    z = (
+        op.r_die_k_per_w * (1.0 - math.exp(-op.t_pulse_s / op.tau_die_s))
+        + r_housing * (1.0 - math.exp(-op.t_pulse_s / op.tau_housing_s))
+    )
+    t_pulse = base["steady_state_tj_c"] + d_p * z
+    return {
+        "pulse_current_a": op.i_peak_a,
+        "pulse_duration_s": op.t_pulse_s,
+        "pulse_power_step_w": round(d_p, 3),
+        "pulse_thermal_impedance_k_per_w": round(z, 4),
+        "pulse_tj_c": round(t_pulse, 2),
+        "pulse_thermal_ok": t_pulse < 110.0,
     }
 
 
@@ -472,7 +502,9 @@ def run_capstone1_eda(repo_root: Path, dry_run: bool = False) -> dict[str, Any]:
 
     bom = build_capstone1_bom()
     netlist_str, erc = generate_kicad_netlist(bom)
-    thermal = solve_power_stage_thermal(PowerStageOperatingPoint())
+    op = PowerStageOperatingPoint()
+    thermal = solve_power_stage_thermal(op)
+    thermal.update(solve_pulse_thermal(op))
 
     total_bom_cost = round(sum(item.qty * item.unit_cost_usd for item in bom), 2)
     total_parts_count = sum(item.qty for item in bom)
@@ -482,7 +514,12 @@ def run_capstone1_eda(repo_root: Path, dry_run: bool = False) -> dict[str, Any]:
     csv_path = eda_dir / "capstone1_bom.csv"
     json_path = eda_dir / "foc_thermal_and_bom.json"
 
-    ok = all_derated and thermal["thermal_and_voltage_ok"] and erc["dual_channel_sto_verified"]
+    ok = (
+        all_derated
+        and thermal["thermal_and_voltage_ok"]
+        and thermal["pulse_thermal_ok"]
+        and erc["dual_channel_sto_verified"]
+    )
 
     report = {
         "lab": "08-capstone1-foc-eda",

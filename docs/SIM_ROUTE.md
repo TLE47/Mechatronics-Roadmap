@@ -21,10 +21,6 @@ flowchart LR
 | Stage | Item | Hours |
 | :--- | :--- | ---: |
 | Track P - programming from zero | `P.1` Variables and Fundamental Data Types | 1-3 |
-| Track P - programming from zero | `P.10` Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry | 1.5-3.5 |
-| Track P - programming from zero | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
-| Track P - programming from zero | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
-| Track P - programming from zero | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
 | Track P - programming from zero | `P.2` Computer Arithmetic and Order of Operations | 1-2.5 |
 | Track P - programming from zero | `P.3` Conditional Decisions (if/elif/else) and Command Clamping | 1.5-3.5 |
 | Track P - programming from zero | `P.4` Ordered Lists and Repeating Actions with for Loops | 1.5-3.5 |
@@ -33,7 +29,12 @@ flowchart LR
 | Track P - programming from zero | `P.7` Base SI Units and Metric Prefixes (M, k, m, µ) | 1-2.5 |
 | Track P - programming from zero | `P.8` Cycle Frequency (Hz), Period (T = 1/f) and Binary Bits (2^N) | 1-3 |
 | Track P - programming from zero | `P.9` Rearranging Physics Formulas and Linear Range Scaling | 1-3 |
-| Track P - programming from zero | **13 lessons, together** | 40 |
+| Track P - programming from zero | `P.10` Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry | 1.5-3.5 |
+| Track P - programming from zero | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
+| Track P - programming from zero | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
+| Track P - programming from zero | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
+| Track P - programming from zero | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
+| Track P - programming from zero | **14 lessons, together** | 16.75-42.5 |
 | Stage 0 - why electricity behaves like flow | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
 | Stage 0 - why electricity behaves like flow | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
 | Stage 0 - why electricity behaves like flow | `S0.2` Series vs. Parallel Resistor Networks, Voltage Dividers and Potentiometers | 1.5-3.5 |
@@ -45,7 +46,7 @@ flowchart LR
 | Stage 0 - why electricity behaves like flow | `S0.8` Reading Analog Sensors — The 10-Bit ADC (analogRead) and Serial Monitor | 1.5-3 |
 | Stage 0 - why electricity behaves like flow | `S0.9` Switching Power Smoothly — PWM Duty Cycle and analogWrite() | 1.5-3 |
 | Stage 0 - why electricity behaves like flow | `S0.M` Stage 0 Milestone — Potentiometer LED Dimmer with Safety Kill-Switch | 1-2.5 |
-| Stage 0 - why electricity behaves like flow | **11 lessons, together** | 33 |
+| Stage 0 - why electricity behaves like flow | **11 lessons, together** | 13.75-33 |
 | Tier 1 | `00-foundations.T1.00a` Running Python, Variables, Loops, Functions & Tracebacks | 3 |
 | Tier 1 | `00-foundations.T1.00b` Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics | 3.5 |
 | Tier 1 | `00-foundations.T1.00c` SI Units, Engineering Prefixes & Dimensional Analysis | 2.5 |
@@ -70,7 +71,9 @@ flowchart LR
 | Tier 2 | `00-foundations.T2.00d` Complex Numbers, Euler's Formula & Phasors | 2 |
 | Tier 2 | `00-foundations.T2.00h` Winding Impedance, Transfer Functions, Decibels & the Resonance Peak | 3 |
 | Tier 2 | `00-foundations.T2.00e` Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization | 4.5 |
-| Tier 2 | `00-foundations.T2.00f` Nyquist Sampling & Aliasing, Pre-Warped Tustin Biquad Filters & Gaussian Covariance | 4.5 |
+| Tier 2 | `00-foundations.T2.00f` Nyquist Sampling, Aliasing & the Analog Anti-Alias Filter | 2 |
+| Tier 2 | `00-foundations.T2.00i` Pre-Warped Tustin Biquads: Where the Notch Really Lands | 2.5 |
+| Tier 2 | `00-foundations.T2.00j` Gaussian Variance, Covariance & the Predict Step | 2.5 |
 | Tier 2 | `01-electronics.T2.01a` Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing | 4 |
 | Tier 2 | `01-electronics.T2.01b` Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping | 4.5 |
 | Tier 2 | `02-mechanics.T2.02a` 6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia | 4.5 |
@@ -81,7 +84,7 @@ flowchart LR
 | Tier 2 | `06-robotics.T2.06a` ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, QoS), TF2 Frames, URDF & ros2_control | 5.5 |
 | Tier 2 | `06-robotics.T2.06b` ROS 2 Operations: Launch & Parameter Composition, Deterministic rosbag2 Recording/Replay & Simulator Integration (Gazebo / MuJoCo) | 4.5 |
 | Tier 2 | `07-systems.T2.07a` Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection | 4.5 |
-| Tier 2 | **18 modules, together** | 71.5 |
+| Tier 2 | **20 modules, together** | 74 |
 | Tier 3 | `00-foundations.T3.00a` Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation | 5 |
 | Tier 3 | `02-mechanics.T3.02a` 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | 5 |
 | Tier 3 | `05-control.T3.05a` Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency | 2 |
@@ -89,7 +92,7 @@ flowchart LR
 | Tier 3 | `05-control.T3.05c` Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | 2 |
 | Tier 3 | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off | 4.5 |
 | Tier 3 | **6 modules, together** | 20.5 |
-| **Core total** | **40 modules + the prose tracks above** | **174.5-218** |
+| **Core total** | **42 modules + the prose tracks above** | **178-223** |
 
 The low end is every page's `est_hours` / `typical_hours`; the high end is its
 `slow_learner_hours`. Nothing in this table is hand-entered, and `--check` fails when it

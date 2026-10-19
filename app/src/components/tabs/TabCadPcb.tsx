@@ -12,6 +12,53 @@ interface TabCadPcbProps {
 
 const PCB_PRESETS = ['pcb_6layer_opt', 'pcb_2layer_bad', 'pcb_peak_30a', 'cad_flexure_stage', 'cad_qdd_carrier'];
 
+// Steady-state junction-to-ambient resistance of the whole stack (K/W), as the solver below uses it.
+const R_THJA_K_W = 8.2;
+// Transient Cauer ladder (Track 01 Tier 3 module): the die rung and the housing rung sum to R_THJA_K_W,
+// so the steady state is unchanged. 0.45 K/W with 5 ms and 2.5 K/W with 30 s are the module's worked values.
+const R_DIE_K_W = 0.45;
+const TAU_DIE_S = 0.005;
+const TAU_HOUSING_S = 30.0;
+const R_HOUSING_K_W = R_THJA_K_W - R_DIE_K_W;
+// The pulse starts from the 15 A continuous design point (the Capstone I operating point).
+const DESIGN_I_A = 15.0;
+
+// Coupled electro-thermal steady state at a continuous phase current (A_rms).
+function solveThermal(iRms: number, fKhz: number) {
+  const f_pwm = fKhz * 1e3;
+  const i_avg = (2.0 * Math.SQRT2 / Math.PI) * iRms;
+  const p_sw_fet = 0.5 * 48.0 * i_avg * (26e-9) * f_pwm;
+  const p_rr = 3.0 * 48.0 * 42e-9 * f_pwm;
+  const p_dt = 3.0 * 0.82 * i_avg * (200e-9 * f_pwm);
+  const p_shunt = 3.0 * iRms * iRms * 0.001;
+
+  let tj = 55.0;
+  for (let k = 0; k < 25; k++) {
+    const rds = 0.0025 * (1.0 + 0.0042 * (tj - 25.0));
+    const p_cond = 3.0 * iRms * iRms * rds;
+    const p_tot = p_cond + 6.0 * p_sw_fet + p_rr + p_dt + p_shunt + 0.85;
+    tj = 40.0 + p_tot * R_THJA_K_W;
+  }
+  const rds_hot = 0.0025 * (1.0 + 0.0042 * (tj - 25.0));
+  const p_cond = 3.0 * iRms * iRms * rds_hot;
+  const p_sw_all = 6.0 * p_sw_fet + p_rr + p_dt;
+  const p_loss = p_cond + p_sw_all + p_shunt + 0.85;
+  const p_out = Math.sqrt(3.0) * (48.0 / Math.SQRT2) * 0.85 * iRms * 0.92;
+  const eff = 100.0 * p_out / (p_out + p_loss);
+  return { tj, p_cond, p_sw_all, p_shunt, p_loss, eff };
+}
+
+// Junction temperature at the end of a rectangular pulse of iPulse (A_rms) lasting tpS seconds, starting from
+// the design point: T_j(t_p) = T_design + dP * Z(t_p). The pulse power is the steady loss at iPulse, which is an
+// upper bound because a short burst never reaches that steady temperature.
+function transientPulseTj(iPulse: number, tpS: number, fKhz: number): number {
+  const design = solveThermal(DESIGN_I_A, fKhz);
+  const pulse = solveThermal(iPulse, fKhz);
+  const dP = Math.max(0, pulse.p_loss - design.p_loss);
+  const z = R_DIE_K_W * (1 - Math.exp(-tpS / TAU_DIE_S)) + R_HOUSING_K_W * (1 - Math.exp(-tpS / TAU_HOUSING_S));
+  return design.tj + dP * z;
+}
+
 const BOM_DATA: BomItem[] = [
   { refDes: 'U1', mpn: 'STM32G474RET6', functionDesc: '170MHz M4F + CORDIC', rating: '3.3V, 5x 4MSPS ADC' },
   { refDes: 'U2', mpn: 'DRV8353RSRGZR', functionDesc: '100V 3-Ph Gate Driver', rating: '48V bus (53V peak)' },
@@ -27,11 +74,13 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
   const [iRms, setIRms] = useState<number>(15.0);
   const [fKhz, setFKhz] = useState<number>(40);
   const [lNh, setLNh] = useState<number>(1.6);
+  const [pulseMs, setPulseMs] = useState<number>(1000);
 
   const [flexureK, setFlexureK] = useState<number>(6.84);
   const [tjDeg, setTjDeg] = useState<number>(90.9);
   const [vdsPeak, setVdsPeak] = useState<number>(53.1);
   const [efficiency, setEfficiency] = useState<number>(99.11);
+  const [pulseTjDeg, setPulseTjDeg] = useState<number>(90.9);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -50,32 +99,14 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
     const k_theta = (2.0 * 114e9 * 0.012 * Math.pow(tMm * 1e-3, 2.5)) / (9.0 * Math.PI * Math.sqrt(0.006));
     setFlexureK(k_theta);
 
-    // Coupled electro-thermal iterative solve
-    const f_pwm = fKhz * 1e3;
-    const i_avg = (2.0 * Math.SQRT2 / Math.PI) * iRms;
-    const p_sw_fet = 0.5 * 48.0 * i_avg * (26e-9) * f_pwm;
-    const p_rr = 3.0 * 48.0 * 42e-9 * f_pwm;
-    const p_dt = 3.0 * 0.82 * i_avg * (200e-9 * f_pwm);
-    const p_shunt = 3.0 * iRms * iRms * 0.001;
-
-    let tj = 55.0;
-    for (let k = 0; k < 25; k++) {
-      const rds = 0.0025 * (1.0 + 0.0042 * (tj - 25.0));
-      const p_cond = 3.0 * iRms * iRms * rds;
-      const p_tot = p_cond + 6.0 * p_sw_fet + p_rr + p_dt + p_shunt + 0.85;
-      tj = 40.0 + p_tot * 8.2;
-    }
-    const rds_hot = 0.0025 * (1.0 + 0.0042 * (tj - 25.0));
-    const p_cond = 3.0 * iRms * iRms * rds_hot;
-    const p_sw_all = 6.0 * p_sw_fet + p_rr + p_dt;
-    const p_loss = p_cond + p_sw_all + p_shunt + 0.85;
-    const p_out = Math.sqrt(3.0) * (48.0 / Math.SQRT2) * 0.85 * iRms * 0.92;
-    const eff = 100.0 * p_out / (p_out + p_loss);
+    // Coupled electro-thermal iterative solve (steady state at iRms), then the transient burst at pulseMs
+    const { tj, p_cond, p_sw_all, p_shunt, p_loss, eff } = solveThermal(iRms, fKhz);
     const peakV = 48.0 + lNh * 3.2;
 
     setTjDeg(tj);
     setVdsPeak(peakV);
     setEfficiency(eff);
+    setPulseTjDeg(transientPulseTj(iRms, pulseMs / 1000, fKhz));
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -144,7 +175,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
       const barLen = Math.min(bw, (val / 12.0) * bw);
       ctx.fillRect(bx, y + 6, Math.max(6, barLen), 20);
     });
-  }, [activeCadPart, tMm, iRms, fKhz, lNh]);
+  }, [activeCadPart, tMm, iRms, fKhz, lNh, pulseMs]);
 
   return (
     <div className="space-y-4">
@@ -261,6 +292,22 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
             />
           </div>
 
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-[#cbd5e1]">
+              <span>Burst length <MathView math="t_p" /> [ms] at this current</span>
+              <span className="font-mono text-[#34d399] font-bold">{pulseMs}</span>
+            </div>
+            <input
+              type="range"
+              min="5"
+              max="10000"
+              step="5"
+              value={pulseMs}
+              onChange={(e) => setPulseMs(parseFloat(e.target.value))}
+              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+            />
+          </div>
+
           {/* BOM Table */}
           <div className="pt-2">
             <h3 className="text-xs font-bold text-[#38bdf8] uppercase mb-1.5">
@@ -299,7 +346,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
             </h2>
 
             {/* KPIs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
               <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
                 <div className="text-[0.7rem] text-[#94a3b8]">Flexure <MathView math="k_\theta" /></div>
                 <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{flexureK.toFixed(2)} N·m/rad</div>
@@ -319,6 +366,12 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
               <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
                 <div className="text-[0.7rem] text-[#94a3b8]">Inverter Efficiency</div>
                 <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{efficiency.toFixed(2)}%</div>
+              </div>
+              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-[#94a3b8]">Pulse <MathView math="T_j" /> (peak)</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${pulseTjDeg < 110 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+                  {pulseTjDeg.toFixed(1)} °C
+                </div>
               </div>
             </div>
 

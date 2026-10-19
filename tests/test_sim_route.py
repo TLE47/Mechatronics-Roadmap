@@ -16,9 +16,11 @@ The route document is the one page a beginner is asked to follow, so the failure
 Run: `python3 tests/test_sim_route.py` (also wired into the CI verify step).
 """
 
+import glob
 import importlib.util
 import os
 import re
+import subprocess
 import sys
 import unittest
 
@@ -276,6 +278,135 @@ class SimRouteTests(unittest.TestCase):
                 f"the Core route; moving it to Extensions leaves a learner with the setup half "
                 f"and no project to use it in",
             )
+
+    def test_track_p_follows_the_lesson_numbers_not_the_filenames(self):
+        """Plain filename order lists P.10 before P.2; the route has to follow the lesson numbers."""
+        ids = [row["id"] for row in gen.track_rows("track-p/*.md", None)]
+        self.assertEqual(
+            ids, sorted(ids, key=gen.lesson_order),
+            f"expected Track P rows in lesson-number order, got {ids}",
+        )
+        self.assertLess(
+            self.doc.index("`P.2`"), self.doc.index("`P.10`"),
+            "expected P.2 before P.10 in docs/SIM_ROUTE.md; string order puts P.10 first",
+        )
+
+    def test_each_track_p_lesson_comes_before_the_one_it_hands_to(self):
+        """A lesson's `Next lesson` link names the lesson that depends on it, so the route must list the
+        dependent after it. Filename order breaks this at P.9 -> P.10."""
+        order = {row["id"]: i for i, row in enumerate(gen.track_rows("track-p/*.md", None))}
+        checked = 0
+        for path in sorted(glob.glob(os.path.join(ROOT, "track-p", "P.*.md"))):
+            source = gen.frontmatter(path).get("lesson_id", "")
+            with open(path, encoding="utf-8") as handle:
+                match = re.search(r"\*\*Next lesson:\*\*.*?\[Lesson (P\.\w+):", handle.read())
+            if not match or source not in order or match.group(1) not in order:
+                continue
+            checked += 1
+            self.assertLess(
+                order[source], order[match.group(1)],
+                f"expected {source} to come before {match.group(1)}, which it hands to; the route "
+                f"lists {match.group(1)} first, so a learner meets the dependent lesson too early",
+            )
+        self.assertGreaterEqual(
+            checked, 10,
+            f"expected at least 10 Track P hand-offs to check, found {checked}; the Next-lesson "
+            f"pattern may have changed",
+        )
+
+    def test_track_p_ids_are_the_documented_set(self):
+        """Track P has no P.13: the numbering skips it on purpose, and the route must show exactly the
+        documented set. Renumbering P.14 would orphan learners' saved progress, which is keyed by id."""
+        ids = [row["id"] for row in gen.track_rows("track-p/*.md", None)]
+        expected = [f"P.{n}" for n in range(1, 13)] + ["P.14", "P.M"]
+        self.assertEqual(
+            sorted(ids, key=gen.lesson_order), expected,
+            f"expected Track P to be P.1-P.12, P.14 and the P.M milestone, got {ids}; a new or "
+            f"missing id changes saved progress and the lint/test sets that name these ids",
+        )
+        for ident in expected:
+            self.assertIn(
+                f"`{ident}`", self.doc,
+                f"expected {ident} in the route page; a required milestone missing from the route "
+                f"is a lesson a learner is never asked to finish",
+            )
+
+    def test_the_count_labels_match_the_generated_route(self):
+        """The bridge counts quoted in the QUALITY_SPEC and the lab BOM must be the counts the route
+        computes from the pages, split the same way (Core vs Extensions, and by tier)."""
+        bridge = [row for row in gen.module_rows() if row["tier"] in ("1", "2", "3")]
+        core = [row for row in bridge if row["id"] in gen.CORE_MODULES]
+        ext = [row for row in bridge if row["id"] not in gen.CORE_MODULES]
+        tiers = {t: sum(1 for row in bridge if row["tier"] == t) for t in ("1", "2", "3")}
+        total = len(bridge)
+        with open(os.path.join(ROOT, "docs", "QUALITY_SPEC.md"), encoding="utf-8") as handle:
+            spec = handle.read()
+        applies = re.search(
+            r"Applies to the \*\*(\d+) bridge modules\*\*.*?\((\d+) Tier 1, (\d+) Tier 2, (\d+) Tier 3\)"
+            r".*?the \*\*(\d+) Core\*\*.*?\*\*(\d+) Extensions\*\*",
+            spec, re.DOTALL,
+        )
+        self.assertIsNotNone(
+            applies,
+            "expected docs/QUALITY_SPEC.md to state the bridge total, the tier split and the "
+            "Core/Extensions split in its 'Applies to' line; check the wording was not reformatted",
+        )
+        got = tuple(int(x) for x in applies.groups())
+        want = (total, tiers["1"], tiers["2"], tiers["3"], len(core), len(ext))
+        self.assertEqual(
+            got, want,
+            f"expected docs/QUALITY_SPEC.md to state (total, T1, T2, T3, Core, Extensions) = "
+            f"{want} from the pages, got {got} - a bridge count that is typed rather than computed "
+            f"drifts when a module moves between Core and Extensions",
+        )
+        graded = re.findall(r"all (\d+) bridge modules \(Core and Extensions\)", spec)
+        self.assertEqual(
+            [int(x) for x in graded], [total],
+            f"expected QUALITY_SPEC to say 'all {total} bridge modules (Core and Extensions)' "
+            f"exactly once, found {graded}",
+        )
+        with open(os.path.join(ROOT, "resources", "lab-workbench-bom.md"), encoding="utf-8") as handle:
+            bom = handle.read()
+        bom_counts = [int(x) for x in re.findall(r"all (\d+) Bridge Modules", bom)]
+        self.assertEqual(
+            bom_counts, [total],
+            f"expected resources/lab-workbench-bom.md to say 'all {total} Bridge Modules' exactly "
+            f"once, found {bom_counts} - the BOM promises a $0 path to every bridge module",
+        )
+
+    def test_the_08_1_lesson_count_matches_the_validator(self):
+        """The 08.1 capstone tells a learner how many beginner lessons they have completed. The validator
+        counts those lessons from the track folders, so the capstone's figure must equal that count, or
+        the finish line it names is not the course's own."""
+        capstone_path = os.path.join(
+            ROOT, "08-capstone-projects", "08.1-tier1-2dof-compliant-arm-capstone.md"
+        )
+        with open(capstone_path, encoding="utf-8") as handle:
+            quoted = re.findall(r"Completing all (\d+) beginner lessons", handle.read())
+        self.assertEqual(
+            len(quoted), 1,
+            f"expected 08.1 to quote the beginner lesson count exactly once, found {quoted}; check "
+            f"the 'Completing all N beginner lessons' recap line was not reworded",
+        )
+        run = subprocess.run(
+            [sys.executable, os.path.join("scripts", "validate_modules.py")],
+            cwd=ROOT, capture_output=True, text=True,
+        )
+        self.assertEqual(
+            run.returncode, 0,
+            f"expected scripts/validate_modules.py to pass so its lesson count can be read, got exit "
+            f"{run.returncode}: {run.stdout.strip()} {run.stderr.strip()}",
+        )
+        counted = re.search(r"(\d+) beginner lessons;", run.stdout)
+        self.assertIsNotNone(
+            counted,
+            f"expected validate_modules.py to print 'N beginner lessons;', got: {run.stdout.strip()!r}",
+        )
+        self.assertEqual(
+            quoted[0], counted.group(1),
+            f"expected 08.1 to say {counted.group(1)} beginner lessons, the validator's count; it says "
+            f"{quoted[0]} - the capstone's finish line has drifted from the course",
+        )
 
 
 if __name__ == "__main__":

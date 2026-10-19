@@ -1,0 +1,24 @@
+{
+  "id": "00-foundations.T2.00j",
+  "module": "modules/00-foundations.T2.00j.md",
+  "title": "Gaussian covariance and the predict step",
+  "requires": [
+    "covariance_propagate(A, Sigma, Q) -> A Sigma A^T + Q",
+    "symmetrize(Sigma) -> (Sigma + Sigma^T) / 2"
+  ],
+  "checks": {
+    "behaviour": "test_behavior.py",
+    "transfer": "test_transfer.py"
+  },
+  "faults": {
+    "covariance_no_transpose": ["test_behavior.PredictTests.test_off_diagonal_terms_couple_the_states"],
+    "covariance_ignores_q": ["test_behavior.PredictTests.test_adds_the_process_noise"],
+    "symmetrize_one_sided": ["test_behavior.SymmetrizeTests.test_symmetrize_averages_the_off_diagonals"]
+  },
+  "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},
+  "delivery": {
+    "workbench_id": "EX.00-foundations.T2.00j",
+    "browser_e2e": "scripts/e2e_pages_bundle.mjs",
+    "native_command": "EXERCISE_TARGET=exercises/00-foundations.T2.00j/starter.py python3 -m unittest discover -s exercises/00-foundations.T2.00j -p 'test_*.py'"
+  }
+}

@@ -105,7 +105,7 @@ class CoverageGateTests(unittest.TestCase):
         self.assertEqual(
             self.run_gate()[0], 0,
             "expected a complete package to pass, since a false positive here would make the "
-            "gate unusable for the 46 real packages",
+            "gate unusable for the 48 real packages",
         )
 
     def test_an_incomplete_package_fails(self):

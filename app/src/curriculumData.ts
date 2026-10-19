@@ -1043,7 +1043,7 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Use Layers 2 and 5 as solid reference planes immediately adjacent to outer signal/FET layers (prepreg height h = 0.1 mm) to cancel magnetic loop area, and place a 22 Ω + 1.5 nF NP0 charge bucket directly at the STM32 ADC pins.',
     equation: 'V_{DS,\\text{peak}} = V_{\\text{bus}} + L_{\\text{loop}}\\frac{dI}{dt} < 58\\text{ V}, \\qquad R_{DS}(T_j) = R_{25}\\big(1 + \\alpha(T_j - 25)\\big)',
     milestoneId: 't3_tr01',
-    milestoneTask: 'Run the 30A Peak Torque Thermal Load preset in Tab 6 and verify V_DS,peak < 60 V and MOSFET T_j < 110 °C.',
+    milestoneTask: 'Run the 30A Peak Torque Thermal Load preset in Tab 6 and verify V_DS,peak < 60 V. The T_j < 110 °C gate applies to the 15 A continuous design point (T_j 90.9 °C); holding 30 A continuous drives T_j to 206 °C, so 30 A is a short peak, not a continuous rating.',
     deliverableGate: 'Tier 3.1 Gate: Lab 01 & Capstone I PCB — V_DS,peak = 53.1 V, Efficiency = 99.11%.',
     linkedTab: 'tab-cadpcb',
     presetId: 'pcb_peak_30a',
