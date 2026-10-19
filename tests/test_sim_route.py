@@ -20,6 +20,7 @@ import glob
 import importlib.util
 import os
 import re
+import subprocess
 import sys
 import unittest
 
@@ -371,6 +372,40 @@ class SimRouteTests(unittest.TestCase):
             bom_counts, [total],
             f"expected resources/lab-workbench-bom.md to say 'all {total} Bridge Modules' exactly "
             f"once, found {bom_counts} - the BOM promises a $0 path to every bridge module",
+        )
+
+    def test_the_08_1_lesson_count_matches_the_validator(self):
+        """The 08.1 capstone tells a learner how many beginner lessons they have completed. The validator
+        counts those lessons from the track folders, so the capstone's figure must equal that count, or
+        the finish line it names is not the course's own."""
+        capstone_path = os.path.join(
+            ROOT, "08-capstone-projects", "08.1-tier1-2dof-compliant-arm-capstone.md"
+        )
+        with open(capstone_path, encoding="utf-8") as handle:
+            quoted = re.findall(r"Completing all (\d+) beginner lessons", handle.read())
+        self.assertEqual(
+            len(quoted), 1,
+            f"expected 08.1 to quote the beginner lesson count exactly once, found {quoted}; check "
+            f"the 'Completing all N beginner lessons' recap line was not reworded",
+        )
+        run = subprocess.run(
+            [sys.executable, os.path.join("scripts", "validate_modules.py")],
+            cwd=ROOT, capture_output=True, text=True,
+        )
+        self.assertEqual(
+            run.returncode, 0,
+            f"expected scripts/validate_modules.py to pass so its lesson count can be read, got exit "
+            f"{run.returncode}: {run.stdout.strip()} {run.stderr.strip()}",
+        )
+        counted = re.search(r"(\d+) beginner lessons;", run.stdout)
+        self.assertIsNotNone(
+            counted,
+            f"expected validate_modules.py to print 'N beginner lessons;', got: {run.stdout.strip()!r}",
+        )
+        self.assertEqual(
+            quoted[0], counted.group(1),
+            f"expected 08.1 to say {counted.group(1)} beginner lessons, the validator's count; it says "
+            f"{quoted[0]} - the capstone's finish line has drifted from the course",
         )
 
 
