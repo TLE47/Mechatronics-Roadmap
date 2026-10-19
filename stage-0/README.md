@@ -33,7 +33,7 @@ For the **[Stage 0 Milestone (`S0.M`)](S0.M-stage-0-milestone.md)**, completion 
 
 ## 2. Lesson Map & Unmeasured Target Times
 
-> **Note on Timing:** Per-lesson times below (`~45–90 min` target per lesson, `~8–10 hours` total for Stage 0) are **unmeasured author targets**, not empirical averages. Please help us calibrate Stage 0 by submitting your completion times via our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
+> **Note on Timing:** Per-lesson times below (`~45–180 min` target per lesson, `~14–33 hours` total for Step 2) are **unmeasured author targets**, not empirical averages. Please help us calibrate Stage 0 by submitting your completion times via our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
 
 | Lesson | Title | New Ideas (Max 2, Enforced in YAML Front Matter) | Primary Simulator | Unmeasured Target | Unmeasured Slow-Paced Target |
 | :--- | :--- | :--- | :--- | :--- | :--- |

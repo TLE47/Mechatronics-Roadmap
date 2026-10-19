@@ -56,6 +56,7 @@ export async function runSmokeTests(viteServer) {
     const runnerMod = await vite.ssrLoadModule('/src/components/tabs/TabPyodideRunner.tsx');
     const quizMod = await vite.ssrLoadModule('/src/components/tabs/TabPlacementQuiz.tsx');
     const linkMod = await vite.ssrLoadModule('/src/components/tabs/TabLinkHealth.tsx');
+    const archMod = await vite.ssrLoadModule('/src/components/tabs/TabArchitecture.tsx');
     const lessonsMod = await vite.ssrLoadModule('/src/data/pythonLessonsData.ts');
     const historyMod = await vite.ssrLoadModule('/src/data/linkHistoryData.ts');
 
@@ -67,6 +68,7 @@ export async function runSmokeTests(viteServer) {
       STORAGE_KEY_MILESTONES,
     } = appMod;
     const { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } = runnerMod;
+    const { TabArchitecture } = archMod;
     const {
       TabPlacementQuiz,
       PLACEMENT_QUESTIONS,
@@ -87,9 +89,26 @@ export async function runSmokeTests(viteServer) {
       htmlBeginner.includes('Beginner View (Plain-English Path)'),
       'Workbench must render the Beginner View toggle button'
     );
+    // A newcomer lands on the Python runner, not the advanced roadmap: the first screen must be
+    // the place where Lesson 1 is run. The roadmap is still checked, by rendering Tab 1 directly.
     assert(
-      htmlBeginner.includes('data-testid="panel-completion-routes-spine"'),
-      'Tab 1 Roadmap must render the 3 Completion Routes, Recurring Arm Spine & Tier 2/3 Scope banner'
+      htmlBeginner.includes('runner-verified-count'),
+      'Beginner View must default to the Python runner, where Lesson 1 is run'
+    );
+    const htmlRoadmap = cleanSsr(
+      ReactDOMServer.renderToString(
+        React.createElement(TabArchitecture, {
+          onLoadPreset: () => {},
+          activeTierPass: 'tier1',
+          onSelectTierPass: () => {},
+          completedMilestones: {},
+          onToggleMilestone: () => {},
+        })
+      )
+    );
+    assert(
+      htmlRoadmap.includes('data-testid="panel-completion-routes-spine"'),
+      'Tab 1 Roadmap must render the Completion Routes, Arm Spine & deeper-scope banner when opened'
     );
     assert(
       htmlBeginner.includes('1. Start Here: Roadmap &amp; Progress') ||

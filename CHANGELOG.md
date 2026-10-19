@@ -11,6 +11,29 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 105: The Front Page Becomes a Beginner Entry
+
+The README opened with a badge wall, seven acronyms and a `Track P → Stage 0 → Pass 1` route a
+newcomer had to decode before finding a lesson. It is now three lines: a link to Lesson 1, one
+sentence naming the finished arm, and the time and cost. The ten-step table is generated from
+`scripts/route_model.py`; the tier/pass matrix, CI details and optional modules moved to
+[`docs/ROUTE.md`](docs/ROUTE.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) and
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 6 KB.
+
+Two contradictions surfaced while generating the counts:
+
+- the README said "13 Track P lessons and the P.M milestone" beside a fourteen-row table;
+- the route total omitted all 23 lesson pages inside Tracks 00-08. Including them moves the Core
+  from 178–223 to 200–290 hours, and the ROS 2 pair moves to Extensions, so the required set is
+  40 modules and 48 lessons.
+
+`scripts/check_consistency.py` now fails CI on a quoted count that differs from the lesson files,
+a step repeated or missing from the table, a second name for a step on the front page, and a stale
+route or README figure. [`docs/BEGINNER_TEST.md`](docs/BEGINNER_TEST.md) is the 40-minute first
+sitting script, with the [`beginner-session-log.md`](.github/ISSUE_TEMPLATE/beginner-session-log.md)
+observation template; it records N = 0 until two real beginners have been watched. The two ROS 2 modules keep their graded packages and badges; the README
+names the Docker and browser walkthrough and says the arm does not need a local ROS 2 install.
+
 ## [2026-10-19] — Run 104: The Rise Gate Compares URLs, Not Counts
 
 The `--fail-on-rise` gate compared `not_checked` with the previous row's, which made a new bot wall and

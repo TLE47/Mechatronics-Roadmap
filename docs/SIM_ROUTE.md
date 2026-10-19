@@ -20,120 +20,149 @@ flowchart LR
 
 | Stage | Item | Hours |
 | :--- | :--- | ---: |
-| Track P - programming from zero | `P.1` Variables and Fundamental Data Types | 1-3 |
-| Track P - programming from zero | `P.2` Computer Arithmetic and Order of Operations | 1-2.5 |
-| Track P - programming from zero | `P.3` Conditional Decisions (if/elif/else) and Command Clamping | 1.5-3.5 |
-| Track P - programming from zero | `P.4` Ordered Lists and Repeating Actions with for Loops | 1.5-3.5 |
-| Track P - programming from zero | `P.5` Reusable Functions (def/return) and while Loops | 1.5-3.5 |
-| Track P - programming from zero | `P.6` Loading Modules (import) and Automated Self-Checks (assert) | 1-3 |
-| Track P - programming from zero | `P.7` Base SI Units and Metric Prefixes (M, k, m, µ) | 1-2.5 |
-| Track P - programming from zero | `P.8` Cycle Frequency (Hz), Period (T = 1/f) and Binary Bits (2^N) | 1-3 |
-| Track P - programming from zero | `P.9` Rearranging Physics Formulas and Linear Range Scaling | 1-3 |
-| Track P - programming from zero | `P.10` Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry | 1.5-3.5 |
-| Track P - programming from zero | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
-| Track P - programming from zero | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
-| Track P - programming from zero | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
-| Track P - programming from zero | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
-| Track P - programming from zero | **14 lessons, together** | 16.75-42.5 |
-| Stage 0 - why electricity behaves like flow | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
-| Stage 0 - why electricity behaves like flow | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
-| Stage 0 - why electricity behaves like flow | `S0.2` Series vs. Parallel Resistor Networks, Voltage Dividers and Potentiometers | 1.5-3.5 |
-| Stage 0 - why electricity behaves like flow | `S0.3` Reading Schematics, Breadboards and Short Circuits | 1-3 |
-| Stage 0 - why electricity behaves like flow | `S0.4` Diodes, LEDs, Forward Voltage Drop (V_f) and Resistor Power Ratings (P = VI) | 1.5-3.5 |
-| Stage 0 - why electricity behaves like flow | `S0.5` Virtual Multimeters (Voltmeter vs. Ammeter) and Current-Limited (CC/CV) Bench Supplies | 1-3 |
-| Stage 0 - why electricity behaves like flow | `S0.6` Capacitors — Charge Storage (tau = R*C) and Power-Rail Decoupling | 1.5-3 |
-| Stage 0 - why electricity behaves like flow | `S0.7` Meet the Microcontroller (Arduino Uno 5 V) — Digital I/O and INPUT_PULLUP | 1.5-3.5 |
-| Stage 0 - why electricity behaves like flow | `S0.8` Reading Analog Sensors — The 10-Bit ADC (analogRead) and Serial Monitor | 1.5-3 |
-| Stage 0 - why electricity behaves like flow | `S0.9` Switching Power Smoothly — PWM Duty Cycle and analogWrite() | 1.5-3 |
-| Stage 0 - why electricity behaves like flow | `S0.M` Stage 0 Milestone — Potentiometer LED Dimmer with Safety Kill-Switch | 1-2.5 |
-| Stage 0 - why electricity behaves like flow | **11 lessons, together** | 13.75-33 |
-| Tier 1 | `00-foundations.T1.00a` Running Python, Variables, Loops, Functions & Tracebacks | 3 |
-| Tier 1 | `00-foundations.T1.00b` Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics | 3.5 |
-| Tier 1 | `00-foundations.T1.00c` SI Units, Engineering Prefixes & Dimensional Analysis | 2.5 |
-| Tier 1 | `00-foundations.T1.00d` Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors | 3.5 |
-| Tier 1 | `00-foundations.T1.00e` Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop | 4 |
-| Tier 1 | `01-electronics.T1.01a` Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers | 3 |
-| Tier 1 | `01-electronics.T1.01b` Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal | 3.5 |
-| Tier 1 | `01-electronics.T1.01c` Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety | 2.5 |
-| Tier 1 | `01-electronics.T1.01d` Capacitors, Inductors, RC Time Constants & Inductive Flyback | 3 |
-| Tier 1 | `02-mechanics.T1.02a` Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling | 3.5 |
-| Tier 1 | `03-sensors.T1.03a` Electromagnets, Permanent Magnets, Pole Pairs, Quadrature Pulses & Faraday Back-EMF | 3.5 |
-| Tier 1 | `04-embedded.T1.04a` From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers | 3.5 |
-| Tier 1 | `04-embedded.T1.04b` Non-Blocking millis()/micros() State Machines, Hardware Interrupts (ISRs) & volatile | 3.5 |
-| Tier 1 | `05-control.T1.05a` Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Actuator Saturation | 3.5 |
-| Tier 1 | `06-robotics.T1.06a` 1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper | 3.5 |
-| Tier 1 | `07-systems.T1.07a` Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep Gain/Phase | 3.5 |
-| Tier 1 | **16 modules, together** | 53 |
-| Tier 2 | `00-foundations.T2.00a` Numerical Derivatives & Integrals: Backward Difference and the Running Sum | 2 |
-| Tier 2 | `00-foundations.T2.00g` Matrix-Vector Multiplication & the One-Step State Update | 3 |
-| Tier 2 | `00-foundations.T2.00b` Vectors, Dot & Cross Products, Linear Independence & Change of Basis | 3.5 |
-| Tier 2 | `00-foundations.T2.00c` First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio | 4.5 |
-| Tier 2 | `00-foundations.T2.00d` Complex Numbers, Euler's Formula & Phasors | 2 |
-| Tier 2 | `00-foundations.T2.00h` Winding Impedance, Transfer Functions, Decibels & the Resonance Peak | 3 |
-| Tier 2 | `00-foundations.T2.00e` Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization | 4.5 |
-| Tier 2 | `00-foundations.T2.00f` Nyquist Sampling, Aliasing & the Analog Anti-Alias Filter | 2 |
-| Tier 2 | `00-foundations.T2.00i` Pre-Warped Tustin Biquads: Where the Notch Really Lands | 2.5 |
-| Tier 2 | `00-foundations.T2.00j` Gaussian Variance, Covariance & the Predict Step | 2.5 |
-| Tier 2 | `01-electronics.T2.01a` Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing | 4 |
-| Tier 2 | `01-electronics.T2.01b` Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping | 4.5 |
-| Tier 2 | `02-mechanics.T2.02a` 6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia | 4.5 |
-| Tier 2 | `03-sensors.T2.03a` Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Locked Loops & Sensor Random Walk | 4.5 |
-| Tier 2 | `04-embedded.T2.04a` Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers | 4 |
-| Tier 2 | `04-embedded.T2.04b` RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration | 4 |
-| Tier 2 | `05-control.T2.05a` Gain/Phase Margin, Sensitivity Waterbed (S+T=1), Luenberger State Observers & Bryson's Rule for LQR | 4.5 |
-| Tier 2 | `06-robotics.T2.06a` ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, QoS), TF2 Frames, URDF & ros2_control | 5.5 |
-| Tier 2 | `06-robotics.T2.06b` ROS 2 Operations: Launch & Parameter Composition, Deterministic rosbag2 Recording/Replay & Simulator Integration (Gazebo / MuJoCo) | 4.5 |
-| Tier 2 | `07-systems.T2.07a` Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection | 4.5 |
-| Tier 2 | **20 modules, together** | 74 |
-| Tier 3 | `00-foundations.T3.00a` Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation | 5 |
-| Tier 3 | `02-mechanics.T3.02a` 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | 5 |
-| Tier 3 | `05-control.T3.05a` Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency | 2 |
-| Tier 3 | `05-control.T3.05b` Rodrigues on SO(3), Multiplicative Error Injection & the ESKF Reset | 2 |
-| Tier 3 | `05-control.T3.05c` Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | 2 |
-| Tier 3 | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off | 4.5 |
-| Tier 3 | **6 modules, together** | 20.5 |
-| **Core total** | **42 modules + the prose tracks above** | **178-223** |
+| Step 1 · Python and the maths a robot needs | `P.1` Variables and Fundamental Data Types | 1-3 |
+| Step 1 · Python and the maths a robot needs | `P.2` Computer Arithmetic and Order of Operations | 1-2.5 |
+| Step 1 · Python and the maths a robot needs | `P.3` Conditional Decisions (if/elif/else) and Command Clamping | 1.5-3.5 |
+| Step 1 · Python and the maths a robot needs | `P.4` Ordered Lists and Repeating Actions with for Loops | 1.5-3.5 |
+| Step 1 · Python and the maths a robot needs | `P.5` Reusable Functions (def/return) and while Loops | 1.5-3.5 |
+| Step 1 · Python and the maths a robot needs | `P.6` Loading Modules (import) and Automated Self-Checks (assert) | 1-3 |
+| Step 1 · Python and the maths a robot needs | `P.7` Base SI Units and Metric Prefixes (M, k, m, µ) | 1-2.5 |
+| Step 1 · Python and the maths a robot needs | `P.8` Cycle Frequency (Hz), Period (T = 1/f) and Binary Bits (2^N) | 1-3 |
+| Step 1 · Python and the maths a robot needs | `P.9` Rearranging Physics Formulas and Linear Range Scaling | 1-3 |
+| Step 1 · Python and the maths a robot needs | `P.10` Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry | 1.5-3.5 |
+| Step 1 · Python and the maths a robot needs | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
+| Step 1 · Python and the maths a robot needs | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
+| Step 1 · Python and the maths a robot needs | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
+| Step 1 · Python and the maths a robot needs | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
+| Step 1 · Python and the maths a robot needs | **14 lessons, together** | 16.75-42.5 |
+| Step 2 · Circuits and your first microcontroller | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
+| Step 2 · Circuits and your first microcontroller | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
+| Step 2 · Circuits and your first microcontroller | `S0.2` Series vs. Parallel Resistor Networks, Voltage Dividers and Potentiometers | 1.5-3.5 |
+| Step 2 · Circuits and your first microcontroller | `S0.3` Reading Schematics, Breadboards and Short Circuits | 1-3 |
+| Step 2 · Circuits and your first microcontroller | `S0.4` Diodes, LEDs, Forward Voltage Drop (V_f) and Resistor Power Ratings (P = VI) | 1.5-3.5 |
+| Step 2 · Circuits and your first microcontroller | `S0.5` Virtual Multimeters (Voltmeter vs. Ammeter) and Current-Limited (CC/CV) Bench Supplies | 1-3 |
+| Step 2 · Circuits and your first microcontroller | `S0.6` Capacitors — Charge Storage (tau = R*C) and Power-Rail Decoupling | 1.5-3 |
+| Step 2 · Circuits and your first microcontroller | `S0.7` Meet the Microcontroller (Arduino Uno 5 V) — Digital I/O and INPUT_PULLUP | 1.5-3.5 |
+| Step 2 · Circuits and your first microcontroller | `S0.8` Reading Analog Sensors — The 10-Bit ADC (analogRead) and Serial Monitor | 1.5-3 |
+| Step 2 · Circuits and your first microcontroller | `S0.9` Switching Power Smoothly — PWM Duty Cycle and analogWrite() | 1.5-3 |
+| Step 2 · Circuits and your first microcontroller | `S0.M` Stage 0 Milestone — Potentiometer LED Dimmer with Safety Kill-Switch | 1-2.5 |
+| Step 2 · Circuits and your first microcontroller | **11 lessons, together** | 13.75-33 |
+| Step 3 · Make a joint move: foundations | `00.1` Cross-Domain Power (P = Effort * Flow) and First-Order Lag | 1.5-3.5 |
+| Step 3 · Make a joint move: foundations | `00.2` Second-Order Motion — Springs (F_s = -k*x), Dampers (F_d = -b*v) and Damping Regimes | 1.5-3.5 |
+| Step 3 · Make a joint move: foundations | `00.3` Engineering Modeling Discipline — 4-Step Workflow, Dimensional Checks and Sign Conventions | 1-3 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T1.00a` Running Python, Variables, Loops, Functions & Tracebacks | 3 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T1.00b` Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics | 3.5 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T1.00c` SI Units, Engineering Prefixes & Dimensional Analysis | 2.5 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T1.00d` Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors | 3.5 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T1.00e` Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop | 4 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00a` Numerical Derivatives & Integrals: Backward Difference and the Running Sum | 2 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00g` Matrix-Vector Multiplication & the One-Step State Update | 3 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00b` Vectors, Dot & Cross Products, Linear Independence & Change of Basis | 3.5 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00c` First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio | 4.5 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00d` Complex Numbers, Euler's Formula & Phasors | 2 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00h` Winding Impedance, Transfer Functions, Decibels & the Resonance Peak | 3 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00e` Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization | 4.5 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00f` Nyquist Sampling, Aliasing & the Analog Anti-Alias Filter | 2 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00i` Pre-Warped Tustin Biquads: Where the Notch Really Lands | 2.5 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T2.00j` Gaussian Variance, Covariance & the Predict Step | 2.5 |
+| Step 3 · Make a joint move: foundations | `00-foundations.T3.00a` Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation | 5 |
+| Step 3 · Make a joint move: foundations | **3 lessons + 16 modules, together** | 55-61 |
+| Step 4 · Power the joint: electronics | `01.1` High-Current Switching — MOSFETs, Inductors (Motor Coils) and Flyback Diodes | 1.5-3.5 |
+| Step 4 · Power the joint: electronics | `01.2` Bidirectional DC Motor Control — H-Bridges, Shoot-Through and Stall Current | 1.5-3.5 |
+| Step 4 · Power the joint: electronics | `01.3` Multi-Rail Robot Power — Linear (LDO) vs. Switching (Buck) Regulators and Power Budgets | 1.5-3 |
+| Step 4 · Power the joint: electronics | `01.4` Quiet Sensor Signals — Star Grounding and Passive RC Low-Pass Filters (f_c = 1/(2*pi*R*C)) | 1.5-3.5 |
+| Step 4 · Power the joint: electronics | `01-electronics.T1.01a` Voltage, Current, Resistance, Ohm's Law, KVL/KCL & Voltage Dividers | 3 |
+| Step 4 · Power the joint: electronics | `01-electronics.T1.01b` Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal | 3.5 |
+| Step 4 · Power the joint: electronics | `01-electronics.T1.01c` Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety | 2.5 |
+| Step 4 · Power the joint: electronics | `01-electronics.T1.01d` Capacitors, Inductors, RC Time Constants & Inductive Flyback | 3 |
+| Step 4 · Power the joint: electronics | `01-electronics.T2.01a` Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing | 4 |
+| Step 4 · Power the joint: electronics | `01-electronics.T2.01b` Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping | 4.5 |
+| Step 4 · Power the joint: electronics | **4 lessons + 6 modules, together** | 26.5-34 |
+| Step 5 · Build the arm: mechanics | `02.1` 2D Coordinate Frames and 1-Link Planar Arm Forward Kinematics | 1-3 |
+| Step 5 · Build the arm: mechanics | `02.2` 2-Link Planar Arm Forward Kinematics (theta_1, theta_2 -> x, y) | 1.5-3.5 |
+| Step 5 · Build the arm: mechanics | `02.3` 2-Link Planar Arm Inverse Kinematics (x, y -> theta_1, theta_2) and Reachability | 1.5-4 |
+| Step 5 · Build the arm: mechanics | `02.4` Rotational Dynamics (tau_net = I_rot * alpha), Gear Ratios (N) and Reflected Inertia | 1.5-3.5 |
+| Step 5 · Build the arm: mechanics | `02.5` Practical Robot Mechanisms — Double-Shear Bearings, Timing Belts and 3D-Printed Parts | 1.5-3 |
+| Step 5 · Build the arm: mechanics | `02-mechanics.T1.02a` Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling | 3.5 |
+| Step 5 · Build the arm: mechanics | `02-mechanics.T2.02a` 6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia | 4.5 |
+| Step 5 · Build the arm: mechanics | `02-mechanics.T3.02a` 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | 5 |
+| Step 5 · Build the arm: mechanics | **5 lessons + 3 modules, together** | 20-30 |
+| Step 6 · Measure the joint: sensors | `03.1` Quadrature Encoders (4x Counting) and 12-Bit Magnetic Angle Sensors | 1.5-3.5 |
+| Step 6 · Measure the joint: sensors | `03.2` 3-Phase Brushless Motors, Pole Pairs and 90-Degree Electrical Torque Lead | 1.5-3.5 |
+| Step 6 · Measure the joint: sensors | `03.3` Track 02 + 03 Integration Micro-Lab — Read Dual Encoders to Compute 2-Link End-Effector Position | 0.35-1 |
+| Step 6 · Measure the joint: sensors | `03-sensors.T1.03a` Electromagnets, Permanent Magnets, Pole Pairs, Quadrature Pulses & Faraday Back-EMF | 3.5 |
+| Step 6 · Measure the joint: sensors | `03-sensors.T2.03a` Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Locked Loops & Sensor Random Walk | 4.5 |
+| Step 6 · Measure the joint: sensors | **3 lessons + 2 modules, together** | 11.35-16 |
+| Step 7 · Run it in real time: embedded C | `04.1` Fixed-Width C/C++ Types (uint16_t), volatile ISR Flags and 1 kHz Timer Loops | 1.5-3.5 |
+| Step 7 · Run it in real time: embedded C | `04.2` Packed Binary Telemetry Structs (struct.pack), CRC-8 & UART Bandwidth Budgets | 1.5-3.5 |
+| Step 7 · Run it in real time: embedded C | `04.3` Python-to-C Bridge (Part 3) — C Structs as Labeled Boxes & Pointers as Box Addresses | 1-3 |
+| Step 7 · Run it in real time: embedded C | `04-embedded.T1.04a` From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers | 3.5 |
+| Step 7 · Run it in real time: embedded C | `04-embedded.T1.04b` Non-Blocking millis()/micros() State Machines, Hardware Interrupts (ISRs) & volatile | 3.5 |
+| Step 7 · Run it in real time: embedded C | `04-embedded.T2.04a` Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers | 4 |
+| Step 7 · Run it in real time: embedded C | `04-embedded.T2.04b` RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration | 4 |
+| Step 7 · Run it in real time: embedded C | **3 lessons + 4 modules, together** | 19-25 |
+| Step 8 · Make it hold still: control | `05.1` PID Virtual Spring-Damper Control and Integrator Anti-Windup Clamping | 1.5-3.5 |
+| Step 8 · Make it hold still: control | `05.2` Gyroscope Drift, Accelerometer Tilt (atan2) and 2-Line Complementary IMU Fusion | 1.5-3.5 |
+| Step 8 · Make it hold still: control | `05-control.T1.05a` Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Actuator Saturation | 3.5 |
+| Step 8 · Make it hold still: control | `05-control.T2.05a` Gain/Phase Margin, Sensitivity Waterbed (S+T=1), Luenberger State Observers & Bryson's Rule for LQR | 4.5 |
+| Step 8 · Make it hold still: control | `05-control.T3.05a` Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency | 2 |
+| Step 8 · Make it hold still: control | `05-control.T3.05b` Rodrigues on SO(3), Multiplicative Error Injection & the ESKF Reset | 2 |
+| Step 8 · Make it hold still: control | `05-control.T3.05c` Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | 2 |
+| Step 8 · Make it hold still: control | **2 lessons + 5 modules, together** | 17-21 |
+| Step 9 · Plan motion and bring it up safely | `06.1` Rest-to-Rest Cubic Polynomial Trajectories and Joint-Space Gravity Feedforward | 1.5-3.5 |
+| Step 9 · Plan motion and bring it up safely | `07.1` 10-Step Smoke-Free Hardware Bring-Up and Single-Tone Sine-Sweep System Identification | 1.5-3.5 |
+| Step 9 · Plan motion and bring it up safely | `06-robotics.T1.06a` 1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper | 3.5 |
+| Step 9 · Plan motion and bring it up safely | `07-systems.T1.07a` Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep Gain/Phase | 3.5 |
+| Step 9 · Plan motion and bring it up safely | `07-systems.T2.07a` Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection | 4.5 |
+| Step 9 · Plan motion and bring it up safely | **2 lessons + 3 modules, together** | 14.5-18.5 |
+| Step 10 · Put it together: the 2-DOF arm | `08.1` Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry | 2-4.5 |
+| Step 10 · Put it together: the 2-DOF arm | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off | 4.5 |
+| Step 10 · Put it together: the 2-DOF arm | **1 lesson + 1 module, together** | 6.5-9 |
+| **Core total** | **40 modules + all 10 steps' lessons** | **200.35-290** |
 
 The low end is every page's `est_hours` / `typical_hours`; the high end is its
 `slow_learner_hours` where the page states one.
 
-**Estimate coverage:** The Core's high end is a slow-learner figure on 25 of 67 pages and a single estimate on the other 42, so plan against it as a floor and expect it to rise as those pages are measured.
+**Estimate coverage:** The Core's high end is a slow-learner figure on 48 of 88 pages and a single estimate on the other 40, so plan against it as a floor and expect it to rise as those pages are measured.
 
 Nothing in this table is hand-entered, and `--check` fails when it drifts from the pages.
 
 ## Extensions (optional, still graded)
 
-| Tier | Item | Hours |
+| Where | Item | Hours |
 | :--- | :--- | ---: |
-| 3 | `01-electronics.T3.01a` 6-Layer Flux-Canceling Return Planes, Constant Group-Delay Bessel Filters, SAR ADC Charge-Bucket Settling & Cauer Thermal RC Networks | 5 |
-| 3 | `03-sensors.T3.03a` Rotating-Frame Cross-Coupling (omega_e L i), Min-Max SVPWM Bus Utilization (1/sqrt(3)) & Encoder Harmonic Calibration | 4.5 |
-| 2 | `04-embedded.T2.04c` Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives | 4 |
-| 2 | `04-embedded.T2.04d` micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging | 4 |
-| 3 | `04-embedded.T3.04a` Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic & Lock-Free SeqLock | 5 |
-| 3 | `06-robotics.T3.06a` PyTorch Tensors, Automatic Differentiation (autograd), Loss Functions & Behavior Cloning on Trajectory Logs | 5 |
-| 3 | `06-robotics.T3.06b` Markov Decision Processes (MDPs), Policy Gradient / PPO, Action Chunking & Sim-to-Real Safety Wrappers | 5.5 |
-| 3 | `07-systems.T3.06a` OPC UA Information Models, IEC 63278 Asset Administration Shell (AAS) Submodels & ISO 13849-1 Performance Level d (PLd) | 4.5 |
-| - | **8 modules** | **37.5** |
+| Optional | `01-electronics.T3.01a` 6-Layer Flux-Canceling Return Planes, Constant Group-Delay Bessel Filters, SAR ADC Charge-Bucket Settling & Cauer Thermal RC Networks | 5 |
+| Optional | `03-sensors.T3.03a` Rotating-Frame Cross-Coupling (omega_e L i), Min-Max SVPWM Bus Utilization (1/sqrt(3)) & Encoder Harmonic Calibration | 4.5 |
+| Optional | `04-embedded.T2.04c` Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives | 4 |
+| Optional | `04-embedded.T2.04d` micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging | 4 |
+| Optional | `04-embedded.T3.04a` Center-Aligned PWM Midpoint ADC Triggering, Q1.31 Fixed-Point Arithmetic & Lock-Free SeqLock | 5 |
+| Optional | `06-robotics.T2.06a` ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, QoS), TF2 Frames, URDF & ros2_control | 5.5 |
+| Optional | `06-robotics.T2.06b` ROS 2 Operations: Launch & Parameter Composition, Deterministic rosbag2 Recording/Replay & Simulator Integration (Gazebo / MuJoCo) | 4.5 |
+| Optional | `06-robotics.T3.06a` PyTorch Tensors, Automatic Differentiation (autograd), Loss Functions & Behavior Cloning on Trajectory Logs | 5 |
+| Optional | `06-robotics.T3.06b` Markov Decision Processes (MDPs), Policy Gradient / PPO, Action Chunking & Sim-to-Real Safety Wrappers | 5.5 |
+| Optional | `07-systems.T3.06a` OPC UA Information Models, IEC 63278 Asset Administration Shell (AAS) Submodels & ISO 13849-1 Performance Level d (PLd) | 4.5 |
+| - | **10 modules** | **47.5** |
 
 Each extension keeps its own graded package, Break-it case and badge. Taking one adds
 hours; skipping one costs nothing on the Core route.
 
 ## Why this split
 
-- Every Tier 1 bridge is required because each one supplies the plant, the units or the
-  tool that Tier 2 assumes.
-- Every Tier 2 module on the route is required because the Tier 3 depth line uses it: the
-  covariance and ESKF work sits on the linear-algebra and estimation ladder, and the
-  constrained-control module sits on the control ladder. The two exceptions are named below,
-  with the sentence that earns each one.
-- Tier 3 requires one depth line - rotation foundations, Joseph covariance, ESKF reset,
-  constrained control, one simulation capstone - so a learner reaches a working
-  estimation-and-safety stack without first finishing every capstone.
+- Every practice module in Steps 3-8 is required because it supplies the plant, the units or
+  the tool the next step assumes.
+- The deeper modules are required because the last step's project uses them: the covariance
+  and ESKF work sits on the linear-algebra and estimation line, and the constrained-control
+  module sits on the control line.
+- The advanced half of the course is one depth line - rotation foundations, Joseph
+  covariance, ESKF reset, constrained control, one simulation capstone - so a learner reaches
+  a working estimation-and-safety stack without first finishing every capstone.
 
-## Why two Tier 2 modules are optional
+## Why 4 modules are optional
 
 - **`04-embedded.T2.04c`** (Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives): Zephyr is a second RTOS toolchain (west, devicetree, Kconfig) on top of the FreeRTOS unit that already teaches preemption, priority inversion and a static kernel; the Core's timing work needs the concepts, not a second build system.
 - **`04-embedded.T2.04d`** (micro-ROS on Microcontrollers: XRCE-DDS Client-Agent Transport, Static rclc_executor & MCU-to-ROS 2 Bridging): micro-ROS bridges a microcontroller to a ROS 2 graph, and the Core's integration checkpoint runs trajectory, estimator and controller on the plant in the browser; the bridge is real work but nothing on the required route consumes it.
+- **`06-robotics.T2.06a`** (ROS 2 Computational Graph (Nodes, Executors, Topics, Services, Actions, QoS), TF2 Frames, URDF & ros2_control): A local ROS 2 install is the most common place a self-guided beginner stops: it needs a supported Ubuntu, several GB and a shell, while the 2-DOF arm, its estimator and its controller all run in the browser. The page keeps its graded exercise and badge; the Docker and browser walkthroughs teach the node graph without the install.
+- **`06-robotics.T2.06b`** (ROS 2 Operations: Launch & Parameter Composition, Deterministic rosbag2 Recording/Replay & Simulator Integration (Gazebo / MuJoCo)): This is the operations half of the same ROS 2 toolchain (launch files, rosbag2 replay, Gazebo integration), so it carries the same install wall as `T2.06a`; nothing later on the required route opens a ROS 2 shell.
 
-Both stay in their track's ladder, keep their graded package and their badge, and keep their
-browser-verifiable exercise - moving them changes what is required, not what exists.
+Each stays in its track, keeps its graded package and its badge, and keeps its
+browser-verifiable exercise - moving it changes what is required, not what exists.

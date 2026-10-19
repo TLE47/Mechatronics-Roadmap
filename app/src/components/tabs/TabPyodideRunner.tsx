@@ -707,10 +707,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         <div>
           <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
             <Terminal className="w-3.5 h-3.5" />
-            <span>Isolated Web Worker Python 3.12 Runner · 32 Beginner Lessons</span>
+            <span>Isolated Web Worker Python 3.12 Runner · {PYTHON_LESSONS.length} graded exercises</span>
           </div>
           <h2 className="text-lg font-bold text-[#f1f5f9] mt-0.5">
-            Run Track P (`P.1–P.M`) &amp; Pass 1 (`00.1–08.1`) Starter Code, Progressive Hints &amp; Behavioral Tests
+            Run every Step 1–10 lesson and practice module: starter code, progressive hints &amp; behavioral tests
           </h2>
           <p className="text-xs text-[#94a3b8] mt-0.5">
             Complete the `TODO` lines, unlock hints one step at a time, and click <b>Run &amp; Verify Output</b>. Code executes inside an isolated <b>Web Worker</b> with infinite-loop protection and is graded by <b>Instructor Behavioral Tests</b> (multi-input &amp; boundary checks) plus output presentation.
@@ -748,7 +748,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Sidebar: 32-Lesson Search & Selector */}
+        {/* Left Sidebar: exercise search and selector */}
         <div className="lg:col-span-4 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col max-h-[760px]">
           {/* Search Input */}
           <div className="relative mb-3">
@@ -765,28 +765,28 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           <div className="flex items-center justify-between gap-1 mb-3">
             <span className="text-xs font-mono text-[#94a3b8] tabular-nums">
-              Lessons ({filteredLessons.length})
+              Exercises ({filteredLessons.length})
             </span>
             <div className="flex gap-1">
               {[
                 { id: 'all', label: `All (${PYTHON_LESSONS.length})` },
                 {
                   id: 'advanced',
-                  label: `Modules (${PYTHON_LESSONS.filter((l) => l.track === 'modules').length})`,
+                  label: `Practice modules (${PYTHON_LESSONS.filter((l) => l.track === 'modules').length})`,
                 },
                 {
                   id: 'track-p',
-                  label: `Track P (${PYTHON_LESSONS.filter((l) => l.track === 'track-p').length})`,
+                  label: `Step 1 (${PYTHON_LESSONS.filter((l) => l.track === 'track-p').length})`,
                 },
                 {
                   id: 't00-02',
-                  label: `T00–02 (${PYTHON_LESSONS.filter((l) =>
+                  label: `Steps 3–5 (${PYTHON_LESSONS.filter((l) =>
                     ['00-foundations', '01-electronics-and-power', '02-mechanics-kinematics-dynamics'].includes(l.track)
                   ).length})`,
                 },
                 {
                   id: 't03-08',
-                  label: `T03–08 (${PYTHON_LESSONS.filter((l) =>
+                  label: `Steps 6–10 (${PYTHON_LESSONS.filter((l) =>
                     ['03-sensors-and-actuators', '04-embedded-and-realtime', '05-control-and-estimation', '06-robotics-and-autonomy', '07-systems-hil-and-production', '08-capstone-projects'].includes(l.track)
                   ).length})`,
                 },

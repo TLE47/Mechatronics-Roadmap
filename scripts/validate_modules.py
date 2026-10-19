@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the 72 module pages, their ladders, and their Expected Output blocks.
+"""Validate the 74 module pages, their ladders, and their Expected Output blocks.
 
 Front-matter lists are read through `scripts/frontmatter_lists.list_field`, because this page set is
 parsed by PyYAML where it is installed and by the fallback parser below where it is not, and the two
@@ -16,6 +16,7 @@ import json
 import os
 import pathlib
 import re
+import subprocess
 import sys  # noqa: F401  (also used to put the shared plant on `sys.path` below)
 
 # Pages execute real module code, and that code uses `X | None` annotations. On an older
@@ -310,29 +311,21 @@ lesson_cnt = sum(len(list(pathlib.Path(d).glob(pat))) for d, pat in lesson_dirs)
 
 readme_path = pathlib.Path("README.md")
 if readme_path.exists():
-    rtxt = readme_path.read_text(encoding="utf-8")
-    expected_summary = (
-        f"**{len(nodes)} formal modules** (**{legacy_cnt} legacy** modules and "
-        f"**{bridge_cnt} bridge** modules across **{len(ladders)} ladders**"
+    # The front page's counts and hours are generated, so their assertions moved to
+    # scripts/check_consistency.py: one place compares the README table, the learner model and
+    # the module index. Keeping a second, hand-maintained copy of the counted strings here is
+    # how the page and the index drifted apart in the first place.
+    consistency = subprocess.run(
+        [sys.executable, "scripts/check_consistency.py"],
+        cwd=pathlib.Path(__file__).resolve().parent.parent,
+        capture_output=True,
+        text=True,
     )
-    if expected_summary not in rtxt:
+    if consistency.returncode != 0:
         bad.append(
-            f"README.md: module count summary out of sync with _index.yaml (expected '{expected_summary}')"
+            "README.md: generated counts are inconsistent with the lesson/module files: "
+            + (consistency.stdout.strip() or consistency.stderr.strip())
         )
-    if f"{t1_bridge_cnt} Tier 1 Bridge Modules" not in rtxt:
-        bad.append(
-            f"README.md: Tier 1 bridge count out of sync (expected '{t1_bridge_cnt} Tier 1 Bridge Modules')"
-        )
-    if f"+ {t1_bridge_cnt} Bridge Modules" not in rtxt:
-        bad.append(
-            f"README.md: Mermaid diagram bridge count out of sync (expected '+ {t1_bridge_cnt} Bridge Modules')"
-        )
-    if f"**{lesson_cnt} beginner lessons**" not in rtxt or f"**{lesson_cnt} beginner-first lessons**" not in rtxt:
-        bad.append(
-            f"README.md: beginner lesson count out of sync (expected {lesson_cnt} beginner lessons)"
-        )
-    if "Unmeasured target:" not in rtxt or "untimed" in rtxt.lower():
-        bad.append("README.md: must use 'Unmeasured target:' labels and not 'untimed'")
 
 link_wf_path = pathlib.Path(".github/workflows/link-check.yml")
 if link_wf_path.exists():

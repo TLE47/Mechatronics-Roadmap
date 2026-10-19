@@ -49,6 +49,8 @@ jobs:
           python3 scripts/generate_python_lessons_data.py --check
           python3 scripts/generate_link_history_data.py --check
           python3 scripts/generate_sim_route.py --check
+          python3 scripts/generate_readme_counts.py --check
+          python3 scripts/check_consistency.py
           python3 scripts/friction_report.py --check
           python3 scripts/lint_assertions.py
           # The 48-package sweep runs once: packages are checked in parallel workers, and this
