@@ -186,6 +186,57 @@ class HistoryTests(unittest.TestCase):
         )
 
 
+class RiseReportTests(unittest.TestCase):
+    def record(self, unverified):
+        return {"date": "2026-10-26T06:00:00+00:00", "urls": 512, "not_checked": len(unverified),
+                "unverified": unverified}
+
+    def test_the_report_names_only_the_new_urls_with_what_they_said(self):
+        report = check_links.rise_report(
+            self.record(["https://old.example", "https://new.example"]),
+            {"date": "2026-10-19T18:15:02+00:00"},
+            ["https://new.example"],
+            {"https://new.example": (check_links.UNREACHABLE, "nodename nor servname", {"b.md", "a.md"})},
+        )
+        self.assertEqual(
+            [row["url"] for row in report["new"]],
+            ["https://new.example"],
+            "expected only the URL the gate called new; an issue that lists last week's walls as "
+            "well is noise the maintainer has already triaged",
+        )
+        self.assertEqual(
+            report["new"][0]["sources"],
+            ["a.md", "b.md"],
+            "expected the citing files sorted, so two runs on the same set produce the same body "
+            "and the fingerprint is not the only stable thing about the issue",
+        )
+        self.assertEqual(
+            report["baseline_date"], "2026-10-19T18:15:02+00:00",
+            "expected the baseline date in the report, so the issue says what it was compared to",
+        )
+
+    def test_an_empty_unverified_set_produces_no_rows(self):
+        report = check_links.rise_report(self.record([]), {}, [], {})
+        self.assertEqual(
+            report["new"], [],
+            "expected no rows when nothing is unverified; the caller passes None in that case, "
+            "but the builder must not invent a row from a missing detail entry",
+        )
+
+    def test_a_stale_report_is_removed_by_a_run_with_no_rise(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "rise.json")
+            wrote = check_links.emit_rise_report(path, {"new": [{"url": "https://a.example"}]})
+            self.assertTrue(wrote, "expected the gate to write its report when it has new URLs")
+            wrote_again = check_links.emit_rise_report(path, None)
+            self.assertEqual(
+                (wrote_again, os.path.exists(path)),
+                (False, False),
+                "expected a passing run to delete the leftover report; otherwise a reused workspace "
+                "files last week's URLs as this week's news",
+            )
+
+
 class CacheFileTests(unittest.TestCase):
     def test_save_then_load_round_trips(self):
         with tempfile.TemporaryDirectory() as directory:

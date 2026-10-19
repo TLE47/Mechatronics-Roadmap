@@ -45,3 +45,8 @@ Annotating all 27 bot walls in the prose would add noise without changing what a
 the link still works. The weekly gate (`--fail-on-rise`) is what keeps the list from growing —
 it fails on a URL that is unverified now and was not in the previous row, naming it, so a new
 wall cannot hide behind a recovering page.
+
+A failed gate also **files an issue** (`scripts/file_rise_issue.py`): the new URLs with their
+verdicts and the files citing them, one issue per distinct set, deduplicated by a fingerprint in
+the body so a retried job cannot file twice. The issue is where the citation gets triaged; the
+workflow log stays the raw evidence.

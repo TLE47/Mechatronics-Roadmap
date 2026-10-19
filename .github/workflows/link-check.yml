@@ -12,6 +12,8 @@ on:
 # default token is read-only in some repository settings and the push step would fail silently there.
 permissions:
   contents: write
+  # The rise gate files an issue naming the URLs a scheduled run could not verify.
+  issues: write
 
 jobs:
   verify-lessons-and-links:
@@ -49,9 +51,21 @@ jobs:
       # reads the last committed row's URL list and exits 1 when a page that was checked then is
       # unverified now - a count alone cannot tell a new wall from one that was already there.
       - name: Verify all external URLs and static-page HTML headings
+        id: sweep
         run: |
           python3 scripts/check_links.py --write-report --history docs/link-check-history.jsonl \
+            --rise-report .rise-report.json \
             ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '--fail-on-rise' || '' }}
+
+      # A red job is a log line a maintainer has to go looking for. The gate writes the new URLs to
+      # a JSON file before it exits, and this turns that file into a tracked issue: one per distinct
+      # set, deduplicated by a fingerprint in the body, so a retried job or the same wall next week
+      # cannot open a second one. Scoped to `sweep` because an unrelated lint failure has no report.
+      - name: File an issue for newly unverified URLs
+        if: failure() && steps.sweep.outcome == 'failure' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/file_rise_issue.py --report .rise-report.json
 
       # The sweep's own numbers, not a badge: `not_checked` is the pile a human still has to open by
       # hand, so a rise across weeks is visible in one committed file.
