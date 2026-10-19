@@ -29,7 +29,13 @@
     "inverter_efficiency_pct": 99.11,
     "v_ds_peak_turnoff_v": 53.12,
     "v_ds_limit_v": 60.0,
-    "thermal_and_voltage_ok": true
+    "thermal_and_voltage_ok": true,
+    "pulse_current_a": 30.0,
+    "pulse_duration_s": 1.0,
+    "pulse_power_step_w": 14.042,
+    "pulse_thermal_impedance_k_per_w": 0.7041,
+    "pulse_tj_c": 100.81,
+    "pulse_thermal_ok": true
   },
   "bom": [
     {
