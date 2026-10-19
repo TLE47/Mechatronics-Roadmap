@@ -1,6 +1,6 @@
 ---
 name: "Report a Lab Simulation or Workbench Bug"
-about: "Report a bug in a Python/C++ reference lab, Falstad/Wokwi circuit, or the 10-tab interactive browser workbench"
+about: "Report a bug in a Python/C++ reference lab, Falstad/Wokwi circuit, or the 11-tab interactive browser workbench"
 title: "[Lab/Workbench Bug] <Tab or Lab ID>: <Short summary>"
 labels: ["lab-bug", "triage"]
 ---

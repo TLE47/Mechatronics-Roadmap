@@ -170,6 +170,18 @@ def verdict_for_http_status(code: int) -> str:
     return FAIL
 
 
+def request_url(url: str) -> str:
+    """Percent-encode a URL's non-ASCII bytes before it reaches http.client.
+
+    A markdown link can carry raw UTF-8 (a paper whose filename is Chinese, a space in a title).
+    `Request` hands the string straight to `http.client`, which encodes the request line as ASCII,
+    so the fetch dies with a `UnicodeEncodeError` that the sweep reported as UNREACHABLE — a code
+    bug wearing a network verdict. Percent-encoding is what a browser sends; `%` stays safe so an
+    already-encoded URL is not double-escaped.
+    """
+    return urllib.parse.quote(url, safe=":/?#[]@!$&'()*+,;=%~")
+
+
 def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str, int | str, str, str]:
     """Fetch one URL and return `(verdict, status, title, normalized_body)`.
 
@@ -186,7 +198,7 @@ def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str,
     status: int | str = ""
     for attempt in range(1, attempts + 1):
         try:
-            req = urllib.request.Request(url, headers=headers, method="GET")
+            req = urllib.request.Request(request_url(url), headers=headers, method="GET")
             with OPENER.open(req, timeout=timeout) as resp:
                 code = resp.status
                 raw_bytes = resp.read(1_500_000)
@@ -374,6 +386,15 @@ def print_history(path: str, window: int = 10) -> None:
 
 
 def main() -> int:
+    if sys.version_info < (3, 12):
+        # urllib's redirect handling differs on older interpreters and used to label live 308 pages
+        # FAIL; refuse rather than write a verdict the repo cannot trust.
+        print(
+            "ERROR: the link sweep needs Python 3.12 (see .python-version and CONTRIBUTING.md); "
+            f"this interpreter is {sys.version.split()[0]}. Run: python3.12 scripts/check_links.py ...",
+            file=sys.stderr,
+        )
+        return 2
     parser = argparse.ArgumentParser(description="Check markdown links and static-page section headings.")
     parser.add_argument("--write-report", action="store_true", help="Write LINK_REPORT.md")
     parser.add_argument("--jobs", type=int, default=8, help="Concurrent fetches (default 8)")

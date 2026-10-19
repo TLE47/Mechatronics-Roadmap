@@ -1354,8 +1354,9 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
   },
 ];
 
+// The Link Health dashboard reports on the checker, not on a simulated plant, so it has no tier guide.
 export const SIMULATOR_TIER_GUIDES: Record<
-  Exclude<TabId, 'tab-arch' | 'tab-pyodide' | 'tab-placement'>,
+  Exclude<TabId, 'tab-arch' | 'tab-pyodide' | 'tab-placement' | 'tab-links'>,
   Record<ActiveTierPass, { badge: string; title: string; focus: string; actionHint: string }>
 > = {
   'tab-bode': {

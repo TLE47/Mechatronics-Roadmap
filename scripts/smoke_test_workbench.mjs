@@ -4,7 +4,7 @@
  * (`scripts/smoke_test_workbench.mjs`)
  *
  * Uses Vite's SSR module loader + ReactDOMServer to mount and verify:
- * 1. Beginner View (default plain-English 6-tab navigation) vs. Advanced View (all 10 technical labs).
+ * 1. Beginner View (default plain-English 6-tab navigation) vs. Advanced View (all 11 technical labs).
  * 2. In-Browser Python Lesson Runner (`TabPyodideRunner`): the whole generated lesson + exercise
  *    dataset, starter code,
  *    3-step hint ladder, search/filter UI, and completion state rendering.
@@ -55,7 +55,9 @@ export async function runSmokeTests(viteServer) {
     const appMod = await vite.ssrLoadModule('/src/App.tsx');
     const runnerMod = await vite.ssrLoadModule('/src/components/tabs/TabPyodideRunner.tsx');
     const quizMod = await vite.ssrLoadModule('/src/components/tabs/TabPlacementQuiz.tsx');
+    const linkMod = await vite.ssrLoadModule('/src/components/tabs/TabLinkHealth.tsx');
     const lessonsMod = await vite.ssrLoadModule('/src/data/pythonLessonsData.ts');
+    const historyMod = await vite.ssrLoadModule('/src/data/linkHistoryData.ts');
 
     const {
       App,
@@ -77,7 +79,7 @@ export async function runSmokeTests(viteServer) {
     // and touched no app code: every tally below is derived from the dataset instead.
     const TOTAL = PYTHON_LESSONS.length;
 
-    // 1. Verify Beginner View (default) vs. Advanced View (all 10 technical labs)
+    // 1. Verify Beginner View (default) vs. Advanced View (all 11 technical labs)
     const cleanSsr = (html) => html.replace(/<!--\s*-->/g, '');
     globalThis.localStorage.clear();
     const htmlBeginner = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
@@ -108,11 +110,15 @@ export async function runSmokeTests(viteServer) {
       !htmlBeginner.includes('tab-btn-tab-eskf'),
       'Beginner View should hide non-core Tier 3 ESKF tab by default to prevent beginner overload'
     );
+    assert(
+      !htmlBeginner.includes('tab-btn-tab-links'),
+      'Beginner View should hide the maintainer Link Health dashboard unless it is the active tab'
+    );
 
-    // Switch to Advanced View via localStorage and verify all 10 technical tabs render
+    // Switch to Advanced View via localStorage and verify all 11 technical tabs render
     globalThis.localStorage.setItem(STORAGE_KEY_VIEW_MODE, 'advanced');
     const htmlAdvanced = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
-    assert.equal(WORKBENCH_TABS.length, 10, 'WORKBENCH_TABS must define all 10 tabs');
+    assert.equal(WORKBENCH_TABS.length, 11, 'WORKBENCH_TABS must define all 11 tabs');
     for (const tab of WORKBENCH_TABS) {
       assert(
         htmlAdvanced.includes(`data-testid="tab-btn-${tab.id}"`),
@@ -123,6 +129,49 @@ export async function runSmokeTests(viteServer) {
       htmlAdvanced.includes('3. 25 kHz PMSM FOC &amp; SVPWM (Lab 01/03)'),
       'Advanced View must surface technical tab titles'
     );
+
+    // 1b. Verify the Link Health dashboard plots the generated run history
+    const { TabLinkHealth } = linkMod;
+    const { LINK_HISTORY, LINK_HISTORY_SOURCE } = historyMod;
+    assert.ok(Array.isArray(LINK_HISTORY), 'linkHistoryData must export LINK_HISTORY as an array');
+    assert.equal(
+      LINK_HISTORY_SOURCE,
+      'docs/link-check-history.jsonl',
+      'the dashboard must name the history file the checker appends to'
+    );
+    for (let i = 1; i < LINK_HISTORY.length; i += 1) {
+      assert.ok(
+        Date.parse(LINK_HISTORY[i].date) >= Date.parse(LINK_HISTORY[i - 1].date),
+        'LINK_HISTORY must be chronological so the chart x-axis means time'
+      );
+    }
+    for (const point of LINK_HISTORY) {
+      assert.ok(point.notChecked >= 0 && point.served >= 0 && point.failed >= 0, 'counts must be non-negative');
+      assert.equal(
+        point.notChecked,
+        point.blocked + point.unreachable + point.serverError,
+        `not-checked must be the sum of BLOCKED + UNREACHABLE + SERVER_ERROR (${point.date})`
+      );
+    }
+    const linkHtml = cleanSsr(ReactDOMServer.renderToString(React.createElement(TabLinkHealth)));
+    assert(
+      linkHtml.includes('data-testid="link-history-chart"'),
+      'Link Health must render the not-checked trend chart'
+    );
+    assert(
+      linkHtml.includes('data-testid="link-history-table"'),
+      'Link Health must render the recent-runs table'
+    );
+    if (LINK_HISTORY.length > 0) {
+      const latest = LINK_HISTORY[LINK_HISTORY.length - 1];
+      const rendered = linkHtml.match(/data-testid="link-history-latest-not-checked"[^>]*>(\d+)/);
+      assert.ok(rendered, 'Link Health must render the latest not-checked KPI');
+      assert.equal(
+        Number(rendered[1]),
+        latest.notChecked,
+        'the KPI must show the newest run from the generated history, not a hand-typed number'
+      );
+    }
 
     // 2. Verify In-Browser Python Runner (TabPyodideRunner) & its generated dataset
     assert.ok(TOTAL > 0, 'PYTHON_LESSONS must contain the generated lessons and exercises');

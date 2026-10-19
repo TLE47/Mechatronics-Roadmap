@@ -11,6 +11,7 @@ import { TabModels } from './components/tabs/TabModels';
 import { TabCadPcb } from './components/tabs/TabCadPcb';
 import { TabSysId } from './components/tabs/TabSysId';
 import { TabEskf } from './components/tabs/TabEskf';
+import { TabLinkHealth } from './components/tabs/TabLinkHealth';
 import { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } from './components/tabs/TabPyodideRunner';
 import { TabPlacementQuiz } from './components/tabs/TabPlacementQuiz';
 import { PresetRequest } from './demoPresets';
@@ -203,6 +204,13 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
     beginnerLabel: '10. IMU Sensor Fusion & Real-Time Lock',
     technicalLabel: '8. 6-DOF Attitude ESKF & RTOS SeqLock (Lab 04/05)',
     technicalSubtitle: 'IMU Gyro/Accel Fusion · WaitFreeSeqLock',
+    isBeginnerCore: false,
+  },
+  {
+    id: 'tab-links',
+    beginnerLabel: '11. Citation Link Health (Nightly Check)',
+    technicalLabel: '11. Link Check History & Not-Checked Trend',
+    technicalSubtitle: 'Blocked / Unreachable Citations · Run Timeline',
     isBeginnerCore: false,
   },
 ];
@@ -637,8 +645,8 @@ export const App: React.FC = () => {
 
           <span className="text-[#94a3b8] hidden xl:inline">
             {viewMode === 'beginner'
-              ? 'Showing core beginner tabs with plain-English titles first. Switch anytime to view all 10 Tier 2/3 labs.'
-              : 'Showing all 10 simulators with technical control-theory & embedded terminology.'}
+              ? `Showing core beginner tabs with plain-English titles first. Switch anytime to view all ${WORKBENCH_TABS.length} workbench tabs.`
+              : `Showing all ${WORKBENCH_TABS.length} workbench tabs with technical control-theory & embedded terminology.`}
           </span>
         </div>
 
@@ -707,7 +715,10 @@ export const App: React.FC = () => {
 
       {/* Main Tab Pane */}
       <main className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4">
-        {activeTab !== 'tab-arch' && activeTab !== 'tab-pyodide' && activeTab !== 'tab-placement' && (
+        {activeTab !== 'tab-arch' &&
+          activeTab !== 'tab-pyodide' &&
+          activeTab !== 'tab-placement' &&
+          activeTab !== 'tab-links' && (
           <SimulatorTierBanner
             tabId={activeTab}
             activeTierPass={activeTierPass}
@@ -735,6 +746,7 @@ export const App: React.FC = () => {
         {activeTab === 'tab-cadpcb' && <TabCadPcb onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
         {activeTab === 'tab-sysid' && <TabSysId onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
         {activeTab === 'tab-eskf' && <TabEskf onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+        {activeTab === 'tab-links' && <TabLinkHealth />}
         {activeTab === 'tab-pyodide' && (
           <TabPyodideRunner
             initialLessonId={pyodideLessonId}
