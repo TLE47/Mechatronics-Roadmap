@@ -133,11 +133,11 @@ jobs:
       - name: Install Playwright Chromium & Firefox (once, for both browser suites)
         run: npx playwright-core install --with-deps chromium firefox
 
-      # One dev server, one built bundle, three suites side by side: the SSR smoke test, the
-      # dev-server E2E run and the built-bundle E2E run. Before, each of them booted its own server
-      # (and the bundle suite rebuilt when dist/ was absent), one after another. `npm run test:smoke`,
-      # `test:e2e` and `test:e2e:pages` still run standalone.
-      - name: Run the Workbench suites (SSR smoke, dev-server E2E, built-bundle E2E) on one server pair
+      # One dev server, one built bundle, four suites side by side: the SSR smoke test, the dev-server
+      # E2E run, the built-bundle E2E run and the same-task control-pair sweep. Before, each of them
+      # booted its own server (and the bundle suite rebuilt when dist/ was absent), one after another.
+      # `npm run test:smoke`, `test:e2e`, `test:e2e:pages` and `test:pairs` still run standalone.
+      - name: Run the Workbench suites (SSR smoke, dev-server E2E, built-bundle E2E, control pairs) on one server pair
         run: npm run test:workbench
 
       - name: Configure Pages
