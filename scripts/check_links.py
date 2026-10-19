@@ -281,6 +281,20 @@ def save_cache(path: str, cache: dict) -> None:
     atomic_write_json(path, cache)
 
 
+def counts_reconcile(record: dict) -> bool:
+    """Whether served + not_checked + failed accounts for every URL swept.
+
+    Every URL gets exactly one verdict, so those three must partition `urls`; if they do not, the
+    row is a mixture of two runs (a served count copied from one and an unverified count from
+    another) and anything generated from it — a triage page, a dashboard, a delta gate — will not
+    add up. Refusing to record it is cheaper than explaining the arithmetic later.
+    """
+    return (
+        record.get("served", 0) + record.get("not_checked", 0) + record.get("failed", 0)
+        == record.get("urls", 0)
+    )
+
+
 def rise_report(record: dict, baseline: dict, new_unverified: list[str],
                 details: dict[str, tuple[str, int | str, set[str]]]) -> dict:
     """The artifact a failing gate hands to the issue filer: which URLs are new, and what each said.
@@ -705,6 +719,15 @@ def main() -> int:
         "elapsed_s": round(elapsed, 1),
         "verdicts": {v: sum(1 for r in results if r[1] == v) for v in (PASS, FAIL, BLOCKED, SERVER_ERROR, UNREACHABLE)},
     }
+    if not counts_reconcile(record):
+        print(
+            f"ERROR: the sweep's counts do not reconcile: served {record['served']} + not checked "
+            f"{record['not_checked']} + failed {record['failed']} != {record['urls']} URLs. Each URL "
+            f"gets one verdict, so this row mixes two runs; refusing to append it to "
+            f"{args.history or 'the report'} is what keeps a published total honest.",
+            file=sys.stderr,
+        )
+        return 3
     previous_rows = read_history(args.history) if args.history else []
     new_unverified = newly_unverified(previous_rows, record) if args.fail_on_rise else None
     if args.rise_report:

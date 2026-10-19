@@ -24,6 +24,13 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "SIM_ROUTE.md")
+README = os.path.join(ROOT, "README.md")
+# The README quotes two numbers from the route. They are written between markers and regenerated
+# here, because the front page is where a beginner decides what to finish: a hand-typed total goes
+# stale the first time a module's `est_hours` moves, and a stale requirement count is worse than no
+# count at all.
+README_MARKER_OPEN = "<!-- sim-route:{name} -->"
+README_MARKER_CLOSE = "<!-- /sim-route -->"
 PILOT_RESULTS = os.path.join(ROOT, "docs", "pilot-results.md")
 
 # The one claim this page makes about evidence, and the only three values it may take:
@@ -197,7 +204,68 @@ def status_findings(status, participants):
     return problems
 
 
+def read_text(path: str) -> str:
+    """A file's text, or "" when it is missing: `--check` reports staleness, it does not traceback."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.read()
+    except OSError:
+        return ""
+
+
+def route_facts() -> dict:
+    """The numbers the README quotes: Core hours and how many modules each required tier holds.
+
+    Summed here once, from the same `CORE_TRACKS` and `CORE_MODULES` the document is rendered from,
+    so the README cannot disagree with `docs/SIM_ROUTE.md` — the test that compares the two would
+    catch a drift, but this is what makes the drift impossible to introduce in the first place.
+    """
+    core = [row for row in module_rows() if row["id"] in set(CORE_MODULES)]
+    low = high = 0.0
+    for _label, pattern, stop_before in CORE_TRACKS:
+        for row in track_rows(pattern, stop_before):
+            if row["low"] is not None:
+                low += row["low"]
+                high += row["high"]
+    tiers: dict[str, int] = {}
+    for row in core:
+        tier = str(row["tier"])
+        tiers[tier] = tiers.get(tier, 0) + 1
+        low += row["low"] or 0.0
+        high += row["high"] or 0.0
+    return {"low": round(low, 2), "high": round(high, 2), "tiers": tiers}
+
+
+def _replace_marker(text: str, name: str, value: str) -> str:
+    """Replace every `<!-- sim-route:NAME -->…<!-- /sim-route -->` block, or refuse to guess."""
+    open_tag = README_MARKER_OPEN.format(name=name)
+    pattern = re.compile(re.escape(open_tag) + r".*?" + re.escape(README_MARKER_CLOSE), re.S)
+    if not pattern.search(text):
+        sys.exit(
+            f"README.md has no {open_tag} marker, so the value it quotes cannot be generated; "
+            f"restore the marker around the figure (the hours range and the Tier 2 count each "
+            f"need one)"
+        )
+    return pattern.sub(lambda _match: f"{open_tag}{value}{README_MARKER_CLOSE}", text)
+
+
+def render_readme(text: str | None = None) -> str:
+    """The README with both route figures rewritten from `route_facts()`.
+
+    Two markers carry the hours (the first paragraph and the requirement note), so the same name is
+    replaced everywhere it appears; the Tier 2 count appears once, on the step that names it.
+    """
+    if text is None:
+        text = read_text(README)
+    facts = route_facts()
+    hours = fmt(facts["low"], facts["high"]).replace("-", "–")
+    text = _replace_marker(text, "hours", f"**{hours} hours**")
+    text = _replace_marker(text, "tier2", str(facts["tiers"].get("2", 0)))
+    return text
+
+
 def render():
+    facts = route_facts()
     findings = status_findings(ROUTE_STATUS, participants_from_results())
     if findings:
         sys.exit("route status claim is unsupported: " + "; ".join(findings))
@@ -265,7 +333,7 @@ def render():
 
     lines += [
         f"| **Core total** | **{len(CORE_MODULES)} modules + the prose tracks above** | "
-        f"**{fmt(round(core_low, 2), round(core_high, 2))}** |",
+        f"**{fmt(facts['low'], facts['high'])}** |",
         "",
         "The low end is every page's `est_hours` / `typical_hours`; the high end is its",
         "`slow_learner_hours`. Nothing in this table is hand-entered, and `--check` fails when it",
@@ -320,20 +388,24 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     text = render()
+    readme = render_readme()
     if args.check:
-        if not os.path.exists(OUT):
-            print("docs/SIM_ROUTE.md is missing; run scripts/generate_sim_route.py")
+        stale = [
+            os.path.relpath(path, ROOT)
+            for path, expected in ((OUT, text), (README, readme))
+            if read_text(path) != expected
+        ]
+        if stale:
+            print(f"{', '.join(stale)} stale; run scripts/generate_sim_route.py")
             return 1
-        with open(OUT, encoding="utf-8") as handle:
-            if handle.read() != text:
-                print("docs/SIM_ROUTE.md is stale; run scripts/generate_sim_route.py")
-                return 1
-        print("docs/SIM_ROUTE.md is current")
+        print("docs/SIM_ROUTE.md and README.md are current")
         return 0
 
     with open(OUT, "w", encoding="utf-8") as handle:
         handle.write(text)
-    print(f"wrote {os.path.relpath(OUT, ROOT)}")
+    with open(README, "w", encoding="utf-8") as handle:
+        handle.write(readme)
+    print(f"wrote {os.path.relpath(OUT, ROOT)} and {os.path.relpath(README, ROOT)}")
     return 0
 
 

@@ -40,6 +40,8 @@ class SimRouteTests(unittest.TestCase):
     def setUpClass(cls):
         with open(DOC, encoding="utf-8") as handle:
             cls.doc = handle.read()
+        with open(gen.README, encoding="utf-8") as handle:
+            cls.readme = handle.read()
 
     def test_the_published_document_matches_the_pages(self):
         """The committed doc is what the generator renders now - no stale hours, no stale tiers."""
@@ -180,6 +182,71 @@ class SimRouteTests(unittest.TestCase):
             readme,
             r"(?s)Extensions.{0,400}?optional",
             "README.md must say the Extensions are optional",
+        )
+
+    def test_the_readme_figures_are_generated_from_the_route(self):
+        """The front page quotes the Core hours and the Tier 2 requirement; both are rendered here.
+
+        The failure this locks out: `est_hours` moves, `docs/SIM_ROUTE.md` is regenerated, and the
+        README keeps yesterday's total — or a step says 18 required modules while the route lists
+        20. `--check` now compares the README too, so a hand edit cannot survive CI.
+        """
+        self.assertEqual(
+            gen.render_readme(self.readme), self.readme,
+            "expected README's marked figures to equal what the generator renders from the pages; "
+            "check the hours range and the Tier 2 count against docs/SIM_ROUTE.md, since a hand "
+            "edit makes the front page disagree with the route it links",
+        )
+
+    def test_the_readme_carries_both_hours_markers_and_the_tier2_marker(self):
+        self.assertEqual(
+            (self.readme.count("<!-- sim-route:hours -->"),
+             self.readme.count("<!-- sim-route:tier2 -->")),
+            (2, 1),
+            "expected two hours markers (the first paragraph and the requirement note) and one Tier "
+            "2 marker; a missing marker silently removes that figure from generation, which is how "
+            "the 175.5-220.5 total survived next to a 178-223 one",
+        )
+
+    def test_a_stale_figure_is_rewritten_not_left_alone(self):
+        doctored = self.readme.replace("**178–223 hours**", "**175.5–220.5 hours**", 1)
+        fixed = gen.render_readme(doctored)
+        self.assertNotEqual(
+            fixed, doctored,
+            "expected the generator to rewrite a stale hours figure between its markers; otherwise "
+            "--check passes while the README still quotes the old range",
+        )
+        self.assertNotIn(
+            "175.5", fixed,
+            "expected the old range to be gone after rendering, because the marker's job is to "
+            "replace the figure, not merely to sit beside it",
+        )
+
+    def test_the_route_total_row_is_the_number_the_readme_quotes(self):
+        facts = gen.route_facts()
+        hours = gen.fmt(facts["low"], facts["high"])
+        self.assertIn(
+            f"**{hours}** |", self.doc,
+            f"expected the Core total row in docs/SIM_ROUTE.md to carry {hours!r}, the same sum "
+            f"route_facts() gives the README; two summations mean two chances to disagree",
+        )
+        self.assertIn(
+            f"**{hours.replace('-', '–')} hours**", self.readme,
+            f"expected README.md's marked total to quote {hours!r} with the en dash the page uses; "
+            f"check generate_sim_route.py and docs/SIM_ROUTE.md",
+        )
+
+    def test_the_tier2_requirement_count_is_the_route_count(self):
+        tier2 = gen.route_facts()["tiers"].get("2", 0)
+        self.assertEqual(
+            tier2, 20,
+            "expected the Core route to hold 20 Tier 2 modules as the page lists them; if this "
+            "moved, the README's step-4 line moved with it",
+        )
+        self.assertIn(
+            f"<!-- sim-route:tier2 -->{tier2}<!-- /sim-route -->", self.readme,
+            f"expected README.md's step-4 requirement to carry the route's own Tier 2 count "
+            f"({tier2}); a hand-typed 18 is exactly the drift the marker exists to stop",
         )
 
     def test_every_optional_module_is_real_and_justified(self):
