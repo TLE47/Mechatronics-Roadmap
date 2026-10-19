@@ -33,7 +33,8 @@ flowchart LR
 | Track P - programming from zero | `P.11` Reading Time-Series Graphs — Slope and Area | 1.5-3.5 |
 | Track P - programming from zero | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
 | Track P - programming from zero | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
-| Track P - programming from zero | **13 lessons, together** | 40 |
+| Track P - programming from zero | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
+| Track P - programming from zero | **14 lessons, together** | 42.5 |
 | Stage 0 - why electricity behaves like flow | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
 | Stage 0 - why electricity behaves like flow | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
 | Stage 0 - why electricity behaves like flow | `S0.2` Series vs. Parallel Resistor Networks, Voltage Dividers and Potentiometers | 1.5-3.5 |
@@ -89,7 +90,7 @@ flowchart LR
 | Tier 3 | `05-control.T3.05c` Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | 2 |
 | Tier 3 | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off | 4.5 |
 | Tier 3 | **6 modules, together** | 20.5 |
-| **Core total** | **40 modules + the prose tracks above** | **174.5-218** |
+| **Core total** | **40 modules + the prose tracks above** | **175.5-220.5** |
 
 The low end is every page's `est_hours` / `typical_hours`; the high end is its
 `slow_learner_hours`. Nothing in this table is hand-entered, and `--check` fails when it

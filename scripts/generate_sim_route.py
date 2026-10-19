@@ -83,9 +83,10 @@ OPTIONAL_REASONS = {
 }
 
 # Prose tracks that ship before any module: Python from zero, then the electricity intuition.
-# Order matters; ids are the lesson_id frontmatter values.
+# Order matters; ids are the lesson_id frontmatter values. The Track P milestone (P.M) is part of
+# the required route: it is the one lesson that ties the track together, so it is not skipped.
 CORE_TRACKS = [
-    ("Track P - programming from zero", "track-p/*.md", "P.M"),
+    ("Track P - programming from zero", "track-p/*.md", None),
     ("Stage 0 - why electricity behaves like flow", "stage-0/*.md", None),
 ]
 
