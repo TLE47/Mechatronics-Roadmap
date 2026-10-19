@@ -14,8 +14,9 @@
  *   separated — click A, let React commit, re-resolve B, click B (what a person can actually do).
  *
  * Both runs start from the same clean page, and the page is fingerprinted afterwards as its whole
- * visible text plus every input value plus the `mechalab*` storage (learning-log events excluded:
- * their timestamps legitimately differ). If the two fingerprints disagree, the pair read stale
+ * visible text plus every input value plus the `mechalab*` storage (the learning log's events and the
+ * cloud-sync "last changed" stamp excluded: their timestamps legitimately differ). If the two
+ * fingerprints disagree, the pair read stale
  * state — the sweep reports the pair and the first difference and fails.
  *
  * Which pairs: the audit in `CHANGELOG.md` (Run 96) walks every `useState` in `app/src` and pairs
@@ -89,10 +90,11 @@ window.__pairs = {
     const fields = Array.from(document.querySelectorAll('input, textarea, select'))
       .map((el) => (el.type || el.tagName) + '=' + (el.value || ''))
       .join('|');
-    // Every mechalab key except the learning log: its event timestamps differ between two runs of
-    // the same clicks by design, and nothing in this sweep is about the log.
+    // Every mechalab key except the two that carry a wall clock: the learning log's event stamps and
+    // the cloud-sync "last changed" stamp both differ between two runs of the same clicks by design,
+    // and nothing in this sweep is about either. Everything else in storage is still compared.
     const storage = Object.keys(localStorage)
-      .filter((k) => k.startsWith('mechalab') && !/learningLog/i.test(k))
+      .filter((k) => k.startsWith('mechalab') && !/learningLog|progress\.updatedAt/i.test(k))
       .sort()
       .map((k) => k + '=' + localStorage.getItem(k))
       .join('|');

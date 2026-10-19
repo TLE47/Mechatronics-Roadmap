@@ -127,8 +127,16 @@ jobs:
       - name: Typeset every formula (Markdown modules + workbench curriculum) with KaTeX
         run: node scripts/audit_math.mjs .
 
+      # Sign-in is optional: with neither repository variable set the bundle ships local-only and the
+      # account panel says so. The anon key is public by design (row-level security guards the rows).
       - name: Typecheck and build the production bundle (base /Mechatronics-Roadmap/)
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
+
+      - name: Check the cloud-sync merge rules (local vs account progress)
+        run: npm run test:merge
 
       - name: Install Playwright Chromium & Firefox (once, for both browser suites)
         run: npx playwright-core install --with-deps chromium firefox
