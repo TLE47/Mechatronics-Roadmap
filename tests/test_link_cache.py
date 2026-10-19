@@ -353,5 +353,55 @@ class RedirectTests(unittest.TestCase):
         )
 
 
+class NonAsciiUrlTests(unittest.TestCase):
+    def test_a_raw_utf8_path_is_percent_encoded_before_the_request(self):
+        """A markdown link may carry raw UTF-8 in its path; http.client sends the request line as
+        ASCII, so an unencoded URL dies with UnicodeEncodeError and is reported UNREACHABLE."""
+        seen = {}
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                seen["path"] = self.path
+                body = b"<html><title>Vibration control</title></html>"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *args):
+                pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            verdict, status, title, _ = check_links.fetch_url_info(
+                f"http://127.0.0.1:{server.server_port}/振动控制.pdf"
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+        self.assertEqual(
+            (verdict, status, title),
+            (check_links.PASS, 200, "Vibration control"),
+            "expected the raw UTF-8 path to be percent-encoded and fetched, not reported "
+            "UNREACHABLE on the ascii codec's encode error",
+        )
+        self.assertEqual(
+            seen["path"],
+            "/%E6%8C%AF%E5%8A%A8%E6%8E%A7%E5%88%B6.pdf",
+            "expected the request line to carry the browser's percent-encoded form",
+        )
+
+    def test_an_already_encoded_url_is_not_double_escaped(self):
+        url = "https://example.com/a%20b.pdf?q=1&r=2"
+        self.assertEqual(
+            check_links.request_url(url), url,
+            "expected an already percent-encoded URL to pass through unchanged; double-escaping "
+            "`%20` to `%2520` would fetch a different path than the citation names",
+        )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

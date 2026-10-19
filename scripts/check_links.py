@@ -170,6 +170,18 @@ def verdict_for_http_status(code: int) -> str:
     return FAIL
 
 
+def request_url(url: str) -> str:
+    """Percent-encode a URL's non-ASCII bytes before it reaches http.client.
+
+    A markdown link can carry raw UTF-8 (a paper whose filename is Chinese, a space in a title).
+    `Request` hands the string straight to `http.client`, which encodes the request line as ASCII,
+    so the fetch dies with a `UnicodeEncodeError` that the sweep reported as UNREACHABLE — a code
+    bug wearing a network verdict. Percent-encoding is what a browser sends; `%` stays safe so an
+    already-encoded URL is not double-escaped.
+    """
+    return urllib.parse.quote(url, safe=":/?#[]@!$&'()*+,;=%~")
+
+
 def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str, int | str, str, str]:
     """Fetch one URL and return `(verdict, status, title, normalized_body)`.
 
@@ -186,7 +198,7 @@ def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str,
     status: int | str = ""
     for attempt in range(1, attempts + 1):
         try:
-            req = urllib.request.Request(url, headers=headers, method="GET")
+            req = urllib.request.Request(request_url(url), headers=headers, method="GET")
             with OPENER.open(req, timeout=timeout) as resp:
                 code = resp.status
                 raw_bytes = resp.read(1_500_000)
