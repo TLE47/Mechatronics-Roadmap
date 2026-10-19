@@ -336,3 +336,5 @@ $$
 - **Tier 2 (ROS 2 Graph, Executors, QoS, TF2, URDF, `ros2_control`, Launch, `rosbag2` MCAP & Gazebo/MuJoCo Sim Bridge → Step 2.7):** [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) · [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) *(Ladder Gate Test)*
 - **Tier 3 (Behavior Cloning, ACT/Diffusion Policies, PPO RL & Sim-to-Real → Step 3.7):** [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) · [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) *(Ladder Gate Test)*
 
+
+- **Handoff to Track 07 — first bridge page:** [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md)

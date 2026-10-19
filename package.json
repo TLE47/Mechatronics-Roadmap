@@ -27,6 +27,7 @@
     "test:linkscan": "python3 tests/test_link_scan_set.py",
     "test:bridges": "python3 tests/test_track_bridge_lists.py",
     "test:linkcache": "python3 tests/test_link_cache.py",
+    "links:revalidate": "python3 scripts/check_links.py --revalidate-unverified --jobs 8",
     "check:route": "python3 scripts/generate_sim_route.py --check",
     "test:parity": "python3 tests/test_module_parity.py",
     "check:plant": "python3 scripts/generate_plant_data.py --check",

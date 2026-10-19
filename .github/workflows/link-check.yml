@@ -44,13 +44,20 @@ jobs:
           restore-keys: |
             link-cache-
 
+      # The weekly run is the one that fails on a rising pile: PR runs compare against a history file
+      # they do not own, so a transient bot wall would red a contributor's branch. `--fail-on-rise`
+      # reads the last committed row and exits 1 when `not_checked` grew above it.
       - name: Verify all external URLs and static-page HTML headings
-        run: python3 scripts/check_links.py --write-report --history docs/link-check-history.jsonl
+        run: |
+          python3 scripts/check_links.py --write-report --history docs/link-check-history.jsonl \
+            ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '--fail-on-rise' || '' }}
 
       # The sweep's own numbers, not a badge: `not_checked` is the pile a human still has to open by
       # hand, so a rise across weeks is visible in one committed file.
+      # `always()` because the row is the evidence for a failed rise gate: without it the baseline
+      # would never move and the next weekly run would report the same delta.
       - name: Record the sweep's not-checked count (scheduled runs only)
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
           if git diff --quiet -- docs/link-check-history.jsonl; then
             echo "No new history row."

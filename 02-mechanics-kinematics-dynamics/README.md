@@ -395,3 +395,5 @@ $$
 - **Tier 2 (3D Homogeneous Transforms $SE(3)$ & Velocity Jacobian → Step 2.3):** [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) *(Ladder Gate Test)*
 - **Tier 3 (6D Spatial Twists/Wrenches, Paros-Weisbord Flexures & Two-Pass RNEA → Step 3.3):** [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) *(Ladder Gate Test)*
 
+
+- **Handoff to Track 03 — first bridge page:** [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md)
