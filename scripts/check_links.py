@@ -4,9 +4,13 @@ Automated Link, Relative-Path & Static-Page Heading Checker (`scripts/check_link
 
 1. Scans all beginner-path markdown files (`README.md`, `PLAN-batch-1.md`, `track-p/`, `stage-0/`,
    the nine numbered track index pages (`00-foundations/README.md` through
-   `08-capstone-projects/README.md`), every lesson in those tracks, `modules/`,
-   `resources/glossary.md`, `resources/safety.md`, `resources/troubleshooting.md`). Every external URL
-   on a scanned page is fetched, the index pages' Tier 2/3 resource lists included.
+   `08-capstone-projects/README.md`), every lesson in those tracks, `modules/`, and every markdown page
+   under `resources/` - the glossary, the cheatsheet, the BOM, the toolchain and textbook reading lists
+   and `resources/plants/README.md`). Every external URL on a scanned page is fetched, the index pages'
+   Tier 2/3 resource lists included.
+1b. Fetches with a bounded thread pool (`--jobs`, default 8) and caches verdicts between runs
+   (`--cache`, 7-day TTL for served pages, 6 hours for anything unverified), so a weekly sweep does not
+   re-pay for 350 unchanged citations. `--refresh` ignores the cache; `--no-cache` skips it entirely.
 2. Verifies that every relative file link resolves to an existing file on disk.
 3. Checks every unique `http://` and `https://` URL using an HTTP GET request and records its HTTP status
    and `<title>`. Each URL gets one of five verdicts: **PASS** (2xx/3xx), **FAIL** (a 4xx the host is
@@ -33,8 +37,11 @@ Automated Link, Relative-Path & Static-Page Heading Checker (`scripts/check_link
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
+import datetime
 import glob
 import html
+import json
 import os
 import re
 import sys
@@ -106,8 +113,9 @@ UNREACHABLE = "UNREACHABLE"
 UNVERIFIED_VERDICTS = (BLOCKED, SERVER_ERROR, UNREACHABLE)
 
 # 401/403: Cloudflare/ACM/WAF bot walls (w3.org, dl.acm.org, allaboutcircuits.com, umich CTMS).
-# 429: rate limiting. Neither is evidence that the link rotted.
-BOT_WALL_STATUSES = frozenset({401, 403})
+# 418: IEEE Xplore answers scripts with a teapot while serving browsers the journal page.
+# 429: rate limiting. None of these is evidence that the link rotted.
+BOT_WALL_STATUSES = frozenset({401, 403, 418})
 # The retryable set from the host rules: transient upstream errors and throttling.
 RETRYABLE_STATUSES = frozenset({429, 502, 503, 504})
 
@@ -118,11 +126,12 @@ def get_target_markdown_files() -> list[str]:
         os.path.join(ROOT, "PLAN-batch-1.md"),
         os.path.join(ROOT, "track-p", "README.md"),
         os.path.join(ROOT, "stage-0", "README.md"),
-        os.path.join(ROOT, "resources", "glossary.md"),
-        os.path.join(ROOT, "resources", "safety.md"),
-        os.path.join(ROOT, "resources", "troubleshooting.md"),
         *TRACK_READMES,
     ]
+    # Derived rather than named: naming three of the seven resource pages is how
+    # `open-source-toolchains.md` and `textbooks-and-papers.md` kept two dead links out of the scan.
+    files.extend(sorted(glob.glob(os.path.join(ROOT, "resources", "*.md"))))
+    files.extend(sorted(glob.glob(os.path.join(ROOT, "resources", "*", "README.md"))))
     for pattern in LESSON_GLOBS:
         files.extend(sorted(glob.glob(pattern)))
     return [f for f in files if os.path.exists(f)]
@@ -135,6 +144,30 @@ def normalize_text(s: str) -> str:
     s = s.replace("—", "-").replace("–", "-").replace("\u00a0", " ")
     s = re.sub(r"\s+", " ", s)
     return s.strip().lower()
+
+
+# Python 3.9's `HTTPRedirectHandler` has no 308 handler, so a permanent redirect reads as a failure
+# there while 3.12 follows it. 308 preserves the method exactly as 307 does, and every request here is
+# a GET, so aliasing the two makes the verdict version-independent.
+class _PermanentRedirects(urllib.request.HTTPRedirectHandler):
+    http_error_308 = urllib.request.HTTPRedirectHandler.http_error_307
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        # 3.9's `redirect_request` raises for a code outside {301, 302, 303, 307}; 308 is 307's
+        # method-preserving twin, so present it as one rather than duplicating the request logic.
+        return super().redirect_request(req, fp, 307 if code == 308 else code, msg, headers, newurl)
+
+
+OPENER = urllib.request.build_opener(_PermanentRedirects())
+
+
+def verdict_for_http_status(code: int) -> str:
+    """The verdict a non-retryable HTTP status earns, kept separate so it can be tested dry."""
+    if code in BOT_WALL_STATUSES or code == 429:
+        return BLOCKED
+    if 500 <= code < 600:
+        return SERVER_ERROR
+    return FAIL
 
 
 def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str, int | str, str, str]:
@@ -154,7 +187,7 @@ def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str,
     for attempt in range(1, attempts + 1):
         try:
             req = urllib.request.Request(url, headers=headers, method="GET")
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with OPENER.open(req, timeout=timeout) as resp:
                 code = resp.status
                 raw_bytes = resp.read(1_500_000)
                 body = raw_bytes.decode("utf-8", errors="ignore")
@@ -166,11 +199,7 @@ def fetch_url_info(url: str, timeout: int = 12, attempts: int = 2) -> tuple[str,
             if e.code in RETRYABLE_STATUSES and attempt < attempts:
                 time.sleep(0.5 * attempt)
                 continue
-            if e.code in BOT_WALL_STATUSES or e.code == 429:
-                return BLOCKED, e.code, "", ""
-            if 500 <= e.code < 600:
-                return SERVER_ERROR, e.code, "", ""
-            return FAIL, e.code, "", ""
+            return verdict_for_http_status(e.code), e.code, "", ""
         except Exception as e:
             status = str(e)
             if attempt < attempts:
@@ -194,10 +223,125 @@ def extract_quoted_headings_from_segment(segment: str) -> list[str]:
     return cleaned
 
 
+# A served page is re-fetched weekly; anything the host would not serve is retried within hours, because
+# a bot wall or an outage says nothing about the citation and should not be cached away for a week.
+UNVERIFIED_CACHE_HOURS = 6.0
+CACHE_DEFAULT = os.path.join(ROOT, ".link_cache.json")
+
+
+def load_cache(path: str) -> dict:
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def save_cache(path: str, cache: dict) -> None:
+    """Write the cache atomically, temp file beside the target, fsync file and directory."""
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    tmp = os.path.join(directory, f".{os.path.basename(path)}.tmp.{os.getpid()}")
+    try:
+        with open(tmp, "w", encoding="utf-8") as handle:
+            json.dump(cache, handle, sort_keys=True)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, path)
+        dir_fd = os.open(directory, os.O_RDONLY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+
+def cache_entry_is_fresh(entry: object, expected: list[str], ttl_hours: float) -> bool:
+    """A cached verdict is usable only if it is young enough and answers every cited heading."""
+    if not isinstance(entry, dict):
+        return False
+    verdict = entry.get("verdict")
+    try:
+        fetched_at = float(entry.get("fetched_at", 0))
+    except (TypeError, ValueError):
+        return False
+    ttl = ttl_hours if verdict == PASS else min(ttl_hours, UNVERIFIED_CACHE_HOURS)
+    if time.time() - fetched_at > ttl * 3600:
+        return False
+    if verdict != PASS:
+        return True
+    headings = entry.get("headings")
+    if not isinstance(headings, dict):
+        return False
+    return all(heading in headings for heading in expected)
+
+
+def fetch_many(urls: list[str], jobs: int) -> dict[str, tuple[str, int | str, str, str]]:
+    """Fetch every URL with a bounded pool; one failure is a verdict, never a crash."""
+    fetched: dict[str, tuple[str, int | str, str, str]] = {}
+    total = len(urls)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as pool:
+        futures = {pool.submit(fetch_url_info, url): url for url in urls}
+        for done, future in enumerate(concurrent.futures.as_completed(futures), start=1):
+            url = futures[future]
+            try:
+                fetched[url] = future.result()
+            except Exception as exc:  # a worker bug must not lose the other 350 verdicts
+                fetched[url] = (UNREACHABLE, f"worker error: {exc}"[:80], "", "")
+            if done % 25 == 0 or done == total:
+                print(f"  fetched {done}/{total}", file=sys.stderr)
+    return fetched
+
+
+def append_history(path: str, record: dict) -> None:
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True) + "\n")
+
+
+def print_history(path: str, window: int = 10) -> None:
+    """Show the last sweeps, so a growing unverified pile is visible without opening the file."""
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            lines = handle.read().splitlines()[-window:]
+    except OSError:
+        return
+    rows = []
+    for line in lines:
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            continue
+    if not rows:
+        return
+    print("Not-checked over recent sweeps (oldest first):")
+    for row in rows:
+        print(
+            f"  {str(row.get('date', '?'))[:10]}  urls={row.get('urls', 0):<4} "
+            f"served={row.get('served', 0):<4} not_checked={row.get('not_checked', 0):<3} "
+            f"failed={row.get('failed', 0)}"
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check markdown links and static-page section headings.")
     parser.add_argument("--write-report", action="store_true", help="Write LINK_REPORT.md")
+    parser.add_argument("--jobs", type=int, default=8, help="Concurrent fetches (default 8)")
+    parser.add_argument("--cache", default=CACHE_DEFAULT, help="URL verdict cache path")
+    parser.add_argument("--no-cache", action="store_true", help="Neither read nor write the cache")
+    parser.add_argument("--refresh", action="store_true", help="Ignore cached verdicts and re-fetch everything")
+    parser.add_argument(
+        "--cache-ttl-hours", type=float, default=168.0, help="Age limit for a served page's verdict (default 168)"
+    )
+    parser.add_argument(
+        "--history", default=None, help="Append one JSON line per run here, and print the recent trend"
+    )
     args = parser.parse_args()
+    started = time.time()
 
     md_files = get_target_markdown_files()
     # The target allows one level of balanced parentheses, so `.../Pointer_(computer_programming)`
@@ -277,11 +421,52 @@ def main() -> int:
     unverified_urls = []
     failed_headings = []
 
-    for url in sorted(external_urls.keys()):
-        verdict, status, title, page_text = fetch_url_info(url)
+    sorted_urls = sorted(external_urls.keys())
+    cache = {} if args.no_cache else load_cache(args.cache)
+    pending: list[str] = []
+    for url in sorted_urls:
+        expected_norm = [normalize_text(h) for h in url_expected_headings.get(url, set())]
+        if not args.refresh and cache_entry_is_fresh(cache.get(url), expected_norm, args.cache_ttl_hours):
+            continue
+        pending.append(url)
+
+    served_from_cache = len(sorted_urls) - len(pending)
+    if served_from_cache:
+        print(
+            f"Reusing {served_from_cache} of {len(sorted_urls)} cached verdicts from "
+            f"{os.path.relpath(args.cache, ROOT)} (TTL {args.cache_ttl_hours:g} h).",
+            file=sys.stderr,
+        )
+    fetched = fetch_many(pending, max(1, args.jobs)) if pending else {}
+
+    updated_cache = dict(cache)
+    for url in sorted_urls:
         sources = ", ".join(f"`{s}`" for s in sorted(external_urls[url]))
         spa = is_spa_url(url)
         quoted_headings = sorted(url_expected_headings.get(url, set()))
+        expected_norm = list(dict.fromkeys(normalize_text(h) for h in quoted_headings))
+        entry = cache.get(url) or {}
+
+        if url in fetched:
+            verdict, status, title, page_text = fetched[url]
+            fetched_at = time.time()
+            heading_found = {heading: bool(heading and heading in page_text) for heading in expected_norm}
+        else:
+            verdict = str(entry.get("verdict", UNREACHABLE))
+            status = entry.get("status", "")
+            title = str(entry.get("title", ""))
+            fetched_at = float(entry.get("fetched_at", 0) or 0)
+            cached_headings = entry.get("headings") if isinstance(entry.get("headings"), dict) else {}
+            heading_found = {heading: bool(cached_headings.get(heading)) for heading in expected_norm}
+
+        updated_cache[url] = {
+            "verdict": verdict,
+            "status": status,
+            "title": title,
+            "fetched_at": fetched_at,
+            # A page the host did not serve has no headings to remember; `not checked` is the verdict.
+            "headings": heading_found if verdict == PASS else {},
+        }
 
         heading_status_list = []
         if spa:
@@ -299,7 +484,7 @@ def main() -> int:
             kind = "Static HTML + Heading Check"
             for h in quoted_headings:
                 norm_h = normalize_text(h)
-                if norm_h and norm_h in page_text:
+                if norm_h and heading_found.get(norm_h):
                     heading_status_list.append(f"`{h}`: **FOUND in HTML**")
                 else:
                     heading_status_list.append(f"`{h}`: **MISSING in HTML**")
@@ -360,6 +545,33 @@ def main() -> int:
         with open(report_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines) + "\n")
         print(f"Wrote {report_path}")
+
+    if not args.no_cache:
+        save_cache(args.cache, updated_cache)
+
+    elapsed = time.time() - started
+    record = {
+        "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "files": len(md_files),
+        "urls": len(results),
+        "served": sum(1 for r in results if r[1] == PASS),
+        "not_checked": len(unverified_urls),
+        "failed": len(failed_urls),
+        "missing_headings": len(failed_headings),
+        "broken_relative": len(relative_errors),
+        "cached": served_from_cache,
+        "fetched": len(pending),
+        "jobs": max(1, args.jobs),
+        "elapsed_s": round(elapsed, 1),
+        "verdicts": {v: sum(1 for r in results if r[1] == v) for v in (PASS, FAIL, BLOCKED, SERVER_ERROR, UNREACHABLE)},
+    }
+    if args.history:
+        append_history(args.history, record)
+        print_history(args.history, window=1)
+    print(
+        f"Swept {len(results)} URLs in {elapsed:.1f}s ({served_from_cache} cached, {len(pending)} fetched).",
+        file=sys.stderr,
+    )
 
     for url, verdict, status, sources in unverified_urls:
         print(f"NOT VERIFIED: {url} -> {verdict} ({status}) ({sources})", file=sys.stderr)

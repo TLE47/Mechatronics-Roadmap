@@ -11,6 +11,41 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 102: The Sweep Runs in Parallel, Remembers, and Reports Its Gap
+
+The checker fetched 513 URLs one after another, re-fetched every one of them on every run, and named
+three of the seven `resources/` pages as the ones in scope. A serial sweep took **9 m 12 s** here and
+about the same on CI; the scan set is now derived from disk, the fetch runs in a pool, a verdict cache
+survives between runs, and each run appends its own numbers so a growing unverified pile is visible.
+
+| change | effect |
+| --- | --- |
+| `resources/*.md` and `resources/*/README.md` globbed into the scan set | 118 files and 513 URLs, up from 113/352; five reference pages that were never fetched |
+| `--jobs` thread pool (default 8) | **9 m 12 s -> 1 m 14 s** on the same 513 URLs, same machine, cold cache |
+| embedded verdict cache (`.link_cache.json`, gitignored) | 7-day TTL for served pages, 6 hours for anything unverified; warm run **0.1 s** |
+| `--refresh`, `--no-cache`, `--cache-ttl-hours` | a citation that changed can be re-checked without deleting a file |
+| `--history docs/link-check-history.jsonl` | one JSON row per sweep and a printed trend of `not_checked` |
+| 308 follows on Python 3.9 | `folk.ntnu.no`, `modelcontextprotocol.io` and `prusa3d.com` answered 308 and were called FAIL by the 3.9 interpreter; they pass on 3.12, which has the handler |
+| 418 is a bot wall | IEEE Xplore answers scripts with a teapot; that is `BLOCKED`, not a dead citation |
+
+Four dead citations the wider scan set found, all in the reference pages:
+
+| page citation | was | now |
+| --- | --- | --- |
+| ToOptix | `github.com/DerBaumeister/toOptix` 404 | the PyPI project page |
+| microTVM | `tvm.apache.org/docs/topic/microtvm/` 404 | the Apache TVM repository |
+| IEEE/ASME TMECH | `ieee-ims.org/publication/tmech` 404 | the IEEE Xplore journal page |
+| IEEE/ASME AIM | `ieee-ras.org/.../aim` 404 | IEEE IES's conference list (AIM is an IES conference) |
+
+`tests/test_link_cache.py` covers the cache rules (TTL, heading coverage, corrupt file, atomic write),
+the pool (overlap, one crashed worker, every verdict kept) and a local 308 server;
+`tests/test_track_bridge_lists.py` fails when a module page is missing from its track README;
+`tests/test_link_scan_set.py` now also fails when a `resources/` page leaves the scan set.
+
+Measured: cold sweep `Swept 513 URLs in 74.1s (0 cached, 513 fetched)`, warm `0.1s (513 cached)`,
+both exit `0` with 476 served and 37 not checked; 223 tests pass; `verify_repo.py` reports
+`links=1898 errors=0`.
+
 ## [2026-10-19] — Run 101: The T2.00f Split's Citations Follow It
 
 Splitting `00-foundations.T2.00f` into `T2.00i` (pre-warped Tustin biquads) and `T2.00j` (Gaussian

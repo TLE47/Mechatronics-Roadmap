@@ -8,6 +8,11 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
+# Only the scheduled/dispatch run pushes (one history row); the scope is declared here because the
+# default token is read-only in some repository settings and the push step would fail silently there.
+permissions:
+  contents: write
+
 jobs:
   verify-lessons-and-links:
     runs-on: ubuntu-latest
@@ -29,8 +34,34 @@ jobs:
       - name: Run all Python & host C++ exercise unit tests
         run: python3 tests/test_exercises.py
 
+      # A week-old verdict for a page that still serves is worth reusing; the script keeps served
+      # verdicts for 7 days and retries anything it could not check within 6 hours itself.
+      - name: Restore the URL verdict cache
+        uses: actions/cache@v4
+        with:
+          path: .link_cache.json
+          key: link-cache-${{ github.run_id }}
+          restore-keys: |
+            link-cache-
+
       - name: Verify all external URLs and static-page HTML headings
-        run: python3 scripts/check_links.py --write-report
+        run: python3 scripts/check_links.py --write-report --history docs/link-check-history.jsonl
+
+      # The sweep's own numbers, not a badge: `not_checked` is the pile a human still has to open by
+      # hand, so a rise across weeks is visible in one committed file.
+      - name: Record the sweep's not-checked count (scheduled runs only)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          if git diff --quiet -- docs/link-check-history.jsonl; then
+            echo "No new history row."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/link-check-history.jsonl
+          git commit -m "Record the link sweep's served and not-checked counts"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push
 
   compile-arduino-uno-sketches:
     runs-on: ubuntu-latest

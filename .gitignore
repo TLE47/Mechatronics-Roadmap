@@ -23,4 +23,6 @@ dist/
 .idea/
 .aistudio/
 LINK_REPORT.md
+.link_cache.json
+
 
