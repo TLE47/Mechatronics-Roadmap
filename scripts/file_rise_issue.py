@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""File one GitHub issue for a link sweep that failed its rise gate, naming the new URLs.
+
+The weekly sweep already fails when a URL is unverified now and was not in the last recorded row,
+but the evidence lands in a workflow log a maintainer has to go looking for. This turns that log
+line into a tracked issue: one issue per distinct set of new URLs, with each URL's verdict, what
+the host said, and the files that cite it.
+
+Deduplication is by content, not by date: the body carries `<!-- rise-fingerprint: … -->`, a hash
+of the sorted new URLs. If an open issue already carries that marker the rise is already tracked
+and nothing is filed — so a re-run of the same sweep (or a retried job) cannot open a second issue.
+When the next sweep clears the wall, the set changes, so the marker changes too; the old issue stays
+open until a human closes it, which is the point of filing it.
+
+Usage in CI (after a failed gate):
+    python3 scripts/file_rise_issue.py --report .rise-report.json
+
+Run: `python3 tests/test_rise_issue.py` for the decision logic; `--dry-run` prints the `gh`
+commands instead of running them.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+
+LABEL = "link-rise"
+MARKER = "rise-fingerprint:"
+REPORT_DEFAULT = ".rise-report.json"
+
+
+def fingerprint(urls: list[str]) -> str:
+    """A stable 12-hex id for a set of URLs: order does not matter, membership does."""
+    joined = "\n".join(sorted(urls))
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:12]
+
+
+def issue_title(report: dict) -> str:
+    count = len(report.get("new", []))
+    noun = "URL" if count == 1 else "URLs"
+    return f"Link sweep rise: {count} newly unverified {noun}"
+
+
+def issue_body(report: dict, mark: str) -> str:
+    """The issue as a maintainer needs it: what rose, what each host said, and where it is cited."""
+    rows = [
+        "| URL | Verdict | Host said | Cited in |",
+        "| :--- | :--- | :--- | :--- |",
+    ]
+    for row in report.get("new", []):
+        # The checker formats these with backticks already; strip before re-wrapping so the table
+        # renders one code span, not an empty one around a code span.
+        sources = ", ".join(f"`{str(source).strip('`')}`" for source in row.get("sources", [])) or "—"
+        status = str(row.get("status") or "—").replace("|", "\\|")
+        rows.append(f"| {row.get('url', '')} | `{row.get('verdict', '')}` | {status} | {sources} |")
+
+    baseline = report.get("baseline_date") or "no comparable row"
+    return "\n".join([
+        "The scheduled link sweep found URL(s) unverified now that the last recorded sweep "
+        "did not list. Each one is either a page that stopped being served or a host that now "
+        "walls scripts; the two need different responses.",
+        "",
+        f"<!-- {MARKER} {mark} -->",
+        "",
+        f"- **Sweep:** {report.get('date') or '?'} (baseline: {baseline})",
+        f"- **Checked:** {report.get('urls', 0)} URLs, {report.get('not_checked', 0)} not verified",
+        "",
+        *rows,
+        "",
+        "**Likely cause:** a `BLOCKED` verdict (403/429) is a bot wall and usually opens in a "
+        "browser; `UNREACHABLE` with a DNS error is a dead citation; a timeout is retried within "
+        "six hours by the sweep and may clear on its own.",
+        "",
+        "**What to check:** open each URL in a browser, then either replace the citation or annotate "
+        "it in `docs/UNVERIFIED_CITATIONS.md` the way an outage is annotated. A wall that lifts "
+        "closes this issue with no change; a dead page needs the citation repaired.",
+        "",
+        "Reproduce:",
+        "",
+        "```",
+        "python3.12 scripts/check_links.py --fail-on-rise --history docs/link-check-history.jsonl "
+        "--rise-report .rise-report.json",
+        "```",
+    ])
+
+
+def find_duplicate(issues: list[dict], mark: str) -> int | None:
+    """The number of an open issue already tracking this exact set, or None."""
+    needle = f"{MARKER} {mark}"
+    for issue in issues:
+        if needle in str(issue.get("body", "")):
+            return int(issue.get("number", 0))
+    return None
+
+
+def gh(args: list[str]) -> str:
+    result = subprocess.run(["gh", *args], capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError((result.stderr or result.stdout).strip() or f"gh {' '.join(args)} failed")
+    return result.stdout
+
+
+def ensure_label(dry_run: bool) -> None:
+    """`gh issue create --label` fails on a missing label, so create it and ignore 'already exists'."""
+    command = ["label", "create", LABEL, "--color", "D93F0B",
+               "--description", "A URL the weekly link sweep could not verify"]
+    if dry_run:
+        print("gh " + " ".join(command))
+        return
+    result = subprocess.run(["gh", *command], capture_output=True, text=True)
+    if result.returncode != 0 and "already exists" not in (result.stderr or ""):
+        raise RuntimeError((result.stderr or "").strip() or "could not create the link-rise label")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="File an issue for a failing link-sweep rise gate.")
+    parser.add_argument("--report", default=REPORT_DEFAULT, help=f"the gate's JSON report (default {REPORT_DEFAULT})")
+    parser.add_argument("--dry-run", action="store_true", help="Print the gh commands instead of running them")
+    parser.add_argument(
+        "--existing",
+        default=None,
+        help="Read open issues from this JSON file instead of calling `gh issue list` (tests, offline runs)",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        with open(args.report, "r", encoding="utf-8") as handle:
+            report = json.load(handle)
+    except (OSError, ValueError) as exc:
+        print(f"No rise report at {args.report} ({exc}); nothing to file.", file=sys.stderr)
+        return 2
+    urls = [str(row.get("url", "")) for row in report.get("new", []) if row.get("url")]
+    if not urls:
+        print("The rise report lists no new URLs; nothing to file.", file=sys.stderr)
+        return 2
+
+    mark = fingerprint(urls)
+    title = issue_title(report)
+    body = issue_body(report, mark)
+
+    if args.existing:
+        with open(args.existing, "r", encoding="utf-8") as handle:
+            issues = json.load(handle)
+    else:
+        try:
+            ensure_label(args.dry_run)
+            issues = json.loads(gh([
+                "issue", "list", "--label", LABEL, "--state", "open",
+                "--json", "number,body", "--limit", "100",
+            ]) or "[]")
+        except (RuntimeError, ValueError) as exc:
+            print(f"ERROR: could not read open {LABEL} issues: {exc}", file=sys.stderr)
+            return 1
+
+    duplicate = find_duplicate(issues, mark)
+    if duplicate is not None:
+        print(f"Already tracked by issue #{duplicate} ({mark}); nothing filed.")
+        return 0
+
+    command = ["issue", "create", "--title", title, "--body", body, "--label", LABEL]
+    if args.dry_run:
+        print("gh " + " ".join(command[:4]) + " <body> " + " ".join(command[4:]))
+        print(f"Would file: {title} ({mark})")
+        return 0
+    try:
+        created = gh(command).strip()
+    except RuntimeError as exc:
+        print(f"ERROR: could not file the issue: {exc}", file=sys.stderr)
+        return 1
+    print(f"Filed {created} for {len(urls)} new URL(s) ({mark}).")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
