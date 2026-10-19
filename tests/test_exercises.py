@@ -102,7 +102,12 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
     def test_all_32_python_lessons_starter_and_full_solutions(self):
         """Every Python lesson's Starter Code runs without error, Full Solution matches Expected Output + Instructor Behavioral Tests, and print-only spoofing fails."""
         lesson_files = get_python_lesson_files()
-        self.assertEqual(len(lesson_files), 36)
+        self.assertEqual(
+            len(lesson_files), 36,
+            f"expected 36 Python lessons with a Starter/Full Solution pair; got "
+            f"{len(lesson_files)} - check get_python_lesson_files' glob, since a renamed "
+            f"directory would silently drop lessons from every check below",
+        )
 
         for path in lesson_files:
             rel_path = os.path.relpath(path, ROOT)
@@ -112,7 +117,12 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
                 fm_block = text.split("---")[1] if text.startswith("---") else text
                 lid_m = re.search(r'^lesson_id:\s*["\']?([^"\'\n]+)["\']?', fm_block, re.MULTILINE)
                 lesson_id = lid_m.group(1).strip() if lid_m else rel_path
-                self.assertIn(lesson_id, INSTRUCTOR_TESTS, f"Missing INSTRUCTOR_TESTS for {lesson_id}")
+                self.assertIn(
+                    lesson_id, INSTRUCTOR_TESTS,
+                    f"expected {lesson_id} to have a behavioural instructor test; a lesson the "
+                    f"workbench cannot grade is delivered ungated - check the lesson_id key in "
+                    f"INSTRUCTOR_TESTS against the page's front matter",
+                )
                 _, instructor_test_code = INSTRUCTOR_TESTS[lesson_id]
 
                 starter_code, expected_out, solution_code = extract_python_blocks(text, rel_path)
@@ -130,7 +140,9 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
                     starter_passed_behavior = False
                 self.assertFalse(
                     starter_passed_behavior and starter_buf.getvalue().strip() == expected_out,
-                    f"Starter code for {lesson_id} must not pass full verification before solving TODOs",
+                    f"expected the starter for {lesson_id} to fail either the instructor tests or "
+                    f"the Expected Output comparison, since a starter that already passes hands "
+                    f"the learner a solved exercise; check the TODO holes are still open",
                 )
 
                 # Spoofed print-only solution must ALWAYS fail instructor behavioral tests
@@ -150,7 +162,12 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
                 with contextlib.redirect_stdout(sol_buf):
                     exec(compile(solution_code, f"{rel_path}:solution", "exec"), sol_ns)
                 actual_out = sol_buf.getvalue().strip()
-                self.assertEqual(actual_out, expected_out)
+                self.assertEqual(
+                    actual_out, expected_out,
+                    f"expected {lesson_id}'s Full Solution stdout to be its Expected Output block "
+                    f"verbatim; the page prints one and the browser grades the other, so a "
+                    f"mismatch ships a lesson no correct answer can pass. Got:\n{actual_out}",
+                )
                 exec(compile(instructor_test_code, f"{rel_path}:instructor_test", "exec"), sol_ns)
 
     def test_falstad_lessons_ci_python_mirrors_and_netlists(self):
@@ -166,7 +183,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             f"5.0 V across 1000 ohms -> {i_1k_ma:.2f} mA | across 250 ohms -> {i_250_ma:.2f} mA",
             f"2.5 mA through 2.0 kOhm -> {v_2k:.2f} V",
         ]
-        self.assertEqual("\n".join(s01_lines), s01_expected)
+        mirrored = "\n".join(s01_lines)
+        self.assertEqual(
+            mirrored, s01_expected,
+            f"expected the S0.1 mirror to reproduce the page's Expected Output from Ohm's law "
+            f"(I = V/R, V = I*R); a mismatch means the page's published numbers or the formula "
+            f"here moved - check 5.0 V across 1000 and 250 ohms. Got:\n{mirrored}",
+        )
 
         # S0.2 CI mirror: Series/Parallel & Voltage Divider
         s02_expected = extract_expected_output(
@@ -179,7 +202,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             f"12.0 V with R1=10k, R2=4.7k -> V_out = {v_div1:.2f} V (I_series = {i_ser1_ma:.2f} mA)",
             f"5.0 V with R1=10k, R2=10k (50% pot) -> V_out = {v_div2:.2f} V",
         ]
-        self.assertEqual("\n".join(s02_lines), s02_expected)
+        mirrored = "\n".join(s02_lines)
+        self.assertEqual(
+            mirrored, s02_expected,
+            f"expected the S0.2 mirror to reproduce the page's divider figures (12 V across "
+            f"10k/4.7k and 5 V across 10k/10k) from V_out = V_in * R2/(R1+R2); a mismatch means "
+            f"one of the two moved. Got:\n{mirrored}",
+        )
 
         # S0.3 CI mirror: Breadboard Continuity & Short-Circuit Detection
         s03_expected = extract_expected_output(
@@ -192,7 +221,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             f"Row 10a to 14a: {check_breadboard_pair(10, 'left', 14, 'left')}",
             f"Row 10e to 10f (across ravine): {check_breadboard_pair(10, 'left', 10, 'right')}",
         ]
-        self.assertEqual("\n".join(s03_lines), s03_expected)
+        mirrored = "\n".join(s03_lines)
+        self.assertEqual(
+            mirrored, s03_expected,
+            f"expected the S0.3 mirror to reproduce the breadboard verdicts the page publishes "
+            f"(same clip SHORTED_SAME_CLIP, a pair across the ravine VALID_ACROSS_NODES); a "
+            f"mismatch means the continuity rule or the page's table moved. Got:\n{mirrored}",
+        )
 
         # S0.4 CI mirror: LED Ballast Resistor & Power Rating
         s04_expected = extract_expected_output(
@@ -205,7 +240,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             f"5.0V supply, Vf=2.0V, I=15.0mA -> R = {r_led:.1f} ohms | P_R = {p_led_mw:.1f} mW ({'SAFE_QUARTER_WATT' if p_led_mw <= 125.0 else 'OVERHEAT_DANGER'})",
             f"12.0V across 100 ohms (120mA) -> P_R = {p_12v_mw:.1f} mW ({'SAFE_QUARTER_WATT' if p_12v_mw <= 125.0 else 'OVERHEAT_DANGER'})",
         ]
-        self.assertEqual("\n".join(s04_lines), s04_expected)
+        mirrored = "\n".join(s04_lines)
+        self.assertEqual(
+            mirrored, s04_expected,
+            f"expected the S0.4 mirror to reproduce the page's LED figures: R = (Vs - Vf)/I = "
+            f"200 ohms at 15 mA, and the quarter-watt verdicts (43 mW SAFE, 1440 mW OVERHEAT); a "
+            f"mismatch means the page's numbers or the formula here moved. Got:\n{mirrored}",
+        )
 
         # S0.5 CI mirror: CC/CV Bench Power Supply
         s05_expected = extract_expected_output(
@@ -219,7 +260,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             else:
                 mode, v_out, i_ma = "CC", 0.10 * r_load, 100.0
             s05_lines.append(f"{label} Mode={mode} | V_out={v_out:.2f} V | I={i_ma:.1f} mA")
-        self.assertEqual("\n".join(s05_lines), s05_expected)
+        mirrored = "\n".join(s05_lines)
+        self.assertEqual(
+            mirrored, s05_expected,
+            f"expected the S0.5 mirror to reproduce the page's CC/CV figures (250 ohm load in CV "
+            f"at 5.00 V, 0.5 ohm load in CC at 0.10 A); a mismatch means the current-limit "
+            f"branch or the page's table moved. Got:\n{mirrored}",
+        )
 
         # S0.6 CI mirror: Capacitor Time Constant tau = R * C
         s06_expected = extract_expected_output(
@@ -230,7 +277,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
         for t_s in [1.0, 2.0, 5.0]:
             vc = 5.0 * (1.0 - math.exp(-t_s / tau_s))
             s06_lines.append(f"t = {t_s:.1f} s -> V_C = {vc:.2f} V")
-        self.assertEqual("\n".join(s06_lines), s06_expected)
+        mirrored = "\n".join(s06_lines)
+        self.assertEqual(
+            mirrored, s06_expected,
+            f"expected the S0.6 mirror to reproduce the page's charging curve for R=10k, C=100uF "
+            f"(tau = 1.00 s; 3.16 V at 1 s, 4.32 V at 2 s, 4.97 V at 5 s); a mismatch means tau "
+            f"or the page's table moved. Got:\n{mirrored}",
+        )
 
         # 01.1 CI mirror: MOSFET Power & Flyback Spike vs Clamp
         l011_expected = extract_expected_output(
@@ -244,18 +297,34 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             f"Peak Drain voltage WITHOUT flyback diode: {v_unclamped:.1f} V (DESTROYS 60V MOSFET!)",
             f"Peak Drain voltage WITH flyback diode: {v_clamped:.1f} V (SAFE!)",
         ]
-        self.assertEqual("\n".join(l011_lines), l011_expected)
+        mirrored = "\n".join(l011_lines)
+        self.assertEqual(
+            mirrored, l011_expected,
+            f"expected the 01.1 mirror to reproduce the page's MOSFET figures: 80 mW of heat at "
+            f"2 A, an unclamped 512 V spike that destroys a 60 V part, and 12.7 V with the "
+            f"flyback diode. Got:\n{mirrored}",
+        )
 
         # Verify all standalone Falstad netlists exist and start with valid "$ 1" header
         netlists = sorted(
             glob.glob(os.path.join(ROOT, "stage-0", "falstad", "*.txt"))
             + glob.glob(os.path.join(ROOT, "01-electronics-and-power", "falstad", "*.txt"))
         )
-        self.assertGreaterEqual(len(netlists), 10)
+        self.assertGreaterEqual(
+            len(netlists), 10,
+            f"expected at least 10 standalone Falstad netlists across stage-0 and "
+            f"01-electronics-and-power; found {len(netlists)} - check the glob paths, since the "
+            f"lessons link these files by name",
+        )
         for nl in netlists:
             with open(nl, "r", encoding="utf-8") as f:
                 first_line = f.readline().strip()
-            self.assertTrue(first_line.startswith("$ 1 "), f"Invalid Falstad header in {nl}")
+            self.assertTrue(
+                first_line.startswith("$ 1 "),
+                f"expected {os.path.relpath(nl, ROOT)} to open with the Falstad header '$ 1 '; "
+                f"got {first_line!r} - Falstad refuses a file whose first line is not its "
+                f"version header, so the learner's import fails",
+            )
 
     def test_arduino_wokwi_lessons_python_mirrors_and_cpp_sketches(self):
         """Verify Python numerical mirrors AND extracted C++ sketches for S0.7, S0.8, S0.9, S0.M, and 01.2."""
@@ -269,7 +338,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             p_str = "HIGH(1)" if pin_reading == 1 else "LOW(0)"
             l_str = "HIGH(1)" if led_out == 1 else "LOW(0)"
             s07_lines.append(f"{label} | pin_reading={p_str} -> led_out={l_str}")
-        self.assertEqual("\n".join(s07_lines), s07_info["expected_output"])
+        mirrored = "\n".join(s07_lines)
+        self.assertEqual(
+            mirrored, s07_info["expected_output"],
+            f"expected the S0.7 mirror to reproduce the page's serial output: a released button "
+            f"reads HIGH and lights nothing, a pressed one reads LOW and lights the LED; a "
+            f"mismatch means the pull-up convention inverted. Got:\n{mirrored}",
+        )
 
         # 2. S0.8 Python mirror
         s08_info = arduino_verifier.extract_sketches_from_lesson(
@@ -280,7 +355,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             volts = (adc_raw / 1023.0) * 5.0
             pct = (adc_raw / 1023.0) * 100.0
             s08_lines.append(f"ADC={adc_raw} -> V={volts:.2f} V ({pct:.1f}%)")
-        self.assertEqual("\n".join(s08_lines), s08_info["expected_output"])
+        mirrored = "\n".join(s08_lines)
+        self.assertEqual(
+            mirrored, s08_info["expected_output"],
+            f"expected the S0.8 mirror to reproduce the page's ADC table (0 -> 0.00 V, 1023 -> "
+            f"5.00 V, 512 -> 2.50 V); a scale factor of 1024 instead of 1023 moves every row. "
+            f"Got:\n{mirrored}",
+        )
 
         # 3. S0.9 Python mirror
         s09_info = arduino_verifier.extract_sketches_from_lesson(
@@ -291,7 +372,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             v_avg = (cmd / 255.0) * 5.0
             t_on_us = (cmd / 255.0) * (1_000_000.0 / 490.0)
             s09_lines.append(f"analogWrite(9, {cmd}) -> V_avg = {v_avg:.2f} V | T_on = {t_on_us:.1f} us (at 490 Hz)")
-        self.assertEqual("\n".join(s09_lines), s09_info["expected_output"])
+        mirrored = "\n".join(s09_lines)
+        self.assertEqual(
+            mirrored, s09_info["expected_output"],
+            f"expected the S0.9 mirror to reproduce the page's PWM table: V_avg = cmd/255*5 V and "
+            f"T_on from the 490 Hz frame (2.04 ms); a mismatch means the duty mapping or the "
+            f"frame time moved. Got:\n{mirrored}",
+        )
 
         # 4. S0.M Python mirror
         s0m_info = arduino_verifier.extract_sketches_from_lesson(
@@ -303,7 +390,13 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             v_avg = (pwm_val / 255.0) * 5.0
             b_str = "LOW(pressed)" if btn == 0 else "HIGH(open)"
             s0m_lines.append(f"adc_raw:{adc_raw} | btn:{b_str} -> pwm_val:{pwm_val} | V_avg:{v_avg:.2f} V")
-        self.assertEqual("\n".join(s0m_lines), s0m_info["expected_output"])
+        mirrored = "\n".join(s0m_lines)
+        self.assertEqual(
+            mirrored, s0m_info["expected_output"],
+            f"expected the S0.M milestone mirror to reproduce the page's table: the pressed "
+            f"button forces pwm_val 0 whatever the ADC reads; a mismatch means the button "
+            f"override moved. Got:\n{mirrored}",
+        )
 
         # 5. 01.2 Python mirror
         l012_info = arduino_verifier.extract_sketches_from_lesson(
@@ -317,27 +410,67 @@ class TestBeginnerRoadmapExercises(unittest.TestCase):
             in2 = 1 if cmd < 0 else 0
             pwm = abs(cmd)
             l012_lines.append(f"cmd={cmd} -> IN1={in1} IN2={in2} PWM={pwm}")
-        self.assertEqual("\n".join(l012_lines), l012_info["expected_output"])
+        mirrored = "\n".join(l012_lines)
+        self.assertEqual(
+            mirrored, l012_info["expected_output"],
+            f"expected the 01.2 mirror to reproduce the page's H-bridge table: 3.00 A stall, "
+            f"-0.50 A running at omega=100, and IN1/IN2/PWM for cmd=192, -192, 0; a mismatch "
+            f"means the direction decode or the back-EMF term moved. Got:\n{mirrored}",
+        )
 
         # 6. Host C++ compilation & execution check (if g++ is present)
         ok, msg = arduino_verifier.run_host_verify()
         if ok:
-            self.assertIn("Compiled and verified all 10 Arduino sketches", msg)
+            self.assertIn(
+                "Compiled and verified all 10 Arduino sketches", msg,
+                f"expected run_host_verify to report all 10 sketches compiled and matching "
+                f"their Expected Output; got {msg!r} - a sketch that compiles but prints "
+                f"something else fails the learner through no fault of theirs",
+            )
 
     def test_consistent_horizontal_torque_convention(self):
         """Verify horizontal-angle torque convention tau = m * g * L * cos(theta) across P.10, P.12, P.M, and 02.1."""
         # P.10 & 02.1: x = L * cos(theta), y = L * sin(theta)
-        self.assertAlmostEqual(0.20 * math.cos(math.radians(60.0)), 0.1000, places=4)
-        self.assertAlmostEqual(0.20 * math.sin(math.radians(60.0)), 0.1732, places=4)
+        self.assertAlmostEqual(
+            0.20 * math.cos(math.radians(60.0)), 0.1000, places=4,
+            msg="expected x = 0.20*cos(60) = 0.1000 m, the horizontal convention the four "
+                "pages share; a sine here would read 0.1732 and reverse every torque sign",
+        )
+        self.assertAlmostEqual(
+            0.20 * math.sin(math.radians(60.0)), 0.1732, places=4,
+            msg="expected y = 0.20*sin(60) = 0.1732 m; a cosine here means the page and the "
+                "mirror disagree about which axis carries the angle",
+        )
 
         # P.12: tau = m * g * L * cos(theta) for m=0.50 kg, L=0.30 m at 0, 60, 90 deg from horizontal
-        self.assertAlmostEqual(0.50 * 9.81 * 0.30 * math.cos(math.radians(0.0)), 1.4715, places=4)
-        self.assertAlmostEqual(0.50 * 9.81 * 0.30 * math.cos(math.radians(60.0)), 0.73575, places=4)
-        self.assertAlmostEqual(0.50 * 9.81 * 0.30 * math.cos(math.radians(90.0)), 0.0000, places=4)
+        self.assertAlmostEqual(
+            0.50 * 9.81 * 0.30 * math.cos(math.radians(0.0)), 1.4715, places=4,
+            msg="expected tau = 0.50*9.81*0.30*cos(0) = 1.4715 N.m at the horizontal pose, where "
+                "the full lever arm acts; 0.0 here would be the vertical-angle mistake",
+        )
+        self.assertAlmostEqual(
+            0.50 * 9.81 * 0.30 * math.cos(math.radians(60.0)), 0.73575, places=4,
+            msg="expected tau = 0.73575 N.m at 60 deg, exactly half the horizontal torque; a "
+                "sine would give 1.2744 and invert the page's worked example",
+        )
+        self.assertAlmostEqual(
+            0.50 * 9.81 * 0.30 * math.cos(math.radians(90.0)), 0.0000, places=4,
+            msg="expected zero holding torque at 90 deg: a straight-up arm has no lever arm, "
+                "and a nonzero value means the convention is applied to the wrong axis",
+        )
 
         # P.M: m=0.40 kg, L=0.25 m at 0 deg -> 0.9810 N*m; min 10-bit cmd for 2.0 N*m full scale = 502
-        self.assertAlmostEqual(0.40 * 9.81 * 0.25 * math.cos(0.0), 0.9810, places=4)
-        self.assertEqual(math.ceil((0.9810 / 2.0) * 1023.0), 502)
+        self.assertAlmostEqual(
+            0.40 * 9.81 * 0.25 * math.cos(0.0), 0.9810, places=4,
+            msg="expected the P.M milestone's horizontal holding torque to be 0.9810 N.m "
+                "(0.40*9.81*0.25); a different figure means the page and this mirror disagree",
+        )
+        self.assertEqual(
+            math.ceil((0.9810 / 2.0) * 1023.0), 502,
+            f"expected the milestone's minimum command for 0.9810 N.m on a 2.0 N.m full scale to "
+            f"be 502 counts (ceil(0.4905*1023)); got {math.ceil((0.9810 / 2.0) * 1023.0)} - "
+            f"check the page's DAC table, which the learner types in",
+        )
 
 
 if __name__ == "__main__":

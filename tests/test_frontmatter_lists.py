@@ -29,23 +29,47 @@ from frontmatter_lists import as_list, list_field  # noqa: E402
 
 class FrontmatterListTests(unittest.TestCase):
     def test_missing_key_is_empty(self):
-        self.assertEqual(list_field({}, "uses"), [])
+        self.assertEqual(
+            list_field({}, "uses"), [],
+            "expected a missing `uses:` to read as an empty list; check the `.get` default, since "
+            "a KeyError here would fail every page without the field",
+        )
 
     def test_yaml_null_is_empty(self):
-        self.assertEqual(list_field({"uses": None}, "uses"), [])
+        self.assertEqual(
+            list_field({"uses": None}, "uses"), [],
+            "expected a YAML-null `uses:` to read as an empty list; None is what PyYAML returns "
+            "for a bare key and what used to crash the validator with a TypeError",
+        )
 
     def test_fallback_parser_empty_list_is_empty(self):
-        self.assertEqual(list_field({"uses": []}, "uses"), [])
+        self.assertEqual(
+            list_field({"uses": []}, "uses"), [],
+            "expected the fallback parser's empty list to read as empty; check that the helper "
+            "does not wrap an empty list into `[[]]`, which would claim one blank concept",
+        )
 
     def test_a_bare_scalar_wraps(self):
         """`uses: jacobian` is one concept, not twelve characters to iterate over."""
-        self.assertEqual(list_field({"uses": "jacobian"}, "uses"), ["jacobian"])
+        self.assertEqual(
+            list_field({"uses": "jacobian"}, "uses"), ["jacobian"],
+            "expected a bare scalar to wrap into a one-item list; iterating the string instead "
+            "gives twelve single-character concepts and every one of them a bogus lookup",
+        )
 
     def test_a_blank_scalar_is_empty(self):
-        self.assertEqual(list_field({"uses": "  "}, "uses"), [])
+        self.assertEqual(
+            list_field({"uses": "  "}, "uses"), [],
+            "expected a whitespace-only scalar to read as empty rather than one blank concept; "
+            "check the strip() before the wrap, since a blank id fails every concept lookup",
+        )
 
     def test_a_list_passes_through(self):
-        self.assertEqual(list_field({"uses": ["a", "b"]}, "uses"), ["a", "b"])
+        self.assertEqual(
+            list_field({"uses": ["a", "b"]}, "uses"), ["a", "b"],
+            "expected a real list to pass through unchanged and in order; a re-sort or a dedupe "
+            "here would hide the duplicate the validator exists to report",
+        )
 
     def test_a_number_is_refused_rather_than_iterated(self):
         with self.assertRaises(TypeError):
@@ -55,10 +79,19 @@ class FrontmatterListTests(unittest.TestCase):
         """The regression was a bare `fm.get(key, [])`; keep the validator reading through the helper."""
         with open(os.path.join(ROOT, "scripts", "validate_modules.py"), encoding="utf-8") as handle:
             source = handle.read()
-        self.assertIn("list_field", source)
-        self.assertNotIn('fm.get("uses", [])', source)
-        self.assertNotIn('fm.get("new_concepts", [])', source)
-        self.assertNotIn('e.get("introduces", [])', source)
+        self.assertIn(
+            "list_field", source,
+            "expected scripts/validate_modules.py to read list fields through frontmatter_lists."
+            "list_field; a bare `.get(key, [])` satisfies a missing key but returns None for a "
+            "null one, which is the TypeError this helper exists to prevent",
+        )
+        for field, owner in (("uses", "fm"), ("new_concepts", "fm"), ("introduces", "e")):
+            self.assertNotIn(
+                f'{owner}.get("{field}", [])', source,
+                f"expected no bare `{owner}.get(\"{field}\", [])` back in the validator; that "
+                f"exact call is the regression, so check this line is not reintroduced while "
+                f"refactoring a field read",
+            )
 
     def test_real_page_front_matter_reads_either_way(self):
         """A real page's `uses:` reads as a list whether the YAML reader returns null, [] or a scalar."""

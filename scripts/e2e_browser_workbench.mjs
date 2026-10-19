@@ -18,13 +18,38 @@
  * 7. Progress survives a full browser reload (`page.reload()`).
  * 8. Portfolio export (`buildPortfolioMarkdown` modal preview) contains the exact, strictly
  *    separated completion categories (`Executed & Passed in Pyodide WASM` vs `Self-Marked Complete`).
+ *
+ * Every scenario runs on one page and one browser context, so the runtime each scenario needs is
+ * shared rather than rebuilt: the scenarios that must start from zero progress clear the workbench's
+ * `mechalab*` keys and reload instead of opening a second context, and the runtime is re-booted only
+ * where a scenario is *about* the runtime dying (the trace-step limit, the Stop button, a load
+ * failure, or the reload that proves persistence). Measured here: a boot is ~1.3-1.9 s and a warm run
+ * is ~0.05 s, which is why the number of boots, not the number of runs, is what the suite pays for.
  */
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { createServer } from 'vite';
+
+/**
+ * The dev server every workbench suite shares. `scripts/test_workbench.mjs` starts it once and hands
+ * the URL to this suite through `E2E_BASE_URL`, so the smoke test, this suite and the built-bundle
+ * suite do not each boot their own Vite.
+ */
+export async function startDevServer(repoRoot = process.cwd()) {
+  const viteServer = await createServer({
+    root: path.join(repoRoot, 'app'),
+    server: { port: 0, host: '127.0.0.1' },
+    logLevel: 'error',
+  });
+  await viteServer.listen();
+  const address = viteServer.httpServer?.address();
+  const port = typeof address === 'object' && address ? address.port : 4173;
+  return { viteServer, baseUrl: `http://127.0.0.1:${port}/Mechatronics-Roadmap/` };
+}
 
 function resolveChromiumExecutable() {
   if (
@@ -79,17 +104,17 @@ async function readTally(page) {
   return Number(match[2]);
 }
 
-async function runRealBrowserE2ETests() {
+/**
+ * `baseUrl` is the already-running dev server (from `startDevServer`, via `E2E_BASE_URL`, or passed
+ * by the combined runner). Without one this suite starts and closes its own, so `npm run test:e2e`
+ * keeps working on its own.
+ */
+export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) {
   const repoRoot = process.cwd();
-  const viteServer = await createServer({
-    root: path.join(repoRoot, 'app'),
-    server: { port: 0, host: '127.0.0.1' },
-    logLevel: 'error',
-  });
-  await viteServer.listen();
-  const address = viteServer.httpServer?.address();
-  const port = typeof address === 'object' && address ? address.port : 4173;
-  const baseUrl = `http://127.0.0.1:${port}/Mechatronics-Roadmap/`;
+  const own = externalBaseUrl ? null : await startDevServer(repoRoot);
+  const baseUrl = externalBaseUrl
+    ? externalBaseUrl.replace(/\/*$/, '/')
+    : own.baseUrl;
 
   const executablePath = resolveChromiumExecutable();
   const browser = await chromium.launch({
@@ -290,9 +315,13 @@ async function runRealBrowserE2ETests() {
       window.__mechalabExecutionTimeoutMs = undefined;
     });
 
-    // 5. Correct solution passes both Behavioral Tests and Output Presentation check
-    await page.getByTestId('btn-load-solution').click();
-    await page.getByTestId('btn-run-verify').click();
+    // 5. Correct solution passes both Behavioral Tests and Output Presentation check. Both clicks
+    // happen in one task, so this also pins `Run` reading the editor's live text: a handler that runs
+    // the program it was rendered with would run the starter here and fail the assertions below.
+    await page.evaluate(() => {
+      document.querySelector('[data-testid="btn-load-solution"]').click();
+      document.querySelector('[data-testid="btn-run-verify"]').click();
+    });
     await page.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
 
     assert(
@@ -313,7 +342,9 @@ async function runRealBrowserE2ETests() {
     await page.getByTestId('lesson-item-P.7').click();
     await page.getByTestId('btn-load-solution').click();
     await page.evaluate(() => {
-      window.__mechalabPyodideCdnUrl = 'https://invalid.cdn.mechalab.local/pyodide/';
+      // A refused connection, not an unresolvable host: the loader used to sit on DNS for ~10 s
+      // before reporting the same 'could not be loaded' failure this asserts.
+      window.__mechalabPyodideCdnUrl = 'http://127.0.0.1:1/pyodide/';
     });
     await page.getByTestId('btn-reset-runtime').click();
     await page.getByTestId('btn-run-verify').click();
@@ -390,95 +421,104 @@ async function runRealBrowserE2ETests() {
 
     // 10. Formatting is graded separately from behaviour: a behaviourally correct run must not be blocked
     // by harmless whitespace, while a lesson whose Expected Output is a padded table still grades its
-    // columns. A fresh context keeps this scenario out of the progress counts asserted above.
-    const formattingContext = await browser.newContext();
-    const formattingPage = await formattingContext.newPage();
-    try {
-      await formattingPage.goto(baseUrl, { waitUntil: 'networkidle' });
-      await formattingPage.getByTestId('tab-btn-tab-pyodide').click();
-      const formatTotal = await readTally(formattingPage);
-      const formatVerified = (n) => `${n} / ${formatTotal} Verified`;
+    // columns. What these scenarios need is the progress counters at zero, which used to mean a second
+    // browser context - a second page, a second Pyodide download and a second runtime. Same page now:
+    // clear the workbench's progress keys and reload, so the app re-mounts with no progress and the
+    // runtime re-boots from the bundle already on disk.
+    // Every key the workbench writes starts with `mechalab` (`mechalab_pyodide_verified_v1`,
+    // `mechalab_completed_v1`, `mechalab.learningLog.v1`, ...), so this clears progress without
+    // naming each one.
+    await page.evaluate(() => {
+      for (const key of Object.keys(window.localStorage)) {
+        if (key.startsWith('mechalab')) window.localStorage.removeItem(key);
+      }
+    });
+    await page.reload({ waitUntil: 'networkidle' });
+    const formattingPage = page;
+    await formattingPage.getByTestId('tab-btn-tab-pyodide').click();
+    const formatTotal = await readTally(formattingPage);
+    const formatVerified = (n) => `${n} / ${formatTotal} Verified`;
 
-      // 10a. Lesson 03.1 declares exact formatting and still fails when its table columns lose their padding.
-      await formattingPage.getByTestId('lesson-item-03.1').click();
-      const exactModeNote = await formattingPage.getByTestId('note-output-match-mode').textContent();
-      assert(
-        exactModeNote?.includes('grades exact formatting'),
-        `Lesson 03.1 must say it grades exact formatting, got: ${exactModeNote}`
-      );
-      await formattingPage.getByTestId('btn-load-solution').click();
-      const tableSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
-      const unpadded = tableSolution.replace(/:(?:[<>^=])?\d+(\.\d+)?([fdegsx%])/g, ':$1$2');
-      assert.notEqual(unpadded, tableSolution, 'the 03.1 solution must pad its table with field widths');
-      await formattingPage.getByTestId('textarea-python-code').fill(unpadded);
-      await formattingPage.getByTestId('btn-run-verify').click();
-      await formattingPage.getByTestId('status-output-mismatch').waitFor({ timeout: 30000 });
-      assert(
-        (await formattingPage.getByTestId('badge-behavior-check').textContent())?.includes('PASSED'),
-        'Dropping field widths must not change the behavioural verdict'
-      );
-      assert(
-        (await formattingPage.getByTestId('badge-output-check').textContent())?.includes('DIFFERS'),
-        'Lesson 03.1 must still fail presentation when its table columns are unpadded'
-      );
-      assert.equal(
-        (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
-        formatVerified(0),
-        'A formatting-only difference must never award lesson verification'
-      );
-      await formattingPage.getByTestId('btn-load-solution').click();
-      await formattingPage.getByTestId('btn-run-verify').click();
-      await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
-      assert.equal(
-        (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
-        formatVerified(1),
-        'The unmodified 03.1 solution must still verify'
-      );
+    // 10a. Lesson 03.1 declares exact formatting and still fails when its table columns lose their padding.
+    await formattingPage.getByTestId('lesson-item-03.1').click();
+    const exactModeNote = await formattingPage.getByTestId('note-output-match-mode').textContent();
+    assert(
+      exactModeNote?.includes('grades exact formatting'),
+      `Lesson 03.1 must say it grades exact formatting, got: ${exactModeNote}`
+    );
+    await formattingPage.getByTestId('btn-load-solution').click();
+    const tableSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+    const unpadded = tableSolution.replace(/:(?:[<>^=])?\d+(\.\d+)?([fdegsx%])/g, ':$1$2');
+    assert.notEqual(unpadded, tableSolution, 'the 03.1 solution must pad its table with field widths');
+    await formattingPage.getByTestId('textarea-python-code').fill(unpadded);
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.getByTestId('status-output-mismatch').waitFor({ timeout: 30000 });
+    assert(
+      (await formattingPage.getByTestId('badge-behavior-check').textContent())?.includes('PASSED'),
+      'Dropping field widths must not change the behavioural verdict'
+    );
+    assert(
+      (await formattingPage.getByTestId('badge-output-check').textContent())?.includes('DIFFERS'),
+      'Lesson 03.1 must still fail presentation when its table columns are unpadded'
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+      formatVerified(0),
+      'A formatting-only difference must never award lesson verification'
+    );
+    await formattingPage.getByTestId('btn-load-solution').click();
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
+    assert.equal(
+      (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+      formatVerified(1),
+      'The unmodified 03.1 solution must still verify'
+    );
 
-      // 10b. Lesson P.6 keeps the numbers but changes every harmless whitespace, and must still verify.
-      await formattingPage.getByTestId('lesson-item-P.6').click();
-      const plainModeNote = await formattingPage.getByTestId('note-output-match-mode').textContent();
-      assert(
-        plainModeNote?.includes('Formatting is ignored'),
-        `Lesson P.6 must say that whitespace is ignored, got: ${plainModeNote}`
-      );
-      await formattingPage.getByTestId('btn-load-solution').click();
-      const plainSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
-      const rewrapped = [
-        'import contextlib, io',
-        '_buffer = io.StringIO()',
-        'with contextlib.redirect_stdout(_buffer):',
-        ...plainSolution.split('\n').map((line) => (line ? `    ${line}` : line)),
-        "print('')",
-        'for _line in _buffer.getvalue().splitlines():',
-        '    print("   " + _line.replace(" | ", "   |   "))',
-        "print('')",
-      ].join('\n');
-      await formattingPage.getByTestId('textarea-python-code').fill(rewrapped);
-      await formattingPage.getByTestId('btn-run-verify').click();
-      await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
-      assert(
-        (await formattingPage.getByTestId('badge-behavior-check').textContent())?.includes('PASSED'),
-        'A re-indented, re-spaced solution must still pass the behavioural tests'
-      );
-      assert(
-        (await formattingPage.getByTestId('badge-output-check').textContent())?.includes('MATCHED'),
-        'A whitespace-only difference must not fail a lesson that does not grade formatting'
-      );
-      await formattingPage.getByTestId('note-formatting-normalized').waitFor({ timeout: 5000 });
-      assert.equal(
-        (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
-        formatVerified(2),
-        'A behaviourally correct run with different whitespace must award lesson verification'
-      );
-      console.log(
-        '  ok formatting is graded separately from behaviour: 03.1 keeps its padded table, P.6 accepts re-spaced output'
-      );
+    // 10b. Lesson P.6 keeps the numbers but changes every harmless whitespace, and must still verify.
+    await formattingPage.getByTestId('lesson-item-P.6').click();
+    const plainModeNote = await formattingPage.getByTestId('note-output-match-mode').textContent();
+    assert(
+      plainModeNote?.includes('Formatting is ignored'),
+      `Lesson P.6 must say that whitespace is ignored, got: ${plainModeNote}`
+    );
+    await formattingPage.getByTestId('btn-load-solution').click();
+    const plainSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+    const rewrapped = [
+      'import contextlib, io',
+      '_buffer = io.StringIO()',
+      'with contextlib.redirect_stdout(_buffer):',
+      ...plainSolution.split('\n').map((line) => (line ? `    ${line}` : line)),
+      "print('')",
+      'for _line in _buffer.getvalue().splitlines():',
+      '    print("   " + _line.replace(" | ", "   |   "))',
+      "print('')",
+    ].join('\n');
+    await formattingPage.getByTestId('textarea-python-code').fill(rewrapped);
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
+    assert(
+      (await formattingPage.getByTestId('badge-behavior-check').textContent())?.includes('PASSED'),
+      'A re-indented, re-spaced solution must still pass the behavioural tests'
+    );
+    assert(
+      (await formattingPage.getByTestId('badge-output-check').textContent())?.includes('MATCHED'),
+      'A whitespace-only difference must not fail a lesson that does not grade formatting'
+    );
+    await formattingPage.getByTestId('note-formatting-normalized').waitFor({ timeout: 5000 });
+    assert.equal(
+      (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+      formatVerified(2),
+      'A behaviourally correct run with different whitespace must award lesson verification'
+    );
+    console.log(
+      '  ok formatting is graded separately from behaviour: 03.1 keeps its padded table, P.6 accepts re-spaced output'
+    );
 
-      // 11. The shared plant is importable inside Pyodide. An exercise may `import mechalab_plant`
-      // and get the arm the Tier 1 capstone builds - the same numbers CI tests on the host, which is
-      // the whole point of one plant every exercise shares.
-      const plantProbe = `import mechalab_plant as plant
+    // 11. The shared plant is importable inside Pyodide. An exercise may `import mechalab_plant`
+    // and get the arm the Tier 1 capstone builds - the same numbers CI tests on the host, which is
+    // the whole point of one plant every exercise shares.
+    const plantProbe = `import mechalab_plant as plant
 
 print(plant.plant_summary())
 print("gravity holding torque at q1=q2=0: %.4f, %.4f N*m" % plant.gravity_torque(0.0, 0.0))
@@ -486,59 +526,58 @@ run = plant.simulate_arm(steps=1000)
 print("tip err max=%.2f mm rms=%.2f mm" % (run["max_dyn_err_mm"], run["rms_dyn_err_mm"]))
 print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.001, 115200), plant.simulate_uart_tx(1000, 20, 0.001, 500000)))
 `;
-      await formattingPage.getByTestId('textarea-python-code').fill(plantProbe);
-      await formattingPage.getByTestId('btn-run-verify').click();
-      await formattingPage.waitForFunction(
-        () =>
-          document
-            .querySelector('[data-testid="pre-actual-stdout"]')
-            ?.textContent?.includes('encoder=4096 cpr'),
-        { timeout: 30000 }
-      );
-      const plantStdout = (await formattingPage.getByTestId('pre-actual-stdout').textContent()) || '';
-      assert(
-        plantStdout.includes('2-DOF planar arm: L1=0.10 m, L2=0.10 m'),
-        `the shared plant must be importable in the browser, got: ${plantStdout}`
-      );
-      assert(
-        plantStdout.includes('I=(0.0080, 0.0030) kg*m^2') &&
-          plantStdout.includes('tau_limit=2.5 N*m'),
-        `the in-browser plant must carry the capstone's joint values, got: ${plantStdout}`
-      );
-      assert(
-        plantStdout.includes('gravity holding torque at q1=q2=0: 0.3188, 0.0736 N*m'),
-        `the in-browser plant must reproduce the capstone's gravity torques, got: ${plantStdout}`
-      );
-      assert(
-        plantStdout.includes('tip err max=2.40 mm rms=0.91 mm'),
-        `the in-browser plant must reproduce the capstone's tracking error, got: ${plantStdout}`
-      );
-      assert(
-        plantStdout.includes('uart dropped @115.2k=412, @500k=0'),
-        `the in-browser plant must reproduce the capstone's UART budget, got: ${plantStdout}`
-      );
-      assert.equal(
-        (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
-        formatVerified(2),
-        'Using the shared plant must not award lesson verification on its own'
-      );
-      console.log(
-        '  ok the shared plant imports inside Pyodide and reproduces the capstone numbers in the browser'
-      );
-    } finally {
-      await formattingContext.close();
-    }
+    await formattingPage.getByTestId('textarea-python-code').fill(plantProbe);
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="pre-actual-stdout"]')
+          ?.textContent?.includes('encoder=4096 cpr'),
+      { timeout: 30000 }
+    );
+    const plantStdout = (await formattingPage.getByTestId('pre-actual-stdout').textContent()) || '';
+    assert(
+      plantStdout.includes('2-DOF planar arm: L1=0.10 m, L2=0.10 m'),
+      `the shared plant must be importable in the browser, got: ${plantStdout}`
+    );
+    assert(
+      plantStdout.includes('I=(0.0080, 0.0030) kg*m^2') &&
+        plantStdout.includes('tau_limit=2.5 N*m'),
+      `the in-browser plant must carry the capstone's joint values, got: ${plantStdout}`
+    );
+    assert(
+      plantStdout.includes('gravity holding torque at q1=q2=0: 0.3188, 0.0736 N*m'),
+      `the in-browser plant must reproduce the capstone's gravity torques, got: ${plantStdout}`
+    );
+    assert(
+      plantStdout.includes('tip err max=2.40 mm rms=0.91 mm'),
+      `the in-browser plant must reproduce the capstone's tracking error, got: ${plantStdout}`
+    );
+    assert(
+      plantStdout.includes('uart dropped @115.2k=412, @500k=0'),
+      `the in-browser plant must reproduce the capstone's UART budget, got: ${plantStdout}`
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+      formatVerified(2),
+      'Using the shared plant must not award lesson verification on its own'
+    );
+    console.log(
+      '  ok the shared plant imports inside Pyodide and reproduces the capstone numbers in the browser'
+    );
 
     console.log(
       '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading & shared-plant import).'
     );
   } finally {
     await browser.close();
-    await viteServer.close();
+    if (own) await own.viteServer.close();
   }
 }
 
-runRealBrowserE2ETests().catch((err) => {
-  console.error('[FAIL] Real-browser E2E test failed:', err);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  runRealBrowserE2ETests({ baseUrl: process.env.E2E_BASE_URL }).catch((err) => {
+    console.error('[FAIL] Real-browser E2E test failed:', err);
+    process.exit(1);
+  });
+}

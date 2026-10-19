@@ -68,17 +68,23 @@ class LintLessonsTests(unittest.TestCase):
         for path in self.beginner:
             self.assertFalse(
                 lint_lessons.is_ramp_lesson(path),
-                f"{os.path.relpath(path, ROOT)} must not count as a ramp lesson",
+                f"{os.path.relpath(path, ROOT)} must not count as a ramp lesson, or the jargon "
+                f"waiver leaks into the beginner track; check the ramp/ prefix test",
             )
 
     def test_ramp_lessons_are_not_hit_by_the_jargon_ban(self):
         for path in self.ramp:
-            self.assertTrue(lint_lessons.is_ramp_lesson(path))
+            self.assertTrue(
+                lint_lessons.is_ramp_lesson(path),
+                f"expected {os.path.relpath(path, ROOT)} to be recognised as a ramp lesson; "
+                f"check get_ramp_files(), since R.5/R.6 cannot be written without the waiver",
+            )
             found = jargon_errors(lint_lessons.lint_file(path, self.glossary))
             self.assertEqual(
                 found,
                 [],
-                f"{os.path.relpath(path, ROOT)} is a ramp lesson and must be exempt: {found}",
+                f"{os.path.relpath(path, ROOT)} is a ramp lesson, so the jargon ban must be "
+                f"waived there; found {found} - check is_ramp_lesson() reaches lint_file()",
             )
 
     def test_the_ban_still_bites_outside_the_ramp(self):
@@ -88,17 +94,22 @@ class LintLessonsTests(unittest.TestCase):
         using_banned_terms = [p for p in self.ramp if banned_labels(p)]
         self.assertTrue(
             using_banned_terms,
-            "no ramp lesson uses a banned term, so this negative path would test nothing",
+            "expected at least one ramp lesson to use a banned term, or this negative path "
+            "tests nothing; check whether the ramp drifted away from its own subject",
         )
         for source in using_banned_terms:
             copy = os.path.join(scratch, os.path.basename(source))
             shutil.copyfile(source, copy)
-            self.assertFalse(lint_lessons.is_ramp_lesson(copy))
+            self.assertFalse(
+                lint_lessons.is_ramp_lesson(copy),
+                f"a copy of {os.path.basename(source)} in a scratch dir must not count as a "
+                f"ramp lesson; check that is_ramp_lesson() keys on the path, not the name",
+            )
             found = jargon_errors(lint_lessons.lint_file(copy, self.glossary))
             self.assertTrue(
                 found,
-                f"{os.path.basename(source)} outside ramp/ must trip the jargon ban, "
-                f"but the linter found none",
+                f"expected {os.path.basename(source)} outside ramp/ to trip the jargon ban, "
+                f"but the linter found none; check that the waiver is path-scoped only",
             )
 
     def test_the_exemption_is_loading_bearing(self):

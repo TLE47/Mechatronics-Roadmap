@@ -11,6 +11,255 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 95: Run Reads the Editor, Not the Render
+
+The stale-code bug Run 94 found and documented is fixed at its cause. `Run & Verify`'s click handler
+closed over the `code` the button was *rendered* with, so when `Load Solution` and `Run` landed in one
+task the solution's `setCode` had not committed yet and the starter ran instead — silently, and with
+the starter's `NotImplementedError` reported as the reference's failure.
+
+- **The editor's live text is what runs.** `codeRef` is written synchronously by every editor write
+  (`commitCode`: lesson select, Reset Starter, Load Solution, typing) and re-confirmed after each
+  commit, and `Run` executes `codeRef.current` at click time.
+- **The lesson is resolved at click time too.** `runPythonCode` now takes the lesson it grades and
+  derives its match mode from it, so a lesson switch and a run in the same task cannot grade the new
+  text against the previous lesson's instructor tests.
+- **Coverage that fails without the fix.** The dev-server suite's step 5 now clicks Load Solution and
+  Run in one task (reverted: `status-assert-passed` times out, rc 1; with the fix: green). The bundle
+  sweep no longer waits for React to commit the reference before running it, so all 48 packages
+  exercise same-task Run, and a stale run there is named as such instead of as a missing PASS line.
+- The sweep stays at **3.6 s** for 48 packages, so removing the commit wait costs nothing and the
+  suite now proves the stronger claim.
+
+## [2026-10-18] — Run 94: The ~100 ms Was the Harness, Not the Runner
+
+Measured the runner's click-to-result cycle from **inside the page** (a MutationObserver on the status
+and badges, `performance.now()` around a synthetic click) and from outside it:
+
+| | measured |
+| --- | --- |
+| click -> badges updated, in the page | **8-14 ms** |
+| long tasks during that cycle | **0** |
+| the same cycle through Playwright (click, `waitForFunction`, reads) | **~100-130 ms** |
+
+So there was nothing to cut in the runner: one run is two warm worker messages and a small React
+commit, and the browser reports no long task at all. The 100 ms was the *test harness* - actionability
+checks, an IPC round trip per locator, `waitForFunction` polling at rAF granularity.
+
+- **The sweep moved into the page.** `gradeInPage` is one `page.evaluate` that clicks each lesson, waits
+  for the editor to commit, runs the starter and the reference, and returns the stdout and badges it
+  saw. Waits are 2 ms polls in the page instead of CDP polls, and the assertions run in Node on exactly
+  the strings the page returned.
+- **Run 93's two-page fan-out is gone**: it existed to hide CDP chatter, and with the loop in the page
+  a second page measured +0.2 s (its own load and runtime) and buys nothing.
+- Same assertions, same messages, plus a five-minute sweep budget and a per-entry `problem` naming the
+  state it was stuck in, so a stuck app fails as `EX.… its starter run never reported (status …)`
+  rather than a generic timeout.
+- A real finding along the way: **Load Solution then Run in the same task runs the stale program** -
+  the click handler captures the code it was rendered with, so the suite now waits for the editor to
+  commit the reference before clicking Run. A human cannot click that fast; worth knowing anyway.
+
+| | before | after |
+| --- | --- | --- |
+| Chromium sweep, 48 packages | 8.9 s | **3.6 s** |
+| bundle suite, standalone | 15 s | **10 s** |
+| `npm run test:workbench` | 17-19 s | **12-16 s** |
+
+## [2026-10-18] — Run 93: The Sweep Is Latency, Not Python
+
+Measured the bundle suite's 48-package sweep before touching it, and the hypothesis did not survive:
+there is **no reload per package** — the sweep clicks through the lesson list in one page and reuses
+one warm Pyodide worker. Per package, 12 of them instrumented: select 77 ms, starter run 174 ms, load
+reference 37 ms, reference run 84 ms, reads 2 ms. The interpreter is a few tens of ms of that; the rest
+is Playwright/CDP round trips.
+
+| | before | after |
+| --- | --- | --- |
+| Chromium sweep, 48 packages | 13.9 s | **8.9 s** |
+| bundle suite, standalone | 19 s | **15 s** |
+| bundle suite, inside the combined run | 18-20 s | **16.3-18.0 s** |
+| `npm run test:workbench` | 19-21 s | **17-19 s** |
+
+- **Two pages, not one.** Each run is a warm round trip, so a second page of the same bundle grades the
+  other half of the list: 48 packages took 13.4 s on one page and 8.7-9.6 s on two (measured with the
+  page load included; three and four pages were no better, and the sample stays on one page where a
+  second load would cost more than it saves).
+- **One round trip per state.** The starter/expected text and each run's three badge/stdout readings
+  are now single `page.evaluate` calls instead of four `getByTestId(...)` calls, and the explicit
+  `scrollIntoViewIfNeeded` is gone (a locator click scrolls the entry into view itself).
+- Every assertion is unchanged: the starter still must carry its holes and self-check, fail on a
+  `NotImplementedError`, and not be graded MATCHED; the reference must match and pass the behavioural
+  badge. A doctored expected output still fails the two-page sweep, naming the package.
+
+On the runners the sweep is too noisy to claim a number: 17.4 s and 23.0 s for the same code on two
+neighbouring runs, 18.4 s after. The Workbench step went 29 -> 26 s and the job 81 -> 74 s, which is
+one sample each and within that spread. The clean comparison is the local one above.
+
+## [2026-10-18] — Run 92: The Dev-Server Suite Shares One Runtime
+
+Measured before changing anything, because the guess was wrong: a Pyodide boot costs **1.3-1.9 s**
+and a warm run **0.04-0.06 s**, so the suite pays for the number of *boots*, not runs - and the
+biggest single item in its 22-24 s was not a boot at all.
+
+| | before | after |
+| --- | --- | --- |
+| bad-CDN scenario (the runtime must fail to load) | 10.4 s | **0.1 s** |
+| formatting + shared-plant scenarios | own browser context (own page, own download, own boot) | same page, `mechalab*` keys cleared + reload |
+| `npm run test:e2e`, standalone | 22 s | **13 s** |
+| `npm run test:e2e`, inside the combined run | 23.8-24.7 s | **12.8-15.2 s** |
+| `npm run test:workbench` | 24-26 s | **19-21 s** |
+
+- **The CDN negative path pointed at an unresolvable host** (`invalid.cdn.mechalab.local`), so the
+  loader sat on DNS for ~10 s before reporting the failure the suite asserts. It now points at
+  `http://127.0.0.1:1/pyodide/` - a refused connection, the same "runtime could not be loaded"
+  failure, answered in ~0.1 s. That one line was most of the suite's wall clock.
+- **One page, one context.** The formatting and shared-plant scenarios used to open a second browser
+  context: a second page, a second Pyodide download and a second runtime, for two scenarios that only
+  needed the *progress counters* at zero. They clear every `mechalab*` key and reload instead.
+- The runtime is still re-booted where a scenario is about the runtime dying - the trace-step limit,
+  the Stop button, the load failure, and the reload that proves persistence - so those assertions are
+  untouched. Locally the suite now hands the pole to the bundle suite: 12.8-15.2 s against 18-20 s.
+
+**On the runners that win does not transfer**, and the log says why: the dev suite was 23.2 s before
+and 22.9 s after, and the Workbench step stayed at 29 s because the bundle suite (28.0-28.7 s) is the
+pole there. Most of my 10 s was a *local* macOS resolver sitting on the nonexistent CDN host for
+~10 s; GitHub's resolver answers NXDOMAIN immediately, so that scenario was already ~0.2 s on CI. The
+second context went too, for ~0.3 s. What this run buys on the runner is a simpler suite, not a
+shorter step - the next lever is the bundle suite's 48-package Chromium sweep.
+
+## [2026-10-18] — Run 91: Every Package Graded Once, the Second Browser Samples
+
+The built-bundle suite graded all 48 exercise packages in Chromium *and* again in Firefox: 96
+gradings, and every one is two Pyodide runs (starter, then reference), so the same 48 verdicts were
+produced twice from the same bundle, the same interpreter and the same packages.
+
+- **The exhaustive pass is still exhaustive.** The first selected browser (Chromium) grades all 48:
+  starter fails on its `NotImplementedError`, the reference matches the expected output, and the
+  behavioural badge passes. A single-browser run (`PLAYWRIGHT_BROWSERS=chromium|firefox`) is
+  exhaustive too, so nobody loses the sweep by asking for one browser.
+- **The second browser grades a sample** (`sampleExerciseIds`): the first package of every track (a new
+  track is in the sample the run after it lands) plus both ends of the list - 9 of 48 here. Same
+  assertions per entry, and the size is asserted, so a shrunken sample fails rather than passing
+  quietly. The DOM count of `EX.*` entries is still the full 48 in *every* browser, so a bundle that
+  dropped an entry still fails there.
+- Gradings per workbench run: **96 -> 57**; Pyodide interpreter runs: **192 -> 114**.
+- Measured (8-core Mac): the bundle suite 24.5 -> 18.9 s inside the combined run (21 -> 19 s on its
+  own); Firefox's sweep 15.9 -> 4.1 s. The three-suite run itself stays ~24-26 s, because the
+dev-server suite (23.8 s) is now the longest of the three - the saved work was no longer on the
+  critical path.
+- Negative path: with one sampled package's expected output doctored, the Firefox pass fails naming
+  it (`firefox: EX.00-foundations.T1.00a reference must match its expected output`).
+
+## [2026-10-18] — Run 90: One Workbench Run, One Server Pair
+
+Measured on an 8-core Mac; same suites, same verdicts, same coverage.
+
+| Workbench suite | before (one after another) | after (`npm run test:workbench`) |
+| --- | --- | --- |
+| `test:smoke` (SSR: App, Runner, Quiz, export) | 2 s | 0.9 s |
+| `test:e2e` (dev server, Chromium, Pyodide) | 22 s | 23.5 s |
+| `test:e2e:pages` (built bundle, Chromium + Firefox) | 38 s | 24.5 s |
+| **the three, end to end** | **62 s** | **25 s** |
+
+- **`scripts/test_workbench.mjs`** builds `dist/` only when it is missing, starts one dev server and
+  one Pages-shaped static server, then runs the smoke suite in-process against that same dev server
+  (its SSR modules come out of the graph the browser suites load) and the two browser suites side by
+  side in child processes, each given a URL (`E2E_BASE_URL`, `PAGES_SERVER_URL`) instead of booting
+  its own. Output is prefixed per suite, and any suite failing fails the run.
+- **The built-bundle suite drives Chromium and Firefox at the same time**: separate browser contexts
+  against the same served bundle, verdicts collected in the requested order, a missing browser still
+  reported as SKIP. That is most of its 38 s.
+On the GitHub runners, `main` at `8a6c8da` (run 39169605826) against this branch at `d3be7bd`
+(run 39173331743), same matrix and same gates:
+
+| job / step | before | after |
+| --- | --- | --- |
+| `verify-and-test`, macOS, Python step | 105 s | **32 s** |
+| `verify-and-test`, ubuntu, Python step | 59 s | **36 s** |
+| `build-workbench` | 89 s | **70 s** |
+| run start -> `build-workbench` done | 228 s | **127 s** |
+
+One sample per side, and the macOS Python step ranged 24-40 s across the neighbouring `main`
+pushes, so 32 s is the fast end of that band rather than a new floor. Nothing was dropped: both legs
+ran the same 18 gates, the 194-test discovery run and the 48-package sweep.
+
+- **Firmware job:** `--compile-arduino-cli` now warms the `arduino:avr` core with one sketch before
+  fanning out over the ten. The separate Arduino Uno workflow went red once on a fresh runner with a
+  bare `collect2: error: ld returned 1 exit status`, and the rerun of that same job passed; the only
+  state those ten processes share is the first build of the core archive, so the warm build leaves it
+  complete for the rest to read (and a broken toolchain fails once, with one message). That is a
+  narrowed window rather than a proven fix - local cold-cache repeats (three script runs, four rounds
+  of all ten at once) never reproduced the failure.
+- `test:smoke`, `test:e2e` and `test:e2e:pages` still run standalone, creating their own servers.
+- **CI**: the KaTeX audit left the Python job to run in `build-workbench`, where `npm ci` has already
+  installed `katex` from the lockfile - so neither `verify-and-test` leg sets up Node anymore, or
+  re-fetches a pinned dependency with `npm install --no-save`. Playwright's browsers are installed in
+  their own step, once, for both browser suites.
+
+## [2026-10-18] — Run 89: The Verification Gates Run in Parallel
+
+Measured on an 8-core Mac (4 performance cores); every number is wall-clock for the same work and
+the same verdicts.
+
+| gate | before | after |
+| --- | --- | --- |
+| `scripts/run_exercise.py` (48 packages, ~340 interpreters) | 39 s | **15 s** |
+| `python3 -m unittest discover -s tests` (194 tests) | 57 s | **22 s** |
+| the same, reusing CI's report (`RUN_EXERCISE_REPORT`) | 57 s | **15 s** |
+| the CI `verify-and-test` Python step, end to end | ~105 s | **40 s** |
+| `tests/test_module_full_solutions.py` (46 package discovers) | 6.3 s | **2.6 s** |
+| `tests/test_exercises.py` (20 g++ compiles + 10 runs) | 6.1 s | **2.9 s** |
+| `extract_and_compile_sketches.py --compile-arduino-cli` (10 sketches) | ~24 s | **4 s** |
+
+- **Packages are checked in parallel.** `run_exercise.py` takes `--jobs/-j` (default: one worker per
+  performance core, capped at 8); a package is an independent unit that spawns its own interpreters
+  and writes only inside a temp dir, so two workers cannot tread on each other. `-j 1` is the old
+  serial path, and the serial and parallel reports are byte-identical, ordered by package.
+- **The 48-package sweep runs once in CI.** `run_exercise.py --report-file` writes the machine-readable
+  report; `tests/test_exercise_package.py` reads it from `RUN_EXERCISE_REPORT` instead of running the
+  sweep again, and refuses a report that does not name every package on disk, so a stale or partial
+  report cannot quietly shrink the coverage. A doctored report is proved to fail the suite.
+- **The other subprocess-heavy suites are parallel too**: the 46 per-module page-solution discovers in
+  `test_module_full_solutions.py` (thread pool, verdicts asserted in discovery order) and the 20
+  g++ compiles in `extract_and_compile_sketches.run_host_verify` (first failure in lesson order, so
+  the message does not depend on timing).
+- Nothing was dropped to get these numbers: 194 tests (2 new), every package still checked for its
+  starter, both suites, its faults, its cheat submission and both flattened browser programs. The
+  negative paths were re-run by hand: a broken sketch still fails the host g++ verify and still fails
+  `--compile-arduino-cli`, and a doctored report file still fails the package suite.
+
+---
+
+## [2026-10-18] — Run 88: The Ratchet Now Covers the Suites That Grade the Rest
+
+### 1. `tests/` is inside the assertion ratchet, and it was an f-string blind spot
+- `scripts/lint_assertions.py` now reads `tests/*.py` as well as the graded exercise files. It had
+  been scoring those 17 suites at **368 weak assertions**, and the measurement was wrong: the lint
+  accepted only a bare string literal, so the f-string messages most of those suites already used
+  (`f"{os.path.relpath(path, ROOT)} must not count as a ramp lesson"`) were reported as
+  "not a literal string". An f-string is now flattened to its literal segments (each `{hole}`
+  becomes `{}`) and its length and keyword checked like any other message.
+- 368 → **0**, the same zero floor the exercise packages reached in Run 87, so a new test file or a
+  new bare assertion in an existing one fails CI on the first push. `docs/assertion-baseline.json`
+  stays at 0/0 files.
+- Messages name the number a plausible bug produces and the formula to check it against, in the
+  file's own terms: the plant's 2.40 mm peak error, the ladder paper's 0.3188 N.m holding torque,
+  the skip store's `ceil(0.8 * count)` pass floor, the parity gate's `executable:shared_plant` item.
+
+### 2. `--json` prints JSON and nothing else
+- The human summary line (`OK: ...`) used to follow the JSON object on stdout, so
+  `lint_assertions.py --json | jq` failed with "Extra data: line 6". It now goes to stderr, and
+  `tests/test_lint_assertions.py` asserts stdout parses on its own and that a `1` exit carries the
+  baseline problems that caused it.
+
+### 3. A merge that merged the wrong content
+- PR #16 was opened from a stale local branch, so it re-squashed the previous block's diff onto
+  `main`; #17 carries the real Block 1 commit and is the one that landed. `git push -u origin
+  <branch>` now names the refspec explicitly (`HEAD:refs/heads/<branch>`) so a reused branch name
+  cannot push an older tip.
+
+---
+
 ## [2026-10-18] — Run 87: Block 1 Closed — Every Graded Assertion Now Explains Itself
 
 ### 1. 593 → 0 weak assertions, 41 → 0 files

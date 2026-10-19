@@ -15,15 +15,24 @@
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
  * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
  *    viewport: zero horizontal overflow, asserted rather than reported.
- * 5. *Every* graded exercise entry is driven, discovered from each `exercises/<package>/exercise.json` rather than
- *    listed by hand: the starter fails on its `NotImplementedError`, the reference solution passes the
- *    appended self-check, and the output badge reads MATCHED - the browser path, on the built bundle.
- *    A package added to `exercises/` is in this suite the next run, and a package whose entry the
- *    bundle does not carry fails the count, so the sample can never fall behind the registry again.
+ * 5. *Every* graded exercise entry is graded - once - discovered from each `exercises/<package>/exercise.json`
+ *    rather than listed by hand: the starter fails on its `NotImplementedError`, the reference solution
+ *    passes the appended self-check, and the output badge reads MATCHED, on the built bundle. A package
+ *    added to `exercises/` is in this suite the next run, and a package whose entry the bundle does not
+ *    carry fails the count in every browser, so the sweep cannot fall behind the registry.
+ *    The sweep runs *inside* the page (`gradeInPage`): one `page.evaluate` clicks every lesson, runs the
+ *    starter and the reference, and reads the badges. Measured: a click-to-result cycle is 8-14 ms in
+ *    the page and ~100 ms through Playwright, so the harness, not the interpreter, was the cost.
+ * 6. A second browser grades a *sample* (`sampleExerciseIds`), not the whole list: the same bundle,
+ *    Pyodide and packages had already been graded end to end once, so repeating 48 verdicts in Firefox
+ *    bought no new signal for twice the interpreter runs. The sample keeps a real Firefox signal on
+ *    every track and at both ends of the list, with the same assertions per entry, and its size is
+ *    logged and asserted.
  *
- * Chromium always runs; Firefox runs when its browser build is present (`npx playwright-core install
- * firefox`, which CI does). `PLAYWRIGHT_BROWSERS=chromium|firefox|both` selects them; a browser that is
- * not installed is reported as SKIP with the reason, never as a pass.
+ * Chromium always runs and carries the exhaustive pass; Firefox runs when its browser build is present
+ * (`npx playwright-core install firefox`, which CI does) and grades the sample. A browser selected on
+ * its own (`PLAYWRIGHT_BROWSERS=chromium|firefox`) still gets the exhaustive pass. A browser that is not
+ * installed is reported as SKIP with the reason, never as a pass.
  *
  * Usage:  PAGES_BASE=/Mechatronics-Roadmap/ node scripts/e2e_pages_bundle.mjs
  */
@@ -33,10 +42,11 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium, firefox } from 'playwright-core';
 
 const repoRoot = process.cwd();
-const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
+export const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
 const distDir = path.join(repoRoot, 'dist');
 const LATER_TRACK_LESSONS = ['03.3', '06.1', '08.1'];
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
@@ -81,6 +91,31 @@ function discoverExerciseIds() {
   return ids;
 }
 
+/**
+ * The entries the *second* browser grades. The exhaustive pass is the delivery claim - the registry and
+ * the bundle agree, every package ships a starter that fails and a reference that passes - and one
+ * browser establishes it. A second browser repeating all 48 verdicts adds no signal (same bundle, same
+ * Pyodide, same packages) at twice the interpreter runs, so it grades these instead: the first package
+ * of every track (a new track is in the sample the run after it lands), plus both ends of the list.
+ * Assertions per entry are unchanged; the count is logged and asserted so a shrunken sample cannot pass
+ * quietly.
+ */
+export function sampleExerciseIds(ids) {
+  assert.ok(ids.length > 0, 'no graded exercise packages to sample');
+  const trackOf = (id) => id.split('.')[1] ?? id;
+  const firstPerTrack = new Map();
+  for (const id of ids) if (!firstPerTrack.has(trackOf(id))) firstPerTrack.set(trackOf(id), id);
+  const wanted = new Set([ids[0], ids[ids.length - 1], ...firstPerTrack.values()]);
+  const sample = ids.filter((id) => wanted.has(id));
+  assert.ok(sample.length >= 3, `the second browser's sample collapsed to ${sample.length} entries`);
+  assert.equal(
+    new Set(sample.map(trackOf)).size,
+    firstPerTrack.size,
+    `the sample must grade at least one package from each of the ${firstPerTrack.size} tracks`
+  );
+  return sample;
+}
+
 function ensureBuilt() {
   if (fs.existsSync(path.join(distDir, 'index.html'))) return;
   console.log('[build] dist/index.html is missing - running `npm run build` first');
@@ -89,7 +124,7 @@ function ensureBuilt() {
 }
 
 /** Serve `dist/` under the Pages base path, the way GitHub Pages does for a project site. */
-function startStaticServer() {
+export function startStaticServer() {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
     let rel = url.pathname;
@@ -121,7 +156,7 @@ function startStaticServer() {
   });
 }
 
-function checkBuiltHtml() {
+export function checkBuiltHtml() {
   const html = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8');
   assert.match(html, /<div id="root"/, 'the built index.html must contain the React root');
   const localRefs = [...html.matchAll(/(?:src|href)="(\/[^"]*)"/g)].map((m) => m[1]);
@@ -136,7 +171,7 @@ function checkBuiltHtml() {
   return localRefs;
 }
 
-async function checkServed(baseUrl, refs) {
+export async function checkServed(baseUrl, refs) {
   const index = await fetch(baseUrl);
   assert.equal(index.status, 200, `GET ${baseUrl} -> ${index.status}`);
   assert.match(await index.text(), /<div id="root"/, 'served index.html must contain the React root');
@@ -150,7 +185,138 @@ async function checkServed(baseUrl, refs) {
   console.log(`  ok every built asset answers 200 with the right content type at ${BASE}`);
 }
 
-async function checkInBrowser(name, launcher, baseUrl) {
+/**
+ * Grade `ids` on one page: the starter must fail on a hole, the reference must match and pass.
+ *
+ * Two things make this the suite's most expensive loop, and neither is the runtime: the app keeps one
+ * Pyodide worker per page, so a run is a warm ~50-130 ms round trip, and every `getByTestId(...)` is
+ * its own CDP call. So each state is read in *one* `page.evaluate` rather than four locator calls, the
+ * explicit `scrollIntoViewIfNeeded` is gone (a locator click scrolls the entry into view itself), and
+ * the sweep is split across pages by the caller. The assertions are unchanged.
+ */
+/**
+ * Grade `ids` by driving the page from inside it: one `page.evaluate` clicks every lesson, runs the
+ * starter and the reference, and reads the badges the learner sees.
+ *
+ * Measured before writing this: one click-to-result cycle is **8-14 ms** in the page (no long tasks at
+ * all), while the same cycle costs **~100 ms** through Playwright - actionability checks, one IPC round
+ * trip per locator, and `waitForFunction` polling at rAF granularity. The interpreter is not the cost;
+ * the test harness is, and moving the loop into the page is what takes it out. Each wait is a 2 ms poll
+ * inside the page, so the runner's own timing is what shows up.
+ *
+ * Returns one record per id; `problem` is set (and the rest of the entry's fields may be missing) when
+ * a step did not arrive in time, so the failure names the package and the state it was stuck in.
+ */
+async function gradeInPage(page, ids) {
+  return page.evaluate(async (list) => {
+    const q = (sel) => document.querySelector(sel);
+    const text = (sel) => q(sel)?.textContent ?? '';
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const statusId = () => q('[data-testid^="status-"]')?.getAttribute('data-testid') ?? 'none';
+    const editor = () => q('[data-testid="textarea-python-code"]')?.value ?? '';
+    const waitFor = async (predicate, budgetMs) => {
+      const startedAt = performance.now();
+      while (performance.now() - startedAt < budgetMs) {
+        if (predicate()) return true;
+        await sleep(2);
+      }
+      return false;
+    };
+    const badges = () => [
+      text('[data-testid="badge-output-check"]').trim(),
+      text('[data-testid="badge-behavior-check"]').trim(),
+    ];
+    const results = [];
+    const deadline = performance.now() + 300000;
+    for (const id of list) {
+      const result = { id, problem: '' };
+      results.push(result);
+      if (performance.now() > deadline) {
+        result.problem = 'the sweep exceeded its five-minute budget before this entry';
+        break;
+      }
+      q(`[data-testid="lesson-item-${id}"]`)?.click();
+      // Wait for *this* entry's starter to land in the editor: after the previous exercise loaded its
+      // reference, the editor holds that program for a beat, and reading it would grade the wrong lesson.
+      if (!(await waitFor(() => editor().includes('raise NotImplementedError'), 15000))) {
+        result.problem = "its starter never landed in the editor";
+        continue;
+      }
+      result.starter = editor();
+      result.expected = text('[data-testid="pre-expected-stdout"]').trim();
+      const starterBefore = text('[data-testid="pre-actual-stdout"]');
+      q('[data-testid="btn-run-verify"]').click();
+      if (!(await waitFor(() => {
+        const out = text('[data-testid="pre-actual-stdout"]');
+        return out !== starterBefore && out.length > 0;
+      }, 90000))) {
+        result.problem = `its starter run never reported (status ${statusId()})`;
+        continue;
+      }
+      result.starterStdout = text('[data-testid="pre-actual-stdout"]');
+      result.starterBadges = badges();
+      q('[data-testid="btn-load-solution"]').click();
+      // Both clicks in one task on purpose: Run must execute the text the editor holds now, so the
+      // reference still runs without waiting for React to commit it. A regression here runs the
+      // starter a second time, which the PASS-line requirement below turns into a failure.
+      const referenceBefore = text('[data-testid="pre-actual-stdout"]');
+      q('[data-testid="btn-run-verify"]').click();
+      if (!(await waitFor(() => {
+        const out = text('[data-testid="pre-actual-stdout"]');
+        return out !== referenceBefore && out.includes('SELF-CHECK PASS');
+      }, 90000))) {
+        result.problem = text('[data-testid="pre-actual-stdout"]').includes('NotImplementedError')
+          ? 'its reference run executed the starter program instead (Run read stale editor text)'
+          : `its reference run never printed a PASS line (status ${statusId()})`;
+        continue;
+      }
+      result.referenceBadges = badges();
+    }
+    return results;
+  }, ids);
+}
+
+/** The delivery claim, asserted on what the page handed back for one package. */
+function assertGraded(result, name) {
+  assert.ok(result.starter?.includes('raise NotImplementedError'), `${name}: ${result.id} ${result.problem}`);
+  assert.ok(
+    result.starter.includes('_selfcheck()'),
+    `${name}: ${result.id} must ship its holes and its self-check together`
+  );
+  assert.match(
+    result.expected,
+    /SELF-CHECK PASS/,
+    `${name}: ${result.id} expected output is not its self-check PASS line`
+  );
+  assert.ok(
+    result.starterStdout.includes('NotImplementedError'),
+    `${name}: ${result.id} starter must fail on a hole, got: ${result.starterStdout}`
+  );
+  assert.doesNotMatch(
+    result.starterBadges[0],
+    /MATCHED/i,
+    `${name}: ${result.id} starter must not be graded as a match`
+  );
+  assert.match(
+    result.starterBadges[1],
+    /FAILED/i,
+    `${name}: ${result.id} starter must fail the instructor behavioural tests`
+  );
+  assert.match(
+    result.referenceBadges[0],
+    /MATCHED/i,
+    `${name}: ${result.id} reference must match its expected output`
+  );
+  // The registry's copy of the package's selfcheck.py, run after the program, is what awards
+  // verification: a reference that only printed the PASS line would fail this badge.
+  assert.match(
+    result.referenceBadges[1],
+    /PASSED/i,
+    `${name}: ${result.id} reference must pass the instructor behavioural tests`
+  );
+}
+
+async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
   let browser;
   const envPath = process.env[`PLAYWRIGHT_${name.toUpperCase()}_EXECUTABLE_PATH`];
   const executablePath = envPath && fs.existsSync(envPath) ? envPath : undefined;
@@ -198,83 +364,28 @@ async function checkInBrowser(name, launcher, baseUrl) {
 
     // Every exercise entry is generated from its package, not hand-written into the registry: each
     // must appear in the same list, fail on its own holes, and pass once the reference is loaded.
-    // That is the whole delivery claim, checked on the bundle learners actually open - for each of
-    // the packages in `exercises/`, not a sample of them.
+    // That is the whole delivery claim, checked on the bundle learners actually open. `gradingIds` is
+    // every package in this browser for the exhaustive pass, or the sample for a second browser.
+    assert.ok(
+      gradingIds.every((id) => exerciseIds.includes(id)),
+      `${name}: the grading list carries an id exercises/ does not have`
+    );
+    const gradingScope =
+      gradingIds.length === exerciseIds.length
+        ? `all ${exerciseIds.length} graded exercise entries`
+        : `${gradingIds.length} of ${exerciseIds.length} graded exercise entries (one per track, plus both ends)`;
     const exercisePassStarted = Date.now();
-    for (const exerciseId of exerciseIds) {
-      const exercise = page.getByTestId(`lesson-item-${exerciseId}`);
-      await exercise.scrollIntoViewIfNeeded();
-      await exercise.click();
-      // Wait for *this* entry's starter to land in the editor: after the previous exercise loaded its
-      // reference, the editor holds that program for a beat, and reading it would grade the wrong lesson.
-      await page.waitForFunction(
-        () =>
-          (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
-            'raise NotImplementedError'
-          ),
-        undefined,
-        { timeout: 15000 }
-      );
-      const exerciseStarter = await page.getByTestId('textarea-python-code').inputValue();
-      assert.ok(
-        exerciseStarter.includes('raise NotImplementedError') && exerciseStarter.includes('_selfcheck()'),
-        `${name}: ${exerciseId} must ship its holes and its self-check together`
-      );
-      const exerciseExpected = (await page.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
-      assert.match(
-        exerciseExpected,
-        /SELF-CHECK PASS/,
-        `${name}: ${exerciseId} expected output is not its self-check PASS line`
-      );
-      await page.getByTestId('btn-run-verify').click();
-      await page.waitForFunction(
-        () => {
-          const text = document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '';
-          return text.length > 0 && !text.includes('Click "Run & Verify Output"');
-        },
-        undefined,
-        { timeout: 90000 }
-      );
-      const starterStdout = await page.getByTestId('pre-actual-stdout').textContent();
-      assert.ok(
-        starterStdout?.includes('NotImplementedError'),
-        `${name}: ${exerciseId} starter must fail on a hole, got: ${starterStdout}`
-      );
-      assert.doesNotMatch(
-        (await page.getByTestId('badge-output-check').textContent()) ?? '',
-        /MATCHED/i,
-        `${name}: ${exerciseId} starter must not be graded as a match`
-      );
-      assert.match(
-        (await page.getByTestId('badge-behavior-check').textContent()) ?? '',
-        /FAILED/i,
-        `${name}: ${exerciseId} starter must fail the instructor behavioural tests`
-      );
-      await page.getByTestId('btn-load-solution').click();
-      await page.getByTestId('btn-run-verify').click();
-      await page.waitForFunction(
-        () =>
-          (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes(
-            'SELF-CHECK PASS'
-          ),
-        undefined,
-        { timeout: 90000 }
-      );
-      assert.match(
-        (await page.getByTestId('badge-output-check').textContent()) ?? '',
-        /MATCHED/i,
-        `${name}: ${exerciseId} reference must match its expected output`
-      );
-      // The registry's copy of the package's selfcheck.py, run after the program, is what awards
-      // verification: a reference that only printed the PASS line would fail this badge.
-      assert.match(
-        (await page.getByTestId('badge-behavior-check').textContent()) ?? '',
-        /PASSED/i,
-        `${name}: ${exerciseId} reference must pass the instructor behavioural tests`
-      );
-    }
+    // One page, one pass: the loop lives in the page now (see `gradeInPage`), so there is nothing to
+    // parallelise - a second page only added its own load and runtime, measured at +0.2 s.
+    const results = await gradeInPage(page, gradingIds);
+    assert.equal(
+      results.length,
+      gradingIds.length,
+      `${name}: the sweep returned ${results.length} results for ${gradingIds.length} packages`
+    );
+    for (const result of results) assertGraded(result, name);
     console.log(
-      `  ok ${name}: all ${exerciseIds.length} graded exercise entries (${exerciseIds[0]} .. ${exerciseIds[exerciseIds.length - 1]}) ` +
+      `  ok ${name}: ${gradingScope} (${gradingIds[0]} .. ${gradingIds[gradingIds.length - 1]}) ` +
         `failed their starter on a hole and matched on their reference in ${((Date.now() - exercisePassStarted) / 1000).toFixed(1)}s`
     );
 
@@ -372,33 +483,57 @@ async function checkInBrowser(name, launcher, baseUrl) {
 }
 
 async function main() {
-  ensureBuilt();
+  // `PAGES_SERVER_URL` names a dist server the combined runner already started for all three
+  // suites, base path included; without it this script builds and serves the bundle itself.
+  const sharedBaseUrl = process.env.PAGES_SERVER_URL;
+  if (!sharedBaseUrl) ensureBuilt();
   const refs = checkBuiltHtml();
-  const { server, port } = await startStaticServer();
-  const baseUrl = `http://127.0.0.1:${port}${BASE}`;
+  const served = sharedBaseUrl ? null : await startStaticServer();
+  const baseUrl = sharedBaseUrl ? sharedBaseUrl.replace(/\/*$/, '/') : `http://127.0.0.1:${served.port}${BASE}`;
   try {
     await checkServed(baseUrl, refs);
     const wanted = (process.env.PLAYWRIGHT_BROWSERS ?? 'both').toLowerCase();
-    const results = {};
-    if (wanted === 'chromium' || wanted === 'both') results.chromium = await checkInBrowser('chromium', chromium, baseUrl);
-    if (wanted === 'firefox' || wanted === 'both') results.firefox = await checkInBrowser('firefox', firefox, baseUrl);
-    if (!Object.keys(results).length) throw new Error(`PLAYWRIGHT_BROWSERS=${wanted} selects no browser`);
+    // Each browser drives its own contexts against the same served bundle, so they run side by side:
+    // the suite's wall clock is the slower browser, not the sum of both. Verdicts are collected in the
+    // requested order, and each one is still SKIP-or-pass on its own.
+    const selected = [
+      ['chromium', chromium],
+      ['firefox', firefox],
+    ].filter(([name]) => wanted === name || wanted === 'both');
+    if (!selected.length) throw new Error(`PLAYWRIGHT_BROWSERS=${wanted} selects no browser`);
+    // The first selected browser (Chromium, unless it was not asked for) takes the exhaustive pass;
+    // any browser after it grades the sample. So one browser always grades every package, and a
+    // single-browser run is still exhaustive.
+    const allExerciseIds = discoverExerciseIds();
+    const sample = sampleExerciseIds(allExerciseIds);
+    const settled = await Promise.all(
+      selected.map(([name, launcher], index) =>
+        checkInBrowser(name, launcher, baseUrl, index === 0 ? allExerciseIds : sample)
+      )
+    );
+    const results = Object.fromEntries(selected.map(([name], index) => [name, settled[index]]));
     if (Object.values(results).every((value) => value === 'skip')) {
       throw new Error('no requested browser is installed - run `npx playwright-core install chromium firefox`');
     }
     const ran = Object.entries(results).filter(([, value]) => value === 'pass').map(([name]) => name);
     const skipped = Object.entries(results).filter(([, value]) => value === 'skip').map(([name]) => name);
+    const grading = selected.length > 1
+      ? `grades all ${allExerciseIds.length} exercise entries in ${selected[0][0]} and a ${sample.length}-entry sample in ` +
+        `${selected.slice(1).map(([name]) => name).join(', ')}`
+      : `grades all ${allExerciseIds.length} exercise entries in ${selected[0][0]}`;
     console.log(        `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
-        `${LATER_TRACK_LESSONS.join(', ')}, grades all ${discoverExerciseIds().length} exercise entries end to end ` +
+        `${LATER_TRACK_LESSONS.join(', ')}, ${grading}, ` +
         `and stays usable at tablet width in: ${ran.join(', ')}` +
         (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
     );
   } finally {
-    server.close();
+    served?.server.close();
   }
 }
 
-main().catch((error) => {
-  console.error('[FAIL] Pages bundle checks failed:', error.message);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error('[FAIL] Pages bundle checks failed:', error.message);
+    process.exit(1);
+  });
+}

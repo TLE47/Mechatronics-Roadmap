@@ -45,19 +45,35 @@ class ErrorExplainerTests(unittest.TestCase):
 
     def test_there_are_at_least_fifteen_entries(self):
         self.assertGreaterEqual(
-            len(self.entries), MIN_ENTRIES, f"ERROR_EXPLAINER.md has {len(self.entries)} entries"
+            len(self.entries), MIN_ENTRIES,
+            f"expected at least {MIN_ENTRIES} `## N. Title` entries, found {len(self.entries)} - "
+            f"check the heading level, since `###` entries are invisible to the index",
         )
 
     def test_entries_are_numbered_once_and_in_order(self):
         numbers = [int(number) for number, _title, _body in self.entries]
-        self.assertEqual(numbers, list(range(1, len(numbers) + 1)), "entry numbering has a gap")
+        self.assertEqual(
+            numbers, list(range(1, len(numbers) + 1)),
+            f"expected entries numbered 1..{len(numbers)} with no gap or repeat, got {numbers} - "
+            f"check for a deleted entry whose number was not closed up",
+        )
 
     def test_every_entry_says_what_it_means_and_what_to_check(self):
         for number, title, body in self.entries:
-            self.assertIn("**What it means.**", body, f"entry {number} ({title}) has no plain sentence")
-            self.assertIn("**Check first.**", body, f"entry {number} ({title}) has no check list")
             self.assertIn(
-                "**Where it comes from.**", body, f"entry {number} ({title}) names no source page"
+                "**What it means.**", body,
+                f"expected entry {number} ({title}) to open with a plain sentence; a reader who "
+                f"reaches it has a label and nothing to do - check the bold label spelling",
+            )
+            self.assertIn(
+                "**Check first.**", body,
+                f"expected entry {number} ({title}) to carry a Check first list; without it the "
+                f"entry names the error but not the next action - check the label spelling",
+            )
+            self.assertIn(
+                "**Where it comes from.**", body,
+                f"expected entry {number} ({title}) to name the page it comes from; a stuck "
+                f"learner needs the source, not just the label - check the bold label spelling",
             )
             checks = re.findall(r"^- ", body.split("**Check first.**", 1)[1], flags=re.MULTILINE)
             self.assertGreaterEqual(
@@ -68,21 +84,28 @@ class ErrorExplainerTests(unittest.TestCase):
         for number, title, body in self.entries:
             where = body.split("**Where it comes from.**", 1)[1]
             links = LINK_RE.findall(where.split("\n## ", 1)[0])
-            self.assertTrue(links, f"entry {number} ({title}) cites no page")
+            self.assertTrue(
+                links,
+                f"expected entry {number} ({title}) to cite at least one page as a markdown "
+                f"link under Where it comes from; check for a bare path, which LINK_RE misses",
+            )
             for target in links:
                 if target.startswith(("http://", "https://", "#")):
                     continue
                 path = os.path.normpath(os.path.join(ROOT, "docs", target.split("#")[0]))
                 self.assertTrue(
                     os.path.exists(path),
-                    f"entry {number} ({title}) points at {target}, which does not exist",
+                    f"entry {number} ({title}) points at {target}, and {path} does not exist - "
+                    f"check the link target and the docs/ prefix; a dead pointer is worse than none",
                 )
 
     def test_the_front_page_links_to_it(self):
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as handle:
             readme = handle.read()
         self.assertIn(
-            "docs/ERROR_EXPLAINER.md", readme, "README.md must link docs/ERROR_EXPLAINER.md"
+            "docs/ERROR_EXPLAINER.md", readme,
+            "expected README.md to link docs/ERROR_EXPLAINER.md, or nobody reaches the page "
+            "from the front door; check the link was not renamed with the file",
         )
 
 

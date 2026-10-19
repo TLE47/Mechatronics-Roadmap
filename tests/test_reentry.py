@@ -187,30 +187,50 @@ class ReentryTests(unittest.TestCase):
         )
 
     def test_the_page_passes_its_own_checks(self):
-        self.assertEqual(self.check(), [], "docs/REENTRY.md has findings")
+        self.assertEqual(
+            self.check(), [],
+            f"expected docs/REENTRY.md to pass every check it documents about itself, got "
+            f"{self.check()} - check the task table's item ids and lesson ids, which is what "
+            f"the finder cross-checks",
+        )
 
     def test_every_ramp_lesson_is_sampled(self):
         cited = set()
         for task in parse_tasks(self.doc):
             cited.update(task["lessons"])
-        self.assertEqual(cited, ramp_lesson_ids())
+        self.assertEqual(
+            cited, ramp_lesson_ids(),
+            f"expected the tasks to sample every ramp lesson exactly once; cited {sorted(cited)} "
+            f"against {sorted(ramp_lesson_ids())} - a lesson nobody samples is one a returning "
+            f"learner never revisits",
+        )
 
     def test_a_task_pointing_at_a_missing_item_fails(self):
         doctored = re.sub(r"^(\| 1 \|.*\| )1( \|)$", r"\g<1>99\2", self.doc, count=1, flags=re.MULTILINE)
-        self.assertNotEqual(doctored, self.doc, "the negative path matched nothing")
+        self.assertNotEqual(
+            doctored, self.doc,
+            "expected the doctoring to change the table row; it matched nothing, so the negative "
+            "path below would test an unmodified page - check the row's shape",
+        )
         problems = self.check(doctored)
         self.assertTrue(
             any("item 99" in problem for problem in problems),
-            f"an item that does not exist was not reported: {problems}",
+            f"expected a task citing item 99 to be reported as pointing at a missing item; got "
+            f"{problems} - check the item-id lookup, which is what stops a dead pointer",
         )
 
     def test_a_task_citing_a_lesson_that_does_not_exist_fails(self):
         doctored = re.sub(r"^(\| 1 \|.*\| )R\.1( \| 1 \|)$", r"\g<1>R.9\2", self.doc, count=1, flags=re.MULTILINE)
-        self.assertNotEqual(doctored, self.doc, "the negative path matched nothing")
+        self.assertNotEqual(
+            doctored, self.doc,
+            "expected the doctoring to change the lesson id in row 1; it matched nothing, so "
+            "the negative path below would test an unmodified page",
+        )
         problems = self.check(doctored)
         self.assertTrue(
             any("R.9" in problem for problem in problems),
-            f"a lesson outside ramp/ was not reported: {problems}",
+            f"expected a task citing R.9, which is not a ramp lesson, to be reported; got "
+            f"{problems} - check the lesson-id set the finder compares against",
         )
 
     def test_a_dropped_task_leaves_a_lesson_unsampled(self):
@@ -222,24 +242,44 @@ class ReentryTests(unittest.TestCase):
         problems = self.check("\n".join(lines))
         self.assertTrue(
             any("expected 5" in problem for problem in problems),
-            f"a missing task row was not reported: {problems}",
+            f"expected dropping task row 3 to be reported as the wrong task count; got "
+            f"{problems} - check the count check, since a lost row silently un-samples a lesson",
         )
 
     def test_the_documented_regrade_command_grades_one_package(self):
         """§4 tells a returning learner to re-grade one package; the command has to do exactly that."""
         commands = re.findall(r"`(python3 scripts/run_exercise\.py[^`]*)`", self.doc)
         self.assertEqual(len(commands), 1, f"expected one run_exercise command, found {commands}")
-        self.assertIn("--only", commands[0], "without --only the command grades every package")
+        self.assertIn(
+            "--only", commands[0],
+            f"expected the documented re-grade command to name one package with --only; "
+            f"without it the command grades all 46 and a returning learner waits for the course, "
+            f"which is not what section 4 promises",
+        )
         proc = subprocess.run(
             shlex.split(commands[0]), cwd=ROOT, capture_output=True, text=True, timeout=300
         )
-        self.assertEqual(proc.returncode, 0, f"{commands[0]} failed:\n{proc.stdout}{proc.stderr}")
+        self.assertEqual(
+            proc.returncode, 0,
+            f"expected the documented command {commands[0]!r} to exit 0 for the package it names; "
+            f"a command a returning learner is told to run must work as printed - check the "
+            f"package id and its suite:\n{proc.stdout}{proc.stderr}",
+        )
         graded = [line for line in proc.stdout.splitlines() if line and not line.startswith(" ")]
-        self.assertEqual(len(graded), 1, f"{commands[0]} graded {graded}, expected one package")
+        self.assertEqual(
+            len(graded), 1,
+            f"expected {commands[0]!r} to grade exactly one package and print one name; it "
+            f"graded {graded} - check --only was parsed, since an ignored flag re-grades the "
+            f"whole course",
+        )
 
     def test_a_drifted_answer_fails(self):
         doctored = self.doc.replace("18.408 rad/s", "17.204 rad/s", 1)
-        self.assertNotEqual(doctored, self.doc, "the negative path matched nothing")
+        self.assertNotEqual(
+            doctored, self.doc,
+            "expected the doctoring to replace a quoted answer; it matched nothing, so the "
+            "negative path below would test an unmodified page - check the answer's wording",
+        )
         problems = self.check(doctored)
         self.assertTrue(
             any("17.204" in problem for problem in problems),

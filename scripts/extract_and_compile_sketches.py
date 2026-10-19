@@ -19,6 +19,7 @@ Modes:
 from __future__ import annotations  # `str | None` annotations must import on Python 3.9, the macOS system interpreter
 
 import argparse
+import concurrent.futures
 import os
 import re
 import shutil
@@ -167,6 +168,38 @@ def cxx_include_flags(compiler: str, candidates: list[str] | None = None) -> lis
     return []
 
 
+def verify_one_sketch(path: str, gpp: str, include_flags: list[str], tmpdir: str) -> None:
+    """Compile one lesson's starter and solution and run it; raises on any mismatch.
+
+    Each lesson writes only its own `{slug}_*` files into the shared temp dir, so lessons can run
+    side by side: the 10 lessons are g++ invocations, and 20 of them in series is the slowest thing
+    the repository's own test suite does.
+    """
+    info = extract_sketches_from_lesson(path)
+    # 1. Compile Starter Code with g++
+    starter_src = os.path.join(tmpdir, f"{info['slug']}_starter.cpp")
+    starter_bin = os.path.join(tmpdir, f"{info['slug']}_starter.out")
+    with open(starter_src, "w", encoding="utf-8") as f:
+        f.write(HOST_ARDUINO_MOCK_H + "\n" + info["starter_cpp"] + "\nint main() { setup(); return 0; }\n")
+    subprocess.run([gpp, "-std=c++17", "-Wall", "-Wextra", *include_flags,
+                    starter_src, "-o", starter_bin], check=True)
+
+    # 2. Compile & Run Full Solution with g++ and verify Serial output matches Expected Output!
+    sol_src = os.path.join(tmpdir, f"{info['slug']}_solution.cpp")
+    sol_bin = os.path.join(tmpdir, f"{info['slug']}_solution.out")
+    with open(sol_src, "w", encoding="utf-8") as f:
+        f.write(HOST_ARDUINO_MOCK_H + "\n" + info["solution_cpp"] + "\nint main() { setup(); return 0; }\n")
+    subprocess.run([gpp, "-std=c++17", "-Wall", "-Wextra", *include_flags,
+                    sol_src, "-o", sol_bin], check=True)
+    proc = subprocess.run([sol_bin], capture_output=True, text=True, check=True)
+    actual = proc.stdout.strip()
+    if actual != info["expected_output"]:
+        raise AssertionError(
+            f"C++ Serial output mismatch in {info['filepath']}:\n"
+            f"Expected:\n{info['expected_output']}\nActual:\n{actual}"
+        )
+
+
 def run_host_verify() -> tuple[bool, str]:
     gpp = shutil.which("g++")
     if not gpp:
@@ -174,30 +207,20 @@ def run_host_verify() -> tuple[bool, str]:
     include_flags = cxx_include_flags(gpp)
 
     with tempfile.TemporaryDirectory() as tmpdir:
+        work = [(path, gpp, include_flags, tmpdir) for path in ARDUINO_LESSON_FILES]
+        workers = max(1, min(len(work), os.cpu_count() or 1, 8))
+        failures = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(verify_one_sketch, *item): item[0] for item in work}
+            for future, path in futures.items():
+                try:
+                    future.result()
+                except Exception as exc:  # noqa: BLE001 - re-raised below, in lesson order
+                    failures[path] = exc
+        # The first failure in lesson order, so which lesson is reported cannot depend on timing.
         for path in ARDUINO_LESSON_FILES:
-            info = extract_sketches_from_lesson(path)
-            # 1. Compile Starter Code with g++
-            starter_src = os.path.join(tmpdir, f"{info['slug']}_starter.cpp")
-            starter_bin = os.path.join(tmpdir, f"{info['slug']}_starter.out")
-            with open(starter_src, "w", encoding="utf-8") as f:
-                f.write(HOST_ARDUINO_MOCK_H + "\n" + info["starter_cpp"] + "\nint main() { setup(); return 0; }\n")
-            subprocess.run([gpp, "-std=c++17", "-Wall", "-Wextra", *include_flags,
-                            starter_src, "-o", starter_bin], check=True)
-
-            # 2. Compile & Run Full Solution with g++ and verify Serial output matches Expected Output!
-            sol_src = os.path.join(tmpdir, f"{info['slug']}_solution.cpp")
-            sol_bin = os.path.join(tmpdir, f"{info['slug']}_solution.out")
-            with open(sol_src, "w", encoding="utf-8") as f:
-                f.write(HOST_ARDUINO_MOCK_H + "\n" + info["solution_cpp"] + "\nint main() { setup(); return 0; }\n")
-            subprocess.run([gpp, "-std=c++17", "-Wall", "-Wextra", *include_flags,
-                            sol_src, "-o", sol_bin], check=True)
-            proc = subprocess.run([sol_bin], capture_output=True, text=True, check=True)
-            actual = proc.stdout.strip()
-            if actual != info["expected_output"]:
-                raise AssertionError(
-                    f"C++ Serial output mismatch in {info['filepath']}:\n"
-                    f"Expected:\n{info['expected_output']}\nActual:\n{actual}"
-                )
+            if path in failures:
+                raise failures[path]
     return True, f"Compiled and verified all {len(ARDUINO_LESSON_FILES) * 2} Arduino sketches (Starter + Full Solution) with g++"
 
 
@@ -219,9 +242,39 @@ def main():
             sys.exit(1)
         with tempfile.TemporaryDirectory() as tmpdir:
             written = write_sketches_to_dir(tmpdir)
-            for name, sdir in written:
+            # One build alone, before the fan-out. Every sketch links against the compiled
+            # arduino:avr core, and the first build of that archive is the one piece of state all
+            # of them share: on a fresh runner with an empty cache, eight processes asking for it
+            # at once produced a bare `collect2: error: ld returned 1 exit status` in CI. Building
+            # a sketch first leaves the archive complete for the rest to read, and a broken
+            # toolchain fails here with one message instead of eight.
+            warm_dir = os.path.join(tmpdir, "core_warmup")
+            os.makedirs(warm_dir, exist_ok=True)
+            with open(os.path.join(warm_dir, "core_warmup.ino"), "w", encoding="utf-8") as handle:
+                handle.write("void setup() {}\nvoid loop() {}\n")
+            warmup = subprocess.run([cli, "compile", "--fqbn", "arduino:avr:uno", warm_dir],
+                                    capture_output=True, text=True)
+            if warmup.returncode != 0:
+                print(f"arduino-cli could not build the arduino:avr core:\n{warmup.stderr}",
+                      file=sys.stderr)
+                raise SystemExit(warmup.returncode)
+            # Each sketch is its own directory and its own arduino-cli process: ten cold CLI starts
+            # in series is the slowest step of the firmware job, so they run side by side. Verdicts
+            # are read back in sketch order, so a failure names the same sketch it would have.
+            for name, _sdir in written:
                 print(f"Compiling {name} for arduino:avr:uno ...")
-                subprocess.run([cli, "compile", "--fqbn", "arduino:avr:uno", sdir], check=True)
+            workers = max(1, min(len(written), os.cpu_count() or 1, 8))
+            with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+                futures = [(name, pool.submit(subprocess.run,
+                                              [cli, "compile", "--fqbn", "arduino:avr:uno", sdir],
+                                              check=True, capture_output=True, text=True))
+                           for name, sdir in written]
+            for name, future in futures:
+                failure = future.exception()
+                if failure is not None:
+                    print(f"arduino-cli failed on {name}:\n{getattr(failure, 'stderr', '')}",
+                          file=sys.stderr)
+                    raise failure
         print(f"OK: Compiled all {len(written)} sketches with arduino-cli for arduino:avr:uno.")
 
     if args.host_verify:

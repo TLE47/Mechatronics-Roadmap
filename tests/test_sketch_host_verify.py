@@ -56,7 +56,12 @@ class IncludeFlagTests(unittest.TestCase):
     def test_a_working_compiler_gets_no_extra_flags(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             compiler = _write_exe(tmpdir, "cxx", ALWAYS_OK)
-            self.assertEqual(verifier.cxx_include_flags(compiler, candidates=[tmpdir]), [])
+            self.assertEqual(
+                verifier.cxx_include_flags(compiler, candidates=[tmpdir]),
+                [],
+                "expected no extra include flags from a compiler that already finds <cstdio>; "
+                "check the probe's success branch, which must return before adding -isystem",
+            )
 
     def test_a_broken_toolchain_gets_the_sdk_headers(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -64,8 +69,12 @@ class IncludeFlagTests(unittest.TestCase):
             sdk_v1 = os.path.join(tmpdir, "sdk", "c++", "v1")
             os.makedirs(sdk_v1)
             open(os.path.join(sdk_v1, "cstdio"), "w").close()
-            self.assertEqual(verifier.cxx_include_flags(compiler, candidates=[sdk_v1]),
-                             ["-isystem", sdk_v1])
+            self.assertEqual(
+                verifier.cxx_include_flags(compiler, candidates=[sdk_v1]),
+                ["-isystem", sdk_v1],
+                "expected -isystem pointing at the SDK's libc++ dir, because that is the only "
+                "invocation the fake compiler accepts; check the flag order and the probe call",
+            )
 
     def test_a_candidate_without_cstdio_is_skipped(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -75,8 +84,12 @@ class IncludeFlagTests(unittest.TestCase):
             good = os.path.join(tmpdir, "good")
             os.makedirs(good)
             open(os.path.join(good, "cstdio"), "w").close()
-            self.assertEqual(verifier.cxx_include_flags(compiler, candidates=[empty, good]),
-                             ["-isystem", good])
+            self.assertEqual(
+                verifier.cxx_include_flags(compiler, candidates=[empty, good]),
+                ["-isystem", good],
+                "expected the empty candidate skipped and the one holding cstdio used; check "
+                "the os.path.isfile(cstdio) filter, which is what keeps a stub dir out",
+            )
 
     def test_a_hopeless_compiler_gets_nothing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -84,12 +97,22 @@ class IncludeFlagTests(unittest.TestCase):
             sdk_v1 = os.path.join(tmpdir, "sdk", "c++", "v1")
             os.makedirs(sdk_v1)
             open(os.path.join(sdk_v1, "cstdio"), "w").close()
-            self.assertEqual(verifier.cxx_include_flags(compiler, candidates=[sdk_v1]), [])
+            self.assertEqual(
+                verifier.cxx_include_flags(compiler, candidates=[sdk_v1]),
+                [],
+                "expected no flags for a compiler that fails with -isystem too; returning a "
+                "flag here would paper over a broken toolchain instead of letting it fail",
+            )
 
     def test_no_candidates_at_all_is_not_a_crash(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             compiler = _write_exe(tmpdir, "cxx", FAKE_COMPILER)
-            self.assertEqual(verifier.cxx_include_flags(compiler, candidates=[]), [])
+            self.assertEqual(
+                verifier.cxx_include_flags(compiler, candidates=[]),
+                [],
+                "expected [] rather than an exception when no candidate dirs exist; check the "
+                "loop's empty case, since a crash here would break the caller on a bare host",
+            )
 
 
 if __name__ == "__main__":
