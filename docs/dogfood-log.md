@@ -53,6 +53,9 @@ it. `transfer later` is `pass`, `fail`, or `-` until the delayed attempt happens
 | `00-foundations.T2.00d` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `00-foundations.T2.00e` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `00-foundations.T2.00f` | 2026-10-17 | 1 | 0 | none | no | - |
+| `00-foundations.T2.00h` | 2026-10-19 | 2 | 0 | none | no | - |
+| `00-foundations.T2.00i` | 2026-10-19 | 1 | 0 | none | no | - |
+| `00-foundations.T2.00j` | 2026-10-19 | 1 | 0 | none | no | - |
 | `01-electronics.T2.01a` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `01-electronics.T2.01b` | 2026-10-17 | 1 | 0 | none | yes | - |
 | `03-sensors.T2.03a` | 2026-10-17 | 1 | 0 | none | yes | - |

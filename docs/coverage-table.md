@@ -22,7 +22,7 @@ flowchart LR
 
 | Track | Modules | Structure | Executable | Ladder | Validated | Parity | Shared plant | Level |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `00` | 16 | 100% | 100% | 100% | 91% | **98.6%** | 16 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
+| `00` | 16 | 100% | 100% | 100% | 100% | **100.0%** | 16 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `01` | 7 | 100% | 100% | 100% | 100% | **100.0%** | 7 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `02` | 3 | 100% | 100% | 100% | 100% | **100.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
 | `03` | 3 | 100% | 100% | 100% | 100% | **100.0%** | 3 arm · 0 exempt · 0 unhooked · 0 undeclared | `report` |
@@ -37,10 +37,10 @@ flowchart LR
 | Tier | Modules | Parity |
 | :--- | :---: | :---: |
 | Tier 1 | 16 | **100.0%** |
-| Tier 2 | 22 | **99.0%** |
+| Tier 2 | 22 | **100.0%** |
 | Tier 3 | 12 | **100.0%** |
 
-## Per module (50 modules, overall **99.6%**)
+## Per module (50 modules, overall **100.0%**)
 
 | Module | Tier | Structure | Executable | Ladder | Validated | Parity | Shared plant | Missing |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -56,9 +56,9 @@ flowchart LR
 | `00-foundations.T2.00e` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T2.00f` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T2.00g` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
-| `00-foundations.T2.00h` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `00-foundations.T2.00i` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
-| `00-foundations.T2.00j` | 2 | 100% | 100% | 100% | 50% | **92.5%** | `arm` | 1 item(s) |
+| `00-foundations.T2.00h` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `00-foundations.T2.00i` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
+| `00-foundations.T2.00j` | 2 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `00-foundations.T3.00a` | 3 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `01-electronics.T1.01a` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
 | `01-electronics.T1.01b` | 1 | 100% | 100% | 100% | 100% | **100.0%** | `arm` | 0 item(s) |
@@ -149,9 +149,9 @@ not demonstrated learner mastery.
 | `00-foundations.T2.00e` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `00-foundations.T2.00f` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 1 min, 0 hints | - | `-` |
 | `00-foundations.T2.00g` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | met (19 unit tests; 12 grade groups in `run_exercise.py`, all OK), not re-sat (the package's 19 tests and four faults are graded separately) min, 12/12 hints | pending | `-` |
-| `00-foundations.T2.00h` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00i` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
-| `00-foundations.T2.00j` | **92.5%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | `-` | `-` | `-` |
+| `00-foundations.T2.00h` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-19, 2 min, 0 hints | - | `-` |
+| `00-foundations.T2.00i` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-19, 1 min, 0 hints | - | `-` |
+| `00-foundations.T2.00j` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-19, 1 min, 0 hints | - | `-` |
 | `00-foundations.T3.00a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `01-electronics.T1.01a` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
 | `01-electronics.T1.01b` | **100.0%** | yes | yes | yes (`e2e_pages_bundle.mjs`) | 2026-10-17, 2 min, 0 hints | - | `-` |
