@@ -1,0 +1,1 @@
+{"broken_relative": 0, "cached": 0, "date": "2026-10-19T18:15:02+00:00", "elapsed_s": 74.1, "failed": 0, "fetched": 513, "files": 118, "jobs": 8, "missing_headings": 0, "not_checked": 37, "served": 476, "urls": 513, "verdicts": {"BLOCKED": 21, "FAIL": 0, "PASS": 476, "SERVER_ERROR": 1, "UNREACHABLE": 15}}

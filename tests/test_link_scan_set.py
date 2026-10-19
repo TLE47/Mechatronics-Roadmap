@@ -14,6 +14,7 @@ Run: `python3 tests/test_link_scan_set.py` (also picked up by `python3 -m unitte
 in CI).
 """
 
+import glob
 import os
 import re
 import sys
@@ -91,6 +92,21 @@ class LinkScanSetTests(unittest.TestCase):
             [dropped],
             f"dropping {dropped} from the scanned files must be reported; a detector that stays "
             f"silent here would let the page fall out of the checker without a failing test",
+        )
+
+    def test_every_resources_page_is_scanned(self):
+        """The reference pages carried two dead citations while three of seven were scanned."""
+        opened = {os.path.normpath(path) for path in scan_set()}
+        resources = sorted(glob.glob(os.path.join(ROOT, "resources", "*.md"))) + sorted(
+            glob.glob(os.path.join(ROOT, "resources", "*", "README.md"))
+        )
+        missing = [os.path.normpath(path) for path in resources if os.path.normpath(path) not in opened]
+        self.assertEqual(
+            missing,
+            [],
+            "check that `get_target_markdown_files()` globs every markdown page under resources/; "
+            "expected all of them scanned, since naming three of the seven is how two dead citations "
+            "stayed invisible",
         )
 
     def test_the_scan_set_skips_no_readme_that_exists(self):
