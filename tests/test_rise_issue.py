@@ -24,12 +24,14 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 import file_rise_issue  # noqa: E402
 
 
-def report(urls, date="2026-10-26T06:12:00+00:00", baseline="2026-10-19T18:15:02+00:00"):
+def report(urls, date="2026-10-26T06:12:00+00:00", baseline="2026-10-19T18:15:02+00:00",
+           unverified=None):
     return {
         "date": date,
         "baseline_date": baseline,
         "urls": 512,
         "not_checked": 50,
+        "unverified": list(urls) if unverified is None else unverified,
         "new": [
             {
                 "url": url,
@@ -92,6 +94,16 @@ class IssueTextTests(unittest.TestCase):
             "it must stay invisible when the issue is rendered",
         )
 
+    def test_the_body_carries_the_url_list_the_resolver_reads_back(self):
+        text = file_rise_issue.issue_body(
+            report(["https://b.example", "https://a.example"]), "abc123def456"
+        )
+        self.assertEqual(
+            file_rise_issue.issue_urls(text), ["https://a.example", "https://b.example"],
+            "expected the sorted URL list to round-trip through the body; without it the resolver "
+            "has a fingerprint but no membership, so it can never tell whether an issue recovered",
+        )
+
     def test_the_title_counts_the_urls(self):
         self.assertEqual(
             file_rise_issue.issue_title(report(["https://a.example", "https://b.example"])),
@@ -121,6 +133,142 @@ class DuplicateTests(unittest.TestCase):
             file_rise_issue.find_duplicate(issues, "abc123def456"),
             "expected no match for a different set; treating it as one would drop a genuinely new "
             "wall",
+        )
+
+
+class IssueUrlTests(unittest.TestCase):
+    def test_a_body_without_the_marker_reads_as_no_urls(self):
+        self.assertEqual(
+            file_rise_issue.issue_urls("An issue filed before the marker existed."), [],
+            "expected an empty list for a legacy body, which the resolver turns into 'leave it for "
+            "a human' rather than closing on no evidence",
+        )
+
+    def test_a_corrupt_marker_reads_as_no_urls(self):
+        self.assertEqual(
+            file_rise_issue.issue_urls("<!-- rise-urls: [not json -->"), [],
+            "expected malformed JSON to read as no URLs; a parse failure must not be mistaken for "
+            "'every URL recovered', which would close the issue",
+        )
+
+
+class ResolutionPlanTests(unittest.TestCase):
+    def issue(self, number, urls):
+        return {"number": number, "body": file_rise_issue.issue_body(report(urls), "aaaaaaaaaaaa")}
+
+    def test_an_issue_whose_urls_are_all_absent_from_the_pile_is_closable(self):
+        closable, kept, legacy = file_rise_issue.plan_resolution(
+            [self.issue(5, ["https://a.example"])], set()
+        )
+        self.assertEqual(
+            ([issue["number"] for issue, _urls in closable], kept, legacy),
+            ([5], [], []),
+            "expected the issue to be closable when none of its URLs is unverified now; that is "
+            "the recovery the sweep already observed",
+        )
+
+    def test_an_issue_with_one_url_still_unverified_stays_open(self):
+        closable, kept, _legacy = file_rise_issue.plan_resolution(
+            [self.issue(6, ["https://a.example", "https://b.example"])],
+            {"https://b.example"},
+        )
+        self.assertEqual(
+            (closable, [(issue["number"], still, total) for issue, still, total in kept]),
+            ([], [(6, 1, 2)]),
+            "expected the kept list to carry the 1-of-2 count, so a maintainer sees the wall that "
+            "is still standing instead of a silent skip",
+        )
+
+    def test_a_legacy_issue_is_neither_closed_nor_counted_as_open_with_a_count(self):
+        closable, kept, legacy = file_rise_issue.plan_resolution(
+            [{"number": 7, "body": "no markers here"}], set()
+        )
+        self.assertEqual(
+            (closable, kept, [issue["number"] for issue in legacy]),
+            ([], [], [7]),
+            "expected an issue without the marker to land in its own bucket; closing it on a body "
+            "the resolver cannot read would be a guess about what it tracks",
+        )
+
+
+class ResolveCommandTests(unittest.TestCase):
+    def run_cli(self, *argv):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            code = file_rise_issue.main(list(argv))
+        return code, out.getvalue()
+
+    def write(self, directory, name, payload):
+        path = os.path.join(directory, name)
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle)
+        return path
+
+    def test_recovered_urls_close_the_issue(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = self.write(tmp, "state.json", report([], unverified=[], date="2026-10-26T06:12:00+00:00"))
+            body = file_rise_issue.issue_body(report(["https://a.example"]), "aaaaaaaaaaaa")
+            existing = self.write(tmp, "open.json", [{"number": 9, "body": body}])
+            code, out = self.run_cli(
+                "--resolve", "--report", state, "--existing", existing, "--dry-run",
+                "--now", "2026-10-26T07:00:00+00:00",
+            )
+        self.assertEqual(
+            (code, "gh issue close 9" in out), (0, True),
+            "expected a dry run to print the close for issue 9; a sweep with no unverified URLs "
+            "is the recovery that closes it",
+        )
+
+    def test_a_still_unverified_url_keeps_the_issue_open(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = self.write(
+                tmp, "state.json",
+                report([], unverified=["https://b.example"], date="2026-10-26T06:12:00+00:00"),
+            )
+            body = file_rise_issue.issue_body(
+                report(["https://a.example", "https://b.example"]), "aaaaaaaaaaaa"
+            )
+            existing = self.write(tmp, "open.json", [{"number": 10, "body": body}])
+            code, out = self.run_cli(
+                "--resolve", "--report", state, "--existing", existing, "--dry-run",
+                "--now", "2026-10-26T07:00:00+00:00",
+            )
+        self.assertEqual(
+            (code, "1 of 2 URL(s) still unverified" in out, "gh issue close" in out),
+            (0, True, False),
+            "expected issue 10 kept open with the 1-of-2 count and no close command; closing it "
+            "would hide a wall the sweep can still see",
+        )
+
+    def test_a_stale_state_closes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = self.write(tmp, "state.json", report([], unverified=[], date="2026-10-19T06:00:00+00:00"))
+            body = file_rise_issue.issue_body(report(["https://a.example"]), "aaaaaaaaaaaa")
+            existing = self.write(tmp, "open.json", [{"number": 11, "body": body}])
+            code, out = self.run_cli(
+                "--resolve", "--report", state, "--existing", existing, "--dry-run",
+                "--now", "2026-10-26T07:00:00+00:00",
+            )
+        self.assertEqual(
+            (code, "gh issue close" in out), (2, False),
+            "expected exit 2 and no close for a state a week old; a stale sweep is not evidence "
+            "that this week's URLs recovered",
+        )
+
+    def test_a_state_without_an_unverified_list_closes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            payload = report(["https://a.example"])
+            payload.pop("unverified")
+            state = self.write(tmp, "state.json", payload)
+            existing = self.write(tmp, "open.json", [])
+            code, _ = self.run_cli(
+                "--resolve", "--report", state, "--existing", existing,
+                "--now", "2026-10-26T07:00:00+00:00",
+            )
+        self.assertEqual(
+            code, 2,
+            "expected 2 when the state has no unverified list; there is no evidence to close on, "
+            "and an empty default would close everything",
         )
 
 

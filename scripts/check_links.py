@@ -295,13 +295,14 @@ def counts_reconcile(record: dict) -> bool:
     )
 
 
-def rise_report(record: dict, baseline: dict, new_unverified: list[str],
+def sweep_state(record: dict, baseline: dict, new_unverified: list[str],
                 details: dict[str, tuple[str, int | str, set[str]]]) -> dict:
-    """The artifact a failing gate hands to the issue filer: which URLs are new, and what each said.
+    """What one run hands to the issue tracker: the URLs unverified now, and which of those are new.
 
-    The gate's stderr already names the URLs, but a red workflow log is not where a maintainer
-    triages a citation — an issue is. Keeping this a plain dict leaves the filer testable without a
-    network or a repository, and lets a misread run be checked by opening the report itself.
+    `unverified` is the whole current pile (used to close an issue once its URLs verify again);
+    `new` is the gate's evidence, with what each host said and where it is cited. Keeping this a
+    plain dict leaves the filer testable without a network or a repository, and lets a misread run
+    be checked by opening the file itself.
     """
     rows = []
     for url in sorted(new_unverified):
@@ -317,23 +318,10 @@ def rise_report(record: dict, baseline: dict, new_unverified: list[str],
         "baseline_date": baseline.get("date", ""),
         "urls": record.get("urls", 0),
         "not_checked": record.get("not_checked", 0),
+        "failed": record.get("failed", 0),
+        "unverified": sorted(str(url) for url in details),
         "new": rows,
     }
-
-
-def emit_rise_report(path: str, report: dict | None) -> bool:
-    """Write the gate's report, or delete a leftover one so a passing run cannot be filed as news.
-
-    Returns whether a file was written. The deletion is the safety half: `.rise-report.json` lives
-    in the workspace, and a scheduled run that reuses a directory tree (or a maintainer re-running
-    the job) would otherwise hand last week's URLs to the issue filer as this week's.
-    """
-    if report is None:
-        if os.path.exists(path):
-            os.unlink(path)
-        return False
-    atomic_write_json(path, report)
-    return True
 
 
 def cache_entry_is_fresh(entry: object, expected: list[str], ttl_hours: float) -> bool:
@@ -478,9 +466,9 @@ def main() -> int:
         help="Exit 1 when a URL unverified now was not unverified in the last --history row",
     )
     parser.add_argument(
-        "--rise-report",
+        "--sweep-state",
         default=None,
-        help="Write the failing gate's new URLs here as JSON (nothing is written when nothing rose)",
+        help="Write this run's state here as JSON: the URLs unverified now, and which are new",
     )
     parser.add_argument(
         "--revalidate-unverified",
@@ -730,16 +718,17 @@ def main() -> int:
         return 3
     previous_rows = read_history(args.history) if args.history else []
     new_unverified = newly_unverified(previous_rows, record) if args.fail_on_rise else None
-    if args.rise_report:
-        # The report has to exist BEFORE the gate returns 1: in CI this is the artifact the next
-        # step files as an issue. A stale file from an earlier run is deleted so a pass can never
-        # be filed as news.
-        report = None
-        if new_unverified:
-            detail = {url: (verdict, status, sources) for url, verdict, status, sources in unverified_urls}
-            report = rise_report(record, previous_rows[-1] if previous_rows else {}, new_unverified, detail)
-        if emit_rise_report(args.rise_report, report):
-            print(f"Wrote the rise report to {args.rise_report}", file=sys.stderr)
+    if args.sweep_state:
+        # Written on every run, before the gate returns 1, because two steps read it: the filer
+        # (when `new` is non-empty) and the resolver (always, against `unverified`). Writing it
+        # unconditionally is also what stops a leftover file from an earlier run being read as
+        # this run's news.
+        detail = {url: (verdict, status, sources) for url, verdict, status, sources in unverified_urls}
+        state = sweep_state(
+            record, previous_rows[-1] if previous_rows else {}, new_unverified or [], detail
+        )
+        atomic_write_json(args.sweep_state, state)
+        print(f"Wrote the sweep state to {args.sweep_state}", file=sys.stderr)
     if args.history:
         append_history(args.history, record)
         print_history(args.history, window=10)

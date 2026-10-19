@@ -54,7 +54,7 @@ jobs:
         id: sweep
         run: |
           python3 scripts/check_links.py --write-report --history docs/link-check-history.jsonl \
-            --rise-report .rise-report.json \
+            --sweep-state .sweep-state.json \
             ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '--fail-on-rise' || '' }}
 
       # A red job is a log line a maintainer has to go looking for. The gate writes the new URLs to
@@ -65,7 +65,16 @@ jobs:
         if: failure() && steps.sweep.outcome == 'failure' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/file_rise_issue.py --report .rise-report.json
+        run: python3 scripts/file_rise_issue.py --report .sweep-state.json
+
+      # The other half of the tracker: a wall that lifts closes its own issue. Runs on the same
+      # state file whether the gate passed or failed, because the sweep writes it before exiting;
+      # `cancelled` is the one outcome where the file is not this run's.
+      - name: Close rise issues whose URLs verify again
+        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.sweep.outcome != 'cancelled'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/file_rise_issue.py --resolve --report .sweep-state.json
 
       # The sweep's own numbers, not a badge: `not_checked` is the pile a human still has to open by
       # hand, so a rise across weeks is visible in one committed file.
