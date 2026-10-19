@@ -11,6 +11,53 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 96: Two Controls in One Task, Audited Pair by Pair
+
+Run 95 fixed one instance of a class: a click handler that reads the state its last *render* captured, so
+a second control clicked in the same task acts on the world before the first click. This run walks every
+`useState` in `app/src`, pairs each with its writers and readers, and lands the sweep that keeps them
+honest — `scripts/e2e_same_task_pairs.mjs` (17 pairs, 18.5 s standalone, the fourth suite in
+`npm run test:workbench`).
+
+| state | writers | readers | reads stale in one task? |
+| --- | --- | --- | --- |
+| `TabPyodideRunner.code` | Load Solution, Reset Starter, lesson select, typing | Run | **was** - fixed in Run 95 |
+| `TabPyodideRunner.localCompleted` (standalone fallback) | Self-Mark Complete | itself | **was** - read-modify-write; now a functional update |
+| `App.tourIndex` | Next Step, Prev Step | Next, Prev, Apply Demo Preset | **was** - Next+Next stepped once (2 vs 3), Next+Prev landed on step 8 instead of back on step 1 |
+| placement quiz `answers` | option buttons, Reset | *Open Lesson* / *Open Matched Simulator Tab* | **was** - the jump opened the previous gap's lesson (P.14 vs 00.1) |
+| `App.completedMilestones` | milestone toggles | toggles, export modal, progress counters | no - `prev =>` updates compose |
+| `App.viewMode`, `App.activeTierPass` | mode buttons, header links, banner switcher | tab list, banner text | no - absolute writes |
+| simulator inputs (`fbw`, `useSchroeder`, `lNh`, ...) | sliders, presets, FOC/ESKF toggles | their own panels, derived numbers | no - presets are absolute; both toggles are `prev => !prev` |
+| `quiz.submitted`, `diagnosticMode`, modal flags | their own buttons | their own panels | no |
+
+**The three fixes.** The tour keeps `tourIndexRef`, written by the two steppers and read by all three
+buttons, so two tour clicks compose and Apply Demo Preset applies the step the learner is on. The quiz
+keeps `answersRef` and resolves the recommended gap at click time (`openRecommendedLesson`,
+`openRecommendedSimulator`). The runner's standalone self-mark fallback derives from `prev` instead of
+reading the render. Two testids were added for addressable controls: `btn-milestone-<milestoneId>` and the
+two recommendation jumps.
+
+**The sweep's oracle is the app, not a written expectation.** For one ordered pair of controls it runs the
+page twice from a clean load: *task* (both controls resolved from the pre-click DOM, clicked with no commit
+between) and *separated* (click, let React commit, re-resolve, click). It fingerprints the page afterwards
+- all visible text, every input value, the `mechalab*` storage except the learning log, whose timestamps
+differ by design - and fails when the two disagree. Pairs that write absolute values are in the list as
+controls: they must come out equal, which is what proves the sweep is not flagging every pair it tries.
+Out of scope and said so in the script: a reader that only *exists* after the writer's click (open a modal,
+then a button inside it) has nothing stale to read. The runner's own pair stays in
+`e2e_browser_workbench.mjs`, which already pays for the Pyodide boot.
+
+**Evidence.** With the two app fixes reverted (patch kept in `/tmp`, restored after): tour cases fail as
+`task ... (Step 2 / 8 ...)` vs `separated ... (Step 3 / 8 ...)` and `Step 8` vs `Step 1`; with only the
+pre-fix quiz handler back, the task arm opens `Lesson P.14` while human pace opens `Lesson 00.1`. Green
+afterwards: 17/17 pairs, and `npm run test:workbench` smoke 1.6 s / e2e 24.1 s / pages 26.7 s / pairs 32.3 s.
+
+**Found, not fixed.** The guided tour's *Apply Demo Preset* (and the roadmap's preset buttons) call
+`onLoadPreset`, which in `App` only switches tabs: the prop is declared in eight tabs and called in
+`TabArchitecture` alone, so no *simulator* ever receives a preset — and the tour's promise ("watch the filter surgically erase the
+vibration peak") is not implemented anywhere. Presets need per-simulator values and a decision about
+them; recorded here rather than guessed at.
+
 ## [2026-10-18] — Run 95: Run Reads the Editor, Not the Render
 
 The stale-code bug Run 94 found and documented is fixed at its cause. `Run & Verify`'s click handler

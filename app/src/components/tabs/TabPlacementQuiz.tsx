@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Compass,
   CheckCircle2,
@@ -504,11 +504,22 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
   >({});
   const [exitAnswers, setExitAnswers] = useState<Record<string, number>>({});
 
+  // The recommendation's two jump buttons act on the answers *as they are at click time*: an answer
+  // and the button that opens its lesson can land in the same task, and the button drawn with the
+  // older answers would send the learner to the previous gap. `answersRef` is written by every
+  // answer write (and by the reset); the effect re-confirms it after each commit.
+  const answersRef = useRef<Record<string, number>>(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
   const selectOption = (qId: string, optIdx: number) => {
+    answersRef.current = { ...answersRef.current, [qId]: optIdx };
     setAnswers((prev) => ({ ...prev, [qId]: optIdx }));
   };
 
   const resetQuiz = () => {
+    answersRef.current = {};
     setAnswers({});
     setSubmitted(false);
     setMathRoutes({});
@@ -518,11 +529,25 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
   const answeredCount = Object.keys(answers).length;
 
   // Determine placement from dependency graph: first question answered incorrectly or unanswered
-  const firstGapQuestion = PLACEMENT_QUESTIONS.find((q) => {
-    const idx = answers[q.id];
-    if (idx === undefined) return true;
-    return !q.options[idx]?.isCorrect;
-  });
+  const firstGapOf = (answered: Record<string, number>) =>
+    PLACEMENT_QUESTIONS.find((q) => {
+      const idx = answered[q.id];
+      if (idx === undefined) return true;
+      return !q.options[idx]?.isCorrect;
+    });
+
+  const firstGapQuestion = firstGapOf(answers);
+
+  // Click-time versions of the two jumps in the recommendation card, reading the live answers.
+  const openRecommendedLesson = () => {
+    const gap = firstGapOf(answersRef.current);
+    onOpenPyodideLesson(gap ? gap.lessonId : '08.1');
+  };
+
+  const openRecommendedSimulator = () => {
+    const gap = firstGapOf(answersRef.current);
+    onSwitchSimulatorTab(gap?.recommendedTab ?? 3);
+  };
 
   const totalCorrect = PLACEMENT_QUESTIONS.filter((q) => {
     const idx = answers[q.id];
@@ -818,9 +843,8 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
 
             <div className="flex flex-wrap items-center gap-2.5">
               <button
-                onClick={() =>
-                  onOpenPyodideLesson(firstGapQuestion ? firstGapQuestion.lessonId : '08.1')
-                }
+                onClick={openRecommendedLesson}
+                data-testid="btn-open-recommended-lesson"
                 className="px-3.5 py-2 rounded-lg text-xs font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] flex items-center gap-1.5 cursor-pointer"
               >
                 <Terminal className="w-3.5 h-3.5" />
@@ -828,9 +852,8 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() =>
-                  onSwitchSimulatorTab(firstGapQuestion?.recommendedTab ?? 3)
-                }
+                onClick={openRecommendedSimulator}
+                data-testid="btn-open-recommended-simulator"
                 className="px-3.5 py-2 rounded-lg text-xs font-mono font-semibold bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 text-[#38bdf8] border border-[#38bdf8]/40 flex items-center gap-1.5 cursor-pointer"
               >
                 <Cpu className="w-3.5 h-3.5" />

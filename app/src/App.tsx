@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
@@ -362,8 +362,18 @@ export const App: React.FC = () => {
       ? WORKBENCH_TABS.filter((t) => t.isBeginnerCore || t.id === activeTab)
       : WORKBENCH_TABS;
 
+  // The tour's own index is what its three buttons *step from*, so it is read at click time rather
+  // than from the render the button was drawn with: two tour clicks queued in one task (or a click
+  // right after another) must compose into two steps, and Apply Demo Preset must apply the step the
+  // learner is on now. `tourIndexRef` is written by the two steppers; the effect re-confirms it.
+  const tourIndexRef = useRef<number>(tourIndex);
+  useEffect(() => {
+    tourIndexRef.current = tourIndex;
+  }, [tourIndex]);
+
   const handleNextTourStep = () => {
-    const nextIdx = (tourIndex + 1) % TOUR_STEPS.length;
+    const nextIdx = (tourIndexRef.current + 1) % TOUR_STEPS.length;
+    tourIndexRef.current = nextIdx;
     setTourIndex(nextIdx);
     const nextStep = TOUR_STEPS[nextIdx];
     setActiveTab(nextStep.tab);
@@ -371,7 +381,8 @@ export const App: React.FC = () => {
   };
 
   const handlePrevTourStep = () => {
-    const prevIdx = (tourIndex - 1 + TOUR_STEPS.length) % TOUR_STEPS.length;
+    const prevIdx = (tourIndexRef.current - 1 + TOUR_STEPS.length) % TOUR_STEPS.length;
+    tourIndexRef.current = prevIdx;
     setTourIndex(prevIdx);
     const prevStep = TOUR_STEPS[prevIdx];
     setActiveTab(prevStep.tab);
@@ -379,7 +390,7 @@ export const App: React.FC = () => {
   };
 
   const handleApplyPreset = () => {
-    const step = TOUR_STEPS[tourIndex];
+    const step = TOUR_STEPS[tourIndexRef.current];
     if (step.tab === 'tab-bode') handleLoadPreset('wafer_scanner');
     else if (step.tab === 'tab-foc') handleLoadPreset('foc_cobot_joint');
     else if (step.tab === 'tab-pend') handleLoadPreset('pend_swingup');

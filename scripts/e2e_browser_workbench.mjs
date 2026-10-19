@@ -51,7 +51,7 @@ export async function startDevServer(repoRoot = process.cwd()) {
   return { viteServer, baseUrl: `http://127.0.0.1:${port}/Mechatronics-Roadmap/` };
 }
 
-function resolveChromiumExecutable() {
+export function resolveChromiumExecutable() {
   if (
     process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH &&
     fs.existsSync(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)

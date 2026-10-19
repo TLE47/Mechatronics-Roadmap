@@ -322,14 +322,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     if (onToggleLessonCompleted) {
       onToggleLessonCompleted(lessonId, forceValue);
     } else {
-      const nextVal = forceValue !== undefined ? forceValue : !localCompleted[lessonId];
-      const next = { ...localCompleted, [lessonId]: nextVal };
-      setLocalCompleted(next);
-      try {
-        localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(next));
-      } catch {
-        // ignore storage quota errors
-      }
+      // Standalone fallback (no parent owning the state): the toggle derives from `prev`, so two
+      // same-task clicks compose instead of both reading the render they were drawn with.
+      setLocalCompleted((prev) => {
+        const nextVal = forceValue !== undefined ? forceValue : !prev[lessonId];
+        const next = { ...prev, [lessonId]: nextVal };
+        try {
+          localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(next));
+        } catch {
+          // ignore storage quota errors
+        }
+        return next;
+      });
     }
   };
 
