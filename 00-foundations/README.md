@@ -43,7 +43,7 @@ If you come from a strong computing/software background with no formal Electrica
 
 - **Curated Free Resources:**
   - 🔗 [Falstad Interactive Circuit Simulator (falstad.com)](https://www.falstad.com/circuit/) — *Browser-based real-time circuit simulator that visualizes voltage as color and current as animated dots so you can build immediate physical intuition.*
-  - 🔗 [The Evolution of Mechatronics Engineering: Industry 3.0, 4.0, 5.0 & Physical AI (Technologies 2026 — Open Access)](https://doi.org/10.3390/technologies14020081) & [The Mechatronics Handbook (R. H. Bishop — Free 1st-Ed. PDF)](http://www.sze.hu/~szenasy/Szenzorok%20%E9s%20aktu%E1torok/Szenzakt%20jegyzetek/Mechatronics_handbook%5B1%5D.pdf) — *Traces how mechatronics evolved from the 1969 Yaskawa coinage and V-Model co-design to Cyber-Physical Systems and Embodied AI.*
+  - 🔗 [The Evolution of Mechatronics Engineering: Industry 3.0, 4.0, 5.0 & Physical AI (Technologies 2026 — Open Access)](https://doi.org/10.3390/technologies14020081) & [The Mechatronics Handbook (R. H. Bishop — Borrow on Internet Archive)](https://archive.org/details/mechatronicshand0000unse) — *Traces how mechatronics evolved from the 1969 Yaskawa coinage and V-Model co-design to Cyber-Physical Systems and Embodied AI.*
   - 🔗 [SparkFun: Voltage, Current, Resistance, and Ohm's Law](https://learn.sparkfun.com/tutorials/voltage-current-resistance-and-ohms-law) & [All About Circuits Vol. I: Direct Current (Open-Source Textbook)](https://www.allaboutcircuits.com/textbook/direct-current/) — *Illustrated water-tank analogies and passive circuit laws designed for software learners with zero prior hardware background.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open the [Falstad Circuit Simulator](https://www.falstad.com/circuit/), wire a $12\text{ V}$ voltage source in series with a switch, a $1\text{ mH}$ inductor, and a $6\ \Omega$ resistor ($I = 2\text{ A}$ steady state), and open the switch abruptly with and without a parallel flyback diode. Compute the theoretical voltage spike $V_L = L\frac{\Delta I}{\Delta t}$ if $5\text{ A}$ through $1\text{ mH}$ turns off in $100\text{ ns}$ ($50,000\text{ V}$).
@@ -480,7 +480,7 @@ $$
 $$
 
 - **Curated Free Resources:**
-  - 🔗 [Collocated vs. Non-Collocated Control of Flexible Mechanical Systems (Preumont, Active Vibration Control)](https://www.ulb.ac.be/scmero/documents/books/振动控制.pdf) — *Explains interlaced pole-zero patterns in collocated actuator-sensor pairs.*
+  - 🔗 Collocated vs. Non-Collocated Control of Flexible Mechanical Systems (*Preumont, Active Vibration Control*) — *Explains interlaced pole-zero patterns in collocated actuator-sensor pairs. The free mirror at `ulb.ac.be` stopped resolving on 2026-10-19, so this is cited by title only.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 2: Two-Mass & Notch Bode** and compare the phase curve of the Collocated Motor Encoder (Cyan, which dips to $-90^\circ$, jumps back to $+90^\circ$ at $f_{ar}$, and returns to $-90^\circ$ at $f_r$) against the Non-Collocated Load Tip (Amber, which plunges straight to $-270^\circ$ at $f_r$).
   - *📚 What to Learn & Resource Links for This Exercise:* Review Bode phase lag and transfer-function zeros/poles in [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) and [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), and Port-Hamiltonian electromechanical coupling in [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md).
