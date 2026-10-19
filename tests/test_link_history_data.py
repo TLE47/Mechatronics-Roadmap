@@ -31,6 +31,11 @@ def run_generator(*args: str) -> subprocess.CompletedProcess:
     )
 
 
+spec = importlib.util.spec_from_file_location("generate_link_history_data", GENERATOR)
+gen = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(gen)
+
+
 def record(date: str, **overrides) -> dict:
     row = {
         "date": date,
@@ -42,6 +47,75 @@ def record(date: str, **overrides) -> dict:
     }
     row.update(overrides)
     return row
+
+
+class HostRecurrenceTests(unittest.TestCase):
+    def rows(self, *url_lists, dates=None):
+        dates = dates or [f"2026-10-0{i + 1}T00:00:00+00:00" for i in range(len(url_lists))]
+        return [{"date": date, "unverified": urls} for date, urls in zip(dates, url_lists)]
+
+    def test_a_host_counts_once_per_run_not_once_per_url(self):
+        rows = self.rows(
+            ["https://www.a.example/x", "https://a.example/y"],
+            ["https://a.example/y"],
+        )
+        recurrence, runs = gen.host_recurrence(rows)
+        a = next(entry for entry in recurrence if entry["host"] == "a.example")
+        self.assertEqual(
+            (a["runs"], runs), (2, 2),
+            "expected www.a.example and a.example to be one host counted once per run; counting "
+            "URLs instead would make a host with ten blocked PDFs look ten times flakier",
+        )
+
+    def test_the_current_count_comes_from_the_latest_run_only(self):
+        rows = self.rows(
+            ["https://a.example/x", "https://a.example/y"],
+            ["https://a.example/y"],
+        )
+        recurrence, _runs = gen.host_recurrence(rows)
+        self.assertEqual(
+            recurrence[0]["urls"], 1,
+            "expected `urls` to be what the latest run lists, not everything ever seen; the table "
+            "labels it 'URLs now'",
+        )
+
+    def test_a_row_without_a_url_list_is_not_a_run_for_recurrence(self):
+        rows = self.rows(
+            ["https://a.example/x"],
+            None,
+            ["https://a.example/x"],
+        )
+        recurrence, runs = gen.host_recurrence(rows)
+        self.assertEqual(
+            (runs, recurrence[0]["runs"]), (2, 2),
+            "expected a pre-`unverified` row to be excluded from both counts; treating it as an "
+            "empty run would understate the denominator and overstate recurrence",
+        )
+
+    def test_the_worst_host_comes_first(self):
+        rows = self.rows(
+            ["https://once.example/x", "https://always.example/x"],
+            ["https://always.example/x"],
+        )
+        recurrence, _runs = gen.host_recurrence(rows)
+        self.assertEqual(
+            [entry["host"] for entry in recurrence],
+            ["always.example", "once.example"],
+            "expected the table order to be worst-first (runs, then current URLs, then host), so "
+            "the recurring wall is the first row a maintainer reads",
+        )
+
+    def test_last_seen_is_the_latest_run_that_listed_the_host(self):
+        rows = self.rows(
+            ["https://a.example/x"],
+            ["https://b.example/x"],
+        )
+        recurrence, _runs = gen.host_recurrence(rows)
+        a = next(entry for entry in recurrence if entry["host"] == "a.example")
+        self.assertEqual(
+            a["lastSeen"], "2026-10-01T00:00:00+00:00",
+            "expected last-seen to stay at the run that listed the host, not move to the newest run",
+        )
 
 
 class LinkHistoryGeneratorTests(unittest.TestCase):
