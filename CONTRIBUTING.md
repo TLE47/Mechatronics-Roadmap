@@ -35,7 +35,11 @@ All beginner lessons are enforced by `scripts/lint_lessons.py` and `scripts/chec
 
 ## 3. Running the Verification Suite Locally
 
-Before submitting a Pull Request, run the verification scripts from the repository root:
+Before submitting a Pull Request, run the verification scripts from the repository root. They need
+**Python 3.12** — the version CI uses and `.python-version` pins. The macOS system `python3` is 3.9,
+and `validate_modules.py` executes module code that uses 3.10+ syntax (`int | None`), so a 3.9
+interpreter fails on a page you did not touch. Check with `python3 --version`; if it prints 3.9,
+use `python3.12` or put Homebrew's `bin` first on `PATH`.
 
 ```bash
 # 1. Verify repository structure, links, Mermaid diagrams, and clean TeX math hygiene

@@ -59,8 +59,8 @@ jobs:
           python3 scripts/check_exercise_coverage.py
           # One discovery run covers all 21 suites in tests/ - including test_sketch_host_verify
           # and test_module_full_solutions, which the old per-file list never ran - and it is the
-          # same command CONTRIBUTING gives a contributor. It needs Python >= 3.9-safe imports,
-          # so every script a test imports must tolerate the system interpreter.
+          # same command CONTRIBUTING gives a contributor. It runs on the 3.12 interpreter the
+          # repo pins in .python-version, so every script a test imports must run there.
           RUN_EXERCISE_REPORT="${RUNNER_TEMP:-/tmp}/run-exercise.json" \
             python3 -m unittest discover -s tests
 

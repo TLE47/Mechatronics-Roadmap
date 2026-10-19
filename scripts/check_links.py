@@ -374,6 +374,15 @@ def print_history(path: str, window: int = 10) -> None:
 
 
 def main() -> int:
+    if sys.version_info < (3, 12):
+        # urllib's redirect handling differs on older interpreters and used to label live 308 pages
+        # FAIL; refuse rather than write a verdict the repo cannot trust.
+        print(
+            "ERROR: the link sweep needs Python 3.12 (see .python-version and CONTRIBUTING.md); "
+            f"this interpreter is {sys.version.split()[0]}. Run: python3.12 scripts/check_links.py ...",
+            file=sys.stderr,
+        )
+        return 2
     parser = argparse.ArgumentParser(description="Check markdown links and static-page section headings.")
     parser.add_argument("--write-report", action="store_true", help="Write LINK_REPORT.md")
     parser.add_argument("--jobs", type=int, default=8, help="Concurrent fetches (default 8)")

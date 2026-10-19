@@ -6,8 +6,10 @@ parsed by PyYAML where it is installed and by the fallback parser below where it
 disagree on an empty key (`None` vs `[]`). A bare `.get(key, [])` therefore only worked on the
 fallback: with PyYAML an empty `uses:` reached `set(None)`.
 
-The page bodies are executed to verify their Expected Output, so this script needs **Python 3.10+**
-for the pages' own syntax (`int | None`). The front-matter handling itself is version-independent.
+The page bodies are executed to verify their Expected Output, so this script needs **Python 3.12** —
+the version `.python-version` pins and CI installs. A 3.9 interpreter fails on the pages' own
+`int | None` syntax with a bare operator error in a page the reader did not touch, so the guard
+below refuses early and names the command to run instead.
 """
 import ast
 import json
@@ -15,6 +17,15 @@ import os
 import pathlib
 import re
 import sys  # noqa: F401  (also used to put the shared plant on `sys.path` below)
+
+# Pages execute real module code, and that code uses `X | None` annotations. On an older
+# interpreter the failure surfaces as a bare operator error in a page the reader did not touch, so
+# say what is wrong and which command to run instead.
+if sys.version_info < (3, 12):
+    sys.exit(
+        "ERROR: this repository's checks need Python 3.12 (see .python-version and CONTRIBUTING.md); "
+        f"this interpreter is {sys.version.split()[0]}. Run: python3.12 scripts/validate_modules.py"
+    )
 
 from frontmatter_lists import list_field
 
