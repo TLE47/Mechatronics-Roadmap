@@ -11,6 +11,26 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 104: The Rise Gate Compares URLs, Not Counts
+
+The `--fail-on-rise` gate compared `not_checked` with the previous row's, which made a new bot wall and
+a page recovering cancel out silently, and made the verdict a number nobody could act on. Each history
+row now records the unverified URLs, and the gate fails only on URLs that are unverified now and were
+not in the last committed row.
+
+| case | before | now |
+| --- | --- | --- |
+| same 37 walls, another week | pass | pass, and the rows carry the list |
+| one page recovers, one new wall appears (count flat) | pass, change invisible | fail, naming the new wall |
+| the pile shrinks | pass | pass |
+| first row after the change (no list in the old row) | compared against a count | baseline recorded, no failure |
+
+`tests/test_link_cache.py` covers the same set in another order, the recovery-plus-new-wall case, a
+shrinking set, a legacy row without the list, and the first run. Measured against a baseline row of 37
+URLs with one URL removed from its list: the sweep exited `1` naming that URL, while the same tree
+against the unmodified row exited `0` - a count-only gate would have passed both, since the counts
+were identical.
+
 ## [2026-10-19] — Run 103: A Rising Pile Fails the Sweep, and the Ladder Hands Off
 
 The history file recorded `not_checked` but nothing acted on it, a bot wall that lifted waited a full

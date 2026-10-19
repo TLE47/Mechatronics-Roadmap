@@ -46,7 +46,8 @@ jobs:
 
       # The weekly run is the one that fails on a rising pile: PR runs compare against a history file
       # they do not own, so a transient bot wall would red a contributor's branch. `--fail-on-rise`
-      # reads the last committed row and exits 1 when `not_checked` grew above it.
+      # reads the last committed row's URL list and exits 1 when a page that was checked then is
+      # unverified now - a count alone cannot tell a new wall from one that was already there.
       - name: Verify all external URLs and static-page HTML headings
         run: |
           python3 scripts/check_links.py --write-report --history docs/link-check-history.jsonl \
