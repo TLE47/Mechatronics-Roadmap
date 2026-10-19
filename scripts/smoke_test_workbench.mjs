@@ -95,6 +95,19 @@ export async function runSmokeTests(viteServer) {
       htmlBeginner.includes('runner-verified-count'),
       'Beginner View must default to the Python runner, where Lesson 1 is run'
     );
+    assert(
+      htmlBeginner.includes('data-testid="first-lesson-guide"'),
+      'A first-time visitor must see the guided first lesson above the runner'
+    );
+    assert(
+      htmlBeginner.includes('Run the starter') &&
+        !htmlBeginner.includes('data-testid="guide-what-to-fix"'),
+      'The guide must offer to run the starter, and show the fix panel only after a failure'
+    );
+    assert(
+      !htmlBeginner.includes('Interactive Guided Beginner Walkthrough'),
+      'The advanced simulator tour must stay off the first-lesson screen'
+    );
     const htmlRoadmap = cleanSsr(
       ReactDOMServer.renderToString(
         React.createElement(TabArchitecture, {

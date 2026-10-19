@@ -239,6 +239,9 @@ async function freshPage(context, baseUrl, pageErrors) {
 }
 
 async function runTour(page, baseUrl, log) {
+  // The tour is hidden on the Python runner (the newcomer's first screen), so open the roadmap the
+  // same way a learner does before touching the tour controls.
+  await page.getByRole('button', { name: /^1\. Start Here/ }).first().click({ timeout: 8000 });
   // Real clicks on the tour's own controls: the same path a learner takes.
   const next = page.getByRole('button', { name: /^Next Step/ });
   const apply = page.getByRole('button', { name: 'Apply Demo Preset', exact: true });

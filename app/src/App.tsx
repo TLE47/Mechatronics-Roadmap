@@ -668,14 +668,19 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      <GuidedTourBar
-        currentStepIndex={tourIndex}
-        totalSteps={TOUR_STEPS.length}
-        stepInfo={TOUR_STEPS[tourIndex]}
-        onPrev={handlePrevTourStep}
-        onNext={handleNextTourStep}
-        onApplyPreset={handleApplyPreset}
-      />
+      {/* The simulator tour is for exploring the labs, not for the first lesson. On the Python
+          runner it would put a tier-matrix paragraph between a newcomer and Lesson P.1, so it
+          appears once they open the roadmap (or any simulator tab). */}
+      {activeTab !== 'tab-pyodide' && (
+        <GuidedTourBar
+          currentStepIndex={tourIndex}
+          totalSteps={TOUR_STEPS.length}
+          stepInfo={TOUR_STEPS[tourIndex]}
+          onPrev={handlePrevTourStep}
+          onNext={handleNextTourStep}
+          onApplyPreset={handleApplyPreset}
+        />
+      )}
 
       {/* Tabs navigation */}
       <nav

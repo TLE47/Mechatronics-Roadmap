@@ -128,6 +128,37 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
 
+    // 0. A first-time visitor lands on Step 1 with a guide that explains the editor, runs the
+    //    starter for them, and turns the failure into a "what to fix" line. This is the whole
+    //    first lesson without the README: the assertions are what a newcomer can actually see.
+    await page.getByTestId('first-lesson-guide').waitFor({ timeout: 15000 });
+    assert(
+      (await page.getByTestId('first-lesson-guide').innerText()).includes('Lesson P.1'),
+      'the first-lesson guide must name Lesson P.1'
+    );
+    await page.getByTestId('btn-guide-run').click();
+    await page.getByTestId('status-behavior-failed').waitFor({ timeout: 45000 });
+    const fixLine = await page.getByTestId('guide-what-to-fix').innerText();
+    assert(
+      fixLine.includes('Expected') && fixLine.includes('got'),
+      `the guide must say what to fix using the check's own expected/got line; got: ${fixLine}`
+    );
+    await page.getByTestId('btn-guide-hint').click();
+    assert.equal(
+      (await page.getByTestId('btn-reveal-hint').innerText()).trim(),
+      'Reveal Hint 2',
+      'the guide\'s hint button must open Hint 1, leaving Hint 2 to reveal'
+    );
+    // A traceback's useful line is the last one, not its first: the guide must still say what to fix.
+    await page.getByTestId('textarea-python-code').fill('def broken(\n    return 1\n');
+    await page.getByTestId('btn-guide-run').click();
+    await page.getByTestId('guide-what-to-fix').waitFor({ timeout: 45000 });
+    assert(
+      (await page.getByTestId('guide-what-to-fix').innerText()).includes('SyntaxError'),
+      'the guide must surface the SyntaxError line for a broken starter edit'
+    );
+    await page.getByTestId('btn-reset-starter').click();
+
     // Open Tab 2: Run Python Lessons (32 Lessons)
     await page.getByTestId('tab-btn-tab-pyodide').click();
     await page.getByTestId('lesson-item-P.6').click();

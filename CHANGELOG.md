@@ -11,6 +11,25 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 106: Step 1 Teaches Itself
+
+Step 1 used to need the README beside it: a newcomer had to know they were looking at an editor,
+that the untouched starter was *supposed* to fail, and that the red assertion line already named
+the fix. The runner's first visit now opens on Lesson P.1 with a three-panel guide — the editor and
+its `# TODO` lines, a **Run the starter** button that executes the untouched code, and the
+`WHAT TO FIX` panel that appears from the check's own expected/got line — or, after a traceback,
+from its last line, where the `SyntaxError` or `NameError` actually is.
+
+The guide is not a modal, so it can be read beside the lesson. It hides itself after P.1 verifies,
+and **I have done this before — hide** remembers the choice in
+`mechalab_first_guide_dismissed_v1`. The simulator tour stays off this screen; it remains on the
+roadmap and every simulator tab.
+
+`scripts/e2e_browser_workbench.mjs` walks the newcomer path (guide → run starter → behavior-failed
+line → Hint 1), and the smoke suite checks the guide renders server-side without the failure panel.
+The same-task pair sweep and tour test now open the roadmap first, because the tour is one click
+away from the first lesson rather than above it.
+
 ## [2026-10-19] — Run 105: The Front Page Becomes a Beginner Entry
 
 The README opened with a badge wall, seven acronyms and a `Track P → Stage 0 → Pass 1` route a

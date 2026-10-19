@@ -124,7 +124,8 @@ const CASES = [
   // --- Guided tour (App.tsx): tourIndex is read by Next/Prev and by Apply Demo Preset.
   {
     name: 'tour: Next Step + Next Step steps two steps',
-    setup: [],
+    // The tour is hidden on the first-lesson screen, so open the roadmap first, like a learner.
+    setup: [{ testid: 'tab-btn-tab-arch' }],
     pair: [
       { textIncludes: 'Next Step' },
       { textIncludes: 'Next Step' },
@@ -135,7 +136,7 @@ const CASES = [
     // Net zero on purpose: the pair is a round trip, and `Next` then `Prev` in one task must land
     // back on step 1 rather than on step 8 (which is what a stale index gives).
     netZero: true,
-    setup: [],
+    setup: [{ testid: 'tab-btn-tab-arch' }],
     pair: [
       { textIncludes: 'Next Step' },
       { textIncludes: 'Prev Step' },
@@ -143,7 +144,7 @@ const CASES = [
   },
   {
     name: 'tour: Next Step + Apply Demo Preset applies the step it moved to',
-    setup: [],
+    setup: [{ testid: 'tab-btn-tab-arch' }],
     pair: [
       { textIncludes: 'Next Step' },
       { textIncludes: 'Apply Demo Preset' },
@@ -151,7 +152,7 @@ const CASES = [
   },
   {
     name: 'tour: Apply Demo Preset + Next Step',
-    setup: [],
+    setup: [{ testid: 'tab-btn-tab-arch' }],
     pair: [
       { textIncludes: 'Apply Demo Preset' },
       { textIncludes: 'Next Step' },
@@ -161,7 +162,8 @@ const CASES = [
   // --- Roadmap milestones (TabArchitecture → App.completedMilestones).
   {
     name: 'roadmap: two milestone toggles in one task both land',
-    setup: [],
+    // The app now opens on the first Python lesson, so the roadmap is one click away, as for a learner.
+    setup: [{ testid: 'tab-btn-tab-arch' }],
     pair: [
       { testid: 'btn-milestone-t1_tr00' },
       { testid: 'btn-milestone-t1_tr01' },
@@ -169,7 +171,7 @@ const CASES = [
   },
   {
     name: 'roadmap: milestone toggle then Export Progress shows the new milestone',
-    setup: [],
+    setup: [{ testid: 'tab-btn-tab-arch' }],
     pair: [
       { testid: 'btn-milestone-t1_tr00' },
       { testid: 'btn-export-portfolio' },
@@ -177,7 +179,7 @@ const CASES = [
   },
   {
     name: 'roadmap: one milestone toggle twice in one task nets out',
-    setup: [],
+    setup: [{ testid: 'tab-btn-tab-arch' }],
     pair: [{ testid: 'btn-milestone-t1_tr02' }, { testid: 'btn-milestone-t1_tr02' }],
   },
 

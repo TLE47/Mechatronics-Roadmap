@@ -37,6 +37,8 @@ const DEFAULT_MAX_TRACE_STEPS = 400000;
 
 export const STORAGE_KEY_VERIFIED = 'mechalab_pyodide_verified_v1';
 export const STORAGE_KEY_COMPLETED = 'mechalab_pyodide_completed_v1';
+// Set once the newcomer hides the first-lesson guide; the guide is the only thing this key gates.
+export const STORAGE_KEY_FIRST_GUIDE = 'mechalab_first_guide_dismissed_v1';
 
 const PYODIDE_WORKER_SOURCE = `
 let pyodideInstance = null;
@@ -268,6 +270,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onToggleLessonCompleted,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
+  const [guideDismissed, setGuideDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_FIRST_GUIDE) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const guideEditorRef = useRef<HTMLTextAreaElement | null>(null);
+  const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
   const [trackFilter, setTrackFilter] = useState<'all' | 'advanced' | 'track-p' | 't00-02' | 't03-08'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [code, setCode] = useState<string>(PYTHON_LESSONS[0].starterCode);
@@ -700,6 +711,35 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const isCurrentVerified = !!verifiedLessons[currentLesson.id];
   const isCurrentSelfMarked = !!completedLessons[currentLesson.id];
 
+  // The guide is for the first sitting only: Step 1, not yet passed, not yet hidden. It is not a
+  // modal, so a newcomer can read it beside the editor rather than dismiss it to see the lesson.
+  const showFirstGuide = currentLesson.id === 'P.1' && !isCurrentVerified && !guideDismissed;
+  const dismissFirstGuide = () => {
+    setGuideDismissed(true);
+    try {
+      localStorage.setItem(STORAGE_KEY_FIRST_GUIDE, '1');
+    } catch {
+      // ignore storage quota errors
+    }
+  };
+  const guideFailed =
+    passStatus === 'behavior_failed' || passStatus === 'mismatch' || passStatus === 'error' ||
+    passStatus === 'stopped';
+  const guideLines = (instructorError || stderr || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  // An assertion puts its expected/got line first; a traceback puts the useful SyntaxError or
+  // NameError last. The guide should show the line a beginner can act on in either case.
+  const guideFixLine =
+    passStatus === 'mismatch'
+      ? 'Output differs from the lesson\'s expected output.'
+      : passStatus === 'behavior_failed'
+        ? guideLines[0] || ''
+        : guideLines[guideLines.length - 1] || '';
+  const guideShowsExpectedGot =
+    passStatus === 'behavior_failed' && guideFixLine.startsWith('AssertionError');
+
   return (
     <div className="space-y-5">
       {/* Header Banner */}
@@ -746,6 +786,143 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </div>
         </div>
       </div>
+
+      {showFirstGuide && (
+        <section
+          data-testid="first-lesson-guide"
+          className="bg-[#06281f] border border-[#34d399]/50 rounded-xl p-5"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Start here · Lesson P.1 · Step 1 of 10</span>
+              </div>
+              <h3 className="text-base font-bold text-[#f1f5f9] mt-1">
+                One editor, one button, one red line.
+              </h3>
+              <p className="text-xs text-[#cbd5e1] mt-1 max-w-3xl">
+                This page is the whole lesson. Nothing to install and nothing else to read: change a
+                line, press <b>Run</b>, and let the red line tell you what to fix.
+              </p>
+            </div>
+            <button
+              onClick={dismissFirstGuide}
+              data-testid="btn-guide-dismiss"
+              className="px-2.5 py-1 rounded text-[11px] font-mono text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer"
+            >
+              I have done this before — hide
+            </button>
+          </div>
+
+          <ol className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
+              <div className="text-[11px] font-mono text-[#38bdf8]">1 · THE EDITOR</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5">
+                The dark box below holds Python. The lines that say <code># TODO</code> are yours;
+                everything else is the lesson's scaffolding.
+              </p>
+              <button
+                onClick={() => {
+                  guideEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  guideEditorRef.current?.focus();
+                }}
+                data-testid="btn-guide-editor"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 text-[#38bdf8] border border-[#38bdf8]/40 cursor-pointer"
+              >
+                Show me the editor
+              </button>
+            </li>
+
+            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
+              <div className="text-[11px] font-mono text-[#34d399]">2 · THE BUTTON</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5">
+                Press it before you are finished. The starter is <i>supposed</i> to fail — the check
+                is how the page tells you what the finished answer must produce.
+              </p>
+              <button
+                onClick={() => runPythonCode(codeRef.current, currentLesson)}
+                disabled={isRunning}
+                data-testid="btn-guide-run"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] disabled:opacity-50 cursor-pointer"
+              >
+                {isRunning
+                  ? pyodideStatus === 'loading'
+                    ? 'Loading Python (first run takes a few seconds)…'
+                    : 'Running…'
+                  : 'Run the starter'}
+              </button>
+            </li>
+
+            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
+              <div className="text-[11px] font-mono text-[#fbbf24]">3 · THE RED LINE</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5">
+                It names the value the check expected and the value your code produced. Change one
+                line, run again. Hint 1 is a nudge; it never gives the answer.
+              </p>
+              <button
+                onClick={() => {
+                  setRevealedHints((h) => Math.max(h, 1));
+                  guideAssessmentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+                disabled={currentLesson.hints.length === 0}
+                data-testid="btn-guide-hint"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-[#fbbf24]/15 hover:bg-[#fbbf24]/25 text-[#fbbf24] border border-[#fbbf24]/40 disabled:opacity-50 cursor-pointer"
+              >
+                {revealedHints > 0 ? 'Hint 1 is open below' : 'Reveal Hint 1'}
+              </button>
+            </li>
+          </ol>
+
+          {guideFailed && guideFixLine && (
+            <div
+              data-testid="guide-what-to-fix"
+              aria-live="polite"
+              className="mt-3 p-3 rounded-lg bg-[#0b0f19] border border-[#f43f5e]/50"
+            >
+              <div className="text-[11px] font-mono text-[#f43f5e]">WHAT TO FIX</div>
+              <code className="block mt-1 text-xs text-[#fecdd3] break-words">{guideFixLine}</code>
+              <p className="text-[11px] text-[#cbd5e1] mt-1">
+                {guideShowsExpectedGot ? (
+                  <>
+                    That is the check explaining itself: expected value first, what your code
+                    produced second. Read it, change one <code># TODO</code> line, and press{' '}
+                    <b>Run &amp; Verify Output</b> again.
+                  </>
+                ) : passStatus === 'mismatch' ? (
+                  <>
+                    Compare that with the expected output in the panel below, then change one{' '}
+                    <code># TODO</code> line and press <b>Run &amp; Verify Output</b> again.
+                  </>
+                ) : (
+                  <>
+                    That line is Python's own error, naming what it could not do. Fix that line and
+                    press <b>Run &amp; Verify Output</b> again.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          {passStatus === 'passed' && (
+            <div
+              data-testid="guide-passed"
+              className="mt-3 p-3 rounded-lg bg-[#0b0f19] border border-[#34d399]/50 text-xs text-[#cbd5e1]"
+            >
+              <b className="text-[#34d399]">That is the whole loop.</b> You read a failure, changed
+              the code, and proved it. Every lesson on this page works the same way.
+              {nextLesson && (
+                <button
+                  onClick={() => selectLesson(nextLesson.id)}
+                  className="ml-2 px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-[#34d399] text-[#0b0f19] cursor-pointer"
+                >
+                  Next: Lesson {nextLesson.id} →
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Sidebar: exercise search and selector */}
@@ -1019,6 +1196,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </span>
             </div>
             <textarea
+              ref={guideEditorRef}
               value={code}
               onChange={(e) => commitCode(e.target.value)}
               spellCheck={false}
@@ -1029,6 +1207,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           {/* Instructor Behavioral Assessment Panel */}
           <div
+            ref={guideAssessmentRef}
             data-testid="panel-instructor-tests"
             className="bg-[#111827] border border-[#334155] rounded-xl p-4"
           >
