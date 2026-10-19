@@ -11,6 +11,26 @@ flowchart LR
 
 ---
 
+## [2026-10-18] — Run 95: Run Reads the Editor, Not the Render
+
+The stale-code bug Run 94 found and documented is fixed at its cause. `Run & Verify`'s click handler
+closed over the `code` the button was *rendered* with, so when `Load Solution` and `Run` landed in one
+task the solution's `setCode` had not committed yet and the starter ran instead — silently, and with
+the starter's `NotImplementedError` reported as the reference's failure.
+
+- **The editor's live text is what runs.** `codeRef` is written synchronously by every editor write
+  (`commitCode`: lesson select, Reset Starter, Load Solution, typing) and re-confirmed after each
+  commit, and `Run` executes `codeRef.current` at click time.
+- **The lesson is resolved at click time too.** `runPythonCode` now takes the lesson it grades and
+  derives its match mode from it, so a lesson switch and a run in the same task cannot grade the new
+  text against the previous lesson's instructor tests.
+- **Coverage that fails without the fix.** The dev-server suite's step 5 now clicks Load Solution and
+  Run in one task (reverted: `status-assert-passed` times out, rc 1; with the fix: green). The bundle
+  sweep no longer waits for React to commit the reference before running it, so all 48 packages
+  exercise same-task Run, and a stale run there is named as such instead of as a missing PASS line.
+- The sweep stays at **3.6 s** for 48 packages, so removing the commit wait costs nothing and the
+  suite now proves the stronger claim.
+
 ## [2026-10-18] — Run 94: The ~100 ms Was the Harness, Not the Runner
 
 Measured the runner's click-to-result cycle from **inside the page** (a MutationObserver on the status

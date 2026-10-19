@@ -417,11 +417,30 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const outputComparison = compareStdout(stdout, currentLesson.expectedOutput, outputMatchMode);
   const lessonDowngradesFormatting = outputMatchMode !== 'exact';
 
+  // What Run executes is the editor's text *now*, not the text the button was rendered with. `code`
+  // and `selectedId` are what renders; these refs are written synchronously by the handlers that
+  // change them, so Load Solution followed by Run in the same task runs the reference instead of
+  // the starter both handlers were rendered with. The effects re-confirm the refs after each
+  // commit, which is the same value whenever the handlers are the only writers.
+  const codeRef = useRef<string>(code);
+  const lessonIdRef = useRef<string>(initialLessonId || PYTHON_LESSONS[0].id);
+  const commitCode = (next: string) => {
+    codeRef.current = next;
+    setCode(next);
+  };
+  useEffect(() => {
+    codeRef.current = code;
+  }, [code]);
+  useEffect(() => {
+    lessonIdRef.current = selectedId;
+  }, [selectedId]);
+
   const selectLesson = (id: string) => {
     const found = PYTHON_LESSONS.find((l) => l.id === id);
     if (!found) return;
     setSelectedId(id);
-    setCode(found.starterCode);
+    lessonIdRef.current = id;
+    commitCode(found.starterCode);
     setRevealedHints(0);
     setStdout('');
     setStderr('');
@@ -477,7 +496,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   };
 
-  const runPythonCode = async (sourceCode: string) => {
+  // `lesson` defaults to the rendered lesson; Run passes the one selected at click time.
+  const runPythonCode = async (sourceCode: string, lesson: PythonLessonItem = currentLesson) => {
+    const matchMode: OutputMatchMode = asOutputMatchMode(lesson.outputMatch);
     const runId = activeRunIdRef.current + 1;
     activeRunIdRef.current = runId;
 
@@ -555,7 +576,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           type: 'run',
           runId,
           studentCode: sourceCode,
-          instructorTests: currentLesson.instructorTests,
+          instructorTests: lesson.instructorTests,
           cdnUrl,
           maxSteps,
           timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
@@ -605,7 +626,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
       const isOutputMatched =
         !actualErr &&
-        compareStdout(actualOut, currentLesson.expectedOutput, outputMatchMode).matched;
+        compareStdout(actualOut, lesson.expectedOutput, matchMode).matched;
       const isBehaviorPassed = Boolean(workerOutcome?.instructorPassed);
 
       setOutputCheck(isOutputMatched ? 'matched' : 'differs');
@@ -622,7 +643,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
       if (isBehaviorPassed && isOutputMatched) {
         setPassStatus('passed');
-        markLessonVerified(currentLesson.id);
+        markLessonVerified(lesson.id);
       } else {
         setPassStatus('mismatch');
       }
@@ -865,7 +886,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    setCode(currentLesson.starterCode);
+                    commitCode(currentLesson.starterCode);
                     setPassStatus('untested');
                     setBehaviorCheck('untested');
                     setOutputCheck('untested');
@@ -888,7 +909,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    setCode(currentLesson.fullSolution);
+                    commitCode(currentLesson.fullSolution);
                     logEvent({ kind: 'solution_open', lesson: selectedId });
                   }}
                   data-testid="btn-load-solution"
@@ -908,7 +929,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   </button>
                 )}
                 <button
-                  onClick={() => runPythonCode(code)}
+                  onClick={() => {
+                    const lesson =
+                      PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
+                    runPythonCode(codeRef.current, lesson);
+                  }}
                   disabled={isRunning}
                   data-testid="btn-run-verify"
                   className="px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
@@ -991,7 +1016,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
             <textarea
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e) => commitCode(e.target.value)}
               spellCheck={false}
               data-testid="textarea-python-code"
               className="w-full h-72 p-4 bg-[#0b0f19] text-[#f1f5f9] font-mono text-xs leading-relaxed focus:outline-none resize-y"

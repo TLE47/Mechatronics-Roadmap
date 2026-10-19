@@ -315,9 +315,13 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       window.__mechalabExecutionTimeoutMs = undefined;
     });
 
-    // 5. Correct solution passes both Behavioral Tests and Output Presentation check
-    await page.getByTestId('btn-load-solution').click();
-    await page.getByTestId('btn-run-verify').click();
+    // 5. Correct solution passes both Behavioral Tests and Output Presentation check. Both clicks
+    // happen in one task, so this also pins `Run` reading the editor's live text: a handler that runs
+    // the program it was rendered with would run the starter here and fail the assertions below.
+    await page.evaluate(() => {
+      document.querySelector('[data-testid="btn-load-solution"]').click();
+      document.querySelector('[data-testid="btn-run-verify"]').click();
+    });
     await page.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
 
     assert(

@@ -256,19 +256,18 @@ async function gradeInPage(page, ids) {
       result.starterStdout = text('[data-testid="pre-actual-stdout"]');
       result.starterBadges = badges();
       q('[data-testid="btn-load-solution"]').click();
-      // React must commit the reference before Run is clicked: the handler captures the code it was
-      // rendered with, so both clicks in one task would run the starter a second time.
-      if (!(await waitFor(() => !editor().includes('raise NotImplementedError'), 15000))) {
-        result.problem = "its reference never landed in the editor";
-        continue;
-      }
+      // Both clicks in one task on purpose: Run must execute the text the editor holds now, so the
+      // reference still runs without waiting for React to commit it. A regression here runs the
+      // starter a second time, which the PASS-line requirement below turns into a failure.
       const referenceBefore = text('[data-testid="pre-actual-stdout"]');
       q('[data-testid="btn-run-verify"]').click();
       if (!(await waitFor(() => {
         const out = text('[data-testid="pre-actual-stdout"]');
         return out !== referenceBefore && out.includes('SELF-CHECK PASS');
       }, 90000))) {
-        result.problem = `its reference run never printed a PASS line (status ${statusId()})`;
+        result.problem = text('[data-testid="pre-actual-stdout"]').includes('NotImplementedError')
+          ? 'its reference run executed the starter program instead (Run read stale editor text)'
+          : `its reference run never printed a PASS line (status ${statusId()})`;
         continue;
       }
       result.referenceBadges = badges();
