@@ -24,6 +24,7 @@
     "test:friction": "python3 tests/test_friction_report.py",
     "check:assertions": "python3 scripts/lint_assertions.py",
     "test:assertions": "python3 tests/test_lint_assertions.py",
+    "test:linkscan": "python3 tests/test_link_scan_set.py",
     "check:route": "python3 scripts/generate_sim_route.py --check",
     "test:parity": "python3 tests/test_module_parity.py",
     "check:plant": "python3 scripts/generate_plant_data.py --check",

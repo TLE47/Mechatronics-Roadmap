@@ -321,7 +321,7 @@ $$
   - 🔗 [Paros & Weisbord (1965): How to Design Flexure Hinges (classic derivation notes)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Derives the circular notch compliance equations used in precision wafer stages and FTS diamond turning.*
 - **🧪 Hands-On Exercise:**
   - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench, select **Ti-6Al-4V Notch Flexure**, and adjust Web Thickness $t$ from $0.4\text{ mm}$ to $1.2\text{ mm}$. Verify the $t^{5/2}$ scaling of rotational stiffness $k_\theta$ and inspect the generated CAD file [`cad/notch_flexure_hinge.step`](cad/notch_flexure_hinge.step).
-  - *📚 What to Learn & Resource Links for This Exercise:* Study Paros-Weisbord circular notch flexure equations $K_\theta = \frac{2 E b t^{5/2}}{9\pi R^{1/2}}$ and parasitic stage resonance in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Stuart T. Smith *Flexures: Elements of Elastic Mechanisms*](https://books.google.com/books?id=u9a3CgAAQBAJ).
+  - *📚 What to Learn & Resource Links for This Exercise:* Study Paros-Weisbord circular notch flexure equations $K_\theta = \frac{2 E b t^{5/2}}{9\pi R^{1/2}}$ and parasitic stage resonance in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Stuart T. Smith *Flexures: Elements of Elastic Mechanisms*](https://books.google.com/books/about/Flexures.html?id=6GFf8QhMM4IC).
 - **🧠 Knowledge Check:**
   <details>
   <summary><b>Click to toggle quiz questions & answers</b></summary>

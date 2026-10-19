@@ -134,7 +134,7 @@ The tests are behavioural: the $46\text{ B}$ frame must take $499.1319\ \mu\text
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Arrays & Linear Regression*) and [`00-foundations.T1.00c`](00-foundations.T1.00c.md) (*Baud Rate, Bits/Bytes & Nanosecond Clock Offsets*).
   - **Prerequisite Bridge Modules:** [`04-embedded.T1.04b`](04-embedded.T1.04b.md) (*Binary Framing*) and [`04-embedded.T2.04c`](04-embedded.T2.04c.md) (*Zephyr Static Threads*).
   - **Core Concepts to Review First:** XRCE-DDS wire framing overhead & baud-rate link utilization, static memory budgets (`sizeof(handle) * N <= arena`) with deterministic `rclc_executor` handle ordering, and NTP-style four-timestamp clock offset $\theta_{\text{offset}} = \frac{(t_2 - t_1) + (t_3 - t_4)}{2}$ in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [Official micro-ROS Documentation & Zephyr Tutorials (`micro.ros.org`)](https://micro.ros.org/docs/tutorials/core/first_application_rtos/zephyr/) and [eProsima Micro XRCE-DDS Docs (`micro-xrce-dds.docs.eprosima.com`)](https://micro-xrce-dds.docs.eprosima.com/).
+  - **Study Links & Resources:** [Official micro-ROS Documentation & Zephyr Tutorials (`micro.vulcanexus.org`)](https://micro.vulcanexus.org/docs/tutorials/core/first_application_rtos/zephyr/) and [eProsima Micro XRCE-DDS Docs (`micro-xrce-dds.docs.eprosima.com`)](https://micro-xrce-dds.docs.eprosima.com/).
 
 ### Starter code
 ```python

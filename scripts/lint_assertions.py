@@ -80,7 +80,7 @@ def graded_files():
         os.path.join(ROOT, "exercises", "*", "test_behavior.py"),
         os.path.join(ROOT, "exercises", "*", "test_transfer.py"),
         os.path.join(ROOT, "exercises", "*", "selfcheck.py"),
-        # The repository's own 17 suites run in CI on every push, so a message-free assertion here
+        # The repository's own 19 suites run in CI on every push, so a message-free assertion here
         # fails a learner no click away from the defect the suite exists to catch. Leaving them out
         # made the ratchet cover the graded packages and nothing that grades the packages.
         os.path.join(ROOT, "tests", "*.py"),
