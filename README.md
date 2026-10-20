@@ -1,8 +1,14 @@
 # Mechatronics Roadmap
 
-**What this is.** A free, browser-based course that starts from no coding, electronics, or maths past school arithmetic and ends with a working simulated two-joint robot arm. You read one small idea, write it in Python, and a lesson only counts when its checks pass.
+> **Start here — your first 2 hours**
+>
+> **[Open Lesson 1: Variables and data types →](track-p/P.1-variables-and-data-types.md)**
+>
+> One lesson, one editor, one Run button. No install, no account, nothing to buy.
 
-**Start here → [Lesson 1: Variables and data types](track-p/P.1-variables-and-data-types.md)**. No install, no account, nothing to buy.
+---
+
+**What this is.** A free, browser-based course that starts from no coding, electronics, or maths past school arithmetic and ends with a working simulated two-joint robot arm. You read one small idea, write it in Python, and a lesson only counts when its checks pass.
 
 You will finish with a simulated two-joint robot arm that holds its own weight, follows a figure-8, and recovers from three faults we break on purpose.
 

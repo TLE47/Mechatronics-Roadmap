@@ -14,6 +14,8 @@ Tier 1 bridge, the capstone's own prerequisites and the capstone - builds the sa
 in about half the focused hours, page by page in [`MINIMUM.md`](MINIMUM.md). The Core
 route below is the full course: the same arm with the Tier 2/3 depth modules.
 
+**Core total: ≈200–290 focused hours** for 40 required modules and all 48 lessons. Extensions add 47.5 focused hours and are optional.
+
 **Route status: `author-dogfood`** — the author has run every page and no outside learner has finished this route, so every hour is a target rather than a measurement.
 
 ```mermaid

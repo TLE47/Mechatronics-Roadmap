@@ -118,6 +118,7 @@ export async function runSmokeTests(viteServer) {
       ReactDOMServer.renderToString(
         React.createElement(TabArchitecture, {
           onLoadPreset: () => {},
+          beginnerView: true,
           activeTierPass: 'tier1',
           onSelectTierPass: () => {},
           completedMilestones: {},

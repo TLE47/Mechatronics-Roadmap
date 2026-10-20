@@ -24,6 +24,8 @@ import {
 
 interface TabArchitectureProps {
   onLoadPreset: (presetId: string) => void;
+  /** When true, the matrix starts with the Beginner column only; deeper columns are opt-in. */
+  beginnerView: boolean;
   activeTierPass: ActiveTierPass;
   onSelectTierPass: (pass: ActiveTierPass) => void;
   completedMilestones: Record<string, boolean>;
@@ -33,13 +35,18 @@ interface TabArchitectureProps {
 
 export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   onLoadPreset,
+  beginnerView,
   activeTierPass,
   onSelectTierPass,
   completedMilestones,
   onToggleMilestone,
 }) => {
   const [viewMode, setViewMode] = useState<'linear' | 'matrix'>('linear');
+  const [advancedColumnsOpen, setAdvancedColumnsOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  // Advanced View always shows the full matrix. Beginner View shows only the Beginner column
+  // until the learner asks for the deeper ones.
+  const showAdvancedColumns = !beginnerView || advancedColumnsOpen;
 
   const getPassSteps = (pass: ActiveTierPass): LinearTrackStep[] => {
     if (pass === 'level0') return LEVEL_0_STEPS;
@@ -81,6 +88,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
           <div className="flex items-center gap-1 bg-[#0b0f19] p-1 rounded-lg border border-[#1e293b]">
             <button
               onClick={() => setViewMode('linear')}
+              data-testid="btn-arch-linear"
               className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                 viewMode === 'linear'
                   ? 'bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/50'
@@ -92,6 +100,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             </button>
             <button
               onClick={() => setViewMode('matrix')}
+              data-testid="btn-arch-matrix"
               className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                 viewMode === 'matrix'
                   ? 'bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/50'
@@ -99,7 +108,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
               }`}
             >
               <Grid className="w-3.5 h-3.5" />
-              <span>Full 3-Tier Matrix</span>
+              <span>{beginnerView ? 'Compare Tracks' : 'Full 3-Tier Matrix'}</span>
             </button>
           </div>
         </div>
@@ -467,25 +476,55 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
         </div>
       )}
 
-      {/* 3B. MATRIX COMPARISON VIEW (All 3 Tiers Side-by-Side Across Tracks 00–08) */}
+      {/* 3B. MATRIX COMPARISON VIEW (Beginner column by default; deeper columns opt-in) */}
       {viewMode === 'matrix' && (
         <div className="bg-[#111827] border border-[#334155] rounded-xl p-4 overflow-x-auto">
-          <div className="mb-3">
-            <h3 className="text-sm font-bold text-[#38bdf8]">
-              Complete Horizontal vs. Vertical Curriculum Matrix (Tracks 00–08 × Tiers 1–3)
-            </h3>
-            <p className="text-xs text-[#94a3b8]">
-              Read down a column to follow a **Linear Level-Up Pass** (Track 00 → Track 08), or read across a row to see how a single track evolves from Beginner to Production.
-            </p>
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-[#38bdf8]">
+                {beginnerView
+                  ? 'Track-by-Track Matrix (Beginner Path)'
+                  : 'Complete Horizontal vs. Vertical Curriculum Matrix (Tracks 00–08 × Tiers 1–3)'}
+              </h3>
+              <p className="text-xs text-[#94a3b8]">
+                {beginnerView
+                  ? 'Read across a row to see the beginner path for one track. The deeper columns stay out of the way until you ask for them.'
+                  : 'Read down a column to follow a **Linear Level-Up Pass** (Track 00 → Track 08), or read across a row to see how a single track evolves from Beginner to Production.'}
+              </p>
+            </div>
+            {beginnerView && (
+              <button
+                onClick={() => setAdvancedColumnsOpen((open) => !open)}
+                data-testid="btn-toggle-advanced-columns"
+                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#0b0f19] text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer transition-colors"
+              >
+                {advancedColumnsOpen ? 'Hide deeper columns' : 'Show deeper columns'}
+              </button>
+            )}
           </div>
 
-          <table className="w-full text-xs text-left border-collapse min-w-[900px]">
+          <table
+            data-testid="arch-matrix"
+            className={`w-full text-xs text-left border-collapse ${
+              showAdvancedColumns ? 'min-w-[900px]' : 'min-w-[520px]'
+            }`}
+          >
             <thead>
               <tr className="border-b border-[#334155] bg-[#0b0f19] text-[#38bdf8] font-mono">
                 <th className="p-3 w-1/5">Track (00 → 08)</th>
-                <th className="p-3 w-1/4 text-[#34d399]">Pass 1: Tier 1 (Beginner / Intuitive)</th>
-                <th className="p-3 w-1/4 text-[#38bdf8]">Pass 2: Tier 2 (Intermediate / Applied)</th>
-                <th className="p-3 w-1/4 text-[#c084fc]">Pass 3: Tier 3 (Advanced / Production)</th>
+                <th className="p-3 w-1/4 text-[#34d399]">
+                  {beginnerView ? 'Beginner path' : 'Pass 1: Tier 1 (Beginner / Intuitive)'}
+                </th>
+                {showAdvancedColumns && (
+                  <th className="p-3 w-1/4 text-[#38bdf8]">
+                    {beginnerView ? 'Deeper practice' : 'Pass 2: Tier 2 (Intermediate / Applied)'}
+                  </th>
+                )}
+                {showAdvancedColumns && (
+                  <th className="p-3 w-1/4 text-[#c084fc]">
+                    {beginnerView ? 'Advanced' : 'Pass 3: Tier 3 (Advanced / Production)'}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1e293b] text-[#cbd5e1] align-top">
@@ -511,32 +550,36 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                         <Play className="w-2.5 h-2.5 fill-current" /> Open in Tier 1
                       </button>
                     </td>
-                    <td className="p-3">
-                      <div className="font-semibold text-[#38bdf8] mb-1">{t2Step.headline}</div>
-                      <p className="text-[#94a3b8] text-[0.74rem] mb-2">{t2Step.milestoneTask}</p>
-                      <button
-                        onClick={() => {
-                          onSelectTierPass('tier2');
-                          onLoadPreset(t2Step.presetId);
-                        }}
-                        className="text-[0.7rem] text-[#38bdf8] hover:underline font-mono inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <Play className="w-2.5 h-2.5 fill-current" /> Open in Tier 2
-                      </button>
-                    </td>
-                    <td className="p-3">
-                      <div className="font-semibold text-[#c084fc] mb-1">{t3Step.headline}</div>
-                      <p className="text-[#94a3b8] text-[0.74rem] mb-2">{t3Step.milestoneTask}</p>
-                      <button
-                        onClick={() => {
-                          onSelectTierPass('tier3');
-                          onLoadPreset(t3Step.presetId);
-                        }}
-                        className="text-[0.7rem] text-[#c084fc] hover:underline font-mono inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <Play className="w-2.5 h-2.5 fill-current" /> Open in Tier 3
-                      </button>
-                    </td>
+                    {showAdvancedColumns && (
+                      <td className="p-3">
+                        <div className="font-semibold text-[#38bdf8] mb-1">{t2Step.headline}</div>
+                        <p className="text-[#94a3b8] text-[0.74rem] mb-2">{t2Step.milestoneTask}</p>
+                        <button
+                          onClick={() => {
+                            onSelectTierPass('tier2');
+                            onLoadPreset(t2Step.presetId);
+                          }}
+                          className="text-[0.7rem] text-[#38bdf8] hover:underline font-mono inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Play className="w-2.5 h-2.5 fill-current" /> Open in Tier 2
+                        </button>
+                      </td>
+                    )}
+                    {showAdvancedColumns && (
+                      <td className="p-3">
+                        <div className="font-semibold text-[#c084fc] mb-1">{t3Step.headline}</div>
+                        <p className="text-[#94a3b8] text-[0.74rem] mb-2">{t3Step.milestoneTask}</p>
+                        <button
+                          onClick={() => {
+                            onSelectTierPass('tier3');
+                            onLoadPreset(t3Step.presetId);
+                          }}
+                          className="text-[0.7rem] text-[#c084fc] hover:underline font-mono inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Play className="w-2.5 h-2.5 fill-current" /> Open in Tier 3
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}

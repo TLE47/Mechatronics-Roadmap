@@ -11,6 +11,20 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 109: The First Two Hours, and a Core Total
+
+The README now opens with a single **Start here — your first 2 hours** block: one Lesson 1 link,
+one editor, one Run button, no jargon. Everything else starts below the fold.
+
+`docs/SIM_ROUTE.md` now states the **Core total: ≈200–290 focused hours** before its long table,
+and `docs/ROUTE.md` repeats it on the Core-complete line. The Extensions total was already visible;
+Core is now impossible to miss.
+
+Beginner View's track matrix starts with the Beginner column only. The Tier 2 and Tier 3 columns
+are behind a **Show deeper columns** button, and the matrix switch is renamed **Compare Tracks**;
+Advanced View still opens the full three-tier matrix. The browser E2E now proves the columns start
+hidden, appear on the toggle, and hide again.
+
 ## [2026-10-19] — Run 108: Focused Hours and a Real Finish Line
 
 The front page said **200–290 hours** without saying what it counted, which reads as elapsed time

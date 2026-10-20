@@ -501,6 +501,10 @@ def render():
 
     core = [by_id[ident] for ident in CORE_MODULES]
     extensions = [row for row in modules if row["id"] not in set(CORE_MODULES)]
+    ext_low = sum(row["low"] or 0.0 for row in extensions)
+    ext_high = sum(row["high"] or 0.0 for row in extensions)
+    ext_hours = fmt(round(ext_low, 2), round(ext_high, 2))
+    core_lessons = route_model.facts()["lesson_count"]
 
     lines = [
         "# The simulation route: what is required, what is optional",
@@ -518,6 +522,10 @@ def render():
         "Tier 1 bridge, the capstone's own prerequisites and the capstone - builds the same arm",
         "in about half the focused hours, page by page in [`MINIMUM.md`](MINIMUM.md). The Core",
         "route below is the full course: the same arm with the Tier 2/3 depth modules.",
+        "",
+        f"**Core total: {friendly_range(facts['low'], facts['high'])} focused hours** for "
+        f"{len(CORE_MODULES)} required modules and all {core_lessons} lessons. Extensions add "
+        f"{ext_hours} focused hours and are optional.",
         "",
         f"**Route status: `{ROUTE_STATUS}`** — {STATUS_SENTENCE[ROUTE_STATUS]}.",
         "",

@@ -468,6 +468,30 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('tab-tier1-exit-review').click();
     await page.getByTestId('panel-tier1-exit-review').waitFor({ timeout: 5000 });
 
+    // 9b. Beginner View opens the roadmap matrix on the Beginner column only, and the deeper
+    // Tier 2/Tier 3 columns are opt-in. This is the first place a beginner would meet the matrix.
+    await page.getByTestId('tab-btn-tab-arch').click();
+    await page.getByTestId('btn-arch-matrix').click();
+    const matrixBeginner = await page.getByTestId('arch-matrix').textContent();
+    assert(
+      matrixBeginner?.includes('Beginner path'),
+      'Beginner View matrix must label its only column in plain English'
+    );
+    assert(
+      !matrixBeginner?.includes('Open in Tier 2') && !matrixBeginner?.includes('Open in Tier 3'),
+      'Beginner View matrix must start without Tier 2 or Tier 3 columns'
+    );
+    await page.getByTestId('btn-toggle-advanced-columns').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="arch-matrix"]')?.textContent?.includes('Open in Tier 2') &&
+        document.querySelector('[data-testid="arch-matrix"]')?.textContent?.includes('Open in Tier 3')
+    );
+    await page.getByTestId('btn-toggle-advanced-columns').click();
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="arch-matrix"]')?.textContent?.includes('Open in Tier 2')
+    );
+
     // 10. Formatting is graded separately from behaviour: a behaviourally correct run must not be blocked
     // by harmless whitespace, while a lesson whose Expected Output is a padded table still grades its
     // columns. What these scenarios need is the progress counters at zero, which used to mean a second

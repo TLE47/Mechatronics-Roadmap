@@ -749,6 +749,7 @@ export const App: React.FC = () => {
         {activeTab === 'tab-arch' && (
           <TabArchitecture
             onLoadPreset={handleLoadPreset}
+            beginnerView={viewMode === 'beginner'}
             activeTierPass={activeTierPass}
             onSelectTierPass={setActiveTierPass}
             completedMilestones={completedMilestones}
