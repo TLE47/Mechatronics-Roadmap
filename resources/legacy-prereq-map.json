@@ -213,9 +213,11 @@
       ]
     },
     "bond_graph_port_hamiltonian_passivity": {
-      "page": "06-robotics.T2.06a",
+      "page": "00-foundations.T3.00a",
       "evidence": [
-        "graph"
+        "hamiltonian",
+        "passivity",
+        "port"
       ]
     },
     "bulk_vs_ceramic_decoupling": {

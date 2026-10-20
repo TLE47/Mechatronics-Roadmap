@@ -42,49 +42,49 @@ const TOUR_STEPS: TourStepInfo[] = [
   {
     tab: 'tab-arch',
     targetId: null,
-    title: 'Step 1 / 8 — Linear Multi-Pass Level-Up Roadmap (Stage 0 → Pass 1 → Pass 2 → Pass 3)',
+    title: 'Tour 1 / 8 — Linear Multi-Pass Level-Up Roadmap (Stage 0 → Pass 1 → Pass 2 → Pass 3)',
     desc: 'Start with Track P & Stage 0 foundations, then complete Pass 1 (Tier 1 Beginner) linearly from Track 00 to Track 08 before looping back for Pass 2 (Tier 2 Applied) and Pass 3 (Tier 3 Production). Click "Next Step →" to test the simulators!',
   },
   {
     tab: 'tab-bode',
     targetId: 'sl-fn',
-    title: 'Step 2 / 8 — Canceling Mechanical Vibration with a Notch Filter',
+    title: 'Tour 2 / 8 — Canceling Mechanical Vibration with a Notch Filter',
     desc: 'Notice the highlighted Notch Center slider. When detuned from the resonance frequency, the green curve has a large vibration peak. Drag the slider or click "Apply Demo Preset" to watch the filter surgically erase the vibration peak.',
   },
   {
     tab: 'tab-foc',
     targetId: 'btn-dec-toggle',
-    title: 'Step 3 / 8 — Brushless Motor Field-Oriented Control (FOC) & Decoupling',
+    title: 'Tour 3 / 8 — Brushless Motor Field-Oriented Control (FOC) & Decoupling',
     desc: 'At high RPM, spinning magnets induce cross-coupling voltages (±ω_e L i_q). Click the highlighted "Toggle Decoupling Feedforward" button to see how turning off feedforward decoupling causes a large rose-colored i_d current error spike!',
   },
   {
     tab: 'tab-pend',
     targetId: 'sl-xmax',
-    title: 'Step 4 / 8 — Pendulum Energy Swing-Up, Balancing & Safety Walls',
+    title: 'Tour 4 / 8 — Pendulum Energy Swing-Up, Balancing & Safety Walls',
     desc: 'Watch the Furuta Pendulum pump energy until upright and catch itself! Drag the highlighted Safety Wall slider (x_max) inward or click "Apply Demo Preset" to inject a +3.2 rad/s kick—the safety filter brakes the cart before crossing the red walls.',
   },
   {
     tab: 'tab-models',
     targetId: 'sl-rq2',
-    title: 'Step 5 / 8 — 3D Robot Arm Kinematics & Sub-Microsecond Safety Cutoff (STO)',
+    title: 'Tour 5 / 8 — 3D Robot Arm Kinematics & Sub-Microsecond Safety Cutoff (STO)',
     desc: 'Drag the highlighted Joint q_2 slider to articulate the 3-DOF Hopping Leg, or click "Apply Demo Preset" to inject a 42A Overcurrent Short and watch the dual-channel hardware STO trip the MOSFET gates to SAFE HIGH-Z in 0.65 μs!',
   },
   {
     tab: 'tab-cadpcb',
     targetId: 'sl-pcbl',
-    title: 'Step 6 / 8 — 3D Flexure Hinges & Motor Driver PCB Voltage Spikes',
+    title: 'Tour 6 / 8 — 3D Flexure Hinges & Motor Driver PCB Voltage Spikes',
     desc: 'Drag the highlighted Loop Inductance slider (L_loop) above 4.0 nH: notice how V_DS,peak turns red (>60V) because stray PCB trace inductance spikes during turn-off! Click "Apply Demo Preset" to snap back to our 6-layer 1.6 nH layout.',
   },
   {
     tab: 'tab-sysid',
     targetId: 'btn-sysmode-toggle',
-    title: 'Step 7 / 8 — Sine-Sweep & Multisine System Identification',
+    title: 'Tour 7 / 8 — Sine-Sweep & Multisine System Identification',
     desc: 'Notice how zero-phase cosines (φ_k = 0) create a giant impulse spike at t=0 (CF = 8.00) that clips the actuator! Click "Apply Demo Preset" to switch to Schroeder quadratic phasing—compressing Crest Factor to 1.71 and locking onto the true cyan plant curve.',
   },
   {
     tab: 'tab-eskf',
     targetId: 'btn-seqlock-toggle',
-    title: 'Step 8 / 8 — IMU Attitude Sensor Fusion & Torn-Read Protection',
+    title: 'Tour 8 / 8 — IMU Attitude Sensor Fusion & Torn-Read Protection',
     desc: 'When WaitFreeSeqLock is disabled, the 40 kHz motor ISR overwrites the telemetry struct mid-read—causing violent red torn-read spikes! Click "Apply Demo Preset" to enable atomic sequence locking (0 torn reads in 29.6 ns) while estimating gyro bias.',
   },
 ];
@@ -146,7 +146,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-pyodide',
     beginnerLabel: `2. Run Python Lessons (${PYTHON_LESSONS.length} Exercises)`,
-    technicalLabel: '9. In-Browser Python Runner (36 Lessons)',
+    technicalLabel: '9. In-Browser Python Runner (86 Exercises)',
     technicalSubtitle: 'Pyodide WASM · 3-Step Hints · Asserts',
     isBeginnerCore: true,
   },
@@ -278,7 +278,9 @@ export function buildPortfolioMarkdown(
 }
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabId>('tab-arch');
+  // A newcomer arrives to run the first lesson, not to read the advanced roadmap: open the Python
+  // runner by default. The roadmap tab is still one click away for anyone who wants the map.
+  const [activeTab, setActiveTab] = useState<TabId>('tab-pyodide');
   const [tourIndex, setTourIndex] = useState<number>(0);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
@@ -666,14 +668,19 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      <GuidedTourBar
-        currentStepIndex={tourIndex}
-        totalSteps={TOUR_STEPS.length}
-        stepInfo={TOUR_STEPS[tourIndex]}
-        onPrev={handlePrevTourStep}
-        onNext={handleNextTourStep}
-        onApplyPreset={handleApplyPreset}
-      />
+      {/* The simulator tour is for exploring the labs, not for the first lesson. On the Python
+          runner it would put a tier-matrix paragraph between a newcomer and Lesson P.1, so it
+          appears once they open the roadmap (or any simulator tab). */}
+      {activeTab !== 'tab-pyodide' && (
+        <GuidedTourBar
+          currentStepIndex={tourIndex}
+          totalSteps={TOUR_STEPS.length}
+          stepInfo={TOUR_STEPS[tourIndex]}
+          onPrev={handlePrevTourStep}
+          onNext={handleNextTourStep}
+          onApplyPreset={handleApplyPreset}
+        />
+      )}
 
       {/* Tabs navigation */}
       <nav

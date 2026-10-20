@@ -92,7 +92,7 @@ Three additional electronics modules carry `safety_level: low` with dedicated `#
 
 ## 4. Automated Verification Command
 
-To validate the entire 72-module DAG (24 legacy + 48 bridge modules) and execute all 121 embedded Python blocks (worked examples, Skip Test answer keys, and Gate Test answer keys):
+To validate the entire 74-module DAG (24 legacy + 50 bridge modules) and execute all 121 embedded Python blocks (worked examples, Skip Test answer keys, and Gate Test answer keys):
 
 ```bash
 python3 scripts/validate_modules.py

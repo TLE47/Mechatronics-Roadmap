@@ -10,7 +10,7 @@
  *
  * Each case perturbs or primes the simulator where its default already equals the preset, asserts the
  * readout is NOT yet the preset's value, applies the preset, and asserts the readout IS the value.
- * Step 1 (the roadmap) has no simulator, so its Apply is a deliberate no-op and is not asserted.
+ * Tour 1 (the roadmap) has no simulator, so its Apply is a deliberate no-op and is not asserted.
  *
  * The expected readouts are the ones each preset writes in `app/src/components/tabs/*`, measured in the
  * browser: the notch at 547 Hz and 172 Hz, the 5500 RPM drone with decoupling off, the 0.45 m wall, the
@@ -239,6 +239,9 @@ async function freshPage(context, baseUrl, pageErrors) {
 }
 
 async function runTour(page, baseUrl, log) {
+  // The tour is hidden on the Python runner (the newcomer's first screen), so open the roadmap the
+  // same way a learner does before touching the tour controls.
+  await page.getByRole('button', { name: /^1\. Start Here/ }).first().click({ timeout: 8000 });
   // Real clicks on the tour's own controls: the same path a learner takes.
   const next = page.getByRole('button', { name: /^Next Step/ });
   const apply = page.getByRole('button', { name: 'Apply Demo Preset', exact: true });
@@ -250,7 +253,7 @@ async function runTour(page, baseUrl, log) {
       await next.click();
       stepNumber += 1;
     }
-    await page.waitForFunction((n) => document.body.innerText.includes(`Step ${n} / 8`), testCase.step, {
+    await page.waitForFunction((n) => document.body.innerText.includes(`Tour ${n} / 8`), testCase.step, {
       timeout: 5000,
     });
 
@@ -283,6 +286,9 @@ async function runTour(page, baseUrl, log) {
 
 /** Open a card on the roadmap: select its tier pass, then press the card's preset button. */
 async function openCard(page, { pass, card }) {
+  // A fresh context now opens on the Python runner (the beginner's first screen), so the roadmap
+  // has to be selected before its cards exist in the DOM.
+  await page.getByRole('button', { name: /^1\. Start Here/ }).first().click({ timeout: 8000 });
   await page.getByRole('button', { name: pass }).first().click({ timeout: 8000 });
   await page.getByRole('button', { name: card, exact: true }).first().click({ timeout: 8000 });
 }

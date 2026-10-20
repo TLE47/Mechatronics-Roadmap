@@ -56,7 +56,9 @@ export async function runSmokeTests(viteServer) {
     const runnerMod = await vite.ssrLoadModule('/src/components/tabs/TabPyodideRunner.tsx');
     const quizMod = await vite.ssrLoadModule('/src/components/tabs/TabPlacementQuiz.tsx');
     const linkMod = await vite.ssrLoadModule('/src/components/tabs/TabLinkHealth.tsx');
+    const archMod = await vite.ssrLoadModule('/src/components/tabs/TabArchitecture.tsx');
     const lessonsMod = await vite.ssrLoadModule('/src/data/pythonLessonsData.ts');
+    const { coachForLesson } = await vite.ssrLoadModule('/src/lessonCoach.ts');
     const historyMod = await vite.ssrLoadModule('/src/data/linkHistoryData.ts');
 
     const {
@@ -66,7 +68,13 @@ export async function runSmokeTests(viteServer) {
       STORAGE_KEY_VIEW_MODE,
       STORAGE_KEY_MILESTONES,
     } = appMod;
-    const { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } = runnerMod;
+    const {
+      TabPyodideRunner,
+      STORAGE_KEY_VERIFIED,
+      STORAGE_KEY_COMPLETED,
+      STORAGE_KEY_FIRST_GUIDE,
+    } = runnerMod;
+    const { TabArchitecture } = archMod;
     const {
       TabPlacementQuiz,
       PLACEMENT_QUESTIONS,
@@ -87,9 +95,39 @@ export async function runSmokeTests(viteServer) {
       htmlBeginner.includes('Beginner View (Plain-English Path)'),
       'Workbench must render the Beginner View toggle button'
     );
+    // A newcomer lands on the Python runner, not the advanced roadmap: the first screen must be
+    // the place where Lesson 1 is run. The roadmap is still checked, by rendering Tab 1 directly.
     assert(
-      htmlBeginner.includes('data-testid="panel-completion-routes-spine"'),
-      'Tab 1 Roadmap must render the 3 Completion Routes, Recurring Arm Spine & Tier 2/3 Scope banner'
+      htmlBeginner.includes('runner-verified-count'),
+      'Beginner View must default to the Python runner, where Lesson 1 is run'
+    );
+    assert(
+      htmlBeginner.includes('data-testid="first-lesson-guide"'),
+      'A first-time visitor must see the guided first lesson above the runner'
+    );
+    assert(
+      htmlBeginner.includes('Run the starter') &&
+        !htmlBeginner.includes('data-testid="guide-what-to-fix"'),
+      'The guide must offer to run the starter, and show the fix panel only after a failure'
+    );
+    assert(
+      !htmlBeginner.includes('Interactive Guided Beginner Walkthrough'),
+      'The advanced simulator tour must stay off the first-lesson screen'
+    );
+    const htmlRoadmap = cleanSsr(
+      ReactDOMServer.renderToString(
+        React.createElement(TabArchitecture, {
+          onLoadPreset: () => {},
+          activeTierPass: 'tier1',
+          onSelectTierPass: () => {},
+          completedMilestones: {},
+          onToggleMilestone: () => {},
+        })
+      )
+    );
+    assert(
+      htmlRoadmap.includes('data-testid="panel-completion-routes-spine"'),
+      'Tab 1 Roadmap must render the Completion Routes, Arm Spine & deeper-scope banner when opened'
     );
     assert(
       htmlBeginner.includes('1. Start Here: Roadmap &amp; Progress') ||
@@ -226,6 +264,39 @@ export async function runSmokeTests(viteServer) {
       assert(
         Array.isArray(lesson.instructorTestSummary) && lesson.instructorTestSummary.length >= 1,
         `Lesson ${lesson.id} missing instructorTestSummary`
+      );
+    }
+
+    // Every entry, not only P.1, must have a specific brief: how many holes, the first one, the
+    // first check, and the output that means finished. A generic fallback on 86 entries would pass
+    // the render test while telling a learner nothing.
+    for (const lesson of PYTHON_LESSONS) {
+      const coach = coachForLesson(lesson);
+      assert(coach.holeCount > 0, `Lesson ${lesson.id} starter must name at least one marked hole`);
+      assert(
+        coach.firstHole && !/^TODO\b/i.test(coach.firstHole),
+        `Lesson ${lesson.id} first hole must be readable (${coach.firstHole})`
+      );
+      assert(coach.check.length > 10, `Lesson ${lesson.id} must describe its first check`);
+      assert(
+        coach.check !== 'the lesson behavioural checks',
+        `Lesson ${lesson.id} must name its own first check, not the generic fallback`
+      );
+      assert(
+        coach.firstHole !== 'the first marked line in the starter',
+        `Lesson ${lesson.id} must name its own first hole, not the generic fallback`
+      );
+      if (coach.isExercise) {
+        assert(
+          coach.check.includes(coach.firstHole),
+          `Lesson ${lesson.id} exercise check must name its first hole`
+        );
+      }
+      assert(coach.finish.length > 0, `Lesson ${lesson.id} must name a finished output`);
+      const markers = (lesson.starterCode.match(/raise\s+NotImplementedError|#\s*TODO\b/g) || []).length;
+      assert(
+        coach.holeCount <= markers,
+        `Lesson ${lesson.id} reports ${coach.holeCount} holes but its starter marks only ${markers}`
       );
     }
 
@@ -372,6 +443,27 @@ export async function runSmokeTests(viteServer) {
         htmlRunner.includes('Formatting is ignored'),
       'TabPyodideRunner must state that a normalized lesson ignores whitespace'
     );
+    // The coach is per lesson, including its hide control: hiding P.1 must not hide P.2's brief.
+    globalThis.localStorage.setItem(STORAGE_KEY_FIRST_GUIDE, JSON.stringify(['P.1']));
+    const htmlP1Hidden = cleanSsr(
+      ReactDOMServer.renderToString(React.createElement(TabPyodideRunner, { initialLessonId: 'P.1' }))
+    );
+    assert(
+      !htmlP1Hidden.includes('data-testid="first-lesson-guide"'),
+      'hiding P.1\'s guide must hide P.1\'s guide only'
+    );
+    const p2Coach = coachForLesson(PYTHON_LESSONS.find((lesson) => lesson.id === 'P.2'));
+    const htmlP2 = cleanSsr(
+      ReactDOMServer.renderToString(React.createElement(TabPyodideRunner, { initialLessonId: 'P.2' }))
+    );
+    assert(
+      htmlP2.includes('data-testid="first-lesson-guide"') &&
+        htmlP2.includes('First run · Lesson P.2') &&
+        htmlP2.includes('THE STARTER') &&
+        htmlP2.includes(p2Coach.firstHole.slice(0, 30)),
+      'P.2 must get its own coach naming its starter hole, even after P.1 is hidden'
+    );
+    globalThis.localStorage.clear();
     const htmlExactLesson = cleanSsr(
       ReactDOMServer.renderToString(
         React.createElement(TabPyodideRunner, { initialLessonId: exactLesson.id })

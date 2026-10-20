@@ -6,7 +6,7 @@ ladder. "As good as Tier 1" is too vague to finish, so this file is the contract
 [`scripts/module_parity.py`](../scripts/module_parity.py) is the implementation. Run it, read
 [`docs/coverage-table.md`](coverage-table.md), and the question "how far is this module?" has a number.
 
-Applies to the **50 bridge modules** in `modules/` (16 Tier 1, 22 Tier 2, 12 Tier 3): the **42 Core** modules that the required route names in [`SIM_ROUTE.md`](SIM_ROUTE.md), and the **8 Extensions** that are optional but still graded. The 24 legacy
+Applies to the **50 bridge modules** in `modules/` (16 Tier 1, 22 Tier 2, 12 Tier 3): the **40 Core** modules that the required route names in [`SIM_ROUTE.md`](SIM_ROUTE.md), and the **10 Extensions** that are optional but still graded. The 24 legacy
 modules are superseded and out of scope.
 
 ```mermaid

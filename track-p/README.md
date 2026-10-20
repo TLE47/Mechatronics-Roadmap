@@ -45,7 +45,7 @@ You do **not** need to take a separate math course before starting robotics. Use
 
 ## 3. Lesson Map & Unmeasured Target Times
 
-> **Note on Timing:** Per-lesson times below (`~45–90 min` target per lesson, `~10–13 hours` total for Track P) are **unmeasured author targets**, not empirical averages. If you are a beginner working through Track P, please submit your actual per-lesson completion times using our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
+> **Note on Timing:** Per-lesson times below (`~60–180 min` target per lesson, `~17–43 hours` total for Track P) are **unmeasured author targets**, not empirical averages. If you are a beginner working through Track P, please submit your actual per-lesson completion times using our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
 
 | Lesson | Title | New Ideas (Max 2, Enforced in YAML Front Matter) | Unmeasured Target | Unmeasured Slow-Paced Target |
 | :--- | :--- | :--- | :--- | :--- |

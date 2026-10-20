@@ -133,12 +133,12 @@ class SimRouteTests(unittest.TestCase):
             f"expected a `**Core total**` figure in {DOC}; without it the README has nothing "
             f"generated to quote - check the route page's totals table",
         )
-        quoted = f"{float(core.group(1)):g}–{float(core.group(2)):g} hours"
+        quoted = gen.friendly_range(float(core.group(1)), float(core.group(2))) + " hours"
         self.assertIn(
             quoted,
             readme,
-            f"expected README.md to quote the generated Core total {quoted!r} exactly as "
-            f"docs/SIM_ROUTE.md states it; check the first-paragraph claim, which is where a "
+            f"expected README.md to quote the generated Core plan figure {quoted!r}, rounded from "
+            f"docs/SIM_ROUTE.md's exact total; check the first three lines, which is where a "
             f"beginner decides what to finish and goes stale first",
         )
 
@@ -162,26 +162,32 @@ class SimRouteTests(unittest.TestCase):
         )
 
         # The counts a newcomer reads must be the generated ones too: a moved module is exactly the
-        # change that leaves "42 modules" standing in the first paragraph while the table says 40.
+        # change that leaves an old count standing while the table says otherwise.
         self.assertIn(
-            f"**{len(gen.CORE_MODULES)} modules plus the prose tracks**",
+            f"<!-- sim-route:modules -->**{len(gen.CORE_MODULES)} modules**<!-- /sim-route -->",
             readme,
-            f"expected README.md to state the generated Core module count "
-            f"({len(gen.CORE_MODULES)}); check the first paragraph against {DOC}, since a moved "
-            f"module is exactly what leaves the old count standing while the table says otherwise",
+            f"expected README.md's module count marker to carry the required count "
+            f"({len(gen.CORE_MODULES)}); a hand-typed count is what drifts when a module moves",
         )
-        tier2 = sum(1 for row in gen.module_rows() if row["id"] in gen.CORE_MODULES and row["tier"] == "2")
+        step_facts = gen.route_model.facts()
         self.assertIn(
-            f"{tier2} Tier 2 modules",
+            f"<!-- route:lessons -->{step_facts['lesson_count']}<!-- /route -->",
             readme,
-            f"expected README.md to state the generated Core Tier 2 count ({tier2}); check the "
-            f"first paragraph against {DOC}, since the Tier 2 count is the course's own promise",
+            f"expected README.md's lesson-count marker to carry the generated total "
+            f"({step_facts['lesson_count']}); the table and the prose must agree",
         )
 
         self.assertRegex(
             readme,
-            r"(?s)Extensions.{0,400}?optional",
-            "README.md must say the Extensions are optional",
+            r"(?s)optional modules.{0,300}?outside the route",
+            "README.md must say the optional modules sit outside the route, so a newcomer does not "
+            "read them as required work",
+        )
+        self.assertIn(
+            "docs/EXTENSIONS.md",
+            readme,
+            "expected README.md to link docs/EXTENSIONS.md, where the optional modules and the "
+            "ROS 2 escape hatch are explained; check the optional-modules paragraph",
         )
 
     def test_the_readme_figures_are_generated_from_the_route(self):
@@ -194,22 +200,24 @@ class SimRouteTests(unittest.TestCase):
         self.assertEqual(
             gen.render_readme(self.readme), self.readme,
             "expected README's marked figures to equal what the generator renders from the pages; "
-            "check the hours range and the Tier 2 count against docs/SIM_ROUTE.md, since a hand "
-            "edit makes the front page disagree with the route it links",
+            "check the hours range, module count and optional total against docs/SIM_ROUTE.md, "
+            "since a hand edit makes the front page disagree with the route it links",
         )
 
-    def test_the_readme_carries_both_hours_markers_and_the_tier2_marker(self):
+    def test_the_readme_carries_the_generated_figures(self):
         self.assertEqual(
             (self.readme.count("<!-- sim-route:hours -->"),
-             self.readme.count("<!-- sim-route:tier2 -->")),
-            (2, 1),
-            "expected two hours markers (the first paragraph and the requirement note) and one Tier "
-            "2 marker; a missing marker silently removes that figure from generation, which is how "
-            "the 175.5-220.5 total survived next to a 178-223 one",
+             self.readme.count("<!-- sim-route:modules -->"),
+             self.readme.count("<!-- sim-route:extensions -->")),
+            (1, 1, 1),
+            "expected one hours marker, one required-module marker and one optional-total marker; "
+            "a missing marker silently removes that figure from generation, which is how a stale "
+            "total survives next to a generated one",
         )
 
     def test_a_stale_figure_is_rewritten_not_left_alone(self):
-        doctored = self.readme.replace("**178–223 hours**", "**175.5–220.5 hours**", 1)
+        current = f"**{gen.friendly_range(gen.route_facts()['low'], gen.route_facts()['high'])} hours**"
+        doctored = self.readme.replace(current, "**175.5–220.5 hours**", 1)
         fixed = gen.render_readme(doctored)
         self.assertNotEqual(
             fixed, doctored,
@@ -231,23 +239,18 @@ class SimRouteTests(unittest.TestCase):
             f"route_facts() gives the README; two summations mean two chances to disagree",
         )
         self.assertIn(
-            f"**{hours.replace('-', '–')} hours**", self.readme,
-            f"expected README.md's marked total to quote {hours!r} with the en dash the page uses; "
-            f"check generate_sim_route.py and docs/SIM_ROUTE.md",
+            f"**{gen.friendly_range(facts['low'], facts['high'])} hours**", self.readme,
+            f"expected README.md's first-line total to quote the rounded plan figure built from "
+            f"{hours!r}; check generate_sim_route.py and docs/SIM_ROUTE.md",
         )
 
-    def test_the_tier2_requirement_count_is_the_route_count(self):
-        """No pinned literal: the route is the only expectation, so moving a module needs one edit.
-
-        A test that also asserted `tier2 == 20` would force a second, manual update whenever a
-        module deliberately moves — and it would be the second place to get that edit wrong. The
-        marker comparison below is the real check: regenerate, and the README follows.
-        """
-        tier2 = gen.route_facts()["tiers"].get("2", 0)
+    def test_the_required_module_count_is_the_route_count(self):
+        """No pinned literal: the route is the only expectation, so moving a module needs one edit."""
+        required = len(gen.CORE_MODULES)
         self.assertIn(
-            f"<!-- sim-route:tier2 -->{tier2}<!-- /sim-route -->", self.readme,
-            f"expected README.md's step-4 requirement to carry the route's own Tier 2 count "
-            f"({tier2}); a hand-typed 18 is exactly the drift the marker exists to stop",
+            f"<!-- sim-route:modules -->**{required} modules**<!-- /sim-route -->", self.readme,
+            f"expected README.md to carry the route's own required-module count ({required}); "
+            f"a hand-typed 42 is exactly the drift the marker exists to stop",
         )
 
     def test_the_hours_basis_sentence_is_generated_from_the_metadata(self):

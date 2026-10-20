@@ -23,6 +23,8 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import route_model  # noqa: E402  (the learner-facing Step 1-10 model)
 OUT = os.path.join(ROOT, "docs", "SIM_ROUTE.md")
 README = os.path.join(ROOT, "README.md")
 # The README quotes two numbers from the route. They are written between markers and regenerated
@@ -66,7 +68,7 @@ CORE_MODULES = [
     "01-electronics.T2.01a", "01-electronics.T2.01b",
     "02-mechanics.T2.02a", "03-sensors.T2.03a",
     "04-embedded.T2.04a", "04-embedded.T2.04b",
-    "05-control.T2.05a", "06-robotics.T2.06a", "06-robotics.T2.06b", "07-systems.T2.07a",
+    "05-control.T2.05a", "07-systems.T2.07a",
     # Tier 3 - one depth line: rotation foundations, covariance, ESKF reset, constrained control,
     # then the single simulation capstone that exercises all four.
     "00-foundations.T3.00a", "02-mechanics.T3.02a",
@@ -88,14 +90,29 @@ OPTIONAL_REASONS = {
         "runs trajectory, estimator and controller on the plant in the browser; the bridge is real "
         "work but nothing on the required route consumes it."
     ),
+    "06-robotics.T2.06a": (
+        "A local ROS 2 install is the most common place a self-guided beginner stops: it needs a "
+        "supported Ubuntu, several GB and a shell, while the 2-DOF arm, its estimator and its "
+        "controller all run in the browser. The page keeps its graded exercise and badge; the "
+        "Docker and browser walkthroughs teach the node graph without the install."
+    ),
+    "06-robotics.T2.06b": (
+        "This is the operations half of the same ROS 2 toolchain (launch files, rosbag2 replay, "
+        "Gazebo integration), so it carries the same install wall as `T2.06a`; nothing later on "
+        "the required route opens a ROS 2 shell."
+    ),
 }
 
 # Prose tracks that ship before any module: Python from zero, then the electricity intuition.
 # Order matters; ids are the lesson_id frontmatter values. The Track P milestone (P.M) is part of
 # the required route: it is the one lesson that ties the track together, so it is not skipped.
 CORE_TRACKS = [
-    ("Track P - programming from zero", "track-p/*.md", None),
-    ("Stage 0 - why electricity behaves like flow", "stage-0/*.md", None),
+    ("Step 1 - Python and the maths a robot needs", "track-p/*.md", None),
+    ("Step 2 - Circuits and your first microcontroller", "stage-0/*.md", None),
+    # The 23 lessons in Tracks 00-08 are required pages too. They were missing from this list
+    # once, which is how a 178-hour total stood beside a 48-lesson course: the route page summed
+    # the two prose tracks and every module, but no lesson inside the tracks themselves.
+    ("Steps 3-10 - the arm, one system at a time", "0*-*/0*.md", None),
 ]
 
 
@@ -244,6 +261,11 @@ def route_facts() -> dict:
             "pages": pages, "slow_pages": slow_pages}
 
 
+def friendly_range(low: float, high: float) -> str:
+    """`200.35, 290` -> `≈200–290`: a front-page figure is a plan, not a decimal claim."""
+    return f"≈{int(low + 0.5)}–{int(high + 0.5)}"
+
+
 def hours_basis(facts: dict) -> str:
     """One clause, lowercase for mid-sentence use, saying what the high end of the range is made of.
 
@@ -275,17 +297,26 @@ def _replace_marker(text: str, name: str, value: str) -> str:
 
 
 def render_readme(text: str | None = None) -> str:
-    """The README with both route figures rewritten from `route_facts()`.
+    """The README with its route figures rewritten from `route_facts()`.
 
     Two markers carry the hours (the first paragraph and the requirement note), so the same name is
-    replaced everywhere it appears; the Tier 2 count appears once, on the step that names it.
+    replaced everywhere it appears. The required-module count and the optional half (count and
+    hours) are generated too: they are the numbers a moved module changes first.
     """
     if text is None:
         text = read_text(README)
     facts = route_facts()
-    hours = fmt(facts["low"], facts["high"]).replace("-", "–")
+    hours = friendly_range(facts["low"], facts["high"])
+    modules = len(CORE_MODULES)
+    extensions = [row for row in module_rows() if row["id"] not in set(CORE_MODULES)]
+    ext_low = sum(row["low"] or 0.0 for row in extensions)
+    ext_high = sum(row["high"] or 0.0 for row in extensions)
+    ext_hours = fmt(round(ext_low, 2), round(ext_high, 2)).replace("-", "–")
     text = _replace_marker(text, "hours", f"**{hours} hours**")
-    text = _replace_marker(text, "tier2", str(facts["tiers"].get("2", 0)))
+    text = _replace_marker(text, "modules", f"**{modules} modules**")
+    text = _replace_marker(
+        text, "extensions", f"**{len(extensions)} optional modules ({ext_hours} hours)**"
+    )
     text = _replace_marker(text, "hours-basis", hours_basis(facts))
     return text
 
@@ -330,35 +361,40 @@ def render():
     ]
 
     core_low = core_high = 0.0
-    for label, pattern, stop_before in CORE_TRACKS:
-        rows = track_rows(pattern, stop_before)
-        got_low = got_high = 0.0
-        for row in rows:
-            lines.append(f"| {label} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
-            if row["low"] is not None:
-                got_high += row["high"]
-                got_low += row["low"]
-        core_low += got_low
-        core_high += got_high
-        lines.append(
-            f"| {label} | **{len(rows)} lessons, together** | "
-            f"{fmt(round(got_low, 2), round(got_high, 2))} |"
-        )
-
-    for stage in ("1", "2", "3"):
-        rows = [row for row in core if row["tier"] == stage]
-        if not rows:
+    covered = []
+    for step in route_model.STEPS:
+        lessons = route_model.step_lessons(step)
+        rows = [row for row in core if row["id"] in set(step["modules"])]
+        if not lessons and not rows:
             continue
-        low = sum(row["low"] or 0.0 for row in rows)
-        high = sum(row["high"] or 0.0 for row in rows)
+        covered.extend(row["id"] for row in rows)
+        low = sum(row["low"] or 0.0 for row in lessons + rows)
+        high = sum(row["high"] or 0.0 for row in lessons + rows)
         core_low += low
         core_high += high
+        label = f"Step {step['number']} · {step['title']}"
+        for row in lessons:
+            lines.append(f"| {label} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
         for row in rows:
-            lines.append(f"| Tier {stage} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
-        lines.append(f"| Tier {stage} | **{len(rows)} modules, together** | {fmt(low, high)} |")
+            lines.append(f"| {label} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
+        parts = []
+        if lessons:
+            parts.append(f"{len(lessons)} lesson{'s' if len(lessons) != 1 else ''}")
+        if rows:
+            parts.append(f"{len(rows)} module{'s' if len(rows) != 1 else ''}")
+        lines.append(
+            f"| {label} | **{' + '.join(parts)}, together** | {fmt(round(low, 2), round(high, 2))} |"
+        )
+    uncovered = sorted(set(CORE_MODULES) - set(covered))
+    if uncovered:
+        sys.exit(
+            "CORE_MODULES are in no learner step, so the route page cannot label them: "
+            + ", ".join(uncovered)
+            + "; add them to the right step in scripts/route_model.py"
+        )
 
     lines += [
-        f"| **Core total** | **{len(CORE_MODULES)} modules + the prose tracks above** | "
+        f"| **Core total** | **{len(CORE_MODULES)} modules + all {len(route_model.facts()['steps'])} steps' lessons** | "
         f"**{fmt(facts['low'], facts['high'])}** |",
         "",
         "The low end is every page's `est_hours` / `typical_hours`; the high end is its",
@@ -370,14 +406,14 @@ def render():
         "",
         "## Extensions (optional, still graded)",
         "",
-        "| Tier | Item | Hours |",
+        "| Where | Item | Hours |",
         "| :--- | :--- | ---: |",
     ]
     ext_low = ext_high = 0.0
     for row in extensions:
         ext_low += row["low"] or 0.0
         ext_high += row["high"] or 0.0
-        lines.append(f"| {row['tier']} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
+        lines.append(f"| Optional | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
     lines += [
         f"| - | **{len(extensions)} modules** | **{fmt(round(ext_low, 2), round(ext_high, 2))}** |",
         "",
@@ -386,17 +422,16 @@ def render():
         "",
         "## Why this split",
         "",
-        "- Every Tier 1 bridge is required because each one supplies the plant, the units or the",
-        "  tool that Tier 2 assumes.",
-        "- Every Tier 2 module on the route is required because the Tier 3 depth line uses it: the",
-        "  covariance and ESKF work sits on the linear-algebra and estimation ladder, and the",
-        "  constrained-control module sits on the control ladder. The two exceptions are named below,",
-        "  with the sentence that earns each one.",
-        "- Tier 3 requires one depth line - rotation foundations, Joseph covariance, ESKF reset,",
-        "  constrained control, one simulation capstone - so a learner reaches a working",
-        "  estimation-and-safety stack without first finishing every capstone.",
+        "- Every practice module in Steps 3-8 is required because it supplies the plant, the units or",
+        "  the tool the next step assumes.",
+        "- The deeper modules are required because the last step's project uses them: the covariance",
+        "  and ESKF work sits on the linear-algebra and estimation line, and the constrained-control",
+        "  module sits on the control line.",
+        "- The advanced half of the course is one depth line - rotation foundations, Joseph",
+        "  covariance, ESKF reset, constrained control, one simulation capstone - so a learner reaches",
+        "  a working estimation-and-safety stack without first finishing every capstone.",
         "",
-        "## Why two Tier 2 modules are optional",
+        f"## Why {len(OPTIONAL_REASONS)} modules are optional",
         "",
     ]
     for ident, reason in OPTIONAL_REASONS.items():
@@ -404,8 +439,8 @@ def render():
         lines.append(f"- **`{ident}`** ({title}): {reason}")
     lines += [
         "",
-        "Both stay in their track's ladder, keep their graded package and their badge, and keep their",
-        "browser-verifiable exercise - moving them changes what is required, not what exists.",
+        "Each stays in its track, keeps its graded package and its badge, and keeps its",
+        "browser-verifiable exercise - moving it changes what is required, not what exists.",
         "",
     ]
     return "\n".join(lines)

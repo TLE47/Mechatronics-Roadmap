@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
+import { coachForLesson } from '../../lessonCoach';
 import { logEvent } from '../../learningLog';
 import {
   Play,
@@ -37,6 +38,9 @@ const DEFAULT_MAX_TRACE_STEPS = 400000;
 
 export const STORAGE_KEY_VERIFIED = 'mechalab_pyodide_verified_v1';
 export const STORAGE_KEY_COMPLETED = 'mechalab_pyodide_completed_v1';
+// A JSON array of lesson ids whose first-run coach the learner hid. The old P.1-only key stored
+// '1', which means P.1 was hidden, not that every lesson's later brief should be.
+export const STORAGE_KEY_FIRST_GUIDE = 'mechalab_first_guide_dismissed_v1';
 
 const PYODIDE_WORKER_SOURCE = `
 let pyodideInstance = null;
@@ -268,6 +272,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onToggleLessonCompleted,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
+  const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_FIRST_GUIDE);
+      if (!raw) return [];
+      if (raw === '1') return ['P.1'];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
+  const guideEditorRef = useRef<HTMLTextAreaElement | null>(null);
+  const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
   const [trackFilter, setTrackFilter] = useState<'all' | 'advanced' | 'track-p' | 't00-02' | 't03-08'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [code, setCode] = useState<string>(PYTHON_LESSONS[0].starterCode);
@@ -700,6 +717,42 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const isCurrentVerified = !!verifiedLessons[currentLesson.id];
   const isCurrentSelfMarked = !!completedLessons[currentLesson.id];
 
+  // Every unverified lesson gets its own first-run brief: the starter's marked holes, the first
+  // check, and the output that means finished. Hiding one lesson's brief does not hide the next's.
+  const coach = coachForLesson(currentLesson);
+  const guideDismissed =
+    dismissedGuides.includes('*') || dismissedGuides.includes(currentLesson.id);
+  // Keep the brief up for the run that earns verification, so its "that is the whole loop" line is
+  // actually seen instead of unmounting the moment the lesson is marked verified.
+  const showFirstGuide = (!isCurrentVerified || passStatus === 'passed') && !guideDismissed;
+  const dismissFirstGuide = () => {
+    if (guideDismissed) return;
+    const next = [...dismissedGuides, currentLesson.id];
+    setDismissedGuides(next);
+    try {
+      localStorage.setItem(STORAGE_KEY_FIRST_GUIDE, JSON.stringify(next));
+    } catch {
+      // ignore storage quota errors
+    }
+  };
+  const guideFailed =
+    passStatus === 'behavior_failed' || passStatus === 'mismatch' || passStatus === 'error' ||
+    passStatus === 'stopped';
+  const guideLines = (instructorError || stderr || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  // An assertion puts its expected/got line first; a traceback puts the useful SyntaxError or
+  // NameError last. The guide should show the line a beginner can act on in either case.
+  const guideFixLine =
+    passStatus === 'mismatch'
+      ? 'Output differs from the lesson\'s expected output.'
+      : passStatus === 'behavior_failed'
+        ? guideLines[0] || ''
+        : guideLines[guideLines.length - 1] || '';
+  const guideShowsExpectedGot =
+    passStatus === 'behavior_failed' && guideFixLine.startsWith('AssertionError');
+
   return (
     <div className="space-y-5">
       {/* Header Banner */}
@@ -707,10 +760,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         <div>
           <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
             <Terminal className="w-3.5 h-3.5" />
-            <span>Isolated Web Worker Python 3.12 Runner · 32 Beginner Lessons</span>
+            <span>Isolated Web Worker Python 3.12 Runner · {PYTHON_LESSONS.length} graded exercises</span>
           </div>
           <h2 className="text-lg font-bold text-[#f1f5f9] mt-0.5">
-            Run Track P (`P.1–P.M`) &amp; Pass 1 (`00.1–08.1`) Starter Code, Progressive Hints &amp; Behavioral Tests
+            Run every Step 1–10 lesson and practice module: starter code, progressive hints &amp; behavioral tests
           </h2>
           <p className="text-xs text-[#94a3b8] mt-0.5">
             Complete the `TODO` lines, unlock hints one step at a time, and click <b>Run &amp; Verify Output</b>. Code executes inside an isolated <b>Web Worker</b> with infinite-loop protection and is graded by <b>Instructor Behavioral Tests</b> (multi-input &amp; boundary checks) plus output presentation.
@@ -747,8 +800,172 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         </div>
       </div>
 
+      {showFirstGuide && (
+        <section
+          data-testid="first-lesson-guide"
+          className="bg-[#06281f] border border-[#34d399]/50 rounded-xl p-5"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>
+                  {currentLesson.id === 'P.1'
+                    ? 'Start here · Lesson P.1 · Step 1 of 10'
+                    : `First run · Lesson ${currentLesson.id} · ${
+                        currentLesson.track === 'modules' ? 'graded exercise' : currentLesson.title
+                      }`}
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-[#f1f5f9] mt-1">
+                {currentLesson.id === 'P.1'
+                  ? 'One editor, one button, one red line.'
+                  : 'This starter, its first check, and the finish line.'}
+              </h3>
+              <p className="text-xs text-[#cbd5e1] mt-1 max-w-3xl">
+                {currentLesson.id === 'P.1'
+                  ? 'This page is the whole lesson. Nothing to install and nothing else to read: change a line, press Run, and let the red line tell you what to fix.'
+                  : `This brief is only for ${currentLesson.id}. It names the first hole, the first check, and what a finished run prints; the editor and the red line do the rest.`}
+              </p>
+            </div>
+            <button
+              onClick={dismissFirstGuide}
+              data-testid="btn-guide-dismiss"
+              className="px-2.5 py-1 rounded text-[11px] font-mono text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer"
+            >
+              {currentLesson.id === 'P.1'
+                ? 'I have done this before — hide'
+                : "Hide this lesson's guide"}
+            </button>
+          </div>
+
+          <ol className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
+              <div className="text-[11px] font-mono text-[#38bdf8]">1 · THE STARTER</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+                {coach.holeCount > 0 ? (
+                  <>
+                    This starter leaves{' '}
+                    <b>
+                      {coach.holeCount}{' '}
+                      {coach.isExercise
+                        ? `NotImplementedError ${coach.holeCount === 1 ? 'hole' : 'holes'}`
+                        : `TODO ${coach.holeCount === 1 ? 'line' : 'lines'}`}
+                    </b>
+                    . Start with: <code>{coach.firstHole}</code>
+                  </>
+                ) : (
+                  <>The starter is complete; the checks decide whether its behaviour is right.</>
+                )}
+              </p>
+              <button
+                onClick={() => {
+                  guideEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  guideEditorRef.current?.focus();
+                }}
+                data-testid="btn-guide-editor"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 text-[#38bdf8] border border-[#38bdf8]/40 cursor-pointer"
+              >
+                Show me the editor
+              </button>
+            </li>
+
+            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
+              <div className="text-[11px] font-mono text-[#34d399]">2 · THE FIRST FAILURE</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+                Run it untouched. The first check is: <b>{coach.check}</b>
+              </p>
+              <p className="text-[11px] text-[#94a3b8] mt-1">
+                The red line names the value it expected and the value your code produced.
+              </p>
+              <button
+                onClick={() => runPythonCode(codeRef.current, currentLesson)}
+                disabled={isRunning}
+                data-testid="btn-guide-run"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] disabled:opacity-50 cursor-pointer"
+              >
+                {isRunning
+                  ? pyodideStatus === 'loading'
+                    ? 'Loading Python (first run takes a few seconds)…'
+                    : 'Running…'
+                  : 'Run the starter'}
+              </button>
+            </li>
+
+            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
+              <div className="text-[11px] font-mono text-[#fbbf24]">3 · THE FINISH LINE</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+                When every check passes, it prints: <code>{coach.finish}</code>
+              </p>
+              <p className="text-[11px] text-[#94a3b8] mt-1">
+                Hint 1 is a nudge; it never gives the answer.
+              </p>
+              <button
+                onClick={() => {
+                  setRevealedHints((h) => Math.max(h, 1));
+                  guideAssessmentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+                disabled={currentLesson.hints.length === 0}
+                data-testid="btn-guide-hint"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-[#fbbf24]/15 hover:bg-[#fbbf24]/25 text-[#fbbf24] border border-[#fbbf24]/40 disabled:opacity-50 cursor-pointer"
+              >
+                {revealedHints > 0 ? 'Hint 1 is open below' : 'Reveal Hint 1'}
+              </button>
+            </li>
+          </ol>
+
+          {guideFailed && guideFixLine && (
+            <div
+              data-testid="guide-what-to-fix"
+              aria-live="polite"
+              className="mt-3 p-3 rounded-lg bg-[#0b0f19] border border-[#f43f5e]/50"
+            >
+              <div className="text-[11px] font-mono text-[#f43f5e]">WHAT TO FIX</div>
+              <code className="block mt-1 text-xs text-[#fecdd3] break-words">{guideFixLine}</code>
+              <p className="text-[11px] text-[#cbd5e1] mt-1">
+                {guideShowsExpectedGot ? (
+                  <>
+                    That is the check explaining itself: expected value first, what your code
+                    produced second. Read it, change one marked line, and press{' '}
+                    <b>Run &amp; Verify Output</b> again.
+                  </>
+                ) : passStatus === 'mismatch' ? (
+                  <>
+                    Compare that with the expected output in the panel below, then change one marked
+                    line and press <b>Run &amp; Verify Output</b> again.
+                  </>
+                ) : (
+                  <>
+                    That line is Python's own error, naming what it could not do. Fix that line and
+                    press <b>Run &amp; Verify Output</b> again.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          {passStatus === 'passed' && (
+            <div
+              data-testid="guide-passed"
+              className="mt-3 p-3 rounded-lg bg-[#0b0f19] border border-[#34d399]/50 text-xs text-[#cbd5e1]"
+            >
+              <b className="text-[#34d399]">That is the whole loop.</b> You read a failure, changed
+              the code, and proved it. The next lesson opens with its own starter brief.
+              {nextLesson && (
+                <button
+                  onClick={() => selectLesson(nextLesson.id)}
+                  className="ml-2 px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-[#34d399] text-[#0b0f19] cursor-pointer"
+                >
+                  Next: Lesson {nextLesson.id} →
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Sidebar: 32-Lesson Search & Selector */}
+        {/* Left Sidebar: exercise search and selector */}
         <div className="lg:col-span-4 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col max-h-[760px]">
           {/* Search Input */}
           <div className="relative mb-3">
@@ -765,28 +982,28 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           <div className="flex items-center justify-between gap-1 mb-3">
             <span className="text-xs font-mono text-[#94a3b8] tabular-nums">
-              Lessons ({filteredLessons.length})
+              Exercises ({filteredLessons.length})
             </span>
             <div className="flex gap-1">
               {[
                 { id: 'all', label: `All (${PYTHON_LESSONS.length})` },
                 {
                   id: 'advanced',
-                  label: `Modules (${PYTHON_LESSONS.filter((l) => l.track === 'modules').length})`,
+                  label: `Practice modules (${PYTHON_LESSONS.filter((l) => l.track === 'modules').length})`,
                 },
                 {
                   id: 'track-p',
-                  label: `Track P (${PYTHON_LESSONS.filter((l) => l.track === 'track-p').length})`,
+                  label: `Step 1 (${PYTHON_LESSONS.filter((l) => l.track === 'track-p').length})`,
                 },
                 {
                   id: 't00-02',
-                  label: `T00–02 (${PYTHON_LESSONS.filter((l) =>
+                  label: `Steps 3–5 (${PYTHON_LESSONS.filter((l) =>
                     ['00-foundations', '01-electronics-and-power', '02-mechanics-kinematics-dynamics'].includes(l.track)
                   ).length})`,
                 },
                 {
                   id: 't03-08',
-                  label: `T03–08 (${PYTHON_LESSONS.filter((l) =>
+                  label: `Steps 6–10 (${PYTHON_LESSONS.filter((l) =>
                     ['03-sensors-and-actuators', '04-embedded-and-realtime', '05-control-and-estimation', '06-robotics-and-autonomy', '07-systems-hil-and-production', '08-capstone-projects'].includes(l.track)
                   ).length})`,
                 },
@@ -1019,6 +1236,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </span>
             </div>
             <textarea
+              ref={guideEditorRef}
               value={code}
               onChange={(e) => commitCode(e.target.value)}
               spellCheck={false}
@@ -1029,6 +1247,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           {/* Instructor Behavioral Assessment Panel */}
           <div
+            ref={guideAssessmentRef}
             data-testid="panel-instructor-tests"
             className="bg-[#111827] border border-[#334155] rounded-xl p-4"
           >

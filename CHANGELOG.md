@@ -11,6 +11,62 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 107: Every Lesson Teaches Its Own First Run
+
+The first-run brief was P.1-only, so a learner who clicked P.2 or an exercise got the same generic
+"change a TODO" paragraph. Every unverified lesson now derives its own three lines: how many holes
+its starter leaves and the first one, the first instructor check it must satisfy, and the output
+that means finished. Beginner pages count `# TODO` markers; exercise packages count the
+`NotImplementedError` holes they actually raise.
+
+Hiding a brief is now per lesson (`mechalab_first_guide_dismissed_v1` holds a JSON array of ids;
+the old `'1'` value means P.1 was hidden, not every lesson), and a brief stays up for the run that
+earns verification so its success line is seen. `app/src/lessonCoach.ts` is the single parser; the smoke suite checks
+all 86 entries have a non-empty specific brief, and the browser E2E walks P.2 and P.3 to prove the
+brief follows the selected lesson and that hiding one does not hide the next.
+
+## [2026-10-19] — Run 106: Step 1 Teaches Itself
+
+Step 1 used to need the README beside it: a newcomer had to know they were looking at an editor,
+that the untouched starter was *supposed* to fail, and that the red assertion line already named
+the fix. The runner's first visit now opens on Lesson P.1 with a three-panel guide — the editor and
+its `# TODO` lines, a **Run the starter** button that executes the untouched code, and the
+`WHAT TO FIX` panel that appears from the check's own expected/got line — or, after a traceback,
+from its last line, where the `SyntaxError` or `NameError` actually is.
+
+The guide is not a modal, so it can be read beside the lesson. It hides itself after P.1 verifies,
+and **I have done this before — hide** remembers the choice in
+`mechalab_first_guide_dismissed_v1`. The simulator tour stays off this screen; it remains on the
+roadmap and every simulator tab.
+
+`scripts/e2e_browser_workbench.mjs` walks the newcomer path (guide → run starter → behavior-failed
+line → Hint 1), and the smoke suite checks the guide renders server-side without the failure panel.
+The same-task pair sweep and tour test now open the roadmap first, because the tour is one click
+away from the first lesson rather than above it.
+
+## [2026-10-19] — Run 105: The Front Page Becomes a Beginner Entry
+
+The README opened with a badge wall, seven acronyms and a `Track P → Stage 0 → Pass 1` route a
+newcomer had to decode before finding a lesson. It is now three lines: a link to Lesson 1, one
+sentence naming the finished arm, and the time and cost. The ten-step table is generated from
+`scripts/route_model.py`; the tier/pass matrix, CI details and optional modules moved to
+[`docs/ROUTE.md`](docs/ROUTE.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) and
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 6 KB.
+
+Two contradictions surfaced while generating the counts:
+
+- the README said "13 Track P lessons and the P.M milestone" beside a fourteen-row table;
+- the route total omitted all 23 lesson pages inside Tracks 00-08. Including them moves the Core
+  from 178–223 to 200–290 hours, and the ROS 2 pair moves to Extensions, so the required set is
+  40 modules and 48 lessons.
+
+`scripts/check_consistency.py` now fails CI on a quoted count that differs from the lesson files,
+a step repeated or missing from the table, a second name for a step on the front page, and a stale
+route or README figure. [`docs/BEGINNER_TEST.md`](docs/BEGINNER_TEST.md) is the 40-minute first
+sitting script, with the [`beginner-session-log.md`](.github/ISSUE_TEMPLATE/beginner-session-log.md)
+observation template; it records N = 0 until two real beginners have been watched. The two ROS 2 modules keep their graded packages and badges; the README
+names the Docker and browser walkthrough and says the arm does not need a local ROS 2 install.
+
 ## [2026-10-19] — Run 104: The Rise Gate Compares URLs, Not Counts
 
 The `--fail-on-rise` gate compared `not_checked` with the previous row's, which made a new bot wall and

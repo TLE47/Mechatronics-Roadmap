@@ -5,6 +5,10 @@ reporting template; [`docs/pilot-results.md`](pilot-results.md) stays a template
 fills it. Nothing in this repository claims beginner completion data, and the hour figures are
 author targets until this pilot says otherwise.
 
+For a single 40-minute first sitting, use the script and observation sheet in
+[`docs/BEGINNER_TEST.md`](BEGINNER_TEST.md); it is the same protocol narrowed to Step 1, so a blocker
+can be fixed before five people are recruited.
+
 The point of the pilot is the one claim the rest of the course cannot make for itself: that someone who
 did **not** write the material can finish the Core route with only occasional help. Author-dogfood
 ([`docs/dogfood-log.md`](dogfood-log.md)) finds bugs; it cannot measure beginner difficulty, because the

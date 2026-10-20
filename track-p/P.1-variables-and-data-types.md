@@ -10,6 +10,8 @@ slow_learner_hours: "2.0-3.0"
 
 # Lesson P.1: Variables and Fundamental Data Types (`int`, `float`, `str`, `bool`)
 
+> **Step 1 of 10 — start here.** [Open the browser runner](https://tle47.github.io/Mechatronics-Roadmap/) and pick `P.1` on the left; it needs no install. Read on if you prefer to work in your own Python 3.
+
 ## Goal
 Store robot measurements such as battery charge level, wheel pulse counts, and safety status flags in named Python variables, and distinguish the four fundamental data types (`int`, `float`, `str`, `bool`).
 
@@ -27,7 +29,7 @@ Store robot measurements such as battery charge level, wheel pulse counts, and s
 
 ```mermaid
 flowchart LR
-    Start["Start Here: Track P"] --> P1["P.1: Variables & Data Types"]
+    Start["Start Here: Step 1"] --> P1["P.1: Variables & Data Types"]
     P1 --> P2["P.2: Arithmetic & Order of Operations"]
 ```
 
