@@ -11,6 +11,17 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 111: The Start Here Block Steps Aside
+
+The landing block was doing a first-timer's job forever. Once Lesson 1 is executed and passed it
+now collapses to a single line — **Lesson 1 verified · Start here — your first 2 hours**, with the
+same Lesson 1 link at the far right — so a returning learner is not made to scroll past a banner
+that is no longer news. The first-timer block is unchanged, and the README-agreement check still
+reads the same strings.
+
+The smoke suite renders both states; the browser E2E runs P.1's reference solution in the real
+runner and proves the block collapses without losing its link.
+
 ## [2026-10-19] — Run 110: The Start Here Block Reaches the Landing Screen
 
 The README's opening block now also opens the workbench. The default Python tab renders the same

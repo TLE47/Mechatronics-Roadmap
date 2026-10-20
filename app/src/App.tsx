@@ -737,8 +737,11 @@ export const App: React.FC = () => {
       {/* Main Tab Pane */}
       <main className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4">
         {/* The landing screen is where a newcomer arrives, so it opens with the README's own
-            "Start here" block: one heading, one Lesson 1 link, one plain-English line. */}
-        {activeTab === 'tab-pyodide' && <StartHereCard />}
+            "Start here" block: one heading, one Lesson 1 link, one plain-English line. Once Lesson 1
+            is verified the same block closes to a single line. */}
+        {activeTab === 'tab-pyodide' && (
+          <StartHereCard lessonOneVerified={!!verifiedLessons['P.1']} />
+        )}
         {activeTab !== 'tab-arch' &&
           activeTab !== 'tab-pyodide' &&
           activeTab !== 'tab-placement' &&

@@ -123,6 +123,31 @@ export async function runSmokeTests(viteServer) {
       ),
       "The Start here link must open Lesson 1's page at the same path the README links"
     );
+    // The full block is for a newcomer. Once Lesson 1 is verified the same block is one line: the
+    // lesson link survives, the first-timer promise does not.
+    globalThis.localStorage.setItem(STORAGE_KEY_VERIFIED, JSON.stringify({ 'P.1': true }));
+    const htmlReturning = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
+    globalThis.localStorage.clear();
+    assert(
+      htmlReturning.includes('data-testid="start-here"') &&
+        htmlReturning.includes('data-collapsed="true"'),
+      'A learner who has verified Lesson 1 must get the collapsed Start here line'
+    );
+    assert(
+      htmlReturning.includes('Lesson 1 verified') &&
+        !htmlReturning.includes(
+          'One lesson, one editor, one Run button. No install, no account, nothing to buy.'
+        ),
+      'The collapsed block must say Lesson 1 is verified and drop the first-timer promise'
+    );
+    assert(
+      htmlReturning.includes(
+        `href="https://github.com/TLE47/Mechatronics-Roadmap/blob/main/${
+          PYTHON_LESSONS.find((lesson) => lesson.id === 'P.1').path
+        }"`
+      ),
+      'The collapsed block must keep the Lesson 1 link'
+    );
     assert(
       htmlBeginner.includes('data-testid="first-lesson-guide"'),
       'A first-time visitor must see the guided first lesson above the runner'

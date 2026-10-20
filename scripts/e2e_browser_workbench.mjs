@@ -653,8 +653,36 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       '  ok the shared plant imports inside Pyodide and reproduces the capstone numbers in the browser'
     );
 
+    // 12. The landing Start here block closes to one line once Lesson 1 is verified. Everything
+    //     above saw the full first-timer block; a returning learner should get the compact line
+    //     without losing the lesson link.
+    await formattingPage.getByTestId('lesson-item-P.1').click();
+    await formattingPage.getByTestId('btn-load-solution').click();
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
+    const collapsedStartHere = formattingPage.getByTestId('start-here');
+    await collapsedStartHere.waitFor({ timeout: 5000 });
+    assert.equal(
+      await collapsedStartHere.getAttribute('data-collapsed'),
+      'true',
+      'verifying Lesson 1 must collapse the Start here block to one line'
+    );
+    const collapsedText = await collapsedStartHere.innerText();
+    assert(
+      collapsedText.includes('Lesson 1 verified') &&
+        !collapsedText.includes('One lesson, one editor, one Run button'),
+      `the collapsed block must say Lesson 1 is verified and drop the first-timer promise; got: ${collapsedText}`
+    );
+    assert(
+      (await formattingPage.getByTestId('start-here-lesson-link').getAttribute('href'))?.endsWith(
+        '/track-p/P.1-variables-and-data-types.md'
+      ),
+      'the collapsed block must keep the Lesson 1 link'
+    );
+    console.log('  ok the Start here block collapses to one line after Lesson 1 is verified');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading & shared-plant import).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import & Start here collapse).'
     );
   } finally {
     await browser.close();
