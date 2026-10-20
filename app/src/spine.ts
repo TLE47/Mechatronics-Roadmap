@@ -70,6 +70,7 @@ function passStep(spineNumber: number, pass: ActiveTierPass): PassStep | null {
 
 const ONRAMP_STEP = 1;
 const BENCH_STEP = 2;
+const ONRAMP_LAST_STEP = 2;
 
 function entriesForSpineStep(source: SpineStepData): PythonLessonItem[] {
   if (source.number === ONRAMP_STEP) {
@@ -170,14 +171,42 @@ export function hoursRange(range: HourRange): string {
 }
 
 /**
- * The cost line the step card and the runner header both print, from the same sums:
- * `17–21 h · arm 6.5–10.5 h · depth 10.5 h`. Steps 1-2 are the on-ramp and have no depth
- * layer, so they say that plainly instead of printing `depth 0 h`.
+ * The cost line the step card, the runner header and the matrix row all print, from the same
+ * sums: `17–21 h · arm 6.5–10.5 h · depth 10.5 h`. Steps 1-2 are the on-ramp and have no depth
+ * layer, so they say that plainly instead of printing `depth 0 h`. The number, not a zero in
+ * the depth sum, decides that: Step 10's capstone is all arm work and is not an on-ramp.
  */
 export function stepCostLabel(step: SpineStep): string {
-  const total = hoursRange(step.hours.total);
-  if (step.hours.depth.high === 0) return `${total} · on-ramp, one layer`;
-  return `${total} · arm ${hoursRange(step.hours.arm)} · depth ${hoursRange(step.hours.depth)}`;
+  if (step.number <= ONRAMP_LAST_STEP) {
+    return `${hoursRange(step.hours.total)} · on-ramp, one layer`;
+  }
+  return costLabel(step.hours);
+}
+
+/** The same line from sums that are not one step's: a table footer totals them. */
+export function costLabel(hours: SpineStep['hours']): string {
+  const total = hoursRange(hours.total);
+  if (hours.depth.high === 0) return `${total} · arm ${hoursRange(hours.arm)}`;
+  return `${total} · arm ${hoursRange(hours.arm)} · depth ${hoursRange(hours.depth)}`;
+}
+
+/** Printed precision, so a footer does not show `169.84999999999997 h`. */
+const round2 = (value: number) => Math.round(value * 100) / 100;
+
+/**
+ * The rows' own sums, added up. A matrix footer typed by hand is a second total that can
+ * disagree with the rows above it; this one cannot.
+ */
+export function sumHours(steps: SpineStep[]): SpineStep['hours'] {
+  const add = (pick: (hours: SpineStep['hours']) => HourRange): HourRange => ({
+    low: round2(steps.reduce((sum, step) => sum + pick(step.hours).low, 0)),
+    high: round2(steps.reduce((sum, step) => sum + pick(step.hours).high, 0)),
+  });
+  return {
+    arm: add((hours) => hours.arm),
+    depth: add((hours) => hours.depth),
+    total: add((hours) => hours.total),
+  };
 }
 
 const DEPTH_ORDER: ActiveTierPass[] = ['tier1', 'tier2', 'tier3'];

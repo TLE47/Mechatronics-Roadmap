@@ -28,6 +28,7 @@ import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import {
   SPINE,
   SPINE_STEP_COUNT,
+  costLabel,
   entriesAtDepth,
   spineStepForEntry,
   stepAtDepth,
@@ -36,6 +37,7 @@ import {
   stepCostLabel,
   stepForMilestone,
   stepLabel,
+  sumHours,
 } from '../app/src/spine.ts';
 import { ALL_PASS_STEPS } from '../app/src/practiceLinks.ts';
 
@@ -180,6 +182,43 @@ check('every step prints its focused hours, and arm + depth is the total', () =>
   assert.ok(
     stepCostLabel(SPINE[0]).includes('on-ramp'),
     'the on-ramp must say it has one layer instead of printing a depth of zero hours'
+  );
+  assert.equal(
+    stepCostLabel(SPINE[9]),
+    '6.5–9 h · arm 6.5–9 h',
+    'Step 10 is all arm work, but it is the capstone, not an on-ramp: a zero depth sum is not the test'
+  );
+  for (const step of SPINE.slice(ONRAMP_STEPS)) {
+    assert.ok(
+      !stepCostLabel(step).includes('on-ramp'),
+      `step ${step.number} must not be labelled the on-ramp just because it has no depth hours`
+    );
+  }
+});
+
+check('the matrix footer totals the rows it prints, not a second hand-typed number', () => {
+  const rows = SPINE.filter((step) => step.number > 2);
+  assert.equal(rows.length, 8, 'the matrix compares Steps 3-10: the on-ramp has no depth columns');
+  const sums = sumHours(rows);
+  // Steps 1-2 are the on-ramp, so the footer is the ten-step total minus those two rows.
+  const ten = sumHours(SPINE);
+  for (const layer of ['arm', 'depth', 'total']) {
+    for (const end of ['low', 'high']) {
+      const onramp = SPINE[0].hours[layer][end] + SPINE[1].hours[layer][end];
+      assert.ok(
+        Math.abs(sums[layer][end] + onramp - ten[layer][end]) < 1e-9,
+        `matrix footer ${layer}.${end} must be the ten-step total minus Steps 1-2`
+      );
+    }
+  }
+  assert.equal(
+    costLabel(sums),
+    '169.85–214.5 h · arm 89.85–134.5 h · depth 80 h',
+    'the matrix footer must print the same spelled-out layers as the step cards'
+  );
+  assert.ok(
+    !/\d\.\d{3,}/.test(costLabel(sums)),
+    'the footer must print rounded hours (two decimals), not a float artifact like 169.84999999999997'
   );
 });
 

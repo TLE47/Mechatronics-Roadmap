@@ -10,10 +10,12 @@ import {
   SPINE,
   SPINE_STEP_COUNT,
   entriesAtDepth,
+  costLabel,
   milestonesForStep,
   stepAtDepth,
   stepCompleteAtDepth,
   stepCostLabel,
+  sumHours,
   type SpineStep,
 } from '../../spine';
 import { tabForPreset } from '../../demoPresets';
@@ -104,6 +106,8 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
     return haystack.some((piece) => piece.toLowerCase().includes(q));
   };
   const visibleSpineSteps = SPINE.filter(matchesSearch);
+  // The matrix covers Steps 3-10: the on-ramp has no depth columns to compare.
+  const matrixSteps = SPINE.filter((step) => step.number > 2);
 
   return (
     <div className="space-y-5">
@@ -814,7 +818,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1e293b] text-[#cbd5e1] align-top">
-              {SPINE.filter((step) => step.number > 2).map((spineStep) => {
+              {matrixSteps.map((spineStep) => {
                 const t1Step = stepAtDepth(spineStep, 'tier1')!.step;
                 const t2Step = stepAtDepth(spineStep, 'tier2')?.step ?? t1Step;
                 const t3Step = stepAtDepth(spineStep, 'tier3')?.step ?? t1Step;
@@ -825,6 +829,13 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                         STEP {spineStep.number} OF {SPINE_STEP_COUNT}
                       </div>
                       <div>{spineStep.title}</div>
+                      <div
+                        data-testid={`matrix-cost-${spineStep.number}`}
+                        className="mt-1 text-[0.7rem] font-mono font-normal text-[#94a3b8] tabular-nums"
+                        title="Focused hours from each page's own metadata; the row is that step, the footer is these rows added up"
+                      >
+                        {stepCostLabel(spineStep)}
+                      </div>
                     </td>
                     <td className="p-3">
                       <div className="font-semibold text-[#34d399] mb-1">{t1Step.headline}</div>
@@ -873,6 +884,21 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 );
               })}
             </tbody>
+            <tfoot>
+              <tr className="border-t border-[#334155] bg-[#0b0f19] align-top">
+                <td className="p-3 font-mono text-[#f1f5f9]">
+                  Steps 3–{SPINE_STEP_COUNT} · {matrixSteps.length} rows
+                </td>
+                <td
+                  colSpan={showAdvancedColumns ? 3 : 1}
+                  data-testid="matrix-cost-total"
+                  className="p-3 font-mono text-[#34d399] tabular-nums"
+                  title="The rows above, added up; the on-ramp's Steps 1-2 are in the ten-step list, not here"
+                >
+                  {costLabel(sumHours(matrixSteps))}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       )}

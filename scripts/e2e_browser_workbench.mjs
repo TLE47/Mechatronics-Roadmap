@@ -631,6 +631,33 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       !matrixBeginner?.includes('Open in Tier 2') && !matrixBeginner?.includes('Open in Tier 3'),
       'Beginner View matrix must start without Tier 2 or Tier 3 columns'
     );
+
+    // 9c. The matrix is plannable: every row prices its own step in the same words the step
+    // card uses, and the footer is those rows added up rather than a second hand-typed total.
+    // Step 10 is all arm work and prints no depth clause; every other row prints one.
+    const rowShape =
+      /^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h · arm (\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h(?: · depth (\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h)?$/;
+    const rowCosts = [];
+    for (let number = 3; number <= 10; number += 1) {
+      const text = (await page.getByTestId(`matrix-cost-${number}`).textContent())?.trim() ?? '';
+      const hit = rowShape.exec(text);
+      assert(hit, `matrix row ${number} must price its step like the card does, got: ${text}`);
+      rowCosts.push([Number(hit[1]), Number(hit[2] ?? hit[1])]);
+    }
+    const totalText = (await page.getByTestId('matrix-cost-total').textContent())?.trim() ?? '';
+    const totalHit = /^(\d+(?:\.\d+)?)–(\d+(?:\.\d+)?) h · arm /.exec(totalText);
+    assert(totalHit, `matrix footer must total its eight rows, got: ${totalText}`);
+    const round2 = (value) => Math.round(value * 100) / 100;
+    assert.equal(
+      Number(totalHit[1]),
+      round2(rowCosts.reduce((sum, row) => sum + row[0], 0)),
+      `matrix footer low total must be the rows' low hours added up, got: ${totalText}`
+    );
+    assert.equal(
+      Number(totalHit[2]),
+      round2(rowCosts.reduce((sum, row) => sum + row[1], 0)),
+      `matrix footer high total must be the rows' high hours added up, got: ${totalText}`
+    );
     await page.getByTestId('btn-toggle-advanced-columns').click();
     await page.waitForFunction(
       () =>
