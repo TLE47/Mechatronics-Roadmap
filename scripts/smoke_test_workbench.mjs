@@ -109,12 +109,31 @@ export async function runSmokeTests(viteServer) {
       startHereAt >= 0 && startHereAt < htmlBeginner.indexOf('data-testid="first-lesson-guide"'),
       'The landing screen must open with the Start here block, above the first-lesson guide'
     );
-    const sharedNote =
-      'Read the page, run the code in MechaLab. Nothing is installed, nothing is saved on GitHub — ' +
-      'the workbench is where you type, run and verify.';
+    // Read the words from the shared file rather than typing a second copy here: the block exists so
+    // the README and this screen cannot drift, and a hard-coded sentence in the test is just a third
+    // copy that goes stale silently.
+    const shared = JSON.parse(
+      fs.readFileSync(
+        path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'src', 'data', 'startHere.json'),
+        'utf8'
+      )
+    );
+    // The server-rendered HTML escapes the apostrophe in "course's", so compare against the text a
+    // browser would show rather than the raw markup.
+    const rendered = htmlBeginner
+      .replace(/&#x27;|&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&');
     assert(
-      htmlBeginner.includes('Start here — your first 2 hours') && htmlBeginner.includes(sharedNote),
-      'The Start here block must repeat the README heading and note word for word'
+      rendered.includes(shared.heading) &&
+        rendered.includes(shared.definition) &&
+        rendered.includes(shared.note),
+      'The Start here block must repeat the README heading, what-MechaLab-is line and when-to-use-it ' +
+        'line word for word'
+    );
+    assert(
+      rendered.includes('data-testid="start-here-definition"'),
+      'the Start here block must define MechaLab on the screen a newcomer lands on, not only in README'
     );
     assert(
       htmlBeginner.includes('data-testid="btn-start-here-run"') &&
@@ -150,7 +169,8 @@ export async function runSmokeTests(viteServer) {
     );
     assert(
       htmlReturning.includes('Lesson 1 verified') &&
-        !htmlReturning.includes(sharedNote) &&
+        !htmlReturning.includes(shared.definition) &&
+        !htmlReturning.includes(shared.note) &&
         !htmlReturning.includes('data-testid="btn-start-here-run"'),
       'The collapsed block must say Lesson 1 is verified and drop the first-timer copy and button'
     );

@@ -38,6 +38,14 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { createServer } from 'vite';
 
+/** The one copy of the Start here words, the same file the README block is generated from. */
+const START_HERE = JSON.parse(
+  fs.readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app', 'src', 'data', 'startHere.json'),
+    'utf8'
+  )
+);
+
 /**
  * The dev server every workbench suite shares. `scripts/test_workbench.mjs` starts it once and hands
  * the URL to this suite through `E2E_BASE_URL`, so the smoke test, this suite and the built-bundle
@@ -136,9 +144,16 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     //    same page the README links, so the two doors agree on the first thing to do.
     const startHere = page.getByTestId('start-here');
     await startHere.waitFor({ timeout: 15000 });
+    const startHereText = await startHere.innerText();
     assert(
-      (await startHere.innerText()).includes('Start here — your first 2 hours'),
+      startHereText.includes(START_HERE.heading),
       "the landing screen must open with the README's Start here heading"
+    );
+    // A newcomer meets the word "MechaLab" in the wordmark and nowhere explained; the block has to
+    // say what it is and when a lesson expects them to be in it, in the words the README uses.
+    assert(
+      startHereText.includes(START_HERE.definition) && startHereText.includes(START_HERE.note),
+      `the landing block must define MechaLab and say when to use it; got: ${startHereText}`
     );
     assert.equal(
       await page.getByTestId('start-here-lesson-link').getAttribute('href'),
@@ -755,7 +770,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     const collapsedText = await collapsedStartHere.innerText();
     assert(
       collapsedText.includes('Lesson 1 verified') &&
-        !collapsedText.includes('Read the page, run the code in MechaLab'),
+        !collapsedText.includes(START_HERE.definition),
       `the collapsed block must say Lesson 1 is verified and drop the first-timer copy; got: ${collapsedText}`
     );
     assert(

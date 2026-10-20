@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2, Play, X } from 'lucide-react';
 import {
   START_HERE_HEADING,
+  START_HERE_DEFINITION,
   START_HERE_LESSON_URL,
   START_HERE_LINK_LABEL,
   START_HERE_NOTE,
@@ -26,7 +27,8 @@ interface StartHereCardProps {
  *
  * Two doors, because they do different jobs: the GitHub page is the reading copy, and the workbench
  * below is where the code is typed, run and verified. A newcomer should not have to guess which one
- * to open, so each is labelled with its verb.
+ * to open, so each is labelled with its verb - and the name in the wordmark is defined above them,
+ * because "MechaLab" alone tells a first-timer nothing about what it is or when to be in it.
  *
  * A newcomer sees all three lines. Once Lesson 1 is verified the block is no longer news, so it
  * collapses to one line that still names the lesson and keeps the link - nothing is lost, and a
@@ -84,7 +86,10 @@ export const StartHereCard: React.FC<StartHereCardProps> = ({
       className="bg-[#06281f] border border-[#34d399]/50 rounded-xl px-5 py-4"
     >
       <h2 className="text-base font-bold text-[#f1f5f9]">{START_HERE_HEADING}</h2>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-2">
+      <p data-testid="start-here-definition" className="text-xs text-[#cbd5e1] mt-1.5">
+        {START_HERE_DEFINITION}
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2">
         <a
           data-testid="start-here-lesson-link"
           href={START_HERE_LESSON_URL}
@@ -106,7 +111,9 @@ export const StartHereCard: React.FC<StartHereCardProps> = ({
           </button>
         )}
       </div>
-      <p className="text-xs text-[#cbd5e1] mt-1.5">{START_HERE_NOTE}</p>
+      <p data-testid="start-here-note" className="text-xs text-[#94a3b8] mt-1.5">
+        {START_HERE_NOTE}
+      </p>
     </section>
   );
 };

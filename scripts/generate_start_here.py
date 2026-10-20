@@ -36,7 +36,7 @@ README = os.path.join(ROOT, "README.md")
 DATA = os.path.join(ROOT, "app", "src", "data", "startHere.json")
 START = "<!-- start-here:start -->"
 END = "<!-- start-here:end -->"
-REQUIRED = ("heading", "linkLabel", "note", "lessonId")
+REQUIRED = ("heading", "definition", "linkLabel", "note", "lessonId")
 
 
 def data():
@@ -69,6 +69,8 @@ def render_block():
     return "\n".join(
         [
             f"> **{payload['heading']}**",
+            ">",
+            f"> {payload['definition']}",
             ">",
             f"> **[{payload['linkLabel']}]({path})**",
             ">",

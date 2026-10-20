@@ -5,6 +5,8 @@ import { PYTHON_LESSONS } from './data/pythonLessonsData';
 // same file by `scripts/generate_start_here.py`, so the two doors a newcomer can arrive at open
 // with the same heading, Lesson 1 link and promise without a copy that can drift.
 export const START_HERE_HEADING = startHere.heading;
+/** What MechaLab is, in one sentence, and when a lesson expects you to be in it. */
+export const START_HERE_DEFINITION = startHere.definition;
 export const START_HERE_LINK_LABEL = startHere.linkLabel;
 export const START_HERE_NOTE = startHere.note;
 /** The app's own door: the reading link opens GitHub, this button runs the same lesson here. */

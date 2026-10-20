@@ -3,9 +3,11 @@
 <!-- start-here:start -->
 > **Start here — your first 2 hours**
 >
+> What MechaLab is: this course's browser workbench. Python 3.12 and the circuit simulators run inside the tab, with nothing to install and no account.
+>
 > **[Read Lesson 1: Variables and data types →](track-p/P.1-variables-and-data-types.md)**
 >
-> Read the page, run the code in MechaLab. Nothing is installed, nothing is saved on GitHub — the workbench is where you type, run and verify.
+> When to use it: any time a lesson hands you a starter file — Tab 2 lists every lesson and exercise that has one. Read the page for the idea, then type, run and verify in MechaLab; your progress stays in this browser, and nothing is saved on GitHub.
 <!-- start-here:end -->
 
 ---

@@ -11,6 +11,24 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 118: The Wordmark Gets a Definition
+
+"MechaLab" appeared in the header of every screen and was explained nowhere: a first-timer met a
+product name, two doors and a promise, and had to infer what the thing was and when a lesson
+expected them to be in it.
+
+The Start here block now opens with two plain sentences, both rendered from
+`app/src/data/startHere.json` into the README and the landing screen so the two cannot drift:
+**what MechaLab is** (this course's browser workbench — Python 3.12 and the circuit simulators run
+inside the tab, nothing to install, no account) and **when to use it** (any time a lesson hands you
+a starter file, which Tab 2 lists; read the page for the idea, then type, run and verify). The
+when-line keeps the old promise that progress stays in the browser and nothing is saved on GitHub.
+
+The smoke and browser suites had their own typed copy of the old sentence; they now read heading,
+definition and note from the same JSON, so the next reword does not leave three versions of it.
+
+---
+
 ## [2026-10-20] — Run 117: One Order, a Real Short-Circuit, and a Diagnosis You Must Infer
 
 Three findings from an external read-through, all about what the course teaches by structure rather
@@ -225,7 +243,7 @@ newcomer had to decode before finding a lesson. It is now three lines: a link to
 sentence naming the finished arm, and the time and cost. The ten-step table is generated from
 `scripts/route_model.py`; the tier/pass matrix, CI details and optional modules moved to
 [`docs/ROUTE.md`](docs/ROUTE.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) and
-[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 10 KB.
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 11 KB.
 
 Two contradictions surfaced while generating the counts:
 
