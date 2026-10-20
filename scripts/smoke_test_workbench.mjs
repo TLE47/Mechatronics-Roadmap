@@ -558,6 +558,10 @@ export async function runSmokeTests(viteServer) {
       'TabPyodideRunner must render the 3-step progressive hint ladder'
     );
     assert(
+      htmlRunner.includes('Reveal Hint 1') && !htmlRunner.includes('Run to unlock Hint'),
+      'Hint 1 must be open on a fresh lesson; later hints wait for a run'
+    );
+    assert(
       htmlRunner.includes('data-testid="note-output-match-mode"') &&
         htmlRunner.includes('Formatting is ignored'),
       'TabPyodideRunner must state that a normalized lesson ignores whitespace'

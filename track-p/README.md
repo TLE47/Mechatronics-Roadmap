@@ -45,7 +45,9 @@ You do **not** need to take a separate math course before starting robotics. Use
 
 ## 3. Lesson Map & Unmeasured Target Times
 
-> **Note on Timing:** Per-lesson times below (`~60–180 min` target per lesson, `~17–43 hours` total for Track P) are **unmeasured author targets**, not empirical averages. If you are a beginner working through Track P, please submit your actual per-lesson completion times using our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
+> **Note on Timing:** The per-lesson times below are coarse **unmeasured author targets**, not empirical averages. They sum to about 12–17 hours (24–31 slow-paced). The generated page metadata behind [`docs/SIM_ROUTE.md`](../docs/SIM_ROUTE.md) estimates **~17–43 focused hours** for the track; that is the figure the front page quotes and the one to plan against. If you are a beginner working through Track P, please submit your actual per-lesson completion times using our **[Beginner Timing Log Issue Template](../.github/ISSUE_TEMPLATE/beginner-timing-log.md)**!
+
+> **There is no Lesson P.13.** The Track P ids skip it on purpose: saved progress and every link are keyed by lesson id, so `P.14` keeps the number it shipped with. The gap is not a missing lesson.
 
 | Lesson | Title | New Ideas (Max 2, Enforced in YAML Front Matter) | Unmeasured Target | Unmeasured Slow-Paced Target |
 | :--- | :--- | :--- | :--- | :--- |
@@ -63,7 +65,7 @@ You do **not** need to take a separate math course before starting robotics. Use
 | **[Lesson P.12](P.12-forces-and-lever-torque.md)** | **Linear Forces ($F = ma$) & Lever Torque ($\tau = mgL\cos\theta$)** | 1. Linear force ($F = ma$) and gravitational weight ($W = mg$)<br>2. Lever torque from horizontal arm angle ($\tau = mgL\cos\theta$) | ~60–90 min (unmeasured) | ~120–150 min (unmeasured) |
 | **[Lesson P.14](P.14-reading-a-datasheet-table.md)** | **Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds** | 1. Reading datasheet `Symbol / Min / Typ / Max / Unit` columns (`DRV8833` $2.7\text{–}10.8\text{ V}$)<br>2. Recommended Operating Conditions vs. Absolute Maximum Ratings ($11.8\text{ V}$) | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
 | **[Lesson P.M](P.M-track-p-milestone.md)** | **Track P Milestone — Gravity-Holding Robot Arm Simulator** | 1. End-to-end sense-compute-simulate loop | ~45–60 min (unmeasured) | ~90–120 min (unmeasured) |
-| **Total Track P** | **13 Lessons + 1 Milestone (14 Files)** | **27 Ideas Total ($\le 2$ per lesson)** | **Unmeasured (~10.5–14 hrs total target)** | **Submit logs via Issue Template** |
+| **Total Track P** | **13 Lessons + 1 Milestone (14 Files)** | **27 Ideas Total ($\le 2$ per lesson)** | **≈12–17 h** | **≈24–31 h** |
 
 ---
 

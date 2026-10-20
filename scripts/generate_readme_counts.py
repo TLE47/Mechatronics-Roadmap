@@ -56,6 +56,9 @@ def _friendly(low, high):
 def render_table():
     """The 10-step table: what a learner can do, how many pages, how many focused hours."""
     facts = route_model.facts()
+    # Whole hours, allocated so the ten rows add to the total below; the exact sums stay in
+    # docs/SIM_ROUTE.md, and the same allocation is what that page's step rows show.
+    rounded = generate_sim_route.rounded_step_ranges()
     lines = [
         "| Step | What you can do when it is done | Lessons | Modules | Focused hours |",
         "| :--- | :--- | ---: | ---: | ---: |",
@@ -64,14 +67,20 @@ def render_table():
         title = row["title"]
         href = route_model.first_lesson_href_from_row(row)
         modules = str(row["module_count"]) if row["module_count"] else "—"
+        low, high = rounded[str(row["number"])]
         lines.append(
             f"| **[{row['number']} · {title}]({href})** | {row['outcome']} | "
-            f"{row['lesson_count']} | {modules} | {_friendly(row['low'], row['high'])} |"
+            f"{row['lesson_count']} | {modules} | ≈{low}–{high} |"
         )
     lines.append(
         f"| **10 steps** | **A finished simulated arm, and the checks to prove it** | "
         f"**{facts['lesson_count']}** | **{facts['module_count']}** | "
         f"**{_friendly(facts['low'], facts['high'])}** |"
+    )
+    lines.append("")
+    lines.append(
+        f"_Rounded to whole hours: the ten rows add to {_friendly(facts['low'], facts['high'])}. "
+        "[`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) keeps the page-level decimals._"
     )
     return "\n".join(lines)
 

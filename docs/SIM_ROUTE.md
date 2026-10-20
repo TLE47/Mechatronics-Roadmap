@@ -18,6 +18,9 @@ route below is the full course: the same arm with the Tier 2/3 depth modules.
 
 **Route status: `author-dogfood`** — the author has run every page and no outside learner has finished this route, so every hour is a target rather than a measurement.
 
+Track P's lesson ids skip `P.13` on purpose: saved progress and every link are keyed by
+lesson id, so `P.14` keeps the number it shipped with. The gap is not a missing lesson.
+
 ```mermaid
 flowchart LR
     Core["Core route<br/>required"] --> Done["Course complete"]
@@ -42,7 +45,7 @@ flowchart LR
 | Step 1 · Python and the maths a robot needs | `P.12` Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta)) | 1.5-3.5 |
 | Step 1 · Python and the maths a robot needs | `P.14` Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds | 0.75-2 |
 | Step 1 · Python and the maths a robot needs | `P.M` Track P Milestone — Gravity-Holding Robot Arm Link Simulator | 1-2.5 |
-| Step 1 · Python and the maths a robot needs | **14 lessons, together** | 16.75-42.5 |
+| Step 1 · Python and the maths a robot needs | **14 lessons, together** | ≈17–43 |
 | Step 2 · Circuits and your first microcontroller | `S0.0` Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction | 0.75-2 |
 | Step 2 · Circuits and your first microcontroller | `S0.1` Closed DC Circuits, Ground Reference (0 V) and Ohm's Law | 1-3 |
 | Step 2 · Circuits and your first microcontroller | `S0.2` Series vs. Parallel Resistor Networks, Voltage Dividers and Potentiometers | 1.5-3.5 |
@@ -54,7 +57,7 @@ flowchart LR
 | Step 2 · Circuits and your first microcontroller | `S0.8` Reading Analog Sensors — The 10-Bit ADC (analogRead) and Serial Monitor | 1.5-3 |
 | Step 2 · Circuits and your first microcontroller | `S0.9` Switching Power Smoothly — PWM Duty Cycle and analogWrite() | 1.5-3 |
 | Step 2 · Circuits and your first microcontroller | `S0.M` Stage 0 Milestone — Potentiometer LED Dimmer with Safety Kill-Switch | 1-2.5 |
-| Step 2 · Circuits and your first microcontroller | **11 lessons, together** | 13.75-33 |
+| Step 2 · Circuits and your first microcontroller | **11 lessons, together** | ≈14–33 |
 | Step 3 · Make a joint move: foundations | `00.1` Cross-Domain Power (P = Effort * Flow) and First-Order Lag | 1.5-3.5 |
 | Step 3 · Make a joint move: foundations | `00.2` Second-Order Motion — Springs (F_s = -k*x), Dampers (F_d = -b*v) and Damping Regimes | 1.5-3.5 |
 | Step 3 · Make a joint move: foundations | `00.3` Engineering Modeling Discipline — 4-Step Workflow, Dimensional Checks and Sign Conventions | 1-3 |
@@ -74,7 +77,7 @@ flowchart LR
 | Step 3 · Make a joint move: foundations | `00-foundations.T2.00i` Pre-Warped Tustin Biquads: Where the Notch Really Lands | 2.5 |
 | Step 3 · Make a joint move: foundations | `00-foundations.T2.00j` Gaussian Variance, Covariance & the Predict Step | 2.5 |
 | Step 3 · Make a joint move: foundations | `00-foundations.T3.00a` Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation | 5 |
-| Step 3 · Make a joint move: foundations | **3 lessons + 16 modules, together** | 55-61 |
+| Step 3 · Make a joint move: foundations | **3 lessons + 16 modules, together** | ≈55–61 |
 | Step 4 · Power the joint: electronics | `01.1` High-Current Switching — MOSFETs, Inductors (Motor Coils) and Flyback Diodes | 1.5-3.5 |
 | Step 4 · Power the joint: electronics | `01.2` Bidirectional DC Motor Control — H-Bridges, Shoot-Through and Stall Current | 1.5-3.5 |
 | Step 4 · Power the joint: electronics | `01.3` Multi-Rail Robot Power — Linear (LDO) vs. Switching (Buck) Regulators and Power Budgets | 1.5-3 |
@@ -85,7 +88,7 @@ flowchart LR
 | Step 4 · Power the joint: electronics | `01-electronics.T1.01d` Capacitors, Inductors, RC Time Constants & Inductive Flyback | 3 |
 | Step 4 · Power the joint: electronics | `01-electronics.T2.01a` Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing | 4 |
 | Step 4 · Power the joint: electronics | `01-electronics.T2.01b` Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping | 4.5 |
-| Step 4 · Power the joint: electronics | **4 lessons + 6 modules, together** | 26.5-34 |
+| Step 4 · Power the joint: electronics | **4 lessons + 6 modules, together** | ≈27–34 |
 | Step 5 · Build the arm: mechanics | `02.1` 2D Coordinate Frames and 1-Link Planar Arm Forward Kinematics | 1-3 |
 | Step 5 · Build the arm: mechanics | `02.2` 2-Link Planar Arm Forward Kinematics (theta_1, theta_2 -> x, y) | 1.5-3.5 |
 | Step 5 · Build the arm: mechanics | `02.3` 2-Link Planar Arm Inverse Kinematics (x, y -> theta_1, theta_2) and Reachability | 1.5-4 |
@@ -94,13 +97,13 @@ flowchart LR
 | Step 5 · Build the arm: mechanics | `02-mechanics.T1.02a` Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling | 3.5 |
 | Step 5 · Build the arm: mechanics | `02-mechanics.T2.02a` 6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia | 4.5 |
 | Step 5 · Build the arm: mechanics | `02-mechanics.T3.02a` 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | 5 |
-| Step 5 · Build the arm: mechanics | **5 lessons + 3 modules, together** | 20-30 |
+| Step 5 · Build the arm: mechanics | **5 lessons + 3 modules, together** | ≈20–30 |
 | Step 6 · Measure the joint: sensors | `03.1` Quadrature Encoders (4x Counting) and 12-Bit Magnetic Angle Sensors | 1.5-3.5 |
 | Step 6 · Measure the joint: sensors | `03.2` 3-Phase Brushless Motors, Pole Pairs and 90-Degree Electrical Torque Lead | 1.5-3.5 |
 | Step 6 · Measure the joint: sensors | `03.3` Track 02 + 03 Integration Micro-Lab — Read Dual Encoders to Compute 2-Link End-Effector Position | 0.35-1 |
 | Step 6 · Measure the joint: sensors | `03-sensors.T1.03a` Electromagnets, Permanent Magnets, Pole Pairs, Quadrature Pulses & Faraday Back-EMF | 3.5 |
 | Step 6 · Measure the joint: sensors | `03-sensors.T2.03a` Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Locked Loops & Sensor Random Walk | 4.5 |
-| Step 6 · Measure the joint: sensors | **3 lessons + 2 modules, together** | 11.35-16 |
+| Step 6 · Measure the joint: sensors | **3 lessons + 2 modules, together** | ≈11–16 |
 | Step 7 · Run it in real time: embedded C | `04.1` Fixed-Width C/C++ Types (uint16_t), volatile ISR Flags and 1 kHz Timer Loops | 1.5-3.5 |
 | Step 7 · Run it in real time: embedded C | `04.2` Packed Binary Telemetry Structs (struct.pack), CRC-8 & UART Bandwidth Budgets | 1.5-3.5 |
 | Step 7 · Run it in real time: embedded C | `04.3` Python-to-C Bridge (Part 3) — C Structs as Labeled Boxes & Pointers as Box Addresses | 1-3 |
@@ -108,7 +111,7 @@ flowchart LR
 | Step 7 · Run it in real time: embedded C | `04-embedded.T1.04b` Non-Blocking millis()/micros() State Machines, Hardware Interrupts (ISRs) & volatile | 3.5 |
 | Step 7 · Run it in real time: embedded C | `04-embedded.T2.04a` Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers | 4 |
 | Step 7 · Run it in real time: embedded C | `04-embedded.T2.04b` RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration | 4 |
-| Step 7 · Run it in real time: embedded C | **3 lessons + 4 modules, together** | 19-25 |
+| Step 7 · Run it in real time: embedded C | **3 lessons + 4 modules, together** | ≈19–25 |
 | Step 8 · Make it hold still: control | `05.1` PID Virtual Spring-Damper Control and Integrator Anti-Windup Clamping | 1.5-3.5 |
 | Step 8 · Make it hold still: control | `05.2` Gyroscope Drift, Accelerometer Tilt (atan2) and 2-Line Complementary IMU Fusion | 1.5-3.5 |
 | Step 8 · Make it hold still: control | `05-control.T1.05a` Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Actuator Saturation | 3.5 |
@@ -116,16 +119,16 @@ flowchart LR
 | Step 8 · Make it hold still: control | `05-control.T3.05a` Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency | 2 |
 | Step 8 · Make it hold still: control | `05-control.T3.05b` Rodrigues on SO(3), Multiplicative Error Injection & the ESKF Reset | 2 |
 | Step 8 · Make it hold still: control | `05-control.T3.05c` Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | 2 |
-| Step 8 · Make it hold still: control | **2 lessons + 5 modules, together** | 17-21 |
+| Step 8 · Make it hold still: control | **2 lessons + 5 modules, together** | ≈17–21 |
 | Step 9 · Plan motion and bring it up safely | `06.1` Rest-to-Rest Cubic Polynomial Trajectories and Joint-Space Gravity Feedforward | 1.5-3.5 |
 | Step 9 · Plan motion and bring it up safely | `07.1` 10-Step Smoke-Free Hardware Bring-Up and Single-Tone Sine-Sweep System Identification | 1.5-3.5 |
 | Step 9 · Plan motion and bring it up safely | `06-robotics.T1.06a` 1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper | 3.5 |
 | Step 9 · Plan motion and bring it up safely | `07-systems.T1.07a` Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep Gain/Phase | 3.5 |
 | Step 9 · Plan motion and bring it up safely | `07-systems.T2.07a` Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection | 4.5 |
-| Step 9 · Plan motion and bring it up safely | **2 lessons + 3 modules, together** | 14.5-18.5 |
+| Step 9 · Plan motion and bring it up safely | **2 lessons + 3 modules, together** | ≈14–18 |
 | Step 10 · Put it together: the 2-DOF arm | `08.1` Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry | 2-4.5 |
 | Step 10 · Put it together: the 2-DOF arm | `08-capstones.T3.07a` System Error/Latency Budgeting, Cross-Domain Interface Contracts & Pre-Bring-Up Safety Sign-Off | 4.5 |
-| Step 10 · Put it together: the 2-DOF arm | **1 lesson + 1 module, together** | 6.5-9 |
+| Step 10 · Put it together: the 2-DOF arm | **1 lesson + 1 module, together** | ≈6–9 |
 | **Core total** | **40 modules + all 10 steps' lessons** | **200.35-290** |
 
 These are **focused hours**: time with the page open, excluding setup, debugging and
@@ -136,6 +139,10 @@ estimate these become once first-time overhead is counted.
 **Estimate coverage:** The Core's high end is a slow-learner figure on 48 of 88 pages and a single estimate on the other 40, so plan against it as a floor and expect it to rise as those pages are measured.
 
 Nothing in this table is hand-entered, and `--check` fails when it drifts from the pages.
+
+The stage rows above are rounded to whole hours with the same allocation as the README's
+step table, so `16.75-42.5` appears as `≈17–43` in both places; the page rows and the
+Core total keep the exact sums (`200.35-290`).
 
 ## Extensions (optional, still graded)
 

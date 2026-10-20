@@ -252,6 +252,44 @@ class SimRouteTests(unittest.TestCase):
             f"{hours!r}; check generate_sim_route.py and docs/SIM_ROUTE.md",
         )
 
+    def test_step_ranges_are_whole_hours_that_add_up(self):
+        """One allocation feeds both documents, and its parts sum to the rounded total."""
+        rounded = gen.rounded_step_ranges()
+        facts = gen.route_facts()
+        self.assertEqual(
+            sum(low for low, _ in rounded.values()), int(facts["low"] + 0.5),
+            f"expected the ten rounded low ends to sum to {facts['low']!r} rounded, got "
+            f"{sum(low for low, _ in rounded.values())}; otherwise the table does not add up",
+        )
+        self.assertEqual(
+            sum(high for _, high in rounded.values()), int(facts["high"] + 0.5),
+            f"expected the ten rounded high ends to sum to {facts['high']!r} rounded, got "
+            f"{sum(high for _, high in rounded.values())}; otherwise the table does not add up",
+        )
+        for step in gen.route_model.facts()["steps"]:
+            low, high = rounded[str(step["number"])]
+            self.assertIn(
+                low, (int(step["low"]), int(step["low"]) + 1),
+                f"expected Step {step['number']}'s exact low {step['low']!r} to round to within "
+                f"an hour; got {low} - check rounded_step_ranges",
+            )
+            self.assertIn(
+                high, (int(step["high"]), int(step["high"]) + 1),
+                f"expected Step {step['number']}'s exact high {step['high']!r} to round to within "
+                f"an hour; got {high} - check rounded_step_ranges",
+            )
+        for low, high in rounded.values():
+            self.assertIn(
+                f"≈{low}–{high}", self.readme,
+                f"expected the README step table to carry ≈{low}–{high}, the same allocation "
+                f"docs/SIM_ROUTE.md renders",
+            )
+            self.assertIn(
+                f"≈{low}–{high}", self.doc,
+                f"expected docs/SIM_ROUTE.md's stage row to carry ≈{low}–{high}, so a reader "
+                f"cannot find two ranges for the same step",
+            )
+
     def test_the_required_module_count_is_the_route_count(self):
         """No pinned literal: the route is the only expectation, so moving a module needs one edit."""
         required = len(gen.CORE_MODULES)

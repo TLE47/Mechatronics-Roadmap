@@ -276,6 +276,37 @@ def friendly_range(low: float, high: float) -> str:
     return f"≈{int(low + 0.5)}–{int(high + 0.5)}"
 
 
+def _whole_hours(values: list[float]) -> list[int]:
+    """Round a column to whole hours so the parts still add up to the rounded whole.
+
+    Each value moves by less than an hour; the largest remainders get the hours the plain
+    `int(value + 0.5)` roundings of the column would otherwise lose or gain.
+    """
+    total = int(sum(values) + 0.5)
+    whole = [int(value) for value in values]
+    remaining = total - sum(whole)
+    order = sorted(range(len(values)), key=lambda index: (-(values[index] - whole[index]), index))
+    for index in order[:remaining]:
+        whole[index] += 1
+    return whole
+
+
+def rounded_step_ranges() -> dict[str, tuple[int, int]]:
+    """Whole-hour ranges per step, allocated so the ten rows add to the quoted Core total.
+
+    The README step table and the `together` rows of `SIM_ROUTE.md` both render these values, so
+    the two documents cannot appear to disagree. The page rows and the Core total keep the exact
+    sums; only the learner-facing plan figures are whole hours.
+    """
+    steps = route_model.facts()["steps"]
+    lows = _whole_hours([float(row["low"]) for row in steps])
+    highs = _whole_hours([float(row["high"]) for row in steps])
+    return {
+        str(row["number"]): (lows[index], highs[index])
+        for index, row in enumerate(steps)
+    }
+
+
 def hours_basis(facts: dict) -> str:
     """One clause, lowercase for mid-sentence use, saying what the high end of the range is made of.
 
@@ -529,6 +560,9 @@ def render():
         "",
         f"**Route status: `{ROUTE_STATUS}`** — {STATUS_SENTENCE[ROUTE_STATUS]}.",
         "",
+        "Track P's lesson ids skip `P.13` on purpose: saved progress and every link are keyed by",
+        "lesson id, so `P.14` keeps the number it shipped with. The gap is not a missing lesson.",
+        "",
         "```mermaid",
         "flowchart LR",
         '    Core["Core route<br/>required"] --> Done["Course complete"]',
@@ -543,6 +577,7 @@ def render():
 
     core_low = core_high = 0.0
     covered = []
+    rounded = rounded_step_ranges()
     for step in route_model.STEPS:
         lessons = route_model.step_lessons(step)
         rows = [row for row in core if row["id"] in set(step["modules"])]
@@ -563,8 +598,9 @@ def render():
             parts.append(f"{len(lessons)} lesson{'s' if len(lessons) != 1 else ''}")
         if rows:
             parts.append(f"{len(rows)} module{'s' if len(rows) != 1 else ''}")
+        step_low, step_high = rounded[str(step["number"])]
         lines.append(
-            f"| {label} | **{' + '.join(parts)}, together** | {fmt(round(low, 2), round(high, 2))} |"
+            f"| {label} | **{' + '.join(parts)}, together** | ≈{step_low}–{step_high} |"
         )
     uncovered = sorted(set(CORE_MODULES) - set(covered))
     if uncovered:
@@ -586,6 +622,10 @@ def render():
         f"**Estimate coverage:** {hours_basis(facts)[0].upper() + hours_basis(facts)[1:]}.",
         "",
         "Nothing in this table is hand-entered, and `--check` fails when it drifts from the pages.",
+        "",
+        "The stage rows above are rounded to whole hours with the same allocation as the README's",
+        "step table, so `16.75-42.5` appears as `≈17–43` in both places; the page rows and the",
+        f"Core total keep the exact sums (`{fmt(facts['low'], facts['high'])}`).",
         "",
         "## Extensions (optional, still graded)",
         "",

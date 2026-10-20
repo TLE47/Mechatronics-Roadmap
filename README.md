@@ -39,9 +39,11 @@ Each step ends with something you can run and check yourself. Start at Step 1; f
 | **[6 · Measure the joint: sensors](03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md)** | Read an encoder, compute a clean angle, and know how much to trust it. | 3 | 2 | ≈11–16 |
 | **[7 · Run it in real time: embedded C](04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md)** | Move a fixed-rate control loop off Python and onto a microcontroller. | 3 | 4 | ≈19–25 |
 | **[8 · Make it hold still: control](05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md)** | Tune a PID that holds the arm against gravity without overshooting. | 2 | 5 | ≈17–21 |
-| **[9 · Plan motion and bring it up safely](06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md)** | Smooth a path, identify the plant, and run a bring-up that fails safe. | 2 | 3 | ≈15–19 |
-| **[10 · Put it together: the 2-DOF arm](08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md)** | Run a figure-8 path on a simulated arm, then recover from three planted faults. | 1 | 1 | ≈7–9 |
+| **[9 · Plan motion and bring it up safely](06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md)** | Smooth a path, identify the plant, and run a bring-up that fails safe. | 2 | 3 | ≈14–18 |
+| **[10 · Put it together: the 2-DOF arm](08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md)** | Run a figure-8 path on a simulated arm, then recover from three planted faults. | 1 | 1 | ≈6–9 |
 | **10 steps** | **A finished simulated arm, and the checks to prove it** | **48** | **40** | **≈200–290** |
+
+_Rounded to whole hours: the ten rows add to ≈200–290. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) keeps the page-level decimals._
 <!-- route:table:end -->
 
 <!-- route:lessons -->48<!-- /route --> lessons and <!-- sim-route:modules -->**40 modules**<!-- /sim-route --> you practise with. Another <!-- sim-route:extensions -->**10 optional modules (47.5 focused hours)**<!-- /sim-route --> sit outside the route; skipping all of them still leaves a finished arm.
@@ -75,7 +77,7 @@ The 5× and 10× are planning multipliers, not measurements: no outside learner 
 
 **ROS 2, inside Step 9, is the one heavy install in the course.** Do not start it on your main machine: use the Docker image or the browser walkthrough in [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md#ros-2), or read the node-graph lesson and move on. Nothing after Step 9 opens a ROS 2 shell, and the finished arm does not need it. Zephyr and micro-ROS are optional for the same reason.
 
-Every lesson also ships three progressive hints, a known-failure explainer ([`docs/ERROR_EXPLAINER.md`](docs/ERROR_EXPLAINER.md)), and a 20-minute return path after a break ([`docs/REENTRY.md`](docs/REENTRY.md)).
+Every lesson also ships three progressive hints (the first is always open; later hints wait until you have run the lesson once), a known-failure explainer ([`docs/ERROR_EXPLAINER.md`](docs/ERROR_EXPLAINER.md)), and a 20-minute return path after a break ([`docs/REENTRY.md`](docs/REENTRY.md)).
 
 ## How a lesson works
 

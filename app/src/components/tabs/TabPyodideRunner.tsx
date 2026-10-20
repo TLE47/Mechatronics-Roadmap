@@ -289,6 +289,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [code, setCode] = useState<string>(PYTHON_LESSONS[0].starterCode);
   const [revealedHints, setRevealedHints] = useState<number>(0);
+  // Runs completed per lesson: Hint 2 waits for one, so the ladder is not a table of contents.
+  // Kept per lesson, not reset on selection, because an earlier attempt on that lesson counts.
+  const [runAttempts, setRunAttempts] = useState<Record<string, number>>({});
   const [stdout, setStdout] = useState<string>('');
   const [stderr, setStderr] = useState<string>('');
   const [instructorError, setInstructorError] = useState<string>('');
@@ -401,6 +404,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
+  const nextHintNumber = revealedHints + 1;
+  // Hint 1 is always open. Every hint after it waits for at least one completed run of this
+  // lesson, so a learner cannot read the near-solution second hint without trying first.
+  const nextHintNeedsAttempt =
+    revealedHints > 0 && (runAttempts[currentLesson.id] ?? 0) === 0;
 
   // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
   useEffect(() => {
@@ -520,6 +528,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // `lesson` defaults to the rendered lesson; Run passes the one selected at click time.
   const runPythonCode = async (sourceCode: string, lesson: PythonLessonItem = currentLesson) => {
     const matchMode: OutputMatchMode = asOutputMatchMode(lesson.outputMatch);
+    const attemptLessonId = lesson.id;
     const runId = activeRunIdRef.current + 1;
     activeRunIdRef.current = runId;
 
@@ -672,6 +681,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       setStderr(err?.message || String(err));
       setPassStatus('error');
     } finally {
+      // A finished run counts as the attempt that unlocks Hint 2, even if it failed or was
+      // stopped - the point is that the learner tried before asking for the next nudge. The
+      // count is keyed by the lesson that ran, so leaving mid-run cannot unlock another lesson.
+      setRunAttempts((prev) => ({
+        ...prev,
+        [attemptLessonId]: (prev[attemptLessonId] ?? 0) + 1,
+      }));
       if (activeRunIdRef.current === runId) {
         setIsRunning(false);
       }
@@ -1194,16 +1210,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </div>
                 {revealedHints < currentLesson.hints.length && (
                   <button
-                    onClick={() =>
+                    onClick={() => {
+                      if (nextHintNeedsAttempt) return;
                       setRevealedHints((h) => {
                         logEvent({ kind: 'hint', lesson: selectedId, level: h + 1 });
                         return h + 1;
-                      })
+                      });
+                    }}
+                    disabled={nextHintNeedsAttempt}
+                    title={
+                      nextHintNeedsAttempt
+                        ? 'Run & Verify once to unlock the next hint'
+                        : undefined
                     }
                     data-testid="btn-reveal-hint"
-                    className="px-2.5 py-1 rounded text-xs font-mono bg-[#fbbf24]/15 hover:bg-[#fbbf24]/25 text-[#fbbf24] border border-[#fbbf24]/40 cursor-pointer"
+                    className="px-2.5 py-1 rounded text-xs font-mono bg-[#fbbf24]/15 hover:bg-[#fbbf24]/25 text-[#fbbf24] border border-[#fbbf24]/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Reveal Hint {revealedHints + 1}
+                    {nextHintNeedsAttempt ? `Run to unlock Hint ${nextHintNumber}` : `Reveal Hint ${nextHintNumber}`}
                   </button>
                 )}
               </div>

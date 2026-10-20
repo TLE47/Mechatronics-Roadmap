@@ -182,6 +182,38 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       p2Guide.includes('Lesson P.2') && p2Guide.includes('new_pos_m'),
       `the P.2 guide must name P.2 and its first starter hole; got: ${p2Guide}`
     );
+    // 0b. Hint 1 is open without a run. Hint 2 is nearly the full fix, so it stays locked until
+    //     the learner has actually run the lesson once - reading it first is not an attempt.
+    await page.getByTestId('btn-reveal-hint').click();
+    const nextHintButton = page.getByTestId('btn-reveal-hint');
+    assert(
+      await nextHintButton.isDisabled(),
+      'Hint 2 must stay locked until the learner has run the lesson'
+    );
+    assert(
+      (await nextHintButton.innerText()).includes('Run to unlock Hint 2'),
+      'the locked hint control must say that a run unlocks it'
+    );
+    await page.getByTestId('btn-guide-run').click();
+    await page.getByTestId('status-behavior-failed').waitFor({ timeout: 45000 });
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-reveal-hint"]');
+        return button && !button.disabled;
+      },
+      null,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      (await nextHintButton.innerText()).trim(),
+      'Reveal Hint 2',
+      'a completed run must unlock Hint 2'
+    );
+    await nextHintButton.click();
+    assert(
+      await page.getByText('new_pos_m = start_pos_m', { exact: false }).first().isVisible(),
+      'Hint 2 must open as the code-block hint it is documented as'
+    );
     await page.getByTestId('btn-guide-dismiss').click();
     await page.getByTestId('first-lesson-guide').waitFor({ state: 'detached', timeout: 5000 });
     await page.getByTestId('lesson-item-P.3').click();

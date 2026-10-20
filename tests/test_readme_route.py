@@ -17,6 +17,7 @@ Run: `python3.12 tests/test_readme_route.py` (also discovered by `python3 -m uni
 
 import importlib.util
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -93,6 +94,76 @@ class RouteModelTests(unittest.TestCase):
 
 
 class GeneratorTests(unittest.TestCase):
+    def test_the_step_rows_add_up_to_the_quoted_total(self):
+        """The rounded rows must total the rounded figure beside them.
+
+        Rounding each step independently used to make the ten rows sum to 202–291 while the total
+        row said 200–290: every number was individually right and the table still did not add up.
+        """
+        with open(generator.README, encoding="utf-8") as handle:
+            text = handle.read()
+        rows = re.findall(r"\| \*\*\[\d+ · .*?\| ≈(\d+)–(\d+) \|", text)
+        self.assertEqual(
+            len(rows), 10,
+            f"expected the ten step rows to carry rounded hour ranges, found {len(rows)}; check "
+            f"the generated table's last column",
+        )
+        total = re.search(r"\| \*\*10 steps\*\* .*?\| \*\*≈(\d+)–(\d+)\*\* \|", text)
+        self.assertIsNotNone(
+            total,
+            "expected the table's total row to quote the rounded range; without it the rows have "
+            "nothing to add up to",
+        )
+        low = sum(int(row[0]) for row in rows)
+        high = sum(int(row[1]) for row in rows)
+        self.assertEqual(
+            (low, high), (int(total.group(1)), int(total.group(2))),
+            f"expected the ten rounded step rows to sum to the total row "
+            f"({total.group(1)}-{total.group(2)}), got {low}-{high}; round the column "
+            f"additively instead of rounding each step on its own",
+        )
+
+    def test_track_p_targets_add_up_and_name_the_id_gap(self):
+        """The hand-kept Track P table must sum its own rows, and say why P.13 is absent."""
+        with open(os.path.join(ROOT, "track-p", "README.md"), encoding="utf-8") as handle:
+            text = handle.read()
+        rows = re.findall(
+            r"\| \*\*\[Lesson P\.[^\]]+\].*?\| ~(\d+)–(\d+) min \(unmeasured\) "
+            r"\| ~(\d+)–(\d+) min \(unmeasured\) \|",
+            text,
+        )
+        self.assertEqual(
+            len(rows), 14,
+            f"expected the 14 Track P lessons to each carry both target columns, found "
+            f"{len(rows)}; check the table's row shape",
+        )
+        low = sum(int(row[0]) for row in rows)
+        high = sum(int(row[1]) for row in rows)
+        slow_low = sum(int(row[2]) for row in rows)
+        slow_high = sum(int(row[3]) for row in rows)
+        total = re.search(
+            r"\| \*\*Total Track P\*\* .*?\| \*\*≈(\d+)–(\d+) h\*\* "
+            r"\| \*\*≈(\d+)–(\d+) h\*\* \|",
+            text,
+        )
+        self.assertIsNotNone(
+            total,
+            "expected the Track P total row to carry both column sums; without it the table has "
+            "nothing to add up to",
+        )
+        self.assertEqual(
+            (low, high, slow_low, slow_high),
+            tuple(int(value) * 60 for value in total.groups()),
+            f"expected the Track P rows to sum to the totals row "
+            f"{tuple(int(value) * 60 for value in total.groups())} minutes, got "
+            f"{(low, high, slow_low, slow_high)} - update the total when a target moves",
+        )
+        self.assertIn(
+            "There is no Lesson P.13", text,
+            "expected the Track P README to say why the ids skip P.13, so the gap does not read "
+            "as a missing lesson",
+        )
+
     def test_the_committed_readme_is_the_rendered_table(self):
         with open(generator.README, encoding="utf-8") as handle:
             current = handle.read()

@@ -11,6 +11,31 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 116: Hints After a Run, Hours That Add Up, and a Named P.13 Gap
+
+Three polish issues from a read-through, none of them a broken lesson.
+
+**Hint 2 now waits for a run.** The ladder was sequential, but a learner could click **Reveal
+Hint 2** immediately after Hint 1; on many lessons Hint 2 is nearly the full fix. The first hint
+stays open, and every later hint is disabled — labelled **Run to unlock Hint 2** — until that
+lesson has completed at least one run. Attempts are counted per lesson, so an earlier try still
+counts, and a failed or stopped run is a real attempt.
+
+**The hour rows add up.** Rounding each step on its own made the README's ten rows sum to
+202–291 beside a 200–290 total. One largest-remainder allocation now rounds the column so the
+rows total the quoted figure, and both the README step table and the `SIM_ROUTE` stage rows use
+it; Step 9 reads ≈14–18 and Step 10 ≈6–9. Page rows and the exact Core total (200.35–290) are
+unchanged, and each document says which figure is rounded.
+
+**P.13 and the Track P totals.** The id gap is deliberate — saved progress and links are keyed by
+lesson id — and now says so in `track-p/README.md` and `SIM_ROUTE.md`. The Track P table's stale
+`~10.5–14 h` total is replaced by the sums of its own two columns (≈12–17 h and ≈24–31 h), with
+the generated ~17–43 h page-metadata estimate named separately.
+
+Tests: the README row sum and the shared allocation are asserted in `test_readme_route.py` and
+`test_sim_route.py`; the browser E2E checks that Hint 2 is disabled before a run and opens after
+one.
+
 ## [2026-10-19] — Run 115: The Pass Selector Shows Which Step 1s Are Done
 
 Each pass card in the roadmap selector now carries a green check beside its name when that pass's
