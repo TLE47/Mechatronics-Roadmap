@@ -412,9 +412,10 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
 
       <p className="text-[11px] text-[#64748b]">
         The bench computes each metric with its own two-link FK chord, not yours, and the
-        anti-windup number runs the same 3000-step saturated PI loop as Lesson 05.1. The
-        capstone's instructor test still decides whether the lesson passes; these cards only
-        show what your repairs do.
+        anti-windup number runs the same 3000-step saturated PI loop as Lesson 05.1. These four
+        metrics are the capstone's pass condition: <b className="text-[#cbd5e1]">Run &amp; Verify
+        Output</b> only marks 08.1 verified when every card is at target, so a repair left at 1.20 mm
+        keeps the lesson unverified however its printed line reads.
       </p>
     </section>
   );

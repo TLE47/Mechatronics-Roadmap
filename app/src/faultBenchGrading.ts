@@ -179,3 +179,80 @@ export function countRepaired(report: FaultBenchReport | null): number {
     0
   );
 }
+
+/** The one lesson whose pass condition is the bench, not only its printed lines. */
+export const BENCH_LESSON_ID = '08.1';
+
+/** The bench source a run sends, or `''` for a lesson the bench does not grade. */
+export function benchSourceForLesson(lessonId: string): string {
+  return lessonId === BENCH_LESSON_ID ? FAULT_BENCH_PY : '';
+}
+
+interface BenchUnitSpec {
+  key: keyof FaultBenchReport;
+  label: string;
+  unit: RepairUnit;
+}
+
+const BENCH_UNITS: BenchUnitSpec[] = [
+  { key: 'offset', label: 'encoder zero offset', unit: 'mm' },
+  { key: 'cpr', label: 'encoder CPR scale', unit: 'mm' },
+  { key: 'antiWindup', label: 'anti-windup', unit: '%' },
+  { key: 'gravity', label: 'gravity sign', unit: 'mm' },
+];
+
+export interface BenchGate {
+  /** True only when every unit is at or under its target: the capstone's pass condition. */
+  passed: boolean;
+  repaired: number;
+  total: number;
+  /** One line per unit that missed its target, naming the metric it left behind. */
+  failures: string[];
+  /** The same verdict as one sentence, for the guide and the log. */
+  summary: string;
+}
+
+/**
+ * The 08.1 pass condition. A run that fails any graded metric cannot verify the lesson, however its
+ * printed lines read; a report that never arrived counts as unproven, not as a pass.
+ */
+export function benchGate(report: FaultBenchReport | null): BenchGate {
+  const total = BENCH_UNITS.length;
+  if (!report) {
+    return {
+      passed: false,
+      repaired: 0,
+      total,
+      failures: ['the bench did not report: no graded metrics came back from this run'],
+      summary: `0 / ${total} graded repairs at target — the bench did not report.`,
+    };
+  }
+  const failures: string[] = [];
+  for (const unit of BENCH_UNITS) {
+    const target = FAULT_BENCH_TARGETS[unit.key];
+    const metric = report[unit.key];
+    const verdict = repairVerdict(metric, target);
+    if (verdict === 'repaired') continue;
+    if (verdict === 'error') {
+      failures.push(`${unit.label}: call failed — ${metric.error}`);
+      continue;
+    }
+    failures.push(
+      `${unit.label}: ${formatRepairMetric(metric.value, unit.unit)} (target ≤ ${formatRepairMetric(
+        target,
+        unit.unit
+      )})`
+    );
+  }
+  const repaired = total - failures.length;
+  return {
+    passed: failures.length === 0,
+    repaired,
+    total,
+    failures,
+    summary:
+      failures.length === 0
+        ? `${total} / ${total} graded repairs at target.`
+        : `${repaired} / ${total} graded repairs at target — ${failures.join('; ')}.`,
+  };
+}

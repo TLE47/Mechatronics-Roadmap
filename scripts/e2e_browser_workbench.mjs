@@ -18,6 +18,8 @@
  * 7. Progress survives a full browser reload (`page.reload()`).
  * 8. Portfolio export (`buildPortfolioMarkdown` modal preview) contains the exact, strictly
  *    separated completion categories (`Executed & Passed in Pyodide WASM` vs `Self-Marked Complete`).
+ * 9. Lesson 08.1 passes only when its four-fault bench grades every repair at target: a repair left
+ *    10% short keeps its real 1.20 mm on the card and leaves the lesson unverified.
  *
  * Every scenario runs on one page and one browser context, so the runtime each scenario needs is
  * shared rather than rebuilt: the scenarios that must start from zero progress clear the workbench's
@@ -788,8 +790,90 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
     console.log('  ok the collapsed Start here line can be dismissed and restored from the roadmap');
 
+    // 13. The capstone's pass condition is its four-fault bench. A repair that is 10% short keeps its
+    //     real metric on the card (1.20 mm, still broken) and the lesson stays unverified, even though
+    //     the program runs cleanly and prints a repair line; the intended repairs verify it. The bench
+    //     calls the learner's own functions, so the edit is one line inside `repair_encoder_offset`
+    //     rather than a removed assertion.
+    await formattingPage.getByTestId('tab-btn-tab-pyodide').click();
+    await formattingPage.getByTestId('lesson-item-08.1').scrollIntoViewIfNeeded();
+    await formattingPage.getByTestId('lesson-item-08.1').click();
+    await formattingPage.getByTestId('btn-load-solution').click();
+    const benchSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+    const shortRepair = benchSolution.replace(
+      'def repair_encoder_offset(q_measured, offset_rad):\n    return q_measured - offset_rad',
+      'def repair_encoder_offset(q_measured, offset_rad):\n    return q_measured - 0.9 * offset_rad'
+    );
+    assert.notEqual(
+      shortRepair,
+      benchSolution,
+      'the 08.1 solution must contain the one-line offset repair this scenario shortens'
+    );
+    const countBeforeBench = (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim();
+    const benchVerifiedBefore = Number((countBeforeBench || '').match(/^(\d+)/)?.[1]);
+    assert.ok(Number.isInteger(benchVerifiedBefore), `the tally must start with a count, got: ${countBeforeBench}`);
+
+    await formattingPage.getByTestId('textarea-python-code').fill(shortRepair);
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.getByTestId('status-bench-failed').waitFor({ timeout: 45000 });
+
+    assert.equal(
+      (await formattingPage.getByTestId('fault-metric-zero-offset').textContent())?.trim(),
+      '1.20 mm',
+      'a 10%-short offset repair must keep its real 1.20 mm tip error on the card'
+    );
+    assert(
+      (await formattingPage.getByTestId('fault-card-zero-offset').innerText()).includes('STILL BROKEN'),
+      'a repair above the 1 mm target must read STILL BROKEN, not REPAIRED'
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('fault-bench-count').textContent())?.trim(),
+      '3 / 4 repaired',
+      'the bench header must count three at-target repairs'
+    );
+    const benchError = await formattingPage.getByTestId('pre-bench-error').innerText();
+    assert(
+      benchError.includes('encoder zero offset') && benchError.includes('1.20 mm'),
+      `the bench failure must name the unit and its metric; got: ${benchError}`
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('status-assert-passed').count()),
+      0,
+      'a run whose bench misses a target must not report a pass'
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+      countBeforeBench,
+      'a repair that fails its graded metric must not verify Lesson 08.1'
+    );
+    const benchLog = await formattingPage.evaluate(() =>
+      JSON.parse(localStorage.getItem('mechalab.learningLog.v1') || '[]')
+    );
+    const benchRun = benchLog.filter((e) => e.kind === 'run' && e.lesson === '08.1').pop();
+    assert.equal(benchRun?.outcome, 'bench_failed', 'the learning log must record the bench failure');
+    assert(
+      benchRun?.fail?.includes('1.20 mm'),
+      `the logged failure must carry the real metric; got: ${benchRun?.fail}`
+    );
+    console.log('  ok a 10%-short 08.1 repair keeps 1.20 mm and leaves the lesson unverified');
+
+    await formattingPage.getByTestId('btn-load-solution').click();
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 45000 });
+    assert.equal(
+      (await formattingPage.getByTestId('fault-bench-count').textContent())?.trim(),
+      '4 / 4 repaired',
+      'the intended repairs must put all four cards at target'
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+      `${benchVerifiedBefore + 1} / ${(countBeforeBench || '').match(/\/\s*(\d+)/)?.[1]} Verified`,
+      'the same solution with all four repairs at target must verify the capstone'
+    );
+    console.log('  ok the intended 08.1 repairs put all four cards at target and verify the lesson');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass).'
     );
   } finally {
     await browser.close();

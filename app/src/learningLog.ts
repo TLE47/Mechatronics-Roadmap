@@ -10,7 +10,8 @@
  *  - `lesson_open`: the denominator for abandon rate.
  *  - `run`: one per execution, with the outcome and its duration; attempts-to-verify is the count of
  *    runs before the first `verified`.
- *  - `verified`: the numerator. A run that passed both behavioural and output checks.
+ *  - `verified`: the numerator. A run that passed both behavioural and output checks, and — for
+ *    08.1 — every graded repair on the four-fault bench.
  *  - `hint` / `solution_open`: which help was used and when, so "needed a person" can be told apart
  *    from "used the ladder".
  *  - `export`: when the learner handed the file over, so a partial log is not read as a whole one.
@@ -26,7 +27,7 @@ export interface LearningEvent {
   t: number;
   kind: LearningEventKind;
   lesson?: string;
-  /** `run`: verified | mismatch | behavior_failed | stopped | error. */
+  /** `run`: verified | mismatch | bench_failed | behavior_failed | stopped | error. */
   outcome?: string;
   /** `run`: the first line of the failing assertion or traceback, truncated. */
   fail?: string;

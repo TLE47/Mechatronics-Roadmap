@@ -21,8 +21,11 @@ import {
   zeroOffsetTipErrorMm,
 } from '../app/src/faultBench.ts';
 import {
+  BENCH_LESSON_ID,
   FAULT_BENCH_PY,
   FAULT_BENCH_TARGETS,
+  benchGate,
+  benchSourceForLesson,
   countRepaired,
   formatRepairMetric,
   parseBenchReport,
@@ -154,6 +157,43 @@ check('the worker report round-trips through its JSON string', () => {
     null,
     'a non-numeric metric is rejected'
   );
+});
+
+check('the lesson pass condition is the bench: a 10%-short repair cannot verify it', () => {
+  const halfFixed = { ...REPAIRED_REPORT, offset: { value: 1.2, error: '' } };
+  const gate = benchGate(halfFixed);
+  assert.equal(gate.passed, false, 'a 1.2 mm repair must not pass the capstone');
+  assert.equal(gate.repaired, 3, 'three units are at target');
+  assert.equal(gate.total, 4, 'the capstone grades four units');
+  assert.equal(gate.failures.length, 1, 'only the short repair is named');
+  assert.match(gate.failures[0], /encoder zero offset/, 'the failure must name the unit');
+  assert.match(gate.failures[0], /1\.20 mm/, 'the failure must keep the real metric');
+  assert.match(gate.failures[0], /1\.00 mm/, 'the failure must state the target');
+  assert.match(gate.summary, /3 \/ 4 graded repairs at target/, 'the summary counts what passed');
+});
+
+check('a solved report is the only one that passes the lesson', () => {
+  const gate = benchGate(REPAIRED_REPORT);
+  assert.equal(gate.passed, true, 'four at-target repairs must pass');
+  assert.deepEqual(gate.failures, [], 'a passing gate names no failures');
+  assert.equal(benchGate(BROKEN_REPORT).passed, false, 'the starter must not pass the capstone');
+  assert.equal(benchGate(BROKEN_REPORT).repaired, 0, 'the starter fixes nothing');
+});
+
+check('a call that raises fails the gate by name, and so does a missing report', () => {
+  const failedReport = { ...REPAIRED_REPORT, cpr: { value: null, error: 'NameError: nope' } };
+  const gate = benchGate(failedReport);
+  assert.equal(gate.passed, false, 'a failed call must not pass the lesson');
+  assert.match(gate.failures[0], /encoder CPR scale: call failed — NameError: nope/);
+  const missing = benchGate(null);
+  assert.equal(missing.passed, false, 'an unrun bench is unproven, not a pass');
+  assert.equal(missing.repaired, 0);
+});
+
+check('the bench is sent for 08.1 and for no other lesson', () => {
+  assert.equal(BENCH_LESSON_ID, '08.1');
+  assert.equal(benchSourceForLesson('08.1'), FAULT_BENCH_PY, '08.1 must send the harness');
+  assert.equal(benchSourceForLesson('05.1'), '', 'another lesson must not run the bench');
 });
 
 check('the Python harness calls all four learner repairs and its own FK', () => {

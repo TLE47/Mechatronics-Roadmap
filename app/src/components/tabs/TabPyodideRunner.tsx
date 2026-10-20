@@ -4,7 +4,13 @@ import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabP
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson } from '../../lessonCoach';
 import { FaultBench08 } from '../FaultBench08';
-import { FAULT_BENCH_PY, FaultBenchReport, parseBenchReport } from '../../faultBenchGrading';
+import {
+  BENCH_LESSON_ID,
+  FaultBenchReport,
+  benchGate,
+  benchSourceForLesson,
+  parseBenchReport,
+} from '../../faultBenchGrading';
 import { logEvent } from '../../learningLog';
 import {
   Play,
@@ -187,6 +193,18 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__ = __mechalab_e
       }
 
       if (studentErr) {
+        // The bench is an independent grader, not part of the learner's own program: it is still
+        // worth running when one of their assertions fired, because that is exactly what a repair
+        // that is close but short does. The cards keep their real metric either way.
+        let earlyBench = '';
+        if (benchSource && benchSource.trim()) {
+          try {
+            await py.runPythonAsync(benchSource);
+            earlyBench = py.globals.get('__mechalab_bench_json__') || '';
+          } catch (benchErr) {
+            earlyBench = '';
+          }
+        }
         self.postMessage({
           type: 'result',
           runId,
@@ -196,6 +214,7 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__ = __mechalab_e
           runtimeError: true,
           instructorPassed: false,
           instructorError: '',
+          bench: earlyBench,
         });
         return;
       }
@@ -320,7 +339,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [pyodideStatus, setPyodideStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [passStatus, setPassStatus] = useState<
-    'untested' | 'passed' | 'behavior_failed' | 'mismatch' | 'stopped' | 'error'
+    'untested' | 'passed' | 'bench_failed' | 'behavior_failed' | 'mismatch' | 'stopped' | 'error'
   >('untested');
 
   const [localVerified, setLocalVerified] = useState<Record<string, boolean>>(() => {
@@ -424,6 +443,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
+  // What the bench says about the code on screen now; only 08.1 has one, and a `null` report is a
+  // failed gate (unproven), never a pass.
+  const benchResult = currentLesson.id === BENCH_LESSON_ID ? benchGate(benchReport) : null;
   const nextHintNumber = revealedHints + 1;
   // Hint 1 is always open. Every hint after it waits for at least one completed run of this
   // lesson, so a learner cannot read the near-solution second hint without trying first.
@@ -448,7 +470,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   useEffect(() => {
     if (isRunning || !pendingRunRef.current || passStatus === 'untested') return;
     pendingRunRef.current = false;
-    const failed = (instructorError || stderr || '').split('\n')[0];
+    const failed =
+      passStatus === 'bench_failed' && benchResult
+        ? benchResult.summary
+        : (instructorError || stderr || '').split('\n')[0];
     logEvent({
       kind: 'run',
       lesson: selectedId,
@@ -457,7 +482,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       ms: Math.round(performance.now() - runStartedAtRef.current),
     });
     if (passStatus === 'passed') logEvent({ kind: 'verified', lesson: selectedId });
-  }, [isRunning, passStatus, selectedId, instructorError, stderr]);
+    // `benchReport` is the identity that changes when the gate's verdict can: a fresh gate object
+    // every render would re-run this effect on every keystroke, which `pendingRunRef` would swallow.
+  }, [isRunning, passStatus, selectedId, instructorError, stderr, benchReport]);
 
   // Formatting and behaviour are graded separately: the lesson declares how strictly its `stdout` is
   // compared (`normalized` unless its Expected Output is a column-aligned table), and the note under
@@ -494,6 +521,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setStdout('');
     setStderr('');
     setInstructorError('');
+    setBenchReport(null);
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setPassStatus('untested');
@@ -630,7 +658,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           runId,
           studentCode: sourceCode,
           instructorTests: lesson.instructorTests,
-          benchSource: lesson.id === '08.1' ? FAULT_BENCH_PY : '',
+          benchSource: benchSourceForLesson(lesson.id),
           cdnUrl,
           maxSteps,
           timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
@@ -666,12 +694,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       const actualErr: string = String(workerOutcome?.stderr || '').trim();
       setStdout(actualOut);
       setStderr(actualErr);
-      setBenchReport(parseBenchReport(workerOutcome?.bench));
+      const parsedBench = parseBenchReport(workerOutcome?.bench);
+      setBenchReport(parsedBench);
+      // 08.1 is graded by the bench, not only by its printed lines. A repair that misses its target
+      // keeps its real metric on the card *and* keeps the lesson unverified; `null` means the bench
+      // never reported, which is unproven rather than a pass.
+      const bench = lesson.id === BENCH_LESSON_ID ? benchGate(parsedBench) : null;
 
       if (workerOutcome?.runtimeError) {
         setBehaviorCheck('failed');
         if (actualErr.startsWith('AssertionError')) {
           setInstructorError(actualErr);
+          // The learner's own check fired; if the bench names a repair behind it, that metric is the
+          // thing to fix, so it outranks the assertion line. A syntax error or a NameError keeps its
+          // own verdict: the program never got far enough for a repair to be the story.
+          if (bench && !bench.passed) {
+            setPassStatus('bench_failed');
+            return;
+          }
           setPassStatus('behavior_failed');
         } else {
           setPassStatus('error');
@@ -692,6 +732,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           workerOutcome?.instructorError ||
             'Instructor behavioral tests failed on unseen or boundary inputs.'
         );
+      }
+
+      // The bench outranks the other verdicts for 08.1: the four graded repairs are the capstone's
+      // pass condition, so a card left at 1.20 mm reports that metric instead of a logged assertion.
+      if (bench && !bench.passed) {
+        setPassStatus('bench_failed');
+        return;
+      }
+
+      if (!isBehaviorPassed) {
         setPassStatus('behavior_failed');
         return;
       }
@@ -777,7 +827,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   };
   const guideFailed =
-    passStatus === 'behavior_failed' || passStatus === 'mismatch' || passStatus === 'error' ||
+    passStatus === 'bench_failed' ||
+    passStatus === 'behavior_failed' ||
+    passStatus === 'mismatch' ||
+    passStatus === 'error' ||
     passStatus === 'stopped';
   const guideLines = (instructorError || stderr || '')
     .split('\n')
@@ -786,11 +839,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // An assertion puts its expected/got line first; a traceback puts the useful SyntaxError or
   // NameError last. The guide should show the line a beginner can act on in either case.
   const guideFixLine =
-    passStatus === 'mismatch'
-      ? 'Output differs from the lesson\'s expected output.'
-      : passStatus === 'behavior_failed'
-        ? guideLines[0] || ''
-        : guideLines[guideLines.length - 1] || '';
+    passStatus === 'bench_failed'
+      ? benchResult?.failures[0] || 'The bench found a repair that misses its graded metric.'
+      : passStatus === 'mismatch'
+        ? 'Output differs from the lesson\'s expected output.'
+        : passStatus === 'behavior_failed'
+          ? guideLines[0] || ''
+          : guideLines[guideLines.length - 1] || '';
   const guideShowsExpectedGot =
     passStatus === 'behavior_failed' && guideFixLine.startsWith('AssertionError');
 
@@ -964,7 +1019,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               <div className="text-[11px] font-mono text-[#f43f5e]">WHAT TO FIX</div>
               <code className="block mt-1 text-xs text-[#fecdd3] break-words">{guideFixLine}</code>
               <p className="text-[11px] text-[#cbd5e1] mt-1">
-                {guideShowsExpectedGot ? (
+                {passStatus === 'bench_failed' ? (
+                  <>
+                    That is the bench measuring your own repair function, not reading a printed
+                    line. The capstone passes only when all four graded repairs are at target, so
+                    change that function and press <b>Run &amp; Verify Output</b> again.
+                  </>
+                ) : guideShowsExpectedGot ? (
                   <>
                     That is the check explaining itself: expected value first, what your code
                     produced second. Read it, change one marked line, and press{' '}
@@ -1372,6 +1433,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {instructorError}
               </div>
             )}
+            {passStatus === 'bench_failed' && benchResult && benchResult.failures.length > 0 && (
+              <div
+                data-testid="pre-bench-error"
+                className="mt-2.5 p-2.5 rounded-lg bg-[#0b0f19] border border-[#f43f5e]/50 font-mono text-xs text-[#f43f5e] space-y-1"
+              >
+                <div className="text-[11px] text-[#fbbf24]">
+                  Bench: {benchResult.repaired} / {benchResult.total} graded repairs at target
+                </div>
+                {benchResult.failures.map((line) => (
+                  <div key={line}>{line}</div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Output & Expected Output Side-by-Side Diff */}
@@ -1388,6 +1462,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>PASS · Behavior &amp; Output Verified</span>
+                  </span>
+                )}
+                {passStatus === 'bench_failed' && (
+                  <span
+                    data-testid="status-bench-failed"
+                    className="text-xs font-mono font-bold text-[#f43f5e] flex items-center gap-1"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>
+                      BENCH FAILED · {benchResult?.repaired ?? 0} / {benchResult?.total ?? 4}{' '}
+                      Repairs At Target
+                    </span>
                   </span>
                 )}
                 {passStatus === 'behavior_failed' && (
