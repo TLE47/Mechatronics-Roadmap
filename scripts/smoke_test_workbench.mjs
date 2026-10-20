@@ -567,8 +567,9 @@ export async function runSmokeTests(viteServer) {
       'TabPyodideRunner must state that a normalized lesson ignores whitespace'
     );
 
-    // 08.1 owns the four-fault bench; other lessons must not inherit it. The SSR values are the
-    // broken ones, so a card that starts already fixed is caught here rather than in the browser.
+    // 08.1 owns the four-fault bench; other lessons must not inherit it. The bench grades the
+    // learner's own repair functions, so the server render has no report: every card must say
+    // "not run", and a card that starts green is caught here rather than in the browser.
     const html081 = cleanSsr(
       ReactDOMServer.renderToString(
         React.createElement(TabPyodideRunner, { initialLessonId: '08.1' })
@@ -586,10 +587,15 @@ export async function runSmokeTests(viteServer) {
     }
     assert(
       html081.includes('data-testid="input-zero-offset-correction"') &&
-        html081.includes('12.0 mm') &&
-        html081.includes('37.2%') &&
-        html081.includes('4.7%'),
-      '08.1 bench must open on the broken metrics, with the zero-offset slider and both windup values'
+        html081.includes('data-testid="btn-fault-grade"') &&
+        html081.includes('broken 12.00 mm') &&
+        html081.includes('broken 37.2%') &&
+        html081.includes('0 / 4 repaired'),
+      '08.1 bench must open ungraded, naming each broken value and offering Grade my repairs'
+    );
+    assert(
+      html081.includes('not graded yet') && !html081.includes('REPAIRED'),
+      '08.1 bench must not present an unrun card as repaired'
     );
     assert(
       !htmlRunner.includes('fault-bench-08-1'),

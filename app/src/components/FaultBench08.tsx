@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { AlertTriangle, CheckCircle2, RotateCcw, Wrench } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleSlash, Loader2, Play, RotateCcw, Wrench } from 'lucide-react';
 import {
-  CPR_SCALE,
   ZERO_OFFSET_RAD,
   antiWindupOvershootPct,
   cprTipErrorMm,
@@ -9,31 +8,46 @@ import {
   zeroOffsetCurve,
   zeroOffsetTipErrorMm,
 } from '../faultBench';
+import {
+  FAULT_BENCH_TARGETS,
+  FaultBenchReport,
+  TIP_TARGET_MM,
+  countRepaired,
+  formatRepairMetric,
+  repairVerdict,
+} from '../faultBenchGrading';
+
+interface FaultBench08Props {
+  /** The metrics the learner's own repair functions returned on the last run. */
+  report: FaultBenchReport | null;
+  /** True while the runner is executing the editor's code. */
+  grading: boolean;
+  /** Runs the editor's code, which is what refreshes the report. */
+  onGrade: () => void;
+}
 
 type ToggleFaultId = 'cpr' | 'antiWindup' | 'gravity';
 type MetricUnit = 'mm' | '%';
 
-interface ToggleFaultSpec {
+interface BenchCardSpec {
   id: ToggleFaultId;
   badge: string;
   title: string;
-  before: number;
-  after: number;
+  /** The metric the broken unit produces, before any repair. */
+  broken: number;
   unit: MetricUnit;
   testId: string;
 }
 
 const ZERO_CURVE = zeroOffsetCurve(24);
 const ANTI_WINDUP_BEFORE = antiWindupOvershootPct(false);
-const ANTI_WINDUP_AFTER = antiWindupOvershootPct(true);
 
-const TOGGLE_FAULTS: ToggleFaultSpec[] = [
+const BENCH_CARDS: BenchCardSpec[] = [
   {
     id: 'cpr',
     badge: 'Broken B · CPR scale',
     title: 'Encoder reports 4× the true angle',
-    before: cprTipErrorMm(1),
-    after: cprTipErrorMm(CPR_SCALE),
+    broken: cprTipErrorMm(1),
     unit: 'mm',
     testId: 'cpr',
   },
@@ -41,8 +55,7 @@ const TOGGLE_FAULTS: ToggleFaultSpec[] = [
     id: 'antiWindup',
     badge: 'Broken C · anti-windup',
     title: 'Integral keeps charging while clipped',
-    before: ANTI_WINDUP_BEFORE,
-    after: ANTI_WINDUP_AFTER,
+    broken: ANTI_WINDUP_BEFORE,
     unit: '%',
     testId: 'anti-windup',
   },
@@ -50,17 +63,11 @@ const TOGGLE_FAULTS: ToggleFaultSpec[] = [
     id: 'gravity',
     badge: 'Broken A · gravity sign',
     title: 'Feedforward command is inverted',
-    before: gravityTipErrorMm(false),
-    after: gravityTipErrorMm(true),
+    broken: gravityTipErrorMm(false),
     unit: 'mm',
     testId: 'gravity',
   },
 ];
-
-function formatMetric(value: number, unit: MetricUnit): string {
-  if (unit === '%') return `${value.toFixed(1)}%`;
-  return value < 0.005 ? '0.00 mm' : `${value.toFixed(1)} mm`;
-}
 
 const CHART_WIDTH = 320;
 const CHART_HEIGHT = 108;
@@ -78,43 +85,59 @@ function chartY(errorMm: number): number {
   return CHART_BOTTOM - (errorMm / ZERO_CURVE_MAX_MM) * (CHART_BOTTOM - CHART_TOP);
 }
 
-function statusBadge(fixed: boolean): React.ReactNode {
-  return fixed ? (
-    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#34d399]">
-      <CheckCircle2 className="w-3 h-3" /> REPAIRED
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#f43f5e]">
-      <AlertTriangle className="w-3 h-3" /> BROKEN
+function statusBadge(verdict: ReturnType<typeof repairVerdict>): React.ReactNode {
+  if (verdict === 'repaired') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#34d399]">
+        <CheckCircle2 className="w-3 h-3" /> REPAIRED
+      </span>
+    );
+  }
+  if (verdict === 'broken') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#f43f5e]">
+        <AlertTriangle className="w-3 h-3" /> STILL BROKEN
+      </span>
+    );
+  }
+  if (verdict === 'error') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#fbbf24]">
+        <AlertTriangle className="w-3 h-3" /> CALL FAILED
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#64748b]">
+      <CircleSlash className="w-3 h-3" /> NOT RUN
     </span>
   );
 }
 
-/** The 08.1 capstone's four broken units, exercised against the same metrics as its proof lines. */
-export const FaultBench08: React.FC = () => {
-  const [fixed, setFixed] = useState<Record<ToggleFaultId, boolean>>({
-    cpr: false,
-    antiWindup: false,
-    gravity: false,
-  });
+function verdictColor(verdict: ReturnType<typeof repairVerdict>): string {
+  if (verdict === 'repaired') return 'text-[#34d399]';
+  if (verdict === 'broken') return 'text-[#f43f5e]';
+  if (verdict === 'error') return 'text-[#fbbf24]';
+  return 'text-[#64748b]';
+}
+
+/**
+ * The 08.1 capstone's four broken units, graded from the learner's `repair_*` functions.
+ *
+ * Nothing here is a local toggle: the numbers come from the Python runner's last run, so a
+ * repair that returns the wrong angle keeps that angle's real tip error on the card.
+ */
+export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onGrade }) => {
+  // The slider is the manual playground, not the graded repair: it applies its own correction
+  // to the exact FK chord so the learner can see what "right" looks like before writing it.
   const [correctionRad, setCorrectionRad] = useState(0);
 
-  const offsetFixed = Math.abs(correctionRad - ZERO_OFFSET_RAD) < 0.0005;
-  const offsetError = zeroOffsetTipErrorMm(correctionRad);
-  const repairedCount =
-    Number(offsetFixed) + Number(fixed.cpr) + Number(fixed.antiWindup) + Number(fixed.gravity);
-
-  const toggleFault = (id: ToggleFaultId) => {
-    setFixed((previous) => ({ ...previous, [id]: !previous[id] }));
-  };
-
-  const resetBench = () => {
-    setFixed({ cpr: false, antiWindup: false, gravity: false });
-    setCorrectionRad(0);
-  };
+  const sliderError = zeroOffsetTipErrorMm(correctionRad);
+  const repairedCount = countRepaired(report);
+  const offsetVerdict = repairVerdict(report?.offset, FAULT_BENCH_TARGETS.offset);
 
   const currentPointX = chartX(correctionRad);
-  const currentPointY = chartY(offsetError);
+  const currentPointY = chartY(sliderError);
 
   return (
     <section
@@ -125,15 +148,16 @@ export const FaultBench08: React.FC = () => {
         <div>
           <div className="text-xs font-mono text-[#38bdf8] flex items-center gap-1.5">
             <Wrench className="w-3.5 h-3.5" />
-            <span>08.1 Four-Fault Bench · interactive</span>
+            <span>08.1 Four-Fault Bench · grades your repairs</span>
           </div>
           <h3 className="text-base font-bold text-[#f1f5f9] mt-0.5">
-            Toggle a broken unit and watch its metric recover
+            Run your four repair functions and watch each real metric land
           </h3>
           <p className="text-xs text-[#94a3b8] mt-0.5 max-w-3xl">
-            These are the same tip-error and overshoot checks the page prints: repair each cause,
-            not the label. The green target is below <b>1 mm</b> for tip errors and below{' '}
-            <b>5%</b> for overshoot.
+            These cards report what <b>your</b> <code className="font-mono">repair_*</code>{' '}
+            functions actually return, computed with the bench's own forward kinematics: return
+            the wrong angle and the tip error stays wrong. A unit is repaired below <b>1 mm</b>{' '}
+            of tip error, or below <b>5%</b> overshoot.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -148,12 +172,25 @@ export const FaultBench08: React.FC = () => {
             {repairedCount} / 4 repaired
           </div>
           <button
-            onClick={resetBench}
+            onClick={() => setCorrectionRad(0)}
             data-testid="btn-fault-reset-all"
             className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#cbd5e1] border border-[#334155] flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Reset bench
+            Reset slider
+          </button>
+          <button
+            onClick={onGrade}
+            disabled={grading}
+            data-testid="btn-fault-grade"
+            className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 disabled:opacity-60 disabled:cursor-wait text-[#38bdf8] border border-[#38bdf8]/50 flex items-center gap-1.5 cursor-pointer"
+          >
+            {grading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Play className="w-3.5 h-3.5" />
+            )}
+            {grading ? 'Grading…' : 'Grade my repairs'}
           </button>
         </div>
       </div>
@@ -161,7 +198,7 @@ export const FaultBench08: React.FC = () => {
       <div
         data-testid="fault-card-zero-offset"
         className={`rounded-lg border p-3 ${
-          offsetFixed
+          offsetVerdict === 'repaired'
             ? 'bg-[#06281f]/50 border-[#34d399]/50'
             : 'bg-[#0b0f19] border-[#334155]'
         }`}
@@ -175,26 +212,30 @@ export const FaultBench08: React.FC = () => {
                   Encoder has a constant 0.06 rad offset
                 </div>
               </div>
-              {statusBadge(offsetFixed)}
+              {statusBadge(offsetVerdict)}
             </div>
 
             <div
               data-testid="fault-metric-zero-offset"
-              className={`mt-3 font-mono text-2xl font-bold tabular-nums ${
-                offsetFixed ? 'text-[#34d399]' : 'text-[#f43f5e]'
-              }`}
+              className={`mt-3 font-mono text-2xl font-bold tabular-nums ${verdictColor(offsetVerdict)}`}
             >
-              {formatMetric(offsetError, 'mm')}
+              {formatRepairMetric(report?.offset.value ?? null, 'mm')}
             </div>
             <div className="text-[11px] text-[#94a3b8] mt-0.5">
-              broken 12.0 mm · target 0.00 mm
+              your <code className="font-mono">repair_encoder_offset</code> · broken 12.00 mm ·
+              target {formatRepairMetric(TIP_TARGET_MM, 'mm')}
             </div>
+            {report?.offset.error && (
+              <div className="text-[11px] font-mono text-[#fbbf24] mt-1 break-words">
+                {report.offset.error}
+              </div>
+            )}
 
             <label
               htmlFor="fault-zero-offset-slider"
               className="mt-3 flex items-center justify-between text-[11px] font-mono text-[#cbd5e1]"
             >
-              <span>Correction applied</span>
+              <span>Manual correction (playground)</span>
               <span className="text-[#38bdf8]">{correctionRad.toFixed(3)} rad</span>
             </label>
             <input
@@ -206,23 +247,20 @@ export const FaultBench08: React.FC = () => {
               step={0.001}
               value={correctionRad}
               onChange={(event) => setCorrectionRad(Number(event.target.value))}
-              aria-label="Zero-offset correction in radians"
+              aria-label="Manual zero-offset correction in radians"
               className="mt-1.5 w-full accent-[#38bdf8] cursor-pointer"
             />
-            <button
-              onClick={() => setCorrectionRad(offsetFixed ? 0 : ZERO_OFFSET_RAD)}
-              data-testid="btn-fault-zero-offset"
-              className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono font-bold bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 text-[#38bdf8] border border-[#38bdf8]/40 cursor-pointer"
-            >
-              {offsetFixed ? 'Break it again' : 'Apply exact repair'}
-            </button>
+            <div className="mt-1 text-[10px] font-mono text-[#64748b]">
+              playground tip error {formatRepairMetric(sliderError, 'mm')} — the card above only
+              turns green when your function does this
+            </div>
           </div>
 
           <div className="lg:col-span-7">
             <svg
               viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
               role="img"
-              aria-label="Tip error falls from 12 mm to 0 as the zero-offset correction approaches 0.06 radians"
+              aria-label="Tip error falls from 12 mm to 0 as the manual zero-offset correction approaches 0.06 radians"
               className="w-full h-auto"
             >
               {[0, 6, 12].map((millimetres) => (
@@ -268,7 +306,8 @@ export const FaultBench08: React.FC = () => {
               </text>
               <polyline
                 points={ZERO_CURVE.map(
-                  (point) => `${chartX(point.correctionRad).toFixed(1)},${chartY(point.errorMm).toFixed(1)}`
+                  (point) =>
+                    `${chartX(point.correctionRad).toFixed(1)},${chartY(point.errorMm).toFixed(1)}`
                 ).join(' ')}
                 fill="none"
                 stroke="#38bdf8"
@@ -278,7 +317,7 @@ export const FaultBench08: React.FC = () => {
                 cx={currentPointX}
                 cy={currentPointY}
                 r="4"
-                fill={offsetFixed ? '#34d399' : '#f43f5e'}
+                fill={sliderError <= TIP_TARGET_MM ? '#34d399' : '#f43f5e'}
                 stroke="#0b0f19"
                 strokeWidth="1.5"
               />
@@ -287,7 +326,9 @@ export const FaultBench08: React.FC = () => {
                   key={correction}
                   x={chartX(correction)}
                   y={CHART_BOTTOM + 14}
-                  textAnchor={correction === 0 ? 'start' : correction === ZERO_OFFSET_RAD ? 'end' : 'middle'}
+                  textAnchor={
+                    correction === 0 ? 'start' : correction === ZERO_OFFSET_RAD ? 'end' : 'middle'
+                  }
                   fill="#64748b"
                   fontSize="9"
                   fontFamily="monospace"
@@ -311,22 +352,27 @@ export const FaultBench08: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {TOGGLE_FAULTS.map((fault) => {
-          const isFixed = fixed[fault.id];
-          const current = isFixed ? fault.after : fault.before;
+        {BENCH_CARDS.map((fault) => {
+          const metric = report?.[fault.id];
+          const verdict = repairVerdict(metric, FAULT_BENCH_TARGETS[fault.id]);
+          const value = metric?.value ?? null;
           const recoveredPct =
-            fault.before === 0 ? 100 : Math.max(0, Math.min(100, (1 - current / fault.before) * 100));
+            value === null || fault.broken === 0
+              ? 0
+              : Math.max(0, Math.min(100, (1 - value / fault.broken) * 100));
           return (
             <div
               key={fault.id}
               data-testid={`fault-card-${fault.testId}`}
               className={`rounded-lg border p-3 ${
-                isFixed ? 'bg-[#06281f]/50 border-[#34d399]/50' : 'bg-[#0b0f19] border-[#334155]'
+                verdict === 'repaired'
+                  ? 'bg-[#06281f]/50 border-[#34d399]/50'
+                  : 'bg-[#0b0f19] border-[#334155]'
               }`}
             >
               <div className="flex items-center justify-between gap-2 h-4">
                 <span className="text-[11px] font-mono text-[#94a3b8] truncate">{fault.badge}</span>
-                <span className="shrink-0">{statusBadge(isFixed)}</span>
+                <span className="shrink-0">{statusBadge(verdict)}</span>
               </div>
               <div className="text-sm font-semibold text-[#f1f5f9] mt-1 min-h-[2.5rem]">
                 {fault.title}
@@ -334,15 +380,13 @@ export const FaultBench08: React.FC = () => {
 
               <div
                 data-testid={`fault-metric-${fault.testId}`}
-                className={`mt-3 font-mono text-2xl font-bold tabular-nums ${
-                  isFixed ? 'text-[#34d399]' : 'text-[#f43f5e]'
-                }`}
+                className={`mt-3 font-mono text-2xl font-bold tabular-nums ${verdictColor(verdict)}`}
               >
-                {formatMetric(current, fault.unit)}
+                {formatRepairMetric(value, fault.unit)}
               </div>
               <div className="text-[11px] text-[#94a3b8] mt-0.5">
-                broken {formatMetric(fault.before, fault.unit)} · repaired{' '}
-                {formatMetric(fault.after, fault.unit)}
+                broken {formatRepairMetric(fault.broken, fault.unit)} · target ≤{' '}
+                {formatRepairMetric(FAULT_BENCH_TARGETS[fault.id], fault.unit)}
               </div>
 
               <div className="mt-3 h-1.5 rounded-full bg-[#1e293b] overflow-hidden">
@@ -352,29 +396,25 @@ export const FaultBench08: React.FC = () => {
                 />
               </div>
               <div className="mt-1 text-[10px] font-mono text-[#64748b]">
-                {recoveredPct.toFixed(0)}% recovered
+                {verdict === 'unrun'
+                  ? 'not graded yet — press Grade my repairs'
+                  : `${recoveredPct.toFixed(0)}% recovered by your repair`}
               </div>
-
-              <button
-                onClick={() => toggleFault(fault.id)}
-                aria-pressed={isFixed}
-                data-testid={`btn-fault-${fault.testId}`}
-                className={`mt-3 w-full px-2.5 py-1.5 rounded text-[11px] font-mono font-bold border cursor-pointer ${
-                  isFixed
-                    ? 'bg-[#0b0f19] text-[#f43f5e] border-[#f43f5e]/40 hover:bg-[#f43f5e]/10'
-                    : 'bg-[#34d399]/15 text-[#34d399] border-[#34d399]/40 hover:bg-[#34d399]/25'
-                }`}
-              >
-                {isFixed ? 'Break it again' : 'Repair this unit'}
-              </button>
+              {metric?.error && (
+                <div className="mt-1 text-[10px] font-mono text-[#fbbf24] break-words">
+                  {metric.error}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
       <p className="text-[11px] text-[#64748b]">
-        The zero-offset curve uses the exact two-link FK chord, not a small-angle approximation.
-        The anti-windup metric runs the same 3000-step saturated PI loop as Lesson 05.1.
+        The bench computes each metric with its own two-link FK chord, not yours, and the
+        anti-windup number runs the same 3000-step saturated PI loop as Lesson 05.1. The
+        capstone's instructor test still decides whether the lesson passes; these cards only
+        show what your repairs do.
       </p>
     </section>
   );

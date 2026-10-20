@@ -4,6 +4,7 @@ import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabP
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson } from '../../lessonCoach';
 import { FaultBench08 } from '../FaultBench08';
+import { FAULT_BENCH_PY, FaultBenchReport, parseBenchReport } from '../../faultBenchGrading';
 import { logEvent } from '../../learningLog';
 import {
   Play,
@@ -78,6 +79,7 @@ self.onmessage = async (event) => {
       runId,
       studentCode,
       instructorTests,
+      benchSource,
       cdnUrl,
       maxSteps = 400000,
       timeoutSec = 4.0,
@@ -236,6 +238,20 @@ __mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
       const instructorPassed = Boolean(py.globals.get('__mechalab_inst_ok__'));
       const instructorError = py.globals.get('__mechalab_inst_err__') || '';
 
+      // The 08.1 bench grades the learner's own repair functions against the same numbers the
+      // lesson prints. It runs after the instructor tests so a failed attempt still reports the
+      // real tip error each repair produces, instead of a card that says broken because a
+      // boolean was left alone.
+      let benchReport = '';
+      if (benchSource && benchSource.trim()) {
+        try {
+          await py.runPythonAsync(benchSource);
+          benchReport = py.globals.get('__mechalab_bench_json__') || '';
+        } catch (benchErr) {
+          benchReport = '';
+        }
+      }
+
       self.postMessage({
         type: 'result',
         runId,
@@ -245,6 +261,7 @@ __mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
         runtimeError: false,
         instructorPassed,
         instructorError,
+        bench: benchReport,
       });
     } catch (err) {
       self.postMessage({
@@ -296,6 +313,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [stdout, setStdout] = useState<string>('');
   const [stderr, setStderr] = useState<string>('');
   const [instructorError, setInstructorError] = useState<string>('');
+  // What the 08.1 bench grades: the metrics the learner's own repair functions produce.
+  const [benchReport, setBenchReport] = useState<FaultBenchReport | null>(null);
   const [behaviorCheck, setBehaviorCheck] = useState<'untested' | 'passed' | 'failed'>('untested');
   const [outputCheck, setOutputCheck] = useState<'untested' | 'matched' | 'differs'>('untested');
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -537,6 +556,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setStdout('');
     setStderr('');
     setInstructorError('');
+    // A report describes the code that produced it: a run that never reaches the bench (a syntax
+    // error, a timeout) must not leave the previous run's green cards on screen.
+    setBenchReport(null);
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setPassStatus('untested');
@@ -608,6 +630,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           runId,
           studentCode: sourceCode,
           instructorTests: lesson.instructorTests,
+          benchSource: lesson.id === '08.1' ? FAULT_BENCH_PY : '',
           cdnUrl,
           maxSteps,
           timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
@@ -643,6 +666,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       const actualErr: string = String(workerOutcome?.stderr || '').trim();
       setStdout(actualOut);
       setStderr(actualErr);
+      setBenchReport(parseBenchReport(workerOutcome?.bench));
 
       if (workerOutcome?.runtimeError) {
         setBehaviorCheck('failed');
@@ -1199,7 +1223,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
           </div>
 
-          {currentLesson.id === '08.1' && <FaultBench08 />}
+          {currentLesson.id === '08.1' && (
+            <FaultBench08
+              report={benchReport}
+              grading={isRunning}
+              onGrade={() => runPythonCode(codeRef.current, currentLesson)}
+            />
+          )}
 
           {/* Progressive 3-Step Hint Ladder */}
           {currentLesson.hints.length > 0 && (
