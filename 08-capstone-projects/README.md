@@ -1,26 +1,35 @@
-# Track 08: Multi-Pass Boss Capstone Projects (Tier 1 → Tier 2 → Tier 3)
+# Track 08: Boss Capstone Projects, One per Depth (Tier 1 → Tier 2 → Tier 3)
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
-> **Prerequisites:** Tracks [00](../00-foundations/README.md) through [07](../07-systems-hil-and-production/README.md) in your current Tier Pass  
-> **Core Principle:** Mastery is proven only by designing, fabricating, bringing up, and qualifying integrated physical hardware. In our linear level-up architecture, Track 08 serves as the **Boss Fight at the end of each pass**—letting you build a complete, working robot at Tier 1 with breakout modules, then loop back to Track 00 for Tier 2 to build custom 4-layer PCBs, and finally loop back for Tier 3 to build the full industrial Capstones I–V.
+> **Part of the [ten-step MechaLab course](../README.md)**  
+> **Prerequisites:** Tracks [00](../00-foundations/README.md) through [07](../07-systems-hil-and-production/README.md) at your current depth  
+> **Core Principle:** Mastery is proven only by designing, fabricating, bringing up, and qualifying integrated physical hardware. Track 08 is the **last step of each depth**: build a complete working robot at Depth 1 with breakout modules, return here at Depth 2 for the custom 4-layer CAN servo, and at Depth 3 for the industrial Capstones I–V.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Complete Your Current Pass & Loop Back to Level Up!)
+<!-- step-index -->
+> **Step 10 of 10 · Put it together: the 2-DOF arm.** Run a figure-8 path on a simulated arm, then recover from four planted faults.
+>
+> This folder is the reading for Step 10. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Depth 1 is the whole required step; the two deeper builds below are optional.
 
-| Pass / Level | Previous Step in Pass | Current Track 08 Boss Capstone | Next Level-Up Loop Action |
-| :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 Boss** | [← Track 07 (Tier 1)](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive) | [§1 Tier 1 Boss: Breadboard/Breakout 2-DOF Compliant Desktop Robot](#tier-1-capstone-builds-beginner--breakout-pass) | [**🔼 Loop Back & Level Up to Pass 2 → Track 00 (Tier 2)**](../00-foundations/README.md#tier-2-intermediate--applied) |
-| **🔵 Pass 2: Tier 2 Boss** | [← Track 07 (Tier 2)](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) | [§2 Tier 2 Boss: Custom 4-Layer CAN Servo + LQR Pendulum / MuJoCo Twin](#tier-2-capstone-builds-intermediate--applied-pass) | [**🔼 Loop Back & Level Up to Pass 3 → Track 00 (Tier 3)**](../00-foundations/README.md#tier-3-advanced--production) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: 3-Pass Evolution of the Same Robot Architecture](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Capstones I–V ↓](#tier-3-capstone-builds-advanced--production-pass) |
-| **🟣 Pass 3: Tier 3 Boss** | [← Track 07 (Tier 3)](../07-systems-hil-and-production/README.md#tier-3-advanced--production) | [§4 Tier 3 Boss: Full Production Capstones I–V (48 V FOC, Furuta, 6-DOF, Hopper, AMR)](#tier-3-capstone-builds-advanced--production-pass) | **🏆 Curriculum Mastery Complete!** |
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 10](#tier-1-capstone-builds-beginner--breakout-pass), in order | [`08.1`](08.1-tier1-2dof-compliant-arm-capstone.md) · [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md) | 6.5-9 |
+| **2 · practice** | [after Step 10](#tier-2-capstone-builds-intermediate--applied-pass), same step order | — | — |
+| **3 · outside both routes** | [optional](#tier-3-capstone-builds-advanced--production-pass), graded, never required | — | — |
 
+**Step 10 costs 6.5-9 focused hours in total** - 2-4.5 of lessons, 4.5 of arm modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+
+**Last step:** the course ends here, at the capstone.
+<!-- /step-index -->
 ---
 
 ## Tier 1 Capstone Builds (Beginner / Breakout Pass)
 
-> **🏆 Goal of Pass 1 Boss (`Track 08 · Tier 1`):** Combine every skill from Pass 1 (`Track 00` $\to$ `Track 07`) to build a complete, desktop-safe **$12\text{ V}$ 2-DOF Planar Compliant Robot Arm** (or 1-Axis Reaction-Wheel Pendulum) using off-the-shelf breakout boards, 3D-printed double-shear links, and a $1\text{ kHz}$ timer ISR.
-> **📚 Required Foundations & Bridge Modules for Pass 1 Boss (`07-systems.T1.08`):** Requires completing Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and **Step 1.1 (`00-foundations.T1.01`)** plus all Tier 1 Track Bridges ([`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md), [`05-control.T1.05a`](../modules/05-control.T1.05a.md), [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md), [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md)).
+> **🏆 Goal of Depth 1 Boss (`Track 08 · Tier 1`):** Combine every skill from Depth 1 (`Track 00` $\to$ `Track 07`) to build a complete, desktop-safe **$12\text{ V}$ 2-DOF Planar Compliant Robot Arm** (or 1-Axis Reaction-Wheel Pendulum) using off-the-shelf breakout boards, 3D-printed double-shear links, and a $1\text{ kHz}$ timer ISR.
+> **📚 Required Foundations & Bridge Modules for Depth 1 Boss (`07-systems.T1.08`):** Requires completing Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and **Step 1.1 (`00-foundations.T1.01`)** plus all Tier 1 Track Bridges ([`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md), [`05-control.T1.05a`](../modules/05-control.T1.05a.md), [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md), [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md)).
 
 ### Beginner-First Capstone Lesson (`08.1`, $\le 2$ new ideas per lesson)
 
@@ -31,7 +40,7 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
 | **[08.1](08.1-tier1-2dof-compliant-arm-capstone.md)** | **Tier 1 Boss Milestone — 2-DOF Figure-8 Trajectory and Compliant Arm Integration** | 1. End-to-end 2-DOF Cartesian figure-8 path generation and Law-of-Cosines IK loop<br>2. Dual-joint compliant PD control with coupled gravity feedforward and RMS tracking verification | 60–90 min |
 
 ### 1.1 Tier 1 Boss Architecture: 2-DOF Breakout Compliant Desktop Robot (`~\$120` BOM)
-- **Core Summary:** Integrates every Pass 1 milestone into a physical 2-DOF desktop robot arm using off-the-shelf `SimpleFOCMini` (`DRV8313`) breakouts, `AS5600`/`AS5048A` magnetic encoders, 3D-printed double-shear `608` bearing joints, a $1.000\text{ kHz}$ hardware timer ISR, cubic spline interpolation, and joint-space virtual spring-damper compliance.
+- **Core Summary:** Integrates every Depth 1 milestone into a physical 2-DOF desktop robot arm using off-the-shelf `SimpleFOCMini` (`DRV8313`) breakouts, `AS5600`/`AS5048A` magnetic encoders, 3D-printed double-shear `608` bearing joints, a $1.000\text{ kHz}$ hardware timer ISR, cubic spline interpolation, and joint-space virtual spring-damper compliance.
   * **Compute:** `ESP32-S3` or `STM32 Nucleo-G474RE` running a zero-`delay()` $1.000\text{ kHz}$ hardware timer ISR (Track 04 Tier 1).
   * **Power & Actuators:** $12\text{ V} / 3\text{ A}$ current-limited bench supply + $470\ \mu\text{F}$ bulk decoupling + $2\times$ gimbal BLDC motors (`2804`/`4108` hollow-shaft) driven by `SimpleFOCMini` (`DRV8313`) breakouts (Track 01 & Track 03 Tier 1).
   * **Sensors:** $2\times$ `AS5600` ($I^2C$) or `AS5048A` (`SPI`) 14-bit magnetic encoders + 1x `MPU6050`/`ICM-42688` IMU fused via 2-line complementary filter (Track 03 & Track 05 Tier 1).
@@ -55,18 +64,18 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
   * **Answer & Explanation:** Because a gimbal motor weighs $\sim 80\text{–}120\text{ g}$! Mounting it out at the moving elbow joint adds $m_{\text{motor}} L_1^2$ to the shoulder's rotational inertia and $m_{\text{motor}} g L_1$ to the shoulder's gravity load. Moving the elbow actuator coaxially to the base (the core principle of **Capstone 4**!) keeps the moving links feather-light.
   </details>
 
-### ✅ Tier 1 Boss Sign-Off Gate (`Unlock Pass 2!`)
+### ✅ Tier 1 Boss Sign-Off Gate (`Unlock Depth 2!`)
 1. Passes all 10 steps of the Track 07 smoke-free bring-up checklist with hardware E-stop verified.
 2. Tracks a $0.5\text{ Hz}$ figure-8 planar trajectory using analytical Law-of-Cosines IK with $< 3\text{ mm}$ tracking error.
 3. Yields compliantly like a gentle mechanical spring when pushed by a human finger and returns smoothly to the trajectory without oscillation or MCU brown-out resets.
-* **🔼 Next Step After Completing Pass 1:** [**Loop Back & Level Up to Pass 2 → Track 00 (Tier 2: State-Space Matrices, Quaternions & Tustin Biquads)**](../00-foundations/README.md#tier-2-intermediate--applied)
+* **🔼 Next Step After Completing Depth 1:** [**Loop Back & Level Up to Depth 2 → Track 00 (Tier 2: State-Space Matrices, Quaternions & Tustin Biquads)**](../00-foundations/README.md#tier-2-intermediate--applied)
 
 ---
 
 ## Tier 2 Capstone Builds (Intermediate / Applied Pass)
 
-> **🏆 Goal of Pass 2 Boss (`Track 08 · Tier 2`):** Combine every skill from Pass 2 (`Track 00` $\to$ `Track 07`) to build a **Custom 4-Layer $24\text{ V}/15\text{ A}$ CAN-FD Smart Actuator PCB** and use it to drive either a **Physical Furuta Rotary Inverted Pendulum (Swing-Up + LQR)** or a **2-DOF Cartesian Impedance Leg synced to a live MuJoCo Digital Twin**.
-> **📚 Required Foundations & Bridge Modules for Pass 2 Boss (`07-systems.T2.08`):** Requires completing Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md)–[`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) and **Step 2.1 (`00-foundations.T2.01`)** plus all Tier 2 Track Bridges ([`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md), [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md), [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md)–[`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md), [`05-control.T2.05a`](../modules/05-control.T2.05a.md), [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md)–[`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md), [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md)).
+> **🏆 Goal of Depth 2 Boss (`Track 08 · Tier 2`):** Combine every skill from Depth 2 (`Track 00` $\to$ `Track 07`) to build a **Custom 4-Layer $24\text{ V}/15\text{ A}$ CAN-FD Smart Actuator PCB** and use it to drive either a **Physical Furuta Rotary Inverted Pendulum (Swing-Up + LQR)** or a **2-DOF Cartesian Impedance Leg synced to a live MuJoCo Digital Twin**.
+> **📚 Required Foundations & Bridge Modules for Depth 2 Boss (`07-systems.T2.08`):** Requires completing Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md)–[`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) and **Step 2.1 (`00-foundations.T2.01`)** plus all Tier 2 Track Bridges ([`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md), [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md), [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md)–[`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md), [`05-control.T2.05a`](../modules/05-control.T2.05a.md), [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md)–[`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md), [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md)).
 
 ### 2.1 Tier 2 Boss Architecture: Custom 4-Layer CAN-FD Smart Servo + LQR / MuJoCo Twin
 - **Core Summary:** Transitions from breadboards to a custom-fabricated 4-layer KiCad PCB integrating an `STM32G4` MCU, 3-phase gate driver, 4-terminal Kelvin shunt amplifiers, and CAN-FD transceiver—running $25\text{ kHz}$ $d$-$q$ current FOC and a $1\text{ kHz}$ FreeRTOS `MIT Mode` impedance/LQR loop synchronized with a validated URDF/MuJoCo digital twin.
@@ -79,7 +88,7 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
   - 🔗 [Universal Manipulation Interface (`UMI`, `umi-gripper.github.io`)](https://umi-gripper.github.io/) — *3D-printed handheld GoPro + IMU + ArUco gripper for collecting in-the-wild visuomotor Diffusion Policy demonstrations.*
   - 🔗 [MuJoCo Python Bindings (`mujoco` pip package) & Interactive Viewer Documentation](https://mujoco.readthedocs.io/en/stable/python.html) — *Load `./models/capstone2-furuta-pendulum/furuta_pendulum.xml` directly in Python at* $1\text{ kHz}$ *to co-simulate your LQR controller alongside hardware.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Run `python3 08-capstone-projects/models/validate_models.py` to verify all URDF and MuJoCo MJCF inertial matrices across Capstones 2, 3, and 4, and test the full swing-up + LQR + CBF safety filter in **Tab 4** and **Tab 5** of the interactive workbench.
+  - *Task:* Run `python3 08-capstone-projects/models/validate_models.py` to verify all URDF and MuJoCo MJCF inertial matrices across Capstones 2, 3, and 4, and test the full swing-up + LQR + CBF safety filter in **Pendulum Balance & Safety Walls** and **Robot Arm Kinematics & Safety Cutoff** of the interactive workbench.
   - *📚 What to Learn & Resource Links for This Exercise:* Study state-space matrices & eigenvalues in Foundations [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), parallel-axis inertia & triangle-inequality checks in [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), LQR Riccati control in [`05-control.T2.05a`](../modules/05-control.T2.05a.md), and regenerative shunt clamping + CAN-FD CRC-16 watchdogs in [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md).
 - **🧠 Knowledge Check:**
   <details>
@@ -92,18 +101,18 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
   * **Answer & Explanation:** Release the unpowered pendulum from a known initial angle (e.g., $15^\circ$ from hanging down) and compare the **free-decay oscillation period $T_d$ and logarithmic decrement damping $\zeta$** of the real encoder log against the MuJoCo simulation trajectory! Matching the natural frequency $\omega_n = \sqrt{m g l_c / J}$ validates $m, l_c, J$, and matching the ringdown envelope validates joint viscous/Coulomb friction.
   </details>
 
-### ✅ Tier 2 Boss Sign-Off Gate (`Unlock Pass 3!`)
+### ✅ Tier 2 Boss Sign-Off Gate (`Unlock Depth 3!`)
 1. Custom 4-layer PCB passes Double-Pulse Test ($V_{DS,\text{peak}} < 34\text{ V}$ on $24\text{ V}$ bus) and $1\text{ kHz}$ CAN-FD command loop with CRC-16 watchdog active.
 2. Furuta Pendulum catches upright autonomously within $< 2.5\text{ s}$ (or 2-DOF leg tracks Cartesian stiffness targets in hardware + MuJoCo twin).
-* **🔼 Next Step After Completing Pass 2:** [**Loop Back & Level Up to Pass 3 → Track 00 (Tier 3: Lie Groups SO(3)/SE(3) & Port-Hamiltonian Modeling)**](../00-foundations/README.md#tier-3-advanced--production)
+* **🔼 Next Step After Completing Depth 2:** [**Loop Back & Level Up to Depth 3 → Track 00 (Tier 3: Lie Groups SO(3)/SE(3) & Port-Hamiltonian Modeling)**](../00-foundations/README.md#tier-3-advanced--production)
 
 ---
 
 ## Bridging the Gap: Maker to Custom
 
-### How the Same Robot Evolves Across All 3 Linear Passes
+### How the Same Robot Evolves Across the Three Depths
 
-| Subsystem | Pass 1: Tier 1 Boss (Breakout Desktop Arm) | Pass 2: Tier 2 Boss (Custom 4-Layer CAN Servo) | Pass 3: Tier 3 Boss (Full Production Capstones I–V) |
+| Subsystem | Depth 1: Tier 1 Boss (Breakout Desktop Arm) | Depth 2: Tier 2 Boss (Custom 4-Layer CAN Servo) | Depth 3: Tier 3 Boss (Full Production Capstones I–V) |
 | :--- | :--- | :--- | :--- |
 | **Motor Drive Hardware** | Breadboard + `SimpleFOCMini` (`DRV8313`, $12\text{ V} / 1.5\text{ A}$, no current shunts) | Custom 4-Layer KiCad PCB (`DRV8323` + `INA240` Kelvin shunts, $24\text{ V} / 15\text{ A}$) | Custom 6-Layer $<2\text{ nH}$ PCB (`DRV8353RS` + `ISC030N08NM6`, $48\text{ V} / 30\text{ A}$ + Dual Hardware STO) |
 | **Commutation & Timing** | $1\text{ kHz}$ timer ISR + open-loop sine voltage | $25\text{ kHz}$ $d$-$q$ FOC + FreeRTOS + SPI DMA | $40\text{ kHz}$ `TIM1_TRGO2`$\to$`ADC` DMA in `ITCM` RAM + `CORDIC` + `WaitFreeSeqLock` |
@@ -114,8 +123,8 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
 
 ## Tier 3 Capstone Builds (Advanced / Production Pass)
 
-> **🏆 Goal of Pass 3 Mastery (`Track 08 · Tier 3`):** Full industrial-grade specification, fabrication, bring-up, and quantitative sign-off of the five flagship production capstones below.
-> **📚 Required Foundations & Bridge Modules for Pass 3 Capstones (`08-capstones.T3.08`):** Requires completing Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) and **Step 3.1 (`00-foundations.T3.01`)** plus all Tier 3 Bridges ([`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md), [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md), [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md), [`05-control.T3.05a`](../modules/05-control.T3.05a.md), [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md)–[`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md), [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md), and [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md)).
+> **🏆 Goal of Depth 3 Mastery (`Track 08 · Tier 3`):** Full industrial-grade specification, fabrication, bring-up, and quantitative sign-off of the five flagship production capstones below.
+> **📚 Required Foundations & Bridge Modules for Depth 3 Capstones (`08-capstones.T3.08`):** Requires completing Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) and **Step 3.1 (`00-foundations.T3.01`)** plus all Tier 3 Bridges ([`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md), [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md), [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md), [`05-control.T3.05a`](../modules/05-control.T3.05a.md), [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md)–[`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md), [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md), and [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md)).
 
 ```mermaid
 flowchart LR
@@ -156,17 +165,17 @@ flowchart LR
 
 | Parameter | Acceptance Threshold | Test Procedure |
 | :--- | :--- | :--- |
-| **Switching Overshoot** | $V_{DS,\text{peak}} < 60\text{ V}$ at $48\text{ V}$ bus, $30\text{ A}$ turn-off | Double-pulse test with spring-tip probe (Tab 6 Simulator) |
-| **$d$-$q$ Current Bandwidth** | $f_{-3\text{dB}} \ge 2.5\text{ kHz}$, phase margin $\ge 55^\circ$ | Swept-sine current injection Bode measurement (Tab 3 Simulator) |
+| **Switching Overshoot** | $V_{DS,\text{peak}} < 60\text{ V}$ at $48\text{ V}$ bus, $30\text{ A}$ turn-off | Double-pulse test with spring-tip probe (3D Parts & Motor Driver PCB Lab Simulator) |
+| **$d$-$q$ Current Bandwidth** | $f_{-3\text{dB}} \ge 2.5\text{ kHz}$, phase margin $\ge 55^\circ$ | Swept-sine current injection Bode measurement (Brushless Motor Control Lab Simulator) |
 | **Torque Ripple (Calibrated)** | $< 1.5\%$ of rated torque at $10\text{ RPM}$ | Reaction torque load cell sweep over $360^\circ$ |
 | **CAN-FD Command Latency** | $< 120\ \mu\text{s}$ from CAN frame EOF to updated PWM duty | Oscilloscope trigger on CAN RX vs. PWM duty step |
-| **Short-Circuit Protection** | Survives hard phase-to-phase and phase-to-GND short at $48\text{ V}$ | Physical contactor short test; gate shutdown $< 1.2\ \mu\text{s}$ (Tab 5 STO) |
+| **Short-Circuit Protection** | Survives hard phase-to-phase and phase-to-GND short at $48\text{ V}$ | Physical contactor short test; gate shutdown $< 1.2\ \mu\text{s}$ (Robot Arm Kinematics & Safety Cutoff tab) |
 
 - **Curated Free Resources:**
   - 🔗 [KiCad Netlist (`eda-capstone1-foc-drive/capstone1_foc_48v30a.net`)](eda-capstone1-foc-drive/capstone1_foc_48v30a.net) & [Production BOM (`capstone1_bom.csv`)](eda-capstone1-foc-drive/capstone1_bom.csv) — *Complete 43-net KiCad S-expression netlist and 18-line manufacturable BOM inside this repository.*
   - 🔗 [Bare-Metal STM32G474 Register-Level 40 kHz FOC Firmware (`firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp`)](firmware-capstone1-stm32g474/stm32g474_foc_firmware.cpp) — *Production C++20 firmware implementing `TIM1_TRGO2`* $\to$ *`ADC1/2`, `CORDIC`, `WaitFreeSeqLock`, and `TIM1_BKIN` STO.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Run `python3 08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py` and inspect `foc_thermal_and_bom.json` + **Tab 6: 48V 30A PCB & Thermal** to verify that at $48\text{ V} / 30\text{ A}$ ($40\text{ kHz}$), total 6-MOSFET loss is $12.16\text{ W}$, $T_{j,\max} = 85.4^\circ\text{C} < 125^\circ\text{C}$, and $V_{DS,\text{peak}} = 57.5\text{ V} < 64\text{ V}$.
+  - *Task:* Run `python3 08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py` and inspect `foc_thermal_and_bom.json` + **48V 30A PCB & Thermal** to verify that at $48\text{ V} / 30\text{ A}$ ($40\text{ kHz}$), total 6-MOSFET loss is $12.16\text{ W}$, $T_{j,\max} = 85.4^\circ\text{C} < 125^\circ\text{C}$, and $V_{DS,\text{peak}} = 57.5\text{ V} < 64\text{ V}$.
   - *📚 What to Learn & Resource Links for This Exercise:* Study Port-Hamiltonian power balance in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), 6-layer `<2 nH` PCB layout + Cauer thermal networks in [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md), $d$-$q$ decoupling + SVPWM in [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md), and cross-domain thermal/power budgeting in [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md).
 - **🧠 Knowledge Check:**
   <details>
@@ -195,15 +204,15 @@ flowchart LR
 | Parameter | Acceptance Threshold | Test Procedure |
 | :--- | :--- | :--- |
 | **Unactuated Joint Damping ($Q$-Factor)** | $> 45$ free oscillations from $15^\circ$ release to $1^\circ$ decay | Free-decay ringdown log |
-| **Autonomous Swing-Up Reliability** | $100 / 100$ successful catches from hanging rest within $\le 2.2\text{ s}$ | Interactive **Tab 4 Simulator** & 100-trial script |
+| **Autonomous Swing-Up Reliability** | $100 / 100$ successful catches from hanging rest within $\le 2.2\text{ s}$ | Interactive **Pendulum Balance & Safety Walls Simulator** & 100-trial script |
 | **Upright Balancing RMS Jitter** | $\lvert q_2\rvert_{\text{rms}} < 0.08^\circ$, $\lvert q_1\rvert_{\text{rms}} < 0.25^\circ$ at steady state | 60-second upright hold telemetry audit |
-| **Impulse Disturbance Recovery** | Recovers from $25^\circ$ perturbation without violating base travel limit | CBF Safety Wall test in **Tab 4 Simulator** |
+| **Impulse Disturbance Recovery** | Recovers from $25^\circ$ perturbation without violating base travel limit | CBF Safety Wall test in **Pendulum Balance & Safety Walls Simulator** |
 
 - **Curated Free Resources:**
   - 🔗 [URDF (`models/capstone2-furuta-pendulum/furuta_pendulum.urdf`)](models/capstone2-furuta-pendulum/furuta_pendulum.urdf) & [MuJoCo MJCF (`furuta_pendulum.xml`)](models/capstone2-furuta-pendulum/furuta_pendulum.xml) — *Exact physical multi-body models verified by `validate_models.py`.*
   - 🔗 [Åström & Furuta (Automatica 2000): Swinging Up a Pendulum by Energy Control](https://www.sciencedirect.com/science/article/pii/S0005109899001405) — *Original paper deriving the energy Lyapunov pump and homoclinic catch conditions.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 4: Furuta Pendulum + LQR + CBF**, run the autonomous swing-up, and test the maximum impulse disturbance (`+3.2 rad/s` push) the pendulum can survive with the CBF safety wall active at $x_{\max} = 0.45\text{ m}$.
+  - *Task:* Open **Furuta Pendulum + LQR + CBF**, run the autonomous swing-up, and test the maximum impulse disturbance (`+3.2 rad/s` push) the pendulum can survive with the CBF safety wall active at $x_{\max} = 0.45\text{ m}$.
   - *📚 What to Learn & Resource Links for This Exercise:* Study Van Loan ZOH discretization in Foundations **Step 3.1 (`00-foundations.T3.01`)**, discrete LQR in [`05-control.T2.05a`](../modules/05-control.T2.05a.md), and CLF-CBF-QP forward invariance in [`05-control.T3.05a`](../modules/05-control.T3.05a.md).
 - **🧠 Knowledge Check:**
   <details>
@@ -251,7 +260,7 @@ flowchart TB
   - 🔗 [ALOHA 2 (`aloha-2.github.io`) & Pollen Robotics `Reachy 2` (`pollen-robotics.com`)](https://aloha-2.github.io/) — *Open-source bimanual and humanoid manipulation hardware blueprints and `ros2_control` stacks.*
   - 🔗 [Pinocchio C++/Python Rigid Body Dynamics Library](https://stack-of-tasks.github.io/pinocchio/) — *Computes 6-DOF RNEA, CRBA,* $J(q)$ *, and* $\Lambda(q)$ *in* $< 5\ \mu\text{s}$ *.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 5: URDF / MuJoCo & STO** and **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench (`npm run dev`), or run `python3 08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py` to inspect the 6-DOF arm's space screw axes $\mathcal{S}_1 \dots \mathcal{S}_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).
+  - *Task:* Open **URDF / MuJoCo & STO** and **3D CAD & 48V PCB** in the MechaLab Workbench (`npm run dev`), or run `python3 08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py` to inspect the 6-DOF arm's space screw axes $\mathcal{S}_1 \dots \mathcal{S}_6$, verify inverse dynamics torque $\tau = \text{RNEA}(q, \dot{q}, \ddot{q})$, and test damped least-squares IK near the wrist singularity ($q_5 \to 0$).
   - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)/SE(3)$ Lie groups in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), Screw PoE & $\mathcal{O}(n)$ RNEA in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), and Khatib operational-space impedance $\Lambda(q)$ in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md).
 - **🧠 Knowledge Check:**
   <details>
@@ -286,7 +295,7 @@ flowchart TB
   - 🔗 [URDF (`models/capstone4-qdd-hopper/qdd_hopper_leg.urdf`)](models/capstone4-qdd-hopper/qdd_hopper_leg.urdf), [MuJoCo MJCF (`qdd_hopper_leg.xml`)](models/capstone4-qdd-hopper/qdd_hopper_leg.xml), and [3D STEP/STL Planetary Carrier (`cad/qdd_planetary_carrier.step`)](cad/qdd_planetary_carrier.step) — *Complete mechanical CAD and physics models inside this repository.*
   - 🔗 [Marc Raibert (MIT Leg Lab): Legged Robots That Balance — Chapter 2: Hopping on One Leg](https://mitpress.mit.edu/9780262681193/legged-robots-that-balance/) & [Jared Di Carlo et al. (MIT Cheetah 3 Convex MPC Paper)](https://dspace.mit.edu/handle/1721.1/138000) — *Foundational papers on Raibert foot placement and convex contact-force MPC.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 1: 3D CAD & FEA** to inspect the **8:1 QDD Double-Shear Planetary Carrier** (`cad/qdd_planetary_carrier.stl`), and open **Tab 5: URDF / MuJoCo & STO** to simulate the **3-DOF QDD Hopping Leg (`Capstone 4`)** through stance thrust, liftoff, apex, and touchdown impact absorption.
+  - *Task:* Open **3D CAD & FEA** to inspect the **8:1 QDD Double-Shear Planetary Carrier** (`cad/qdd_planetary_carrier.stl`), and open **URDF / MuJoCo & STO** to simulate the **3-DOF QDD Hopping Leg (`Capstone 4`)** through stance thrust, liftoff, apex, and touchdown impact absorption.
   - *📚 What to Learn & Resource Links for This Exercise:* Study reflected inertia $N^2 J_{\text{rotor}}$ in [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md), linearized friction-cone contact WBC constraints in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md), and EtherCAT DC synchronization in [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md).
 - **🧠 Knowledge Check:**
   <details>

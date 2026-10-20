@@ -1,29 +1,36 @@
 # Track 05: Classical, Optimal, Nonlinear Control & State Estimation
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
+> **Part of the [ten-step MechaLab course](../README.md)**  
 > **Prerequisites:** [Track 00: Foundations](../00-foundations/README.md), [Track 02: Mechanics, Kinematics & Dynamics](../02-mechanics-kinematics-dynamics/README.md), [Track 03: Sensors & Actuators](../03-sensors-and-actuators/README.md), [Track 04: Embedded & Real-Time](../04-embedded-and-realtime/README.md)  
 > **Feeds Into:** [Track 06: Robotics & Autonomy](../06-robotics-and-autonomy/README.md), [Track 07: Systems, HIL & Production](../07-systems-hil-and-production/README.md)  
 > **Core Principle:** Feedback control exists solely to reject unknown disturbances and handle model uncertainty; **feedforward inversion of known physics does 90% of the trajectory tracking work**. Moreover, Bode's Integral Theorem ("the waterbed effect") proves that suppressing sensitivity at low frequencies *inevitably* amplifies sensitivity and sensor noise at high frequencies—making actuator saturation, phase delay, and structural resonances the true boundaries of control design.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
+<!-- step-index -->
+> **Step 8 of 10 · Make it hold still: control.** Tune a PID that holds the arm against gravity without overshooting.
+>
+> This folder is the reading for Step 8. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
 
-Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 06 in the same Tier**:
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 8](#tier-1-beginner--intuitive), in order | [`05.1`](05.1-pid-virtual-spring-damper-and-anti-windup.md), [`05.2`](05.2-complementary-imu-sensor-fusion.md) · [`05-control.T1.05a`](../modules/05-control.T1.05a.md) | 6.5-10.5 |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`05-control.T2.05a`](../modules/05-control.T2.05a.md), [`05-control.T3.05a`](../modules/05-control.T3.05a.md), [`05-control.T3.05b`](../modules/05-control.T3.05b.md), [`05-control.T3.05c`](../modules/05-control.T3.05c.md) | 10.5 |
+| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-| Pass / Level | Previous Step in Pass | Current Track 05 Section | Next Linear Step in This Pass |
-| :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 04 (Tier 1)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: PID Virtual Spring-Damper, Anti-Windup & Complementary IMU](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 06 (Tier 1: Cubic Trajectories & Joint Springs)**](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive) |
-| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 04 (Tier 2)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 06 (Tier 2: Jacobian Transpose & `Ruckig` S-Curves)**](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Trial-and-Error PID / `if` Limits → LQR + Predictive CBF-QP](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 04 (Tier 3)](../04-embedded-and-realtime/README.md#tier-3-advanced--production) | [§4 Tier 3: Joseph-Form Manifold ESKF, MPC & Control Barrier QPs](#tier-3-advanced--production) | [**Next in Pass 3 → Track 06 (Tier 3: Khatib Operational Inertia & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production) |
+**Step 8 costs 17-21 focused hours in total** - 3-7 of lessons, 3.5 of arm modules, 10.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
+**Next:** Step 9 · Plan motion and bring it up safely → [Track 06](../06-robotics-and-autonomy/README.md) + [Track 07](../07-systems-hil-and-production/README.md) (14.5-18.5 focused hours).
+<!-- /step-index -->
 ---
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 05):** Build rock-solid physical intuition for PID control (Proportional = virtual spring, Derivative = virtual viscous damper, Integral = steady-state offset accumulator), prevent integrator windup, and fuse an accelerometer + gyroscope in 2 lines of code using a Complementary Filter.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 05):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Discrete `while` Loops*), [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Mass-Spring-Damper Dynamics*), and **Step 1.1 (`00-foundations.T1.01`)** (*RC Low-Pass Smoothing*) plus the Track 05 Tier 1 Bridge [`05-control.T1.05a`](../modules/05-control.T1.05a.md).
+> **Goal of Depth 1 (Track 05):** Build rock-solid physical intuition for PID control (Proportional = virtual spring, Derivative = virtual viscous damper, Integral = steady-state offset accumulator), prevent integrator windup, and fuse an accelerometer + gyroscope in 2 lines of code using a Complementary Filter.
+> **📚 Required Foundations & Bridge Modules for Depth 1 (Track 05):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Discrete `while` Loops*), [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Mass-Spring-Damper Dynamics*), and **Step 1.1 (`00-foundations.T1.01`)** (*RC Low-Pass Smoothing*) plus the Track 05 Tier 1 Bridge [`05-control.T1.05a`](../modules/05-control.T1.05a.md).
 
 ### Beginner-First Lesson Series (`05.1 – 05.2`, $\le 2$ new ideas per lesson)
 
@@ -92,16 +99,16 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
   * **Answer & Explanation:** $\tau_c = \frac{\alpha \Delta t}{1 - \alpha} = \frac{0.98 \times 0.005}{0.02} = 0.245\text{ s}$ (corresponding to a corner frequency $f_c = \frac{1}{2\pi \tau_c} \approx 0.65\text{ Hz}$). Motions faster than $0.65\text{ Hz}$ trust the gyro; motions slower than $0.65\text{ Hz}$ trust gravity.
   </details>
 
-### ✅ Tier 1 Milestone Gate (`Track 05 · Pass 1`)
+### ✅ Tier 1 Milestone Gate (`Track 05 · Depth 1`)
 * Implement `IndustrialPID` (code in §4.2 below) with anti-windup and filtered derivative on measurement, and fuse a 6-DOF IMU (`MPU6050`/`ICM-42688` or simulated data) to track tilt angle cleanly under table taps.
-* **Next Linear Step in Pass 1:** [**Proceed to Track 06 (Tier 1: Cubic/Trapezoidal Trajectories & Joint Virtual Springs) →**](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive)
+* **Next Linear Step in Depth 1:** [**Proceed to Track 06 (Tier 1: Cubic/Trapezoidal Trajectories & Joint Virtual Springs) →**](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive)
 
 ---
 
 ## Tier 2 (Intermediate / Applied)
 
-> **Goal of Pass 2 (Track 05):** Graduate from SISO trial-and-error tuning to **Bode Loop Shaping & Åström's Gang of Four ($M_s \le 1.75$)**, **Åström-Furuta Nonlinear Energy Swing-Up + MIMO LQR Balancing**, and the **Linear Kalman Filter**.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 05):** Complete Tier 2 Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order ODEs*), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (State-Space Matrices $\dot{x} = Ax + Bu$), and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Gaussian Covariance & the Predict Step*) plus the Track 05 Tier 2 Bridge [`05-control.T2.05a`](../modules/05-control.T2.05a.md).
+> **Goal of Depth 2 (Track 05):** Graduate from SISO trial-and-error tuning to **Bode Loop Shaping & Åström's Gang of Four ($M_s \le 1.75$)**, **Åström-Furuta Nonlinear Energy Swing-Up + MIMO LQR Balancing**, and the **Linear Kalman Filter**.
+> **📚 Required Foundations & Bridge Modules for Depth 2 (Track 05):** Complete Tier 2 Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order ODEs*), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Bode Gain/Phase*), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (State-Space Matrices $\dot{x} = Ax + Bu$), and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Gaussian Covariance & the Predict Step*) plus the Track 05 Tier 2 Bridge [`05-control.T2.05a`](../modules/05-control.T2.05a.md).
 
 ### 2.1 Frequency-Domain Loop Shaping, Phase Margin & Delay Bounds
 - **Core Summary:** Every millisecond of sensor/computation delay $\tau_{\text{delay}}$ steals phase $\Delta\phi(\omega) = -\omega\tau_{\text{delay}}$, bounding your maximum achievable crossover frequency to $\omega_c < \frac{\phi_{\text{margin,rad}}}{\tau_{\text{delay}}}$. Auditing **Åström's Gang of Four ($S, T, PS, CS$)** and keeping peak sensitivity $M_s = \max_\omega \lvert S(j\omega)\rvert \le 1.75$ ($4.8\text{ dB}$) guarantees robustness against unmodeled resonances and gain variations.
@@ -130,7 +137,7 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
   - 🔗 [Stephen Boyd (Stanford EE364a): Convex Optimization (Free Textbook & Video Lectures)](https://web.stanford.edu/~boyd/cvxbook/) — *Mathematical foundation for quadratic programming (QP), LQR, and real-time Model Predictive Control.*
   - 🔗 [Steve Brunton (YouTube): Control Bootcamp — Linear Quadratic Regulator (LQR) & Bryson's Rule](https://www.youtube.com/watch?v=1_UobILf3cc) — *Clear walkthrough of tuning* $Q$ *and* $R$ *matrices systematically.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 4: Furuta Pendulum + LQR + CBF** in the interactive workbench, trigger a full swing-up from hanging down ($\theta = \pi$), and experiment with the $Q_\theta$ (angle penalty) and $R_{\text{ctrl}}$ (effort penalty) sliders before injecting a $+3.2\text{ rad/s}$ impulse push.
+  - *Task:* Open **Furuta Pendulum + LQR + CBF** in the interactive workbench, trigger a full swing-up from hanging down ($\theta = \pi$), and experiment with the $Q_\theta$ (angle penalty) and $R_{\text{ctrl}}$ (effort penalty) sliders before injecting a $+3.2\text{ rad/s}$ impulse push.
   - *📚 What to Learn & Resource Links for This Exercise:* Study state-space matrices $(A, B)$ in Foundations [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) and discrete LQR quadratic cost $J = \sum (x_k^\top Q x_k + u_k^\top R u_k)$ + Riccati recursion in [`05-control.T2.05a`](../modules/05-control.T2.05a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`), plus [Russ Tedrake *Underactuated Robotics* Ch. 3 & Ch. 8 (`underactuated.mit.edu`)](https://underactuated.mit.edu/).
 - **🧠 Knowledge Check:**
   <details>
@@ -168,9 +175,9 @@ $$
   * **Answer & Explanation:** As $R \to \infty$, $(H P_k^- H^\top + R)^{-1} \to 0$, so $K_k \to 0$: the filter automatically ignores the noisy sensor measurement and coasts purely on its physics/gyro prediction model!
   </details>
 
-### ✅ Tier 2 Milestone Gate (`Track 05 · Pass 2`)
-* Open **Tab 4: Furuta Pendulum + LQR + CBF** in the interactive workbench, tune $Q_\theta$ and $R_{\text{ctrl}}$, and verify autonomous swing-up and upright LQR stabilization after injecting a $+3.2\text{ rad/s}$ impulse disturbance.
-* **Next Linear Step in Pass 2:** [**Proceed to Track 06 (Tier 2: Jacobian Transpose Cartesian Compliance & `Ruckig` S-Curves) →**](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied)
+### ✅ Tier 2 Milestone Gate (`Track 05 · Depth 2`)
+* Open **Furuta Pendulum + LQR + CBF** in the interactive workbench, tune $Q_\theta$ and $R_{\text{ctrl}}$, and verify autonomous swing-up and upright LQR stabilization after injecting a $+3.2\text{ rad/s}$ impulse disturbance.
+* **Next Linear Step in Depth 2:** [**Proceed to Track 06 (Tier 2: Jacobian Transpose Cartesian Compliance & `Ruckig` S-Curves) →**](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied)
 
 ---
 
@@ -180,15 +187,15 @@ $$
 
 * **Why Naive `if (x > x_max) u = 0` Crashes Hardware:** A physical mass moving at $\dot{x} = 1.5\text{ m/s}$ has kinetic energy $\frac{1}{2}m\dot{x}^2$. Waiting until $x$ touches the limit switch $x_{\max}$ to cut motor torque is **too late**—momentum carries the carriage straight through the mechanical end-stop!
 * **How Production Engineers Enforce Safety (Control Barrier Function CBF-QP):**
-  Define a velocity-aware quadratic safe set $h(x, \dot{x}) = x_{\max}^2 - x^2 - k_v x \dot{x} \ge 0$ and enforce the barrier condition $\dot{h}(x, u) \ge -\alpha_{\text{cbf}} h(x)$. As tested live in **Tab 4**, the CBF filter sees the wall approaching **ahead of time** and smoothly commands maximum reverse braking force so the carriage kisses the red safety boundary at zero velocity without ever crossing it!
+  Define a velocity-aware quadratic safe set $h(x, \dot{x}) = x_{\max}^2 - x^2 - k_v x \dot{x} \ge 0$ and enforce the barrier condition $\dot{h}(x, u) \ge -\alpha_{\text{cbf}} h(x)$. As tested live in **Pendulum Balance & Safety Walls**, the CBF filter sees the wall approaching **ahead of time** and smoothly commands maximum reverse braking force so the carriage kisses the red safety boundary at zero velocity without ever crossing it!
 
 ---
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 05):** Production mastery of modern optimal, nonlinear, and manifold control: Joseph-form Error-State Kalman Filters (ESKF) on $SO(3)\times\mathbb{R}^n$, Slotine-Li passivity-based adaptive control, CLF-CBF-QP safety filters, and Real-Time Iteration Nonlinear Model Predictive Control (RTI-NMPC).
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 05):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Exponential & Hamiltonian Passivity) and **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*) plus the three Track 05 Tier 3 bridges: [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (Joseph-form covariance), [`05-control.T3.05b`](../modules/05-control.T3.05b.md) (tangent-space injection and reset) and [`05-control.T3.05c`](../modules/05-control.T3.05c.md) (the CBF-QP safety filter).
-> * [**Next Linear Step in Pass 3 → Track 06 (Tier 3: Khatib Operational Inertia Λ(q) & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production)
+> **Goal of Depth 3 (Track 05):** Production mastery of modern optimal, nonlinear, and manifold control: Joseph-form Error-State Kalman Filters (ESKF) on $SO(3)\times\mathbb{R}^n$, Slotine-Li passivity-based adaptive control, CLF-CBF-QP safety filters, and Real-Time Iteration Nonlinear Model Predictive Control (RTI-NMPC).
+> **📚 Required Foundations & Bridge Modules for Depth 3 (Track 05):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Exponential & Hamiltonian Passivity) and **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*) plus the three Track 05 Tier 3 bridges: [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (Joseph-form covariance), [`05-control.T3.05b`](../modules/05-control.T3.05b.md) (tangent-space injection and reset) and [`05-control.T3.05c`](../modules/05-control.T3.05c.md) (the CBF-QP safety filter).
+> * [**Next Linear Step in Depth 3 → Track 06 (Tier 3: Khatib Operational Inertia Λ(q) & Null-Space WBC)**](../06-robotics-and-autonomy/README.md#tier-3-advanced--production)
 
 ### 4.1 Two-Degree-of-Freedom (2-DOF) Control & State Estimation Architecture
 
@@ -323,9 +330,9 @@ $$
 
 - **Curated Free Resources:**
   - 🔗 [Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter (arXiv Free Monograph)](https://arxiv.org/abs/1711.02508) — *The definitive 100-page reference used across drone and robotics companies for manifold ESKF derivations, Jacobians, and resets.*
-  - 🔗 [Paul Groves: Principles of GNSS, Inertial, and Multisensor Integrated Navigation Systems](https://www.artechhouse.com/) / [Tab 8: Attitude ESKF & SeqLock Simulator](../README.md) — *Interactive verification of Joseph-form ESKF convergence and Normalized Estimation Error Squared (NEES) consistency.*
+  - 🔗 [Paul Groves: Principles of GNSS, Inertial, and Multisensor Integrated Navigation Systems](https://www.artechhouse.com/) / [Attitude ESKF & SeqLock Simulator](../README.md) — *Interactive verification of Joseph-form ESKF convergence and Normalized Estimation Error Squared (NEES) consistency.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 8: Attitude ESKF & SeqLock** in the interactive workbench, inject a large initial gyro bias $b_g$ and attitude error, and verify that the 6-state $SO(3)$ ESKF converges while keeping its **Normalized Estimation Error Squared (NEES)** $\epsilon_k = \delta x_k^\top P_k^{-1} \delta x_k$ inside the $95\%$ $\chi^2$ consistency bounds.
+  - *Task:* Open **Attitude ESKF & SeqLock** in the interactive workbench, inject a large initial gyro bias $b_g$ and attitude error, and verify that the 6-state $SO(3)$ ESKF converges while keeping its **Normalized Estimation Error Squared (NEES)** $\epsilon_k = \delta x_k^\top P_k^{-1} \delta x_k$ inside the $95\%$ $\chi^2$ consistency bounds.
   - *📚 What to Learn & Resource Links for This Exercise:* Study $SO(3)$ hat/vee maps and Rodrigues' rotation formula in Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), the Joseph-form covariance update in [`05-control.T3.05a`](../modules/05-control.T3.05a.md) (`## 3. Formalization` Item 2), and the $SO(3)$ Error-State Kalman Filter injection/reset in [`05-control.T3.05b`](../modules/05-control.T3.05b.md) (`## 3. Formalization` Items 1-3), plus [Joan Solà *Quaternion Kinematics for the Error-State Kalman Filter* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508).
 - **🧠 Knowledge Check:**
   <details>
@@ -359,7 +366,7 @@ $$
   - 🔗 [Aaron Ames et al. (ECC Tutorial): Control Barrier Functions: Theory and Applications (arXiv Free Paper)](https://arxiv.org/abs/1903.11199) — *Comprehensive tutorial on Zeroing Control Barrier Functions (ZCBFs), relative degree 2 exponential CBFs, and QP safety filters.*
   - 🔗 [OSQP (Operator Splitting Quadratic Program Solver) Documentation](https://osqp.org/) — *Zero-allocation embedded C/C++ QP solver used across production MPC and CBF controllers.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* In **Tab 4: Furuta Pendulum + LQR + CBF**, toggle the **CBF Safety Filter ON vs. OFF** and apply repeated $+3.2\text{ rad/s}$ impulse pushes toward the rail limit $x_{\max}$. Verify that with CBF ON, $\min_t h(x(t)) \ge 0$ and the carriage never crosses the red safety wall.
+  - *Task:* In **Furuta Pendulum + LQR + CBF**, toggle the **CBF Safety Filter ON vs. OFF** and apply repeated $+3.2\text{ rad/s}$ impulse pushes toward the rail limit $x_{\max}$. Verify that with CBF ON, $\min_t h(x(t)) \ge 0$ and the carriage never crosses the red safety wall.
   - *📚 What to Learn & Resource Links for This Exercise:* Study Control Barrier Function forward invariance ($\dot{h}(x,u) + \gamma h(x) \ge 0$) and closed-form 1D CBF-QP safety filtering in [`05-control.T3.05c`](../modules/05-control.T3.05c.md) (`## 3. Formalization` Items 2-3 & `## 4. Worked example`), plus [Ames et al., *Control Barrier Functions: Theory and Applications* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199).
 - **🧠 Knowledge Check:**
   <details>
@@ -387,9 +394,9 @@ $$
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
 | **Robustness Sensitivity Peak ($M_s, M_t$)** | $M_s = \|S(j\omega)\|_\infty \le 1.75$ ($4.8\text{ dB}$), $M_t \le 1.4$ | Gang-of-Four Bode audit |
-| **ESKF Statistical Consistency (NEES)** | Mean NEES within $95\%$ $\chi^2_6$ bounds $[0.21, 2.41]$ (normalized per DOF) | Interactive **Tab 8: Attitude ESKF & SeqLock Simulator** |
-| **Furuta Swing-Up & LQR Balancing** | Autonomous catch within $< 2.2\text{ s}$ and steady RMS error $< 0.08^\circ$ | Interactive **Tab 4: Furuta Pendulum + LQR + CBF Simulator** |
-| **CBF Safety Invariance** | $\min_t h(x(t)) \ge 0$ ($\lvert x_c \rvert \le x_{\max}$) under $+3.2\text{ rad/s}$ impulse push | Interactive **Tab 4: CBF Safety Wall Test** |
+| **ESKF Statistical Consistency (NEES)** | Mean NEES within $95\%$ $\chi^2_6$ bounds $[0.21, 2.41]$ (normalized per DOF) | Interactive **Attitude ESKF & SeqLock Simulator** |
+| **Furuta Swing-Up & LQR Balancing** | Autonomous catch within $< 2.2\text{ s}$ and steady RMS error $< 0.08^\circ$ | Interactive **Furuta Pendulum + LQR + CBF Simulator** |
+| **CBF Safety Invariance** | $\min_t h(x(t)) \ge 0$ ($\lvert x_c \rvert \le x_{\max}$) under $+3.2\text{ rad/s}$ impulse push | Interactive **CBF Safety Wall Test** |
 
 ---
 

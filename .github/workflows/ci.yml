@@ -48,8 +48,15 @@ jobs:
           python3 scripts/check_term_order.py
           python3 scripts/generate_python_lessons_data.py --check
           python3 scripts/generate_run_callouts.py --check
+          # One name per tab, in one file; no page or label may point at a position instead.
+          python3 scripts/check_tab_names.py
           python3 scripts/generate_link_history_data.py --check
           python3 scripts/generate_sim_route.py --check
+          # The ten steps the pages print, copied for the app by the same model.
+          python3 scripts/generate_spine_data.py --check
+          # The syllabus, the curriculum map and the nine track READMEs cost those ten steps
+          # from each page's own metadata; a moved page must move the hours with it.
+          python3 scripts/generate_step_docs.py --check
           python3 scripts/generate_readme_counts.py --check
           python3 scripts/check_consistency.py
           python3 scripts/friction_report.py --check
@@ -144,6 +151,9 @@ jobs:
 
       - name: Check the 08.1 fault-bench metrics
         run: npm run test:faultbench
+
+      - name: Check the roadmap <-> workbench join (every entry claimed once)
+        run: npm run test:practice
 
       - name: Install Playwright Chromium & Firefox (once, for both browser suites)
         run: npx playwright-core install --with-deps chromium firefox

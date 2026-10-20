@@ -1,28 +1,35 @@
 # Track 01: Mixed-Signal Electronics, Power Stages & High-Speed PCB Design
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
+> **Part of the [ten-step MechaLab course](../README.md)**  
 > **Prerequisites:** [Track 00: Foundations, Bench Intuition & Multi-Domain Mathematics](../00-foundations/README.md)  
 > **Feeds Into:** [Track 03: Sensors & Actuators](../03-sensors-and-actuators/README.md), [Track 04: Embedded & Real-Time](../04-embedded-and-realtime/README.md), [Track 07: Systems, HIL & Production](../07-systems-hil-and-production/README.md)  
 > **Core Principle:** At $20\text{–}100\text{ kHz}$ PWM switching frequencies and $>50\text{ V/ns}$ slew rates, there is no such thing as an ideal wire or a "ground node." Every PCB trace is a coupled RLC transmission line, and precision microvolt sensing survives next to kilowatt switching stages only through deliberate loop-inductance minimization, return-current control, and differential signal conditioning.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
+<!-- step-index -->
+> **Step 4 of 10 · Power the joint: electronics.** Switch a motor both ways, budget its current, and keep the switching noise out.
+>
+> This folder is the reading for Step 4. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
 
-Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 02 in the same Tier**:
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 4](#tier-1-beginner--intuitive), in order | [`01.1`](01.1-mosfet-inductor-flyback.md), [`01.2`](01.2-h-bridge-and-stall-current.md), [`01.3`](01.3-power-regulators-and-power-budget.md), [`01.4`](01.4-grounding-and-rc-lowpass-filters.md) · [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md), [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md), [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) | 18-25.5 |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md), [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) | 8.5 |
+| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-| Pass / Level | Previous Step in Pass | Current Track 01 Section | Next Linear Step in This Pass |
-| :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 00 (Tier 1)](../00-foundations/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Breadboard H-Bridges (`DRV8833`), Logic Levels & Decoupling](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 02 (Tier 1: 2D Planar IK & Gear Ratios)**](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive) |
-| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 00 (Tier 2)](../00-foundations/README.md#tier-2-intermediate--applied) | [§2 Tier 2: 4-Layer KiCad PCBs, Gate Drivers & Kelvin Shunts](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 02 (Tier 2: Exact Constraint, `CadQuery` & URDF)**](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: `L298N`/`INA219` Breakouts → `DRV8353` + `INA240` Kelvin PCB](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 00 (Tier 3)](../00-foundations/README.md#tier-3-advanced--production) | [§4 Tier 3: <2 nH 48 V/30 A 6-Layer Inverter & SAR Charge Buckets](#tier-3-advanced--production) | [**Next in Pass 3 → Track 02 (Tier 3: Screw PoE, Flexures & O(n) RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) |
+**Step 4 costs 26.5-34 focused hours in total** - 6-13.5 of lessons, 12 of arm modules, 8.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
+**Next:** Step 5 · Build the arm: mechanics → [Track 02](../02-mechanics-kinematics-dynamics/README.md) (20-30 focused hours).
+<!-- /step-index -->
 ---
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 01):** Learn how low-voltage logic safely controls higher-voltage motor power without browning out or frying your microcontroller, using MOSFETs, flyback diodes, 4-switch H-bridges, buck/LDO regulators, star grounding, and passive RC low-pass filters in 4 self-contained lessons (`01.1`–`01.4`).
+> **Goal of Depth 1 (Track 01):** Learn how low-voltage logic safely controls higher-voltage motor power without browning out or frying your microcontroller, using MOSFETs, flyback diodes, 4-switch H-bridges, buck/LDO regulators, star grounding, and passive RC low-pass filters in 4 self-contained lessons (`01.1`–`01.4`).
 
 ### 🟢 Track 01 — Tier 1 Beginner Lessons (`01.1`–`01.4`)
 
@@ -114,16 +121,16 @@ $$
   * **Answer & Explanation:** In that daisy-chain, all $3\text{ A}$ of choppy motor PWM return current flows through the shared wire segment between the power supply and the motor driver. With $0.15\ \Omega$ + $150\text{ nH}$ of breadboard jumper impedance, the motor driver's "ground" node bounces by $\pm 1.5\text{ V}$ relative to true supply ground—shaking the MCU's logic reference and corrupting UART/ADC signals.
   </details>
 
-### ✅ Tier 1 Milestone Gate (`Track 01 · Pass 1`)
+### ✅ Tier 1 Milestone Gate (`Track 01 · Depth 1`)
 * Complete your glitch-free breadboard H-bridge reversal test with $<100\text{ mV}$ ripple on the `3.3V` rail.
-* **Next Linear Step in Pass 1:** [**Proceed to Track 02 (Tier 1: 2D Planar Kinematics, Gear Ratios & Bearings) →**](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive)
+* **Next Linear Step in Depth 1:** [**Proceed to Track 02 (Tier 1: 2D Planar Kinematics, Gear Ratios & Bearings) →**](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive)
 
 ---
 
 ## Tier 2 (Intermediate / Applied)
 
-> **Goal of Pass 2 (Track 01):** Graduate from solderless breadboards and maker breakout modules to designing and SMD-soldering your own **4-layer KiCad PCB** with dedicated 3-phase gate drivers (`DRV8323`/`DRV8353`), 4-terminal Kelvin current shunts (`INA240`), and active RC anti-aliasing filters.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 01):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Phasors, Impedance & Bode Plots*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Nyquist Aliasing & Anti-Aliasing Cutoffs*) plus the Track 01 Tier 2 Bridge Ladder [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) → [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md).
+> **Goal of Depth 2 (Track 01):** Graduate from solderless breadboards and maker breakout modules to designing and SMD-soldering your own **4-layer KiCad PCB** with dedicated 3-phase gate drivers (`DRV8323`/`DRV8353`), 4-terminal Kelvin current shunts (`INA240`), and active RC anti-aliasing filters.
+> **📚 Required Foundations & Bridge Modules for Depth 2 (Track 01):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Phasors, Impedance & Bode Plots*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Nyquist Aliasing & Anti-Aliasing Cutoffs*) plus the Track 01 Tier 2 Bridge Ladder [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) → [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md).
 
 ### [2.1 Schematic Capture, SMD Footprints & 4-Layer KiCad PCB Layout]
 - **Core Summary:** Introduces custom PCB engineering in KiCad using a 4-layer stackup (`L1: Signal/Power` $\to$ `L2: Unbroken Solid GND` $\to$ `L3: Power Pours` $\to$ `L4: Signals`), Design Rule Checks (DRC), thermal via stitching under MOSFET pads, and desktop SMD reflow assembly (`0603`, `SOIC`, `QFN`).
@@ -146,7 +153,7 @@ $$
   - 🔗 [KiCad Official Getting Started & Layout Documentation (docs.kicad.org)](https://docs.kicad.org/) & [LTspice Free SPICE Simulator (Analog Devices)](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) — *Step-by-step workflow from SPICE gate-drive simulation and schematic symbols to 4-layer routing, DRC verification, and Gerber/BOM generation.*
   - 🔗 [Phil's Lab STM32 & Mixed-Signal KiCad Hardware Design Tutorials (YouTube)](https://www.youtube.com/@PhilsLab) & [The Art of Electronics (Horowitz & Hill)](https://artofelectronics.net/) — *Detailed video walkthroughs of 4-layer stackups, grounding, decoupling placement, and JLCPCB SMT assembly.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench and compare the **2-Layer Poor Layout (5.2 nH)** preset against the **6-Layer Production Stackup (1.6 nH)** to see how placing a solid ground plane $0.1\text{–}0.2\text{ mm}$ underneath the power loop cuts voltage overshoot from $62.4\text{ V}$ to $53.1\text{ V}$, and inspect the generated netlist/BOM via `python3 08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py`.
+  - *Task:* Open **3D CAD & 48V PCB** in the MechaLab Workbench and compare the **2-Layer Poor Layout (5.2 nH)** preset against the **6-Layer Production Stackup (1.6 nH)** to see how placing a solid ground plane $0.1\text{–}0.2\text{ mm}$ underneath the power loop cuts voltage overshoot from $62.4\text{ V}$ to $53.1\text{ V}$, and inspect the generated netlist/BOM via `python3 08-capstone-projects/eda-capstone1-foc-drive/generate_foc_pcb_and_bom.py`.
   - *📚 What to Learn & Resource Links for This Exercise:* Study SI nanohenry/nanosecond scaling in Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), inductive spike $V_{\text{peak}} = V_{\text{bus}} + L_{\text{loop}}\frac{dI}{dt}$ in [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md), and 4-layer KiCad layout + return-plane inductance + oscilloscope pigtail spring-tip probing safety in [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md), plus [KiCad Official Layout Docs](https://docs.kicad.org/) and [Phil's Lab Mixed-Signal PCB Design Tutorials](https://www.youtube.com/@PhilsLab).
 - **🧠 Knowledge Check:**
   <details>
@@ -211,9 +218,9 @@ $$
   * **Answer & Explanation:** Pure copper has a temperature coefficient of resistance $\alpha_{\text{Cu}} \approx +3,930\text{ ppm}/^\circ\text{C}$ ($+0.393\%/^\circ\text{C}$). A $50^\circ\text{C}$ rise in PCB temperature under load changes a copper trace's resistance by nearly $+20\%$, ruining torque accuracy!
   </details>
 
-### ✅ Tier 2 Milestone Gate (`Track 01 · Pass 2`)
-* Inspect the **Tab 6: 3D CAD & 48V PCB** solver and the reference KiCad netlist [`capstone1_foc_48v30a.net`](../08-capstone-projects/eda-capstone1-foc-drive/capstone1_foc_48v30a.net).
-* **Next Linear Step in Pass 2:** [**Proceed to Track 02 (Tier 2: Exact Constraint, `CadQuery` & URDF/MuJoCo) →**](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied)
+### ✅ Tier 2 Milestone Gate (`Track 01 · Depth 2`)
+* Inspect the **3D CAD & 48V PCB** solver and the reference KiCad netlist [`capstone1_foc_48v30a.net`](../08-capstone-projects/eda-capstone1-foc-drive/capstone1_foc_48v30a.net).
+* **Next Linear Step in Depth 2:** [**Proceed to Track 02 (Tier 2: Exact Constraint, `CadQuery` & URDF/MuJoCo) →**](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied)
 
 ---
 
@@ -231,9 +238,9 @@ $$
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 01):** Master production-grade mixed-signal and power hardware: $<2\text{ nH}$ 6-layer switching loops on $48\text{ V}$ silicon MOSFET power stages (with `SiC`/`GaN` covered as an optional Tier 3 extension), Bessel anti-aliasing filters, SAR ADC charge buckets, and coupled electro-thermal Cauer/Foster verification.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 01):** Complete Tier 2/3 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Bode Phase & Group Delay*), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space Thermal Matrices*), and [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (*Port-Hamiltonian Energy Conservation*) plus the Track 01 Tier 3 Bridge [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md).
-> * [**Next Linear Step in Pass 3 → Track 02 (Tier 3: Screw PoE, `Ti-6Al-4V` Flexures & O(n) RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production)
+> **Goal of Depth 3 (Track 01):** Master production-grade mixed-signal and power hardware: $<2\text{ nH}$ 6-layer switching loops on $48\text{ V}$ silicon MOSFET power stages (with `SiC`/`GaN` covered as an optional Tier 3 extension), Bessel anti-aliasing filters, SAR ADC charge buckets, and coupled electro-thermal Cauer/Foster verification.
+> **📚 Required Foundations & Bridge Modules for Depth 3 (Track 01):** Complete Tier 2/3 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Bode Phase & Group Delay*), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space Thermal Matrices*), and [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) (*Port-Hamiltonian Energy Conservation*) plus the Track 01 Tier 3 Bridge [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md).
+> * [**Next Linear Step in Depth 3 → Track 02 (Tier 3: Screw PoE, `Ti-6Al-4V` Flexures & O(n) RNEA)**](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production)
 
 ### [4.1 Mixed-Signal & Power Hardware Architecture]
 - **Core Summary:** Partitions a $48\text{ V} / 30\text{ A}$ motor drive across high-$dI/dt$ power switching, Kelvin differential signal conditioning, and ultra-low-noise synchronous SAR ADC conversion over an unbroken solid reference plane:
@@ -351,7 +358,7 @@ $$
   - 🔗 [Infineon Application Note: MOSFET Power Losses Calculation Using the Data-Sheet Parameters](https://www.infineon.com/gated/infineon-70-41484-applicationnotes-en_f72138ac-8173-4b5c-8c8e-63dd1e039074) — *Complete industry derivation of conduction, switching, gate-charge, and reverse-recovery losses.*
   - 🔗 [Texas Instruments SLUA887: Understanding & Preventing dV/dt Turn-On (Miller Shoot-Through)](https://www.ti.com/lit/pdf/slua887) — *Derives the condition* $R_{g,\text{off}} C_{gd}\frac{dV}{dt} < V_{GS(\text{th})}$ *and asymmetric gate drive techniques.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench, first note the 15 A continuous design point ($T_j = 90.9^\circ\text{C}$, $\eta = 99.11\%$), then select the **30A Peak Torque Thermal Load** preset and observe how the fixed-point thermal solver iterates $T_j \leftrightarrow R_{DS(\text{on})}(T_j)$ to $T_j = 206.1^\circ\text{C}$ and $\eta = 98.55\%$ when 30 A is held continuous, which is why 30 A is a short peak, not a continuous rating. Try increasing Heatsink Thermal Resistance $R_{\theta\text{JA}}$ until you observe thermal runaway!
+  - *Task:* Open **3D CAD & 48V PCB** in the MechaLab Workbench, first note the 15 A continuous design point ($T_j = 90.9^\circ\text{C}$, $\eta = 99.11\%$), then select the **30A Peak Torque Thermal Load** preset and observe how the fixed-point thermal solver iterates $T_j \leftrightarrow R_{DS(\text{on})}(T_j)$ to $T_j = 206.1^\circ\text{C}$ and $\eta = 98.55\%$ when 30 A is held continuous, which is why 30 A is a short peak, not a continuous rating. Try increasing Heatsink Thermal Resistance $R_{\theta\text{JA}}$ until you observe thermal runaway!
   - *📚 What to Learn & Resource Links for This Exercise:* Study state-space ODEs in Foundations [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), Port-Hamiltonian thermal dissipation in [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md), and Cauer RC electro-thermal networks in [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) (`## 3. Formalization` Item 3), plus [Infineon AN-MOSFET Power Losses Calculation](https://www.infineon.com/gated/infineon-70-41484-applicationnotes-en_f72138ac-8173-4b5c-8c8e-63dd1e039074).
 - **🧠 Knowledge Check:**
   <details>
@@ -409,7 +416,7 @@ $$
 
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
-| **Half-Bridge Voltage Overshoot** | $V_{DS,\text{peak}} < 58\text{ V}$ at $V_{\text{bus}} = 48\text{ V}$, $I_D = 30\text{ A}$, $t_{sw} \le 25\text{ ns}$ | Double-Pulse Test (DPT) in SPICE & Tab 6 PCB Simulator ($L_{\text{loop}} \le 2\text{ nH}$) |
+| **Half-Bridge Voltage Overshoot** | $V_{DS,\text{peak}} < 58\text{ V}$ at $V_{\text{bus}} = 48\text{ V}$, $I_D = 30\text{ A}$, $t_{sw} \le 25\text{ ns}$ | Double-Pulse Test (DPT) in SPICE & 3D Parts & Motor Driver PCB Lab PCB Simulator ($L_{\text{loop}} \le 2\text{ nH}$) |
 | **Current AFE Phase Lag & Settling** | Phase lag $< 2.5^\circ$ at $2.5\text{ kHz}$; ADC sample error $< 0.25\text{ LSB}$ (12-bit) | 2nd-order Bessel AFE + SAR charge bucket ($C_{\text{filt}} \ge 20 C_{sh}$) |
 | **Current Noise Floor (PWM Active)** | $< 15\text{ mA}_{\text{rms}}$ at ADC output with $48\text{ V}$ bus switching at $40\text{ kHz}$ | 10,000-sample DMA capture at PWM center trigger |
 | **Thermal Rise at Continuous Load** | $\Delta T_{\text{PCB/Case}} < 40^\circ\text{C}$ ($T_j < 125^\circ\text{C}$) at $15\text{ A}_{\text{rms}}$ continuous ($30\text{ A}$ peak) | Coupled Cauer thermal solver & thermal camera soak test |

@@ -1,29 +1,36 @@
 # Track 04: Hard Real-Time Embedded Systems, Industrial Networks & FPGA Co-Design
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
+> **Part of the [ten-step MechaLab course](../README.md)**  
 > **Prerequisites:** [Track 01: Mixed-Signal & Power Electronics](../01-electronics-and-power/README.md), [Track 03: Sensors & Actuators](../03-sensors-and-actuators/README.md)  
 > **Feeds Into:** [Track 05: Control & Estimation](../05-control-and-estimation/README.md), [Track 06: Robotics & Autonomy](../06-robotics-and-autonomy/README.md), [Track 07: Systems, HIL & Production](../07-systems-hil-and-production/README.md)  
 > **Core Principle:** In a real-time control system, **a mathematically correct answer delivered late is a wrong answer.** Sampling jitter $\Delta t$ acts as phase noise that directly erodes phase margin ($\Delta\phi = -\omega_c \Delta t_{\max}$) and injects multiplicative derivative noise. Production firmware achieves sub-microsecond determinism by offloading timing-critical I/O to hardware timers, DMA controllers, or FPGA fabric—and enforcing strict zero-allocation, lock-free execution paths.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
+<!-- step-index -->
+> **Step 7 of 10 · Run it in real time: embedded C.** Move a fixed-rate control loop off Python and onto a microcontroller.
+>
+> This folder is the reading for Step 7. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
 
-Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 05 in the same Tier**:
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 7](#tier-1-beginner--intuitive), in order | [`04.1`](04.1-c-types-and-hardware-timer-isr.md), [`04.2`](04.2-packed-structs-and-crc8-telemetry.md), [`04.3`](04.3-structs-and-pointers-labeled-boxes.md) · [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) | 11-17 |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md), [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) | 8 |
+| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md), [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md) | 8 |
 
-| Pass / Level | Previous Step in Pass | Current Track 04 Section | Next Linear Step in This Pass |
-| :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 03 (Tier 1)](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Killing `delay()`, 1 kHz Timer ISRs & Binary Serial](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 05 (Tier 1: PID Virtual Spring-Damper & Comp IMU)**](../05-control-and-estimation/README.md#tier-1-beginner--intuitive) |
-| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 03 (Tier 2)](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied) | [§2 Tier 2: FreeRTOS Scheduling (RTA), DMA Buffers & CAN-FD (`MIT Mode`)](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 05 (Tier 2: Bode Loop Shaping, LQR & Linear KF)**](../05-control-and-estimation/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Global Structs / `mutex` → DMA Pipelines & `WaitFreeSeqLock`](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 03 (Tier 3)](../03-sensors-and-actuators/README.md#tier-3-advanced--production) | [§4 Tier 3: Bare-Metal `TIM1`→`ADC`, CORDIC & C++20 `WaitFreeSeqLock`](#tier-3-advanced--production) | [**Next in Pass 3 → Track 05 (Tier 3: Joseph ESKF, MPC & CBF-QP Walls)**](../05-control-and-estimation/README.md#tier-3-advanced--production) |
+**Step 7 costs 19-25 focused hours in total** - 4-10 of lessons, 7 of arm modules, 8 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
+**Next:** Step 8 · Make it hold still: control → [Track 05](../05-control-and-estimation/README.md) (17-21 focused hours).
+<!-- /step-index -->
 ---
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 04):** Break the #1 beginner firmware habit (`delay(10)` and slow `Serial.println()` inside a control loop), set up a deterministic **$1\text{ kHz}$ hardware timer interrupt (ISR)**, and stream compact binary telemetry frames to your laptop.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 04):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Loops & Functions*), [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) (*Arrays & Plotting*), and [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (*SI Timing Units*) plus the Track 04 Tier 1 Bridge Ladder [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) → [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md).
+> **Goal of Depth 1 (Track 04):** Break the #1 beginner firmware habit (`delay(10)` and slow `Serial.println()` inside a control loop), set up a deterministic **$1\text{ kHz}$ hardware timer interrupt (ISR)**, and stream compact binary telemetry frames to your laptop.
+> **📚 Required Foundations & Bridge Modules for Depth 1 (Track 04):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Loops & Functions*), [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md) (*Arrays & Plotting*), and [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (*SI Timing Units*) plus the Track 04 Tier 1 Bridge Ladder [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) → [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md).
 
 ### Beginner-First Lesson Series (`04.1 – 04.3`, 3-Part Python$\to$C Bridge, $\le 2$ new ideas per lesson)
 
@@ -121,16 +128,16 @@ struct __attribute__((packed)) TelemetryPacket {
   * **Answer & Explanation:** Because binary IEEE-754 `float` values in the payload (`q_rad`, `dq_rad_s`) can legitimately contain the byte `0xAA`! Pairing the sync header (`0xAA 0x55` or COBS framing) with a trailing `crc8` checksum guarantees that if the receiver ever locks onto a fake `0xAA` inside a float, the CRC check immediately rejects the misaligned frame and re-synchronizes.
   </details>
 
-### ✅ Tier 1 Milestone Gate (`Track 04 · Pass 1`)
+### ✅ Tier 1 Milestone Gate (`Track 04 · Depth 1`)
 * Replace `loop() { delay(1); }` on your `ESP32`/`STM32` with a $1.000\text{ kHz}$ hardware timer interrupt, toggle a debug GPIO pin on entry/exit, and verify on your logic analyzer/oscilloscope that period jitter is $< 2\ \mu\text{s}$.
-* **Next Linear Step in Pass 1:** [**Proceed to Track 05 (Tier 1: PID Virtual Spring-Damper, Anti-Windup & Complementary IMU) →**](../05-control-and-estimation/README.md#tier-1-beginner--intuitive)
+* **Next Linear Step in Depth 1:** [**Proceed to Track 05 (Tier 1: PID Virtual Spring-Damper, Anti-Windup & Complementary IMU) →**](../05-control-and-estimation/README.md#tier-1-beginner--intuitive)
 
 ---
 
 ## Tier 2 (Intermediate / Applied)
 
-> **Goal of Pass 2 (Track 04):** Architect multi-rate embedded firmware using **FreeRTOS Rate-Monotonic Scheduling**, **Direct Memory Access (DMA)** circular buffers (zero CPU overhead I/O), and **CAN 2.0 / CAN-FD (`MIT Mini-Cheetah` 5-parameter impedance packets)**.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 04):** Complete Tier 1/2 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md)–[`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Timing & Linear Range Mapping*) plus the Track 04 Tier 2 Bridge Ladder [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) (*DMA + RTA + CAN Packing*) → [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) (*Zephyr Devicetree & West*) → [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md) (*Zephyr Static Threads & Priority Inheritance*) → [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md) (*micro-ROS `rclc` Executor & XRCE-DDS*).
+> **Goal of Depth 2 (Track 04):** Architect multi-rate embedded firmware using **FreeRTOS Rate-Monotonic Scheduling**, **Direct Memory Access (DMA)** circular buffers (zero CPU overhead I/O), and **CAN 2.0 / CAN-FD (`MIT Mini-Cheetah` 5-parameter impedance packets)**.
+> **📚 Required Foundations & Bridge Modules for Depth 2 (Track 04):** Complete Tier 1/2 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md)–[`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Timing & Linear Range Mapping*) plus the Track 04 Tier 2 Bridge Ladder [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) (*DMA + RTA + CAN Packing*) → [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) (*Zephyr Devicetree & West*) → [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md) (*Zephyr Static Threads & Priority Inheritance*) → [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md) (*micro-ROS `rclc` Executor & XRCE-DDS*).
 
 ### 2.1 Multi-Rate FreeRTOS Task Partitioning & Response-Time Analysis (RTA)
 - **Core Summary:** In multi-rate robotics firmware, **Rate-Monotonic Scheduling (RMS)** assigns higher priorities to shorter-period tasks: the $25\text{–}40\text{ kHz}$ FOC loop runs in a zero-latency hardware IRQ above the RTOS kernel, the $1\text{ kHz}$ servo/impedance loop runs in the highest-priority FreeRTOS task via `vTaskDelayUntil()`, and $100\text{ Hz}$ logging runs in a low-priority background task.
@@ -202,9 +209,9 @@ struct __attribute__((packed)) TelemetryPacket {
   * **Answer & Explanation:** Because evaluating the PD impedance law $\tau = \tau_{ff} + K_p(q_{\text{des}} - q) + K_d(\dot{q}_{\text{des}} - \dot{q})$ locally inside the motor driver at **$25\text{–}40\text{ kHz}$** eliminates the $1\text{ ms}$ CAN bus transport delay from the stiffness/damping loop! This allows $10\times$ higher stable virtual damping $K_d$ and stiffness $K_p$ without high-frequency chatter.
   </details>
 
-### ✅ Tier 2 Milestone Gate (`Track 04 · Pass 2`)
-* Verify schedulability via exact Response-Time Analysis ($R_i \le D_i$) and test lock-free vs. torn-read behavior under contention in **Tab 8: Attitude ESKF & SeqLock** of the interactive workbench.
-* **Next Linear Step in Pass 2:** [**Proceed to Track 05 (Tier 2: Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF) →**](../05-control-and-estimation/README.md#tier-2-intermediate--applied)
+### ✅ Tier 2 Milestone Gate (`Track 04 · Depth 2`)
+* Verify schedulability via exact Response-Time Analysis ($R_i \le D_i$) and test lock-free vs. torn-read behavior under contention in **Attitude ESKF & SeqLock** of the interactive workbench.
+* **Next Linear Step in Depth 2:** [**Proceed to Track 05 (Tier 2: Bode Loop Shaping, Gang of Four, Swing-Up LQR & Linear KF) →**](../05-control-and-estimation/README.md#tier-2-intermediate--applied)
 
 ---
 
@@ -214,7 +221,7 @@ struct __attribute__((packed)) TelemetryPacket {
 
 * **How Beginners Do It (Tier 1/2 Pitfall):** A $25\text{ kHz}$ motor ISR writes `global_state.q` and `global_state.dq` while a $1\text{ kHz}$ control task reads `global_state`. Midway through the $1\text{ kHz}$ task reading the 24-byte struct, the $25\text{ kHz}$ ISR preempts it—resulting in a **torn read** (new position paired with old velocity or half-written float bytes!). Or worse, someone puts a `mutex` inside the $25\text{ kHz}$ ISR, causing hard faults or priority inversion deadlocks.
 * **How Production Engineers Do It (Tier 3 Custom Approach):**
-  Use a 25-line C++20 **`WaitFreeSeqLock<T>`** (full code in §4.3 below & simulated live in **Tab 8**):
+  Use a 25-line C++20 **`WaitFreeSeqLock<T>`** (full code in §4.3 below & simulated live in **IMU Sensor Fusion & Real-Time Lock**):
   1. The $40\text{ kHz}$ ISR increments an atomic sequence counter `seq_` to **odd** (`seq + 1`, `memory_order_release`), writes the struct, and increments `seq_` to **even** (`seq + 2`).
   2. The $1\text{ kHz}$ reader reads `seq0`, copies the struct, and reads `seq1` (`memory_order_acquire`). If `(seq0 != seq1) || (seq0 & 1)`, a preemption occurred during the copy and the reader simply retries in $<30\text{ ns}$—**zero locks, zero priority inversion, and zero torn reads ever!**
 
@@ -222,9 +229,9 @@ struct __attribute__((packed)) TelemetryPacket {
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 04):** Master zero-jitter bare-metal and heterogeneous real-time execution: Autonomous `TIM1_TRGO2` $\to$ `ADC1/2` $\to$ `DMA` hardware pipelines, Cortex-M7 `ITCM`/`DTCM` memory placement, `CORDIC` hardware trig co-processors, C++20 `WaitFreeSeqLock`, EtherCAT Distributed Clocks (`<50 ns`), and FPGA $\Sigma\Delta$ `sinc³` decimation filters.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 04):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Nyquist Sampling & Aliasing*) plus the Track 04 Tier 3 Bridge [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md).
-> * [**Next Linear Step in Pass 3 → Track 05 (Tier 3: Joseph-Form Manifold ESKF, MPC & Control Barrier QPs)**](../05-control-and-estimation/README.md#tier-3-advanced--production)
+> **Goal of Depth 3 (Track 04):** Master zero-jitter bare-metal and heterogeneous real-time execution: Autonomous `TIM1_TRGO2` $\to$ `ADC1/2` $\to$ `DMA` hardware pipelines, Cortex-M7 `ITCM`/`DTCM` memory placement, `CORDIC` hardware trig co-processors, C++20 `WaitFreeSeqLock`, EtherCAT Distributed Clocks (`<50 ns`), and FPGA $\Sigma\Delta$ `sinc³` decimation filters.
+> **📚 Required Foundations & Bridge Modules for Depth 3 (Track 04):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) (*Nyquist Sampling & Aliasing*) plus the Track 04 Tier 3 Bridge [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md).
+> * [**Next Linear Step in Depth 3 → Track 05 (Tier 3: Joseph-Form Manifold ESKF, MPC & Control Barrier QPs)**](../05-control-and-estimation/README.md#tier-3-advanced--production)
 
 ### 4.1 Zero-Jitter Hardware-Triggered Control Execution Pipeline
 
@@ -331,7 +338,7 @@ private:
   - 🔗 [Embassy Async Embedded Rust (`embassy.dev`) & RTIC (`rtic.rs`)](https://embassy.dev/) — *Compile-time memory-safe, data-race-free bare-metal concurrency and zero-cost Stack Resource Policy (SRP) hardware interrupt scheduling in Rust.*
   - 🔗 [CppReference: `std::memory_order` (`memory_order_acquire` & `memory_order_release`)](https://en.cppreference.com/w/cpp/atomic/memory_order) — *Complete reference on acquire/release semantics and preventing compiler/CPU load-store reordering.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 8: Attitude ESKF & SeqLock** in the interactive workbench, run the $40\text{ kHz}$ writer vs. $1\text{ kHz}$ reader stress test, and compare **Unprotected Global Struct** (which suffers torn reads where `q + dq != 0`) against **`WaitFreeSeqLock<T>`** ($0$ torn reads across $10^7$ cycles). Also compile and run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp`.
+  - *Task:* Open **Attitude ESKF & SeqLock** in the interactive workbench, run the $40\text{ kHz}$ writer vs. $1\text{ kHz}$ reader stress test, and compare **Unprotected Global Struct** (which suffers torn reads where `q + dq != 0`) against **`WaitFreeSeqLock<T>`** ($0$ torn reads across $10^7$ cycles). Also compile and run `./04-embedded-and-realtime/lab/lab04_realtime_embedded.cpp`.
   - *📚 What to Learn & Resource Links for This Exercise:* Study bitwise odd/even sequence checks (`seq & 1U`) in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) and C++20 `WaitFreeSeqLock<T>` acquire-release protocol in [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Hans Boehm *Can Seqlocks Get Along With Programming Language Memory Models?*](https://dl.acm.org/doi/10.1145/2247684.2247688).
 - **🧠 Knowledge Check:**
   <details>
@@ -390,7 +397,7 @@ private:
 | **ADC-Trigger-to-ISR-Entry Jitter** | Peak-to-peak jitter $< 50\text{ ns}$ ($< 25$ CPU cycles) over $10^7$ cycles | Hardware `TIM1_TRGO2` $\to$ `ADC` DMA pipeline |
 | **Tier-0 FOC ISR WCET** | $\text{WCET}_{\max} < 4.0\ \mu\text{s}$ ($2.08\ \mu\text{s}$ achieved at $170\text{ MHz}$) | `DWT->CYCCNT` watermark in `ITCM`/`CCM-SRAM` |
 | **Zero Heap Allocation Verification** | `0 bytes` allocated from `.heap` section | Linker `--wrap=malloc` build gate |
-| **Lock-Free IPC Data Integrity** | `0` torn reads over $10^8$ transfers under high contention | Interactive **Tab 8: Attitude ESKF & SeqLock Simulator** |
+| **Lock-Free IPC Data Integrity** | `0` torn reads over $10^8$ transfers under high contention | Interactive **Attitude ESKF & SeqLock Simulator** |
 
 ---
 

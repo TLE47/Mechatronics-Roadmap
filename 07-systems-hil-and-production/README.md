@@ -1,29 +1,36 @@
 # Track 07: Mechatronic Systems Engineering, SysID, Real-Time HIL & Production Qualification
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
+> **Part of the [ten-step MechaLab course](../README.md)**  
 > **Prerequisites:** [Track 01: Electronics & Power](../01-electronics-and-power/README.md), [Track 04: Embedded & Real-Time](../04-embedded-and-realtime/README.md), [Track 05: Control & Estimation](../05-control-and-estimation/README.md)  
 > **Feeds Into:** [Track 08: Capstone Projects](../08-capstone-projects/README.md)  
 > **Core Principle:** A prototype that works once on a laboratory bench is not a product. Production mechatronics engineering closes the V-Model via frequency-domain System Identification, deterministic Hardware-in-the-Loop (HIL) fault injection, Independent Hardware Functional Safety (IEC 61508 / ISO 13849), and first-pass Electromagnetic Compatibility (EMC) & Design-for-Manufacturing (DFM) sign-off.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
+<!-- step-index -->
+> **Step 9 of 10 · Plan motion and bring it up safely.** Smooth a path, identify the plant, and run a bring-up that fails safe.
+>
+> This is one of the 2 folders for Step 9. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Take Depth 1 with the other folder in this step rather than as a standalone course; Depth 2 waits until Step 10 is finished.
 
-Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 08 (The Boss Capstone for Your Current Pass)**:
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 9](#tier-1-beginner--intuitive), in order | [`07.1`](07.1-safe-bringup-and-sine-sweep-sysid.md) · [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) | 5-7 |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) | 4.5 |
+| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-| Pass / Level | Previous Step in Pass | Current Track 07 Section | Next Linear Step in This Pass |
-| :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 06 (Tier 1)](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: 10-Step Safe Bring-Up Protocol & Single-Tone Sine Sweeps](#tier-1-beginner--intuitive) | [**🏆 Next in Pass 1 → Track 08 (Tier 1 Boss: Breakout 2-DOF Desktop Robot)**](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass) |
-| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 06 (Tier 2)](../06-robotics-and-autonomy/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Regen Braking Bus Clamps, CRC Watchdogs & HIL Faults](#tier-2-intermediate--applied) | [**🏆 Next in Pass 2 → Track 08 (Tier 2 Boss: Custom 4-Layer CAN Servo + LQR)**](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Software `if(fault) pwm=0` → Dual-Channel Hardware STO Cutoff](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 06 (Tier 3)](../06-robotics-and-autonomy/README.md#tier-3-advanced--production) | [§4 Tier 3: Schroeder Multisine Closed-Loop SysID & <1 μs Hardware STO](#tier-3-advanced--production) | [**🏆 Next in Pass 3 → Track 08 (Tier 3 Boss: Full Production Capstones I–V)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass) |
+**Step 9 costs 14.5-18.5 focused hours in total** - 1.5-3.5 of lessons, 3.5 of arm modules, 4.5 of depth modules - shared by Track 06 and Track 07, this one's pages are 9.5-11.5 of it - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
+**Next:** Step 10 · Put it together: the 2-DOF arm → [Track 08](../08-capstone-projects/README.md) (6.5-9 focused hours).
+<!-- /step-index -->
 ---
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 07):** Adopt a disciplined **10-Step Hardware Bring-Up Protocol** so you never release magic smoke on power-up, wire a physical E-Stop switch + inline fuse, and measure your motor's actual inertia and friction using a simple single-tone sine sweep.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 07):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) (*CC/CV Bench Supply & Continuity Safety*) plus the Track 07 Tier 1 Bridge [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md).
+> **Goal of Depth 1 (Track 07):** Adopt a disciplined **10-Step Hardware Bring-Up Protocol** so you never release magic smoke on power-up, wire a physical E-Stop switch + inline fuse, and measure your motor's actual inertia and friction using a simple single-tone sine sweep.
+> **📚 Required Foundations & Bridge Modules for Depth 1 (Track 07):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md)–[`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) and [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) (*CC/CV Bench Supply & Continuity Safety*) plus the Track 07 Tier 1 Bridge [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md).
 
 ### Beginner-First Lesson Series (`07.1`, $\le 2$ new ideas per lesson)
 
@@ -81,16 +88,16 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
   * **Answer & Explanation:** It rolls off at **$-20\text{ dB/decade}$** (slope $-1$), and the gain $|\omega|/A \approx \frac{1}{2\pi f J}$ depends **exclusively on the total rotational inertia $J$** (viscous friction $b$ becomes negligible at high frequency).
   </details>
 
-### ✅ Tier 1 Milestone Gate (`Track 07 · Pass 1`)
+### ✅ Tier 1 Milestone Gate (`Track 07 · Depth 1`)
 * Execute the 10-Step Bring-Up Checklist on your Tier 1 hardware setup, verify positive encoder-to-torque sign matching, and extract empirical rotor inertia $J$ and viscous damping $b$ from a 4-frequency sine sweep.
-* **🏆 Next Linear Step in Pass 1:** [**Proceed to Track 08 (Tier 1 Boss Capstone: Breadboard/Breakout 2-DOF Desktop Robot) →**](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass)
+* **🏆 Next Linear Step in Depth 1:** [**Proceed to Track 08 (Tier 1 Boss Capstone: Breadboard/Breakout 2-DOF Desktop Robot) →**](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass)
 
 ---
 
 ## Tier 2 (Intermediate / Applied)
 
-> **Goal of Pass 2 (Track 07):** Protect your custom 4-layer PCBs from **Regenerative Braking Over-Voltage Spikes** using an active shunt brake chopper, enforce **CRC-16 + Window Watchdog timeouts** on every CAN-FD frame, and automate **Software/Hardware-in-the-Loop (SIL/HIL) Fault Injection**.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 07):** Complete Tier 1/2 Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinetic & Capacitor Energy Balance*) and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Variance & Statistical Bounds*) plus the Track 07 Tier 2 Bridge [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md).
+> **Goal of Depth 2 (Track 07):** Protect your custom 4-layer PCBs from **Regenerative Braking Over-Voltage Spikes** using an active shunt brake chopper, enforce **CRC-16 + Window Watchdog timeouts** on every CAN-FD frame, and automate **Software/Hardware-in-the-Loop (SIL/HIL) Fault Injection**.
+> **📚 Required Foundations & Bridge Modules for Depth 2 (Track 07):** Complete Tier 1/2 Foundations [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinetic & Capacitor Energy Balance*) and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Variance & Statistical Bounds*) plus the Track 07 Tier 2 Bridge [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md).
 
 ### 2.1 Why Fast Braking Blows Up Power Supplies (Regenerative Bus Clamping)
 - **Core Summary:** When a spinning robot joint decelerates rapidly ($\tau \cdot \omega < 0$), the brushless motor acts as a generator and pumps kinetic energy $\frac{1}{2}J\omega^2$ back into the DC bus capacitors. Because bench power supplies have output diodes and cannot sink reverse current, $V_{\text{bus}}$ spikes catastrophically unless an **active shunt brake chopper** (comparator/MCU-driven MOSFET + power resistor) clamps the rail whenever $V_{\text{bus}} > V_{\text{nom}} + 3\text{ V}$.
@@ -122,7 +129,7 @@ $$
   - 🔗 [Jack Ganssle: Great Watchdog Timers for Embedded Systems](https://www.ganssle.com/watchdogs.htm) — *The classic industry guide to independent hardware window watchdogs, task health bitmasks, and safe fallback states.*
   - 🔗 [Maxon Academy: Thermal Winding Time Constants & I² t Overload Protection](https://www.maxongroup.com/) — *Explains two-node thermal RC modeling (copper winding to iron stator housing) for brushless motors.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench and trigger all three hardware fault injections (**Overcurrent Short $42\text{ A}$**, **Encoder SPI Wire Open**, and **DC Bus Overvoltage $64\text{ V}$**) to inspect the deterministic fault detection latency and safe-state transition.
+  - *Task:* Open **URDF / MuJoCo & STO** in the interactive workbench and trigger all three hardware fault injections (**Overcurrent Short $42\text{ A}$**, **Encoder SPI Wire Open**, and **DC Bus Overvoltage $64\text{ V}$**) to inspect the deterministic fault detection latency and safe-state transition.
   - *📚 What to Learn & Resource Links for This Exercise:* Study CAN-FD CRC-16-CCITT + rolling counter watchdogs and automated SIL/HIL fault-injection matrices in [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) (`## 3. Formalization` Items 2–3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
@@ -135,9 +142,9 @@ $$
   * **Answer & Explanation:** Because the copper coils have small thermal mass and are separated from the aluminum housing by electrically insulating slot liners and epoxy (thermal resistance $R_{\text{th,cu-case}}$). Under a $30\text{ A}$ stall, the internal copper windings can exceed $180^\circ\text{C}$ and melt their enamel insulation in **8 seconds** while the outside of the motor still feels cool to the touch!
   </details>
 
-### ✅ Tier 2 Milestone Gate (`Track 07 · Pass 2`)
-* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench and inject all three hardware faults (**Overcurrent Short $42\text{ A}$**, **Encoder SPI Wire Open**, and **DC Bus Overvoltage $64\text{ V}$**) to verify deterministic fault detection and gate shutdown.
-* **🏆 Next Linear Step in Pass 2:** [**Proceed to Track 08 (Tier 2 Boss Capstone: Custom 4-Layer CAN Servo + LQR/MuJoCo Twin) →**](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass)
+### ✅ Tier 2 Milestone Gate (`Track 07 · Depth 2`)
+* Open **URDF / MuJoCo & STO** in the interactive workbench and inject all three hardware faults (**Overcurrent Short $42\text{ A}$**, **Encoder SPI Wire Open**, and **DC Bus Overvoltage $64\text{ V}$**) to verify deterministic fault detection and gate shutdown.
+* **🏆 Next Linear Step in Depth 2:** [**Proceed to Track 08 (Tier 2 Boss Capstone: Custom 4-Layer CAN Servo + LQR/MuJoCo Twin) →**](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass)
 
 ---
 
@@ -156,9 +163,9 @@ $$
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 07):** Master industrial V-Model qualification: Root-Sum-Square (RSS) multi-domain error budgets, **Schroeder-Phased Multisine Closed-Loop System Identification** ($\text{CF} \approx 1.66$), automated HIL fault-injection matrices, and **IEC 61508 / ISO 13849 / IEC 61800-5-2 Dual-Channel Safe Torque Off (STO)**.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 07):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Variance Addition & Covariance*) plus the Track 07 Tier 3 Bridge [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md).
-> * [**🏆 Next Linear Step in Pass 3 → Track 08 (Tier 3 Mastery: Full Production Capstones I–V)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass)
+> **Goal of Depth 3 (Track 07):** Master industrial V-Model qualification: Root-Sum-Square (RSS) multi-domain error budgets, **Schroeder-Phased Multisine Closed-Loop System Identification** ($\text{CF} \approx 1.66$), automated HIL fault-injection matrices, and **IEC 61508 / ISO 13849 / IEC 61800-5-2 Dual-Channel Safe Torque Off (STO)**.
+> **📚 Required Foundations & Bridge Modules for Depth 3 (Track 07):** Complete Tier 2 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Variance Addition & Covariance*) plus the Track 07 Tier 3 Bridge [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md).
+> * [**🏆 Next Linear Step in Depth 3 → Track 08 (Tier 3 Mastery: Full Production Capstones I–V)**](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass)
 
 ### 4.1 Mechatronic V-Model & Real-Time HIL Verification Architecture
 
@@ -237,7 +244,7 @@ $$
   - 🔗 [Rik Pintelon & Johan Schoukens: System Identification — A Frequency Domain Approach (IEEE Press / VUB Lecture Notes)](https://www.vub.be/) — *The definitive text on Schroeder-phased multisines, Crest Factor minimization, and closed-loop FRF estimation.*
   - 🔗 [Lab 07 Script: `07-systems-hil-and-production/lab/lab07_sysid_hil_and_sto.py`](./lab/lab07_sysid_hil_and_sto.py) — *Executable Python verification of Schroeder multisine Crest Factor reduction and closed-loop two-mass FRF identification.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 7: Schroeder Multisine SysID** in the interactive workbench, toggle between **Zero Phases ($\phi_k = 0$)** and **Schroeder Phases ($\phi_k = -\pi k(k-1)/M$)** to see the time-domain Crest Factor drop from $> 6.5$ down to $\sim 1.66$, and inspect how the extracted Bode plot pinpoints both the anti-resonance $f_{\text{ar}}$ and resonance $f_{\text{res}}$ so a Biquad Notch Filter can flatten the peak!
+  - *Task:* Open **Schroeder Multisine SysID** in the interactive workbench, toggle between **Zero Phases ($\phi_k = 0$)** and **Schroeder Phases ($\phi_k = -\pi k(k-1)/M$)** to see the time-domain Crest Factor drop from $> 6.5$ down to $\sim 1.66$, and inspect how the extracted Bode plot pinpoints both the anti-resonance $f_{\text{ar}}$ and resonance $f_{\text{res}}$ so a Biquad Notch Filter can flatten the peak!
   - *📚 What to Learn & Resource Links for This Exercise:* Study Bode plots in Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), pre-warped Tustin biquad notch filters in [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md), and Schroeder-phased multisine Crest Factor minimization ($\phi_k = -\frac{\pi k(k-1)}{K}$) in [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`), plus [Pintelon & Schoukens *System Identification: A Frequency Domain Approach*](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118287422).
 - **🧠 Knowledge Check:**
   <details>
@@ -283,7 +290,7 @@ stateDiagram-v2
   - 🔗 [STMicroelectronics AN4277: Using STM32 Timer Break Inputs (`TIMx_BKIN`) for Cycle-by-Cycle Motor Fault Protection](https://www.st.com/resource/en/application_note/an4277-using-stm32-device-pwm-shut-down-features-for-motor-control-and-digital-power-conversion-stmicroelectronics.pdf) — *Shows how internal/external analog comparators asynchronously latch PWM outputs into safe state in silicon even if the CPU clock stops.*
   - 🔗 [ISO 10218-1:2025 / ISO/TS 15066: Industrial & Collaborative Robot Safety Requirements](https://www.iso.org/standard/73933.html) — *Newly revised 2025 global safety standard unifying collaborative Speed and Separation Monitoring (SSM), Power and Force Limiting (PFL), and industrial cybersecurity.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench, trigger the **Overcurrent Short ($42\text{ A}$)** fault, and verify on the sub-microsecond fault timeline that the analog comparator + `TIM1_BKIN` hardware latch drives all 6 MOSFET gates to `High-Z` at $t = 0.65\ \mu\text{s}$—long before the $25\ \mu\text{s}$ software ISR tick!
+  - *Task:* Open **URDF / MuJoCo & STO** in the interactive workbench, trigger the **Overcurrent Short ($42\text{ A}$)** fault, and verify on the sub-microsecond fault timeline that the analog comparator + `TIM1_BKIN` hardware latch drives all 6 MOSFET gates to `High-Z` at $t = 0.65\ \mu\text{s}$—long before the $25\ \mu\text{s}$ software ISR tick!
   - *📚 What to Learn & Resource Links for This Exercise:* Study dual-channel Safe Torque Off (STO) AND-gate hardware inhibit latency ($t_{\text{STO}} < 1\ \mu\text{s}$) and `IEC 61800-5-2` / `ISO 13849-1` safety verification in [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
@@ -331,9 +338,9 @@ stateDiagram-v2
 
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
-| **SysID Model-to-Hardware Correlation** | Magnitude error $< 1.5\text{ dB}$ across $5\text{ Hz} - 500\text{ Hz}$ with $\text{CF} \approx 1.66$ | Interactive **Tab 7: Schroeder Multisine SysID Simulator** |
-| **Hardware Over-Current to Gate Turn-Off** | Latency $< 1.0\ \mu\text{s}$ ($0.65\ \mu\text{s}$ achieved) from shunt fault to all 6 gates High-Z | Interactive **Tab 5: Dual-Channel Hardware STO Simulator** |
-| **Encoder CRC / Wire-Break Fault Reaction** | Fault detected within $\le 2$ cycles ($\le 80\ \mu\text{s}$); zero unintended torque spike | Interactive **Tab 5: Encoder SPI Wire Open Fault Injection** |
+| **SysID Model-to-Hardware Correlation** | Magnitude error $< 1.5\text{ dB}$ across $5\text{ Hz} - 500\text{ Hz}$ with $\text{CF} \approx 1.66$ | Interactive **Schroeder Multisine SysID Simulator** |
+| **Hardware Over-Current to Gate Turn-Off** | Latency $< 1.0\ \mu\text{s}$ ($0.65\ \mu\text{s}$ achieved) from shunt fault to all 6 gates High-Z | Interactive **Dual-Channel Hardware STO Simulator** |
+| **Encoder CRC / Wire-Break Fault Reaction** | Fault detected within $\le 2$ cycles ($\le 80\ \mu\text{s}$); zero unintended torque spike | Interactive **Encoder SPI Wire Open Fault Injection** |
 | **Regenerative Braking Clamp Accuracy** | Peak DC bus rise $\Delta V_{\text{bus}} < 4.5\text{ V}$ during emergency stop | Active shunt brake chopper verification |
 
 ---

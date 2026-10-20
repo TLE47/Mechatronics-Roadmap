@@ -1,28 +1,35 @@
 # Track 02: Precision Mechanical Design, Kinematics & Multibody Dynamics
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
+> **Part of the [ten-step MechaLab course](../README.md)**  
 > **Prerequisites:** [Track 00: Foundations, Bench Intuition & Multi-Domain Mathematics](../00-foundations/README.md)  
 > **Feeds Into:** [Track 03: Sensors & Actuators](../03-sensors-and-actuators/README.md), [Track 05: Control & Estimation](../05-control-and-estimation/README.md), [Track 06: Robotics & Autonomy](../06-robotics-and-autonomy/README.md)  
 > **Core Principle:** Software cannot compensate for non-repeatable mechanical hysteresis, lost motion, or structural compliance inside the control bandwidth. Precision mechanical engineering eliminates friction and backlash through exact kinematic constraint, preloaded rolling elements, or monolithic flexures—and provides the exact differential equations that model-based controllers exploit.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
+<!-- step-index -->
+> **Step 5 of 10 · Build the arm: mechanics.** Turn joint angles into a tip position, and a tip position back into joint angles.
+>
+> This folder is the reading for Step 5. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
 
-Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 03 in the same Tier**:
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 5](#tier-1-beginner--intuitive), in order | [`02.1`](02.1-1d-link-fk-and-coord-frames.md), [`02.2`](02.2-2link-planar-forward-kinematics.md), [`02.3`](02.3-2link-planar-inverse-kinematics.md), [`02.4`](02.4-rotational-inertia-and-gear-ratios.md), [`02.5`](02.5-bearings-belts-and-3d-printing.md) · [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) | 10.5-20.5 |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | 9.5 |
+| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-| Pass / Level | Previous Step in Pass | Current Track 02 Section | Next Linear Step in This Pass |
-| :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 01 (Tier 1)](../01-electronics-and-power/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: 2D Planar Kinematics, Gear Ratios (N² Inertia) & Bearings](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 03 (Tier 1: Encoders & `SimpleFOC`)**](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive) |
-| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 01 (Tier 2)](../01-electronics-and-power/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Maxwell Exact Constraint, `CadQuery` & URDF/MuJoCo](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 03 (Tier 2: Clarke/Park & Velocity PLL)**](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: 200:1 Hobby Servos → 8:1 Backdrivable QDD Planetary](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 01 (Tier 3)](../01-electronics-and-power/README.md#tier-3-advanced--production) | [§4 Tier 3: Screw PoE on SE(3), `Ti-6Al-4V` Flexures & O(n) RNEA](#tier-3-advanced--production) | [**Next in Pass 3 → Track 03 (Tier 3: 40 kHz Decoupled FOC & SVPWM)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production) |
+**Step 5 costs 20-30 focused hours in total** - 7-17 of lessons, 3.5 of arm modules, 9.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
+**Next:** Step 6 · Measure the joint: sensors → [Track 03](../03-sensors-and-actuators/README.md) (11.35-16 focused hours).
+<!-- /step-index -->
 ---
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 02):** Ramp smoothly from **1-Link Planar Forward Kinematics (`02.1`)** $\to$ **2-Link Planar Forward Kinematics (`02.2`)** $\to$ **2-Link Planar Inverse Kinematics (`02.3`)**, then master **Rotational Inertia & Gear Ratios ($N^2$ reflected inertia, `02.4`)** and **Double-Shear Bearings, Timing Belts & 3D-Printed Parts (`02.5`)**.
+> **Goal of Depth 1 (Track 02):** Ramp smoothly from **1-Link Planar Forward Kinematics (`02.1`)** $\to$ **2-Link Planar Forward Kinematics (`02.2`)** $\to$ **2-Link Planar Inverse Kinematics (`02.3`)**, then master **Rotational Inertia & Gear Ratios ($N^2$ reflected inertia, `02.4`)** and **Double-Shear Bearings, Timing Belts & 3D-Printed Parts (`02.5`)**.
 
 ### 🟢 Track 02 — Tier 1 Beginner Lessons (`02.1`–`02.5`)
 
@@ -121,16 +128,16 @@ $$
   * **Answer / Explanation:** Fiberglass tensile cords give the belt high axial stiffness with near-zero stretch so belt tension doesn't introduce position slop. However, fiberglass filaments fracture under tight reverse-bending radii, causing the belt to snap prematurely.
   </details>
 
-### ✅ Tier 1 Milestone Gate (`Track 02 · Pass 1`)
+### ✅ Tier 1 Milestone Gate (`Track 02 · Depth 1`)
 * Complete **[Lesson 02.1](02.1-1d-link-fk-and-coord-frames.md)** through **[Lesson 02.5](02.5-bearings-belts-and-3d-printing.md)** and verify your 2-DOF planar inverse kinematics trajectory tracker and workspace bounds check.
-* **Next Linear Step in Pass 1:** [**Proceed to Track 03 (Tier 1: Encoders & Open-Loop BLDC with `SimpleFOC`) →**](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive)
+* **Next Linear Step in Depth 1:** [**Proceed to Track 03 (Tier 1: Encoders & Open-Loop BLDC with `SimpleFOC`) →**](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive)
 
 ---
 
 ## Tier 2 (Intermediate / Applied)
 
-> **Goal of Pass 2 (Track 02):** Upgrade from flexible 3D-printed brackets and ad-hoc trigonometry to **Maxwell's Exact Constraint (`6 - C = DOF`)**, programmatic CAD (`CadQuery`), Duplex Angular-Contact Bearings, Manipulator Jacobians ($\tau = J^\top F$), and physical **URDF / MuJoCo MJCF** validation.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 02):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrices, Determinants & Singularities*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Change of Basis) plus the Track 02 Tier 2 Bridge [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md).
+> **Goal of Depth 2 (Track 02):** Upgrade from flexible 3D-printed brackets and ad-hoc trigonometry to **Maxwell's Exact Constraint (`6 - C = DOF`)**, programmatic CAD (`CadQuery`), Duplex Angular-Contact Bearings, Manipulator Jacobians ($\tau = J^\top F$), and physical **URDF / MuJoCo MJCF** validation.
+> **📚 Required Foundations & Bridge Modules for Depth 2 (Track 02):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrices, Determinants & Singularities*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (3D Cross Products $\vec{\tau} = \vec{r}\times\vec{F}$ & Change of Basis) plus the Track 02 Tier 2 Bridge [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md).
 
 ### 2.1 Maxwell's Rule of Exact Constraint ($6 - C = \text{DOF}$) & Abbe Error
 - **Core Summary:** Eliminates mechanical binding, thermal warping, and measurement offset errors by constraining exactly $C = 6 - \text{DOF}$ independent points (such as a 3-2-1 Kelvin Kinematic Coupling) and aligning encoders coaxial with the load axis (Abbe's Principle).
@@ -142,7 +149,7 @@ $$
 - **Curated Free Resources:**
   - 🔗 [Precision Machine Design: Exact Constraint & Kinematic Couplings (Prof. Alex Slocum, MIT)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Explains 3-vee and Kelvin 3-2-1 kinematic couplings, Hertzian contact stresses, and thermal centers.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench, select the **440C Kelvin 3-2-1 Coupling** preset, and inspect the 3D wireframe of the tetrahedral socket ($3$ contacts), V-groove ($2$ contacts), and flat pad ($1$ contact) along with the Hertzian contact stress calculation under preload.
+  - *Task:* Open **3D CAD & 48V PCB** in the MechaLab Workbench, select the **440C Kelvin 3-2-1 Coupling** preset, and inspect the 3D wireframe of the tetrahedral socket ($3$ contacts), V-groove ($2$ contacts), and flat pad ($1$ contact) along with the Hertzian contact stress calculation under preload.
   - *📚 What to Learn & Resource Links for This Exercise:* Study 3D orthogonal basis frames in Foundations [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) and Maxwell's exact constraint rule ($6 - C = \text{DOF}$) + Hertzian stress in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md), plus [Slocum *Precision Machine Design* / MIT 2.75 Notes](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/).
 - **🧠 Knowledge Check:**
   <details>
@@ -212,7 +219,7 @@ $$
   - 🔗 [OpenSCAD — The Programmers Solid 3D CAD Modeller (openscad.org)](https://openscad.org/) — *Script-only constructive solid geometry (CSG) compiler ideal for rapid 3D-printed brackets, gears, and sensor mounts.*
   - 🔗 [MuJoCo Modeling & XML Reference Guide (mujoco.readthedocs.io)](https://mujoco.readthedocs.io/en/stable/modeling.html) — *Details inertial frame conventions, `<inertial>` tags, and reflected rotor `armature`.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Run `python3 02-mechanics-kinematics-dynamics/cad/validate_cad_parts.py` and `python3 08-capstone-projects/models/validate_models.py` (or inspect **Tab 5** and **Tab 6**) to verify watertight STEP/STL topology and SPD inertia invariants across all capstone robots.
+  - *Task:* Run `python3 02-mechanics-kinematics-dynamics/cad/validate_cad_parts.py` and `python3 08-capstone-projects/models/validate_models.py` (or inspect **Robot Arm Kinematics & Safety Cutoff** and **3D Parts & Motor Driver PCB Lab**) to verify watertight STEP/STL topology and SPD inertia invariants across all capstone robots.
   - *📚 What to Learn & Resource Links for This Exercise:* Study eigenvalues and positive-definite matrices in Foundations [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) and parallel-axis inertia tensors + triangle-inequality validation in [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) (`## 3. Formalization` Item 3 & `## 4. Worked example`), plus [CadQuery Documentation (`cadquery.readthedocs.io`)](https://cadquery.readthedocs.io/).
 - **🧠 Knowledge Check:**
   <details>
@@ -225,9 +232,9 @@ $$
   * **Answer & Explanation:** `armature` represents the **reflected rotor inertia** $J_{\text{refl}} = N^2 J_{\text{rotor}}$ added directly to the diagonal of the joint-space mass matrix $M_{ii}(q) \leftarrow M_{ii}(q) + N^2 J_{\text{rotor}}$. Without it, lightweight distal links (like a wrist or ankle) have near-zero inertia, causing $\ddot{q} = M(q)^{-1}\tau$ to explode with huge condition numbers $\kappa(M)$.
   </details>
 
-### ✅ Tier 2 Milestone Gate (`Track 02 · Pass 2`)
-* Verify all URDF/MuJoCo models in **Tab 5** and CAD wireframes in **Tab 6**.
-* **Next Linear Step in Pass 2:** [**Proceed to Track 03 (Tier 2: Clarke/Park Transforms, Type-II PLLs & Allan Variance) →**](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied)
+### ✅ Tier 2 Milestone Gate (`Track 02 · Depth 2`)
+* Verify all URDF/MuJoCo models in **Robot Arm Kinematics & Safety Cutoff** and CAD wireframes in **3D Parts & Motor Driver PCB Lab**.
+* **Next Linear Step in Depth 2:** [**Proceed to Track 03 (Tier 2: Clarke/Park Transforms, Type-II PLLs & Allan Variance) →**](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied)
 
 ---
 
@@ -245,9 +252,9 @@ $$
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 02):** Production-grade mechanical synthesis and multibody dynamics: monolithic `Ti-6Al-4V` Paros-Weisbord flexures, Hertzian contact stress, Screw Theory Product of Exponentials (PoE) on $SE(3)$, Christoffel passivity skew-symmetry ($\dot{M}-2C$), and Featherstone's $O(n)$ RNEA/CRBA/ABA algorithms.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 02):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Formula & Port-Hamiltonian Passivity) and **Step 3.1 (`00-foundations.T3.01`)** (Lie Groups $SO(3)/SE(3)$ & Adjoints) plus the Track 02 Tier 3 Bridge [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md).
-> * [**Next Linear Step in Pass 3 → Track 03 (Tier 3: 25–40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production)
+> **Goal of Depth 3 (Track 02):** Production-grade mechanical synthesis and multibody dynamics: monolithic `Ti-6Al-4V` Paros-Weisbord flexures, Hertzian contact stress, Screw Theory Product of Exponentials (PoE) on $SE(3)$, Christoffel passivity skew-symmetry ($\dot{M}-2C$), and Featherstone's $O(n)$ RNEA/CRBA/ABA algorithms.
+> **📚 Required Foundations & Bridge Modules for Depth 3 (Track 02):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Hat/Vee Maps, Rodrigues' Formula & Port-Hamiltonian Passivity) and **Step 3.1 (`00-foundations.T3.01`)** (Lie Groups $SO(3)/SE(3)$ & Adjoints) plus the Track 02 Tier 3 Bridge [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md).
+> * [**Next Linear Step in Depth 3 → Track 03 (Tier 3: 25–40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT)**](../03-sensors-and-actuators/README.md#tier-3-advanced--production)
 
 ### [4.1 Mechanical Transmission & Multibody Computation Pipeline]
 - **Core Summary:** Integrates exact kinematic constraint, preloaded bearing arrangements, Screw PoE kinematics on $SE(3)$, and Featherstone's $\mathcal{O}(n)$ spatial dynamics:
@@ -320,7 +327,7 @@ $$
   - 🔗 [Compliant Mechanisms Lecture Series & Reference Resources (BYU Compliant Mechanisms Research)](https://compliantmechanisms.byu.edu/) — *Open educational resources on flexure hinges, pseudo-rigid-body models, and fatigue design.*
   - 🔗 [Paros & Weisbord (1965): How to Design Flexure Hinges (classic derivation notes)](https://pergatory.mit.edu/resources/FUNdaMENTALS.html) — *Derives the circular notch compliance equations used in precision wafer stages and FTS diamond turning.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 6: 3D CAD & 48V PCB** in the MechaLab Workbench, select **Ti-6Al-4V Notch Flexure**, and adjust Web Thickness $t$ from $0.4\text{ mm}$ to $1.2\text{ mm}$. Verify the $t^{5/2}$ scaling of rotational stiffness $k_\theta$ and inspect the generated CAD file [`cad/notch_flexure_hinge.step`](cad/notch_flexure_hinge.step).
+  - *Task:* Open **3D CAD & 48V PCB** in the MechaLab Workbench, select **Ti-6Al-4V Notch Flexure**, and adjust Web Thickness $t$ from $0.4\text{ mm}$ to $1.2\text{ mm}$. Verify the $t^{5/2}$ scaling of rotational stiffness $k_\theta$ and inspect the generated CAD file [`cad/notch_flexure_hinge.step`](cad/notch_flexure_hinge.step).
   - *📚 What to Learn & Resource Links for This Exercise:* Study Paros-Weisbord circular notch flexure equations $K_\theta = \frac{2 E b t^{5/2}}{9\pi R^{1/2}}$ and parasitic stage resonance in [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) (`## 3. Formalization` Item 1 & `## 4. Worked example`), plus [Stuart T. Smith *Flexures: Elements of Elastic Mechanisms*](https://books.google.com/books/about/Flexures.html?id=6GFf8QhMM4IC).
 - **🧠 Knowledge Check:**
   <details>
@@ -382,7 +389,7 @@ $$
 
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
-| **First Structural Eigenfrequency** | $f_1 > 250\text{ Hz}$ (for $50\text{ Hz}$ closed-loop bandwidth target) | Modal FEA & Tab 6 CAD Flexure Solver |
+| **First Structural Eigenfrequency** | $f_1 > 250\text{ Hz}$ (for $50\text{ Hz}$ closed-loop bandwidth target) | Modal FEA & 3D Parts & Motor Driver PCB Lab CAD Flexure Solver |
 | **PoE vs. Analytical FK/Jacobian Match** | $\|T_{\text{PoE}}(q) - T_{\text{Analytical}}(q)\|_F < 10^{-12}$ | Automated test suite over 1,000 random configurations |
 | **RNEA Inverse Dynamics Accuracy** | $\|\tau_{\text{RNEA}} - \tau_{\text{Lagrange}}\|_\infty < 10^{-11}\text{ N}\cdot\text{m}$ | Randomized state/acceleration trajectory benchmark |
 | **Passivity Skew-Symmetry Identity** | $\lvert x^\top(\dot{M} - 2C)x\rvert < 10^{-9}$ across all configurations | Numerical derivative check along free-fall trajectory |

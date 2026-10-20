@@ -1,29 +1,36 @@
 # Track 06: Robotics, Whole-Body Control, Perception & Autonomous Systems
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
+> **Part of the [ten-step MechaLab course](../README.md)**  
 > **Prerequisites:** [Track 02: Mechanics, Kinematics & Dynamics](../02-mechanics-kinematics-dynamics/README.md), [Track 04: Embedded & Real-Time](../04-embedded-and-realtime/README.md), [Track 05: Control & Estimation](../05-control-and-estimation/README.md)  
 > **Feeds Into:** [Track 07: Systems, HIL & Production](../07-systems-hil-and-production/README.md), [Track 08: Capstone Projects](../08-capstone-projects/README.md)  
 > **Core Principle:** High-level autonomy (SLAM, motion planning, task policies) is only as reliable as the real-time bridge connecting it to physical joint torques and contact forces. Modern robotic systems replace rigid trajectory replay with **Operational-Space Impedance Control, Hierarchical Whole-Body Quadratic Programming (WBC-QP), and Factor-Graph State Estimation**.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
+<!-- step-index -->
+> **Step 9 of 10 · Plan motion and bring it up safely.** Smooth a path, identify the plant, and run a bring-up that fails safe.
+>
+> This is one of the 2 folders for Step 9. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Take Depth 1 with the other folder in this step rather than as a standalone course; Depth 2 waits until Step 10 is finished.
 
-Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 07 in the same Tier**:
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 9](#tier-1-beginner--intuitive), in order | [`06.1`](06.1-cubic-trajectories-and-compliant-joints.md) · [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) | 5-7 |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | — | — |
+| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md), [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) | 10 |
 
-| Pass / Level | Previous Step in Pass | Current Track 06 Section | Next Linear Step in This Pass |
-| :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 05 (Tier 1)](../05-control-and-estimation/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Cubic/Trapezoidal Trajectories & Joint Virtual Springs](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 07 (Tier 1: 10-Step Safe Bring-Up & Sine Sweeps)**](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive) |
-| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 05 (Tier 2)](../05-control-and-estimation/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Jacobian Transpose Cartesian Compliance & `Ruckig` S-Curves](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 07 (Tier 2: Regen Clamps, CRC & HIL Faults)**](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Rigid `servo.write()` Stepping → 1 kHz Torque/Impedance Control](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 05 (Tier 3)](../05-control-and-estimation/README.md#tier-3-advanced--production) | [§4 Tier 3: Khatib Operational Inertia Λ(q) & Null-Space WBC](#tier-3-advanced--production) | [**Next in Pass 3 → Track 07 (Tier 3: Schroeder Multisine SysID & <1 μs STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production) |
+**Step 9 costs 14.5-18.5 focused hours in total** - 1.5-3.5 of lessons, 3.5 of arm modules - shared by Track 06 and Track 07, this one's pages are 5-7 of it - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
+**Next:** Step 10 · Put it together: the 2-DOF arm → [Track 08](../08-capstone-projects/README.md) (6.5-9 focused hours).
+<!-- /step-index -->
 ---
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 06):** Stop commanding sudden step jumps (`q_des = 90.0`) that slam robot joints! Learn to generate smooth **Cubic Polynomial & Trapezoidal Velocity Trajectories** so velocity starts and ends at zero, and implement **Joint-Space Virtual Springs (Compliant PD + Gravity Offset)** so a human hand can safely push the robot arm out of the way.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 06):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Python Functions & Loops*), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Trigonometry for Gravity Torque*), and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinematics & Virtual Springs*) plus the Track 06 Tier 1 Bridge [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md).
+> **Goal of Depth 1 (Track 06):** Stop commanding sudden step jumps (`q_des = 90.0`) that slam robot joints! Learn to generate smooth **Cubic Polynomial & Trapezoidal Velocity Trajectories** so velocity starts and ends at zero, and implement **Joint-Space Virtual Springs (Compliant PD + Gravity Offset)** so a human hand can safely push the robot arm out of the way.
+> **📚 Required Foundations & Bridge Modules for Depth 1 (Track 06):** Complete Tier 1 Foundations [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md) (*Python Functions & Loops*), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Trigonometry for Gravity Torque*), and [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) (*Kinematics & Virtual Springs*) plus the Track 06 Tier 1 Bridge [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md).
 
 ### Beginner-First Lesson Series (`06.1`, $\le 2$ new ideas per lesson)
 
@@ -83,16 +90,16 @@ $$
   * **Answer & Explanation:** Using $\tau_g(q) = m g l_c \cos(q)$: at $q = 0$ (horizontal), $\tau_g = 0.5 \times 9.81 \times 0.20 \times \cos(0) = 0.981\text{ N}\cdot\text{m}$. At $q = \pi/2$ (straight up), $\cos(\pi/2) = 0$, so $\tau_g = 0.0\text{ N}\cdot\text{m}$.
   </details>
 
-### ✅ Tier 1 Milestone Gate (`Track 06 · Pass 1`)
+### ✅ Tier 1 Milestone Gate (`Track 06 · Depth 1`)
 * Replace step setpoints on your 1-DOF or 2-DOF gimbal arm with a rest-to-rest cubic polynomial generator and gravity feedforward $g(q)$, verifying that you can gently push the link away by hand and watch it return smoothly without overshoot.
-* **Next Linear Step in Pass 1:** [**Proceed to Track 07 (Tier 1: 10-Step Safe Bring-Up Protocol & Single-Tone Sine Sweeps) →**](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive)
+* **Next Linear Step in Depth 1:** [**Proceed to Track 07 (Tier 1: 10-Step Safe Bring-Up Protocol & Single-Tone Sine Sweeps) →**](../07-systems-hil-and-production/README.md#tier-1-beginner--intuitive)
 
 ---
 
 ## Tier 2 (Intermediate / Applied)
 
-> **Goal of Pass 2 (Track 06):** Upgrade from joint-space springs to **Cartesian Task-Space Impedance Control (`tau = J^T F_cart + g(q)`)**—allowing you to specify independent $(x, y, z)$ stiffness in millimeters/Newtons—and eliminate structural vibration using **Jerk-Bounded S-Curve Trajectories (`Ruckig`)**.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 06):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrix Transpose & Inverse*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (*3D Coordinate Frames*) plus the Track 06 Tier 2 Bridge Ladder [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) (*ROS 2 Nodes, Topics, Services, Actions & TF2*) → [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) (*ROS 2 Launch, Parameters, `ros2_control` & Cartesian Impedance / S-Curves*).
+> **Goal of Depth 2 (Track 06):** Upgrade from joint-space springs to **Cartesian Task-Space Impedance Control (`tau = J^T F_cart + g(q)`)**—allowing you to specify independent $(x, y, z)$ stiffness in millimeters/Newtons—and eliminate structural vibration using **Jerk-Bounded S-Curve Trajectories (`Ruckig`)**.
+> **📚 Required Foundations & Bridge Modules for Depth 2 (Track 06):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Matrix Transpose & Inverse*) and [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) (*3D Coordinate Frames*) plus the Track 06 Tier 2 Bridge Ladder [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md) (*ROS 2 Nodes, Topics, Services, Actions & TF2*) → [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) (*ROS 2 Launch, Parameters, `ros2_control` & Cartesian Impedance / S-Curves*).
 
 ### 2.1 Sensorless Cartesian Impedance via the Jacobian Transpose ($\tau = J(q)^\top F_{\text{cart}} + g(q)$)
 - **Core Summary:** Using the virtual-work duality $\tau = J(q)^\top F_{\text{cart}} + g(q)$ with $F_{\text{cart}} = K_x(x_d - x) + D_x(\dot{x}_d - J(q)\dot{q})$, a multi-DOF robot can act as an anisotropic 3D virtual spring-damper at its gripper—for example, very stiff vertically ($K_z = 1000\text{ N/m}$) while compliant horizontally ($K_x = 50\text{ N/m}$)—without requiring inverse kinematics or an external force/torque sensor!
@@ -101,7 +108,7 @@ $$
   - 🔗 [Khatib (1987 Seminal Paper): A Unified Approach for Motion and Force Control of Robot Manipulators](https://cs.stanford.edu/groups/manips/publications/pdfs/Khatib_1987_RA.pdf) — *Introduces operational-space control directly in end-effector coordinates.*
   - 🔗 [Siciliano, Sciavicco, Villani & Oriolo: Robotics — Modelling, Planning and Control (Springer)](https://link.springer.com/book/10.1007/978-1-84628-642-1) — *Complete textbook coverage of Cartesian impedance, hybrid force/motion control, and visual servoing.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` or open **Tab 5: URDF / MuJoCo & STO** to simulate a 2-link/3-link leg or arm hitting an unexpected rigid wall at $x_{\text{wall}}$ under Cartesian Impedance Control ($K_x = 400\text{ N/m}$), verifying that steady-state contact force settles cleanly to $F_x = K_x(x_d - x_{\text{wall}})$.
+  - *Task:* Run `./06-robotics-and-autonomy/lab/lab06_impedance_and_ruckig.py` or open **URDF / MuJoCo & STO** to simulate a 2-link/3-link leg or arm hitting an unexpected rigid wall at $x_{\text{wall}}$ under Cartesian Impedance Control ($K_x = 400\text{ N/m}$), verifying that steady-state contact force settles cleanly to $F_x = K_x(x_d - x_{\text{wall}})$.
   - *📚 What to Learn & Resource Links for This Exercise:* Study $2\times 2$ matrix multiplication in Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md), Jacobian virtual work $\tau = J(q)^\top F$ in [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), ROS 2 TF2 transforms in [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md), and Cartesian impedance + `ros2_control` `JointImpedanceController` in [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) (`## 3. Formalization` Items 2–3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
@@ -134,9 +141,9 @@ $$
   * **Answer & Explanation:** Because motor torque is proportional to acceleration ($\tau = J \ddot{q} = K_t i_q$), the time derivative of torque—**yank / jerk** ($J \dddot{q} = K_t \frac{di_q}{dt}$)—is directly proportional to the inductive voltage drop $L_q \frac{di_q}{dt}$ required from the DC bus! Infinite jerk demands infinite $\frac{di_q}{dt}$, which immediately saturates the inverter bus voltage $V_{\text{bus}}$.
   </details>
 
-### ✅ Tier 2 Milestone Gate (`Track 06 · Pass 2`)
-* Test the 3-DOF QDD Hopping Leg and 6-DOF Arm kinematics in **Tab 5: URDF / MuJoCo & STO**, verifying Jacobian transpose force mapping across the workspace.
-* **Next Linear Step in Pass 2:** [**Proceed to Track 07 (Tier 2: Regen Braking Bus Clamps, CRC Watchdogs & HIL Faults) →**](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied)
+### ✅ Tier 2 Milestone Gate (`Track 06 · Depth 2`)
+* Test the 3-DOF QDD Hopping Leg and 6-DOF Arm kinematics in **URDF / MuJoCo & STO**, verifying Jacobian transpose force mapping across the workspace.
+* **Next Linear Step in Depth 2:** [**Proceed to Track 07 (Tier 2: Regen Braking Bus Clamps, CRC Watchdogs & HIL Faults) →**](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied)
 
 ---
 
@@ -154,9 +161,9 @@ $$
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 06):** Master full-stack robotic autonomy and whole-body control: Khatib's Operational-Space Inertia $\Lambda(q)$ & dynamically consistent null-space projection $\bar{J}(q)$, Floating-Base Whole-Body Control QPs (`WBC-QP`) with friction cones, `PREEMPT_RT` Linux kernel isolation (`<50 µs` jitter), Forster's Manifold IMU Preintegration for Factor-Graph SLAM (`GTSAM`), and Visuomotor Imitation Learning (`ACT`, `Diffusion Policy`, `LeRobot`) & Vision-Language-Action (`VLA`) models.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 06):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Exponential/Log Maps & Port-Hamiltonians) and **Step 3.1 (`00-foundations.T3.01`)** (Lie Groups $SO(3)/SE(3)$) plus the Track 06 Tier 3 Bridge Ladder [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) (Khatib $\Lambda(q)$, Friction-Cone WBC & IMU Preintegration) → [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) (*ACT Chunking, Diffusion DDIM & Sim-to-Real*). **also depends on:** [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md).
-> * [**Next Linear Step in Pass 3 → Track 07 (Tier 3: Schroeder Multisine Closed-Loop SysID & <1 μs Hardware STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production)
+> **Goal of Depth 3 (Track 06):** Master full-stack robotic autonomy and whole-body control: Khatib's Operational-Space Inertia $\Lambda(q)$ & dynamically consistent null-space projection $\bar{J}(q)$, Floating-Base Whole-Body Control QPs (`WBC-QP`) with friction cones, `PREEMPT_RT` Linux kernel isolation (`<50 µs` jitter), Forster's Manifold IMU Preintegration for Factor-Graph SLAM (`GTSAM`), and Visuomotor Imitation Learning (`ACT`, `Diffusion Policy`, `LeRobot`) & Vision-Language-Action (`VLA`) models.
+> **📚 Required Foundations & Bridge Modules for Depth 3 (Track 06):** Complete Tier 3 Foundations [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) ($SO(3)$ Exponential/Log Maps & Port-Hamiltonians) and **Step 3.1 (`00-foundations.T3.01`)** (Lie Groups $SO(3)/SE(3)$) plus the Track 06 Tier 3 Bridge Ladder [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) (Khatib $\Lambda(q)$, Friction-Cone WBC & IMU Preintegration) → [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) (*ACT Chunking, Diffusion DDIM & Sim-to-Real*). **also depends on:** [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md).
+> * [**Next Linear Step in Depth 3 → Track 07 (Tier 3: Schroeder Multisine Closed-Loop SysID & <1 μs Hardware STO)**](../07-systems-hil-and-production/README.md#tier-3-advanced--production)
 
 ### 4.1 Full-Stack Autonomous Robotic Software & Hardware Architecture
 
@@ -250,7 +257,7 @@ $$
   - 🔗 [ETH Zurich Robotic Systems Lab (Marco Hutter): Quadrupedal Locomotion & Whole-Body Control Lecture Notes](https://rsl.ethz.ch/education-students/lectures/robotdynamics.html) — *Industry-standard derivations of floating-base dynamics, friction pyramids, and hierarchical WBC-QP.*
   - 🔗 [Linux Foundation Real-Time Linux Wiki: Configuring `PREEMPT_RT`, `mlockall`, and `cyclictest`](https://wiki.linuxfoundation.org/realtime/start) — *Production guide to eliminating page faults, CPU C-state wake latency, and scheduler jitter on Linux.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 5: URDF / MuJoCo & STO** in the interactive workbench, select the **3-DOF QDD Hopping Leg (`Capstone 4`)**, and inspect how stance phase enforces the unilateral friction cone $\sqrt{f_x^2 + f_y^2} \le \mu f_z$ ($f_z \ge 0$) before transitioning smoothly to flight-phase Raibert foot placement.
+  - *Task:* Open **URDF / MuJoCo & STO** in the interactive workbench, select the **3-DOF QDD Hopping Leg (`Capstone 4`)**, and inspect how stance phase enforces the unilateral friction cone $\sqrt{f_x^2 + f_y^2} \le \mu f_z$ ($f_z \ge 0$) before transitioning smoothly to flight-phase Raibert foot placement.
   - *📚 What to Learn & Resource Links for This Exercise:* Study linearized pyramid friction-cone constraints ($f_z \ge f_{z,\min}, |f_x| \le \mu f_z, |f_y| \le \mu f_z$) in [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md) (`## 3. Formalization` Item 2 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>

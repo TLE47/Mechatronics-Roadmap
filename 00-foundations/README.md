@@ -1,29 +1,31 @@
 # Track 00: Foundations, Bench Intuition & Multi-Domain Mathematics
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
+> **Part of the [ten-step MechaLab course](../README.md)**  
 > **Prerequisite for:** All subsequent tracks ([Track 01](../01-electronics-and-power/README.md) through [Track 08](../08-capstone-projects/README.md))  
 > **Core Principle:** Every physical transducer, power converter, mechanical linkage, and feedback controller is governed by the same underlying structures: conservation of energy across generalized power ports, differential equations, and discrete-time sampling theory.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
+<!-- step-index -->
+> **Step 3 of 10 · Make a joint move: foundations.** Model a spring, a damper, and a motor as one joint that responds to torque.
+>
+> This folder is the reading for Step 3. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
+>
+> Do not read this folder end to end first: Depth 1 is Step 3's arm module plus lessons `00.1`-`00.3`, and you then move on to Track 01 in the same step. Depth 2 is the return visit after Step 10, when the arm exists to model.
 
-**⚠️ Tier-First Learning Rule (Do NOT Complete Track 00 All at Once!):**
-`00-foundations` is **interleaved by Tier** across your learning journey—it is **not** a standalone prerequisite course that you finish from Tier 1 to Tier 3 before touching hardware!
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 3](#tier-1-beginner--intuitive), in order | [`00.1`](00.1-effort-flow-and-first-order-lag.md), [`00.2`](00.2-mass-spring-damper-oscillations.md), [`00.3`](00.3-modeling-discipline-and-sanity-checks.md) · [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md), [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) | 20.5-26.5 |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md), [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md), [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), [`00-foundations.T2.00g`](../modules/00-foundations.T2.00g.md), [`00-foundations.T2.00h`](../modules/00-foundations.T2.00h.md), [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md), [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md), [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) | 34.5 |
+| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-**Where this sits in the ten-step route.** The front page's Steps 1–10 are the **arm layer**: each step's arm module is its Tier 1 bridge, and Step 10 is the arm capstone. The depth modules in the same ten-step table are the **depth layer**; they wait until after Step 10. That is this page's rule written once for the whole course, not a second order. Instead:
-- **In Tier 1:** Complete the **Tier 1 Foundations Bridge Ladder** ([`T1.00a`](../modules/00-foundations.T1.00a.md)–[`T1.00e`](../modules/00-foundations.T1.00e.md)) and **§1 Tier 1 Foundations (`00-foundations.T1.01`)**, then **immediately move horizontally to [Track 01 · Tier 1](../01-electronics-and-power/README.md#tier-1-beginner--intuitive)** through **Track 08 · Tier 1 Boss**.
-- **In Tier 2:** Only after the arm capstone (`08.1`, Step 10) — which follows the Tier 1 Boss (`07-systems.T1.08`) — return here for the **Tier 2 Foundations Bridge Ladder** ([`T2.00a`](../modules/00-foundations.T2.00a.md)–[`T2.00j`](../modules/00-foundations.T2.00j.md), including [`T2.00g`](../modules/00-foundations.T2.00g.md) between `T2.00a` and `T2.00b`, and [`T2.00h`](../modules/00-foundations.T2.00h.md) between `T2.00d` and `T2.00e`) and **§2 Tier 2 Foundations (`00-foundations.T2.01`)**, then **move horizontally to [Track 01 · Tier 2](../01-electronics-and-power/README.md#tier-2-intermediate--applied)** through **Track 08 · Tier 2 Boss**.
-- **In Tier 3:** Only after finishing the Tier 2 Boss (`07-systems.T2.08`), return here for the **Tier 3 Foundations Bridge** ([`T3.00a`](../modules/00-foundations.T3.00a.md)) and **§4 Tier 3 Foundations (`00-foundations.T3.01`)**, then **move horizontally to [Track 01 · Tier 3](../01-electronics-and-power/README.md#tier-3-advanced--production)** through **Track 08 · Tier 3 Capstones I–V**.
+**Step 3 costs 55-61 focused hours in total** - 4-10 of lessons, 16.5 of arm modules, 34.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
-| Pass / Level | Current Track 00 Section | Next Linear Step in This Pass |
-| :--- | :--- | :--- |
-| **🛠️ Stage 0: Level 0 On-Ramp** | [§0 Global Level 0 Prerequisite Track (No Prior EE)](#level-0-global-prerequisite-on-ramp-intuition--bench-tools) | [Proceed to Track 00 · Tier 1 ↓](#tier-1-beginner--intuitive) |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [§1 Tier 1: Calculus as `while` Loops, 2D Rotations & RC Smoothing](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 01 (Tier 1: Breadboard H-Bridges)**](../01-electronics-and-power/README.md#tier-1-beginner--intuitive) |
-| **🔵 Pass 2: Tier 2 (Applied)** | [§2 Tier 2: State-Space Matrices, Quaternions & Tustin Biquads](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 01 (Tier 2: 4-Layer KiCad & Kelvin Shunts)**](../01-electronics-and-power/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | [§3 Bridging the Gap: Moving Average → Pre-Warped TDF-II Biquad](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [§4 Tier 3: Bond Graphs, Lie Groups SO(3)/SE(3) & Van Loan ZOH](#tier-3-advanced--production) | [**Next in Pass 3 → Track 01 (Tier 3: <2 nH Inverter & SAR Buckets)**](../01-electronics-and-power/README.md#tier-3-advanced--production) |
-
+**Next:** Step 4 · Power the joint: electronics → [Track 01](../01-electronics-and-power/README.md) (26.5-34 focused hours).
+<!-- /step-index -->
 ---
 
 ## Level 0: Global Prerequisite On-Ramp (Intuition & Bench Tools)
@@ -119,7 +121,7 @@ $$
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 00):** Master cross-domain power ($P = \text{Effort} \times \text{Flow}$), first-order lag ($\tau$), second-order spring-damper motion ($\omega_n, \zeta$), and the 4-step engineering modeling discipline in 3 self-contained Python lessons (`00.1`–`00.3`) before moving to **Track 01 (Tier 1)**.
+> **Goal of Depth 1 (Track 00):** Master cross-domain power ($P = \text{Effort} \times \text{Flow}$), first-order lag ($\tau$), second-order spring-damper motion ($\omega_n, \zeta$), and the 4-step engineering modeling discipline in 3 self-contained Python lessons (`00.1`–`00.3`) before moving to **Track 01 (Tier 1)**.
 
 ### 🟢 Track 00 — Tier 1 Beginner Lessons (`00.1`–`00.3`)
 
@@ -213,15 +215,15 @@ $$
   * **Answer & Explanation:** $\alpha = \frac{\Delta t}{\tau + \Delta t} = \frac{0.01}{0.10 + 0.01} = \frac{1}{11} \approx 0.0909$.
   </details>
 
-### ✅ Tier 1 Milestone Gate (`Track 00 · Pass 1`)
+### ✅ Tier 1 Milestone Gate (`Track 00 · Depth 1`)
 * Complete **[Lesson 00.1](00.1-effort-flow-and-first-order-lag.md)**, **[Lesson 00.2](00.2-mass-spring-damper-oscillations.md)**, and **[Lesson 00.3](00.3-modeling-discipline-and-sanity-checks.md)** (and optionally explore the interactive workbench).
-* **Next Linear Step in Pass 1:** [**Proceed to Track 01 (Tier 1: MOSFETs, H-Bridges, Power Budgets & RC Filters) →**](../01-electronics-and-power/README.md#tier-1-beginner--intuitive)
+* **Next Linear Step in Depth 1:** [**Proceed to Track 01 (Tier 1: MOSFETs, H-Bridges, Power Budgets & RC Filters) →**](../01-electronics-and-power/README.md#tier-1-beginner--intuitive)
 
 ---
 
 ## Tier 2 (Intermediate / Applied)
 
-> **Goal of Pass 2 (Track 00):** When you return to Track 00 after finishing your first Tier 1 robot, upgrade your ad-hoc scalar equations into **State-Space Matrices ($\dot{x} = Ax + Bu$)**, **Two-Mass Torsional Resonance**, **Unit Quaternions**, and **Pre-Warped Tustin Biquad Notch Filters**.
+> **Goal of Depth 2 (Track 00):** When you return to Track 00 after finishing your first Tier 1 robot, upgrade your ad-hoc scalar equations into **State-Space Matrices ($\dot{x} = Ax + Bu$)**, **Two-Mass Torsional Resonance**, **Unit Quaternions**, and **Pre-Warped Tustin Biquad Notch Filters**.
 
 ### 2.1 State-Space Modeling ($\dot{x} = A_c x + B_c u$) & Two-Mass Resonance
 - **Core Summary:** Models a motor rotor ($J_m$) coupled to a load inertia ($J_L$) through a compliant shaft/gearbox ($k_s$) as a 4-state matrix system exhibiting an anti-resonance zero $\omega_{ar} = \sqrt{k_s/J_L}$ and a structural resonance pole $\omega_r = \sqrt{k_s(1/J_m + 1/J_L)}$.
@@ -234,7 +236,7 @@ $$
   - 🔗 [Control Bootcamp: State-Space Equations (Prof. Steve Brunton, YouTube)](https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m) & [Data-Driven Science and Engineering (Brunton & Kutz, 2nd Ed. Free PDF — databookuw.com)](https://www.databookuw.com/) — *Clear walkthrough converting multi-DOF mechanical ODEs into* $\dot{x} = Ax + Bu$ *matrix form, plus SVD, DMD, and SINDy.*
   - 🔗 [Åström & Murray: Feedback Systems — Ch. 5 & 6: Linear Systems (fbsbook.org)](https://www.fbsbook.org/) & [Control of Mechatronic Systems (P. O. J. Kaltjob)](https://doi.org/10.1002/9781119505730) — *Open-access textbook chapters on state-space matrices, eigenvalues, and discrete-time digital implementation.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 2: Two-Mass & Notch Bode** in the MechaLab Workbench, drag the Load-to-Motor Inertia Ratio $J_L / J_m$ and Shaft Stiffness $k_s$ sliders, and observe how the motor encoder Bode plot (Cyan) exhibits an anti-resonance dip at $f_{ar}$ followed by a resonance peak at $f_r$, whereas the load tip (Amber) has only the resonance peak.
+  - *Task:* Open **Two-Mass & Notch Bode** in the MechaLab Workbench, drag the Load-to-Motor Inertia Ratio $J_L / J_m$ and Shaft Stiffness $k_s$ sliders, and observe how the motor encoder Bode plot (Cyan) exhibits an anti-resonance dip at $f_{ar}$ followed by a resonance peak at $f_r$, whereas the load tip (Amber) has only the resonance peak.
   - *📚 What to Learn & Resource Links for This Exercise:* Complete the Tier 2 Foundations Bridge modules [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Backward Differences & Running Integrals*) and [`00-foundations.T2.00g`](../modules/00-foundations.T2.00g.md) (*State Update Matrices*), [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (2nd-Order ODEs, $\omega_n$ & $\zeta$), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Phasors & Bode Plots*), and [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (State-Space $\dot{x} = Ax + Bu$) plus [`00-foundations.T2.00h`](../modules/00-foundations.T2.00h.md) (Impedance, dB & Resonance), plus [Steve Brunton's Control Bootcamp](https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m).
 - **🧠 Knowledge Check:**
   <details>
@@ -286,7 +288,7 @@ $$
   - 🔗 [Julius O. Smith III: Introduction to Digital Filters — Biquad Sections & TDF-II (Stanford CCRMA)](https://ccrma.stanford.edu/~jos/filters/) — *Free online textbook detailing biquad filter structures and numerical precision in floating-point DSP.*
   - 🔗 [Robert Bristow-Johnson's Audio EQ & Biquad Cookbook (w3.org)](https://www.w3.org/TR/audio-eq-cookbook/) — *Closed-form coefficient formulas for digital notch, low-pass, and peaking biquads.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Use **Tab 2: Two-Mass & Notch Bode Simulator** to tune $f_{\text{notch}}$ and $Q_n$ on the **CNC Ballscrew** preset ($f_r = 290.6\text{ Hz}$), confirming that the resonant peak drops by $\ge 25\text{ dB}$ and the time-domain step response ringing disappears.
+  - *Task:* Use **Two-Mass & Notch Bode Simulator** to tune $f_{\text{notch}}$ and $Q_n$ on the **CNC Ballscrew** preset ($f_r = 290.6\text{ Hz}$), confirming that the resonant peak drops by $\ge 25\text{ dB}$ and the time-domain step response ringing disappears.
   - *📚 What to Learn & Resource Links for This Exercise:* Study Bode magnitude/phase in [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), Tustin discretization in [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), and frequency pre-warping $\omega_a = \frac{2}{T_s}\tan(\omega_n T_s/2)$ + biquad filters in [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md), plus [Stanford CCRMA Digital Filters (`ccrma.stanford.edu/~jos/filters/`)](https://ccrma.stanford.edu/~jos/filters/).
 - **🧠 Knowledge Check:**
   <details>
@@ -299,9 +301,9 @@ $$
   * **Answer & Explanation:** Both roots of $z^2 + a_1 z + a_2 = 0$ must lie strictly **inside the unit circle** ($|z_p| < 1$), which is equivalent to the Jury stability triangle conditions: $|a_2| < 1$ and $|a_1| < 1 + a_2$.
   </details>
 
-### ✅ Tier 2 Milestone Gate (`Track 00 · Pass 2`)
-* Verify your pre-warped Tustin biquad notch tuning in **Tab 2** ($\ge 25\text{ dB}$ attenuation at $f_r$).
-* **Next Linear Step in Pass 2:** [**Proceed to Track 01 (Tier 2: 4-Layer KiCad PCBs, Gate Drivers & Kelvin Shunts) →**](../01-electronics-and-power/README.md#tier-2-intermediate--applied)
+### ✅ Tier 2 Milestone Gate (`Track 00 · Depth 2`)
+* Verify your pre-warped Tustin biquad notch tuning in **Vibration Filter & Resonance Lab** ($\ge 25\text{ dB}$ attenuation at $f_r$).
+* **Next Linear Step in Depth 2:** [**Proceed to Track 01 (Tier 2: 4-Layer KiCad PCBs, Gate Drivers & Kelvin Shunts) →**](../01-electronics-and-power/README.md#tier-2-intermediate--applied)
 
 ---
 
@@ -328,8 +330,8 @@ $$
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 00):** Full mathematical mastery for production robotics and high-rate control: Bond Graph & Port-Hamiltonian energy modeling, SVD conditioning, Matrix Lie Groups $SO(3)/SE(3)$, Van Loan exact ZOH discretization, and stochastic Welch spectral estimation.
-> * [**Next Linear Step in Pass 3 → Track 01 (Tier 3: 6-Layer <2 nH Inverter & SAR Charge Buckets)**](../01-electronics-and-power/README.md#tier-3-advanced--production)
+> **Goal of Depth 3 (Track 00):** Full mathematical mastery for production robotics and high-rate control: Bond Graph & Port-Hamiltonian energy modeling, SVD conditioning, Matrix Lie Groups $SO(3)/SE(3)$, Van Loan exact ZOH discretization, and stochastic Welch spectral estimation.
+> * [**Next Linear Step in Depth 3 → Track 01 (Tier 3: 6-Layer <2 nH Inverter & SAR Charge Buckets)**](../01-electronics-and-power/README.md#tier-3-advanced--production)
 
 ### [4.1 Unified Multi-Domain Energy Architecture (Bond Graphs & Port-Hamiltonians)]
 - **Core Summary:** Unifies electrical, mechanical, hydraulic, and thermal subsystems through generalized power conjugates $P(t) = e(t) \cdot f(t)$ and Port-Hamiltonian energy-balance equations $\dot{x} = (J(x) - R(x))\nabla\mathcal{H}(x) + g(x)u$ with skew-symmetric interconnection $J(x) = -J(x)^\top$ and dissipative $R(x) \succeq 0$.
@@ -484,7 +486,7 @@ $$
 - **Curated Free Resources:**
   - 🔗 Collocated vs. Non-Collocated Control of Flexible Mechanical Systems (*Preumont, Active Vibration Control*) — *Explains interlaced pole-zero patterns in collocated actuator-sensor pairs. The free mirror at `ulb.ac.be` stopped resolving on 2026-10-19, so this is cited by title only.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 2: Two-Mass & Notch Bode** and compare the phase curve of the Collocated Motor Encoder (Cyan, which dips to $-90^\circ$, jumps back to $+90^\circ$ at $f_{ar}$, and returns to $-90^\circ$ at $f_r$) against the Non-Collocated Load Tip (Amber, which plunges straight to $-270^\circ$ at $f_r$).
+  - *Task:* Open **Two-Mass & Notch Bode** and compare the phase curve of the Collocated Motor Encoder (Cyan, which dips to $-90^\circ$, jumps back to $+90^\circ$ at $f_{ar}$, and returns to $-90^\circ$ at $f_r$) against the Non-Collocated Load Tip (Amber, which plunges straight to $-270^\circ$ at $f_r$).
   - *📚 What to Learn & Resource Links for This Exercise:* Review Bode phase lag and transfer-function zeros/poles in [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) and [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), and Port-Hamiltonian electromechanical coupling in [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md).
 - **🧠 Knowledge Check:**
   <details>
@@ -514,7 +516,7 @@ $$
 | :--- | :--- | :--- |
 | **Energy Conservation Check** | $\left\lvert\int_0^T V_{in} i_a\,dt - \left(\Delta E_{stored} + \int_0^T P_{dissipated}\,dt\right)\right\rvert < 10^{-9}\text{ J}$ | Continuous RK45 / Störmer-Verlet energy balance audit |
 | **Analytical vs. Identified Resonance** | $\lvert\hat{\omega}_{ar} - \omega_{ar}\rvert / \omega_{ar} < 0.5\%$ and $\lvert\hat{\omega}_r - \omega_r\rvert / \omega_r < 0.5\%$ | Welch FRF peak/trough extraction with $\gamma^2(\omega) > 0.98$ |
-| **Notch Filter Suppression** | Resonant peak attenuated by $\ge 20\text{ dB}$ in `float32` Transposed Direct Form II | Closed-loop step response & Bode magnitude verification (Tab 2 Simulator) |
+| **Notch Filter Suppression** | Resonant peak attenuated by $\ge 20\text{ dB}$ in `float32` Transposed Direct Form II | Closed-loop step response & Bode magnitude verification (Vibration Filter & Resonance Lab) |
 | **$SO(3)$ Singularity Immunity** | $\exp([\phi]_\times)$ and $\log(R)$ round-trip error $< 10^{-14}\text{ rad}$ across $\theta \in [0, \pi]$ | Unit test suite across 10,000 random & edge-case axes |
 
 ---

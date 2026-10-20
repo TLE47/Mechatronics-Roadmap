@@ -12,15 +12,18 @@
 
 ```mermaid
 flowchart LR
-    Meta["Lesson and module metadata"] --> Gen["generate_readme_counts<br/>generate_sim_route"] --> Page["README, SIM_ROUTE, DEPTH<br/>and MINIMUM"] --> Check["--check in CI"] --> Fail["Fails on drift"]
+    Meta["Lesson and module metadata"] --> Gen["generate_readme_counts<br/>generate_sim_route<br/>generate_step_docs"] --> Page["README, SIM_ROUTE, DEPTH,<br/>SYLLABUS, CURRICULUM and the track READMEs"] --> Check["--check in CI"] --> Fail["Fails on drift"]
 ```
 
 | Fact | Source | Check |
 | :--- | :--- | :--- |
 | 10 steps, lesson and module counts, step hours | `scripts/route_model.py` from each page's front matter | `python3.12 scripts/generate_readme_counts.py --check` |
 | Arm hours, depth hours, the optional total, and the minimum finish | `scripts/generate_sim_route.py` | `python3.12 scripts/generate_sim_route.py --check` |
+| What each of the ten steps costs, page by page, and each track's three depth layers | `scripts/route_model.py` from each page's front matter | `python3.12 scripts/generate_step_docs.py --check` |
 | The README's Start here block and the workbench card | `app/src/data/startHere.json` (one file, read by both) | `python3.12 scripts/generate_start_here.py --check` |
 | The callout on every lesson and module page: where to run it, or that there is no entry | `app/src/data/pythonLessonsData.ts`, the workbench's own registry | `python3.12 scripts/generate_run_callouts.py --check` |
+| The name of every tab, and no page or label referring to one by position | `app/src/data/workbenchTabs.json`, read by `App.tsx` and by the callout generator | `python3.12 scripts/check_tab_names.py` |
+| Which workbench entries a roadmap step asks for, and that every entry is claimed once | `app/src/practiceLinks.ts`, joining the roadmap and the registry by track and pass | `npm run test:practice` |
 | Every count quoted anywhere in the docs | `scripts/check_consistency.py` | `python3.12 scripts/check_consistency.py` |
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
@@ -39,12 +42,15 @@ python3.12 scripts/check_ramp_lessons.py
 python3.12 scripts/audit_step_size.py --check
 python3.12 scripts/generate_sim_route.py --check
 python3.12 scripts/generate_readme_counts.py --check
+python3.12 scripts/generate_step_docs.py --check
 python3.12 scripts/generate_start_here.py --check
 python3.12 scripts/generate_run_callouts.py --check
+python3.12 scripts/check_tab_names.py
 python3.12 scripts/check_consistency.py
 python3.12 scripts/lint_assertions.py
 python3.12 scripts/run_all_labs.py
 python3.12 -m unittest discover -s tests
+npm run test:practice
 npm run test:smoke
 ```
 

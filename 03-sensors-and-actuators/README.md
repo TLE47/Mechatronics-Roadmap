@@ -1,29 +1,36 @@
 # Track 03: Sensors, Metrology, Actuators & Field-Oriented Drive Systems
 
-> **Part of the [MechaLab Multi-Pass Tiered Roadmap](../README.md)**  
+> **Part of the [ten-step MechaLab course](../README.md)**  
 > **Prerequisites:** [Track 01: Mixed-Signal & Power Electronics](../01-electronics-and-power/README.md), [Track 02: Precision Mechanics, Kinematics & Dynamics](../02-mechanics-kinematics-dynamics/README.md)  
 > **Feeds Into:** [Track 04: Embedded & Real-Time](../04-embedded-and-realtime/README.md), [Track 05: Control & Estimation](../05-control-and-estimation/README.md)  
 > **Core Principle:** A closed-loop system is fundamentally bounded by the noise floor, bandwidth, and non-linearity of its sensors and the torque-ripple and saturation limits of its actuators. Calibrating transducer systematics and executing deterministic Field-Oriented Control (FOC) transforms raw electromagnetic hardware into an ideal linear torque source.
 
 ---
 
-## 🔄 Linear Level-Up Navigation (Follow Your Current Pass Across Track 00 → Track 08)
+<!-- step-index -->
+> **Step 6 of 10 · Measure the joint: sensors.** Read an encoder, compute a clean angle, and know how much to trust it.
+>
+> This folder is the reading for Step 6. The ten steps are the only order the course uses; the three `Tier` sections
+> below are its three depth layers, and the headings keep their old names because the
+> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
+> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
 
-Complete **only your current Tier section** below, verify its hands-on milestone, and proceed directly to **Track 04 in the same Tier**:
+| Depth | What it is | Pages in this track | Focused hours |
+| :--- | :--- | :--- | ---: |
+| **1 · arm** | [Step 6](#tier-1-beginner--intuitive), in order | [`03.1`](03.1-quadrature-and-magnetic-encoders.md), [`03.2`](03.2-three-phase-bldc-and-electrical-angle.md), [`03.3`](03.3-encoder-to-fk-integration-microlab.md) · [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md) | 6.85-11.5 |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) | 4.5 |
+| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-| Pass / Level | Previous Step in Pass | Current Track 03 Section | Next Linear Step in This Pass |
-| :--- | :--- | :--- | :--- |
-| **🟢 Pass 1: Tier 1 (Beginner)** | [← Track 02 (Tier 1)](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive) | [§1 Tier 1: Quadrature/Magnetic Encoders & Open-Loop BLDC (`SimpleFOC`)](#tier-1-beginner--intuitive) | [**Next in Pass 1 → Track 04 (Tier 1: Killing `delay()` & 1 kHz Timer ISR)**](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) |
-| **🔵 Pass 2: Tier 2 (Applied)** | [← Track 02 (Tier 2)](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied) | [§2 Tier 2: Clarke/Park Transforms, Type-II PLLs & Allan Variance](#tier-2-intermediate--applied) | [**Next in Pass 2 → Track 04 (Tier 2: FreeRTOS, DMA & CAN-FD)**](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied) |
-| **🌉 Bridge Concept** | — | [§3 Bridging the Gap: Hobby Drone ESC / Voltage Mode → Center-Aligned Current FOC](#bridging-the-gap-maker-to-custom) | [Inspect Tier 3 Production Mastery ↓](#tier-3-advanced--production) |
-| **🟣 Pass 3: Tier 3 (Production)** | [← Track 02 (Tier 3)](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) | [§4 Tier 3: 25–40 kHz Decoupled d-q FOC, SVPWM & Harmonic LUT](#tier-3-advanced--production) | [**Next in Pass 3 → Track 04 (Tier 3: `TIM1`→`ADC`, CORDIC & `WaitFreeSeqLock`)**](../04-embedded-and-realtime/README.md#tier-3-advanced--production) |
+**Step 6 costs 11.35-16 focused hours in total** - 3.35-8 of lessons, 3.5 of arm modules, 4.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
+**Next:** Step 7 · Run it in real time: embedded C → [Track 04](../04-embedded-and-realtime/README.md) (19-25 focused hours).
+<!-- /step-index -->
 ---
 
 ## Tier 1 (Beginner / Intuitive)
 
-> **Goal of Pass 1 (Track 03):** Read rotor position accurately using quadrature optical and on-axis magnetic encoders (`AS5600`/`AS5048`), understand how a 3-phase brushless motor rotates a magnetic field, and spin your first gimbal BLDC motor smoothly in angle mode using `SimpleFOC` and a `DRV8313`/`SimpleFOCMini` breakout.
-> **📚 Required Foundations & Bridge Modules for Pass 1 (Track 03):** Complete Tier 1 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (SI Units & RPM-to-$\text{rad/s}$), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians & 2D Vectors*), and [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) (*PWM H-Bridges*) plus the Track 03 Tier 1 Bridge [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md).
+> **Goal of Depth 1 (Track 03):** Read rotor position accurately using quadrature optical and on-axis magnetic encoders (`AS5600`/`AS5048`), understand how a 3-phase brushless motor rotates a magnetic field, and spin your first gimbal BLDC motor smoothly in angle mode using `SimpleFOC` and a `DRV8313`/`SimpleFOCMini` breakout.
+> **📚 Required Foundations & Bridge Modules for Depth 1 (Track 03):** Complete Tier 1 Foundations [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) (SI Units & RPM-to-$\text{rad/s}$), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) (*Radians & 2D Vectors*), and [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) (*PWM H-Bridges*) plus the Track 03 Tier 1 Bridge [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md).
 
 ### Beginner-First Lesson Series (`03.1 – 03.3`, $\le 2$ new ideas per lesson + Integration Micro-Lab)
 
@@ -81,7 +88,7 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
 ### 1.3 Sinusoidal Voltage Commutation with `SimpleFOC`
 - **Core Summary:** Using an `ESP32`/`STM32` + `SimpleFOCMini` (`DRV8313` 3-phase driver breakout) + `AS5600` magnetic encoder, you can close a smooth position/velocity loop in 20 lines of C++ (`SimpleFOC`) by commanding sinusoidal phase voltages $v_a, v_b, v_c$ locked $90^\circ$ electrical ahead of the measured encoder angle $\theta_e$.
 - **Self-Contained C++ Sketch Anatomy Primer (Before Track 04 [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md)):**
-  Because Track 03 Tier 1 comes right before Track 04 Tier 1 in Pass 1, here is how to read a 20-line `SimpleFOC` Arduino/PlatformIO C++ sketch if you have only written Python so far:
+  Because Track 03 Tier 1 comes right before Track 04 Tier 1 in Depth 1, here is how to read a 20-line `SimpleFOC` Arduino/PlatformIO C++ sketch if you have only written Python so far:
   - `#include <SimpleFOC.h>` is C++'s `import SimpleFOC`. Every statement ends with `;`, and blocks use `{ ... }` instead of indentation.
   - `BLDCMotor motor = BLDCMotor(7);` and `BLDCDriver3PWM driver = BLDCDriver3PWM(25, 26, 27, 14);` instantiate C++ objects (for a 7-pole-pair motor and PWM pins `25, 26, 27` + enable pin `14`).
   - `void setup() { ... }` runs **once** at power-up (`driver.init(); motor.linkDriver(&driver); motor.init(); motor.initFOC();`—where `&driver` passes the memory address of `driver`).
@@ -90,7 +97,7 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
   - 🔗 [SimpleFOC Official Documentation: Writing Your First Closed-Loop Angle Sketch](https://docs.simplefoc.com/angle_loop) — *Step-by-step wiring and Arduino/PlatformIO C++ code for sinusoidal voltage-mode position control.*
   - 🔗 [Texas Instruments DRV8313 Triple Half-Bridge Driver Datasheet](https://www.ti.com/lit/ds/symlink/drv8313.pdf) — *Reference datasheet for the* $8\text{–}60\text{ V}$ *,* $2.5\text{ A}$ *integrated 3-phase motor driver IC used on `SimpleFOCMini` breakouts.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Wire a gimbal BLDC motor + `AS5600`/`AS5048` magnetic encoder + `DRV8313` breakout on your bench, run the `SimpleFOC` electrical zero-offset alignment routine, and hold a target shaft angle with a spring-like feel (or explore **Tab 3: 25 kHz PMSM FOC** in the interactive workbench).
+  - *Task:* Wire a gimbal BLDC motor + `AS5600`/`AS5048` magnetic encoder + `DRV8313` breakout on your bench, run the `SimpleFOC` electrical zero-offset alignment routine, and hold a target shaft angle with a spring-like feel (or explore **25 kHz PMSM FOC** in the interactive workbench).
   - *📚 What to Learn & Resource Links for This Exercise:* Study unit-circle trigonometry ($\cos\theta_e, \sin\theta_e$) in Foundations [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), C-for-Python syntax in [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), and torque-speed curves + electrical zero alignment in [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md), plus [SimpleFOC Closed-Loop Angle Control Guide (`docs.simplefoc.com`)](https://docs.simplefoc.com/angle_loop).
 - **🧠 Knowledge Check:**
   <details>
@@ -103,16 +110,16 @@ If you are following the **Beginner-First Track (`Track P → Stage 0 → Track 
   * **Answer & Explanation:** Without current sensors, stalling a motor at $v_q = 6\text{ V}$ causes steady-state phase current $I = v_q / R_s$. On a $10\ \Omega$ gimbal motor, $I = 0.6\text{ A}$ (safe). On a $0.05\ \Omega$ power motor, $I = 6\text{ V} / 0.05\ \Omega = 120\text{ A}$, which instantly vaporizes the MOSFETs and motor windings!
   </details>
 
-### ✅ Tier 1 Milestone Gate (`Track 03 · Pass 1`)
-* Wire a gimbal BLDC motor + `AS5600`/`AS5048` magnetic encoder + `DRV8313` breakout on your bench, run the electrical zero-offset alignment routine, and hold a target shaft angle with spring-like feel (or explore **Tab 3: 25 kHz PMSM FOC** in the interactive workbench).
-* **Next Linear Step in Pass 1:** [**Proceed to Track 04 (Tier 1: Killing `delay()`, 1 kHz Timer ISRs & Binary Serial) →**](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive)
+### ✅ Tier 1 Milestone Gate (`Track 03 · Depth 1`)
+* Wire a gimbal BLDC motor + `AS5600`/`AS5048` magnetic encoder + `DRV8313` breakout on your bench, run the electrical zero-offset alignment routine, and hold a target shaft angle with spring-like feel (or explore **25 kHz PMSM FOC** in the interactive workbench).
+* **Next Linear Step in Depth 1:** [**Proceed to Track 04 (Tier 1: Killing `delay()`, 1 kHz Timer ISRs & Binary Serial) →**](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive)
 
 ---
 
 ## Tier 2 (Intermediate / Applied)
 
-> **Goal of Pass 2 (Track 03):** Move beyond voltage-mode `SimpleFOC` into true mathematical **Clarke & Park Coordinate Transforms**, **Type-II Phase-Locked Loop (PLL) Velocity Observers** (eliminating finite-difference quantization spikes), and **IMU Allan Variance** noise characterization.
-> **📚 Required Foundations & Bridge Modules for Pass 2 (Track 03):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Orthogonal Matrix Transforms*), [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order Critically Damped Poles*), and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Gaussian Variance & Covariance*) plus the Track 03 Tier 2 Bridge [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md).
+> **Goal of Depth 2 (Track 03):** Move beyond voltage-mode `SimpleFOC` into true mathematical **Clarke & Park Coordinate Transforms**, **Type-II Phase-Locked Loop (PLL) Velocity Observers** (eliminating finite-difference quantization spikes), and **IMU Allan Variance** noise characterization.
+> **📚 Required Foundations & Bridge Modules for Depth 2 (Track 03):** Complete Tier 2 Foundations [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) (*Orthogonal Matrix Transforms*), [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) (*2nd-Order Critically Damped Poles*), and [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) (*Gaussian Variance & Covariance*) plus the Track 03 Tier 2 Bridge [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md).
 
 ### 2.1 Clarke ($\{a,b,c\}\to\{\alpha,\beta\}$) & Park ($\{\alpha,\beta\}\to\{d,q\}$) Intuition
 - **Core Summary:** Standard PI controllers lag behind high-frequency AC sine waves ($i_a, i_b, i_c$). The **Clarke transform** projects balanced 3-phase currents onto a stationary 2D orthogonal frame $(i_\alpha, i_\beta)$, and the **Park transform** rotates that frame by the live electrical angle $\theta_e = N_p \theta_m$ into the rotor's $(d,q)$ frame—turning AC sine waves into flat DC quantities where $i_d^* = 0$ regulates radial flux and $i_q^*$ directly commands torque $\tau = \frac{3}{2}N_p \lambda_{pm} i_q$.
@@ -146,7 +153,7 @@ $$
   - 🔗 [ODrive Firmware Docs: Encoder PLL Estimator Design](https://docs.odriverobotics.com/v/latest/control.html) — *Shows how production open-source motor drives implement a second-order tracking PLL with bandwidth* $\omega_{\text{pll}}$ *and critical damping (* $K_p = 2\omega_{\text{pll}}$ *,* $K_i = \omega_{\text{pll}}^2$ *).*
   - 🔗 [Lab 03 Script: `03-sensors-and-actuators/lab/lab03_foc_and_metrology.py`](./lab/lab03_foc_and_metrology.py) — *Executable reference comparing raw finite-difference velocity spikes against the Type-II PLL velocity observer.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* In **Tab 3: 25 kHz PMSM FOC** or Python, simulate a 14-bit encoder spinning at $5.0\text{ rad/s}$ sampled at $25\text{ kHz}$. Compare the RMS velocity error of raw Euler backward difference $(\theta_k - \theta_{k-1})/T_s$ against a critically damped Type-II PLL with bandwidth $\omega_{\text{pll}} = 2\pi(150\text{ Hz})$ ($K_p = 2\omega_{\text{pll}}$, $K_i = \omega_{\text{pll}}^2$).
+  - *Task:* In **25 kHz PMSM FOC** or Python, simulate a 14-bit encoder spinning at $5.0\text{ rad/s}$ sampled at $25\text{ kHz}$. Compare the RMS velocity error of raw Euler backward difference $(\theta_k - \theta_{k-1})/T_s$ against a critically damped Type-II PLL with bandwidth $\omega_{\text{pll}} = 2\pi(150\text{ Hz})$ ($K_p = 2\omega_{\text{pll}}$, $K_i = \omega_{\text{pll}}^2$).
   - *📚 What to Learn & Resource Links for This Exercise:* Study second-order critical damping ($\zeta = 1.0, s^2 + 2\omega_n s + \omega_n^2$) in Foundations [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) and encoder quantization velocity noise + Type-II PLL observer tuning in [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) (`## 3. Formalization` Item 2), plus [ODrive Encoder PLL Estimator Documentation (`docs.odriverobotics.com`)](https://docs.odriverobotics.com/).
 - **🧠 Knowledge Check:**
   <details>
@@ -178,9 +185,9 @@ $$
   * **Answer & Explanation:** $\sigma_{\text{gyro}} = \text{Noise Density} \times \sqrt{f_s} = 0.005 \times \sqrt{400} = 0.005 \times 20 = 0.10\ ^\circ/\text{s}$ ($0.00175\text{ rad/s}$).
   </details>
 
-### ✅ Tier 2 Milestone Gate (`Track 03 · Pass 2`)
-* In **Tab 3: 25 kHz PMSM FOC**, test how Clarke/Park transforms convert $i_a, i_b, i_c$ into DC $i_d, i_q$, and verify how the Type-II PLL velocity observer tracks rotor speed cleanly without finite-difference quantization spikes.
-* **Next Linear Step in Pass 2:** [**Proceed to Track 04 (Tier 2: FreeRTOS Scheduling, DMA Buffers & CAN-FD MIT Mode) →**](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied)
+### ✅ Tier 2 Milestone Gate (`Track 03 · Depth 2`)
+* In **25 kHz PMSM FOC**, test how Clarke/Park transforms convert $i_a, i_b, i_c$ into DC $i_d, i_q$, and verify how the Type-II PLL velocity observer tracks rotor speed cleanly without finite-difference quantization spikes.
+* **Next Linear Step in Depth 2:** [**Proceed to Track 04 (Tier 2: FreeRTOS Scheduling, DMA Buffers & CAN-FD MIT Mode) →**](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied)
 
 ---
 
@@ -198,9 +205,9 @@ $$
 
 ## Tier 3 (Advanced / Production)
 
-> **Goal of Pass 3 (Track 03):** Master production actuator & metrology engineering: encoder spatial harmonic LUT calibration, Allan variance error budgets, pole-zero cancellation $d$-$q$ current PI synthesis, feedforward back-EMF/cross-coupling decoupling, Min-Max SVPWM (+15.47% bus utilization), and anticogging torque-ripple suppression.
-> **📚 Required Foundations & Bridge Modules for Pass 3 (Track 03):** Complete Tier 2/3 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Transfer Function Pole-Zero Cancellation*) and [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space Coupling*) plus the Track 03 Tier 3 Bridge [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md).
-> * [**Next Linear Step in Pass 3 → Track 04 (Tier 3: Bare-Metal `TIM1`→`ADC`, CORDIC & C++20 `WaitFreeSeqLock`)**](../04-embedded-and-realtime/README.md#tier-3-advanced--production)
+> **Goal of Depth 3 (Track 03):** Master production actuator & metrology engineering: encoder spatial harmonic LUT calibration, Allan variance error budgets, pole-zero cancellation $d$-$q$ current PI synthesis, feedforward back-EMF/cross-coupling decoupling, Min-Max SVPWM (+15.47% bus utilization), and anticogging torque-ripple suppression.
+> **📚 Required Foundations & Bridge Modules for Depth 3 (Track 03):** Complete Tier 2/3 Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) (*Transfer Function Pole-Zero Cancellation*) and [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) (*State-Space Coupling*) plus the Track 03 Tier 3 Bridge [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md).
+> * [**Next Linear Step in Depth 3 → Track 04 (Tier 3: Bare-Metal `TIM1`→`ADC`, CORDIC & C++20 `WaitFreeSeqLock`)**](../04-embedded-and-realtime/README.md#tier-3-advanced--production)
 
 ### 4.1 Field-Oriented Control (FOC) & Metrology Architecture
 
@@ -318,7 +325,7 @@ $$
   - 🔗 [Texas Instruments SPRABQ7: Space Vector PWM (SVPWM) & Min-Max Zero-Sequence Injection](https://www.ti.com/lit/an/sprabq7a/sprabq7a.pdf) — *Proves mathematically why subtracting the average of* $\max(v_{a,b,c})$ *and* $\min(v_{a,b,c})$ *produces the exact same saddle waveform as sector-based Space Vector PWM with zero `atan2`/`sin` overhead.*
   - 🔗 [STMicroelectronics UM1052: STM32 Motor Control SDK (FOC Theory & Decoupling)](https://www.st.com/resource/en/user_manual/um1052-stm32f-pmsm-singledual-foc-sdk-v43-stmicroelectronics.pdf) — *Complete production equations for* $d$ *-* $q$ *PI current loops, feedforward decoupling, and circle-limitation voltage anti-windup.*
 - **🧪 Hands-On Exercise:**
-  - *Task:* Open **Tab 3: 25 kHz PMSM FOC** in the MechaLab Workbench, command a $0 \to 10\text{ A}$ step in $i_q^*$ at $2000\text{ RPM}$, and toggle **Cross-Coupling Decoupling ON vs. OFF** and **SVPWM vs. Sinusoidal PWM**. Observe the $i_d$ parasitic current spike drop below $0.15\text{ A}$ with decoupling active and inspect the classic triple-harmonic "saddle" duty waveforms $(d_a, d_b, d_c)$ of Min-Max SVPWM.
+  - *Task:* Open **25 kHz PMSM FOC** in the MechaLab Workbench, command a $0 \to 10\text{ A}$ step in $i_q^*$ at $2000\text{ RPM}$, and toggle **Cross-Coupling Decoupling ON vs. OFF** and **SVPWM vs. Sinusoidal PWM**. Observe the $i_d$ parasitic current spike drop below $0.15\text{ A}$ with decoupling active and inspect the classic triple-harmonic "saddle" duty waveforms $(d_a, d_b, d_c)$ of Min-Max SVPWM.
   - *📚 What to Learn & Resource Links for This Exercise:* Study first-order transfer functions in Foundations [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) and $d$-$q$ cross-coupling decoupling + pole-zero PI tuning ($K_p = L\omega_{\text{bw}}, K_i = R\omega_{\text{bw}}$) + Min-Max SVPWM zero-sequence injection in [`03-sensors.T3.03a`](../modules/03-sensors.T3.03a.md) (`## 3. Formalization` Items 1–3 & `## 4. Worked example`).
 - **🧠 Knowledge Check:**
   <details>
@@ -347,8 +354,8 @@ $$
 | Metric | Target Requirement | Verification Method |
 | :--- | :--- | :--- |
 | **Calibrated Encoder Nonlinearity (INL)** | Peak-to-peak error $< \pm 0.04^\circ$ mechanical across full $360^\circ$ rotation | Harmonic Fourier LUT calibration cross-check |
-| **Current Loop Bandwidth ($-3\text{ dB}$)** | $f_{-3\text{dB}} \ge 2.0\text{ kHz}$ with overshoot $< 4\%$ and zero steady-state error | $i_q^*$ step response ($90\%$ rise time $\le 180\ \mu\text{s}$) in Tab 3 FOC Simulator |
-| **$d$-$q$ Axis Cross-Coupling Rejection** | Peak $\lvert i_d \rvert$ perturbation $< 0.15\text{ A}$ during $0 \to 10\text{ A}$ $i_q^*$ step at $2,000\text{ RPM}$ | Compare Decoupling ON vs. OFF in Tab 3 FOC Simulator |
+| **Current Loop Bandwidth ($-3\text{ dB}$)** | $f_{-3\text{dB}} \ge 2.0\text{ kHz}$ with overshoot $< 4\%$ and zero steady-state error | $i_q^*$ step response ($90\%$ rise time $\le 180\ \mu\text{s}$) in Brushless Motor Control Lab FOC Simulator |
+| **$d$-$q$ Axis Cross-Coupling Rejection** | Peak $\lvert i_d \rvert$ perturbation $< 0.15\text{ A}$ during $0 \to 10\text{ A}$ $i_q^*$ step at $2,000\text{ RPM}$ | Compare Decoupling ON vs. OFF in Brushless Motor Control Lab FOC Simulator |
 | **Cogging Torque Ripple Suppression** | Peak-to-peak velocity ripple reduced by $\ge 75\%$ at $10\text{ RPM}$ with Anticogging LUT | PLL velocity spectrum FFT at $1\times, 6\times, N_{\text{slots}}\times$ harmonics |
 
 ---
