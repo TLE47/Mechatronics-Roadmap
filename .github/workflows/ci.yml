@@ -141,6 +141,9 @@ jobs:
       - name: Check the cloud-sync merge rules (local vs account progress)
         run: npm run test:merge
 
+      - name: Check the 08.1 fault-bench metrics
+        run: npm run test:faultbench
+
       - name: Install Playwright Chromium & Firefox (once, for both browser suites)
         run: npx playwright-core install --with-deps chromium firefox
 

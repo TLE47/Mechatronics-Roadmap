@@ -566,6 +566,35 @@ export async function runSmokeTests(viteServer) {
         htmlRunner.includes('Formatting is ignored'),
       'TabPyodideRunner must state that a normalized lesson ignores whitespace'
     );
+
+    // 08.1 owns the four-fault bench; other lessons must not inherit it. The SSR values are the
+    // broken ones, so a card that starts already fixed is caught here rather than in the browser.
+    const html081 = cleanSsr(
+      ReactDOMServer.renderToString(
+        React.createElement(TabPyodideRunner, { initialLessonId: '08.1' })
+      )
+    );
+    assert(
+      html081.includes('data-testid="fault-bench-08-1"'),
+      'Lesson 08.1 must render the interactive four-fault bench'
+    );
+    for (const faultId of ['zero-offset', 'cpr', 'anti-windup', 'gravity']) {
+      assert(
+        html081.includes(`data-testid="fault-card-${faultId}"`),
+        `08.1 bench must render the ${faultId} card`
+      );
+    }
+    assert(
+      html081.includes('data-testid="input-zero-offset-correction"') &&
+        html081.includes('12.0 mm') &&
+        html081.includes('37.2%') &&
+        html081.includes('4.7%'),
+      '08.1 bench must open on the broken metrics, with the zero-offset slider and both windup values'
+    );
+    assert(
+      !htmlRunner.includes('fault-bench-08-1'),
+      'the 08.1 fault bench must not leak into another lesson (05.1)'
+    );
     // The coach is per lesson, including its hide control: hiding P.1 must not hide P.2's brief.
     globalThis.localStorage.setItem(STORAGE_KEY_FIRST_GUIDE, JSON.stringify(['P.1']));
     const htmlP1Hidden = cleanSsr(

@@ -3,6 +3,7 @@ import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson } from '../../lessonCoach';
+import { FaultBench08 } from '../FaultBench08';
 import { logEvent } from '../../learningLog';
 import {
   Play,
@@ -1197,6 +1198,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               ))}
             </div>
           </div>
+
+          {currentLesson.id === '08.1' && <FaultBench08 />}
 
           {/* Progressive 3-Step Hint Ladder */}
           {currentLesson.hints.length > 0 && (
