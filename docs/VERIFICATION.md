@@ -68,11 +68,13 @@ Chromium through Playwright or the documented fallback paths.
   [`CURRICULUM.md`](CURRICULUM.md) point at the same lists.
 - **Minimum finish integrity:** [`MINIMUM.md`](MINIMUM.md) is generated from the same pages, its
   ids are a subset of the Core route, and its total is the sum of its own rows.
-- **The 08.1 pass condition:** the capstone verifies only when its four-fault bench reports every
-  graded repair at target (≤ 1 mm tip error, < 5% overshoot). The bench runs the learner's own
-  `repair_*` functions after their program and computes its own FK, so a learner's broken
-  `fk_2link` cannot make a wrong repair look right. The browser E2E suite types a 10%-short repair
-  into 08.1 and asserts the card keeps its 1.20 mm and the lesson stays unverified.
+- **The capstone pass conditions:** a capstone in `app/src/lessonHarnesses.ts` verifies only when
+  its own harness reports every graded number at target. 08.1 runs the learner's `repair_*`
+  functions after their program with its own FK chord (≤ 1 mm tip error, < 5% overshoot); the Tier 3
+  capstone (`EX.08-capstones.T3.07a`) runs their budget functions on an unseen design point
+  (≤ 0.50 mm, ≥ 45°, the delay its spare margin buys, both sign-off verdicts). The browser E2E types
+  a 10%-short repair into 08.1 and a doubled zero-order hold into the Tier 3 capstone, asserting
+  1.20 mm and 42.7° stay on the cards and both lessons stay unverified.
 - **Exercise coverage:** every graded package runs and every solution passes; the report CI
   reads is the same one the tests consume, so a package cannot be skipped silently.
 - **Links and sketches:** weekly, with failures filed as `link-*` issues.

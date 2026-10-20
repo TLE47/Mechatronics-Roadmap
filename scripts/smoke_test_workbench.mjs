@@ -601,6 +601,35 @@ export async function runSmokeTests(viteServer) {
       !htmlRunner.includes('fault-bench-08-1'),
       'the 08.1 fault bench must not leak into another lesson (05.1)'
     );
+
+    // The Tier 3 capstone carries its own harness, and it must open ungraded too: four rows, the
+    // lesson's own limits, and no row claimed as at target before a run.
+    const htmlT3 = cleanSsr(
+      ReactDOMServer.renderToString(
+        React.createElement(TabPyodideRunner, { initialLessonId: 'EX.08-capstones.T3.07a' })
+      )
+    );
+    assert(
+      htmlT3.includes('data-testid="lesson-harness"'),
+      'the Tier 3 capstone must render its budget bench'
+    );
+    for (const unit of ['budget', 'margin', 'allowance', 'signoff']) {
+      assert(
+        htmlT3.includes(`data-testid="harness-row-${unit}"`),
+        `the Tier 3 bench must render the ${unit} row`
+      );
+    }
+    assert(
+      htmlT3.includes('0 / 4 at target') &&
+        htmlT3.includes('target ≤ 0.50 mm') &&
+        htmlT3.includes('target ≥ 45.0 deg') &&
+        htmlT3.includes('data-testid="btn-harness-grade"'),
+      'the Tier 3 bench must open ungraded, naming each target and offering Grade my budgets'
+    );
+    assert(
+      !htmlT3.includes('AT TARGET') && !html081.includes('data-testid="lesson-harness"'),
+      'no capstone bench may present an unrun row as at target, and the generic panel must not'
+    );
     // The coach is per lesson, including its hide control: hiding P.1 must not hide P.2's brief.
     globalThis.localStorage.setItem(STORAGE_KEY_FIRST_GUIDE, JSON.stringify(['P.1']));
     const htmlP1Hidden = cleanSsr(

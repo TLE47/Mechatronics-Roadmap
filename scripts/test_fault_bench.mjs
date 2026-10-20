@@ -10,6 +10,7 @@
  */
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   CPR_SCALE,
   ZERO_OFFSET_RAD,
@@ -21,16 +22,22 @@ import {
   zeroOffsetTipErrorMm,
 } from '../app/src/faultBench.ts';
 import {
-  BENCH_LESSON_ID,
+  FAULT_BENCH_HARNESS,
   FAULT_BENCH_PY,
   FAULT_BENCH_TARGETS,
-  benchGate,
-  benchSourceForLesson,
   countRepaired,
   formatRepairMetric,
   parseBenchReport,
   repairVerdict,
 } from '../app/src/faultBenchGrading.ts';
+import {
+  formatHarnessMetric,
+  formatHarnessTarget,
+  harnessGate,
+  unitVerdict,
+} from '../app/src/harnessGrading.ts';
+import { harnessForLesson, harnessSourceForLesson } from '../app/src/lessonHarnesses.ts';
+import { T3_HARNESS, T3_HARNESS_PY, T3_TARGETS } from '../app/src/capstoneBudgets.ts';
 
 let passed = 0;
 let failed = 0;
@@ -161,39 +168,124 @@ check('the worker report round-trips through its JSON string', () => {
 
 check('the lesson pass condition is the bench: a 10%-short repair cannot verify it', () => {
   const halfFixed = { ...REPAIRED_REPORT, offset: { value: 1.2, error: '' } };
-  const gate = benchGate(halfFixed);
+  const gate = harnessGate(FAULT_BENCH_HARNESS, halfFixed);
   assert.equal(gate.passed, false, 'a 1.2 mm repair must not pass the capstone');
-  assert.equal(gate.repaired, 3, 'three units are at target');
+  assert.equal(gate.met, 3, 'three units are at target');
   assert.equal(gate.total, 4, 'the capstone grades four units');
   assert.equal(gate.failures.length, 1, 'only the short repair is named');
   assert.match(gate.failures[0], /encoder zero offset/, 'the failure must name the unit');
   assert.match(gate.failures[0], /1\.20 mm/, 'the failure must keep the real metric');
   assert.match(gate.failures[0], /1\.00 mm/, 'the failure must state the target');
-  assert.match(gate.summary, /3 \/ 4 graded repairs at target/, 'the summary counts what passed');
+  assert.match(gate.summary, /3 \/ 4 graded metrics at target/, 'the summary counts what passed');
 });
 
 check('a solved report is the only one that passes the lesson', () => {
-  const gate = benchGate(REPAIRED_REPORT);
+  const gate = harnessGate(FAULT_BENCH_HARNESS, REPAIRED_REPORT);
   assert.equal(gate.passed, true, 'four at-target repairs must pass');
   assert.deepEqual(gate.failures, [], 'a passing gate names no failures');
-  assert.equal(benchGate(BROKEN_REPORT).passed, false, 'the starter must not pass the capstone');
-  assert.equal(benchGate(BROKEN_REPORT).repaired, 0, 'the starter fixes nothing');
+  assert.equal(harnessGate(FAULT_BENCH_HARNESS, BROKEN_REPORT).passed, false, 'the starter must not pass the capstone');
+  assert.equal(harnessGate(FAULT_BENCH_HARNESS, BROKEN_REPORT).met, 0, 'the starter fixes nothing');
 });
 
 check('a call that raises fails the gate by name, and so does a missing report', () => {
   const failedReport = { ...REPAIRED_REPORT, cpr: { value: null, error: 'NameError: nope' } };
-  const gate = benchGate(failedReport);
+  const gate = harnessGate(FAULT_BENCH_HARNESS, failedReport);
   assert.equal(gate.passed, false, 'a failed call must not pass the lesson');
   assert.match(gate.failures[0], /encoder CPR scale: call failed — NameError: nope/);
-  const missing = benchGate(null);
+  const missing = harnessGate(FAULT_BENCH_HARNESS, null);
   assert.equal(missing.passed, false, 'an unrun bench is unproven, not a pass');
-  assert.equal(missing.repaired, 0);
+  assert.equal(missing.met, 0);
 });
 
-check('the bench is sent for 08.1 and for no other lesson', () => {
-  assert.equal(BENCH_LESSON_ID, '08.1');
-  assert.equal(benchSourceForLesson('08.1'), FAULT_BENCH_PY, '08.1 must send the harness');
-  assert.equal(benchSourceForLesson('05.1'), '', 'another lesson must not run the bench');
+check('the registry sends a harness for the capstones and for no other lesson', () => {
+  assert.equal(FAULT_BENCH_HARNESS.lessonId, '08.1');
+  assert.equal(harnessSourceForLesson('08.1'), FAULT_BENCH_PY, '08.1 must send the bench');
+  assert.equal(
+    harnessSourceForLesson('EX.08-capstones.T3.07a'),
+    T3_HARNESS_PY,
+    'the Tier 3 capstone must send its own bench'
+  );
+  assert.equal(harnessSourceForLesson('05.1'), '', 'a non-capstone lesson must not run a harness');
+  assert.equal(harnessForLesson('05.1'), null, 'a lesson without a harness has no gate');
+  assert.equal(harnessForLesson('08.1')?.units.length, 4, '08.1 grades four units');
+});
+
+// --- the Tier 3 capstone's own bench ------------------------------------------------
+
+const T3_SOLVED = {
+  budget: { value: 0.4674235, error: '' },
+  margin: { value: 47.8304, error: '' },
+  allowance: { value: 1.4544, error: '' },
+  signoff: { value: 2, error: '' },
+};
+
+check('the Tier 3 capstone grades four units with their own directions', () => {
+  assert.deepEqual(
+    T3_HARNESS.units.map((u) => [u.key, u.direction, u.target]),
+    [
+      ['budget', 'atMost', T3_TARGETS.budgetMm],
+      ['margin', 'atLeast', T3_TARGETS.marginDeg],
+      ['allowance', 'atLeast', T3_TARGETS.chainMs],
+      ['signoff', 'atLeast', T3_TARGETS.signoffAgreements],
+    ],
+    'a budget is met under its target and a margin above it'
+  );
+  assert.equal(harnessGate(T3_HARNESS, T3_SOLVED).passed, true, 'the intended solution passes');
+});
+
+check('a doubled zero-order hold keeps the margin it really has and fails the lesson', () => {
+  // 30 + 210 + 350 + 90 + a full 1000 us tick = 1680 us; 60 - 180*0.00168*180/pi = 42.67 deg.
+  const zohDoubled = { ...T3_SOLVED, margin: { value: 42.6734, error: '' } };
+  const gate = harnessGate(T3_HARNESS, zohDoubled);
+  assert.equal(gate.passed, false, 'an eroded margin must not verify the capstone');
+  assert.equal(gate.met, 3, 'only the margin misses; the budget, allowance and sign-off still pass');
+  assert.match(gate.failures[0], /net phase margin: 42\.7 deg \(target ≥ 45\.0 deg\)/);
+});
+
+check('the budget and the sign-off each fail on their own side of the line', () => {
+  const overBudget = { ...T3_SOLVED, budget: { value: 0.951, error: '' } };
+  assert.match(
+    harnessGate(T3_HARNESS, overBudget).failures[0],
+    /3σ spatial budget: 0\.95 mm \(target ≤ 0\.50 mm\)/,
+    'a 0.95 mm budget must read as off target, not as a pass'
+  );
+  const fourOfFive = { ...T3_SOLVED, signoff: { value: 1, error: '' } };
+  assert.match(
+    harnessGate(T3_HARNESS, fourOfFive).failures[0],
+    /sign-off verdicts correct: 1 of 2 \(target ≥ 2 of 2\)/,
+    'four of five domains must not count as a sign-off'
+  );
+  assert.equal(harnessGate(T3_HARNESS, { ...T3_SOLVED, signoff: { value: null, error: 'TypeError: bool' } }).passed, false);
+});
+
+check('a harness unit prints its own unit and target phrase', () => {
+  const margin = T3_HARNESS.units.find((u) => u.key === 'margin');
+  assert.ok(margin, 'the Tier 3 harness must declare a margin unit');
+  assert.equal(formatHarnessMetric(42.6734, margin), '42.7 deg');
+  assert.equal(formatHarnessTarget(margin), 'target ≥ 45.0 deg');
+  const budget = T3_HARNESS.units.find((u) => u.key === 'budget');
+  assert.equal(formatHarnessTarget(budget), 'target ≤ 0.50 mm');
+  assert.equal(unitVerdict(budget, undefined), 'unrun');
+  assert.equal(unitVerdict(budget, { value: null, error: 'x' }), 'error');
+  const antiWindup = FAULT_BENCH_HARNESS.units.find((u) => u.key === 'antiWindup');
+  assert.equal(formatHarnessMetric(37.1858, antiWindup), '37.2%', 'percent has no space before the sign');
+});
+
+check('the Tier 3 harness calls the learner\'s functions on inputs the page never shows', () => {
+  for (const name of [
+    'error_budget_3sigma',
+    'total_latency_s',
+    'net_phase_margin_deg',
+    'max_allowable_delay_ms',
+    'capstone_signoff',
+  ]) {
+    assert.ok(T3_HARNESS_PY.includes(name), `harness must call ${name}`);
+  }
+  const moduleText = fs.readFileSync('modules/08-capstones.T3.07a.md', 'utf8');
+  assert.ok(
+    !moduleText.includes('0.02, -0.03, 0.05') && !moduleText.includes('0.04, 0.07, 0.02, 0.09'),
+    'the bench inputs must not be the module\'s worked example, so a printed number cannot pass'
+  );
 });
 
 check('the Python harness calls all four learner repairs and its own FK', () => {

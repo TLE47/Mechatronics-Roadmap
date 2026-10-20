@@ -8,29 +8,27 @@
  *
  * The harness computes its own forward kinematics: a learner with a broken `fk_2link` cannot
  * grade their own encoder repair with it.
+ *
+ * The report shape and the gate live in `/harnessGrading`; this file is 08.1's own harness and the
+ * card formatting that goes with it.
  */
+
+import type { HarnessMetric, HarnessReport, LessonHarness } from './harnessGrading.ts';
+import { parseHarnessReport } from './harnessGrading.ts';
 
 export type RepairUnit = 'mm' | '%';
 
-export interface RepairMetric {
-  /** The tip error in mm, or the overshoot in percent. `null` when the call raised. */
-  value: number | null;
-  /** Why the call failed, when it did (`NameError`, a wrong return type, ...). */
-  error: string;
-}
+/** One metric in the units a card prints: a tip error in mm, or an overshoot in percent. */
+export type RepairMetric = HarnessMetric;
 
-export interface FaultBenchReport {
-  offset: RepairMetric;
-  cpr: RepairMetric;
-  antiWindup: RepairMetric;
-  gravity: RepairMetric;
-}
+/** The four numbers the bench grades, keyed as `offset`, `cpr`, `antiWindup`, `gravity`. */
+export type FaultBenchReport = HarnessReport;
 
 /** The targets the page's proof block asserts: under 1 mm, and under 5% overshoot. */
 export const TIP_TARGET_MM = 1;
 export const OVERSHOOT_TARGET_PCT = 5;
 
-export const FAULT_BENCH_TARGETS: Record<keyof FaultBenchReport, number> = {
+export const FAULT_BENCH_TARGETS: Record<string, number> = {
   offset: TIP_TARGET_MM,
   cpr: TIP_TARGET_MM,
   antiWindup: OVERSHOOT_TARGET_PCT,
@@ -118,40 +116,11 @@ def __mechalab_bench_metrics():
 __mechalab_bench_json__ = json.dumps(__mechalab_bench_metrics())
 `;
 
-const METRIC_KEYS: (keyof FaultBenchReport)[] = ['offset', 'cpr', 'antiWindup', 'gravity'];
+const METRIC_KEYS: string[] = ['offset', 'cpr', 'antiWindup', 'gravity'];
 
-function readMetric(raw: unknown): RepairMetric | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const candidate = raw as { value?: unknown; error?: unknown };
-  const value =
-    typeof candidate.value === 'number' && Number.isFinite(candidate.value)
-      ? candidate.value
-      : null;
-  const error = typeof candidate.error === 'string' ? candidate.error : '';
-  if (value === null && !error) return null;
-  return { value, error };
-}
-
-/** Turns the worker's JSON string into a report, or `null` when it is not one. */
+/** Turns the worker's JSON string into 08.1's report, or `null` when it is not one. */
 export function parseBenchReport(raw: unknown): FaultBenchReport | null {
-  let parsed: unknown = raw;
-  if (typeof raw === 'string') {
-    if (!raw.trim()) return null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  }
-  if (!parsed || typeof parsed !== 'object') return null;
-  const source = parsed as Record<string, unknown>;
-  const report = {} as FaultBenchReport;
-  for (const key of METRIC_KEYS) {
-    const metric = readMetric(source[key]);
-    if (!metric) return null;
-    report[key] = metric;
-  }
-  return report;
+  return parseHarnessReport(raw, FAULT_BENCH_HARNESS);
 }
 
 /** How one card should read: never run, fixed, still broken at its real metric, or a failed call. */
@@ -180,79 +149,26 @@ export function countRepaired(report: FaultBenchReport | null): number {
   );
 }
 
-/** The one lesson whose pass condition is the bench, not only its printed lines. */
-export const BENCH_LESSON_ID = '08.1';
-
-/** The bench source a run sends, or `''` for a lesson the bench does not grade. */
-export function benchSourceForLesson(lessonId: string): string {
-  return lessonId === BENCH_LESSON_ID ? FAULT_BENCH_PY : '';
-}
-
-interface BenchUnitSpec {
-  key: keyof FaultBenchReport;
-  label: string;
-  unit: RepairUnit;
-}
-
-const BENCH_UNITS: BenchUnitSpec[] = [
-  { key: 'offset', label: 'encoder zero offset', unit: 'mm' },
-  { key: 'cpr', label: 'encoder CPR scale', unit: 'mm' },
-  { key: 'antiWindup', label: 'anti-windup', unit: '%' },
-  { key: 'gravity', label: 'gravity sign', unit: 'mm' },
-];
-
-export interface BenchGate {
-  /** True only when every unit is at or under its target: the capstone's pass condition. */
-  passed: boolean;
-  repaired: number;
-  total: number;
-  /** One line per unit that missed its target, naming the metric it left behind. */
-  failures: string[];
-  /** The same verdict as one sentence, for the guide and the log. */
-  summary: string;
-}
-
 /**
- * The 08.1 pass condition. A run that fails any graded metric cannot verify the lesson, however its
- * printed lines read; a report that never arrived counts as unproven, not as a pass.
+ * 08.1's harness, as the shared gate sees it: four units a repair must bring under its target. The
+ * units are the pass condition — the page's cards and the runner's verdict both read them here.
  */
-export function benchGate(report: FaultBenchReport | null): BenchGate {
-  const total = BENCH_UNITS.length;
-  if (!report) {
-    return {
-      passed: false,
-      repaired: 0,
-      total,
-      failures: ['the bench did not report: no graded metrics came back from this run'],
-      summary: `0 / ${total} graded repairs at target — the bench did not report.`,
-    };
-  }
-  const failures: string[] = [];
-  for (const unit of BENCH_UNITS) {
-    const target = FAULT_BENCH_TARGETS[unit.key];
-    const metric = report[unit.key];
-    const verdict = repairVerdict(metric, target);
-    if (verdict === 'repaired') continue;
-    if (verdict === 'error') {
-      failures.push(`${unit.label}: call failed — ${metric.error}`);
-      continue;
-    }
-    failures.push(
-      `${unit.label}: ${formatRepairMetric(metric.value, unit.unit)} (target ≤ ${formatRepairMetric(
-        target,
-        unit.unit
-      )})`
-    );
-  }
-  const repaired = total - failures.length;
-  return {
-    passed: failures.length === 0,
-    repaired,
-    total,
-    failures,
-    summary:
-      failures.length === 0
-        ? `${total} / ${total} graded repairs at target.`
-        : `${repaired} / ${total} graded repairs at target — ${failures.join('; ')}.`,
-  };
-}
+export const FAULT_BENCH_HARNESS: LessonHarness = {
+  lessonId: '08.1',
+  title: '08.1 Four-Fault Bench · grades your repairs',
+  action: 'Grade my repairs',
+  units: [
+    { key: 'offset', label: 'encoder zero offset', unit: 'mm', target: TIP_TARGET_MM, direction: 'atMost' },
+    { key: 'cpr', label: 'encoder CPR scale', unit: 'mm', target: TIP_TARGET_MM, direction: 'atMost' },
+    {
+      key: 'antiWindup',
+      label: 'anti-windup',
+      unit: '%',
+      target: OVERSHOOT_TARGET_PCT,
+      direction: 'atMost',
+      digits: 1,
+    },
+    { key: 'gravity', label: 'gravity sign', unit: 'mm', target: TIP_TARGET_MM, direction: 'atMost' },
+  ],
+  source: FAULT_BENCH_PY,
+};

@@ -4,13 +4,10 @@ import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabP
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson } from '../../lessonCoach';
 import { FaultBench08 } from '../FaultBench08';
-import {
-  BENCH_LESSON_ID,
-  FaultBenchReport,
-  benchGate,
-  benchSourceForLesson,
-  parseBenchReport,
-} from '../../faultBenchGrading';
+import type { HarnessReport } from '../../harnessGrading.ts';
+import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
+import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
+import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
 import {
   Play,
@@ -332,14 +329,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [stdout, setStdout] = useState<string>('');
   const [stderr, setStderr] = useState<string>('');
   const [instructorError, setInstructorError] = useState<string>('');
-  // What the 08.1 bench grades: the metrics the learner's own repair functions produce.
-  const [benchReport, setBenchReport] = useState<FaultBenchReport | null>(null);
+  // What a capstone harness grades: the metrics the learner's own functions produce.
+  const [harnessReport, setHarnessReport] = useState<HarnessReport | null>(null);
   const [behaviorCheck, setBehaviorCheck] = useState<'untested' | 'passed' | 'failed'>('untested');
   const [outputCheck, setOutputCheck] = useState<'untested' | 'matched' | 'differs'>('untested');
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [pyodideStatus, setPyodideStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [passStatus, setPassStatus] = useState<
-    'untested' | 'passed' | 'bench_failed' | 'behavior_failed' | 'mismatch' | 'stopped' | 'error'
+    'untested' | 'passed' | 'harness_failed' | 'behavior_failed' | 'mismatch' | 'stopped' | 'error'
   >('untested');
 
   const [localVerified, setLocalVerified] = useState<Record<string, boolean>>(() => {
@@ -443,9 +440,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
-  // What the bench says about the code on screen now; only 08.1 has one, and a `null` report is a
-  // failed gate (unproven), never a pass.
-  const benchResult = currentLesson.id === BENCH_LESSON_ID ? benchGate(benchReport) : null;
+  // What the lesson's harness says about the code on screen now; a `null` report is a failed gate
+  // (unproven), never a pass.
+  const currentHarness = harnessForLesson(currentLesson.id);
+  const harnessResult = currentHarness ? harnessGate(currentHarness, harnessReport) : null;
   const nextHintNumber = revealedHints + 1;
   // Hint 1 is always open. Every hint after it waits for at least one completed run of this
   // lesson, so a learner cannot read the near-solution second hint without trying first.
@@ -471,8 +469,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     if (isRunning || !pendingRunRef.current || passStatus === 'untested') return;
     pendingRunRef.current = false;
     const failed =
-      passStatus === 'bench_failed' && benchResult
-        ? benchResult.summary
+      passStatus === 'harness_failed' && harnessResult
+        ? harnessResult.summary
         : (instructorError || stderr || '').split('\n')[0];
     logEvent({
       kind: 'run',
@@ -482,9 +480,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       ms: Math.round(performance.now() - runStartedAtRef.current),
     });
     if (passStatus === 'passed') logEvent({ kind: 'verified', lesson: selectedId });
-    // `benchReport` is the identity that changes when the gate's verdict can: a fresh gate object
+    // `harnessReport` is the identity that changes when the gate's verdict can: a fresh gate object
     // every render would re-run this effect on every keystroke, which `pendingRunRef` would swallow.
-  }, [isRunning, passStatus, selectedId, instructorError, stderr, benchReport]);
+  }, [isRunning, passStatus, selectedId, instructorError, stderr, harnessReport]);
 
   // Formatting and behaviour are graded separately: the lesson declares how strictly its `stdout` is
   // compared (`normalized` unless its Expected Output is a column-aligned table), and the note under
@@ -521,7 +519,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setStdout('');
     setStderr('');
     setInstructorError('');
-    setBenchReport(null);
+    setHarnessReport(null);
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setPassStatus('untested');
@@ -584,9 +582,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setStdout('');
     setStderr('');
     setInstructorError('');
-    // A report describes the code that produced it: a run that never reaches the bench (a syntax
+    // A report describes the code that produced it: a run that never reaches the harness (a syntax
     // error, a timeout) must not leave the previous run's green cards on screen.
-    setBenchReport(null);
+    setHarnessReport(null);
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setPassStatus('untested');
@@ -658,7 +656,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           runId,
           studentCode: sourceCode,
           instructorTests: lesson.instructorTests,
-          benchSource: benchSourceForLesson(lesson.id),
+          benchSource: harnessSourceForLesson(lesson.id),
           cdnUrl,
           maxSteps,
           timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
@@ -694,22 +692,25 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       const actualErr: string = String(workerOutcome?.stderr || '').trim();
       setStdout(actualOut);
       setStderr(actualErr);
-      const parsedBench = parseBenchReport(workerOutcome?.bench);
-      setBenchReport(parsedBench);
-      // 08.1 is graded by the bench, not only by its printed lines. A repair that misses its target
-      // keeps its real metric on the card *and* keeps the lesson unverified; `null` means the bench
-      // never reported, which is unproven rather than a pass.
-      const bench = lesson.id === BENCH_LESSON_ID ? benchGate(parsedBench) : null;
+      // A capstone is graded by its harness, not only by its printed lines. A number that misses its
+      // target keeps its real value on the card *and* keeps the lesson unverified; `null` means the
+      // harness never reported, which is unproven rather than a pass.
+      const lessonHarness = harnessForLesson(lesson.id);
+      const parsedHarness = lessonHarness
+        ? parseHarnessReport(workerOutcome?.bench, lessonHarness)
+        : null;
+      setHarnessReport(parsedHarness);
+      const harness = lessonHarness ? harnessGate(lessonHarness, parsedHarness) : null;
 
       if (workerOutcome?.runtimeError) {
         setBehaviorCheck('failed');
         if (actualErr.startsWith('AssertionError')) {
           setInstructorError(actualErr);
-          // The learner's own check fired; if the bench names a repair behind it, that metric is the
-          // thing to fix, so it outranks the assertion line. A syntax error or a NameError keeps its
-          // own verdict: the program never got far enough for a repair to be the story.
-          if (bench && !bench.passed) {
-            setPassStatus('bench_failed');
+          // The learner's own check fired; if the harness names a number behind it, that metric is
+          // the thing to fix, so it outranks the assertion line. A syntax error or a NameError keeps
+          // its own verdict: the program never got far enough for a metric to be the story.
+          if (harness && !harness.passed) {
+            setPassStatus('harness_failed');
             return;
           }
           setPassStatus('behavior_failed');
@@ -734,10 +735,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         );
       }
 
-      // The bench outranks the other verdicts for 08.1: the four graded repairs are the capstone's
-      // pass condition, so a card left at 1.20 mm reports that metric instead of a logged assertion.
-      if (bench && !bench.passed) {
-        setPassStatus('bench_failed');
+      // The harness outranks the other verdicts on a capstone: its graded metrics are the pass
+      // condition, so a card left off its target reports that number instead of a logged assertion.
+      if (harness && !harness.passed) {
+        setPassStatus('harness_failed');
         return;
       }
 
@@ -827,7 +828,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   };
   const guideFailed =
-    passStatus === 'bench_failed' ||
+    passStatus === 'harness_failed' ||
     passStatus === 'behavior_failed' ||
     passStatus === 'mismatch' ||
     passStatus === 'error' ||
@@ -839,8 +840,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // An assertion puts its expected/got line first; a traceback puts the useful SyntaxError or
   // NameError last. The guide should show the line a beginner can act on in either case.
   const guideFixLine =
-    passStatus === 'bench_failed'
-      ? benchResult?.failures[0] || 'The bench found a repair that misses its graded metric.'
+    passStatus === 'harness_failed'
+      ? harnessResult?.failures[0] || 'The harness found a number that misses its graded target.'
       : passStatus === 'mismatch'
         ? 'Output differs from the lesson\'s expected output.'
         : passStatus === 'behavior_failed'
@@ -1019,10 +1020,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               <div className="text-[11px] font-mono text-[#f43f5e]">WHAT TO FIX</div>
               <code className="block mt-1 text-xs text-[#fecdd3] break-words">{guideFixLine}</code>
               <p className="text-[11px] text-[#cbd5e1] mt-1">
-                {passStatus === 'bench_failed' ? (
+                {passStatus === 'harness_failed' ? (
                   <>
-                    That is the bench measuring your own repair function, not reading a printed
-                    line. The capstone passes only when all four graded repairs are at target, so
+                    That is the harness measuring what your own functions compute, not reading a
+                    printed line. The capstone passes only when every graded metric is at target, so
                     change that function and press <b>Run &amp; Verify Output</b> again.
                   </>
                 ) : guideShowsExpectedGot ? (
@@ -1284,9 +1285,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
           </div>
 
-          {currentLesson.id === '08.1' && (
+          {currentHarness && currentLesson.id === '08.1' && (
             <FaultBench08
-              report={benchReport}
+              report={harnessReport}
+              grading={isRunning}
+              onGrade={() => runPythonCode(codeRef.current, currentLesson)}
+            />
+          )}
+          {currentHarness && currentLesson.id !== '08.1' && (
+            <LessonHarnessPanel
+              harness={currentHarness}
+              report={harnessReport}
               grading={isRunning}
               onGrade={() => runPythonCode(codeRef.current, currentLesson)}
             />
@@ -1433,15 +1442,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {instructorError}
               </div>
             )}
-            {passStatus === 'bench_failed' && benchResult && benchResult.failures.length > 0 && (
+            {passStatus === 'harness_failed' && harnessResult && harnessResult.failures.length > 0 && (
               <div
-                data-testid="pre-bench-error"
+                data-testid="pre-harness-error"
                 className="mt-2.5 p-2.5 rounded-lg bg-[#0b0f19] border border-[#f43f5e]/50 font-mono text-xs text-[#f43f5e] space-y-1"
               >
                 <div className="text-[11px] text-[#fbbf24]">
-                  Bench: {benchResult.repaired} / {benchResult.total} graded repairs at target
+                  Harness: {harnessResult.met} / {harnessResult.total} graded metrics at target
                 </div>
-                {benchResult.failures.map((line) => (
+                {harnessResult.failures.map((line) => (
                   <div key={line}>{line}</div>
                 ))}
               </div>
@@ -1464,15 +1473,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     <span>PASS · Behavior &amp; Output Verified</span>
                   </span>
                 )}
-                {passStatus === 'bench_failed' && (
+                {passStatus === 'harness_failed' && (
                   <span
-                    data-testid="status-bench-failed"
+                    data-testid="status-harness-failed"
                     className="text-xs font-mono font-bold text-[#f43f5e] flex items-center gap-1"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>
-                      BENCH FAILED · {benchResult?.repaired ?? 0} / {benchResult?.total ?? 4}{' '}
-                      Repairs At Target
+                      HARNESS FAILED · {harnessResult?.met ?? 0} / {harnessResult?.total ?? 0}{' '}
+                      Metrics At Target
                     </span>
                   </span>
                 )}

@@ -20,6 +20,8 @@
  *    separated completion categories (`Executed & Passed in Pyodide WASM` vs `Self-Marked Complete`).
  * 9. Lesson 08.1 passes only when its four-fault bench grades every repair at target: a repair left
  *    10% short keeps its real 1.20 mm on the card and leaves the lesson unverified.
+ * 10. The Tier 3 capstone (`EX.08-capstones.T3.07a`) passes only when its budget bench does: a
+ *    zero-order hold charged double a tick keeps its real 42.7 deg margin and leaves it unverified.
  *
  * Every scenario runs on one page and one browser context, so the runtime each scenario needs is
  * shared rather than rebuilt: the scenarios that must start from zero progress clear the workbench's
@@ -815,7 +817,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
 
     await formattingPage.getByTestId('textarea-python-code').fill(shortRepair);
     await formattingPage.getByTestId('btn-run-verify').click();
-    await formattingPage.getByTestId('status-bench-failed').waitFor({ timeout: 45000 });
+    await formattingPage.getByTestId('status-harness-failed').waitFor({ timeout: 45000 });
 
     assert.equal(
       (await formattingPage.getByTestId('fault-metric-zero-offset').textContent())?.trim(),
@@ -831,7 +833,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       '3 / 4 repaired',
       'the bench header must count three at-target repairs'
     );
-    const benchError = await formattingPage.getByTestId('pre-bench-error').innerText();
+    const benchError = await formattingPage.getByTestId('pre-harness-error').innerText();
     assert(
       benchError.includes('encoder zero offset') && benchError.includes('1.20 mm'),
       `the bench failure must name the unit and its metric; got: ${benchError}`
@@ -850,7 +852,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       JSON.parse(localStorage.getItem('mechalab.learningLog.v1') || '[]')
     );
     const benchRun = benchLog.filter((e) => e.kind === 'run' && e.lesson === '08.1').pop();
-    assert.equal(benchRun?.outcome, 'bench_failed', 'the learning log must record the bench failure');
+    assert.equal(benchRun?.outcome, 'harness_failed', 'the learning log must record the harness failure');
     assert(
       benchRun?.fail?.includes('1.20 mm'),
       `the logged failure must carry the real metric; got: ${benchRun?.fail}`
@@ -872,8 +874,85 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
     console.log('  ok the intended 08.1 repairs put all four cards at target and verify the lesson');
 
+    // 14. The Tier 3 capstone's pass condition is its budget bench. A zero-order hold charged a full
+    //     tick instead of half keeps its real 42.7 deg margin on the row and leaves the lesson
+    //     unverified; the intended functions put all four budgets at target and verify it. The bench
+    //     calls the learner's own functions on inputs the module never prints.
+    await formattingPage.getByTestId('lesson-item-EX.08-capstones.T3.07a').scrollIntoViewIfNeeded();
+    await formattingPage.getByTestId('lesson-item-EX.08-capstones.T3.07a').click();
+    await formattingPage.getByTestId('lesson-harness').waitFor({ timeout: 10000 });
+    await formattingPage.getByTestId('btn-load-solution').click();
+    const budgetSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+    const doubleZoh = budgetSolution.replace(
+      'return 0.5 * ts_us',
+      'return ts_us  # deliberately double the hold'
+    );
+    assert.notEqual(
+      doubleZoh,
+      budgetSolution,
+      'the Tier 3 solution must contain the half-tick zero-order hold this scenario doubles'
+    );
+    const countBeforeBudget = (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim();
+    const budgetVerifiedBefore = Number((countBeforeBudget || '').match(/^(\d+)/)?.[1]);
+    assert.ok(Number.isInteger(budgetVerifiedBefore), `the tally must start with a count, got: ${countBeforeBudget}`);
+
+    await formattingPage.getByTestId('textarea-python-code').fill(doubleZoh);
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.getByTestId('status-harness-failed').waitFor({ timeout: 45000 });
+    assert.equal(
+      (await formattingPage.getByTestId('harness-metric-margin').textContent())?.trim(),
+      '42.7 deg',
+      'a full-tick hold must keep the 42.7 deg margin it really leaves, not the 47.8 deg one'
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('harness-count').textContent())?.trim(),
+      '3 / 4 at target',
+      'the bench must count the three budgets that still pass'
+    );
+    assert(
+      (await formattingPage.getByTestId('harness-row-margin').innerText()).includes('OFF TARGET'),
+      'the eroded margin row must read OFF TARGET'
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('status-assert-passed').count()),
+      0,
+      'a capstone run with an off-target metric must not report a pass'
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+      countBeforeBudget,
+      'a zero-order hold charged double a tick must not verify the Tier 3 capstone'
+    );
+    const budgetLog = await formattingPage.evaluate(() =>
+      JSON.parse(localStorage.getItem('mechalab.learningLog.v1') || '[]')
+    );
+    const budgetRun = budgetLog
+      .filter((e) => e.kind === 'run' && e.lesson === 'EX.08-capstones.T3.07a')
+      .pop();
+    assert.equal(budgetRun?.outcome, 'harness_failed', 'the log must record the budget failure');
+    assert(
+      budgetRun?.fail?.includes('net phase margin: 42.7 deg'),
+      `the logged failure must name the real margin; got: ${budgetRun?.fail}`
+    );
+    console.log('  ok a doubled zero-order hold keeps 42.7 deg and leaves the Tier 3 capstone unverified');
+
+    await formattingPage.getByTestId('btn-load-solution').click();
+    await formattingPage.getByTestId('btn-run-verify').click();
+    await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 45000 });
+    assert.equal(
+      (await formattingPage.getByTestId('harness-count').textContent())?.trim(),
+      '4 / 4 at target',
+      'the intended budget functions must put all four rows at target'
+    );
+    assert.equal(
+      (await formattingPage.getByTestId('runner-verified-count').textContent())?.trim(),
+      `${budgetVerifiedBefore + 1} / ${(countBeforeBudget || '').match(/\/\s*(\d+)/)?.[1]} Verified`,
+      'the same functions with every budget at target must verify the Tier 3 capstone'
+    );
+    console.log('  ok the intended budget functions put all four rows at target and verify the capstone');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass).'
     );
   } finally {
     await browser.close();
