@@ -33,6 +33,8 @@ import generate_sim_route as route  # noqa: E402
 import route_model  # noqa: E402
 
 README = os.path.join(ROOT, "README.md")
+APP_START_HERE = os.path.join(ROOT, "app", "src", "startHere.ts")
+APP_LESSON_DATA = os.path.join(ROOT, "app", "src", "data", "pythonLessonsData.ts")
 SKIP_FILES = {"CHANGELOG.md"}
 
 
@@ -228,6 +230,64 @@ def check_readme_table(f):
     return findings
 
 
+def check_start_here(f):
+    """The landing screen repeats the README's first block; both must name the same Lesson 1.
+
+    A newcomer can arrive at either door - the README or the workbench - and the promise has to be
+    identical: one heading, one Lesson 1 link, one plain-English line. The app's link is built from
+    the generated lesson dataset, so a moved page is caught here rather than by a 404.
+    """
+    findings = []
+    text = read(README)
+    heading = re.search(r"^> \*\*(Start here — your first 2 hours)\*\*$", text, re.M)
+    link = re.search(r"^> \*\*\[(Open Lesson 1: [^\]]+)\]\(([^)]+)\)\*\*$", text, re.M)
+    note = re.search(r"^> (One lesson, one editor, one Run button\.[^\n]*)$", text, re.M)
+    if not (heading and link and note):
+        findings.append(
+            "README.md lost its opening Start here block (heading, Lesson 1 link and one-line "
+            "promise); the workbench landing screen repeats it verbatim, so both must stay"
+        )
+        return findings
+
+    try:
+        app = read(APP_START_HERE)
+        data = read(APP_LESSON_DATA)
+    except OSError as error:
+        findings.append(f"cannot read the workbench's Start here block: {error}")
+        return findings
+
+    for label, value in (
+        ("heading", heading.group(1)),
+        ("link label", link.group(1)),
+        ("note", note.group(1)),
+    ):
+        if f"'{value}'" not in app:
+            findings.append(
+                f"app/src/startHere.ts no longer carries the README's Start here {label} "
+                f"{value!r}; the landing screen would open with different words than the README"
+            )
+
+    target = link.group(2)
+    if target != route_model.STEPS[0]["start"]:
+        findings.append(
+            f"README.md points Lesson 1 at {target!r}, but Step 1 starts at "
+            f"{route_model.STEPS[0]['start']!r}; one of the two is a dead end"
+        )
+    p1 = re.search(r'"id": "P\.1",.*?"path": "([^"]+)"', data, re.S)
+    path = p1.group(1) if p1 else ""
+    if path != target:
+        findings.append(
+            f"the workbench's Lesson 1 is {path!r} while README.md links {target!r}; regenerate "
+            f"app/src/data/pythonLessonsData.ts or fix the link"
+        )
+    if "blob/main/${START_HERE_LESSON_PATH}" not in app:
+        findings.append(
+            "app/src/startHere.ts must build its Lesson 1 URL from START_HERE_LESSON_PATH; a typed "
+            "URL drifts the moment the page moves"
+        )
+    return findings
+
+
 def check_generated_docs(f):
     findings = []
     expected = route.render()
@@ -257,6 +317,7 @@ def run():
     findings += check_quoted_hours(f)
     findings += check_learner_vocabulary(f)
     findings += check_readme_table(f)
+    findings += check_start_here(f)
     findings += check_generated_docs(f)
     return f, findings
 

@@ -11,6 +11,17 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 110: The Start Here Block Reaches the Landing Screen
+
+The README's opening block now also opens the workbench. The default Python tab renders the same
+heading (**Start here — your first 2 hours**), the same Lesson 1 link — built from the generated
+lesson dataset, at `track-p/P.1-variables-and-data-types.md` — and the same one-line promise, so
+whichever door a newcomer opens, the first instruction is identical.
+
+`scripts/check_consistency.py` now fails when the README block, the app's strings, or Lesson 1's
+path disagree. The smoke and browser E2E suites assert the block's position, wording and href, and
+the first-lesson guide no longer repeats "Start here" directly beneath it.
+
 ## [2026-10-19] — Run 109: The First Two Hours, and a Core Total
 
 The README now opens with a single **Start here — your first 2 hours** block: one Lesson 1 link,

@@ -128,7 +128,21 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
 
-    // 0. A first-time visitor lands on Step 1 with a guide that explains the editor, runs the
+    // 0. The landing screen opens with the README's Start here block, and its Lesson 1 link is the
+    //    same page the README links, so the two doors agree on the first thing to do.
+    const startHere = page.getByTestId('start-here');
+    await startHere.waitFor({ timeout: 15000 });
+    assert(
+      (await startHere.innerText()).includes('Start here — your first 2 hours'),
+      "the landing screen must open with the README's Start here heading"
+    );
+    assert.equal(
+      await page.getByTestId('start-here-lesson-link').getAttribute('href'),
+      'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/track-p/P.1-variables-and-data-types.md',
+      'the Start here link must open the same Lesson 1 page the README links'
+    );
+
+    // 0a. A first-time visitor lands on Step 1 with a guide that explains the editor, runs the
     //    starter for them, and turns the failure into a "what to fix" line. This is the whole
     //    first lesson without the README: the assertions are what a newcomer can actually see.
     await page.getByTestId('first-lesson-guide').waitFor({ timeout: 15000 });

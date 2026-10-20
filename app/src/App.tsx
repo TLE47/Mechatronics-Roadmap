@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
+import { StartHereCard } from './components/StartHereCard';
 import { TabArchitecture } from './components/tabs/TabArchitecture';
 import { TabBode } from './components/tabs/TabBode';
 import { TabFOC } from './components/tabs/TabFOC';
@@ -735,6 +736,9 @@ export const App: React.FC = () => {
 
       {/* Main Tab Pane */}
       <main className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4">
+        {/* The landing screen is where a newcomer arrives, so it opens with the README's own
+            "Start here" block: one heading, one Lesson 1 link, one plain-English line. */}
+        {activeTab === 'tab-pyodide' && <StartHereCard />}
         {activeTab !== 'tab-arch' &&
           activeTab !== 'tab-pyodide' &&
           activeTab !== 'tab-placement' &&

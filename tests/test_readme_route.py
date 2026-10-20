@@ -186,5 +186,61 @@ class ConsistencyTests(unittest.TestCase):
         )
 
 
+class StartHereTests(unittest.TestCase):
+    """The README's first block and the workbench landing screen must open the same lesson."""
+
+    def setUp(self):
+        self.facts = checker.facts()
+
+    def _with_readme(self, text):
+        """Run the check against an edited README, then restore the committed one."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "README.md")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(text)
+            original = checker.README
+            checker.README = path
+            try:
+                return checker.check_start_here(self.facts)
+            finally:
+                checker.README = original
+
+    def test_the_landing_screen_repeats_the_readme_block(self):
+        self.assertEqual(
+            checker.check_start_here(self.facts), [],
+            "expected the README's Start here heading, link label, note and Lesson 1 path to be "
+            "the same on the workbench landing screen; a newcomer arriving at either door must "
+            "be told the same first thing",
+        )
+
+    def test_a_drifted_heading_is_caught(self):
+        with open(checker.README, encoding="utf-8") as handle:
+            text = handle.read()
+        findings = self._with_readme(
+            text.replace("Start here — your first 2 hours", "Start here — your first 3 hours")
+        )
+        self.assertTrue(
+            any("heading" in finding for finding in findings),
+            f"expected a README heading the app does not repeat to be reported; got {findings}",
+        )
+
+    def test_a_different_lesson_target_is_caught(self):
+        with open(checker.README, encoding="utf-8") as handle:
+            text = handle.read()
+        findings = self._with_readme(
+            text.replace(
+                "](track-p/P.1-variables-and-data-types.md)",
+                "](track-p/P.2-arithmetic-and-order-of-operations.md)",
+            )
+        )
+        self.assertTrue(
+            any(
+                "P.2-arithmetic-and-order-of-operations" in finding or "Step 1 starts at" in finding
+                for finding in findings
+            ),
+            f"expected a README Lesson 1 link that is not Step 1 to be reported; got {findings}",
+        )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

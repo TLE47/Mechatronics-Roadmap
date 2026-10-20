@@ -101,6 +101,28 @@ export async function runSmokeTests(viteServer) {
       htmlBeginner.includes('runner-verified-count'),
       'Beginner View must default to the Python runner, where Lesson 1 is run'
     );
+    // The landing screen opens with the README's own Start here block: same heading, same promise,
+    // and a Lesson 1 link built from the generated dataset, so the two doors agree.
+    const startHereAt = htmlBeginner.indexOf('data-testid="start-here"');
+    assert(
+      startHereAt >= 0 && startHereAt < htmlBeginner.indexOf('data-testid="first-lesson-guide"'),
+      'The landing screen must open with the Start here block, above the first-lesson guide'
+    );
+    assert(
+      htmlBeginner.includes('Start here — your first 2 hours') &&
+        htmlBeginner.includes(
+          'One lesson, one editor, one Run button. No install, no account, nothing to buy.'
+        ),
+      'The Start here block must repeat the README heading and promise word for word'
+    );
+    assert(
+      htmlBeginner.includes(
+        `href="https://github.com/TLE47/Mechatronics-Roadmap/blob/main/${
+          PYTHON_LESSONS.find((lesson) => lesson.id === 'P.1').path
+        }"`
+      ),
+      "The Start here link must open Lesson 1's page at the same path the README links"
+    );
     assert(
       htmlBeginner.includes('data-testid="first-lesson-guide"'),
       'A first-time visitor must see the guided first lesson above the runner'

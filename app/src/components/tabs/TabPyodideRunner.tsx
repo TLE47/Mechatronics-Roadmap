@@ -811,7 +811,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>
                   {currentLesson.id === 'P.1'
-                    ? 'Start here · Lesson P.1 · Step 1 of 10'
+                    ? 'Lesson P.1 · Step 1 of 10 · open and ready below'
                     : `First run · Lesson ${currentLesson.id} · ${
                         currentLesson.track === 'modules' ? 'graded exercise' : currentLesson.title
                       }`}
