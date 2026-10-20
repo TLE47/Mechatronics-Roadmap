@@ -7,6 +7,8 @@ import { PYTHON_LESSONS } from './data/pythonLessonsData';
 export const START_HERE_HEADING = startHere.heading;
 export const START_HERE_LINK_LABEL = startHere.linkLabel;
 export const START_HERE_NOTE = startHere.note;
+/** The app's own door: the reading link opens GitHub, this button runs the same lesson here. */
+export const START_HERE_RUN_LABEL = 'Run Lesson 1 here →';
 
 /** Once the collapsed strip is dismissed, this is what keeps it gone until the roadmap restores it. */
 export const STORAGE_KEY_START_HERE_DISMISSED = 'mechalab_start_here_dismissed_v1';
@@ -20,3 +22,8 @@ export const START_HERE_LESSON_PATH =
  * so the workbench links the identical path on GitHub and keeps the lesson open here.
  */
 export const START_HERE_LESSON_URL = `https://github.com/TLE47/Mechatronics-Roadmap/blob/main/${START_HERE_LESSON_PATH}`;
+
+/** Any lesson's reading page, from the same `path` the runner already shows. */
+export function lessonPageUrl(path: string): string {
+  return `https://github.com/TLE47/Mechatronics-Roadmap/blob/main/${path}`;
+}

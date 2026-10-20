@@ -3,6 +3,7 @@ import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson } from '../../lessonCoach';
+import { lessonPageUrl } from '../../startHere';
 import { FaultBench08 } from '../FaultBench08';
 import type { HarnessReport } from '../../harnessGrading.ts';
 import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
@@ -1181,6 +1182,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <span className="text-[#38bdf8] font-bold">Lesson {currentLesson.id}</span>
                   <span aria-hidden="true">·</span>
                   <span>{currentLesson.path}</span>
+                  <span aria-hidden="true">·</span>
+                  <a
+                    data-testid="link-lesson-page"
+                    href={lessonPageUrl(currentLesson.path)}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="The GitHub page is the reading copy. This editor is where you type, run and verify; nothing is saved on GitHub."
+                    className="text-[#38bdf8] hover:text-[#7dd3fc] underline underline-offset-2"
+                  >
+                    Read this page on GitHub ↗
+                  </a>
                   {isCurrentVerified && (
                     <>
                       <span aria-hidden="true">·</span>

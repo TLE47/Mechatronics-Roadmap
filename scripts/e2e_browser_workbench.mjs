@@ -145,6 +145,25 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/track-p/P.1-variables-and-data-types.md',
       'the Start here link must open the same Lesson 1 page the README links'
     );
+    // Two doors, two verbs: the reading link leaves for GitHub, and the button stays to run the
+    // same lesson here. Clicking it must not navigate away from the workbench.
+    const runHere = page.getByTestId('btn-start-here-run');
+    assert(
+      (await runHere.innerText()).includes('Run Lesson 1 here'),
+      'the Start here button must say that it runs the lesson here, not that it reads it'
+    );
+    await runHere.click();
+    assert.equal(
+      new URL(page.url()).pathname,
+      new URL(baseUrl).pathname,
+      'the run-here button must not navigate to GitHub'
+    );
+    await page.getByTestId('lesson-item-P.1').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('link-lesson-page').getAttribute('href'),
+      'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/track-p/P.1-variables-and-data-types.md',
+      "the runner's reading link must point at the selected lesson's own page"
+    );
 
     // 0a. A first-time visitor lands on Step 1 with a guide that explains the editor, runs the
     //    starter for them, and turns the failure into a "what to fix" line. This is the whole
@@ -706,8 +725,8 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     const collapsedText = await collapsedStartHere.innerText();
     assert(
       collapsedText.includes('Lesson 1 verified') &&
-        !collapsedText.includes('One lesson, one editor, one Run button'),
-      `the collapsed block must say Lesson 1 is verified and drop the first-timer promise; got: ${collapsedText}`
+        !collapsedText.includes('Read the page, run the code in MechaLab'),
+      `the collapsed block must say Lesson 1 is verified and drop the first-timer copy; got: ${collapsedText}`
     );
     assert(
       (await formattingPage.getByTestId('start-here-lesson-link').getAttribute('href'))?.endsWith(

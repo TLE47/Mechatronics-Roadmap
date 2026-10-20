@@ -109,12 +109,26 @@ export async function runSmokeTests(viteServer) {
       startHereAt >= 0 && startHereAt < htmlBeginner.indexOf('data-testid="first-lesson-guide"'),
       'The landing screen must open with the Start here block, above the first-lesson guide'
     );
+    const sharedNote =
+      'Read the page, run the code in MechaLab. Nothing is installed, nothing is saved on GitHub — ' +
+      'the workbench is where you type, run and verify.';
     assert(
-      htmlBeginner.includes('Start here — your first 2 hours') &&
+      htmlBeginner.includes('Start here — your first 2 hours') && htmlBeginner.includes(sharedNote),
+      'The Start here block must repeat the README heading and note word for word'
+    );
+    assert(
+      htmlBeginner.includes('data-testid="btn-start-here-run"') &&
+        htmlBeginner.includes('Run Lesson 1 here'),
+      'The Start here block must offer the run-in-the-workbench door beside the GitHub link'
+    );
+    assert(
+      htmlBeginner.includes('data-testid="link-lesson-page"') &&
         htmlBeginner.includes(
-          'One lesson, one editor, one Run button. No install, no account, nothing to buy.'
+          `href="https://github.com/TLE47/Mechatronics-Roadmap/blob/main/${
+            PYTHON_LESSONS.find((lesson) => lesson.id === 'P.1').path
+          }"`
         ),
-      'The Start here block must repeat the README heading and promise word for word'
+      'each runner lesson must link its reading page, labelled as the reading copy'
     );
     assert(
       htmlBeginner.includes(
@@ -136,10 +150,9 @@ export async function runSmokeTests(viteServer) {
     );
     assert(
       htmlReturning.includes('Lesson 1 verified') &&
-        !htmlReturning.includes(
-          'One lesson, one editor, one Run button. No install, no account, nothing to buy.'
-        ),
-      'The collapsed block must say Lesson 1 is verified and drop the first-timer promise'
+        !htmlReturning.includes(sharedNote) &&
+        !htmlReturning.includes('data-testid="btn-start-here-run"'),
+      'The collapsed block must say Lesson 1 is verified and drop the first-timer copy and button'
     );
     assert(
       htmlReturning.includes(

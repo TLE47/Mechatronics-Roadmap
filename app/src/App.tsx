@@ -768,6 +768,14 @@ export const App: React.FC = () => {
           <StartHereCard
             lessonOneVerified={!!verifiedLessons['P.1']}
             onDismiss={() => setStartHereDismissed(true)}
+            onStartLesson={() => {
+              // The reading link leaves for GitHub; this button stays and puts Lesson 1 under the
+              // cursor, so the two doors are never confused for each other.
+              setPyodideLessonId('P.1');
+              document
+                .getElementById('python-runner')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
           />
         )}
         {activeTab !== 'tab-arch' &&
@@ -806,13 +814,16 @@ export const App: React.FC = () => {
         {activeTab === 'tab-eskf' && <TabEskf onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
         {activeTab === 'tab-links' && <TabLinkHealth />}
         {activeTab === 'tab-pyodide' && (
-          <TabPyodideRunner
-            initialLessonId={pyodideLessonId}
-            verifiedLessons={verifiedLessons}
-            completedLessons={completedLessons}
-            onMarkLessonVerified={handleMarkLessonVerified}
-            onToggleLessonCompleted={handleToggleLessonCompleted}
-          />
+          // An anchor for the Start here button: it scrolls here rather than opening GitHub.
+          <div id="python-runner" className="scroll-mt-4">
+            <TabPyodideRunner
+              initialLessonId={pyodideLessonId}
+              verifiedLessons={verifiedLessons}
+              completedLessons={completedLessons}
+              onMarkLessonVerified={handleMarkLessonVerified}
+              onToggleLessonCompleted={handleToggleLessonCompleted}
+            />
+          </div>
         )}
         {activeTab === 'tab-placement' && (
           <TabPlacementQuiz

@@ -9,6 +9,21 @@ flowchart LR
     S1["Steps 1-2<br/>Python and circuits"] --> S3["Steps 3-8<br/>one joint, every discipline"] --> S9["Step 9<br/>motion and safe bring-up"] --> S10["Step 10<br/>2-DOF arm"]
 ```
 
+## Read here, run there
+
+The course has two surfaces, and they do different jobs. Use both, in this order:
+
+| Surface | Use it for | What it does not do |
+| :--- | :--- | :--- |
+| The lesson page on GitHub | Reading: the idea, the worked example, the resources, the checklist | Run or grade anything. GitHub is read-only for a learner, so nothing you type there is saved. |
+| [The MechaLab workbench](https://tle47.github.io/Mechatronics-Roadmap/) (Tab 2) | Typing the code, running it, the hint ladder, the graded checks, your progress | Teach the idea; the page carries that. |
+
+Every lesson in Tab 2 shows its own page path with a **Read this page on GitHub ↗** link, and every
+page runs in the same tab, so a learner never has to guess which one to open: read on the page,
+run in the workbench, and the lesson only counts once the workbench verifies it. **Export Progress
+(.md)** and **Export Learning Log (.json)** are the two records of that; neither leaves your browser
+unless you hand it over.
+
 ## Where the ids and depth live
 
 The step-to-folder/id map, the full depth matrix, and the CI checks that keep them aligned are

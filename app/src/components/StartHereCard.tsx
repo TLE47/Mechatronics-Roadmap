@@ -1,10 +1,11 @@
 import React from 'react';
-import { CheckCircle2, X } from 'lucide-react';
+import { CheckCircle2, Play, X } from 'lucide-react';
 import {
   START_HERE_HEADING,
   START_HERE_LESSON_URL,
   START_HERE_LINK_LABEL,
   START_HERE_NOTE,
+  START_HERE_RUN_LABEL,
 } from '../startHere';
 
 interface StartHereCardProps {
@@ -15,11 +16,17 @@ interface StartHereCardProps {
    * needs the full block, and the roadmap tab carries the control that brings it back.
    */
   onDismiss?: () => void;
+  /** Selects Lesson 1 in the editor below and scrolls to it; the reading link stays on GitHub. */
+  onStartLesson?: () => void;
 }
 
 /**
  * The README's first block, on the landing screen. Same heading, same Lesson 1 path, same promise;
  * the link opens a new tab so the runner and the guide below stay where the learner left them.
+ *
+ * Two doors, because they do different jobs: the GitHub page is the reading copy, and the workbench
+ * below is where the code is typed, run and verified. A newcomer should not have to guess which one
+ * to open, so each is labelled with its verb.
  *
  * A newcomer sees all three lines. Once Lesson 1 is verified the block is no longer news, so it
  * collapses to one line that still names the lesson and keeps the link - nothing is lost, and a
@@ -28,6 +35,7 @@ interface StartHereCardProps {
 export const StartHereCard: React.FC<StartHereCardProps> = ({
   lessonOneVerified = false,
   onDismiss,
+  onStartLesson,
 }) => {
   if (lessonOneVerified) {
     return (
@@ -76,16 +84,29 @@ export const StartHereCard: React.FC<StartHereCardProps> = ({
       className="bg-[#06281f] border border-[#34d399]/50 rounded-xl px-5 py-4"
     >
       <h2 className="text-base font-bold text-[#f1f5f9]">{START_HERE_HEADING}</h2>
-      <a
-        data-testid="start-here-lesson-link"
-        href={START_HERE_LESSON_URL}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-block mt-1 text-sm font-semibold text-[#34d399] hover:text-[#6ee7b7] underline underline-offset-4 break-words"
-      >
-        {START_HERE_LINK_LABEL}
-      </a>
-      <p className="text-xs text-[#cbd5e1] mt-1">{START_HERE_NOTE}</p>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <a
+          data-testid="start-here-lesson-link"
+          href={START_HERE_LESSON_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="text-sm font-semibold text-[#34d399] hover:text-[#6ee7b7] underline underline-offset-4 break-words"
+        >
+          {START_HERE_LINK_LABEL}
+        </a>
+        {onStartLesson && (
+          <button
+            onClick={onStartLesson}
+            data-testid="btn-start-here-run"
+            title="Selects Lesson 1 in the editor below. This is where the code runs; the GitHub page is for reading."
+            className="text-sm font-semibold text-[#0b0f19] bg-[#34d399] hover:bg-[#10b981] px-3 py-1 rounded-lg inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <Play className="w-3 h-3 fill-current" aria-hidden="true" />
+            {START_HERE_RUN_LABEL}
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-[#cbd5e1] mt-1.5">{START_HERE_NOTE}</p>
     </section>
   );
 };
