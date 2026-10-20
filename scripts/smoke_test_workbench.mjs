@@ -190,8 +190,8 @@ export async function runSmokeTests(viteServer) {
       htmlRoadmap.includes('data-testid="panel-completion-routes-spine"'),
       'Tab 1 Roadmap must render the Completion Routes, Arm Spine & deeper-scope banner when opened'
     );
-    // A verified learner gets the roadmap's own first step card as one line, expandable again; the
-    // roadmap is also where a dismissed Start here block is restored from.
+    // A learner who finished a pass's own first step gets that card as one line, expandable again.
+    // The roadmap is also where a dismissed Start here block is restored from.
     const htmlRoadmapReturning = cleanSsr(
       ReactDOMServer.renderToString(
         React.createElement(TabArchitecture, {
@@ -199,9 +199,8 @@ export async function runSmokeTests(viteServer) {
           beginnerView: true,
           activeTierPass: 'tier1',
           onSelectTierPass: () => {},
-          completedMilestones: {},
+          completedMilestones: { t1_tr00: true },
           onToggleMilestone: () => {},
-          lessonOneVerified: true,
           startHereDismissed: true,
           onRestoreStartHere: () => {},
         })
@@ -210,8 +209,28 @@ export async function runSmokeTests(viteServer) {
     assert(
       htmlRoadmapReturning.includes('data-testid="step-card-t1_tr00"') &&
         htmlRoadmapReturning.includes('data-collapsed="true"') &&
-        htmlRoadmapReturning.includes('data-testid="btn-step-expand"'),
-      "The roadmap's first step card must collapse to one line once Lesson 1 is verified, and stay expandable"
+        htmlRoadmapReturning.includes('data-testid="btn-step-expand"') &&
+        htmlRoadmapReturning.includes('Step 1 complete'),
+      "The roadmap's first step card must collapse to one line once that pass's first step is done, and stay expandable"
+    );
+    // Completion belongs to the pass that earned it: Tier 1's checked first milestone must not
+    // close Tier 2's card, the way verifying Lesson 1 used to close every pass's card.
+    const htmlRoadmapOtherPass = cleanSsr(
+      ReactDOMServer.renderToString(
+        React.createElement(TabArchitecture, {
+          onLoadPreset: () => {},
+          beginnerView: true,
+          activeTierPass: 'tier2',
+          onSelectTierPass: () => {},
+          completedMilestones: { t1_tr00: true },
+          onToggleMilestone: () => {},
+        })
+      )
+    );
+    assert(
+      htmlRoadmapOtherPass.includes('data-testid="step-card-t2_tr00"') &&
+        !htmlRoadmapOtherPass.includes('data-collapsed="true"'),
+      "Tier 1's completed first step must not collapse Tier 2's first step"
     );
     assert(
       htmlRoadmapReturning.includes('data-testid="btn-restore-start-here"'),

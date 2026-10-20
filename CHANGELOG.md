@@ -11,6 +11,21 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 114: Each Pass Collapses on Its Own First Step
+
+The roadmap's collapsed first card was keyed to Lesson 1 (`P.1`) rather than to the pass on
+screen. Verifying Lesson 1 therefore closed the first card of **every** pass — including Tier 2 and
+Tier 3 before they were started — while checking a roadmap pass's own first milestone closed
+nothing. The card now reads the active pass's first milestone (`l0_m1`, `t1_tr00`, `t2_tr00`,
+`t3_tr00`) from the same `completedMilestones` map the pass counters use, so it closes only when
+that pass's Step 1 is checked, reopens when the check is removed, and says **Step 1 complete**.
+Expansion is kept per pass, so folding one pass's card does not unfold another's.
+
+Smoke renders a completed Tier 1 first step, Tier 2 left whole by it, and the newcomer's whole
+card; the browser E2E verifies Lesson 1 first and asserts the roadmap card is still whole, then
+checks the milestone, expands and folds, switches to Tier 2 to see its card open, and reloads to
+prove the collapsed state persists.
+
 ## [2026-10-19] — Run 113: One Source for the Start Here Block
 
 The README block and the landing card were two typed copies held together by a checker that could

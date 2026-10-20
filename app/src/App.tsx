@@ -789,7 +789,6 @@ export const App: React.FC = () => {
             onSelectTierPass={setActiveTierPass}
             completedMilestones={completedMilestones}
             onToggleMilestone={handleToggleMilestone}
-            lessonOneVerified={!!verifiedLessons['P.1']}
             startHereDismissed={startHereDismissed}
             onRestoreStartHere={handleRestoreStartHere}
             onOpenPyodideLesson={(lessonId) => {

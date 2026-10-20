@@ -31,8 +31,6 @@ interface TabArchitectureProps {
   onSelectTierPass: (pass: ActiveTierPass) => void;
   completedMilestones: Record<string, boolean>;
   onToggleMilestone: (id: string) => void;
-  /** Lesson 1 has been executed and passed, so the pass's first step card closes to one line. */
-  lessonOneVerified?: boolean;
   /** The landing Start here line is hidden; this tab carries the control that restores it. */
   startHereDismissed?: boolean;
   onRestoreStartHere?: () => void;
@@ -46,14 +44,14 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   onSelectTierPass,
   completedMilestones,
   onToggleMilestone,
-  lessonOneVerified = false,
   startHereDismissed = false,
   onRestoreStartHere,
 }) => {
   const [viewMode, setViewMode] = useState<'linear' | 'matrix'>('linear');
   const [advancedColumnsOpen, setAdvancedColumnsOpen] = useState<boolean>(false);
-  // The first step card is the one a returning learner has already read; it stays expandable.
-  const [expandedFirstStep, setExpandedFirstStep] = useState<boolean>(false);
+  // Which passes' first cards the learner has re-opened. Keyed by pass, so expanding one
+  // pass's first step does not unfold another pass's; completion stays the only auto-collapse.
+  const [expandedFirstStep, setExpandedFirstStep] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
   // Advanced View always shows the full matrix. Beginner View shows only the Beginner column
   // until the learner asks for the deeper ones.
@@ -72,6 +70,11 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   const activeSteps = getPassSteps(activeTierPass);
   const activeMeta = TIER_PASS_META[activeTierPass];
   const activeDone = countCompleted(activeSteps);
+  // Each pass has its own first step and its own milestone, so one pass's checked milestone
+  // never closes another pass's card - and Lesson 1 is not a progress signal here at all.
+  const firstStepId = activeSteps[0]?.milestoneId;
+  const firstStepDone = !!firstStepId && !!completedMilestones[firstStepId];
+  const firstStepExpanded = !!expandedFirstStep[activeTierPass];
 
   const passOrder: ActiveTierPass[] = ['level0', 'tier1', 'tier2', 'tier3'];
   const currentPassIdx = passOrder.indexOf(activeTierPass);
@@ -144,6 +147,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             return (
               <button
                 key={passId}
+                data-testid={`btn-pass-card-${passId}`}
                 onClick={() => {
                   onSelectTierPass(passId);
                   setViewMode('linear');
@@ -309,7 +313,10 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
               // Only while searching does the list stop being the pass's own order; collapsing the
               // first row of a filtered list would hide a step the learner typed a filter for.
               const collapseFirstStep =
-                lessonOneVerified && index === 0 && !expandedFirstStep && !searchQuery.trim();
+                firstStepDone &&
+                step.milestoneId === firstStepId &&
+                !firstStepExpanded &&
+                !searchQuery.trim();
 
             if (collapseFirstStep) {
               return (
@@ -321,7 +328,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 >
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-[#34d399]">
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    Lesson 1 verified
+                    Step 1 complete
                   </span>
                   <span aria-hidden="true" className="text-[#475569]">
                     ·
@@ -342,7 +349,9 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       <span>{isChecked ? 'Milestone Completed' : 'Mark Milestone Complete'}</span>
                     </button>
                     <button
-                      onClick={() => setExpandedFirstStep(true)}
+                      onClick={() =>
+                        setExpandedFirstStep((open) => ({ ...open, [activeTierPass]: true }))
+                      }
                       data-testid="btn-step-expand"
                       className="px-2.5 py-1 rounded-md text-[11px] font-semibold text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer transition-colors"
                     >
@@ -356,6 +365,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             return (
               <div
                 key={step.milestoneId}
+                data-testid={`step-card-${step.milestoneId}`}
                 className={`bg-[#111827] border rounded-xl p-5 transition-all ${
                   isChecked ? 'border-[#34d399]/60 bg-[#111827]/90' : 'border-[#334155]'
                 }`}
@@ -371,9 +381,11 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    {lessonOneVerified && index === 0 && (
+                    {firstStepDone && step.milestoneId === firstStepId && (
                       <button
-                        onClick={() => setExpandedFirstStep(false)}
+                        onClick={() =>
+                          setExpandedFirstStep((open) => ({ ...open, [activeTierPass]: false }))
+                        }
                         data-testid="btn-step-collapse"
                         className="px-3 py-1 rounded-md text-xs font-semibold text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer transition-colors"
                       >
