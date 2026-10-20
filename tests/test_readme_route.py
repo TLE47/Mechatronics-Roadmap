@@ -64,6 +64,35 @@ class RouteModelTests(unittest.TestCase):
             "front page and the route page would otherwise describe different courses",
         )
 
+    def test_every_module_is_in_exactly_one_layer_and_the_arm_is_tier1_plus_the_capstone(self):
+        """The arm/depth split is the order the reader is told to follow, so it cannot have gaps."""
+        for step in route_model.facts()["steps"]:
+            arm = {row["id"] for row in step["arm_modules"]}
+            depth = {row["id"] for row in step["depth_modules"]}
+            self.assertEqual(
+                arm & depth, set(),
+                f"expected Step {step['number']} to keep {sorted(arm & depth)} in one layer; "
+                f"a module cannot be taken before and after the arm",
+            )
+            self.assertEqual(
+                arm | depth, {row["id"] for row in step["modules"]},
+                f"expected Step {step['number']}'s layers to cover its modules; the table would "
+                f"otherwise hide or duplicate a page",
+            )
+            for ident in arm:
+                if ident != route_model.ARM_CAPSTONE_ID:
+                    self.assertIn(
+                        ".T1.", ident,
+                        f"expected Step {step['number']}'s arm layer to hold only Tier 1 "
+                        f"modules and the capstone; {ident} is neither",
+                    )
+        for step in route_model.facts()["steps"][2:]:
+            self.assertGreaterEqual(
+                step["arm_module_count"], 1,
+                f"expected Step {step['number']} to have an arm module; without one the arm "
+                f"order skips the system that step is about",
+            )
+
     def test_the_step_hours_are_the_pages_own_metadata(self):
         facts = route_model.facts()
         low = high = 0.0
@@ -191,6 +220,16 @@ class GeneratorTests(unittest.TestCase):
             "| Focused hours |", table,
             "expected the hour column to say focused hours, not elapsed hours; an unqualified "
             "total is the 5-10x underestimate a first-time learner plans against",
+        )
+        self.assertIn(
+            "| Modules (arm + depth) |", table,
+            "expected the module column to name the two passes; without it the sixteen modules "
+            "in Step 3 read as one block to do before hardware",
+        )
+        self.assertIn(
+            "**Two passes, one order.**", table,
+            "expected the table to state the arm-first order; the reader should not have to "
+            "infer it from the counts",
         )
 
 

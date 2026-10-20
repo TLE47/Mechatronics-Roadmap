@@ -321,13 +321,18 @@ assert can_lift is True and math.isclose(math.degrees(angle_rad), 54.0, abs_tol=
     ),
     "S0.0": (
         [
-            "Test compute_flow inversely proportional to opposition and zero guard at opposition <= 0",
-            "Test compute_effort_flow_power (Effort * Flow) across active and zero-flow (closed valve) states",
+            "Test compute_flow inversely proportional to opposition and ValueError at opposition <= 0",
+            "Test compute_effort_flow_power (Effort * Flow) across active and zero-flow (open-loop) states",
         ],
         """import math
 assert math.isclose(compute_flow(12.0, 60.0), 0.20, abs_tol=1e-9)
 assert math.isclose(compute_flow(12.0, 120.0), 0.10, abs_tol=1e-9)
-assert math.isclose(compute_flow(12.0, 0.0), 0.0, abs_tol=1e-9)
+try:
+    compute_flow(12.0, 0.0)
+except ValueError:
+    pass
+else:
+    raise AssertionError("a zero-ohm short must be rejected, not reported as zero flow")
 assert math.isclose(compute_effort_flow_power(12.0, 0.20), 2.40, abs_tol=1e-9)
 assert math.isclose(compute_effort_flow_power(12.0, 0.0), 0.0, abs_tol=1e-9)
 """,
@@ -613,7 +618,7 @@ assert math.isclose(_bh, _b_true, abs_tol=1e-4) and math.isclose(_jh, _j_true, a
     "08.1": (
         [
             "Test fk_2link / ik_2link round-trip on unseen target (0.12, 0.08), figure8_target from spec, and gravity_ff_2link at vertical posture",
-            "Test diagnose_capstone_fault across all 3 R4 broken versions, pack_boss_telemetry 20-byte CRC-8 integrity, and simulate_uart_tx bandwidth drops",
+            "Test diagnose_capstone_fault across all 4 R4 broken versions, pack_boss_telemetry 20-byte CRC-8 integrity, and simulate_uart_tx bandwidth drops",
         ],
         """import math
 _q1u, _q2u = ik_2link(0.12, 0.08)
@@ -625,6 +630,7 @@ _tg1, _tg2 = gravity_ff_2link(math.pi / 2.0, 0.0)
 assert abs(_tg1) < 1e-6 and abs(_tg2) < 1e-6
 assert diagnose_capstone_fault(-0.22, 1.0, 4.0) == "gravity_ff_sign_inverted"
 assert diagnose_capstone_fault(-0.01, 85.0, 4.0) == "wrong_encoder_cpr"
+assert diagnose_capstone_fault(-0.01, 12.0, 4.0) == "encoder_zero_offset"
 assert diagnose_capstone_fault(-0.01, 1.0, 37.2) == "missing_anti_windup"
 assert diagnose_capstone_fault(-0.01, 1.0, 4.0) == "nominal_ok"
 _pkt = pack_boss_telemetry(42, 0.1, -0.2, 0.3, -0.4)

@@ -467,7 +467,9 @@ def render_minimum() -> str:
         "## What the full Core route adds",
         "",
         f"The full route is **{facts['core_low']:g}-{facts['core_high']:g} focused hours**: "
-        f"{len(CORE_MODULES)} required modules and all {facts['core_lesson_count']} lessons "
+        f"{len(CORE_MODULES)} modules ({sum(1 for m in CORE_MODULES if route_model.module_layer(m) == 'arm')} arm + "
+        f"{sum(1 for m in CORE_MODULES if route_model.module_layer(m) == 'depth')} depth) and all "
+        f"{facts['core_lesson_count']} lessons "
         f"({facts['core_page_count']} pages). It is the same arm with the depth that explains why",
         f"it works, not a different project.",
         "",
@@ -503,7 +505,7 @@ def render_readme(text: str | None = None) -> str:
     minimum = minimum_facts()
     hours = friendly_range(facts["low"], facts["high"])
     minimum_hours = friendly_range(minimum["low"], minimum["high"])
-    modules = len(CORE_MODULES)
+    split = route_model.facts()
     extensions = [row for row in module_rows() if row["id"] not in set(CORE_MODULES)]
     ext_low = sum(row["low"] or 0.0 for row in extensions)
     ext_high = sum(row["high"] or 0.0 for row in extensions)
@@ -511,7 +513,11 @@ def render_readme(text: str | None = None) -> str:
     text = _replace_marker(text, "hours", f"**{hours} focused hours**")
     text = _replace_marker(text, "minimum", f"**{minimum_hours} focused hours**")
     text = _replace_marker(text, "minimum-pages", str(minimum["page_count"]))
-    text = _replace_marker(text, "modules", f"**{modules} modules**")
+    text = _replace_marker(
+        text,
+        "modules",
+        f"**{split['arm_module_count']} arm + {split['depth_module_count']} depth modules**",
+    )
     text = _replace_marker(
         text, "extensions", f"**{len(extensions)} optional modules ({ext_hours} focused hours)**"
     )
@@ -535,7 +541,8 @@ def render():
     ext_low = sum(row["low"] or 0.0 for row in extensions)
     ext_high = sum(row["high"] or 0.0 for row in extensions)
     ext_hours = fmt(round(ext_low, 2), round(ext_high, 2))
-    core_lessons = route_model.facts()["lesson_count"]
+    split = route_model.facts()
+    core_lessons = split["lesson_count"]
 
     lines = [
         "# The simulation route: what is required, what is optional",
@@ -545,18 +552,22 @@ def render():
         "     `typical_hours`, `slow_learner_hours`); the second column of a range is the",
         "     slow-learner figure. They exclude setup, debugging and re-reading. -->",
         "",
-        "Finishing the **full** course means finishing **the Core route** below. Everything under",
-        "Extensions is real, graded and badgeable - it is simply not required, so a learner can",
-        "stop at Core completion and still hold every skill the Core names.",
+        "The ten steps come in **two layers, and the order between them is fixed**: the arm layer",
+        "first, then the depth layer. The **arm layer** is every Tier 1 bridge plus the capstone;",
+        "take Steps 1-10 in order and stop at the working arm. The **depth layer** is every Tier 2",
+        "and Tier 3 module; return to Step 3 only after the arm, then take the depth modules in",
+        "the same step order. The depth layer is optional. Extensions are a third, further step",
+        "out: still graded, in neither layer.",
         "",
-        "**Two finish lines, both real.** The minimum viable finish - Track P, Stage 0, every",
-        "Tier 1 bridge, the capstone's own prerequisites and the capstone - builds the same arm",
-        "in about half the focused hours, page by page in [`MINIMUM.md`](MINIMUM.md). The Core",
-        "route below is the full course: the same arm with the Tier 2/3 depth modules.",
+        "**Two finish lines, both real.** The arm finish - Track P, Stage 0, every arm module,",
+        "the capstone's own prerequisites and the capstone - is [`MINIMUM.md`](MINIMUM.md) page by",
+        "page. The full course is the arm plus the depth layer; the depth layer is what adds the",
+        "explanation, not a prerequisite for the arm.",
         "",
         f"**Core total: {friendly_range(facts['low'], facts['high'])} focused hours** for "
-        f"{len(CORE_MODULES)} required modules and all {core_lessons} lessons. Extensions add "
-        f"{ext_hours} focused hours and are optional.",
+        f"{len(CORE_MODULES)} modules ({split['arm_module_count']} arm + "
+        f"{split['depth_module_count']} depth) and all {core_lessons} lessons. "
+        f"Extensions add {ext_hours} focused hours and are optional.",
         "",
         f"**Route status: `{ROUTE_STATUS}`** — {STATUS_SENTENCE[ROUTE_STATUS]}.",
         "",
@@ -565,11 +576,13 @@ def render():
         "",
         "```mermaid",
         "flowchart LR",
-        '    Core["Core route<br/>required"] --> Done["Course complete"]',
-        '    Ext["Extensions<br/>optional, still graded"] -.->|"adds hours, costs no requirement"| Done',
+        '    Arm["Arm layer<br/>Steps 3-10, required"] --> ArmDone["Working arm<br/>a real finish"]',
+        '    ArmDone --> Depth["Depth layer<br/>same step order, optional"]',
+        '    Depth --> Done["Full course"]',
+        '    Ext["Extensions<br/>a further step out, still graded"] -.-> Done',
         "```",
         "",
-        "## Core route (required)",
+        "## Core route: arm layer, then depth layer",
         "",
         "| Stage | Item | Focused hours |",
         "| :--- | :--- | ---: |",
@@ -592,12 +605,20 @@ def render():
         for row in lessons:
             lines.append(f"| {label} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
         for row in rows:
-            lines.append(f"| {label} | `{row['id']}` {row['title']} | {fmt(row['low'], row['high'])} |")
+            layer = route_model.module_layer(row["id"])
+            lines.append(
+                f"| {label} | `{row['id']}` {row['title']} **· {layer}** | "
+                f"{fmt(row['low'], row['high'])} |"
+            )
         parts = []
         if lessons:
             parts.append(f"{len(lessons)} lesson{'s' if len(lessons) != 1 else ''}")
-        if rows:
-            parts.append(f"{len(rows)} module{'s' if len(rows) != 1 else ''}")
+        arm_count = sum(1 for row in rows if route_model.module_layer(row["id"]) == "arm")
+        depth_count = len(rows) - arm_count
+        if arm_count:
+            parts.append(f"{arm_count} arm module{'s' if arm_count != 1 else ''}")
+        if depth_count:
+            parts.append(f"{depth_count} depth module{'s' if depth_count != 1 else ''}")
         step_low, step_high = rounded[str(step["number"])]
         lines.append(
             f"| {label} | **{' + '.join(parts)}, together** | ≈{step_low}–{step_high} |"
@@ -610,9 +631,13 @@ def render():
             + "; add them to the right step in scripts/route_model.py"
         )
 
+    minimum = minimum_facts()
     lines += [
-        f"| **Core total** | **{len(CORE_MODULES)} modules + all {len(route_model.facts()['steps'])} steps' lessons** | "
-        f"**{fmt(facts['low'], facts['high'])}** |",
+        f"| **Arm finish (minimum list)** | **{minimum['page_count']} pages: "
+        f"{minimum['lesson_count']} lessons + {minimum['module_count']} arm modules** | "
+        f"**{fmt(minimum['low'], minimum['high'])}** |",
+        f"| **Core total** (arm + depth) | **{len(CORE_MODULES)} modules + all "
+        f"{len(route_model.facts()['steps'])} steps' lessons** | **{fmt(facts['low'], facts['high'])}** |",
         "",
         "These are **focused hours**: time with the page open, excluding setup, debugging and",
         "re-reading. The low end is every page's `est_hours` / `typical_hours`; the high end is",
@@ -645,14 +670,14 @@ def render():
         "",
         "## Why this split",
         "",
-        "- Every practice module in Steps 3-8 is required because it supplies the plant, the units or",
-        "  the tool the next step assumes.",
-        "- The deeper modules are required because the last step's project uses them: the covariance",
-        "  and ESKF work sits on the linear-algebra and estimation line, and the constrained-control",
-        "  module sits on the control line.",
-        "- The advanced half of the course is one depth line - rotation foundations, Joseph",
-        "  covariance, ESKF reset, constrained control, one simulation capstone - so a learner reaches",
-        "  a working estimation-and-safety stack without first finishing every capstone.",
+        "- **The arm layer is what the arm needs.** Every Tier 1 bridge in Steps 3-9 supplies the",
+        "  plant, the units or the tool the next step assumes, and the capstone consumes them.",
+        "- **The depth layer is a second pass, not a prerequisite.** It returns to Track 00 for the",
+        "  Tier 2 foundations ladder, then follows the same step order through each track's Tier 2",
+        "  work and the Tier 3 depth line. Nothing the arm checks depends on it.",
+        "- **The order is the one every track already states.** `00-foundations/README.md` says to",
+        "  finish the Tier 1 ladder, move horizontally through Tiers 1, and return for Tier 2 only",
+        "  after the Tier 1 boss; this page is that rule written once for the whole course.",
         "",
         f"## Why {len(OPTIONAL_REASONS)} modules are optional",
         "",

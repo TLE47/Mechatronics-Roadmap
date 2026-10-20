@@ -53,6 +53,29 @@ class SimRouteTests(unittest.TestCase):
             "the page being regenerated - run python3 scripts/generate_sim_route.py",
         )
 
+    def test_the_route_labels_the_arm_and_depth_layers_and_states_the_order(self):
+        """The split is only useful if a reader can see it on every module row."""
+        self.assertIn(
+            "## Core route: arm layer, then depth layer", self.doc,
+            "expected the route's section heading to name the order; without it the Tier 2/3 "
+            "rows still read as required before the arm",
+        )
+        self.assertIn(
+            "**· arm**", self.doc,
+            "expected arm module rows to be labelled; an unlabelled Tier 1 row leaves the "
+            "reader guessing which modules finish the arm",
+        )
+        self.assertIn(
+            "**· depth**", self.doc,
+            "expected depth rows to be labelled optional; without the label the table is the "
+            "contradiction it used to be",
+        )
+        self.assertIn(
+            "Arm finish (minimum list)", self.doc,
+            "expected the arm's own finish line on the route page, so a learner can stop there "
+            "without reading the depth rows as unfinished business",
+        )
+
     def test_every_module_appears_exactly_once(self):
         """A module in neither table is a module the learner is never told about."""
         on_disk = sorted(row["id"] for row in gen.module_rows())
@@ -102,11 +125,18 @@ class SimRouteTests(unittest.TestCase):
             for row in gen.track_rows(pattern, stop_before):
                 low += row["low"]
                 high += row["high"]
-        match = re.search(r"\*\*([\d.]+)-([\d.]+)\*\* \|", self.doc)
+        core_line = next(
+            (line for line in self.doc.splitlines() if "**Core total**" in line), None
+        )
+        self.assertIsNotNone(
+            core_line,
+            f"expected a `**Core total**` row in {DOC}; without it the route states no total - "
+            f"check the table was not reformatted",
+        )
+        match = re.search(r"\*\*([\d.]+)-([\d.]+)\*\*", core_line)
         self.assertIsNotNone(
             match,
-            f"expected a `**low-high** |` Core total row in {DOC}; without it the route states "
-            f"no total - check the table was not reformatted",
+            f"expected the Core total row to carry a `low-high` figure; got {core_line!r}",
         )
         self.assertAlmostEqual(
             low, float(match.group(1)), places=2,
@@ -164,11 +194,14 @@ class SimRouteTests(unittest.TestCase):
 
         # The counts a newcomer reads must be the generated ones too: a moved module is exactly the
         # change that leaves an old count standing while the table says otherwise.
+        split = gen.route_model.facts()
         self.assertIn(
-            f"<!-- sim-route:modules -->**{len(gen.CORE_MODULES)} modules**<!-- /sim-route -->",
+            f"<!-- sim-route:modules -->**{split['arm_module_count']} arm + "
+            f"{split['depth_module_count']} depth modules**<!-- /sim-route -->",
             readme,
-            f"expected README.md's module count marker to carry the required count "
-            f"({len(gen.CORE_MODULES)}); a hand-typed count is what drifts when a module moves",
+            f"expected README.md's module marker to carry the arm/depth split "
+            f"({split['arm_module_count']} + {split['depth_module_count']}); a hand-typed count "
+            f"is what drifts when a module moves",
         )
         step_facts = gen.route_model.facts()
         self.assertIn(
@@ -292,11 +325,18 @@ class SimRouteTests(unittest.TestCase):
 
     def test_the_required_module_count_is_the_route_count(self):
         """No pinned literal: the route is the only expectation, so moving a module needs one edit."""
-        required = len(gen.CORE_MODULES)
+        split = gen.route_model.facts()
         self.assertIn(
-            f"<!-- sim-route:modules -->**{required} modules**<!-- /sim-route -->", self.readme,
-            f"expected README.md to carry the route's own required-module count ({required}); "
-            f"a hand-typed 42 is exactly the drift the marker exists to stop",
+            f"<!-- sim-route:modules -->**{split['arm_module_count']} arm + "
+            f"{split['depth_module_count']} depth modules**<!-- /sim-route -->", self.readme,
+            f"expected README.md to carry the route's own arm/depth split "
+            f"({split['arm_module_count']} + {split['depth_module_count']}); a hand-typed 42 is "
+            f"exactly the drift the marker exists to stop",
+        )
+        self.assertEqual(
+            split["arm_module_count"] + split["depth_module_count"], len(gen.CORE_MODULES),
+            "expected every Core module to be in exactly one layer; otherwise the split hides a "
+            "module the route still requires",
         )
 
     def test_the_minimum_document_matches_the_pages(self):

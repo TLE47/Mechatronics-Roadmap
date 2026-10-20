@@ -54,19 +54,22 @@ def _friendly(low, high):
 
 
 def render_table():
-    """The 10-step table: what a learner can do, how many pages, how many focused hours."""
+    """The 10-step table: two ordered passes, the pages in each, and their focused hours."""
     facts = route_model.facts()
     # Whole hours, allocated so the ten rows add to the total below; the exact sums stay in
     # docs/SIM_ROUTE.md, and the same allocation is what that page's step rows show.
     rounded = generate_sim_route.rounded_step_ranges()
     lines = [
-        "| Step | What you can do when it is done | Lessons | Modules | Focused hours |",
+        "| Step | What you can do when it is done | Lessons | Modules (arm + depth) | Focused hours |",
         "| :--- | :--- | ---: | ---: | ---: |",
     ]
     for row in facts["steps"]:
         title = row["title"]
         href = route_model.first_lesson_href_from_row(row)
-        modules = str(row["module_count"]) if row["module_count"] else "—"
+        if row["depth_module_count"]:
+            modules = f"{row['arm_module_count']} + {row['depth_module_count']}"
+        else:
+            modules = str(row["arm_module_count"]) if row["arm_module_count"] else "—"
         low, high = rounded[str(row["number"])]
         lines.append(
             f"| **[{row['number']} · {title}]({href})** | {row['outcome']} | "
@@ -74,8 +77,15 @@ def render_table():
         )
     lines.append(
         f"| **10 steps** | **A finished simulated arm, and the checks to prove it** | "
-        f"**{facts['lesson_count']}** | **{facts['module_count']}** | "
+        f"**{facts['lesson_count']}** | "
+        f"**{facts['arm_module_count']} + {facts['depth_module_count']}** | "
         f"**{_friendly(facts['low'], facts['high'])}** |"
+    )
+    lines.append("")
+    lines.append(
+        "**Two passes, one order.** Take the **arm** module in Steps 3–10 first: that "
+        "is the arm finish. Then return to Step 3 and take the **depth** modules in the same step "
+        "order. The depth pass is optional, and the hours column counts both passes."
     )
     lines.append("")
     lines.append(

@@ -337,7 +337,7 @@ def main(argv=None):
     else:
         print(
             f"consistent: {f['steps']['step_count']} steps, {f['lessons']} lessons, "
-            f"{f['required_modules']} required + {f['optional_modules']} optional modules, "
+            f"{f['required_modules']} core + {f['optional_modules']} optional modules, "
             f"{f['core_low']:g}-{f['core_high']:g} hours"
         )
     return 1 if findings else 0

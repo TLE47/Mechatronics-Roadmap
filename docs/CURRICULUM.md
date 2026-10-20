@@ -28,10 +28,12 @@ validate). The mapping is fixed here so a page never has to explain it twice.
 | 9 | [`06-robotics-and-autonomy/`](../06-robotics-and-autonomy/README.md), [`07-systems-hil-and-production/`](../07-systems-hil-and-production/README.md) | Plan motion and bring it up safely | `06.1`, `07.1`, `T1.06a`, `T1.07a`, `T2.07a` |
 | 10 | [`08-capstone-projects/`](../08-capstone-projects/README.md) | Put it together: the 2-DOF arm | `08.1`, `T3.07a` |
 
-The required set is exactly `scripts/route_model.py`'s `STEPS`; `scripts/generate_sim_route.py`
-holds the same ids in `CORE_MODULES`. `scripts/check_consistency.py` fails if the two lists
-disagree, if a step's lessons or hours change without the README being regenerated, or if a
-learner-facing page uses a second name for a step.
+The ten-step model is exactly `scripts/route_model.py`'s `STEPS`; `scripts/generate_sim_route.py`
+holds the same ids in `CORE_MODULES`. Each step's modules are split into an **arm** layer
+(Tier 1 plus the capstone) and a **depth** layer (Tier 2/3); the depth layer is taken in the
+same order after the arm. `scripts/check_consistency.py` fails if the two lists disagree, if a
+step's lessons or hours change without the README being regenerated, or if a learner-facing
+page uses a second name for a step.
 
 ## The full depth matrix
 

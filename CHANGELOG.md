@@ -11,6 +11,38 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 117: One Order, a Real Short-Circuit, and a Diagnosis You Must Infer
+
+Three findings from an external read-through, all about what the course teaches by structure rather
+than by copy.
+
+**One learning order.** The ten-step table used to list each step's Tier 1 and Tier 2/3 modules in
+one block, so Step 3's sixteen modules read as "finish the Tier 2 foundations before hardware" —
+while `00-foundations/README.md` and every track README said the opposite. Each step now has an
+**arm** layer (Tier 1 plus the capstone) and a **depth** layer (Tier 2/3). The README table shows
+`arm + depth` counts and says: arm modules in Steps 3–10 first, then the depth modules in the same
+step order. `SIM_ROUTE.md` labels every module row `· arm` or `· depth`, adds the arm finish, and
+stops calling the depth layer required. The arm finish is still `MINIMUM.md`; the full course is
+still 200–290 hours, now honestly split 17 arm + 23 depth modules.
+
+**A short is not zero flow.** `S0.0`'s supplied `compute_flow` returned `0.0` for zero or negative
+resistance, which teaches that a short draws no current. It now raises `ValueError` with a message
+saying a short is outside the model; the hint ladder, full solution, instructor test and common
+mistakes say why an open valve is not a zero-ohm resistor.
+
+**Diagnosis without the decision table.** `08.1`'s TODO used to hand over the three thresholds and
+their labels. It now gives four broken units' observable signatures and asks the learner to choose
+the boundaries; the fourth (`encoder_zero_offset`, a small constant tip error) is new, and the full
+solution is still available as one worked calibration.
+
+Verified: `generate_sim_route`, `generate_readme_counts`, `generate_start_here` `--check` current;
+`check_consistency`, `validate_modules`, `lint_assertions` clean; `npm run lint`, `build`, `smoke`
+and the five-suite `test:workbench` pass; 315 Python tests OK (1 skipped). The two changed lesson
+solutions and their generated instructor tests were executed directly: S0.0 rejects a zero-ohm
+short, and 08.1 classifies all four cases.
+
+---
+
 ## [2026-10-19] — Run 116: Hints After a Run, Hours That Add Up, and a Named P.13 Gap
 
 Three polish issues from a read-through, none of them a broken lesson.
@@ -193,7 +225,7 @@ newcomer had to decode before finding a lesson. It is now three lines: a link to
 sentence naming the finished arm, and the time and cost. The ten-step table is generated from
 `scripts/route_model.py`; the tier/pass matrix, CI details and optional modules moved to
 [`docs/ROUTE.md`](docs/ROUTE.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) and
-[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 9 KB.
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 10 KB.
 
 Two contradictions surfaced while generating the counts:
 

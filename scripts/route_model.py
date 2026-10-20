@@ -252,14 +252,32 @@ def step_optional(step):
     return [modules[ident] for ident in step["optional"] if ident in modules]
 
 
+# The arm layer is every Tier 1 bridge plus the final capstone; the depth layer is every other
+# module in the step. The split is what makes the order unambiguous: the arm is taken in Steps
+# 1-10 first, the depth layer is a second pass in the same step order, and 00-foundations says
+# exactly that. Without it, Step 3's sixteen modules read as "do Tier 2 before hardware".
+ARM_CAPSTONE_ID = "08-capstones.T3.07a"
+
+
+def module_layer(ident):
+    """`arm` for a Tier 1 bridge or the capstone, `depth` for Tier 2/3 practice."""
+    return "arm" if ident == ARM_CAPSTONE_ID or ".T1." in ident else "depth"
+
+
 def step_facts(step):
-    """One row: lesson count, required module count, hours, first lesson link."""
+    """One row: lessons, arm and depth modules, hours, first lesson link."""
     lessons = step_lessons(step)
     modules = step_modules(step)
+    arm = [row for row in modules if module_layer(row["id"]) == "arm"]
+    depth = [row for row in modules if module_layer(row["id"]) == "depth"]
     low = high = 0.0
     for row in lessons + modules:
         low += row["low"] or 0.0
         high += row["high"] or 0.0
+    arm_low = sum(row["low"] or 0.0 for row in lessons + arm)
+    arm_high = sum(row["high"] or 0.0 for row in lessons + arm)
+    depth_low = sum(row["low"] or 0.0 for row in depth)
+    depth_high = sum(row["high"] or 0.0 for row in depth)
     return {
         "number": step["number"],
         "slug": step["slug"],
@@ -268,11 +286,19 @@ def step_facts(step):
         "start": step["start"],
         "lessons": lessons,
         "modules": modules,
+        "arm_modules": arm,
+        "depth_modules": depth,
         "optional": step_optional(step),
         "lesson_count": len(lessons),
         "module_count": len(modules),
+        "arm_module_count": len(arm),
+        "depth_module_count": len(depth),
         "low": round(low, 2),
         "high": round(high, 2),
+        "arm_low": round(arm_low, 2),
+        "arm_high": round(arm_high, 2),
+        "depth_low": round(depth_low, 2),
+        "depth_high": round(depth_high, 2),
         "hours": _fmt_range(round(low, 2), round(high, 2)),
     }
 
@@ -285,6 +311,8 @@ def facts():
         "step_count": len(steps),
         "lesson_count": sum(row["lesson_count"] for row in steps),
         "module_count": sum(row["module_count"] for row in steps),
+        "arm_module_count": sum(row["arm_module_count"] for row in steps),
+        "depth_module_count": sum(row["depth_module_count"] for row in steps),
         "optional_count": sum(len(row["optional"]) for row in steps),
         "low": round(sum(row["low"] for row in steps), 2),
         "high": round(sum(row["high"] for row in steps), 2),

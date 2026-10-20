@@ -82,7 +82,7 @@ overhead the README explains (5x focused hours) and plan **1.5-2.5 years**; at 1
 
 ## What the full Core route adds
 
-The full route is **200.35-290 focused hours**: 40 required modules and all 48 lessons (88 pages). It is the same arm with the depth that explains why
+The full route is **200.35-290 focused hours**: 40 modules (17 arm + 23 depth) and all 48 lessons (88 pages). It is the same arm with the depth that explains why
 it works, not a different project.
 
 Page-by-page totals for the full route are in `docs/SIM_ROUTE.md`.
