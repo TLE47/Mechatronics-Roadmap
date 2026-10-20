@@ -78,7 +78,7 @@ flowchart LR
 | `06-robotics.T2.06a` | `can_fd_mit_impedance_packet_packing` | 2 | 3. Formalization, 7. Checkpoint |
 | `06-robotics.T3.06a` | `jacobian_transpose_cartesian_impedance` | 2 | 5. Exercise, 8. Common mistakes |
 | `07-systems.T1.07a` | `ten_step_power_on_bringup` | 2 | 1. Why it matters, 5. Exercise |
-| `07-systems.T1.07a` | `rc_cutoff_phase_lag` | 13 | 3. Formalization, 5. Exercise, 7. Checkpoint |
+| `07-systems.T1.07a` | `rc_cutoff_phase_lag` | 17 | 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 7. Checkpoint |
 | `07-systems.T3.06a` | `opc_ua_industrial_telemetry` | 30 | 1. Why it matters, 2. Intuition first, 3. Formalization, 4. Worked example, 5. Exercise, 6. Simulation path, 7. Checkpoint, 8. Common mistakes, 9. Resources |
 
 ## What each decision changes

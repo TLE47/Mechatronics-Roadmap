@@ -225,10 +225,12 @@
       "page": "07-systems.T1.07a",
       "concept": "rc_cutoff_phase_lag",
       "decision": "keep",
-      "core": "cutoff",
-      "lines": 13,
+      "core": "lag",
+      "lines": 17,
       "sections": [
+        "2. Intuition first",
         "3. Formalization",
+        "4. Worked example",
         "5. Exercise",
         "7. Checkpoint"
       ]
