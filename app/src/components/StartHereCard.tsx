@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, X } from 'lucide-react';
 import {
   START_HERE_HEADING,
   START_HERE_LESSON_URL,
@@ -10,6 +10,11 @@ import {
 interface StartHereCardProps {
   /** Lesson 1 has been executed and passed; the block then closes to a single line. */
   lessonOneVerified?: boolean;
+  /**
+   * Dismisses the collapsed line for good. Only the collapsed state offers this: a newcomer still
+   * needs the full block, and the roadmap tab carries the control that brings it back.
+   */
+  onDismiss?: () => void;
 }
 
 /**
@@ -20,7 +25,10 @@ interface StartHereCardProps {
  * collapses to one line that still names the lesson and keeps the link - nothing is lost, and a
  * returning learner is not made to scroll past a first-timer's banner.
  */
-export const StartHereCard: React.FC<StartHereCardProps> = ({ lessonOneVerified = false }) => {
+export const StartHereCard: React.FC<StartHereCardProps> = ({
+  lessonOneVerified = false,
+  onDismiss,
+}) => {
   if (lessonOneVerified) {
     return (
       <section
@@ -36,15 +44,28 @@ export const StartHereCard: React.FC<StartHereCardProps> = ({ lessonOneVerified 
           ·
         </span>
         <h2 className="text-xs font-normal text-[#94a3b8]">{START_HERE_HEADING}</h2>
-        <a
-          data-testid="start-here-lesson-link"
-          href={START_HERE_LESSON_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="ml-auto text-xs font-semibold text-[#34d399] hover:text-[#6ee7b7] underline underline-offset-4 break-words"
-        >
-          {START_HERE_LINK_LABEL}
-        </a>
+        <div className="ml-auto flex items-center gap-2.5">
+          <a
+            data-testid="start-here-lesson-link"
+            href={START_HERE_LESSON_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-semibold text-[#34d399] hover:text-[#6ee7b7] underline underline-offset-4 break-words"
+          >
+            {START_HERE_LINK_LABEL}
+          </a>
+          {onDismiss && (
+            <button
+              onClick={onDismiss}
+              data-testid="btn-dismiss-start-here"
+              title="Hide this line. The roadmap tab can bring it back."
+              aria-label="Dismiss the Start here line"
+              className="p-1 rounded text-[#94a3b8] hover:text-[#f1f5f9] border border-transparent hover:border-[#334155] cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          )}
+        </div>
       </section>
     );
   }

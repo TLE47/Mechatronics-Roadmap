@@ -20,6 +20,7 @@ import {
   Compass,
   Grid,
   ListOrdered,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface TabArchitectureProps {
@@ -30,6 +31,11 @@ interface TabArchitectureProps {
   onSelectTierPass: (pass: ActiveTierPass) => void;
   completedMilestones: Record<string, boolean>;
   onToggleMilestone: (id: string) => void;
+  /** Lesson 1 has been executed and passed, so the pass's first step card closes to one line. */
+  lessonOneVerified?: boolean;
+  /** The landing Start here line is hidden; this tab carries the control that restores it. */
+  startHereDismissed?: boolean;
+  onRestoreStartHere?: () => void;
   onOpenPyodideLesson?: (lessonId: string) => void;
 }
 
@@ -40,9 +46,14 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   onSelectTierPass,
   completedMilestones,
   onToggleMilestone,
+  lessonOneVerified = false,
+  startHereDismissed = false,
+  onRestoreStartHere,
 }) => {
   const [viewMode, setViewMode] = useState<'linear' | 'matrix'>('linear');
   const [advancedColumnsOpen, setAdvancedColumnsOpen] = useState<boolean>(false);
+  // The first step card is the one a returning learner has already read; it stays expandable.
+  const [expandedFirstStep, setExpandedFirstStep] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   // Advanced View always shows the full matrix. Beginner View shows only the Beginner column
   // until the learner asks for the deeper ones.
@@ -82,6 +93,15 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             <p className="text-xs text-[#94a3b8] mt-0.5">
               Instead of getting stuck in graduate math on Track 00 before ever touching a motor, complete a full horizontal pass from Track 00 to Track 08 at Tier 1, build your first robot, and then level up to Tier 2 and Tier 3.
             </p>
+            {startHereDismissed && onRestoreStartHere && (
+              <button
+                onClick={onRestoreStartHere}
+                data-testid="btn-restore-start-here"
+                className="mt-2 px-3 py-1 rounded-md text-xs font-semibold bg-[#06281f] text-[#34d399] border border-[#34d399]/50 hover:bg-[#0b3a2c] cursor-pointer transition-colors"
+              >
+                Show the Start here block
+              </button>
+            )}
           </div>
 
           {/* View Mode Switcher */}
@@ -286,6 +306,52 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             })
             .map((step, index) => {
               const isChecked = !!completedMilestones[step.milestoneId];
+              // Only while searching does the list stop being the pass's own order; collapsing the
+              // first row of a filtered list would hide a step the learner typed a filter for.
+              const collapseFirstStep =
+                lessonOneVerified && index === 0 && !expandedFirstStep && !searchQuery.trim();
+
+            if (collapseFirstStep) {
+              return (
+                <div
+                  key={step.milestoneId}
+                  data-testid={`step-card-${step.milestoneId}`}
+                  data-collapsed="true"
+                  className="bg-[#111827] border border-[#34d399]/40 rounded-lg px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2"
+                >
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-[#34d399]">
+                    <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    Lesson 1 verified
+                  </span>
+                  <span aria-hidden="true" className="text-[#475569]">
+                    ·
+                  </span>
+                  <span className="text-xs font-mono text-[#94a3b8]">{step.stepNumber}</span>
+                  <span className="text-xs font-semibold text-[#f1f5f9]">{step.trackTitle}</span>
+                  <div className="ml-auto flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => onToggleMilestone(step.milestoneId)}
+                      data-testid={`btn-milestone-${step.milestoneId}`}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1.5 border transition-colors cursor-pointer ${
+                        isChecked
+                          ? 'bg-[#34d399]/20 border-[#34d399] text-[#34d399]'
+                          : 'bg-[#1e293b] border-[#334155] text-[#cbd5e1] hover:border-[#38bdf8]'
+                      }`}
+                    >
+                      {isChecked ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span>{isChecked ? 'Milestone Completed' : 'Mark Milestone Complete'}</span>
+                    </button>
+                    <button
+                      onClick={() => setExpandedFirstStep(true)}
+                      data-testid="btn-step-expand"
+                      className="px-2.5 py-1 rounded-md text-[11px] font-semibold text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer transition-colors"
+                    >
+                      Show details
+                    </button>
+                  </div>
+                </div>
+              );
+            }
 
             return (
               <div
@@ -304,18 +370,29 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                     <span className="text-[#34d399]">{step.deliverableGate}</span>
                   </div>
 
-                  <button
-                    onClick={() => onToggleMilestone(step.milestoneId)}
-                    data-testid={`btn-milestone-${step.milestoneId}`}
-                    className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 border transition-colors cursor-pointer ${
-                      isChecked
-                        ? 'bg-[#34d399]/20 border-[#34d399] text-[#34d399]'
-                        : 'bg-[#1e293b] border-[#334155] text-[#cbd5e1] hover:border-[#38bdf8]'
-                    }`}
-                  >
-                    {isChecked ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                    <span>{isChecked ? 'Milestone Completed' : 'Mark Milestone Complete'}</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {lessonOneVerified && index === 0 && (
+                      <button
+                        onClick={() => setExpandedFirstStep(false)}
+                        data-testid="btn-step-collapse"
+                        className="px-3 py-1 rounded-md text-xs font-semibold text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer transition-colors"
+                      >
+                        Hide details
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onToggleMilestone(step.milestoneId)}
+                      data-testid={`btn-milestone-${step.milestoneId}`}
+                      className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 border transition-colors cursor-pointer ${
+                        isChecked
+                          ? 'bg-[#34d399]/20 border-[#34d399] text-[#34d399]'
+                          : 'bg-[#1e293b] border-[#334155] text-[#cbd5e1] hover:border-[#38bdf8]'
+                      }`}
+                    >
+                      {isChecked ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span>{isChecked ? 'Milestone Completed' : 'Mark Milestone Complete'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Title & Why */}

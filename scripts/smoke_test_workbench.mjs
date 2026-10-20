@@ -82,6 +82,7 @@ export async function runSmokeTests(viteServer) {
       TIER1_EXIT_GATES,
     } = quizMod;
     const { PYTHON_LESSONS } = lessonsMod;
+    const { STORAGE_KEY_START_HERE_DISMISSED } = await vite.ssrLoadModule('/src/startHere.ts');
     // The registry mixes hand-written lessons with one entry per graded exercise, so its size grows
     // with every package. A literal here is how CI went red on a push that added exercise packages
     // and touched no app code: every tally below is derived from the dataset instead.
@@ -149,6 +150,18 @@ export async function runSmokeTests(viteServer) {
       'The collapsed block must keep the Lesson 1 link'
     );
     assert(
+      htmlReturning.includes('data-testid="btn-dismiss-start-here"') &&
+        !htmlBeginner.includes('data-testid="btn-dismiss-start-here"'),
+      'Only the collapsed line may be dismissed; a newcomer must not be able to drop the full block'
+    );
+    globalThis.localStorage.setItem(STORAGE_KEY_START_HERE_DISMISSED, '1');
+    const htmlDismissed = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
+    globalThis.localStorage.clear();
+    assert(
+      !htmlDismissed.includes('data-testid="start-here"'),
+      'A dismissed Start here line must stay gone on the landing screen'
+    );
+    assert(
       htmlBeginner.includes('data-testid="first-lesson-guide"'),
       'A first-time visitor must see the guided first lesson above the runner'
     );
@@ -176,6 +189,38 @@ export async function runSmokeTests(viteServer) {
     assert(
       htmlRoadmap.includes('data-testid="panel-completion-routes-spine"'),
       'Tab 1 Roadmap must render the Completion Routes, Arm Spine & deeper-scope banner when opened'
+    );
+    // A verified learner gets the roadmap's own first step card as one line, expandable again; the
+    // roadmap is also where a dismissed Start here block is restored from.
+    const htmlRoadmapReturning = cleanSsr(
+      ReactDOMServer.renderToString(
+        React.createElement(TabArchitecture, {
+          onLoadPreset: () => {},
+          beginnerView: true,
+          activeTierPass: 'tier1',
+          onSelectTierPass: () => {},
+          completedMilestones: {},
+          onToggleMilestone: () => {},
+          lessonOneVerified: true,
+          startHereDismissed: true,
+          onRestoreStartHere: () => {},
+        })
+      )
+    );
+    assert(
+      htmlRoadmapReturning.includes('data-testid="step-card-t1_tr00"') &&
+        htmlRoadmapReturning.includes('data-collapsed="true"') &&
+        htmlRoadmapReturning.includes('data-testid="btn-step-expand"'),
+      "The roadmap's first step card must collapse to one line once Lesson 1 is verified, and stay expandable"
+    );
+    assert(
+      htmlRoadmapReturning.includes('data-testid="btn-restore-start-here"'),
+      'The roadmap tab must offer to bring a dismissed Start here block back'
+    );
+    assert(
+      !htmlRoadmap.includes('data-collapsed="true"') &&
+        !htmlRoadmap.includes('data-testid="btn-restore-start-here"'),
+      'A newcomer on the roadmap must get the whole first step card and no restore button'
     );
     assert(
       htmlBeginner.includes('1. Start Here: Roadmap &amp; Progress') ||

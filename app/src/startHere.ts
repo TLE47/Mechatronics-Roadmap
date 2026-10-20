@@ -7,6 +7,9 @@ export const START_HERE_LINK_LABEL = 'Open Lesson 1: Variables and data types â†
 export const START_HERE_NOTE =
   'One lesson, one editor, one Run button. No install, no account, nothing to buy.';
 
+/** Once the collapsed strip is dismissed, this is what keeps it gone until the roadmap restores it. */
+export const STORAGE_KEY_START_HERE_DISMISSED = 'mechalab_start_here_dismissed_v1';
+
 /** The lesson's page in the repo, read from the same generated dataset the runner uses. */
 export const START_HERE_LESSON_PATH =
   (PYTHON_LESSONS.find((lesson) => lesson.id === 'P.1') ?? PYTHON_LESSONS[0]).path;

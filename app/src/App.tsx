@@ -4,6 +4,7 @@ import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { StartHereCard } from './components/StartHereCard';
+import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
 import { TabArchitecture } from './components/tabs/TabArchitecture';
 import { TabBode } from './components/tabs/TabBode';
 import { TabFOC } from './components/tabs/TabFOC';
@@ -297,6 +298,15 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('tab-pyodide');
   const [tourIndex, setTourIndex] = useState<number>(0);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
+  // The collapsed Start here line can be dismissed for good; the roadmap tab carries the control
+  // that restores it, so nothing is lost without a way back.
+  const [startHereDismissed, setStartHereDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_START_HERE_DISMISSED) === '1';
+    } catch {
+      return false;
+    }
+  });
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState<boolean>(false);
   const [portfolioCopied, setPortfolioCopied] = useState<boolean>(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -380,6 +390,14 @@ export const App: React.FC = () => {
       // ignore
     }
   }, [activeTierPass]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_START_HERE_DISMISSED, startHereDismissed ? '1' : '0');
+    } catch {
+      // ignore
+    }
+  }, [startHereDismissed]);
 
   useEffect(() => {
     try {
@@ -493,6 +511,13 @@ export const App: React.FC = () => {
     setAccountUserId(null);
     setSyncNote('');
     setAccountError(null);
+  };
+
+  const handleRestoreStartHere = () => {
+    setStartHereDismissed(false);
+    // Show the restored block where it lives, rather than flipping a flag on a screen the
+    // learner cannot see.
+    setActiveTab('tab-pyodide');
   };
 
   const handleToggleMilestone = (id: string) => {
@@ -739,8 +764,11 @@ export const App: React.FC = () => {
         {/* The landing screen is where a newcomer arrives, so it opens with the README's own
             "Start here" block: one heading, one Lesson 1 link, one plain-English line. Once Lesson 1
             is verified the same block closes to a single line. */}
-        {activeTab === 'tab-pyodide' && (
-          <StartHereCard lessonOneVerified={!!verifiedLessons['P.1']} />
+        {activeTab === 'tab-pyodide' && !startHereDismissed && (
+          <StartHereCard
+            lessonOneVerified={!!verifiedLessons['P.1']}
+            onDismiss={() => setStartHereDismissed(true)}
+          />
         )}
         {activeTab !== 'tab-arch' &&
           activeTab !== 'tab-pyodide' &&
@@ -761,6 +789,9 @@ export const App: React.FC = () => {
             onSelectTierPass={setActiveTierPass}
             completedMilestones={completedMilestones}
             onToggleMilestone={handleToggleMilestone}
+            lessonOneVerified={!!verifiedLessons['P.1']}
+            startHereDismissed={startHereDismissed}
+            onRestoreStartHere={handleRestoreStartHere}
             onOpenPyodideLesson={(lessonId) => {
               setPyodideLessonId(lessonId);
               setActiveTab('tab-pyodide');

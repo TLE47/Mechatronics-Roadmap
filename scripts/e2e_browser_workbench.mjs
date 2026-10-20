@@ -681,8 +681,44 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
     console.log('  ok the Start here block collapses to one line after Lesson 1 is verified');
 
+    // 12b. The collapsed line can be dismissed for good, the roadmap tab restores it, and the
+    //      roadmap's own first step card is one line too - with the details one click away.
+    await formattingPage.getByTestId('btn-dismiss-start-here').click();
+    await formattingPage.getByTestId('start-here').waitFor({ state: 'detached', timeout: 5000 });
+    await formattingPage.getByTestId('tab-btn-tab-arch').click();
+    const restoreStartHere = formattingPage.getByTestId('btn-restore-start-here');
+    await restoreStartHere.waitFor({ timeout: 5000 });
+    assert(
+      (await restoreStartHere.innerText()).includes('Show the Start here block'),
+      'the roadmap must name the control that brings the block back'
+    );
+    assert.equal(
+      await formattingPage.getByTestId('step-card-t1_tr00').getAttribute('data-collapsed'),
+      'true',
+      'the roadmap first step card must collapse once Lesson 1 is verified'
+    );
+    await formattingPage.getByTestId('btn-step-expand').click();
+    await formattingPage.getByTestId('btn-step-collapse').waitFor({ timeout: 5000 });
+    await formattingPage.getByTestId('btn-step-collapse').click();
+    await formattingPage.getByTestId('btn-step-expand').waitFor({ timeout: 5000 });
+
+    // The dismissal is remembered across a reload, and the restore control survives it too.
+    await formattingPage.reload({ waitUntil: 'networkidle' });
+    assert(
+      (await formattingPage.getByTestId('start-here').count()) === 0,
+      'a dismissed Start here line must stay dismissed after a reload'
+    );
+    await formattingPage.getByTestId('tab-btn-tab-arch').click();
+    await formattingPage.getByTestId('btn-restore-start-here').click();
+    await formattingPage.getByTestId('start-here').waitFor({ timeout: 5000 });
+    assert(
+      (await formattingPage.getByTestId('start-here').getAttribute('data-collapsed')) === 'true',
+      'restoring from the roadmap must bring the line back on the landing screen, still collapsed'
+    );
+    console.log('  ok the collapsed Start here line can be dismissed and restored from the roadmap');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import & Start here collapse).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore).'
     );
   } finally {
     await browser.close();

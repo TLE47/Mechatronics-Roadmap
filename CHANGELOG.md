@@ -11,6 +11,21 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 112: The Roadmap Agrees, and the Line Can Go
+
+The roadmap tab now does what the landing screen does once Lesson 1 is verified: its own first
+step card closes to one line — **Lesson 1 verified · T1 · Step 1 / 8**, the step's title, its
+milestone toggle and **Show details** — and expands back to the full card on request. A search
+filter keeps the card whole, so a filtered list never hides a step the learner asked for.
+
+The collapsed landing line is also dismissible for good now. The × is offered only while collapsed,
+the choice persists across reloads, and the roadmap tab carries **Show the Start here block**, which
+restores the line and returns to the landing screen where it lives.
+
+Smoke renders the dismissed and restored states and the roadmap's collapsed card; the browser E2E
+dismisses the line, finds the restore control on the roadmap, reloads to prove the choice sticks,
+and brings the line back.
+
 ## [2026-10-19] — Run 111: The Start Here Block Steps Aside
 
 The landing block was doing a first-timer's job forever. Once Lesson 1 is executed and passed it
