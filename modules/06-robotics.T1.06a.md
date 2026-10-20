@@ -27,7 +27,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.06-robotics.T1.06a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T1.06a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 9 of 10 · Plan motion and bring it up safely**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.06-robotics.T1.06a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T1.06a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -277,7 +279,7 @@ print("plant PD+gravity=(%.4f, %.4f) N*m = spring+damping+feedforward" % tau_pla
 - **Fix:** clamp `s = max(0.0, min(1.0, t / T))`, then re-check the same sample: at $t = 3.0\ \text{s}$ the profile holds $q = 1.2\ \text{rad}$ with $\dot{q}_d = 0.0\ \text{rad/s}$, and the midpoint and peak values are unchanged.
 
 ## 6. Simulation path
-Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`) to compare step setpoints against cubic, trapezoidal, and minimum-jerk profiles interactively.
+Open **URDF / MuJoCo & STO** in the MechaLab Workbench (`npm run dev`) to compare step setpoints against cubic, trapezoidal, and minimum-jerk profiles interactively.
 
 The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T1.06a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

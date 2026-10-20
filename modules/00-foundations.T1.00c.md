@@ -27,7 +27,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T1.00c`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00c) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T1.00c` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00c) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -286,7 +288,7 @@ Inject the `## 8. Common mistakes` row about multiplying torque straight by RPM,
 - **Fix:** multiply the torque by `omega_rad_s` $= 2400 \times 2\pi/60 = 251.3274\text{ rad/s}$, which returns $113.10\text{ W}$ to $\pm 10^{-6}\text{ W}$ — the number the worked example asserts.
 
 ## 6. Simulation path
-Run the worked example script in Python, then open **Tab 3 (25 kHz PMSM FOC)** in the MechaLab Workbench to see how rotor speed in $\text{RPM}$ ($2800\text{ RPM}$) converts to electrical $\text{rad/s}$ and shaft power in watts.
+Run the worked example script in Python, then open **25 kHz PMSM FOC** in the MechaLab Workbench to see how rotor speed in $\text{RPM}$ ($2800\text{ RPM}$) converts to electrical $\text{rad/s}$ and shaft power in watts.
 
 No hardware required for this module (`hardware_required: false`). On the physical bench in Stage 0 (`L0.2`), this unit discipline prevents DMM and oscilloscope scaling errors:
 ```text

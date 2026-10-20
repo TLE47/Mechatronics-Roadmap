@@ -12,7 +12,9 @@ output_match: "exact"
 # Lesson R.6: Wiggle In, Wiggle Out — Shaking the Joint and Reading Gain and Phase
 
 <!-- run-callout:start -->
-> **No workbench entry for this page.** There is nothing to load in Tab 2 for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [MechaLab, Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+> **Before Step 1 · the school-maths ramp**
+>
+> **No workbench entry for this page.** There is nothing to load in Run Python Lessons for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
 <!-- run-callout:end -->
 
 ## Goal

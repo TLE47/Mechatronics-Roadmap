@@ -33,7 +33,7 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.04-embedded.T3.04a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T3.04a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab with `EX.04-embedded.T3.04a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T3.04a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -175,7 +175,7 @@ EXERCISE_TARGET=exercises/04-embedded.T3.04a/starter.py \
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Filter Group Delay*) and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Sampling, Aliasing & Decimation*).
   - **Prerequisite Bridge Modules:** [`04-embedded.T2.04a`](04-embedded.T2.04a.md)–[`04-embedded.T2.04d`](04-embedded.T2.04d.md) and Legacy **Step 2.5 (`04-embedded.T2.05`)**.
   - **Core Concepts to Review First:** C++20 `WaitFreeSeqLock<T>` even/odd sequence retry protocol, EtherCAT Distributed Clocks (`DC`) propagation-compensated clock offset + PI drift discipline, and Hogenauer `sinc³` $\Sigma\Delta$ decimation ($G = \text{OSR}^3$, group delay $\tau_g = \frac{3(\text{OSR}-1)}{2 f_{\text{mod}}}$) in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [Hans Boehm *Seqlocks Paper*](https://dl.acm.org/doi/10.1145/2247684.2247688), [Hogenauer CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535), and [Track 04 Tier 3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-3-advanced--production) (**Tab 8: Attitude ESKF & SeqLock**).
+  - **Study Links & Resources:** [Hans Boehm *Seqlocks Paper*](https://dl.acm.org/doi/10.1145/2247684.2247688), [Hogenauer CIC Filter Paper (IEEE TSP 1981)](https://ieeexplore.ieee.org/document/1163535), and [Track 04 Tier 3 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-3-advanced--production) (**Attitude ESKF & SeqLock**).
 
 ### Starter code
 ```python
@@ -364,10 +364,10 @@ Inject the parity slip the exercise plants (`seqlock_ignores_parity`), keeping t
 - **Inject:** implement `seqlock_valid(s1, s2)` as `s1 == s2` only, dropping the even-parity test.
 - **Symptom:** `valid(5, 5)` now returns `True` although the writer was mid-update, so the reader accepts a 32-byte telemetry struct whose first fields are from the previous tick and whose last fields are from the current one. `valid(4, 6)` is still rejected, which is why the bug survives a test that only ever starts on an even counter.
 - **Diagnose:** the first read's parity is the only signal that separates "the writer finished before $s_1$" from "the writer had already started at $s_1$"; equality alone cannot see the difference, because a completed write returns the counter to an even value. A missing `acquire`/`release` fence produces a different symptom — fields that never change at all — and dropping the $s_1 = s_2$ check admits $4 \to 6$, not $5 \to 5$.
-- **Fix:** restore `(s1 & 1) == 0 and s1 == s2`, then re-run the $100{,}000$-preemption stress test in **Tab 8 (Attitude ESKF & SeqLock)**: every torn copy must retry, and the retries per reader must stay bounded as the writer rate rises.
+- **Fix:** restore `(s1 & 1) == 0 and s1 == s2`, then re-run the $100{,}000$-preemption stress test in **Attitude ESKF & SeqLock**: every torn copy must retry, and the retries per reader must stay bounded as the writer rate rises.
 
 ## 6. Simulation path
-Open **Tab 8 (Attitude ESKF & SeqLock — C++20 `WaitFreeSeqLock`, `TIM1_TRGO2` Timing & `ITCM/DTCM` Budget)** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to stress-test the `SeqLock` across $100{,}000$ simulated preemptions.
+Open **Attitude ESKF & SeqLock — C++20 `WaitFreeSeqLock`, `TIM1_TRGO2` Timing & `ITCM/DTCM` Budget** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to stress-test the `SeqLock` across $100{,}000$ simulated preemptions.
 
 No hardware required for this module (`hardware_required: false`). In Step 3.5 (`04-embedded.T3.05`), the `STM32G474` bare-metal C++20 firmware (`08-capstone-projects/stm32g4-foc-firmware/main.cpp`) and Embedded Rust (`RTIC` / `Embassy`) implementations run this exact pipeline:
 ```text

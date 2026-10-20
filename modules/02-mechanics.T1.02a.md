@@ -27,7 +27,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.02-mechanics.T1.02a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.02-mechanics.T1.02a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 5 of 10 · Build the arm: mechanics**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.02-mechanics.T1.02a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.02-mechanics.T1.02a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -271,7 +273,7 @@ Inject the `gravity_uses_sine` fault the graded package names, and diagnose it f
 - **Fix:** put `math.cos` back. Then $\tau_0 = 1.3734\text{ N}\cdot\text{m}$, $\tau_{60} = 0.6867\text{ N}\cdot\text{m}$, and $\tau_{\text{motor}} = 1.3734 / (0.90 \times 6.0) = 0.2543\text{ N}\cdot\text{m}$ — the worst-case gravity load the gearbox must hold, which is the number a motor is sized on.
 
 ## 6. Simulation path
-Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`) to visualize how link lengths and joint angles change the horizontal moment arm of a planar robot arm.
+Open **URDF / MuJoCo & STO** in the MechaLab Workbench (`npm run dev`) to visualize how link lengths and joint angles change the horizontal moment arm of a planar robot arm.
 
 The graded package is also a workbench entry: **Modules -> `EX.02-mechanics.T1.02a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

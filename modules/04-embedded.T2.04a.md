@@ -27,7 +27,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.04-embedded.T2.04a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T2.04a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 7 of 10 · Run it in real time: embedded C**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.04-embedded.T2.04a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T2.04a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -275,7 +277,7 @@ Use the worked example's $2N = 8$ buffer ($N = 4$ samples per half) and plant th
   - **Study Links & Resources:** [STMicroelectronics AN4031 (STM32 DMA Controller)](https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf), [Buttazzo *Hard Real-Time Computing Systems*](https://link.springer.com/book/10.1007/978-1-4614-0676-1), and [Track 04 Tier 2 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-Open **Tab 8 (Real-Time Concurrency & DMA/ISR Timing)** in the MechaLab Workbench (`npm run dev`) or inspect logic-analyzer SPI/DMA traces in [PulseView (`sigrok`)](https://sigrok.org/wiki/PulseView) (`resources/open-source-toolchains.md`).
+Open **Real-Time Concurrency & DMA/ISR Timing** in the MechaLab Workbench (`npm run dev`) or inspect logic-analyzer SPI/DMA traces in [PulseView (`sigrok`)](https://sigrok.org/wiki/PulseView) (`resources/open-source-toolchains.md`).
 
 No hardware required for this module (`hardware_required: false`). In Step 2.5 (`04-embedded.T2.05`), the STM32 DMA controller runs in circular mode (`DMA_CIRCULAR`) attached to `ADC1` and `SPI1`, firing `DMA_ISR_HTIF` and `DMA_ISR_TCIF`:
 ```text

@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.04-embedded.T1.04a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T1.04a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 7 of 10 · Run it in real time: embedded C**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.04-embedded.T1.04a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T1.04a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters

@@ -30,7 +30,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.03-sensors.T2.03a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.03-sensors.T2.03a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 6 of 10 · Measure the joint: sensors**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.03-sensors.T2.03a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.03-sensors.T2.03a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -300,7 +302,7 @@ Keep the worked example's $350\text{ Hz}$ electrical angle ($p = 7$ at $3000\tex
   - **Study Links & Resources:** [TI Sensored FOC of 3-Phase PMSM Motors (BPRA073)](https://www.ti.com/lit/pdf/bpra073), [VectorNav Allan Variance Guide](https://www.vectornav.com/resources/inertial-navigation-primer/specifications--and--error-budgets/specs-imuspecs), and [Track 03 Tier 2 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied).
 
 ## 6. Simulation path
-Open **Tab 3 (25 kHz PMSM FOC: Clarke & Park Transforms)** in the MechaLab Workbench (`npm run dev`) to watch the 3-phase AC waveforms $(i_a, i_b, i_c)$ collapse into flat DC lines $(i_d, i_q)$ in real time.
+Open **25 kHz PMSM FOC: Clarke & Park Transforms** in the MechaLab Workbench (`npm run dev`) to watch the 3-phase AC waveforms $(i_a, i_b, i_c)$ collapse into flat DC lines $(i_d, i_q)$ in real time.
 
 The graded package is also a workbench entry: **Modules -> `EX.03-sensors.T2.03a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

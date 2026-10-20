@@ -28,7 +28,7 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.06-robotics.T3.06b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T3.06b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab with `EX.06-robotics.T3.06b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T3.06b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -340,7 +340,7 @@ Inject the `ppo_max_not_min` fault and diagnose it from the loss alone, keeping 
   - **Study Links & Resources:** [Zhao et al. *ACT* (`arXiv:2304.13705`)](https://arxiv.org/abs/2304.13705), [Chi et al. *Diffusion Policy* (`arXiv:2303.04137`)](https://arxiv.org/abs/2303.04137), [Schulman et al. *PPO* (`arXiv:1707.06347`)](https://arxiv.org/abs/1707.06347), and [HuggingFace LeRobot (`github.com/huggingface/lerobot`)](https://github.com/huggingface/lerobot).
 
 ## 6. Simulation path
-Open **Tab 4 (Furuta Pendulum + LQR + CBF)** and **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
+Open **Furuta Pendulum + LQR + CBF** and **URDF / MuJoCo & STO** in the MechaLab Workbench (`npm run dev`), or train a PPO/ACT policy in `MuJoCo Playground` / `Hugging Face LeRobot` (`resources/open-source-toolchains.md`).
 
 The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T3.06b`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

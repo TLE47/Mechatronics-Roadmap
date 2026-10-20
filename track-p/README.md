@@ -15,7 +15,7 @@ flowchart LR
 ## 1. Computer-Tooling Orientation (Zero-Jargon Quickstart)
 
 Before writing your first line of Python, here is how your workspace operates so you never confuse a tool question with a robotics question:
-1. **Where to run code (\$0 Zero-Install):** Open **[Tab 2: Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/)** in the live Browser Workbench. Select any lesson (`P.1` through `08.1`) on the left, edit the `# TODO` lines in the center editor, and click **Run & Verify Output**.
+1. **Where to run code (\$0 Zero-Install):** Open **[Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/)** in the live Browser Workbench. Select any lesson (`P.1` through `08.1`) on the left, edit the `# TODO` lines in the center editor, and click **Run & Verify Output**.
 2. **How to recover from mistakes or infinite loops:**
    - **Stop (`OctagonX` button):** If you accidentally write an infinite loop (such as `while True:`), Python runs inside an isolated background **Web Worker**. Click **Stop** (or wait ~4 seconds for the automatic step limit) to cancel execution without losing a single character of your editor code.
    - **Reset Runtime:** Restarts a fresh Python interpreter in the background while keeping your current editor code intact.
@@ -30,7 +30,7 @@ Before writing your first line of Python, here is how your workspace operates so
 
 ## 2. Explicit School-Math Diagnostic & Just-In-Time Refresher Routes
 
-You do **not** need to take a separate math course before starting robotics. Use this 6-topic self-check (also available interactively in **Tab 3: Placement & Readiness $\to$ School-Math Diagnostic** of the Workbench) to choose **"I know this"**, **"Show me a refresher"**, or **"Teach it from scratch"** right when a lesson needs it:
+You do **not** need to take a separate math course before starting robotics. Use this 6-topic self-check (also available interactively in **Placement & Readiness $\to$ School-Math Diagnostic** of the Workbench) to choose **"I know this"**, **"Show me a refresher"**, or **"Teach it from scratch"** right when a lesson needs it:
 
 | School-Math Skill | Quick Self-Check Question | Route A: "I know this" | Route B: "Show me a 2-minute refresher" | Route C: "Teach it from scratch" |
 | :--- | :--- | :--- | :--- | :--- |
@@ -71,7 +71,7 @@ You do **not** need to take a separate math course before starting robotics. Use
 
 ## 4. Gate P→0: 15-Minute Track P → Stage 0 Readiness Check (Targeted Review, Never "Start Over")
 
-Before jumping into Stage 0 circuits and Arduino sketches, verify these three practical skills in **Tab 3 (`Placement & Readiness`)** or **Tab 2 (`Run Python Lessons`)** of the Workbench (~15 minutes total):
+Before jumping into Stage 0 circuits and Arduino sketches, verify these three practical skills in **Placement & Readiness** or **Run Python Lessons** of the Workbench (~15 minutes total):
 1. **Write a function with a loop and an `assert`:** Write a short `def` function that loops over a list of commands and verified behavior with `assert` $\to$ *If rusty, review only **[Lesson P.5](P.5-functions-and-while-loops.md)** & **[Lesson P.6](P.6-modules-and-automated-asserts.md)**.*
 2. **Convert 3 quantities between SI prefixes:** Convert $15\text{ mA} \to 0.015\text{ A}$, $4.7\text{ k}\Omega \to 4700\ \Omega$, and $500\ \mu\text{s} \to 0.0005\text{ s}$ $\to$ *If rusty, review only **[Lesson P.7](P.7-si-units-and-metric-prefixes.md)**.*
 3. **Read one row from a component datasheet table:** Given the `DRV8833` datasheet row (`VM: Min 2.7 V, Max 10.8 V Recommended; 11.8 V Abs Max`), explain why a $12.0\text{ V}$ supply is unsafe on `DRV8833` and requires `TB6612FNG` ($4.5\text{–}13.5\text{ V}$) $\to$ *If rusty, review only **[Lesson P.14](P.14-reading-a-datasheet-table.md)**.*
@@ -79,7 +79,7 @@ Before jumping into Stage 0 circuits and Arduino sketches, verify these three pr
 ---
 
 ## 5. How to Run the Exercises (Zero Installation Required)
-1. **In your browser (Web-Worker Isolated Pyodide Runner):** Open **Tab 2 (`Run Python Lessons`)** in the live MechaLab Workbench to edit starter code, unlock 3-step progressive hints, and run instructor behavioral tests directly in your browser.
+1. **In your browser (Web-Worker Isolated Pyodide Runner):** Open **Run Python Lessons** in the live MechaLab Workbench to edit starter code, unlock 3-step progressive hints, and run instructor behavioral tests directly in your browser.
 2. **Or locally:** Run `python3 tests/test_exercises.py` to execute all automated exercise and behavioral tests across the roadmap.
 
 👉 **Start now:** [Lesson P.1: Variables and Fundamental Data Types (`int`, `float`, `str`, `bool`)](P.1-variables-and-data-types.md)

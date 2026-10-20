@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.05-control.T1.05a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T1.05a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 8 of 10 · Make it hold still: control**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.05-control.T1.05a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T1.05a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -290,7 +292,7 @@ print("clamp=%.1f rad/s^2 | sag(Kp=10)=%.7f rad | one count=%.4f rad/s"
 - **Fix:** restore `anti_windup=True`, which clips $\lvert I_k\rvert \le u_{\max}$ and freezes the accumulator while $\lvert u_{\text{raw}}\rvert > u_{\max}$ and $e_k$ still pushes that way; the overshoot then reads $0.047\ \text{rad}$ and the steady-state error falls under $10^{-3}\ \text{rad}$.
 
 ## 6. Simulation path
-Run the Python simulation script above or open **Tab 4 (Control Loop & Saturation)** in the MechaLab Workbench (`npm run dev`) to observe how actuator saturation interacts with closed-loop feedback gains.
+Run the Python simulation script above or open **Control Loop & Saturation** in the MechaLab Workbench (`npm run dev`) to observe how actuator saturation interacts with closed-loop feedback gains.
 
 No hardware required for this module (`hardware_required: false`). In Step 1.6 (`05-control.T1.06`), this exact discrete PID + anti-windup law executes inside the $1\text{ kHz}$ timer ISR on your microcontroller driving the H-bridge or BLDC stage:
 ```text

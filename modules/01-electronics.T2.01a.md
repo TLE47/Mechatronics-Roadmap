@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.01-electronics.T2.01a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T2.01a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 4 of 10 · Power the joint: electronics**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.01-electronics.T2.01a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T2.01a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -271,7 +273,7 @@ Inject one realistic bring-up fault and diagnose it from the symptom alone, keep
 - **Fix:** tie `REF1` and `REF2` together to a low-impedance $1.65\text{ V}$ source (a buffered `VREF/2` reference, not a high-value resistor divider that sags under the pin current), then prove it twice: short the amplifier inputs together ($0\text{ A}$) and the ADC must read $1.65\text{ V}$ to within $\pm 5\text{ mV}$, and drive $+25\text{ A}$ and confirm $3.15\text{ V}$, which is $0.15\text{ V}$ inside the $3.30\text{ V}$ rail.
 
 ## 6. Simulation path
-Open **Tab 3 (25 kHz PMSM FOC)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`) or simulate a differential amplifier in [LTspice](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) (`resources/open-source-toolchains.md`).
+Open **25 kHz PMSM FOC** and **3D CAD & 48V PCB** in the MechaLab Workbench (`npm run dev`) or simulate a differential amplifier in [LTspice](https://www.analog.com/en/resources/design-tools-and-calculators/ltspice-simulator.html) (`resources/open-source-toolchains.md`).
 
 No hardware required for this module (`hardware_required: false`). In Step 2.2 (`01-electronics.T2.02`), your KiCad PCB footprint routes the two inner Kelvin pads (`S+`, `S-`) as a tightly coupled differential pair directly to the `INA240` inputs, completely separate from the high-current power pours:
 ```text

@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.01-electronics.T2.01b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T2.01b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 4 of 10 · Power the joint: electronics**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.01-electronics.T2.01b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T2.01b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -282,7 +284,7 @@ print("plant tick=%.0f ms | pre-charge=%.0f ticks | 1.152 J holds the clamp for 
 - **Fix:** keep the whole chain in SI seconds (`dt_s = 20e-9`), or use this module's own shortcut that $\text{nH}/\text{ns} = 1\ \Omega$: $L_{\text{nH}} \cdot \frac{\Delta I}{\Delta t_{\text{ns}}} = 20.0 \times \frac{30.0}{20.0} = 30.0\text{ V}$ of overshoot. The check that proves the fix is the asserted value itself: $V_{\text{peak}} = 48.0 + 30.0 = 78.0\text{ V}$, which is *not* under the $75\text{ V}$ ceiling — only the 4-layer $L_{\text{loop}} = 4.0\text{ nH}$ layout brings it back to $54.0\text{ V}$.
 
 ## 6. Simulation path
-Open **Tab 6 (3D CAD & 48V PCB — Loop Inductance Ringing & Thermal Solver)** in the MechaLab Workbench (`npm run dev`) and sweep $L_{\text{loop}}$ from $2\text{ nH}$ to $25\text{ nH}$ to watch the $V_{DS}$ turn-off ringing spike grow toward the MOSFET avalanche limit, or run the Worked Example Python script above (for `KiCad 8+` and `kicad-cli` installation, verification, and ERC/DRC/Gerber export, see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup) and [`01-electronics-and-power/README.md` §2.1](../01-electronics-and-power/README.md#21-schematic-capture-smd-footprints--4-layer-kicad-pcb-layout)).
+Open **3D CAD & 48V PCB — Loop Inductance Ringing & Thermal Solver** in the MechaLab Workbench (`npm run dev`) and sweep $L_{\text{loop}}$ from $2\text{ nH}$ to $25\text{ nH}$ to watch the $V_{DS}$ turn-off ringing spike grow toward the MOSFET avalanche limit, or run the Worked Example Python script above (for `KiCad 8+` and `kicad-cli` installation, verification, and ERC/DRC/Gerber export, see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup) and [`01-electronics-and-power/README.md` §2.1](../01-electronics-and-power/README.md#21-schematic-capture-smd-footprints--4-layer-kicad-pcb-layout)).
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before touching hardware or taking the Skip/Gate test):**

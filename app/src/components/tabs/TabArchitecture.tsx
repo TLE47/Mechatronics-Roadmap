@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import { MathView, MathPanel } from '../MathView';
+import { ActiveTierPass, LEVEL_0_STEPS, TIER_PASS_META } from '../../curriculumData';
 import {
-  ActiveTierPass,
-  LEVEL_0_STEPS,
-  TIER_1_LINEAR_PASS,
-  TIER_2_LINEAR_PASS,
-  TIER_3_LINEAR_PASS,
-  TIER_PASS_META,
-  LinearTrackStep,
-} from '../../curriculumData';
+  ALL_PASS_STEPS,
+  firstUnverifiedEntry,
+  verifiedForStep,
+} from '../../practiceLinks';
+import {
+  SPINE,
+  SPINE_STEP_COUNT,
+  entriesAtDepth,
+  milestonesForStep,
+  stepAtDepth,
+  stepCompleteAtDepth,
+  type SpineStep,
+} from '../../spine';
+import { tabForPreset } from '../../demoPresets';
+import { PYTHON_TAB_NAME, tabName } from '../../tabNames';
 import {
   ExternalLink,
   Play,
@@ -30,6 +38,8 @@ interface TabArchitectureProps {
   activeTierPass: ActiveTierPass;
   onSelectTierPass: (pass: ActiveTierPass) => void;
   completedMilestones: Record<string, boolean>;
+  /** Executed-and-passed entries, so a step can show the practice it actually has behind it. */
+  verifiedLessons: Record<string, boolean>;
   onToggleMilestone: (id: string) => void;
   /** The landing Start here line is hidden; this tab carries the control that restores it. */
   startHereDismissed?: boolean;
@@ -43,9 +53,11 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   activeTierPass,
   onSelectTierPass,
   completedMilestones,
+  verifiedLessons = {},
   onToggleMilestone,
   startHereDismissed = false,
   onRestoreStartHere,
+  onOpenPyodideLesson,
 }) => {
   const [viewMode, setViewMode] = useState<'linear' | 'matrix'>('linear');
   const [advancedColumnsOpen, setAdvancedColumnsOpen] = useState<boolean>(false);
@@ -57,29 +69,40 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   // until the learner asks for the deeper ones.
   const showAdvancedColumns = !beginnerView || advancedColumnsOpen;
 
-  const getPassSteps = (pass: ActiveTierPass): LinearTrackStep[] => {
-    if (pass === 'level0') return LEVEL_0_STEPS;
-    if (pass === 'tier1') return TIER_1_LINEAR_PASS;
-    if (pass === 'tier2') return TIER_2_LINEAR_PASS;
-    return TIER_3_LINEAR_PASS;
-  };
-
-  const countCompleted = (steps: LinearTrackStep[]) =>
-    steps.filter((s) => completedMilestones[s.milestoneId]).length;
-
-  const activeSteps = getPassSteps(activeTierPass);
-  const activeMeta = TIER_PASS_META[activeTierPass];
-  const activeDone = countCompleted(activeSteps);
-  // Each pass has its own first step and its own milestone, so one pass's checked milestone
-  // never closes another pass's card - and Lesson 1 is not a progress signal here at all.
-  const firstStepId = activeSteps[0]?.milestoneId;
+  // Depth is a lens, not a numbering: all ten steps are always on screen, and the lens decides
+  // what each of Steps 3-10 asks for. A stored 'level0' (the old Stage-0 pass) is the on-ramp,
+  // which is now Steps 1-2, so the closest depth is used rather than showing an empty list.
+  const DEPTHS: ActiveTierPass[] = ['tier1', 'tier2', 'tier3'];
+  const depth: ActiveTierPass = DEPTHS.includes(activeTierPass) ? activeTierPass : 'tier1';
+  const activeMeta = TIER_PASS_META[depth];
+  const depthSteps = ALL_PASS_STEPS.filter((candidate) => candidate.pass === depth);
+  // A step is done at this depth when every entry it lists there has been executed and passed.
+  // The milestone tick below it is still a self-report, and no longer drives this number.
+  const depthDone = SPINE.filter((step) => stepCompleteAtDepth(step, depth, verifiedLessons)).length;
+  const firstStepId = depthSteps[0]?.step.milestoneId;
   const firstStepDone = !!firstStepId && !!completedMilestones[firstStepId];
-  const firstStepExpanded = !!expandedFirstStep[activeTierPass];
-
-  const passOrder: ActiveTierPass[] = ['level0', 'tier1', 'tier2', 'tier3'];
-  const currentPassIdx = passOrder.indexOf(activeTierPass);
+  const firstStepExpanded = !!expandedFirstStep[depth];
+  const currentPassIdx = DEPTHS.indexOf(depth);
   const nextPass: ActiveTierPass | null =
-    currentPassIdx < passOrder.length - 1 ? passOrder[currentPassIdx + 1] : null;
+    currentPassIdx < DEPTHS.length - 1 ? DEPTHS[currentPassIdx + 1] : null;
+
+  const matchesSearch = (spineStep: SpineStep): boolean => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const at = stepAtDepth(spineStep, depth);
+    const haystack = [
+      spineStep.title,
+      spineStep.outcome,
+      `step ${spineStep.number}`,
+      ...spineStep.trackDirs,
+      at?.step.trackCode ?? '',
+      at?.step.trackTitle ?? '',
+      at?.step.headline ?? '',
+      ...(at?.step.topics ?? []),
+    ];
+    return haystack.some((piece) => piece.toLowerCase().includes(q));
+  };
+  const visibleSpineSteps = SPINE.filter(matchesSearch);
 
   return (
     <div className="space-y-5">
@@ -88,13 +111,15 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#1e293b]">
           <div>
             <div className="text-xs font-mono uppercase tracking-wider text-[#38bdf8]">
-              SPIRAL / MULTI-PASS LEVEL-UP ARCHITECTURE · TRACK 00 → TRACK 08
+              TEN STEPS · ONE NUMBER · DEPTH 1 → 3
             </div>
             <h2 className="text-lg font-bold text-[#f1f5f9] mt-0.5">
-              Linear Level-Up Roadmap: Finish All Tracks in Tier 1, Then Loop Back for Tier 2 & Tier 3
+              The Same Ten Steps the Pages Print: Python, Circuits, Then One Joint and One Arm
             </h2>
             <p className="text-xs text-[#94a3b8] mt-0.5">
-              Instead of getting stuck in graduate math on Track 00 before ever touching a motor, complete a full horizontal pass from Track 00 to Track 08 at Tier 1, build your first robot, and then level up to Tier 2 and Tier 3.
+              Steps 1 and 2 are the on-ramp. Steps 3–10 are one track each — the same joint and arm,
+              from a lag model to the figure-8 capstone. The depth above changes how deep a step
+              goes, never its number, so a page saying Step 6 means this card.
             </p>
             {startHereDismissed && onRestoreStartHere && (
               <button
@@ -119,7 +144,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
               }`}
             >
               <ListOrdered className="w-3.5 h-3.5" />
-              <span>Linear Level-Up Pass</span>
+              <span>Ten Steps</span>
             </button>
             <button
               onClick={() => setViewMode('matrix')}
@@ -136,17 +161,13 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
           </div>
         </div>
 
-        {/* 4-Stage Level-Up Selector Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-          {passOrder.map((passId, idx) => {
+        {/* Depth, not a step number: it changes what Steps 3-10 ask for. */}
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs" data-testid="depth-bar">
+          <span className="font-mono uppercase text-[#94a3b8]">Depth</span>
+          {DEPTHS.map((passId, idx) => {
             const meta = TIER_PASS_META[passId];
-            const steps = getPassSteps(passId);
-            const done = countCompleted(steps);
-            // The same per-pass signal the pass's own first card collapses on, shown here so
-            // the selector says which passes have cleared Step 1 without opening each one.
-            const firstStepDone = !!steps[0] && !!completedMilestones[steps[0].milestoneId];
-            const isSelected = activeTierPass === passId;
-
+            const isSelected = depth === passId;
+            const firstDone = !!completedMilestones[depthSteps[0]?.step.milestoneId];
             return (
               <button
                 key={passId}
@@ -155,50 +176,40 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                   onSelectTierPass(passId);
                   setViewMode('linear');
                 }}
-                className={`text-left p-3.5 rounded-lg border transition-all cursor-pointer flex flex-col justify-between ${
+                className={`text-left px-3 py-2 rounded-lg border transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-[#1e293b] border-[#38bdf8] shadow-md'
                     : 'bg-[#0b0f19] border-[#1e293b] hover:border-[#334155]'
                 }`}
               >
-                <div>
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className={isSelected ? 'text-[#38bdf8] font-bold' : 'text-[#94a3b8]'}>
-                      {idx === 0 ? 'STAGE 0' : `PASS ${idx} OF 3`} · {meta.levelNumber}
+                <span className="flex items-center gap-1.5">
+                  <span className={isSelected ? 'text-[#38bdf8] font-bold' : 'text-[#cbd5e1]'}>
+                    DEPTH {idx + 1} OF 3 · {meta.levelNumber}
+                  </span>
+                  {isSelected && firstDone && (
+                    <span
+                      data-testid={`pass-first-step-complete-${passId}`}
+                      role="img"
+                      aria-label="Step 3 milestone marked done"
+                      title="Step 3 milestone marked done (self-reported)"
+                      className="inline-flex shrink-0 items-center text-[#34d399]"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                     </span>
-                    <span className="text-[#34d399]">
-                      {done}/{steps.length} Done
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-start gap-1.5">
-                    <div className="text-sm font-bold text-[#f1f5f9]">{meta.name}</div>
-                    {firstStepDone && (
-                      <span
-                        data-testid={`pass-first-step-complete-${passId}`}
-                        role="img"
-                        aria-label="Step 1 complete"
-                        title="Step 1 complete"
-                        className="inline-flex shrink-0 items-center text-[#34d399] mt-0.5"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[0.73rem] text-[#94a3b8] mt-1 line-clamp-2">{meta.tagline}</div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="mt-3">
-                  <div className="w-full h-1.5 bg-[#111827] rounded-full overflow-hidden border border-[#1e293b]">
-                    <div
-                      className="h-full bg-[#34d399] transition-all duration-300"
-                      style={{ width: `${(done / steps.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
+                  )}
+                </span>
+                <span className="block text-[0.7rem] text-[#94a3b8] mt-0.5 max-w-[16rem] truncate">
+                  {meta.tagline}
+                </span>
               </button>
             );
           })}
+          <span
+            className="font-mono text-[11px] text-[#34d399] tabular-nums ml-auto"
+            data-testid="depth-done"
+          >
+            {depthDone}/{SPINE_STEP_COUNT} steps passed at this depth
+          </span>
         </div>
 
         {/* 3 Completion Routes, Recurring Arm Spine & Tier 2/3 Transition Boundaries */}
@@ -251,16 +262,19 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             <div className="space-y-1.5 max-w-4xl">
               <div className="flex items-center gap-2 text-xs font-mono text-[#34d399]">
                 <Compass className="w-4 h-4" />
-                <span>ACTIVE LEARNING PASS: {activeMeta.levelNumber}</span>
+                <span>DEPTH {currentPassIdx + 1} OF 3: {activeMeta.levelNumber}</span>
                 <span aria-hidden="true">·</span>
                 <span>
-                  {activeDone} of {activeSteps.length} Milestones Checked
+                  {depthDone} of {SPINE_STEP_COUNT} steps passed at this depth
                 </span>
               </div>
               <h3 className="text-base font-bold text-[#f1f5f9]">
                 {activeMeta.name} — {activeMeta.tagline}
               </h3>
-              <p className="text-xs text-[#cbd5e1] leading-relaxed">{activeMeta.goalSummary}</p>
+              <p className="text-xs text-[#cbd5e1] leading-relaxed">
+                {activeMeta.goalSummary} Depth changes what Steps 3–10 ask for; it does not add
+                steps, and nothing here changes what Step 1 or 2 is.
+              </p>
             </div>
 
             {nextPass && (
@@ -293,7 +307,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter tracks, lessons, bridge modules, or concepts in this pass..."
+              placeholder="Filter the ten steps by title, track, or concept..."
               data-testid="input-roadmap-search"
               className="w-full sm:w-96 px-3 py-1.5 rounded-lg bg-[#0b0f19] border border-[#334155] text-xs text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#38bdf8]"
             />
@@ -312,27 +326,98 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
       {/* 3A. LINEAR PASS VIEW (Step-by-Step Track 00 -> Track 08 in Current Tier) */}
       {viewMode === 'linear' && (
         <div className="space-y-4">
-          {activeSteps
-            .filter((step) => {
-              if (!searchQuery.trim()) return true;
-              const q = searchQuery.toLowerCase();
+          {visibleSpineSteps.map((spineStep) => {
+            const at = stepAtDepth(spineStep, depth);
+            const step = at?.step ?? null;
+            const isChecked = step ? !!completedMilestones[step.milestoneId] : false;
+            // The step's practice is derived from the same registry the runner lists, so this
+            // count is evidence, not a second progress ledger.
+            const practiceEntries = entriesAtDepth(spineStep, depth);
+            const practicePassed = practiceEntries.filter((entry) => verifiedLessons[entry.id]).length;
+            const nextEntry =
+              practiceEntries.find((entry) => !verifiedLessons[entry.id]) ?? practiceEntries[0] ?? null;
+
+            // Steps 1-2 are the on-ramp: no depth milestone, so the card is its entries, its
+            // bench tasks, and the count of what has actually run.
+            if (!step) {
+              const benchMilestones = spineStep.number === 2 ? LEVEL_0_STEPS : [];
               return (
-                step.trackCode.toLowerCase().includes(q) ||
-                step.trackTitle.toLowerCase().includes(q) ||
-                step.headline.toLowerCase().includes(q) ||
-                step.coreWhy.toLowerCase().includes(q) ||
-                step.topics.some((t) => t.toLowerCase().includes(q))
+                <div
+                  key={`spine-${spineStep.number}`}
+                  data-testid={`step-card-spine-${spineStep.number}`}
+                  className="bg-[#111827] border border-[#334155] rounded-xl p-5"
+                >
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono pb-3 border-b border-[#1e293b]">
+                    <span className="text-[#38bdf8] font-bold">
+                      STEP {spineStep.number} OF {SPINE_STEP_COUNT}
+                    </span>
+                    <span aria-hidden="true" className="text-[#475569]">·</span>
+                    <span className="text-[#34d399]">ON-RAMP</span>
+                  </div>
+                  <h3 className="text-base font-bold text-[#f1f5f9] mt-3">{spineStep.title}</h3>
+                  <p className="text-xs text-[#cbd5e1] mt-1 leading-relaxed">{spineStep.outcome}</p>
+
+                  <div className="mt-3 text-xs font-mono text-[#94a3b8] tabular-nums">
+                    {practicePassed}/{practiceEntries.length} entries passed in this browser
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {practiceEntries.map((entry) => {
+                      const passed = !!verifiedLessons[entry.id];
+                      return (
+                        <button
+                          key={entry.id}
+                          onClick={() => onOpenPyodideLesson?.(entry.id)}
+                          data-testid={`practice-entry-${entry.id}`}
+                          title={`${entry.title} — ${passed ? 'executed and passed here' : 'not passed here yet'}`}
+                          className={`px-1.5 py-0.5 rounded font-mono text-[11px] border transition-colors cursor-pointer whitespace-nowrap ${
+                            passed
+                              ? 'bg-[#34d399]/15 border-[#34d399]/60 text-[#34d399]'
+                              : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1] hover:border-[#38bdf8]'
+                          }`}
+                        >
+                          {passed ? '✓' : '○'} {entry.id}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {benchMilestones.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-[#1e293b] space-y-2">
+                      <div className="text-[0.72rem] font-mono uppercase text-[#94a3b8]">
+                        Bench tasks on this step (ticked by you, not checked)
+                      </div>
+                      {benchMilestones.map((bench) => {
+                        const benchChecked = !!completedMilestones[bench.milestoneId];
+                        return (
+                          <button
+                            key={bench.milestoneId}
+                            onClick={() => onToggleMilestone(bench.milestoneId)}
+                            data-testid={`btn-milestone-${bench.milestoneId}`}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-md text-[11px] border flex items-center gap-1.5 cursor-pointer transition-colors ${
+                              benchChecked
+                                ? 'bg-[#34d399]/20 border-[#34d399] text-[#34d399]'
+                                : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1] hover:border-[#38bdf8]'
+                            }`}
+                          >
+                            {benchChecked ? <CheckSquare className="w-3 h-3" /> : <Square className="w-3 h-3" />}
+                            <span>{bench.trackTitle}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
-            })
-            .map((step, index) => {
-              const isChecked = !!completedMilestones[step.milestoneId];
-              // Only while searching does the list stop being the pass's own order; collapsing the
-              // first row of a filtered list would hide a step the learner typed a filter for.
-              const collapseFirstStep =
-                firstStepDone &&
-                step.milestoneId === firstStepId &&
-                !firstStepExpanded &&
-                !searchQuery.trim();
+            }
+
+            const labTab = tabForPreset(step.presetId);
+            // Only while searching does the list stop being the pass's own order; collapsing the
+            // first row of a filtered list would hide a step the learner typed a filter for.
+            const collapseFirstStep =
+              firstStepDone &&
+              step.milestoneId === firstStepId &&
+              !firstStepExpanded &&
+              !searchQuery.trim();
 
             if (collapseFirstStep) {
               return (
@@ -344,13 +429,15 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 >
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-[#34d399]">
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    Step 1 complete
+                    Step {spineStep.number} complete
                   </span>
                   <span aria-hidden="true" className="text-[#475569]">
                     ·
                   </span>
-                  <span className="text-xs font-mono text-[#94a3b8]">{step.stepNumber}</span>
-                  <span className="text-xs font-semibold text-[#f1f5f9]">{step.trackTitle}</span>
+                  <span className="text-xs font-semibold text-[#f1f5f9]">{spineStep.title}</span>
+                  <span className="text-[11px] font-mono text-[#94a3b8]">
+                    Depth {currentPassIdx + 1} · {step.trackTitle}
+                  </span>
                   <div className="ml-auto flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => onToggleMilestone(step.milestoneId)}
@@ -362,7 +449,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       }`}
                     >
                       {isChecked ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                      <span>{isChecked ? 'Milestone Completed' : 'Mark Milestone Complete'}</span>
+                      <span>{isChecked ? 'Marked done (self-reported)' : 'Mark done (self-reported)'}</span>
                     </button>
                     <button
                       onClick={() =>
@@ -389,9 +476,13 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 {/* Top Row: Step Kicker + Checkbox */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#1e293b]">
                   <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                    <span className="text-[#38bdf8] font-bold">{step.stepNumber}</span>
+                    <span className="text-[#38bdf8] font-bold">
+                      STEP {spineStep.number} OF {SPINE_STEP_COUNT}
+                    </span>
                     <span aria-hidden="true" className="text-[#475569]">·</span>
                     <span className="text-[#f1f5f9] font-bold">{step.trackCode}</span>
+                    <span aria-hidden="true" className="text-[#475569]">·</span>
+                    <span className="text-[#cbd5e1]">Depth {currentPassIdx + 1}</span>
                     <span aria-hidden="true" className="text-[#475569]">·</span>
                     <span className="text-[#34d399]">{step.deliverableGate}</span>
                   </div>
@@ -418,14 +509,15 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       }`}
                     >
                       {isChecked ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                      <span>{isChecked ? 'Milestone Completed' : 'Mark Milestone Complete'}</span>
+                      <span>{isChecked ? 'Marked done (self-reported)' : 'Mark done (self-reported)'}</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Title & Why */}
                 <div className="mt-3">
-                  <h3 className="text-base font-bold text-[#f1f5f9]">{step.trackTitle}</h3>
+                  <h3 className="text-base font-bold text-[#f1f5f9]">{spineStep.title}</h3>
+                  <div className="text-[11px] font-mono text-[#94a3b8] mt-0.5">{step.trackTitle}</div>
                   <div className="text-xs font-semibold text-[#38bdf8] mt-0.5">{step.headline}</div>
                   <p className="text-xs text-[#94a3b8] mt-1.5 leading-relaxed">{step.coreWhy}</p>
                 </div>
@@ -489,24 +581,87 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       </div>
                       <div className="bg-[#080d1a] border border-[#1e293b] rounded-md p-3 overflow-x-auto text-xs">
                         <MathView math={step.equation} block={true} />
-                      </div>
-
-                      <div className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3.5 mt-3 text-xs">
+                      </div>                      <div className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3.5 mt-3 text-xs">
                         <div className="font-bold text-[#34d399] mb-1 flex items-center gap-1.5">
                           <Trophy className="w-3.5 h-3.5" />
-                          <span>🧪 Hands-On Exercise ({index + 1}/{activeSteps.length}):</span>
+                          <span>Deliverable (not auto-checked):</span>
                         </div>
                         <p className="text-[#cbd5e1] leading-relaxed">
                           <em>Task:</em> {step.milestoneTask}
                         </p>
+                        <p className="text-[11px] text-[#94a3b8] mt-1.5">
+                          The tick below records that <b>you</b> say this is done. The only count the
+                          app can verify is the practice block underneath.
+                        </p>
+                      </div>
+
+                      {/* The join that used to be missing: this step's entries, by id, with the
+                          passes this browser owns, and one button that opens the next open one. */}
+                      <div
+                        data-testid={`practice-${step.milestoneId}`}
+                        className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3.5 mt-3 text-xs"
+                      >
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                          <div className="font-bold text-[#38bdf8] flex items-center gap-1.5">
+                            <Play className="w-3.5 h-3.5" />
+                            <span>Practice in {PYTHON_TAB_NAME}</span>
+                          </div>
+                          <span
+                            className="font-mono text-[11px] text-[#94a3b8] tabular-nums"
+                            data-testid={`practice-count-${step.milestoneId}`}
+                          >
+                            {practiceEntries.length > 0
+                              ? `${practicePassed}/${practiceEntries.length} passed in this browser`
+                              : 'no workbench entry for this step'}
+                          </span>
+                        </div>
+                        {practiceEntries.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {practiceEntries.map((entry) => {
+                              const passed = !!verifiedLessons[entry.id];
+                              return (
+                                <button
+                                  key={entry.id}
+                                  onClick={() => onOpenPyodideLesson?.(entry.id)}
+                                  data-testid={`practice-entry-${entry.id}`}
+                                  title={`${entry.title} — ${passed ? 'executed and passed here' : 'not passed here yet'}`}
+                                  className={`px-1.5 py-0.5 rounded font-mono text-[11px] border transition-colors cursor-pointer whitespace-nowrap ${
+                                    passed
+                                      ? 'bg-[#34d399]/15 border-[#34d399]/60 text-[#34d399]'
+                                      : 'bg-[#111827] border-[#334155] text-[#cbd5e1] hover:border-[#38bdf8]'
+                                  }`}
+                                >
+                                  {passed ? '✓' : '○'} {entry.id}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-[#94a3b8] leading-relaxed mt-1.5">
+                            This step is bench or prose work. Nothing in the app can run or check it,
+                            so the tick is the only record — the lab above still applies.
+                          </p>
+                        )}
+                        {practiceEntries.length > 1 && nextEntry && (
+                          <button
+                            onClick={() => onOpenPyodideLesson?.(nextEntry.id)}
+                            className="mt-2 text-[11px] font-mono text-[#38bdf8] hover:underline cursor-pointer"
+                          >
+                            Open the next one I have not passed: {nextEntry.id} →
+                          </button>
+                        )}
                       </div>
 
                       {step.quiz && (
                         <div className="bg-[#0b0f19] border border-[#334155] rounded-lg p-3.5 mt-3 text-xs">
-                          <div className="font-bold text-[#c084fc] mb-1.5">🧠 Knowledge Check:</div>
+                          {/* Answers are on the page, so this is a self-check, not an assessment:
+                              the label says so rather than implying the app scored it. */}
+                          <div className="font-bold text-[#c084fc] mb-1.5">
+                            Self-check (answers shown, not scored)
+                          </div>
                           <details className="group cursor-pointer">
                             <summary className="font-semibold text-[#f1f5f9] hover:text-[#38bdf8] select-none">
-                              <b>Click to toggle quiz questions &amp; answers</b>
+                              <b>Show the two questions and their answers</b>
                             </summary>
                             <div className="mt-3 pt-2.5 border-t border-[#1e293b] space-y-2.5 text-[#cbd5e1] cursor-default">
                               <div>
@@ -531,8 +686,17 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       )}
                     </div>
 
-                    {/* Footer Button: Launch Interactive Simulator */}
-                    <div className="pt-2 flex flex-wrap items-center justify-end gap-2 border-t border-[#1e293b]">
+                    {/* Footer Button: the lab it opens, named from the same table the tab strip
+                        renders — a label can no longer promise a position that moved. */}
+                    <div className="pt-2 flex flex-col items-end gap-1 border-t border-[#1e293b]">
+                      {labTab && (
+                        <span
+                          className="text-[11px] font-mono text-[#94a3b8]"
+                          data-testid={`step-lab-${step.milestoneId}`}
+                        >
+                          Opens: {tabName(labTab)}
+                        </span>
+                      )}
                       <button
                         onClick={() => onLoadPreset(step.presetId)}
                         className="bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8] px-3 py-1.5 rounded-md text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
@@ -551,16 +715,18 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
           <div className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#064e3b] border border-[#34d399] rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-1 max-w-3xl">
               <div className="text-xs font-mono uppercase text-[#34d399] font-bold">
-                {nextPass ? `END OF ${activeMeta.levelNumber} · READY TO LEVEL UP` : 'FINAL PRODUCTION MASTERY ACHIEVED'}
+                {nextPass
+                  ? `END OF DEPTH ${currentPassIdx + 1} · READY TO GO DEEPER`
+                  : 'FINAL PRODUCTION MASTERY ACHIEVED'}
               </div>
               <h3 className="text-base font-bold text-[#f1f5f9]">
                 {nextPass
-                  ? `Finished ${activeMeta.name}? Loop Back to Track 00 for ${TIER_PASS_META[nextPass].name}!`
-                  : 'Congratulations! You Have Completed All 3 Linear Passes (Tracks 00–08) Through Production Mastery.'}
+                  ? `Finished Depth ${currentPassIdx + 1}? Steps 3–10 again at ${TIER_PASS_META[nextPass].levelNumber}: same numbers, deeper work.`
+                  : `Congratulations! You Have Walked Steps 1–${SPINE_STEP_COUNT} at All 3 Depths Through Production Mastery.`}
               </h3>
               <p className="text-xs text-[#cbd5e1]">
                 {nextPass
-                  ? `You now have the complete end-to-end foundation from ${activeMeta.levelNumber}. Click the button to start ${TIER_PASS_META[nextPass].levelNumber} from Track 00 with upgraded hardware, deeper math, and custom engineering tools.`
+                  ? `You now have the complete end-to-end foundation from ${activeMeta.levelNumber}. The next depth keeps the step numbers and raises what each one asks for: upgraded hardware, deeper math, custom engineering tools. Steps 1–2 do not repeat.`
                   : 'All 12 Lab, CAD, 48V/30A PCB, and STM32G474 Firmware verification gates are unlocked in the interactive simulators.'}
               </p>
             </div>
@@ -573,7 +739,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 }}
                 className="bg-[#34d399] hover:bg-[#34d399]/90 text-[#090d16] font-bold text-xs px-4 py-2.5 rounded-md flex items-center gap-2 cursor-pointer transition-all shadow-md"
               >
-                <span>Start {TIER_PASS_META[nextPass].levelNumber} (Loop to Track 00)</span>
+                <span>Start {TIER_PASS_META[nextPass].levelNumber} at Step 3</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             )}
@@ -588,13 +754,13 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             <div>
               <h3 className="text-sm font-bold text-[#38bdf8]">
                 {beginnerView
-                  ? 'Track-by-Track Matrix (Beginner Path)'
-                  : 'Complete Horizontal vs. Vertical Curriculum Matrix (Tracks 00–08 × Tiers 1–3)'}
+                  ? 'Step-by-Step Matrix (Beginner Path)'
+                  : 'Complete Horizontal vs. Vertical Curriculum Matrix (Steps 3–10 × Depths 1–3)'}
               </h3>
               <p className="text-xs text-[#94a3b8]">
                 {beginnerView
                   ? 'Read across a row to see the beginner path for one track. The deeper columns stay out of the way until you ask for them.'
-                  : 'Read down a column to follow a **Linear Level-Up Pass** (Track 00 → Track 08), or read across a row to see how a single track evolves from Beginner to Production.'}
+                  : 'Read down a column to walk one depth from Step 3 to Step 10, or read across a row to see how one step deepens. The row number is the step number every page prints.'}
               </p>
             </div>
             {beginnerView && (
@@ -616,31 +782,34 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
           >
             <thead>
               <tr className="border-b border-[#334155] bg-[#0b0f19] text-[#38bdf8] font-mono">
-                <th className="p-3 w-1/5">Track (00 → 08)</th>
+                <th className="p-3 w-1/5">Step (3 → 10)</th>
                 <th className="p-3 w-1/4 text-[#34d399]">
-                  {beginnerView ? 'Beginner path' : 'Pass 1: Tier 1 (Beginner / Intuitive)'}
+                  {beginnerView ? 'Beginner path' : 'Depth 1 · Tier 1 (Beginner / Intuitive)'}
                 </th>
                 {showAdvancedColumns && (
                   <th className="p-3 w-1/4 text-[#38bdf8]">
-                    {beginnerView ? 'Deeper practice' : 'Pass 2: Tier 2 (Intermediate / Applied)'}
+                    {beginnerView ? 'Deeper practice' : 'Depth 2 · Tier 2 (Intermediate / Applied)'}
                   </th>
                 )}
                 {showAdvancedColumns && (
                   <th className="p-3 w-1/4 text-[#c084fc]">
-                    {beginnerView ? 'Advanced' : 'Pass 3: Tier 3 (Advanced / Production)'}
+                    {beginnerView ? 'Advanced' : 'Depth 3 · Tier 3 (Advanced / Production)'}
                   </th>
                 )}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1e293b] text-[#cbd5e1] align-top">
-              {TIER_1_LINEAR_PASS.map((t1Step, idx) => {
-                const t2Step = TIER_2_LINEAR_PASS[idx];
-                const t3Step = TIER_3_LINEAR_PASS[idx];
+              {SPINE.filter((step) => step.number > 2).map((spineStep) => {
+                const t1Step = stepAtDepth(spineStep, 'tier1')!.step;
+                const t2Step = stepAtDepth(spineStep, 'tier2')?.step ?? t1Step;
+                const t3Step = stepAtDepth(spineStep, 'tier3')?.step ?? t1Step;
                 return (
-                  <tr key={t1Step.milestoneId} className="hover:bg-[#1e293b]/30">
+                  <tr key={spineStep.slug} className="hover:bg-[#1e293b]/30">
                     <td className="p-3 font-bold text-[#f1f5f9]">
-                      <div className="text-[#38bdf8] font-mono text-[0.7rem]">STEP {idx + 1} OF 8</div>
-                      <div>{t1Step.trackTitle.split(':')[0]}</div>
+                      <div className="text-[#38bdf8] font-mono text-[0.7rem]">
+                        STEP {spineStep.number} OF {SPINE_STEP_COUNT}
+                      </div>
+                      <div>{spineStep.title}</div>
                     </td>
                     <td className="p-3">
                       <div className="font-semibold text-[#34d399] mb-1">{t1Step.headline}</div>

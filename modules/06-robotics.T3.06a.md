@@ -27,7 +27,7 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.06-robotics.T3.06a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T3.06a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab with `EX.06-robotics.T3.06a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T3.06a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -436,7 +436,7 @@ Inject the `no_tanh_derivative` fault from the graded package: drop the $(1 - H^
 - **Fix:** multiply $dH$ by $(1 - H^2)$ per hidden unit, and prove it by re-running the central difference on every parameter and requiring agreement below $10^{-7}$ again.
 
 ## 6. Simulation path
-Run the Python Behavior Cloning script above or inspect how learned policies interface with the $1\text{ kHz}$ Operational-Space & CBF safety layer in **Tab 4 (Furuta Pendulum + LQR + CBF)** and **Tab 5 (URDF / MuJoCo & STO)** of the MechaLab Workbench (`npm run dev`).
+Run the Python Behavior Cloning script above or inspect how learned policies interface with the $1\text{ kHz}$ Operational-Space & CBF safety layer in **Furuta Pendulum + LQR + CBF** and **URDF / MuJoCo & STO** of the MechaLab Workbench (`npm run dev`).
 
 No hardware required for this module (`hardware_required: false`). In Step 3.7 (`06-robotics.T3.07`), a policy trained in PyTorch / `Hugging Face LeRobot` exports its weights to `ONNX` / `TorchScript` and runs at $30\text{–}50\text{ Hz}$ on the host PC, streaming smooth joint position/action chunks to the $1\text{ kHz}$ `ros2_control` impedance loop:
 ```text

@@ -24,7 +24,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.05-control.T3.05a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T3.05a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 8 of 10 · Make it hold still: control**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.05-control.T3.05a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T3.05a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -146,7 +148,7 @@ EXERCISE_TARGET=exercises/05-control.T3.05a/starter.py \
 - **📚 What to Learn & Resources to Solve This Exercise:**
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00e`](00-foundations.T2.00e.md)-[`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*State-Space & Covariance*) and Legacy **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*).
   - **Core Concepts to Review First:** the optimal scalar gain, the Joseph-form posterior and NEES in `## 3. Formalization` (Items 1-3) and the bad-gain comparison in `## 4. Worked example` above.
-  - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the ESKF* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 8**).
+  - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the ESKF* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**IMU Sensor Fusion & Real-Time Lock**).
 
 ### Starter code
 ```python
@@ -254,7 +256,7 @@ Inject the `## 8. Common mistakes` row about the naive subtraction, keeping the 
 - **Fix:** restore `(1.0 - k * h) ** 2 * p_minus + k * k * r`. The same run then reads $3.25000$, and the $20\%$-over-optimal plant case lands at $1.1733\times10^{-3}$ instead of $-5.3333\times10^{-4}$.
 
 ## 6. Simulation path
-Open **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`) and watch the covariance diagonal stay positive across a long run, or run `05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py` for the full filter with both updates.
+Open **6-DOF Manifold Attitude ESKF on $SO(3$)** in the MechaLab Workbench (`npm run dev`) and watch the covariance diagonal stay positive across a long run, or run `05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py` for the full filter with both updates.
 
 The graded package is also a workbench entry: **Modules -> `EX.05-control.T3.05a`**, where `selfcheck.py` is appended below the starter and **Verify** compares it against the instructor copy of the same self-check. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

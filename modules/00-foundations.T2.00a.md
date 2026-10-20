@@ -24,7 +24,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -225,7 +227,7 @@ Inject the `## 8. Common mistakes` row about a difference that never divided by 
 - **Fix:** divide by `dt` inside `joint_velocity`; then one count per millisecond reads $1.534\,\text{rad/s}$ and the $\Delta t$ test passes.
 
 ## 6. Simulation path
-Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench: the encoder trace feeding that plant's state estimate is the same difference and running sum.
+Run the worked example in Python, then open **Two-Mass & Notch Bode** in the MechaLab Workbench: the encoder trace feeding that plant's state estimate is the same difference and running sum.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

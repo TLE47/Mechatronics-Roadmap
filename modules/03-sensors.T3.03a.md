@@ -28,7 +28,7 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.03-sensors.T3.03a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.03-sensors.T3.03a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab with `EX.03-sensors.T3.03a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.03-sensors.T3.03a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -152,7 +152,7 @@ EXERCISE_TARGET=exercises/03-sensors.T3.03a/starter.py \
   python3 -m unittest discover -s exercises/03-sensors.T3.03a -p 'test_*.py'
 ```
 
-**34 tests.** The feedforward is checked at the worked example's $-3.60\text{ V}$ and $12.00\text{ V}$, the Skip test's $-4.50\text{ V}$, the Gate test's $18.0\text{ V}$, and on a salient machine whose two axes have different inductances, so a swapped axis fails; the offset and duties are checked at the exercise's $-6.0\text{ V}$ and $(0.875, 0.125, 0.125)$, the Skip test's $-3.0\text{ V}$, the Gate test's $0.875$, at the hexagon limit where $d_a = 1.0$ exactly, and at a command outside the inscribed circle, which must be refused rather than clamped leg by leg; the $27.7128\text{ V}$ limit and the $+15.47\%$ gain are pinned; and the Fourier fit is checked at the worked example's $a_1 = 0.012$ and $b_2 = -0.005$ and the Gate test's $0.010\text{ rad}$ amplitude. The transfer suite runs **the plant's own 12-bit encoder**: an ideal encoder must fit to zero error, one count is $2\pi/4096 = 0.001534\text{ rad}$, the module's $0.012\text{ rad}$ eccentricity is $7.82$ counts and cancels to machine precision, a 2nd harmonic leaks nothing into the 1st at $4096$ samples, and the 25 kHz loop of Tab 3 executes $25$ updates inside one $1\text{ ms}$ plant tick. Five planted faults - `feedforward_swaps_axes`, `svpwm_offset_uses_mean`, `duties_ignore_offset`, `hexagon_uses_half_bus`, `harmonic_amplitude_sums` - each fail the test named for them.
+**34 tests.** The feedforward is checked at the worked example's $-3.60\text{ V}$ and $12.00\text{ V}$, the Skip test's $-4.50\text{ V}$, the Gate test's $18.0\text{ V}$, and on a salient machine whose two axes have different inductances, so a swapped axis fails; the offset and duties are checked at the exercise's $-6.0\text{ V}$ and $(0.875, 0.125, 0.125)$, the Skip test's $-3.0\text{ V}$, the Gate test's $0.875$, at the hexagon limit where $d_a = 1.0$ exactly, and at a command outside the inscribed circle, which must be refused rather than clamped leg by leg; the $27.7128\text{ V}$ limit and the $+15.47\%$ gain are pinned; and the Fourier fit is checked at the worked example's $a_1 = 0.012$ and $b_2 = -0.005$ and the Gate test's $0.010\text{ rad}$ amplitude. The transfer suite runs **the plant's own 12-bit encoder**: an ideal encoder must fit to zero error, one count is $2\pi/4096 = 0.001534\text{ rad}$, the module's $0.012\text{ rad}$ eccentricity is $7.82$ counts and cancels to machine precision, a 2nd harmonic leaks nothing into the 1st at $4096$ samples, and the 25 kHz loop of Brushless Motor Control Lab executes $25$ updates inside one $1\text{ ms}$ plant tick. Five planted faults - `feedforward_swaps_axes`, `svpwm_offset_uses_mean`, `duties_ignore_offset`, `hexagon_uses_half_bus`, `harmonic_amplitude_sums` - each fail the test named for them.
 
 ### Starter code
 ```python
@@ -384,10 +384,10 @@ Use the exercise's own commands $v_a^* = +24.0\text{ V}$, $v_b^* = v_c^* = -12.0
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*First-Order Transfer Functions & Bandwidth*) and [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (*Coupled State-Space Equations*).
   - **Prerequisite Bridge Module:** [`03-sensors.T2.03a`](03-sensors.T2.03a.md) and Legacy **Step 2.4 (`03-sensors.T2.04`)**.
   - **Core Concepts to Review First:** Synchronous $d$-$q$ voltage equations and feedforward decoupling ($v_{d,\text{ff}} = -\omega_e L_q i_q, v_{q,\text{ff}} = \omega_e(L_d i_d + \lambda_{pm})$), pole-zero cancellation PI gains ($K_p = L\omega_{\text{bw}}, K_i = R\omega_{\text{bw}}$), and Min-Max zero-sequence SVPWM injection in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [TI Clarke, Park & SVPWM Theory (SPRU585 / BPRA073)](https://www.ti.com/lit/pdf/bpra073) and [Track 03 Tier 3 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-3-advanced--production) (**Tab 3: 25 kHz PMSM FOC**).
+  - **Study Links & Resources:** [TI Clarke, Park & SVPWM Theory (SPRU585 / BPRA073)](https://www.ti.com/lit/pdf/bpra073) and [Track 03 Tier 3 (`03-sensors-and-actuators/README.md`)](../03-sensors-and-actuators/README.md#tier-3-advanced--production) (**25 kHz PMSM FOC**).
 
 ## 6. Simulation path
-Open **Tab 3 (25 kHz PMSM FOC — Decoupled d-q, SVPWM Saddle Wave & Anticogging)** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to compare coupled vs. decoupled step responses and SPWM vs. SVPWM duty waveforms (see [`03-sensors-and-actuators/README.md` §3.1–3.2](../03-sensors-and-actuators/README.md#tier-3-advanced--production)).
+Open **25 kHz PMSM FOC — Decoupled d-q, SVPWM Saddle Wave & Anticogging** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to compare coupled vs. decoupled step responses and SPWM vs. SVPWM duty waveforms (see [`03-sensors-and-actuators/README.md` §3.1–3.2](../03-sensors-and-actuators/README.md#tier-3-advanced--production)).
 
 No hardware required for this module (`hardware_required: false`). In Step 3.4 (`03-sensors.T3.04`) and Step 3.5 (`04-embedded.T3.05`), these exact decoupling and Min-Max SVPWM equations execute in $< 3.2\ \mu\text{s}$ inside the `STM32G474` $40\text{ kHz}$ `ADC_DMA_TC` ISR:
 ```text

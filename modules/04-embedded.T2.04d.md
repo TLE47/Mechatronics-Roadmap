@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.04-embedded.T2.04d`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T2.04d) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 7 of 10 · Run it in real time: embedded C**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.04-embedded.T2.04d` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T2.04d) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -319,7 +321,7 @@ ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 921600
 # In Terminal 2: verify live MCU topics on the ROS 2 graph
 source /opt/ros/jazzy/setup.bash && ros2 topic list && ros2 topic echo /joint_states
 ```
-Or inspect the MCU-to-host packet framing and real-time scheduling budgets in **Tab 8 (Attitude ESKF & SeqLock)** of the MechaLab Workbench (`npm run dev`).
+Or inspect the MCU-to-host packet framing and real-time scheduling budgets in **Attitude ESKF & SeqLock** of the MechaLab Workbench (`npm run dev`).
 ```text
 [MCU Task_Ctrl (1 kHz)] --(k_mutex / Queue)--> [MCU Task_uROS: rclc_executor (500 Hz)]
                                                         || (XRCE-DDS over CAN-FD / UART DMA / UDP)

@@ -11,7 +11,9 @@ slow_learner_hours: "2.5-3.5"
 # Lesson P.10: Radians, Rotational Speed (`rad/s`) and Right-Triangle Trigonometry
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `P.10`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.10) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 1 of 10 · Python and the maths a robot needs**
+>
+> **Run this in the workbench.** [Open MechaLab with `P.10` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.10) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal

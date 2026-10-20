@@ -16,9 +16,9 @@ The course has two surfaces, and they do different jobs. Use both, in this order
 | Surface | Use it for | What it does not do |
 | :--- | :--- | :--- |
 | The lesson page on GitHub | Reading: the idea, the worked example, the resources, the checklist | Run or grade anything. GitHub is read-only for a learner, so nothing you type there is saved. |
-| [The MechaLab workbench](https://tle47.github.io/Mechatronics-Roadmap/) (Tab 2) | Typing the code, running it, the hint ladder, the graded checks, your progress | Teach the idea; the page carries that. |
+| [The MechaLab workbench](https://tle47.github.io/Mechatronics-Roadmap/), on the Run Python Lessons tab | Typing the code, running it, the hint ladder, the graded checks, your progress | Teach the idea; the page carries that. |
 
-Every lesson in Tab 2 shows its own page path with a **Read this page on GitHub ↗** link, and every
+Every entry in Run Python Lessons shows its own page path with a **Read this page on GitHub ↗** link, and every
 page opens with the same **Run this in the workbench** callout, and its link carries the entry:
 `?lesson=<id>` opens the workbench with that lesson already in the editor, so a reader who arrives
 from a search result lands on the thing to run instead of being told to go and find it. A page with

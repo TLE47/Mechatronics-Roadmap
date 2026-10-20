@@ -30,7 +30,7 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.07-systems.T3.06a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.07-systems.T3.06a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab with `EX.07-systems.T3.06a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.07-systems.T3.06a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -342,10 +342,10 @@ Inject the `sto_no_filter` fault and diagnose it from the restart behaviour alon
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Frequency Response*) and [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*Spectral Estimation*).
   - **Prerequisite Bridge Module:** [`07-systems.T2.07a`](07-systems.T2.07a.md) and Legacy **Step 2.8 (`07-systems.T2.08`)**.
   - **Core Concepts to Review First:** `OPC UA` (`IEC 62541`) & Asset Administration Shell (`IEC 63278 AAS`), Schroeder-phased multisine Crest Factor minimization $\phi_k = -\frac{\pi k(k-1)}{K}$, and `ISO 13849-1` Category 3 / `PLd` dual-channel Safe Torque Off (STO) discrepancy monitoring in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [open62541 OPC UA Docs (`open62541.org`)](https://www.open62541.org/), [IDTA Asset Administration Shell Specs (`industrialdigitaltwin.org`)](https://industrialdigitaltwin.org/), and [Track 07 Tier 3 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-3-advanced--production) (**Tab 5 & Tab 7**).
+  - **Study Links & Resources:** [open62541 OPC UA Docs (`open62541.org`)](https://www.open62541.org/), [IDTA Asset Administration Shell Specs (`industrialdigitaltwin.org`)](https://industrialdigitaltwin.org/), and [Track 07 Tier 3 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-3-advanced--production) (**Robot Arm Kinematics & Safety Cutoff & Sine-Sweep System Identification**).
 
 ## 6. Simulation path
-Open **Tab 5 (URDF / MuJoCo & STO — Dual-Channel Hardware STO)** and **Tab 7 (Schroeder Multisine SysID)** in the MechaLab Workbench (`npm run dev`), or explore open-source OPC UA / AAS tools (`open62541`, `python-opcua`, `Eclipse BaSyx`, `AASX Package Explorer`) in `resources/open-source-toolchains.md`.
+Open **URDF / MuJoCo & STO — Dual-Channel Hardware STO** and **Schroeder Multisine SysID** in the MechaLab Workbench (`npm run dev`), or explore open-source OPC UA / AAS tools (`open62541`, `python-opcua`, `Eclipse BaSyx`, `AASX Package Explorer`) in `resources/open-source-toolchains.md`.
 
 The graded package is also a workbench entry: **Modules -> `EX.07-systems.T3.06a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

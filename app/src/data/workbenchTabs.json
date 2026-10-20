@@ -1,0 +1,16 @@
+{
+  "workbenchUrl": "https://tle47.github.io/Mechatronics-Roadmap/",
+  "tabs": {
+    "tab-arch": "Start Here: Roadmap & Progress",
+    "tab-pyodide": "Run Python Lessons",
+    "tab-placement": "Placement Quiz",
+    "tab-bode": "Vibration Filter & Resonance Lab",
+    "tab-foc": "Brushless Motor Control Lab",
+    "tab-pend": "Pendulum Balance & Safety Walls",
+    "tab-models": "Robot Arm Kinematics & Safety Cutoff",
+    "tab-cadpcb": "3D Parts & Motor Driver PCB Lab",
+    "tab-sysid": "Sine-Sweep System Identification",
+    "tab-eskf": "IMU Sensor Fusion & Real-Time Lock",
+    "tab-links": "Citation Link Health"
+  }
+}

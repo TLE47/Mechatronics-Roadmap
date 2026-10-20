@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.03-sensors.T1.03a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.03-sensors.T1.03a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 6 of 10 · Measure the joint: sensors**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.03-sensors.T1.03a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.03-sensors.T1.03a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -332,7 +334,7 @@ Inject the `pole_pairs_counts_poles` fault the graded package names, and diagnos
 - **Fix:** restore $p = N_{\text{poles}}/2 = 7$. Then $\omega_e = 7 \times 200 = 1400\text{ rad/s}$ and $\theta_m = \pi/7$ maps to $\theta_e = \pi\text{ rad}$, half an electrical cycle, where the five-edge walk still adds $5$ counts.
 
 ## 6. Simulation path
-Open **Tab 3 (25 kHz PMSM FOC)** in the MechaLab Workbench (`npm run dev`) to see how mechanical rotor angle $\theta_m$ multiplies by pole pairs $p$ into electrical commutation angle $\theta_e = p\theta_m$.
+Open **25 kHz PMSM FOC** in the MechaLab Workbench (`npm run dev`) to see how mechanical rotor angle $\theta_m$ multiplies by pole pairs $p$ into electrical commutation angle $\theta_e = p\theta_m$.
 
 No hardware required for this module (`hardware_required: false`). In Step 1.4 (`03-sensors.T1.04`), you can verify pole pairs $p$ on a real BLDC motor by Energizing Phase A to $+1.5\text{ V}$ (current-limited to $0.5\text{ A}$) and Phase B/C to $\text{GND}$, rotating the rotor by hand through one full $360^\circ$ mechanical turn, and counting the $p$ magnetic detent lock positions:
 ```text

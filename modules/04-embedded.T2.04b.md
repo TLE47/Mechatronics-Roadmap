@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.04-embedded.T2.04b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T2.04b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 7 of 10 · Run it in real time: embedded C**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.04-embedded.T2.04b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T2.04b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -343,7 +345,7 @@ Keep the worked example's numbers — $C_H = 100\ \mu\text{s}$, $B_i = 40\ \mu\t
   - **Study Links & Resources:** [Mastering the FreeRTOS Real Time Kernel (`freertos.org`)](https://www.freertos.org/Documentation/02-Kernel/07-Books-and-manual/01-RTOS_book) and [`resources/open-source-toolchains.md`](../resources/open-source-toolchains.md).
 
 ## 6. Simulation path
-Open **Tab 8 (Real-Time Concurrency, Scheduling & CAN Framing)** in the MechaLab Workbench (`npm run dev`) to inspect preemptive task timelines and priority inheritance mutex behavior.
+Open **Real-Time Concurrency, Scheduling & CAN Framing** in the MechaLab Workbench (`npm run dev`) to inspect preemptive task timelines and priority inheritance mutex behavior.
 
 No hardware required for this module (`hardware_required: false`). In Step 2.5 (`04-embedded.T2.05`), your `STM32G4` or `ESP32` runs `FreeRTOS` with `vTaskDelayUntil()` for drift-free periodic execution and `FDCAN` hardware filters for $1\text{ kHz}$ MIT-mode actuator frames:
 ```text

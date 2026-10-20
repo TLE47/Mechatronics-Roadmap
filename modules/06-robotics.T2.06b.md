@@ -30,7 +30,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.06-robotics.T2.06b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T2.06b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 9 of 10 · Plan motion and bring it up safely**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.06-robotics.T2.06b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T2.06b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -297,7 +299,7 @@ Inject the first row of the `## 8. Common mistakes` table: replay the bag withou
 - **Fix:** add `--clock`, then prove it by `ros2 topic hz /clock` reporting $1\text{ kHz}$ and `ros2 topic echo /clock` advancing $0.001\text{ s}$ per message, with the estimator's $\dot{q}$ back at $20\text{ rad/s}$ at $0.25\times$, $1\times$ and $4\times$.
 
 ## 6. Simulation path
-Inspect the reference URDF and MuJoCo XML scene in `08-capstone-projects/urdf-mujoco-capstone3-6dof/` or open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`). In a local ROS 2 + Gazebo Harmonic / MuJoCo workspace (see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)), launch `robot_state_publisher` with the repository's reference URDF and record an MCAP bag:
+Inspect the reference URDF and MuJoCo XML scene in `08-capstone-projects/urdf-mujoco-capstone3-6dof/` or open **URDF / MuJoCo & STO** in the MechaLab Workbench (`npm run dev`). In a local ROS 2 + Gazebo Harmonic / MuJoCo workspace (see [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)), launch `robot_state_publisher` with the repository's reference URDF and record an MCAP bag:
 ```bash
 # Terminal 1: Publish the repository's 6-DOF reference URDF with simulated clock enabled
 ros2 run robot_state_publisher robot_state_publisher 08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf --ros-args -p use_sim_time:=true

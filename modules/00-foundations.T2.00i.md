@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00i`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00i) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00i` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00i) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -250,7 +252,7 @@ Inject the `prewarp_unwarped` fault on purpose: design the $850\,\text{Hz}$ notc
 - **Fix:** pre-warp with $\omega_a = 6306.69\,\text{rad/s}$ at $850/4000$, then prove it twice: the round trip returns $850.00\,\text{Hz}$ to $10^{-9}$, and a sampled $850\,\text{Hz}$ tone loses more than $99.9\%$ of its energy while a $200\,\text{Hz}$ tone passes through.
 
 ## 6. Simulation path
-Open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench (`npm run dev`) and toggle pre-warping ON vs. OFF at $f_0 = 850\,\text{Hz}$, $f_s = 4000\,\text{Hz}$ to watch the notch centre shift from $749.5\,\text{Hz}$ onto the $850\,\text{Hz}$ resonance peak.
+Open **Two-Mass & Notch Bode** in the MechaLab Workbench (`npm run dev`) and toggle pre-warping ON vs. OFF at $f_0 = 850\,\text{Hz}$, $f_s = 4000\,\text{Hz}$ to watch the notch centre shift from $749.5\,\text{Hz}$ onto the $850\,\text{Hz}$ resonance peak.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00i`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

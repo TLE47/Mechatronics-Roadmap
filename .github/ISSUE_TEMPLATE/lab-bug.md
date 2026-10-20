@@ -11,7 +11,7 @@ flowchart LR
 ```
 
 ### 1. Lab Script or Workbench Tab
-- **Lab folder or Workbench Tab** (e.g. `Tab 9: In-Browser Python Runner`, `Tab 3: 25 kHz FOC`, `05-control-and-estimation/lab`):
+- **Lab folder or workbench tab** (e.g. `Run Python Lessons`, `Brushless Motor Control Lab`, `05-control-and-estimation/lab`):
 - **Operating System / Browser / Python or Node version**:
 
 ### 2. Steps to Reproduce

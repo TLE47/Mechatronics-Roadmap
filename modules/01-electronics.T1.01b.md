@@ -30,7 +30,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.01-electronics.T1.01b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T1.01b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 4 of 10 · Power the joint: electronics**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.01-electronics.T1.01b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T1.01b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -276,7 +278,7 @@ Inject one realistic H-bridge analysis slip and diagnose it from the number alon
 - **Fix:** use the combined $R_{\text{high}} + R_{\text{low}} = 0.36\ \Omega$, which reproduces $P_{\text{loss}} = (1.2\text{ A})^2 \times 0.36\ \Omega = 0.5184\text{ W}$. Prove the fix by printing both loop models side by side: the ratio must be exactly the count of switches in the path (two), and any other ratio means the loop is not the one you think it is.
 
 ## 6. Simulation path
-Simulate a low-side MOSFET PWM switch and 4-FET H-bridge in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or inspect **Tab 3 (25 kHz PMSM FOC)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`).
+Simulate a low-side MOSFET PWM switch and 4-FET H-bridge in [Falstad Circuit Simulator](https://www.falstad.com/circuit/) or inspect **25 kHz PMSM FOC** and **3D CAD & 48V PCB** in the MechaLab Workbench (`npm run dev`).
 
 The graded package is also a workbench entry: **Modules -> `EX.01-electronics.T1.01b`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

@@ -25,7 +25,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00f`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00f) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00f` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00f) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -192,7 +194,7 @@ Inject the `alias_no_mirror` fault: fold with `fmod` and stop there.
 - **Fix:** reflect with `fs - folded` when `folded > fs/2`, then assert the seam: $3000$ and $1000$ at $4\,\text{kHz}$ must agree.
 
 ## 6. Simulation path
-Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench and set the sample rate to $4\,\text{kHz}$: the alias of the $850\,\text{Hz}$ notch's neighbourhood is what the coarse-rate display shows.
+Run the worked example in Python, then open **Two-Mass & Notch Bode** in the MechaLab Workbench and set the sample rate to $4\,\text{kHz}$: the alias of the $850\,\text{Hz}$ notch's neighbourhood is what the coarse-rate display shows.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00f`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

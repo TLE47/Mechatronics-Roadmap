@@ -27,7 +27,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T1.00b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T1.00b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -279,7 +281,7 @@ Inject the error the exercise hint warns about, on the exercise's own lists `tar
 - **Fix:** square each error inside the sum, `sum(e * e for e in err) / len(err)`, and confirm $\text{RMSE} = 0.1581139\text{ rad}$ to $\pm 10^{-6}\text{ rad}$ — while the *mean* of the signed errors, a different quantity, is the one that comes back `0.0`.
 
 ## 6. Simulation path
-Run the worked-example script in your terminal with `python3` (inside your `.venv`), or inspect how time-series arrays (`t`, `q`, `i_q`) are plotted across **Tab 2 (Two-Mass & Notch Bode)** and **Tab 3 (25 kHz PMSM FOC)** of the MechaLab Workbench (`resources/open-source-toolchains.md`).
+Run the worked-example script in your terminal with `python3` (inside your `.venv`), or inspect how time-series arrays (`t`, `q`, `i_q`) are plotted across **Two-Mass & Notch Bode** and **25 kHz PMSM FOC** of the MechaLab Workbench (`resources/open-source-toolchains.md`).
 - **Canonical First-Success Hands-On Practice (`NumPy` Array + `Matplotlib` Plot + `Git` Commit):**
   Inside your activated `.venv` (`source .venv/bin/activate`), run this 1-minute verification to practice creating a `numpy` array, saving a `matplotlib` plot to disk, and recording your first `git commit`:
   ```bash

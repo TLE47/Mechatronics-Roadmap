@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.08-capstones.T3.07a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.08-capstones.T3.07a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 10 of 10 · Put it together: the 2-DOF arm**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.08-capstones.T3.07a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.08-capstones.T3.07a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -418,7 +420,7 @@ Inject the `latency_forgets_zoh` fault and diagnose it from the budget alone, ke
   - **Study Links & Resources:** [Slocum *Precision Machine Design*](https://ocw.mit.edu/courses/2-75-precision-machine-design-fall-2001/), [NASA Systems Engineering Handbook (`NASA/SP-2016-6105`)](https://www.nasa.gov/reference/systems-engineering-handbook/), and [Track 08 Capstones (`08-capstone-projects/README.md`)](../08-capstone-projects/README.md#tier-3-capstone-builds-advanced--production-pass).
 
 ## 6. Simulation path
-Open **Tab 5 (URDF / MuJoCo & STO — Capstone 3: 6-DOF Force-Controlled Tele-Impedance Manipulator & System Verification)** in the MechaLab Workbench (`npm run dev`), or run the standalone verification script `python3 08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py`.
+Open **URDF / MuJoCo & STO — Capstone 3: 6-DOF Force-Controlled Tele-Impedance Manipulator & System Verification** in the MechaLab Workbench (`npm run dev`), or run the standalone verification script `python3 08-capstone-projects/urdf-mujoco-capstone3-6dof/verify_capstone3_kinematics_cbf.py`.
 
 ### Safety notes
 > **⚠️ Mandatory Safety Briefing (`safety_level: high` — read before energizing any Capstone hardware build or taking the Skip/Gate test):**

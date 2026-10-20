@@ -103,50 +103,52 @@ const TOUR_CASES = [
 ];
 
 /**
- * Architecture-card presets. `pass` selects the tier pass that shows the card (Pass 1 is the default).
+ * Architecture-card presets. `depth` selects the depth that shows the card (Depth 1 is the default).
+ * The depth bar in the roadmap prints `DEPTH n OF 3`; it used to print `PASS n OF 3`, which named
+ * the same lens a second time.
  * `prime` is set when the card's own simulator already defaults to the preset's value: another card
  * on the same tab is applied first, its readout is checked to differ, and the roadmap is re-entered.
  */
 const ARCH_CASES = [
   {
     preset: 'surgical_cable',
-    pass: /PASS 1 OF 3/,
-    card: 'Open Two-Mass Resonance Sim (Tab 2)',
+    depth: /DEPTH 1 OF 3/,
+    card: 'Open Two-Mass Resonance Sim',
     name: 'Bode: low-stiffness cable drive, notch at 172 Hz',
     shows: () => document.getElementById('sl-fn')?.value === '172',
   },
   {
     preset: 'robot_hopper_crouch',
-    pass: /PASS 1 OF 3/,
-    card: 'Open Kinematic Chain Inspector (Tab 5)',
+    depth: /DEPTH 1 OF 3/,
+    card: 'Open Kinematic Chain Inspector',
     name: 'Models: hopper knee bent to -100°',
     shows: () => document.getElementById('sl-rq2')?.value === '-100',
   },
   {
     preset: 'robot_arm_polish',
-    pass: /PASS 1 OF 3/,
-    card: 'Launch Capstone Inspector (Tab 5)',
+    depth: /DEPTH 1 OF 3/,
+    card: 'Launch Capstone Inspector',
     name: 'Models: 6-DOF serial arm selected',
     shows: () => document.body.innerText.split('\n').some((s) => s.trim() === '6-DOF Serial Arm'),
   },
   {
     preset: 'robot_furuta_bal',
-    pass: /PASS 2 OF 3/,
-    card: 'Inspect URDF/MuJoCo Models (Tab 5)',
+    depth: /DEPTH 2 OF 3/,
+    card: 'Inspect URDF/MuJoCo Models',
     name: 'Models: Furuta pendulum selected',
     shows: () => document.body.innerText.split('\n').some((s) => s.trim() === 'Furuta Pendulum'),
   },
   {
     preset: 'sto_enc_crc',
-    pass: /PASS 2 OF 3/,
-    card: 'Test HIL Fault Injection (Tab 5)',
+    depth: /DEPTH 2 OF 3/,
+    card: 'Test HIL Fault Injection',
     name: 'Models: encoder CRC break trips the STO',
     shows: () => document.body.innerText.includes('FAULT: ENC CRC'),
   },
   {
     preset: 'pcb_2layer_bad',
-    pass: /PASS 2 OF 3/,
-    card: 'Inspect 2-Layer vs 6-Layer PCB (Tab 6)',
+    depth: /DEPTH 2 OF 3/,
+    card: 'Inspect 2-Layer vs 6-Layer PCB',
     name: '2-layer 4.5 nH layout: turn-off V_DS 62.4 V breaches 60 V',
     shows: () =>
       [...document.querySelectorAll('div')].some(
@@ -161,8 +163,8 @@ const ARCH_CASES = [
     // T_j < 110 °C gate belongs to the 15 A continuous design point (see the generator's thermal_and_voltage_ok);
     // this preset is the 30 A peak case, so the readout above 110 °C is expected and the test pins it.
     preset: 'pcb_peak_30a',
-    pass: /PASS 3 OF 3/,
-    card: 'Run 30A Electro-Thermal Solver (Tab 6)',
+    depth: /DEPTH 3 OF 3/,
+    card: 'Run 30A Electro-Thermal Solver',
     name: '30 A solver: efficiency 98.55%, MOSFET T_j 206.1 °C, 1 s pulse peak T_j 100.8 °C',
     shows: () => {
       const valueOf = (label) => {
@@ -180,9 +182,9 @@ const ARCH_CASES = [
   },
   {
     preset: 'cad_flexure_stage',
-    pass: /PASS 3 OF 3/,
-    card: 'Inspect Ti-6Al-4V Flexure CAD (Tab 6)',
-    prime: { pass: /PASS 2 OF 3/, card: 'Inspect QDD Actuator Design (Tab 6)' },
+    depth: /DEPTH 3 OF 3/,
+    card: 'Inspect Ti-6Al-4V Flexure CAD',
+    prime: { depth: /DEPTH 2 OF 3/, card: 'Inspect QDD Actuator Design' },
     name: 'CAD: notch flexure part selected',
     shows: () => {
       const button = [...document.querySelectorAll('button')].find((b) => /Ti Notch Flexure/.test(b.innerText));
@@ -191,8 +193,8 @@ const ARCH_CASES = [
   },
   {
     preset: 'cad_qdd_carrier',
-    pass: /PASS 2 OF 3/,
-    card: 'Inspect QDD Actuator Design (Tab 6)',
+    depth: /DEPTH 2 OF 3/,
+    card: 'Inspect QDD Actuator Design',
     name: 'CAD: 8:1 QDD carrier part selected',
     shows: () => {
       const button = [...document.querySelectorAll('button')].find((b) => /QDD Carrier/.test(b.innerText));
@@ -241,7 +243,7 @@ async function freshPage(context, baseUrl, pageErrors) {
 async function runTour(page, baseUrl, log) {
   // The tour is hidden on the Python runner (the newcomer's first screen), so open the roadmap the
   // same way a learner does before touching the tour controls.
-  await page.getByRole('button', { name: /^1\. Start Here/ }).first().click({ timeout: 8000 });
+  await page.getByRole('button', { name: /^Start Here: Roadmap/ }).first().click({ timeout: 8000 });
   // Real clicks on the tour's own controls: the same path a learner takes.
   const next = page.getByRole('button', { name: /^Next Step/ });
   const apply = page.getByRole('button', { name: 'Apply Demo Preset', exact: true });
@@ -284,12 +286,12 @@ async function runTour(page, baseUrl, log) {
   }
 }
 
-/** Open a card on the roadmap: select its tier pass, then press the card's preset button. */
-async function openCard(page, { pass, card }) {
+/** Open a card on the roadmap: select its depth, then press the card's preset button. */
+async function openCard(page, { depth, card }) {
   // A fresh context now opens on the Python runner (the beginner's first screen), so the roadmap
   // has to be selected before its cards exist in the DOM.
-  await page.getByRole('button', { name: /^1\. Start Here/ }).first().click({ timeout: 8000 });
-  await page.getByRole('button', { name: pass }).first().click({ timeout: 8000 });
+  await page.getByRole('button', { name: /^Start Here: Roadmap/ }).first().click({ timeout: 8000 });
+  await page.getByRole('button', { name: depth }).first().click({ timeout: 8000 });
   await page.getByRole('button', { name: card, exact: true }).first().click({ timeout: 8000 });
 }
 
@@ -304,7 +306,7 @@ async function runArchitecture(browser, baseUrl, pageErrors, log) {
         await settle(page);
         const primed = await page.evaluate(testCase.shows);
         assert.equal(primed, false, `${testCase.preset}: the readout already matches before its own card is applied`);
-        await page.getByRole('button', { name: /^1\. Start Here/ }).first().click({ timeout: 8000 });
+        await page.getByRole('button', { name: /^Start Here: Roadmap/ }).first().click({ timeout: 8000 });
       }
       await openCard(page, testCase)
         .catch((error) => {

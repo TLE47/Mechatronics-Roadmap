@@ -11,7 +11,9 @@ slow_learner_hours: "2.0-3.0"
 # Lesson P.8: Cycle Frequency (`Hz`), Period ($T = 1/f$) and Binary Bits ($2^N$)
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `P.8`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.8) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 1 of 10 · Python and the maths a robot needs**
+>
+> **Run this in the workbench.** [Open MechaLab with `P.8` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.8) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal

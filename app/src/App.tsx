@@ -5,6 +5,7 @@ import { CheatSheetModal } from './components/CheatSheetModal';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { StartHereCard } from './components/StartHereCard';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
+import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
 import { TabArchitecture } from './components/tabs/TabArchitecture';
 import { TabBode } from './components/tabs/TabBode';
 import { TabFOC } from './components/tabs/TabFOC';
@@ -16,7 +17,7 @@ import { TabEskf } from './components/tabs/TabEskf';
 import { TabLinkHealth } from './components/tabs/TabLinkHealth';
 import { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } from './components/tabs/TabPyodideRunner';
 import { TabPlacementQuiz } from './components/tabs/TabPlacementQuiz';
-import { PresetRequest } from './demoPresets';
+import { PresetRequest, tabForPreset } from './demoPresets';
 import { AccountPanel } from './components/AccountPanel';
 import {
   accountsConfigured,
@@ -31,6 +32,7 @@ import { readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
+import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { lessonIdFromLocation } from './lessonRoute';
 import {
   ActiveTierPass,
@@ -45,8 +47,8 @@ const TOUR_STEPS: TourStepInfo[] = [
   {
     tab: 'tab-arch',
     targetId: null,
-    title: 'Tour 1 / 8 — Linear Multi-Pass Level-Up Roadmap (Stage 0 → Pass 1 → Pass 2 → Pass 3)',
-    desc: 'Start with Track P & Stage 0 foundations, then complete Pass 1 (Tier 1 Beginner) linearly from Track 00 to Track 08 before looping back for Pass 2 (Tier 2 Applied) and Pass 3 (Tier 3 Production). Click "Next Step →" to test the simulators!',
+    title: 'Tour 1 / 8 — The Ten-Step Roadmap (Steps 1–10, Depths 1–3)',
+    desc: 'Steps 1 and 2 are Python and circuits; Steps 3–10 are one joint and then the 2-DOF arm, in order. Depth 2 and Depth 3 keep the same step numbers and raise what each step asks for. Click "Next Step →" to test the simulators!',
   },
   {
     tab: 'tab-bode',
@@ -143,89 +145,89 @@ export interface WorkbenchTabMeta {
 export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-arch',
-    beginnerLabel: '1. Start Here: Roadmap & Progress',
-    beginnerSubtitle: 'Your ten steps, one at a time',
-    technicalLabel: '1. Linear Tier Roadmap (Tracks 00→08)',
-    technicalSubtitle: 'Track P · Stage 0 · Pass 1–3 Matrix',
+    beginnerLabel: TAB_NAMES['tab-arch'],
+    beginnerSubtitle: 'Four passes, and the practice each step asks for',
+    technicalLabel: 'Linear Tier Roadmap (Tracks 00→08)',
+    technicalSubtitle: 'Track P · Stage 0 · Depths 1–3 Matrix',
     isBeginnerCore: true,
   },
   {
     id: 'tab-pyodide',
-    beginnerLabel: `2. Run Python Lessons (${PYTHON_LESSONS.length} Exercises)`,
+    beginnerLabel: `${PYTHON_TAB_NAME} (${PYTHON_LESSONS.length} lessons & exercises)`,
     beginnerSubtitle: 'Write code, press Run, see what passes',
-    technicalLabel: '9. In-Browser Python Runner (86 Exercises)',
+    technicalLabel: 'In-Browser Python Runner (Pyodide WASM)',
     technicalSubtitle: 'Pyodide WASM · 3-Step Hints · Asserts',
     isBeginnerCore: true,
   },
   {
     id: 'tab-placement',
-    beginnerLabel: '3. Placement Quiz (Skip What You Know)',
+    beginnerLabel: `${TAB_NAMES['tab-placement']} (Skip What You Know)`,
     beginnerSubtitle: 'Find the right starting step',
-    technicalLabel: '10. Prerequisite Placement Quiz',
+    technicalLabel: 'Prerequisite Placement Quiz',
     technicalSubtitle: '8 Module Skip-Gate Checkpoints',
     isBeginnerCore: true,
   },
   {
     id: 'tab-bode',
-    beginnerLabel: '4. Vibration Filter & Resonance Lab',
+    beginnerLabel: TAB_NAMES['tab-bode'],
     beginnerSubtitle: 'Watch a vibration fade with a filter',
-    technicalLabel: '2. Two-Mass Resonance & Notch Bode (Lab 00/05)',
+    technicalLabel: 'Two-Mass Resonance & Notch Bode (Lab 00/05)',
     technicalSubtitle: 'Two-Mass Bode · Biquad Notch Filter',
     isBeginnerCore: true,
   },
   {
     id: 'tab-foc',
-    beginnerLabel: '5. Brushless Motor Control Lab',
+    beginnerLabel: TAB_NAMES['tab-foc'],
     beginnerSubtitle: 'Make a motor spin smoothly',
-    technicalLabel: '3. 25 kHz PMSM FOC & SVPWM (Lab 01/03)',
+    technicalLabel: '25 kHz PMSM FOC & SVPWM (Lab 01/03)',
     technicalSubtitle: '3-Phase BLDC · d-q FOC · SVPWM',
     isBeginnerCore: true,
   },
   {
     id: 'tab-pend',
-    beginnerLabel: '6. Pendulum Balance & Safety Walls',
+    beginnerLabel: TAB_NAMES['tab-pend'],
     beginnerSubtitle: 'Balance a pendulum without falling',
-    technicalLabel: '4. Furuta Pendulum + LQR + CBF (Lab 02/05)',
+    technicalLabel: 'Furuta Pendulum + LQR + CBF (Lab 02/05)',
     technicalSubtitle: 'PID/LQR Balance · CBF Safety Filter',
     isBeginnerCore: true,
   },
   {
     id: 'tab-models',
-    beginnerLabel: '7. Robot Arm Kinematics & Safety Cutoff',
+    beginnerLabel: TAB_NAMES['tab-models'],
     beginnerSubtitle: 'Move a robot arm to a point',
-    technicalLabel: '5. URDF/MuJoCo Inspector & STO Safety (Lab 07/08)',
+    technicalLabel: 'URDF/MuJoCo Inspector & STO Safety (Lab 07/08)',
     technicalSubtitle: 'Forward/Inverse Kinematics · <1 μs STO',
     isBeginnerCore: false,
   },
   {
     id: 'tab-cadpcb',
-    beginnerLabel: '8. 3D Parts & Motor Driver PCB Lab',
+    beginnerLabel: TAB_NAMES['tab-cadpcb'],
     beginnerSubtitle: 'See the parts and the motor board',
-    technicalLabel: '6. 3D CAD Parts & 48V/30A FOC PCB BOM',
+    technicalLabel: '3D CAD Parts & 48V/30A FOC PCB BOM',
     technicalSubtitle: 'STEP Flexures · Parasitic Inductance',
     isBeginnerCore: false,
   },
   {
     id: 'tab-sysid',
-    beginnerLabel: '9. Sine-Sweep System Identification',
+    beginnerLabel: TAB_NAMES['tab-sysid'],
     beginnerSubtitle: 'Measure how a machine responds',
-    technicalLabel: '7. Schroeder Multisine Closed-Loop SysID (Lab 07)',
+    technicalLabel: 'Schroeder Multisine Closed-Loop SysID (Lab 07)',
     technicalSubtitle: 'Frequency-Domain Plant Identification',
     isBeginnerCore: false,
   },
   {
     id: 'tab-eskf',
-    beginnerLabel: '10. IMU Sensor Fusion & Real-Time Lock',
+    beginnerLabel: TAB_NAMES['tab-eskf'],
     beginnerSubtitle: 'Combine two motion sensors',
-    technicalLabel: '8. 6-DOF Attitude ESKF & RTOS SeqLock (Lab 04/05)',
+    technicalLabel: '6-DOF Attitude ESKF & RTOS SeqLock (Lab 04/05)',
     technicalSubtitle: 'IMU Gyro/Accel Fusion · WaitFreeSeqLock',
     isBeginnerCore: false,
   },
   {
     id: 'tab-links',
-    beginnerLabel: '11. Citation Link Health (Nightly Check)',
+    beginnerLabel: `${TAB_NAMES['tab-links']} (Nightly Check)`,
     beginnerSubtitle: 'See which outside links still work',
-    technicalLabel: '11. Link Check History & Not-Checked Trend',
+    technicalLabel: 'Link Check History & Not-Checked Trend',
     technicalSubtitle: 'Blocked / Unreachable Citations · Run Timeline',
     isBeginnerCore: false,
   },
@@ -260,7 +262,7 @@ export function buildPortfolioMarkdown(
   ];
 
   if (verifiedPy.length === 0) {
-    lines.push('_No Python lessons have been executed and passed in Pyodide WASM yet. Open Tab 2 (Run Python Lessons) and click "Run & Verify Output" to execute your first exercise._');
+    lines.push(`_No Python lessons have been executed and passed in Pyodide WASM yet. Open ${PYTHON_TAB_NAME} and click "Run & Verify Output" to execute your first entry._`);
   } else {
     for (const l of verifiedPy) {
       lines.push(`- [x] **Lesson ${l.id} (${l.title})** — \`${l.path}\` *(Executed & Passed in Pyodide WASM)*`);
@@ -276,12 +278,16 @@ export function buildPortfolioMarkdown(
     }
   }
 
-  lines.push('', '## 3. Self-Reported Multi-Pass Track Milestones', '');
+  lines.push('', '## 3. Self-Reported Ten-Step Track Milestones', '');
   if (passedMilestones.length === 0) {
     lines.push('_No track milestones checked off yet. Use the Roadmap & Progress tab to track your pass completion._');
   } else {
     for (const s of passedMilestones) {
-      lines.push(`- [x] **${s.stepNumber} · ${s.trackCode} (${s.trackTitle})** — ${s.deliverableGate}`);
+      // The spine's number and title, so the export names a step the pages also name.
+      const at = stepForMilestone(s.milestoneId);
+      lines.push(
+        `- [x] **Step ${at?.number ?? '?'} of ${SPINE_STEP_COUNT} · ${at?.title ?? s.trackTitle}** — ${s.deliverableGate}`
+      );
     }
   }
 
@@ -542,6 +548,13 @@ export const App: React.FC = () => {
     }));
   };
 
+  // A step's practice is opened by id, so the roadmap and the runner agree on the join; coming
+  // back from the runner lands on the same pass the entry belongs to.
+  const handleOpenRoadmap = (pass: ActiveTierPass, _milestoneId: string) => {
+    setActiveTierPass(pass);
+    setActiveTab('tab-arch');
+  };
+
   const allMilestoneIds = [
     ...LEVEL_0_STEPS,
     ...TIER_1_LINEAR_PASS,
@@ -613,21 +626,8 @@ export const App: React.FC = () => {
   const handleLoadPreset = (presetId: string) => {
     presetNonce.current += 1;
     setPresetRequest({ presetId, nonce: presetNonce.current });
-    if (presetId.startsWith('wafer') || presetId.startsWith('surgical') || presetId.startsWith('cnc')) {
-      setActiveTab('tab-bode');
-    } else if (presetId.startsWith('foc_')) {
-      setActiveTab('tab-foc');
-    } else if (presetId.startsWith('pend_')) {
-      setActiveTab('tab-pend');
-    } else if (presetId.startsWith('robot_') || presetId.startsWith('sto_')) {
-      setActiveTab('tab-models');
-    } else if (presetId.startsWith('pcb_') || presetId.startsWith('cad_')) {
-      setActiveTab('tab-cadpcb');
-    } else if (presetId.startsWith('sysid_')) {
-      setActiveTab('tab-sysid');
-    } else if (presetId.startsWith('eskf_')) {
-      setActiveTab('tab-eskf');
-    }
+    const destination = tabForPreset(presetId);
+    if (destination) setActiveTab(destination);
   };
 
   const portfolioMarkdown = buildPortfolioMarkdown(verifiedLessons, completedLessons, completedMilestones);
@@ -809,6 +809,7 @@ export const App: React.FC = () => {
             activeTierPass={activeTierPass}
             onSelectTierPass={setActiveTierPass}
             completedMilestones={completedMilestones}
+            verifiedLessons={verifiedLessons}
             onToggleMilestone={handleToggleMilestone}
             startHereDismissed={startHereDismissed}
             onRestoreStartHere={handleRestoreStartHere}
@@ -835,6 +836,7 @@ export const App: React.FC = () => {
               completedLessons={completedLessons}
               onMarkLessonVerified={handleMarkLessonVerified}
               onToggleLessonCompleted={handleToggleLessonCompleted}
+              onOpenRoadmap={handleOpenRoadmap}
             />
           </div>
         )}
@@ -931,7 +933,7 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-[#1e293b] bg-[#070b14] px-4 py-2.5 text-center text-xs text-[#64748b]">
-        MechaLab · Multi-Pass Spiral Mechatronics Curriculum (Track P → Stage 0 → Pass 1–3) · Dual License: CC BY 4.0 (Docs) &amp; MIT (Code)
+        MechaLab · Ten-Step Spiral Mechatronics Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License: CC BY 4.0 (Docs) &amp; MIT (Code)
       </footer>
     </div>
   );

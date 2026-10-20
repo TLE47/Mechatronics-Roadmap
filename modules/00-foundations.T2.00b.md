@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -266,7 +268,7 @@ Inject the anti-commutation slip from the `## 8. Common mistakes` table and diag
 - **Fix:** put the lever arm first, $\vec{\tau} = \vec{r}\times\vec{F}$, then prove the sign on a case whose answer is known independently: the payload moment must come out $-0.1962\text{ N}\cdot\text{m}$ and $\vec{\tau}\cdot\vec{F}$ must vanish, so both orthogonality checks and the physical sign agree.
 
 ## 6. Simulation path
-Run the worked example in Python, then open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench to inspect how 3D joint axes and link lever arms produce spatial torques across the 6-DOF arm.
+Run the worked example in Python, then open **URDF / MuJoCo & STO** in the MechaLab Workbench to inspect how 3D joint axes and link lever arms produce spatial torques across the 6-DOF arm.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00b`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

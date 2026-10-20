@@ -27,7 +27,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.05-control.T3.05c`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T3.05c) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 8 of 10 · Make it hold still: control**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.05-control.T3.05c` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T3.05c) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -157,7 +159,7 @@ EXERCISE_TARGET=exercises/05-control.T3.05c/starter.py \
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (*State-Space & Covariance*) and Legacy **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*).
   - **Prerequisite Bridge Modules:** [`05-control.T3.05a`](05-control.T3.05a.md) (*Joseph-form covariance*) and [`05-control.T3.05b`](05-control.T3.05b.md) (*tangent-space injection and reset*).
   - **Core Concepts to Review First:** the safe set, the CBF condition $\dot{h} \ge -\alpha h$ and the closed-form projection in `## 3. Formalization` (Items 1-3) and the four commands in `## 4. Worked example` above.
-  - **Study Links & Resources:** [Ames et al. *Control Barrier Functions: Theory and Applications* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 4**).
+  - **Study Links & Resources:** [Ames et al. *Control Barrier Functions: Theory and Applications* (`arXiv:1903.11199`)](https://arxiv.org/abs/1903.11199) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Pendulum Balance & Safety Walls**).
 
 ### Starter code
 ```python
@@ -277,7 +279,7 @@ Inject the `## 8. Common mistakes` row about ignoring the barrier, keeping the w
 - **Fix:** restore `upper = min(u_max, alpha * h_value)` and return `min(max(u_nom, u_min), upper)`. The worked case then reads $0.20$, the exercise $0.80$, the retreat stays $-0.40$, and the plant's one-tick margin admits only $0.15625\,\text{rad/s}$ against a $0.3125\,\text{rad/s}$ approach.
 
 ## 6. Simulation path
-Open **Tab 4 (Swing-Up, LQR & Predictive Control Barrier Function QP)** in the MechaLab Workbench (`npm run dev`) and watch the nominal command and the filtered command separate only as the joint nears its stop, or run `05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py`.
+Open **Swing-Up, LQR & Predictive Control Barrier Function QP** in the MechaLab Workbench (`npm run dev`) and watch the nominal command and the filtered command separate only as the joint nears its stop, or run `05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py`.
 
 The graded package is also a workbench entry: **Modules -> `EX.05-control.T3.05c`**, where `selfcheck.py` is appended below the starter and **Verify** compares it against the instructor copy of the same self-check. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

@@ -1,8 +1,28 @@
+import { TabId } from './types';
+
 // A preset request is created by App for every "Apply Demo Preset" or architecture-step click.
 // The nonce only ever grows, so each click is claimed exactly once.
 export interface PresetRequest {
   presetId: string;
   nonce: number;
+}
+
+/**
+ * The tab a preset actually opens. The roadmap shows this name beside its button instead of a
+ * hand-typed "(Brushless Motor Control Lab)", and App uses the same function to switch tabs, so the label and the
+ * destination cannot disagree.
+ */
+export function tabForPreset(presetId: string): TabId | null {
+  if (presetId.startsWith('wafer') || presetId.startsWith('surgical') || presetId.startsWith('cnc')) {
+    return 'tab-bode';
+  }
+  if (presetId.startsWith('foc_')) return 'tab-foc';
+  if (presetId.startsWith('pend_')) return 'tab-pend';
+  if (presetId.startsWith('robot_') || presetId.startsWith('sto_')) return 'tab-models';
+  if (presetId.startsWith('pcb_') || presetId.startsWith('cad_')) return 'tab-cadpcb';
+  if (presetId.startsWith('sysid_')) return 'tab-sysid';
+  if (presetId.startsWith('eskf_')) return 'tab-eskf';
+  return null;
 }
 
 // Highest nonce any simulator has already applied. Module scope on purpose: a tab that unmounts

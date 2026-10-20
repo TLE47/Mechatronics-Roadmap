@@ -24,7 +24,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T1.00a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T1.00a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -285,7 +287,7 @@ Inject the `range` fault the exercise hint warns about, keeping $V_{\text{start}
 - **Fix:** use `range(n_steps)`, then confirm $12.0 - 10 \times 0.15 = 10.50\text{ V}$ to $\pm 10^{-6}\text{ V}$, and cross-check the count against the worked example's `8` ticks of $0.125\text{ m}$ for $1.0\text{ m}$.
 
 ## 6. Simulation path
-Run the Worked example script directly with `python3 step01.py` in your terminal (following the canonical environment bootstrap in [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)), or open **Tab 1 (Architecture & Roadmap)** of the MechaLab Workbench (`npm run dev`) to inspect how discrete simulation steps drive every interactive physics plot in the browser with zero hardware.
+Run the Worked example script directly with `python3 step01.py` in your terminal (following the canonical environment bootstrap in [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)), or open **Architecture & Roadmap** of the MechaLab Workbench (`npm run dev`) to inspect how discrete simulation steps drive every interactive physics plot in the browser with zero hardware.
 
 No hardware required for this module (`hardware_required: false`). In Stage 0 (`L0.3`) and Track 04, the exact same `while` loop structure maps directly onto a microcontroller firmware loop:
 ```text

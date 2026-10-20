@@ -10,7 +10,9 @@ slow_learner_hours: "2.0-2.5"
 # Lesson P.M: Track P Milestone — Gravity-Holding Robot Arm Link Simulator
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `P.M`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.M) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 1 of 10 · Python and the maths a robot needs**
+>
+> **Run this in the workbench.** [Open MechaLab with `P.M` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.M) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal

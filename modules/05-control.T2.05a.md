@@ -31,7 +31,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.05-control.T2.05a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T2.05a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 8 of 10 · Make it hold still: control**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.05-control.T2.05a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T2.05a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -360,7 +362,7 @@ Inject the phase-wrap slip the exercise plants (`pm_no_unwrap`), keeping the sam
 - **Fix:** wrap the lag to $(-180^\circ, 180^\circ]$ before adding $180^\circ$, then prove it on both sides: the $200^\circ$ loop must read $-20^\circ$, and the worked loop with $\tau_d = 5\text{ ms}$ must still read $\text{PM}_{\text{new}} = 29.31^\circ$.
 
 ## 6. Simulation path
-Open **Tab 2 (Two-Mass & Notch Bode — Loop Shaping & Gang of Four)** and **Tab 4 (Furuta Pendulum + LQR + CBF)** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.
+Open **Two-Mass & Notch Bode — Loop Shaping & Gang of Four** and **Furuta Pendulum + LQR + CBF** in the MechaLab Workbench (`npm run dev`) to inspect $S(s)$, $T(s)$, Phase Margin, and LQR state weights interactively.
 
 The graded package is also a workbench entry: **Modules -> `EX.05-control.T2.05a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

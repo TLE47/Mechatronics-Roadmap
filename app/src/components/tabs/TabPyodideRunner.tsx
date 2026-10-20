@@ -11,6 +11,10 @@ import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.
 import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
 import { rememberLessonInUrl } from '../../lessonRoute';
+import { roadmapStepForLesson } from '../../practiceLinks';
+import { stepBreadcrumb } from '../../spine';
+import { PYTHON_TAB_NAME } from '../../tabNames';
+import type { ActiveTierPass } from '../../curriculumData';
 import {
   Play,
   RotateCcw,
@@ -298,6 +302,8 @@ interface TabPyodideRunnerProps {
   completedLessons?: Record<string, boolean>;
   onMarkLessonVerified?: (lessonId: string) => void;
   onToggleLessonCompleted?: (lessonId: string, forceValue?: boolean) => void;
+  /** Opens the roadmap at the pass the open entry belongs to. */
+  onOpenRoadmap?: (pass: ActiveTierPass, milestoneId: string) => void;
 }
 
 export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
@@ -306,6 +312,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   completedLessons: externalCompleted,
   onMarkLessonVerified,
   onToggleLessonCompleted,
+  onOpenRoadmap,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
   const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
@@ -321,7 +328,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   });
   const guideEditorRef = useRef<HTMLTextAreaElement | null>(null);
   const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
-  const [trackFilter, setTrackFilter] = useState<'all' | 'advanced' | 'track-p' | 't00-02' | 't03-08'>('all');
+  // Named groups the roadmap also uses; the old "Step 1 / Steps 3-5 / Steps 6-10" numbering was a
+  // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
+  const [trackFilter, setTrackFilter] = useState<'all' | 'onramp' | 'lessons' | 'modules'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [code, setCode] = useState<string>(PYTHON_LESSONS[0].starterCode);
   const [revealedHints, setRevealedHints] = useState<number>(0);
@@ -434,9 +443,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     };
   }, []);
 
+  // The first pass restores a deep link and must not rewrite the address (a plain visit keeps a
+  // clean URL). A later pass is the learner picking a different entry in-app - from a roadmap step's
+  // practice chip, say - and then the address has to follow, or it keeps naming the old lesson.
+  const initialLessonApplied = useRef<boolean>(false);
   useEffect(() => {
     if (initialLessonId && PYTHON_LESSONS.some((l) => l.id === initialLessonId)) {
-      selectLesson(initialLessonId, false);
+      selectLesson(initialLessonId, initialLessonApplied.current);
+      initialLessonApplied.current = true;
     }
   }, [initialLessonId]);
 
@@ -783,19 +797,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const filteredLessons = PYTHON_LESSONS.filter((l) => {
     const matchesTrack =
       trackFilter === 'all' ||
-      (trackFilter === 'advanced' && l.track === 'modules') ||
-      (trackFilter === 'track-p' && l.track === 'track-p') ||
-      (trackFilter === 't00-02' &&
-        (l.track === '00-foundations' ||
-          l.track === '01-electronics-and-power' ||
-          l.track === '02-mechanics-kinematics-dynamics')) ||
-      (trackFilter === 't03-08' &&
-        (l.track === '03-sensors-and-actuators' ||
-          l.track === '04-embedded-and-realtime' ||
-          l.track === '05-control-and-estimation' ||
-          l.track === '06-robotics-and-autonomy' ||
-          l.track === '07-systems-hil-and-production' ||
-          l.track === '08-capstone-projects'));
+      (trackFilter === 'modules' && l.track === 'modules') ||
+      (trackFilter === 'onramp' && l.track === 'track-p') ||
+      (trackFilter === 'lessons' && l.track !== 'modules' && l.track !== 'track-p');
 
     if (!matchesTrack) return false;
     if (!searchQuery.trim()) return true;
@@ -818,6 +822,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const completedCount = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
   const isCurrentVerified = !!verifiedLessons[currentLesson.id];
   const isCurrentSelfMarked = !!completedLessons[currentLesson.id];
+  // The same derived join the roadmap uses in the other direction: every entry names the step it
+  // serves, and the button switches the roadmap to that step's pass.
+  const currentRoadmapStep = roadmapStepForLesson(currentLesson.id);
 
   // Every unverified lesson gets its own first-run brief: the starter's marked holes, the first
   // check, and the output that means finished. Hiding one lesson's brief does not hide the next's.
@@ -867,10 +874,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         <div>
           <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
             <Terminal className="w-3.5 h-3.5" />
-            <span>Isolated Web Worker Python 3.12 Runner · {PYTHON_LESSONS.length} graded exercises</span>
+            <span>
+              Isolated Web Worker Python 3.12 Runner · {PYTHON_LESSONS.length} lessons &amp;
+              exercises
+            </span>
           </div>
           <h2 className="text-lg font-bold text-[#f1f5f9] mt-0.5">
-            Run every Step 1–10 lesson and practice module: starter code, progressive hints &amp; behavioral tests
+            Every lesson and graded module in one place: the Python on-ramp, then the practice each
+            roadmap step asks for, with starter code, progressive hints and behavioural tests
           </h2>
           <p className="text-xs text-[#94a3b8] mt-0.5">
             Complete the `TODO` lines, unlock hints one step at a time, and click <b>Run &amp; Verify Output</b>. Code executes inside an isolated <b>Web Worker</b> with infinite-loop protection and is graded by <b>Instructor Behavioral Tests</b> (multi-input &amp; boundary checks) plus output presentation.
@@ -918,7 +929,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>
                   {currentLesson.id === 'P.1'
-                    ? 'Lesson P.1 · Step 1 of 10 · open and ready below'
+                    ? 'Lesson P.1 · start of the Python on-ramp · open and ready below'
                     : `First run · Lesson ${currentLesson.id} · ${
                         currentLesson.track === 'modules' ? 'graded exercise' : currentLesson.title
                       }`}
@@ -1102,30 +1113,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               the chips wrap inside the card. */}
           <div className="mb-3">
             <span className="block text-xs font-mono text-[#94a3b8] tabular-nums mb-1.5">
-              Exercises ({filteredLessons.length})
+              Lessons &amp; exercises ({filteredLessons.length})
             </span>
             <div className="flex flex-wrap gap-1" data-testid="track-filters">
               {[
                 { id: 'all', label: `All (${PYTHON_LESSONS.length})` },
                 {
-                  id: 'advanced',
-                  label: `Practice modules (${PYTHON_LESSONS.filter((l) => l.track === 'modules').length})`,
+                  id: 'modules',
+                  label: `Graded modules (${PYTHON_LESSONS.filter((l) => l.track === 'modules').length})`,
                 },
                 {
-                  id: 'track-p',
-                  label: `Step 1 (${PYTHON_LESSONS.filter((l) => l.track === 'track-p').length})`,
-                },
-                {
-                  id: 't00-02',
-                  label: `Steps 3–5 (${PYTHON_LESSONS.filter((l) =>
-                    ['00-foundations', '01-electronics-and-power', '02-mechanics-kinematics-dynamics'].includes(l.track)
+                  id: 'lessons',
+                  label: `Track lessons (${PYTHON_LESSONS.filter(
+                    (l) => l.track !== 'modules' && l.track !== 'track-p'
                   ).length})`,
                 },
                 {
-                  id: 't03-08',
-                  label: `Steps 6–10 (${PYTHON_LESSONS.filter((l) =>
-                    ['03-sensors-and-actuators', '04-embedded-and-realtime', '05-control-and-estimation', '06-robotics-and-autonomy', '07-systems-hil-and-production', '08-capstone-projects'].includes(l.track)
-                  ).length})`,
+                  id: 'onramp',
+                  label: `Python on-ramp (${PYTHON_LESSONS.filter((l) => l.track === 'track-p').length})`,
                 },
               ].map((tab) => (
                 <button
@@ -1163,7 +1168,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     <div className="flex items-center gap-1.5 text-[11px] font-mono">
                       <span className="font-bold text-[#38bdf8]">{lesson.id}</span>
                       <span aria-hidden="true" className="text-[#475569]">·</span>
-                      <span className="text-[#94a3b8] truncate">{lesson.track}</span>
+                      <span className="text-[#94a3b8] truncate">
+                        {roadmapStepForLesson(lesson.id)
+                          ? stepBreadcrumb(roadmapStepForLesson(lesson.id)!)
+                          : lesson.track === 'track-p'
+                            ? 'Python on-ramp'
+                            : 'Stage 0 on-ramp'}
+                      </span>
                     </div>
                     <div className="text-xs font-medium mt-0.5 line-clamp-1">{lesson.title}</div>
                   </div>
@@ -1209,6 +1220,25 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <span className="truncate max-w-[16rem] sm:max-w-[22rem]" title={currentLesson.path}>
                     {currentLesson.path}
                   </span>
+                  {currentRoadmapStep ? (
+                    <button
+                      onClick={() =>
+                        onOpenRoadmap?.(
+                          currentRoadmapStep.pass,
+                          currentRoadmapStep.step.milestoneId
+                        )
+                      }
+                      data-testid="lesson-roadmap-step"
+                      title="Show the roadmap step this entry practises"
+                      className="whitespace-nowrap text-[#38bdf8] hover:underline cursor-pointer"
+                    >
+                      Roadmap: {stepBreadcrumb(currentRoadmapStep)} ↗
+                    </button>
+                  ) : (
+                    <span className="whitespace-nowrap" data-testid="lesson-roadmap-step">
+                      Python on-ramp — before the roadmap
+                    </span>
+                  )}
                   <a
                     data-testid="link-lesson-page"
                     href={lessonPageUrl(currentLesson.path)}

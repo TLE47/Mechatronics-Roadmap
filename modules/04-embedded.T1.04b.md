@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.04-embedded.T1.04b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T1.04b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 7 of 10 · Run it in real time: embedded C**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.04-embedded.T1.04b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T1.04b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -327,7 +329,7 @@ print("plant: tick=%.3f ms | 1 s = %d ticks | 45 us ISR at the plant rate = %.1f
 - **Fix:** subtract first in unsigned 32-bit arithmetic, `if ((now_us - last_us) & 0xFFFFFFFF) >= 1000:`, and advance `last_us` by the period. The pair $4{,}294{,}966{,}000 \to 1200$ then reads $2496\ \mu\text{s}$, fires, and moves the deadline to $4{,}294{,}967{,}000$, so the $1000\ \mu\text{s}$ grid survives the wrap and a $10{,}000\ \mu\text{s}$ window still yields the ten control ticks the worked example asserts.
 
 ## 6. Simulation path
-Open **Tab 8 (Real-Time Concurrency & ISR Preemption)** in the MechaLab Workbench (`npm run dev`) or run a non-blocking `micros()` sketch on the [Wokwi Simulator](https://wokwi.com/).
+Open **Real-Time Concurrency & ISR Preemption** in the MechaLab Workbench (`npm run dev`) or run a non-blocking `micros()` sketch on the [Wokwi Simulator](https://wokwi.com/).
 
 No hardware required for this module (`hardware_required: false`). When you transition to physical microcontroller hardware in **Step 1.5 (`04-embedded.T1.05`)**, follow the canonical **First-Use `PlatformIO` Build/Flash (`pio run -t upload`), Linux `udev` Serial Permissions & Python `struct.unpack` Telemetry Walkthrough** in [`04-embedded-and-realtime/README.md` (§1.1–1.3)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive) and [`resources/open-source-toolchains.md` (§0)](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup). There you will toggle a physical GPIO pin at entry and exit of the $1\text{ kHz}$ timer ISR on an `ESP32` or `STM32 Nucleo` and measure pulse width $t_{\text{exec}}$ and period $T_{\text{isr}} = 1000\ \mu\text{s}$ with a logic analyzer (`PulseView`):
 ```text

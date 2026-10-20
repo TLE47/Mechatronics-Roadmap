@@ -32,7 +32,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.06-robotics.T2.06a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T2.06a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 9 of 10 · Plan motion and bring it up safely**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.06-robotics.T2.06a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T2.06a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -321,7 +323,7 @@ Inject the first row of the `## 8. Common mistakes` table: subscribe to the came
 - **Fix:** request `SensorDataQoS()` (Best-Effort) on the subscriber, and prove it by counting $60$ callbacks in one wall-clock second with `ros2 topic hz` reporting $60.000$.
 
 ## 6. Simulation path
-Open **Tab 5 (URDF / MuJoCo & STO)** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).
+Open **URDF / MuJoCo & STO** in the MechaLab Workbench (`npm run dev`), or load the repository's reference URDF (`08-capstone-projects/urdf-mujoco-capstone3-6dof/capstone3_6dof_arm.urdf`) in `RViz2`, `Foxglove Studio`, or `MuJoCo` (`resources/open-source-toolchains.md`).
 
 The graded package is also a workbench entry: **Modules -> `EX.06-robotics.T2.06a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 - **One-Time `ROS 2 Jazzy` & `colcon` Installation + First-Use Workspace Walkthrough (Ubuntu 24.04 / WSL2 — see [`resources/open-source-toolchains.md` §0.4b](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)):**

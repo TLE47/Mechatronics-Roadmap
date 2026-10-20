@@ -2,8 +2,10 @@
 /**
  * The whole Workbench test surface, one run (`scripts/test_workbench.mjs`, `npm run test:workbench`)
  *
- * Five suites used to run one after another, each booting what it needed:
+ * The suites used to run one after another, each booting what it needed:
  *
+ *   test:practice    the roadmap <-> workbench join, pure TypeScript (Node type stripping)
+ *   test:spine       the ten-step spine the pages print, and the numbering no surface repeats
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
  *   test:e2e:pages   `npm run build` if `dist/` was missing, a static Pages server + Chromium, Firefox
@@ -98,6 +100,12 @@ async function main() {
 
   const suites = [
     runSmoke(viteServer),
+    runSuite('links', 'test_practice_links.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('spine', 'test_spine.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
     runSuite('e2e', 'e2e_browser_workbench.mjs', { E2E_BASE_URL: devUrl }),
     runSuite('pages', 'e2e_pages_bundle.mjs', { PAGES_SERVER_URL: pagesUrl }),
     runSuite('pairs', 'e2e_same_task_pairs.mjs', { E2E_BASE_URL: devUrl }),

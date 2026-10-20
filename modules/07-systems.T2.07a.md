@@ -30,7 +30,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.07-systems.T2.07a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.07-systems.T2.07a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 9 of 10 · Plan motion and bring it up safely**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.07-systems.T2.07a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.07-systems.T2.07a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -291,10 +293,10 @@ Inject the `counter_plain_delta` fault and diagnose it from the frame log alone,
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T1.00c`](00-foundations.T1.00c.md) ($\mu\text{F}$, Joules & Watts), [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (Rotational Kinetic Energy $\frac{1}{2}J\omega^2$), and [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (Capacitor Energy $\frac{1}{2}C V^2$).
   - **Prerequisite Bridge Modules:** [`01-electronics.T2.02`](../01-electronics-and-power/README.md), [`04-embedded.T2.05`](../04-embedded-and-realtime/README.md), and [`06-robotics.T2.07`](../06-robotics-and-autonomy/README.md).
   - **Core Concepts to Review First:** Regenerative braking bus voltage rise $V_{\text{bus,unclamped}} = \sqrt{V_{\text{nom}}^2 + \frac{2\Delta E_{\text{regen}}}{C_{\text{bus}}}}$ and active brake chopper resistor sizing $R_{\text{brake,max}} = \frac{V_{\text{clamp}}^2}{P_{\text{regen,peak}}}$, CAN-FD CRC-16 + rolling counter watchdogs, and SIL/HIL fault injection in `## 3. Formalization` and `## 4. Worked example` above.
-  - **Study Links & Resources:** [TI SLLA325 (Managing Regenerative Energy in BLDC Drives)](https://www.ti.com/lit/pdf/slla325) and [Track 07 Tier 2 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) (**Tab 5: URDF / MuJoCo & STO**).
+  - **Study Links & Resources:** [TI SLLA325 (Managing Regenerative Energy in BLDC Drives)](https://www.ti.com/lit/pdf/slla325) and [Track 07 Tier 2 (`07-systems-hil-and-production/README.md`)](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) (**URDF / MuJoCo & STO**).
 
 ## 6. Simulation path
-Open **Tab 5 (URDF / MuJoCo Digital Twin & Fault Injection)** and **Tab 8 (CAN Framing & Watchdog)** in the MechaLab Workbench (`npm run dev`) to test regenerative braking bus clamping and fault injection recovery before connecting physical Tier 2 hardware.
+Open **URDF / MuJoCo Digital Twin & Fault Injection** and **CAN Framing & Watchdog** in the MechaLab Workbench (`npm run dev`) to test regenerative braking bus clamping and fault injection recovery before connecting physical Tier 2 hardware.
 
 The graded package is also a workbench entry: **Modules -> `EX.07-systems.T2.07a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 ```text

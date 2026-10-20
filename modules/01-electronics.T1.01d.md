@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.01-electronics.T1.01d`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T1.01d) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 4 of 10 · Power the joint: electronics**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.01-electronics.T1.01d` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T1.01d) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters

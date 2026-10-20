@@ -26,7 +26,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.05-control.T3.05b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T3.05b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 8 of 10 · Make it hold still: control**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.05-control.T3.05b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.05-control.T3.05b) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -157,7 +159,7 @@ EXERCISE_TARGET=exercises/05-control.T3.05b/starter.py \
   - **Required Foundations Modules (`00-foundations`):** [`00-foundations.T3.00a`](00-foundations.T3.00a.md) (SO(3) Hat/Vee Maps, Rodrigues' Formula & Hamiltonian Passivity) and Legacy **Step 3.1 (`00-foundations.T3.01`)** (*Van Loan ZOH & Lie Groups*).
   - **Prerequisite Bridge Module:** [`05-control.T3.05a`](05-control.T3.05a.md) (*Joseph-form covariance and NEES*).
   - **Core Concepts to Review First:** Rodrigues' exponential, right-multiplicative injection and the reset in `## 3. Formalization` (Items 1-3) and the zero-innovation comparison in `## 4. Worked example` above.
-  - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the Error-State Kalman Filter* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**Tab 8**).
+  - **Study Links & Resources:** [Joan Solà *Quaternion Kinematics for the Error-State Kalman Filter* (`arXiv:1711.02508`)](https://arxiv.org/abs/1711.02508) and [Track 05 Tier 3 (`05-control-and-estimation/README.md#tier-3-advanced--production`)](../05-control-and-estimation/README.md#tier-3-advanced--production) (**IMU Sensor Fusion & Real-Time Lock**).
 
 ### Starter code
 ```python
@@ -308,7 +310,7 @@ Inject the `## 8. Common mistakes` row about the missing reset, keeping the work
 - **Fix:** reset the mean to zero immediately after injecting. The same pair then reads $0.049979$ on the second step (one count of $\sin(0.05)$), the $0.02$ rad innovation reaches $0.069943$, and the stale case stays at $0.10$ where the filter without the reset can be seen for what it is.
 
 ## 6. Simulation path
-Open **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`) and watch the nominal rotation move while the error-state mean returns to zero after each update, or run `05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py`.
+Open **6-DOF Manifold Attitude ESKF on $SO(3$)** in the MechaLab Workbench (`npm run dev`) and watch the nominal rotation move while the error-state mean returns to zero after each update, or run `05-control-and-estimation/lab/lab05_eskf_mpc_and_cbf.py`.
 
 The graded package is also a workbench entry: **Modules -> `EX.05-control.T3.05b`**, where `selfcheck.py` is appended below the starter and **Verify** compares it against the instructor copy of the same self-check. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

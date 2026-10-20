@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T1.00e`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00e) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T1.00e` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00e) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -301,7 +303,7 @@ Inject the `spring_force_sign_dropped` fault the graded package names, and diagn
 - **Fix:** restore `f_net_n = -k_nm * x_m`. The first step then gives $v = -0.00125\text{ m/s}$ and $x = 0.099999375\text{ m}$, and the run closes at $E_{\text{final}} = 0.2502\text{ J}$ with $v_{\text{peak}} = 0.5000\text{ m/s}$ — energy held within $10^{-3}$ relative, and the release energy recovered at the center.
 
 ## 6. Simulation path
-Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum)** in the MechaLab Workbench to see coupled spring-mass-damper and pendulum energy loops in action.
+Run the worked example in Python, then open **Two-Mass & Notch Bode** and **Furuta Pendulum** in the MechaLab Workbench to see coupled spring-mass-damper and pendulum energy loops in action.
 
 No hardware required for this module (`hardware_required: false`). In Track 05 (`Step 1.6`), a closed-loop PD motor controller creates this exact spring-damper behavior electronically:
 ```text

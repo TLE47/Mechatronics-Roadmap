@@ -29,7 +29,7 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.01-electronics.T3.01a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T3.01a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab with `EX.01-electronics.T3.01a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T3.01a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -371,7 +371,7 @@ Inject one realistic bring-up fault into this module's own exercise (12-bit SAR 
 - **Fix:** restore $R_{\text{filt}} = 50.0\ \Omega$, which reproduces the exercise's $0.5076\text{ LSB}$ - still $0.008\text{ LSB}$ over the half-LSB budget, so the change that actually closes it is the acquisition window: $t_{\text{acq}} \ge \tau \ln\!\left(\frac{4096 \times 0.050}{0.5}\right) = 5.70\text{ ns} \times 6.015 = 34.29\text{ ns}$, and the $35\text{ ns}$ this module recommends gives $204.8 \times e^{-6.14} = 0.441\text{ LSB}$.
 
 ## 6. Simulation path
-Open **Tab 3 (25 kHz PMSM FOC)** and **Tab 6 (3D CAD & 48V PCB — Parasitics & Thermal Analyzer)** in the MechaLab Workbench (`npm run dev`), or simulate the 2nd-order Bessel AFE + SAR charge bucket by running `python3 01-electronics-and-power/lab/lab01_power_and_afe_sim.py`.
+Open **25 kHz PMSM FOC** and **3D CAD & 48V PCB — Parasitics & Thermal Analyzer** in the MechaLab Workbench (`npm run dev`), or simulate the 2nd-order Bessel AFE + SAR charge bucket by running `python3 01-electronics-and-power/lab/lab01_power_and_afe_sim.py`.
 
 No hardware required for this module (`hardware_required: false`). In Step 3.2 (`01-electronics.T3.02`), these exact equations size the 6-layer `STM32G474` + `DRV8353` inverter stackup:
 ```text

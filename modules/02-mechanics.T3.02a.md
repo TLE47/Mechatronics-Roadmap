@@ -29,7 +29,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.02-mechanics.T3.02a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.02-mechanics.T3.02a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 5 of 10 · Build the arm: mechanics**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.02-mechanics.T3.02a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.02-mechanics.T3.02a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -380,7 +382,7 @@ Inject the `rnea_uncoupled_second_link` fault on purpose: in the outward pass tr
 - **Fix:** set $\alpha_2 = \alpha_1 + \ddot{q}_2$ in the outward pass before projecting the inward wrench onto each axis, then prove it at the worked $(0.16, 0.06)\text{ N}\cdot\text{m}$ and at the Gate test's $(0.17, 0.09)\text{ N}\cdot\text{m}$ for $I_1 = 0.08$, $I_2 = 0.03$ and $\ddot{q} = [1.0, 2.0]^\top$.
 
 ## 6. Simulation path
-Open **Tab 5 (URDF / MuJoCo & STO)** and **Tab 6 (3D CAD & 48V PCB)** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to verify $O(n)$ RNEA against closed-form Lagrangian equations and `Christoffel` skew-symmetry (see [`02-mechanics-kinematics-dynamics/README.md` §3.1–3.2](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) and [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)).
+Open **URDF / MuJoCo & STO** and **3D CAD & 48V PCB** in the MechaLab Workbench (`npm run dev`), or run the Worked Example Python script above to verify $O(n)$ RNEA against closed-form Lagrangian equations and `Christoffel` skew-symmetry (see [`02-mechanics-kinematics-dynamics/README.md` §3.1–3.2](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production) and [`resources/open-source-toolchains.md` §0](../resources/open-source-toolchains.md#0-core-supported-os-environment-terminal-bootstrap--python-venv-setup)).
 
 No hardware required for this module (`hardware_required: false`). In Step 3.3 (`02-mechanics.T3.03`), Step 3.5 (`05-control.T3.06`), and Step 3.7 (`06-robotics.T3.07`), two-pass RNEA runs at $1\text{–}4\text{ kHz}$ to supply exact inverse-dynamics feedforward torque $\tau_{\text{ff}} = \text{RNEA}(q, \dot{q}, \ddot{q}_d)$:
 ```text

@@ -7,7 +7,7 @@ a matrix multiply, add two rotations as one number, and read a gain and a phase 
 every miss sends you to the exact ramp lesson that repairs it.
 The six **practical** gates (block diagram, parameter scaling, telemetry fault, units on a bench, a
 closed loop that settles, a bring-up you can explain) are the other half and live in the Workbench:
-**Tab 10 → Placement & Readiness → Tier 1 Exit Review**, whose gates point at the Track P, Track 00 and
+**Placement Quiz → Placement & Readiness → Tier 1 Exit Review**, whose gates point at the Track P, Track 00 and
 Track 02–04 lessons that teach them.
 
 A miss is not a verdict on Tier 1. It is a named lesson to do before the first Tier 2 page.

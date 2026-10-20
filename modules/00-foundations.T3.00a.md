@@ -30,7 +30,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T3.00a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T3.00a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T3.00a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T3.00a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -80,7 +82,7 @@ Plausibility checks that catch most mistakes before a control loop ever sees the
 - In the energy balance $\dot H\le u^\top y$, with equality only when $R_d=0$; a positive $\dot H$ on a passive system is a sign error in $J$ or $R_d$, not a discovery.
 - For the discretization, $e^{AT_s}$ must agree with a fine-grained simulation as $T_s\to0$, and $\|e^{AT_s}\|$ must stay bounded for a stable $A$.
 
-Section 6 names the workbench tab (Tab 8) and the graded package that run these numbers; nothing here needs hardware.
+Section 6 names the workbench tab (IMU Sensor Fusion & Real-Time Lock) and the graded package that run these numbers; nothing here needs hardware.
 
 ### Derive & Extend
 Where Rodrigues' formula comes from, in five steps.
@@ -320,7 +322,7 @@ Inject the `rodrigues_over_rotates` fault on purpose: apply the unit-axis form $
 - **Fix:** divide both coefficients by the angle, $c_1 = \frac{\sin\theta}{\theta}$ and $c_2 = \frac{1-\cos\theta}{\theta^2}$ (or use $1 - \theta^2/6$ and $\tfrac{1}{2} - \theta^2/24$ below $10^{-7}\text{ rad}$), then prove it at the hard end: $R^\top R = I$ to $10^{-14}$ and $\det(R) = 1$ for a rotation vector of length $\pi$, plus the nanoradian case equal to $I + [\phi]_\times$ to $10^{-17}$.
 
 ## 6. Simulation path
-Open **Tab 8 (6-DOF Manifold Attitude ESKF on $SO(3)$)** in the MechaLab Workbench (`npm run dev`) to watch how `exp_so3(omega * dt)` integrates 3D gyroscope measurements on $SO(3)$ without gimbal lock or loss of orthogonality.
+Open **6-DOF Manifold Attitude ESKF on $SO(3$)** in the MechaLab Workbench (`npm run dev`) to watch how `exp_so3(omega * dt)` integrates 3D gyroscope measurements on $SO(3)$ without gimbal lock or loss of orthogonality.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T3.00a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

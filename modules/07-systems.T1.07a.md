@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.07-systems.T1.07a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.07-systems.T1.07a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 9 of 10 · Plan motion and bring it up safely**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.07-systems.T1.07a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.07-systems.T1.07a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -321,7 +323,7 @@ print("scan=%.1f Hz | A_x=%.6f m | A_y=%.6f m" % (1.0 / dt, plant.AX, plant.AY))
 - **Fix:** restore the branch so `ESTOP_LATCHED` leaves only on `reset_btn_no and not start_btn_no`; that scan then returns `("ESTOP_LATCHED", False)` and the third assertion passes, with `pwr` False as the expected output shows.
 
 ## 6. Simulation path
-Test the cyclic PLC logic in [OpenPLC Editor](https://autonomylogic.com/) (`resources/open-source-toolchains.md`) or open **Tab 5 (Functional Safety & STO)** and **Tab 7 (System Identification)** in the MechaLab Workbench (`npm run dev`).
+Test the cyclic PLC logic in [OpenPLC Editor](https://autonomylogic.com/) (`resources/open-source-toolchains.md`) or open **Functional Safety & STO** and **System Identification** in the MechaLab Workbench (`npm run dev`).
 
 The graded package is also a workbench entry: **Modules -> `EX.07-systems.T1.07a`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

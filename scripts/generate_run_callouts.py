@@ -12,6 +12,16 @@ gets the second variant instead: it says there is nothing to load, so a reader d
 and points at the list that has the entries. Both variants use the same markers, so a page moving
 between them is a replacement, not a second block.
 
+The block names the tab the app actually renders (`app/src/data/workbenchTabs.json`), never a
+position. "Tab 2" meant the Python runner on some pages and the resonance lab on others, and the
+app numbered every tab twice - once per view - so a number could not be made true. A name can.
+
+It also names the **step** the page belongs to, read from `scripts/route_model.py` - the same ten
+steps the front page table, `docs/ROUTE.md` and the app's roadmap cards print. The page used to
+say "Track 02" while the app said "Step 5", and a reader had no way to join the two; now the
+number on the page is the number on the card. The six ramp pages print "Before Step 1" instead,
+because they are the warm-up, not one of the ten.
+
 The block sits directly under the H1 (module pages have no H1, so it opens the body) and is
 wrapped in `run-callout` markers, so re-running is idempotent: the old block is removed and
 re-inserted rather than stacked.
@@ -31,7 +41,33 @@ import urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "app", "src", "data", "pythonLessonsData.ts")
-WORKBENCH = "https://tle47.github.io/Mechatronics-Roadmap/"
+TAB_DATA = os.path.join(ROOT, "app", "src", "data", "workbenchTabs.json")
+
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+import route_model  # noqa: E402
+
+STEP_COUNT = len(route_model.STEPS)
+
+# One page and one workbench id per step, from the model: the page cannot pick its own number.
+STEP_BY_ID = {}
+STEP_BY_PAGE = {}
+for _step in route_model.STEPS:
+    for _row in route_model.step_lessons(_step):
+        STEP_BY_ID.setdefault(_row["id"], _step)
+        STEP_BY_PAGE.setdefault(_row["path"], _step)
+    for _row in route_model.step_modules(_step) + route_model.step_optional(_step):
+        STEP_BY_ID.setdefault(_row["id"], _step)
+        STEP_BY_PAGE.setdefault("modules/%s.md" % _row["id"], _step)
+
+# The maths ramp is read before Step 1; it is the one surface that is not a step at all.
+PRE_STEP = "Before Step 1 · the school-maths ramp"
+
+with open(TAB_DATA, encoding="utf-8") as _handle:
+    _TABS = json.load(_handle)
+
+# Both read from the app's own table, so the page cannot name a tab the strip does not show.
+WORKBENCH = _TABS["workbenchUrl"]
+PYTHON_TAB = _TABS["tabs"]["tab-pyodide"]
 
 START = "<!-- run-callout:start -->"
 END = "<!-- run-callout:end -->"
@@ -122,26 +158,50 @@ def lesson_url(lesson_id):
     return "%s?lesson=%s" % (WORKBENCH, urllib.parse.quote(lesson_id, safe=""))
 
 
-def block(lesson_id):
-    """The one callout, rendered from the id alone."""
-    return (
-        "%s\n"
-        "> **Run this in the workbench.** [Open MechaLab on `%s`](%s) - Tab 2 opens with that "
-        "entry selected, starter code, hints and graded check ready. This page is the reading "
-        "copy, and nothing you type here is saved.\n"
-        "%s\n" % (START, lesson_id, lesson_url(lesson_id), END)
+def step_line(lesson_id=None, page=None):
+    """The spine step this page belongs to, rendered for the top of the block.
+
+    Returns "" only when neither the id nor the page is in any step, so a page that claims a
+    number it does not have cannot happen: the number comes from `route_model.STEPS`.
+    """
+    step = STEP_BY_ID.get(lesson_id) if lesson_id else None
+    if step is None and page:
+        step = STEP_BY_PAGE.get(page)
+    if step is None and page and page.startswith("ramp/"):
+        return "**%s**" % PRE_STEP
+    if step is None:
+        return ""
+    return "**Step %d of %d · %s**" % (step["number"], STEP_COUNT, step["title"])
+
+
+def quote(lines):
+    """The block's lines as one blockquote: every line prefixed, blank ones as a bare `>`."""
+    return "\n".join(("> " + line).rstrip() for line in lines)
+
+
+def block(lesson_id, page=None):
+    """The one callout, rendered from the id and the page's step."""
+    head = step_line(lesson_id, page)
+    lines = head.split("\n") + [""] if head else []
+    lines.append(
+        "**Run this in the workbench.** [Open MechaLab with `%s` loaded](%s) - it opens on the "
+        "**%s** tab with that entry selected. Starter code, hints and the graded check are ready; "
+        "this page is the reading copy, and nothing you type here is saved."
+        % (lesson_id, lesson_url(lesson_id), PYTHON_TAB)
     )
+    return "%s\n%s\n%s\n" % (START, quote(lines), END)
 
 
-def empty_block():
+def empty_block(page=None, lesson_id=None):
     """The same block for a page the workbench does not list: say so, do not send them hunting."""
-    return (
-        "%s\n"
-        "> **No workbench entry for this page.** There is nothing to load in Tab 2 for it - its "
+    head = step_line(lesson_id, page)
+    lines = head.split("\n") + [""] if head else []
+    lines.append(
+        "**No workbench entry for this page.** There is nothing to load in %s for it - its "
         "code runs in your own Python 3 or on the bench, with no starter file or graded check. "
-        "The pages that do have one are listed in [MechaLab, Run Python Lessons](%s).\n"
-        "%s\n" % (START, WORKBENCH, END)
+        "The pages that do have one are listed in [%s](%s)." % (PYTHON_TAB, PYTHON_TAB, WORKBENCH)
     )
+    return "%s\n%s\n%s\n" % (START, quote(lines), END)
 
 
 def strip_block(text):
@@ -165,9 +225,9 @@ def split_front_matter(text):
     return text[:end], text[end:]
 
 
-def with_callout(text, lesson_id=None):
+def with_callout(text, lesson_id=None, page=None):
     """The page with its block replaced; `lesson_id=None` renders the "no entry" variant."""
-    rendered = block(lesson_id) if lesson_id else empty_block()
+    rendered = block(lesson_id, page) if lesson_id else empty_block(page, lesson_id)
     text = strip_block(text).rstrip("\n") + "\n"
     front, body = split_front_matter(text)
     lines = body.split("\n")
@@ -199,7 +259,7 @@ def main(argv=None):
     for lesson_id, rel in pages:
         path = os.path.join(ROOT, rel)
         before = read(path)
-        after = with_callout(before, lesson_id)
+        after = with_callout(before, lesson_id, rel)
         if before == after:
             continue
         stale.append((lesson_id, rel))

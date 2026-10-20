@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.04-embedded.T2.04c`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T2.04c) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 7 of 10 · Run it in real time: embedded C**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.04-embedded.T2.04c` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.04-embedded.T2.04c) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -340,7 +342,7 @@ west build -b nucleo_g474re my_actuator_app -- -DDTC_OVERLAY_FILE=app.overlay
 west flash
 ```
 *(If `west: command not found` occurs, activate your virtual environment with `source ~/mechalab/.venv/bin/activate`.)*
-Or open **Tab 8 (Attitude ESKF & SeqLock)** in the MechaLab Workbench (`npm run dev`) to compare priority inheritance vs. priority inversion timelines.
+Or open **Attitude ESKF & SeqLock** in the MechaLab Workbench (`npm run dev`) to compare priority inheritance vs. priority inversion timelines.
 ```text
 [app.overlay (.dts) + prj.conf (Kconfig)] ==(west build -b native_sim / nucleo_g474re)==> [Static Zephyr ELF: K_THREAD_DEFINE + K_MUTEX_DEFINE]
 ```

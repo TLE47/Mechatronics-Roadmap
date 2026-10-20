@@ -297,7 +297,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'hiding P.2\'s guide must not hide P.3\'s guide'
     );
 
-    // Open Tab 2: Run Python Lessons (32 Lessons)
+    // Open the Run Python Lessons tab
     await page.getByTestId('tab-btn-tab-pyodide').click();
 
     // The five track-filter chips must stay inside the lesson list's own card. They once shared a

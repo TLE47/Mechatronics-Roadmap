@@ -21,10 +21,10 @@ flowchart LR
 Focused means time with the lesson open. Do **not** include tool setup, debugging a broken
 environment, or re-reading an earlier page here; those go in section 3.
 
-| Lesson ID | Focused minutes | Used Hints? (`0`, `1`, `2`, `3`, or `Solution`) | Simulator Used (`Tab 9 Pyodide`, `Local Python`, `Falstad`, `Wokwi`) |
+| Lesson ID | Focused minutes | Used Hints? (`0`, `1`, `2`, `3`, or `Solution`) | Where it ran (`Run Python Lessons`, `Local Python`, `Falstad`, `Wokwi`) |
 | :--- | :--- | :--- | :--- |
-| e.g. `P.1` | `38 min` | `Hint 1` | `Tab 9 Pyodide` |
-| e.g. `P.2` | `42 min` | `0` | `Tab 9 Pyodide` |
+| e.g. `P.1` | `38 min` | `Hint 1` | `Run Python Lessons` |
+| e.g. `P.2` | `42 min` | `0` | `Run Python Lessons` |
 | e.g. `S0.1` | `50 min` | `Hint 2` | `Falstad` |
 
 ### 3. Session Overhead (Not Counted in Section 2)

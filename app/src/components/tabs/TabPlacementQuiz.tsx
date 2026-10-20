@@ -139,13 +139,13 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: '50.0% at t = tau, and b_crit = 10.0 N·s/m',
         isCorrect: false,
         explanation:
-          'Start Pass 1 at Track 00 Lesson 00.1 & 00.2 (and Bridge Ladder T1.00a..e).',
+          'Start at Depth 1, Track 00 Lesson 00.1 & 00.2 (and Bridge Ladder T1.00a..e).',
       },
       {
         label: '95.0% at t = tau, and b_crit = 100.0 N·s/m',
         isCorrect: false,
         explanation:
-          'Start Pass 1 at Track 00 Lesson 00.1 (Effort/Flow & First-Order Time Constant tau).',
+          'Start at Depth 1, Track 00 Lesson 00.1 (Effort/Flow & First-Order Time Constant tau).',
       },
     ],
     recommendedTab: 1,
@@ -257,7 +257,7 @@ export const PLACEMENT_QUESTIONS: PlacementQuestion[] = [
         label: 'Actuator saturation lets error_sum grow huge (causing massive overshoot unless clamped); gravity feedforward cancels weight with zero sag while keeping K_p soft and human-safe',
         isCorrect: true,
         explanation:
-          'Correct! You have mastered the entire Tier 1 conceptual foundation and are ready for the Lesson 08.1 2-DOF Capstone or Pass 2 (Tier 2)!',
+          'Correct! You have mastered the entire Tier 1 conceptual foundation and are ready for the Lesson 08.1 2-DOF Capstone or Depth 2 (Tier 2)!',
       },
       {
         label: 'Derivative kick causes windup; high K_p is always safer than gravity feedforward',
@@ -828,10 +828,10 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               ) : (
                 <>
                   <h3 className="text-base font-bold text-[#34d399]">
-                    All 8 Tier 1 Skip-Gates Passed! Start at Lesson 08.1 (2-DOF Boss Capstone) or Pass 2 (Tier 2)
+                    All 8 Tier 1 Skip-Gates Passed! Start at Lesson 08.1 (2-DOF Boss Capstone) or Depth 2 (Tier 2)
                   </h3>
                   <p className="text-xs text-[#cbd5e1]">
-                    You passed every Track P, Stage 0, and Pass 1 skip test. Run the{' '}
+                    You passed every Track P, Stage 0 and Depth 1 skip test. Run the{' '}
                     <code className="px-1.5 py-0.5 rounded bg-[#0b0f19] text-[#34d399] font-mono">
                       Lesson 08.1
                     </code>{' '}

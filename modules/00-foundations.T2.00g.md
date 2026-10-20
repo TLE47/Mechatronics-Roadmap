@@ -26,7 +26,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00g`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00g) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00g` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00g) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -292,7 +294,7 @@ Inject the `## 8. Common mistakes` row about a force that entered the position r
 - **Fix:** put the force back in row 1; then $x_1 = 0.1000\,\text{m}$, $v_1 = -0.0500\,\text{m/s}$, and 500 steps land on $x_{\text{eq}} = 0.0500\,\text{m}$ within $10^{-3}\,\text{m}$.
 
 ## 6. Simulation path
-Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench: the plant there is the 4-state matrix updater this page builds, driven by a motor and a flexible shaft.
+Run the worked example in Python, then open **Two-Mass & Notch Bode** in the MechaLab Workbench: the plant there is the 4-state matrix updater this page builds, driven by a motor and a flexible shaft.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00g`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

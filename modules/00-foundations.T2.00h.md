@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00h`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00h) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00h` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00h) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -107,7 +109,7 @@ The tests are behavioural: the winding's magnitude is checked as a hypotenuse an
   - **Prerequisite Foundations Module:** [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (Complex Numbers, Euler's Formula & Phasors).
   - **Core Concepts to Review First:** the $j\omega$ substitution, $Z(j\omega) = R + j\omega L$, $G(j\omega) = \frac{\omega_n^2}{(\omega_n^2 - \omega^2) + j(2\zeta\omega_n\omega)}$, decibels, and the peak at $\omega_n\sqrt{1-2\zeta^2}$ in `## 3. Formalization` (Items 1-3).
   - **Bode Plot & Phasor Study Links:** [Brian Douglas: Bode Plots by Hand & Frequency Response (YouTube)](https://www.youtube.com/user/ControlLectures), [CTMS Frequency Response Tutorial (`ctms.engin.umich.edu`)](https://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=ControlFrequency), and [Python `cmath` Documentation](https://docs.python.org/3/library/cmath.html).
-  - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (**Tab 2: Two-Mass & Notch Bode**).
+  - **Curriculum Reference:** [Track 00 Tier 2 (`00-foundations/README.md#tier-2-intermediate--applied`)](../00-foundations/README.md#tier-2-intermediate--applied) (**Two-Mass & Notch Bode**).
 
 ### Starter code
 ```python
@@ -241,7 +243,7 @@ Inject the decibel-convention fault from the `## 8. Common mistakes` table and d
 - **Fix:** use $20\log_{10}|G|$; then the peak reads $+20.0\,\text{dB}$ and the RC corner $-3.0103\,\text{dB}$ to within $10^{-4}\,\text{dB}$, and the $\omega = 1000\,\text{rad/s}$ point lands on $-39.9127\,\text{dB}$.
 
 ## 6. Simulation path
-Open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench (`npm run dev`) to inspect how a lightly damped resonance peak ($+20\,\text{dB}$) and $-180^\circ$ phase drop appear on an interactive Bode magnitude and phase plot.
+Open **Two-Mass & Notch Bode** in the MechaLab Workbench (`npm run dev`) to inspect how a lightly damped resonance peak ($+20\,\text{dB}$) and $-180^\circ$ phase drop appear on an interactive Bode magnitude and phase plot.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00h`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

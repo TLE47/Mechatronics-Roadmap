@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00e`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00e) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00e` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00e) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -250,7 +252,7 @@ Inject the sign error from the common-mistakes table on purpose: build $A$ with 
 - **Fix:** restore $-k/J$ and $-b/J$ in row 2, then prove it twice: $\det(A) = +100\text{ s}^{-2}$ with $\operatorname{tr}(A) = -4\text{ s}^{-1}$, and the worked example's two radii return to `rho_euler=1.0247` (outside the unit circle) and `rho_tustin=0.9099` (inside it).
 
 ## 6. Simulation path
-Open **Tab 2 (Two-Mass & Notch Bode)** and **Tab 4 (Furuta Pendulum + LQR + CBF)** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
+Open **Two-Mass & Notch Bode** and **Furuta Pendulum + LQR + CBF** in the MechaLab Workbench (`npm run dev`) to inspect how continuous state-space matrices $(A, B)$ are discretized for real-time closed-loop simulation.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00e`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

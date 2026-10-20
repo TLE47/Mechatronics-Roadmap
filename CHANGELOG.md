@@ -11,6 +11,39 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 120: One Name per Tab, and a Real Join Between Roadmap and Runner
+
+Lesson P.1 recommended "2. Run Python Lesson" while the app showed "2. Run Python Lessons" and, in
+the technical view, "9. In-Browser Python Runner". The same tab had two numbers and a lesson page
+had a third name. The roadmap also showed a prose "Hands-On Exercise (1/10)" and a checkbox that
+only recorded a click, while the runner listed the same work under a fourth numbering ("Step 1",
+"Steps 3–5", "Steps 6–10") that belonged to neither.
+
+- **One name, one file.** `app/src/data/workbenchTabs.json` now holds the 11 tab names and the
+  workbench URL. `App.tsx` renders them through `app/src/tabNames.ts`; the page generator reads the
+  same file, so P.1 asks for **Run Python Lessons** by the name the strip shows. `Tab 1…11` is gone
+  from the app, every lesson and module page, the entry docs and the issue templates: 234 mentions
+  across 65 files. A number cannot be true when the two views order tabs differently; a name can.
+- **A guard against the next drift.** `scripts/check_tab_names.py` fails on any positional tab
+  reference, a duplicate or missing name, or an `App.tsx` label typed by hand; `tests/test_tab_names.py`
+  covers the table, the app and the callout. `CHANGELOG.md` is the only file exempt (it is history).
+- **A derived join.** `app/src/practiceLinks.ts` maps each roadmap step to the workbench entries that
+  carry the same track and pass (`EX.<track>.T<pass>.<n>`, plus the tier-1 readings). All 86 entries
+  are claimed exactly once; `scripts/test_practice_links.mjs` asserts that, plus the `Track 06 & 07`
+  step and the capstone step. Step 7 covers two tracks and step 8 is Track 08, so the mapping reads
+  position in the pass rather than the milestone id's `tr07`/`tr08` suffix.
+- **Both directions on screen.** Each roadmap step lists its entries as id chips with a
+  `passed in this browser` count and one "open the next one I have not passed" button; the runner's
+  header carries `Roadmap: T2 · Step 6 / 8 ↗`, which switches to that step's pass. The Python on-ramp
+  (14 `P.` entries) is now shown above Level 0 — it had no step on the roadmap at all.
+- **Honest wording.** The tick reads *Mark done (self-reported)*; the prose task is a *Deliverable
+  (not auto-checked)*; the runner counts *lessons & exercises* and filters by *graded modules*,
+  *track lessons* and *Python on-ramp*; the roadmap says *Opens: <tab name>* computed from the preset.
+- Verified: `npm run lint` clean; `python3.12 -m unittest discover -s tests` 340 OK (skipped=1),
+  including `check_tab_names` and the callout suite; `npm run test:workbench` all six suites pass.
+
+---
+
 ## [2026-10-20] — Run 119: A Lesson Has an Address
 
 The callout on 86 pages said to search for an id in Tab 2, which was one instruction more than the

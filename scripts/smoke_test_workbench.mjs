@@ -215,6 +215,8 @@ export async function runSmokeTests(viteServer) {
           activeTierPass: 'tier1',
           onSelectTierPass: () => {},
           completedMilestones: {},
+          // Two entries actually passed: the block must count them, not the empty ticks above.
+          verifiedLessons: { '00.1': true, '00.2': true },
           onToggleMilestone: () => {},
         })
       )
@@ -233,6 +235,7 @@ export async function runSmokeTests(viteServer) {
           activeTierPass: 'tier1',
           onSelectTierPass: () => {},
           completedMilestones: { t1_tr00: true },
+          verifiedLessons: {},
           onToggleMilestone: () => {},
           startHereDismissed: true,
           onRestoreStartHere: () => {},
@@ -243,8 +246,10 @@ export async function runSmokeTests(viteServer) {
       htmlRoadmapReturning.includes('data-testid="step-card-t1_tr00"') &&
         htmlRoadmapReturning.includes('data-collapsed="true"') &&
         htmlRoadmapReturning.includes('data-testid="btn-step-expand"') &&
-        htmlRoadmapReturning.includes('Step 1 complete'),
-      "The roadmap's first step card must collapse to one line once that pass's first step is done, and stay expandable"
+        // t1_tr00 is position 1 of depth 1, which is spine step 3: the collapsed line must
+        // name that step, not the position inside the depth.
+        htmlRoadmapReturning.includes('Step 3 complete'),
+      "The roadmap's first step card must collapse to one line once that depth's first step is done, and stay expandable"
     );
     assert(
       htmlRoadmapReturning.includes('data-testid="pass-first-step-complete-tier1"') &&
@@ -262,6 +267,7 @@ export async function runSmokeTests(viteServer) {
           activeTierPass: 'tier2',
           onSelectTierPass: () => {},
           completedMilestones: { t1_tr00: true },
+          verifiedLessons: {},
           onToggleMilestone: () => {},
         })
       )
@@ -282,18 +288,65 @@ export async function runSmokeTests(viteServer) {
       'A newcomer on the roadmap must get the whole first step card, no completed first step, and no restore button'
     );
     assert(
-      htmlBeginner.includes('1. Start Here: Roadmap &amp; Progress') ||
-        htmlBeginner.includes('1. Start Here: Roadmap & Progress'),
+      htmlBeginner.includes('Start Here: Roadmap &amp; Progress') ||
+        htmlBeginner.includes('Start Here: Roadmap & Progress'),
       'Beginner View must display plain-English primary label for Tab 1'
     );
+    // The count must say what the 86 are: 36 reading lessons and 50 graded exercises. Calling the
+    // whole set "Exercises" was one of the small lies the tab strip told.
     assert(
-      htmlBeginner.includes(`2. Run Python Lessons (${TOTAL} Exercises)`),
-      'Beginner View must display plain-English primary label for the Python Runner'
+      htmlBeginner.includes(`Run Python Lessons (${TOTAL} lessons &amp; exercises)`),
+      'Beginner View must display the shared Run Python Lessons name and an accurate count'
     );
     assert(
-      htmlBeginner.includes('4. Vibration Filter &amp; Resonance Lab') ||
-        htmlBeginner.includes('4. Vibration Filter & Resonance Lab'),
+      htmlBeginner.includes('Vibration Filter &amp; Resonance Lab') ||
+        htmlBeginner.includes('Vibration Filter & Resonance Lab'),
       'Beginner View must display plain-English label for the Vibration & Resonance Lab'
+    );
+    // A tab must not be numbered in one view and different in the other; no label may carry one.
+    assert(
+      !/[0-9]+\.\s+(Start Here|Run Python Lessons|Vibration Filter|Brushless Motor)/.test(
+        htmlBeginner
+      ),
+      'Tab labels must not carry position numbers that the other view contradicts'
+    );
+    // Steps 1 and 2 are the on-ramp now: one card each, numbered 1 and 2 like the pages print,
+    // carrying the Python and Stage 0 entries rather than a strip beside the numbered steps.
+    assert(
+      htmlRoadmap.includes('data-testid="step-card-spine-1"') &&
+        htmlRoadmap.includes('data-testid="step-card-spine-2"'),
+      'The roadmap must open with spine steps 1 and 2, or the on-ramp entries belong to no step'
+    );
+    assert(
+      htmlRoadmap.includes('data-testid="practice-entry-P.1"'),
+      'Step 1 must carry the Python on-ramp entries by the ids the runner lists'
+    );
+    assert(
+      /0\/\d+ entries passed in this browser/.test(htmlRoadmap),
+      'An on-ramp step must count verified entries, starting at zero for a new browser'
+    );
+    // Each step must carry the practice entries the runner lists, by id, and say the tick is
+    // self-reported rather than implying the app checked the deliverable.
+    assert(
+      htmlRoadmap.includes('data-testid="practice-t1_tr00"'),
+      'A roadmap step must show its practice block, not only a prose task and a checkbox'
+    );
+    assert(
+      htmlRoadmap.includes('data-testid="practice-entry-00.1"'),
+      'The practice block must list the step\'s workbench entries by the ids the runner uses'
+    );
+    assert(
+      htmlRoadmap.includes('2/8 passed in this browser'),
+      'The practice block must count executed passes, not the ticks the learner set'
+    );
+    assert(
+      htmlRoadmap.includes('data-testid="practice-entry-00.1"') &&
+        /data-testid="practice-entry-00\.1"[^>]*>\s*✓ 00\.1/.test(htmlRoadmap),
+      'A passed entry must be marked as passed in its own chip'
+    );
+    assert(
+      htmlRoadmap.includes('Mark done (self-reported)'),
+      'The milestone control must say the tick is self-reported'
     );
     // In Beginner View, non-core Tier 3 tabs (like 6-DOF Attitude ESKF) are hidden until unlocked
     assert(
@@ -316,8 +369,13 @@ export async function runSmokeTests(viteServer) {
       );
     }
     assert(
-      htmlAdvanced.includes('3. 25 kHz PMSM FOC &amp; SVPWM (Lab 01/03)'),
+      htmlAdvanced.includes('25 kHz PMSM FOC &amp; SVPWM (Lab 01/03)'),
       'Advanced View must surface technical tab titles'
+    );
+    assert(
+      htmlAdvanced.includes('Run Python Lessons') ||
+        htmlAdvanced.includes('In-Browser Python Runner (Pyodide WASM)'),
+      'Advanced View must still name the Python tab by name, not by a position'
     );
 
     // 1b. Verify the Link Health dashboard plots the generated run history

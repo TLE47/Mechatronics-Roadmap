@@ -1,9 +1,8 @@
-import { TabId } from './types';
+import type { TabId } from './types';
 
 export type ActiveTierPass = 'level0' | 'tier1' | 'tier2' | 'tier3';
 
 export interface LinearTrackStep {
-  stepNumber: string;
   trackCode: string;
   trackTitle: string;
   tierBadge: string;
@@ -59,7 +58,7 @@ export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
     id: 'tier1',
     levelNumber: 'TIER 1 PASS',
     name: 'Beginner / Intuitive Pass (Tracks 00 → 08)',
-    tagline: 'Pass 1 of 3 · Breadboards, Breakout Modules & Core Physical "Why"',
+    tagline: 'Depth 1 of 3 · Breadboards, Breakout Modules & Core Physical "Why"',
     goalSummary:
       'Go linearly from Track 00 to Track 08 using off-the-shelf breakout boards (DRV8833, SimpleFOCMini, AS5600) and high-level code. Understand WHY motors spark, WHY shafts vibrate, and HOW PID virtual springs work before touching custom PCBs.',
     hardwareStack: 'Breakout Modules (DRV8833 / DRV8313) · I2C/SPI Magnetic Encoders · 3D-Printed Brackets & Hobby Servos',
@@ -71,7 +70,7 @@ export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
     id: 'tier2',
     levelNumber: 'TIER 2 PASS',
     name: 'Intermediate / Applied Pass (Tracks 00 → 08)',
-    tagline: 'Pass 2 of 3 · Custom KiCad PCBs, SMD Soldering, RTOS/DMA & Model-Based Control',
+    tagline: 'Depth 2 of 3 · Custom KiCad PCBs, SMD Soldering, RTOS/DMA & Model-Based Control',
     goalSummary:
       'Loop back to Track 00 and level up every subsystem from maker breakouts to custom engineering: capture schematics in KiCad, solder SMD gate drivers and Kelvin shunts, model URDFs in MuJoCo, write Clarke/Park + PLL observers, and run LQR + FreeRTOS + CAN.',
     hardwareStack: 'Custom 2–4 Layer KiCad PCBs · Half-Bridge Gate Drivers · 4-Terminal Kelvin Shunts · 6:1–8:1 Planetary Gears',
@@ -83,7 +82,7 @@ export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
     id: 'tier3',
     levelNumber: 'TIER 3 PASS',
     name: 'Advanced / Production Pass (Tracks 00 → 08)',
-    tagline: 'Pass 3 of 3 · Lie Groups, <2 nH 48V/30A Inverters, 40 kHz Bare-Metal FOC & Safety QPs',
+    tagline: 'Depth 3 of 3 · Lie Groups, <2 nH 48V/30A Inverters, 40 kHz Bare-Metal FOC & Safety QPs',
     goalSummary:
       'The final mastery pass across Tracks 00 to 08. Implement graduate-level math and industrial safety standards: SO(3)/SE(3) Lie groups, <2 nH 6-layer 48V/30A power stages, SAR ADC charge buckets, O(n) spatial RNEA, WaitFreeSeqLock IPC, Joseph ESKF, CBF-QP safety walls, and <1 µs hardware STO.',
     hardwareStack: '6-Layer 48V/30A FOC PCB (STM32G474 + DRV8353 + OptiMOS 6) · Ti-6Al-4V Flexures · Dual-Channel Hardware STO',
@@ -95,7 +94,6 @@ export const TIER_PASS_META: Record<ActiveTierPass, TierPassMeta> = {
 
 export const LEVEL_0_STEPS: LinearTrackStep[] = [
   {
-    stepNumber: 'L0.1',
     trackCode: 'LEVEL 0 · MODULE 1',
     trackTitle: 'Everyday Hydraulic & Software Analogies for Electronics',
     tierBadge: 'LEVEL 0 ON-RAMP',
@@ -141,7 +139,6 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'L0.2',
     trackCode: 'LEVEL 0 · MODULE 2',
     trackTitle: 'Practical Bench Tools & Smoke-Free Bring-Up',
     tierBadge: 'LEVEL 0 ON-RAMP',
@@ -186,7 +183,6 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'L0.3',
     trackCode: 'LEVEL 0 · MODULE 3',
     trackTitle: 'Starter Hardware: GPIO, PWM & ADC on ESP32 / Arduino / STM32',
     tierBadge: 'LEVEL 0 ON-RAMP',
@@ -237,7 +233,6 @@ export const LEVEL_0_STEPS: LinearTrackStep[] = [
 // ============================================================================
 export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
   {
-    stepNumber: 'T1 · Step 1 / 8',
     trackCode: 'TRACK 00 (TIER 1)',
     trackTitle: 'Foundations: Calculus as Code, 2D Rotations & RC Filters',
     tierBadge: 'TIER 1 · BEGINNER',
@@ -256,7 +251,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: 'Tier 1.0 Gate: Working time-stepping physics loop + 2D rotation plotter.',
     linkedTab: 'tab-bode',
     presetId: 'surgical_cable',
-    presetLabel: 'Open Two-Mass Resonance Sim (Tab 2)',
+    presetLabel: 'Open Two-Mass Resonance Sim',
     studyLinks: [
       {
         label: '3Blue1Brown: Essence of Linear Algebra & Differential Equations',
@@ -282,7 +277,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T1 · Step 2 / 8',
     trackCode: 'TRACK 01 (TIER 1)',
     trackTitle: 'Electronics & Power: H-Bridges, Logic Levels & Decoupling',
     tierBadge: 'TIER 1 · BEGINNER',
@@ -301,7 +295,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: 'Tier 1.1 Gate: Glitch-free bidirectional H-bridge breadboard build.',
     linkedTab: 'tab-cadpcb',
     presetId: 'pcb_6layer_opt',
-    presetLabel: 'Open Power Stage Explorer (Tab 6)',
+    presetLabel: 'Open Power Stage Explorer',
     studyLinks: [
       {
         label: 'TI SLVA959: Brushed DC Motor Driver Basics (H-Bridge)',
@@ -327,7 +321,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T1 · Step 3 / 8',
     trackCode: 'TRACK 02 (TIER 1)',
     trackTitle: 'Mechanics & Kinematics: 2D Linkages, Gear Ratios & Bearings',
     tierBadge: 'TIER 1 · BEGINNER',
@@ -345,7 +338,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: 'Tier 1.2 Gate: Zero-NaN 2-DOF IK solver + working 2-link trajectory tracker.',
     linkedTab: 'tab-models',
     presetId: 'robot_hopper_crouch',
-    presetLabel: 'Open Kinematic Chain Inspector (Tab 5)',
+    presetLabel: 'Open Kinematic Chain Inspector',
     studyLinks: [
       {
         label: 'Modern Robotics Ch. 1–3 & Video Series (Lynch & Park)',
@@ -371,7 +364,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T1 · Step 4 / 8',
     trackCode: 'TRACK 03 (TIER 1)',
     trackTitle: 'Sensors & Actuators: Encoders & Open-Loop BLDC (`SimpleFOC`)',
     tierBadge: 'TIER 1 · BEGINNER',
@@ -389,7 +381,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: 'Tier 1.3 Gate: Smooth 3-phase brushless position holding with SimpleFOC.',
     linkedTab: 'tab-foc',
     presetId: 'foc_cobot_joint',
-    presetLabel: 'Open FOC & SVPWM Simulator (Tab 3)',
+    presetLabel: 'Open FOC & SVPWM Simulator',
     studyLinks: [
       {
         label: 'SimpleFOC Official Theory & Getting Started Docs',
@@ -415,7 +407,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T1 · Step 5 / 8',
     trackCode: 'TRACK 04 (TIER 1)',
     trackTitle: 'Embedded & Real-Time: Killing `delay()`, Timer ISRs & Binary Packets',
     tierBadge: 'TIER 1 · BEGINNER',
@@ -433,7 +424,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: 'Tier 1.4 Gate: 1 kHz hardware-timer ISR verified on scope + binary packet parser.',
     linkedTab: 'tab-eskf',
     presetId: 'eskf_seqlock_clean',
-    presetLabel: 'Open Real-Time Telemetry Sim (Tab 8)',
+    presetLabel: 'Open Real-Time Telemetry Sim',
     studyLinks: [
       {
         label: 'Quantum Leaps: Modern Embedded Systems Programming Course',
@@ -459,7 +450,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T1 · Step 6 / 8',
     trackCode: 'TRACK 05 (TIER 1)',
     trackTitle: 'Control & Estimation: PID Physical Intuition, Anti-Windup & Complementary IMU',
     tierBadge: 'TIER 1 · BEGINNER',
@@ -477,7 +467,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: 'Tier 1.5 Gate: Step response with <5% overshoot + drift-free IMU tilt angle.',
     linkedTab: 'tab-pend',
     presetId: 'pend_swingup',
-    presetLabel: 'Open Pendulum Balancer Sim (Tab 4)',
+    presetLabel: 'Open Pendulum Balancer Sim',
     studyLinks: [
       {
         label: 'Brian Douglas Control Systems Lectures (Resourcium)',
@@ -503,7 +493,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T1 · Step 7 / 8',
     trackCode: 'TRACK 06 & 07 (TIER 1)',
     trackTitle: 'Smooth Trajectories, Virtual Springs & Safe Benchtop Bring-Up',
     tierBadge: 'TIER 1 · BEGINNER',
@@ -521,7 +510,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: 'Tier 1.6 Gate: Smooth cubic trajectory tracker + physical virtual wall demo.',
     linkedTab: 'tab-sysid',
     presetId: 'sysid_schroeder_clean',
-    presetLabel: 'Open Frequency Identification Sim (Tab 7)',
+    presetLabel: 'Open Frequency Identification Sim',
     studyLinks: [
       {
         label: 'Underactuated Robotics Ch. 1–2 (Russ Tedrake, MIT)',
@@ -547,11 +536,10 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T1 · Step 8 / 8 (LEVEL-UP BOSS)',
     trackCode: 'TRACK 08 (TIER 1 CAPSTONE)',
     trackTitle: 'Tier 1 Graduation Capstone: Off-the-Shelf 2-DOF Compliant Desktop Robot / SO-101 / LeKiwi',
     tierBadge: 'TIER 1 · BOSS GATE',
-    headline: 'Integrate Everything from Pass 1 into a Complete Working Desktop Robot to Unlock Tier 2',
+    headline: 'Integrate Everything from Depth 1 into a Complete Working Desktop Robot to Unlock Tier 2',
     coreWhy:
       'Before moving to custom PCBs, SMD soldering, and advanced matrix control in Tier 2, consolidate your Tier 1 skills by building an end-to-end 2-DOF planar arm, desktop inverted pendulum, or open-source SO-101 / LeKiwi robot using off-the-shelf modules.',
     topics: [
@@ -565,7 +553,7 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: '🏆 TIER 1 GRADUATION: Unlock Tier 2 (Custom PCBs, RTOS/DMA, LQR & MuJoCo).',
     linkedTab: 'tab-models',
     presetId: 'robot_arm_polish',
-    presetLabel: 'Launch Capstone Inspector (Tab 5)',
+    presetLabel: 'Launch Capstone Inspector',
     studyLinks: [
       {
         label: 'SimpleFOC Community Projects Showcase',
@@ -597,7 +585,6 @@ export const TIER_1_LINEAR_PASS: LinearTrackStep[] = [
 // ============================================================================
 export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
   {
-    stepNumber: 'T2 · Step 1 / 8',
     trackCode: 'TRACK 00 (TIER 2)',
     trackTitle: 'State-Space Matrices, Quaternions & Pre-Warped Tustin Biquads',
     tierBadge: 'TIER 2 · APPLIED',
@@ -616,11 +603,11 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
       'Replace sluggish moving averages (which add heavy phase lag and destabilize PID loops) with a 5-multiply Transposed Direct Form II biquad notch tuned directly to the anti-resonance/resonance pair.',
     equation: 'H_{\\text{notch}}(s) = \\frac{s^2 + \\omega_n^2}{s^2 + \\frac{\\omega_n}{Q_n}s + \\omega_n^2}, \\qquad s \\leftarrow \\frac{\\omega_n}{\\tan(\\omega_n T_s/2)}\\frac{z-1}{z+1}',
     milestoneId: 't2_tr00',
-    milestoneTask: 'Tune the Biquad Notch Filter in Tab 2 to cancel the 290.6 Hz two-mass resonance peak by >25 dB and verify float32 TDF-II stability.',
+    milestoneTask: 'Tune the Biquad Notch Filter in Vibration Filter & Resonance Lab to cancel the 290.6 Hz two-mass resonance peak by >25 dB and verify float32 TDF-II stability.',
     deliverableGate: 'Tier 2.0 Gate: Pre-warped TDF-II notch filter achieving ≤ -25 dB attenuation at f_r.',
     linkedTab: 'tab-bode',
     presetId: 'cnc_ballscrew',
-    presetLabel: 'Tune CNC Ballscrew Notch (Tab 2)',
+    presetLabel: 'Tune CNC Ballscrew Notch',
     studyLinks: [
       {
         label: 'Julius O. Smith III: Introduction to Digital Filters (CCRMA Stanford)',
@@ -646,7 +633,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T2 · Step 2 / 8',
     trackCode: 'TRACK 01 (TIER 2)',
     trackTitle: 'Custom KiCad PCBs, Half-Bridge Gate Drivers & Kelvin Current Shunts',
     tierBadge: 'TIER 2 · APPLIED',
@@ -665,11 +651,11 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
       'Start by copying the manufacturer’s "Typical Application Schematic" from the DRV8353 and INA240 datasheets into KiCad, use a 4-layer stackup from JLCPCB, and let their SMT assembly service populate the passive 0402/0603 parts.',
     equation: 'I_{\\text{gate}} = \\frac{Q_g}{t_{\\text{rise}}}, \\qquad V_{\\text{sense}} = G_{\\text{INA240}} \\cdot (I_{\\text{phase}} R_{\\text{shunt}})',
     milestoneId: 't2_tr01',
-    milestoneTask: 'Inspect the Capstone I 48V/30A BOM & thermal solver in Tab 6; compare the 2-layer 5.2 nH overshoot preset against the 6-layer 1.6 nH layout.',
+    milestoneTask: 'Inspect the Capstone I 48V/30A BOM & thermal solver in 3D Parts & Motor Driver PCB Lab; compare the 2-layer 5.2 nH overshoot preset against the 6-layer 1.6 nH layout.',
     deliverableGate: 'Tier 2.1 Gate: DRC-clean KiCad half-bridge schematic/layout + Kelvin sense routing.',
     linkedTab: 'tab-cadpcb',
     presetId: 'pcb_2layer_bad',
-    presetLabel: 'Inspect 2-Layer vs 6-Layer PCB (Tab 6)',
+    presetLabel: 'Inspect 2-Layer vs 6-Layer PCB',
     studyLinks: [
       {
         label: 'KiCad Official Getting Started & PCB Layout Docs',
@@ -695,7 +681,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T2 · Step 3 / 8',
     trackCode: 'TRACK 02 (TIER 2)',
     trackTitle: 'Exact Constraint Design, Parametric CAD (`CadQuery`) & URDF/MuJoCo',
     tierBadge: 'TIER 2 · APPLIED',
@@ -714,11 +699,11 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
       'Export link mass, center-of-mass, and 3×3 inertia tensors directly from CAD into both URDF and MuJoCo XML files, and run automated Sylvester SPD and triangle-inequality assertions.',
     equation: '\\text{DOF} = 6 - C, \\qquad I_1 + I_2 \\ge I_3, \\qquad \\det(I) > 0',
     milestoneId: 't2_tr02',
-    milestoneTask: 'Articulate all 3 Capstone URDF/MuJoCo models in Tab 5 and inspect the 3D CAD wireframes (Notch Flexure, Kelvin Coupling, 8:1 QDD Carrier) in Tab 6.',
+    milestoneTask: 'Articulate all 3 Capstone URDF/MuJoCo models in Robot Arm Kinematics & Safety Cutoff and inspect the 3D CAD wireframes (Notch Flexure, Kelvin Coupling, 8:1 QDD Carrier) in 3D Parts & Motor Driver PCB Lab.',
     deliverableGate: 'Tier 2.2 Gate: Watertight STEP/STL meshes + SPD-validated URDF/MJCF robot models.',
     linkedTab: 'tab-models',
     presetId: 'robot_furuta_bal',
-    presetLabel: 'Inspect URDF/MuJoCo Models (Tab 5)',
+    presetLabel: 'Inspect URDF/MuJoCo Models',
     studyLinks: [
       {
         label: 'MIT Precision Machine Design Principles (Slocum FUNdaMENTALS)',
@@ -744,7 +729,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T2 · Step 4 / 8',
     trackCode: 'TRACK 03 (TIER 2)',
     trackTitle: 'Clarke/Park Transforms, Type-II Velocity PLLs & IMU Allan Variance',
     tierBadge: 'TIER 2 · APPLIED',
@@ -763,11 +747,11 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
       'Replace `(pos - last_pos)/dt` with a 6-line Type-II PLL (`err = wrap(theta_meas - theta_hat); w_hat += ki*err*dt; theta_hat += (w_hat + kp*err)*dt`) before feeding velocity to your D-term.',
     equation: '\\begin{bmatrix}i_d\\\\i_q\\end{bmatrix} = \\begin{bmatrix}\\cos\\theta_e & \\sin\\theta_e\\\\-\\sin\\theta_e & \\cos\\theta_e\\end{bmatrix} \\begin{bmatrix}i_\\alpha\\\\i_\\beta\\end{bmatrix}',
     milestoneId: 't2_tr03',
-    milestoneTask: 'Explore the 25 kHz FOC simulator in Tab 3 across 1,200–5,500 RPM and observe how rotor speed couples into the d-q axes.',
+    milestoneTask: 'Explore the 25 kHz FOC simulator in Brushless Motor Control Lab across 1,200–5,500 RPM and observe how rotor speed couples into the d-q axes.',
     deliverableGate: 'Tier 2.3 Gate: Custom Clarke/Park implementation + lag-free Type-II velocity PLL.',
     linkedTab: 'tab-foc',
     presetId: 'foc_drone_prop',
-    presetLabel: 'Test High-Speed FOC Coupling (Tab 3)',
+    presetLabel: 'Test High-Speed FOC Coupling',
     studyLinks: [
       {
         label: 'TI BPRA048: Field Orientated Control of 3-Phase AC-Motors',
@@ -788,7 +772,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T2 · Step 5 / 8',
     trackCode: 'TRACK 04 (TIER 2)',
     trackTitle: 'FreeRTOS Preemptive Scheduling, DMA Circular Buffers & CAN-FD (MIT Mode)',
     tierBadge: 'TIER 2 · APPLIED',
@@ -807,11 +790,11 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
       'Add a $1.50 `TCAN1044V` transceiver to your MCU’s `FDCAN` pins, daisy-chain two twisted wires (`CAN_H` / `CAN_L`) across all robot joints, and pack commands using fixed-range bit shifts.',
     equation: 'R_i^{(k+1)} = C_i + B_i + \\sum_{j \\in hp(i)} \\left\\lceil \\frac{R_i^{(k)}}{T_j} \\right\\rceil C_j \\le D_i',
     milestoneId: 't2_tr04',
-    milestoneTask: 'Verify multi-rate task schedulability and inspect real-time ISR-to-planner contention behavior in Tab 8.',
+    milestoneTask: 'Verify multi-rate task schedulability and inspect real-time ISR-to-planner contention behavior in IMU Sensor Fusion & Real-Time Lock.',
     deliverableGate: 'Tier 2.4 Gate: Exact RTA deadline proof + bit-exact MIT CAN frame encoder/decoder.',
     linkedTab: 'tab-eskf',
     presetId: 'eskf_seqlock_clean',
-    presetLabel: 'Open RTOS & IPC Simulator (Tab 8)',
+    presetLabel: 'Open RTOS & IPC Simulator',
     studyLinks: [
       {
         label: 'FreeRTOS Official Mastering the Kernel Book (Free PDF)',
@@ -837,7 +820,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T2 · Step 6 / 8',
     trackCode: 'TRACK 05 (TIER 2)',
     trackTitle: 'Bode Loop Shaping, Gang of Four, LQR & Linear Kalman Filtering',
     tierBadge: 'TIER 2 · APPLIED',
@@ -856,11 +838,11 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
       'Linearize your nonlinear plant around upright equilibrium (A, B), choose diagonal state weights Q and effort weight R in Python (`scipy.linalg.solve_continuous_are`), and export the 4-element gain vector K to your firmware.',
     equation: 'u = -Kx, \\qquad K = R^{-1}B^\\top P, \\qquad A^\\top P + PA - PBR^{-1}B^\\top P + Q = 0',
     milestoneId: 't2_tr05',
-    milestoneTask: 'Run the Furuta Pendulum simulator in Tab 4, adjust LQR angle weight Q_θ and swing-up gain k_E, and test impulse recovery.',
+    milestoneTask: 'Run the Furuta Pendulum simulator in Pendulum Balance & Safety Walls, adjust LQR angle weight Q_θ and swing-up gain k_E, and test impulse recovery.',
     deliverableGate: 'Tier 2.5 Gate: Autonomous pendulum swing-up and upright LQR stabilization.',
     linkedTab: 'tab-pend',
     presetId: 'pend_swingup',
-    presetLabel: 'Run Swing-Up + LQR Sim (Tab 4)',
+    presetLabel: 'Run Swing-Up + LQR Sim',
     studyLinks: [
       {
         label: 'Steve Brunton Control Bootcamp (LQR & Kalman Filter Lectures)',
@@ -886,7 +868,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T2 · Step 7 / 8',
     trackCode: 'TRACK 06 & 07 (TIER 2)',
     trackTitle: 'Task-Space Jacobian Transpose, S-Curves, Regen Clamps & HIL Fault Testing',
     tierBadge: 'TIER 2 · APPLIED',
@@ -905,11 +886,11 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
       'Compute the 3×3 manipulator Jacobian J(q) at 1 kHz, multiply J(q)ᵀ by your desired Cartesian spring force F_x, and add a voltage comparator on V_bus to dump regenerative braking surge into a power resistor.',
     equation: '\\tau = J(q)^\\top \\big(K_x(x_d - x) - D_x \\dot{x}\\big) + g(q), \\qquad V_{\\text{bus,peak}} = \\sqrt{V_{\\text{nom}}^2 + \\frac{\\eta J\\omega_0^2}{C_{\\text{bus}}}}',
     milestoneId: 't2_tr06',
-    milestoneTask: 'Test encoder wire-break CRC fault injection in Tab 5 and verify safe fault transitions.',
+    milestoneTask: 'Test encoder wire-break CRC fault injection in Robot Arm Kinematics & Safety Cutoff and verify safe fault transitions.',
     deliverableGate: 'Tier 2.6 Gate: Working Cartesian Jacobian transpose controller + HIL fault test pass.',
     linkedTab: 'tab-models',
     presetId: 'sto_enc_crc',
-    presetLabel: 'Test HIL Fault Injection (Tab 5)',
+    presetLabel: 'Test HIL Fault Injection',
     studyLinks: [
       {
         label: 'Robotic Manipulation (Russ Tedrake, MIT Open Textbook)',
@@ -935,7 +916,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T2 · Step 8 / 8 (LEVEL-UP BOSS)',
     trackCode: 'TRACK 08 (TIER 2 CAPSTONE)',
     trackTitle: 'Tier 2 Graduation Capstone: Custom 4-Layer CAN Servo + LQR/Impedance Robot / Pupper / UMI',
     tierBadge: 'TIER 2 · BOSS GATE',
@@ -953,7 +933,7 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: '🏆 TIER 2 GRADUATION: Unlock Tier 3 (Lie Groups, <2nH 48V FOC, WaitFreeSeqLock & STO).',
     linkedTab: 'tab-cadpcb',
     presetId: 'cad_qdd_carrier',
-    presetLabel: 'Inspect QDD Actuator Design (Tab 6)',
+    presetLabel: 'Inspect QDD Actuator Design',
     studyLinks: [
       {
         label: 'Ben Katz MIT Master’s Thesis: Low Cost Modular Actuators for Dynamic Robots',
@@ -980,7 +960,6 @@ export const TIER_2_LINEAR_PASS: LinearTrackStep[] = [
 // ============================================================================
 export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
   {
-    stepNumber: 'T3 · Step 1 / 8',
     trackCode: 'TRACK 00 (TIER 3)',
     trackTitle: 'Matrix Lie Groups SO(3)/SE(3) & Symplectic Port-Hamiltonian Integration',
     tierBadge: 'TIER 3 · PRODUCTION',
@@ -999,11 +978,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Represent attitude errors in the 3D tangent vector space so(3) while storing nominal orientation as an exact 3×3 rotation matrix R ∈ SO(3) updated via R_new = R_old · exp([ω·dt]×).',
     equation: '\\exp([\\phi]_\\times) = I + \\frac{\\sin\\theta}{\\theta}[\\phi]_\\times + \\frac{1-\\cos\\theta}{\\theta^2}[\\phi]_\\times^2',
     milestoneId: 't3_tr00',
-    milestoneTask: 'Verify the ASML Wafer Stage 390 Hz resonance suppression preset in Tab 2 and review the SO(3) small-angle guard in the 1-Page Reference Card.',
+    milestoneTask: 'Verify the ASML Wafer Stage 390 Hz resonance suppression preset in Vibration Filter & Resonance Lab and review the SO(3) small-angle guard in the 1-Page Reference Card.',
     deliverableGate: 'Tier 3.0 Gate: Lab 00 Suite — |ΔE| < 10⁻⁹ J & exact SO(3) tangent-space identities.',
     linkedTab: 'tab-bode',
     presetId: 'wafer_scanner',
-    presetLabel: 'Run ASML Wafer Stage Sim (Tab 2)',
+    presetLabel: 'Run ASML Wafer Stage Sim',
     studyLinks: [
       {
         label: 'Joan Solà: A Micro Lie Theory for State Estimation in Robotics (arXiv:1812.01537)',
@@ -1024,7 +1003,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T3 · Step 2 / 8',
     trackCode: 'TRACK 01 (TIER 3)',
     trackTitle: '6-Layer <2 nH 48V/30A Inverter, Bessel AFE & SAR ADC Charge Buckets',
     tierBadge: 'TIER 3 · PRODUCTION',
@@ -1043,11 +1021,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Use Layers 2 and 5 as solid reference planes immediately adjacent to outer signal/FET layers (prepreg height h = 0.1 mm) to cancel magnetic loop area, and place a 22 Ω + 1.5 nF NP0 charge bucket directly at the STM32 ADC pins.',
     equation: 'V_{DS,\\text{peak}} = V_{\\text{bus}} + L_{\\text{loop}}\\frac{dI}{dt} < 58\\text{ V}, \\qquad R_{DS}(T_j) = R_{25}\\big(1 + \\alpha(T_j - 25)\\big)',
     milestoneId: 't3_tr01',
-    milestoneTask: 'Run the 30A Peak Torque Thermal Load preset in Tab 6 and verify V_DS,peak < 60 V. The T_j < 110 °C gate applies to the 15 A continuous design point (T_j 90.9 °C); holding 30 A continuous drives T_j to 206 °C, so 30 A is a short peak, not a continuous rating.',
+    milestoneTask: 'Run the 30A Peak Torque Thermal Load preset in 3D Parts & Motor Driver PCB Lab and verify V_DS,peak < 60 V. The T_j < 110 °C gate applies to the 15 A continuous design point (T_j 90.9 °C); holding 30 A continuous drives T_j to 206 °C, so 30 A is a short peak, not a continuous rating.',
     deliverableGate: 'Tier 3.1 Gate: Lab 01 & Capstone I PCB — V_DS,peak = 53.1 V, Efficiency = 99.11%.',
     linkedTab: 'tab-cadpcb',
     presetId: 'pcb_peak_30a',
-    presetLabel: 'Run 30A Electro-Thermal Solver (Tab 6)',
+    presetLabel: 'Run 30A Electro-Thermal Solver',
     studyLinks: [
       {
         label: 'TI SBAA586: Charge-Bucket Circuit Design for SAR ADCs',
@@ -1068,7 +1046,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T3 · Step 3 / 8',
     trackCode: 'TRACK 02 (TIER 3)',
     trackTitle: 'Screw PoE Kinematics, Flexures, O(n) RNEA & GPU Physics (Newton / Isaac Lab)',
     tierBadge: 'TIER 3 · PRODUCTION',
@@ -1087,11 +1064,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Replace rolling-element bearings in short-stroke precision axes with wire-EDM notch flexures, and compute exact inverse dynamics feedforward torques τ_ff = RNEA(q, q̇, q̈_d) inside your 1 kHz control loop.',
     equation: 'M(q)\\ddot{q} + C(q,\\dot{q})\\dot{q} + g(q) = \\tau, \\qquad k_\\theta = \\frac{2 E b t^{5/2}}{9\\pi\\sqrt{R}}',
     milestoneId: 't3_tr02',
-    milestoneTask: 'Inspect the Ti-6Al-4V Notch Flexure and 440C Kelvin 3-2-1 Coupling in Tab 6 and tune web thickness t to observe rotational stiffness k_θ.',
+    milestoneTask: 'Inspect the Ti-6Al-4V Notch Flexure and 440C Kelvin 3-2-1 Coupling in 3D Parts & Motor Driver PCB Lab and tune web thickness t to observe rotational stiffness k_θ.',
     deliverableGate: 'Tier 3.2 Gate: Lab 02 Suite — ‖τ_RNEA - τ_Lagrange‖_∞ < 10⁻¹¹ N·m.',
     linkedTab: 'tab-cadpcb',
     presetId: 'cad_flexure_stage',
-    presetLabel: 'Inspect Ti-6Al-4V Flexure CAD (Tab 6)',
+    presetLabel: 'Inspect Ti-6Al-4V Flexure CAD',
     studyLinks: [
       {
         label: 'Roy Featherstone: Spatial Vector Algebra & Pinocchio O(n) Library',
@@ -1117,7 +1094,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T3 · Step 4 / 8',
     trackCode: 'TRACK 03 (TIER 3)',
     trackTitle: '25–40 kHz Decoupled d-q FOC, Min-Max SVPWM & Harmonic Encoder Calibration',
     tierBadge: 'TIER 3 · PRODUCTION',
@@ -1136,11 +1112,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Add the two cross-coupling feedforward terms using your PLL velocity estimate ω_e, replace `sin()` modulation with min-max neutral injection, and subtract a 64-point flash LUT from raw SPI encoder readings.',
     equation: 'v_d^* = u_d - \\omega_e L_q i_q, \\quad v_q^* = u_q + \\omega_e(L_d i_d + \\lambda_{pm}), \\quad \\sqrt{v_d^{*2}+v_q^{*2}} \\le \\frac{V_{\\text{bus}}}{\\sqrt{3}}',
     milestoneId: 't3_tr03',
-    milestoneTask: 'In Tab 3, toggle Cross-Coupling Decoupling OFF and ON at 2,500 RPM and run the 24A Hopper Jump preset to verify ≤180 µs rise time.',
+    milestoneTask: 'In Brushless Motor Control Lab, toggle Cross-Coupling Decoupling OFF and ON at 2,500 RPM and run the 24A Hopper Jump preset to verify ≤180 µs rise time.',
     deliverableGate: 'Tier 3.3 Gate: Lab 03 Suite — t_rise ≤ 180 µs, INL < 0.04°, +15.47% SVPWM boost.',
     linkedTab: 'tab-foc',
     presetId: 'foc_qdd_jump',
-    presetLabel: 'Run 24A Hopper Jump FOC (Tab 3)',
+    presetLabel: 'Run 24A Hopper Jump FOC',
     studyLinks: [
       {
         label: 'TI SPRABQ2: Space Vector PWM (SVPWM) & Min-Max Injection',
@@ -1161,7 +1137,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T3 · Step 5 / 8',
     trackCode: 'TRACK 04 (TIER 3)',
     trackTitle: 'Bare-Metal STM32G474 TIM1→ADC, CORDIC, Embedded Rust (Embassy/RTIC) & `WaitFreeSeqLock<T>`',
     tierBadge: 'TIER 3 · PRODUCTION',
@@ -1180,11 +1155,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Wrap your shared telemetry struct in a template `WaitFreeSeqLock<ActuatorState>`: the writer increments `seq` to odd before writing and even after; the reader loops `do { s0 = seq; copy; s1 = seq; } while (s0 != s1 || (s0 & 1));`.',
     equation: '\\text{SeqLock Retry Condition: } (s_0 \\neq s_1) \\lor (s_0 \\bmod 2 = 1)',
     milestoneId: 't3_tr04',
-    milestoneTask: 'In Tab 8, toggle `WaitFreeSeqLock` vs. Unprotected Shared Struct to observe corrupted torn-read spikes vs. 0 torn reads across 250k cycles.',
+    milestoneTask: 'In IMU Sensor Fusion & Real-Time Lock, toggle `WaitFreeSeqLock` vs. Unprotected Shared Struct to observe corrupted torn-read spikes vs. 0 torn reads across 250k cycles.',
     deliverableGate: 'Tier 3.4 Gate: Lab 04 & Firmware Suite — 0 heap allocs, 0 torn reads, <30 ns latency.',
     linkedTab: 'tab-eskf',
     presetId: 'eskf_torn_race',
-    presetLabel: 'Compare Torn Reads vs SeqLock (Tab 8)',
+    presetLabel: 'Compare Torn Reads vs SeqLock',
     studyLinks: [
       {
         label: 'STM32G474 Reference Manual RM0440 (TIM1, ADC & CORDIC)',
@@ -1210,7 +1185,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T3 · Step 6 / 8',
     trackCode: 'TRACK 05 (TIER 3)',
     trackTitle: 'Joseph-Form Manifold ESKF, Embedded MPC (`acados`/`TinyMPC`) & Control Barrier QPs',
     tierBadge: 'TIER 3 · PRODUCTION',
@@ -1229,11 +1203,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Wrap your LQR torque output u_nom in a 1D closed-form CBF projection `u_safe = clamp(u_nom, u_min_cbf(x, v), u_max_cbf(x, v))` that computes the exact braking force required to respect ±x_max.',
     equation: 'P^+ = (I - KH)P^-(I - KH)^\\top + KRK^\\top, \\qquad \\dot{h}(x,u) + \\alpha h(x) \\ge 0',
     milestoneId: 't3_tr05',
-    milestoneTask: 'Test the Tight ±0.50m CBF Safety Wall preset in Tab 4 and the High Gyro Bias Recovery preset in Tab 8.',
+    milestoneTask: 'Test the Tight ±0.50m CBF Safety Wall preset in Pendulum Balance & Safety Walls and the High Gyro Bias Recovery preset in IMU Sensor Fusion & Real-Time Lock.',
     deliverableGate: 'Tier 3.5 Gate: Lab 05 Suite — NEES ∈ χ²_95% & 0 CBF safety wall violations.',
     linkedTab: 'tab-pend',
     presetId: 'pend_cbf_wall',
-    presetLabel: 'Test Tight ±0.50m CBF Wall (Tab 4)',
+    presetLabel: 'Test Tight ±0.50m CBF Wall',
     studyLinks: [
       {
         label: 'Joan Solà: Quaternion Kinematics for the Error-State Kalman Filter (arXiv:1711.02508)',
@@ -1259,7 +1233,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T3 · Step 7 / 8',
     trackCode: 'TRACK 06 & 07 (TIER 3)',
     trackTitle: 'Khatib Operational WBC, Embodied AI (LeRobot / VLAs), Schroeder SysID & <1 µs STO',
     tierBadge: 'TIER 3 · PRODUCTION',
@@ -1278,11 +1251,11 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
       'Run high-level visuomotor action-chunking policies at 30–50 Hz with Real-Time Chunking (RTC) while enforcing 1 kHz Khatib operational impedance, CBF-QP workspace walls, and <1 µs hardware STO on the real-time controller.',
     equation: '\\phi_k^{\\text{Schroeder}} = -\\frac{\\pi k(k-1)}{M}, \\qquad \\Lambda(q) = (J M^{-1} J^\\top)^{-1}',
     milestoneId: 't3_tr06',
-    milestoneTask: 'Compare Schroeder vs. Zero-Phase Clipping in Tab 7, and trigger the <1 µs 42A Short Desat Trip in Tab 5.',
+    milestoneTask: 'Compare Schroeder vs. Zero-Phase Clipping in Sine-Sweep System Identification, and trigger the <1 µs 42A Short Desat Trip in Robot Arm Kinematics & Safety Cutoff.',
     deliverableGate: 'Tier 3.6 Gate: Lab 06 & 07 Suites — CF = 1.66, RMS SysID error < 0.5 dB, STO trip = 0.65 µs.',
     linkedTab: 'tab-sysid',
     presetId: 'sysid_zero_clip',
-    presetLabel: 'Compare Schroeder vs Zero-Phase (Tab 7)',
+    presetLabel: 'Compare Schroeder vs Zero-Phase',
     studyLinks: [
       {
         label: 'Khatib (1987): A Unified Approach for Motion and Force Control (Operational Space)',
@@ -1308,7 +1281,6 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     },
   },
   {
-    stepNumber: 'T3 · Step 8 / 8 (FINAL MASTERY)',
     trackCode: 'TRACK 08 (TIER 3 CAPSTONES)',
     trackTitle: 'Full Production Capstones I–V: 48V FOC Drive, Furuta, 6-DOF Arm, QDD Hopper & ALOHA 2 / Reachy 2',
     tierBadge: 'TIER 3 · MASTERY',
@@ -1327,7 +1299,7 @@ export const TIER_3_LINEAR_PASS: LinearTrackStep[] = [
     deliverableGate: '🏆 FULL ROADMAP MASTERY: 12/12 Production Suites Verified.',
     linkedTab: 'tab-models',
     presetId: 'robot_hopper_crouch',
-    presetLabel: 'Inspect All Capstone Models (Tab 5)',
+    presetLabel: 'Inspect All Capstone Models',
     studyLinks: [
       {
         label: 'NASA Systems Engineering Handbook (SP-2016-6105 Rev2)',
@@ -1369,19 +1341,19 @@ export const SIMULATOR_TIER_GUIDES: Record<
     tier1: {
       badge: 'TIER 1 · BEGINNER PASS',
       title: 'Observing Mechanical Resonance & Why High PID Gains Shake Robots',
-      focus: 'In Pass 1, understand the difference between the motor encoder curve (Cyan, which has an anti-resonance dip f_ar) and the load tip (Amber).',
+      focus: 'In Depth 1, understand the difference between the motor encoder curve (Cyan, which has an anti-resonance dip f_ar) and the load tip (Amber).',
       actionHint: 'Click "Da Vinci Cable" to see a low-stiffness 142 Hz surgical cable drive.',
     },
     tier2: {
       badge: 'TIER 2 · APPLIED PASS',
       title: 'Designing a Pre-Warped Tustin Digital Biquad Notch Filter',
-      focus: 'In Pass 2, you code a 5-multiply Transposed Direct Form II biquad filter H_notch(z) tuned to f_notch = f_r to surgically scoop out the resonance peak.',
+      focus: 'In Depth 2, you code a 5-multiply Transposed Direct Form II biquad filter H_notch(z) tuned to f_notch = f_r to surgically scoop out the resonance peak.',
       actionHint: 'Click "Auto-Tune f_notch ← f_r" and adjust Quality Factor Q_n to flatten the green curve.',
     },
     tier3: {
       badge: 'TIER 3 · PRODUCTION PASS',
       title: 'Sub-Nanometer Lithography Stage Loop Shaping & Float32 Quantization',
-      focus: 'In Pass 3, verify ≥25 dB resonance attenuation on a 390 Hz wafer stage while maintaining phase margin and Gang-of-Four sensitivity bounds.',
+      focus: 'In Depth 3, verify ≥25 dB resonance attenuation on a 390 Hz wafer stage while maintaining phase margin and Gang-of-Four sensitivity bounds.',
       actionHint: 'Click "ASML Wafer" and verify Notch Gain @ f_r is ≤ -25 dB.',
     },
   },
@@ -1395,19 +1367,19 @@ export const SIMULATOR_TIER_GUIDES: Record<
     tier1: {
       badge: 'TIER 1 · BEGINNER PASS',
       title: '3-Phase Sinusoidal Commutation & SimpleFOC Basics',
-      focus: 'In Pass 1, observe the bottom plot: 3-phase duty cycles (da, db, dc) shifted by 120° that create a smoothly rotating magnetic field.',
+      focus: 'In Depth 1, observe the bottom plot: 3-phase duty cycles (da, db, dc) shifted by 120° that create a smoothly rotating magnetic field.',
       actionHint: 'Set Mechanical Speed to 1200 RPM ("Surgical Cobot") and inspect the 3-phase waveforms.',
     },
     tier2: {
       badge: 'TIER 2 · APPLIED PASS',
       title: 'Clarke/Park d-q PI Tuning & Pole-Zero Cancellation',
-      focus: 'In Pass 2, see how Proportional (Kp = L·ω_bw) and Integral (Ki = R·ω_bw) gains scale directly with your desired Current Loop Bandwidth f_bw.',
+      focus: 'In Depth 2, see how Proportional (Kp = L·ω_bw) and Integral (Ki = R·ω_bw) gains scale directly with your desired Current Loop Bandwidth f_bw.',
       actionHint: 'Drag Current Loop Bandwidth f_bw from 1000 Hz to 3500 Hz and watch 0–90% Rise Time drop.',
     },
     tier3: {
       badge: 'TIER 3 · PRODUCTION PASS',
       title: '25 kHz Synchronous Cross-Coupling Decoupling & +15.47% Min-Max SVPWM',
-      focus: 'In Pass 3, observe how high rotor speed ω_e injects false d-axis current error (Rose curve) unless ±ω_e L_dq feedforward decoupling is active, plus saddle-wave SVPWM boost.',
+      focus: 'In Depth 3, observe how high rotor speed ω_e injects false d-axis current error (Rose curve) unless ±ω_e L_dq feedforward decoupling is active, plus saddle-wave SVPWM boost.',
       actionHint: 'Click "5500 RPM Drone" and toggle Decoupling ON/OFF to see the Rose i_d error spike vanish!',
     },
   },
@@ -1421,19 +1393,19 @@ export const SIMULATOR_TIER_GUIDES: Record<
     tier1: {
       badge: 'TIER 1 · BEGINNER PASS',
       title: 'Stabilizing an Upright Pendulum Around Equilibrium',
-      focus: 'In Pass 1, focus on the upright balancing phase (|θ| < 22°): when the rod tilts right, the cart accelerates right to get underneath the center of mass.',
+      focus: 'In Depth 1, focus on the upright balancing phase (|θ| < 22°): when the rod tilts right, the cart accelerates right to get underneath the center of mass.',
       actionHint: 'Click "Reset Upright (θ₀ = 10°)" and adjust LQR Angle Weight Q_θ.',
     },
     tier2: {
       badge: 'TIER 2 · APPLIED PASS',
       title: 'Åström Energy Pumping Swing-Up & Full-State LQR Handoff',
-      focus: 'In Pass 2, tune Energy Swing-Up Gain k_E so total mechanical energy E(θ, θ̇) converges to the upright homoclinic orbit before switching to u = -Kx.',
+      focus: 'In Depth 2, tune Energy Swing-Up Gain k_E so total mechanical energy E(θ, θ̇) converges to the upright homoclinic orbit before switching to u = -Kx.',
       actionHint: 'Click "Inject +3.2 rad/s Kick" to test disturbance recovery.',
     },
     tier3: {
       badge: 'TIER 3 · PRODUCTION PASS',
       title: 'Exponential Control Barrier Function (ECBF-QP) Hard Workspace Wall Filter',
-      focus: 'In Pass 3, the CBF safety filter h(x, ẋ) = (x_max - |x|) - |ẋ|/α ≥ 0 overrides LQR in real time whenever the cart approaches the dashed red walls ±x_max.',
+      focus: 'In Depth 3, the CBF safety filter h(x, ẋ) = (x_max - |x|) - |ẋ|/α ≥ 0 overrides LQR in real time whenever the cart approaches the dashed red walls ±x_max.',
       actionHint: 'Drag CBF Safety Wall x_max down to 0.50 m and inject a kick—watch the cart brake right at the red line!',
     },
   },
@@ -1447,19 +1419,19 @@ export const SIMULATOR_TIER_GUIDES: Record<
     tier1: {
       badge: 'TIER 1 · BEGINNER PASS',
       title: 'Multi-Link Forward Kinematics & End-Effector Workspace',
-      focus: 'In Pass 1, explore how shoulder, hip, and knee angles map to foot/hand coordinates (x, y) across the Hopper, 6-DOF Arm, and Furuta models.',
+      focus: 'In Depth 1, explore how shoulder, hip, and knee angles map to foot/hand coordinates (x, y) across the Hopper, 6-DOF Arm, and Furuta models.',
       actionHint: 'Switch between Capstone IV Hopper, Capstone III 6-DOF Arm, and Capstone II Furuta.',
     },
     tier2: {
       badge: 'TIER 2 · APPLIED PASS',
       title: 'Validated URDF / MuJoCo Inertia Tensors & SPI Encoder CRC Watchdogs',
-      focus: 'In Pass 2, verify Sylvester positive-definiteness (I > 0) and the triangle inequality (I₁ + I₂ ≥ I₃), plus 2-cycle SPI encoder wire-break detection.',
+      focus: 'In Depth 2, verify Sylvester positive-definiteness (I > 0) and the triangle inequality (I₁ + I₂ ≥ I₃), plus 2-cycle SPI encoder wire-break detection.',
       actionHint: 'Click "Encoder Wire Break" to simulate a 50.0 µs (2-cycle) CRC-16 watchdog trip.',
     },
     tier3: {
       badge: 'TIER 3 · PRODUCTION PASS',
       title: 'IEC 61800-5-2 Dual-Channel Hardware Safe Torque Off (<1 µs Desat Shutdown)',
-      focus: 'In Pass 3, a 42 A phase short triggers hardware comparator `TIM1_BKIN` + `STO_A/B`, driving all 6 MOSFET gates to SAFE HIGH-Z in 0.65 µs without waiting for software.',
+      focus: 'In Depth 3, a 42 A phase short triggers hardware comparator `TIM1_BKIN` + `STO_A/B`, driving all 6 MOSFET gates to SAFE HIGH-Z in 0.65 µs without waiting for software.',
       actionHint: 'Click "Inject 42A Short (<1µs)" and observe the 0.65 µs hardware STO gate shutdown.',
     },
   },
@@ -1473,19 +1445,19 @@ export const SIMULATOR_TIER_GUIDES: Record<
     tier1: {
       badge: 'TIER 1 · BEGINNER PASS',
       title: 'Reading a Bill of Materials (BOM) & Understanding Inverter Power Loss',
-      focus: 'In Pass 1, inspect the 6 core chips on a brushless motor controller (MCU, Gate Driver, MOSFETs, Current Amps, Shunts, Encoder/CAN) and their voltage ratings.',
+      focus: 'In Depth 1, inspect the 6 core chips on a brushless motor controller (MCU, Gate Driver, MOSFETs, Current Amps, Shunts, Encoder/CAN) and their voltage ratings.',
       actionHint: 'Review the $40.47 BOM table and switch between the 3 CAD parts.',
     },
     tier2: {
       badge: 'TIER 2 · APPLIED PASS',
       title: '4-Terminal Kelvin Shunts, Exact-Constraint Kelvin Couplings & 8:1 QDD Gears',
-      focus: 'In Pass 2, examine how the 3-2-1 Kelvin coupling locks 6 DOF without thermal binding, and compare conduction losses vs. PWM switching losses.',
+      focus: 'In Depth 2, examine how the 3-2-1 Kelvin coupling locks 6 DOF without thermal binding, and compare conduction losses vs. PWM switching losses.',
       actionHint: 'Select "Kelvin 3-2-1" and "8:1 QDD Carrier", and adjust SVPWM Frequency f_pwm.',
     },
     tier3: {
       badge: 'TIER 3 · PRODUCTION PASS',
       title: 'Paros-Weisbord Flexure Stiffness, <2 nH Commutation Loops & Coupled T_j(R_DS) Solver',
-      focus: 'In Pass 3, solve the coupled electro-thermal loop for R_DS(on)(T_j) and keep parasitic loop inductance L_loop < 2 nH so turn-off V_DS,peak stays safely below 60 V.',
+      focus: 'In Depth 3, solve the coupled electro-thermal loop for R_DS(on)(T_j) and keep parasitic loop inductance L_loop < 2 nH so turn-off V_DS,peak stays safely below 60 V.',
       actionHint: 'Drag Loop Inductance L_loop above 4.0 nH to see V_DS,peak breach the 60 V gate!',
     },
   },
@@ -1499,19 +1471,19 @@ export const SIMULATOR_TIER_GUIDES: Record<
     tier1: {
       badge: 'TIER 1 · BEGINNER PASS',
       title: 'Frequency Response Intuition & Signal-to-Noise Averaging',
-      focus: 'In Pass 1, see how measurement noise σ_v scatters the identified green Bode dots, and how averaging across multiple periods P_avg cleans up the measurement.',
+      focus: 'In Depth 1, see how measurement noise σ_v scatters the identified green Bode dots, and how averaging across multiple periods P_avg cleans up the measurement.',
       actionHint: 'Drag Measurement Noise σ_v up to 0.25, then increase Averaged Periods P_avg to 20.',
     },
     tier2: {
       badge: 'TIER 2 · APPLIED PASS',
       title: 'Crest Factor Compression & Multi-Harmonic Excitation Design',
-      focus: 'In Pass 2, adjust the number of excited harmonics M and observe how Zero-Phase Crest Factor grows as √(2M) while Schroeder phasing stays below 1.7.',
+      focus: 'In Depth 2, adjust the number of excited harmonics M and observe how Zero-Phase Crest Factor grows as √(2M) while Schroeder phasing stays below 1.7.',
       actionHint: 'Increase Excited Harmonics M to 48 and compare Zero-Phase CF vs. Schroeder CF.',
     },
     tier3: {
       badge: 'TIER 3 · PRODUCTION PASS',
       title: 'Manfred Schroeder Quadratic Phase Law & Unbiased Closed-Loop Spectral FRF',
-      focus: 'In Pass 3, compute φ_k = -πk(k-1)/M and extract the unbiased plant estimate P̂(jω_k) = S_yd(jω_k) / S_ud(jω_k) inside an active feedback loop with <0.5 dB RMS error.',
+      focus: 'In Depth 3, compute φ_k = -πk(k-1)/M and extract the unbiased plant estimate P̂(jω_k) = S_yd(jω_k) / S_ud(jω_k) inside an active feedback loop with <0.5 dB RMS error.',
       actionHint: 'Click "48-Tone Schroeder" vs. "Zero-Phase Clipping" to see amplifier saturation bias.',
     },
   },
@@ -1525,19 +1497,19 @@ export const SIMULATOR_TIER_GUIDES: Record<
     tier1: {
       badge: 'TIER 1 · BEGINNER PASS',
       title: 'Observing Uncompensated Gyro Bias Drift vs. Sensor Fusion',
-      focus: 'In Pass 1, drag True Gyro Bias b_g up and watch how fast raw gyro integration (Rose curve) diverges to 45° within seconds while the filter (Emerald) stays flat.',
+      focus: 'In Depth 1, drag True Gyro Bias b_g up and watch how fast raw gyro integration (Rose curve) diverges to 45° within seconds while the filter (Emerald) stays flat.',
       actionHint: 'Drag True Gyro Bias b_g from 0.05 to 0.30 rad/s and watch the Cyan bias estimate converge.',
     },
     tier2: {
       badge: 'TIER 2 · APPLIED PASS',
       title: 'Kalman Filter Covariance Tuning & Multi-Rate ISR/Planner Contention',
-      focus: 'In Pass 2, adjust Vector Measurement Noise σ_meas to see how the Kalman gain trades off noisy attitude updates against gyro bias convergence speed.',
+      focus: 'In Depth 2, adjust Vector Measurement Noise σ_meas to see how the Kalman gain trades off noisy attitude updates against gyro bias convergence speed.',
       actionHint: 'Adjust Vector Measurement Noise σ_meas and ISR Contention Rate [%].',
     },
     tier3: {
       badge: 'TIER 3 · PRODUCTION PASS',
       title: 'Joseph-Form Manifold ESKF on SO(3) & C++20 `WaitFreeSeqLock<T>` Atomic IPC',
-      focus: 'In Pass 3, verify symmetric Joseph-form covariance updates P⁺ = (I-KH)P⁻(I-KH)ᵀ + KRKᵀ with χ²₆ NEES consistency, paired with 29.6 ns lock-free sequence locking.',
+      focus: 'In Depth 3, verify symmetric Joseph-form covariance updates P⁺ = (I-KH)P⁻(I-KH)ᵀ + KRKᵀ with χ²₆ NEES consistency, paired with 29.6 ns lock-free sequence locking.',
       actionHint: 'Click "Enable SeqLock (0 Torn)" and verify Mean NEES (PASS) and 0 Torn Reads.',
     },
   },

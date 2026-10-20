@@ -28,7 +28,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00c`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00c) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00c` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00c) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -259,7 +261,7 @@ Inject the square-root slip the exercise warns about - $b_{\text{crit}} = 2 J k$
 - **Fix:** use $b_{\text{crit}} = 2\sqrt{Jk} = 0.80\text{ N}\cdot\text{m}\cdot\text{s/rad}$; then $\zeta = 1.00$ and the same loop reports `mp_sim < 1e-6`, which is the proof the repair worked.
 
 ## 6. Simulation path
-Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench to watch how low structural damping $\zeta$ creates a sharp time-domain ringing transient.
+Run the worked example in Python, then open **Two-Mass & Notch Bode** in the MechaLab Workbench to watch how low structural damping $\zeta$ creates a sharp time-domain ringing transient.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00c`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

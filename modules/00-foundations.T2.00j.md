@@ -26,7 +26,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.00-foundations.T2.00j`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00j) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 3 of 10 · Make a joint move: foundations**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.00-foundations.T2.00j` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00j) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -209,7 +211,7 @@ Inject the `covariance_no_transpose` fault: compute $A\Sigma_x + Q$ and stop.
 - **Fix:** multiply by $A^\top$ as well, then assert both symmetry and a positive determinant before handing the matrix to the update step.
 
 ## 6. Simulation path
-Run the worked example in Python, then open **Tab 2 (Two-Mass & Notch Bode)** in the MechaLab Workbench: the uncertainty band drawn around the position trace is this page's covariance, propagated with the same matrix that advances the states.
+Run the worked example in Python, then open **Two-Mass & Notch Bode** in the MechaLab Workbench: the uncertainty band drawn around the position trace is this page's covariance, propagated with the same matrix that advances the states.
 
 The graded package is also a workbench entry: **Modules -> `EX.00-foundations.T2.00j`**, where `selfcheck.py` is appended below the starter and **Verify** compares its `SELF-CHECK PASS:` line. `scripts/e2e_pages_bundle.mjs` drives it on the built bundle, so the browser path is tested, not assumed.
 

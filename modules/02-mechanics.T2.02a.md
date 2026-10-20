@@ -29,7 +29,9 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab on `EX.02-mechanics.T2.02a`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.02-mechanics.T2.02a) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
+> **Step 5 of 10 · Build the arm: mechanics**
+>
+> **Run this in the workbench.** [Open MechaLab with `EX.02-mechanics.T2.02a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.02-mechanics.T2.02a) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters
@@ -473,7 +475,7 @@ Build the elbow link's CoM Jacobian from the elbow's **own** angle instead of th
 - **Fix:** use the world angle $q_1 + q_2$ for the second link, then re-run the identity at several poses, not just the one you were testing: `plant.gravity_torque` is the oracle and the agreement must hold to $10^{-12}$ everywhere on the trajectory.
 
 ## 6. Simulation path
-Every block above runs in the workbench's Python runner (`npm run dev`, Tab 2), where `import mechalab_plant` needs no setup: the runner writes the shared plant into Pyodide's filesystem before your code runs. On your own machine, put that one directory on the path and run the same code with the host interpreter:
+Every block above runs in the workbench's Python runner (`npm run dev`, Vibration Filter & Resonance Lab), where `import mechalab_plant` needs no setup: the runner writes the shared plant into Pyodide's filesystem before your code runs. On your own machine, put that one directory on the path and run the same code with the host interpreter:
 
 ```bash
 PYTHONPATH=resources/plants python3 your_script.py

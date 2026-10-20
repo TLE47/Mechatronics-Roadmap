@@ -7,7 +7,7 @@
 >
 > **[Read Lesson 1: Variables and data types →](track-p/P.1-variables-and-data-types.md)**
 >
-> When to use it: any time a lesson hands you a starter file — Tab 2 lists every lesson and exercise that has one. Read the page for the idea, then type, run and verify in MechaLab; your progress stays in this browser, and nothing is saved on GitHub.
+> When to use it: any time a lesson asks you to run something — Run Python Lessons lists every lesson and exercise that has an entry. Read the page for the idea, then type, run and verify in MechaLab; your progress stays in this browser, and nothing is saved on GitHub.
 <!-- start-here:end -->
 
 ---
