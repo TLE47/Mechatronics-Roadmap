@@ -19,10 +19,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      # `check_links.py` refuses any interpreter but the one `.python-version` pins, so this job
+      # must match the weekly sweep. It pinned 3.11 and had exited 2 before fetching a single URL.
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       # Same `link-cache-` prefix the weekly sweep restores, so the two workflows share one newest
       # cache regardless of which ran last.
