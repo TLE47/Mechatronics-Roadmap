@@ -10,6 +10,10 @@ slow_learner_hours: "1.5-2.0"
 
 # Lesson R.5: Spinning Arrows — Complex Numbers and Phasor Sums, Computed Before Named
 
+<!-- run-callout:start -->
+> **No workbench entry for this page.** There is nothing to load in Tab 2 for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [MechaLab, Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+<!-- run-callout:end -->
+
 ## Goal
 Carry a **rotation and a length together in one number**, rotate by multiplying, and add two of them the way you add arrows — then use that to explain why three motor phases 120° apart sum to nothing while a 3 and a 4 at right angles make a 5.
 

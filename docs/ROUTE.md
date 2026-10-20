@@ -20,9 +20,11 @@ The course has two surfaces, and they do different jobs. Use both, in this order
 
 Every lesson in Tab 2 shows its own page path with a **Read this page on GitHub ↗** link, and every
 page opens with the same **Run this in the workbench** callout naming its own id, so a learner who
-arrives from a search result is told where to run it before reading anything else. Every page runs
-in the same tab, so a learner never has to guess which one to open: read on the page, run in the
-workbench, and the lesson only counts once the workbench verifies it. **Export Progress
+arrives from a search result is told where to run it before reading anything else. A page with no
+entry - the bench lessons in Stage 0 and Step 1, and the maths ramp - carries the same block saying
+so, rather than leaving the reader to search for one that is not there. Every page runs in the same
+tab, so a learner never has to guess which one to open: read on the page, run in the workbench, and
+the lesson only counts once the workbench verifies it. **Export Progress
 (.md)** and **Export Learning Log (.json)** are the two records of that; neither leaves your browser
 unless you hand it over.
 

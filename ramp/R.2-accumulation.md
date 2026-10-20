@@ -10,6 +10,10 @@ slow_learner_hours: "1.5-2.0"
 
 # Lesson R.2: Accumulation — Recovering Position From Rates, and Why a Small Bias Drifts
 
+<!-- run-callout:start -->
+> **No workbench entry for this page.** There is nothing to load in Tab 2 for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [MechaLab, Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+<!-- run-callout:end -->
+
 ## Goal
 Go the other way from R.1 and recover **position from a series of rates** by adding up area, then use that sum to explain the two things that bite every real robot: **the starting value is part of the answer**, and **a constant bias integrates into an ever-growing error**.
 

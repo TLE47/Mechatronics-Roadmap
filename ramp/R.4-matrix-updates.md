@@ -10,6 +10,10 @@ slow_learner_hours: "1.5-2.0"
 
 # Lesson R.4: Tables That Transform — Writing One Tick as a Matrix Multiply, and Reading Rows as Rates
 
+<!-- run-callout:start -->
+> **No workbench entry for this page.** There is nothing to load in Tab 2 for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [MechaLab, Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+<!-- run-callout:end -->
+
 ## Goal
 Take the two-line tick from R.3 and store its **coefficients in a table**, so one multiply `A @ x + B·u` produces the same answer as the two lines. Then read the table back: each **row** is the rate of one slot, each **column** says where one input goes.
 

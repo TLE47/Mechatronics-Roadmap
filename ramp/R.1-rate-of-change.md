@@ -10,6 +10,10 @@ slow_learner_hours: "1.5-2.0"
 
 # Lesson R.1: Rate of Change — Reading dq/dt From Two Samples, and Why the Interval Matters
 
+<!-- run-callout:start -->
+> **No workbench entry for this page.** There is nothing to load in Tab 2 for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [MechaLab, Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+<!-- run-callout:end -->
+
 ## Goal
 Turn two encoder samples into a **joint speed** (`dq/dt` in rad/s) without guessing the units, read the **sign** as direction, and see why the **average** over a window and the **rate at one moment** are different numbers — the difference Tier 2 writes as $\dot{q}$.
 
