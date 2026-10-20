@@ -10,7 +10,10 @@ import {
   SPINE,
   SPINE_STEP_COUNT,
   entriesAtDepth,
+  columnHours,
   costLabel,
+  hoursRange,
+  layerLabel,
   milestonesForStep,
   stepAtDepth,
   stepCompleteAtDepth,
@@ -108,6 +111,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   const visibleSpineSteps = SPINE.filter(matchesSearch);
   // The matrix covers Steps 3-10: the on-ramp has no depth columns to compare.
   const matrixSteps = SPINE.filter((step) => step.number > 2);
+  const matrixTotals = sumHours(matrixSteps);
 
   return (
     <div className="space-y-5">
@@ -831,13 +835,27 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       <div>{spineStep.title}</div>
                       <div
                         data-testid={`matrix-cost-${spineStep.number}`}
-                        className="mt-1 text-[0.7rem] font-mono font-normal text-[#94a3b8] tabular-nums"
+                        className="mt-1 text-[0.75rem] font-mono font-normal text-[#cbd5e1] tabular-nums"
                         title="Focused hours from each page's own metadata; the row is that step, the footer is these rows added up"
                       >
-                        {stepCostLabel(spineStep)}
+                        {hoursRange(spineStep.hours.total)}
+                      </div>
+                      <div
+                        data-testid={`matrix-layer-${spineStep.number}`}
+                        className="mt-0.5 text-[0.68rem] font-mono font-normal text-[#94a3b8] tabular-nums"
+                        title="The arm pass (lessons plus Tier 1) and the depth pass after Step 10; the columns across the row split the depth pass further"
+                      >
+                        {layerLabel(spineStep.hours)}
                       </div>
                     </td>
                     <td className="p-3">
+                      <div
+                        data-testid={`matrix-cost-${spineStep.number}-d1`}
+                        className="text-[0.7rem] font-mono text-[#94a3b8] tabular-nums mb-1"
+                        title="Lessons plus Tier 1 modules: the arm pass"
+                      >
+                        {columnHours(spineStep.hours.arm)}
+                      </div>
                       <div className="font-semibold text-[#34d399] mb-1">{t1Step.headline}</div>
                       <p className="text-[#94a3b8] text-[0.74rem] mb-2">{t1Step.milestoneTask}</p>
                       <button
@@ -852,6 +870,13 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                     </td>
                     {showAdvancedColumns && (
                       <td className="p-3">
+                        <div
+                          data-testid={`matrix-cost-${spineStep.number}-d2`}
+                          className="text-[0.7rem] font-mono text-[#94a3b8] tabular-nums mb-1"
+                          title="The step's Tier 2 modules: the depth pass at Depth 2"
+                        >
+                          {columnHours(spineStep.hours.depth2)}
+                        </div>
                         <div className="font-semibold text-[#38bdf8] mb-1">{t2Step.headline}</div>
                         <p className="text-[#94a3b8] text-[0.74rem] mb-2">{t2Step.milestoneTask}</p>
                         <button
@@ -867,6 +892,13 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                     )}
                     {showAdvancedColumns && (
                       <td className="p-3">
+                        <div
+                          data-testid={`matrix-cost-${spineStep.number}-d3`}
+                          className="text-[0.7rem] font-mono text-[#94a3b8] tabular-nums mb-1"
+                          title="The step's Tier 3 modules: the depth pass at Depth 3"
+                        >
+                          {columnHours(spineStep.hours.depth3)}
+                        </div>
                         <div className="font-semibold text-[#c084fc] mb-1">{t3Step.headline}</div>
                         <p className="text-[#94a3b8] text-[0.74rem] mb-2">{t3Step.milestoneTask}</p>
                         <button
@@ -886,17 +918,43 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             </tbody>
             <tfoot>
               <tr className="border-t border-[#334155] bg-[#0b0f19] align-top">
-                <td className="p-3 font-mono text-[#f1f5f9]">
-                  Steps 3–{SPINE_STEP_COUNT} · {matrixSteps.length} rows
+                <td className="p-3">
+                  <div className="font-mono text-[#f1f5f9]">
+                    Steps 3–{SPINE_STEP_COUNT} · {matrixSteps.length} rows
+                  </div>
+                  <div
+                    data-testid="matrix-cost-total"
+                    className="mt-1 text-[0.7rem] font-mono text-[#34d399] tabular-nums"
+                    title="The rows above, added up; the on-ramp's Steps 1-2 are in the ten-step list, not here"
+                  >
+                    {costLabel(matrixTotals)}
+                  </div>
                 </td>
                 <td
-                  colSpan={showAdvancedColumns ? 3 : 1}
-                  data-testid="matrix-cost-total"
+                  data-testid="matrix-cost-col-1"
                   className="p-3 font-mono text-[#34d399] tabular-nums"
-                  title="The rows above, added up; the on-ramp's Steps 1-2 are in the ten-step list, not here"
+                  title="Every arm hour in the rows above: lessons plus Tier 1 modules"
                 >
-                  {costLabel(sumHours(matrixSteps))}
+                  {columnHours(matrixTotals.arm)}
                 </td>
+                {showAdvancedColumns && (
+                  <td
+                    data-testid="matrix-cost-col-2"
+                    className="p-3 font-mono text-[#38bdf8] tabular-nums"
+                    title="Every Depth 2 hour in the rows above: the step's Tier 2 modules"
+                  >
+                    {columnHours(matrixTotals.depth2)}
+                  </td>
+                )}
+                {showAdvancedColumns && (
+                  <td
+                    data-testid="matrix-cost-col-3"
+                    className="p-3 font-mono text-[#c084fc] tabular-nums"
+                    title="Every Depth 3 hour in the rows above: the step's Tier 3 modules"
+                  >
+                    {columnHours(matrixTotals.depth3)}
+                  </td>
+                )}
               </tr>
             </tfoot>
           </table>

@@ -264,6 +264,22 @@ def module_layer(ident):
     return "arm" if ident == ARM_CAPSTONE_ID or ".T1." in ident else "depth"
 
 
+def depth_tier(row):
+    """Which depth column a practice module belongs to: 2 or 3, from its own front matter.
+
+    The matrix compares Depth 2 and Depth 3 side by side, so each column needs hours of its
+    own. Anything that is not a Tier 2 or 3 page is a modelling error rather than a module
+    with zero hours: silently dropping it from both columns is how a cost disappears.
+    """
+    tier = str(row.get("tier", "")).strip()
+    if tier not in ("2", "3"):
+        raise SystemExit(
+            f"module {row['id']} has tier {tier!r}; a depth module must declare tier: 2 or 3 "
+            f"so the matrix's Depth 2/3 columns can cost it"
+        )
+    return int(tier)
+
+
 def step_facts(step):
     """One row: lessons, arm and depth modules, hours, first lesson link."""
     lessons = step_lessons(step)
@@ -278,6 +294,12 @@ def step_facts(step):
     arm_high = sum(row["high"] or 0.0 for row in lessons + arm)
     depth_low = sum(row["low"] or 0.0 for row in depth)
     depth_high = sum(row["high"] or 0.0 for row in depth)
+    depth2 = [row for row in depth if depth_tier(row) == 2]
+    depth3 = [row for row in depth if depth_tier(row) == 3]
+    depth2_low = sum(row["low"] or 0.0 for row in depth2)
+    depth2_high = sum(row["high"] or 0.0 for row in depth2)
+    depth3_low = sum(row["low"] or 0.0 for row in depth3)
+    depth3_high = sum(row["high"] or 0.0 for row in depth3)
     return {
         "number": step["number"],
         "slug": step["slug"],
@@ -299,6 +321,12 @@ def step_facts(step):
         "arm_high": round(arm_high, 2),
         "depth_low": round(depth_low, 2),
         "depth_high": round(depth_high, 2),
+        "depth2_modules": depth2,
+        "depth3_modules": depth3,
+        "depth2_low": round(depth2_low, 2),
+        "depth2_high": round(depth2_high, 2),
+        "depth3_low": round(depth3_low, 2),
+        "depth3_high": round(depth3_high, 2),
         "hours": _fmt_range(round(low, 2), round(high, 2)),
     }
 
@@ -320,6 +348,10 @@ def facts():
         "arm_high": round(sum(row["arm_high"] for row in steps), 2),
         "depth_low": round(sum(row["depth_low"] for row in steps), 2),
         "depth_high": round(sum(row["depth_high"] for row in steps), 2),
+        "depth2_low": round(sum(row["depth2_low"] for row in steps), 2),
+        "depth2_high": round(sum(row["depth2_high"] for row in steps), 2),
+        "depth3_low": round(sum(row["depth3_low"] for row in steps), 2),
+        "depth3_high": round(sum(row["depth3_high"] for row in steps), 2),
         "hours": _fmt_range(round(sum(row["low"] for row in steps), 2),
                             round(sum(row["high"] for row in steps), 2)),
     }

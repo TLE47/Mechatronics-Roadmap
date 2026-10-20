@@ -19,7 +19,11 @@ export interface SpineStepData {
   hours: {
     /** Lessons plus Tier 1 modules: what Steps 1-10 ask for. */
     arm: { low: number; high: number };
-    /** Modules taken after Step 10 in the same step order; 0 on the on-ramp. */
+    /** The step's Tier 2 modules: the matrix's Depth 2 column. */
+    depth2: { low: number; high: number };
+    /** The step's Tier 3 modules: the matrix's Depth 3 column. */
+    depth3: { low: number; high: number };
+    /** depth2 + depth3: the second pass, taken after Step 10; 0 on the on-ramp. */
     depth: { low: number; high: number };
     /** arm + depth. */
     total: { low: number; high: number };
@@ -38,6 +42,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: [],
     hours: {
       arm: { low: 16.75, high: 42.5 },
+      depth2: { low: 0, high: 0 },
+      depth3: { low: 0, high: 0 },
       depth: { low: 0, high: 0 },
       total: { low: 16.75, high: 42.5 },
     },
@@ -53,6 +59,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: [],
     hours: {
       arm: { low: 13.75, high: 33.0 },
+      depth2: { low: 0, high: 0 },
+      depth3: { low: 0, high: 0 },
       depth: { low: 0, high: 0 },
       total: { low: 13.75, high: 33.0 },
     },
@@ -68,6 +76,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: [],
     hours: {
       arm: { low: 20.5, high: 26.5 },
+      depth2: { low: 29.5, high: 29.5 },
+      depth3: { low: 5.0, high: 5.0 },
       depth: { low: 34.5, high: 34.5 },
       total: { low: 55.0, high: 61.0 },
     },
@@ -83,6 +93,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: [],
     hours: {
       arm: { low: 18.0, high: 25.5 },
+      depth2: { low: 8.5, high: 8.5 },
+      depth3: { low: 0, high: 0 },
       depth: { low: 8.5, high: 8.5 },
       total: { low: 26.5, high: 34.0 },
     },
@@ -98,6 +110,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: [],
     hours: {
       arm: { low: 10.5, high: 20.5 },
+      depth2: { low: 4.5, high: 4.5 },
+      depth3: { low: 5.0, high: 5.0 },
       depth: { low: 9.5, high: 9.5 },
       total: { low: 20.0, high: 30.0 },
     },
@@ -113,6 +127,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: [],
     hours: {
       arm: { low: 6.85, high: 11.5 },
+      depth2: { low: 4.5, high: 4.5 },
+      depth3: { low: 0, high: 0 },
       depth: { low: 4.5, high: 4.5 },
       total: { low: 11.35, high: 16.0 },
     },
@@ -128,6 +144,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: ["04-embedded.T2.04c", "04-embedded.T2.04d"],
     hours: {
       arm: { low: 11.0, high: 17.0 },
+      depth2: { low: 8.0, high: 8.0 },
+      depth3: { low: 0, high: 0 },
       depth: { low: 8.0, high: 8.0 },
       total: { low: 19.0, high: 25.0 },
     },
@@ -143,6 +161,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: [],
     hours: {
       arm: { low: 6.5, high: 10.5 },
+      depth2: { low: 4.5, high: 4.5 },
+      depth3: { low: 6.0, high: 6.0 },
       depth: { low: 10.5, high: 10.5 },
       total: { low: 17.0, high: 21.0 },
     },
@@ -158,6 +178,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: ["06-robotics.T2.06a", "06-robotics.T2.06b"],
     hours: {
       arm: { low: 10.0, high: 14.0 },
+      depth2: { low: 4.5, high: 4.5 },
+      depth3: { low: 0, high: 0 },
       depth: { low: 4.5, high: 4.5 },
       total: { low: 14.5, high: 18.5 },
     },
@@ -173,6 +195,8 @@ export const SPINE_SOURCE: SpineStepData[] = [
     optional: [],
     hours: {
       arm: { low: 6.5, high: 9.0 },
+      depth2: { low: 0, high: 0 },
+      depth3: { low: 0, high: 0 },
       depth: { low: 0, high: 0 },
       total: { low: 6.5, high: 9.0 },
     },

@@ -37,8 +37,17 @@ export interface SpineStep {
   trackDirs: string[];
   /** Workbench entries in every depth, in registry order. */
   entries: PythonLessonItem[];
-  /** Focused hours from the pages' own metadata: the arm pass, the depth pass, and their sum. */
-  hours: { arm: HourRange; depth: HourRange; total: HourRange };
+  /**
+   * Focused hours from the pages' own metadata: the arm pass, the depth pass split into its
+   * Tier 2 and Tier 3 halves (the matrix's Depth 2 and Depth 3 columns), and their sum.
+   */
+  hours: {
+    arm: HourRange;
+    depth2: HourRange;
+    depth3: HourRange;
+    depth: HourRange;
+    total: HourRange;
+  };
 }
 
 export const SPINE_STEP_COUNT = SPINE_SOURCE.length;
@@ -185,9 +194,16 @@ export function stepCostLabel(step: SpineStep): string {
 
 /** The same line from sums that are not one step's: a table footer totals them. */
 export function costLabel(hours: SpineStep['hours']): string {
-  const total = hoursRange(hours.total);
-  if (hours.depth.high === 0) return `${total} · arm ${hoursRange(hours.arm)}`;
-  return `${total} · arm ${hoursRange(hours.arm)} · depth ${hoursRange(hours.depth)}`;
+  return `${hoursRange(hours.total)} · ${layerLabel(hours)}`;
+}
+
+/**
+ * The arm/depth split on its own, for a narrow cell where the total sits on its own line.
+ * Step 10 has no depth layer and says so by saying nothing about one.
+ */
+export function layerLabel(hours: SpineStep['hours']): string {
+  if (hours.depth.high === 0) return `arm ${hoursRange(hours.arm)}`;
+  return `arm ${hoursRange(hours.arm)} · depth ${hoursRange(hours.depth)}`;
 }
 
 /** Printed precision, so a footer does not show `169.84999999999997 h`. */
@@ -204,9 +220,19 @@ export function sumHours(steps: SpineStep[]): SpineStep['hours'] {
   });
   return {
     arm: add((hours) => hours.arm),
+    depth2: add((hours) => hours.depth2),
+    depth3: add((hours) => hours.depth3),
     depth: add((hours) => hours.depth),
     total: add((hours) => hours.total),
   };
+}
+
+/**
+ * A matrix cell: the hours, or an em dash where the step asks for nothing at that depth.
+ * Printing `0 h` would read as a free column rather than an empty one.
+ */
+export function columnHours(range: HourRange): string {
+  return range.high === 0 ? '—' : hoursRange(range);
 }
 
 const DEPTH_ORDER: ActiveTierPass[] = ['tier1', 'tier2', 'tier3'];

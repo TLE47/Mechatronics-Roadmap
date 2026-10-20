@@ -50,13 +50,17 @@ def payload():
                 "modules": list(step["modules"]),
                 "optional": list(step["optional"]),
                 # The arm pass is the lessons plus the Tier 1 modules; the depth pass is what is
-                # left. Both are summed from each page's own front matter by route_model's
-                # step_facts, so the card, the runner and the syllabus cannot disagree.
+                # left, split into its Tier 2 and Tier 3 halves so the matrix's Depth 2 and Depth 3
+                # columns can price themselves. Every number is summed from each page's own front
+                # matter by route_model's step_facts, so the card, the runner, the matrix and the
+                # syllabus cannot disagree.
                 "hours": {
                     "arm": {
                         "low": round(cost["low"] - cost["depth_low"], 2),
                         "high": round(cost["high"] - cost["depth_high"], 2),
                     },
+                    "depth2": {"low": cost["depth2_low"], "high": cost["depth2_high"]},
+                    "depth3": {"low": cost["depth3_low"], "high": cost["depth3_high"]},
                     "depth": {"low": cost["depth_low"], "high": cost["depth_high"]},
                     "total": {"low": cost["low"], "high": cost["high"]},
                 },
@@ -91,7 +95,11 @@ def render():
         "  hours: {",
         "    /** Lessons plus Tier 1 modules: what Steps 1-10 ask for. */",
         "    arm: { low: number; high: number };",
-        "    /** Modules taken after Step 10 in the same step order; 0 on the on-ramp. */",
+        "    /** The step's Tier 2 modules: the matrix's Depth 2 column. */",
+        "    depth2: { low: number; high: number };",
+        "    /** The step's Tier 3 modules: the matrix's Depth 3 column. */",
+        "    depth3: { low: number; high: number };",
+        "    /** depth2 + depth3: the second pass, taken after Step 10; 0 on the on-ramp. */",
         "    depth: { low: number; high: number };",
         "    /** arm + depth. */",
         "    total: { low: number; high: number };",
@@ -114,7 +122,7 @@ def render():
         for name, value in fields:
             lines.append("    %s: %s," % (name, value))
         lines.append("    hours: {")
-        for layer in ("arm", "depth", "total"):
+        for layer in ("arm", "depth2", "depth3", "depth", "total"):
             hours = step["hours"][layer]
             lines.append(
                 "      %s: { low: %s, high: %s },"

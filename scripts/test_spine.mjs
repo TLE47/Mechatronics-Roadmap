@@ -28,8 +28,11 @@ import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import {
   SPINE,
   SPINE_STEP_COUNT,
+  columnHours,
   costLabel,
   entriesAtDepth,
+  hoursRange,
+  layerLabel,
   spineStepForEntry,
   stepAtDepth,
   stepBreadcrumb,
@@ -194,6 +197,65 @@ check('every step prints its focused hours, and arm + depth is the total', () =>
       `step ${step.number} must not be labelled the on-ramp just because it has no depth hours`
     );
   }
+});
+
+check('each matrix column prices its own layer, and the footer adds up each column', () => {
+  for (const step of SPINE) {
+    const { arm, depth2, depth3, depth, total } = step.hours;
+    for (const end of ['low', 'high']) {
+      assert.ok(
+        Math.abs(depth2[end] + depth3[end] - depth[end]) < 1e-9,
+        `step ${step.number}: the Depth 2 and Depth 3 columns must add up to the depth pass`
+      );
+      assert.ok(
+        Math.abs(arm[end] + depth[end] - total[end]) < 1e-9,
+        `step ${step.number}: the arm column plus the two depth columns must add up to the total`
+      );
+      assert.ok(
+        depth2[end] >= 0 && depth3[end] >= 0,
+        `step ${step.number}: a column cannot cost negative hours`
+      );
+    }
+  }
+  // Step 8 is the control: 2 h + 2 h + 2 h of Tier 3 under one 4.5 h Tier 2 module.
+  assert.equal(columnHours(SPINE[7].hours.arm), '6.5–10.5 h');
+  assert.equal(columnHours(SPINE[7].hours.depth2), '4.5 h');
+  assert.equal(columnHours(SPINE[7].hours.depth3), '6 h');
+  assert.equal(
+    columnHours(SPINE[9].hours.depth2),
+    '—',
+    'Step 10 has no Tier 2 modules, so its Depth 2 column is empty, not a free 0 h'
+  );
+  assert.equal(columnHours(SPINE[9].hours.depth3), '—', 'Step 10\'s only module is arm work');
+  // The narrow matrix cell prints the total and its split on separate lines, from one spelling.
+  assert.equal(layerLabel(SPINE[7].hours), 'arm 6.5–10.5 h · depth 10.5 h');
+  assert.equal(
+    layerLabel(SPINE[9].hours),
+    'arm 6.5–9 h',
+    'Step 10 must not claim a depth pass it does not have'
+  );
+  assert.equal(
+    stepCostLabel(SPINE[7]),
+    `${hoursRange(SPINE[7].hours.total)} · ${layerLabel(SPINE[7].hours)}`,
+    'the card and the matrix must not spell the same cost two ways'
+  );
+
+  const rows = SPINE.filter((step) => step.number > 2);
+  const totals = sumHours(rows);
+  for (const layer of ['arm', 'depth2', 'depth3']) {
+    for (const end of ['low', 'high']) {
+      const fromRows = rows.reduce((sum, step) => sum + step.hours[layer][end], 0);
+      assert.ok(
+        Math.abs(totals[layer][end] - fromRows) < 1e-9,
+        `the ${layer} footer must be the ${layer} cells above it added up`
+      );
+    }
+  }
+  assert.equal(
+    Math.abs(totals.depth2.high + totals.depth3.high - totals.depth.high) < 1e-9,
+    true,
+    'the Depth 2 and Depth 3 footers must add up to the depth footer'
+  );
 });
 
 check('the matrix footer totals the rows it prints, not a second hand-typed number', () => {

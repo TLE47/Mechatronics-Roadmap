@@ -102,6 +102,26 @@ class SpineDataTests(unittest.TestCase):
                     msg="expected the depth layer to be the model's depth sum; the depth pass "
                         "must cost only its own modules",
                 )
+                self.assertAlmostEqual(
+                    cost["depth2"]["low"] + cost["depth3"]["low"], cost["depth"]["low"], places=2,
+                    msg="expected the matrix's Depth 2 and Depth 3 columns to add up to the depth "
+                        "pass; a gap would price one column with the other's hours",
+                )
+                self.assertAlmostEqual(
+                    cost["depth2"]["high"] + cost["depth3"]["high"], cost["depth"]["high"], places=2,
+                    msg="expected the Depth 2 and Depth 3 high ends to add up to the depth high "
+                        "end; the columns are read side by side",
+                )
+                self.assertAlmostEqual(
+                    cost["depth2"]["low"], row["depth2_low"], places=2,
+                    msg="expected the Depth 2 column to be the model's Tier 2 sum; a typed hour "
+                        "would let the matrix disagree with the syllabus",
+                )
+                self.assertAlmostEqual(
+                    cost["depth3"]["high"], row["depth3_high"], places=2,
+                    msg="expected the Depth 3 column to be the model's Tier 3 sum; check "
+                        "route_model.depth_tier and the modules' tier front matter",
+                )
 
     def test_generated_module_carries_every_field_the_app_reads(self):
         text = committed()

@@ -634,15 +634,28 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
     // 9c. The matrix is plannable: every row prices its own step in the same words the step
     // card uses, and the footer is those rows added up rather than a second hand-typed total.
-    // Step 10 is all arm work and prints no depth clause; every other row prints one.
-    const rowShape =
-      /^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h · arm (\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h(?: · depth (\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h)?$/;
+    // The total sits on its own line and the arm/depth split under it; Step 10 is all arm work
+    // and prints no depth clause, every other row prints one.
+    const rowShape = /^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h$/;
+    const layerShape = /^arm (\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h(?: · depth (\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h)?$/;
     const rowCosts = [];
     for (let number = 3; number <= 10; number += 1) {
       const text = (await page.getByTestId(`matrix-cost-${number}`).textContent())?.trim() ?? '';
       const hit = rowShape.exec(text);
-      assert(hit, `matrix row ${number} must price its step like the card does, got: ${text}`);
+      assert(hit, `matrix row ${number} must print its step's focused hours, got: ${text}`);
       rowCosts.push([Number(hit[1]), Number(hit[2] ?? hit[1])]);
+      const layer =
+        (await page.getByTestId(`matrix-layer-${number}`).textContent())?.trim() ?? '';
+      const layerHit = layerShape.exec(layer);
+      assert(
+        layerHit,
+        `matrix row ${number} must split its hours into the arm pass and the depth pass, got: ${layer}`
+      );
+      assert.equal(
+        !!layerHit[3],
+        number !== 10,
+        `matrix row ${number} ${number === 10 ? 'has no depth layer and must not claim one' : 'must name its depth pass'}`
+      );
     }
     const totalText = (await page.getByTestId('matrix-cost-total').textContent())?.trim() ?? '';
     const totalHit = /^(\d+(?:\.\d+)?)–(\d+(?:\.\d+)?) h · arm /.exec(totalText);
@@ -664,6 +677,41 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         document.querySelector('[data-testid="arch-matrix"]')?.textContent?.includes('Open in Tier 2') &&
         document.querySelector('[data-testid="arch-matrix"]')?.textContent?.includes('Open in Tier 3')
     );
+
+    // 9d. Each column prices its own layer: Depth 1 is the arm pass, Depth 2 the step's Tier 2
+    // modules, Depth 3 its Tier 3 ones. An empty cell is an em dash, not a free 0 h, and each
+    // footer column is the cells above it added up - never a second typed number.
+    const parseCell = (text, where) => {
+      if (text === '—') return [0, 0];
+      const hit = /^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))? h$/.exec(text);
+      assert(hit, `${where} must print hours or an em dash, got: ${text}`);
+      return [Number(hit[1]), Number(hit[2] ?? hit[1])];
+    };
+    for (const [column, suffix] of [
+      [1, 'd1'],
+      [2, 'd2'],
+      [3, 'd3'],
+    ]) {
+      const cells = [];
+      for (let number = 3; number <= 10; number += 1) {
+        const text =
+          (await page.getByTestId(`matrix-cost-${number}-${suffix}`).textContent())?.trim() ?? '';
+        cells.push(parseCell(text, `matrix step ${number} Depth ${column}`));
+      }
+      const footerText =
+        (await page.getByTestId(`matrix-cost-col-${column}`).textContent())?.trim() ?? '';
+      const footer = parseCell(footerText, `matrix Depth ${column} footer`);
+      assert.equal(
+        footer[0],
+        round2(cells.reduce((sum, cell) => sum + cell[0], 0)),
+        `Depth ${column} footer low total must be its cells added up, got: ${footerText}`
+      );
+      assert.equal(
+        footer[1],
+        round2(cells.reduce((sum, cell) => sum + cell[1], 0)),
+        `Depth ${column} footer high total must be its cells added up, got: ${footerText}`
+      );
+    }
     await page.getByTestId('btn-toggle-advanced-columns').click();
     await page.waitForFunction(
       () => !document.querySelector('[data-testid="arch-matrix"]')?.textContent?.includes('Open in Tier 2')
