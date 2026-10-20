@@ -1070,7 +1070,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Sidebar: exercise search and selector */}
-        <div className="lg:col-span-4 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col max-h-[760px]">
+        <div
+          data-testid="lesson-list-card"
+          className="lg:col-span-4 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col max-h-[760px]"
+        >
           {/* Search Input */}
           <div className="relative mb-3">
             <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -1084,11 +1087,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             />
           </div>
 
-          <div className="flex items-center justify-between gap-1 mb-3">
-            <span className="text-xs font-mono text-[#94a3b8] tabular-nums">
+          {/* The five filter chips cannot share one line with the count in a 4/12 column: they
+              used to run ~200px past the card and sit under the editor's opaque background, so a
+              chip was readable only after resizing the window. The count gets its own line and
+              the chips wrap inside the card. */}
+          <div className="mb-3">
+            <span className="block text-xs font-mono text-[#94a3b8] tabular-nums mb-1.5">
               Exercises ({filteredLessons.length})
             </span>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1" data-testid="track-filters">
               {[
                 { id: 'all', label: `All (${PYTHON_LESSONS.length})` },
                 {

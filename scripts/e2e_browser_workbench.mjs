@@ -248,6 +248,36 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
     // Open Tab 2: Run Python Lessons (32 Lessons)
     await page.getByTestId('tab-btn-tab-pyodide').click();
+
+    // The five track-filter chips must stay inside the lesson list's own card. They once shared a
+    // line with the count and ran ~200px past the card, where the editor's opaque background hid
+    // them: nothing scrolled them into view, because the page itself never scrolls sideways.
+    const filters = await page.evaluate(() => {
+      const card = document.querySelector('[data-testid="lesson-list-card"]');
+      const group = document.querySelector('[data-testid="track-filters"]');
+      if (!card || !group) return null;
+      const cardBox = card.getBoundingClientRect();
+      return {
+        cardRight: Math.round(cardBox.right),
+        overflow: group.scrollWidth - group.clientWidth,
+        escaped: [...group.querySelectorAll('button')]
+          .map((chip) => ({ label: chip.textContent?.trim() ?? '', box: chip.getBoundingClientRect() }))
+          .filter(({ box }) => box.right > cardBox.right + 1 || box.bottom > cardBox.bottom + 1)
+          .map(({ label, box }) => `${label} to ${Math.round(box.right)}px`),
+      };
+    });
+    assert(filters, 'the lesson list must expose its card and its track filters');
+    assert.equal(
+      filters.escaped.length,
+      0,
+      `every track-filter chip must stay inside the lesson list card (card ends at ${filters.cardRight}px); ` +
+        `escaped: ${filters.escaped.join(', ')}`
+    );
+    assert(
+      filters.overflow <= 0,
+      `the track-filter row must not overflow its column, but it does by ${filters.overflow}px`
+    );
+
     await page.getByTestId('lesson-item-P.6').click();
 
     // The registry grows with every graded exercise, so the total is read from the page rather than
