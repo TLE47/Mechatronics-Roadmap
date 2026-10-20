@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
+import { coachForLesson } from '../../lessonCoach';
 import { logEvent } from '../../learningLog';
 import {
   Play,
@@ -37,7 +38,8 @@ const DEFAULT_MAX_TRACE_STEPS = 400000;
 
 export const STORAGE_KEY_VERIFIED = 'mechalab_pyodide_verified_v1';
 export const STORAGE_KEY_COMPLETED = 'mechalab_pyodide_completed_v1';
-// Set once the newcomer hides the first-lesson guide; the guide is the only thing this key gates.
+// A JSON array of lesson ids whose first-run coach the learner hid. The old P.1-only key stored
+// '1', which means P.1 was hidden, not that every lesson's later brief should be.
 export const STORAGE_KEY_FIRST_GUIDE = 'mechalab_first_guide_dismissed_v1';
 
 const PYODIDE_WORKER_SOURCE = `
@@ -270,11 +272,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onToggleLessonCompleted,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
-  const [guideDismissed, setGuideDismissed] = useState<boolean>(() => {
+  const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY_FIRST_GUIDE) === '1';
+      const raw = localStorage.getItem(STORAGE_KEY_FIRST_GUIDE);
+      if (!raw) return [];
+      if (raw === '1') return ['P.1'];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
     } catch {
-      return false;
+      return [];
     }
   });
   const guideEditorRef = useRef<HTMLTextAreaElement | null>(null);
@@ -711,13 +717,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const isCurrentVerified = !!verifiedLessons[currentLesson.id];
   const isCurrentSelfMarked = !!completedLessons[currentLesson.id];
 
-  // The guide is for the first sitting only: Step 1, not yet passed, not yet hidden. It is not a
-  // modal, so a newcomer can read it beside the editor rather than dismiss it to see the lesson.
-  const showFirstGuide = currentLesson.id === 'P.1' && !isCurrentVerified && !guideDismissed;
+  // Every unverified lesson gets its own first-run brief: the starter's marked holes, the first
+  // check, and the output that means finished. Hiding one lesson's brief does not hide the next's.
+  const coach = coachForLesson(currentLesson);
+  const guideDismissed =
+    dismissedGuides.includes('*') || dismissedGuides.includes(currentLesson.id);
+  // Keep the brief up for the run that earns verification, so its "that is the whole loop" line is
+  // actually seen instead of unmounting the moment the lesson is marked verified.
+  const showFirstGuide = (!isCurrentVerified || passStatus === 'passed') && !guideDismissed;
   const dismissFirstGuide = () => {
-    setGuideDismissed(true);
+    if (guideDismissed) return;
+    const next = [...dismissedGuides, currentLesson.id];
+    setDismissedGuides(next);
     try {
-      localStorage.setItem(STORAGE_KEY_FIRST_GUIDE, '1');
+      localStorage.setItem(STORAGE_KEY_FIRST_GUIDE, JSON.stringify(next));
     } catch {
       // ignore storage quota errors
     }
@@ -796,14 +809,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             <div>
               <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Start here · Lesson P.1 · Step 1 of 10</span>
+                <span>
+                  {currentLesson.id === 'P.1'
+                    ? 'Start here · Lesson P.1 · Step 1 of 10'
+                    : `First run · Lesson ${currentLesson.id} · ${
+                        currentLesson.track === 'modules' ? 'graded exercise' : currentLesson.title
+                      }`}
+                </span>
               </div>
               <h3 className="text-base font-bold text-[#f1f5f9] mt-1">
-                One editor, one button, one red line.
+                {currentLesson.id === 'P.1'
+                  ? 'One editor, one button, one red line.'
+                  : 'This starter, its first check, and the finish line.'}
               </h3>
               <p className="text-xs text-[#cbd5e1] mt-1 max-w-3xl">
-                This page is the whole lesson. Nothing to install and nothing else to read: change a
-                line, press <b>Run</b>, and let the red line tell you what to fix.
+                {currentLesson.id === 'P.1'
+                  ? 'This page is the whole lesson. Nothing to install and nothing else to read: change a line, press Run, and let the red line tell you what to fix.'
+                  : `This brief is only for ${currentLesson.id}. It names the first hole, the first check, and what a finished run prints; the editor and the red line do the rest.`}
               </p>
             </div>
             <button
@@ -811,16 +833,30 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               data-testid="btn-guide-dismiss"
               className="px-2.5 py-1 rounded text-[11px] font-mono text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer"
             >
-              I have done this before — hide
+              {currentLesson.id === 'P.1'
+                ? 'I have done this before — hide'
+                : "Hide this lesson's guide"}
             </button>
           </div>
 
           <ol className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
             <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
-              <div className="text-[11px] font-mono text-[#38bdf8]">1 · THE EDITOR</div>
-              <p className="text-xs text-[#cbd5e1] mt-1.5">
-                The dark box below holds Python. The lines that say <code># TODO</code> are yours;
-                everything else is the lesson's scaffolding.
+              <div className="text-[11px] font-mono text-[#38bdf8]">1 · THE STARTER</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+                {coach.holeCount > 0 ? (
+                  <>
+                    This starter leaves{' '}
+                    <b>
+                      {coach.holeCount}{' '}
+                      {coach.isExercise
+                        ? `NotImplementedError ${coach.holeCount === 1 ? 'hole' : 'holes'}`
+                        : `TODO ${coach.holeCount === 1 ? 'line' : 'lines'}`}
+                    </b>
+                    . Start with: <code>{coach.firstHole}</code>
+                  </>
+                ) : (
+                  <>The starter is complete; the checks decide whether its behaviour is right.</>
+                )}
               </p>
               <button
                 onClick={() => {
@@ -835,10 +871,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </li>
 
             <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
-              <div className="text-[11px] font-mono text-[#34d399]">2 · THE BUTTON</div>
-              <p className="text-xs text-[#cbd5e1] mt-1.5">
-                Press it before you are finished. The starter is <i>supposed</i> to fail — the check
-                is how the page tells you what the finished answer must produce.
+              <div className="text-[11px] font-mono text-[#34d399]">2 · THE FIRST FAILURE</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+                Run it untouched. The first check is: <b>{coach.check}</b>
+              </p>
+              <p className="text-[11px] text-[#94a3b8] mt-1">
+                The red line names the value it expected and the value your code produced.
               </p>
               <button
                 onClick={() => runPythonCode(codeRef.current, currentLesson)}
@@ -855,10 +893,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </li>
 
             <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
-              <div className="text-[11px] font-mono text-[#fbbf24]">3 · THE RED LINE</div>
-              <p className="text-xs text-[#cbd5e1] mt-1.5">
-                It names the value the check expected and the value your code produced. Change one
-                line, run again. Hint 1 is a nudge; it never gives the answer.
+              <div className="text-[11px] font-mono text-[#fbbf24]">3 · THE FINISH LINE</div>
+              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+                When every check passes, it prints: <code>{coach.finish}</code>
+              </p>
+              <p className="text-[11px] text-[#94a3b8] mt-1">
+                Hint 1 is a nudge; it never gives the answer.
               </p>
               <button
                 onClick={() => {
@@ -886,13 +926,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {guideShowsExpectedGot ? (
                   <>
                     That is the check explaining itself: expected value first, what your code
-                    produced second. Read it, change one <code># TODO</code> line, and press{' '}
+                    produced second. Read it, change one marked line, and press{' '}
                     <b>Run &amp; Verify Output</b> again.
                   </>
                 ) : passStatus === 'mismatch' ? (
                   <>
-                    Compare that with the expected output in the panel below, then change one{' '}
-                    <code># TODO</code> line and press <b>Run &amp; Verify Output</b> again.
+                    Compare that with the expected output in the panel below, then change one marked
+                    line and press <b>Run &amp; Verify Output</b> again.
                   </>
                 ) : (
                   <>
@@ -910,7 +950,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               className="mt-3 p-3 rounded-lg bg-[#0b0f19] border border-[#34d399]/50 text-xs text-[#cbd5e1]"
             >
               <b className="text-[#34d399]">That is the whole loop.</b> You read a failure, changed
-              the code, and proved it. Every lesson on this page works the same way.
+              the code, and proved it. The next lesson opens with its own starter brief.
               {nextLesson && (
                 <button
                   onClick={() => selectLesson(nextLesson.id)}

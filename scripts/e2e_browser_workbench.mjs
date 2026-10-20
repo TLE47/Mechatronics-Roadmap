@@ -159,6 +159,24 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     await page.getByTestId('btn-reset-starter').click();
 
+    // 0b. Every lesson gets its own brief, not just P.1: P.2 must name its own first hole, and
+    //     hiding P.2 must not hide P.3's brief.
+    await page.getByTestId('lesson-item-P.2').click();
+    await page.getByTestId('first-lesson-guide').waitFor({ timeout: 5000 });
+    const p2Guide = await page.getByTestId('first-lesson-guide').innerText();
+    assert(
+      p2Guide.includes('Lesson P.2') && p2Guide.includes('new_pos_m'),
+      `the P.2 guide must name P.2 and its first starter hole; got: ${p2Guide}`
+    );
+    await page.getByTestId('btn-guide-dismiss').click();
+    await page.getByTestId('first-lesson-guide').waitFor({ state: 'detached', timeout: 5000 });
+    await page.getByTestId('lesson-item-P.3').click();
+    await page.getByTestId('first-lesson-guide').waitFor({ timeout: 5000 });
+    assert(
+      (await page.getByTestId('first-lesson-guide').innerText()).includes('Lesson P.3'),
+      'hiding P.2\'s guide must not hide P.3\'s guide'
+    );
+
     // Open Tab 2: Run Python Lessons (32 Lessons)
     await page.getByTestId('tab-btn-tab-pyodide').click();
     await page.getByTestId('lesson-item-P.6').click();

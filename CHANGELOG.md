@@ -11,6 +11,20 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 107: Every Lesson Teaches Its Own First Run
+
+The first-run brief was P.1-only, so a learner who clicked P.2 or an exercise got the same generic
+"change a TODO" paragraph. Every unverified lesson now derives its own three lines: how many holes
+its starter leaves and the first one, the first instructor check it must satisfy, and the output
+that means finished. Beginner pages count `# TODO` markers; exercise packages count the
+`NotImplementedError` holes they actually raise.
+
+Hiding a brief is now per lesson (`mechalab_first_guide_dismissed_v1` holds a JSON array of ids;
+the old `'1'` value means P.1 was hidden, not every lesson), and a brief stays up for the run that
+earns verification so its success line is seen. `app/src/lessonCoach.ts` is the single parser; the smoke suite checks
+all 86 entries have a non-empty specific brief, and the browser E2E walks P.2 and P.3 to prove the
+brief follows the selected lesson and that hiding one does not hide the next.
+
 ## [2026-10-19] — Run 106: Step 1 Teaches Itself
 
 Step 1 used to need the README beside it: a newcomer had to know they were looking at an editor,
