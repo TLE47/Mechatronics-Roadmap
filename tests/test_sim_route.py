@@ -29,6 +29,7 @@ sys.dont_write_bytecode = True
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GENERATOR = os.path.join(ROOT, "scripts", "generate_sim_route.py")
 DOC = os.path.join(ROOT, "docs", "SIM_ROUTE.md")
+DEPTH = os.path.join(ROOT, "docs", "DEPTH.md")
 MINIMUM = os.path.join(ROOT, "docs", "MINIMUM.md")
 
 spec = importlib.util.spec_from_file_location("generate_sim_route", GENERATOR)
@@ -43,6 +44,8 @@ class SimRouteTests(unittest.TestCase):
             cls.doc = handle.read()
         with open(gen.README, encoding="utf-8") as handle:
             cls.readme = handle.read()
+        with open(DEPTH, encoding="utf-8") as handle:
+            cls.depth = handle.read()
 
     def test_the_published_document_matches_the_pages(self):
         """The committed doc is what the generator renders now - no stale hours, no stale tiers."""
@@ -53,27 +56,78 @@ class SimRouteTests(unittest.TestCase):
             "the page being regenerated - run python3 scripts/generate_sim_route.py",
         )
 
-    def test_the_route_labels_the_arm_and_depth_layers_and_states_the_order(self):
-        """The split is only useful if a reader can see it on every module row."""
+    def test_the_arm_route_contains_only_arm_work(self):
+        """SIM_ROUTE is the arm route; every row on it is arm work and no depth row appears."""
         self.assertIn(
-            "## Core route: arm layer, then depth layer", self.doc,
-            "expected the route's section heading to name the order; without it the Tier 2/3 "
-            "rows still read as required before the arm",
+            "## Arm route (required)", self.doc,
+            "expected the route's section heading to name the arm and nothing else; a combined "
+            "heading lets the depth rows read as required before the arm",
         )
         self.assertIn(
             "**· arm**", self.doc,
             "expected arm module rows to be labelled; an unlabelled Tier 1 row leaves the "
             "reader guessing which modules finish the arm",
         )
-        self.assertIn(
+        self.assertNotIn(
             "**· depth**", self.doc,
-            "expected depth rows to be labelled optional; without the label the table is the "
-            "contradiction it used to be",
+            "expected no depth row in the arm route; that row belongs in docs/DEPTH.md",
+        )
+        self.assertNotIn(
+            "T2.", self.doc,
+            "expected no Tier 2 module in the arm route; a depth row here makes the arm route "
+            "look like it requires optional work",
         )
         self.assertIn(
-            "Arm finish (minimum list)", self.doc,
-            "expected the arm's own finish line on the route page, so a learner can stop there "
-            "without reading the depth rows as unfinished business",
+            "Arm route total", self.doc,
+            "expected the arm's own total on the route page, so a learner can stop there without "
+            "reading the depth pass as unfinished business",
+        )
+
+    def test_the_depth_document_is_generated_with_its_own_total(self):
+        """DEPTH.md is the second route: 23 modules, 80 hours, no lessons."""
+        self.assertEqual(
+            gen.render_depth(), self.depth,
+            "expected docs/DEPTH.md to equal what the generator renders; run "
+            "scripts/generate_sim_route.py",
+        )
+        self.assertIn(
+            "**Depth pass total**", self.depth,
+            "expected the depth page to state its own total; without it the pass has no finish line",
+        )
+        facts = gen.depth_facts()
+        self.assertIn(
+            f"**{facts['module_count']} modules**", self.depth,
+            f"expected the depth page to count its own {facts['module_count']} modules",
+        )
+        self.assertIn(
+            f"**{gen.fmt(facts['low'], facts['high'])}** |", self.depth,
+            f"expected the depth total row to carry {gen.fmt(facts['low'], facts['high'])}, the "
+            f"sum of its own pages",
+        )
+
+    def test_the_arm_and_depth_routes_are_disjoint_and_cover_every_core_module(self):
+        """One module is either arm work or depth work; no page may be in both totals."""
+        arm = set(gen.ARM_MODULES)
+        depth = set(gen.DEPTH_MODULES)
+        self.assertEqual(
+            sorted(arm & depth), [],
+            f"expected no module in both the arm route and the depth pass, found "
+            f"{sorted(arm & depth)}; a module in both totals is double-counted",
+        )
+        self.assertEqual(
+            sorted(arm | depth), sorted(set(gen.CORE_MODULES)),
+            "expected the arm and depth sets to cover every Core module exactly once; "
+            "otherwise a page belongs to neither route",
+        )
+        self.assertEqual(
+            len(arm), gen.route_model.facts()["arm_module_count"],
+            f"expected ARM_MODULES to match the step model's {gen.route_model.facts()['arm_module_count']} "
+            f"arm modules, got {len(arm)}",
+        )
+        self.assertEqual(
+            len(depth), gen.route_model.facts()["depth_module_count"],
+            f"expected DEPTH_MODULES to match the step model's "
+            f"{gen.route_model.facts()['depth_module_count']} depth modules, got {len(depth)}",
         )
 
     def test_every_module_appears_exactly_once(self):
@@ -90,14 +144,15 @@ class SimRouteTests(unittest.TestCase):
             # time on purpose, and a duplicate *row* is what would confuse a learner's route.
             rows = [
                 line
-                for line in self.doc.splitlines()
+                for line in (self.doc + self.depth).splitlines()
                 if line.startswith("|") and f"`{ident}`" in line
             ]
             self.assertEqual(
                 len(rows), 1,
-                f"expected {ident} to appear in exactly one route table row, found {len(rows)}; "
-                f"a module in two rows reads as two modules, and one in none is missing from the "
-                f"learner's route - check CORE_MODULES and the Extensions table",
+                f"expected {ident} to appear in exactly one route table row across the arm "
+                f"route and the depth pass, found {len(rows)}; a module in two rows reads as two "
+                f"modules, and one in neither is missing from the learner's route - check "
+                f"CORE_MODULES and the Extensions table",
             )
 
     def test_the_core_route_is_a_subset_of_the_modules(self):
@@ -114,39 +169,39 @@ class SimRouteTests(unittest.TestCase):
             f"appear twice - a duplicate inflates the Core total the README quotes",
         )
 
-    def test_the_core_total_is_the_sum_of_its_pages(self):
-        """Independently from the renderer: sum `est_hours` for the Core ids and compare the line."""
+    def test_the_arm_total_is_the_sum_of_its_pages(self):
+        """Independently from the renderer: sum the arm ids and compare the total row."""
         low = high = 0.0
         for row in gen.module_rows():
-            if row["id"] in set(gen.CORE_MODULES):
+            if row["id"] in set(gen.ARM_MODULES):
                 low += row["low"]
                 high += row["high"]
         for _label, pattern, stop_before in gen.CORE_TRACKS:
             for row in gen.track_rows(pattern, stop_before):
                 low += row["low"]
                 high += row["high"]
-        core_line = next(
-            (line for line in self.doc.splitlines() if "**Core total**" in line), None
+        total_line = next(
+            (line for line in self.doc.splitlines() if "**Arm route total**" in line), None
         )
         self.assertIsNotNone(
-            core_line,
-            f"expected a `**Core total**` row in {DOC}; without it the route states no total - "
-            f"check the table was not reformatted",
+            total_line,
+            f"expected an `**Arm route total**` row in {DOC}; without it the route states no "
+            f"total - check the table was not reformatted",
         )
-        match = re.search(r"\*\*([\d.]+)-([\d.]+)\*\*", core_line)
+        match = re.search(r"\*\*([\d.]+)-([\d.]+)\*\*", total_line)
         self.assertIsNotNone(
             match,
-            f"expected the Core total row to carry a `low-high` figure; got {core_line!r}",
+            f"expected the arm total row to carry a `low-high` figure; got {total_line!r}",
         )
         self.assertAlmostEqual(
             low, float(match.group(1)), places=2,
-            msg=f"expected the Core total's low end to sum to {low:.2f} hours from the pages' "
-                f"own est_hours; got {float(match.group(1)):.2f} - check CORE_MODULES and the "
+            msg=f"expected the arm total's low end to sum to {low:.2f} hours from the pages' "
+                f"own est_hours; got {float(match.group(1)):.2f} - check ARM_MODULES and the "
                 f"track rows against the metadata",
         )
         self.assertAlmostEqual(
             high, float(match.group(2)), places=2,
-            msg=f"expected the Core total's high end to sum to {high:.2f} hours from the pages' "
+            msg=f"expected the arm total's high end to sum to {high:.2f} hours from the pages' "
                 f"own metadata; got {float(match.group(2)):.2f} - a total that is typed rather "
                 f"than summed drifts on the next page edit",
         )
@@ -158,39 +213,41 @@ class SimRouteTests(unittest.TestCase):
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as handle:
             readme = handle.read()
 
-        core = re.search(r"\*\*Core total\*\*.*?\*\*([\d.]+)-([\d.]+)\*\*", self.doc)
+        arm = re.search(r"\*\*Arm route total\*\*.*?\*\*([\d.]+)-([\d.]+)\*\*", self.doc)
         self.assertIsNotNone(
-            core,
-            f"expected a `**Core total**` figure in {DOC}; without it the README has nothing "
-            f"generated to quote - check the route page's totals table",
+            arm,
+            f"expected an `**Arm route total**` figure in {DOC}; without it the README has "
+            f"nothing generated to quote - check the route page's totals table",
         )
-        quoted = gen.friendly_range(float(core.group(1)), float(core.group(2))) + " focused hours"
+        quoted = gen.friendly_range(float(arm.group(1)), float(arm.group(2))) + " focused hours"
         self.assertIn(
             quoted,
             readme,
-            f"expected README.md to quote the generated Core plan figure {quoted!r}, rounded from "
+            f"expected README.md to quote the generated arm plan figure {quoted!r}, rounded from "
             f"docs/SIM_ROUTE.md's exact total; check the first three lines, which is where a "
             f"beginner decides what to finish and goes stale first",
         )
 
-        extensions = re.search(r"\*\*(\d+) modules\*\* \| \*\*([\d.]+)\*\*", self.doc)
-        self.assertIsNotNone(
-            extensions,
-            f"expected an Extensions total row in {DOC}; without it the optional half of the "
-            f"route states no size - check the totals table",
+        extensions = [
+            row for row in gen.module_rows() if row["id"] not in set(gen.CORE_MODULES)
+        ]
+        ext_hours = gen.fmt(
+            round(sum(row["low"] or 0.0 for row in extensions), 2),
+            round(sum(row["high"] or 0.0 for row in extensions), 2),
         )
         self.assertIn(
-            f"{float(extensions.group(2)):g} focused hours",
+            f"{ext_hours} focused hours",
             readme,
-            f"expected README.md to quote the generated Extensions total "
-            f"{extensions.group(2)!r} focused hours; check the claim against {DOC}, since a "
-            f"mismatched optional figure makes the extras look required",
+            f"expected README.md to quote the generated Extensions total {ext_hours!r} focused "
+            f"hours; check the claim against the pages, since a mismatched optional figure makes "
+            f"the extras look required",
         )
-        self.assertIn(
-            "docs/SIM_ROUTE.md", readme,
-            f"expected README.md to link docs/SIM_ROUTE.md; without the link a learner never "
-            f"reaches the page the route is generated into",
-        )
+        for link in ("docs/SIM_ROUTE.md", "docs/DEPTH.md", "docs/MINIMUM.md", "docs/EXTENSIONS.md"):
+            self.assertIn(
+                link, readme,
+                f"expected README.md to link {link}; the learner needs the arm route, the depth "
+                f"pass, the minimum finish and the optional modules as separate doors",
+            )
 
         # The counts a newcomer reads must be the generated ones too: a moved module is exactly the
         # change that leaves an old count standing while the table says otherwise.
@@ -241,12 +298,14 @@ class SimRouteTests(unittest.TestCase):
     def test_the_readme_carries_the_generated_figures(self):
         self.assertEqual(
             (self.readme.count("<!-- sim-route:hours -->"),
+             self.readme.count("<!-- sim-route:full-hours -->"),
+             self.readme.count("<!-- sim-route:depth-hours -->"),
              self.readme.count("<!-- sim-route:modules -->"),
              self.readme.count("<!-- sim-route:extensions -->")),
-            (1, 1, 1),
-            "expected one hours marker, one required-module marker and one optional-total marker; "
-            "a missing marker silently removes that figure from generation, which is how a stale "
-            "total survives next to a generated one",
+            (1, 1, 1, 1, 1),
+            "expected one arm-hours marker, one full-hours marker, one depth-hours marker, one "
+            "module marker and one optional-total marker; a missing marker silently removes "
+            "that figure from generation, which is how a stale total survives next to a generated one",
         )
         self.assertEqual(
             (self.readme.count("<!-- sim-route:minimum -->"),
@@ -302,14 +361,14 @@ class SimRouteTests(unittest.TestCase):
         for step in gen.route_model.facts()["steps"]:
             low, high = rounded[str(step["number"])]
             self.assertIn(
-                low, (int(step["low"]), int(step["low"]) + 1),
-                f"expected Step {step['number']}'s exact low {step['low']!r} to round to within "
-                f"an hour; got {low} - check rounded_step_ranges",
+                low, (int(step["arm_low"]), int(step["arm_low"]) + 1),
+                f"expected Step {step['number']}'s exact arm low {step['arm_low']!r} to round to "
+                f"within an hour; got {low} - check rounded_step_ranges",
             )
             self.assertIn(
-                high, (int(step["high"]), int(step["high"]) + 1),
-                f"expected Step {step['number']}'s exact high {step['high']!r} to round to within "
-                f"an hour; got {high} - check rounded_step_ranges",
+                high, (int(step["arm_high"]), int(step["arm_high"]) + 1),
+                f"expected Step {step['number']}'s exact arm high {step['arm_high']!r} to round "
+                f"to within an hour; got {high} - check rounded_step_ranges",
             )
         for low, high in rounded.values():
             self.assertIn(
@@ -415,21 +474,21 @@ class SimRouteTests(unittest.TestCase):
             for row in gen.track_rows(pattern, stop_before):
                 pages += 1
                 slow += 1 if row["low"] is not None and row["high"] > row["low"] else 0
-        core = {row["id"] for row in gen.module_rows() if row["id"] in set(gen.CORE_MODULES)}
+        arm = {row["id"] for row in gen.module_rows() if row["id"] in set(gen.ARM_MODULES)}
         for row in gen.module_rows():
-            if row["id"] in core:
+            if row["id"] in arm:
                 pages += 1
                 slow += 1 if row["low"] is not None and row["high"] > row["low"] else 0
         self.assertEqual(
             (facts["pages"], facts["slow_pages"]), (pages, slow),
-            f"expected route_facts to count the same {pages} required pages and {slow} with a "
-            f"slow-learner range as a walk of CORE_TRACKS plus CORE_MODULES does; otherwise the "
+            f"expected route_facts to count the same {pages} arm pages and {slow} with a "
+            f"slow-learner range as a walk of CORE_TRACKS plus ARM_MODULES does; otherwise the "
             f"coverage sentence describes a route the page does not list",
         )
 
     def test_every_optional_module_is_real_and_justified(self):
-        """An exception to "Tier 2 is required" has to name a module that exists, is not in Core, and
-        comes with a reason long enough to be one — otherwise the exception is just a gap."""
+        """An optional module has to exist, stay outside every route, and come with a reason long
+        enough to be one — otherwise the exception is just a gap."""
         on_disk = {row["id"] for row in gen.module_rows()}
         for ident, reason in gen.OPTIONAL_REASONS.items():
             self.assertIn(
@@ -450,9 +509,9 @@ class SimRouteTests(unittest.TestCase):
                 f"a short reason is a gap with a label",
             )
             self.assertIn(
-                f"`{ident}`", self.doc,
-                f"expected {ident} to be rendered in {DOC}; an exception the page never mentions "
-                f"is invisible to the learner it was written for",
+                f"`{ident}`", self.depth,
+                f"expected {ident} to be rendered in {DEPTH}; an exception the page never "
+                f"mentions is invisible to the learner it was written for",
             )
 
     def test_the_status_field_is_one_of_three_values(self):
@@ -507,22 +566,24 @@ class SimRouteTests(unittest.TestCase):
             f"count before raising the route's status, since the claim is only as good as it",
         )
 
-    def test_the_depth_line_is_required(self):
-        """The four Tier 3 bridges and one capstone are the point of the Core route; losing any of
-        them (say by classifying the ESKF reset as an extension) would leave a beginner with the
-        covariance half and no filter to use it in."""
+    def test_the_depth_line_stays_in_the_depth_pass(self):
+        """The three Tier 3 depth modules are the depth line; the capstone stays on the arm route."""
         for ident in (
             "05-control.T3.05a",
             "05-control.T3.05b",
             "05-control.T3.05c",
-            "08-capstones.T3.07a",
         ):
             self.assertIn(
-                ident, gen.CORE_MODULES,
-                f"expected {ident}, one of the four Tier 3 bridges or the capstone, to stay on "
-                f"the Core route; moving it to Extensions leaves a learner with the setup half "
-                f"and no project to use it in",
+                ident, gen.DEPTH_MODULES,
+                f"expected {ident}, one of the three Tier 3 depth modules, to stay in the "
+                f"depth pass; moving it to Extensions leaves the depth line with the covariance "
+                f"half and no filter to use it in",
             )
+        self.assertIn(
+            "08-capstones.T3.07a", gen.ARM_MODULES,
+            "expected the capstone to stay on the arm route; it is the arm's last page, not "
+            "depth practice",
+        )
 
     def test_track_p_follows_the_lesson_numbers_not_the_filenames(self):
         """Plain filename order lists P.10 before P.2; the route has to follow the lesson numbers."""

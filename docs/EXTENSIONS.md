@@ -12,7 +12,7 @@ arm or the skills the route names. Taking one adds hours; skipping one costs not
 
 There are **10 optional modules, 47.5 focused hours** in total. The generated per-module list,
 with focused hours from each page, is the Extensions table in
-[`SIM_ROUTE.md`](SIM_ROUTE.md#extensions-optional-still-graded). These are lesson-time targets,
+[`DEPTH.md`](DEPTH.md#extensions-a-third-layer-optional). These are lesson-time targets,
 not elapsed time; the README gives the calendar estimate.
 
 ## ROS 2
@@ -47,5 +47,6 @@ If you do install it: use a supported Ubuntu or the container, never `sudo pip`,
   inverter and filter design, SVPWM depth, Q1.31 CORDIC, behaviour cloning, PPO, and OPC
   UA/AAS. Each is a full project; none is a prerequisite for the capstone.
 
-The required depth line - rotation foundations, Joseph covariance, the ESKF reset, constrained
-control, and one simulation capstone - stays in the route because the capstone uses it.
+The depth pass - rotation foundations, Joseph covariance, the ESKF reset and constrained
+control - is separate and optional: see [`DEPTH.md`](DEPTH.md). The capstone is on the arm
+route and does not depend on that pass.

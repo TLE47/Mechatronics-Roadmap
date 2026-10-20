@@ -12,13 +12,13 @@
 
 ```mermaid
 flowchart LR
-    Meta["Lesson and module metadata"] --> Gen["generate_readme_counts<br/>generate_sim_route"] --> Page["README, SIM_ROUTE<br/>and MINIMUM"] --> Check["--check in CI"] --> Fail["Fails on drift"]
+    Meta["Lesson and module metadata"] --> Gen["generate_readme_counts<br/>generate_sim_route"] --> Page["README, SIM_ROUTE, DEPTH<br/>and MINIMUM"] --> Check["--check in CI"] --> Fail["Fails on drift"]
 ```
 
 | Fact | Source | Check |
 | :--- | :--- | :--- |
 | 10 steps, lesson and module counts, step hours | `scripts/route_model.py` from each page's front matter | `python3.12 scripts/generate_readme_counts.py --check` |
-| Core hours, the optional total, and the minimum finish | `scripts/generate_sim_route.py` | `python3.12 scripts/generate_sim_route.py --check` |
+| Arm hours, depth hours, the optional total, and the minimum finish | `scripts/generate_sim_route.py` | `python3.12 scripts/generate_sim_route.py --check` |
 | The README's Start here block and the workbench card | `app/src/data/startHere.json` (one file, read by both) | `python3.12 scripts/generate_start_here.py --check` |
 | Every count quoted anywhere in the docs | `scripts/check_consistency.py` | `python3.12 scripts/check_consistency.py` |
 
@@ -62,9 +62,10 @@ Chromium through Playwright or the documented fallback paths.
   front-matter `ideas` list.
 - **Assertion quality:** every graded assert names what was expected and what arrived
   (`lint_assertions.py`), ratcheted against `docs/assertion-baseline.json`.
-- **Route integrity:** every module appears exactly once in [`SIM_ROUTE.md`](SIM_ROUTE.md), the
-  Core ids exist on disk, and the totals are the sum of the pages. The step/id map and depth
-  matrix in [`CURRICULUM.md`](CURRICULUM.md) point at the same lists.
+- **Route integrity:** every module appears exactly once across [`SIM_ROUTE.md`](SIM_ROUTE.md)
+  and [`DEPTH.md`](DEPTH.md) — the arm route and the depth pass are disjoint — the ids exist on
+  disk, and each total is the sum of its pages. The step/id map and depth matrix in
+  [`CURRICULUM.md`](CURRICULUM.md) point at the same lists.
 - **Minimum finish integrity:** [`MINIMUM.md`](MINIMUM.md) is generated from the same pages, its
   ids are a subset of the Core route, and its total is the sum of its own rows.
 - **Exercise coverage:** every graded package runs and every solution passes; the report CI

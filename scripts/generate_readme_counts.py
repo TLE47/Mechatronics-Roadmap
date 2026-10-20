@@ -79,17 +79,21 @@ def render_table():
         f"| **10 steps** | **A finished simulated arm, and the checks to prove it** | "
         f"**{facts['lesson_count']}** | "
         f"**{facts['arm_module_count']} + {facts['depth_module_count']}** | "
-        f"**{_friendly(facts['low'], facts['high'])}** |"
+        f"**{_friendly(facts['arm_low'], facts['arm_high'])}** |"
     )
     lines.append("")
     lines.append(
-        "**Two passes, one order.** Take the **arm** module in Steps 3–10 first: that "
-        "is the arm finish. Then return to Step 3 and take the **depth** modules in the same step "
-        "order. The depth pass is optional, and the hours column counts both passes."
+        "**Two passes, one order.** The hours column is the **arm route**. Take its arm module "
+        "in Steps 3–10, then stop at the working arm. The **depth** modules are the optional "
+        "second pass, with their own totals in [`docs/DEPTH.md`](docs/DEPTH.md)."
     )
     lines.append("")
+    depth = generate_sim_route.depth_facts()
+    full = generate_sim_route.full_route_facts()
     lines.append(
-        f"_Rounded to whole hours: the ten rows add to {_friendly(facts['low'], facts['high'])}. "
+        f"_Rounded to whole hours: the ten rows add to {_friendly(facts['arm_low'], facts['arm_high'])} for the arm. "
+        f"With the optional depth pass ({generate_sim_route.fmt(depth['low'], depth['high'])} h), "
+        f"the full course is {_friendly(full['low'], full['high'])} focused hours. "
         "[`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) keeps the page-level decimals._"
     )
     return "\n".join(lines)
@@ -101,11 +105,11 @@ def render(text=None):
             text = handle.read()
     facts = route_model.facts()
     route = generate_sim_route.route_facts()
-    if (facts["low"], facts["high"]) != (route["low"], route["high"]):
+    if (facts["arm_low"], facts["arm_high"]) != (route["low"], route["high"]):
         sys.exit(
-            f"the step table sums to {facts['low']}-{facts['high']} hours but the required route "
-            f"sums to {route['low']}-{route['high']}; the step model and CORE_MODULES disagree, so "
-            f"one of them is missing or double-counting a module"
+            f"the step table's arm hours sum to {facts['arm_low']}-{facts['arm_high']} but the "
+            f"arm route sums to {route['low']}-{route['high']}; the step model and ARM_MODULES "
+            f"disagree, so one of them is missing or double-counting a module"
         )
     if facts["module_count"] != len(generate_sim_route.CORE_MODULES):
         sys.exit(

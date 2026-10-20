@@ -61,7 +61,8 @@ learners who want the derivation, not just the result. CI counts these from
 | Question | Page |
 | :--- | :--- |
 | Where do I start, and what are the ten steps? | [`../README.md`](../README.md) |
-| What pages are required, and how many hours? | [`SIM_ROUTE.md`](SIM_ROUTE.md) |
+| What pages are required for the arm, and how many hours? | [`SIM_ROUTE.md`](SIM_ROUTE.md) |
+| What is the optional depth pass? | [`DEPTH.md`](DEPTH.md) |
 | What is the smallest finish that still builds the arm? | [`MINIMUM.md`](MINIMUM.md) |
 | Which modules are optional, and what can I skip? | [`EXTENSIONS.md`](EXTENSIONS.md) |
 | What does CI check? | [`VERIFICATION.md`](VERIFICATION.md) |

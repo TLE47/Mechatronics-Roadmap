@@ -115,10 +115,10 @@ class RouteModelTests(unittest.TestCase):
         route = sim_route.route_facts()
         facts = route_model.facts()
         self.assertEqual(
-            (facts["low"], facts["high"]), (route["low"], route["high"]),
-            f"expected the step table total {(facts['low'], facts['high'])} to equal the route's "
-            f"own sum {(route['low'], route['high'])}; otherwise one of the two summaries omits "
-            f"a page the learner is asked to finish",
+            (facts["arm_low"], facts["arm_high"]), (route["low"], route["high"]),
+            f"expected the step table's arm total {(facts['arm_low'], facts['arm_high'])} to "
+            f"equal the arm route's own sum {(route['low'], route['high'])}; otherwise one of "
+            f"the two summaries omits a page the learner is asked to finish",
         )
 
 

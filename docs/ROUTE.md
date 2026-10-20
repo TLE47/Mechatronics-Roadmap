@@ -17,22 +17,21 @@ and the arm they build.
 
 ## What "complete" means
 
-There are two finish lines, and both are real:
+There are three finish lines, and all are real:
 
 - **Minimum viable finish** - Track P, Stage 0, every Tier 1 bridge, the five lessons the
   capstone opens, and the capstone itself. That is one working, verified 2-DOF arm at about
   half the focused hours; the exact page list is [`MINIMUM.md`](MINIMUM.md). Stop here and
   you are done, not behind.
-- **Arm finish** - the arm layer of the ten steps: Steps 3–10's arm modules, the capstone's
-  prerequisites, and the capstone. That is the same working arm as the minimum finish, page by
-  page in [`MINIMUM.md`](MINIMUM.md), at **≈93–151 focused hours**.
-- **Core complete** - the arm layer plus the depth layer in [`docs/SIM_ROUTE.md`](SIM_ROUTE.md):
+- **Arm route** - all 48 prose lessons plus the 17 arm modules, page by page in
+  [`SIM_ROUTE.md`](SIM_ROUTE.md). That is **≈120–210 focused hours**, and it contains no depth
+  modules and no Extensions. Stop here and the arm is finished.
+- **Full course** - the arm route plus the optional depth pass in [`DEPTH.md`](DEPTH.md):
   **≈200–290 focused hours** for 40 practice modules (17 arm + 23 depth) plus all 48 lessons.
-  The depth layer is optional and comes after the arm; it explains why the arm works rather than
-  replacing it.
+  The depth pass comes after the arm and explains why it works rather than replacing it.
 
-Everything in Extensions is graded and badgeable but optional. The front page gives the
-focused-hours label and the calendar estimate; an hour target is not elapsed time.
+Everything in Extensions is graded and badgeable but optional, and outside both routes. The front
+page gives the focused-hours label and the calendar estimate; an hour target is not elapsed time.
 
 ## One arm, ten steps
 

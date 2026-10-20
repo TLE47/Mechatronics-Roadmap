@@ -59,6 +59,8 @@ def facts():
     steps = route_model.facts()
     modules = route_model.all_modules()
     core = route.route_facts()
+    full = route.full_route_facts()
+    depth = route.depth_facts()
     minimum = route.minimum_facts()
     extensions = [row for row in route.module_rows() if row["id"] not in set(route.CORE_MODULES)]
     ext_hours = route.fmt(
@@ -74,6 +76,10 @@ def facts():
         "bridge_modules": len(modules),
         "core_low": core["low"],
         "core_high": core["high"],
+        "full_low": full["low"],
+        "full_high": full["high"],
+        "depth_low": depth["low"],
+        "depth_high": depth["high"],
         "minimum_low": minimum["low"],
         "minimum_high": minimum["high"],
         "optional_hours": ext_hours,
@@ -141,6 +147,7 @@ def check_quoted_hours(f):
         "README.md",
         "docs/ROUTE.md",
         "docs/SIM_ROUTE.md",
+        "docs/DEPTH.md",
         "docs/EXTENSIONS.md",
         "docs/VERIFICATION.md",
     }
@@ -166,11 +173,13 @@ def check_quoted_hours(f):
                 (round(track_p["low"]), round(track_p["high"])),
                 (round(stage0["low"]), round(stage0["high"])),
                 (round(f["minimum_low"]), round(f["minimum_high"])),
+                (round(f["full_low"]), round(f["full_high"])),
+                (round(f["depth_low"]), round(f["depth_high"])),
             }
             if got in allowed:
                 continue
             findings.append(
-                f"{rel}: quotes {match.group(0)!r}, which is neither the Core range "
+                f"{rel}: quotes {match.group(0)!r}, which is neither the arm range "
                 f"({expected_core[0]}-{expected_core[1]}) nor a step's own hours - a total that "
                 f"was typed rather than generated drifts first"
             )
@@ -298,6 +307,13 @@ def check_generated_docs(f):
         doc = ""
     if doc != expected:
         findings.append("docs/SIM_ROUTE.md is stale; run scripts/generate_sim_route.py")
+    depth_expected = route.render_depth()
+    try:
+        depth_doc = read(route.DEPTH_OUT)
+    except OSError:
+        depth_doc = ""
+    if depth_doc != depth_expected:
+        findings.append("docs/DEPTH.md is stale; run scripts/generate_sim_route.py")
     minimum_expected = route.render_minimum()
     try:
         minimum_doc = read(route.MINIMUM_OUT)
