@@ -10,6 +10,10 @@ slow_learner_hours: "2.5-3.5"
 
 # Lesson P.10: Radians, Rotational Speed (`rad/s`) and Right-Triangle Trigonometry
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.10` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## Goal
 Convert angles between degrees and **radians** ($\pi\text{ rad} = 180^\circ$) and motor speeds between `RPM` and `rad/s`, and use `math.cos()`, `math.sin()`, and `math.atan2(y, x)` to compute 2D robot arm geometry.
 

@@ -32,6 +32,8 @@
     "links:revalidate": "python3 scripts/check_links.py --revalidate-unverified --jobs 8",
     "check:route": "python3 scripts/generate_sim_route.py --check",
     "check:starthere": "python3 scripts/generate_start_here.py --check",
+    "check:callout": "python3 scripts/generate_run_callouts.py --check",
+    "test:callout": "python3 tests/test_run_callout.py",
     "test:parity": "python3 tests/test_module_parity.py",
     "check:plant": "python3 scripts/generate_plant_data.py --check",
     "test:plant": "python3 tests/test_plant.py",

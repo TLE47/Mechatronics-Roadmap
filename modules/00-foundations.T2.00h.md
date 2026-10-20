@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.00-foundations.T2.00h` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 A motor winding is a resistor and an inductor in series, and at $1\,\text{krad/s}$ the inductor's opposition is not a number you can add to the resistor's - it is $90^\circ$ out of phase with it. Write both as one complex number and the arithmetic becomes trivial: magnitudes form a hypotenuse, angles add, and a current loop's PI gains have something to be tuned against. The same ratio, read across frequency, is the **Bode plot** that tells you where a joint resonates, how much it lags, and whether a filter will make it worse. Already know this? Take the Skip test in section 7 first.
 

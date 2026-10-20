@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.03-sensors.T3.03a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the final bridge module in the Track 03 Tier 3 ladder before Step 3.4 (`03-sensors.T3.04`). In Tier 2 (`03-sensors.T2.04`), you closed two independent PI current loops on $i_d$ and $i_q$ using sinusoidal PWM (`SPWM`). When you spin a joint actuator at high electrical speed $\omega_e = p \omega_m$ ($> 1000\text{ rad/s}$), three production bottlenecks emerge: (1) rotating the reference frame at $\omega_e$ creates physical Coriolis-like **inductive cross-coupling voltages** ($-\omega_e L_q i_q$ on the $d$-axis and $+\omega_e L_d i_d + \omega_e \psi_m$ on the $q$-axis) that cause $i_d$ to sag and waste torque unless canceled by **decoupling feedforward**, (2) pure sine modulation clips at phase peak $V_{\text{bus}}/2 = 0.500\,V_{\text{bus}}$, whereas **Min-Max Zero-Sequence Space-Vector PWM (`SVPWM`)** shifts the floating neutral point to unlock the full hexagon inscribed circle $V_{\text{bus}}/\sqrt{3} \approx 0.5774\,V_{\text{bus}}$ (**$+15.47\%$ more speed/voltage for free!**), and (3) off-axis magnetic encoder mounting eccentricity injects $1\times$ and $2\times$ spatial angle ripple that causes torque ripple unless canceled by a **Fourier harmonic lookup table (LUT)**. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

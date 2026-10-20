@@ -9,6 +9,10 @@ slow_learner_hours: "2.0-2.5"
 
 # Lesson P.M: Track P Milestone — Gravity-Holding Robot Arm Link Simulator
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.M` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## Goal
 Combine everything from Track P (variables, clamping, loops, functions, `assert`, metric conversions, 10-bit scaling, radians, time-series area integration, and $\tau = mgL\cos\theta$ gravity torque) into a self-testing Python simulation of a single-joint robot arm lifting a payload against gravity.
 

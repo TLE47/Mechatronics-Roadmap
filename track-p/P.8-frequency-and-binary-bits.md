@@ -10,6 +10,10 @@ slow_learner_hours: "2.0-3.0"
 
 # Lesson P.8: Cycle Frequency (`Hz`), Period ($T = 1/f$) and Binary Bits ($2^N$)
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.8` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## Goal
 Convert between a repeating signal's **frequency** ($f$, in Hertz `Hz`) and its **period** ($T = 1/f$, in seconds), and use **powers of 2** ($2^N$) to calculate the exact integer range of an $N$-bit microcontroller register.
 

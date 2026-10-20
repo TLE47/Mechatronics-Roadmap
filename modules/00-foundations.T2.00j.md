@@ -25,6 +25,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.00-foundations.T2.00j` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 Every estimator in Tier 3 answers one question the model alone cannot: *how wrong am I, and in which direction?* A single number cannot hold that. A joint's position error and velocity error are coupled - if the position reads high, the velocity is probably reading high too - and a Kalman filter's predict step has to carry both the two spreads and that coupling forward through the same matrix that advances the state. This page is the last bridge module before Step 2.1 (`00-foundations.T2.01`). What sampling does to a signal is `00-foundations.T2.00f`; the filter that cleans it is `00-foundations.T2.00i`; this page is the uncertainty that survives both.
 

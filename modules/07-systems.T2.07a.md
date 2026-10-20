@@ -29,6 +29,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.07-systems.T2.07a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the dedicated Track 07 Tier 2 bridge module before Step 2.8 (`07-systems.T2.08`, the Tier 2 Boss Capstone). When your custom 4-layer $24\text{ V}/15\text{ A}$ CAN-FD servo (`01-electronics.T2.02` + `04-embedded.T2.05`) decelerates a heavy link or Furuta pendulum arm rapidly (`06-robotics.T2.07`), the motor acts as a generator and pumps kinetic energy back into the DC bus. Because bench power supplies have series output protection diodes and cannot sink reverse current, an unclamped stop from $30\text{ rad/s}$ spikes a $24\text{ V}$ bus above $160\text{ V}$ in milliseconds! Before running the Tier 2 Boss Capstone, you must size an **active hysteretic shunt brake chopper** (`MOSFET + power resistor`), protect every CAN-FD command frame with a **CRC-16 checksum, 4-bit rolling counter, and hardware Window Watchdog (`WWDG`) timeout**, and verify fault recovery via **Software/Hardware-in-the-Loop (SIL/HIL) fault injection**. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

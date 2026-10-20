@@ -29,6 +29,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.06-robotics.T2.06b` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the final bridge module in the Track 06 Tier 2 ladder before Step 2.7 (`06-robotics.T2.07`). In `06-robotics.T2.06a`, you learned how individual ROS 2 nodes, `tf2` trees, and `ros2_control` interfaces operate. In a real robotics lab, you never start 15 terminals by hand or test an untested Cartesian impedance controller directly on a $48\text{ V}$ metal arm! You orchestrate the entire stack from a declarative **Python `LaunchDescription` + YAML parameter file** (with intra-process **Component Composition** for zero-copy image/point-cloud passing), record and deterministically replay multi-topic **`rosbag2` (`MCAP`)** logs using simulated time (`use_sim_time: true` + `--clock`) to debug estimators and train imitation-learning policies (`Track 06 Tier 3`), and close the $1\text{ kHz}$ **`ros2_control` $\leftrightarrow$ Physics Simulator (`MuJoCo` / `Gazebo Harmonic`)** loop so your exact C++ controller runs identically in simulation and on physical hardware. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

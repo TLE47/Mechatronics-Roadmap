@@ -10,6 +10,10 @@ slow_learner_hours: "2.5-3.5"
 
 # Lesson P.4: Ordered Lists and Repeating Actions with `for` Loops
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.4` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## Goal
 Store sequences of sensor readings in zero-indexed Python `lists` (`[a, b, c]`) and process every item automatically using `for` loops and `range()`.
 

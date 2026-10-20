@@ -28,6 +28,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.01-electronics.T3.01a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the final bridge module in the Track 01 Tier 3 ladder before Step 3.2 (`01-electronics.T3.02`). Scaling a motor inverter from a $24\text{ V}/5\text{ A}$ 4-layer board (`01-electronics.T2.02`) to a production $48\text{ V}/30\text{ A}$ ($1.5\text{ kW}$) actuator introduces four severe mixed-signal physics bottlenecks: (1) switching $30\text{ A}$ in $10\text{ ns}$ ($di/dt = 3\text{ A/ns}$) destroys $80\text{ V}$ MOSFETs unless the commutation loop inductance is crushed below $2.0\text{ nH}$ using **6-layer mutual-inductance flux cancellation**, (2) Butterworth/Chebyshev anti-aliasing filters ring on step current changes and distort phase unless replaced by a **linear-phase Bessel filter**, (3) a microcontroller's **SAR ADC internal sampling switch** kicks charge back into the op-amp unless isolated by a $C_0\text{G}$ **RC charge bucket** that settles to $< 0.5\text{ LSB}$ within the $150\text{ ns}$ acquisition window, and (4) millisecond motor stall bursts burn silicon dies long before the external heatsink warms up unless modeled with a **Cauer electro-thermal RC network**. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

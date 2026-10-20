@@ -28,6 +28,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.02-mechanics.T3.02a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the final bridge module in the Track 02 Tier 3 ladder before Step 3.3 (`02-mechanics.T3.03`). In Tier 2 (`02-mechanics.T2.03`), you chained $4\times 4$ homogeneous transforms link-by-link and assembled dense inertia matrices by hand. For a 6-DOF manipulator or a 12-DOF quadruped running model-based torque control at $1\text{–}4\text{ kHz}$, Denavit-Hartenberg tables become error-prone and $O(n^3)$ symbolic dynamics become intractable. Modern robotics (`Lynch & Park`, `Featherstone`, `Pinocchio`, `MuJoCo`, `Newton`) unifies linear and angular motion into **6D spatial twists $\mathcal{V} = (\omega, v)$ and wrenches $\mathcal{F} = (m, f)$**, describes any revolute or prismatic joint by a single **unit screw axis $\mathcal{S}_i \in \mathbb{R}^6$** via the **Product of Exponentials (PoE)** formula without intermediate coordinate frame conventions, sizes zero-backlash **circular notch flexures** via Paros-Weisbord compliance, and computes exact inverse dynamics in **$O(n)$ linear time** via a two-pass **Recursive Newton-Euler Algorithm (RNEA)**! Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

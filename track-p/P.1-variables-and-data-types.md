@@ -10,7 +10,11 @@ slow_learner_hours: "2.0-3.0"
 
 # Lesson P.1: Variables and Fundamental Data Types (`int`, `float`, `str`, `bool`)
 
-> **Step 1 of 10 — start here.** [Open the browser runner](https://tle47.github.io/Mechatronics-Roadmap/) and pick `P.1` on the left; it needs no install. Read on if you prefer to work in your own Python 3.
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.1` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
+**Step 1 of 10 — start here.** The callout above is the whole setup: search `P.1` in the workbench and paste nothing. Read on if you prefer to work in your own Python 3.
 
 ## Goal
 Store robot measurements such as battery charge level, wheel pulse counts, and safety status flags in named Python variables, and distinguish the four fundamental data types (`int`, `float`, `str`, `bool`).

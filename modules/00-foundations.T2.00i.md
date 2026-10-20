@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.00-foundations.T2.00i` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 `00-foundations.T2.00e` turned a continuous transfer function into a difference equation with the Tustin substitution. That substitution is not free: it bends the frequency axis, so a filter designed for $850\,\text{Hz}$ in the analog domain lands at $749\,\text{Hz}$ in code - and a resonance at the frequency you meant to kill survives untouched. This page is the correction, and the five coefficients it produces are the ones a microcontroller runs on every ADC sample in Tier 2. Sampling that decides which frequencies exist at all is `00-foundations.T2.00f`; the uncertainty that survives the filter is `00-foundations.T2.00j`.
 

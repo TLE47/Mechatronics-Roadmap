@@ -23,6 +23,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.05-control.T3.05a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 A propagating covariance matrix decides how much a filter trusts its own model, and in 32-bit `float` the textbook update $P^+ = (I - KH)P^-$ can hand back a **negative variance** - a state no real sensor can produce. The Joseph form rewrites the same algebra as a sum of two squares, so symmetry and positive semi-definiteness survive roundoff and even a wrong gain. This is the first of the three Track 05 Tier 3 bridges: it fixes the covariance, Step `05-control.T3.05b` fixes the attitude injection, and `05-control.T3.05c` builds the safety filter. Already know this? Take the Skip test in section 7 first.
 

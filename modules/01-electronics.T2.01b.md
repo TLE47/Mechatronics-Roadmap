@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.01-electronics.T2.01b` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the final bridge module in the Track 01 Tier 2 ladder before Step 2.2 (`01-electronics.T2.02`). Jumping from a $12\text{ V}$ breadboard to a custom $24\text{–}48\text{ V}$, $15\text{–}30\text{ A}$ 4-layer motor controller PCB introduces three critical physics challenges: (1) even $15\text{ nH}$ of PCB trace loop inductance creates a $\Delta V = L_{\text{loop}}\frac{di}{dt}$ voltage spike that can exceed your MOSFET's $V_{DS,\max}$ rating, (2) driving an N-channel MOSFET on the **high side** requires a **bootstrap capacitor** floating above the switching phase node, and (3) plugging a $48\text{ V}$ battery straight into uncharged bulk capacitors sparks a $>200\text{ A}$ inrush arc without a **pre-charge resistor circuit**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 

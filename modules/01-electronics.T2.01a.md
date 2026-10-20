@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.01-electronics.T2.01a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 To control motor torque at $20\text{–}40\text{ kHz}$ in Tier 2 (`01-electronics.T2.02` and `03-sensors.T2.04`), your microcontroller must measure phase currents of $\pm 15\text{ A}$ across a tiny $R_{\text{shunt}} = 2\text{ m}\Omega$ resistor. That produces a signal of only $\pm 30\text{ mV}$ riding on top of a noisy power ground or switching phase node! Understanding how **operational amplifiers (op-amps)** and dedicated current-sense amplifiers (`INA240`) amplify microvolt differential drops around a $V_{\text{ref}} = 1.65\text{ V}$ mid-supply bias while rejecting common-mode bounce—and why **4-terminal Kelvin traces** are mandatory—prevents 50% current measurement errors on your first custom PCB. Already know this? Take the Skip test in section 7 first.
 

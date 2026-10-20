@@ -24,6 +24,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.00-foundations.T2.00f` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 A digital controller sees the world only at its sample instants. Anything faster than half the sample rate does not disappear - it comes back as a **slower frequency that was never there**, and no amount of digital filtering can tell the two apart afterwards. At the capstone's $1\,\text{kHz}$ tick a $1.8\,\text{kHz}$ vibration reads as $200\,\text{Hz}$, and a controller tuned to reject $200\,\text{Hz}$ will happily reject a resonance it never had. This page is the one place that arithmetic is taught; the notch filter that removes an in-band tone is `00-foundations.T2.00i`, and the uncertainty that survives sampling is `00-foundations.T2.00j`. Already know this? Take the Skip test in section 7 first.
 

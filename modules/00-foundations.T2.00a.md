@@ -23,6 +23,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.00-foundations.T2.00a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 Every controller you will write in Pass 2 runs on numbers that arrive once per tick, not on a formula. A joint's velocity exists only as the **difference between two encoder readings**, and a position integral exists only as a running sum of those readings. Get either wrong and a $1\,\text{kHz}$ loop is confidently wrong $1000$ times a second: a derivative that forgot $\Delta t$ is off by $1000\times$, and one that ignores the encoder's wrap reads $4095 \to 0$ as a full backwards turn. Already know this? Take the Skip test in section 7 first.
 

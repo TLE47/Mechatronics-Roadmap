@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.04-embedded.T2.04d` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the final bridge module in the Track 04 Tier 2 ladder before Step 2.5 (`04-embedded.T2.05`). Once your microcontroller runs FreeRTOS (`04-embedded.T2.04b`) or Zephyr RTOS (`04-embedded.T2.04c`), how does it exchange typed topics, services, and timestamps with a Linux companion computer running **ROS 2** (`Track 06`)? Standard ROS 2 DDS (`Fast DDS` / `Cyclone DDS`) requires megabytes of RAM, multicast UDP discovery sockets, and dynamic C++ heap allocations that do not fit on a microcontroller with $128\text{ KiB}$ of SRAM. **micro-ROS** solves this by running an ultra-lightweight **`XRCE-DDS` (eXtremely Resource Constrained Environments DDS) Client** on the MCU (over UART DMA, CAN-FD, or UDP) that bridges through a **`micro_ros_agent`** on the Linux host into the native ROS 2 graph, driven by a deterministic **`rclc_executor`** with zero dynamic heap allocation during real-time execution! Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

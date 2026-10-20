@@ -24,6 +24,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.00-foundations.T2.00d` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 A sine wave has two numbers that matter - how big it is and when it peaks - and ordinary arithmetic keeps losing one of them. A complex number holds both at once: the magnitude is the amplitude, the angle is the phase, and Euler's formula $e^{j\phi} = \cos\phi + j\sin\phi$ is the bridge back to the time domain. Every later frequency-domain tool in this track - impedance, transfer functions, Bode plots, the Kalman filter's complex poles - is arithmetic on these two-number containers. Already know this? Take the Skip test in section 7 first.
 

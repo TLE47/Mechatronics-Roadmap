@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.04-embedded.T2.04b` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 When your firmware grows to include a $1\text{ kHz}$ impedance controller, a $200\text{ Hz}$ CAN-FD bus manager, and a $50\text{ Hz}$ diagnostics logger, a single bare-metal `loop()` becomes brittle: one slow calculation delays the fast control tick. A **Real-Time Operating System (RTOS)** such as **FreeRTOS** lets high-priority tasks (`xTaskCreate`, `vTaskDelayUntil`) preempt low-priority tasks deterministically, **Priority Inheritance Mutexes** (`xSemaphoreCreateMutex`) prevent catastrophic priority inversion (the bug that froze the Mars Pathfinder!), and **CAN bitwise arbitration** lets multiple robot joints share a 2-wire differential bus without packet collisions. Already know this? Take the Skip test in section 7 first.
 

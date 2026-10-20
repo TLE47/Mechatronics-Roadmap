@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.07-systems.T1.07a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the bridge module before the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8). Integrating a multi-DOF robot into a workcell requires three system-level skills: structuring supervisory logic around a deterministic **Read-Inputs $\to$ Execute-Logic $\to$ Write-Outputs cyclic PLC scan**, wiring a fail-safe **Normally-Closed (NC) hardware Emergency-Stop chain** that cuts motor power even if a wire breaks or the CPU freezes, and measuring your assembled robot's empirical bandwidth via a **single-tone sine sweep**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 

@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.01-electronics.T1.01c` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 More beginner circuits are destroyed in the first five seconds of power-on by a breadboard row short, a multimeter lead left in the $10\text{ A}$ current jack, or an unprotected LiPo battery than by any software bug. Mastering how solderless breadboard clips are wired internally, how to measure voltage vs. current safely with a Digital Multimeter (DMM), and how to set a bench power supply's Constant-Current (CC) limit protects every board you build from Stage 0 (`L0.1`) through Track 08. Already know this? Read `### Safety notes` first, then take the Skip test in section 7.
 

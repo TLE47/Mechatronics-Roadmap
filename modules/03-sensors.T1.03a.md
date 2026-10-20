@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.03-sensors.T1.03a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the bridge module before Step 1.4 (`03-sensors.T1.04`). Every electric motor is simultaneously an actuator ($\tau = K_t i$) and a generator ($v_{\text{bemf}} = K_e \omega_m$), every brushless motor has $p$ magnetic **pole pairs** that make its electrical phase spin $p$ times faster than its physical shaft ($\theta_e = p\theta_m$), and every incremental encoder determines rotation direction from two $90^\circ$-shifted pulse channels (`A` and `B`). Mastering these three ideas makes SimpleFOC and encoder feedback in Step 1.4 click immediately. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

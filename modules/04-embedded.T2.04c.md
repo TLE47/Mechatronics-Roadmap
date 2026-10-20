@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.04-embedded.T2.04c` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 In `04-embedded.T2.04b`, you learned how **FreeRTOS** schedules tasks and prevents priority inversion, but FreeRTOS is only a scheduler kernel—you still have to stitch together vendor-specific HALs (`STM32Cube`, `ESP-IDF`, `NXP MCUXpresso`) whenever you change microcontrollers. **Zephyr RTOS** (Linux Foundation) is a complete, hardware-agnostic real-time operating system inspired by the Linux kernel architecture: you manage multi-repo workspaces and builds with **`west`**, enable kernel/driver features via **`Kconfig` (`prj.conf`)**, describe board hardware in a **Devicetree (`*.dts` / `.overlay`)** so your C application never hardcodes pin numbers or peripheral addresses, and allocate threads (`K_THREAD_DEFINE`) and priority-inheritance mutexes (`K_MUTEX_DEFINE`) statically at compile time with zero heap fragmentation. Already know this? Take the Skip test in section 7 first.
 

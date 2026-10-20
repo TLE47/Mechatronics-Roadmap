@@ -10,6 +10,10 @@ slow_learner_hours: "2.5-3.5"
 
 # Lesson P.11: Reading Time-Series Graphs — Slope and Area
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.11` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## Goal
 Read position-vs-time and velocity-vs-time telemetry plots by connecting **slope** ($\Delta y / \Delta t$) to rate of change (velocity and acceleration) and **rectangle area** ($v \cdot \Delta t$) to accumulated displacement.
 

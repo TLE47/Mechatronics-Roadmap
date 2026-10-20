@@ -26,6 +26,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.06-robotics.T1.06a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the bridge module before Step 1.7 (`06-robotics.T1.07`). Feeding an instantaneous step jump ($q_{\text{des}}: 0^\circ \to 90^\circ$ in $0\text{ s}$) into a robot arm controller demands infinite velocity and slams the actuator into saturation. Generating a smooth time-parameterized **trajectory** $q_d(t), \dot{q}_d(t), \ddot{q}_d(t)$ that starts and ends at zero velocity—and tracking it with a **virtual joint spring-damper** plus gravity feedforward—lets your arm glide smoothly and yield safely when touched. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

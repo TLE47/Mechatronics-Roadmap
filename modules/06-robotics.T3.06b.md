@@ -27,6 +27,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.06-robotics.T3.06b` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the final bridge module in the Track 06 Tier 3 Embodied AI ladder before Step 3.7 (`06-robotics.T3.07`). While Behavior Cloning (`06-robotics.T3.06a`) imitates human demonstrations, **Reinforcement Learning (RL / PPO)** discovers agile locomotion and contact behaviors in GPU simulators (`Newton`, `Isaac Lab`, `MuJoCo Playground`) by maximizing discounted cumulative reward $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$. And to deploy *either* an RL policy or a Vision-Language-Action (`VLA` / `ACT` / `Diffusion` / `π₀`) policy onto real $48\text{ V}$ hardware without violent jitter or collisions, you must master **Action Chunking with Temporal Ensembling / Real-Time Chunking (`RTC`)**, **Domain Randomization**, and a hard $1\text{ kHz}$ **Sim-to-Real CBF/Impedance Safety Shield**. Already know this? Read `### Safety notes` first, then take the Skip test or the Ladder Gate test in section 7.
 

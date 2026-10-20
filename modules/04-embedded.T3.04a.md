@@ -32,6 +32,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.04-embedded.T3.04a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the final bridge module in the Track 04 Tier 3 ladder before Step 3.5 (`04-embedded.T3.05`). In Tier 2 (`04-embedded.T2.05`), you used RTOS mutexes (`FreeRTOS` / `Zephyr RTOS`) to share state between a $1\text{ kHz}$ control task and a CAN-FD thread. When you push the inner FOC current loop to $40\text{ kHz}$ ($25\ \mu\text{s}$ total period), RTOS context switches and mutex locks are **strictly forbidden** inside the Tier-0 fast ISR (`NVIC Priority 0`): a mutex cannot even be called from an ISR, and disabling interrupts during a slow reader copy adds unacceptable jitter. Production actuator firmware (`STM32G474` C++20, `Zephyr` zero-latency ISRs, or `Embassy` / `RTIC` Embedded Rust) relies on three hardware-software co-design primitives: (1) **Center-Aligned PWM Midpoint ADC Triggering (`TIM1_TRGO2`)** so the ADC samples shunt current automatically at the exact triangular counter peak where $di/dt$ switching transients are zero and average current equals instantaneous current, (2) **Q1.31 Fixed-Point Arithmetic** for deterministic hardware `CORDIC` $\sin/\cos$ coprocessor calls, and (3) a **Wait-Free Sequence Lock (`SeqLock`)** using an even/odd atomic sequence counter so the $40\text{ kHz}$ ISR never blocks for a single nanosecond! Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

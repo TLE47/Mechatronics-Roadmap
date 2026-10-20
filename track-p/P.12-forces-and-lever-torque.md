@@ -10,6 +10,10 @@ slow_learner_hours: "2.5-3.5"
 
 # Lesson P.12: Linear Forces ($F = ma$) and Lever Torque ($\tau = mgL\cos\theta$)
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.12` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## Goal
 Calculate linear forces ($F = ma$) and gravitational weight ($W = mg$), and compute the **lever torque** ($\tau = F \cdot r_\perp = m g L \cos\theta$) required for a robot joint to hold a payload at any angle $\theta$ measured from the horizontal.
 

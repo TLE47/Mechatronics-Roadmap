@@ -10,6 +10,10 @@ slow_learner_hours: "2.5-3.5"
 
 # Lesson P.5: Reusable Functions (`def`/`return`) and `while` Loops
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.5` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## Goal
 Package repeatable engineering calculations into named functions using `def` and `return`, and step physical simulations forward in time using `while` loops.
 

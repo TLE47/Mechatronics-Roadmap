@@ -29,6 +29,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.00-foundations.T3.00a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the bridge module before Step 3.1 (`00-foundations.T3.01`), which launches Tier 3 across the entire roadmap. In Tier 3 (`3.1`–`3.8`), 3D orientations are updated on the curved manifold $SO(3)$ (never by adding Euler angles!), linear state-space models are discretized exactly via the matrix exponential $e^{AT_s}$, and multi-domain mechatronic models are checked for physical passivity via Hamiltonian energy balance $\dot{H} = u^\top y - d(t) \le u^\top y$. Connecting the 3D cross product $\omega \times v$ to a $3\times 3$ **skew-symmetric matrix $[\omega]_\times$** makes Rodrigues' rotation formula and Lie algebra $\mathfrak{so}(3)$ completely natural. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

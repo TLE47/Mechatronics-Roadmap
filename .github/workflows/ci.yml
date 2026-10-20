@@ -47,6 +47,7 @@ jobs:
           python3 scripts/generate_plant_data.py --check
           python3 scripts/check_term_order.py
           python3 scripts/generate_python_lessons_data.py --check
+          python3 scripts/generate_run_callouts.py --check
           python3 scripts/generate_link_history_data.py --check
           python3 scripts/generate_sim_route.py --check
           python3 scripts/generate_readme_counts.py --check

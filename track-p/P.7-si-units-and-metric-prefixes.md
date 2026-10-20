@@ -10,6 +10,10 @@ slow_learner_hours: "2.0-2.5"
 
 # Lesson P.7: Base SI Units and Metric Prefixes (`M`, `k`, `m`, `µ`)
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.7` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## Goal
 Identify the base SI units (`m`, `kg`, `s`) and unit symbols (`A`, `V`, `Ω`) used in mechatronics, and convert values with metric prefixes (`M`, `k`, `m`, `µ`) into base units before plugging them into equations.
 

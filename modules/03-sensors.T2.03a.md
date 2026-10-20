@@ -29,6 +29,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.03-sensors.T2.03a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the bridge module before Step 2.4 (`03-sensors.T2.04`). In a 3-phase BLDC motor spinning at $3000\text{ RPM}$ ($350\text{ Hz}$ electrical for $p=7$), the three stator currents $(i_a, i_b, i_c)$ are high-frequency AC sine waves that a standard PI controller cannot track without severe phase lag. Projecting the three $120^\circ$-spaced coils onto a 2D stationary frame ($\alpha$-$\beta$, **Clarke transform**) and then rotating that frame at the rotor's exact electrical angle $\theta_e$ ($d$-$q$, **Park transform**) turns those fast AC sine waves into two steady **DC numbers** $(i_d, i_q)$! Combine that with a **Phase-Locked Loop (PLL)** to estimate smooth velocity from quantized encoder angles and **random-walk noise scaling** ($\sigma \propto \sqrt{t}$) for IMUs, and you have the complete foundation for Step 2.4. Already know this? Take the Skip test or the Ladder Gate test in section 7 first.
 

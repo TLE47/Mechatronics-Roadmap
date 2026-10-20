@@ -28,6 +28,10 @@ verification: ci-native
 plant: tier1_arm_motor
 ---
 
+<!-- run-callout:start -->
+> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.02-mechanics.T2.02a` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+<!-- run-callout:end -->
+
 ## 1. Why it matters
 This is the bridge module before Step 2.3 (`02-mechanics.T2.03`) and Step 2.7 (`06-robotics.T2.07`). Moving from 2D links to 3D CAD, kinematic couplings and `URDF`/`MuJoCo` physics takes four tools: counting **6-DOF spatial degrees of freedom**, combining rotation $R \in SO(3)$ and translation $p \in \mathbb{R}^3$ into one $4\times 4$ **homogeneous transform** $T \in SE(3)$, mapping joint speeds to tip speed with the **Jacobian** $\dot{x} = J(q)\dot{q}$ (and tip forces to joint torques with its transpose, $\tau = J^\top F$), and shifting an inertia tensor to a joint axis with the **Parallel-Axis Theorem**.
 
