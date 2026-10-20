@@ -1,7 +1,7 @@
 # [New to everything? Click here → Lesson 1](track-p/P.1-variables-and-data-types.md)
 
 You will finish with a simulated two-joint robot arm that holds its own weight, follows a figure-8, and recovers from three faults we break on purpose.
-<!-- sim-route:hours -->**≈200–290 hours**<!-- /sim-route --> · **$0 in hardware** — everything runs in your browser; an optional bench starts at \$15.
+<!-- sim-route:hours -->**≈200–290 hours**<!-- /sim-route --> · **$0 in hardware** — everything runs in your browser; an optional bench starts at $15.
 
 ![A simulated two-link arm tracking a figure-8 path, with its joints and tip trail drawn as it moves](docs/media/arm-sim.gif)
 
