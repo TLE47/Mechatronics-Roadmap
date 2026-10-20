@@ -446,6 +446,31 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     assert.ok(await lesson.isVisible(), `${name}: at ${TABLET_VIEWPORT.width}px the lesson list is not usable`);
     await lesson.click();
     await tablet.getByTestId('textarea-python-code').waitFor({ state: 'visible', timeout: 10000 });
+
+    // The lesson header used to be one nowrap flex row whose spans could shrink, so at this width
+    // "Lesson P.1" split across two lines and the pass badge read across three. Items may move to
+    // the next line as whole units; none of them may break inside itself.
+    const brokenHeader = await tablet.evaluate(() => {
+      const row = document.querySelector('[data-testid="lesson-meta"]');
+      if (!row) return ['no lesson header'];
+      const oneLine = parseFloat(getComputedStyle(row).fontSize) * 1.9;
+      return [...row.children]
+        .filter((element) => (element.textContent || '').trim())
+        .filter((element) => element.getBoundingClientRect().height > oneLine)
+        .map(
+          (element) =>
+            `"${(element.textContent || '').trim().slice(0, 28)}" is ${Math.round(
+              element.getBoundingClientRect().height
+            )}px tall`
+        );
+    });
+    assert.equal(
+      brokenHeader.length,
+      0,
+      `${name}: at ${TABLET_VIEWPORT.width}px the lesson header must not break an item across lines; ` +
+        brokenHeader.join('; ')
+    );
+
     assert.ok(await tablet.getByTestId('btn-run-verify').isVisible(), `${name}: Run & Verify is not visible on a tablet`);
     assert.ok(await tablet.getByTestId('btn-export-portfolio').isVisible(), `${name}: Export Progress is not visible on a tablet`);
     const layout = await tablet.evaluate(() => {

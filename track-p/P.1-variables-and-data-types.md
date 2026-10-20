@@ -11,7 +11,7 @@ slow_learner_hours: "2.0-3.0"
 # Lesson P.1: Variables and Fundamental Data Types (`int`, `float`, `str`, `bool`)
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.1` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab on `P.1`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.1) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 **Step 1 of 10 — start here.** The callout above is the whole setup: search `P.1` in the workbench and paste nothing. Read on if you prefer to work in your own Python 3.

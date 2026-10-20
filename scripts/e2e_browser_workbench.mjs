@@ -180,6 +180,42 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       "the runner's reading link must point at the selected lesson's own page"
     );
 
+    // 0c. A page's callout links `?lesson=<id>`, so that address has to open the workbench on that
+    //     entry. Without this the callout's link is only the workbench's front door again, and the
+    //     reader is back to searching for the id the page just handed them.
+    const deepPage = await context.newPage();
+    await deepPage.goto(`${baseUrl}?lesson=EX.05-control.T2.05a`, { waitUntil: 'networkidle' });
+    await deepPage.getByTestId('textarea-python-code').waitFor({ timeout: 15000 });
+    assert(
+      (await deepPage.getByTestId('link-lesson-page').getAttribute('href'))?.endsWith(
+        '/exercises/05-control.T2.05a/solution.py'
+      ),
+      `?lesson=EX.05-control.T2.05a must open that exercise's own editor entry, not the default one`
+    );
+    assert.equal(
+      new URL(deepPage.url()).search,
+      '?lesson=EX.05-control.T2.05a',
+      'the deep link must survive the load, so the address still names the lesson on screen'
+    );
+    // Picking another entry writes the address too: a URL copied after browsing reopens what is open.
+    await deepPage.getByTestId('lesson-item-P.7').click();
+    assert.equal(
+      new URL(deepPage.url()).search,
+      '?lesson=P.7',
+      'selecting a lesson must put it in the address bar, or a copied URL reopens the old one'
+    );
+    // An id the registry does not list is ignored rather than blanking the editor.
+    await deepPage.goto(`${baseUrl}?lesson=NOT.A.LESSON`, { waitUntil: 'networkidle' });
+    await deepPage.getByTestId('textarea-python-code').waitFor({ timeout: 15000 });
+    assert(
+      (await deepPage.getByTestId('link-lesson-page').getAttribute('href'))?.endsWith(
+        '/track-p/P.1-variables-and-data-types.md'
+      ),
+      'an unknown ?lesson= id must fall back to Lesson 1 instead of opening nothing'
+    );
+    await deepPage.close();
+    console.log('  ok ?lesson= opens the named entry, follows the editor, and ignores unknown ids');
+
     // 0a. A first-time visitor lands on Step 1 with a guide that explains the editor, runs the
     //    starter for them, and turns the failure into a "what to fix" line. This is the whole
     //    first lesson without the README: the assertions are what a newcomer can actually see.

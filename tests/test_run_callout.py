@@ -86,15 +86,27 @@ class RegistryTests(unittest.TestCase):
         # The module's own id is `05-control.T2.05a`; the workbench lists it as `EX.05-control.T2.05a`.
         page = read(os.path.join(ROOT, "modules", "05-control.T2.05a.md"))
         self.assertIn(
-            "search `EX.05-control.T2.05a`", page,
-            msg="expected the module page to name the workbench's own id, EX.05-control.T2.05a; "
-                "the front-matter id alone would find nothing in the list's search box",
+            "?lesson=EX.05-control.T2.05a", page,
+            msg="expected the module page to link the workbench's own id, EX.05-control.T2.05a; "
+                "the front-matter id alone would open nothing - check the registry parse",
         )
         self.assertNotIn(
-            "search `05-control.T2.05a`", page,
-            msg="expected no callout naming the module id without the EX. prefix; that is the "
+            "?lesson=05-control.T2.05a", page,
+            msg="expected no callout linking the module id without the EX. prefix; that is the "
                 "drift this test exists to catch - re-run the generator",
         )
+
+    def test_the_link_is_a_deep_link_the_app_can_open(self):
+        # The callout's whole job is landing the reader on the right entry; a bare workbench link
+        # would send them back to the search box the page just told them to skip.
+        for lesson_id, rel in gr.workbench_pages():
+            page = read(os.path.join(ROOT, rel))
+            with self.subTest(page=rel):
+                self.assertIn(
+                    "%s?lesson=%s" % (gr.WORKBENCH, lesson_id), page,
+                    msg="expected the callout to link the workbench with this entry preselected; a "
+                        "bare workbench link loses the one instruction the block exists to give",
+                )
 
 
 class CommittedPageTests(unittest.TestCase):
@@ -134,9 +146,9 @@ class CommittedPageTests(unittest.TestCase):
                             "searching Tab 2 for an entry that is not there",
                     )
                     self.assertNotIn(
-                        "search `", block,
-                        msg="expected no id to search for on a page with no entry; an id here is a "
-                            "promise the list cannot keep - check the registry membership test",
+                        "?lesson=", block,
+                        msg="expected no deep link on a page with no entry; a link there is a "
+                            "promise the app cannot keep - check the registry membership test",
                     )
                     continue
                 self.assertIn(
@@ -233,9 +245,9 @@ class RenderTests(unittest.TestCase):
                 "promise a run entry and deny one in the same screenful",
         )
         self.assertNotIn(
-            "search `", fixed,
-            msg="expected the run pointer to be gone once the page has no entry; a leftover id "
-                "sends a reader to a search that returns nothing",
+            "?lesson=", fixed,
+            msg="expected the deep link to be gone once the page has no entry; a leftover link "
+                "opens a workbench with nothing selected",
         )
 
     def test_a_page_without_front_matter_is_supported(self):

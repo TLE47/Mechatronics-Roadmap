@@ -11,7 +11,7 @@ slow_learner_hours: "2.5-3.5"
 # Lesson P.3: Conditional Decisions (`if/elif/else`) and Command Clamping
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `P.3` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab on `P.3`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=P.3) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal

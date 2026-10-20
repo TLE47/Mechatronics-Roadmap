@@ -31,6 +31,7 @@ import { readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
+import { lessonIdFromLocation } from './lessonRoute';
 import {
   ActiveTierPass,
   LEVEL_0_STEPS,
@@ -552,7 +553,19 @@ export const App: React.FC = () => {
   const totalVerifiedLessons = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]).length;
   const totalCompletedLessons = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
 
-  const [pyodideLessonId, setPyodideLessonId] = useState<string>('P.1');
+  // A page's "Run this in the workbench" link arrives as `?lesson=<id>`; the runner opens on that
+  // entry instead of making the reader find it in the search box again. An id the registry does not
+  // list is ignored rather than shown as an empty editor.
+  const [pyodideLessonId, setPyodideLessonId] = useState<string>(
+    () => lessonIdFromLocation() ?? 'P.1'
+  );
+
+  // A deep link is a promise about the editor being on screen, so land on it rather than on the
+  // hero above it. Only on arrival, and only when the address named a lesson.
+  useEffect(() => {
+    if (!lessonIdFromLocation()) return;
+    document.getElementById('python-runner')?.scrollIntoView({ block: 'start' });
+  }, []);
 
   const visibleTabs =
     viewMode === 'beginner'

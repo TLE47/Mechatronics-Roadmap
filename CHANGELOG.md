@@ -11,6 +11,28 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 119: A Lesson Has an Address
+
+The callout on 86 pages said to search for an id in Tab 2, which was one instruction more than the
+link needed to carry. `app/src/lessonRoute.ts` gives the workbench an address: `?lesson=<id>` reads
+the entry on load (validated against the registry, so an unknown id falls back to Lesson 1), lands
+the page on the editor, and `selectLesson` writes it back with `history.replaceState` so a copied
+URL reopens what is open. The mount-time sync does not write, so a plain visit keeps a clean URL.
+`scripts/generate_run_callouts.py` now links `…/?lesson=P.1`, and the 86 callouts are regenerated.
+
+The editor's metadata row was a single nowrap flex line whose spans could shrink: at tablet width
+"Lesson P.1" broke across two lines and the pass badge across three. Its items now wrap as whole
+units with `whitespace-nowrap` (the long page path truncates with its full value in `title`), and
+the dotted separators are gone because one cannot dangle at the start of a wrapped line.
+
+Verified: `?lesson=05.1` and `?lesson=EX.05-control.T2.05a` open those entries; clicking P.7 rewrites
+the address; an unknown id falls back to P.1; the header measures 16px per item at 1024 and the new
+tablet assertion flags the old layout (28–42px per item) so it is not vacuous. `npm run lint`,
+`test:smoke`, `test:e2e`, `test:e2e:pages` (chromium + firefox, tablet 834x1112) PASS; 331 Python
+tests OK; `generate_run_callouts --check`, `lint_assertions` clean.
+
+---
+
 ## [2026-10-20] — Run 118: The Wordmark Gets a Definition
 
 "MechaLab" appeared in the header of every screen and was explained nowhere: a first-timer met a

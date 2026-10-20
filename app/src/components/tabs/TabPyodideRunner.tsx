@@ -10,6 +10,7 @@ import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
 import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
 import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
+import { rememberLessonInUrl } from '../../lessonRoute';
 import {
   Play,
   RotateCcw,
@@ -435,7 +436,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   useEffect(() => {
     if (initialLessonId && PYTHON_LESSONS.some((l) => l.id === initialLessonId)) {
-      selectLesson(initialLessonId);
+      selectLesson(initialLessonId, false);
     }
   }, [initialLessonId]);
 
@@ -510,11 +511,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     lessonIdRef.current = selectedId;
   }, [selectedId]);
 
-  const selectLesson = (id: string) => {
+  /**
+   * Open a lesson in the editor.
+   *
+   * `remember` is false for the mount-time sync from `initialLessonId`: a plain visit should keep the
+   * clean address it arrived on, while a learner's own pick makes the address bar name that entry so
+   * a copied URL reopens it.
+   */
+  const selectLesson = (id: string, remember = true) => {
     const found = PYTHON_LESSONS.find((l) => l.id === id);
     if (!found) return;
     setSelectedId(id);
     lessonIdRef.current = id;
+    if (remember) rememberLessonInUrl(id);
     commitCode(found.starterCode);
     setRevealedHints(0);
     setStdout('');
@@ -1185,26 +1194,35 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="flex items-center gap-2 text-xs font-mono text-[#94a3b8]">
-                  <span className="text-[#38bdf8] font-bold">Lesson {currentLesson.id}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{currentLesson.path}</span>
-                  <span aria-hidden="true">·</span>
+                {/* Whole items wrap; none of them breaks inside a word. Before this, the row was a
+                    single nowrap flex line whose spans could shrink, so at tablet width "Lesson
+                    P.1" split across two lines and the pass badge read "Executed & Passed
+                    (WASM)" on three. Each chip is nowrap and the separators went with them: a
+                    dotted separator cannot dangle at the start of a wrapped line. */}
+                <div
+                  data-testid="lesson-meta"
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-[#94a3b8]"
+                >
+                  <span className="text-[#38bdf8] font-bold whitespace-nowrap">
+                    Lesson {currentLesson.id}
+                  </span>
+                  <span className="truncate max-w-[16rem] sm:max-w-[22rem]" title={currentLesson.path}>
+                    {currentLesson.path}
+                  </span>
                   <a
                     data-testid="link-lesson-page"
                     href={lessonPageUrl(currentLesson.path)}
                     target="_blank"
                     rel="noreferrer"
                     title="The GitHub page is the reading copy. This editor is where you type, run and verify; nothing is saved on GitHub."
-                    className="text-[#38bdf8] hover:text-[#7dd3fc] underline underline-offset-2"
+                    className="text-[#38bdf8] hover:text-[#7dd3fc] underline underline-offset-2 whitespace-nowrap"
                   >
                     Read this page on GitHub ↗
                   </a>
                   {isCurrentVerified && (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      <span className="text-[#34d399] font-semibold">Executed &amp; Passed (WASM)</span>
-                    </>
+                    <span className="text-[#34d399] font-semibold whitespace-nowrap">
+                      Executed &amp; Passed (WASM)
+                    </span>
                   )}
                 </div>
                 <h3 className="text-base font-bold text-[#f1f5f9] mt-1">{currentLesson.title}</h3>

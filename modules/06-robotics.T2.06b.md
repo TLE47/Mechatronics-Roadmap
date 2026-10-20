@@ -30,7 +30,7 @@ plant: tier1_arm_motor
 ---
 
 <!-- run-callout:start -->
-> **Run this in the workbench.** [Open MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) → **Tab 2, Run Python Lessons** → search `EX.06-robotics.T2.06b` and pick it from the list. The starter code, hints and graded check live there; this page is the reading copy, and nothing you type here is saved.
+> **Run this in the workbench.** [Open MechaLab on `EX.06-robotics.T2.06b`](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.06-robotics.T2.06b) - Tab 2 opens with that entry selected, starter code, hints and graded check ready. This page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## 1. Why it matters

@@ -27,6 +27,7 @@ import json
 import os
 import re
 import sys
+import urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "app", "src", "data", "pythonLessonsData.ts")
@@ -116,14 +117,19 @@ def no_entry_pages():
     return pages
 
 
+def lesson_url(lesson_id):
+    """The workbench with this entry already open: the app reads `?lesson=` on load."""
+    return "%s?lesson=%s" % (WORKBENCH, urllib.parse.quote(lesson_id, safe=""))
+
+
 def block(lesson_id):
     """The one callout, rendered from the id alone."""
     return (
         "%s\n"
-        "> **Run this in the workbench.** [Open MechaLab](%s) → **Tab 2, Run Python Lessons** "
-        "→ search `%s` and pick it from the list. The starter code, hints and graded check live "
-        "there; this page is the reading copy, and nothing you type here is saved.\n"
-        "%s\n" % (START, WORKBENCH, lesson_id, END)
+        "> **Run this in the workbench.** [Open MechaLab on `%s`](%s) - Tab 2 opens with that "
+        "entry selected, starter code, hints and graded check ready. This page is the reading "
+        "copy, and nothing you type here is saved.\n"
+        "%s\n" % (START, lesson_id, lesson_url(lesson_id), END)
     )
 
 
