@@ -11,6 +11,18 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 115: The Pass Selector Shows Which Step 1s Are Done
+
+Each pass card in the roadmap selector now carries a green check beside its name when that pass's
+own first milestone (`l0_m1`, `t1_tr00`, `t2_tr00`, `t3_tr00`) is checked — the same signal that
+folds the pass's first step card. The check is per pass, so a finished Tier 1 does not mark Tier 2,
+and it is absent entirely for a newcomer. It is exposed as
+`pass-first-step-complete-<passId>` and labelled "Step 1 complete" for assistive technology.
+
+Smoke renders the Tier 1 check beside unchecked Tier 2/Tier 3 and no check for a newcomer; the
+browser E2E checks the marker appears with the milestone, survives a Tier 2 switch, and survives a
+reload.
+
 ## [2026-10-19] — Run 114: Each Pass Collapses on Its Own First Step
 
 The roadmap's collapsed first card was keyed to Lesson 1 (`P.1`) rather than to the pass on

@@ -142,6 +142,9 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             const meta = TIER_PASS_META[passId];
             const steps = getPassSteps(passId);
             const done = countCompleted(steps);
+            // The same per-pass signal the pass's own first card collapses on, shown here so
+            // the selector says which passes have cleared Step 1 without opening each one.
+            const firstStepDone = !!steps[0] && !!completedMilestones[steps[0].milestoneId];
             const isSelected = activeTierPass === passId;
 
             return (
@@ -167,7 +170,20 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       {done}/{steps.length} Done
                     </span>
                   </div>
-                  <div className="text-sm font-bold text-[#f1f5f9] mt-1">{meta.name}</div>
+                  <div className="mt-1 flex items-start gap-1.5">
+                    <div className="text-sm font-bold text-[#f1f5f9]">{meta.name}</div>
+                    {firstStepDone && (
+                      <span
+                        data-testid={`pass-first-step-complete-${passId}`}
+                        role="img"
+                        aria-label="Step 1 complete"
+                        title="Step 1 complete"
+                        className="inline-flex shrink-0 items-center text-[#34d399] mt-0.5"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      </span>
+                    )}
+                  </div>
                   <div className="text-[0.73rem] text-[#94a3b8] mt-1 line-clamp-2">{meta.tagline}</div>
                 </div>
 

@@ -213,6 +213,12 @@ export async function runSmokeTests(viteServer) {
         htmlRoadmapReturning.includes('Step 1 complete'),
       "The roadmap's first step card must collapse to one line once that pass's first step is done, and stay expandable"
     );
+    assert(
+      htmlRoadmapReturning.includes('data-testid="pass-first-step-complete-tier1"') &&
+        !htmlRoadmapReturning.includes('data-testid="pass-first-step-complete-tier2"') &&
+        !htmlRoadmapReturning.includes('data-testid="pass-first-step-complete-tier3"'),
+      "The pass selector must check off Tier 1's Step 1 and leave Tier 2 and Tier 3 unchecked"
+    );
     // Completion belongs to the pass that earned it: Tier 1's checked first milestone must not
     // close Tier 2's card, the way verifying Lesson 1 used to close every pass's card.
     const htmlRoadmapOtherPass = cleanSsr(
@@ -238,8 +244,9 @@ export async function runSmokeTests(viteServer) {
     );
     assert(
       !htmlRoadmap.includes('data-collapsed="true"') &&
+        !htmlRoadmap.includes('data-testid="pass-first-step-complete-') &&
         !htmlRoadmap.includes('data-testid="btn-restore-start-here"'),
-      'A newcomer on the roadmap must get the whole first step card and no restore button'
+      'A newcomer on the roadmap must get the whole first step card, no completed first step, and no restore button'
     );
     assert(
       htmlBeginner.includes('1. Start Here: Roadmap &amp; Progress') ||

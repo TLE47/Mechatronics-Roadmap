@@ -707,6 +707,11 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       'true',
       "checking a pass's own first milestone must collapse its first step card"
     );
+    assert(
+      (await formattingPage.getByTestId('pass-first-step-complete-tier1').count()) === 1 &&
+        (await formattingPage.getByTestId('pass-first-step-complete-tier2').count()) === 0,
+      "the pass selector must mark Tier 1's completed Step 1 and leave Tier 2 unmarked"
+    );
     await formattingPage.getByTestId('btn-step-expand').click();
     await formattingPage.getByTestId('btn-step-collapse').waitFor({ timeout: 5000 });
     await formattingPage.getByTestId('btn-step-collapse').click();
@@ -717,6 +722,11 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       await formattingPage.getByTestId('step-card-t2_tr00').getAttribute('data-collapsed'),
       null,
       "Tier 1's completed first step must not collapse Tier 2's first step"
+    );
+    assert.equal(
+      await formattingPage.getByTestId('pass-first-step-complete-tier2').count(),
+      0,
+      "selecting Tier 2 must not mark its first step complete"
     );
     await formattingPage.getByTestId('btn-pass-card-tier1').click();
     await formattingPage.getByTestId('btn-step-expand').waitFor({ timeout: 5000 });
@@ -732,6 +742,11 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       await formattingPage.getByTestId('step-card-t1_tr00').getAttribute('data-collapsed'),
       'true',
       'a checked first milestone must keep its card collapsed after a reload'
+    );
+    assert.equal(
+      await formattingPage.getByTestId('pass-first-step-complete-tier1').count(),
+      1,
+      "a completed first step must keep its pass-card check after a reload"
     );
     await formattingPage.getByTestId('btn-restore-start-here').click();
     await formattingPage.getByTestId('start-here').waitFor({ timeout: 5000 });
