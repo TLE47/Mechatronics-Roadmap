@@ -618,7 +618,7 @@ assert math.isclose(_bh, _b_true, abs_tol=1e-4) and math.isclose(_jh, _j_true, a
     "08.1": (
         [
             "Test fk_2link / ik_2link round-trip on unseen target (0.12, 0.08), figure8_target from spec, and gravity_ff_2link at vertical posture",
-            "Test diagnose_capstone_fault across all 4 R4 broken versions, pack_boss_telemetry 20-byte CRC-8 integrity, and simulate_uart_tx bandwidth drops",
+            "Test diagnose_capstone_fault across all 4 R4 broken versions, all four repair functions restoring the true tip or cutting overshoot, pack_boss_telemetry 20-byte CRC-8 integrity, and simulate_uart_tx bandwidth drops",
         ],
         """import math
 _q1u, _q2u = ik_2link(0.12, 0.08)
@@ -633,6 +633,57 @@ assert diagnose_capstone_fault(-0.01, 85.0, 4.0) == "wrong_encoder_cpr"
 assert diagnose_capstone_fault(-0.01, 12.0, 4.0) == "encoder_zero_offset"
 assert diagnose_capstone_fault(-0.01, 1.0, 37.2) == "missing_anti_windup"
 assert diagnose_capstone_fault(-0.01, 1.0, 4.0) == "nominal_ok"
+_q_true = 0.30
+_offset_rad = 0.06
+_x_true, _y_true = fk_2link(_q_true, 0.0)
+_x_bad, _y_bad = fk_2link(_q_true + _offset_rad, 0.0)
+assert math.isclose(math.hypot(_x_bad - _x_true, _y_bad - _y_true) * 1000.0, 12.0, abs_tol=0.01)
+_q_fixed = repair_encoder_offset(_q_true + _offset_rad, _offset_rad)
+_x_fixed, _y_fixed = fk_2link(_q_fixed, 0.0)
+assert math.hypot(_x_fixed - _x_true, _y_fixed - _y_true) * 1000.0 < 1e-6
+assert math.isclose(repair_encoder_cpr(1.2, 4.0), 0.30, abs_tol=1e-12)
+assert math.isclose(repair_encoder_cpr(-0.8, 4.0), -0.20, abs_tol=1e-12)
+assert math.isclose(repair_integral_update(0.10, 0.15, 1.0, 1.30, 1.20), 0.10, abs_tol=1e-12)
+assert math.isclose(repair_integral_update(0.10, 0.15, -1.0, -1.30, 1.20), 0.10, abs_tol=1e-12)
+assert math.isclose(repair_integral_update(0.10, 0.15, 1.0, 0.90, 1.20), 0.15, abs_tol=1e-12)
+assert math.isclose(repair_integral_update(0.10, 0.15, 1.0, -1.30, 1.20), 0.15, abs_tol=1e-12)
+assert math.isclose(repair_gravity_sign(0.40), -0.40, abs_tol=1e-12)
+assert math.isclose(repair_gravity_sign(-0.40), 0.40, abs_tol=1e-12)
+_cpr_true = 0.30
+_cpr_scale = 4.0
+_cpr_x, _cpr_y = fk_2link(_cpr_true, 0.0)
+_cpr_bad_x, _cpr_bad_y = fk_2link(_cpr_true * _cpr_scale, 0.0)
+assert math.hypot(_cpr_bad_x - _cpr_x, _cpr_bad_y - _cpr_y) * 1000.0 > 100.0
+_cpr_fixed_x, _cpr_fixed_y = fk_2link(repair_encoder_cpr(_cpr_true * _cpr_scale, _cpr_scale), 0.0)
+assert math.hypot(_cpr_fixed_x - _cpr_x, _cpr_fixed_y - _cpr_y) * 1000.0 < 1e-6
+def _sim(update):
+    _J, _b, _tg, _umax, _dt = 0.02, 0.05, 0.60, 1.20, 0.001
+    _q = _dq = _i = _peak = 0.0
+    for _ in range(3000):
+        _e = 1.0 - _q
+        _ic = _i + 12.0 * _e * _dt
+        _uraw = 4.0 * _e - 0.4 * _dq + _ic
+        _i = update(_i, _ic, _e, _uraw, _umax)
+        _u = max(-_umax, min(_umax, 4.0 * _e - 0.4 * _dq + _i))
+        _ddq = (_u - _b * _dq - _tg) / _J
+        _dq += _ddq * _dt
+        _q += _dq * _dt
+        _peak = max(_peak, _q)
+    return max(0.0, _peak - 1.0)
+def _no_repair(i_term, i_candidate, e, u_raw, u_max):
+    return i_candidate
+assert math.isclose(100.0 * _sim(_no_repair), 37.2, abs_tol=0.1)
+assert 100.0 * _sim(repair_integral_update) < 5.0
+_tg1, _ = gravity_ff_2link(0.0, 0.0)
+_grav_u_bad = -_tg1
+_grav_u_fixed = repair_gravity_sign(_grav_u_bad)
+_grav_q_bad = (_grav_u_bad - _tg1) / 4.0
+_grav_q_fixed = (_grav_u_fixed - _tg1) / 4.0
+_grav_x0, _grav_y0 = fk_2link(0.0, 0.0)
+_grav_x_bad, _grav_y_bad = fk_2link(_grav_q_bad, 0.0)
+_grav_x_fixed, _grav_y_fixed = fk_2link(_grav_q_fixed, 0.0)
+assert math.hypot(_grav_x_bad - _grav_x0, _grav_y_bad - _grav_y0) * 1000.0 > 20.0
+assert math.hypot(_grav_x_fixed - _grav_x0, _grav_y_fixed - _grav_y0) * 1000.0 < 1e-6
 _pkt = pack_boss_telemetry(42, 0.1, -0.2, 0.3, -0.4)
 assert len(_pkt) == 20 and _pkt[0] == 0xAA and crc8_ccitt(_pkt[:-1]) == _pkt[-1]
 assert simulate_uart_tx(100, 20, 0.001, 115200) > 0
