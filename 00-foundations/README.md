@@ -12,17 +12,19 @@
 > This folder is the reading for Step 3. The ten steps are the only order the course uses; the three `Tier` sections
 > below are its three depth layers, and the headings keep their old names because the
 > module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
-> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
+> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
+> whatever its tier. Take Depth 1 in order; Depth 2 and Depth 3 wait until Step 10 is finished.
 >
 > Do not read this folder end to end first: Depth 1 is Step 3's arm module plus lessons `00.1`-`00.3`, and you then move on to Track 01 in the same step. Depth 2 is the return visit after Step 10, when the arm exists to model.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |
 | **1 · arm** | [Step 3](#tier-1-beginner--intuitive), in order | [`00.1`](00.1-effort-flow-and-first-order-lag.md), [`00.2`](00.2-mass-spring-damper-oscillations.md), [`00.3`](00.3-modeling-discipline-and-sanity-checks.md) · [`00-foundations.T1.00a`](../modules/00-foundations.T1.00a.md), [`00-foundations.T1.00b`](../modules/00-foundations.T1.00b.md), [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md), [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md), [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) | 20.5-26.5 |
-| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md), [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md), [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), [`00-foundations.T2.00g`](../modules/00-foundations.T2.00g.md), [`00-foundations.T2.00h`](../modules/00-foundations.T2.00h.md), [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md), [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md), [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) | 34.5 |
-| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md), [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md), [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md), [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md), [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md), [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md), [`00-foundations.T2.00g`](../modules/00-foundations.T2.00g.md), [`00-foundations.T2.00h`](../modules/00-foundations.T2.00h.md), [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md), [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) | 29.5 |
+| **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) | 5 |
+| **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-**Step 3 costs 55-61 focused hours in total** - 4-10 of lessons, 16.5 of arm modules, 34.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 3 costs 55-61 focused hours in total** - 4-10 of lessons, 16.5 of arm modules, 29.5 of Depth 2 practice, 5 of Depth 3 derivation - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 4 · Power the joint: electronics → [Track 01](../01-electronics-and-power/README.md) (26.5-34 focused hours).
 <!-- /step-index -->

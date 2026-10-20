@@ -12,13 +12,15 @@
 > This folder is the reading for Step 10. The ten steps are the only order the course uses; the three `Tier` sections
 > below are its three depth layers, and the headings keep their old names because the
 > module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
-> Depth 2, `Tier 3` as Depth 3. Depth 1 is the whole required step; the two deeper builds below are optional.
+> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
+> whatever its tier. Depth 1 is the whole required step; the two deeper builds below are optional.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |
 | **1 · arm** | [Step 10](#tier-1-capstone-builds-beginner--breakout-pass), in order | [`08.1`](08.1-tier1-2dof-compliant-arm-capstone.md) · [`08-capstones.T3.07a`](../modules/08-capstones.T3.07a.md) | 6.5-9 |
 | **2 · practice** | [after Step 10](#tier-2-capstone-builds-intermediate--applied-pass), same step order | — | — |
-| **3 · outside both routes** | [optional](#tier-3-capstone-builds-advanced--production-pass), graded, never required | — | — |
+| **3 · derive** | [after the practice pass](#tier-3-capstone-builds-advanced--production-pass), same step order | — | — |
+| **outside both routes** | [optional](#tier-3-capstone-builds-advanced--production-pass), graded, never required | — | — |
 
 **Step 10 costs 6.5-9 focused hours in total** - 2-4.5 of lessons, 4.5 of arm modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 

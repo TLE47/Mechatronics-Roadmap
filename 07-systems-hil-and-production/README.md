@@ -13,15 +13,17 @@
 > This is one of the 2 folders for Step 9. The ten steps are the only order the course uses; the three `Tier` sections
 > below are its three depth layers, and the headings keep their old names because the
 > module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
-> Depth 2, `Tier 3` as Depth 3. Take Depth 1 with the other folder in this step rather than as a standalone course; Depth 2 waits until Step 10 is finished.
+> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
+> whatever its tier. Take Depth 1 with the other folder in this step rather than as a standalone course; Depth 2 and Depth 3 wait until Step 10 is finished.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |
 | **1 · arm** | [Step 9](#tier-1-beginner--intuitive), in order | [`07.1`](07.1-safe-bringup-and-sine-sweep-sysid.md) · [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) | 5-7 |
 | **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) | 4.5 |
-| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
+| **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | — | — |
+| **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`07-systems.T3.06a`](../modules/07-systems.T3.06a.md) | 4.5 |
 
-**Step 9 costs 14.5-18.5 focused hours in total** - 1.5-3.5 of lessons, 3.5 of arm modules, 4.5 of depth modules - shared by Track 06 and Track 07, this one's pages are 9.5-11.5 of it - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 9 costs 14.5-18.5 focused hours in total** - 1.5-3.5 of lessons, 3.5 of arm modules, 4.5 of Depth 2 practice - shared by Track 06 and Track 07, this one's pages are 9.5-11.5 of it - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 10 · Put it together: the 2-DOF arm → [Track 08](../08-capstone-projects/README.md) (6.5-9 focused hours).
 <!-- /step-index -->

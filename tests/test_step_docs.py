@@ -105,6 +105,56 @@ class SyllabusTests(unittest.TestCase):
                     "vocabulary that was the second order on the page",
             )
 
+    def test_the_depth_pass_is_shown_as_its_two_tiered_halves(self):
+        """Depth 2 is the Tier 2 pass and Depth 3 the Tier 3 pass; the old page split neither."""
+        text = read(generator.SYLLABUS)
+        expected = facts()
+        for heading in ("Depth 2 \u00b7 practice", "Depth 3 \u00b7 derive"):
+            self.assertIn(
+                heading, text,
+                msg="expected the syllabus cost table to name the two depth halves it splits "
+                    "a step's optional work into; one column for both is the gap this closes",
+            )
+        for label, low_key, high_key in (
+            ("Depth 2 pass", "depth2_low", "depth2_high"),
+            ("Depth 3 pass", "depth3_low", "depth3_high"),
+        ):
+            row = next(
+                (line for line in text.splitlines() if line.startswith(f"| **{label}, after Step 10**")),
+                None,
+            )
+            self.assertIsNotNone(
+                row,
+                msg="expected a totals row for each depth half in the syllabus; without it the "
+                    "per-step split cannot be checked against one sum",
+            )
+            self.assertIn(
+                generator.rng(expected[low_key], expected[high_key]), row,
+                msg="expected each depth totals row to carry the model's own sum for that tier, "
+                    "not a typed subtotal",
+            )
+        for step in expected["steps"]:
+            row = next(
+                (line for line in text.splitlines() if line.startswith(f"| **{step['number']} \u00b7 ")),
+                None,
+            )
+            self.assertIsNotNone(
+                row,
+                msg="expected every step to have a cost row in the syllabus table; a missing row "
+                    "is a step whose depth split nobody can read",
+            )
+            for low_key, high_key, count in (
+                ("depth2_low", "depth2_high", len(step["depth2_modules"])),
+                ("depth3_low", "depth3_high", len(step["depth3_modules"])),
+            ):
+                if not count:
+                    continue
+                self.assertIn(
+                    generator.rng(step[low_key], step[high_key]), row,
+                    msg="expected each step row to price each depth half from its own modules; "
+                        "a shared depth figure is what the two columns exist to replace",
+                )
+
     def test_the_tier3_two_level_contract_survives(self):
         """`tests/test_module_parity.py` cites this page for the Level A / Level B split."""
         text = read(generator.SYLLABUS)
@@ -145,9 +195,9 @@ class CurriculumTests(unittest.TestCase):
                     "missing row hides that track's layers and hours",
             )
             self.assertEqual(
-                row.count("|"), 7,
-                msg="expected each track row to carry track, step and three layer cells; a wrong "
-                    "cell count means the table will render short",
+                row.count("|"), 8,
+                msg="expected each track row to carry track, step, both depth halves and the "
+                    "outside pages; a wrong cell count means the table will render short",
             )
 
 
@@ -183,12 +233,29 @@ class TrackReadmeTests(unittest.TestCase):
     def test_the_three_depth_layers_are_all_named(self):
         for folder in generator.TRACKS:
             text = read(os.path.join(ROOT, folder, "README.md"))
-            for label in ("1 \u00b7 arm", "2 \u00b7 practice", "3 \u00b7 outside both routes"):
+            for label in ("1 \u00b7 arm", "2 \u00b7 practice", "3 \u00b7 derive", "outside both routes"):
                 self.assertIn(
                     label, text,
-                    msg="expected every track README to name its three depth layers; the "
-                        "per-track split is what the ten steps must keep",
+                    msg="expected every track README to name both depth halves and the pages "
+                        "outside both routes; the per-track split is what the ten steps keep",
                 )
+
+    def test_an_unlisted_tier3_page_is_outside_both_routes_not_a_depth(self):
+        """Track 01's Tier 3 page is neither required nor in its step's `optional` list."""
+        text = read(os.path.join(ROOT, "01-electronics-and-power", "README.md"))
+        outside = next(
+            (line for line in text.splitlines() if line.startswith("| **outside both routes** |")),
+            None,
+        )
+        self.assertIsNotNone(
+            outside,
+            msg="expected Track 01 to carry the outside-both-routes row its Tier 3 page belongs in",
+        )
+        self.assertIn(
+            "01-electronics.T3.01a", outside,
+            msg="expected the track page to cost the Tier 3 page the step never required; "
+                "listing only step-level `optional` pages hid it from the table",
+        )
 
     def test_a_track_readme_without_markers_or_the_old_table_is_an_error(self):
         with self.assertRaises(SystemExit):

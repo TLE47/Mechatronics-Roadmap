@@ -13,13 +13,15 @@
 > This is one of the 2 folders for Step 9. The ten steps are the only order the course uses; the three `Tier` sections
 > below are its three depth layers, and the headings keep their old names because the
 > module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
-> Depth 2, `Tier 3` as Depth 3. Take Depth 1 with the other folder in this step rather than as a standalone course; Depth 2 waits until Step 10 is finished.
+> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
+> whatever its tier. Take Depth 1 with the other folder in this step rather than as a standalone course; Depth 2 and Depth 3 wait until Step 10 is finished.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |
 | **1 · arm** | [Step 9](#tier-1-beginner--intuitive), in order | [`06.1`](06.1-cubic-trajectories-and-compliant-joints.md) · [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) | 5-7 |
 | **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | — | — |
-| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md), [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md) | 10 |
+| **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | — | — |
+| **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md), [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md), [`06-robotics.T3.06a`](../modules/06-robotics.T3.06a.md), [`06-robotics.T3.06b`](../modules/06-robotics.T3.06b.md) | 20.5 |
 
 **Step 9 costs 14.5-18.5 focused hours in total** - 1.5-3.5 of lessons, 3.5 of arm modules - shared by Track 06 and Track 07, this one's pages are 5-7 of it - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 

@@ -11,14 +11,16 @@ This generator makes the spine, its depth layers and its hours one artifact each
 from the pages themselves (a module's `est_hours`, a lesson's `typical_hours` and
 `slow_learner_hours`) - it never invents or types a subtotal:
 
-* `docs/SYLLABUS.md` - the ten steps costed page by page, with the arm layer and the depth layer
-  separate, so "how long is this step" and "what does the optional half add" are two answers.
-* `docs/CURRICULUM.md` - the step <-> folder <-> id map and each track's three depth layers, with
+* `docs/SYLLABUS.md` - the ten steps costed page by page, with the arm layer, the Depth 2 pass
+  (Tier 2 practice) and the Depth 3 pass (Tier 3 derivation) separate, so "how long is this step",
+  "what does the practice half add" and "what does the derivation half add" are three answers.
+* `docs/CURRICULUM.md` - the step <-> folder <-> id map and each track's depth layers, with
   the hours of each.
 * the nine track READMEs (Tracks 00-08) - a step block between `<!-- step-index -->` markers:
   which step the folder is, what this track costs at each depth, and the next step. The teaching
   prose below it is untouched, and the `Tier 1/2/3` headings keep their names because two hundred
-  module pages link to those anchors - the block says to read "Tier 1" as Depth 1 of its step.
+  module pages link to those anchors - the block says to read "Tier 1" as Depth 1 of its step,
+  "Tier 2" as Depth 2 and "Tier 3" as Depth 3, with the optional pages outside both routes.
 
 The block replaced the old per-pass navigation table once; the markers make it idempotent, so a
 later page move rewrites the block instead of stacking a second one, and a README with neither the
@@ -164,6 +166,17 @@ def totals(rows):
     return (round(sum(row["low"] for row in rows), 2), round(sum(row["high"] for row in rows), 2))
 
 
+def depth_by_tier(rows):
+    """`((tier2_rows, tier2_hours), (tier3_rows, tier3_hours))`, from each module's own tier.
+
+    Depth 2 is the Tier 2 practice pass and Depth 3 the Tier 3 derivation pass. A page that is
+    optional is not a depth at all: it sits outside both routes, so callers list it separately.
+    """
+    tier2 = [row for row in rows if route_model.depth_tier(row) == 2]
+    tier3 = [row for row in rows if route_model.depth_tier(row) == 3]
+    return (tier2, totals(tier2)), (tier3, totals(tier3))
+
+
 def step_lessons_in(step, number):
     prefix = f"{number:02d}-"
     return [row for row in step["lessons"] if row["path"].startswith(prefix)]
@@ -174,9 +187,20 @@ def step_modules_in(step, number):
     return [row for row in step["modules"] if row["id"].startswith(prefix)]
 
 
-def optional_modules_in(index, number):
+def outside_modules_in(index, number):
+    """Pages in this track that no route requires: graded, badgeable, outside both passes.
+
+    That is every module page in the folder the step does not list - whether the step calls it
+    `optional` or never names it. Reading only the step's `optional` list hid Track 01's Tier 3
+    page, which the step neither requires nor marks optional, so the track page linked to it in
+    its Tier 3 prose while the cost table called the column empty.
+    """
+    required = set(route_model.STEPS[index]["modules"])
     prefix = f"{number:02d}-"
-    return [row for row in route_model.step_optional(route_model.STEPS[index]) if row["id"].startswith(prefix)]
+    return [
+        row for row in route.module_rows()
+        if row["id"].startswith(prefix) and row["id"] not in required
+    ]
 
 
 def step_of_track():
@@ -294,13 +318,14 @@ def render_syllabus():
         "  exercise and its checks. They exclude setup, debugging and re-reading, which is why the",
         "  front page's calendar estimate multiplies this column by 5-10. An hour target is not",
         "  elapsed time.",
-        "- **Two layers, one order.** The **arm layer** is every Tier 1 bridge plus the Step 10",
-        "  capstone: take it in Steps 1-10 and you have a working, verified 2-DOF arm. The **depth",
-        "  layer** is every Tier 2/3 practice module in the same steps: it is a second pass in the",
-        "  same step order, after Step 10, and nothing on the arm consumes it.",
-        f"- **A third layer is outside both routes.** {len(outside)} modules are graded and "
-        "badgeable but not required; they are listed at the end of this page and in each track "
-        "README as Depth 3.",
+        "- **Three layers, one order.** The **arm layer** is every Tier 1 bridge plus the Step 10",
+        "  capstone: take it in Steps 1-10 and you have a working, verified 2-DOF arm. The **Depth 2",
+        "  pass** is the Tier 2 practice modules; the **Depth 3 pass** is the Tier 3 modules that",
+        "  derive and validate. Both are a second pass in the same step order, after Step 10, and",
+        "  nothing on the arm consumes them.",
+        f"- **Pages outside both routes.** A further {len(outside)} modules are graded and "
+        "badgeable but not required; they are neither depth, and are listed at the end of this page "
+        "and in each track README as the optional pages.",
         "- **Every row is a page.** The lesson rows are the prose lessons, the module rows are the",
         "  graded `modules/*.md` packages, and no page appears in two steps.",
         "",
@@ -315,37 +340,54 @@ def render_syllabus():
         f'    Outside["Outside both routes<br/>{len(outside)} modules"] -.-> Full',
         "```",
         "",
-        "| Step | Lessons | Arm layer | Depth layer | Focused hours |",
-        "| :--- | ---: | :--- | :--- | ---: |",
+        "| Step | Lessons | Arm layer | Depth 2 · practice | Depth 3 · derive | Focused hours |",
+        "| :--- | ---: | :--- | :--- | :--- | ---: |",
     ]
+
+    def layer_cell(rows, low, high):
+        if not rows:
+            return "—"
+        return f"{plural(len(rows), 'module')} · {rng(low, high)} h"
+
     for step in steps:
         arm = "—" if not step["arm_module_count"] else (
             f"{plural(step['arm_module_count'], 'module')} · "
             f"{rng(step['arm_low'], step['arm_high'])} h"
         )
-        layer = "—" if not step["depth_module_count"] else (
-            f"{plural(step['depth_module_count'], 'module')} · "
-            f"{rng(step['depth_low'], step['depth_high'])} h"
-        )
         lines.append(
             f"| **{step['number']} · {step['title']}** ({folder_links(step, '../')}) | "
-            f"{step['lesson_count']} | {arm} | {layer} | **{rng(step['low'], step['high'])}** |"
+            f"{step['lesson_count']} | {arm} | "
+            f"{layer_cell(step['depth2_modules'], step['depth2_low'], step['depth2_high'])} | "
+            f"{layer_cell(step['depth3_modules'], step['depth3_low'], step['depth3_high'])} | "
+            f"**{rng(step['low'], step['high'])}** |"
         )
     lines += [
         f"| **Arm route, Steps 1-10** | {facts['lesson_count']} | "
         f"{plural(facts['arm_module_count'], 'module')} · "
-        f"{rng(facts['arm_low'], facts['arm_high'])} h | — | "
+        f"{rng(facts['arm_low'], facts['arm_high'])} h | — | — | "
         f"**{rng(facts['arm_low'], facts['arm_high'])}** |",
+        f"| **Depth 2 pass, after Step 10** | — | — | "
+        f"{plural(facts['depth2_module_count'], 'module')} · "
+        f"{rng(facts['depth2_low'], facts['depth2_high'])} h | — | "
+        f"**{rng(facts['depth2_low'], facts['depth2_high'])}** |",
+        f"| **Depth 3 pass, after Step 10** | — | — | — | "
+        f"{plural(facts['depth3_module_count'], 'module')} · "
+        f"{rng(facts['depth3_low'], facts['depth3_high'])} h | "
+        f"**{rng(facts['depth3_low'], facts['depth3_high'])}** |",
         f"| **Depth pass, after Step 10** | — | — | "
-        f"{plural(facts['depth_module_count'], 'module')} · "
-        f"{rng(facts['depth_low'], facts['depth_high'])} h | "
+        f"{plural(facts['depth2_module_count'], 'module')} | "
+        f"{plural(facts['depth3_module_count'], 'module')} | "
         f"**{rng(facts['depth_low'], facts['depth_high'])}** |",
         f"| **Full course** | {facts['lesson_count']} | "
         f"{plural(facts['arm_module_count'], 'module')} | "
-        f"{plural(facts['depth_module_count'], 'module')} | **{rng(facts['low'], facts['high'])}** |",
+        f"{plural(facts['depth2_module_count'], 'module')} | "
+        f"{plural(facts['depth3_module_count'], 'module')} | "
+        f"**{rng(facts['low'], facts['high'])}** |",
         "",
         f"The arm route is **{rng(core['low'], core['high'])} focused hours**, the depth pass adds "
-        f"**{rng(depth['low'], depth['high'])}**, and the full course is "
+        f"**{rng(depth['low'], depth['high'])}** - of which Depth 2 practice is "
+        f"**{rng(facts['depth2_low'], facts['depth2_high'])}** and Depth 3 derivation is "
+        f"**{rng(facts['depth3_low'], facts['depth3_high'])}** - and the full course is "
         f"**{rng(full['low'], full['high'])}**. The minimum viable finish - every Tier 1 bridge plus "
         f"the capstone and the {len(route.MINIMUM_LESSON_IDS) - 1} lessons it opens - is "
         f"**{rng(minimum['low'], minimum['high'])} focused hours**; its page list is "
@@ -386,6 +428,7 @@ def render_syllabus():
 
     for step in steps:
         low, high = step["low"], step["high"]
+        (tier2_rows, _), (tier3_rows, _) = depth_by_tier(step["depth_modules"])
         lines += [
             f"### Step {step['number']} · {step['title']}",
             "",
@@ -398,8 +441,10 @@ def render_syllabus():
                 if step["arm_module_count"] else ""
             )
             + (
-                f" · {plural(step['depth_module_count'], 'depth module')}"
-                if step["depth_module_count"] else ""
+                f" · {plural(len(tier2_rows), 'Depth 2 module')}" if tier2_rows else ""
+            )
+            + (
+                f" · {plural(len(tier3_rows), 'Depth 3 module')}" if tier3_rows else ""
             )
             + ".",
             "",
@@ -414,10 +459,12 @@ def render_syllabus():
             lines.append(
                 f"| {module_link(row)} | {row['title']} | arm | {rng(row['low'], row['high'])} |"
             )
-        for row in step["depth_modules"]:
-            lines.append(
-                f"| {module_link(row)} | {row['title']} | depth | {rng(row['low'], row['high'])} |"
-            )
+        for label, rows in (("depth 2", tier2_rows), ("depth 3", tier3_rows)):
+            for row in rows:
+                lines.append(
+                    f"| {module_link(row)} | {row['title']} | {label} | "
+                    f"{rng(row['low'], row['high'])} |"
+                )
         lines.append("")
         if step["optional"]:
             names = ", ".join(module_link(row) for row in step["optional"])
@@ -474,8 +521,9 @@ def render_syllabus():
         "",
         "## G. Modules outside both routes",
         "",
-        f"{len(outside)} modules are graded, badgeable and not needed for the arm or the depth "
-        "pass. They stay in their track READMEs as Depth 3.",
+        f"{len(outside)} modules are graded, badgeable and not needed for the arm or either "
+        "depth pass. They sit outside both routes, and the track READMEs list them as the "
+        "optional pages rather than as a fourth depth.",
         "",
         "| Module | Focused hours |",
         "| :--- | ---: |",
@@ -528,9 +576,15 @@ def render_curriculum():
         "model and apply, `T3` = derive and validate). The mapping is fixed here so no page explains",
         "it twice, and the hours are the pages' own metadata.",
         "",
-        "| Step | Folder | Learner-facing title | Lessons | Arm layer | Depth layer | Focused hours |",
-        "| ---: | :--- | :--- | ---: | :--- | :--- | ---: |",
+        "| Step | Folder | Learner-facing title | Lessons | Arm layer | Depth 2 | Depth 3 | Focused hours |",
+        "| ---: | :--- | :--- | ---: | :--- | :--- | :--- | ---: |",
     ]
+
+    def cell_for(rows, low, high):
+        if not rows:
+            return "—"
+        return f"{plural(len(rows), 'module')} · {rng(low, high)} h"
+
     for step in steps:
         folders = " + ".join(
             f"[`{folder}/`](../{folder}/README.md)" for folder in step_folders(step)
@@ -539,21 +593,22 @@ def render_curriculum():
             f"{plural(step['arm_module_count'], 'module')} · "
             f"{rng(step['arm_low'], step['arm_high'])} h"
         )
-        layer = "—" if not step["depth_module_count"] else (
-            f"{plural(step['depth_module_count'], 'module')} · "
-            f"{rng(step['depth_low'], step['depth_high'])} h"
-        )
         lines.append(
             f"| {step['number']} | {folders} | {step['title']} | {step['lesson_count']} | "
-            f"{arm} | {layer} | **{rng(step['low'], step['high'])}** |"
+            f"{arm} | "
+            f"{cell_for(step['depth2_modules'], step['depth2_low'], step['depth2_high'])} | "
+            f"{cell_for(step['depth3_modules'], step['depth3_low'], step['depth3_high'])} | "
+            f"**{rng(step['low'], step['high'])}** |"
         )
     lines += [
         "",
-        f"Totals: arm **{rng(facts['arm_low'], facts['arm_high'])} h**, depth "
-        f"**{rng(facts['depth_low'], facts['depth_high'])} h**, full course "
+        f"Totals: arm **{rng(facts['arm_low'], facts['arm_high'])} h**, Depth 2 "
+        f"**{rng(facts['depth2_low'], facts['depth2_high'])} h**, Depth 3 "
+        f"**{rng(facts['depth3_low'], facts['depth3_high'])} h**, full course "
         f"**{rng(facts['low'], facts['high'])} h**. The arm layer is every Tier 1 bridge plus the",
-        "Step 10 capstone; the depth layer is every other module in the step, taken as a second",
-        "pass in the same step order. `scripts/route_model.py` is the declaration; this page and",
+        "Step 10 capstone; Depth 2 is the Tier 2 practice pass and Depth 3 the Tier 3 derivation",
+        "pass, both taken after Step 10 in the same step order. `scripts/route_model.py` is the",
+        "declaration; this page and",
         "`docs/SYLLABUS.md` are rendered from it by `scripts/generate_step_docs.py`, and",
         "`scripts/check_consistency.py` fails when a step's lessons, layers or hours move without",
         "them being regenerated.",
@@ -576,13 +631,13 @@ def render_curriculum():
         "## The three depth layers, per track",
         "",
         "Every step folder holds three layers. **Depth 1** is the arm: the Tier 1 bridge and the",
-        "track's own lessons, in step order. **Depth 2** is the practice modules (`T2`) and the",
-        "derivation modules (`T3`) that the route requires, taken after Step 10 in the same step",
-        "order. **Depth 3** is the handful of modules outside both routes - still graded, still",
-        "badgeable, never required.",
+        "track's own lessons, in step order. **Depth 2** is the Tier 2 practice modules and",
+        "**Depth 3** the Tier 3 derivation modules, both required and both taken after Step 10 in",
+        "the same step order. A handful of pages sit **outside both routes**: still graded, still",
+        "badgeable, never required, and not a fourth depth.",
         "",
-        "| Track | Step | Depth 1 · arm | Depth 2 · practice | Depth 3 · outside both routes | What bridges maker work to custom work |",
-        "| :--- | ---: | :--- | :--- | :--- | :--- |",
+        "| Track | Step | Depth 1 · arm | Depth 2 · practice | Depth 3 · derive | Outside both routes | What bridges maker work to custom work |",
+        "| :--- | ---: | :--- | :--- | :--- | :--- | :--- |",
     ]
     for number, folder in enumerate(TRACKS):
         index = owner[number]
@@ -594,9 +649,11 @@ def render_curriculum():
         depth_required = [
             row for row in step_modules_in(step, number) if route_model.module_layer(row["id"]) == "depth"
         ]
-        optional_rows = optional_modules_in(index, number)
+        optional_rows = outside_modules_in(index, number)
         arm_low, arm_high = totals(arm_rows)
-        depth_low, depth_high = totals(depth_required)
+        (t2_rows, (t2_low, t2_high)), (t3_rows, (t3_low, t3_high)) = depth_by_tier(
+            depth_required
+        )
         out_low, out_high = totals(optional_rows)
         heading = track_title(folder).replace("Track " + f"{number:02d}: ", "")
 
@@ -607,7 +664,7 @@ def render_curriculum():
 
         lines.append(
             f"| **{heading}** | {step['number']} | {cell(arm_rows, arm_low, arm_high)} | "
-            f"{cell(depth_required, depth_low, depth_high)} | "
+            f"{cell(t2_rows, t2_low, t2_high)} | {cell(t3_rows, t3_low, t3_high)} | "
             f"{cell(optional_rows, out_low, out_high)} | {BRIDGES[folder]} |"
         )
     lines += [
@@ -640,10 +697,10 @@ def render_track(folder):
     lessons = step_lessons_in(step, number)
     arm_rows = [row for row in step_modules_in(step, number) if route_model.module_layer(row["id"]) == "arm"]
     depth_rows = [row for row in step_modules_in(step, number) if route_model.module_layer(row["id"]) == "depth"]
-    optional_rows = optional_modules_in(owner[number], number)
+    optional_rows = outside_modules_in(owner[number], number)
     lesson_low, lesson_high = totals(lessons)
     arm_low, arm_high = totals(arm_rows)
-    depth_low, depth_high = totals(depth_rows)
+    (t2_rows, (t2_low, t2_high)), (t3_rows, (t3_low, t3_high)) = depth_by_tier(depth_rows)
     out_low, out_high = totals(optional_rows)
     layer1_low, layer1_high = totals(lessons + arm_rows)
     slice_low, slice_high = totals(lessons + arm_rows + depth_rows)
@@ -677,10 +734,10 @@ def render_track(folder):
     if len(folders) > 1:
         take = (
             "Take Depth 1 with the other folder in this step rather than as a standalone course; "
-            "Depth 2 waits until Step 10 is finished."
+            "Depth 2 and Depth 3 wait until Step 10 is finished."
         )
-    elif step["depth_module_count"]:
-        take = "Take Depth 1 in order; Depth 2 waits until Step 10 is finished."
+    elif t2_rows or t3_rows:
+        take = "Take Depth 1 in order; Depth 2 and Depth 3 wait until Step 10 is finished."
     else:
         take = "Depth 1 is the whole required step; the two deeper builds below are optional."
     lead = (
@@ -696,7 +753,8 @@ def render_track(folder):
         f"> {lead} The ten steps are the only order the course uses; the three `Tier` sections",
         "> below are its three depth layers, and the headings keep their old names because the",
         "> module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as",
-        f"> Depth 2, `Tier 3` as Depth 3. {take}",
+        "> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,",
+        f"> whatever its tier. {take}",
         *([f">\n> {EXTRAS[folder]}"] if folder in EXTRAS else []),
         "",
         "| Depth | What it is | Pages in this track | Focused hours |",
@@ -704,16 +762,19 @@ def render_track(folder):
         f"| **1 · arm** | [Step {step['number']}](#{anchors[0]}), in order | "
         f"{lesson_ids()} · {pages(arm_rows)} | {rng(layer1_low, layer1_high)} |",
         f"| **2 · practice** | [after Step 10](#{anchors[1]}), same step order | "
-        f"{pages(depth_rows)} | {rng(depth_low, depth_high) if depth_rows else '—'} |",
-        f"| **3 · outside both routes** | [optional](#{anchors[2]}), graded, never "
-        f"required | {pages(optional_rows)} | {rng(out_low, out_high) if optional_rows else '—'} |",
+        f"{pages(t2_rows)} | {rng(t2_low, t2_high) if t2_rows else '—'} |",
+        f"| **3 · derive** | [after the practice pass](#{anchors[2]}), same step order | "
+        f"{pages(t3_rows)} | {rng(t3_low, t3_high) if t3_rows else '—'} |",
+        f"| **outside both routes** | [optional](#{anchors[2]}), graded, never required | "
+        f"{pages(optional_rows)} | {rng(out_low, out_high) if optional_rows else '—'} |",
         "",
         f"**Step {step['number']} costs {rng(step['low'], step['high'])} focused hours in total** - "
         + ", ".join(
             part for part in (
                 f"{rng(lesson_low, lesson_high)} of lessons" if lessons else "",
                 f"{rng(arm_low, arm_high)} of arm modules" if arm_rows else "",
-                f"{rng(depth_low, depth_high)} of depth modules" if depth_rows else "",
+                f"{rng(t2_low, t2_high)} of Depth 2 practice" if t2_rows else "",
+                f"{rng(t3_low, t3_high)} of Depth 3 derivation" if t3_rows else "",
             ) if part
         )
         + (

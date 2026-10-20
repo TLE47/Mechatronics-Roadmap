@@ -13,15 +13,17 @@
 > This folder is the reading for Step 4. The ten steps are the only order the course uses; the three `Tier` sections
 > below are its three depth layers, and the headings keep their old names because the
 > module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
-> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
+> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
+> whatever its tier. Take Depth 1 in order; Depth 2 and Depth 3 wait until Step 10 is finished.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |
 | **1 · arm** | [Step 4](#tier-1-beginner--intuitive), in order | [`01.1`](01.1-mosfet-inductor-flyback.md), [`01.2`](01.2-h-bridge-and-stall-current.md), [`01.3`](01.3-power-regulators-and-power-budget.md), [`01.4`](01.4-grounding-and-rc-lowpass-filters.md) · [`01-electronics.T1.01a`](../modules/01-electronics.T1.01a.md), [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md), [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md), [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) | 18-25.5 |
 | **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md), [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) | 8.5 |
-| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
+| **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | — | — |
+| **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`01-electronics.T3.01a`](../modules/01-electronics.T3.01a.md) | 5 |
 
-**Step 4 costs 26.5-34 focused hours in total** - 6-13.5 of lessons, 12 of arm modules, 8.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 4 costs 26.5-34 focused hours in total** - 6-13.5 of lessons, 12 of arm modules, 8.5 of Depth 2 practice - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 5 · Build the arm: mechanics → [Track 02](../02-mechanics-kinematics-dynamics/README.md) (20-30 focused hours).
 <!-- /step-index -->

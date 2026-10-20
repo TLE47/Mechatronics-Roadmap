@@ -12,11 +12,12 @@
   exercise and its checks. They exclude setup, debugging and re-reading, which is why the
   front page's calendar estimate multiplies this column by 5-10. An hour target is not
   elapsed time.
-- **Two layers, one order.** The **arm layer** is every Tier 1 bridge plus the Step 10
-  capstone: take it in Steps 1-10 and you have a working, verified 2-DOF arm. The **depth
-  layer** is every Tier 2/3 practice module in the same steps: it is a second pass in the
-  same step order, after Step 10, and nothing on the arm consumes it.
-- **A third layer is outside both routes.** 10 modules are graded and badgeable but not required; they are listed at the end of this page and in each track README as Depth 3.
+- **Three layers, one order.** The **arm layer** is every Tier 1 bridge plus the Step 10
+  capstone: take it in Steps 1-10 and you have a working, verified 2-DOF arm. The **Depth 2
+  pass** is the Tier 2 practice modules; the **Depth 3 pass** is the Tier 3 modules that
+  derive and validate. Both are a second pass in the same step order, after Step 10, and
+  nothing on the arm consumes them.
+- **Pages outside both routes.** A further 10 modules are graded and badgeable but not required; they are neither depth, and are listed at the end of this page and in each track README as the optional pages.
 - **Every row is a page.** The lesson rows are the prose lessons, the module rows are the
   graded `modules/*.md` packages, and no page appears in two steps.
 
@@ -30,23 +31,25 @@ flowchart LR
     Outside["Outside both routes<br/>10 modules"] -.-> Full
 ```
 
-| Step | Lessons | Arm layer | Depth layer | Focused hours |
-| :--- | ---: | :--- | :--- | ---: |
-| **1 · Python and the maths a robot needs** ([Track P](../track-p/README.md)) | 14 | — | — | **16.75-42.5** |
-| **2 · Circuits and your first microcontroller** ([Stage 0](../stage-0/README.md)) | 11 | — | — | **13.75-33** |
-| **3 · Make a joint move: foundations** ([Track 00](../00-foundations/README.md)) | 3 | 5 modules · 20.5-26.5 h | 11 modules · 34.5 h | **55-61** |
-| **4 · Power the joint: electronics** ([Track 01](../01-electronics-and-power/README.md)) | 4 | 4 modules · 18-25.5 h | 2 modules · 8.5 h | **26.5-34** |
-| **5 · Build the arm: mechanics** ([Track 02](../02-mechanics-kinematics-dynamics/README.md)) | 5 | 1 module · 10.5-20.5 h | 2 modules · 9.5 h | **20-30** |
-| **6 · Measure the joint: sensors** ([Track 03](../03-sensors-and-actuators/README.md)) | 3 | 1 module · 6.85-11.5 h | 1 module · 4.5 h | **11.35-16** |
-| **7 · Run it in real time: embedded C** ([Track 04](../04-embedded-and-realtime/README.md)) | 3 | 2 modules · 11-17 h | 2 modules · 8 h | **19-25** |
-| **8 · Make it hold still: control** ([Track 05](../05-control-and-estimation/README.md)) | 2 | 1 module · 6.5-10.5 h | 4 modules · 10.5 h | **17-21** |
-| **9 · Plan motion and bring it up safely** ([Track 06](../06-robotics-and-autonomy/README.md) + [Track 07](../07-systems-hil-and-production/README.md)) | 2 | 2 modules · 10-14 h | 1 module · 4.5 h | **14.5-18.5** |
-| **10 · Put it together: the 2-DOF arm** ([Track 08](../08-capstone-projects/README.md)) | 1 | 1 module · 6.5-9 h | — | **6.5-9** |
-| **Arm route, Steps 1-10** | 48 | 17 modules · 120.35-210 h | — | **120.35-210** |
-| **Depth pass, after Step 10** | — | — | 23 modules · 80 h | **80** |
-| **Full course** | 48 | 17 modules | 23 modules | **200.35-290** |
+| Step | Lessons | Arm layer | Depth 2 · practice | Depth 3 · derive | Focused hours |
+| :--- | ---: | :--- | :--- | :--- | ---: |
+| **1 · Python and the maths a robot needs** ([Track P](../track-p/README.md)) | 14 | — | — | — | **16.75-42.5** |
+| **2 · Circuits and your first microcontroller** ([Stage 0](../stage-0/README.md)) | 11 | — | — | — | **13.75-33** |
+| **3 · Make a joint move: foundations** ([Track 00](../00-foundations/README.md)) | 3 | 5 modules · 20.5-26.5 h | 10 modules · 29.5 h | 1 module · 5 h | **55-61** |
+| **4 · Power the joint: electronics** ([Track 01](../01-electronics-and-power/README.md)) | 4 | 4 modules · 18-25.5 h | 2 modules · 8.5 h | — | **26.5-34** |
+| **5 · Build the arm: mechanics** ([Track 02](../02-mechanics-kinematics-dynamics/README.md)) | 5 | 1 module · 10.5-20.5 h | 1 module · 4.5 h | 1 module · 5 h | **20-30** |
+| **6 · Measure the joint: sensors** ([Track 03](../03-sensors-and-actuators/README.md)) | 3 | 1 module · 6.85-11.5 h | 1 module · 4.5 h | — | **11.35-16** |
+| **7 · Run it in real time: embedded C** ([Track 04](../04-embedded-and-realtime/README.md)) | 3 | 2 modules · 11-17 h | 2 modules · 8 h | — | **19-25** |
+| **8 · Make it hold still: control** ([Track 05](../05-control-and-estimation/README.md)) | 2 | 1 module · 6.5-10.5 h | 1 module · 4.5 h | 3 modules · 6 h | **17-21** |
+| **9 · Plan motion and bring it up safely** ([Track 06](../06-robotics-and-autonomy/README.md) + [Track 07](../07-systems-hil-and-production/README.md)) | 2 | 2 modules · 10-14 h | 1 module · 4.5 h | — | **14.5-18.5** |
+| **10 · Put it together: the 2-DOF arm** ([Track 08](../08-capstone-projects/README.md)) | 1 | 1 module · 6.5-9 h | — | — | **6.5-9** |
+| **Arm route, Steps 1-10** | 48 | 17 modules · 120.35-210 h | — | — | **120.35-210** |
+| **Depth 2 pass, after Step 10** | — | — | 18 modules · 64 h | — | **64** |
+| **Depth 3 pass, after Step 10** | — | — | — | 5 modules · 16 h | **16** |
+| **Depth pass, after Step 10** | — | — | 18 modules | 5 modules | **80** |
+| **Full course** | 48 | 17 modules | 18 modules | 5 modules | **200.35-290** |
 
-The arm route is **120.35-210 focused hours**, the depth pass adds **80**, and the full course is **200.35-290**. The minimum viable finish - every Tier 1 bridge plus the capstone and the 5 lessons it opens - is **93-151 focused hours**; its page list is [`MINIMUM.md`](MINIMUM.md).
+The arm route is **120.35-210 focused hours**, the depth pass adds **80** - of which Depth 2 practice is **64** and Depth 3 derivation is **16** - and the full course is **200.35-290**. The minimum viable finish - every Tier 1 bridge plus the capstone and the 5 lessons it opens - is **93-151 focused hours**; its page list is [`MINIMUM.md`](MINIMUM.md).
 
 ## C. The teaching sequence every page follows
 
@@ -126,7 +129,7 @@ Starts at [`S0.0`](../stage-0/S0.0-why-electricity-is-like-flow.md) · **13.75-3
 
 > Model a spring, a damper, and a motor as one joint that responds to torque.
 
-Starts at [`00.1`](../00-foundations/00.1-effort-flow-and-first-order-lag.md) · **55-61 focused hours** · 3 lessons · 5 arm modules · 11 depth modules.
+Starts at [`00.1`](../00-foundations/00.1-effort-flow-and-first-order-lag.md) · **55-61 focused hours** · 3 lessons · 5 arm modules · 10 Depth 2 modules · 1 Depth 3 module.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
@@ -138,23 +141,23 @@ Starts at [`00.1`](../00-foundations/00.1-effort-flow-and-first-order-lag.md) ·
 | [`00-foundations.T1.00c`](../modules/00-foundations.T1.00c.md) | SI Units, Engineering Prefixes & Dimensional Analysis | arm | 2.5 |
 | [`00-foundations.T1.00d`](../modules/00-foundations.T1.00d.md) | Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors | arm | 3.5 |
 | [`00-foundations.T1.00e`](../modules/00-foundations.T1.00e.md) | Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop | arm | 4 |
-| [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) | Numerical Derivatives & Integrals: Backward Difference and the Running Sum | depth | 2 |
-| [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) | Vectors, Dot & Cross Products, Linear Independence & Change of Basis | depth | 3.5 |
-| [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) | First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio | depth | 4.5 |
-| [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) | Complex Numbers, Euler's Formula & Phasors | depth | 2 |
-| [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) | Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization | depth | 4.5 |
-| [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) | Nyquist Sampling, Aliasing & the Analog Anti-Alias Filter | depth | 2 |
-| [`00-foundations.T2.00g`](../modules/00-foundations.T2.00g.md) | Matrix-Vector Multiplication & the One-Step State Update | depth | 3 |
-| [`00-foundations.T2.00h`](../modules/00-foundations.T2.00h.md) | Winding Impedance, Transfer Functions, Decibels & the Resonance Peak | depth | 3 |
-| [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md) | Pre-Warped Tustin Biquads: Where the Notch Really Lands | depth | 2.5 |
-| [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) | Gaussian Variance, Covariance & the Predict Step | depth | 2.5 |
-| [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) | Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation | depth | 5 |
+| [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) | Numerical Derivatives & Integrals: Backward Difference and the Running Sum | depth 2 | 2 |
+| [`00-foundations.T2.00b`](../modules/00-foundations.T2.00b.md) | Vectors, Dot & Cross Products, Linear Independence & Change of Basis | depth 2 | 3.5 |
+| [`00-foundations.T2.00c`](../modules/00-foundations.T2.00c.md) | First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio | depth 2 | 4.5 |
+| [`00-foundations.T2.00d`](../modules/00-foundations.T2.00d.md) | Complex Numbers, Euler's Formula & Phasors | depth 2 | 2 |
+| [`00-foundations.T2.00e`](../modules/00-foundations.T2.00e.md) | Laplace Transform, Poles/Zeros, Continuous State-Space (x_dot = Ax + Bu) & Euler/Tustin Discretization | depth 2 | 4.5 |
+| [`00-foundations.T2.00f`](../modules/00-foundations.T2.00f.md) | Nyquist Sampling, Aliasing & the Analog Anti-Alias Filter | depth 2 | 2 |
+| [`00-foundations.T2.00g`](../modules/00-foundations.T2.00g.md) | Matrix-Vector Multiplication & the One-Step State Update | depth 2 | 3 |
+| [`00-foundations.T2.00h`](../modules/00-foundations.T2.00h.md) | Winding Impedance, Transfer Functions, Decibels & the Resonance Peak | depth 2 | 3 |
+| [`00-foundations.T2.00i`](../modules/00-foundations.T2.00i.md) | Pre-Warped Tustin Biquads: Where the Notch Really Lands | depth 2 | 2.5 |
+| [`00-foundations.T2.00j`](../modules/00-foundations.T2.00j.md) | Gaussian Variance, Covariance & the Predict Step | depth 2 | 2.5 |
+| [`00-foundations.T3.00a`](../modules/00-foundations.T3.00a.md) | Skew-Symmetric Hat Map [omega]_x, Matrix Exponential e^{At}, Rodrigues' Formula & Energy Conservation | depth 3 | 5 |
 
 ### Step 4 · Power the joint: electronics
 
 > Switch a motor both ways, budget its current, and keep the switching noise out.
 
-Starts at [`01.1`](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md) · **26.5-34 focused hours** · 4 lessons · 4 arm modules · 2 depth modules.
+Starts at [`01.1`](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md) · **26.5-34 focused hours** · 4 lessons · 4 arm modules · 2 Depth 2 modules.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
@@ -166,14 +169,14 @@ Starts at [`01.1`](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md) 
 | [`01-electronics.T1.01b`](../modules/01-electronics.T1.01b.md) | Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal | arm | 3.5 |
 | [`01-electronics.T1.01c`](../modules/01-electronics.T1.01c.md) | Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety | arm | 2.5 |
 | [`01-electronics.T1.01d`](../modules/01-electronics.T1.01d.md) | Capacitors, Inductors, RC Time Constants & Inductive Flyback | arm | 3 |
-| [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) | Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing | depth | 4 |
-| [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) | Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping | depth | 4.5 |
+| [`01-electronics.T2.01a`](../modules/01-electronics.T2.01a.md) | Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing | depth 2 | 4 |
+| [`01-electronics.T2.01b`](../modules/01-electronics.T2.01b.md) | Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping | depth 2 | 4.5 |
 
 ### Step 5 · Build the arm: mechanics
 
 > Turn joint angles into a tip position, and a tip position back into joint angles.
 
-Starts at [`02.1`](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md) · **20-30 focused hours** · 5 lessons · 1 arm module · 2 depth modules.
+Starts at [`02.1`](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md) · **20-30 focused hours** · 5 lessons · 1 arm module · 1 Depth 2 module · 1 Depth 3 module.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
@@ -183,14 +186,14 @@ Starts at [`02.1`](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord
 | [`02.4`](../02-mechanics-kinematics-dynamics/02.4-rotational-inertia-and-gear-ratios.md) | Rotational Dynamics (tau_net = I_rot * alpha), Gear Ratios (N) and Reflected Inertia | lesson | 1.5-3.5 |
 | [`02.5`](../02-mechanics-kinematics-dynamics/02.5-bearings-belts-and-3d-printing.md) | Practical Robot Mechanisms — Double-Shear Bearings, Timing Belts and 3D-Printed Parts | lesson | 1.5-3 |
 | [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) | Free-Body Diagrams, Gravity Lever-Arm Torque & Gear Speed/Torque Power Scaling | arm | 3.5 |
-| [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) | 6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia | depth | 4.5 |
-| [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | depth | 5 |
+| [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) | 6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia | depth 2 | 4.5 |
+| [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity | depth 3 | 5 |
 
 ### Step 6 · Measure the joint: sensors
 
 > Read an encoder, compute a clean angle, and know how much to trust it.
 
-Starts at [`03.1`](../03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md) · **11.35-16 focused hours** · 3 lessons · 1 arm module · 1 depth module.
+Starts at [`03.1`](../03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md) · **11.35-16 focused hours** · 3 lessons · 1 arm module · 1 Depth 2 module.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
@@ -198,13 +201,13 @@ Starts at [`03.1`](../03-sensors-and-actuators/03.1-quadrature-and-magnetic-enco
 | [`03.2`](../03-sensors-and-actuators/03.2-three-phase-bldc-and-electrical-angle.md) | 3-Phase Brushless Motors, Pole Pairs and 90-Degree Electrical Torque Lead | lesson | 1.5-3.5 |
 | [`03.3`](../03-sensors-and-actuators/03.3-encoder-to-fk-integration-microlab.md) | Track 02 + 03 Integration Micro-Lab — Read Dual Encoders to Compute 2-Link End-Effector Position | lesson | 0.35-1 |
 | [`03-sensors.T1.03a`](../modules/03-sensors.T1.03a.md) | Electromagnets, Permanent Magnets, Pole Pairs, Quadrature Pulses & Faraday Back-EMF | arm | 3.5 |
-| [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) | Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Locked Loops & Sensor Random Walk | depth | 4.5 |
+| [`03-sensors.T2.03a`](../modules/03-sensors.T2.03a.md) | Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Locked Loops & Sensor Random Walk | depth 2 | 4.5 |
 
 ### Step 7 · Run it in real time: embedded C
 
 > Move a fixed-rate control loop off Python and onto a microcontroller.
 
-Starts at [`04.1`](../04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md) · **19-25 focused hours** · 3 lessons · 2 arm modules · 2 depth modules.
+Starts at [`04.1`](../04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md) · **19-25 focused hours** · 3 lessons · 2 arm modules · 2 Depth 2 modules.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
@@ -213,8 +216,8 @@ Starts at [`04.1`](../04-embedded-and-realtime/04.1-c-types-and-hardware-timer-i
 | [`04.3`](../04-embedded-and-realtime/04.3-structs-and-pointers-labeled-boxes.md) | Python-to-C Bridge (Part 3) — C Structs as Labeled Boxes & Pointers as Box Addresses | lesson | 1-3 |
 | [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md) | From Python to C/Arduino: Fixed-Width Types, Bitwise Masks, Structs & Pointers | arm | 3.5 |
 | [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) | Non-Blocking millis()/micros() State Machines, Hardware Interrupts (ISRs) & volatile | arm | 3.5 |
-| [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) | Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers | depth | 4 |
-| [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) | RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration | depth | 4 |
+| [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md) | Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers | depth 2 | 4 |
+| [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) | RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration | depth 2 | 4 |
 
 Optional pages in this step's folder - graded, not required: [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md), [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md).
 
@@ -222,23 +225,23 @@ Optional pages in this step's folder - graded, not required: [`04-embedded.T2.04
 
 > Tune a PID that holds the arm against gravity without overshooting.
 
-Starts at [`05.1`](../05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md) · **17-21 focused hours** · 2 lessons · 1 arm module · 4 depth modules.
+Starts at [`05.1`](../05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md) · **17-21 focused hours** · 2 lessons · 1 arm module · 1 Depth 2 module · 3 Depth 3 modules.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
 | [`05.1`](../05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md) | PID Virtual Spring-Damper Control and Integrator Anti-Windup Clamping | lesson | 1.5-3.5 |
 | [`05.2`](../05-control-and-estimation/05.2-complementary-imu-sensor-fusion.md) | Gyroscope Drift, Accelerometer Tilt (atan2) and 2-Line Complementary IMU Fusion | lesson | 1.5-3.5 |
 | [`05-control.T1.05a`](../modules/05-control.T1.05a.md) | Open-Loop vs. Closed-Loop Feedback, P/I/D Physical Roles & Actuator Saturation | arm | 3.5 |
-| [`05-control.T2.05a`](../modules/05-control.T2.05a.md) | Gain/Phase Margin, Sensitivity Waterbed (S+T=1), Luenberger State Observers & Bryson's Rule for LQR | depth | 4.5 |
-| [`05-control.T3.05a`](../modules/05-control.T3.05a.md) | Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency | depth | 2 |
-| [`05-control.T3.05b`](../modules/05-control.T3.05b.md) | Rodrigues on SO(3), Multiplicative Error Injection & the ESKF Reset | depth | 2 |
-| [`05-control.T3.05c`](../modules/05-control.T3.05c.md) | Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | depth | 2 |
+| [`05-control.T2.05a`](../modules/05-control.T2.05a.md) | Gain/Phase Margin, Sensitivity Waterbed (S+T=1), Luenberger State Observers & Bryson's Rule for LQR | depth 2 | 4.5 |
+| [`05-control.T3.05a`](../modules/05-control.T3.05a.md) | Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency | depth 3 | 2 |
+| [`05-control.T3.05b`](../modules/05-control.T3.05b.md) | Rodrigues on SO(3), Multiplicative Error Injection & the ESKF Reset | depth 3 | 2 |
+| [`05-control.T3.05c`](../modules/05-control.T3.05c.md) | Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter | depth 3 | 2 |
 
 ### Step 9 · Plan motion and bring it up safely
 
 > Smooth a path, identify the plant, and run a bring-up that fails safe.
 
-Starts at [`06.1`](../06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md) · **14.5-18.5 focused hours** · 2 lessons · 2 arm modules · 1 depth module.
+Starts at [`06.1`](../06-robotics-and-autonomy/06.1-cubic-trajectories-and-compliant-joints.md) · **14.5-18.5 focused hours** · 2 lessons · 2 arm modules · 1 Depth 2 module.
 
 | Page | What it teaches | Layer | Focused hours |
 | :--- | :--- | :--- | ---: |
@@ -246,7 +249,7 @@ Starts at [`06.1`](../06-robotics-and-autonomy/06.1-cubic-trajectories-and-compl
 | [`07.1`](../07-systems-hil-and-production/07.1-safe-bringup-and-sine-sweep-sysid.md) | 10-Step Smoke-Free Hardware Bring-Up and Single-Tone Sine-Sweep System Identification | lesson | 1.5-3.5 |
 | [`06-robotics.T1.06a`](../modules/06-robotics.T1.06a.md) | 1D Point-to-Point Motion, Boundary Conditions & Virtual Joint Spring-Damper | arm | 3.5 |
 | [`07-systems.T1.07a`](../modules/07-systems.T1.07a.md) | Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep Gain/Phase | arm | 3.5 |
-| [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) | Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection | depth | 4.5 |
+| [`07-systems.T2.07a`](../modules/07-systems.T2.07a.md) | Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection | depth 2 | 4.5 |
 
 Optional pages in this step's folder - graded, not required: [`06-robotics.T2.06a`](../modules/06-robotics.T2.06a.md), [`06-robotics.T2.06b`](../modules/06-robotics.T2.06b.md).
 
@@ -285,7 +288,7 @@ sums - no entry claims hours it does not remove. The gates are catalogued in
 
 ## G. Modules outside both routes
 
-10 modules are graded, badgeable and not needed for the arm or the depth pass. They stay in their track READMEs as Depth 3.
+10 modules are graded, badgeable and not needed for the arm or either depth pass. They sit outside both routes, and the track READMEs list them as the optional pages rather than as a fourth depth.
 
 | Module | Focused hours |
 | :--- | ---: |

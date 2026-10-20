@@ -352,6 +352,8 @@ def facts():
         "depth2_high": round(sum(row["depth2_high"] for row in steps), 2),
         "depth3_low": round(sum(row["depth3_low"] for row in steps), 2),
         "depth3_high": round(sum(row["depth3_high"] for row in steps), 2),
+        "depth2_module_count": sum(len(row["depth2_modules"]) for row in steps),
+        "depth3_module_count": sum(len(row["depth3_modules"]) for row in steps),
         "hours": _fmt_range(round(sum(row["low"] for row in steps), 2),
                             round(sum(row["high"] for row in steps), 2)),
     }

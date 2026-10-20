@@ -13,15 +13,17 @@
 > This folder is the reading for Step 5. The ten steps are the only order the course uses; the three `Tier` sections
 > below are its three depth layers, and the headings keep their old names because the
 > module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
-> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
+> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
+> whatever its tier. Take Depth 1 in order; Depth 2 and Depth 3 wait until Step 10 is finished.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |
 | **1 · arm** | [Step 5](#tier-1-beginner--intuitive), in order | [`02.1`](02.1-1d-link-fk-and-coord-frames.md), [`02.2`](02.2-2link-planar-forward-kinematics.md), [`02.3`](02.3-2link-planar-inverse-kinematics.md), [`02.4`](02.4-rotational-inertia-and-gear-ratios.md), [`02.5`](02.5-bearings-belts-and-3d-printing.md) · [`02-mechanics.T1.02a`](../modules/02-mechanics.T1.02a.md) | 10.5-20.5 |
-| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md), [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | 9.5 |
-| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`02-mechanics.T2.02a`](../modules/02-mechanics.T2.02a.md) | 4.5 |
+| **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | [`02-mechanics.T3.02a`](../modules/02-mechanics.T3.02a.md) | 5 |
+| **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-**Step 5 costs 20-30 focused hours in total** - 7-17 of lessons, 3.5 of arm modules, 9.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 5 costs 20-30 focused hours in total** - 7-17 of lessons, 3.5 of arm modules, 4.5 of Depth 2 practice, 5 of Depth 3 derivation - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 6 · Measure the joint: sensors → [Track 03](../03-sensors-and-actuators/README.md) (11.35-16 focused hours).
 <!-- /step-index -->

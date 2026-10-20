@@ -13,15 +13,17 @@
 > This folder is the reading for Step 8. The ten steps are the only order the course uses; the three `Tier` sections
 > below are its three depth layers, and the headings keep their old names because the
 > module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
-> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
+> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
+> whatever its tier. Take Depth 1 in order; Depth 2 and Depth 3 wait until Step 10 is finished.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |
 | **1 · arm** | [Step 8](#tier-1-beginner--intuitive), in order | [`05.1`](05.1-pid-virtual-spring-damper-and-anti-windup.md), [`05.2`](05.2-complementary-imu-sensor-fusion.md) · [`05-control.T1.05a`](../modules/05-control.T1.05a.md) | 6.5-10.5 |
-| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`05-control.T2.05a`](../modules/05-control.T2.05a.md), [`05-control.T3.05a`](../modules/05-control.T3.05a.md), [`05-control.T3.05b`](../modules/05-control.T3.05b.md), [`05-control.T3.05c`](../modules/05-control.T3.05c.md) | 10.5 |
-| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
+| **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`05-control.T2.05a`](../modules/05-control.T2.05a.md) | 4.5 |
+| **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | [`05-control.T3.05a`](../modules/05-control.T3.05a.md), [`05-control.T3.05b`](../modules/05-control.T3.05b.md), [`05-control.T3.05c`](../modules/05-control.T3.05c.md) | 6 |
+| **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | — | — |
 
-**Step 8 costs 17-21 focused hours in total** - 3-7 of lessons, 3.5 of arm modules, 10.5 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 8 costs 17-21 focused hours in total** - 3-7 of lessons, 3.5 of arm modules, 4.5 of Depth 2 practice, 6 of Depth 3 derivation - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 9 · Plan motion and bring it up safely → [Track 06](../06-robotics-and-autonomy/README.md) + [Track 07](../07-systems-hil-and-production/README.md) (14.5-18.5 focused hours).
 <!-- /step-index -->

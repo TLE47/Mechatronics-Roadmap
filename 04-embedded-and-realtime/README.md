@@ -13,15 +13,17 @@
 > This folder is the reading for Step 7. The ten steps are the only order the course uses; the three `Tier` sections
 > below are its three depth layers, and the headings keep their old names because the
 > module pages link to them. Read `Tier 1` as Depth 1 of this step, `Tier 2` as
-> Depth 2, `Tier 3` as Depth 3. Take Depth 1 in order; Depth 2 waits until Step 10 is finished.
+> Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
+> whatever its tier. Take Depth 1 in order; Depth 2 and Depth 3 wait until Step 10 is finished.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |
 | **1 · arm** | [Step 7](#tier-1-beginner--intuitive), in order | [`04.1`](04.1-c-types-and-hardware-timer-isr.md), [`04.2`](04.2-packed-structs-and-crc8-telemetry.md), [`04.3`](04.3-structs-and-pointers-labeled-boxes.md) · [`04-embedded.T1.04a`](../modules/04-embedded.T1.04a.md), [`04-embedded.T1.04b`](../modules/04-embedded.T1.04b.md) | 11-17 |
 | **2 · practice** | [after Step 10](#tier-2-intermediate--applied), same step order | [`04-embedded.T2.04a`](../modules/04-embedded.T2.04a.md), [`04-embedded.T2.04b`](../modules/04-embedded.T2.04b.md) | 8 |
-| **3 · outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md), [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md) | 8 |
+| **3 · derive** | [after the practice pass](#tier-3-advanced--production), same step order | — | — |
+| **outside both routes** | [optional](#tier-3-advanced--production), graded, never required | [`04-embedded.T2.04c`](../modules/04-embedded.T2.04c.md), [`04-embedded.T2.04d`](../modules/04-embedded.T2.04d.md), [`04-embedded.T3.04a`](../modules/04-embedded.T3.04a.md) | 13 |
 
-**Step 7 costs 19-25 focused hours in total** - 4-10 of lessons, 7 of arm modules, 8 of depth modules - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
+**Step 7 costs 19-25 focused hours in total** - 4-10 of lessons, 7 of arm modules, 8 of Depth 2 practice - out of a **200.35-290 focused-hour** course. Hours are each page's own metadata; [`docs/SYLLABUS.md`](../docs/SYLLABUS.md) is the full column, and [`docs/CURRICULUM.md`](../docs/CURRICULUM.md) maps steps to ids.
 
 **Next:** Step 8 · Make it hold still: control → [Track 05](../05-control-and-estimation/README.md) (17-21 focused hours).
 <!-- /step-index -->
