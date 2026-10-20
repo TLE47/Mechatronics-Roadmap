@@ -13,6 +13,7 @@ import {
   milestonesForStep,
   stepAtDepth,
   stepCompleteAtDepth,
+  stepCostLabel,
   type SpineStep,
 } from '../../spine';
 import { tabForPreset } from '../../demoPresets';
@@ -356,6 +357,13 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                   </div>
                   <h3 className="text-base font-bold text-[#f1f5f9] mt-3">{spineStep.title}</h3>
                   <p className="text-xs text-[#cbd5e1] mt-1 leading-relaxed">{spineStep.outcome}</p>
+                  <div
+                    data-testid={`step-cost-${spineStep.number}`}
+                    className="mt-2 text-[11px] font-mono text-[#94a3b8] tabular-nums"
+                    title="Focused hours from each page's own metadata; an hour target is not elapsed time"
+                  >
+                    {stepCostLabel(spineStep)}
+                  </div>
 
                   <div className="mt-3 text-xs font-mono text-[#94a3b8] tabular-nums">
                     {practicePassed}/{practiceEntries.length} entries passed in this browser
@@ -518,6 +526,13 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 <div className="mt-3">
                   <h3 className="text-base font-bold text-[#f1f5f9]">{spineStep.title}</h3>
                   <div className="text-[11px] font-mono text-[#94a3b8] mt-0.5">{step.trackTitle}</div>
+                  <div
+                    data-testid={`step-cost-${spineStep.number}`}
+                    className="text-[11px] font-mono text-[#94a3b8] mt-0.5 tabular-nums"
+                    title="Focused hours from each page's own metadata; an arm hour is Steps 1-10, a depth hour is the second pass after Step 10"
+                  >
+                    {stepCostLabel(spineStep)}
+                  </div>
                   <div className="text-xs font-semibold text-[#38bdf8] mt-0.5">{step.headline}</div>
                   <p className="text-xs text-[#94a3b8] mt-1.5 leading-relaxed">{step.coreWhy}</p>
                 </div>

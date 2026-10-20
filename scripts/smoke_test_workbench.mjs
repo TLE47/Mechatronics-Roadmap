@@ -321,6 +321,18 @@ export async function runSmokeTests(viteServer) {
       htmlRoadmap.includes('data-testid="practice-entry-P.1"'),
       'Step 1 must carry the Python on-ramp entries by the ids the runner lists'
     );
+    // The cost line comes from the generated spine (route_model + page metadata), so a card and
+    // the syllabus can never quote the same step differently. The on-ramp has one layer and says
+    // so rather than printing a depth of zero hours.
+    assert(
+      htmlRoadmap.includes('data-testid="step-cost-1"') &&
+        htmlRoadmap.includes('on-ramp, one layer'),
+      'Step 1 must print its focused hours and say the on-ramp has one layer'
+    );
+    assert(
+      /data-testid="step-cost-3"[\s\S]{0,400}?arm [\d.]+[^<]*depth [\d.]+/.test(htmlRoadmap),
+      'A numbered step must print its focused hours with the arm/depth split'
+    );
     assert(
       /0\/\d+ entries passed in this browser/.test(htmlRoadmap),
       'An on-ramp step must count verified entries, starting at zero for a new browser'

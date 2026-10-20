@@ -12,7 +12,7 @@ import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { roadmapStepForLesson } from '../../practiceLinks';
-import { stepBreadcrumb } from '../../spine';
+import { stepBreadcrumb, stepCostLabel, stepForMilestone } from '../../spine';
 import { PYTHON_TAB_NAME } from '../../tabNames';
 import type { ActiveTierPass } from '../../curriculumData';
 import {
@@ -825,6 +825,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The same derived join the roadmap uses in the other direction: every entry names the step it
   // serves, and the button switches the roadmap to that step's pass.
   const currentRoadmapStep = roadmapStepForLesson(currentLesson.id);
+  // The step's focused hours come from the same generated spine the cards read, so the header and
+  // the roadmap cannot cost the same step differently.
+  const currentSpineStep = currentRoadmapStep
+    ? stepForMilestone(currentRoadmapStep.step.milestoneId)
+    : null;
 
   // Every unverified lesson gets its own first-run brief: the starter's marked holes, the first
   // check, and the output that means finished. Hiding one lesson's brief does not hide the next's.
@@ -1237,6 +1242,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   ) : (
                     <span className="whitespace-nowrap" data-testid="lesson-roadmap-step">
                       Python on-ramp — before the roadmap
+                    </span>
+                  )}
+                  {currentSpineStep && (
+                    <span
+                      data-testid="lesson-step-cost"
+                      title="Focused hours from each page's own metadata: the arm pass you are in, and the depth pass after Step 10"
+                      className="whitespace-nowrap tabular-nums text-[#cbd5e1]"
+                    >
+                      {stepCostLabel(currentSpineStep)}
                     </span>
                   )}
                   <a

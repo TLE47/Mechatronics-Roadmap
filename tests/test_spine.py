@@ -31,7 +31,9 @@ spec = importlib.util.spec_from_file_location("generate_spine_data", SCRIPT)
 spine = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(spine)
 
-FIELDS = ["number", "slug", "title", "outcome", "start", "lessons", "modules", "optional"]
+FIELDS = [
+    "number", "slug", "title", "outcome", "start", "lessons", "modules", "optional", "hours",
+]
 
 
 def committed():
@@ -71,6 +73,34 @@ class SpineDataTests(unittest.TestCase):
                     os.path.isfile(path),
                     "expected every step to start on a page in the repo; check the `start` path "
                     "in scripts/route_model.py for that step",
+                )
+
+    def test_each_step_costs_its_pages_arm_plus_depth(self):
+        """The card and the runner print these; the syllabus sums the same pages."""
+        facts = {row["number"]: row for row in spine.route_model.facts()["steps"]}
+        for step in spine.payload()["steps"]:
+            cost = step["hours"]
+            row = facts[step["number"]]
+            with self.subTest(step=step["number"]):
+                self.assertAlmostEqual(
+                    cost["total"]["low"], row["low"], places=2,
+                    msg="expected the step total to be the model's own low sum; a typed hour would "
+                        "let the card disagree with the syllabus",
+                )
+                self.assertAlmostEqual(
+                    cost["total"]["high"], row["high"], places=2,
+                    msg="expected the step total to be the model's own slow-end sum; check that "
+                        "generate_spine_data reads route_model.facts",
+                )
+                self.assertAlmostEqual(
+                    cost["arm"]["low"] + cost["depth"]["low"], cost["total"]["low"], places=2,
+                    msg="expected the arm and depth layers to add up to the step total; a gap "
+                        "would print two numbers that do not make the third",
+                )
+                self.assertAlmostEqual(
+                    cost["depth"]["high"], row["depth_high"], places=2,
+                    msg="expected the depth layer to be the model's depth sum; the depth pass "
+                        "must cost only its own modules",
                 )
 
     def test_generated_module_carries_every_field_the_app_reads(self):

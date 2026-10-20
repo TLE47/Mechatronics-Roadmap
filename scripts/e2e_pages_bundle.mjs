@@ -447,6 +447,16 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await lesson.click();
     await tablet.getByTestId('textarea-python-code').waitFor({ state: 'visible', timeout: 10000 });
 
+    // The runner header must cost the step it names from the same generated spine the cards read:
+    // the total, then the arm pass the learner is in and the depth pass after Step 10.
+    const stepCost =
+      (await tablet.getByTestId('lesson-step-cost').textContent())?.trim() ?? '';
+    assert.match(
+      stepCost,
+      /^\d+(?:\.\d+)?(?:–[\d.]+)? h · arm [\d.]+(?:–[\d.]+)? h · depth [\d.]+(?:–[\d.]+)? h$/,
+      `${name}: the lesson header must print the step's focused hours and arm/depth split, got "${stepCost}"`
+    );
+
     // The lesson header used to be one nowrap flex row whose spans could shrink, so at this width
     // "Lesson P.1" split across two lines and the pass badge read across three. Items may move to
     // the next line as whole units; none of them may break inside itself.

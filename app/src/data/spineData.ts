@@ -15,6 +15,15 @@ export interface SpineStepData {
   lessons: string[];
   modules: string[];
   optional: string[];
+  /** Focused hours, summed from each page's own metadata by route_model.step_facts(). */
+  hours: {
+    /** Lessons plus Tier 1 modules: what Steps 1-10 ask for. */
+    arm: { low: number; high: number };
+    /** Modules taken after Step 10 in the same step order; 0 on the on-ramp. */
+    depth: { low: number; high: number };
+    /** arm + depth. */
+    total: { low: number; high: number };
+  };
 }
 
 export const SPINE_SOURCE: SpineStepData[] = [
@@ -27,6 +36,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["track-p/P.*.md"],
     modules: [],
     optional: [],
+    hours: {
+      arm: { low: 16.75, high: 42.5 },
+      depth: { low: 0, high: 0 },
+      total: { low: 16.75, high: 42.5 },
+    },
   },
   {
     number: 2,
@@ -37,6 +51,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["stage-0/S0.*.md"],
     modules: [],
     optional: [],
+    hours: {
+      arm: { low: 13.75, high: 33.0 },
+      depth: { low: 0, high: 0 },
+      total: { low: 13.75, high: 33.0 },
+    },
   },
   {
     number: 3,
@@ -47,6 +66,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["00-foundations/0*.md"],
     modules: ["00-foundations.T1.00a", "00-foundations.T1.00b", "00-foundations.T1.00c", "00-foundations.T1.00d", "00-foundations.T1.00e", "00-foundations.T2.00a", "00-foundations.T2.00b", "00-foundations.T2.00c", "00-foundations.T2.00d", "00-foundations.T2.00e", "00-foundations.T2.00f", "00-foundations.T2.00g", "00-foundations.T2.00h", "00-foundations.T2.00i", "00-foundations.T2.00j", "00-foundations.T3.00a"],
     optional: [],
+    hours: {
+      arm: { low: 20.5, high: 26.5 },
+      depth: { low: 34.5, high: 34.5 },
+      total: { low: 55.0, high: 61.0 },
+    },
   },
   {
     number: 4,
@@ -57,6 +81,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["01-electronics-and-power/0*.md"],
     modules: ["01-electronics.T1.01a", "01-electronics.T1.01b", "01-electronics.T1.01c", "01-electronics.T1.01d", "01-electronics.T2.01a", "01-electronics.T2.01b"],
     optional: [],
+    hours: {
+      arm: { low: 18.0, high: 25.5 },
+      depth: { low: 8.5, high: 8.5 },
+      total: { low: 26.5, high: 34.0 },
+    },
   },
   {
     number: 5,
@@ -67,6 +96,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["02-mechanics-kinematics-dynamics/0*.md"],
     modules: ["02-mechanics.T1.02a", "02-mechanics.T2.02a", "02-mechanics.T3.02a"],
     optional: [],
+    hours: {
+      arm: { low: 10.5, high: 20.5 },
+      depth: { low: 9.5, high: 9.5 },
+      total: { low: 20.0, high: 30.0 },
+    },
   },
   {
     number: 6,
@@ -77,6 +111,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["03-sensors-and-actuators/0*.md"],
     modules: ["03-sensors.T1.03a", "03-sensors.T2.03a"],
     optional: [],
+    hours: {
+      arm: { low: 6.85, high: 11.5 },
+      depth: { low: 4.5, high: 4.5 },
+      total: { low: 11.35, high: 16.0 },
+    },
   },
   {
     number: 7,
@@ -87,6 +126,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["04-embedded-and-realtime/0*.md"],
     modules: ["04-embedded.T1.04a", "04-embedded.T1.04b", "04-embedded.T2.04a", "04-embedded.T2.04b"],
     optional: ["04-embedded.T2.04c", "04-embedded.T2.04d"],
+    hours: {
+      arm: { low: 11.0, high: 17.0 },
+      depth: { low: 8.0, high: 8.0 },
+      total: { low: 19.0, high: 25.0 },
+    },
   },
   {
     number: 8,
@@ -97,6 +141,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["05-control-and-estimation/0*.md"],
     modules: ["05-control.T1.05a", "05-control.T2.05a", "05-control.T3.05a", "05-control.T3.05b", "05-control.T3.05c"],
     optional: [],
+    hours: {
+      arm: { low: 6.5, high: 10.5 },
+      depth: { low: 10.5, high: 10.5 },
+      total: { low: 17.0, high: 21.0 },
+    },
   },
   {
     number: 9,
@@ -107,6 +156,11 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["06-robotics-and-autonomy/06.*.md", "07-systems-hil-and-production/07.*.md"],
     modules: ["06-robotics.T1.06a", "07-systems.T1.07a", "07-systems.T2.07a"],
     optional: ["06-robotics.T2.06a", "06-robotics.T2.06b"],
+    hours: {
+      arm: { low: 10.0, high: 14.0 },
+      depth: { low: 4.5, high: 4.5 },
+      total: { low: 14.5, high: 18.5 },
+    },
   },
   {
     number: 10,
@@ -117,5 +171,10 @@ export const SPINE_SOURCE: SpineStepData[] = [
     lessons: ["08-capstone-projects/08.1-*.md"],
     modules: ["08-capstones.T3.07a"],
     optional: [],
+    hours: {
+      arm: { low: 6.5, high: 9.0 },
+      depth: { low: 0, high: 0 },
+      total: { low: 6.5, high: 9.0 },
+    },
   },
 ];

@@ -21,6 +21,11 @@ import type { ActiveTierPass } from './curriculumData.ts';
  * registry the runner already lists. Nothing here is hand-typed prose.
  */
 
+export interface HourRange {
+  low: number;
+  high: number;
+}
+
 export interface SpineStep {
   /** 1..10, the number every surface prints. */
   number: number;
@@ -32,6 +37,8 @@ export interface SpineStep {
   trackDirs: string[];
   /** Workbench entries in every depth, in registry order. */
   entries: PythonLessonItem[];
+  /** Focused hours from the pages' own metadata: the arm pass, the depth pass, and their sum. */
+  hours: { arm: HourRange; depth: HourRange; total: HourRange };
 }
 
 export const SPINE_STEP_COUNT = SPINE_SOURCE.length;
@@ -86,6 +93,7 @@ export const SPINE: SpineStep[] = SPINE_SOURCE.map((source) => ({
   start: source.start,
   trackDirs: trackDirsOf(source),
   entries: entriesForSpineStep(source),
+  hours: source.hours,
 }));
 
 const STEP_BY_ENTRY = new Map<string, SpineStep>();
@@ -154,6 +162,22 @@ export function stepsCompleteAtDepth(
 /** The step's own name for a breadcrumb: `Step 6 of 10 · Measure the joint`. */
 export function stepLabel(step: SpineStep): string {
   return `Step ${step.number} of ${SPINE_STEP_COUNT} · ${step.title}`;
+}
+
+/** `17–21 h`, or `34.5 h` where the pages give one value rather than a range. */
+export function hoursRange(range: HourRange): string {
+  return range.low === range.high ? `${range.low} h` : `${range.low}–${range.high} h`;
+}
+
+/**
+ * The cost line the step card and the runner header both print, from the same sums:
+ * `17–21 h · arm 6.5–10.5 h · depth 10.5 h`. Steps 1-2 are the on-ramp and have no depth
+ * layer, so they say that plainly instead of printing `depth 0 h`.
+ */
+export function stepCostLabel(step: SpineStep): string {
+  const total = hoursRange(step.hours.total);
+  if (step.hours.depth.high === 0) return `${total} · on-ramp, one layer`;
+  return `${total} · arm ${hoursRange(step.hours.arm)} · depth ${hoursRange(step.hours.depth)}`;
 }
 
 const DEPTH_ORDER: ActiveTierPass[] = ['tier1', 'tier2', 'tier3'];

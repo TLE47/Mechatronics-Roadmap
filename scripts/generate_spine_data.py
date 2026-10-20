@@ -9,8 +9,9 @@ and "Tier 1 · Step 1 / 8" in the roadmap, and the Python on-ramp had no step at
 
 This generator copies the ten steps into `app/src/data/spineData.ts` so the app can render the same
 numbers the pages print. It copies, it does not paraphrase: the titles and outcomes are route_model's
-strings, the lesson/module lists are its lists. `--check` compares the committed file with what the
-model renders now, so a step cannot be added or renamed on one surface only.
+strings, the lesson/module lists are its lists, and the focused hours are its `step_facts` sums of
+each page's front matter. `--check` compares the committed file with what the model renders now, so
+a step cannot be added, renamed or recosted on one surface only.
 
 A typed module rather than JSON, for the same reason `pythonLessonsData.ts` is one: Node's type
 stripping runs `app/src/spine.ts` directly, so `scripts/test_spine.mjs` can check the join between
@@ -34,8 +35,10 @@ import route_model  # noqa: E402
 
 
 def payload():
+    facts = {row["number"]: row for row in route_model.facts()["steps"]}
     steps = []
     for step in route_model.STEPS:
+        cost = facts[step["number"]]
         steps.append(
             {
                 "number": step["number"],
@@ -46,6 +49,17 @@ def payload():
                 "lessons": list(step["lessons"]),
                 "modules": list(step["modules"]),
                 "optional": list(step["optional"]),
+                # The arm pass is the lessons plus the Tier 1 modules; the depth pass is what is
+                # left. Both are summed from each page's own front matter by route_model's
+                # step_facts, so the card, the runner and the syllabus cannot disagree.
+                "hours": {
+                    "arm": {
+                        "low": round(cost["low"] - cost["depth_low"], 2),
+                        "high": round(cost["high"] - cost["depth_high"], 2),
+                    },
+                    "depth": {"low": cost["depth_low"], "high": cost["depth_high"]},
+                    "total": {"low": cost["low"], "high": cost["high"]},
+                },
             }
         )
     return {
@@ -73,6 +87,15 @@ def render():
         "  lessons: string[];",
         "  modules: string[];",
         "  optional: string[];",
+        "  /** Focused hours, summed from each page's own metadata by route_model.step_facts(). */",
+        "  hours: {",
+        "    /** Lessons plus Tier 1 modules: what Steps 1-10 ask for. */",
+        "    arm: { low: number; high: number };",
+        "    /** Modules taken after Step 10 in the same step order; 0 on the on-ramp. */",
+        "    depth: { low: number; high: number };",
+        "    /** arm + depth. */",
+        "    total: { low: number; high: number };",
+        "  };",
         "}",
         "",
         "export const SPINE_SOURCE: SpineStepData[] = [",
@@ -90,6 +113,14 @@ def render():
         lines.append("  {")
         for name, value in fields:
             lines.append("    %s: %s," % (name, value))
+        lines.append("    hours: {")
+        for layer in ("arm", "depth", "total"):
+            hours = step["hours"][layer]
+            lines.append(
+                "      %s: { low: %s, high: %s },"
+                % (layer, json.dumps(hours["low"]), json.dumps(hours["high"]))
+            )
+        lines.append("    },")
         lines.append("  },")
     lines.append("];")
     lines.append("")

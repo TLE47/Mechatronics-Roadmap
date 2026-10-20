@@ -33,6 +33,7 @@ import {
   stepAtDepth,
   stepBreadcrumb,
   stepCompleteAtDepth,
+  stepCostLabel,
   stepForMilestone,
   stepLabel,
 } from '../app/src/spine.ts';
@@ -142,6 +143,44 @@ check('the breadcrumb prints the spine number and the depth, never "of 8"', () =
       `stepLabel for step ${step.number} must lead with its number`
     );
   }
+});
+
+check('every step prints its focused hours, and arm + depth is the total', () => {
+  for (const step of SPINE) {
+    const { arm, depth, total } = step.hours;
+    assert.ok(
+      total.high > 0,
+      `step ${step.number} must cost more than zero focused hours; a zero is a missing sum`
+    );
+    assert.ok(
+      Math.abs(arm.low + depth.low - total.low) < 1e-9 &&
+        Math.abs(arm.high + depth.high - total.high) < 1e-9,
+      `step ${step.number}: the arm and depth layers must add up to the step total`
+    );
+    assert.ok(
+      arm.low <= arm.high && depth.low <= depth.high && total.low <= total.high,
+      `step ${step.number}: an hour range must not run backwards`
+    );
+  }
+  assert.equal(
+    SPINE[0].hours.depth.high,
+    0,
+    'step 1 is the Python on-ramp and has no depth layer to cost'
+  );
+  assert.equal(
+    SPINE[1].hours.depth.high,
+    0,
+    'step 2 is the circuits on-ramp and has no depth layer to cost'
+  );
+  assert.equal(
+    stepCostLabel(SPINE[7]),
+    '17–21 h · arm 6.5–10.5 h · depth 10.5 h',
+    'the card and the runner must print the same cost line for the same step'
+  );
+  assert.ok(
+    stepCostLabel(SPINE[0]).includes('on-ramp'),
+    'the on-ramp must say it has one layer instead of printing a depth of zero hours'
+  );
 });
 
 check('a step is complete only when every entry it lists has been verified', () => {
