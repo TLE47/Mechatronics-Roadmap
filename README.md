@@ -80,7 +80,7 @@ Read one idea, predict what the code will do, then run it. A lesson passes only 
 
 ## The advanced half (optional)
 
-The advanced material — state-space control, sensor fusion, motor drives, ROS 2, learned policies — is real and graded, and it is not needed for the ten steps. The full map is [`docs/ROUTE.md`](docs/ROUTE.md); what can be skipped is [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md); the badges and every check CI runs are [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
+The advanced material — state-space control, sensor fusion, motor drives, ROS 2, learned policies — is real and graded, and it is not needed for the ten steps. The architecture map is [`docs/CURRICULUM.md`](docs/CURRICULUM.md); the full route is [`docs/ROUTE.md`](docs/ROUTE.md); what can be skipped is [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md); the badges and every check CI runs are [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
 
 ## License
 

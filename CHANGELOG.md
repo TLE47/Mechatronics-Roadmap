@@ -28,6 +28,10 @@ it **someday**, and `generate_sim_route.py --check` now fails if the page list o
 Pilot logging separates `active_minutes` from `elapsed_minutes` and `overhead_minutes`, so the 5x
 calendar multiplier can be calibrated by real sittings instead of asserted.
 
+The architecture tables that used to sit inline in `docs/ROUTE.md` now live in
+[`docs/CURRICULUM.md`](docs/CURRICULUM.md), so the README, the route plan and the ids each have one
+home. `docs/ROUTE.md` keeps the ten steps and the two finish lines.
+
 The workbench's first screen had the same problem in miniature: its header still said
 `Stage 0: On-Ramp` and `Pass 1: Beginner`, and the Beginner View tab subtitles still read
 `d-q FOC · SVPWM` and `Track P · Stage 0 · Pass 1–3 Matrix`. The header now says Start here,

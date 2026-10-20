@@ -61,7 +61,8 @@ Chromium through Playwright or the documented fallback paths.
 - **Assertion quality:** every graded assert names what was expected and what arrived
   (`lint_assertions.py`), ratcheted against `docs/assertion-baseline.json`.
 - **Route integrity:** every module appears exactly once in [`SIM_ROUTE.md`](SIM_ROUTE.md), the
-  Core ids exist on disk, and the totals are the sum of the pages.
+  Core ids exist on disk, and the totals are the sum of the pages. The step/id map and depth
+  matrix in [`CURRICULUM.md`](CURRICULUM.md) point at the same lists.
 - **Minimum finish integrity:** [`MINIMUM.md`](MINIMUM.md) is generated from the same pages, its
   ids are a subset of the Core route, and its total is the sum of its own rows.
 - **Exercise coverage:** every graded package runs and every solution passes; the report CI
