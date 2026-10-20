@@ -10,8 +10,10 @@ The ten-step route finishes with a working simulated arm. Everything here is ext
 module is graded, has its own Break-it case and badge, and can be skipped without losing the
 arm or the skills the route names. Taking one adds hours; skipping one costs nothing.
 
-There are **10 optional modules, 47.5 hours** in total. The generated per-module list, with
-hours from each page, is the Extensions table in [`SIM_ROUTE.md`](SIM_ROUTE.md#extensions-optional-still-graded).
+There are **10 optional modules, 47.5 focused hours** in total. The generated per-module list,
+with focused hours from each page, is the Extensions table in
+[`SIM_ROUTE.md`](SIM_ROUTE.md#extensions-optional-still-graded). These are lesson-time targets,
+not elapsed time; the README gives the calendar estimate.
 
 ## ROS 2
 

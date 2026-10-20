@@ -11,6 +11,29 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 108: Focused Hours and a Real Finish Line
+
+The front page said **200–290 hours** without saying what it counted, which reads as elapsed time
+and turns hour 200 at Step 5 into evidence that the learner is slow. It now says **focused hours**
+in the table, the route page and the Extensions page, and adds the calendar arithmetic a first
+project actually needs: 200–290 focused hours is 8–11 months at 6 h/week before overhead, and a
+**3–5 year project** at the same pace once a 5x first-time multiplier is counted.
+
+The other half of the same problem was the absence of a stopping point. [`docs/MINIMUM.md`](docs/MINIMUM.md)
+is now generated from the same page metadata as the full route: Track P, Stage 0, every Tier 1
+bridge, the capstone's five prerequisites, and the capstone. That is 47 pages and 93–151 focused
+hours, a real finished arm rather than a consolation prize. The README labels everything outside
+it **someday**, and `generate_sim_route.py --check` now fails if the page list or total drifts.
+
+Pilot logging separates `active_minutes` from `elapsed_minutes` and `overhead_minutes`, so the 5x
+calendar multiplier can be calibrated by real sittings instead of asserted.
+
+The workbench's first screen had the same problem in miniature: its header still said
+`Stage 0: On-Ramp` and `Pass 1: Beginner`, and the Beginner View tab subtitles still read
+`d-q FOC · SVPWM` and `Track P · Stage 0 · Pass 1–3 Matrix`. The header now says Start here,
+Beginner, Applied and Advanced, and each tab carries a plain-English beginner subtitle while the
+technical one stays in Advanced View.
+
 ## [2026-10-19] — Run 107: Every Lesson Teaches Its Own First Run
 
 The first-run brief was P.1-only, so a learner who clicked P.2 or an exercise got the same generic
@@ -51,7 +74,7 @@ newcomer had to decode before finding a lesson. It is now three lines: a link to
 sentence naming the finished arm, and the time and cost. The ten-step table is generated from
 `scripts/route_model.py`; the tier/pass matrix, CI details and optional modules moved to
 [`docs/ROUTE.md`](docs/ROUTE.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) and
-[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 6 KB.
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 9 KB.
 
 Two contradictions surfaced while generating the counts:
 

@@ -1,11 +1,18 @@
-# [New to everything? Click here → Lesson 1](track-p/P.1-variables-and-data-types.md)
+# Mechatronics Roadmap
+
+**What this is.** A free, browser-based course that starts from no coding, electronics, or maths past school arithmetic and ends with a working simulated two-joint robot arm. You read one small idea, write it in Python, and a lesson only counts when its checks pass.
+
+**Start here → [Lesson 1: Variables and data types](track-p/P.1-variables-and-data-types.md)**. No install, no account, nothing to buy.
 
 You will finish with a simulated two-joint robot arm that holds its own weight, follows a figure-8, and recovers from three faults we break on purpose.
-<!-- sim-route:hours -->**≈200–290 hours**<!-- /sim-route --> · **\$0 in hardware** — everything runs in your browser; an optional bench starts at \$15.
 
 ![A simulated two-link arm tracking a figure-8 path, with its joints and tip trail drawn as it moves](docs/media/arm-sim.gif)
 
 *Step 10: the 2-DOF arm you build towards. No kit, no install — this is the browser simulator.*
+
+<!-- sim-route:hours -->**≈200–290 focused hours**<!-- /sim-route --> · **\$0 in hardware** — everything runs in your browser; an optional bench starts at \$15.
+
+**Focused hours, not elapsed time.** That count is time with the lesson open; it excludes setup, debugging and re-reading. At 6 hours a week, plan for **3–5 years** for the full route once that overhead is counted; the minimum viable finish is about **1.5–2.5 years** at the same pace. [The arithmetic is below.](#how-long-this-really-takes)
 
 No previous electronics, mechanics, or coding. No maths past school arithmetic: what you need is taught, in order, at most two new ideas per lesson.
 
@@ -14,7 +21,7 @@ No previous electronics, mechanics, or coding. No maths past school arithmetic: 
 Each step ends with something you can run and check yourself. Start at Step 1; follow the links down.
 
 <!-- route:table:start -->
-| Step | What you can do when it is done | Lessons | Modules | Hours |
+| Step | What you can do when it is done | Lessons | Modules | Focused hours |
 | :--- | :--- | ---: | ---: | ---: |
 | **[1 · Python and the maths a robot needs](track-p/P.1-variables-and-data-types.md)** | Read a formula, write it in Python, and check your own answer. | 14 | — | ≈17–43 |
 | **[2 · Circuits and your first microcontroller](stage-0/S0.0-why-electricity-is-like-flow.md)** | Light an LED, read a knob, and dim it with PWM without breaking anything. | 11 | — | ≈14–33 |
@@ -29,9 +36,26 @@ Each step ends with something you can run and check yourself. Start at Step 1; f
 | **10 steps** | **A finished simulated arm, and the checks to prove it** | **48** | **40** | **≈200–290** |
 <!-- route:table:end -->
 
-<!-- route:lessons -->48<!-- /route --> lessons and <!-- sim-route:modules -->**40 modules**<!-- /sim-route --> you practise with. Another <!-- sim-route:extensions -->**10 optional modules (47.5 hours)**<!-- /sim-route --> sit outside the route; skipping all of them still leaves a finished arm.
+<!-- route:lessons -->48<!-- /route --> lessons and <!-- sim-route:modules -->**40 modules**<!-- /sim-route --> you practise with. Another <!-- sim-route:extensions -->**10 optional modules (47.5 focused hours)**<!-- /sim-route --> sit outside the route; skipping all of them still leaves a finished arm.
 
-The hours are targets, not measurements: each page's own estimate, summed by [`scripts/generate_sim_route.py`](scripts/generate_sim_route.py): <!-- sim-route:hours-basis -->the Core's high end is a slow-learner figure on 48 of 88 pages and a single estimate on the other 40, so plan against it as a floor and expect it to rise as those pages are measured<!-- /sim-route -->. No outside learner has completed the route yet. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) is the full page-by-page list, and `--check` fails CI if a count or hour drifts from the lessons.
+The focused hours are targets, not measurements: each page's own estimate, summed by [`scripts/generate_sim_route.py`](scripts/generate_sim_route.py): <!-- sim-route:hours-basis -->the Core's high end is a slow-learner figure on 48 of 88 pages and a single estimate on the other 40, so plan against it as a floor and expect it to rise as those pages are measured<!-- /sim-route -->. No outside learner has completed the route yet. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) is the full page-by-page list, and `--check` fails CI if a count or hour drifts from the lessons.
+
+## How long this really takes
+
+The number above is **focused hours**: time with the lesson open, including the reading, the exercise and its checks. It is not elapsed time. Setup, debugging, re-reading, and the days you take off are real, and for a first project they are often the larger part of the calendar.
+
+| If you can give | Focused route | Plan for (5× overhead) | If you need 10× |
+| :--- | :--- | :--- | :--- |
+| 6 hours/week | ≈8–11 months | **≈3–5 years** | ≈6–9 years |
+| 10 hours/week | ≈5–7 months | ≈2–3 years | ≈4–6 years |
+
+The 5× and 10× are planning multipliers, not measurements: no outside learner has completed the route yet. At 6 hours a week, **3–5 years is the number to plan against**; 8–11 months is only the scheduled lesson time.
+
+## The minimum viable finish
+
+**If you want one working arm, this is a finish line, not a consolation prize.** Do Step 1, Step 2, the beginner practice modules in Steps 3–9, the lessons the capstone opens, and Step 10. That is <!-- sim-route:minimum-pages -->47<!-- /sim-route --> pages and <!-- sim-route:minimum -->**≈93–151 focused hours**<!-- /sim-route -->, about half the full route. The exact page list is [`docs/MINIMUM.md`](docs/MINIMUM.md).
+
+**Everything else is someday.** The full route adds the deeper practice modules and the remaining lessons ([`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md)); the optional modules add their own hours ([`docs/EXTENSIONS.md`](docs/EXTENSIONS.md)). None of it is unfinished business if you stop at the arm.
 
 ## What you need
 
@@ -54,9 +78,9 @@ flowchart LR
 
 Read one idea, predict what the code will do, then run it. A lesson passes only when its behaviour checks pass, so "it printed something" is not finished. Progress is saved in your browser and exports as a Markdown portfolio; the [beginner timing log](.github/ISSUE_TEMPLATE/beginner-timing-log.md) is where a real completion time helps everyone.
 
-## The rest of the course
+## The advanced half (optional)
 
-The advanced half — state-space control, sensor fusion, motor drives, ROS 2, learned policies — is real, graded, and optional. It lives in [`docs/ROUTE.md`](docs/ROUTE.md) with the full module map; [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md) explains what can be skipped; [`docs/VERIFICATION.md`](docs/VERIFICATION.md) lists the badges and every check CI runs. Nothing there is needed to finish the ten steps.
+The advanced material — state-space control, sensor fusion, motor drives, ROS 2, learned policies — is real and graded, and it is not needed for the ten steps. The full map is [`docs/ROUTE.md`](docs/ROUTE.md); what can be skipped is [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md); the badges and every check CI runs are [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
 
 ## License
 

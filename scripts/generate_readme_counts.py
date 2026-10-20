@@ -54,10 +54,10 @@ def _friendly(low, high):
 
 
 def render_table():
-    """The 10-step table: what a learner can do, how many pages, how many hours."""
+    """The 10-step table: what a learner can do, how many pages, how many focused hours."""
     facts = route_model.facts()
     lines = [
-        "| Step | What you can do when it is done | Lessons | Modules | Hours |",
+        "| Step | What you can do when it is done | Lessons | Modules | Focused hours |",
         "| :--- | :--- | ---: | ---: | ---: |",
     ]
     for row in facts["steps"]:

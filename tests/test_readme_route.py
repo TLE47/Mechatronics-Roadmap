@@ -115,6 +115,11 @@ class GeneratorTests(unittest.TestCase):
         )
         self.assertIn("| **10 steps** |", table,
                       "expected a total row so the reader sees the whole route's size at a glance")
+        self.assertIn(
+            "| Focused hours |", table,
+            "expected the hour column to say focused hours, not elapsed hours; an unqualified "
+            "total is the 5-10x underestimate a first-time learner plans against",
+        )
 
 
 class ConsistencyTests(unittest.TestCase):

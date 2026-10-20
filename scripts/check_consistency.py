@@ -56,6 +56,7 @@ def facts():
     steps = route_model.facts()
     modules = route_model.all_modules()
     core = route.route_facts()
+    minimum = route.minimum_facts()
     extensions = [row for row in route.module_rows() if row["id"] not in set(route.CORE_MODULES)]
     ext_hours = route.fmt(
         round(sum(row["low"] or 0.0 for row in extensions), 2),
@@ -70,6 +71,8 @@ def facts():
         "bridge_modules": len(modules),
         "core_low": core["low"],
         "core_high": core["high"],
+        "minimum_low": minimum["low"],
+        "minimum_high": minimum["high"],
         "optional_hours": ext_hours,
     }
 
@@ -142,7 +145,7 @@ def check_quoted_hours(f):
         if rel not in scoped:
             continue
         text = read(path)
-        for match in re.finditer(r"(\d+)[–-](\d+)\s*hours", text):
+        for match in re.finditer(r"(\d+)[–-](\d+)\s*(?:focused\s+)?hours", text):
             start = text.rfind("\n", 0, match.start()) + 1
             end = text.find("\n", match.end())
             line = text[start:end if end != -1 else len(text)]
@@ -159,6 +162,7 @@ def check_quoted_hours(f):
             allowed = {
                 (round(track_p["low"]), round(track_p["high"])),
                 (round(stage0["low"]), round(stage0["high"])),
+                (round(f["minimum_low"]), round(f["minimum_high"])),
             }
             if got in allowed:
                 continue
@@ -233,6 +237,13 @@ def check_generated_docs(f):
         doc = ""
     if doc != expected:
         findings.append("docs/SIM_ROUTE.md is stale; run scripts/generate_sim_route.py")
+    minimum_expected = route.render_minimum()
+    try:
+        minimum_doc = read(route.MINIMUM_OUT)
+    except OSError:
+        minimum_doc = ""
+    if minimum_doc != minimum_expected:
+        findings.append("docs/MINIMUM.md is stale; run scripts/generate_sim_route.py")
     if route.render_readme(read(README)) != read(README):
         findings.append("README.md route figures are stale; run scripts/generate_sim_route.py")
     return findings

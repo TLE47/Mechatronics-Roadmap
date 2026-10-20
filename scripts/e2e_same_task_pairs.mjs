@@ -192,10 +192,10 @@ const CASES = [
 
   // --- Tier pass (App.activeTierPass): header links and the in-simulator switcher.
   {
-    name: 'tier: header Pass 3 + in-simulator Tier 2 (control)',
+    name: 'tier: header Advanced + in-simulator Tier 2 (control)',
     setup: [{ testid: 'tab-btn-tab-foc' }],
     pair: [
-      { text: 'Pass 3: Production' },
+      { testid: 'btn-pass-tier3' },
       { text: 'Tier 2 Pass: Applied' },
     ],
   },

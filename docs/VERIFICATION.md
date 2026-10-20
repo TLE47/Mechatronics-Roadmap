@@ -12,13 +12,13 @@
 
 ```mermaid
 flowchart LR
-    Meta["Lesson and module metadata"] --> Gen["generate_readme_counts<br/>generate_sim_route"] --> Page["README and SIM_ROUTE"] --> Check["--check in CI"] --> Fail["Fails on drift"]
+    Meta["Lesson and module metadata"] --> Gen["generate_readme_counts<br/>generate_sim_route"] --> Page["README, SIM_ROUTE<br/>and MINIMUM"] --> Check["--check in CI"] --> Fail["Fails on drift"]
 ```
 
 | Fact | Source | Check |
 | :--- | :--- | :--- |
 | 10 steps, lesson and module counts, step hours | `scripts/route_model.py` from each page's front matter | `python3.12 scripts/generate_readme_counts.py --check` |
-| Core hours and the optional total | `scripts/generate_sim_route.py` | `python3.12 scripts/generate_sim_route.py --check` |
+| Core hours, the optional total, and the minimum finish | `scripts/generate_sim_route.py` | `python3.12 scripts/generate_sim_route.py --check` |
 | Every count quoted anywhere in the docs | `scripts/check_consistency.py` | `python3.12 scripts/check_consistency.py` |
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
@@ -62,6 +62,8 @@ Chromium through Playwright or the documented fallback paths.
   (`lint_assertions.py`), ratcheted against `docs/assertion-baseline.json`.
 - **Route integrity:** every module appears exactly once in [`SIM_ROUTE.md`](SIM_ROUTE.md), the
   Core ids exist on disk, and the totals are the sum of the pages.
+- **Minimum finish integrity:** [`MINIMUM.md`](MINIMUM.md) is generated from the same pages, its
+  ids are a subset of the Core route, and its total is the sum of its own rows.
 - **Exercise coverage:** every graded package runs and every solution passes; the report CI
   reads is the same one the tests consume, so a package cannot be skipped silently.
 - **Links and sketches:** weekly, with failures filed as `link-*` issues.

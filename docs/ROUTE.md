@@ -35,9 +35,18 @@ learner-facing page uses a second name for a step.
 
 ## What "complete" means
 
-**Course complete means the Core route** in [`docs/SIM_ROUTE.md`](SIM_ROUTE.md): the 40
-required practice modules plus all 48 lessons, summarised on the front page as ten steps.
-Everything in Extensions is graded and badgeable but optional.
+There are two finish lines, and both are real:
+
+- **Minimum viable finish** - Track P, Stage 0, every Tier 1 bridge, the five lessons the
+  capstone opens, and the capstone itself. That is one working, verified 2-DOF arm at about
+  half the focused hours; the exact page list is [`MINIMUM.md`](MINIMUM.md). Stop here and
+  you are done, not behind.
+- **Core complete** - the Core route in [`docs/SIM_ROUTE.md`](SIM_ROUTE.md): the 40 required
+  practice modules plus all 48 lessons, summarised on the front page as ten steps. This is
+  the same arm with the depth modules that explain why it works.
+
+Everything in Extensions is graded and badgeable but optional. The front page gives the
+focused-hours label and the calendar estimate; an hour target is not elapsed time.
 
 ## One arm, ten steps
 

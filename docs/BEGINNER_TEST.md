@@ -60,6 +60,9 @@ Copy this into a private note per participant. Publish aggregates only.
 | Background (coding / electronics / maths) | |
 | Device and browser | |
 | Reached Lesson 1 without help? | yes / no — how long |
+| Total session elapsed (minutes) | |
+| Focused lesson minutes (lesson open) | |
+| Setup / tool / re-read minutes | |
 | First confusion (quote) | |
 | Stuck points (time, page, what they tried) | |
 | Hints used (in-course / person) | |
@@ -97,11 +100,15 @@ sitting with a new person; do not count the author re-reading the fix as validat
 On 2026-10-19 the author walked the first five minutes as a newcomer would, from the README. It
 found two defects, both fixed the same day:
 
-1. **The README's first screen was a badge wall and a tier matrix.** It is now three lines ending
-   in a link to Lesson 1, with the finished result as a moving image.
+1. **The README's first screen was a badge wall and a tier matrix.** It is now a two-sentence
+   what-this-is, a Lesson 1 link, and the finished result as a moving image, before any route
+   table or advanced vocabulary.
 2. **The app opened on the advanced tier roadmap, and its runner headline said "32 Beginner
    Lessons" beside an actual 86 graded exercises.** The runner now opens by default and its counts
    are rendered from the lesson data.
+3. **The header and Beginner View tab subtitles still spoke in Stage/Pass and FOC/SVPWM.** The
+   header now says Start here, Beginner, Applied and Advanced; each tab's beginner subtitle is
+   plain English, and the technical one is kept for Advanced View.
 
 The run-verify failure for the untouched starter was readable: it named the variable, the expected
 value and the actual value. That is the bar the rest of the error states have to meet.

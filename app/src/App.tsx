@@ -130,6 +130,8 @@ export type WorkbenchViewMode = 'beginner' | 'advanced';
 export interface WorkbenchTabMeta {
   id: TabId;
   beginnerLabel: string;
+  /** The plain-English second line in Beginner View; keep acronyms out of it. */
+  beginnerSubtitle: string;
   technicalLabel: string;
   technicalSubtitle: string;
   isBeginnerCore: boolean;
@@ -139,6 +141,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-arch',
     beginnerLabel: '1. Start Here: Roadmap & Progress',
+    beginnerSubtitle: 'Your ten steps, one at a time',
     technicalLabel: '1. Linear Tier Roadmap (Tracks 00→08)',
     technicalSubtitle: 'Track P · Stage 0 · Pass 1–3 Matrix',
     isBeginnerCore: true,
@@ -146,6 +149,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-pyodide',
     beginnerLabel: `2. Run Python Lessons (${PYTHON_LESSONS.length} Exercises)`,
+    beginnerSubtitle: 'Write code, press Run, see what passes',
     technicalLabel: '9. In-Browser Python Runner (86 Exercises)',
     technicalSubtitle: 'Pyodide WASM · 3-Step Hints · Asserts',
     isBeginnerCore: true,
@@ -153,6 +157,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-placement',
     beginnerLabel: '3. Placement Quiz (Skip What You Know)',
+    beginnerSubtitle: 'Find the right starting step',
     technicalLabel: '10. Prerequisite Placement Quiz',
     technicalSubtitle: '8 Module Skip-Gate Checkpoints',
     isBeginnerCore: true,
@@ -160,6 +165,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-bode',
     beginnerLabel: '4. Vibration Filter & Resonance Lab',
+    beginnerSubtitle: 'Watch a vibration fade with a filter',
     technicalLabel: '2. Two-Mass Resonance & Notch Bode (Lab 00/05)',
     technicalSubtitle: 'Two-Mass Bode · Biquad Notch Filter',
     isBeginnerCore: true,
@@ -167,6 +173,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-foc',
     beginnerLabel: '5. Brushless Motor Control Lab',
+    beginnerSubtitle: 'Make a motor spin smoothly',
     technicalLabel: '3. 25 kHz PMSM FOC & SVPWM (Lab 01/03)',
     technicalSubtitle: '3-Phase BLDC · d-q FOC · SVPWM',
     isBeginnerCore: true,
@@ -174,6 +181,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-pend',
     beginnerLabel: '6. Pendulum Balance & Safety Walls',
+    beginnerSubtitle: 'Balance a pendulum without falling',
     technicalLabel: '4. Furuta Pendulum + LQR + CBF (Lab 02/05)',
     technicalSubtitle: 'PID/LQR Balance · CBF Safety Filter',
     isBeginnerCore: true,
@@ -181,6 +189,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-models',
     beginnerLabel: '7. Robot Arm Kinematics & Safety Cutoff',
+    beginnerSubtitle: 'Move a robot arm to a point',
     technicalLabel: '5. URDF/MuJoCo Inspector & STO Safety (Lab 07/08)',
     technicalSubtitle: 'Forward/Inverse Kinematics · <1 μs STO',
     isBeginnerCore: false,
@@ -188,6 +197,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-cadpcb',
     beginnerLabel: '8. 3D Parts & Motor Driver PCB Lab',
+    beginnerSubtitle: 'See the parts and the motor board',
     technicalLabel: '6. 3D CAD Parts & 48V/30A FOC PCB BOM',
     technicalSubtitle: 'STEP Flexures · Parasitic Inductance',
     isBeginnerCore: false,
@@ -195,6 +205,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-sysid',
     beginnerLabel: '9. Sine-Sweep System Identification',
+    beginnerSubtitle: 'Measure how a machine responds',
     technicalLabel: '7. Schroeder Multisine Closed-Loop SysID (Lab 07)',
     technicalSubtitle: 'Frequency-Domain Plant Identification',
     isBeginnerCore: false,
@@ -202,6 +213,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-eskf',
     beginnerLabel: '10. IMU Sensor Fusion & Real-Time Lock',
+    beginnerSubtitle: 'Combine two motion sensors',
     technicalLabel: '8. 6-DOF Attitude ESKF & RTOS SeqLock (Lab 04/05)',
     technicalSubtitle: 'IMU Gyro/Accel Fusion · WaitFreeSeqLock',
     isBeginnerCore: false,
@@ -209,6 +221,7 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   {
     id: 'tab-links',
     beginnerLabel: '11. Citation Link Health (Nightly Check)',
+    beginnerSubtitle: 'See which outside links still work',
     technicalLabel: '11. Link Check History & Not-Checked Trend',
     technicalSubtitle: 'Blocked / Unreachable Citations · Run Timeline',
     isBeginnerCore: false,
@@ -713,7 +726,7 @@ export const App: React.FC = () => {
                 {viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel}
               </div>
               <div className="text-[11px] font-mono text-[#94a3b8] truncate whitespace-nowrap mt-0.5">
-                {viewMode === 'beginner' ? tab.technicalSubtitle : tab.beginnerLabel}
+                {viewMode === 'beginner' ? tab.beginnerSubtitle : tab.beginnerLabel}
               </div>
             </button>
           );

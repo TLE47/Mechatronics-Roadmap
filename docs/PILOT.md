@@ -64,7 +64,9 @@ One row per module or lesson, in a private sheet during the pilot, published as 
 | :--- | :--- | :--- |
 | `id` | e.g. `00-foundations.T2.00a`, `P.4`, `R.3` | Joins the row to the page |
 | `date` | `YYYY-MM-DD` | Transfer timing, and whether a break preceded a stall |
-| `active_minutes` | integer | The time claim the roadmap publishes |
+| `active_minutes` | integer | Focused lesson time: the time claim the roadmap publishes |
+| `elapsed_minutes` | integer | Wall-clock time from sitting down to stopping, including setup and breaks |
+| `overhead_minutes` | integer | `elapsed_minutes - active_minutes`: setup, tool recovery and re-reading. This is what calibrates the 5x/10x calendar multiplier |
 | `hints_used` | 0–3 | Distinguishes "used the ladder" from "needed a person" |
 | `help` | `none` · `hint_1` · `hint_2` · `solution` · `person` | The help budget in §3 |
 | `stuck` | `none` · `setup` · `tool` · `maths` · `instruction` · `bug` | The top-10 stuck-point table |
@@ -88,7 +90,8 @@ consent and initials.
 - **the actual N**, with counts next to every percentage (five people are described, not turned into
   statistics);
 - the **funnel**: how many started, finished each stage, and dropped;
-- **median and range** per stage, not means;
+- **median and range** per stage for both focused and elapsed minutes, not means, plus the
+  overhead ratio that lets the published calendar estimate be checked against real sittings;
 - **help per lesson**, by type, against the §3 budget;
 - the **top 10 stuck points**, and what changed because of each;
 - **before/after** numbers on every revised page;

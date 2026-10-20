@@ -29,6 +29,7 @@ sys.dont_write_bytecode = True
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GENERATOR = os.path.join(ROOT, "scripts", "generate_sim_route.py")
 DOC = os.path.join(ROOT, "docs", "SIM_ROUTE.md")
+MINIMUM = os.path.join(ROOT, "docs", "MINIMUM.md")
 
 spec = importlib.util.spec_from_file_location("generate_sim_route", GENERATOR)
 gen = importlib.util.module_from_spec(spec)
@@ -133,7 +134,7 @@ class SimRouteTests(unittest.TestCase):
             f"expected a `**Core total**` figure in {DOC}; without it the README has nothing "
             f"generated to quote - check the route page's totals table",
         )
-        quoted = gen.friendly_range(float(core.group(1)), float(core.group(2))) + " hours"
+        quoted = gen.friendly_range(float(core.group(1)), float(core.group(2))) + " focused hours"
         self.assertIn(
             quoted,
             readme,
@@ -149,11 +150,11 @@ class SimRouteTests(unittest.TestCase):
             f"route states no size - check the totals table",
         )
         self.assertIn(
-            f"{float(extensions.group(2)):g} hours",
+            f"{float(extensions.group(2)):g} focused hours",
             readme,
             f"expected README.md to quote the generated Extensions total "
-            f"{extensions.group(2)!r} hours; check the claim against {DOC}, since a mismatched "
-            f"optional figure makes the extras look required",
+            f"{extensions.group(2)!r} focused hours; check the claim against {DOC}, since a "
+            f"mismatched optional figure makes the extras look required",
         )
         self.assertIn(
             "docs/SIM_ROUTE.md", readme,
@@ -214,9 +215,16 @@ class SimRouteTests(unittest.TestCase):
             "a missing marker silently removes that figure from generation, which is how a stale "
             "total survives next to a generated one",
         )
+        self.assertEqual(
+            (self.readme.count("<!-- sim-route:minimum -->"),
+             self.readme.count("<!-- sim-route:minimum-pages -->")),
+            (1, 1),
+            "expected the minimum finish's page count and focused hours to be generated too; "
+            "a hand-typed minimum total is the first number to drift when a page moves",
+        )
 
     def test_a_stale_figure_is_rewritten_not_left_alone(self):
-        current = f"**{gen.friendly_range(gen.route_facts()['low'], gen.route_facts()['high'])} hours**"
+        current = f"**{gen.friendly_range(gen.route_facts()['low'], gen.route_facts()['high'])} focused hours**"
         doctored = self.readme.replace(current, "**175.5–220.5 hours**", 1)
         fixed = gen.render_readme(doctored)
         self.assertNotEqual(
@@ -239,7 +247,7 @@ class SimRouteTests(unittest.TestCase):
             f"route_facts() gives the README; two summations mean two chances to disagree",
         )
         self.assertIn(
-            f"**{gen.friendly_range(facts['low'], facts['high'])} hours**", self.readme,
+            f"**{gen.friendly_range(facts['low'], facts['high'])} focused hours**", self.readme,
             f"expected README.md's first-line total to quote the rounded plan figure built from "
             f"{hours!r}; check generate_sim_route.py and docs/SIM_ROUTE.md",
         )
@@ -251,6 +259,60 @@ class SimRouteTests(unittest.TestCase):
             f"<!-- sim-route:modules -->**{required} modules**<!-- /sim-route -->", self.readme,
             f"expected README.md to carry the route's own required-module count ({required}); "
             f"a hand-typed 42 is exactly the drift the marker exists to stop",
+        )
+
+    def test_the_minimum_document_matches_the_pages(self):
+        with open(MINIMUM, encoding="utf-8") as handle:
+            committed = handle.read()
+        self.assertEqual(
+            gen.render_minimum(), committed,
+            "expected docs/MINIMUM.md to equal the generator's rendering of the same page "
+            "metadata; run python3 scripts/generate_sim_route.py",
+        )
+
+    def test_the_minimum_is_a_real_subset_of_the_core_route(self):
+        facts = gen.minimum_facts()
+        core_modules = set(gen.CORE_MODULES)
+        minimum_modules = {row["id"] for row in facts["modules"]}
+        self.assertEqual(
+            sorted(minimum_modules - core_modules), [],
+            "expected no minimum practice module outside the Core route; every one must be a "
+            "page the full route also requires, or the stopping point is a second course",
+        )
+        core_lessons = {
+            row["id"] for step in gen.route_model.facts()["steps"] for row in step["lessons"]
+        }
+        minimum_lessons = {row["id"] for row in facts["lessons"] + facts["arm_lessons"]}
+        self.assertEqual(
+            sorted(minimum_lessons - core_lessons), [],
+            "expected no minimum lesson outside the Core route; the stopping point cannot require "
+            "a page the full route does not, or the two routes disagree",
+        )
+        self.assertEqual(
+            facts["high"] < gen.route_facts()["high"], True,
+            "expected the minimum finish's high end to be below the full route's; otherwise it is "
+            "not an honest stopping point, just the same course with a new name",
+        )
+
+    def test_the_minimum_total_is_the_sum_of_its_rows(self):
+        facts = gen.minimum_facts()
+        low = sum(row["low"] or 0.0 for row in facts["lessons"] + facts["arm_lessons"])
+        high = sum(row["high"] or 0.0 for row in facts["lessons"] + facts["arm_lessons"])
+        low += sum(row["low"] or 0.0 for row in facts["modules"])
+        high += sum(row["high"] or 0.0 for row in facts["modules"])
+        with open(MINIMUM, encoding="utf-8") as handle:
+            doc = handle.read()
+        self.assertIn(
+            f"| **{gen.fmt(round(low, 2), round(high, 2))}** |", doc,
+            f"expected the minimum total row to sum to {low:.2f}-{high:.2f} focused hours from "
+            f"its own rows; a total that is typed rather than summed drifts on the next page edit",
+        )
+
+    def test_the_readme_links_the_minimum_finish(self):
+        self.assertIn(
+            "docs/MINIMUM.md", self.readme,
+            "expected README.md to link the exact minimum page list; a finish line without a "
+            "page list is a slogan, not a route",
         )
 
     def test_the_hours_basis_sentence_is_generated_from_the_metadata(self):

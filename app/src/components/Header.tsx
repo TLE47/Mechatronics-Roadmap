@@ -21,11 +21,13 @@ export const Header: React.FC<HeaderProps> = ({
   accountEmail,
   onOpenAccount,
 }) => {
+  // The nav is on every screen, including a newcomer's first one. Keep the labels plain English:
+  // the internal Stage/Pass/Tier names live in the roadmap tab and docs/ROUTE.md, not here.
   const passLinks: { id: ActiveTierPass; label: string }[] = [
-    { id: 'level0', label: 'Stage 0: On-Ramp' },
-    { id: 'tier1', label: 'Pass 1: Beginner' },
-    { id: 'tier2', label: 'Pass 2: Applied' },
-    { id: 'tier3', label: 'Pass 3: Production' },
+    { id: 'level0', label: 'Start here' },
+    { id: 'tier1', label: 'Beginner' },
+    { id: 'tier2', label: 'Applied' },
+    { id: 'tier3', label: 'Advanced' },
   ];
 
   return (
@@ -42,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Zone 2: 4 concise single-line navigation links */}
       <nav
-        aria-label="Learning Pass Navigation"
+        aria-label="Course level navigation"
         className="hidden md:flex flex-wrap items-center gap-x-6 gap-y-1 text-xs font-medium text-[#94a3b8]"
       >
         {passLinks.map((item) => {
@@ -50,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
           return (
             <button
               key={item.id}
+              data-testid={`btn-pass-${item.id}`}
               onClick={() => onSelectTierPass(item.id)}
               className={`whitespace-nowrap shrink-0 py-1 transition-colors cursor-pointer border-b-2 ${
                 isActive
