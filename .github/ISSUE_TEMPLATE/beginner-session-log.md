@@ -46,7 +46,7 @@ One row per stop over 20 seconds. `kind` is `link`, `tool`, `install`, `instruct
 | Finished Step 1? | yes / no — `__ min` |
 
 ### 5. The one fix they asked for
-> 
+>
 
 ### 6. What changed because of this sitting
 - [ ] Page copy updated
