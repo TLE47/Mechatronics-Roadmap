@@ -19,6 +19,7 @@ flowchart LR
 | :--- | :--- | :--- |
 | 10 steps, lesson and module counts, step hours | `scripts/route_model.py` from each page's front matter | `python3.12 scripts/generate_readme_counts.py --check` |
 | Core hours, the optional total, and the minimum finish | `scripts/generate_sim_route.py` | `python3.12 scripts/generate_sim_route.py --check` |
+| The README's Start here block and the workbench card | `app/src/data/startHere.json` (one file, read by both) | `python3.12 scripts/generate_start_here.py --check` |
 | Every count quoted anywhere in the docs | `scripts/check_consistency.py` | `python3.12 scripts/check_consistency.py` |
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
@@ -37,6 +38,7 @@ python3.12 scripts/check_ramp_lessons.py
 python3.12 scripts/audit_step_size.py --check
 python3.12 scripts/generate_sim_route.py --check
 python3.12 scripts/generate_readme_counts.py --check
+python3.12 scripts/generate_start_here.py --check
 python3.12 scripts/check_consistency.py
 python3.12 scripts/lint_assertions.py
 python3.12 scripts/run_all_labs.py

@@ -11,6 +11,18 @@ flowchart LR
 
 ---
 
+## [2026-10-19] — Run 113: One Source for the Start Here Block
+
+The README block and the landing card were two typed copies held together by a checker that could
+only report a drift after it shipped. The words now live once, in `app/src/data/startHere.json`:
+the app imports that file, `scripts/generate_start_here.py` renders the README block from it
+between markers, and the lesson path is resolved from the lesson pages by id. `--check` runs in CI
+through `check_consistency.py`, and the guard now fails on a stale README **or** on a typed copy
+reappearing in `startHere.ts`.
+
+`docs/VERIFICATION.md` lists the new command; tests cover the generated block, the shared-file
+import, the missing-marker error and the lesson-id resolution.
+
 ## [2026-10-19] — Run 112: The Roadmap Agrees, and the Line Can Go
 
 The roadmap tab now does what the landing screen does once Lesson 1 is verified: its own first

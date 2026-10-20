@@ -38,6 +38,7 @@ route_model = load("route_model_for_tests", "route_model.py")
 generator = load("generate_readme_counts_for_tests", "generate_readme_counts.py")
 checker = load("check_consistency_for_tests", "check_consistency.py")
 sim_route = load("generate_sim_route_for_tests", "generate_sim_route.py")
+start_here = load("generate_start_here_for_tests", "generate_start_here.py")
 
 
 class RouteModelTests(unittest.TestCase):
@@ -187,7 +188,7 @@ class ConsistencyTests(unittest.TestCase):
 
 
 class StartHereTests(unittest.TestCase):
-    """The README's first block and the workbench landing screen must open the same lesson."""
+    """One JSON file feeds the README block and the workbench landing screen."""
 
     def setUp(self):
         self.facts = checker.facts()
@@ -205,41 +206,60 @@ class StartHereTests(unittest.TestCase):
             finally:
                 checker.README = original
 
-    def test_the_landing_screen_repeats_the_readme_block(self):
+    def test_the_committed_readme_is_generated_from_the_shared_file(self):
+        with open(checker.README, encoding="utf-8") as handle:
+            text = handle.read()
         self.assertEqual(
-            checker.check_start_here(self.facts), [],
-            "expected the README's Start here heading, link label, note and Lesson 1 path to be "
-            "the same on the workbench landing screen; a newcomer arriving at either door must "
-            "be told the same first thing",
+            start_here.rewrite(text),
+            text,
+            "expected README.md's Start here block to equal what generate_start_here.py renders "
+            "from app/src/data/startHere.json; run scripts/generate_start_here.py",
         )
 
-    def test_a_drifted_heading_is_caught(self):
+    def test_the_shared_file_and_the_current_tree_agree(self):
+        self.assertEqual(
+            checker.check_start_here(self.facts), [],
+            "expected the README block, the app's import and the lesson path to come from one "
+            "source; a newcomer arriving at either door must be told the same first thing",
+        )
+
+    def test_a_drifted_readme_block_is_caught(self):
         with open(checker.README, encoding="utf-8") as handle:
             text = handle.read()
         findings = self._with_readme(
             text.replace("Start here — your first 2 hours", "Start here — your first 3 hours")
         )
         self.assertTrue(
-            any("heading" in finding for finding in findings),
-            f"expected a README heading the app does not repeat to be reported; got {findings}",
+            any("stale" in finding for finding in findings),
+            f"expected a hand-edited README block to be reported as stale; got {findings}",
         )
 
-    def test_a_different_lesson_target_is_caught(self):
-        with open(checker.README, encoding="utf-8") as handle:
-            text = handle.read()
-        findings = self._with_readme(
-            text.replace(
-                "](track-p/P.1-variables-and-data-types.md)",
-                "](track-p/P.2-arithmetic-and-order-of-operations.md)",
-            )
+    def test_the_lesson_link_follows_the_lesson_files(self):
+        payload = start_here.data()
+        self.assertEqual(
+            start_here.lesson_path(payload["lessonId"]),
+            route_model.STEPS[0]["start"],
+            "expected startHere.json's lesson to be Step 1's own page; otherwise the block's "
+            "only link leads somewhere the route does not start",
         )
-        self.assertTrue(
-            any(
-                "P.2-arithmetic-and-order-of-operations" in finding or "Step 1 starts at" in finding
-                for finding in findings
-            ),
-            f"expected a README Lesson 1 link that is not Step 1 to be reported; got {findings}",
+
+    def test_the_app_does_not_keep_a_typed_copy(self):
+        with open(checker.APP_START_HERE, encoding="utf-8") as handle:
+            app = handle.read()
+        self.assertIn(
+            "./data/startHere.json",
+            app,
+            "expected app/src/startHere.ts to import the shared JSON; without that import the "
+            "landing screen reads typed strings that the README generator never sees",
         )
+        self.assertNotIn(
+            start_here.data()["heading"], app,
+            "expected the heading to be read from startHere.json, not typed into startHere.ts",
+        )
+
+    def test_missing_markers_are_an_error_not_a_silent_skip(self):
+        with self.assertRaises(ValueError):
+            start_here.rewrite("# a README with no markers\n")
 
 
 if __name__ == "__main__":

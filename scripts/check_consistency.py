@@ -30,6 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import generate_sim_route as route  # noqa: E402
+import generate_start_here as start_here  # noqa: E402
 import route_model  # noqa: E402
 
 README = os.path.join(ROOT, "README.md")
@@ -231,22 +232,24 @@ def check_readme_table(f):
 
 
 def check_start_here(f):
-    """The landing screen repeats the README's first block; both must name the same Lesson 1.
+    """README and the workbench read one JSON file; prove the README was generated from it.
 
-    A newcomer can arrive at either door - the README or the workbench - and the promise has to be
-    identical: one heading, one Lesson 1 link, one plain-English line. The app's link is built from
-    the generated lesson dataset, so a moved page is caught here rather than by a 404.
+    The block used to be typed twice - README.md and app/src/startHere.ts - with a checker that
+    compared the copies, which only ever finds a drift after it has been published. Now
+    `app/src/data/startHere.json` is the only copy of the words, the app imports it directly, and
+    this check fails when README.md stops equalling what the generator renders from that file.
     """
     findings = []
     text = read(README)
-    heading = re.search(r"^> \*\*(Start here — your first 2 hours)\*\*$", text, re.M)
-    link = re.search(r"^> \*\*\[(Open Lesson 1: [^\]]+)\]\(([^)]+)\)\*\*$", text, re.M)
-    note = re.search(r"^> (One lesson, one editor, one Run button\.[^\n]*)$", text, re.M)
-    if not (heading and link and note):
-        findings.append(
-            "README.md lost its opening Start here block (heading, Lesson 1 link and one-line "
-            "promise); the workbench landing screen repeats it verbatim, so both must stay"
-        )
+    try:
+        if start_here.rewrite(text) != text:
+            findings.append(
+                "README.md Start here block is stale; run scripts/generate_start_here.py"
+            )
+        payload = start_here.data()
+        path = start_here.lesson_path(payload["lessonId"])
+    except ValueError as error:
+        findings.append(str(error))
         return findings
 
     try:
@@ -256,29 +259,27 @@ def check_start_here(f):
         findings.append(f"cannot read the workbench's Start here block: {error}")
         return findings
 
-    for label, value in (
-        ("heading", heading.group(1)),
-        ("link label", link.group(1)),
-        ("note", note.group(1)),
-    ):
-        if f"'{value}'" not in app:
-            findings.append(
-                f"app/src/startHere.ts no longer carries the README's Start here {label} "
-                f"{value!r}; the landing screen would open with different words than the README"
-            )
-
-    target = link.group(2)
-    if target != route_model.STEPS[0]["start"]:
+    if "./data/startHere.json" not in app:
         findings.append(
-            f"README.md points Lesson 1 at {target!r}, but Step 1 starts at "
-            f"{route_model.STEPS[0]['start']!r}; one of the two is a dead end"
+            "app/src/startHere.ts must import app/src/data/startHere.json; a typed copy is the "
+            "drift this check exists to prevent"
+        )
+    if payload["heading"] in app or payload["note"] in app:
+        findings.append(
+            "app/src/startHere.ts repeats the Start here text instead of reading it from "
+            "app/src/data/startHere.json"
+        )
+    if path != route_model.STEPS[0]["start"]:
+        findings.append(
+            f"startHere.json names lesson {payload['lessonId']!r} at {path!r}, but Step 1 starts "
+            f"at {route_model.STEPS[0]['start']!r}; one of the two is a dead end"
         )
     p1 = re.search(r'"id": "P\.1",.*?"path": "([^"]+)"', data, re.S)
-    path = p1.group(1) if p1 else ""
-    if path != target:
+    app_path = p1.group(1) if p1 else ""
+    if app_path != path:
         findings.append(
-            f"the workbench's Lesson 1 is {path!r} while README.md links {target!r}; regenerate "
-            f"app/src/data/pythonLessonsData.ts or fix the link"
+            f"the workbench's Lesson 1 is {app_path!r} while startHere.json resolves to "
+            f"{path!r}; regenerate app/src/data/pythonLessonsData.ts or fix the lesson id"
         )
     if "blob/main/${START_HERE_LESSON_PATH}" not in app:
         findings.append(

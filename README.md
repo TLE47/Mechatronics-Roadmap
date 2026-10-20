@@ -1,10 +1,12 @@
 # Mechatronics Roadmap
 
+<!-- start-here:start -->
 > **Start here — your first 2 hours**
 >
 > **[Open Lesson 1: Variables and data types →](track-p/P.1-variables-and-data-types.md)**
 >
 > One lesson, one editor, one Run button. No install, no account, nothing to buy.
+<!-- start-here:end -->
 
 ---
 
