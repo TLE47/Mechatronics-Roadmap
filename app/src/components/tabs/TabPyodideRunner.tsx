@@ -11,6 +11,7 @@ import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.
 import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
 import { rememberLessonInUrl } from '../../lessonRoute';
+import { rememberLastLesson } from '../../lastLesson';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { parseSliders } from '../../editor/sliderModel';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
@@ -754,6 +755,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     if (!found) return;
     setSelectedId(id);
     lessonIdRef.current = id;
+    // Always recorded, unlike the address bar: a plain visit keeps its clean URL and still reopens
+    // here next time, which is the difference between a bookmark that resumes and one that resets.
+    rememberLastLesson(id);
     if (remember) rememberLessonInUrl(id);
     commitCode(found.starterCode);
     setRevealedHints(0);

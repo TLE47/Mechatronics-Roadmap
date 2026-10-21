@@ -38,6 +38,7 @@ import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { lessonIdFromLocation } from './lessonRoute';
+import { readLastLessonId } from './lastLesson';
 import { lessonIdOf, type PaletteItem } from './palette';
 import { paletteCatalog } from './paletteCatalog';
 import {
@@ -724,9 +725,11 @@ export const App: React.FC = () => {
 
   // A page's "Run this in the workbench" link arrives as `?lesson=<id>`; the runner opens on that
   // entry instead of making the reader find it in the search box again. An id the registry does not
-  // list is ignored rather than shown as an empty editor.
+  // list is ignored rather than shown as an empty editor. With no query string the workbench reopens
+  // the lesson the learner was last on (`src/lastLesson.ts`), and only then falls back to P.1 - the
+  // address is the deliberate pick, storage is the ordinary one, and both are validated by id.
   const [pyodideLessonId, setPyodideLessonId] = useState<string>(
-    () => lessonIdFromLocation() ?? 'P.1'
+    () => lessonIdFromLocation() ?? readLastLessonId() ?? 'P.1'
   );
 
   // A deep link is a promise about the editor being on screen, so land on it rather than on the

@@ -45,6 +45,7 @@ npm run test:theme:e2e                  # toggle contract + contrast on all 11 t
 npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
 npm run test:editor                     # slider directives and which lessons get helper tabs
+npm run test:resume                     # the lesson the next visit reopens, and the ids it refuses
 npm run test:smoke                      # needs `npm ci` first
 ```
 

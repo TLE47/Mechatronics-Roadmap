@@ -11,6 +11,42 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 132: The Workbench Reopens Where You Left Off
+
+The address bar remembered a lesson (`?lesson=P.7`), and progress was stored - but the lesson itself
+was not. A learner who bookmarked the plain workbench URL, or opened it from the browser's
+most-visited row, was put back on **P.1** every time: on their tenth verification as much as their
+first. The one thing a self-paced course has to get right is the cost of coming back.
+
+**Where you were is now remembered, and it is one id.** [`app/src/lastLesson.ts`](app/src/lastLesson.ts)
+writes the lesson on screen to `mechalab_last_lesson_v1` and reads it back, and `App` picks the
+opening entry in the order the two promises imply:
+
+| Order | Source | Meaning |
+| :--- | :--- | :--- |
+| 1 | `?lesson=<id>` | a deliberate link - a page's "Run this in the workbench" callout |
+| 2 | `mechalab_last_lesson_v1` | the ordinary last visit |
+| 3 | the registry's first entry | a genuinely new learner |
+
+The runner records the id inside `selectLesson`, the same function that writes the address bar, so
+the two cannot disagree. Unlike the address bar it records **every** selection, including the
+mount-time one: that is what keeps a plain URL plain - the workbench reopens P.7 without rewriting
+the address the learner typed into a deep link.
+
+**The fallbacks are chosen, not accidental.** An id the registry does not list is never opened - it
+falls back to the remembered lesson, and to P.1 only when there is none, because a broken link is not
+evidence that someone wanted to start over. A store that throws (private mode, a blocked third-party
+context) and a render with no storage at all both read as "nothing remembered" rather than crashing
+the shell.
+
+**Guarded.** `npm run test:resume` ([`scripts/test_last_lesson.mjs`](scripts/test_last_lesson.mjs))
+pins the six behaviours without a browser - stored id, refused id, refused id not overwriting a real
+one, a throwing store, no store - and the browser E2E gained the case that matters: choose P.4, visit
+the plain URL, and the runner opens P.4 with the address still bare. Its unknown-`?lesson=` case was
+updated to the new answer (resume, not P.1) and says why.
+
+---
+
 ## [2026-10-21] — Run 131: A Workflow That Cannot Parse Fails Locally, Not on the Runner
 
 The six commits of runs 129-130 went up, and the `ci.yml` run came back **`failure` in 0 s with no

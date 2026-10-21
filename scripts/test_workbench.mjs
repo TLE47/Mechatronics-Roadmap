@@ -10,6 +10,7 @@
  *   test:spine       the ten-step spine the pages print, and the numbering no surface repeats
  *   test:palette     the ⌘K catalogue: every lesson/tab/command once, and predictable ranking
  *   test:editor      slider directives (parse/clamp/format) and which lessons get helper tabs
+ *   test:resume      the lesson the next visit reopens, including the ids it must refuse
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
  *   test:e2e:pages   `npm run build` if `dist/` was missing, a static Pages server + Chromium, Firefox
@@ -120,6 +121,9 @@ async function main() {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('editor', 'test_editor.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('resume', 'test_last_lesson.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('e2e', 'e2e_browser_workbench.mjs', { E2E_BASE_URL: devUrl }),

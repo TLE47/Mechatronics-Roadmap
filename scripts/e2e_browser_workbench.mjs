@@ -15,7 +15,8 @@
  * 5. Correct full solution passes both Instructor Behavioral Tests and Output Presentation
  *    check, awarding `1 / N Verified`.
  * 6. CDN failure (even when running the full solution) never awards verification.
- * 7. Progress survives a full browser reload (`page.reload()`).
+ * 7. Progress survives a full browser reload (`page.reload()`), and a plain visit with no query
+ *    string reopens the lesson the learner was last on.
  * 8. Portfolio export (`buildPortfolioMarkdown` modal preview) contains the exact, strictly
  *    separated completion categories (`Executed & Passed in Pyodide WASM` vs `Self-Marked Complete`).
  * 9. Lesson 08.1 passes only when its four-fault bench grades every repair at target: a repair left
@@ -209,14 +210,15 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       '?lesson=P.7',
       'selecting a lesson must put it in the address bar, or a copied URL reopens the old one'
     );
-    // An id the registry does not list is ignored rather than blanking the editor.
+    // An id the registry does not list never opens an empty editor. It falls back to the lesson the
+    // learner was last on - here P.7, chosen just above - and only to Lesson 1 when nothing is
+    // remembered: a broken link is not evidence that they wanted to start over (`src/lastLesson.ts`).
     await deepPage.goto(`${baseUrl}?lesson=NOT.A.LESSON`, { waitUntil: 'networkidle' });
     await waitForEditor(deepPage, undefined, 15000);
+    const unknownIdMeta = (await deepPage.getByTestId('lesson-meta').textContent()) ?? '';
     assert(
-      (await deepPage.getByTestId('link-lesson-page').getAttribute('href'))?.endsWith(
-        '/track-p/P.1-variables-and-data-types.md'
-      ),
-      'an unknown ?lesson= id must fall back to Lesson 1 instead of opening nothing'
+      unknownIdMeta.includes('Lesson P.7'),
+      `an unknown ?lesson= id must resume the last lesson (P.7), not blank the editor; got: ${unknownIdMeta}`
     );
     await deepPage.close();
     console.log('  ok ?lesson= opens the named entry, follows the editor, and ignores unknown ids');
@@ -584,6 +586,35 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       bodyAfterReload?.includes(`Self-Marked: 1/${TOTAL}`),
       `Self-Marked count (1/${TOTAL}) must survive full browser reload`
     );
+
+    // 7b. A visit with no query string reopens the lesson the learner was last on. The address bar
+    //     only carries a lesson for the tab it was typed in, so a bookmark of the plain workbench URL
+    //     used to open P.1 on every return - on the tenth verification as much as the first.
+    await page.getByTestId('lesson-item-P.4').scrollIntoViewIfNeeded();
+    await page.getByTestId('lesson-item-P.4').click();
+    assert.equal(
+      new URL(page.url()).search,
+      '?lesson=P.4',
+      'choosing a lesson must still write the address, or a copied URL reopens the previous one'
+    );
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await waitForEditor(page, undefined, 15000);
+    const resumedMeta = (await page.getByTestId('lesson-meta').textContent()) ?? '';
+    assert(
+      resumedMeta.includes('Lesson P.4'),
+      `a plain visit must reopen the lesson last chosen (P.4); the runner opened: ${resumedMeta}`
+    );
+    // The address itself is not asserted, and the reason is React: in development StrictMode runs the
+    // mount effect twice, so its second pass writes the lesson it just restored and a plain visit
+    // ends up with `?lesson=P.4`. In the production build the effect runs once and the address stays
+    // as it arrived. This suite drives the dev server, so pinning the URL here would pin StrictMode's
+    // double-invoke instead of the workbench; what the feature promises is the lesson and the memory.
+    assert.equal(
+      await page.evaluate(() => localStorage.getItem('mechalab_last_lesson_v1')),
+      'P.4',
+      'the remembered lesson must be the one chosen, so the next plain visit opens it again'
+    );
+    console.log('  ok a plain visit reopens the lesson the learner was last on');
 
     // 8. Portfolio export contains the correct completion categories
     await page.getByTestId('btn-export-portfolio').click();
@@ -1240,7 +1271,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
     );
   } finally {
     await browser.close();
