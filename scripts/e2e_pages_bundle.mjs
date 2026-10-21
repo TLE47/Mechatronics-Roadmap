@@ -14,7 +14,9 @@
  * 3. Representative *later-track* lessons (03.3 sensors+F, 06.1 robotics, 08.1 capstone) must load in
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
  * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
- *    viewport: zero horizontal overflow, asserted rather than reported.
+ *    viewport: zero horizontal overflow, asserted rather than reported. Elements inside a
+ *    horizontal scroller (the tab rail) are reachable by scrolling that rail, so they are not
+ *    counted as spilling the page.
  * 5. Every school-maths ramp entry (R.1-R.6) is graded on the bundle: the starter must not verify, and
  *    the page's own reference must match its expected output and pass its instructor tests. Each ramp
  *    page repairs a Tier 1 exit-check item, so the recovery path is now proven where a learner uses it.
@@ -713,9 +715,21 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     const layout = await tablet.evaluate(() => {
       const doc = document.documentElement;
       const viewportWidth = window.innerWidth;
+      // The tab rail is a horizontal scroller on purpose: its cards past the right edge are reached
+      // by scrolling the rail, not by scrolling the page. Counting them as spilled would forbid the
+      // rail; the page itself still has to have zero horizontal overflow, which is asserted below.
+      const insideHorizontalScroller = (element) => {
+        for (let node = element.parentElement; node && node !== document.body; node = node.parentElement) {
+          if (/auto|scroll/.test(getComputedStyle(node).overflowX) && node.scrollWidth > node.clientWidth + 1) {
+            return true;
+          }
+        }
+        return false;
+      };
       const spilled = [...document.querySelectorAll('body *')]
         .map((element) => ({ element, rect: element.getBoundingClientRect() }))
         .filter(({ rect }) => rect.width > 0 && rect.height > 0 && rect.right - viewportWidth > 1)
+        .filter(({ element }) => !insideHorizontalScroller(element))
         .sort((a, b) => b.rect.right - a.rect.right);
       const worst = spilled[0];
       return {

@@ -11,6 +11,43 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 126: The Workbench Looks Like the Product It Is
+
+The curriculum was stronger than its first screen. This run is presentation only: no lesson, count,
+hour or generated block changed, and every string the smoke and browser suites assert is untouched.
+
+**The landing screen now argues instead of describing.** [`StartHereCard.tsx`](app/src/components/StartHereCard.tsx)
+is a two-column hero: the README's own Start-here words (still generated from `startHere.json`, so
+the page and README cannot drift) beside `HeroArm.tsx`, a canvas running the capstone's figure-8
+through two-link inverse kinematics. It pauses off-screen, draws one still frame under
+`prefers-reduced-motion`, and caps at 2x device pixels. One primary button; the GitHub reading copy
+is a quiet second line.
+
+**Ten tiles became one rail.** The mode toolbar is a single segmented control with the three
+counters beside it, and the tab grid - which used three rows at desktop width - is a horizontally
+scrolling rail of icon + label + subtitle cards. The words are the generated ones; the rail just
+stops them from pushing the editor off the first screen.
+
+**The shell has tokens.** [`index.css`](app/src/index.css) went from 41 lines to a design system:
+surfaces, ink, brand and semantic colours, a fluid type scale, `.btn`/`.chip`/`.kbd` primitives, one
+visible focus ring for every interactive element, a skip link, tabular numerals, and a
+reduced-motion branch that turns the animation off. The lab tabs keep their inline hexes - the same
+family - so the workbench reads as one instrument without a risky rewrite of eleven simulators.
+
+**A run started before the learner clicks.** Pyodide is ~10 MB from a CDN, and paying that inside
+the first Run is what makes Run look broken. The runner now warms the worker on idle (one shared load
+promise, so a click mid-download joins it) and the first click measured **116 ms** to a verdict with
+the runtime already reading `Ready (Worker WASM)`; a metered or 2G connection keeps the download
+until the learner actually asks. A pass now also raises a short toast with the next lesson in it,
+and ⌘↵ / Ctrl+↵ runs from anywhere on the screen.
+
+**Launch surface.** The page had `MechaLab` as its title and an empty favicon. It now ships an SVG
+arm mark, a real title and description, Open Graph / Twitter cards pointing at the generated
+1200x630 preview (copied to `app/public/og.png`), a theme colour, and a web manifest, so the
+workbench can be installed to a home screen.
+
+---
+
 ## [2026-10-20] — Run 125: One Command for Every Gate CI Runs
 
 Two of the last three pushes were stopped by gates a contributor can run locally in seconds - a

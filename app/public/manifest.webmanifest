@@ -1,0 +1,19 @@
+{
+  "name": "MechaLab — Mechatronics Workbench",
+  "short_name": "MechaLab",
+  "description": "A free, browser-based mechatronics course: from no coding or electronics to a verified simulated 2-DOF robot arm. Python 3.12 runs in the tab.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070b12",
+  "theme_color": "#070b12",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

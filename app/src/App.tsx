@@ -41,7 +41,42 @@ import {
   TIER_2_LINEAR_PASS,
   TIER_3_LINEAR_PASS,
 } from './curriculumData';
-import { Copy, Check, Download, X } from 'lucide-react';
+import {
+  Activity,
+  Bot,
+  Check,
+  Code2,
+  Compass,
+  Copy,
+  Cpu,
+  Download,
+  FlaskConical,
+  Gauge,
+  GraduationCap,
+  LineChart,
+  Link2,
+  Map as MapIcon,
+  Radar,
+  Sparkles,
+  X,
+  Zap,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+/** One glyph per tab, so the rail can be scanned by shape as well as by name. */
+const TAB_ICONS: Record<TabId, LucideIcon> = {
+  'tab-arch': MapIcon,
+  'tab-pyodide': Code2,
+  'tab-placement': Compass,
+  'tab-bode': Activity,
+  'tab-foc': Zap,
+  'tab-pend': Gauge,
+  'tab-models': Bot,
+  'tab-cadpcb': Cpu,
+  'tab-sysid': LineChart,
+  'tab-eskf': Radar,
+  'tab-links': Link2,
+};
 
 const TOUR_STEPS: TourStepInfo[] = [
   {
@@ -656,6 +691,10 @@ export const App: React.FC = () => {
 
   return (
     <div id="top" className="min-h-screen flex flex-col bg-[#0b0f19] text-[#f1f5f9]">
+      {/* Keyboard users can jump the header, the mode bar and the tab rail in one key. */}
+      <a href="#main" className="skip-link">
+        Skip to the workbench
+      </a>
       <Header
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
         onExportPortfolio={() => setIsPortfolioModalOpen(true)}
@@ -665,58 +704,70 @@ export const App: React.FC = () => {
         onOpenAccount={() => setIsAccountOpen(true)}
       />
 
-      {/* Workspace Mode & Live Progress Toolbar */}
-      <div className="bg-[#111827] border-b border-[#334155] px-5 py-2.5 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          <div
-            role="group"
-            aria-label="Workbench Complexity Mode"
-            className="flex flex-wrap items-center gap-1 bg-[#0b0f19] p-1 rounded-lg border border-[#334155]"
-          >
-            <button
-              onClick={() => setViewMode('beginner')}
-              data-testid="btn-mode-beginner"
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                viewMode === 'beginner'
-                  ? 'bg-[#34d399]/20 text-[#34d399] border border-[#34d399]/50'
-                  : 'text-[#94a3b8] hover:text-[#f1f5f9] border border-transparent'
-              }`}
+      {/* Workspace mode and the running tally: one segmented control, three counters. The labels
+          are the ones the smoke test asserts, so a redesign cannot reword what the tabs mean. */}
+      <div className="border-b" style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}>
+        <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <div
+              role="group"
+              aria-label="Workbench Complexity Mode"
+              className="flex max-w-full items-center gap-0.5 overflow-x-auto rounded-[var(--r-full)] border p-1"
+              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
             >
-              Beginner View (Plain-English Path)
-            </button>
-            <button
-              onClick={() => setViewMode('advanced')}
-              data-testid="btn-mode-advanced"
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                viewMode === 'advanced'
-                  ? 'bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/50'
-                  : 'text-[#94a3b8] hover:text-[#f1f5f9] border border-transparent'
-              }`}
-            >
-              All 10 Engineering Labs (Technical Names)
-            </button>
+              <button
+                onClick={() => setViewMode('beginner')}
+                data-testid="btn-mode-beginner"
+                aria-pressed={viewMode === 'beginner'}
+                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--r-full)] px-3 py-1.5 text-[12px] font-semibold transition-colors"
+                style={
+                  viewMode === 'beginner'
+                    ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }
+                    : { color: 'var(--muted)' }
+                }
+              >
+                <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
+                Beginner View (Plain-English Path)
+              </button>
+              <button
+                onClick={() => setViewMode('advanced')}
+                data-testid="btn-mode-advanced"
+                aria-pressed={viewMode === 'advanced'}
+                className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-[var(--r-full)] px-3 py-1.5 text-[12px] font-semibold transition-colors"
+                style={
+                  viewMode === 'advanced'
+                    ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }
+                    : { color: 'var(--muted)' }
+                }
+              >
+                <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
+                All 10 Engineering Labs (Technical Names)
+              </button>
+            </div>
+
+            <span className="hidden text-[11.5px] xl:inline" style={{ color: 'var(--dim)' }}>
+              {viewMode === 'beginner'
+                ? `Core beginner tabs first, in plain English. All ${WORKBENCH_TABS.length} workbench tabs stay one switch away.`
+                : `All ${WORKBENCH_TABS.length} workbench tabs, with their technical names.`}
+            </span>
           </div>
 
-          <span className="text-[#94a3b8] hidden xl:inline">
-            {viewMode === 'beginner'
-              ? `Showing core beginner tabs with plain-English titles first. Switch anytime to view all ${WORKBENCH_TABS.length} workbench tabs.`
-              : `Showing all ${WORKBENCH_TABS.length} workbench tabs with technical control-theory & embedded terminology.`}
-          </span>
-        </div>
-
-        {/* Unboxed tabular-nums progress summary */}
-        <div className="flex items-center gap-2 text-xs font-mono tabular-nums text-[#cbd5e1]">
-          <span className="text-[#34d399]" data-testid="progress-verified-count">
-            Executed &amp; Passed: {totalVerifiedLessons}/{PYTHON_LESSONS.length}
-          </span>
-          <span aria-hidden="true" className="text-[#475569]">·</span>
-          <span className="text-[#cbd5e1]" data-testid="progress-lessons-count">
-            Self-Marked: {totalCompletedLessons}/{PYTHON_LESSONS.length}
-          </span>
-          <span aria-hidden="true" className="text-[#475569]">·</span>
-          <span className="text-[#38bdf8]" data-testid="progress-milestones-count">
-            Track Milestones: {totalCompletedMilestones}/{allMilestoneIds.length}
-          </span>
+          <div
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-medium tnum"
+            aria-label="Progress in this browser"
+          >
+            <span data-testid="progress-verified-count" style={{ color: 'var(--emerald)' }}>
+              Executed &amp; Passed: {totalVerifiedLessons}/{PYTHON_LESSONS.length}
+            </span>
+            <span aria-hidden="true" style={{ color: 'var(--border-strong)' }}>·</span>
+            <span data-testid="progress-lessons-count" style={{ color: 'var(--muted)' }}>
+              Self-Marked: {totalCompletedLessons}/{PYTHON_LESSONS.length}
+            </span>
+            <span aria-hidden="true" style={{ color: 'var(--border-strong)' }}>·</span>
+            <span data-testid="progress-milestones-count" style={{ color: 'var(--accent)' }}>
+              Track Milestones: {totalCompletedMilestones}/{allMilestoneIds.length}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -734,46 +785,77 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Tabs navigation */}
+      {/* One scrollable rail instead of a ten-card grid: the whole workbench fits on one line, so
+          the page below starts a full row higher and a newcomer sees one continuous strip of
+          choices rather than a wall of tiles. Every label and subtitle is unchanged. */}
       <nav
         aria-label="Simulator Tabs"
-        className={`grid grid-cols-1 sm:grid-cols-3 ${
-          viewMode === 'beginner' ? 'xl:grid-cols-6' : 'xl:grid-cols-5'
-        } bg-[#111827] border-b border-[#334155] p-2 gap-2`}
+        className="border-b"
+        style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
       >
-        {visibleTabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              data-testid={`tab-btn-${tab.id}`}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setHighlightedId(null);
-              }}
-              className={`px-3 py-2 rounded-lg text-left transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-[#38bdf8]/15 border border-[#38bdf8] text-[#f1f5f9]'
-                  : 'bg-[#1e293b] text-[#cbd5e1] hover:text-[#f1f5f9] border border-[#334155]'
-              }`}
-            >
-              <div
-                className={`text-xs font-semibold truncate whitespace-nowrap ${
-                  isActive ? 'text-[#38bdf8]' : 'text-[#f1f5f9]'
-                }`}
+        <div className="relative mx-auto max-w-[var(--shell-max)]">
+          <div
+            className="flex gap-2 overflow-x-auto px-3 py-2 sm:px-5"
+            style={{ scrollbarWidth: 'thin', scrollSnapType: 'x proximity' }}
+          >
+          {visibleTabs.map((tab) => {
+            const Icon = TAB_ICONS[tab.id] ?? Sparkles;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                data-testid={`tab-btn-${tab.id}`}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setHighlightedId(null);
+                }}
+                aria-current={isActive ? 'page' : undefined}
+                className="group flex min-w-[12rem] shrink-0 cursor-pointer snap-start items-center gap-2.5 rounded-[var(--r-md)] border px-2.5 py-2 text-left transition-colors"
+                style={{
+                  borderColor: isActive ? 'var(--accent)' : 'var(--border)',
+                  backgroundColor: isActive ? 'var(--accent-soft)' : 'transparent',
+                }}
               >
-                {viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel}
-              </div>
-              <div className="text-[11px] font-mono text-[#94a3b8] truncate whitespace-nowrap mt-0.5">
-                {viewMode === 'beginner' ? tab.beginnerSubtitle : tab.beginnerLabel}
-              </div>
-            </button>
-          );
-        })}
+                <span
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-sm)] border"
+                  style={{
+                    borderColor: isActive ? 'var(--accent)' : 'var(--border)',
+                    color: isActive ? 'var(--accent)' : 'var(--dim)',
+                    backgroundColor: isActive ? 'rgba(56,189,248,0.10)' : 'var(--bg)',
+                  }}
+                  aria-hidden="true"
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0">
+                  <span
+                    className="block truncate text-[12.5px] font-semibold"
+                    style={{ color: isActive ? 'var(--accent)' : 'var(--text)' }}
+                  >
+                    {viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel}
+                  </span>
+                  <span
+                    className="mt-0.5 block truncate text-[11px]"
+                    style={{ color: isActive ? 'var(--muted)' : 'var(--dim)' }}
+                  >
+                    {viewMode === 'beginner' ? tab.beginnerSubtitle : tab.beginnerLabel}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+          </div>
+          {/* The rail scrolls; the fade says so without a scrollbar squatting under it. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-10"
+            style={{ background: 'linear-gradient(90deg, transparent, var(--panel))' }}
+          />
+        </div>
       </nav>
 
       {/* Main Tab Pane */}
-      <main className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4">
+      <main id="main" tabIndex={-1} className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4 outline-none">
         {/* The landing screen is where a newcomer arrives, so it opens with the README's own
             "Start here" block: one heading, one Lesson 1 link, one plain-English line. Once Lesson 1
             is verified the same block closes to a single line. */}
@@ -932,7 +1014,7 @@ export const App: React.FC = () => {
       />
 
       {/* Footer */}
-      <footer className="border-t border-[#1e293b] bg-[#070b14] px-4 py-2.5 text-center text-xs text-[#64748b]">
+      <footer className="border-t border-[#1e293b] bg-[#070b14] px-4 py-3 text-center text-[11.5px] text-[#64748b]">
         MechaLab · Ten-Step Spiral Mechatronics Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License: CC BY 4.0 (Docs) &amp; MIT (Code)
       </footer>
     </div>

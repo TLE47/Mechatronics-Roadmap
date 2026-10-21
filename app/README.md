@@ -16,6 +16,24 @@ flowchart LR
     RUN --> SAVE["localStorage progress<br/>+ Markdown portfolio"]
 ```
 
+## The shell's design system
+
+[`src/index.css`](src/index.css) is the one place colours, type, radii, motion and the component
+primitives live: tokens (`--bg`, `--panel`, `--accent`, `--emerald`, …), a fluid type scale
+(`--step-3` … `--step--1`), `.btn` / `.btn-primary` / `.chip` / `.kbd`, one visible focus ring for
+every interactive element, and a `prefers-reduced-motion` branch that disables the hero animation and
+the transitions.
+
+The eleven lab tabs still carry their own inline hex values. They are the same family as the tokens,
+so the workbench reads as one instrument; moving a tab onto the tokens is a local change, and the
+shell no longer needs to be part of it.
+
+Landing hero: [`src/components/StartHereCard.tsx`](src/components/StartHereCard.tsx) renders the
+README's own Start-here block (the words come from `src/data/startHere.json`, so the page and the
+README cannot drift apart) beside [`HeroArm.tsx`](src/components/HeroArm.tsx) - a live canvas running
+the capstone's figure-8 through two-link inverse kinematics. The canvas pauses off-screen, draws one
+still frame under `prefers-reduced-motion`, and never exceeds 2x device pixels.
+
 ## Stack
 
 Vite 6 · React 19 · TypeScript 5.7 · Tailwind 4 · KaTeX · Lucide. Tests drive the built bundle with

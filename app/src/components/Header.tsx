@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User } from 'lucide-react';
+import { Printer, Download, FileJson, User, Compass } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 
@@ -12,6 +12,30 @@ interface HeaderProps {
   accountEmail: string | null;
   onOpenAccount: () => void;
 }
+
+/** The mark: a two-link arm, drawn in the same cyan as the live hero canvas. */
+const ArmMark: React.FC = () => (
+  <svg
+    width="26"
+    height="26"
+    viewBox="0 0 26 26"
+    fill="none"
+    aria-hidden="true"
+    className="shrink-0"
+  >
+    <rect x="0.75" y="0.75" width="24.5" height="24.5" rx="7" stroke="var(--border-strong)" />
+    <path
+      d="M7 18.5 L12.2 12.4 L18.4 9.2"
+      stroke="var(--accent)"
+      strokeWidth="2.1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="7" cy="18.5" r="2" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+    <circle cx="12.2" cy="12.4" r="1.8" fill="var(--bg)" stroke="var(--accent)" strokeWidth="1.6" />
+    <circle cx="18.4" cy="9.2" r="2.2" fill="var(--accent)" />
+  </svg>
+);
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenCheatSheet,
@@ -31,81 +55,115 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    // Wraps instead of overflowing: at tablet width (~834px) the four nav links stay on the
-    // wordmark's row and the action group drops to its own row, right-aligned by `ml-auto`.
-    <header className="bg-[#0f172a] border-b border-[#334155] px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2.5">
-      {/* Zone 1: Single-line Brand Wordmark */}
-      <a
-        href="#top"
-        className="text-base font-bold tracking-tight text-[#f1f5f9] whitespace-nowrap shrink-0"
-      >
-        MechaLab Workbench
-      </a>
-
-      {/* Zone 2: 4 concise single-line navigation links */}
-      <nav
-        aria-label="Course level navigation"
-        className="hidden md:flex flex-wrap items-center gap-x-6 gap-y-1 text-xs font-medium text-[#94a3b8]"
-      >
-        {passLinks.map((item) => {
-          const isActive = activeTierPass === item.id;
-          return (
-            <button
-              key={item.id}
-              data-testid={`btn-pass-${item.id}`}
-              onClick={() => onSelectTierPass(item.id)}
-              className={`whitespace-nowrap shrink-0 py-1 transition-colors cursor-pointer border-b-2 ${
-                isActive
-                  ? 'text-[#38bdf8] border-[#38bdf8] font-semibold'
-                  : 'text-[#94a3b8] hover:text-[#f1f5f9] border-transparent'
-              }`}
+    <header
+      className="sticky top-0 z-40 border-b backdrop-blur-md"
+      style={{
+        borderColor: 'var(--border)',
+        // A translucent panel, so the tab rail and lesson list slide underneath the header instead
+        // of jumping when the page scrolls.
+        backgroundColor: 'color-mix(in srgb, var(--bg) 82%, transparent)',
+      }}
+    >
+      <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
+        {/* Zone 1: brand lockup. The mark is the arm a learner is working towards. */}
+        <a
+          href="#top"
+          className="group flex shrink-0 items-center gap-2.5 whitespace-nowrap no-underline"
+          aria-label="MechaLab Workbench, back to top"
+        >
+          <ArmMark />
+          <span className="flex flex-col leading-none">
+            <span
+              className="text-[15px] font-bold tracking-tight"
+              style={{ color: 'var(--text)' }}
             >
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
+              MechaLab
+            </span>
+            <span
+              className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em]"
+              style={{ color: 'var(--dim)' }}
+            >
+              Workbench
+            </span>
+          </span>
+        </a>
 
-      {/* Zone 3: Primary Action */}
-      <div className="flex flex-wrap items-center justify-end gap-2.5 ml-auto">
-        <button
-          onClick={onOpenAccount}
-          data-testid="btn-account"
-          title={
-            accountEmail
-              ? `Signed in as ${accountEmail} — progress syncs to your account`
-              : 'Sign in to keep your progress across browsers, or keep it in this one'
-          }
-          className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b0f19] hover:bg-[#1e293b] border border-[#334155] text-[#cbd5e1] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer max-w-[16rem]"
+        {/* Zone 2: four course-level links, underlined when active. */}
+        <nav
+          aria-label="Course level navigation"
+          className="hidden items-center gap-1 md:flex"
         >
-          <User className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">{accountEmail ?? 'Sign in'}</span>
-        </button>
-        <button
-          onClick={downloadLearningLog}
-          data-testid="btn-export-learning-log"
-          title="Download what you actually did — opens, runs, failed tests, hints — as JSON. It never leaves this browser unless you hand it over."
-          className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b0f19] hover:bg-[#1e293b] border border-[#334155] text-[#94a3b8] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
-        >
-          <FileJson className="w-3.5 h-3.5" />
-          <span>Export Learning Log (.json)</span>
-        </button>
-        <button
-          onClick={onExportPortfolio}
-          data-testid="btn-export-portfolio"
-          className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b0f19] hover:bg-[#1e293b] border border-[#334155] text-[#34d399] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>Export Progress (.md)</span>
-        </button>
-        <button
-          onClick={onOpenCheatSheet}
-          data-testid="btn-open-cheatsheet"
-          className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#1e293b] hover:bg-[#334155] border border-[#38bdf8]/50 text-[#38bdf8] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          <span>1-Page Cheat Sheet</span>
-        </button>
+          {passLinks.map((item) => {
+            const isActive = activeTierPass === item.id;
+            return (
+              <button
+                key={item.id}
+                data-testid={`btn-pass-${item.id}`}
+                onClick={() => onSelectTierPass(item.id)}
+                aria-current={isActive ? 'page' : undefined}
+                className="shrink-0 cursor-pointer rounded-[var(--r-sm)] px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors"
+                style={{
+                  color: isActive ? 'var(--accent)' : 'var(--muted)',
+                  backgroundColor: isActive ? 'var(--accent-soft)' : 'transparent',
+                }}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Zone 3: actions. Secondary tools stay reachable but quiet; the account button is the
+            only one that shows state, so it keeps a border. */}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          <button
+            onClick={onOpenAccount}
+            data-testid="btn-account"
+            title={
+              accountEmail
+                ? `Signed in as ${accountEmail} — progress syncs to your account`
+                : 'Sign in to keep your progress across browsers, or keep it in this one'
+            }
+            className="btn max-w-[15rem]"
+          >
+            <User className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{accountEmail ?? 'Sign in'}</span>
+          </button>
+          <button
+            onClick={downloadLearningLog}
+            data-testid="btn-export-learning-log"
+            title="Download what you actually did — opens, runs, failed tests, hints — as JSON. It never leaves this browser unless you hand it over."
+            className="btn"
+          >
+            <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="hidden 2xl:inline">Export Learning Log (.json)</span>
+          </button>
+          <button
+            onClick={onExportPortfolio}
+            data-testid="btn-export-portfolio"
+            className="btn"
+            style={{ color: 'var(--emerald)' }}
+          >
+            <Download className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="hidden 2xl:inline">Export Progress (.md)</span>
+          </button>
+          <button
+            onClick={onOpenCheatSheet}
+            data-testid="btn-open-cheatsheet"
+            className="btn"
+            style={{ borderColor: 'var(--border-strong)', color: 'var(--accent)' }}
+          >
+            <Printer className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="hidden 2xl:inline">1-Page Cheat Sheet</span>
+          </button>
+          <span
+            className="hidden pl-1 xl:inline"
+            style={{ color: 'var(--dim)' }}
+            title="Keyboard-friendly: Tab to anything, Enter to open it, ⌘↵ to run a lesson."
+          >
+            <Compass className="h-3.5 w-3.5" aria-hidden="true" />
+          </span>
+        </div>
       </div>
     </header>
   );

@@ -1,41 +1,354 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   MechaLab design tokens
+   ----------------------------------------------------------------------------
+   One place for every surface, line, colour and easing the shell uses. The lab
+   tabs still carry their own inline hexes; those values are the same family, so
+   the whole workbench reads as one instrument rather than eleven pages.
+
+   Dark is the default because the work is mostly a canvas, a code editor and a
+   plot; the palette is the panel colour of a bench instrument, not a document.
+   ========================================================================== */
 :root {
-  --bg: #0b0f19;
-  --panel: #111827;
-  --panel-2: #1e293b;
-  --border: #334155;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
+  /* Surfaces, darkest to raised */
+  --bg: #070b12;
+  --panel: #0e1624;
+  --panel-2: #162234;
+  --panel-3: #1f2f47;
+
+  /* Lines */
+  --border: #24344c;
+  --border-soft: #182436;
+  --border-strong: #35506f;
+
+  /* Ink */
+  --text: #eef4ff;
+  --muted: #9fb0c9;
+  --dim: #6d7f99;
+  --inverse: #06101c;
+
+  /* Brand: signal cyan, the "powered on" colour */
   --accent: #38bdf8;
+  --accent-strong: #0ea5e9;
+  --accent-soft: rgba(56, 189, 248, 0.14);
   --emerald: #34d399;
   --amber: #fbbf24;
   --rose: #fb7185;
   --purple: #c084fc;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-full: 999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(2, 6, 16, 0.5);
+  --shadow-md: 0 8px 24px rgba(2, 6, 16, 0.45);
+  --shadow-lg: 0 24px 64px rgba(2, 6, 16, 0.6);
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(56, 189, 248, 0.65);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 120ms;
+  --t-base: 200ms;
+
+  /* Type scale (fluid) */
+  --step--1: clamp(0.76rem, 0.74rem + 0.1vw, 0.82rem);
+  --step-0: clamp(0.95rem, 0.92rem + 0.14vw, 1.02rem);
+  --step-1: clamp(1.1rem, 1.04rem + 0.3vw, 1.3rem);
+  --step-2: clamp(1.35rem, 1.22rem + 0.6vw, 1.75rem);
+  --step-3: clamp(1.7rem, 1.45rem + 1.1vw, 2.4rem);
+  --lh-body: 1.6;
+  --lh-tight: 1.15;
+  --measure: 68ch;
+
+  /* Rhythm */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  --shell-max: 1560px;
+  --radius: var(--r-md);
+}
+
+/* Light mode is a warm paper sheet rather than clinical white, and it is a real
+   alternative: the same tokens, not a filter. Kept behind `data-theme` so the
+   default stays dark until a toggle ships. */
+[data-theme="light"] {
+  --bg: #f8f6f2;
+  --panel: #ffffff;
+  --panel-2: #f1eee8;
+  --panel-3: #e6e1d8;
+  --border: #dcd5c9;
+  --border-soft: #eae5db;
+  --border-strong: #b8ad9b;
+  --text: #141a24;
+  --muted: #4d5a6d;
+  --dim: #7b8798;
+  --inverse: #ffffff;
+  --accent: #0d9488;
+  --accent-strong: #0b7d73;
+  --accent-soft: rgba(13, 148, 136, 0.12);
+  --emerald: #0f9d63;
+  --amber: #b7791f;
+  --rose: #d6455a;
+  --shadow-md: 0 8px 24px rgba(20, 26, 36, 0.08);
+  --shadow-lg: 0 24px 64px rgba(20, 26, 36, 0.12);
+}
+
+/* ----------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
-  line-height: 1.55;
   min-height: 100vh;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1100px 620px at 12% -10%, rgba(56, 189, 248, 0.09), transparent 65%),
+    radial-gradient(900px 520px at 92% 0%, rgba(52, 211, 153, 0.06), transparent 60%);
+  background-repeat: no-repeat;
+  color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  font-size: var(--step-0);
+  line-height: var(--lh-body);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Custom scrollbars */
+::selection {
+  background: rgba(56, 189, 248, 0.28);
+  color: var(--text);
+}
+
+/* Every interactive element gets the same visible ring. This is the one rule
+   that makes keyboard use of ten tabs tolerable. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--r-sm);
+}
+
+/* Numbers never jitter: counters, timers, tables and edits all line up. */
+.tnum,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Scrollbars, so the many panes look like one instrument. */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  background: var(--border);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--border-strong);
+  background-clip: padding-box;
+}
+
+/* ----------------------------------------------------------------------------
+   Primitives. Components use these instead of re-deriving spacing and colour.
+   -------------------------------------------------------------------------- */
+@layer components {
+  .skip-link {
+    position: absolute;
+    left: var(--s-4);
+    top: -3rem;
+    z-index: 100;
+    padding: 0.55rem 0.9rem;
+    border-radius: var(--r-sm);
+    background: var(--accent);
+    color: var(--inverse);
+    font-weight: 650;
+    font-size: var(--step--1);
+    transition: top var(--t-fast) var(--ease-out);
+  }
+  .skip-link:focus {
+    top: var(--s-3);
+  }
+
+  .surface {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+  }
+
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.55rem 0.85rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color var(--t-fast) var(--ease-out),
+      border-color var(--t-fast) var(--ease-out),
+      transform var(--t-fast) var(--ease-out),
+      color var(--t-fast) var(--ease-out);
+  }
+  .btn:hover {
+    background: var(--panel-3);
+    border-color: var(--border-strong);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--inverse);
+  }
+  .btn-primary:hover {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--muted);
+  }
+  .btn-ghost:hover {
+    background: var(--panel-2);
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--r-full);
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 5px;
+    border: 1px solid var(--border-strong);
+    background: rgba(7, 11, 18, 0.5);
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Motion: short, purposeful, and off when the reader asks for less.
+   -------------------------------------------------------------------------- */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(56, 189, 248, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 320ms var(--ease-out) both;
+}
+.animate-pop {
+  animation: pop 420ms var(--ease-spring) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

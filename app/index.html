@@ -3,12 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MechaLab</title>
-    <!-- No icon file ships with the site; an empty data URI stops the browser's /favicon.ico request from 404ing. -->
-    <link rel="icon" href="data:," />
-    <meta name="description" content="Interactive Mechatronics & Robotics Workbench with guided tutorials, real-time physics simulators, Lie groups, FOC, LQR+CBF, SysID, ESKF, and 3D CAD/PCB analysis." />
-    <meta property="og:title" content="MechaLab" />
-    <meta property="og:description" content="Interactive Mechatronics & Robotics Workbench with guided tutorials, real-time physics simulators, Lie groups, FOC, LQR+CBF, SysID, ESKF, and 3D CAD/PCB analysis." />
+    <title>MechaLab — Learn Mechatronics by Building a Robot Arm</title>
+    <meta
+      name="description"
+      content="A free, browser-based mechatronics course: from no coding or electronics to a verified simulated 2-DOF robot arm. Python 3.12 runs in the tab, with nothing to install and $0 of hardware."
+    />
+    <meta name="theme-color" content="#070b12" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Social cards. The image is docs/media/social-preview.png, copied into public/ so Pages
+         serves it at a stable URL; scripts/generate_social_preview.mjs renders it. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MechaLab" />
+    <meta property="og:title" content="MechaLab — Learn Mechatronics by Building a Robot Arm" />
+    <meta
+      property="og:description"
+      content="48 browser-based lessons from zero background to a working simulated 2-DOF robot arm. No install, no kit, free."
+    />
+    <meta property="og:image" content="https://tle47.github.io/Mechatronics-Roadmap/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MechaLab — Learn Mechatronics by Building a Robot Arm" />
+    <meta
+      name="twitter:description"
+      content="48 browser-based lessons from zero background to a working simulated 2-DOF robot arm. No install, no kit, free."
+    />
+    <meta name="twitter:image" content="https://tle47.github.io/Mechatronics-Roadmap/og.png" />
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
   </head>
   <body class="bg-[#0b0f19] text-[#f1f5f9] antialiased">

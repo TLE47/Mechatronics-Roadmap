@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MechaLab">
+  <rect width="64" height="64" rx="15" fill="#070b12"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="13.5" fill="none" stroke="#24344c" stroke-width="1.5"/>
+  <!-- Two-link arm: base, elbow, glowing tip - the figure the hero canvas draws. -->
+  <path d="M15 46 L30 30 L48 22" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="15" cy="46" r="5" fill="#070b12" stroke="#38bdf8" stroke-width="3"/>
+  <circle cx="30" cy="30" r="4.5" fill="#070b12" stroke="#38bdf8" stroke-width="3"/>
+  <circle cx="48" cy="22" r="5" fill="#38bdf8"/>
+  <circle cx="48" cy="22" r="9" fill="#38bdf8" fill-opacity="0.18"/>
+</svg>

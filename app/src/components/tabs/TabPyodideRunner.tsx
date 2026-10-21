@@ -33,6 +33,7 @@ import {
   OctagonX,
   RefreshCw,
   ShieldCheck,
+  Loader2,
 } from 'lucide-react';
 
 declare global {
@@ -56,33 +57,56 @@ export const STORAGE_KEY_FIRST_GUIDE = 'mechalab_first_guide_dismissed_v1';
 const PYODIDE_WORKER_SOURCE = `
 let pyodideInstance = null;
 let loadedCdnUrl = null;
+// One load at a time. The page warms the runtime on idle, and the first Run can arrive while that
+// download is still in flight; without this promise the run would start a second importScripts.
+let loadPromise = null;
 
 async function ensurePyodideLoaded(cdnUrl) {
   if (pyodideInstance && loadedCdnUrl === cdnUrl) {
     return pyodideInstance;
   }
-  self.postMessage({ type: 'status', status: 'loading' });
-  try {
-    importScripts(cdnUrl + 'pyodide.js');
-    if (typeof self.loadPyodide !== 'function') {
-      throw new Error('loadPyodide not exposed by pyodide.js');
-    }
-    pyodideInstance = await self.loadPyodide({ indexURL: cdnUrl });
-    loadedCdnUrl = cdnUrl;
-    self.postMessage({ type: 'status', status: 'ready' });
-    return pyodideInstance;
-  } catch (err) {
-    self.postMessage({ type: 'status', status: 'error' });
-    throw new Error(
-      'Pyodide WebAssembly runtime could not be loaded from CDN (' +
-        (err && err.message ? err.message : String(err)) +
-        '). Execution verification requires Pyodide WASM.'
-    );
+  // Any in-flight load is the load: Pyodide comes from one CDN, and two importScripts calls in one
+  // worker would race the interpreter's global.
+  if (loadPromise) {
+    return loadPromise;
   }
+  loadedCdnUrl = cdnUrl;
+  self.postMessage({ type: 'status', status: 'loading' });
+  loadPromise = (async () => {
+    try {
+      importScripts(cdnUrl + 'pyodide.js');
+      if (typeof self.loadPyodide !== 'function') {
+        throw new Error('loadPyodide not exposed by pyodide.js');
+      }
+      pyodideInstance = await self.loadPyodide({ indexURL: cdnUrl });
+      self.postMessage({ type: 'status', status: 'ready' });
+      return pyodideInstance;
+    } catch (err) {
+      loadPromise = null;
+      loadedCdnUrl = null;
+      self.postMessage({ type: 'status', status: 'error' });
+      throw new Error(
+        'Pyodide WebAssembly runtime could not be loaded from CDN (' +
+          (err && err.message ? err.message : String(err)) +
+          '). Execution verification requires Pyodide WASM.'
+      );
+    }
+  })();
+  return loadPromise;
 }
 
 self.onmessage = async (event) => {
   const msg = event.data || {};
+  // The page warms the runtime while the learner is still reading, so the first Run is a warm run.
+  // A failed warm-up is silent: the run that needs the runtime reports the failure itself.
+  if (msg.type === 'warm') {
+    try {
+      await ensurePyodideLoaded(msg.cdnUrl);
+    } catch (err) {
+      self.postMessage({ type: 'warm', status: 'unavailable' });
+    }
+    return;
+  }
   if (msg.type === 'run') {
     const {
       runId,
@@ -345,6 +369,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [behaviorCheck, setBehaviorCheck] = useState<'untested' | 'passed' | 'failed'>('untested');
   const [outputCheck, setOutputCheck] = useState<'untested' | 'matched' | 'differs'>('untested');
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  // The pass toast is short and dismissable by time alone: it exists to carry the learner into
+  // the next lesson while the win is fresh, not to become another panel to close.
+  const [showPassToast, setShowPassToast] = useState<boolean>(false);
   const [pyodideStatus, setPyodideStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [passStatus, setPassStatus] = useState<
     'untested' | 'passed' | 'harness_failed' | 'behavior_failed' | 'mismatch' | 'stopped' | 'error'
@@ -560,6 +587,56 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     workerRef.current = worker;
     return worker;
   };
+
+  // Warm the interpreter while the learner reads. Pyodide is ~10 MB from a CDN, and paying that
+  // inside the first Run is what makes Run look broken; the worker now starts downloading as soon
+  // as the screen is idle, and the first click is a warm run (the worker keeps one load promise, so
+  // a Run that arrives mid-download joins it instead of starting a second).
+  //
+  // On a metered or 2G connection the download waits until the learner actually asks to run: a
+  // study site should not spend someone's data on a program they may never write.
+  useEffect(() => {
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    if (connection?.saveData || connection?.effectiveType === 'slow-2g' || connection?.effectiveType === '2g') {
+      return;
+    }
+    const cdnUrl =
+      (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) || DEFAULT_PYODIDE_CDN;
+    let cancelled = false;
+    const warm = () => {
+      if (cancelled) return;
+      try {
+        const worker = getOrCreateWorker();
+        const previousHandler = worker.onmessage;
+        worker.onmessage = (event: MessageEvent) => {
+          const data = event.data || {};
+          if (data.type === 'status' && (data.status === 'loading' || data.status === 'ready')) {
+            setPyodideStatus(data.status);
+          }
+          if (data.type === 'status' && data.status === 'ready') {
+            worker.onmessage = previousHandler;
+          }
+        };
+        worker.postMessage({ type: 'warm', cdnUrl });
+      } catch {
+        // A warm-up that cannot start is not something to report: the Run that needs it will.
+      }
+    };
+    const idleCallback = (
+      window as Window & {
+        requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
+    const handle = idleCallback ? idleCallback(warm, { timeout: 2500 }) : window.setTimeout(warm, 1200);
+    return () => {
+      cancelled = true;
+      if (!idleCallback) window.clearTimeout(handle as number);
+    };
+  }, []);
 
   const stopExecution = (customMessage?: string) => {
     activeRunIdRef.current += 1;
@@ -794,6 +871,37 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   };
 
+  // ⌘↵ / Ctrl+↵ runs from anywhere on this screen, including inside the editor. The button stays
+  // the discoverable path; this is the one keyboard habit a code editor trains.
+  const runShortcutRef = useRef<() => void>(() => {});
+  runShortcutRef.current = () => {
+    if (isRunning) return;
+    const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
+    runPythonCode(codeRef.current, lesson);
+  };
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        runShortcutRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // A verdict earns a toast once. Leaving the lesson or running again clears it, so the same pass
+  // cannot stack three copies on screen.
+  useEffect(() => {
+    if (passStatus !== 'passed') {
+      setShowPassToast(false);
+      return;
+    }
+    setShowPassToast(true);
+    const timer = window.setTimeout(() => setShowPassToast(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [passStatus, selectedId]);
+
   const filteredLessons = PYTHON_LESSONS.filter((l) => {
     const matchesTrack =
       trackFilter === 'all' ||
@@ -875,52 +983,83 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Header Banner */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
-            <Terminal className="w-3.5 h-3.5" />
-            <span>
-              Isolated Web Worker Python 3.12 Runner · {PYTHON_LESSONS.length} lessons &amp;
-              exercises
+      {/* Runtime strip. The three numbers that move, the interpreter, and one line about what
+          this screen is. The long explanation now lives in the first-lesson guide below, so a
+          learner reaches the editor a screen sooner. */}
+      <div
+        className="rounded-[var(--r-md)] border"
+        style={{ borderColor: 'var(--border)', backgroundColor: 'var(--panel)' }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-sm)] border"
+              style={{ borderColor: 'var(--border)', color: 'var(--emerald)', backgroundColor: 'var(--bg)' }}
+              aria-hidden="true"
+            >
+              <Terminal className="h-4 w-4" />
             </span>
+            <div className="min-w-0">
+              <p className="flex flex-wrap items-center gap-2 text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                <span>Python 3.12 in an isolated Web Worker</span>
+                <span
+                  data-testid="runner-runtime-status"
+                  className="chip"
+                  style={{ color: pyodideStatus === 'error' ? 'var(--rose)' : 'var(--accent)' }}
+                >
+                  {pyodideStatus === 'ready'
+                    ? 'Ready (Worker WASM)'
+                    : pyodideStatus === 'loading'
+                    ? 'Loading WASM...'
+                    : pyodideStatus === 'error'
+                    ? 'WASM Load Error'
+                    : 'Isolated Worker Ready'}
+                </span>
+              </p>
+              <p className="mt-0.5 text-[11.5px]" style={{ color: 'var(--dim)' }}>
+                {PYTHON_LESSONS.length} entries · starter code, three hints, behavioural tests
+              </p>
+            </div>
           </div>
-          <h2 className="text-lg font-bold text-[#f1f5f9] mt-0.5">
-            Every lesson and graded module in one place: the Python on-ramp, then the practice each
-            roadmap step asks for, with starter code, progressive hints and behavioural tests
-          </h2>
-          <p className="text-xs text-[#94a3b8] mt-0.5">
-            Complete the `TODO` lines, unlock hints one step at a time, and click <b>Run &amp; Verify Output</b>. Code executes inside an isolated <b>Web Worker</b> with infinite-loop protection and is graded by <b>Instructor Behavioral Tests</b> (multi-input &amp; boundary checks) plus output presentation.
-          </p>
+
+          <div className="flex items-center gap-3 font-mono tabular-nums">
+            <div className="text-right">
+              <div className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
+                Executed &amp; Passed (WASM)
+              </div>
+              <div
+                className="text-[13px] font-bold"
+                data-testid="runner-verified-count"
+                style={{ color: 'var(--emerald)' }}
+              >
+                {`${verifiedCount} / ${PYTHON_LESSONS.length} Verified`}
+              </div>
+            </div>
+            <div className="h-8 w-px" style={{ backgroundColor: 'var(--border)' }} />
+            <div className="text-right">
+              <div className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
+                Self-Marked
+              </div>
+              <div
+                className="text-[13px] font-bold"
+                data-testid="runner-self-marked-count"
+                style={{ color: 'var(--muted)' }}
+              >
+                {`${completedCount} / ${PYTHON_LESSONS.length} Marked`}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 bg-[#0b0f19] border border-[#1e293b] px-4 py-2.5 rounded-lg font-mono tabular-nums">
-          <div>
-            <div className="text-[11px] text-[#94a3b8]">Executed &amp; Passed (WASM)</div>
-            <div className="text-sm font-bold text-[#34d399]" data-testid="runner-verified-count">
-              {`${verifiedCount} / ${PYTHON_LESSONS.length} Verified`}
-            </div>
-          </div>
-          <div className="h-7 w-[1px] bg-[#1e293b]" />
-          <div>
-            <div className="text-[11px] text-[#94a3b8]">Self-Marked</div>
-            <div className="text-sm font-bold text-[#cbd5e1]" data-testid="runner-self-marked-count">
-              {`${completedCount} / ${PYTHON_LESSONS.length} Marked`}
-            </div>
-          </div>
-          <div className="h-7 w-[1px] bg-[#1e293b]" />
-          <div>
-            <div className="text-[11px] text-[#94a3b8]">Worker Runtime</div>
-            <div className="text-xs font-semibold text-[#38bdf8]" data-testid="runner-runtime-status">
-              {pyodideStatus === 'ready'
-                ? 'Ready (Worker WASM)'
-                : pyodideStatus === 'loading'
-                ? 'Loading WASM...'
-                : pyodideStatus === 'error'
-                ? 'WASM Load Error'
-                : 'Isolated Worker Ready'}
-            </div>
-          </div>
+        {/* One thin bar for the one number a learner is trying to move. */}
+        <div className="h-1 w-full overflow-hidden rounded-b-[var(--r-md)]" style={{ backgroundColor: 'var(--border-soft)' }}>
+          <div
+            className="h-full transition-[width] duration-500"
+            style={{
+              width: `${PYTHON_LESSONS.length ? Math.round((verifiedCount / PYTHON_LESSONS.length) * 100) : 0}%`,
+              background: 'linear-gradient(90deg, var(--accent), var(--emerald))',
+            }}
+          />
         </div>
       </div>
 
@@ -1346,10 +1485,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   }}
                   disabled={isRunning}
                   data-testid="btn-run-verify"
-                  className="px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
+                  className="btn btn-primary ml-1 px-3.5 py-2 text-[12.5px] font-bold"
                 >
-                  <Play className="w-3.5 h-3.5 fill-current" />
+                  {isRunning ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+                  )}
                   <span>{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
+                  {!isRunning && <span className="kbd ml-0.5">⌘↵</span>}
                 </button>
               </div>
             </div>
@@ -1662,6 +1807,55 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* The verdict is announced, not only coloured: a screen reader hears the result and the
+          next step without moving focus. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {passStatus === 'passed'
+          ? `Lesson ${currentLesson.id} passed: behavioural checks and output both meet the lesson.`
+          : passStatus === 'untested' || passStatus === 'error'
+            ? ''
+            : `Lesson ${currentLesson.id} has not passed yet. Read the failing line above.`}
+      </p>
+
+      {showPassToast && passStatus === 'passed' && (
+        <div
+          className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4"
+          data-testid="pass-toast"
+        >
+          <div
+            className="pointer-events-auto flex animate-pop items-center gap-3 rounded-[var(--r-full)] border py-2 pl-2.5 pr-2 shadow-[var(--shadow-lg)]"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--emerald) 45%, transparent)',
+              backgroundColor: 'var(--panel-2)',
+            }}
+          >
+            <span
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
+              style={{ backgroundColor: 'var(--emerald)', color: 'var(--inverse)' }}
+              aria-hidden="true"
+            >
+              <Check className="h-4 w-4" strokeWidth={3} />
+            </span>
+            <div className="pr-1">
+              <p className="text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>
+                Lesson {currentLesson.id} passed
+              </p>
+              <p className="text-[11px]" style={{ color: 'var(--dim)' }}>
+                Behavioural checks and output both green
+              </p>
+            </div>
+            {nextLesson && (
+              <button
+                onClick={() => selectLesson(nextLesson.id)}
+                className="btn btn-primary px-3 py-1.5 text-[12px]"
+              >
+                Next lesson →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
