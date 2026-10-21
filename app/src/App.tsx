@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
+import { CommandPalette } from './components/CommandPalette';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { StartHereCard } from './components/StartHereCard';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
@@ -28,7 +29,7 @@ import {
 } from './accounts';
 import { loadProgress, saveProgress } from './cloudProgress';
 import { mergeProgress, PROGRESS_SCHEMA, type ProgressSnapshot } from './progressMerge';
-import { readLearningLog, replaceLearningLog } from './learningLog';
+import { downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
@@ -37,6 +38,8 @@ import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { lessonIdFromLocation } from './lessonRoute';
+import { lessonIdOf, type PaletteItem } from './palette';
+import { paletteCatalog } from './paletteCatalog';
 import {
   ActiveTierPass,
   LEVEL_0_STEPS,
@@ -369,6 +372,13 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('tab-pyodide');
   const [tourIndex, setTourIndex] = useState<number>(0);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
+  // `⌘K` is the keyboard's table of contents: one dialog over lessons, tabs and commands.
+  const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
+  // Bumped by the palette's "Run the lesson" command; the runner watches it (see `runRequest`).
+  const [runRequest, setRunRequest] = useState<number>(0);
+  // Bumped whenever a learner asks for a specific entry, so the runner can tell a new pick from a
+  // render that happens to carry the same id.
+  const [lessonRequest, setLessonRequest] = useState<{ id: string; nonce: number } | null>(null);
   // The collapsed Start here line can be dismissed for good; the roadmap tab carries the control
   // that restores it, so nothing is lost without a way back.
   const [startHereDismissed, setStartHereDismissed] = useState<boolean>(() => {
@@ -619,6 +629,88 @@ export const App: React.FC = () => {
     setActiveTab('tab-arch');
   };
 
+  // One catalogue, built from the lesson registry and the rail's own metadata, so the palette can
+  // never list a lesson the runner does not have or name a tab the strip does not show.
+  const paletteItems = React.useMemo(() => paletteCatalog(WORKBENCH_TABS), []);
+
+  const openLesson = (lessonId: string) => {
+    setPyodideLessonId(lessonId);
+    // The id alone is not enough: re-choosing the lesson a deep link already named is a no-op prop
+    // change, so the runner gets a request it can count.
+    setLessonRequest((prev) => ({ id: lessonId, nonce: (prev?.nonce ?? 0) + 1 }));
+    setActiveTab('tab-pyodide');
+    setHighlightedId(null);
+    document.getElementById('python-runner')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handlePaletteSelect = (item: PaletteItem) => {
+    const lessonId = lessonIdOf(item);
+    if (lessonId) {
+      openLesson(lessonId);
+      return;
+    }
+    if (item.kind === 'tab') {
+      const target = WORKBENCH_TABS.find((tab) => `tab-${tab.id}` === item.id);
+      if (target) {
+        setActiveTab(target.id);
+        setHighlightedId(null);
+      }
+      return;
+    }
+    switch (item.id) {
+      case 'action-run-lesson':
+        setActiveTab('tab-pyodide');
+        setRunRequest((nonce) => nonce + 1);
+        break;
+      case 'action-toggle-theme':
+        toggleThemeMode();
+        break;
+      case 'action-beginner-view':
+        setViewMode('beginner');
+        break;
+      case 'action-advanced-view':
+        setViewMode('advanced');
+        break;
+      case 'action-open-cheatsheet':
+        setIsCheatSheetOpen(true);
+        break;
+      case 'action-export-portfolio':
+        setIsPortfolioModalOpen(true);
+        break;
+      case 'action-export-log':
+        downloadLearningLog();
+        break;
+      case 'action-theme-tokens':
+        if (typeof window !== 'undefined') window.location.assign(themeViewSearch());
+        break;
+      case 'action-pass-level0':
+      case 'action-pass-tier1':
+      case 'action-pass-tier2':
+      case 'action-pass-tier3': {
+        const pass = item.id.replace('action-pass-', '') as ActiveTierPass;
+        setActiveTierPass(pass);
+        setActiveTab('tab-arch');
+        setHighlightedId(null);
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
+  // ⌘K / Ctrl+K from anywhere, including inside the editor: a palette that only opens when no
+  // field has focus is the one you cannot use while typing, which is when you want it.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setIsPaletteOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const allMilestoneIds = [
     ...LEVEL_0_STEPS,
     ...TIER_1_LINEAR_PASS,
@@ -730,6 +822,7 @@ export const App: React.FC = () => {
           onSelectTierPass={setActiveTierPass}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
+          onOpenPalette={() => setIsPaletteOpen(true)}
         />
         <main
           id="main"
@@ -758,6 +851,7 @@ export const App: React.FC = () => {
         onSelectTierPass={setActiveTierPass}
         accountEmail={accountEmail}
         onOpenAccount={() => setIsAccountOpen(true)}
+        onOpenPalette={() => setIsPaletteOpen(true)}
       />
 
       {/* Workspace mode and the running tally: one segmented control, three counters. The labels
@@ -923,11 +1017,9 @@ export const App: React.FC = () => {
             onDismiss={() => setStartHereDismissed(true)}
             onStartLesson={() => {
               // The reading link leaves for GitHub; this button stays and puts Lesson 1 under the
-              // cursor, so the two doors are never confused for each other.
-              setPyodideLessonId('P.1');
-              document
-                .getElementById('python-runner')
-                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              // cursor, so the two doors are never confused for each other. `openLesson` also
+              // handles the case where P.1 was already the prop but the reader had browsed away.
+              openLesson('P.1');
             }}
           />
         )}
@@ -953,10 +1045,7 @@ export const App: React.FC = () => {
             onToggleMilestone={handleToggleMilestone}
             startHereDismissed={startHereDismissed}
             onRestoreStartHere={handleRestoreStartHere}
-            onOpenPyodideLesson={(lessonId) => {
-              setPyodideLessonId(lessonId);
-              setActiveTab('tab-pyodide');
-            }}
+            onOpenPyodideLesson={openLesson}
           />
         )}
         {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
@@ -977,15 +1066,14 @@ export const App: React.FC = () => {
               onMarkLessonVerified={handleMarkLessonVerified}
               onToggleLessonCompleted={handleToggleLessonCompleted}
               onOpenRoadmap={handleOpenRoadmap}
+              runRequest={runRequest}
+              lessonRequest={lessonRequest}
             />
           </div>
         )}
         {activeTab === 'tab-placement' && (
           <TabPlacementQuiz
-            onOpenPyodideLesson={(lessonId) => {
-              setPyodideLessonId(lessonId);
-              setActiveTab('tab-pyodide');
-            }}
+            onOpenPyodideLesson={openLesson}
             onSwitchSimulatorTab={(tabIdx) => {
               const legacyOrder: TabId[] = [
                 'tab-arch',
@@ -1008,6 +1096,14 @@ export const App: React.FC = () => {
 
       {/* Cheat sheet modal */}
       <CheatSheetModal isOpen={isCheatSheetOpen} onClose={() => setIsCheatSheetOpen(false)} />
+
+      {/* ⌘K. Rendered last so it sits above every panel, and only mounted while open. */}
+      <CommandPalette
+        isOpen={isPaletteOpen}
+        items={paletteItems}
+        onClose={() => setIsPaletteOpen(false)}
+        onSelect={handlePaletteSelect}
+      />
 
       {/* Export Progress Portfolio Modal */}
       {isPortfolioModalOpen && (

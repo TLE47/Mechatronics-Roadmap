@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, Compass, Sun, Moon } from 'lucide-react';
+import { Printer, Download, FileJson, User, Compass, Sun, Moon, Search } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { toggleLabel, type Theme } from '../theme';
@@ -15,6 +15,8 @@ interface HeaderProps {
   /** The signed-in address, or null when signed out (and when accounts are not configured). */
   accountEmail: string | null;
   onOpenAccount: () => void;
+  /** Opens the `⌘K` palette: the header's door to the same dialog the shortcut opens. */
+  onOpenPalette: () => void;
 }
 
 /** The mark: a two-link arm, drawn in the same cyan as the live hero canvas. */
@@ -50,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTierPass,
   accountEmail,
   onOpenAccount,
+  onOpenPalette,
 }) => {
   // The theme is mounted once, in `App`, and handed down: the attribute on <html> and this button's
   // label are the same state, so the toggle can never claim a mode the page is not in.
@@ -124,6 +127,23 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Zone 3: actions. Secondary tools stay reachable but quiet; the account button is the
             only one that shows state, so it keeps a border. */}
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          {/* The palette is a shortcut first, but a shortcut nobody can see is a secret. */}
+          <button
+            onClick={onOpenPalette}
+            data-testid="btn-open-palette"
+            aria-keyshortcuts="Meta+K Control+K"
+            title="Jump to a lesson, tab or command (⌘K)"
+            className="btn"
+          >
+            <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="hidden 2xl:inline">Search</span>
+            <kbd
+              className="ml-0.5 hidden rounded border px-1 py-0.5 text-[9.5px] font-semibold sm:inline"
+              style={{ borderColor: 'var(--border)', color: 'var(--dim)' }}
+            >
+              ⌘K
+            </kbd>
+          </button>
           <button
             onClick={toggle}
             data-testid="btn-theme-toggle"

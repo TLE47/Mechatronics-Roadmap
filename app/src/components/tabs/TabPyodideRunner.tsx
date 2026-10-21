@@ -454,6 +454,9 @@ __mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
 };
 `;
 
+/** The last palette run request this page has acted on; see the effect near the keyboard shortcut. */
+let LAST_RUN_REQUEST_HANDLED = 0;
+
 interface TabPyodideRunnerProps {
   initialLessonId?: string;
   verifiedLessons?: Record<string, boolean>;
@@ -462,6 +465,17 @@ interface TabPyodideRunnerProps {
   onToggleLessonCompleted?: (lessonId: string, forceValue?: boolean) => void;
   /** Opens the roadmap at the pass the open entry belongs to. */
   onOpenRoadmap?: (pass: ActiveTierPass, milestoneId: string) => void;
+  /**
+   * A counter the palette bumps when "Run the lesson" is chosen. A nonce, not a callback: the
+   * palette outlives this component (it is mounted whatever tab is open), so it cannot hold the
+   * run function, and a mount must never fire a run the learner asked for on an earlier visit.
+   */
+  runRequest?: number;
+  /**
+   * An explicit "open this entry" request. The id alone cannot express it: choosing the lesson a
+   * deep link already named leaves `initialLessonId` unchanged, so nothing would fire.
+   */
+  lessonRequest?: { id: string; nonce: number } | null;
 }
 
 export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
@@ -471,6 +485,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onMarkLessonVerified,
   onToggleLessonCompleted,
   onOpenRoadmap,
+  runRequest,
+  lessonRequest,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
   const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
@@ -633,6 +649,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       initialLessonApplied.current = true;
     }
   }, [initialLessonId]);
+
+  // A palette pick (or a roadmap practice chip) is an instruction, not a prop sync: the nonce is
+  // what makes it land even when it names the entry already in `initialLessonId`, and the address
+  // bar follows because a learner's own pick is what a copied URL should reopen.
+  const lastLessonRequest = useRef<number>(0);
+  useEffect(() => {
+    if (!lessonRequest || lessonRequest.nonce <= lastLessonRequest.current) return;
+    lastLessonRequest.current = lessonRequest.nonce;
+    selectLesson(lessonRequest.id, true);
+  }, [lessonRequest]);
 
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
@@ -1139,6 +1165,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         runShortcutRef.current();
@@ -1164,6 +1191,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     },
     []
   );
+
+  // The palette's "Run the lesson" command. The highest nonce ever acted on lives outside the
+  // component: the palette can be used from another tab, and this component only mounts when the
+  // learner lands here, by which time the bump has already happened. Recording it on mount instead
+  // would swallow exactly the request that brought them here.
+  useEffect(() => {
+    if (!runRequest || runRequest <= LAST_RUN_REQUEST_HANDLED) return;
+    LAST_RUN_REQUEST_HANDLED = runRequest;
+    runShortcutRef.current();
+  }, [runRequest]);
 
   // A verdict earns a toast once. Leaving the lesson or running again clears it, so the same pass
   // cannot stack three copies on screen.
