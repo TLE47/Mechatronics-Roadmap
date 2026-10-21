@@ -54,6 +54,7 @@
     "test:e2e:pages": "node scripts/e2e_pages_bundle.mjs",
     "verify:walls": "node scripts/verify_bot_walls.mjs",
     "test:merge": "node --experimental-strip-types scripts/test_progress_merge.mjs",
+    "test:editor": "node --experimental-strip-types scripts/test_editor.mjs",
     "test:theme": "node --experimental-strip-types scripts/test_theme.mjs",
     "test:theme:e2e": "node scripts/e2e_theme.mjs",
     "test:theme:tokens": "node --experimental-strip-types scripts/test_theme_tokens.mjs",
@@ -62,6 +63,14 @@
     "test:tour": "node scripts/e2e_tour_presets.mjs"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "^1.2.5",
     "@supabase/supabase-js": "^2.118.0",
     "katex": "^0.16.21",
     "lucide-react": "^1.16.0",
