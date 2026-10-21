@@ -186,6 +186,12 @@ jobs:
       - name: "Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback"
         run: npm run test:runtime
 
+      # A third step of its own, for the same reason: this one serves the built bundle WITHOUT the
+      # isolation headers, the way GitHub Pages does, so the service worker has to supply them - and then
+      # takes the browser offline. Nothing in the other suites runs with the network off.
+      - name: "Check the offline workbench: worker-supplied isolation, cached shell, offline reload"
+        run: npm run test:offline
+
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/configure-pages@v5

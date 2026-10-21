@@ -15,7 +15,7 @@ flowchart LR
         T["Dark/light tokens<br/>contrast measured in CI"]
     end
     subgraph next["Next, in this order"]
-        O["Offline PWA<br/>shell + wheels precached"] --> H["Check-linked hints"]
+        O["Offline Python<br/>worker to a module URL"] --> H["Check-linked hints"]
         H --> A["Scope cursors, zoom<br/>A/B run overlay"]
         A --> X["IndexedDB + backup zip<br/>when 5 MB stops fitting"]
     end
@@ -29,7 +29,7 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 
 | Plan item | Reality now | Verdict |
 | :--- | :--- | :--- |
-| Python in a Web Worker + `coi-serviceworker` + a real Stop | `PYODIDE_WORKER_SOURCE` in [`app/src/components/tabs/TabPyodideRunner.tsx`](../app/src/components/tabs/TabPyodideRunner.tsx) runs Pyodide off-thread; Stop writes a `SharedArrayBuffer` interrupt word (`setInterruptBuffer`), so `KeyboardInterrupt` lands **in place** and imports survive; [`app/public/coi-serviceworker.js`](../app/public/coi-serviceworker.js) supplies COOP/COEP on Pages, with a terminate-the-worker fallback when isolation is absent. Pinned by `npm run test:runtime` (real Chromium, real `SharedArrayBuffer`). | **ships** |
+| Python in a Web Worker + isolation on Pages + a real Stop | `PYODIDE_WORKER_SOURCE` in [`app/src/components/tabs/TabPyodideRunner.tsx`](../app/src/components/tabs/TabPyodideRunner.tsx) runs Pyodide off-thread; Stop writes a `SharedArrayBuffer` interrupt word (`setInterruptBuffer`), so `KeyboardInterrupt` lands **in place** and imports survive; [`app/public/sw.js`](../app/public/sw.js) supplies COOP/COEP on Pages, with a terminate-the-worker fallback when isolation is absent. Pinned by `npm run test:runtime` (real Chromium, real `SharedArrayBuffer`). | **ships** |
 | IndexedDB persistence with snapshot-on-run | Drafts are `localStorage` per lesson, bounded and evicted ([`app/src/lessonDraft.ts`](../app/src/lessonDraft.ts)); every Run files the code it started from with its verdict, five per lesson, restorable ([`app/src/draftHistory.ts`](../app/src/draftHistory.ts), `npm run test:history`). No IndexedDB, no zip backup, no cross-lesson timeline. | **partial** |
 | A Scope panel with a `scope.plot()` helper | Ships: `mechalab.scope.stream(name, t, y)` / `scope.plot(...)` inside a run, batched through the worker, drawn on one pair of axes with last values in the legend and the same data as a table ([`app/src/scopeModel.ts`](../app/src/scopeModel.ts), [`app/src/components/ScopePanel.tsx`](../app/src/components/ScopePanel.tsx), `npm run test:scope`, browser step 7h). No uPlot zoom/cursors, no A/B run overlay yet. | **partial** |
 
@@ -60,16 +60,18 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Plan | Reality | Verdict |
 | :--- | :--- | :--- |
 | ⌘K palette | Ships, built from the lesson registry ([`app/src/paletteCatalog.ts`](../app/src/paletteCatalog.ts), `npm run test:palette`); `⌘↵` runs. No `⌘P`, no `⌘⇧F` full-text search, no `?` sheet beyond the header modal. | **partial** |
-| Offline PWA, install prompt, download-step | `coi-serviceworker` is the only service worker; no precache of shell, lessons or Pyodide, so a plane still fails. | **missing** |
+| Offline PWA | `sw.js` precaches the shell, manifest and favicon, serves same-origin assets cache-first with a background refresh, and falls back to the cached document for any navigation: an offline reload and an offline deep link both work, proven by `npm run test:offline` with no host headers. The manifest is already installable. **Offline Python does not work**: Pyodide loads in a blob-URL worker, which a service worker cannot control, so its CDN fetches are never cached. | **partial** |
 | Themes, contrast, reduced motion, keyboard | Dark and light from one token set, every tab measured for contrast in both modes in CI (`npm run test:theme:e2e`), reduced-motion branch, visible focus ring. No high-contrast, no paper theme, no keymap (Vim/Emacs), no screen-reader announcements for run results. | **partial** |
 | Share links, "ask for help", pair study | None. | **missing** |
 | CI rigour (workers, E2E, budgets) | 28 repository gates plus 15 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
 
 ## What to build next, in order
 
-1. **Offline PWA** — highest reachability win per line of code, and it needs no new dependency: precache
-   the shell, the registry JSON and the Pyodide wheels the current lesson needs. Acceptance: a browser
-   suite loads the app, goes offline, reloads, and runs a lesson.
+1. **Offline Python** — the shell, assets and deep links already work offline (`npm run test:offline`);
+   the runtime does not, because Pyodide loads inside a blob-URL worker that a service worker never
+   controls. Move the worker to a real module URL and load the ESM build (`pyodide.mjs`) with a dynamic
+   `import`, and the same worker caches every wheel it fetches. Acceptance: `test:offline` goes offline,
+   reloads, and a lesson still runs to a verdict.
 2. **Check-linked hints** — the checks already carry ids and labels, and the hint ladder already counts
    levels; pointing a hint at the failing check is the smallest change that makes the ladder feel
    specific. Acceptance: a failing check names its own hints, and hint 2 does not reveal hint 3.

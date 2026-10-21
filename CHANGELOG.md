@@ -11,6 +11,40 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 142: The Workbench, Offline
+
+GitHub Pages could not send the isolation headers, and it could not keep the site working on a plane.
+One worker did the first job; the plan's Phase 8 asked for the second. A page can only be controlled by
+**one** service worker, so the two jobs had to become one file: [`app/public/sw.js`](app/public/sw.js)
+replaces `coi-serviceworker.js` and does both.
+
+| job | how |
+| :--- | :--- |
+| isolation without host headers | re-issues every **same-origin** response with `COOP: same-origin` + `COEP: require-corp` (third-party responses are left alone - only the top-level document decides isolation) |
+| shell | precached on install (`./`, `index.html`, the manifest, the favicon), network-first on navigation so a deploy lands on the next load, cached document as the offline fallback |
+| assets | cache-first with a background refresh, which is what makes a repeat visit instant |
+| deep links | any navigation offline gets the cached shell, so `?lesson=P.4` opens its lesson from a URL the cache never saw |
+
+The page half stays in the same file and still registers only when `crossOriginIsolated` is false, so the
+dev server never has a worker between HMR and the page - the reason the old script was conditional is
+still true.
+
+**What it does not do, and says so.** Pyodide is loaded inside a blob-URL worker, and a service worker
+does not control blob workers, so its CDN fetches never reach the cache. Offline **reading** ships -
+reload, the lesson list, a deep link, all isolated. Offline **running** needs the worker moved to a real
+module URL, which is the next slice and is written down in [`docs/PLAN-2.0-GAP.md`](docs/PLAN-2.0-GAP.md)
+rather than implied.
+
+**Measured.** `npm run test:offline` serves the built bundle **without** the header pair - the way Pages
+does - and asserts, in order: the worker takes control and the document reloads isolated; the shell,
+manifest and 5 built assets are in `mechalab-shell-v1` / `mechalab-assets-v1`; then it takes the browser
+offline and asserts a reload paints the workbench with the tab rail and the lesson list, that the cached
+document still carries the isolation pair, and that `?lesson=P.4` opens *Ordered Lists and Repeating
+Actions* from the cache. `test:e2e:pages` still passes against the same bundle (its server sends the
+headers, so the worker correctly does nothing).
+
+---
+
 ## [2026-10-21] — Run 141: The Loop Draws Itself
 
 A control lesson could only ask a learner to imagine the curve: forty printed numbers, and "does it
@@ -549,7 +583,7 @@ second shared word while the page shows an input box, so blocking `input()` neve
 and Stop wakes that wait too.
 
 **GitHub Pages can now be isolated.** Interruption needs `SharedArrayBuffer`, which needs COOP/COEP,
-which a static host cannot send. [`app/public/coi-serviceworker.js`](app/public/coi-serviceworker.js)
+which a static host cannot send. `app/public/coi-serviceworker.js` (run 142 folded it into `sw.js`)
 adds the pair and reloads once; `npm run dev` and `preview` send the same pair directly from
 [`scripts/isolation-headers.mjs`](scripts/isolation-headers.mjs), so every browser suite runs isolated
 without the service worker in the way. A blocked service worker degrades to the terminate fallback;

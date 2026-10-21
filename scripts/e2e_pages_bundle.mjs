@@ -177,7 +177,7 @@ function ensureBuilt() {
 }
 
 /** Serve `dist/` under the Pages base path, the way GitHub Pages does for a project site. */
-export function startStaticServer() {
+export function startStaticServer({ isolation = true } = {}) {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
     let rel = url.pathname;
@@ -201,14 +201,15 @@ export function startStaticServer() {
       res.end('not found');
       return;
     }
-    // The real host is GitHub Pages, which cannot set these; the bundle carries
-    // app/public/coi-serviceworker.js for that. The test server sets them instead, so the suite exercises
-    // the isolated document (SharedArrayBuffer present) without a service-worker reload mid-test.
-    res.writeHead(200, {
-      'content-type': MIME[path.extname(file)] ?? 'application/octet-stream',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-    });
+    // The real host is GitHub Pages, which cannot set these; the bundle carries app/public/sw.js for
+    // that. This server sets them instead so the Pages suite exercises the isolated document without a
+    // service-worker reload mid-test; the offline suite turns isolation off to test exactly that pair.
+    const headers = { 'content-type': MIME[path.extname(file)] ?? 'application/octet-stream' };
+    if (isolation) {
+      headers['Cross-Origin-Opener-Policy'] = 'same-origin';
+      headers['Cross-Origin-Embedder-Policy'] = 'require-corp';
+    }
+    res.writeHead(200, headers);
     res.end(fs.readFileSync(file));
   });
   return new Promise((resolve) => {

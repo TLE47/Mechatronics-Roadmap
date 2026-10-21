@@ -54,6 +54,7 @@
     "test:workbench": "node scripts/test_workbench.mjs",
     "test:e2e": "node scripts/e2e_browser_workbench.mjs",
     "test:e2e:pages": "node scripts/e2e_pages_bundle.mjs",
+    "test:offline": "node scripts/e2e_offline.mjs",
     "verify:walls": "node scripts/verify_bot_walls.mjs",
     "test:merge": "node --experimental-strip-types scripts/test_progress_merge.mjs",
     "test:palette": "node --experimental-strip-types scripts/test_palette.mjs",

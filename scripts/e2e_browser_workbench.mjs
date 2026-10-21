@@ -63,7 +63,7 @@ export async function startDevServer(repoRoot = process.cwd()) {
     root: path.join(repoRoot, 'app'),
     // Cross-origin isolation is what gives the page a SharedArrayBuffer, and without it the
     // interrupt-based Stop cannot exist. The production host is GitHub Pages, which cannot send
-    // headers; `app/public/coi-serviceworker.js` covers that, and every local server sends them here.
+    // headers; `app/public/sw.js` covers that, and every local server sends them here.
     server: { port: 0, host: '127.0.0.1', headers: ISOLATION_HEADERS },
     logLevel: 'error',
   });

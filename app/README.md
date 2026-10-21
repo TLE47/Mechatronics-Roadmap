@@ -83,11 +83,30 @@ editor keeps typing, the tabs keep switching, and a runaway loop cannot freeze t
 | `while True:` | **Stop** writes to a `SharedArrayBuffer` interrupt word that Pyodide watches; the interpreter raises `KeyboardInterrupt` **in place**, so imports, variables and the 10 MB runtime all survive. Without `SharedArrayBuffer` it falls back to terminating the worker, which still stops the run. |
 | `input()` | The worker posts the prompt, then `Atomics.wait`s on a second shared word while the page shows the input box. The UI stays live because it is a different thread. Stop wakes the wait. |
 | The download | The runtime is warmed on idle, so the first Run is a warm run; the status line reports the measured boot (`ready in 1.4 s`), not a spinner. |
-| GitHub Pages (no headers) | [`public/coi-serviceworker.js`](public/coi-serviceworker.js) adds the COOP/COEP pair a static host cannot send; it reloads once and then `SharedArrayBuffer` exists. `npm run dev` and `preview` send the same pair directly (`scripts/isolation-headers.mjs`), so tests never depend on the service worker. |
+| GitHub Pages (no headers) | [`public/sw.js`](public/sw.js) adds the COOP/COEP pair a static host cannot send; it reloads once and then `SharedArrayBuffer` exists. `npm run dev` and `preview` send the same pair directly (`scripts/isolation-headers.mjs`), so the dev server never puts a worker between HMR and the page. |
 
 Interruption needs cross-origin isolation for **one** reason: it is what makes `SharedArrayBuffer`
 available. If the service worker is blocked, the runner still stops programs — it just pays for it by
 restarting the runtime.
+
+### Offline
+
+The same worker caches the app, so a second visit starts without the network. On install it precaches
+the shell, `index.html`, the manifest and the favicon; every same-origin asset it serves after that is
+cache-first with a background refresh, which is why a repeat visit is instant and a deploy still lands
+on the next load. Navigations are network-first with the cached document as the fallback, so an offline
+reload — or a deep link like `?lesson=P.4` the cache never saw — still opens the workbench, isolated,
+with the lesson list rendered.
+
+`npm run test:offline` is the suite that proves it the way Pages serves it: the built bundle is served
+**without** the header pair, the worker takes control, and then the context goes offline. It asserts the
+isolated document, the cached shell/manifest/bundle, an offline reload that paints the workbench, and an
+offline deep link into a lesson.
+
+**Offline Python is not covered yet**, and the reason is structural: Pyodide is loaded inside a blob-URL
+worker, and a service worker does not control blob workers, so those CDN fetches never reach the cache.
+Offline reading ships; offline *running* needs the worker moved to a real module URL (tracked in
+[`docs/PLAN-2.0-GAP.md`](../docs/PLAN-2.0-GAP.md)).
 
 ### Keys
 
@@ -224,6 +243,7 @@ npm run test:history         # run history: filed on Run, deduped, capped per le
 npm run test:scope           # Scope payload rules: NaN, alignment, caps, bounds, table sampling
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
+npm run test:offline         # the service worker: isolation without host headers, cached shell, offline reload + deep link
 npm run check:lessons        # the registry is current
 ```
 

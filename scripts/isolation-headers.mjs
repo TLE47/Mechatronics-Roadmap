@@ -3,7 +3,7 @@
  *
  * `SharedArrayBuffer` — and so the interrupt-based Stop in the Python runtime — needs a document
  * served with COOP `same-origin` and COEP `require-corp`. GitHub Pages cannot set headers, so the
- * bundle ships `app/public/coi-serviceworker.js` for production; every server the project controls
+ * bundle ships `app/public/sw.js` for production; every server the project controls
  * (Vite's dev/preview server, the built-bundle test server, the browser suites) sends them here, so
  * tests exercise the same isolated document a learner gets.
  *
