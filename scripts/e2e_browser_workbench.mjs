@@ -242,11 +242,46 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       fixLine.includes('Expected') && fixLine.includes('got'),
       `the guide must say what to fix using the check's own expected/got line; got: ${fixLine}`
     );
+    // 0a-i. The failing check names its own hint. The card under the badges says which check is red
+    //       and which rung answers it, and opening that rung from the card opens *one* rung: the
+    //       formula block below it is the near-solution, so it waits for a run after the nudge.
+    const behaviourCard = page.getByTestId('check-failure-behaviour');
+    await behaviourCard.waitFor({ timeout: 5000 });
+    const behaviourCardText = await behaviourCard.innerText();
+    assert(
+      behaviourCardText.includes('Behavioural check failed'),
+      `the card must name the check that failed; got: ${behaviourCardText}`
+    );
+    assert(
+      behaviourCardText.includes('Hint 1'),
+      `the failing check must name the rung that answers it; got: ${behaviourCardText}`
+    );
+    await page.getByTestId('btn-check-hint-behaviour').click();
+    assert(
+      await page.getByTestId('hint-for-check').isVisible(),
+      'the rung a check points at must be marked where the hint is read'
+    );
+    const nudgeHintButton = page.getByTestId('btn-reveal-hint');
+    assert(
+      await nudgeHintButton.isDisabled(),
+      'opening the nudge from a check must not open the formula block with it'
+    );
+    assert.equal(
+      (await nudgeHintButton.innerText()).trim(),
+      'Run again to unlock Hint 2',
+      'Hint 2 must be earned by an attempt after the nudge, not by the run already on screen'
+    );
+    assert.equal(
+      await page.getByText('Hint 2:', { exact: false }).count(),
+      0,
+      'exactly one rung may be on screen after a check opens its hint'
+    );
+    // The guide's own hint control still works, and now reports the open rung instead of offering it.
     await page.getByTestId('btn-guide-hint').click();
     assert.equal(
-      (await page.getByTestId('btn-reveal-hint').innerText()).trim(),
-      'Reveal Hint 2',
-      'the guide\'s hint button must open Hint 1, leaving Hint 2 to reveal'
+      (await page.getByTestId('btn-guide-hint').innerText()).trim(),
+      'Hint 1 is open below',
+      'the guide must not present a rung as unopened when the check card already opened it'
     );
     // A traceback's useful line is the last one, not its first: the guide must still say what to fix.
     await setEditorCode(page, 'def broken(\n    return 1\n');
@@ -298,6 +333,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert(
       await page.getByText('new_pos_m = start_pos_m', { exact: false }).first().isVisible(),
       'Hint 2 must open as the code-block hint it is documented as'
+    );
+    // Hint 2 is the ladder's last rung on every page: opening it must not offer, or open, a third.
+    assert.equal(
+      await page.getByTestId('btn-reveal-hint').count(),
+      0,
+      'opening the last rung must not leave a control that opens another - a hint never cascades'
     );
     await page.getByTestId('btn-guide-dismiss').click();
     await page.getByTestId('first-lesson-guide').waitFor({ state: 'detached', timeout: 5000 });
@@ -1084,6 +1125,35 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await setEditorCode(formattingPage, unpadded);
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-output-mismatch').waitFor({ timeout: 30000 });
+    // The presentation check has its own card, and it names the output line that differs: a
+    // formatting slip is mechanical, so the Expected Output panel is the fix and the nudge is the
+    // only rung offered - the code block would hand over the answer to a padded table.
+    const presentationCard = formattingPage.getByTestId('check-failure-presentation');
+    await presentationCard.waitFor({ timeout: 5000 });
+    const presentationText = await presentationCard.innerText();
+    assert(
+      presentationText.includes('Presentation check failed') && /line \d+/.test(presentationText),
+      `the presentation card must name the check and the output line that differs; got: ${presentationText}`
+    );
+    assert(
+      presentationText.includes('Hint 1') && !presentationText.includes('Hint 2'),
+      `the card must name the nudge and never the formula block; got: ${presentationText}`
+    );
+    assert.equal(
+      await formattingPage.getByTestId('check-failure-behaviour').count(),
+      0,
+      'a behavioural check that passed must not open a card'
+    );
+    await formattingPage.getByTestId('btn-check-hint-presentation').click();
+    assert(
+      await formattingPage.getByTestId('hint-for-check').isVisible(),
+      'the rung the presentation check names must be marked as answering it'
+    );
+    assert(
+      (await formattingPage.getByTestId('btn-reveal-hint').innerText()).trim(),
+      'Run again to unlock Hint 2',
+      'the formatting card must not unlock the code-block hint on the run that was already on screen'
+    );
     assert(
       (await formattingPage.getByTestId('badge-behavior-check').textContent())?.includes('PASSED'),
       'Dropping field widths must not change the behavioural verdict'

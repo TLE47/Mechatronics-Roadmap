@@ -11,6 +11,42 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 144: The Check Names Its Hint
+
+A failed run used to say *what* was red (behavioural or presentation) in one place, and offer the hint
+ladder as an unrelated panel 400 px below it. The learner had to work out which of the two nudge
+sentences answered the red line. Now the failing check names the rung that answers it.
+
+**One card per failed check.** [`app/src/checkHints.ts`](app/src/checkHints.ts) turns the run's verdict
+into the checks it left unproven, each with its own line and its own button:
+
+| Check | What the card prints | Rung it names |
+| :--- | :--- | :--- |
+| Behavioural | the instructor's assertion sentence, `AssertionError:` stripped - expected value and got value | Hint 1 |
+| Presentation | the output line that first differs from the Expected Output | Hint 1 |
+
+Only those two open a card. A harness metric, a `SyntaxError` and a stopped loop keep the cards they
+already had, because none of them is a graded check failing on a value - pointing any of them at a hint
+would be guessing.
+
+**And it opens one rung, never the ladder.** The button opens rung 1 and stops; the rung is then marked
+*for the failing check* where the hint is read. Rung 2 is the formula or code block - on several lessons
+it is nearly the full fix - so it is no longer unlocked by the run that was already on screen when the
+nudge was opened. It waits for one attempt made *after* the nudge
+(`hintLock`), for a check's card and for the ladder's own button alike.
+
+- `npm run test:checkhints` (15 checks): the assertion line against a bare message and a full traceback,
+the mismatch line number, the five verdicts that must not open a card, the gate's three states, and a
+sweep of all 42 registry entries asserting each names rung 1 and never the block.
+- Browser step 0a-i: the P.1 card names the behavioural check and Hint 1; opening it marks the rung,
+leaves `btn-reveal-hint` disabled and reading **Run again to unlock Hint 2**, and puts exactly one rung
+on screen. Step 0b then asserts the last rung leaves no control that opens another. Step 10a does the
+same for the presentation card on 03.1, where the behaviour passes and only the table padding is wrong.
+- `docs/PLAN-2.0-GAP.md`: the hint row moves from **partial** to **ships**; the next item is the Scope's
+cursors and A/B overlay.
+
+---
+
 ## [2026-10-21] — Run 143: A Lesson on a Plane
 
 Run 142 could open the workbench offline but not run anything: Pyodide was loaded inside a **blob-URL**

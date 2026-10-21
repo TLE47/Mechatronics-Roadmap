@@ -50,6 +50,7 @@ npm run test:resume                     # the lesson the next visit reopens, whi
 npm run test:draft                      # the editor's unfinished work: kept per lesson, bounded, evicted, never a starter copy - and how much of it is written
 npm run test:history                    # the versions behind the draft: filed on Run with its verdict, deduped, capped per lesson and in total
 npm run test:scope                      # the Scope's payload rules: NaN dropped, t/y aligned, flat traces widened, readable tables
+npm run test:checkhints                 # a failing check names its own rung; rung 2 is earned by a run made after the nudge
 npm run test:fonts                      # the two self-hosted faces: named, imported, emitted, no CDN
 npm run test:smoke                      # needs `npm ci` first
 ```

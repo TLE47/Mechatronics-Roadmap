@@ -63,6 +63,7 @@
     "test:draft": "node --experimental-strip-types scripts/test_lesson_draft.mjs",
     "test:history": "node --experimental-strip-types scripts/test_draft_history.mjs",
     "test:scope": "node --experimental-strip-types scripts/test_scope.mjs",
+    "test:checkhints": "node --experimental-strip-types scripts/test_check_hints.mjs",
     "test:fonts": "node scripts/test_fonts.mjs",
     "test:theme": "node --experimental-strip-types scripts/test_theme.mjs",
     "test:theme:e2e": "node scripts/e2e_theme.mjs",

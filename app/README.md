@@ -227,6 +227,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/outputMatch.ts`](src/outputMatch.ts) | How stdout is compared (exact vs formatting-tolerant), shared by the runner and its tests. |
 | [`src/progressMerge.ts`](src/progressMerge.ts) | Merging saved progress between browsers and accounts. |
 | [`src/lessonCoach.ts`](src/lessonCoach.ts) | The progressive hints and the stuck-state prompts. |
+| [`src/checkHints.ts`](src/checkHints.ts) | The join between a failed check and the hint rung that answers it, plus the rule that earns rung 2. |
 | [`src/runtime/pythonWorker.js`](src/runtime/pythonWorker.js) | The interpreter worker: warm-up, run, in-place Stop, `input()`, `mechalab.scope`, `result` and `scope` messages. |
 | [`src/components/PythonEditor.tsx`](src/components/PythonEditor.tsx) | The CodeMirror editor: view, external sync, test bridge. |
 | [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
@@ -245,6 +246,7 @@ npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pa
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
 npm run test:history         # run history: filed on Run, deduped, capped per lesson and in total
 npm run test:scope           # Scope payload rules: NaN, alignment, caps, bounds, table sampling
+npm run test:checkhints      # the failed check -> rung join, and the rule that earns rung 2
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
 npm run test:offline         # the service worker: isolation without host headers, cached shell, offline reload + deep link

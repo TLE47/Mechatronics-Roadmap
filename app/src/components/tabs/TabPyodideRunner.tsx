@@ -3,6 +3,7 @@ import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson } from '../../lessonCoach';
+import { failingChecks, hintCountFor, hintLock, nextRung, rungAnswersCheck } from '../../checkHints';
 import { lessonPageUrl } from '../../startHere';
 import { FaultBench08 } from '../FaultBench08';
 import type { HarnessReport } from '../../harnessGrading.ts';
@@ -145,6 +146,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Runs completed per lesson: Hint 2 waits for one, so the ladder is not a table of contents.
   // Kept per lesson, not reset on selection, because an earlier attempt on that lesson counts.
   const [runAttempts, setRunAttempts] = useState<Record<string, number>>({});
+  // The attempt count at the moment rung 1 was opened, per lesson. Rung 2 is the near-solution, so
+  // it is earned by an attempt *after* the nudge (`checkHints.hintLock`), not by the run that was
+  // already on screen when the nudge was read.
+  const [hintOpenedAt, setHintOpenedAt] = useState<Record<string, number>>({});
   const [stdout, setStdout] = useState<string>('');
   const [stderr, setStderr] = useState<string>('');
   const [instructorError, setInstructorError] = useState<string>('');
@@ -311,11 +316,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // lesson that only prints, so the panel renders nothing at all rather than an empty frame.
   const [scopeSeries, setScopeSeries] = useState<ScopeSeries[]>([]);
 
-  const nextHintNumber = revealedHints + 1;
-  // Hint 1 is always open. Every hint after it waits for at least one completed run of this
-  // lesson, so a learner cannot read the near-solution second hint without trying first.
-  const nextHintNeedsAttempt =
-    revealedHints > 0 && (runAttempts[currentLesson.id] ?? 0) === 0;
 
   // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
   useEffect(() => {
@@ -365,6 +365,51 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const outputMatchMode: OutputMatchMode = asOutputMatchMode(currentLesson.outputMatch);
   const outputComparison = compareStdout(stdout, currentLesson.expectedOutput, outputMatchMode);
   const lessonDowngradesFormatting = outputMatchMode !== 'exact';
+
+  // The ladder, joined to the checks. A failed run names the rung that answers it (`checkHints`),
+  // and rung 2 is earned by an attempt after the nudge rather than by the run that was already on
+  // screen - the same rule for the ladder's own button and for a check's card.
+  const hintCount = hintCountFor(currentLesson);
+  const attemptsHere = runAttempts[currentLesson.id] ?? 0;
+  const hintGate = {
+    revealed: revealedHints,
+    hintCount,
+    attempts: attemptsHere,
+    openedAt: hintOpenedAt[currentLesson.id] ?? null,
+  };
+  const hintLockState = hintLock(hintGate);
+  const nextHintNumber = nextRung(hintGate);
+  const nextHintNeedsAttempt = hintLockState !== 'none';
+  const nextHintLabel =
+    hintLockState === 'no-attempt'
+      ? `Run to unlock Hint ${nextHintNumber}`
+      : hintLockState === 'stale-attempt'
+        ? `Run again to unlock Hint ${nextHintNumber}`
+        : `Reveal Hint ${nextHintNumber}`;
+  const checkFailures = failingChecks({
+    passStatus,
+    instructorError,
+    firstDiffLine: outputComparison.firstDiffLine,
+    hintCount,
+  });
+
+  /**
+   * Open one rung, never a cascade.
+   *
+   * Rung 1 also starts the clock for rung 2: the attempt on screen when it was opened does not
+   * count as having tried the nudge, so the near-solution waits for the next run. Recorded once per
+   * lesson, because a learner who reopens Hint 1 after three attempts has already tried.
+   */
+  const revealHint = (rung: number) => {
+    if (rung <= 0 || rung > hintCount) return;
+    setRevealedHints((open) => (open >= rung ? open : rung));
+    if (rung === 1) {
+      setHintOpenedAt((prev) =>
+        prev[selectedId] === undefined ? { ...prev, [selectedId]: attemptsHere } : prev
+      );
+    }
+    logEvent({ kind: 'hint', lesson: selectedId, level: rung });
+  };
 
   // What Run executes is the editor's text *now*, not the text the button was rendered with. `code`
   // and `selectedId` are what renders; these refs are written synchronously by the handlers that
@@ -1152,7 +1197,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </p>
               <button
                 onClick={() => {
-                  setRevealedHints((h) => Math.max(h, 1));
+                  revealHint(1);
                   guideAssessmentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }}
                 disabled={currentLesson.hints.length === 0}
@@ -1677,37 +1722,51 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <button
                     onClick={() => {
                       if (nextHintNeedsAttempt) return;
-                      setRevealedHints((h) => {
-                        logEvent({ kind: 'hint', lesson: selectedId, level: h + 1 });
-                        return h + 1;
-                      });
+                      revealHint(nextHintNumber);
                     }}
                     disabled={nextHintNeedsAttempt}
                     title={
-                      nextHintNeedsAttempt
+                      hintLockState === 'no-attempt'
                         ? 'Run & Verify once to unlock the next hint'
-                        : undefined
+                        : hintLockState === 'stale-attempt'
+                          ? 'Run again after reading Hint 1 to unlock Hint 2'
+                          : undefined
                     }
                     data-testid="btn-reveal-hint"
                     className="px-2.5 py-1 rounded text-xs font-mono bg-amber/15 hover:bg-amber/25 text-amber border border-amber/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {nextHintNeedsAttempt ? `Run to unlock Hint ${nextHintNumber}` : `Reveal Hint ${nextHintNumber}`}
+                    {nextHintLabel}
                   </button>
                 )}
               </div>
               {revealedHints > 0 && (
                 <div className="mt-3 space-y-2">
-                  {currentLesson.hints.slice(0, revealedHints).map((hint, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 rounded-lg bg-canvas border border-line text-xs text-ink"
-                    >
-                      <span className="font-mono font-bold text-amber mr-1.5">
-                        Hint {idx + 1}:
-                      </span>
-                      <span dangerouslySetInnerHTML={{ __html: hint }} />
-                    </div>
-                  ))}
+                  {currentLesson.hints.slice(0, revealedHints).map((hint, idx) => {
+                    // The rung the failing check points at says so where the hint is read, not only
+                    // on the card that sent the learner here.
+                    const answersCheck = rungAnswersCheck(idx + 1, checkFailures);
+                    return (
+                      <div
+                        key={idx}
+                        data-testid={answersCheck ? 'hint-for-check' : undefined}
+                        className={
+                          answersCheck
+                            ? 'p-2.5 rounded-lg bg-canvas border border-amber/50 text-xs text-ink'
+                            : 'p-2.5 rounded-lg bg-canvas border border-line text-xs text-ink'
+                        }
+                      >
+                        <span className="font-mono font-bold text-amber mr-1.5">
+                          Hint {idx + 1}:
+                        </span>
+                        {answersCheck && (
+                          <span className="font-mono text-[10.5px] text-amber mr-1.5">
+                            for the failing check
+                          </span>
+                        )}
+                        <span dangerouslySetInnerHTML={{ __html: hint }} />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1857,6 +1916,47 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </li>
               ))}
             </ul>
+            {/* The failing check, named, with the one rung that answers it. The runner reports one
+                graded check at a time - a behavioural failure outranks a presentation one - but each
+                check owns its card and its own button, so adding the third cannot turn this into a
+                single control that guesses which failure the learner meant. */}
+            {checkFailures.map((check) => (
+              <div
+                key={check.id}
+                data-testid={`check-failure-${check.id}`}
+                aria-live="polite"
+                className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/40"
+              >
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs font-mono">
+                  <span className="font-bold text-rose">{check.title}</span>
+                  <span aria-hidden="true" className="text-faint">·</span>
+                  <span className="text-body break-words">{check.detail}</span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                  <span className="text-muted break-words">{check.why}</span>
+                  {check.hint > 0 && revealedHints < check.hint && (
+                    <button
+                      data-testid={`btn-check-hint-${check.id}`}
+                      onClick={() => revealHint(check.hint)}
+                      title={`Open Hint ${check.hint}, the rung that answers this check - and only that rung`}
+                      className="px-2 py-0.5 rounded bg-amber/15 hover:bg-amber/25 text-amber border border-amber/40 cursor-pointer"
+                    >
+                      Show Hint {check.hint}
+                    </button>
+                  )}
+                  {check.hint > 0 && revealedHints >= check.hint && (
+                    <span
+                      data-testid={`check-hint-open-${check.id}`}
+                      className="text-amber"
+                    >
+                      {revealedHints < hintCount
+                        ? `Hint ${check.hint} is open below · Hint ${revealedHints + 1} waits for your next run`
+                        : `Hint ${check.hint} is open below`}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
             {instructorError && (
               <div
                 data-testid="pre-instructor-error"

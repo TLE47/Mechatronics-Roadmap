@@ -13,9 +13,10 @@ flowchart LR
         S["Scope panel<br/>scope.stream()"]
         P["⌘K palette"]
         T["Dark/light tokens<br/>contrast measured in CI"]
+        H["A failing check names<br/>its own hint rung"]
     end
     subgraph next["Next, in this order"]
-        H["Check-linked hints"] --> A["Scope cursors, zoom<br/>A/B run overlay"]
+        A["Scope cursors, zoom<br/>A/B run overlay"]
         A --> X["IndexedDB + backup zip<br/>when 5 MB stops fitting"]
     end
     shipped --> next
@@ -49,7 +50,7 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | :--- | :--- | :--- |
 | Scope (uPlot), A/B runs, arm view upgrades, fault panel | Arm rendering, fault bench (08.1) and per-tab simulators exist; nothing is a live scope the learner's code streams into. | **partial** |
 | Checks as a test runner + watch mode | Output comparison (`exact` vs formatting-tolerant) and instructor behaviour checks run per lesson; the 08.1 bench and Tier 3 budgets gate passes. No watch-on-save. | **partial** |
-| Hint ladder tied to the failing check | Three levels per lesson, and level 2+ requires a completed run first ([`app/src/lessonCoach.ts`](../app/src/lessonCoach.ts)); hints are per lesson, not per check. | **partial** |
+| Hint ladder tied to the failing check | Each failed run opens a card naming the check that is red — behaviour or presentation — with the check's own line (the instructor's assertion, or the output line that differs) and the one rung that answers it ([`app/src/checkHints.ts`](../app/src/checkHints.ts), `npm run test:checkhints`, browser steps 0a-i and 10a). Rung 2 is now *earned*: it waits for a run made after the nudge was opened, not for the run already on screen. Blocks that are not a graded check (a harness metric, a traceback, a stopped loop) keep their own cards and name no hint. | **ships** |
 | Predict-first gate, try-it blocks, symbol linking | None of the three. | **missing** |
 | Notes, highlights, flashcards (FSRS), focus mode, measured time | None; the portfolio export is Markdown of progress, not of notes. | **missing** |
 | Debugger + time travel, embedded C/AVR | None. | **missing** |
@@ -62,20 +63,17 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Offline PWA | `sw.js` precaches the shell, manifest and favicon, serves same-origin assets cache-first with a background refresh, falls back to the cached document for any navigation, and caches the Pyodide runtime the module worker loads. `npm run test:offline` serves the bundle with no host headers, then goes offline: reload, deep link, and a lesson run to the same verdict. The manifest is installable. No per-step "download for offline" button or size estimate yet. | **ships** |
 | Themes, contrast, reduced motion, keyboard | Dark and light from one token set, every tab measured for contrast in both modes in CI (`npm run test:theme:e2e`), reduced-motion branch, visible focus ring. No high-contrast, no paper theme, no keymap (Vim/Emacs), no screen-reader announcements for run results. | **partial** |
 | Share links, "ask for help", pair study | None. | **missing** |
-| CI rigour (workers, E2E, budgets) | 28 repository gates plus 15 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
+| CI rigour (workers, E2E, budgets) | 28 repository gates plus 17 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
 
 ## What to build next, in order
 
-1. **Check-linked hints** — the checks already carry ids and labels, and the hint ladder already counts
-   levels; pointing a hint at the failing check is the smallest change that makes the ladder feel
-   specific. Acceptance: a failing check names its own hints, and hint 2 does not reveal hint 3.
-2. **Scope follow-ups** — cursors and zoom, then the plan's A/B overlay (pin run #3, change `Kp`, run
+1. **Scope follow-ups** — cursors and zoom, then the plan's A/B overlay (pin run #3, change `Kp`, run
    again, both traces on one pair of axes). The panel now has the data and the message channel; this is
    interaction on top of it. Acceptance: two runs overlay, and a cursor reads both values at one `t`.
-3. **A "download this step for offline" button** — the cache is warm after one run, but a learner about
+2. **A "download this step for offline" button** — the cache is warm after one run, but a learner about
    to board has no way to say "take these five lessons". Acceptance: a button warms the shell and the
    runtime, reports a size, and the offline suite starts from it.
-4. **Dexie / IndexedDB + backup zip** — only worth doing once history, notes or plots outgrow the 5 MB
+3. **Dexie / IndexedDB + backup zip** — only worth doing once history, notes or plots outgrow the 5 MB
    bucket; until then the bounded `localStorage` stores are cheaper and already tested.
-5. **Jedi completions + Ruff lint in the worker** — a real editor at ~2 MB of extra cached weight; do it
+4. **Jedi completions + Ruff lint in the worker** — a real editor at ~2 MB of extra cached weight; do it
    after the study layer, because it changes how a lesson feels rather than what a learner can do.
