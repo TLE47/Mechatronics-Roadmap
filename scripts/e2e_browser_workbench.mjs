@@ -775,16 +775,33 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // 7f. Running it, even to a failure, is the next rung of that ladder: the card stops saying
     //     "edited, never run" and starts counting attempts, which is the difference the log exists for.
     await page.getByTestId('btn-run-verify').click();
+    // Parsed, not substring-matched: `"kind":"run"` and `"lesson":"P.4"` can each come from a
+    // different event, so a raw search for both resolves on the previous lesson's run and the card is
+    // then read before this run has finished - which is exactly how this assertion failed on CI once.
     await page.waitForFunction(
       () => {
-        const raw = localStorage.getItem('mechalab.learningLog.v1') ?? '';
-        return raw.includes('"kind":"run"') && raw.includes('"lesson":"P.4"');
+        try {
+          const events = JSON.parse(localStorage.getItem('mechalab.learningLog.v1') ?? '[]');
+          return Array.isArray(events) && events.some((e) => e.kind === 'run' && e.lesson === 'P.4');
+        } catch {
+          return false;
+        }
       },
       undefined,
       { timeout: 60000 }
     );
     await page.getByTestId('tab-btn-tab-arch').click();
     await page.getByTestId('resume-card').waitFor({ timeout: 15000 });
+    // The card reads the log at render, so give that render a moment rather than reading the first
+    // frame after the click; a card that never says `tried` still fails here, with its own text below.
+    await page
+      .waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="resume-card"]')?.textContent ?? '').includes('tried'),
+        undefined,
+        { timeout: 15000 }
+      )
+      .catch(() => {});
     const triedText = (await page.getByTestId('resume-card').textContent()) ?? '';
     assert(
       triedText.includes('tried once, not passed yet'),
