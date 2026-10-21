@@ -15,10 +15,13 @@ flowchart LR
         T["Dark/light tokens<br/>contrast measured in CI"]
         H["A failing check names<br/>its own hint rung"]
         A["Scope cursor, zoom<br/>A/B run overlay"]
+        J["Jedi completions<br/>pyflakes in the editor"]
+        B["One-press backup<br/>and a merging restore"]
     end
     subgraph next["Next, in this order"]
-        X["Jedi completions + Ruff lint<br/>in the worker"]
-        Y["IndexedDB, when the caps<br/>stop fitting 5 MB"]
+        N1["Hover + signature help<br/>on the same Jedi"]
+        N2["The study layer: notes,<br/>flashcards, focus mode"]
+        N3["IndexedDB, when the caps<br/>stop fitting 5 MB"]
     end
     shipped --> next
 ```
@@ -40,8 +43,8 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | :--- | :--- | :--- |
 | Worker runtime, warm-up, measured boot, restart kernel | Warm-up on idle, `ready in N ms` reported from the worker, Reset Runtime respawns it, `input()` blocks the worker on `Atomics.wait` while the page stays live. | **ships** |
 | Dockable panels, `⌥1`–`⌥4` layout presets, activity bar | One fixed two-column layout per tab; no docking, no presets. | **missing** |
-| CodeMirror 6 with multi-file tabs, read-only helpers | CodeMirror 6 with Python highlighting, bracket handling, indent, search and name completion; `main.py` plus a **read-only** plant tab where a lesson uses one. | **ships** |
-| Jedi completions/hover, Ruff lint + format, parsed tracebacks | Completion is keyword- and file-derived, not Jedi (no docstrings on `np.`); no linter; tracebacks are shown as text. [`docs/ERROR_EXPLAINER.md`](ERROR_EXPLAINER.md) exists as prose, not as an in-app matcher. | **missing** |
+| CodeMirror 6 with multi-file tabs, read-only helpers | CodeMirror 6 with Python highlighting, bracket handling, indent, search and Jedi completion; `main.py` plus a **read-only** plant tab where a lesson uses one. | **ships** |
+| Jedi completions/hover, Ruff lint + format, parsed tracebacks | **Completions and lint ship, from the interpreter itself**: Jedi answers `math.` with `acos` and its signature ([`app/src/analysisClient.ts`](../app/src/analysisClient.ts), [`app/src/editor/completions.ts`](../app/src/editor/completions.ts)), and pyflakes names an unused import on its line in a Checker strip (`npm run test:analysis`, `npm run test:runtime`). Ruff is a Rust binary and cannot run in Pyodide at all, so Ruff's lint *and* its formatter are the browser's one real gap here: pyflakes has no style rules and nothing reformats the file. Hover and signature help are not built (Jedi can answer both), tracebacks are still text, and [`docs/ERROR_EXPLAINER.md`](ERROR_EXPLAINER.md) is prose rather than an in-app matcher. The analyzers install on first use (~1.5 MB), so a first visit that never edits pays nothing for them. | **partial** |
 | Inline values, parameter sliders, `# %%` cells | Sliders ship as a `# @slider 0 20 0.1` comment on a literal, rewritten in the file and re-run on settle, across 7 starters ([`app/src/editor/sliderModel.ts`](../app/src/editor/sliderModel.ts), `npm run test:editor`). No inline values, no cells. | **partial** |
 | Diff view against starter/solution | Not a diff view; the roadmap card counts changed lines and written steps. | **missing** |
 
@@ -64,13 +67,16 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Offline PWA | `sw.js` precaches the shell, manifest and favicon, serves same-origin assets cache-first with a background refresh, falls back to the cached document for any navigation, and caches the Pyodide runtime the module worker loads. **Take this step offline** ([`app/src/offlineTakeAlong.ts`](../app/src/offlineTakeAlong.ts), `npm run test:takealong`): one press sends the worker this document's own script/link URLs, warms the runtime, and reports the measured cost (`Offline ready · 8.0 MB · 16 files`), and the offline suite now starts from that press with no lesson run first. `npm run test:offline` serves the bundle with no host headers, then goes offline: reload, deep link, and a lesson run to its verdict from the cache. The manifest is installable. | **ships** |
 | Themes, contrast, reduced motion, keyboard | Dark and light from one token set, every tab measured for contrast in both modes in CI (`npm run test:theme:e2e`), reduced-motion branch, visible focus ring. No high-contrast, no paper theme, no keymap (Vim/Emacs), no screen-reader announcements for run results. | **partial** |
 | Share links, "ask for help", pair study | None. | **missing** |
-| CI rigour (workers, E2E, budgets) | 28 repository gates plus 20 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
+| CI rigour (workers, E2E, budgets) | 28 repository gates plus 21 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
 
 ## What to build next, in order
 
-1. **Jedi completions + Ruff lint in the worker** — a real editor at ~2 MB of extra cached weight; do it
-   after the study layer, because it changes how a lesson feels rather than what a learner can do.
-2. **Dexie / IndexedDB** — the other half of the persistence item, now that the backup makes the data
+1. **Hover and signature help** — the cheapest way to spend the Jedi install that is already in the
+   worker: `jedi.Script.help` and `get_signatures` answer `math.acos(` today, the renderer is the work.
+2. **The study layer** — notes, highlights, FSRS flashcards, focus mode and measured time. It is the
+   largest block still marked *missing*, it is what makes a term of study feel like a course rather
+   than a set of exercises, and its files would ride in the backup that already exists.
+3. **Dexie / IndexedDB** — the other half of the persistence item, now that the backup makes the data
    portable. Still only worth doing once notes, plots or a cross-lesson timeline outgrow the 5 MB
    bucket: the caps are measured at ~2.4 MB in `npm run test:backup`, and the bounded `localStorage`
    stores are cheaper and already tested until then.

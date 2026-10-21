@@ -11,6 +11,55 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 148: The Editor Knows Python
+
+The gap page's editor row was the plan's hardest ask - "Jedi completions/hover, Ruff lint + format" -
+and half of it was answered wrong before it was written: **Ruff is a Rust binary and cannot run
+anywhere in Pyodide.** What can run there is the same thing Ruff replaces, so that is what shipped:
+Jedi answers completions and pyflakes answers the lint, both inside the interpreter that is already
+loaded.
+
+**Completions with the module kept.** `math.` offers `acos` with its signature (`acos(x:
+SupportsFloat, /) -> float`) and the docstring beside it, and picking one replaces only the text after
+the dot - `math.ac` becomes `math.acos`, never `acos`. That insertion point is computed in
+[`app/src/analysisClient.ts`](app/src/analysisClient.ts) rather than taken from CodeMirror's word
+match, which is the difference between a completion that works and one that eats the module name. The
+keyword source the editor shipped with stays as the fallback for the three normal cases: the runtime
+is still downloading, the analyzers were never installed, or the worker did not answer in time.
+
+**A lint a learner can act on.** pyflakes answers structurally - line, column, message - instead of
+being parsed out of its own prose report, so an unused import reads `line 1 · 'os' imported but
+unused` in a Checker strip under the editor, and the strip disappears when the import is used. Only
+the learner's own text is checked: a lesson's starter is the scaffold the lesson ships, and notes
+about it would read as the app complaining about its own exercise.
+
+**Installed on first use, not at boot.** `micropip` pulls Jedi and pyflakes (~1.5 MB) the first time
+something is analysed, so a learner who never edits pays nothing and the first Run waits only for the
+interpreter. If the install cannot happen - a first visit with no network - the completion source
+falls back to keywords and the strip says the checker could not load, instead of showing an empty
+list as if nothing were wrong. That is the one place this phase is weaker than the offline story: the
+wheels come from PyPI, and only Pyodide's own CDN is in the service worker's cache.
+
+The two features share one worker with runs, which is the part that could break a lesson. Answers
+carry a request id and no run id, the session claims them before the run's own `onmessage` handler
+sees them, a request that is never answered resolves as unavailable after eight seconds, and a late
+answer to a dropped request is consumed rather than resolved twice. A `Reset Runtime` therefore
+cannot strand a pending completion.
+
+- `npm run test:analysis` (16 checks): the dotted insertion point, Jedi's 1-based-line/0-based-column
+  pair, Jedi type to completion type, docstring to detail/info, which notes are drawable and how one
+  reads, plus the transport cases - two answers that must not cross, a run outcome that must not be
+  claimed, a timeout, a failed install, a cancelled request, and a worker that throws on post.
+- `npm run test:runtime` grows from 7 checks to 11 in the real browser: `math.` completes to `acos`
+  with its signature, typing `aco` filters and Enter produces `math.acos`, an unused import is named
+  on line 1 and the note clears when the import is used, and a Run still works afterwards.
+- Workbench suites: 21, was 20, all green; `test:offline` and `test:theme:e2e` unchanged and green.
+- `docs/PLAN-2.0-GAP.md`: the editor row moves to **partial** with the Ruff reason recorded, and the
+  next list now leads with hover and signature help on the same Jedi, then the study layer.
+  `app/README.md` and `docs/VERIFICATION.md` describe the analysis path and its checks.
+
+---
+
 ## [2026-10-21] — Run 147: The Backup, and What a Restore May Not Do
 
 The gap page's persistence item had two halves. The second now ships: one press in the header writes

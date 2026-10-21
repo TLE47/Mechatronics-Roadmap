@@ -53,6 +53,7 @@ npm run test:resume                     # the lesson the next visit reopens, whi
 npm run test:draft                      # the editor's unfinished work: kept per lesson, bounded, evicted, never a starter copy - and how much of it is written
 npm run test:history                    # the versions behind the draft: filed on Run with its verdict, deduped, capped per lesson and in total
 npm run test:scope                      # the Scope: NaN dropped, t/y aligned, the cursor's interpolation, zoom/pan windows clamped to the data, readable tables
+npm run test:analysis                   # completions and lint without a browser: where the insert starts, Jedi's cursor coordinates, note shape, request and timeout rules
 npm run test:checkhints                 # a failing check names its own rung; rung 2 is earned by a run made after the nudge
 npm run test:fonts                      # the two self-hosted faces: named, imported, emitted, no CDN
 npm run test:smoke                      # needs `npm ci` first
@@ -71,7 +72,14 @@ store-only restore would leave stale.
 `test:runtime` is the one suite that cannot be a unit test: stopping a `while True:` in place needs
 cross-origin isolation, a real `SharedArrayBuffer` and a real browser. It asserts the Stop answers by
 interrupt (the session and its imports survive), that `input()` blocks the worker while the page
-stays live, and that the no-buffer fallback still ends the run. `test:palette` is the opposite -
+stays live, and that the no-buffer fallback still ends the run. It also walks the editor's analysis
+path, because that shares the worker with runs: `math.` completes to `math.acos` with its signature
+and keeps the module name when picked, an unused import is named on its line and the note clears once
+the import is used, and a Run still works after the analyzers installed. `npm run test:analysis` pins
+the rules underneath (insertion point, 1-based line / 0-based column, how a Jedi type or a pyflakes
+message is drawn, and that an answer is never mistaken for a verdict). Ruff is a Rust binary and
+cannot run in Pyodide, so pyflakes is the browser's linter and the suite says so rather than borrowing
+the name. `test:palette` is the opposite -
 pure TypeScript over the catalogue, pinning that every lesson, exercise, tab and command appears
 exactly once and that ranking prefers the entry the learner typed (`P.1` over `P.10`). Both run in
 CI; `test:runtime` is its own step because it downloads Pyodide.

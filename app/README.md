@@ -165,9 +165,27 @@ appears without editing the palette.
 
 The textarea is gone: [`PythonEditor.tsx`](src/components/PythonEditor.tsx) mounts **CodeMirror 6**
 (Python highlighting, line numbers, undo history, bracket matching and closing, in-document search,
-`Tab`/`Shift-Tab` indent, and completion from Python keywords plus the names the file itself
-defines). The colours come from the app's tokens ([`editor/theme.ts`](src/editor/theme.ts)), so light
-mode is not a second editor theme.
+`Tab`/`Shift-Tab` indent, and completion from **Jedi** with the keyword list as its fallback). The
+colours come from the app's tokens ([`editor/theme.ts`](src/editor/theme.ts)), so light mode is not a
+second editor theme.
+
+**The editor knows Python, because the interpreter is already there.** `math.` offers `acos` with its
+signature (`acos(x: SupportsFloat, /) -> float`) and the docstring beside it, and the Checker strip
+under the editor names an unused import on the line it is on. Both answers come from the same worker
+that runs the lesson: Jedi for completions, pyflakes for the lint
+([`src/analysisClient.ts`](src/analysisClient.ts), [`src/editor/completions.ts`](src/editor/completions.ts),
+`npm run test:analysis` for the mapping rules and `npm run test:runtime` in a browser). Ruff is a Rust
+binary and cannot run in Pyodide at all, so pyflakes is the browser's honest linter and the editor
+never claims otherwise; nothing here reformats code.
+
+The analyzers **install on first use** (~1.5 MB, one online request), not at boot, so a learner who
+never edits pays nothing for them and the first Run still waits for the interpreter only. If the
+install cannot happen — a first offline visit — the completion source answers from the keywords it
+always had and the strip says the checker could not load, rather than showing an empty list as if
+nothing were wrong. Only the learner's own text is checked: a lesson's starter is the scaffold the
+lesson ships, and notes about it would read as the app complaining about its own exercise. A request
+that is never answered times out and is dropped, and an analysis answer can never be mistaken for a
+run's verdict — the two share one worker, and the message ids keep them apart.
 
 The document is still owned by React: every edit is reported through `onChange`, an external change
 (a different lesson, Load Solution, Reset) replaces the document, and the run button reads the same
@@ -276,6 +294,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/components/tabs/`](src/components/tabs) | One file per tab. [`TabPyodideRunner.tsx`](src/components/tabs/TabPyodideRunner.tsx) is the graded runner — editor, expected output, badges, instructor panel. |
 | [`src/data/`](src/data) | **Generated.** Lesson registry, spine, start-here card, plant model, link history. Edit the generator, not these files. |
 | [`src/outputMatch.ts`](src/outputMatch.ts) | How stdout is compared (exact vs formatting-tolerant), shared by the runner and its tests. |
+| [`src/analysisClient.ts`](src/analysisClient.ts) | Completions and lint over the worker: request ids, timeouts, Jedi's vocabulary mapped to the completion list, pyflakes messages made drawable. |
+| [`src/editor/completions.ts`](src/editor/completions.ts) | The completion source: Jedi when the interpreter is up, keywords when it is not, and the inserted span after the dot. |
 | [`src/progressMerge.ts`](src/progressMerge.ts) | Merging saved progress between browsers and accounts. |
 | [`src/lessonCoach.ts`](src/lessonCoach.ts) | The progressive hints and the stuck-state prompts. |
 | [`src/checkHints.ts`](src/checkHints.ts) | The join between a failed check and the hint rung that answers it, plus the rule that earns rung 2. |
@@ -298,8 +318,8 @@ npm run lint                 # types
 npm run test:workbench       # runner behaviour (happy-dom) + palette search + editor model
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
-npm run test:history         # run history: filed on Run, deduped, capped per lesson and in total
-npm run test:scope           # Scope rules: payloads, cursor sampling, zoom/pan windows, bounds, tables
+npm run test:history         # run history: filed on Run, deduped, capped per lesson and in totalnpm run test:scope          # Scope rules: payloads, cursor sampling, zoom/pan windows, bounds, tables
+npm run test:analysis       # completions and lint: insertion point, cursor coordinates, note shape, transport rules
 npm run test:checkhints      # the failed check -> rung join, and the rule that earns rung 2
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width

@@ -12,6 +12,10 @@
  *    line the learner types comes back as the return value.
  * 3. **The page stays alive.** The main thread is free while Python runs: the Stop button is
  *    clickable, and after the interrupt the tabs still switch.
+ * 4. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
+ *    `acos` with its signature, and picking one keeps the module name), the lint comes from
+ *    pyflakes (an unused import is named with its line, and the note clears when the import is
+ *    used), and a Run still works afterwards - the analysis messages share the worker with runs.
  *
  * Cross-origin isolation is checked first, because without `SharedArrayBuffer` the interrupt path
  * cannot exist at all (the app then falls back to terminating the worker).
@@ -24,7 +28,9 @@
 
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
-import { startDevServer } from './e2e_browser_workbench.mjs';
+// The same executable search the other browser suites use: a machine with a system Chrome and no
+// Playwright download is a normal machine, and this suite has to run there too.
+import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
 
 const EDITOR = '[data-editor="editor-main"] .cm-content';
@@ -36,7 +42,11 @@ const STATUS = '[data-testid="runner-runtime-status"]';
 async function main() {
   const own = process.env.E2E_BASE_URL ? null : await startDevServer(process.cwd());
   const baseUrl = process.env.E2E_BASE_URL ?? own.baseUrl;
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  const executablePath = resolveChromiumExecutable();
+  const browser = await chromium.launch({
+    ...(executablePath ? { executablePath } : {}),
+    args: ['--no-sandbox'],
+  });
   let failures = 0;
   const notes = [];
 
@@ -208,6 +218,112 @@ async function main() {
       assert.equal(pageErrors.length, 0, `expected no uncaught page errors, got: ${pageErrors.join(' | ')}`);
     });
 
+    // 7. Completions from Jedi. The keyword source this editor shipped with knows `print` and the
+    // names in the file; it has never known `math.acos` or a docstring. Both are here, which means the
+    // request reached the worker, the analyzers installed, and Jedi answered about this buffer.
+    //
+    // Switching back to the tab remounts the runner and therefore rewarms a worker, so the status is
+    // waited for again: completions are only asked of a loaded interpreter (a request sent into the
+    // 10 MB download would time out), and that gate is exactly what this wait lines up with.
+    await page.click('[data-testid="tab-btn-tab-pyodide"]');
+    await page.waitForFunction(
+      (selector) => document.querySelector(selector)?.getAttribute('data-runtime-status') === 'ready',
+      STATUS,
+      { timeout: 120000 }
+    );
+    await setEditorCode(page, 'import math\nmath.');
+    await page.evaluate(() => {
+      window.__mechalabEditors['editor-main'].setCursor(9999);
+      // The same command `Ctrl-Space` runs. A synthetic key press into a contenteditable after a tab
+      // switch is not what this suite is testing, and the binding is CodeMirror's own.
+      window.__mechalabEditors['editor-main'].startCompletion();
+    });
+    await page.waitForSelector('.cm-tooltip-autocomplete li', { timeout: 120000 });
+    const completions = await page.$$eval('.cm-tooltip-autocomplete li', (items) =>
+      items.map((item) => item.textContent ?? '')
+    );
+    check('a dotted name completes from the module, with its signature', () => {
+      assert.ok(
+        completions.some((label) => label.startsWith('acos')),
+        `expected Jedi's math module in the list, got: ${completions.slice(0, 12).join(' | ')}`
+      );
+      assert.ok(
+        completions.some((label) => /SupportsFloat|acos\(/.test(label)),
+        `expected the signature or docstring beside the name, got: ${completions.slice(0, 12).join(' | ')}`
+      );
+    });
+
+    // Picking an option replaces only the text after the dot: `math.ac` must become `math.acos`,
+    // never `acos`. This is the whole reason the inserted span is computed rather than taken from
+    // CodeMirror's word match. `aco` is typed to filter the list (Jedi also offers the dunders), which
+    // is what a learner does anyway.
+    await page.keyboard.type('aco');
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('.cm-tooltip-autocomplete li[aria-selected="true"]')?.textContent ?? '').startsWith(
+          'acos'
+        ),
+      null,
+      { timeout: 20000 }
+    );
+    await page.keyboard.press('Enter');
+    const afterPick = await getEditorCode(page);
+    check('the picked completion keeps the module it was completed from', () => {
+      assert.match(
+        afterPick,
+        /math\.acos\b/,
+        `expected math.acos in the editor, held: ${afterPick.slice(-80)}`
+      );
+    });
+
+    // 8. Lint from pyflakes: an unused import is named with the line to look at, and the note clears
+    // as soon as the name is used.
+    await setEditorCode(page, 'import os\n\nprint("hi")\n');
+    // Wait for *this* note, not for the panel: the previous buffer's note (`math.` is a syntax error)
+    // keeps the panel on screen, so its existence proves nothing about the new code.
+    await page.waitForFunction(
+      () =>
+        /'os' imported but unused/.test(
+          document.querySelector('[data-testid="analysis-notes"]')?.textContent ?? ''
+        ),
+      null,
+      { timeout: 60000 }
+    );
+    const notes = await page.$$eval('[data-testid^="lint-note-"]', (items) =>
+      items.map((item) => item.textContent ?? '')
+    );
+    check('an unused import is named with its line', () => {
+      assert.ok(
+        notes.some((note) => /'os' imported but unused/.test(note)),
+        `expected pyflakes to name the unused import, got: ${notes.join(' | ')}`
+      );
+      assert.ok(
+        notes.some((note) => /line 1/.test(note)),
+        `expected the note to say which line, got: ${notes.join(' | ')}`
+      );
+    });
+    await setEditorCode(page, 'import os\nprint(os.getcwd())\n');
+    await page
+      .waitForFunction(() => !document.querySelector('[data-testid="analysis-notes"]'), null, {
+        timeout: 30000,
+      })
+      .catch(() => undefined);
+    const leftoverPanels = await page.locator('[data-testid="analysis-notes"]').count();
+    check('using the import clears the note', () => {
+      assert.equal(
+        leftoverPanels,
+        0,
+        'expected the checker panel to disappear once pyflakes has nothing to say'
+      );
+    });
+
+    // 9. The analyzers share the worker with runs. A run queued after a completion is still a run.
+    const afterAnalysis = await runAndWait(page, 'print(2 + 2)');
+    check('a run still works once the analyzers are installed', () => {
+      assert.match(afterAnalysis, /\b4\b/, `expected the run's own output, got "${afterAnalysis.slice(0, 120)}"`);
+      assert.equal(pageErrors.length, 0, `expected no uncaught page errors, got: ${pageErrors.join(' | ')}`);
+    });
+
     await context.close();
   } finally {
     await browser.close();
@@ -220,7 +336,10 @@ async function main() {
     return;
   }
   console.log(
-    '\n[PASS] Interruptible Python: input() round-trips, a while-True loop stops by interrupt, the session survives it, and the page never blocks.'
+    '\n[PASS] Interruptible Python: input() round-trips, a while-True loop stops by interrupt, the session survives it, '
+  );
+  console.log(
+    '       the page never blocks, Jedi completes math.acos without losing the module, pyflakes names an unused import, and a run still works afterwards.'
   );
 }
 

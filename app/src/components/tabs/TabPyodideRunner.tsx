@@ -19,9 +19,15 @@ import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
 import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
 import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
+import {
+  AnalysisSession,
+  noteLabel,
+  sameNotes,
+  type LintNote,
+} from '../../analysisClient';
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
-import { readDraft, saveDraft } from '../../lessonDraft';
+import { isEdited, readDraft, saveDraft } from '../../lessonDraft';
 import { STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED } from '../../progressKeys';
 import {
   clearHistory,
@@ -238,6 +244,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   };
 
   const workerRef = useRef<Worker | null>(null);
+  // One analysis channel per page, bound to whichever worker is current (Reset Runtime replaces it).
+  const analysisRef = useRef<AnalysisSession | null>(null);
   const activeRunIdRef = useRef<number>(0);
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeResolveRef = useRef<((val: any) => void) | null>(null);
@@ -439,6 +447,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // commit, which is the same value whenever the handlers are the only writers.
   const codeRef = useRef<string>(code);
   const lessonIdRef = useRef<string>(initialLessonId || PYTHON_LESSONS[0].id);
+  // What pyflakes last said about this buffer, and the one sentence to show when it could not be
+  // installed at all. Both are cleared on a lesson change: a note about another file is noise.
+  const [lintNotes, setLintNotes] = useState<LintNote[]>([]);
+  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
   const commitCode = (next: string) => {
     codeRef.current = next;
     setCode(next);
@@ -517,6 +529,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       stdinCtrlRef.current = null;
     }
     workerRef.current = worker;
+    // Analysis answers carry a request id and no run id. The session claims them here, so the run
+    // path's own `onmessage` handler can never mistake a completion list for a verdict.
+    worker.addEventListener('message', (event: MessageEvent) => {
+      analysisRef.current?.handleMessage(event.data);
+    });
     return worker;
   };
 
@@ -527,6 +544,69 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   useEffect(() => {
     pyodideStatusRef.current = pyodideStatus;
   }, [pyodideStatus]);
+
+  /** The analysis channel, created on first use and posted to whichever worker is current. */
+  const analysisSession = (): AnalysisSession => {
+    if (!analysisRef.current) {
+      analysisRef.current = new AnalysisSession((message) =>
+        getOrCreateWorker().postMessage(message)
+      );
+    }
+    return analysisRef.current;
+  };
+
+  /**
+   * The session, but only once the interpreter is up.
+   *
+   * Before that a completion request would queue behind the 10 MB load and arrive long after the
+   * learner moved on; the keyword completions answer immediately instead, which is what the editor
+   * shipped with. The analyzers themselves install on the first request, so a learner who never
+   * types never pays for them.
+   */
+  const getReadyAnalysis = () =>
+    pyodideStatusRef.current === 'ready' ? analysisSession() : null;
+
+  useEffect(() => {
+    setLintNotes([]);
+    setAnalysisNotice(null);
+  }, [selectedId]);
+
+  // Lint as the buffer settles. Not on every keystroke: the worker is one thread and a Run must never
+  // queue behind a lint, so this waits for a pause, for a loaded interpreter, and for an idle runner.
+  //
+  // Only the learner's own text is checked. A lesson's starter is the scaffold the lesson ships, and
+  // pyflakes notes about it would read as the app complaining about its own exercise - while the one
+  // thing a note is good for is the code somebody just wrote.
+  useEffect(() => {
+    if (pyodideStatus !== 'ready' || isRunning) return;
+    if (!isEdited(code, currentLesson.starterCode)) {
+      setLintNotes([]);
+      setAnalysisNotice(null);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      const session = getReadyAnalysis();
+      if (!session) return;
+      const source = codeRef.current;
+      void session.lint({ code: source }).then((reply) => {
+        // The buffer moved on while pyflakes was working: that answer describes text nobody is
+        // looking at, and the effect has already scheduled the next one.
+        if (codeRef.current !== source) return;
+        if (!reply.ok) {
+          setAnalysisNotice(
+            'The checker could not load — it installs on one online visit, then stays in this browser session.'
+          );
+          setLintNotes([]);
+          return;
+        }
+        setAnalysisNotice(null);
+        setLintNotes((previous) => (sameNotes(previous, reply.value) ? previous : reply.value));
+      });
+    }, 700);
+    return () => window.clearTimeout(timer);
+    // `getReadyAnalysis` is a render-local function; the inputs it reads are in this list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, pyodideStatus, isRunning, selectedId]);
 
   // What the caches already hold. A learner who has run a lesson is offline-ready by accident, and the
   // strip should say so without waiting for a press - but only the interpreter's own files make it
@@ -2013,9 +2093,51 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 ariaLabel="Python code editor"
                 testId="editor-main"
                 onSliderCommit={handleSliderCommit}
+                getAnalysis={getReadyAnalysis}
               />
             )}
           </div>
+
+          {/* What the checker saw. Absent when there is nothing to say, because a green "0 notes"
+              strip under every lesson is furniture, not information. */}
+          {(lintNotes.length > 0 || analysisNotice) && (
+            <div
+              data-testid="analysis-notes"
+              data-lint-count={lintNotes.length}
+              className="bg-panel border border-line rounded-xl px-3.5 py-2.5 text-[11.5px]"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted">
+                  Checker · pyflakes
+                </span>
+                <span className="text-[10.5px] font-mono text-faint">
+                  {lintNotes.length
+                    ? `${lintNotes.length} note${lintNotes.length === 1 ? '' : 's'}`
+                    : 'unavailable'}
+                </span>
+              </div>
+              {analysisNotice ? (
+                <p data-testid="analysis-unavailable" className="mt-1.5 text-muted">
+                  {analysisNotice}
+                </p>
+              ) : (
+                <ul className="mt-1.5 space-y-1">
+                  {lintNotes.slice(0, 3).map((note, index) => (
+                    <li
+                      key={`${note.line}:${note.column}:${index}`}
+                      data-testid={`lint-note-${index}`}
+                      className="font-mono text-[11px] text-muted"
+                    >
+                      {noteLabel(note)}
+                    </li>
+                  ))}
+                  {lintNotes.length > 3 && (
+                    <li className="text-[10.5px] text-faint">+ {lintNotes.length - 3} more</li>
+                  )}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* Instructor Behavioral Assessment Panel */}
           <div

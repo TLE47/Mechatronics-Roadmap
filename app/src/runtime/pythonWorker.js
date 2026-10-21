@@ -180,6 +180,180 @@ function installStdinBridge(py) {
   py.__mechalabStdinInstalled = true;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Analysis: completions and lint, inside the interpreter that is already loaded.
+//
+// Both come from pure-Python packages, which is the whole reason they can run here: Jedi answers
+// completions with docstrings and pyflakes answers the lint. Ruff is a Rust binary compiled to native
+// code and cannot run in Pyodide at all, so pyflakes is the browser's honest linter - the page says
+// which one answered rather than borrowing Ruff's name.
+//
+// Installed on the first request, not at boot: a learner who never asks for a completion never pays
+// the ~1.5 MB, and the warm-up that a first Run needs stays the 10 MB it was. The install is a
+// network request, so it can fail; that answer is reported to the page as `unavailable`, and the
+// editor falls back to the keyword completions it shipped with.
+// ---------------------------------------------------------------------------------------------
+let analysisPromise = null;
+
+// The Python half. A function call per keystroke bucket rather than a script string, so the code
+// being completed is data and can never be executed by the analysis path.
+const ANALYSIS_HELPER_SOURCE = `
+import json as _mechalab_json
+
+def __mechalab_complete(code, line, column):
+    import jedi
+    try:
+        completions = jedi.Script(code, path="main.py").complete(int(line), int(column))
+    except Exception:
+        return "[]"
+    items = []
+    for completion in completions[:80]:
+        try:
+            doc = (completion.docstring() or "").strip()
+        except Exception:
+            doc = ""
+        items.append({
+            "name": completion.name,
+            "type": completion.type,
+            "doc": doc[:400],
+        })
+    return _mechalab_json.dumps(items)
+
+def __mechalab_lint(code):
+    import pyflakes.api
+    import pyflakes.reporter
+    found = []
+
+    class _Reporter(pyflakes.reporter.Reporter):
+        # Structured messages rather than the text report: pyflakes already knows the line, the
+        # column and the words, and re-parsing its own prose is how a lint hint ends up wrong.
+        def __init__(self):
+            pass
+
+        def unexpectedError(self, filename, msg):
+            found.append({"line": 1, "column": 1, "text": str(msg)})
+
+        def syntaxError(self, filename, msg, lineno, offset, text):
+            found.append({
+                "line": int(lineno or 1),
+                "column": int(offset or 1),
+                "text": "syntax error: " + str(msg),
+            })
+
+        def flake(self, message):
+            try:
+                text = message.message % message.message_args
+            except Exception:
+                text = str(message.message)
+            found.append({
+                "line": int(message.lineno or 1),
+                "column": int(message.col or 1),
+                "text": str(text),
+            })
+
+    pyflakes.api.check(code, "<editor>", _Reporter())
+    return _mechalab_json.dumps(found[:20])
+`;
+
+async function ensureAnalysis(py) {
+  if (py.__mechalabAnalysisReady) return true;
+  if (!analysisPromise) {
+    analysisPromise = (async () => {
+      await py.loadPackage('micropip');
+      const micropip = py.pyimport('micropip');
+      await micropip.install(['jedi', 'pyflakes']);
+      py.runPython(ANALYSIS_HELPER_SOURCE);
+      py.__mechalabAnalysisReady = true;
+      return true;
+    })().catch((error) => {
+      // A failed install is not remembered: the next attempt (a next visit with a network) retries.
+      analysisPromise = null;
+      throw error;
+    });
+  }
+  return analysisPromise;
+}
+
+/** Write the lesson's read-only files, once per content revision, for both a run and an analysis. */
+function writeLessonFiles(py, plantSource, plantFilename, helperFiles) {
+  // The shared plant: one file on the Pyodide filesystem and one importable name, so every Tier 2
+  // and Tier 3 exercise works the same arm the Tier 1 capstone builds.
+  if (plantSource && plantFilename && py.__mechalabPlantInstalled !== plantFilename) {
+    py.FS.writeFile('/' + plantFilename, plantSource);
+    py.__mechalabPlantInstalled = plantFilename;
+  }
+  for (const file of helperFiles) {
+    if (!file || !file.name) continue;
+    if (!py.__mechalabFiles) py.__mechalabFiles = {};
+    if (py.__mechalabFiles[file.name] !== file.content) {
+      py.FS.writeFile('/' + file.name, file.content);
+      py.__mechalabFiles[file.name] = file.content;
+    }
+  }
+  if (helperFiles.length || (plantSource && plantFilename)) {
+    py.runPython('import sys\nif "/" not in sys.path:\n    sys.path.insert(0, "/")\n');
+  }
+}
+
+function errorText(error) {
+  const message = error && error.message ? error.message : String(error);
+  return message.slice(0, 300);
+}
+
+/** Load the interpreter (if needed), install the analyzers (if needed), write the lesson's files. */
+async function prepareAnalysis(msg) {
+  const py = await ensurePyodideLoaded(msg.cdnUrl);
+  await ensureAnalysis(py);
+  writeLessonFiles(py, msg.plantSource, msg.plantFilename, msg.helperFiles || []);
+  return py;
+}
+
+async function handleComplete(msg) {
+  const startedAt = performance.now();
+  try {
+    const py = await prepareAnalysis(msg);
+    const call = py.globals.get('__mechalab_complete');
+    let json = '[]';
+    try {
+      json = String(call(String(msg.code || ''), Number(msg.line) || 1, Number(msg.column) || 0));
+    } finally {
+      if (call && typeof call.destroy === 'function') call.destroy();
+    }
+    self.postMessage({
+      type: 'completions',
+      requestId: msg.requestId,
+      options: JSON.parse(json),
+      source: 'jedi',
+      ms: Math.round(performance.now() - startedAt),
+    });
+  } catch (error) {
+    self.postMessage({ type: 'completions', requestId: msg.requestId, unavailable: errorText(error) });
+  }
+}
+
+async function handleLint(msg) {
+  const startedAt = performance.now();
+  try {
+    const py = await prepareAnalysis(msg);
+    const call = py.globals.get('__mechalab_lint');
+    let json = '[]';
+    try {
+      json = String(call(String(msg.code || '')));
+    } finally {
+      if (call && typeof call.destroy === 'function') call.destroy();
+    }
+    self.postMessage({
+      type: 'lint',
+      requestId: msg.requestId,
+      messages: JSON.parse(json),
+      source: 'pyflakes',
+      ms: Math.round(performance.now() - startedAt),
+    });
+  } catch (error) {
+    self.postMessage({ type: 'lint', requestId: msg.requestId, unavailable: errorText(error) });
+  }
+}
+
 async function ensurePyodideLoaded(cdnUrl) {
   if (pyodideInstance && loadedCdnUrl === cdnUrl) {
     return pyodideInstance;
@@ -260,6 +434,16 @@ self.onmessage = async (event) => {
     }
     return;
   }
+  // Analysis rides the same thread as a run, so a request that arrives mid-run is answered after
+  // it: the page only asks while nothing is running, and drops a late answer by request id.
+  if (msg.type === 'complete') {
+    await handleComplete(msg);
+    return;
+  }
+  if (msg.type === 'lint') {
+    await handleLint(msg);
+    return;
+  }
   if (msg.type === 'run') {
     const {
       runId,
@@ -288,28 +472,10 @@ self.onmessage = async (event) => {
 
     try {
       const py = await ensurePyodideLoaded(cdnUrl);
-      // Install the shared plant once per runtime: one file on the Pyodide filesystem and one
-      // importable name, so every Tier 2 and Tier 3 exercise works the same arm the Tier 1
-      // capstone builds (resources/plants/mechalab_plant.py, embedded by
-      // scripts/generate_plant_data.py).
-      if (plantSource && plantFilename && py.__mechalabPlantInstalled !== plantFilename) {
-        py.FS.writeFile('/' + plantFilename, plantSource);
-        py.runPython('import sys\nif "/" not in sys.path:\n    sys.path.insert(0, "/")\n');
-        py.__mechalabPlantInstalled = plantFilename;
-      }
-      // The lesson's read-only files, exactly as the editor shows them. Written once per content
-      // revision: a helper the learner can read on screen is the module the import resolves to.
-      for (const file of helperFiles) {
-        if (!file || !file.name) continue;
-        if (!py.__mechalabFiles) py.__mechalabFiles = {};
-        if (py.__mechalabFiles[file.name] !== file.content) {
-          py.FS.writeFile('/' + file.name, file.content);
-          py.__mechalabFiles[file.name] = file.content;
-        }
-      }
-      if (helperFiles.length) {
-        py.runPython('import sys\nif "/" not in sys.path:\n    sys.path.insert(0, "/")\n');
-      }
+      // The shared plant and the lesson's read-only files, exactly as the editor shows them: a
+      // helper the learner can read on screen is the module the import resolves to, and the same
+      // writer serves completions so a dotted name completes against the real file.
+      writeLessonFiles(py, plantSource, plantFilename, helperFiles);
       py.setStdout({
         batched: (line) => {
           if (captureEnabled) capturedOut.push(line);

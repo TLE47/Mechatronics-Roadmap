@@ -14,6 +14,7 @@ import {
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,
+  startCompletion,
   type CompletionSource,
 } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
@@ -29,6 +30,8 @@ import {
 } from '@codemirror/view';
 import { pythonEditorTheme } from '../editor/theme';
 import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
+import { pythonCompletionSource } from '../editor/completions';
+import type { AnalysisSession } from '../analysisClient';
 
 /** The imperative surface the runner (and the browser suites) need. */
 export interface PythonEditorHandle {
@@ -47,6 +50,14 @@ interface PythonEditorProps {
   testId: string;
   /** Called (debounced by the caller) when a slider drag changed the code. */
   onSliderCommit?: () => void;
+  /**
+   * The worker's analysis channel, or null while there is none.
+   *
+   * A getter rather than a session, because the runner may replace the worker (Reset Runtime) and the
+   * completion source must ask the *current* one. Null means the interpreter is not up yet or the
+   * analyzers could not be installed: the source then answers from the keywords it always had.
+   */
+  getAnalysis?: () => AnalysisSession | null;
   className?: string;
 }
 
@@ -84,7 +95,22 @@ declare global {
     /** Browser suites drive the editor through this, so they never depend on DOM shape. */
     __mechalabEditors?: Record<
       string,
-      { get: () => string; set: (text: string) => void; focus: () => void }
+      {
+        get: () => string;
+        set: (text: string) => void;
+        focus: () => void;
+        /** Move the cursor, clamped to the document: a suite types at a known position. */
+        setCursor: (pos: number) => void;
+        getCursor: () => number;
+        /**
+         * Open the completion list, the same command `Ctrl-Space` runs.
+         *
+         * A suite cannot rely on a synthetic key press landing in a contenteditable after a tab
+         * switch, and the binding itself is CodeMirror's, not this app's: what is worth pinning is
+         * that the list appears and what is in it.
+         */
+        startCompletion: () => void;
+      }
     >;
   }
 }
@@ -101,13 +127,17 @@ declare global {
  * Reset) replaces the document. CodeMirror is the view; it is never the source of truth.
  */
 export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(function PythonEditor(
-  { value, onChange, readOnly = false, ariaLabel, testId, onSliderCommit, className },
+  { value, onChange, readOnly = false, ariaLabel, testId, onSliderCommit, getAnalysis, className },
   ref
 ) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   const onSliderRef = useRef(onSliderCommit);
+  // Read at completion time, not captured: the session appears once the interpreter is ready, and
+  // the editor is created long before that.
+  const analysisRef = useRef(getAnalysis);
+  analysisRef.current = getAnalysis;
   onChangeRef.current = onChange;
   onSliderRef.current = onSliderCommit;
 
@@ -144,7 +174,9 @@ export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(fu
         closeBrackets(),
         rectangularSelection(),
         highlightSelectionMatches(),
-        autocompletion({ override: [pythonCompletions] }),
+        autocompletion({
+          override: [pythonCompletionSource(() => analysisRef.current?.() ?? null, pythonCompletions)],
+        }),
         EditorView.lineWrapping,
         EditorState.readOnly.of(readOnly),
         EditorView.editable.of(!readOnly),
@@ -179,6 +211,16 @@ export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(fu
         view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
       },
       focus: () => view.focus(),
+      setCursor: (pos: number) => {
+        const clamped = Math.max(0, Math.min(pos, view.state.doc.length));
+        view.dispatch({ selection: { anchor: clamped } });
+        view.focus();
+      },
+      getCursor: () => view.state.selection.main.head,
+      startCompletion: () => {
+        view.focus();
+        startCompletion(view);
+      },
     };
     window.__mechalabEditors = { ...(window.__mechalabEditors ?? {}), [testId]: bridge };
 

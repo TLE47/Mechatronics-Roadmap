@@ -66,6 +66,7 @@
     "test:checkhints": "node --experimental-strip-types scripts/test_check_hints.mjs",
     "test:takealong": "node --experimental-strip-types scripts/test_offline_takealong.mjs",
     "test:backup": "node --experimental-strip-types scripts/test_backup.mjs",
+    "test:analysis": "node --experimental-strip-types scripts/test_analysis.mjs",
     "test:e2e:backup": "node --experimental-strip-types scripts/e2e_backup.mjs",
     "test:fonts": "node scripts/test_fonts.mjs",
     "test:theme": "node --experimental-strip-types scripts/test_theme.mjs",
