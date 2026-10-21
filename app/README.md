@@ -119,6 +119,36 @@ isolation headers (the dev server, a preview) has no service worker in front of 
 so instead of claiming a cache it cannot build. `npm run test:takealong` pins the URL list, the size
 wording, and the rule that only the interpreter's own files let the button call itself ready.
 
+### Backup
+
+Five stores hold the work, so getting it out is one file, not five: **Back Up (.zip)** in the header
+writes a small archive — `manifest.json`, `progress.json`, `drafts.json`, `history.json`,
+`learning-log.json`, `README.txt` — with the counts and date in the manifest, and a README that still
+explains the file if it is opened years later. [`src/backupZip.ts`](src/backupZip.ts) is a stored-method
+zip writer and reader (CRC-32, central directory, end record) rather than a dependency: the payload is
+JSON and code text, and a stored archive needs no decompressor.
+
+**Restore (.zip)** merges, and never deletes. Flags union, drafts only fill lessons this browser has no
+text for, versions union by the timestamp they were filed at, and log events dedupe by identity the
+same way cloud sync does. The toast reports what actually changed (`Restored · 4 lessons verified · 2
+drafts · 11 log events`), or says the file has nothing new; a refusal says which refusal it was — not a
+backup, a download that stopped short, or a zip that was re-compressed after it was unzipped, which is
+common enough (macOS Archive Utility) to deserve its own sentence.
+
+A restore writes the stores, not React's copy of them, so the controls dispatch
+`mechalab:store-restored` and `App` re-reads the maps: the tick comes back without a reload, which keeps
+the learner's tab and unsaved editor text. `npm run test:backup` pins the format (CRC vector, a
+byte-for-byte round trip, all three refusals) and the merge rules (a local flag survives a backup that
+lacks it, a local draft beats the file's, a newer version is not pushed out by an older one, the caps
+still hold); `npm run test:e2e:backup` does it in Chromium — write the zip, wipe, restore, and see the
+tick and the draft come back.
+
+Why this and not IndexedDB yet: the caps bound everything the five stores can hold at ~1.2 M characters,
+about 2.4 MB of the 5 MB bucket (12 drafts × 40 k, 120 k of versions, 5,000 log events), and
+`test:backup` computes that number from the exported caps instead of trusting this paragraph. IndexedDB
+becomes the right answer when notes, plots or a cross-lesson timeline outgrow that; the backup is the
+right answer today, because it is the part that matters when a browser is cleared.
+
 ### Keys
 
 | Key | Does |
@@ -253,7 +283,10 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/components/PythonEditor.tsx`](src/components/PythonEditor.tsx) | The CodeMirror editor: view, external sync, test bridge. |
 | [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
-| [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total. |
+| [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
+| [`src/backupZip.ts`](src/backupZip.ts) | The zip writer and reader a backup is made of: stored entries, CRC-32, and the four ways a chosen file can fail. |
+| [`src/backupBundle.ts`](src/backupBundle.ts) | What a backup holds and how a restore merges it: flags union, drafts fill gaps, versions and events dedupe. |
+| [`src/progressKeys.ts`](src/progressKeys.ts) | Where the three progress maps live, so the backup can read them without importing React. |
 | [`src/scopeModel.ts`](src/scopeModel.ts) | What a Scope payload must be to be drawn: NaN dropped, lengths aligned, flat traces widened, tables sampled. |
 | [`src/components/ScopePanel.tsx`](src/components/ScopePanel.tsx) | The Scope: canvas, shared axes, legend with last values, and the same data as a table. |
 | [`src/learningLog.ts`](src/learningLog.ts) | The event log behind the friction report and the roadmap's "opened / tried" states. |
@@ -272,6 +305,8 @@ npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
 npm run test:offline         # the service worker: isolation without host headers, the take-offline button, offline reload, run + deep link
 npm run test:takealong       # the offline button's rules: URL list, size wording, what "ready" may claim
+npm run test:backup          # the archive: CRC, round trip, the three refusals, and a merge that never deletes
+npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run check:lessons        # the registry is current
 ```
 

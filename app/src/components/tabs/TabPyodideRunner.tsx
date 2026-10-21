@@ -22,6 +22,7 @@ import { logEvent } from '../../learningLog';
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
 import { readDraft, saveDraft } from '../../lessonDraft';
+import { STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED } from '../../progressKeys';
 import {
   clearHistory,
   recordSnapshot,
@@ -73,8 +74,9 @@ const DEFAULT_PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
 const DEFAULT_EXECUTION_TIMEOUT_MS = 6000;
 const DEFAULT_MAX_TRACE_STEPS = 400000;
 
-export const STORAGE_KEY_VERIFIED = 'mechalab_pyodide_verified_v1';
-export const STORAGE_KEY_COMPLETED = 'mechalab_pyodide_completed_v1';
+// The keys live in `progressKeys.ts`, because the backup reads the same stores without importing
+// React; re-exported here so the existing importers keep their names.
+export { STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED };
 // A JSON array of lesson ids whose first-run coach the learner hid. The old P.1-only key stored
 // '1', which means P.1 was hidden, not that every lesson's later brief should be.
 export const STORAGE_KEY_FIRST_GUIDE = 'mechalab_first_guide_dismissed_v1';

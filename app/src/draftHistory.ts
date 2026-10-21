@@ -143,6 +143,55 @@ export function snapshotsFor(id: string): DraftSnapshot[] {
   return readHistory()[id] ?? [];
 }
 
+export interface HistoryMerge {
+  /** The store as written. */
+  history: HistoryStore;
+  /** Versions the result holds that it did not hold before; an evicted arrival does not count. */
+  added: number;
+}
+
+/**
+ * Merge a whole store in - a backup's versions, or another device's.
+ *
+ * `recordSnapshot` cannot do this job: it files arrivals in the order they come, which is correct for
+ * a Run (a live run is always the newest) and wrong for a replay, where an older version inserted
+ * after a newer one would sit on top and then evict it. A merge therefore orders by timestamp itself,
+ * dedupes by that timestamp plus the text, and enforces both caps on the result.
+ */
+export function mergeHistory(incoming: HistoryStore): HistoryMerge {
+  const current = readHistory();
+  const ids = new Set([...Object.keys(current), ...Object.keys(incoming)]);
+  const merged: HistoryStore = {};
+  for (const id of ids) {
+    const byKey = new Map<string, DraftSnapshot>();
+    for (const version of current[id] ?? []) byKey.set(`${version.at}|${version.code}`, version);
+    const starter = starterFor(id);
+    for (const version of incoming[id] ?? []) {
+      if (!version.code.trim() || version.code.length > MAX_SNAPSHOT_CHARS) continue;
+      if (starter !== null && version.code === starter) continue;
+      byKey.set(`${version.at}|${version.code}`, version);
+    }
+    const kept = [...byKey.values()]
+      .sort((a, b) => b.at - a.at)
+      .slice(0, MAX_SNAPSHOTS_PER_LESSON);
+    if (kept.length) merged[id] = kept;
+  }
+  const history = trimToBudget(merged);
+  const store = storage();
+  if (store) writeHistory(store, history);
+
+  let added = 0;
+  for (const [id, versions] of Object.entries(history)) {
+    for (const version of versions) {
+      const known = (current[id] ?? []).some(
+        (existing) => existing.at === version.at && existing.code === version.code
+      );
+      if (!known) added += 1;
+    }
+  }
+  return { history, added };
+}
+
 function starterFor(id: string): string | null {
   return PYTHON_LESSONS.find((lesson) => lesson.id === id)?.starterCode ?? null;
 }

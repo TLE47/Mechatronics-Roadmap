@@ -39,7 +39,8 @@ export interface LearningEvent {
 
 export const LOG_STORAGE_KEY = 'mechalab.learningLog.v1';
 export const LOG_SCHEMA = 'mechalab.learning-log/1';
-const MAX_EVENTS = 5000;
+/** The log's own cap. Exported so the backup's size ceiling is computed from it, not copied. */
+export const MAX_EVENTS = 5000;
 const FAIL_LINE_CHARS = 200;
 
 export function readLearningLog(): LearningEvent[] {

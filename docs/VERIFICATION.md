@@ -45,6 +45,8 @@ npm run test:theme:e2e                  # toggle contract + contrast on all 11 t
 npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
+npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes
+npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore to the store and to the screen
 npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
 npm run test:editor                     # slider directives and which lessons get helper tabs
 npm run test:resume                     # the lesson the next visit reopens, which one the roadmap offers and when it hands forward, and the ids it refuses
@@ -55,6 +57,16 @@ npm run test:checkhints                 # a failing check names its own rung; ru
 npm run test:fonts                      # the two self-hosted faces: named, imported, emitted, no CDN
 npm run test:smoke                      # needs `npm ci` first
 ```
+
+`test:backup` is the one suite that owns a file format, so it checks the format itself: the published
+CRC-32 vector, a round trip that returns every byte of every entry, and the three ways a chosen file
+can fail (not a zip, half a download, a zip a tool re-compressed) — each with its own sentence in the
+UI. It then checks the merge a restore performs, because a merge that loses work is worse than no
+backup: a flag set here survives a file that lacks it, a draft written here beats the file's copy, an
+older arriving version never evicts a newer one, and restoring the same file twice adds nothing.
+`test:e2e:backup` takes the archive the browser actually wrote, wipes `localStorage`, and restores it,
+asserting the milestone tick returns **without a reload** — the App's own copy of the maps is what a
+store-only restore would leave stale.
 
 `test:runtime` is the one suite that cannot be a unit test: stopping a `while True:` in place needs
 cross-origin isolation, a real `SharedArrayBuffer` and a real browser. It asserts the Stop answers by

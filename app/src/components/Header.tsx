@@ -2,6 +2,7 @@ import React from 'react';
 import { Printer, Download, FileJson, User, Compass, Sun, Moon, Search } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
+import { BackupControls } from './BackupControls';
 import { toggleLabel, type Theme } from '../theme';
 
 interface HeaderProps {
@@ -181,6 +182,8 @@ export const Header: React.FC<HeaderProps> = ({
             <FileJson className="h-3.5 w-3.5" aria-hidden="true" />
             <span className="hidden 2xl:inline">Export Learning Log (.json)</span>
           </button>
+          {/* Everything in this browser, out and back in: the two buttons report what they did. */}
+          <BackupControls />
           <button
             onClick={onExportPortfolio}
             data-testid="btn-export-portfolio"

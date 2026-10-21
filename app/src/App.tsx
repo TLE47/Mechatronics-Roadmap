@@ -16,7 +16,7 @@ import { TabCadPcb } from './components/tabs/TabCadPcb';
 import { TabSysId } from './components/tabs/TabSysId';
 import { TabEskf } from './components/tabs/TabEskf';
 import { TabLinkHealth } from './components/tabs/TabLinkHealth';
-import { TabPyodideRunner, STORAGE_KEY_VERIFIED, STORAGE_KEY_COMPLETED } from './components/tabs/TabPyodideRunner';
+import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
 import { TabPlacementQuiz } from './components/tabs/TabPlacementQuiz';
 import { PresetRequest, tabForPreset } from './demoPresets';
 import { AccountPanel } from './components/AccountPanel';
@@ -29,6 +29,14 @@ import {
 } from './accounts';
 import { loadProgress, saveProgress } from './cloudProgress';
 import { mergeProgress, PROGRESS_SCHEMA, type ProgressSnapshot } from './progressMerge';
+import {
+  STORAGE_KEY_COMPLETED,
+  STORAGE_KEY_MILESTONES,
+  STORAGE_KEY_PROGRESS_UPDATED,
+  STORAGE_KEY_VERIFIED,
+  readFlagMap,
+} from './progressKeys';
+import { STORE_RESTORED_EVENT } from './backupBundle';
 import { attemptsByLesson, downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
@@ -138,20 +146,11 @@ const TOUR_STEPS: TourStepInfo[] = [
   },
 ];
 
-export const STORAGE_KEY_MILESTONES = 'mechalab_linear_milestones_v1';
 export const STORAGE_KEY_TIER = 'mechalab_active_tier_pass_v1';
 export const STORAGE_KEY_VIEW_MODE = 'mechalab_view_mode_v1';
-// When the three progress maps last changed, so a cloud merge can tell which side is newer.
-const STORAGE_KEY_PROGRESS_UPDATED = 'mechalab.progress.updatedAt.v1';
-
-function readFlagMap(key: string): Record<string, boolean> {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
-  } catch {
-    return {};
-  }
-}
+// The progress keys live in `progressKeys.ts` (the backup reads the same stores without importing
+// React); re-exported here so the existing importers keep their names.
+export { STORAGE_KEY_COMPLETED, STORAGE_KEY_MILESTONES, STORAGE_KEY_VERIFIED };
 
 function readProgressUpdatedAt(): number {
   try {
@@ -459,6 +458,21 @@ export const App: React.FC = () => {
     }
   });
 
+  // A zip restore writes the stores; this component's copies of them did not change. Re-read on the
+  // event rather than reloading the page, so the learner keeps their tab and unsaved editor text.
+  const [storeNonce, setStoreNonce] = useState(0);
+
+  useEffect(() => {
+    const onRestored = () => {
+      setVerifiedLessons(readFlagMap(STORAGE_KEY_VERIFIED));
+      setCompletedLessons(readFlagMap(STORAGE_KEY_COMPLETED));
+      setCompletedMilestones(readFlagMap(STORAGE_KEY_MILESTONES));
+      setStoreNonce((nonce) => nonce + 1);
+    };
+    window.addEventListener(STORE_RESTORED_EVENT, onRestored);
+    return () => window.removeEventListener(STORE_RESTORED_EVENT, onRestored);
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_VIEW_MODE, viewMode);
@@ -729,7 +743,7 @@ export const App: React.FC = () => {
   // is a lesson read and left, which no progress flag can tell apart from one never touched. Read
   // when the visible tab changes - opening the roadmap re-renders, and anywhere else would parse the
   // log on every keystroke in the editor.
-  const lessonAttempts = useMemo(() => attemptsByLesson(readLearningLog()), [activeTab]);
+  const lessonAttempts = useMemo(() => attemptsByLesson(readLearningLog()), [activeTab, storeNonce]);
 
   // The roadmap leads with the lesson to do next, not with Step 1 of ten: the runner already
   // remembers where the learner stopped (`src/lastLesson.ts`), and "continue" has to mean forward

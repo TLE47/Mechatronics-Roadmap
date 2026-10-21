@@ -11,6 +11,52 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 147: The Backup, and What a Restore May Not Do
+
+The gap page's persistence item had two halves. The second now ships: one press in the header writes
+every store a learner's work lives in as a single `.zip`, and a restore merges it back. The first half —
+IndexedDB — is deliberately not built, and this run is where that decision got a number: the caps bound
+the five stores at ~1.2 M characters (~2.4 MB of the 5 MB bucket), so the move is not earned by size.
+
+**The archive.** [`app/src/backupZip.ts`](app/src/backupZip.ts) writes and reads a stored-method zip by
+hand - CRC-32, local headers, central directory, end record - because the payload is JSON and code text
+and a stored archive needs no dependency, no worker and no async decompressor. `manifest.json` carries
+the counts and the date, `README.txt` still explains the file years later, and the reader distinguishes
+the three ways a chosen file fails: not a zip, a download that stopped short, and a zip a tool
+re-compressed after it was unzipped (macOS Archive Utility does that by default, and a learner who
+unzips and re-zips has done nothing wrong).
+
+**The merge, which is the part that had to be right.** [`app/src/backupBundle.ts`](app/src/backupBundle.ts)
+restores by merging: flags union, drafts fill only lessons this browser has no text for, versions union
+by the timestamp they were filed at, and log events dedupe by identity - the same rule cloud sync uses,
+because two merges that disagree about what one event is would eventually double a learner's log. Every
+write goes through the store's own writer, so the caps and the eviction order still hold.
+
+That exposed a real bug in the first design. Replaying versions through `recordSnapshot` files them in
+arrival order, which is right for a Run and wrong for a replay: an *older* arriving version lands on top
+of a newer local one and then evicts it. `mergeHistory`
+([`app/src/draftHistory.ts`](app/src/draftHistory.ts)) orders by timestamp itself, dedupes by timestamp
+plus text, and applies both caps - and the suite pins the case rather than the intent.
+
+**Without a reload.** The restore writes the stores, not React's copy of them, so `BackupControls`
+dispatches `mechalab:store-restored` and `App` re-reads the three maps: the tick returns on screen and
+the learner keeps their tab and unsaved editor text. A toast reports exactly what changed (`Restored · 1
+milestone · 1 draft · 1 log event`) or says the file has nothing new.
+
+- `npm run test:backup` (17 checks): the published CRC vector, a round trip that returns every byte of
+  an empty file and a non-ASCII name, the three refusals, the manifest counts, and every merge rule -
+  including restoring the same file twice adding nothing, and the measured ceiling computed from the
+exported caps rather than a comment in a doc.
+- `npm run test:e2e:backup`: the header button in Chromium writes a 2.8 kB archive the app reads back,
+  `localStorage` is cleared, and the restore brings back the milestone (without a reload), the draft
+  (opened in P.3's editor) and the log event; a text file renamed `.zip` is refused and changes nothing.
+- Workbench suites: 20, was 18, all green on one dev server and one built bundle.
+- `docs/PLAN-2.0-GAP.md`: the persistence row records the backup as shipped and the ~2.4 MB measurement;
+  the next list now leads with Jedi/Ruff, with IndexedDB after it. `app/README.md` gains a Backup
+  section and the two new checks; `docs/VERIFICATION.md` explains what the format suite asserts.
+
+---
+
 ## [2026-10-21] — Run 146: Take This Step Offline
 
 The cache was warm by accident: a learner who had used the workbench was offline-ready, and one who
