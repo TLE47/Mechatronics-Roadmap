@@ -17,8 +17,9 @@
  * 6. CDN failure (even when running the full solution) never awards verification.
  * 7. Progress survives a full browser reload (`page.reload()`), a plain visit with no query string
  *    reopens the lesson the learner was last on, and the roadmap offers it back as a resume card -
- *    then hands that offer forward to the next unverified lesson once the first is passed, so
- *    "continue" always means forward progress.
+ *    then hands that offer forward to the next unverified lesson once the first is passed, and
+ *    names the unfinished edit the editor is holding (which reopening from a plain visit restores),
+ *    so "continue" always means forward progress and never a fresh starter.
  * 8. Portfolio export (`buildPortfolioMarkdown` modal preview) contains the exact, strictly
  *    separated completion categories (`Executed & Passed in Pyodide WASM` vs `Self-Marked Complete`).
  * 9. Lesson 08.1 passes only when its four-fault bench grades every repair at target: a repair left
@@ -716,6 +717,48 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     console.log('  ok a passed lesson hands the roadmap card forward');
 
+    // 7e. And the card knows what is half-written, not just which lesson. The editor keeps the
+    //     unfinished program, the card says how far it has moved from the starter, and reopening it
+    //     from a plain visit hands the work back - a card naming an exercise whose typing it then
+    //     replaced with the starter would be the same loss in a new place.
+    await page.getByTestId('tab-btn-tab-pyodide').click();
+    await waitForEditor(page, undefined, 15000);
+    const p4Starter = await getEditorCode(page);
+    const halfWritten = `${p4Starter.trimEnd()}\n# half-written idea, not run yet`;
+    await setEditorCode(page, halfWritten);
+    await page.waitForTimeout(700); // the draft is written on a pause, not on every keystroke
+    await page.getByTestId('tab-btn-tab-arch').click();
+    const draftLine = page.getByTestId('resume-draft');
+    await draftLine.waitFor({ timeout: 5000 });
+    const draftText = (await draftLine.textContent()) ?? '';
+    assert(
+      draftText.includes('1 line changed'),
+      `the card must price the unfinished edit by what changed from the starter; got: ${draftText}`
+    );
+    const draftCard = (await page.getByTestId('resume-card').textContent()) ?? '';
+    assert(
+      draftCard.includes('resume'.toUpperCase()) === false && draftCard.includes('P.4'),
+      `the draft belongs to the lesson the learner stopped on; the card said: ${draftCard}`
+    );
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await waitForEditor(page, undefined, 15000);
+    assert.equal(
+      await getEditorCode(page),
+      halfWritten,
+      'a plain visit must reopen the unfinished edit, not the starter it was written over'
+    );
+    // Reset Starter is the one edit that means "forget this one", so the card stops mentioning it.
+    await page.getByTestId('btn-reset-starter').click();
+    await page.waitForTimeout(200);
+    await page.getByTestId('tab-btn-tab-arch').click();
+    await page.getByTestId('resume-card').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('resume-draft').count(),
+      0,
+      'resetting to the starter must clear the draft, or the card would keep advertising it'
+    );
+    console.log('  ok the card shows the unfinished edit and reopening hands it back');
+
     // 8. Portfolio export contains the correct completion categories
     await page.getByTestId('btn-export-portfolio').click();
     const portfolioPreview = await page.getByTestId('portfolio-markdown-preview').textContent();
@@ -1371,7 +1414,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, unfinished-draft restore, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
     );
   } finally {
     await browser.close();

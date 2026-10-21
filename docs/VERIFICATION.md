@@ -46,6 +46,7 @@ npm run test:runtime                    # the worker: in-place Stop, input(), is
 npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
 npm run test:editor                     # slider directives and which lessons get helper tabs
 npm run test:resume                     # the lesson the next visit reopens, which one the roadmap offers and when it hands forward, and the ids it refuses
+npm run test:draft                      # the editor's unfinished work: kept per lesson, bounded, evicted, never a starter copy
 npm run test:fonts                      # the two self-hosted faces: named, imported, emitted, no CDN
 npm run test:smoke                      # needs `npm ci` first
 ```

@@ -39,6 +39,7 @@ import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { lessonIdFromLocation } from './lessonRoute';
 import { readLastLessonId, lessonOffer } from './lastLesson';
+import { editedLines, readDraft } from './lessonDraft';
 import { lessonIdOf, type PaletteItem } from './palette';
 import { paletteCatalog } from './paletteCatalog';
 import {
@@ -737,6 +738,9 @@ export const App: React.FC = () => {
     if (!offer) return null;
     const entry = PYTHON_LESSONS.find((lesson) => lesson.id === offer.id);
     if (!entry) return null;
+    // What the learner typed into that exercise and did not finish (`src/lessonDraft.ts`). The card
+    // prints it and the runner restores it, so "continue" hands back the work, not a fresh starter.
+    const draft = readDraft(entry.id);
     return {
       id: entry.id,
       title: entry.title,
@@ -744,6 +748,7 @@ export const App: React.FC = () => {
       verified: !!verifiedLessons[entry.id],
       completed: !!completedLessons[entry.id],
       reason: offer.reason,
+      edited: draft === null ? 0 : editedLines(draft, entry.starterCode),
     };
   })();
 

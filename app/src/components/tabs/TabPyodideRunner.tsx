@@ -12,6 +12,7 @@ import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
+import { readDraft, saveDraft } from '../../lessonDraft';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { parseSliders } from '../../editor/sliderModel';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
@@ -511,7 +512,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
   const [trackFilter, setTrackFilter] = useState<'all' | 'onramp' | 'lessons' | 'modules'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [code, setCode] = useState<string>(PYTHON_LESSONS[0].starterCode);
+  // The editor opens on the learner's own unfinished work when there is any (`src/lessonDraft.ts`),
+  // and on the lesson's starter when there is not. Without this, "Continue P.4" on the roadmap would
+  // open a fresh starter - the card would be naming work it had already thrown away.
+  const [code, setCode] = useState<string>(() => {
+    const id = initialLessonId || PYTHON_LESSONS[0].id;
+    return (
+      readDraft(id) ??
+      PYTHON_LESSONS.find((lesson) => lesson.id === id)?.starterCode ??
+      PYTHON_LESSONS[0].starterCode
+    );
+  });
   const [revealedHints, setRevealedHints] = useState<number>(0);
   // Runs completed per lesson: Hint 2 waits for one, so the ladder is not a table of contents.
   // Kept per lesson, not reset on selection, because an earlier attempt on that lesson counts.
@@ -743,6 +754,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     lessonIdRef.current = selectedId;
   }, [selectedId]);
 
+  // Typing is the draft. Written once the learner pauses rather than on every keystroke, so the
+  // store sees one write per thought instead of one per character; `saveDraft` itself is what
+  // decides that a lesson back on its starter keeps nothing.
+  useEffect(() => {
+    const timer = setTimeout(() => saveDraft(selectedId, code), 400);
+    return () => clearTimeout(timer);
+  }, [selectedId, code]);
+
   /**
    * Open a lesson in the editor.
    *
@@ -753,13 +772,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const selectLesson = (id: string, remember = true) => {
     const found = PYTHON_LESSONS.find((l) => l.id === id);
     if (!found) return;
+    // The lesson being left gets one last write before the editor is replaced: the debounce below
+    // may not have fired for the keystrokes typed just before the switch.
+    if (lessonIdRef.current !== id) saveDraft(lessonIdRef.current, codeRef.current);
     setSelectedId(id);
     lessonIdRef.current = id;
     // Always recorded, unlike the address bar: a plain visit keeps its clean URL and still reopens
     // here next time, which is the difference between a bookmark that resumes and one that resets.
     rememberLastLesson(id);
     if (remember) rememberLessonInUrl(id);
-    commitCode(found.starterCode);
+    commitCode(readDraft(id) ?? found.starterCode);
     setRevealedHints(0);
     setStdout('');
     setStderr('');
@@ -1762,6 +1784,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 <button
                   onClick={() => {
                     commitCode(currentLesson.starterCode);
+                    // Back on the starter is the one edit that means "forget this one".
+                    saveDraft(currentLesson.id, currentLesson.starterCode);
                     setPassStatus('untested');
                     setBehaviorCheck('untested');
                     setOutputCheck('untested');

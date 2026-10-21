@@ -64,6 +64,8 @@ interface TabArchitectureProps {
     completed: boolean;
     /** `resume` = the lesson they stopped on; `next` = the first one still to do. */
     reason: 'resume' | 'next';
+    /** Lines the learner's unfinished draft differs from the lesson's starter by; 0 when untouched. */
+    edited: number;
   } | null;
 }
 
@@ -163,6 +165,14 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 ? 'not verified yet'
                 : 'opened, not verified yet'}
             </div>
+            {/* The half-written exercise is the part of the work the lesson id cannot show: without
+                this the card would offer "a lesson" when what is waiting is a program. */}
+            {resumeLesson.edited > 0 && (
+              <div data-testid="resume-draft" className="mt-1 text-xs text-emerald">
+                Your unfinished edit is still here · {resumeLesson.edited}{' '}
+                {resumeLesson.edited === 1 ? 'line' : 'lines'} changed from the starter
+              </div>
+            )}
           </div>
           <button
             onClick={() => onOpenPyodideLesson(resumeLesson.id)}
@@ -172,7 +182,12 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
             <Play className="w-3.5 h-3.5" />
             {/* The tab is named by the runner itself, so the button says what it does, not where. */}
             <span>
-              {resumeLesson.reason === 'next' ? 'Start' : 'Continue'} {resumeLesson.id}
+              {resumeLesson.reason === 'next'
+                ? resumeLesson.edited > 0
+                  ? 'Resume'
+                  : 'Start'
+                : 'Continue'}{' '}
+              {resumeLesson.id}
             </span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>

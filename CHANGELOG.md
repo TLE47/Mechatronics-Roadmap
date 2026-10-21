@@ -11,6 +11,49 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 136: The Card Knows What Is Half-Written
+
+Run 135 taught the card which lesson to offer, and then the button opened that lesson on its starter.
+The editor's text lived in React state alone, so a half-written `for` loop survived exactly as long as
+the tab stayed open: a learner who looked at the roadmap to decide what was left came back to a fresh
+starter. The card was naming work it had already thrown away.
+
+**The unfinished program is kept per lesson.** [`app/src/lessonDraft.ts`](app/src/lessonDraft.ts) stores
+`mechalab_drafts_v1` - lesson id to editor text - and the runner reads it wherever it used to reach for
+the starter: on mount, on `selectLesson`, and when a deep link or the card opens an entry. Three rules
+make it safe to leave running:
+
+| rule | why |
+| :--- | :--- |
+| stored only when it differs from the starter | "no draft" means nothing was typed, not "we copied the starter" |
+| written on a 400 ms pause, and once more when a lesson is left | one write per thought, and the last keystrokes before a tab switch are not the ones lost |
+| `Reset Starter` is the one edit that forgets | it is the learner asking for the starter back, and `saveDraft` with the starter deletes the entry |
+
+Bounded, because it shares a 5 MB bucket with progress, theme and the log: **12 lessons** (least
+recently edited evicted, and re-editing a lesson moves it to the newest slot) and **40,000 characters**
+per draft. A store written by an older version, a full bucket, private mode and a missing `localStorage`
+all read as "no drafts" instead of throwing.
+
+**And the card says it.** `App` prices the draft with `editedLines()` - added plus removed lines against
+the starter, computed as a longest-common-subsequence, so one appended line costs one and not the
+sixty the file happens to have - and the card prints `Your unfinished edit is still here · 3 lines
+changed from the starter`. The button distinguishes the three cases it can now be in: **Continue**
+(the lesson they stopped on), **Start** (a lesson after it, untouched), **Resume** (a lesson after it
+that already has typing in it).
+
+**Guarded.** [`scripts/test_lesson_draft.mjs`](scripts/test_lesson_draft.mjs) pins ten cases without a
+browser - byte-exact roundtrip, a starter storing nothing, Reset forgetting, an unknown id, eviction and
+the re-edit reordering, an oversized paste refused without disturbing the rest, four kinds of unreadable
+store, a blocked store, the server render, and the line count itself. It joins the workbench matrix as
+`test:draft` (**14 suites**). Step **7e** of [`scripts/e2e_browser_workbench.mjs`](scripts/e2e_browser_workbench.mjs)
+drives the promise in Chromium: a line typed into P.4 makes the card say `1 line changed`, a plain visit
+reopens that exact text instead of the starter, and Reset Starter takes the line off the card.
+
+Measured on the run: `test:draft` 1.0 s, `test:workbench` 14/14 (e2e 98.2 s, pages 110.4 s, pairs
+110.0 s, tour 106.3 s), `check_all.py` 28/28.
+
+---
+
 ## [2026-10-21] — Run 135: "Continue" Means Forward, Not Last Opened
 
 Run 134's card named the lesson last opened, which was right until that lesson was passed: from then on
