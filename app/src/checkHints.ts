@@ -16,7 +16,7 @@ import type { PythonLessonItem } from './data/pythonLessonsData.ts';
  *   it is safe to open from a failure card;
  * - rung 2 is the formula or code block, close enough to the solution that handing it over because
  *   one `print` was mis-formatted would teach the wrong thing. It is earned by trying again after
- *   the nudge (`hintGate`), never by a check.
+ *   the nudge (`hintLock`), never by a check.
  *
  * So the card's job is to say "this check, that rung, and no further" - the specificity the gap
  * page asked for - while the ladder keeps its own pacing intact.
@@ -44,8 +44,8 @@ export function hintForCheck(hintCount: number): number {
 /**
  * The line a learner can act on from an instructor test's failure.
  *
- * Two shapes arrive here: an assertion's own message (`assertion_message`) and a traceback whose
- * last line is the exception. The assertion text is the useful one - it already carries expected
+ * Two shapes arrive here: an assertion's own message, and a traceback whose last line is the
+ * exception. The assertion text is the useful one - it already carries expected
  * and got - so it is returned with its `AssertionError: ` prefix stripped, and an empty string
  * means "the worker said nothing usable", which the card replaces with its generic line rather
  * than printing a bare word like `None`.
