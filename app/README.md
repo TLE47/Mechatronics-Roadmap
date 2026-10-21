@@ -145,6 +145,30 @@ starter is never filed (Reset Starter already restores it), and the store evicts
 anywhere once it passes its budget - [src/draftHistory.ts](src/draftHistory.ts), pinned by
 `npm run test:history`.
 
+**The Scope: your loop, drawn.** A lesson that prints forty lines of `theta = ...` is asking the reader
+to plot it in their head. Inside a run, Python can hand its samples to a panel instead:
+
+```python
+import math
+from mechalab import scope
+
+ts = [i / 100 for i in range(400)]
+ys = [1 - math.exp(-t) for t in ts]
+scope.stream("step response", ts, ys)
+```
+
+`scope.stream(name, t, y)` (and its synonym `scope.plot`) takes lists, ranges or numpy arrays and
+records a trace for **this run**. The worker buffers the points and posts them in batches of 500 plus
+one final batch before the verdict, so the curve grows while the loop runs and is complete when it
+stops; a runaway recording is capped at 20 000 points per series and says so
+([`src/scopeModel.ts`](src/scopeModel.ts) holds the rules, `npm run test:scope` pins them). The panel
+shares one pair of axes across traces, marks zero when the data crosses it, prints each trace's last
+value beside its name, and **Show as table** turns the same run into twelve sampled rows - a canvas is
+invisible to a screen reader ([`src/components/ScopePanel.tsx`](src/components/ScopePanel.tsx)).
+
+Nothing is stored: a trace belongs to the run that produced it, and pressing Run on something that
+traces nothing clears the panel rather than leaving a stale curve on screen.
+
 The seven control and mechanics lessons (02.1-02.5, 05.1, 05.2) ship their own annotations: link
 lengths on the FK/IK demos, mass and gear ratio on the inertia lesson, tooth counts on the belt
 drive, `Kp`/`Ki`/`Kd` on the PID lesson and the gyro bias/`alpha` pair on the complementary filter -
@@ -185,6 +209,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total. |
+| [`src/scopeModel.ts`](src/scopeModel.ts) | What a Scope payload must be to be drawn: NaN dropped, lengths aligned, flat traces widened, tables sampled. |
+| [`src/components/ScopePanel.tsx`](src/components/ScopePanel.tsx) | The Scope: canvas, shared axes, legend with last values, and the same data as a table. |
 | [`src/learningLog.ts`](src/learningLog.ts) | The event log behind the friction report and the roadmap's "opened / tried" states. |
 
 ## Checks that cover this directory
@@ -195,6 +221,7 @@ npm run test:workbench       # runner behaviour (happy-dom) + palette search + e
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
 npm run test:history         # run history: filed on Run, deduped, capped per lesson and in total
+npm run test:scope           # Scope payload rules: NaN, alignment, caps, bounds, table sampling
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
 npm run check:lessons        # the registry is current

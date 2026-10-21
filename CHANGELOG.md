@@ -11,6 +11,52 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 141: The Loop Draws Itself
+
+A control lesson could only ask a learner to imagine the curve: forty printed numbers, and "does it
+overshoot?" answered by eye over a terminal. The workspace plan's third item - a Scope the learner's
+own code drives - was the largest missing piece of the lab, so it is the next slice.
+
+**Python hands its samples to the panel.** Inside a run, `mechalab.scope` exists:
+
+```python
+from mechalab import scope
+scope.stream("step response", ts, ys)   # lists, ranges or numpy arrays
+```
+
+The worker installs the module once per interpreter, buffers the points and posts them in batches of
+500 plus one final batch **before** the run's verdict, so the curve grows while the loop runs and is
+complete when the result lands. A runaway recording is capped at 20 000 points per series and labelled,
+not silently truncated. Every path that ends a run goes through one `postResult()`, which is what makes
+the final batch ordered before the verdict the panel is drawn beside.
+
+**Nothing is drawn that cannot be justified.** [`app/src/scopeModel.ts`](app/src/scopeModel.ts) is a
+pure module, and its rules are the edge cases a real lesson hits:
+
+| payload | what is drawn |
+| :--- | :--- |
+| a NaN or an infinity from a diverging sim | the point is dropped - one bad sample would stretch the axis and flatten everything that did converge |
+| `t` and `y` of different lengths | cut to the shorter, so the pairs cannot misalign |
+| a flat trace (all five) | a unit of height, because a zero-height range divides by zero |
+| more than 20 000 points | the **first** points and a `truncated` flag: the transient is what the learner is reading |
+| no series at all | no panel, rather than an empty frame |
+
+**Readable without colour.** [`app/src/components/ScopePanel.tsx`](app/src/components/ScopePanel.tsx)
+draws one pair of axes for every trace, marks zero when the data crosses it, prints each trace's last
+value beside its name, and **Show as table** renders the same run as twelve evenly spaced rows for
+screen readers and for anyone who cannot separate amber from emerald. Switching to the table unmounts
+the canvas, which is why `asTable` is a dependency of the draw effect - a bug the browser run caught
+before this shipped: the panel came back blank.
+
+**Measured.** `npm run test:scope` is 14 checks over the model (dropped NaN, alignment, unnamed
+series, the cap and its flag, refusal of a non-list payload, scalars and typed arrays, shared bounds,
+the flat-trace widening, the last-value legend, number formatting, table sampling, short-series
+dashes). Browser step 7h runs a real lesson that imports `mechalab`, waits for the legend, and then
+reads the canvas back: the trace must have **ink** (4.6% of pixels on a 926x400 canvas), the table's
+last row must carry the settling value `0.9815`, and returning from the table must repaint.
+
+---
+
 ## [2026-10-21] — Run 140: The Version Behind the Draft
 
 Run 136 made the draft survive the tab. One text is not a history: a learner who tuned `Kp` until the

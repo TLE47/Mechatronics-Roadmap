@@ -855,6 +855,68 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok the card shows the unfinished edit and reopening hands it back');
 
+    // 7h. The Scope draws what the run's own loop produced. `mechalab.scope` is the module the lesson
+    //     prose names, so this is the learner's path: import it, stream a trace, press Run, look.
+    await page.getByTestId('tab-btn-tab-pyodide').click();
+    await setEditorCode(
+      page,
+      [
+        'import math',
+        'from mechalab import scope',
+        '',
+        'ts = [i / 100 for i in range(400)]',
+        'ys = [1 - math.exp(-t) for t in ts]',
+        'scope.stream("step response", ts, ys)',
+        'print("traced", len(ts), "points")',
+        '',
+      ].join('\n')
+    );
+    await page.getByTestId('btn-run-verify').click();
+    await page.getByTestId('scope-legend').waitFor({ timeout: 90000 });
+    const legendText = (await page.getByTestId('scope-legend').textContent()) ?? '';
+    assert(
+      legendText.includes('step response') && legendText.includes('0.9815'),
+      `the legend must name the trace and its last value; got: ${legendText}`
+    );
+    // A canvas that exists but was never painted is the bug this asserts against: the plot has to have
+    // ink on it, not just a mounted element.
+    const ink = await page.evaluate(() => {
+      const canvas = document.querySelector('[data-testid="scope-canvas"]');
+      if (!canvas) return { painted: 0, total: 0 };
+      const context = canvas.getContext('2d');
+      const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+      let painted = 0;
+      for (let i = 3; i < data.length; i += 4) if (data[i] > 0) painted += 1;
+      return { painted, total: data.length / 4 };
+    });
+    assert(
+      ink.painted > ink.total * 0.002,
+      `the trace must be drawn, not only mounted; ${ink.painted} of ${ink.total} pixels painted`
+    );
+    // The numbers exist as text too: a canvas is invisible to a screen reader.
+    await page.getByTestId('btn-scope-table').click();
+    await page.getByTestId('scope-table').waitFor({ timeout: 5000 });
+    const tableRows = await page.getByTestId('scope-table').locator('tbody tr').count();
+    assert(tableRows >= 5, `the table must sample the window, got ${tableRows} rows`);
+    const lastTableRow =
+      (await page.getByTestId('scope-table').locator('tbody tr').last().textContent()) ?? '';
+    assert(
+      lastTableRow.includes('0.9815'),
+      `the table's last row must carry the settling value; got: ${lastTableRow}`
+    );
+    // ...and switching back repaints the canvas it unmounted.
+    await page.getByTestId('btn-scope-table').click();
+    await page.getByTestId('scope-canvas').waitFor({ timeout: 5000 });
+    const repainted = await page.evaluate(() => {
+      const canvas = document.querySelector('[data-testid="scope-canvas"]');
+      const { data } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      let painted = 0;
+      for (let i = 3; i < data.length; i += 4) if (data[i] > 0) painted += 1;
+      return painted;
+    });
+    assert(repainted > 0, 'returning from the table must draw the trace again');
+    console.log('  ok a run traces its own signal into the Scope, as a plot and as a table');
+
     // 8. Portfolio export contains the correct completion categories
     await page.getByTestId('btn-export-portfolio').click();
     const portfolioPreview = await page.getByTestId('portfolio-markdown-preview').textContent();
@@ -1510,7 +1572,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Scope trace as plot & table, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
     );
   } finally {
     await browser.close();

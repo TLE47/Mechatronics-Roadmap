@@ -13,6 +13,7 @@
  *   test:resume      the lesson the next visit reopens, including the ids it must refuse
  *   test:draft       the editor's unfinished work: kept, bounded, evicted, and never a starter copy
  *   test:history     the versions behind the draft: filed on Run, deduped, capped, evicted oldest-first
+ *   test:scope       the Scope's payload rules: NaN dropped, lengths aligned, flat traces widened
  *   test:fonts       the two self-hosted faces are named, imported and emitted
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
@@ -133,6 +134,9 @@ async function main() {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('history', 'test_draft_history.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('scope', 'test_scope.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('fonts', 'test_fonts.mjs', {}),

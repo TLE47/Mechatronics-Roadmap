@@ -23,6 +23,8 @@ import {
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { parseSliders } from '../../editor/sliderModel';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
+import { ScopePanel } from '../ScopePanel';
+import { normalizeScopeSeries, type ScopeSeries } from '../../scopeModel';
 import { roadmapStepForLesson } from '../../practiceLinks';
 import { stepBreadcrumb, stepCostLabel, stepForMilestone } from '../../spine';
 import { PYTHON_TAB_NAME } from '../../tabNames';
@@ -90,6 +92,16 @@ const BOOT_ID = Math.random().toString(36).slice(2, 10);
 const STDIN_STATE = 0;
 const STDIN_LENGTH = 1;
 
+// Scope. A learner's loop can produce tens of thousands of points; posting each one would cost more
+// than the simulation. Points are buffered here and sent in batches of SCOPE_FLUSH_POINTS, plus one
+// final message before the run's result, so the panel draws while the loop runs and is complete at
+// the end. SCOPE_MAX_POINTS caps a runaway recording at what a canvas can still show.
+const SCOPE_FLUSH_POINTS = 500;
+const SCOPE_MAX_POINTS = 20000;
+let scopeSeries = new Map();
+let scopePending = 0;
+let scopeRunId = null;
+
 // Blocking input(), kept in the worker so the UI never freezes: post the prompt, then wait on the
 // shared word until the page writes the line (1) or cancels the run (-1).
 function readStdin(prompt) {
@@ -104,6 +116,107 @@ function readStdin(prompt) {
   const length = Atomics.load(stdinView, STDIN_LENGTH);
   const bytes = new Uint8Array(stdinBytes, 8, length).slice();
   return new TextDecoder().decode(bytes);
+}
+
+function toNumberArray(value) {
+  if (typeof value === 'number') return [value];
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (ArrayBuffer.isView(value)) return Array.from(value);
+  if (typeof value.length === 'number') return Array.from(value);
+  return [];
+}
+
+// Called from Python as scope.stream(name, t, y). Silent while no run is active, so a stray call
+// from a module import cannot leave a message for a run that has already been reported.
+function scopePush(name, t, y) {
+  if (!scopeRunId) return;
+  const key = String(name || 'series');
+  let entry = scopeSeries.get(key);
+  if (!entry) {
+    entry = { t: [], y: [] };
+    scopeSeries.set(key, entry);
+  }
+  const times = toNumberArray(t);
+  const values = toNumberArray(y);
+  const count = Math.min(times.length, values.length);
+  for (let i = 0; i < count; i += 1) {
+    if (entry.t.length >= SCOPE_MAX_POINTS) {
+      entry.truncated = true;
+      break;
+    }
+    const tv = times[i];
+    const yv = values[i];
+    if (!Number.isFinite(tv) || !Number.isFinite(yv)) continue;
+    entry.t.push(tv);
+    entry.y.push(yv);
+    scopePending += 1;
+  }
+  if (scopePending >= SCOPE_FLUSH_POINTS) flushScope(false);
+}
+
+function flushScope(final) {
+  scopePending = 0;
+  if (!scopeRunId || !scopeSeries.size) return;
+  self.postMessage({
+    type: 'scope',
+    runId: scopeRunId,
+    final: Boolean(final),
+    series: Array.from(scopeSeries, ([name, entry]) => ({
+      name,
+      t: entry.t,
+      y: entry.y,
+      truncated: Boolean(entry.truncated),
+    })),
+  });
+}
+
+// Every path that ends a run goes through here, so the last batch of points cannot arrive after the
+// verdict the panel is drawn beside.
+function postResult(payload) {
+  flushScope(true);
+  self.postMessage(payload);
+}
+
+// mechalab.scope, the module the lessons' prose tells the learner to import. The two methods are
+// one operation: stream paints as it goes, plot is the name a lesson uses when it is a finished curve.
+function installScopeBridge(py) {
+  if (py.__mechalabScopeInstalled) return;
+  py.globals.set('__mechalab_scope_push__', scopePush);
+  py.globals.set('__mechalab_scope_clear__', () => {
+    scopeSeries.clear();
+    scopePending = 0;
+  });
+  py.runPython(
+    [
+      'import sys, types',
+      '',
+      'def _mechalab_as_list(value):',
+      '    """A list of numbers, from a list, a range or a numpy array alike."""',
+      '    try:',
+      '        return list(value)',
+      '    except TypeError:',
+      '        return [value]',
+      '',
+      'class _MechaLabScope:',
+      '    """The Scope panel: stream and plot record a signal, clear forgets this run."""',
+      '',
+      '    def stream(self, name, t, y, _push=__mechalab_scope_push__):',
+      '        _push(str(name), _mechalab_as_list(t), _mechalab_as_list(y))',
+      '',
+      '    def plot(self, name, t, y, _push=__mechalab_scope_push__):',
+      '        _push(str(name), _mechalab_as_list(t), _mechalab_as_list(y))',
+      '',
+      '    def clear(self, _clear=__mechalab_scope_clear__):',
+      '        _clear()',
+      '',
+      'if "mechalab" not in sys.modules:',
+      '    _mechalab_module = types.ModuleType("mechalab")',
+      '    _mechalab_module.scope = _MechaLabScope()',
+      '    sys.modules["mechalab"] = _mechalab_module',
+    ].join('\\n')
+  );
+  py.__mechalabScopeInstalled = true;
 }
 
 function installStdinBridge(py) {
@@ -139,6 +252,7 @@ async function ensurePyodideLoaded(cdnUrl) {
       pyodideInstance = await self.loadPyodide({ indexURL: cdnUrl });
       if (interruptView) pyodideInstance.setInterruptBuffer(interruptView);
       installStdinBridge(pyodideInstance);
+      installScopeBridge(pyodideInstance);
       // The measured load, not a guess: the status line tells a learner what the wait actually was.
       self.postMessage({
         type: 'status',
@@ -210,6 +324,10 @@ self.onmessage = async (event) => {
     // A fresh run starts un-stopped: clear the interrupt word a previous Stop left set.
     stopRequested = false;
     activeRunId = runId;
+    // ...and with an empty Scope: a trace belongs to the run that produced it.
+    scopeSeries = new Map();
+    scopePending = 0;
+    scopeRunId = runId;
     if (interruptView) Atomics.store(interruptView, 0, 0);
     const capturedOut = [];
     const capturedErr = [];
@@ -317,7 +435,7 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_st
       const stderrText = capturedErr.join('\\n').trim();
 
       if (stopped) {
-        self.postMessage({
+        postResult({
           type: 'result',
           runId,
           stdout: stdoutText,
@@ -332,7 +450,7 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_st
       }
 
       if (timedOut) {
-        self.postMessage({
+        postResult({
           type: 'result',
           runId,
           stdout: stdoutText,
@@ -358,7 +476,7 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_st
             earlyBench = '';
           }
         }
-        self.postMessage({
+        postResult({
           type: 'result',
           runId,
           stdout: stdoutText,
@@ -424,7 +542,7 @@ __mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
         }
       }
 
-      self.postMessage({
+      postResult({
         type: 'result',
         runId,
         stdout: stdoutText,
@@ -441,7 +559,7 @@ __mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
       // Pyodide surfaces the interrupt as KeyboardInterrupt (sometimes wrapped in a JS error).
       if (stopRequested || /KeyboardInterrupt/.test(message)) {
         captureEnabled = false;
-        self.postMessage({
+        postResult({
           type: 'result',
           runId,
           stdout: capturedOut.join('\\n').trim(),
@@ -706,6 +824,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     () => snapshotsFor(selectedId),
     [selectedId, passStatus, historyVersion]
   );
+  // The run's traced signals. Empty means the run drew nothing, which is the normal case for a
+  // lesson that only prints, so the panel renders nothing at all rather than an empty frame.
+  const [scopeSeries, setScopeSeries] = useState<ScopeSeries[]>([]);
 
   const nextHintNumber = revealedHints + 1;
   // Hint 1 is always open. Every hint after it waits for at least one completed run of this
@@ -999,6 +1120,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setStdout('');
     setStderr('');
     setInstructorError('');
+    // A trace belongs to the run that produced it: the panel starts empty, and the worker's first
+    // batch replaces it (a run that traces nothing leaves no stale curve on screen).
+    setScopeSeries([]);
     // A report describes the code that produced it: a run that never reaches the harness (a syntax
     // error, a timeout) must not leave the previous run's green cards on screen.
     setHarnessReport(null);
@@ -1058,6 +1182,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           if (data.type === 'stdin-request') {
             setStdinPrompt(String(data.prompt || ''));
             setStdinValue('');
+            return;
+          }
+          // Batched scope points, not an outcome: handle them and keep waiting for the verdict. This
+          // has to sit above the runId gate below, which resolves the run on any message.
+          if (data.type === 'scope') {
+            if (data.runId === runId) setScopeSeries(normalizeScopeSeries(data.series));
             return;
           }
           if (data.runId !== runId) return;
@@ -2264,6 +2394,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
             )}
           </div>
+
+          {/* The Scope: the learner's own traced signal, drawn the moment the first batch lands. */}
+          <ScopePanel series={scopeSeries} className="mt-4" />
 
           {/* Output & Expected Output Side-by-Side Diff */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
