@@ -722,10 +722,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // each of the six branches that can set it. `pendingRun` stops a re-render from logging twice.
   const pendingRunRef = useRef<boolean>(false);
   const runStartedAtRef = useRef<number>(0);
+  // The text this run started from, captured before the worker is even asked: a learner who keeps
+  // typing while it runs would otherwise file their in-progress edit under the old run's verdict.
+  const runCodeRef = useRef<string>('');
   useEffect(() => {
     if (isRunning) {
       pendingRunRef.current = true;
       runStartedAtRef.current = performance.now();
+      runCodeRef.current = codeRef.current;
     }
   }, [isRunning]);
   useEffect(() => {
@@ -746,7 +750,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // The half of the draft store a learner cannot get from a single latest version: what each run
     // started from, filed with the verdict it got. Taken here because every path that ends a run
     // converges on this state, and the text is read from the ref so it is the code that ran.
-    recordSnapshot(selectedId, codeRef.current, passStatus);
+    recordSnapshot(selectedId, runCodeRef.current || codeRef.current, passStatus);
     // `harnessReport` is the identity that changes when the gate's verdict can: a fresh gate object
     // every render would re-run this effect on every keystroke, which `pendingRunRef` would swallow.
   }, [isRunning, passStatus, selectedId, instructorError, stderr, harnessReport]);
