@@ -649,8 +649,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       `the resume card must name the lesson, not just its id; expected "${resumedTitle}" in: ${resumeCardText}`
     );
     assert(
-      resumeCardText.includes('opened, not verified yet'),
-      `the resume card must not claim an unverified lesson is done; got: ${resumeCardText}`
+      resumeCardText.includes('opened, never run'),
+      `the card must tell a lesson read and left apart from one attempted; got: ${resumeCardText}`
     );
     await page.getByTestId('btn-resume-lesson').click();
     await waitForEditor(page, undefined, 15000);
@@ -755,6 +755,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       draftText.includes('lines changed'),
       `the card keeps the raw diff beside the step count; got: ${draftText}`
     );
+    const draftState = (await page.getByTestId('resume-lesson-state').textContent()) ?? '';
+    assert(
+      draftState.includes('edited, never run'),
+      `typed-but-unrun is its own state, not "opened"; the state line said: ${draftState}`
+    );
     const draftCard = (await page.getByTestId('resume-card').textContent()) ?? '';
     assert(
       draftCard.includes('resume'.toUpperCase()) === false && draftCard.includes('P.4'),
@@ -767,6 +772,37 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       halfWritten,
       'a plain visit must reopen the unfinished edit, not the starter it was written over'
     );
+    // 7f. Running it, even to a failure, is the next rung of that ladder: the card stops saying
+    //     "edited, never run" and starts counting attempts, which is the difference the log exists for.
+    await page.getByTestId('btn-run-verify').click();
+    await page.waitForFunction(
+      () => {
+        const raw = localStorage.getItem('mechalab.learningLog.v1') ?? '';
+        return raw.includes('"kind":"run"') && raw.includes('"lesson":"P.4"');
+      },
+      undefined,
+      { timeout: 60000 }
+    );
+    await page.getByTestId('tab-btn-tab-arch').click();
+    await page.getByTestId('resume-card').waitFor({ timeout: 15000 });
+    const triedText = (await page.getByTestId('resume-card').textContent()) ?? '';
+    assert(
+      triedText.includes('tried once, not passed yet'),
+      `a lesson run and not passed must say so; got: ${triedText}`
+    );
+    // The roadmap's step cards carry the same distinction, so the whole map can be read as
+    // "never opened / opened and left / tried and failed / passed" at a glance.
+    assert.equal(
+      await page.getByTestId('practice-entry-P.4').first().getAttribute('data-state'),
+      'tried',
+      'the step chip for a run-but-unpassed lesson must show the attempt'
+    );
+    assert.equal(
+      await page.getByTestId('practice-entry-P.6').first().getAttribute('data-state'),
+      'passed',
+      'the step chip for a verified lesson must stay passed'
+    );
+    await page.getByTestId('tab-btn-tab-pyodide').click();
     // Reset Starter is the one edit that means "forget this one", so the card stops mentioning it.
     await page.getByTestId('btn-reset-starter').click();
     await page.waitForTimeout(200);

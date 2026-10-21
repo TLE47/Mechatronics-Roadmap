@@ -11,6 +11,45 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 139: Tried Is Not Opened
+
+Run 138 taught the card how much of a lesson was *written*. The roadmap still could not tell a starter
+that had been **run and failed** from one **read and left**, because every lesson the learner had not
+verified looked the same: `opened, not verified yet`. Those are opposite facts about a learner's
+afternoon - one says come back and fix the failing check, the other says there is nothing here yet -
+and the app already recorded both, in the learning log it exports and the friction report reads.
+
+**One fold over the log, one vocabulary.** [`app/src/learningLog.ts`](app/src/learningLog.ts) gains
+`attemptsByLesson()`: a pure fold of the events the runner already writes, giving each lesson its
+`opens`, its `runs`, and the last run's outcome and failure line. No new storage key, no new event -
+the facts were already on disk, unread.
+
+| what the learner did | the card says | the step chip |
+| :--- | :--- | :--- |
+| nothing | `not opened yet` | `○ P.7`, "not opened here yet" |
+| opened, left without running | `opened, never run` | `○ P.7`, "opened here, never run" |
+| wrote something, never ran it | `edited, never run` | `○ P.7` |
+| ran it, checks failed | `tried twice, not passed yet` | `● P.4`, amber |
+| passed the checks | `executed and passed` | `✓ P.4`, emerald (unchanged) |
+
+**Why the edit count survives.** "Edited, never run" is not the log's fact - it comes from the draft,
+which knows the starter changed - so it keeps its place above the log's answer: a learner who has
+written half a program and has not pressed Run needs "run it" far more than "open it again".
+
+**Read once per tab, not per keystroke.** `App.tsx` folds the log in a `useMemo` keyed on the visible
+tab, so opening the roadmap parses it and typing in the editor does not. The parsed map is passed down
+as `lessonAttempts`, and the step chips read it only to choose between four states they already
+rendered as one.
+
+**Measured.** `npm run test:resume` is 19 checks, four of them new - the fold counts opens and runs
+separately, keeps the last outcome and its failure line, ignores events with no lesson, and returns
+`{}` for an empty log rather than a fabricated entry. Browser step 7f now runs P.4 expecting the
+failure, then asserts the card says `tried once, not passed yet` **and** that the roadmap chips read
+`data-state="tried"` for P.4 beside `data-state="passed"` for the verified P.6. `npm run test:e2e`
+passes, `check_all.py` 28/28.
+
+---
+
 ## [2026-10-21] — Run 138: Every Marked Step Is Countable
 
 Run 137's denominator was honest and partial: P.4 marks two TODOs, only one of which had a placeholder

@@ -83,6 +83,47 @@ export function clearLearningLog(): void {
   }
 }
 
+/** What one lesson's events add up to: opened, run, and how the last run landed. */
+export interface LessonAttempt {
+  /** `lesson_open` events - one per visit, including the first render. */
+  opens: number;
+  /** Executions the learner asked for; 0 means the starter was never run. */
+  runs: number;
+  /** The last run's verdict: verified | mismatch | harness_failed | behavior_failed | stopped | error. */
+  lastOutcome?: string;
+  /** The first line of that run's failure, when it had one. */
+  lastFail?: string;
+  /** When that run finished, so "this session" can be told from "weeks ago". */
+  lastRunAt?: number;
+}
+
+/**
+ * The log folded per lesson: how often it was opened, and whether anything was ever run.
+ *
+ * This is the difference between "opened" and "attempted" that no progress flag carries: a learner
+ * who opens a lesson, reads it and leaves has an `lesson_open` and nothing else, and the roadmap can
+ * say so instead of calling the same lesson untouched as one they wrote half of and ran four times.
+ * Pure, so the rule is testable without a browser; the caller decides when to re-read the log.
+ */
+export function attemptsByLesson(events: LearningEvent[] = readLearningLog()): Record<string, LessonAttempt> {
+  const attempts: Record<string, LessonAttempt> = {};
+  for (const event of events) {
+    if (!event.lesson) continue;
+    if (event.kind === 'lesson_open') {
+      const entry = (attempts[event.lesson] ??= { opens: 0, runs: 0 });
+      entry.opens += 1;
+      continue;
+    }
+    if (event.kind !== 'run') continue;
+    const entry = (attempts[event.lesson] ??= { opens: 0, runs: 0 });
+    entry.runs += 1;
+    entry.lastOutcome = event.outcome;
+    entry.lastFail = event.fail;
+    entry.lastRunAt = event.t;
+  }
+  return attempts;
+}
+
 /** The exported document. Versioned so `scripts/friction_report.py` can refuse a shape it cannot read. */
 export function learningLogJson(): string {
   return JSON.stringify(

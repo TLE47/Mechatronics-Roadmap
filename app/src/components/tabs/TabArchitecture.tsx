@@ -23,6 +23,7 @@ import {
 } from '../../spine';
 import { tabForPreset } from '../../demoPresets';
 import { trackLabel } from '../../trackLabel';
+import type { LessonAttempt } from '../../learningLog';
 import { PYTHON_TAB_NAME, tabName } from '../../tabNames';
 import {
   ExternalLink,
@@ -71,7 +72,13 @@ interface TabArchitectureProps {
     stepsTotal: number;
     /** True for a graded exercise, whose marked steps are `raise NotImplementedError` holes. */
     stepsAreHoles: boolean;
+    /** `lesson_open` events for the lesson, and executions the learner asked for. */
+    opens: number;
+    runs: number;
+    lastOutcome: string | null;
   } | null;
+  /** Opens and runs per lesson, from the log; absent means nothing recorded yet. */
+  lessonAttempts?: Record<string, LessonAttempt>;
 }
 
 export const TabArchitecture: React.FC<TabArchitectureProps> = ({
@@ -86,6 +93,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   onRestoreStartHere,
   onOpenPyodideLesson,
   resumeLesson = null,
+  lessonAttempts = {},
 }) => {
   const [viewMode, setViewMode] = useState<'linear' | 'matrix'>('linear');
   const [advancedColumnsOpen, setAdvancedColumnsOpen] = useState<boolean>(false);
@@ -166,9 +174,15 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 ? 'executed and passed'
                 : resumeLesson.completed
                 ? 'marked complete by you'
+                : resumeLesson.runs > 0
+                ? `tried ${
+                    resumeLesson.runs === 1 ? 'once' : `${resumeLesson.runs} times`
+                  }, not passed yet`
+                : resumeLesson.edited > 0
+                ? 'edited, never run'
                 : resumeLesson.reason === 'next'
-                ? 'not verified yet'
-                : 'opened, not verified yet'}
+                ? 'not opened yet'
+                : 'opened, never run'}
             </div>
             {/* The half-written exercise is the part of the work the lesson id cannot show: without
                 this the card would offer "a lesson" when what is waiting is a program. The step
@@ -478,19 +492,41 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                   <div className="flex flex-wrap gap-1 mt-2">
                     {practiceEntries.map((entry) => {
                       const passed = !!verifiedLessons[entry.id];
+                      // Opened and attempted are different facts, and the log has both: a lesson
+                      // read and left is not the same as a starter that was run and failed, and
+                      // neither is the same as one never touched.
+                      const attempt = lessonAttempts?.[entry.id];
+                      const state = passed
+                        ? 'passed'
+                        : attempt && attempt.runs > 0
+                        ? 'tried'
+                        : attempt && attempt.opens > 0
+                        ? 'opened'
+                        : 'untouched';
+                      const title =
+                        state === 'passed'
+                          ? 'executed and passed here'
+                          : state === 'tried'
+                          ? `tried ${attempt?.runs === 1 ? 'once' : `${attempt?.runs} times`} here, not passed yet`
+                          : state === 'opened'
+                          ? 'opened here, never run'
+                          : 'not opened here yet';
                       return (
                         <button
                           key={entry.id}
                           onClick={() => onOpenPyodideLesson?.(entry.id)}
                           data-testid={`practice-entry-${entry.id}`}
-                          title={`${entry.title} — ${passed ? 'executed and passed here' : 'not passed here yet'}`}
+                          data-state={state}
+                          title={`${entry.title} — ${title}`}
                           className={`px-1.5 py-0.5 rounded font-mono text-[11px] border transition-colors cursor-pointer whitespace-nowrap ${
-                            passed
+                            state === 'passed'
                               ? 'bg-emerald/15 border-emerald/60 text-emerald'
+                              : state === 'tried'
+                              ? 'bg-amber/10 border-amber/60 text-amber'
                               : 'bg-canvas border-line text-body hover:border-accent'
                           }`}
                         >
-                          {passed ? '✓' : '○'} {entry.id}
+                          {state === 'passed' ? '✓' : state === 'tried' ? '●' : '○'} {entry.id}
                         </button>
                       );
                     })}

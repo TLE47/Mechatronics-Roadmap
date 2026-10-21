@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Header } from './components/Header';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
@@ -29,7 +29,7 @@ import {
 } from './accounts';
 import { loadProgress, saveProgress } from './cloudProgress';
 import { mergeProgress, PROGRESS_SCHEMA, type ProgressSnapshot } from './progressMerge';
-import { downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
+import { attemptsByLesson, downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
@@ -725,6 +725,12 @@ export const App: React.FC = () => {
   const totalVerifiedLessons = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]).length;
   const totalCompletedLessons = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
 
+  // Opened versus attempted, from the log the runner already writes: an `lesson_open` with no `run`
+  // is a lesson read and left, which no progress flag can tell apart from one never touched. Read
+  // when the visible tab changes - opening the roadmap re-renders, and anywhere else would parse the
+  // log on every keystroke in the editor.
+  const lessonAttempts = useMemo(() => attemptsByLesson(readLearningLog()), [activeTab]);
+
   // The roadmap leads with the lesson to do next, not with Step 1 of ten: the runner already
   // remembers where the learner stopped (`src/lastLesson.ts`), and "continue" has to mean forward
   // progress - the stopped-on lesson while it is unverified, the first unfinished one after it once
@@ -756,6 +762,11 @@ export const App: React.FC = () => {
       stepsFilled: progress?.filled ?? 0,
       stepsTotal: progress?.total ?? 0,
       stepsAreHoles: progress?.isExercise ?? false,
+      // How the lesson has actually been used, so the card can say "tried twice" rather than
+      // "opened", and "not opened yet" for a lesson it is offering further down the list.
+      opens: lessonAttempts[entry.id]?.opens ?? 0,
+      runs: lessonAttempts[entry.id]?.runs ?? 0,
+      lastOutcome: lessonAttempts[entry.id]?.lastOutcome ?? null,
     };
   })();
 
@@ -1086,6 +1097,7 @@ export const App: React.FC = () => {
             onRestoreStartHere={handleRestoreStartHere}
             onOpenPyodideLesson={openLesson}
             resumeLesson={resumeLesson}
+            lessonAttempts={lessonAttempts}
           />
         )}
         {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}

@@ -19,6 +19,7 @@ import {
   rememberLastLesson,
   lessonOffer,
 } from '../app/src/lastLesson.ts';
+import { attemptsByLesson } from '../app/src/learningLog.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
 let passed = 0;
@@ -180,6 +181,43 @@ check('a self-marked lesson is still unverified, so the card keeps offering it',
 
 check('an id the list does not hold offers nothing', () => {
   assert.equal(offer('NOT.A.LESSON', { verified: {}, completed: {} }), null);
+});
+
+// The card's state line, and the roadmap's practice chips, separate "opened" from "attempted" by
+// folding the learning log the runner already writes. Pin the fold: an open with no run is a read,
+// and a lesson that was run is never mistaken for one that was merely opened.
+const event = (kind, lesson, extra = {}) => ({ t: 1, kind, lesson, ...extra });
+
+check('a lesson opened and left has opens but no runs', () => {
+  const attempts = attemptsByLesson([event('lesson_open', 'P.4'), event('lesson_open', 'P.4')]);
+  assert.deepEqual(attempts['P.4'], { opens: 2, runs: 0 });
+});
+
+check('a run counts as an attempt even with no open recorded', () => {
+  const attempts = attemptsByLesson([event('run', 'P.5', { outcome: 'mismatch', fail: 'line 3' })]);
+  assert.equal(attempts['P.5'].runs, 1, 'expected the run to be counted');
+  assert.equal(attempts['P.5'].opens, 0, 'expected the open count to stay zero');
+});
+
+check('the last run wins, and its failure line is kept', () => {
+  const attempts = attemptsByLesson([
+    event('lesson_open', 'P.6'),
+    event('run', 'P.6', { outcome: 'behavior_failed', fail: 'first failure' }),
+    event('run', 'P.6', { outcome: 'mismatch', fail: 'second failure' }),
+    event('verified', 'P.6'),
+  ]);
+  assert.equal(attempts['P.6'].runs, 2);
+  assert.equal(attempts['P.6'].lastOutcome, 'mismatch');
+  assert.equal(attempts['P.6'].lastFail, 'second failure');
+});
+
+check('hints and exports are not attempts, and a lesson-less event is skipped', () => {
+  const attempts = attemptsByLesson([
+    event('hint', 'P.4', { level: 2 }),
+    event('export'),
+    event('solution_open', 'P.4'),
+  ]);
+  assert.deepEqual(attempts, {}, 'expected nothing that is not an open or a run to appear');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
