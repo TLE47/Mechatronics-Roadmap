@@ -13,6 +13,7 @@ import { PYTHON_LESSONS } from './data/pythonLessonsData.ts';
 import type { PythonLessonItem } from './data/pythonLessonsData.ts';
 import type { PaletteItem } from './palette.ts';
 import type { TabId } from './types.ts';
+import { trackLabel } from './trackLabel.ts';
 
 /** The fields the palette needs from a tab; `WORKBENCH_TABS` satisfies this structurally. */
 export interface PaletteTabMeta {
@@ -104,11 +105,6 @@ export const PALETTE_ACTIONS: PaletteItem[] = [
   },
 ];
 
-/** `track-p` -> `Track P`, so the lesson's second line reads like the pages. */
-function trackLabel(track: string): string {
-  const bare = track.replace(/^track-/, '');
-  return `Track ${bare.toUpperCase()}`;
-}
 
 export function lessonPaletteItems(lessons: PythonLessonItem[] = PYTHON_LESSONS): PaletteItem[] {
   return lessons.map((lesson) => ({

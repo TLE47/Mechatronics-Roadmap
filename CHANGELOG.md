@@ -11,6 +11,45 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 134: The Roadmap Opens With the Lesson You Stopped On
+
+Run 132 taught the runner to reopen the lesson the learner was on, but it only helped someone who
+went straight back to the runner. The tab that answers *what is next* - the roadmap - still opened at
+Step 1 of ten, so a return visit read as a fresh start with a progress bar, and "continue" was a
+scroll through ten steps and a search box. The memory existed; the place a learner looks first did
+not use it.
+
+**The roadmap now leads with it.** Above the ten-step pipeline, a card names the lesson by id and
+title, says what state it is in, and continues it in one click. Nothing new is stored: it reads the
+same `mechalab_last_lesson_v1` the runner writes ([`app/src/lastLesson.ts`](app/src/lastLesson.ts)),
+and reads it at render rather than mirroring it in state, so opening the tab shows the current lesson
+and there is no second copy to go stale.
+
+| the card says | when |
+| :--- | :--- |
+| `executed and passed` | the runner's own verification flag is set for that id |
+| `marked complete by you` | self-marked, not verified - the two are never conflated here either |
+| `opened, not verified yet` | chosen and left; the honest state of a lesson in progress |
+
+**Hidden on a first visit, by one rule.** The runner mounts on the first entry, so \"whatever was
+stored\" would open a brand-new learner with an invitation to resume a lesson they never started.
+`resumeCandidate()` ([`app/src/lastLesson.ts`](app/src/lastLesson.ts)) refuses that case and only
+that case: the first lesson is left to the landing page's own Start here block, which already names
+it. Anything past the first entry, or a first entry that is verified or self-marked, is offered back.
+
+**Guarded in both layers.** [`scripts/test_last_lesson.mjs`](scripts/test_last_lesson.mjs) pins the
+rule without a browser (nothing stored, an untouched first visit, a used first lesson, any later
+lesson - 10 checks), and step 7c of [`scripts/e2e_browser_workbench.mjs`](scripts/e2e_browser_workbench.mjs)
+drives the real card: it must name **P.4** and its title, must not claim the unverified lesson is
+done, and its button must open that same lesson in the editor. The title is read from the runner's
+own heading (`data-testid="lesson-title"`) rather than hand-copied, so renaming a lesson cannot leave
+the test asserting yesterday's words.
+
+The card is one card, not a second progress system: it adds no key, no count and no new screen, and
+the track name it prints comes from the one `trackLabel()` both the palette and the roadmap use.
+
+---
+
 ## [2026-10-21] — Run 133: One Typeface for the Bench, and the Browser Has It
 
 `body` asked for `font-family: Inter, ...` and nothing in the bundle was Inter. On macOS that fell

@@ -1737,7 +1737,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     </span>
                   )}
                 </div>
-                <h3 className="text-base font-bold text-ink mt-1">{currentLesson.title}</h3>
+                <h3 data-testid="lesson-title" className="text-base font-bold text-ink mt-1">
+                  {currentLesson.title}
+                </h3>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

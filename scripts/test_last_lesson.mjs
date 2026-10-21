@@ -17,6 +17,7 @@ import {
   STORAGE_KEY_LAST_LESSON,
   readLastLessonId,
   rememberLastLesson,
+  resumeCandidate,
 } from '../app/src/lastLesson.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
@@ -111,6 +112,38 @@ check('no storage at all (the server render) is not an error', () => {
   assert.equal(readLastLessonId(), null, 'expected the server render to have nothing remembered');
   rememberLastLesson(LAST);
   assert.ok(true, 'expected rememberLastLesson to be safe without a store');
+});
+
+// The roadmap's resume card asks `resumeCandidate` what to offer. Pin the one rule that is not
+// "whatever was stored": the runner mounts on the first entry, so an untouched first visit must not
+// arrive as a lesson to resume. Everything else about the card is rendering, which the E2E covers.
+const FIRST = PYTHON_LESSONS[0].id;
+
+check('nothing remembered offers no lesson', () => {
+  assert.equal(resumeCandidate(null, { firstId: FIRST, verified: false, completed: false }), null);
+});
+
+check('an untouched first visit is not a lesson to resume', () => {
+  assert.equal(
+    resumeCandidate(FIRST, { firstId: FIRST, verified: false, completed: false }),
+    null,
+    'expected an unstarted Lesson 1 to be left to the Start here block'
+  );
+});
+
+check('a first lesson that was used is offered back', () => {
+  assert.equal(resumeCandidate(FIRST, { firstId: FIRST, verified: true, completed: false }), FIRST);
+  assert.equal(resumeCandidate(FIRST, { firstId: FIRST, verified: false, completed: true }), FIRST);
+});
+
+check('any later lesson is offered whatever its state', () => {
+  for (const done of [false, true]) {
+    assert.equal(
+      resumeCandidate(LAST, { firstId: FIRST, verified: done, completed: !done }),
+      LAST,
+      'expected a lesson past the first to be offered even before it is verified'
+    );
+  }
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

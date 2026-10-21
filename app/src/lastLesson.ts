@@ -44,6 +44,28 @@ export function readLastLessonId(): string | null {
   }
 }
 
+/** What the roadmap needs to know about the remembered lesson before offering it. */
+export interface ResumeState {
+  /** The entry the runner's list starts with. */
+  firstId: string;
+  verified: boolean;
+  completed: boolean;
+}
+
+/**
+ * The lesson a returning learner should be offered, or null when there is nothing to return to.
+ *
+ * The one rule beyond "the stored id": the runner mounts on the first entry and remembers it, so a
+ * learner who has only ever opened the workbench would be told to resume a lesson they never started.
+ * Until that entry is verified or self-marked, the landing page's own "Start here" block is the
+ * better door, and it already names the same lesson.
+ */
+export function resumeCandidate(storedId: string | null, state: ResumeState): string | null {
+  if (!storedId) return null;
+  if (storedId === state.firstId && !state.verified && !state.completed) return null;
+  return storedId;
+}
+
 /** Record the lesson on screen. Called on every selection, including the one a deep link opens. */
 export function rememberLastLesson(id: string): void {
   const store = storage();

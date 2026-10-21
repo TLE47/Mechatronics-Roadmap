@@ -15,8 +15,9 @@
  * 5. Correct full solution passes both Instructor Behavioral Tests and Output Presentation
  *    check, awarding `1 / N Verified`.
  * 6. CDN failure (even when running the full solution) never awards verification.
- * 7. Progress survives a full browser reload (`page.reload()`), and a plain visit with no query
- *    string reopens the lesson the learner was last on.
+ * 7. Progress survives a full browser reload (`page.reload()`), a plain visit with no query string
+ *    reopens the lesson the learner was last on, and the roadmap offers that same lesson back as a
+ *    resume card - so "what was I doing" is answered where a returning learner looks first.
  * 8. Portfolio export (`buildPortfolioMarkdown` modal preview) contains the exact, strictly
  *    separated completion categories (`Executed & Passed in Pyodide WASM` vs `Self-Marked Complete`).
  * 9. Lesson 08.1 passes only when its four-fault bench grades every repair at target: a repair left
@@ -604,6 +605,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       resumedMeta.includes('Lesson P.4'),
       `a plain visit must reopen the lesson last chosen (P.4); the runner opened: ${resumedMeta}`
     );
+    // The title the runner is showing, so the resume card can be read against the same string rather
+    // than a hand-copied one that would go stale the first time a lesson is renamed.
+    const resumedTitle = (await page.getByTestId('lesson-title').textContent())?.trim() ?? '';
+    assert(resumedTitle.length > 3, `the runner must name the lesson it opened; got: "${resumedTitle}"`);
     // The address itself is not asserted, and the reason is React: in development StrictMode runs the
     // mount effect twice, so its second pass writes the lesson it just restored and a plain visit
     // ends up with `?lesson=P.4`. In the production build the effect runs once and the address stays
@@ -615,6 +620,43 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the remembered lesson must be the one chosen, so the next plain visit opens it again'
     );
     console.log('  ok a plain visit reopens the lesson the learner was last on');
+
+    // 7c. And the roadmap says it out loud. Remembering the lesson only helped a learner who went
+    //     straight back to the runner; the tab that answers "what is next" still started at Step 1.
+    //     It now opens with the lesson they stopped on, named by id and title, and one click continues
+    //     it - P.4 has been opened but not verified, which is the case worth resuming.
+    await page.getByTestId('tab-btn-tab-arch').click();
+    const resumeCard = page.getByTestId('resume-card');
+    await resumeCard.waitFor({ timeout: 5000 });
+    const resumeId = (await page.getByTestId('resume-lesson-id').textContent())?.trim();
+    assert.equal(
+      resumeId,
+      'P.4',
+      `the roadmap must open with the lesson the learner stopped on (P.4); it named: ${resumeId}`
+    );
+    const resumeCardText = (await resumeCard.textContent()) ?? '';
+    assert(
+      resumeCardText.includes(resumedTitle),
+      `the resume card must name the lesson, not just its id; expected "${resumedTitle}" in: ${resumeCardText}`
+    );
+    assert(
+      resumeCardText.includes('opened, not verified yet'),
+      `the resume card must not claim an unverified lesson is done; got: ${resumeCardText}`
+    );
+    await page.getByTestId('btn-resume-lesson').click();
+    await waitForEditor(page, undefined, 15000);
+    const continuedMeta = (await page.getByTestId('lesson-meta').textContent()) ?? '';
+    assert(
+      continuedMeta.includes('Lesson P.4'),
+      `the resume card must continue the lesson it names; the runner opened: ${continuedMeta}`
+    );
+    assert.equal(
+      (await page.getByTestId('lesson-title').textContent())?.trim(),
+      resumedTitle,
+      'the resume card must open the very lesson whose title it printed'
+    );
+    await page.getByTestId('tab-btn-tab-arch').click();
+    console.log('  ok the roadmap opens with the lesson the learner stopped on');
 
     // 8. Portfolio export contains the correct completion categories
     await page.getByTestId('btn-export-portfolio').click();
@@ -1271,7 +1313,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume card, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
     );
   } finally {
     await browser.close();

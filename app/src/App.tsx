@@ -38,7 +38,7 @@ import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { lessonIdFromLocation } from './lessonRoute';
-import { readLastLessonId } from './lastLesson';
+import { readLastLessonId, resumeCandidate } from './lastLesson';
 import { lessonIdOf, type PaletteItem } from './palette';
 import { paletteCatalog } from './paletteCatalog';
 import {
@@ -723,6 +723,26 @@ export const App: React.FC = () => {
   const totalVerifiedLessons = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]).length;
   const totalCompletedLessons = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
 
+  // The roadmap leads with where the learner stopped, not with Step 1 of ten: the runner already
+  // remembers the lesson (`src/lastLesson.ts`), and on a return visit "continue" should be one click
+  // rather than a scroll through the list. Read at render rather than mirrored in state - the
+  // runner owns the id, and opening this tab re-renders, so there is no second copy to go stale.
+  const resumeLesson = (() => {
+    const storedId = readLastLessonId();
+    if (!storedId) return null;
+    const entry = PYTHON_LESSONS.find((lesson) => lesson.id === storedId);
+    if (!entry) return null;
+    const verified = !!verifiedLessons[entry.id];
+    const completed = !!completedLessons[entry.id];
+    const offer = resumeCandidate(storedId, {
+      firstId: PYTHON_LESSONS[0]?.id ?? '',
+      verified,
+      completed,
+    });
+    if (!offer) return null;
+    return { id: entry.id, title: entry.title, track: entry.track, verified, completed };
+  })();
+
   // A page's "Run this in the workbench" link arrives as `?lesson=<id>`; the runner opens on that
   // entry instead of making the reader find it in the search box again. An id the registry does not
   // list is ignored rather than shown as an empty editor. With no query string the workbench reopens
@@ -1049,6 +1069,7 @@ export const App: React.FC = () => {
             startHereDismissed={startHereDismissed}
             onRestoreStartHere={handleRestoreStartHere}
             onOpenPyodideLesson={openLesson}
+            resumeLesson={resumeLesson}
           />
         )}
         {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}

@@ -22,6 +22,7 @@ import {
   type SpineStep,
 } from '../../spine';
 import { tabForPreset } from '../../demoPresets';
+import { trackLabel } from '../../trackLabel';
 import { PYTHON_TAB_NAME, tabName } from '../../tabNames';
 import {
   ExternalLink,
@@ -51,6 +52,17 @@ interface TabArchitectureProps {
   startHereDismissed?: boolean;
   onRestoreStartHere?: () => void;
   onOpenPyodideLesson?: (lessonId: string) => void;
+  /**
+   * The lesson the learner stopped on, when there is one worth resuming (`lastLesson.ts` decides).
+   * The roadmap leads with it: a return visit should be one click, not a search through ten steps.
+   */
+  resumeLesson?: {
+    id: string;
+    title: string;
+    track: string;
+    verified: boolean;
+    completed: boolean;
+  } | null;
 }
 
 export const TabArchitecture: React.FC<TabArchitectureProps> = ({
@@ -64,6 +76,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   startHereDismissed = false,
   onRestoreStartHere,
   onOpenPyodideLesson,
+  resumeLesson = null,
 }) => {
   const [viewMode, setViewMode] = useState<'linear' | 'matrix'>('linear');
   const [advancedColumnsOpen, setAdvancedColumnsOpen] = useState<boolean>(false);
@@ -115,6 +128,48 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
 
   return (
     <div className="space-y-5">
+      {/* 0. Where the learner stopped. Above the pipeline, because a return visit is asking
+             "what was I doing?" before "what is the map?", and the runner already remembers the
+             lesson - this is the same answer, one click away instead of a scroll through ten
+             steps. Hidden on a first visit: there is nothing to resume yet. */}
+      {resumeLesson && onOpenPyodideLesson && (
+        <div
+          data-testid="resume-card"
+          data-resume-lesson={resumeLesson.id}
+          className="bg-panel border border-accent/40 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3"
+        >
+          <div className="min-w-0">
+            <div className="text-xs font-mono uppercase tracking-wider text-accent">
+              Pick up where you stopped
+            </div>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span data-testid="resume-lesson-id" className="text-sm font-bold font-mono text-ink">
+                {resumeLesson.id}
+              </span>
+              <span className="text-sm font-semibold text-ink">{resumeLesson.title}</span>
+            </div>
+            <div data-testid="resume-lesson-state" className="mt-0.5 text-xs text-muted">
+              {trackLabel(resumeLesson.track)} ·{' '}
+              {resumeLesson.verified
+                ? 'executed and passed'
+                : resumeLesson.completed
+                ? 'marked complete by you'
+                : 'opened, not verified yet'}
+            </div>
+          </div>
+          <button
+            onClick={() => onOpenPyodideLesson(resumeLesson.id)}
+            data-testid="btn-resume-lesson"
+            className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 bg-accent/20 text-accent border border-accent/50 hover:bg-accent/30 cursor-pointer transition-colors"
+          >
+            <Play className="w-3.5 h-3.5" />
+            {/* The tab is named by the runner itself, so the button says what it does, not where. */}
+            <span>Continue {resumeLesson.id}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* 1. Linear Level-Up Progression Pipeline Header */}
       <div className="bg-panel border border-line rounded-xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-line-soft">
