@@ -48,6 +48,11 @@ Plots are the exception by design: a canvas or SVG chart sits on `.plot` (`--plo
 themes, because the traces are drawn in literal plot colours tuned against that ink. Light mode is
 warm paper around dark instrument faces, not a white plot with invisible curves.
 
+[`docs/THEME.md`](../docs/THEME.md) is the token reference: every colour in both palettes side by
+side, the utility family that reaches it, a "you are styling X, reach for Y" table, and the rules
+above stated once. It is checked against `src/index.css` by `tests/test_theme_docs.py`, so it cannot
+drift from the stylesheet.
+
 Legibility is measured, not eyeballed: `npm run test:theme` pins the storage/OS rules, and
 `npm run test:theme:e2e` drives Chromium through all eleven tabs in both themes, compositing each
 text run over the backgrounds it actually sits on and failing anything below 3:1 (the current floor

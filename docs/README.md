@@ -35,6 +35,12 @@ flowchart LR
 | [`UNVERIFIED_CITATIONS.md`](UNVERIFIED_CITATIONS.md) | The external links a host would not answer, kept visible rather than dropped. |
 | [`coverage-table.md`](coverage-table.md) | Concept coverage across the modules. |
 
+## Building the workbench
+
+| Page | What it is |
+| :--- | :--- |
+| [`THEME.md`](THEME.md) | Every colour token in both palettes side by side, the utility that reaches each one, and the rules that keep a tab legible in both modes. Checked against [`app/src/index.css`](../app/src/index.css) by [`tests/test_theme_docs.py`](../tests/test_theme_docs.py). |
+
 ## When you are stuck or coming back
 
 - [`ERROR_EXPLAINER.md`](ERROR_EXPLAINER.md) — the failure you are looking at, by traceback and by symptom.
@@ -51,7 +57,8 @@ flowchart LR
 
 ## Contributing
 
-Rules and the local suite are in [`CONTRIBUTING.md`](../CONTRIBUTING.md). Generated pages
+Rules and the local suite are in [`CONTRIBUTING.md`](../CONTRIBUTING.md); the app's token reference is
+[`THEME.md`](THEME.md). Generated pages
 (`SIM_ROUTE.md`, `DEPTH.md`, `MINIMUM.md`, the route tables) are written by
 [`scripts/generate_sim_route.py`](../scripts/generate_sim_route.py); edit the model or the lesson
 front matter, then re-run the generator, never the numbers by hand.

@@ -197,8 +197,9 @@ npm run test:theme:e2e  # Chromium: the toggle contract, then all 11 tabs in bot
 
 `test:theme` runs inside `npm run test:workbench`; `test:theme:e2e` is its own step in CI (a seventh
 parallel browser suite pushed the older ones past their click timeouts). Tokens live in
-[`app/src/index.css`](app/src/index.css), the rules in [`app/src/theme.ts`](app/src/theme.ts), and
-[`app/README.md`](app/README.md#light-and-dark) has the full picture.
+[`app/src/index.css`](app/src/index.css) and the rules in [`app/src/theme.ts`](app/src/theme.ts);
+[`docs/THEME.md`](docs/THEME.md) sets both palettes side by side with the utility to use for each
+role, and [`app/README.md`](app/README.md#light-and-dark) has the full picture.
 
 ## License
 
