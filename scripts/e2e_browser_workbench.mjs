@@ -733,10 +733,17 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     assert.notEqual(halfWritten, p4Starter, 'P.4 starter must still carry the TODO 1 placeholder');
     await setEditorCode(page, halfWritten);
-    await page.waitForTimeout(700); // the draft is written on a pause, not on every keystroke
+    // The draft is written on a pause, not on every keystroke, so wait for the store to have it
+    // rather than for a fixed number of milliseconds - a slower CI runner would otherwise reach the
+    // roadmap before the debounce fired and read an untouched starter.
+    await page.waitForFunction(
+      (marker) => (localStorage.getItem('mechalab_drafts_v1') ?? '').includes(marker),
+      'min(max(cmd',
+      { timeout: 15000 }
+    );
     await page.getByTestId('tab-btn-tab-arch').click();
     const draftLine = page.getByTestId('resume-draft');
-    await draftLine.waitFor({ timeout: 5000 });
+    await draftLine.waitFor({ timeout: 15000 });
     const draftText = (await draftLine.textContent()) ?? '';
     const draftProgressText = (await page.getByTestId('resume-draft-progress').textContent())?.trim();
     assert.equal(
