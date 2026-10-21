@@ -38,7 +38,7 @@ import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { lessonIdFromLocation } from './lessonRoute';
-import { readLastLessonId, resumeCandidate } from './lastLesson';
+import { readLastLessonId, lessonOffer } from './lastLesson';
 import { lessonIdOf, type PaletteItem } from './palette';
 import { paletteCatalog } from './paletteCatalog';
 import {
@@ -723,24 +723,28 @@ export const App: React.FC = () => {
   const totalVerifiedLessons = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]).length;
   const totalCompletedLessons = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
 
-  // The roadmap leads with where the learner stopped, not with Step 1 of ten: the runner already
-  // remembers the lesson (`src/lastLesson.ts`), and on a return visit "continue" should be one click
-  // rather than a scroll through the list. Read at render rather than mirrored in state - the
-  // runner owns the id, and opening this tab re-renders, so there is no second copy to go stale.
+  // The roadmap leads with the lesson to do next, not with Step 1 of ten: the runner already
+  // remembers where the learner stopped (`src/lastLesson.ts`), and "continue" has to mean forward
+  // progress - the stopped-on lesson while it is unverified, the first unfinished one after it once
+  // it is not. Read at render rather than mirrored in state: the runner owns the id, and opening
+  // this tab re-renders, so there is no second copy to go stale.
   const resumeLesson = (() => {
-    const storedId = readLastLessonId();
-    if (!storedId) return null;
-    const entry = PYTHON_LESSONS.find((lesson) => lesson.id === storedId);
-    if (!entry) return null;
-    const verified = !!verifiedLessons[entry.id];
-    const completed = !!completedLessons[entry.id];
-    const offer = resumeCandidate(storedId, {
-      firstId: PYTHON_LESSONS[0]?.id ?? '',
-      verified,
-      completed,
-    });
+    const offer = lessonOffer(
+      readLastLessonId(),
+      PYTHON_LESSONS.map((lesson) => lesson.id),
+      { verified: verifiedLessons, completed: completedLessons }
+    );
     if (!offer) return null;
-    return { id: entry.id, title: entry.title, track: entry.track, verified, completed };
+    const entry = PYTHON_LESSONS.find((lesson) => lesson.id === offer.id);
+    if (!entry) return null;
+    return {
+      id: entry.id,
+      title: entry.title,
+      track: entry.track,
+      verified: !!verifiedLessons[entry.id],
+      completed: !!completedLessons[entry.id],
+      reason: offer.reason,
+    };
   })();
 
   // A page's "Run this in the workbench" link arrives as `?lesson=<id>`; the runner opens on that

@@ -62,6 +62,8 @@ interface TabArchitectureProps {
     track: string;
     verified: boolean;
     completed: boolean;
+    /** `resume` = the lesson they stopped on; `next` = the first one still to do. */
+    reason: 'resume' | 'next';
   } | null;
 }
 
@@ -128,19 +130,22 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* 0. Where the learner stopped. Above the pipeline, because a return visit is asking
-             "what was I doing?" before "what is the map?", and the runner already remembers the
-             lesson - this is the same answer, one click away instead of a scroll through ten
-             steps. Hidden on a first visit: there is nothing to resume yet. */}
+      {/* 0. The lesson to do next. Above the pipeline, because a return visit is asking "what was I
+             doing?" before "what is the map?", and the runner already remembers the lesson. The
+             card answers for both cases that matter - an unfinished lesson to pick up, and a passed
+             one that should hand the offer forward - and says which one it is, because "continue"
+             on a lesson already passed would be a lie. Hidden on a first visit: the landing page's
+             Start here block names the first lesson already. */}
       {resumeLesson && onOpenPyodideLesson && (
         <div
           data-testid="resume-card"
           data-resume-lesson={resumeLesson.id}
+          data-resume-reason={resumeLesson.reason}
           className="bg-panel border border-accent/40 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3"
         >
           <div className="min-w-0">
             <div className="text-xs font-mono uppercase tracking-wider text-accent">
-              Pick up where you stopped
+              {resumeLesson.reason === 'next' ? 'Next unverified lesson' : 'Pick up where you stopped'}
             </div>
             <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span data-testid="resume-lesson-id" className="text-sm font-bold font-mono text-ink">
@@ -154,6 +159,8 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 ? 'executed and passed'
                 : resumeLesson.completed
                 ? 'marked complete by you'
+                : resumeLesson.reason === 'next'
+                ? 'not verified yet'
                 : 'opened, not verified yet'}
             </div>
           </div>
@@ -164,7 +171,9 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
           >
             <Play className="w-3.5 h-3.5" />
             {/* The tab is named by the runner itself, so the button says what it does, not where. */}
-            <span>Continue {resumeLesson.id}</span>
+            <span>
+              {resumeLesson.reason === 'next' ? 'Start' : 'Continue'} {resumeLesson.id}
+            </span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

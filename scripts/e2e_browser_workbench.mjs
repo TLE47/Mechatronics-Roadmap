@@ -16,8 +16,9 @@
  *    check, awarding `1 / N Verified`.
  * 6. CDN failure (even when running the full solution) never awards verification.
  * 7. Progress survives a full browser reload (`page.reload()`), a plain visit with no query string
- *    reopens the lesson the learner was last on, and the roadmap offers that same lesson back as a
- *    resume card - so "what was I doing" is answered where a returning learner looks first.
+ *    reopens the lesson the learner was last on, and the roadmap offers it back as a resume card -
+ *    then hands that offer forward to the next unverified lesson once the first is passed, so
+ *    "continue" always means forward progress.
  * 8. Portfolio export (`buildPortfolioMarkdown` modal preview) contains the exact, strictly
  *    separated completion categories (`Executed & Passed in Pyodide WASM` vs `Self-Marked Complete`).
  * 9. Lesson 08.1 passes only when its four-fault bench grades every repair at target: a repair left
@@ -624,7 +625,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // 7c. And the roadmap says it out loud. Remembering the lesson only helped a learner who went
     //     straight back to the runner; the tab that answers "what is next" still started at Step 1.
     //     It now opens with the lesson they stopped on, named by id and title, and one click continues
-    //     it - P.4 has been opened but not verified, which is the case worth resuming.
+    //     it - P.4 has been opened but not verified, which is the case worth resuming. Step 7d then
+    //     proves the same card moves forward rather than repeating itself.
     await page.getByTestId('tab-btn-tab-arch').click();
     const resumeCard = page.getByTestId('resume-card');
     await resumeCard.waitFor({ timeout: 5000 });
@@ -633,6 +635,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       resumeId,
       'P.4',
       `the roadmap must open with the lesson the learner stopped on (P.4); it named: ${resumeId}`
+    );
+    assert.equal(
+      await resumeCard.getAttribute('data-resume-reason'),
+      'resume',
+      'an unfinished lesson is a resume, and the card must carry that reason for the assertions below'
     );
     const resumeCardText = (await resumeCard.textContent()) ?? '';
     assert(
@@ -657,6 +664,57 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     await page.getByTestId('tab-btn-tab-arch').click();
     console.log('  ok the roadmap opens with the lesson the learner stopped on');
+
+    // 7d. And passing it hands the offer forward. A card that kept naming the lesson just verified
+    //     would ask for it twice, on the screen whose job is to say what is next - so with P.4
+    //     passed the card moves to P.5 and changes its words from "continue" to "next".
+    const verifiedBefore = await page.evaluate(() =>
+      localStorage.getItem('mechalab_pyodide_verified_v1')
+    );
+    await page.evaluate(() => {
+      const key = 'mechalab_pyodide_verified_v1';
+      const flags = JSON.parse(localStorage.getItem(key) ?? '{}');
+      flags['P.4'] = true;
+      localStorage.setItem(key, JSON.stringify(flags));
+    });
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.getByTestId('tab-btn-tab-arch').click();
+    const nextCard = page.getByTestId('resume-card');
+    await nextCard.waitFor({ timeout: 5000 });
+    const nextId = (await page.getByTestId('resume-lesson-id').textContent())?.trim();
+    assert.equal(
+      nextId,
+      'P.5',
+      `a passed lesson must hand the offer forward to the next unverified one (P.5); the card named: ${nextId}`
+    );
+    assert.equal(
+      await nextCard.getAttribute('data-resume-reason'),
+      'next',
+      'a card pointing past a finished lesson must say so, not call it a resume'
+    );
+    const nextText = (await nextCard.textContent()) ?? '';
+    assert(
+      nextText.toLowerCase().includes('next unverified lesson'),
+      `the card must name what it is offering; got: ${nextText}`
+    );
+    assert(
+      !nextText.includes('executed and passed'),
+      `the card must not describe an unpassed lesson as passed; got: ${nextText}`
+    );
+    const nextButton = (await page.getByTestId('btn-resume-lesson').textContent())?.trim() ?? '';
+    assert(
+      nextButton.includes('Start P.5'),
+      `a lesson not yet opened is started, not continued; the button said: ${nextButton}`
+    );
+    // Put the progress back exactly as the scenarios before this one left it: the portfolio counts
+    // in section 8 read one verified and one self-marked lesson.
+    await page.evaluate((previous) => {
+      const key = 'mechalab_pyodide_verified_v1';
+      if (previous === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, previous);
+    }, verifiedBefore);
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    console.log('  ok a passed lesson hands the roadmap card forward');
 
     // 8. Portfolio export contains the correct completion categories
     await page.getByTestId('btn-export-portfolio').click();
@@ -1313,7 +1371,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume card, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
     );
   } finally {
     await browser.close();

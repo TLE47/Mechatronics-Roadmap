@@ -11,6 +11,45 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 135: "Continue" Means Forward, Not Last Opened
+
+Run 134's card named the lesson last opened, which was right until that lesson was passed: from then on
+the one screen whose job is to say *what is next* was offering **Continue P.4** for something already
+executed and passed. The memory was correct; the question was the wrong one. A learner finishes a
+lesson, returns to the roadmap, and is asked to do it again.
+
+**One function now answers both questions.** `lessonOffer()` ([`app/src/lastLesson.ts`](app/src/lastLesson.ts))
+takes the stored id, the registry's order and the two flag maps, and returns `{ id, reason }` or
+nothing:
+
+| offer | when |
+| :--- | :--- |
+| `resume` | the stored lesson is unverified - including when it is self-marked, because that is a note, not a pass |
+| `next` | the stored lesson is verified: the first lesson after it that is neither verified nor self-marked |
+| none | nothing remembered, an untouched first entry, or every lesson verified |
+
+The forward search wraps once it reaches the end, so a learner who skipped something early is shown
+that gap before the course is called finished. Self-marking counts on the way forward (a lesson the
+learner has declared done is not what they should be sent to next) and not on the way back (they may
+still want it verified) - the asymmetry is the point, and it is written down where the rule lives.
+
+**The card says which one it is doing.** The eyebrow reads `PICK UP WHERE YOU STOPPED` or
+`NEXT UNVERIFIED LESSON`, the state line `opened, not verified yet` or `not verified yet`, and the
+button `Continue P.4` or `Start P.5`; `data-resume-reason` carries the same distinction for tests.
+
+**Guarded.** [`scripts/test_last_lesson.mjs`](scripts/test_last_lesson.mjs) now pins eight cases of
+the rule (nothing stored, untouched first visit, an unfinished lesson offered back, a verified one
+handing forward, skipping what is done, wrapping to the earliest gap, a fully verified course, an id
+the list does not hold - 15 checks in all). Step **7d** of [`scripts/e2e_browser_workbench.mjs`](scripts/e2e_browser_workbench.mjs)
+drives it in Chromium: with P.4 verified the card must name **P.5**, say `next`, refuse to describe it
+as passed, and offer to **Start** it - then it restores the flag map so the portfolio counts asserted
+right after stay at one verified and one self-marked lesson.
+
+No new storage key, count or screen: the card is still one card, and it now answers the question it
+was meant to answer.
+
+---
+
 ## [2026-10-21] — Run 134: The Roadmap Opens With the Lesson You Stopped On
 
 Run 132 taught the runner to reopen the lesson the learner was on, but it only helped someone who

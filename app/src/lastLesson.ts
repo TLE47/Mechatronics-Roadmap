@@ -44,26 +44,56 @@ export function readLastLessonId(): string | null {
   }
 }
 
-/** What the roadmap needs to know about the remembered lesson before offering it. */
-export interface ResumeState {
-  /** The entry the runner's list starts with. */
-  firstId: string;
-  verified: boolean;
-  completed: boolean;
+/** The two progress flags the roadmap already reads, as plain maps. */
+export interface LessonProgress {
+  verified: Record<string, boolean>;
+  completed: Record<string, boolean>;
+}
+
+/** Which lesson to offer, and why that one. */
+export interface LessonOffer {
+  id: string;
+  /** `resume` = the lesson they stopped on; `next` = the first one still to do. */
+  reason: 'resume' | 'next';
 }
 
 /**
- * The lesson a returning learner should be offered, or null when there is nothing to return to.
+ * The lesson the roadmap should offer, or null when it has nothing to say.
  *
- * The one rule beyond "the stored id": the runner mounts on the first entry and remembers it, so a
- * learner who has only ever opened the workbench would be told to resume a lesson they never started.
- * Until that entry is verified or self-marked, the landing page's own "Start here" block is the
- * better door, and it already names the same lesson.
+ * "Continue" has to mean forward progress. Offering back the lesson that was last *opened* is only
+ * right while it is unfinished: the moment it is verified, pointing at it again asks the learner to
+ * redo the thing they just did, on the one screen whose job is to say what is next. So the offer is
+ * the stopped-on lesson while it is unverified, and otherwise the first lesson after it that is
+ * neither verified nor self-marked - wrapping to the earliest gap once the end is reached, because a
+ * learner who skipped something early should still be shown it before the course is called done.
+ *
+ * Two cases produce no card at all:
+ *
+ * - **Nothing remembered** - a first visit belongs to the landing page's own "Start here" block.
+ * - **An untouched first entry** - the runner mounts on the first lesson and remembers it, so without
+ *   this rule a brand-new learner would be invited to resume a lesson they never started.
  */
-export function resumeCandidate(storedId: string | null, state: ResumeState): string | null {
+export function lessonOffer(
+  storedId: string | null,
+  lessons: readonly string[],
+  progress: LessonProgress
+): LessonOffer | null {
   if (!storedId) return null;
-  if (storedId === state.firstId && !state.verified && !state.completed) return null;
-  return storedId;
+  const at = lessons.indexOf(storedId);
+  // The registry that lists the ids is the same one `readLastLessonId` validated against; a miss here
+  // means a caller passed a different list, and "nothing to offer" is the only safe answer.
+  if (at < 0) return null;
+  const verified = !!progress.verified[storedId];
+  const completed = !!progress.completed[storedId];
+  if (!verified && at === 0 && !completed) return null;
+  // Self-marking is a note the learner wrote, not a pass: on the lesson they stopped on it keeps the
+  // offer here (and the card prints "marked complete by you"), because it is still unverified.
+  if (!verified) return { id: storedId, reason: 'resume' };
+  // Looking forward, that same note does count as done - a lesson the learner has declared finished
+  // is not what they should be sent to next.
+  const order = [...lessons.slice(at + 1), ...lessons.slice(0, at + 1)];
+  const next = order.find((id) => !progress.verified[id] && !progress.completed[id]);
+  return next ? { id: next, reason: 'next' } : null;
 }
 
 /** Record the lesson on screen. Called on every selection, including the one a deep link opens. */

@@ -17,7 +17,7 @@ import {
   STORAGE_KEY_LAST_LESSON,
   readLastLessonId,
   rememberLastLesson,
-  resumeCandidate,
+  lessonOffer,
 } from '../app/src/lastLesson.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
@@ -114,36 +114,72 @@ check('no storage at all (the server render) is not an error', () => {
   assert.ok(true, 'expected rememberLastLesson to be safe without a store');
 });
 
-// The roadmap's resume card asks `resumeCandidate` what to offer. Pin the one rule that is not
-// "whatever was stored": the runner mounts on the first entry, so an untouched first visit must not
-// arrive as a lesson to resume. Everything else about the card is rendering, which the E2E covers.
-const FIRST = PYTHON_LESSONS[0].id;
+// The roadmap's card asks `lessonOffer` what to offer. Pin the two rules behind it: an untouched
+// first visit must not arrive as a lesson to resume, and once the stopped-on lesson is verified the
+// offer has to move forward instead of asking for that lesson again. Rendering is the E2E's job.
+const IDS = PYTHON_LESSONS.map((lesson) => lesson.id);
+const FIRST = IDS[0];
+const SECOND = IDS[1];
+const NONE = { verified: {}, completed: {} };
+const offer = (storedId, progress = NONE) => lessonOffer(storedId, IDS, progress);
 
 check('nothing remembered offers no lesson', () => {
-  assert.equal(resumeCandidate(null, { firstId: FIRST, verified: false, completed: false }), null);
+  assert.equal(offer(null), null);
 });
 
 check('an untouched first visit is not a lesson to resume', () => {
   assert.equal(
-    resumeCandidate(FIRST, { firstId: FIRST, verified: false, completed: false }),
+    offer(FIRST),
     null,
     'expected an unstarted Lesson 1 to be left to the Start here block'
   );
 });
 
-check('a first lesson that was used is offered back', () => {
-  assert.equal(resumeCandidate(FIRST, { firstId: FIRST, verified: true, completed: false }), FIRST);
-  assert.equal(resumeCandidate(FIRST, { firstId: FIRST, verified: false, completed: true }), FIRST);
+check('the lesson stopped on is offered back while it is unverified', () => {
+  for (const stored of [FIRST, LAST]) {
+    const progress = stored === FIRST ? { verified: {}, completed: { [FIRST]: true } } : NONE;
+    assert.deepEqual(offer(stored, progress), { id: stored, reason: 'resume' });
+  }
 });
 
-check('any later lesson is offered whatever its state', () => {
-  for (const done of [false, true]) {
-    assert.equal(
-      resumeCandidate(LAST, { firstId: FIRST, verified: done, completed: !done }),
-      LAST,
-      'expected a lesson past the first to be offered even before it is verified'
-    );
-  }
+check('a verified lesson hands the offer forward, never back to itself', () => {
+  assert.deepEqual(offer(FIRST, { verified: { [FIRST]: true }, completed: {} }), {
+    id: SECOND,
+    reason: 'next',
+  });
+});
+
+check('the next offer skips what is already done, verified or self-marked', () => {
+  const at = 1;
+  const progress = {
+    verified: { [IDS[at]]: true, [IDS[at + 1]]: true },
+    completed: { [IDS[at + 2]]: true },
+  };
+  assert.deepEqual(offer(IDS[at], progress), { id: IDS[at + 3], reason: 'next' });
+});
+
+check('finishing the last lesson wraps to the earliest gap, not nowhere', () => {
+  const verified = Object.fromEntries(IDS.map((id) => [id, true]));
+  delete verified[SECOND];
+  assert.deepEqual(offer(LAST, { verified, completed: {} }), { id: SECOND, reason: 'next' });
+});
+
+check('a fully verified course offers nothing rather than repeating itself', () => {
+  const all = Object.fromEntries(IDS.map((id) => [id, true]));
+  assert.equal(offer(LAST, { verified: all, completed: {} }), null);
+});
+
+check('a self-marked lesson is still unverified, so the card keeps offering it', () => {
+  const all = Object.fromEntries(IDS.map((id) => [id, true]));
+  assert.deepEqual(
+    offer(LAST, { verified: {}, completed: all }),
+    { id: LAST, reason: 'resume' },
+    'expected self-marking to be a note, not a pass, on the lesson the learner stopped on'
+  );
+});
+
+check('an id the list does not hold offers nothing', () => {
+  assert.equal(offer('NOT.A.LESSON', { verified: {}, completed: {} }), null);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
