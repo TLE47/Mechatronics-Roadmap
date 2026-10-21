@@ -36,6 +36,7 @@ once omitted all 23 lesson pages inside Tracks 00-08.
 
 ```bash
 python3.12 scripts/check_all.py         # every gate CI's verify step runs, in CI's order (~12 s)
+python3.12 scripts/check_workflows.py   # the workflow files themselves, before the push
 python3.12 scripts/check_all.py --full  # + the 48-package exercise sweep and the unittest discovery
 python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
@@ -70,6 +71,21 @@ second opinion about what matters: [`tests/test_check_all.py`](../tests/test_che
 the workflow's verify step and fails when the script and CI drift apart, so a gate added in one
 place cannot go missing in the other. It exits `2` when handed an interpreter other than the
 pinned 3.12, because two of the gates execute module code that needs 3.10+ syntax.
+
+**The workflow files are the first gate, because nothing inside the job can report them.**
+[`check_workflows.py`](../scripts/check_workflows.py) reads every `.github/workflows/*.yml` for the
+lines YAML refuses - an unquoted `: ` in a value (YAML reads the second colon as another mapping
+key), a tab in the indentation, a quote that never closes, a flow collection left open, a key set
+twice in one mapping - and skips the places that rule does not apply: a `run: |` body is text, a
+quoted value may hold any colon it likes, and `check:native` is not a separator. It needs no YAML
+parser; PyYAML is not a dependency of this repository. Run 131 exists because a step name reading
+`Check light/dark: toggle contract` made `ci.yml` unparseable for two commits, and GitHub reports
+the result as a run that fails in 0 s with no jobs - so the gate that runs CI's commands locally
+could not see it, since no job was ever created to run them. With `actionlint` on `PATH`
+(`brew install actionlint`) the same command also runs the full lint and fails on its findings;
+GitHub's runners do not preinstall it, which is why the built-in scan is the half that has to hold
+everywhere. `npm run test:workflows` pins both directions: the historical broken line, and the false
+positive that matters (two steps may each have a `name:`).
 
 The same gates, plus the 48-package exercise sweep, the test discovery and the native-dependency
 installs, run in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on Ubuntu and macOS. The weekly

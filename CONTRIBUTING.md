@@ -46,7 +46,10 @@ verification step runs, in CI's order, and takes about 12 s; `--full` adds the 4
 sweep and the unittest discovery, `--list` names the gates, and `--only <gate>` re-runs one after
 you regenerate a file. It refuses to run on anything but Python 3.12. The script's gate table and
 `.github/workflows/ci.yml` are kept equal by [`tests/test_check_all.py`](tests/test_check_all.py),
-so a check CI gains is not silently missing locally.
+so a check CI gains is not silently missing locally. Its first gate reads the workflow files
+themselves: a `ci.yml` GitHub cannot parse fails **in 0 s with no jobs**, which is what an unquoted
+`: ` in a step name does - quote the name (`- name: "Check light/dark: toggle"`) and run
+`python3 scripts/check_workflows.py` to see it either way.
 
 ```bash
 # 1. Verify repository structure, links, Mermaid diagrams, and clean TeX math hygiene

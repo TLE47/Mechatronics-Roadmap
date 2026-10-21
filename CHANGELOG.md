@@ -11,6 +11,57 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 131: A Workflow That Cannot Parse Fails Locally, Not on the Runner
+
+The six commits of runs 129-130 went up, and the `ci.yml` run came back **`failure` in 0 s with no
+jobs**. No logs, no test names, nothing that named a file: GitHub could not parse the workflow, so no
+runner was ever created. Two step names carried an unquoted `: `
+
+```yaml
+- name: Check light/dark: toggle contract, and WCAG contrast on all 11 tabs in both modes
+```
+
+and YAML reads that second colon as the start of another mapping. The first of them arrived with the
+seventh tab's theme work, so **every push since had been failing before it started** - and the local
+gate could not have said so, because `scripts/check_all.py` re-runs the commands *inside* the job. A
+workflow the runner refuses to start is a file no gate in this repository was reading.
+
+**Quoted, first.** Both step names are now quoted strings, with the reason written above them: a
+colon in a step name costs a full round trip to learn about, and it is a two-character fix.
+
+**Then a gate that reads the workflow, not the job.** [`scripts/check_workflows.py`](scripts/check_workflows.py)
+now runs first in the verify step and first in `check_all.py`, and it needs no YAML parser (PyYAML is
+not a dependency of this repo, and adding one to catch a parse error would be the tail wagging the
+dog). It applies the rule that was broken - in an unquoted scalar `:` is legal only when no space
+follows - and it knows where that rule does *not* apply: the body of a `run: |` block is text, a
+quoted value may hold any colon it likes, `check:native` is not a separator, and a `[...]` may span
+lines. Alongside the colon it catches the neighbours of the same class: a tab in the indentation, a
+quote that never closes, a flow collection left open, a key set twice in one mapping, a value that
+starts with a reserved indicator, and a file with no `jobs:` at all.
+
+| Where | What it costs | What it catches |
+| :--- | :--- | :--- |
+| the built-in scan | ~20 ms, stdlib only | the lines YAML would refuse, in every `.github/workflows/*.yml` |
+| `actionlint`, when installed | ~0.1 s | the full lint: expressions, action inputs, shellcheck, and the parse itself |
+
+`actionlint` is the second opinion, not the gate: GitHub's runners do not preinstall it, so it stays
+optional and the scan is the half that has to hold everywhere. On the historical file the two find
+different things - the scan reports **both** step names, `actionlint` stops at the first parse error -
+which is why both run rather than one standing in for the other.
+
+**Pinned by tests.** `tests/test_check_workflows.py` (`npm run test:workflows`) feeds the scanner the
+broken line and the legal lines either side of it, and it pins the false positive that matters:
+**every step of a workflow has a `name:`**, and a duplicate-key detector that cannot tell one step's
+from the next step's would block every push instead of saving one. `tests/test_check_all.py` keeps
+the new row and the workflow's command list equal in both directions, as it does for every gate.
+
+**Measured.** `scripts/check_workflows.py` clean on all three shipped workflows, `actionlint` clean on
+`ci.yml`, and the same script on the historical file exits 1 naming lines 175 and 182. `check_all.py`
+28/28 (the new gate included), `tests/test_check_workflows.py` 14/14, `tests/test_check_all.py` 7/7.
+The next push to `main` was the first since the theme commit whose five jobs actually started.
+
+---
+
 ## [2026-10-20] — Run 130: The Lesson Opens With Its Numbers Already Tunable
 
 Seven lesson starters now carry **14 `# @slider` parameters**, so the control and mechanics lessons

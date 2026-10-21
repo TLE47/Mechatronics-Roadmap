@@ -42,6 +42,10 @@ PINNED = open(os.path.join(ROOT, ".python-version"), encoding="utf-8").read().st
 # (name, argv after the interpreter, heavy) - CI's verify step, in its order. `--verbose` stays
 # where CI passes it, so a gate that only fails verbosely still shows its detail here.
 GATES: list[tuple[str, list[str], bool]] = [
+    # First, because a workflow file GitHub cannot parse never starts the job that runs the rest of
+    # this list: the run fails in 0 s with no jobs, which is how a `: ` left unquoted in a step name
+    # kept every push red.
+    ("workflows", ["scripts/check_workflows.py"], False),
     ("verify_repo", ["scripts/verify_repo.py", "--verbose"], False),
     ("clean_tex", ["scripts/clean_tex.py", "--check"], False),
     ("modules", ["scripts/validate_modules.py"], False),

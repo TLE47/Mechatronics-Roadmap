@@ -32,6 +32,10 @@ jobs:
 
       - name: Verify Markdown structure, internal links, Mermaid diagrams & LaTeX math fences
         run: |
+          # The workflows themselves come first: a file GitHub cannot parse is a run that fails in
+          # 0 s with no jobs, and nothing inside the job ever gets to report it. This scan needs no
+          # YAML parser; a contributor with actionlint installed gets the full lint too.
+          python3 scripts/check_workflows.py
           python3 scripts/verify_repo.py --verbose
           python3 scripts/clean_tex.py --check
           python3 scripts/validate_modules.py
