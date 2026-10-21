@@ -24,6 +24,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright-core';
+import { waitForEditor } from './editor-code.mjs';
 import { BASE, startStaticServer } from './e2e_pages_bundle.mjs';
 
 const repoRoot = process.cwd();
@@ -34,6 +35,22 @@ function ensureBuilt() {
   console.log('[build] dist/index.html is missing - running `npm run build` first');
   execFileSync('npm', ['run', 'build'], { stdio: 'inherit', cwd: repoRoot });
   assert.ok(fs.existsSync(path.join(distDir, 'index.html')), 'npm run build produced no dist/index.html');
+}
+
+/** Run the open lesson and wait for its verdict badge; returns the badge text and the printed output. */
+async function runLesson(page, timeoutMs = 180000) {
+  await waitForEditor(page, undefined, 30000);
+  await page.getByTestId('btn-run-verify').click();
+  await page.waitForFunction(
+    () => Boolean(document.querySelector('[data-testid^="status-"]')),
+    undefined,
+    { timeout: timeoutMs }
+  );
+  const verdict = (await page.evaluate(
+    () => document.querySelector('[data-testid^="status-"]')?.textContent ?? ''
+  )).trim();
+  const stdout = (await page.getByTestId('pre-actual-stdout').textContent()) ?? '';
+  return { verdict, stdout };
 }
 
 /** Wait across the worker's own reload: the page navigates while the worker claims it. */
@@ -97,6 +114,28 @@ async function main() {
       `  ok the shell, the manifest and ${cached.assets.length} asset(s) are cached (${cached.keys.join(', ')})`
     );
 
+    // One online run is what pulls the interpreter in: pyodide.mjs, its wasm, the stdlib zip. That run
+    // is also the baseline the offline run below is compared against.
+    const online = await runLesson(page);
+    assert.match(
+      online.verdict,
+      /FAILED|STOPPED|ERROR|PASS/,
+      `the online run must produce a verdict; got: ${online.verdict}`
+    );
+    const pyodideCached = await page.evaluate(async () => {
+      const cache = await caches.open('mechalab-pyodide-v1');
+      return (await cache.keys()).map((request) => new URL(request.url).pathname);
+    });
+    assert.ok(
+      pyodideCached.some((url) => url.endsWith('/pyodide.mjs')),
+      `the ESM runtime must be cached by a run; cached: ${pyodideCached.join(', ')}`
+    );
+    assert.ok(
+      pyodideCached.some((url) => url.endsWith('.wasm')),
+      `the wasm binary must be cached by a run; cached: ${pyodideCached.join(', ')}`
+    );
+    console.log(`  ok one run cached the interpreter: ${pyodideCached.length} Pyodide file(s)`);
+
     // ---- No network from here on ----
     await context.setOffline(true);
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -117,6 +156,20 @@ async function main() {
     );
     console.log('  ok offline: a reload paints the workbench, isolated, with the lessons listed');
 
+    // The claim the whole phase is for: Python still runs with the network off, from the cached runtime.
+    const offlineRun = await runLesson(page);
+    assert.equal(
+      offlineRun.verdict,
+      online.verdict,
+      `the offline run must reach the same verdict as the online one; online: ${online.verdict}, offline: ${offlineRun.verdict}`
+    );
+    assert.doesNotMatch(
+      offlineRun.stdout,
+      /could not be loaded from CDN|Pyodide WASM/i,
+      `the offline run must use the cached interpreter, not fail on the network: ${offlineRun.stdout.slice(0, 200)}`
+    );
+    console.log(`  ok offline: a lesson still runs to its verdict (${offlineRun.verdict})`);
+
     // A URL the cache never saw: every navigation gets the shell, and the app routes from the query.
     const deep = await context.newPage();
     await deep.goto(`${baseUrl}?lesson=P.4`, { waitUntil: 'domcontentloaded' });
@@ -127,8 +180,8 @@ async function main() {
 
     assert.deepEqual(pageErrors, [], `the page threw while offline: ${pageErrors.join(' | ')}`);
     console.log(
-      `[PASS] Offline workbench: worker-supplied isolation, cached shell + ${cached.assets.length} assets, ` +
-        'reload and deep links with the network off (Python execution offline is not covered - blob worker)'
+      `[PASS] Offline workbench: worker-supplied isolation, cached shell + ${cached.assets.length} assets + ` +
+        `${pyodideCached.length} runtime files, with the network off: reload, deep link, and a lesson run`
     );
   } finally {
     await browser.close();

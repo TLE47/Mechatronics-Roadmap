@@ -11,6 +11,45 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 143: A Lesson on a Plane
+
+Run 142 could open the workbench offline but not run anything: Pyodide was loaded inside a **blob-URL**
+worker, and a service worker does not control blob workers, so those CDN fetches never reached the cache.
+The fix was structural, not an extra rule in `sw.js`.
+
+**The worker is a real module file.** The 510-line source string that lived at the top of
+[`TabPyodideRunner.tsx`](app/src/components/tabs/TabPyodideRunner.tsx) moved, verbatim, to
+[`app/src/runtime/pythonWorker.js`](app/src/runtime/pythonWorker.js), and the page constructs it as
+
+```js
+new Worker(new URL('../../runtime/pythonWorker.js', import.meta.url), { type: 'module' });
+```
+
+A worker served from this origin is in the service worker's scope, so every request it makes is
+cacheable. The blob URL, its `revokeObjectURL` bookkeeping and the string-within-a-string that made the
+worker's own escapes easy to get wrong (run 141 lost an afternoon to exactly that) are gone.
+
+**And it loads the ESM build.** A module worker has no `importScripts`, so the loader became
+`await import(cdnUrl + 'pyodide.mjs')` - an ordinary request of a controlled client, which is what
+`sw.js` now caches under `mechalab-pyodide-v1`, alongside the wasm binary, the stdlib zip and any wheel a
+lesson imports. The protocol is untouched: `init`/`warm`/`run`/`stop` in; `status`/`scope`/`stdin-request`/
+`result` out, the interrupt word, the stdin buffer and the scope batches all as they were.
+
+| still true after the move | proof |
+| :--- | :--- |
+| Stop interrupts in place, the session survives | `npm run test:runtime` - stopped a `while True:` in 288 ms, same boot id afterwards |
+| `input()` blocks the worker, not the page | same suite, round-trip |
+| every lesson verifies on the built bundle | `npm run test:e2e:pages`, 50 exercises plus the ramp |
+| the Scope still receives traces | `npm run test:e2e` step 7h |
+| the workbench opens offline | `npm run test:offline`, reload + deep link |
+
+**New this run: the offline suite runs Python.** After one online run it asserts the cache holds
+`pyodide.mjs` and a `.wasm` file (5 files), then takes the browser offline, reloads, and runs the same
+lesson to **the same verdict**, with the output checked against the CDN-failure text so a silent fallback
+cannot pass. That is the difference between offline reading and the plan's "on a plane" claim.
+
+---
+
 ## [2026-10-21] — Run 142: The Workbench, Offline
 
 GitHub Pages could not send the isolation headers, and it could not keep the site working on a plane.

@@ -74,9 +74,10 @@ still frame under `prefers-reduced-motion`, and never exceeds 2x device pixels.
 
 ## Python you can stop, and ⌘K over everything
 
-Python runs in a **dedicated Web Worker** (`PYODIDE_WORKER_SOURCE` at the top of
-[`TabPyodideRunner.tsx`](src/components/tabs/TabPyodideRunner.tsx)), never on the UI thread. The
-editor keeps typing, the tabs keep switching, and a runaway loop cannot freeze the page.
+Python runs in a **dedicated Web Worker** ([`src/runtime/pythonWorker.js`](src/runtime/pythonWorker.js)),
+mounted from a real module URL (`new Worker(new URL(...), { type: 'module' })`) rather than a blob, so the
+service worker controls it and can cache the runtime. It never runs on the UI thread: the editor keeps
+typing, the tabs keep switching, and a runaway loop cannot freeze the page.
 
 | Problem | What the runner does |
 | :--- | :--- |
@@ -100,13 +101,15 @@ with the lesson list rendered.
 
 `npm run test:offline` is the suite that proves it the way Pages serves it: the built bundle is served
 **without** the header pair, the worker takes control, and then the context goes offline. It asserts the
-isolated document, the cached shell/manifest/bundle, an offline reload that paints the workbench, and an
-offline deep link into a lesson.
+isolated document, the cached shell/manifest/bundle, one online run that pulls the interpreter in, an
+offline reload that paints the workbench, a whole lesson run to the same verdict with the network off,
+and an offline deep link into a lesson.
 
-**Offline Python is not covered yet**, and the reason is structural: Pyodide is loaded inside a blob-URL
-worker, and a service worker does not control blob workers, so those CDN fetches never reach the cache.
-Offline reading ships; offline *running* needs the worker moved to a real module URL (tracked in
-[`docs/PLAN-2.0-GAP.md`](../docs/PLAN-2.0-GAP.md)).
+**The interpreter is cached too.** Pyodide is loaded by that module worker with a dynamic `import()` of
+its ESM build, and its `pyodide.mjs`, wasm binary, stdlib zip and any wheel it loads are cached under
+`mechalab-pyodide-v1`. One online run is enough: the suite then goes offline and runs the same lesson to
+the same verdict from the cache - which is the difference between "offline reading" and "a lesson on a
+plane".
 
 ### Keys
 
@@ -224,6 +227,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/outputMatch.ts`](src/outputMatch.ts) | How stdout is compared (exact vs formatting-tolerant), shared by the runner and its tests. |
 | [`src/progressMerge.ts`](src/progressMerge.ts) | Merging saved progress between browsers and accounts. |
 | [`src/lessonCoach.ts`](src/lessonCoach.ts) | The progressive hints and the stuck-state prompts. |
+| [`src/runtime/pythonWorker.js`](src/runtime/pythonWorker.js) | The interpreter worker: warm-up, run, in-place Stop, `input()`, `mechalab.scope`, `result` and `scope` messages. |
 | [`src/components/PythonEditor.tsx`](src/components/PythonEditor.tsx) | The CodeMirror editor: view, external sync, test bridge. |
 | [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |

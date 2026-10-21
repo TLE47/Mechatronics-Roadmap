@@ -17,10 +17,10 @@
  *    is what makes a repeat visit instant; the shell itself is network-first, so a deploy is picked up
  *    as soon as it is reachable.
  *
- * What this does NOT cache: the Python runtime. Pyodide is loaded inside a blob-URL worker, and a
- * service worker does not control blob workers, so its CDN fetches never reach this handler. Offline
- * *reading* works; offline *running* needs the worker to move to a real module URL (see
- * docs/PLAN-2.0-GAP.md).
+ * 3. **The Python runtime.** Pyodide is fetched from a CDN by a worker, so the worker had to stop being
+ *    a blob (a service worker controls only real URLs). `pythonWorker.js` is a module worker served from
+ *    this origin, which puts it in scope: its `pyodide.mjs`, `pyodide.asm.wasm`, the stdlib zip and any
+ *    wheel it loads are cached here, and a lesson still runs with the network off.
  *
  * The page half lives at the bottom: `if (typeof window !== 'undefined')`. One file, no build step,
  * because the same script has to be served byte-for-byte from `public/`.
@@ -29,9 +29,13 @@
 const VERSION = 'v1';
 const SHELL_CACHE = `mechalab-shell-${VERSION}`;
 const ASSET_CACHE = `mechalab-assets-${VERSION}`;
+// The interpreter and its wheels: ~10 MB, and the reason a run works offline after one online run.
+const PYODIDE_CACHE = `mechalab-pyodide-${VERSION}`;
 // The shell is `./` and its document; the hashed bundle files are picked up as they are requested.
 const SHELL_URLS = ['./', './index.html', './manifest.webmanifest', './favicon.svg'];
-const OWN_CACHES = [SHELL_CACHE, ASSET_CACHE];
+const OWN_CACHES = [SHELL_CACHE, ASSET_CACHE, PYODIDE_CACHE];
+// Pyodide's CDN. Everything under this prefix is immutable for a version, so cache-first is safe.
+const PYODIDE_CDN = 'cdn.jsdelivr.net';
 
 if (typeof window === 'undefined') {
   self.addEventListener('install', (event) => {
@@ -65,6 +69,13 @@ if (typeof window === 'undefined') {
   /** Add the isolation pair to a response this origin served, so the document is cross-origin isolated. */
   function withIsolation(response) {
     if (!response || response.status === 0) return response;
+    // Only this origin's responses: a CDN response is not part of the document's isolation decision, and
+    // re-wrapping an opaque one is impossible anyway.
+    try {
+      if (new URL(response.url).origin !== self.location.origin) return response;
+    } catch {
+      return response;
+    }
     const headers = new Headers(response.headers);
     headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
     headers.set('Cross-Origin-Opener-Policy', 'same-origin');
@@ -119,9 +130,14 @@ if (typeof window === 'undefined') {
     if (request.cache === 'only-if-cached' && request.mode !== 'same-origin') return;
 
     const url = new URL(request.url);
-    if (url.origin !== self.location.origin) return;
-    // The CDN (Pyodide) and anything else third-party is left to the browser: this worker does not
-    // control the blob worker that loads Python, so caching it here would only be dead weight.
+    if (url.origin !== self.location.origin) {
+      // The interpreter comes from a CDN; the module worker that loads it is in this worker's scope, so
+      // these are ordinary requests to cache. Anything else third-party is left to the browser.
+      if (url.hostname === PYODIDE_CDN && url.pathname.startsWith('/pyodide/')) {
+        event.respondWith(cacheFirst(request, PYODIDE_CACHE, event));
+      }
+      return;
+    }
 
     if (request.mode === 'navigate') {
       event.respondWith(shellFirst(request));
