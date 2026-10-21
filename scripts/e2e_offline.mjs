@@ -11,12 +11,13 @@
  * 1. the page registers the worker, the worker takes control, and the document reloads into an isolated
  *    one (`crossOriginIsolated === true`) — the Stop-in-place path depends on that pair;
  * 2. the shell, the built bundle and the manifest are in the caches, so the install did its job;
- * 3. with the context offline, a reload still renders the workbench, and a **deep link** to a lesson
- *    opens that lesson's page — the SPA shell is served from the cache for a URL the cache never saw.
+ * 3. **the take-offline button** caches the page's own bundle *and* the Python runtime, and reports a
+ *    size — with no lesson run first, so the button is the only reason the interpreter is there;
+ * 4. with the context offline, a reload still renders the workbench, a lesson still runs to the same
+ *    verdict, and a **deep link** opens a lesson the cache never saw.
  *
- * What it does not assert: running Python offline. Pyodide is loaded inside a blob-URL worker, which a
- * service worker does not control, so its CDN fetches never reach the handler. Offline *reading* is what
- * ships; offline *running* needs the worker to move to a real module URL (docs/PLAN-2.0-GAP.md).
+ * Starting from the button rather than from a run is the point of the suite: the run path used to be
+ * the only thing that pulled Pyodide in, and a learner about to board had no way to ask for it.
  */
 
 import assert from 'node:assert/strict';
@@ -26,6 +27,9 @@ import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { waitForEditor } from './editor-code.mjs';
 import { BASE, startStaticServer } from './e2e_pages_bundle.mjs';
+// The same executable search the other browser suites use: a machine with a system Chrome and no
+// Playwright download is a normal machine, and this suite should run there too.
+import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 
 const repoRoot = process.cwd();
 const distDir = path.join(repoRoot, 'dist');
@@ -76,7 +80,11 @@ async function main() {
   );
   const { server, port } = await startStaticServer({ isolation: false });
   const baseUrl = `http://127.0.0.1:${port}${BASE}`;
-  const browser = await chromium.launch({ headless: true });
+  const executablePath = resolveChromiumExecutable();
+  const browser = await chromium.launch({
+    ...(executablePath ? { executablePath } : {}),
+    headless: true,
+  });
   try {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -114,13 +122,37 @@ async function main() {
       `  ok the shell, the manifest and ${cached.assets.length} asset(s) are cached (${cached.keys.join(', ')})`
     );
 
-    // One online run is what pulls the interpreter in: pyodide.mjs, its wasm, the stdlib zip. That run
-    // is also the baseline the offline run below is compared against.
-    const online = await runLesson(page);
+    // ---- The button, with no lesson run first ----
+    // This is the whole feature: one press caches the page's own bundle and the interpreter, and says
+    // what it cost. No lesson has been run at this point - the page's own idle warm-up may have started
+    // loading Python (it always does), but nothing has produced a verdict, and the offline run below
+    // is the first one.
+    await page.getByTestId('btn-offline-takealong').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="btn-offline-takealong"]')?.dataset.offlineState ===
+        'ready',
+      undefined,
+      { timeout: 240000 }
+    );
+    const offlineLabel = (
+      await page.getByTestId('btn-offline-takealong').textContent()
+    ).trim();
     assert.match(
-      online.verdict,
-      /FAILED|STOPPED|ERROR|PASS/,
-      `the online run must produce a verdict; got: ${online.verdict}`
+      offlineLabel,
+      /Offline ready · \d+(\.\d+)? (kB|MB)/,
+      `the button must report the size it cached; got: ${offlineLabel}`
+    );
+    const sizeMatch = offlineLabel.match(/(\d+(?:\.\d+)?) (kB|MB)/);
+    const reportedBytes = sizeMatch
+      ? Number(sizeMatch[1]) * (sizeMatch[2] === 'MB' ? 1_000_000 : 1000)
+      : 0;
+    // The report is the transfer size the CDN served (compressed), not the decoded size on disk, so the
+    // floor is "clearly more than the shell". The separate Pyodide cache assertions below are what
+    // prove the interpreter itself came along; this one proves the number is real and not a stub.
+    assert.ok(
+      reportedBytes > 3_000_000,
+      `the shell alone is ~1 MB, so a real report must exceed 3 MB; got ${reportedBytes} from "${offlineLabel}"`
     );
     const pyodideCached = await page.evaluate(async () => {
       const cache = await caches.open('mechalab-pyodide-v1');
@@ -128,13 +160,13 @@ async function main() {
     });
     assert.ok(
       pyodideCached.some((url) => url.endsWith('/pyodide.mjs')),
-      `the ESM runtime must be cached by a run; cached: ${pyodideCached.join(', ')}`
+      `the button must cache the ESM runtime; cached: ${pyodideCached.join(', ')}`
     );
     assert.ok(
       pyodideCached.some((url) => url.endsWith('.wasm')),
-      `the wasm binary must be cached by a run; cached: ${pyodideCached.join(', ')}`
+      `the button must cache the wasm binary; cached: ${pyodideCached.join(', ')}`
     );
-    console.log(`  ok one run cached the interpreter: ${pyodideCached.length} Pyodide file(s)`);
+    console.log(`  ok the take-offline button cached the bundle and ${pyodideCached.length} runtime files (${offlineLabel})`);
 
     // ---- No network from here on ----
     await context.setOffline(true);
@@ -156,12 +188,13 @@ async function main() {
     );
     console.log('  ok offline: a reload paints the workbench, isolated, with the lessons listed');
 
-    // The claim the whole phase is for: Python still runs with the network off, from the cached runtime.
+    // The claim the whole phase is for: Python still runs with the network off, from the runtime the
+    // button cached. There is no online run to compare against - the button was the only warm-up.
     const offlineRun = await runLesson(page);
-    assert.equal(
+    assert.match(
       offlineRun.verdict,
-      online.verdict,
-      `the offline run must reach the same verdict as the online one; online: ${online.verdict}, offline: ${offlineRun.verdict}`
+      /FAILED/,
+      `the P.1 starter must still reach its failing verdict offline; got: ${offlineRun.verdict}`
     );
     assert.doesNotMatch(
       offlineRun.stdout,

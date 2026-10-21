@@ -29,7 +29,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
-import { startDevServer } from './e2e_browser_workbench.mjs';
+import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 
 // The tab ids come from the one file that names them, so a new tab is swept without
 // touching this script.
@@ -161,7 +161,11 @@ async function firstVisit(page, url, colorScheme) {
 async function main() {
   const own = process.env.E2E_BASE_URL ? null : await startDevServer(process.cwd());
   const baseUrl = process.env.E2E_BASE_URL ?? own.baseUrl;
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  const executablePath = resolveChromiumExecutable();
+  const browser = await chromium.launch({
+    ...(executablePath ? { executablePath } : {}),
+    args: ['--no-sandbox'],
+  });
   const rows = [];
   let failures = 0;
   const notes = [];

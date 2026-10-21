@@ -15,6 +15,7 @@
  *   test:history     the versions behind the draft: filed on Run, deduped, capped, evicted oldest-first
  *   test:scope       the Scope's payload rules: NaN dropped, lengths aligned, flat traces widened
  *   test:checkhints  a failing check names its own rung, and rung 2 is earned by another run
+ *   test:takealong   the offline button's URL list, its size wording, and what "ready" may claim
  *   test:fonts       the two self-hosted faces are named, imported and emitted
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
@@ -141,6 +142,9 @@ async function main() {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('hints', 'test_check_hints.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('takealong', 'test_offline_takealong.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('fonts', 'test_fonts.mjs', {}),

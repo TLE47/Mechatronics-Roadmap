@@ -60,17 +60,14 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Plan | Reality | Verdict |
 | :--- | :--- | :--- |
 | ⌘K palette | Ships, built from the lesson registry ([`app/src/paletteCatalog.ts`](../app/src/paletteCatalog.ts), `npm run test:palette`); `⌘↵` runs. No `⌘P`, no `⌘⇧F` full-text search, no `?` sheet beyond the header modal. | **partial** |
-| Offline PWA | `sw.js` precaches the shell, manifest and favicon, serves same-origin assets cache-first with a background refresh, falls back to the cached document for any navigation, and caches the Pyodide runtime the module worker loads. `npm run test:offline` serves the bundle with no host headers, then goes offline: reload, deep link, and a lesson run to the same verdict. The manifest is installable. No per-step "download for offline" button or size estimate yet. | **ships** |
+| Offline PWA | `sw.js` precaches the shell, manifest and favicon, serves same-origin assets cache-first with a background refresh, falls back to the cached document for any navigation, and caches the Pyodide runtime the module worker loads. **Take this step offline** ([`app/src/offlineTakeAlong.ts`](../app/src/offlineTakeAlong.ts), `npm run test:takealong`): one press sends the worker this document's own script/link URLs, warms the runtime, and reports the measured cost (`Offline ready · 8.0 MB · 16 files`), and the offline suite now starts from that press with no lesson run first. `npm run test:offline` serves the bundle with no host headers, then goes offline: reload, deep link, and a lesson run to its verdict from the cache. The manifest is installable. | **ships** |
 | Themes, contrast, reduced motion, keyboard | Dark and light from one token set, every tab measured for contrast in both modes in CI (`npm run test:theme:e2e`), reduced-motion branch, visible focus ring. No high-contrast, no paper theme, no keymap (Vim/Emacs), no screen-reader announcements for run results. | **partial** |
 | Share links, "ask for help", pair study | None. | **missing** |
-| CI rigour (workers, E2E, budgets) | 28 repository gates plus 17 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
+| CI rigour (workers, E2E, budgets) | 28 repository gates plus 18 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
 
 ## What to build next, in order
 
-1. **A "download this step for offline" button** — the cache is warm after one run, but a learner about
-   to board has no way to say "take these five lessons". Acceptance: a button warms the shell and the
-   runtime, reports a size, and the offline suite starts from it.
-2. **Dexie / IndexedDB + backup zip** — only worth doing once history, notes or plots outgrow the 5 MB
+1. **Dexie / IndexedDB + backup zip** — only worth doing once history, notes or plots outgrow the 5 MB
    bucket; until then the bounded `localStorage` stores are cheaper and already tested.
-3. **Jedi completions + Ruff lint in the worker** — a real editor at ~2 MB of extra cached weight; do it
+2. **Jedi completions + Ruff lint in the worker** — a real editor at ~2 MB of extra cached weight; do it
    after the study layer, because it changes how a lesson feels rather than what a learner can do.

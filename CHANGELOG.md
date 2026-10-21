@@ -11,6 +11,38 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 146: Take This Step Offline
+
+The cache was warm by accident: a learner who had used the workbench was offline-ready, and one who
+had not had no way to ask. The gap page's last offline item was a button that says "take this step"
+and reports what it cost. It is now in the runtime strip.
+
+**One press, and a measured answer.** [`app/src/offlineTakeAlong.ts`](app/src/offlineTakeAlong.ts) reads
+this document's own `<script>` and `<link>` tags - the hashed bundle names change every deploy, so a
+manifest list is the one thing that would go stale - and sends them to the worker. `sw.js` gains a
+`message` handler that caches each URL with `cache: 'reload'` and replies with entries and bytes; the
+worker never intercepts its own fetches, so each response is put into the cache explicitly, which is
+also what makes the count possible. The runtime is then loaded if it is not up, and every `mechalab-*`
+cache is measured. The button reads `Offline ready · 8.0 MB · 16 files`.
+
+Two honesty rules: the interpreter's own files are required before the button says **ready** (a cached
+shell that cannot run Python is a half answer, shown as `Take Python offline`), and a host that sends
+its own isolation headers has no worker to ask, so it says `Offline: built site only` rather than claim
+a cache it cannot build. The size is the transfer size served, not the decoded size on disk, and says so.
+
+- `npm run test:takealong` (9 checks): the URL list (own origin only, prefetch excluded, duplicates and
+malformed hrefs dropped), the size wording, and that a shell-only inventory never reads as ready.
+- `npm run test:offline` now **starts from the button**: no lesson run first, press it, read the size,
+find `pyodide.mjs` and the wasm in the cache, then go offline - reload, deep link, and a lesson run to
+`BEHAVIOR FAILED` from the cache (8.0 MB, 16 files, 5 runtime files). It also uses the other suites'
+Chromium resolver, so a machine with a system Chrome and no Playwright download can run it.
+- `npm run test:theme:e2e` still passes with the new strip control: 24 tab/theme pairs, lowest text run
+4.52:1. Both that suite and `test:offline` now use the other suites' Chromium resolver, so a machine
+with a system Chrome and no Playwright download can run them (`resolveChromiumExecutable`).
+- `docs/PLAN-2.0-GAP.md`: the offline row names the button; the next item is IndexedDB + backup zip.
+
+---
+
 ## [2026-10-21] — Run 145: Read the Scope, and Compare Two Runs
 
 The Scope drew the learner's own `scope.stream()` traces and then stopped there: no cursor, no zoom,

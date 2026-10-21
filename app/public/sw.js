@@ -123,6 +123,77 @@ if (typeof window === 'undefined') {
     return withIsolation(fresh);
   }
 
+  /**
+   * Cache a list of same-origin URLs and report what it cost.
+   *
+   * `self.fetch` inside a service worker does **not** pass through this worker's own `fetch` handler -
+   * a worker never intercepts itself - so "the request will be cached on the way past" is false here:
+   * every response has to be put into the cache explicitly, which is also what makes the byte count
+   * possible. `cache: 'reload'` is deliberate: the point of the button is to take what is current, not
+   * a stale entry the browser is holding.
+   */
+  async function warmInto(cacheName, urls) {
+    const cache = await caches.open(cacheName);
+    let entries = 0;
+    let bytes = 0;
+    await Promise.all(
+      urls.map(async (url) => {
+        try {
+          const request = new Request(url, { cache: 'reload' });
+          const response = await fetch(request);
+          if (!response || !response.ok) return;
+          const size = Number(response.headers.get('content-length')) || 0;
+          await cache.put(request, response.clone());
+          entries += 1;
+          bytes += size || (await response.clone().blob()).size;
+        } catch (error) {
+          // One missing asset (a font this build does not use, a 404) must not fail the whole warm.
+        }
+      })
+    );
+    return { entries, bytes };
+  }
+
+  /**
+   * The "take this step offline" button, over a MessageChannel.
+   *
+   * The page sends the URLs it is actually running (its own script, styles, manifest, favicon) rather
+   * than the worker keeping a copy of a build's hashed file names, which change every deploy. The reply
+   * is the measured cost, so the button can say what it took rather than "done".
+   */
+  self.addEventListener('message', (event) => {
+    const data = event.data || {};
+    if (data.type !== 'warm') return;
+    const port = event.ports && event.ports[0];
+    const urls = Array.isArray(data.urls)
+      ? Array.from(new Set(data.urls.filter((url) => typeof url === 'string')))
+      : [];
+    event.waitUntil(
+      (async () => {
+        const sameOrigin = urls.filter((url) => {
+          try {
+            return new URL(url, self.location.href).origin === self.location.origin;
+          } catch {
+            return false;
+          }
+        });
+        const shellish = sameOrigin.filter((url) => /\/(index\.html)?$|manifest\.webmanifest$|favicon\.[a-z]+$/.test(url));
+        const assets = sameOrigin.filter((url) => !shellish.includes(url));
+        const [shell, bundle] = await Promise.all([
+          warmInto(SHELL_CACHE, shellish),
+          warmInto(ASSET_CACHE, assets),
+        ]);
+        if (port) {
+          port.postMessage({
+            type: 'warm-done',
+            entries: shell.entries + bundle.entries,
+            bytes: shell.bytes + bundle.bytes,
+          });
+        }
+      })()
+    );
+  });
+
   self.addEventListener('fetch', (event) => {
     const request = event.request;
     if (request.method !== 'GET') return;

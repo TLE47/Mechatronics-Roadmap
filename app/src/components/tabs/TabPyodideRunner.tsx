@@ -5,6 +5,14 @@ import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputM
 import { coachForLesson } from '../../lessonCoach';
 import { failingChecks, hintCountFor, hintLock, nextRung, rungAnswersCheck } from '../../checkHints';
 import { lessonPageUrl } from '../../startHere';
+import {
+  assetUrlsFromDocument,
+  cacheInventory,
+  offlineReportLine,
+  offlineWarmSupported,
+  warmWithServiceWorker,
+  type OfflineCacheReport,
+} from '../../offlineTakeAlong';
 import { FaultBench08 } from '../FaultBench08';
 import type { HarnessReport } from '../../harnessGrading.ts';
 import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
@@ -162,6 +170,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // the next lesson while the win is fresh, not to become another panel to close.
   const [showPassToast, setShowPassToast] = useState<boolean>(false);
   const [pyodideStatus, setPyodideStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  // The "take this step offline" press: what it found, what it measured, and whether the runtime
+  // came along. `ready` requires the interpreter's own files, not just the shell - a cached page that
+  // cannot run Python is not offline-ready for this app.
+  const [offline, setOffline] = useState<{
+    state: 'idle' | 'working' | 'ready' | 'partial' | 'unsupported';
+    report: OfflineCacheReport | null;
+  }>({ state: 'idle', report: null });
   const [passStatus, setPassStatus] = useState<
     'untested' | 'passed' | 'harness_failed' | 'behavior_failed' | 'mismatch' | 'stopped' | 'error'
   >('untested');
@@ -501,6 +516,96 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
     workerRef.current = worker;
     return worker;
+  };
+
+  // The status the warm-up promise below has to know about without re-rendering: a worker that is
+  // already loaded answers a second `warm` with silence (it has nothing new to report), so the page
+  // has to remember for itself that Python is up.
+  const pyodideStatusRef = useRef<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  useEffect(() => {
+    pyodideStatusRef.current = pyodideStatus;
+  }, [pyodideStatus]);
+
+  // What the caches already hold. A learner who has run a lesson is offline-ready by accident, and the
+  // strip should say so without waiting for a press - but only the interpreter's own files make it
+  // "ready": a cached shell that cannot run Python is a half answer, and says so.
+  useEffect(() => {
+    let cancelled = false;
+    cacheInventory()
+      .then((report) => {
+        if (cancelled || !report.entries) return;
+        setOffline({ state: report.runtimeFiles > 0 ? 'ready' : 'partial', report });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /**
+   * Load the interpreter for the offline copy, resolving when it is ready or when it never becomes so.
+   *
+   * A listener rather than an `onmessage` handler: the run path owns `worker.onmessage`, and taking it
+   * over here would swallow a verdict if a Run landed while the button was still working.
+   */
+  const warmRuntimeForOffline = (timeoutMs = 180_000): Promise<boolean> =>
+    new Promise((resolve) => {
+      if (pyodideStatusRef.current === 'ready') {
+        resolve(true);
+        return;
+      }
+      let worker: Worker | null = null;
+      let settled = false;
+      const finish = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        worker?.removeEventListener('message', onMessage);
+        resolve(ok);
+      };
+      const onMessage = (event: MessageEvent) => {
+        const data = event.data || {};
+        if (data.type !== 'status' || data.status !== 'ready') return;
+        setPyodideStatus('ready');
+        if (typeof data.ms === 'number') setReadyMs(data.ms);
+        finish(true);
+      };
+      const timer = window.setTimeout(() => finish(false), timeoutMs);
+      try {
+        worker = getOrCreateWorker();
+      } catch {
+        finish(false);
+        return;
+      }
+      worker.addEventListener('message', onMessage);
+      const cdnUrl =
+        (typeof window !== 'undefined' && window.__mechalabPyodideCdnUrl) || DEFAULT_PYODIDE_CDN;
+      worker.postMessage({ type: 'warm', cdnUrl });
+    });
+
+  /**
+   * Take this step offline: cache what this document is running, load Python, then measure the result.
+   *
+   * The order matters. The worker caches the shell and the bundle, the runtime's own CDN files are
+   * cached by the module worker as it loads them, and only then is the inventory read - so the number
+   * on the button is what the machine actually holds, not an estimate of what it will.
+   */
+  const takeOffline = async () => {
+    if (offline.state === 'working') return;
+    if (!offlineWarmSupported()) {
+      setOffline({ state: 'unsupported', report: offline.report });
+      return;
+    }
+    setOffline({ state: 'working', report: offline.report });
+    const urls = assetUrlsFromDocument();
+    const shell = await warmWithServiceWorker(urls);
+    if (!shell) {
+      setOffline({ state: 'unsupported', report: offline.report });
+      return;
+    }
+    await warmRuntimeForOffline();
+    const report = await cacheInventory();
+    setOffline({ state: report.runtimeFiles > 0 ? 'ready' : 'partial', report });
   };
 
   /** Hand a line to a program blocked in `input()`, and unblock the worker's wait. */
@@ -1082,6 +1187,58 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               >
                 {`${completedCount} / ${PYTHON_LESSONS.length} Marked`}
               </div>
+            </div>
+            <div className="h-8 w-px" style={{ backgroundColor: 'var(--border)' }} />
+            {/* Take this step offline. The size is on the button because "ready offline" without a
+                number is a claim; the state is on a data attribute so the browser suite reads the same
+                thing a learner does. */}
+            <div className="text-right">
+              <div className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
+                Offline
+              </div>
+              <button
+                onClick={takeOffline}
+                data-testid="btn-offline-takealong"
+                data-offline-state={offline.state}
+                disabled={offline.state === 'working'}
+                title={
+                  offline.state === 'unsupported'
+                    ? 'This host sends its own isolation headers (dev server or preview), so it has no service worker to cache with - the built site on Pages does.'
+                    : offline.state === 'ready'
+                      ? 'The page, its bundle and Python are cached: this step opens and runs with the network off'
+                      : 'Cache this page, its bundle and the Python runtime, then report how much that took'
+                }
+                className="mt-0.5 px-2 py-0.5 rounded text-[11px] font-mono border cursor-pointer disabled:cursor-wait"
+                style={{
+                  color:
+                    offline.state === 'ready'
+                      ? 'var(--emerald)'
+                      : offline.state === 'unsupported'
+                        ? 'var(--dim)'
+                        : 'var(--accent)',
+                  borderColor: 'var(--border)',
+                  backgroundColor: 'var(--bg)',
+                }}
+              >
+                {offline.state === 'working'
+                  ? 'Caching… Python is loading'
+                  : offline.state === 'unsupported'
+                    ? 'Offline: built site only'
+                    : offline.state === 'ready'
+                      ? `Offline ready · ${offline.report ? offlineReportLine(offline.report) : 'checking'}`
+                      : offline.state === 'partial'
+                        ? `Take Python offline · ${offline.report ? offlineReportLine(offline.report) : ''}`
+                        : 'Take this step offline'}
+              </button>
+              {offline.state === 'partial' && (
+                <div
+                  data-testid="offline-partial-note"
+                  className="text-[10px] font-mono"
+                  style={{ color: 'var(--amber)' }}
+                >
+                  the shell is cached; press again for Python
+                </div>
+              )}
             </div>
           </div>
         </div>

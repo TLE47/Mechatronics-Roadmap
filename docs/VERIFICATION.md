@@ -43,7 +43,8 @@ npm run test:practice                   # roadmap <-> workbench join
 npm run test:theme                      # light/dark rules: stored pick, OS default, data-theme
 npm run test:theme:e2e                  # toggle contract + contrast on all 11 tabs, both themes
 npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pages fallback
-npm run test:offline                    # the built bundle with no host headers: worker isolation, cached shell, offline reload and deep link
+npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
+npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
 npm run test:editor                     # slider directives and which lessons get helper tabs
 npm run test:resume                     # the lesson the next visit reopens, which one the roadmap offers and when it hands forward, and the ids it refuses

@@ -101,15 +101,23 @@ with the lesson list rendered.
 
 `npm run test:offline` is the suite that proves it the way Pages serves it: the built bundle is served
 **without** the header pair, the worker takes control, and then the context goes offline. It asserts the
-isolated document, the cached shell/manifest/bundle, one online run that pulls the interpreter in, an
-offline reload that paints the workbench, a whole lesson run to the same verdict with the network off,
-and an offline deep link into a lesson.
+isolated document, the cached shell/manifest/bundle, the take-offline button, an offline reload that
+paints the workbench, a whole lesson run to a verdict with the network off, and an offline deep link
+into a lesson.
 
 **The interpreter is cached too.** Pyodide is loaded by that module worker with a dynamic `import()` of
 its ESM build, and its `pyodide.mjs`, wasm binary, stdlib zip and any wheel it loads are cached under
-`mechalab-pyodide-v1`. One online run is enough: the suite then goes offline and runs the same lesson to
-the same verdict from the cache - which is the difference between "offline reading" and "a lesson on a
-plane".
+`mechalab-pyodide-v1` - which is the difference between "offline reading" and "a lesson on a plane".
+
+**Take this step offline.** A button in the runtime strip makes that deliberate rather than accidental:
+[`src/offlineTakeAlong.ts`](src/offlineTakeAlong.ts) sends the worker the URLs this document is actually
+running (its own `<script>` and `<link>` tags, never a build manifest that goes stale), the worker caches
+them with `cache: 'reload'`, the runtime is loaded if it is not up yet, and the app then measures every
+`mechalab-*` cache and prints the result on the button - `Offline ready · 8.0 MB · 16 files`. The number
+is the transfer size the CDN and host served, not the decoded size on disk. A host that sends its own
+isolation headers (the dev server, a preview) has no service worker in front of it, and the button says
+so instead of claiming a cache it cannot build. `npm run test:takealong` pins the URL list, the size
+wording, and the rule that only the interpreter's own files let the button call itself ready.
 
 ### Keys
 
@@ -262,7 +270,8 @@ npm run test:scope           # Scope rules: payloads, cursor sampling, zoom/pan 
 npm run test:checkhints      # the failed check -> rung join, and the rule that earns rung 2
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
-npm run test:offline         # the service worker: isolation without host headers, cached shell, offline reload + deep link
+npm run test:offline         # the service worker: isolation without host headers, the take-offline button, offline reload, run + deep link
+npm run test:takealong       # the offline button's rules: URL list, size wording, what "ready" may claim
 npm run check:lessons        # the registry is current
 ```
 
