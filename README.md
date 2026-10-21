@@ -12,6 +12,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/TLE47/Mechatronics-Roadmap/ci.yml?label=ci)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml)
 [![Link check](https://img.shields.io/github/actions/workflow/status/TLE47/Mechatronics-Roadmap/link-check.yml?label=links)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/link-check.yml)
+[![Light/dark](https://img.shields.io/github/actions/workflow/status/TLE47/Mechatronics-Roadmap/ci.yml?label=light%2Fdark&style=flat-square)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml)
 [![Zero install](https://img.shields.io/badge/install-none-success?style=flat-square)](#what-you-need)
 [![Hardware](https://img.shields.io/badge/hardware-%240-success?style=flat-square)](#what-you-need)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://tle47.github.io/Mechatronics-Roadmap/)
@@ -172,6 +173,32 @@ python3 scripts/validate_modules.py   # module contracts, skip/gate keys, counts
 python3 scripts/lint_lessons.py       # lesson template and jargon rules
 npm run build && npm run test:workbench
 ```
+
+### Verify the theme
+
+MechaLab ships a light and a dark palette, and both are checked rather than eyeballed — the
+[light/dark badge](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml) is that
+step. After `npm ci` and a build:
+
+```bash
+npm run test:theme      # the rules: stored pick, OS default, data-theme, blocked storage
+npm run test:theme:e2e  # Chromium: the toggle contract, then all 11 tabs in both modes
+```
+
+- **`test:theme`** (10 cases, no browser) pins what a reader cannot see: a first visit stores
+  nothing and follows `prefers-color-scheme`; a pick in `localStorage['mechalab_theme_v1']` wins from
+  then on; a corrupt key or a private-mode store that throws falls back instead of breaking the shell.
+- **`test:theme:e2e`** drives the header toggle in Chromium, checks the choice survives a reload and
+  an OS flip, then composites every visible text run in every tab over the backgrounds it actually
+  sits on. It fails below 3:1 and reports anything under its size minimum; the current floor is
+  4.5:1 across 22 tab/theme pairs.
+- Add `--warnings` to name the runs between 3:1 and their minimum, or `--screenshots` to write one
+  PNG per tab per theme into `.fb-scratch/theme/`.
+
+`test:theme` runs inside `npm run test:workbench`; `test:theme:e2e` is its own step in CI (a seventh
+parallel browser suite pushed the older ones past their click timeouts). Tokens live in
+[`app/src/index.css`](app/src/index.css), the rules in [`app/src/theme.ts`](app/src/theme.ts), and
+[`app/README.md`](app/README.md#light-and-dark) has the full picture.
 
 ## License
 
