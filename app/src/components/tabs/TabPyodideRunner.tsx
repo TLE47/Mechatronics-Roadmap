@@ -11,6 +11,9 @@ import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.
 import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
 import { rememberLessonInUrl } from '../../lessonRoute';
+import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
+import { parseSliders } from '../../editor/sliderModel';
+import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
 import { roadmapStepForLesson } from '../../practiceLinks';
 import { stepBreadcrumb, stepCostLabel, stepForMilestone } from '../../spine';
 import { PYTHON_TAB_NAME } from '../../tabNames';
@@ -33,6 +36,7 @@ import {
   OctagonX,
   RefreshCw,
   ShieldCheck,
+  Lock,
   Loader2,
 } from 'lucide-react';
 
@@ -118,7 +122,13 @@ self.onmessage = async (event) => {
       timeoutSec = 4.0,
       plantSource,
       plantFilename,
+      helperFiles = [],
     } = msg;
+
+    activeRunId = runId;
+    const capturedOut = [];
+    const capturedErr = [];
+    let captureEnabled = true;
 
     try {
       const py = await ensurePyodideLoaded(cdnUrl);
@@ -131,10 +141,19 @@ self.onmessage = async (event) => {
         py.runPython('import sys\\nif "/" not in sys.path:\\n    sys.path.insert(0, "/")\\n');
         py.__mechalabPlantInstalled = plantFilename;
       }
-      const capturedOut = [];
-      const capturedErr = [];
-      let captureEnabled = true;
-
+      // The lesson's read-only files, exactly as the editor shows them. Written once per content
+      // revision: a helper the learner can read on screen is the module the import resolves to.
+      for (const file of helperFiles) {
+        if (!file || !file.name) continue;
+        if (!py.__mechalabFiles) py.__mechalabFiles = {};
+        if (py.__mechalabFiles[file.name] !== file.content) {
+          py.FS.writeFile('/' + file.name, file.content);
+          py.__mechalabFiles[file.name] = file.content;
+        }
+      }
+      if (helperFiles.length) {
+        py.runPython('import sys\\nif "/" not in sys.path:\\n    sys.path.insert(0, "/")\\n');
+      }
       py.setStdout({
         batched: (line) => {
           if (captureEnabled) capturedOut.push(line);
@@ -350,7 +369,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       return [];
     }
   });
-  const guideEditorRef = useRef<HTMLTextAreaElement | null>(null);
+  const guideEditorRef = useRef<PythonEditorHandle | null>(null);
+  const editorPanelRef = useRef<HTMLDivElement | null>(null);
+  // Which tab of the lesson's small project is open: null is `main.py`, a string is a read-only
+  // helper. Reset on every lesson change, because a helper from the previous lesson is not this one.
+  const [openHelper, setOpenHelper] = useState<string | null>(null);
   const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
   // Named groups the roadmap also uses; the old "Step 1 / Steps 3-5 / Steps 6-10" numbering was a
   // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
@@ -483,6 +506,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   const currentLesson: PythonLessonItem =
     PYTHON_LESSONS.find((l) => l.id === selectedId) || PYTHON_LESSONS[0];
+  // The lesson's read-only helpers. The plant is 400 lines a learner can read but not edit; the
+  // worker writes the same text into Pyodide, so `from mechalab_plant import ...` works unchanged.
+  const helperFiles = React.useMemo(
+    () => helperFilesForLesson(currentLesson, { filename: MECHALAB_PLANT_FILENAME, source: MECHALAB_PLANT_PY }),
+    [currentLesson]
+  );
+  const sliderCount = React.useMemo(() => parseSliders(code).length, [code]);
+  const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
+  useEffect(() => {
+    setOpenHelper(null);
+  }, [selectedId]);
   // What the lesson's harness says about the code on screen now; a `null` report is a failed gate
   // (unproven), never a pass.
   const currentHarness = harnessForLesson(currentLesson.id);
@@ -763,6 +797,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
           plantSource: MECHALAB_PLANT_PY,
           plantFilename: MECHALAB_PLANT_FILENAME,
+          helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
         });
       });
 
@@ -889,6 +924,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // A slider drag is a parameter change, so the answer is a fresh run - but one run per drag, not
+  // one per pixel. The timer is cleared on unmount so a removed tab cannot run in the background.
+  const sliderTimerRef = useRef<number | null>(null);
+  const handleSliderCommit = () => {
+    if (sliderTimerRef.current !== null) window.clearTimeout(sliderTimerRef.current);
+    sliderTimerRef.current = window.setTimeout(() => {
+      sliderTimerRef.current = null;
+      runShortcutRef.current();
+    }, 450);
+  };
+  useEffect(
+    () => () => {
+      if (sliderTimerRef.current !== null) window.clearTimeout(sliderTimerRef.current);
+    },
+    []
+  );
 
   // A verdict earns a toast once. Leaving the lesson or running again clears it, so the same pass
   // cannot stack three copies on screen.
@@ -1123,8 +1175,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </p>
               <button
                 onClick={() => {
-                  guideEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  guideEditorRef.current?.focus();
+                  // The reader may be looking at a helper tab; the guide points at their code.
+                  setOpenHelper(null);
+                  editorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  window.setTimeout(() => guideEditorRef.current?.focus(), 0);
                 }}
                 data-testid="btn-guide-editor"
                 className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 cursor-pointer"
@@ -1582,24 +1636,85 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
           )}
 
-          {/* Code Editor */}
-          <div className="bg-panel border border-line rounded-xl overflow-hidden">
-            <div className="bg-canvas px-4 py-2 border-b border-line-soft flex items-center justify-between">
-              <span className="text-xs font-mono text-muted">
-                Python 3 Editor — Edit TODOs and press &quot;Run &amp; Verify Output&quot; (Web Worker Isolated)
-              </span>
+          {/* Code editor: a small project, not a scratch pad. `main.py` is the learner's; a helper
+              the lesson imports is a second, locked tab whose text is the module Pyodide loads. */}
+          <div
+            ref={editorPanelRef}
+            id="python-runner-editor"
+            className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
+          >
+            <div className="bg-canvas border-b border-line-soft flex flex-wrap items-center justify-between gap-2 px-3 py-1.5">
+              <div className="flex items-center gap-1" role="tablist" aria-label="Lesson files">
+                <button
+                  role="tab"
+                  aria-selected={openHelper === null}
+                  data-testid="editor-tab-main"
+                  onClick={() => setOpenHelper(null)}
+                  className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[11.5px] font-mono cursor-pointer"
+                  style={{
+                    color: openHelper === null ? 'var(--accent)' : 'var(--muted)',
+                    borderBottom: openHelper === null ? '2px solid var(--accent)' : '2px solid transparent',
+                  }}
+                >
+                  <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                  {MAIN_FILE_NAME}
+                </button>
+                {helperFiles.map((file) => (
+                  <button
+                    key={file.name}
+                    role="tab"
+                    aria-selected={openHelper === file.name}
+                    data-testid={`editor-tab-${file.name}`}
+                    onClick={() => setOpenHelper(file.name)}
+                    title={`${file.name} is read-only: it is the module the checks import`}
+                    className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[11.5px] font-mono cursor-pointer"
+                    style={{
+                      color: openHelper === file.name ? 'var(--accent)' : 'var(--muted)',
+                      borderBottom: openHelper === file.name ? '2px solid var(--accent)' : '2px solid transparent',
+                    }}
+                  >
+                    <Lock className="h-3 w-3" aria-hidden="true" />
+                    {file.name}
+                  </button>
+                ))}
+              </div>
               <span className="text-[11px] font-mono text-faint tabular-nums">
-                {code.split('\n').length} lines
+                {openHelperFile
+                  ? `${openHelperFile.content.split('\n').length} lines · read-only`
+                  : `${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`}
               </span>
             </div>
-            <textarea
-              ref={guideEditorRef}
-              value={code}
-              onChange={(e) => commitCode(e.target.value)}
-              spellCheck={false}
-              data-testid="textarea-python-code"
-              className="w-full h-72 p-4 bg-canvas text-ink font-mono text-xs leading-relaxed focus:outline-none resize-y"
-            />
+            {openHelperFile ? (
+              <>
+                <p
+                  className="border-b px-3 py-1.5 text-[11px]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
+                >
+                  Read-only helper. Your code imports this file; edit{' '}
+                  <span className="font-mono" style={{ color: 'var(--accent)' }}>
+                    {MAIN_FILE_NAME}
+                  </span>{' '}
+                  to change the answer.
+                </p>
+                <PythonEditor
+                  key={`${selectedId}:${openHelperFile.name}`}
+                  value={openHelperFile.content}
+                  readOnly
+                  ariaLabel={`${openHelperFile.name}, read-only lesson helper`}
+                  testId="editor-helper"
+                />
+              </>
+            ) : (
+              <PythonEditor
+                key={`main:${selectedId}`}
+                ref={guideEditorRef}
+                value={code}
+                onChange={commitCode}
+                ariaLabel="Python code editor"
+                testId="editor-main"
+                onSliderCommit={handleSliderCommit}
+              />
+            )}
           </div>
 
           {/* Instructor Behavioral Assessment Panel */}
