@@ -18,8 +18,9 @@
  * 7. Progress survives a full browser reload (`page.reload()`), a plain visit with no query string
  *    reopens the lesson the learner was last on, and the roadmap offers it back as a resume card -
  *    then hands that offer forward to the next unverified lesson once the first is passed, and
- *    names the unfinished edit the editor is holding (which reopening from a plain visit restores),
- *    so "continue" always means forward progress and never a fresh starter.
+ *    names the unfinished edit the editor is holding (which reopening from a plain visit restores)
+ *    along with how many of the starter's marked steps it has written, so "continue" always means
+ *    forward progress and never a fresh starter.
  * 8. Portfolio export (`buildPortfolioMarkdown` modal preview) contains the exact, strictly
  *    separated completion categories (`Executed & Passed in Pyodide WASM` vs `Self-Marked Complete`).
  * 9. Lesson 08.1 passes only when its four-fault bench grades every repair at target: a repair left
@@ -724,16 +725,28 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('tab-btn-tab-pyodide').click();
     await waitForEditor(page, undefined, 15000);
     const p4Starter = await getEditorCode(page);
-    const halfWritten = `${p4Starter.trimEnd()}\n# half-written idea, not run yet`;
+    // A real half-finished attempt: P.4's one measurable step (`# TODO 1` over `safe_cmd = cmd`) is
+    // written, and nothing else is. The card has to say "1 of 1", not "2 lines changed".
+    const halfWritten = p4Starter.replace(
+      'safe_cmd = cmd',
+      'safe_cmd = min(max(cmd, 0), 255)'
+    );
+    assert.notEqual(halfWritten, p4Starter, 'P.4 starter must still carry the TODO 1 placeholder');
     await setEditorCode(page, halfWritten);
     await page.waitForTimeout(700); // the draft is written on a pause, not on every keystroke
     await page.getByTestId('tab-btn-tab-arch').click();
     const draftLine = page.getByTestId('resume-draft');
     await draftLine.waitFor({ timeout: 5000 });
     const draftText = (await draftLine.textContent()) ?? '';
+    const draftProgressText = (await page.getByTestId('resume-draft-progress').textContent())?.trim();
+    assert.equal(
+      draftProgressText,
+      '1 of 1 TODO line written',
+      `the card must say how close the exercise is to done, not only how long the diff is; got: ${draftProgressText}`
+    );
     assert(
-      draftText.includes('1 line changed'),
-      `the card must price the unfinished edit by what changed from the starter; got: ${draftText}`
+      draftText.includes('lines changed'),
+      `the card keeps the raw diff beside the step count; got: ${draftText}`
     );
     const draftCard = (await page.getByTestId('resume-card').textContent()) ?? '';
     assert(
@@ -1414,7 +1427,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, unfinished-draft restore, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
     );
   } finally {
     await browser.close();

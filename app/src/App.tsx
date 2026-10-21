@@ -40,6 +40,7 @@ import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { lessonIdFromLocation } from './lessonRoute';
 import { readLastLessonId, lessonOffer } from './lastLesson';
 import { editedLines, readDraft } from './lessonDraft';
+import { draftProgress } from './lessonCoach';
 import { lessonIdOf, type PaletteItem } from './palette';
 import { paletteCatalog } from './paletteCatalog';
 import {
@@ -741,6 +742,7 @@ export const App: React.FC = () => {
     // What the learner typed into that exercise and did not finish (`src/lessonDraft.ts`). The card
     // prints it and the runner restores it, so "continue" hands back the work, not a fresh starter.
     const draft = readDraft(entry.id);
+    const progress = draft === null ? null : draftProgress(draft, entry);
     return {
       id: entry.id,
       title: entry.title,
@@ -749,6 +751,11 @@ export const App: React.FC = () => {
       completed: !!completedLessons[entry.id],
       reason: offer.reason,
       edited: draft === null ? 0 : editedLines(draft, entry.starterCode),
+      // How many of the starter's marked steps the draft has written: the difference between "six
+      // lines changed" and "one of two steps done", which is what "close to passing" means here.
+      stepsFilled: progress?.filled ?? 0,
+      stepsTotal: progress?.total ?? 0,
+      stepsAreHoles: progress?.isExercise ?? false,
     };
   })();
 

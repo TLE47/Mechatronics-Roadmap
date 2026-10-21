@@ -11,6 +11,42 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 137: The Card Counts the Steps, Not the Lines
+
+Run 136's card answered "how close is this to passing?" with **6 lines changed** - mechanically true,
+and useless. A learner who appended one comment read as progress; a learner who wrote one step of two
+read as six lines. Both are the diff, and neither is the work.
+
+**The starter already knows its steps, so the card counts them.** `draftProgress()` in
+[`app/src/lessonCoach.ts`](app/src/lessonCoach.ts) reuses the markers the guide has always counted, in
+one definition of a hole:
+
+| starter | probe | filled when |
+| :--- | :--- | :--- |
+| a `# TODO n:` lesson | the code directly under the marker, up to the first blank line (`safe_cmd = cmd`) | that code is no longer in the draft, compared after whitespace squeeze so re-indenting or moving the answer still counts |
+| a graded exercise | the `raise NotImplementedError(...)` line, which is marker and placeholder at once | the raise is gone |
+| a TODO with no placeholder under it | nothing to compare | never - it is left out of the denominator rather than guessed at |
+
+The card now reads `Your unfinished edit is still here · 1 of 1 TODO line written · 2 lines changed`
+(exercises: `1 of 4 NotImplementedError holes filled`). The raw diff stays beside it as detail; the
+step count is the answer.
+
+**What it does not claim.** This is a text measure: writing every marked step is necessary and not
+sufficient, because the instructor's behavioural checks still have to run and agree. The card says how
+much is written, never that it passes - the runner remains the only thing that can say that.
+
+**Guarded.** Five more checks in [`scripts/test_lesson_draft.mjs`](scripts/test_lesson_draft.mjs)
+(15 in all): an untouched starter is `0 of N`, replacing the first placeholder counts exactly one,
+**appending unrelated code counts zero** - the precise case run 136 got wrong - a filled exercise raise
+counts one and leaves the denominator alone, and a starter with no markers answers `0 / 0` instead of
+inventing a total. `lessonCoach`'s registry import became type-only with a `.ts` extension so the
+measure is testable in Node. Step **7e** of the browser suite now writes P.4's `TODO 1` and asserts the
+card says `1 of 1 TODO line written`.
+
+Measured on the run: `test:draft` 15/15, `test:workbench` 14/14, `check_all.py` 28/28.
+
+---
+
 ## [2026-10-21] — Run 136: The Card Knows What Is Half-Written
 
 Run 135 taught the card which lesson to offer, and then the button opened that lesson on its starter.

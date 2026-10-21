@@ -1,4 +1,6 @@
-import { PythonLessonItem } from './data/pythonLessonsData';
+// Type-only, and the `.ts` extension is for Node's type stripping (`scripts/test_lesson_draft.mjs`):
+// the draft-progress rule below is tested as a function, not through a browser.
+import type { PythonLessonItem } from './data/pythonLessonsData.ts';
 
 /**
  * A short, lesson-specific first-run brief.
@@ -102,6 +104,131 @@ function finishFor(expectedOutput: string): string {
     .filter(Boolean)
     .slice(0, 2);
   return trim(lines.join(' · ') || 'the Expected Output panel', MAX_FINISH_CHARS);
+}
+
+/** One marked hole, and the starter text a learner has to change to fill it. */
+export interface HoleSpan {
+  /** `todo-<n>` for a numbered marker, `line-<index>` for an unnumbered one. */
+  key: string;
+  /** The code the marker introduces: what a filled hole no longer looks like. */
+  probe: string;
+}
+
+const CODE_LINE = /^[ \t]*\S/;
+const COMMENT_LINE = /^[ \t]*#/;
+
+function compact(text: string): string {
+  return text.replace(/\s+/g, '');
+}
+
+/**
+ * The code directly under a marker: the first non-comment, non-blank line, plus its neighbours at the
+ * same indentation - stopping at the first blank line, which is where a starter stops marking.
+ *
+ * `safe_cmd = cmd` under `# TODO 1:` is one such probe. A TODO with no placeholder under it (the
+ * learner writes a line that is not there yet) has an empty probe, and its span is used instead.
+ */
+function probeAfter(lines: string[], markerIndex: number): string {
+  const collected: string[] = [];
+  let indent: number | null = null;
+  for (let index = markerIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim()) break;
+    if (COMMENT_LINE.test(line)) continue;
+    if (!CODE_LINE.test(line)) continue;
+    const own = line.length - line.trimStart().length;
+    if (indent === null) indent = own;
+    else if (own < indent) break;
+    collected.push(line);
+  }
+  return collected.join('\n');
+}
+
+/**
+ * The spans a starter marks that this measure can compare, in file order.
+ *
+ * The markers are the same two the coach counts above (`# TODO n:` comments and `raise
+ * NotImplementedError("...")`), so the card and the guide are reading one definition of a hole - with
+ * one honest difference: a TODO whose starter leaves no placeholder under it cannot be measured by
+ * text, and is not counted, while the guide still mentions it.
+ */
+export function starterHoles(starter: string, isExercise: boolean): HoleSpan[] {
+  const lines = starter.split('\n');
+  if (isExercise) {
+    const spans: HoleSpan[] = [];
+    const seen = new Set<string>();
+    lines.forEach((line, index) => {
+      if (!/raise\s+NotImplementedError\(/.test(line)) return;
+      // Keyed by the raise itself, so a hole is still recognisable after the ones above it are
+      // filled and the surviving raises renumber.
+      const key = `raise-${compact(line)}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      // The raise is both the marker and the placeholder: a filled hole is one where it is gone.
+      spans.push({ key, probe: line.trim() });
+    });
+    return spans;
+  }
+
+  const matcher = /^[ \t]*#[ \t]*TODO\b(?:[ \t]*(\d+))?/i;
+  const seen = new Set<string>();
+  const spans: HoleSpan[] = [];
+  lines.forEach((line, index) => {
+    const match = line.match(matcher);
+    if (!match) return;
+    const key = match[1] ? `todo-${match[1]}` : `line-${index}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    // No placeholder under the marker means there is nothing to compare against: a learner writes
+    // that line from nothing, and the scaffolding further down is not theirs to edit. Such a hole is
+    // left out of the count rather than guessed at, so "3 of 4" is never three edits of `print`.
+    const placeholder = probeAfter(lines, index);
+    if (placeholder) spans.push({ key, probe: placeholder });
+  });
+  return spans;
+}
+
+/** What the roadmap card says about a half-finished exercise. */
+export interface DraftProgress {
+  /** Holes whose marked code the draft has already changed. */
+  filled: number;
+  /** Holes the starter marks in a way this can measure; 0 when the starter marks none. */
+  total: number;
+  /** True for a graded exercise bundle, which counts `raise NotImplementedError` instead. */
+  isExercise: boolean;
+}
+
+/**
+ * How much of a half-written exercise is written - the card's answer to "how close is this to
+ * passing", as far as text can tell.
+ *
+ * It is deliberately a *text* measure and says so: filling every hole is necessary and not
+ * sufficient, because the instructor's behavioural checks still have to run and agree. What it will
+ * not do is guess from line counts, which is why run 136's "6 lines changed" could sit beside an
+ * untouched starter.
+ *
+ * A hole counts as filled when the code its marker introduced is no longer in the draft - compared
+ * by the probe rather than by position, so indenting or moving the answer still counts, and a learner
+ * who deleted the TODO comment but reused the placeholder line does not.
+ */
+export function draftProgress(code: string, lesson: PythonLessonItem): DraftProgress {
+  const isExercise = lesson.track === 'modules';
+  const holes = starterHoles(lesson.starterCode, isExercise);
+  if (holes.length === 0) return { filled: 0, total: 0, isExercise };
+  const draftHoles = new Map(starterHoles(code, isExercise).map((hole) => [hole.key, hole]));
+  const draftText = compact(code);
+  let filled = 0;
+  for (const hole of holes) {
+    const inDraft = draftHoles.get(hole.key);
+    if (inDraft) {
+      if (compact(inDraft.probe) !== compact(hole.probe)) filled += 1;
+    } else if (!draftText.includes(compact(hole.probe))) {
+      // The marker is gone. That counts only when the code it marked is gone with it, so tidying a
+      // comment up is not mistaken for work.
+      filled += 1;
+    }
+  }
+  return { filled, total: holes.length, isExercise };
 }
 
 export function coachForLesson(lesson: PythonLessonItem): LessonCoach {

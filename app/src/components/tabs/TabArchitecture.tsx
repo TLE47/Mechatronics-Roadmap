@@ -66,6 +66,11 @@ interface TabArchitectureProps {
     reason: 'resume' | 'next';
     /** Lines the learner's unfinished draft differs from the lesson's starter by; 0 when untouched. */
     edited: number;
+    /** Marked steps the draft has written, out of the ones the starter makes measurable. */
+    stepsFilled: number;
+    stepsTotal: number;
+    /** True for a graded exercise, whose marked steps are `raise NotImplementedError` holes. */
+    stepsAreHoles: boolean;
   } | null;
 }
 
@@ -166,11 +171,26 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 : 'opened, not verified yet'}
             </div>
             {/* The half-written exercise is the part of the work the lesson id cannot show: without
-                this the card would offer "a lesson" when what is waiting is a program. */}
+                this the card would offer "a lesson" when what is waiting is a program. The step
+                count is the honest half of "how close is this to passing" - the starter marks the
+                steps, so the card can count the ones already written; whether they are *right* is
+                still the runner's job, and the card never claims otherwise. */}
             {resumeLesson.edited > 0 && (
               <div data-testid="resume-draft" className="mt-1 text-xs text-emerald">
-                Your unfinished edit is still here · {resumeLesson.edited}{' '}
-                {resumeLesson.edited === 1 ? 'line' : 'lines'} changed from the starter
+                Your unfinished edit is still here
+                {resumeLesson.stepsTotal > 0 && (
+                  <>
+                    {' · '}
+                    <span data-testid="resume-draft-progress">
+                      {resumeLesson.stepsFilled} of {resumeLesson.stepsTotal}{' '}
+                      {resumeLesson.stepsAreHoles
+                        ? `NotImplementedError ${resumeLesson.stepsTotal === 1 ? 'hole' : 'holes'} filled`
+                        : `TODO ${resumeLesson.stepsTotal === 1 ? 'line' : 'lines'} written`}
+                    </span>
+                  </>
+                )}
+                {' · '}
+                {resumeLesson.edited} {resumeLesson.edited === 1 ? 'line' : 'lines'} changed
               </div>
             )}
           </div>

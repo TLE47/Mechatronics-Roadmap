@@ -25,6 +25,7 @@ import {
   saveDraft,
 } from '../app/src/lessonDraft.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
+import { coachForLesson, draftProgress } from '../app/src/lessonCoach.ts';
 
 let passed = 0;
 let failed = 0;
@@ -178,6 +179,58 @@ check('editedLines counts what changed, not how long the file is', () => {
     2,
     'expected a rewritten line to cost its removal plus its replacement'
   );
+});
+
+// How close a half-written exercise is to passing, as far as text can tell. The point of these
+// checks is the difference between "two lines changed" (run 136's measure) and "one step written":
+// unrelated typing must not read as progress, and a filled step must count without running anything.
+const lessonById = (id) => PYTHON_LESSONS.find((lesson) => lesson.id === id);
+const P1 = lessonById('P.1');
+const P4 = lessonById('P.4');
+const EXERCISE = PYTHON_LESSONS.find((lesson) => lesson.track === 'modules');
+
+check('an untouched starter has nothing written', () => {
+  for (const lesson of [P1, P4, EXERCISE]) {
+    const progress = draftProgress(lesson.starterCode, lesson);
+    assert.equal(progress.filled, 0, `${lesson.id}: expected no holes filled on the starter`);
+    assert.ok(progress.total > 0, `${lesson.id}: expected the starter to mark holes to measure`);
+    assert.ok(
+      progress.total <= coachForLesson(lesson).holeCount,
+      `${lesson.id}: the card must never claim more holes than the guide counts`
+    );
+  }
+});
+
+check('filling one marked step counts one, and only what changed', () => {
+  const starter = P1.starterCode;
+  const filled = starter.replace('encoder_ticks = encoder_ticks', 'encoder_ticks = encoder_ticks + 25');
+  assert.equal(draftProgress(filled, P1).filled, 1, 'expected replacing the first placeholder to count once');
+  const both = filled.replace('battery_level = battery_level', 'battery_level = battery_level - 0.45');
+  // TODO 1 covers both assignments, so its probe as a whole still differs from the starter's.
+  assert.ok(draftProgress(both, P1).filled >= 1, 'expected the whole first step to stay counted');
+});
+
+check('unrelated typing does not read as progress', () => {
+  const noisy = `${P4.starterCode}\nprint("a thought")`;
+  assert.equal(
+    draftProgress(noisy, P4).filled,
+    0,
+    'expected appending a line to leave the measure where the starter is; changed-lines would have said 2'
+  );
+});
+
+check('an exercise counts a hole as filled when its raise is gone', () => {
+  const raise = EXERCISE.starterCode.split('\n').find((line) => /raise\s+NotImplementedError\(/.test(line));
+  assert.ok(raise, 'expected the exercise starter to raise for at least one hole');
+  const before = draftProgress(EXERCISE.starterCode, EXERCISE);
+  const after = draftProgress(EXERCISE.starterCode.replace(raise, '    return 1.0'), EXERCISE);
+  assert.equal(after.filled, before.filled + 1, 'expected implementing one raise to count one hole');
+  assert.equal(after.total, before.total, 'expected the denominator to stay the starter\'s own count');
+});
+
+check('a lesson whose starter marks nothing measurable says so instead of guessing', () => {
+  const unmarked = { ...P1, starterCode: 'print("no markers here")' };
+  assert.deepEqual(draftProgress('print(1)', unmarked), { filled: 0, total: 0, isExercise: false });
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
