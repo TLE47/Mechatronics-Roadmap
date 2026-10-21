@@ -170,14 +170,16 @@ jobs:
       # Its own step, not a seventh suite in the parallel run above: it drives a browser through all
       # eleven tabs twice, and under that much contention the older suites start missing their 30 s
       # click timeouts. Alone it takes ~35 s and fails on a contrast regression, not on a slow runner.
-      - name: Check light/dark: toggle contract, and WCAG contrast on all 11 tabs in both modes
+      # A colon inside a step name has to be quoted: unquoted, YAML reads the second `: ` as another
+      # mapping and the whole workflow fails to parse, which GitHub reports as a run that fails in 0 s.
+      - name: "Check light/dark: toggle contract, and WCAG contrast on all 11 tabs in both modes"
         run: npm run test:theme:e2e
 
       # The interrupt path needs cross-origin isolation and a real SharedArrayBuffer, which no unit
       # test can provide: this suite stops a `while True:` in place, proves the interpreter survived
       # it, and answers an `input()` mid-run. It downloads Pyodide once, so it is its own step rather
       # than a fifth suite competing for the same machine.
-      - name: Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback
+      - name: "Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback"
         run: npm run test:runtime
 
       - name: Configure Pages
