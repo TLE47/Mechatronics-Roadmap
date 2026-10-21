@@ -136,6 +136,19 @@
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(15, 118, 110, 0.75);
 }
 
+/* Two faces, self-hosted, so the first name in the stack is a font the browser actually has.
+   `body` used to name Inter and hand Linux and Windows the system sans fallback, and the code
+   editor carried its own copy of the mono stack: one name for each, here, is what makes the UI and
+   the editor look like the same instrument. The files come from `@fontsource-variable` and are
+   imported in `src/main.tsx`; they are weight-axis variable woff2, `font-display: swap`, and
+   unicode-range gated, so a Latin-script visit fetches two files and nothing else. */
+@theme {
+  --font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+}
+
 /* Utilities, not just properties: Tailwind v4 registers these names so `bg-panel`,
    `text-muted:`, `border-line` and opacity modifiers (`bg-emerald/20`) all follow
    the active theme. `inline` keeps the generated CSS pointing at the custom
@@ -185,8 +198,7 @@ body {
   transition: background-color var(--t-base) var(--ease-out), color var(--t-base) var(--ease-out);
   background-repeat: no-repeat;
   color: var(--text);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--step-0);
   line-height: var(--lh-body);
   font-feature-settings: "cv11", "ss01";
@@ -356,7 +368,7 @@ body {
     border: 1px solid var(--border-strong);
     background: color-mix(in srgb, var(--bg) 50%, transparent);
     color: var(--muted);
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     line-height: 1.4;
   }

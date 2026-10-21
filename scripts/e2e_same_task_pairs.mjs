@@ -86,7 +86,19 @@ window.__pairs = {
   },
   digest() {
     const norm = (s) => (s || '').replace(/\\s+/g, ' ').trim();
-    const text = norm(document.body.innerText);
+    // The runtime caption is a live progress label - Loading WASM... while the worker boots,
+    // Warming Python (once, ~10 MB)... while it warms, then Python ready in 1.4 s with a measured
+    // time. Two runs of the same clicks catch it at different moments, and nothing in this sweep is
+    // about the boot banner; under load it was the only difference between the two runs of a pair
+    // that opens a lesson. Removed before comparing, for the same reason the two wall-clock storage
+    // keys are filtered out below.
+    const runtimeLabel = norm(
+      document.querySelector('[data-testid="runner-runtime-status"]')?.textContent ?? ''
+    );
+    const flattened = norm(document.body.innerText);
+    // Split and join rather than a RegExp: the label carries dots, brackets and a percent sign, and
+    // a pattern would have to escape them inside the same page-evaluated source this lives in.
+    const text = runtimeLabel ? flattened.split(runtimeLabel).join(' ') : flattened;
     const fields = Array.from(document.querySelectorAll('input, textarea, select'))
       .map((el) => (el.type || el.tagName) + '=' + (el.value || ''))
       .join('|');

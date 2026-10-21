@@ -11,6 +11,7 @@
  *   test:palette     the ⌘K catalogue: every lesson/tab/command once, and predictable ranking
  *   test:editor      slider directives (parse/clamp/format) and which lessons get helper tabs
  *   test:resume      the lesson the next visit reopens, including the ids it must refuse
+ *   test:fonts       the two self-hosted faces are named, imported and emitted
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
  *   test:e2e:pages   `npm run build` if `dist/` was missing, a static Pages server + Chromium, Firefox
@@ -126,6 +127,7 @@ async function main() {
     runSuite('resume', 'test_last_lesson.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
+    runSuite('fonts', 'test_fonts.mjs', {}),
     runSuite('e2e', 'e2e_browser_workbench.mjs', { E2E_BASE_URL: devUrl }),
     runSuite('pages', 'e2e_pages_bundle.mjs', { PAGES_SERVER_URL: pagesUrl }),
     runSuite('pairs', 'e2e_same_task_pairs.mjs', { E2E_BASE_URL: devUrl }),

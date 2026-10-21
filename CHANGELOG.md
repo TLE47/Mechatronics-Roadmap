@@ -11,6 +11,39 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 133: One Typeface for the Bench, and the Browser Has It
+
+`body` asked for `font-family: Inter, ...` and nothing in the bundle was Inter. On macOS that fell
+through to the system face and looked close enough; on Windows and Linux the same page rendered in
+Segoe or DejaVu, so two readers of the same lesson saw two different products. The code editor
+carried its own hard-coded mono stack, and the editor's slider row read
+`var(--font-sans, system-ui, sans-serif)` - a token nothing defined, so its fallback was the truth.
+
+**Both faces are self-hosted and named once.** [`src/main.tsx`](app/src/main.tsx) imports
+`@fontsource-variable/inter` and `@fontsource-variable/jetbrains-mono`, and
+[`src/index.css`](app/src/index.css) defines `--font-sans` / `--font-mono` in an `@theme` block, which
+is what gives Tailwind's `font-sans` and `font-mono` utilities the same two families and makes
+`var(--font-sans)` resolve at all. `body` reads the token instead of spelling out a stack, and the
+CodeMirror scroller asks for `var(--font-mono)` - so the editor's digits line up with the tables and
+readouts beside them rather than being the only surface with a private font.
+
+| | |
+| :--- | :--- |
+| on the wire, a Latin visit | **88 KB** (Inter 48 KB + JetBrains Mono 40 KB, weight-axis variable woff2) |
+| in `dist/` | 12 subset files, 296 KB - unicode-range gated, so a Latin page fetches two |
+| loading | `font-display: swap`; no blocking, no third-party request, no CDN outage |
+| measured | `document.fonts.check()` true for both; exactly two woff2 requested; `body` and `.cm-scroller` resolve to the variable families |
+
+**Guarded.** `npm run test:fonts` ([`scripts/test_fonts.mjs`](scripts/test_fonts.mjs)) fails when
+an import goes missing, when a token stops naming the variable family, when a font CDN appears in
+the shell or the stylesheet, and - against `dist/` - when the two Latin files are not emitted.
+
+**No serif.** The plan this came from asks for a serif for lesson prose. The long-form reading lives
+in the Markdown pages, rendered by GitHub; the workbench's own surface is an editor, a list and
+tables, where a serif would be a costume rather than a reading improvement.
+
+---
+
 ## [2026-10-21] — Run 132: The Workbench Reopens Where You Left Off
 
 The address bar remembered a lesson (`?lesson=P.7`), and progress was stored - but the lesson itself

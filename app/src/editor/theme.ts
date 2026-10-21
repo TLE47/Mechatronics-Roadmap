@@ -35,8 +35,10 @@ export const pythonTheme = EditorView.theme(
     },
     '&.cm-focused': { outline: 'none' },
     '.cm-scroller': {
-      fontFamily:
-        'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      // One mono face for the whole app (`--font-mono`, src/index.css), so the editor's digits line
+      // up with the tables and readouts beside it instead of being the only surface with its own
+      // hard-coded stack.
+      fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
       lineHeight: '1.6',
       maxHeight: '360px',
       overflow: 'auto',
