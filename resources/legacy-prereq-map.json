@@ -561,10 +561,8 @@
     "joseph_form_so3_manifold_eskf": {
       "page": "05-control.T3.05c",
       "evidence": [
-        "eskf",
         "form",
-        "joseph",
-        "manifold"
+        "joseph"
       ]
     },
     "kelvin_kinematic_coupling": {
@@ -620,6 +618,7 @@
     "open_loop_three_phase_sine_modulation": {
       "page": "03-sensors.T1.03a",
       "evidence": [
+        "loop",
         "open",
         "phase",
         "three"
@@ -738,7 +737,6 @@
     "receding_horizon_embedded_mpc": {
       "page": "05-control.T3.05c",
       "evidence": [
-        "embedded",
         "horizon",
         "mpc"
       ]
