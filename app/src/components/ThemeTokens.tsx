@@ -41,7 +41,7 @@ const ValueCell: React.FC<{ token: string; palette: 'dark' | 'light'; value: str
   palette,
   value,
 }) => (
-  <span className="flex items-center gap-2">
+  <span className="flex items-center gap-2 whitespace-nowrap">
     <Swatch token={token} palette={palette} value={value} />
     <code
       data-testid="token-value"
@@ -57,12 +57,12 @@ const ValueCell: React.FC<{ token: string; palette: 'dark' | 'light'; value: str
 
 const ColourRow: React.FC<{ row: ColourToken }> = ({ row }) => (
   <tr data-testid="theme-token-row" data-token={row.name}>
-    <td className="py-1.5 pr-3 align-middle">
+    <td className="py-1.5 pr-4 align-middle whitespace-nowrap">
       <code className="text-[12px] font-semibold" style={{ color: 'var(--text)' }}>
         {row.name}
       </code>
     </td>
-    <td className="py-1.5 pr-3 align-middle">
+    <td className="py-1.5 pr-4 align-middle whitespace-nowrap">
       {row.utility ? (
         <code className="text-[11.5px]" style={{ color: 'var(--accent)' }}>
           {row.utility}
@@ -84,12 +84,12 @@ const ColourRow: React.FC<{ row: ColourToken }> = ({ row }) => (
 
 const ScaleRow: React.FC<{ row: TokenRow }> = ({ row }) => (
   <tr data-testid="theme-scale-row" data-token={row.name}>
-    <td className="py-1.5 pr-3 align-middle">
+    <td className="py-1.5 pr-4 align-middle whitespace-nowrap">
       <code className="text-[12px] font-semibold" style={{ color: 'var(--text)' }}>
         {row.name}
       </code>
     </td>
-    <td className="py-1.5 pr-3 align-middle">
+    <td className="py-1.5 pr-4 align-middle">
       <code className="text-[11.5px] tnum" style={{ color: 'var(--muted)' }}>
         {row.dark}
       </code>
