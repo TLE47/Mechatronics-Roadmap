@@ -35,27 +35,22 @@ once omitted all 23 lesson pages inside Tracks 00-08.
 ## Full local run
 
 ```bash
-python3.12 scripts/verify_repo.py --verbose
-python3.12 scripts/validate_modules.py
-python3.12 scripts/lint_lessons.py
-python3.12 scripts/check_ramp_lessons.py
-python3.12 scripts/audit_step_size.py --check
-python3.12 scripts/generate_sim_route.py --check
-python3.12 scripts/generate_readme_counts.py --check
-python3.12 scripts/generate_step_docs.py --check
-python3.12 scripts/generate_start_here.py --check
-python3.12 scripts/generate_run_callouts.py --check
-python3.12 scripts/check_tab_names.py
-python3.12 scripts/check_consistency.py
-python3.12 scripts/lint_assertions.py
-python3.12 scripts/run_all_labs.py
-python3.12 -m unittest discover -s tests
-npm run test:practice
-npm run test:smoke
+python3.12 scripts/check_all.py         # every gate CI's verify step runs, in CI's order (~12 s)
+python3.12 scripts/check_all.py --full  # + the 48-package exercise sweep and the unittest discovery
+python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
+npm run test:practice                   # roadmap <-> workbench join
+npm run test:smoke                      # needs `npm ci` first
 ```
 
-The same list, plus the 48-package exercise sweep and the native-dependency installs, runs in
-[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on Ubuntu and macOS. The weekly
+`check_all.py --list` prints the gates it runs and which are heavy; `--only <gate>` re-runs one
+after you regenerate something, and `--json` reports them machine-readably. The list is not a
+second opinion about what matters: [`tests/test_check_all.py`](../tests/test_check_all.py) parses
+the workflow's verify step and fails when the script and CI drift apart, so a gate added in one
+place cannot go missing in the other. It exits `2` when handed an interpreter other than the
+pinned 3.12, because two of the gates execute module code that needs 3.10+ syntax.
+
+The same gates, plus the 48-package exercise sweep, the test discovery and the native-dependency
+installs, run in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) on Ubuntu and macOS. The weekly
 [`link-check.yml`](../.github/workflows/link-check.yml) lints every lesson, verifies links, and
 compiles the Arduino sketches against the hosted toolchain; blocked citations are collected in
 [`UNVERIFIED_CITATIONS.md`](UNVERIFIED_CITATIONS.md) and charted in the workbench's Link Health

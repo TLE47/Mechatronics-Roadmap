@@ -41,6 +41,13 @@ and `validate_modules.py` executes module code that uses 3.10+ syntax (`int | No
 interpreter fails on a page you did not touch. Check with `python3 --version`; if it prints 3.9,
 use `python3.12` or put Homebrew's `bin` first on `PATH`.
 
+**The one command to run before a push:** `python3 scripts/check_all.py` runs every gate CI's
+verification step runs, in CI's order, and takes about 12 s; `--full` adds the 48-package exercise
+sweep and the unittest discovery, `--list` names the gates, and `--only <gate>` re-runs one after
+you regenerate a file. It refuses to run on anything but Python 3.12. The script's gate table and
+`.github/workflows/ci.yml` are kept equal by [`tests/test_check_all.py`](tests/test_check_all.py),
+so a check CI gains is not silently missing locally.
+
 ```bash
 # 1. Verify repository structure, links, Mermaid diagrams, and clean TeX math hygiene
 python3 scripts/verify_repo.py

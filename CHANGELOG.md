@@ -11,6 +11,27 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 125: One Command for Every Gate CI Runs
+
+Two of the last three pushes were stopped by gates a contributor can run locally in seconds - a
+stale generated `concepts` crosswalk and the term-order check reading a next-step line - and both
+were found by CI instead of before the push. `scripts/check_all.py` now runs the verification
+step's whole command list, in its order, as one command: 27 gates in ~12 s, with `--full` adding
+the 48-package exercise sweep and the unittest discovery, `--list` naming the gates, `--only`
+re-running one, and `--json` for a machine-readable report. It exits `2` on an interpreter other
+than the pinned 3.12, because two gates execute module code that needs 3.10+ syntax.
+
+The list is not a second opinion: [`tests/test_check_all.py`](tests/test_check_all.py) parses
+`.github/workflows/ci.yml` as text and compares it with the script's table in both directions, so
+a gate added to CI cannot be missing locally and one cannot be quietly dropped from the script to
+make a pre-push run green. A failing gate keeps its own exit status, prints the tail of its output
+and names the command that fixes it; that path is tested against a gate that exits 3.
+
+[`docs/VERIFICATION.md`](docs/VERIFICATION.md) replaces its hand-typed "full local run" list with
+the one command plus `--list`, and [`CONTRIBUTING.md`](CONTRIBUTING.md) makes it the pre-push step.
+
+---
+
 ## [2026-10-20] — Run 124: The First Ten Seconds, and a Harness That Was 150x the Cost of the Work
 
 **The ramp pass stopped costing 30 s a page.** Run 123's ramp loop drove Playwright locators, and

@@ -23,6 +23,8 @@
     "test:lessonlint": "python3 tests/test_lint_lessons.py",
     "test:reentry": "python3 tests/test_reentry.py",
     "check:friction": "python3 scripts/friction_report.py --check",
+    "check:all": "python3 scripts/check_all.py",
+    "check:all:full": "python3 scripts/check_all.py --full",
     "test:friction": "python3 tests/test_friction_report.py",
     "check:assertions": "python3 scripts/lint_assertions.py",
     "test:assertions": "python3 tests/test_lint_assertions.py",
