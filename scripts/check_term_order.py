@@ -255,8 +255,16 @@ def discover_existing_lessons() -> list[tuple[str, str]]:
 
 
 def strip_forward_navigation(markdown_text: str) -> str:
-    """Strip YAML frontmatter, Mermaid flowchart previews, 'What to skip:' lines, and 'Next lesson:' links."""
+    """Strip YAML frontmatter, Mermaid previews, 'What to skip:' lines, and 'Next lesson:' links.
+
+    The generated `next-step` block goes too. It names the successor page by its full title, so
+    `P.1` ends with "Lesson P.2: Computer Arithmetic and Order of Operations" - which is how six
+    glossary terms came to look like they were used one page before the page that defines them.
+    A machine-written navigation line is not a page teaching the term, and the block is the only
+    place these titles appear ahead of their lessons.
+    """
     body = re.sub(r"^---\n.*?\n---\n", "", markdown_text, flags=re.DOTALL)
+    body = re.sub(r"<!-- next-step:start -->.*?<!-- next-step:end -->", "", body, flags=re.DOTALL)
     body = re.sub(r"```mermaid.*?```", "", body, flags=re.DOTALL)
     body = re.sub(r"^.*?\*\*What to skip:\*\*.*$", "", body, flags=re.MULTILINE)
     body = re.sub(r"^.*?\*\*Next [Ll]esson:\*\*.*$", "", body, flags=re.MULTILINE)
