@@ -6,6 +6,7 @@
  *
  *   test:practice    the roadmap <-> workbench join, pure TypeScript (Node type stripping)
  *   test:theme       light/dark rules: stored choice, OS default, the data-theme attribute
+ *   test:theme:tokens  the ?view=theme page's parse of index.css, and its address
  *   test:spine       the ten-step spine the pages print, and the numbering no surface repeats
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
@@ -105,6 +106,9 @@ async function main() {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('theme', 'test_theme.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('tokens', 'test_theme_tokens.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('spine', 'test_spine.mjs', {

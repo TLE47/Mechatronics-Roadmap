@@ -2,10 +2,12 @@ import React from 'react';
 import { Printer, Download, FileJson, User, Compass, Sun, Moon } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
-import { useTheme } from '../useTheme';
-import { toggleLabel } from '../theme';
+import { toggleLabel, type Theme } from '../theme';
 
 interface HeaderProps {
+  /** The palette on screen, and the flip for it — mounted once in `App`, not here. */
+  theme: Theme;
+  onToggle: () => void;
   onOpenCheatSheet: () => void;
   onExportPortfolio: () => void;
   activeTierPass: ActiveTierPass;
@@ -40,6 +42,8 @@ const ArmMark: React.FC = () => (
 );
 
 export const Header: React.FC<HeaderProps> = ({
+  theme,
+  onToggle: toggle,
   onOpenCheatSheet,
   onExportPortfolio,
   activeTierPass,
@@ -47,9 +51,8 @@ export const Header: React.FC<HeaderProps> = ({
   accountEmail,
   onOpenAccount,
 }) => {
-  // The one place the theme is mounted: the attribute on <html> and this button's label
-  // are always the same state, so the toggle can never claim a mode the page is not in.
-  const { theme, toggle } = useTheme();
+  // The theme is mounted once, in `App`, and handed down: the attribute on <html> and this button's
+  // label are the same state, so the toggle can never claim a mode the page is not in.
   // The nav is on every screen, including a newcomer's first one. Keep the labels plain English:
   // the internal Stage/Pass/Tier names live in the roadmap tab and docs/ROUTE.md, not here.
   const passLinks: { id: ActiveTierPass; label: string }[] = [

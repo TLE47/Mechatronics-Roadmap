@@ -871,6 +871,46 @@ export async function runSmokeTests(viteServer) {
       'buildPortfolioMarkdown must strictly separate Execution-Verified lessons from Self-Marked lessons and milestones'
     );
 
+    // 4b. The palette reference (`?view=theme`): its table is parsed from index.css at build time, so
+    // the render must carry real values — a handful of tokens and both palettes' swatches — and the
+    // workbench must not render it unless the address asks for it.
+    const { ThemeTokens } = await vite.ssrLoadModule('/src/components/ThemeTokens.tsx');
+    const tokensHtml = cleanSsr(
+      ReactDOMServer.renderToString(
+        React.createElement(ThemeTokens, { theme: 'dark', onToggle: () => {} })
+      )
+    );
+    const rowCount = (tokensHtml.match(/data-testid="theme-token-row"/g) || []).length;
+    assert(
+      tokensHtml.includes('data-testid="theme-tokens-page"'),
+      'the ?view=theme page must render its own container, or the route has nothing to show'
+    );
+    assert(
+      rowCount >= 20,
+      `the token page must print a row per colour token (expected >= 20, got ${rowCount}); a short table means the ?raw stylesheet import or the parser stopped matching`
+    );
+    assert(
+      tokensHtml.includes('data-palette="dark"') && tokensHtml.includes('data-palette="light"'),
+      'the token page must draw a swatch for both palettes, not just the one on screen'
+    );
+    // The values are the stylesheet's, not the component's: --bg is #070b12 in index.css.
+    assert(
+      tokensHtml.includes('--bg') && tokensHtml.includes('#070b12') && tokensHtml.includes('#f8f6f2'),
+      'the token page must print the values parsed from index.css (expected --bg #070b12 and its light override #f8f6f2)'
+    );
+    assert(
+      !tokensHtml.includes('data-testid="theme-tokens-error"'),
+      'the token page must not render its parse-error panel; the stylesheet still has :root, [data-theme="light"] and @theme inline'
+    );
+    assert(
+      tokensHtml.includes('data-testid="btn-theme-route-toggle"'),
+      'the token page must carry the mode toggle, so both palettes can be read on the page itself'
+    );
+    assert(
+      !htmlBeginner.includes('data-testid="theme-tokens-page"'),
+      'the workbench must not render the token page without ?view=theme (SSR has no address, so the default must be the workbench)'
+    );
+
     // 5. If production bundle dist/index.html exists, verify asset integrity
     const distHtmlPath = path.join(repoRoot, 'dist', 'index.html');
     if (fs.existsSync(distHtmlPath)) {

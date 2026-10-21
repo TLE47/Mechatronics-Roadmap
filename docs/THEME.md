@@ -169,11 +169,22 @@ Three rules hold the behaviour together: a first visit stores nothing and follow
 explicit and wins from then on, even if the OS flips at sunset; and everything imports cleanly on the
 server, so the dark shell can render before the attribute is corrected.
 
+## See it in the app
+
+`?view=theme` opens the same table inside the workbench — both palettes side by side, a swatch beside
+every value, the mode toggle in place, linked from the footer. It is a route rather than a tab: the
+learner-facing rail stays at the tabs a learner needs. The page parses
+[`app/src/index.css`](../app/src/index.css) at build time (`?raw`) instead of carrying a copy, so a
+token added to the stylesheet appears there with no edit — and a missing `:root`,
+`[data-theme="light"]` or `@theme inline` block shows as an error panel rather than a half-empty
+table. That page, this one and the stylesheet cannot disagree: each is checked against the file.
+
 ## Verify a change
 
 ```bash
-npm run test:theme      # the rules: stored pick, OS default, data-theme, blocked storage (no browser)
-npm run test:theme:e2e  # Chromium: the toggle contract, then every tab in both modes
+npm run test:theme        # the rules: stored pick, OS default, data-theme, blocked storage (no browser)
+npm run test:theme:tokens # the ?view=theme page's parse of index.css, and its address
+npm run test:theme:e2e    # Chromium: the toggle contract, every tab in both modes, and the palette page
 python3 tests/test_theme_docs.py   # this page against index.css
 ```
 
@@ -184,6 +195,10 @@ python3 tests/test_theme_docs.py   # this page against index.css
   below 3:1 and reports anything under its size minimum; the current floor is 4.5:1 across the
   tab/theme pairs. `--warnings` names the runs between 3:1 and their minimum, `--screenshots` writes
   one PNG per tab per theme to `.fb-scratch/theme/`.
+- **`test:theme:tokens`** covers the app page's parser: every row against an independent read of the
+  file, both directions of the utility map, and three mutations (a changed value, a new token, a
+  missing block) that a hand-typed table could not follow. It also pins the address, so the page
+  cannot quietly move.
 - **`test_theme_docs.py`** is the anti-drift check for this page: both values of every colour token,
   every utility in `@theme inline`, and the presence of every property in `:root`. It cannot tell you
   a colour is ugly — only that the table and the stylesheet still say the same thing.

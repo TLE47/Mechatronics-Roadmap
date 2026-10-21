@@ -13,6 +13,11 @@
  *    backgrounds it actually sits on, and computes WCAG contrast. Text below
  *    3:1 fails at any size; text between 3:1 and its size's minimum is listed as
  *    a warning, because the ratio is the fact and the threshold is a judgement.
+ * 3. Does `?view=theme` describe the palette it is looking at? The page parses
+ *    index.css, so the browser check is the one that proves the parsed values
+ *    reach painted pixels: the swatch for `--panel` must be the colour in the
+ *    file, both palettes must draw, and the page must survive the same contrast
+ *    audit in both modes as every tab does.
  *
  * `E2E_BASE_URL` points it at a running dev server (the combined runner passes
  * one); alone, it boots its own. `--screenshots` also writes one PNG per tab per
@@ -126,6 +131,26 @@ function auditContrast() {
 }
 
 const THEME_ATTRIBUTE = 'data-theme';
+
+/** A token's value in one palette, read from the stylesheet the page parses. */
+function stylesheetValue(token, palette) {
+  const css = fs.readFileSync(path.join(process.cwd(), 'app/src/index.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const opener = palette === 'light' ? '[data-theme="light"]' : ':root';
+  const start = css.search(new RegExp(`^${opener.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{`, 'm'));
+  assert.ok(start >= 0, `index.css has no ${opener} block`);
+  const body = css.slice(css.indexOf('{', start), css.indexOf('}', css.indexOf('{', start)));
+  const match = new RegExp(`${token}\\s*:\\s*([^;]+);`).exec(body);
+  assert.ok(match, `index.css has no ${token} in ${opener}`);
+  return match[1].trim();
+}
+
+/** `#0e1624` -> `rgb(14, 22, 36)`, the form getComputedStyle reports. */
+function hexToRgb(hex) {
+  const value = hex.replace('#', '');
+  const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value;
+  const [r, g, b] = [0, 2, 4].map((at) => Number.parseInt(full.slice(at, at + 2), 16));
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
 async function firstVisit(page, url, colorScheme) {
   await page.emulateMedia({ colorScheme });
@@ -249,6 +274,105 @@ async function main() {
             .join('\n           ');
           notes.push(`[${theme}/${tabId}] ${report.failures.length} text run(s) below 3:1:\n           ${sample}`);
         }
+      }
+      await context.close();
+    }
+
+    // 6. The palette reference (`?view=theme`): a page of its own, reading the stylesheet.
+    for (const theme of ['dark', 'light']) {
+      const context = await browser.newContext({ colorScheme: theme === 'dark' ? 'dark' : 'light' });
+      const page = await context.newPage();
+      await page.goto(`${baseUrl}?view=theme`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[data-testid="theme-tokens-page"]');
+      await page.waitForTimeout(250);
+
+      assert.equal(
+        await page.locator('[data-testid^="tab-btn-"]').count(),
+        0,
+        'the token page is a route, not a workbench tab: the learner-facing rail must not render on it'
+      );
+      assert.equal(
+        await page.locator('[data-testid="btn-theme-toggle"]').count(),
+        1,
+        'the header toggle must be on the token page, so both palettes can be compared in place'
+      );
+      const footerHref = await page.evaluate(() =>
+        document.querySelector('[data-testid="link-theme-tokens"]')?.getAttribute('href') ?? null
+      );
+      assert.ok(
+        footerHref && footerHref.includes('view=theme'),
+        `the footer must link the token page (got ${footerHref}); a page nobody can find is a page nobody checks`
+      );
+
+      const rowsOnPage = await page.locator('[data-testid="theme-token-row"]').count();
+      assert.ok(
+        rowsOnPage >= 20,
+        `expected a row per colour token on ?view=theme, got ${rowsOnPage}; the ?raw import or the parser stopped matching`
+      );
+      // Painted pixels, not printed text: every swatch must carry the colour it claims.
+      const swatches = await page.evaluate(() => {
+        const all = [...document.querySelectorAll('[data-testid="swatch"]')];
+        return all.map((element) => ({
+          token: element.getAttribute('data-token'),
+          palette: element.getAttribute('data-palette'),
+          colour: getComputedStyle(element).backgroundColor,
+        }));
+      });
+      assert.equal(
+        swatches.length,
+        rowsOnPage * 2,
+        `expected two swatches per row (${rowsOnPage * 2}), got ${swatches.length}`
+      );
+      const transparent = swatches.filter((swatch) => /rgba\(0, 0, 0, 0\)|transparent/.test(swatch.colour));
+      assert.equal(
+        transparent.length,
+        0,
+        `expected every swatch to be painted; ${transparent.length} resolved to transparent (first: ${transparent[0]?.token} ${transparent[0]?.palette}) — a value the browser rejected`
+      );
+      for (const palette of ['dark', 'light']) {
+        const swatch = swatches.find((candidate) => candidate.token === '--panel' && candidate.palette === palette);
+        assert.ok(swatch, `expected a --panel swatch for the ${palette} palette`);
+        assert.equal(
+          swatch.colour,
+          hexToRgb(stylesheetValue('--panel', palette)),
+          `the ${palette} --panel swatch must be the value in index.css, not a painted default`
+        );
+      }
+
+      // The page's own toggle flips the page it documents, and the marker follows.
+      const before = await page.evaluate((attr) => document.documentElement.getAttribute(attr), THEME_ATTRIBUTE);
+      await page.click('[data-testid="btn-theme-route-toggle"]');
+      await page.waitForTimeout(200);
+      const after = await page.evaluate((attr) => document.documentElement.getAttribute(attr), THEME_ATTRIBUTE);
+      assert.notEqual(after, before, 'the token page\'s toggle must flip data-theme on <html>');
+      const marker = await page.evaluate(
+        () => document.querySelector('[data-testid="theme-active-palette"]')?.getAttribute('data-theme-now') ?? null
+      );
+      assert.equal(
+        marker,
+        after,
+        `the "This page" marker must name the palette that is on screen (marker ${marker}, attribute ${after})`
+      );
+
+      // The page documents contrast, so it gets the same audit as every tab — once per palette,
+      // in the context that starts there. Flip back first: the check above left it on the other side.
+      await page.click('[data-testid="btn-theme-route-toggle"]');
+      await page.waitForTimeout(200);
+      const shown = await page.evaluate((attr) => document.documentElement.getAttribute(attr), THEME_ATTRIBUTE);
+      assert.equal(shown, theme, `expected the token page to return to ${theme} for its audit (found ${shown})`);
+      const report = await page.evaluate(auditContrast);
+      rows.push({ theme, tab: 'view=theme', ...report });
+      if (SHOTS) {
+        fs.mkdirSync(SHOT_DIR, { recursive: true });
+        await page.screenshot({ path: path.join(SHOT_DIR, `${theme}-view-theme.png`), fullPage: false });
+      }
+      if (report.failures.length) {
+        failures += report.failures.length;
+        const sample = report.failures
+          .slice(0, 3)
+          .map((f) => `"${f.text}" ${f.ratio}:1 (${f.size}px, ${f.color} on ${f.background}) ${f.className}`)
+          .join('\n           ');
+        notes.push(`[${theme}/view=theme] ${report.failures.length} text run(s) below 3:1:\n           ${sample}`);
       }
       await context.close();
     }

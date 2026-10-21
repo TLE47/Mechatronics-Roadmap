@@ -53,6 +53,12 @@ side, the utility family that reaches it, a "you are styling X, reach for Y" tab
 above stated once. It is checked against `src/index.css` by `tests/test_theme_docs.py`, so it cannot
 drift from the stylesheet.
 
+The same table is in the app at `?view=theme`, linked from the footer
+([`src/components/ThemeTokens.tsx`](src/components/ThemeTokens.tsx)). It reads `index.css` with
+`?raw` and paints each value, so it needs no maintenance when a token is added; `npm run
+test:theme:tokens` pins the parse and `npm run test:theme:e2e` checks the painted swatches in a
+browser. The page is a route, not a tab: the learner's rail is unchanged.
+
 Legibility is measured, not eyeballed: `npm run test:theme` pins the storage/OS rules, and
 `npm run test:theme:e2e` drives Chromium through all eleven tabs in both themes, compositing each
 text run over the backgrounds it actually sits on and failing anything below 3:1 (the current floor

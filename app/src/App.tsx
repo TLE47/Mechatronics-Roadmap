@@ -32,6 +32,9 @@ import { readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
+import { useTheme } from './useTheme';
+import { ThemeTokens } from './components/ThemeTokens';
+import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { lessonIdFromLocation } from './lessonRoute';
 import {
@@ -334,7 +337,33 @@ export function buildPortfolioMarkdown(
   return lines.join('\n');
 }
 
+/**
+ * The one footer, so the palette page and the workbench cannot drift apart. The token reference is
+ * linked rather than hidden behind a typed URL: a page nobody can find is a page nobody checks.
+ */
+const SiteFooter: React.FC = () => (
+  <footer className="border-t border-line-soft bg-canvas px-4 py-3 text-center text-[11.5px] text-faint">
+    MechaLab · Ten-Step Spiral Mechatronics Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License:
+    CC BY 4.0 (Docs) &amp; MIT (Code) ·{' '}
+    <a
+      href={themeViewSearch()}
+      data-testid="link-theme-tokens"
+      className="underline decoration-dotted hover:text-muted"
+    >
+      Theme tokens
+    </a>
+  </footer>
+);
+
 export const App: React.FC = () => {
+  // The theme is mounted here, once, and handed to both the header's toggle and the palette page:
+  // two `useTheme` mounts would be two writers for one attribute, and the button could label a mode
+  // the page is not in.
+  const { theme, toggle: toggleThemeMode } = useTheme();
+  // `?view=theme` is a page of its own, read once on arrival. It is not a workbench tab: the rail
+  // stays the eleven tabs a learner needs, and this is a reference for whoever is adding a colour.
+  const [themeView] = useState<boolean>(() => themeViewFromLocation());
+
   // A newcomer arrives to run the first lesson, not to read the advanced roadmap: open the Python
   // runner by default. The roadmap tab is still one click away for anyone who wants the map.
   const [activeTab, setActiveTab] = useState<TabId>('tab-pyodide');
@@ -689,6 +718,31 @@ export const App: React.FC = () => {
     }
   };
 
+  if (themeView) {
+    return (
+      <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
+        <Header
+          theme={theme}
+          onToggle={toggleThemeMode}
+          onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+          onExportPortfolio={() => setIsPortfolioModalOpen(true)}
+          activeTierPass={activeTierPass}
+          onSelectTierPass={setActiveTierPass}
+          accountEmail={accountEmail}
+          onOpenAccount={() => setIsAccountOpen(true)}
+        />
+        <main
+          id="main"
+          tabIndex={-1}
+          className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto outline-none"
+        >
+          <ThemeTokens theme={theme} onToggle={toggleThemeMode} />
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
+
   return (
     <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
       {/* Keyboard users can jump the header, the mode bar and the tab rail in one key. */}
@@ -696,6 +750,8 @@ export const App: React.FC = () => {
         Skip to the workbench
       </a>
       <Header
+        theme={theme}
+        onToggle={toggleThemeMode}
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
         onExportPortfolio={() => setIsPortfolioModalOpen(true)}
         activeTierPass={activeTierPass}
@@ -1015,10 +1071,7 @@ export const App: React.FC = () => {
         onSignOut={handleSignOut}
       />
 
-      {/* Footer */}
-      <footer className="border-t border-line-soft bg-canvas px-4 py-3 text-center text-[11.5px] text-faint">
-        MechaLab · Ten-Step Spiral Mechatronics Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License: CC BY 4.0 (Docs) &amp; MIT (Code)
-      </footer>
+      <SiteFooter />
     </div>
   );
 };
