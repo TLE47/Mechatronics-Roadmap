@@ -40,6 +40,7 @@ flowchart LR
 | Page | What it is |
 | :--- | :--- |
 | [`THEME.md`](THEME.md) | Every colour token in both palettes side by side, the utility that reaches each one, and the rules that keep a tab legible in both modes. Checked against [`app/src/index.css`](../app/src/index.css) by [`tests/test_theme_docs.py`](../tests/test_theme_docs.py). |
+| [`PLAN-2.0-GAP.md`](PLAN-2.0-GAP.md) | The workspace plan mapped against the code as it ships: what is already in production, what is partial, what is missing, and the order to build the rest. |
 
 ## When you are stuck or coming back
 
