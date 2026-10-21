@@ -956,6 +956,108 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       return painted;
     });
     assert(repainted > 0, 'returning from the table must draw the trace again');
+
+    // 7h-i. The Scope is readable, not only painted: a pointer over it names every trace at one t,
+    //       the arrow keys move that cursor, and the zoom buttons narrow the time axis - about the
+    //       middle of the view, and never past the data.
+    // A pointer event only lands on a canvas that is actually on screen: `mouse.move` does not scroll
+    // the way a locator action does, so bring the plot into view first.
+    await page.getByTestId('scope-canvas').scrollIntoViewIfNeeded();
+    const scopeBox = await page.getByTestId('scope-canvas').boundingBox();
+    assert(scopeBox, 'the Scope canvas must have a box to point at');
+    await page.mouse.move(
+      scopeBox.x + scopeBox.width * 0.55,
+      scopeBox.y + scopeBox.height * 0.5
+    );
+    const firstCursor = (await page.getByTestId('scope-cursor-t').innerText()).trim();
+    assert(
+      /^t = -?[\d.]/.test(firstCursor),
+      `pointing at the plot must read a time, got: ${firstCursor}`
+    );
+    const firstReading = (await page.getByTestId('scope-cursor-value-0').innerText()).trim();
+    assert(
+      firstReading.includes('step response') && !firstReading.includes('—'),
+      `the cursor must read this trace's value at that t, got: ${firstReading}`
+    );
+    await page.getByTestId('scope-canvas').focus();
+    await page.keyboard.press('ArrowRight');
+    const movedCursor = (await page.getByTestId('scope-cursor-t').innerText()).trim();
+    assert.notEqual(
+      movedCursor,
+      firstCursor,
+      'the arrow key must move the cursor, so the readout is not mouse-only'
+    );
+    const fullWindow = (await page.getByTestId('scope-window').innerText()).trim();
+    await page.getByTestId('btn-scope-zoom-in').click();
+    const zoomedWindow = (await page.getByTestId('scope-window').innerText()).trim();
+    assert.notEqual(zoomedWindow, fullWindow, 'Zoom + must narrow the time axis');
+    await page.getByTestId('btn-scope-zoom-reset').click();
+    assert.equal(
+      (await page.getByTestId('scope-window').innerText()).trim(),
+      fullWindow,
+      'Fit must return to the whole trace'
+    );
+
+    // 7h-ii. Pin this run, change one parameter, run again: both traces share the axes, and one
+    //        cursor reads both values at the same t. That is the comparison the panel is for.
+    await page.getByTestId('btn-scope-pin').click();
+    assert(
+      (await page.getByTestId('scope-pin-label').innerText()).includes('A pinned'),
+      'pinning must say which run is on the axes'
+    );
+    await setEditorCode(
+      page,
+      [
+        'import math',
+        'from mechalab import scope',
+        '',
+        'ts = [i / 100 for i in range(400)]',
+        'ys = [2 * (1 - math.exp(-t)) for t in ts]',
+        'scope.stream("step response", ts, ys)',
+        'print("traced", len(ts), "points")',
+        '',
+      ].join('\n')
+    );
+    await page.getByTestId('btn-run-verify').click();
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="scope-legend"]')?.textContent?.includes('(B)'),
+      null,
+      { timeout: 90000 }
+    );
+    const overlayLegend = (await page.getByTestId('scope-legend').innerText()).trim();
+    assert(
+      overlayLegend.includes('(A)') && overlayLegend.includes('(B)'),
+      `the legend must name both runs once one is pinned; got: ${overlayLegend}`
+    );
+    await page.getByTestId('scope-canvas').scrollIntoViewIfNeeded();
+    const overlayBox = await page.getByTestId('scope-canvas').boundingBox();
+    // A pointer that is already where it was does not emit another move, and the second run cleared
+    // the cursor - so this one lands somewhere else and reads the pair there.
+    await page.mouse.move(
+      overlayBox.x + overlayBox.width * 0.35,
+      overlayBox.y + overlayBox.height * 0.5
+    );
+    const pairA = (await page.getByTestId('scope-cursor-value-0').innerText()).trim();
+    const pairB = (await page.getByTestId('scope-cursor-value-1').innerText()).trim();
+    assert(
+      pairA.includes('(A)') && pairB.includes('(B)'),
+      `the cursor must read both runs at one t; got A: ${pairA} / B: ${pairB}`
+    );
+    const numberIn = (text) => Number((text.match(/(-?[\d.]+(?:e[-+]?\d+)?)\s*$/) || [])[1]);
+    const [valueA, valueB] = [numberIn(pairA), numberIn(pairB)];
+    assert(
+      Number.isFinite(valueA) && Number.isFinite(valueB) && valueB > valueA * 1.5,
+      `the doubled run must read about twice the pinned one at the same t; got ${valueA} and ${valueB}`
+    );
+    await page.getByTestId('btn-scope-unpin').click();
+    assert.equal(
+      await page.getByTestId('scope-pin-label').count(),
+      0,
+      'clearing A must take the overlay label with it'
+    );
+    console.log(
+      '  ok the Scope reads a cursor, zooms, and overlays a pinned run with the next one at one t'
+    );
     console.log('  ok a run traces its own signal into the Scope, as a plot and as a table');
 
     // 8. Portfolio export contains the correct completion categories
@@ -1642,7 +1744,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Scope trace as plot & table, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
     );
   } finally {
     await browser.close();

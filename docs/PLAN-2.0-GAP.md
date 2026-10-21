@@ -14,10 +14,10 @@ flowchart LR
         P["⌘K palette"]
         T["Dark/light tokens<br/>contrast measured in CI"]
         H["A failing check names<br/>its own hint rung"]
+        A["Scope cursor, zoom<br/>A/B run overlay"]
     end
     subgraph next["Next, in this order"]
-        A["Scope cursors, zoom<br/>A/B run overlay"]
-        A --> X["IndexedDB + backup zip<br/>when 5 MB stops fitting"]
+        X["IndexedDB + backup zip<br/>when 5 MB stops fitting"]
     end
     shipped --> next
 ```
@@ -48,7 +48,7 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 
 | Plan | Reality | Verdict |
 | :--- | :--- | :--- |
-| Scope (uPlot), A/B runs, arm view upgrades, fault panel | Arm rendering, fault bench (08.1) and per-tab simulators exist; nothing is a live scope the learner's code streams into. | **partial** |
+| Scope (uPlot), A/B runs, arm view upgrades, fault panel | The learner's own `scope.stream()` traces are drawn on a canvas with a cursor that reads every signal at one `t`, zoom (wheel, buttons, `+`/`-`/`0`) and drag-pan clamped to the data, and an A/B overlay: pin a run as A, change a gain, run again, and both traces share the axes with the cursor reading both ([`app/src/scopeModel.ts`](../app/src/scopeModel.ts), [`app/src/components/ScopePanel.tsx`](../app/src/components/ScopePanel.tsx), `npm run test:scope`, browser step 7h-i/7h-ii). Not uPlot, so no box-zoom or tooltips beyond the one cursor; arm-view upgrades and the fault panel are unchanged. | **ships** |
 | Checks as a test runner + watch mode | Output comparison (`exact` vs formatting-tolerant) and instructor behaviour checks run per lesson; the 08.1 bench and Tier 3 budgets gate passes. No watch-on-save. | **partial** |
 | Hint ladder tied to the failing check | Each failed run opens a card naming the check that is red — behaviour or presentation — with the check's own line (the instructor's assertion, or the output line that differs) and the one rung that answers it ([`app/src/checkHints.ts`](../app/src/checkHints.ts), `npm run test:checkhints`, browser steps 0a-i and 10a). Rung 2 is now *earned*: it waits for a run made after the nudge was opened, not for the run already on screen. Blocks that are not a graded check (a harness metric, a traceback, a stopped loop) keep their own cards and name no hint. | **ships** |
 | Predict-first gate, try-it blocks, symbol linking | None of the three. | **missing** |
@@ -67,13 +67,10 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 
 ## What to build next, in order
 
-1. **Scope follow-ups** — cursors and zoom, then the plan's A/B overlay (pin run #3, change `Kp`, run
-   again, both traces on one pair of axes). The panel now has the data and the message channel; this is
-   interaction on top of it. Acceptance: two runs overlay, and a cursor reads both values at one `t`.
-2. **A "download this step for offline" button** — the cache is warm after one run, but a learner about
+1. **A "download this step for offline" button** — the cache is warm after one run, but a learner about
    to board has no way to say "take these five lessons". Acceptance: a button warms the shell and the
    runtime, reports a size, and the offline suite starts from it.
-3. **Dexie / IndexedDB + backup zip** — only worth doing once history, notes or plots outgrow the 5 MB
+2. **Dexie / IndexedDB + backup zip** — only worth doing once history, notes or plots outgrow the 5 MB
    bucket; until then the bounded `localStorage` stores are cheaper and already tested.
-4. **Jedi completions + Ruff lint in the worker** — a real editor at ~2 MB of extra cached weight; do it
+3. **Jedi completions + Ruff lint in the worker** — a real editor at ~2 MB of extra cached weight; do it
    after the study layer, because it changes how a lesson feels rather than what a learner can do.

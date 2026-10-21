@@ -13,11 +13,18 @@
 import assert from 'node:assert/strict';
 import {
   MAX_SCOPE_POINTS,
+  MIN_SCOPE_ZOOM_SPAN,
+  cursorReadout,
   formatScopeNumber,
   normalizeScopeSeries,
+  panWindow,
+  sampleAt,
   scopeBounds,
+  scopeBoundsIn,
   scopeLast,
   scopeTableRows,
+  scopeTimeRange,
+  zoomWindow,
 } from '../app/src/scopeModel.ts';
 
 let passed = 0;
@@ -144,6 +151,113 @@ check('a shorter series shows a dash instead of another series\' number', () => 
   const rows = scopeTableRows(series, 4);
   assert.equal(rows[3].values[0], 3);
   assert.equal(rows[3].values[1], null);
+});
+
+check('the cursor reads a logged sample exactly', () => {
+  const [series] = normalizeScopeSeries([{ name: 'x', t: [0, 1, 2], y: [5, 7, 9] }]);
+  assert.equal(sampleAt(series, 1), 7);
+  assert.equal(sampleAt(series, 0), 5);
+  assert.equal(sampleAt(series, 2), 9);
+});
+
+check('a cursor between samples interpolates the line, not the nearest point', () => {
+  const [series] = normalizeScopeSeries([{ name: 'x', t: [0, 1, 2], y: [5, 7, 9] }]);
+  assert.equal(sampleAt(series, 0.25), 5.5);
+  assert.equal(sampleAt(series, 1.5), 8);
+});
+
+check('outside a trace there is no value rather than a made-up one', () => {
+  const [series] = normalizeScopeSeries([{ name: 'late', t: [4, 5], y: [1, 2] }]);
+  assert.equal(sampleAt(series, 3.9), null);
+  assert.equal(sampleAt(series, 5.1), null);
+  assert.equal(sampleAt(series, NaN), null);
+});
+
+check('a loop that logged out of order still reads correctly', () => {
+  const series = { name: 'shuffled', t: [2, 0, 1], y: [9, 5, 7] };
+  assert.equal(sampleAt(series, 0.5), 6);
+  assert.equal(sampleAt(series, 1), 7);
+});
+
+check('one reading per trace at the same t, and none for the trace that ends earlier', () => {
+  const series = normalizeScopeSeries([
+    { name: 'long', t: [0, 1, 2], y: [0, 2, 4] },
+    { name: 'short', t: [0, 0.5], y: [10, 11] },
+  ]);
+  assert.deepEqual(cursorReadout(series, 1), [
+    { name: 'long', value: 2 },
+    { name: 'short', value: null },
+  ]);
+  assert.deepEqual(cursorReadout(series, null), []);
+});
+
+check('zooming in keeps the time under the anchor where it is', () => {
+  const extent = { tMin: 0, tMax: 10 };
+  const view = zoomWindow({ tMin: 0, tMax: 10 }, extent, 0.5, 4);
+  assert.equal(view.tMax - view.tMin, 5, 'half the span');
+  assert.equal(view.tMin, 2, 'the anchor was four tenths in, and stays four tenths in');
+  assert.equal(view.tMax, 7);
+  assert.equal(sampleAt({ name: 'anchor', t: [0, 10], y: [0, 10] }, 4), 4);
+  assert.ok(view.tMin < 4 && view.tMax > 4, 'the time under the pointer is still inside the view');
+});
+
+check('a zoom never leaves the data, and never narrows past the floor', () => {
+  const extent = { tMin: 0, tMax: 10 };
+  const atEdge = zoomWindow({ tMin: 0, tMax: 10 }, extent, 0.5, 0);
+  assert.equal(atEdge.tMin, 0);
+  assert.equal(atEdge.tMax, 5);
+  const out = zoomWindow({ tMin: 2, tMax: 4 }, extent, 100, 3);
+  assert.deepEqual(out, { tMin: 0, tMax: 10 }, 'zooming out stops at the whole trace');
+  let view = { tMin: 0, tMax: 10 };
+  for (let i = 0; i < 40; i += 1) view = zoomWindow(view, extent, 0.5, 5);
+  assert.ok(
+    Math.abs(view.tMax - view.tMin - 10 * MIN_SCOPE_ZOOM_SPAN) < 1e-9,
+    `the floor is the whole span / 1000, got ${view.tMax - view.tMin}`
+  );
+  assert.ok(view.tMin >= 0 && view.tMax <= 10);
+});
+
+check('panning slides the window and stops at the data', () => {
+  const extent = { tMin: 0, tMax: 10 };
+  const right = panWindow({ tMin: 2, tMax: 6 }, extent, 0.5);
+  assert.deepEqual(right, { tMin: 4, tMax: 8 });
+  const clamped = panWindow({ tMin: 2, tMax: 6 }, extent, 5);
+  assert.deepEqual(clamped, { tMin: 6, tMax: 10 }, 'the span is kept at the right edge');
+  const left = panWindow({ tMin: 2, tMax: 6 }, extent, -5);
+  assert.deepEqual(left, { tMin: 0, tMax: 4 });
+});
+
+check('the y axis follows what is on screen, not the whole trace', () => {
+  const series = normalizeScopeSeries([{ name: 'settle', t: [0, 1, 2, 3], y: [0, 10, 19, 20] }]);
+  const bounds = scopeBoundsIn(series, { tMin: 2, tMax: 3 });
+  assert.deepEqual(bounds, { tMin: 2, tMax: 3, yMin: 19, yMax: 20 });
+  assert.deepEqual(
+    scopeBoundsIn(series, { tMin: 2, tMax: 3 }),
+    bounds,
+    'the visible window and the y range describe the same slice'
+  );
+});
+
+check('a window with no sample, or a flat one, still gets a usable scale', () => {
+  const series = normalizeScopeSeries([{ name: 'flat', t: [0, 1], y: [4, 4] }]);
+  const empty = scopeBoundsIn(series, { tMin: 5, tMax: 6 });
+  assert.deepEqual(empty, scopeBounds(series), 'the fallback is the whole trace');
+  const flat = scopeBoundsIn(series, { tMin: 0, tMax: 1 });
+  assert.ok(flat.yMax > flat.yMin, 'a flat window is widened instead of dividing by zero');
+});
+
+check('the time extent is the furthest a zoom or pan may go', () => {
+  const series = normalizeScopeSeries([
+    { name: 'a', t: [1, 2], y: [0, 0] },
+    { name: 'b', t: [0.5, 3], y: [0, 0] },
+  ]);
+  assert.deepEqual(scopeTimeRange(series), { tMin: 0.5, tMax: 3 });
+  assert.deepEqual(
+    scopeTimeRange(normalizeScopeSeries([{ name: 'one', t: [7], y: [1] }])),
+    { tMin: 7, tMax: 8 },
+    'a single sample still has a span to draw'
+  );
+  assert.equal(scopeTimeRange([]), null);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

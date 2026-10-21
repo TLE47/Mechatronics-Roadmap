@@ -315,6 +315,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The run's traced signals. Empty means the run drew nothing, which is the normal case for a
   // lesson that only prints, so the panel renders nothing at all rather than an empty frame.
   const [scopeSeries, setScopeSeries] = useState<ScopeSeries[]>([]);
+  // The run pinned as A: its traces stay on the axes while the next run draws over them as B, which
+  // is how a parameter change is read - one `t`, both values, on the same pair of axes. Cleared when
+  // the lesson changes, because a trace from another lesson is not the baseline for this one.
+  const [pinnedScope, setPinnedScope] = useState<ScopeSeries[] | null>(null);
 
 
   // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
@@ -458,6 +462,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     if (remember) rememberLessonInUrl(id);
     commitCode(readDraft(id) ?? found.starterCode);
     setRevealedHints(0);
+    setPinnedScope(null);
     setStdout('');
     setStderr('');
     setInstructorError('');
@@ -1981,7 +1986,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </div>
 
           {/* The Scope: the learner's own traced signal, drawn the moment the first batch lands. */}
-          <ScopePanel series={scopeSeries} className="mt-4" />
+          <ScopePanel
+            series={scopeSeries}
+            pinned={pinnedScope}
+            onPin={() => setPinnedScope(scopeSeries)}
+            onUnpin={() => setPinnedScope(null)}
+            className="mt-4"
+          />
 
           {/* Output & Expected Output Side-by-Side Diff */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

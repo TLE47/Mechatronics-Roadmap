@@ -11,6 +11,38 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 145: Read the Scope, and Compare Two Runs
+
+The Scope drew the learner's own `scope.stream()` traces and then stopped there: no cursor, no zoom,
+and one run on screen at a time, so the only way to see what changing `Kp` did was to remember the
+old curve. It is now a scope you can read and compare.
+
+**A cursor that reads every trace at one `t`.** `sampleAt` interpolates between the two samples around
+the pointer (order-independent, `null` outside a trace's own span, never the nearest sample dressed up
+as an answer), and the readout names each signal's value at that time. The arrow keys move the same
+cursor when the canvas has focus, so nothing here is mouse-only.
+
+**A time axis you can move.** Wheel zooms about the pointer, `Zoom +/−` about the middle of the view,
+drag pans, `Fit`/`0` returns to the whole trace, and every window is clamped to the data and to a
+1/1000-of-the-trace floor - the axis cannot end up in empty space a learner cannot scroll back from.
+The y axis follows the visible window (`scopeBoundsIn`), because keeping the full trace's height while
+zoomed into one edge leaves a flat line in the middle of the plot.
+
+**An A/B overlay.** **Pin as A** keeps a run's traces on the axes; the next run draws over it as B,
+dashed and lighter, with both in the legend and both read by the cursor at one `t`. That is the plan's
+acceptance, and it is what a parameter change is: one `t`, two values.
+
+- `npm run test:scope` grows from 14 checks to 25: exact and interpolated sampling, an out-of-order
+trace, a series that ends earlier, zoom anchoring and clamping, the zoom floor, pan clamping at both
+edges, and a y range that follows the window.
+- Browser step 7h-i/7h-ii: point at the plot and read a value, move the cursor with `ArrowRight`,
+narrow the axis with **Zoom +**, restore it with **Fit**, pin the run, double the trace, run again, and
+read both values at the same `t` (asserting B is about twice A) before clearing A.
+- `docs/PLAN-2.0-GAP.md`: the Scope row moves to **ships**; the next item is the offline "download this
+step" button.
+
+---
+
 ## [2026-10-21] — Run 144: The Check Names Its Hint
 
 A failed run used to say *what* was red (behavioural or presentation) in one place, and offer the hint

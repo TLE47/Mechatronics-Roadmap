@@ -188,8 +188,21 @@ shares one pair of axes across traces, marks zero when the data crosses it, prin
 value beside its name, and **Show as table** turns the same run into twelve sampled rows - a canvas is
 invisible to a screen reader ([`src/components/ScopePanel.tsx`](src/components/ScopePanel.tsx)).
 
-Nothing is stored: a trace belongs to the run that produced it, and pressing Run on something that
-traces nothing clears the panel rather than leaving a stale curve on screen.
+**Reading it.** Pointing at the plot draws a cursor and names every trace's value at that one `t`
+(interpolated between samples, `—` where a trace has no sample there); the arrow keys move the same
+cursor, so the readout is not mouse-only. Wheel, **Zoom +/−** and `+`/`-`/`0` change the time axis
+about the pointer or the middle of the view, dragging pans it, and both are clamped to the data and
+to a 1/1000-of-the-trace floor, so the axis can never end up showing empty space. The y axis follows
+the visible window rather than the whole trace.
+
+**Comparing two runs.** **Pin as A** keeps this run's traces on the axes while the next run draws
+over them as B (dashed, lighter), so a change to `Kp` or `ki` is read on one pair of axes; the cursor
+then reads both values at the same `t`, and the legend names both. Pinning survives a run and is
+cleared by changing lesson or by **Clear A**.
+
+Nothing is stored beyond the pinned traces in memory: a trace belongs to the run that produced it,
+and pressing Run on something that traces nothing clears the current curve rather than leaving a stale
+one on screen.
 
 The seven control and mechanics lessons (02.1-02.5, 05.1, 05.2) ship their own annotations: link
 lengths on the FK/IK demos, mass and gear ratio on the inertia lesson, tooth counts on the belt
@@ -245,7 +258,7 @@ npm run test:workbench       # runner behaviour (happy-dom) + palette search + e
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
 npm run test:history         # run history: filed on Run, deduped, capped per lesson and in total
-npm run test:scope           # Scope payload rules: NaN, alignment, caps, bounds, table sampling
+npm run test:scope           # Scope rules: payloads, cursor sampling, zoom/pan windows, bounds, tables
 npm run test:checkhints      # the failed check -> rung join, and the rule that earns rung 2
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
