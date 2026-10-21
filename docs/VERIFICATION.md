@@ -39,8 +39,19 @@ python3.12 scripts/check_all.py         # every gate CI's verify step runs, in C
 python3.12 scripts/check_all.py --full  # + the 48-package exercise sweep and the unittest discovery
 python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
+npm run test:theme                      # light/dark rules: stored pick, OS default, data-theme
+npm run test:theme:e2e                  # toggle contract + contrast on all 11 tabs, both themes
 npm run test:smoke                      # needs `npm ci` first
 ```
+
+The theme pair exists because the palette is a promise, not a preference. The unit suite pins the
+rules a reader cannot see (a first visit stores nothing, a corrupt key falls back to the OS, a
+blocked store does not throw), and the browser suite measures legibility: every visible text run in
+every tab, in both modes, composited over the backgrounds it actually sits on. Anything below 3:1
+fails the suite; `--warnings` names the runs between 3:1 and their size minimum, and
+`--screenshots` writes one PNG per tab per theme to `.fb-scratch/theme/`. `test:theme` runs inside
+`npm run test:workbench`; `test:theme:e2e` is its own CI step, because a seventh browser suite in the
+parallel run pushed the older ones past their 30 s click timeouts.
 
 `check_all.py --list` prints the gates it runs and which are heavy; `--only <gate>` re-runs one
 after you regenerate something, and `--json` reports them machine-readably. The list is not a

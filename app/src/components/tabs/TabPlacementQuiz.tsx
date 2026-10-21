@@ -562,16 +562,16 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
   return (
     <div className="space-y-5">
       {/* Header Banner */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-panel border border-line rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-mono uppercase tracking-wider text-[#c084fc] flex items-center gap-2">
+          <div className="text-xs font-mono uppercase tracking-wider text-purple flex items-center gap-2">
             <Compass className="w-3.5 h-3.5" />
             <span>DIAGNOSTIC &amp; TIER-TRANSITION TOOLKIT · PLACEMENT, SCHOOL MATH &amp; TIER 1 EXIT REVIEW</span>
           </div>
-          <h2 className="text-lg font-bold text-[#f1f5f9] mt-0.5">
+          <h2 className="text-lg font-bold text-ink mt-0.5">
             Find Your Starting Point, Refresh Assumed School Math Just-In-Time, or Verify Tier 1 &rarr; Tier 2 Readiness
           </h2>
-          <p className="text-xs text-[#94a3b8] mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Switch between the <b>8-Gate Prerequisite Placement Quiz</b>, the no-penalty <b>Track P School-Math Diagnostic</b>, and the <b>6-Gate Tier 1 &rarr; Tier 2 Exit Readiness Review</b>.
           </p>
 
@@ -582,8 +582,8 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               data-testid="tab-mode-placement"
               className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
                 diagnosticMode === 'placement'
-                  ? 'bg-[#38bdf8] text-[#0b0f19] border-[#38bdf8]'
-                  : 'bg-[#0b0f19] text-[#cbd5e1] border-[#334155] hover:border-[#38bdf8]'
+                  ? 'bg-accent text-inverse border-accent'
+                  : 'bg-canvas text-body border-line hover:border-accent'
               }`}
             >
               1. Skip-Gate Placement Quiz (8 Gates)
@@ -593,8 +593,8 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               data-testid="tab-math-diagnostic"
               className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
                 diagnosticMode === 'school-math'
-                  ? 'bg-[#34d399] text-[#0b0f19] border-[#34d399]'
-                  : 'bg-[#0b0f19] text-[#cbd5e1] border-[#334155] hover:border-[#34d399]'
+                  ? 'bg-emerald text-inverse border-emerald'
+                  : 'bg-canvas text-body border-line hover:border-emerald'
               }`}
             >
               2. Track P School-Math Diagnostic (6 Topics)
@@ -604,8 +604,8 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               data-testid="tab-tier1-exit-review"
               className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
                 diagnosticMode === 'tier1-exit'
-                  ? 'bg-[#c084fc] text-[#0b0f19] border-[#c084fc]'
-                  : 'bg-[#0b0f19] text-[#cbd5e1] border-[#334155] hover:border-[#c084fc]'
+                  ? 'bg-purple text-inverse border-purple'
+                  : 'bg-canvas text-body border-line hover:border-purple'
               }`}
             >
               3. Tier 1 &rarr; Tier 2 Exit Readiness Review (6 Gates)
@@ -614,15 +614,15 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-[#0b0f19] border border-[#1e293b] px-3.5 py-2 rounded-lg text-right">
-            <div className="text-[10px] font-mono uppercase text-[#94a3b8]">Progress</div>
-            <div className="text-sm font-mono font-bold text-[#f1f5f9]">
+          <div className="bg-canvas border border-line-soft px-3.5 py-2 rounded-lg text-right">
+            <div className="text-[10px] font-mono uppercase text-muted">Progress</div>
+            <div className="text-sm font-mono font-bold text-ink">
               {`${answeredCount} / ${PLACEMENT_QUESTIONS.length} Answered`}
             </div>
           </div>
           <button
             onClick={resetQuiz}
-            className="px-3 py-2 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#cbd5e1] border border-[#334155] flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-2 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
@@ -633,11 +633,11 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
       {/* MODE 2: Track P Explicit School-Math Diagnostic (3 Routes per Topic) */}
       {diagnosticMode === 'school-math' && (
         <div className="space-y-4" data-testid="panel-school-math-diagnostic">
-          <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-            <h3 className="text-sm font-bold text-[#34d399]">
+          <div className="bg-panel border border-line rounded-xl p-4">
+            <h3 className="text-sm font-bold text-emerald">
               No-Penalty School-Math Diagnostic — Choose &ldquo;I know this&rdquo;, &ldquo;Show me a refresher&rdquo;, or &ldquo;Teach it from scratch&rdquo;
             </h3>
-            <p className="text-xs text-[#94a3b8] mt-1">
+            <p className="text-xs text-muted mt-1">
               You do not need to take an entire math course before starting robotics. Check each of the 6 school-math skills below and pick the route you need right when a lesson uses it.
             </p>
           </div>
@@ -648,11 +648,11 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               return (
                 <div
                   key={item.id}
-                  className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between space-y-3"
+                  className="bg-panel border border-line rounded-xl p-4 flex flex-col justify-between space-y-3"
                 >
                   <div className="space-y-1.5">
-                    <div className="text-xs font-mono font-bold text-[#38bdf8]">{item.title}</div>
-                    <p className="text-xs text-[#f1f5f9] leading-relaxed">{item.checkQuestion}</p>
+                    <div className="text-xs font-mono font-bold text-accent">{item.title}</div>
+                    <p className="text-xs text-ink leading-relaxed">{item.checkQuestion}</p>
                   </div>
 
                   <div className="space-y-2">
@@ -663,8 +663,8 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                         }
                         className={`px-2.5 py-1.5 rounded text-xs font-mono border cursor-pointer ${
                           selectedRoute === 'known'
-                            ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
-                            : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1] hover:border-emerald-500/50'
+                            ? 'bg-emerald/15 border-emerald/60 text-emerald font-bold'
+                            : 'bg-canvas border-line text-body hover:border-emerald/60'
                         }`}
                       >
                         I know this
@@ -675,8 +675,8 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                         }
                         className={`px-2.5 py-1.5 rounded text-xs font-mono border cursor-pointer ${
                           selectedRoute === 'refresher'
-                            ? 'bg-amber-950/60 border-amber-500 text-amber-300 font-bold'
-                            : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1] hover:border-amber-500/50'
+                            ? 'bg-amber/15 border-amber/60 text-amber font-bold'
+                            : 'bg-canvas border-line text-body hover:border-amber/60'
                         }`}
                       >
                         Show me a refresher
@@ -686,20 +686,20 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                           setMathRoutes((prev) => ({ ...prev, [item.id]: 'teach' }));
                           onOpenPyodideLesson(item.lessonId);
                         }}
-                        className="px-2.5 py-1.5 rounded text-xs font-mono border bg-[#0b0f19] border-[#38bdf8]/50 text-[#38bdf8] hover:bg-[#38bdf8]/15 cursor-pointer"
+                        className="px-2.5 py-1.5 rounded text-xs font-mono border bg-canvas border-accent/50 text-accent hover:bg-accent/15 cursor-pointer"
                       >
                         Teach it from scratch ({item.lessonId}) &rarr;
                       </button>
                     </div>
 
                     {selectedRoute === 'refresher' && (
-                      <div className="p-3 rounded-lg bg-[#0b0f19] border border-amber-500/40 text-xs text-amber-200 leading-relaxed">
-                        <span className="font-mono font-bold text-amber-400">2-Minute Refresher: </span>
+                      <div className="p-3 rounded-lg bg-amber/10 border border-amber/40 text-xs text-amber leading-relaxed">
+                        <span className="font-mono font-bold text-amber">2-Minute Refresher: </span>
                         {item.refresherText}
                       </div>
                     )}
                     {selectedRoute === 'known' && (
-                      <div className="p-2 rounded bg-emerald-950/30 border border-emerald-500/30 text-[11px] font-mono text-emerald-300">
+                      <div className="p-2 rounded bg-emerald/10 border border-emerald/30 text-[11px] font-mono text-emerald">
                         Marked ready — you can skip directly to the code check in {item.lessonTitle}.
                       </div>
                     )}
@@ -714,18 +714,18 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
       {/* MODE 3: Tier 1 -> Tier 2 Exit Readiness Review (6 Practical Gates + Self-Administered Exit Project) */}
       {diagnosticMode === 'tier1-exit' && (
         <div className="space-y-4" data-testid="panel-tier1-exit-review">
-          <div className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-panel border border-line rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-bold text-[#c084fc]">
+              <h3 className="text-sm font-bold text-purple">
                 Gate 1&rarr;2 (&ldquo;Tier 1 Exit&rdquo;) Readiness Review ({exitReadyCount} / {TIER1_EXIT_GATES.length} Practical Gates Verified)
               </h3>
-              <p className="text-xs text-[#94a3b8] mt-1">
+              <p className="text-xs text-muted mt-1">
                 Before starting Tier 2 (`00-foundations.T2.00a` State-Space &amp; ODEs on the recurring arm), verify the 6 practical readiness gates below and complete the <b>2–3 Hour Self-Administered Position-Loop Exit Project</b>: <i>&ldquo;Given this motor&rsquo;s parameters, build a simulated position loop with anti-windup that meets &plusmn;2% overshoot and settles in &lt; 0.5 s; log and plot it.&rdquo;</i>
               </p>
             </div>
             <button
               onClick={() => onOpenPyodideLesson('08.1')}
-              className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#c084fc] text-[#0b0f19] cursor-pointer"
+              className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-purple text-inverse cursor-pointer"
             >
               Launch 4-Stage 08.1 Boss &amp; Exit Spec &rarr;
             </button>
@@ -737,15 +737,15 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               return (
                 <div
                   key={gate.id}
-                  className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between space-y-3"
+                  className="bg-panel border border-line rounded-xl p-4 flex flex-col justify-between space-y-3"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-[#c084fc] font-bold">{gate.skillDomain}</span>
-                      <span className="text-[#94a3b8]">Refresher: Lesson {gate.refresherLessonId}</span>
+                      <span className="text-purple font-bold">{gate.skillDomain}</span>
+                      <span className="text-muted">Refresher: Lesson {gate.refresherLessonId}</span>
                     </div>
-                    <h4 className="text-xs font-bold text-[#f1f5f9]">{gate.title}</h4>
-                    <p className="text-xs text-[#cbd5e1] leading-relaxed">{gate.scenarioQuestion}</p>
+                    <h4 className="text-xs font-bold text-ink">{gate.title}</h4>
+                    <p className="text-xs text-body leading-relaxed">{gate.scenarioQuestion}</p>
                   </div>
 
                   <div className="space-y-2">
@@ -760,9 +760,9 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                             className={`w-full text-left p-2.5 rounded-lg border text-xs transition-all flex items-start gap-2 cursor-pointer ${
                               isSelected
                                 ? opt.isReady
-                                  ? 'bg-emerald-950/50 border-emerald-500/60 text-emerald-200'
-                                  : 'bg-rose-950/50 border-rose-500/60 text-rose-200'
-                                : 'bg-[#0b0f19] border-[#1e293b] text-[#cbd5e1] hover:border-[#475569]'
+                                  ? 'bg-emerald/15 border-emerald/50 text-emerald'
+                                  : 'bg-rose/15 border-rose/50 text-rose'
+                                : 'bg-canvas border-line-soft text-body hover:border-line-strong'
                             }`}
                           >
                             <span className="font-mono font-bold shrink-0">
@@ -774,15 +774,15 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                             <div
                               className={`p-2.5 rounded text-[11px] flex flex-wrap items-center justify-between gap-2 ${
                                 opt.isReady
-                                  ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/30'
-                                  : 'bg-rose-950/30 text-rose-300 border border-rose-500/30'
+                                  ? 'bg-emerald/10 text-emerald border border-emerald/30'
+                                  : 'bg-rose/10 text-rose border border-rose/30'
                               }`}
                             >
                               <span>{opt.feedback}</span>
                               {!opt.isReady && (
                                 <button
                                   onClick={() => onOpenPyodideLesson(gate.refresherLessonId)}
-                                  className="px-2.5 py-1 rounded font-mono font-bold bg-[#38bdf8] text-[#0b0f19] cursor-pointer"
+                                  className="px-2.5 py-1 rounded font-mono font-bold bg-accent text-inverse cursor-pointer"
                                 >
                                   Open Targeted Refresher ({gate.refresherLessonId}) &rarr;
                                 </button>
@@ -802,37 +802,37 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
 
       {/* MODE 1: Placement Recommendation Card & 8 Skip-Gate Questions */}
       {diagnosticMode === 'placement' && (submitted || answeredCount > 0) && (
-        <div className="bg-gradient-to-r from-[#0f172a] via-[#111827] to-[#1e1b4b] border border-[#38bdf8]/50 rounded-xl p-5">
+        <div className="bg-gradient-to-r from-panel via-panel to-purple/10 border border-accent/50 rounded-xl p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1.5 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#38bdf8]/15 text-[#38bdf8] border border-[#38bdf8]/40">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-accent/15 text-accent border border-accent/40">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 RECOMMENDED ENTRY POINT · {totalCorrect}/{PLACEMENT_QUESTIONS.length} SKIP-GATES PASSED
               </div>
               {firstGapQuestion ? (
                 <>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-base font-bold text-ink">
                     Start at: {firstGapQuestion.lessonTitle}
                   </h3>
-                  <p className="text-xs text-[#cbd5e1]">
+                  <p className="text-xs text-body">
                     Bridge Module ID:{' '}
-                    <code className="px-1.5 py-0.5 rounded bg-[#0b0f19] text-[#34d399] font-mono">
+                    <code className="px-1.5 py-0.5 rounded bg-canvas text-emerald font-mono">
                       {firstGapQuestion.moduleId}
                     </code>{' '}
                     · Prereqs Verified:{' '}
-                    <span className="font-mono text-[#94a3b8]">
+                    <span className="font-mono text-muted">
                       {firstGapQuestion.prereqChain.join(' → ')}
                     </span>
                   </p>
                 </>
               ) : (
                 <>
-                  <h3 className="text-base font-bold text-[#34d399]">
+                  <h3 className="text-base font-bold text-emerald">
                     All 8 Tier 1 Skip-Gates Passed! Start at Lesson 08.1 (2-DOF Boss Capstone) or Depth 2 (Tier 2)
                   </h3>
-                  <p className="text-xs text-[#cbd5e1]">
+                  <p className="text-xs text-body">
                     You passed every Track P, Stage 0 and Depth 1 skip test. Run the{' '}
-                    <code className="px-1.5 py-0.5 rounded bg-[#0b0f19] text-[#34d399] font-mono">
+                    <code className="px-1.5 py-0.5 rounded bg-canvas text-emerald font-mono">
                       Lesson 08.1
                     </code>{' '}
                     2-DOF compliant robot arm simulation or jump directly into Tier 2 (`00-foundations.T2.00a` State-Space & Quaternions).
@@ -845,7 +845,7 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               <button
                 onClick={openRecommendedLesson}
                 data-testid="btn-open-recommended-lesson"
-                className="px-3.5 py-2 rounded-lg text-xs font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-lg text-xs font-mono font-bold bg-emerald hover:bg-emerald-strong text-inverse flex items-center gap-1.5 cursor-pointer"
               >
                 <Terminal className="w-3.5 h-3.5" />
                 Open Lesson {firstGapQuestion ? firstGapQuestion.lessonId : '08.1'} in Python Runner
@@ -854,7 +854,7 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               <button
                 onClick={openRecommendedSimulator}
                 data-testid="btn-open-recommended-simulator"
-                className="px-3.5 py-2 rounded-lg text-xs font-mono font-semibold bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 text-[#38bdf8] border border-[#38bdf8]/40 flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-lg text-xs font-mono font-semibold bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 flex items-center gap-1.5 cursor-pointer"
               >
                 <Cpu className="w-3.5 h-3.5" />
                 Open Matched Simulator Tab
@@ -873,23 +873,23 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
               return (
                 <div
                   key={q.id}
-                  className="bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between space-y-3"
+                  className="bg-panel border border-line rounded-xl p-4 flex flex-col justify-between space-y-3"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#0b0f19] text-[#38bdf8] border border-[#1e293b]">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-canvas text-accent border border-line-soft">
                         Gate {qIdx + 1} · {q.stageBadge}
                       </span>
-                      <span className="text-[10px] font-mono text-[#94a3b8] flex items-center gap-1">
-                        <BookOpen className="w-3 h-3 text-[#c084fc]" />
+                      <span className="text-[10px] font-mono text-muted flex items-center gap-1">
+                        <BookOpen className="w-3 h-3 text-purple" />
                         {q.moduleId}
                       </span>
                     </div>
 
-                    <h4 className="text-xs font-bold text-[#f1f5f9] leading-relaxed">{q.question}</h4>
+                    <h4 className="text-xs font-bold text-ink leading-relaxed">{q.question}</h4>
 
                     {q.codeSnippet && (
-                      <pre className="p-2.5 rounded bg-[#0b0f19] border border-[#1e293b] font-mono text-[11px] text-[#38bdf8] overflow-x-auto">
+                      <pre className="p-2.5 rounded bg-canvas border border-line-soft font-mono text-[11px] text-accent overflow-x-auto">
                         {q.codeSnippet}
                       </pre>
                     )}
@@ -906,9 +906,9 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                             className={`w-full text-left p-2.5 rounded-lg border text-xs transition-all flex items-start gap-2 cursor-pointer ${
                               isSelected
                                 ? opt.isCorrect
-                                  ? 'bg-emerald-950/50 border-emerald-500/60 text-emerald-200'
-                                  : 'bg-rose-950/50 border-rose-500/60 text-rose-200'
-                                : 'bg-[#0b0f19] border-[#1e293b] text-[#cbd5e1] hover:border-[#475569]'
+                                  ? 'bg-emerald/15 border-emerald/50 text-emerald'
+                                  : 'bg-rose/15 border-rose/50 text-rose'
+                                : 'bg-canvas border-line-soft text-body hover:border-line-strong'
                             }`}
                           >
                             <span className="font-mono font-bold shrink-0 mt-0.5">
@@ -917,17 +917,17 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
                             <span className="flex-1">{opt.label}</span>
                             {showFeedback &&
                               (opt.isCorrect ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                <CheckCircle2 className="w-4 h-4 text-emerald shrink-0 mt-0.5" />
                               ) : (
-                                <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                                <XCircle className="w-4 h-4 text-rose shrink-0 mt-0.5" />
                               ))}
                           </button>
                           {showFeedback && (
                             <div
                               className={`px-3 py-1.5 rounded text-[11px] ${
                                 opt.isCorrect
-                                  ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/30'
-                                  : 'bg-rose-950/30 text-rose-300 border border-rose-500/30'
+                                  ? 'bg-emerald/10 text-emerald border border-emerald/30'
+                                  : 'bg-rose/10 text-rose border border-rose/30'
                               }`}
                             >
                               {opt.explanation}
@@ -945,7 +945,7 @@ export const TabPlacementQuiz: React.FC<TabPlacementQuizProps> = ({
           <div className="flex justify-end">
             <button
               onClick={() => setSubmitted(true)}
-              className="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-[#38bdf8] hover:bg-[#0284c7] text-[#0b0f19] flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-accent hover:bg-accent-strong text-inverse flex items-center gap-1.5 cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4" />
               Compute Final Placement Recommendation

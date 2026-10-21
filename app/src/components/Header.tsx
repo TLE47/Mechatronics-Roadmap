@@ -1,7 +1,9 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, Compass } from 'lucide-react';
+import { Printer, Download, FileJson, User, Compass, Sun, Moon } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
+import { useTheme } from '../useTheme';
+import { toggleLabel } from '../theme';
 
 interface HeaderProps {
   onOpenCheatSheet: () => void;
@@ -45,6 +47,9 @@ export const Header: React.FC<HeaderProps> = ({
   accountEmail,
   onOpenAccount,
 }) => {
+  // The one place the theme is mounted: the attribute on <html> and this button's label
+  // are always the same state, so the toggle can never claim a mode the page is not in.
+  const { theme, toggle } = useTheme();
   // The nav is on every screen, including a newcomer's first one. Keep the labels plain English:
   // the internal Stage/Pass/Tier names live in the roadmap tab and docs/ROUTE.md, not here.
   const passLinks: { id: ActiveTierPass; label: string }[] = [
@@ -116,6 +121,21 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Zone 3: actions. Secondary tools stay reachable but quiet; the account button is the
             only one that shows state, so it keeps a border. */}
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+          <button
+            onClick={toggle}
+            data-testid="btn-theme-toggle"
+            aria-label={toggleLabel(theme)}
+            aria-pressed={theme === 'light'}
+            title={toggleLabel(theme)}
+            className="btn"
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            ) : (
+              <Moon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            )}
+            <span className="hidden 2xl:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
+          </button>
           <button
             onClick={onOpenAccount}
             data-testid="btn-account"

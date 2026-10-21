@@ -11,6 +11,34 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 127: One Workbench, Two Lights
+
+A light theme that is a real alternative rather than a filter, and a toggle that owns the page.
+
+**Tokens replaced hexes in all eleven tabs.** `@theme inline` in [`index.css`](app/src/index.css)
+registers the palette as Tailwind colours (`bg-panel`, `border-line`, `text-body`, `text-faint`,
+`bg-emerald/20`, …) that resolve to the custom properties, and ~1,400 literal colour utilities were
+rewritten to those names. Nothing else about a tab changed: same layout, same words, same tests.
+
+**The choice is remembered, and still follows the OS until it is made.** The pre-paint script in
+[`index.html`](app/index.html) writes `data-theme` from `localStorage` or `prefers-color-scheme`
+before the bundle loads, so there is no flash; [`theme.ts`](app/src/theme.ts) is the documented rule
+set (corrupt storage falls back, a blocked store never throws) and the header gained a Sun/Moon
+toggle with `aria-pressed` and an honest label.
+
+**Plots stay dark on purpose.** A canvas or chart sits on `.plot`, because its traces are literal
+plot colours tuned against dark ink; light mode reads as warm paper around instrument faces.
+Two token nudges came out of the audit rather than taste: dark `--dim` to #7a8aa3 (4.6:1 on the
+lightest surface it labels) and light `--accent` to #0d6b64 (5.1:1 on the accent-soft chip).
+
+**Measured, both ways.** `scripts/test_theme.mjs` (10 cases) pins storage, OS default and the
+attribute; `scripts/e2e_theme.mjs` drives Chromium through the toggle contract and all eleven tabs in
+both themes, compositing every text run over its real backgrounds. Result: 2,939 text runs, zero below
+4.5:1, in either mode. The unit suite runs inside `npm run test:workbench`; the browser sweep is its own CI step, added
+after that run went flaky with a seventh browser suite competing for the same machine.
+
+---
+
 ## [2026-10-20] — Run 126: The Workbench Looks Like the Product It Is
 
 The curriculum was stronger than its first screen. This run is presentation only: no lesson, count,

@@ -180,8 +180,8 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
   return (
     <div className="space-y-4">
       {/* Beginner Intuition */}
-      <div className="bg-[#38bdf8]/10 border border-[#38bdf8]/30 border-l-4 border-l-[#38bdf8] rounded-lg p-3.5 text-xs text-[#cbd5e1] leading-relaxed">
-        <strong className="text-[#38bdf8] text-[0.85rem] block mb-1">
+      <div className="bg-accent/10 border border-accent/30 border-l-4 border-l-accent rounded-lg p-3.5 text-xs text-body leading-relaxed">
+        <strong className="text-accent text-[0.85rem] block mb-1">
           Beginner's Intuition — Why Monolithic Flexures, Kelvin Couplings & 4-Terminal Kelvin Shunts Matter:
         </strong>
         (1) <strong>Notch Flexure Hinge:</strong> Instead of ball bearings that have friction and play (backlash), we carve a thin 0.5 mm Titanium bridge that bends elastically with <em>zero friction and infinite resolution</em>.<br />
@@ -190,8 +190,8 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
       </div>
 
       {/* Equations */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-        <h2 className="text-sm font-bold text-[#38bdf8] mb-2">
+      <div className="bg-panel border border-line rounded-xl p-4">
+        <h2 className="text-sm font-bold text-accent mb-2">
           Paros-Weisbord Flexure Stiffness, Hertzian Contact Stress & Coupled MOSFET Electro-Thermal Loop
         </h2>
         <MathPanel
@@ -201,33 +201,36 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-[#111827] border border-[#334155] rounded-xl p-4 space-y-3.5">
-          <h2 className="text-sm font-bold text-[#38bdf8]">3D CAD & 48V/30A PCB Thermal Controls</h2>
+        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+          <h2 className="text-sm font-bold text-accent">3D CAD & 48V/30A PCB Thermal Controls</h2>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveCadPart('flexure')}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${activeCadPart === 'flexure' ? 'bg-[#38bdf8]/25 border border-[#38bdf8] text-[#38bdf8]' : 'bg-[#1e293b] border border-[#334155] text-[#94a3b8]'}`}
+              aria-pressed={activeCadPart === 'flexure'}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${activeCadPart === 'flexure' ? 'bg-accent/25 border border-accent text-accent' : 'bg-raise border border-line text-muted'}`}
             >
               Ti Notch Flexure
             </button>
             <button
               onClick={() => setActiveCadPart('kelvin')}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${activeCadPart === 'kelvin' ? 'bg-[#38bdf8]/25 border border-[#38bdf8] text-[#38bdf8]' : 'bg-[#1e293b] border border-[#334155] text-[#94a3b8]'}`}
+              aria-pressed={activeCadPart === 'kelvin'}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${activeCadPart === 'kelvin' ? 'bg-accent/25 border border-accent text-accent' : 'bg-raise border border-line text-muted'}`}
             >
               Kelvin 3-2-1
             </button>
             <button
               onClick={() => setActiveCadPart('carrier')}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${activeCadPart === 'carrier' ? 'bg-[#38bdf8]/25 border border-[#38bdf8] text-[#38bdf8]' : 'bg-[#1e293b] border border-[#334155] text-[#94a3b8]'}`}
+              aria-pressed={activeCadPart === 'carrier'}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${activeCadPart === 'carrier' ? 'bg-accent/25 border border-accent text-accent' : 'bg-raise border border-line text-muted'}`}
             >
               8:1 QDD Carrier
             </button>
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Flexure Min Web Thickness <MathView math="t" /> [mm]</span>
-              <span className="font-mono text-[#34d399] font-bold">{tMm.toFixed(2)}</span>
+              <span className="font-mono text-emerald font-bold">{tMm.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -236,14 +239,14 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
               step="0.05"
               value={tMm}
               onChange={(e) => setTMm(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Capstone I Phase Current <MathView math="I_{\text{rms}}" /> [A]</span>
-              <span className="font-mono text-[#34d399] font-bold">{iRms.toFixed(1)}</span>
+              <span className="font-mono text-emerald font-bold">{iRms.toFixed(1)}</span>
             </div>
             <input
               type="range"
@@ -252,14 +255,14 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
               step="1.0"
               value={iRms}
               onChange={(e) => setIRms(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>SVPWM Frequency <MathView math="f_{\text{pwm}}" /> [kHz]</span>
-              <span className="font-mono text-[#34d399] font-bold">{fKhz}</span>
+              <span className="font-mono text-emerald font-bold">{fKhz}</span>
             </div>
             <input
               type="range"
@@ -268,17 +271,17 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
               step="4"
               value={fKhz}
               onChange={(e) => setFKhz(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
-          <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-pcbl' ? 'ring-2 ring-[#fbbf24] bg-[#fbbf24]/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
-              <span className="text-[#fbbf24] font-semibold flex items-center gap-1">
+          <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-pcbl' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
+            <div className="flex justify-between text-xs text-body">
+              <span className="text-amber font-semibold flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 Loop Inductance <MathView math="L_{\text{loop}}" /> [nH]
               </span>
-              <span className="font-mono text-[#34d399] font-bold">{lNh.toFixed(1)}</span>
+              <span className="font-mono text-emerald font-bold">{lNh.toFixed(1)}</span>
             </div>
             <input
               id="sl-pcbl"
@@ -288,14 +291,14 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
               step="0.2"
               value={lNh}
               onChange={(e) => setLNh(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Burst length <MathView math="t_p" /> [ms] at this current</span>
-              <span className="font-mono text-[#34d399] font-bold">{pulseMs}</span>
+              <span className="font-mono text-emerald font-bold">{pulseMs}</span>
             </div>
             <input
               type="range"
@@ -304,32 +307,32 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
               step="5"
               value={pulseMs}
               onChange={(e) => setPulseMs(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           {/* BOM Table */}
           <div className="pt-2">
-            <h3 className="text-xs font-bold text-[#38bdf8] uppercase mb-1.5">
+            <h3 className="text-xs font-bold text-accent uppercase mb-1.5">
               Capstone I 48V / 30A FOC Smart Actuator BOM ($40.47 Total)
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-[0.72rem] text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-[#334155] text-[#38bdf8] bg-[#0d1322]">
+                  <tr className="border-b border-line text-accent bg-canvas">
                     <th className="p-1.5">RefDes</th>
                     <th className="p-1.5">MPN</th>
                     <th className="p-1.5">Function</th>
                     <th className="p-1.5">Rating</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1e293b] text-[#cbd5e1]">
+                <tbody className="divide-y divide-raise text-body">
                   {BOM_DATA.map((item) => (
-                    <tr key={item.refDes} className="hover:bg-[#1e293b]/50">
-                      <td className="p-1.5 font-mono text-[#34d399] font-bold">{item.refDes}</td>
+                    <tr key={item.refDes} className="hover:bg-raise/50">
+                      <td className="p-1.5 font-mono text-emerald font-bold">{item.refDes}</td>
                       <td className="p-1.5 font-mono">{item.mpn}</td>
                       <td className="p-1.5">{item.functionDesc}</td>
-                      <td className="p-1.5 text-[#94a3b8]">{item.rating}</td>
+                      <td className="p-1.5 text-muted">{item.rating}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -339,44 +342,44 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
         </div>
 
         {/* Right: 3D Wireframe & Loss Chart */}
-        <div className="lg:col-span-7 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#38bdf8] mb-3 flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>3D CAD Projection & Coupled PCB Thermal Budget</span>
             </h2>
 
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Flexure <MathView math="k_\theta" /></div>
-                <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{flexureK.toFixed(2)} N·m/rad</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Flexure <MathView math="k_\theta" /></div>
+                <div className="text-base font-bold font-mono text-emerald mt-0.5">{flexureK.toFixed(2)} N·m/rad</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">MOSFET <MathView math="T_j" /> (Hot)</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${tjDeg < 110 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">MOSFET <MathView math="T_j" /> (Hot)</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${tjDeg < 110 ? 'text-emerald' : 'text-rose'}`}>
                   {tjDeg.toFixed(1)} °C
                 </div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Turn-Off <MathView math="V_{DS,\text{peak}}" /></div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${vdsPeak < 60 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Turn-Off <MathView math="V_{DS,\text{peak}}" /></div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${vdsPeak < 60 ? 'text-emerald' : 'text-rose'}`}>
                   {vdsPeak.toFixed(1)} V
                 </div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Inverter Efficiency</div>
-                <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{efficiency.toFixed(2)}%</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Inverter Efficiency</div>
+                <div className="text-base font-bold font-mono text-emerald mt-0.5">{efficiency.toFixed(2)}%</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Pulse <MathView math="T_j" /> (peak)</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${pulseTjDeg < 110 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Pulse <MathView math="T_j" /> (peak)</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${pulseTjDeg < 110 ? 'text-emerald' : 'text-rose'}`}>
                   {pulseTjDeg.toFixed(1)} °C
                 </div>
               </div>
             </div>
 
             {/* Canvas */}
-            <div className="w-full overflow-hidden rounded-lg border border-[#1e293b] bg-[#070a12]">
+            <div className="w-full overflow-hidden rounded-lg plot">
               <canvas
                 ref={canvasRef}
                 width={850}

@@ -209,16 +209,16 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
   return (
     <div className="space-y-4">
       {/* Beginner Intuition */}
-      <div className="bg-[#38bdf8]/10 border border-[#38bdf8]/30 border-l-4 border-l-[#38bdf8] rounded-lg p-3.5 text-xs text-[#cbd5e1] leading-relaxed">
-        <strong className="text-[#38bdf8] text-[0.85rem] block mb-1">
+      <div className="bg-accent/10 border border-accent/30 border-l-4 border-l-accent rounded-lg p-3.5 text-xs text-body leading-relaxed">
+        <strong className="text-accent text-[0.85rem] block mb-1">
           Beginner's Intuition — Swing-Up, LQR Balancing & Control Barrier Functions (CBF):
         </strong>
         When a pendulum hangs straight down, a linear controller cannot lift it directly if the motor torque is limited. Instead, we use <strong>Energy Pumping</strong> (like a child pumping their legs on a playground swing) until the rod reaches within 22° of upright, then hand off to an <strong>LQR balancer</strong> (like balancing a broomstick on your palm). Meanwhile, the <strong>Control Barrier Function <MathView math="h(x) \ge 0" /></strong> acts as an invisible force-field bumper that smoothly brakes the cart before it can ever crash into the red workspace limits <MathView math="\pm x_{\max}" />.
       </div>
 
       {/* Equations */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-        <h2 className="text-sm font-bold text-[#38bdf8] mb-2">
+      <div className="bg-panel border border-line rounded-xl p-4">
+        <h2 className="text-sm font-bold text-accent mb-2">
           Åström-Furuta Energy Pumping, LQR Stabilization & Exponential Control Barrier Function (ECBF)
         </h2>
         <MathPanel
@@ -228,16 +228,16 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-[#111827] border border-[#334155] rounded-xl p-4 space-y-3.5">
-          <h2 className="text-sm font-bold text-[#38bdf8]">Nonlinear Swing-Up, LQR & CBF Controls</h2>
-          <p className="text-xs text-[#94a3b8]">
+        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+          <h2 className="text-sm font-bold text-accent">Nonlinear Swing-Up, LQR & CBF Controls</h2>
+          <p className="text-xs text-muted">
             Real-time 60 FPS RK4 simulation switching from energy pumping to LQR at <MathView math="|\theta| < 22^\circ" /> while enforcing hard cart walls <MathView math="\pm x_{\max}" /> via a Control Barrier Function QP.
           </p>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>LQR Angle Weight <MathView math="Q_\theta" /></span>
-              <span className="font-mono text-[#34d399] font-bold">{qth}</span>
+              <span className="font-mono text-emerald font-bold">{qth}</span>
             </div>
             <input
               type="range"
@@ -246,14 +246,14 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
               step="10"
               value={qth}
               onChange={(e) => setQth(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Energy Swing-Up Gain <MathView math="k_E" /></span>
-              <span className="font-mono text-[#34d399] font-bold">{ke.toFixed(1)}</span>
+              <span className="font-mono text-emerald font-bold">{ke.toFixed(1)}</span>
             </div>
             <input
               type="range"
@@ -262,17 +262,17 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
               step="0.2"
               value={ke}
               onChange={(e) => setKe(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
-          <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-xmax' ? 'ring-2 ring-[#fbbf24] bg-[#fbbf24]/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
-              <span className="flex items-center gap-1 font-semibold text-[#fbbf24]">
+          <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-xmax' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
+            <div className="flex justify-between text-xs text-body">
+              <span className="flex items-center gap-1 font-semibold text-amber">
                 <Sparkles className="w-3 h-3" />
                 CBF Safety Wall <MathView math="x_{\max}" /> [m]
               </span>
-              <span className="font-mono text-[#34d399] font-bold">{xmax.toFixed(2)}</span>
+              <span className="font-mono text-emerald font-bold">{xmax.toFixed(2)}</span>
             </div>
             <input
               id="sl-xmax"
@@ -282,28 +282,28 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
               step="0.05"
               value={xmax}
               onChange={(e) => setXmax(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="pt-2 flex flex-wrap gap-2">
             <button
               onClick={() => resetPendulum(Math.PI - 0.08)}
-              className="bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8] px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1"
+              className="bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Reset Hanging (θ₀ = 175°)</span>
             </button>
             <button
               onClick={() => injectImpulse(3.2)}
-              className="bg-[#1e293b] hover:bg-[#334155] text-[#fbbf24] border border-[#334155] px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+              className="bg-raise hover:bg-elevate text-amber border border-line px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
             >
               <Zap className="w-3.5 h-3.5" />
               <span>Inject +3.2 rad/s Kick</span>
             </button>
             <button
               onClick={() => resetPendulum(0.18)}
-              className="bg-[#1e293b] hover:bg-[#334155] text-[#f1f5f9] border border-[#334155] px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
+              className="bg-raise hover:bg-elevate text-ink border border-line px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
             >
               Reset Upright (θ₀ = 10°)
             </button>
@@ -311,39 +311,39 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
         </div>
 
         {/* Right: 60 FPS Visual Canvas & KPIs */}
-        <div className="lg:col-span-7 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#38bdf8] mb-3 flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Live Inverted Pendulum Kinematics & CBF Wall Enforcement</span>
-              <span className="text-xs text-[#94a3b8] font-mono">Dashed Rose Lines = CBF Limits</span>
+              <span className="text-xs text-muted font-mono">Dashed Rose Lines = CBF Limits</span>
             </h2>
 
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Active Controller</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${controllerMode === 'LQR + CBF' ? 'text-[#34d399]' : 'text-[#38bdf8]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Active Controller</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${controllerMode === 'LQR + CBF' ? 'text-emerald' : 'text-accent'}`}>
                   {controllerMode}
                 </div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Pendulum Angle θ</div>
-                <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{thetaDeg.toFixed(1)}°</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Pendulum Angle θ</div>
+                <div className="text-base font-bold font-mono text-emerald mt-0.5">{thetaDeg.toFixed(1)}°</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Base Position x</div>
-                <div className="text-base font-bold font-mono text-[#38bdf8] mt-0.5">{cartPos.toFixed(2)} m</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Base Position x</div>
+                <div className="text-base font-bold font-mono text-accent mt-0.5">{cartPos.toFixed(2)} m</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">CBF Margin h(x)</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${cbfMargin >= 0.1 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">CBF Margin h(x)</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${cbfMargin >= 0.1 ? 'text-emerald' : 'text-rose'}`}>
                   +{cbfMargin.toFixed(2)} m
                 </div>
               </div>
             </div>
 
             {/* Canvas */}
-            <div className="w-full overflow-hidden rounded-lg border border-[#1e293b] bg-[#070a12]">
+            <div className="w-full overflow-hidden rounded-lg plot">
               <canvas
                 ref={canvasRef}
                 width={850}

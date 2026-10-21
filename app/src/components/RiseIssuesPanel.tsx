@@ -73,32 +73,32 @@ export const RiseIssuesPanel: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-[#111827] border border-[#334155] rounded-xl p-4" data-testid="rise-issues-panel">
+    <div className="bg-panel border border-line rounded-xl p-4" data-testid="rise-issues-panel">
       <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
-        <h2 className="text-sm font-bold text-[#38bdf8] flex items-center gap-2">
+        <h2 className="text-sm font-bold text-accent flex items-center gap-2">
           <GitPullRequest size={14} /> Open rise issues
           {state.status === 'ready' && (
-            <span className="font-mono text-[0.72rem] text-[#94a3b8] font-normal">({state.issues.length})</span>
+            <span className="font-mono text-[0.72rem] text-muted font-normal">({state.issues.length})</span>
           )}
         </h2>
         <a
           href={LABEL_URL}
           target="_blank"
           rel="noreferrer"
-          className="text-[0.7rem] text-[#38bdf8] hover:underline flex items-center gap-1"
+          className="text-[0.7rem] text-accent hover:underline flex items-center gap-1"
         >
           label: link-rise <ExternalLink size={11} />
         </a>
       </div>
 
       {state.status === 'loading' && (
-        <p className="text-xs text-[#94a3b8]" data-testid="rise-issues-loading">
+        <p className="text-xs text-muted" data-testid="rise-issues-loading">
           Reading open issues from GitHub…
         </p>
       )}
 
       {state.status === 'error' && (
-        <p className="text-xs text-[#fbbf24] leading-relaxed" data-testid="rise-issues-error">
+        <p className="text-xs text-amber leading-relaxed" data-testid="rise-issues-error">
           Could not reach the GitHub API ({state.error}).{' '}
           <a href={LABEL_URL} target="_blank" rel="noreferrer" className="underline">
             Open the label on GitHub
@@ -108,7 +108,7 @@ export const RiseIssuesPanel: React.FC = () => {
       )}
 
       {state.status === 'ready' && state.issues.length === 0 && (
-        <p className="text-xs text-[#34d399] leading-relaxed" data-testid="rise-issues-empty">
+        <p className="text-xs text-emerald leading-relaxed" data-testid="rise-issues-empty">
           None open. A sweep that finds newly unverified URLs files one here; a later sweep closes
           it once those URLs verify again.
         </p>
@@ -122,12 +122,12 @@ export const RiseIssuesPanel: React.FC = () => {
                 href={issue.htmlUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[#cbd5e1] hover:text-[#38bdf8] hover:underline"
+                className="text-body hover:text-accent hover:underline"
               >
-                <span className="font-mono text-[#64748b]">#{issue.number}</span> {issue.title}
+                <span className="font-mono text-faint">#{issue.number}</span> {issue.title}
               </a>
               {issue.createdAt && (
-                <span className="text-[0.68rem] text-[#64748b] font-mono shrink-0">
+                <span className="text-[0.68rem] text-faint font-mono shrink-0">
                   {ageLabel(issue.createdAt)}
                 </span>
               )}

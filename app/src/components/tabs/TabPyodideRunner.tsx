@@ -1066,11 +1066,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       {showFirstGuide && (
         <section
           data-testid="first-lesson-guide"
-          className="bg-[#06281f] border border-[#34d399]/50 rounded-xl p-5"
+          className="bg-emerald/10 border border-emerald/50 rounded-xl p-5"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-xs font-mono text-[#34d399] flex items-center gap-2">
+              <div className="text-xs font-mono text-emerald flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>
                   {currentLesson.id === 'P.1'
@@ -1080,12 +1080,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       }`}
                 </span>
               </div>
-              <h3 className="text-base font-bold text-[#f1f5f9] mt-1">
+              <h3 className="text-base font-bold text-ink mt-1">
                 {currentLesson.id === 'P.1'
                   ? 'One editor, one button, one red line.'
                   : 'This starter, its first check, and the finish line.'}
               </h3>
-              <p className="text-xs text-[#cbd5e1] mt-1 max-w-3xl">
+              <p className="text-xs text-body mt-1 max-w-3xl">
                 {currentLesson.id === 'P.1'
                   ? 'This page is the whole lesson. Nothing to install and nothing else to read: change a line, press Run, and let the red line tell you what to fix.'
                   : `This brief is only for ${currentLesson.id}. It names the first hole, the first check, and what a finished run prints; the editor and the red line do the rest.`}
@@ -1094,7 +1094,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             <button
               onClick={dismissFirstGuide}
               data-testid="btn-guide-dismiss"
-              className="px-2.5 py-1 rounded text-[11px] font-mono text-[#94a3b8] hover:text-[#f1f5f9] border border-[#334155] cursor-pointer"
+              className="px-2.5 py-1 rounded text-[11px] font-mono text-muted hover:text-ink border border-line cursor-pointer"
             >
               {currentLesson.id === 'P.1'
                 ? 'I have done this before — hide'
@@ -1103,9 +1103,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </div>
 
           <ol className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
-              <div className="text-[11px] font-mono text-[#38bdf8]">1 · THE STARTER</div>
-              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+            <li className="bg-canvas border border-line-soft rounded-lg p-3">
+              <div className="text-[11px] font-mono text-accent">1 · THE STARTER</div>
+              <p className="text-xs text-body mt-1.5 break-words">
                 {coach.holeCount > 0 ? (
                   <>
                     This starter leaves{' '}
@@ -1127,25 +1127,25 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   guideEditorRef.current?.focus();
                 }}
                 data-testid="btn-guide-editor"
-                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 text-[#38bdf8] border border-[#38bdf8]/40 cursor-pointer"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 cursor-pointer"
               >
                 Show me the editor
               </button>
             </li>
 
-            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
-              <div className="text-[11px] font-mono text-[#34d399]">2 · THE FIRST FAILURE</div>
-              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+            <li className="bg-canvas border border-line-soft rounded-lg p-3">
+              <div className="text-[11px] font-mono text-emerald">2 · THE FIRST FAILURE</div>
+              <p className="text-xs text-body mt-1.5 break-words">
                 Run it untouched. The first check is: <b>{coach.check}</b>
               </p>
-              <p className="text-[11px] text-[#94a3b8] mt-1">
+              <p className="text-[11px] text-muted mt-1">
                 The red line names the value it expected and the value your code produced.
               </p>
               <button
                 onClick={() => runPythonCode(codeRef.current, currentLesson)}
                 disabled={isRunning}
                 data-testid="btn-guide-run"
-                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono font-bold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] disabled:opacity-50 cursor-pointer"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono font-bold bg-emerald hover:bg-emerald-strong text-inverse disabled:opacity-50 cursor-pointer"
               >
                 {isRunning
                   ? pyodideStatus === 'loading'
@@ -1155,12 +1155,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </button>
             </li>
 
-            <li className="bg-[#0b0f19] border border-[#1e293b] rounded-lg p-3">
-              <div className="text-[11px] font-mono text-[#fbbf24]">3 · THE FINISH LINE</div>
-              <p className="text-xs text-[#cbd5e1] mt-1.5 break-words">
+            <li className="bg-canvas border border-line-soft rounded-lg p-3">
+              <div className="text-[11px] font-mono text-amber">3 · THE FINISH LINE</div>
+              <p className="text-xs text-body mt-1.5 break-words">
                 When every check passes, it prints: <code>{coach.finish}</code>
               </p>
-              <p className="text-[11px] text-[#94a3b8] mt-1">
+              <p className="text-[11px] text-muted mt-1">
                 Hint 1 is a nudge; it never gives the answer.
               </p>
               <button
@@ -1170,7 +1170,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 }}
                 disabled={currentLesson.hints.length === 0}
                 data-testid="btn-guide-hint"
-                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-[#fbbf24]/15 hover:bg-[#fbbf24]/25 text-[#fbbf24] border border-[#fbbf24]/40 disabled:opacity-50 cursor-pointer"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-amber/15 hover:bg-amber/25 text-amber border border-amber/40 disabled:opacity-50 cursor-pointer"
               >
                 {revealedHints > 0 ? 'Hint 1 is open below' : 'Reveal Hint 1'}
               </button>
@@ -1181,11 +1181,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             <div
               data-testid="guide-what-to-fix"
               aria-live="polite"
-              className="mt-3 p-3 rounded-lg bg-[#0b0f19] border border-[#f43f5e]/50"
+              className="mt-3 p-3 rounded-lg bg-canvas border border-rose/50"
             >
-              <div className="text-[11px] font-mono text-[#f43f5e]">WHAT TO FIX</div>
-              <code className="block mt-1 text-xs text-[#fecdd3] break-words">{guideFixLine}</code>
-              <p className="text-[11px] text-[#cbd5e1] mt-1">
+              <div className="text-[11px] font-mono text-rose">WHAT TO FIX</div>
+              <code className="block mt-1 text-xs text-rose break-words">{guideFixLine}</code>
+              <p className="text-[11px] text-body mt-1">
                 {passStatus === 'harness_failed' ? (
                   <>
                     That is the harness measuring what your own functions compute, not reading a
@@ -1216,14 +1216,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           {passStatus === 'passed' && (
             <div
               data-testid="guide-passed"
-              className="mt-3 p-3 rounded-lg bg-[#0b0f19] border border-[#34d399]/50 text-xs text-[#cbd5e1]"
+              className="mt-3 p-3 rounded-lg bg-canvas border border-emerald/50 text-xs text-body"
             >
-              <b className="text-[#34d399]">That is the whole loop.</b> You read a failure, changed
+              <b className="text-emerald">That is the whole loop.</b> You read a failure, changed
               the code, and proved it. The next lesson opens with its own starter brief.
               {nextLesson && (
                 <button
                   onClick={() => selectLesson(nextLesson.id)}
-                  className="ml-2 px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-[#34d399] text-[#0b0f19] cursor-pointer"
+                  className="ml-2 px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-emerald text-inverse cursor-pointer"
                 >
                   Next: Lesson {nextLesson.id} →
                 </button>
@@ -1237,18 +1237,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         {/* Left Sidebar: exercise search and selector */}
         <div
           data-testid="lesson-list-card"
-          className="lg:col-span-4 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col max-h-[760px]"
+          className="lg:col-span-4 bg-panel border border-line rounded-xl p-4 flex flex-col max-h-[760px]"
         >
           {/* Search Input */}
           <div className="relative mb-3">
-            <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search ${PYTHON_LESSONS.length} lessons and exercises by ID, title, or topic...`}
               data-testid="input-lesson-search"
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0b0f19] border border-[#334155] text-xs text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#38bdf8]"
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-canvas border border-line text-xs text-ink placeholder-faint focus:outline-none focus:border-accent"
             />
           </div>
 
@@ -1257,7 +1257,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               chip was readable only after resizing the window. The count gets its own line and
               the chips wrap inside the card. */}
           <div className="mb-3">
-            <span className="block text-xs font-mono text-[#94a3b8] tabular-nums mb-1.5">
+            <span className="block text-xs font-mono text-muted tabular-nums mb-1.5">
               Lessons &amp; exercises ({filteredLessons.length})
             </span>
             <div className="flex flex-wrap gap-1" data-testid="track-filters">
@@ -1285,8 +1285,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   onClick={() => setTrackFilter(tab.id as any)}
                   className={`px-2 py-1 rounded text-[11px] font-mono whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                     trackFilter === tab.id
-                      ? 'bg-[#38bdf8] text-[#0b0f19] font-bold'
-                      : 'bg-[#0b0f19] text-[#94a3b8] hover:text-white border border-[#1e293b]'
+                      ? 'bg-accent text-inverse font-bold'
+                      : 'bg-canvas text-muted hover:text-ink border border-line-soft'
                   }`}
                 >
                   {tab.label}
@@ -1307,15 +1307,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   onClick={() => selectLesson(lesson.id)}
                   className={`w-full text-left p-2.5 rounded-lg border transition-all flex items-start justify-between gap-2 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#1e293b] border-[#38bdf8] text-white'
-                      : 'bg-[#0b0f19]/70 border-[#1e293b] text-[#cbd5e1] hover:border-[#475569]'
+                      ? 'bg-raise border-accent text-ink'
+                      : 'bg-canvas/70 border-line-soft text-body hover:border-line-strong'
                   }`}
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[11px] font-mono">
-                      <span className="font-bold text-[#38bdf8]">{lesson.id}</span>
-                      <span aria-hidden="true" className="text-[#475569]">·</span>
-                      <span className="text-[#94a3b8] truncate">
+                      <span className="font-bold text-accent">{lesson.id}</span>
+                      <span aria-hidden="true" className="text-faint">·</span>
+                      <span className="text-muted truncate">
                         {roadmapStepForLesson(lesson.id)
                           ? stepBreadcrumb(roadmapStepForLesson(lesson.id)!)
                           : lesson.track === 'track-p'
@@ -1329,17 +1329,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   </div>
                   <div className="shrink-0 mt-0.5">
                     {isVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#34d399]">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Verified</span>
                       </span>
                     ) : isSelfMarked ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#38bdf8]">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-accent">
                         <Check className="w-3.5 h-3.5" />
                         <span>Marked</span>
                       </span>
                     ) : (
-                      <ChevronRight className="w-4 h-4 text-[#475569]" />
+                      <ChevronRight className="w-4 h-4 text-faint" />
                     )}
                   </div>
                 </button>
@@ -1351,7 +1351,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         {/* Right Main Area: Lesson Ideas, Code Editor, Hints & Output Diff */}
         <div className="lg:col-span-8 space-y-4">
           {/* Active Lesson Metadata Card */}
-          <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
+          <div className="bg-panel border border-line rounded-xl p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 {/* Whole items wrap; none of them breaks inside a word. Before this, the row was a
@@ -1361,9 +1361,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     dotted separator cannot dangle at the start of a wrapped line. */}
                 <div
                   data-testid="lesson-meta"
-                  className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-[#94a3b8]"
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-muted"
                 >
-                  <span className="text-[#38bdf8] font-bold whitespace-nowrap">
+                  <span className="text-accent font-bold whitespace-nowrap">
                     Lesson {currentLesson.id}
                   </span>
                   <span className="truncate max-w-[16rem] sm:max-w-[22rem]" title={currentLesson.path}>
@@ -1379,7 +1379,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       }
                       data-testid="lesson-roadmap-step"
                       title="Show the roadmap step this entry practises"
-                      className="whitespace-nowrap text-[#38bdf8] hover:underline cursor-pointer"
+                      className="whitespace-nowrap text-accent hover:underline cursor-pointer"
                     >
                       Roadmap: {stepBreadcrumb(currentRoadmapStep)} ↗
                     </button>
@@ -1392,7 +1392,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     <span
                       data-testid="lesson-step-cost"
                       title="Focused hours from each page's own metadata: the arm pass you are in, and the depth pass after Step 10"
-                      className="whitespace-nowrap tabular-nums text-[#cbd5e1]"
+                      className="whitespace-nowrap tabular-nums text-body"
                     >
                       {stepCostLabel(currentSpineStep)}
                     </span>
@@ -1403,17 +1403,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     target="_blank"
                     rel="noreferrer"
                     title="The GitHub page is the reading copy. This editor is where you type, run and verify; nothing is saved on GitHub."
-                    className="text-[#38bdf8] hover:text-[#7dd3fc] underline underline-offset-2 whitespace-nowrap"
+                    className="text-accent hover:text-accent underline underline-offset-2 whitespace-nowrap"
                   >
                     Read this page on GitHub ↗
                   </a>
                   {isCurrentVerified && (
-                    <span className="text-[#34d399] font-semibold whitespace-nowrap">
+                    <span className="text-emerald font-semibold whitespace-nowrap">
                       Executed &amp; Passed (WASM)
                     </span>
                   )}
                 </div>
-                <h3 className="text-base font-bold text-[#f1f5f9] mt-1">{currentLesson.title}</h3>
+                <h3 className="text-base font-bold text-ink mt-1">{currentLesson.title}</h3>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -1422,8 +1422,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   data-testid="btn-toggle-lesson-complete"
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-mono border flex items-center gap-1.5 cursor-pointer ${
                     isCurrentSelfMarked
-                      ? 'bg-[#38bdf8]/20 border-[#38bdf8] text-[#38bdf8]'
-                      : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1] hover:border-[#38bdf8]'
+                      ? 'bg-accent/20 border-accent text-accent'
+                      : 'bg-canvas border-line text-body hover:border-accent'
                   }`}
                 >
                   {isCurrentSelfMarked ? (
@@ -1442,7 +1442,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     setInstructorError('');
                   }}
                   data-testid="btn-reset-starter"
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#cbd5e1] border border-[#334155] flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset Starter</span>
@@ -1451,7 +1451,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   onClick={resetRuntime}
                   data-testid="btn-reset-runtime"
                   title="Terminate and restart the background Python Web Worker without losing editor code"
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#38bdf8] border border-[#38bdf8]/40 flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-accent border border-accent/40 flex items-center gap-1.5 cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Reset Runtime</span>
@@ -1462,7 +1462,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     logEvent({ kind: 'solution_open', lesson: selectedId });
                   }}
                   data-testid="btn-load-solution"
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#fbbf24] border border-[#fbbf24]/40 flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-amber border border-amber/40 flex items-center gap-1.5 cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5" />
                   <span>Load Solution</span>
@@ -1471,7 +1471,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <button
                     onClick={() => stopExecution()}
                     data-testid="btn-stop-execution"
-                    className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#f43f5e] hover:bg-[#e11d48] text-white flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-rose hover:bg-rose-strong text-inverse flex items-center gap-1.5 cursor-pointer"
                   >
                     <OctagonX className="w-3.5 h-3.5" />
                     <span>Stop</span>
@@ -1500,14 +1500,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
 
             {/* <= 2 Ideas Unboxed Metadata List */}
-            <div className="mt-3 pt-3 border-t border-[#1e293b] flex flex-wrap items-center gap-2 text-xs text-[#cbd5e1]">
-              <span className="font-mono text-[#94a3b8] flex items-center gap-1">
-                <BookOpen className="w-3.5 h-3.5 text-[#38bdf8]" />
+            <div className="mt-3 pt-3 border-t border-line-soft flex flex-wrap items-center gap-2 text-xs text-body">
+              <span className="font-mono text-muted flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5 text-accent" />
                 <span>New Ideas (≤2 rule):</span>
               </span>
               {currentLesson.ideas.map((idea, idx) => (
                 <React.Fragment key={idx}>
-                  {idx > 0 && <span aria-hidden="true" className="text-[#475569]">·</span>}
+                  {idx > 0 && <span aria-hidden="true" className="text-faint">·</span>}
                   <span>
                     {idx + 1}. {idea}
                   </span>
@@ -1534,9 +1534,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           {/* Progressive 3-Step Hint Ladder */}
           {currentLesson.hints.length > 0 && (
-            <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
+            <div className="bg-panel border border-line rounded-xl p-4">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-mono text-[#fbbf24] flex items-center gap-1.5">
+                <div className="text-xs font-mono text-amber flex items-center gap-1.5">
                   <Lightbulb className="w-4 h-4" />
                   <span>
                     Progressive 3-Step Hint Ladder ({revealedHints} / {currentLesson.hints.length} unlocked)
@@ -1558,7 +1558,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                         : undefined
                     }
                     data-testid="btn-reveal-hint"
-                    className="px-2.5 py-1 rounded text-xs font-mono bg-[#fbbf24]/15 hover:bg-[#fbbf24]/25 text-[#fbbf24] border border-[#fbbf24]/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2.5 py-1 rounded text-xs font-mono bg-amber/15 hover:bg-amber/25 text-amber border border-amber/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {nextHintNeedsAttempt ? `Run to unlock Hint ${nextHintNumber}` : `Reveal Hint ${nextHintNumber}`}
                   </button>
@@ -1569,9 +1569,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   {currentLesson.hints.slice(0, revealedHints).map((hint, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-lg bg-[#0b0f19] border border-[#334155] text-xs text-[#e2e8f0]"
+                      className="p-2.5 rounded-lg bg-canvas border border-line text-xs text-ink"
                     >
-                      <span className="font-mono font-bold text-[#fbbf24] mr-1.5">
+                      <span className="font-mono font-bold text-amber mr-1.5">
                         Hint {idx + 1}:
                       </span>
                       <span dangerouslySetInnerHTML={{ __html: hint }} />
@@ -1583,12 +1583,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           )}
 
           {/* Code Editor */}
-          <div className="bg-[#111827] border border-[#334155] rounded-xl overflow-hidden">
-            <div className="bg-[#0b0f19] px-4 py-2 border-b border-[#1e293b] flex items-center justify-between">
-              <span className="text-xs font-mono text-[#94a3b8]">
+          <div className="bg-panel border border-line rounded-xl overflow-hidden">
+            <div className="bg-canvas px-4 py-2 border-b border-line-soft flex items-center justify-between">
+              <span className="text-xs font-mono text-muted">
                 Python 3 Editor — Edit TODOs and press &quot;Run &amp; Verify Output&quot; (Web Worker Isolated)
               </span>
-              <span className="text-[11px] font-mono text-[#64748b] tabular-nums">
+              <span className="text-[11px] font-mono text-faint tabular-nums">
                 {code.split('\n').length} lines
               </span>
             </div>
@@ -1598,7 +1598,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               onChange={(e) => commitCode(e.target.value)}
               spellCheck={false}
               data-testid="textarea-python-code"
-              className="w-full h-72 p-4 bg-[#0b0f19] text-[#f1f5f9] font-mono text-xs leading-relaxed focus:outline-none resize-y"
+              className="w-full h-72 p-4 bg-canvas text-ink font-mono text-xs leading-relaxed focus:outline-none resize-y"
             />
           </div>
 
@@ -1606,10 +1606,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div
             ref={guideAssessmentRef}
             data-testid="panel-instructor-tests"
-            className="bg-[#111827] border border-[#334155] rounded-xl p-4"
+            className="bg-panel border border-line rounded-xl p-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-mono text-[#38bdf8] flex items-center gap-1.5">
+              <div className="text-xs font-mono text-accent flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4" />
                 <span>Instructor Behavioral Assessment (Multi-Input, Boundary &amp; Tolerance Checks)</span>
               </div>
@@ -1618,10 +1618,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   data-testid="badge-behavior-check"
                   className={
                     behaviorCheck === 'passed'
-                      ? 'text-[#34d399] font-bold'
+                      ? 'text-emerald font-bold'
                       : behaviorCheck === 'failed'
-                      ? 'text-[#f43f5e] font-bold'
-                      : 'text-[#94a3b8]'
+                      ? 'text-rose font-bold'
+                      : 'text-muted'
                   }
                 >
                   Behavior Tests:{' '}
@@ -1631,15 +1631,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     ? 'FAILED'
                     : 'UNTESTED'}
                 </span>
-                <span aria-hidden="true" className="text-[#475569]">·</span>
+                <span aria-hidden="true" className="text-faint">·</span>
                 <span
                   data-testid="badge-output-check"
                   className={
                     outputCheck === 'matched'
-                      ? 'text-[#34d399] font-bold'
+                      ? 'text-emerald font-bold'
                       : outputCheck === 'differs'
-                      ? 'text-[#fbbf24] font-bold'
-                      : 'text-[#94a3b8]'
+                      ? 'text-amber font-bold'
+                      : 'text-muted'
                   }
                 >
                   Presentation (`stdout`, {outputMatchMode} match):{' '}
@@ -1649,18 +1649,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     ? 'DIFFERS'
                     : 'UNTESTED'}
                 </span>
-                <span aria-hidden="true" className="text-[#475569]">·</span>
-                <span data-testid="note-output-match-mode" className="text-[11px] text-[#94a3b8]">
+                <span aria-hidden="true" className="text-faint">·</span>
+                <span data-testid="note-output-match-mode" className="text-[11px] text-muted">
                   {lessonDowngradesFormatting
                     ? 'Formatting is ignored: indentation, column padding and blank lines cannot block a correct solution.'
                     : 'This lesson grades exact formatting: its table columns are part of the answer.'}
                 </span>
               </div>
             </div>
-            <ul className="mt-2.5 space-y-1 text-xs text-[#cbd5e1] font-mono">
+            <ul className="mt-2.5 space-y-1 text-xs text-body font-mono">
               {(currentLesson.instructorTestSummary || []).map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <span className="text-[#38bdf8]">•</span>
+                  <span className="text-accent">•</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -1668,7 +1668,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             {instructorError && (
               <div
                 data-testid="pre-instructor-error"
-                className="mt-2.5 p-2.5 rounded-lg bg-[#0b0f19] border border-[#f43f5e]/50 font-mono text-xs text-[#f43f5e]"
+                className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/50 font-mono text-xs text-rose"
               >
                 {instructorError}
               </div>
@@ -1676,9 +1676,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             {passStatus === 'harness_failed' && harnessResult && harnessResult.failures.length > 0 && (
               <div
                 data-testid="pre-harness-error"
-                className="mt-2.5 p-2.5 rounded-lg bg-[#0b0f19] border border-[#f43f5e]/50 font-mono text-xs text-[#f43f5e] space-y-1"
+                className="mt-2.5 p-2.5 rounded-lg bg-canvas border border-rose/50 font-mono text-xs text-rose space-y-1"
               >
-                <div className="text-[11px] text-[#fbbf24]">
+                <div className="text-[11px] text-amber">
                   Harness: {harnessResult.met} / {harnessResult.total} graded metrics at target
                 </div>
                 {harnessResult.failures.map((line) => (
@@ -1690,15 +1690,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           {/* Output & Expected Output Side-by-Side Diff */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
+            <div className="bg-panel border border-line rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono text-[#94a3b8]">
+                <span className="text-xs font-mono text-muted">
                   Actual Python Output (`stdout` / `assert`)
                 </span>
                 {passStatus === 'passed' && (
                   <span
                     data-testid="status-assert-passed"
-                    className="text-xs font-mono font-bold text-[#34d399] flex items-center gap-1"
+                    className="text-xs font-mono font-bold text-emerald flex items-center gap-1"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>PASS · Behavior &amp; Output Verified</span>
@@ -1707,7 +1707,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {passStatus === 'harness_failed' && (
                   <span
                     data-testid="status-harness-failed"
-                    className="text-xs font-mono font-bold text-[#f43f5e] flex items-center gap-1"
+                    className="text-xs font-mono font-bold text-rose flex items-center gap-1"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>
@@ -1719,7 +1719,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {passStatus === 'behavior_failed' && (
                   <span
                     data-testid="status-behavior-failed"
-                    className="text-xs font-mono font-bold text-[#f43f5e] flex items-center gap-1"
+                    className="text-xs font-mono font-bold text-rose flex items-center gap-1"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>BEHAVIOR FAILED · Instructor Tests Failed</span>
@@ -1728,7 +1728,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {passStatus === 'mismatch' && (
                   <span
                     data-testid="status-output-mismatch"
-                    className="text-xs font-mono font-bold text-[#fbbf24] flex items-center gap-1"
+                    className="text-xs font-mono font-bold text-amber flex items-center gap-1"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>BEHAVIOR PASSED · Output Format Differs</span>
@@ -1737,7 +1737,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {passStatus === 'stopped' && (
                   <span
                     data-testid="status-execution-stopped"
-                    className="text-xs font-mono font-bold text-[#fbbf24] flex items-center gap-1"
+                    className="text-xs font-mono font-bold text-amber flex items-center gap-1"
                   >
                     <OctagonX className="w-3.5 h-3.5" />
                     <span>STOPPED · Loop Limit / Cancelled</span>
@@ -1746,7 +1746,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {passStatus === 'error' && (
                   <span
                     data-testid="status-execution-error"
-                    className="text-xs font-mono font-bold text-[#f43f5e] flex items-center gap-1"
+                    className="text-xs font-mono font-bold text-rose flex items-center gap-1"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>ERROR · Syntax / Runtime Error</span>
@@ -1755,22 +1755,22 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
               <pre
                 data-testid="pre-actual-stdout"
-                className="p-3 rounded-lg bg-[#0b0f19] border border-[#1e293b] font-mono text-xs text-[#e2e8f0] whitespace-pre-wrap min-h-[120px]"
+                className="p-3 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-ink whitespace-pre-wrap min-h-[120px]"
               >
                 {stdout || (stderr ? '' : 'Click "Run & Verify Output" to execute this lesson.')}
-                {stderr && <span className="text-rose-400 block mt-1">{stderr}</span>}
+                {stderr && <span className="text-rose block mt-1">{stderr}</span>}
               </pre>
             </div>
 
-            <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
+            <div className="bg-panel border border-line rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono text-[#94a3b8]">
+                <span className="text-xs font-mono text-muted">
                   Expected Output (Presentation Check)
                 </span>
                 {passStatus === 'passed' && nextLesson && (
                   <button
                     onClick={() => selectLesson(nextLesson.id)}
-                    className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-[#38bdf8] text-[#0b0f19] flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-accent text-inverse flex items-center gap-1 cursor-pointer"
                   >
                     <Sparkles className="w-3 h-3" />
                     <span>Next: Lesson {nextLesson.id} →</span>
@@ -1779,14 +1779,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
               <pre
                 data-testid="pre-expected-stdout"
-                className="p-3 rounded-lg bg-[#0b0f19] border border-[#1e293b] font-mono text-xs text-[#34d399] whitespace-pre-wrap min-h-[120px]"
+                className="p-3 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-emerald whitespace-pre-wrap min-h-[120px]"
               >
                 {currentLesson.expectedOutput}
               </pre>
               {outputCheck === 'matched' && outputComparison.formattingDiffers && (
                 <p
                   data-testid="note-formatting-normalized"
-                  className="mt-2 text-[11px] font-mono text-[#34d399]"
+                  className="mt-2 text-[11px] font-mono text-emerald"
                 >
                   Matched with formatting ignored — your numbers and words are identical to the
                   Expected Output; only whitespace differs, and this lesson does not grade it.
@@ -1795,7 +1795,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               {outputCheck === 'differs' && outputComparison.firstDiffLine !== null && (
                 <p
                   data-testid="note-output-diff-line"
-                  className="mt-2 text-[11px] font-mono text-[#fbbf24]"
+                  className="mt-2 text-[11px] font-mono text-amber"
                 >
                   First difference: line {outputComparison.firstDiffLine}
                   {lessonDowngradesFormatting

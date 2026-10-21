@@ -690,7 +690,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div id="top" className="min-h-screen flex flex-col bg-[#0b0f19] text-[#f1f5f9]">
+    <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
       {/* Keyboard users can jump the header, the mode bar and the tab rail in one key. */}
       <a href="#main" className="skip-link">
         Skip to the workbench
@@ -759,11 +759,11 @@ export const App: React.FC = () => {
             <span data-testid="progress-verified-count" style={{ color: 'var(--emerald)' }}>
               Executed &amp; Passed: {totalVerifiedLessons}/{PYTHON_LESSONS.length}
             </span>
-            <span aria-hidden="true" style={{ color: 'var(--border-strong)' }}>·</span>
+            <span aria-hidden="true" style={{ color: 'var(--dim)' }}>·</span>
             <span data-testid="progress-lessons-count" style={{ color: 'var(--muted)' }}>
               Self-Marked: {totalCompletedLessons}/{PYTHON_LESSONS.length}
             </span>
-            <span aria-hidden="true" style={{ color: 'var(--border-strong)' }}>·</span>
+            <span aria-hidden="true" style={{ color: 'var(--dim)' }}>·</span>
             <span data-testid="progress-milestones-count" style={{ color: 'var(--accent)' }}>
               Track Milestones: {totalCompletedMilestones}/{allMilestoneIds.length}
             </span>
@@ -821,7 +821,9 @@ export const App: React.FC = () => {
                   style={{
                     borderColor: isActive ? 'var(--accent)' : 'var(--border)',
                     color: isActive ? 'var(--accent)' : 'var(--dim)',
-                    backgroundColor: isActive ? 'rgba(56,189,248,0.10)' : 'var(--bg)',
+                    backgroundColor: isActive
+                      ? 'color-mix(in srgb, var(--accent) 12%, transparent)'
+                      : 'var(--bg)',
                   }}
                   aria-hidden="true"
                 >
@@ -954,19 +956,19 @@ export const App: React.FC = () => {
       {/* Export Progress Portfolio Modal */}
       {isPortfolioModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-          <div className="bg-[#111827] border border-[#334155] rounded-xl max-w-2xl w-full p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
+          <div className="bg-panel border border-line rounded-xl max-w-2xl w-full p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-line-soft pb-3">
               <div>
-                <h2 className="text-base font-bold text-[#f1f5f9]">
+                <h2 className="text-base font-bold text-ink">
                   Export Verified Progress &amp; Portfolio Certificate (`.md`)
                 </h2>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   Save your completed Python lessons and roadmap milestones as a portable Markdown certificate for your GitHub profile or study log.
                 </p>
               </div>
               <button
                 onClick={() => setIsPortfolioModalOpen(false)}
-                className="p-1.5 rounded-lg text-[#94a3b8] hover:text-white bg-[#0b0f19] border border-[#334155] cursor-pointer"
+                className="p-1.5 rounded-lg text-muted hover:text-ink bg-canvas border border-line cursor-pointer"
                 aria-label="Close export modal"
               >
                 <X className="w-4 h-4" />
@@ -975,7 +977,7 @@ export const App: React.FC = () => {
 
             <pre
               data-testid="portfolio-markdown-preview"
-              className="p-3.5 rounded-lg bg-[#0b0f19] border border-[#1e293b] font-mono text-xs text-[#e2e8f0] whitespace-pre-wrap max-h-80 overflow-y-auto"
+              className="p-3.5 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-ink whitespace-pre-wrap max-h-80 overflow-y-auto"
             >
               {portfolioMarkdown}
             </pre>
@@ -983,15 +985,15 @@ export const App: React.FC = () => {
             <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2">
               <button
                 onClick={handleCopyPortfolio}
-                className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#1e293b] hover:bg-[#334155] text-[#f1f5f9] border border-[#334155] flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-raise hover:bg-elevate text-ink border border-line flex items-center gap-1.5 cursor-pointer"
               >
-                {portfolioCopied ? <Check className="w-3.5 h-3.5 text-[#34d399]" /> : <Copy className="w-3.5 h-3.5" />}
+                {portfolioCopied ? <Check className="w-3.5 h-3.5 text-emerald" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{portfolioCopied ? 'Copied to Clipboard' : 'Copy Markdown'}</span>
               </button>
               <button
                 onClick={handleDownloadPortfolioFile}
                 data-testid="btn-download-portfolio-md"
-                className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#34d399] hover:bg-[#10b981] text-[#0b0f19] flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-semibold bg-emerald hover:bg-emerald-strong text-inverse flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download mechalab-progress-portfolio.md</span>
@@ -1014,7 +1016,7 @@ export const App: React.FC = () => {
       />
 
       {/* Footer */}
-      <footer className="border-t border-[#1e293b] bg-[#070b14] px-4 py-3 text-center text-[11.5px] text-[#64748b]">
+      <footer className="border-t border-line-soft bg-canvas px-4 py-3 text-center text-[11.5px] text-faint">
         MechaLab · Ten-Step Spiral Mechatronics Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License: CC BY 4.0 (Docs) &amp; MIT (Code)
       </footer>
     </div>

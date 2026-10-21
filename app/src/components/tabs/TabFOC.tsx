@@ -179,16 +179,16 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
   return (
     <div className="space-y-4">
       {/* Beginner Intuition */}
-      <div className="bg-[#38bdf8]/10 border border-[#38bdf8]/30 border-l-4 border-l-[#38bdf8] rounded-lg p-3.5 text-xs text-[#cbd5e1] leading-relaxed">
-        <strong className="text-[#38bdf8] text-[0.85rem] block mb-1">
+      <div className="bg-accent/10 border border-accent/30 border-l-4 border-l-accent rounded-lg p-3.5 text-xs text-body leading-relaxed">
+        <strong className="text-accent text-[0.85rem] block mb-1">
           Beginner's Intuition — What Is Field-Oriented Control (FOC)?
         </strong>
         A 3-phase brushless motor has three stationary coils (<MathView math="A, B, C" />) pushing a spinning permanent magnet. If you just apply fixed voltages, the magnetic push angle changes as the rotor spins. <strong>Clarke & Park transforms</strong> rotate our mathematical camera alongside the rotor so the 3 AC sine waves become two simple DC numbers: <MathView math="i_d" /> (pulls uselessly straight into the magnet like pulling on a wrench handle—keep <MathView math="i_d = 0" />!) and <MathView math="i_q" /> (pushes 90° sideways on the wrench for 100% pure torque).
       </div>
 
       {/* Equations */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-        <h2 className="text-sm font-bold text-[#38bdf8] mb-2">
+      <div className="bg-panel border border-line rounded-xl p-4">
+        <h2 className="text-sm font-bold text-accent mb-2">
           Synchronous d-q Frame PMSM Equations & Pole-Zero Cancellation PI Law
         </h2>
         <MathPanel
@@ -198,16 +198,16 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-[#111827] border border-[#334155] rounded-xl p-4 space-y-3.5">
-          <h2 className="text-sm font-bold text-[#38bdf8]">25 kHz FOC Loop & SVPWM Controls</h2>
-          <p className="text-xs text-[#94a3b8]">
+        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+          <h2 className="text-sm font-bold text-accent">25 kHz FOC Loop & SVPWM Controls</h2>
+          <p className="text-xs text-muted">
             Toggle <MathView math="\omega_e L_{d,q}" /> cross-coupling decoupling to observe how rotor speed injects false d-axis flux current when feedforward decoupling is omitted.
           </p>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Current Loop Bandwidth <MathView math="f_{bw}" /> [Hz]</span>
-              <span className="font-mono text-[#34d399] font-bold">{fbw}</span>
+              <span className="font-mono text-emerald font-bold">{fbw}</span>
             </div>
             <input
               type="range"
@@ -216,14 +216,14 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
               step="100"
               value={fbw}
               onChange={(e) => setFbw(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Step q-Axis Command <MathView math="i_q^*" /> [A]</span>
-              <span className="font-mono text-[#34d399] font-bold">{iqRef.toFixed(1)}</span>
+              <span className="font-mono text-emerald font-bold">{iqRef.toFixed(1)}</span>
             </div>
             <input
               type="range"
@@ -232,14 +232,14 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
               step="0.5"
               value={iqRef}
               onChange={(e) => setIqRef(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Mechanical Speed <MathView math="\omega_m" /> [RPM]</span>
-              <span className="font-mono text-[#34d399] font-bold">{rpm}</span>
+              <span className="font-mono text-emerald font-bold">{rpm}</span>
             </div>
             <input
               type="range"
@@ -248,14 +248,14 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
               step="100"
               value={rpm}
               onChange={(e) => setRpm(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
-          <div className={`p-2.5 rounded-lg border border-[#1e293b] bg-[#0d1322] space-y-2 ${highlightedId === 'btn-dec-toggle' ? 'ring-2 ring-[#fbbf24] bg-[#fbbf24]/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
+          <div className={`p-2.5 rounded-lg border border-line-soft bg-canvas space-y-2 ${highlightedId === 'btn-dec-toggle' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-[#cbd5e1] font-medium">Decoupling (<MathView math="\pm \omega_e L i_{d,q}" />):</span>
-              <span className={`font-mono text-xs font-bold flex items-center gap-1 ${decouplingEnabled ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <span className="text-body font-medium">Decoupling (<MathView math="\pm \omega_e L i_{d,q}" />):</span>
+              <span className={`font-mono text-xs font-bold flex items-center gap-1 ${decouplingEnabled ? 'text-emerald' : 'text-rose'}`}>
                 {decouplingEnabled ? <Check className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
                 {decouplingEnabled ? 'ENABLED' : 'DISABLED (COUPLED)'}
               </span>
@@ -263,7 +263,7 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
             <button
               id="btn-dec-toggle"
               onClick={toggleDecoupling}
-              className="w-full bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8] px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
+              className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Toggle Decoupling Feedforward</span>
@@ -273,19 +273,19 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
           <div className="pt-2 flex flex-wrap gap-2">
             <button
               onClick={() => { setFbw(2800); setIqRef(6.5); setRpm(1200); setDecouplingEnabled(true); }}
-              className="bg-[#1e293b] hover:bg-[#334155] text-[#f1f5f9] border border-[#334155] px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
+              className="bg-raise hover:bg-elevate text-ink border border-line px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
             >
               Surgical Cobot (1200 RPM)
             </button>
             <button
               onClick={() => { setFbw(3200); setIqRef(14.0); setRpm(5500); setDecouplingEnabled(false); }}
-              className="bg-[#1e293b] hover:bg-[#334155] text-[#f1f5f9] border border-[#334155] px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
+              className="bg-raise hover:bg-elevate text-ink border border-line px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
             >
               5500 RPM Drone
             </button>
             <button
               onClick={() => { setFbw(3500); setIqRef(24.0); setRpm(2200); setDecouplingEnabled(true); }}
-              className="bg-[#1e293b] hover:bg-[#334155] text-[#f1f5f9] border border-[#334155] px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
+              className="bg-raise hover:bg-elevate text-ink border border-line px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
             >
               24A Hopper Jump
             </button>
@@ -293,36 +293,36 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
         </div>
 
         {/* Right: Plots & KPIs */}
-        <div className="lg:col-span-7 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#38bdf8] mb-3 flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Top: i_q / i_d Current Dynamics · Bottom: 3-Phase SVPWM Waveforms</span>
             </h2>
 
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">0–90% Rise Time</div>
-                <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{riseTimeUs} μs</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">0–90% Rise Time</div>
+                <div className="text-base font-bold font-mono text-emerald mt-0.5">{riseTimeUs} μs</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Peak |i_d| Error</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${maxIdErr < 0.2 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Peak |i_d| Error</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${maxIdErr < 0.2 ? 'text-emerald' : 'text-rose'}`}>
                   {maxIdErr.toFixed(2)} A
                 </div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Kp / Ki Gains</div>
-                <div className="text-base font-bold font-mono text-[#38bdf8] mt-0.5">{kp.toFixed(2)} / {ki.toFixed(0)}</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Kp / Ki Gains</div>
+                <div className="text-base font-bold font-mono text-accent mt-0.5">{kp.toFixed(2)} / {ki.toFixed(0)}</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">SVPWM Boost</div>
-                <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">+15.47%</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">SVPWM Boost</div>
+                <div className="text-base font-bold font-mono text-emerald mt-0.5">+15.47%</div>
               </div>
             </div>
 
             {/* Canvas */}
-            <div className="w-full overflow-hidden rounded-lg border border-[#1e293b] bg-[#070a12]">
+            <div className="w-full overflow-hidden rounded-lg plot">
               <canvas
                 ref={canvasRef}
                 width={850}

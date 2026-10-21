@@ -163,16 +163,16 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
   return (
     <div className="space-y-4">
       {/* Beginner Intuition */}
-      <div className="bg-[#38bdf8]/10 border border-[#38bdf8]/30 border-l-4 border-l-[#38bdf8] rounded-lg p-3.5 text-xs text-[#cbd5e1] leading-relaxed">
-        <strong className="text-[#38bdf8] text-[0.85rem] block mb-1">
+      <div className="bg-accent/10 border border-accent/30 border-l-4 border-l-accent rounded-lg p-3.5 text-xs text-body leading-relaxed">
+        <strong className="text-accent text-[0.85rem] block mb-1">
           Beginner's Intuition — Why Do Naive Sines Blow Up Actuators, and How Does Schroeder Phasing Fix It?
         </strong>
         To measure a robot's true transfer function <MathView math="P(j\omega)" /> quickly, we inject <MathView math="M" /> sine waves at once (a <strong>multisine</strong>). If all <MathView math="M" /> sine waves start with phase <MathView math="\phi_k = 0" />, they add up into a violent spike at <MathView math="t = 0" /> (high <strong>Crest Factor</strong> <MathView math="\text{CF} = \|d\|_\infty / d_{\text{rms}} > 4.0" />) that saturates your amplifier or trips over-current protection! <strong>Manfred Schroeder's quadratic phase formula</strong> <MathView math="\phi_k = -\frac{\pi k(k-1)}{M}" /> staggers the starting phase of each harmonic like an arpeggio chord on a piano—spreading the exact same frequency energy evenly over time (<MathView math="\text{CF} \approx 1.65" />) so we can identify the plant safely inside a closed feedback loop.
       </div>
 
       {/* Equations */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-        <h2 className="text-sm font-bold text-[#38bdf8] mb-2">
+      <div className="bg-panel border border-line rounded-xl p-4">
+        <h2 className="text-sm font-bold text-accent mb-2">
           Schroeder Quadratic Phase Law, Crest Factor & Unbiased Closed-Loop Spectral Estimator
         </h2>
         <MathPanel
@@ -182,23 +182,23 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-[#111827] border border-[#334155] rounded-xl p-4 space-y-3.5">
-          <h2 className="text-sm font-bold text-[#38bdf8]">Schroeder Multisine & SysID Controls</h2>
-          <p className="text-xs text-[#94a3b8]">
+        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+          <h2 className="text-sm font-bold text-accent">Schroeder Multisine & SysID Controls</h2>
+          <p className="text-xs text-muted">
             Toggle between Schroeder quadratic phasing and naive zero-phase cosines (<MathView math="\phi_k = 0" />), adjust harmonic count <MathView math="M" /> and sensor noise <MathView math="\sigma_v" />, and observe the crest factor and identification accuracy.
           </p>
 
-          <div className={`p-2.5 rounded-lg border border-[#1e293b] bg-[#0d1322] space-y-2 ${highlightedId === 'btn-sysmode-toggle' ? 'ring-2 ring-[#fbbf24] bg-[#fbbf24]/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
+          <div className={`p-2.5 rounded-lg border border-line-soft bg-canvas space-y-2 ${highlightedId === 'btn-sysmode-toggle' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-[#cbd5e1] font-medium">Phase Schedule Mode:</span>
-              <span className={`font-mono text-xs font-bold ${useSchroeder ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <span className="text-body font-medium">Phase Schedule Mode:</span>
+              <span className={`font-mono text-xs font-bold ${useSchroeder ? 'text-emerald' : 'text-rose'}`}>
                 {useSchroeder ? 'SCHROEDER' : 'ZERO-PHASE (SPIKE!)'}
               </span>
             </div>
             <button
               id="btn-sysmode-toggle"
               onClick={togglePhaseMode}
-              className="w-full bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8] px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
+              className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Toggle Schroeder vs. Zero-Phase (φₖ=0)</span>
@@ -206,9 +206,9 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Excited Harmonics <MathView math="M" /></span>
-              <span className="font-mono text-[#34d399] font-bold">{harmonicM}</span>
+              <span className="font-mono text-emerald font-bold">{harmonicM}</span>
             </div>
             <input
               type="range"
@@ -217,14 +217,14 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
               step="4"
               value={harmonicM}
               onChange={(e) => setHarmonicM(parseInt(e.target.value, 10))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Measurement Noise Level <MathView math="\sigma_v" /></span>
-              <span className="font-mono text-[#34d399] font-bold">{noiseSigma.toFixed(2)}</span>
+              <span className="font-mono text-emerald font-bold">{noiseSigma.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -233,14 +233,14 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
               step="0.01"
               value={noiseSigma}
               onChange={(e) => setNoiseSigma(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Averaged Periods <MathView math="P_{\text{avg}}" /></span>
-              <span className="font-mono text-[#34d399] font-bold">{nPeriods}</span>
+              <span className="font-mono text-emerald font-bold">{nPeriods}</span>
             </div>
             <input
               type="range"
@@ -249,26 +249,26 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
               step="1"
               value={nPeriods}
               onChange={(e) => setNPeriods(parseInt(e.target.value, 10))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="pt-2 flex flex-wrap gap-2">
             <button
               onClick={() => { setUseSchroeder(true); setHarmonicM(48); setNoiseSigma(0.04); setNPeriods(12); }}
-              className="bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8] px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer"
+              className="bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer"
             >
               48-Tone Schroeder
             </button>
             <button
               onClick={() => { setUseSchroeder(false); setHarmonicM(48); setNoiseSigma(0.04); setNPeriods(8); }}
-              className="bg-[#fb7185]/20 hover:bg-[#fb7185]/30 text-[#fb7185] border border-[#fb7185] px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer"
+              className="bg-rose/20 hover:bg-rose/30 text-rose border border-rose px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer"
             >
               Zero-Phase Clipping
             </button>
             <button
               onClick={() => { setUseSchroeder(true); setHarmonicM(32); setNoiseSigma(0.25); setNPeriods(20); }}
-              className="bg-[#1e293b] hover:bg-[#334155] text-[#cbd5e1] border border-[#334155] px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
+              className="bg-raise hover:bg-elevate text-body border border-line px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
             >
               Noisy 20-Period Avg
             </button>
@@ -276,40 +276,40 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
         </div>
 
         {/* Right: Waveform Canvas & KPIs */}
-        <div className="lg:col-span-7 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#38bdf8] mb-3 flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Top: Time-Domain Excitation · Bottom: True vs. Identified Plant Bode</span>
             </h2>
 
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Active Phasing</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${useSchroeder ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Active Phasing</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${useSchroeder ? 'text-emerald' : 'text-rose'}`}>
                   {useSchroeder ? 'SCHROEDER' : 'ZERO-PHASE'}
                 </div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Crest Factor (CF)</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${activeCF < 2.2 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Crest Factor (CF)</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${activeCF < 2.2 ? 'text-emerald' : 'text-rose'}`}>
                   {activeCF.toFixed(2)}
                 </div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Zero-Phase CF</div>
-                <div className="text-base font-bold font-mono text-[#fb7185] mt-0.5">{zeroCF.toFixed(2)}</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Zero-Phase CF</div>
+                <div className="text-base font-bold font-mono text-rose mt-0.5">{zeroCF.toFixed(2)}</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">SysID RMS Error</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${rmsErrDb < 1.0 ? 'text-[#34d399]' : 'text-[#fbbf24]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">SysID RMS Error</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${rmsErrDb < 1.0 ? 'text-emerald' : 'text-amber'}`}>
                   {rmsErrDb.toFixed(2)} dB
                 </div>
               </div>
             </div>
 
             {/* Canvas */}
-            <div className="w-full overflow-hidden rounded-lg border border-[#1e293b] bg-[#070a12]">
+            <div className="w-full overflow-hidden rounded-lg plot">
               <canvas
                 ref={canvasRef}
                 width={850}

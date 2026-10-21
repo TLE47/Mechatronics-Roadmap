@@ -24,9 +24,36 @@ primitives live: tokens (`--bg`, `--panel`, `--accent`, `--emerald`, …), a flu
 every interactive element, and a `prefers-reduced-motion` branch that disables the hero animation and
 the transitions.
 
-The eleven lab tabs still carry their own inline hex values. They are the same family as the tokens,
-so the workbench reads as one instrument; moving a tab onto the tokens is a local change, and the
-shell no longer needs to be part of it.
+Every tab now names the tokens, not a hex. `@theme inline` in [`src/index.css`](src/index.css)
+registers `bg-canvas`, `bg-panel`, `bg-raise`, `border-line`, `text-ink`, `text-body`, `text-muted`,
+`text-faint` and the accent set as Tailwind colours that resolve to the custom properties, so opacity
+modifiers (`bg-emerald/20`) work too. A literal colour left in a tab is a bug that the light theme
+shows immediately.
+
+## Light and dark
+
+`<html data-theme>` decides every colour. The inline script in [`index.html`](index.html) writes it
+before first paint (stored pick, else `prefers-color-scheme`), so there is no flash;
+[`src/theme.ts`](src/theme.ts) owns the rules and [`src/useTheme.ts`](src/useTheme.ts) mounts them in
+the header toggle.
+
+| Situation | What happens |
+| :--- | :--- |
+| First visit | The OS decides. Nothing is written to `localStorage`. |
+| Toggle clicked | The visible theme flips and `mechalab_theme_v1` stores the side that was picked. |
+| Reload, or the OS flips | The stored pick wins; only an unpicked visit keeps following the OS. |
+| Corrupt or blocked storage | Falls back to the OS and keeps working — no throw, no broken shell. |
+
+Plots are the exception by design: a canvas or SVG chart sits on `.plot` (`--plot: #070a12`) in both
+themes, because the traces are drawn in literal plot colours tuned against that ink. Light mode is
+warm paper around dark instrument faces, not a white plot with invisible curves.
+
+Legibility is measured, not eyeballed: `npm run test:theme` pins the storage/OS rules, and
+`npm run test:theme:e2e` drives Chromium through all eleven tabs in both themes, compositing each
+text run over the backgrounds it actually sits on and failing anything below 3:1 (the current floor
+is 4.5:1). The unit suite runs inside `npm run test:workbench`; the browser sweep is its own CI step,
+because as a seventh parallel suite it pushed the older ones past their click timeouts. `--warnings` lists runs between 3:1 and their size minimum; `--screenshots` writes one
+PNG per tab per theme to `.fb-scratch/theme/`.
 
 Landing hero: [`src/components/StartHereCard.tsx`](src/components/StartHereCard.tsx) renders the
 README's own Start-here block (the words come from `src/data/startHere.json`, so the page and the

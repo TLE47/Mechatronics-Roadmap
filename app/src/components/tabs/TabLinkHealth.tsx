@@ -145,8 +145,8 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
       >
         <defs>
           <linearGradient id="link-history-area-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
@@ -155,8 +155,8 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
           const y = PAD.top + INNER_H - (value / chart.top) * INNER_H;
           return (
             <g key={`tick-${value}`}>
-              <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="#1e293b" strokeWidth="1" />
-              <text x={PAD.left - 10} y={y + 4} textAnchor="end" fontSize="11" fill="#94a3b8" fontFamily="monospace">
+              <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="var(--panel-2)" strokeWidth="1" />
+              <text x={PAD.left - 10} y={y + 4} textAnchor="end" fontSize="11" fill="var(--muted)" fontFamily="monospace">
                 {Math.round(value)}
               </text>
             </g>
@@ -164,23 +164,23 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
         })}
 
         {/* Plot border */}
-        <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + INNER_H} stroke="#334155" strokeWidth="1" />
+        <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + INNER_H} stroke="var(--border)" strokeWidth="1" />
         <line
           x1={PAD.left}
           y1={PAD.top + INNER_H}
           x2={W - PAD.right}
           y2={PAD.top + INNER_H}
-          stroke="#334155"
+          stroke="var(--border)"
           strokeWidth="1"
         />
 
-        <text x={8} y={11} fontSize="10.5" fill="#64748b" fontFamily="monospace">
+        <text x={8} y={11} fontSize="10.5" fill="var(--dim)" fontFamily="monospace">
           links
         </text>
 
         {chart.area && <path d={chart.area} fill="url(#link-history-area-fill)" />}
         {chart.points.length > 1 && (
-          <path d={chart.line} fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinejoin="round" />
+          <path d={chart.line} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round" />
         )}
 
         {/* One run cannot make a line, so read it off a guide to the axis instead of a lone dot. */}
@@ -190,7 +190,7 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
             y1={chart.points[0].y}
             x2={chart.points[0].x}
             y2={chart.points[0].y}
-            stroke="#fbbf24"
+            stroke="var(--amber)"
             strokeDasharray="3 4"
             strokeWidth="1"
             opacity="0.55"
@@ -207,7 +207,7 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
                 cy={point.y}
                 r={hovered === index ? 6.5 : 4.5}
                 fill={isLatest ? '#fbbf24' : '#38bdf8'}
-                stroke="#070a12"
+                stroke="var(--bg)"
                 strokeWidth="1.5"
               />
               <circle
@@ -226,7 +226,7 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
                   textAnchor="middle"
                   fontSize="11"
                   fontWeight="bold"
-                  fill="#fbbf24"
+                  fill="var(--amber)"
                   fontFamily="monospace"
                 >
                   {point.row.notChecked}
@@ -245,7 +245,7 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
               y={H - PAD.bottom + 18}
               textAnchor="middle"
               fontSize="11"
-              fill="#94a3b8"
+              fill="var(--muted)"
               fontFamily="monospace"
             >
               {formatDay(point.t)}
@@ -256,13 +256,13 @@ const TrendChart: React.FC<ChartProps> = ({ rows }) => {
 
       {active && (
         <div
-          className="absolute pointer-events-none -translate-x-1/2 -translate-y-full rounded-lg border border-[#334155] bg-[#070a12]/95 px-2.5 py-2 text-[0.7rem] text-[#cbd5e1] shadow-lg whitespace-nowrap"
+          className="absolute pointer-events-none -translate-x-1/2 -translate-y-full rounded-lg border border-line bg-canvas/95 px-2.5 py-2 text-[0.7rem] text-body shadow-lg whitespace-nowrap"
           style={{ left: `${(active.x / W) * 100}%`, top: `${(active.y / H) * 100}%` }}
           data-testid="link-history-tooltip"
         >
-          <div className="font-mono text-[#fbbf24] font-bold">{active.row.notChecked} not checked</div>
-          <div className="text-[#94a3b8]">{formatStamp(active.row.date)}</div>
-          <div className="font-mono text-[#94a3b8]">
+          <div className="font-mono text-amber font-bold">{active.row.notChecked} not checked</div>
+          <div className="text-muted">{formatStamp(active.row.date)}</div>
+          <div className="font-mono text-muted">
             {active.row.served}/{active.row.urls} served · {active.row.failed} failed
           </div>
         </div>
@@ -279,10 +279,10 @@ export const TabLinkHealth: React.FC = () => {
   if (!latest) {
     return (
       <div className="space-y-4">
-        <div className="bg-[#111827] border border-[#334155] rounded-xl p-6">
-          <h2 className="text-sm font-bold text-[#38bdf8] mb-2">Link Health — no runs recorded yet</h2>
-          <p className="text-xs text-[#94a3b8] leading-relaxed">
-            The dashboard plots <span className="font-mono text-[#cbd5e1]">{LINK_HISTORY_SOURCE}</span>, which the nightly
+        <div className="bg-panel border border-line rounded-xl p-6">
+          <h2 className="text-sm font-bold text-accent mb-2">Link Health — no runs recorded yet</h2>
+          <p className="text-xs text-muted leading-relaxed">
+            The dashboard plots <span className="font-mono text-body">{LINK_HISTORY_SOURCE}</span>, which the nightly
             citation check appends one line to per run. Once the first scheduled run lands, the trend appears here.
           </p>
         </div>
@@ -297,8 +297,8 @@ export const TabLinkHealth: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Beginner intuition */}
-      <div className="bg-[#38bdf8]/10 border border-[#38bdf8]/30 border-l-4 border-l-[#38bdf8] rounded-lg p-3.5 text-xs text-[#cbd5e1] leading-relaxed">
-        <strong className="text-[#38bdf8] text-[0.85rem] block mb-1">
+      <div className="bg-accent/10 border border-accent/30 border-l-4 border-l-accent rounded-lg p-3.5 text-xs text-body leading-relaxed">
+        <strong className="text-accent text-[0.85rem] block mb-1">
           Why count the links nobody could check?
         </strong>
         A citation that returns <strong>PASS</strong> is verified. A citation that returns <strong>FAIL</strong> is a bug to fix.
@@ -309,57 +309,57 @@ export const TabLinkHealth: React.FC = () => {
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-          <div className="flex items-center gap-2 text-[0.72rem] text-[#94a3b8]">
+        <div className="bg-panel border border-line rounded-xl p-4">
+          <div className="flex items-center gap-2 text-[0.72rem] text-muted">
             <CircleSlash size={13} /> Not checked (latest)
           </div>
           <div
-            className={`text-2xl font-bold font-mono mt-1 ${latest.notChecked === 0 ? 'text-[#34d399]' : 'text-[#fbbf24]'}`}
+            className={`text-2xl font-bold font-mono mt-1 ${latest.notChecked === 0 ? 'text-emerald' : 'text-amber'}`}
             data-testid="link-history-latest-not-checked"
           >
             {latest.notChecked}
-            <span className="text-sm text-[#94a3b8] font-normal"> / {latest.urls}</span>
+            <span className="text-sm text-muted font-normal"> / {latest.urls}</span>
           </div>
-          <div className="text-[0.68rem] text-[#94a3b8] mt-1">
+          <div className="text-[0.68rem] text-muted mt-1">
             {uncheckedPct} of citations · {deltaLabel(latest.notChecked, previous ? previous.notChecked : null)}
           </div>
         </div>
 
-        <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-          <div className="flex items-center gap-2 text-[0.72rem] text-[#94a3b8]">
+        <div className="bg-panel border border-line rounded-xl p-4">
+          <div className="flex items-center gap-2 text-[0.72rem] text-muted">
             <CheckCircle2 size={13} /> Served (HTTP 200)
           </div>
-          <div className="text-2xl font-bold font-mono text-[#38bdf8] mt-1" data-testid="link-history-latest-served">
+          <div className="text-2xl font-bold font-mono text-accent mt-1" data-testid="link-history-latest-served">
             {latest.served}
-            <span className="text-sm text-[#94a3b8] font-normal"> / {latest.urls}</span>
+            <span className="text-sm text-muted font-normal"> / {latest.urls}</span>
           </div>
-          <div className="mt-2 h-1.5 rounded-full bg-[#1e293b] overflow-hidden">
-            <div className="h-full bg-[#38bdf8]" style={{ width: checkedPct === '—' ? '0%' : checkedPct }} />
+          <div className="mt-2 h-1.5 rounded-full bg-raise overflow-hidden">
+            <div className="h-full bg-accent" style={{ width: checkedPct === '—' ? '0%' : checkedPct }} />
           </div>
-          <div className="text-[0.68rem] text-[#94a3b8] mt-1">{checkedPct} of citations verified live</div>
+          <div className="text-[0.68rem] text-muted mt-1">{checkedPct} of citations verified live</div>
         </div>
 
-        <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-          <div className="flex items-center gap-2 text-[0.72rem] text-[#94a3b8]">
+        <div className="bg-panel border border-line rounded-xl p-4">
+          <div className="flex items-center gap-2 text-[0.72rem] text-muted">
             <AlertTriangle size={13} /> Failed citations (latest)
           </div>
           <div
-            className={`text-2xl font-bold font-mono mt-1 ${latest.failed === 0 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}
+            className={`text-2xl font-bold font-mono mt-1 ${latest.failed === 0 ? 'text-emerald' : 'text-rose'}`}
             data-testid="link-history-latest-failed"
           >
             {latest.failed}
           </div>
-          <div className="text-[0.68rem] text-[#94a3b8] mt-1">
+          <div className="text-[0.68rem] text-muted mt-1">
             {latest.blocked} blocked · {latest.unreachable} unreachable · {latest.serverError} server error
           </div>
         </div>
 
-        <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-          <div className="flex items-center gap-2 text-[0.72rem] text-[#94a3b8]">
+        <div className="bg-panel border border-line rounded-xl p-4">
+          <div className="flex items-center gap-2 text-[0.72rem] text-muted">
             <Activity size={13} /> Runs recorded
           </div>
-          <div className="text-2xl font-bold font-mono text-[#cbd5e1] mt-1">{LINK_HISTORY.length}</div>
-          <div className="text-[0.68rem] text-[#94a3b8] mt-1">
+          <div className="text-2xl font-bold font-mono text-body mt-1">{LINK_HISTORY.length}</div>
+          <div className="text-[0.68rem] text-muted mt-1">
             {first ? `${formatDay(parseDate(first.date))} → ${formatDay(parseDate(latest.date))}` : '—'}
           </div>
         </div>
@@ -368,10 +368,10 @@ export const TabLinkHealth: React.FC = () => {
       <RiseIssuesPanel />
 
       {LINK_HISTORY_SKIPPED.length > 0 && (
-        <div className="bg-[#fbbf24]/10 border border-[#fbbf24]/40 rounded-lg p-3 text-xs text-[#fbbf24]">
+        <div className="bg-amber/10 border border-amber/40 rounded-lg p-3 text-xs text-amber">
           <strong>{LINK_HISTORY_SKIPPED.length} history line(s) could not be plotted.</strong> Fix{' '}
           <span className="font-mono">{LINK_HISTORY_SOURCE}</span> or regenerate the module:
-          <ul className="mt-1 space-y-0.5 font-mono text-[0.7rem] text-[#fcd34d]">
+          <ul className="mt-1 space-y-0.5 font-mono text-[0.7rem] text-amber">
             {LINK_HISTORY_SKIPPED.slice(0, 5).map((line) => (
               <li key={line}>{line}</li>
             ))}
@@ -380,61 +380,61 @@ export const TabLinkHealth: React.FC = () => {
       )}
 
       {/* Trend */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
+      <div className="bg-panel border border-line rounded-xl p-4">
         <div className="flex items-baseline justify-between flex-wrap gap-2 mb-3">
-          <h2 className="text-sm font-bold text-[#38bdf8]">Not-Checked Citations Over Time</h2>
-          <span className="text-[0.7rem] text-[#94a3b8] font-mono">
+          <h2 className="text-sm font-bold text-accent">Not-Checked Citations Over Time</h2>
+          <span className="text-[0.7rem] text-muted font-mono">
             source: {LINK_HISTORY_SOURCE} · {LINK_HISTORY.length} run{LINK_HISTORY.length === 1 ? '' : 's'}
           </span>
         </div>
-        <div className="rounded-lg border border-[#1e293b] bg-[#070a12] p-2">
+        <div className="rounded-lg plot p-2">
           <TrendChart rows={LINK_HISTORY} />
         </div>
         {LINK_HISTORY.length === 1 && (
-          <p className="text-[0.68rem] text-[#64748b] font-mono mt-1.5">
+          <p className="text-[0.68rem] text-faint font-mono mt-1.5">
             One run recorded — each nightly sweep appends a row, and the trend line grows from here.
           </p>
         )}
-        <p className="text-[0.7rem] text-[#94a3b8] mt-2 leading-relaxed">
+        <p className="text-[0.7rem] text-muted mt-2 leading-relaxed">
           Amber dot = latest run. Hover a point for that run's served/failed split. <em>Served</em> counts HTTP 200 PASSes, so
           served + not checked + failed = citations, and a run whose <em>not checked</em> count jumps is usually a host starting
           to block the checker rather than new broken links — confirm with{' '}
-          <span className="font-mono text-[#cbd5e1]">scripts/check_links.py</span> before editing citations.
+          <span className="font-mono text-body">scripts/check_links.py</span> before editing citations.
         </p>
       </div>
 
       {/* Recurring hosts: a wall that keeps coming back is a different problem from a one-off. */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4 overflow-x-auto">
+      <div className="bg-panel border border-line rounded-xl p-4 overflow-x-auto">
         <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
-          <h2 className="text-sm font-bold text-[#38bdf8]">Recurring unverified hosts</h2>
-          <span className="text-[0.7rem] text-[#94a3b8] font-mono">
+          <h2 className="text-sm font-bold text-accent">Recurring unverified hosts</h2>
+          <span className="text-[0.7rem] text-muted font-mono">
             {HOST_RECURRENCE_RUNS} run{HOST_RECURRENCE_RUNS === 1 ? '' : 's'} recorded the URL list
           </span>
         </div>
         {HOST_RECURRENCE.length === 0 ? (
-          <p className="text-xs text-[#94a3b8] leading-relaxed">
+          <p className="text-xs text-muted leading-relaxed">
             No run has recorded which URLs it could not verify yet, so there is nothing to count per
             host. The next sweep writes that list; this table fills from it.
           </p>
         ) : (
           <table className="w-full text-left text-xs border-collapse" data-testid="link-history-hosts">
             <thead>
-              <tr className="text-[#94a3b8] border-b border-[#334155]">
+              <tr className="text-muted border-b border-line">
                 <th className="py-1.5 pr-3 font-semibold">Host</th>
                 <th className="py-1.5 pr-3 font-semibold text-right">Runs unverified</th>
                 <th className="py-1.5 pr-3 font-semibold text-right">URLs now</th>
                 <th className="py-1.5 font-semibold text-right">Last seen</th>
               </tr>
             </thead>
-            <tbody className="font-mono text-[#cbd5e1]">
+            <tbody className="font-mono text-body">
               {HOST_RECURRENCE.map((entry) => (
-                <tr key={entry.host} className="border-b border-[#1e293b] last:border-0">
+                <tr key={entry.host} className="border-b border-line-soft last:border-0">
                   <td className="py-1.5 pr-3 whitespace-nowrap">{entry.host}</td>
-                  <td className={`py-1.5 pr-3 text-right ${entry.runs >= 2 ? 'text-[#fbbf24]' : 'text-[#94a3b8]'}`}>
+                  <td className={`py-1.5 pr-3 text-right ${entry.runs >= 2 ? 'text-amber' : 'text-muted'}`}>
                     {entry.runs} / {HOST_RECURRENCE_RUNS}
                   </td>
                   <td className="py-1.5 pr-3 text-right">{entry.urls}</td>
-                  <td className="py-1.5 text-right text-[#94a3b8]">
+                  <td className="py-1.5 text-right text-muted">
                     {entry.lastSeen ? formatDay(parseDate(entry.lastSeen)) : '—'}
                   </td>
                 </tr>
@@ -442,7 +442,7 @@ export const TabLinkHealth: React.FC = () => {
             </tbody>
           </table>
         )}
-        <p className="text-[0.7rem] text-[#94a3b8] mt-2 leading-relaxed">
+        <p className="text-[0.7rem] text-muted mt-2 leading-relaxed">
           A host that stays on this list across sweeps is a publisher that blocks scripts — keep the
           citation and confirm it in a browser, or find a mirror. A host seen once is usually a
           transient wall or an outage; the rise gate files an issue only for the URLs that are new.
@@ -450,13 +450,13 @@ export const TabLinkHealth: React.FC = () => {
       </div>
 
       {/* Run table */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4 overflow-x-auto">
-        <h2 className="text-sm font-bold text-[#38bdf8] mb-2 flex items-center gap-2">
+      <div className="bg-panel border border-line rounded-xl p-4 overflow-x-auto">
+        <h2 className="text-sm font-bold text-accent mb-2 flex items-center gap-2">
           <Clock3 size={14} /> Recent runs (newest first)
         </h2>
         <table className="w-full text-left text-xs border-collapse" data-testid="link-history-table">
           <thead>
-            <tr className="text-[#94a3b8] border-b border-[#334155]">
+            <tr className="text-muted border-b border-line">
               <th className="py-1.5 pr-3 font-semibold">Run (UTC)</th>
               <th className="py-1.5 pr-3 font-semibold text-right">Citations</th>
               <th className="py-1.5 pr-3 font-semibold text-right">Served</th>
@@ -466,22 +466,22 @@ export const TabLinkHealth: React.FC = () => {
               <th className="py-1.5 font-semibold text-right">Failed</th>
             </tr>
           </thead>
-          <tbody className="font-mono text-[#cbd5e1]">
+          <tbody className="font-mono text-body">
             {tableRows.map((row, index) => (
               <tr
                 key={row.date}
-                className="border-b border-[#1e293b] last:border-0"
+                className="border-b border-line-soft last:border-0"
                 data-testid={`link-history-row-${index}`}
               >
                 <td className="py-1.5 pr-3 whitespace-nowrap">{formatStamp(row.date)}</td>
                 <td className="py-1.5 pr-3 text-right">{row.urls}</td>
-                <td className="py-1.5 pr-3 text-right text-[#38bdf8]">{row.served}</td>
-                <td className={`py-1.5 pr-3 text-right ${row.notChecked === 0 ? 'text-[#34d399]' : 'text-[#fbbf24]'}`}>
+                <td className="py-1.5 pr-3 text-right text-accent">{row.served}</td>
+                <td className={`py-1.5 pr-3 text-right ${row.notChecked === 0 ? 'text-emerald' : 'text-amber'}`}>
                   {row.notChecked}
                 </td>
-                <td className="py-1.5 pr-3 text-right text-[#94a3b8]">{row.blocked}</td>
-                <td className="py-1.5 pr-3 text-right text-[#94a3b8]">{row.unreachable}</td>
-                <td className={`py-1.5 text-right ${row.failed === 0 ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+                <td className="py-1.5 pr-3 text-right text-muted">{row.blocked}</td>
+                <td className="py-1.5 pr-3 text-right text-muted">{row.unreachable}</td>
+                <td className={`py-1.5 text-right ${row.failed === 0 ? 'text-emerald' : 'text-rose'}`}>
                   {row.failed}
                 </td>
               </tr>

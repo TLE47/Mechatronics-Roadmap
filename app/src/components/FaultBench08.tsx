@@ -88,37 +88,37 @@ function chartY(errorMm: number): number {
 function statusBadge(verdict: ReturnType<typeof repairVerdict>): React.ReactNode {
   if (verdict === 'repaired') {
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#34d399]">
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald">
         <CheckCircle2 className="w-3 h-3" /> REPAIRED
       </span>
     );
   }
   if (verdict === 'broken') {
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#f43f5e]">
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-rose">
         <AlertTriangle className="w-3 h-3" /> STILL BROKEN
       </span>
     );
   }
   if (verdict === 'error') {
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#fbbf24]">
+      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-amber">
         <AlertTriangle className="w-3 h-3" /> CALL FAILED
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#64748b]">
+    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-faint">
       <CircleSlash className="w-3 h-3" /> NOT RUN
     </span>
   );
 }
 
 function verdictColor(verdict: ReturnType<typeof repairVerdict>): string {
-  if (verdict === 'repaired') return 'text-[#34d399]';
-  if (verdict === 'broken') return 'text-[#f43f5e]';
-  if (verdict === 'error') return 'text-[#fbbf24]';
-  return 'text-[#64748b]';
+  if (verdict === 'repaired') return 'text-emerald';
+  if (verdict === 'broken') return 'text-rose';
+  if (verdict === 'error') return 'text-amber';
+  return 'text-faint';
 }
 
 /**
@@ -142,18 +142,18 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
   return (
     <section
       data-testid="fault-bench-08-1"
-      className="bg-[#111827] border border-[#334155] rounded-xl p-4 space-y-3"
+      className="bg-panel border border-line rounded-xl p-4 space-y-3"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-mono text-[#38bdf8] flex items-center gap-1.5">
+          <div className="text-xs font-mono text-accent flex items-center gap-1.5">
             <Wrench className="w-3.5 h-3.5" />
             <span>08.1 Four-Fault Bench · grades your repairs</span>
           </div>
-          <h3 className="text-base font-bold text-[#f1f5f9] mt-0.5">
+          <h3 className="text-base font-bold text-ink mt-0.5">
             Run your four repair functions and watch each real metric land
           </h3>
-          <p className="text-xs text-[#94a3b8] mt-0.5 max-w-3xl">
+          <p className="text-xs text-muted mt-0.5 max-w-3xl">
             These cards report what <b>your</b> <code className="font-mono">repair_*</code>{' '}
             functions actually return, computed with the bench's own forward kinematics: return
             the wrong angle and the tip error stays wrong. A unit is repaired below <b>1 mm</b>{' '}
@@ -165,8 +165,8 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
             data-testid="fault-bench-count"
             className={`px-3 py-1.5 rounded-lg border font-mono text-xs tabular-nums ${
               repairedCount === 4
-                ? 'bg-[#34d399]/15 border-[#34d399]/50 text-[#34d399]'
-                : 'bg-[#0b0f19] border-[#334155] text-[#cbd5e1]'
+                ? 'bg-emerald/15 border-emerald/50 text-emerald'
+                : 'bg-canvas border-line text-body'
             }`}
           >
             {repairedCount} / 4 repaired
@@ -174,7 +174,7 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
           <button
             onClick={() => setCorrectionRad(0)}
             data-testid="btn-fault-reset-all"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-[#0b0f19] hover:bg-[#1e293b] text-[#cbd5e1] border border-[#334155] flex items-center gap-1.5 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Reset slider
@@ -183,7 +183,7 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
             onClick={onGrade}
             disabled={grading}
             data-testid="btn-fault-grade"
-            className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#38bdf8]/15 hover:bg-[#38bdf8]/25 disabled:opacity-60 disabled:cursor-wait text-[#38bdf8] border border-[#38bdf8]/50 flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-accent/15 hover:bg-accent/25 disabled:opacity-60 disabled:cursor-wait text-accent border border-accent/50 flex items-center gap-1.5 cursor-pointer"
           >
             {grading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -199,16 +199,16 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
         data-testid="fault-card-zero-offset"
         className={`rounded-lg border p-3 ${
           offsetVerdict === 'repaired'
-            ? 'bg-[#06281f]/50 border-[#34d399]/50'
-            : 'bg-[#0b0f19] border-[#334155]'
+            ? 'bg-emerald/50 border-emerald/50'
+            : 'bg-canvas border-line'
         }`}
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
           <div className="lg:col-span-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <div className="text-[11px] font-mono text-[#94a3b8]">Broken D · zero offset</div>
-                <div className="text-sm font-semibold text-[#f1f5f9]">
+                <div className="text-[11px] font-mono text-muted">Broken D · zero offset</div>
+                <div className="text-sm font-semibold text-ink">
                   Encoder has a constant 0.06 rad offset
                 </div>
               </div>
@@ -221,22 +221,22 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
             >
               {formatRepairMetric(report?.offset.value ?? null, 'mm')}
             </div>
-            <div className="text-[11px] text-[#94a3b8] mt-0.5">
+            <div className="text-[11px] text-muted mt-0.5">
               your <code className="font-mono">repair_encoder_offset</code> · broken 12.00 mm ·
               target {formatRepairMetric(TIP_TARGET_MM, 'mm')}
             </div>
             {report?.offset.error && (
-              <div className="text-[11px] font-mono text-[#fbbf24] mt-1 break-words">
+              <div className="text-[11px] font-mono text-amber mt-1 break-words">
                 {report.offset.error}
               </div>
             )}
 
             <label
               htmlFor="fault-zero-offset-slider"
-              className="mt-3 flex items-center justify-between text-[11px] font-mono text-[#cbd5e1]"
+              className="mt-3 flex items-center justify-between text-[11px] font-mono text-body"
             >
               <span>Manual correction (playground)</span>
-              <span className="text-[#38bdf8]">{correctionRad.toFixed(3)} rad</span>
+              <span className="text-accent">{correctionRad.toFixed(3)} rad</span>
             </label>
             <input
               id="fault-zero-offset-slider"
@@ -248,9 +248,9 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
               value={correctionRad}
               onChange={(event) => setCorrectionRad(Number(event.target.value))}
               aria-label="Manual zero-offset correction in radians"
-              className="mt-1.5 w-full accent-[#38bdf8] cursor-pointer"
+              className="mt-1.5 w-full accent-accent cursor-pointer"
             />
-            <div className="mt-1 text-[10px] font-mono text-[#64748b]">
+            <div className="mt-1 text-[10px] font-mono text-faint">
               playground tip error {formatRepairMetric(sliderError, 'mm')} — the card above only
               turns green when your function does this
             </div>
@@ -270,14 +270,14 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
                     x2={CHART_RIGHT}
                     y1={chartY(millimetres)}
                     y2={chartY(millimetres)}
-                    stroke="#1e293b"
+                    stroke="var(--panel-2)"
                     strokeWidth="1"
                   />
                   <text
                     x={CHART_LEFT - 5}
                     y={chartY(millimetres) + 3}
                     textAnchor="end"
-                    fill="#64748b"
+                    fill="var(--dim)"
                     fontSize="9"
                     fontFamily="monospace"
                   >
@@ -290,7 +290,7 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
                 x2={CHART_RIGHT}
                 y1={chartY(1)}
                 y2={chartY(1)}
-                stroke="#34d399"
+                stroke="var(--emerald)"
                 strokeDasharray="4 4"
                 strokeWidth="1.2"
               />
@@ -298,7 +298,7 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
                 x={CHART_LEFT + 4}
                 y={chartY(1) - 4}
                 textAnchor="start"
-                fill="#34d399"
+                fill="var(--emerald)"
                 fontSize="9"
                 fontFamily="monospace"
               >
@@ -310,7 +310,7 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
                     `${chartX(point.correctionRad).toFixed(1)},${chartY(point.errorMm).toFixed(1)}`
                 ).join(' ')}
                 fill="none"
-                stroke="#38bdf8"
+                stroke="var(--accent)"
                 strokeWidth="2"
               />
               <circle
@@ -318,7 +318,7 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
                 cy={currentPointY}
                 r="4"
                 fill={sliderError <= TIP_TARGET_MM ? '#34d399' : '#f43f5e'}
-                stroke="#0b0f19"
+                stroke="var(--bg)"
                 strokeWidth="1.5"
               />
               {[0, ZERO_OFFSET_RAD / 2, ZERO_OFFSET_RAD].map((correction) => (
@@ -329,7 +329,7 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
                   textAnchor={
                     correction === 0 ? 'start' : correction === ZERO_OFFSET_RAD ? 'end' : 'middle'
                   }
-                  fill="#64748b"
+                  fill="var(--dim)"
                   fontSize="9"
                   fontFamily="monospace"
                 >
@@ -340,7 +340,7 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
                 x={(CHART_LEFT + CHART_RIGHT) / 2}
                 y={CHART_HEIGHT - 4}
                 textAnchor="middle"
-                fill="#94a3b8"
+                fill="var(--muted)"
                 fontSize="9"
                 fontFamily="monospace"
               >
@@ -366,15 +366,15 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
               data-testid={`fault-card-${fault.testId}`}
               className={`rounded-lg border p-3 ${
                 verdict === 'repaired'
-                  ? 'bg-[#06281f]/50 border-[#34d399]/50'
-                  : 'bg-[#0b0f19] border-[#334155]'
+                  ? 'bg-emerald/50 border-emerald/50'
+                  : 'bg-canvas border-line'
               }`}
             >
               <div className="flex items-center justify-between gap-2 h-4">
-                <span className="text-[11px] font-mono text-[#94a3b8] truncate">{fault.badge}</span>
+                <span className="text-[11px] font-mono text-muted truncate">{fault.badge}</span>
                 <span className="shrink-0">{statusBadge(verdict)}</span>
               </div>
-              <div className="text-sm font-semibold text-[#f1f5f9] mt-1 min-h-[2.5rem]">
+              <div className="text-sm font-semibold text-ink mt-1 min-h-[2.5rem]">
                 {fault.title}
               </div>
 
@@ -384,24 +384,24 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
               >
                 {formatRepairMetric(value, fault.unit)}
               </div>
-              <div className="text-[11px] text-[#94a3b8] mt-0.5">
+              <div className="text-[11px] text-muted mt-0.5">
                 broken {formatRepairMetric(fault.broken, fault.unit)} · target ≤{' '}
                 {formatRepairMetric(FAULT_BENCH_TARGETS[fault.id], fault.unit)}
               </div>
 
-              <div className="mt-3 h-1.5 rounded-full bg-[#1e293b] overflow-hidden">
+              <div className="mt-3 h-1.5 rounded-full bg-raise overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[#34d399] transition-[width] duration-300"
+                  className="h-full rounded-full bg-emerald transition-[width] duration-300"
                   style={{ width: `${recoveredPct}%` }}
                 />
               </div>
-              <div className="mt-1 text-[10px] font-mono text-[#64748b]">
+              <div className="mt-1 text-[10px] font-mono text-faint">
                 {verdict === 'unrun'
                   ? 'not graded yet — press Grade my repairs'
                   : `${recoveredPct.toFixed(0)}% recovered by your repair`}
               </div>
               {metric?.error && (
-                <div className="mt-1 text-[10px] font-mono text-[#fbbf24] break-words">
+                <div className="mt-1 text-[10px] font-mono text-amber break-words">
                   {metric.error}
                 </div>
               )}
@@ -410,10 +410,10 @@ export const FaultBench08: React.FC<FaultBench08Props> = ({ report, grading, onG
         })}
       </div>
 
-      <p className="text-[11px] text-[#64748b]">
+      <p className="text-[11px] text-faint">
         The bench computes each metric with its own two-link FK chord, not yours, and the
         anti-windup number runs the same 3000-step saturated PI loop as Lesson 05.1. These four
-        metrics are the capstone's pass condition: <b className="text-[#cbd5e1]">Run &amp; Verify
+        metrics are the capstone's pass condition: <b className="text-body">Run &amp; Verify
         Output</b> only marks 08.1 verified when every card is at target, so a repair left at 1.20 mm
         keeps the lesson unverified however its printed line reads.
       </p>

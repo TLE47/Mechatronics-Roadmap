@@ -61,7 +61,7 @@ export const StartHereCard: React.FC<StartHereCardProps> = ({
           <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
           Lesson 1 verified
         </span>
-        <span aria-hidden="true" style={{ color: 'var(--border-strong)' }}>
+        <span aria-hidden="true" style={{ color: 'var(--dim)' }}>
           ·
         </span>
         <h2 className="text-[12px] font-normal" style={{ color: 'var(--muted)' }}>

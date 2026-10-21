@@ -174,17 +174,17 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
   return (
     <div className="space-y-4">
       {/* Beginner Intuition */}
-      <div className="bg-[#38bdf8]/10 border border-[#38bdf8]/30 border-l-4 border-l-[#38bdf8] rounded-lg p-3.5 text-xs text-[#cbd5e1] leading-relaxed">
-        <strong className="text-[#38bdf8] text-[0.85rem] block mb-1">
+      <div className="bg-accent/10 border border-accent/30 border-l-4 border-l-accent rounded-lg p-3.5 text-xs text-body leading-relaxed">
+        <strong className="text-accent text-[0.85rem] block mb-1">
           Beginner's Intuition — Why Do Gyros Drift & What Is a "Torn Read" Between Two CPU Threads?
         </strong>
         (1) <strong>Attitude Error-State Kalman Filter (ESKF):</strong> A MEMS gyroscope measures angular speed (<MathView math="\omega_m" />), but even a tiny 0.05 rad/s hidden temperature bias (<MathView math="b_g" />) integrates into a runaway tilt error within seconds! The ESKF fuses noisy gravity/magnetometer readings using the <strong>Joseph-form covariance update</strong> <MathView math="P^+" /> to continuously estimate and subtract the hidden gyro bias <MathView math="b_g" /> on the <MathView math="SO(3)" /> rotation manifold.<br />
-        (2) <strong>Cortex-M7 <code className="text-[#38bdf8]">WaitFreeSeqLock&lt;T&gt;</code>:</strong> If a 40 kHz motor ISR writes a multi-word state struct while a 1 kHz planner reads it without synchronization, the reader gets half of the old struct and half of the new struct (a <strong>torn read spike</strong>!). A <code className="text-[#38bdf8]">WaitFreeSeqLock</code> uses an odd/even atomic sequence counter so the reader detects concurrent writes in 30 ns without ever blocking the high-rate motor ISR.
+        (2) <strong>Cortex-M7 <code className="text-accent">WaitFreeSeqLock&lt;T&gt;</code>:</strong> If a 40 kHz motor ISR writes a multi-word state struct while a 1 kHz planner reads it without synchronization, the reader gets half of the old struct and half of the new struct (a <strong>torn read spike</strong>!). A <code className="text-accent">WaitFreeSeqLock</code> uses an odd/even atomic sequence counter so the reader detects concurrent writes in 30 ns without ever blocking the high-rate motor ISR.
       </div>
 
       {/* Equations */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-        <h2 className="text-sm font-bold text-[#38bdf8] mb-2">
+      <div className="bg-panel border border-line rounded-xl p-4">
+        <h2 className="text-sm font-bold text-accent mb-2">
           Manifold Error-State Kalman Filter (Joseph Form) & Lock-Free Sequence Lock (WaitFreeSeqLock&lt;T&gt;)
         </h2>
         <MathPanel
@@ -194,16 +194,16 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-[#111827] border border-[#334155] rounded-xl p-4 space-y-3.5">
-          <h2 className="text-sm font-bold text-[#38bdf8]">6-DOF Attitude ESKF & SeqLock Controls</h2>
-          <p className="text-xs text-[#94a3b8]">
-            Adjust initial gyro bias <MathView math="b_{g,0}" />, accelerometer attitude noise <MathView math="\sigma_{\text{acc}}" />, and toggle <code className="text-[#38bdf8]">WaitFreeSeqLock</code> protection to observe corrupted torn-read spikes when lock-free synchronization is disabled.
+        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+          <h2 className="text-sm font-bold text-accent">6-DOF Attitude ESKF & SeqLock Controls</h2>
+          <p className="text-xs text-muted">
+            Adjust initial gyro bias <MathView math="b_{g,0}" />, accelerometer attitude noise <MathView math="\sigma_{\text{acc}}" />, and toggle <code className="text-accent">WaitFreeSeqLock</code> protection to observe corrupted torn-read spikes when lock-free synchronization is disabled.
           </p>
 
-          <div className={`p-2.5 rounded-lg border border-[#1e293b] bg-[#0d1322] space-y-2 ${highlightedId === 'btn-seqlock-toggle' ? 'ring-2 ring-[#fbbf24] bg-[#fbbf24]/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
+          <div className={`p-2.5 rounded-lg border border-line-soft bg-canvas space-y-2 ${highlightedId === 'btn-seqlock-toggle' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-[#cbd5e1] font-medium">IPC Memory Protection:</span>
-              <span className={`font-mono text-xs font-bold flex items-center gap-1 ${seqLockEnabled ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <span className="text-body font-medium">IPC Memory Protection:</span>
+              <span className={`font-mono text-xs font-bold flex items-center gap-1 ${seqLockEnabled ? 'text-emerald' : 'text-rose'}`}>
                 {seqLockEnabled ? <ShieldCheck className="w-3.5 h-3.5" /> : <AlertOctagon className="w-3.5 h-3.5" />}
                 {seqLockEnabled ? 'SEQLOCK ENABLED' : 'UNPROTECTED RACE'}
               </span>
@@ -211,7 +211,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
             <button
               id="btn-seqlock-toggle"
               onClick={toggleSeqLock}
-              className="w-full bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8] px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
+              className="w-full bg-accent/20 hover:bg-accent/30 text-accent border border-accent px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Toggle WaitFreeSeqLock vs. Unprotected Struct</span>
@@ -219,9 +219,9 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>True Gyro Bias <MathView math="b_g" /> [rad/s]</span>
-              <span className="font-mono text-[#34d399] font-bold">{bgTrue.toFixed(2)}</span>
+              <span className="font-mono text-emerald font-bold">{bgTrue.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -230,14 +230,14 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
               step="0.01"
               value={bgTrue}
               onChange={(e) => setBgTrue(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Vector Measurement Noise <MathView math="\sigma_{\text{meas}}" /> [rad]</span>
-              <span className="font-mono text-[#34d399] font-bold">{sigmaMeas.toFixed(2)}</span>
+              <span className="font-mono text-emerald font-bold">{sigmaMeas.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -246,14 +246,14 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
               step="0.01"
               value={sigmaMeas}
               onChange={(e) => setSigmaMeas(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>ISR vs Reader Contention Rate [%]</span>
-              <span className="font-mono text-[#34d399] font-bold">{contentionPct}%</span>
+              <span className="font-mono text-emerald font-bold">{contentionPct}%</span>
             </div>
             <input
               type="range"
@@ -262,26 +262,26 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
               step="1"
               value={contentionPct}
               onChange={(e) => setContentionPct(parseInt(e.target.value, 10))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="pt-2 flex flex-wrap gap-2">
             <button
               onClick={() => { setSeqLockEnabled(true); setBgTrue(0.12); setContentionPct(12); }}
-              className="bg-[#34d399]/20 hover:bg-[#34d399]/30 text-[#34d399] border border-[#34d399] px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer"
+              className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer"
             >
               Enable SeqLock (0 Torn)
             </button>
             <button
               onClick={() => { setSeqLockEnabled(false); setContentionPct(22); }}
-              className="bg-[#fb7185]/20 hover:bg-[#fb7185]/30 text-[#fb7185] border border-[#fb7185] px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer"
+              className="bg-rose/20 hover:bg-rose/30 text-rose border border-rose px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer"
             >
               Disable SeqLock (Race)
             </button>
             <button
               onClick={() => { setSeqLockEnabled(true); setBgTrue(0.30); setSigmaMeas(0.03); }}
-              className="bg-[#1e293b] hover:bg-[#334155] text-[#cbd5e1] border border-[#334155] px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
+              className="bg-raise hover:bg-elevate text-body border border-line px-2.5 py-1.5 rounded-md text-xs cursor-pointer font-medium"
             >
               High Bias Recovery
             </button>
@@ -289,36 +289,36 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
         </div>
 
         {/* Right: ESKF Telemetry Canvas & KPIs */}
-        <div className="lg:col-span-7 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#38bdf8] mb-3 flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Top: Gyro Drift vs. Joseph ESKF · Bottom: Lock-Free Telemetry</span>
             </h2>
 
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">ESKF Steady Error</div>
-                <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{steadyErrDeg.toFixed(2)}°</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">ESKF Steady Error</div>
+                <div className="text-base font-bold font-mono text-emerald mt-0.5">{steadyErrDeg.toFixed(2)}°</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Mean NEES (χ²₆)</div>
-                <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{neesVal.toFixed(2)} (PASS)</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Mean NEES (χ²₆)</div>
+                <div className="text-base font-bold font-mono text-emerald mt-0.5">{neesVal.toFixed(2)} (PASS)</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Torn Reads Detected</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${seqLockEnabled ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Torn Reads Detected</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${seqLockEnabled ? 'text-emerald' : 'text-rose'}`}>
                   {tornCount}
                 </div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Mean Step Latency</div>
-                <div className="text-base font-bold font-mono text-[#38bdf8] mt-0.5">{stepLatNs.toFixed(1)} ns</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Mean Step Latency</div>
+                <div className="text-base font-bold font-mono text-accent mt-0.5">{stepLatNs.toFixed(1)} ns</div>
               </div>
             </div>
 
             {/* Canvas */}
-            <div className="w-full overflow-hidden rounded-lg border border-[#1e293b] bg-[#070a12]">
+            <div className="w-full overflow-hidden rounded-lg plot">
               <canvas
                 ref={canvasRef}
                 width={850}

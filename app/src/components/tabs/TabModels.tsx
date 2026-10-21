@@ -150,17 +150,17 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
   return (
     <div className="space-y-4">
       {/* Beginner Intuition */}
-      <div className="bg-[#38bdf8]/10 border border-[#38bdf8]/30 border-l-4 border-l-[#38bdf8] rounded-lg p-3.5 text-xs text-[#cbd5e1] leading-relaxed">
-        <strong className="text-[#38bdf8] text-[0.85rem] block mb-1">
+      <div className="bg-accent/10 border border-accent/30 border-l-4 border-l-accent rounded-lg p-3.5 text-xs text-body leading-relaxed">
+        <strong className="text-accent text-[0.85rem] block mb-1">
           Beginner's Intuition — Why Physics Simulators Crash & How Hardware STO Saves Lives:
         </strong>
         (1) In a 3D physics engine (MuJoCo/URDF), every link has a 3×3 inertia matrix <MathView math="I" />. For a real physical object, the sum of any two principal inertias must be at least as large as the third (<MathView math="I_1 + I_2 \ge I_3" />, the <strong>triangle inequality</strong>). Violating this creates "negative mass density" in certain directions and blows up the simulator.<br />
-        (2) <strong>Dual-Channel Safe Torque Off (STO):</strong> Never trust software (<code className="text-[#fb7185]">if (fault) pwm = 0</code>) to stop a 48V robot if the CPU freezes! Hardware STO uses two independent physical logic paths (<MathView math="\text{STO}_A" /> and <MathView math="\text{STO}_B" />) that directly cut power to the MOSFET gate drivers in &lt;1 μs.
+        (2) <strong>Dual-Channel Safe Torque Off (STO):</strong> Never trust software (<code className="text-rose">if (fault) pwm = 0</code>) to stop a 48V robot if the CPU freezes! Hardware STO uses two independent physical logic paths (<MathView math="\text{STO}_A" /> and <MathView math="\text{STO}_B" />) that directly cut power to the MOSFET gate drivers in &lt;1 μs.
       </div>
 
       {/* Equations */}
-      <div className="bg-[#111827] border border-[#334155] rounded-xl p-4">
-        <h2 className="text-sm font-bold text-[#38bdf8] mb-2">
+      <div className="bg-panel border border-line rounded-xl p-4">
+        <h2 className="text-sm font-bold text-accent mb-2">
           Validated URDF & MuJoCo MJCF Inertia Tensor Invariants + IEC 61800-5-2 Dual-Channel STO
         </h2>
         <MathPanel
@@ -170,33 +170,33 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
 
       {/* Controls and Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5 bg-[#111827] border border-[#334155] rounded-xl p-4 space-y-3.5">
-          <h2 className="text-sm font-bold text-[#38bdf8]">Robot Articulation & Model Selection</h2>
+        <div className="lg:col-span-5 bg-panel border border-line rounded-xl p-4 space-y-3.5">
+          <h2 className="text-sm font-bold text-accent">Robot Articulation & Model Selection</h2>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedModel('hopper')}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${selectedModel === 'hopper' ? 'bg-[#38bdf8]/25 border border-[#38bdf8] text-[#38bdf8]' : 'bg-[#1e293b] border border-[#334155] text-[#94a3b8]'}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${selectedModel === 'hopper' ? 'bg-accent/25 border border-accent text-accent' : 'bg-raise border border-line text-muted'}`}
             >
               Capstone IV: 3-DOF Hopper
             </button>
             <button
               onClick={() => setSelectedModel('arm6')}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${selectedModel === 'arm6' ? 'bg-[#38bdf8]/25 border border-[#38bdf8] text-[#38bdf8]' : 'bg-[#1e293b] border border-[#334155] text-[#94a3b8]'}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${selectedModel === 'arm6' ? 'bg-accent/25 border border-accent text-accent' : 'bg-raise border border-line text-muted'}`}
             >
               Capstone III: 6-DOF Arm
             </button>
             <button
               onClick={() => setSelectedModel('furuta')}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${selectedModel === 'furuta' ? 'bg-[#38bdf8]/25 border border-[#38bdf8] text-[#38bdf8]' : 'bg-[#1e293b] border border-[#334155] text-[#94a3b8]'}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${selectedModel === 'furuta' ? 'bg-accent/25 border border-accent text-accent' : 'bg-raise border border-line text-muted'}`}
             >
               Capstone II: Furuta
             </button>
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Joint <MathView math="q_1" /> [deg]</span>
-              <span className="font-mono text-[#34d399] font-bold">{q1}°</span>
+              <span className="font-mono text-emerald font-bold">{q1}°</span>
             </div>
             <input
               type="range"
@@ -205,14 +205,14 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
               step="1"
               value={q1}
               onChange={(e) => setQ1(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
-          <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-rq2' ? 'ring-2 ring-[#fbbf24] bg-[#fbbf24]/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
-              <span className="text-[#fbbf24] font-semibold">Joint <MathView math="q_2" /> [deg]</span>
-              <span className="font-mono text-[#34d399] font-bold">{q2}°</span>
+          <div className={`space-y-1 p-2 rounded-lg transition-all ${highlightedId === 'sl-rq2' ? 'ring-2 ring-amber bg-amber/10 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
+            <div className="flex justify-between text-xs text-body">
+              <span className="text-amber font-semibold">Joint <MathView math="q_2" /> [deg]</span>
+              <span className="font-mono text-emerald font-bold">{q2}°</span>
             </div>
             <input
               id="sl-rq2"
@@ -222,14 +222,14 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
               step="1"
               value={q2}
               onChange={(e) => setQ2(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between text-xs text-[#cbd5e1]">
+            <div className="flex justify-between text-xs text-body">
               <span>Joint <MathView math="q_3" /> [deg]</span>
-              <span className="font-mono text-[#34d399] font-bold">{q3}°</span>
+              <span className="font-mono text-emerald font-bold">{q3}°</span>
             </div>
             <input
               type="range"
@@ -238,38 +238,38 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
               step="1"
               value={q3}
               onChange={(e) => setQ3(parseFloat(e.target.value))}
-              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#1e293b] rounded-lg"
+              className="w-full accent-accent cursor-pointer h-1.5 bg-raise rounded-lg"
             />
           </div>
 
-          <h2 className="text-sm font-bold text-[#38bdf8] pt-2 border-t border-[#1e293b]">
+          <h2 className="text-sm font-bold text-accent pt-2 border-t border-line-soft">
             Lab 07 HIL Fault-Injection & Dual-Channel STO
           </h2>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => triggerSTOFault('RUN')}
-              className="bg-[#34d399]/20 hover:bg-[#34d399]/30 text-[#34d399] border border-[#34d399] px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+              className="bg-emerald/20 hover:bg-emerald/30 text-emerald border border-emerald px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Enable Closed-Loop</span>
             </button>
             <button
               onClick={() => triggerSTOFault('OC_SHORT')}
-              className="bg-[#fb7185]/20 hover:bg-[#fb7185]/30 text-[#fb7185] border border-[#fb7185] px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+              className="bg-rose/20 hover:bg-rose/30 text-rose border border-rose px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
             >
               <Zap className="w-3.5 h-3.5" />
               <span>Inject 42A Short (&lt;1μs)</span>
             </button>
             <button
               onClick={() => triggerSTOFault('ENC_CRC')}
-              className="bg-[#fb7185]/20 hover:bg-[#fb7185]/30 text-[#fb7185] border border-[#fb7185] px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+              className="bg-rose/20 hover:bg-rose/30 text-rose border border-rose px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
             >
               <ShieldAlert className="w-3.5 h-3.5" />
               <span>Encoder Wire Break</span>
             </button>
             <button
               onClick={() => triggerSTOFault('RESET')}
-              className="bg-[#1e293b] hover:bg-[#334155] text-[#cbd5e1] border border-[#334155] px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1"
+              className="bg-raise hover:bg-elevate text-body border border-line px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Manual STO Reset</span>
@@ -278,36 +278,36 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
         </div>
 
         {/* Right: Kinematics Canvas & KPIs */}
-        <div className="lg:col-span-7 bg-[#111827] border border-[#334155] rounded-xl p-4 flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-panel border border-line rounded-xl p-4 flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#38bdf8] mb-3 flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-sm font-bold text-accent mb-3 flex items-center justify-between flex-wrap gap-2">
               <span>Kinematic Chain Pose & Validated URDF/MJCF Telemetry</span>
             </h2>
 
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Selected Model</div>
-                <div className="text-base font-bold font-mono text-[#38bdf8] mt-0.5">{modelMeta.name}</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Selected Model</div>
+                <div className="text-base font-bold font-mono text-accent mt-0.5">{modelMeta.name}</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Total Mass <MathView math="\sum m_i" /></div>
-                <div className="text-base font-bold font-mono text-[#34d399] mt-0.5">{modelMeta.mass}</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Total Mass <MathView math="\sum m_i" /></div>
+                <div className="text-base font-bold font-mono text-emerald mt-0.5">{modelMeta.mass}</div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">STO Safety State</div>
-                <div className={`text-base font-bold font-mono mt-0.5 ${stoState.startsWith('ACTIVE') ? 'text-[#34d399]' : 'text-[#fb7185]'}`}>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">STO Safety State</div>
+                <div className={`text-base font-bold font-mono mt-0.5 ${stoState.startsWith('ACTIVE') ? 'text-emerald' : 'text-rose'}`}>
                   {stoState}
                 </div>
               </div>
-              <div className="bg-[#1e293b] border border-[#334155] rounded-lg p-2.5">
-                <div className="text-[0.7rem] text-[#94a3b8]">Gate Reaction Time</div>
-                <div className="text-base font-bold font-mono text-[#fbbf24] mt-0.5">{stoReactionUs}</div>
+              <div className="bg-raise border border-line rounded-lg p-2.5">
+                <div className="text-[0.7rem] text-muted">Gate Reaction Time</div>
+                <div className="text-base font-bold font-mono text-amber mt-0.5">{stoReactionUs}</div>
               </div>
             </div>
 
             {/* Canvas */}
-            <div className="w-full overflow-hidden rounded-lg border border-[#1e293b] bg-[#070a12]">
+            <div className="w-full overflow-hidden rounded-lg plot">
               <canvas
                 ref={canvasRef}
                 width={850}

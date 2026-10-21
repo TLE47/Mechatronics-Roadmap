@@ -188,7 +188,9 @@ const ARCH_CASES = [
     name: 'CAD: notch flexure part selected',
     shows: () => {
       const button = [...document.querySelectorAll('button')].find((b) => /Ti Notch Flexure/.test(b.innerText));
-      return Boolean(button && button.className.includes('bg-[#38bdf8]/25'));
+      // The selection is state, not a colour: aria-pressed is what a screen reader hears and
+      // what the token migration cannot rename out from under this check.
+      return Boolean(button && button.getAttribute('aria-pressed') === 'true');
     },
   },
   {
@@ -198,7 +200,9 @@ const ARCH_CASES = [
     name: 'CAD: 8:1 QDD carrier part selected',
     shows: () => {
       const button = [...document.querySelectorAll('button')].find((b) => /QDD Carrier/.test(b.innerText));
-      return Boolean(button && button.className.includes('bg-[#38bdf8]/25'));
+      // The selection is state, not a colour: aria-pressed is what a screen reader hears and
+      // what the token migration cannot rename out from under this check.
+      return Boolean(button && button.getAttribute('aria-pressed') === 'true');
     },
   },
 ];

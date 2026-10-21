@@ -54,6 +54,8 @@
     "test:e2e:pages": "node scripts/e2e_pages_bundle.mjs",
     "verify:walls": "node scripts/verify_bot_walls.mjs",
     "test:merge": "node --experimental-strip-types scripts/test_progress_merge.mjs",
+    "test:theme": "node --experimental-strip-types scripts/test_theme.mjs",
+    "test:theme:e2e": "node scripts/e2e_theme.mjs",
     "test:faultbench": "node --experimental-strip-types scripts/test_fault_bench.mjs",
     "test:pairs": "node scripts/e2e_same_task_pairs.mjs",
     "test:tour": "node scripts/e2e_tour_presets.mjs"

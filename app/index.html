@@ -10,6 +10,29 @@
     />
     <meta name="theme-color" content="#070b12" />
     <meta name="color-scheme" content="dark light" />
+    <!-- Theme before first paint. Stored choice wins; otherwise the OS decides. This is the only
+         place the storage key is duplicated (src/theme.ts owns it), because it has to run before
+         the bundle loads. A throw (private mode) leaves the dark default in place. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('mechalab_theme_v1');
+          var dark = stored === 'dark';
+          var light = stored === 'light';
+          if (!dark && !light) {
+            dark = !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
+            light = !dark;
+          }
+          var theme = light ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', theme === 'dark' ? '#070b12' : '#f8f6f2');
+        } catch (error) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
@@ -35,7 +58,7 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
   </head>
-  <body class="bg-[#0b0f19] text-[#f1f5f9] antialiased">
+  <body class="bg-canvas text-ink antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
