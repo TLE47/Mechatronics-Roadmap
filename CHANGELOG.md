@@ -11,6 +11,52 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 138: Every Marked Step Is Countable
+
+Run 137's denominator was honest and partial: P.4 marks two TODOs, only one of which had a placeholder
+to compare, so the card said **1 of 1** under a guide that promised two lines. The measure skipped what
+it could not compare instead of learning to compare it, and a learner reading the pair of numbers would
+rightly wonder which one was wrong.
+
+**Two kinds of hole, two rules, one parser.** [`app/src/lessonCoach.ts`](app/src/lessonCoach.ts) now
+parses a starter's holes once, in `starterHoles()`:
+
+| hole | probe | counted when |
+| :--- | :--- | :--- |
+| placeholder (`# TODO 1:` over `safe_cmd = cmd`) | that code, up to the first blank line | it changed, compared after whitespace squeeze, so re-indenting or moving the answer still counts |
+| insertion (`# TODO 2:` over nothing at all) | none - the marker is an insertion point | **any** code appears directly under the marker |
+| exercise raise | the `raise NotImplementedError(...)` line | it is gone |
+
+The insertion rule is bounded by the first blank line after the marker, which is why it cannot be fooled
+by typing elsewhere in the file: appending `print("a thought")` to the end of P.4 still counts **zero**
+steps, exactly as it should.
+
+**One number, not two.** `coachForLesson()` takes its `holeCount` and its first hole from that same
+parse, so the guide's "leaves 2 TODO lines" and the card's "1 of 2 TODO lines written" are the same
+two lines by construction. The old separate TODO and raise counters are gone, and with them the last
+place where two surfaces could derive the same fact twice. Fifteen of the 92 entries now print a
+different count than before - packages whose raises carry a computed message, and one whose starter
+quotes none - because the parser counts what is actually marked rather than what a narrower regex
+recognised.
+
+**The smoke gate caught the parser's own gap.** 03.3 writes `# TODO 1:` on a line of its own and puts
+its four steps in a numbered comment list under it, so the new parse gave that hole an empty label and
+the guide fell back to "the first marked line in the starter" - the assertion that every entry names
+its own first hole failed exactly where it should have. A numbered `# 1. ...` list is now folded into
+the marker's sentence like an indented continuation is, and the guide names 03.3's four real steps.
+
+**And the label that parse exposed.** An exercise's `track` is `modules`, so the card and the palette
+both printed **Track MODULES** - a track no page teaches. `trackLabel()` now says `Graded exercises`
+for a package and `Track 02` for a page whose directory carries more than the number
+(`02-mechanics-kinematics-dynamics`), which the palette had been printing whole.
+
+**Measured.** `npm run test:draft` is 17 checks, two of them new: every entry's card total must equal
+its guide count (a sweep over all 92), and an insertion hole must count when typed under and stop
+counting when only the surrounding file is edited. Step 7e of the browser suite now expects
+`1 of 2 TODO lines written`. `test:workbench` 14/14, `check_all.py` 28/28.
+
+---
+
 ## [2026-10-21] — Run 137: The Card Counts the Steps, Not the Lines
 
 Run 136's card answered "how close is this to passing?" with **6 lines changed** - mechanically true,

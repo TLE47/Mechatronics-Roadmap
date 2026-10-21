@@ -194,10 +194,21 @@ check('an untouched starter has nothing written', () => {
     const progress = draftProgress(lesson.starterCode, lesson);
     assert.equal(progress.filled, 0, `${lesson.id}: expected no holes filled on the starter`);
     assert.ok(progress.total > 0, `${lesson.id}: expected the starter to mark holes to measure`);
-    assert.ok(
-      progress.total <= coachForLesson(lesson).holeCount,
-      `${lesson.id}: the card must never claim more holes than the guide counts`
+  }
+});
+
+check('the card\'s total is the guide\'s count, on every entry', () => {
+  // One parser feeds both surfaces. Two numbers derived separately would eventually disagree on some
+  // starter, and the learner would read "1 of 3" under a guide that promised four lines.
+  for (const lesson of PYTHON_LESSONS) {
+    const progress = draftProgress(lesson.starterCode, lesson);
+    const coach = coachForLesson(lesson);
+    assert.equal(
+      progress.total,
+      coach.holeCount,
+      `${lesson.id}: the card counts ${progress.total} holes, the guide says ${coach.holeCount}`
     );
+    assert.ok(coach.holeCount > 0, `${lesson.id}: expected at least one marked hole`);
   }
 });
 
@@ -217,6 +228,21 @@ check('unrelated typing does not read as progress', () => {
     0,
     'expected appending a line to leave the measure where the starter is; changed-lines would have said 2'
   );
+});
+
+check('a TODO with no placeholder is written by typing under it', () => {
+  // P.4's second step is an insertion point: the starter leaves nothing to replace, so the only
+  // evidence is code appearing where the marker points.
+  const withStep = P4.starterCode.replace(
+    '    #         and add safe_cmd to total_cmd.',
+    '    #         and add safe_cmd to total_cmd.\n    clamped_commands.append(safe_cmd)\n    total_cmd = total_cmd + safe_cmd'
+  );
+  const progress = draftProgress(withStep, P4);
+  assert.equal(progress.total, draftProgress(P4.starterCode, P4).total, 'expected the same denominator');
+  assert.equal(progress.filled, 1, 'expected the inserted step to count once');
+  // Writing in both steps is the whole exercise written.
+  const both = withStep.replace('safe_cmd = cmd', 'safe_cmd = min(max(cmd, 0), 255)');
+  assert.equal(draftProgress(both, P4).filled, progress.total, 'expected both steps to read as done');
 });
 
 check('an exercise counts a hole as filled when its raise is gone', () => {

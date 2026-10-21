@@ -741,7 +741,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     const draftProgressText = (await page.getByTestId('resume-draft-progress').textContent())?.trim();
     assert.equal(
       draftProgressText,
-      '1 of 1 TODO line written',
+      '1 of 2 TODO lines written',
       `the card must say how close the exercise is to done, not only how long the diff is; got: ${draftProgressText}`
     );
     assert(

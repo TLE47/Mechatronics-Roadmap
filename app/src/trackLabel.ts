@@ -6,5 +6,13 @@
  * learner reads a track name, and two hand-written versions would drift the moment a track is added.
  */
 export function trackLabel(track: string): string {
-  return `Track ${track.replace(/^track-/, '').toUpperCase()}`;
+  // A graded exercise package's `track` is `modules` - the registry bucket it lives in, not a track a
+  // page teaches. Naming it "Track MODULES" would invent a track, and the runner already calls these
+  // "graded exercises".
+  if (track === 'modules') return 'Graded exercises';
+  const bare = track.replace(/^track-/, '');
+  // A page lives in a directory whose name carries more than the track (`02-mechanics-kinematics-
+  // dynamics`); the number is the track. `track-p` has no number, so its own name is the label.
+  const code = /^\d+/.exec(bare)?.[0] ?? bare.toUpperCase();
+  return `Track ${code}`;
 }
