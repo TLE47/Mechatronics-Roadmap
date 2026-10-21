@@ -65,6 +65,49 @@ let loadedCdnUrl = null;
 // download is still in flight; without this promise the run would start a second importScripts.
 let loadPromise = null;
 
+// Interrupt + stdin. A SharedArrayBuffer lets the page stop the interpreter in place: setting the
+// interrupt word raises KeyboardInterrupt inside the running program, so the session (imports,
+// variables, the 10 MB download) survives the Stop. Without cross-origin isolation there is no
+// SharedArrayBuffer; the page then falls back to terminating the worker, which still stops the run.
+let interruptView = null;
+let stdinView = null;
+let stdinBytes = null;
+let activeRunId = null;
+let stopRequested = false;
+// One id per worker. Stop must interrupt the interpreter, not replace it; the page can only tell
+// those apart by seeing whether this id changed, so it is reported with the ready status.
+const BOOT_ID = Math.random().toString(36).slice(2, 10);
+const STDIN_STATE = 0;
+const STDIN_LENGTH = 1;
+
+// Blocking input(), kept in the worker so the UI never freezes: post the prompt, then wait on the
+// shared word until the page writes the line (1) or cancels the run (-1).
+function readStdin(prompt) {
+  if (!stdinView) return '';
+  Atomics.store(stdinView, STDIN_STATE, 0);
+  Atomics.store(stdinView, STDIN_LENGTH, 0);
+  self.postMessage({ type: 'stdin-request', runId: activeRunId, prompt: String(prompt || '') });
+  Atomics.wait(stdinView, STDIN_STATE, 0);
+  if (Atomics.load(stdinView, STDIN_STATE) === -1) {
+    throw new Error('Execution stopped by user.');
+  }
+  const length = Atomics.load(stdinView, STDIN_LENGTH);
+  const bytes = new Uint8Array(stdinBytes, 8, length).slice();
+  return new TextDecoder().decode(bytes);
+}
+
+function installStdinBridge(py) {
+  if (py.__mechalabStdinInstalled) return;
+  py.globals.set('__mechalab_read_stdin__', readStdin);
+  py.runPython(
+    'import builtins\\n' +
+      'def __mechalab_input(prompt=""):\\n' +
+      '    return __mechalab_read_stdin__(str(prompt))\\n' +
+      'builtins.input = __mechalab_input\\n'
+  );
+  py.__mechalabStdinInstalled = true;
+}
+
 async function ensurePyodideLoaded(cdnUrl) {
   if (pyodideInstance && loadedCdnUrl === cdnUrl) {
     return pyodideInstance;
@@ -82,8 +125,17 @@ async function ensurePyodideLoaded(cdnUrl) {
       if (typeof self.loadPyodide !== 'function') {
         throw new Error('loadPyodide not exposed by pyodide.js');
       }
+      const startedAt = performance.now();
       pyodideInstance = await self.loadPyodide({ indexURL: cdnUrl });
-      self.postMessage({ type: 'status', status: 'ready' });
+      if (interruptView) pyodideInstance.setInterruptBuffer(interruptView);
+      installStdinBridge(pyodideInstance);
+      // The measured load, not a guess: the status line tells a learner what the wait actually was.
+      self.postMessage({
+        type: 'status',
+        status: 'ready',
+        boot: BOOT_ID,
+        ms: Math.round(performance.now() - startedAt),
+      });
       return pyodideInstance;
     } catch (err) {
       loadPromise = null;
@@ -101,6 +153,26 @@ async function ensurePyodideLoaded(cdnUrl) {
 
 self.onmessage = async (event) => {
   const msg = event.data || {};
+  if (msg.type === 'init') {
+    interruptView = msg.interruptBuffer ? new Int32Array(msg.interruptBuffer) : null;
+    stdinView = msg.stdinBuffer ? new Int32Array(msg.stdinBuffer, 0, 2) : null;
+    stdinBytes = msg.stdinBuffer || null;
+    if (interruptView && pyodideInstance) pyodideInstance.setInterruptBuffer(interruptView);
+    return;
+  }
+  if (msg.type === 'stop') {
+    stopRequested = true;
+    if (interruptView) {
+      Atomics.store(interruptView, 0, 2);
+      Atomics.notify(interruptView, 0);
+    }
+    // A program waiting for input is not on the interpreter's clock: wake that wait too.
+    if (stdinView) {
+      Atomics.store(stdinView, STDIN_STATE, -1);
+      Atomics.notify(stdinView, STDIN_STATE);
+    }
+    return;
+  }
   // The page warms the runtime while the learner is still reading, so the first Run is a warm run.
   // A failed warm-up is silent: the run that needs the runtime reports the failure itself.
   if (msg.type === 'warm') {
@@ -125,7 +197,10 @@ self.onmessage = async (event) => {
       helperFiles = [],
     } = msg;
 
+    // A fresh run starts un-stopped: clear the interrupt word a previous Stop left set.
+    stopRequested = false;
     activeRunId = runId;
+    if (interruptView) Atomics.store(interruptView, 0, 0);
     const capturedOut = [];
     const capturedErr = [];
     let captureEnabled = true;
@@ -196,10 +271,16 @@ def __mechalab_execute():
 
     student_err = ""
     timed_out = False
+    stopped = False
     try:
         compiled_student = compile(__mechalab_student_code__, "<lesson_editor>", "exec")
         sys.settrace(_trace_guard)
         exec(compiled_student, ns)
+    except KeyboardInterrupt:
+        # Caught here, not left to escape: a rejection that crosses into JavaScript shows up as an
+        # uncaught PythonError in the page console, and a Stop is a normal outcome, not a crash.
+        stopped = True
+        student_err = "Execution stopped by user. The interpreter kept your session; nothing was reloaded."
     except TimeoutError as te:
         timed_out = True
         student_err = str(te)
@@ -211,18 +292,34 @@ def __mechalab_execute():
     finally:
         sys.settrace(None)
 
-    return ns, student_err, timed_out
+    return ns, student_err, timed_out, stopped
 
-__mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__ = __mechalab_execute()
+__mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_stopped__ = __mechalab_execute()
 \`;
 
       await py.runPythonAsync(runnerHarness);
       const studentErr = py.globals.get('__mechalab_student_err__') || '';
       const timedOut = Boolean(py.globals.get('__mechalab_timed_out__'));
+      const stopped = Boolean(py.globals.get('__mechalab_stopped__'));
 
       captureEnabled = false;
       const stdoutText = capturedOut.join('\\n').trim();
       const stderrText = capturedErr.join('\\n').trim();
+
+      if (stopped) {
+        self.postMessage({
+          type: 'result',
+          runId,
+          stdout: stdoutText,
+          stderr: studentErr || 'Execution stopped by user.',
+          stopped: true,
+          timedOut: false,
+          runtimeError: false,
+          instructorPassed: false,
+          instructorError: '',
+        });
+        return;
+      }
 
       if (timedOut) {
         self.postMessage({
@@ -329,10 +426,28 @@ __mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
         bench: benchReport,
       });
     } catch (err) {
+      const message = err && err.message ? err.message : String(err);
+      // Stopping is not a crash: the interpreter is still healthy and the next Run reuses it.
+      // Pyodide surfaces the interrupt as KeyboardInterrupt (sometimes wrapped in a JS error).
+      if (stopRequested || /KeyboardInterrupt/.test(message)) {
+        captureEnabled = false;
+        self.postMessage({
+          type: 'result',
+          runId,
+          stdout: capturedOut.join('\\n').trim(),
+          stderr: 'Execution stopped by user. The session is still loaded — nothing was reloaded.',
+          stopped: true,
+          timedOut: false,
+          runtimeError: false,
+          instructorPassed: false,
+          instructorError: '',
+        });
+        return;
+      }
       self.postMessage({
         type: 'error',
         runId,
-        error: err && err.message ? err.message : String(err),
+        error: message,
       });
     }
   }
@@ -459,6 +574,17 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const activeRunIdRef = useRef<number>(0);
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeResolveRef = useRef<((val: any) => void) | null>(null);
+  // Shared memory between the page and the interpreter: [interrupt] and [state, length, bytes].
+  // Both are null when the page is not cross-origin isolated, and Stop falls back to terminating.
+  const interruptRef = useRef<SharedArrayBuffer | null>(null);
+  const stdinCtrlRef = useRef<SharedArrayBuffer | null>(null);
+  const stopFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [stdinPrompt, setStdinPrompt] = useState<string | null>(null);
+  const [stdinValue, setStdinValue] = useState<string>('');
+  const [readyMs, setReadyMs] = useState<number | null>(null);
+  // Changes only when the worker is replaced. A Stop that interrupts keeps it; a Stop that had to
+  // terminate shows a new one, which is exactly the distinction the runtime suite checks.
+  const [runtimeBoot, setRuntimeBoot] = useState<string | null>(null);
 
   const clearRunWatchdog = () => {
     if (timeoutIdRef.current) {
@@ -469,6 +595,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   const destroyWorker = () => {
     clearRunWatchdog();
+    if (stopFallbackRef.current) {
+      clearTimeout(stopFallbackRef.current);
+      stopFallbackRef.current = null;
+    }
     if (workerRef.current) {
       try {
         workerRef.current.terminate();
@@ -618,8 +748,40 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     const blobUrl = URL.createObjectURL(blob);
     workerBlobUrlRef.current = blobUrl;
     const worker = new Worker(blobUrl);
+    // Cross-origin isolation is what makes SharedArrayBuffer exist. With it, Stop raises
+    // KeyboardInterrupt in the running program and the session survives; without it, Stop still
+    // works, by terminating the worker (the old behaviour).
+    try {
+      if (typeof SharedArrayBuffer !== 'undefined') {
+        interruptRef.current = new SharedArrayBuffer(4);
+        stdinCtrlRef.current = new SharedArrayBuffer(8 * 1024);
+        worker.postMessage({
+          type: 'init',
+          interruptBuffer: interruptRef.current,
+          stdinBuffer: stdinCtrlRef.current,
+        });
+      }
+    } catch {
+      interruptRef.current = null;
+      stdinCtrlRef.current = null;
+    }
     workerRef.current = worker;
     return worker;
+  };
+
+  /** Hand a line to a program blocked in `input()`, and unblock the worker's wait. */
+  const submitStdin = (line: string) => {
+    const buffer = stdinCtrlRef.current;
+    setStdinPrompt(null);
+    setStdinValue('');
+    if (!buffer) return;
+    const ctrl = new Int32Array(buffer, 0, 2);
+    const limit = buffer.byteLength - 8;
+    const bytes = new TextEncoder().encode(line).subarray(0, limit);
+    new Uint8Array(buffer, 8, bytes.length).set(bytes);
+    Atomics.store(ctrl, 1, bytes.length);
+    Atomics.store(ctrl, 0, 1);
+    Atomics.notify(ctrl, 0);
   };
 
   // Warm the interpreter while the learner reads. Pyodide is ~10 MB from a CDN, and paying that
@@ -650,6 +812,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           const data = event.data || {};
           if (data.type === 'status' && (data.status === 'loading' || data.status === 'ready')) {
             setPyodideStatus(data.status);
+            // The warm-up is how most learners meet the runtime, so its measured time is the one the
+            // status line reports; the run handler sets this too, for a cold first Run.
+            if (data.status === 'ready' && typeof data.ms === 'number') setReadyMs(data.ms);
+            if (data.status === 'ready' && data.boot) setRuntimeBoot(String(data.boot));
           }
           if (data.type === 'status' && data.status === 'ready') {
             worker.onmessage = previousHandler;
@@ -673,6 +839,44 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   }, []);
 
   const stopExecution = (customMessage?: string) => {
+    const runId = activeRunIdRef.current;
+    // With shared memory, stop in place: the interpreter raises KeyboardInterrupt inside the
+    // running program, so imports, variables and the loaded runtime all survive. A worker that
+    // cannot unwind within the grace period is terminated by the fallback below.
+    if (workerRef.current && interruptRef.current) {
+      // The word has to be written from THIS thread. `postMessage` to a worker that is inside a
+      // Python loop queues behind the loop it is meant to stop, which is why the buffer is shared:
+      // CPython polls it between bytecodes and raises KeyboardInterrupt in the running program.
+      const interrupt = new Int32Array(interruptRef.current);
+      Atomics.store(interrupt, 0, 2);
+      Atomics.notify(interrupt, 0);
+      // A program parked in input() is not on the interpreter's clock; wake that wait too.
+      if (stdinCtrlRef.current) {
+        const stdin = new Int32Array(stdinCtrlRef.current, 0, 2);
+        Atomics.store(stdin, 0, -1);
+        Atomics.notify(stdin, 0);
+      }
+      setStderr('Stopping…');
+      setStdinPrompt(null);
+      if (stopFallbackRef.current) clearTimeout(stopFallbackRef.current);
+      stopFallbackRef.current = setTimeout(() => {
+        stopFallbackRef.current = null;
+        if (activeRunIdRef.current !== runId || !activeResolveRef.current) return;
+        destroyWorker();
+        setIsRunning(false);
+        setPyodideStatus('idle');
+        setBehaviorCheck('failed');
+        setPassStatus('stopped');
+        setStderr(
+          'Execution stopped: the interpreter did not unwind, so the worker was restarted. Your editor code is preserved.'
+        );
+        if (activeResolveRef.current) {
+          activeResolveRef.current({ stopped: true });
+          activeResolveRef.current = null;
+        }
+      }, 1500);
+      return;
+    }
     activeRunIdRef.current += 1;
     destroyWorker();
     setIsRunning(false);
@@ -763,13 +967,26 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               setPyodideStatus('loading');
             } else if (data.status === 'ready') {
               setPyodideStatus('ready');
+              if (typeof data.ms === 'number') setReadyMs(data.ms);
+              if (data.boot) setRuntimeBoot(String(data.boot));
               armExecutionWatchdog(timeoutMs, 'Python execution');
             } else if (data.status === 'error') {
               setPyodideStatus('error');
             }
             return;
           }
+          // The learner's `input()` is waiting on a line; the run is still alive, so this is not
+          // an outcome — answer it and keep waiting.
+          if (data.type === 'stdin-request') {
+            setStdinPrompt(String(data.prompt || ''));
+            setStdinValue('');
+            return;
+          }
           if (data.runId !== runId) return;
+          if (stopFallbackRef.current) {
+            clearTimeout(stopFallbackRef.current);
+            stopFallbackRef.current = null;
+          }
           clearRunWatchdog();
           resolve(data);
         };
@@ -805,6 +1022,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       if (activeRunIdRef.current !== runId) return;
 
       if (workerOutcome?.stopped) {
+        // The interpreter was interrupted, not killed: it is still loaded for the next Run.
+        setStdinPrompt(null);
+        if (workerOutcome?.stdout) setStdout(String(workerOutcome.stdout));
+        setStderr(String(workerOutcome.stderr || 'Execution stopped by user.'));
+        setBehaviorCheck('failed');
+        setPassStatus('stopped');
         return;
       }
 
@@ -1056,16 +1279,22 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 <span>Python 3.12 in an isolated Web Worker</span>
                 <span
                   data-testid="runner-runtime-status"
+                  data-runtime-status={pyodideStatus}
+                  data-runtime-boot={runtimeBoot ?? undefined}
                   className="chip"
                   style={{ color: pyodideStatus === 'error' ? 'var(--rose)' : 'var(--accent)' }}
                 >
                   {pyodideStatus === 'ready'
-                    ? 'Ready (Worker WASM)'
+                    ? readyMs !== null
+                      ? `Python ready in ${(readyMs / 1000).toFixed(1)} s`
+                      : 'Python ready (Worker WASM)'
                     : pyodideStatus === 'loading'
                     ? 'Loading WASM...'
                     : pyodideStatus === 'error'
                     ? 'WASM Load Error'
-                    : 'Isolated Worker Ready'}
+                    : // The worker exists and the warm-up is in flight; say so, because "Ready"
+                      // here would claim a runtime that has not finished downloading.
+                      'Warming Python (once, ~10 MB)…'}
                 </span>
               </p>
               <p className="mt-0.5 text-[11.5px]" style={{ color: 'var(--dim)' }}>
@@ -1552,6 +1781,55 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* A program blocked in input() is waiting on this box. The run is alive, not stuck:
+                the worker is parked on the shared word until a line arrives. */}
+            {stdinPrompt !== null && (
+              <div
+                className="mt-3 rounded-lg border p-3"
+                style={{ borderColor: 'var(--accent)', backgroundColor: 'var(--bg)' }}
+                data-testid="stdin-prompt"
+              >
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    submitStdin(stdinValue);
+                  }}
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  <label
+                    htmlFor="stdin-line"
+                    className="font-mono text-xs"
+                    style={{ color: 'var(--accent)' }}
+                  >
+                    {stdinPrompt || 'input()'}
+                  </label>
+                  <input
+                    id="stdin-line"
+                    data-testid="input-stdin"
+                    autoFocus
+                    value={stdinValue}
+                    onChange={(event) => setStdinValue(event.target.value)}
+                    className="min-w-[12rem] flex-1 rounded-lg border px-2 py-1.5 font-mono text-xs outline-none"
+                    style={{
+                      borderColor: 'var(--border)',
+                      backgroundColor: 'var(--panel)',
+                      color: 'var(--text)',
+                    }}
+                  />
+                  <button type="submit" className="btn btn-primary" data-testid="btn-stdin-submit">
+                    Send ⏎
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => stopExecution()}
+                  >
+                    Stop
+                  </button>
+                </form>
+              </div>
+            )}
 
             {/* <= 2 Ideas Unboxed Metadata List */}
             <div className="mt-3 pt-3 border-t border-line-soft flex flex-wrap items-center gap-2 text-xs text-body">

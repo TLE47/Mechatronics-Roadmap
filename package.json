@@ -60,7 +60,8 @@
     "test:theme:tokens": "node --experimental-strip-types scripts/test_theme_tokens.mjs",
     "test:faultbench": "node --experimental-strip-types scripts/test_fault_bench.mjs",
     "test:pairs": "node scripts/e2e_same_task_pairs.mjs",
-    "test:tour": "node scripts/e2e_tour_presets.mjs"
+    "test:tour": "node scripts/e2e_tour_presets.mjs",
+    "test:runtime": "node scripts/e2e_runtime.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

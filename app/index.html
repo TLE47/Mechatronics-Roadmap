@@ -33,6 +33,11 @@
         }
       })();
     </script>
+    <!-- Cross-origin isolation on a host that cannot set headers (GitHub Pages). It reloads the page
+         once, then every response carries COOP/COEP, SharedArrayBuffer exists, and the Python worker
+         can be interrupted in place. Local servers send the headers themselves, so this exits early. -->
+    <script src="coi-serviceworker.js"></script>
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
