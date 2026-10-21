@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
@@ -13,6 +13,13 @@ import { logEvent } from '../../learningLog';
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
 import { readDraft, saveDraft } from '../../lessonDraft';
+import {
+  clearHistory,
+  recordSnapshot,
+  snapshotAgeLabel,
+  snapshotsFor,
+  verdictLabel,
+} from '../../draftHistory';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { parseSliders } from '../../editor/sliderModel';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
@@ -40,6 +47,7 @@ import {
   ShieldCheck,
   Lock,
   Loader2,
+  History,
 } from 'lucide-react';
 
 declare global {
@@ -689,6 +697,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // (unproven), never a pass.
   const currentHarness = harnessForLesson(currentLesson.id);
   const harnessResult = currentHarness ? harnessGate(currentHarness, harnessReport) : null;
+  // Re-read when the lesson changes, when a run ends, or when the learner forgets the list - the
+  // three moments it can differ from what is on screen. Never on a keystroke: the editor's own text
+  // is not what this list holds.
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyVersion, setHistoryVersion] = useState(0);
+  const draftHistory = useMemo(
+    () => snapshotsFor(selectedId),
+    [selectedId, passStatus, historyVersion]
+  );
+
   const nextHintNumber = revealedHints + 1;
   // Hint 1 is always open. Every hint after it waits for at least one completed run of this
   // lesson, so a learner cannot read the near-solution second hint without trying first.
@@ -725,6 +743,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       ms: Math.round(performance.now() - runStartedAtRef.current),
     });
     if (passStatus === 'passed') logEvent({ kind: 'verified', lesson: selectedId });
+    // The half of the draft store a learner cannot get from a single latest version: what each run
+    // started from, filed with the verdict it got. Taken here because every path that ends a run
+    // converges on this state, and the text is read from the ref so it is the code that ran.
+    recordSnapshot(selectedId, codeRef.current, passStatus);
     // `harnessReport` is the identity that changes when the gate's verdict can: a fresh gate object
     // every render would re-run this effect on every keystroke, which `pendingRunRef` would swallow.
   }, [isRunning, passStatus, selectedId, instructorError, stderr, harnessReport]);
@@ -1817,6 +1839,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <Eye className="w-3.5 h-3.5" />
                   <span>Load Solution</span>
                 </button>
+                <button
+                  onClick={() => setHistoryOpen((open) => !open)}
+                  aria-expanded={historyOpen}
+                  aria-controls="draft-history"
+                  data-testid="btn-draft-history"
+                  title="Every run files the code it started from, with its verdict, so a version that worked is one click away"
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                    historyOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+                  }`}
+                >
+                  <History className="w-3.5 h-3.5" />
+                  <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
+                </button>
                 {isRunning && (
                   <button
                     onClick={() => stopExecution()}
@@ -1848,6 +1883,84 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* The versions behind the draft. A draft is one latest text; this is the run that
+                worked before the last edit, which is the thing a learner actually wants back. */}
+            {historyOpen && (
+              <div
+                id="draft-history"
+                data-testid="draft-history"
+                className="mt-3 rounded-lg border border-line-soft bg-canvas p-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono text-accent">
+                    RUN HISTORY · this lesson
+                  </span>
+                  {draftHistory.length > 0 && (
+                    <button
+                      onClick={() => {
+                        clearHistory(selectedId);
+                        setHistoryVersion((version) => version + 1);
+                      }}
+                      data-testid="btn-clear-history"
+                      className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-rose border border-line cursor-pointer"
+                    >
+                      Forget these
+                    </button>
+                  )}
+                </div>
+                {draftHistory.length === 0 ? (
+                  <p className="text-xs text-muted mt-2" data-testid="draft-history-empty">
+                    Every run files the code it started from, so a version that worked is one click
+                    away. Nothing filed yet — press Run.
+                  </p>
+                ) : (
+                  <ol className="mt-2 space-y-1.5">
+                    {draftHistory.map((snapshot, index) => (
+                      <li
+                        key={`${snapshot.at}-${index}`}
+                        data-testid={`history-entry-${index}`}
+                        className="flex flex-wrap items-center justify-between gap-2 text-xs border border-line-soft rounded px-2 py-1"
+                      >
+                        <span className="font-mono text-muted">
+                          {snapshotAgeLabel(snapshot.at)}
+                        </span>
+                        <span
+                          data-testid={`history-entry-${index}-verdict`}
+                          className={`font-mono ${
+                            snapshot.outcome === 'verified' || snapshot.outcome === 'passed'
+                              ? 'text-emerald'
+                              : 'text-amber'
+                          }`}
+                        >
+                          {verdictLabel(snapshot.outcome)}
+                        </span>
+                        <button
+                          onClick={() => {
+                            // The same text, back in the editor, and the badges cleared: they
+                            // described the code that was there a moment ago, not this one.
+                            commitCode(snapshot.code);
+                            saveDraft(selectedId, snapshot.code);
+                            setPassStatus('untested');
+                            setBehaviorCheck('untested');
+                            setOutputCheck('untested');
+                            setInstructorError('');
+                          }}
+                          data-testid={`btn-restore-history-${index}`}
+                          className="px-2 py-0.5 rounded text-[11px] font-mono bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 cursor-pointer"
+                        >
+                          Restore
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <p className="text-[11px] text-faint mt-2">
+                  Five attempts per lesson, kept locally. Restoring puts that code back in the editor
+                  — press Run to grade it again.
+                </p>
+              </div>
+            )}
 
             {/* A program blocked in input() is waiting on this box. The run is alive, not stuck:
                 the worker is parked on the shared word until a line arrives. */}

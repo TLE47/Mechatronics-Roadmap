@@ -11,6 +11,38 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 140: The Version Behind the Draft
+
+Run 136 made the draft survive the tab. One text is not a history: a learner who tuned `Kp` until the
+checks passed, changed one line, and ran again kept only the broken version, and "it worked before I
+touched that" was a memory rather than a button.
+
+**Every run files what it started from.** [`app/src/draftHistory.ts`](app/src/draftHistory.ts) records
+the editor's text at the moment Run is pressed, with the verdict that run got, and the lesson header
+grows a **History** button that lists the last five attempts with `just now` / `3 min ago` and
+`passed` / `checks failed` / `output mismatch` / `stopped`. **Restore** puts that version back in the
+editor and clears the badges, because they described the text that was just replaced.
+
+| rule | why |
+| :--- | :--- |
+| snapshots on Run, never on typing | the unit worth restoring is an attempt; a per-keystroke history is unreadable and would fill the bucket |
+| the same text run twice is one version carrying the newer verdict | pressing Run three times on a failing line must not bury the version that worked |
+| the untouched starter is never filed | Reset Starter already restores it, so filing it would spend the bucket on the lesson's own text |
+| 5 versions per lesson, 12 KB per version, 120 KB total | it shares the same 5 MB `localStorage` bucket as drafts and progress; over budget, the **oldest attempt anywhere** goes first |
+
+Read and written in `draftHistory.ts`'s own idiom - one JSON key, never throwing when storage is
+blocked, rejecting a store an older version wrote rather than guessing at it - so private mode loses
+history and keeps the editor.
+
+**Measured.** `npm run test:history` is 11 checks: filed with verdict and time, starter refused, the
+dedupe rule, newest-first with the sixth attempt evicting the first, per-lesson isolation, the
+per-snapshot cap, a store over budget losing its oldest attempt anywhere, a corrupt/truncated/foreign
+store reading as the entries it can prove, blocked and absent storage, and the age and verdict
+wording (including a clock that moved backwards). Browser step 7g runs P.4 to `checks failed`, opens
+History, finds that verdict filed, types a worse edit, and restores the filed version into the editor.
+
+---
+
 ## [2026-10-21] — Run 139: Tried Is Not Opened
 
 Run 138 taught the card how much of a lesson was *written*. The roadmap still could not tell a starter

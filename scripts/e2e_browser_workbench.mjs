@@ -803,6 +803,29 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the step chip for a verified lesson must stay passed'
     );
     await page.getByTestId('tab-btn-tab-pyodide').click();
+    // 7g. A run files the code it started from, so the version before the last edit is one click
+    //     away. The draft keeps only the latest text; this is the attempt behind it.
+    await page.getByTestId('btn-draft-history').click();
+    await page.getByTestId('draft-history').waitFor({ timeout: 5000 });
+    // P.4 grades behaviour before stdout, so a half-written starter fails its checks, not its output.
+    assert.equal(
+      (await page.getByTestId('history-entry-0-verdict').textContent())?.trim(),
+      'checks failed',
+      'the filed attempt must carry the verdict its run got'
+    );
+    // Overwrite it in the editor, then take the filed version back.
+    await setEditorCode(page, `${halfWritten}\nprint("a later, worse edit")\n`);
+    await page.getByTestId('btn-restore-history-0').click();
+    await page.waitForFunction(
+      (expected) => window.__mechalabEditors?.['editor-main']?.get() === expected,
+      halfWritten,
+      { timeout: 5000 }
+    );
+    // Restoring is not a run: the badges described the code that was just replaced, so they clear.
+    assert.ok(
+      (await page.getByTestId('btn-run-verify').textContent())?.includes('Run & Verify'),
+      'the restored version must be ungraded until it is run again'
+    );
     // Reset Starter is the one edit that means "forget this one", so the card stops mentioning it.
     await page.getByTestId('btn-reset-starter').click();
     await page.waitForTimeout(200);

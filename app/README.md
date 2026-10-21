@@ -135,6 +135,16 @@ ordinary Python: open it in VS Code and it runs the same. A directive with a mis
 range is ignored rather than guessed at, and the range input is reused while only its value moves,
 so the drag is not aborted by its own re-render.
 
+**Every run files the code it started from.** A draft holds one text - the latest - so running a
+version that worked, breaking it and running again used to leave the learner with the broken one and
+nothing to go back to. **History** in the lesson header lists the last five attempts for that lesson,
+each with the verdict it got (`passed`, `output mismatch`, `checks failed`, `stopped`, …) and how long
+ago it ran, and **Restore** puts that text back in the editor ungraded. Snapshots are taken on Run,
+not on typing: the same text run twice is one version carrying the newer verdict, the untouched
+starter is never filed (Reset Starter already restores it), and the store evicts the oldest attempt
+anywhere once it passes its budget - [src/draftHistory.ts](src/draftHistory.ts), pinned by
+`npm run test:history`.
+
 The seven control and mechanics lessons (02.1-02.5, 05.1, 05.2) ship their own annotations: link
 lengths on the FK/IK demos, mass and gear ratio on the inertia lesson, tooth counts on the belt
 drive, `Kp`/`Ki`/`Kd` on the PID lesson and the gyro bias/`alpha` pair on the complementary filter -
@@ -174,6 +184,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/components/PythonEditor.tsx`](src/components/PythonEditor.tsx) | The CodeMirror editor: view, external sync, test bridge. |
 | [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
+| [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total. |
+| [`src/learningLog.ts`](src/learningLog.ts) | The event log behind the friction report and the roadmap's "opened / tried" states. |
 
 ## Checks that cover this directory
 
@@ -182,6 +194,7 @@ npm run lint                 # types
 npm run test:workbench       # runner behaviour (happy-dom) + palette search + editor model
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
+npm run test:history         # run history: filed on Run, deduped, capped per lesson and in total
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
 npm run check:lessons        # the registry is current
