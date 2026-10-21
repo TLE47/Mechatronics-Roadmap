@@ -188,4 +188,7 @@ print(f"First={raw_commands[0]} | Last={raw_commands[5]} | Mean Clamped Cmd={mea
 - [ ] You can read the first and last element of any list using zero-based indices.
 - [ ] You can use a `for` loop to clamp or sum a list of sensor values.
 - [ ] Your **Do it yourself** script prints `Clamped list: [0, 0, 64, 128, 200, 255]` and `Mean Clamped Cmd=107.83`.
-- **Next lesson:** [Lesson P.5: Reusable Functions (`def`/`return`) & `while` Loops](P.5-functions-and-while-loops.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.5: Reusable Functions (def/return) and while Loops](P.5-functions-and-while-loops.md)
+<!-- next-step:end -->

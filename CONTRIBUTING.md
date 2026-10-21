@@ -72,6 +72,15 @@ npm run test:workbench
 
 ---
 
-## 4. Licensing of Contributions
+## 4. Community Standards
+
+Participation is covered by the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) (Contributor Covenant 2.1).
+Report unacceptable behaviour privately through the repository's **Security → Report a vulnerability**
+channel, not a public issue. Beginner questions belong in issues and Discussions and are never noise:
+the course exists because those questions are hard.
+
+---
+
+## 5. Licensing of Contributions
 
 By submitting a pull request or issue, you agree that your documentation contributions are licensed under **CC BY 4.0** and your code contributions are licensed under the **MIT License**, as detailed in [`LICENSE`](LICENSE).

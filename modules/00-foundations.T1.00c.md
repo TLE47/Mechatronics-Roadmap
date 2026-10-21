@@ -411,4 +411,7 @@ assert math.isclose(g12_energy_j, 1.08, rel_tol=1e-9)
 - **W. Bolton — [*Mechatronics* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md) & [Track 00 (`00-foundations/README.md`)](../00-foundations/README.md):** Engineering unit conversions across electrical and mechanical domains `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T1.00d`](00-foundations.T1.00d.md) (*Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T1.00d: Linear Equations, Unit-Circle Trig, Radians, atan2 & 2D Vectors](00-foundations.T1.00d.md)
+<!-- next-step:end -->

@@ -13,7 +13,7 @@ slow_learner_hours: "1.5-2.0"
 <!-- run-callout:start -->
 > **Before Step 1 · the school-maths ramp**
 >
-> **No workbench entry for this page.** There is nothing to load in Run Python Lessons for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+> **Run this in the workbench.** [Open MechaLab with `R.4` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=R.4) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal
@@ -245,4 +245,4 @@ assert first_row == [1.0, -2.5]
 - [ ] I can write `x_next = x + dt (A x + B u)` and keep `dt` outside the coefficients.
 - [ ] I can prove my table is right by comparing it against the two-line update for the same number of ticks.
 
-👉 **Next:** [Tier 1 Exit Check](../docs/TIER1_EXIT_CHECK.md) — twelve items, each pointing back at R.1–R.4, before you start Tier 2.
+👉 **Next:** [Tier 1 Exit Check](../docs/TIER1_EXIT_CHECK.md) — fourteen items, each pointing back at R.1–R.6, before you start Tier 2.

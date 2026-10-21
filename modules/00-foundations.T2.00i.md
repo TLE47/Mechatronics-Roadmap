@@ -407,4 +407,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 - **Julius O. Smith III — [*Introduction to Digital Filters* (`ccrma.stanford.edu/~jos/filters/`)](https://ccrma.stanford.edu/~jos/filters/):** Bilinear transformation, frequency warping and pre-warping derivations `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00j`](00-foundations.T2.00j.md) (*Gaussian Variance, Covariance & the Predict Step*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T2.00j: Gaussian Variance, Covariance & the Predict Step](00-foundations.T2.00j.md)
+<!-- next-step:end -->

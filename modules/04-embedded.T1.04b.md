@@ -436,4 +436,7 @@ assert g8_choice == "A"
 - **Lee & Seshia — *Introduction to Embedded Systems* (`leeseshia.org`, `resources/textbooks-and-papers.md`):** Free textbook covering finite state machines, interrupts, and `volatile` memory semantics `[VERIFIED 2026-10-15]`.
 - **Track 04 (`04-embedded-and-realtime/README.md`):** Directly continues into Step 1.5 (`04-embedded.T1.05`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 1.5 (`04-embedded.T1.05`)** in [`04-embedded-and-realtime/README.md`](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 8 · Make it hold still: control — Lesson 05.1: PID Virtual Spring-Damper Control and Integrator Anti-Windup Clamping](../05-control-and-estimation/05.1-pid-virtual-spring-damper-and-anti-windup.md)
+<!-- next-step:end -->

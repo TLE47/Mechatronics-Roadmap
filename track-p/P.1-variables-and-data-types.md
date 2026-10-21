@@ -186,4 +186,7 @@ print(f"Encoder Ticks: {encoder_ticks} | Battery: {battery_level:.2f} V")
 - [ ] You can trace variable updates like `x = x + 10` without hesitation.
 - [ ] You can tell `int`, `float`, `str`, and `bool` apart at a glance.
 - [ ] Your **Do it yourself** script prints the exact two expected lines.
-- **Next lesson:** [Lesson P.2: Computer Arithmetic & Order of Operations](P.2-arithmetic-and-order-of-operations.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.2: Computer Arithmetic and Order of Operations](P.2-arithmetic-and-order-of-operations.md)
+<!-- next-step:end -->

@@ -208,4 +208,7 @@ print(f"E-Stop={is_estop_pressed} -> Safe Output: {safe_output}")
 - [ ] You never confuse `=` (assignment) with `==` (equality test).
 - [ ] You can write an `if / elif / else` clamping block from memory.
 - [ ] Your **Do it yourself** script prints `310 clamped -> 255 | -45 clamped -> 0` and `Safe Output: 0`.
-- **Next lesson:** [Lesson P.4: Ordered Lists & Repeating Actions with `for` Loops](P.4-lists-and-for-loops.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.4: Ordered Lists and Repeating Actions with for Loops](P.4-lists-and-for-loops.md)
+<!-- next-step:end -->

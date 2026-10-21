@@ -7,9 +7,11 @@ search box use - and it is generated from `app/src/data/pythonLessonsData.ts`, t
 workbench renders. A page cannot carry a stale or invented id, and a page that gains an entry
 gains the callout by re-running this script instead of by someone remembering to retype it.
 
-A lesson page with no entry (the bench lessons S0.1-S0.9, 01.1 and 01.2, and the maths ramp R.1-R.6)
-gets the second variant instead: it says there is nothing to load, so a reader does not go looking,
-and points at the list that has the entries. Both variants use the same markers, so a page moving
+A lesson page with no entry (the bench lessons S0.1-S0.9, 01.1 and 01.2, which run on hardware or
+on the bench) gets the second variant instead: it says there is nothing to load, so a reader does
+not go looking, and points at the list that has the entries. The maths ramp R.1-R.6 all carry the
+first variant: each is the page a Tier 1 exit-check miss sends a learner to, so the repair runs in
+the workbench with the same starter, hints and graded check as the page it repairs. Both variants use the same markers, so a page moving
 between them is a replacement, not a second block.
 
 The block names the tab the app actually renders (`app/src/data/workbenchTabs.json`), never a
@@ -123,8 +125,8 @@ def _lesson_id_of(path):
 def no_entry_pages():
     """Lesson and module pages the workbench does not list, with their own id.
 
-    These are the bench lessons (S0.1-S0.9, 01.1, 01.2) and the maths ramp (R.1-R.6): a reader who
-    lands on one from a search should be told there is no entry rather than left to look for one.
+    These are the bench lessons (S0.1-S0.9, 01.1, 01.2): a reader who lands on one from a search
+    should be told there is no entry rather than left to look for one.
     """
     covered = {path for _, path in workbench_pages()}
     roots = ("track-p", "stage-0", "ramp", "modules") + tuple(

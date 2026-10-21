@@ -487,4 +487,7 @@ assert g10_choice == "A"
 - **Åström & Murray — *Feedback Systems* ([`fbsbook.org`](https://www.fbsbook.org/), Ch. 7–8 & 10–12, `resources/textbooks-and-papers.md`):** Free textbook on observers, LQR, Bode loop shaping, and the Gang of Four `[VERIFIED 2026-10-15]`.
 - **Track 05 (`05-control-and-estimation/README.md`):** Directly continues into Step 2.6 (`05-control.T2.06`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 2.6 (`05-control.T2.06`)** in [`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-2-intermediate--applied).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 8 · Make it hold still: control — 05-control.T3.05a: Joseph-Form Covariance Update, Suboptimal Kalman Gains & NEES Consistency](05-control.T3.05a.md)
+<!-- next-step:end -->

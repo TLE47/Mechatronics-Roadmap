@@ -456,4 +456,7 @@ assert g10_choice == "A"
 - **Track 04 (`04-embedded-and-realtime/README.md`):** Prepares for `04-embedded.T2.04c` (Zephyr RTOS) and Step 2.5 (`04-embedded.T2.05`) `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`04-embedded.T2.04c`](04-embedded.T2.04c.md) (*Zephyr RTOS: West Workspaces, Devicetree Hardware Binding, Kconfig & Static Kernel Primitives*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 8 · Make it hold still: control — 05-control.T2.05a: Gain/Phase Margin, Sensitivity Waterbed (S+T=1), Luenberger State Observers & Bryson's Rule for LQR](05-control.T2.05a.md)
+<!-- next-step:end -->

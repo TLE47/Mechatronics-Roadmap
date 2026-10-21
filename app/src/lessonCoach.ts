@@ -5,7 +5,7 @@ import { PythonLessonItem } from './data/pythonLessonsData';
  *
  * The workbench already has the two things a newcomer needs before pressing Run: the starter's
  * marked holes and the instructor's own description of what it checks. This module turns them into
- * one sentence each, so the coach is not a generic "change a TODO" paragraph on all 86 entries.
+ * one sentence each, so the coach is not a generic "change a TODO" paragraph on every entry.
  */
 export interface LessonCoach {
   /** Number of TODO/NotImplementedError holes the starter leaves. */

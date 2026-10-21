@@ -598,14 +598,16 @@ class SimRouteTests(unittest.TestCase):
         )
 
     def test_each_track_p_lesson_comes_before_the_one_it_hands_to(self):
-        """A lesson's `Next lesson` link names the lesson that depends on it, so the route must list the
-        dependent after it. Filename order breaks this at P.9 -> P.10."""
+        """A page's generated next-step link names the lesson that depends on it, so the route must
+        list the dependent after it. Filename order breaks this at P.9 -> P.10."""
         order = {row["id"]: i for i, row in enumerate(gen.track_rows("track-p/*.md", None))}
         checked = 0
         for path in sorted(glob.glob(os.path.join(ROOT, "track-p", "P.*.md"))):
             source = gen.frontmatter(path).get("lesson_id", "")
             with open(path, encoding="utf-8") as handle:
-                match = re.search(r"\*\*Next lesson:\*\*.*?\[Lesson (P\.\w+):", handle.read())
+                match = re.search(
+                    r"<!-- next-step:start -->.*?Lesson (P\.\w+):", handle.read(), re.DOTALL
+                )
             if not match or source not in order or match.group(1) not in order:
                 continue
             checked += 1

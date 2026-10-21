@@ -208,4 +208,7 @@ print("All assert checks passed!")
 - [ ] You can import `math` and call `math.sqrt()`.
 - [ ] You can write `assert` checks to test a function at normal and boundary inputs.
 - [ ] Your **Do it yourself** script passes all assertions and prints `All assert checks passed!`.
-- **Next lesson:** [Lesson P.7: Base SI Units & Metric Prefixes (`M`, `k`, `m`, `µ`)](P.7-si-units-and-metric-prefixes.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.7: Base SI Units and Metric Prefixes (M, k, m, µ)](P.7-si-units-and-metric-prefixes.md)
+<!-- next-step:end -->

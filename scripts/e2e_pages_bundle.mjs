@@ -15,7 +15,10 @@
  *    the in-browser Python runner, so the suite is no longer a single-lesson check.
  * 4. A tablet viewport (834x1112) must keep the tab bar, lesson list and runner usable *and* fit the
  *    viewport: zero horizontal overflow, asserted rather than reported.
- * 5. *Every* graded exercise entry is graded - once - discovered from each `exercises/<package>/exercise.json`
+ * 5. Every school-maths ramp entry (R.1-R.6) is graded on the bundle: the starter must not verify, and
+ *    the page's own reference must match its expected output and pass its instructor tests. Each ramp
+ *    page repairs a Tier 1 exit-check item, so the recovery path is now proven where a learner uses it.
+ * 6. *Every* graded exercise entry is graded - once - discovered from each `exercises/<package>/exercise.json`
  *    rather than listed by hand: the starter fails on its `NotImplementedError`, the reference solution
  *    passes the appended self-check, and the output badge reads MATCHED, on the built bundle. A package
  *    added to `exercises/` is in this suite the next run, and a package whose entry the bundle does not
@@ -23,7 +26,7 @@
  *    The sweep runs *inside* the page (`gradeInPage`): one `page.evaluate` clicks every lesson, runs the
  *    starter and the reference, and reads the badges. Measured: a click-to-result cycle is 8-14 ms in
  *    the page and ~100 ms through Playwright, so the harness, not the interpreter, was the cost.
- * 6. A second browser grades a *sample* (`sampleExerciseIds`), not the whole list: the same bundle,
+ * 7. A second browser grades a *sample* (`sampleExerciseIds`), not the whole list: the same bundle,
  *    Pyodide and packages had already been graded end to end once, so repeating 48 verdicts in Firefox
  *    bought no new signal for twice the interpreter runs. The sample keeps a real Firefox signal on
  *    every track and at both ends of the list, with the same assertions per entry, and its size is
@@ -49,6 +52,26 @@ const repoRoot = process.cwd();
 export const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
 const distDir = path.join(repoRoot, 'dist');
 const LATER_TRACK_LESSONS = ['03.3', '06.1', '08.1'];
+/**
+ * The six maths-ramp pages, in order. Each repairs at least one Tier 1 exit-check item, so the
+ * recovery path is graded on the built bundle: the starter must not verify, the reference must.
+ * The id doubles as the entry's `data-testid="lesson-item-..."` and its registry key.
+ */
+const RAMP_LESSONS = ['R.1', 'R.2', 'R.3', 'R.4', 'R.5', 'R.6'];
+/**
+ * One unique substring per ramp starter. Clicking a list item loads the next program
+ * asynchronously, and every starter carries `TODO 1`, so the generic "has a TODO" wait can read the
+ * previous entry's code for a beat and grade the wrong lesson. Each marker is a function only that
+ * ramp page defines.
+ */
+const RAMP_STARTER_MARKERS = {
+  'R.1': 'counts_to_rad',
+  'R.2': 'left_rule_rad',
+  'R.3': 'accel_rad_s2',
+  'R.4': 'mat_vec',
+  'R.5': 'sum_arrows',
+  'R.6': 'phase_deg',
+};
 const TABLET_VIEWPORT = { width: 834, height: 1112 };
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -114,6 +137,33 @@ export function sampleExerciseIds(ids) {
     `the sample must grade at least one package from each of the ${firstPerTrack.size} tracks`
   );
   return sample;
+}
+
+/**
+ * The ramp entries' reference programs, read from the generated registry the bundle ships.
+ *
+ * The registry is a `.ts` module and this script runs on plain Node, so it is parsed the same way
+ * `scripts/generate_run_callouts.py` parses it: everything after the array declaration is JSON.
+ * Reading the registry rather than the Markdown keeps the browser pass grading exactly what the
+ * runner has - a reference that drifts from the page fails `generate_python_lessons_data.py --check`
+ * first, and a registry that loses a ramp entry fails here.
+ */
+function rampReferences() {
+  const registry = path.join(repoRoot, 'app', 'src', 'data', 'pythonLessonsData.ts');
+  assert.ok(fs.existsSync(registry), `no generated registry at ${registry} - run scripts/generate_python_lessons_data.py`);
+  const marker = 'PYTHON_LESSONS: PythonLessonItem[] =';
+  const text = fs.readFileSync(registry, 'utf8');
+  const at = text.indexOf(marker);
+  assert.ok(at >= 0, `${registry} has no PYTHON_LESSONS array`);
+  const entries = JSON.parse(text.slice(at + marker.length).trim().replace(/;$/, ''));
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  return RAMP_LESSONS.map((id) => {
+    const entry = byId.get(id);
+    assert.ok(entry, `the registry carries no ramp entry ${id}`);
+    assert.ok(entry.fullSolution.trim().length > 100, `${id}'s reference is missing from the registry`);
+    assert.ok(entry.expectedOutput.trim().length > 0, `${id}'s expected output is missing from the registry`);
+    return { id, reference: entry.fullSolution, expected: entry.expectedOutput };
+  });
 }
 
 function ensureBuilt() {
@@ -316,6 +366,179 @@ function assertGraded(result, name) {
   );
 }
 
+/**
+ * Grade one program per ramp page: the starter must not verify, then the reference must.
+ *
+ * Ramp starters deliberately run as-is (R.1 prints zeros and a "no reversal yet" line until its
+ * TODOs are filled) rather than raising `NotImplementedError`, so `gradeInPage`'s starter contract
+ * cannot grade them. This pass asserts the property that matters instead - a ramp entry that accepts
+ * its own starter, or rejects its own reference, is a broken recovery path - and it does it on the
+ * bundle a learner opens, not in the Python registry alone.
+ *
+ * It drives the page from inside it, like `gradeInPage`, and for a measured reason: the locator version
+ * spent ~30 s per entry waiting on Playwright actionability before the first Run click, while the same
+ * clicks and reads cost milliseconds in the page (twelve ramp runs now take ~0.2 s). A run is finished
+ * when the panel moves to a *terminal verdict different from the one it held before the click*: R.6's
+ * starter raises before printing, so a non-empty output never arrives, and the presentation badge can
+ * stay UNTESTED forever. Freshness is asserted on what was printed instead - the reference's stdout
+ * must carry a distinctive line of this page's own registry entry, which a stale panel cannot.
+ */
+async function gradeRampEntries(page, name) {
+  const startedAt = Date.now();
+  const entries = rampReferences();
+  assert.equal(entries.length, RAMP_LESSONS.length, `${name}: the ramp set shrank to ${entries.length}`);
+  const inputs = entries.map((entry) => ({ ...entry, marker: RAMP_STARTER_MARKERS[entry.id] }));
+  assert.ok(
+    inputs.every((entry) => entry.marker),
+    `${name}: no starter marker for ${inputs.filter((entry) => !entry.marker).map((entry) => entry.id).join(', ')}`
+  );
+  const records = await page.evaluate(async (list) => {
+    const q = (sel) => document.querySelector(sel);
+    const text = (sel) => q(sel)?.textContent ?? '';
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const statusId = () => q('[data-testid^="status-"]')?.getAttribute('data-testid') ?? 'none';
+    const editorEl = () => q('[data-testid="textarea-python-code"]');
+    const editor = () => editorEl()?.value ?? '';
+    const waitFor = async (predicate, budgetMs) => {
+      const started = performance.now();
+      while (performance.now() - started < budgetMs) {
+        if (predicate()) return true;
+        await sleep(2);
+      }
+      return false;
+    };
+    const badges = () => ({
+      output: text('[data-testid="badge-output-check"]').trim(),
+      behavior: text('[data-testid="badge-behavior-check"]').trim(),
+    });
+    // A run is over when the panel carries a verdict: the output has changed, the presentation badge
+    // has left UNTESTED, and the status is a terminal one. Waiting on the output alone reads the
+    // badges mid-run, before the runner has graded the program.
+    const TERMINAL = new Set([
+      'status-assert-passed',
+      'status-output-mismatch',
+      'status-behavior-failed',
+      'status-harness-failed',
+      'status-execution-stopped',
+    ]);
+    const runAndWait = async () => {
+      const beforeStatus = statusId();
+      q('[data-testid="btn-run-verify"]').click();
+      const landed = await waitFor(() => {
+        // A ramp starter can raise before printing anything (R.6 does), so neither a non-empty stdout
+        // nor a graded presentation badge can be the completion condition; a *changed terminal
+        // verdict* can. The assertions below then hold the reference's stdout to this page's own
+        // expected output, which a verdict left behind by the previous entry cannot satisfy.
+        return TERMINAL.has(statusId()) && statusId() !== beforeStatus;
+      }, 90000);
+      return { ok: landed, out: text('[data-testid="pre-actual-stdout"]'), badges: badges(), status: statusId() };
+    };
+    const results = [];
+    for (const entry of list) {
+      const result = { id: entry.id, problem: '' };
+      results.push(result);
+      const t0 = performance.now();
+      q(`[data-testid="lesson-item-${entry.id}"]`)?.click();
+      // Wait for *this* page's starter, not the previous entry's: every ramp starter has `TODO 1`.
+      if (!(await waitFor(() => editor().includes(entry.marker), 15000))) {
+        result.problem = 'its starter never landed in the editor';
+        continue;
+      }
+      result.expected = text('[data-testid="pre-expected-stdout"]').trim();
+      result.starter = editor();
+      const starterBefore = statusId();
+
+      const starterRun = await runAndWait();
+      if (!starterRun.ok) {
+        result.problem = `its starter run never reported (status ${starterRun.status})`;
+        continue;
+      }
+      result.starterStdout = starterRun.out;
+      result.starterBadges = starterRun.badges;
+      result.starterStatus = starterRun.status;
+      result.starterBeforeStatus = starterBefore;
+      const tStarter = performance.now();
+
+      // React owns the textarea: write through the native setter and dispatch `input`, then click Run in
+      // the same task so the app runs the reference text, not the starter it still holds.
+      const el = editorEl();
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+      setter.call(el, entry.reference);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      const referenceRun = await runAndWait();
+      result.loadMs = Math.round(tStarter - t0);
+      result.referenceMs = Math.round(performance.now() - tStarter);
+      if (!referenceRun.ok) {
+        result.problem = editor().includes('TODO')
+          ? 'its reference run executed stale editor text'
+          : `its reference run never reported (status ${referenceRun.status})`;
+        continue;
+      }
+      result.referenceStdout = referenceRun.out;
+      result.referenceBadges = referenceRun.badges;
+      result.referenceStatus = referenceRun.status;
+    }
+    return results;
+  }, inputs);
+
+  for (const [i, result] of records.entries()) {
+    const entry = entries[i];
+    assert.ok(result.starter?.includes(RAMP_STARTER_MARKERS[entry.id]), `${name}: ${entry.id} ${result.problem}`);
+    assert.equal(
+      result.expected,
+      entry.expected.trim(),
+      `${name}: ${entry.id}'s runner shows a different expected output from the registry`
+    );
+    assert.ok(
+      !result.problem,
+      `${name}: ${entry.id} ${result.problem} (stdout: ${(result.referenceStdout ?? '').slice(0, 200)})`
+    );
+    assert.doesNotMatch(
+      result.starterBadges.output,
+      /MATCHED/i,
+      `${name}: ${entry.id}'s starter was graded as matching its expected output - the ramp entry accepts unfinished work`
+    );
+    assert.match(
+      result.starterBadges.behavior,
+      /FAILED/i,
+      `${name}: ${entry.id}'s starter passed the instructor tests ("${result.starterBadges.behavior}") - the ramp entry accepts unfinished work`
+    );
+    assert.match(
+      result.referenceBadges.output,
+      /MATCHED/i,
+      `${name}: ${entry.id}'s reference did not match its own expected output ("${result.referenceBadges.output}")`
+    );
+    assert.match(
+      result.referenceBadges.behavior,
+      /PASSED/i,
+      `${name}: ${entry.id}'s reference failed its own instructor tests - the recovery page cannot be completed`
+    );
+    // The reference printed *this* page's answer, not a verdict another entry left in the panel: a
+    // distinctive line of the registry's expected output has to be in what the run produced.
+    const signature = entry.expected
+      .trim()
+      .split('\n')
+      .map((line) => line.trim())
+      .find((line) => line.length > 12);
+    assert.ok(signature, `${name}: ${entry.id}'s expected output has no line to identify it by`);
+    assert.ok(
+      result.referenceStdout.includes(signature),
+      `${name}: ${entry.id}'s reference printed another page's output (expected a line like "${signature}")`
+    );
+    assert.equal(
+      result.referenceStatus,
+      'status-assert-passed',
+      `${name}: ${entry.id}'s reference must finish verified, not just badge-passed`
+    );
+    console.log(
+      `    [ramp] ${name} ${entry.id}: load+starter ${(result.loadMs / 1000).toFixed(1)}s, reference ${(result.referenceMs / 1000).toFixed(1)}s`
+    );
+  }
+  console.log(
+    `  ok ${name}: ramp ${entries[0].id}..${entries[entries.length - 1].id} - each starter stays unverified and each reference verifies (${((Date.now() - startedAt) / 1000).toFixed(1)}s)`
+  );
+}
+
 async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
   let browser;
   const envPath = process.env[`PLAYWRIGHT_${name.toUpperCase()}_EXECUTABLE_PATH`];
@@ -433,6 +656,10 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       );
     }
     console.log(`  ok ${name}: a Tier 2 and a Tier 3 entry print their own PASS line and stay unverified`);
+
+    // The recovery path, graded where it is used: every ramp page repairs an exit-check item, so
+    // each one must reject its starter and verify its own reference on the built bundle.
+    await gradeRampEntries(page, name);
 
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
     // must fit the viewport - the header used to push a 249px horizontal overflow here, so a page
@@ -557,7 +784,8 @@ async function main() {
         `${selected.slice(1).map(([name]) => name).join(', ')}`
       : `grades all ${allExerciseIds.length} exercise entries in ${selected[0][0]}`;
     console.log(        `[PASS] Built Pages bundle at ${BASE} mounts, serves every asset, loads later-track lessons ` +
-        `${LATER_TRACK_LESSONS.join(', ')}, ${grading}, ` +
+        `${LATER_TRACK_LESSONS.join(', ')}, grades ramp ${RAMP_LESSONS[0]}..${RAMP_LESSONS[RAMP_LESSONS.length - 1]} ` +
+        `(starter unverified, reference verified), ${grading}, ` +
         `and stays usable at tablet width in: ${ran.join(', ')}` +
         (skipped.length ? ` (SKIP: ${skipped.join(', ')} not installed)` : '')
     );

@@ -420,4 +420,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 - **Lynch & Park — [*Modern Robotics* (`hades.mech.northwestern.edu`)](https://hades.mech.northwestern.edu/index.php/Modern_Robotics) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** Spatial moments $\vec{r}\times\vec{F}$ and coordinate frames `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00c`](00-foundations.T2.00c.md) (*First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T2.00c: First- & Second-Order ODEs, Characteristic Roots, Natural Frequency & Damping Ratio](00-foundations.T2.00c.md)
+<!-- next-step:end -->

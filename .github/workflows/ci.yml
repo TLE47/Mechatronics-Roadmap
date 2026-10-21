@@ -54,6 +54,8 @@ jobs:
           python3 scripts/generate_sim_route.py --check
           # The ten steps the pages print, copied for the app by the same model.
           python3 scripts/generate_spine_data.py --check
+          # One order: every arm page's last line names the next page in that same model.
+          python3 scripts/generate_next_links.py --check
           # The syllabus, the curriculum map and the nine track READMEs cost those ten steps
           # from each page's own metadata; a moved page must move the hours with it.
           python3 scripts/generate_step_docs.py --check

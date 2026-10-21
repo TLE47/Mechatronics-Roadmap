@@ -20,6 +20,10 @@
     "sag_multiplies_the_gain": ["test_behavior.SagTests.test_the_exercise_sag_and_angle"],
     "integral_missing_dt": ["test_behavior.IntegralTests.test_the_gate_integral_update"],
     "anti_windup_never_freezes": ["test_behavior.AntiWindupTests.test_the_gate_freeze"],
+    "anti_windup_freezes_any_saturation": [
+      "test_behavior.AntiWindupTests.test_an_error_against_the_demand_does_not_freeze",
+      "test_behavior.AntiWindupTests.test_the_negative_rail_lets_a_reversing_error_unwind"
+    ],
     "saturate_clips_one_rail": ["test_behavior.SaturationTests.test_the_negative_rail_clips_too"]
   },
   "cheat": {"file": "faults/print_only.py", "must_fail": "test_behavior"},

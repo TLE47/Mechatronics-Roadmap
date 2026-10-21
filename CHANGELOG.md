@@ -11,6 +11,176 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 124: The First Ten Seconds, and a Harness That Was 150x the Cost of the Work
+
+**The ramp pass stopped costing 30 s a page.** Run 123's ramp loop drove Playwright locators, and
+`item.click()`'s actionability wait burned ~30 s per entry before the first Run click - the six-entry
+pass took minutes. The loop now runs *inside* the page like `gradeInPage`, and twelve ramp executions
+finish in 0.2 s. Two assertion bugs fell out of the rewrite, both of which had let a verdict be read
+rather than earned: a run is now complete only when the panel moves to a *changed* terminal status
+(R.6's starter raises before printing, so "output arrived" can never be the signal), and the
+reference's stdout must carry a distinctive line of **that page's** registry entry, so a verdict left
+behind by the previous entry cannot be graded as this one's. Badges, terminal status and the PASSED
+requirement are unchanged.
+
+**The social preview is now a build artifact.** GitHub's 1200x630 social preview has no API - it is
+uploaded by hand - so it used to be the one visual asset nobody could regenerate.
+`scripts/generate_social_preview.mjs` renders it in Chromium from the repository's own hero GIF
+(inlined as a data URI, because `setContent` pages silently drop `file://` images and produced a
+broken-image icon on the first attempt) and the lesson count counted from disk (48; the milestone
+pages `P.M`/`S0.M` are lessons too). `--check` asserts the PNG is 1200x630. The file is
+[`docs/media/social-preview.png`](docs/media/social-preview.png).
+
+**A repo a stranger can contribute to.** `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1) names a
+private reporting channel - the repository's Security tab - instead of a public issue, and says
+plainly that beginner questions are the point. [`app/README.md`](app/README.md) documents the
+workbench for developers: stack, the generate-before-build rule, which files are generated (never
+hand-edited), the checks that cover it, and the Pages base-path trap that `test:e2e:pages` catches.
+[`docs/README.md`](docs/README.md) gains an assets table naming both media files and the command
+that regenerates each.
+
+The generated blocks and every honest number are untouched: the README's route table, hour claims
+and fault count still come from `scripts/route_model.py`, and the social preview's lesson count is
+counted, not typed.
+
+---
+
+## [2026-10-20] — Run 123: The Ramp Graded Where It Is Used, and a Front Page That Says So
+
+The previous two runs fixed the curriculum and the checks. This one proved the recovery path in a
+browser and made the front page read like the product the pages already are.
+
+**Every ramp entry is graded on the built bundle.** `scripts/e2e_pages_bundle.mjs` gains a ramp
+pass: for R.1-R.6 it clicks the entry, waits for *that* page's starter (a per-page function marker,
+because every ramp starter contains `TODO 1` and the previous entry's code lingers for a beat),
+asserts the starter does not match or verify, then loads the registry's own reference and asserts
+MATCHED output, PASSED instructor tests and `status-assert-passed`. The reference comes from
+`pythonLessonsData.ts`, so the browser grades exactly what the runner ships; `RAMP_LESSONS` and the
+markers are the only hand-typed lists, and each is asserted complete. Chromium and Firefox both run
+it, and the suite's `[PASS]` line now names the ramp range.
+
+**The new pass found a real platform bug on its first run.** R.5's last line printed `abs(Z)`, a
+residual of ~4e-16 whose mantissa depends on the platform's `sin`/`cos`: CPython printed
+`4.003e-16` and Pyodide `3.140e-16`, so the page's Expected Output was unmeetable in the browser
+that grades it. The line now rounds before formatting (`0.000e+00` on both, the physics the lesson
+is about) with a comment saying why; `check_ramp_lessons.py` still proves the page and its answer
+agree. This is exactly the class of failure a registry-only check cannot see.
+
+**Repo settings now match the content.** Description, sixteen topics and Discussions were applied
+to `TLE47/Mechatronics-Roadmap` (they are repository settings, not files); the homepage was already
+correct. `README.md` is rebuilt around the generated blocks, every marker and route row untouched:
+centered title, tagline and badge row (workbench, Lesson 1, license, CI, link check, zero install,
+\$0 hardware, Python 3.12), the start-here callout, the arm GIF as a hero, a Quick start table,
+GitHub alert callouts for the honest timing caveat and the minimum finish, and new sections for the
+repository map and the verification commands. `docs/README.md` is a short index of the maps, the
+checks and the evidence, with a diagram so it passes the repo's own page rules.
+
+The generated blocks stay generated: `generate_sim_route.py --check` still reports the README
+current, `generate_start_here.py --check` is current, and the README size claim in Run 121's entry
+was updated to the new 17 KB so `validate_modules.py` keeps passing.
+
+Verified: pages e2e on the built bundle in Chromium and Firefox (50 exercises, the Tier 2/Tier 3
+cheat cases, and all six ramp entries starter-fail/reference-verify), 372 Python tests (1 skipped),
+`verify_repo` (158 files, 2007 links, 0 errors), `validate_modules`, `check_consistency`,
+`check_tab_names`, `generate_sim_route --check`, `generate_start_here --check`, and a fresh build.
+
+---
+
+## [2026-10-20] — Run 122: The Check That Could Not See a Reversal
+
+The read-through after Run 121 tested the tests. Four of its five findings were coverage, not
+curriculum: the pages were right and the checks were not asking the question that separates a
+correct answer from a plausible one.
+
+**Anti-windup's missing case.** `05-control.T1.05a`'s browser self-check froze the accumulator only
+while the demand was past a rail *and* the error pushed that way - and then only tested a demand
+past the rail with the error pushing. An implementation that froze on **every** saturation passed
+the browser. The self-check now walks both rails and both directions: `e = -0.4`, `u_raw = 15` must
+land at $0.7952$ (0.8 is the freeze-on-any-saturation answer), the negative rail must freeze and
+unwind the same way, and $u_{\text{raw}} = \pm u_{\max}$ exactly must **not** freeze. `test_behavior.py`
+gains the same four cases under named messages and `test_transfer.py` gains the unwind on the
+plant's own clamp, so the package is 53 tests. A sixth planted fault,
+`anti_windup_freezes_any_saturation`, fails exactly the two tests named for it - and the browser
+shows the freeze-on-any-saturation submission `Behavior Tests: FAILED` with *"the error reversed
+while the demand is still past the positive rail"*.
+
+**Two modules split without shrinking.** `04-embedded.T1.04a` keeps every topic but now ends §5's
+interface with **four sittings** (widths and rollover, bit operations, structs and pointers, packing
+a frame), each 40-50 minutes with the test subset that ends it (13, 9, and all 38 tests). Sitting 3
+has no Python hole because the compiler owns that fact: a three-struct `frame.cpp` prints
+`8 12 8` and shows the two bytes an un-packed `H f h` layout loses - which also corrected §8's
+padding row, whose 12-vs-8 example was `H h f` and therefore wrong. `P.9` gains an **independence
+check**: a belt-driven gantry word problem, different numbers, no supplied expression, a
+units-before-code sentence, and a self-grading block (`0.0025 mm/microstep`, `55000` microsteps,
+`250.0 mm/s`) whose answer explains why the reciprocal is the plausible wrong one.
+
+**Two checkpoints that could mis-teach.** `docs/TIER1_EXIT_CHECK.md` left 11/14 with misses in
+different lessons with no route; it now has a row (do both missed ramp lessons, retake those two)
+and the flowchart draws it. Item 4 asked about "the average rate" with no interval; it now fixes
+the interval at 0.4 s and separates average **velocity** (zero on a round trip) from average
+**speed** (non-zero) - the distinction the item exists to teach. R.4's recap also said "twelve
+items"; the check has fourteen.
+
+**The recovery path now runs where the others do.** Every ramp page said "no workbench entry", so
+the exit check could name the lesson that repairs a miss and then send the learner somewhere they
+could not run it. All six are registry entries now (`generate_python_lessons_data.py` reads
+`ramp/R.*.md`) with instructor tests on their own numbers: R.1's full/quarter turn and both rate
+signs, R.2's three rules and the Q0 offset, R.3's old-speed tick and superposition, R.4's
+`A x = [3, -7.5]` and `B u = [0, 20]`, R.5's two-part addition and 53.130 deg report, R.6's corner
+gain and a measured phase against a known 0.5 rad lag. They are owned by `PRE_STEP_RAMP` rather than
+by Step 1, because they are remedial and must not become a completion requirement; `test_spine.mjs`,
+`test_practice_links.mjs` and `test_run_callout.py` each learned that one owner and assert every
+R.x entry exists. R.1's starter also stopped crashing before its first TODO: its guard prints "no
+reversal yet" instead of interpolating `None`, so the promise "runs as-is" is true. The reader's
+rule for AI - *unblock an attempt, not make it* - is now five numbered steps in the README, with
+"mark it assisted and rebuild it unaided" as the last one.
+
+Verified: 372 Python tests (1 skipped), 53 tests in the changed package, six planted faults each
+failing their named test, all six ramp entries failing on their starter and passing on their
+reference (R.2 and R.4 also exercised in the real browser), workbench suites on the dev server and
+the built Pages bundle (smoke, links, spine, e2e, pages, pairs, tour), `tsc -b` and `vite build`,
+`verify_repo` (157 files, 1971 links, 0 errors), and every generator `--check`.
+
+---
+
+## [2026-10-20] — Run 121: The Links Walk the One Order, and a Unit Nobody Described
+
+The same external read-through that produced Run 117 found the fixes had not reached every page.
+The steps and the arm/depth split were right; the pages still pointed past them.
+
+**Every page now names its successor in the same model.** `scripts/generate_next_links.py` writes
+one `next-step` block per page from `route_model` (the arm route: 65 pages) and then the depth pass
+in `docs/DEPTH.md` order (23 pages). What it replaced was three different answers: `00.3` pointed at
+Track 01 and skipped all five Tier 1 foundations modules; `00-foundations.T1.00e` pointed at a
+"Legacy Step 1.1" id that no longer exists; `08.1` sent the learner to the capstone README's Pass 2
+instead of the arm's last page. The arm's last page now says the arm is finished and offers the
+depth pass as optional; the depth pass ends at `EXTENSIONS.md`. `tests/test_next_chain.py` (9 tests)
+follows the links from `P.1` as a learner would and requires exactly the routed pages in order, no
+loops, no detours, and `--check` is in CI; `00-foundations/README.md` now says Track 01 is Step 4.
+
+**A short is not zero flow — re-verified, not re-fixed.** Run 117 corrected `S0.0`; this run proved
+the guard still bites: reverting the supplied solution to `return 0.0` for `opposition_ohm <= 0`
+fails `tests/test_exercises.py` with *"a zero-ohm short must be rejected, not reported as zero
+flow"*, and restoring it passes.
+
+**A fifth unit with no rule of its own.** Run 117 asked the learner to choose the four units'
+boundaries, but the four signatures were still described. `08.1` now adds **Unit E** (`TODO 6`): a
+bench report only — $0.4575\text{ rad}$ reported for a $0.305\text{ rad}$ command, no sag, $4.0\%$
+overshoot, tip error growing $15.2\text{ mm} \to 30.5\text{ mm}$ with the pose — and no rule above
+covers it. `infer_encoder_scale` must name the cause as one number ($1.5$, not the described $4\times$
+CPR fault) and `repair_encoder_cpr` must correct it. The instructor tests also require an honest
+encoder to read $1.0$ and a constant-offset unit to *not* read as a scale, so the fix has to tell a
+ratio from an offset rather than pattern-match the prose.
+
+Verified: `generate_next_links`, `generate_step_docs`, `generate_python_lessons_data`,
+`generate_sim_route`, `generate_readme_counts`, `generate_start_here`, `generate_spine_data`,
+`generate_run_callouts`, `mentions_audit`, `lint_assertions`, `verify_repo` (157 files, 1970 links,
+0 errors), `lint_lessons`, `lint_modules`, `validate_modules`, `audit_step_size`, `check_consistency`
+all clean; the full Python suite passes; the broken-solution revert for `infer_encoder_scale` fails
+the same suite, so the new test is not vacuous.
+
+---
+
 ## [2026-10-20] — Run 120: One Name per Tab, and a Real Join Between Roadmap and Runner
 
 Lesson P.1 recommended "2. Run Python Lesson" while the app showed "2. Run Python Lessons" and, in
@@ -298,7 +468,7 @@ newcomer had to decode before finding a lesson. It is now three lines: a link to
 sentence naming the finished arm, and the time and cost. The ten-step table is generated from
 `scripts/route_model.py`; the tier/pass matrix, CI details and optional modules moved to
 [`docs/ROUTE.md`](docs/ROUTE.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) and
-[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 11 KB.
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 17 KB.
 
 Two contradictions surfaced while generating the counts:
 

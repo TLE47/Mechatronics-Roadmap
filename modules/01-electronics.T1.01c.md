@@ -406,4 +406,7 @@ assert math.isclose(g13_vab, 6.0, rel_tol=1e-9)
 - **Stage 0 Onboarding (`README.md#stage-0--pre-tier-1-absolute-beginner-on-ramp`, `L0.1`):** Breadboard, multimeter, and current-limited PSU bring-up checklist `[VERIFIED 2026-10-15]`.
 - **Paul Scherz & Simon Monk — *Practical Electronics for Inventors* (`resources/textbooks-and-papers.md`):** Hands-on guide to multimeters, bench supplies, and breadboard prototyping `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to [`01-electronics.T1.01d`](01-electronics.T1.01d.md) (*Capacitors, Inductors, RC Time Constants & Inductive Flyback*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 4 · Power the joint: electronics — 01-electronics.T1.01d: Capacitors, Inductors, RC Time Constants & Inductive Flyback](01-electronics.T1.01d.md)
+<!-- next-step:end -->

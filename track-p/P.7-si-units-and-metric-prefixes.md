@@ -206,4 +206,7 @@ print(f"500.0 us = {t_sec:.6f} s")
 ### You're ready to move on when...
 - [ ] You can convert `mm`, `mA`, `ms`, `µs`, and `kΩ` into base SI units without guessing whether to multiply or divide.
 - [ ] Your **Do it yourself** script passes all assertions and prints `V = 3.30 V`.
-- **Next lesson:** [Lesson P.8: Cycle Frequency (`Hz`), Period & Binary Bits](P.8-frequency-and-binary-bits.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.8: Cycle Frequency (Hz), Period (T = 1/f) and Binary Bits (2^N)](P.8-frequency-and-binary-bits.md)
+<!-- next-step:end -->

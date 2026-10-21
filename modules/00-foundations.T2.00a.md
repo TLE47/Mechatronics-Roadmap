@@ -381,5 +381,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 - **3Blue1Brown — [*The Essence of Calculus* (`3blue1brown.com/topics/calculus`)](https://www.3blue1brown.com/topics/calculus):** Visual intuition for derivatives and integrals as inverse operations `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00g`](00-foundations.T2.00g.md) (*Matrix-Vector Multiplication & the One-Step State Update*) to carry this velocity in a state vector.
-- After that, [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*Vectors, Dot & Cross Products, Linear Independence & Change of Basis*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T2.00g: Matrix-Vector Multiplication & the One-Step State Update](00-foundations.T2.00g.md)
+<!-- next-step:end -->

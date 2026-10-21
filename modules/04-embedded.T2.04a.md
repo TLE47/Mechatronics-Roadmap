@@ -397,4 +397,7 @@ assert math.isclose(g11_spin_us, 100.0, rel_tol=1e-9)
 - **Carmine Noviello — *Mastering STM32* & STMicroelectronics `AN4031` (*Using the STM32 DMA Controller*, `resources/textbooks-and-papers.md`):** Complete guide to circular DMA, `HT`/`TC` interrupts, and SPI framing `[VERIFIED 2026-10-15]`.
 - **Track 04 (`04-embedded-and-realtime/README.md`):** Prepares directly for `04-embedded.T2.04b` and Step 2.5 (`04-embedded.T2.05`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to [`04-embedded.T2.04b`](04-embedded.T2.04b.md) (*RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 7 · Run it in real time: embedded C — 04-embedded.T2.04b: RTOS Tasks, FreeRTOS Preemptive Scheduling, Priority Inversion & CAN Bus Bitwise Arbitration](04-embedded.T2.04b.md)
+<!-- next-step:end -->

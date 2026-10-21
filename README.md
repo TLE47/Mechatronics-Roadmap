@@ -1,4 +1,22 @@
+<div align="center">
+
 # Mechatronics Roadmap
+
+### MechaLab — a free, browser-based curriculum
+
+**From zero coding, electronics, or maths past school arithmetic to a working simulated two-joint robot arm** — one that holds its own weight, follows a figure-8, and recovers from four faults broken on purpose.
+
+[![Open the workbench](https://img.shields.io/badge/workbench-open-0d9488?style=for-the-badge)](https://tle47.github.io/Mechatronics-Roadmap/)
+[![Start lesson 1](https://img.shields.io/badge/start-lesson%201-1e3a5f?style=for-the-badge)](track-p/P.1-variables-and-data-types.md)
+[![License](https://img.shields.io/badge/license-CC%20BY%204.0%20%2B%20MIT-blue?style=for-the-badge)](LICENSE)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/TLE47/Mechatronics-Roadmap/ci.yml?label=ci)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml)
+[![Link check](https://img.shields.io/github/actions/workflow/status/TLE47/Mechatronics-Roadmap/link-check.yml?label=links)](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/link-check.yml)
+[![Zero install](https://img.shields.io/badge/install-none-success?style=flat-square)](#what-you-need)
+[![Hardware](https://img.shields.io/badge/hardware-%240-success?style=flat-square)](#what-you-need)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://tle47.github.io/Mechatronics-Roadmap/)
+
+</div>
 
 <!-- start-here:start -->
 > **Start here — your first 2 hours**
@@ -12,19 +30,34 @@
 
 ---
 
-**What this is.** A free, browser-based course that starts from no coding, electronics, or maths past school arithmetic and ends with a working simulated two-joint robot arm. You read one small idea, write it in Python, and a lesson only counts when its checks pass.
-
-You will finish with a simulated two-joint robot arm that holds its own weight, follows a figure-8, and recovers from four faults we break on purpose.
+<div align="center">
 
 ![A simulated two-link arm tracking a figure-8 path, with its joints and tip trail drawn as it moves](docs/media/arm-sim.gif)
 
 *Step 10: the 2-DOF arm you build towards. No kit, no install — this is the browser simulator.*
 
+</div>
+
+**What this is.** A free, browser-based course that starts from no coding, electronics, or maths past school arithmetic and ends with a working simulated two-joint robot arm. You read one small idea, write it in Python, and a lesson only counts when its checks pass.
+
 <!-- sim-route:hours -->**≈120–210 focused hours**<!-- /sim-route --> to the arm · <!-- sim-route:full-hours -->**≈200–290 with the optional depth pass**<!-- /sim-route --> · **\$0 in hardware** — everything runs in your browser; an optional bench starts at \$15.
 
 **Focused hours, not elapsed time.** The first count is the arm route: time with its lessons open, excluding setup, debugging and re-reading. At 6 hours a week, plan for **2–4 years** for the arm once that overhead is counted; the full course with the optional depth pass is **3–5 years**, and the minimum viable finish is about **1.5–2.5 years** at the same pace. [The arithmetic is below.](#how-long-this-really-takes)
 
+> [!NOTE]
+> **No outside learner has completed the full route yet.** Every hour on this page is a target summed from the pages' own estimates, and every number is checked by CI against the lessons. The [beginner timing log](.github/ISSUE_TEMPLATE/beginner-timing-log.md) is where a real completion time helps everyone.
+
 No previous electronics, mechanics, or coding. No maths past school arithmetic: what you need is taught, in order, at most two new ideas per lesson.
+
+## Quick start: your first two hours
+
+| | Step | Where |
+| :--- | :--- | :--- |
+| 1 | **Open the workbench** — Python 3.12 and the circuit sims run in the tab, with no account | [MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) |
+| 2 | **Read and run Lesson 1** — variables, types and one prediction you check yourself | [P.1 · Variables and data types](track-p/P.1-variables-and-data-types.md) |
+| 3 | **Follow the route below** — each step ends with something you can run and verify | [Your route: 10 steps](#your-route-10-steps) |
+
+Nothing to install, nothing to sign up for, and your progress stays in this browser.
 
 ## Your route: 10 steps
 
@@ -54,6 +87,9 @@ _Rounded to whole hours: the ten rows add to ≈120–210 for the arm. With the 
 
 The focused hours are targets, not measurements: each page's own estimate, summed by [`scripts/generate_sim_route.py`](scripts/generate_sim_route.py): <!-- sim-route:hours-basis -->the route's high end is a slow-learner figure on 48 of 65 pages and a single estimate on the other 17, so plan against it as a floor and expect it to rise as those pages are measured<!-- /sim-route -->. No outside learner has completed the route yet. [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md) is the arm route, [`docs/DEPTH.md`](docs/DEPTH.md) is the depth pass, and `--check` fails CI if a count or hour drifts from the lessons.
 
+> [!TIP]
+> **One working arm is a finish line, not a consolation prize.** The [minimum viable finish](#the-minimum-viable-finish) is 47 pages and ≈93–151 focused hours. Everything after it is optional depth.
+
 ## How long this really takes
 
 The number above is **focused hours**: time with the lesson open, including the reading, the exercise and its checks. It is not elapsed time. Setup, debugging, re-reading, and the days you take off are real, and for a first project they are often the larger part of the calendar.
@@ -71,18 +107,6 @@ The 5× and 10× are planning multipliers, not measurements: no outside learner 
 
 **Everything else is someday.** The arm route adds the remaining prose lessons and the capstone's graded exercise ([`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md)); the depth pass is a separate <!-- sim-route:depth-hours -->**80 focused hours**<!-- /sim-route --> in [`docs/DEPTH.md`](docs/DEPTH.md); the optional modules add their own hours ([`docs/EXTENSIONS.md`](docs/EXTENSIONS.md)). None of it is unfinished business if you stop at the arm.
 
-## What you need
-
-- **A browser.** The [live workbench](https://tle47.github.io/Mechatronics-Roadmap/) runs Python 3.12, the circuit simulators, and every graded check. Nothing to install.
-- **Optional \$15–\$25:** an Arduino Uno clone, breadboard, LEDs, resistors, a potentiometer, and buttons, for the physical versions of Steps 2 and 3.
-- **Optional ~\$150:** a current-limited bench supply, multimeter, small motor, and driver, for the physical motor labs. Required for none of the route.
-
-## Stuck on a tool install?
-
-**ROS 2, inside Step 9, is the one heavy install in the course.** Do not start it on your main machine: use the Docker image or the browser walkthrough in [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md#ros-2), or read the node-graph lesson and move on. Nothing after Step 9 opens a ROS 2 shell, and the finished arm does not need it. Zephyr and micro-ROS are optional for the same reason.
-
-Every lesson also ships three progressive hints (the first is always open; later hints wait until you have run the lesson once), a known-failure explainer ([`docs/ERROR_EXPLAINER.md`](docs/ERROR_EXPLAINER.md)), and a 20-minute return path after a break ([`docs/REENTRY.md`](docs/REENTRY.md)).
-
 ## How a lesson works
 
 ```mermaid
@@ -90,12 +114,74 @@ flowchart LR
     Read["Read one idea"] --> Predict["Predict the output"] --> Run["Run and verify"] --> Pass["Behaviour checks pass"]
 ```
 
-Read one idea, predict what the code will do, then run it. A lesson passes only when its behaviour checks pass, so "it printed something" is not finished. Progress is saved in your browser and exports as a Markdown portfolio; the [beginner timing log](.github/ISSUE_TEMPLATE/beginner-timing-log.md) is where a real completion time helps everyone.
+Read one idea, predict what the code will do, then run it. A lesson passes only when its behaviour checks pass, so "it printed something" is not finished. Every lesson also ships three progressive hints (the first is always open; later hints wait until you have run the lesson once), a known-failure explainer ([`docs/ERROR_EXPLAINER.md`](docs/ERROR_EXPLAINER.md)), and a 20-minute return path after a break ([`docs/REENTRY.md`](docs/REENTRY.md)). Progress is saved in your browser and exports as a Markdown portfolio; the [beginner timing log](.github/ISSUE_TEMPLATE/beginner-timing-log.md) is where a real completion time helps everyone.
+
+### Using AI without skipping the attempt
+
+**Use AI to unblock an attempt, not to make it.** A generated answer that passes the check and a solution you could rebuild are different outcomes, and only the second one survives the next page. The rule this project assumes:
+
+1. Read the idea and the assigned resource section.
+2. Write your prediction before you run anything.
+3. Attempt it, then use the three hints and the troubleshooting section.
+4. Still blocked? Ask for **one hint**, and include what you tried plus the expected and actual numbers.
+5. If you end up with a solution, mark that lesson **assisted** and rebuild the essential part unaided a day or two later. The second attempt is the one that counts.
+
+Every lesson's `## Check yourself` is closed-book: the answers are in `<details>` so you can try before you look. The [independence check in P.9](track-p/P.9-rearranging-formulas-and-scaling.md) is the worked example of the last step - same skill, different numbers, no expression supplied.
+
+## What you need
+
+| Requirement | What it covers |
+| :--- | :--- |
+| **A browser** | [MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) runs Python 3.12, the circuit simulators, and every graded check. Nothing to install, no account. |
+| **Optional \$15–\$25** | An Arduino Uno clone, breadboard, LEDs, resistors, a potentiometer, and buttons, for the physical versions of Steps 2 and 3. |
+| **Optional ~\$150** | A current-limited bench supply, multimeter, small motor, and driver, for the physical motor labs. Required for none of the route. |
+
+Every graded check runs without hardware, and the finished arm is the simulator's. The bench is for people who want to touch the parts.
+
+## Stuck on a tool install?
+
+**ROS 2, inside Step 9, is the one heavy install in the course.** Do not start it on your main machine: use the Docker image or the browser walkthrough in [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md#ros-2), or read the node-graph lesson and move on. Nothing after Step 9 opens a ROS 2 shell, and the finished arm does not need it. Zephyr and micro-ROS are optional for the same reason.
 
 ## The advanced half (optional)
 
 The advanced material — state-space control, sensor fusion, motor drives, ROS 2, learned policies — is real and graded, and it is not needed for the arm. It is the **depth pass** in [`docs/DEPTH.md`](docs/DEPTH.md): after Step 10, return to Step 3 and take the depth modules in the same step order. The architecture map is [`docs/CURRICULUM.md`](docs/CURRICULUM.md); the full route is [`docs/ROUTE.md`](docs/ROUTE.md); what can be skipped is [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md); the badges and every check CI runs are [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
 
+## What is in the repository
+
+```text
+Mechatronics-Roadmap/
+├── track-p/ + stage-0/                     Absolute-beginner on-ramp (Python, circuits)
+├── 00-foundations/ … 08-capstone-projects/ The ten-step spine: prose lessons + arm modules
+├── modules/                                Practice modules (17 arm + 23 depth)
+├── exercises/                             50 graded packages: starter, solution, tests, faults
+├── app/                                   MechaLab — the Vite + React workbench
+├── docs/                                  Route maps, verification, re-entry, pilot results
+├── resources/                             Glossary, cheatsheet, plants, reading lists
+└── scripts/ + tests/                      Generators and the suites that keep them honest
+```
+
+The map is held to the content, not typed twice: [`docs/SIM_ROUTE.md`](docs/SIM_ROUTE.md), [`docs/DEPTH.md`](docs/DEPTH.md), [`docs/MINIMUM.md`](docs/MINIMUM.md), [`docs/ROUTE.md`](docs/ROUTE.md), [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md) and this page all read `scripts/route_model.py`, and `--check` fails when one drifts.
+
+## Contributing and verification
+
+Every lesson and module is continuously verified: links, maths, expected outputs, module parity, route counts and the browser workbench itself. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the pedagogical rules (at most two new ideas, enforced term order, clean TeX) and the full local suite; [`docs/VERIFICATION.md`](docs/VERIFICATION.md) lists the badges and every check CI runs.
+
+```bash
+python3 scripts/verify_repo.py        # relative links, headings, TeX, media
+python3 scripts/validate_modules.py   # module contracts, skip/gate keys, counts
+python3 scripts/lint_lessons.py       # lesson template and jargon rules
+npm run build && npm run test:workbench
+```
+
 ## License
 
 Curriculum text is [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); code and simulators are [MIT](LICENSE). Some external links in `resources/` are curated from [engyasin/awesome-mechatronics](https://github.com/engyasin/awesome-mechatronics).
+
+<div align="center">
+
+**Ready when you are.**
+
+[![Open MechaLab](https://img.shields.io/badge/open-mechalab-0d9488?style=for-the-badge)](https://tle47.github.io/Mechatronics-Roadmap/)
+[![Begin lesson 1](https://img.shields.io/badge/begin-lesson%201-1e3a5f?style=for-the-badge)](track-p/P.1-variables-and-data-types.md)
+
+</div>

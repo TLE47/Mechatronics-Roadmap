@@ -15,7 +15,7 @@ a step cannot be added, renamed or recosted on one surface only.
 
 A typed module rather than JSON, for the same reason `pythonLessonsData.ts` is one: Node's type
 stripping runs `app/src/spine.ts` directly, so `scripts/test_spine.mjs` can check the join between
-the spine and the 86 workbench entries without a bundler, and a JSON import would need a loader flag.
+the spine and every workbench entry without a bundler, and a JSON import would need a loader flag.
 
 Usage:
     python3 scripts/generate_spine_data.py            # write app/src/data/spineData.ts

@@ -13,7 +13,7 @@ slow_learner_hours: "1.5-2.0"
 <!-- run-callout:start -->
 > **Before Step 1 · the school-maths ramp**
 >
-> **No workbench entry for this page.** There is nothing to load in Run Python Lessons for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+> **Run this in the workbench.** [Open MechaLab with `R.1` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=R.1) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal
@@ -125,7 +125,9 @@ print(f"first step 0->1: {first:.3f} rad/s")
 print(f"last step 8->9: {last:.3f} rad/s")
 print(f"whole trace: {whole:.3f} rad/s over {len(COUNTS) - 1} ticks")
 print(f"peak at tick {peak}: {COUNTS[peak]} counts, central rate {at_peak:.3f} rad/s")
-print("rate changes sign between ticks %d and %d" % reversal_tick(COUNTS))
+_reversal = reversal_tick(COUNTS)
+print("rate changes sign between ticks %d and %d" % _reversal if _reversal is not None
+      else "no reversal yet: rate_rad_s still returns 0.0 for every step (TODO 2)")
 ```
 
 ### Expected Output

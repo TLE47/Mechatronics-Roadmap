@@ -197,6 +197,76 @@ print(f"Count 511.5 -> {out_mid:.2f} units | Cmd = {cmd_mid:.1f}")
    $x = \left(\frac{y}{5.0}\right) \times 1023 = \left(\frac{1.25}{5.0}\right) \times 1023 = 0.25 \times 1023 = \mathbf{255.75}$ (which rounds to integer count **`256`**).
    </details>
 
+### Independence check — a week later, no formula supplied
+The starter above hands you every expression in a comment, so it tests translation more than derivation. This one does the opposite, on different numbers, with the formula left out. Do it a week after the lesson, closed book: read the word problem, write the three unit sentences on paper, *then* code. If you have to open the hint or the answer to finish, mark the attempt **assisted** and redo it a week later without looking — that second attempt is the one that counts.
+
+**The job.** A belt-driven gantry: a **200 full-step/rev** stepper, a driver at **16 microsteps** per full step, a **5:1** gearbox on the output, a **20-tooth** pulley and a **2.0 mm** belt pitch. The carriage must travel **137.5 mm**, and that move takes **0.55 s** at constant speed.
+
+Before writing code, complete these three sentences with units as well as numbers:
+1. One motor microstep turns the output shaft by ______ revolutions.
+2. One output revolution moves the belt ______ mm.
+3. So one microstep moves the carriage ______ mm, and one millimetre is ______ microsteps.
+
+Now write the three functions. The docstrings must state the unit of what comes back — that sentence is part of the answer, not decoration.
+
+```python
+STEPS_PER_REV = 200
+MICROSTEPS_PER_STEP = 16
+GEAR_RATIO = 5.0
+PULLEY_TEETH = 20
+PITCH_MM = 2.0
+
+
+def mm_per_microstep():
+    # TODO 1: unit of the return value in the docstring first, then the value
+    ...
+
+
+def microsteps_for_mm(travel_mm):
+    # TODO 2: whole microsteps, and say why the answer is not a fraction
+    ...
+
+
+def speed_mm_s(travel_mm, time_s):
+    # TODO 3: no gearbox needed here - say why in the docstring
+    ...
+
+
+print(f"one microstep = {mm_per_microstep():.4f} mm | 137.5 mm = {microsteps_for_mm(137.5)} "
+      f"microsteps | speed = {speed_mm_s(137.5, 0.55):.1f} mm/s")
+assert round(mm_per_microstep(), 6) == 0.0025
+assert microsteps_for_mm(137.5) == 55000
+assert round(speed_mm_s(137.5, 0.55), 6) == 250.0
+print("INDEPENDENCE CHECK PASS: 0.0025 mm per microstep, 55000 microsteps, 250.0 mm/s")
+```
+
+<details>
+<summary><strong>Answer and the units sentence</strong></summary>
+
+One motor microstep is `1 / (200 × 16) = 1/3200` of a motor revolution, and the 5:1 gearbox turns that into `1/16000` of an **output** revolution. One output revolution pays out `20 × 2.0 = 40 mm` of belt, so one microstep moves the carriage `40 / 16000 = 0.0025 mm`, and one millimetre is `16000 / 40 = 400` microsteps. `137.5 mm × 400 = 55000` microsteps, and `137.5 mm / 0.55 s = 250.0 mm/s`.
+
+The units sentence that has to come first: *millimetres per microstep is a length divided by a count, so it gets smaller as the gearing gets finer; microsteps per millimetre is its reciprocal and gets larger.* Choosing the reciprocal by accident gives `400 mm` per microstep, which the endpoint test catches: put `137.5` through `400` and the move is `0.34 mm`, not 137.5.
+
+```python
+def mm_per_microstep():
+    """Millimetres of carriage travel per motor microstep."""
+    output_revs_per_microstep = 1.0 / (STEPS_PER_REV * MICROSTEPS_PER_STEP * GEAR_RATIO)
+    return output_revs_per_microstep * PULLEY_TEETH * PITCH_MM
+
+
+def microsteps_for_mm(travel_mm):
+    """Whole motor microsteps for a carriage move - an integer count, not a length."""
+    return round(travel_mm / mm_per_microstep())
+
+
+def speed_mm_s(travel_mm, time_s):
+    """Carriage speed in mm/s: the gearbox is already inside the distance, not the time."""
+    if time_s <= 0.0:
+        raise ValueError("a move needs a positive duration")
+    return travel_mm / time_s
+```
+</details>
+
 ---
 
 ## Recap
@@ -207,4 +277,7 @@ print(f"Count 511.5 -> {out_mid:.2f} units | Cmd = {cmd_mid:.1f}")
 - [ ] You can rearrange $d = s \cdot t$ and $x = s \cdot t + x_0$ for any variable without guessing.
 - [ ] You can scale any `[0, 1023]` sensor reading into `[0.0, 5.0]` or `[0, 255]`.
 - [ ] Your **Do it yourself** script prints `200.0 m/s`, `2.50 units`, and `Cmd = 127.5`.
-- **Next lesson:** [Lesson P.10: Radians, Rotational Speed (`rad/s`) & Right-Triangle Trigonometry](P.10-radians-and-right-triangle-trig.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.10: Radians, Rotational Speed (rad/s) and Right-Triangle Trigonometry](P.10-radians-and-right-triangle-trig.md)
+<!-- next-step:end -->

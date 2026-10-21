@@ -196,4 +196,7 @@ print(f"Kinetic Energy: {kinetic_energy_j:.2f} J")
 - [ ] You never write `^` for exponents or omit `*` in multiplication.
 - [ ] You can translate any fraction with a multi-term denominator into parentheses-safe Python.
 - [ ] Your **Do it yourself** script prints `2.0625 m`, `4.00 V`, and `9.00 J`.
-- **Next lesson:** [Lesson P.3: Conditional Decisions (`if/elif/else`) & Command Clamping](P.3-decisions-and-clamping.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.3: Conditional Decisions (if/elif/else) and Command Clamping](P.3-decisions-and-clamping.md)
+<!-- next-step:end -->

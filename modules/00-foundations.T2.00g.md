@@ -449,4 +449,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 - **3Blue1Brown — [*Essence of Linear Algebra* (`3blue1brown.com/topics/linear-algebra`)](https://www.3blue1brown.com/topics/linear-algebra):** Visual intuition for matrices as linear transformations `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00b`](00-foundations.T2.00b.md) (*Vectors, Dot & Cross Products, Linear Independence & Change of Basis*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T2.00b: Vectors, Dot & Cross Products, Linear Independence & Change of Basis](00-foundations.T2.00b.md)
+<!-- next-step:end -->

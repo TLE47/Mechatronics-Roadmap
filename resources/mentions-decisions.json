@@ -31,7 +31,7 @@
       "page": "02-mechanics.T3.02a",
       "concept": "rodrigues_so3_se3_exp_log_maps",
       "decision": "keep",
-      "core": "rodrigues",
+      "core": "so3",
       "lines": 1,
       "sections": [
         "5. Exercise"
@@ -155,15 +155,14 @@
       "page": "05-control.T3.05b",
       "concept": "rodrigues_so3_se3_exp_log_maps",
       "decision": "keep",
-      "core": "rodrigues",
-      "lines": 21,
+      "core": "so3",
+      "lines": 20,
       "sections": [
         "3. Formalization",
         "4. Worked example",
         "5. Exercise",
         "6. Simulation path",
-        "7. Checkpoint",
-        "8. Common mistakes"
+        "7. Checkpoint"
       ]
     },
     {

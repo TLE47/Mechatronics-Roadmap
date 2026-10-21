@@ -421,4 +421,7 @@ assert math.isclose(g9_angle, 1.8, rel_tol=1e-12)
 - **Texas Instruments — *Field Oriented Control of Permanent Magnet Motors* (`SPRABZ0`, `resources/textbooks-and-papers.md`):** Complete derivation of Clarke, Park, and inverse Park transforms `[VERIFIED 2026-10-15]`.
 - **Track 03 (`03-sensors-and-actuators/README.md`):** Directly continues into Step 2.4 (`03-sensors.T2.04`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 2.4 (`03-sensors.T2.04`)** in [`03-sensors-and-actuators/README.md`](../03-sensors-and-actuators/README.md#tier-2-intermediate--applied).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 7 · Run it in real time: embedded C — 04-embedded.T2.04a: Vendor HAL Drivers (SPI/I2C), Bare-Metal Register Basics (MMIO/BSRR) & Ping-Pong DMA Buffers](04-embedded.T2.04a.md)
+<!-- next-step:end -->

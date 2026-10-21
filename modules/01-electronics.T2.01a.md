@@ -388,4 +388,7 @@ assert math.isclose(g10_safety_energy, 1.8, rel_tol=1e-9)  # Mandatory [SAFETY] 
 - **Texas Instruments — *INA240 Zero-Drift, Bidirectional Current-Sense Amplifier Datasheet & Kelvin Layout Guide* (`resources/textbooks-and-papers.md`):** Enhanced PWM rejection and 4-terminal shunt PCB layout rules `[VERIFIED 2026-10-15]`.
 - **Horowitz & Hill — *The Art of Electronics* (3e, Ch. 4 Operational Amplifiers):** Virtual short, differential amplifiers, and CMRR `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to [`01-electronics.T2.01b`](01-electronics.T2.01b.md) (KiCad 4-Layer Stackup, Parasitic Loop Inductance ($L\,di/dt$), Bootstrap Gate Drivers & 48 V Pre-Charge Safety).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 4 · Power the joint: electronics — 01-electronics.T2.01b: Parasitic Loop Inductance (4-Layer Stackup), Bootstrap Gate Drivers & 48 V Pre-Charge/TVS Clamping](01-electronics.T2.01b.md)
+<!-- next-step:end -->

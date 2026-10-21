@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate app/src/data/pythonLessonsData.ts from all 32 Python beginner lessons.
+"""Generate app/src/data/pythonLessonsData.ts from the Python lessons and the ramp page R.4.
 
 Each lesson's `output_match:` front-matter key decides how the workbench compares the learner's
 `stdout` with the lesson's Expected Output: `normalized` (default - whitespace is ignored, so a
@@ -39,6 +39,11 @@ def natural_sort_key(path: str):
 
 def get_python_lesson_files():
     track_p = sorted(glob.glob(os.path.join(ROOT, "track-p", "P.*.md")), key=natural_sort_key)
+    # The ramp is the recovery path the Tier 1 exit check sends a miss to, so every ramp page
+    # carries the same workbench entry every lesson does: starter, hints, the graded check that
+    # compares its stdout, and instructor tests on its own numbers. A learner sent here by a miss
+    # should not have to leave the runner to repair it.
+    ramp = sorted(glob.glob(os.path.join(ROOT, "ramp", "R.*.md")), key=natural_sort_key)
     stage_0_py = [
         os.path.join(ROOT, "stage-0", "S0.0-why-electricity-is-like-flow.md"),
     ]
@@ -77,6 +82,7 @@ def get_python_lesson_files():
     )
     return (
         track_p
+        + ramp
         + stage_0_py
         + track_00
         + track_01_py
@@ -245,6 +251,166 @@ assert math.isclose(solve_for_speed(2.0, 2.0, 0.5), 0.0, abs_tol=1e-6)
 assert math.isclose(solve_for_speed(-1.0, 3.0, 2.0), -2.0, abs_tol=1e-6)
 assert math.isclose(scale10_to_five(0), 0.0, abs_tol=1e-6) and math.isclose(scale10_to_five(1023), 5.0, abs_tol=1e-6)
 assert math.isclose(scale10_to_cmd8(0), 0.0, abs_tol=1e-6) and math.isclose(scale10_to_cmd8(1023), 255.0, abs_tol=1e-6)
+""",
+    ),
+    "R.4": (
+        [
+            "Test mat_vec on the lesson's [2, 3] state (rows are rates: [3, -7.5]) and on a B u multiplication",
+            "Test step_matrix against step_two_lines for one tick and for thirty, and that a row/vector shape mismatch raises ValueError",
+        ],
+        """import math
+assert abs(DT_S - 0.01) < 1e-12, f"expected the lesson's 10 ms tick, got {DT_S!r}"
+assert A == [[0.0, 1.0], [0.0, -2.5]], f"A must hold the rates [[0, 1], [0, -2.5]], got {A!r}"
+assert len(B_IN) == 2 and len(B_IN[0]) == 1, f"B_IN is 2x1 - one input (torque), got {B_IN!r}"
+assert abs(B_IN[1][0] - 50.0) < 1e-12, f"expected B_IN[1][0] = 1/J = 50, got {B_IN[1][0]!r}"
+_tick = mat_vec(A, [2.0, 3.0])
+assert abs(_tick[0] - 3.0) < 1e-12 and abs(_tick[1] + 7.5) < 1e-12, f"A x for [2, 3] is [3, -7.5], got {_tick!r}"
+_bu = mat_vec(B_IN, [0.40])
+assert abs(_bu[0]) < 1e-15 and abs(_bu[1] - 20.0) < 1e-12, f"B u for 0.40 N*m is [0, 20], got {_bu!r}"
+try:
+    mat_vec(A, [1.0])
+    raise AssertionError("mat_vec must refuse a 2-column matrix with a one-slot vector, not read past the row")
+except ValueError:
+    pass
+_one = step_matrix([0.0, 0.0])
+_one_line = step_two_lines([0.0, 0.0])
+assert abs(_one[0] - _one_line[0]) < 1e-15 and abs(_one[1] - _one_line[1]) < 1e-15, f"one matrix tick {_one!r} must equal the two-line tick {_one_line!r}"
+assert abs(_one[1] - 0.2) < 1e-12, f"expected qd = 0.2 rad/s after one 10 ms tick of 0.40 N*m, got {_one[1]!r}"
+assert abs(matrix_path[0] - 0.697230) < 1e-5, f"expected q = 0.697230 rad after 30 ticks, got {matrix_path[0]!r}"
+assert abs(matrix_path[1] - 4.256926) < 1e-5, f"expected qd = 4.256926 rad/s after 30 ticks, got {matrix_path[1]!r}"
+assert abs(matrix_path[0] - line_path[0]) < 1e-12 and abs(matrix_path[1] - line_path[1]) < 1e-12, "the matrix path and the two-line path must agree to the last digit; a difference means a coefficient or the dt placement is wrong"
+assert first_row == [1.0, -2.5], f"A applied to [0, 1] must be [1, -2.5], got {first_row!r}"
+""",
+    ),
+    "R.1": (
+        [
+            "Test counts_to_rad on a full turn and a quarter turn, rate_rad_s forwards and backwards, and the average/central rates on unseen traces",
+            "Test the refusals: one sample has no average rate, the first sample has no central difference, and a rising trace has no reversal",
+        ],
+        """import math
+_2pi = 2.0 * math.pi
+assert abs(counts_to_rad(4096) - _2pi) < 1e-12, f"expected one turn of 4096 counts to be 2*pi rad, got {counts_to_rad(4096)!r}"
+assert abs(counts_to_rad(1024) - _2pi / 4.0) < 1e-12, f"expected 1024 counts to be a quarter turn (pi/2), got {counts_to_rad(1024)!r}"
+assert abs(rate_rad_s(120, 0) - 18.407769454627694) < 1e-9, f"expected 120 counts in 0.01 s = 18.408 rad/s, got {rate_rad_s(120, 0)!r}"
+assert abs(rate_rad_s(0, 120) + 18.407769454627694) < 1e-9, f"the same step backwards must be negative: expected -18.408 rad/s, got {rate_rad_s(0, 120)!r} - check the subtraction order"
+assert abs(average_rate_rad_s([0, 409, 819]) - 62.816513263917) < 1e-9, f"expected 819 counts over two 0.01 s ticks = 62.817 rad/s, got {average_rate_rad_s([0, 409, 819])!r}"
+assert abs(average_rate_rad_s([0, 819], 0.02) - 62.816513263917) < 1e-9, f"two samples average the same way: expected 62.817 rad/s, got {average_rate_rad_s([0, 819], 0.02)!r}"
+try:
+    average_rate_rad_s([5])
+    raise AssertionError("average_rate_rad_s must refuse one sample - a rate needs two")
+except ValueError:
+    pass
+assert abs(central_rate_rad_s([0, 100, 180], 1) - 13.805827090970771) < 1e-9, f"expected the central difference at [0, 100, 180] to be (180-0) counts over 0.02 s = 13.806 rad/s, got {central_rate_rad_s([0, 100, 180], 1)!r}"
+try:
+    central_rate_rad_s([0, 100, 180], 0)
+    raise AssertionError("the first sample has no left neighbour - central_rate_rad_s must refuse i = 0")
+except ValueError:
+    pass
+assert peak_index([0, 5, 9, 4]) == 2, f"expected the peak at index 2, got {peak_index([0, 5, 9, 4])!r}"
+assert reversal_tick([0, 10, 20, 15, 5]) == (2, 3), f"expected the sign change between ticks 2 and 3, got {reversal_tick([0, 10, 20, 15, 5])!r}"
+assert reversal_tick([0, 10, 20]) is None, f"a rising trace has no reversal, so the answer is None, got {reversal_tick([0, 10, 20])!r}"
+""",
+    ),
+    "R.2": (
+        [
+            "Test the left, right and trapezoid rules on a three-sample trace where all three differ, and a constant rate over 0.75 s",
+            "Test that q0 is added rather than replaced, the bias drift, and the refusals for a single sample and a negative duration",
+        ],
+        """assert abs(left_rule_rad([0.0, 2.0, 4.0], 0.5) - 1.0) < 1e-12, f"expected the left rule on [0, 2, 4] at dt = 0.5 to be (0 + 2) * 0.5 = 1.0, got {left_rule_rad([0.0, 2.0, 4.0], 0.5)!r}"
+assert abs(right_rule_rad([0.0, 2.0, 4.0], 0.5) - 3.0) < 1e-12, f"expected the right rule on [0, 2, 4] at dt = 0.5 to be (2 + 4) * 0.5 = 3.0, got {right_rule_rad([0.0, 2.0, 4.0], 0.5)!r}"
+assert abs(trapezoid_rad([0.0, 2.0, 4.0], 0.5) - 2.0) < 1e-12, f"expected the trapezoid on [0, 2, 4] at dt = 0.5 to be 2.0, got {trapezoid_rad([0.0, 2.0, 4.0], 0.5)!r}"
+assert abs(accumulate_rad([0.0, 2.0, 4.0], 1.0, 0.5) - 3.0) < 1e-12, f"expected q0 = 1.0 plus 2.0 rad of travel = 3.0, got {accumulate_rad([0.0, 2.0, 4.0], 1.0, 0.5)!r} - check the starting value is added, not replaced"
+assert abs(trapezoid_rad([3.0, 3.0, 3.0, 3.0], 0.25) - 2.25) < 1e-12, f"expected a constant 3 rad/s held for 0.75 s to be 2.25 rad, got {trapezoid_rad([3.0, 3.0, 3.0, 3.0], 0.25)!r}"
+assert abs(drift_rad(0.05, 10.0) - 0.5) < 1e-12, f"expected a 0.05 rad/s bias over 10 s to drift 0.5 rad, got {drift_rad(0.05, 10.0)!r}"
+try:
+    drift_rad(0.05, -1.0)
+    raise AssertionError("drift_rad must refuse a negative duration instead of running time backwards")
+except ValueError:
+    pass
+for _rule in (left_rule_rad, right_rule_rad, trapezoid_rad):
+    try:
+        _rule([1.0])
+        raise AssertionError(f"{_rule.__name__} must refuse a single sample - one sample is not an interval")
+    except ValueError:
+        pass
+""",
+    ),
+    "R.3": (
+        [
+            "Test accel_rad_s2 and one step from rest and from a moving state, including that position uses the OLD speed",
+            "Test run against ten single steps, superposition on unseen torques, element-wise add/scale, the length refusal, and that step does not mutate its input",
+        ],
+        """import math
+assert abs(accel_rad_s2([0.0, 2.0]) - 15.0) < 1e-12, f"expected (0.40 - 0.05*2.0)/0.02 = 15.0 rad/s^2 at a speed of 2 rad/s, got {accel_rad_s2([0.0, 2.0])!r}"
+_one = step([0.0, 0.0])
+assert abs(_one[0]) < 1e-15 and abs(_one[1] - 0.2) < 1e-12, f"expected one tick from rest to leave q = 0 and give qd = 0.2 rad/s, got {_one!r}"
+_next = step([1.0, 1.0])
+assert abs(_next[0] - 1.01) < 1e-12, f"expected q = 1.0 + 1.0*0.01 = 1.01 rad using the OLD speed, got {_next[0]!r} - 1.01175 is the new-speed answer repeated every tick"
+assert abs(_next[1] - 1.175) < 1e-12, f"expected qd = 1.0 + 17.5*0.01 = 1.175 rad/s, got {_next[1]!r}"
+_held = [1.0, 1.0]
+step(_held)
+assert _held == [1.0, 1.0], f"step must return a new state, not overwrite the caller's list; got {_held!r}"
+assert run([0.0, 0.0], 0) == [0.0, 0.0], "zero ticks must leave the state untouched"
+_ten = [0.0, 0.0]
+for _i in range(10):
+    _ten = step(_ten)
+assert max(abs(run([0.0, 0.0], 10)[0] - _ten[0]), abs(run([0.0, 0.0], 10)[1] - _ten[1])) < 1e-12, "run(state, 10) must equal ten applications of step; a mismatch means the loop does not feed each result into the next tick"
+_tau_a, _tau_b = 0.30, 0.12
+_both = run([0.0, 0.0], 25, tau=_tau_a + _tau_b)
+_parts = add(run([0.0, 0.0], 25, tau=_tau_a), run([0.0, 0.0], 25, tau=_tau_b))
+assert abs(_both[0] - _parts[0]) < 1e-12 and abs(_both[1] - _parts[1]) < 1e-12, f"superposition must hold on unseen torques: got {_both!r} for the sum and {_parts!r} for the two runs added"
+assert add([1.0, 2.0], [3.0, 4.0]) == [4.0, 6.0], f"expected element-wise addition [4.0, 6.0], got {add([1.0, 2.0], [3.0, 4.0])!r} - list concatenation gives a four-slot state"
+assert scale([1.0, -2.0], 2.5) == [2.5, -5.0], f"expected [2.5, -5.0], got {scale([1.0, -2.0], 2.5)!r}"
+try:
+    add([1.0], [1.0, 2.0])
+    raise AssertionError("add must refuse states of different lengths instead of adding what it can")
+except ValueError:
+    pass
+""",
+    ),
+    "R.5": (
+        [
+            "Test arrow at 0 and 90 degrees, rotate keeping the length, and that adding the two parts gives 1 + 1j rather than a length of 2",
+            "Test the empty sum and the four fields of report(), including the 53.130 degree angle from 3 + 4j",
+        ],
+        """import cmath
+import math
+assert abs(arrow(2.5, 0.0).real - 2.5) < 1e-12 and abs(arrow(2.5, 0.0).imag) < 1e-12, f"expected a length 2.5 arrow at 0 rad to be 2.5 + 0j, got {arrow(2.5, 0.0)!r}"
+assert abs(arrow(1.0, math.pi / 2.0).imag - 1.0) < 1e-12, f"expected a unit arrow at 90 degrees to be 1j, got {arrow(1.0, math.pi / 2.0)!r}"
+assert abs(abs(arrow(3.0, 0.7)) - 3.0) < 1e-12, f"an arrow must keep its magnitude: expected 3.0, got {abs(arrow(3.0, 0.7))!r}"
+_turned = rotate(arrow(2.0, 0.0), math.pi / 2.0)
+assert abs(_turned.real) < 1e-12 and abs(_turned.imag - 2.0) < 1e-12, f"expected 2 + 0j turned 90 degrees to be 2j, got {_turned!r}"
+assert abs(abs(rotate(arrow(4.0, 0.3), 1.1)) - 4.0) < 1e-12, f"rotation must not change the length: expected 4.0, got {abs(rotate(arrow(4.0, 0.3), 1.1))!r}"
+assert abs(sum_arrows([1 + 0j, 0 + 1j]) - (1 + 1j)) < 1e-12, f"expected 1 + 1j from adding the two parts, got {sum_arrows([1 + 0j, 0 + 1j])!r} - adding the lengths would give 2"
+assert sum_arrows([]) == 0j, f"expected 0j for an empty list, got {sum_arrows([])!r}"
+_line = report("T", 3 + 4j)
+for _field in ("real 3.000", "imag 4.000", "length 5.000", "53.130", "deg"):
+    assert _field in _line, f"expected the report to contain {_field!r}, got {_line!r}"
+""",
+    ),
+    "R.6": (
+        [
+            "Test the gain and phase at DC, the corner 1/tau and 200 rad/s, plus one period's sample count at 20 and 200 rad/s",
+            "Test the simulated gain and phase against the formula, and measure() on a known 2x response lagging 0.5 rad",
+        ],
+        """import math
+assert abs(gain(0.0) - 1.0) < 1e-12, f"expected unity gain at DC, got {gain(0.0)!r}"
+assert abs(gain(1.0 / TAU) - math.sqrt(0.5)) < 1e-12, f"expected gain 1/sqrt(2) = 0.7071 at the corner 1/tau = 20 rad/s, got {gain(1.0 / TAU)!r}"
+assert abs(gain(200.0) - 0.09950371902099892) < 1e-12, f"expected 1/sqrt(1 + 100) = 0.0995 at 200 rad/s, got {gain(200.0)!r} - a gain that stays near 1 means the frequency never entered the formula"
+assert abs(phase_deg(0.0)) < 1e-12, f"expected 0 degrees at DC, got {phase_deg(0.0)!r}"
+assert abs(phase_deg(200.0) + math.degrees(math.atan(10.0))) < 1e-12, f"expected -84.289 degrees at 200 rad/s, got {phase_deg(200.0)!r} - a positive phase means the sign was dropped"
+_period = simulate(20.0)
+assert len(_period) == 314, f"expected one 20 rad/s period at 1 ms to be 314 samples, got {len(_period)!r}"
+assert all(len(_sample) == 3 for _sample in _period), "every sample must be (t, u, y)"
+assert len(simulate(200.0)) == 31, f"expected 31 samples for one 200 rad/s period at 1 ms, got {len(simulate(200.0))!r}"
+_gain_20, _phase_20 = measure(simulate(20.0), 20.0)
+assert abs(_gain_20 - gain(20.0)) < 2e-3, f"expected the measured 20 rad/s gain to match the formula 0.7071, got {_gain_20!r}"
+assert abs(_phase_20 - phase_deg(20.0)) < 1.5, f"expected the measured 20 rad/s phase near -45 degrees, got {_phase_20!r}"
+_w = 2.0 * math.pi * 5.0
+_samples = [(i * 0.001, math.sin(_w * i * 0.001), 2.0 * math.sin(_w * i * 0.001 - 0.5)) for i in range(400)]
+_gain_known, _phase_known = measure(_samples, _w)
+assert abs(_gain_known - 2.0) < 1e-3, f"expected gain 2.0 from a response twice the command, got {_gain_known!r} - an RMS that divides the wrong way gives 0.5"
+assert abs(_phase_known + 28.64788975654116) < 0.01, f"expected -28.648 degrees from a response lagging 0.5 rad, got {_phase_known!r}"
 """,
     ),
     "P.10": (
@@ -618,7 +784,7 @@ assert math.isclose(_bh, _b_true, abs_tol=1e-4) and math.isclose(_jh, _j_true, a
     "08.1": (
         [
             "Test fk_2link / ik_2link round-trip on unseen target (0.12, 0.08), figure8_target from spec, and gravity_ff_2link at vertical posture",
-            "Test diagnose_capstone_fault across all 4 R4 broken versions, all four repair functions restoring the true tip or cutting overshoot, pack_boss_telemetry 20-byte CRC-8 integrity, and simulate_uart_tx bandwidth drops",
+            "Test diagnose_capstone_fault across all 4 R4 broken versions, infer_encoder_scale on an unfamiliar fifth unit (1.5x, and a constant offset that must not read as a scale), all four repair functions restoring the true tip or cutting overshoot, pack_boss_telemetry 20-byte CRC-8 integrity, and simulate_uart_tx bandwidth drops",
         ],
         """import math
 _q1u, _q2u = ik_2link(0.12, 0.08)
@@ -633,6 +799,11 @@ assert diagnose_capstone_fault(-0.01, 85.0, 4.0) == "wrong_encoder_cpr"
 assert diagnose_capstone_fault(-0.01, 12.0, 4.0) == "encoder_zero_offset"
 assert diagnose_capstone_fault(-0.01, 1.0, 37.2) == "missing_anti_windup"
 assert diagnose_capstone_fault(-0.01, 1.0, 4.0) == "nominal_ok"
+assert math.isclose(infer_encoder_scale(0.305, 0.4575), 1.5, abs_tol=1e-9)
+assert math.isclose(infer_encoder_scale(0.305, 1.22), 4.0, abs_tol=1e-6)
+assert math.isclose(infer_encoder_scale(0.30, 0.30), 1.0, abs_tol=1e-12)
+assert not math.isclose(infer_encoder_scale(0.10, 0.16), infer_encoder_scale(1.00, 1.06), abs_tol=1e-6)
+assert math.isclose(repair_encoder_cpr(0.4575, infer_encoder_scale(0.305, 0.4575)), 0.305, abs_tol=1e-12)
 _q_true = 0.30
 _offset_rad = 0.06
 _x_true, _y_true = fk_2link(_q_true, 0.0)

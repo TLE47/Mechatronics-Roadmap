@@ -395,4 +395,7 @@ assert g8_safety_choice == "B"                         # Mandatory [SAFETY] 100%
 - **Henry Ott — *Electromagnetic Compatibility Engineering* & Texas Instruments `SLVA714` (* Layout Guide for Motor Drivers*, `resources/textbooks-and-papers.md`):** 4-layer stackup, return-current planes, and hot-loop minimization `[VERIFIED 2026-10-15]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Directly continues into Step 2.2 (`01-electronics.T2.02`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 2.2 (`01-electronics.T2.02`)** in [`01-electronics-and-power/README.md`](../01-electronics-and-power/README.md#tier-2-intermediate--applied).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 5 · Build the arm: mechanics — 02-mechanics.T2.02a: 6-DOF Rigid-Body Degrees of Freedom, 3D Homogeneous Transforms (SE(3)), Velocity Jacobians & Parallel-Axis Inertia](02-mechanics.T2.02a.md)
+<!-- next-step:end -->

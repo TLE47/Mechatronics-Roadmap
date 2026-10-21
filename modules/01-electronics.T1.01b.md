@@ -383,4 +383,7 @@ assert g8_safety == "B"  # Mandatory [SAFETY] 100% required
 - **Texas Instruments — *Understanding Motor Driver Current Ratings and PWM Decay Modes* (`SLVA959` & `SLUA618`, `resources/textbooks-and-papers.md`):** Clear diagrams of H-bridge forward, reverse, brake, and coast states `[VERIFIED 2026-10-15]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Directly continues into Step 1.2 (`01-electronics.T1.02`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 1.2 (`01-electronics.T1.02`)** in [`01-electronics-and-power/README.md`](../01-electronics-and-power/README.md#tier-1-beginner--intuitive).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 4 · Power the joint: electronics — 01-electronics.T1.01c: Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety](01-electronics.T1.01c.md)
+<!-- next-step:end -->

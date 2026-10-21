@@ -438,4 +438,7 @@ assert math.isclose(g10_qdot_norm, 1.5, rel_tol=1e-12)
 - **Track 00 ([`00-foundations/README.md#tier-3-advanced--production`](../00-foundations/README.md#tier-3-advanced--production)):** Directly continues into Step 3.1 (`00-foundations.T3.01`) `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to legacy **Step 3.1 (`00-foundations.T3.01`)** in [`00-foundations/README.md`](../00-foundations/README.md#tier-3-advanced--production).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 4 · Power the joint: electronics — 01-electronics.T2.01a: Operational Amplifiers, Differential Shunt Amplification, Common-Mode Voltage & Kelvin Sensing](01-electronics.T2.01a.md)
+<!-- next-step:end -->

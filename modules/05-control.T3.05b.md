@@ -408,4 +408,7 @@ assert math.isclose(g7_u_retreat, -0.60, rel_tol=1e-9)
 - **Track 05 Tier 3 ([`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-3-advanced--production)):** where this injection sits in the control stack `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`05-control.T3.05c`](05-control.T3.05c.md) (*Control Barrier Function QP Safety Filter*), then Step 3.6 (`05-control.T3.06`).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 8 · Make it hold still: control — 05-control.T3.05c: Control Barrier Functions, Forward Invariance & the 1D CBF-QP Safety Filter](05-control.T3.05c.md)
+<!-- next-step:end -->

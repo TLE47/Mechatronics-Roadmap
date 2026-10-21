@@ -337,5 +337,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 - **Track 00 ([`00-foundations/README.md#tier-2-intermediate--applied`](../00-foundations/README.md#tier-2-intermediate--applied)):** Feeds `00-foundations.T2.00h`'s impedance and Bode plots directly `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00h`](00-foundations.T2.00h.md) (*Winding Impedance, Transfer Functions, Decibels & the Resonance Peak*), where these phasors become a ratio.
-- After that, [`00-foundations.T2.00e`](00-foundations.T2.00e.md) (Laplace Transform, Poles/Zeros, State-Space $\dot{x} = Ax + Bu$, Matrix Exponential & Discretization).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T2.00h: Winding Impedance, Transfer Functions, Decibels & the Resonance Peak](00-foundations.T2.00h.md)
+<!-- next-step:end -->

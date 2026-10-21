@@ -380,4 +380,7 @@ assert g14_choice == "B"
 - **Track 02 ([`02-mechanics-kinematics-dynamics/README.md`](../02-mechanics-kinematics-dynamics/README.md)) & [Red Blob Games Interactive 2D Math](https://www.redblobgames.com/):** Uses 2D vector projections and `atan2` in Step 1.3 planar 2-link kinematics `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T1.00e`](00-foundations.T1.00e.md) (*Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T1.00e: Position, Velocity, Acceleration, Force, Mass, Energy & Torque in a Loop](00-foundations.T1.00e.md)
+<!-- next-step:end -->

@@ -440,4 +440,7 @@ assert g8_choice == "A"
 - **Frank Petruzella — *Programmable Logic Controllers* & OpenPLC (`autonomylogic.com`, `resources/open-source-toolchains.md`):** IEC 61131-3 cyclic scan execution and safety interlock patterns `[VERIFIED 2026-10-15]`.
 - **Track 07 & 08 (`07-systems-hil-and-production/README.md`, `08-capstone-projects/README.md`):** Directly continues into the Tier 1 Boss Capstone (`07-systems.T1.08`, Step 1.8) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 1.8 (`07-systems.T1.08`)** in [`08-capstone-projects/README.md`](../08-capstone-projects/README.md#tier-1-capstone-builds-beginner--breakout-pass).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 10 · Put it together: the 2-DOF arm — Lesson 08.1: Tier 1 Boss Milestone — 1 kHz 2-DOF Compliant Arm Plant, Figure-8 PD Control & CRC-8 Telemetry](../08-capstone-projects/08.1-tier1-2dof-compliant-arm-capstone.md)
+<!-- next-step:end -->

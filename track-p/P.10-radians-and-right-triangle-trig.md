@@ -217,4 +217,7 @@ print(f"Angle to (-0.10, 0.10): {ang:.1f} deg")
 - [ ] You always convert degrees to radians before calling `math.cos()` or `math.sin()`.
 - [ ] You can convert `RPM` to `rad/s` and compute $(x, y) = (L\cos\theta, L\sin\theta)$.
 - [ ] Your **Do it yourself** script passes all assertions.
-- **Next lesson:** [Lesson P.11: Reading Time-Series Graphs — Slope & Area](P.11-reading-time-series-graphs.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.11: Reading Time-Series Graphs — Slope and Area](P.11-reading-time-series-graphs.md)
+<!-- next-step:end -->

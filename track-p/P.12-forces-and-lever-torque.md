@@ -203,4 +203,7 @@ for angle_deg in [0.0, 60.0, 90.0]:
 - [ ] You always multiply mass (`kg`) by $9.81\text{ m/s}^2$ to get weight in Newtons (`N`).
 - [ ] You can compute gravity holding torque $\tau = mgL\cos\theta$ at any angle $\theta$ from horizontal.
 - [ ] Your **Do it yourself** script prints `1.4715 N*m`, `0.7358 N*m`, and `0.0000 N*m`.
-- **Next lesson:** [Lesson P.14: Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds](P.14-reading-a-datasheet-table.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.14: Reading a Datasheet Table — Unit Columns, Min/Typ/Max & Safe Operating Bounds](P.14-reading-a-datasheet-table.md)
+<!-- next-step:end -->

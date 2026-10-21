@@ -418,4 +418,7 @@ assert math.isclose(g13_vab, -4.8, rel_tol=1e-9)
 - **Horowitz & Hill — *The Art of Electronics* (3e, Ch. 1, `resources/textbooks-and-papers.md`):** Capacitive decoupling, RC filters, and inductive kickback protection `[VERIFIED 2026-10-15]`.
 - **Track 01 (`01-electronics-and-power/README.md`):** Prepares directly for MOSFET switching in `01-electronics.T1.01b` and Step 1.2 (`01-electronics.T1.02`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to [`01-electronics.T1.01b`](01-electronics.T1.01b.md) (*Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 5 · Build the arm: mechanics — Lesson 02.1: 2D Coordinate Frames and 1-Link Planar Arm Forward Kinematics](../02-mechanics-kinematics-dynamics/02.1-1d-link-fk-and-coord-frames.md)
+<!-- next-step:end -->

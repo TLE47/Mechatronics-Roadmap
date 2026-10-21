@@ -21,6 +21,8 @@ flowchart LR
     Q{"Fourteen items,<br/>closed book"} --> A["14 / 14: start Tier 2"]
     Q --> B["12-13 / 14: do the missed<br/>item's ramp lesson"]
     B --> A
+    Q --> E["11 / 14: do both missed<br/>ramp lessons, retake those two"]
+    E --> Q
     Q --> C["9-10 / 14: all six ramp<br/>lessons, then retake"]
     C --> Q
     Q --> D["under 9 / 14: the ramp,<br/>then the Track P pages"]
@@ -33,6 +35,7 @@ flowchart LR
 | :--- | :--- | :--- |
 | 14 / 14 | Ready | Start [`00-foundations.T2.00a`](../modules/00-foundations.T2.00a.md) |
 | 12–13 / 14, at most one miss per lesson | Ready with a gap | Do the ramp lesson for the missed item, then start Tier 2 |
+| 11 / 14, at most one miss per lesson | Ready with two gaps | Do **both** missed items' ramp lessons, then retake just those two items; 2/2 and start Tier 2 |
 | 9–10 / 14, or two misses in one lesson | Not yet | Do **all six** ramp lessons ([`R.1`](../ramp/R.1-rate-of-change.md) to [`R.6`](../ramp/R.6-frequency-response.md)), then retake |
 | < 9 / 14 | Start at the ramp | R.1–R.6, then the Track P lessons they cite, then retake |
 
@@ -46,7 +49,7 @@ Tier 2 asks you to show the derivation.
 | 1 | An encoder reads **24 counts** in **2 ms**; 4096 counts per turn. Give the joint speed in rad/s. | `18.408 rad/s`, with the two conversions shown (`counts/s`, then × 2π/4096). | [R.1](../ramp/R.1-rate-of-change.md): the quotient and its units | R.1 |
 | 2 | The same encoder falls from **300 to 280 counts** in **5 ms**. Give the speed and say what the sign means for the actuator. | `−6.136 rad/s`; motion toward −q, so a positive command is fighting the motion. | [R.1](../ramp/R.1-rate-of-change.md): the sign is information | R.1 |
 | 3 | Ten samples at **200 Hz** read 100 counts first and 340 last. Give the average rate. | Denominator `9 × 0.005 s`, not `10 × 0.005 s`: `8.181 rad/s`. | [R.1](../ramp/R.1-rate-of-change.md): nine intervals, not ten | R.1 |
-| 4 | A trace rises to a peak and comes back. At the peak, is the instantaneous rate zero, the average rate zero, both, or neither? | Instantaneous zero at the peak (it is turning), average non-zero (it travelled). A controller needs the former. | [R.1](../ramp/R.1-rate-of-change.md): average vs instantaneous | R.1 |
+| 4 | A trace rises from **1.0 rad** to a peak and returns to **1.0 rad** over **0.4 s**. At the peak: is the instantaneous rate zero, is the average velocity over the 0.4 s zero, is the average speed zero? | Instantaneous zero at the peak (it is turning *through* it); average **velocity** zero (net displacement `1.0 − 1.0 = 0` over the 0.4 s); average **speed** non-zero (it covered the up-and-back distance). A controller needs the instantaneous rate. | [R.1](../ramp/R.1-rate-of-change.md): average vs instantaneous, velocity vs speed | R.1 |
 | 5 | One encoder count over a **1 ms** window is what speed? What happens to that noise when you halve the window to 0.5 ms? | `1.534 rad/s`; halving the window **doubles** it, so a short window buys lag at the price of noise. | [R.1](../ramp/R.1-rate-of-change.md): the window is a filter | R.1 |
 | 6 | A joint runs **+4 rad/s for 0.05 s**, stops **0.1 s**, then **−1.5 rad/s for 0.2 s**. Net displacement? | `0.2 − 0.3 = −0.1 rad`; the motion went out and came back past its start. | [R.2](../ramp/R.2-accumulation.md): signed area | R.2 |
 | 7 | Velocity ramps linearly from **0 to 6 rad/s over 0.3 s**. How far did it travel? | Triangle area `½ × 0.3 × 6 = 0.9 rad` — no rectangle rule needed when the shape is exact. | [R.2](../ramp/R.2-accumulation.md): area under the trace | R.2 |
@@ -85,8 +88,11 @@ by hand — the script guards the map and the lessons' numbers, not your arithme
 1. `24 / 0.002 = 12 000 counts/s`; `× 2π/4096 = 18.408 rad/s`.
 2. `−20 / 0.005 = −4 000 counts/s = −6.136 rad/s`. Negative means toward −q.
 3. `240 counts / 0.045 s = 5 333.3 counts/s = 8.181 rad/s`.
-4. Instantaneous zero at the peak, average non-zero. A controller needs the instantaneous rate; a logger's
-   average cannot see the reversal coming.
+4. Instantaneous rate zero at the peak, average **velocity** zero over the 0.4 s (net displacement is
+   `1.0 − 1.0 = 0`, and velocity is displacement over the interval), average **speed** non-zero (the
+   joint travelled up and back). A controller needs the instantaneous rate; a logger's average over
+   the interval cannot see the reversal coming, and reporting the average speed as velocity would
+   call a completed round trip "no motion".
 5. `2π/(4096 × 0.001) = 1.534 rad/s`; halving the window doubles it.
 </details>
 

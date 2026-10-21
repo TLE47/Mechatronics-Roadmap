@@ -385,4 +385,7 @@ assert g8_choice == "A"
 - **Kevin Lynch & Frank Park — *Modern Robotics* (`modernrobotics.org`, Ch. 9 Trajectory Generation, `resources/textbooks-and-papers.md`):** Free textbook + video lectures on polynomial and trapezoidal time scaling `[VERIFIED 2026-10-15]`.
 - **Track 06 (`06-robotics-and-autonomy/README.md`):** Directly continues into Step 1.7 (`06-robotics.T1.07`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 1.7 (`06-robotics.T1.07`)** in [`06-robotics-and-autonomy/README.md`](../06-robotics-and-autonomy/README.md#tier-1-beginner--intuitive).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 9 · Plan motion and bring it up safely — 07-systems.T1.07a: Industrial State Machines, Cyclic PLC Scan, E-Stop Chains & Sine-Sweep Gain/Phase](07-systems.T1.07a.md)
+<!-- next-step:end -->

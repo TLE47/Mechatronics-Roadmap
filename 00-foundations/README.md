@@ -15,7 +15,7 @@
 > Depth 2, `Tier 3` as Depth 3; a page marked optional sits outside both routes,
 > whatever its tier. Take Depth 1 in order; Depth 2 and Depth 3 wait until Step 10 is finished.
 >
-> Do not read this folder end to end first: Depth 1 is Step 3's arm module plus lessons `00.1`-`00.3`, and you then move on to Track 01 in the same step. Depth 2 is the return visit after Step 10, when the arm exists to model.
+> Do not read this folder end to end first: Depth 1 is Step 3's arm module plus lessons `00.1`-`00.3`, and the last arm module's next link then takes you to Track 01, which is Step 4. Depth 2 is the return visit after Step 10, when the arm exists to model.
 
 | Depth | What it is | Pages in this track | Focused hours |
 | :--- | :--- | :--- | ---: |

@@ -425,4 +425,7 @@ assert math.isclose(g10_x1, 0.0696, rel_tol=1e-9)
 - **MechaLab Root Roadmap ([`README.md`](../README.md)) & [Track 00 (`00-foundations/README.md`)](../00-foundations/README.md):** Explains how Stage 0 and Pass 1 (`Track 00 -> Track 08`) use Python time-stepping scripts before embedded C++ `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T1.00b`](00-foundations.T1.00b.md) (*Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T1.00b: Lists, Dictionaries, NumPy Arrays, Plotting & Git/Terminal Basics](00-foundations.T1.00b.md)
+<!-- next-step:end -->

@@ -9,6 +9,8 @@ Each test names the mistake it catches:
     1 kHz loop;
   * clamping anti-windup that never freezes, so the accumulator balloons past the rail - the whole
     point of the module;
+  * clamping anti-windup that freezes on *every* saturation, so the accumulator cannot unwind
+    while the error has already reversed - the case a freeze-only test cannot see;
   * a saturation that clips the positive rail only;
   * a gravity sag that multiplies the gain instead of dividing by it;
   * a closed-loop simulation that never saturates, which cannot show windup at all.
@@ -122,11 +124,57 @@ class AntiWindupTests(unittest.TestCase):
             0.8 - 0.0048, delta=1e-15,
             msg="expected the tick to land (0.8 - 0.0048) because the error opposes the demand; no change likely froze a loop that is already unwinding - check the sign condition")
 
+    def test_the_negative_rail_freezes_with_the_error_pushing_down(self):
+        # u_raw = -15 against the -12 rail with e = -0.4: same sign, so the accumulator holds.
+        self.assertAlmostEqual(
+            submission.anti_windup_integral(0.8, 12.0, -0.4, 0.001, -15.0, 12.0), 0.8,
+            delta=1e-15,
+            msg="expected the integral to hold at 0.8 with 15 N*m of demand past the negative "
+                "rail and the error still pushing that way; growth means the freeze only looks "
+                "at the positive rail - check |u_raw|, not u_raw > u_max")
+
+    def test_the_negative_rail_lets_a_reversing_error_unwind(self):
+        # e = +0.4 against a -15 demand: the loop is unwinding, so the tick lands.
+        self.assertAlmostEqual(
+            submission.anti_windup_integral(0.8, 12.0, 0.4, 0.001, -15.0, 12.0),
+            0.8048, delta=1e-15,
+            msg="expected 0.8 + 0.0048 = 0.8048 because the error opposes the negative demand; "
+                "0.8 means the freeze ignored the error direction, which holds the accumulator "
+                "hostage on the way back out of saturation")
+
+    def test_exactly_on_the_rail_is_not_past_it(self):
+        # u_raw == u_max is at the limit, not beyond it: the tick must land on both rails.
+        self.assertAlmostEqual(
+            submission.anti_windup_integral(0.8, 12.0, 0.4, 0.001, 12.0, 12.0),
+            0.8048, delta=1e-15,
+            msg="expected the tick to land at u_raw = u_max exactly (0.8048); freezing there "
+                "likely tests u_raw >= u_max - check the strict comparison")
+        self.assertAlmostEqual(
+            submission.anti_windup_integral(0.8, 12.0, -0.4, 0.001, -12.0, 12.0),
+            0.7952, delta=1e-15,
+            msg="expected the tick to land at u_raw = -u_max exactly (0.7952); 0.8 means the "
+                "boundary was treated as saturated on the negative rail too")
+
     def test_inside_the_rails_the_integral_lands(self):
         self.assertAlmostEqual(
             submission.anti_windup_integral(0.8, 12.0, 0.4, 0.001, 10.0, 12.0),
             0.8048, delta=1e-15,
             msg="expected 0.8 + 0.0048 = 0.8048 while the demand is inside the rail; freezing here likely tests u_raw >= u_max instead of > - check the comparison")
+
+    def test_a_freeze_without_the_error_direction_loses_the_unwind(self):
+        # The wrong rule - freeze on any saturation - gives 0.8 here instead of 0.7952. This is
+        # the case the gate test alone cannot see, so it is checked in both directions.
+        top = submission.anti_windup_integral(0.8, 12.0, -0.4, 0.001, 15.0, 12.0)
+        bottom = submission.anti_windup_integral(0.8, 12.0, 0.4, 0.001, -15.0, 12.0)
+        self.assertAlmostEqual(
+            top, 0.7952, delta=1e-15,
+            msg="expected 0.7952 - the tick landing while a reversed error unwinds a positive "
+                "saturation; 0.8 means the integral froze for any saturation, with no "
+                "e * u_raw > 0 test")
+        self.assertAlmostEqual(
+            bottom, 0.8048, delta=1e-15,
+            msg="expected 0.8048 - the tick landing while a reversed error unwinds a negative "
+                "saturation; 0.8 means the same missing error-direction test on the other rail")
 
     def test_a_magnitude_cap_holds_the_accumulator(self):
         # 3.9 + 0.0048 wants 3.9048, but the cap is 2.5.

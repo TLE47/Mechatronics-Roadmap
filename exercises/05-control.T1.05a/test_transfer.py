@@ -129,6 +129,18 @@ class WindupOnThePlantTests(unittest.TestCase):
                 "the windup the module's second Common-mistakes row describes",
         )
 
+    def test_an_error_against_the_plant_clamp_unwinds_it(self):
+        # The demand is still 10 N*m past the 2.5 N*m clamp, but the error now opposes it, so the
+        # plant's accumulator has to come back down 12 x 0.4 x 0.001 = 0.0048 per tick.
+        unwound = submission.anti_windup_integral(2.5, 12.0, -0.4, plant.DT, 10.0,
+                                                  plant.TAU_LIMIT, i_max=plant.TAU_LIMIT)
+        self.assertAlmostEqual(
+            unwound, 2.4952, delta=1e-15,
+            msg="expected the plant's accumulator to fall to 2.4952 when the error reverses "
+                "while the demand is still clamped; 2.5 means the freeze ran for any saturation "
+                "and the joint would stay wound up through the whole recovery",
+        )
+
     def test_the_unclamped_tick_keeps_growing(self):
         # 12 * 0.4 * 0.001 = 0.0048 per tick, on top of the clamp: 2.5048.
         self.assertAlmostEqual(

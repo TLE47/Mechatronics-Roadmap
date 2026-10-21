@@ -490,7 +490,7 @@ export async function runSmokeTests(viteServer) {
     }
 
     // Every entry, not only P.1, must have a specific brief: how many holes, the first one, the
-    // first check, and the output that means finished. A generic fallback on 86 entries would pass
+    // first check, and the output that means finished. A generic fallback on every entry would pass
     // the render test while telling a learner nothing.
     for (const lesson of PYTHON_LESSONS) {
       const coach = coachForLesson(lesson);

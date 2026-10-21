@@ -600,9 +600,7 @@ assert math.isclose(g8_izz_joint, 0.024, rel_tol=1e-9)
 - **Track 02 (`02-mechanics-kinematics-dynamics/README.md`):** continues into Step 2.3 (`02-mechanics.T2.03`) `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to legacy **Step 2.3 (`02-mechanics.T2.03`)** in [`02-mechanics-kinematics-dynamics/README.md`](../02-mechanics-kinematics-dynamics/README.md#tier-2-intermediate--applied).
-- Then Step 2.7 (`06-robotics.T2.07`), where $\tau = J(q)^\top F$ runs at $1\ \text{kHz}$ to make the same arm a Cartesian virtual spring-damper:
-```text
-[x_d - plant.fk(q1, q2)] -> [F = K_x * dx - D_x * (J * dq)] -> [tau = J(q)^T * F] -> [plant.step_arm]
-```
-- Keep the plant in every later exercise: `import mechalab_plant` is what makes your Step 2.7 controller act on the arm you already tuned here, and `plant.gravity_torque` stays the oracle you check any new feedforward term against.
+
+<!-- next-step:start -->
+👉 **Next:** [Step 5 · Build the arm: mechanics — 02-mechanics.T3.02a: 6D Spatial Twists & Wrenches, Screw Axes in SE(3), Notch Flexure Stiffness & Recursive Newton-Euler Passivity](02-mechanics.T3.02a.md)
+<!-- next-step:end -->

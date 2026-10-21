@@ -107,6 +107,38 @@ EXERCISE_TARGET=exercises/04-embedded.T1.04a/starter.py \
   - **Core Concepts to Review First:** Fixed-width `<stdint.h>` integer types (`uint8_t`, `uint16_t`, `uint32_t`), bitwise set/clear/toggle/extract idioms (`|= (1U << n)`, `&= ~(1U << n)`), and C structs/pointers in `## 3. Formalization` and `## 4. Worked example` above.
   - **Study Links & Resources:** [Barr Group *Embedded C Coding Standard* (`barrgroup.com`)](https://barrgroup.com/embedded-systems/books/embedded-c-coding-standard) and [Track 04 Tier 1 (`04-embedded-and-realtime/README.md`)](../04-embedded-and-realtime/README.md#tier-1-beginner--intuitive).
 
+### Four sittings - do not take this page in one go
+The 3.5 hours are one page but four different skills, and the jump inside it is the largest in Track 04 Tier 1: a new language, a fixed width, a register and a wire frame. Keep every topic; split the sitting. Each row is 40-50 minutes and ends with a green test subset, so stopping between rows is a finished state rather than an abandoned one. The workbench entry keeps every TODO, and the four commands below run the same suite in slices - `-k` matches a test class, so no file is copied and every slice still runs from the same starter.
+
+| Sitting | Read | Write | Stop when this is green |
+| :--- | :--- | :--- | :--- |
+| **1. Widths and rollover** - what a `uintN_t` can hold, and why the tick difference survives the wrap | §3 item 1, then the §4 worked example | `int_range`, `wrap_uint`, `elapsed_unsigned` (`TODO 1`–`3`) | `python3 -m unittest discover -s exercises/04-embedded.T1.04a -p 'test_behavior.py' -k IntegerRangeTests -k WrapTests` - 13 tests |
+| **2. Bit operations** - set, clear and test one flag without touching its neighbours | §3 item 2, then the §5 exercise `0x5A -> 0x52` | `apply_bits`, `bit_is_set` (`TODO 4`–`5`) | `... -k MaskTests -k BitTests` - 9 tests |
+| **3. Structs and pointers** - one address instead of a copied tray, and why padding changes the wire | §2's tray-and-sticky-note paragraph, §3 item 3 | nothing in `starter.py`; compile the 8-byte layout check below | the same three layouts print `8 12 8` and you can say which field the two padding bytes sat in |
+| **4. Packing a frame** - the little-endian bytes on the UART | §4, §6 and the frame bytes in the answer line | `pack_telemetry`, `unpack_telemetry` (`TODO 6`–`7`) | `EXERCISE_TARGET=exercises/04-embedded.T1.04a/starter.py python3 -m unittest discover -s exercises/04-embedded.T1.04a -p 'test_*.py'` - all 38 tests |
+
+Sitting 3 has no Python hole because C's compiler, not CPython, owns that fact. Put this in `frame.cpp` and run `g++ -std=c++20 -Wall -Wextra -Werror frame.cpp -o frame && ./frame`:
+```c
+#include <cstdint>
+#include <cstdio>
+#include <cstddef>
+
+// The wire order the Python package packs by hand: no padding happens to be needed.
+struct MotorState { uint16_t tick; int16_t count; float vel_rad_s; };
+// The same three fields with the float moved up: the compiler inserts 2 bytes of padding
+// before it, so the struct is 12 bytes and 2 of them are not data.
+struct PaddedState { uint16_t tick; float vel_rad_s; int16_t count; };
+// The same bytes on the wire, however the C struct is laid out in RAM.
+struct __attribute__((packed)) WireFrame { uint16_t tick; int16_t count; float vel_rad_s; };
+
+int main() {
+    std::printf("%zu %zu %zu\n", sizeof(MotorState), sizeof(PaddedState), sizeof(WireFrame));
+    std::printf("PaddedState count at %zu, offsetof(MotorState, vel_rad_s) = %zu\n",
+                offsetof(PaddedState, count), offsetof(MotorState, vel_rad_s));
+}
+```
+It prints `8 12 8` and `PaddedState count at 8, offsetof(MotorState, vel_rad_s) = 4`: `H h f` needs no padding because 2 + 2 lands the `float` on its own 4-byte boundary, while `H f h` loses two bytes before the `float` and two more at the end - and the packed frame stays 8 either way. That is the whole of §8's second Common-mistakes row, seen rather than memorised: the field order is what decides the padding, which is why the Python package packs `"<Hhf"` by hand instead of trusting a native layout.
+
 ### Starter code
 ```python
 # --- Exercise scaffold: fill in each TODO, then check against the numbers in the full solution below ---
@@ -389,11 +421,14 @@ assert math.isclose(g8_pct, 5.6, rel_tol=1e-9)
 | Symptom | Root cause | 2-minute fix |
 | :--- | :--- | :--- |
 | Wrote `reg &= (1 << 3)` to clear bit 3, wiping out all other bits | Forgot the bitwise NOT operator `~` before `(1 << 3)`. | Always write `reg &= ~(1U << n)` to clear bit `n`. |
-| `sizeof(struct)` is 12 bytes on MCU instead of 8 bytes | Compiler inserted 2 bytes of alignment padding after `uint16_t`/`int16_t`. | Order 4-byte fields (`float`, `uint32_t`) first or mark wire packets `__attribute__((packed))`. |
+| `sizeof(struct)` is 12 bytes on MCU instead of 8 bytes | Compiler inserted 2 bytes of alignment padding before the 4-byte `float`, because the fields are not in the wire order (`uint16_t`, `float`, `int16_t`). | Keep the wire fields in one `__attribute__((packed))` struct and `static_assert(sizeof(...) == 8)`; reordering cannot be trusted on its own - §5's sitting 3 prints all three sizes. |
 | Signed `int16_t` encoder count jumps from `+32767` to `-32768` | Exceeded the signed 16-bit range during multi-turn rotation. | Accumulate multi-turn counts in a 32-bit `int32_t` or 64-bit `int64_t` variable using unsigned 16-bit tick deltas. |
 
 ## 9. Resources
 - **Jens Gustedt — *Modern C* & Arduino Reference (`resources/textbooks-and-papers.md`):** Fixed-width integer types (`<stdint.h>`), pointers, and bitwise operators `[VERIFIED 2026-10-15]`.
 - **Wokwi Embedded Simulator (`wokwi.com`, `resources/open-source-toolchains.md`):** Browser-based Arduino/ESP32/STM32 simulator `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to [`04-embedded.T1.04b`](04-embedded.T1.04b.md) (*Non-Blocking `millis()`/`micros()` State Machines, Hardware Interrupts (ISRs) & `volatile`*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 7 · Run it in real time: embedded C — 04-embedded.T1.04b: Non-Blocking millis()/micros() State Machines, Hardware Interrupts (ISRs) & volatile](04-embedded.T1.04b.md)
+<!-- next-step:end -->

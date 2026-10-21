@@ -203,4 +203,7 @@ print(f"Position trace: {pos_trace} | Final pos: {pos_trace[4]:.2f} m")
 - [ ] You can compute velocity from two points on a position-vs-time graph.
 - [ ] You can accumulate position from a list of velocities and a time step `dt_s`.
 - [ ] Your **Do it yourself** script prints `Position trace: [1.0, 2.0, 4.0, 4.0, 3.0]`.
-- **Next lesson:** [Lesson P.12: Forces, Weight & Lever Torque](P.12-forces-and-lever-torque.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.12: Linear Forces (F = ma) and Lever Torque (tau = m*g*L*cos(theta))](P.12-forces-and-lever-torque.md)
+<!-- next-step:end -->

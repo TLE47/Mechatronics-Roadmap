@@ -220,4 +220,7 @@ assert round(math.degrees(angle_rad), 1) == 54.0
 ### You're done with Track P when...
 - [ ] Your milestone script prints the exact 4 expected lines and passes all `assert` checks.
 - [ ] You can explain every single line of the milestone solution in plain English without looking anything up.
-- **Next lesson:** [Stage 0 (Lesson S0.0): Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction](../stage-0/S0.0-why-electricity-is-like-flow.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 2 · Circuits and your first microcontroller — Lesson S0.0: Why Electricity Is Like Water Flow — Effort, Flow & Pipe Constriction](../stage-0/S0.0-why-electricity-is-like-flow.md)
+<!-- next-step:end -->

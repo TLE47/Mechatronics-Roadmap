@@ -538,4 +538,7 @@ assert g8_safety_choice == "A"  # Mandatory [SAFETY] 100% required
 - **Alexander Slocum — *Precision Machine Design* & NASA *Systems Engineering Handbook (`NASA/SP-2016-6105 Rev2`)* (`resources/textbooks-and-papers.md`):** Industry-standard methodology for structural error budgets, interface control documents (ICDs), and staged system verification `[VERIFIED 2026-10-15]`.
 - **Track 08 (`08-capstone-projects/README.md`):** Directly unlocks Step 3.8 (`08-capstones.T3.08`: Capstones 1, 2, and 3) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 3.8 (`08-capstones.T3.08`)** in [`08-capstone-projects/README.md`](../08-capstone-projects/README.md) — **Capstone 1** (Precision Stage), **Capstone 2** (Balancing Robot), or **Capstone 3** (6-DOF Force-Controlled Tele-Impedance Manipulator — the **Graduate Goal**).
+
+<!-- next-step:start -->
+👉 **You have finished the arm route.** The depth pass is optional and starts at [Step 3 · Make a joint move: foundations — 00-foundations.T2.00a: Numerical Derivatives & Integrals: Backward Difference and the Running Sum](00-foundations.T2.00a.md).
+<!-- next-step:end -->

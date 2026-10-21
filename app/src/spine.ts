@@ -95,6 +95,17 @@ function entriesForSpineStep(source: SpineStepData): PythonLessonItem[] {
   });
 }
 
+/**
+ * Workbench entries that sit before Step 1 rather than inside it: the school-maths ramp.
+ *
+ * They are runnable and graded like every other entry, so they are listed in the runner and their
+ * pages carry the "run this" callout, but they are remedial - the Tier 1 exit check sends a miss
+ * here - so they are not a completion requirement of Step 1 and do not belong in `step.entries`.
+ */
+export const PRE_STEP_RAMP: PythonLessonItem[] = PYTHON_LESSONS.filter(
+  (entry) => entry.track === 'ramp'
+);
+
 export const SPINE: SpineStep[] = SPINE_SOURCE.map((source) => ({
   number: source.number,
   slug: source.slug,

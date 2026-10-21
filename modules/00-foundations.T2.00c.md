@@ -413,4 +413,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 - **Track 05 ([`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md)) & [Paul's Online Math Notes (Vibrations)](https://tutorial.math.lamar.edu/Classes/DE/Vibrations.aspx):** Applies $\omega_n = \sqrt{K_p/J}$ and $K_d = 2\zeta\sqrt{JK_p}$ to joint PD tuning `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00d`](00-foundations.T2.00d.md) (*Complex Numbers, Euler's Formula, Phasors, Impedance & Frequency Response (Bode Plots)*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T2.00d: Complex Numbers, Euler's Formula & Phasors](00-foundations.T2.00d.md)
+<!-- next-step:end -->

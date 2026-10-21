@@ -798,8 +798,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     const matchesTrack =
       trackFilter === 'all' ||
       (trackFilter === 'modules' && l.track === 'modules') ||
-      (trackFilter === 'onramp' && l.track === 'track-p') ||
-      (trackFilter === 'lessons' && l.track !== 'modules' && l.track !== 'track-p');
+      (trackFilter === 'onramp' && (l.track === 'track-p' || l.track === 'ramp')) ||
+      (trackFilter === 'lessons' &&
+        l.track !== 'modules' && l.track !== 'track-p' && l.track !== 'ramp');
 
     if (!matchesTrack) return false;
     if (!searchQuery.trim()) return true;
@@ -1130,12 +1131,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {
                   id: 'lessons',
                   label: `Track lessons (${PYTHON_LESSONS.filter(
-                    (l) => l.track !== 'modules' && l.track !== 'track-p'
+                    (l) => l.track !== 'modules' && l.track !== 'track-p' && l.track !== 'ramp'
                   ).length})`,
                 },
                 {
                   id: 'onramp',
-                  label: `Python on-ramp (${PYTHON_LESSONS.filter((l) => l.track === 'track-p').length})`,
+                  label: `Python on-ramp (${PYTHON_LESSONS.filter(
+                    (l) => l.track === 'track-p' || l.track === 'ramp'
+                  ).length})`,
                 },
               ].map((tab) => (
                 <button
@@ -1178,7 +1181,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                           ? stepBreadcrumb(roadmapStepForLesson(lesson.id)!)
                           : lesson.track === 'track-p'
                             ? 'Python on-ramp'
-                            : 'Stage 0 on-ramp'}
+                            : lesson.track === 'ramp'
+                              ? 'School-maths ramp'
+                              : 'Stage 0 on-ramp'}
                       </span>
                     </div>
                     <div className="text-xs font-medium mt-0.5 line-clamp-1">{lesson.title}</div>

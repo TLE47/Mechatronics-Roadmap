@@ -51,6 +51,13 @@ const stepById = (milestoneId) => {
 check('every workbench entry belongs to exactly one step or the on-ramp', () => {
   const claims = new Map();
   for (const entry of ONRAMP_ENTRIES) claims.set(entry.id, 'on-ramp');
+  // The school-maths ramp runs before Step 1 and is remedial - the Tier 1 exit check sends a miss
+  // here - so it is runnable in the runner without being a rung on the roadmap or a requirement
+  // of the Python on-ramp. It is still claimed, once, so an orphan stays a failure.
+  for (const entry of PYTHON_LESSONS.filter((candidate) => candidate.track === 'ramp')) {
+    assert.ok(!claims.has(entry.id), `${entry.id} is claimed twice`);
+    claims.set(entry.id, 'school-maths ramp');
+  }
   for (const { step } of ALL_PASS_STEPS) {
     for (const entry of entriesForStep(step)) {
       assert.ok(

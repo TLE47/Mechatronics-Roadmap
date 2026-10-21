@@ -380,4 +380,7 @@ assert g6_feasible is False
 - **Track 05 Tier 3 ([`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-3-advanced--production)):** where the safety filter sits before the torque loop `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to Step 3.6 (`05-control.T3.06`) (*Joseph-Form Manifold ESKF, Embedded MPC & Control Barrier QPs*), which runs all three bridges in one $1\text{ kHz}$ stack.
+
+<!-- next-step:start -->
+👉 **Next:** [Step 9 · Plan motion and bring it up safely — 07-systems.T2.07a: Regenerative Braking Shunt Choppers, CAN-FD CRC-16 + Rolling-Counter Watchdogs & SIL/HIL Fault Injection](07-systems.T2.07a.md)
+<!-- next-step:end -->

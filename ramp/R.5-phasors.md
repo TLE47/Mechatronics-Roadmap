@@ -13,7 +13,7 @@ slow_learner_hours: "1.5-2.0"
 <!-- run-callout:start -->
 > **Before Step 1 · the school-maths ramp**
 >
-> **No workbench entry for this page.** There is nothing to load in Run Python Lessons for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+> **Run this in the workbench.** [Open MechaLab with `R.5` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=R.5) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal
@@ -107,7 +107,9 @@ print(report("A turned 90 deg", rotate(A, math.pi / 2.0)))
 
 phases = [arrow(1.0, math.radians(deg)) for deg in (0.0, 120.0, 240.0)]
 Z = sum_arrows(phases)
-print(f"three phases 120 deg apart, added: length {abs(Z):.3e}")
+# The residual is a few 1e-17 rounding crumbs, and which crumbs depends on the platform's
+# sin/cos: round before printing so the graded line is the physics (they cancel), not libm.
+print(f"three phases 120 deg apart, added: length {round(abs(Z), 12):.3e}")
 ```
 
 ### Expected Output
@@ -118,7 +120,7 @@ A: real 3.000, imag 0.000, length 3.000, angle 0.000 deg
 B: real 0.000, imag 4.000, length 4.000, angle 90.000 deg
 A+B: real 3.000, imag 4.000, length 5.000, angle 53.130 deg
 A turned 90 deg: real 0.000, imag 3.000, length 3.000, angle 90.000 deg
-three phases 120 deg apart, added: length 4.003e-16
+three phases 120 deg apart, added: length 0.000e+00
 ```
 
 ### Hint Ladder
@@ -193,7 +195,9 @@ print(report("A turned 90 deg", rotate(A, math.pi / 2.0)))
 
 phases = [arrow(1.0, math.radians(deg)) for deg in (0.0, 120.0, 240.0)]
 Z = sum_arrows(phases)
-print(f"three phases 120 deg apart, added: length {abs(Z):.3e}")
+# The residual is a few 1e-17 rounding crumbs, and which crumbs depends on the platform's
+# sin/cos: round before printing so the graded line is the physics (they cancel), not libm.
+print(f"three phases 120 deg apart, added: length {round(abs(Z), 12):.3e}")
 
 assert abs(abs(S) - 5.0) < 1e-12
 assert abs(math.degrees(cmath.phase(S)) - 53.13010235415598) < 1e-9

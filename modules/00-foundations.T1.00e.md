@@ -398,4 +398,7 @@ assert g8 == "C"
 - **W. Bolton — [*Mechatronics* (`resources/textbooks-and-papers.md`)](../resources/textbooks-and-papers.md):** Mechanical translational and rotational springs, masses, and dampers `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to Legacy Step 1.1: [`00-foundations.T1.01`](../00-foundations/README.md#tier-1-beginner--intuitive) (*Calculus as `while` Loops, 2D Rotations & RC Smoothing*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 4 · Power the joint: electronics — Lesson 01.1: High-Current Switching — MOSFETs, Inductors (Motor Coils) and Flyback Diodes](../01-electronics-and-power/01.1-mosfet-inductor-flyback.md)
+<!-- next-step:end -->

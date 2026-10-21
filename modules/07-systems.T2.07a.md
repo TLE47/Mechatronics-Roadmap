@@ -414,4 +414,7 @@ assert math.isclose(g9_unclamped_v, 166.060230, abs_tol=1e-6)
 - **Track 07 & Track 08 (`07-systems-hil-and-production/README.md`, `08-capstone-projects/README.md`):** Directly prepares for Step 2.8 (`07-systems.T2.08`, Tier 2 Boss Capstone) `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to legacy **Step 2.8 (`07-systems.T2.08`, Tier 2 Boss Capstone)** in [`07-systems-hil-and-production/README.md`](../07-systems-hil-and-production/README.md#tier-2-intermediate--applied) and [`08-capstone-projects/README.md`](../08-capstone-projects/README.md#tier-2-capstone-builds-intermediate--applied-pass).
+
+<!-- next-step:start -->
+👉 **You have finished the depth pass.** The Extensions in [`docs/EXTENSIONS.md`](../docs/EXTENSIONS.md) are the last optional page.
+<!-- next-step:end -->

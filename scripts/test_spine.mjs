@@ -4,13 +4,14 @@
  *
  * `app/src/spine.ts` joins two registries that used to number the course separately - the ten
  * steps `scripts/route_model.py` declares for the pages, and the three depth passes (eight track
- * positions each) the roadmap rendered - plus the 86 workbench entries. `spineData.ts` is generated
+ * positions each) the roadmap rendered - plus the workbench entries. `spineData.ts` is generated
  * from the model by `scripts/generate_spine_data.py --check`, so the data side is already guarded.
  * What this file guards is the join and the spellings:
  *
  *   1. **Ten steps, numbered 1..10 once.** Any gap, repeat or reorder makes a breadcrumb lie.
- *   2. **Every entry belongs to exactly one step.** Orphans are practice a learner can reach but
- *      never see on the map; doubles are a step claiming work that is not its own.
+ *   2. **Every entry belongs to exactly one step, or to the pre-step ramp.** Orphans are practice a
+ *      learner can reach but never see on the map; doubles are a step claiming work that is not
+ *      its own. The ramp is remedial, so it is owned by `PRE_STEP_RAMP`, not by Step 1's list.
  *   3. **Each depth owns one position per step, in spine order.** Step 3 is position 1 of every
  *      depth, step 10 position 8, or the matrix and the cards disagree again.
  *   4. **The breadcrumb prints the spine number and the depth**, never the old "Step 6 / 8".
@@ -26,6 +27,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import {
+  PRE_STEP_RAMP,
   SPINE,
   SPINE_STEP_COUNT,
   columnHours,
@@ -93,10 +95,19 @@ check('every workbench entry belongs to exactly one step', () => {
       seen.set(entry.id, step.number);
     }
   }
-  const orphans = PYTHON_LESSONS.filter((entry) => !seen.has(entry.id)).map((entry) => entry.id);
-  assert.deepEqual(orphans, [], 'these entries are runnable but no step lists them');
-  assert.equal(seen.size, PYTHON_LESSONS.length, 'the spine must claim all 86 entries once');
+  // The ramp sits before Step 1 and is remedial, so it is claimed by the pre-step list rather
+  // than by a step's completion requirements - but it must still be claimed exactly once.
+  for (const entry of PRE_STEP_RAMP) {
+    assert.equal(entry.track, 'ramp', `${entry.id} is in the pre-step list but is not a ramp entry`);
+    assert.equal(seen.get(entry.id), undefined, `${entry.id} is both a step entry and a ramp entry`);
+  }
+  const claimed = new Set([...seen.keys(), ...PRE_STEP_RAMP.map((entry) => entry.id)]);
+  assert.equal(claimed.size, seen.size + PRE_STEP_RAMP.length, 'a ramp entry is listed twice');
+  const orphans = PYTHON_LESSONS.filter((entry) => !claimed.has(entry.id)).map((entry) => entry.id);
+  assert.deepEqual(orphans, [], 'these entries are runnable but neither a step nor the ramp lists them');
+  assert.equal(seen.size + PRE_STEP_RAMP.length, PYTHON_LESSONS.length, 'every entry needs one owner');
   for (const entry of PYTHON_LESSONS) {
+    if (PRE_STEP_RAMP.some((ramp) => ramp.id === entry.id)) continue;
     assert.equal(spineStepForEntry(entry.id)?.number, seen.get(entry.id));
   }
 });

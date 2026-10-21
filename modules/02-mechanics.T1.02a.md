@@ -374,4 +374,7 @@ assert g8_choice == "A"
 - **Shigley's *Mechanical Engineering Design* & Lynch/Park *Modern Robotics* (`resources/textbooks-and-papers.md`):** Free-body diagrams, static equilibrium, and gear transmission basics `[VERIFIED 2026-10-15]`.
 - **Track 02 (`02-mechanics-kinematics-dynamics/README.md`):** Directly continues into Step 1.3 (`02-mechanics.T1.03`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 1.3 (`02-mechanics.T1.03`)** in [`02-mechanics-kinematics-dynamics/README.md`](../02-mechanics-kinematics-dynamics/README.md#tier-1-beginner--intuitive).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 6 · Measure the joint: sensors — Lesson 03.1: Quadrature Encoders (4x Counting) and 12-Bit Magnetic Angle Sensors](../03-sensors-and-actuators/03.1-quadrature-and-magnetic-encoders.md)
+<!-- next-step:end -->

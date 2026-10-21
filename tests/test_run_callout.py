@@ -39,9 +39,10 @@ class RegistryTests(unittest.TestCase):
     def test_every_python_page_is_covered(self):
         pages = gr.workbench_pages()
         self.assertEqual(
-            len(pages), 86,
-            msg="expected 36 lesson pages and 50 graded-module pages in the registry; a smaller "
-                "count means an entry's page was skipped, so its callout cannot be checked",
+            len(pages), 92,
+            msg="expected 42 lesson pages (36 lessons plus the six ramp lessons) and 50 "
+                "graded-module pages in the registry; a smaller count means an entry's page was "
+                "skipped, so its callout cannot be checked",
         )
         self.assertEqual(
             len({path for _, path in pages}), len(pages),
@@ -49,13 +50,26 @@ class RegistryTests(unittest.TestCase):
                 "means two ids would overwrite each other's callout - check the exercise manifests",
         )
 
-    def test_bench_and_ramp_lessons_are_marked_as_having_no_entry(self):
+    def test_every_ramp_page_the_exit_check_sends_a_miss_to_has_an_entry(self):
+        # Each ramp lesson repairs at least one Tier 1 exit-check item, so the recovery path has to
+        # run where every other page runs: starter, hints and graded check in the workbench, not
+        # "nothing to load here". Every R.x the check cites is here, not just the most recent one.
+        pages = dict((rel, lesson_id) for lesson_id, rel in gr.workbench_pages())
+        self.assertEqual(
+            sorted(lesson_id for lesson_id in pages.values() if lesson_id.startswith("R.")),
+            ["R.1", "R.2", "R.3", "R.4", "R.5", "R.6"],
+            msg="every ramp lesson must be a workbench entry - the exit check sends a miss to one "
+                "of them, and a recovery lesson that cannot be run in the runner breaks the path "
+                "it exists for. Check generate_python_lessons_data.py's ramp list",
+        )
+
+    def test_bench_lessons_are_marked_as_having_no_entry(self):
         pages = gr.no_entry_pages()
         self.assertEqual(
-            len(pages), 18,
-            msg="expected the 12 bench lessons (S0.1-S0.9, S0.M, 01.1, 01.2) and the 6 ramp lessons "
-                "to be the only pages without an entry; another count means a runnable page is "
-                "being told it has nothing to load - check the registry parse",
+            len(pages), 12,
+            msg="expected the 12 bench lessons (S0.1-S0.9, S0.M, 01.1, 01.2) to be the only pages "
+                "without an entry; another count means a runnable page is being told it has "
+                "nothing to load - check the registry parse",
         )
         by_path = dict((rel, lesson_id) for lesson_id, rel in pages)
         self.assertEqual(
@@ -63,10 +77,10 @@ class RegistryTests(unittest.TestCase):
             msg="expected the bench lesson's own front-matter id; a missing id means the "
                 "front-matter parse failed and the page would silently get no block at all",
         )
-        self.assertEqual(
-            by_path["ramp/R.1-rate-of-change.md"], "R.1",
-            msg="expected the maths ramp page's own id; the ramp prints code but has no workbench "
-                "entry, so it belongs with the bench lessons, not the registry",
+        self.assertNotIn(
+            "ramp/R.1-rate-of-change.md", by_path,
+            msg="the maths ramp now has a workbench entry, so R.1 must not be told there is "
+                "nothing to load - check the ramp list in generate_python_lessons_data.py",
         )
 
     def test_exercise_entries_use_the_module_page_and_the_ex_suffix(self):

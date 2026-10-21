@@ -191,4 +191,7 @@ print(f"8-bit max: {max_unsigned_int(8)} | 10-bit max: {max_unsigned_int(10)} | 
 - [ ] You can convert between `Hz` and `ms`/`µs` using $T = 1/f$.
 - [ ] You know why 8-bit is `0..255` and 10-bit is `0..1023`.
 - [ ] Your **Do it yourself** script passes all assertions.
-- **Next lesson:** [Lesson P.9: Rearranging Physics Formulas & Linear Range Scaling](P.9-rearranging-formulas-and-scaling.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.9: Rearranging Physics Formulas and Linear Range Scaling](P.9-rearranging-formulas-and-scaling.md)
+<!-- next-step:end -->

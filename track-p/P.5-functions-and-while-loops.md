@@ -193,4 +193,7 @@ print(f"After {step} steps: pos_m = {pos_m:.2f} m")
 - [ ] You can explain why calculations inside a function must use `return` rather than `print()`.
 - [ ] You can trace a `while` loop and verify that its counter updates on every pass.
 - [ ] Your **Do it yourself** script prints `After 4 steps: pos_m = 1.20 m`.
-- **Next lesson:** [Lesson P.6: Loading Modules (`import`) & Automated Self-Checks (`assert`)](P.6-modules-and-automated-asserts.md)
+
+<!-- next-step:start -->
+👉 **Next:** [Step 1 · Python and the maths a robot needs — Lesson P.6: Loading Modules (import) and Automated Self-Checks (assert)](P.6-modules-and-automated-asserts.md)
+<!-- next-step:end -->

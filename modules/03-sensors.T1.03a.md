@@ -440,4 +440,7 @@ assert g8_choice == "B"
 - **Jacob Fraden — *Handbook of Modern Sensors* & SimpleFOC Docs (`docs.simplefoc.com`, `resources/open-source-toolchains.md`):** Practical guide to optical/magnetic encoders, pole pairs, and BLDC commutation `[VERIFIED 2026-10-15]`.
 - **Track 03 (`03-sensors-and-actuators/README.md`):** Directly continues into Step 1.4 (`03-sensors.T1.04`) `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to legacy **Step 1.4 (`03-sensors.T1.04`)** in [`03-sensors-and-actuators/README.md`](../03-sensors-and-actuators/README.md#tier-1-beginner--intuitive).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 7 · Run it in real time: embedded C — Lesson 04.1: Fixed-Width C/C++ Types (uint16_t), volatile ISR Flags and 1 kHz Timer Loops](../04-embedded-and-realtime/04.1-c-types-and-hardware-timer-isr.md)
+<!-- next-step:end -->

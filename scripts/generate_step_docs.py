@@ -126,8 +126,8 @@ ANCHORS = {"08-capstone-projects": CAPSTONE_ANCHORS}
 EXTRAS = {
     "00-foundations": (
         "Do not read this folder end to end first: Depth 1 is Step 3's arm module plus lessons "
-        "`00.1`-`00.3`, and you then move on to Track 01 in the same step. Depth 2 is the return "
-        "visit after Step 10, when the arm exists to model."
+        "`00.1`-`00.3`, and the last arm module's next link then takes you to Track 01, which "
+        "is Step 4. Depth 2 is the return visit after Step 10, when the arm exists to model."
     ),
 }
 

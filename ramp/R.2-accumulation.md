@@ -13,7 +13,7 @@ slow_learner_hours: "1.5-2.0"
 <!-- run-callout:start -->
 > **Before Step 1 · the school-maths ramp**
 >
-> **No workbench entry for this page.** There is nothing to load in Run Python Lessons for it - its code runs in your own Python 3 or on the bench, with no starter file or graded check. The pages that do have one are listed in [Run Python Lessons](https://tle47.github.io/Mechatronics-Roadmap/).
+> **Run this in the workbench.** [Open MechaLab with `R.2` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=R.2) - it opens on the **Run Python Lessons** tab with that entry selected. Starter code, hints and the graded check are ready; this page is the reading copy, and nothing you type here is saved.
 <!-- run-callout:end -->
 
 ## Goal

@@ -356,5 +356,7 @@ assert g6_feasible is False
 - **Track 05 Tier 3 ([`05-control-and-estimation/README.md`](../05-control-and-estimation/README.md#tier-3-advanced--production)):** the module sequence this bridge feeds `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`05-control.T3.05b`](05-control.T3.05b.md) (Tangent-Space Error Injection on $SO(3)$ & the ESKF Reset).
-- Then [`05-control.T3.05c`](05-control.T3.05c.md) (*Control Barrier Function QP Safety Filter*) and Step 3.6 (`05-control.T3.06`).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 8 · Make it hold still: control — 05-control.T3.05b: Rodrigues on SO(3), Multiplicative Error Injection & the ESKF Reset](05-control.T3.05b.md)
+<!-- next-step:end -->

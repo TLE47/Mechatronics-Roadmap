@@ -390,4 +390,7 @@ assert g11_safety_choice == "B"  # Mandatory [SAFETY] 100% required
 - **Paul Scherz & Simon Monk — *Practical Electronics for Inventors* (`resources/textbooks-and-papers.md`):** Beginner-friendly chapters on Ohm's law, KVL/KCL, and resistor power ratings `[VERIFIED 2026-10-15]`.
 - **Falstad Circuit Simulator (`falstad.com/circuit/`, `resources/open-source-toolchains.md`):** Interactive browser circuit simulator showing live current dots and voltage colors `[VERIFIED 2026-10-15]`.
 ## 10. Next modules
-- Proceed to [`01-electronics.T1.01c`](01-electronics.T1.01c.md) (*Multimeter, Current-Limited Bench Supply, Breadboard & ESD/Short-Circuit Safety*).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 4 · Power the joint: electronics — 01-electronics.T1.01b: Low-Side MOSFET Switching, PWM Duty Cycle & H-Bridge Polarity Reversal](01-electronics.T1.01b.md)
+<!-- next-step:end -->

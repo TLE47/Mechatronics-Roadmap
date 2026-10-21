@@ -406,4 +406,7 @@ print("gate key: Ax=[%.1f, %.1f], v1=%.2f m/s, x1(new v)=%.3f m, radius=%.6f"
 - **Brunton & Kutz — [*Data-Driven Science and Engineering* (`databookuw.com`)](https://databookuw.com/) ([`resources/textbooks-and-papers.md`](../resources/textbooks-and-papers.md)):** State-space modeling and discretization `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to [`00-foundations.T2.00f`](00-foundations.T2.00f.md) (Sampling, Aliasing, Nyquist, $z$-Transform, Bilinear (Tustin) Pre-Warping, Biquads & Gaussian Covariance).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 3 · Make a joint move: foundations — 00-foundations.T2.00f: Nyquist Sampling, Aliasing & the Analog Anti-Alias Filter](00-foundations.T2.00f.md)
+<!-- next-step:end -->

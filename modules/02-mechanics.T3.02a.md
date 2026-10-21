@@ -493,4 +493,7 @@ assert math.isclose(g8_power_w, 10.0, rel_tol=1e-9)
 - **Track 02 (`02-mechanics-kinematics-dynamics/README.md`):** Directly continues into Step 3.3 (`02-mechanics.T3.03`) `[VERIFIED 2026-10-15]`.
 
 ## 10. Next modules
-- Proceed to legacy **Step 3.3 (`02-mechanics.T3.03`)** in [`02-mechanics-kinematics-dynamics/README.md`](../02-mechanics-kinematics-dynamics/README.md#tier-3-advanced--production).
+
+<!-- next-step:start -->
+👉 **Next:** [Step 6 · Measure the joint: sensors — 03-sensors.T2.03a: Three-Phase Stator Reference Frames (abc -> alpha-beta -> d-q), Phase-Locked Loops & Sensor Random Walk](03-sensors.T2.03a.md)
+<!-- next-step:end -->
