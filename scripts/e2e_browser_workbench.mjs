@@ -36,6 +36,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
+import { ISOLATION_HEADERS } from './isolation-headers.mjs';
+import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { createServer } from 'vite';
 
 /** The one copy of the Start here words, the same file the README block is generated from. */
@@ -54,7 +56,10 @@ const START_HERE = JSON.parse(
 export async function startDevServer(repoRoot = process.cwd()) {
   const viteServer = await createServer({
     root: path.join(repoRoot, 'app'),
-    server: { port: 0, host: '127.0.0.1' },
+    // Cross-origin isolation is what gives the page a SharedArrayBuffer, and without it the
+    // interrupt-based Stop cannot exist. The production host is GitHub Pages, which cannot send
+    // headers; `app/public/coi-serviceworker.js` covers that, and every local server sends them here.
+    server: { port: 0, host: '127.0.0.1', headers: ISOLATION_HEADERS },
     logLevel: 'error',
   });
   await viteServer.listen();
@@ -185,7 +190,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     //     reader is back to searching for the id the page just handed them.
     const deepPage = await context.newPage();
     await deepPage.goto(`${baseUrl}?lesson=EX.05-control.T2.05a`, { waitUntil: 'networkidle' });
-    await deepPage.getByTestId('textarea-python-code').waitFor({ timeout: 15000 });
+    await waitForEditor(deepPage, undefined, 15000);
     assert(
       (await deepPage.getByTestId('link-lesson-page').getAttribute('href'))?.endsWith(
         '/exercises/05-control.T2.05a/solution.py'
@@ -206,7 +211,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     // An id the registry does not list is ignored rather than blanking the editor.
     await deepPage.goto(`${baseUrl}?lesson=NOT.A.LESSON`, { waitUntil: 'networkidle' });
-    await deepPage.getByTestId('textarea-python-code').waitFor({ timeout: 15000 });
+    await waitForEditor(deepPage, undefined, 15000);
     assert(
       (await deepPage.getByTestId('link-lesson-page').getAttribute('href'))?.endsWith(
         '/track-p/P.1-variables-and-data-types.md'
@@ -238,7 +243,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the guide\'s hint button must open Hint 1, leaving Hint 2 to reveal'
     );
     // A traceback's useful line is the last one, not its first: the guide must still say what to fix.
-    await page.getByTestId('textarea-python-code').fill('def broken(\n    return 1\n');
+    await setEditorCode(page, 'def broken(\n    return 1\n');
     await page.getByTestId('btn-guide-run').click();
     await page.getByTestId('guide-what-to-fix').waitFor({ timeout: 45000 });
     assert(
@@ -374,7 +379,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // 2. Print-only spoofing passes presentation check but FAILS Instructor Behavioral Tests
     const expectedText = await page.getByTestId('pre-expected-stdout').textContent();
     const spoofedPython = `print(${JSON.stringify((expectedText || '').trim())})\n`;
-    await page.getByTestId('textarea-python-code').fill(spoofedPython);
+    await setEditorCode(page, spoofedPython);
     await page.getByTestId('btn-run-verify').click();
     await page.waitForFunction(
       () => {
@@ -415,11 +420,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       await page.getByTestId(`lesson-item-${exerciseLesson}`).scrollIntoViewIfNeeded();
       await page.getByTestId(`lesson-item-${exerciseLesson}`).click();
       await page.waitForFunction(
-        () =>
-          (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
-            'NotImplementedError'
-          ),
-        undefined,
+        (key) =>
+          (window.__mechalabEditors?.[key]?.get() ?? '').includes('NotImplementedError'),
+        'editor-main',
         { timeout: 15000 }
       );
       const exerciseExpectedText = await page.getByTestId('pre-expected-stdout').textContent();
@@ -428,9 +431,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         /SELF-CHECK PASS/,
         `${exerciseLesson} must publish its self-check PASS line as the expected output`
       );
-      await page
-        .getByTestId('textarea-python-code')
-        .fill(`print(${JSON.stringify((exerciseExpectedText || '').trim())})\n`);
+      await setEditorCode(page, `print(${JSON.stringify((exerciseExpectedText || '').trim())})\n`);
       await page.getByTestId('btn-run-verify').click();
       await page.waitForFunction(
         () => {
@@ -455,7 +456,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('lesson-item-P.6').click();
 
     // 3. Invalid Python syntax produces an understandable error
-    await page.getByTestId('textarea-python-code').fill('def broken_syntax(\n    x = \n');
+    await setEditorCode(page, 'def broken_syntax(\n    x = \n');
     await page.getByTestId('btn-run-verify').click();
     await page.getByTestId('status-execution-error').waitFor({ timeout: 15000 });
     const syntaxErrOut = await page.getByTestId('pre-actual-stdout').textContent();
@@ -474,7 +475,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       window.__mechalabMaxTraceSteps = 5000;
     });
     const loopCode = '# important learner work to preserve\ni = 0\nwhile True:\n    i += 1\n';
-    await page.getByTestId('textarea-python-code').fill(loopCode);
+    await setEditorCode(page, loopCode);
     await page.getByTestId('btn-run-verify').click();
     await page.getByTestId('status-execution-stopped').waitFor({ timeout: 15000 });
 
@@ -483,7 +484,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       loopErrOut?.includes('ExecutionTimeoutError') && loopErrOut?.includes('infinite loop'),
       `Infinite loop must report ExecutionTimeoutError recovery hint, got: ${loopErrOut}`
     );
-    const preservedEditorValue = await page.getByTestId('textarea-python-code').inputValue();
+    const preservedEditorValue = await getEditorCode(page);
     assert.equal(
       preservedEditorValue,
       loopCode,
@@ -505,7 +506,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       `Stop button must terminate worker and report cancellation, got: ${stoppedOut}`
     );
     assert.equal(
-      await page.getByTestId('textarea-python-code').inputValue(),
+      await getEditorCode(page),
       loopCode,
       'Stopping execution must preserve learner code'
     );
@@ -745,10 +746,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       `Lesson 03.1 must say it grades exact formatting, got: ${exactModeNote}`
     );
     await formattingPage.getByTestId('btn-load-solution').click();
-    const tableSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+    const tableSolution = await getEditorCode(formattingPage);
     const unpadded = tableSolution.replace(/:(?:[<>^=])?\d+(\.\d+)?([fdegsx%])/g, ':$1$2');
     assert.notEqual(unpadded, tableSolution, 'the 03.1 solution must pad its table with field widths');
-    await formattingPage.getByTestId('textarea-python-code').fill(unpadded);
+    await setEditorCode(formattingPage, unpadded);
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-output-mismatch').waitFor({ timeout: 30000 });
     assert(
@@ -781,7 +782,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       `Lesson P.6 must say that whitespace is ignored, got: ${plainModeNote}`
     );
     await formattingPage.getByTestId('btn-load-solution').click();
-    const plainSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+    const plainSolution = await getEditorCode(formattingPage);
     const rewrapped = [
       'import contextlib, io',
       '_buffer = io.StringIO()',
@@ -792,7 +793,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       '    print("   " + _line.replace(" | ", "   |   "))',
       "print('')",
     ].join('\n');
-    await formattingPage.getByTestId('textarea-python-code').fill(rewrapped);
+    await setEditorCode(formattingPage, rewrapped);
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
     assert(
@@ -824,7 +825,7 @@ run = plant.simulate_arm(steps=1000)
 print("tip err max=%.2f mm rms=%.2f mm" % (run["max_dyn_err_mm"], run["rms_dyn_err_mm"]))
 print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.001, 115200), plant.simulate_uart_tx(1000, 20, 0.001, 500000)))
 `;
-    await formattingPage.getByTestId('textarea-python-code').fill(plantProbe);
+    await setEditorCode(formattingPage, plantProbe);
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.waitForFunction(
       () =>
@@ -976,7 +977,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('lesson-item-08.1').scrollIntoViewIfNeeded();
     await formattingPage.getByTestId('lesson-item-08.1').click();
     await formattingPage.getByTestId('btn-load-solution').click();
-    const benchSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+    const benchSolution = await getEditorCode(formattingPage);
     const shortRepair = benchSolution.replace(
       'def repair_encoder_offset(q_measured, offset_rad):\n    return q_measured - offset_rad',
       'def repair_encoder_offset(q_measured, offset_rad):\n    return q_measured - 0.9 * offset_rad'
@@ -990,7 +991,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     const benchVerifiedBefore = Number((countBeforeBench || '').match(/^(\d+)/)?.[1]);
     assert.ok(Number.isInteger(benchVerifiedBefore), `the tally must start with a count, got: ${countBeforeBench}`);
 
-    await formattingPage.getByTestId('textarea-python-code').fill(shortRepair);
+    await setEditorCode(formattingPage, shortRepair);
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-harness-failed').waitFor({ timeout: 45000 });
 
@@ -1057,7 +1058,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('lesson-item-EX.08-capstones.T3.07a').click();
     await formattingPage.getByTestId('lesson-harness').waitFor({ timeout: 10000 });
     await formattingPage.getByTestId('btn-load-solution').click();
-    const budgetSolution = await formattingPage.getByTestId('textarea-python-code').inputValue();
+    const budgetSolution = await getEditorCode(formattingPage);
     const doubleZoh = budgetSolution.replace(
       'return 0.5 * ts_us',
       'return ts_us  # deliberately double the hold'
@@ -1071,7 +1072,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     const budgetVerifiedBefore = Number((countBeforeBudget || '').match(/^(\d+)/)?.[1]);
     assert.ok(Number.isInteger(budgetVerifiedBefore), `the tally must start with a count, got: ${countBeforeBudget}`);
 
-    await formattingPage.getByTestId('textarea-python-code').fill(doubleZoh);
+    await setEditorCode(formattingPage, doubleZoh);
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-harness-failed').waitFor({ timeout: 45000 });
     assert.equal(
@@ -1126,8 +1127,120 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
     console.log('  ok the intended budget functions put all four rows at target and verify the capstone');
 
+    // 12. The editor is CodeMirror, and a lesson is a small project: Python is highlighted, a
+    //     lesson that imports the shared plant gets a locked tab holding that same source, and a
+    //     `# @slider` comment becomes a control that rewrites the literal and re-runs.
+    await formattingPage.getByTestId('lesson-item-EX.05-control.T2.05a').scrollIntoViewIfNeeded();
+    await formattingPage.getByTestId('lesson-item-EX.05-control.T2.05a').click();
+    await waitForEditor(formattingPage);
+    await formattingPage.getByTestId('editor-tab-mechalab_plant.py').waitFor({ timeout: 10000 });
+    await formattingPage.getByTestId('editor-tab-mechalab_plant.py').click();
+    await formattingPage.waitForSelector('[data-editor="editor-helper"] .cm-content', { timeout: 10000 });
+    assert.equal(
+      await formattingPage.locator('[data-editor="editor-helper"] .cm-content').getAttribute('contenteditable'),
+      'false',
+      'the shared plant must be read-only in the editor: it is the module the checks import'
+    );
+    assert(
+      (await getEditorCode(formattingPage, 'editor-helper')).includes('def simulate_arm'),
+      'the locked tab must show the plant the worker imports, not a stub'
+    );
+    await formattingPage.getByTestId('editor-tab-main').click();
+    await waitForEditor(formattingPage);
+
+    // The control lesson opens with its three gains already tunable, not as a plain starter.
+    await formattingPage.getByTestId('lesson-item-05.1').scrollIntoViewIfNeeded();
+    await formattingPage.getByTestId('lesson-item-05.1').click();
+    await formattingPage.getByTestId('slider-KP').waitFor({ timeout: 10000 });
+    assert.equal(
+      await formattingPage.locator('[data-editor="editor-main"] input[type="range"]').count(),
+      3,
+      '05.1 must open with Kp, Ki and Kd wired as sliders'
+    );
+
+    await formattingPage.getByTestId('lesson-item-P.1').scrollIntoViewIfNeeded();
+    await formattingPage.getByTestId('lesson-item-P.1').click();
+    await setEditorCode(
+      formattingPage,
+      'Kp = 4.0  # @slider 0 20 0.1\nprint(f"Kp={Kp:.1f}")\n'
+    );
+    await formattingPage.getByTestId('slider-Kp').waitFor({ timeout: 10000 });
+    const tokenSpans = await formattingPage.locator('[data-editor="editor-main"] .cm-content span').count();
+    assert(tokenSpans >= 3, `Python must be highlighted, not plain text; found ${tokenSpans} token spans`);
+    await formattingPage.evaluate(() => {
+      const slider = document.querySelector('[data-testid="slider-Kp"]');
+      slider.value = '8';
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await formattingPage.waitForFunction(
+      () => (window.__mechalabEditors?.['editor-main']?.get() ?? '').includes('Kp = 8.0'),
+      undefined,
+      { timeout: 5000 }
+    );
+    await formattingPage.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="pre-actual-stdout"]')
+          ?.textContent?.includes('Kp=8.0'),
+      undefined,
+      { timeout: 30000 }
+    );
+    console.log('  ok the editor highlights Python, locks a read-only helper, and a slider drag rewrites and re-runs');
+    console.log('  ok 05.1 opens with Kp, Ki and Kd already tunable');
+
+    // ⌘K: one dialog over the whole course, driven the way a keyboard user drives it.
+    await formattingPage.keyboard.press('Control+k');
+    await formattingPage.getByTestId('command-palette').waitFor({ timeout: 10000 });
+    assert.equal(
+      await formattingPage.getByTestId('command-palette').getAttribute('role'),
+      'dialog',
+      'the palette must be a real dialog so a screen reader announces it as one'
+    );
+    assert.equal(
+      await formattingPage.getByTestId('input-palette-search').evaluate((el) => el === document.activeElement),
+      true,
+      'opening the palette must put the caret in its search field: a palette you have to click into is a menu'
+    );
+    const listed = (await formattingPage.getByTestId('palette-match-count').innerText()).match(/(\d+) of (\d+)/);
+    assert(listed && Number(listed[2]) > 90, `the empty palette must list the whole catalogue, not a subset; read: ${listed?.[0]}`);
+
+    await formattingPage.getByTestId('input-palette-search').fill('P.1');
+    await formattingPage.getByTestId('palette-item-lesson-P.1').waitFor({ timeout: 5000 });
+    assert.equal(
+      await formattingPage.getByTestId('palette-item-lesson-P.1').getAttribute('aria-selected'),
+      'true',
+      'the exact lesson id must be the highlighted row, so Enter opens the lesson that was typed'
+    );
+    await formattingPage.keyboard.press('Enter');
+    await formattingPage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
+    await formattingPage.getByTestId('lesson-item-P.1').waitFor({ timeout: 5000 });
+    assert(
+      formattingPage.url().includes('lesson=P.1'),
+      `choosing a lesson from the palette must put it in the address bar; url was ${formattingPage.url()}`
+    );
+
+    await formattingPage.getByTestId('btn-open-palette').click();
+    await formattingPage.getByTestId('command-palette').waitFor({ timeout: 5000 });
+    await formattingPage.getByTestId('input-palette-search').fill('zzzzqqq');
+    await formattingPage.getByTestId('palette-empty').waitFor({ timeout: 5000 });
+    assert.equal(
+      await formattingPage.getByRole('option').count(),
+      0,
+      'an unmatched query must offer nothing to open, not the whole catalogue'
+    );
+    await formattingPage.getByTestId('input-palette-search').fill('theme');
+    await formattingPage.getByTestId('palette-item-action-toggle-theme').waitFor({ timeout: 5000 });
+    await formattingPage.keyboard.press('ArrowDown');
+    const highlighted = await formattingPage.getByRole('option').evaluateAll((rows) =>
+      rows.filter((row) => row.getAttribute('aria-selected') === 'true').map((row) => row.dataset.paletteId)
+    );
+    assert.equal(highlighted.length, 1, 'exactly one row may be highlighted at a time');
+    await formattingPage.keyboard.press('Escape');
+    await formattingPage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
+    console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
     );
   } finally {
     await browser.close();

@@ -173,6 +173,13 @@ jobs:
       - name: Check light/dark: toggle contract, and WCAG contrast on all 11 tabs in both modes
         run: npm run test:theme:e2e
 
+      # The interrupt path needs cross-origin isolation and a real SharedArrayBuffer, which no unit
+      # test can provide: this suite stops a `while True:` in place, proves the interpreter survived
+      # it, and answers an `input()` mid-run. It downloads Pyodide once, so it is its own step rather
+      # than a fifth suite competing for the same machine.
+      - name: Check the Python worker: in-place Stop, input(), isolation, and the no-buffer fallback
+        run: npm run test:runtime
+
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/configure-pages@v5

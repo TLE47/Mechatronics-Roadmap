@@ -11,6 +11,132 @@ flowchart LR
 
 ---
 
+## [2026-10-20] — Run 130: The Lesson Opens With Its Numbers Already Tunable
+
+Seven lesson starters now carry **14 `# @slider` parameters**, so the control and mechanics lessons
+open with the values they are about already on sliders instead of asking a learner to retype a number
+and re-run:
+
+| Lesson | Sliders |
+| :--- | :--- |
+| 02.1 one-link FK | link length |
+| 02.2 two-link FK | both link lengths |
+| 02.3 two-link IK | both link lengths (the outer target sits on the reach limit at the defaults) |
+| 02.4 inertia and gears | mass, gear ratio |
+| 02.5 belts and fits | driver and driven tooth counts |
+| 05.1 PID + anti-windup | `KP`, `KI`, `KD` |
+| 05.2 complementary filter | gyro bias, `alpha` |
+
+Each starter hoists the literals its demo already passed into named constants with a range and step,
+and passes those constants into the same call. **Every default is exactly the literal it replaced**,
+so the completed program still prints the page's Expected Output: filling each annotated starter from
+its own reference solution and diffing stdout against the Expected Output block is 7/7 exact. The
+reference solutions are deliberately left as the plain version, so **Load Solution** still shows the
+canonical code rather than a second copy of the scaffold.
+
+**Guarded, not just added.** `scripts/test_editor.mjs` now fails if any of the seven starters loses its
+sliders, if a default falls outside its own range, or if a slider names a value the demo never reads -
+a control wired to nothing is worse than no control. The browser E2E opens 05.1 and asserts three
+range inputs (`Kp`, `Ki`, `Kd`) are mounted. `pythonLessonsData.ts` was regenerated from the pages;
+`scripts/check_all.py` 27/27, `test:editor`, and the workbench suites pass.
+
+---
+
+## [2026-10-20] — Run 129: A Real Editor, and a Lesson That Is a Project
+
+The runner's textarea is now **CodeMirror 6** ([`PythonEditor.tsx`](app/src/components/PythonEditor.tsx)):
+Python syntax highlighting, line numbers, undo history, bracket matching and closing, in-document
+search, indent with `Tab`, and completion from Python keywords plus the names the open file defines.
+The colours are the app's own tokens ([`editor/theme.ts`](app/src/editor/theme.ts)), so light mode is
+the same editor, not a second theme to audit. React still owns the document: edits go out through
+`onChange`, an external change (another lesson, Load Solution, Reset) replaces it, and the run button
+reads the state the screen shows.
+
+**A lesson is a small project.** `main.py` is the learner's tab; a lesson whose starter, solution,
+hints or tests mention `mechalab_plant` gets a second, **read-only** tab holding that plant
+([`src/lessonFiles.ts`](app/src/lessonFiles.ts); 29 of the 92 entries do). The worker writes the same
+text into Pyodide's filesystem, so the import resolves to what is on screen and the learner can read
+the code the checks assume without being able to break it.
+
+**A slider is a comment on a number.**
+
+```python
+Kp = 4.0   # @slider 0 20 0.1
+```
+
+puts a range control under that line; dragging **rewrites the literal in the file** and re-runs once
+the drag settles (450 ms). There is no hidden parameter channel: the code on screen is the code that
+runs, and the file stays ordinary Python. [`editor/sliderModel.ts`](app/src/editor/sliderModel.ts)
+parses, clamps, snaps and formats (a drag inside one step dispatches nothing);
+[`editor/sliderWidget.ts`](app/src/editor/sliderWidget.ts) draws it as a **state field**, because
+CodeMirror refuses block decorations from a view plugin, and reuses the range input while only its
+value moves so a re-render cannot abort the drag under the pointer.
+
+**The suites follow the editor, not its markup.** Browser tests type and read through a two-method
+bridge (`window.__mechalabEditors['editor-main']`,
+[`scripts/editor-code.mjs`](scripts/editor-code.mjs)) instead of `.fill()`/`.inputValue()`; the Pages
+sweep, which sets each package's reference solution inside one `page.evaluate`, now writes through
+the same bridge. A new end-to-end scenario checks that Python is highlighted, that the plant tab is
+read-only and holds the real module, and that a slider drag rewrites `4.0` to `8.0` and re-runs to
+print `Kp=8.0`.
+
+**Measured.** `scripts/test_editor.mjs` (`npm run test:editor`) covers the directive grammar, the
+ignored malformed forms, clamping/snapping/formatting, and which lessons claim the helper tab; it
+runs inside `npm run test:workbench`. Full matrix on the built app: 11 workbench suites (smoke,
+links, theme, tokens, spine, palette, editor, e2e 66 s, Pages 71 s, pairs 79 s, tour 78 s),
+`test:runtime`, `test:theme:e2e`, and `scripts/check_all.py` 27/27 - all passing, `npm run build`
+clean.
+
+---
+
+## [2026-10-20] — Run 128: A Python You Can Stop, and ⌘K Over Everything
+
+Two changes to the loop between typing and knowing: the runtime moved off the UI thread, and the
+keyboard got one door to the whole course.
+
+**Python runs in a dedicated Web Worker.** `TabPyodideRunner` used to own the interpreter on the
+page's thread, which meant a runaway loop froze the editor, the tab strip and the Stop button with
+it. The worker (`PYODIDE_WORKER_SOURCE`) loads Pyodide once, is warmed on idle so the first Run is a
+warm run, and reports its measured boot so the status line can say `ready in 1.4 s` instead of
+spinning.
+
+**Stop interrupts instead of discarding.** A `SharedArrayBuffer` interrupt word handed to
+`pyodide.setInterruptBuffer()` raises `KeyboardInterrupt` *inside* the running program: imports,
+variables and the 10 MB runtime survive, and the Stop button answers in milliseconds rather than a
+kernel restart. Where the buffer cannot exist the page falls back to terminating the worker, which
+still stops the run. `input()` got the same treatment: the worker posts its prompt and waits on a
+second shared word while the page shows an input box, so blocking `input()` never blocks a frame -
+and Stop wakes that wait too.
+
+**GitHub Pages can now be isolated.** Interruption needs `SharedArrayBuffer`, which needs COOP/COEP,
+which a static host cannot send. [`app/public/coi-serviceworker.js`](app/public/coi-serviceworker.js)
+adds the pair and reloads once; `npm run dev` and `preview` send the same pair directly from
+[`scripts/isolation-headers.mjs`](scripts/isolation-headers.mjs), so every browser suite runs isolated
+without the service worker in the way. A blocked service worker degrades to the terminate fallback;
+it never leaves a loop unstoppable.
+
+**`⌘K` opens a palette over the whole course.** [`palette.ts`](app/src/palette.ts) holds the search
+and [`paletteCatalog.ts`](app/src/paletteCatalog.ts) builds the list from the lesson registry (92
+lessons and exercises) plus the rail's own tab metadata and twelve commands, so nothing is
+maintained twice. Ranking is stated rather than tuned: whole-word prefix > token prefix > word start
+> substring > in-order subsequence, stable inside a band - typing `P.1` opens lesson P.1, not P.10,
+and a lesson's own ideas are searchable (`damping ratio` finds 00.2). The header gained a Search
+button with the shortcut on it; the dialog is a real `role="dialog"` + `role="option"` list with
+arrow keys, `↵`, `esc`, and a focus trap. Selecting a lesson lands on it in the runner and rewrites
+`?lesson=`; "Run the lesson" bumps a nonce the runner watches, so the command works from any tab
+without the palette holding a callback into an unmounted editor.
+
+**Measured.** `scripts/test_palette.mjs` (13 checks) pins the catalogue's completeness and the
+ranking order, including `P.1` vs `P.10`; it runs inside `npm run test:workbench`.
+`scripts/e2e_runtime.mjs` (`npm run test:runtime`) drives the worker in Chromium: in-place Stop with
+the session intact, `input()` answered mid-run, the isolation flags, and the Pages fallback. The
+browser E2E suite now also opens `⌘K` with a keystroke, checks the empty catalogue is the whole
+course, ranks P.1 first, opens it, and closes on Escape. Full matrix: `test:workbench`, `test:e2e`,
+`test:runtime`, `test:theme:e2e`, `test:e2e:pages`, `test:tour`, `test:pairs` - all passing, with
+`npm run build` clean.
+
+---
+
 ## [2026-10-20] — Run 127: One Workbench, Two Lights
 
 A light theme that is a real alternative rather than a filter, and a toggle that owns the page.
@@ -554,7 +680,7 @@ newcomer had to decode before finding a lesson. It is now three lines: a link to
 sentence naming the finished arm, and the time and cost. The ten-step table is generated from
 `scripts/route_model.py`; the tier/pass matrix, CI details and optional modules moved to
 [`docs/ROUTE.md`](docs/ROUTE.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) and
-[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 18 KB.
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 19 KB.
 
 Two contradictions surfaced while generating the counts:
 

@@ -49,6 +49,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, firefox } from 'playwright-core';
+import { getEditorCode, setEditorCode } from './editor-code.mjs';
 
 const repoRoot = process.cwd();
 export const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
@@ -200,7 +201,14 @@ export function startStaticServer() {
       res.end('not found');
       return;
     }
-    res.writeHead(200, { 'content-type': MIME[path.extname(file)] ?? 'application/octet-stream' });
+    // The real host is GitHub Pages, which cannot set these; the bundle carries
+    // app/public/coi-serviceworker.js for that. The test server sets them instead, so the suite exercises
+    // the isolated document (SharedArrayBuffer present) without a service-worker reload mid-test.
+    res.writeHead(200, {
+      'content-type': MIME[path.extname(file)] ?? 'application/octet-stream',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    });
     res.end(fs.readFileSync(file));
   });
   return new Promise((resolve) => {
@@ -265,7 +273,10 @@ async function gradeInPage(page, ids) {
     const text = (sel) => q(sel)?.textContent ?? '';
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const statusId = () => q('[data-testid^="status-"]')?.getAttribute('data-testid') ?? 'none';
-    const editor = () => q('[data-testid="textarea-python-code"]')?.value ?? '';
+    const editor = () =>
+      (window.__mechalabEditors && window.__mechalabEditors['editor-main']
+        ? window.__mechalabEditors['editor-main'].get()
+        : '');
     const waitFor = async (predicate, budgetMs) => {
       const startedAt = performance.now();
       while (performance.now() - startedAt < budgetMs) {
@@ -399,8 +410,10 @@ async function gradeRampEntries(page, name) {
     const text = (sel) => q(sel)?.textContent ?? '';
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const statusId = () => q('[data-testid^="status-"]')?.getAttribute('data-testid') ?? 'none';
-    const editorEl = () => q('[data-testid="textarea-python-code"]');
-    const editor = () => editorEl()?.value ?? '';
+    const editor = () =>
+      (window.__mechalabEditors && window.__mechalabEditors['editor-main']
+        ? window.__mechalabEditors['editor-main'].get()
+        : '');
     const waitFor = async (predicate, budgetMs) => {
       const started = performance.now();
       while (performance.now() - started < budgetMs) {
@@ -461,12 +474,10 @@ async function gradeRampEntries(page, name) {
       result.starterBeforeStatus = starterBefore;
       const tStarter = performance.now();
 
-      // React owns the textarea: write through the native setter and dispatch `input`, then click Run in
-      // the same task so the app runs the reference text, not the starter it still holds.
-      const el = editorEl();
-      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
-      setter.call(el, entry.reference);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
+      // Write through the editor's own bridge (the same call a browser suite makes), then click Run in
+      // the same task: the runner's code ref is updated synchronously, so it runs the reference text,
+      // not the starter React still holds.
+      window.__mechalabEditors['editor-main'].set(entry.reference);
       const referenceRun = await runAndWait();
       result.loadMs = Math.round(tStarter - t0);
       result.referenceMs = Math.round(performance.now() - tStarter);
@@ -576,7 +587,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       const item = page.getByTestId(`lesson-item-${lesson}`);
       await item.scrollIntoViewIfNeeded();
       await item.click();
-      const starter = await page.getByTestId('textarea-python-code').inputValue();
+      const starter = await getEditorCode(page);
       assert.ok(starter.trim().length > 40, `${name}: lesson ${lesson} starter code is empty`);
       const expected = (await page.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
       assert.ok(expected.length > 0, `${name}: lesson ${lesson} has no expected output to grade against`);
@@ -623,11 +634,8 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       await entry.scrollIntoViewIfNeeded();
       await entry.click();
       await page.waitForFunction(
-        () =>
-          (document.querySelector('[data-testid="textarea-python-code"]')?.value ?? '').includes(
-            'raise NotImplementedError'
-          ),
-        undefined,
+        (key) => (window.__mechalabEditors?.[key]?.get() ?? '').includes('raise NotImplementedError'),
+        'editor-main',
         { timeout: 15000 }
       );
       const verifiedBefore = (await page.getByTestId('runner-verified-count').textContent())?.trim();
@@ -637,7 +645,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         /SELF-CHECK PASS/,
         `${name}: ${cheatId} expected output is not its self-check PASS line`
       );
-      await page.getByTestId('textarea-python-code').fill(`print(${JSON.stringify(cheatExpected)})\n`);
+      await setEditorCode(page, `print(${JSON.stringify(cheatExpected)})\n`);
       await page.getByTestId('btn-run-verify').click();
       await page.waitForFunction(
         () => {
@@ -674,7 +682,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await lesson.scrollIntoViewIfNeeded();
     assert.ok(await lesson.isVisible(), `${name}: at ${TABLET_VIEWPORT.width}px the lesson list is not usable`);
     await lesson.click();
-    await tablet.getByTestId('textarea-python-code').waitFor({ state: 'visible', timeout: 10000 });
+    await tablet.waitForSelector('[data-editor="editor-main"] .cm-content', { state: 'visible', timeout: 10000 });
 
     // The runner header must cost the step it names from the same generated spine the cards read:
     // the total, then the arm pass the learner is in and the depth pass after Step 10.

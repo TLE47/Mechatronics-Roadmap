@@ -72,6 +72,77 @@ README cannot drift apart) beside [`HeroArm.tsx`](src/components/HeroArm.tsx) - 
 the capstone's figure-8 through two-link inverse kinematics. The canvas pauses off-screen, draws one
 still frame under `prefers-reduced-motion`, and never exceeds 2x device pixels.
 
+## Python you can stop, and ⌘K over everything
+
+Python runs in a **dedicated Web Worker** (`PYODIDE_WORKER_SOURCE` at the top of
+[`TabPyodideRunner.tsx`](src/components/tabs/TabPyodideRunner.tsx)), never on the UI thread. The
+editor keeps typing, the tabs keep switching, and a runaway loop cannot freeze the page.
+
+| Problem | What the runner does |
+| :--- | :--- |
+| `while True:` | **Stop** writes to a `SharedArrayBuffer` interrupt word that Pyodide watches; the interpreter raises `KeyboardInterrupt` **in place**, so imports, variables and the 10 MB runtime all survive. Without `SharedArrayBuffer` it falls back to terminating the worker, which still stops the run. |
+| `input()` | The worker posts the prompt, then `Atomics.wait`s on a second shared word while the page shows the input box. The UI stays live because it is a different thread. Stop wakes the wait. |
+| The download | The runtime is warmed on idle, so the first Run is a warm run; the status line reports the measured boot (`ready in 1.4 s`), not a spinner. |
+| GitHub Pages (no headers) | [`public/coi-serviceworker.js`](public/coi-serviceworker.js) adds the COOP/COEP pair a static host cannot send; it reloads once and then `SharedArrayBuffer` exists. `npm run dev` and `preview` send the same pair directly (`scripts/isolation-headers.mjs`), so tests never depend on the service worker. |
+
+Interruption needs cross-origin isolation for **one** reason: it is what makes `SharedArrayBuffer`
+available. If the service worker is blocked, the runner still stops programs — it just pays for it by
+restarting the runtime.
+
+### Keys
+
+| Key | Does |
+| :--- | :--- |
+| `⌘K` / `Ctrl+K` | The command palette: every lesson, exercise, tab and command in one searchable list. `↑`/`↓` move, `↵` opens, `esc` closes. It works while the editor has focus, which is when it is needed. |
+| `⌘↵` / `Ctrl+↵` | Run the open lesson. |
+
+[`src/palette.ts`](src/palette.ts) is the whole search (prefix > word-start > substring >
+subsequence, stable order inside a score band) and [`src/paletteCatalog.ts`](src/paletteCatalog.ts)
+builds the list from the lesson registry plus the rail's metadata, so a new lesson or a renamed tab
+appears without editing the palette.
+
+### The editor
+
+The textarea is gone: [`PythonEditor.tsx`](src/components/PythonEditor.tsx) mounts **CodeMirror 6**
+(Python highlighting, line numbers, undo history, bracket matching and closing, in-document search,
+`Tab`/`Shift-Tab` indent, and completion from Python keywords plus the names the file itself
+defines). The colours come from the app's tokens ([`editor/theme.ts`](src/editor/theme.ts)), so light
+mode is not a second editor theme.
+
+The document is still owned by React: every edit is reported through `onChange`, an external change
+(a different lesson, Load Solution, Reset) replaces the document, and the run button reads the same
+state the screen shows. The component also exposes a two-method bridge
+(`window.__mechalabEditors['editor-main']`) so the browser suites type and read through the view
+rather than through CodeMirror's internal markup ([`scripts/editor-code.mjs`](../scripts/editor-code.mjs)).
+
+**A lesson is a small project.** `main.py` is the learner's tab. A lesson whose starter, solution,
+hints or tests mention `mechalab_plant` gets a second, **read-only** tab holding that plant
+([`src/lessonFiles.ts`](src/lessonFiles.ts); 29 of the 92 entries do). The worker writes the same
+text into Pyodide's filesystem ([`TabPyodideRunner.tsx`](src/components/tabs/TabPyodideRunner.tsx)),
+so `from mechalab_plant import simulate_arm` works exactly as it would locally - and the learner can
+read what the import is doing without being able to break it.
+
+**Sliders are a comment on a number.**
+
+```python
+Kp = 4.0   # @slider 0 20 0.1
+```
+
+puts a control under that line ([`src/editor/sliderModel.ts`](src/editor/sliderModel.ts) parses it,
+[`sliderWidget.ts`](src/editor/sliderWidget.ts) draws it). Dragging **rewrites the literal in the
+file** - no hidden parameter channel - and re-runs once the drag settles (450 ms). The file stays
+ordinary Python: open it in VS Code and it runs the same. A directive with a missing or inverted
+range is ignored rather than guessed at, and the range input is reused while only its value moves,
+so the drag is not aborted by its own re-render.
+
+The seven control and mechanics lessons (02.1-02.5, 05.1, 05.2) ship their own annotations: link
+lengths on the FK/IK demos, mass and gear ratio on the inertia lesson, tooth counts on the belt
+drive, `Kp`/`Ki`/`Kd` on the PID lesson and the gyro bias/`alpha` pair on the complementary filter -
+14 sliders across 7 starters, every default exactly the literal it replaced. The reference solutions
+stay the plain version, so **Load Solution** shows the canonical code while the starter is the
+workspace where the numbers move. `npm run test:editor` fails if one of those starters loses its
+sliders or gains a slider the demo never reads.
+
 ## Stack
 
 Vite 6 · React 19 · TypeScript 5.7 · Tailwind 4 · KaTeX · Lucide. Tests drive the built bundle with
@@ -100,12 +171,17 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/outputMatch.ts`](src/outputMatch.ts) | How stdout is compared (exact vs formatting-tolerant), shared by the runner and its tests. |
 | [`src/progressMerge.ts`](src/progressMerge.ts) | Merging saved progress between browsers and accounts. |
 | [`src/lessonCoach.ts`](src/lessonCoach.ts) | The progressive hints and the stuck-state prompts. |
+| [`src/components/PythonEditor.tsx`](src/components/PythonEditor.tsx) | The CodeMirror editor: view, external sync, test bridge. |
+| [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
+| [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
 
 ## Checks that cover this directory
 
 ```bash
 npm run lint                 # types
-npm run test:workbench       # unit-level runner behaviour (happy-dom)
+npm run test:workbench       # runner behaviour (happy-dom) + palette search + editor model
+npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
+npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
 npm run check:lessons        # the registry is current

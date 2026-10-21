@@ -41,8 +41,19 @@ python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
 npm run test:theme                      # light/dark rules: stored pick, OS default, data-theme
 npm run test:theme:e2e                  # toggle contract + contrast on all 11 tabs, both themes
+npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pages fallback
+npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
+npm run test:editor                     # slider directives and which lessons get helper tabs
 npm run test:smoke                      # needs `npm ci` first
 ```
+
+`test:runtime` is the one suite that cannot be a unit test: stopping a `while True:` in place needs
+cross-origin isolation, a real `SharedArrayBuffer` and a real browser. It asserts the Stop answers by
+interrupt (the session and its imports survive), that `input()` blocks the worker while the page
+stays live, and that the no-buffer fallback still ends the run. `test:palette` is the opposite -
+pure TypeScript over the catalogue, pinning that every lesson, exercise, tab and command appears
+exactly once and that ranking prefers the entry the learner typed (`P.1` over `P.10`). Both run in
+CI; `test:runtime` is its own step because it downloads Pyodide.
 
 The theme pair exists because the palette is a promise, not a preference. The unit suite pins the
 rules a reader cannot see (a first visit stores nothing, a corrupt key falls back to the OS, a

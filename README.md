@@ -117,6 +117,10 @@ flowchart LR
 
 Read one idea, predict what the code will do, then run it. A lesson passes only when its behaviour checks pass, so "it printed something" is not finished. Every lesson also ships three progressive hints (the first is always open; later hints wait until you have run the lesson once), a known-failure explainer ([`docs/ERROR_EXPLAINER.md`](docs/ERROR_EXPLAINER.md)), and a 20-minute return path after a break ([`docs/REENTRY.md`](docs/REENTRY.md)). Progress is saved in your browser and exports as a Markdown portfolio; the [beginner timing log](.github/ISSUE_TEMPLATE/beginner-timing-log.md) is where a real completion time helps everyone.
 
+**The keyboard goes everywhere.** `⌘K` opens one search over all 92 lessons and exercises, every tab, and the commands hidden in the header - type `P.1`, `damping ratio`, or `theme`; `↵` opens the highlighted row. `⌘↵` runs the lesson you are on, and **Stop** interrupts a runaway loop in place instead of reloading the page.
+
+**The editor is a real one.** Python is highlighted and completed as you type, undo works, the arm code a lesson imports is a read-only tab beside `main.py`, and a `# @slider` comment on a number becomes a control that rewrites it and re-runs - so tuning `Kp` is a drag, not a retype. The control and mechanics lessons open with those already wired.
+
 ### Using AI without skipping the attempt
 
 **Use AI to unblock an attempt, not to make it.** A generated answer that passes the check and a solution you could rebuild are different outcomes, and only the second one survives the next page. The rule this project assumes:
