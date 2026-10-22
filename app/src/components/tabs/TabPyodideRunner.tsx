@@ -57,6 +57,7 @@ import {
   watchDecision,
   type WatchVerdict,
 } from '../../watchMode';
+import { runAnnouncement } from '../../announce';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
@@ -2922,14 +2923,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         </div>
       </div>
 
-      {/* The verdict is announced, not only coloured: a screen reader hears the result and the
-          next step without moving focus. */}
-      <p className="sr-only" role="status" aria-live="polite">
-        {passStatus === 'passed'
-          ? `Lesson ${currentLesson.id} passed: behavioural checks and output both meet the lesson.`
-          : passStatus === 'untested' || passStatus === 'error'
-            ? ''
-            : `Lesson ${currentLesson.id} has not passed yet. Read the failing line above.`}
+      {/* The verdict is announced, not only coloured: a screen reader hears the outcome and the
+          failing line itself, rather than an instruction to go and find a coloured one. The words
+          come from `app/src/announce.ts`, which is a pure function and pinned by `npm run
+          test:announce`. */}
+      <p className="sr-only" role="status" aria-live="polite" data-testid="run-announcement">
+        {runAnnouncement({
+          lessonId: currentLesson.id,
+          verdict: passStatus,
+          firstDiff: outputComparison.firstDiff,
+          harnessSummary: harnessResult?.summary ?? null,
+          stderr,
+          prediction: predictRecord,
+        })}
       </p>
 
       {showPassToast && passStatus === 'passed' && (

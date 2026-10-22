@@ -15,6 +15,7 @@
  *   test:codediff    the Diff panel's rules: what a change is, how gaps are trimmed, the coarse fallback
  *   test:predict     the predict-first gate's grading: lines not strings, four verdicts, a bounded store, no lockout
  *   test:watch       when the checks may re-run themselves: after a graded failure, on an edit, never past the gate
+ *   test:announce    what a screen reader hears after a run: the verdict first, then the failing line itself
  *   test:history     the versions behind the draft: filed on Run, deduped, capped, evicted oldest-first
  *   test:scope       the Scope's payload rules: NaN dropped, lengths aligned, flat traces widened
  *   test:checkhints  a failing check names its own rung, and rung 2 is earned by another run
@@ -163,6 +164,7 @@ async function main() {
     { label: 'codediff', script: 'test_codediff.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'predict', script: 'test_predict_gate.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'watch', script: 'test_watch.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'announce', script: 'test_announce.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'history', script: 'test_draft_history.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'scope', script: 'test_scope.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'hints', script: 'test_check_hints.mjs', env: { NODE_OPTIONS: TYPES } },

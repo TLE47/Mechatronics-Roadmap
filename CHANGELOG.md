@@ -11,6 +11,45 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 168: The Verdict, Read Aloud
+
+The workbench already had a polite live region, and it said one of two sentences: *passed*, or *has not
+passed yet — read the failing line above*. That second half is the problem. The failing line is drawn,
+coloured and inside a panel; a screen-reader user had to go and find it, so the part of the page a
+sighted learner gets for free was the part they had to reconstruct. `docs/PLAN-2.0-GAP.md` listed it
+plainly: "no screen-reader announcements for run results".
+
+[`app/src/announce.ts`](app/src/announce.ts) composes the sentence now, and the rules are stated because
+a live region interrupts whatever is being read:
+
+- **One sentence, the verdict first** — `passed`, `has not passed`, `failed to run`, `was stopped` — so
+  the outcome lands in the first words.
+- **The specific reason, not the advice**: the two lines that differ (`expected "…", got "…"`), the
+  harness's own sentence about the metric that is off, the exception's last line for a runtime error.
+- **Short, and flat.** Trailing detail past 220 characters is cut at a word with an ellipsis, quotes are
+  cut at 48, and a traceback's newlines collapse to spaces — a line break is a pause, and forty of them
+  are forty interruptions.
+- **Nothing to say is nothing.** An untested lesson announces an empty string rather than a status a
+  reader might read out.
+- **The prediction is a second sentence** when the gate was answered (`Your prediction was exact.`) or
+  skipped (`You ran it without predicting.`).
+
+**A bug the quoting found.** The diff the announcement quotes came from the *normalised* lines, so in
+the default lenient mode `and a second` was announced as `andasecond`: the comparison strips whitespace,
+which is right for grading and unreadable as a quote. `compareStdout` now carries `firstDiff` with both
+the expected and the actual line **as written**, decided on the normalised line and reported in the
+original — which is also what the panel could show next.
+
+**Verified.** `npm run test:announce` is 15 checks: every verdict branch, the original-vs-normalised
+quote, the word-boundary cut, an output that ends early (`(no line: the output ends here)` on the
+correct side), the traceback's last line, an error with no message, the prediction sentences, and the
+comparison the panel draws agreeing with the words announced. In Chromium, step 5 asserts a passing run
+announces `/^Lesson .+ passed:/` and step 7g-iii asserts a failing one announces its verdict **and a
+reason**, and never the old "read the failing line above". `npm run lint` is clean, the matrix runs
+**41 suites**, `check:axe` clears 11 tabs × 2 themes, `check_all.py` is 29/29 (it caught a broken
+`../scripts/...` link in this entry's predecessor), and `check:weight` reads 955.1 kB on a fresh build
+(+0.7 kB for the composer), every budget intact.
+
 ## [2026-10-22] — Run 167: The Sweep Grades What It Just Built
 
 Run 166 taught the weight gate to refuse a `dist/` older than its sources. The same hole was one suite
@@ -19,7 +58,7 @@ a leftover build was graded happily — fifty exercise entries, six ramp lessons
 measured against code the checkout no longer had, reported as a pass. That is worse than the weight
 case, because the sweep's whole claim is that *this* bundle works.
 
-The walk moved into [`scripts/buildFreshness.mjs`](../scripts/buildFreshness.mjs), shared by the weight
+The walk moved into [`scripts/buildFreshness.mjs`](scripts/buildFreshness.mjs), shared by the weight
 gate, the Pages sweep and `npm run test:workbench`'s own dist server, so "built" means one thing in all
 three. The pure rule is unchanged (`staleSources`): fresh when the newest output is at least as new as
 every source. The two readers differ on purpose:

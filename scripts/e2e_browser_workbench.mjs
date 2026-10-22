@@ -666,6 +666,13 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       verified(1),
       `Passing solution must increment verified count to ${verified(1)}`
     );
+    // The verdict is announced for a screen reader as well as drawn: the sentence starts with the
+    // outcome, so it is useful the moment a live region interrupts.
+    assert.match(
+      (await page.getByTestId('run-announcement').textContent()) ?? '',
+      /^Lesson .+ passed:/,
+      'a passing run must announce its verdict first'
+    );
 
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
@@ -1088,6 +1095,22 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       `the re-run must wait for a pause in typing, not fire per keystroke; it took ${watchElapsed} ms`
     );
     console.log(`  ok watch mode re-ran the checks after a ${watchElapsed} ms pause in typing`);
+    // 7g-iii. A failed run announces a reason, not an instruction to go and find a coloured line.
+    //         This program prints, so the red check here is a behaviour one and the announcement
+    //         says so; the wording of every branch (including the quoted output line) is pinned in
+    //         `npm run test:announce`.
+    const announcement = (await page.getByTestId('run-announcement').textContent()) ?? '';
+    assert.match(announcement, /has not passed:/, 'a failed run must announce its verdict');
+    assert.match(
+      announcement,
+      /a behaviour check failed|expected ".+", got "|off target/,
+      `the announcement must carry the reason; got: ${announcement}`
+    );
+    assert.equal(
+      /read the failing line above/i.test(announcement),
+      false,
+      'the announcement must not send a screen reader hunting for a colour'
+    );
     // Off again: the rest of this suite clicks Run itself, and a watching editor would race it.
     await page.getByTestId('btn-watch').click();
     assert.equal(
@@ -2065,7 +2088,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, watch mode re-running on a pause, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
     );
   } finally {
     await browser.close();

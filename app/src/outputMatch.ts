@@ -34,6 +34,11 @@ export interface OutputComparison {
   formattingDiffers: boolean;
   /** 1-based line number of the first difference, or null when the runs agree. */
   firstDiffLine: number | null;
+  /**
+   * The two lines that differ, so a caller can say what went wrong without re-reading both texts —
+   * the announcement does, and the panel could. `null` when the runs agree.
+   */
+  firstDiff: { expected: string; actual: string } | null;
 }
 
 /** Narrow an unknown value (e.g. generated lesson data) to a valid mode, defaulting to normalized. */
@@ -57,13 +62,28 @@ function toLines(text: string): string[] {
  * sequence of text per line - the least formatting can be wrong while still being the same output.
  */
 export function normalizeStdout(text: string, mode: OutputMatchMode = 'normalized'): string {
-  const lines = toLines(text).map((line) => {
-    const withoutTrailing = line.replace(/\s+$/, '');
-    return mode === 'exact' ? withoutTrailing : withoutTrailing.replace(/\s+/g, '');
+  return linePairs(text, mode)
+    .map((pair) => pair.normalized)
+    .join('\n');
+}
+
+/**
+ * Each line of a run, in the form it is compared and in the form a person reads it.
+ *
+ * The comparison strips whitespace in `normalized` mode, and that stripped form is unreadable as a
+ * quote - `and a second` becomes `andasecond`, which is what the first version of the run announcement
+ * said out loud. Both forms are kept so the verdict is decided on the normalised line and reported with
+ * the original.
+ */
+function linePairs(text: string, mode: OutputMatchMode): { normalized: string; original: string }[] {
+  const pairs = toLines(text).map((line) => {
+    const original = line.replace(/\s+$/, '');
+    return { normalized: mode === 'exact' ? original : original.replace(/\s+/g, ''), original };
   });
-  while (lines.length > 0 && lines[0].trim() === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1].trim() === '') lines.pop();
-  return (mode === 'exact' ? lines : lines.filter((line) => line.trim() !== '')).join('\n');
+  if (mode === 'normalized') return pairs.filter((pair) => pair.normalized !== '');
+  while (pairs.length > 0 && pairs[0].original.trim() === '') pairs.shift();
+  while (pairs.length > 0 && pairs[pairs.length - 1].original.trim() === '') pairs.pop();
+  return pairs;
 }
 
 /** Compare a learner's stdout with the lesson's Expected Output under the lesson's mode. */
@@ -77,13 +97,18 @@ export function compareStdout(
   const matched = actualNormalized === expectedNormalized;
 
   let firstDiffLine: number | null = null;
+  let firstDiff: { expected: string; actual: string } | null = null;
   if (!matched) {
-    const actualLines = actualNormalized.split('\n');
-    const expectedLines = expectedNormalized.split('\n');
+    const actualLines = linePairs(actual, mode);
+    const expectedLines = linePairs(expected, mode);
     const lineCount = Math.max(actualLines.length, expectedLines.length);
     for (let index = 0; index < lineCount; index += 1) {
-      if (actualLines[index] !== expectedLines[index]) {
+      if (actualLines[index]?.normalized !== expectedLines[index]?.normalized) {
         firstDiffLine = index + 1;
+        firstDiff = {
+          expected: expectedLines[index]?.original ?? '(no line: the output ends here)',
+          actual: actualLines[index]?.original ?? '(no line: the output ends here)',
+        };
         break;
       }
     }
@@ -97,5 +122,6 @@ export function compareStdout(
     mode,
     formattingDiffers: matched && !exactMatched,
     firstDiffLine,
+    firstDiff,
   };
 }

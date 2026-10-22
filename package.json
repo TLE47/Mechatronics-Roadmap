@@ -64,6 +64,7 @@
     "test:codediff": "node --experimental-strip-types scripts/test_codediff.mjs",
     "test:predict": "node --experimental-strip-types scripts/test_predict_gate.mjs",
     "test:watch": "node --experimental-strip-types scripts/test_watch.mjs",
+    "test:announce": "node --experimental-strip-types scripts/test_announce.mjs",
     "test:history": "node --experimental-strip-types scripts/test_draft_history.mjs",
     "test:scope": "node --experimental-strip-types scripts/test_scope.mjs",
     "test:checkhints": "node --experimental-strip-types scripts/test_check_hints.mjs",

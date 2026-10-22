@@ -507,6 +507,13 @@ starter is never filed (Reset Starter already restores it), and the store evicts
 anywhere once it passes its budget - [src/draftHistory.ts](src/draftHistory.ts), pinned by
 `npm run test:history`.
 
+**The verdict is announced, not only coloured.** A run ends in one polite live region that says the
+outcome first and then the reason — the two lines that differ (quoted from the original text, so
+`and a second` is not read as `andasecond`), the harness's own sentence about the metric that is off,
+the exception's last line for a runtime error, or `Stopped`, with the lesson's prediction as a second
+sentence ([src/announce.ts](src/announce.ts), `npm run test:announce`). The old region said *read the
+failing line above*, which is an instruction written for eyes; the failing line is now the words.
+
 **Watch mode is the fix loop.** A beginner fixes one `TODO`, presses Run, reads, fixes the next, and
 the pressing is what they think about instead of the program. With **Watch** on, a pause in typing
 re-runs the checks — but only after a *graded failure*, which is the state the loop is for: never on
@@ -640,6 +647,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/predictGate.ts`](src/predictGate.ts) | Predict first: how a free-text guess is graded against the expected output (four verdicts, lines not substrings), and the bounded per-lesson store of guesses and skips. |
 | [`src/watchMode.ts`](src/watchMode.ts) | When the checks may re-run themselves — after a graded failure, on an edited buffer, never past the gate — and the remembered toggle. |
+| [`src/announce.ts`](src/announce.ts) | The sentence a screen reader hears after a run: verdict first, then the failing line, the metric or the exception — condensed to one interruption. |
 | [`src/backupZip.ts`](src/backupZip.ts) | The zip writer and reader a backup is made of: stored entries, CRC-32, and the four ways a chosen file can fail. |
 | [`src/backupBundle.ts`](src/backupBundle.ts) | What a backup holds and how a restore merges it: flags union, drafts fill gaps, versions and events dedupe. |
 | [`src/progressKeys.ts`](src/progressKeys.ts) | Where the three progress maps live, so the backup can read them without importing React. |
