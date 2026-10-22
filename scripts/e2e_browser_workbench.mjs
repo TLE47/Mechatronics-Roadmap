@@ -1054,6 +1054,80 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('btn-reset-starter').click();
     await page.getByTestId('btn-diff').click();
 
+    // 7g-i-b. Share: the one thing a stuck learner can send a person — this lesson and this code.
+    //        The link is read out of the real clipboard, opened in a browser with no storage of its
+    //        own, and it must *offer* the code rather than replace the draft that is there. Applying
+    //        it takes the card's own button, and then the code is the draft that a reload restores.
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
+      origin: new URL(baseUrl).origin,
+    });
+    const shareCode = '# the attempt that got stuck\nprint("shared attempt 🙂")\n';
+    await setEditorCode(page, shareCode);
+    const sharedLessonTitle = await page.getByTestId('lesson-title').innerText();
+    await page.getByTestId('btn-share-attempt').click();
+    await page.waitForFunction(
+      () => /Link copied/.test(document.querySelector('[data-testid="share-status"]')?.textContent ?? ''),
+      undefined,
+      { timeout: 5000 }
+    );
+    const sharedUrl = await page.evaluate(() => navigator.clipboard.readText());
+    assert.ok(
+      sharedUrl.includes('#share=') && sharedUrl.includes('?lesson='),
+      `the copied link must be this lesson plus the code fragment, got ${sharedUrl.slice(0, 120)}`
+    );
+    assert.ok(
+      sharedUrl.length <= 2000,
+      `a link past 2,000 characters is one chat clients truncate; got ${sharedUrl.length}`
+    );
+    assert.match(
+      (await page.getByTestId('share-status').textContent()) ?? '',
+      /not encrypted/,
+      'the status must say the code is encoded rather than encrypted, since it is the learner’s own work going into a link'
+    );
+
+    const receiverContext = await browser.newContext();
+    await receiverContext.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
+    const receiver = await receiverContext.newPage();
+    await receiver.goto(sharedUrl, { waitUntil: 'networkidle' });
+    await receiver.getByTestId('shared-attempt-card').waitFor({ timeout: 15000 });
+    assert.equal(
+      await receiver.getByTestId('lesson-title').innerText(),
+      sharedLessonTitle,
+      'opening a share link must land on the lesson the code was written for'
+    );
+    // Offered, not applied: the editor is still the starter, because the receiver's draft is theirs.
+    await waitForEditor(receiver);
+    assert.notEqual(
+      await getEditorCode(receiver),
+      shareCode,
+      'a share link must not put someone else’s code into the editor without a press'
+    );
+    await receiver.getByTestId('btn-load-shared-attempt').click();
+    await receiver.waitForFunction(
+      (expected) => window.__mechalabEditors['editor-main'].get() === expected,
+      shareCode,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await receiver.getByTestId('shared-attempt-card').count(),
+      0,
+      'loading the attempt must clear the offer, so it cannot be applied twice'
+    );
+    // Loading is a draft like any other: a reload on the receiver's own browser has to keep it.
+    await receiver.reload({ waitUntil: 'networkidle' });
+    await waitForEditor(receiver);
+    assert.equal(
+      await getEditorCode(receiver),
+      shareCode,
+      'the loaded attempt must survive a reload as the lesson’s draft'
+    );
+    await receiverContext.close();
+    console.log('  ok Share copies a link, the receiver is offered the code, and loading it becomes their draft');
+    // Back to the starter: the watch-mode step below starts from a failed check of its own.
+    await page.getByTestId('btn-reset-starter').click();
+
     // 7g-ii. Watch mode: after a failed check, the *typing* is what runs the code. One run per pause,
     //        not per keystroke, and the loop ends when the learner turns it off or passes.
     await page.getByTestId('btn-watch').click();
@@ -2088,7 +2162,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
     );
   } finally {
     await browser.close();

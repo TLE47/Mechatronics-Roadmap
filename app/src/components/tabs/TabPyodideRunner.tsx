@@ -58,6 +58,7 @@ import {
   type WatchVerdict,
 } from '../../watchMode';
 import { runAnnouncement } from '../../announce';
+import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
@@ -91,6 +92,7 @@ import {
   History,
   GitCompare,
   Activity,
+  Share2,
 } from 'lucide-react';
 
 declare global {
@@ -140,7 +142,23 @@ interface TabPyodideRunnerProps {
    * deep link already named leaves `initialLessonId` unchanged, so nothing would fire.
    */
   lessonRequest?: { id: string; nonce: number } | null;
+  /**
+   * Code that arrived in a share link (`#share=…`). Offered, never applied: it is someone else's
+   * attempt and the learner's own draft is behind it.
+   */
+  sharedAttempt?: SharedAttempt | null;
+  /** Clear the offer once it has been used or dismissed. */
+  onDismissShared?: () => void;
 }
+
+/** What the Share button last did, so the line under the toolbar can say it. */
+type ShareStatus =
+  | { kind: 'idle' }
+  | { kind: 'copied'; characters: number }
+  | { kind: 'no-code' }
+  | { kind: 'too-long'; characters: number }
+  | { kind: 'failed'; url: string }
+  | { kind: 'loaded' };
 
 export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   initialLessonId,
@@ -151,6 +169,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onOpenRoadmap,
   runRequest,
   lessonRequest,
+  sharedAttempt,
+  onDismissShared,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
   const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
@@ -195,6 +215,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [hintOpenedAt, setHintOpenedAt] = useState<Record<string, number>>({});
   const [stdout, setStdout] = useState<string>('');
   const [stderr, setStderr] = useState<string>('');
+  const [shareStatus, setShareStatus] = useState<ShareStatus>({ kind: 'idle' });
   const [instructorError, setInstructorError] = useState<string>('');
   // What a capstone harness grades: the metrics the learner's own functions produce.
   const [harnessReport, setHarnessReport] = useState<HarnessReport | null>(null);
@@ -598,6 +619,46 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setBehaviorCheck('untested');
     setOutputCheck('untested');
     setPassStatus('untested');
+    setShareStatus({ kind: 'idle' });
+  };
+
+  /**
+   * Copy a link to this lesson with the editor's text in it.
+   *
+   * The codec decides whether a link is possible at all (`shareLink.ts`): an empty editor has nothing
+   * to send, and a program that would make a 2,000+ character URL is refused here rather than pasted
+   * into a chat that will cut it in half. The line under the toolbar says which of those happened —
+   * and, when the clipboard refuses, prints the URL so it can still be copied by hand.
+   */
+  const shareAttempt = async () => {
+    const result = shareUrl(window.location.href, { lesson: selectedId, code: codeRef.current });
+    if (!result.ok) {
+      setShareStatus(
+        result.reason === 'too-long'
+          ? { kind: 'too-long', characters: result.characters }
+          : { kind: 'no-code' },
+      );
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(result.url);
+      setShareStatus({ kind: 'copied', characters: result.characters });
+    } catch {
+      setShareStatus({ kind: 'failed', url: result.url });
+    }
+  };
+
+  /** Adopt a shared attempt: the one click that replaces the draft, said plainly on the card. */
+  const loadSharedAttempt = () => {
+    if (!sharedAttempt) return;
+    commitCode(sharedAttempt.code);
+    saveDraft(selectedId, sharedAttempt.code);
+    setPassStatus('untested');
+    setBehaviorCheck('untested');
+    setOutputCheck('untested');
+    setInstructorError('');
+    setShareStatus({ kind: 'loaded' });
+    onDismissShared?.();
   };
 
   const getOrCreateWorker = (): Worker => {
@@ -2013,6 +2074,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <GitCompare className="w-3.5 h-3.5" />
                   <span>Diff</span>
                 </button>
+                {/* The one thing a stuck learner can send a person: this lesson and this code. The
+                    code rides in the URL fragment, so it never reaches the host — and it is base64,
+                    not encryption, which the title says rather than implying a privacy it lacks. */}
+                <button
+                  onClick={() => void shareAttempt()}
+                  data-testid="btn-share-attempt"
+                  title={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Share</span>
+                </button>
                 {/* The gate's own door. The question also opens by itself on a lesson's first Run;
                     this is how a learner rereads the verdict, or predicts before pressing Run. */}
                 <button
@@ -2069,6 +2142,74 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
+                something the learner just asked for, and pressing Share twice must not trap them. */}
+            {shareStatus.kind !== 'idle' && (
+              <p
+                role="status"
+                data-testid="share-status"
+                className="mt-2 rounded-lg border border-line-soft bg-panel px-3 py-2 text-[11.5px] leading-relaxed"
+                style={{ color: 'var(--body)' }}
+              >
+                {shareStatus.kind === 'copied' && (
+                  <>
+                    Link copied — {shareStatus.characters} characters, this lesson and your code. It is
+                    encoded in the link, not encrypted: send it only where you would send the file.
+                  </>
+                )}
+                {shareStatus.kind === 'no-code' && (
+                  <>The editor matches nothing yet, so there is nothing to send. Type your attempt first.</>
+                )}
+                {shareStatus.kind === 'too-long' && (
+                  <>
+                    This link would be {shareStatus.characters} characters, and chat and mail cut off
+                    around {MAX_SHARE_URL}. Trim the file (or share the Diff) and press Share again.
+                  </>
+                )}
+                {shareStatus.kind === 'loaded' && <>Loaded the shared code into the editor.</>}
+                {shareStatus.kind === 'failed' && (
+                  <>
+                    Could not copy automatically. Select this link instead:{' '}
+                    <code className="break-all" data-testid="share-url">
+                      {shareStatus.url}
+                    </code>
+                  </>
+                )}
+              </p>
+            )}
+
+            {/* A shared attempt is offered, never applied. The learner's own draft is the work; the
+                card says what the button replaces before it replaces it. */}
+            {sharedAttempt && sharedAttempt.lesson === selectedId && (
+              <div
+                data-testid="shared-attempt-card"
+                className="mt-2 rounded-lg border border-accent/50 bg-accent/10 px-3 py-2.5"
+              >
+                <p className="eyebrow">Shared attempt</p>
+                <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
+                  Someone sent you their code for this lesson —{' '}
+                  {sharedAttempt.code.split('\n').length} lines. Loading it replaces the draft in
+                  this editor; your own work is here until you press the button.
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={loadSharedAttempt}
+                    data-testid="btn-load-shared-attempt"
+                    className="btn btn-primary px-2.5 py-1.5 text-[12px]"
+                  >
+                    Load their code
+                  </button>
+                  <button
+                    onClick={() => onDismissShared?.()}
+                    data-testid="btn-keep-own-code"
+                    className="btn px-2.5 py-1.5 text-[12px]"
+                  >
+                    Keep mine
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Predict first — the ladder's third move, and the one place the workbench could skip
                 it: press Run on the starter, read the answer off the screen, learn nothing. The run

@@ -610,6 +610,24 @@ stay the plain version, so **Load Solution** shows the canonical code while the 
 workspace where the numbers move. `npm run test:editor` fails if one of those starters loses its
 sliders or gains a slider the demo never reads.
 
+### Sharing an attempt
+
+**Share** in the runner toolbar copies a link to this lesson with the editor's text in it
+([`src/shareLink.ts`](src/shareLink.ts), `npm run test:share`). It is the one thing a stuck learner
+can send a person: a screenshot loses the code and a paste lands in the wrong lesson.
+
+| Rule | Why |
+| :--- | :--- |
+| The code rides in the URL **fragment** (`#share=…`), base64url | The fragment never reaches GitHub Pages or its logs. Base64 is encoding, not encryption, and the status line says so rather than implying a privacy the link does not have. |
+| The whole URL is capped at **2,000 characters**, measured | Chat clients and mail truncate around there; a refusal names the measured size instead of producing a link that will be cut in half. |
+| An empty editor is not a link | The button says there is nothing to send; it cannot produce a URL that silently opens the starter. |
+| A received attempt is **offered, never applied** | A link opening a page must not be able to replace the draft that is behind it. The card says how many lines arrived and what its button replaces, and loading the code then stores it as this lesson's draft like any other edit. |
+| Decoding is validation | Version, alphabet, JSON shape, field types and the same length cap are checked; anything else decodes to nothing and the workbench opens normally. |
+
+The link opens `?lesson=<id>#share=<payload>`, so a client that strips the fragment still lands on
+the right lesson. Pair study — two people editing one attempt — is still missing; this is the send, not
+the session.
+
 ## Stack
 
 Vite 6 · React 19 · TypeScript 5.7 · Tailwind 4 · KaTeX · Lucide. Tests drive the built bundle with
@@ -697,6 +715,7 @@ npm run test:trail           # the trail: local days, the fold, sitting time on 
 npm run test:trailreading    # the same trail read for advice: a resisting lesson, a quiet deck, opens alone
 npm run test:paint          # the first paint as a reading: one sample per visit, medians, the export shape
 npm run test:weight          # the weight budget's rules: the boundary, an unmeasured metric, the tightest
+npm run test:share           # the share link: round trips, the URL-safe alphabet, the measured cap, every malformed fragment
 npm run check:axe            # axe over all 11 tabs in every palette; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen

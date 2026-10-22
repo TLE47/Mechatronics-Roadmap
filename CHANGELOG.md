@@ -11,6 +11,39 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 170: Send Someone the Attempt, Not a Screenshot
+
+`docs/PLAN-2.0-GAP.md` listed *share links, "ask for help", pair study* as one missing row. The moment
+behind it is narrow and real: a learner is stuck, their attempt is thirty lines, and the person who
+could help is not at their screen. A screenshot loses the code; a paste lands in the wrong lesson. So
+the runner's toolbar has a **Share** button, and the link it copies opens *this* lesson with *this*
+code ([`app/src/shareLink.ts`](app/src/shareLink.ts), `npm run test:share`).
+
+**A URL is the most public thing this app emits, so the rules are written down.** The code rides in
+the fragment (`#share=…`), which never reaches GitHub Pages or its logs; it is base64url, which is
+encoding, not encryption, and the status line says so instead of implying a privacy the link does not
+have. The whole URL is held to a measured **2,000 characters** — a refusal names its size rather than
+producing a link a chat window will cut in half — and an editor with nothing in it produces no link
+at all. Decoding is validation: version, alphabet, JSON shape, field types and the same length cap
+are checked, and anything else returns nothing, so a malformed fragment opens the workbench normally
+instead of half-applying someone's bytes. The address carries `?lesson=<id>` as well, so a client
+that strips the fragment still lands on the right entry.
+
+**Offered, never applied.** Receiving a link does not replace the draft behind it: the card says how
+many lines arrived and what its button does, and only **Load their code** puts them in the editor —
+at which point they are this lesson's draft like any other edit, and a reload keeps them. That is the
+whole difference between a link that opens a page and a link that quietly overwrites work.
+
+**Verified.** `npm run test:share` is **9 checks** — round trip for a program with emoji, accents and
+CRLF; the URL-safe alphabet and a real `new URL(...).hash` parse; the measured cap on both sides of
+the boundary; stale query (the palette page's `?view=theme`) dropped; fragments read with or without
+their `#`; and eight malformed payloads that must all decode to `null`. Browser step 7g-i-b clicks
+the button, reads the link out of the **real clipboard**, opens it in a second browser with no storage
+of its own, proves the editor is still the starter, presses the card's button, checks the code arrived
+and the card is gone, then reloads to prove it became a draft. `npm run lint` is clean,
+`npm run test:workbench` runs **42 suites**, `npm run check:axe` clears 11 tabs × 3 palettes,
+`check_all.py` is 29/29, and the build is **958.1 kB** gzipped (+1.6 kB), every budget intact.
+
 ## [2026-10-22] — Run 169: A Palette for the Reader Who Asked
 
 `docs/PLAN-2.0-GAP.md` had one accessibility row left holding a plain gap: *"No high-contrast

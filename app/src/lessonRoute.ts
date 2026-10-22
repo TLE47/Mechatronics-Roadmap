@@ -11,12 +11,16 @@ import { PYTHON_LESSONS } from './data/pythonLessonsData';
 
 export const LESSON_QUERY_KEY = 'lesson';
 
+/** True when the runner lists a lesson by that id — the check every address and link goes through. */
+export function isKnownLesson(id: string | null | undefined): boolean {
+  return !!id && PYTHON_LESSONS.some((lesson) => lesson.id === id);
+}
+
 /** The id in a query string, or null when it is absent or names nothing the runner lists. */
 export function lessonIdFromSearch(search: string): string | null {
   const wanted = new URLSearchParams(search).get(LESSON_QUERY_KEY);
   if (!wanted) return null;
-  const found = PYTHON_LESSONS.find((lesson) => lesson.id === wanted);
-  return found ? found.id : null;
+  return isKnownLesson(wanted) ? wanted : null;
 }
 
 /**

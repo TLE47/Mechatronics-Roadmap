@@ -100,7 +100,8 @@ import { useTheme } from './useTheme';
 import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
-import { lessonIdFromLocation } from './lessonRoute';
+import { isKnownLesson, lessonIdFromLocation } from './lessonRoute';
+import { readSharedAttempt, type SharedAttempt } from './shareLink';
 import { readLastLessonId, lessonOffer } from './lastLesson';
 import { editedLines, readDraft } from './lessonDraft';
 import { draftProgress } from './lessonCoach';
@@ -826,8 +827,17 @@ export const App: React.FC = () => {
   // list is ignored rather than shown as an empty editor. With no query string the workbench reopens
   // the lesson the learner was last on (`src/lastLesson.ts`), and only then falls back to P.1 - the
   // address is the deliberate pick, storage is the ordinary one, and both are validated by id.
+  // A share link carries someone's attempt in the fragment (`src/shareLink.ts`). It is read once,
+  // offered by the runner as a card, and never applied by itself: the learner's draft is the work,
+  // and a link opening a page should not be able to replace it. An id the runner does not list is
+  // dropped rather than trusted, the same rule the query string follows.
+  const [sharedAttempt, setSharedAttempt] = useState<SharedAttempt | null>(() => {
+    if (typeof window === 'undefined' || !window.location) return null;
+    const attempt = readSharedAttempt(window.location.hash || '');
+    return attempt && isKnownLesson(attempt.lesson) ? attempt : null;
+  });
   const [pyodideLessonId, setPyodideLessonId] = useState<string>(
-    () => lessonIdFromLocation() ?? readLastLessonId() ?? 'P.1'
+    () => lessonIdFromLocation() ?? sharedAttempt?.lesson ?? readLastLessonId() ?? 'P.1'
   );
 
   // A deep link is a promise about the editor being on screen, so land on it rather than on the
@@ -1226,6 +1236,8 @@ export const App: React.FC = () => {
               onOpenRoadmap={handleOpenRoadmap}
               runRequest={runRequest}
               lessonRequest={lessonRequest}
+              sharedAttempt={sharedAttempt}
+              onDismissShared={() => setSharedAttempt(null)}
             />
           </div>
         )}
