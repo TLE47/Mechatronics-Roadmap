@@ -63,6 +63,15 @@ export interface PythonEditorProps {
    */
   onRunCell?: (index: number) => void;
   /**
+   * Read the keys as Vim: normal mode, insert mode, `dd`, `u`, the lot.
+   *
+   * Only the main editor takes it. A read-only helper is a file the learner is looking at rather than
+   * writing, and the plugin's whole vocabulary of edits would be a vocabulary of refusals there.
+   */
+  vimMode?: boolean;
+  /** The mode the plugin is in, as it changes: `normal`, `insert`, `visual line` (`vimMode.ts`). */
+  onVimMode?: (mode: string) => void;
+  /**
    * The line to put the cursor on when this editor mounts.
    *
    * Used when a jump lands in the *other* file: the tab switch unmounts one editor and mounts the

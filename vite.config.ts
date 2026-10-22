@@ -36,6 +36,12 @@ export default defineConfig(({ command }) => ({
           if (/node_modules\/(@codemirror|@lezer|crelt|style-mod|w3c-keyname)\//.test(id)) {
             return 'vendor-editor';
           }
+          // Vim is 41 kB gzipped of keymap nobody pays for unless they turn the keys on, so it gets
+          // its own chunk *and* is imported dynamically (`pythonEditorImpl.tsx`). Chunking it with
+          // `@codemirror` would have put it in front of every learner who opens the editor, and the
+          // catch-all `vendor` chunk is statically reachable from the entry, which is what put
+          // 149 kB of CodeMirror back in `entry_gzip` the first time this was built.
+          if (/node_modules\/@replit\//.test(id)) return 'vendor-vim';
           if (/node_modules\/katex\//.test(id)) return 'vendor-katex';
           if (/node_modules\/lucide-react\//.test(id)) return 'vendor-icons';
           return 'vendor';

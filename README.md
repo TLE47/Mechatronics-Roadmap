@@ -191,13 +191,13 @@ npm run test:theme:e2e  # Chromium: the three controls, then all 11 tabs in each
 
 - **`test:theme`** (12 cases, no browser) pins what a reader cannot see: a first visit stores
   nothing and follows `prefers-contrast: more` ahead of `prefers-color-scheme`; the flip is dark ↔
-  light and the contrast button is a real on/off, each labelled with the palette it hands over; a
-  pick in `localStorage['mechalab_theme_v1']` wins from then on; a corrupt key or a private-mode
-  store that throws falls back instead of breaking the shell.
-- **`test:theme:e2e`** drives the header button in Chromium, checks the choice survives a reload and
-  an OS flip, then composites every visible text run in every tab over the backgrounds it actually
-  sits on. It fails below 3:1 and reports anything under its size minimum; the current floor is
-  4.5:1 in dark and light and 7:1 in high contrast, across 36 tab/palette pairs.
+  light, and contrast and paper are each a real on/off, every control labelled with the palette it
+  hands over; a pick in `localStorage['mechalab_theme_v1']` wins from then on; a corrupt key or a
+  private-mode store that throws falls back instead of breaking the shell.
+- **`test:theme:e2e`** drives the header's three controls in Chromium, checks the choice survives a
+  reload and an OS flip, then composites every visible text run in every tab over the backgrounds it
+  actually sits on. It fails below 3:1 and reports anything under its size minimum; the current floor
+  is 4.52:1 in dark, light and paper, 7.04:1 in high contrast, across 48 tab/palette pairs.
 - Add `--warnings` to name the runs between 3:1 and their minimum, or `--screenshots` to write one
   PNG per tab per theme into `.fb-scratch/theme/`.
 

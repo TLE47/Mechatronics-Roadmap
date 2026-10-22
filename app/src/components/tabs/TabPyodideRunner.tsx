@@ -57,6 +57,7 @@ import {
   watchDecision,
   type WatchVerdict,
 } from '../../watchMode';
+import { VIM_LABEL, readVim, vimHint, vimModeLabel, writeVim } from '../../vimMode';
 import { runAnnouncement } from '../../announce';
 import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
 import { inlineValuesFor, readRunValues } from '../../inlineValues';
@@ -104,6 +105,7 @@ import {
   GitCompare,
   Activity,
   Share2,
+  Keyboard,
 } from 'lucide-react';
 
 declare global {
@@ -505,6 +507,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [watchOn, setWatchOn] = useState<boolean>(() => readWatch());
   /** Set for the one run watch mode starts, so the log and the filed versions know it was automatic. */
   const watchRunRef = useRef(false);
+  // Vim keys (see `app/src/vimMode.ts`): a remembered opt-in, and the mode the editor is reading keys
+  // in while it is on — a badge with no mode would be the one question normal mode always raises.
+  const [vimOn, setVimOn] = useState<boolean>(() => readVim());
+  const [vimMode, setVimMode] = useState<string>('normal');
   // A new lesson is a new question: the panel closes, the half-typed guess goes, and the record is
   // read for the lesson now on screen rather than the one just left.
   useEffect(() => {
@@ -2336,6 +2342,25 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
                   </span>
                 </button>
+                {/* Vim keys: a reading preference like watch mode, remembered the same way. Off by
+                    default, because normal mode reads a beginner's first `i` as a command and the
+                    editor would look broken rather than unusual (`app/src/vimMode.ts`). */}
+                <button
+                  onClick={() => {
+                    const next = writeVim(!vimOn);
+                    setVimOn(next);
+                    setVimMode('normal');
+                  }}
+                  aria-pressed={vimOn}
+                  data-testid="btn-vim"
+                  title={vimHint(vimOn)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                    vimOn ? 'text-accent border-accent/60' : 'text-body border-line'
+                  }`}
+                >
+                  <Keyboard className="w-3.5 h-3.5" />
+                  <span>{VIM_LABEL}</span>
+                </button>
                 <button
                   onClick={() => setWatchOn(setWatch(!watchOn))}
                   aria-pressed={watchOn}
@@ -2991,6 +3016,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 ) : (
                   `${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`
                 )}
+                {/* Which mode is reading the keys. A live region, not decoration: with Vim on, a
+                    keystroke that does nothing is correct behaviour, and this is the only place the
+                    screen says which mode it is correct in. */}
+                {vimOn && (
+                  <span
+                    role="status"
+                    data-testid="vim-mode"
+                    title="The mode the editor is reading keys in — Escape for NORMAL, i for INSERT"
+                    className="ml-2 rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em]"
+                    style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
+                  >
+                    {vimModeLabel(vimMode)}
+                  </span>
+                )}
               </span>
             </div>
             {openHelperFile ? (
@@ -3028,6 +3067,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 getAnalysis={getReadyAnalysis}
                 onGoToDefinition={goToDefinition}
                 onRunCell={runCellTo}
+                vimMode={vimOn}
+                onVimMode={setVimMode}
                 initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
               />
             )}

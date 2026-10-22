@@ -972,6 +972,82 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a try-it link opens scratch, runs ungraded, and saves nothing');
 
+    // 5g. Vim keys: off until asked for, remembered when asked, and the badge says which mode is
+    //     reading the keystrokes. Both halves matter — with normal mode on and nothing on screen, a
+    //     learner who types `i` and sees no text would decide the editor is broken
+    //     (`app/src/vimMode.ts`, `pythonEditorImpl.tsx`).
+    assert.equal(await page.getByTestId('vim-mode').count(), 0, 'vim keys must be off until asked for');
+    await page.getByTestId('btn-vim').click();
+    assert.equal(
+      await page.getByTestId('btn-vim').getAttribute('aria-pressed'),
+      'true',
+      'the control must report that the keys are on'
+    );
+    // The plugin is a chunk of its own, fetched on this press: the badge appears when it has arrived.
+    await page.getByTestId('vim-mode').waitFor({ timeout: 15000 });
+    assert.equal((await page.getByTestId('vim-mode').textContent())?.trim(), 'NORMAL');
+    await setEditorCode(page, 'a = 1\nb = 2\nprint(a + b)\n');
+    await page.evaluate(() => window.__mechalabEditors['editor-main'].focus());
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('d');
+    await page.keyboard.press('d');
+    await page.waitForFunction(
+      () => (window.__mechalabEditors['editor-main'].get() ?? '').startsWith('b = 2'),
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      (await getEditorCode(page)).trim(),
+      'b = 2\nprint(a + b)',
+      '`dd` in normal mode must delete the line, not insert the letter'
+    );
+    await page.keyboard.press('i');
+    await page.waitForFunction(
+      () => (document.querySelector('[data-testid="vim-mode"]')?.textContent ?? '').trim() === 'INSERT',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.keyboard.type('x');
+    assert.equal(
+      (await getEditorCode(page)).startsWith('xb = 2'),
+      true,
+      '`i` then a character must insert where the caret is'
+    );
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(
+      () => (document.querySelector('[data-testid="vim-mode"]')?.textContent ?? '').trim() === 'NORMAL',
+      undefined,
+      { timeout: 5000 }
+    );
+    // Remembered: the reload is the whole point of storing it.
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForEditor(page);
+    assert.equal(
+      await page.getByTestId('btn-vim').getAttribute('aria-pressed'),
+      'true',
+      'the choice must survive a reload'
+    );
+    await page.getByTestId('vim-mode').waitFor({ timeout: 15000 });
+    // Off again: the badge goes, and a keystroke is a keystroke. The editor is the same editor — the
+    // document, the caret and the undo history were never rebuilt for the toggle.
+    await page.getByTestId('btn-vim').click();
+    assert.equal(await page.getByTestId('vim-mode').count(), 0, 'turning the keys off must drop the badge');
+    await setEditorCode(page, 'print(1)\n');
+    await page.evaluate(() => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.setCursor(0);
+      editor.focus();
+    });
+    await page.keyboard.type('Z');
+    assert.equal(
+      (await getEditorCode(page)).startsWith('Zprint(1)'),
+      true,
+      'with the keys off, typing must type without a mode to enter'
+    );
+    // Leave the draft where 5f found it: the rest of the suite reads this lesson.
+    await setEditorCode(page, afterScratch);
+    console.log('  ok vim keys: dd deletes, the badge names the mode, and the choice survives a reload');
+
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
     await page.getByTestId('btn-load-solution').click();

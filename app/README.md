@@ -191,6 +191,7 @@ IndexedDB and comes back after a reload.
 | :--- | :--- |
 | `⌘K` / `Ctrl+K` | The command palette: every lesson, exercise, tab and command in one searchable list. `↑`/`↓` move, `↵` opens, `esc` closes. It works while the editor has focus, which is when it is needed. |
 | `⌘↵` / `Ctrl+↵` | Run the open lesson. |
+| `Escape`, then `i` | With **Vim keys** on (the toolbar's `Vim keys` button), normal mode reads `dd`, `u`, `/` and the rest; the badge beside the line count names the mode that is reading them. Off by default, and remembered once turned on ([`src/vimMode.ts`](src/vimMode.ts)). |
 
 [`src/palette.ts`](src/palette.ts) is the whole search (prefix > word-start > substring >
 subsequence, stable order inside a score band) and [`src/paletteCatalog.ts`](src/paletteCatalog.ts)
@@ -446,6 +447,18 @@ The textarea is gone: [`PythonEditor.tsx`](src/components/PythonEditor.tsx) moun
 `Tab`/`Shift-Tab` indent, and completion from **Jedi** with the keyword list as its fallback). The
 colours come from the app's tokens ([`editor/theme.ts`](src/editor/theme.ts)), so light mode is not a
 second editor theme.
+
+**Vim keys are one press away, and one chunk away.** The `Vim keys` control installs
+[`@replit/codemirror-vim`](https://github.com/replit/codemirror-vim) — the CM5 Vim emulation ported to
+CM6, `dd`, `ciw`, visual blocks and all — into a **compartment of the existing editor state**, so
+turning it on or off never mounts a second editor: the document, the caret and the undo history are
+the ones that were there. It is off by default (normal mode would read a beginner's first `i` as a
+command) and remembered once asked for; the badge beside the line count prints `NORMAL`, `INSERT` or
+`VISUAL LINE`, because a mode nothing on screen names is the shape of a broken editor. The package is
+39 kB gzipped and **dynamically imported** into its own `vendor-vim` chunk, so a visitor who never
+presses the button never downloads it — which is also what kept `entry_gzip` at 446 kB when the
+static import first pulled 149 kB of CodeMirror back into the preload list (`docs/weight-budget.json`).
+The Emacs-style line motions (`Ctrl-a/e/f/b/n/p`) were already in CodeMirror's default keymap.
 
 **The editor knows Python, because the interpreter is already there.** `math.` offers `acos` with its
 signature (`acos(x: SupportsFloat, /) -> float`) and the docstring beside it; hovering a name opens a

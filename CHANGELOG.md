@@ -11,6 +11,39 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 177: Vim Keys, in a Chunk Nobody Downloads
+
+`docs/PLAN-2.0-GAP.md`'s theme row ended with *"No keymap (Vim/Emacs)"*, and CodeMirror's default already
+carries the emacs-style line motions, so the real gap was Vim. It ships as a **remembered toggle in the
+runner's toolbar** and a badge beside the line count
+([`app/src/vimMode.ts`](app/src/vimMode.ts), [`app/src/components/pythonEditorImpl.tsx`](app/src/components/pythonEditorImpl.tsx)):
+
+| Decision | Why |
+| :--- | :--- |
+| [`@replit/codemirror-vim`](https://github.com/replit/codemirror-vim) rather than a hand-written subset | It is the CM5 Vim emulation ported to CM6 — `dd`, `ciw`, visual blocks, registers, `:` commands. A subset would be a different editor half the time, and a learner's muscle memory is the one thing this cannot get wrong |
+| The plugin lives in a **compartment of the editor's own state** | The toggle reconfigures the editor instead of mounting a second one: the document, the caret and the undo history survive it |
+| Off by default; remembered once asked for | Normal mode reads a beginner's first `i` as a command. A first visit that opened in it would look like a broken editor, not an unusual one |
+| A badge printing `NORMAL` / `INSERT` / `VISUAL LINE` | A mode nothing on screen names is the same broken editor, one keystroke later. It is a live region, so a screen reader hears the mode too — and `UNAVAILABLE` when the chunk could not be fetched, rather than a badge claiming keys that are not there |
+| A **dynamic import** into its own `vendor-vim` chunk | 39 kB gzipped that only the learner who presses the button pays for |
+
+**The weight lesson is the interesting part.** The first build imported the package statically, inside the
+lazily loaded editor chunk — which is already off the entry's preload list. It cost **+189 kB of
+`entry_gzip`** anyway: `@replit/*` fell into the catch-all `vendor` chunk, that chunk *is* statically
+reachable from the entry, and `vendor` now imported `@codemirror/*` — so 149 kB of CodeMirror and two
+other chunks went back into a first paint that had spent three runs getting them out. `vite.config.ts`
+gives the package its own chunk and the editor imports it with `import()`, so the first paint is back to
+**446.0 kB** (+0.6 kB) and nothing is fetched until the keys are turned on. `js_gzip` — which counts every
+emitted byte, fetched or not — moved to 700 kB with that reason in `docs/weight-budget.json`.
+
+Pinned by `npm run test:vim` (7: off with no storage, the stored value read back, a foreign value read as
+off, throwing storage costing the memory and not the toggle, and the mode word for absent, unknown and
+two-word modes) and browser step 5g: `dd` deletes the line rather than inserting the letter, `i` then a
+keystroke inserts, the badge follows both, the choice survives a reload, and turning it off leaves an
+editor that types again.
+
+Verified: test:vim 7/7, 48 workbench suites, check_all 29/29, axe 11 tabs × 4 palettes, browser E2E
+(all steps incl. 5g), lint clean, weight 1.00 MB in 34 files (entry 446.0 kB, js 686.2 kB of 700 kB).
+
 ## [2026-10-22] — Run 176: A Paper Palette, and a Fourth Palette Measured
 
 `docs/PLAN-2.0-GAP.md`'s theme row ended with one sentence: *"No paper theme."* Dark is a bench

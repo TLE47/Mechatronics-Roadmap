@@ -17,6 +17,7 @@
 
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
@@ -34,7 +35,7 @@ import {
   startCompletion,
   type CompletionSource,
 } from '@codemirror/autocomplete';
-import { EditorState } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
 import {
   drawSelection,
   dropCursor,
@@ -67,6 +68,23 @@ function revealLine(view: EditorView, line: number): void {
   const target = view.state.doc.line(number);
   view.dispatch({ selection: { anchor: target.from }, scrollIntoView: true });
   view.focus();
+}
+
+type VimModule = typeof import('@replit/codemirror-vim');
+
+/**
+ * The Vim plugin, fetched the first time somebody asks for the keys and never before.
+ *
+ * It is 41 kB gzipped — a full Vim emulation is not a small keymap — and it is **off by default**, so
+ * a static import would charge every learner who opens the editor for a feature most of them will never
+ * turn on. The import lands in its own chunk (`vite.config.ts`, `vendor-vim`), which is not in the
+ * entry's preload list, so a visit that never enables it never fetches it. One promise per page: a
+ * second enable reuses the module the first one loaded.
+ */
+let vimModule: Promise<VimModule> | null = null;
+function loadVim(): Promise<VimModule> {
+  vimModule ??= import('@replit/codemirror-vim');
+  return vimModule;
 }
 
 /** `useLayoutEffect` on the browser, `useEffect` during SSR: React warns about the former on a server. */
@@ -144,7 +162,21 @@ declare global {
  */
 export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps>(
   function PythonEditorImpl(
-    { value, onChange, readOnly = false, ariaLabel, testId, onSliderCommit, getAnalysis, className, onGoToDefinition, onRunCell, initialLine },
+    {
+      value,
+      onChange,
+      readOnly = false,
+      ariaLabel,
+      testId,
+      onSliderCommit,
+      getAnalysis,
+      className,
+      onGoToDefinition,
+      onRunCell,
+      vimMode = false,
+      onVimMode,
+      initialLine,
+    },
     ref
   ) {
     const hostRef = useRef<HTMLDivElement | null>(null);
@@ -165,6 +197,44 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     onSliderRef.current = onSliderCommit;
     onDefinitionRef.current = onGoToDefinition;
     onRunCellRef.current = onRunCell;
+    // The Vim mode word, reported upward as it changes: the badge the learner reads is the runner's
+    // (`app/src/vimMode.ts`), and this file only knows what the plugin says the mode is.
+    const onVimModeRef = useRef(onVimMode);
+    onVimModeRef.current = onVimMode;
+    // The plugin rides in a compartment of the editor's own state, so the toggle is a reconfigure
+    // rather than a second editor: the document, the undo history and the caret survive it.
+    const vimSlot = useRef(new Compartment());
+    /** Whether the plugin is installed in the state right now: the module load is asynchronous. */
+    const vimApplied = useRef(false);
+    /** This editor's subscription to `vim-mode-change`, so a re-enable does not add a second one. */
+    const vimSub = useRef<{ off: () => void } | null>(null);
+
+    /**
+     * Listen to the Vim plugin's mode, and report the one it opens in.
+     *
+     * `getCM(view)` is the plugin's CM5 facade and `vim-mode-change` is the event CM5's Vim emits; the
+     * word that comes out of it is what the runner's badge prints. One subscription per enable —
+     * `detachVim` runs before the compartment is reconfigured, because the plugin (and its facade) are
+     * replaced when it is.
+     */
+    const attachVim = useCallback((view: EditorView, mod: VimModule) => {
+      const cm = mod.getCM(view);
+      if (!cm) return;
+      const report = (event: { mode?: string; subMode?: string }) => {
+        const mode = [event?.mode, event?.subMode].filter(Boolean).join(' ');
+        onVimModeRef.current?.(mode || 'normal');
+      };
+      cm.on('vim-mode-change', report);
+      vimSub.current = { off: () => cm.off('vim-mode-change', report) };
+      // A fresh editor starts in normal mode; the plugin says nothing until the first change.
+      onVimModeRef.current?.('normal');
+    }, []);
+
+    const detachVim = useCallback(() => {
+      vimSub.current?.off();
+      vimSub.current = null;
+      vimApplied.current = false;
+    }, []);
 
     useImperativeHandle(
       ref,
@@ -194,6 +264,10 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       const state = EditorState.create({
         doc: value,
         extensions: [
+          // The Vim plugin's slot, empty until the module has loaded and the keys were asked for:
+          // it sits before every other keymap, which is what the package's README asks for (in
+          // normal mode it has to see the key first). `vimMode` arrives asynchronously below.
+          vimSlot.current.of([]),
           lineNumbers(),
           highlightActiveLineGutter(),
           highlightActiveLine(),
@@ -324,6 +398,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       window.__mechalabEditors = { ...(window.__mechalabEditors ?? {}), [testId]: bridge };
 
       return () => {
+        detachVim();
         view.dom.removeEventListener(CELL_RUN_EVENT, onCellRun);
         view.destroy();
         viewRef.current = null;
@@ -334,6 +409,41 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       // The document is synced by the effect below; mounting once per editor instance is the point.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [testId, readOnly, ariaLabel]);
+
+    // The Vim preference changed: reconfigure this editor instead of mounting another one, so the
+    // document, the undo history and the caret survive the toggle. Also runs on mount, which is how a
+    // remembered `on` reaches an editor whose state was created before the plugin had loaded.
+    useEffect(() => {
+      const view = viewRef.current;
+      if (!view || vimApplied.current === vimMode) return;
+      detachVim();
+      // Turning it off is synchronous: the plugin is already in memory, and there is nothing to load.
+      if (!vimMode) {
+        view.dispatch({ effects: vimSlot.current.reconfigure([]) });
+        // Nothing to read any more: the runner drops its badge on this word.
+        onVimModeRef.current?.('');
+        return;
+      }
+      let cancelled = false;
+      void loadVim()
+        .then((mod) => {
+          // Off again before the chunk arrived, or this editor is gone: the wish was withdrawn.
+          if (cancelled || !viewRef.current) return;
+          vimApplied.current = true;
+          view.dispatch({ effects: vimSlot.current.reconfigure(mod.vim()) });
+          // Read after the dispatch: the plugin builds its CM5 facade when it is installed.
+          attachVim(view, mod);
+        })
+        .catch((error: unknown) => {
+          // A chunk that never arrived (offline, or a deploy that replaced the file). The editor is
+          // unchanged and still works; the badge says the keys are not there rather than pretending.
+          console.warn('The Vim keymap could not be loaded; the editor keeps its plain keys.', error);
+          if (!cancelled) onVimModeRef.current?.('unavailable');
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [vimMode, attachVim, detachVim]);
 
     // External changes: a different lesson, Load Solution, Reset starter. The learner's own keystrokes
     // arrive here too and are already equal to the document, so nothing is dispatched twice.
