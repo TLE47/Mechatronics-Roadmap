@@ -47,6 +47,8 @@ import {
 } from '@codemirror/view';
 import { pythonEditorTheme } from '../editor/theme';
 import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
+import { applyInlineValues, inlineValueField } from '../editor/inlineWidget';
+import type { InlineValueAt } from '../inlineValues';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
 import { markPaintReady } from '../paintTiming';
@@ -122,6 +124,8 @@ declare global {
          * harness rather than of the card that opens.
          */
         coordsOf: (pos: number) => { left: number; top: number; bottom: number } | null;
+        /** The inline values currently drawn, read from the widgets themselves. */
+        inlineValues: () => { name: string; value: string }[];
       }
     >;
   }
@@ -165,6 +169,10 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
         revealLine: (line: number) => {
           const view = viewRef.current;
           if (view) revealLine(view, line);
+        },
+        setInlineValues: (entries: InlineValueAt[]) => {
+          const view = viewRef.current;
+          if (view) applyInlineValues(view, entries);
         },
       }),
       [value]
@@ -216,6 +224,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           python(),
           pythonEditorTheme,
           sliderField,
+          inlineValueField,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onChangeRef.current?.(update.state.doc.toString());
             if (update.transactions.some((tr) => tr.annotation(sliderAnnotation))) {
@@ -259,6 +268,11 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           const coords = view.coordsAtPos(clamped);
           return coords ? { left: coords.left, top: coords.top, bottom: coords.bottom } : null;
         },
+        inlineValues: () =>
+          [...view.dom.querySelectorAll<HTMLElement>('.cm-inline-value')].map((element) => ({
+            name: element.dataset.inlineName ?? '',
+            value: element.dataset.inlineValue ?? '',
+          })),
       };
       window.__mechalabEditors = { ...(window.__mechalabEditors ?? {}), [testId]: bridge };
 

@@ -66,6 +66,7 @@
     "test:watch": "node --experimental-strip-types scripts/test_watch.mjs",
     "test:announce": "node --experimental-strip-types scripts/test_announce.mjs",
     "test:share": "node --experimental-strip-types scripts/test_sharelink.mjs",
+    "test:inline": "node --experimental-strip-types scripts/test_inline_values.mjs",
     "test:history": "node --experimental-strip-types scripts/test_draft_history.mjs",
     "test:scope": "node --experimental-strip-types scripts/test_scope.mjs",
     "test:checkhints": "node --experimental-strip-types scripts/test_check_hints.mjs",

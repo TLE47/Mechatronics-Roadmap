@@ -110,6 +110,18 @@ export const pythonTheme = EditorView.theme(
       marginTop: '5px',
       whiteSpace: 'pre-wrap',
     },
+    // Inline values (`inlineWidget.ts`): a note about the line, not a verdict on it — muted ink,
+    // a hairline rule above so it reads as an annotation, and no border to compete with the code.
+    '.cm-inline-value': {
+      marginLeft: '0.75rem',
+      paddingLeft: '0.4rem',
+      borderLeft: '2px solid var(--border)',
+      color: 'var(--muted)',
+      fontStyle: 'italic',
+      fontSize: '11.5px',
+      whiteSpace: 'pre',
+      userSelect: 'text',
+    },
     '.cm-searchMatch': { backgroundColor: 'color-mix(in srgb, var(--amber) 26%, transparent)' },
     '.cm-panels': { backgroundColor: 'var(--panel)', color: 'var(--text)' },
     '.cm-slider-row': {

@@ -11,6 +11,42 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 171: The Numbers Beside the Code
+
+`docs/PLAN-2.0-GAP.md`'s editor row had one half left: *"Inline values"*. It is the difference between
+a run you read and a run you can see the state of: `v = 3.2` on screen and `v` three lines later is a
+number nobody should have to hold in their head. After a run that **finished**, the workbench now draws
+what that run bound at the end of the line that bound it ([`app/src/inlineValues.ts`](app/src/inlineValues.ts),
+[`app/src/editor/inlineWidget.ts`](app/src/editor/inlineWidget.ts), `npm run test:inline`).
+
+**The line is the last top-level assignment, and that is a real choice.** The obvious rule — draw the
+value where the name is assigned — is wrong for the most ordinary loop in the course: `err = 0` inside
+`for _ in range(200)` runs two hundred times, so one chip there would claim a history the line does not
+have. A nested assignment is therefore not a home; the top-level one that opened the loop is, and it
+shows the value as of the end of the run, which is what "inline values" means in a notebook too.
+Containers and `numpy` floats come through the same path: the worker's `repr` is flattened to one line
+and cut at **48 characters**, so a list of four hundred samples is a chip that says how long it was
+rather than a wall of text.
+
+**Filtered in the worker, validated in the client.** Functions, classes, modules and dunders are
+skipped before anything is sent — a chip reading `<module 'math'>` is noise, and shipping a namespace
+of imports on every run is weight for nothing. The client does not trust the payload either: it
+re-checks the shape, drops anything that is not a number or string, sorts by line, and re-cuts a long
+value with its own ellipsis (`npm run test:inline`, **7 checks** independent of the worker).
+
+**Stale is drawn as nothing.** The values belong to the text that ran, so the first edit clears every
+chip — a number next to a line that has since changed is worse than no number — and a **stopped** or
+timed-out run draws none at all, because a namespace frozen half-way through a loop describes a program
+that was interrupted, not one that finished. The widget is a `StateField` on the doc end-of-line (block
+decorations from a field, not a plugin) and reuses its DOM across value changes, so a re-run does not
+blink the layout it is describing.
+
+**Verified.** Browser step 5b in `scripts/e2e_browser_workbench.mjs` runs a snippet, asserts the chips
+appear beside the right lines with the right text, then types one character and asserts they are gone.
+`npm run lint` is clean, `npm run test:workbench` runs **43 suites** on one dev server and one built
+bundle, `npm run check:axe` clears 11 tabs × 3 palettes, `check_all.py` is 29/29, and the build is
+**959.3 kB** gzipped (+1.2 kB), every budget intact.
+
 ## [2026-10-22] — Run 170: Send Someone the Attempt, Not a Screenshot
 
 `docs/PLAN-2.0-GAP.md` listed *share links, "ask for help", pair study* as one missing row. The moment

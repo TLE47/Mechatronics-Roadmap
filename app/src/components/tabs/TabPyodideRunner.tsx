@@ -59,6 +59,7 @@ import {
 } from '../../watchMode';
 import { runAnnouncement } from '../../announce';
 import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
+import { inlineValuesFor, readRunValues } from '../../inlineValues';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
@@ -1127,6 +1128,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       if (workerOutcome?.stopped) {
         // The interpreter was interrupted, not killed: it is still loaded for the next Run.
         setStdinPrompt(null);
+        // No values: a stopped run is not a finished one, and a half-filled namespace drawn as if it
+        // were an answer is worse than no answer.
+        guideEditorRef.current?.setInlineValues([]);
         if (workerOutcome?.stdout) setStdout(String(workerOutcome.stdout));
         setStderr(String(workerOutcome.stderr || 'Execution stopped by user.'));
         setBehaviorCheck('failed');
@@ -1135,6 +1139,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       }
 
       if (workerOutcome?.watchdogTimedOut || workerOutcome?.timedOut) {
+        guideEditorRef.current?.setInlineValues([]);
         if (workerOutcome?.stdout) setStdout(workerOutcome.stdout);
         setStderr(workerOutcome.message || workerOutcome.stderr || 'Execution timed out.');
         setBehaviorCheck('failed');
@@ -1154,6 +1159,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       const actualErr: string = String(workerOutcome?.stderr || '').trim();
       setStdout(actualOut);
       setStderr(actualErr);
+      // Inline values: what this run left each top-level name holding, drawn beside the line that
+      // bound it. Joined against `sourceCode` — the text the run executed, a snapshot — because the
+      // editor may have changed since, and a value must sit next to the line that produced it.
+      guideEditorRef.current?.setInlineValues(
+        inlineValuesFor(sourceCode, readRunValues(workerOutcome?.inlineValues)),
+      );
       // A capstone is graded by its harness, not only by its printed lines. A number that misses its
       // target keeps its real value on the card *and* keeps the lesson unverified; `null` means the
       // harness never reported, which is unproven rather than a pass.

@@ -693,12 +693,56 @@ def __mechalab_execute():
     return ns, student_err, timed_out, stopped
 
 __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_stopped__ = __mechalab_execute()
+
+# Inline values: what this run left each top-level name holding. Captured here, from the namespace the
+# run itself returned, because a value read later would belong to a later attempt. Functions, classes,
+# modules and dunders are skipped (a name is only worth drawing when it holds data), and a long repr is
+# cut to the width the editor draws.
+import json as __mechalab_json__
+
+def __mechalab_inline_values(namespace):
+    import types
+    skip = (
+        types.ModuleType,
+        types.FunctionType,
+        types.BuiltinFunctionType,
+        types.MethodType,
+        type,
+    )
+    collected = []
+    for value_name, bound in list(namespace.items()):
+        if value_name.startswith("_") or isinstance(bound, skip):
+            continue
+        try:
+            text = repr(bound)
+        except Exception:
+            continue
+        if len(text) > 48:
+            text = text[:45] + "..."
+        collected.append({"name": value_name, "value": text})
+    return collected[-16:]
+
+try:
+    __mechalab_inline_json__ = __mechalab_json__.dumps(__mechalab_inline_values(__mechalab_ns__))
+except Exception:
+    __mechalab_inline_json__ = "[]"
 `;
 
       await py.runPythonAsync(runnerHarness);
       const studentErr = py.globals.get('__mechalab_student_err__') || '';
       const timedOut = Boolean(py.globals.get('__mechalab_timed_out__'));
       const stopped = Boolean(py.globals.get('__mechalab_stopped__'));
+      // Parsed once, attached to every verdict: a failed run's values are the ones the learner needs
+      // most, and they are still this run's own.
+      const inlineValues = (() => {
+        try {
+          const raw = py.globals.get('__mechalab_inline_json__');
+          const parsed = raw ? JSON.parse(String(raw)) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      })();
 
       captureEnabled = false;
       const stdoutText = capturedOut.join('\n').trim();
@@ -715,6 +759,7 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_st
           runtimeError: false,
           instructorPassed: false,
           instructorError: '',
+          inlineValues,
         });
         return;
       }
@@ -729,6 +774,7 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_st
           runtimeError: false,
           instructorPassed: false,
           instructorError: '',
+          inlineValues,
         });
         return;
       }
@@ -756,6 +802,7 @@ __mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_st
           instructorPassed: false,
           instructorError: '',
           bench: earlyBench,
+          inlineValues,
         });
         return;
       }
@@ -822,6 +869,7 @@ __mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
         instructorPassed,
         instructorError,
         bench: benchReport,
+        inlineValues,
       });
     } catch (err) {
       const message = err && err.message ? err.message : String(err);

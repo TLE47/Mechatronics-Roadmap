@@ -674,6 +674,52 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'a passing run must announce its verdict first'
     );
 
+    // 5b. Inline values: the names the run bound, drawn beside the line that bound them. The values
+    //     come from the run's own namespace, so they cannot be from an earlier attempt, and they
+    //     belong to the *last* top-level assignment (the one still holding a value when it ended).
+    await page.waitForFunction(
+      () => window.__mechalabEditors['editor-main'].inlineValues().length > 0,
+      undefined,
+      { timeout: 5000 }
+    );
+    const inlineValues = await page.evaluate(() =>
+      window.__mechalabEditors['editor-main'].inlineValues()
+    );
+    const byName = Object.fromEntries(inlineValues.map((entry) => [entry.name, entry.value]));
+    // P.6's solution computes two distances with a function and imports `math`.
+    assert.equal(
+      byName.d1,
+      '5.0',
+      `the value drawn must be the one this run computed (got ${JSON.stringify(byName)})`
+    );
+    assert.equal(byName.d2, '1.0', 'both computed names must be drawn');
+    assert.equal(
+      byName.distance_2d,
+      undefined,
+      'a function is not data: it has no value to draw beside its definition'
+    );
+    assert.equal(byName.math, undefined, 'an imported module is not a value either');
+    assert.equal(
+      inlineValues.length,
+      Object.keys(byName).length,
+      'one chip per name: the last binding, not one per assignment line'
+    );
+    assert.equal(
+      await page.evaluate(() =>
+        document.querySelectorAll('.cm-inline-value[data-inline-name="d1"]').length
+      ),
+      1,
+      'the chip must be drawn in the document, with its name on the element'
+    );
+    // An edit makes the values describe code that is gone, so the editor clears them itself.
+    await setEditorCode(page, `${await getEditorCode(page)}\n# edit\n`);
+    await page.waitForFunction(
+      () => window.__mechalabEditors['editor-main'].inlineValues().length === 0,
+      undefined,
+      { timeout: 5000 }
+    );
+    console.log('  ok a run draws its values beside their lines, and an edit clears them');
+
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
     await page.getByTestId('btn-load-solution').click();
@@ -2162,7 +2208,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, inline values drawn then cleared by an edit, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
     );
   } finally {
     await browser.close();

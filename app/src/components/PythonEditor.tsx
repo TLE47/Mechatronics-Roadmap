@@ -22,6 +22,7 @@
 
 import React, { Suspense, forwardRef } from 'react';
 import type { AnalysisSession } from '../analysisClient';
+import type { InlineValueAt } from '../inlineValues';
 
 /** The imperative surface the runner (and the browser suites) need. */
 export interface PythonEditorHandle {
@@ -30,6 +31,11 @@ export interface PythonEditorHandle {
   setValue: (text: string) => void;
   /** Put the cursor at the start of a 1-based line and scroll it into view. */
   revealLine: (line: number) => void;
+  /**
+   * Draw the values a run left beside their assignment lines; `[]` clears them. The editor clears
+   * them itself on the next edit, because a value describes one run of one document.
+   */
+  setInlineValues: (entries: InlineValueAt[]) => void;
 }
 
 export interface PythonEditorProps {

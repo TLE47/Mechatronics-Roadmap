@@ -46,6 +46,7 @@ npm run test:runtime                    # the worker: in-place Stop, input(), is
 npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:share                      # the share link: round trip, the URL-safe alphabet, the measured cap, every malformed fragment
+npm run test:inline                     # inline values: which lines bind, which value belongs where, the payload's validation
 npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes
 npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped and evicted, merged on restore
 npm run test:review                     # FSRS-5: the 0.9-at-stability identity, grade order, lapses, the year cap, and the card join

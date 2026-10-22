@@ -486,6 +486,17 @@ text into Pyodide's filesystem ([`TabPyodideRunner.tsx`](src/components/tabs/Tab
 so `from mechalab_plant import simulate_arm` works exactly as it would locally - and the learner can
 read what the import is doing without being able to break it.
 
+**After a run, the names show what they hold.** A completed run sends back the namespace it returned —
+functions, classes, modules and dunders filtered out, each `repr` cut to 48 characters — and the
+editor draws each value at the end of the line that bound it, muted and italic so it reads as a note
+about the line rather than a verdict on it ([`src/inlineValues.ts`](src/inlineValues.ts),
+[`src/editor/inlineWidget.ts`](src/editor/inlineWidget.ts), `npm run test:inline`). Three choices keep
+it honest: the value is the **last top-level assignment** for that name (a line inside a loop or a
+function runs many times, so it is not a home for one value); the values come from **the run's own
+namespace**, so a stale number from an earlier attempt is impossible; and **any edit clears them**,
+because the numbers then describe code that is no longer on screen. A stopped or timed-out run draws
+none — a half-filled namespace presented as an answer is worse than no answer.
+
 **Sliders are a comment on a number.**
 
 ```python
@@ -716,6 +727,7 @@ npm run test:trailreading    # the same trail read for advice: a resisting lesso
 npm run test:paint          # the first paint as a reading: one sample per visit, medians, the export shape
 npm run test:weight          # the weight budget's rules: the boundary, an unmeasured metric, the tightest
 npm run test:share           # the share link: round trips, the URL-safe alphabet, the measured cap, every malformed fragment
+npm run test:inline          # inline values: top-level bindings only, the last binding, payload validation, the cut
 npm run check:axe            # axe over all 11 tabs in every palette; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
