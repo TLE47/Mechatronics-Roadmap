@@ -24,6 +24,7 @@ import {
   formatHeadroom,
   formatUsed,
   measurementFrom,
+  staleSources,
 } from './weight_budget.mjs';
 
 let passed = 0;
@@ -110,6 +111,60 @@ check('a metric that is not in the budget list is ignored rather than invented',
   const report = compareBudgets({ ...fits, pyodide_wasm: 9_000_000 }, budget);
   assert.equal(report.rows.some((row) => row.metric === 'pyodide_wasm'), false);
   assert.equal(report.breaches.length, 0, 'the runtime the worker fetches is not in the shell budget');
+});
+
+console.log('\nbuild staleness');
+
+// Run 165 quoted a weight that was measured against a `dist/` from before the features under test.
+// A build older than its own sources is the one state that makes every budget a lie, so the rule has
+// its own checks rather than being a line nobody exercises.
+const SRC = (over) => ({
+  path: 'app/src/main.tsx',
+  mtimeMs: 1_000,
+  ...over,
+});
+const OUT = (over) => ({ path: 'dist/assets/index-abc.js', mtimeMs: 2_000, ...over });
+
+check('a build newer than every source is fresh', () => {
+  assert.deepEqual(staleSources([SRC()], [OUT()]), []);
+  assert.deepEqual(
+    staleSources([SRC({ mtimeMs: 1_999 }), SRC({ path: 'app/index.html' })], [OUT()]),
+    [],
+    'nothing newer than the build is a fresh build'
+  );
+});
+
+check('a source newer than the build makes it stale, and the newest is named first', () => {
+  const stale = staleSources(
+    [SRC({ path: 'app/src/watchMode.ts', mtimeMs: 3_000 }), SRC({ mtimeMs: 5_000 }), SRC({ mtimeMs: 1_500 })],
+    [OUT()]
+  );
+  assert.deepEqual(
+    stale.map((file) => file.path),
+    ['app/src/main.tsx', 'app/src/watchMode.ts'],
+    'expected exactly the sources the build predates, newest first'
+  );
+});
+
+check('the newest output is the build; one fresh asset covers the rest', () => {
+  const outputs = [OUT({ path: 'dist/index.html', mtimeMs: 2_000 }), OUT({ mtimeMs: 4_000 }) ]; 
+  assert.deepEqual(
+    staleSources([SRC({ mtimeMs: 3_000 })], outputs),
+    [],
+    'a copy written late in the build is still the build'
+  );
+});
+
+check('an equal timestamp is fresh: a one-second filesystem must not flake', () => {
+  assert.deepEqual(staleSources([SRC({ mtimeMs: 2_000 })], [OUT({ mtimeMs: 2_000 })]), []);
+});
+
+check('nothing built at all reads every source as stale', () => {
+  assert.equal(staleSources([SRC(), SRC({ path: 'app/index.html' })], []).length, 2);
+});
+
+check('no sources (a bare checkout) is not a staleness failure', () => {
+  assert.deepEqual(staleSources([], [OUT()]), []);
 });
 
 console.log('\nweight measurement');

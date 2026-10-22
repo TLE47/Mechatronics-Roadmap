@@ -11,6 +11,41 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 166: A Build Older Than Its Sources
+
+Run 165 ended with a correction rather than a feature: `npm run check:weight` reported 950.3 kB, and
+the number was real but of a `dist/` built before the predict gate and watch mode. A gate that can be
+run against the wrong bytes is not a gate — the stale bundle fits every budget, has the right file
+names, and looks exactly like a pass — so this run makes the byte budget refuse to measure one.
+
+`staleSources` in [`scripts/weight_budget.mjs`](scripts/weight_budget.mjs) is the rule, kept pure:
+**the build is fresh when its newest output is at least as new as every source.** The checker walks
+`app/**`, `vite.config.ts`, `tsconfig.json` and `package.json` (skipping `node_modules` and `tsc`'s
+`.tsbuildinfo`), compares them with the newest file in `dist/`, and on a stale build exits **`2`** —
+the typed family's *nothing to measure* — naming the newest offenders and the two ways forward:
+
+```
+dist/ is older than 1 source file; the bundle on disk is not what the source tree describes, so
+measuring it would report a number for code nobody is shipping. Run `npm run build` first (or
+`--allow-stale` to measure it anyway):
+  app/src/watchMode.ts
+```
+
+Equal timestamps count as fresh, because a filesystem with one-second resolution would otherwise
+flake; a missing `dist/` reports every source as stale rather than as a clean tree; and
+`--allow-stale` still measures an old build on purpose, saying so in the report and in `--json`
+(`stale: [...]`) instead of quietly passing. `--record` inherits the same refusal, which is how a
+wrong number gets written into the budget file in the first place.
+
+**Verified in both states, not argued.** On the checked-out tree the gate passed with 954.4 kB; a
+touched `app/src/watchMode.ts` then made it exit `2` and name that one file, `--allow-stale` passed
+with its banner on the same build, and a rebuild put it back to a clean pass. `npm run test:weight`
+grew from 13 checks to **19**: a fresh build, the newest stale file named first, one fresh asset
+covering the rest of the outputs, the equal-timestamp boundary, nothing built at all, and a bare
+checkout with no sources. The full matrix passes unchanged (**40 suites**), `check_all.py` is 29/29,
+and CI already builds before it measures, which is now a requirement the gate enforces rather than a
+habit it assumes.
+
 ## [2026-10-22] — Run 165: The Checks Run Themselves
 
 The plan's row is "checks as a test runner + watch mode", and the runner half shipped long ago: a run

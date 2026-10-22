@@ -94,6 +94,32 @@ export function compareBudgets(measured, budget) {
 }
 
 /**
+ * Which source files are newer than the build that claims to measure them.
+ *
+ * Why this exists: the gate reads `dist/`, and a `dist/` left over from an earlier checkout is
+ * indistinguishable from a fresh one — it has the right file names, the right shape, and every budget
+ * fits. Run 165 measured 950.3 kB that way: the number was real, it was simply of a build from before
+ * the two features being verified, and it was reported as a pass. A gate that can be run against the
+ * wrong bytes is not a gate.
+ *
+ * The rule is the simplest one that cannot misfire on a legitimate build: **the build is fresh when
+ * its newest output is at least as new as every source**. Copied public files and `tsc`'s own
+ * bookkeeping are outputs or excluded, not sources, so a normal `npm run build && node
+ * scripts/check_weight_budget.mjs` is always fresh. Equal timestamps count as fresh: a filesystem
+ * with one-second resolution would otherwise flake.
+ *
+ * Both lists are `{ path, mtimeMs }` with the checkout-relative path, so this stays file-system-free
+ * and the suite can pin stale, fresh and "nothing built at all".
+ */
+export function staleSources(sources, outputs) {
+  if (!sources.length) return [];
+  const newestOutput = outputs.reduce((newest, file) => Math.max(newest, file.mtimeMs), -Infinity);
+  return sources
+    .filter((file) => file.mtimeMs > newestOutput)
+    .sort((left, right) => right.mtimeMs - left.mtimeMs);
+}
+
+/**
  * The measurement a build produces: totals plus the biggest chunk, from per-file gzip sizes.
  *
  * `entry` is the list of file names `index.html` itself names (its module script, its modulepreloads

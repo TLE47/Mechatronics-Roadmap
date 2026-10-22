@@ -17,15 +17,23 @@
  * `--record` rewrites the `measured` block with today's numbers and prints what moved; the budgets
  * themselves are hand-edited, deliberately, like the accessibility allowlist.
  *
+ * **A stale `dist/` is a failure, not a measurement.** The gate reads what was built, so a bundle
+ * left over from an earlier checkout fits every budget while measuring code nobody is shipping — Run
+ * 165 quoted 950.3 kB from exactly that. The sources are walked and compared with the newest output
+ * (`weight_budget.mjs`'s `staleSources`), and a build older than its own sources exits `2` with the
+ * offending files named. `--allow-stale` is for deliberately re-measuring an old build, and says so in
+ * the report rather than quietly passing.
+ *
  * Usage
  *     npm run build && node scripts/check_weight_budget.mjs
- *     node scripts/check_weight_budget.mjs --json      # machine-readable, stdout only
- *     node scripts/check_weight_budget.mjs --record    # write today's measurement into the file
+ *     node scripts/check_weight_budget.mjs --json        # machine-readable, stdout only
+ *     node scripts/check_weight_budget.mjs --record      # write today's measurement into the file
+ *     node scripts/check_weight_budget.mjs --allow-stale # measure an older build on purpose
  *
  * Exit-code family: typed
  *     0  every metric is within its budget
  *     1  a metric is over its budget, or a budget measures nothing
- *     2  no build to measure (run `npm run build`), or a bad command line
+ *     2  no build to measure, a build older than its sources (run `npm run build`), or a bad command line
  */
 
 import fs from 'node:fs';
@@ -39,6 +47,7 @@ import {
   formatHeadroom,
   formatUsed,
   measurementFrom,
+  staleSources,
 } from './weight_budget.mjs';
 
 const ROOT = process.cwd();
@@ -48,6 +57,36 @@ const BUDGET_FILE = path.join(ROOT, 'docs', 'weight-budget.json');
 const argv = process.argv.slice(2);
 const JSON_OUT = argv.includes('--json');
 const RECORD = argv.includes('--record');
+const ALLOW_STALE = argv.includes('--allow-stale');
+
+/** Everything the bundle is built from, as far as a timestamp can tell. */
+const SOURCE_ENTRIES = ['app', 'vite.config.ts', 'tsconfig.json', 'package.json'];
+const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.fb-scratch']);
+
+/** `{ path, mtimeMs }` for every file under `entries`, skipping dependency and output trees. */
+function sourceMtimes(entries) {
+  const files = [];
+  // A named root is always walked: `dist` is in SKIP_DIRS so a source walk does not descend into a
+  // nested build, and the output walk itself starts at `dist`.
+  const walk = (target, isRoot = false) => {
+    let stat;
+    try {
+      stat = fs.statSync(target);
+    } catch {
+      return;
+    }
+    if (stat.isDirectory()) {
+      if (!isRoot && SKIP_DIRS.has(path.basename(target))) return;
+      for (const child of fs.readdirSync(target)) walk(path.join(target, child));
+      return;
+    }
+    // `tsc -b` writes its bookkeeping next to the sources; it is not what the bundle is made of.
+    if (target.endsWith('.tsbuildinfo')) return;
+    files.push({ path: path.relative(ROOT, target), mtimeMs: stat.mtimeMs });
+  };
+  for (const entry of entries) walk(path.join(ROOT, entry), true);
+  return files;
+}
 
 function log(...args) {
   (JSON_OUT ? console.error : console.log)(...args);
@@ -116,6 +155,20 @@ function main() {
     console.error(`${BUDGET_FILE} is missing; the gate has nothing to compare against`);
     process.exit(2);
   }
+
+  // Before measuring: is this build made of the sources in front of us?
+  const stale = staleSources(sourceMtimes(SOURCE_ENTRIES), sourceMtimes(['dist']));
+  if (stale.length && !ALLOW_STALE) {
+    const named = stale.slice(0, 3).map((file) => `  ${file.path}`).join('\n');
+    console.error(
+      `dist/ is older than ${stale.length} source file${stale.length === 1 ? '' : 's'}; the bundle on ` +
+        `disk is not what the source tree describes, so measuring it would report a number for code ` +
+        `nobody is shipping. Run \`npm run build\` first (or \`--allow-stale\` to measure it anyway):\n` +
+        named
+    );
+    process.exit(2);
+  }
+
   const budgetFile = JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
   const { files, entry } = readAssets(DIST);
   const measured = measurementFrom(files, entry);
@@ -136,8 +189,15 @@ function main() {
   const biggest = [...files].sort((left, right) => right.gzip - left.gzip).slice(0, 5);
 
   if (JSON_OUT) {
-    console.log(JSON.stringify({ measured, rows, biggest, files: files.length }, null, 2));
+    console.log(
+      JSON.stringify(
+        { measured, rows, biggest, files: files.length, stale: stale.map((file) => file.path) },
+        null,
+        2
+      )
+    );
   } else {
+    if (stale.length) log(`  measured on purpose from a build older than ${stale.length} source file(s)`);
     log(`The built bundle: ${files.length} files, first paint from ${entry.length} of them`);
     for (const file of biggest) log(`  ${file.name.padEnd(38)} ${formatBytes(file.gzip).padStart(8)}`);
     log('');
