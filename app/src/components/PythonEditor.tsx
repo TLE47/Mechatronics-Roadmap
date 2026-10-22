@@ -31,6 +31,7 @@ import {
 import { pythonEditorTheme } from '../editor/theme';
 import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
 import { pythonCompletionSource } from '../editor/completions';
+import { analysisHover, analysisSignature } from '../editor/analysisTips';
 import type { AnalysisSession } from '../analysisClient';
 
 /** The imperative surface the runner (and the browser suites) need. */
@@ -110,6 +111,12 @@ declare global {
          * that the list appears and what is in it.
          */
         startCompletion: () => void;
+        /**
+         * Where a document position is on screen, so a browser suite can put the real pointer over
+         * a name. Hover is a mouse gesture CodeMirror owns; a synthetic event would be a test of the
+         * harness rather than of the card that opens.
+         */
+        coordsOf: (pos: number) => { left: number; top: number; bottom: number } | null;
       }
     >;
   }
@@ -177,6 +184,15 @@ export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(fu
         autocompletion({
           override: [pythonCompletionSource(() => analysisRef.current?.() ?? null, pythonCompletions)],
         }),
+        // Hover and signature help read the same session the completion list does, and are only
+        // installed where one can exist: the read-only helper tab passes no `getAnalysis`, and a
+        // hover card over somebody else's file would be a card about the lesson, not the learner's code.
+        ...(getAnalysis
+          ? [
+              analysisHover(() => analysisRef.current?.() ?? null),
+              ...analysisSignature(() => analysisRef.current?.() ?? null),
+            ]
+          : []),
         EditorView.lineWrapping,
         EditorState.readOnly.of(readOnly),
         EditorView.editable.of(!readOnly),
@@ -220,6 +236,11 @@ export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(fu
       startCompletion: () => {
         view.focus();
         startCompletion(view);
+      },
+      coordsOf: (pos: number) => {
+        const clamped = Math.max(0, Math.min(pos, view.state.doc.length));
+        const coords = view.coordsAtPos(clamped);
+        return coords ? { left: coords.left, top: coords.top, bottom: coords.bottom } : null;
       },
     };
     window.__mechalabEditors = { ...(window.__mechalabEditors ?? {}), [testId]: bridge };

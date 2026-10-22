@@ -1,11 +1,13 @@
 /**
- * Asking the Python worker for completions and lint (`app/src/analysisClient.ts`).
+ * Asking the Python worker for completions, lint, hover and signatures (`app/src/analysisClient.ts`).
  *
- * The worker owns the interpreter, so both questions are messages, not imports: `complete` and `lint`
- * go out with a request id and come back as `completions` / `lint`, carrying Jedi's options or
- * pyflakes' messages. Everything here is transport plus the *mapping* rules - what a Jedi type is
- * called in a CodeMirror completion, where the inserted text starts, how a note reads in a sentence -
- * because those are the parts a test can pin without a browser or a 10 MB interpreter.
+ * The worker owns the interpreter, so every question is a message, not an import: `complete`, `lint`,
+ * `hover` and `signature` go out with a request id and come back as `completions` / `lint` / `hover` /
+ * `signature`, carrying Jedi's options, pyflakes' messages, or jedi's definition and call signature.
+ * Everything here is transport plus the *mapping* rules - what a Jedi type is called in a CodeMirror
+ * completion, where the inserted text starts, how a note reads in a sentence, which parameter of a
+ * signature is the active one - because those are the parts a test can pin without a browser or a
+ * 10 MB interpreter.
  *
  * Three rules the code keeps:
  *
@@ -36,6 +38,37 @@ export interface LintNote {
   text: string;
 }
 
+/**
+ * What hover answers: the name under the pointer and what it is.
+ *
+ * `description` is Jedi's definition line (`def acos`, `pi: Final[float]`, `module math`) and is the
+ * part that is always true; `signature` is filled for anything callable. `doc` is empty for a
+ * constant - see the worker's note on why Jedi's docstring there belongs to the type, not the name.
+ */
+export interface HoverInfo {
+  name: string;
+  type: string;
+  description: string;
+  signature: string;
+  doc: string;
+}
+
+/** The call a cursor sits inside, as Jedi describes it. `index` is the active parameter, if any. */
+export interface SignatureInfo {
+  name: string;
+  label: string;
+  index: number | null;
+  params: string[];
+  doc: string;
+}
+
+/** A signature split at the active parameter, so the tooltip can bold the argument being typed. */
+export interface SignatureParts {
+  before: string;
+  active: string;
+  after: string;
+}
+
 export type AnalysisReply<T> =
   | { ok: true; value: T; ms: number }
   | { ok: false; reason: string };
@@ -56,6 +89,9 @@ export interface CompletionRequest extends AnalysisRequest {
   line: number;
   column: number;
 }
+
+/** Hover and signature ask about a position too, at the name the pointer is over or the cursor. */
+export type PositionRequest = CompletionRequest;
 
 /** One completed option, in the shape CodeMirror's completion list reads. */
 export interface CompletionOption {
@@ -151,6 +187,107 @@ export function asLintNotes(value: unknown, max = 20): LintNote[] {
   return notes;
 }
 
+/**
+ * The definition line for a hover, which is always true, or the bare name when Jedi sent neither.
+ *
+ * `def acos` / `pi: Final[float]` / `module math` / `keyword print`; the bare name is the fallback for
+ * an analyzer whose description came back empty rather than an empty heading over a tooltip.
+ */
+export function hoverTitle(hover: HoverInfo): string {
+  return hover.description || hover.name;
+}
+
+/**
+ * The first paragraph of a docstring, at most `maxLines` lines and `maxChars` characters.
+ *
+ * A tooltip is a glance, not a page: `math`'s module docstring runs to several paragraphs, and the
+ * first one is the answer to "what is this".
+ */
+export function docParagraph(doc: string, maxLines = 4, maxChars = 320): string {
+  const text = (doc || '').trim();
+  if (!text) return '';
+  const paragraph = text.split(/\n\s*\n/)[0].trim();
+  const lines = paragraph.split('\n').slice(0, Math.max(1, maxLines));
+  const joined = lines.join('\n');
+  return joined.length > maxChars ? `${joined.slice(0, maxChars - 1).trimEnd()}…` : joined;
+}
+
+/**
+ * Split a signature at the argument the cursor is in, so the tooltip can bold it.
+ *
+ * The label is cut at *top-level* commas: `gain(k, x, scale=1.0)` at index 1 highlights `x`, not
+ * `x, scale=1.0`, and a default that is itself a call (`f(g(1, 2), 3)`) does not split inside the
+ * inner call. An empty argument (the cursor right after `(`) or an index outside the label returns
+ * null, and the tooltip then draws the label undivided.
+ */
+export function splitSignature(signature: SignatureInfo): SignatureParts | null {
+  const { label, index } = signature;
+  if (typeof label !== 'string' || index === null || index < 0) return null;
+  const open = label.indexOf('(');
+  if (open < 0) return null;
+  const segments: Array<[number, number]> = [];
+  let depth = 0;
+  let start = open + 1;
+  for (let i = open + 1; i < label.length; i += 1) {
+    const char = label[i];
+    if (char === '(' || char === '[' || char === '{') depth += 1;
+    else if (char === ')' || char === ']' || char === '}') {
+      if (depth === 0) {
+        segments.push([start, i]);
+        break;
+      }
+      depth -= 1;
+    } else if (char === ',' && depth === 0) {
+      segments.push([start, i]);
+      start = i + 1;
+    }
+  }
+  const segment = segments[index];
+  if (!segment) return null;
+  const raw = label.slice(segment[0], segment[1]);
+  const leading = raw.length - raw.trimStart().length;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const from = segment[0] + leading;
+  const to = from + trimmed.length;
+  return { before: label.slice(0, from), active: trimmed, after: label.slice(to) };
+}
+
+/** A hover answer, or null when it says nothing (Jedi found no definition under the pointer). */
+export function asHover(value: unknown): HoverInfo | null {
+  if (!value || typeof value !== 'object') return null;
+  const entry = value as Record<string, unknown>;
+  const name = typeof entry.name === 'string' ? entry.name.trim() : '';
+  if (!name) return null;
+  return {
+    name,
+    type: typeof entry.type === 'string' && entry.type ? entry.type : 'statement',
+    description: typeof entry.description === 'string' ? entry.description.trim() : '',
+    signature: typeof entry.signature === 'string' ? entry.signature.trim() : '',
+    doc: typeof entry.doc === 'string' ? entry.doc : '',
+  };
+}
+
+/** A signature answer, or null when the cursor is not inside a call (or Jedi sent nothing usable). */
+export function asSignature(value: unknown): SignatureInfo | null {
+  if (!value || typeof value !== 'object') return null;
+  const entry = value as Record<string, unknown>;
+  const label = typeof entry.label === 'string' ? entry.label.trim() : '';
+  if (!label) return null;
+  const params = Array.isArray(entry.params)
+    ? entry.params.filter((param): param is string => typeof param === 'string').slice(0, 12)
+    : [];
+  const rawIndex = Number(entry.index);
+  const index = Number.isInteger(rawIndex) && rawIndex >= 0 && rawIndex < params.length ? rawIndex : null;
+  return {
+    name: typeof entry.name === 'string' ? entry.name.trim() : '',
+    label,
+    index,
+    params,
+    doc: typeof entry.doc === 'string' ? entry.doc : '',
+  };
+}
+
 /** `line 3 · 'os' imported but unused` - the line a learner has to look at, then what is wrong. */
 export function noteLabel(note: LintNote): string {
   return `line ${note.line} · ${note.text}`;
@@ -235,7 +372,7 @@ export class AnalysisSession {
   }
 
   private ask(
-    type: 'complete' | 'lint',
+    type: 'complete' | 'lint' | 'hover' | 'signature',
     request: AnalysisRequest & Record<string, unknown>
   ): Promise<Record<string, unknown>> {
     const requestId = this.nextId;
@@ -278,5 +415,30 @@ export class AnalysisSession {
       value: asLintNotes(reply.messages),
       ms: Number(reply.ms) || 0,
     };
+  }
+
+  /**
+   * What the name at a position is.
+   *
+   * `ok: true, value: null` is a real answer - Jedi knows nothing about that spot (whitespace, a
+   * name it cannot resolve) - and is kept apart from `ok: false`, which is the analyzer being
+   * unavailable. A hover shows nothing in the first case and says why in the second with nothing to
+   * add: a tooltip that appears on every word to say "unknown" would be worse than no tooltip.
+   */
+  async hover(request: PositionRequest): Promise<AnalysisReply<HoverInfo | null>> {
+    const reply = await this.ask('hover', { ...request });
+    if (reply.unavailable) {
+      return { ok: false, reason: String(reply.unavailable) };
+    }
+    return { ok: true, value: asHover(reply.hover), ms: Number(reply.ms) || 0 };
+  }
+
+  /** The call the cursor is inside, or `ok: true, value: null` when it is not inside one. */
+  async signature(request: PositionRequest): Promise<AnalysisReply<SignatureInfo | null>> {
+    const reply = await this.ask('signature', { ...request });
+    if (reply.unavailable) {
+      return { ok: false, reason: String(reply.unavailable) };
+    }
+    return { ok: true, value: asSignature(reply.signature), ms: Number(reply.ms) || 0 };
   }
 }

@@ -22,14 +22,20 @@ import assert from 'node:assert/strict';
 import {
   ANALYSIS_TIMEOUT_MS,
   AnalysisSession,
+  asHover,
   asLintNotes,
+  asSignature,
   completionStart,
   completionType,
+  docParagraph,
+  hoverTitle,
   lineColumnAt,
   noteLabel,
   sameNotes,
+  splitSignature,
   toCompletionOptions,
 } from '../app/src/analysisClient.ts';
+import { callContext, hoverRange } from '../app/src/editor/callContext.ts';
 
 let passed = 0;
 let failed = 0;
@@ -146,6 +152,201 @@ check('the same notes compare equal, a changed one does not', () => {
   assert.equal(sameNotes(a, [{ line: 1, column: 1, text: 'x' }]), true);
   assert.equal(sameNotes(a, [{ line: 2, column: 1, text: 'x' }]), false);
   assert.equal(sameNotes(a, []), false);
+});
+
+section('hover and signatures');
+
+check('a hover keeps the definition line, the signature and the docstring', () => {
+  const hover = asHover({
+    name: 'acos',
+    type: 'function',
+    description: 'def acos',
+    signature: 'acos(x, /) -> float',
+    doc: 'Return the arc cosine.\n\nThe result is between 0 and pi.',
+  });
+  assert.equal(hover.name, 'acos');
+  assert.equal(hoverTitle(hover), 'def acos');
+  assert.equal(hover.signature, 'acos(x, /) -> float');
+  assert.match(hover.doc, /arc cosine/);
+});
+
+check('a hover with no name is no hover, and missing fields get safe defaults', () => {
+  assert.equal(asHover(null), null);
+  assert.equal(asHover('acos'), null);
+  assert.equal(asHover({ name: '   ' }), null);
+  const bare = asHover({ name: 'pi' });
+  assert.deepEqual(bare, { name: 'pi', type: 'statement', description: '', signature: '', doc: '' });
+  // The title falls back to the name rather than drawing an empty heading.
+  assert.equal(hoverTitle(bare), 'pi');
+});
+
+check('a docstring in a tooltip is its first paragraph, shortened', () => {
+  assert.equal(docParagraph(''), '');
+  assert.equal(docParagraph('One line.'), 'One line.');
+  assert.equal(
+    docParagraph('First paragraph.\nStill first.\n\nSecond paragraph.'),
+    'First paragraph.\nStill first.',
+    'only the first paragraph belongs in a card'
+  );
+  const long = docParagraph('x'.repeat(500));
+  assert.ok(long.length <= 320, `expected a capped paragraph, got ${long.length} chars`);
+  assert.match(long, /…$/);
+  assert.equal(docParagraph('a\nb\nc\nd\ne', 2), 'a\nb');
+});
+
+check('a signature keeps its label and only an index that names a real parameter', () => {
+  const full = asSignature({
+    name: 'gain',
+    label: 'gain(k, x, scale=1.0)',
+    index: 1,
+    params: ['k', 'x', 'scale'],
+    doc: 'A gain.',
+  });
+  assert.equal(full.label, 'gain(k, x, scale=1.0)');
+  assert.equal(full.index, 1);
+  assert.deepEqual(full.params, ['k', 'x', 'scale']);
+  assert.equal(asSignature(null), null);
+  assert.equal(asSignature({ label: '  ' }), null);
+  // An index outside the parameter list cannot mark anything, so it is dropped, not clamped.
+  assert.equal(asSignature({ label: 'f()', index: 3, params: [] }).index, null);
+  assert.equal(asSignature({ label: 'f(a, b)', index: 2, params: ['a', 'b'] }).index, null);
+  assert.deepEqual(asSignature({ label: 'f(a, b)', index: 0, params: ['a', 7, 'b'] }).params, ['a', 'b']);
+});
+
+check('the active parameter is cut out of the label at top-level commas', () => {
+  const parts = splitSignature({
+    name: 'gain',
+    label: 'gain(k, x, scale=1.0)',
+    index: 1,
+    params: ['k', 'x', 'scale'],
+    doc: '',
+  });
+  assert.deepEqual(parts, { before: 'gain(k, ', active: 'x', after: ', scale=1.0)' });
+});
+
+check('a signature with annotations, nesting, or nothing to mark is handled', () => {
+  const acos = splitSignature({
+    name: 'acos',
+    label: 'acos(x: _SupportsFloatOrIndex, /) -> float',
+    index: 0,
+    params: ['x'],
+    doc: '',
+  });
+  assert.equal(acos.active, 'x: _SupportsFloatOrIndex');
+  // The comma inside the inner call is not an argument separator of the outer one.
+  const nested = splitSignature({
+    name: 'f',
+    label: 'f(g(1, 2), 3)',
+    index: 1,
+    params: ['h', 'i'],
+    doc: '',
+  });
+  assert.deepEqual(nested, { before: 'f(g(1, 2), ', active: '3', after: ')' });
+  assert.equal(splitSignature({ label: 'f()', index: 0, params: [], doc: '', name: 'f' }), null);
+  assert.equal(splitSignature({ label: 'f(a)', index: null, params: ['a'], doc: '', name: 'f' }), null);
+  assert.equal(splitSignature({ label: 'no parens', index: 0, params: ['a'], doc: '', name: 'f' }), null);
+});
+
+section('the cursor inside a call');
+
+check('an open call is found, with the argument being typed', () => {
+  const context = callContext('math.acos(', 10);
+  assert.equal(context.open, 9);
+  assert.deepEqual(
+    { line: context.line, column: context.column, activeParam: context.activeParam },
+    { line: 1, column: 10, activeParam: 0 }
+  );
+  assert.equal(callContext('gain(2, ', 8).activeParam, 1);
+  assert.equal(callContext('gain(2, 3', 9).activeParam, 1);
+});
+
+check('the innermost call wins, and only a parenthesis opens one', () => {
+  const nested = 'gain(2, gain(1, ';
+  const inner = callContext(nested, nested.length);
+  assert.equal(inner.open, nested.lastIndexOf('('));
+  assert.equal(inner.activeParam, 1);
+  assert.equal(callContext('x = values[1', 12), null, 'a list literal has no signature');
+  assert.equal(callContext('x = {"a": 1', 12), null);
+  assert.equal(callContext('x = 1', 5), null);
+});
+
+check('a bracket in a string or a comment is not a call', () => {
+  const quotedParen = callContext('print("("', 9);
+  assert.equal(quotedParen.open, 5, 'the paren inside the string must not be mistaken for the call');
+  assert.equal(quotedParen.activeParam, 0);
+  assert.equal(callContext('# f(', 4), null);
+  const quoted = 'print("hi", ';
+  assert.equal(callContext(quoted, quoted.length).activeParam, 1, 'the real call is still found');
+  const stringComma = 'f("a, b", ';
+  assert.equal(callContext(stringComma, stringComma.length).activeParam, 1);
+});
+
+check('a call that spans lines is still one call', () => {
+  const code = 'f(\n    1,\n    ';
+  const context = callContext(code, code.length);
+  assert.equal(context.open, 1);
+  assert.equal(context.line, 3);
+  assert.equal(context.activeParam, 1);
+});
+
+check('a closed call is over', () => {
+  const code = 'gain(2, 3)';
+  assert.equal(callContext(code, code.length), null, 'after the closing paren there is no signature');
+  assert.equal(callContext('(2 + 3', 6).open, 0, 'grouping parens still open a context');
+});
+
+section('the name under the pointer');
+
+check('a dotted name is one token, whichever part the pointer is over', () => {
+  const code = 'import math\nmath.acos(x)';
+  const start = code.indexOf('math.acos');
+  assert.deepEqual(hoverRange(code, start + 2), { from: start, to: start + 9 });
+  assert.deepEqual(hoverRange(code, start + 9), { from: start, to: start + 9 }, 'the gap after the name still names it');
+});
+
+check('whitespace, numbers and empty documents have nothing to hover', () => {
+  assert.equal(hoverRange('x = 1', 2), null);
+  assert.equal(hoverRange('3.14', 2), null);
+  assert.equal(hoverRange('', 0), null);
+  assert.deepEqual(hoverRange('math.', 5), { from: 0, to: 4 }, 'the trailing dot is trimmed off the name');
+  assert.equal(hoverRange('a.b', 2).from, 0);
+});
+
+section('transport of hover and signatures');
+
+check('hover asks about a position and a null answer is still an answer', async () => {
+  const { session, sent } = fakeSession();
+  const pending = session.hover({ code: 'import math\nmath.acos', line: 2, column: 9 });
+  assert.equal(sent[0].type, 'hover');
+  assert.equal(sent[0].line, 2);
+  session.handleMessage({ type: 'hover', requestId: sent[0].requestId, hover: null });
+  const reply = await pending;
+  assert.equal(reply.ok, true);
+  assert.equal(reply.value, null, 'nothing to show is not a failure');
+});
+
+check('signature asks about the cursor and maps the answer', async () => {
+  const { session, sent } = fakeSession();
+  const pending = session.signature({ code: 'math.acos(', line: 1, column: 10 });
+  assert.equal(sent[0].type, 'signature');
+  session.handleMessage({
+    type: 'signature',
+    requestId: sent[0].requestId,
+    signature: { name: 'acos', label: 'acos(x, /) -> float', index: 0, params: ['x'], doc: '' },
+  });
+  const reply = await pending;
+  assert.equal(reply.ok, true);
+  assert.equal(reply.value.label, 'acos(x, /) -> float');
+  assert.equal(reply.value.index, 0);
+});
+
+check('a hover that could not be answered says so instead of showing a blank card', async () => {
+  const { session, sent } = fakeSession();
+  const pending = session.signature({ code: 'f(', line: 1, column: 2 });
+  session.handleMessage({ type: 'signature', requestId: sent[0].requestId, unavailable: 'no jedi' });
+  const reply = await pending;
+  assert.equal(reply.ok, false);
+  assert.match(reply.reason, /no jedi/);
 });
 
 section('transport');

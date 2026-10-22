@@ -562,9 +562,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * learner moved on; the keyword completions answer immediately instead, which is what the editor
    * shipped with. The analyzers themselves install on the first request, so a learner who never
    * types never pays for them.
+   *
+   * A run is the other thing that blocks this worker: a hover, a signature or a completion asked
+   * while Python is running would wait in the queue until the run ended and then answer a request
+   * whose keystroke is long gone - so nothing is asked at all, and the card simply does not open.
    */
   const getReadyAnalysis = () =>
-    pyodideStatusRef.current === 'ready' ? analysisSession() : null;
+    pyodideStatusRef.current === 'ready' && !isRunning ? analysisSession() : null;
 
   useEffect(() => {
     setLintNotes([]);

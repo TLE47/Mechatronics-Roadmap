@@ -11,6 +11,60 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 149: Hover and Signatures from the Same Jedi
+
+The plan's next item was "hover and signature help on the same Jedi", and it cost no new download:
+`jedi.Script.help` and `get_signatures` were already inside the wheel the completion list installs.
+What it needed was a renderer, a rule for *where* to ask, and a way to ask without queueing behind
+the learner's own program.
+
+**Hover asks about the dotted name, not the word.** `math.acos` is one token, so a card opened over
+`acos` describes `math.acos` with the position Jedi resolves (the end of the name). The card shows
+the definition line (`def acos`), the call and the docstring's first paragraph. A constant shows
+`pi: Final[float]` and **no** docstring: Jedi answers `math.pi` with `float()`'s "Convert a string or
+number to a floating-point number", which is its *type's* documentation and the wrong answer to the
+question the learner asked, so the worker drops the doc for a `statement` and keeps the definition
+line.
+
+**Signature help is the call the cursor is inside.** `callContext` walks back to the unmatched `(`,
+masking strings and comments first so `print("(")` does not open a call at the string's bracket,
+and counts top-level commas so `gain(2, gain(1, |` describes the inner call and underlines its second
+argument. `splitSignature` cuts the label at top-level commas too, which is what makes the mark land
+on `x` in `gain(k, x, scale=1.0)` and not on `x, scale=1.0`; an argument that is itself a call
+(`f(g(1, 2), 3)`) does not split inside the inner one. Closing the paren, moving the cursor away or
+starting a run closes the card.
+
+**Both are safe in the ways the rest of the analysis path is.** A stale reply is dropped rather than
+shown one keystroke late (the document is compared before the card is built), a hover with nothing
+to say returns `ok: true, value: null` instead of a failure, and every card is drawn with
+`textContent` - a docstring is third-party text and a tooltip is not a place to interpret it. The
+request gate also tightened: `getReadyAnalysis` now refuses while a run is in flight, so a hover or a
+completion can no longer sit in the worker's queue behind `while True:` and answer text nobody is
+looking at.
+
+Two defects found while building it, both fixed: the worker's Python helpers arrive through a JS
+template literal, where `"\n"` is a real newline (the signature helper's `code.split("\n")` broke the
+whole analysis module in Pyodide, and pyflakes' strip said the checker could not load); and a failed
+analysis install left no trace for a maintainer, so it now logs the full error to the console while
+the page keeps its one sentence.
+
+- `npm run test:analysis` grows from 16 checks to **32**: the hover sanitiser and its safe defaults,
+  the first-paragraph rule, a signature index that names a real parameter, the top-level-comma split
+  (annotations, nesting, nothing to mark), the call under the cursor (innermost call, `[`/`{` are not
+  calls, brackets in strings and comments, multi-line calls, a closed call), the dotted name under the
+  pointer, and the hover/signature transport cases (a null answer is an answer; an unavailable one is
+  not).
+- `npm run test:runtime` grows from 11 checks to **16** in real Chromium: a real pointer moved onto
+  `math.acos` opens the card with `def acos`, the call and the docstring, and it closes when the
+  pointer leaves; typing `math.acos(` shows the signature with `x` marked as the active argument, and
+typing `)` takes it away.
+- `docs/PLAN-2.0-GAP.md`: the editor row keeps its Ruff note but now records hover and signatures as
+  shipping, and the next list leads with the study layer, then IndexedDB, then parsed tracebacks
+  (which replaces the hover item and names the file the matcher should read).
+- `app/README.md`, `docs/VERIFICATION.md` and the workbench suite index describe the two cards and
+  their checks; the styles for both cards live in `app/src/editor/theme.ts`, so light mode is not a
+  second tooltip.
+
 ## [2026-10-21] — Run 148: The Editor Knows Python
 
 The gap page's editor row was the plan's hardest ask - "Jedi completions/hover, Ruff lint + format" -

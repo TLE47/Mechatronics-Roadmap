@@ -15,13 +15,13 @@ flowchart LR
         T["Dark/light tokens<br/>contrast measured in CI"]
         H["A failing check names<br/>its own hint rung"]
         A["Scope cursor, zoom<br/>A/B run overlay"]
-        J["Jedi completions<br/>pyflakes in the editor"]
+        J["Jedi completions, hover,<br/>signatures; pyflakes lint"]
         B["One-press backup<br/>and a merging restore"]
     end
     subgraph next["Next, in this order"]
-        N1["Hover + signature help<br/>on the same Jedi"]
-        N2["The study layer: notes,<br/>flashcards, focus mode"]
-        N3["IndexedDB, when the caps<br/>stop fitting 5 MB"]
+        N1["The study layer: notes,<br/>flashcards, focus mode"]
+        N2["IndexedDB, when the caps<br/>stop fitting 5 MB"]
+        N3["Parsed tracebacks, matched<br/>to the hint that answers them"]
     end
     shipped --> next
 ```
@@ -44,7 +44,7 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Worker runtime, warm-up, measured boot, restart kernel | Warm-up on idle, `ready in N ms` reported from the worker, Reset Runtime respawns it, `input()` blocks the worker on `Atomics.wait` while the page stays live. | **ships** |
 | Dockable panels, `⌥1`–`⌥4` layout presets, activity bar | One fixed two-column layout per tab; no docking, no presets. | **missing** |
 | CodeMirror 6 with multi-file tabs, read-only helpers | CodeMirror 6 with Python highlighting, bracket handling, indent, search and Jedi completion; `main.py` plus a **read-only** plant tab where a lesson uses one. | **ships** |
-| Jedi completions/hover, Ruff lint + format, parsed tracebacks | **Completions and lint ship, from the interpreter itself**: Jedi answers `math.` with `acos` and its signature ([`app/src/analysisClient.ts`](../app/src/analysisClient.ts), [`app/src/editor/completions.ts`](../app/src/editor/completions.ts)), and pyflakes names an unused import on its line in a Checker strip (`npm run test:analysis`, `npm run test:runtime`). Ruff is a Rust binary and cannot run in Pyodide at all, so Ruff's lint *and* its formatter are the browser's one real gap here: pyflakes has no style rules and nothing reformats the file. Hover and signature help are not built (Jedi can answer both), tracebacks are still text, and [`docs/ERROR_EXPLAINER.md`](ERROR_EXPLAINER.md) is prose rather than an in-app matcher. The analyzers install on first use (~1.5 MB), so a first visit that never edits pays nothing for them. | **partial** |
+| Jedi completions/hover, Ruff lint + format, parsed tracebacks | **Completions, hover and signatures ship, from the interpreter itself**: Jedi answers `math.` with `acos` and its signature, hovering a name opens a card with its definition line, its call and the docstring, and typing `math.acos(` shows that call with the argument being typed marked ([`app/src/analysisClient.ts`](../app/src/analysisClient.ts), [`app/src/editor/completions.ts`](../app/src/editor/completions.ts), [`app/src/editor/analysisTips.ts`](../app/src/editor/analysisTips.ts)); pyflakes names an unused import on its line in a Checker strip (`npm run test:analysis`, `npm run test:runtime`). Ruff is a Rust binary and cannot run in Pyodide at all, so Ruff's lint *and* its formatter are the browser's one real gap here: pyflakes has no style rules and nothing reformats the file. Tracebacks are still text and [`docs/ERROR_EXPLAINER.md`](ERROR_EXPLAINER.md) is prose rather than an in-app matcher. The analyzers install on first use (~1.5 MB), so a first visit that never edits pays nothing for them. | **partial** |
 | Inline values, parameter sliders, `# %%` cells | Sliders ship as a `# @slider 0 20 0.1` comment on a literal, rewritten in the file and re-run on settle, across 7 starters ([`app/src/editor/sliderModel.ts`](../app/src/editor/sliderModel.ts), `npm run test:editor`). No inline values, no cells. | **partial** |
 | Diff view against starter/solution | Not a diff view; the roadmap card counts changed lines and written steps. | **missing** |
 
@@ -71,12 +71,14 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 
 ## What to build next, in order
 
-1. **Hover and signature help** — the cheapest way to spend the Jedi install that is already in the
-   worker: `jedi.Script.help` and `get_signatures` answer `math.acos(` today, the renderer is the work.
-2. **The study layer** — notes, highlights, FSRS flashcards, focus mode and measured time. It is the
+1. **The study layer** — notes, highlights, FSRS flashcards, focus mode and measured time. It is the
    largest block still marked *missing*, it is what makes a term of study feel like a course rather
    than a set of exercises, and its files would ride in the backup that already exists.
-3. **Dexie / IndexedDB** — the other half of the persistence item, now that the backup makes the data
+2. **Dexie / IndexedDB** — the other half of the persistence item, now that the backup makes the data
    portable. Still only worth doing once notes, plots or a cross-lesson timeline outgrow the 5 MB
    bucket: the caps are measured at ~2.4 MB in `npm run test:backup`, and the bounded `localStorage`
    stores are cheaper and already tested until then.
+3. **Parsed tracebacks** — the last editor item that is still prose. A failing run currently prints
+   CPython's traceback as text; parsing it into the frame the learner owns, with the line highlighted
+   and the matching entry from [`docs/ERROR_EXPLAINER.md`](ERROR_EXPLAINER.md) beside it, is the same
+   shape as the hint ladder that already names the failing check.

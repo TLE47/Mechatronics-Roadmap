@@ -170,13 +170,24 @@ colours come from the app's tokens ([`editor/theme.ts`](src/editor/theme.ts)), s
 second editor theme.
 
 **The editor knows Python, because the interpreter is already there.** `math.` offers `acos` with its
-signature (`acos(x: SupportsFloat, /) -> float`) and the docstring beside it, and the Checker strip
-under the editor names an unused import on the line it is on. Both answers come from the same worker
-that runs the lesson: Jedi for completions, pyflakes for the lint
+signature (`acos(x: SupportsFloat, /) -> float`) and the docstring beside it; hovering a name opens a
+card with its definition (`def acos`), its call and the docstring's first paragraph; typing
+`math.acos(` shows that call with the argument being typed marked; and the Checker strip under the
+editor names an unused import on the line it is on. All of it comes from the same worker that runs
+the lesson: Jedi for completions, hover and signatures, pyflakes for the lint
 ([`src/analysisClient.ts`](src/analysisClient.ts), [`src/editor/completions.ts`](src/editor/completions.ts),
-`npm run test:analysis` for the mapping rules and `npm run test:runtime` in a browser). Ruff is a Rust
-binary and cannot run in Pyodide at all, so pyflakes is the browser's honest linter and the editor
-never claims otherwise; nothing here reformats code.
+[`src/editor/analysisTips.ts`](src/editor/analysisTips.ts), `npm run test:analysis` for the mapping
+rules and `npm run test:runtime` in a browser). Ruff is a Rust binary and cannot run in Pyodide at
+all, so pyflakes is the browser's honest linter and the editor never claims otherwise; nothing here
+reformats code.
+
+**Hover asks about the whole dotted name, and a signature only exists inside a call.** `math.acos` is
+one token, so a card opened over `acos` still describes `math.acos`; `callContext` walks back to the
+unmatched `(` behind the cursor, ignoring brackets in strings and comments, and counts top-level
+commas so the right argument is the one underlined — including in a nested call, where the inner
+signature is the one that matters. Both cards are drawn with `textContent`, never as HTML: a
+docstring is third-party text. While a run is in flight the worker is busy, so nothing is asked and
+no card opens rather than queueing a request behind the learner's own program.
 
 The analyzers **install on first use** (~1.5 MB, one online request), not at boot, so a learner who
 never edits pays nothing for them and the first Run still waits for the interpreter only. If the
@@ -319,7 +330,7 @@ npm run test:workbench       # runner behaviour (happy-dom) + palette search + e
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
 npm run test:history         # run history: filed on Run, deduped, capped per lesson and in totalnpm run test:scope          # Scope rules: payloads, cursor sampling, zoom/pan windows, bounds, tables
-npm run test:analysis       # completions and lint: insertion point, cursor coordinates, note shape, transport rules
+npm run test:analysis       # completions, hover and signatures: insertion point, cursor coordinates, the call under the cursor, note shape, transport rules
 npm run test:checkhints      # the failed check -> rung join, and the rule that earns rung 2
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width

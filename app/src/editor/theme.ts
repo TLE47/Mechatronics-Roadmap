@@ -77,6 +77,39 @@ export const pythonTheme = EditorView.theme(
       backgroundColor: 'var(--accent-soft)',
       color: 'var(--accent)',
     },
+    // Hover card and call signature (src/editor/analysisTips.ts). Both are the same card: a mono
+    // definition line, the call, and a plain sentence of docstring - so the words read as prose and
+    // the code as code.
+    '.cm-mechalab-tip': {
+      padding: '7px 10px',
+      maxWidth: '380px',
+      fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+    },
+    '.cm-mechalab-tip-title': {
+      fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
+      fontSize: '11px',
+      color: 'var(--accent)',
+      whiteSpace: 'pre-wrap',
+    },
+    '.cm-mechalab-tip-sig': {
+      fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
+      fontSize: '11.5px',
+      marginTop: '3px',
+      whiteSpace: 'pre-wrap',
+    },
+    '.cm-mechalab-tip-sig-plain': { color: 'var(--text)' },
+    '.cm-mechalab-tip-sig-active': {
+      color: 'var(--accent)',
+      fontWeight: '700',
+      borderBottom: '1px solid var(--accent)',
+    },
+    '.cm-mechalab-tip-doc': {
+      fontSize: '11.5px',
+      lineHeight: '1.45',
+      color: 'var(--muted)',
+      marginTop: '5px',
+      whiteSpace: 'pre-wrap',
+    },
     '.cm-searchMatch': { backgroundColor: 'color-mix(in srgb, var(--amber) 26%, transparent)' },
     '.cm-panels': { backgroundColor: 'var(--panel)', color: 'var(--text)' },
     '.cm-slider-row': {

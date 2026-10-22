@@ -15,7 +15,9 @@
  * 4. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
  *    `acos` with its signature, and picking one keeps the module name), the lint comes from
  *    pyflakes (an unused import is named with its line, and the note clears when the import is
- *    used), and a Run still works afterwards - the analysis messages share the worker with runs.
+ *    used), the pointer over a name opens Jedi's card for it (`def acos`, the call, the docstring),
+ *    typing a call shows its signature with the argument marked, and a Run still works afterwards -
+ *    all of these share one worker and one interpreter.
  *
  * Cross-origin isolation is checked first, because without `SharedArrayBuffer` the interrupt path
  * cannot exist at all (the app then falls back to terminating the worker).
@@ -317,7 +319,85 @@ async function main() {
       );
     });
 
-    // 9. The analyzers share the worker with runs. A run queued after a completion is still a run.
+    // 9. Hover: Jedi's card for the name under the pointer. The real mouse is moved to the name's
+    // coordinates - hover is a gesture CodeMirror owns, and a synthetic event would test the harness.
+    await setEditorCode(page, 'import math\nprint(math.acos(0.5))\n');
+    await page.locator(EDITOR).scrollIntoViewIfNeeded();
+    const acosPoint = await page.evaluate(() => {
+      const bridge = window.__mechalabEditors['editor-main'];
+      const at = bridge.get().indexOf('acos') + 1;
+      return at > 0 ? bridge.coordsOf(at) : null;
+    });
+    let hoverText = '';
+    try {
+      assert.ok(acosPoint, 'the editor bridge did not report on-screen coordinates for `acos`');
+      await page.mouse.move(0, 0);
+      await page.mouse.move(acosPoint.left + 3, (acosPoint.top + acosPoint.bottom) / 2);
+      await page.waitForSelector('[data-testid="hover-tip"]', { timeout: 60000 });
+      hoverText = (await page.textContent('[data-testid="hover-tip"]')) ?? '';
+    } catch (error) {
+      failures += 1;
+      notes.push(`the hover card did not open: ${error.message}`);
+      console.error(`  FAIL the hover card opens over a name\n       ${error.message}`);
+    }
+    check('the hover card shows the definition, the call and the docstring', () => {
+      assert.match(hoverText, /def acos/, `expected Jedi's definition line in the card, got "${hoverText}"`);
+      assert.match(hoverText, /acos\(/, `expected the call signature in the card, got "${hoverText}"`);
+      assert.match(
+        hoverText,
+        /arc cosine/i,
+        `expected the docstring in the card, got "${hoverText}"`
+      );
+    });
+    // The pointer leaves the name: the card belongs to that name and should go with it.
+    await page.mouse.move(0, 0);
+    const hoverLeft = await page
+      .waitForFunction(() => !document.querySelector('[data-testid="hover-tip"]'), null, { timeout: 10000 })
+      .then(() => true)
+      .catch(() => false);
+    check('the hover card closes when the pointer leaves the name', () => {
+      assert.equal(hoverLeft, true, 'expected the hover card to disappear once the pointer moved away');
+    });
+
+    // 10. Signature help: typing a call shows its signature with the argument being typed marked,
+    // and closing the call takes it away. `(` auto-closes, so the cursor is inside `()` after typing.
+    await setEditorCode(page, 'import math\n');
+    await page.evaluate(() => {
+      const bridge = window.__mechalabEditors['editor-main'];
+      bridge.setCursor(bridge.get().length);
+    });
+    await page.keyboard.type('math.acos(');
+    let signatureText = '';
+    let activeParam = null;
+    let activeText = '';
+    try {
+      await page.waitForSelector('[data-testid="signature-tip"]', { timeout: 60000 });
+      signatureText = (await page.textContent('[data-testid="signature-tip"]')) ?? '';
+      activeParam = await page.getAttribute('[data-testid="signature-tip"]', 'data-active-param');
+      activeText =
+        (await page.textContent('[data-testid="signature-tip"] .cm-mechalab-tip-sig-active')) ?? '';
+    } catch (error) {
+      failures += 1;
+      notes.push(`the signature card did not open: ${error.message}`);
+      console.error(`  FAIL typing a call shows its signature\n       ${error.message}`);
+    }
+    check('typing a call shows its signature and marks the argument being typed', () => {
+      assert.match(signatureText, /acos\(/, `expected the call in the card, got "${signatureText}"`);
+      assert.equal(activeParam, '0', `expected the first parameter to be active, got "${activeParam}"`);
+      assert.match(activeText, /^x\b/, `expected the active parameter to be x, got "${activeText}"`);
+    });
+    await page.keyboard.type(')');
+    const signatureLeft = await page
+      .waitForFunction(() => !document.querySelector('[data-testid="signature-tip"]'), null, {
+        timeout: 20000,
+      })
+      .then(() => true)
+      .catch(() => false);
+    check('closing the call closes the signature', () => {
+      assert.equal(signatureLeft, true, 'expected the signature card to disappear once the call is closed');
+    });
+
+    // 11. The analyzers share the worker with runs. A run queued after a completion is still a run.
     const afterAnalysis = await runAndWait(page, 'print(2 + 2)');
     check('a run still works once the analyzers are installed', () => {
       assert.match(afterAnalysis, /\b4\b/, `expected the run's own output, got "${afterAnalysis.slice(0, 120)}"`);
@@ -339,7 +419,10 @@ async function main() {
     '\n[PASS] Interruptible Python: input() round-trips, a while-True loop stops by interrupt, the session survives it, '
   );
   console.log(
-    '       the page never blocks, Jedi completes math.acos without losing the module, pyflakes names an unused import, and a run still works afterwards.'
+    '       the page never blocks, Jedi completes math.acos without losing the module, hovers `def acos`,'
+  );
+  console.log(
+    '       shows the signature of a call being typed, pyflakes names an unused import, and a run still works afterwards.'
   );
 }
 

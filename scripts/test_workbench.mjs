@@ -17,7 +17,7 @@
  *   test:checkhints  a failing check names its own rung, and rung 2 is earned by another run
  *   test:takealong   the offline button's URL list, its size wording, and what "ready" may claim
  *   test:backup      the backup archive: CRC, round trip, the three refusals, and a merge that never deletes
- *   test:analysis    completions and lint without a browser: insertion point, cursor coordinates, note shape, transport
+ *   test:analysis    completions, hover and signatures without a browser: insertion point, cursor coordinates, the call under the cursor, note shape, transport
  *   test:e2e:backup  the header buttons in Chromium: write a zip, wipe, restore to store *and* screen
  *   test:fonts       the two self-hosted faces are named, imported and emitted
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz

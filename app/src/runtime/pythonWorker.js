@@ -181,12 +181,12 @@ function installStdinBridge(py) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Analysis: completions and lint, inside the interpreter that is already loaded.
+// Analysis: completions, lint, hover and signatures, inside the interpreter that is already loaded.
 //
-// Both come from pure-Python packages, which is the whole reason they can run here: Jedi answers
-// completions with docstrings and pyflakes answers the lint. Ruff is a Rust binary compiled to native
-// code and cannot run in Pyodide at all, so pyflakes is the browser's honest linter - the page says
-// which one answered rather than borrowing Ruff's name.
+// All four come from pure-Python packages, which is the whole reason they can run here: Jedi answers
+// completions, hover text and call signatures with docstrings, and pyflakes answers the lint. Ruff is
+// a Rust binary compiled to native code and cannot run in Pyodide at all, so pyflakes is the browser's
+// honest linter - the page says which one answered rather than borrowing Ruff's name.
 //
 // Installed on the first request, not at boot: a learner who never asks for a completion never pays
 // the ~1.5 MB, and the warm-up that a first Run needs stays the 10 MB it was. The install is a
@@ -253,6 +253,102 @@ def __mechalab_lint(code):
 
     pyflakes.api.check(code, "<editor>", _Reporter())
     return _mechalab_json.dumps(found[:20])
+
+def __mechalab_hover(code, line, column):
+    import jedi
+    try:
+        helps = jedi.Script(code, path="main.py").help(int(line), int(column))
+    except Exception:
+        return "null"
+    for help_ in helps:
+        try:
+            name = str(help_.name or "")
+        except Exception:
+            name = ""
+        if not name:
+            continue
+        try:
+            description = str(help_.description or "")
+        except Exception:
+            description = ""
+        try:
+            kind = str(help_.type or "statement")
+        except Exception:
+            kind = "statement"
+        # help() objects have no get_signature, but they can hand out their signatures, and the first
+        # one is the call a learner would write.
+        signature = ""
+        try:
+            signatures = help_.get_signatures()
+            if signatures:
+                signature = str(signatures[0].to_string() or "")
+        except Exception:
+            signature = ""
+        try:
+            doc = (help_.docstring(raw=True) or "").strip()
+        except Exception:
+            doc = ""
+        # Jedi answers a constant with the docstring of its *type*: math.pi came back as float()'s
+        # "Convert a string or number to a floating-point number", which answers a question nobody
+        # asked. The definition line ("pi: Final[float]") is the true part, so only that is kept.
+        if kind == "statement":
+            doc = ""
+        return _mechalab_json.dumps({
+            "name": name,
+            "type": kind,
+            "description": description[:160],
+            "signature": signature[:300],
+            "doc": doc[:1200],
+        })
+    return "null"
+
+def __mechalab_signature(code, line, column):
+    import jedi
+    line = int(line)
+    column = int(column)
+    # Jedi raises on a column past the end of its line rather than clamping, and the end of a line is
+    # exactly where a half-written call puts the cursor.
+    lines = code.splitlines()
+    if 1 <= line <= len(lines):
+        column = min(column, len(lines[line - 1]))
+    try:
+        signatures = jedi.Script(code, path="main.py").get_signatures(line, column)
+    except Exception:
+        return "null"
+    if not signatures:
+        return "null"
+    best = signatures[0]
+    try:
+        label = str(best.to_string() or "")
+    except Exception:
+        label = ""
+    if not label:
+        return "null"
+    params = []
+    for param in list(getattr(best, "params", None) or [])[:12]:
+        try:
+            params.append(str(param.name or ""))
+        except Exception:
+            params.append(str(param))
+    try:
+        index = best.index
+    except Exception:
+        index = None
+    # A signature with no active parameter ("f(" typed before any argument) reports index 0 with an
+    # empty list, and highlighting "parameter 0 of 0" would be noise.
+    if not isinstance(index, int) or index < 0 or index >= len(params):
+        index = None
+    try:
+        doc = (best.docstring(raw=True) or "").strip()
+    except Exception:
+        doc = ""
+    return _mechalab_json.dumps({
+        "name": str(getattr(best, "name", "") or ""),
+        "label": label[:300],
+        "index": index,
+        "params": params,
+        "doc": doc[:1200],
+    })
 `;
 
 async function ensureAnalysis(py) {
@@ -308,51 +404,83 @@ async function prepareAnalysis(msg) {
   return py;
 }
 
-async function handleComplete(msg) {
-  const startedAt = performance.now();
+/**
+ * Call one analysis helper and return its JSON, or `fallback` when the call could not be made.
+ *
+ * The Python function is fetched, called and destroyed per request: a PyProxy that outlives the call
+ * leaks across a Reset Runtime, and the four helpers all take plain strings and numbers.
+ */
+function runAnalysisCall(py, name, args, fallback) {
+  const call = py.globals.get(name);
   try {
-    const py = await prepareAnalysis(msg);
-    const call = py.globals.get('__mechalab_complete');
-    let json = '[]';
-    try {
-      json = String(call(String(msg.code || ''), Number(msg.line) || 1, Number(msg.column) || 0));
-    } finally {
-      if (call && typeof call.destroy === 'function') call.destroy();
-    }
-    self.postMessage({
-      type: 'completions',
-      requestId: msg.requestId,
-      options: JSON.parse(json),
-      source: 'jedi',
-      ms: Math.round(performance.now() - startedAt),
-    });
-  } catch (error) {
-    self.postMessage({ type: 'completions', requestId: msg.requestId, unavailable: errorText(error) });
+    return String(call(...args));
+  } finally {
+    if (call && typeof call.destroy === 'function') call.destroy();
   }
 }
 
-async function handleLint(msg) {
+/**
+ * One request shape for all four analyzers: prepare, call, post.
+ *
+ * `shape` says how the answer is shaped (`options` is a list, `hover` may be null) and which message
+ * type carries it back; the request id is echoed, which is the only thing that ties an answer to the
+ * keystroke that asked for it.
+ */
+async function handleAnalysis(msg, { type, helper, fallback, args, shape }) {
   const startedAt = performance.now();
   try {
     const py = await prepareAnalysis(msg);
-    const call = py.globals.get('__mechalab_lint');
-    let json = '[]';
-    try {
-      json = String(call(String(msg.code || '')));
-    } finally {
-      if (call && typeof call.destroy === 'function') call.destroy();
-    }
+    const json = runAnalysisCall(py, helper, args(msg), fallback);
     self.postMessage({
-      type: 'lint',
+      type,
       requestId: msg.requestId,
-      messages: JSON.parse(json),
-      source: 'pyflakes',
+      [shape]: JSON.parse(json),
+      source: helper.indexOf('lint') >= 0 ? 'pyflakes' : 'jedi',
       ms: Math.round(performance.now() - startedAt),
     });
   } catch (error) {
-    self.postMessage({ type: 'lint', requestId: msg.requestId, unavailable: errorText(error) });
+    // The page turns this into one sentence; the console keeps the whole error for whoever is
+    // debugging a failed analyzer install.
+    console.error(`[${type}] analysis failed`, error);
+    self.postMessage({ type, requestId: msg.requestId, unavailable: errorText(error) });
   }
 }
+
+const handleComplete = (msg) =>
+  handleAnalysis(msg, {
+    type: 'completions',
+    helper: '__mechalab_complete',
+    fallback: '[]',
+    shape: 'options',
+    args: (m) => [String(m.code || ''), Number(m.line) || 1, Number(m.column) || 0],
+  });
+
+const handleLint = (msg) =>
+  handleAnalysis(msg, {
+    type: 'lint',
+    helper: '__mechalab_lint',
+    fallback: '[]',
+    shape: 'messages',
+    args: (m) => [String(m.code || '')],
+  });
+
+const handleHover = (msg) =>
+  handleAnalysis(msg, {
+    type: 'hover',
+    helper: '__mechalab_hover',
+    fallback: 'null',
+    shape: 'hover',
+    args: (m) => [String(m.code || ''), Number(m.line) || 1, Number(m.column) || 0],
+  });
+
+const handleSignature = (msg) =>
+  handleAnalysis(msg, {
+    type: 'signature',
+    helper: '__mechalab_signature',
+    fallback: 'null',
+    shape: 'signature',
+    args: (m) => [String(m.code || ''), Number(m.line) || 1, Number(m.column) || 0],
+  });
 
 async function ensurePyodideLoaded(cdnUrl) {
   if (pyodideInstance && loadedCdnUrl === cdnUrl) {
@@ -442,6 +570,14 @@ self.onmessage = async (event) => {
   }
   if (msg.type === 'lint') {
     await handleLint(msg);
+    return;
+  }
+  if (msg.type === 'hover') {
+    await handleHover(msg);
+    return;
+  }
+  if (msg.type === 'signature') {
+    await handleSignature(msg);
     return;
   }
   if (msg.type === 'run') {
