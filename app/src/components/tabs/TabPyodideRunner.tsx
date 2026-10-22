@@ -160,6 +160,13 @@ interface TabPyodideRunnerProps {
   sharedAttempt?: SharedAttempt | null;
   /** Clear the offer once it has been used or dismissed. */
   onDismissShared?: () => void;
+  /**
+   * A lesson page's code block, arrived as `#try=…` (`app/src/tryLink.ts`). Shown in the editor as
+   * *scratch*: the page's snippet, not the learner's draft, and never graded against the lesson.
+   */
+  trySnippet?: SharedAttempt | null;
+  /** Forget the snippet once the learner leaves scratch. */
+  onDismissTry?: () => void;
 }
 
 /** What the Share button last did, so the line under the toolbar can say it. */
@@ -182,8 +189,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   lessonRequest,
   sharedAttempt,
   onDismissShared,
+  trySnippet,
+  onDismissTry,
 }) => {
   const [selectedId, setSelectedId] = useState<string>(initialLessonId || PYTHON_LESSONS[0].id);
+  // Scratch: the editor holds a page's snippet rather than the learner's draft. The ref is what the
+  // run and draft paths read, because those are called from timers and refs that outlive a render.
+  const [scratch, setScratch] = useState<boolean>(Boolean(trySnippet));
+  const scratchRef = useRef<boolean>(Boolean(trySnippet));
+  scratchRef.current = scratch;
+  // Set when a run starts, so the result effect can tell a scratch run from an attempt at the lesson
+  // even if the learner has already left scratch by the time it finishes.
+  const runScratchRef = useRef<boolean>(false);
   const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_FIRST_GUIDE);
@@ -220,6 +237,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // and on the lesson's starter when there is not. Without this, "Continue P.4" on the roadmap would
   // open a fresh starter - the card would be naming work it had already thrown away.
   const [code, setCode] = useState<string>(() => {
+    // A try-it link is the text the reader clicked for; the draft is restored when they leave scratch.
+    if (trySnippet) return trySnippet.code;
     const id = initialLessonId || PYTHON_LESSONS[0].id;
     return (
       readDraft(id) ??
@@ -377,6 +396,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   }, [initialLessonId]);
 
+  // A try-it link lands *after* the draft has been loaded, so it wins: the page's snippet is what the
+  // reader clicked for. Declared below the lesson sync for exactly that order, on mount and on a
+  // second link arriving without a reload.
+  useEffect(() => {
+    if (!trySnippet) return;
+    setScratch(true);
+    scratchRef.current = true;
+    commitCode(trySnippet.code);
+  }, [trySnippet]);
+
   // A palette pick (or a roadmap practice chip) is an instruction, not a prop sync: the nonce is
   // what makes it land even when it names the entry already in `initialLessonId`, and the address
   // bar follows because a learner's own pick is what a copied URL should reopen.
@@ -513,6 +542,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       pendingRunRef.current = true;
       runStartedAtRef.current = performance.now();
       runCodeRef.current = codeRef.current;
+      runScratchRef.current = scratchRef.current;
     }
   }, [isRunning]);
   useEffect(() => {
@@ -524,6 +554,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // and still records a pass, because both are facts about the learner's work.
     const watched = watchRunRef.current;
     watchRunRef.current = false;
+    // A scratch run is the page's snippet, not an attempt at the lesson: it files no version and logs
+    // no `run`, the same reason a watch run does not. It still extends the sitting - the learner was
+    // at the screen, working - which is the one thing that stays true.
+    const scratchRun = runScratchRef.current;
+    runScratchRef.current = false;
     const failed =
       passStatus === 'harness_failed' && harnessResult
         ? harnessResult.summary
@@ -532,7 +567,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           passStatus === 'error'
           ? failureSummary(stderr) || (instructorError || stderr || '').split('\n')[0]
           : (instructorError || stderr || '').split('\n')[0];
-    if (!watched) {
+    if (!watched && !scratchRun) {
       logEvent({
         kind: 'run',
         lesson: selectedId,
@@ -548,7 +583,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // The half of the draft store a learner cannot get from a single latest version: what each run
     // started from, filed with the verdict it got. Taken here because every path that ends a run
     // converges on this state, and the text is read from the ref so it is the code that ran.
-    if (!watched) recordSnapshot(selectedId, runCodeRef.current || codeRef.current, passStatus);
+    if (!watched && !scratchRun) recordSnapshot(selectedId, runCodeRef.current || codeRef.current, passStatus);
     // The panel is read through a memo keyed on the lesson, the verdict and this counter. The verdict
     // this run reports is already rendered by the time this effect runs - that render read the store
     // *before* the snapshot above was filed - so without the bump the version the learner just made
@@ -644,6 +679,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // store sees one write per thought instead of one per character; `saveDraft` itself is what
   // decides that a lesson back on its starter keeps nothing.
   useEffect(() => {
+    // Scratch text is the page's snippet: writing it as this lesson's draft would overwrite work the
+    // learner never replaced. `readDraft` still holds their own text, and leaving scratch restores it.
+    if (scratchRef.current) return;
     const timer = setTimeout(() => saveDraft(selectedId, code), 400);
     return () => clearTimeout(timer);
   }, [selectedId, code]);
@@ -659,8 +697,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     const found = PYTHON_LESSONS.find((l) => l.id === id);
     if (!found) return;
     // The lesson being left gets one last write before the editor is replaced: the debounce below
-    // may not have fired for the keystrokes typed just before the switch.
-    if (lessonIdRef.current !== id) saveDraft(lessonIdRef.current, codeRef.current);
+    // may not have fired for the keystrokes typed just before the switch. Not from scratch: that text
+    // is the page's snippet, and the learner's own draft is still in the store.
+    if (lessonIdRef.current !== id && !scratchRef.current) saveDraft(lessonIdRef.current, codeRef.current);
+    // Picking a lesson is leaving scratch: the snippet belonged to the page that sent it.
+    setScratch(false);
+    scratchRef.current = false;
     setSelectedId(id);
     lessonIdRef.current = id;
     // Always recorded, unlike the address bar: a plain visit keeps its clean URL and still reopens
@@ -704,6 +746,26 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     } catch {
       setShareStatus({ kind: 'failed', url: result.url });
     }
+  };
+
+  /**
+   * Leave scratch: the editor goes back to the learner's own draft, and the next run is graded again.
+   *
+   * Nothing from the snippet was written to the store, so there is nothing to undo — the draft is
+   * still exactly where the learner left it, and `readDraft` is what fetches it back.
+   */
+  const endScratch = () => {
+    setScratch(false);
+    scratchRef.current = false;
+    commitCode(readDraft(selectedId) ?? currentLesson.starterCode);
+    setStdout('');
+    setStderr('');
+    setInstructorError('');
+    setHarnessReport(null);
+    setBehaviorCheck('untested');
+    setOutputCheck('untested');
+    setPassStatus('untested');
+    onDismissTry?.();
   };
 
   /** Adopt a shared attempt: the one click that replaces the draft, said plainly on the card. */
@@ -1064,13 +1126,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   // `lesson` defaults to the rendered lesson; Run passes the one selected at click time. `grade`
   // defaults to true; a cell's **Run to here** passes false, because a prefix of the program is not an
-  // attempt at the lesson and must never verify it (`app/src/editor/cells.ts`).
+  // attempt at the lesson and must never verify it (`app/src/editor/cells.ts`). Scratch is the third
+  // case and the simplest: a page's snippet is not an attempt either, so every run in scratch is
+  // ungraded however it was started - the button, the shortcut, the palette, watch or a slider.
   const runPythonCode = async (
     sourceCode: string,
     lesson: PythonLessonItem = currentLesson,
     options: { grade?: boolean } = {}
   ) => {
-    const grade = options.grade !== false;
+    const grade = options.grade !== false && !scratchRef.current;
     const matchMode: OutputMatchMode = asOutputMatchMode(lesson.outputMatch);
     const attemptLessonId = lesson.id;
     const runId = activeRunIdRef.current + 1;
@@ -1345,6 +1409,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    */
   const requestRun = (sourceCode: string, lesson: PythonLessonItem = currentLesson) => {
     if (isRunning) return;
+    // The gate asks what the *lesson* will print. A page's snippet is not the lesson, and a guess
+    // about a loop the reader has not read yet is a quiz nobody asked for.
+    if (scratchRef.current) {
+      void runPythonCode(sourceCode, lesson);
+      return;
+    }
     // A suite that drives hundreds of runs sets this once; the gate keeps its own browser step, so
     // what is switched off here is a prompt, not a check.
     if (typeof window !== 'undefined' && window.__mechalabPredictFirst === false) {
@@ -2334,6 +2404,34 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   </>
                 )}
               </p>
+            )}
+
+            {/* Scratch: a lesson page's block, opened from its **Try this in the workbench** link. It
+                is not the learner's draft and it is never graded, and the card says both before they
+                press Run - a snippet that quietly counted as an attempt would be a verdict on code
+                they did not write. `bg-canvas` rather than a tint of the amber, because body text on
+                the canvas is a pair the theme suite already measures in all three palettes. */}
+            {scratch && (
+              <div
+                data-testid="scratch-banner"
+                className="mt-2 rounded-lg border border-amber/40 bg-canvas px-3 py-2.5"
+              >
+                <p className="eyebrow">Scratch · the page's snippet</p>
+                <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
+                  This is the block from the lesson page, not your draft for {selectedId}. Runs here
+                  are ungraded: nothing is verified and nothing is saved, and your own draft is still
+                  where you left it — so anything you type here is discarded when you go back.
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={endScratch}
+                    data-testid="btn-end-scratch"
+                    className="btn px-2.5 py-1.5 text-[12px]"
+                  >
+                    Back to my draft
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* A shared attempt is offered, never applied. The learner's own draft is the work; the

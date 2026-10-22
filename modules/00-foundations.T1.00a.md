@@ -73,6 +73,7 @@ $$
 
 A robot slider starts at $x_0 = 0.0\text{ m}$ and moves at constant velocity $v = 0.5\text{ m/s}$ with time step $\Delta t = 0.25\text{ s}$ until reaching $1.0\text{ m}$ ($8$ steps of $0.125\text{ m}$), and then tests catching a `ZeroDivisionError`.
 
+<!-- try -->
 ```python
 import math
 
@@ -100,10 +101,15 @@ except ZeroDivisionError as exc:
 assert caught_error == "ZeroDivisionError"
 print(f"steps={steps}, pos_m={pos_m:.3f} m, caught={caught_error}")
 ```
+
 Expected output:
 ```text
 steps=8, pos_m=1.000 m, caught=ZeroDivisionError
 ```
+
+<!-- try-link:start -->
+> **Try this in the workbench.** [Open these 25 lines with `EX.00-foundations.T1.00a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T1.00a#try=eyJ2IjoxLCJsZXNzb24iOiJFWC4wMC1mb3VuZGF0aW9ucy5UMS4wMGEiLCJjb2RlIjoiaW1wb3J0IG1hdGhcblxuZGVmIHN0ZXBfcG9zaXRpb24ocG9zX206IGZsb2F0LCB2ZWxfbV9zOiBmbG9hdCwgZHRfczogZmxvYXQpIC0-IGZsb2F0OlxuICAgIHJldHVybiBwb3NfbSArIHZlbF9tX3MgKiBkdF9zXG5cbnBvc19tID0gMC4wXG52ZWxfbV9zID0gMC41XG5kdF9zID0gMC4yNVxuc3RlcHMgPSAwXG5cbndoaWxlIHBvc19tIDwgMS4wIC0gMWUtOTpcbiAgICBwb3NfbSA9IHN0ZXBfcG9zaXRpb24ocG9zX20sIHZlbF9tX3MsIGR0X3MpXG4gICAgc3RlcHMgKz0gMVxuXG5hc3NlcnQgc3RlcHMgPT0gOFxuYXNzZXJ0IG1hdGguaXNjbG9zZShwb3NfbSwgMS4wLCByZWxfdG9sPTFlLTkpXG5cbmNhdWdodF9lcnJvciA9IFwiXCJcbnRyeTpcbiAgICBiYWRfcmF0aW8gPSAxLjAgLyAwLjBcbmV4Y2VwdCBaZXJvRGl2aXNpb25FcnJvciBhcyBleGM6XG4gICAgY2F1Z2h0X2Vycm9yID0gdHlwZShleGMpLl9fbmFtZV9fXG5cbmFzc2VydCBjYXVnaHRfZXJyb3IgPT0gXCJaZXJvRGl2aXNpb25FcnJvclwiXG5wcmludChmXCJzdGVwcz17c3RlcHN9LCBwb3NfbT17cG9zX206LjNmfSBtLCBjYXVnaHQ9e2NhdWdodF9lcnJvcn1cIikifQ) - it opens on the **Run Python Lessons** tab with the snippet in a scratch editor: Run prints what the snippet prints, nothing is graded, and the draft you have for `EX.00-foundations.T1.00a` is left alone.
+<!-- try-link:end -->
 
 ## 5. Exercise
 Write a Python function `battery_voltage_after_steps(v_start, drop_per_step, n_steps)` that uses a `for` loop to subtract `drop_per_step` from `v_start` `n_steps` times. Verify that starting at $12.0\text{ V}$ with a drop of $0.15\text{ V}$ per step over $10$ steps returns `10.5` ($\pm 10^{-6}\text{ V}$).

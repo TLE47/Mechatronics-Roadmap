@@ -73,6 +73,7 @@ $$
 
 Compare MOSFET conduction loss at $I_D = 4.0\text{ A}$, $R_{DS(\text{on})} = 0.020\ \Omega$ against linear drop loss at $V_{\text{bus}} = 12.0\text{ V}$, $D = 0.50$, and compute the catastrophic shoot-through current if both FETs in one leg turn on across $12.0\text{ V}$.
 
+<!-- try -->
 ```python
 import math
 
@@ -92,10 +93,15 @@ assert math.isclose(p_linear_drop, 24.0, rel_tol=1e-9)
 assert math.isclose(i_shoot_through, 300.0, rel_tol=1e-9)
 print(f"V_eff={v_eff:.1f} V, P_PWM={p_mosfet_pwm:.2f} W vs P_linear={p_linear_drop:.1f} W, I_shoot={i_shoot_through:.0f} A")
 ```
+
 Expected output:
 ```text
 V_eff=6.0 V, P_PWM=0.16 W vs P_linear=24.0 W, I_shoot=300 A
 ```
+
+<!-- try-link:start -->
+> **Try this in the workbench.** [Open these 17 lines with `EX.01-electronics.T1.01b` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.01-electronics.T1.01b#try=eyJ2IjoxLCJsZXNzb24iOiJFWC4wMS1lbGVjdHJvbmljcy5UMS4wMWIiLCJjb2RlIjoiaW1wb3J0IG1hdGhcblxudl9idXMgPSAxMi4wXG5kdXR5ID0gMC41MFxuaV9sb2FkID0gNC4wXG5yZHNfb24gPSAwLjAyMFxuXG52X2VmZiA9IGR1dHkgKiB2X2J1c1xucF9tb3NmZXRfcHdtID0gZHV0eSAqIChpX2xvYWQgKiogMikgKiByZHNfb25cbnBfbGluZWFyX2Ryb3AgPSAodl9idXMgLSB2X2VmZikgKiBpX2xvYWRcbmlfc2hvb3RfdGhyb3VnaCA9IHZfYnVzIC8gKDIuMCAqIHJkc19vbilcblxuYXNzZXJ0IG1hdGguaXNjbG9zZSh2X2VmZiwgNi4wLCByZWxfdG9sPTFlLTkpXG5hc3NlcnQgbWF0aC5pc2Nsb3NlKHBfbW9zZmV0X3B3bSwgMC4xNiwgcmVsX3RvbD0xZS05KVxuYXNzZXJ0IG1hdGguaXNjbG9zZShwX2xpbmVhcl9kcm9wLCAyNC4wLCByZWxfdG9sPTFlLTkpXG5hc3NlcnQgbWF0aC5pc2Nsb3NlKGlfc2hvb3RfdGhyb3VnaCwgMzAwLjAsIHJlbF90b2w9MWUtOSlcbnByaW50KGZcIlZfZWZmPXt2X2VmZjouMWZ9IFYsIFBfUFdNPXtwX21vc2ZldF9wd206LjJmfSBXIHZzIFBfbGluZWFyPXtwX2xpbmVhcl9kcm9wOi4xZn0gVywgSV9zaG9vdD17aV9zaG9vdF90aHJvdWdoOi4wZn0gQVwiKSJ9) - it opens on the **Run Python Lessons** tab with the snippet in a scratch editor: Run prints what the snippet prints, nothing is graded, and the draft you have for `EX.01-electronics.T1.01b` is left alone.
+<!-- try-link:end -->
 
 ## 5. Exercise
 Using the **Canonical `TI DRV8833` Datasheet Walkthrough** in `## 3. Formalization` Item 3 above, (a) extract the maximum Recommended Operating supply voltage $V_{\text{VM,rec,max}}$ ($10.8\text{ V}$) vs. the Absolute Maximum destruction ceiling $V_{\text{VM,abs,max}}$ ($11.8\text{ V}$) and verify that a $V_{\text{bus}} = 9.0\text{ V}$ supply is safely inside the recommended operating window (`2.7 <= 9.0 <= 10.8`), and (b) extract the combined high-side + low-side path on-resistance $R_{DS(\text{on, high})} + R_{DS(\text{on, low})} = 0.36\ \Omega$ to compute the total H-bridge conduction power loss $P_{\text{loss}} = I^2 (R_{\text{high}} + R_{\text{low}})$ in watts ($\text{W}$) when driving $I = 1.2\text{ A}$ continuously at $D = 1.0$. Verify $P_{\text{loss}} = 0.5184\text{ W}$ ($\pm 10^{-4}\text{ W}$).

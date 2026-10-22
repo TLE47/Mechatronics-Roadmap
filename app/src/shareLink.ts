@@ -133,7 +133,7 @@ export function shareUrl(href: string, attempt: SharedAttempt): ShareResult {
 }
 
 /** The page's address with no query and no hash, so the link carries nothing stale. */
-function baseWithoutHash(href: string): string {
+export function baseWithoutHash(href: string): string {
   try {
     const parsed = new URL(href);
     return `${parsed.origin}${parsed.pathname}`;

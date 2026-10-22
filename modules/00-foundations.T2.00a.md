@@ -63,6 +63,7 @@ $$
 ## 4. Worked example
 **Predict first (before you run it):** commit to two numbers before running the block. (1) Counts run $4094, 4095, 0, 1$ at one sample per millisecond. Is the $4095 \to 0$ step a tiny **positive** move or a near-full-turn **negative** one, and what speed does it read as? (2) After integrating those velocities back, does the trace end at the last angle, at the first angle, or near zero? Two tells that a wrong result is a mistake rather than a surprise: the step must read $+1.534\,\text{rad/s}$ - a value near $-6.28\times10^3\,\text{rad/s}$ means the difference was never wrapped - and the round trip must close to the **last** angle, so a trace ending near $0$ means the integral restarted every tick.
 
+<!-- try -->
 ```python
 import math
 
@@ -86,10 +87,15 @@ travelled = integrated[-1] - span
 print("v1=%.4f rad/s | round trip: %.6f rad from the encoder angle"
       % (velocity[1], abs(travelled)))
 ```
+
 Expected output:
 ```text
 v1=1.5340 rad/s | round trip: 0.000000 rad from the encoder angle
 ```
+
+<!-- try-link:start -->
+> **Try this in the workbench.** [Open these 21 lines with `EX.00-foundations.T2.00a` loaded](https://tle47.github.io/Mechatronics-Roadmap/?lesson=EX.00-foundations.T2.00a#try=eyJ2IjoxLCJsZXNzb24iOiJFWC4wMC1mb3VuZGF0aW9ucy5UMi4wMGEiLCJjb2RlIjoiaW1wb3J0IG1hdGhcblxuQ1BSLCBkdCA9IDQwOTYsIDFlLTNcbmNvdW50cyA9IFs0MDk0LCA0MDk1LCAwLCAxXVxucGVyX2NvdW50ID0gMi4wICogbWF0aC5waSAvIENQUlxuXG52ZWxvY2l0eSA9IFswLjBdXG5mb3IgayBpbiByYW5nZSgxLCBsZW4oY291bnRzKSk6XG4gICAgZGVsdGEgPSAoY291bnRzW2tdIC0gY291bnRzW2sgLSAxXSkgKiBwZXJfY291bnRcbiAgICB2ZWxvY2l0eS5hcHBlbmQoKChkZWx0YSArIG1hdGgucGkpICUgKDIuMCAqIG1hdGgucGkpIC0gbWF0aC5waSkgLyBkdClcblxuYW5nbGVzID0gW2NvdW50ICogcGVyX2NvdW50IGZvciBjb3VudCBpbiBjb3VudHNdXG5pbnRlZ3JhdGVkLCB0b3RhbCA9IFtdLCAwLjBcbmZvciB2YWx1ZSBpbiB2ZWxvY2l0eTpcbiAgICB0b3RhbCArPSB2YWx1ZSAqIGR0XG4gICAgaW50ZWdyYXRlZC5hcHBlbmQodG90YWwpXG5cbnNwYW4gPSAoYW5nbGVzWy0xXSAtIGFuZ2xlc1swXSArIG1hdGgucGkpICUgKDIuMCAqIG1hdGgucGkpIC0gbWF0aC5waVxudHJhdmVsbGVkID0gaW50ZWdyYXRlZFstMV0gLSBzcGFuXG5wcmludChcInYxPSUuNGYgcmFkL3MgfCByb3VuZCB0cmlwOiAlLjZmIHJhZCBmcm9tIHRoZSBlbmNvZGVyIGFuZ2xlXCJcbiAgICAgICUgKHZlbG9jaXR5WzFdLCBhYnModHJhdmVsbGVkKSkpIn0) - it opens on the **Run Python Lessons** tab with the snippet in a scratch editor: Run prints what the snippet prints, nothing is graded, and the draft you have for `EX.00-foundations.T2.00a` is left alone.
+<!-- try-link:end -->
 
 ## 5. Exercise
 Run the same difference over a $400$-sample figure-8 joint trace from the shared arm at $1\,\text{kHz}$, integrate the result, and confirm the total angle change matches the encoder's own endpoints within one count ($2\pi/4096\,\text{rad}$). Then change $\Delta t$ and confirm the estimate changes by exactly the same factor - a derivative that does not scale with the sample time is not a derivative.

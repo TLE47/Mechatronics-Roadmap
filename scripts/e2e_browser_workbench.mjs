@@ -926,6 +926,52 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok # %% cells run to here, ungraded, and leave files without markers alone');
 
+    // 5f. A try-it block — a lesson page's `<!-- try -->` fence — arrives as `?lesson=…#try=…`. It
+    //     opens the snippet in a *scratch* editor: Run prints what the snippet prints, nothing is
+    //     graded, and nothing about it becomes the lesson's draft, so a reload without the fragment
+    //     opens the work the learner already had (`app/src/tryLink.ts`).
+    const tryLesson = 'P.1';
+    const tryCode = 'total = 0\nfor n in (2, 3, 5):\n    total += n\nprint(total)\n';
+    const tryPayload = Buffer.from(JSON.stringify({ v: 1, lesson: tryLesson, code: tryCode })).toString(
+      'base64url'
+    );
+    await page.goto(`${baseUrl}?lesson=${tryLesson}#try=${tryPayload}`, { waitUntil: 'networkidle' });
+    await waitForEditor(page);
+    assert.equal(await page.getByTestId('scratch-banner').isVisible(), true, 'a try link must open scratch');
+    assert.equal(
+      (await getEditorCode(page)).trim(),
+      tryCode.trim(),
+      'the page’s own snippet must be the text in the editor'
+    );
+    await page.getByTestId('btn-run-verify').click();
+    await page.waitForFunction(
+      () => (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').trim() === '10',
+      undefined,
+      { timeout: 20000 }
+    );
+    assert.equal(
+      (await page.getByTestId('badge-behavior-check').textContent())?.includes('UNTESTED'),
+      true,
+      'a scratch run grades nothing: the behavior badge must stay untested'
+    );
+    assert.equal(
+      (await page.getByTestId('runner-verified-count').textContent())?.trim(),
+      verified(1),
+      'a page’s snippet must never verify the lesson'
+    );
+    await page.getByTestId('btn-end-scratch').click();
+    assert.equal(await page.getByTestId('scratch-banner').count(), 0, 'the banner’s button must leave scratch');
+    const afterScratch = await getEditorCode(page);
+    assert.equal(afterScratch.includes('total = 0'), false, 'leaving scratch must restore the learner’s text');
+    await page.goto(`${baseUrl}?lesson=${tryLesson}`, { waitUntil: 'networkidle' });
+    await waitForEditor(page);
+    assert.equal(
+      (await getEditorCode(page)).trim(),
+      afterScratch.trim(),
+      'a reload must reopen the same draft: scratch wrote nothing to the store'
+    );
+    console.log('  ok a try-it link opens scratch, runs ungraded, and saves nothing');
+
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
     await page.getByTestId('btn-load-solution').click();

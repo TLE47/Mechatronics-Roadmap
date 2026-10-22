@@ -11,6 +11,71 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 175: The Page's Own Code, in Scratch
+
+`docs/PLAN-2.0-GAP.md`'s last content-side gap was one sentence: *"Try-it blocks are still absent."*
+Every module page opens its worked example with **Predict first (before you run it)** — and had no Run
+to press. The Markdown fence is inert, and the workbench is a page away with a different lesson in its
+editor. A page now marks that fence with `<!-- try -->` on the line above it, and a generator writes
+the link that opens it ([`app/src/tryLink.ts`](app/src/tryLink.ts),
+[`app/src/tryLinks.ts`](app/src/tryLinks.ts), [`scripts/generate_try_links.mjs`](scripts/generate_try_links.mjs),
+`npm run test:try`, `npm run check:try-links`, browser step 5f):
+
+````markdown
+<!-- try -->
+```python
+CPR, dt = 4096, 1e-3
+counts = [4094, 4095, 0, 1]   # the wrap: 4095 -> 0 is +1 count, not -4095
+```
+````
+
+| Piece | Where |
+| :--- | :--- |
+| The payload, and the fragment that carries it | `#try=…`, the app's own share codec under its own key |
+| The page rule: the marker, the lesson, the generated line | [`app/src/tryLinks.ts`](app/src/tryLinks.ts) |
+| The file walk, `--check` and `--dry-run` | [`scripts/generate_try_links.mjs`](scripts/generate_try_links.mjs) |
+| Scratch in the runner, and the card that says so | [`app/src/components/tabs/TabPyodideRunner.tsx`](app/src/components/tabs/TabPyodideRunner.tsx) |
+| Tests | `npm run test:try` (18), browser step 5f |
+
+The four decisions that shaped it:
+
+- **Scratch, not an attempt.** A page's block is the page's, and it is usually not an answer to the
+exercise — so running it must not grade it. Arriving through `#try=` puts the runner in scratch: every
+run there takes `{ grade: false }` however it was started (the button, ⌘↵, the palette, watch, a
+slider), so nothing is verified, no version is filed, no `run` is logged and the hint ladder does not
+move. The predict gate is skipped for the same reason — it asks what the *lesson* will print. A
+sitting still counts: the learner was at the screen, working.
+- **The draft is never touched.** Scratch text is not written to the draft store, and leaving scratch
+restores `readDraft(id) ?? starter`. This is the rule the share card already set — a link opening a
+page must not be able to replace the work behind it — and the browser step proves it the only way that
+matters: leave scratch, reload without the fragment, and the same draft is there.
+- **One codec, two keys.** `#try=` carries exactly what `#share=` does, decoded by `decodeAttempt`, and
+is capped at the same measured 2,000 characters. A second encoder written in the generator would have
+been a second thing that can disagree with the decoder by one byte, and base64url of JSON disagrees
+silently. The generator imports the app's TypeScript for that reason.
+- **The link goes under the printed output, and the page owns the id.** A worked example is followed by
+`Expected output:` and a `text` fence, which `validate_modules.py` requires to sit directly under the
+code — the first placement put the link between them and the gate said so. The lesson id is the one the
+page's own run callout names, so a block cannot open a different entry from the link above it, and a
+page that names none is reported rather than shipped with a link to nowhere.
+
+Three worked examples carry one today — the slider loop (`00-foundations.T1.00a`), the half-bridge loss
+comparison (`01-electronics.T1.01b`) and the encoder wrap (`00-foundations.T2.00a`). The 05-control
+worked example is refused by the cap at **2,025 characters**, which is the rule working rather than a
+page half-written: the largest examples stay read-only until someone splits them.
+
+`npm run test:try` pins the marker rule (a fence that is not `python`, prose between marker and fence,
+an unclosed fence), the id read from the page, a rewrite that is idempotent, an edit that makes the
+page stale, an unmarked page whose line is removed, both refusals by their measured size — and then
+reads every shipped link back through `readTrySnippet` to prove it carries the block it sits under.
+`npm run check:try-links` is the drift gate. Verified on the final files: `npm run test:try` 18/18;
+**47 workbench suites**; browser step 5f (scratch card, run → `10` with behaviour `UNTESTED` and the
+verified count unmoved, **Back to my draft** restores, reload reopens the same draft); `npm run lint`
+clean; `npm run check:axe` 11 tabs × 3 palettes; `check_all` 29/29 (and `validate_modules` 74 modules);
+weight **962.3 kB** gzipped, +0.4 kB.
+
+---
+
 ## [2026-10-22] — Run 174: A Boundary You Can Run To
 
 `docs/PLAN-2.0-GAP.md`'s editor row ended on a bare fact: *"No `# %%` cells."* A cell is the one piece

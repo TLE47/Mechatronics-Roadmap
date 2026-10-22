@@ -663,6 +663,23 @@ The link opens `?lesson=<id>#share=<payload>`, so a client that strips the fragm
 the right lesson. Pair study — two people editing one attempt — is still missing; this is the send, not
 the session.
 
+### Try-it blocks
+
+A module page's worked example opens with **Predict first (before you run it)** — and had no Run to
+press, because a Markdown fence is inert and the workbench is a page away with a different lesson in
+its editor. A page now marks that fence with `<!-- try -->` on the line above it and
+[`scripts/generate_try_links.mjs`](../scripts/generate_try_links.mjs) writes the link that opens it
+([`src/tryLink.ts`](src/tryLink.ts), [`src/tryLinks.ts`](src/tryLinks.ts), `npm run test:try`,
+`npm run check:try-links`).
+
+| Rule | Why |
+| :--- | :--- |
+| The payload is the share codec under its own key (`#try=…`) | One encoder, one decoder, one version, one 2,000-character cap. A second codec is a second thing that can disagree with the first, and base64url of JSON disagrees silently. |
+| The snippet opens in a **scratch** editor, ungraded | A page's block is the page's, not the learner's attempt, and usually not an answer to the exercise. Every run in scratch takes `{ grade: false }`: nothing is verified, no version is filed, no `run` is logged, and the hint ladder does not move. |
+| The learner's draft is never touched | Scratch text is not written to the draft store, so a link from a page cannot cost a reader the work behind it. **Back to my draft** restores what was there, and the sitting still counts — they were at the screen. |
+| The lesson comes from the page | The id is the one the page's own run callout names, so a block cannot open a different entry from the link above it, and a page that names none is reported instead of shipping a link to nowhere. |
+| The link is generated, and `--check` gates it | Edit the code and re-run the generator; a stale page fails `npm run check:try-links` instead of opening old code. A block too long for the URL cap is refused by its measured size — why the biggest worked examples are still read-only. |
+
 ## Stack
 
 Vite 6 · React 19 · TypeScript 5.7 · Tailwind 4 · KaTeX · Lucide. Tests drive the built bundle with

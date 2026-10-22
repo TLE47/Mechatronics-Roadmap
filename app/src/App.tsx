@@ -102,6 +102,7 @@ import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
 import { isKnownLesson, lessonIdFromLocation } from './lessonRoute';
 import { readSharedAttempt, type SharedAttempt } from './shareLink';
+import { readTrySnippet } from './tryLink';
 import { readLastLessonId, lessonOffer } from './lastLesson';
 import { editedLines, readDraft } from './lessonDraft';
 import { draftProgress } from './lessonCoach';
@@ -836,8 +837,17 @@ export const App: React.FC = () => {
     const attempt = readSharedAttempt(window.location.hash || '');
     return attempt && isKnownLesson(attempt.lesson) ? attempt : null;
   });
+  // A page's try-it block arrives as `#try=…` (`src/tryLink.ts`): the same payload as a share link,
+  // read under its own key because the workbench does something different with it - the snippet opens
+  // in a scratch editor, ungraded, and the learner's draft for that lesson is not touched.
+  const [trySnippet, setTrySnippet] = useState<SharedAttempt | null>(() => {
+    if (typeof window === 'undefined' || !window.location) return null;
+    const snippet = readTrySnippet(window.location.hash || '');
+    return snippet && isKnownLesson(snippet.lesson) ? snippet : null;
+  });
   const [pyodideLessonId, setPyodideLessonId] = useState<string>(
-    () => lessonIdFromLocation() ?? sharedAttempt?.lesson ?? readLastLessonId() ?? 'P.1'
+    () =>
+      lessonIdFromLocation() ?? trySnippet?.lesson ?? sharedAttempt?.lesson ?? readLastLessonId() ?? 'P.1'
   );
 
   // A deep link is a promise about the editor being on screen, so land on it rather than on the
@@ -1238,6 +1248,8 @@ export const App: React.FC = () => {
               lessonRequest={lessonRequest}
               sharedAttempt={sharedAttempt}
               onDismissShared={() => setSharedAttempt(null)}
+              trySnippet={trySnippet}
+              onDismissTry={() => setTrySnippet(null)}
             />
           </div>
         )}

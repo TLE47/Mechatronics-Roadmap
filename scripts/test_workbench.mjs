@@ -170,6 +170,7 @@ async function main() {
     { label: 'symbols', script: 'test_symbols.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'layout', script: 'test_layout.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'cells', script: 'test_cells.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'try', script: 'test_try_links.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'history', script: 'test_draft_history.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'scope', script: 'test_scope.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'hints', script: 'test_check_hints.mjs', env: { NODE_OPTIONS: TYPES } },

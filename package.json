@@ -39,6 +39,8 @@
     "test:spine": "node --experimental-strip-types scripts/test_spine.mjs",
     "check:starthere": "python3 scripts/generate_start_here.py --check",
     "check:callout": "python3 scripts/generate_run_callouts.py --check",
+    "check:try-links": "node --experimental-strip-types scripts/generate_try_links.mjs --check",
+    "test:try": "node --experimental-strip-types scripts/test_try_links.mjs",
     "test:callout": "python3 tests/test_run_callout.py",
     "check:tabnames": "python3 scripts/check_tab_names.py",
     "test:tabnames": "python3 tests/test_tab_names.py",
