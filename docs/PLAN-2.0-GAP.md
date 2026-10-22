@@ -68,7 +68,12 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Share links, "ask for help", pair study | None. | **missing** |
 | CI rigour (workers, E2E, budgets) | 31 repository gates plus 34 workbench suites on one dev server and one built bundle, including the real-browser worker suite, the trail, and a Pages-bundle sweep that fails if a starter verifies. **Both budgets ship**: `npm run check:axe` runs axe-core over all 11 tabs in both themes and fails on any serious/critical finding that `docs/a11y-allowlist.json` does not explain (empty, and stale entries fail); `npm run check:weight` holds the gzipped bundle to `docs/weight-budget.json` and fails on a breach *or* on a budget nothing measures. On its first run it found 22 unnamed sliders, a brand link whose name reworded what is on screen, and an editor scroll region no keyboard could reach — all fixed, none allowlisted. No Lighthouse run and no visual-regression snapshots; wall-clock timings are deliberately not gated, because CI variance is larger than any regression this app could ship. | **partial** |
 
-## What to build next, in order
+## What was built next, in order
+
+All three are shipped (Runs 160–162). What is left is chosen from the **missing** and **partial** rows
+above, and that is an owner's call rather than a default: the debugger and time travel, embedded C/AVR,
+the diff view, docking and layout presets, the predict-first gate, share links and pair study, a
+high-contrast palette. None of them is a repair — the gates are green.
 
 1. ~~**The trail as a study input**~~ — **shipped in Run 161**: `app/src/trailReading.ts` reads the same
 days for what they imply (a lesson that resisted, the review deck going quiet, days that were only
