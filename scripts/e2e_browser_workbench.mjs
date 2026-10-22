@@ -42,8 +42,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { ISOLATION_HEADERS } from './isolation-headers.mjs';
+import { clearBulk, waitForBulk } from './bulk_store_page.mjs';
 import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { createServer } from 'vite';
+
+/**
+ * The three stores this suite reads by hand. They are in IndexedDB now (`app/src/bulkStorage.ts`), so a
+ * read is one round trip through `bulk_store_page.mjs` rather than a `localStorage.getItem` - and a
+ * run's event lands a tick after the UI says it is done, which is what the waits below are for.
+ */
+const LOG_KEY = 'mechalab.learningLog.v1';
+const DRAFTS_KEY = 'mechalab_drafts_v1';
+const STUDY_KEY = 'mechalab_study_notes_v1';
 
 /** The one copy of the Start here words, the same file the README block is generated from. */
 const START_HERE = JSON.parse(
@@ -410,8 +420,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
     // 1b. The learning log is written by the UI itself, and a failed run keeps the first failing line
     //     — the record a friction report is built from. Nothing leaves the browser to prove this.
-    const logged = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('mechalab.learningLog.v1') || '[]')
+    const logged = await waitForBulk(page, LOG_KEY, (events) =>
+      Array.isArray(events) && events.some((e) => e.kind === 'run' && e.lesson === 'P.6')
     );
     assert.ok(
       logged.some((e) => e.kind === 'lesson_open' && e.lesson === 'P.6'),
@@ -777,11 +787,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // The draft is written on a pause, not on every keystroke, so wait for the store to have it
     // rather than for a fixed number of milliseconds - a slower CI runner would otherwise reach the
     // roadmap before the debounce fired and read an untouched starter.
-    await page.waitForFunction(
-      (marker) => (localStorage.getItem('mechalab_drafts_v1') ?? '').includes(marker),
-      'min(max(cmd',
-      { timeout: 15000 }
-    );
+    await waitForBulk(page, DRAFTS_KEY, (drafts) => (drafts['P.4'] ?? '').includes('min(max(cmd'));
     await page.getByTestId('tab-btn-tab-arch').click();
     const draftLine = page.getByTestId('resume-draft');
     await draftLine.waitFor({ timeout: 15000 });
@@ -819,17 +825,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // Parsed, not substring-matched: `"kind":"run"` and `"lesson":"P.4"` can each come from a
     // different event, so a raw search for both resolves on the previous lesson's run and the card is
     // then read before this run has finished - which is exactly how this assertion failed on CI once.
-    await page.waitForFunction(
-      () => {
-        try {
-          const events = JSON.parse(localStorage.getItem('mechalab.learningLog.v1') ?? '[]');
-          return Array.isArray(events) && events.some((e) => e.kind === 'run' && e.lesson === 'P.4');
-        } catch {
-          return false;
-        }
-      },
-      undefined,
-      { timeout: 60000 }
+    await waitForBulk(
+      page,
+      LOG_KEY,
+      (events) => Array.isArray(events) && events.some((e) => e.kind === 'run' && e.lesson === 'P.4'),
+      60000
     );
     await page.getByTestId('tab-btn-tab-arch').click();
     await page.getByTestId('resume-card').waitFor({ timeout: 15000 });
@@ -1207,6 +1207,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         if (key.startsWith('mechalab')) window.localStorage.removeItem(key);
       }
     });
+    // ...and the six stores that live in IndexedDB, or the reload would come back with this suite's
+    // own log, drafts and notes still in place.
+    await clearBulk(page);
     await page.reload({ waitUntil: 'networkidle' });
     const formattingPage = page;
     await formattingPage.getByTestId('tab-btn-tab-pyodide').click();
@@ -1528,8 +1531,11 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       countBeforeBench,
       'a repair that fails its graded metric must not verify Lesson 08.1'
     );
-    const benchLog = await formattingPage.evaluate(() =>
-      JSON.parse(localStorage.getItem('mechalab.learningLog.v1') || '[]')
+    const benchLog = await waitForBulk(
+      formattingPage,
+      LOG_KEY,
+      (events) =>
+        Array.isArray(events) && events.some((e) => e.kind === 'run' && e.lesson === '08.1')
     );
     const benchRun = benchLog.filter((e) => e.kind === 'run' && e.lesson === '08.1').pop();
     assert.equal(benchRun?.outcome, 'harness_failed', 'the learning log must record the harness failure');
@@ -1603,8 +1609,12 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       countBeforeBudget,
       'a zero-order hold charged double a tick must not verify the Tier 3 capstone'
     );
-    const budgetLog = await formattingPage.evaluate(() =>
-      JSON.parse(localStorage.getItem('mechalab.learningLog.v1') || '[]')
+    const budgetLog = await waitForBulk(
+      formattingPage,
+      LOG_KEY,
+      (events) =>
+        Array.isArray(events) &&
+        events.some((e) => e.kind === 'run' && e.lesson === 'EX.08-capstones.T3.07a')
     );
     const budgetRun = budgetLog
       .filter((e) => e.kind === 'run' && e.lesson === 'EX.08-capstones.T3.07a')
@@ -1748,14 +1758,12 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     // state alone would be gone, and the note is the part of a lesson that cannot be regenerated.
     const studyNote = 'Tolerance is on the angle, not the position.';
     await formattingPage.getByTestId('study-note').fill(studyNote);
-    await formattingPage.waitForTimeout(900);
-    const storedStudy = await formattingPage.evaluate(
-      () => localStorage.getItem('mechalab_study_notes_v1') ?? ''
+    const storedStudy = await waitForBulk(formattingPage, STUDY_KEY, (study) =>
+      Object.values(study).some((entry) => (entry.note ?? '').includes('Tolerance is on the angle'))
     );
-    assert.match(
-      storedStudy,
-      /Tolerance is on the angle/,
-      `the note must reach the store once the learner pauses; the store held: ${storedStudy.slice(0, 120)}`
+    assert.ok(
+      JSON.stringify(storedStudy).includes('Tolerance is on the angle'),
+      'the note must reach the store once the learner pauses'
     );
 
     await formattingPage.getByTestId('panel-study').waitFor({ timeout: 30000 });

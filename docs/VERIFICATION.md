@@ -53,8 +53,10 @@ npm run test:portfolio                  # the export: a section only when it has
 npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore to the store and to the screen
 npm run test:e2e:review                 # pin, comment, rate and reload in Chromium: the card is still scheduled after the reload
 npm run test:e2e:focus                  # focus in Chromium: the chrome hides, the work stays, all three exits work, and a sitting is measured
+npm run test:e2e:storage                # the migration in Chromium: a pre-IndexedDB bucket arrives whole, the screen shows it, new work stays in the database
 npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
 npm run test:editor                     # slider directives and which lessons get helper tabs
+npm run test:storage                    # the move to IndexedDB: the bucket fallback, the migration order, the coalesced write queue, the retry after a refused write
 npm run test:resume                     # the lesson the next visit reopens, which one the roadmap offers and when it hands forward, and the ids it refuses
 npm run test:draft                      # the editor's unfinished work: kept per lesson, bounded, evicted, never a starter copy - and how much of it is written
 npm run test:history                    # the versions behind the draft: filed on Run with its verdict, deduped, capped per lesson and in total
@@ -73,8 +75,21 @@ backup: a flag set here survives a file that lacks it, a draft or a note written
 copy, a highlight already kept is not doubled and an older file cannot erase a newer comment, an older
 arriving version never evicts a newer one, and restoring the same file twice adds nothing. The last
 check is a measurement rather than a claim: the caps of all seven stores, computed from the modules
-that export them, come to ~4.0 MB of the 5 MB bucket - 80% of it, which is why `docs/PLAN-2.0-GAP.md`
-now calls the next large store the trigger for IndexedDB rather than a someday.
+that export them, come to ~2.0 M characters - the archive's size, and the number the bucket fallback
+(`localStorage`, for a browser that refuses a database) still has to hold in case the store has to go
+back there.
+
+`test:storage` covers the move to IndexedDB, which is the one change in the app that can lose work
+rather than show a wrong number. It pins the whole rulebook against a backend it can fail on demand: no
+`indexedDB` means the store *is* the bucket (not a copy), a migration copies all six keys before it
+deletes any of them and a refused copy leaves the bucket whole, the bucket wins over a database copy of
+the same key, an entry only the database has is readable, reads are synchronous after `hydrate()` while
+writes land on `flush()` coalesced per key, a clear empties the database, a failed write goes back on
+the queue instead of being dropped, and a store that has not hydrated answers `null` ("not ready")
+rather than an empty store. `test:e2e:storage` then does it in Chromium: a bucket holding all six
+stores the way the previous build left it, a reload, and the checks that nothing was lost, the editor
+and the study panel and the deck show the carried work, a note typed now lands in the database and not
+in the bucket, and a further reload reads it back.
 
 `test:study` pins the note and highlight rules without a browser: a note keeps its own line breaks and
 is cleared to nothing by an empty box, a quote collapses to one line and the same passage pinned twice

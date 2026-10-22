@@ -22,6 +22,8 @@
  *   test:review      FSRS: the 0.9-at-stability identity, grade ordering, lapses, the interval cap, and the card join
  *   test:sitting     the sitting clock: the idle cutoff, the three-hour cap, a backwards clock, the store, and focus's store
  *   test:portfolio   the exported Markdown: the progress record, notes and passages, the deck, the time table
+ *   test:storage     drafts/versions/log/notes/schedules/sittings in IndexedDB: the migration order, the queue, the fallback
+ *   test:e2e:storage the same move in Chromium: a bucket full of a pre-IndexedDB visit, migrated, then written to
  *   test:e2e:backup  the header buttons in Chromium: write a zip, wipe, restore to store *and* screen
  *   test:e2e:review  pin, comment, review, reload in Chromium: a card asked, answered, and still scheduled tomorrow
  *   test:e2e:focus   focus mode in Chromium: the chrome hides, the work stays, three exits, and a measured sitting
@@ -174,6 +176,9 @@ async function main() {
     runSuite('portfolio', 'test_portfolio.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
+    runSuite('storage', 'test_storage.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
     runSuite('fonts', 'test_fonts.mjs', {}),
     runSuite('e2e', 'e2e_browser_workbench.mjs', { E2E_BASE_URL: devUrl }),
     runSuite('pages', 'e2e_pages_bundle.mjs', { PAGES_SERVER_URL: pagesUrl }),
@@ -188,6 +193,10 @@ async function main() {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('focus2e', 'e2e_focus.mjs', {
+      E2E_BASE_URL: devUrl,
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('store2e', 'e2e_storage.mjs', {
       E2E_BASE_URL: devUrl,
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),

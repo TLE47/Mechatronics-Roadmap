@@ -11,6 +11,47 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 154: The Work Moves to IndexedDB
+
+The caps on every store were sized against one 5 MB bucket, and after the study layer and the review
+deck they measured ~4.0 MB of it — one big capstone draft away from a `QuotaExceeded` in the middle of
+a debounced save. The six large stores now live in **IndexedDB**: drafts, filed versions, the learning
+log, notes and highlights, review schedules and sittings.
+
+**No store module changed its signature to get there.** Every one already read through a
+`Storage`-shaped helper, so [`app/src/bulkStorage.ts`](app/src/bulkStorage.ts) is a `Storage` with a
+write-behind cache underneath: `main.tsx` awaits `hydrateBulkStorage()` before the first render, which
+opens the database, copies every entry into memory and migrates the bucket, and from then on reads are
+synchronous out of that copy while writes land in IndexedDB on the next tick, coalesced per key. The
+signatures, the fake buckets in the unit suites and React's `useState` initializers all keep working.
+One object store and three operations did not earn a dependency, so
+[`app/src/idbBackend.ts`](app/src/idbBackend.ts) is a hand-written wrapper whose every failure mode
+resolves to `null`.
+
+**The migration is the part that could eat work, so it is ordered for it.** Copy every key first,
+delete only after the backend has it; the bucket's copy wins over the database's when both have a key,
+because that copy is the one the previous build wrote. A browser that refuses a database — private
+mode, blocked storage, a second tab holding an older version open — settles back on the bucket and
+behaves exactly as before. The small first-paint keys (theme, focus, last lesson, view mode, progress
+flags) deliberately stay in the bucket: they are read before React mounts, and a theme one frame late
+is a flash.
+
+- `npm run test:storage` (**13 checks**, new): the bucket-is-the-store fallback with no database, the
+  copy-then-delete order, a refused copy leaving the bucket whole (and the next visit finishing),
+  the bucket winning over a duplicate, coalescing three writes into one put, a clear reaching the
+  database, a failed write going back on the queue, and `null` — not an empty store — before hydrate.
+- `npm run test:e2e:storage` (new) starts as a learner from the previous build: a bucket holding all
+  six stores, a reload, and then nothing lost (every value in the database, the bucket empty), the
+  editor / note box / deck showing the carried work, a typed note landing in the database and not the
+  bucket, and a further reload reading it back.
+- The suites that read the bucket by hand now read the database through
+  [`scripts/bulk_store_page.mjs`](scripts/bulk_store_page.mjs), and the workbench suite's "zero
+  progress" reset clears both stores — clearing only the bucket would leave the log, drafts and notes
+  the scenario is trying to forget. The same-task pair sweep's fingerprint gained the four bulk stores
+  it used to compare in `localStorage`, in the same read.
+- `npm run test:workbench` now runs **28 suites**; `docs/PLAN-2.0-GAP.md`'s persistence row records the
+  move and keeps its **partial** on the cross-lesson timeline that is still missing.
+
 ## [2026-10-21] — Run 153: The Portfolio Carries the Work
 
 The export was the last place where the study layer did not show up: a learner could write a note, keep

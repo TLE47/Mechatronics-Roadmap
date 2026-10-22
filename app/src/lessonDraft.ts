@@ -1,6 +1,7 @@
 // The `.ts` extension is for Node's type stripping (`scripts/test_lesson_draft.mjs`), the same way
 // `lastLesson.ts` imports its registry: no bundler, no resolution rules beyond what the file says.
 import { PYTHON_LESSONS } from './data/pythonLessonsData.ts';
+import { bulkStorage } from './bulkStorage.ts';
 
 /**
  * The code the learner has typed into a lesson and not finished.
@@ -15,7 +16,9 @@ import { PYTHON_LESSONS } from './data/pythonLessonsData.ts';
  * lesson keeps nothing, so a first visit writes nothing and "no draft" means "nothing typed yet"
  * rather than "we stored a copy of the starter".
  *
- * Bounded, because `localStorage` is a single 5 MB bucket shared with progress, theme and the log:
+ * Bounded, because a draft store is what makes every write, export and backup pay for the learner's
+ * whole editing history - and the `localStorage` a browser falls back to when it refuses IndexedDB is a
+ * single 5 MB bucket shared with progress, theme and the log:
  *
  * - **At most `MAX_DRAFTS` lessons**, least-recently-edited evicted. Twelve is more than a week of
  *   self-paced work, and a learner who returns to the thirteenth still gets the lesson, just from its
@@ -35,12 +38,8 @@ export const MAX_DRAFT_CHARS = 40_000;
 export type Drafts = Record<string, string>;
 
 function storage(): Storage | null {
-  try {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage;
-  } catch {
-    return null;
-  }
+  // IndexedDB when the browser has it (`bulkStorage.ts`), the bucket otherwise.
+  return bulkStorage();
 }
 
 /** A store that has been written by something else (or by an older version) reads as empty. */

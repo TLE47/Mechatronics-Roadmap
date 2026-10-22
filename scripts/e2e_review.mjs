@@ -16,6 +16,7 @@
 
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
+import { readBulk, waitForBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { waitForEditor } from './editor-code.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
@@ -137,7 +138,14 @@ async function main() {
       /Review \(0 due\)/,
       'the deck must say nothing is due after the only card was answered'
     );
-    const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '{}'), CARDS_KEY);
+    // The deck's schedules are in IndexedDB (`app/src/bulkStorage.ts`); the write lands a tick after
+    // the panel says "Rated".
+    // Wait for the *reviewed* schedule, not merely for a schedule: the deck's own sync writes the new
+    // card before the rating does, so a predicate on the key's presence would read the pre-rating copy
+    // out of the database and see reps 0.
+    const stored = await waitForBulk(page, CARDS_KEY, (cards) =>
+      Object.values(cards).some((card) => card.reps === 1)
+    );
     const ids = Object.keys(stored);
     assert.equal(ids.length, 1, `expected one stored schedule, got ${ids.join(', ')}`);
     assert.equal(stored[ids[0]].reps, 1);
@@ -169,7 +177,7 @@ async function main() {
       { timeout: 20000 }
     );
     assert.equal(await page.getByTestId('review-card').count(), 0);
-    const afterReload = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '{}'), CARDS_KEY);
+    const afterReload = JSON.parse(await readBulk(page, CARDS_KEY));
     assert.equal(Object.keys(afterReload).length, 1, 'the stored deck must not be rewritten into nothing');
     console.log('  ok after a reload the deck says nothing is due and names the next day');
 
@@ -195,7 +203,7 @@ async function main() {
       undefined,
       { timeout: 20000 }
     );
-    const retired = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '{}'), CARDS_KEY);
+    const retired = await waitForBulk(page, CARDS_KEY, (cards) => Object.keys(cards).length === 0);
     assert.deepEqual(retired, {}, 'a card with no question must not keep a schedule behind');
     console.log('  ok clearing the comment retired the card and pruned its schedule');
 

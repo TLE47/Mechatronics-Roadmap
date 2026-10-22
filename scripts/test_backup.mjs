@@ -477,7 +477,10 @@ check('the summaries say what happened, and say "nothing new" when nothing was',
   );
 });
 
-check('the caps bound every store well below the 5 MB bucket', () => {
+check('the caps keep the bucket fallback - and the archive - inside 5 MB', () => {
+  // The bulk stores are in IndexedDB now (`app/src/bulkStorage.ts`), so this ceiling no longer guards a
+  // quota; it guards the two things that still have to hold every store at once: the `localStorage` a
+  // browser falls back to when it refuses a database, and the zip a learner hands over.
   // Measured, not guessed: 120 chars is a run event with a lesson id, an outcome and a short fail
   // line. Every store's own cap is exported by the module that enforces it.
   const worst =
@@ -492,7 +495,7 @@ check('the caps bound every store well below the 5 MB bucket', () => {
   const ceiling = (worst + verified) * 2; // UTF-16 in localStorage: two bytes per character
   assert.ok(
     ceiling < 5_000_000,
-    `the stores could reach ${Math.round(ceiling / 1000)} kB, which no longer fits the bucket`
+    `the stores could reach ${Math.round(ceiling / 1000)} kB, which no longer fits a bucket fallback`
   );
   console.log(
     `       caps: ${Math.round(worst / 1000)}k chars -> ~${Math.round(ceiling / 1000)} kB of a 5,000 kB bucket ` +

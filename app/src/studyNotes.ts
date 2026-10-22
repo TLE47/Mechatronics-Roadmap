@@ -12,7 +12,9 @@
  * - **A highlight** is a quoted passage plus an optional comment. The quote is the identity: saving
  *   the same passage twice updates what was said about it rather than growing a duplicate list.
  *
- * Bounded, because `localStorage` is one 5 MB bucket shared with drafts, versions, flags and the log:
+ * Bounded, because a note store with no ceiling is one that eventually makes every write, export and
+ * backup pay for it - the caps are what keep the archive small and the fallback (`localStorage`, for a
+ * browser that refuses IndexedDB) inside 5 MB:
  * `MAX_NOTE_CHARS` per note, `MAX_HIGHLIGHTS` per lesson, `MAX_NOTE_LESSONS` lessons. Eviction is by
  * last write, so the notes a learner is actually using survive and the ones from a month ago go
  * first — and a lesson that loses its last note and highlight is removed entirely, so an empty entry
@@ -21,6 +23,8 @@
  * Never throws: private mode and blocked storage both make `localStorage` throw on access, and a
  * learner in one of those still gets a working lesson, just without notes.
  */
+
+import { bulkStorage } from './bulkStorage.ts';
 
 export const STORAGE_KEY_STUDY = 'mechalab_study_notes_v1';
 export const MAX_NOTE_CHARS = 4_000;
@@ -50,12 +54,8 @@ export interface LessonStudy {
 export type StudyStore = Record<string, LessonStudy>;
 
 function storage(): Storage | null {
-  try {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage;
-  } catch {
-    return null;
-  }
+  // IndexedDB when the browser has it (`bulkStorage.ts`), the bucket otherwise.
+  return bulkStorage();
 }
 
 /** A selection across three lines reads as one line: the quote is for reading back, not for diffing. */

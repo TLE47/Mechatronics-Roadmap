@@ -25,6 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { getEditorCode, waitForEditor } from './editor-code.mjs';
+import { clearBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 // The app's own reader, so the archive the browser wrote is checked by the code that restores it.
 import { readZip, fromUtf8 } from '../app/src/backupZip.ts';
@@ -77,6 +78,30 @@ async function main() {
       timeout: 30000,
     });
 
+    // ---- A draft and a log event, seeded into the stores the backup reads ----
+    // The editor text is the editor suite's surface, not this one's; the draft store is a plain map,
+    // and what this suite proves is that a restore puts it back where the learner can use it.
+    // Seeded into the bucket and then migrated by the reload, which is also how a learner arriving
+    // from the previous build gets here: `app/src/bulkStorage.ts` moves these six stores into
+    // IndexedDB before the first render, and the app reads them from there afterwards.
+    await page.evaluate(
+      ({ lesson, marker }) => {
+        localStorage.setItem(
+          'mechalab_drafts_v1',
+          JSON.stringify({ [lesson]: `# worked example\nprint("${marker}")\n` })
+        );
+        localStorage.setItem(
+          'mechalab.learningLog.v1',
+          JSON.stringify([{ t: 1_700_000_000_000, kind: 'lesson_open', lesson }])
+        );
+      },
+      { lesson: DRAFT_LESSON, marker: DRAFT_MARKER }
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => Boolean(document.querySelector('#root *')), undefined, {
+      timeout: 30000,
+    });
+
     // ---- Progress the app itself wrote: one milestone, ticked by the UI ----
     await openRoadmap(page);
     // The plain "Mark done" buttons are a pass's steps; the first ones in the DOM are a bench's, whose
@@ -95,22 +120,6 @@ async function main() {
       'the milestone click must tick the button before anything is backed up'
     );
 
-    // ---- A draft and a log event, seeded into the stores the backup reads ----
-    // The editor text is the editor suite's surface, not this one's; the draft store is a plain map,
-    // and what this suite proves is that a restore puts it back where the learner can use it.
-    await page.evaluate(
-      ({ lesson, marker }) => {
-        localStorage.setItem(
-          'mechalab_drafts_v1',
-          JSON.stringify({ [lesson]: `# worked example\nprint("${marker}")\n` })
-        );
-        localStorage.setItem(
-          'mechalab.learningLog.v1',
-          JSON.stringify([{ t: 1_700_000_000_000, kind: 'lesson_open', lesson }])
-        );
-      },
-      { lesson: DRAFT_LESSON, marker: DRAFT_MARKER }
-    );
 
     // ---- One press: a zip the browser saves ----
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
@@ -145,7 +154,11 @@ async function main() {
     );
 
     // ---- Wipe everything, and prove the wipe took ----
+    // Both stores: the bucket holds the progress flags, and the draft and the log are in IndexedDB.
+    // Clearing only the bucket would leave the archive's own contents in place, and the restore below
+    // would then be asserting that a file it did not need still works.
     await page.evaluate(() => localStorage.clear());
+    await clearBulk(page);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await openRoadmap(page);
     assert.match(

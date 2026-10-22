@@ -20,6 +20,7 @@
  * broken.
  */
 
+import { bulkStorage } from './bulkStorage.ts';
 import { newCard, review, type CardSchedule, type Grade } from './fsrs.ts';
 import { readStudy, type StudyStore } from './studyNotes.ts';
 
@@ -45,12 +46,8 @@ export interface StudyCard {
 export type CardStore = Record<string, CardSchedule>;
 
 function storage(): Storage | null {
-  try {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage;
-  } catch {
-    return null;
-  }
+  // IndexedDB when the browser has it (`bulkStorage.ts`), the bucket otherwise.
+  return bulkStorage();
 }
 
 function asSchedule(value: unknown): CardSchedule | null {

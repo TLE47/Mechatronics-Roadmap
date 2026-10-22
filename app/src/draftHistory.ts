@@ -1,6 +1,7 @@
 // The `.ts` extension is for Node's type stripping (`scripts/test_draft_history.mjs`), the same way
 // `lessonDraft.ts` imports its registry.
 import { PYTHON_LESSONS } from './data/pythonLessonsData.ts';
+import { bulkStorage } from './bulkStorage.ts';
 
 /**
  * The code each run started from, so a learner can go back one step.
@@ -14,7 +15,8 @@ import { PYTHON_LESSONS } from './data/pythonLessonsData.ts';
  * history would be both enormous and unreadable. An identical re-run does not add a version - it
  * updates that version's verdict - because pressing Run twice on the same text is one attempt.
  *
- * Bounded three ways, because it shares the same 5 MB `localStorage` bucket as drafts and progress:
+ * Bounded three ways, because a version list is the store that grows without being edited - and because
+ * the `localStorage` a browser falls back to when it refuses IndexedDB is still one 5 MB bucket:
  *
  * - **No starter, no snapshot.** The starter is always one button away (Reset Starter), so storing it
  *   would spend the bucket on something the lesson already ships.
@@ -46,12 +48,9 @@ export interface DraftSnapshot {
 export type HistoryStore = Record<string, DraftSnapshot[]>;
 
 function storage(): Storage | null {
-  try {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage;
-  } catch {
-    return null;
-  }
+  // IndexedDB when the browser has it (`bulkStorage.ts`), the bucket otherwise: the caps above are
+  // about the backup's size now, not about surviving a 5 MB quota.
+  return bulkStorage();
 }
 
 /** A store written by an older version, or a truncated one, reads as the entries it can prove. */
@@ -87,7 +86,7 @@ function writeHistory(store: Storage, history: HistoryStore): void {
   }
 }
 
-/** Characters a store holds, which is what the bucket measures. */
+/** Characters a store holds, which is the number the caps and the backup's ceiling are stated in. */
 export function historyChars(history: HistoryStore): number {
   let total = 0;
   for (const versions of Object.values(history)) {

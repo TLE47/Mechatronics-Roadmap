@@ -36,6 +36,8 @@
 
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
+import { BULK_KEYS } from '../app/src/bulkStorage.ts';
+import { clearBulk, readBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 
 /** Injected into every page load: spec resolution, clicking, fingerprinting. */
@@ -287,6 +289,23 @@ const CASES = [
   },
 ];
 
+/**
+ * The stores that left the bucket for IndexedDB, as one string.
+ *
+ * The fingerprint used to include them by reading `localStorage`; the migration moved drafts, versions,
+ * notes, schedules, the log and sittings into `app/src/bulkStorage.ts`, so the same coverage now needs
+ * a read of the database. The log and the sittings are left out for the reason the wall-clock keys are
+ * filtered out of the bucket dump above: two runs of the same clicks are two different pieces of time.
+ */
+async function bulkFingerprint(page) {
+  const parts = [];
+  for (const key of BULK_KEYS) {
+    if (/learningLog|sittings/i.test(key)) continue;
+    parts.push(`${key}=${(await readBulk(page, key)) ?? ''}`);
+  }
+  return parts.join('|');
+}
+
 /** The first place two fingerprints differ, with a little context on each side. */
 function diffHint(left, right) {
   const limit = Math.min(left.length, right.length);
@@ -311,6 +330,9 @@ async function runCase(page, baseUrl, testCase) {
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('button', { timeout: 15000 });
       await page.evaluate(() => localStorage.clear());
+      // Both stores: the work these pairs produce is in IndexedDB now, and a variant that inherited
+      // the previous arm's drafts would be comparing two different starting points.
+      await clearBulk(page);
       await page.reload({ waitUntil: 'load' });
       await page.waitForSelector('button', { timeout: 15000 });
     });
@@ -320,9 +342,9 @@ async function runCase(page, baseUrl, testCase) {
         await page.evaluate(() => window.__pairs.settle(1000));
       });
     }
-    const before = await stage('fingerprint before', () =>
-      page.evaluate(() => window.__pairs.digest())
-    );
+    const fingerprint = async () =>
+      `${await page.evaluate(() => window.__pairs.digest())}\n--bulk--\n${await bulkFingerprint(page)}`;
+    const before = await stage('fingerprint before', fingerprint);
     await stage('clicks', () =>
       page.evaluate(
         ([specs, inOneTask]) =>
@@ -333,7 +355,7 @@ async function runCase(page, baseUrl, testCase) {
       )
     );
     await stage('settle', () => page.evaluate(() => window.__pairs.settle(2500)));
-    const after = await stage('fingerprint after', () => page.evaluate(() => window.__pairs.digest()));
+    const after = await stage('fingerprint after', fingerprint);
     results[variant] = { before, after };
   }
   return results;

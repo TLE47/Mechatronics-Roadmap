@@ -30,6 +30,8 @@
  * the idle cutoff, the cap, the backwards clock and the statistics without a browser or a timer.
  */
 
+import { bulkStorage } from './bulkStorage.ts';
+
 export const STORAGE_KEY_SITTINGS = 'mechalab_sittings_v1';
 export const SITTINGS_SCHEMA = 'mechalab.sittings/1';
 /** Five minutes without a run, a review or a lesson open is a break. */
@@ -165,12 +167,8 @@ export function parseSittings(raw: string | null): Sitting[] {
 }
 
 function storage(): Storage | null {
-  try {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage;
-  } catch {
-    return null;
-  }
+  // IndexedDB when the browser has it (`bulkStorage.ts`), the bucket otherwise.
+  return bulkStorage();
 }
 
 export function readSittings(): Sitting[] {

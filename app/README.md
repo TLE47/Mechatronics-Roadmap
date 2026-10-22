@@ -144,13 +144,41 @@ lacks it, a local draft beats the file's, a newer version is not pushed out by a
 still hold); `npm run test:e2e:backup` does it in Chromium — write the zip, wipe, restore, and see the
 tick and the draft come back.
 
-Why this and not IndexedDB yet: the caps bound everything the seven stores can hold at ~2.0 M
-characters, about 4.0 MB of the 5 MB bucket (12 drafts × 40 k, 120 k of versions, 25 lessons of notes
-and highlights, 500 review cards, 5,000 log events), and `test:backup` computes that number from the
-exported caps instead of trusting this paragraph. That is 80% of the bucket — the deck is what took the
-last real slack — so the next store that is not a rounding error is the point where IndexedDB stops
-being optional. The backup is still the right answer today, because it is the part that matters when a
-browser is cleared.
+Why this as well as IndexedDB: the caps bound everything the seven stores can hold at ~2.0 M
+characters (12 drafts × 40 k, 120 k of versions, 25 lessons of notes and highlights, 500 review cards,
+5,000 log events) and `test:backup` computes that number from the exported caps instead of trusting
+this paragraph. Before the move that was 80% of a 5 MB bucket; now it is the size of the archive and
+the cost of one `put`, which is a budget a cap can defend rather than an emergency. A backup is still
+the part that matters when a browser is cleared, which no amount of storage room changes.
+
+### Where the work is stored
+
+The six stores above are too big for `localStorage` and live in **IndexedDB**
+([`src/bulkStorage.ts`](src/bulkStorage.ts), [`src/idbBackend.ts`](src/idbBackend.ts)): one database
+(`mechalab`), one object store (`kv`), the same key names the bucket used.
+
+No store module changed its signature to get there. They all read through a `Storage` helper, so this is
+a `Storage` — one with a write-behind cache underneath. `hydrateBulkStorage()` runs in `main.tsx` before
+the first render: it opens the database, copies every entry into memory, and migrates anything a
+previous build left in the bucket. After that reads are synchronous from that copy (so `readDrafts()`
+and the rest keep working, and React can keep reading in `useState` initializers) and writes land in
+IndexedDB on the next tick, coalesced per key. `pagehide` flushes the queue, so the last edit does not
+need that tick.
+
+The migration is the rule that cannot lose work: **copy everything first, delete only after the backend
+has it**, and the bucket's copy wins over the database's when both have a key, because the bucket copy is
+the one the previous build wrote. A browser that refuses a database — private mode, blocked third-party
+storage, a second tab holding an older version open — settles on the bucket and behaves exactly as it
+did before; a page that never hydrated gets `null` ("not ready") rather than an empty store. The small
+first-paint keys stay in `localStorage` on purpose: theme, focus, the last lesson, the view mode, the
+progress flags and the dismissed cards are read before React mounts, and a theme that arrives one frame
+late is a flash the learner sees.
+
+`npm run test:storage` pins the fallback, the migration order, the coalescing queue and the retry after
+a refused write against a fake backend; `npm run test:e2e:storage` starts as a learner from the previous
+build — a bucket full of all six stores — reloads, and checks the values arrive in the database, the
+bucket is empty, the editor/note box/deck show the carried work, and a note typed now lands in
+IndexedDB and comes back after a reload.
 
 ### Keys
 
@@ -426,6 +454,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/sittingClock.ts`](src/sittingClock.ts) | The measured sitting: idle cutoff, three-hour cap, bounded store, and the totals the pilot quotes. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
+| [`src/bulkStorage.ts`](src/bulkStorage.ts) | The six large stores behind a `Storage`-shaped write-behind cache over IndexedDB, and the migration out of the bucket. |
+| [`src/idbBackend.ts`](src/idbBackend.ts) | The raw IndexedDB backend: one object store, three operations, and `null` on every way a database can be refused. |
 
 ## Checks that cover this directory
 
@@ -447,9 +477,11 @@ npm run test:study           # notes and highlights: what is kept, deduped, evic
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser
 npm run test:portfolio       # the export: sections only when they have content, quoting, caps, the time table
+npm run test:storage         # IndexedDB: the bucket fallback, the migration order, the write queue, a refused write
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting
+npm run test:e2e:storage     # a pre-IndexedDB bucket in Chromium: migrated whole, shown on screen, written to
 npm run check:lessons        # the registry is current
 ```
 

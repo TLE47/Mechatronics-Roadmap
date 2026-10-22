@@ -16,8 +16,10 @@
  *    from "used the ladder".
  *  - `export`: when the learner handed the file over, so a partial log is not read as a whole one.
  *
- * Events are capped so the log cannot fill localStorage (a quota error would otherwise break the
- * runner); the oldest events are dropped first, and the cap is far above one Core route's worth.
+ * Events are capped so the log cannot grow without bound - it is the largest store, and a log that grew
+ * per run would make every write, every export and every backup pay for a learner's whole history; the
+ * oldest events are dropped first, and the cap is far above one Core route's worth. The store itself is
+ * IndexedDB (`bulkStorage.ts`), so the cap is a budget for the archive rather than a quota wall.
  *
  * The exported file also carries the measured sittings (`sittingClock.ts`): the log records what
  * happened, and the clock records how long each stretch lasted, which together are the pilot's
@@ -26,6 +28,7 @@
 
 // With the extension: this module is loaded by Node's type stripping in the unit suites, which does not
 // resolve an extensionless relative import the way Vite does.
+import { bulkStorage } from './bulkStorage.ts';
 import { readSittings } from './sittingClock.ts';
 
 export type LearningEventKind = 'lesson_open' | 'run' | 'verified' | 'hint' | 'solution_open' | 'export';
@@ -51,9 +54,14 @@ export const LOG_SCHEMA = 'mechalab.learning-log/1';
 export const MAX_EVENTS = 5000;
 const FAIL_LINE_CHARS = 200;
 
+function storage(): Storage | null {
+  // IndexedDB when the browser has it (`bulkStorage.ts`), the bucket otherwise.
+  return bulkStorage();
+}
+
 export function readLearningLog(): LearningEvent[] {
   try {
-    const raw = localStorage.getItem(LOG_STORAGE_KEY);
+    const raw = storage()?.getItem(LOG_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as LearningEvent[]) : [];
@@ -67,9 +75,11 @@ export function logEvent(event: Omit<LearningEvent, 't'> & { t?: number }): void
   const entry: LearningEvent = { t: event.t ?? Date.now(), ...event };
   if (entry.kind === 'run' && entry.fail) entry.fail = entry.fail.split('\n')[0].slice(0, FAIL_LINE_CHARS);
   try {
+    const store = storage();
+    if (!store) return;
     const events = readLearningLog();
     events.push(entry);
-    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
+    store.setItem(LOG_STORAGE_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
   } catch {
     // Storage disabled or over quota: the learner keeps working, the log simply misses this event.
   }
@@ -78,7 +88,7 @@ export function logEvent(event: Omit<LearningEvent, 't'> & { t?: number }): void
 /** Replace the whole log, used after a cloud merge has unioned this browser's events with another's. */
 export function replaceLearningLog(events: LearningEvent[]): void {
   try {
-    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
+    storage()?.setItem(LOG_STORAGE_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
   } catch {
     // Storage disabled or over quota: the log keeps whatever it already held.
   }
@@ -86,7 +96,7 @@ export function replaceLearningLog(events: LearningEvent[]): void {
 
 export function clearLearningLog(): void {
   try {
-    localStorage.removeItem(LOG_STORAGE_KEY);
+    storage()?.removeItem(LOG_STORAGE_KEY);
   } catch {
     // nothing to clear if storage is unavailable
   }

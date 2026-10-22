@@ -20,7 +20,6 @@ flowchart LR
     end
     subgraph next["Next, in this order"]
         N1["The study layer: notes,<br/>flashcards, focus mode"]
-        N2["IndexedDB, when the caps<br/>stop fitting 5 MB"]
         N3["Parsed tracebacks, matched<br/>to the hint that answers them"]
     end
     shipped --> next
@@ -34,7 +33,7 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Plan item | Reality now | Verdict |
 | :--- | :--- | :--- |
 | Python in a Web Worker + isolation on Pages + a real Stop | `PYODIDE_WORKER_SOURCE` in [`app/src/components/tabs/TabPyodideRunner.tsx`](../app/src/components/tabs/TabPyodideRunner.tsx) runs Pyodide off-thread; Stop writes a `SharedArrayBuffer` interrupt word (`setInterruptBuffer`), so `KeyboardInterrupt` lands **in place** and imports survive; [`app/public/sw.js`](../app/public/sw.js) supplies COOP/COEP on Pages, with a terminate-the-worker fallback when isolation is absent. Pinned by `npm run test:runtime` (real Chromium, real `SharedArrayBuffer`). | **ships** |
-| IndexedDB persistence with snapshot-on-run | Drafts are `localStorage` per lesson, bounded and evicted ([`app/src/lessonDraft.ts`](../app/src/lessonDraft.ts)); every Run files the code it started from with its verdict, five per lesson, restorable ([`app/src/draftHistory.ts`](../app/src/draftHistory.ts), `npm run test:history`). **The backup half ships**: one press writes a `.zip` of all seven stores with a manifest and a README ([`app/src/backupZip.ts`](../app/src/backupZip.ts), [`app/src/backupBundle.ts`](../app/src/backupBundle.ts), `npm run test:backup`, `npm run test:e2e:backup`), and a restore merges — flags union, drafts fill gaps, versions and log events dedupe — so it never deletes and never doubles. No IndexedDB and no cross-lesson timeline yet: `npm run test:backup` measures the caps at ~2.0 M characters (~4.0 MB of the 5 MB bucket), so the move is not earned by size today - but the study layer and the review deck took the slack down to 20%, and the next large store will not fit. | **partial** |
+| IndexedDB persistence with snapshot-on-run | The six large stores — drafts, filed versions, the learning log, notes and highlights, review schedules, sittings — are in **IndexedDB** (`mechalab`/`kv`) behind a `Storage`-shaped write-behind cache ([`app/src/bulkStorage.ts`](../app/src/bulkStorage.ts), [`app/src/idbBackend.ts`](../app/src/idbBackend.ts), `npm run test:storage`, `npm run test:e2e:storage`), migrated from the bucket copy-first so a browser that refuses a database loses nothing. The small first-paint keys (theme, focus, last lesson, view mode, progress flags) stay in `localStorage`, where a synchronous read at mount time is what they need. Hand-written rather than Dexie: one object store and three operations do not earn a dependency. Drafts are per lesson, bounded and evicted ([`app/src/lessonDraft.ts`](../app/src/lessonDraft.ts)); every Run files the code it started from with its verdict, five per lesson, restorable ([`app/src/draftHistory.ts`](../app/src/draftHistory.ts), `npm run test:history`). **The backup half ships**: one press writes a `.zip` of all seven stores with a manifest and a README ([`app/src/backupZip.ts`](../app/src/backupZip.ts), [`app/src/backupBundle.ts`](../app/src/backupBundle.ts), `npm run test:backup`, `npm run test:e2e:backup`), and a restore merges — flags union, drafts fill gaps, versions and log events dedupe — so it never deletes and never doubles. What is still missing is a cross-lesson timeline; the caps (~2.0 M characters, measured by `npm run test:backup`) are now the archive's size rather than a bucket emergency. | **partial** |
 | A Scope panel with a `scope.plot()` helper | Ships: `mechalab.scope.stream(name, t, y)` / `scope.plot(...)` inside a run, batched through the worker, drawn on one pair of axes with last values in the legend and the same data as a table ([`app/src/scopeModel.ts`](../app/src/scopeModel.ts), [`app/src/components/ScopePanel.tsx`](../app/src/components/ScopePanel.tsx), `npm run test:scope`, browser step 7h). No uPlot zoom/cursors, no A/B run overlay yet. | **partial** |
 
 ## Phases 1–3 — runtime, workspace, editor
@@ -67,16 +66,11 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Offline PWA | `sw.js` precaches the shell, manifest and favicon, serves same-origin assets cache-first with a background refresh, falls back to the cached document for any navigation, and caches the Pyodide runtime the module worker loads. **Take this step offline** ([`app/src/offlineTakeAlong.ts`](../app/src/offlineTakeAlong.ts), `npm run test:takealong`): one press sends the worker this document's own script/link URLs, warms the runtime, and reports the measured cost (`Offline ready · 8.0 MB · 16 files`), and the offline suite now starts from that press with no lesson run first. `npm run test:offline` serves the bundle with no host headers, then goes offline: reload, deep link, and a lesson run to its verdict from the cache. The manifest is installable. | **ships** |
 | Themes, contrast, reduced motion, keyboard | Dark and light from one token set, every tab measured for contrast in both modes in CI (`npm run test:theme:e2e`), reduced-motion branch, visible focus ring. No high-contrast, no paper theme, no keymap (Vim/Emacs), no screen-reader announcements for run results. | **partial** |
 | Share links, "ask for help", pair study | None. | **missing** |
-| CI rigour (workers, E2E, budgets) | 28 repository gates plus 27 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
+| CI rigour (workers, E2E, budgets) | 28 repository gates plus 28 workbench suites on one dev server and one built bundle, including the real-browser worker suite and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
 
 ## What to build next, in order
 
-1. **Dexie / IndexedDB** — the other half of the persistence item, now that the backup makes the data
-   portable, and the caps now measure **~4.0 MB of the 5 MB bucket** in `npm run test:backup` — the
-   review deck took the last real slack. The bounded `localStorage` stores are still cheaper and
-   already tested, but the next store that is not a rounding error is the one that forces this, so it
-   is worth doing before that store, not after it.
-2. **Parsed tracebacks** — the last editor item that is still prose. A failing run currently prints
+1. **Parsed tracebacks** — the last editor item that is still prose. A failing run currently prints
    CPython's traceback as text; parsing it into the frame the learner owns, with the line highlighted
    and the matching entry from [`docs/ERROR_EXPLAINER.md`](ERROR_EXPLAINER.md) beside it, is the same
    shape as the hint ladder that already names the failing check.

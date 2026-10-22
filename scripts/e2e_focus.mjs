@@ -16,6 +16,7 @@
 
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
+import { readBulk, waitForBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { waitForEditor } from './editor-code.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
@@ -68,7 +69,9 @@ async function main() {
     await waitForEditor(page, undefined, 20000);
 
     // ---- The clock: opening a lesson is one sitting, and the panel says so ----
-    const sittings = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), SITTINGS_KEY);
+    // Sittings are in IndexedDB (`app/src/bulkStorage.ts`): the open is written on a tick, so the read
+    // waits for the store rather than for a fixed sleep.
+    const sittings = await waitForBulk(page, SITTINGS_KEY, (list) => Array.isArray(list) && list.length === 1);
     assert.equal(sittings.length, 1, `expected one sitting after opening a lesson, got ${sittings.length}`);
     assert.equal(sittings[0].lessons.includes(LESSON.id), true, 'the sitting must name the lesson opened');
     assert.ok(sittings[0].end >= sittings[0].start, 'a sitting cannot end before it starts');
@@ -140,7 +143,7 @@ async function main() {
     console.log('  ok ⌘. enters focus, the reload keeps it, and the pill leaves it');
 
     // ---- The clock survives the reload as well ----
-    const afterReload = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), SITTINGS_KEY);
+    const afterReload = JSON.parse(await readBulk(page, SITTINGS_KEY));
     assert.equal(afterReload.length, 1, 'a reload of the same sitting must not fork it');
     assert.ok(afterReload[0].end >= afterReload[0].start);
 
