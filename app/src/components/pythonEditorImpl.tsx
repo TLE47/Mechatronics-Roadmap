@@ -48,6 +48,7 @@ import {
 import { pythonEditorTheme } from '../editor/theme';
 import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
 import { applyInlineValues, inlineValueField } from '../editor/inlineWidget';
+import { CELL_RUN_EVENT, cellField } from '../editor/cellWidget';
 import type { InlineValueAt } from '../inlineValues';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
@@ -143,7 +144,7 @@ declare global {
  */
 export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps>(
   function PythonEditorImpl(
-    { value, onChange, readOnly = false, ariaLabel, testId, onSliderCommit, getAnalysis, className, onGoToDefinition, initialLine },
+    { value, onChange, readOnly = false, ariaLabel, testId, onSliderCommit, getAnalysis, className, onGoToDefinition, onRunCell, initialLine },
     ref
   ) {
     const hostRef = useRef<HTMLDivElement | null>(null);
@@ -153,6 +154,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     // A jump is asked for by the runner, which may change its mind between renders (a different
     // lesson's files); read through a ref so a mounted editor always calls the current one.
     const onDefinitionRef = useRef(onGoToDefinition);
+    // A cell button dispatches a DOM event (`cellWidget.ts`); the runner is called from here, because
+    // a `StateField` cannot hold a callback without rebuilding the state on every render.
+    const onRunCellRef = useRef(onRunCell);
     // Read at completion time, not captured: the session appears once the interpreter is ready, and
     // the editor is created long before that.
     const analysisRef = useRef(getAnalysis);
@@ -160,6 +164,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     onChangeRef.current = onChange;
     onSliderRef.current = onSliderCommit;
     onDefinitionRef.current = onGoToDefinition;
+    onRunCellRef.current = onRunCell;
 
     useImperativeHandle(
       ref,
@@ -256,6 +261,8 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           pythonEditorTheme,
           sliderField,
           inlineValueField,
+          // Only where a cell can be run: a read-only helper with a `# %%` in it gets no buttons.
+          ...(onRunCell ? [cellField] : []),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onChangeRef.current?.(update.state.doc.toString());
             if (update.transactions.some((tr) => tr.annotation(sliderAnnotation))) {
@@ -266,6 +273,12 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       });
       const view = new EditorView({ state, parent: host });
       viewRef.current = view;
+      // The cell button's own event, listened for on the editor's element (it bubbles from the button).
+      const onCellRun = (event: Event) => {
+        const index = (event as CustomEvent<{ index?: number }>).detail?.index;
+        if (typeof index === 'number') onRunCellRef.current?.(index);
+      };
+      view.dom.addEventListener(CELL_RUN_EVENT, onCellRun);
       // The paint reading's third moment: the editor exists where the placeholder stood. `fcp` already
       // covered the lesson text and the code, so this is what the lazy boundary costs (`paintTiming.ts`).
       markPaintReady('editor');
@@ -311,6 +324,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       window.__mechalabEditors = { ...(window.__mechalabEditors ?? {}), [testId]: bridge };
 
       return () => {
+        view.dom.removeEventListener(CELL_RUN_EVENT, onCellRun);
         view.destroy();
         viewRef.current = null;
         if (window.__mechalabEditors?.[testId] === bridge) {

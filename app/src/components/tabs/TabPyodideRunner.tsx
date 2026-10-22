@@ -62,6 +62,7 @@ import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
 import { inlineValuesFor, readRunValues } from '../../inlineValues';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
+import { cellPrefix } from '../../editor/cells';
 import {
   LAYOUTS,
   layoutShortcutFor,
@@ -1061,8 +1062,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   };
 
-  // `lesson` defaults to the rendered lesson; Run passes the one selected at click time.
-  const runPythonCode = async (sourceCode: string, lesson: PythonLessonItem = currentLesson) => {
+  // `lesson` defaults to the rendered lesson; Run passes the one selected at click time. `grade`
+  // defaults to true; a cell's **Run to here** passes false, because a prefix of the program is not an
+  // attempt at the lesson and must never verify it (`app/src/editor/cells.ts`).
+  const runPythonCode = async (
+    sourceCode: string,
+    lesson: PythonLessonItem = currentLesson,
+    options: { grade?: boolean } = {}
+  ) => {
+    const grade = options.grade !== false;
     const matchMode: OutputMatchMode = asOutputMatchMode(lesson.outputMatch);
     const attemptLessonId = lesson.id;
     const runId = activeRunIdRef.current + 1;
@@ -1167,8 +1175,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           type: 'run',
           runId,
           studentCode: sourceCode,
-          instructorTests: lesson.instructorTests,
-          benchSource: harnessSourceForLesson(lesson.id),
+          // Nothing to grade with: an ungraded run must not execute the appended self-check or the
+          // capstone bench, because a half-written program would fail checks it was never meant to
+          // meet and the failure would look like a verdict.
+          instructorTests: grade ? lesson.instructorTests : '',
+          benchSource: grade ? harnessSourceForLesson(lesson.id) : '',
           cdnUrl,
           maxSteps,
           timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
@@ -1221,6 +1232,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       guideEditorRef.current?.setInlineValues(
         inlineValuesFor(sourceCode, readRunValues(workerOutcome?.inlineValues)),
       );
+      if (!grade) {
+        // A cell run is a look at what the program does so far. An exception is still a report — a
+        // prefix that raises should say so — but no check is graded and no lesson is verified.
+        setBehaviorCheck('untested');
+        setOutputCheck('untested');
+        setPassStatus(workerOutcome?.runtimeError ? 'error' : 'untested');
+        return;
+      }
       // A capstone is graded by its harness, not only by its printed lines. A number that misses its
       // target keeps its real value on the card *and* keeps the lesson unverified; `null` means the
       // harness never reported, which is unproven rather than a pass.
@@ -1291,14 +1310,33 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       // A finished run counts as the attempt that unlocks Hint 2, even if it failed or was
       // stopped - the point is that the learner tried before asking for the next nudge. The
       // count is keyed by the lesson that ran, so leaving mid-run cannot unlock another lesson.
-      setRunAttempts((prev) => ({
-        ...prev,
-        [attemptLessonId]: (prev[attemptLessonId] ?? 0) + 1,
-      }));
+      // A cell run is not an attempt: it runs part of the program, and Hint 2 is the reward for
+      // trying the exercise.
+      if (grade) {
+        setRunAttempts((prev) => ({
+          ...prev,
+          [attemptLessonId]: (prev[attemptLessonId] ?? 0) + 1,
+        }));
+      }
       if (activeRunIdRef.current === runId) {
         setIsRunning(false);
       }
     }
+  };
+
+  /**
+   * A `# %%` cell's **Run to here**: the document through the end of that cell, ungraded.
+   *
+   * Through the cell, not just the cell, because the worker runs each program in a fresh namespace —
+   * a later cell on its own would `NameError` on everything the earlier ones bound (`cells.ts`). The
+   * predict gate is skipped on purpose: it asks what the *lesson* will print, and a prefix is not the
+   * lesson. Nothing is graded, so nothing is verified and Hint 2 is not unlocked.
+   */
+  const runCellTo = (index: number) => {
+    if (isRunning) return;
+    const prefix = cellPrefix(codeRef.current, index);
+    if (!prefix || !prefix.trim()) return;
+    void runPythonCode(prefix, currentLesson, { grade: false });
   };
 
   /**
@@ -2891,6 +2929,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 onSliderCommit={handleSliderCommit}
                 getAnalysis={getReadyAnalysis}
                 onGoToDefinition={goToDefinition}
+                onRunCell={runCellTo}
                 initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
               />
             )}

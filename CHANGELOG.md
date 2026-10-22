@@ -11,6 +11,53 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 174: A Boundary You Can Run To
+
+`docs/PLAN-2.0-GAP.md`'s editor row ended on a bare fact: *"No `# %%` cells."* A cell is the one piece
+of notebook furniture a learner writing a sixty-line program actually wants — somewhere to say *this
+part is finished, run up to here* — and it now exists, in the plain-text form every Python editor
+reads ([`app/src/editor/cells.ts`](app/src/editor/cells.ts),
+[`app/src/editor/cellWidget.ts`](app/src/editor/cellWidget.ts), `npm run test:cells`, browser step 5e):
+
+```python
+x = 2
+
+# %% Use it
+print(x * 3)
+```
+
+**Run to here, not run this cell.** The worker executes each program in a fresh namespace, so a cell
+run on its own would `NameError` on everything the earlier cells bound. The button therefore runs the
+document **through the end of that cell** — the only stateless reading of "run this part", and the
+one that matches a learner who is writing a program top-down. The button says so: `▶ Cell 2 · Use it`,
+and its title spells out `Run to here: run everything through the end of Cell 2`.
+
+**Ungraded, and that is the whole reason it needed a runtime change.** A prefix is not an attempt at
+the lesson: `runPythonCode` now takes `grade: false` for a cell run, which sends **no instructor tests
+and no bench** to the worker (a half-written program would fail checks it was never meant to meet, and
+the failure would look like a verdict), skips the harness and output comparison, verifies nothing,
+leaves the behaviour and presentation badges `UNTESTED`, and **does not count as a run** for the hint
+ladder. An exception in a cell still reports: the traceback is the point of running one.
+
+**What counts as a boundary is a written-down rule.** A marker starts at **column 0** — an indented
+`# %%` is inside a function, and splitting there would cut a body in half. Everything above the first
+marker is cell 1, so imports and constants are never silently excluded; when that preamble is empty it
+is not a cell at all, so the first real cell is not numbered 2. A trailing blank line belongs to
+neither cell.
+
+**The click leaves the editor as an event.** The button lives in a `StateField` (block decorations
+cannot come from a plugin), which has no access to React props, so it dispatches `mechalab:run-cell`
+on the editor's element and `pythonEditorImpl` listens — the same seam focus mode uses, and the reason
+a re-render cannot rebuild the editor's state.
+
+**Verified.** `npm run test:cells` is **9 checks** — the preamble, a marker on line 1, an indented
+marker, an empty cell, the last cell ending at the document, a trailing newline, an index that is not a
+cell. Browser step 5e types a two-cell program, presses the second cell's button, and asserts stdout is
+`6`, the behaviour badge is `UNTESTED`, the verified count has not moved and `never` (the third cell's
+line) did not run; then removes the markers and asserts the buttons are gone. `npm run lint` is clean,
+`npm run test:workbench` runs **46 suites**, `npm run check:axe` clears 11 tabs × 3 palettes,
+`check_all.py` is 29/29, and the build is **961.9 kB** gzipped (+1.1 kB), every budget intact.
+
 ## [2026-10-22] — Run 173: The Screen Gives Its Width to One Thing
 
 `docs/PLAN-2.0-GAP.md` called this row **missing** outright: *"one fixed two-column layout per tab; no

@@ -149,6 +149,31 @@ export const pythonTheme = EditorView.theme(
       cursor: 'pointer',
     },
     '.cm-slider-row .cm-slider-range': { fontSize: '10.5px', color: 'var(--dim)' },
+    // `# %%` cells (`cellWidget.ts`): the boundary is a hairline, and its button is quiet until
+    // hovered, so a file with six cells does not read as six toolbars.
+    '.cm-cell-row': {
+      margin: '6px 12px 2px 52px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    '.cm-cell-run': {
+      fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
+      fontSize: '10.5px',
+      padding: '1px 7px',
+      borderRadius: 'var(--r-sm)',
+      border: '1px solid var(--border)',
+      backgroundColor: 'var(--panel)',
+      color: 'var(--muted)',
+      cursor: 'pointer',
+    },
+    '.cm-cell-run:hover': { color: 'var(--accent)', borderColor: 'var(--accent)' },
+    '.cm-cell-run:focus-visible': { outline: '2px solid var(--accent)', outlineOffset: '1px' },
+    '.cm-cell-marker': {
+      borderTop: '1px dashed var(--border)',
+      color: 'var(--dim)',
+      fontStyle: 'italic',
+    },
   },
   { dark: false }
 );

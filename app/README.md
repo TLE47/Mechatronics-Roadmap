@@ -497,6 +497,14 @@ namespace**, so a stale number from an earlier attempt is impossible; and **any 
 because the numbers then describe code that is no longer on screen. A stopped or timed-out run draws
 none — a half-filled namespace presented as an answer is worse than no answer.
 
+**`# %%` is a run boundary.** A marker at column 0 draws a **Run to here** button above it: pressing
+it runs the document *through* the end of that cell, ungraded — no verification, no hint rung, nothing
+filed to history. Through the cell rather than just the cell because the worker runs each program in a
+fresh namespace, so a later cell on its own would `NameError` on everything the earlier ones bound;
+the code above the first marker is part of cell 1, and an indented `# %%` inside a function is not a
+boundary at all ([`src/editor/cells.ts`](src/editor/cells.ts),
+[`src/editor/cellWidget.ts`](src/editor/cellWidget.ts), `npm run test:cells`).
+
 **A name can be followed to where it is defined.** **F12** on a name, or ⌘-click / Ctrl-click on it,
 puts the cursor on the line that defines it. A lesson is a small project, so the definition may be in
 the other file: a name imported from `mechalab_plant` opens the read-only tab on its own `def` line.

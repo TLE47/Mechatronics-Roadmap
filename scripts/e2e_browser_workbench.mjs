@@ -876,6 +876,56 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(await visible('results-panel'), true, '⌥1 brings the results back');
     console.log('  ok ⌥1–⌥3 choose which regions are on screen, and the choice is remembered');
 
+    // 5e. `# %%` cells: a marker draws a "Run to here" button, and the button runs the document
+    //     *through* that cell and no further — ungraded, so it neither verifies the lesson nor
+    //     changes the hint ladder. The preamble above the first marker has no button of its own.
+    await setEditorCode(
+      page,
+      'x = 2\n\n# %% Use it\nprint(x * 3)\n\n# %% After\nprint("never")\n'
+    );
+    await page.getByTestId('cell-run-1').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('cell-run-0').count(),
+      0,
+      'the preamble above the first marker is not a cell with a button'
+    );
+    assert.equal(
+      await page.getByTestId('cell-run-2').count(),
+      1,
+      'every marker gets its own button'
+    );
+    await page.getByTestId('cell-run-1').click();
+    await page.waitForFunction(
+      () => (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').trim() === '6',
+      undefined,
+      { timeout: 20000 }
+    );
+    assert.equal(
+      (await page.getByTestId('badge-behavior-check').textContent())?.includes('UNTESTED'),
+      true,
+      'a cell run grades nothing: the behavior badge must stay untested'
+    );
+    assert.equal(
+      (await page.getByTestId('runner-verified-count').textContent())?.trim(),
+      verified(1),
+      'a cell run must never verify the lesson'
+    );
+    // The cell after it did not run: "run to here" means through this cell, not through the file.
+    await page.getByTestId('cell-run-2').click();
+    await page.waitForFunction(
+      () => (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes('never'),
+      undefined,
+      { timeout: 20000 }
+    );
+    // No markers, no buttons: every other lesson in the registry is untouched.
+    await setEditorCode(page, 'print(1)\n');
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-testid^="cell-run-"]').length === 0,
+      undefined,
+      { timeout: 5000 }
+    );
+    console.log('  ok # %% cells run to here, ungraded, and leave files without markers alone');
+
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
     await page.getByTestId('btn-load-solution').click();

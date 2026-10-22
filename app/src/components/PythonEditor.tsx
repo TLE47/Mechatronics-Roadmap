@@ -56,6 +56,13 @@ export interface PythonEditorProps {
    */
   onGoToDefinition?: (name: string) => void;
   /**
+   * A `# %%` cell's **Run to here** button was pressed.
+   *
+   * Only the main editor gets one: a read-only helper has no cells to run, and the runner is the only
+   * thing that can start a program (`app/src/editor/cells.ts`).
+   */
+  onRunCell?: (index: number) => void;
+  /**
    * The line to put the cursor on when this editor mounts.
    *
    * Used when a jump lands in the *other* file: the tab switch unmounts one editor and mounts the
