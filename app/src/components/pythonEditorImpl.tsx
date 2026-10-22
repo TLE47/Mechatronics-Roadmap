@@ -51,6 +51,7 @@ import { applyInlineValues, inlineValueField } from '../editor/inlineWidget';
 import type { InlineValueAt } from '../inlineValues';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
+import { symbolAt } from '../symbolIndex';
 import { markPaintReady } from '../paintTiming';
 import type { PythonEditorHandle, PythonEditorProps } from './PythonEditor';
 
@@ -142,19 +143,23 @@ declare global {
  */
 export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps>(
   function PythonEditorImpl(
-    { value, onChange, readOnly = false, ariaLabel, testId, onSliderCommit, getAnalysis, className },
+    { value, onChange, readOnly = false, ariaLabel, testId, onSliderCommit, getAnalysis, className, onGoToDefinition, initialLine },
     ref
   ) {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const viewRef = useRef<EditorView | null>(null);
     const onChangeRef = useRef(onChange);
     const onSliderRef = useRef(onSliderCommit);
+    // A jump is asked for by the runner, which may change its mind between renders (a different
+    // lesson's files); read through a ref so a mounted editor always calls the current one.
+    const onDefinitionRef = useRef(onGoToDefinition);
     // Read at completion time, not captured: the session appears once the interpreter is ready, and
     // the editor is created long before that.
     const analysisRef = useRef(getAnalysis);
     analysisRef.current = getAnalysis;
     onChangeRef.current = onChange;
     onSliderRef.current = onSliderCommit;
+    onDefinitionRef.current = onGoToDefinition;
 
     useImperativeHandle(
       ref,
@@ -213,7 +218,33 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           EditorState.readOnly.of(readOnly),
           EditorView.editable.of(!readOnly),
           EditorView.contentAttributes.of({ 'aria-label': ariaLabel, 'data-testid': testId }),
+          // ⌘-click, the other half of the gesture: the caret moves to the clicked name and the
+          // runner is asked for its definition. A plain click is left entirely to CodeMirror.
+          EditorView.domEventHandlers({
+            mousedown: (event, view) => {
+              if (!(event.metaKey || event.ctrlKey) || !onDefinitionRef.current) return false;
+              const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+              if (pos === null) return false;
+              const at = symbolAt(view.state.doc.toString(), pos);
+              if (!at || at.attribute) return false;
+              event.preventDefault();
+              view.dispatch({ selection: { anchor: at.from } });
+              onDefinitionRef.current(at.name);
+              return true;
+            },
+          }),
           keymap.of([
+            // First, so it wins over anything CodeMirror binds to F12 (nothing today). A name the
+            // editor cannot resolve returns `false` and the key falls through untouched.
+            {
+              key: 'F12',
+              run: (view) => {
+                const at = symbolAt(view.state.doc.toString(), view.state.selection.main.head);
+                if (!at || at.attribute || !onDefinitionRef.current) return false;
+                onDefinitionRef.current(at.name);
+                return true;
+              },
+            },
             ...closeBracketsKeymap,
             ...defaultKeymap,
             ...searchKeymap,
@@ -238,6 +269,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       // The paint reading's third moment: the editor exists where the placeholder stood. `fcp` already
       // covered the lesson text and the code, so this is what the lazy boundary costs (`paintTiming.ts`).
       markPaintReady('editor');
+      // A jump that landed in this file arrives with its line, because the tab switch mounted this
+      // editor after the decision was made (`PythonEditorProps.initialLine`).
+      if (initialLine && Number.isFinite(initialLine)) revealLine(view, initialLine);
       // The scroller is a scroll container of its own, so it takes a tab stop: CodeMirror focuses the
       // editable content, which scrolls only with the caret, so without this a keyboard user has no
       // way to page through a long file while leaving the cursor where it is (WCAG 2.1.1; axe's

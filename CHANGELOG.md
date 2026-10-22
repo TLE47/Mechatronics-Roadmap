@@ -11,6 +11,41 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 172: A Jump to the Line That Defines It
+
+`docs/PLAN-2.0-GAP.md`'s predict row ended with *"try-it blocks and symbol linking are still absent."*
+Of those two, symbol linking is the one a learner misses inside a single sitting: hover says what a name
+is *called*, and nothing says where it is *written*. **F12** on a name — or ⌘-click / Ctrl-click on it —
+now puts the cursor on the line that defines it ([`app/src/symbolIndex.ts`](app/src/symbolIndex.ts),
+`npm run test:symbols`, browser step 5c).
+
+**A lesson is two files, so the jump crosses tabs.** `main.py` and the read-only plant it imports: a name
+like `fk` or `simulate_arm` is defined in the helper, and the jump opens that tab on its own `def` line.
+The line rides in as `initialLine` rather than being asked of a ref, because the tab switch *mounts* that
+editor — a ref to it does not exist yet, and the editor itself is behind a lazy chunk, so "wait a frame
+and call it" would be a race with the module loader.
+
+**What counts as a definition is a written-down choice.** `def`, `async def` and `class` at any indent
+(a method is a definition a learner wants to read too), plus a top-level assignment, because `total = 0j`
+is the other thing a name points at. The **first** occurrence wins: Python would keep the last, but a jump
+to the bottom of the file is a worse answer than the line the name is introduced on. The scan is a line
+regex, not a parser — a `def` written inside a triple-quoted docstring would be indexed — and that is the
+same trade the completion list and the inline-value binder already make. An attribute is declined:
+`z.real` belongs to whatever `z` is, and jumping to an unrelated `real` would be worse than not jumping.
+
+**A miss is not a dead key.** The file strip already shows the line count, so that is where the answer
+goes: `no definition for <name>`, in a `role="status"` so it is announced, cleared by the next edit, tab
+switch or successful jump. Nothing new is placed on screen to dismiss.
+
+**Verified.** `npm run test:symbols` is **8 checks** — the three kinds of definition, a method, a
+commented-out and a docstring `def` refused, first-wins, the caret sitting after a word it just typed,
+an attribute reported as one, the open file winning a tie, the helper still searched, and a name nothing
+defines. Browser step 5c drives the real gestures: F12 in `main.py`, Ctrl held around a click on the call
+line, an `from mechalab_plant import fk` jump that opens the helper tab on `def fk(`, and a name nothing
+defines landing in the strip with the tab unchanged. `npm run lint` is clean,
+`npm run test:workbench` runs **44 suites**, `npm run check:axe` clears 11 tabs × 3 palettes,
+`check_all.py` is 29/29, and the build is **960.2 kB** gzipped (+0.9 kB), every budget intact.
+
 ## [2026-10-22] — Run 171: The Numbers Beside the Code
 
 `docs/PLAN-2.0-GAP.md`'s editor row had one half left: *"Inline values"*. It is the difference between

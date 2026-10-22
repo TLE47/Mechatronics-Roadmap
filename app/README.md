@@ -497,6 +497,14 @@ namespace**, so a stale number from an earlier attempt is impossible; and **any 
 because the numbers then describe code that is no longer on screen. A stopped or timed-out run draws
 none — a half-filled namespace presented as an answer is worse than no answer.
 
+**A name can be followed to where it is defined.** **F12** on a name, or ⌘-click / Ctrl-click on it,
+puts the cursor on the line that defines it. A lesson is a small project, so the definition may be in
+the other file: a name imported from `mechalab_plant` opens the read-only tab on its own `def` line.
+The index is a line scan, not a parser — `def`, `async def` and `class` at any indent, plus a
+top-level assignment, first occurrence wins — and an attribute (`z.real`) is declined rather than
+jumping to an unrelated `real`. A name nothing defines is not a dead key: the file strip says
+`no definition for <name>` ([`src/symbolIndex.ts`](src/symbolIndex.ts), `npm run test:symbols`).
+
 **Sliders are a comment on a number.**
 
 ```python

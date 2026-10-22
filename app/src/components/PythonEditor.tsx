@@ -49,6 +49,21 @@ export interface PythonEditorProps {
   /** Called (debounced by the caller) when a slider drag changed the code. */
   onSliderCommit?: () => void;
   /**
+   * A name the learner asked to go to: `F12`, or ⌘-click on it.
+   *
+   * The editor reports the name and nothing else — deciding which file defines it belongs to the
+   * runner, which is the only place that knows what the lesson's files are (`symbolIndex.ts`).
+   */
+  onGoToDefinition?: (name: string) => void;
+  /**
+   * The line to put the cursor on when this editor mounts.
+   *
+   * Used when a jump lands in the *other* file: the tab switch unmounts one editor and mounts the
+   * other, so the line has to be part of the mount rather than a call on a ref that does not exist
+   * yet.
+   */
+  initialLine?: number;
+  /**
    * The worker's analysis channel, or null while there is none.
    *
    * A getter rather than a session, because the runner may replace the worker (Reset Runtime) and the

@@ -720,6 +720,120 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a run draws its values beside their lines, and an edit clears them');
 
+    // 5c. Symbol linking: F12 on a name puts the cursor on the line that defines it, and the name is
+    //     read from the solution rather than hard-coded, so this does not depend on which function
+    //     P.6 happens to ship.
+    const symbolText = await getEditorCode(page);
+    const defMatch = /^def ([A-Za-z_]\w*)\(/m.exec(symbolText);
+    assert(defMatch, 'the loaded solution must define a function to jump to');
+    const symbolName = defMatch[1];
+    const defLineStart = symbolText.lastIndexOf('\n', defMatch.index) + 1;
+    const callIndex = symbolText.indexOf(symbolName, defMatch.index + defMatch[0].length);
+    assert(callIndex > 0, `the solution must also call ${symbolName}`);
+    await page.evaluate((pos) => window.__mechalabEditors['editor-main'].setCursor(pos), callIndex + 1);
+    await page.keyboard.press('F12');
+    assert.equal(
+      await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor()),
+      defLineStart,
+      `F12 on a call must put the cursor on the def of ${symbolName}`
+    );
+    // The mouse gesture is the same jump: Ctrl-click (Meta-click on a Mac) on the call, from
+    // somewhere else in the file, lands on the definition too. The call line is scrolled into view
+    // first, because a click has to land on a pixel and `coordsOf` answers null off screen.
+    const callLine = symbolText.slice(0, callIndex).split('\n').length;
+    await page.evaluate((line) => window.__mechalabEditors['editor-main'].revealLine(line), callLine);
+    // The editor scrolled its own scroller; the page still has to put the panel under the pointer.
+    await page.locator('[data-editor="editor-main"]').scrollIntoViewIfNeeded();
+    // The mouse gesture: a Ctrl-mousedown on the name, aimed at the middle of the word's own glyphs
+    // (a Range over the line's text node, which is the line `revealLine` just made active). Dispatched
+    // in the page rather than replayed through the driver because only the page knows where a
+    // character sits after the editor scrolled itself, and `defaultPrevented` is then the app's own
+    // answer to "the handler took this gesture".
+    const clickResult = await page.evaluate((word) => {
+      const line = document.querySelector('[data-editor="editor-main"] .cm-line.cm-activeLine');
+      if (!line) return null;
+      const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const at = node.textContent.indexOf(word);
+        if (at < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, at);
+        range.setEnd(node, at + word.length);
+        const box = range.getBoundingClientRect();
+        const x = box.x + box.width / 2;
+        const y = box.y + box.height / 2;
+        const target = document.elementFromPoint(x, y);
+        if (!target) return null;
+        const event = new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          button: 0,
+          clientX: x,
+          clientY: y,
+        });
+        target.dispatchEvent(event);
+        return { took: event.defaultPrevented, target: String(target.className ?? '').slice(0, 24) };
+      }
+      return null;
+    }, symbolName);
+    assert(clickResult, 'the call must be rendered for a click to land on it');
+    assert.equal(clickResult.took, true, `a Ctrl-mousedown on ${symbolName} must be handled by the editor`);
+    assert.equal(
+      await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor()),
+      defLineStart,
+      '⌘-click / Ctrl-click on a call must be the same jump'
+    );
+    console.log(`  ok F12 and Ctrl-click on ${symbolName} land on its definition`);
+
+    // 5c-i. Across the lesson's files: a name this file imports is defined in the read-only plant,
+    //       so the jump opens that tab and puts the cursor on the `def` line there. The exercise is
+    //       the one the formatting suite already opens, so a plant-using lesson is known to exist.
+    await page.getByTestId('lesson-item-EX.05-control.T2.05a').scrollIntoViewIfNeeded();
+    await page.getByTestId('lesson-item-EX.05-control.T2.05a').click();
+    await page.getByTestId('editor-tab-mechalab_plant.py').waitFor({ timeout: 10000 });
+    const crossCode = 'from mechalab_plant import fk\n\nprint(fk(0.1, 0.2))\n';
+    await setEditorCode(page, crossCode);
+    await page.evaluate(() =>
+      window.__mechalabEditors['editor-main'].setCursor('from mechalab_plant import fk\n\nprint('.length + 1)
+    );
+    await page.keyboard.press('F12');
+    await page.waitForFunction(() => Boolean(window.__mechalabEditors['editor-helper']), undefined, {
+      timeout: 15000,
+    });
+    assert.equal(
+      await page.getByTestId('editor-tab-mechalab_plant.py').getAttribute('aria-selected'),
+      'true',
+      'a definition in the helper file must open the helper tab'
+    );
+    const plantText = await page.evaluate(() => window.__mechalabEditors['editor-helper'].get());
+    const plantDef = /^def fk\(/m.exec(plantText);
+    assert(plantDef, 'the plant must define fk');
+    assert.equal(
+      await page.evaluate(() => window.__mechalabEditors['editor-helper'].getCursor()),
+      plantText.lastIndexOf('\n', plantDef.index) + 1,
+      'the helper tab must open on the line that defines the name'
+    );
+    console.log('  ok a name defined in the read-only plant opens its tab on the def');
+
+    // 5c-ii. Nothing to jump to is said, not silent: the import's module name is not a definition
+    //        in either file, so the file strip names the miss and the tab does not change.
+    await page.getByTestId('editor-tab-main').click();
+    await page.evaluate(() => window.__mechalabEditors['editor-main'].setCursor(6));
+    await page.keyboard.press('F12');
+    await page.getByTestId('symbol-miss').waitFor({ timeout: 5000 });
+    assert.match(
+      (await page.getByTestId('symbol-miss').textContent()) ?? '',
+      /no definition for\s*mechalab_plant/,
+      'a name nothing defines must be named, not silently ignored'
+    );
+    assert.equal(
+      await page.getByTestId('editor-tab-main').getAttribute('aria-selected'),
+      'true',
+      'a miss must not switch files'
+    );
+    console.log('  ok a name nothing defines is named in the file strip');
+
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
     await page.getByTestId('btn-load-solution').click();
@@ -2208,7 +2322,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, inline values drawn then cleared by an edit, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
     );
   } finally {
     await browser.close();

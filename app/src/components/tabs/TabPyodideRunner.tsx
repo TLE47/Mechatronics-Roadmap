@@ -61,6 +61,7 @@ import { runAnnouncement } from '../../announce';
 import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
 import { inlineValuesFor, readRunValues } from '../../inlineValues';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
+import { findDefinition } from '../../symbolIndex';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
@@ -186,10 +187,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   });
   const guideEditorRef = useRef<PythonEditorHandle | null>(null);
+  const helperEditorRef = useRef<PythonEditorHandle | null>(null);
   const editorPanelRef = useRef<HTMLDivElement | null>(null);
   // Which tab of the lesson's small project is open: null is `main.py`, a string is a read-only
   // helper. Reset on every lesson change, because a helper from the previous lesson is not this one.
   const [openHelper, setOpenHelper] = useState<string | null>(null);
+  // A jump that landed in the file that is *not* open: the tab switch mounts that editor, so the line
+  // rides in with the mount (`PythonEditorProps.initialLine`) instead of being asked of a ref that
+  // does not exist yet.
+  const [pendingJump, setPendingJump] = useState<{ file: string; line: number } | null>(null);
+  // The name F12 was pressed on when nothing in the lesson defines it. Said in the file strip, which
+  // is already there, rather than in a toast the learner has to dismiss.
+  const [symbolMiss, setSymbolMiss] = useState<string | null>(null);
   const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
   // Named groups the roadmap also uses; the old "Step 1 / Steps 3-5 / Steps 6-10" numbering was a
   // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
@@ -378,7 +387,43 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
   useEffect(() => {
     setOpenHelper(null);
+    setPendingJump(null);
+    setSymbolMiss(null);
   }, [selectedId]);
+  // An edit retires a "no definition" line: the name may well be defined now.
+  useEffect(() => {
+    setSymbolMiss(null);
+  }, [code, openHelper]);
+
+  /**
+   * F12, or ⌘-click: put the cursor on the line that defines `name`.
+   *
+   * Three outcomes, and all three are visible: the open file (cursor moves, nothing else changes),
+   * the other file (its tab opens on the definition), or neither (the strip says which name it could
+   * not find). An attribute — `z.real` — never reaches here: a name after a dot belongs to whatever
+   * `z` is, and this lesson's files are not where it is defined.
+   */
+  const goToDefinition = (name: string) => {
+    const files = [
+      { name: MAIN_FILE_NAME, text: codeRef.current },
+      ...helperFiles.map((file) => ({ name: file.name, text: file.content })),
+    ];
+    const activeFile = openHelper ?? MAIN_FILE_NAME;
+    const hit = findDefinition(name, files, activeFile);
+    if (!hit) {
+      setSymbolMiss(name);
+      return;
+    }
+    setSymbolMiss(null);
+    const targetTab = hit.file === MAIN_FILE_NAME ? null : hit.file;
+    if (targetTab === openHelper) {
+      const editor = targetTab === null ? guideEditorRef.current : helperEditorRef.current;
+      editor?.revealLine(hit.line);
+      return;
+    }
+    setPendingJump({ file: hit.file, line: hit.line });
+    setOpenHelper(targetTab);
+  };
   // What the lesson's harness says about the code on screen now; a `null` report is a failed gate
   // (unproven), never a pass.
   const currentHarness = harnessForLesson(currentLesson.id);
@@ -2698,7 +2743,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   role="tab"
                   aria-selected={openHelper === null}
                   data-testid="editor-tab-main"
-                  onClick={() => setOpenHelper(null)}
+                  title="main.py — F12 on a name jumps to the line that defines it"
+                  onClick={() => {
+                    setPendingJump(null);
+                    setOpenHelper(null);
+                  }}
                   className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[11.5px] font-mono cursor-pointer"
                   style={{
                     color: openHelper === null ? 'var(--accent)' : 'var(--muted)',
@@ -2714,8 +2763,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     role="tab"
                     aria-selected={openHelper === file.name}
                     data-testid={`editor-tab-${file.name}`}
-                    onClick={() => setOpenHelper(file.name)}
-                    title={`${file.name} is read-only: it is the module the checks import`}
+                    onClick={() => {
+                      setPendingJump(null);
+                      setOpenHelper(file.name);
+                    }}
+                    title={`${file.name} is read-only: it is the module the checks import. F12 on a name jumps to its definition.`}
                     className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[11.5px] font-mono cursor-pointer"
                     style={{
                       color: openHelper === file.name ? 'var(--accent)' : 'var(--muted)',
@@ -2728,9 +2780,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 ))}
               </div>
               <span className="text-[11px] font-mono text-faint tabular-nums">
-                {openHelperFile
-                  ? `${openHelperFile.content.split('\n').length} lines · read-only`
-                  : `${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`}
+                {symbolMiss ? (
+                  <span role="status" data-testid="symbol-miss" style={{ color: 'var(--muted)' }}>
+                    no definition for <code style={{ color: 'var(--accent)' }}>{symbolMiss}</code>
+                  </span>
+                ) : openHelperFile ? (
+                  `${openHelperFile.content.split('\n').length} lines · read-only`
+                ) : (
+                  `${code.split('\n').length} lines${sliderCount ? ` · ${sliderCount} slider${sliderCount === 1 ? '' : 's'}` : ''}`
+                )}
               </span>
             </div>
             {openHelperFile ? (
@@ -2747,10 +2805,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </p>
                 <PythonEditor
                   key={`${selectedId}:${openHelperFile.name}`}
+                  ref={helperEditorRef}
                   value={openHelperFile.content}
                   readOnly
                   ariaLabel={`${openHelperFile.name}, read-only lesson helper`}
                   testId="editor-helper"
+                  onGoToDefinition={goToDefinition}
+                  initialLine={pendingJump?.file === openHelperFile.name ? pendingJump.line : undefined}
                 />
               </>
             ) : (
@@ -2763,6 +2824,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 testId="editor-main"
                 onSliderCommit={handleSliderCommit}
                 getAnalysis={getReadyAnalysis}
+                onGoToDefinition={goToDefinition}
+                initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}
               />
             )}
           </div>
