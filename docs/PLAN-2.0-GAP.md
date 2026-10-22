@@ -66,15 +66,24 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Offline PWA | `sw.js` precaches the shell, manifest and favicon, serves same-origin assets cache-first with a background refresh, falls back to the cached document for any navigation, and caches the Pyodide runtime the module worker loads. **Take this step offline** ([`app/src/offlineTakeAlong.ts`](../app/src/offlineTakeAlong.ts), `npm run test:takealong`): one press sends the worker this document's own script/link URLs, warms the runtime, and reports the measured cost (`Offline ready · 8.0 MB · 16 files`), and the offline suite now starts from that press with no lesson run first. `npm run test:offline` serves the bundle with no host headers, then goes offline: reload, deep link, and a lesson run to its verdict from the cache. The manifest is installable. | **ships** |
 | Themes, contrast, reduced motion, keyboard | Dark and light from one token set, every tab measured for contrast in both modes in CI (`npm run test:theme:e2e`), reduced-motion branch, visible focus ring. No high-contrast, no paper theme, no keymap (Vim/Emacs), no screen-reader announcements for run results. | **partial** |
 | Share links, "ask for help", pair study | None. | **missing** |
-| CI rigour (workers, E2E, budgets) | 29 repository gates plus 33 workbench suites on one dev server and one built bundle, including the real-browser worker suite, the trail, and a Pages-bundle sweep that fails if a starter verifies. **Both budgets ship**: `npm run check:axe` runs axe-core over all 11 tabs in both themes and fails on any serious/critical finding that `docs/a11y-allowlist.json` does not explain (empty, and stale entries fail); `npm run check:weight` holds the gzipped bundle to `docs/weight-budget.json` and fails on a breach *or* on a budget nothing measures. On its first run it found 22 unnamed sliders, a brand link whose name reworded what is on screen, and an editor scroll region no keyboard could reach — all fixed, none allowlisted. No Lighthouse run and no visual-regression snapshots; wall-clock timings are deliberately not gated, because CI variance is larger than any regression this app could ship. | **partial** |
+| CI rigour (workers, E2E, budgets) | 31 repository gates plus 34 workbench suites on one dev server and one built bundle, including the real-browser worker suite, the trail, and a Pages-bundle sweep that fails if a starter verifies. **Both budgets ship**: `npm run check:axe` runs axe-core over all 11 tabs in both themes and fails on any serious/critical finding that `docs/a11y-allowlist.json` does not explain (empty, and stale entries fail); `npm run check:weight` holds the gzipped bundle to `docs/weight-budget.json` and fails on a breach *or* on a budget nothing measures. On its first run it found 22 unnamed sliders, a brand link whose name reworded what is on screen, and an editor scroll region no keyboard could reach — all fixed, none allowlisted. No Lighthouse run and no visual-regression snapshots; wall-clock timings are deliberately not gated, because CI variance is larger than any regression this app could ship. | **partial** |
 
 ## What to build next, in order
 
-1. **One chunk, 614 kB** — the weight gate's `largest_js_gzip` says the app ships as a single
-   compressed chunk: React, CodeMirror, KaTeX and the Supabase client arrive on a first visit to a
-   page that needs none of them until a lesson is opened. Splitting the tabs behind `React.lazy` and
-   the editor behind the runner is the change that shows in the budget, and the budget is now the
-   proof it worked.
-2. **The trail as a study input** — the timeline now says what happened; the next question it can
+1. **The trail as a study input** — the timeline now says what happened; the next question it can
    answer is what to do with it: a week that only ever opened lessons, a lesson that took nine runs,
    a day with no review. That is a reading of the same data, not a new store.
+2. **The first explicit completion after a remount is dropped** — `npm run test:runtime` fails at its
+   Jedi step: the `startCompletion()` call issued immediately after a tab switch remounts the runner
+   opens no list, typing one character does, and a second explicit start after the runtime is warm
+   does. The tooltip element is never created (not an empty list), so the query is not reaching a
+   result. Reproduced with CodeMirror imported statically, so the lazy editor is not the cause. The
+   probe sequence — mount, `set()`, `setCursor()`, `startCompletion()`, poll `.cm-tooltip` — is in the
+   CHANGELOG's Run 159 entry; the next step is to instrument the completion plugin's `update` (a reset
+   transaction landing inside its 50 ms start debounce would abort the context silently).
+3. **The paint, measured** — both splits moved `entry_gzip` (627.5 → 585.5 → 432.9 kB) on the theory
+   that bytes before the first paint are time before the first paint. That theory needs a reading:
+   `PerformanceObserver` for `first-contentful-paint` and `largest-contentful-paint`, the moment the
+   editor reports `data-editor-ready="true"`, and the moment the Run button is clickable, recorded in
+   the learning log the way run durations already are. Then a byte budget can say what it is worth,
+   and the next cut is chosen from a measurement rather than from a chunk listing.

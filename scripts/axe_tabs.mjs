@@ -150,6 +150,18 @@ async function main() {
 
       for (const tabId of TAB_IDS) {
         await page.click(`[data-testid="tab-btn-${tabId}"]`);
+        // Ten of the eleven tabs are lazy chunks (`React.lazy` in App.tsx): a click can land on the
+        // Suspense panel, and auditing a panel that says "Loading this tab…" would pass every rule.
+        // The editor is lazy for the same reason and shows its code as a placeholder
+        // (`data-editor-ready="false"`) while CodeMirror arrives, so it is waited out too. Wait for
+        // both to go — the tab's own markup — then let it settle.
+        await page.waitForFunction(
+          () =>
+            !document.querySelector('[data-testid="tab-loading"]') &&
+            !document.querySelector('[data-editor-ready="false"]'),
+          undefined,
+          { timeout: 20000 }
+        );
         await page.waitForTimeout(300);
         for (const violation of await runAxe(page)) {
           findings.push({

@@ -11,6 +11,103 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 159: The Editor Arrives After the Code Does
+
+The tab split left one thing on the first paint that did not need to be there: the editor. CodeMirror
+and its Python parser are 149 kB gzipped and they sat in the entry's preload list, so a learner waited
+for a syntax highlighter before reading the first line of their lesson.
+
+**The editor is now a `React.lazy` boundary, inside the runner rather than around it.**
+[`PythonEditor.tsx`](app/src/components/PythonEditor.tsx) is the shell that stays mounted — the props,
+the `PythonEditorHandle` type, and a placeholder that paints the learner's code as monospace text at
+the editor's own metrics (`min-height: 288px`, `12.5px/1.6`, the gutter's 44px left inset). The
+CodeMirror view moved whole into [`pythonEditorImpl.tsx`](app/src/components/pythonEditorImpl.tsx),
+imported only there, and the ref is forwarded straight through the lazy component so the runner's
+`guideEditorRef` has no new callers. Four consequences, each checked:
+
+- `entry_gzip` **585.5 → 432.9 kB** (−152.6 kB, −26%), and `vendor-editor` left the modulepreload list:
+  a first visit now waits for the document, React, KaTeX and the icons, then paints the lesson text,
+the code and the Run button.
+- `largest_js_gzip` 267.3 → **263.0 kB**; `total` 947.7 → 948.5 kB across 33 files (the shell and the
+  glue are a 5.25 kB chunk that used to be folded into the entry).
+- `window.__mechalabEditors[testId]` no longer exists at t=0 — it is a post-chunk promise. Every suite
+  already waits through `scripts/editor-code.mjs`'s `waitForEditor`, and the three sweeps that had
+  learned to wait out `[data-testid="tab-loading"]` now wait out `[data-editor-ready="false"]` too:
+  the placeholder's own text runs are not the editor's, and auditing them would measure a page that is
+  about to be replaced.
+- The starter is readable while CodeMirror parses, so the placeholder is the code, not a spinner: the
+  swap changes the surface's internals instead of the page's shape.
+
+`docs/weight-budget.json` carries the new entry budget (620 → **470 kB**) with the number and the reason,
+and `npm run check:weight`, `npm run test:weight` (13 checks) and `npm run lint` pass.
+
+**The failure a lazy chunk adds, caught where it happens.** With the module behind a network fetch, a
+deploy that replaced the hashed file — or an offline visit serving an index that names it — used to
+throw out of the lazy component, and an app with no other boundary unmounts: the lesson, the Run
+button and the learner's own code with it. `PythonEditor.tsx` now wraps the boundary in a small
+`EditorBoundary` whose fallback is the same placeholder with a sentence saying which half is missing
+and that Run still works. `npm run test:editor:deferred` (`scripts/e2e_editor_deferred.mjs`, now part
+of `test:workbench`, 34 suites) pins both halves in Chromium: with the chunk aborted at the network the
+code is readable, the notice is named, Run is pressable and no exception escapes; on an ordinary visit
+the placeholder paints the starter, CodeMirror takes the box over, and an edit through the view reaches
+the app.
+
+**The matrix stops competing with itself.** Thirty-four suites used to be started in one `Promise.all`,
+so thirty of them were driving Chromium against one dev server at the same moment; the first run of
+this change produced three failures that were all that contention — a 30 s `page.goto`, a 5 s readout
+wait, and a Suspense panel read as settled content. `test:workbench` now lists its suites as data and
+runs the browser half **four at a time** (`runWaves`), and the pair sweep's `settle()` re-checks for a
+skeleton *inside* its stability loop, so a tab opened by the pair's second click cannot be fingerprinted
+while it still says "Loading this tab…".
+
+**One repository gate is red, and it was red before this change.** `npm run test:runtime` fails at its
+Jedi-completions step: the explicit start issued right after a runner remount (tab → other tab → back)
+never opens the list, while typing one character does, and a second explicit start after the runtime is
+warm does. Reproduced with CodeMirror imported statically (`const EditorImpl = StaticImpl`) — the
+failure is identical, so it predates the lazy boundary rather than being caused by it. Not fixed here:
+recorded in `docs/PLAN-2.0-GAP.md` as the next item, with the probe that isolates it.
+
+## [2026-10-21] — Run 158: One Chunk Becomes an Entry, Five Vendors and Ten Tabs
+
+The weight gate went up in the last run with a single 614 kB chunk behind it, which is the number it
+was built to point at. It is gone: the bundle is now an **entry chunk of 267 kB gzip**, five vendor
+chunks split by how often they change (`vendor-react` 69 kB, `vendor-editor` 149 kB, `vendor-katex`
+77 kB, `vendor-icons` 8 kB), and **ten lazy tab chunks** of 3.5–11 kB each, fetched when the learner
+opens that tab.
+
+**What moved, exactly.** `entry_gzip` — the document plus everything it names: its module script, the
+chunks it preloads, its stylesheets — went from **627.5 kB in one file to 585.5 kB across seven**, and
+the largest single file fell **58% (614.1 → 267.3 kB)**. `total` went *up* 9.9 kB, from 937.8 to
+947.7 across 32 files, and that is the honest shape of a split: every chunk is emitted whether or not
+its tab is opened, so the bundle as a whole pays a few hundred bytes of headers per chunk while the
+bytes a first visit waits for fall. The budget records both, so neither can drift silently.
+
+**The runner stays static.** It is the tab the app opens on, so a lazy boundary there would only add a
+round trip before the lesson appears; its code was never the part a visit could avoid. The other ten
+are `React.lazy`, and the rail **prefetches on pointer-enter and focus** — the intent to open a tab,
+not the act — so the chunk is usually in memory by the time the button is released and the Suspense
+panel never shows. A tab the learner never points at is never fetched.
+
+**One thing the split exposed in the gates.** The theme sweep clicks each tab and audits what is on
+screen after a fixed 260 ms; with lazy tabs that wait could audit the *Suspense panel* instead of the
+tab, which would pass every contrast rule while measuring a page that says "Loading this tab…". The
+sweep (and the axe sweep, at 300 ms) now waits for `[data-testid="tab-loading"]` to be **gone** before
+auditing — a state rather than a guess at the network's speed. `entry_gzip` was added to the budget for
+the same reason the split exists: `total` cannot see this change, and the metric that can has to be the
+one a first paint waits for.
+
+- `npm run check:weight` gained `entry_gzip` (the document, its module script, its modulepreloads,
+  its stylesheets — parsed from the built `index.html`), and `largest_js_gzip`'s budget came down from
+  665 kB to **300 kB**, so folding the tabs back into the entry fails the gate rather than passing
+  quietly.
+- `npm run test:weight` grew three checks (**13**): the entry is the document plus the files it names,
+  an entry naming a file the build never emitted is **unmeasured** rather than a smaller first paint,
+  and a document that names nothing is unmeasured too.
+- `vite.config.ts` carries the `manualChunks` split, with the reason: one chunk meant one cache key, so
+  a sentence change in a tab re-downloaded React and CodeMirror with it.
+- `npm run test:theme:e2e` and `npm run check:axe` wait for the tab's own markup; `npm run test:smoke`
+  (SSR) still passes unchanged, because the tabs it renders — the runner — were never lazy.
+
 ## [2026-10-21] — Run 157: axe Found Three Real Bugs, and the Bundle Gets a Ceiling
 
 The plan's last two gates were "an axe run over the tabs" and "a weight budget". Both exist now, and

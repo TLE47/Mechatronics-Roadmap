@@ -7,17 +7,71 @@ import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { StartHereCard } from './components/StartHereCard';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
 import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
-import { TabArchitecture } from './components/tabs/TabArchitecture';
-import { TabBode } from './components/tabs/TabBode';
-import { TabFOC } from './components/tabs/TabFOC';
-import { TabPendulum } from './components/tabs/TabPendulum';
-import { TabModels } from './components/tabs/TabModels';
-import { TabCadPcb } from './components/tabs/TabCadPcb';
-import { TabSysId } from './components/tabs/TabSysId';
-import { TabEskf } from './components/tabs/TabEskf';
-import { TabLinkHealth } from './components/tabs/TabLinkHealth';
+// The runner is the tab the app opens on, so it is imported statically: its code is on the first
+// screen either way, and a lazy boundary there would only add a fetch before the lesson appears.
 import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
-import { TabPlacementQuiz } from './components/tabs/TabPlacementQuiz';
+
+// Every other tab is its own chunk (`React.lazy` + the import below), fetched when the learner opens
+// it. Ten tabs' code — the simulators, the placement quiz, the roadmap's matrix, the link history —
+// used to be in the one bundle every visit downloaded, whether or not the tab was ever opened
+// (`npm run check:weight` measures the result: `entry_gzip` in docs/weight-budget.json).
+//
+// `React.lazy` needs a default export per module, and these are named, so each import is reshaped.
+// The Suspense fallback is deliberately the tab's own frame rather than a spinner: a tab switch
+// keeps the rail, the header and the scroll position, and the panel fills in behind it.
+//
+// The same importer function is what `prefetchTab` calls, so the rail can fetch a chunk on intent
+// (pointer-enter, focus) and the module registry is asked exactly once: Vite resolves both calls to
+// the same dynamic import, and the browser's module cache serves the second.
+const importTabArchitecture = () =>
+  import('./components/tabs/TabArchitecture').then((module) => ({ default: module.TabArchitecture }));
+const importTabPlacementQuiz = () =>
+  import('./components/tabs/TabPlacementQuiz').then((module) => ({ default: module.TabPlacementQuiz }));
+const importTabBode = () =>
+  import('./components/tabs/TabBode').then((module) => ({ default: module.TabBode }));
+const importTabFOC = () =>
+  import('./components/tabs/TabFOC').then((module) => ({ default: module.TabFOC }));
+const importTabPendulum = () =>
+  import('./components/tabs/TabPendulum').then((module) => ({ default: module.TabPendulum }));
+const importTabModels = () =>
+  import('./components/tabs/TabModels').then((module) => ({ default: module.TabModels }));
+const importTabCadPcb = () =>
+  import('./components/tabs/TabCadPcb').then((module) => ({ default: module.TabCadPcb }));
+const importTabSysId = () =>
+  import('./components/tabs/TabSysId').then((module) => ({ default: module.TabSysId }));
+const importTabEskf = () =>
+  import('./components/tabs/TabEskf').then((module) => ({ default: module.TabEskf }));
+const importTabLinkHealth = () =>
+  import('./components/tabs/TabLinkHealth').then((module) => ({ default: module.TabLinkHealth }));
+
+const TabArchitecture = React.lazy(importTabArchitecture);
+const TabPlacementQuiz = React.lazy(importTabPlacementQuiz);
+const TabBode = React.lazy(importTabBode);
+const TabFOC = React.lazy(importTabFOC);
+const TabPendulum = React.lazy(importTabPendulum);
+const TabModels = React.lazy(importTabModels);
+const TabCadPcb = React.lazy(importTabCadPcb);
+const TabSysId = React.lazy(importTabSysId);
+const TabEskf = React.lazy(importTabEskf);
+const TabLinkHealth = React.lazy(importTabLinkHealth);
+
+/** Fetch a tab's chunk before it is opened. The runner has none: it is imported statically. */
+const TAB_PREFETCH: Record<string, () => Promise<unknown>> = {
+  'tab-arch': importTabArchitecture,
+  'tab-placement': importTabPlacementQuiz,
+  'tab-bode': importTabBode,
+  'tab-foc': importTabFOC,
+  'tab-pend': importTabPendulum,
+  'tab-models': importTabModels,
+  'tab-cadpcb': importTabCadPcb,
+  'tab-sysid': importTabSysId,
+  'tab-eskf': importTabEskf,
+  'tab-links': importTabLinkHealth,
+};
+
+function prefetchTab(tabId: string): void {
+  void TAB_PREFETCH[tabId]?.();
+}
 import { PresetRequest, tabForPreset } from './demoPresets';
 import { AccountPanel } from './components/AccountPanel';
 import {
@@ -1029,6 +1083,11 @@ export const App: React.FC = () => {
                   setActiveTab(tab.id);
                   setHighlightedId(null);
                 }}
+                // Pointer and focus intent, not a click: the chunk is usually in memory by the time
+                // the button is released, so the tab appears instead of a panel saying "Loading".
+                // Nothing is fetched for a tab the learner never points at.
+                onPointerEnter={() => prefetchTab(tab.id)}
+                onFocus={() => prefetchTab(tab.id)}
                 aria-current={isActive ? 'page' : undefined}
                 className="group flex min-w-[12rem] shrink-0 cursor-pointer snap-start items-center gap-2.5 rounded-[var(--r-md)] border px-2.5 py-2 text-left transition-colors"
                 style={{
@@ -1076,8 +1135,21 @@ export const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main Tab Pane */}
+      {/* Main Tab Pane. One Suspense boundary around the pane: only one tab is on screen, and every
+          lazy tab's chunk is fetched the first time it is opened, so the fallback is a panel rather
+          than a page. The runner is static, so the opening screen never shows it. */}
       <main id="main" tabIndex={-1} className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4 outline-none">
+        <React.Suspense
+          fallback={
+            <div
+              data-testid="tab-loading"
+              role="status"
+              className="bg-panel border border-line rounded-xl p-6 text-sm text-muted"
+            >
+              Loading this tab…
+            </div>
+          }
+        >
         {/* The landing screen is where a newcomer arrives, so it opens with the README's own
             "Start here" block: one heading, one Lesson 1 link, one plain-English line. Once Lesson 1
             is verified the same block closes to a single line. */}
@@ -1164,6 +1236,7 @@ export const App: React.FC = () => {
             }}
           />
         )}
+        </React.Suspense>
       </main>
 
       {/* Cheat sheet modal */}

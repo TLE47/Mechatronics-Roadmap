@@ -72,16 +72,37 @@ window.__pairs = {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve(true)))
     );
   },
+  /**
+   * Wait for a spec to exist, then return it.
+   *
+   * A setup step that opens a tab past the runner (tab-btn-tab-arch, tab-btn-tab-foc, ...) is
+   * fetching a lazy chunk (React.lazy in App.tsx): the button the task wants is not in the DOM for
+   * a frame or two after the click, and find() would throw "no element" on a race rather than on a
+   * regression. Polling here keeps the pair's clicks in one task (which is what the sweep is about)
+   * while letting the chunk arrive first.
+   */
+  async findEventually(spec, timeoutMs = 20000) {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      try {
+        return this.find(spec);
+      } catch (error) {
+        if (Date.now() > deadline) throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  },
   /** One task: both controls resolved from the pre-click DOM, then clicked with no commit between. */
-  clickInOneTask(specs) {
-    const els = specs.map((spec) => this.find(spec));
+  async clickInOneTask(specs) {
+    const els = [];
+    for (const spec of specs) els.push(await this.findEventually(spec));
     for (const el of els) el.click();
     return true;
   },
   /** Human pace: resolve, click, let React commit, then resolve the next one (it may have re-rendered). */
   async clickSeparated(specs) {
     for (const spec of specs) {
-      this.find(spec).click();
+      (await this.findEventually(spec)).click();
       await this.commit();
     }
     return true;
@@ -118,11 +139,31 @@ window.__pairs = {
   /** Wait until the fingerprint stops moving (async effects, derived numbers), bounded. */
   async settle(budgetMs) {
     const started = performance.now();
+    // A tab past the runner is a lazy chunk, and its Suspense panel ("Loading this tab...") is a
+    // perfectly stable fingerprint: without this wait the loop below can declare the skeleton settled
+    // and compare two ghosts. The editor has the same shape for the same reason - CodeMirror is its
+    // own chunk, and its placeholder (the element with data-editor-ready="false", which shows the
+    // code while that chunk arrives) is the same shape. Both are transient by design, so this is a
+    // wait, not a filter. No backticks in here: this whole block is a template literal.
+    while (
+      performance.now() - started < budgetMs &&
+      (document.querySelector('[data-testid="tab-loading"]') ||
+        document.querySelector('[data-editor-ready="false"]'))
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
     let previous = null;
     while (performance.now() - started < budgetMs) {
       await this.commit();
-      const now = this.digest();
-      if (now === previous) return true;
+      // Checked inside the loop as well as before it: a pair's second click can open a tab whose chunk
+      // is still in flight, so a skeleton can arrive *after* the wait above. A fingerprint that
+      // currently contains one is not settled, whatever it does on the next tick - that is the whole
+      // reason this sweep saw "Loading this tab..." compared against a finished tab.
+      const skeleton =
+        document.querySelector('[data-testid="tab-loading"]') ||
+        document.querySelector('[data-editor-ready="false"]');
+      const now = skeleton ? null : this.digest();
+      if (now && now === previous) return true;
       previous = now;
       await new Promise((resolve) => setTimeout(resolve, 60));
     }

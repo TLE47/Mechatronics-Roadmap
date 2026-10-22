@@ -40,8 +40,22 @@ function check(name, fn) {
   }
 }
 
-const budget = { js_gzip: 1000, css_gzip: 100, fonts: 500, largest_js_gzip: 800, total: 2000 };
-const fits = { js_gzip: 900, css_gzip: 90, fonts: 450, largest_js_gzip: 700, total: 1800 };
+const budget = {
+  entry_gzip: 950,
+  js_gzip: 1000,
+  css_gzip: 100,
+  fonts: 500,
+  largest_js_gzip: 800,
+  total: 2000,
+};
+const fits = {
+  entry_gzip: 900,
+  js_gzip: 900,
+  css_gzip: 90,
+  fonts: 450,
+  largest_js_gzip: 700,
+  total: 1800,
+};
 
 console.log('weight budget');
 
@@ -100,19 +114,55 @@ check('a metric that is not in the budget list is ignored rather than invented',
 
 console.log('\nweight measurement');
 
+const FILES = [
+  { name: 'assets/index-abc.js', size: 3000, gzip: 900 },
+  { name: 'assets/vendor-def.js', size: 1000, gzip: 400 },
+  { name: 'assets/TabBode-ghi.js', size: 100, gzip: 30 },
+  { name: 'assets/index-abc.css', size: 200, gzip: 90 },
+  { name: 'assets/inter-latin.woff2', size: 450, gzip: 450 },
+  { name: 'index.html', size: 500, gzip: 60 },
+];
+
 check('js, css, fonts and the largest chunk are measured from the files', () => {
-  const measurement = measurementFrom([
-    { name: 'assets/index-abc.js', size: 3000, gzip: 900 },
-    { name: 'assets/vendor-def.js', size: 1000, gzip: 400 },
-    { name: 'assets/index-abc.css', size: 200, gzip: 90 },
-    { name: 'assets/inter-latin.woff2', size: 450, gzip: 450 },
-    { name: 'index.html', size: 500, gzip: 60 },
-  ]);
-  assert.equal(measurement.js_gzip, 1300, 'expected every .js summed');
+  const measurement = measurementFrom(FILES);
+  assert.equal(measurement.js_gzip, 1330, 'expected every .js summed, the lazy chunks included');
   assert.equal(measurement.css_gzip, 90);
   assert.equal(measurement.fonts, 450, 'expected the font counted at its own size, not gzipped twice');
   assert.equal(measurement.largest_js_gzip, 900, 'expected the biggest chunk, not the sum');
-  assert.equal(measurement.total, 1900, 'expected everything measured to be in the total');
+  assert.equal(measurement.total, 1930, 'expected everything measured to be in the total');
+});
+
+// The split's own metric: the document plus what it names is a first paint, and a chunk nobody opens
+// is still emitted — so `entry_gzip` falls when tabs become lazy while `total` does not.
+check('the entry is the document plus the files it names, not the whole bundle', () => {
+  const measurement = measurementFrom(FILES, [
+    'index.html',
+    'assets/index-abc.js',
+    'assets/index-abc.css',
+  ]);
+  assert.equal(measurement.entry_gzip, 1050, 'expected html + entry script + its stylesheet');
+  assert.ok(
+    measurement.entry_gzip < measurement.total,
+    'expected the lazy chunk (30 B) and the font (450 B) to sit outside the entry'
+  );
+});
+
+check('an entry naming a file the build did not emit is unmeasured, not free', () => {
+  const measurement = measurementFrom(FILES, ['index.html', 'assets/gone-xyz.js']);
+  assert.equal(
+    Number.isNaN(measurement.entry_gzip),
+    true,
+    'expected a stale name in index.html to read as unmeasured rather than as a smaller entry'
+  );
+  assert.deepEqual(
+    compareBudgets(measurement, budget).unmeasured.map((row) => row.metric),
+    ['entry_gzip'],
+    'expected the gate to fail on the budget, not to measure half an entry'
+  );
+});
+
+check('a document that names nothing is unmeasured, not an empty first paint', () => {
+  assert.equal(Number.isNaN(measurementFrom(FILES).entry_gzip), true);
 });
 
 check('a bundle with no js does not invent a largest chunk', () => {

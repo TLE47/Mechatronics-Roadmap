@@ -343,17 +343,51 @@ It is empty.
 
 **`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
 it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
-because woff2 is already compressed), `largest_js_gzip` and `total`. Today that is **937.8 kB across 16
-files**, with the budgets 8% above. A breach fails with the overshoot named, and so does a budget with
+because woff2 is already compressed), `largest_js_gzip` and `total`. Today that is **948.5 kB across 33
+files**, with the budgets 5-8% above. A breach fails with the overshoot named, and so does a budget with
 nothing measured behind it — a metric the build stopped emitting would otherwise pass forever. The
 rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and `npm run
 test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a budget
 gate is usually wrong.
 
 A byte budget is a gate because it is deterministic. Wall-clock timing is not gated: on a shared runner
-its variance is larger than any regression this app could ship, and a flaky gate gets disabled. The
-number that should move next is `largest_js_gzip` — the whole app is one 614 kB chunk, including the
-editor, KaTeX and the account client, none of which a first visit to the roadmap needs.
+its variance is larger than any regression this app could ship, and a flaky gate gets disabled.
+
+### One chunk became an entry, five vendors and ten tabs
+
+The budget's first reading was a single 614 kB chunk, and turning the split into a gate is what made
+the number move. `App.tsx` imports the runner statically — it is the tab the app opens on, so a lazy
+boundary there would only add a fetch before the lesson appears — and the other ten tabs are
+`React.lazy` chunks, fetched when the learner opens one. `vite.config.ts` splits the libraries by how
+often they change (`vendor-react`, `vendor-editor`, `vendor-katex`, `vendor-icons`), so editing a tab
+no longer invalidates React and CodeMirror with it.
+
+The editor's 149 kB left the entry the same way. The runner's editor is now a `React.lazy` boundary:
+[`PythonEditor.tsx`](src/components/PythonEditor.tsx) is the shell that stays — the props, the handle
+type, and a placeholder that paints the learner's code in monospace at the editor's own metrics — and
+the CodeMirror view moved to [`pythonEditorImpl.tsx`](src/components/pythonEditorImpl.tsx). A first
+paint now waits for the lesson text, the code and the Run button only; the editor is parsed while they
+are already readable.
+
+| | one chunk | tabs split | editor lazy |
+| :--- | ---: | ---: | ---: |
+| `entry_gzip` (document + script + preloads + CSS) | 627.5 kB | 585.5 kB | **432.9 kB** |
+| `largest_js_gzip` | 614.1 kB | 267.3 kB | **263.0 kB** |
+| `total` (every emitted file) | 937.8 kB | 947.7 kB | 948.5 kB |
+| files | 16 | 32 | 33 |
+
+The largest single file fell 58%, the bytes a first paint waits for fell 195 kB, and the whole bundle
+grew 10.7 kB — every chunk is emitted whether or not its tab is opened, so `total` is a ceiling on the
+bundle rather than the cost of a visit. The rail **prefetches on pointer-enter and focus**, so the
+chunk is usually in memory before the button is released and the Suspense panel never shows; a tab
+nobody points at is never fetched.
+
+The splits also taught three gates to wait rather than guess: the theme sweep and the axe sweep now
+wait for `[data-testid="tab-loading"]` to disappear before auditing (a fixed 260 ms would audit the
+skeleton and pass every rule), and the pair sweep's settle loop waits for it too — its fingerprint of
+"Loading this tab…" is perfectly stable, which is exactly why it had to be excluded. The editor's
+placeholder joins both conditions (`[data-editor-ready="false"]`): it is a different shape of the
+same hazard, since its own text runs would otherwise be measured as the editor's.
 
 ### The editor
 

@@ -208,6 +208,11 @@ const ARCH_CASES = [
 ];
 
 async function setSlider(page, id, value) {
+  // Ten of the eleven tabs are lazy chunks (`React.lazy` in App.tsx), so a preset that drives a
+  // slider on one can arrive before that chunk has rendered. Waiting for the control is waiting for
+  // the state being changed; without it the native setter is called with `null` and throws
+  // "Illegal invocation" from inside the page, which reads like a bug in the app rather than a race.
+  await page.waitForSelector(`#${id}`, { timeout: 20000 });
   await page.evaluate(
     ([sliderId, v]) => {
       const el = document.getElementById(sliderId);

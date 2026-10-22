@@ -13,8 +13,13 @@
  * - **`fonts`** — the two self-hosted variable faces, counted as their file sizes: woff2 is already
  *   compressed, so gzipping it again would flatter the number.
  * - **`largest_js_gzip`** — the biggest single chunk. A total can stay flat while one route's chunk
- *   doubles and its own first paint gets slower; this is the number that notices. *   - **`total`** — everything the browser pulls for the shell (assets plus the document), which is
- *     the honest "cost of the app".
+ *   doubles and its own first paint gets slower; this is the number that notices. * - **`entry_gzip`** — the document plus everything `index.html` names: its module script, the
+ *     chunks it preloads, and its stylesheets. This is what a first paint waits for, and it is the
+ *     number a chunk split is supposed to move; `total` cannot, because a chunk nobody opens is
+ *     still emitted into `dist/`.
+ * - **`total`** — everything emitted (assets plus the document): a ceiling on the bundle as a whole,
+ *     not the cost of a visit. A split raises this slightly (chunk headers) while lowering
+ *     `entry_gzip`, which is exactly the trade the report is meant to show.
  *
  * The comparison is pure (`compareBudgets`) so a unit suite can pin every direction — a metric under
  * budget, exactly at it, over it by one byte, missing from the measurement, and a budget for a metric
@@ -26,7 +31,7 @@
  */
 
 /** The metrics the budget covers, in the order the report prints them. */
-export const METRICS = ['js_gzip', 'css_gzip', 'fonts', 'largest_js_gzip', 'total'];
+export const METRICS = ['entry_gzip', 'js_gzip', 'css_gzip', 'fonts', 'largest_js_gzip', 'total'];
 
 /** `1234567` -> `1.18 MB`, `45678` -> `44.6 kB` — a size a person reads without arithmetic. */
 export function formatBytes(bytes) {
@@ -88,12 +93,22 @@ export function compareBudgets(measured, budget) {
   };
 }
 
-/** The measurement a build produces: totals plus the biggest chunk, from per-file gzip sizes. */
-export function measurementFrom(files) {
+/**
+ * The measurement a build produces: totals plus the biggest chunk, from per-file gzip sizes.
+ *
+ * `entry` is the list of file names `index.html` itself names (its module script, its modulepreloads
+ * and its stylesheets). An empty list yields `NaN` rather than `0`, so a document that stopped
+ * naming its script reads as **unmeasured** at the gate instead of as a free visit.
+ */
+export function measurementFrom(files, entry = []) {
   const sum = (predicate) =>
     files.filter(predicate).reduce((total, file) => total + file.gzip, 0);
   const js = files.filter((file) => file.name.endsWith('.js'));
+  const entryFiles = files.filter((file) => entry.includes(file.name));
   return {
+    entry_gzip: entry.length && entryFiles.length === entry.length
+      ? entryFiles.reduce((total, file) => total + file.gzip, 0)
+      : Number.NaN,
     js_gzip: sum((file) => file.name.endsWith('.js')),
     css_gzip: sum((file) => file.name.endsWith('.css')),
     fonts: files

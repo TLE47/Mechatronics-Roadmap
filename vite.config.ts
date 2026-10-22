@@ -23,6 +23,25 @@ export default defineConfig(({ command }) => ({
   build: {
     outDir: '../dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // One chunk for the whole app meant one cache key for the whole app: a tab's text change
+        // invalidated React and CodeMirror with it, and every file downloaded again. These split the
+        // libraries that change on their own schedule away from the code that changes daily — a
+        // caching win, and `npm run check:weight`'s `entry_gzip` is what says whether the first visit
+        // got smaller (it did: the ten non-runner tabs are `React.lazy` chunks, fetched when opened).
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined;
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'vendor-react';
+          if (/node_modules\/(@codemirror|@lezer|crelt|style-mod|w3c-keyname)\//.test(id)) {
+            return 'vendor-editor';
+          }
+          if (/node_modules\/katex\//.test(id)) return 'vendor-katex';
+          if (/node_modules\/lucide-react\//.test(id)) return 'vendor-icons';
+          return 'vendor';
+        },
+      },
+    },
   },
   server: {
     host: '0.0.0.0',

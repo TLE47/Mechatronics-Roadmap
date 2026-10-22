@@ -253,6 +253,18 @@ async function main() {
       if (await advanced.count()) await advanced.click();
       for (const tabId of TAB_IDS) {
         await page.click(`[data-testid="tab-btn-${tabId}"]`);
+        // A tab past the runner is a lazy chunk (`React.lazy` in App.tsx), so the click can land on
+        // the Suspense panel. The editor is lazy for the same reason and paints its code as a
+        // placeholder (`data-editor-ready="false"`) until CodeMirror arrives. Audit the tab, never
+        // either placeholder: waiting for both to go is what makes this wait a state rather than a
+        // guess at the network's speed — and the placeholder's own text runs are not the editor's.
+        await page.waitForFunction(
+          () =>
+            !document.querySelector('[data-testid="tab-loading"]') &&
+            !document.querySelector('[data-editor-ready="false"]'),
+          undefined,
+          { timeout: 20000 }
+        );
         await page.waitForTimeout(260);
         const report = await page.evaluate(auditContrast);
         // A canvas or chart is drawn against literal plot colours, so the inset has to stay

@@ -1,37 +1,26 @@
-import React, {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useLayoutEffect,
-  useRef,
-} from 'react';
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { bracketMatching, foldGutter, indentOnInput } from '@codemirror/language';
-import { python } from '@codemirror/lang-python';
-import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
-import {
-  autocompletion,
-  closeBrackets,
-  closeBracketsKeymap,
-  completionKeymap,
-  startCompletion,
-  type CompletionSource,
-} from '@codemirror/autocomplete';
-import { EditorState } from '@codemirror/state';
-import {
-  drawSelection,
-  dropCursor,
-  EditorView,
-  highlightActiveLine,
-  highlightActiveLineGutter,
-  keymap,
-  lineNumbers,
-  rectangularSelection,
-} from '@codemirror/view';
-import { pythonEditorTheme } from '../editor/theme';
-import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
-import { pythonCompletionSource } from '../editor/completions';
-import { analysisHover, analysisSignature } from '../editor/analysisTips';
+/**
+ * The editor as the runner imports it: a thin, always-resident shell around the CodeMirror module.
+ *
+ * CodeMirror and its Python parser are ~149 kB gzipped, and they are the largest thing the opening tab
+ * used to wait for. This file keeps the props, the handle type and a placeholder that paints the
+ * learner's code immediately, and the real editor arrives through `React.lazy`
+ * ([`pythonEditorImpl.tsx`](pythonEditorImpl.tsx)) — so the lesson text, the Run button and the starter
+ * are on screen before the editor is parsed (`docs/weight-budget.json`, the `entry_gzip` metric).
+ *
+ * Three consequences worth knowing, all pinned by `npm run test:editor:deferred`:
+ *
+ * - `window.__mechalabEditors[testId]` does not exist until the chunk lands. The bridge is a
+ *   post-mount promise, and `scripts/editor-code.mjs`'s `waitForEditor` is how a suite waits for it.
+ * - The wrapper stays mounted while the module loads, so a `ref` held by the runner is attached for
+ *   the component's whole life; the impl fills it when it mounts. A `focus()` or `revealLine()` asked
+ *   in that first moment does nothing rather than throwing.
+ * - A chunk that never arrives is caught here. Without the boundary below, a deploy that replaced the
+ *   hashed file (or an offline visit that precached an index naming it) would throw out of the lazy
+ *   component, and an app with no other boundary would unmount entirely — the lesson, the Run button
+ *   and the learner's own code with it. The placeholder stays instead, says so, and Run still works.
+ */
+
+import React, { Suspense, forwardRef } from 'react';
 import type { AnalysisSession } from '../analysisClient';
 
 /** The imperative surface the runner (and the browser suites) need. */
@@ -43,20 +32,7 @@ export interface PythonEditorHandle {
   revealLine: (line: number) => void;
 }
 
-/**
- * Move the cursor to a line, clamped to the document, and scroll it into view.
- *
- * Not a selection: the failure card's job is to show the learner the line that raised, and a selected
- * line would also arm the study panel's "pin selected text" for a passage they did not choose.
- */
-function revealLine(view: EditorView, line: number): void {
-  const number = Math.max(1, Math.min(Math.round(line), view.state.doc.lines));
-  const target = view.state.doc.line(number);
-  view.dispatch({ selection: { anchor: target.from }, scrollIntoView: true });
-  view.focus();
-}
-
-interface PythonEditorProps {
+export interface PythonEditorProps {
   value: string;
   onChange?: (next: string) => void;
   readOnly?: boolean;
@@ -77,230 +53,131 @@ interface PythonEditorProps {
   className?: string;
 }
 
-/** `useLayoutEffect` on the browser, `useEffect` during SSR: React warns about the former on a server. */
-const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+/** One loader for the module: a second call returns the same chunk from the module map. */
+const loadEditorImpl = () => import('./pythonEditorImpl');
 
-const PYTHON_WORDS = [
-  'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif',
-  'else', 'except', 'False', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
-  'lambda', 'None', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'True', 'try', 'while',
-  'with', 'yield',
-  'abs', 'all', 'any', 'bool', 'dict', 'enumerate', 'float', 'input', 'int', 'len', 'list', 'map',
-  'max', 'min', 'print', 'range', 'round', 'set', 'sorted', 'str', 'sum', 'tuple', 'zip',
-];
+const EditorImpl = React.lazy(() =>
+  loadEditorImpl().then((module) => ({ default: module.PythonEditorImpl }))
+);
 
-/** Names the document defines, so `zeta` completes inside the same file. */
-function documentNames(text: string): string[] {
-  const names = new Set<string>();
-  for (const match of text.matchAll(/^\s*(?:def|class)\s+([A-Za-z_]\w*)/gm)) names.add(match[1]);
-  for (const match of text.matchAll(/^\s*([A-Za-z_]\w*)\s*(?:=(?!=)|\+=|-=|\*=|\/=)/gm)) names.add(match[1]);
-  return [...names];
+/**
+ * Start fetching the editor's chunk without rendering it.
+ *
+ * Called by the runner where a press is likely but not certain (the helper tab is in the tab list of
+ * every lesson that has one). It is the same module the lazy boundary asks for, so a prefetch is
+ * never work the page would not have done anyway.
+ */
+export function prefetchPythonEditor(): void {
+  void loadEditorImpl().catch(() => undefined);
 }
 
-const pythonCompletions: CompletionSource = (context) => {
-  const word = context.matchBefore(/[A-Za-z_][\w.]*/);
-  if (!word || (word.from === word.to && !context.explicit)) return null;
-  const options = [...new Set([...PYTHON_WORDS, ...documentNames(context.state.doc.toString())])].map(
-    (label) => ({ label, type: PYTHON_WORDS.includes(label) ? 'keyword' : 'variable' })
+/**
+ * What is on screen for the first frames: the code itself.
+ *
+ * Not a spinner and not an empty box. The starter is the thing the learner came to read, it is already
+ * in memory as a string, and a monospace block at the editor's own size and metrics means the swap to
+ * CodeMirror changes the surface's internals rather than the page's shape — the line box, the padding
+ * and the minimum height are the theme's numbers (`app/src/editor/theme.ts`).
+ *
+ * The text is left padded by the gutter's width so the first character sits close to where CodeMirror
+ * will draw it; the gutter is the one part that cannot be faked without a second layout engine.
+ */
+function EditorPlaceholder({
+  value,
+  testId,
+  className,
+  ariaLabel,
+  notice,
+}: PythonEditorProps & { notice?: string }) {
+  return (
+    <div className={className} data-editor={testId} data-editor-ready="false">
+      <div
+        role="status"
+        aria-label={`${ariaLabel}: opening the editor`}
+        data-testid={`${testId}-loading`}
+        className="overflow-hidden"
+        style={{
+          minHeight: 288,
+          maxHeight: 360,
+          // Clipped rather than scrollable: a scroll container that is not keyboard reachable is an
+          // axe finding, and this one exists for one frame. The editor's own scroller takes the tab
+          // stop when it mounts.
+          overflow: 'hidden',
+          backgroundColor: 'var(--bg)',
+          color: 'var(--dim)',
+          fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
+          fontSize: '12.5px',
+          lineHeight: 1.6,
+        }}
+      >
+        {notice ? (
+          <p
+            data-testid={`${testId}-notice`}
+            style={{ margin: 0, padding: '10px 12px 0 44px', color: 'var(--muted)' }}
+          >
+            {notice}
+          </p>
+        ) : null}
+        <pre
+          data-testid={`${testId}-preview`}
+          className="whitespace-pre-wrap break-words"
+          style={{ margin: 0, padding: '12px 12px 12px 44px' }}
+        >
+          {value}
+        </pre>
+      </div>
+    </div>
   );
-  return { from: word.from, options, validFor: /^[\w.]*$/ };
-};
+}
 
-declare global {
-  interface Window {
-    /** Browser suites drive the editor through this, so they never depend on DOM shape. */
-    __mechalabEditors?: Record<
-      string,
-      {
-        get: () => string;
-        set: (text: string) => void;
-        focus: () => void;
-        /** Move the cursor, clamped to the document: a suite types at a known position. */
-        setCursor: (pos: number) => void;
-        getCursor: () => number;
-        /** Cursor to a 1-based line, scrolled into view: the failure card's "show line N". */
-        revealLine: (line: number) => void;
-        /**
-         * Open the completion list, the same command `Ctrl-Space` runs.
-         *
-         * A suite cannot rely on a synthetic key press landing in a contenteditable after a tab
-         * switch, and the binding itself is CodeMirror's, not this app's: what is worth pinning is
-         * that the list appears and what is in it.
-         */
-        startCompletion: () => void;
-        /**
-         * Where a document position is on screen, so a browser suite can put the real pointer over
-         * a name. Hover is a mouse gesture CodeMirror owns; a synthetic event would be a test of the
-         * harness rather than of the card that opens.
-         */
-        coordsOf: (pos: number) => { left: number; top: number; bottom: number } | null;
-      }
-    >;
+/**
+ * The one failure a lazy boundary adds, caught where it happens.
+ *
+ * `React.lazy` marks its module rejected for the life of the page, so there is no retry to offer from
+ * here: what the boundary owes the learner is that the screen they came for survives, with a sentence
+ * saying which half is missing and what still works.
+ */
+class EditorBoundary extends React.Component<
+  { fallback: React.ReactNode; children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    // Quiet and named: the app is still usable, and the next deploy is the fix.
+    console.warn('The editor could not be loaded; showing the code instead.', error);
+  }
+
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
   }
 }
 
 /**
- * The Python editor: CodeMirror 6 in place of the textarea.
+ * The Python editor, with CodeMirror loaded on demand.
  *
- * A textarea cannot colour syntax, complete a name, keep an undo history, or hold a widget under a
- * line. This does all four and stays a small dependency (~200 kB before gzip, versus Monaco), works
- * on touch, and takes its colours from the app's tokens so light mode is not a second theme.
- *
- * The component is intentionally thin: the document is owned by React (`value`), every edit is
- * reported through `onChange`, and an external `value` change (a different lesson, Load Solution,
- * Reset) replaces the document. CodeMirror is the view; it is never the source of truth.
+ * The ref is forwarded straight to the lazy component: `React.lazy` passes the element's own `ref`
+ * through to whatever it resolves to, so the runner's `guideEditorRef` needs no changed callers.
  */
-export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(function PythonEditor(
-  { value, onChange, readOnly = false, ariaLabel, testId, onSliderCommit, getAnalysis, className },
-  ref
-) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const viewRef = useRef<EditorView | null>(null);
-  const onChangeRef = useRef(onChange);
-  const onSliderRef = useRef(onSliderCommit);
-  // Read at completion time, not captured: the session appears once the interpreter is ready, and
-  // the editor is created long before that.
-  const analysisRef = useRef(getAnalysis);
-  analysisRef.current = getAnalysis;
-  onChangeRef.current = onChange;
-  onSliderRef.current = onSliderCommit;
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      focus: () => viewRef.current?.focus(),
-      getValue: () => viewRef.current?.state.doc.toString() ?? value,
-      setValue: (text: string) => {
-        const view = viewRef.current;
-        if (!view) return;
-        view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
-      },
-      revealLine: (line: number) => {
-        const view = viewRef.current;
-        if (view) revealLine(view, line);
-      },
-    }),
-    [value]
-  );
-
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-    const state = EditorState.create({
-      doc: value,
-      extensions: [
-        lineNumbers(),
-        highlightActiveLineGutter(),
-        highlightActiveLine(),
-        foldGutter(),
-        history(),
-        drawSelection(),
-        dropCursor(),
-        EditorState.allowMultipleSelections.of(true),
-        indentOnInput(),
-        bracketMatching(),
-        closeBrackets(),
-        rectangularSelection(),
-        highlightSelectionMatches(),
-        autocompletion({
-          override: [pythonCompletionSource(() => analysisRef.current?.() ?? null, pythonCompletions)],
-        }),
-        // Hover and signature help read the same session the completion list does, and are only
-        // installed where one can exist: the read-only helper tab passes no `getAnalysis`, and a
-        // hover card over somebody else's file would be a card about the lesson, not the learner's code.
-        ...(getAnalysis
-          ? [
-              analysisHover(() => analysisRef.current?.() ?? null),
-              ...analysisSignature(() => analysisRef.current?.() ?? null),
-            ]
-          : []),
-        EditorView.lineWrapping,
-        EditorState.readOnly.of(readOnly),
-        EditorView.editable.of(!readOnly),
-        EditorView.contentAttributes.of({ 'aria-label': ariaLabel, 'data-testid': testId }),
-        keymap.of([
-          ...closeBracketsKeymap,
-          ...defaultKeymap,
-          ...searchKeymap,
-          ...historyKeymap,
-          ...completionKeymap,
-          indentWithTab,
-        ]),
-        python(),
-        pythonEditorTheme,
-        sliderField,
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) onChangeRef.current?.(update.state.doc.toString());
-          if (update.transactions.some((tr) => tr.annotation(sliderAnnotation))) {
-            onSliderRef.current?.();
-          }
-        }),
-      ],
-    });
-    const view = new EditorView({ state, parent: host });
-    viewRef.current = view;
-    // The scroller is a scroll container of its own, so it takes a tab stop: CodeMirror focuses the
-    // editable content, which scrolls only with the caret, so without this a keyboard user has no
-    // way to page through a long file while leaving the cursor where it is (WCAG 2.1.1; axe's
-    // `scrollable-region-focusable` names exactly this element).
-    view.scrollDOM.setAttribute('tabindex', '0');
-
-    // The suites type code from a string, read it back, and check it survived a reload; going
-    // through the view keeps React's `value` in step instead of only the DOM.
-    const bridge = {
-      get: () => view.state.doc.toString(),
-      set: (text: string) => {
-        view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
-      },
-      focus: () => view.focus(),
-      setCursor: (pos: number) => {
-        const clamped = Math.max(0, Math.min(pos, view.state.doc.length));
-        view.dispatch({ selection: { anchor: clamped } });
-        view.focus();
-      },
-      getCursor: () => view.state.selection.main.head,
-      revealLine: (line: number) => revealLine(view, line),
-      startCompletion: () => {
-        view.focus();
-        startCompletion(view);
-      },
-      coordsOf: (pos: number) => {
-        const clamped = Math.max(0, Math.min(pos, view.state.doc.length));
-        const coords = view.coordsAtPos(clamped);
-        return coords ? { left: coords.left, top: coords.top, bottom: coords.bottom } : null;
-      },
-    };
-    window.__mechalabEditors = { ...(window.__mechalabEditors ?? {}), [testId]: bridge };
-
-    return () => {
-      view.destroy();
-      viewRef.current = null;
-      if (window.__mechalabEditors?.[testId] === bridge) {
-        delete window.__mechalabEditors[testId];
-      }
-    };
-    // The document is synced by the effect below; mounting once per editor instance is the point.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, readOnly, ariaLabel]);
-
-  // External changes: a different lesson, Load Solution, Reset starter. The learner's own keystrokes
-  // arrive here too and are already equal to the document, so nothing is dispatched twice.
-  useIsomorphicLayoutEffect(() => {
-    const view = viewRef.current;
-    if (!view) return;
-    const current = view.state.doc.toString();
-    if (current === value) return;
-    view.dispatch({ changes: { from: 0, to: current.length, insert: value } });
-  }, [value]);
-
-  return (
-    <div className={className} data-editor={testId}>
-      <div ref={hostRef} className="cm-host" />
-      {/* Server-rendered markup and no-JS readers still see the code as text; the browser suite
-          asserts the starter reaches the page, and hiding it would make that check vacuous. */}
-      <pre hidden data-testid={`${testId}-text`}>
-        {value}
-      </pre>
-    </div>
-  );
-});
+export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(
+  function PythonEditor(props, ref) {
+    return (
+      <EditorBoundary
+        fallback={
+          <EditorPlaceholder
+            {...props}
+            notice="The editor could not be loaded — this is your code, and Run still works. Reload to bring the editor back."
+          />
+        }
+      >
+        <Suspense fallback={<EditorPlaceholder {...props} />}>
+          <EditorImpl {...props} ref={ref} />
+        </Suspense>
+      </EditorBoundary>
+    );
+  }
+);

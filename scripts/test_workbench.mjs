@@ -45,7 +45,8 @@
  *     (`E2E_BASE_URL`, `PAGES_SERVER_URL`) so no suite boots a second one;
  *   - runs the smoke suite in this process, against that same dev server, so its SSR module graph
  *     is the graph the browser suites load - not a third transformation of the same sources;
- *   - runs the four browser suites side by side, each in its own process, output prefixed.
+ *   - runs the browser suites in waves of four, each in its own process with its output prefixed,
+ *     because thirty Chromium drivers at once is more than one dev server and one machine carry.
  *
  * Wall clock is the slowest suite rather than their sum, and the coverage is exactly what the separate
  * scripts cover when run alone. Each one still passes standalone: they create their own servers when
@@ -94,6 +95,27 @@ function runSuite(label, script, env) {
   });
 }
 
+/**
+ * Run thunks in waves. A suite is started only when a slot frees, so the wave size is how many are in
+ * flight at once, and a fast suite is never held behind a slow one in the same batch.
+ *
+ * `throws` is false by design: a suite that cannot start has already been reported by `runSuite`, and
+ * one dead script must not stop the rest of the matrix from running.
+ */
+async function runWaves(begins, limit) {
+  const results = [];
+  let next = 0;
+  const worker = async () => {
+    while (next < begins.length) {
+      const at = next;
+      next += 1;
+      results[at] = await begins[at]();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, begins.length) }, worker));
+  return results;
+}
+
 /** Run the smoke suite in-process with its own log prefix, leaving the child pipes alone. */
 function runSmoke(viteServer) {
   const started = Date.now();
@@ -124,97 +146,43 @@ async function main() {
   console.log(`[setup] dev server ${devUrl}`);
   console.log(`[setup] built bundle ${pagesUrl}`);
 
-  const suites = [
-    runSmoke(viteServer),
-    runSuite('links', 'test_practice_links.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('theme', 'test_theme.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('tokens', 'test_theme_tokens.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('spine', 'test_spine.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('palette', 'test_palette.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('editor', 'test_editor.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('resume', 'test_last_lesson.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('draft', 'test_lesson_draft.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('history', 'test_draft_history.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('scope', 'test_scope.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('hints', 'test_check_hints.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('takealong', 'test_offline_takealong.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('backup', 'test_backup.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('analysis', 'test_analysis.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('study', 'test_study.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('review', 'test_review.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('sitting', 'test_sitting.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('portfolio', 'test_portfolio.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('storage', 'test_storage.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('traceback', 'test_traceback.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('trail', 'test_timeline.mjs', {
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('weight', 'test_weight_budget.mjs', {}),
-    runSuite('fonts', 'test_fonts.mjs', {}),
-    runSuite('e2e', 'e2e_browser_workbench.mjs', { E2E_BASE_URL: devUrl }),
-    runSuite('pages', 'e2e_pages_bundle.mjs', { PAGES_SERVER_URL: pagesUrl }),
-    runSuite('pairs', 'e2e_same_task_pairs.mjs', { E2E_BASE_URL: devUrl }),
-    runSuite('tour', 'e2e_tour_presets.mjs', { E2E_BASE_URL: devUrl }),
-    runSuite('bak2e', 'e2e_backup.mjs', {
-      E2E_BASE_URL: devUrl,
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('rev2e', 'e2e_review.mjs', {
-      E2E_BASE_URL: devUrl,
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('trail2e', 'e2e_trail.mjs', {
-      E2E_BASE_URL: devUrl,
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('focus2e', 'e2e_focus.mjs', {
-      E2E_BASE_URL: devUrl,
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
-    runSuite('store2e', 'e2e_storage.mjs', {
-      E2E_BASE_URL: devUrl,
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
-    }),
+  // The suites, as data: `browser` marks the ones that launch Chromium and drive pages, and those run
+  // in waves rather than all at once (`runWaves` below).
+  const TYPES = `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim();
+  const SUITES = [
+    { label: 'links', script: 'test_practice_links.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'theme', script: 'test_theme.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'tokens', script: 'test_theme_tokens.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'spine', script: 'test_spine.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'palette', script: 'test_palette.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'editor', script: 'test_editor.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'resume', script: 'test_last_lesson.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'draft', script: 'test_lesson_draft.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'history', script: 'test_draft_history.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'scope', script: 'test_scope.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'hints', script: 'test_check_hints.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'takealong', script: 'test_offline_takealong.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'backup', script: 'test_backup.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'analysis', script: 'test_analysis.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'study', script: 'test_study.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'review', script: 'test_review.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'sitting', script: 'test_sitting.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'portfolio', script: 'test_portfolio.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'storage', script: 'test_storage.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'traceback', script: 'test_traceback.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'trail', script: 'test_timeline.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'weight', script: 'test_weight_budget.mjs' },
+    { label: 'fonts', script: 'test_fonts.mjs' },
+    { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
+    { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, browser: true },
+    { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
+    { label: 'tour', script: 'e2e_tour_presets.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
+    { label: 'defer', script: 'e2e_editor_deferred.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'bak2e', script: 'e2e_backup.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'rev2e', script: 'e2e_review.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'trail2e', script: 'e2e_trail.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
   ];
   // Ctrl-C must not leave a Vite server or two Chromium runs behind.
   const stop = () => {
@@ -227,7 +195,17 @@ async function main() {
 
   let results;
   try {
-    results = await Promise.all(suites);
+    // Unit suites are cheap and share one dev server happily; the browser suites each open a Chromium
+    // and drive pages, and thirty of those at once is what made this matrix flake (a 30 s navigation
+    // timeout in one run, a 5 s readout wait in another, a Suspense panel read as content in a third).
+    // Four at a time is what one machine carries, and wall clock is still the slowest suite plus a
+    // wave, not their sum.
+    // The browser suites are started as thunks so a wave decides when a Chromium is opened at all;
+    // the rest are cheap and go in one batch.
+    const start = (suite) => () => runSuite(suite.label, suite.script, suite.env ?? {});
+    const unit = SUITES.filter((suite) => !suite.browser).map(start);
+    const browser = SUITES.filter((suite) => suite.browser).map(start);
+    results = [...(await Promise.all([runSmoke(viteServer), ...unit.map((begin) => begin())])), ...(await runWaves(browser, 4))];
   } finally {
     process.off('SIGINT', stop);
     process.off('SIGTERM', stop);

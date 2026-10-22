@@ -58,6 +58,8 @@ function log(...args) {
  * `dist/index.html`. Files at `dist/` root that no page fetches (`og.png`, the social card, 370 kB)
  * are deliberately out of scope — a budget that counts them would make the app look twice its size
  * and would move when the card is redrawn.
+ *
+ * Returns the files and the names `index.html` itself references, which is what `entry_gzip` sums.
  */
 function readAssets(dir) {
   const files = [];
@@ -82,7 +84,27 @@ function readAssets(dir) {
     size: html.length,
     gzip: zlib.gzipSync(html, { level: 9 }).length,
   });
-  return files;
+  return { files, entry: entryNames(String(html)) };
+}
+
+/**
+ * The asset names the document names: `<script src>`, `<link rel="modulepreload" href>` and
+ * `<link rel="stylesheet" href>`. A stylesheet from another origin (KaTeX's CDN copy in the
+ * template) is skipped — the gate measures this bundle, not somebody else's.
+ */
+function entryNames(html) {
+  const names = new Set(['index.html']);
+  const references = [
+    ...html.matchAll(/<script[^>]+src="([^"]+)"/g),
+    ...html.matchAll(/<link[^>]+(?:modulepreload|stylesheet)[^>]*href="([^"]+)"/g),
+    ...html.matchAll(/<link[^>]+href="([^"]+)"[^>]*(?:modulepreload|stylesheet)/g),
+  ];
+  for (const [, href] of references) {
+    const at = href.indexOf('assets/');
+    if (at < 0) continue;
+    names.add(href.slice(at));
+  }
+  return [...names];
 }
 
 function main() {
@@ -95,8 +117,8 @@ function main() {
     process.exit(2);
   }
   const budgetFile = JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
-  const files = readAssets(DIST);
-  const measured = measurementFrom(files);
+  const { files, entry } = readAssets(DIST);
+  const measured = measurementFrom(files, entry);
   const { rows, breaches, unmeasured, tightest } = compareBudgets(measured, budgetFile.budgets);
 
   if (RECORD) {
@@ -116,7 +138,7 @@ function main() {
   if (JSON_OUT) {
     console.log(JSON.stringify({ measured, rows, biggest, files: files.length }, null, 2));
   } else {
-    log(`The built bundle: ${files.length} files, biggest gzipped first`);
+    log(`The built bundle: ${files.length} files, first paint from ${entry.length} of them`);
     for (const file of biggest) log(`  ${file.name.padEnd(38)} ${formatBytes(file.gzip).padStart(8)}`);
     log('');
     log('  metric              measured     budget      used');
