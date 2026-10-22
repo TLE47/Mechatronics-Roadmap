@@ -11,6 +11,33 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 176: A Paper Palette, and a Fourth Palette Measured
+
+`docs/PLAN-2.0-GAP.md`'s theme row ended with one sentence: *"No paper theme."* Dark is a bench
+instrument, light is a warm sheet, high contrast is a request — and the long lesson pages had nothing
+between them and a screen at night. **Paper** is the fourth palette: cream behind brown-black ink,
+for reading rather than working ([`app/src/index.css`](app/src/index.css),
+[`app/src/theme.ts`](app/src/theme.ts), [`app/src/components/Header.tsx`](app/src/components/Header.tsx)):
+
+| Decision | Why |
+| :--- | :--- |
+| Never a default — only a stored pick reaches it | Contrast is the OS's request (`prefers-contrast: more`); paper is a preference about reading, and a first visit that opened on cream would look like a mistake on a work laptop |
+| A third on/off button (book icon), not a step in a cycle | `aria-pressed` has to state what is drawn; contrast is the same shape, and the flip stays dark ↔ light, returning either extra palette to the OS's own |
+| Accents darkened until they clear 4.5:1 on `--panel-3` **as well as** `--panel` | A hovered row is where a 12px status label spends much of its life |
+| The plot face unchanged, as in every palette | The traces are literal colours tuned against one ink; a brighter chart would wash them out |
+
+The measurement is the point of the run. `npm run test:theme:e2e` now walks **eleven tabs plus the
+reference page in four palettes — 48 pairs**, compositing each text run over the backgrounds it
+actually sits on: every pair clears 3:1 and the lowest measured run is **4.52:1** (high contrast still
+holds 7:1: its floor measures 7.04:1). `npm run check:axe` covers the same four palettes. The token
+reference (`?view=theme`) prints a paper column per row and a third control, both pinned by
+`npm run test:theme:tokens` and the workbench smoke step; `tests/test_theme_docs.py` checks all four
+palettes against the stylesheet.
+
+Verified: test:theme 12/12, test:theme:tokens 10/10, test_theme_docs 11/11, 47 workbench suites,
+check_all 29/29, axe 11 tabs × 4 palettes (0 exceptions, none stale), theme e2e 48/48 pairs
+(min 4.52:1), lint clean, weight 963.3 kB (+1.0 kB).
+
 ## [2026-10-22] — Run 175: The Page's Own Code, in Scratch
 
 `docs/PLAN-2.0-GAP.md`'s last content-side gap was one sentence: *"Try-it blocks are still absent."*

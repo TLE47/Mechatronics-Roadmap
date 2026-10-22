@@ -1,8 +1,8 @@
 /**
- * The three palettes: the stored choice, the OS default, and the attribute that
+ * The four palettes: the stored choice, the OS default, and the attribute that
  * re-points every token in index.css.
  *
- * Four rules, and the tests in `scripts/test_theme.mjs` exist to keep them:
+ * Five rules, and the tests in `scripts/test_theme.mjs` exist to keep them:
  *
  * 1. First visit follows the OS — `prefers-contrast: more` before
  *    `prefers-color-scheme`, because a reader who asked for contrast is asking
@@ -11,17 +11,22 @@
  *    workbench with it.
  * 2. A pick is explicit and persisted: `localStorage[STORAGE_KEY_THEME]` wins
  *    from then on, on every tab and every visit.
- * 3. There are **two controls, because there are two questions**: the flip is
- *    dark ↔ light (from high contrast it returns to the OS palette), and high
- *    contrast is its own on/off button (`aria-pressed`, which a three-state
- *    cycle could not state honestly). Each names what it will give you.
- * 4. Everything here is safe to import on the server: no module-level `window`,
+ * 3. There are **three controls, because there are three questions**: the flip is
+ *    dark ↔ light (from any other palette it returns to the OS palette), high
+ *    contrast is its own on/off button, and paper is its own on/off button —
+ *    `aria-pressed` on each, which a cycle could not state honestly. Each names
+ *    what it will give you.
+ * 4. **Only the OS picks dark or light.** Contrast is the OS's request too
+ *    (`prefers-contrast: more`); paper is never a default, because it is a
+ *    preference about reading, not about the machine — a first visit that opened
+ *    on cream would look like a mistake on a work machine.
+ * 5. Everything here is safe to import on the server: no module-level `window`,
  *    no top-level side effects. `App` renders the dark shell during SSR and the
  *    effect below corrects it after mount; the inline script in index.html sets
  *    the attribute before first paint, so nothing flashes.
  */
 
-export type Theme = 'light' | 'dark' | 'contrast';
+export type Theme = 'light' | 'dark' | 'contrast' | 'paper';
 /** What the learner picked. `system` is the untouched first visit, not a fourth button. */
 export type ThemeChoice = Theme | 'system';
 
@@ -32,7 +37,9 @@ const CONTRAST_QUERY = '(prefers-contrast: more)';
 
 /** The storage name is also written by the pre-paint script in index.html; keep them in step. */
 export function parseChoice(raw: string | null | undefined): ThemeChoice {
-  return raw === 'light' || raw === 'dark' || raw === 'contrast' || raw === 'system' ? raw : 'system';
+  return raw === 'light' || raw === 'dark' || raw === 'contrast' || raw === 'paper' || raw === 'system'
+    ? raw
+    : 'system';
 }
 
 export function resolveTheme(
@@ -111,11 +118,11 @@ export function defaultTheme(systemDark: boolean): Theme {
 }
 
 /**
- * The everyday flip, dark ↔ light. From high contrast it returns to the OS's own palette rather
- * than to whichever of the two the learner came from — one rule, no remembered third state.
+ * The everyday flip, dark ↔ light. From high contrast or paper it returns to the OS's own palette
+ * rather than to whichever side the learner came from — one rule, no remembered third state.
  */
 export function toggleTheme(theme: Theme, fallback: Theme): Theme {
-  if (theme === 'contrast') return fallback;
+  if (theme === 'contrast' || theme === 'paper') return fallback;
   return theme === 'dark' ? 'light' : 'dark';
 }
 
@@ -129,6 +136,7 @@ const THEME_COLOR: Record<Theme, string> = {
   dark: '#070b12',
   light: '#f8f6f2',
   contrast: '#000000',
+  paper: '#efe4d0',
 };
 
 /** Write the attribute the stylesheet keys off, plus the browser's own scrollbar/form colour. */
@@ -138,8 +146,8 @@ export function applyTheme(theme: Theme, root?: HTMLElement | null): void {
   if (!el) return;
   el.setAttribute(THEME_ATTRIBUTE, theme);
   // The contrast palette is a dark palette: a light `color-scheme` would hand every native
-  // control and scrollbar a white chrome the page's own panels sit inside.
-  el.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+  // control and scrollbar a white chrome the page's own panels sit inside. Paper is a light one.
+  el.style.colorScheme = theme === 'light' || theme === 'paper' ? 'light' : 'dark';
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', THEME_COLOR[theme]);
 }
@@ -190,6 +198,7 @@ export const THEME_NAMES: Record<Theme, string> = {
   dark: 'dark',
   light: 'light',
   contrast: 'high contrast',
+  paper: 'paper',
 };
 
 /** What the flip will give you, said as the thing it hands over rather than the thing it leaves. */
@@ -201,6 +210,21 @@ export function themeLabel(theme: Theme, fallback: Theme): string {
 /** The word drawn beside the flip's icon, naming the same palette as `themeLabel`. */
 export function themeShortLabel(theme: Theme, fallback: Theme): string {
   return toggleTheme(theme, fallback) === 'light' ? 'Light' : 'Dark';
+}
+
+/** The paper control, which is a real on/off beside the flip for the same reason contrast is. */
+export function togglePaper(theme: Theme, fallback: Theme): Theme {
+  return theme === 'paper' ? fallback : 'paper';
+}
+
+/** The paper control's name, the same words whether it is on or off. */
+export const PAPER_LABEL = 'Paper';
+
+/** What pressing the paper control will do, for its title. */
+export function paperHint(theme: Theme): string {
+  return theme === 'paper'
+    ? 'Paper is on. Leave it for the light or dark palette.'
+    : 'Warm cream behind brown-black ink — easier on the eyes for long reading.';
 }
 
 /** The contrast control's name, which is the same words whether it is on or off. */

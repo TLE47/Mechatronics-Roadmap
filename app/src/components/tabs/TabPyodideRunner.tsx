@@ -2410,7 +2410,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 is not the learner's draft and it is never graded, and the card says both before they
                 press Run - a snippet that quietly counted as an attempt would be a verdict on code
                 they did not write. `bg-canvas` rather than a tint of the amber, because body text on
-                the canvas is a pair the theme suite already measures in all three palettes. */}
+                the canvas is a pair the theme suite already measures in all four palettes. */}
             {scratch && (
               <div
                 data-testid="scratch-banner"

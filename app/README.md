@@ -30,27 +30,29 @@ registers `bg-canvas`, `bg-panel`, `bg-raise`, `border-line`, `text-ink`, `text-
 modifiers (`bg-emerald/20`) work too. A literal colour left in a tab is a bug that the light theme
 shows immediately.
 
-## Dark, light and high contrast
+## Dark, light, paper and high contrast
 
 `<html data-theme>` decides every colour. The inline script in [`index.html`](index.html) writes it
 before first paint (stored pick, else `prefers-contrast`, else `prefers-color-scheme`), so there is no
 flash; [`src/theme.ts`](src/theme.ts) owns the rules and [`src/useTheme.ts`](src/useTheme.ts) mounts
-them in the header's two controls.
+them in the header's three controls.
 
 | Situation | What happens |
 | :--- | :--- |
 | First visit | The OS decides — a `prefers-contrast: more` request takes high contrast ahead of the colour scheme. Nothing is written to `localStorage`. |
 | Sun/moon pressed | Dark ↔ light, and `mechalab_theme_v1` stores the side that landed. The label names the palette the press gives you; from high contrast it returns to the OS palette. |
 | Contrast pressed | High contrast on or off — a real on/off, so `aria-pressed` states what is drawn. Off returns to the OS palette. |
+| Paper pressed | Paper on or off, the same way. It is never an OS default: a first visit that opened on cream would look like a mistake on a work laptop. |
 | Reload, or the OS flips | The stored pick wins; only an unpicked visit keeps following the OS. |
 | Corrupt or blocked storage | Falls back to the OS and keeps working — no throw, no broken shell. |
 
 Plots are the exception by design: a canvas or SVG chart sits on `.plot` (`--plot: #070a12`) in every
 palette, because the traces are drawn in literal plot colours tuned against that ink. Light mode is
 warm paper around dark instrument faces, not a white plot with invisible curves; high contrast keeps
-the same face and spends its contrast budget on the text and the lines around it.
+the same face and spends its contrast budget on the text and the lines around it. The paper palette is
+that idea taken further: a cream sheet with brown-black ink, for long lesson pages.
 
-[`docs/THEME.md`](../docs/THEME.md) is the token reference: every colour in all three palettes side by
+[`docs/THEME.md`](../docs/THEME.md) is the token reference: every colour in all four palettes side by
 side, the utility family that reaches it, a "you are styling X, reach for Y" table, and the rules
 above stated once. It is checked against `src/index.css` by `tests/test_theme_docs.py`, so it cannot
 drift from the stylesheet.
@@ -61,10 +63,11 @@ The same table is in the app at `?view=theme`, linked from the footer
 test:theme:tokens` pins the parse and `npm run test:theme:e2e` checks the painted swatches in a
 browser. The page is a route, not a tab: the learner's rail is unchanged.
 
-Legibility is measured, not eyeballed: `npm run test:theme` pins the storage/OS/cycle rules, and
-`npm run test:theme:e2e` drives Chromium through all eleven tabs in all three palettes, compositing each
-text run over the backgrounds it actually sits on and failing anything below 3:1 (the current floor
-is 4.5:1, and 7:1 in high contrast). The unit suite runs inside `npm run test:workbench`; the browser sweep is its own CI step,
+Legibility is measured, not eyeballed: `npm run test:theme` pins the storage/OS rules and keeps the
+three controls honest, and `npm run test:theme:e2e` drives Chromium through all eleven tabs in all four
+palettes, compositing each text run over the backgrounds it actually sits on and failing anything
+below 3:1 (the current floor is 4.52:1, and 7:1 in high contrast). The unit suite runs inside
+`npm run test:workbench`; the browser sweep is its own CI step,
 because as a seventh parallel suite it pushed the older ones past their click timeouts. `--warnings` lists runs between 3:1 and their size minimum; `--screenshots` writes one
 PNG per tab per theme to `.fb-scratch/theme/`.
 
@@ -339,11 +342,11 @@ preview — and the download and the preview are the same string.
 
 Two numbers about the shell itself, both measured rather than asserted.
 
-**`npm run check:axe`** injects `axe-core` into every one of the eleven tabs, in all three palettes, and
+**`npm run check:axe`** injects `axe-core` into every one of the eleven tabs, in all four palettes, and
 fails on anything `serious` or `critical`. `minor` and `moderate` findings are printed (46 of them:
 `page-has-heading-one`, `region`, `heading-order`) and do not fail — a gate that trips on a landmark
 suggestion is a gate people turn off. `color-contrast` is switched off here on purpose: the theme
-suite composites the real ancestor backgrounds and fails below 3:1 on all 33 tab/palette pairs, and a
+suite composites the real ancestor backgrounds and fails below 3:1 on all 44 tab/palette pairs, and a
 second, rougher contrast measure that disagreed with it would make the accurate one look wrong.
 
 Its first run found three things, all fixed rather than excused: **22 sliders with no accessible

@@ -1,17 +1,26 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, Compass, Sun, Moon, Contrast, Search, Maximize2, Minimize2 } from 'lucide-react';
+import { Printer, Download, FileJson, User, Compass, Sun, Moon, Contrast, BookOpen, Search, Maximize2, Minimize2 } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
-import { CONTRAST_LABEL, contrastHint, themeLabel, themeShortLabel, type Theme } from '../theme';
+import {
+  CONTRAST_LABEL,
+  PAPER_LABEL,
+  contrastHint,
+  paperHint,
+  themeLabel,
+  themeShortLabel,
+  type Theme,
+} from '../theme';
 import { focusLabel } from '../focusMode';
 
 interface HeaderProps {
-  /** The palette on screen, the OS palette leaving high contrast returns to, and the two controls. */
+  /** The palette on screen, the OS palette leaving high contrast returns to, and the three controls. */
   theme: Theme;
   fallback: Theme;
   onToggle: () => void;
   onToggleContrast: () => void;
+  onTogglePaper: () => void;
   onOpenCheatSheet: () => void;
   onExportPortfolio: () => void;
   activeTierPass: ActiveTierPass;
@@ -58,6 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
   fallback,
   onToggle: toggle,
   onToggleContrast,
+  onTogglePaper,
   onOpenCheatSheet,
   onExportPortfolio,
   activeTierPass,
@@ -190,6 +200,21 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Contrast className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="hidden 2xl:inline">Contrast</span>
+          </button>
+          {/* Paper is the third question, not a step in a cycle: "is this reading or working?" A
+              pressed button on a cycle would mean nothing, which is why each palette that is not the
+              OS's own pair gets its own on/off. */}
+          <button
+            onClick={onTogglePaper}
+            data-testid="btn-paper-toggle"
+            aria-label={PAPER_LABEL}
+            aria-pressed={theme === 'paper'}
+            title={paperHint(theme)}
+            className="btn"
+            style={theme === 'paper' ? { color: 'var(--accent)' } : undefined}
+          >
+            <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="hidden 2xl:inline">Paper</span>
           </button>
           {onToggleFocus && (
             <button

@@ -373,6 +373,7 @@ export const App: React.FC = () => {
     fallback: themeFallback,
     toggle: toggleThemeMode,
     toggleContrast: toggleContrastMode,
+    togglePaper: togglePaperMode,
   } = useTheme();
   // `?view=theme` is a page of its own, read once on arrival. It is not a workbench tab: the rail
   // stays the eleven tabs a learner needs, and this is a reference for whoever is adding a colour.
@@ -954,6 +955,7 @@ export const App: React.FC = () => {
           fallback={themeFallback}
           onToggle={toggleThemeMode}
           onToggleContrast={toggleContrastMode}
+          onTogglePaper={togglePaperMode}
           onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
           onExportPortfolio={() => setIsPortfolioModalOpen(true)}
           activeTierPass={activeTierPass}
@@ -972,6 +974,7 @@ export const App: React.FC = () => {
             fallback={themeFallback}
             onToggle={toggleThemeMode}
             onToggleContrast={toggleContrastMode}
+            onTogglePaper={togglePaperMode}
           />
         </main>
         <SiteFooter />
@@ -994,6 +997,7 @@ export const App: React.FC = () => {
         fallback={themeFallback}
         onToggle={toggleThemeMode}
         onToggleContrast={toggleContrastMode}
+        onTogglePaper={togglePaperMode}
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
         onExportPortfolio={() => setIsPortfolioModalOpen(true)}
         activeTierPass={activeTierPass}

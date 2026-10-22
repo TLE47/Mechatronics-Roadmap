@@ -174,6 +174,42 @@
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(125, 211, 252, 0.95);
 }
 
+/* Paper is a reading palette, not a fourth mood: a warm cream sheet for the long lesson pages, where
+   the light palette's near-white still reads as a screen at night. Its ink is a brown-black rather
+   than a blue-grey, and every accent is darkened until it clears 4.5:1 on --panel-3 as well as
+   --panel, because a hovered row is where a 12px status label spends much of its life. The plot face
+   is unchanged, as in every palette: the traces are literal colours tuned against one ink. */
+[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #efe4d0;
+  --panel: #f9f1e2;
+  --panel-2: #ece0ca;
+  --panel-3: #e0d1b6;
+  --border: #d3bd98;
+  --border-soft: #e3d5bd;
+  --border-strong: #9c7c50;
+  --text: #1f1710;
+  --body: #3a2c1c;
+  --muted: #57432c;
+  --dim: #6b5436;
+  --inverse: #fbf5e9;
+  --accent: #0b6157;
+  --accent-strong: #084f47;
+  --accent-soft: rgba(11, 97, 87, 0.13);
+  --emerald: #12603a;
+  --emerald-strong: #0d4f30;
+  --amber: #7a4d00;
+  --amber-strong: #633f00;
+  --rose: #a51d38;
+  --rose-strong: #85172c;
+  --purple: #6a2a96;
+  --purple-strong: #55217a;
+  --shadow-sm: 0 1px 2px rgba(58, 44, 28, 0.1);
+  --shadow-md: 0 8px 24px rgba(58, 44, 28, 0.12);
+  --shadow-lg: 0 24px 64px rgba(58, 44, 28, 0.16);
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(11, 97, 87, 0.75);
+}
+
 /* Two faces, self-hosted, so the first name in the stack is a font the browser actually has.
    `body` used to name Inter and hand Linux and Windows the system sans fallback, and the code
    editor carried its own copy of the mono stack: one name for each, here, is what makes the UI and

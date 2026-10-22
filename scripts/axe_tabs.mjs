@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Accessibility sweep: axe-core over every tab, in both themes (`scripts/axe_tabs.mjs`,
+ * Accessibility sweep: axe-core over every tab, in every palette (`scripts/axe_tabs.mjs`,
  * `npm run check:axe`).
  *
  * The theme suite measures contrast pixel by pixel and the smoke suite catches a render that
@@ -10,13 +10,13 @@
  *
  * The sweep walks the same tab list the theme suite uses (`app/src/data/workbenchTabs.json`), so a
  * new tab is swept without touching this file, and it runs each tab in every palette (dark, light,
- * high contrast) because a violation can be theme-specific — an invisible focus ring, a disabled
+ * paper, high contrast) because a violation can be theme-specific — an invisible focus ring, a disabled
  * colour that disappears.
  *
  * Two deliberate choices about the ruleset:
  *
  * - **`color-contrast` is left to `e2e_theme.mjs`.** axe samples the rendered pixels with an
- *   approximation; that suite composites the actual ancestor stack and fails below 3:1 across 33
+ *   approximation; that suite composites the actual ancestor stack and fails below 3:1 across 44
  *   tab/palette pairs. Two contrast gates that disagree would make the stricter one look wrong, and
  *   the colour one is the more accurate measurement.
  * - **`serious` and `critical` fail; `minor` and `moderate` are reported.** A gate that fails on a
@@ -54,9 +54,10 @@ const AXE_SOURCE = path.join(ROOT, 'node_modules', 'axe-core', 'axe.min.js');
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'];
 /** Impacts that fail the gate. */
 const FAILING = new Set(['serious', 'critical']);
-const THEMES = ['dark', 'light', 'contrast'];
-/** The OS colour scheme each palette is browsed under; high contrast is reached by a stored pick. */
-const SCHEME = { dark: 'dark', light: 'light', contrast: 'dark' };
+/** Every palette a signed-out reader can be in; the sweep audits each in turn. */
+const THEMES = ['dark', 'light', 'paper', 'contrast'];
+/** The OS colour scheme each palette is browsed under; the two extras are reached by a stored pick. */
+const SCHEME = { dark: 'dark', light: 'light', paper: 'light', contrast: 'dark' };
 
 const argv = process.argv.slice(2);
 const JSON_OUT = argv.includes('--json');
@@ -137,16 +138,16 @@ async function main() {
   try {
     for (const theme of THEMES) {
       const context = await browser.newContext({ colorScheme: SCHEME[theme] });
-      // High contrast is not something a browser's `colorScheme` can ask for, so it is reached the
-      // way a reader reaches it on a machine without the OS setting: a stored pick.
-      if (theme === 'contrast') {
-        await context.addInitScript(() => {
+      // Neither extra palette is something a browser's `colorScheme` can ask for, so both are
+      // reached the way a reader reaches them: a stored pick.
+      if (theme === 'contrast' || theme === 'paper') {
+        await context.addInitScript((choice) => {
           try {
-            localStorage.setItem('mechalab_theme_v1', 'contrast');
+            localStorage.setItem('mechalab_theme_v1', choice);
           } catch {
             // A blocked store leaves the OS palette, and the assertion below says so.
           }
-        });
+        }, theme);
       }
       const page = await context.newPage();
       page.on('pageerror', (error) => errors.push(`${theme}: ${error.message}`));

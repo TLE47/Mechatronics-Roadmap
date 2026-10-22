@@ -180,13 +180,13 @@ npm run build && npm run test:workbench
 
 ### Verify the theme
 
-MechaLab ships three palettes — dark, light and high contrast — and each is checked rather than
+MechaLab ships four palettes — dark, light, paper and high contrast — and each is checked rather than
 eyeballed — the [light/dark badge](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml)
 is that step. After `npm ci` and a build:
 
 ```bash
-npm run test:theme      # the rules: stored pick, OS default, prefers-contrast, both controls, blocked storage
-npm run test:theme:e2e  # Chromium: both controls, then all 11 tabs in each palette
+npm run test:theme      # the rules: stored pick, OS default, prefers-contrast, all three controls, blocked storage
+npm run test:theme:e2e  # Chromium: the three controls, then all 11 tabs in each of the four palettes
 ```
 
 - **`test:theme`** (12 cases, no browser) pins what a reader cannot see: a first visit stores
@@ -204,8 +204,8 @@ npm run test:theme:e2e  # Chromium: both controls, then all 11 tabs in each pale
 `test:theme` runs inside `npm run test:workbench`; `test:theme:e2e` is its own step in CI (a seventh
 parallel browser suite pushed the older ones past their click timeouts). Tokens live in
 [`app/src/index.css`](app/src/index.css) and the rules in [`app/src/theme.ts`](app/src/theme.ts);
-[`docs/THEME.md`](docs/THEME.md) sets all three palettes side by side with the utility to use for each
-role, and [`app/README.md`](app/README.md#dark-light-and-high-contrast) has the full picture.
+[`docs/THEME.md`](docs/THEME.md) sets all four palettes side by side with the utility to use for each
+role, and [`app/README.md`](app/README.md#dark-light-paper-and-high-contrast) has the full picture.
 
 ## License
 

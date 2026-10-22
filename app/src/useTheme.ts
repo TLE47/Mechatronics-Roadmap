@@ -11,6 +11,7 @@ import {
   resolveTheme,
   saveChoice,
   toggleContrast,
+  togglePaper,
   toggleTheme,
   watchSystemTheme,
 } from './theme';
@@ -26,6 +27,8 @@ export interface ThemeController {
   toggle: () => void;
   /** Turns the contrast palette on, or back off to the OS palette. */
   toggleContrast: () => void;
+  /** Turns the paper palette on, or back off to the OS palette. */
+  togglePaper: () => void;
   setChoice: (choice: ThemeChoice) => void;
 }
 
@@ -75,5 +78,20 @@ export function useTheme(): ThemeController {
     applyTheme(next);
   }, [theme, fallback]);
 
-  return { theme, choice, fallback, toggle, toggleContrast: toggleContrastMode, setChoice };
+  const togglePaperMode = useCallback(() => {
+    const next = togglePaper(theme, fallback);
+    saveChoice(next);
+    setChoiceState(next);
+    applyTheme(next);
+  }, [theme, fallback]);
+
+  return {
+    theme,
+    choice,
+    fallback,
+    toggle,
+    toggleContrast: toggleContrastMode,
+    togglePaper: togglePaperMode,
+    setChoice,
+  };
 }

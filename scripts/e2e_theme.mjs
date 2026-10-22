@@ -5,10 +5,10 @@
  *
  * Two questions, neither of which a unit test can answer:
  *
- * 1. Does the control own the page? `data-theme` on <html>, the stored key, the
- *    OS default on a first visit, the three-palette cycle (dark → light → high
- *    contrast), and an explicit pick surviving both a reload and an OS flip.
- * 2. Is every one of the eleven tabs readable in each of the three palettes? The audit walks
+ * 1. Does the controls own the page? `data-theme` on <html>, the stored key, the
+ *    OS default on a first visit, the flip plus the two on/off palettes (contrast
+ *    and paper), and an explicit pick surviving both a reload and an OS flip.
+ * 2. Is every one of the eleven tabs readable in each of the four palettes? The audit walks
  *    every visible text node, composites its colour over the stack of ancestor
  *    backgrounds it actually sits on, and computes WCAG contrast. Text below
  *    3:1 fails at any size; text between 3:1 and its size's minimum is listed as
@@ -16,7 +16,7 @@
  * 3. Does `?view=theme` describe the palette it is looking at? The page parses
  *    index.css, so the browser check is the one that proves the parsed values
  *    reach painted pixels: the swatch for `--panel` must be the colour in the
- *    file, all three palettes must draw, and the page must survive the same
+ *    file, all four palettes must draw, and the page must survive the same
  *    contrast audit in each palette that every tab does.
  *
  * `E2E_BASE_URL` points it at a running dev server (the combined runner passes
@@ -131,10 +131,10 @@ function auditContrast() {
 }
 
 const THEME_ATTRIBUTE = 'data-theme';
-/** The three palettes, in the order the header button cycles them. */
-const PALETTES = ['dark', 'light', 'contrast'];
-/** The colour scheme each palette is browsed under: high contrast is a dark palette. */
-const SCHEME = { dark: 'dark', light: 'light', contrast: 'dark' };
+/** The four palettes, in the order the token page prints them. */
+const PALETTES = ['dark', 'light', 'paper', 'contrast'];
+/** The colour scheme each palette is browsed under: high contrast is dark, paper is light. */
+const SCHEME = { dark: 'dark', light: 'light', paper: 'light', contrast: 'dark' };
 
 /** A token's value in one palette, read from the stylesheet the page parses. */
 function stylesheetValue(token, palette) {
@@ -142,9 +142,11 @@ function stylesheetValue(token, palette) {
   const opener =
     palette === 'light'
       ? '[data-theme="light"]'
-      : palette === 'contrast'
-        ? '[data-theme="contrast"]'
-        : ':root';
+      : palette === 'paper'
+        ? '[data-theme="paper"]'
+        : palette === 'contrast'
+          ? '[data-theme="contrast"]'
+          : ':root';
   const start = css.search(new RegExp(`^${opener.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{`, 'm'));
   assert.ok(start >= 0, `index.css has no ${opener} block`);
   const body = css.slice(css.indexOf('{', start), css.indexOf('}', css.indexOf('{', start)));
@@ -170,14 +172,16 @@ async function firstVisit(page, url, colorScheme) {
 /** A context whose stored pick is `palette`, so a palette the OS cannot request is reachable. */
 async function contextFor(browser, palette) {
   const context = await browser.newContext({ colorScheme: SCHEME[palette] });
-  if (palette === 'contrast') {
-    await context.addInitScript(() => {
+  // Neither extra palette is reachable from the OS: contrast is a media query the browser cannot be
+  // made to answer here, and paper is never a default at all. Both are stored picks.
+  if (palette === 'contrast' || palette === 'paper') {
+    await context.addInitScript((choice) => {
       try {
-        localStorage.setItem('mechalab_theme_v1', 'contrast');
+        localStorage.setItem('mechalab_theme_v1', choice);
       } catch {
         // A blocked store is the theme suite's own case; here the attribute is what is asserted.
       }
-    });
+    }, palette);
   }
   return context;
 }
@@ -397,7 +401,7 @@ async function main() {
       assert.equal(
         swatches.length,
         rowsOnPage * PALETTES.length,
-        `expected a swatch per row per palette (${rowsOnPage * PALETTES.length}), got ${swatches.length} — the fourth column is missing from the page`
+        `expected a swatch per row per palette (${rowsOnPage * PALETTES.length}), got ${swatches.length} — a palette column is missing from the page`
       );
       const transparent = swatches.filter((swatch) => /rgba\(0, 0, 0, 0\)|transparent/.test(swatch.colour));
       assert.equal(

@@ -895,26 +895,30 @@ export async function runSmokeTests(viteServer) {
       `the token page must print a row per colour token (expected >= 20, got ${rowCount}); a short table means the ?raw stylesheet import or the parser stopped matching`
     );
     assert(
-      ['dark', 'light', 'contrast'].every((palette) => tokensHtml.includes(`data-palette="${palette}"`)),
+      ['dark', 'light', 'paper', 'contrast'].every((palette) =>
+        tokensHtml.includes(`data-palette="${palette}"`)
+      ),
       'the token page must draw a swatch for every palette, not just the one on screen'
     );
-    // The values are the stylesheet's, not the component's: --bg is #070b12 in index.css, #000000 in
-    // its high-contrast block.
+    // The values are the stylesheet's, not the component's: --bg is #070b12 in index.css, #f8f6f2 in
+    // its light block, #efe4d0 in its paper block and #000000 in its high-contrast block.
     assert(
       tokensHtml.includes('--bg') &&
         tokensHtml.includes('#070b12') &&
         tokensHtml.includes('#f8f6f2') &&
+        tokensHtml.includes('#efe4d0') &&
         tokensHtml.includes('#000000'),
-      'the token page must print the values parsed from index.css (expected --bg #070b12, its light override #f8f6f2 and its high-contrast #000000)'
+      'the token page must print the values parsed from index.css (expected --bg #070b12, its light override #f8f6f2, its paper override #efe4d0 and its high-contrast #000000)'
     );
     assert(
       !tokensHtml.includes('data-testid="theme-tokens-error"'),
-      'the token page must not render its parse-error panel; the stylesheet still has :root, [data-theme="light"], [data-theme="contrast"] and @theme inline'
+      'the token page must not render its parse-error panel; the stylesheet still has :root, [data-theme="light"], [data-theme="paper"], [data-theme="contrast"] and @theme inline'
     );
     assert(
       tokensHtml.includes('data-testid="btn-theme-route-toggle"') &&
-        tokensHtml.includes('data-testid="btn-contrast-route-toggle"'),
-      'the token page must carry both controls, so each palette can be read on the page itself'
+        tokensHtml.includes('data-testid="btn-contrast-route-toggle"') &&
+        tokensHtml.includes('data-testid="btn-paper-route-toggle"'),
+      'the token page must carry all three controls, so each palette can be read on the page itself'
     );
     assert(
       !htmlBeginner.includes('data-testid="theme-tokens-page"'),

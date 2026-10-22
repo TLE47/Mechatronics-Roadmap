@@ -11,8 +11,9 @@
  *   - the OS only keeps deciding while the learner has not picked a side;
  *   - a pick is written, survives a reload, and wins over the OS afterwards;
  *   - a corrupt or hand-edited stored value falls back to the OS, not to a crash;
- *   - the flip is dark ↔ light (from high contrast: back to the OS palette) and the
- *     contrast button is a real on/off; each names the palette it hands over;
+ *   - the flip is dark ↔ light (from high contrast or paper: back to the OS palette) and
+ *     the contrast and paper buttons are real on/offs; each names the palette it hands over;
+ *   - paper is never the OS's pick — it is a stored preference and nothing else;
  *   - `applyTheme` sets `data-theme`, `color-scheme` and the `theme-color` meta,
  *     which is what the stylesheet and the phone's address bar read;
  *   - a private-mode `localStorage` that throws neither breaks the control nor
@@ -25,9 +26,12 @@ import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
 import {
   CONTRAST_LABEL,
+  PAPER_LABEL,
   STORAGE_KEY_THEME,
   applyTheme,
   contrastHint,
+  paperHint,
+  togglePaper,
   currentChoice,
   currentTheme,
   defaultTheme,
@@ -117,6 +121,9 @@ check('a stored pick wins over the OS', () => {
   assert.equal(currentTheme(), 'dark');
   window.localStorage.setItem(STORAGE_KEY_THEME, 'contrast');
   assert.equal(currentTheme(), 'contrast');
+  window.localStorage.setItem(STORAGE_KEY_THEME, 'paper');
+  assert.equal(readChoice(), 'paper');
+  assert.equal(currentTheme(), 'paper', 'a stored paper pick wins over the OS like any other');
 });
 
 check('a corrupt stored value falls back to the OS instead of throwing', () => {
@@ -138,11 +145,15 @@ check('the flip is dark ↔ light and names the palette it hands over', () => {
   // From high contrast the flip means "back to normal": the OS palette, whichever side it is.
   assert.equal(toggleTheme('contrast', 'light'), 'light');
   assert.equal(toggleTheme('contrast', 'dark'), 'dark');
+  // Paper is on the same rule: the flip means "back to normal", not "the other special palette".
+  assert.equal(toggleTheme('paper', 'light'), 'light');
+  assert.equal(toggleTheme('paper', 'dark'), 'dark');
   assert.equal(defaultTheme(false), 'light');
   assert.equal(defaultTheme(true), 'dark');
   assert.equal(themeLabel('dark', 'dark'), 'Switch to light theme');
   assert.equal(themeLabel('light', 'dark'), 'Switch to dark theme');
   assert.equal(themeLabel('contrast', 'light'), 'Switch to light theme');
+  assert.equal(themeLabel('paper', 'dark'), 'Switch to dark theme');
   // The word drawn beside the flip's icon names the same palette as the label above.
   assert.equal(themeShortLabel('dark', 'dark'), 'Light');
   assert.equal(themeShortLabel('light', 'dark'), 'Dark');
@@ -155,6 +166,15 @@ check('the contrast control is a real on/off, and says what it does', () => {
   assert.equal(toggleContrast('light', 'light'), 'contrast');
   assert.equal(toggleContrast('contrast', 'dark'), 'dark');
   assert.equal(toggleContrast('contrast', 'light'), 'light');
+  // The two on/off palettes are independent switches: each one replaces whatever is on screen.
+  assert.equal(toggleContrast('paper', 'light'), 'contrast');
+  assert.equal(togglePaper('contrast', 'dark'), 'paper');
+  assert.equal(togglePaper('dark', 'dark'), 'paper');
+  assert.equal(togglePaper('light', 'light'), 'paper');
+  assert.equal(togglePaper('paper', 'dark'), 'dark', 'pressing paper off must return to the OS palette');
+  assert.equal(PAPER_LABEL, 'Paper');
+  assert.match(paperHint('dark'), /cream/, 'the hint must say what the palette buys you');
+  assert.match(paperHint('paper'), /is on/, 'the hint must say when pressing turns it off');
   assert.equal(CONTRAST_LABEL, 'High contrast');
   assert.match(contrastHint('dark'), /7:1/, 'the hint must say what the palette buys you');
   assert.match(contrastHint('contrast'), /is on/, 'the hint must say when pressing turns it off');
@@ -185,6 +205,14 @@ check('applyTheme writes the attribute, the colour scheme and the browser chrome
     window.document.querySelector('meta[name="theme-color"]').getAttribute('content'),
     '#000000'
   );
+  // Paper is a light palette: its native chrome, scrollbars and form controls stay light.
+  applyTheme('paper');
+  assert.equal(window.document.documentElement.getAttribute('data-theme'), 'paper');
+  assert.equal(window.document.documentElement.style.colorScheme, 'light');
+  assert.equal(
+    window.document.querySelector('meta[name="theme-color"]').getAttribute('content'),
+    '#efe4d0'
+  );
 });
 
 check('system is the only choice that tracks the OS', () => {
@@ -192,9 +220,13 @@ check('system is the only choice that tracks the OS', () => {
   assert.equal(followsSystem('light'), false);
   assert.equal(followsSystem('dark'), false);
   assert.equal(followsSystem('contrast'), false);
+  assert.equal(followsSystem('paper'), false);
   assert.equal(resolveTheme('system', false), 'light');
   assert.equal(resolveTheme('system', true), 'dark');
   assert.equal(resolveTheme('system', false, true), 'contrast');
+  // Paper is never the OS's answer: no query asks for it, so only a pick can reach it.
+  assert.equal(resolveTheme('paper', true, true), 'paper', 'a paper pick beats both OS queries');
+  assert.equal(resolveTheme('system', true, false), 'dark');
   // A pick wins even when the OS asks for more contrast.
   assert.equal(resolveTheme('light', true, true), 'light');
 });

@@ -3,15 +3,17 @@ import themeCss from '../index.css?raw';
 import { themeTokensFromCss, type ColourToken, type TokenRow } from '../themeTokens';
 import {
   CONTRAST_LABEL,
+  PAPER_LABEL,
   contrastHint,
+  paperHint,
   themeLabel,
   themeShortLabel,
   type Theme,
 } from '../theme';
-import { ArrowLeft, Contrast, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, BookOpen, Contrast, Moon, Sun } from 'lucide-react';
 
 /** Each column is a palette as the stylesheet spells it; `palette` only ever reaches a data attribute. */
-type Palette = 'dark' | 'light' | 'contrast';
+type Palette = 'dark' | 'light' | 'paper' | 'contrast';
 
 interface ThemeTokensPageProps {
   /** The palette the page itself is wearing, so the live marker and the toggle cannot disagree. */
@@ -20,6 +22,7 @@ interface ThemeTokensPageProps {
   fallback: Theme;
   onToggle: () => void;
   onToggleContrast: () => void;
+  onTogglePaper: () => void;
 }
 
 /** The app's own base path, so the "back" link survives the Pages deployment's subdirectory. */
@@ -91,6 +94,9 @@ const ColourRow: React.FC<{ row: ColourToken }> = ({ row }) => (
     <td className="py-1.5 pr-3 align-middle">
       <ValueCell token={row.name} palette="light" value={row.light} />
     </td>
+    <td className="py-1.5 pr-3 align-middle">
+      <ValueCell token={row.name} palette="paper" value={row.paper} />
+    </td>
     <td className="py-1.5 align-middle">
       <ValueCell token={row.name} palette="contrast" value={row.contrast} />
     </td>
@@ -114,6 +120,11 @@ const ScaleRow: React.FC<{ row: TokenRow }> = ({ row }) => (
         {row.themed ? row.light : 'unchanged'}
       </code>
     </td>
+    <td className="py-1.5 pr-3 align-middle">
+      <code className="text-[11.5px] tnum" style={{ color: row.themedPaper ? 'var(--muted)' : 'var(--dim)' }}>
+        {row.themedPaper ? row.paper : 'unchanged'}
+      </code>
+    </td>
     <td className="py-1.5 align-middle">
       <code
         className="text-[11.5px] tnum"
@@ -133,7 +144,13 @@ const ScaleRow: React.FC<{ row: TokenRow }> = ({ row }) => (
  * app does not use. It is deliberately not a workbench tab: it is a reference for whoever is adding a
  * colour, and the learner-facing rail stays at the tabs a learner needs.
  */
-export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({ theme, fallback, onToggle, onToggleContrast }) => {
+export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({
+  theme,
+  fallback,
+  onToggle,
+  onToggleContrast,
+  onTogglePaper,
+}) => {
   const table = useMemo(() => themeTokensFromCss(themeCss), []);
   const familyCount = Object.keys(table.utilities).length;
 
@@ -144,13 +161,13 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({ theme, fallback, o
           <div className="min-w-0">
             <p className="eyebrow">Design system</p>
             <h1 className="mt-1 text-[length:var(--step-2)] font-bold leading-[var(--lh-tight)]">
-              The palette, all three ways
+              The palette, all four ways
             </h1>
             <p className="mt-2 max-w-[var(--measure)] text-[13.5px]" style={{ color: 'var(--body)' }}>
               Parsed from <code className="text-[12.5px]">app/src/index.css</code> when the app is
               built, so nothing on this page is a second copy of the palette. Each swatch is painted
-              with the value printed beside it; the three columns are the palettes, not the page's own.
-              High contrast is held to a 7:1 floor for body text, not the 4.5:1 the other two aim at.
+              with the value printed beside it; the four columns are the palettes, not the page's own.
+              High contrast is held to a 7:1 floor for body text, not the 4.5:1 the other three aim at.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -183,6 +200,18 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({ theme, fallback, o
             >
               <Contrast className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               Contrast
+            </button>
+            <button
+              onClick={onTogglePaper}
+              data-testid="btn-paper-route-toggle"
+              aria-label={PAPER_LABEL}
+              aria-pressed={theme === 'paper'}
+              title={paperHint(theme)}
+              className="btn"
+              style={theme === 'paper' ? { color: 'var(--accent)' } : undefined}
+            >
+              <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              Paper
             </button>
           </div>
         </div>
@@ -230,6 +259,7 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({ theme, fallback, o
                 <th scope="col" className="py-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.12em]">Utility family</th>
                 <th scope="col" className="py-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.12em]">Dark</th>
                 <th scope="col" className="py-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.12em]">Light</th>
+                <th scope="col" className="py-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.12em]">Paper</th>
                 <th scope="col" className="py-2 text-[10.5px] font-semibold uppercase tracking-[0.12em]">High contrast</th>
               </tr>
             </thead>
@@ -260,6 +290,7 @@ export const ThemeTokens: React.FC<ThemeTokensPageProps> = ({ theme, fallback, o
                 <th scope="col" className="py-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.12em]">Token</th>
                 <th scope="col" className="py-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.12em]">Dark</th>
                 <th scope="col" className="py-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.12em]">Light</th>
+                <th scope="col" className="py-2 pr-3 text-[10.5px] font-semibold uppercase tracking-[0.12em]">Paper</th>
                 <th scope="col" className="py-2 text-[10.5px] font-semibold uppercase tracking-[0.12em]">High contrast</th>
               </tr>
             </thead>

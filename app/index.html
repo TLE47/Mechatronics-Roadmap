@@ -19,7 +19,8 @@
         try {
           var stored = localStorage.getItem('mechalab_theme_v1');
           var theme = null;
-          if (stored === 'light' || stored === 'dark' || stored === 'contrast') theme = stored;
+          if (stored === 'light' || stored === 'dark' || stored === 'contrast' || stored === 'paper')
+            theme = stored;
           if (!theme) {
             var query = window.matchMedia;
             if (query && query('(prefers-contrast: more)').matches) theme = 'contrast';
@@ -27,12 +28,19 @@
             else theme = 'light';
           }
           document.documentElement.setAttribute('data-theme', theme);
-          document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+          document.documentElement.style.colorScheme =
+            theme === 'light' || theme === 'paper' ? 'light' : 'dark';
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) {
             meta.setAttribute(
               'content',
-              theme === 'light' ? '#f8f6f2' : theme === 'contrast' ? '#000000' : '#070b12'
+              theme === 'light'
+                ? '#f8f6f2'
+                : theme === 'paper'
+                  ? '#efe4d0'
+                  : theme === 'contrast'
+                    ? '#000000'
+                    : '#070b12'
             );
           }
         } catch (error) {

@@ -5,10 +5,11 @@
  * says something the stylesheet does not. So the stylesheet is the input (`index.css?raw` in the
  * page, a file read in the Node suite) and this module is the only thing that knows its shape.
  *
- * Four blocks matter, and all four are read rather than assumed:
+ * Five blocks matter, and all five are read rather than assumed:
  *
  *   :root                    the dark palette, and the value every token starts at
  *   [data-theme="light"]     the tokens the light palette re-points
+ *   [data-theme="paper"]     the tokens the paper palette re-points
  *   [data-theme="contrast"]  the tokens high contrast re-points
  *   @theme inline            `--color-<family>: var(--token)`, i.e. which utility reaches which token
  *
@@ -26,6 +27,10 @@ export interface TokenRow {
   light: string;
   /** False when the light palette deliberately leaves the token alone (the plot face). */
   themed: boolean;
+  /** Its paper value: the override where there is one, else the dark value it keeps. */
+  paper: string;
+  /** False when the paper palette leaves the token alone (the plot face, and the whole type scale). */
+  themedPaper: boolean;
   /** Its high-contrast value: the override where there is one, else the dark value it keeps. */
   contrast: string;
   /** False when high contrast leaves the token alone (the plot face, and the whole type scale). */
@@ -95,12 +100,14 @@ export function themeTokensFromCss(css: string): PaletteTable {
   const source = withoutComments(css);
   const darkBody = blockBody(source, /^:root\s*\{/m);
   const lightBody = blockBody(source, /^\[data-theme="light"\]\s*\{/m);
+  const paperBody = blockBody(source, /^\[data-theme="paper"\]\s*\{/m);
   const contrastBody = blockBody(source, /^\[data-theme="contrast"\]\s*\{/m);
   const themeBody = blockBody(source, /^@theme inline\s*\{/m);
-  if (!darkBody || !lightBody || !contrastBody || !themeBody) {
+  if (!darkBody || !lightBody || !paperBody || !contrastBody || !themeBody) {
     const missing = [
       darkBody ? null : ':root',
       lightBody ? null : '[data-theme="light"]',
+      paperBody ? null : '[data-theme="paper"]',
       contrastBody ? null : '[data-theme="contrast"]',
       themeBody ? null : '@theme inline',
     ].filter(Boolean);
@@ -124,6 +131,7 @@ export function themeTokensFromCss(css: string): PaletteTable {
   }
 
   const light = new Map(declarations(lightBody).map(({ name, value }) => [name, value]));
+  const paper = new Map(declarations(paperBody).map(({ name, value }) => [name, value]));
   const contrast = new Map(declarations(contrastBody).map(({ name, value }) => [name, value]));
   const colour: ColourToken[] = [];
   const scale: TokenRow[] = [];
@@ -133,6 +141,8 @@ export function themeTokensFromCss(css: string): PaletteTable {
       dark: value,
       light: light.get(name) ?? value,
       themed: light.has(name),
+      paper: paper.get(name) ?? value,
+      themedPaper: paper.has(name),
       contrast: contrast.get(name) ?? value,
       themedContrast: contrast.has(name),
     };
