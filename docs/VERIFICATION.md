@@ -47,7 +47,9 @@ npm run test:offline                    # the built bundle with no host headers:
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes
 npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped and evicted, merged on restore
+npm run test:review                     # FSRS-5: the 0.9-at-stability identity, grade order, lapses, the year cap, and the card join
 npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore to the store and to the screen
+npm run test:e2e:review                 # pin, comment, rate and reload in Chromium: the card is still scheduled after the reload
 npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
 npm run test:editor                     # slider directives and which lessons get helper tabs
 npm run test:resume                     # the lesson the next visit reopens, which one the roadmap offers and when it hands forward, and the ids it refuses
@@ -67,8 +69,9 @@ UI. It then checks the merge a restore performs, because a merge that loses work
 backup: a flag set here survives a file that lacks it, a draft or a note written here beats the file's
 copy, a highlight already kept is not doubled and an older file cannot erase a newer comment, an older
 arriving version never evicts a newer one, and restoring the same file twice adds nothing. The last
-check is a measurement rather than a claim: the caps of all six stores, computed from the modules that
-export them, come to ~3.4 MB of the 5 MB bucket - the study layer is why that number is watched.
+check is a measurement rather than a claim: the caps of all seven stores, computed from the modules
+that export them, come to ~4.0 MB of the 5 MB bucket - 80% of it, which is why `docs/PLAN-2.0-GAP.md`
+now calls the next large store the trigger for IndexedDB rather than a someday.
 
 `test:study` pins the note and highlight rules without a browser: a note keeps its own line breaks and
 is cleared to nothing by an empty box, a quote collapses to one line and the same passage pinned twice
@@ -79,6 +82,20 @@ ever overwriting a note written on this machine.
 `test:e2e:backup` takes the archive the browser actually wrote, wipes `localStorage`, and restores it,
 asserting the milestone tick returns **without a reload** — the App's own copy of the maps is what a
 store-only restore would leave stale.
+
+`test:review` is the scheduler checked as arithmetic: `R(S, S) = 0.9` exactly, the interval at a 90%
+target equal to the stability, the four grades ordered in both initial stability and initial difficulty,
+difficulty clamped over forty reviews from both extremes, Easy outlasting Good outlasting Hard, a late
+answer teaching more than an early one, a lapse shortening stability while a success lengthens it, the
+same-day answer being a nudge rather than a new lifetime, the 365-day cap, and `review` never mutating
+its input. It then checks the join that turns notes into a deck: only a commented highlight is a card,
+an id survives a re-pin, deleting the highlight or clearing the comment retires the card and prunes its
+schedule on the next sync, the deck is ordered by due date, a restore keeps the more-reviewed schedule
+and cannot send a studied card backwards, a foreign store reads as the part that parses, and blocked
+storage empties the deck instead of throwing into the panel. `test:e2e:review` walks the same loop
+through the UI - select the lesson heading, pin it, comment, open the deck, be asked before being
+told, rate Good, reload, and find the card still scheduled - and then clears the comment to prove the
+card is retired rather than merely hidden.
 
 `test:runtime` is the one suite that cannot be a unit test: stopping a `while True:` in place needs
 cross-origin isolation, a real `SharedArrayBuffer` and a real browser. It asserts the Stop answers by

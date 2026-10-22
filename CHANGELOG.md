@@ -11,6 +11,57 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 151: Review Cards — a Highlight Asked Back on a Real Schedule
+
+Notes answered "what did I write down". This run answers the next question — *when do I read it again* —
+by turning every commented highlight into a flashcard and scheduling it with **FSRS-5**, the published
+algorithm, not a hand-rolled interval doubling.
+
+**The algorithm is the published one, with its sources in the file.** [`app/src/fsrs.ts`](app/src/fsrs.ts)
+carries the FSRS-5 default weights `w0`–`w18` exactly as the algorithm wiki publishes them, the
+initial-stability and initial-difficulty formulas, the mean-reverting difficulty update, the forgetting
+curve (`DECAY = -0.5`, `FACTOR = 19/81`, which makes `R(S, S) = 0.9` an identity rather than a
+tuning), stability after a successful recall including the Hard penalty and Easy bonus, stability after
+a lapse, the same-day branch, and the interval for a 90% desired retention. Two departures are stated
+where they happen: the weights are the published defaults (there is no review history here to fit) and
+the longest interval is 365 days, not the library's 36,500 — a card promised back in 2060 is a card
+forgotten.
+
+**A card's existence is derived; only its schedule is stored.** [`app/src/studyCards.ts`](app/src/studyCards.ts)
+joins the notes store to a small schedule map on every read, so a card is exactly "a highlight with a
+comment": deleting the highlight deletes the card, re-pinning the same passage keeps its progress
+(the id is lesson + quote), and clearing the comment retires the card and prunes its schedule on the
+next sync. Retiring one needed a new door in the notes store — `setComment` — because `addHighlight`
+deliberately refuses a blank overwrite, and that rule is right for pinning but wrong for a learner who
+has decided a passage is not a question after all.
+
+**The panel asks, then reveals, then takes one of four answers.** [`app/src/components/StudyPanel.tsx`](app/src/components/StudyPanel.tsx)
+gains a **Review (N due)** button that draws on the whole course's deck, a card that shows the quote
+before the comment, the four FSRS ratings (Again/Hard/Good/Easy) only after *Show answer*, and a
+sentence afterwards saying when the card comes back (`Rated · back in 6 days`).
+
+**The deck travels with the backup and merges by how much was learned.** `study-cards.json` joins the
+archive; a restore keeps the schedule that has been answered more (`reps`, tie broken by the later
+review), so restoring an old file cannot un-learn a card. A backup taken before cards existed has no
+such file — that is silent, not a skipped file.
+
+- `npm run test:review` (**29 checks**, new): the `R(S,S) = 0.9` identity and interval = stability, the
+grade ordering of both initial values, difficulty clamped over 40 reviews from both extremes, Easy >
+Good > Hard, a late answer teaching more than an early one, a lapse shortening stability while a
+success lengthens it, the same-day nudge, the 365-day cap, purity, and the card join: only commented
+highlights, stable ids across re-pins, retirement by deletion *and* by clearing the comment, ordering
+by due date, the merge rules, corrupt stores, and blocked storage never throwing.
+- `npm run test:e2e:review` (new): a real DOM selection of the lesson heading, pinned through the real
+  button, commented, then asked back through the deck — the answer hidden before *Show answer*, four
+  ratings after it, `Good` writing `reps = 1` and a due date three days out, the reload keeping it, and
+  clearing the comment retiring the card.
+- `npm run test:backup` grows to **20 checks**: the deck file, its count in the manifest, a restore
+  keeping the more-reviewed schedule and refusing to move a studied card backwards, and an older
+  backup without the deck still restoring. The cap measurement now includes the deck: **~2.0 M
+  characters, ~4.0 MB of the 5 MB bucket** — 80% of the bucket, which is what makes IndexedDB a
+  decision rather than a someday.
+- `npm run test:workbench` runs both new suites, so CI covers them on one dev server.
+
 ## [2026-10-21] — Run 150: The Study Layer Begins — Notes and Highlights
 
 The gap page's largest *missing* block is the study layer, and it starts where the work is actually

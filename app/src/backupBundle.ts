@@ -1,9 +1,10 @@
 /**
  * The backup and its merge back in (`app/src/backupBundle.ts`).
  *
- * What is in a backup: the six stores a learner's work actually lives in — the three progress maps,
- * the drafts, the versions filed by each Run, the study notes and highlights, and the learning log —
- * plus a manifest and a README for whoever opens the zip in ten years. Preferences are deliberately
+ * What is in a backup: the seven stores a learner's work actually lives in — the three progress maps,
+ * the drafts, the versions filed by each Run, the study notes and highlights, the review cards'
+ * schedules, and the learning log — plus a manifest and a README for whoever opens the zip in ten
+ * years. Preferences are deliberately
  * left out: a theme is a device choice, not work, and restoring one onto another machine would fight
  * the learner's own pick.
  *
@@ -11,7 +12,8 @@
  * laptop survives arriving on a desktop that has not seen it. Drafts fill gaps only — the text on this
  * machine is by definition the newer one, so it wins. Versions union and are deduped by the timestamp
  * they were filed at. Notes follow the same rule as drafts, and highlights union by the passage they
- * quote, the newer comment winning. The log unions by event identity, the same rule cloud sync uses
+ * quote, the newer comment winning. Card schedules follow the more-reviewed copy, so restoring a
+ * backup cannot un-learn a card. The log unions by event identity, the same rule cloud sync uses
  * (`mergeLearningLog`), because the two merges must not disagree about what one event is.
  *
  * Every write goes through the store's own writer (`saveDraft`, `recordSnapshot`, `replaceLearningLog`)
@@ -27,6 +29,7 @@ import { mergeHistory, readHistory } from './draftHistory.ts';
 import { readDraft, readDrafts, saveDraft } from './lessonDraft.ts';
 import { readLearningLog, replaceLearningLog, type LearningEvent } from './learningLog.ts';
 import { mergeStudy, parseStudy, readStudy, replaceStudy, studyCounts } from './studyNotes.ts';
+import { mergeCards, parseCards, readCardList, readCards, replaceCards } from './studyCards.ts';
 import { mergeLearningLog } from './progressMerge.ts';
 import {
   STORAGE_KEY_COMPLETED,
@@ -52,6 +55,8 @@ export interface BackupCounts {
   snapshots: number;
   notes: number;
   highlights: number;
+  /** Review cards that currently exist: a commented highlight is one, scheduled or not. */
+  cards: number;
   events: number;
 }
 
@@ -92,6 +97,7 @@ function currentCounts(): BackupCounts {
     snapshots: Object.values(history).reduce((total, versions) => total + versions.length, 0),
     notes: study.notes,
     highlights: study.highlights,
+    cards: readCardList().length,
     events: readLearningLog().length,
   };
 }
@@ -117,6 +123,7 @@ progress.json       Lessons you ran to a verdict, lessons you marked yourself, m
 drafts.json         The unfinished editor text for each lesson you were working on.
 history.json        The versions each Run filed, with the verdict that run got.
 study.json          Your notes and the passages you highlighted, per lesson.
+study-cards.json    When each review card is due, and how many times you have answered it.
 learning-log.json   When you opened, ran, passed, and used a hint - the pilot record.
 README.txt          This page.
 
@@ -128,7 +135,8 @@ deflate compression, which this app does not read (it says so rather than guessi
 
 A restore merges. It never deletes: flags you have already set stay set, drafts and
 notes you have already written are kept, and versions, highlights and log events are
-added only once.
+added only once. A card schedule travels with the more-reviewed copy, so restoring a
+backup cannot send a card you have been practising backwards.
 `;
 
 /**
@@ -163,6 +171,10 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
     name: 'study.json',
     text: JSON.stringify({ schema: 'mechalab.backup.study/1', study: readStudy() }, null, 2),
   };
+  const cards: BackupFile = {
+    name: 'study-cards.json',
+    text: JSON.stringify({ schema: 'mechalab.backup.study-cards/1', cards: readCards() }, null, 2),
+  };
   const log: BackupFile = {
     name: 'learning-log.json',
     text: JSON.stringify(
@@ -171,7 +183,7 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
       2
     ),
   };
-  const data: BackupFile[] = [progress, drafts, history, study, log];
+  const data: BackupFile[] = [progress, drafts, history, study, cards, log];
   const manifest: BackupManifest = {
     schema: BACKUP_SCHEMA,
     app: 'MechaLab Workbench',
@@ -236,6 +248,7 @@ export function backupSummary(counts: BackupCounts, bytes: number): string {
     counts.drafts ? `${counts.drafts} draft${counts.drafts === 1 ? '' : 's'}` : '',
     counts.notes ? `${counts.notes} note${counts.notes === 1 ? '' : 's'}` : '',
     counts.highlights ? `${counts.highlights} highlight${counts.highlights === 1 ? '' : 's'}` : '',
+    counts.cards ? `${counts.cards} card${counts.cards === 1 ? '' : 's'}` : '',
     counts.events ? `${counts.events} log event${counts.events === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
   return `Backed up · ${[...parts, formatBackupSize(bytes)].join(' · ')}`;
@@ -251,6 +264,7 @@ export function restoreSummary(report: RestoreReport): string {
     report.snapshots ? `${report.snapshots} saved version${report.snapshots === 1 ? '' : 's'}` : '',
     report.notes ? `${report.notes} note${report.notes === 1 ? '' : 's'}` : '',
     report.highlights ? `${report.highlights} highlight${report.highlights === 1 ? '' : 's'}` : '',
+    report.cards ? `${report.cards} card ${report.cards === 1 ? 'schedule' : 'schedules'} merged` : '',
     report.events ? `${report.events} log event${report.events === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
   const skipped = report.skipped.length ? ` · skipped ${report.skipped.join(', ')}` : '';
@@ -366,6 +380,26 @@ function restoreStudy(text: string | undefined, report: RestoreReport): void {
   report.highlights += addedHighlights;
 }
 
+/**
+ * Merge a restored deck in.
+ *
+ * A backup taken before cards existed has no such file at all: that is an older backup, not a
+ * corrupt one, so the absence is silent. `mergeCards` keeps the more-reviewed schedule, which is
+ * what makes a restore safe to repeat and impossible to use to send a card backwards.
+ */
+function restoreCards(text: string | undefined, report: RestoreReport): void {
+  if (text === undefined) return;
+  const file = asRecord(parseJson(text));
+  if (!file) {
+    report.skipped.push('study-cards.json');
+    return;
+  }
+  const incoming = parseCards(JSON.stringify(asRecord(file.cards) ?? {}));
+  const { store, added, updated } = mergeCards(readCards(), incoming);
+  if (added || updated) replaceCards(store);
+  report.cards += added + updated;
+}
+
 function restoreLog(text: string | undefined, report: RestoreReport): void {
   const file = asRecord(parseJson(text));
   const events = Array.isArray(file?.events) ? (file?.events as unknown[]) : null;
@@ -417,6 +451,7 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
     snapshots: 0,
     notes: 0,
     highlights: 0,
+    cards: 0,
     events: 0,
     skipped: [],
     files: read.entries.length,
@@ -425,6 +460,7 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
   restoreDrafts(contents.get('drafts.json'), report);
   restoreHistory(contents.get('history.json'), report);
   restoreStudy(contents.get('study.json'), report);
+  restoreCards(contents.get('study-cards.json'), report);
   restoreLog(contents.get('learning-log.json'), report);
   return { ok: true, report };
 }

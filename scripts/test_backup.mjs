@@ -65,6 +65,8 @@ import {
   STORAGE_KEY_MILESTONES,
   STORAGE_KEY_VERIFIED,
 } from '../app/src/progressKeys.ts';
+import { MAX_CARDS, cardId, readCards, reviewCard, syncCards } from '../app/src/studyCards.ts';
+import { DAY_MS } from '../app/src/fsrs.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
 let passed = 0;
@@ -191,6 +193,7 @@ check('the bundle names its files, its schema and its date', () => {
       'drafts.json',
       'history.json',
       'study.json',
+      'study-cards.json',
       'learning-log.json',
       'README.txt',
     ]
@@ -226,8 +229,12 @@ check('the archive carries every store, and the manifest counts them', () => {
     snapshots: 1,
     notes: 1,
     highlights: 1,
+    cards: 1,
     events: 1,
   });
+  // The deck's *existence* is derived from the notes store, so a backup taken before the deck was
+  // ever opened carries no schedules yet - the cards still count, and the file still names its schema.
+  assert.match(files.get('study-cards.json'), /mechalab\.backup\.study-cards\/1/);
   assert.doesNotMatch(
     files.get('progress.json'),
     /localStorage|storage/, // the file holds the maps themselves, not the bucket's keys
@@ -316,6 +323,51 @@ check("a restore brings a lesson's highlights in and keeps the note written here
   assert.equal(study.highlights[0].comment, 'why it mattered');
   assert.equal(result.report.notes, 0, 'nothing was missing, so no note was restored');
   assert.equal(result.report.highlights, 1, 'the highlight was new here');
+});
+
+check("a restore brings a card's schedule in, and never sends a studied card backwards", () => {
+  freshBrowser();
+  addHighlight(LESSON.id, 'tolerance is on the angle', 'why it mattered');
+  const [card] = syncCards(0);
+  reviewCard(card.id, 3, 0);
+  reviewCard(card.id, 3, 3 * DAY_MS);
+  const bytes = createBackupZip(0);
+  assert.equal(cardId(LESSON.id, 'tolerance is on the angle'), card.id, 'the id travels in the file');
+
+  // The other machine knows the same card from one answer: the backup's second answer is the truth.
+  freshBrowser();
+  addHighlight(LESSON.id, 'tolerance is on the angle', 'why it mattered');
+  const [theirs] = syncCards(0);
+  reviewCard(theirs.id, 1, 0);
+  const result = restoreBackupZip(bytes);
+  assert.equal(result.ok, true, `restore failed: ${result.message}`);
+  assert.equal(readCards()[card.id].reps, 2, 'the more-reviewed schedule wins');
+  assert.equal(result.report.cards, 1);
+
+  // A third machine that has studied further is not pulled backwards by an older file.
+  freshBrowser();
+  addHighlight(LESSON.id, 'tolerance is on the angle', 'why it mattered');
+  const [ahead] = syncCards(0);
+  for (let index = 0; index < 4; index += 1) reviewCard(ahead.id, 3, index * 5 * DAY_MS);
+  const again = restoreBackupZip(bytes);
+  assert.equal(again.ok, true, `restore failed: ${again.message}`);
+  assert.equal(readCards()[card.id].reps, 4, 'a restore is never a way to un-learn a card');
+  assert.equal(again.report.cards, 0, 'nothing changed, so nothing is reported as restored');
+});
+
+check('a backup taken before cards existed still restores', () => {
+  freshBrowser();
+  saveNote(LESSON.id, 'a note');
+  const files = collectBackup(0).filter((file) => file.name !== 'study-cards.json');
+  const bytes = createZip(
+    files.map((file) => ({ name: file.name, data: utf8(file.text) })),
+    new Date(0)
+  );
+  freshBrowser();
+  const result = restoreBackupZip(bytes);
+  assert.equal(result.ok, true, `restore failed: ${result.message}`);
+  assert.deepEqual(result.report.skipped, [], 'a missing deck is an older backup, not a bad file');
+  assert.equal(result.report.notes, 1);
 });
 
 check('a restore unions versions by timestamp: deduped, newest kept, cap held', () => {
@@ -433,6 +485,8 @@ check('the caps bound every store well below the 5 MB bucket', () => {
     MAX_HISTORY_CHARS + // versions: 120,000 chars total, by construction
     // study notes: 40 lessons x (a note + 20 highlights, each a quote and a comment)
     MAX_NOTE_LESSONS * (MAX_NOTE_CHARS + MAX_HIGHLIGHTS * (MAX_HIGHLIGHT_CHARS + MAX_COMMENT_CHARS)) +
+    // review cards: 500 schedules, each keyed by lesson plus the quote it asks (~200 chars of schedule)
+    MAX_CARDS * (MAX_HIGHLIGHT_CHARS + 200) +
     MAX_EVENTS * 120; // learning log: the runner's own cap, at ~120 chars an event
   const verified = createBackupZip(0).length; // the archive overhead is a rounding error
   const ceiling = (worst + verified) * 2; // UTF-16 in localStorage: two bytes per character
@@ -444,6 +498,7 @@ check('the caps bound every store well below the 5 MB bucket', () => {
     `       caps: ${Math.round(worst / 1000)}k chars -> ~${Math.round(ceiling / 1000)} kB of a 5,000 kB bucket ` +
       `(drafts ${MAX_DRAFT_CHARS * MAX_DRAFTS}, history ${MAX_HISTORY_CHARS}, ` +
       `study ${MAX_NOTE_LESSONS} x ${MAX_NOTE_CHARS + MAX_HIGHLIGHTS * (MAX_HIGHLIGHT_CHARS + MAX_COMMENT_CHARS)}, ` +
+      `cards ${MAX_CARDS} x ${MAX_HIGHLIGHT_CHARS + 200}, ` +
       `log ${MAX_EVENTS} x 120)`
   );
   assert.ok(

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Highlighter, NotebookPen, Trash2 } from 'lucide-react';
+import { GraduationCap, Highlighter, NotebookPen, Trash2 } from 'lucide-react';
 import {
   MAX_HIGHLIGHT_CHARS,
   addHighlight,
@@ -7,8 +7,12 @@ import {
   readLessonStudy,
   removeHighlight,
   saveNote,
+  setComment,
   type Highlight,
 } from '../studyNotes';
+import { dueCards, nextDueAt, reviewCard, syncCards, type StudyCard } from '../studyCards';
+import { STORE_RESTORED_EVENT } from '../backupBundle';
+import { DAY_MS, type Grade } from '../fsrs';
 
 /**
  * The lesson's study panel: what the learner wrote down, and the passages they kept.
@@ -31,10 +35,30 @@ interface StudyPanelProps {
   lessonId: string;
 }
 
+/** The four answers `fsrs.ts` schedules on, in the order the learner sees them. */
+const RATINGS: { grade: Grade; label: string; hint: string }[] = [
+  { grade: 1, label: 'Again', hint: 'no idea' },
+  { grade: 2, label: 'Hard', hint: 'barely' },
+  { grade: 3, label: 'Good', hint: 'recalled' },
+  { grade: 4, label: 'Easy', hint: 'obvious' },
+];
+
+/** "in 6 days" for a card that came back; the panel says when, never an exact timestamp. */
+function waitText(ms: number): string {
+  const days = Math.round(ms / DAY_MS);
+  if (days <= 0) return 'due now';
+  return days === 1 ? 'in 1 day' : `in ${days} days`;
+}
+
 export function StudyPanel({ lessonId }: StudyPanelProps) {
   const [note, setNote] = useState('');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [selection, setSelection] = useState('');
+  // The deck is course-wide: a card pinned in one lesson is due on its own schedule, and a learner
+  // opening any lesson should be able to clear today's reviews from there.
+  const [cards, setCards] = useState<StudyCard[]>([]);
+  const [reviewing, setReviewing] = useState<StudyCard | null>(null);
+  const [revealed, setRevealed] = useState(false);
   // What the store holds right now, and whether the learner has typed since: a write happens for a
   // keystroke, never for a value the component loaded. That distinction is what keeps React's
   // double-mount in development from writing an empty box over a real note - the mount load must not
@@ -49,11 +73,17 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     setHighlights(study?.highlights ?? []);
     savedRef.current = study?.note ?? '';
     dirtyRef.current = false;
+    setCards(syncCards());
   };
 
   useEffect(() => {
     reload();
     setStatus('');
+    // A restore reads the deck behind this panel's back, so the count it is showing would be stale
+    // until the next lesson switch: re-read on the event the rest of the app re-reads on.
+    const onRestored = () => reload();
+    window.addEventListener(STORE_RESTORED_EVENT, onRestored);
+    return () => window.removeEventListener(STORE_RESTORED_EVENT, onRestored);
     // `reload` is render-local; the only input it reads is the lesson id in this list.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
@@ -108,7 +138,9 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
 
   const comment = (highlight: Highlight, value: string) => {
     if (value === highlight.comment) return;
-    addHighlight(lessonId, highlight.quote, value);
+    // `setComment`, not `addHighlight`: clearing the box is how a card is retired, and the pin path
+    // refuses a blank overwrite on purpose.
+    setComment(lessonId, highlight.quote, value);
     reload();
     setStatus(value.trim() ? 'Comment saved' : 'Comment cleared');
   };
@@ -119,12 +151,41 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     setStatus('Highlight removed');
   };
 
+  // Opening the deck is the moment the schedule is synced: new cards are added and orphans pruned
+  // here rather than on every keystroke in the note box.
+  const openReview = () => {
+    const list = syncCards();
+    setCards(list);
+    const first = dueCards(list)[0] ?? null;
+    setReviewing(first);
+    setRevealed(false);
+    if (first) return setStatus('');
+    const soonest = nextDueAt(list);
+    setStatus(soonest === null ? 'No cards yet: comment on a highlight' : `Nothing due, next ${waitText(soonest - Date.now())}`);
+  };
+
+  const rate = (grade: Grade) => {
+    if (!reviewing) return;
+    const next = reviewCard(reviewing.id, grade);
+    const list = syncCards();
+    setCards(list);
+    // The next card is the next *due* one that is not this one: rating a card must never show it
+    // again in the same sitting, even if its next due date rounds to today.
+    const remaining = dueCards(list).filter((card) => card.id !== reviewing.id);
+    setReviewing(remaining[0] ?? null);
+    setRevealed(false);
+    setStatus(next ? `Rated · back ${waitText(next.due - Date.now())}` : 'Rated');
+  };
+
+  const dueCount = dueCards(cards).length;
+  const soonestDue = nextDueAt(cards);
+
   return (
     <div data-testid="panel-study" className="bg-panel border border-line rounded-xl p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-xs font-mono text-accent flex items-center gap-1.5">
           <NotebookPen className="w-4 h-4" />
-          <span>Study · this lesson's notes</span>
+          <span>Study · notes, highlights and review</span>
         </div>
         <span className="text-[10.5px] font-mono text-faint" data-testid="study-status">
           {status || (highlights.length ? `${highlights.length} highlight${highlights.length === 1 ? '' : 's'}` : 'nothing kept yet')}
@@ -175,6 +236,73 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
           </span>
         )}
       </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-2.5" data-testid="study-deck">
+        <button
+          type="button"
+          data-testid="btn-review-deck"
+          onClick={openReview}
+          disabled={cards.length === 0}
+          title={
+            cards.length === 0
+              ? 'Comment on a pinned passage to turn it into a review card'
+              : 'Work through the cards due today'
+          }
+          className="btn btn-ghost text-[11px] disabled:opacity-50 disabled:cursor-not-allowed"
+          data-card-count={cards.length}
+          data-due-count={dueCount}
+        >
+          <GraduationCap className="w-3.5 h-3.5" />
+          Review {cards.length > 0 ? `(${dueCount} due)` : ''}
+        </button>
+        <span className="min-w-0 flex-1 truncate font-mono text-[10.5px] text-faint" data-testid="study-deck-note">
+          {cards.length === 0
+            ? 'every commented highlight is a card'
+            : `${cards.length} card${cards.length === 1 ? '' : 's'} across the course${dueCount === 0 && soonestDue !== null ? ` · next ${waitText(soonestDue - Date.now())}` : ''}`}
+        </span>
+      </div>
+
+      {reviewing && (
+        <div data-testid="review-card" className="mt-2 rounded-lg border border-line bg-canvas p-2.5">
+          <div className="flex items-center justify-between gap-2 font-mono text-[10px] text-faint">
+            <span data-testid="review-source" className="min-w-0 truncate">
+              {reviewing.lesson}
+            </span>
+            <span>{reviewing.schedule.reps === 0 ? 'new card' : `seen ${reviewing.schedule.reps}x`}</span>
+          </div>
+          <p data-testid="review-front" className="mt-1 font-mono text-[11.5px] text-body break-words">
+            {reviewing.quote}
+          </p>
+          {revealed ? (
+            <div data-testid="review-answer" className="mt-2 border-t border-line pt-2">
+              <p className="text-[11.5px] text-body break-words">{reviewing.comment}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {RATINGS.map((rating) => (
+                  <button
+                    key={rating.grade}
+                    type="button"
+                    data-testid={`btn-rate-${rating.grade}`}
+                    onClick={() => rate(rating.grade)}
+                    title={rating.hint}
+                    className="btn btn-ghost text-[11px]"
+                  >
+                    {rating.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              data-testid="btn-show-answer"
+              onClick={() => setRevealed(true)}
+              className="btn btn-ghost mt-2 text-[11px]"
+            >
+              Show answer
+            </button>
+          )}
+        </div>
+      )}
 
       {highlights.length > 0 && (
         <ul className="mt-3 space-y-2">

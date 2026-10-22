@@ -231,6 +231,33 @@ export function addHighlight(
   return lesson.highlights.find((highlight) => highlight.quote === cleaned) ?? null;
 }
 
+/**
+ * Replace a highlight's comment, including with nothing.
+ *
+ * `addHighlight` deliberately refuses a blank overwrite: pinning the same passage again must not wipe
+ * the thought attached to it. Clearing the box on purpose is a different act, and it is now the way a
+ * review card is retired (a card exists exactly while its highlight has a comment), so it gets a door
+ * of its own instead of loosening that rule.
+ */
+export function setComment(
+  id: string,
+  quote: string,
+  comment: string,
+  now: number = Date.now()
+): Highlight | null {
+  const store = storage();
+  const cleaned = cleanQuote(quote);
+  if (!store || !cleaned) return null;
+  const study = readStudy();
+  const lesson = study[id];
+  const found = lesson?.highlights.find((highlight) => highlight.quote === cleaned);
+  if (!lesson || !found) return null;
+  found.comment = cleanComment(comment);
+  lesson.updatedAt = now;
+  writeStudy(store, study);
+  return found;
+}
+
 /** Remove one highlight; the lesson goes with it when nothing is left. */
 export function removeHighlight(id: string, quote: string, now: number = Date.now()): void {
   const store = storage();

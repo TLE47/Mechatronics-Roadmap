@@ -144,13 +144,13 @@ lacks it, a local draft beats the file's, a newer version is not pushed out by a
 still hold); `npm run test:e2e:backup` does it in Chromium — write the zip, wipe, restore, and see the
 tick and the draft come back.
 
-Why this and not IndexedDB yet: the caps bound everything the six stores can hold at ~1.7 M characters,
-about 3.4 MB of the 5 MB bucket (12 drafts × 40 k, 120 k of versions, 25 lessons of notes and
-highlights, 5,000 log events), and `test:backup` computes that number from the exported caps instead of
-trusting this paragraph. That is the tightest this has been — the study layer is why the measurement is
-worth watching — and the honest state is that another large store would not fit. IndexedDB becomes the
-right answer at that point; the backup is the right answer today, because it is the part that matters
-when a browser is cleared.
+Why this and not IndexedDB yet: the caps bound everything the seven stores can hold at ~2.0 M
+characters, about 4.0 MB of the 5 MB bucket (12 drafts × 40 k, 120 k of versions, 25 lessons of notes
+and highlights, 500 review cards, 5,000 log events), and `test:backup` computes that number from the
+exported caps instead of trusting this paragraph. That is 80% of the bucket — the deck is what took the
+last real slack — so the next store that is not a rounding error is the point where IndexedDB stops
+being optional. The backup is still the right answer today, because it is the part that matters when a
+browser is cleared.
 
 ### Keys
 
@@ -187,6 +187,39 @@ to the id it was typed under), and React's development double-mount must not tre
 as an edit — the panel writes only after a real keystroke, which is what kept a saved note from being
 cleared on reload. `npm run test:study` pins the rules; `npm run test:e2e` types a note, pins a line,
 reloads, and finds both still there.
+
+### Review cards
+
+A highlight with a comment is a question with its answer: the quote asks *why did you keep this?*, the
+comment says. The Study panel asks it back on a schedule — **Review (N due)** draws on the whole
+course's deck, shows the quote, and only after **Show answer** offers the four answers FSRS schedules
+on (Again, Hard, Good, Easy). A highlight without a comment is a passage marked, not a question set, so
+it never becomes a card: that one rule is what keeps the deck from filling with prompts nobody can
+answer.
+
+[`src/fsrs.ts`](src/fsrs.ts) is **FSRS-5**, the published algorithm, with its sources in the file: the
+default weights `w0`–`w18`, the initial stability and difficulty formulas, the mean-reverting difficulty
+update, the forgetting curve (`DECAY = -0.5`, `FACTOR = 19/81`), stability after recall and after a
+lapse, the same-day branch, and the interval for a 90% desired retention. The constants are what make
+`R(S, S) = 0.9` an identity rather than a setting, and the test suite asserts exactly that. Two
+departures are deliberate and stated where they happen: the weights are the published defaults (there
+is no review history yet to fit them to) and the longest interval is a year, not the library's century
+— a course lasts a term.
+
+[`src/studyCards.ts`](src/studyCards.ts) keeps the join honest by keeping it derived: a card's
+existence comes from the notes store on every read, and only its schedule is stored. Deleting the
+highlight deletes the card, re-pinning the same passage keeps its progress (the id is the lesson plus
+the quote), and clearing the comment retires it and prunes the schedule on the next sync. Clearing a
+comment needed a new door in the notes store — `setComment` — because `addHighlight` refuses a blank
+overwrite on purpose; that rule is right for pinning and wrong for a learner who has decided a passage
+is not a question after all.
+
+The deck rides in the backup as `study-cards.json`, and a restore keeps the schedule that has been
+answered more (`reps`, tie broken by the later review), so an older file can never un-learn a card; a
+backup taken before cards existed simply has no such file. `npm run test:review` pins the arithmetic
+and the join without a browser; `npm run test:e2e:review` does it through the panel — a real selection,
+the real pin button, the real comment box, a rating, a reload, and the deck still knowing when the card
+is next due.
 
 ### The editor
 
@@ -348,6 +381,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/scopeModel.ts`](src/scopeModel.ts) | What a Scope payload must be to be drawn: NaN dropped, lengths aligned, flat traces widened, tables sampled. |
 | [`src/components/ScopePanel.tsx`](src/components/ScopePanel.tsx) | The Scope: canvas, shared axes, legend with last values, and the same data as a table. |
 | [`src/learningLog.ts`](src/learningLog.ts) | The event log behind the friction report and the roadmap's "opened / tried" states. |
+| [`src/fsrs.ts`](src/fsrs.ts) | FSRS-5: the published weights and formulas, pure — a schedule in, a schedule out, `now` injected. |
+| [`src/studyCards.ts`](src/studyCards.ts) | The deck: cards derived from commented highlights, their schedules stored, and the merge a restore uses. |
 
 ## Checks that cover this directory
 
@@ -356,7 +391,8 @@ npm run lint                 # types
 npm run test:workbench       # runner behaviour (happy-dom) + palette search + editor model
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
-npm run test:history         # run history: filed on Run, deduped, capped per lesson and in totalnpm run test:scope          # Scope rules: payloads, cursor sampling, zoom/pan windows, bounds, tables
+npm run test:history         # run history: filed on Run, deduped, capped per lesson and in total
+npm run test:scope          # Scope rules: payloads, cursor sampling, zoom/pan windows, bounds, tables
 npm run test:analysis       # completions, hover and signatures: insertion point, cursor coordinates, the call under the cursor, note shape, transport rules
 npm run test:checkhints      # the failed check -> rung join, and the rule that earns rung 2
 npm run test:e2e             # dev server, one lesson end to end
@@ -365,7 +401,9 @@ npm run test:offline         # the service worker: isolation without host header
 npm run test:takealong       # the offline button's rules: URL list, size wording, what "ready" may claim
 npm run test:backup          # the archive: CRC, round trip, the three refusals, and a merge that never deletes
 npm run test:study           # notes and highlights: what is kept, deduped, evicted, and what a restore merges
+npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
+npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run check:lessons        # the registry is current
 ```
 
