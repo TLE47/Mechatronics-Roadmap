@@ -72,6 +72,7 @@
     "test:symbols": "node --experimental-strip-types scripts/test_symbols.mjs",
     "test:layout": "node --experimental-strip-types scripts/test_layout.mjs",
     "test:vim": "node --experimental-strip-types scripts/test_vim.mjs",
+    "test:trace": "node --experimental-strip-types scripts/test_trace.mjs",
     "test:cells": "node --experimental-strip-types scripts/test_cells.mjs",
     "test:history": "node --experimental-strip-types scripts/test_draft_history.mjs",
     "test:scope": "node --experimental-strip-types scripts/test_scope.mjs",

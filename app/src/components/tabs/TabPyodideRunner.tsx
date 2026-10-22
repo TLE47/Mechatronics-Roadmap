@@ -61,6 +61,14 @@ import { VIM_LABEL, readVim, vimHint, vimModeLabel, writeVim } from '../../vimMo
 import { runAnnouncement } from '../../announce';
 import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
 import { inlineValuesFor, readRunValues } from '../../inlineValues';
+import {
+  TRACE_NAME_CAP,
+  TRACE_STEP_CAP,
+  TRACE_VALUE_CHARS,
+  readTrace,
+  type TraceSnapshot,
+} from '../../runTrace';
+import { TracePanel } from '../TracePanel';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
 import { cellPrefix } from '../../editor/cells';
@@ -467,6 +475,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setPendingJump({ file: hit.file, line: hit.line });
     setOpenHelper(targetTab);
   };
+  /**
+   * Put the caret on a line of the learner's own file — what the trace panel's **Show line** asks for.
+   *
+   * The same two paths `goToDefinition` uses: already open, so the mounted editor can take a jump right
+   * now; or the helper tab is open, so `main.py` has to mount first and the line goes with the mount.
+   */
+  const showMainLine = (line: number) => {
+    if (openHelper === null) {
+      guideEditorRef.current?.revealLine(line);
+      return;
+    }
+    setPendingJump({ file: MAIN_FILE_NAME, line });
+    setOpenHelper(null);
+  };
   // What the lesson's harness says about the code on screen now; a `null` report is a failed gate
   // (unproven), never a pass.
   const currentHarness = harnessForLesson(currentLesson.id);
@@ -522,6 +544,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The run's traced signals. Empty means the run drew nothing, which is the normal case for a
   // lesson that only prints, so the panel renders nothing at all rather than an empty frame.
   const [scopeSeries, setScopeSeries] = useState<ScopeSeries[]>([]);
+  // The run trace and the step on screen (`app/src/runTrace.ts`): a recording of the last run, replayed
+  // rather than paused. Reset with the run, read from the outcome that ended it.
+  const [trace, setTrace] = useState<TraceSnapshot | null>(null);
+  const [traceStep, setTraceStep] = useState(0);
   // The run pinned as A: its traces stay on the axes while the next run draws over them as B, which
   // is how a parameter change is read - one `t`, both values, on the same pair of axes. Cleared when
   // the lesson changes, because a trace from another lesson is not the baseline for this one.
@@ -1153,6 +1179,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // A trace belongs to the run that produced it: the panel starts empty, and the worker's first
     // batch replaces it (a run that traces nothing leaves no stale curve on screen).
     setScopeSeries([]);
+    // The same rule for the replay: the previous run's steps describe a program that is gone.
+    setTrace(null);
+    setTraceStep(0);
     // A report describes the code that produced it: a run that never reaches the harness (a syntax
     // error, a timeout) must not leave the previous run's green cards on screen.
     setHarnessReport(null);
@@ -1253,6 +1282,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           cdnUrl,
           maxSteps,
           timeoutSec: Math.max(0.5, (timeoutMs - 500) / 1000),
+          // The trace's caps travel with the request: the worker records with the page's numbers, so
+          // "300 of 12,431" and the 300 on screen cannot mean two different things.
+          trace: { cap: TRACE_STEP_CAP, names: TRACE_NAME_CAP, chars: TRACE_VALUE_CHARS },
           plantSource: MECHALAB_PLANT_PY,
           plantFilename: MECHALAB_PLANT_FILENAME,
           helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
@@ -1270,6 +1302,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         guideEditorRef.current?.setInlineValues([]);
         if (workerOutcome?.stdout) setStdout(String(workerOutcome.stdout));
         setStderr(String(workerOutcome.stderr || 'Execution stopped by user.'));
+        // A stop still leaves the lines it reached: "where was my loop when I stopped it" is the
+        // question Stop is pressed to answer.
+        setTrace(readTrace(workerOutcome?.trace));
+        setTraceStep(0);
         setBehaviorCheck('failed');
         setPassStatus('stopped');
         return;
@@ -1279,6 +1315,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         guideEditorRef.current?.setInlineValues([]);
         if (workerOutcome?.stdout) setStdout(workerOutcome.stdout);
         setStderr(workerOutcome.message || workerOutcome.stderr || 'Execution timed out.');
+        // The lines that ran before the budget ran out: the tail is exactly where the loop turned.
+        setTrace(readTrace(workerOutcome?.trace));
+        setTraceStep(0);
         setBehaviorCheck('failed');
         setPassStatus('stopped');
         return;
@@ -1302,6 +1341,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       guideEditorRef.current?.setInlineValues(
         inlineValuesFor(sourceCode, readRunValues(workerOutcome?.inlineValues)),
       );
+      // The replay: every line this run executed, kept by the worker's own trace hook. Validated here
+      // because it crossed a thread boundary as JSON (`app/src/runTrace.ts`).
+      setTrace(readTrace(workerOutcome?.trace));
+      setTraceStep(0);
       if (!grade) {
         // A cell run is a look at what the program does so far. An exception is still a report — a
         // prefix that raises should say so — but no check is graded and no lesson is verified.
@@ -3244,6 +3287,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* The run trace: the last run replayed step by step, beside the output it explains. A
+              recording, so it is gone when an edit makes it describe a program that no longer exists. */}
+          <div
+            className="mt-4"
+            style={{ display: layoutShows(layout, 'results') ? undefined : 'none' }}
+          >
+            <TracePanel
+              trace={trace}
+              step={traceStep}
+              onStep={setTraceStep}
+              source={runCodeRef.current || code}
+              onReveal={showMainLine}
+            />
           </div>
 
           {/* The Scope: the learner's own traced signal, drawn the moment the first batch lands. */}

@@ -661,6 +661,27 @@ stay the plain version, so **Load Solution** shows the canonical code while the 
 workspace where the numbers move. `npm run test:editor` fails if one of those starters loses its
 sliders or gains a slider the demo never reads.
 
+### The run trace
+
+Every run is recorded, line by line, and the **Trace** panel beside the output steps through it
+([`src/runTrace.ts`](src/runTrace.ts), [`src/components/TracePanel.tsx`](src/components/TracePanel.tsx),
+`npm run test:trace`, browser step 5h). It is the plan's debugger row answered the way this runtime can
+answer it: Pyodide runs a program inside one call, so nothing can be *paused* — the page's only lever
+is the interrupt word. What a learner actually asks, *"why did this loop do that?"*, is answerable from
+what was recorded.
+
+| Rule | Why |
+| :--- | :--- |
+| A step is an executed line **in the learner's own file** | Frames from the harness, the plant and the appended self-check are not steps; stepping through `math.sqrt` would be reading CPython, not their code. |
+| The frame's values ride with the step — six names, reprs cut to 40 characters | A full frame dump is a wall a beginner cannot read, and the worker already formatted the reprs once so a value that raises cannot become a second failure. |
+| **300 steps kept, every line counted** | Past the cap the worker stops collecting but keeps counting, so the panel prints `300 of 12,431 steps · capped` rather than implying the program stopped there. |
+| The quoted line comes from **the text that ran**, not from the editor | A run is a fact about a program; the panel still describes it after an edit, and a new run replaces it. |
+| A stop and a timeout keep their partial traces | "Where was my loop when I stopped it" is the question Stop is pressed to answer. |
+
+The panel says in a sentence that it is a recording — nothing is paused — and offers **Show line** to
+put the caret on the step's line; the values are that step's frame, so the quote and the numbers always
+describe the same moment.
+
 ### Sharing an attempt
 
 **Share** in the runner toolbar copies a link to this lesson with the editor's text in it

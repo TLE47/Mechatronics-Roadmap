@@ -51,6 +51,7 @@ npm run test:inline                     # inline values: which lines bind, which
 npm run test:symbols                    # go to definition: what counts as a def, the caret's word, the active file winning a tie
 npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits
 npm run test:vim                        # Vim keys: off until asked for, remembered, blocked storage, and the mode word the badge prints
+npm run test:trace                      # the run trace: a payload from another thread, the step cap and its honest total, unreadable values cut
 npm run test:cells                      # # %% cells: the boundaries, the preamble, and where "run to here" stops
 npm run test:try                        # try-it blocks: the marker rule, the lesson a page opens, the generated link read back by the app's own codec, and that every page is up to date
 npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes

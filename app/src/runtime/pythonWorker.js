@@ -641,9 +641,16 @@ self.onmessage = async (event) => {
       py.globals.set('__mechalab_instructor_code__', instructorTests || '');
       py.globals.set('__mechalab_max_steps__', maxSteps);
       py.globals.set('__mechalab_timeout_sec__', timeoutSec);
+      // The trace's caps come from the page (`app/src/runTrace.ts`), so the worker and the panel that
+      // prints "300 of 12,431" cannot disagree about which number is which.
+      const traceCaps = msg.trace && typeof msg.trace === 'object' ? msg.trace : null;
+      py.globals.set('__mechalab_trace__', traceCaps ? 1 : 0);
+      py.globals.set('__mechalab_trace_cap__', Number(traceCaps?.cap) || 0);
+      py.globals.set('__mechalab_trace_name_cap__', Number(traceCaps?.names) || 0);
+      py.globals.set('__mechalab_trace_value_chars__', Number(traceCaps?.chars) || 0);
 
       const runnerHarness = `
-import sys, time, traceback
+import sys, time, traceback, warnings
 
 def __mechalab_execute():
     ns = {
@@ -654,11 +661,56 @@ def __mechalab_execute():
     steps = 0
     max_s = int(__mechalab_max_steps__)
     max_t = float(__mechalab_timeout_sec__)
+    # The trace: what the program did, kept only while it is small enough to be read. The count keeps
+    # going past the cap, so the panel can say "300 of 12,431 steps" rather than implying the program
+    # stopped there (the caps and the words are app/src/runTrace.ts's).
+    trace_steps = []
+    trace_total = 0
+    want_trace = bool(int(__mechalab_trace__))
+    trace_cap = int(__mechalab_trace_cap__)
+    trace_names = int(__mechalab_trace_name_cap__)
+    trace_chars = int(__mechalab_trace_value_chars__)
+
+    def _trace_values(frame):
+        # Only data, only a few names, only a width a cell can hold. A repr that raises is skipped:
+        # a recording of a run must not become a second failure.
+        out = []
+        for value_name, bound in list(frame.f_locals.items()):
+            if value_name.startswith("_"):
+                continue
+            try:
+                text = repr(bound)
+            except Exception:
+                continue
+            if len(text) > trace_chars:
+                text = text[: max(0, trace_chars - 3)] + "..."
+            out.append({"name": value_name[:32], "value": text})
+            if len(out) >= trace_names:
+                break
+        return out
+
+    def _trace_depth(frame):
+        # Frames in the learner's own file only: a call into abs() is not a deeper step in their code.
+        depth = 1
+        walker = frame.f_back
+        while walker is not None and walker.f_code.co_filename == "<lesson_editor>":
+            depth += 1
+            walker = walker.f_back
+        return depth
 
     def _trace_guard(frame, event, arg):
-        nonlocal steps
+        nonlocal steps, trace_total
         if event == "line":
             steps += 1
+            if frame.f_code.co_filename == "<lesson_editor>":
+                trace_total += 1
+                if want_trace and len(trace_steps) < trace_cap:
+                    trace_steps.append({
+                        "line": frame.f_lineno,
+                        "fn": frame.f_code.co_name,
+                        "depth": _trace_depth(frame),
+                        "values": _trace_values(frame),
+                    })
             if steps > max_s or (time.monotonic() - t0) > max_t:
                 raise TimeoutError(
                     f"ExecutionTimeoutError: Loop exceeded execution limit ({steps} line steps / {max_t:.1f}s). "
@@ -669,10 +721,20 @@ def __mechalab_execute():
     student_err = ""
     timed_out = False
     stopped = False
+    # One warning is ours, not the learner's: reading a frame's locals makes CPython report that a
+    # name a PEP 709 comprehension left unbound is being set to None. The name stays unbound (a later
+    # read still raises NameError - measured), but the notice would land in their stderr and change the
+    # graded output. The filter names the message, so a RuntimeWarning the learner caused still shows.
     try:
-        compiled_student = compile(__mechalab_student_code__, "<lesson_editor>", "exec")
-        sys.settrace(_trace_guard)
-        exec(compiled_student, ns)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=RuntimeWarning,
+                message="assigning None to unbound local",
+            )
+            compiled_student = compile(__mechalab_student_code__, "<lesson_editor>", "exec")
+            sys.settrace(_trace_guard)
+            exec(compiled_student, ns)
     except KeyboardInterrupt:
         # Caught here, not left to escape: a rejection that crosses into JavaScript shows up as an
         # uncaught PythonError in the page console, and a Stop is a normal outcome, not a crash.
@@ -690,9 +752,9 @@ def __mechalab_execute():
     finally:
         sys.settrace(None)
 
-    return ns, student_err, timed_out, stopped
+    return ns, student_err, timed_out, stopped, trace_steps, trace_total
 
-__mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_stopped__ = __mechalab_execute()
+__mechalab_ns__, __mechalab_student_err__, __mechalab_timed_out__, __mechalab_stopped__, __mechalab_trace_steps__, __mechalab_trace_total__ = __mechalab_execute()
 
 # Inline values: what this run left each top-level name holding. Captured here, from the namespace the
 # run itself returned, because a value read later would belong to a later attempt. Functions, classes,
@@ -726,6 +788,18 @@ try:
     __mechalab_inline_json__ = __mechalab_json__.dumps(__mechalab_inline_values(__mechalab_ns__))
 except Exception:
     __mechalab_inline_json__ = "[]"
+
+# The trace as JSON, or an empty string when nothing was recorded: the panel reads absence as absence.
+try:
+    if __mechalab_trace_steps__:
+        __mechalab_trace_json__ = __mechalab_json__.dumps({
+            "steps": __mechalab_trace_steps__,
+            "total": __mechalab_trace_total__,
+        })
+    else:
+        __mechalab_trace_json__ = ""
+except Exception:
+    __mechalab_trace_json__ = ""
 `;
 
       await py.runPythonAsync(runnerHarness);
@@ -741,6 +815,16 @@ except Exception:
           return Array.isArray(parsed) ? parsed : [];
         } catch {
           return [];
+        }
+      })();
+      // The recorded trace, as JSON, or '' when the run recorded none. The page validates every step
+      // itself (`app/src/runTrace.ts`); this thread only carries it.
+      const traceJson = (() => {
+        try {
+          const raw = py.globals.get('__mechalab_trace_json__');
+          return raw ? String(raw) : '';
+        } catch {
+          return '';
         }
       })();
 
@@ -760,6 +844,7 @@ except Exception:
           instructorPassed: false,
           instructorError: '',
           inlineValues,
+          trace: traceJson,
         });
         return;
       }
@@ -775,6 +860,7 @@ except Exception:
           instructorPassed: false,
           instructorError: '',
           inlineValues,
+          trace: traceJson,
         });
         return;
       }
@@ -803,6 +889,7 @@ except Exception:
           instructorError: '',
           bench: earlyBench,
           inlineValues,
+          trace: traceJson,
         });
         return;
       }
@@ -870,6 +957,7 @@ __mechalab_inst_ok__, __mechalab_inst_err__ = __mechalab_run_instructor()
         instructorError,
         bench: benchReport,
         inlineValues,
+        trace: traceJson,
       });
     } catch (err) {
       const message = err && err.message ? err.message : String(err);

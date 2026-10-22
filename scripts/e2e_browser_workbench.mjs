@@ -1048,6 +1048,101 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await setEditorCode(page, afterScratch);
     console.log('  ok vim keys: dd deletes, the badge names the mode, and the choice survives a reload');
 
+    // 5h. The run trace: every line the last run executed, replayed step by step with the values its
+    //     frame held. This is not a live debugger — the panel says so in a sentence — but "why did
+    //     this loop do that?" is answered by walking the recording (`app/src/runTrace.ts`). Run as a
+    //     cell so nothing is graded, logged or filed: the replay is the subject here.
+    const traceCode = '# %% loop\ntotal = 0\nfor n in (2, 3):\n    total = total + n\nprint(total)\n';
+    await setEditorCode(page, traceCode);
+    await page.getByTestId('cell-run-0').waitFor({ timeout: 5000 });
+    await page.getByTestId('cell-run-0').click();
+    await page.waitForFunction(
+      () => (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').trim() === '5',
+      undefined,
+      { timeout: 20000 }
+    );
+    await page.getByTestId('trace-panel').waitFor({ timeout: 10000 });
+    // One step per executed line: the assignment, the `for` three times (two passes and the test
+    // that ended it), the body twice, the print. The `# %%` marker is a comment and runs nothing.
+    const traceSteps = Number(await page.getByTestId('trace-panel').getAttribute('data-trace-steps'));
+    assert.equal(traceSteps, 7, `the trace must hold one step per line that ran, got ${traceSteps}`);
+    assert.equal((await page.getByTestId('trace-summary').textContent())?.trim(), '7 steps');
+    assert.equal(
+      (await page.getByTestId('trace-step-label').textContent())?.includes('step 1 of 7 · line 2'),
+      true,
+      'a trace opens on the first line the program ran, not on line 1 of the file'
+    );
+    assert.equal(
+      (await page.getByTestId('trace-code').textContent())?.trim(),
+      'total = 0',
+      'the panel quotes the line that ran'
+    );
+    assert.equal(
+      (await page.getByTestId('trace-prev').isDisabled()),
+      true,
+      'the first step has nowhere to go back to'
+    );
+    // Two steps on is the loop's body: `n` is 2 and `total` is still 0 at the moment it runs.
+    await page.getByTestId('trace-next').click();
+    await page.getByTestId('trace-next').click();
+    assert.equal(
+      (await page.getByTestId('trace-step-label').textContent())?.includes('line 4'),
+      true,
+      'stepping forward moves one executed line at a time'
+    );
+    const stepValues = (await page.getByTestId('trace-values').textContent()) ?? '';
+    assert.equal(stepValues.includes('n'), true, 'the step carries the frame\u2019s own names');
+    assert.equal(stepValues.includes('total'), true, 'and the accumulator it is about to add to');
+    assert.equal(
+      (await page.getByTestId('trace-code').textContent())?.trim(),
+      'total = total + n',
+      'the quoted line follows the step'
+    );
+    // The end of the recording: the range takes End, so a keyboard reader can reach the last step.
+    await page.getByTestId('trace-range').focus();
+    await page.keyboard.press('End');
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="trace-step-label"]')?.textContent ?? '').includes(
+          'step 7 of 7'
+        ),
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      (await page.getByTestId('trace-code').textContent())?.trim(),
+      'print(total)',
+      'the last step is the last line the program ran'
+    );
+    assert.equal(
+      (await page.getByTestId('trace-next').isDisabled()),
+      true,
+      'the last step has nowhere to go forward to'
+    );
+    // Show line puts the caret on the line that step ran, in the learner's own file.
+    await page.getByTestId('trace-show-line').click();
+    const caret = await page.evaluate(() => window.__mechalabEditors['editor-main'].getCursor());
+    assert.equal(
+      caret,
+      traceCode.indexOf('print(total)'),
+      'Show line must put the cursor at the start of the step\u2019s line'
+    );
+    assert.equal(
+      (await page.getByTestId('trace-panel').textContent())?.includes('nothing is paused'),
+      true,
+      'the panel says it is a recording, so nobody waits for a breakpoint that will not hit'
+    );
+    // An edit does not take the recording away: the panel quotes the text the run executed, so it
+    // still describes the program it saw. The next run replaces it (and a lesson switch clears it).
+    await setEditorCode(page, traceCode + 'x = 1\n');
+    assert.equal(
+      (await page.getByTestId('trace-code').textContent())?.trim(),
+      'print(total)',
+      'the quoted line is the run\u2019s text, not whatever the editor holds now'
+    );
+    console.log('  ok the run trace replays the lines it ran, with their values, from the text it ran');
+    await setEditorCode(page, afterScratch);
+
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
     await page.getByTestId('btn-load-solution').click();

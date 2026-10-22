@@ -11,6 +11,44 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 178: The Run Trace, and the Warning That Was Ours
+
+`docs/PLAN-2.0-GAP.md`'s last **missing** row was *"debugger + time travel"*. Pyodide runs a program
+inside one `runPythonAsync` call and the page's only lever is the interrupt word, so nothing can be
+*paused* — but the question a beginner actually asks, **"why did this loop do that?"**, is answerable
+from a recording. Every run now records the lines it executed with the values each line could see, and
+the **Trace** panel beside the output replays it
+([`app/src/runTrace.ts`](app/src/runTrace.ts), [`app/src/components/TracePanel.tsx`](app/src/components/TracePanel.tsx),
+the Python half in [`app/src/runtime/pythonWorker.js`](app/src/runtime/pythonWorker.js)):
+
+| Decision | Why |
+| :--- | :--- |
+| A step is an executed line **in `<lesson_editor>`** | Frames from the harness, the plant and the appended self-check are not steps; stepping through `math.sqrt` would be reading CPython, not their code |
+| The frame's values ride with the step — six names, reprs cut to 40 characters | A whole frame is a wall a beginner cannot read; the worker formats each repr once and skips one that raises, so recording cannot become a second failure |
+| **300 steps kept, every line counted** | Past the cap the recorder stops collecting and keeps counting, so the panel prints `300 of 12,431 steps · capped` rather than implying the program stopped there |
+| The quoted line comes from **the text that ran**, not the editor | A replay describes a program, so it survives an edit; the next run replaces it, and **Show line** puts the caret on the step's line |
+| A stop and a timeout keep their partial traces | "Where was my loop when I stopped it" is what Stop is pressed to answer |
+
+**Two bugs, both found by the gates rather than by reading.** The Python harness lives inside a JS
+template literal, and a backtick in a Python comment ends it early: the worker then fails to parse,
+Pyodide never reports `ready`, and every run in the product hangs with nothing on screen — R.5's
+reference and the tour presets were the first things to say so. `npm run test:trace` now runs
+`node --check` on the worker. The second was subtler: reading `frame.f_locals` makes CPython announce
+`RuntimeWarning: assigning None to unbound local` for a name a PEP 709 comprehension left unbound — and
+that notice went **into the learner's stdout**, turning R.5's verified reference into `DIFFERS`. The
+run now silences exactly that message around the traced `exec`; a probe confirmed the name still raises
+`NameError` afterwards, so the program's behaviour is unchanged and only the notice is gone.
+
+Pinned by `npm run test:trace` (14: untrusted payloads, dropped non-steps, both value caps, the honest
+total, clamping, the quoted line, and the worker still parsing) and browser step 5h, which runs a
+four-line loop as a cell and asserts its seven steps, the values that were in scope, the range's `End`
+key, **Show line** landing the caret on the step's line, and the quote staying the run's text after an
+edit.
+
+Verified: test:trace 14/14, 49 workbench suites, check_all 29/29, axe 11 tabs × 4 palettes, browser
+E2E all steps incl. 5h, Pages bundle (ramp R.1–R.6, 50 exercise entries), lint clean, weight 1.01 MB
+(entry 447.5 kB of 470 kB, js 688.7 kB of 700 kB).
+
 ## [2026-10-22] — Run 177: Vim Keys, in a Chunk Nobody Downloads
 
 `docs/PLAN-2.0-GAP.md`'s theme row ended with *"No keymap (Vim/Emacs)"*, and CodeMirror's default already
