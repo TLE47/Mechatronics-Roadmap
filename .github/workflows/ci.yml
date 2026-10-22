@@ -51,6 +51,8 @@ jobs:
           python3 scripts/generate_plant_data.py --check
           python3 scripts/check_term_order.py
           python3 scripts/generate_python_lessons_data.py --check
+          # The app's error index is the explainer page; editing one without the other fails here.
+          python3 scripts/generate_error_index.py --check
           python3 scripts/generate_run_callouts.py --check
           # One name per tab, in one file; no page or label may point at a position instead.
           python3 scripts/check_tab_names.py

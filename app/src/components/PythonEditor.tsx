@@ -39,6 +39,21 @@ export interface PythonEditorHandle {
   focus: () => void;
   getValue: () => string;
   setValue: (text: string) => void;
+  /** Put the cursor at the start of a 1-based line and scroll it into view. */
+  revealLine: (line: number) => void;
+}
+
+/**
+ * Move the cursor to a line, clamped to the document, and scroll it into view.
+ *
+ * Not a selection: the failure card's job is to show the learner the line that raised, and a selected
+ * line would also arm the study panel's "pin selected text" for a passage they did not choose.
+ */
+function revealLine(view: EditorView, line: number): void {
+  const number = Math.max(1, Math.min(Math.round(line), view.state.doc.lines));
+  const target = view.state.doc.line(number);
+  view.dispatch({ selection: { anchor: target.from }, scrollIntoView: true });
+  view.focus();
 }
 
 interface PythonEditorProps {
@@ -103,6 +118,8 @@ declare global {
         /** Move the cursor, clamped to the document: a suite types at a known position. */
         setCursor: (pos: number) => void;
         getCursor: () => number;
+        /** Cursor to a 1-based line, scrolled into view: the failure card's "show line N". */
+        revealLine: (line: number) => void;
         /**
          * Open the completion list, the same command `Ctrl-Space` runs.
          *
@@ -157,6 +174,10 @@ export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(fu
         const view = viewRef.current;
         if (!view) return;
         view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
+      },
+      revealLine: (line: number) => {
+        const view = viewRef.current;
+        if (view) revealLine(view, line);
       },
     }),
     [value]
@@ -233,6 +254,7 @@ export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(fu
         view.focus();
       },
       getCursor: () => view.state.selection.main.head,
+      revealLine: (line: number) => revealLine(view, line),
       startCompletion: () => {
         view.focus();
         startCompletion(view);

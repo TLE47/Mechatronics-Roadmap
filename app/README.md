@@ -362,6 +362,23 @@ starter is never filed (Reset Starter already restores it), and the store evicts
 anywhere once it passes its budget - [src/draftHistory.ts](src/draftHistory.ts), pinned by
 `npm run test:history`.
 
+**A failure, read.** A red line is where the work starts, and a traceback is written for a terminal: the
+learner's own frame sits among the lesson's harness frames, and the failure that *is* one of the
+twelve things [docs/ERROR_EXPLAINER.md](../docs/ERROR_EXPLAINER.md) documents is named only on a page
+in another tab. So a runtime error now gets a card under the output: Python's exception line,
+the line in the learner's own file (`Show line 7` puts the cursor there and scrolls to it), and the
+matching explainer entry with its own "check first" list ([`src/traceback.ts`](src/traceback.ts),
+[`src/errorIndex.ts`](src/errorIndex.ts), [`src/components/TracebackCard.tsx`](src/components/TracebackCard.tsx)).
+
+The parser reads CPython's text rather than a structured payload, because a learner can print a
+traceback of their own and the panel is handed whatever was printed: it takes the last block of a
+chained failure (the one that stopped the program), the deepest frame that is not the lesson's appended
+`_selfcheck`, and both SyntaxError shapes. The index is generated from the page by
+`scripts/generate_error_index.py` — an edit to an entry without regenerating fails `check:errorindex` —
+and the match comes from the entry's heading: a class and its quoted message, or a class alone. A
+failure the page does not cover says so and leaves Python's words as the diagnosis; a failure raised
+inside the lesson's own check says the line is the check's, not the learner's.
+
 **The Scope: your loop, drawn.** A lesson that prints forty lines of `theta = ...` is asking the reader
 to plot it in their head. Inside a run, Python can hand its samples to a panel instead:
 
@@ -454,6 +471,9 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/sittingClock.ts`](src/sittingClock.ts) | The measured sitting: idle cutoff, three-hour cap, bounded store, and the totals the pilot quotes. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
+| [`src/traceback.ts`](src/traceback.ts) | CPython's failure text as data: frames, the learner's own frame, chains, and both SyntaxError shapes. |
+| [`src/errorIndex.ts`](src/errorIndex.ts) | The explainer's entries matched to a parsed failure, and the honest "not in the index" case. |
+| [`src/components/TracebackCard.tsx`](src/components/TracebackCard.tsx) | The failure card: exception, line, `Show line N`, and the entry's check-first list. |
 | [`src/bulkStorage.ts`](src/bulkStorage.ts) | The six large stores behind a `Storage`-shaped write-behind cache over IndexedDB, and the migration out of the bucket. |
 | [`src/idbBackend.ts`](src/idbBackend.ts) | The raw IndexedDB backend: one object store, three operations, and `null` on every way a database can be refused. |
 
@@ -478,6 +498,7 @@ npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the 
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser
 npm run test:portfolio       # the export: sections only when they have content, quoting, caps, the time table
 npm run test:storage         # IndexedDB: the bucket fallback, the migration order, the write queue, a refused write
+npm run test:traceback       # tracebacks as data: frames, chains, syntax shapes, and the index match
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting

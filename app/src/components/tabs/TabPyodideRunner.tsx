@@ -4,6 +4,9 @@ import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabP
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
 import { coachForLesson } from '../../lessonCoach';
 import { failingChecks, hintCountFor, hintLock, nextRung, rungAnswersCheck } from '../../checkHints';
+import { matchError } from '../../errorIndex';
+import { failureSummary, isAssertionFailure, parseFailure } from '../../traceback';
+import { TracebackCard } from '../TracebackCard';
 import { lessonPageUrl } from '../../startHere';
 import {
   assetUrlsFromDocument,
@@ -376,7 +379,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     const failed =
       passStatus === 'harness_failed' && harnessResult
         ? harnessResult.summary
-        : (instructorError || stderr || '').split('\n')[0];
+        : // A runtime error's first line is now `Traceback (most recent call last):` (the worker sends
+          // the whole traceback so the card can read the frames); the exception line is the record.
+          passStatus === 'error'
+          ? failureSummary(stderr) || (instructorError || stderr || '').split('\n')[0]
+          : (instructorError || stderr || '').split('\n')[0];
     logEvent({
       kind: 'run',
       lesson: selectedId,
@@ -423,6 +430,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       : hintLockState === 'stale-attempt'
         ? `Run again to unlock Hint ${nextHintNumber}`
         : `Reveal Hint ${nextHintNumber}`;
+  // The failure read, not only printed: the parse names the line in the learner's own file, and the
+  // index names the habit the page documents for it. Only a `error` run has Python's own words to
+  // read - a failed check has an assertion message, and a stopped run has none.
+  const parsedFailure = useMemo(
+    () => (passStatus === 'error' ? parseFailure(stderr) : null),
+    [passStatus, stderr]
+  );
+  const errorEntry = useMemo(() => matchError(parsedFailure), [parsedFailure]);
   const checkFailures = failingChecks({
     passStatus,
     instructorError,
@@ -1005,7 +1020,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
       if (workerOutcome?.runtimeError) {
         setBehaviorCheck('failed');
-        if (actualErr.startsWith('AssertionError')) {
+        // The class, not the prefix: the worker sends the whole traceback now, so this reads the
+        // exception out of it rather than checking what the text starts with.
+        if (isAssertionFailure(actualErr)) {
           setInstructorError(actualErr);
           // The learner's own check fired; if the harness names a number behind it, that metric is
           // the thing to fix, so it outranks the assertion line. A syntax error or a NameError keeps
@@ -2366,6 +2383,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 {stdout || (stderr ? '' : 'Click "Run & Verify Output" to execute this lesson.')}
                 {stderr && <span className="text-rose block mt-1">{stderr}</span>}
               </pre>
+              {parsedFailure && (
+                <TracebackCard
+                  failure={parsedFailure}
+                  entry={errorEntry}
+                  onRevealLine={(line) => guideEditorRef.current?.revealLine(line)}
+                />
+              )}
             </div>
 
             <div className="bg-panel border border-line rounded-xl p-4">

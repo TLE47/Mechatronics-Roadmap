@@ -11,6 +11,54 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 155: The Failure Is Read, Not Just Printed
+
+The last editor item that was still prose: a red line printed CPython's traceback and stopped there.
+Which frame was the learner's, and whether the failure was one of the twelve the course documents,
+were both questions the learner had to answer from somewhere else.
+
+**`app/src/traceback.ts` reads the text into data.** Frames, the exception, and one line for a log. It
+takes the *last* block of a chained failure — the one that stopped the program — the **deepest** frame,
+and the lesson's appended `_selfcheck` is recognised as harness code: when the check itself raises
+there is no learner line to point at, and the card says so instead of moving the cursor to a line they
+cannot edit. Both shapes parse, because the worker reports a compile failure itself:
+`SyntaxError (line N): msg` with no frames, and CPython's own with a `File` line and a caret that is
+not mistaken for a source line. Parsing rather than a structured payload, because a learner can print a
+traceback of their own and the panel is handed whatever was printed.
+
+**`app/src/errorIndex.ts` joins it to the page.** `docs/ERROR_EXPLAINER.md` is generated into
+`app/src/data/errorIndex.ts` by `scripts/generate_error_index.py`, whose `--check` mode is a new gate:
+editing an entry without regenerating fails the build rather than leaving a card that disagrees with the
+document. The match comes from the entry's heading, which is the page's own organisation: a class and
+the message it quotes, or a class alone. A `TypeError` only matches entry 2's quoted message; a
+`NameError` matches nothing, and the card says so — a confident wrong diagnosis is worse than none.
+
+**The worker sends the whole traceback** (`format_exc()` instead of `format_exception_only`) for an
+uncaught exception, which is what gives the parser frames to read; the learning log's `fail` line is
+now the parsed exception (`ZeroDivisionError: division by zero`) rather than the traceback header. The
+card sits under the output, offers `Show line N` (a new `revealLine` on the editor bridge — a cursor
+move, not a selection, so the study panel is not armed for a passage the learner did not choose), and
+prints the matched entry's own check-first list.
+
+**One regression, caught by the suite that already existed.** Sending the whole traceback made the
+runner's `stderr.startsWith('AssertionError')` false, so a capstone whose appended self-check fired
+reported a plain runtime error instead of a failed bench — the 08.1 scenario in `npm run test:e2e`
+timed out twice on exactly that, reproducibly. The exception class is now read out of the parse
+(`isAssertionFailure`), with the old prefix kept only for text that is a bare assertion message, and the
+unit suite grew the check that would have named it.
+
+- `npm run test:traceback` (**21 checks**, new): frames and source lines, the deepest frame, chains,
+  `_selfcheck` raising vs calling a failing learner function, a custom harness list, both syntax
+  shapes, captured stderr above the traceback, CRLF, non-failures, the assertion-vs-traceback
+  regression, and the index join (numbered entries, a heading that is not an exception claiming
+  nothing, the three matches and the misses).
+- `npm run test:e2e` step 3 grew three checks in Chromium: a syntax error names its line and moves the
+  cursor there while admitting the index has no entry; a `ZeroDivisionError` matches entry 3 and brings
+  its bullets; a `NameError` is named and left outside the index.
+- `check:errorindex` (**29 gates**) and `test:workbench` (**29 suites**) run the generator's drift check
+  and the new unit suite; `docs/PLAN-2.0-GAP.md`'s traceback row records the join, and the next list moves
+  on to the cross-lesson timeline and the accessibility/weight budgets.
+
 ## [2026-10-21] — Run 154: The Work Moves to IndexedDB
 
 The caps on every store were sized against one 5 MB bucket, and after the study layer and the review

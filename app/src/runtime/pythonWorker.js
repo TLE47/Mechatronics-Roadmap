@@ -674,8 +674,9 @@ def __mechalab_execute():
     except SyntaxError as se:
         student_err = f"SyntaxError (line {se.lineno}): {se.msg}"
     except Exception as ex:
-        tb_lines = traceback.format_exception_only(type(ex), ex)
-        student_err = "".join(tb_lines).strip()
+        # The whole traceback, not just the exception line: the panel reads the frames to name the line
+        # in the learner's own file, and separates them from the lesson's appended self-check.
+        student_err = traceback.format_exc().strip()
     finally:
         sys.settrace(None)
 

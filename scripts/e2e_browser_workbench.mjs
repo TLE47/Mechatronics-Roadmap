@@ -526,6 +526,70 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       verified(0),
       'Invalid Python must never award verification'
     );
+    // 3a. The failure is read, not only printed: the card names the line and offers to put the cursor
+    //     on it. `def broken_syntax(` is line 1 and `    x = ` line 2, so the frame must be one of the
+    //     two, and pinning it exactly is what makes the button worth having.
+    const syntaxCard = page.getByTestId('traceback-card');
+    await syntaxCard.waitFor({ timeout: 15000 });
+    const syntaxFrame = (await page.getByTestId('traceback-frame').textContent())?.trim() ?? '';
+    const syntaxLine = Number(syntaxFrame.match(/line (\d+)/)?.[1]);
+    assert.ok(
+      syntaxLine === 1 || syntaxLine === 2,
+      `the card must name the line the syntax error is on; it said: ${syntaxFrame}`
+    );
+    await page.getByTestId('btn-reveal-error-line').click();
+    const cursor = await page.evaluate((line) => {
+      const bridge = window.__mechalabEditors['editor-main'];
+      const text = bridge.get();
+      const start = text.split('\n').slice(0, line - 1).join('\n').length + (line > 1 ? 1 : 0);
+      return { at: bridge.getCursor(), start };
+    }, syntaxLine);
+    assert.equal(cursor.at, cursor.start, 'Show line N must put the cursor at the start of that line');
+    assert.match(
+      (await page.getByTestId('error-index-missing').textContent()) ?? '',
+      /docs\/ERROR_EXPLAINER\.md/,
+      'a SyntaxError is not one of the index entries, and the card must say so instead of guessing'
+    );
+    console.log(`  ok a syntax error names line ${syntaxLine}, moves the cursor there, and is honest about the index`);
+
+    // 3b. A runtime error is parsed for frames, and a failure the page does document is matched: the
+    //     ZeroDivisionError entry names only the class, so it must be claimed; a NameError is not in the
+    //     index at all, and claiming an entry for it would be the wrong diagnosis offered confidently.
+    await setEditorCode(page, 'print(1 / 0)\n');
+    await page.getByTestId('btn-run-verify').click();
+    await page.getByTestId('status-execution-error').waitFor({ timeout: 15000 });
+    await page.getByTestId('error-index-entry').waitFor({ timeout: 15000 });
+    assert.match(
+      (await page.getByTestId('traceback-exception').textContent()) ?? '',
+      /ZeroDivisionError: division by zero/,
+      'the card must carry the exception line, not the traceback header'
+    );
+    assert.match(
+      (await page.getByTestId('traceback-frame').textContent()) ?? '',
+      /line 1/,
+      'a top-level division by zero is on line 1 of the learner’s file'
+    );
+    assert.match(
+      (await page.getByTestId('error-index-entry').textContent()) ?? '',
+      /#3 ·/,
+      'ZeroDivisionError must match the explainer entry that names the class'
+    );
+    assert.ok(
+      (await page.getByTestId('error-index-check').count()) >= 2,
+      'the matched entry must bring the page’s own check-first list, not only its title'
+    );
+    console.log('  ok a ZeroDivisionError names its line and brings the index entry that answers it');
+
+    await setEditorCode(page, 'print(undefined_name)\n');
+    await page.getByTestId('btn-run-verify').click();
+    await page.getByTestId('error-index-missing').waitFor({ timeout: 15000 });
+    assert.match(
+      (await page.getByTestId('traceback-exception').textContent()) ?? '',
+      /NameError: name 'undefined_name' is not defined/,
+      'the card must print Python’s own words for a failure the index does not cover'
+    );
+    console.log('  ok a NameError is named by the card and left outside the index');
+    await page.getByTestId('lesson-item-P.6').click();
 
     // 4. Accidental infinite loop (while True:) is recoverable without losing editor work
     await page.evaluate(() => {

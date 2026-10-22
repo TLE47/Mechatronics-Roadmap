@@ -229,3 +229,11 @@ with a value that was never computed and fails somewhere unrelated later.
 each with a symptom heading, a one-sentence **What it means**, at least two **Check first** bullets, a
 **Where it comes from** line, and links that resolve to files in the repository. Adding an entry means
 naming the page that teaches it; a link to a page that does not exist fails the build.
+
+The workbench reads this page too. `scripts/generate_error_index.py` generates
+`app/src/data/errorIndex.ts` from it — number, heading, sentence, bullets and source — and a failing
+run matches a heading against the traceback it just read: a quoted exception and message, or a class
+alone. Editing an entry here without regenerating fails `python3 scripts/generate_error_index.py
+--check` (CI gate `error_index`), which is what keeps the card and this page saying the same thing.
+Entries whose headings are not exceptions — a wrong number, a swallowed `except` — match nothing and
+stay here to be read, rather than being claimed for a failure they do not describe.

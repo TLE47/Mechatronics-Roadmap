@@ -61,6 +61,7 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("plant_data", ["scripts/generate_plant_data.py", "--check"], False),
     ("term_order", ["scripts/check_term_order.py"], False),
     ("python_lessons_data", ["scripts/generate_python_lessons_data.py", "--check"], False),
+    ("error_index", ["scripts/generate_error_index.py", "--check"], False),
     ("run_callouts", ["scripts/generate_run_callouts.py", "--check"], False),
     ("tab_names", ["scripts/check_tab_names.py"], False),
     ("link_history", ["scripts/generate_link_history_data.py", "--check"], False),
