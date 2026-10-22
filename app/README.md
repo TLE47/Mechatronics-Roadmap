@@ -316,6 +316,45 @@ the time section says it was measured on this device, because a pilot reading th
 the number is. The document is built on the render that opens the modal — never a frame of empty
 preview — and the download and the preview are the same string.
 
+### Accessibility and weight, as gates
+
+Two numbers about the shell itself, both measured rather than asserted.
+
+**`npm run check:axe`** injects `axe-core` into every one of the eleven tabs, in both palettes, and
+fails on anything `serious` or `critical`. `minor` and `moderate` findings are printed (46 of them:
+`page-has-heading-one`, `region`, `heading-order`) and do not fail — a gate that trips on a landmark
+suggestion is a gate people turn off. `color-contrast` is switched off here on purpose: the theme
+suite composites the real ancestor backgrounds and fails below 3:1 on all 22 tab/theme pairs, and a
+second, rougher contrast measure that disagreed with it would make the accurate one look wrong.
+
+Its first run found three things, all fixed rather than excused: **22 sliders with no accessible
+name** across the seven lab tabs (a screen reader announced "slider" and a number, on the control the
+lab is built around — each now carries a plain-language `aria-label` with its unit spoken out,
+`"Shaft stiffness, newton-metres per radian"`), **the brand link**, which reworded itself in an
+`aria-label` that did not contain the words on screen (WCAG 2.5.3 — it now ends in a screen-reader-only
+", back to top" instead), and **the editor's scroll region**, which a keyboard could not reach: the
+`.cm-scroller` takes a `tabindex` of its own, so a long file can be paged through without moving the
+caret.
+
+Exceptions live in [`docs/a11y-allowlist.json`](../docs/a11y-allowlist.json), and the ratchet runs
+three ways: an unlisted finding fails, an entry that fires on more nodes than it recorded fails, and
+an entry that fires on none fails as **stale** — the failure that keeps a gate honest a year later.
+It is empty.
+
+**`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
+it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
+because woff2 is already compressed), `largest_js_gzip` and `total`. Today that is **937.8 kB across 16
+files**, with the budgets 8% above. A breach fails with the overshoot named, and so does a budget with
+nothing measured behind it — a metric the build stopped emitting would otherwise pass forever. The
+rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and `npm run
+test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a budget
+gate is usually wrong.
+
+A byte budget is a gate because it is deterministic. Wall-clock timing is not gated: on a shared runner
+its variance is larger than any regression this app could ship, and a flaky gate gets disabled. The
+number that should move next is `largest_js_gzip` — the whole app is one 614 kB chunk, including the
+editor, KaTeX and the account client, none of which a first visit to the roadmap needs.
+
 ### The editor
 
 The textarea is gone: [`PythonEditor.tsx`](src/components/PythonEditor.tsx) mounts **CodeMirror 6**
@@ -497,6 +536,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/studyCards.ts`](src/studyCards.ts) | The deck: cards derived from commented highlights, their schedules stored, and the merge a restore uses. |
 | [`src/sittingClock.ts`](src/sittingClock.ts) | The measured sitting: idle cutoff, three-hour cap, bounded store, and the totals the pilot quotes. |
 | [`src/timeline.ts`](src/timeline.ts) | The log and the sittings as days of work: the fold that drops repeat rows, local days, and the caps. |
+| [`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs) | The weight rules: what counts, what a breach is, and why an unmeasured budget fails too. |
 | [`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) | The roadmap's trail: a day's time and work, a row per event, and rows that open their lesson. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
@@ -529,6 +569,9 @@ npm run test:portfolio       # the export: sections only when they have content,
 npm run test:storage         # IndexedDB: the bucket fallback, the migration order, the write queue, a refused write
 npm run test:traceback       # tracebacks as data: frames, chains, syntax shapes, and the index match
 npm run test:trail           # the trail: local days, the fold, sitting time on its start day, the caps
+npm run test:weight          # the weight budget's rules: the boundary, an unmeasured metric, the tightest
+npm run check:axe            # axe over all 11 tabs in both themes; serious/critical fails, stale allowlists fail
+npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting

@@ -186,6 +186,7 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
             </div>
             <input
               type="range"
+              aria-label="Shaft stiffness, newton-metres per radian"
               min="30"
               max="400"
               step="5"
@@ -202,6 +203,7 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
             </div>
             <input
               type="range"
+              aria-label="Load inertia, times ten to the minus four kilogram metres squared"
               min="0.5"
               max="5.0"
               step="0.1"
@@ -218,6 +220,7 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
             </div>
             <input
               type="range"
+              aria-label="Shaft damping, newton-metre seconds per radian"
               min="0.0005"
               max="0.02"
               step="0.0005"
@@ -238,6 +241,7 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
             <input
               id="sl-fn"
               type="range"
+              aria-label="Notch centre frequency, hertz"
               min="100"
               max="550"
               step="1"
@@ -254,6 +258,7 @@ export const TabBode: React.FC<TabBodeProps> = ({ onLoadPreset, highlightedId, p
             </div>
             <input
               type="range"
+              aria-label="Notch quality factor"
               min="1.0"
               max="15.0"
               step="0.5"

@@ -241,6 +241,7 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
             </div>
             <input
               type="range"
+              aria-label="LQR angle weight"
               min="40"
               max="300"
               step="10"
@@ -257,6 +258,7 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
             </div>
             <input
               type="range"
+              aria-label="Energy swing-up gain"
               min="1.0"
               max="8.0"
               step="0.2"
@@ -277,6 +279,7 @@ export const TabPendulum: React.FC<TabPendulumProps> = ({ onLoadPreset, highligh
             <input
               id="sl-xmax"
               type="range"
+              aria-label="CBF safety wall, metres"
               min="0.45"
               max="1.20"
               step="0.05"

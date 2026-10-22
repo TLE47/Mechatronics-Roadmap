@@ -163,6 +163,12 @@ jobs:
       - name: Check the roadmap <-> workbench join (every entry claimed once)
         run: npm run test:practice
 
+      # What the bundle costs, in gzipped bytes, against docs/weight-budget.json: a metric over its
+      # budget fails, and so does a budget the build no longer produces anything for. It reads the
+      # `dist/` the step above just built.
+      - name: "Check the weight budget: gzipped shell, largest chunk, and no metric left unmeasured"
+        run: npm run check:weight
+
       - name: Install Playwright Chromium & Firefox (once, for both browser suites)
         run: npx playwright-core install --with-deps chromium firefox
 
@@ -180,6 +186,12 @@ jobs:
       # mapping and the whole workflow fails to parse, which GitHub reports as a run that fails in 0 s.
       - name: "Check light/dark: toggle contract, and WCAG contrast on all 11 tabs in both modes"
         run: npm run test:theme:e2e
+
+      # axe, not contrast: unnamed controls, roles nested where they may not be, a scroll region no
+      # keyboard can reach. It walks the same eleven tabs in both palettes and fails on any
+      # serious/critical finding that docs/a11y-allowlist.json does not explain.
+      - name: "Check accessibility: axe over all 11 tabs in both themes"
+        run: npm run check:axe
 
       # The interrupt path needs cross-origin isolation and a real SharedArrayBuffer, which no unit
       # test can provide: this suite stops a `while True:` in place, proves the interpreter survived

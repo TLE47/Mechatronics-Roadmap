@@ -25,6 +25,7 @@
  *   test:storage     drafts/versions/log/notes/schedules/sittings in IndexedDB: the migration order, the queue, the fallback
  *   test:traceback   Python's failure as data: the learner's frame, chains, syntax errors, and the explainer entry it matches
  *   test:trail       the log and the sitting clock as one trail: days, the fold that drops repeats, the caps
+ *   test:weight      the weight budget's rules: the boundary, an unmeasured metric, the tightest one
  *   test:e2e:storage the same move in Chromium: a bucket full of a pre-IndexedDB visit, migrated, then written to
  *   test:e2e:backup  the header buttons in Chromium: write a zip, wipe, restore to store *and* screen
  *   test:e2e:review  pin, comment, review, reload in Chromium: a card asked, answered, and still scheduled tomorrow
@@ -188,6 +189,7 @@ async function main() {
     runSuite('trail', 'test_timeline.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
+    runSuite('weight', 'test_weight_budget.mjs', {}),
     runSuite('fonts', 'test_fonts.mjs', {}),
     runSuite('e2e', 'e2e_browser_workbench.mjs', { E2E_BASE_URL: devUrl }),
     runSuite('pages', 'e2e_pages_bundle.mjs', { PAGES_SERVER_URL: pagesUrl }),

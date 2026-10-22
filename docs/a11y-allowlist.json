@@ -1,0 +1,4 @@
+{
+  "_why": "Exceptions to the axe gate (`npm run check:axe`), one entry per rule/tab/theme that is knowingly left unfixed. The gate fails on a serious or critical finding that is not listed here, on an entry that fires on more nodes than its `max_nodes`, and on an entry that no longer fires at all — an exception nobody deleted is how a gate quietly stops covering anything. Every entry carries a `reason` a reviewer can disagree with. An empty list is the goal.",
+  "entries": []
+}

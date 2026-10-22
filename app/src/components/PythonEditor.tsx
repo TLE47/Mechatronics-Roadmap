@@ -239,6 +239,11 @@ export const PythonEditor = forwardRef<PythonEditorHandle, PythonEditorProps>(fu
     });
     const view = new EditorView({ state, parent: host });
     viewRef.current = view;
+    // The scroller is a scroll container of its own, so it takes a tab stop: CodeMirror focuses the
+    // editable content, which scrolls only with the caret, so without this a keyboard user has no
+    // way to page through a long file while leaving the cursor where it is (WCAG 2.1.1; axe's
+    // `scrollable-region-focusable` names exactly this element).
+    view.scrollDOM.setAttribute('tabindex', '0');
 
     // The suites type code from a string, read it back, and check it survived a reload; going
     // through the view keeps React's `value` in step instead of only the DOM.

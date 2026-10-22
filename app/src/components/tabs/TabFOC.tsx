@@ -211,6 +211,7 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
             </div>
             <input
               type="range"
+              aria-label="Current loop bandwidth, hertz"
               min="500"
               max="4000"
               step="100"
@@ -227,6 +228,7 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
             </div>
             <input
               type="range"
+              aria-label="Step q-axis command, amperes"
               min="1.0"
               max="25.0"
               step="0.5"
@@ -243,6 +245,7 @@ export const TabFOC: React.FC<TabFOCProps> = ({ onLoadPreset, highlightedId, pre
             </div>
             <input
               type="range"
+              aria-label="Mechanical speed, revolutions per minute"
               min="0"
               max="6000"
               step="100"

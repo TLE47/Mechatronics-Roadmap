@@ -225,6 +225,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
             </div>
             <input
               type="range"
+              aria-label="True gyro bias, radians per second"
               min="0.02"
               max="0.35"
               step="0.01"
@@ -241,6 +242,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
             </div>
             <input
               type="range"
+              aria-label="Vector measurement noise, radians"
               min="0.01"
               max="0.15"
               step="0.01"
@@ -257,6 +259,7 @@ export const TabEskf: React.FC<TabEskfProps> = ({ onLoadPreset, highlightedId, p
             </div>
             <input
               type="range"
+              aria-label="ISR versus reader contention rate, percent"
               min="2"
               max="35"
               step="1"

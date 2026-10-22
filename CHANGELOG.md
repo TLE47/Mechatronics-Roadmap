@@ -11,6 +11,52 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 157: axe Found Three Real Bugs, and the Bundle Gets a Ceiling
+
+The plan's last two gates were "an axe run over the tabs" and "a weight budget". Both exist now, and
+the first one immediately found three things a screenshot could not: **every slider on all seven lab
+tabs had no accessible name** (22 inputs — a screen reader announced "slider" and a number, on the
+control each lab is built around), **the header's brand link reworded itself** in an `aria-label` that
+did not contain the words on screen (WCAG 2.5.3), and **the editor's scroll region could not be
+reached by keyboard** at all, so paging through a long file without moving the caret was impossible.
+All three are fixed in this run, not allowlisted: names on the sliders, a screen-reader-only ", back
+to top" on the brand link, and a tab stop on the CodeMirror scroller.
+
+**`npm run check:axe`** (new) walks the same eleven tabs the theme suite walks, in both palettes,
+with `axe-core` injected into the page. `serious` and `critical` findings fail; `minor` and `moderate`
+are reported (46 of them: `page-has-heading-one`, `region`, `heading-order`), because a gate that
+fails on a landmark suggestion is a gate people switch off. `color-contrast` is deliberately left to
+`test:theme:e2e`, which composites the real ancestor stack and fails below 3:1 on all 22 tab/theme
+pairs — two contrast gates that disagree would make the accurate one look wrong.
+`docs/a11y-allowlist.json` is the sanctioned way to leave something unfixed, and it is a ratchet in
+three directions: an unlisted finding fails, an entry that fires on more nodes than it recorded
+fails, and **an entry that no longer fires fails as stale** — an exception nobody deleted is how a
+gate quietly stops covering anything. It is empty today.
+
+**`npm run check:weight`** (new) reads the built bundle and compares gzipped bytes against
+`docs/weight-budget.json`: `js_gzip`, `css_gzip`, `fonts` (counted raw, because woff2 is already
+compressed), `largest_js_gzip` (the total can stay flat while one chunk doubles) and `total`. Today's
+bundle is **937.8 kB gzipped** across 16 files, and the budgets sit 8% above that. Two rules make it
+a gate: a metric over its budget fails with the overshoot named, and **a budget with nothing measured
+behind it also fails** — a metric the build stopped emitting would otherwise pass forever by being
+absent. `og.png` (370 kB) is out of scope: no page fetches it, and a budget that counted it would
+move whenever the social card is redrawn.
+
+- `npm run test:weight` (**10 checks**, new): under budget, exactly at it, one byte over, a budget
+  with nothing measured, the tightest metric, nothing measured at all, a metric outside the budget
+  list, and the measurement itself (what counts as js, css, a font, the largest chunk, the no-js
+  case, the formatting).
+- `npm run check:axe` proven in both directions on the machine: with one slider's `aria-label`
+  removed it fails with `new violation label (critical)` naming `input[min="0.02"]`; with a stale
+  allowlist entry it fails with *no longer fires*; restored, both pass.
+- `npm run check:weight` proven the same way: with `js_gzip` lowered to 500 kB it fails naming
+  `619.7 kB … over by 119.7 kB (+24%)`; restored, it passes.
+- CI grows two steps in `build-workbench` (weight after the build, axe after the Playwright install),
+  `test:workbench` now runs **33 suites**, and `package-lock.json` carries `axe-core` as a dev
+  dependency — the only new dependency, and a dev one.
+- `docs/PLAN-2.0-GAP.md`'s CI-rigour row and its next list record both gates, and the next item is
+  the 614 kB single chunk.
+
 ## [2026-10-21] — Run 156: The Fortnight as One Page
 
 Every surface in the app answered a question about *one* lesson: the runner's attempts, the resume

@@ -234,6 +234,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
             </div>
             <input
               type="range"
+              aria-label="Flexure minimum web thickness, millimetres"
               min="0.30"
               max="1.20"
               step="0.05"
@@ -250,6 +251,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
             </div>
             <input
               type="range"
+              aria-label="Capstone I phase current, amperes RMS"
               min="5.0"
               max="30.0"
               step="1.0"
@@ -266,6 +268,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
             </div>
             <input
               type="range"
+              aria-label="SVPWM frequency, kilohertz"
               min="16"
               max="80"
               step="4"
@@ -286,6 +289,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
             <input
               id="sl-pcbl"
               type="range"
+              aria-label="Loop inductance, nanohenries"
               min="0.8"
               max="6.0"
               step="0.2"
@@ -302,6 +306,7 @@ export const TabCadPcb: React.FC<TabCadPcbProps> = ({ onLoadPreset, highlightedI
             </div>
             <input
               type="range"
+              aria-label="Burst length, milliseconds at this current"
               min="5"
               max="10000"
               step="5"

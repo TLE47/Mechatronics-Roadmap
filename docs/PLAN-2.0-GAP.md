@@ -66,13 +66,15 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Offline PWA | `sw.js` precaches the shell, manifest and favicon, serves same-origin assets cache-first with a background refresh, falls back to the cached document for any navigation, and caches the Pyodide runtime the module worker loads. **Take this step offline** ([`app/src/offlineTakeAlong.ts`](../app/src/offlineTakeAlong.ts), `npm run test:takealong`): one press sends the worker this document's own script/link URLs, warms the runtime, and reports the measured cost (`Offline ready · 8.0 MB · 16 files`), and the offline suite now starts from that press with no lesson run first. `npm run test:offline` serves the bundle with no host headers, then goes offline: reload, deep link, and a lesson run to its verdict from the cache. The manifest is installable. | **ships** |
 | Themes, contrast, reduced motion, keyboard | Dark and light from one token set, every tab measured for contrast in both modes in CI (`npm run test:theme:e2e`), reduced-motion branch, visible focus ring. No high-contrast, no paper theme, no keymap (Vim/Emacs), no screen-reader announcements for run results. | **partial** |
 | Share links, "ask for help", pair study | None. | **missing** |
-| CI rigour (workers, E2E, budgets) | 29 repository gates plus 32 workbench suites on one dev server and one built bundle, including the real-browser worker suite, the trail, and a Pages-bundle sweep that fails if a starter verifies. No Lighthouse budget, no axe run, no visual-regression snapshots. | **partial** |
+| CI rigour (workers, E2E, budgets) | 29 repository gates plus 33 workbench suites on one dev server and one built bundle, including the real-browser worker suite, the trail, and a Pages-bundle sweep that fails if a starter verifies. **Both budgets ship**: `npm run check:axe` runs axe-core over all 11 tabs in both themes and fails on any serious/critical finding that `docs/a11y-allowlist.json` does not explain (empty, and stale entries fail); `npm run check:weight` holds the gzipped bundle to `docs/weight-budget.json` and fails on a breach *or* on a budget nothing measures. On its first run it found 22 unnamed sliders, a brand link whose name reworded what is on screen, and an editor scroll region no keyboard could reach — all fixed, none allowlisted. No Lighthouse run and no visual-regression snapshots; wall-clock timings are deliberately not gated, because CI variance is larger than any regression this app could ship. | **partial** |
 
 ## What to build next, in order
 
-1. **Accessibility and weight budgets** — CI measures contrast and the Pages bundle, but nothing runs
-   axe over the tabs or fails the build when the workbench gets slower; both are gates rather than
-   opinions, and the plan asks for them by name.
+1. **One chunk, 614 kB** — the weight gate's `largest_js_gzip` says the app ships as a single
+   compressed chunk: React, CodeMirror, KaTeX and the Supabase client arrive on a first visit to a
+   page that needs none of them until a lesson is opened. Splitting the tabs behind `React.lazy` and
+   the editor behind the runner is the change that shows in the budget, and the budget is now the
+   proof it worked.
 2. **The trail as a study input** — the timeline now says what happened; the next question it can
    answer is what to do with it: a week that only ever opened lessons, a lesson that took nine runs,
    a day with no review. That is a reading of the same data, not a new store.

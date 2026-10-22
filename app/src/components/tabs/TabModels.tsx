@@ -200,6 +200,7 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
             </div>
             <input
               type="range"
+              aria-label="Joint 1, degrees"
               min="-90"
               max="90"
               step="1"
@@ -217,6 +218,7 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
             <input
               id="sl-rq2"
               type="range"
+              aria-label="Joint 2, degrees"
               min="-120"
               max="90"
               step="1"
@@ -233,6 +235,7 @@ export const TabModels: React.FC<TabModelsProps> = ({ onLoadPreset, highlightedI
             </div>
             <input
               type="range"
+              aria-label="Joint 3, degrees"
               min="-135"
               max="135"
               step="1"

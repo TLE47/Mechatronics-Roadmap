@@ -87,11 +87,13 @@ export const Header: React.FC<HeaderProps> = ({
       }}
     >
       <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
-        {/* Zone 1: brand lockup. The mark is the arm a learner is working towards. */}
+        {/* Zone 1: brand lockup. The mark is the arm a learner is working towards. The link's name
+            is its own text plus a screen-reader-only tail: an `aria-label` that rewords it ("MechaLab
+            Workbench, back to top") does not *contain* what is drawn, which WCAG 2.5.3 fails — the
+            name has to be the visible words, with the purpose added to them, not written over them. */}
         <a
           href="#top"
           className="group flex shrink-0 items-center gap-2.5 whitespace-nowrap no-underline"
-          aria-label="MechaLab Workbench, back to top"
         >
           <ArmMark />
           <span className="flex flex-col leading-none">
@@ -108,6 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
               Workbench
             </span>
           </span>
+          <span className="sr-only">, back to top</span>
         </a>
 
         {/* Zone 2: four course-level links, underlined when active. */}

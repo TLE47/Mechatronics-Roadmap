@@ -212,6 +212,7 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
             </div>
             <input
               type="range"
+              aria-label="Excited harmonics"
               min="8"
               max="64"
               step="4"
@@ -228,6 +229,7 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
             </div>
             <input
               type="range"
+              aria-label="Measurement noise level"
               min="0.00"
               max="0.35"
               step="0.01"
@@ -244,6 +246,7 @@ export const TabSysId: React.FC<TabSysIdProps> = ({ onLoadPreset, highlightedId,
             </div>
             <input
               type="range"
+              aria-label="Averaged periods"
               min="1"
               max="24"
               step="1"
