@@ -74,6 +74,7 @@ import { findDefinition } from '../../symbolIndex';
 import { cellPrefix } from '../../editor/cells';
 import {
   LAYOUTS,
+  layoutArrangement,
   layoutShortcutFor,
   layoutShows,
   readLayout,
@@ -1530,7 +1531,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setHeldRun(null);
   };
 
-  // ⌥1/⌥2/⌥3 pick a layout, from anywhere including inside the editor. The buttons in the editor's
+  // ⌥1–⌥4 pick a layout, from anywhere including inside the editor. The buttons in the editor's
   // header are the discoverable path; this is the shortcut the buttons print.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -2154,15 +2155,27 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </div>
         </div>
 
-        {/* Right Main Area: Lesson Ideas, Code Editor, Hints & Output Diff */}
+        {/* Right Main Area: Lesson Ideas, Code Editor, Hints & Output Diff.
+            Split puts the editor and everything that reports on it in two columns — one above the
+            other is right for a laptop, wrong for a screen wide enough to show both at once, where
+            the verdict is otherwise scrolled off the moment the line it is about is in view. */}
         <div
           data-focus-expand
           // Eight of twelve beside the chooser, all twelve when the chooser is hidden.
           style={{ gridColumn: layoutShows(layout, 'list') ? undefined : '1 / -1' }}
-          className="lg:col-span-8 space-y-4"
+          data-layout={layout}
+          className={
+            layoutArrangement(layout) === 'columns'
+              ? 'lg:col-span-8 grid gap-4 lg:grid-cols-2 items-start'
+              : 'lg:col-span-8 space-y-4'
+          }
         >
-          {/* Active Lesson Metadata Card */}
-          <div className="bg-panel border border-line rounded-xl p-4">
+          {/* Active Lesson Metadata Card. Spans both columns when there are two: it describes the
+              lesson the editor and the results are both about. */}
+          <div
+            className="bg-panel border border-line rounded-xl p-4"
+            style={layoutArrangement(layout) === 'columns' ? { gridColumn: '1 / -1' } : undefined}
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 {/* Whole items wrap; none of them breaks inside a word. Before this, the row was a
@@ -3117,6 +3130,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             )}
           </div>
 
+          {/* Everything that reports on the editor. One wrapper, because Split's second column is
+              exactly this block: the checker, the trace, the scope and the output describe the code,
+              and a preset that moved only half of them would put a verdict beside nothing. */}
+          <div className="space-y-4" data-testid="results-column">
           {/* What the checker saw. Absent when there is nothing to say, because a green "0 notes"
               strip under every lesson is furniture, not information. */}
           {(lintNotes.length > 0 || analysisNotice) && (
@@ -3291,10 +3308,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           {/* The run trace: the last run replayed step by step, beside the output it explains. A
               recording, so it is gone when an edit makes it describe a program that no longer exists. */}
-          <div
-            className="mt-4"
-            style={{ display: layoutShows(layout, 'results') ? undefined : 'none' }}
-          >
+          <div style={{ display: layoutShows(layout, 'results') ? undefined : 'none' }}>
             <TracePanel
               trace={trace}
               step={traceStep}
@@ -3310,7 +3324,6 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             pinned={pinnedScope}
             onPin={() => setPinnedScope(scopeSeries)}
             onUnpin={() => setPinnedScope(null)}
-            className="mt-4"
           />
 
           {/* Output & Expected Output Side-by-Side Diff */}
@@ -3318,7 +3331,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             data-testid="results-panel"
             // Write hides the last run's output: while drafting, it describes code that has changed.
             style={{ display: layoutShows(layout, 'results') ? undefined : 'none' }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            // Split already spends half the screen on this block: two cards inside one column of it
+            // would be two 20-character panels. They stack there and sit side by side everywhere else.
+            className={
+              layoutArrangement(layout) === 'columns'
+                ? 'grid grid-cols-1 gap-4'
+                : 'grid grid-cols-1 md:grid-cols-2 gap-4'
+            }
           >
             <div className="bg-panel border border-line rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
@@ -3441,6 +3460,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </p>
               )}
             </div>
+          </div>
           </div>
         </div>
       </div>

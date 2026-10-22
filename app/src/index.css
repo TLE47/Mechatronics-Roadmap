@@ -516,6 +516,25 @@ body {
   grid-column: 1 / -1;
 }
 
+/* ----------------------------------------------------------------------------
+   The Split preset: the editor in the first column, the results in the second.
+
+   The container is a two-column grid at the `lg` breakpoint (`lg:grid-cols-2` on the runner's work
+   area); every card in it describes both halves, so each one spans the row except the two that are
+   the halves. Pinning them by placement rather than by document order is what keeps the cards
+   between them — the predict gate, a share banner — from pushing the editor into the second
+   column. These rules are inert below `lg`, where there is no grid to place anything in.
+   ---------------------------------------------------------------------------- */
+[data-layout='split'] > * {
+  grid-column: 1 / -1;
+}
+[data-layout='split'] > [data-testid='editor-panel'] {
+  grid-column: 1;
+}
+[data-layout='split'] > [data-testid='results-column'] {
+  grid-column: 2;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

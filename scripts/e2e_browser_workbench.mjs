@@ -870,11 +870,59 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'true',
       'the remembered preset is the one the buttons report'
     );
+    // ⌥4 is the fourth arrangement the plan asked for: the editor and the results beside each other,
+    // not stacked. Pinned as a real two-column grid, because a preset that only stopped hiding the
+    // results would look identical while scrolling between them.
     await page.keyboard.press('Alt+1');
     assert.equal(await visible('editor-panel'), true, '⌥1 brings the editor back');
     assert.equal(await visible('lesson-list-card'), true, '⌥1 brings the chooser back');
     assert.equal(await visible('results-panel'), true, '⌥1 brings the results back');
-    console.log('  ok ⌥1–⌥3 choose which regions are on screen, and the choice is remembered');
+    // Structure, not computed style: this dev server resolves the config without the Tailwind
+    // plugin, so utility classes have no rules here at all (`display` reads `block` even on a
+    // `grid` container). The built bundle, where the utilities exist, is where the columns are
+    // measured — `scripts/e2e_pages_bundle.mjs`.
+    assert.equal(
+      await page.getByTestId('layout-study').getAttribute('aria-pressed'),
+      'true',
+      'Study is the preset in force before Split'
+    );
+    await page.keyboard.press('Alt+4');
+    assert.equal(
+      await page.getByTestId('layout-split').getAttribute('aria-pressed'),
+      'true',
+      'the Split button must follow the shortcut'
+    );
+    assert.equal(await visible('lesson-list-card'), false, '⌥4 hides the chooser, as the plan asks');
+    assert.equal(await visible('editor-panel'), true, '⌥4 keeps the editor');
+    assert.equal(await visible('results-panel'), true, '⌥4 keeps the results');
+    // Split's two columns are a grid on this container; the editor must still come first in the
+    // DOM, so the second column is the results.
+    const arrangement = await page.evaluate(() => {
+      const box = document.querySelector('[data-layout]');
+      const editor = document.querySelector('[data-testid="editor-panel"]');
+      const results = document.querySelector('[data-testid="results-panel"]');
+      return {
+        layout: box.getAttribute('data-layout'),
+        className: box.className,
+        editorFirst:
+          !!(editor && results) &&
+          !!(editor.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING),
+      };
+    });
+    assert.equal(arrangement.layout, 'split', 'the work area must report the Split preset');
+    assert.match(
+      arrangement.className,
+      /\blg:grid-cols-2\b/,
+      'Split must ask for two columns at the wide breakpoint'
+    );
+    assert.equal(
+      arrangement.editorFirst,
+      true,
+      'Split must put the editor first, so the results land in the second column'
+    );
+    await page.getByTestId('layout-study').click();
+    assert.equal(await visible('lesson-list-card'), true, 'the Study button comes back');
+    console.log('  ok ⌥1–⌥4 choose the regions and their arrangement, and the choice is remembered');
 
     // 5e. `# %%` cells: a marker draws a "Run to here" button, and the button runs the document
     //     *through* that cell and no further — ungraded, so it neither verifies the lesson nor

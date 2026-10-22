@@ -10,17 +10,20 @@
  *    the work area, and while drafting an answer they are a mirror of code that has already changed.
  *  - **Read** — the results, with the editor out of the way: a learner rereading a traceback on a
  *    laptop should not scroll past 300 px of code to see where it stopped.
- *
- * Three, not the plan's four: the work area stacks the editor over the results rather than setting
- * them side by side, so there is no fourth arrangement to name. Docking, an activity bar and a
- * side-by-side split are still absent and stay listed as such.
+ *  - **Split** — the editor on the left, the results on the right. The plan's fourth arrangement, and
+ *    the one a wide screen has been asking for since Read shipped: at 1440 px the stacked work area
+ *    shows the code and the output one above the other, so a run's verdict sits off-screen while the
+ *    line it is about is in view. Docking, an activity bar and a draggable divider are still absent.
  *
  * The rules are a table, and the table is the whole module, which is why it is here rather than
  * inline in the runner: what a preset *hides* is the thing that is wrong when a button produces a
  * blank screen, and it is trivial to pin without a browser (`npm run test:layout`).
  */
 
-export type WorkspaceLayout = 'study' | 'write' | 'read';
+export type WorkspaceLayout = 'study' | 'write' | 'read' | 'split';
+
+/** How the regions that are left are arranged on a wide screen: one column, or two. */
+export type WorkspaceArrangement = 'stack' | 'columns';
 
 /** The regions a preset can hide. `list` and `editor` are single elements; `results` is the output. */
 export type WorkspaceRegion = 'list' | 'editor' | 'results';
@@ -32,6 +35,8 @@ export interface LayoutOption {
   shortcut: string;
   /** What the button promises, for a reader who hovers or listens to a screen reader. */
   title: string;
+  /** Which way the remaining regions sit once the width is wide enough for two. */
+  arrangement: WorkspaceArrangement;
 }
 
 export const LAYOUTS: LayoutOption[] = [
@@ -40,18 +45,28 @@ export const LAYOUTS: LayoutOption[] = [
     label: 'Study',
     shortcut: '⌥1',
     title: 'Study layout (⌥1): the lesson list, the editor and the results',
+    arrangement: 'stack',
   },
   {
     id: 'write',
     label: 'Write',
     shortcut: '⌥2',
     title: 'Write layout (⌥2): the editor only — the lesson list and the results are hidden',
+    arrangement: 'stack',
   },
   {
     id: 'read',
     label: 'Read',
     shortcut: '⌥3',
     title: 'Read layout (⌥3): the results only — the editor and the lesson list are hidden',
+    arrangement: 'stack',
+  },
+  {
+    id: 'split',
+    label: 'Split',
+    shortcut: '⌥4',
+    title: 'Split layout (⌥4): the editor on the left and the results on the right, side by side',
+    arrangement: 'columns',
   },
 ];
 
@@ -63,10 +78,23 @@ const SHOWN: Record<WorkspaceLayout, Record<WorkspaceRegion, boolean>> = {
   study: { list: true, editor: true, results: true },
   write: { list: false, editor: true, results: false },
   read: { list: false, editor: false, results: true },
+  // Split hides one thing (the chooser) and arranges the rest in two columns.
+  split: { list: false, editor: true, results: true },
 };
 
 export function isLayout(value: unknown): value is WorkspaceLayout {
-  return value === 'study' || value === 'write' || value === 'read';
+  return value === 'study' || value === 'write' || value === 'read' || value === 'split';
+}
+
+/**
+ * How the regions a preset keeps are laid out.
+ *
+ * A separate question from *which* regions show: Split shows the same two as a stacked Study with the
+ * chooser hidden, and the whole difference is the container's grid. Keeping the two rules apart is
+ * what lets the tests pin them apart.
+ */
+export function layoutArrangement(layout: WorkspaceLayout): WorkspaceArrangement {
+  return LAYOUTS.find((option) => option.id === layout)?.arrangement ?? 'stack';
 }
 
 /** Does this preset show that region? The one function the runner's three `display` rules call. */

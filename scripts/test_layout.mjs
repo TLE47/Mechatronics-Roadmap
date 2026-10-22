@@ -23,6 +23,7 @@ import {
   DEFAULT_LAYOUT,
   LAYOUTS,
   STORAGE_KEY_LAYOUT,
+  layoutArrangement,
   layoutShortcutFor,
   layoutShows,
   readLayout,
@@ -57,14 +58,14 @@ const REGIONS = ['list', 'editor', 'results'];
 
 console.log('layout presets');
 
-check('three presets, each printing its own shortcut', () => {
+check('four presets, each printing its own shortcut', () => {
   assert.deepEqual(
     LAYOUTS.map((option) => option.id),
-    ['study', 'write', 'read']
+    ['study', 'write', 'read', 'split']
   );
   assert.deepEqual(
     LAYOUTS.map((option) => option.shortcut),
-    ['⌥1', '⌥2', '⌥3']
+    ['⌥1', '⌥2', '⌥3', '⌥4']
   );
   for (const option of LAYOUTS) {
     assert.ok(option.label.length > 0, `${option.id} needs a label for its button`);
@@ -76,6 +77,20 @@ check('the table: what each preset shows', () => {
   assert.deepEqual(REGIONS.filter((r) => layoutShows('study', r)), ['list', 'editor', 'results']);
   assert.deepEqual(REGIONS.filter((r) => layoutShows('write', r)), ['editor']);
   assert.deepEqual(REGIONS.filter((r) => layoutShows('read', r)), ['results']);
+  // Split is the only preset that hides one region and shows the other two in two columns.
+  assert.deepEqual(REGIONS.filter((r) => layoutShows('split', r)), ['editor', 'results']);
+});
+
+check('the arrangement is a separate rule: only Split puts the work beside itself', () => {
+  assert.deepEqual(
+    LAYOUTS.map((option) => [option.id, layoutArrangement(option.id)]),
+    [
+      ['study', 'stack'],
+      ['write', 'stack'],
+      ['read', 'stack'],
+      ['split', 'columns'],
+    ]
+  );
 });
 
 check('no storage at all reads as the default', () => {
@@ -127,10 +142,12 @@ check('the shortcut is the physical key, so ⌥2 works where it types ™', () =
   assert.equal(layoutShortcutFor('Digit1'), 'study');
   assert.equal(layoutShortcutFor('Digit2'), 'write');
   assert.equal(layoutShortcutFor('Digit3'), 'read');
+  assert.equal(layoutShortcutFor('Digit4'), 'split');
   assert.equal(layoutShortcutFor('1'), 'study');
   assert.equal(layoutShortcutFor('3'), 'read');
-  assert.equal(layoutShortcutFor('Digit4'), null, 'there is no fourth preset');
-  assert.equal(layoutShortcutFor('4'), null);
+  assert.equal(layoutShortcutFor('4'), 'split');
+  assert.equal(layoutShortcutFor('Digit5'), null, 'there is no fifth preset');
+  assert.equal(layoutShortcutFor('5'), null);
   assert.equal(layoutShortcutFor('KeyQ'), null);
   assert.equal(layoutShortcutFor('Digit12'), null);
   assert.equal(layoutShortcutFor(''), null);

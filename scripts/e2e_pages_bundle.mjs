@@ -701,6 +701,53 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     // each one must reject its starter and verify its own reference on the built bundle.
     await gradeRampEntries(page, name);
 
+    // Split (⌥4) is the one preset that is an *arrangement* and not only a set of hidden regions:
+    // the editor on the left, the results on the right. Measured here, on the built bundle, because
+    // the two columns are Tailwind utilities and the dev server the workbench suites share resolves
+    // its config without the Tailwind plugin — there `display` reads `block` on the same container.
+    const wideContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await wideContext.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
+    const wide = await wideContext.newPage();
+    await wide.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
+    await wide.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
+    await wide.getByTestId('tab-btn-tab-pyodide').click();
+    await wide.getByTestId('lesson-item-06.1').click();
+    await wide.waitForSelector('[data-editor="editor-main"] .cm-content', { state: 'visible', timeout: 10000 });
+    // The shortcut, not the button: ⌥4 is how a learner changes preset without leaving the editor.
+    await wide.keyboard.press('Alt+4');
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'split',
+      undefined,
+      { timeout: 5000 }
+    );
+    const split = await wide.evaluate(() => {
+      const box = document.querySelector('[data-layout]');
+      const editor = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
+      const results = document.querySelector('[data-testid="results-panel"]').getBoundingClientRect();
+      return {
+        columns: getComputedStyle(box).gridTemplateColumns.split(' ').length,
+        editorWidth: Math.round(editor.width),
+        editorRight: Math.round(editor.right),
+        resultsLeft: Math.round(results.left),
+      };
+    });
+    assert.equal(split.columns, 2, `${name}: ⌥4 must lay the work area out in two columns`);
+    assert.ok(
+      split.resultsLeft >= split.editorRight,
+      `${name}: Split must put the results beside the editor, but the editor runs to ${split.editorRight}px ` +
+        `and the results start at ${split.resultsLeft}px`
+    );
+    assert.ok(
+      split.editorWidth > 320,
+      `${name}: Split's editor column is ${split.editorWidth}px, too narrow to type in at 1440px`
+    );
+    console.log(
+      `  ok ${name}: ⌥4 puts the results beside the editor (editor ${split.editorWidth}px, results from ${split.resultsLeft}px)`
+    );
+    await wide.close();
+
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
     // must fit the viewport - the header used to push a 249px horizontal overflow here, so a page
     // that scrolls sideways is a failure, not a note.

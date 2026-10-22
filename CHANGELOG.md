@@ -11,6 +11,34 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 179: Split, the Fourth Preset
+
+`docs/PLAN-2.0-GAP.md`'s workspace row asked for layout presets beside dockable panels. Three shipped
+in Run 173; **Split** is the fourth, and the only one that is an *arrangement* rather than a set of
+hidden regions: the editor in the first column, everything that reports on it in the second
+([`app/src/workspaceLayout.ts`](app/src/workspaceLayout.ts), browser step 5d,
+`npm run test:e2e:pages`).
+
+| Decision | Why |
+| :--- | :--- |
+| Two rules kept apart — *which* regions a preset shows, *how* the ones left are arranged | Split shows the same two regions as a Study with the chooser hidden, so a table that conflated them could not pin either |
+| The columns are pinned **by placement**, not by document order | The predict gate, a share banner or a checker strip sits between the editor and the results; in document order the editor landed in the second column. `[data-layout='split']`'s children span the row, and the two halves name their column |
+| The second column is one wrapper — checker, trace, scope, output | A preset that moved only the output would put a verdict beside nothing |
+| Columns from `lg`, stacking below it | A 375 px phone is not asked to split two 180 px columns |
+| `KeyboardEvent.code`, not `key` | `⌥2` types `™` on a Mac, so the shortcut is the physical key |
+
+**A gate that was measuring nothing.** The two columns are Tailwind utilities, and the dev server the
+workbench suites share resolves the config **without the Tailwind plugin** — `display` reads `block`
+on that container, so the first assertion written against it could only ever fail, and the ``stacked``
+assertion before it had been passing vacuously (`gridTemplateColumns` is `none` on a non-grid). The
+dev step now pins the structure and the built-bundle suite presses `⌥4` at 1440 px and measures two
+grid tracks with the results starting where the editor ends.
+
+Verified: `npm run test:layout` 8/8, browser step 5d, `npm run test:e2e:pages` (two columns
+692 + 692 px, results from 728 px), `npm run test:workbench`, `npm run check:weight`.
+
+---
+
 ## [2026-10-22] — Run 178: The Run Trace, and the Warning That Was Ours
 
 `docs/PLAN-2.0-GAP.md`'s last **missing** row was *"debugger + time travel"*. Pyodide runs a program
