@@ -834,6 +834,48 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a name nothing defines is named in the file strip');
 
+    // 5d. Layout presets: ⌥1–⌥3 decide which regions the screen gives its width to, the buttons say
+    //     which one is on, and the choice outlives a reload. The shortcut is read from `event.code`,
+    //     because ⌥2 types ™ in `event.key` on a Mac.
+    const visible = (testid) => page.getByTestId(testid).isVisible();
+    assert.equal(await visible('lesson-list-card'), true, 'Study shows the lesson chooser');
+    assert.equal(await visible('editor-panel'), true, 'Study shows the editor');
+    assert.equal(await visible('results-panel'), true, 'Study shows the results');
+    assert.equal(
+      await page.getByTestId('layout-study').getAttribute('aria-pressed'),
+      'true',
+      'the preset in force must say so'
+    );
+    await page.keyboard.press('Alt+2');
+    assert.equal(await visible('lesson-list-card'), false, '⌥2 hides the lesson chooser');
+    assert.equal(await visible('results-panel'), false, '⌥2 hides the last run’s output');
+    assert.equal(await visible('editor-panel'), true, '⌥2 keeps the editor');
+    assert.equal(
+      await page.getByTestId('layout-write').getAttribute('aria-pressed'),
+      'true',
+      'the button must follow the shortcut'
+    );
+    await page.keyboard.press('Alt+3');
+    assert.equal(await visible('editor-panel'), false, '⌥3 hides the editor');
+    assert.equal(await visible('results-panel'), true, '⌥3 keeps the results');
+    assert.equal(await visible('lesson-list-card'), false, '⌥3 keeps the chooser hidden');
+    // Read is a click here, so the button path is pinned as well as the shortcut.
+    await page.getByTestId('layout-read').click();
+    assert.equal(await visible('editor-panel'), false, 'the Read button hides the editor');
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForEditor(page, 'editor-main');
+    assert.equal(await visible('editor-panel'), false, 'a remembered preset survives the reload');
+    assert.equal(
+      await page.getByTestId('layout-read').getAttribute('aria-pressed'),
+      'true',
+      'the remembered preset is the one the buttons report'
+    );
+    await page.keyboard.press('Alt+1');
+    assert.equal(await visible('editor-panel'), true, '⌥1 brings the editor back');
+    assert.equal(await visible('lesson-list-card'), true, '⌥1 brings the chooser back');
+    assert.equal(await visible('results-panel'), true, '⌥1 brings the results back');
+    console.log('  ok ⌥1–⌥3 choose which regions are on screen, and the choice is remembered');
+
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
     await page.getByTestId('btn-load-solution').click();

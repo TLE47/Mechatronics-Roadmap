@@ -11,6 +11,42 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 173: The Screen Gives Its Width to One Thing
+
+`docs/PLAN-2.0-GAP.md` called this row **missing** outright: *"one fixed two-column layout per tab; no
+docking, no presets."* Docking is a framework; a preset is a decision about which region deserves the
+screen right now, and the workbench only ever offered one answer. There are now three, on `⌥1`–`⌥3` or
+three buttons, remembered across a reload ([`app/src/workspaceLayout.ts`](app/src/workspaceLayout.ts),
+`npm run test:layout`, browser step 5d):
+
+| Preset | Shows |
+| :--- | :--- |
+| **Study** `⌥1` | the lesson chooser, the editor and the results — what the tab opens as |
+| **Write** `⌥2` | the editor alone; the chooser and the last run's output are hidden |
+| **Read** `⌥3` | the results, with the editor and chooser out of the way |
+
+**Three, not the plan's four.** The work area stacks the editor over the results rather than setting
+them side by side, so there is no fourth arrangement to name — and inventing one ("everything
+hidden") would be a preset whose only promise is an empty screen. Docking, an activity bar and a true
+split are still listed as absent.
+
+**Where the buttons go is a decision the test made.** The first draft put them in the editor's own
+header, beside the file tabs — where they belong by subject. The browser step then failed with
+*"element is not visible"*: **Read hides the editor**, so the control that got you into Read was the
+one control Read removed, and the only way out was a shortcut. They now sit in the lesson card's
+toolbar, which no preset hides.
+
+**`⌥2` is `™` on a Mac.** Option composes a character, so `event.key` for the second preset is not
+`2` at all; the handler reads `event.code` (`Digit2`) first and falls back to `key`. The unit suite
+pins both spellings, refuses `Digit4`, and checks the two ways storage fails: a value that is not a
+preset (`'grid'` from an older build) reads as the default rather than blanking the page, and a store
+that throws on read or write costs the memory of the choice, never the toggle.
+
+**Verified.** `npm run test:layout` is **7 checks**; browser step 5d drives `Alt+2`, `Alt+3`, the Read
+button, a reload that keeps the preset, and `Alt+1` back to Study. `npm run lint` is clean,
+`npm run test:workbench` runs **45 suites**, `npm run check:axe` clears 11 tabs × 3 palettes,
+`check_all.py` is 29/29, and the build is **960.8 kB** gzipped (+0.6 kB), every budget intact.
+
 ## [2026-10-22] — Run 172: A Jump to the Line That Defines It
 
 `docs/PLAN-2.0-GAP.md`'s predict row ended with *"try-it blocks and symbol linking are still absent."*

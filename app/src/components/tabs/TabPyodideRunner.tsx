@@ -62,6 +62,14 @@ import { MAX_SHARE_URL, shareUrl, type SharedAttempt } from '../../shareLink';
 import { inlineValuesFor, readRunValues } from '../../inlineValues';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
+import {
+  LAYOUTS,
+  layoutShortcutFor,
+  layoutShows,
+  readLayout,
+  writeLayout,
+  type WorkspaceLayout,
+} from '../../workspaceLayout';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
@@ -199,6 +207,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The name F12 was pressed on when nothing in the lesson defines it. Said in the file strip, which
   // is already there, rather than in a toast the learner has to dismiss.
   const [symbolMiss, setSymbolMiss] = useState<string | null>(null);
+  // Which of the three regions the screen gives its width to (`workspaceLayout.ts`). Read once at
+  // mount: it is a preference, and a reload is the only thing that changes it from outside.
+  const [layout, setLayout] = useState<WorkspaceLayout>(() => readLayout());
   const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
   // Named groups the roadmap also uses; the old "Step 1 / Steps 3-5 / Steps 6-10" numbering was a
   // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
@@ -1362,6 +1373,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setHeldRun(null);
   };
 
+  // ⌥1/⌥2/⌥3 pick a layout, from anywhere including inside the editor. The buttons in the editor's
+  // header are the discoverable path; this is the shortcut the buttons print.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || !event.altKey || event.metaKey || event.ctrlKey) return;
+      // The code first: ⌥2 is `™` in `key` on a Mac, and the shortcut is the physical key.
+      const next = layoutShortcutFor(event.code) ?? layoutShortcutFor(event.key);
+      if (!next) return;
+      event.preventDefault();
+      setLayout(writeLayout(next));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   // ⌘↵ / Ctrl+↵ runs from anywhere on this screen, including inside the editor. The button stays
   // the discoverable path; this is the one keyboard habit a code editor trains.
   const runShortcutRef = useRef<() => void>(() => {});
@@ -1857,6 +1883,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           // Focus mode hides the list: choosing a different lesson while working on this one is the
           // other task the mode exists to keep out. `data-focus-expand` on the pane gives it the row.
           data-chrome="lesson-list"
+          // Write and Read give the work area the whole width: the list is a chooser, and once the
+          // lesson is chosen it is the one column a learner is not looking at.
+          style={{ display: layoutShows(layout, 'list') ? undefined : 'none' }}
           className="lg:col-span-4 bg-panel border border-line rounded-xl p-4 flex flex-col max-h-[760px]"
         >
           {/* Search Input */}
@@ -1969,7 +1998,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         </div>
 
         {/* Right Main Area: Lesson Ideas, Code Editor, Hints & Output Diff */}
-        <div data-focus-expand className="lg:col-span-8 space-y-4">
+        <div
+          data-focus-expand
+          // Eight of twelve beside the chooser, all twelve when the chooser is hidden.
+          style={{ gridColumn: layoutShows(layout, 'list') ? undefined : '1 / -1' }}
+          className="lg:col-span-8 space-y-4"
+        >
           {/* Active Lesson Metadata Card */}
           <div className="bg-panel border border-line rounded-xl p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -2039,6 +2073,35 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                {/* The presets live on this card, not in the editor's own header: Read hides that
+                    header, and a control that disappears with the panel it governs is a trap. A
+                    shortcut with no control is a feature only its author knows, so the shortcut is
+                    printed on the button. */}
+                <div
+                  role="group"
+                  aria-label="Layout"
+                  data-testid="layout-presets"
+                  className="flex items-center gap-1 mr-1"
+                >
+                  {LAYOUTS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={layout === option.id}
+                      title={option.title}
+                      data-testid={`layout-${option.id}`}
+                      onClick={() => setLayout(writeLayout(option.id))}
+                      className={`px-2 py-1 rounded text-[10.5px] font-mono cursor-pointer border transition-colors ${
+                        layout === option.id
+                          ? 'bg-accent text-inverse border-accent font-bold'
+                          : 'bg-canvas text-muted hover:text-ink border-line-soft'
+                      }`}
+                    >
+                      {option.label}
+                      <span className="ml-1 opacity-70">{option.shortcut}</span>
+                    </button>
+                  ))}
+                </div>
                 <button
                   onClick={() => toggleLessonSelfMarked(currentLesson.id)}
                   data-testid="btn-toggle-lesson-complete"
@@ -2735,6 +2798,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div
             ref={editorPanelRef}
             id="python-runner-editor"
+            data-testid="editor-panel"
+            // Read hides the editor rather than shrinking it: a traceback is what that preset is for.
+            style={{ display: layoutShows(layout, 'editor') ? undefined : 'none' }}
             className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
           >
             <div className="bg-canvas border-b border-line-soft flex flex-wrap items-center justify-between gap-2 px-3 py-1.5">
@@ -3012,7 +3078,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           />
 
           {/* Output & Expected Output Side-by-Side Diff */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            data-testid="results-panel"
+            // Write hides the last run's output: while drafting, it describes code that has changed.
+            style={{ display: layoutShows(layout, 'results') ? undefined : 'none' }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
             <div className="bg-panel border border-line rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-mono text-muted">

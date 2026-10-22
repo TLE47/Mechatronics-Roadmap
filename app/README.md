@@ -505,6 +505,14 @@ top-level assignment, first occurrence wins — and an attribute (`z.real`) is d
 jumping to an unrelated `real`. A name nothing defines is not a dead key: the file strip says
 `no definition for <name>` ([`src/symbolIndex.ts`](src/symbolIndex.ts), `npm run test:symbols`).
 
+**The screen gives its width to one thing at a time, if you ask it to.** Three presets, in the
+editor's header or on `⌥1`–`⌥3`: **Study** (the chooser, the editor and the results — the default),
+**Write** (the editor alone; the results of a run describe code that has since changed), **Read** (the
+results, with the editor and chooser out of the way for rereading a traceback). The choice is
+remembered. The shortcut reads `KeyboardEvent.code` because `⌥2` types `™` in `key` on a Mac, and a
+stored value that is not one of the three reads as the default rather than blanking the page
+([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout`).
+
 **Sliders are a comment on a number.**
 
 ```python

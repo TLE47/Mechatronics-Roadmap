@@ -68,6 +68,7 @@
     "test:share": "node --experimental-strip-types scripts/test_sharelink.mjs",
     "test:inline": "node --experimental-strip-types scripts/test_inline_values.mjs",
     "test:symbols": "node --experimental-strip-types scripts/test_symbols.mjs",
+    "test:layout": "node --experimental-strip-types scripts/test_layout.mjs",
     "test:history": "node --experimental-strip-types scripts/test_draft_history.mjs",
     "test:scope": "node --experimental-strip-types scripts/test_scope.mjs",
     "test:checkhints": "node --experimental-strip-types scripts/test_check_hints.mjs",
