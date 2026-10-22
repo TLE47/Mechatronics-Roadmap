@@ -1,9 +1,10 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, Compass, Sun, Moon, Search } from 'lucide-react';
+import { Printer, Download, FileJson, User, Compass, Sun, Moon, Search, Maximize2, Minimize2 } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
 import { toggleLabel, type Theme } from '../theme';
+import { focusLabel } from '../focusMode';
 
 interface HeaderProps {
   /** The palette on screen, and the flip for it — mounted once in `App`, not here. */
@@ -18,6 +19,12 @@ interface HeaderProps {
   onOpenAccount: () => void;
   /** Opens the `⌘K` palette: the header's door to the same dialog the shortcut opens. */
   onOpenPalette: () => void;
+  /**
+   * Focus mode, and its toggle. Optional because the token page renders this header too and has no
+   * work to focus on: a button there would hide the page it is on and offer no way back.
+   */
+  focus?: boolean;
+  onToggleFocus?: () => void;
 }
 
 /** The mark: a two-link arm, drawn in the same cyan as the live hero canvas. */
@@ -54,6 +61,8 @@ export const Header: React.FC<HeaderProps> = ({
   accountEmail,
   onOpenAccount,
   onOpenPalette,
+  focus = false,
+  onToggleFocus,
 }) => {
   // The theme is mounted once, in `App`, and handed down: the attribute on <html> and this button's
   // label are the same state, so the toggle can never claim a mode the page is not in.
@@ -68,6 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
+      data-chrome="header"
       className="sticky top-0 z-40 border-b backdrop-blur-md"
       style={{
         borderColor: 'var(--border)',
@@ -160,6 +170,23 @@ export const Header: React.FC<HeaderProps> = ({
             )}
             <span className="hidden 2xl:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
           </button>
+          {onToggleFocus && (
+            <button
+              onClick={onToggleFocus}
+              data-testid="btn-focus-toggle"
+              aria-pressed={focus}
+              aria-keyshortcuts="Meta+. Control+."
+              title={focusLabel(focus)}
+              className="btn"
+            >
+              {focus ? (
+                <Minimize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              )}
+              <span className="hidden 2xl:inline">Focus</span>
+            </button>
+          )}
           <button
             onClick={onOpenAccount}
             data-testid="btn-account"

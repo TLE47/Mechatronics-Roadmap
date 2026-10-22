@@ -221,6 +221,29 @@ and the join without a browser; `npm run test:e2e:review` does it through the pa
 the real pin button, the real comment box, a rating, a reload, and the deck still knowing when the card
 is next due.
 
+### Focus mode and the sitting clock
+
+A review is ruined by a screen full of other things to do, so **Focus** (the header's button, or `⌘.`)
+hides the header, the mode bar, the tab rail, the lesson list and the footer, and leaves the editor, the
+checks and the study card. `Escape` and the pill in the corner both leave it, and the choice is
+remembered across a reload — a focus mode with no visible exit is a trap, which is why the pill is the
+one control the mode does not hide.
+
+It is one rule, not a prop threaded through five components: `App` puts `data-focus` on the shell and
+every region that offers a different task carries `data-chrome`, so `[data-focus='on'] [data-chrome]`
+hides them and the pane that shared a row with the lesson list takes the whole row. [`src/focusMode.ts`](src/focusMode.ts)
+is the store and the event; the state itself lives in `App` so the button, the attribute and the pill
+cannot disagree.
+
+The clock is the other half, because the pilot's `active_minutes` column had no measurement behind it.
+[`src/sittingClock.ts`](src/sittingClock.ts) records **sittings**: any lesson open, run or review extends
+the one in progress, five minutes without one closes it, and a sitting is capped at three hours so a tab
+left open overnight is not study time. The study panel prints `Today 34 min · median sitting 18 min`,
+and the learning-log export carries the raw sittings beside the events, so a pilot can compute the median
+and range `docs/PILOT.md` asks for instead of estimating them. A sitting is deliberately **not** in the
+backup: it is a fact about one machine's clock, and merging two machines' sittings would count the same
+hour twice.
+
 ### The editor
 
 The textarea is gone: [`PythonEditor.tsx`](src/components/PythonEditor.tsx) mounts **CodeMirror 6**
@@ -383,6 +406,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/learningLog.ts`](src/learningLog.ts) | The event log behind the friction report and the roadmap's "opened / tried" states. |
 | [`src/fsrs.ts`](src/fsrs.ts) | FSRS-5: the published weights and formulas, pure — a schedule in, a schedule out, `now` injected. |
 | [`src/studyCards.ts`](src/studyCards.ts) | The deck: cards derived from commented highlights, their schedules stored, and the merge a restore uses. |
+| [`src/sittingClock.ts`](src/sittingClock.ts) | The measured sitting: idle cutoff, three-hour cap, bounded store, and the totals the pilot quotes. |
+| [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
 
 ## Checks that cover this directory
 
@@ -402,8 +427,10 @@ npm run test:takealong       # the offline button's rules: URL list, size wordin
 npm run test:backup          # the archive: CRC, round trip, the three refusals, and a merge that never deletes
 npm run test:study           # notes and highlights: what is kept, deduped, evicted, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
+npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
+npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting
 npm run check:lessons        # the registry is current
 ```
 

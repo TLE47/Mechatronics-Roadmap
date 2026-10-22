@@ -11,6 +11,50 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 152: Focus Mode, and a Clock Under the Pilot's Time Column
+
+The last row of the study layer had two halves: a mode that takes the other tasks off the screen,
+and a measurement of the sitting itself. Both ship here, and the second one closes the only column in
+`docs/PILOT.md` that was still estimated.
+
+**Focus mode is one CSS rule, not a prop through five components.** `App` puts `data-focus` on the
+shell, every region that offers a different task carries `data-chrome` (header, mode bar, tab rail,
+lesson list, tour bar, footer), and `[data-focus='on'] [data-chrome]` hides them; the pane that shared
+a row with the lesson list takes the whole row. `⌘.`, the header's **Focus** button and the pill all
+toggle it; `Escape` leaves it, but only when no dialog has claimed the key (`defaultPrevented`), so one
+press never closes two things. The pill is the one control the mode does not hide — a focus mode you
+cannot get out of is a trap — and the choice is remembered across a reload.
+
+**The clock counts sittings, not seconds on a stopwatch.** [`app/src/sittingClock.ts`](app/src/sittingClock.ts):
+any lesson open, run or review extends the sitting in progress; five minutes without one closes it; a
+sitting is capped at three hours, so a tab left open overnight is not study time; a backwards clock
+starts a new sitting rather than filing a negative one. The pure part takes `now`, so all of that is
+pinned by a unit suite instead of by waiting. The study panel prints `Today 34 min · median sitting
+18 min` (the median only once there are two sittings to take one of), and the learning-log export now
+carries `sittings` beside `events`, which is what lets a pilot fill `active_minutes` from the file.
+Sittings are deliberately **not** in the backup: a sitting is a fact about one machine's clock, and
+merging two machines' would count the same hour twice — the exact number this exists to keep honest.
+
+**Two defects found by running it.** `setFocus` dispatched a `CustomEvent` built in this realm; the
+DOM in the test harness did not dispatch it, so the change reached the store and not the listeners —
+the event is now built with the page's own constructor. And the same-task control-pair sweep began
+failing, correctly: it compares `localStorage` between two runs of identical clicks, and a sitting is a
+record of *when* the clicks happened, so it can never match. The sweep now filters the third
+wall-clock key, with the reason written where the other two already were.
+
+- `npm run test:sitting` (**20 checks**, new): the idle cutoff at the exact boundary, the three-hour
+  cap, a backwards clock, lesson dedupe and its twelve-lesson cap, one entry per sitting, the
+  200-sitting store and its eviction, a foreign store read as the part that parses, blocked storage
+  never throwing, the exported log carrying the sittings beside the events, and totals (median odd and
+  even, longest, today) — plus focus mode's store: the
+  choice survives a reload, the toggle broadcasts once, and a refusing store still returns the state
+  to render.
+- `npm run test:e2e:focus` (new): every chrome region is visible, then hidden by the toggle while the
+  editor, lesson and study card stay; `Escape`, `⌘.` and the pill each leave it; the choice survives a
+  reload; and opening a lesson wrote exactly one sitting naming that lesson.
+- `npm run test:workbench` now runs **26 suites**; `docs/PILOT.md`'s `active_minutes` row says it is
+  measured and where the numbers come from.
+
 ## [2026-10-21] — Run 151: Review Cards — a Highlight Asked Back on a Real Schedule
 
 Notes answered "what did I write down". This run answers the next question — *when do I read it again* —

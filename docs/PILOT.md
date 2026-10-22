@@ -64,7 +64,7 @@ One row per module or lesson, in a private sheet during the pilot, published as 
 | :--- | :--- | :--- |
 | `id` | e.g. `00-foundations.T2.00a`, `P.4`, `R.3` | Joins the row to the page |
 | `date` | `YYYY-MM-DD` | Transfer timing, and whether a break preceded a stall |
-| `active_minutes` | integer | Focused lesson time: the time claim the roadmap publishes |
+| `active_minutes` | integer | Focused lesson time: the time claim the roadmap publishes. **Measured** by the app's sitting clock (five minutes without a run or an answer ends a sitting; three hours is the cap), written into the exported log as `sittings` — sum the durations that fall in the sitting |
 | `elapsed_minutes` | integer | Wall-clock time from sitting down to stopping, including setup and breaks |
 | `overhead_minutes` | integer | `elapsed_minutes - active_minutes`: setup, tool recovery and re-reading. This is what calibrates the 5x/10x calendar multiplier |
 | `hints_used` | 0–3 | Distinguishes "used the ladder" from "needed a person" |
@@ -75,7 +75,8 @@ One row per module or lesson, in a private sheet during the pilot, published as 
 | `export` | the participant's `mechalab-learning-log-*.json` | Machine-recorded opens, runs, failures, hints and verifies — the sheet's evidence, not its replacement |
 
 The workbench keeps its own log in the browser and the header's **Export Learning Log (.json)** button hands
-it over; nothing is sent anywhere. Run `python3 scripts/friction_report.py <exported logs...>` to turn those
+it over; nothing is sent anywhere. The file carries two arrays: `events` (what happened) and `sittings`
+(when it happened, and for how long — [`app/src/sittingClock.ts`](../app/src/sittingClock.ts)). Run `python3 scripts/friction_report.py <exported logs...>` to turn those
 files into [`docs/friction-report.md`](friction-report.md): attempts-to-verify P50/P80, help share,
 unfinished share, and the most common first failing assertion per unit. That page is empty until logs
 exist and says so; it is the instrument the pilot's help budget is measured with.

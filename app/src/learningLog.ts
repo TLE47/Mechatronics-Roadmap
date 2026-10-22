@@ -18,7 +18,15 @@
  *
  * Events are capped so the log cannot fill localStorage (a quota error would otherwise break the
  * runner); the oldest events are dropped first, and the cap is far above one Core route's worth.
+ *
+ * The exported file also carries the measured sittings (`sittingClock.ts`): the log records what
+ * happened, and the clock records how long each stretch lasted, which together are the pilot's
+ * `active_minutes` without a stopwatch.
  */
+
+// With the extension: this module is loaded by Node's type stripping in the unit suites, which does not
+// resolve an extensionless relative import the way Vite does.
+import { readSittings } from './sittingClock.ts';
 
 export type LearningEventKind = 'lesson_open' | 'run' | 'verified' | 'hint' | 'solution_open' | 'export';
 
@@ -125,13 +133,20 @@ export function attemptsByLesson(events: LearningEvent[] = readLearningLog()): R
   return attempts;
 }
 
-/** The exported document. Versioned so `scripts/friction_report.py` can refuse a shape it cannot read. */
+/**
+ * The exported document. Versioned so `scripts/friction_report.py` can refuse a shape it cannot read.
+ *
+ * `sittings` rides beside the events because the pilot's `active_minutes` column is the one number in
+ * `docs/PILOT.md` that had no measurement behind it: the log says *what* happened, and the sitting
+ * clock (`sittingClock.ts`) says how long each stretch of it lasted.
+ */
 export function learningLogJson(): string {
   return JSON.stringify(
     {
       schema: LOG_SCHEMA,
       exportedAt: Date.now(),
       events: readLearningLog(),
+      sittings: readSittings(),
     },
     null,
     2
@@ -140,10 +155,11 @@ export function learningLogJson(): string {
 
 /** Download the log as `mechalab-learning-log-<date>.json`. */
 export function downloadLearningLog(): void {
-  const events = readLearningLog();
+  // The export is itself an event, so it has to be written before the document is built — one
+  // builder for the document and the download, or the two files drift apart.
   logEvent({ kind: 'export' });
   const stamp = new Date().toISOString().slice(0, 10);
-  const blob = new Blob([JSON.stringify({ schema: LOG_SCHEMA, exportedAt: Date.now(), events }, null, 2)], {
+  const blob = new Blob([learningLogJson()], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);

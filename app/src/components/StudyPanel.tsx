@@ -12,6 +12,13 @@ import {
 } from '../studyNotes';
 import { dueCards, nextDueAt, reviewCard, syncCards, type StudyCard } from '../studyCards';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
+import {
+  currentSitting,
+  formatDuration,
+  readSittings,
+  recordSittingEvent,
+  sittingSummary,
+} from '../sittingClock';
 import { DAY_MS, type Grade } from '../fsrs';
 
 /**
@@ -50,6 +57,22 @@ function waitText(ms: number): string {
   return days === 1 ? 'in 1 day' : `in ${days} days`;
 }
 
+/**
+ * The clock's line: what today cost, and how long this sitting has run.
+ *
+ * "This sitting" is measured to the last answer, not to now — a learner who opened the panel and read
+ * for ten minutes without answering has not been measured doing anything, and a clock that guessed
+ * would be the first number in this app nobody could check.
+ */
+function sittingText(): string {
+  const list = readSittings();
+  const open = currentSitting(list);
+  const summary = sittingSummary(list);
+  // With one sitting on record, "today" *is* "this sitting": saying it twice reads like a stutter.
+  if (!open || list.length < 2) return summary;
+  return `${summary} · this sitting ${formatDuration(open.end - open.start)}`;
+}
+
 export function StudyPanel({ lessonId }: StudyPanelProps) {
   const [note, setNote] = useState('');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -59,6 +82,9 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
   const [cards, setCards] = useState<StudyCard[]>([]);
   const [reviewing, setReviewing] = useState<StudyCard | null>(null);
   const [revealed, setRevealed] = useState(false);
+  // What the clock says, read on the same beats as the deck: a sitting is written when a card is
+  // answered, so the panel's own numbers change exactly when it re-reads.
+  const [sitting, setSitting] = useState('');
   // What the store holds right now, and whether the learner has typed since: a write happens for a
   // keystroke, never for a value the component loaded. That distinction is what keeps React's
   // double-mount in development from writing an empty box over a real note - the mount load must not
@@ -74,6 +100,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     savedRef.current = study?.note ?? '';
     dirtyRef.current = false;
     setCards(syncCards());
+    setSitting(sittingText());
   };
 
   useEffect(() => {
@@ -166,6 +193,8 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
 
   const rate = (grade: Grade) => {
     if (!reviewing) return;
+    // One answer is one review in the sitting: the clock's unit is a card taken, not a page opened.
+    recordSittingEvent({ at: Date.now(), kind: 'review', lesson: reviewing.lesson });
     const next = reviewCard(reviewing.id, grade);
     const list = syncCards();
     setCards(list);
@@ -174,6 +203,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     const remaining = dueCards(list).filter((card) => card.id !== reviewing.id);
     setReviewing(remaining[0] ?? null);
     setRevealed(false);
+    setSitting(sittingText());
     setStatus(next ? `Rated · back ${waitText(next.due - Date.now())}` : 'Rated');
   };
 
@@ -259,6 +289,14 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
           {cards.length === 0
             ? 'every commented highlight is a card'
             : `${cards.length} card${cards.length === 1 ? '' : 's'} across the course${dueCount === 0 && soonestDue !== null ? ` · next ${waitText(soonestDue - Date.now())}` : ''}`}
+        </span>
+        {/* The measured half of the study layer: what today cost, and how long this sitting is. */}
+        <span
+          data-testid="study-sitting"
+          title="Measured on this device: a sitting ends after five minutes without a run or an answer, and is capped at three hours."
+          className="font-mono text-[10.5px] text-faint"
+        >
+          {sitting || 'No sittings recorded yet'}
         </span>
       </div>
 

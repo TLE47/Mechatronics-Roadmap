@@ -424,6 +424,24 @@ body {
   animation: pop 420ms var(--ease-spring) both;
 }
 
+/* ----------------------------------------------------------------------------
+   Focus mode: the chrome off, the work left.
+
+   `App` puts `data-focus` on the shell and every region that offers a different
+   task carries `data-chrome`, so hiding is one rule instead of a prop threaded
+   through five components. The exit pill is deliberately not marked: it is what
+   makes hiding everything safe.
+   ---------------------------------------------------------------------------- */
+[data-focus='on'] [data-chrome] {
+  display: none;
+}
+
+/* The pane that shared the row with a hidden sidebar takes the whole row, so focus mode is not a
+   narrower editor with a hole beside it. */
+[data-focus='on'] [data-focus-expand] {
+  grid-column: 1 / -1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

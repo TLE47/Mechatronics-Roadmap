@@ -37,6 +37,7 @@ import {
   readFlagMap,
 } from './progressKeys';
 import { STORE_RESTORED_EVENT } from './backupBundle';
+import { FOCUS_EVENT, focusLabel, readFocus, setFocus } from './focusMode';
 import { attemptsByLesson, downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
@@ -73,6 +74,8 @@ import {
   LineChart,
   Link2,
   Map as MapIcon,
+  Maximize2,
+  Minimize2,
   Radar,
   Sparkles,
   X,
@@ -347,7 +350,10 @@ export function buildPortfolioMarkdown(
  * linked rather than hidden behind a typed URL: a page nobody can find is a page nobody checks.
  */
 const SiteFooter: React.FC = () => (
-  <footer className="border-t border-line-soft bg-canvas px-4 py-3 text-center text-[11.5px] text-faint">
+  <footer
+    data-chrome="footer"
+    className="border-t border-line-soft bg-canvas px-4 py-3 text-center text-[11.5px] text-faint"
+  >
     MechaLab · Ten-Step Spiral Mechatronics Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License:
     CC BY 4.0 (Docs) &amp; MIT (Code) ·{' '}
     <a
@@ -376,6 +382,11 @@ export const App: React.FC = () => {
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
   // `⌘K` is the keyboard's table of contents: one dialog over lessons, tabs and commands.
   const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
+  // Focus mode: the chrome off, the work left. Read once from the store and then owned here, because
+  // the header's button, the pill and the `data-focus` attribute must be one state, not three.
+  const [focus, setFocusOn] = useState<boolean>(() => readFocus());
+  const focusRef = useRef<boolean>(focus);
+  focusRef.current = focus;
   // Bumped by the palette's "Run the lesson" command; the runner watches it (see `runRequest`).
   const [runRequest, setRunRequest] = useState<number>(0);
   // Bumped whenever a learner asks for a specific entry, so the runner can tell a new pick from a
@@ -717,16 +728,41 @@ export const App: React.FC = () => {
 
   // ⌘K / Ctrl+K from anywhere, including inside the editor: a palette that only opens when no
   // field has focus is the one you cannot use while typing, which is when you want it.
+  // Focus mode's two keys live in the same listener as the palette's, because a page with three
+  // keyboard effects is a page where two of them fight over Escape.
   useEffect(() => {
+    const apply = (on: boolean) => setFocusOn(setFocus(on));
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setIsPaletteOpen((open) => !open);
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key === '.') {
+        event.preventDefault();
+        apply(!focusRef.current);
+        return;
+      }
+      // Escape leaves focus, unless a dialog already claimed it: `defaultPrevented` is how a modal
+      // that closes on Escape says so, and closing two things with one press is not a shortcut.
+      if (event.key === 'Escape' && focusRef.current && !event.defaultPrevented) {
+        event.preventDefault();
+        apply(false);
       }
     };
+    // The header's button and this attribute are two surfaces of one fact; a store write from
+    // anywhere else (a test, a future palette command) reaches both through this event.
+    const onFocusEvent = (event: Event) =>
+      setFocusOn(Boolean((event as CustomEvent<{ on?: boolean }>).detail?.on));
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener(FOCUS_EVENT, onFocusEvent);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener(FOCUS_EVENT, onFocusEvent);
+    };
   }, []);
+
+  const toggleFocusMode = () => setFocusOn(setFocus(!focusRef.current));
 
   const allMilestoneIds = [
     ...LEVEL_0_STEPS,
@@ -901,7 +937,11 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
+    <div
+      id="top"
+      data-focus={focus ? 'on' : 'off'}
+      className="min-h-screen flex flex-col bg-canvas text-ink"
+    >
       {/* Keyboard users can jump the header, the mode bar and the tab rail in one key. */}
       <a href="#main" className="skip-link">
         Skip to the workbench
@@ -916,11 +956,17 @@ export const App: React.FC = () => {
         accountEmail={accountEmail}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenPalette={() => setIsPaletteOpen(true)}
+        focus={focus}
+        onToggleFocus={toggleFocusMode}
       />
 
       {/* Workspace mode and the running tally: one segmented control, three counters. The labels
           are the ones the smoke test asserts, so a redesign cannot reword what the tabs mean. */}
-      <div className="border-b" style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}>
+      <div
+        data-chrome="mode-bar"
+        className="border-b"
+        style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
+      >
         <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <div className="flex flex-wrap items-center gap-3">
             <div
@@ -989,14 +1035,16 @@ export const App: React.FC = () => {
           runner it would put a tier-matrix paragraph between a newcomer and Lesson P.1, so it
           appears once they open the roadmap (or any simulator tab). */}
       {activeTab !== 'tab-pyodide' && (
-        <GuidedTourBar
-          currentStepIndex={tourIndex}
-          totalSteps={TOUR_STEPS.length}
-          stepInfo={TOUR_STEPS[tourIndex]}
-          onPrev={handlePrevTourStep}
-          onNext={handleNextTourStep}
-          onApplyPreset={handleApplyPreset}
-        />
+        <div data-chrome="tour">
+          <GuidedTourBar
+            currentStepIndex={tourIndex}
+            totalSteps={TOUR_STEPS.length}
+            stepInfo={TOUR_STEPS[tourIndex]}
+            onPrev={handlePrevTourStep}
+            onNext={handleNextTourStep}
+            onApplyPreset={handleApplyPreset}
+          />
+        </div>
       )}
 
       {/* One scrollable rail instead of a ten-card grid: the whole workbench fits on one line, so
@@ -1004,6 +1052,7 @@ export const App: React.FC = () => {
           choices rather than a wall of tiles. Every label and subtitle is unchanged. */}
       <nav
         aria-label="Simulator Tabs"
+        data-chrome="rail"
         className="border-b"
         style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
       >
@@ -1232,6 +1281,27 @@ export const App: React.FC = () => {
         onSendLink={handleSendMagicLink}
         onSignOut={handleSignOut}
       />
+
+      {/* Focus mode hides every control that would offer a different task, so the way out has to be
+          on screen itself: one pill, and Escape doing the same thing. */}
+      {focus && (
+        <button
+          type="button"
+          data-testid="btn-focus-pill"
+          onClick={() => setFocusOn(setFocus(false))}
+          title="Leave focus mode (Esc)"
+          aria-keyshortcuts="Escape"
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-semibold shadow-lg"
+          style={{
+            borderColor: 'var(--border-strong)',
+            backgroundColor: 'var(--panel)',
+            color: 'var(--accent)',
+          }}
+        >
+          <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" />
+          Focus · Esc to leave
+        </button>
+      )}
 
       <SiteFooter />
     </div>

@@ -20,8 +20,10 @@
  *   test:analysis    completions, hover and signatures without a browser: insertion point, cursor coordinates, the call under the cursor, note shape, transport
  *   test:study       notes and highlights: what is kept, deduped, evicted, and what a restore merges
  *   test:review      FSRS: the 0.9-at-stability identity, grade ordering, lapses, the interval cap, and the card join
+ *   test:sitting     the sitting clock: the idle cutoff, the three-hour cap, a backwards clock, the store, and focus's store
  *   test:e2e:backup  the header buttons in Chromium: write a zip, wipe, restore to store *and* screen
  *   test:e2e:review  pin, comment, review, reload in Chromium: a card asked, answered, and still scheduled tomorrow
+ *   test:e2e:focus   focus mode in Chromium: the chrome hides, the work stays, three exits, and a measured sitting
  *   test:fonts       the two self-hosted faces are named, imported and emitted
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
@@ -165,6 +167,9 @@ async function main() {
     runSuite('review', 'test_review.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
+    runSuite('sitting', 'test_sitting.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
     runSuite('fonts', 'test_fonts.mjs', {}),
     runSuite('e2e', 'e2e_browser_workbench.mjs', { E2E_BASE_URL: devUrl }),
     runSuite('pages', 'e2e_pages_bundle.mjs', { PAGES_SERVER_URL: pagesUrl }),
@@ -175,6 +180,10 @@ async function main() {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('rev2e', 'e2e_review.mjs', {
+      E2E_BASE_URL: devUrl,
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('focus2e', 'e2e_focus.mjs', {
       E2E_BASE_URL: devUrl,
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),

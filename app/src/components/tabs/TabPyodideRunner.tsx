@@ -20,6 +20,7 @@ import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
 import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
 import { LessonHarnessPanel } from '../LessonHarnessPanel';
 import { logEvent } from '../../learningLog';
+import { recordSittingEvent } from '../../sittingClock';
 import {
   AnalysisSession,
   noteLabel,
@@ -348,8 +349,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
 
   // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
+  // The sitting clock takes the same event, because it is the moment the learner is here: it opens a
+  // sitting, or extends the one they were already in when they switched lesson without a break.
   useEffect(() => {
     logEvent({ kind: 'lesson_open', lesson: selectedId });
+    recordSittingEvent({ at: Date.now(), kind: 'open', lesson: selectedId });
   }, [selectedId]);
 
   // One `run` per execution, recorded where every path converges — the result state — rather than in
@@ -381,6 +385,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       ms: Math.round(performance.now() - runStartedAtRef.current),
     });
     if (passStatus === 'passed') logEvent({ kind: 'verified', lesson: selectedId });
+    // A run is the clearest sign of work in a sitting, and the one that stretches it: the clock counts
+    // to the last run, so an hour spent debugging is an hour, not a gap after the lesson opened.
+    recordSittingEvent({ at: Date.now(), kind: 'run', lesson: selectedId });
     // The half of the draft store a learner cannot get from a single latest version: what each run
     // started from, filed with the verdict it got. Taken here because every path that ends a run
     // converges on this state, and the text is read from the ref so it is the code that ran.
@@ -1518,6 +1525,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         {/* Left Sidebar: exercise search and selector */}
         <div
           data-testid="lesson-list-card"
+          // Focus mode hides the list: choosing a different lesson while working on this one is the
+          // other task the mode exists to keep out. `data-focus-expand` on the pane gives it the row.
+          data-chrome="lesson-list"
           className="lg:col-span-4 bg-panel border border-line rounded-xl p-4 flex flex-col max-h-[760px]"
         >
           {/* Search Input */}
@@ -1630,7 +1640,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         </div>
 
         {/* Right Main Area: Lesson Ideas, Code Editor, Hints & Output Diff */}
-        <div className="lg:col-span-8 space-y-4">
+        <div data-focus-expand className="lg:col-span-8 space-y-4">
           {/* Active Lesson Metadata Card */}
           <div className="bg-panel border border-line rounded-xl p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">

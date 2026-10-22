@@ -48,8 +48,10 @@ npm run test:takealong                  # the offline button's rules: which URLs
 npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes
 npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped and evicted, merged on restore
 npm run test:review                     # FSRS-5: the 0.9-at-stability identity, grade order, lapses, the year cap, and the card join
+npm run test:sitting                    # the sitting clock: idle cutoff, three-hour cap, backwards clock, totals, and focus's store
 npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore to the store and to the screen
 npm run test:e2e:review                 # pin, comment, rate and reload in Chromium: the card is still scheduled after the reload
+npm run test:e2e:focus                  # focus in Chromium: the chrome hides, the work stays, all three exits work, and a sitting is measured
 npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
 npm run test:editor                     # slider directives and which lessons get helper tabs
 npm run test:resume                     # the lesson the next visit reopens, which one the roadmap offers and when it hands forward, and the ids it refuses
@@ -96,6 +98,19 @@ storage empties the deck instead of throwing into the panel. `test:e2e:review` w
 through the UI - select the lesson heading, pin it, comment, open the deck, be asked before being
 told, rate Good, reload, and find the card still scheduled - and then clears the comment to prove the
 card is retired rather than merely hidden.
+
+`test:sitting` pins the clock that makes `docs/PILOT.md`'s `active_minutes` a measurement: the first
+event opens a sitting, anything inside five minutes extends it, exactly the gap still extends it and a
+minute more starts a new one, three hours of uninterrupted work closes at the cap and opens a fresh
+one, a clock that went backwards never files a negative duration, one event is one stored entry, the
+list holds 200 and drops the oldest, a store written by something else reads as the part that parses,
+blocked storage never throws, and the totals quote a median (odd and even), the longest sitting and
+only the sittings that started today. It also checks focus mode's store: the choice survives a reload,
+the toggle broadcasts it once, and a store that refuses the write still returns the state to render.
+`test:e2e:focus` measures the mode in the browser: every `data-chrome` region is visible before the
+toggle and hidden after, while the editor, the lesson and the study card stay; `Escape`, `⌘.` and the
+pill each leave it; the choice survives a reload; and opening a lesson wrote exactly one sitting naming
+that lesson, with the panel printing a duration rather than a blank line.
 
 `test:runtime` is the one suite that cannot be a unit test: stopping a `while True:` in place needs
 cross-origin isolation, a real `SharedArrayBuffer` and a real browser. It asserts the Stop answers by
