@@ -279,71 +279,13 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
   },
 ];
 
-export function buildPortfolioMarkdown(
-  verifiedLessons: Record<string, boolean>,
-  completedLessons: Record<string, boolean>,
-  completedMilestones: Record<string, boolean>
-): string {
-  const allSteps = [
-    ...LEVEL_0_STEPS,
-    ...TIER_1_LINEAR_PASS,
-    ...TIER_2_LINEAR_PASS,
-    ...TIER_3_LINEAR_PASS,
-  ];
-  const verifiedPy = PYTHON_LESSONS.filter((l) => verifiedLessons[l.id]);
-  const selfMarkedPy = PYTHON_LESSONS.filter((l) => completedLessons[l.id] && !verifiedLessons[l.id]);
-  const totalSelfMarkedPy = PYTHON_LESSONS.filter((l) => completedLessons[l.id]).length;
-  const passedMilestones = allSteps.filter((s) => completedMilestones[s.milestoneId]);
-
-  const lines: string[] = [
-    '# MechaLab — Learner Progress & Portfolio Summary',
-    '',
-    `- **Generated:** ${new Date().toISOString().slice(0, 10)}`,
-    `- **Execution-Verified In-Browser Python Lessons (Executed & Passed in Pyodide WASM):** ${verifiedPy.length} / ${PYTHON_LESSONS.length}`,
-    `- **Self-Marked Completed Python Lessons (Manual Checklist):** ${totalSelfMarkedPy} / ${PYTHON_LESSONS.length}`,
-    `- **Self-Reported Roadmap Track Milestones:** ${passedMilestones.length} / ${allSteps.length}`,
-    '',
-    '## 1. Execution-Verified Python Exercises (Executed & Passed in Pyodide WASM)',
-    '',
-  ];
-
-  if (verifiedPy.length === 0) {
-    lines.push(`_No Python lessons have been executed and passed in Pyodide WASM yet. Open ${PYTHON_TAB_NAME} and click "Run & Verify Output" to execute your first entry._`);
-  } else {
-    for (const l of verifiedPy) {
-      lines.push(`- [x] **Lesson ${l.id} (${l.title})** — \`${l.path}\` *(Executed & Passed in Pyodide WASM)*`);
-    }
-  }
-
-  lines.push('', '## 2. Self-Marked Completed Python Lessons (Manual Checklist, Not Yet Executed in WASM)', '');
-  if (selfMarkedPy.length === 0) {
-    lines.push('_No additional lessons self-marked complete without Pyodide execution._');
-  } else {
-    for (const l of selfMarkedPy) {
-      lines.push(`- [x] **Lesson ${l.id} (${l.title})** — \`${l.path}\` *(Self-Marked Complete)*`);
-    }
-  }
-
-  lines.push('', '## 3. Self-Reported Ten-Step Track Milestones', '');
-  if (passedMilestones.length === 0) {
-    lines.push('_No track milestones checked off yet. Use the Roadmap & Progress tab to track your pass completion._');
-  } else {
-    for (const s of passedMilestones) {
-      // The spine's number and title, so the export names a step the pages also name.
-      const at = stepForMilestone(s.milestoneId);
-      lines.push(
-        `- [x] **Step ${at?.number ?? '?'} of ${SPINE_STEP_COUNT} · ${at?.title ?? s.trackTitle}** — ${s.deliverableGate}`
-      );
-    }
-  }
-
-  lines.push(
-    '',
-    '---',
-    '*Exported from [MechaLab Beginner-First Mechatronics & Robotics Workbench](https://tle47.github.io/Mechatronics-Roadmap/)*'
-  );
-  return lines.join('\n');
-}
+// The document itself lives in its own module so a unit suite can pin it without React; this stays
+// exported because the smoke suite and the modal have always imported it from here.
+export { buildPortfolioMarkdown } from './portfolio';
+import { buildPortfolioMarkdown } from './portfolio';
+import { readStudy } from './studyNotes';
+import { readCardList } from './studyCards';
+import { readSittings } from './sittingClock';
 
 /**
  * The one footer, so the palette page and the workbench cannot drift apart. The token reference is
@@ -886,7 +828,22 @@ export const App: React.FC = () => {
     if (destination) setActiveTab(destination);
   };
 
-  const portfolioMarkdown = buildPortfolioMarkdown(verifiedLessons, completedLessons, completedMilestones);
+  // Built on the render that opens the modal, and not on any other: the document reads four stores, a
+  // learner who typed a note a keystroke earlier must find it in the file, and the preview must never
+  // be a frame of empty text before the effect fills it in.
+  const portfolioMarkdown = useMemo(
+    () =>
+      isPortfolioModalOpen
+        ? buildPortfolioMarkdown(verifiedLessons, completedLessons, completedMilestones, {
+            study: readStudy(),
+            cards: readCardList(),
+            sittings: readSittings(),
+            pythonTabName: PYTHON_TAB_NAME,
+            now: Date.now(),
+          })
+        : '',
+    [isPortfolioModalOpen, verifiedLessons, completedLessons, completedMilestones]
+  );
 
   const handleDownloadPortfolioFile = () => {
     const blob = new Blob([portfolioMarkdown], { type: 'text/markdown;charset=utf-8' });

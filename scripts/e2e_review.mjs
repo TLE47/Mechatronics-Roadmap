@@ -173,6 +173,20 @@ async function main() {
     assert.equal(Object.keys(afterReload).length, 1, 'the stored deck must not be rewritten into nothing');
     console.log('  ok after a reload the deck says nothing is due and names the next day');
 
+    // ---- The export carries the work, not only the ticks ----
+    // The portfolio is the file a learner hands to somebody else; a card that exists only on screen
+    // is invisible in it, so the same passage, its answer and the measured time must be in the text.
+    await page.getByTestId('btn-export-portfolio').click();
+    const portfolio = (await page.getByTestId('portfolio-markdown-preview').textContent()) ?? '';
+    assert.match(portfolio, /## 4\. Study Notes and Kept Passages/, 'the export must carry the notes section');
+    assert.equal(portfolio.includes(quote), true, 'the pinned passage must be in the export');
+    assert.equal(portfolio.includes(COMMENT), true, 'its comment is the answer side and travels with it');
+    assert.match(portfolio, /## 5\. Review Deck \(FSRS-5\)/);
+    assert.match(portfolio, /## 6\. Measured Study Time/);
+    assert.match(portfolio, /\*\*Sittings:\*\* 1/, 'the sitting this session measured must be counted');
+    await page.getByLabel('Close export modal').click();
+    console.log('  ok the portfolio export carries the passage, its comment, the card and the measured sitting');
+
     // ---- Clearing the comment retires the card, which is the only way to un-ask a question ----
     await page.getByTestId('study-highlight-comment-0').fill('');
     await page.getByTestId('study-highlight-comment-0').press('Enter');

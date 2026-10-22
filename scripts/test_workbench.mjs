@@ -21,6 +21,7 @@
  *   test:study       notes and highlights: what is kept, deduped, evicted, and what a restore merges
  *   test:review      FSRS: the 0.9-at-stability identity, grade ordering, lapses, the interval cap, and the card join
  *   test:sitting     the sitting clock: the idle cutoff, the three-hour cap, a backwards clock, the store, and focus's store
+ *   test:portfolio   the exported Markdown: the progress record, notes and passages, the deck, the time table
  *   test:e2e:backup  the header buttons in Chromium: write a zip, wipe, restore to store *and* screen
  *   test:e2e:review  pin, comment, review, reload in Chromium: a card asked, answered, and still scheduled tomorrow
  *   test:e2e:focus   focus mode in Chromium: the chrome hides, the work stays, three exits, and a measured sitting
@@ -168,6 +169,9 @@ async function main() {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('sitting', 'test_sitting.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('portfolio', 'test_portfolio.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('fonts', 'test_fonts.mjs', {}),

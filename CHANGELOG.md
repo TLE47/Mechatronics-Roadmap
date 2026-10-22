@@ -11,6 +11,40 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 153: The Portfolio Carries the Work
+
+The export was the last place where the study layer did not show up: a learner could write a note, keep
+a passage, answer a card and spend two hours in the app, and the Markdown they handed to a mentor
+contained none of it. It now carries all four.
+
+**The builder moved out of `App.tsx` and became pure.** [`app/src/portfolio.ts`](app/src/portfolio.ts)
+takes the three progress maps and an `extras` object (the notes store, the derived deck, the sittings
+and `now`) and returns the document. `App` re-exports it so the smoke suite and the modal keep their
+import, and the modal's string is built on the render that opens it — never a frame of empty preview,
+and the download and the preview are the same text.
+
+**Three new sections, each only when it has content.** _Study Notes and Kept Passages_ puts each
+lesson's note in a blockquote, line by line, and its passages as one line each with the comment after an
+em dash. _Review Deck (FSRS-5)_ reports cards, how many are due, when the next comes back, and lists
+the first twenty with `seen 2× · in 2 days`, saying how many it left out. _Measured Study Time_ gives
+the totals the pilot quotes, says the number was measured on this device, and prints the most recent
+eight sittings as a table. A fresh browser still gets exactly the three progress sections: empty
+headings that read as "did nothing" are worse than no headings.
+
+**Two escaping rules that a screenshot would hide.** A note is quoted, so a line starting with `#` or
+`---` cannot become a heading or a rule and swallow the section after it; a passage is collapsed to one
+line before it is stored in the list. Both are pinned as text.
+
+- `npm run test:portfolio` (**12 checks**, new): the progress record unchanged and proportional, notes
+  in registry order with their line breaks quoted, passages collapsed with their comments, the `#`/`---`
+  escape, the deck's due/next/cap wording, the table's rows agreeing with the totals, and two builds of
+  one state byte-identical.
+- `npm run test:e2e:review` opens the export in Chromium and finds the pinned passage, its comment, the
+  deck section and the measured sitting in the file — the check that the export looks at the stores and
+  not only at React's copy of them.
+- `npm run test:workbench` now runs **27 suites**; `docs/PLAN-2.0-GAP.md`'s study-layer row moves to
+  **ships**.
+
 ## [2026-10-21] — Run 152: Focus Mode, and a Clock Under the Pilot's Time Column
 
 The last row of the study layer had two halves: a mode that takes the other tasks off the screen,

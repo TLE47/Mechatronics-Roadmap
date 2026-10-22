@@ -70,6 +70,7 @@
     "test:study": "node --experimental-strip-types scripts/test_study.mjs",
     "test:review": "node --experimental-strip-types scripts/test_review.mjs",
     "test:sitting": "node --experimental-strip-types scripts/test_sitting.mjs",
+    "test:portfolio": "node --experimental-strip-types scripts/test_portfolio.mjs",
     "test:e2e:backup": "node --experimental-strip-types scripts/e2e_backup.mjs",
     "test:e2e:review": "node --experimental-strip-types scripts/e2e_review.mjs",
     "test:e2e:focus": "node --experimental-strip-types scripts/e2e_focus.mjs",

@@ -49,6 +49,7 @@ npm run test:backup                     # the archive: CRC vector, byte-for-byte
 npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped and evicted, merged on restore
 npm run test:review                     # FSRS-5: the 0.9-at-stability identity, grade order, lapses, the year cap, and the card join
 npm run test:sitting                    # the sitting clock: idle cutoff, three-hour cap, backwards clock, totals, and focus's store
+npm run test:portfolio                  # the export: a section only when it has content, quoting, the twenty-card cap, the time table
 npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore to the store and to the screen
 npm run test:e2e:review                 # pin, comment, rate and reload in Chromium: the card is still scheduled after the reload
 npm run test:e2e:focus                  # focus in Chromium: the chrome hides, the work stays, all three exits work, and a sitting is measured
@@ -96,8 +97,9 @@ schedule on the next sync, the deck is ordered by due date, a restore keeps the 
 and cannot send a studied card backwards, a foreign store reads as the part that parses, and blocked
 storage empties the deck instead of throwing into the panel. `test:e2e:review` walks the same loop
 through the UI - select the lesson heading, pin it, comment, open the deck, be asked before being
-told, rate Good, reload, and find the card still scheduled - and then clears the comment to prove the
-card is retired rather than merely hidden.
+told, rate Good, reload, and find the card still scheduled - opens the portfolio export and checks that
+the passage, its comment, the deck section and the measured sitting are in the file a learner hands
+over, and then clears the comment to prove the card is retired rather than merely hidden.
 
 `test:sitting` pins the clock that makes `docs/PILOT.md`'s `active_minutes` a measurement: the first
 event opens a sitting, anything inside five minutes extends it, exactly the gap still extends it and a
@@ -107,6 +109,15 @@ list holds 200 and drops the oldest, a store written by something else reads as 
 blocked storage never throws, and the totals quote a median (odd and even), the longest sitting and
 only the sittings that started today. It also checks focus mode's store: the choice survives a reload,
 the toggle broadcasts it once, and a store that refuses the write still returns the state to render.
+`test:portfolio` reads the exported Markdown as text, which is the only way to catch what a browser
+cannot: a document with three empty headings that read as "did nothing", a note starting with `#` that
+becomes a heading and swallows the section after it, a 500-card deck pasted in whole, or a time table
+whose minutes disagree with the totals above it. It checks the progress record is unchanged and
+proportional (a fresh browser gets exactly three sections and no zero-count bullets), that lessons
+appear in registry order with their notes quoted line by line, that passages are one line with their
+comment after an em dash, that the deck reports due/next and caps at twenty with the count it left
+out, that the table holds the most recent eight and agrees with the totals, and that two builds of one
+state are byte-identical.
 `test:e2e:focus` measures the mode in the browser: every `data-chrome` region is visible before the
 toggle and hidden after, while the editor, the lesson and the study card stay; `Escape`, `⌘.` and the
 pill each leave it; the choice survives a reload; and opening a lesson wrote exactly one sitting naming

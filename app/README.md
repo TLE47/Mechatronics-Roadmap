@@ -244,6 +244,23 @@ and range `docs/PILOT.md` asks for instead of estimating them. A sitting is deli
 backup: it is a fact about one machine's clock, and merging two machines' sittings would count the same
 hour twice.
 
+### The portfolio export
+
+**Export Progress (.md)** writes one Markdown file a learner can put in a repository, a CV or a course
+submission, and it now carries the work rather than only the ticks: the three progress sections, then
+**Study Notes and Kept Passages** (each lesson's note as a blockquote, its passages with their
+comments), **Review Deck (FSRS-5)** (cards, how many are due, when the next comes back, the first
+twenty), and **Measured Study Time** (total, median and longest, plus a table of the most recent
+sittings). [`src/portfolio.ts`](src/portfolio.ts) is the builder, pure and given `now`, so
+`npm run test:portfolio` reads the document as text.
+
+Three rules it keeps, each because the opposite is what a pretty screenshot hides: a section appears
+only when it has content (three empty headings read as "did nothing"), every free-text block is a
+blockquote (a note that starts with `#` cannot become a heading and swallow the section after it), and
+the time section says it was measured on this device, because a pilot reading the file has to know what
+the number is. The document is built on the render that opens the modal — never a frame of empty
+preview — and the download and the preview are the same string.
+
 ### The editor
 
 The textarea is gone: [`PythonEditor.tsx`](src/components/PythonEditor.tsx) mounts **CodeMirror 6**
@@ -408,6 +425,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/studyCards.ts`](src/studyCards.ts) | The deck: cards derived from commented highlights, their schedules stored, and the merge a restore uses. |
 | [`src/sittingClock.ts`](src/sittingClock.ts) | The measured sitting: idle cutoff, three-hour cap, bounded store, and the totals the pilot quotes. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
+| [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
 
 ## Checks that cover this directory
 
@@ -428,6 +446,7 @@ npm run test:backup          # the archive: CRC, round trip, the three refusals,
 npm run test:study           # notes and highlights: what is kept, deduped, evicted, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser
+npm run test:portfolio       # the export: sections only when they have content, quoting, caps, the time table
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting
