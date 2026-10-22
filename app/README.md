@@ -507,6 +507,16 @@ starter is never filed (Reset Starter already restores it), and the store evicts
 anywhere once it passes its budget - [src/draftHistory.ts](src/draftHistory.ts), pinned by
 `npm run test:history`.
 
+**Which lines, not just how many.** The roadmap card can say "4 lines changed"; **Diff** in the lesson
+header says which ones. It reads the editor against the starter by default, and against the lesson's
+solution once that is earned - opened in this visit, or the lesson passed - so the view cannot be used
+to read an answer nobody asked for yet. Both line numbers, `+`/`−` rows, and the unchanged runs around
+a change trimmed to three lines each side and counted (`… 12 unchanged`). An indentation fix is a
+change here on purpose: this is the file, not the lenient output comparison the checks use. A file too
+large for the subsequence table keeps its common head and tail and says so rather than freezing the
+tab, and the same engine counts the roadmap card's changed lines, so the two surfaces cannot disagree
+- [src/codeDiff.ts](src/codeDiff.ts), pinned by `npm run test:codediff` and browser step 7g-i.
+
 **A failure, read.** A red line is where the work starts, and a traceback is written for a terminal: the
 learner's own frame sits among the lesson's harness frames, and the failure that *is* one of the
 twelve things [docs/ERROR_EXPLAINER.md](../docs/ERROR_EXPLAINER.md) documents is named only on a page
@@ -605,6 +615,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
+| [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/backupZip.ts`](src/backupZip.ts) | The zip writer and reader a backup is made of: stored entries, CRC-32, and the four ways a chosen file can fail. |
 | [`src/backupBundle.ts`](src/backupBundle.ts) | What a backup holds and how a restore merges it: flags union, drafts fill gaps, versions and events dedupe. |
 | [`src/progressKeys.ts`](src/progressKeys.ts) | Where the three progress maps live, so the backup can read them without importing React. |

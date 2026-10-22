@@ -61,6 +61,7 @@
     "test:editor": "node --experimental-strip-types scripts/test_editor.mjs",
     "test:resume": "node --experimental-strip-types scripts/test_last_lesson.mjs",
     "test:draft": "node --experimental-strip-types scripts/test_lesson_draft.mjs",
+    "test:codediff": "node --experimental-strip-types scripts/test_codediff.mjs",
     "test:history": "node --experimental-strip-types scripts/test_draft_history.mjs",
     "test:scope": "node --experimental-strip-types scripts/test_scope.mjs",
     "test:checkhints": "node --experimental-strip-types scripts/test_check_hints.mjs",

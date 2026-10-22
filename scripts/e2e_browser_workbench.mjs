@@ -963,6 +963,85 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok the card shows the unfinished edit and reopening hands it back');
 
+    // 7g-i. The Diff panel says which lines moved, not only how many. It reads the editor against the
+    //       starter by default, and against the solution only once that is earned: the view must not
+    //       become the answer key for a lesson nobody has opened the answer to yet.
+    await page.getByTestId('tab-btn-tab-pyodide').click();
+    await waitForEditor(page);
+    await page.getByTestId('btn-diff').click();
+    await page.getByTestId('code-diff').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('code-diff').getAttribute('data-diff-target'),
+      'starter',
+      'the Diff panel must open against the starter'
+    );
+    // The editor is back on the starter at this point (Reset Starter, above), so there is nothing to
+    // report, and the panel says that in words rather than drawing an empty body.
+    assert.match(
+      (await page.getByTestId('diff-same').textContent()) ?? '',
+      /nothing written yet/,
+      'an untouched starter must read as unchanged'
+    );
+    assert.equal(
+      await page.getByTestId('diff-target-solution').isDisabled(),
+      true,
+      'comparing against the solution must stay locked until the solution is opened or the lesson passes'
+    );
+    const diffLine = '# the diff should find this line';
+    const starterText = await getEditorCode(page);
+    await setEditorCode(page, `${starterText.trimEnd()}\n${diffLine}\n`);
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="diff-summary"]')?.textContent?.trim() === '+1',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await page.getByTestId('code-diff').getAttribute('data-diff-added'),
+      '1',
+      'one appended line must read as one addition, not as the whole file'
+    );
+    const diffRows = page.getByTestId('diff-row');
+    const addedRow = page.locator('[data-testid="diff-row"][data-kind="added"]');
+    assert.equal(await addedRow.count(), 1, 'exactly one row must be the added line');
+    assert.equal(
+      (await addedRow.first().textContent())?.includes(diffLine),
+      true,
+      'the added row must carry the line the learner typed'
+    );
+    // Context is drawn around the change and the run before it is counted, not printed: a diff of a
+    // forty-line starter with one line added is three rows of context and one gap.
+    assert.ok((await diffRows.count()) > 1, 'the panel must draw context around the change');
+    assert.ok(
+      (await page.getByTestId('diff-gap').count()) > 0,
+      'the unchanged head must be counted as a gap'
+    );
+    // Opening the solution is what earns the second reference; then the editor *is* the solution, so
+    // the honest answer is "no changes" rather than a wall of identical rows.
+    await page.getByTestId('btn-load-solution').click();
+    assert.equal(
+      await page.getByTestId('diff-target-solution').isDisabled(),
+      false,
+      'opening the solution must unlock comparing against it'
+    );
+    await page.getByTestId('diff-target-solution').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="code-diff"]')?.getAttribute('data-diff-target') ===
+          'solution' &&
+        document.querySelector('[data-testid="diff-same"]') !== null,
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.match(
+      (await page.getByTestId('diff-same').textContent()) ?? '',
+      /solution, unchanged/,
+      'the solution text loaded into the editor must compare as no changes'
+    );
+    console.log('  ok the Diff panel names the lines changed, and unlocks the solution only once earned');
+    // Leave the editor and the panel as the next step expects them.
+    await page.getByTestId('btn-reset-starter').click();
+    await page.getByTestId('btn-diff').click();
+
     // 7h. The Scope draws what the run's own loop produced. `mechalab.scope` is the module the lesson
     //     prose names, so this is the learner's path: import it, stream a trace, press Run, look.
     await page.getByTestId('tab-btn-tab-pyodide').click();
@@ -1932,7 +2011,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
     );
   } finally {
     await browser.close();

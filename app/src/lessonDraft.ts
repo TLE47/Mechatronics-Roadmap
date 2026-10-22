@@ -2,6 +2,7 @@
 // `lastLesson.ts` imports its registry: no bundler, no resolution rules beyond what the file says.
 import { PYTHON_LESSONS } from './data/pythonLessonsData.ts';
 import { bulkStorage } from './bulkStorage.ts';
+import { diffLines } from './codeDiff.ts';
 
 /**
  * The code the learner has typed into a lesson and not finished.
@@ -133,23 +134,6 @@ export function clearDraft(id: string): void {
   writeDrafts(store, drafts);
 }
 
-function diffLineCount(left: string[], right: string[]): number {
-  // Lines outside the longest common subsequence are the ones that changed: an inserted line costs
-  // one, not the whole file, which is what makes the count worth printing on a card.
-  if (left.length * right.length > 250_000) return Math.max(left.length, right.length);
-  const row = new Array<number>(right.length + 1).fill(0);
-  for (let i = 1; i <= left.length; i += 1) {
-    let diagonal = 0;
-    for (let j = 1; j <= right.length; j += 1) {
-      const previous = row[j];
-      row[j] = left[i - 1] === right[j - 1] ? diagonal + 1 : Math.max(row[j], row[j - 1]);
-      diagonal = previous;
-    }
-  }
-  const common = row[right.length];
-  return left.length + right.length - 2 * common;
-}
-
 /**
  * How much of the starter the draft replaces - added plus removed lines.
  *
@@ -158,5 +142,10 @@ function diffLineCount(left: string[], right: string[]): number {
  */
 export function editedLines(code: string, starter: string): number {
   if (!isEdited(code, starter)) return 0;
-  return diffLineCount(code.split('\n'), starter.split('\n'));
+  // Lines outside the longest common subsequence are the ones that changed: an inserted line costs
+  // one, not the whole file, which is what makes the count worth printing on a card. The coin is
+  // flipped (editor as the right-hand side) so "added" is the learner's own typing; the sum is the
+  // same either way, and having one diff implementation is the point — the Diff panel counts with it.
+  const diff = diffLines(starter, code);
+  return diff.added + diff.removed;
 }

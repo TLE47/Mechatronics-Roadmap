@@ -41,6 +41,7 @@ import {
   snapshotsFor,
   verdictLabel,
 } from '../../draftHistory';
+import { diffLines, diffSummary } from '../../codeDiff';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
@@ -72,6 +73,7 @@ import {
   Lock,
   Loader2,
   History,
+  GitCompare,
 } from 'lucide-react';
 
 declare global {
@@ -345,9 +347,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // is not what this list holds.
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyVersion, setHistoryVersion] = useState(0);
+  // The diff panel and what it compares against. The solution is a spoiler: the view unlocks once the
+  // learner has opened the solution for this lesson in this visit, or has passed the lesson.
+  const [diffOpen, setDiffOpen] = useState(false);
+  const [diffTarget, setDiffTarget] = useState<'starter' | 'solution'>('starter');
+  const [solutionUsed, setSolutionUsed] = useState<Record<string, boolean>>({});
   const draftHistory = useMemo(
     () => snapshotsFor(selectedId),
     [selectedId, passStatus, historyVersion]
+  );
+  // What the diff compares the editor against. A solution reference is only reachable once it is
+  // earned (opened here, or the lesson is verified), so the panel cannot be used to read the answer.
+  const solutionUnlocked = Boolean(verifiedLessons[selectedId]) || Boolean(solutionUsed[selectedId]);
+  const diffReference =
+    diffTarget === 'solution' && solutionUnlocked ? currentLesson.fullSolution : currentLesson.starterCode;
+  const codeDiff = useMemo(
+    () => (diffOpen ? diffLines(diffReference, code) : null),
+    // `code` is in the deps because this is a view of the buffer: typing is the thing being diffed.
+    [diffOpen, diffReference, code]
   );
   // The run's traced signals. Empty means the run drew nothing, which is the normal case for a
   // lesson that only prints, so the panel renders nothing at all rather than an empty frame.
@@ -1793,6 +1810,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   onClick={() => {
                     commitCode(currentLesson.fullSolution);
                     logEvent({ kind: 'solution_open', lesson: selectedId });
+                    // The diff's solution reference is earned by opening it (or by passing), so this
+                    // is the moment it becomes reachable for this lesson.
+                    setSolutionUsed((used) => ({ ...used, [selectedId]: true }));
                   }}
                   data-testid="btn-load-solution"
                   className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-amber border border-amber/40 flex items-center gap-1.5 cursor-pointer"
@@ -1823,6 +1843,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     <span>Stop</span>
                   </button>
                 )}
+                <button
+                  onClick={() => setDiffOpen((open) => !open)}
+                  aria-expanded={diffOpen}
+                  aria-controls="code-diff"
+                  data-testid="btn-diff"
+                  title="What you changed: your code against the starter, line by line"
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                    diffOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+                  }`}
+                >
+                  <GitCompare className="w-3.5 h-3.5" />
+                  <span>Diff</span>
+                </button>
                 <button
                   onClick={() => {
                     const lesson =
@@ -1919,6 +1952,126 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 <p className="text-[11px] text-faint mt-2">
                   Five attempts per lesson, kept locally. Restoring puts that code back in the editor
                   — press Run to grade it again.
+                </p>
+              </div>
+            )}
+
+            {/* The learner's own change, line by line. The roadmap card could say how many lines moved;
+                this says which ones, and where. */}
+            {diffOpen && codeDiff && (
+              <div
+                id="code-diff"
+                data-testid="code-diff"
+                data-diff-added={codeDiff.added}
+                data-diff-removed={codeDiff.removed}
+                data-diff-target={diffTarget}
+                className="mt-3 rounded-lg border border-line-soft bg-canvas p-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono text-accent">DIFF · your code</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      onClick={() => setDiffTarget('starter')}
+                      aria-pressed={diffTarget === 'starter'}
+                      data-testid="diff-target-starter"
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono border cursor-pointer ${
+                        diffTarget === 'starter'
+                          ? 'text-accent border-accent/60 bg-accent/10'
+                          : 'text-muted border-line'
+                      }`}
+                    >
+                      vs starter
+                    </button>
+                    <button
+                      onClick={() => setDiffTarget('solution')}
+                      aria-pressed={diffTarget === 'solution'}
+                      disabled={!solutionUnlocked}
+                      data-testid="diff-target-solution"
+                      title={
+                        solutionUnlocked
+                          ? 'Your code against the lesson solution'
+                          : 'Open the solution, or pass the lesson, to compare against it'
+                      }
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono border ${
+                        diffTarget === 'solution'
+                          ? 'text-accent border-accent/60 bg-accent/10 cursor-pointer'
+                          : solutionUnlocked
+                            ? 'text-muted border-line cursor-pointer'
+                            : 'text-faint border-line-soft cursor-not-allowed'
+                      }`}
+                    >
+                      vs solution
+                    </button>
+                    <span data-testid="diff-summary" className="text-[11px] font-mono text-muted">
+                      {diffSummary(codeDiff)}
+                    </span>
+                  </div>
+                </div>
+
+                {codeDiff.added === 0 && codeDiff.removed === 0 ? (
+                  <p data-testid="diff-same" className="mt-2 text-xs text-muted">
+                    {diffTarget === 'solution'
+                      ? 'The solution, unchanged.'
+                      : 'The starter, unchanged — nothing written yet.'}
+                  </p>
+                ) : (
+                  <div
+                    data-testid="diff-body"
+                    className="mt-2 max-h-72 overflow-auto rounded border border-line-soft"
+                  >
+                    {codeDiff.blocks.map((block, blockIndex) => (
+                      <div key={`block-${blockIndex}`}>
+                        {block.gap > 0 && (
+                          <div
+                            data-testid="diff-gap"
+                            className="px-2 py-0.5 font-mono text-[11px] text-faint"
+                          >
+                            … {block.gap} unchanged
+                          </div>
+                        )}
+                        {block.rows.map((row, rowIndex) => (
+                          <div
+                            key={`row-${blockIndex}-${rowIndex}`}
+                            data-testid="diff-row"
+                            data-kind={row.kind}
+                            className={`flex gap-2 px-2 font-mono text-[11.5px] leading-[1.55] ${
+                              row.kind === 'added'
+                                ? 'text-emerald bg-emerald/10'
+                                : row.kind === 'removed'
+                                  ? 'text-rose bg-rose/10'
+                                  : 'text-muted'
+                            }`}
+                          >
+                            <span className="w-7 shrink-0 text-right tabular-nums text-faint">
+                              {row.left ?? ''}
+                            </span>
+                            <span className="w-7 shrink-0 text-right tabular-nums text-faint">
+                              {row.right ?? ''}
+                            </span>
+                            <span className="w-3 shrink-0">
+                              {row.kind === 'added' ? '+' : row.kind === 'removed' ? '−' : ' '}
+                            </span>
+                            <span className="whitespace-pre">{row.text || ' '}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                    {codeDiff.truncated && (
+                      <div
+                        data-testid="diff-truncated"
+                        className="px-2 py-1 font-mono text-[11px] text-faint"
+                      >
+                        … the rest of this change is not drawn here.
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p className="mt-1.5 text-[11px] text-faint">
+                  Whitespace counts: this is your file against the reference, not the lenient output
+                  comparison the checks use.
+                  {codeDiff.coarse
+                    ? ' The file is large, so only its unchanged head and tail are matched.'
+                    : ''}
                 </p>
               </div>
             )}

@@ -11,6 +11,47 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 163: The Diff Says Which Lines
+
+The roadmap card could say *how many* lines a learner had changed ([`app/src/lessonDraft.ts`](app/src/lessonDraft.ts)'s
+`editedLines`) and nothing anywhere could say *which*. "What did I actually do to this starter" and "how
+does my version differ from the solution" are the two questions asked at the end of a lesson, they are
+asked in the editor, and the editor could not answer either. [`app/src/codeDiff.ts`](app/src/codeDiff.ts)
+is that answer, and **Diff** in the lesson header draws it.
+
+The rules, because a diff is a judgement:
+
+- **A line is a line**, whitespace included. An indentation fix is a real change here on purpose - the
+  lesson's output check is the lenient one, and this view is deliberately the opposite of it.
+- **The longest common subsequence, not a line-by-line pair.** One line inserted into a forty-line file
+  costs one added row, not forty changed ones.
+- **A trailing newline is not a line.** `"a\n"` and `"a"` are the same program.
+- **Past 250,000 table cells the file degrades honestly**: the common head and tail are kept and the
+  middle is shown as replaced, which is still a true statement and is sayable in a sentence instead of
+  freezing the tab.
+- **Unchanged runs are context, not content.** Three lines either side of a change, with the skipped
+  run counted (`… 12 unchanged`); changes closer than twice the context share one block.
+
+The panel opens against the **starter** and offers the **solution** only once that reference is earned -
+the solution opened in this visit, or the lesson verified - so the view cannot become the answer key for
+a lesson nobody asked the answer to yet. The browser step checks exactly that: the solution target is
+disabled on an untouched lesson, unlocks when Load Solution is pressed, and then reports its own text as
+`no changes` rather than a wall of identical rows.
+
+**One engine, two surfaces.** `editedLines` used to carry its own LCS count; it now calls `diffLines`
+and adds up its sides, so the card's "N lines changed" and the panel's `+N −M` cannot drift. The unit
+suite pins that as a cross-check rather than a comment: for every lesson the course ships, four edits
+(an appended line, an inserted header, the file reversed, the file emptied) must read the same number
+on both surfaces.
+
+**Verified.** `npm run test:codediff` is 13 checks in 0.52 s - the rules above, the caps, the all-added
+and all-removed ends, the summary's wording, and the card/panel agreement. `npm run test:draft` still
+passes its 17 with the shared engine, `npm run lint` is clean, `npm run test:e2e` passes end to end
+including the new step 7g-i, and the matrix gains one suite. Docs updated with it: the
+[PLAN-2.0-GAP](docs/PLAN-2.0-GAP.md) row moves from **missing** to **ships**, and
+[app/README.md](app/README.md) and [docs/VERIFICATION.md](docs/VERIFICATION.md) name the panel, its
+rules and its suite.
+
 ## [2026-10-22] — Run 162: The Paint, Measured
 
 Three runs of splits moved `entry_gzip` 627.5 → 585.5 → 432.9 kB on the theory that bytes before the
