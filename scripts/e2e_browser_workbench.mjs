@@ -1176,9 +1176,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'Show line must put the cursor at the start of the step\u2019s line'
     );
     assert.equal(
-      (await page.getByTestId('trace-panel').textContent())?.includes('nothing is paused'),
+      (await page.getByTestId('trace-panel').textContent())?.includes('this run has already finished'),
       true,
-      'the panel says it is a recording, so nobody waits for a breakpoint that will not hit'
+      'the panel says it is a recording of a finished run, so nobody waits for it to move'
     );
     // An edit does not take the recording away: the panel quotes the text the run executed, so it
     // still describes the program it saw. The next run replaces it (and a lesson switch clears it).

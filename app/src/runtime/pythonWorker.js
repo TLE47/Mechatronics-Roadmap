@@ -41,6 +41,19 @@ const BOOT_ID = Math.random().toString(36).slice(2, 10);
 const STDIN_STATE = 0;
 const STDIN_LENGTH = 1;
 
+// Pause. The page cannot `postMessage` into a worker that is blocked inside Python - the message
+// queues behind the very loop it is meant to steer - so the command comes back through a shared word,
+// the same reason Stop uses one. Two words: the command the page writes, and the status this worker
+// sets so the page knows a pause is in force rather than a slow line.
+const PAUSE_COMMAND = 0;
+const PAUSE_STATUS = 1;
+const PAUSE_NONE = 0;
+const PAUSE_REQUEST = 1;
+const PAUSE_CONTINUE = 2;
+const PAUSE_STEP = 3;
+const PAUSE_STOP = 4;
+let pauseView = null;
+
 // Scope. A learner's loop can produce tens of thousands of points; posting each one would cost more
 // than the simulation. Points are buffered here and sent in batches of SCOPE_FLUSH_POINTS, plus one
 // final message before the run's result, so the panel draws while the loop runs and is complete at
@@ -65,6 +78,54 @@ function readStdin(prompt) {
   const length = Atomics.load(stdinView, STDIN_LENGTH);
   const bytes = new Uint8Array(stdinBytes, 8, length).slice();
   return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Has the page asked to stop at the next line?
+ *
+ * Called from the Python trace hook once per executed line in the learner's file, so it is an
+ * `Atomics.load` and nothing else: a message round trip is not available here, and a promise cannot
+ * be awaited from a trace function.
+ */
+function pauseRequested() {
+  return pauseView ? Atomics.load(pauseView, PAUSE_COMMAND) === PAUSE_REQUEST : false;
+}
+
+/**
+ * Block the interpreter on the lease of the page, and answer how the run should go on.
+ *
+ * The step is posted first: `postMessage` queues to the page even though this thread is about to
+ * park, which is what lets the paused bar appear without polling. Then the worker waits on the
+ * shared command word - `Atomics.wait` on a worker thread is a real park, not a spin, so the page's
+ * own thread stays free and the pause costs no CPU.
+ *
+ * Returns `continue`, `step` or `stop`; the Python side raises `KeyboardInterrupt` for `stop`, so a
+ * stopped pause unwinds through the same `except` a Stop does.
+ */
+function pauseAt(payloadJson) {
+  if (!pauseView) return 'continue';
+  let step = null;
+  try {
+    step = JSON.parse(String(payloadJson));
+  } catch {
+    step = { line: 0, fn: '', depth: 1, values: [] };
+  }
+  Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
+  Atomics.store(pauseView, PAUSE_STATUS, 1);
+  self.postMessage({ type: 'paused', runId: activeRunId, step });
+  for (;;) {
+    Atomics.wait(pauseView, PAUSE_COMMAND, PAUSE_NONE);
+    const command = Atomics.load(pauseView, PAUSE_COMMAND);
+    Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
+    if (command === PAUSE_CONTINUE || command === PAUSE_STEP || command === PAUSE_STOP) {
+      Atomics.store(pauseView, PAUSE_STATUS, 0);
+      if (command === PAUSE_CONTINUE) return 'continue';
+      if (command === PAUSE_STEP) return 'step';
+      return 'stop';
+    }
+    // A request that means nothing here (a pause asked for while already paused, or a word a
+    // previous run left behind) is not a decision: keep waiting.
+  }
 }
 
 function toNumberArray(value) {
@@ -124,6 +185,12 @@ function flushScope(final) {
 // verdict the panel is drawn beside.
 function postResult(payload) {
   flushScope(true);
+  // A run is over: a pause word left set would park the next run at its first line, and a status
+  // left at 1 would tell the page a finished run is still waiting for an answer.
+  if (pauseView) {
+    Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
+    Atomics.store(pauseView, PAUSE_STATUS, 0);
+  }
   self.postMessage(payload);
 }
 
@@ -550,6 +617,7 @@ self.onmessage = async (event) => {
     interruptView = msg.interruptBuffer ? new Int32Array(msg.interruptBuffer) : null;
     stdinView = msg.stdinBuffer ? new Int32Array(msg.stdinBuffer, 0, 2) : null;
     stdinBytes = msg.stdinBuffer || null;
+    pauseView = msg.pauseBuffer ? new Int32Array(msg.pauseBuffer, 0, 2) : null;
     if (interruptView && pyodideInstance) pyodideInstance.setInterruptBuffer(interruptView);
     return;
   }
@@ -616,6 +684,11 @@ self.onmessage = async (event) => {
     scopePending = 0;
     scopeRunId = runId;
     if (interruptView) Atomics.store(interruptView, 0, 0);
+    // A pause word left set by a previous run would stop this one at its first line.
+    if (pauseView) {
+      Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
+      Atomics.store(pauseView, PAUSE_STATUS, 0);
+    }
     const capturedOut = [];
     const capturedErr = [];
     let captureEnabled = true;
@@ -648,9 +721,13 @@ self.onmessage = async (event) => {
       py.globals.set('__mechalab_trace_cap__', Number(traceCaps?.cap) || 0);
       py.globals.set('__mechalab_trace_name_cap__', Number(traceCaps?.names) || 0);
       py.globals.set('__mechalab_trace_value_chars__', Number(traceCaps?.chars) || 0);
+      // Pause lives on the trace hook the step budget already runs: the same line events, one more
+      // question asked of the page before the line executes.
+      py.globals.set('__mechalab_pause_requested__', pauseRequested);
+      py.globals.set('__mechalab_pause__', pauseAt);
 
       const runnerHarness = `
-import sys, time, traceback, warnings
+import json as _json, sys, time, traceback, warnings
 
 def __mechalab_execute():
     ns = {
@@ -698,8 +775,28 @@ def __mechalab_execute():
             walker = walker.f_back
         return depth
 
+    # 0: run freely. 1: stop at the next line of the learner's file and wait for the page. Set by a
+    # Step, so the line after the one a learner just read pauses too, without another click.
+    pause_mode = 0
+
+    def _pause_here(frame):
+        # A pause is only offered at a line of the learner's own file - stepping into math.sqrt is
+        # reading CPython, not their program - and only while the page shares a command word.
+        nonlocal t0, pause_mode
+        verdict = __mechalab_pause__(_json.dumps({
+            "line": frame.f_lineno,
+            "fn": frame.f_code.co_name,
+            "depth": _trace_depth(frame),
+            "values": _trace_values(frame),
+        }))
+        if verdict == "stop":
+            raise KeyboardInterrupt
+        pause_mode = 1 if verdict == "step" else 0
+
     def _trace_guard(frame, event, arg):
-        nonlocal steps, trace_total
+        # t0 is assigned below (the paused time is added back), so it has to be declared here too,
+        # or this function reads it as an unbound local on the very first line.
+        nonlocal steps, trace_total, t0
         if event == "line":
             steps += 1
             if frame.f_code.co_filename == "<lesson_editor>":
@@ -711,6 +808,13 @@ def __mechalab_execute():
                         "depth": _trace_depth(frame),
                         "values": _trace_values(frame),
                     })
+                if pause_mode or __mechalab_pause_requested__():
+                    # The wall clock keeps running while the worker is parked, and the harness's
+                    # timeout is a wall clock: the time a learner spends reading their own line is
+                    # not execution time, so it is added back rather than charged as a slow loop.
+                    before = time.monotonic()
+                    _pause_here(frame)
+                    t0 += time.monotonic() - before
             if steps > max_s or (time.monotonic() - t0) > max_t:
                 raise TimeoutError(
                     f"ExecutionTimeoutError: Loop exceeded execution limit ({steps} line steps / {max_t:.1f}s). "

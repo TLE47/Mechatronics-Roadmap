@@ -39,6 +39,8 @@ const EDITOR = '[data-editor="editor-main"] .cm-content';
 const RUN = '[data-testid="btn-run-verify"]';
 const STOP = '[data-testid="btn-stop-execution"]';
 const OUTPUT = '[data-testid="pre-actual-stdout"]';
+const PAUSE = '[data-testid="btn-pause-execution"]';
+const PAUSED_LINE = '[data-testid="paused-line"]';
 const STATUS = '[data-testid="runner-runtime-status"]';
 
 async function main() {
@@ -408,6 +410,109 @@ async function main() {
       assert.equal(pageErrors.length, 0, `expected no uncaught page errors, got: ${pageErrors.join(' | ')}`);
     });
 
+    // 12. Pause is real, and it is a park rather than a stop: the interpreter waits on a shared word
+    //     until this page answers, so the session survives it and the next run starts from the same
+    //     10 MB runtime. Stepping is the point of parking - "where is my loop now" is answered by
+    //     the line it is about to run, one line at a time.
+    await setEditorCode(
+      page,
+      'import time\ntotal = 0\nwhile True:\n    total += 1\n    time.sleep(0.05)\n'
+    );
+    await page.click(RUN);
+    await page.waitForSelector(PAUSE, { timeout: 60000 });
+    await page.waitForTimeout(400); // a few lines in, so the pause lands inside the loop
+    await page.click(PAUSE);
+    const parked = await page
+      .waitForSelector('[data-testid="paused-bar"]', { timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
+    const parkedLine = parked ? ((await page.textContent(PAUSED_LINE)) ?? '').trim() : '';
+    check('Pause parks the interpreter on the line it was about to run', () => {
+      assert.equal(
+        parked,
+        true,
+        'no paused bar appeared; a park needs the shared command word to reach the trace hook, so check both halves before the widget'
+      );
+      assert.match(
+        parkedLine,
+        /^(while True:|total \+= 1|time\.sleep\()/,
+        `expected the parked line to be one of the program's own lines, got "${parkedLine}"`
+      );
+      assert.equal(pageErrors.length, 0, `expected no uncaught page errors, got: ${pageErrors.join(' | ')}`);
+    });
+
+    const stepFrom = parkedLine;
+    await page.click('[data-testid="btn-step"]');
+    const stepped = await page
+      .waitForFunction(
+        (previous) => {
+          const line = document.querySelector('[data-testid="paused-line"]')?.textContent?.trim();
+          return Boolean(document.querySelector('[data-testid="paused-bar"]')) && Boolean(line) && line !== previous;
+        },
+        stepFrom,
+        { timeout: 15000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    check('Step runs one line and parks on the next', () => {
+      assert.equal(
+        stepped,
+        true,
+        `expected a second pause on a different line after Step; still showing "${stepFrom}" means the hook did not re-arm`
+      );
+    });
+
+    // Stop from a park: the worker is waiting on the pause word, not the interrupt word, so this is
+    // the check that the stop reaches a *parked* run rather than one that is executing.
+    const bootParked = await page.getAttribute(STATUS, 'data-runtime-boot');
+    await page.click(STOP);
+    await page.waitForFunction(
+      () => Boolean(document.querySelector('[data-testid="status-execution-stopped"]')),
+      null,
+      { timeout: 10000 }
+    );
+    const afterParkedStop = await runAndWait(page, 'print("recovered")');
+    const bootAfterParked = await page.getAttribute(STATUS, 'data-runtime-boot');
+    check('Stop ends a parked run, and the interpreter is still the same one', () => {
+      assert.equal(
+        bootAfterParked,
+        bootParked,
+        `expected the same worker after stopping a parked run, got boot id ${bootAfterParked} (was ${bootParked}); a new id means the park could not be woken`
+      );
+      assert.match(
+        afterParkedStop,
+        /recovered/,
+        `expected the runtime to keep running after a parked stop, got "${afterParkedStop.slice(0, 120)}"`
+      );
+    });
+
+    // Continue, on a program that ends by itself: a park must not eat the rest of the run.
+    await setEditorCode(
+      page,
+      'import time\ntotal = 0\nfor i in range(20):\n    total += i\n    time.sleep(0.05)\nprint(total)\n'
+    );
+    await page.click(RUN);
+    await page.waitForSelector(PAUSE, { timeout: 60000 });
+    await page.click(PAUSE);
+    await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 15000 });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const continued = (await page.textContent(OUTPUT)) ?? '';
+    check('Continue lets a parked run finish, with its own output', () => {
+      assert.match(
+        continued,
+        /\b190\b/,
+        `expected the loop's own total (190) after Continue, got "${continued.slice(0, 120)}"`
+      );
+    });
+
     await context.close();
   } finally {
     await browser.close();
@@ -423,10 +528,13 @@ async function main() {
     '\n[PASS] Interruptible Python: input() round-trips, a while-True loop stops by interrupt, the session survives it, '
   );
   console.log(
-    '       the page never blocks, Jedi completes math.acos without losing the module, hovers `def acos`,'
+    '       a run parks on a shared word and steps line by line, Continue finishes it, stopping a parked run keeps'
   );
   console.log(
-    '       shows the signature of a call being typed, pyflakes names an unused import, and a run still works afterwards.'
+    '       the interpreter; the page never blocks, Jedi completes math.acos without losing the module, hovers'
+  );
+  console.log(
+    '       `def acos`, shows the signature of a call being typed, pyflakes names an unused import, and a run still works.'
   );
 }
 

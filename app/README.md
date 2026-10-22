@@ -669,14 +669,22 @@ stay the plain version, so **Load Solution** shows the canonical code while the 
 workspace where the numbers move. `npm run test:editor` fails if one of those starters loses its
 sliders or gains a slider the demo never reads.
 
-### The run trace
+### Pause, step, and the run trace
 
-Every run is recorded, line by line, and the **Trace** panel beside the output steps through it
+**Pause parks the interpreter.** The toolbar's **Pause** stops the program at the next line of your
+own file without losing the session, and the bar above the editor names the line it is about to run,
+quotes it and shows that frame's values; **Step** runs that one line and parks on the next, **Continue**
+runs on, and **Stop** wakes a parked run and leaves Python loaded (`npm run test:runtime`). The worker
+waits on a shared command word because a message queues behind the very loop it is meant to steer —
+the same reason Stop uses one — so a parked run costs no CPU and the page never blocks. A pause is only
+offered where the browser gave the page shared memory; without it, nothing can reach a parked worker.
+There is no gutter breakpoint yet: a park is *asked for*, not placed on a line.
+
+Every run is also recorded, line by line, and the **Trace** panel beside the output steps through it
 ([`src/runTrace.ts`](src/runTrace.ts), [`src/components/TracePanel.tsx`](src/components/TracePanel.tsx),
-`npm run test:trace`, browser step 5h). It is the plan's debugger row answered the way this runtime can
-answer it: Pyodide runs a program inside one call, so nothing can be *paused* — the page's only lever
-is the interrupt word. What a learner actually asks, *"why did this loop do that?"*, is answerable from
-what was recorded.
+`npm run test:trace`, browser step 5h). A replay answers *"why did this loop do that?"* after the fact —
+including a stop and a timeout, which keep their partial traces — while Pause answers it *in the moment*.
+The recording is the history; the park is the present.
 
 | Rule | Why |
 | :--- | :--- |
@@ -686,9 +694,9 @@ what was recorded.
 | The quoted line comes from **the text that ran**, not from the editor | A run is a fact about a program; the panel still describes it after an edit, and a new run replaces it. |
 | A stop and a timeout keep their partial traces | "Where was my loop when I stopped it" is the question Stop is pressed to answer. |
 
-The panel says in a sentence that it is a recording — nothing is paused — and offers **Show line** to
-put the caret on the step's line; the values are that step's frame, so the quote and the numbers always
-describe the same moment.
+The panel says in a sentence that it is a recording — this is where the program has been, not where it
+is — and offers **Show line** to put the caret on the step's line; the values are that step's frame, so
+the quote and the numbers always describe the same moment.
 
 ### Sharing an attempt
 

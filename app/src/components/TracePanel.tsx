@@ -13,9 +13,9 @@ import {
  *
  * The plan's debugger row is the reason this exists (`docs/PLAN-2.0-GAP.md`): *"why did this loop do
  * that?"* is the question a beginner actually asks, and it is answerable after the fact from what the
- * worker recorded. What this is **not** is a live debugger — nothing is paused, no breakpoint is set,
- * and the panel says so once rather than letting a learner discover it — because Pyodide runs the
- * program inside one call and the page's only lever is the interrupt word.
+ * worker recorded. What this is **not** is the park itself: the toolbar's **Pause** stops a *running*
+ * program on a shared command word and walks it from there, while this panel describes a run that has
+ * already finished. The panel says so once rather than letting a learner discover it.
  *
  * Three constraints, each of them the honest half of a shortcut:
  *
@@ -61,8 +61,8 @@ export const TracePanel: React.FC<{
       </div>
 
       <p className="text-[11.5px] mb-3" style={{ color: 'var(--muted)' }}>
-        A recording, replayed — nothing is paused. Step through it to see what each line held when it
-        ran; the values are that run&apos;s, so an edit since then is a different program.
+        A recording, replayed — this run has already finished. Step through it to see what each line
+        held when it ran; the values are that run&apos;s, so an edit since then is a different program.
       </p>
 
       <div className="flex flex-wrap items-center gap-2 mb-2">

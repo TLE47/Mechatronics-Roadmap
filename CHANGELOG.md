@@ -11,6 +11,37 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 181: Pause, for Real
+
+The plan's debugger row ended with *"no breakpoints, no step-in and no pause"*, and Run 178 recorded
+why: Pyodide runs a program inside one `runPythonAsync` call. That is still true — and a trace hook
+can park inside it. **Pause** stops the program at the next line of the learner's own file, **Step**
+walks it one line at a time with that frame's values, **Continue** runs on, and **Stop** wakes a parked
+run leaving the interpreter loaded ([`app/src/runtime/pythonWorker.js`](app/src/runtime/pythonWorker.js),
+`npm run test:runtime`).
+
+| Decision | Why |
+| :--- | :--- |
+| The command is a **shared word**, not a message | A message queues behind the very loop it is meant to steer; this is the same reason Stop writes an interrupt buffer |
+| The worker **parks** with `Atomics.wait`, it does not spin | A paused run costs no CPU and the page's thread stays free, so Step is clickable while Python is stopped |
+| The step is posted **before** the park | `postMessage` queues from a blocking worker, so the bar appears without the page polling shared memory |
+| The pause lands on a line of `<lesson_editor>` only | Stepping into `math.sqrt` is reading CPython, not their program — the same rule the recording follows |
+| Paused wall time is added back to the harness's `t0` | The timeout is a wall clock; a learner reading their own line is not a slow loop |
+| The page watchdog is cleared while parked and re-armed by Step/Continue | A paused run is not a slow run, and one that never wakes must not be killed as a timeout |
+| `Pause` is **absent**, not disabled, without shared memory | A park needs a word to wait on; a button that cannot work is worse than one that is not offered |
+
+**Two bugs the gates caught.** A backtick in a Python comment inside the worker's template literal ended
+the string early — the class `test:trace` already guards with `node --check`, and it fired immediately.
+The second was `UnboundLocalError: t0`: the clock shift assigns `t0` inside `_trace_guard`, which makes
+it a local there unless `nonlocal` says otherwise, and every run failed on its first line.
+
+Verified: `npm run test:runtime` (four new checks: park, step, stop a parked run with the same boot id,
+continue to the program's own output), `npm run test:workbench`, `npm run test:e2e:pages`, axe 11 tabs
+× 4 palettes, weight, lint clean. The trace panel's sentence changed with the feature: it is a recording
+of a run that has already finished, not "nothing is paused".
+
+---
+
 ## [2026-10-22] — Run 180: The Third Reference Is Your Own Work
 
 `docs/PLAN-2.0-GAP.md`'s diff row ended with *"no diff against a filed version."* The Diff panel had

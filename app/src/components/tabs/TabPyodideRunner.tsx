@@ -112,6 +112,7 @@ import {
   CheckSquare,
   Square,
   OctagonX,
+  Pause,
   RefreshCw,
   ShieldCheck,
   Lock,
@@ -184,6 +185,19 @@ interface TabPyodideRunnerProps {
   trySnippet?: SharedAttempt | null;
   /** Forget the snippet once the learner leaves scratch. */
   onDismissTry?: () => void;
+}
+
+/**
+ * The line the interpreter is parked on, as the worker reports it.
+ *
+ * The values are the frame's own, formatted in the worker (`_trace_values`) exactly as the recorded
+ * trace's are, so a paused line and the replay read the same way.
+ */
+interface PausedStep {
+  line: number;
+  fn: string;
+  depth: number;
+  values: { name: string; value: string }[];
 }
 
 /** What the Share button last did, so the line under the toolbar can say it. */
@@ -280,6 +294,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [behaviorCheck, setBehaviorCheck] = useState<'untested' | 'passed' | 'failed'>('untested');
   const [outputCheck, setOutputCheck] = useState<'untested' | 'matched' | 'differs'>('untested');
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  // Where the interpreter is parked, or null when it is not. The worker posts the step and then
+  // blocks; Step, Continue and Stop are the three answers it is waiting for.
+  const [pausedStep, setPausedStep] = useState<PausedStep | null>(null);
+  // Whether this page got a shared command word, which is what makes a park possible at all. State,
+  // not `pauseRef.current`: the buffer is created when the worker is, and a ref would not re-render
+  // the toolbar — the button would exist only after the learner pressed something else.
+  const [pauseCapable, setPauseCapable] = useState(false);
   // The pass toast is short and dismissable by time alone: it exists to carry the learner into
   // the next lesson while the win is fresh, not to become another panel to close.
   const [showPassToast, setShowPassToast] = useState<boolean>(false);
@@ -359,6 +380,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Both are null when the page is not cross-origin isolated, and Stop falls back to terminating.
   const interruptRef = useRef<SharedArrayBuffer | null>(null);
   const stdinCtrlRef = useRef<SharedArrayBuffer | null>(null);
+  // Pause: two shared words, because a message cannot reach a worker that is parked inside Python.
+  // Word 0 is the command this page writes, word 1 the status the worker sets (see the worker's
+  // `pauseAt`). Null means the browser gave no SharedArrayBuffer, and then Pause is simply absent —
+  // a button that cannot work is worse than one that is not offered.
+  const pauseRef = useRef<SharedArrayBuffer | null>(null);
   const stopFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [stdinPrompt, setStdinPrompt] = useState<string | null>(null);
   const [stdinValue, setStdinValue] = useState<string>('');
@@ -853,15 +879,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       if (typeof SharedArrayBuffer !== 'undefined') {
         interruptRef.current = new SharedArrayBuffer(4);
         stdinCtrlRef.current = new SharedArrayBuffer(8 * 1024);
+        pauseRef.current = new SharedArrayBuffer(8);
+        setPauseCapable(true);
         worker.postMessage({
           type: 'init',
           interruptBuffer: interruptRef.current,
           stdinBuffer: stdinCtrlRef.current,
+          pauseBuffer: pauseRef.current,
         });
       }
     } catch {
       interruptRef.current = null;
       stdinCtrlRef.current = null;
+      pauseRef.current = null;
     }
     // A brand-new worker has not loaded Python, so the status has to stop saying it has. A tab switch
     // terminates the worker while this component's state survives it, and the next mount warms a new
@@ -1107,8 +1137,55 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     };
   }, []);
 
+  /** Re-arms the run's watchdog when a pause is answered: the clock belongs to execution. */
+  const resumeWatchdogRef = useRef<(() => void) | null>(null);
+
+  /**
+   * Ask the interpreter to stop at the next line of the learner's file.
+   *
+   * A request, not a command: a line boundary is the only place a `settrace` hook can park, so the
+   * pause lands on the next executed line — the answer to "where is my loop now?" is the line it is
+   * about to run, which is the line the learner is reading.
+   */
+  const pauseExecution = () => {
+    const buffer = pauseRef.current;
+    if (!buffer || !isRunning || pausedStep) return;
+    const view = new Int32Array(buffer, 0, 2);
+    Atomics.store(view, 0, 1);
+    Atomics.notify(view, 0);
+  };
+
+  /**
+   * Answer a parked interpreter: 2 continue, 3 step, 4 stop.
+   *
+   * The command is a shared word because a message would queue behind the very call it is meant to
+   * steer. Step leaves the worker's hook armed for the next line, so holding the button walks the
+   * program one line at a time.
+   */
+  const answerPause = (command: 2 | 3 | 4) => {
+    const buffer = pauseRef.current;
+    if (!buffer) return;
+    const view = new Int32Array(buffer, 0, 2);
+    Atomics.store(view, 0, command);
+    Atomics.notify(view, 0);
+    if (command === 4) {
+      stopExecution();
+      return;
+    }
+    setPausedStep(null);
+    resumeWatchdogRef.current?.();
+  };
+
   const stopExecution = (customMessage?: string) => {
     const runId = activeRunIdRef.current;
+    // A parked interpreter is not on the interrupt word's clock: it is waiting on the pause word,
+    // so wake that wait with a stop of its own.
+    if (pauseRef.current) {
+      const pause = new Int32Array(pauseRef.current, 0, 2);
+      Atomics.store(pause, 0, 4);
+      Atomics.notify(pause, 0);
+      setPausedStep(null);
+    }
     // With shared memory, stop in place: the interpreter raises KeyboardInterrupt inside the
     // running program, so imports, variables and the loaded runtime all survive. A worker that
     // cannot unwind within the grace period is terminated by the fallback below.
@@ -1196,6 +1273,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     activeRunIdRef.current = runId;
 
     setIsRunning(true);
+    // A new run is not paused: a bar left over from the previous one would describe a worker that
+    // has already been replaced by this run.
+    setPausedStep(null);
     setStdout('');
     setStderr('');
     setInstructorError('');
@@ -1228,6 +1308,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
         const armExecutionWatchdog = (ms: number, label: string) => {
           clearRunWatchdog();
+          // What Step and Continue call: the same watchdog, on the run's own timeout, from whatever
+          // thread of execution the page is on when it answers.
+          resumeWatchdogRef.current = () => armExecutionWatchdog(timeoutMs, 'Python execution');
           timeoutIdRef.current = setTimeout(() => {
             if (activeRunIdRef.current === runId) {
               destroyWorker();
@@ -1270,6 +1353,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           // has to sit above the runId gate below, which resolves the run on any message.
           if (data.type === 'scope') {
             if (data.runId === runId) setScopeSeries(normalizeScopeSeries(data.series));
+            return;
+          }
+          // A pause is not an outcome: the worker is parked and this page holds the key. The
+          // watchdog is cleared here - a paused run is not a slow run - and re-armed by Step or
+          // Continue when the interpreter starts moving again.
+          if (data.type === 'paused') {
+            if (data.runId !== runId) return;
+            clearRunWatchdog();
+            setPausedStep((data.step as PausedStep) ?? null);
             return;
           }
           if (data.runId !== runId) return;
@@ -1456,6 +1548,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       }
       if (activeRunIdRef.current === runId) {
         setIsRunning(false);
+        setPausedStep(null);
+        resumeWatchdogRef.current = null;
       }
     }
   };
@@ -2362,6 +2456,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <History className="w-3.5 h-3.5" />
                   <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
                 </button>
+                {/* Pause is offered only where a park is possible: the shared command word and a
+                    trace hook exist together, and one without the other would be a dead button. */}
+                {isRunning && pauseCapable && !pausedStep && (
+                  <button
+                    onClick={() => pauseExecution()}
+                    data-testid="btn-pause-execution"
+                    title="Stop at the next line of your file, without losing the session"
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Pause className="w-3.5 h-3.5" />
+                    <span>Pause</span>
+                  </button>
+                )}
                 {isRunning && (
                   <button
                     onClick={() => stopExecution()}
@@ -3057,6 +3164,63 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Where the interpreter is, while it is there. A parked run is not a slow one, so it says
+              what it is doing rather than leaving a spinner: the line it is about to run, quoted
+              from the text that ran, and the frame's own values. Step and Continue are the two
+              answers the worker is waiting for; Stop stays where it always is, in the toolbar. */}
+          {pausedStep && (
+            <div
+              data-testid="paused-bar"
+              className="rounded-lg border p-3"
+              style={{ borderColor: 'var(--accent)', backgroundColor: 'var(--panel)' }}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-accent">
+                  Paused · {pausedStep.fn === '<module>' ? 'top level' : `${pausedStep.fn}()`} · line{' '}
+                  {pausedStep.line}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => answerPause(3)}
+                    data-testid="btn-step"
+                    title="Run this line and stop at the next one (the frame's values come with it)"
+                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
+                  >
+                    Step
+                  </button>
+                  <button
+                    onClick={() => answerPause(2)}
+                    data-testid="btn-continue"
+                    title="Run on to the end, or until you pause again"
+                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
+                  >
+                    Continue
+                  </button>
+                </span>
+              </div>
+              {/* Quoted from the text that ran, not from the editor: a park describes a program,
+                  and an edit made while it is parked must not rewrite what it is about to execute. */}
+              <code
+                data-testid="paused-line"
+                className="mt-2 block whitespace-pre overflow-x-auto font-mono text-[11.5px] text-body"
+              >
+                {(runCodeRef.current || code).split('\n')[pausedStep.line - 1]?.trim() ?? ''}
+              </code>
+              {pausedStep.values?.length > 0 && (
+                <div
+                  data-testid="paused-values"
+                  className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-muted"
+                >
+                  {pausedStep.values.map((value) => (
+                    <span key={value.name}>
+                      <span className="text-accent">{value.name}</span> = {value.value}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
