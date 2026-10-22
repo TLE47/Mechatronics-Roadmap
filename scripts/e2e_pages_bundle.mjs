@@ -49,6 +49,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, firefox } from 'playwright-core';
+import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
 
 const repoRoot = process.cwd();
@@ -556,7 +557,14 @@ async function gradeRampEntries(page, name) {
 async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
   let browser;
   const envPath = process.env[`PLAYWRIGHT_${name.toUpperCase()}_EXECUTABLE_PATH`];
-  const executablePath = envPath && fs.existsSync(envPath) ? envPath : undefined;
+  // Chromium falls back to the machine's own Chrome when the downloaded Playwright build is absent
+  // (`resolveChromiumExecutable`), so a developer box without `playwright install` still runs this.
+  const executablePath =
+    envPath && fs.existsSync(envPath)
+      ? envPath
+      : name === 'chromium'
+      ? resolveChromiumExecutable()
+      : undefined;
   try {
     browser = await launcher.launch({ ...(executablePath ? { executablePath } : {}), headless: true });
   } catch (error) {

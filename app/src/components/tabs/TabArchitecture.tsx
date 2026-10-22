@@ -22,6 +22,7 @@ import {
   type SpineStep,
 } from '../../spine';
 import { tabForPreset } from '../../demoPresets';
+import { TrailCard } from '../TrailCard';
 import { trackLabel } from '../../trackLabel';
 import type { LessonAttempt } from '../../learningLog';
 import { PYTHON_TAB_NAME, tabName } from '../../tabNames';
@@ -227,6 +228,11 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
           </button>
         </div>
       )}
+
+      {/* 0b. What the learner actually did, across every lesson. Under the resume card because it
+             answers the same question one level up: the card says what to do next, the trail says
+             what the last fortnight was. It renders nothing on a first visit. */}
+      <TrailCard onOpenLesson={onOpenPyodideLesson} />
 
       {/* 1. Linear Level-Up Progression Pipeline Header */}
       <div className="bg-panel border border-line rounded-xl p-5">

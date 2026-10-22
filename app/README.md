@@ -272,6 +272,33 @@ and range `docs/PILOT.md` asks for instead of estimating them. A sitting is deli
 backup: it is a fact about one machine's clock, and merging two machines' sittings would count the same
 hour twice.
 
+### The trail
+
+Every other surface answers a question about *one* lesson. The roadmap's trail card answers the one a
+self-paced course is asked by the person sitting it — "what did I do last Tuesday" — from the two
+stores that already held the answer: the learning log (what happened) and the sitting clock (how long
+it lasted). [`src/timeline.ts`](src/timeline.ts) is the reading, pure and given `now`, and
+[`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) draws it under the resume card: days
+newest first, each row a local time and a verb (`opened`, `run · checks failed`, `verified`, `read hint
+2`, `exported the portfolio`, with a failure's first line beside it).
+
+Four rules make it a trail rather than a dump, and each one is pinned in `npm run test:trail`:
+
+- **A day is local**, and named the way a learner names it: `Today`, `Yesterday`, `Tue 20 Oct`.
+- **An open is context, not work.** An open followed by a run, hint or verification within thirty
+  minutes is that work, so its row is dropped; the same fold collapses a re-mount's second open. An
+  open with nothing behind it stays as the read-only visit it was.
+- **A verification is the run that passed.** Within ten seconds of a passing run the row folds, so a
+  success is one line and not a list that flatters.
+- **A sitting contributes time, not rows.** Its duration lands on the day it *started* (stated in the
+  card), so a sitting across midnight is filed where it began and the total never counts it twice.
+
+The card renders nothing until there is work — a run, a hint, a pass or an export — because the app
+opens on the runner and a brand-new profile logs one `lesson_open` before doing anything. A trail of
+opens is not a study history. It is bounded too (14 days, 30 rows a day, 120 in total) and reports
+what the caps left out rather than ending mid-list, and its lesson ids are buttons that open the
+runner on that lesson.
+
 ### The portfolio export
 
 **Export Progress (.md)** writes one Markdown file a learner can put in a repository, a CV or a course
@@ -469,6 +496,8 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/fsrs.ts`](src/fsrs.ts) | FSRS-5: the published weights and formulas, pure — a schedule in, a schedule out, `now` injected. |
 | [`src/studyCards.ts`](src/studyCards.ts) | The deck: cards derived from commented highlights, their schedules stored, and the merge a restore uses. |
 | [`src/sittingClock.ts`](src/sittingClock.ts) | The measured sitting: idle cutoff, three-hour cap, bounded store, and the totals the pilot quotes. |
+| [`src/timeline.ts`](src/timeline.ts) | The log and the sittings as days of work: the fold that drops repeat rows, local days, and the caps. |
+| [`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) | The roadmap's trail: a day's time and work, a row per event, and rows that open their lesson. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
 | [`src/traceback.ts`](src/traceback.ts) | CPython's failure text as data: frames, the learner's own frame, chains, and both SyntaxError shapes. |
@@ -499,9 +528,11 @@ npm run test:sitting         # the sitting clock's rules and focus mode's store,
 npm run test:portfolio       # the export: sections only when they have content, quoting, caps, the time table
 npm run test:storage         # IndexedDB: the bucket fallback, the migration order, the write queue, a refused write
 npm run test:traceback       # tracebacks as data: frames, chains, syntax shapes, and the index match
+npm run test:trail           # the trail: local days, the fold, sitting time on its start day, the caps
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting
+npm run test:e2e:trail       # the trail in Chromium: two runs become today, a reload keeps them, a row opens its lesson
 npm run test:e2e:storage     # a pre-IndexedDB bucket in Chromium: migrated whole, shown on screen, written to
 npm run check:lessons        # the registry is current
 ```

@@ -105,6 +105,9 @@ export function resolveChromiumExecutable() {
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
     '/usr/bin/google-chrome',
+    // A developer machine without the downloaded Playwright browsers still has a Chrome.
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
   ];
   for (const p of candidatePaths) {
     if (fs.existsSync(p)) return p;

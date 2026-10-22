@@ -11,6 +11,55 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 156: The Fortnight as One Page
+
+Every surface in the app answered a question about *one* lesson: the runner's attempts, the resume
+card, the study panel's notes, the portfolio's per-lesson table. None answered "what did I do last
+Tuesday", which is the question a self-paced course is asked by the person sitting it — and the log
+has held the answer since it was written.
+
+**`app/src/timeline.ts` is the reading, and it is pure.** `buildTrail(events, sittings, { now })`
+folds the learning log and the sitting clock into days of work: newest first, the day named the way a
+learner names it (`Today`, `Yesterday`, `Tue 20 Oct`), each row a time and a verb — `opened`,
+`run · checks failed`, `verified`, `read hint 2`, `exported the portfolio`. Days are local, because a
+sitting is a fact about someone's evening and not about UTC.
+
+**The rules are the part that makes it a trail rather than a dump.** An open followed by work within
+thirty minutes is that work — the row is dropped instead of doubling the list, and a re-mount that
+logs the same open twice collapses to the later one. A verification inside ten seconds of a passing
+run is that run's result, so a success is one row, not two. A sitting contributes *time*, not a row:
+the runs are already there, so its duration lands on the day it started (a sitting across midnight
+is filed where it began, and the total never counts it twice). And the whole thing is bounded — the
+last 14 days, 30 rows a day, 120 in total — with the counts of what was cut, so the card says
+"…and 6 more entries this day" rather than ending mid-list.
+
+**A trail of opens is not work.** The app opens on the runner, so a brand-new profile logs one
+`lesson_open` before the learner has done anything; a card headed *Your trail* over that one line is
+noise on the most important screen the course has. `hasWork()` gates the card on a run, a hint, a
+pass or an export, so the roadmap stays quiet for a beginner and speaks as soon as there is something
+to say. A read-only visit after real work keeps its open row, because there the open is part of a day
+that happened.
+
+- `npm run test:trail` (**27 checks**, new): the local day and its label across a month boundary and
+the 24-hour stamp, grouping from an unsorted log, the open fold at, inside and outside its window, a
+fold that stays inside its own lesson, the double-mount collapse, the verification fold and the three
+cases where it must not fold, every row's words, the failure line, a sitting filed on its start day
+(including one crossing midnight), sittings with no events making no day, a backwards sitting, the
+14-day / 30-a-day / 120-total caps and what each reports omitted, totals over what is on screen, an
+empty trail, an unreadable timestamp, an unknown event kind, and `hasWork`.
+- `npm run test:e2e:trail` (new) in Chromium: a fresh profile has no card; the starter runs to
+  `status-behavior-failed` and the solution to `status-assert-passed`; the roadmap then shows today
+  with both runs, one passing row (not two), and measured time in the summary; a reload keeps the
+  trail and both runs; and clicking a row puts the runner back on that lesson.
+- [`app/src/components/TrailCard.tsx`](app/src/components/TrailCard.tsx) sits under the resume card in
+the roadmap tab, re-reading both stores when the tab opens and after a restore writes them. It renders
+nothing without work, and its rows are links into the runner.
+- `resolveChromiumExecutable` gained the two macOS app paths, and the Pages suite now uses it for
+  Chromium: a developer machine without the downloaded Playwright browsers runs the browser suites
+  instead of reporting `SKIP` for every one of them.
+- `npm run test:workbench` now runs **32 suites**; `docs/PLAN-2.0-GAP.md`'s persistence row and its
+  next list record the timeline, and the accessibility/weight budgets are what remains of that list.
+
 ## [2026-10-21] — Run 155: The Failure Is Read, Not Just Printed
 
 The last editor item that was still prose: a red line printed CPython's traceback and stopped there.
