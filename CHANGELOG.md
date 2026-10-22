@@ -11,6 +11,47 @@ flowchart LR
 
 ---
 
+## [2026-10-21] — Run 150: The Study Layer Begins — Notes and Highlights
+
+The gap page's largest *missing* block is the study layer, and it starts where the work is actually
+lost: what the learner wrote down. Every lesson now has a **Study** card under the editor — a note box
+that saves as they type, and **Pin selected text**, which keeps a passage (or a line of their own code)
+with an optional comment. It is the one artifact a course cannot regenerate by pressing Run.
+
+**One store, two shapes.** [`app/src/studyNotes.ts`](app/src/studyNotes.ts): a note per lesson
+(whitespace-trimmed, capped at 4,000 characters, cleared by emptying the box — so "no note" is one
+state rather than two) and highlights whose identity is the quoted passage, so pinning the same text
+twice updates the comment instead of adding a duplicate row. A selection is collapsed to a single line
+before it is stored, a comment is capped at a margin note's length, and the store is bounded like every
+other one: 20 highlights per lesson, 25 lessons, least-recently-written evicted.
+
+**It rides in the backup and merges like drafts.** `study.json` joins the archive (the manifest counts
+notes and highlights, the README explains the file, the restore summary names what arrived), and a
+restore never deletes: a note written on this machine wins and an empty one is filled from the file,
+highlights union by quote, and an older file cannot erase a newer comment. `npm run test:backup`
+re-measures the caps of all six stores: **~1.7 M characters, ~3.4 MB of the 5 MB bucket** — the study
+store took most of the previous slack, which is now written down rather than discovered later.
+
+**Two failures found and fixed while building it.** A note typed and then followed by a lesson switch
+inside the 500 ms debounce was lost — the write now happens in the effect that leaves the lesson, under
+the id the text was typed against, not the id the panel has just been given. And React's development
+double-mount was calling the mount as an edit: the panel wrote its own empty box over a saved note, so
+a note looked fine until the page reloaded and came back blank. Writes now happen only after a real
+keystroke, which is a distinction the browser test proves — it types, pins, reloads, and finds both.
+
+- `npm run test:study` (**20 checks**, new): notes stored and re-read with their line breaks, cleared to
+  nothing by an empty box, capped; quotes collapsed and capped; the same passage pinned twice updating
+  in place and keeping its first timestamp; a blank comment not erasing a written one; per-lesson and
+  per-store eviction; corrupt, foreign, blocked and over-quota storage never throwing into the render;
+  and the four merge rules a restore depends on.
+- `npm run test:backup` grows to **18 checks**: `study.json` in the bundle and its counts, a restore
+  that brings a lesson's highlights in while the note written here wins, and the caps re-measured.
+- `npm run test:e2e` gains the browser check: a note typed into the panel reaches the store on pause, a
+  selected line of code becomes a highlight, and after a reload both are still on screen.
+- `docs/PLAN-2.0-GAP.md`: the study-layer row moves to **partial** with what ships and what does not
+  (flashcards, focus mode, measured time), and the next list leads with the rest of that layer.
+  `app/README.md` and `docs/VERIFICATION.md` describe the store, the panel, the backup and the checks.
+
 ## [2026-10-21] — Run 149: Hover and Signatures from the Same Jedi
 
 The plan's next item was "hover and signature help on the same Jedi", and it cost no new download:

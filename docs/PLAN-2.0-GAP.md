@@ -34,7 +34,7 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Plan item | Reality now | Verdict |
 | :--- | :--- | :--- |
 | Python in a Web Worker + isolation on Pages + a real Stop | `PYODIDE_WORKER_SOURCE` in [`app/src/components/tabs/TabPyodideRunner.tsx`](../app/src/components/tabs/TabPyodideRunner.tsx) runs Pyodide off-thread; Stop writes a `SharedArrayBuffer` interrupt word (`setInterruptBuffer`), so `KeyboardInterrupt` lands **in place** and imports survive; [`app/public/sw.js`](../app/public/sw.js) supplies COOP/COEP on Pages, with a terminate-the-worker fallback when isolation is absent. Pinned by `npm run test:runtime` (real Chromium, real `SharedArrayBuffer`). | **ships** |
-| IndexedDB persistence with snapshot-on-run | Drafts are `localStorage` per lesson, bounded and evicted ([`app/src/lessonDraft.ts`](../app/src/lessonDraft.ts)); every Run files the code it started from with its verdict, five per lesson, restorable ([`app/src/draftHistory.ts`](../app/src/draftHistory.ts), `npm run test:history`). **The backup half ships**: one press writes a `.zip` of all five stores with a manifest and a README ([`app/src/backupZip.ts`](../app/src/backupZip.ts), [`app/src/backupBundle.ts`](../app/src/backupBundle.ts), `npm run test:backup`, `npm run test:e2e:backup`), and a restore merges — flags union, drafts fill gaps, versions and log events dedupe — so it never deletes and never doubles. No IndexedDB and no cross-lesson timeline yet: `npm run test:backup` measures the caps at ~1.2 M characters (~2.4 MB of the 5 MB bucket), so the move is not earned by size today. | **partial** |
+| IndexedDB persistence with snapshot-on-run | Drafts are `localStorage` per lesson, bounded and evicted ([`app/src/lessonDraft.ts`](../app/src/lessonDraft.ts)); every Run files the code it started from with its verdict, five per lesson, restorable ([`app/src/draftHistory.ts`](../app/src/draftHistory.ts), `npm run test:history`). **The backup half ships**: one press writes a `.zip` of all six stores with a manifest and a README ([`app/src/backupZip.ts`](../app/src/backupZip.ts), [`app/src/backupBundle.ts`](../app/src/backupBundle.ts), `npm run test:backup`, `npm run test:e2e:backup`), and a restore merges — flags union, drafts fill gaps, versions and log events dedupe — so it never deletes and never doubles. No IndexedDB and no cross-lesson timeline yet: `npm run test:backup` measures the caps at ~1.7 M characters (~3.4 MB of the 5 MB bucket), so the move is not earned by size today - but the study store took most of the slack, and the next large store will not fit. | **partial** |
 | A Scope panel with a `scope.plot()` helper | Ships: `mechalab.scope.stream(name, t, y)` / `scope.plot(...)` inside a run, batched through the worker, drawn on one pair of axes with last values in the legend and the same data as a table ([`app/src/scopeModel.ts`](../app/src/scopeModel.ts), [`app/src/components/ScopePanel.tsx`](../app/src/components/ScopePanel.tsx), `npm run test:scope`, browser step 7h). No uPlot zoom/cursors, no A/B run overlay yet. | **partial** |
 
 ## Phases 1–3 — runtime, workspace, editor
@@ -56,7 +56,7 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 | Checks as a test runner + watch mode | Output comparison (`exact` vs formatting-tolerant) and instructor behaviour checks run per lesson; the 08.1 bench and Tier 3 budgets gate passes. No watch-on-save. | **partial** |
 | Hint ladder tied to the failing check | Each failed run opens a card naming the check that is red — behaviour or presentation — with the check's own line (the instructor's assertion, or the output line that differs) and the one rung that answers it ([`app/src/checkHints.ts`](../app/src/checkHints.ts), `npm run test:checkhints`, browser steps 0a-i and 10a). Rung 2 is now *earned*: it waits for a run made after the nudge was opened, not for the run already on screen. Blocks that are not a graded check (a harness metric, a traceback, a stopped loop) keep their own cards and name no hint. | **ships** |
 | Predict-first gate, try-it blocks, symbol linking | None of the three. | **missing** |
-| Notes, highlights, flashcards (FSRS), focus mode, measured time | None; the portfolio export is Markdown of progress, not of notes. | **missing** |
+| Notes, highlights, flashcards (FSRS), focus mode, measured time | **Notes and highlights ship**: every lesson has a note box that saves as the learner types, and **Pin selected text** keeps a passage (or a line of code) with an optional comment ([`app/src/studyNotes.ts`](../app/src/studyNotes.ts), [`app/src/components/StudyPanel.tsx`](../app/src/components/StudyPanel.tsx), `npm run test:study`, `npm run test:e2e`). The store is bounded (20 highlights per lesson, 25 lessons, least-recently-written evicted), rides in the backup, and merges back the way drafts do. Flashcards, focus mode and measured time are not built; the portfolio export is still Markdown of progress, not of notes. | **partial** |
 | Debugger + time travel, embedded C/AVR | None. | **missing** |
 
 ## Phases 8–9 — reach and polish
@@ -71,9 +71,10 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 
 ## What to build next, in order
 
-1. **The study layer** — notes, highlights, FSRS flashcards, focus mode and measured time. It is the
-   largest block still marked *missing*, it is what makes a term of study feel like a course rather
-   than a set of exercises, and its files would ride in the backup that already exists.
+1. **The rest of the study layer** — FSRS flashcards made from the highlights that now exist, focus
+   mode, and measured time per sitting. Notes and highlights already answer "what did I write down";
+   the scheduling is what turns that into review, and the time record is what lets the author
+   estimates in `docs/PILOT.md` be checked against a real learner.
 2. **Dexie / IndexedDB** — the other half of the persistence item, now that the backup makes the data
    portable. Still only worth doing once notes, plots or a cross-lesson timeline outgrow the 5 MB
    bucket: the caps are measured at ~2.4 MB in `npm run test:backup`, and the bounded `localStorage`

@@ -14,6 +14,7 @@ import {
   type OfflineCacheReport,
 } from '../../offlineTakeAlong';
 import { FaultBench08 } from '../FaultBench08';
+import { StudyPanel } from '../StudyPanel';
 import type { HarnessReport } from '../../harnessGrading.ts';
 import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
 import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
@@ -2142,6 +2143,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               )}
             </div>
           )}
+
+          {/* What the learner wrote down about this lesson. It sits between the code and the
+              checks because it is about the learner's understanding rather than about the run. */}
+          <StudyPanel lessonId={selectedId} />
 
           {/* Instructor Behavioral Assessment Panel */}
           <div

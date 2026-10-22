@@ -1743,8 +1743,64 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
+    // Study notes: what the learner writes down is stored as they type, and a pinned passage keeps
+    // its place with it. A reload is the assertion that matters - anything the panel held in React
+    // state alone would be gone, and the note is the part of a lesson that cannot be regenerated.
+    const studyNote = 'Tolerance is on the angle, not the position.';
+    await formattingPage.getByTestId('study-note').fill(studyNote);
+    await formattingPage.waitForTimeout(900);
+    const storedStudy = await formattingPage.evaluate(
+      () => localStorage.getItem('mechalab_study_notes_v1') ?? ''
+    );
+    assert.match(
+      storedStudy,
+      /Tolerance is on the angle/,
+      `the note must reach the store once the learner pauses; the store held: ${storedStudy.slice(0, 120)}`
+    );
+
+    await formattingPage.getByTestId('panel-study').waitFor({ timeout: 30000 });
+    const selectedLine = await formattingPage.evaluate(() => {
+      const line = document.querySelector('[data-editor="editor-main"] .cm-line');
+      if (!line) return '';
+      const range = document.createRange();
+      range.selectNodeContents(line);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return selection.toString().replace(/\s+/g, ' ').trim();
+    });
+    assert.ok(selectedLine, 'expected a line of code to select in the editor');
+    // The panel learns about a selection from `selectionchange`, which arrives a task later, so the
+    // wait is for the button it enables. Then `click()` on the element rather than a mouse press: a
+    // mousedown collapses the selection before the panel's handler can read it.
+    await formattingPage.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-pin-selection"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 10000 }
+    );
+    await formattingPage.getByTestId('btn-pin-selection').evaluate((button) => button.click());
+    await formattingPage.getByTestId('study-highlight-0').waitFor({ timeout: 5000 });
+    assert.match(
+      await formattingPage.getByTestId('study-highlight-0').innerText(),
+      new RegExp(selectedLine.slice(0, 24).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+      'the pinned highlight must be the passage that was selected'
+    );
+
+    await formattingPage.reload({ waitUntil: 'domcontentloaded' });
+    await formattingPage.getByTestId('study-note').waitFor({ timeout: 60000 });
+    assert.equal(
+      await formattingPage.getByTestId('study-note').inputValue(),
+      studyNote,
+      'the note must still be in the box after a reload'
+    );
+    await formattingPage.getByTestId('study-highlight-0').waitFor({ timeout: 5000 });
+    console.log('  ok a study note and a pinned highlight survive a reload');
+
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
     );
   } finally {
     await browser.close();

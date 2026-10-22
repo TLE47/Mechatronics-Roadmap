@@ -1,15 +1,17 @@
 /**
  * The backup and its merge back in (`app/src/backupBundle.ts`).
  *
- * What is in a backup: the five stores a learner's work actually lives in — the three progress maps,
- * the drafts, the versions filed by each Run, and the learning log — plus a manifest and a README for
- * whoever opens the zip in ten years. Preferences are deliberately left out: a theme is a device
- * choice, not work, and restoring one onto another machine would fight the learner's own pick.
+ * What is in a backup: the six stores a learner's work actually lives in — the three progress maps,
+ * the drafts, the versions filed by each Run, the study notes and highlights, and the learning log —
+ * plus a manifest and a README for whoever opens the zip in ten years. Preferences are deliberately
+ * left out: a theme is a device choice, not work, and restoring one onto another machine would fight
+ * the learner's own pick.
  *
  * What a restore does: **merges, never deletes.** Progress flags union, so a milestone ticked on a
  * laptop survives arriving on a desktop that has not seen it. Drafts fill gaps only — the text on this
  * machine is by definition the newer one, so it wins. Versions union and are deduped by the timestamp
- * they were filed at. The log unions by event identity, the same rule cloud sync uses
+ * they were filed at. Notes follow the same rule as drafts, and highlights union by the passage they
+ * quote, the newer comment winning. The log unions by event identity, the same rule cloud sync uses
  * (`mergeLearningLog`), because the two merges must not disagree about what one event is.
  *
  * Every write goes through the store's own writer (`saveDraft`, `recordSnapshot`, `replaceLearningLog`)
@@ -24,6 +26,7 @@ import { createZip, fromUtf8, readZip, utf8, zipFailureMessage } from './backupZ
 import { mergeHistory, readHistory } from './draftHistory.ts';
 import { readDraft, readDrafts, saveDraft } from './lessonDraft.ts';
 import { readLearningLog, replaceLearningLog, type LearningEvent } from './learningLog.ts';
+import { mergeStudy, parseStudy, readStudy, replaceStudy, studyCounts } from './studyNotes.ts';
 import { mergeLearningLog } from './progressMerge.ts';
 import {
   STORAGE_KEY_COMPLETED,
@@ -47,6 +50,8 @@ export interface BackupCounts {
   milestones: number;
   drafts: number;
   snapshots: number;
+  notes: number;
+  highlights: number;
   events: number;
 }
 
@@ -78,12 +83,15 @@ function countFlags(flags: Record<string, boolean>): number {
 
 function currentCounts(): BackupCounts {
   const history = readHistory();
+  const study = studyCounts();
   return {
     verified: countFlags(readFlagMap(STORAGE_KEY_VERIFIED)),
     completed: countFlags(readFlagMap(STORAGE_KEY_COMPLETED)),
     milestones: countFlags(readFlagMap(STORAGE_KEY_MILESTONES)),
     drafts: Object.keys(readDrafts()).length,
     snapshots: Object.values(history).reduce((total, versions) => total + versions.length, 0),
+    notes: study.notes,
+    highlights: study.highlights,
     events: readLearningLog().length,
   };
 }
@@ -108,6 +116,7 @@ manifest.json       What this backup holds: the counts, the date, the file list.
 progress.json       Lessons you ran to a verdict, lessons you marked yourself, milestones.
 drafts.json         The unfinished editor text for each lesson you were working on.
 history.json        The versions each Run filed, with the verdict that run got.
+study.json          Your notes and the passages you highlighted, per lesson.
 learning-log.json   When you opened, ran, passed, and used a hint - the pilot record.
 README.txt          This page.
 
@@ -117,8 +126,9 @@ Open MechaLab, press "Restore (.zip)" in the header, and choose this file exactl
 it was downloaded. Do not unzip and re-zip it first: most tools switch the archive to
 deflate compression, which this app does not read (it says so rather than guessing).
 
-A restore merges. It never deletes: flags you have already set stay set, drafts you
-have already written are kept, and versions and log events are added only once.
+A restore merges. It never deletes: flags you have already set stay set, drafts and
+notes you have already written are kept, and versions, highlights and log events are
+added only once.
 `;
 
 /**
@@ -149,6 +159,10 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
     name: 'history.json',
     text: JSON.stringify({ schema: 'mechalab.backup.history/1', history: readHistory() }, null, 2),
   };
+  const study: BackupFile = {
+    name: 'study.json',
+    text: JSON.stringify({ schema: 'mechalab.backup.study/1', study: readStudy() }, null, 2),
+  };
   const log: BackupFile = {
     name: 'learning-log.json',
     text: JSON.stringify(
@@ -157,7 +171,7 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
       2
     ),
   };
-  const data: BackupFile[] = [progress, drafts, history, log];
+  const data: BackupFile[] = [progress, drafts, history, study, log];
   const manifest: BackupManifest = {
     schema: BACKUP_SCHEMA,
     app: 'MechaLab Workbench',
@@ -220,6 +234,8 @@ export function backupSummary(counts: BackupCounts, bytes: number): string {
     counts.completed ? `${counts.completed} self-marked` : '',
     counts.milestones ? `${counts.milestones} milestone${counts.milestones === 1 ? '' : 's'}` : '',
     counts.drafts ? `${counts.drafts} draft${counts.drafts === 1 ? '' : 's'}` : '',
+    counts.notes ? `${counts.notes} note${counts.notes === 1 ? '' : 's'}` : '',
+    counts.highlights ? `${counts.highlights} highlight${counts.highlights === 1 ? '' : 's'}` : '',
     counts.events ? `${counts.events} log event${counts.events === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
   return `Backed up · ${[...parts, formatBackupSize(bytes)].join(' · ')}`;
@@ -233,6 +249,8 @@ export function restoreSummary(report: RestoreReport): string {
     report.milestones ? `${report.milestones} milestone${report.milestones === 1 ? '' : 's'}` : '',
     report.drafts ? `${report.drafts} draft${report.drafts === 1 ? '' : 's'}` : '',
     report.snapshots ? `${report.snapshots} saved version${report.snapshots === 1 ? '' : 's'}` : '',
+    report.notes ? `${report.notes} note${report.notes === 1 ? '' : 's'}` : '',
+    report.highlights ? `${report.highlights} highlight${report.highlights === 1 ? '' : 's'}` : '',
     report.events ? `${report.events} log event${report.events === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
   const skipped = report.skipped.length ? ` · skipped ${report.skipped.join(', ')}` : '';
@@ -327,6 +345,27 @@ function restoreHistory(text: string | undefined, report: RestoreReport): void {
   report.snapshots += mergeHistory(incoming).added;
 }
 
+/**
+ * Merge a restore's notes and highlights in.
+ *
+ * The file is parsed through the store's own reader, so a hand-edited entry that is not a quote and a
+ * number is dropped rather than written back into the bucket. The merge decides what is new; nothing
+ * here deletes, and a highlight already kept on this machine stays as it is.
+ */
+function restoreStudy(text: string | undefined, report: RestoreReport): void {
+  const file = asRecord(parseJson(text));
+  const raw = asRecord(file?.study);
+  if (!raw) {
+    report.skipped.push('study.json');
+    return;
+  }
+  const incoming = parseStudy(JSON.stringify(raw));
+  const { store, addedNotes, addedHighlights } = mergeStudy(readStudy(), incoming);
+  if (addedNotes || addedHighlights) replaceStudy(store);
+  report.notes += addedNotes;
+  report.highlights += addedHighlights;
+}
+
 function restoreLog(text: string | undefined, report: RestoreReport): void {
   const file = asRecord(parseJson(text));
   const events = Array.isArray(file?.events) ? (file?.events as unknown[]) : null;
@@ -376,6 +415,8 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
     milestones: 0,
     drafts: 0,
     snapshots: 0,
+    notes: 0,
+    highlights: 0,
     events: 0,
     skipped: [],
     files: read.entries.length,
@@ -383,6 +424,7 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
   restoreProgress(contents.get('progress.json'), report);
   restoreDrafts(contents.get('drafts.json'), report);
   restoreHistory(contents.get('history.json'), report);
+  restoreStudy(contents.get('study.json'), report);
   restoreLog(contents.get('learning-log.json'), report);
   return { ok: true, report };
 }

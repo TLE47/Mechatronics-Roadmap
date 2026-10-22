@@ -14,7 +14,7 @@
  * already logged is not logged twice, and the caps that keep the bucket from filling (five versions,
  * twelve drafts, 5,000 events) still hold after a big restore.
  *
- * The last check is the measurement the plan asks for: the caps bound all five stores well under the
+ * The last check is the measurement the plan asks for: the caps bound every store well under the
  * 5 MB bucket, which is why this phase is the zip and not a move to IndexedDB.
  *
  * Run: node --experimental-strip-types scripts/test_backup.mjs
@@ -50,6 +50,16 @@ import {
   snapshotsFor,
 } from '../app/src/draftHistory.ts';
 import { LOG_STORAGE_KEY, MAX_EVENTS, readLearningLog } from '../app/src/learningLog.ts';
+import {
+  MAX_COMMENT_CHARS,
+  MAX_HIGHLIGHT_CHARS,
+  MAX_HIGHLIGHTS,
+  MAX_NOTE_CHARS,
+  MAX_NOTE_LESSONS,
+  addHighlight,
+  readLessonStudy,
+  saveNote,
+} from '../app/src/studyNotes.ts';
 import {
   STORAGE_KEY_COMPLETED,
   STORAGE_KEY_MILESTONES,
@@ -175,7 +185,15 @@ check('the bundle names its files, its schema and its date', () => {
   const files = collectBackup(0);
   assert.deepEqual(
     files.map((file) => file.name),
-    ['manifest.json', 'progress.json', 'drafts.json', 'history.json', 'learning-log.json', 'README.txt']
+    [
+      'manifest.json',
+      'progress.json',
+      'drafts.json',
+      'history.json',
+      'study.json',
+      'learning-log.json',
+      'README.txt',
+    ]
   );
   const manifest = JSON.parse(files[0].text);
   assert.equal(manifest.schema, BACKUP_SCHEMA);
@@ -192,6 +210,8 @@ check('the archive carries every store, and the manifest counts them', () => {
   seedFlags(STORAGE_KEY_MILESTONES, { 'm00-level0': true });
   saveDraft(LESSON.id, `${LESSON.starterCode}\n# half-written\n`);
   seedHistory({ [OTHER.id]: [{ code: 'print(1)', at: 5, outcome: 'verified' }] });
+  saveNote(LESSON.id, 'The tolerance is on the angle.');
+  addHighlight(OTHER.id, 'tolerance is on the angle', 'that is why 5 mm passed');
   seedLog([{ t: 1, kind: 'lesson_open', lesson: LESSON.id }]);
 
   const read = readZip(createBackupZip(1_700_000_000_000));
@@ -204,6 +224,8 @@ check('the archive carries every store, and the manifest counts them', () => {
     milestones: 1,
     drafts: 1,
     snapshots: 1,
+    notes: 1,
+    highlights: 1,
     events: 1,
   });
   assert.doesNotMatch(
@@ -276,6 +298,24 @@ check("a draft written here beats the backup's copy, and a lesson with none is f
   assert.match(readDraft(LESSON.id), /written here/);
   assert.match(readDraft(OTHER.id), /from the backup/);
   assert.equal(result.report.drafts, 1, 'only the missing draft counts as restored');
+});
+
+check("a restore brings a lesson's highlights in and keeps the note written here", () => {
+  freshBrowser();
+  saveNote(LESSON.id, 'from the backup');
+  addHighlight(LESSON.id, 'tolerance is on the angle', 'why it mattered');
+  const bytes = createBackupZip(0);
+
+  freshBrowser();
+  saveNote(LESSON.id, 'written here');
+  const result = restoreBackupZip(bytes);
+  assert.equal(result.ok, true, `restore failed: ${result.message}`);
+  const study = readLessonStudy(LESSON.id);
+  assert.equal(study.note, 'written here', 'a note on this machine is the newer draft and must win');
+  assert.deepEqual(study.highlights.map((highlight) => highlight.quote), ['tolerance is on the angle']);
+  assert.equal(study.highlights[0].comment, 'why it mattered');
+  assert.equal(result.report.notes, 0, 'nothing was missing, so no note was restored');
+  assert.equal(result.report.highlights, 1, 'the highlight was new here');
 });
 
 check('a restore unions versions by timestamp: deduped, newest kept, cap held', () => {
@@ -385,12 +425,14 @@ check('the summaries say what happened, and say "nothing new" when nothing was',
   );
 });
 
-check('the caps bound all five stores far below the 5 MB bucket', () => {
+check('the caps bound every store well below the 5 MB bucket', () => {
   // Measured, not guessed: 120 chars is a run event with a lesson id, an outcome and a short fail
   // line. Every store's own cap is exported by the module that enforces it.
   const worst =
     MAX_DRAFTS * MAX_DRAFT_CHARS + // drafts: 12 x 40,000
     MAX_HISTORY_CHARS + // versions: 120,000 chars total, by construction
+    // study notes: 40 lessons x (a note + 20 highlights, each a quote and a comment)
+    MAX_NOTE_LESSONS * (MAX_NOTE_CHARS + MAX_HIGHLIGHTS * (MAX_HIGHLIGHT_CHARS + MAX_COMMENT_CHARS)) +
     MAX_EVENTS * 120; // learning log: the runner's own cap, at ~120 chars an event
   const verified = createBackupZip(0).length; // the archive overhead is a rounding error
   const ceiling = (worst + verified) * 2; // UTF-16 in localStorage: two bytes per character
@@ -400,7 +442,9 @@ check('the caps bound all five stores far below the 5 MB bucket', () => {
   );
   console.log(
     `       caps: ${Math.round(worst / 1000)}k chars -> ~${Math.round(ceiling / 1000)} kB of a 5,000 kB bucket ` +
-      `(drafts ${MAX_DRAFT_CHARS * MAX_DRAFTS}, history ${MAX_HISTORY_CHARS}, log ${MAX_EVENTS} x 120)`
+      `(drafts ${MAX_DRAFT_CHARS * MAX_DRAFTS}, history ${MAX_HISTORY_CHARS}, ` +
+      `study ${MAX_NOTE_LESSONS} x ${MAX_NOTE_CHARS + MAX_HIGHLIGHTS * (MAX_HIGHLIGHT_CHARS + MAX_COMMENT_CHARS)}, ` +
+      `log ${MAX_EVENTS} x 120)`
   );
   assert.ok(
     MAX_HISTORY_CHARS > MAX_SNAPSHOT_CHARS * MAX_SNAPSHOTS_PER_LESSON,

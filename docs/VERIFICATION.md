@@ -46,6 +46,7 @@ npm run test:runtime                    # the worker: in-place Stop, input(), is
 npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes
+npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped and evicted, merged on restore
 npm run test:e2e:backup                 # the header buttons in Chromium: write a zip, wipe, restore to the store and to the screen
 npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
 npm run test:editor                     # slider directives and which lessons get helper tabs
@@ -63,8 +64,18 @@ npm run test:smoke                      # needs `npm ci` first
 CRC-32 vector, a round trip that returns every byte of every entry, and the three ways a chosen file
 can fail (not a zip, half a download, a zip a tool re-compressed) — each with its own sentence in the
 UI. It then checks the merge a restore performs, because a merge that loses work is worse than no
-backup: a flag set here survives a file that lacks it, a draft written here beats the file's copy, an
-older arriving version never evicts a newer one, and restoring the same file twice adds nothing.
+backup: a flag set here survives a file that lacks it, a draft or a note written here beats the file's
+copy, a highlight already kept is not doubled and an older file cannot erase a newer comment, an older
+arriving version never evicts a newer one, and restoring the same file twice adds nothing. The last
+check is a measurement rather than a claim: the caps of all six stores, computed from the modules that
+export them, come to ~3.4 MB of the 5 MB bucket - the study layer is why that number is watched.
+
+`test:study` pins the note and highlight rules without a browser: a note keeps its own line breaks and
+is cleared to nothing by an empty box, a quote collapses to one line and the same passage pinned twice
+updates instead of duplicating, a blank comment does not erase a written one, the per-lesson and
+per-store caps evict the oldest writes, a corrupt or foreign store reads as what still parses, blocked
+and full storage never throws into the render, and the merge a restore performs fills gaps without
+ever overwriting a note written on this machine.
 `test:e2e:backup` takes the archive the browser actually wrote, wipes `localStorage`, and restores it,
 asserting the milestone tick returns **without a reload** — the App's own copy of the maps is what a
 store-only restore would leave stale.

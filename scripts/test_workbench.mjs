@@ -18,6 +18,7 @@
  *   test:takealong   the offline button's URL list, its size wording, and what "ready" may claim
  *   test:backup      the backup archive: CRC, round trip, the three refusals, and a merge that never deletes
  *   test:analysis    completions, hover and signatures without a browser: insertion point, cursor coordinates, the call under the cursor, note shape, transport
+ *   test:study       notes and highlights: what is kept, deduped, evicted, and what a restore merges
  *   test:e2e:backup  the header buttons in Chromium: write a zip, wipe, restore to store *and* screen
  *   test:fonts       the two self-hosted faces are named, imported and emitted
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
@@ -154,6 +155,9 @@ async function main() {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('analysis', 'test_analysis.mjs', {
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
+    }),
+    runSuite('study', 'test_study.mjs', {
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --experimental-strip-types`.trim(),
     }),
     runSuite('fonts', 'test_fonts.mjs', {}),
