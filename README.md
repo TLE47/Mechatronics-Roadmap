@@ -180,30 +180,32 @@ npm run build && npm run test:workbench
 
 ### Verify the theme
 
-MechaLab ships a light and a dark palette, and both are checked rather than eyeballed — the
-[light/dark badge](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml) is that
-step. After `npm ci` and a build:
+MechaLab ships three palettes — dark, light and high contrast — and each is checked rather than
+eyeballed — the [light/dark badge](https://github.com/TLE47/Mechatronics-Roadmap/actions/workflows/ci.yml)
+is that step. After `npm ci` and a build:
 
 ```bash
-npm run test:theme      # the rules: stored pick, OS default, data-theme, blocked storage
-npm run test:theme:e2e  # Chromium: the toggle contract, then all 11 tabs in both modes
+npm run test:theme      # the rules: stored pick, OS default, prefers-contrast, both controls, blocked storage
+npm run test:theme:e2e  # Chromium: both controls, then all 11 tabs in each palette
 ```
 
-- **`test:theme`** (10 cases, no browser) pins what a reader cannot see: a first visit stores
-  nothing and follows `prefers-color-scheme`; a pick in `localStorage['mechalab_theme_v1']` wins from
-  then on; a corrupt key or a private-mode store that throws falls back instead of breaking the shell.
-- **`test:theme:e2e`** drives the header toggle in Chromium, checks the choice survives a reload and
+- **`test:theme`** (12 cases, no browser) pins what a reader cannot see: a first visit stores
+  nothing and follows `prefers-contrast: more` ahead of `prefers-color-scheme`; the flip is dark ↔
+  light and the contrast button is a real on/off, each labelled with the palette it hands over; a
+  pick in `localStorage['mechalab_theme_v1']` wins from then on; a corrupt key or a private-mode
+  store that throws falls back instead of breaking the shell.
+- **`test:theme:e2e`** drives the header button in Chromium, checks the choice survives a reload and
   an OS flip, then composites every visible text run in every tab over the backgrounds it actually
   sits on. It fails below 3:1 and reports anything under its size minimum; the current floor is
-  4.5:1 across 22 tab/theme pairs.
+  4.5:1 in dark and light and 7:1 in high contrast, across 36 tab/palette pairs.
 - Add `--warnings` to name the runs between 3:1 and their minimum, or `--screenshots` to write one
   PNG per tab per theme into `.fb-scratch/theme/`.
 
 `test:theme` runs inside `npm run test:workbench`; `test:theme:e2e` is its own step in CI (a seventh
 parallel browser suite pushed the older ones past their click timeouts). Tokens live in
 [`app/src/index.css`](app/src/index.css) and the rules in [`app/src/theme.ts`](app/src/theme.ts);
-[`docs/THEME.md`](docs/THEME.md) sets both palettes side by side with the utility to use for each
-role, and [`app/README.md`](app/README.md#light-and-dark) has the full picture.
+[`docs/THEME.md`](docs/THEME.md) sets all three palettes side by side with the utility to use for each
+role, and [`app/README.md`](app/README.md#dark-light-and-high-contrast) has the full picture.
 
 ## License
 

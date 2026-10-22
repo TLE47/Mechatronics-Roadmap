@@ -5,7 +5,7 @@
  * The suites used to run one after another, each booting what it needed:
  *
  *   test:practice    the roadmap <-> workbench join, pure TypeScript (Node type stripping)
- *   test:theme       light/dark rules: stored choice, OS default, the data-theme attribute
+ *   test:theme       palette rules: stored choice, OS default, prefers-contrast, both controls
  *   test:theme:tokens  the ?view=theme page's parse of index.css, and its address
  *   test:spine       the ten-step spine the pages print, and the numbering no surface repeats
  *   test:palette     the ⌘K catalogue: every lesson/tab/command once, and predictable ranking

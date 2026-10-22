@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  SystemTheme,
   Theme,
   ThemeChoice,
   applyTheme,
   currentChoice,
+  defaultTheme,
+  prefersContrast,
   prefersDark,
   resolveTheme,
   saveChoice,
+  toggleContrast,
   toggleTheme,
   watchSystemTheme,
 } from './theme';
@@ -16,8 +20,12 @@ export interface ThemeController {
   theme: Theme;
   /** What the learner picked, or `system` when they never picked. */
   choice: ThemeChoice;
-  /** Flips the visible theme and remembers the side that was picked. */
+  /** The palette the OS would pick right now, which is where leaving high contrast lands. */
+  fallback: Theme;
+  /** Flips dark ↔ light (from high contrast: back to the OS palette) and remembers it. */
   toggle: () => void;
+  /** Turns the contrast palette on, or back off to the OS palette. */
+  toggleContrast: () => void;
   setChoice: (choice: ThemeChoice) => void;
 }
 
@@ -29,8 +37,12 @@ export interface ThemeController {
  */
 export function useTheme(): ThemeController {
   const [choice, setChoiceState] = useState<ThemeChoice>(() => currentChoice());
-  const [systemDark, setSystemDark] = useState<boolean>(() => prefersDark());
-  const theme = resolveTheme(choice, systemDark);
+  const [system, setSystem] = useState<SystemTheme>(() => ({
+    dark: prefersDark(),
+    moreContrast: prefersContrast(),
+  }));
+  const theme = resolveTheme(choice, system.dark, system.moreContrast);
+  const fallback = defaultTheme(system.dark);
 
   useEffect(() => {
     applyTheme(theme);
@@ -40,21 +52,28 @@ export function useTheme(): ThemeController {
   // stored choice is the answer, even if the OS flips at sunset.
   useEffect(() => {
     if (choice !== 'system') return undefined;
-    return watchSystemTheme(setSystemDark);
+    return watchSystemTheme(setSystem);
   }, [choice]);
 
   const setChoice = useCallback((next: ThemeChoice) => {
     saveChoice(next);
     setChoiceState(next);
-    applyTheme(resolveTheme(next, prefersDark()));
+    applyTheme(resolveTheme(next, prefersDark(), prefersContrast()));
   }, []);
 
   const toggle = useCallback(() => {
-    const next = toggleTheme(theme);
+    const next = toggleTheme(theme, fallback);
     saveChoice(next);
     setChoiceState(next);
     applyTheme(next);
-  }, [theme]);
+  }, [theme, fallback]);
 
-  return { theme, choice, toggle, setChoice };
+  const toggleContrastMode = useCallback(() => {
+    const next = toggleContrast(theme, fallback);
+    saveChoice(next);
+    setChoiceState(next);
+    applyTheme(next);
+  }, [theme, fallback]);
+
+  return { theme, choice, fallback, toggle, toggleContrast: toggleContrastMode, setChoice };
 }

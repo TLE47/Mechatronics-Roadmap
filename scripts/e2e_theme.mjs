@@ -5,10 +5,10 @@
  *
  * Two questions, neither of which a unit test can answer:
  *
- * 1. Does the toggle own the page? `data-theme` on <html>, the stored key, the
- *    OS default on a first visit, and an explicit pick surviving both a reload
- *    and an OS flip.
- * 2. Is every one of the eleven tabs readable in both modes? The audit walks
+ * 1. Does the control own the page? `data-theme` on <html>, the stored key, the
+ *    OS default on a first visit, the three-palette cycle (dark → light → high
+ *    contrast), and an explicit pick surviving both a reload and an OS flip.
+ * 2. Is every one of the eleven tabs readable in each of the three palettes? The audit walks
  *    every visible text node, composites its colour over the stack of ancestor
  *    backgrounds it actually sits on, and computes WCAG contrast. Text below
  *    3:1 fails at any size; text between 3:1 and its size's minimum is listed as
@@ -16,8 +16,8 @@
  * 3. Does `?view=theme` describe the palette it is looking at? The page parses
  *    index.css, so the browser check is the one that proves the parsed values
  *    reach painted pixels: the swatch for `--panel` must be the colour in the
- *    file, both palettes must draw, and the page must survive the same contrast
- *    audit in both modes as every tab does.
+ *    file, all three palettes must draw, and the page must survive the same
+ *    contrast audit in each palette that every tab does.
  *
  * `E2E_BASE_URL` points it at a running dev server (the combined runner passes
  * one); alone, it boots its own. `--screenshots` also writes one PNG per tab per
@@ -131,11 +131,20 @@ function auditContrast() {
 }
 
 const THEME_ATTRIBUTE = 'data-theme';
+/** The three palettes, in the order the header button cycles them. */
+const PALETTES = ['dark', 'light', 'contrast'];
+/** The colour scheme each palette is browsed under: high contrast is a dark palette. */
+const SCHEME = { dark: 'dark', light: 'light', contrast: 'dark' };
 
 /** A token's value in one palette, read from the stylesheet the page parses. */
 function stylesheetValue(token, palette) {
   const css = fs.readFileSync(path.join(process.cwd(), 'app/src/index.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
-  const opener = palette === 'light' ? '[data-theme="light"]' : ':root';
+  const opener =
+    palette === 'light'
+      ? '[data-theme="light"]'
+      : palette === 'contrast'
+        ? '[data-theme="contrast"]'
+        : ':root';
   const start = css.search(new RegExp(`^${opener.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{`, 'm'));
   assert.ok(start >= 0, `index.css has no ${opener} block`);
   const body = css.slice(css.indexOf('{', start), css.indexOf('}', css.indexOf('{', start)));
@@ -156,6 +165,21 @@ async function firstVisit(page, url, colorScheme) {
   await page.emulateMedia({ colorScheme });
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-testid="btn-theme-toggle"]');
+}
+
+/** A context whose stored pick is `palette`, so a palette the OS cannot request is reachable. */
+async function contextFor(browser, palette) {
+  const context = await browser.newContext({ colorScheme: SCHEME[palette] });
+  if (palette === 'contrast') {
+    await context.addInitScript(() => {
+      try {
+        localStorage.setItem('mechalab_theme_v1', 'contrast');
+      } catch {
+        // A blocked store is the theme suite's own case; here the attribute is what is asserted.
+      }
+    });
+  }
+  return context;
 }
 
 async function main() {
@@ -187,7 +211,43 @@ async function main() {
     assert.equal(storageKey, null, 'a first visit must not write a choice it did not make');
     console.log('  ok first visit with a light OS paints light and stores nothing');
 
-    // 2. The toggle flips, labels itself honestly and persists.
+    // 2. The contrast control is its own button: a pressed state means the palette is on screen,
+    // and pressing it again returns to the OS palette. Read the painted page, not just the
+    // attribute — an attribute the stylesheet has no block for would show dark and pass anyway.
+    await lightPage.click('[data-testid="btn-contrast-toggle"]');
+    // `body` transitions its background over 200 ms, so the painted colour lags the attribute.
+    // Reading it in the same frame would report the palette that was on screen when the click landed.
+    await lightPage.waitForTimeout(300);
+    const contrast = await lightPage.evaluate(() => ({
+      theme: document.documentElement.getAttribute('data-theme'),
+      pressed: document.querySelector('[data-testid="btn-contrast-toggle"]').getAttribute('aria-pressed'),
+      stored: localStorage.getItem('mechalab_theme_v1'),
+      scheme: document.documentElement.style.colorScheme,
+      meta: document.querySelector('meta[name="theme-color"]')?.getAttribute('content') ?? null,
+      page: getComputedStyle(document.body).backgroundColor,
+    }));
+    assert.equal(contrast.theme, 'contrast', 'the contrast button must apply its palette');
+    assert.equal(contrast.pressed, 'true', 'the button must report that high contrast is on');
+    assert.equal(contrast.stored, 'contrast', 'the contrast palette must be stored like the other two');
+    assert.equal(contrast.scheme, 'dark', 'high contrast is a dark palette; its native chrome stays dark');
+    assert.equal(contrast.meta, '#000000', 'the phone address bar must follow the contrast palette');
+    assert.equal(contrast.page, 'rgb(0, 0, 0)', 'the contrast block must actually paint, not just set its attribute');
+    await lightPage.reload({ waitUntil: 'domcontentloaded' });
+    await lightPage.waitForSelector('[data-testid="btn-contrast-toggle"]');
+    assert.equal(
+      await lightPage.evaluate((attr) => document.documentElement.getAttribute(attr), THEME_ATTRIBUTE),
+      'contrast',
+      'a reload must restore high contrast from storage — it is the palette a reader relies on'
+    );
+    await lightPage.click('[data-testid="btn-contrast-toggle"]');
+    assert.equal(
+      await lightPage.evaluate((attr) => document.documentElement.getAttribute(attr), THEME_ATTRIBUTE),
+      'light',
+      'pressing it off must return to the OS palette (light here), not to an arbitrary one'
+    );
+    console.log('  ok the contrast button paints its palette, reports it, and turns off to the OS palette');
+
+    // 3. The flip: dark ↔ light, labelled with the palette it hands over, and persisted.
     await lightPage.click('[data-testid="btn-theme-toggle"]');
     assert.equal(
       await lightPage.evaluate((attr) => document.documentElement.getAttribute(attr), THEME_ATTRIBUTE),
@@ -207,9 +267,9 @@ async function main() {
     });
     assert.ok(stored, 'the pick must be written to localStorage');
     assert.equal(stored[1], 'dark', 'the stored pick must be the theme that is on screen');
-    console.log(`  ok the toggle writes ${stored[0]}=${stored[1]} and flips data-theme`);
+    console.log(`  ok the flip writes ${stored[0]}=${stored[1]} and sets data-theme`);
 
-    // 3. The pick survives a reload and an OS flip.
+    // 4. The pick survives a reload and an OS flip.
     await lightPage.reload({ waitUntil: 'domcontentloaded' });
     await lightPage.waitForSelector('[data-testid="btn-theme-toggle"]');
     assert.equal(
@@ -226,7 +286,7 @@ async function main() {
     );
     console.log('  ok the pick survives a reload and an OS flip');
 
-    // 4. color-scheme is set too, so native scrollbars and form controls match.
+    // 5. color-scheme is set too, so native scrollbars and form controls match.
     const schemes = await lightPage.evaluate(() => ({
       inline: document.documentElement.style.colorScheme,
       computed: getComputedStyle(document.documentElement).colorScheme,
@@ -236,16 +296,16 @@ async function main() {
     assert.equal(schemes.meta, '#070b12', 'the browser chrome colour must follow the theme');
     console.log('  ok color-scheme and the theme-color meta follow the theme');
 
-    // 5. Every tab, both themes. The sweep uses the same browser and a clean slate.
+    // 6. Every tab, every palette. The sweep uses the same browser and a clean slate.
     await lightContext.close();
-    for (const theme of ['dark', 'light']) {
-      const context = await browser.newContext({ colorScheme: theme === 'dark' ? 'dark' : 'light' });
+    for (const theme of PALETTES) {
+      const context = await contextFor(browser, theme);
       const page = await context.newPage();
-      await firstVisit(page, baseUrl, theme);
+      await firstVisit(page, baseUrl, SCHEME[theme]);
       assert.equal(
         await page.evaluate((attr) => document.documentElement.getAttribute(attr), THEME_ATTRIBUTE),
         theme,
-        `a ${theme} OS must paint the ${theme} theme`
+        `the ${theme} palette must be the one painted (stored pick or OS default)`
       );
       await page.waitForTimeout(400);
       // Beginner mode hides the deeper labs; the sweep needs all eleven.
@@ -294,9 +354,9 @@ async function main() {
       await context.close();
     }
 
-    // 6. The palette reference (`?view=theme`): a page of its own, reading the stylesheet.
-    for (const theme of ['dark', 'light']) {
-      const context = await browser.newContext({ colorScheme: theme === 'dark' ? 'dark' : 'light' });
+    // 7. The palette reference (`?view=theme`): a page of its own, reading the stylesheet.
+    for (const theme of PALETTES) {
+      const context = await contextFor(browser, theme);
       const page = await context.newPage();
       await page.goto(`${baseUrl}?view=theme`, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('[data-testid="theme-tokens-page"]');
@@ -336,8 +396,8 @@ async function main() {
       });
       assert.equal(
         swatches.length,
-        rowsOnPage * 2,
-        `expected two swatches per row (${rowsOnPage * 2}), got ${swatches.length}`
+        rowsOnPage * PALETTES.length,
+        `expected a swatch per row per palette (${rowsOnPage * PALETTES.length}), got ${swatches.length} — the fourth column is missing from the page`
       );
       const transparent = swatches.filter((swatch) => /rgba\(0, 0, 0, 0\)|transparent/.test(swatch.colour));
       assert.equal(
@@ -345,7 +405,7 @@ async function main() {
         0,
         `expected every swatch to be painted; ${transparent.length} resolved to transparent (first: ${transparent[0]?.token} ${transparent[0]?.palette}) — a value the browser rejected`
       );
-      for (const palette of ['dark', 'light']) {
+      for (const palette of PALETTES) {
         const swatch = swatches.find((candidate) => candidate.token === '--panel' && candidate.palette === palette);
         assert.ok(swatch, `expected a --panel swatch for the ${palette} palette`);
         assert.equal(
@@ -370,9 +430,12 @@ async function main() {
         `the "This page" marker must name the palette that is on screen (marker ${marker}, attribute ${after})`
       );
 
-      // The page documents contrast, so it gets the same audit as every tab — once per palette,
-      // in the context that starts there. Flip back first: the check above left it on the other side.
-      await page.click('[data-testid="btn-theme-route-toggle"]');
+      // The page documents contrast, so it gets the same audit as every tab — once per palette. Put
+      // the palette back the way the context started: the flip above wrote its own pick, so a plain
+      // reload would audit the palette the check left behind.
+      await page.evaluate((palette) => localStorage.setItem('mechalab_theme_v1', palette), theme);
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[data-testid="theme-tokens-page"]');
       await page.waitForTimeout(200);
       const shown = await page.evaluate((attr) => document.documentElement.getAttribute(attr), THEME_ATTRIBUTE);
       assert.equal(shown, theme, `expected the token page to return to ${theme} for its audit (found ${shown})`);

@@ -11,6 +11,50 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 169: A Palette for the Reader Who Asked
+
+`docs/PLAN-2.0-GAP.md` had one accessibility row left holding a plain gap: *"No high-contrast
+palette."* Dark and light are two moods of the same 4.5:1 instrument; a reader who has asked their
+system for contrast is not asking for a mood. So there is a third palette, and the first visit takes
+it from `prefers-contrast: more` **ahead of** `prefers-color-scheme` — the one audience the palette
+exists for should not have to find a button to get it.
+
+**The palette.** [`app/src/index.css`](app/src/index.css) gains a `[data-theme="contrast"]` block:
+pure white ink on black, the surface steps kept apart by 6:1 lines instead of tints, and every
+signal lifted until it clears **7:1** as 12px text — the other two palettes aim at 4.5:1. The plot
+face is deliberately unchanged: its traces are literal colours tuned against one ink, and a brighter
+chart would wash them out rather than reveal them.
+
+**Two controls, not a cycle.** The first draft made the header button cycle dark → light → contrast.
+It was wrong twice over: the everyday flip would take two presses from half the palettes, and a
+pressed state cannot describe a three-state cycle — `aria-pressed` would have meant nothing. So the
+flip stays a flip (`btn-theme-toggle`, dark ↔ light) and high contrast is its own on/off
+(`btn-contrast-toggle`, `aria-pressed`) with a title that says what it buys you. Turning contrast off
+returns to the OS palette rather than to whichever side the learner came from: one rule, no
+remembered third state. Both are labelled with the palette a press hands over, and the pre-paint
+script in [`index.html`](app/index.html) applies the same order before the bundle loads, so nothing
+flashes.
+
+**Three palettes, checked three ways.** The reference page (`?view=theme`) and its parser gained a
+column, and so did `docs/THEME.md` — then every gate was widened to match, rather than trusting the
+new column by eye:
+
+- `npm run test:theme` — **12 checks**: `prefers-contrast` outranks the colour scheme, the flip and
+the contrast on/off are pure functions with the labels they promise, leaving contrast lands on the OS
+palette, `color-scheme` stays dark for contrast, and the phone's chrome colour follows all three.
+- `npm run test:theme:tokens` — **10 checks** over the page's parse, now against the contrast block
+  too, including the mutation that a token no override block touches keeps its dark value.
+- `python3 tests/test_theme_docs.py` — **10 checks**; the row parser now reads six cells and every
+  palette's value is compared with the stylesheet, in both directions.
+
+**Measured.** `npm run test:theme:e2e` drives both controls in Chromium (including that the contrast
+block *paints*, not merely sets an attribute — it caught its own first read, taken mid-transition)
+then composites every on-screen text run in 11 tabs × 3 palettes plus the palette page: **36 pairs,
+no failures, no warnings**, lowest 4.57:1 in dark, 4.52:1 in light and **7.04:1 in high contrast**.
+`npm run check:axe` clears 11 tabs × 3 palettes with no allowlist entries. `npm run lint` is clean,
+`npm run test:workbench` runs **41 suites**, the build is **956.5 kB** gzipped (+1.4 kB, the new token
+block and a button), and every budget holds — `css_gzip` is the tightest at 13.3 of 15.0 kB.
+
 ## [2026-10-22] — Run 168: The Verdict, Read Aloud
 
 The workbench already had a polite live region, and it said one of two sentences: *passed*, or *has not
@@ -2250,7 +2294,7 @@ newcomer had to decode before finding a lesson. It is now three lines: a link to
 sentence naming the finished arm, and the time and cost. The ten-step table is generated from
 `scripts/route_model.py`; the tier/pass matrix, CI details and optional modules moved to
 [`docs/ROUTE.md`](docs/ROUTE.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) and
-[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 19 KB.
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md). The page is 111 KB $\to$ 20 KB.
 
 Two contradictions surfaced while generating the counts:
 

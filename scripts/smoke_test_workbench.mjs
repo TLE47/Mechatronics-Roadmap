@@ -872,12 +872,17 @@ export async function runSmokeTests(viteServer) {
     );
 
     // 4b. The palette reference (`?view=theme`): its table is parsed from index.css at build time, so
-    // the render must carry real values — a handful of tokens and both palettes' swatches — and the
+    // the render must carry real values — a handful of tokens and every palette's swatches — and the
     // workbench must not render it unless the address asks for it.
     const { ThemeTokens } = await vite.ssrLoadModule('/src/components/ThemeTokens.tsx');
     const tokensHtml = cleanSsr(
       ReactDOMServer.renderToString(
-        React.createElement(ThemeTokens, { theme: 'dark', onToggle: () => {} })
+        React.createElement(ThemeTokens, {
+          theme: 'dark',
+          fallback: 'dark',
+          onToggle: () => {},
+          onToggleContrast: () => {},
+        })
       )
     );
     const rowCount = (tokensHtml.match(/data-testid="theme-token-row"/g) || []).length;
@@ -890,21 +895,26 @@ export async function runSmokeTests(viteServer) {
       `the token page must print a row per colour token (expected >= 20, got ${rowCount}); a short table means the ?raw stylesheet import or the parser stopped matching`
     );
     assert(
-      tokensHtml.includes('data-palette="dark"') && tokensHtml.includes('data-palette="light"'),
-      'the token page must draw a swatch for both palettes, not just the one on screen'
+      ['dark', 'light', 'contrast'].every((palette) => tokensHtml.includes(`data-palette="${palette}"`)),
+      'the token page must draw a swatch for every palette, not just the one on screen'
     );
-    // The values are the stylesheet's, not the component's: --bg is #070b12 in index.css.
+    // The values are the stylesheet's, not the component's: --bg is #070b12 in index.css, #000000 in
+    // its high-contrast block.
     assert(
-      tokensHtml.includes('--bg') && tokensHtml.includes('#070b12') && tokensHtml.includes('#f8f6f2'),
-      'the token page must print the values parsed from index.css (expected --bg #070b12 and its light override #f8f6f2)'
+      tokensHtml.includes('--bg') &&
+        tokensHtml.includes('#070b12') &&
+        tokensHtml.includes('#f8f6f2') &&
+        tokensHtml.includes('#000000'),
+      'the token page must print the values parsed from index.css (expected --bg #070b12, its light override #f8f6f2 and its high-contrast #000000)'
     );
     assert(
       !tokensHtml.includes('data-testid="theme-tokens-error"'),
-      'the token page must not render its parse-error panel; the stylesheet still has :root, [data-theme="light"] and @theme inline'
+      'the token page must not render its parse-error panel; the stylesheet still has :root, [data-theme="light"], [data-theme="contrast"] and @theme inline'
     );
     assert(
-      tokensHtml.includes('data-testid="btn-theme-route-toggle"'),
-      'the token page must carry the mode toggle, so both palettes can be read on the page itself'
+      tokensHtml.includes('data-testid="btn-theme-route-toggle"') &&
+        tokensHtml.includes('data-testid="btn-contrast-route-toggle"'),
+      'the token page must carry both controls, so each palette can be read on the page itself'
     );
     assert(
       !htmlBeginner.includes('data-testid="theme-tokens-page"'),

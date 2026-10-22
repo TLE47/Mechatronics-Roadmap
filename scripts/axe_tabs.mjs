@@ -9,15 +9,16 @@
  * Those are the failures a screenshot cannot show and a human reviewer stops noticing.
  *
  * The sweep walks the same tab list the theme suite uses (`app/src/data/workbenchTabs.json`), so a
- * new tab is swept without touching this file, and it runs each tab in both palettes because a
- * violation can be theme-specific (an invisible focus ring, a disabled colour that disappears).
+ * new tab is swept without touching this file, and it runs each tab in every palette (dark, light,
+ * high contrast) because a violation can be theme-specific — an invisible focus ring, a disabled
+ * colour that disappears.
  *
  * Two deliberate choices about the ruleset:
  *
  * - **`color-contrast` is left to `e2e_theme.mjs`.** axe samples the rendered pixels with an
- *   approximation; that suite composites the actual ancestor stack and fails below 3:1 across 22
- *   tab/theme pairs. Two contrast gates that disagree would make the stricter one look wrong, and the
- *   colour one is the more accurate measurement.
+ *   approximation; that suite composites the actual ancestor stack and fails below 3:1 across 33
+ *   tab/palette pairs. Two contrast gates that disagree would make the stricter one look wrong, and
+ *   the colour one is the more accurate measurement.
  * - **`serious` and `critical` fail; `minor` and `moderate` are reported.** A gate that fails on a
  *   `landmark-one-main` suggestion is a gate people switch off.
  *
@@ -53,7 +54,9 @@ const AXE_SOURCE = path.join(ROOT, 'node_modules', 'axe-core', 'axe.min.js');
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'];
 /** Impacts that fail the gate. */
 const FAILING = new Set(['serious', 'critical']);
-const THEMES = ['dark', 'light'];
+const THEMES = ['dark', 'light', 'contrast'];
+/** The OS colour scheme each palette is browsed under; high contrast is reached by a stored pick. */
+const SCHEME = { dark: 'dark', light: 'light', contrast: 'dark' };
 
 const argv = process.argv.slice(2);
 const JSON_OUT = argv.includes('--json');
@@ -133,7 +136,18 @@ async function main() {
 
   try {
     for (const theme of THEMES) {
-      const context = await browser.newContext({ colorScheme: theme });
+      const context = await browser.newContext({ colorScheme: SCHEME[theme] });
+      // High contrast is not something a browser's `colorScheme` can ask for, so it is reached the
+      // way a reader reaches it on a machine without the OS setting: a stored pick.
+      if (theme === 'contrast') {
+        await context.addInitScript(() => {
+          try {
+            localStorage.setItem('mechalab_theme_v1', 'contrast');
+          } catch {
+            // A blocked store leaves the OS palette, and the assertion below says so.
+          }
+        });
+      }
       const page = await context.newPage();
       page.on('pageerror', (error) => errors.push(`${theme}: ${error.message}`));
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -141,7 +155,7 @@ async function main() {
       if (
         (await page.evaluate(() => document.documentElement.getAttribute('data-theme'))) !== theme
       ) {
-        throw new Error(`expected the ${theme} palette on a ${theme} OS`);
+        throw new Error(`expected the ${theme} palette (stored pick or ${SCHEME[theme]} OS)`);
       }
       // Beginner mode hides the deeper labs; the sweep needs all eleven tabs.
       const advanced = page.locator('[data-testid="btn-mode-advanced"]');

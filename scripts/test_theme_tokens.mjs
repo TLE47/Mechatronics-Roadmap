@@ -6,8 +6,8 @@
  * page — one copy of the palette — so the thing worth testing is not "does it render 25 rows" but
  * "does it follow the stylesheet". Three kinds of case:
  *
- * 1. **Agreement.** Every row's values match an independent read of the file, the utilities match
- *    `@theme inline` in both directions, and the two tokens with no family say so.
+ * 1. **Agreement.** Every row's values match an independent read of the file in all three palettes,
+ *    the utilities match `@theme inline` in both directions, and the two tokens with no family say so.
  * 2. **Mutation.** Change a value, add a token, drop a block — the parse must follow each, which a
  *    hand-typed table cannot do. This is what "live" is supposed to mean.
  * 3. **The address.** `?view=theme` is the route and nothing else is, and the SSR guard answers
@@ -57,6 +57,7 @@ function independentBlock(source, opener) {
 const table = themeTokensFromCss(SOURCE);
 const darkBlock = independentBlock(SOURCE, ':root');
 const lightBlock = independentBlock(SOURCE, '[data-theme="light"]');
+const contrastBlock = independentBlock(SOURCE, '[data-theme="contrast"]');
 
 console.log('theme tokens');
 
@@ -82,27 +83,40 @@ check('every colour row matches the stylesheet, read independently', () => {
       expectedLight,
       `expected ${row.name} to resolve to ${expectedLight} in light mode, got ${row.light}`,
     );
+    const expectedContrast = contrastBlock.get(row.name) ?? darkBlock.get(row.name);
+    assert.equal(
+      row.contrast,
+      expectedContrast,
+      `expected ${row.name} to resolve to ${expectedContrast} in high contrast, got ${row.contrast}`,
+    );
   }
 });
 
-check('the light palette re-points every palette colour except the plot face', () => {
+check('each palette re-points exactly the colours its block overrides', () => {
   const isColourValue = (value) => /^(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))$/.test(value);
   const paletteNames = new Set(
     [...darkBlock.entries()].filter(([, value]) => isColourValue(value)).map(([name]) => name)
   );
-  const themed = table.colour.filter((row) => row.themed).map((row) => row.name).sort();
-  // The light block re-points the shadows and the focus ring too; those belong in the scale table.
-  const expected = [...lightBlock.keys()].filter((name) => paletteNames.has(name)).sort();
-  assert.deepEqual(
-    themed,
-    expected,
-    'expected exactly the tokens the light block overrides to be marked themed; an unmarked override shows the dark value in the light column',
-  );
+  for (const [label, block, field] of [
+    ['light', lightBlock, 'themed'],
+    ['high contrast', contrastBlock, 'themedContrast'],
+  ]) {
+    const themed = table.colour.filter((row) => row[field]).map((row) => row.name).sort();
+    // Both override blocks re-point the shadows and the focus ring too; those belong in the scale table.
+    const expected = [...block.keys()].filter((name) => paletteNames.has(name)).sort();
+    assert.deepEqual(
+      themed,
+      expected,
+      `expected exactly the tokens the ${label} block overrides to be marked themed; an unmarked override shows the dark value in that column`,
+    );
+  }
   for (const name of ['--plot', '--plot-line']) {
     const row = table.colour.find((candidate) => candidate.name === name);
     assert.ok(row, `expected ${name} to be a colour row`);
-    assert.equal(row.themed, false, `expected ${name} to stay dark in both themes`);
+    assert.equal(row.themed, false, `expected ${name} to stay dark in every palette`);
+    assert.equal(row.themedContrast, false, `expected ${name} to stay dark in high contrast too`);
     assert.equal(row.dark, row.light, `expected ${name} to have one value, got ${row.dark} / ${row.light}`);
+    assert.equal(row.dark, row.contrast, `expected ${name} to keep its value in high contrast, got ${row.contrast}`);
   }
 });
 
@@ -141,6 +155,9 @@ check('the scale values are not mistaken for colours', () => {
   }
   const shadow = table.scale.find((row) => row.name === '--shadow-md');
   assert.equal(shadow?.themed, true, 'expected --shadow-md to be marked themed; light mode softens it');
+  assert.equal(shadow?.themedContrast, true, 'expected --shadow-md to be marked themed in high contrast; the shadows deepen on near-black');
+  const radius = table.scale.find((row) => row.name === '--r-md');
+  assert.equal(radius?.themedContrast, false, 'expected --r-md to be unchanged in high contrast; the scale is shared');
 });
 
 check('a changed value shows up in the table (it is not a typed copy)', () => {
@@ -166,6 +183,7 @@ check('a new token appears without editing the page', () => {
   assert.ok(keel, 'expected a token added to :root to appear in the table');
   assert.equal(keel.utility, 'keel', `expected the new @theme inline family to be found, got ${keel.utility}`);
   assert.equal(keel.light, '#123abc', 'expected a token the light block does not override to keep its dark value');
+  assert.equal(keel.contrast, '#123abc', 'expected a token no override block touches to keep its dark value in high contrast');
 });
 
 check('a missing block is reported, not rendered as a half-empty table', () => {
@@ -176,6 +194,12 @@ check('a missing block is reported, not rendered as a half-empty table', () => {
     result.error ?? '',
     /@theme inline/,
     `expected the error to name the missing block, got: ${result.error}`,
+  );
+  const noContrast = themeTokensFromCss(SOURCE.replace('[data-theme="contrast"] {', '[data-theme="gone"] {'));
+  assert.match(
+    noContrast.error ?? '',
+    /\[data-theme="contrast"\]/,
+    `expected a missing high-contrast block to be reported rather than painted as the dark value, got: ${noContrast.error}`,
   );
 });
 

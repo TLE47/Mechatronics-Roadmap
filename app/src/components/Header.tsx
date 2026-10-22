@@ -1,15 +1,17 @@
 import React from 'react';
-import { Printer, Download, FileJson, User, Compass, Sun, Moon, Search, Maximize2, Minimize2 } from 'lucide-react';
+import { Printer, Download, FileJson, User, Compass, Sun, Moon, Contrast, Search, Maximize2, Minimize2 } from 'lucide-react';
 import { ActiveTierPass } from '../curriculumData';
 import { downloadLearningLog } from '../learningLog';
 import { BackupControls } from './BackupControls';
-import { toggleLabel, type Theme } from '../theme';
+import { CONTRAST_LABEL, contrastHint, themeLabel, themeShortLabel, type Theme } from '../theme';
 import { focusLabel } from '../focusMode';
 
 interface HeaderProps {
-  /** The palette on screen, and the flip for it — mounted once in `App`, not here. */
+  /** The palette on screen, the OS palette leaving high contrast returns to, and the two controls. */
   theme: Theme;
+  fallback: Theme;
   onToggle: () => void;
+  onToggleContrast: () => void;
   onOpenCheatSheet: () => void;
   onExportPortfolio: () => void;
   activeTierPass: ActiveTierPass;
@@ -53,7 +55,9 @@ const ArmMark: React.FC = () => (
 
 export const Header: React.FC<HeaderProps> = ({
   theme,
+  fallback,
   onToggle: toggle,
+  onToggleContrast,
   onOpenCheatSheet,
   onExportPortfolio,
   activeTierPass,
@@ -158,20 +162,34 @@ export const Header: React.FC<HeaderProps> = ({
               ⌘K
             </kbd>
           </button>
+          {/* Two controls, because there are two questions. The flip answers "dark or light?" in one
+              press, and the contrast button is a real on/off (`aria-pressed`), which a three-state
+              cycle could not state honestly — a pressed cycle button means nothing. */}
           <button
             onClick={toggle}
             data-testid="btn-theme-toggle"
-            aria-label={toggleLabel(theme)}
-            aria-pressed={theme === 'light'}
-            title={toggleLabel(theme)}
+            aria-label={themeLabel(theme, fallback)}
+            title={themeLabel(theme, fallback)}
             className="btn"
           >
-            {theme === 'dark' ? (
+            {themeShortLabel(theme, fallback) === 'Light' ? (
               <Sun className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             ) : (
               <Moon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             )}
-            <span className="hidden 2xl:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            <span className="hidden 2xl:inline">{themeShortLabel(theme, fallback)}</span>
+          </button>
+          <button
+            onClick={onToggleContrast}
+            data-testid="btn-contrast-toggle"
+            aria-label={CONTRAST_LABEL}
+            aria-pressed={theme === 'contrast'}
+            title={contrastHint(theme)}
+            className="btn"
+            style={theme === 'contrast' ? { color: 'var(--accent)' } : undefined}
+          >
+            <Contrast className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="hidden 2xl:inline">Contrast</span>
           </button>
           {onToggleFocus && (
             <button

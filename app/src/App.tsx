@@ -366,7 +366,12 @@ export const App: React.FC = () => {
   // The theme is mounted here, once, and handed to both the header's toggle and the palette page:
   // two `useTheme` mounts would be two writers for one attribute, and the button could label a mode
   // the page is not in.
-  const { theme, toggle: toggleThemeMode } = useTheme();
+  const {
+    theme,
+    fallback: themeFallback,
+    toggle: toggleThemeMode,
+    toggleContrast: toggleContrastMode,
+  } = useTheme();
   // `?view=theme` is a page of its own, read once on arrival. It is not a workbench tab: the rail
   // stays the eleven tabs a learner needs, and this is a reference for whoever is adding a colour.
   const [themeView] = useState<boolean>(() => themeViewFromLocation());
@@ -926,7 +931,9 @@ export const App: React.FC = () => {
       <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
         <Header
           theme={theme}
+          fallback={themeFallback}
           onToggle={toggleThemeMode}
+          onToggleContrast={toggleContrastMode}
           onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
           onExportPortfolio={() => setIsPortfolioModalOpen(true)}
           activeTierPass={activeTierPass}
@@ -940,7 +947,12 @@ export const App: React.FC = () => {
           tabIndex={-1}
           className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto outline-none"
         >
-          <ThemeTokens theme={theme} onToggle={toggleThemeMode} />
+          <ThemeTokens
+            theme={theme}
+            fallback={themeFallback}
+            onToggle={toggleThemeMode}
+            onToggleContrast={toggleContrastMode}
+          />
         </main>
         <SiteFooter />
       </div>
@@ -959,7 +971,9 @@ export const App: React.FC = () => {
       </a>
       <Header
         theme={theme}
+        fallback={themeFallback}
         onToggle={toggleThemeMode}
+        onToggleContrast={toggleContrastMode}
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
         onExportPortfolio={() => setIsPortfolioModalOpen(true)}
         activeTierPass={activeTierPass}

@@ -136,6 +136,44 @@
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(15, 118, 110, 0.75);
 }
 
+/* High contrast is not a third mood: it is for the reader who asked their operating system for
+   more contrast (`prefers-contrast: more` picks it on a first visit), and its floor is 7:1 for
+   body text where dark and light are allowed 4.5:1. The ink is pure white on near-black, the
+   accents are lifted until each one clears 7:1 as 12px text, and the lines are strong enough to
+   find without relying on colour — the surface steps are the thing a low-vision reader loses
+   first, so every panel edge is a visible 6:1 line. The plot face deliberately does not change
+   (rule: the traces are literal colours tuned against one ink). */
+[data-theme="contrast"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --panel: #000000;
+  --panel-2: #0b1220;
+  --panel-3: #16233a;
+  --border: #7d90ad;
+  --border-soft: #46566e;
+  --border-strong: #b6c6dd;
+  --text: #ffffff;
+  --body: #f4f7fd;
+  --muted: #e6edf8;
+  --dim: #cbd8ea;
+  --inverse: #000000;
+  --accent: #7dd3fc;
+  --accent-strong: #bae6fd;
+  --accent-soft: rgba(125, 211, 252, 0.28);
+  --emerald: #6ee7b7;
+  --emerald-strong: #a7f3d0;
+  --amber: #fde68a;
+  --amber-strong: #fef3c7;
+  --rose: #fda4af;
+  --rose-strong: #fecdd3;
+  --purple: #d8b4fe;
+  --purple-strong: #e9d5ff;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.85);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.9);
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(125, 211, 252, 0.95);
+}
+
 /* Two faces, self-hosted, so the first name in the stack is a font the browser actually has.
    `body` used to name Inter and hand Linux and Windows the system sans fallback, and the code
    editor carried its own copy of the mono stack: one name for each, here, is what makes the UI and

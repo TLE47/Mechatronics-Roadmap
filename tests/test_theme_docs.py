@@ -7,8 +7,9 @@ repository has already paid for once with a hand-typed lesson count beside a gen
 
 Three separate promises are checked, because they fail differently:
 
-1. **Both values.** Every colour token's dark cell equals its `:root` value, and its light cell equals
-   the `[data-theme="light"]` override — or the `:root` value, where the palette deliberately does not
+1. **Every value, in every palette.** Every colour token's dark cell equals its `:root` value, its
+   light cell the `[data-theme="light"]` override, and its high-contrast cell the
+   `[data-theme="contrast"]` override — or the `:root` value, where a palette deliberately does not
    change (the plot face).
 2. **Both directions of coverage.** A token added to the stylesheet without a row here fails, and a
    row for a token the stylesheet no longer defines fails too. Same for the `@theme inline` utilities:
@@ -63,18 +64,20 @@ def _colour_tokens(block: str) -> dict:
 
 
 def _documented_rows(text: str) -> list:
-    """`(token, utility or None, dark, light)` for every table row that opens with a backticked token."""
+    """`(token, utility or None, dark, light, contrast)` for every row that opens with a backticked token."""
     rows = []
     for line in text.splitlines():
         if not line.lstrip().startswith("|"):
             continue
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if len(cells) != 5 or not re.fullmatch(r"`--[\w-]+`", cells[0]):
+        if len(cells) != 6 or not re.fullmatch(r"`--[\w-]+`", cells[0]):
             continue
         token = cells[0].strip("`")
         utility = None if cells[1] == DARK_ONLY else cells[1].strip("`")
         if token and "-" in token:
-            rows.append((token, utility, cells[2].strip("`"), cells[3].strip("`")))
+            rows.append(
+                (token, utility, cells[2].strip("`"), cells[3].strip("`"), cells[4].strip("`"))
+            )
     return rows
 
 
@@ -86,6 +89,8 @@ class ThemeDocTests(unittest.TestCase):
         cls.dark = _colour_tokens(_block(cls.css, ":root"))
         cls.light_all = _declarations(_block(cls.css, '[data-theme="light"]'))
         cls.light = {name: value for name, value in cls.light_all.items() if name in cls.dark}
+        cls.contrast_all = _declarations(_block(cls.css, '[data-theme="contrast"]'))
+        cls.contrast = {name: value for name, value in cls.contrast_all.items() if name in cls.dark}
         cls.root_all = _declarations(_block(cls.css, ":root"))
         cls.theme_map = {
             name: match.group(1)
@@ -108,7 +113,7 @@ class ThemeDocTests(unittest.TestCase):
         )
 
     def test_every_colour_token_has_exactly_one_row(self):
-        documented = [token for token, _utility, _dark, _light in self.rows]
+        documented = [row[0] for row in self.rows]
         self.assertEqual(
             sorted(documented), sorted(self.dark),
             "expected one row per colour token in :root, and no rows for tokens that no longer "
@@ -120,23 +125,27 @@ class ThemeDocTests(unittest.TestCase):
             "which value a contributor should copy",
         )
 
-    def test_light_block_only_overrides_the_page(self):
-        """The light block re-points the palette, plus the four non-colour tokens the page calls out."""
-        undocumented = sorted(set(self.light_all) - set(self.dark) - NON_COLOUR_THEMED)
-        self.assertEqual(
-            undocumented, [],
-            "expected the light block to re-point colour tokens (checked against the table) or the "
-            "shadows and ring the page names; a token themed there but missing from docs/THEME.md "
-            "is a light-mode change no contributor can find",
-        )
-        self.assertEqual(
-            sorted(set(NON_COLOUR_THEMED) - set(self.light_all)), [],
-            "expected the shadows and the focus ring to keep a lighter set in light mode; if one "
-            "was dropped, the page's elevation note is now wrong",
-        )
+    def test_each_override_block_only_overrides_the_page(self):
+        """Both override blocks re-point the palette, plus the four non-colour tokens the page names."""
+        for opener, declarations in (
+            ('[data-theme="light"]', self.light_all),
+            ('[data-theme="contrast"]', self.contrast_all),
+        ):
+            undocumented = sorted(set(declarations) - set(self.dark) - NON_COLOUR_THEMED)
+            self.assertEqual(
+                undocumented, [],
+                f"expected the {opener} block to re-point colour tokens (checked against the table) "
+                f"or the shadows and ring the page names; a token themed there but missing from "
+                f"docs/THEME.md is a palette change no contributor can find",
+            )
+            self.assertEqual(
+                sorted(set(NON_COLOUR_THEMED) - set(declarations)), [],
+                f"expected the {opener} block to re-point the shadows and the focus ring too; if one "
+                f"was dropped, the page's elevation note is now wrong about that palette",
+            )
 
     def test_dark_values_match_the_stylesheet(self):
-        for token, _utility, dark, _light in self.rows:
+        for token, _utility, dark, _light, _contrast in self.rows:
             self.assertEqual(
                 dark, self.dark[token],
                 f"expected docs/THEME.md to give {token} as {self.dark[token]} in dark mode, but the "
@@ -144,7 +153,7 @@ class ThemeDocTests(unittest.TestCase):
             )
 
     def test_light_values_match_the_stylesheet(self):
-        for token, _utility, _dark, light in self.rows:
+        for token, _utility, _dark, light, _contrast in self.rows:
             expected = self.light.get(token, self.dark[token])
             self.assertEqual(
                 light, expected,
@@ -153,9 +162,20 @@ class ThemeDocTests(unittest.TestCase):
                 f"correct only for the plot face",
             )
 
+    def test_contrast_values_match_the_stylesheet(self):
+        """The column a reader who asked for contrast relies on — and the one easiest to leave stale."""
+        for token, _utility, _dark, _light, contrast in self.rows:
+            expected = self.contrast.get(token, self.dark[token])
+            self.assertEqual(
+                contrast, expected,
+                f"expected docs/THEME.md to give {token} as {expected} in high contrast, but the "
+                f"table says {contrast}; a token missing from the contrast block keeps its dark "
+                f"value, which is correct only for the plot face",
+            )
+
     def test_utility_families_match_theme_inline(self):
         documented = {}
-        for token, utility, _dark, _light in self.rows:
+        for token, utility, _dark, _light, _contrast in self.rows:
             if utility is None:
                 continue
             self.assertNotIn(
@@ -174,7 +194,7 @@ class ThemeDocTests(unittest.TestCase):
 
     def test_tokens_without_a_utility_say_so(self):
         """`--accent-soft` and `--plot-line` are properties only; the page must not invent a class."""
-        for token, utility, _dark, _light in self.rows:
+        for token, utility, _dark, _light, _contrast in self.rows:
             families = sorted(
                 name for name, target in self.theme_map.items()
                 if name.startswith("--color-") and target == token

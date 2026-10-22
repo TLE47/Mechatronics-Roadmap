@@ -10,24 +10,31 @@
     />
     <meta name="theme-color" content="#070b12" />
     <meta name="color-scheme" content="dark light" />
-    <!-- Theme before first paint. Stored choice wins; otherwise the OS decides. This is the only
-         place the storage key is duplicated (src/theme.ts owns it), because it has to run before
-         the bundle loads. A throw (private mode) leaves the dark default in place. -->
+    <!-- Theme before first paint. Stored choice wins; otherwise the OS decides, and a request for
+         more contrast outranks the dark/light preference. This is the only place the storage key is
+         duplicated (src/theme.ts owns it), because it has to run before the bundle loads. A throw
+         (private mode) leaves the dark default in place. -->
     <script>
       (function () {
         try {
           var stored = localStorage.getItem('mechalab_theme_v1');
-          var dark = stored === 'dark';
-          var light = stored === 'light';
-          if (!dark && !light) {
-            dark = !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
-            light = !dark;
+          var theme = null;
+          if (stored === 'light' || stored === 'dark' || stored === 'contrast') theme = stored;
+          if (!theme) {
+            var query = window.matchMedia;
+            if (query && query('(prefers-contrast: more)').matches) theme = 'contrast';
+            else if (!query || query('(prefers-color-scheme: dark)').matches) theme = 'dark';
+            else theme = 'light';
           }
-          var theme = light ? 'light' : 'dark';
           document.documentElement.setAttribute('data-theme', theme);
-          document.documentElement.style.colorScheme = theme;
+          document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
           var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute('content', theme === 'dark' ? '#070b12' : '#f8f6f2');
+          if (meta) {
+            meta.setAttribute(
+              'content',
+              theme === 'light' ? '#f8f6f2' : theme === 'contrast' ? '#000000' : '#070b12'
+            );
+          }
         } catch (error) {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
