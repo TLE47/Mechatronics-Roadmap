@@ -73,14 +73,11 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 1. **The trail as a study input** — the timeline now says what happened; the next question it can
    answer is what to do with it: a week that only ever opened lessons, a lesson that took nine runs,
    a day with no review. That is a reading of the same data, not a new store.
-2. **The first explicit completion after a remount is dropped** — `npm run test:runtime` fails at its
-   Jedi step: the `startCompletion()` call issued immediately after a tab switch remounts the runner
-   opens no list, typing one character does, and a second explicit start after the runtime is warm
-   does. The tooltip element is never created (not an empty list), so the query is not reaching a
-   result. Reproduced with CodeMirror imported statically, so the lazy editor is not the cause. The
-   probe sequence — mount, `set()`, `setCursor()`, `startCompletion()`, poll `.cm-tooltip` — is in the
-   CHANGELOG's Run 159 entry; the next step is to instrument the completion plugin's `update` (a reset
-   transaction landing inside its 50 ms start debounce would abort the context silently).
+2. ~~**The first explicit completion after a remount is dropped**~~ — **fixed in Run 160**, and not where
+   the note guessed. The completion field was never involved: a tab switch terminates the runner's
+   worker while its state survives, so the remounted runner still reported `ready` while it warmed a
+   new worker, and `getReadyAnalysis` correctly refused the request. `getOrCreateWorker` now resets the
+   status and its ref with the worker. `npm run test:runtime` is the pin.
 3. **The paint, measured** — both splits moved `entry_gzip` (627.5 → 585.5 → 432.9 kB) on the theory
    that bytes before the first paint are time before the first paint. That theory needs a reading:
    `PerformanceObserver` for `first-contentful-paint` and `largest-contentful-paint`, the moment the

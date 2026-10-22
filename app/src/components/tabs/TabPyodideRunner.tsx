@@ -551,6 +551,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       interruptRef.current = null;
       stdinCtrlRef.current = null;
     }
+    // A brand-new worker has not loaded Python, so the status has to stop saying it has. A tab switch
+    // terminates the worker while this component's state survives it, and the next mount warms a new
+    // one - without this, the chip reads "Python ready" for the whole re-download, and every request
+    // gated on readiness (completions, hover, signature, lint) believes it too.
+    //
+    // The ref is set here rather than waiting for the render below: it is what the analysis gate
+    // reads, and it exists to answer without a render.
+    setPyodideStatus('idle');
+    pyodideStatusRef.current = 'idle';
     workerRef.current = worker;
     // Analysis answers carry a request id and no run id. The session claims them here, so the run
     // path's own `onmessage` handler can never mistake a completion list for a verdict.

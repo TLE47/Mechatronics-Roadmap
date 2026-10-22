@@ -112,6 +112,16 @@ async function main() {
       const pageErrors = [];
       page.on('pageerror', (error) => pageErrors.push(error.message));
 
+      // The chunk arrives, but not instantly, and the delay is this check's subject: on a warm dev
+      // server it can land inside the round trip between "the root has children" and the snapshot
+      // below, and then the assertion is a race rather than the promise. Holding the response for a
+      // moment makes the window real — what a first visit on a network actually has — so the
+      // placeholder is observed because it is there, not because the machine happened to be slow.
+      await page.route(EDITOR_CHUNK, async (route) => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        await route.continue();
+      });
+
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => Boolean(document.querySelector('#root *')), undefined, {
         timeout: 30000,

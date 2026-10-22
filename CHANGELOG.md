@@ -11,6 +11,48 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 160: The Status Outlived the Worker It Described
+
+Run 159 left one repository gate red and recorded a hypothesis for it: `npm run test:runtime` failed at
+its Jedi step, and the note said a reset transaction landing inside CodeMirror's 50 ms start debounce was
+the likely culprit. The hypothesis was wrong. The cause was in this app, and it is the kind of bug a
+screenshot shows only if you take it at the wrong second.
+
+**A remount throws the runtime away and keeps its status.** Switching away from the runner runs its
+cleanup effect, which terminates the worker; the component's state survives that remount, so when the
+tab comes back it mounts already reading `ready` (`Python ready in 1.4 s`) and then spawns a *new*
+worker to warm from scratch. For the whole re-download — 1.4–2 s in the probes — the chip claimed an
+interpreter that no longer existed, and so did `pyodideStatusRef`, which is what `getReadyAnalysis`
+gates every completion, hover, signature and lint on.
+
+**What the failing suite walked into.** It waits for `[data-runtime-status="ready"]` before asking—
+correctly, because a request sent into a cold worker would time out — and it resolved on the stale
+`ready` about 30 ms before the new worker's own `loading` message landed. The completion source then
+found no session, fell back to the keyword source, and the keyword source has nothing to say about
+`math.`, so no tooltip was ever created. Typing one character worked, and so did a second explicit
+start: by then the runtime was genuinely warm. That is exactly the shape the note described.
+
+**The probe, and what it ruled out.** Instrumenting the worker's `postMessage` and `getReadyAnalysis`
+showed the decisive fact: **no `complete` request ever reached the worker**. The gate logged
+`status: 'loading'` at the moment of the first start while the DOM element still read `ready`, and the
+same start 200 ms later logged `ready` and posted the query. So no transaction was resetting the
+completion field, and the debounce was never involved — the app was answering a question about a
+runtime it had already destroyed. (The lazy editor split from Run 159 was also exonerated the same way:
+reproduced with CodeMirror imported statically.)
+
+**The fix is three lines where the worker is created**
+([`TabPyodideRunner.tsx`](app/src/components/tabs/TabPyodideRunner.tsx)): `getOrCreateWorker` sets
+`pyodideStatus` back to `idle` and assigns the same value to `pyodideStatusRef` — the ref directly,
+because it exists to answer without a render and the analysis gate reads it before React commits. A
+new worker never inherits the last one's readiness; `reset` and `Stop` already reset it on the other
+side, at destruction.
+
+**Verified.** `npm run test:runtime` passes all fifteen checks, Jedi step included, against a real
+interpreter in Chromium. `npm run test:workbench` passes its 34 suites on one dev server and one built
+bundle, `npm run lint` is clean, the Python suite is 404 tests OK, and `npm run check:weight` and
+`npm run check:axe` are unchanged and green. The suite that failed is the assertion that keeps this
+fixed: without the three lines it fails at the same step, deterministically.
+
 ## [2026-10-21] — Run 159: The Editor Arrives After the Code Does
 
 The tab split left one thing on the first paint that did not need to be there: the editor. CodeMirror
