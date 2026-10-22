@@ -51,6 +51,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium, firefox } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
+import { nameStale, staleBuild } from './buildFreshness.mjs';
 
 const repoRoot = process.cwd();
 export const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
@@ -170,9 +171,23 @@ function rampReferences() {
   });
 }
 
-function ensureBuilt() {
-  if (fs.existsSync(path.join(distDir, 'index.html'))) return;
-  console.log('[build] dist/index.html is missing - running `npm run build` first');
+/**
+ * Build the bundle unless it is missing or older than its own sources.
+ *
+ * Building only when `dist/index.html` was *missing* left the same hole the weight gate had until Run
+ * 166: a bundle from an earlier checkout is graded happily, so this suite would report on exercises
+ * and code that the source no longer has. Staleness is the shared rule in `buildFreshness.mjs`, so the
+ * weight gate and this sweep cannot disagree about what "built" means.
+ */
+export function ensureBuilt() {
+  const { built, stale } = staleBuild(repoRoot);
+  if (built && !stale.length) return;
+  console.log(
+    built
+      ? `[build] dist/ is older than ${stale.length} source file(s) - rebuilding before grading it`
+      : '[build] dist/index.html is missing - running `npm run build` first'
+  );
+  if (built) console.log(`[build]   ${nameStale(stale)}`);
   execFileSync('npm', ['run', 'build'], { stdio: 'inherit', cwd: repoRoot });
   assert.ok(fs.existsSync(path.join(distDir, 'index.html')), 'npm run build produced no dist/index.html');
 }

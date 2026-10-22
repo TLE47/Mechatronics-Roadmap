@@ -45,7 +45,8 @@
  *
  * Nothing they check depends on the others' timing, and the app is the same app. So this runner:
  *
- *   - builds `dist/` only when it is missing (CI builds it in its own step, before this one);
+ *   - builds `dist/` when it is missing or older than its sources (CI builds it in its own step, so
+ *     this is a no-op there);
  *   - starts *one* dev server and *one* dist server, and hands their URLs to the suites
  *     (`E2E_BASE_URL`, `PAGES_SERVER_URL`) so no suite boots a second one;
  *   - runs the smoke suite in this process, against that same dev server, so its SSR module graph
@@ -58,11 +59,10 @@
  * no URL is given.
  */
 
-import { execFileSync, spawn } from 'node:child_process';
-import fs from 'node:fs';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { startDevServer } from './e2e_browser_workbench.mjs';
-import { BASE, startStaticServer } from './e2e_pages_bundle.mjs';
+import { BASE, ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
 import { runSmokeTests } from './smoke_test_workbench.mjs';
 
 const repoRoot = process.cwd();
@@ -138,12 +138,9 @@ function runSmoke(viteServer) {
 }
 
 async function main() {
-  const distIndex = path.join(repoRoot, 'dist', 'index.html');
-  if (!fs.existsSync(distIndex)) {
-    console.log('[build] dist/index.html is missing - running `npm run build` first');
-    execFileSync('npm', ['run', 'build'], { stdio: 'inherit', cwd: repoRoot });
-    if (!fs.existsSync(distIndex)) throw new Error('npm run build produced no dist/index.html');
-  }
+  // Build when the bundle is missing *or older than its sources*: the Pages sweep grades `dist/`, and
+  // a stale one there grades code the source no longer has (the weight gate's Run 166 hole).
+  ensureBuilt();
 
   const { viteServer, baseUrl: devUrl } = await startDevServer(repoRoot);
   const { server: distServer, port } = await startStaticServer();

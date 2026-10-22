@@ -11,6 +11,34 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 167: The Sweep Grades What It Just Built
+
+Run 166 taught the weight gate to refuse a `dist/` older than its sources. The same hole was one suite
+wider: `scripts/e2e_pages_bundle.mjs` built the bundle only when `dist/index.html` was **missing**, so
+a leftover build was graded happily — fifty exercise entries, six ramp lessons and a tablet layout
+measured against code the checkout no longer had, reported as a pass. That is worse than the weight
+case, because the sweep's whole claim is that *this* bundle works.
+
+The walk moved into [`scripts/buildFreshness.mjs`](../scripts/buildFreshness.mjs), shared by the weight
+gate, the Pages sweep and `npm run test:workbench`'s own dist server, so "built" means one thing in all
+three. The pure rule is unchanged (`staleSources`): fresh when the newest output is at least as new as
+every source. The two readers differ on purpose:
+
+- the **weight gate** exits `2` and names the newer files — it must never report a number for bytes
+  nobody is shipping;
+- the **Pages sweep** and the matrix rebuild instead, printing what made them:
+
+```
+[build] dist/ is older than 1 source file(s) - rebuilding before grading it
+[build]   app/src/watchMode.ts
+```
+
+**Verified on the real tree.** With `app/src/watchMode.ts` touched, `PLAYWRIGHT_BROWSERS=chromium npm
+run test:e2e:pages` rebuilt, named the file, and passed — every ramp entry's starter unverified,
+every reference verified, all 50 exercise entries graded. With the tree fresh it takes the no-op path,
+which the full matrix exercised end to end (**40 suites**); `check_all.py` is 29/29 and the weight gate
+still reads 954.4 kB against a fresh build.
+
 ## [2026-10-22] — Run 166: A Build Older Than Its Sources
 
 Run 165 ended with a correction rather than a feature: `npm run check:weight` reported 950.3 kB, and

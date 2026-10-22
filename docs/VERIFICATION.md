@@ -217,6 +217,16 @@ tab.
 `npm run test:smoke` and `npm run test:e2e` need `npm ci` first; the browser suites find
 Chromium through Playwright or the documented fallback paths.
 
+**`dist/` is rebuilt when it is older than its own sources.** Two gates read the bundle rather than the
+sources — `npm run check:weight` and the Pages sweep — and a `dist/` from an earlier checkout fits every
+budget and grades every exercise while describing code that is no longer there (Run 165 quoted a weight
+that way). Both now share one rule ([`scripts/buildFreshness.mjs`](../scripts/buildFreshness.mjs), the
+walk behind `staleSources`): the build is fresh when its newest output is at least as new as every
+source. The weight gate exits `2` and names the newer files (`--allow-stale` overrides, and says so in
+the report); the Pages sweep and `npm run test:workbench` rebuild instead, printing what made them. CI
+builds before it measures, so the check costs nothing there and catches the local case — which is
+where the bad number came from.
+
 ## What is asserted, not just run
 
 - **Lesson size:** at most two new ideas per lesson (`lint_lessons.py`), checked from the

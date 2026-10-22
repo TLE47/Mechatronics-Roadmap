@@ -47,8 +47,8 @@ import {
   formatHeadroom,
   formatUsed,
   measurementFrom,
-  staleSources,
 } from './weight_budget.mjs';
+import { nameStale, staleBuild } from './buildFreshness.mjs';
 
 const ROOT = process.cwd();
 const DIST = path.join(ROOT, 'dist');
@@ -58,35 +58,6 @@ const argv = process.argv.slice(2);
 const JSON_OUT = argv.includes('--json');
 const RECORD = argv.includes('--record');
 const ALLOW_STALE = argv.includes('--allow-stale');
-
-/** Everything the bundle is built from, as far as a timestamp can tell. */
-const SOURCE_ENTRIES = ['app', 'vite.config.ts', 'tsconfig.json', 'package.json'];
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.fb-scratch']);
-
-/** `{ path, mtimeMs }` for every file under `entries`, skipping dependency and output trees. */
-function sourceMtimes(entries) {
-  const files = [];
-  // A named root is always walked: `dist` is in SKIP_DIRS so a source walk does not descend into a
-  // nested build, and the output walk itself starts at `dist`.
-  const walk = (target, isRoot = false) => {
-    let stat;
-    try {
-      stat = fs.statSync(target);
-    } catch {
-      return;
-    }
-    if (stat.isDirectory()) {
-      if (!isRoot && SKIP_DIRS.has(path.basename(target))) return;
-      for (const child of fs.readdirSync(target)) walk(path.join(target, child));
-      return;
-    }
-    // `tsc -b` writes its bookkeeping next to the sources; it is not what the bundle is made of.
-    if (target.endsWith('.tsbuildinfo')) return;
-    files.push({ path: path.relative(ROOT, target), mtimeMs: stat.mtimeMs });
-  };
-  for (const entry of entries) walk(path.join(ROOT, entry), true);
-  return files;
-}
 
 function log(...args) {
   (JSON_OUT ? console.error : console.log)(...args);
@@ -157,14 +128,13 @@ function main() {
   }
 
   // Before measuring: is this build made of the sources in front of us?
-  const stale = staleSources(sourceMtimes(SOURCE_ENTRIES), sourceMtimes(['dist']));
+  const { stale } = staleBuild(ROOT);
   if (stale.length && !ALLOW_STALE) {
-    const named = stale.slice(0, 3).map((file) => `  ${file.path}`).join('\n');
     console.error(
       `dist/ is older than ${stale.length} source file${stale.length === 1 ? '' : 's'}; the bundle on ` +
         `disk is not what the source tree describes, so measuring it would report a number for code ` +
-        `nobody is shipping. Run \`npm run build\` first (or \`--allow-stale\` to measure it anyway):\n` +
-        named
+        `nobody is shipping. Run \`npm run build\` first (or \`--allow-stale\` to measure it anyway): ` +
+        nameStale(stale)
     );
     process.exit(2);
   }
