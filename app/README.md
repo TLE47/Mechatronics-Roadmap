@@ -299,6 +299,23 @@ opens is not a study history. It is bounded too (14 days, 30 rows a day, 120 in 
 what the caps left out rather than ending mid-list, and its lesson ids are buttons that open the
 runner on that lesson.
 
+**What this says.** A record is not advice, so [`src/trailReading.ts`](src/trailReading.ts) reads the
+same days for what they imply and the card prints the result under the heading: the lesson that took
+the most failed runs (`P.1: 3 failed runs before it passed.`, or `… and not passed yet.`), the review
+deck going quiet (`No card review since Sun 18 Oct.`), and days that were only opens (`2 of these 3
+days are opens with nothing after them.`). Three rules keep it a reading rather than a scoreboard:
+
+- **Only the days on screen.** No new store and no hidden history: the readings are a pure function
+  of the trail the card was going to draw, so nothing is claimed about work the caps left out.
+- **A floor, or silence.** Three failed runs, two open-only days, three whole days without a review —
+  below every floor the reading is absent rather than softened into a compliment.
+- **At most three**, most actionable first (a resisting lesson, then the deck, then the opens), and a
+  reading about a lesson offers the button that opens it.
+
+Each rule is pinned by `npm run test:trailreading` (20 checks) and the rendered reading by
+`npm run test:e2e:trail`, which runs a lesson three times before its pass and expects the card to say
+so.
+
 ### The portfolio export
 
 **Export Progress (.md)** writes one Markdown file a learner can put in a repository, a CV or a course
@@ -570,6 +587,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/studyCards.ts`](src/studyCards.ts) | The deck: cards derived from commented highlights, their schedules stored, and the merge a restore uses. |
 | [`src/sittingClock.ts`](src/sittingClock.ts) | The measured sitting: idle cutoff, three-hour cap, bounded store, and the totals the pilot quotes. |
 | [`src/timeline.ts`](src/timeline.ts) | The log and the sittings as days of work: the fold that drops repeat rows, local days, and the caps. |
+| [`src/trailReading.ts`](src/trailReading.ts) | The same days read for advice: a resisting lesson, a quiet review deck, days that were only opens — at most three, each behind its own floor. |
 | [`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs) | The weight rules: what counts, what a breach is, and why an unmeasured budget fails too. |
 | [`src/components/TrailCard.tsx`](src/components/TrailCard.tsx) | The roadmap's trail: a day's time and work, a row per event, and rows that open their lesson. |
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
@@ -603,13 +621,14 @@ npm run test:portfolio       # the export: sections only when they have content,
 npm run test:storage         # IndexedDB: the bucket fallback, the migration order, the write queue, a refused write
 npm run test:traceback       # tracebacks as data: frames, chains, syntax shapes, and the index match
 npm run test:trail           # the trail: local days, the fold, sitting time on its start day, the caps
+npm run test:trailreading    # the same trail read for advice: a resisting lesson, a quiet deck, opens alone
 npm run test:weight          # the weight budget's rules: the boundary, an unmeasured metric, the tightest
 npm run check:axe            # axe over all 11 tabs in both themes; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting
-npm run test:e2e:trail       # the trail in Chromium: two runs become today, a reload keeps them, a row opens its lesson
+npm run test:e2e:trail       # the trail in Chromium: runs become today, a reload keeps them, a row opens its lesson, the reading names the lesson that resisted
 npm run test:e2e:storage     # a pre-IndexedDB bucket in Chromium: migrated whole, shown on screen, written to
 npm run check:lessons        # the registry is current
 ```

@@ -11,6 +11,35 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 161: The Trail Says What It Means
+
+The roadmap's trail answered "what did I do last Tuesday" and stopped there. A record is not advice:
+three opens with no run, one lesson that took nine attempts, a review deck left alone for a week — the
+same data, read for what it implies. [`app/src/trailReading.ts`](app/src/trailReading.ts) is that
+reading, a pure function of the trail the card was already drawing, and the card prints it under
+**What this says**:
+
+- **the lesson that resisted** — three or more failed runs in this trail, named with its count, in the
+  past tense when it later passed (`P.1: 3 failed runs before it passed.`) and in the present when it
+  has not (`… and not passed yet.`), with the button that opens it;
+- **the deck going quiet** — no card review for three whole local days, naming the day it stopped;
+- **days that were only opens** — two or more, counted against the days on screen.
+
+Three rules keep it a reading rather than a scoreboard. Every rule has a floor and below it the
+reading is **absent**, not softened. It reads only the days the card draws, so the trail's caps cannot
+be contradicted by advice about work the reader cannot see. And there are at most three, most
+actionable first: a lesson resisting, then the deck, then the opens. `npm run test:trailreading` pins
+twenty cases (floors, ties, the pass-then-past-tense rule, ordering, the cap, an empty trail), and
+`npm run test:e2e:trail` runs a lesson three times before its pass and expects the card to read it
+back in Chromium.
+
+**A bug the new test found on the way in.** The runner's History panel never showed the version a run
+had just filed. The snapshot is written from the effect that reports the verdict, and the panel's memo
+was computed by the render *before* that write, keyed on the lesson, the verdict and an explicit
+counter — so a fresh attempt stayed invisible until the lesson changed or the list was cleared. The
+same effect now bumps that counter after filing ([`TabPyodideRunner.tsx`](app/src/components/tabs/TabPyodideRunner.tsx)),
+and the trail suite's "a run has ended" signal is that entry appearing, which is also what pins it.
+
 ## [2026-10-22] — Run 160: The Status Outlived the Worker It Described
 
 Run 159 left one repository gate red and recorded a hypothesis for it: `npm run test:runtime` failed at

@@ -70,9 +70,10 @@ Verdicts: **ships** (in production with tests), **partial** (the core exists, th
 
 ## What to build next, in order
 
-1. **The trail as a study input** — the timeline now says what happened; the next question it can
-   answer is what to do with it: a week that only ever opened lessons, a lesson that took nine runs,
-   a day with no review. That is a reading of the same data, not a new store.
+1. ~~**The trail as a study input**~~ — **shipped in Run 161**: `app/src/trailReading.ts` reads the same
+days for what they imply (a lesson that resisted, the review deck going quiet, days that were only
+opens), behind a floor per rule, at most three, each printed under **What this says** in the trail card
+(`npm run test:trailreading`, `npm run test:e2e:trail`).
 2. ~~**The first explicit completion after a remount is dropped**~~ — **fixed in Run 160**, and not where
    the note guessed. The completion field was never involved: a tab switch terminates the runner's
    worker while its state survives, so the remounted runner still reported `ready` while it warmed a

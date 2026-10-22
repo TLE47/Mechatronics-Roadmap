@@ -4,6 +4,7 @@ import { readLearningLog } from '../learningLog';
 import { formatDuration, readSittings } from '../sittingClock';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
 import { buildTrail, entryLabel, hasWork, timeLabel, type Trail, type TrailEntry } from '../timeline';
+import { readTrail } from '../trailReading';
 
 interface TrailCardProps {
   /** Opens the lesson a row is about, in the runner. Rows stay text when there is no runner. */
@@ -90,6 +91,9 @@ export const TrailCard: React.FC<TrailCardProps> = ({ onOpenLesson, now }) => {
     // The stores are read on a tab switch (this mounts) and after a restore writes them.
     [readAt, nonce]
   );
+  // The same data, read for what it implies rather than for what happened. Pure, and given the same
+  // `now` the days were grouped with, so "three days ago" cannot disagree with the row it points at.
+  const readings = useMemo(() => readTrail(trail, { now: readAt }), [trail, readAt]);
 
   if (!hasWork(trail)) return null;
 
@@ -118,6 +122,38 @@ export const TrailCard: React.FC<TrailCardProps> = ({ onOpenLesson, now }) => {
         What you actually did, newest first — the log the runner writes, across every lesson. Time is
         measured in sittings, and filed on the day a sitting started.
       </p>
+
+      {readings.length > 0 && (
+        <div
+          data-testid="trail-readings"
+          data-reading-count={readings.length}
+          className="mt-3 rounded-[var(--r-sm)] border border-line-soft px-3 py-2"
+        >
+          <div className="text-[11px] font-mono uppercase tracking-wider text-accent">What this says</div>
+          <ul className="mt-1 space-y-1">
+            {readings.map((reading) => (
+              <li
+                key={reading.kind}
+                data-testid="trail-reading"
+                data-reading={reading.kind}
+                data-lesson={reading.lesson ?? ''}
+                className="text-xs text-muted"
+              >
+                {reading.text}
+                {reading.lesson && onOpenLesson && (
+                  <button
+                    onClick={() => reading.lesson && onOpenLesson(reading.lesson)}
+                    className="ml-1.5 font-mono text-[11px] text-accent hover:underline cursor-pointer"
+                    title={`Open ${reading.lesson}`}
+                  >
+                    open
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-3 space-y-3">
         {trail.days.map((day) => (

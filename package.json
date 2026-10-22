@@ -74,6 +74,7 @@
     "test:storage": "node --experimental-strip-types scripts/test_storage.mjs",
     "test:traceback": "node --experimental-strip-types scripts/test_traceback.mjs",
     "test:trail": "node --experimental-strip-types scripts/test_timeline.mjs",
+    "test:trailreading": "node --experimental-strip-types scripts/test_trail_reading.mjs",
     "check:errorindex": "python3 scripts/generate_error_index.py --check",
     "test:e2e:backup": "node --experimental-strip-types scripts/e2e_backup.mjs",
     "test:e2e:review": "node --experimental-strip-types scripts/e2e_review.mjs",

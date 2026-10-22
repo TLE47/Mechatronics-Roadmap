@@ -7,10 +7,11 @@
  * still there after a reload, and whether a first visit is quiet. The unit suite can be right about a
  * timeline while the app hands it nothing.
  *
- * The scenario is the real one: a fresh profile (no card), a lesson run twice (one failure, one pass
- * from the solution), then the roadmap showing today's work — the failing run, the pass, and the
- * measured time an open plus two runs wrote into the sitting clock. The card's rows are also links:
- * clicking one must put the runner back on that lesson.
+ * The scenario is the real one: a fresh profile (no card), a lesson run four times (three failures,
+ * then a pass from the solution), then the roadmap showing today's work — the failing runs, the pass,
+ * and the measured time those runs wrote into the sitting clock. Three failures is also the floor of
+ * the trail's "what this says" reading, so the card must say so in the browser and not only in the
+ * unit suite. The card's rows are also links: clicking one must put the runner back on that lesson.
  */
 
 import assert from 'node:assert/strict';
@@ -65,7 +66,30 @@ async function main() {
     await page.getByTestId(`lesson-item-${LESSON.id}`).click();
     await waitForEditor(page, undefined, 20000);
 
-    await page.getByTestId('btn-run-verify').click();
+    // A run is over when it has been *filed*: every Run writes a version to the per-lesson history, so
+    // the count of those entries is the one signal that cannot be confused with the previous run's
+    // verdict still being on screen. The panel is collapsed until asked for, so ask once.
+    await page.getByTestId('btn-draft-history').click();
+    await page.getByTestId('draft-history').waitFor({ timeout: 5000 });
+    // The editor's text is edited before each attempt on purpose: the starter itself is never filed
+    // (it is one Reset away), so an untouched run would file nothing and the wait below would have no
+    // signal. Typing through the view is how the app is driven everywhere else.
+    const runOnce = async (label) => {
+      const filed = await page.locator('[data-testid^="history-entry-"]').count();
+      await page.evaluate(
+        ({ code, marker }) => window.__mechalabEditors['editor-main'].set(`${code}\n# ${marker}`),
+        { code: LESSON.starterCode, marker: label }
+      );
+      await page.getByTestId('btn-run-verify').click();
+      await page.waitForFunction(
+        (before) => document.querySelectorAll('[data-testid^="history-entry-"]').length > before,
+        filed,
+        { timeout: 90000 }
+      );
+    };
+
+    const STARTER_RUNS = 3;
+    for (let run = 1; run <= STARTER_RUNS; run += 1) await runOnce(`attempt ${run}`);
     await waitForAnyStatus(page);
     const firstStatus = await page.locator('[data-testid^="status-"]').first().getAttribute('data-testid');
     assert.ok(firstStatus, 'the first run must land on a verdict');
@@ -73,7 +97,7 @@ async function main() {
     await page.getByTestId('btn-load-solution').click();
     await page.getByTestId('btn-run-verify').click();
     await page.getByTestId('status-assert-passed').waitFor({ timeout: 60000 });
-    console.log(`  ok the starter ran (${firstStatus}) and the solution passed`);
+    console.log(`  ok the starter ran ${STARTER_RUNS} times (${firstStatus}) and the solution passed`);
 
     // ---- The roadmap shows it ----
     await openRoadmap(page);
@@ -102,6 +126,29 @@ async function main() {
       kinds.filter((kind) => kind === 'verified').length <= 1,
       'a verification that repeats its run must not double the row'
     );
+
+    // The trail answers what it implies, not only what happened: three failing runs before the pass
+    // is the lesson that resisted, named, with the count and the button that opens it.
+    const readings = page.getByTestId('trail-readings');
+    await readings.waitFor({ timeout: 5000 });
+    const attempt = page.locator('[data-testid="trail-reading"][data-reading="many-runs"]');
+    assert.equal(await attempt.count(), 1, `expected one many-runs reading, got ${await attempt.count()}`);
+    assert.equal(
+      await attempt.getAttribute('data-lesson'),
+      LESSON.id,
+      'the resisting lesson must be the one that took the failed runs'
+    );
+    const attemptText = (await attempt.textContent())?.trim() ?? '';
+    assert.match(
+      attemptText,
+      new RegExp(`${LESSON.id.replace(/\./g, '\\.')}: ${STARTER_RUNS} failed runs before it passed\\.`),
+      `the reading must count the runs and say they were before the pass; got: ${attemptText}`
+    );
+    assert.ok(
+      (await attempt.locator('button').count()) === 1,
+      'a reading about a lesson must offer to open it'
+    );
+    console.log(`  ok the trail reads the attempts back: "${attemptText.replace(/\\s+/g, ' ').trim()}"`);
 
     // Time is measured, not inferred: two runs inside one sitting is more than zero milliseconds.
     const measured = Number(await page.getByTestId('trail-card').getAttribute('data-trail-measured'));
@@ -133,7 +180,11 @@ async function main() {
     const runsAfterReload = await page
       .getByTestId('trail-entry')
       .evaluateAll((rows) => rows.filter((row) => row.getAttribute('data-kind') === 'run').length);
-    assert.equal(runsAfterReload, 2, `expected both runs to survive the reload, got ${runsAfterReload}`);
+    assert.equal(
+      runsAfterReload,
+      STARTER_RUNS + 1,
+      `expected every run to survive the reload, got ${runsAfterReload}`
+    );
     assert.equal(
       (await page.getByTestId('trail-day').first().getAttribute('data-day-label')),
       'Today',
@@ -153,8 +204,9 @@ async function main() {
 
     assert.deepEqual(pageErrors, [], `the page threw on the trail: ${pageErrors.join(' | ')}`);
     console.log(
-      '[PASS] The trail: a fresh profile shows nothing, a failing run and a pass become rows on today, ' +
-        'the pass is one row, time is measured, a reload keeps the trail, and a row opens its lesson'
+      '[PASS] The trail: a fresh profile shows nothing, three failing runs and a pass become rows on ' +
+        'today, the resisting lesson is read back with its count, the pass is one row, time is measured, ' +
+        'a reload keeps the trail, and a row opens its lesson'
     );
   } finally {
     await browser.close();

@@ -399,6 +399,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // started from, filed with the verdict it got. Taken here because every path that ends a run
     // converges on this state, and the text is read from the ref so it is the code that ran.
     recordSnapshot(selectedId, runCodeRef.current || codeRef.current, passStatus);
+    // The panel is read through a memo keyed on the lesson, the verdict and this counter. The verdict
+    // this run reports is already rendered by the time this effect runs - that render read the store
+    // *before* the snapshot above was filed - so without the bump the version the learner just made
+    // would be invisible until the lesson changed or the panel was cleared.
+    setHistoryVersion((version) => version + 1);
     // `harnessReport` is the identity that changes when the gate's verdict can: a fresh gate object
     // every render would re-run this effect on every keystroke, which `pendingRunRef` would swallow.
   }, [isRunning, passStatus, selectedId, instructorError, stderr, harnessReport]);
