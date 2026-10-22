@@ -426,7 +426,7 @@ function runAnalysisCall(py, name, args, fallback) {
  * type carries it back; the request id is echoed, which is the only thing that ties an answer to the
  * keystroke that asked for it.
  */
-async function handleAnalysis(msg, { type, helper, fallback, args, shape }) {
+async function handleAnalysis(msg, { type, helper, source, fallback, args, shape }) {
   const startedAt = performance.now();
   try {
     const py = await prepareAnalysis(msg);
@@ -435,7 +435,7 @@ async function handleAnalysis(msg, { type, helper, fallback, args, shape }) {
       type,
       requestId: msg.requestId,
       [shape]: JSON.parse(json),
-      source: helper.indexOf('lint') >= 0 ? 'pyflakes' : 'jedi',
+      source,
       ms: Math.round(performance.now() - startedAt),
     });
   } catch (error) {
@@ -450,6 +450,7 @@ const handleComplete = (msg) =>
   handleAnalysis(msg, {
     type: 'completions',
     helper: '__mechalab_complete',
+    source: 'jedi',
     fallback: '[]',
     shape: 'options',
     args: (m) => [String(m.code || ''), Number(m.line) || 1, Number(m.column) || 0],
@@ -459,6 +460,7 @@ const handleLint = (msg) =>
   handleAnalysis(msg, {
     type: 'lint',
     helper: '__mechalab_lint',
+    source: 'pyflakes',
     fallback: '[]',
     shape: 'messages',
     args: (m) => [String(m.code || '')],
@@ -468,6 +470,7 @@ const handleHover = (msg) =>
   handleAnalysis(msg, {
     type: 'hover',
     helper: '__mechalab_hover',
+    source: 'jedi',
     fallback: 'null',
     shape: 'hover',
     args: (m) => [String(m.code || ''), Number(m.line) || 1, Number(m.column) || 0],
@@ -477,6 +480,7 @@ const handleSignature = (msg) =>
   handleAnalysis(msg, {
     type: 'signature',
     helper: '__mechalab_signature',
+    source: 'jedi',
     fallback: 'null',
     shape: 'signature',
     args: (m) => [String(m.code || ''), Number(m.line) || 1, Number(m.column) || 0],
