@@ -9,6 +9,12 @@ import {
   diffSummary,
   splitLines,
 } from '../app/src/codeDiff.ts';
+import {
+  diffSameMessage,
+  isDiffTarget,
+  resolveDiffReference,
+  runTarget,
+} from '../app/src/diffReference.ts';
 import { editedLines } from '../app/src/lessonDraft.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
@@ -160,6 +166,81 @@ check('the summary omits a side that did not change', () => {
   assert.equal(diffSummary({ added: 3, removed: 0 }), '+3');
   assert.equal(diffSummary({ added: 0, removed: 4 }), '−4');
   assert.equal(diffSummary({ added: 0, removed: 0 }), 'no changes');
+});
+
+// --- What the panel compares against ------------------------------------------------------------
+// Starter, the earned solution, and now the code a filed run started from. Both non-obvious rules are
+// tested here rather than trusted to the panel: the fallback that keeps a stale target from blanking
+// the diff, and the lock that keeps an unearned solution unreadable through the target id itself.
+
+const NOW = 1_700_000_000_000;
+const source = (over = {}) => ({
+  starter: 'print("start")\n',
+  solution: 'print("answer")\n',
+  solutionUnlocked: false,
+  history: [
+    { code: 'print("newest")\n', at: NOW - 60_000, outcome: 'passed' },
+    { code: 'print("older")\n', at: NOW - 3 * 3_600_000, outcome: 'mismatch' },
+  ],
+  ...over,
+});
+
+check('the starter is the reference until something else is picked', () => {
+  const reference = resolveDiffReference('starter', source(), NOW);
+  assert.equal(reference.code, 'print("start")\n');
+  assert.equal(reference.label, 'starter');
+  assert.equal(reference.fellBack, false);
+});
+
+check('run:<i> reads the code that version filed, and names it with its verdict', () => {
+  const newest = resolveDiffReference(runTarget(0), source(), NOW);
+  assert.equal(newest.code, 'print("newest")\n');
+  assert.equal(newest.label, 'run 1 min ago · passed');
+  assert.equal(newest.fellBack, false);
+  const older = resolveDiffReference(runTarget(1), source(), NOW);
+  assert.equal(older.code, 'print("older")\n');
+  assert.equal(older.label, 'run 3 h ago · output mismatch');
+});
+
+check('a version the history no longer holds falls back to the starter, it never blanks', () => {
+  // The cap keeps five, and the History panel can clear the list while a diff is open.
+  for (const target of [runTarget(2), runTarget(99), runTarget(-1)]) {
+    const reference = resolveDiffReference(target, source(), NOW);
+    assert.equal(reference.code, 'print("start")\n', `${target} must read as the starter`);
+    assert.equal(reference.fellBack, true, `${target} must say it fell back`);
+  }
+  const cleared = resolveDiffReference(runTarget(0), source({ history: [] }), NOW);
+  assert.equal(cleared.code, 'print("start")\n');
+  assert.equal(cleared.fellBack, true);
+});
+
+check('the solution stays unreadable until it is earned, even through the target id', () => {
+  const locked = resolveDiffReference('solution', source(), NOW);
+  assert.equal(locked.code, 'print("start")\n', 'a locked solution must not leak its text');
+  assert.equal(locked.label, 'starter');
+  assert.equal(locked.fellBack, true);
+  const earned = resolveDiffReference('solution', source({ solutionUnlocked: true }), NOW);
+  assert.equal(earned.code, 'print("answer")\n');
+  assert.equal(earned.label, 'solution');
+  assert.equal(earned.fellBack, false);
+});
+
+check('only the three reference shapes are targets', () => {
+  assert.equal(isDiffTarget('starter'), true);
+  assert.equal(isDiffTarget('solution'), true);
+  assert.equal(isDiffTarget(runTarget(0)), true);
+  for (const junk of ['', 'run:', 'run:one', 'run:0.5', 'latest', 'RUN:1']) {
+    assert.equal(isDiffTarget(junk), false, `${JSON.stringify(junk)} must not be a target`);
+  }
+});
+
+check('the "nothing to report" line names the reference it used', () => {
+  const starter = resolveDiffReference('starter', source(), NOW);
+  assert.equal(diffSameMessage('starter', starter), 'The starter, unchanged — nothing written yet.');
+  const version = resolveDiffReference(runTarget(0), source(), NOW);
+  assert.equal(diffSameMessage(runTarget(0), version), 'The run 1 min ago · passed, unchanged.');
+  const solution = resolveDiffReference('solution', source({ solutionUnlocked: true }), NOW);
+  assert.equal(diffSameMessage('solution', solution), 'The solution, unchanged.');
 });
 
 if (failures) {

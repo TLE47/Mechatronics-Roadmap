@@ -596,12 +596,16 @@ also behind **Predict** in the lesson header, where a closed card's answer stays
 **Which lines, not just how many.** The roadmap card can say "4 lines changed"; **Diff** in the lesson
 header says which ones. It reads the editor against the starter by default, and against the lesson's
 solution once that is earned - opened in this visit, or the lesson passed - so the view cannot be used
-to read an answer nobody asked for yet. Both line numbers, `+`/`−` rows, and the unchanged runs around
+to read an answer nobody asked for yet. The third reference is your own work: every filed run's code
+is a button (`vs run 2 · passed`), so "what changed since the run that passed" is one click, and a
+version a restore or the five-version cap removed falls back to the starter instead of blanking the
+panel. Both line numbers, `+`/`−` rows, and the unchanged runs around
 a change trimmed to three lines each side and counted (`… 12 unchanged`). An indentation fix is a
 change here on purpose: this is the file, not the lenient output comparison the checks use. A file too
 large for the subsequence table keeps its common head and tail and says so rather than freezing the
 tab, and the same engine counts the roadmap card's changed lines, so the two surfaces cannot disagree
-- [src/codeDiff.ts](src/codeDiff.ts), pinned by `npm run test:codediff` and browser step 7g-i.
+- [src/codeDiff.ts](src/codeDiff.ts) and [src/diffReference.ts](src/diffReference.ts), pinned by
+`npm run test:codediff` and browser step 7g-i.
 
 **A failure, read.** A red line is where the work starts, and a traceback is written for a terminal: the
 learner's own frame sits among the lesson's harness frames, and the failure that *is* one of the

@@ -43,6 +43,12 @@ import {
 } from '../../draftHistory';
 import { diffLines, diffSummary } from '../../codeDiff';
 import {
+  diffSameMessage,
+  resolveDiffReference,
+  runTarget,
+  type DiffTarget,
+} from '../../diffReference';
+import {
   checkPrediction,
   clearPrediction,
   describeCheck,
@@ -502,7 +508,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The diff panel and what it compares against. The solution is a spoiler: the view unlocks once the
   // learner has opened the solution for this lesson in this visit, or has passed the lesson.
   const [diffOpen, setDiffOpen] = useState(false);
-  const [diffTarget, setDiffTarget] = useState<'starter' | 'solution'>('starter');
+  const [diffTarget, setDiffTarget] = useState<DiffTarget>('starter');
   const [solutionUsed, setSolutionUsed] = useState<Record<string, boolean>>({});
   const draftHistory = useMemo(
     () => snapshotsFor(selectedId),
@@ -511,13 +517,29 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // What the diff compares the editor against. A solution reference is only reachable once it is
   // earned (opened here, or the lesson is verified), so the panel cannot be used to read the answer.
   const solutionUnlocked = Boolean(verifiedLessons[selectedId]) || Boolean(solutionUsed[selectedId]);
-  const diffReference =
-    diffTarget === 'solution' && solutionUnlocked ? currentLesson.fullSolution : currentLesson.starterCode;
-  const codeDiff = useMemo(
-    () => (diffOpen ? diffLines(diffReference, code) : null),
-    // `code` is in the deps because this is a view of the buffer: typing is the thing being diffed.
-    [diffOpen, diffReference, code]
+  // Starter, the earned solution, or the code one of this lesson's filed runs started from. The module
+  // owns the fallbacks: a version that a restore or the cap removed reads as the starter, and the
+  // solution stays unreadable until it is earned (`app/src/diffReference.ts`).
+  const diffReference = useMemo(
+    () =>
+      resolveDiffReference(diffTarget, {
+        starter: currentLesson.starterCode,
+        solution: currentLesson.fullSolution,
+        solutionUnlocked,
+        history: draftHistory,
+      }),
+    [diffTarget, currentLesson, solutionUnlocked, draftHistory]
   );
+  const codeDiff = useMemo(
+    () => (diffOpen ? diffLines(diffReference.code, code) : null),
+    // `code` is in the deps because this is a view of the buffer: typing is the thing being diffed.
+    [diffOpen, diffReference.code, code]
+  );
+  // A filed version belongs to one lesson, so the panel goes back to the starter when the lesson
+  // changes: carrying `run:2` across a switch would describe another lesson's work.
+  useEffect(() => {
+    setDiffTarget('starter');
+  }, [selectedId]);
   // Predict first (see `app/src/predictGate.ts`). The first Run of a lesson asks what it will print
   // and holds the run until the learner commits or skips; the record is per lesson and per store.
   const [predictRecord, setPredictRecord] = useState<PredictionRecord | null>(null);
@@ -2790,17 +2812,47 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     >
                       vs solution
                     </button>
+                    {/* The third reference: the code a filed run started from. Newest first, so the
+                        run a learner just made is the first button; the list is the same one the
+                        History panel restores from, capped at five. */}
+                    {draftHistory.map((version, index) => {
+                      const target = runTarget(index);
+                      const active = diffTarget === target;
+                      return (
+                        <button
+                          key={target}
+                          onClick={() => setDiffTarget(target)}
+                          aria-pressed={active}
+                          data-testid={`diff-target-run-${index}`}
+                          title={`Your code against the code that ran ${snapshotAgeLabel(
+                            version.at
+                          )} (${verdictLabel(version.outcome)})`}
+                          className={`px-2 py-0.5 rounded text-[11px] font-mono border cursor-pointer ${
+                            active
+                              ? 'text-accent border-accent/60 bg-accent/10'
+                              : 'text-muted border-line'
+                          }`}
+                        >
+                          vs run {index + 1} · {verdictLabel(version.outcome)}
+                        </button>
+                      );
+                    })}
                     <span data-testid="diff-summary" className="text-[11px] font-mono text-muted">
                       {diffSummary(codeDiff)}
                     </span>
                   </div>
                 </div>
 
+                {/* The version a restore or the five-version cap removed: the panel says which
+                    reference it used rather than drawing an empty diff. */}
+                {diffReference.fellBack && diffTarget !== 'starter' && (
+                  <p data-testid="diff-fell-back" className="mt-2 text-xs text-muted">
+                    That version is gone — the panel is comparing against your starter.
+                  </p>
+                )}
                 {codeDiff.added === 0 && codeDiff.removed === 0 ? (
                   <p data-testid="diff-same" className="mt-2 text-xs text-muted">
-                    {diffTarget === 'solution'
-                      ? 'The solution, unchanged.'
-                      : 'The starter, unchanged — nothing written yet.'}
+                    {diffSameMessage(diffTarget, diffReference)}
                   </p>
                 ) : (
                   <div

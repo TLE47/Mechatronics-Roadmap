@@ -11,6 +11,27 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 180: The Third Reference Is Your Own Work
+
+`docs/PLAN-2.0-GAP.md`'s diff row ended with *"no diff against a filed version."* The Diff panel had
+two references — the starter, a fixed origin nobody edits, and the solution, an answer — and neither
+can say the thing a learner actually asks after a run: **what have I changed since then?** Every filed
+run's code is now a reference ([`app/src/diffReference.ts`](app/src/diffReference.ts), browser step
+7g-i, `npm run test:codediff`).
+
+| Decision | Why |
+| :--- | :--- |
+| `run:<i>` is a position in the lesson's filed history, newest first | The list is the one the History panel restores from, so the panel and the button cannot disagree about which attempt is which |
+| Each button prints its verdict and its age (`vs run 2 · passed`) | "The version that passed" is the one a learner means; a bare index is a puzzle |
+| A target the history no longer holds falls back to the **starter**, and says so | Five versions are kept and the list can be cleared while the diff is open; an empty diff of nothing is worse than an honest fallback |
+| The lock on the solution lives in the module, not in a `disabled` attribute | A reference that is only *hidden* by a button is one keystroke from being read |
+| Switching lessons puts the panel back on the starter | `run:2` belongs to one lesson; carrying it across a switch would describe somebody else's work |
+
+Verified: `npm run test:codediff` (six new checks, 19 in the suite), browser step 7g-i with the filed
+run as the reference, `npm run test:workbench`, `npm run test:e2e:pages`, lint clean.
+
+---
+
 ## [2026-10-22] — Run 179: Split, the Fourth Preset
 
 `docs/PLAN-2.0-GAP.md`'s workspace row asked for layout presets beside dockable panels. Three shipped

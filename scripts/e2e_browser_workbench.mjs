@@ -1544,6 +1544,41 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       (await page.getByTestId('diff-gap').count()) > 0,
       'the unchanged head must be counted as a gap'
     );
+    // The third reference: the attempt behind the draft. `run 1` is the version filed by the run
+    // above, so this answers "what changed since a real run" — something neither the starter (a
+    // fixed origin nobody edits) nor the solution (an answer) can.
+    const runButton = page.getByTestId('diff-target-run-0');
+    assert.equal(await runButton.isVisible(), true, 'a filed run must be offered as a reference');
+    assert.match(
+      (await runButton.textContent()) ?? '',
+      /vs run 1 · checks failed/,
+      "the version button must name the run it compares against, with that run's verdict"
+    );
+    await runButton.click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="code-diff"]')?.getAttribute('data-diff-target') ===
+        'run:0',
+      undefined,
+      { timeout: 5000 }
+    );
+    // The filed text back in the editor: the honest answer against the run that produced it is
+    // "no changes", and the sentence names that run, not the starter.
+    await setEditorCode(page, halfWritten);
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="diff-same"]')
+          ?.textContent?.includes('checks failed') === true,
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.match(
+      (await page.getByTestId('diff-same').textContent()) ?? '',
+      /^The run .* checks failed, unchanged\.$/,
+      'comparing against a filed run must name that run when there is nothing to report'
+    );
+    await page.getByTestId('diff-target-starter').click();
     // Opening the solution is what earns the second reference; then the editor *is* the solution, so
     // the honest answer is "no changes" rather than a wall of identical rows.
     await page.getByTestId('btn-load-solution').click();
