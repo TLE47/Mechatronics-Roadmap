@@ -11,6 +11,53 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 164: The Run Asks First
+
+The ladder's third move is *Predict* — commit to a prediction before running anything
+([`docs/SYLLABUS.md`](docs/SYLLABUS.md) §C). Every page prints it as a paragraph, and the workbench,
+where the running actually happens, asked nothing: a learner could press Run on the starter, read the
+answer off the screen and never have risked a guess. A result that was not expected is not
+remembered; a result that was guessed and missed is.
+
+So a lesson's **first** Run now asks instead of running. *What will this print?* The run is held until
+the guess is committed or deliberately skipped, and the guess is graded against the lesson's own
+`expectedOutput` — which exists before any run, so the verdict costs no interpreter time.
+[`app/src/predictGate.ts`](app/src/predictGate.ts) is the grading, and the rules are stated because
+grading free text is a judgement:
+
+- **Lines, not substrings.** Each line is trimmed and its inner whitespace collapsed, blanks dropped;
+  a guess that is merely contained in the output is not a prediction of it.
+- **Case and punctuation count.** `True` is not `true`; a prediction that says so is wrong in a way
+  the learner can see. Nothing is lowercased and there is no fuzzy distance — a tolerance on numbers
+  would be a judgement the copy could not show the learner.
+- **Four verdicts, named for what happened**: `match` (every line, in order), `reordered` (every line,
+  not in that order), `partial` (some — the count is reported), `miss` (none). A repeated line is
+  matched once per occurrence, so `ok ok ok` against `ok ok` is not a match.
+- **Skip is a record.** A learner with a cold hand can run without predicting, and the skip is stored
+  with a timestamp rather than counted as a prediction; nothing is ever blocked for good.
+- **One question per lesson**, and **Predict again** clears it for a real second attempt.
+
+The card sits under the lesson toolbar, is reachable from a **Predict** button that keeps the answer
+legible as a chip when the card is closed, and shows the verdict *before* the output arrives: an
+exact hit, the right lines out of order, `n of m`, or none — with the guess read back verbatim.
+
+**The blast radius, handled honestly.** The gate would have stalled every suite that drives runs, so
+those suites switch the prompt off with `window.__mechalabPredictFirst = false` — the same convention
+as `__mechalabPyodideCdnUrl` and `__mechalabExecutionTimeoutMs` — in six files, each with its reason
+in a comment. What that would otherwise cost is the *default* path, so the gate has a browser suite of
+its own ([`scripts/e2e_predict_gate.mjs`](scripts/e2e_predict_gate.mjs), `npm run test:e2e:predict`,
+in the matrix): the first Run asks and awards no verdict, the held run executes on commit, a second
+Run of the same lesson goes straight through, a second lesson asks its own question, Skip is recorded,
+and the expected output typed back is the one exact hit.
+
+**Verified.** `npm run test:predict` is 15 checks (the four verdicts, the trim rule, the multiplicity
+rule, the store's cap and eviction, a corrupt file, a foreign schema, and P.1 judged by its own
+expected output); `npm run test:e2e:predict` passes in 9.5 s; the full matrix passes — **39 suites**,
+smoke 2.4 s through `e2e` 96.6 s — and the suite list now carries `predict` and `predict2e`. `npm run
+check:weight` records 950.3 kB with every budget intact (tightest `css_gzip`, 1.9 kB left), and the
+PLAN-2.0-GAP row moves from **missing** to **partial**: the gate ships, try-it blocks and symbol
+linking do not.
+
 ## [2026-10-22] — Run 163: The Diff Says Which Lines
 
 The roadmap card could say *how many* lines a learner had changed ([`app/src/lessonDraft.ts`](app/src/lessonDraft.ts)'s

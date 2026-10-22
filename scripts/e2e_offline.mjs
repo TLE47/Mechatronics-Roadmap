@@ -87,6 +87,10 @@ async function main() {
   });
   try {
     const context = await browser.newContext();
+    // The predict-first gate is its own suite (`test:e2e:predict`); this one proves the cache.
+    await context.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));

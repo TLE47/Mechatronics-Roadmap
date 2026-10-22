@@ -13,6 +13,7 @@
  *   test:resume      the lesson the next visit reopens, including the ids it must refuse
  *   test:draft       the editor's unfinished work: kept, bounded, evicted, and never a starter copy
  *   test:codediff    the Diff panel's rules: what a change is, how gaps are trimmed, the coarse fallback
+ *   test:predict     the predict-first gate's grading: lines not strings, four verdicts, a bounded store, no lockout
  *   test:history     the versions behind the draft: filed on Run, deduped, capped, evicted oldest-first
  *   test:scope       the Scope's payload rules: NaN dropped, lengths aligned, flat traces widened
  *   test:checkhints  a failing check names its own rung, and rung 2 is earned by another run
@@ -162,6 +163,7 @@ async function main() {
     { label: 'resume', script: 'test_last_lesson.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'draft', script: 'test_lesson_draft.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'codediff', script: 'test_codediff.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'predict', script: 'test_predict_gate.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'history', script: 'test_draft_history.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'scope', script: 'test_scope.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'hints', script: 'test_check_hints.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -187,6 +189,7 @@ async function main() {
     { label: 'bak2e', script: 'e2e_backup.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'rev2e', script: 'e2e_review.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'trail2e', script: 'e2e_trail.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
+    { label: 'predict2e', script: 'e2e_predict_gate.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'focus2e', script: 'e2e_focus.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'store2e', script: 'e2e_storage.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
   ];

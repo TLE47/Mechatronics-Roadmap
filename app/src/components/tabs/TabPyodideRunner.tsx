@@ -42,6 +42,14 @@ import {
   verdictLabel,
 } from '../../draftHistory';
 import { diffLines, diffSummary } from '../../codeDiff';
+import {
+  checkPrediction,
+  clearPrediction,
+  describeCheck,
+  predictionFor,
+  savePrediction,
+  type PredictionRecord,
+} from '../../predictGate';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
@@ -81,6 +89,8 @@ declare global {
     __mechalabPyodideCdnUrl?: string;
     __mechalabExecutionTimeoutMs?: number;
     __mechalabMaxTraceSteps?: number;
+    /** `false` turns the predict-first gate off — a suite's switch, never a learner's. */
+    __mechalabPredictFirst?: boolean;
   }
 }
 
@@ -366,6 +376,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // `code` is in the deps because this is a view of the buffer: typing is the thing being diffed.
     [diffOpen, diffReference, code]
   );
+  // Predict first (see `app/src/predictGate.ts`). The first Run of a lesson asks what it will print
+  // and holds the run until the learner commits or skips; the record is per lesson and per store.
+  const [predictRecord, setPredictRecord] = useState<PredictionRecord | null>(null);
+  const [predictOpen, setPredictOpen] = useState(false);
+  const [predictText, setPredictText] = useState('');
+  /** The run the gate is holding: set when Run was pressed before a prediction was made. */
+  const [heldRun, setHeldRun] = useState<{ code: string; lesson: PythonLessonItem } | null>(null);
+  // A new lesson is a new question: the panel closes, the half-typed guess goes, and the record is
+  // read for the lesson now on screen rather than the one just left.
+  useEffect(() => {
+    setPredictRecord(predictionFor(selectedId));
+    setPredictOpen(false);
+    setPredictText('');
+    setHeldRun(null);
+  }, [selectedId]);
   // The run's traced signals. Empty means the run drew nothing, which is the normal case for a
   // lesson that only prints, so the panel renders nothing at all rather than an empty frame.
   const [scopeSeries, setScopeSeries] = useState<ScopeSeries[]>([]);
@@ -1126,13 +1151,85 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     }
   };
 
+  /**
+   * Every run the learner asks for by name goes through here, so the predict-first gate cannot be
+   * walked around by using the keyboard instead of the button.
+   */
+  const requestRun = (sourceCode: string, lesson: PythonLessonItem = currentLesson) => {
+    if (isRunning) return;
+    // A suite that drives hundreds of runs sets this once; the gate keeps its own browser step, so
+    // what is switched off here is a prompt, not a check.
+    if (typeof window !== 'undefined' && window.__mechalabPredictFirst === false) {
+      void runPythonCode(sourceCode, lesson);
+      return;
+    }
+    const existing = predictionFor(lesson.id);
+    setPredictRecord(existing);
+    if (!existing) {
+      setHeldRun({ code: sourceCode, lesson });
+      setPredictText('');
+      setPredictOpen(true);
+      return;
+    }
+    void runPythonCode(sourceCode, lesson);
+  };
+
+  /** Commit the guess and let the held run go; the verdict stays on screen beside the output. */
+  const commitPrediction = () => {
+    const pending = heldRun;
+    const lesson = pending?.lesson ?? currentLesson;
+    const text = predictText.trim();
+    if (!text) return;
+    const check = checkPrediction(text, lesson.expectedOutput);
+    const record = savePrediction({
+      lessonId: lesson.id,
+      text,
+      verdict: check.verdict,
+      matchedLines: check.matchedLines,
+      predictedLines: check.predictedLines,
+      skipped: false,
+      at: Date.now(),
+    });
+    setPredictRecord(record);
+    setHeldRun(null);
+    // A run was waiting on the answer, so it goes now; a prediction made from the toolbar (no run
+    // held) is just filed.
+    if (pending) void runPythonCode(pending.code, lesson);
+  };
+
+  /** Skip is a recorded decision, not a loophole: nothing is blocked, and "skipped" is stored. */
+  const skipPrediction = () => {
+    const pending = heldRun;
+    const lesson = pending?.lesson ?? currentLesson;
+    const record = savePrediction({
+      lessonId: lesson.id,
+      text: '',
+      verdict: 'miss',
+      matchedLines: 0,
+      predictedLines: 0,
+      skipped: true,
+      at: Date.now(),
+    });
+    setPredictRecord(record);
+    setHeldRun(null);
+    if (pending) void runPythonCode(pending.code, lesson);
+  };
+
+  /** Forget this lesson's commit so the question is asked again (a second attempt, not a reset). */
+  const predictAgain = () => {
+    clearPrediction(selectedId);
+    setPredictRecord(null);
+    setPredictText('');
+    setHeldRun(null);
+  };
+
   // ⌘↵ / Ctrl+↵ runs from anywhere on this screen, including inside the editor. The button stays
   // the discoverable path; this is the one keyboard habit a code editor trains.
   const runShortcutRef = useRef<() => void>(() => {});
   runShortcutRef.current = () => {
     if (isRunning) return;
     const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
-    runPythonCode(codeRef.current, lesson);
+    requestRun(codeRef.current, lesson);
   };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -1153,7 +1250,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     if (sliderTimerRef.current !== null) window.clearTimeout(sliderTimerRef.current);
     sliderTimerRef.current = window.setTimeout(() => {
       sliderTimerRef.current = null;
-      runShortcutRef.current();
+      // A drag is a parameter change, not a new question: it re-runs what the learner is already
+      // looking at, so it does not open the predict gate mid-drag.
+      const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
+      void runPythonCode(codeRef.current, lesson);
     }, 450);
   };
   useEffect(
@@ -1485,7 +1585,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 The red line names the value it expected and the value your code produced.
               </p>
               <button
-                onClick={() => runPythonCode(codeRef.current, currentLesson)}
+                onClick={() => requestRun(codeRef.current, currentLesson)}
                 disabled={isRunning}
                 data-testid="btn-guide-run"
                 className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono font-bold bg-emerald hover:bg-emerald-strong text-inverse disabled:opacity-50 cursor-pointer"
@@ -1856,11 +1956,34 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <GitCompare className="w-3.5 h-3.5" />
                   <span>Diff</span>
                 </button>
+                {/* The gate's own door. The question also opens by itself on a lesson's first Run;
+                    this is how a learner rereads the verdict, or predicts before pressing Run. */}
+                <button
+                  onClick={() => {
+                    const next = !predictOpen;
+                    setPredictRecord(predictionFor(selectedId));
+                    setPredictOpen(next);
+                    if (next) setHeldRun(null);
+                  }}
+                  aria-expanded={predictOpen}
+                  aria-controls="predict-gate"
+                  data-testid="btn-predict"
+                  title="Predict first: commit to what the code will print, then run it"
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                    predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>
+                    Predict
+                    {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
+                  </span>
+                </button>
                 <button
                   onClick={() => {
                     const lesson =
                       PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
-                    runPythonCode(codeRef.current, lesson);
+                    requestRun(codeRef.current, lesson);
                   }}
                   disabled={isRunning}
                   data-testid="btn-run-verify"
@@ -1877,6 +2000,125 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* Predict first — the ladder's third move, and the one place the workbench could skip
+                it: press Run on the starter, read the answer off the screen, learn nothing. The run
+                is held until the guess is committed (or deliberately skipped and recorded). */}
+            {predictOpen && (
+              <div
+                id="predict-gate"
+                data-testid="predict-gate"
+                data-predict-state={predictRecord ? (predictRecord.skipped ? 'skipped' : 'judged') : 'asking'}
+                className="mt-3 rounded-lg border border-amber/40 bg-canvas p-3"
+              >
+                {predictRecord ? (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-mono text-amber">
+                        PREDICT · {predictRecord.skipped ? 'skipped' : describeCheck(predictRecord)}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          onClick={predictAgain}
+                          data-testid="btn-predict-again"
+                          className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-accent border border-line cursor-pointer"
+                        >
+                          Predict again
+                        </button>
+                        <button
+                          onClick={() => setPredictOpen(false)}
+                          data-testid="btn-predict-close"
+                          className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-body border border-line cursor-pointer"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                    {predictRecord.skipped ? (
+                      <p data-testid="predict-skipped-text" className="mt-2 text-xs text-muted">
+                        You ran this one without predicting. The run went through; nothing was
+                        blocked.
+                      </p>
+                    ) : (
+                      <>
+                        <p className="mt-2 text-[11px] font-mono text-faint">You wrote</p>
+                        <pre
+                          data-testid="predict-recorded"
+                          className="mt-1 overflow-auto rounded border border-line-soft bg-panel p-2 font-mono text-[11.5px] text-body whitespace-pre-wrap"
+                        >
+                          {predictRecord.text}
+                        </pre>
+                        <p
+                          data-testid="predict-verdict-text"
+                          className={`mt-1.5 text-xs ${
+                            predictRecord.verdict === 'match'
+                              ? 'text-emerald'
+                              : predictRecord.verdict === 'miss'
+                                ? 'text-rose'
+                                : 'text-amber'
+                          }`}
+                        >
+                          {predictRecord.verdict === 'match'
+                            ? 'You called it: the output matched, line for line.'
+                            : predictRecord.verdict === 'reordered'
+                              ? 'The right lines, in a different order: the program prints them in its own sequence, and that sequence is the lesson.'
+                              : predictRecord.verdict === 'partial'
+                                ? `Your guess and the output share ${predictRecord.matchedLines} of ${predictRecord.predictedLines} lines. The rest are the ones worth reading twice.`
+                                : 'None of your lines are in the output. That is the useful part: the screen just told you something you did not expect.'}
+                        </p>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="text-[11px] font-mono text-amber">
+                        PREDICT FIRST · what will this print?
+                      </span>
+                      <span className="text-[11px] font-mono text-faint">
+                        {heldRun ? 'before the run' : 'before you press Run'}
+                      </span>
+                    </div>
+                    <label htmlFor="predict-input" className="mt-2 block text-xs text-body">
+                      Type the output you expect, one line per line of output. It is checked against
+                      the lesson&apos;s own expected output when you commit, and the run goes then.
+                    </label>
+                    <textarea
+                      id="predict-input"
+                      value={predictText}
+                      onChange={(event) => setPredictText(event.target.value)}
+                      rows={3}
+                      spellCheck={false}
+                      data-testid="predict-input"
+                      placeholder={'e.g.\nEncoder Ticks: 425 | Battery: 12.15 V'}
+                      className="mt-1.5 w-full rounded border border-line bg-panel p-2 font-mono text-[12px] text-body resize-y"
+                    />
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={commitPrediction}
+                        disabled={!predictText.trim() || isRunning}
+                        data-testid="btn-predict-run"
+                        className="btn btn-primary px-3 py-1.5 text-[12px] font-bold disabled:opacity-50"
+                      >
+                        {heldRun ? 'Predict & Run' : 'Save prediction'}
+                      </button>
+                      <button
+                        onClick={skipPrediction}
+                        disabled={isRunning}
+                        data-testid="btn-predict-skip"
+                        title="Run without predicting. The skip is recorded, so it is not counted as a prediction."
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-mono text-muted hover:text-body border border-line cursor-pointer disabled:opacity-50"
+                      >
+                        Skip and run
+                      </button>
+                      <span className="text-[11px] text-faint">
+                        A missed guess is what makes the result stick.
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* The versions behind the draft. A draft is one latest text; this is the run that
                 worked before the last edit, which is the thing a learner actually wants back. */}
@@ -2146,7 +2388,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             <FaultBench08
               report={harnessReport}
               grading={isRunning}
-              onGrade={() => runPythonCode(codeRef.current, currentLesson)}
+              onGrade={() => requestRun(codeRef.current, currentLesson)}
             />
           )}
           {currentHarness && currentLesson.id !== '08.1' && (
@@ -2154,7 +2396,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               harness={currentHarness}
               report={harnessReport}
               grading={isRunning}
-              onGrade={() => runPythonCode(codeRef.current, currentLesson)}
+              onGrade={() => requestRun(codeRef.current, currentLesson)}
             />
           )}
 

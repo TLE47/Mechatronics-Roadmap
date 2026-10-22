@@ -61,6 +61,10 @@ async function main() {
     // ---- Part A: the chunk never arrives ----
     {
       const context = await browser.newContext();
+      // The predict-first gate is its own suite (`test:e2e:predict`); this one is about the editor.
+      await context.addInitScript(() => {
+        window.__mechalabPredictFirst = false;
+      });
       const page = await context.newPage();
       // Only uncaught exceptions: React logs a caught boundary error through `console.error`, and this
       // check is about the app surviving, not about the log it leaves behind.
@@ -108,6 +112,10 @@ async function main() {
     // ---- Part B: an ordinary visit, the chunk arrives ----
     {
       const context = await browser.newContext();
+      // The predict-first gate is its own suite (`test:e2e:predict`); this one is about the editor.
+      await context.addInitScript(() => {
+        window.__mechalabPredictFirst = false;
+      });
       const page = await context.newPage();
       const pageErrors = [];
       page.on('pageerror', (error) => pageErrors.push(error.message));

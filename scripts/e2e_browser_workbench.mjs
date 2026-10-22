@@ -159,6 +159,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
   try {
     const context = await browser.newContext();
+    // The predict-first gate has its own suite (`test:e2e:predict`); the runs in this one are about
+    // the verdicts that follow a run, so the prompt is switched off here rather than answered 20 times.
+    await context.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
     const page = await context.newPage();
 
     await page.goto(baseUrl, { waitUntil: 'networkidle' });

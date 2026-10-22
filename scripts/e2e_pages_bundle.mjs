@@ -572,7 +572,13 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     return 'skip';
   }
   try {
-    const page = await (await browser.newContext()).newPage();
+    const context = await browser.newContext();
+    // The predict-first gate is its own suite (`test:e2e:predict`); this sweep grades 44 started
+    // runs on the built bundle and must not answer a prompt between each one.
+    await context.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
+    const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(String(error)));
 
@@ -683,7 +689,11 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
     // must fit the viewport - the header used to push a 249px horizontal overflow here, so a page
     // that scrolls sideways is a failure, not a note.
-    const tablet = await (await browser.newContext({ viewport: TABLET_VIEWPORT })).newPage();
+    const tabletContext = await browser.newContext({ viewport: TABLET_VIEWPORT });
+    await tabletContext.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
+    const tablet = await tabletContext.newPage();
     await tablet.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await tablet.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
     await tablet.getByTestId('tab-btn-tab-pyodide').click();
