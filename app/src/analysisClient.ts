@@ -76,6 +76,18 @@ export type AnalysisReply<T> =
 /** Long enough for a cold Jedi import on a slow machine, short enough not to hold a keystroke. */
 export const ANALYSIS_TIMEOUT_MS = 8000;
 
+/**
+ * What a request is allowed while the worker installs jedi and pyflakes.
+ *
+ * The analyzers install on the first request of every fresh worker (~1.5 MB through micropip), and a
+ * tab switch throws the worker away — so the first completion after a remount waits on an installation,
+ * not on an answer. Eight seconds is not that; a request cut off mid-install is answered with the
+ * keyword fallback, which has nothing to say about `math.`, so the list simply never appears. This is
+ * the ceiling for that case alone: it starts when the worker says it is installing and returns to
+ * `ANALYSIS_TIMEOUT_MS` the moment the install reports done.
+ */
+export const INSTALL_TIMEOUT_MS = 60_000;
+
 export interface AnalysisRequest {
   code: string;
   cdnUrl?: string;
@@ -330,6 +342,8 @@ export class AnalysisSession {
   private readonly pending = new Map<number, Waiter>();
   private readonly post: (message: Record<string, unknown>) => void;
   private readonly timeoutMs: number;
+  /** True between the worker's `installing` notice and its `ready` one. */
+  private installing = false;
 
   /**
    * @param post         how to reach the current worker
@@ -353,6 +367,12 @@ export class AnalysisSession {
   handleMessage(data: unknown): boolean {
     if (!data || typeof data !== 'object') return false;
     const message = data as Record<string, unknown>;
+    // The worker's own report on the install, which is not an answer to any request: it moves every
+    // pending request onto the install budget and back off it again.
+    if (message.type === 'analysis-status') {
+      this.setInstalling(message.state === 'installing');
+      return true;
+    }
     if (typeof message.requestId !== 'number') return false;
     const waiter = this.pending.get(message.requestId);
     if (!waiter) return true; // a late answer to a request that already timed out
@@ -371,6 +391,28 @@ export class AnalysisSession {
     }
   }
 
+  /**
+   * Re-arm every pending request's clock — the install budget while it runs, the normal one after.
+   *
+   * Nothing else changes about a request: it still resolves or refuses with the same shapes. Only how
+   * long it is allowed to wait moves, because what it is waiting for is an installation.
+   */
+  private armPending(ms: number): void {
+    for (const [requestId, waiter] of this.pending) {
+      clearTimeout(waiter.timer);
+      waiter.timer = setTimeout(() => {
+        this.pending.delete(requestId);
+        waiter.resolve({ unavailable: 'timed out' });
+      }, ms);
+    }
+  }
+
+  private setInstalling(installing: boolean): void {
+    if (this.installing === installing) return;
+    this.installing = installing;
+    this.armPending(installing ? INSTALL_TIMEOUT_MS : this.timeoutMs);
+  }
+
   private ask(
     type: 'complete' | 'lint' | 'hover' | 'signature',
     request: AnalysisRequest & Record<string, unknown>
@@ -381,7 +423,7 @@ export class AnalysisSession {
       const timer = setTimeout(() => {
         this.pending.delete(requestId);
         resolve({ unavailable: 'timed out' });
-      }, this.timeoutMs);
+      }, this.installing ? INSTALL_TIMEOUT_MS : this.timeoutMs);
       this.pending.set(requestId, { resolve, timer });
       try {
         this.post({ type, requestId, ...request });

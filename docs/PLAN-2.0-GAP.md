@@ -79,9 +79,10 @@ opens), behind a floor per rule, at most three, each printed under **What this s
    worker while its state survives, so the remounted runner still reported `ready` while it warmed a
    new worker, and `getReadyAnalysis` correctly refused the request. `getOrCreateWorker` now resets the
    status and its ref with the worker. `npm run test:runtime` is the pin.
-3. **The paint, measured** — both splits moved `entry_gzip` (627.5 → 585.5 → 432.9 kB) on the theory
-   that bytes before the first paint are time before the first paint. That theory needs a reading:
-   `PerformanceObserver` for `first-contentful-paint` and `largest-contentful-paint`, the moment the
-   editor reports `data-editor-ready="true"`, and the moment the Run button is clickable, recorded in
-   the learning log the way run durations already are. Then a byte budget can say what it is worth,
-   and the next cut is chosen from a measurement rather than from a chunk listing.
+3. ~~**The paint, measured**~~ — **shipped in Run 162**: `app/src/paintTiming.ts` records
+   `first-contentful-paint`, `largest-contentful-paint`, the editor mounting and the runner committing,
+   one sample per visit in its own bounded store, carried by the learning-log export under `paint`
+   (`npm run test:paint`, and `npm run test:e2e` reads the sample back out of the downloaded file). A
+   cold visit on this machine reports first paint 385 ms, editor 582 ms, Run 384 ms, so the lazy
+   editor costs about 200 ms after the text is readable — the first number chosen from a measurement
+   rather than from a chunk listing. Wall-clock stays un-gated; the measurement is what is gated.

@@ -11,6 +11,58 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 162: The Paint, Measured
+
+Three runs of splits moved `entry_gzip` 627.5 → 585.5 → 432.9 kB on the theory that bytes before the
+first paint are time before the first paint. The budget file could say what a visit *downloads*; nothing
+could say what it *waited for*. [`app/src/paintTiming.ts`](app/src/paintTiming.ts) is that reading, and
+it is taken by the browser:
+
+- **`fcp`** from `PerformanceObserver` on `paint` — something is on screen;
+- **`lcp`** from `largest-contentful-paint`, kept until the learner interacts — the lesson is readable;
+- **`editor`** marked by `PythonEditor`'s impl where CodeMirror replaces the placeholder;
+- **`run`** marked when the runner commits, which is when the Run button is clickable.
+
+All four are milliseconds from navigation start, read from `performance` rather than `Date.now()`, so a
+wall clock that jumps cannot move them.
+
+**Why they are not log events.** The learning log is a record of what the learner did, and every surface
+reads it that way — the trail draws a row per event, `attemptsByLesson` folds opens and runs, the
+friction report counts kinds. A paint sample is a fact about *this build on this machine*; as an event
+kind it would have become a trail row with no lesson and a denominator with no run. It keeps its own
+small store instead (the newest 50 visits, one sample per navigation, replaced rather than duplicated
+when the same visit flushes again on `pagehide` and on the export). The log export carries it beside the
+events and the sittings — the file already transports measured data that is not an event — under
+`paint: { schema, samples, summary }`, flushed *first* so an export made a second after load carries
+this visit rather than the last one.
+
+**What it measured on this machine.** A cold Chromium visit reports `first paint 385 ms · editor 582 ms
+· Run 384 ms`: the lesson text, the code and the Run button are up in under 400 ms, and the editor
+arrives about 200 ms later — which is what the lazy boundary buys (the reader is not waiting for the
+syntax highlighter) and what it costs (the box swaps once). Wall-clock timings stay **un-gated** for the
+reason the budget note gives — CI variance is larger than any regression this app could ship — so what
+`npm run test:paint` and the browser suite gate is that the measurement *exists* and is read back, not
+that it is fast.
+
+**A second silent failure the verification found.** `npm run test:runtime` failed once on its Jedi step
+while this run was being verified, then passed on the retry. The cause is the same shape as Run 160's: a
+fresh worker installs jedi and pyflakes on the *first* analysis request (~1.5 MB through micropip), and
+`ANALYSIS_TIMEOUT_MS` was 8 s. A cold cache crosses that, the request is answered with the keyword
+fallback, and the keyword list has nothing to say about `math.` — so the first completion after a
+tab switch silently does nothing, intermittently, depending on how fast the CDN was. The worker now
+announces the install (`{ type: 'analysis-status', state: 'installing' | 'done' }`) and `AnalysisSession`
+moves every pending request onto `INSTALL_TIMEOUT_MS` (60 s) while it runs, returning to the 8 s answer
+clock the moment it reports done. The clock still suits a warm worker; it just no longer runs out while
+what it is waiting for is an installation. `npm run test:analysis` grew two checks (34) — a pending
+request outliving the answer clock during an install, and the clock coming back afterwards.
+
+**Verified.** `npm run test:paint` (16 checks: the store, the newest-flush-wins rule, a store another
+build wrote, medians with a missing metric absent rather than zero, the wording, and the export shape),
+and `npm run test:e2e` now downloads the learning log and asserts the sample's `fcp`, `editor` and `run`
+are real milliseconds with `fcp ≤ editor` — the first paint cannot be after the editor mounted.
+`npm run lint` is clean, the matrix is 36 suites, `npm run test:runtime` passes its 16 checks, and
+`npm run check:weight` records 950.3 kB with every budget intact.
+
 ## [2026-10-22] — Run 161: The Trail Says What It Means
 
 The roadmap's trail answered "what did I do last Tuesday" and stopped there. A record is not advice:

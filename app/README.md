@@ -406,6 +406,34 @@ skeleton and pass every rule), and the pair sweep's settle loop waits for it too
 placeholder joins both conditions (`[data-editor-ready="false"]`): it is a different shape of the
 same hazard, since its own text runs would otherwise be measured as the editor's.
 
+### What the paint actually costs
+
+The budget above can say what a visit downloads. It cannot say what the visit *waited for*, and the
+splits were made on the theory that the two are the same thing. [`src/paintTiming.ts`](src/paintTiming.ts)
+is that reading, taken by the browser rather than inferred:
+
+| moment | what it means |
+| :--- | :--- |
+| `fcp` | `first-contentful-paint` — something is on screen |
+| `lcp` | `largest-contentful-paint`, until the learner interacts — the lesson is readable |
+| `editor` | CodeMirror mounted where the placeholder stood (`PythonEditor`'s impl) |
+| `run` | the runner committed, so the Run button is clickable |
+
+All four are milliseconds from navigation start, from `performance`, so a wall clock that jumps cannot
+move them. They live in their own small store (the newest 50 visits, one sample per navigation,
+replaced rather than duplicated when the same visit flushes again on `pagehide`) because the learning
+log is a record of what the *learner* did — a paint sample is a fact about this build on this machine,
+and putting it in the log would draw it as a trail row with no lesson.
+
+The reading is carried by **Export Learning Log (.json)** under `paint` (`schema`, `samples` and the
+medians), flushed first so an export made a second after load still carries this visit. On this machine
+a Chromium run reports `first paint 385 ms · editor 582 ms · Run 384 ms` for a visit that has no
+cache — the editor lands about 200 ms after the text it replaced, which is what the lazy boundary buys
+and costs. `npm run test:paint` pins the store, the medians and the export (16 checks) and the
+`test:e2e` suite reads the sample back out of the downloaded file, so a reading that stops being
+recorded fails rather than going quiet. **Wall-clock timings stay un-gated** for the reason the budget
+note gives; what is gated is that the measurement exists.
+
 ### The editor
 
 The textarea is gone: [`PythonEditor.tsx`](src/components/PythonEditor.tsx) mounts **CodeMirror 6**
@@ -622,6 +650,7 @@ npm run test:storage         # IndexedDB: the bucket fallback, the migration ord
 npm run test:traceback       # tracebacks as data: frames, chains, syntax shapes, and the index match
 npm run test:trail           # the trail: local days, the fold, sitting time on its start day, the caps
 npm run test:trailreading    # the same trail read for advice: a resisting lesson, a quiet deck, opens alone
+npm run test:paint          # the first paint as a reading: one sample per visit, medians, the export shape
 npm run test:weight          # the weight budget's rules: the boundary, an unmeasured metric, the tightest
 npm run check:axe            # axe over all 11 tabs in both themes; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)

@@ -49,6 +49,7 @@ import { pythonEditorTheme } from '../editor/theme';
 import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
+import { markPaintReady } from '../paintTiming';
 import type { PythonEditorHandle, PythonEditorProps } from './PythonEditor';
 
 /**
@@ -225,6 +226,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       });
       const view = new EditorView({ state, parent: host });
       viewRef.current = view;
+      // The paint reading's third moment: the editor exists where the placeholder stood. `fcp` already
+      // covered the lesson text and the code, so this is what the lazy boundary costs (`paintTiming.ts`).
+      markPaintReady('editor');
       // The scroller is a scroll container of its own, so it takes a tab stop: CodeMirror focuses the
       // editable content, which scrolls only with the caret, so without this a keyboard user has no
       // way to page through a long file while leaving the cursor where it is (WCAG 2.1.1; axe's

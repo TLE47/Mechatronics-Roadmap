@@ -8,6 +8,7 @@ import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
 import App from './App';
 import { flushBulkStorage, hydrateBulkStorage } from './bulkStorage';
+import { startPaintTiming } from './paintTiming';
 import './index.css';
 
 /**
@@ -23,6 +24,10 @@ import './index.css';
  * always used, and this await is then one microtask long.
  */
 async function start(): Promise<void> {
+  // Before anything else: the first paint is measured from navigation start, and an observer installed
+  // after the hydrate below would miss it. The four moments it records, and what each one is for, are
+  // in `paintTiming.ts`.
+  startPaintTiming();
   try {
     await hydrateBulkStorage();
   } catch {

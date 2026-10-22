@@ -42,6 +42,7 @@ import {
   verdictLabel,
 } from '../../draftHistory';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
+import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
 import { ScopePanel } from '../ScopePanel';
@@ -293,6 +294,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     return () => {
       destroyWorker();
     };
+  }, []);
+
+  // The paint reading's fourth moment: this tab has committed, which is when the Run button is on
+  // screen and clickable. Once per visit, not once per lesson (`paintTiming.ts`).
+  useEffect(() => {
+    markPaintReady('run');
   }, []);
 
   // The first pass restores a deep link and must not rewrite the address (a plain visit keeps a

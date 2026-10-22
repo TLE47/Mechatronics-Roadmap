@@ -416,6 +416,41 @@ check('an unanswered request resolves as unavailable instead of hanging', async 
   assert.equal(session.handleMessage({ type: 'completions', requestId: 1, options: [] }), true);
 });
 
+check('a request waiting on the analyzer install outlives the answer clock', async () => {
+  const { session, sent } = fakeSession({ timeoutMs: 20 });
+  assert.equal(
+    session.handleMessage({ type: 'analysis-status', state: 'installing' }),
+    true,
+    'the install notice is the session\'s, so the run gate never sees it'
+  );
+  const pending = session.complete({ code: 'import math\nmath.', line: 2, column: 5 });
+  let settled = false;
+  pending.then(() => {
+    settled = true;
+  });
+  // Five times the answer clock: a request abandoned here is the first completion a cold visit loses.
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  assert.equal(settled, false, 'the install budget holds the request open');
+  session.handleMessage({ type: 'analysis-status', state: 'done' });
+  session.handleMessage({
+    type: 'completions',
+    requestId: sent[0].requestId,
+    options: [{ name: 'acos', type: 'function', doc: '' }],
+  });
+  const reply = await pending;
+  assert.equal(reply.ok, true);
+  assert.equal(reply.value[0].name, 'acos');
+});
+
+check('the answer clock is back once the install is done', async () => {
+  const { session } = fakeSession({ timeoutMs: 20 });
+  session.handleMessage({ type: 'analysis-status', state: 'installing' });
+  session.handleMessage({ type: 'analysis-status', state: 'done' });
+  const reply = await session.complete({ code: 'x', line: 1, column: 1 });
+  assert.equal(reply.ok, false);
+  assert.match(reply.reason, /timed out/);
+});
+
 check('an install failure says why, so the UI can say it too', async () => {
   const { session, sent } = fakeSession();
   const pending = session.lint({ code: 'import os' });

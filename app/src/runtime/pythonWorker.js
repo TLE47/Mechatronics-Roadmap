@@ -399,7 +399,17 @@ function errorText(error) {
 /** Load the interpreter (if needed), install the analyzers (if needed), write the lesson's files. */
 async function prepareAnalysis(msg) {
   const py = await ensurePyodideLoaded(msg.cdnUrl);
-  await ensureAnalysis(py);
+  // The page's request clock suits a warm worker; the install it is about to wait on does not fit in
+  // it, so the install is announced and the page stretches the clock rather than abandoning the
+  // request and answering it with keywords. Not a request of its own: no id, and the run path drops
+  // messages it does not know.
+  const wasReady = Boolean(py.__mechalabAnalysisReady);
+  if (!wasReady) self.postMessage({ type: 'analysis-status', state: 'installing' });
+  try {
+    await ensureAnalysis(py);
+  } finally {
+    if (!wasReady) self.postMessage({ type: 'analysis-status', state: 'done' });
+  }
   writeLessonFiles(py, msg.plantSource, msg.plantFilename, msg.helperFiles || []);
   return py;
 }

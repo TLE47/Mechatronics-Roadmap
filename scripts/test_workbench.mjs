@@ -26,6 +26,7 @@
  *   test:traceback   Python's failure as data: the learner's frame, chains, syntax errors, and the explainer entry it matches
  *   test:trail       the log and the sitting clock as one trail: days, the fold that drops repeats, the caps
  *   test:trailreading the same trail read for advice: a resisting lesson, a quiet deck, days that were only opens
+ *   test:paint       the first paint as a reading: one sample per visit, the newest flush wins, medians, the export
  *   test:weight      the weight budget's rules: the boundary, an unmeasured metric, the tightest one
  *   test:e2e:storage the same move in Chromium: a bucket full of a pre-IndexedDB visit, migrated, then written to
  *   test:e2e:backup  the header buttons in Chromium: write a zip, wipe, restore to store *and* screen
@@ -173,6 +174,7 @@ async function main() {
     { label: 'traceback', script: 'test_traceback.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'trail', script: 'test_timeline.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'reading', script: 'test_trail_reading.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'paint', script: 'test_paint_timing.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'weight', script: 'test_weight_budget.mjs' },
     { label: 'fonts', script: 'test_fonts.mjs' },
     { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },

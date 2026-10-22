@@ -30,6 +30,7 @@
 // resolve an extensionless relative import the way Vite does.
 import { bulkStorage } from './bulkStorage.ts';
 import { readSittings } from './sittingClock.ts';
+import { PAINT_SCHEMA, flushPaintSample, paintSummary, readPaintSamples } from './paintTiming.ts';
 
 export type LearningEventKind = 'lesson_open' | 'run' | 'verified' | 'hint' | 'solution_open' | 'export';
 
@@ -151,12 +152,19 @@ export function attemptsByLesson(events: LearningEvent[] = readLearningLog()): R
  * clock (`sittingClock.ts`) says how long each stretch of it lasted.
  */
 export function learningLogJson(): string {
+  // The current visit's paint is flushed first: a learner who exports before the timed flush should
+  // get this visit's reading, not the one before it. Slow-loading samples ride beside the events for
+  // the same reason the sittings do — they are measurements *about* the visit, not things the learner
+  // did, so they are not events (`paintTiming.ts` keeps them in their own store).
+  flushPaintSample();
+  const paint = readPaintSamples();
   return JSON.stringify(
     {
       schema: LOG_SCHEMA,
       exportedAt: Date.now(),
       events: readLearningLog(),
       sittings: readSittings(),
+      paint: { schema: PAINT_SCHEMA, samples: paint, summary: paintSummary(paint) },
     },
     null,
     2

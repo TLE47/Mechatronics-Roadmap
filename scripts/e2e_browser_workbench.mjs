@@ -1153,8 +1153,65 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'Portfolio export must list Lesson P.7 under Self-Marked Completed Python Lessons'
     );
 
-    // 9. Verify School-Math Diagnostic & Tier 1 -> Tier 2 Exit Readiness Review interactive sub-tabs
     await page.getByLabel('Close export modal').click();
+
+    // 8b. The paint reading. The byte budgets can say what a visit downloads; only the browser can say
+    // what it waited for, so the log export carries this visit's four moments — first contentful paint,
+    // largest contentful paint, the editor mounting where the placeholder stood, and the runner
+    // committing (the Run button on screen). They are read from the download's own bytes rather than
+    // from a hook in the app, so what is checked is what a learner would hand to a pilot.
+    await page.evaluate(() => {
+      window.__exportedBlobs = [];
+      const original = URL.createObjectURL.bind(URL);
+      URL.createObjectURL = (blob) => {
+        blob
+          .text()
+          .then((text) => window.__exportedBlobs.push(text))
+          .catch(() => {});
+        return original(blob);
+      };
+    });
+    await page.getByTestId('btn-export-learning-log').click();
+    const paint = await page
+      .waitForFunction(
+        () => {
+          const raw = (window.__exportedBlobs ?? [])[0];
+          if (!raw) return false;
+          try {
+            return JSON.parse(raw).paint ?? false;
+          } catch {
+            return false;
+          }
+        },
+        undefined,
+        { timeout: 10000 }
+      )
+      .then((handle) => handle.jsonValue());
+    const latest = paint.samples[0];
+    assert(latest, `the export must carry the visit's paint sample; got ${JSON.stringify(paint)}`);
+    for (const metric of ['fcp', 'editor', 'run']) {
+      assert(
+        Number.isFinite(latest[metric]) && latest[metric] > 0,
+        `the ${metric} moment must be measured in milliseconds; got ${latest[metric]}`
+      );
+    }
+    assert(
+      latest.fcp <= latest.editor,
+      `the first paint cannot come after the editor mounted (${latest.fcp} vs ${latest.editor})`
+    );
+    assert(
+      latest.run <= latest.editor,
+      `the runner commits before its editor chunk lands (${latest.run} vs ${latest.editor})`
+    );
+    assert(
+      paint.summary.count >= 1 && paint.summary.median.fcp > 0,
+      `the export must summarise the samples it carries; got ${JSON.stringify(paint.summary)}`
+    );
+    console.log(
+      `  ok the export carries the paint reading (first paint ${latest.fcp} ms, editor ${latest.editor} ms, Run ${latest.run} ms)`
+    );
+
+    // 9. Verify School-Math Diagnostic & Tier 1 -> Tier 2 Exit Readiness Review interactive sub-tabs
     await page.getByTestId('tab-btn-tab-placement').click();
     await page.getByTestId('tab-math-diagnostic').click();
     await page.getByTestId('panel-school-math-diagnostic').waitFor({ timeout: 5000 });

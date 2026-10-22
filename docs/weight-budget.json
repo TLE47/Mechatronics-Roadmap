@@ -9,12 +9,12 @@
     "total": 1020000
   },
   "measured": {
-    "entry_gzip": 433134,
-    "js_gzip": 631621,
+    "entry_gzip": 433928,
+    "js_gzip": 632483,
     "css_gzip": 13096,
     "fonts": 302728,
-    "largest_js_gzip": 263253,
-    "total": 949402,
+    "largest_js_gzip": 264047,
+    "total": 950264,
     "recordedAt": "2026-10-22"
   }
 }
