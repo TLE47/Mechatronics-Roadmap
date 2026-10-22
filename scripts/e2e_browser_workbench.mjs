@@ -1047,6 +1047,55 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('btn-reset-starter').click();
     await page.getByTestId('btn-diff').click();
 
+    // 7g-ii. Watch mode: after a failed check, the *typing* is what runs the code. One run per pause,
+    //        not per keystroke, and the loop ends when the learner turns it off or passes.
+    await page.getByTestId('btn-watch').click();
+    assert.equal(
+      await page.getByTestId('btn-watch').getAttribute('aria-pressed'),
+      'true',
+      'Watch must be a pressed toggle, not a one-shot button'
+    );
+    assert.match(
+      (await page.getByTestId('btn-watch').textContent()) ?? '',
+      /Watching/,
+      'an on toggle must say so'
+    );
+    await setEditorCode(page, 'print("first watch")\n');
+    await page.getByTestId('btn-run-verify').click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes(
+          'first watch'
+        ),
+      null,
+      { timeout: 60000 }
+    );
+    // That run cannot match this lesson's expected output, so it is a graded failure: exactly the
+    // state watch mode arms on. Now edit, click nothing, and wait for the verdict to catch up.
+    const watchStarted = Date.now();
+    await setEditorCode(page, 'print("second watch")\n');
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').includes(
+          'second watch'
+        ),
+      null,
+      { timeout: 30000 }
+    );
+    const watchElapsed = Date.now() - watchStarted;
+    assert.ok(
+      watchElapsed >= 1000,
+      `the re-run must wait for a pause in typing, not fire per keystroke; it took ${watchElapsed} ms`
+    );
+    console.log(`  ok watch mode re-ran the checks after a ${watchElapsed} ms pause in typing`);
+    // Off again: the rest of this suite clicks Run itself, and a watching editor would race it.
+    await page.getByTestId('btn-watch').click();
+    assert.equal(
+      await page.getByTestId('btn-watch').getAttribute('aria-pressed'),
+      'false',
+      'Watch must turn off again'
+    );
+
     // 7h. The Scope draws what the run's own loop produced. `mechalab.scope` is the module the lesson
     //     prose names, so this is the learner's path: import it, stream a trace, press Run, look.
     await page.getByTestId('tab-btn-tab-pyodide').click();
@@ -2016,7 +2065,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, watch mode re-running on a pause, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
     );
   } finally {
     await browser.close();

@@ -11,6 +11,50 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 165: The Checks Run Themselves
+
+The plan's row is "checks as a test runner + watch mode", and the runner half shipped long ago: a run
+grades behaviour and output and names the check that is red. The loop was the missing half — change a
+line, see the verdict change — and what its absence cost is specific: a beginner fixes one `TODO`,
+presses Run, reads, fixes the next, presses again, and the pressing becomes the thing they think about
+instead of the program.
+
+**Watch** in the lesson header is the toggle, remembered like focus mode, and
+[`app/src/watchMode.ts`](app/src/watchMode.ts) holds the rules — because an automatic run is a machine
+spending the learner's attention:
+
+- **Only after a graded failure.** `mismatch`, `harness_failed` and `behavior_failed` arm it. A first
+  visit has nothing to watch, a pass ends the loop, a runtime error is usually mid-typing, and a Stop
+  is the learner saying no — re-running either would be the machine arguing with them.
+- **Only when the buffer changed.** The runner already holds the text its last run started from, so an
+  unchanged buffer answers `wait`: the loop stops on its own verdict instead of spinning.
+- **1.5 s of quiet**, longer than the slider's 450 ms settle, and a run in flight means wait rather
+  than queue — the effect re-fires when the run ends, so continuous typing gets one run per pause.
+- **The predict gate wins.** While a lesson's first run waits on a guess, the gate owns the next run;
+  a watch mode that ran the code anyway would be the one path around it.
+
+**An automatic run is not the learner's run.** It files no version (`recordSnapshot` is skipped, so a
+fix loop cannot evict the attempts a learner actually made) and logs no `run` event (so the friction
+report's denominators stay theirs). It does still extend the sitting and still record a pass, because
+both are facts about their work.
+
+**Verified.** `npm run test:watch` is 9 checks: the four arming verdicts, the four that must never
+run, the unchanged-buffer stop, the in-flight wait, the gate's precedence, the debounce floor, and the
+toggle against blocked storage. Browser step 7g-ii proves the loop end to end on the real dev server —
+the run is armed by a failing `print("first watch")`, then `print("second watch")` is typed and
+**nothing is clicked**: the output catches up after a measured **1702 ms** pause, which is also the
+proof that it is not firing per keystroke. `npm run lint` is clean, the full matrix passes with the
+new `watch` suite — **40 suites** — and the PLAN-2.0-GAP row moves to **ships**. `check:axe` clears 11
+tabs × 2 themes, `check_all.py` is 29/29, and `npm run check:weight` on a **fresh** build records
+**954.4 kB** (tightest `css_gzip`, 1.8 kB left).
+
+That last number corrects the run before this one: Run 164 read 950.3 kB from a `dist/` that had not
+been rebuilt, so neither that number nor the one before it measured the predict gate. `check:weight`
+measures what is in `dist/` and says so only in its help text; the stale reading looked exactly like a
+pass. What this means for the discipline rather than for the code: a weight claim made after a source
+change costs a `npm run build` first, and the two features of Runs 163–165 together are ~13 kB
+gzipped, which fits — but only because the budget was re-measured rather than assumed.
+
 ## [2026-10-22] — Run 164: The Run Asks First
 
 The ladder's third move is *Predict* — commit to a prediction before running anything

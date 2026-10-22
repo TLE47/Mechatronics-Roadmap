@@ -63,6 +63,7 @@ npm run test:draft                      # the editor's unfinished work: kept per
 npm run test:history                    # the versions behind the draft: filed on Run with its verdict, deduped, capped per lesson and in total
 npm run test:codediff                   # the Diff panel's rules: a change is an exact line, gaps are trimmed to context, the coarse fallback stays true
 npm run test:predict                    # the predict-first gate: lines not strings, four verdicts, a bounded store, and no way to be locked out
+npm run test:watch                      # when the checks may re-run themselves: after a graded failure, on an edit, never past the gate
 npm run test:scope                      # the Scope: NaN dropped, t/y aligned, the cursor's interpolation, zoom/pan windows clamped to the data, readable tables
 npm run test:analysis                   # completions, hover and signatures without a browser: where the insert starts, Jedi's cursor coordinates, the call under the cursor, note shape, request and timeout rules
 npm run test:checkhints                 # a failing check names its own rung; rung 2 is earned by a run made after the nudge

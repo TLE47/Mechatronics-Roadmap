@@ -50,6 +50,13 @@ import {
   savePrediction,
   type PredictionRecord,
 } from '../../predictGate';
+import {
+  WATCH_DEBOUNCE_MS,
+  readWatch,
+  setWatch,
+  watchDecision,
+  type WatchVerdict,
+} from '../../watchMode';
 import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
@@ -82,6 +89,7 @@ import {
   Loader2,
   History,
   GitCompare,
+  Activity,
 } from 'lucide-react';
 
 declare global {
@@ -383,6 +391,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [predictText, setPredictText] = useState('');
   /** The run the gate is holding: set when Run was pressed before a prediction was made. */
   const [heldRun, setHeldRun] = useState<{ code: string; lesson: PythonLessonItem } | null>(null);
+  // Watch mode (see `app/src/watchMode.ts`): after a graded failure, a pause in typing re-runs the
+  // checks. Off unless the learner asked for it.
+  const [watchOn, setWatchOn] = useState<boolean>(() => readWatch());
+  /** Set for the one run watch mode starts, so the log and the filed versions know it was automatic. */
+  const watchRunRef = useRef(false);
   // A new lesson is a new question: the panel closes, the half-typed guess goes, and the record is
   // read for the lesson now on screen rather than the one just left.
   useEffect(() => {
@@ -425,6 +438,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   useEffect(() => {
     if (isRunning || !pendingRunRef.current || passStatus === 'untested') return;
     pendingRunRef.current = false;
+    // A watch run is the machine repeating a check on the learner's behalf: it must not file a
+    // version (it would evict the attempts they actually made) and must not count as a run the learner
+    // started (it would inflate the friction report's denominators). It does still extend the sitting
+    // and still records a pass, because both are facts about the learner's work.
+    const watched = watchRunRef.current;
+    watchRunRef.current = false;
     const failed =
       passStatus === 'harness_failed' && harnessResult
         ? harnessResult.summary
@@ -433,13 +452,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           passStatus === 'error'
           ? failureSummary(stderr) || (instructorError || stderr || '').split('\n')[0]
           : (instructorError || stderr || '').split('\n')[0];
-    logEvent({
-      kind: 'run',
-      lesson: selectedId,
-      outcome: passStatus,
-      fail: failed || undefined,
-      ms: Math.round(performance.now() - runStartedAtRef.current),
-    });
+    if (!watched) {
+      logEvent({
+        kind: 'run',
+        lesson: selectedId,
+        outcome: passStatus,
+        fail: failed || undefined,
+        ms: Math.round(performance.now() - runStartedAtRef.current),
+      });
+    }
     if (passStatus === 'passed') logEvent({ kind: 'verified', lesson: selectedId });
     // A run is the clearest sign of work in a sitting, and the one that stretches it: the clock counts
     // to the last run, so an hour spent debugging is an hour, not a gap after the lesson opened.
@@ -447,7 +468,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // The half of the draft store a learner cannot get from a single latest version: what each run
     // started from, filed with the verdict it got. Taken here because every path that ends a run
     // converges on this state, and the text is read from the ref so it is the code that ran.
-    recordSnapshot(selectedId, runCodeRef.current || codeRef.current, passStatus);
+    if (!watched) recordSnapshot(selectedId, runCodeRef.current || codeRef.current, passStatus);
     // The panel is read through a memo keyed on the lesson, the verdict and this counter. The verdict
     // this run reports is already rendered by the time this effect runs - that render read the store
     // *before* the snapshot above was filed - so without the bump the version the learner just made
@@ -1243,6 +1264,41 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Watch mode: one run per pause in typing, and only when there is something to watch — a graded
+  // failure whose buffer has changed since the run that produced it. `watchDecision` holds the rules.
+  const watchTimerRef = useRef<number | null>(null);
+  const directRunRef = useRef<(lesson: PythonLessonItem) => void>(() => {});
+  directRunRef.current = (lesson) => {
+    void runPythonCode(codeRef.current, lesson);
+  };
+  useEffect(() => {
+    if (watchTimerRef.current !== null) {
+      window.clearTimeout(watchTimerRef.current);
+      watchTimerRef.current = null;
+    }
+    const decision = watchDecision({
+      enabled: watchOn,
+      lastVerdict: passStatus as WatchVerdict,
+      running: isRunning,
+      // The gate owns the next run while it waits on a guess: a re-run here would be the one path
+      // around it.
+      gateHolding: predictOpen && !predictRecord,
+      editedSinceRun: code !== runCodeRef.current,
+    });
+    if (decision !== 'run') return;
+    watchTimerRef.current = window.setTimeout(() => {
+      watchTimerRef.current = null;
+      watchRunRef.current = true;
+      directRunRef.current(currentLesson);
+    }, WATCH_DEBOUNCE_MS);
+    return () => {
+      if (watchTimerRef.current !== null) {
+        window.clearTimeout(watchTimerRef.current);
+        watchTimerRef.current = null;
+      }
+    };
+  }, [watchOn, code, passStatus, isRunning, predictOpen, predictRecord, selectedId, currentLesson]);
+
   // A slider drag is a parameter change, so the answer is a fresh run - but one run per drag, not
   // one per pixel. The timer is cleared on unmount so a removed tab cannot run in the background.
   const sliderTimerRef = useRef<number | null>(null);
@@ -1978,6 +2034,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     Predict
                     {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
                   </span>
+                </button>
+                <button
+                  onClick={() => setWatchOn(setWatch(!watchOn))}
+                  aria-pressed={watchOn}
+                  data-testid="btn-watch"
+                  title="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                    watchOn ? 'text-emerald border-emerald/60' : 'text-body border-line'
+                  }`}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>{watchOn ? 'Watching' : 'Watch'}</span>
                 </button>
                 <button
                   onClick={() => {
