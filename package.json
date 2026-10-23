@@ -66,6 +66,7 @@
     "test:codediff": "node --experimental-strip-types scripts/test_codediff.mjs",
     "test:predict": "node --experimental-strip-types scripts/test_predict_gate.mjs",
     "test:watch": "node --experimental-strip-types scripts/test_watch.mjs",
+    "test:watches": "node --experimental-strip-types scripts/test_watches.mjs",
     "test:announce": "node --experimental-strip-types scripts/test_announce.mjs",
     "test:share": "node --experimental-strip-types scripts/test_sharelink.mjs",
     "test:inline": "node --experimental-strip-types scripts/test_inline_values.mjs",

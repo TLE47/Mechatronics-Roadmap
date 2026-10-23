@@ -11,6 +11,43 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 188: Watch Expressions
+
+The debugger row's last gap. The paused bar could show the frame's own values, which answered the
+learner only when the name they were thinking about happened to be a local of the frame they stopped
+in — `total` inside the loop, but not `plant.L1`, not `n * 2`, not the accumulator of a caller they
+stepped out to. A **watch** is an expression pinned once and evaluated **in every frame the run parks
+in**, so the same question is answered at every stop.
+
+| Decision | Why |
+| :--- | :--- |
+| A watch is an **expression**, not a name | `n * 2`, `len(items)` and `plant.L1` are one operation to the worker — a single `eval` in the parked frame — so the store holds strings and knows no Python |
+| Pinned **from the bar**, and answered in that same frame | A chip with nothing beside it until the next Step would look broken. The parked worker reads the expression from the frame-edit buffer (the buffer a value edit already rides) and posts the line again, so the answer arrives where the learner is standing |
+| A watch that raises **does not move the run** | `n` before the loop binds it is a question this frame cannot answer, not a failure of the program: the chip carries the interpreter's sentence and the run stays parked |
+| **Five per lesson**, remembered per lesson | Five is what fits beside the frame's own values at the narrowest layout, and `total` is one file's variable — so the list travels with the lesson like its dots. At the cap the bar refuses in words rather than evicting a watch the learner chose |
+| Trimmed, deduped, one line | The field is submitted and cleared, unlike a breakpoint's condition whose input **is** the stored string: a trailing space here can only be a typo, and a duplicate would cost a second `eval` at every park |
+| The park payload carries the **worker's** list | The chips are the interpreter's answer, not the page's hope: a watch the worker refused cannot appear as a chip the next park will not evaluate |
+| Compiled once per run, like a condition | A park in a loop would otherwise pay a compile at every stop; an expression that will not compile is kept with its sentence instead of vanishing |
+
+**The test trap, and it was mine.** The first browser run hung for twenty seconds after Continue. The
+cause was not the worker: the test armed an *unconditional* dot inside the loop, so Continue parked
+again on the second pass and the program never finished. Narrowed to `n == 1`, Continue really runs to
+the end — which is also the honest way to read a loop with a watch on it.
+
+**Verified.** `npm run test:runtime` 44 checks, 0 failed — five new: a watch pinned while parked answers
+`total = 0` in that frame (not one Step later), the same watch reads `total = 1` after a Step, a
+`missing` watch shows its `NameError` and leaves the run parked, the store holds `['total', 'missing']`
+for the lesson, unpinning removes one without moving the run, and the loop finishes with `6`.
+`npm run test:watches` 11 checks (one line and a width, pinned once, the cap, per lesson, junk in the
+store, a blocked store). `npm run test:breakpoints` 20/20, `npm run test:workbench` 50 suites on one
+dev server and the rebuilt bundle, axe 11 tabs × 4 palettes with 0 exceptions, weight 1.02 MB
+(js 699.2/700 kB — 765 B left, css 13.7/15 kB), `check_all` 29/29, lint clean.
+
+[PLAN-2.0-GAP.md](docs/PLAN-2.0-GAP.md) now records the debugger row's half as complete, so its
+remaining gap is embedded C/AVR alone. Only the pre-existing `.fb-scratch/` is untracked.
+
+---
+
 ## [2026-10-22] — Run 187: Step Out to the Caller
 
 The debugger row's last control: a frame could be entered and walked, but not left in one press.

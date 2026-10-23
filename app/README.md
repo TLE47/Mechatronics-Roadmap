@@ -706,6 +706,16 @@ on the line that made the call — even though a call is usually the last thing 
 gets no fresh line event to stop at, because the park is on the frame's **return**. From the plant it
 lands back in your file; at top level there is no caller, so it runs on to the end like Continue.
 
+**A name can be pinned so it is answered at every park.** The bar's **Watch** field takes a Python
+expression — `total`, `n * 2`, `plant.L1` — and its value is shown beside it at every stop, not only in
+the frames where it happens to be a local: the interpreter evaluates each expression **in whichever
+frame it parks in**. It is pinned from the bar while the run stands there, and the first answer arrives
+in that same frame (the parked worker reads the expression and posts the line again), up to five per
+lesson, remembered with the lesson the way its dots are. One this frame cannot answer — a name the loop
+has not assigned yet, a typo — says what the interpreter said beside the expression and leaves the run
+parked; the small **×** unpins one without moving it
+([`src/editor/watches.ts`](src/editor/watches.ts), `npm run test:watches`).
+
 **A parked frame's values can be changed.** Every value in the bar is a button: it opens a one-line form
 prefilled with that value, and **Set** evaluates what you type in the frame the interpreter is stopped in
 and writes it back, so **Continue** runs the next line with it. The run does not move while you do this —
@@ -731,6 +741,9 @@ The recording is the history; the park is the present.
 | A step out parks on a frame **return**, not on the caller's next line | `print(f(x))` never gives the caller another line event: waiting for one would run the program to its end. At the return event the caller's line is still the call, which is the line to show. |
 | A step lands only in a file the page can show, and the park says **which** | A park quotes a line; a frame with no source (CPython's own) would be a sentence nobody can check, so `math.sqrt` is stepped over, not into. A step over parks at the depth that asked for it or shallower — which is also how a returning call lands back in its caller. |
 | A narrowed dot is **hollow**, and a condition that raises **still parks** | A filled dot says "always stops", which is the wrong sentence about a park the learner just narrowed; and a condition that could not be evaluated is a mistake the learner has to see, not a park skipped in silence or a run ended with no explanation. |
+| A watch is an **expression**, and it is evaluated in whichever frame parks | The bar's value chips list this frame's locals, so `plant.L1` or `n * 2` has nowhere to appear; a watch asks one question at every stop. |
+| A watch is pinned **while parked**, and the bar answers in that frame | A chip with nothing beside it until the next Step would look broken: the parked worker reads the expression from the frame-edit buffer, evaluates it in the frame it is standing in, and posts the same line again. |
+| A watch that raises **says so**, and the list is **five per lesson, per file** | A name this frame has not bound is a question it cannot answer, not a failure of the program, so the run stays parked and the sentence is shown in place. Five is what fits beside the frame's own values; the store is per lesson because `total` is one file's variable, not the next lesson's. |
 | A value in the bar is a **button**, and the edit runs **in that frame** | "What if `total` were 41" is answered before the learner decides to continue: the worker evaluates the expression with the frame's own globals and locals, writes it back, and stays parked. Inside a function that needs `PyFrame_LocalsToFast` (a function frame's `f_locals` is a snapshot on CPython 3.12); a failure says so rather than leaving a value that only looks applied. The learner's file is never touched. |
 
 The panel says in a sentence that it is a recording — this is where the program has been, not where it

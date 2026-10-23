@@ -28,6 +28,10 @@
  * 5d. **Step out comes back.** From inside a function or the plant, Step out stops in the caller on
  *    the line that made the call — a frame **return**, because a call is often the last thing on a
  *    line and the caller would otherwise never get a line event to stop at.
+ * 5e. **A watch is a question asked at every park.** An expression pinned in the paused bar is
+ *    evaluated in whichever frame the run stops in, so the same name is answered at every stop
+ *    rather than only where it happens to be a local; one this frame cannot answer says so in place
+ *    and the run stays parked, and the list is remembered per lesson.
  * 6. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
  *    `acos` with its signature, and picking one keeps the module name), the lint comes from
  *    pyflakes (an unused import is named with its line, and the note clears when the import is
@@ -1167,6 +1171,148 @@ async function main() {
     });
     await page.click('[data-testid="breakpoint-slot-2"]');
 
+    // 21. Watch expressions. A watch is written once and answered in **every frame the run parks
+    //     in**, which is the one thing the bar's value chips cannot do: they list this frame's
+    //     locals, so a name that is not one of them has nothing to show. Pinned while parked, so the
+    //     first answer arrives in the frame the learner is standing in rather than one Step later.
+    const watchCode = 'total = 0\nfor n in (1, 2, 3):\n    total = total + n\nprint(total)\n';
+    await setEditorCode(page, watchCode);
+    await page.click('[data-testid="breakpoint-slot-3"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-3"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    // Narrowed to the first pass, so Continue really does run to the end: an unconditional dot in
+    // the loop would park again on the second turn and the run would never finish.
+    if (!(await page.locator('[data-testid="breakpoint-condition-3"]').count())) {
+      await page.click('[data-testid="btn-breakpoints"]');
+    }
+    await page.waitForSelector('[data-testid="breakpoint-condition-3"]', { timeout: 5000 });
+    await page.fill('[data-testid="breakpoint-condition-3"]', 'n == 1');
+    if ((await page.getAttribute('[data-testid="btn-breakpoints"]', 'aria-expanded')) === 'true') {
+      await page.click('[data-testid="btn-breakpoints"]');
+    }
+    await page.click(RUN);
+    await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 });
+    // The chip carries its unpin button, so its text ends with the multiplication sign; the checks
+    // read what is beside the expression rather than the whole row.
+    const watchText = async (index) =>
+      ((await page.textContent(`[data-testid="paused-watch-${index}"]`)) ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    await page.fill('[data-testid="watch-input"]', 'total');
+    await page.press('[data-testid="watch-input"]', 'Enter');
+    const firstWatchShown = await page
+      .waitForSelector('[data-testid="paused-watch-0"]', { timeout: 20000 })
+      .then(() => true)
+      .catch(() => false);
+    const firstWatch = firstWatchShown ? await watchText(0) : '';
+    check('a watch pinned while parked is answered in that frame, not one step later', () => {
+      assert.equal(firstWatchShown, true, 'expected the pinned expression to appear on the bar');
+      assert.match(
+        firstWatch,
+        /total\s*=\s*0\b/,
+        `expected total = 0 at the first pass of the loop, got "${firstWatch}"`
+      );
+    });
+    await page.click('[data-testid="btn-step"]');
+    const steppedWatchShown = await page
+      .waitForFunction(
+        () => /total\s*=\s*1\b/.test(document.querySelector('[data-testid="paused-watch-0"]')?.textContent ?? ''),
+        undefined,
+        { timeout: 20000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const steppedWatch = steppedWatchShown ? await watchText(0) : '';
+    check('the same watch is evaluated again at the next park', () => {
+      assert.equal(
+        steppedWatchShown,
+        true,
+        `expected total = 1 one Step later, got "${steppedWatch}"`
+      );
+    });
+    // A watch this frame cannot answer says so in place: `missing` was never assigned, and the run
+    // must stay parked rather than treating the NameError as a failure of the program.
+    await page.fill('[data-testid="watch-input"]', 'missing');
+    await page.press('[data-testid="watch-input"]', 'Enter');
+    const watchErrorShown = await page
+      .waitForFunction(
+        () => /NameError/.test(document.querySelector('[data-testid="paused-watch-1"]')?.textContent ?? ''),
+        undefined,
+        { timeout: 20000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const erroredWatch = watchErrorShown ? await watchText(1) : '';
+    check('a watch the frame cannot evaluate names the error and leaves the run parked', () => {
+      assert.equal(
+        watchErrorShown,
+        true,
+        `expected a NameError beside "missing", got "${erroredWatch}"`
+      );
+      assert.match(erroredWatch, /missing/, `expected the expression to stay readable, got "${erroredWatch}"`);
+    });
+    const storedWatches = await page.evaluate(() => {
+      try {
+        return JSON.parse(localStorage.getItem('mechalab_watches_v1') || 'null');
+      } catch {
+        return null;
+      }
+    });
+    check('the pinned list is remembered per lesson, in the order it was written', () => {
+      const lists = storedWatches && Object.values(storedWatches);
+      assert.ok(
+        Array.isArray(lists) && lists.length === 1,
+        `expected the store to hold one lesson's list, got ${JSON.stringify(storedWatches)}`
+      );
+      assert.deepEqual(
+        lists[0],
+        ['total', 'missing'],
+        `expected both expressions in order, got ${JSON.stringify(lists[0])}`
+      );
+    });
+    await page.click('[data-testid="btn-unwatch-0"]');
+    const unpinned = await page
+      .waitForFunction(
+        () => {
+          const chip = document.querySelector('[data-testid="paused-watch-0"]')?.textContent ?? '';
+          return !/total/.test(chip) && /NameError/.test(chip);
+        },
+        undefined,
+        { timeout: 20000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    check('unpinning removes that expression and leaves the rest, without moving the run', () => {
+      assert.equal(
+        unpinned,
+        true,
+        'expected the remaining chip to be the NameError one: unpinning is not a Step'
+      );
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const watchOutput = (await page.textContent(OUTPUT)) ?? '';
+    check('the program finishes with its own answer after the watches were read', () => {
+      assert.match(
+        watchOutput,
+        /\b6\b/,
+        `expected the loop to sum to 6, got "${watchOutput.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="breakpoint-slot-3"]');
+
     await context.close();
   } finally {
     await browser.close();
@@ -1191,7 +1337,10 @@ async function main() {
     '       raises parks with the interpreter\u2019s sentence), Step in reaches the call (in the lesson\u2019s'
   );
   console.log(
-    '       file and in the shared plant, quoted from the plant\u2019s own line) and Step out returns to it,'
+    '       file and in the shared plant, quoted from the plant\u2019s own line), Step out returns to it,'
+  );
+  console.log(
+    '       a pinned expression is answered in every frame the run parks in (and says so when it cannot be),'
   );
   console.log(
     '       a parked frame\u2019s values can be changed before it moves on (or are'

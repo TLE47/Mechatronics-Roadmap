@@ -62,12 +62,19 @@ const PAUSE_STEP_IN = 6;
 // Step **out** of the frame that is parked: run the rest of it and stop in its caller. Its own word
 // because it parks on a frame **return**, not on a line of the frame being read.
 const PAUSE_STEP_OUT = 7;
+// Pin, or unpin, an expression the bar should show at every park. Its own word because the run does
+// **not** move: the payload is posted again for the same line, with the new watch evaluated in the
+// frame the learner is standing in - which is the whole point of pinning a name.
+const PAUSE_WATCH = 8;
 let pauseView = null;
 let editView = null;
 let editBytes = null;
 // The payload of the edit the page just asked for, read out of the shared buffer when the command
 // arrives and handed to Python by `takePauseEdit` on the very next call.
 let pendingEdit = '';
+// The same for a watch request (`{ add }` or `{ remove }`): one buffer, one reader at a time, because
+// the page cannot ask for a second thing until this run has parked again.
+let pendingWatch = '';
 
 // Scope. A learner's loop can produce tens of thousands of points; posting each one would cost more
 // than the simulation. Points are buffered here and sent in batches of SCOPE_FLUSH_POINTS, plus one
@@ -107,6 +114,13 @@ function takePauseEdit() {
   return text;
 }
 
+/** The watch request the page just asked for, as JSON, and only once. */
+function takePauseWatch() {
+  const text = pendingWatch;
+  pendingWatch = '';
+  return text;
+}
+
 /**
  * Has the page asked to stop at the next line?
  *
@@ -138,6 +152,29 @@ function serializeBreakpoints(list) {
 }
 
 /**
+ * The watch expressions, as text the Python side can read once per run.
+ *
+ * A JSON string for the same reason as the breakpoints: a JS array arrives in Python as a proxy, and
+ * the trace hook would then make a boundary round trip on every park to read it. The page has
+already normalised the list (`app/src/editor/watches.ts`); this is the last check before the bar can
+ * quote an expression the interpreter will not run - one line, five of them, the width the store and
+ * the chip share.
+ */
+function serializeWatches(list) {
+  const rows = [];
+  for (const item of Array.isArray(list) ? list : []) {
+    const expression = String(item ?? '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120);
+    if (!expression || rows.includes(expression)) continue;
+    rows.push(expression);
+    if (rows.length >= 5) break;
+  }
+  return JSON.stringify(rows);
+}
+
+/**
  * Block the interpreter on the lease of the page, and answer how the run should go on.
  *
  * The step is posted first: `postMessage` queues to the page even though this thread is about to
@@ -163,11 +200,11 @@ function pauseAt(payloadJson) {
     Atomics.wait(pauseView, PAUSE_COMMAND, PAUSE_NONE);
     const command = Atomics.load(pauseView, PAUSE_COMMAND);
     Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
-    if (command === PAUSE_EDIT) {
+    if (command === PAUSE_EDIT || command === PAUSE_WATCH) {
       Atomics.store(pauseView, PAUSE_STATUS, 0);
       // Copied now, while the page is still waiting for the next `paused` message: it will not touch
       // the buffer again until this run has parked, and a decode here is a few hundred bytes.
-      pendingEdit = '';
+      let text = '';
       if (editView) {
         const length = Math.max(0, Math.min(Atomics.load(editView, 1), editBytes.byteLength - 8));
         if (length) {
@@ -175,14 +212,17 @@ function pauseAt(payloadJson) {
             // `slice()` copies out of shared memory first: `TextDecoder` refuses a view over a
             // `SharedArrayBuffer` ("The provided ArrayBufferView value must not be shared"), which is
             // the same reason `readStdin` copies before decoding.
-            pendingEdit = new TextDecoder().decode(
-              new Uint8Array(editBytes, 8, length).slice()
-            );
+            text = new TextDecoder().decode(new Uint8Array(editBytes, 8, length).slice());
           } catch {
-            pendingEdit = '';
+            text = '';
           }
         }
       }
+      if (command === PAUSE_WATCH) {
+        pendingWatch = text;
+        return 'watch';
+      }
+      pendingEdit = text;
       return 'edit';
     }
     if (
@@ -269,6 +309,7 @@ function postResult(payload) {
   }
   // A run is over: an edit left unread belongs to a frame that no longer exists.
   pendingEdit = '';
+  pendingWatch = '';
   self.postMessage(payload);
 }
 
@@ -757,6 +798,7 @@ self.onmessage = async (event) => {
       plantFilename,
       helperFiles = [],
       breakpoints = [],
+      watches = [],
     } = msg;
 
     // A fresh run starts un-stopped: clear the interrupt word a previous Stop left set.
@@ -813,6 +855,10 @@ self.onmessage = async (event) => {
       // Python as a proxy, and a membership test on one would be a boundary round trip on every
       // executed line. The Python side builds one map per run (`breakpoint_conditions`).
       py.globals.set('__mechalab_breakpoints__', serializeBreakpoints(breakpoints));
+      // The expressions the bar pins, one JSON string: evaluated in whichever frame parks, so the
+      // same question is answered at every stop rather than only where the name happens to be local.
+      py.globals.set('__mechalab_watches__', serializeWatches(watches));
+      py.globals.set('__mechalab_take_watch__', takePauseWatch);
       // Every file the page can put on screen: the lesson's helper tabs and the shared plant. A step
       // can land in one of them, and the bar quotes the line from the file it names - so a file the
       // page cannot show is not a place to park (`project_files` in the harness).
@@ -846,6 +892,61 @@ def __mechalab_execute():
     trace_cap = int(__mechalab_trace_cap__)
     trace_names = int(__mechalab_trace_name_cap__)
     trace_chars = int(__mechalab_trace_value_chars__)
+
+    # The expressions the bar pins, and one compiled form each. A watch is the learner's own
+    # expression evaluated in whichever frame parks: 'plant.L1' inside a call, 'n * 2' at top level,
+    # 'total' at every turn of a loop. Compiled once per run - a park in a loop would otherwise pay a
+    # compile at every stop - and an expression that will not compile is kept with its sentence, so
+    # a typo reads as a sentence in the bar rather than as a chip with nothing beside it.
+    try:
+        _watched = _json.loads(str(__mechalab_watches__) or "[]")
+    except Exception:
+        _watched = []
+    watch_expressions = []
+    if isinstance(_watched, list):
+        for _expression in _watched:
+            _text = str(_expression or "").strip()[:120]
+            if not _text or _text in watch_expressions:
+                continue
+            watch_expressions.append(_text)
+            if len(watch_expressions) >= 5:
+                break
+    # A parked value is cut to this width even when the trace is off and its own width is 0.
+    watch_chars = trace_chars if trace_chars > 0 else 120
+    watch_codes = {}
+
+    def _watch_values(frame):
+        # The pinned questions, answered for this frame. A watch that raises is a question this
+        # frame cannot answer ('n' before the loop assigns it, a name from another lesson): the bar
+        # says what the interpreter said and the run stays exactly where it is.
+        out = []
+        for expression in watch_expressions:
+            if expression not in watch_codes:
+                try:
+                    watch_codes[expression] = (compile(expression, "<watch>", "eval"), "")
+                except Exception as watch_compile_error:
+                    watch_codes[expression] = (
+                        None,
+                        f"{type(watch_compile_error).__name__}: {watch_compile_error}",
+                    )
+            code, compile_error = watch_codes[expression]
+            if compile_error:
+                out.append({"expression": expression, "error": compile_error})
+                continue
+            try:
+                text = repr(eval(code, frame.f_globals, frame.f_locals))
+            except Exception as watch_error:
+                out.append(
+                    {
+                        "expression": expression,
+                        "error": f"{type(watch_error).__name__}: {watch_error}",
+                    }
+                )
+                continue
+            if len(text) > watch_chars:
+                text = text[: max(0, watch_chars - 3)] + "..."
+            out.append({"expression": expression, "value": text})
+        return out
 
     def _trace_values(frame):
         # Only data, only a few names, only a width a cell can hold. A repr that raises is skipped:
@@ -1001,6 +1102,30 @@ def __mechalab_execute():
                 return "This interpreter cannot change a local inside a function; edit at top level."
         return ""
 
+    def _apply_watch(frame):
+        # A watch pinned or unpinned while the run is parked. It is read before the bar is posted
+        # again - the point of pinning a name is to see it where the learner is standing, not one
+        # Step later - and a list at its cap says so rather than evicting something they chose.
+        # Answers an error sentence, or "" when it landed.
+        raw = __mechalab_take_watch__()
+        if not raw:
+            return ""
+        try:
+            request = _json.loads(raw)
+            # The page normalises what was typed; this repeats it in one place so a hand-written
+            # message cannot smuggle a newline into an expression the bar has to show on one line.
+            add_expression = " ".join(str(request.get("add") or "").split())[:120]
+            remove_expression = " ".join(str(request.get("remove") or "").split())[:120]
+        except Exception as watch_error:
+            return f"{type(watch_error).__name__}: {watch_error}"
+        if remove_expression and remove_expression in watch_expressions:
+            watch_expressions.remove(remove_expression)
+        if add_expression and add_expression not in watch_expressions:
+            if len(watch_expressions) >= 5:
+                return "At most 5 watches. Remove one to pin another."
+            watch_expressions.append(add_expression)
+        return ""
+
     def _pause_here(frame, reason, condition_error=""):
         # A pause is only offered at a line the page can show - the learner's file, a helper tab, the
         # plant - and only while the shared command word exists. The reason travels with the step so
@@ -1008,6 +1133,7 @@ def __mechalab_execute():
         # condition that would not evaluate travels with it too.
         nonlocal t0, pause_mode, step_floor
         edit_error = ""
+        watch_error = ""
         while True:
             payload = {
                 "line": frame.f_lineno,
@@ -1021,11 +1147,20 @@ def __mechalab_execute():
                 payload["condition_error"] = condition_error
             if edit_error:
                 payload["edit_error"] = edit_error
+            if watch_error:
+                payload["watch_error"] = watch_error
+            if watch_expressions:
+                payload["watches"] = _watch_values(frame)
             verdict = __mechalab_pause__(_json.dumps(payload))
             if verdict == "edit":
                 # Applied, or rejected with a sentence: either way the bar is posted again with this
                 # frame's current values, and the run stays parked until the learner decides.
                 edit_error = _apply_edit(frame)
+                continue
+            if verdict == "watch":
+                # The run does not move: the same line is posted again, with the new watch answered
+                # in this very frame. A refusal (a full bar) travels as a sentence beside it.
+                watch_error = _apply_watch(frame)
                 continue
             break
         if verdict == "stop":

@@ -98,6 +98,15 @@ import {
   writeBreakpoints,
   type Breakpoint,
 } from '../../editor/breakpoints';
+import {
+  MAX_WATCHES_PER_LESSON,
+  addWatch,
+  normalizeWatch,
+  normalizeWatches,
+  readWatches,
+  removeWatch,
+  writeWatches,
+} from '../../editor/watches';
 import type { LessonFile } from '../../lessonFiles';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
 import { ScopePanel } from '../ScopePanel';
@@ -247,6 +256,16 @@ interface PausedStep {
    * on, so the fix is one look away.
    */
   condition_error?: string;
+  /**
+   * The expressions the learner pinned, answered in this frame (`app/src/editor/watches.ts`).
+   *
+   * Absent when nothing is pinned. Each entry is the expression the learner wrote and either the
+   * value the interpreter gave it here or the sentence it raised: a watch that cannot be evaluated in
+   * this frame is a question this frame cannot answer, not a reason to end the run.
+   */
+  watches?: { expression: string; value?: string; error?: string }[];
+  /** A watch that could not be pinned (a full bar), in the interpreter's own words. */
+  watch_error?: string;
 }
 
 /**
@@ -367,6 +386,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The Breakpoints panel: on request only. A dot alone does not say what it is waiting for, so the
   // conditions live in one place the toolbar can open, titled with the count the gutter is drawing.
   const [breakpointsOpen, setBreakpointsOpen] = useState(false);
+  // The expressions pinned in the paused bar, per lesson like the dots above: `total` is one
+  // lesson's variable, so the list travels with the file it was written for.
+  const [watches, setWatches] = useState<string[]>(() =>
+    readWatches(initialLessonId || PYTHON_LESSONS[0].id)
+  );
+  // The expression being typed, and why the last one was refused: a bar already at its cap says so
+  // instead of silently dropping a watch nobody asked it to drop.
+  const [watchDraft, setWatchDraft] = useState<string>('');
+  const [watchError, setWatchError] = useState<string>('');
   // Whether this page got a shared command word, which is what makes a park possible at all. State,
   // not `pauseRef.current`: the buffer is created when the worker is, and a ref would not re-render
   // the toolbar — the button would exist only after the learner pressed something else.
@@ -868,6 +896,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // panel that lists them closes rather than showing another file's lines under this one's title.
     setBreakpoints(readBreakpoints(id));
     setBreakpointsOpen(false);
+    // A watch belongs to the program it was written for, for the same reason.
+    setWatches(readWatches(id));
+    setWatchDraft('');
+    setWatchError('');
     setRevealedHints(0);
     setPinnedScope(null);
     setStdout('');
@@ -1301,6 +1333,65 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   };
 
   /**
+   * Ask the parked interpreter to pin (or unpin) an expression, without moving the run.
+   *
+   * The request rides the frame-edit buffer, which is only ever read between two parks: the worker is
+   * blocked on the command word, so the bytes are in place before it looks. Python answers by posting
+   * the same line again with the expression evaluated in that frame — which is why a watch shows its
+   * value the moment it is pinned rather than one Step later.
+   */
+  const askWorkerWatch = (request: { add?: string; remove?: string }) => {
+    const buffer = frameEditRef.current;
+    const pause = pauseRef.current;
+    if (!buffer || !pause) return;
+    const payload = new TextEncoder().encode(JSON.stringify(request));
+    if (!payload.length || payload.length > FRAME_EDIT_BYTES) return;
+    new Uint8Array(buffer, 8, payload.length).set(payload);
+    Atomics.store(new Int32Array(buffer, 0, 2), 1, payload.length);
+    const command = new Int32Array(pause, 0, 2);
+    Atomics.store(command, 0, 8);
+    Atomics.notify(command, 0);
+  };
+
+  /**
+   * Pin the typed expression.
+   *
+   * Stored per lesson first, then sent to the parked worker so the value appears beside it: a bar that
+   * showed a watch with nothing next to it, one Step before its first answer, would look broken. A bar
+   * at its cap refuses here, in words — evicting a watch the learner chose would be a silent edit to
+   * their list.
+   */
+  const submitWatch = () => {
+    const id = lessonIdRef.current || selectedId;
+    const wanted = normalizeWatch(watchDraft);
+    if (!wanted) {
+      setWatchDraft('');
+      return;
+    }
+    setWatchDraft('');
+    if (watches.includes(wanted)) {
+      setWatchError('');
+      return;
+    }
+    const next = addWatch(watches, wanted);
+    if (next.length === watches.length) {
+      setWatchError(`Watch up to ${MAX_WATCHES_PER_LESSON} expressions; remove one to pin another.`);
+      return;
+    }
+    setWatches(writeWatches(id, next));
+    setWatchError('');
+    if (pausedStep) askWorkerWatch({ add: wanted });
+  };
+
+  /** Unpin one expression. The parked bar is posted again without it, so the chips follow the list. */
+  const removeWatched = (expression: string) => {
+    const id = lessonIdRef.current || selectedId;
+    setWatches(writeWatches(id, removeWatch(watches, expression)));
+    setWatchError('');
+    if (pausedStep) askWorkerWatch({ remove: expression });
+  };
+
+  /**
    * Answer a parked interpreter: 2 continue, 3 step, 4 stop, 6 step into the call.
    *
    * The command is a shared word because a message would queue behind the very call it is meant to
@@ -1321,6 +1412,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setPausedStep(null);
     setFrameEdit(null);
     setFrameEditError('');
+    // The expression being typed survives a Step (it is still about to be pinned); the sentence a
+    // full bar gave belongs to the park that is ending.
+    setWatchError('');
     resumeWatchdogRef.current?.();
   };
 
@@ -1523,6 +1617,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               setFrameEditError('');
               setFrameEdit(null);
             }
+            // A re-post is also the answer to a watch request: whatever the page was saying about
+            // the last one is stale, and the chips now show what this frame says.
+            setWatchError('');
             return;
           }
           if (data.runId !== runId) return;
@@ -1566,6 +1663,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           // travel with the request because a message cannot reach a worker inside Python — a dot
           // added mid-run is therefore for the next run, which the paused bar's title says.
           breakpoints: breakpointsForRun(sourceCode, breakpoints),
+          // The pinned expressions travel with the request, like the dots: the worker evaluates them
+          // in whichever frame it parks in, so a watch added mid-run is for the next run.
+          watches: normalizeWatches(watches),
           plantSource: MECHALAB_PLANT_PY,
           plantFilename: MECHALAB_PLANT_FILENAME,
           helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
@@ -3534,6 +3634,88 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   ))}
                 </div>
               )}
+              {/* What the learner pinned: one question asked again at every park, so the same name
+                  is answered wherever the run stops rather than only in a frame it happens to be a
+                  local of. A watch that raises says so in place - this frame cannot answer it - and
+                  the run stays exactly where it is. */}
+              <div className="mt-1.5 space-y-1">
+                {(pausedStep.watches ?? []).length > 0 && (
+                  <div
+                    data-testid="paused-watches"
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted"
+                  >
+                    {pausedStep.watches?.map((watch, index) => (
+                      <span
+                        key={`watch-${index}`}
+                        data-testid={`paused-watch-${index}`}
+                        className="inline-flex items-center gap-1"
+                      >
+                        <span className="text-accent">{watch.expression}</span>
+                        <span className="text-muted">=</span>
+                        {watch.error ? (
+                          <span style={{ color: 'var(--rose)' }} title={watch.error}>
+                            {watch.error}
+                          </span>
+                        ) : (
+                          <span>{watch.value}</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeWatched(watch.expression)}
+                          data-testid={`btn-unwatch-${index}`}
+                          title={`Unpin ${watch.expression}`}
+                          aria-label={`Unpin ${watch.expression}`}
+                          className="cursor-pointer border-0 bg-transparent px-0.5 text-muted hover:text-body"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <form
+                  data-testid="watch-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    submitWatch();
+                  }}
+                  className="flex flex-wrap items-center gap-1.5 font-mono text-[11px]"
+                >
+                  <input
+                    data-testid="watch-input"
+                    aria-label="Pin an expression to show beside every pause, as Python"
+                    placeholder="pin an expression…"
+                    value={watchDraft}
+                    onChange={(event) => setWatchDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape') {
+                        event.preventDefault();
+                        setWatchDraft('');
+                      }
+                    }}
+                    spellCheck={false}
+                    className="w-44 rounded border px-1.5 py-0.5 font-mono text-[11px] text-body"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
+                  />
+                  <button
+                    type="submit"
+                    data-testid="btn-watch"
+                    title="Show this expression's value at every pause in this lesson"
+                    className="px-2 py-0.5 rounded border border-line bg-canvas text-[11px] text-body cursor-pointer hover:bg-raise"
+                  >
+                    Watch
+                  </button>
+                  {(watchError || pausedStep.watch_error) && (
+                    <span
+                      data-testid="watch-error"
+                      role="status"
+                      style={{ color: 'var(--rose)' }}
+                    >
+                      {watchError || pausedStep.watch_error}
+                    </span>
+                  )}
+                </form>
+              </div>
               {frameEdit && pauseCapable && (
                 <form
                   data-testid="frame-edit"
