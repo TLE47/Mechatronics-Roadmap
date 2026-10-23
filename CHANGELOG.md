@@ -11,6 +11,34 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 187: Step Out to the Caller
+
+The debugger row's last control: a frame could be entered and walked, but not left in one press.
+**Step out** finishes the frame that is parked and stops in its caller, on the line that made the call.
+From the shared plant it lands back in the learner's file; at top level there is no caller, so it runs
+on to the end like Continue.
+
+| Decision | Why |
+| :--- | :--- |
+| The park is on the frame's **return**, not on the caller's next line | A call is usually the last thing on its line (`print(f(x))`), and the caller never gets another line event: waiting for one would run the program to its end. At the return event the caller's line is still the call, which is exactly the line to show |
+| The *caller's* frame is what gets posted | The bar is a statement about where the program is going next, and the values it shows must be the caller's — the frame that has a line left to run |
+| A step out parks **strictly shallower** than the frame that asked | Its caller, not the frame being left; the same depth rule that lets a step over stay in one function now has a second reading |
+| At top level it runs to the end | There is no caller to stop in; a button that did nothing there would look broken, and running on is what the learner asked for |
+| The timeout budget is checked outside the event branches | It was moved inside the return branch for a moment while adding the new event, which would have made a runaway loop notice its budget only when a function returned |
+
+**The trap, third time.** The Python harness is a JavaScript template literal, and a backtick inside one
+of its comments ends the string: `tsc` stayed green while the worker chunk would not parse. `npm run build`
+is what found it, and it found it before the browser suite did.
+
+**Verified.** `npm run test:runtime` (38 checks; four new: Step out from `double`'s body stops on
+`print(double(21))` in the caller with `top level` in the header and no file label, the run then finishes
+with `42`; Step out of the plant's `fk` lands on the call line in the learner's file, and the rest of the
+program — the tuple and `done` — still runs), `npm run test:breakpoints` (20), `npm run test:workbench`
+(50 suites on one dev server and one rebuilt bundle), axe 11 tabs × 4 palettes with 0 exceptions, weight
+1.02 MB (js 697.3/700 kB, css 13.7/15 kB), `check_all` 29/29, lint clean.
+
+---
+
 ## [2026-10-22] — Run 186: Step Into the Call
 
 The debugger row's last named gap: a step could only run a call to its end. **Step in** parks on the

@@ -1308,7 +1308,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * program one line at a time; Step in arms it for the next line of *any* file the learner can open,
    * which is where a call's own body starts.
    */
-  const answerPause = (command: 2 | 3 | 4 | 6) => {
+  const answerPause = (command: 2 | 3 | 4 | 6 | 7) => {
     const buffer = pauseRef.current;
     if (!buffer) return;
     const view = new Int32Array(buffer, 0, 2);
@@ -3469,6 +3469,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
                   >
                     Step
+                  </button>
+                  <button
+                    onClick={() => answerPause(7)}
+                    data-testid="btn-step-out"
+                    title="Run the rest of this function and stop in its caller (at top level it runs to the end)"
+                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
+                  >
+                    Step out
                   </button>
                   <button
                     onClick={() => answerPause(2)}

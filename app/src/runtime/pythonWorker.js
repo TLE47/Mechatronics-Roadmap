@@ -59,6 +59,9 @@ const PAUSE_EDIT = 5;
 // the two land on different lines: a step over waits for the caller's next line, a step in takes the
 // first line of whatever the call runs.
 const PAUSE_STEP_IN = 6;
+// Step **out** of the frame that is parked: run the rest of it and stop in its caller. Its own word
+// because it parks on a frame **return**, not on a line of the frame being read.
+const PAUSE_STEP_OUT = 7;
 let pauseView = null;
 let editView = null;
 let editBytes = null;
@@ -186,12 +189,14 @@ function pauseAt(payloadJson) {
       command === PAUSE_CONTINUE ||
       command === PAUSE_STEP ||
       command === PAUSE_STEP_IN ||
+      command === PAUSE_STEP_OUT ||
       command === PAUSE_STOP
     ) {
       Atomics.store(pauseView, PAUSE_STATUS, 0);
       if (command === PAUSE_CONTINUE) return 'continue';
       if (command === PAUSE_STEP) return 'step';
       if (command === PAUSE_STEP_IN) return 'step_in';
+      if (command === PAUSE_STEP_OUT) return 'step_out';
       return 'stop';
     }
     // A request that means nothing here (a pause asked for while already paused, or a word a
@@ -896,10 +901,11 @@ def __mechalab_execute():
     # 0: run freely. 1: step over - stop at the next line of a file the learner can open, at the depth
     # that asked for the step or shallower, so a call runs to its end and a returning call lands back
     # in its caller. 2: step in - stop at the first line of any of those files, which is how a call
-    # becomes a frame the bar can show.
+    # becomes a frame the bar can show. 3: step out - stop in the caller of the frame that was parked,
+    # which is a frame **return** rather than a line (see the return branch below).
     pause_mode = 0
-    # The depth of the park that asked for a step. A step over parks at this depth or shallower; a
-    # step in has no floor, because the line it wants is one frame deeper.
+    # The depth of the park that asked for a step. A step over parks at this depth or shallower, a step
+    # out strictly shallower (its caller), and a step in has no floor: the line it wants is deeper.
     step_floor = 0
 
     # The lines the gutter armed for this run, and the condition each one waits for. A breakpoint
@@ -1028,6 +1034,10 @@ def __mechalab_execute():
             # The first line of any project file, however deep: that is the call's own body.
             pause_mode = 2
             step_floor = 0
+        elif verdict == "step_out":
+            # The caller is one frame up, so the frame that asked has to return first.
+            pause_mode = 3
+            step_floor = _trace_depth(frame)
         elif verdict == "step":
             pause_mode = 1
             step_floor = _trace_depth(frame)
@@ -1057,7 +1067,15 @@ def __mechalab_execute():
             # and Pause in the learner's own file, which is what the button promises.
             reason = ""
             if pause_mode and _in_project(frame.f_code.co_filename):
-                if pause_mode == 2 or _trace_depth(frame) <= step_floor:
+                depth_now = _trace_depth(frame)
+                if pause_mode == 2:
+                    reason = "step"
+                elif pause_mode == 1 and depth_now <= step_floor:
+                    reason = "step"
+                elif pause_mode == 3 and depth_now < step_floor:
+                    # A step out that never met its return (an exception unwound past it, a frame
+                    # that gave way to a shallower one): the first line of the caller is still
+                    # where the learner wanted to be.
                     reason = "step"
             on_breakpoint, condition_error = (False, "")
             if not reason and in_lesson:
@@ -1073,11 +1091,28 @@ def __mechalab_execute():
                 before = time.monotonic()
                 _pause_here(frame, reason, condition_error if reason == "breakpoint" else "")
                 t0 += time.monotonic() - before
-            if steps > max_s or (time.monotonic() - t0) > max_t:
-                raise TimeoutError(
-                    f"ExecutionTimeoutError: Loop exceeded execution limit ({steps} line steps / {max_t:.1f}s). "
-                    "Possible infinite loop (such as 'while True:'). Your editor code is preserved — check your loop condition and try again."
-                )
+        elif event == "return":
+            # Step out parks on the **return of the frame that was parked**, and reports the caller.
+            # Waiting for the caller's next line event would miss the common case: a call is often
+            # the last thing on its line ('print(f(x))'), so there is no new line in the caller to
+            # stop at, and the run would go to the end instead. At the return event the caller's
+            # f_lineno is still the call, which is exactly the line to show.
+            if (
+                pause_mode == 3
+                and _trace_depth(frame) == step_floor
+                and frame.f_back is not None
+                and _in_project(frame.f_back.f_code.co_filename)
+            ):
+                before = time.monotonic()
+                _pause_here(frame.f_back, "step")
+                t0 += time.monotonic() - before
+        # The budget belongs to execution, not to one event kind: checked here, outside the two
+        # branches, so a return event can never become the only thing that notices an exhausted loop.
+        if steps > max_s or (time.monotonic() - t0) > max_t:
+            raise TimeoutError(
+                f"ExecutionTimeoutError: Loop exceeded execution limit ({steps} line steps / {max_t:.1f}s). "
+                "Possible infinite loop (such as 'while True:'). Your editor code is preserved — check your loop condition and try again."
+            )
         return _trace_guard
 
     student_err = ""

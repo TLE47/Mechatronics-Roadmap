@@ -25,6 +25,9 @@
  * 5c. **Step in reaches the call.** Step runs a call to its end; Step in takes the called function's
  *    first line — in the learner's own file, and in the shared plant, where the bar must name the
  *    file and quote **its** line rather than main.py's. Step inside the plant stays in the plant.
+ * 5d. **Step out comes back.** From inside a function or the plant, Step out stops in the caller on
+ *    the line that made the call — a frame **return**, because a call is often the last thing on a
+ *    line and the caller would otherwise never get a line event to stop at.
  * 6. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
  *    `acos` with its signature, and picking one keeps the module name), the lint comes from
  *    pyflakes (an unused import is named with its line, and the note clears when the import is
@@ -1021,6 +1024,149 @@ async function main() {
     });
     await page.click('[data-testid="breakpoint-slot-2"]');
 
+    // 19. Step out. Step in reaches `double`'s body; Step out runs the rest of that frame and stops in
+    //     the caller — on the **call line**, which is where the program goes next even though that line
+    //     will not get another line event of its own. The header is back to `top level` and the park is
+    //     the learner's own file, so no file label is shown: a label that stayed would say the run is
+    //     still inside a helper.
+    const stepOutCode = 'def double(x):\n    y = x * 2\n    return y\n\nprint(double(21))\n';
+    await setEditorCode(page, stepOutCode);
+    await page.click('[data-testid="breakpoint-slot-5"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-5"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click(RUN);
+    await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 });
+    await page.click('[data-testid="btn-step-in"]');
+    await page
+      .waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="paused-line"]')?.textContent ?? '').trim() ===
+          'y = x * 2',
+        undefined,
+        { timeout: 20000 }
+      )
+      .catch(() => undefined);
+    await page.click('[data-testid="btn-step-out"]');
+    const steppedOut = await page
+      .waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="paused-line"]')?.textContent ?? '').trim() ===
+            'print(double(21))' &&
+          !document.querySelector('[data-testid="paused-file"]'),
+        undefined,
+        { timeout: 20000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const steppedOutLine = steppedOut ? ((await page.textContent(PAUSED_LINE)) ?? '').trim() : '';
+    const steppedOutHeader = steppedOut
+      ? ((await page.textContent('[data-testid="paused-bar"]')) ?? '').trim()
+      : '';
+    check('Step out stops in the caller, on the line that made the call', () => {
+      assert.equal(
+        steppedOut,
+        true,
+        `expected the park at the call line with no file label, got "${steppedOutLine}"`
+      );
+      assert.match(
+        steppedOutHeader,
+        /top level/,
+        `expected the caller's frame in the header, got "${steppedOutHeader.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const steppedOutOutput = (await page.textContent(OUTPUT)) ?? '';
+    check('the program finishes after stepping out', () => {
+      assert.match(
+        steppedOutOutput,
+        /\b42\b/,
+        `expected double(21) to print 42, got "${steppedOutOutput.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="breakpoint-slot-5"]');
+
+    // 20. Step out of a helper and back into the learner's file. The plant's frame returns through a
+    //     `return (` tuple, so this also pins that the park is on the return **event**: the caller's
+    //     line (`print(plant.fk(...))`) is mid-expression and gets no line event of its own.
+    const plantOutCode =
+      'import mechalab_plant as plant\nprint(plant.fk(0.1, 0.2))\nprint("done")\n';
+    await setEditorCode(page, plantOutCode);
+    await page.click('[data-testid="breakpoint-slot-2"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-2"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click(RUN);
+    await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 });
+    await page.click('[data-testid="btn-step-in"]');
+    await page
+      .waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="paused-file"]')?.textContent ?? '').trim() ===
+          'mechalab_plant.py',
+        undefined,
+        { timeout: 20000 }
+      )
+      .catch(() => undefined);
+    await page.click('[data-testid="btn-step-out"]');
+    const plantOut = await page
+      .waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="paused-line"]')?.textContent ?? '').trim() ===
+            'print(plant.fk(0.1, 0.2))' &&
+          !document.querySelector('[data-testid="paused-file"]'),
+        undefined,
+        { timeout: 20000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    check('Step out of the plant lands back in the learner\u2019s file', () => {
+      assert.equal(
+        plantOut,
+        true,
+        'expected the caller line of the call that entered the plant, with no helper label'
+      );
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const plantOutOutput = (await page.textContent(OUTPUT)) ?? '';
+    check('the call finishes after stepping out of the plant', () => {
+      assert.match(
+        plantOutOutput,
+        /0\.195/,
+        `expected the tuple to print after the step out, got "${plantOutOutput.slice(0, 120)}"`
+      );
+      assert.match(
+        plantOutOutput,
+        /done/,
+        `expected the next line to run too, got "${plantOutOutput.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="breakpoint-slot-2"]');
+
     await context.close();
   } finally {
     await browser.close();
@@ -1045,7 +1191,10 @@ async function main() {
     '       raises parks with the interpreter\u2019s sentence), Step in reaches the call (in the lesson\u2019s'
   );
   console.log(
-    '       file and in the shared plant, quoted from the plant\u2019s own line), a parked frame\u2019s values can be changed before it moves on (or are'
+    '       file and in the shared plant, quoted from the plant\u2019s own line) and Step out returns to it,'
+  );
+  console.log(
+    '       a parked frame\u2019s values can be changed before it moves on (or are'
   );
   console.log(
     '       refused in the interpreter\u2019s words), stopping a parked run keeps the interpreter; the page never blocks,'
