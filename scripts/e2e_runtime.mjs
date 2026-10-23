@@ -12,7 +12,9 @@
  *    line the learner types comes back as the return value.
  * 3. **The page stays alive.** The main thread is free while Python runs: the Stop button is
  *    clickable, and after the interrupt the tabs still switch.
- * 4. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
+ * 4. **A breakpoint is a park that was placed.** The gutter is armed before the run, and the
+ *    interpreter stops on that line with nobody pressing Pause (`app/src/editor/breakpoints.ts`).
+ * 5. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
  *    `acos` with its signature, and picking one keeps the module name), the lint comes from
  *    pyflakes (an unused import is named with its line, and the note clears when the import is
  *    used), the pointer over a name opens Jedi's card for it (`def acos`, the call, the docstring),
@@ -513,6 +515,71 @@ async function main() {
       );
     });
 
+    // 13. A breakpoint is the park that was placed rather than asked for: the line is armed in the
+    //     gutter before the run starts, and the interpreter stops there with nobody pressing Pause.
+    //     The page only sees `paused` when the trace hook reaches that line, so this also pins that
+    //     the list travelled with the request and that the harness's clock ignores the pause.
+    // The breakpoint is on a line that runs **once** (`print(total)`). A dot inside the loop is a
+    // standard debugger: every pass stops again, and Continue means "run to the next breakpoint",
+    // which is that same line next time round. Arming the print keeps this check about the park.
+    const breakpointCode = 'total = 0\nfor n in (2, 3):\n    total = total + n\nprint(total)\n';
+    await setEditorCode(page, breakpointCode);
+    await page.click('[data-testid="breakpoint-slot-4"]');
+    // The dot is drawn from React state after the click, one effect later: the assertion waits for
+    // the gutter to agree rather than for the click to return.
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-4"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click(RUN);
+    const broke = await page
+      .waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 })
+      .then(() => true)
+      .catch(() => false);
+    const brokeReason = broke
+      ? await page.getAttribute('[data-testid="paused-bar"]', 'data-paused-reason')
+      : null;
+    const brokeLine = broke ? ((await page.textContent(PAUSED_LINE)) ?? '').trim() : '';
+    check('a breakpoint parks the run where it was placed', () => {
+      assert.equal(
+        broke,
+        true,
+        'no paused bar appeared: a breakpoint needs its list to reach the worker with the request, and the trace hook to check the line it is about to run'
+      );
+      assert.equal(
+        brokeReason,
+        'breakpoint',
+        `expected the bar to say the park was a breakpoint, got "${brokeReason}"`
+      );
+      assert.equal(
+        brokeLine,
+        'print(total)',
+        `expected the parked line to be the armed one, got "${brokeLine}"`
+      );
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const afterBreakpoint = (await page.textContent(OUTPUT)) ?? '';
+    check('Continue runs on from a breakpoint to the end of the program', () => {
+      assert.match(
+        afterBreakpoint,
+        /\b5\b/,
+        `expected the loop's own total (5) after leaving the breakpoint, got "${afterBreakpoint.slice(0, 120)}"`
+      );
+    });
+    // Disarm, so a later visit to this page cannot be parked by this suite.
+    await page.click('[data-testid="breakpoint-slot-4"]');
+
     await context.close();
   } finally {
     await browser.close();
@@ -528,10 +595,13 @@ async function main() {
     '\n[PASS] Interruptible Python: input() round-trips, a while-True loop stops by interrupt, the session survives it, '
   );
   console.log(
-    '       a run parks on a shared word and steps line by line, Continue finishes it, stopping a parked run keeps'
+    '       a run parks on a shared word and steps line by line, Continue finishes it, a breakpoint parks on'
   );
   console.log(
-    '       the interpreter; the page never blocks, Jedi completes math.acos without losing the module, hovers'
+    '       the line it was placed on, stopping a parked run keeps the interpreter; the page never blocks,'
+  );
+  console.log(
+    '       Jedi completes math.acos without losing the module, hovers'
   );
   console.log(
     '       `def acos`, shows the signature of a call being typed, pyflakes names an unused import, and a run still works.'

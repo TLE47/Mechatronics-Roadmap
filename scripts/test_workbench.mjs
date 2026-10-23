@@ -17,6 +17,7 @@
  *   test:watch       when the checks may re-run themselves: after a graded failure, on an edit, never past the gate
  *   test:announce    what a screen reader hears after a run: the verdict first, then the failing line itself
  *   test:history     the versions behind the draft: filed on Run, deduped, capped, evicted oldest-first
+ *   test:breakpoints the gutter's list: a toggle, per lesson, capped, evicted, and filtered to lines that run
  *   test:scope       the Scope's payload rules: NaN dropped, lengths aligned, flat traces widened
  *   test:checkhints  a failing check names its own rung, and rung 2 is earned by another run
  *   test:takealong   the offline button's URL list, its size wording, and what "ready" may claim
@@ -172,6 +173,7 @@ async function main() {
     { label: 'vim', script: 'test_vim.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'trace', script: 'test_trace.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'cells', script: 'test_cells.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'breakpoints', script: 'test_breakpoints.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'try', script: 'test_try_links.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'history', script: 'test_draft_history.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'scope', script: 'test_scope.mjs', env: { NODE_OPTIONS: TYPES } },

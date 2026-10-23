@@ -89,6 +89,12 @@ import {
 } from '../../workspaceLayout';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
+import {
+  breakpointLinesForRun,
+  readBreakpoints,
+  toggleBreakpoint,
+  writeBreakpoints,
+} from '../../editor/breakpoints';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
 import { ScopePanel } from '../ScopePanel';
 import { normalizeScopeSeries, type ScopeSeries } from '../../scopeModel';
@@ -198,6 +204,8 @@ interface PausedStep {
   fn: string;
   depth: number;
   values: { name: string; value: string }[];
+  /** Why the interpreter parked: a gutter breakpoint, a Step, or the Pause button. */
+  reason?: 'breakpoint' | 'step' | 'pause';
 }
 
 /** What the Share button last did, so the line under the toolbar can say it. */
@@ -297,6 +305,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Where the interpreter is parked, or null when it is not. The worker posts the step and then
   // blocks; Step, Continue and Stop are the three answers it is waiting for.
   const [pausedStep, setPausedStep] = useState<PausedStep | null>(null);
+  // The lines the gutter has armed for this lesson (`app/src/editor/breakpoints.ts`). Read at mount,
+  // re-read on a lesson switch, and written on every click: the store, not this state, is what a
+  // reload reads back.
+  const [breakpoints, setBreakpoints] = useState<number[]>(() =>
+    readBreakpoints(initialLessonId || PYTHON_LESSONS[0].id)
+  );
   // Whether this page got a shared command word, which is what makes a park possible at all. State,
   // not `pauseRef.current`: the buffer is created when the worker is, and a ref would not re-render
   // the toolbar — the button would exist only after the learner pressed something else.
@@ -791,6 +805,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     rememberLastLesson(id);
     if (remember) rememberLessonInUrl(id);
     commitCode(readDraft(id) ?? found.starterCode);
+    // A breakpoint belongs to the file it was placed in: the new lesson reads its own list.
+    setBreakpoints(readBreakpoints(id));
     setRevealedHints(0);
     setPinnedScope(null);
     setStdout('');
@@ -1156,6 +1172,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   };
 
   /**
+   * Arm or disarm a line the gutter was clicked on (or `F9` was pressed on).
+   *
+   * Written through and read back, so the dot the learner sees is the list the next run will carry:
+   * a browser that refuses storage leaves this visit's dots working and next visit's empty, and the
+   * gutter says exactly that rather than pretending the write landed.
+   */
+  const toggleBreakpointAt = (line: number) => {
+    const id = lessonIdRef.current || selectedId;
+    setBreakpoints(writeBreakpoints(id, toggleBreakpoint(breakpoints, line)));
+  };
+
+  /**
    * Answer a parked interpreter: 2 continue, 3 step, 4 stop.
    *
    * The command is a shared word because a message would queue behind the very call it is meant to
@@ -1400,6 +1428,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           // The trace's caps travel with the request: the worker records with the page's numbers, so
           // "300 of 12,431" and the 300 on screen cannot mean two different things.
           trace: { cap: TRACE_STEP_CAP, names: TRACE_NAME_CAP, chars: TRACE_VALUE_CHARS },
+          // The lines to park on, checked against the text this run executes: a stored line past the
+          // end of the document, or one that is blank, cannot be a breakpoint on this program. They
+          // travel with the request because a message cannot reach a worker inside Python — a dot
+          // added mid-run is therefore for the next run, which the paused bar's title says.
+          breakpoints: breakpointLinesForRun(sourceCode, breakpoints),
           plantSource: MECHALAB_PLANT_PY,
           plantFilename: MECHALAB_PLANT_FILENAME,
           helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
@@ -3176,12 +3209,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           {pausedStep && (
             <div
               data-testid="paused-bar"
+              data-paused-reason={pausedStep.reason ?? 'pause'}
               className="rounded-lg border p-3"
               style={{ borderColor: 'var(--accent)', backgroundColor: 'var(--panel)' }}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-accent">
-                  Paused · {pausedStep.fn === '<module>' ? 'top level' : `${pausedStep.fn}()`} · line{' '}
+                  {/* Why the interpreter stopped is the first word, because a park the learner
+                      placed and one they asked for answer different questions. */}
+                  {pausedStep.reason === 'breakpoint' ? 'Breakpoint' : 'Paused'} ·{' '}
+                  {pausedStep.fn === '<module>' ? 'top level' : `${pausedStep.fn}()`} · line{' '}
                   {pausedStep.line}
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -3196,7 +3233,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <button
                     onClick={() => answerPause(2)}
                     data-testid="btn-continue"
-                    title="Run on to the end, or until you pause again"
+                    title="Run on to the end, the next breakpoint, or until you pause again"
                     className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
                   >
                     Continue
@@ -3339,6 +3376,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 getAnalysis={getReadyAnalysis}
                 onGoToDefinition={goToDefinition}
                 onRunCell={runCellTo}
+                onToggleBreakpoint={toggleBreakpointAt}
+                breakpoints={breakpoints}
                 vimMode={vimOn}
                 onVimMode={setVimMode}
                 initialLine={pendingJump?.file === MAIN_FILE_NAME ? pendingJump.line : undefined}

@@ -678,7 +678,11 @@ runs on, and **Stop** wakes a parked run and leaves Python loaded (`npm run test
 waits on a shared command word because a message queues behind the very loop it is meant to steer —
 the same reason Stop uses one — so a parked run costs no CPU and the page never blocks. A pause is only
 offered where the browser gave the page shared memory; without it, nothing can reach a parked worker.
-There is no gutter breakpoint yet: a park is *asked for*, not placed on a line.
+**A breakpoint is that park placed on a line** ([`src/editor/breakpoints.ts`](src/editor/breakpoints.ts),
+[`src/editor/breakpointGutter.ts`](src/editor/breakpointGutter.ts), `npm run test:breakpoints`): click
+the gutter slot beside a line, or put the caret on it and press **F9**, and the run stops there whether
+or not the learner can reach the toolbar in time. Clicking an armed line disarms it, a lesson keeps its
+own list, and the list is remembered in `localStorage` across a reload.
 
 Every run is also recorded, line by line, and the **Trace** panel beside the output steps through it
 ([`src/runTrace.ts`](src/runTrace.ts), [`src/components/TracePanel.tsx`](src/components/TracePanel.tsx),
@@ -693,6 +697,8 @@ The recording is the history; the park is the present.
 | **300 steps kept, every line counted** | Past the cap the worker stops collecting but keeps counting, so the panel prints `300 of 12,431 steps · capped` rather than implying the program stopped there. |
 | The quoted line comes from **the text that ran**, not from the editor | A run is a fact about a program; the panel still describes it after an edit, and a new run replaces it. |
 | A stop and a timeout keep their partial traces | "Where was my loop when I stopped it" is the question Stop is pressed to answer. |
+| A breakpoint is a **line number**, and it is read **when the run starts** | A park needs a set the interpreter already has; a message cannot reach a worker inside Python, so a dot added mid-run is for the next run (the toolbar's Pause catches the loop that is already spinning). The line number is what lets the list survive a lesson switch and a reload; an edit above a dot therefore leaves the dot on its number rather than following the code. |
+| The gutter draws a **slot on every line** | A column that is invisible until it holds something has no affordance to click. The slot is the click target *and* the dot, so what the learner reads is what they pressed. |
 
 The panel says in a sentence that it is a recording — this is where the program has been, not where it
 is — and offers **Show line** to put the caret on the step's line; the values are that step's frame, so

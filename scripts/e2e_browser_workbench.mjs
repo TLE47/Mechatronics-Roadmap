@@ -1189,6 +1189,90 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the quoted line is the run\u2019s text, not whatever the editor holds now'
     );
     console.log('  ok the run trace replays the lines it ran, with their values, from the text it ran');
+
+    // 5i. A breakpoint is a park that was placed, not one that was asked for. Clicking the gutter
+    //     beside a line arms it (the dot is the click target), the run stops there without anyone
+    //     reaching for Pause, and the choice is per lesson and survives a reload
+    //     (`app/src/editor/breakpoints.ts`). F9 is the keyboard route: a gutter alone would be a
+    //     mouse-only feature.
+    const bpCode = '# %% bp\na = 1\nb = 2\nprint(a + b)\n';
+    await setEditorCode(page, bpCode);
+    await page.getByTestId('cell-run-0').waitFor({ timeout: 5000 });
+    await page.getByTestId('breakpoint-slot-3').click();
+    // The dot is drawn from React state one effect after the click, so the check waits for the
+    // gutter to agree rather than for the click to return.
+    const armed = (line) =>
+      page.waitForFunction(
+        (number) =>
+          document.querySelector(`[data-testid="breakpoint-slot-${number}"]`)?.getAttribute('data-breakpoint') ===
+          'on',
+        line,
+        { timeout: 5000 }
+      );
+    await armed(3);
+    assert.equal(
+      await page.getByTestId('breakpoint-slot-2').getAttribute('data-breakpoint'),
+      'off',
+      'a click must arm the line it landed on, not the whole gutter'
+    );
+    // Ungraded, so the park is the only side effect this run has.
+    await page.getByTestId('cell-run-0').click();
+    await page.getByTestId('paused-bar').waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId('paused-bar').getAttribute('data-paused-reason'),
+      'breakpoint',
+      'the bar must say the run stopped at a breakpoint, not that somebody pressed Pause'
+    );
+    assert.equal(
+      (await page.getByTestId('paused-line').textContent())?.trim(),
+      'b = 2',
+      'the parked line must be the one the dot was put on'
+    );
+    await page.getByTestId('btn-continue').click();
+    await page.waitForFunction(
+      () => (document.querySelector('[data-testid="pre-actual-stdout"]')?.textContent ?? '').trim() === '3',
+      undefined,
+      { timeout: 20000 }
+    );
+    console.log('  ok a breakpoint parks the run on its line, and Continue finishes it');
+
+    // F9 arms the caret's line. The caret is put on the `print` line, which the run has not reached
+    // yet, so this dot is the keyboard's own doing rather than a leftover.
+    await page.evaluate((source) => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.setCursor(source.indexOf('print(a + b)'));
+      editor.focus();
+    }, bpCode);
+    await page.keyboard.press('F9');
+    await armed(4);
+    assert.equal(
+      (await page.getByTestId('breakpoint-slot-1').getAttribute('data-breakpoint')),
+      'off',
+      'F9 must arm the caret\u2019s line, not the first one'
+    );
+
+    // Per lesson, and remembered: the reload reads the list back and draws the dots on the restored
+    // draft. Both lines were armed in this lesson's file, so both are still dots afterwards.
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForEditor(page);
+    await armed(3);
+    assert.equal(
+      await page.getByTestId('breakpoint-slot-4').getAttribute('data-breakpoint'),
+      'on',
+      'a breakpoint placed with the keyboard must survive a reload too'
+    );
+    console.log('  ok breakpoints are remembered, and F9 arms the caret\u2019s line');
+
+    // Leave both the gutter and the draft as the rest of the suite expects them.
+    await page.getByTestId('breakpoint-slot-3').click();
+    await page.getByTestId('breakpoint-slot-4').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-3"]')?.getAttribute('data-breakpoint') ===
+        'off',
+      undefined,
+      { timeout: 5000 }
+    );
     await setEditorCode(page, afterScratch);
 
     // 6. CDN failure never awards verification (even with full solution loaded)

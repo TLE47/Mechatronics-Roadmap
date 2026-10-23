@@ -53,6 +53,30 @@ export const pythonTheme = EditorView.theme(
       paddingLeft: '4px',
     },
     '.cm-lineNumbers .cm-gutterElement': { minWidth: '2.4em', padding: '0 6px 0 0' },
+    // Breakpoints (`breakpointGutter.ts`): a slot on every line, so the column is a click target
+    // before it holds anything. Quiet at rest, a hollow ring under the pointer, a filled dot armed.
+    '.cm-breakpoint-gutter': { cursor: 'pointer', paddingLeft: '2px' },
+    '.cm-breakpoint-gutter .cm-gutterElement': {
+      minWidth: '14px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    '.cm-breakpoint-slot': {
+      display: 'block',
+      width: '9px',
+      height: '9px',
+      borderRadius: '9999px',
+      border: '1px solid transparent',
+      backgroundColor: 'transparent',
+    },
+    '.cm-breakpoint-gutter .cm-gutterElement:hover .cm-breakpoint-slot': {
+      borderColor: 'var(--muted)',
+    },
+    '.cm-breakpoint-slot[data-breakpoint="on"]': {
+      backgroundColor: 'var(--rose)',
+      borderColor: 'var(--rose)',
+    },
     '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--accent) 6%, transparent)' },
     '.cm-activeLineGutter': {
       backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)',

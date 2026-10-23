@@ -50,6 +50,11 @@ import { pythonEditorTheme } from '../editor/theme';
 import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
 import { applyInlineValues, inlineValueField } from '../editor/inlineWidget';
 import { CELL_RUN_EVENT, cellField } from '../editor/cellWidget';
+import {
+  BREAKPOINT_TOGGLE_EVENT,
+  breakpointGutter,
+  setBreakpointLines,
+} from '../editor/breakpointGutter';
 import type { InlineValueAt } from '../inlineValues';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
@@ -173,6 +178,8 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       className,
       onGoToDefinition,
       onRunCell,
+      onToggleBreakpoint,
+      breakpoints = [],
       vimMode = false,
       onVimMode,
       initialLine,
@@ -189,6 +196,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     // A cell button dispatches a DOM event (`cellWidget.ts`); the runner is called from here, because
     // a `StateField` cannot hold a callback without rebuilding the state on every render.
     const onRunCellRef = useRef(onRunCell);
+    // A gutter click asks for a line to be armed; the list belongs to the runner, which is the only
+    // place that knows which lesson this is and where it is kept (`breakpoints.ts`).
+    const onToggleBreakpointRef = useRef(onToggleBreakpoint);
     // Read at completion time, not captured: the session appears once the interpreter is ready, and
     // the editor is created long before that.
     const analysisRef = useRef(getAnalysis);
@@ -197,6 +207,10 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     onSliderRef.current = onSliderCommit;
     onDefinitionRef.current = onGoToDefinition;
     onRunCellRef.current = onRunCell;
+    onToggleBreakpointRef.current = onToggleBreakpoint;
+    // A string key rather than the array: the runner hands over a fresh array each render, and an
+    // effect keyed on it would dispatch a transaction on every keystroke.
+    const breakpointsKey = breakpoints.join(',');
     // The Vim mode word, reported upward as it changes: the badge the learner reads is the runner's
     // (`app/src/vimMode.ts`), and this file only knows what the plugin says the mode is.
     const onVimModeRef = useRef(onVimMode);
@@ -313,6 +327,22 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
             },
           }),
           keymap.of([
+            // F9 arms the caret's line, the keyboard route to the gutter. Absent without a handler,
+            // so a read-only helper leaves the key alone.
+            ...(onToggleBreakpoint
+              ? [
+                  {
+                    key: 'F9',
+                    run: (view: EditorView) => {
+                      const line = view.state.doc.lineAt(view.state.selection.main.head).number;
+                      view.dom.dispatchEvent(
+                        new CustomEvent(BREAKPOINT_TOGGLE_EVENT, { detail: { line }, bubbles: true })
+                      );
+                      return true;
+                    },
+                  },
+                ]
+              : []),
             // First, so it wins over anything CodeMirror binds to F12 (nothing today). A name the
             // editor cannot resolve returns `false` and the key falls through untouched.
             {
@@ -337,6 +367,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           inlineValueField,
           // Only where a cell can be run: a read-only helper with a `# %%` in it gets no buttons.
           ...(onRunCell ? [cellField] : []),
+          // Only where a line can be armed: the read-only helper gets no gutter, so it also gets no
+          // column of slots that would suggest one.
+          ...(onToggleBreakpoint ? [breakpointGutter] : []),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onChangeRef.current?.(update.state.doc.toString());
             if (update.transactions.some((tr) => tr.annotation(sliderAnnotation))) {
@@ -353,6 +386,12 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
         if (typeof index === 'number') onRunCellRef.current?.(index);
       };
       view.dom.addEventListener(CELL_RUN_EVENT, onCellRun);
+      // The gutter's click, bubbled from the slot (`breakpointGutter.ts`).
+      const onBreakpointToggle = (event: Event) => {
+        const line = (event as CustomEvent<{ line?: number }>).detail?.line;
+        if (typeof line === 'number') onToggleBreakpointRef.current?.(line);
+      };
+      view.dom.addEventListener(BREAKPOINT_TOGGLE_EVENT, onBreakpointToggle);
       // The paint reading's third moment: the editor exists where the placeholder stood. `fcp` already
       // covered the lesson text and the code, so this is what the lazy boundary costs (`paintTiming.ts`).
       markPaintReady('editor');
@@ -364,6 +403,11 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       // way to page through a long file while leaving the cursor where it is (WCAG 2.1.1; axe's
       // `scrollable-region-focusable` names exactly this element).
       view.scrollDOM.setAttribute('tabindex', '0');
+      // The column is a picture of state, so it needs a sentence saying what a click does: a dot that
+      // only appears after the first click would be a feature nobody finds.
+      view.dom
+        .querySelector('.cm-breakpoint-gutter')
+        ?.setAttribute('title', 'Click a line to break there (or press F9 with the cursor on it)');
 
       // The suites type code from a string, read it back, and check it survived a reload; going
       // through the view keeps React's `value` in step instead of only the DOM.
@@ -400,6 +444,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       return () => {
         detachVim();
         view.dom.removeEventListener(CELL_RUN_EVENT, onCellRun);
+        view.dom.removeEventListener(BREAKPOINT_TOGGLE_EVENT, onBreakpointToggle);
         view.destroy();
         viewRef.current = null;
         if (window.__mechalabEditors?.[testId] === bridge) {
@@ -444,6 +489,15 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
         cancelled = true;
       };
     }, [vimMode, attachVim, detachVim]);
+
+    // The dots follow the runner's list: a lesson switch, a click, or a list read back from storage.
+    // Declared after the mount effect, so the first run of this effect finds the view.
+    useEffect(() => {
+      const view = viewRef.current;
+      if (!view || !onToggleBreakpointRef.current) return;
+      view.dispatch({ effects: setBreakpointLines.of(breakpoints) });
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- the joined key is the value
+    }, [breakpointsKey, testId]);
 
     // External changes: a different lesson, Load Solution, Reset starter. The learner's own keystrokes
     // arrive here too and are already equal to the document, so nothing is dispatched twice.

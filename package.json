@@ -74,6 +74,7 @@
     "test:vim": "node --experimental-strip-types scripts/test_vim.mjs",
     "test:trace": "node --experimental-strip-types scripts/test_trace.mjs",
     "test:cells": "node --experimental-strip-types scripts/test_cells.mjs",
+    "test:breakpoints": "node --experimental-strip-types scripts/test_breakpoints.mjs",
     "test:history": "node --experimental-strip-types scripts/test_draft_history.mjs",
     "test:scope": "node --experimental-strip-types scripts/test_scope.mjs",
     "test:checkhints": "node --experimental-strip-types scripts/test_check_hints.mjs",

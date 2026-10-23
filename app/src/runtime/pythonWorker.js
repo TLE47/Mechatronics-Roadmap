@@ -674,6 +674,7 @@ self.onmessage = async (event) => {
       plantSource,
       plantFilename,
       helperFiles = [],
+      breakpoints = [],
     } = msg;
 
     // A fresh run starts un-stopped: clear the interrupt word a previous Stop left set.
@@ -725,6 +726,13 @@ self.onmessage = async (event) => {
       // question asked of the page before the line executes.
       py.globals.set('__mechalab_pause_requested__', pauseRequested);
       py.globals.set('__mechalab_pause__', pauseAt);
+      // The armed lines, as one comma-joined string: a JS array arrives in Python as a proxy, and a
+      // membership test on one would be a boundary round trip on every executed line. The Python
+      // side builds a set once per run (`breakpoint_lines`).
+      py.globals.set(
+        '__mechalab_breakpoints__',
+        Array.isArray(breakpoints) ? breakpoints.join(',') : ''
+      );
 
       const runnerHarness = `
 import json as _json, sys, time, traceback, warnings
@@ -779,15 +787,25 @@ def __mechalab_execute():
     # Step, so the line after the one a learner just read pauses too, without another click.
     pause_mode = 0
 
-    def _pause_here(frame):
+    # The lines the gutter armed for this run. A breakpoint parks the run without anyone pressing
+    # anything, which is the difference between a pause that is asked for and one that is placed.
+    breakpoint_lines = set()
+    for _part in str(__mechalab_breakpoints__).split(","):
+        _part = _part.strip()
+        if _part.isdigit():
+            breakpoint_lines.add(int(_part))
+
+    def _pause_here(frame, reason):
         # A pause is only offered at a line of the learner's own file - stepping into math.sqrt is
-        # reading CPython, not their program - and only while the page shares a command word.
+        # reading CPython, not their program - and only while the page shares a command word. The
+        # reason travels with the step so the bar can say which of the three parks this is.
         nonlocal t0, pause_mode
         verdict = __mechalab_pause__(_json.dumps({
             "line": frame.f_lineno,
             "fn": frame.f_code.co_name,
             "depth": _trace_depth(frame),
             "values": _trace_values(frame),
+            "reason": reason,
         }))
         if verdict == "stop":
             raise KeyboardInterrupt
@@ -808,12 +826,16 @@ def __mechalab_execute():
                         "depth": _trace_depth(frame),
                         "values": _trace_values(frame),
                     })
-                if pause_mode or __mechalab_pause_requested__():
+                on_breakpoint = frame.f_lineno in breakpoint_lines
+                if pause_mode or on_breakpoint or __mechalab_pause_requested__():
                     # The wall clock keeps running while the worker is parked, and the harness's
                     # timeout is a wall clock: the time a learner spends reading their own line is
                     # not execution time, so it is added back rather than charged as a slow loop.
                     before = time.monotonic()
-                    _pause_here(frame)
+                    _pause_here(
+                        frame,
+                        "step" if pause_mode else ("breakpoint" if on_breakpoint else "pause"),
+                    )
                     t0 += time.monotonic() - before
             if steps > max_s or (time.monotonic() - t0) > max_t:
                 raise TimeoutError(

@@ -11,6 +11,38 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 182: Breakpoints in the Gutter
+
+Run 181's pause had one hole left, and the plan named it: *"a park is asked for, not placed on a
+line."* The column beside the line numbers is now a breakpoint gutter — click a line, or put the
+caret on it and press **F9**, and the run stops **there** without anyone reaching for Pause. Clicking
+an armed line disarms it, each lesson keeps its own list, and the list is remembered across a reload
+([`app/src/editor/breakpoints.ts`](app/src/editor/breakpoints.ts),
+[`app/src/editor/breakpointGutter.ts`](app/src/editor/breakpointGutter.ts), `npm run test:breakpoints`).
+
+| Decision | Why |
+| :--- | :--- |
+| The gutter draws a **slot on every line** | A marker only on armed lines leaves an invisible column with nothing to click; the slot is the click target *and* the dot |
+| The click leaves the editor as a **bubbling event** | The gutter's config is built once and has no React props; the runner owns the list (per lesson, persisted, carried by the run), the same seam cells and focus mode use |
+| The list is **per lesson**, in `localStorage` | A park belongs to the file it was placed in; it is a reading preference, not work, so it sits beside the theme rather than in IndexedDB |
+| 25 lines per lesson, 60 lessons, **newest written last** | A runaway list is paid for on every read; deleting and re-adding a key makes eviction drop the longest-untouched lesson |
+| The worker is sent only lines **this document can execute** | A stored line past the end of the file, or a blank one, can never fire; filtering in one place keeps the dots and the parks in agreement |
+| The bar says **Breakpoint**, not Paused | The reason travels with the step: a park the learner placed and one they asked for answer different questions |
+| `F9` arms the caret's line | A gutter is a mouse target, and a mouse-only feature is half a feature |
+
+Two limits are deliberate and written down: a breakpoint is a **line number**, so an edit above a dot
+leaves it on its number, and the list is the one that **travelled with the request**, so a dot added
+while a program runs is for the next run — the toolbar's Pause is what catches a loop already spinning.
+The paused bar now carries `data-paused-reason`, so a suite can tell the three parks apart.
+
+Verified: `npm run test:breakpoints` (10 checks: the toggle, the per-lesson store, its caps and
+eviction, a refused write, and the lines a run is sent), `npm run test:runtime` (a breakpoint parks on
+the armed line and Continue finishes the program), `npm run test:workbench` (50 suites), the built
+bundle's browser sweep (step 5i: gutter click, F9, a reload), axe 11 tabs × 4 palettes, weight, lint
+clean.
+
+---
+
 ## [2026-10-22] — Run 181: Pause, for Real
 
 The plan's debugger row ended with *"no breakpoints, no step-in and no pause"*, and Run 178 recorded

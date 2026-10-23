@@ -63,6 +63,19 @@ export interface PythonEditorProps {
    */
   onRunCell?: (index: number) => void;
   /**
+   * The gutter slot beside a line was clicked, or `F9` was pressed on the caret line.
+   *
+   * The editor reports the line and nothing else: the list is per lesson, persisted, and travels with
+   * the run, so the runner owns it (`app/src/editor/breakpoints.ts`). No handler, no gutter — a
+   * read-only helper is a file the learner is reading, not debugging.
+   */
+  onToggleBreakpoint?: (line: number) => void;
+  /**
+   * The lines that should show a dot. Drawn, not owned: the runner decides, and a click it refuses
+   * leaves the gutter saying what is actually armed.
+   */
+  breakpoints?: number[];
+  /**
    * Read the keys as Vim: normal mode, insert mode, `dd`, `u`, the lot.
    *
    * Only the main editor takes it. A read-only helper is a file the learner is looking at rather than
