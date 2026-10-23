@@ -465,12 +465,20 @@ signature (`acos(x: SupportsFloat, /) -> float`) and the docstring beside it; ho
 card with its definition (`def acos`), its call and the docstring's first paragraph; typing
 `math.acos(` shows that call with the argument being typed marked; and the Checker strip under the
 editor names an unused import on the line it is on. All of it comes from the same worker that runs
-the lesson: Jedi for completions, hover and signatures, pyflakes for the lint
+the lesson: Jedi for completions, hover and signatures, and **two linters for the strip** — pyflakes
+for what the code does (an unused import, an undefined name) and pycodestyle for how it is written
 ([`src/analysisClient.ts`](src/analysisClient.ts), [`src/editor/completions.ts`](src/editor/completions.ts),
 [`src/editor/analysisTips.ts`](src/editor/analysisTips.ts), `npm run test:analysis` for the mapping
 rules and `npm run test:runtime` in a browser). Ruff is a Rust binary and cannot run in Pyodide at
-all, so pyflakes is the browser's honest linter and the editor never claims otherwise; nothing here
-reformats code.
+all, so the strip names the linters that answered — `Checker · pyflakes + pycodestyle` — and every
+style note carries the rule code (`E711 comparison to None …`, `W291 trailing whitespace`) rather
+than paraphrasing it. The style slice is E4 and E7 (the pycodestyle families Ruff shipped by default
+for years) plus W291/W293/W605, the rules for characters a learner cannot see. Two rules are off on
+purpose, both by measurement: E741, because a bare `l` is a link length in this course, and E501,
+because at Black's 88 columns it fires 740 times across this repo's own 100 starters and solutions —
+notes about lines the lesson shipped, not about the line the learner wrote. What the strip does *not*
+run is the indentation family (`E1`/`E2`/`E3`): those are what Black's **Format** button fixes, and a
+press that changes the code is a better answer for a beginner than a sentence describing the change.
 
 **Hover asks about the whole dotted name, and a signature only exists inside a call.** `math.acos` is
 one token, so a card opened over `acos` still describes `math.acos`; `callContext` walks back to the
@@ -480,8 +488,9 @@ signature is the one that matters. Both cards are drawn with `textContent`, neve
 docstring is third-party text. While a run is in flight the worker is busy, so nothing is asked and
 no card opens rather than queueing a request behind the learner's own program.
 
-The analyzers **install on first use** (~1.5 MB, one online request), not at boot, so a learner who
-never edits pays nothing for them and the first Run still waits for the interpreter only. If the
+The analyzers **install on first use** (~1.6 MB, one online request for Jedi, pyflakes and
+pycodestyle together), not at boot, so a learner who never edits pays nothing for them and the first
+Run still waits for the interpreter only. If the
 install cannot happen — a first offline visit — the completion source answers from the keywords it
 always had and the strip says the checker could not load, rather than showing an empty list as if
 nothing were wrong. Only the learner's own text is checked: a lesson's starter is the scaffold the
@@ -822,7 +831,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/components/tabs/`](src/components/tabs) | One file per tab. [`TabPyodideRunner.tsx`](src/components/tabs/TabPyodideRunner.tsx) is the graded runner — editor, expected output, badges, instructor panel. |
 | [`src/data/`](src/data) | **Generated.** Lesson registry, spine, start-here card, plant model, link history. Edit the generator, not these files. |
 | [`src/outputMatch.ts`](src/outputMatch.ts) | How stdout is compared (exact vs formatting-tolerant), shared by the runner and its tests. |
-| [`src/analysisClient.ts`](src/analysisClient.ts) | Completions and lint over the worker: request ids, timeouts, Jedi's vocabulary mapped to the completion list, pyflakes messages made drawable. |
+| [`src/analysisClient.ts`](src/analysisClient.ts) | Completions, lint and format over the worker: request ids, timeouts, Jedi's vocabulary mapped to the completion list, pyflakes and pycodestyle messages made drawable, Black's refusal told apart from a missing formatter. |
 | [`src/editor/completions.ts`](src/editor/completions.ts) | The completion source: Jedi when the interpreter is up, keywords when it is not, and the inserted span after the dot. |
 | [`src/progressMerge.ts`](src/progressMerge.ts) | Merging saved progress between browsers and accounts. |
 | [`src/lessonCoach.ts`](src/lessonCoach.ts) | The progressive hints and the stuck-state prompts. |

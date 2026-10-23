@@ -851,7 +851,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // commit, which is the same value whenever the handlers are the only writers.
   const codeRef = useRef<string>(code);
   const lessonIdRef = useRef<string>(initialLessonId || PYTHON_LESSONS[0].id);
-  // What pyflakes last said about this buffer, and the one sentence to show when it could not be
+  // What the checker last said about this buffer, and the one sentence to show when it could not be
   // installed at all. Both are cleared on a lesson change: a note about another file is noise.
   const [lintNotes, setLintNotes] = useState<LintNote[]>([]);
   const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
@@ -1083,7 +1083,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // queue behind a lint, so this waits for a pause, for a loaded interpreter, and for an idle runner.
   //
   // Only the learner's own text is checked. A lesson's starter is the scaffold the lesson ships, and
-  // pyflakes notes about it would read as the app complaining about its own exercise - while the one
+  // checker notes about it would read as the app complaining about its own exercise - while the one
   // thing a note is good for is the code somebody just wrote.
   useEffect(() => {
     if (pyodideStatus !== 'ready' || isRunning) return;
@@ -4037,7 +4037,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted">
-                  Checker · pyflakes
+                  Checker · pyflakes + pycodestyle
                 </span>
                 <span className="text-[10.5px] font-mono text-faint">
                   {lintNotes.length

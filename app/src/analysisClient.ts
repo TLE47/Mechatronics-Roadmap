@@ -3,7 +3,8 @@
  *
  * The worker owns the interpreter, so every question is a message, not an import: `complete`, `lint`,
  * `hover` and `signature` go out with a request id and come back as `completions` / `lint` / `hover` /
- * `signature`, carrying Jedi's options, pyflakes' messages, or jedi's definition and call signature.
+ * `signature`, carrying Jedi's options, the two linters' messages (pyflakes for behaviour, pycodestyle
+ * for style), or jedi's definition and call signature.
  * Everything here is transport plus the *mapping* rules - what a Jedi type is called in a CodeMirror
  * completion, where the inserted text starts, how a note reads in a sentence, which parameter of a
  * signature is the active one - because those are the parts a test can pin without a browser or a
@@ -33,7 +34,7 @@ export interface AnalysisOption {
 export interface LintNote {
   /** 1-based line, as Python counts. */
   line: number;
-  /** 1-based column, as pyflakes counts. */
+  /** 1-based column, as both linters count it. */
   column: number;
   text: string;
 }
@@ -77,7 +78,7 @@ export type AnalysisReply<T> =
 export const ANALYSIS_TIMEOUT_MS = 8000;
 
 /**
- * What a request is allowed while the worker installs jedi and pyflakes.
+ * What a request is allowed while the worker installs jedi, pyflakes and pycodestyle.
  *
  * The analyzers install on the first request of every fresh worker (~1.5 MB through micropip), and a
  * tab switch throws the worker away — so the first completion after a remount waits on an installation,

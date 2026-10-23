@@ -178,12 +178,17 @@ and keeps the module name when picked, the pointer over a name opens Jedi's card
 the call, the docstring) and the card closes when the pointer leaves, typing `math.acos(` shows the
 signature with the argument marked and closing the call takes it away, an unused import is named on
 its line and the note clears once the import is used, and a Run still works after the analyzers
-installed. `npm run test:analysis` pins the rules underneath (insertion point, 1-based line /
-0-based column, which call the cursor is inside and which argument is active, the dotted name under
-the pointer, how a Jedi type or a pyflakes message is drawn, and that an answer is never mistaken for
-a verdict). Ruff is a Rust binary and
-cannot run in Pyodide, so pyflakes is the browser's linter and the suite says so rather than borrowing
-the name. `test:palette` is the opposite -
+installed. The same step covers the **style half**: one buffer carrying both `if value == None` and a
+90-character string literal must be answered with `E711 comparison to None` on its line, must *not*
+be answered with `E501`, and the strip must name `pycodestyle` — the absence is a policy pinned as
+hard as the presence, because the line-length rule is the one a checker would add first and the one
+that measures 740 hits on this repo's own lesson code. `npm run test:analysis` pins the rules
+underneath (insertion point, 1-based line / 0-based column, which call the cursor is inside and which
+argument is active, the dotted name under the pointer, how a Jedi type or a pyflakes or pycodestyle
+message is drawn and that both tools' notes keep the order the worker sorted them into, and that an
+answer is never mistaken for a verdict). Ruff is a Rust binary and
+cannot run in Pyodide, so the lint is pyflakes and pycodestyle — the tools Ruff reimplements — and the
+suite says which answered rather than borrowing the name. `test:palette` is the opposite -
 pure TypeScript over the catalogue, pinning that every lesson, exercise, tab and command appears
 exactly once and that ranking prefers the entry the learner typed (`P.1` over `P.10`). Both run in
 CI; `test:runtime` is its own step because it downloads Pyodide.

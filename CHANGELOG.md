@@ -11,6 +11,32 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 190: the style half of the lint (pycodestyle)
+
+The lint/format row's last sentence: pyflakes names what the code *does*, and nothing named how it is
+written. Ruff's style rules are pycodestyle's rules — Ruff is a faster reimplementation of them — so
+**pycodestyle** installs beside pyflakes in the same worker and answers into the same Checker strip.
+
+| Decision | Why |
+| :--- | :--- |
+| The rule slice is **measured against this repo's own lesson code** | The 100 `starter.py`/`solution.py` files are the material a learner starts from, so the slice has to be quiet on them. E4/E7 + W291/W293/W605 produce **two** notes across all 100; that is the bar |
+| **E501 stays off** | At Black's 88 columns it fires **740 times** on those same files. A learner who edits one line would be handed notes about lines the lesson shipped — the app complaining about its own exercise |
+| **E741 stays off** | In this course a bare `l` is a link length or an observer gain (it is the observer lesson's own parameter). Telling a beginner to rename the course's notation is the checker arguing with the material |
+| W291/W293/W605 are **added** | They name characters nobody can see — trailing whitespace, whitespace on a blank line, an escape Python reads literally — and the material trips none of them |
+| One list, in reading order | Two tools answering into two lists would make the strip an inventory of analyzers; sorted by line then column it is an inventory of the code |
+| The pyflakes half survives a style failure | The style check is wrapped: notes already collected are true, and a checker that goes silent because its second tool failed is worse than one that answers with what it has |
+| The strip says which tools answered | `Checker · pyflakes + pycodestyle`; the rule code (`E711`, `W291`) is in the note, because the code is the part that can be looked up |
+
+**Verified.** `npm run test:analysis` 39 checks (one new: a pycodestyle message reads with its rule
+code, and a merged list keeps the worker's order). `npm run test:runtime` — a buffer with both
+`if value == None` and a 90-character literal is answered with `E711` on its line, with **no `E501`**
+and with `pycodestyle` named in the strip; the unused-import note still clears when the import is used.
+The Python half was first measured in a Pyodide probe (`micropip` installs both wheels in 716 ms;
+`E711`/`W291`/`W605` named with 1-based columns; `E741`, line length and a syntax error all silent
+from the style side).
+
+---
+
 ## [2026-10-22] — Run 189: Format with Black
 
 The last named piece of the lint/format row. The plan asks for *Ruff lint + format*; Ruff is a Rust

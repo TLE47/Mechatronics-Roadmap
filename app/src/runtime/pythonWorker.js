@@ -370,9 +370,11 @@ function installStdinBridge(py) {
 // Analysis: completions, lint, hover and signatures, inside the interpreter that is already loaded.
 //
 // All four come from pure-Python packages, which is the whole reason they can run here: Jedi answers
-// completions, hover text and call signatures with docstrings, and pyflakes answers the lint. Ruff is
-// a Rust binary compiled to native code and cannot run in Pyodide at all, so pyflakes is the browser's
-// honest linter - the page says which one answered rather than borrowing Ruff's name.
+// completions, hover text and call signatures with docstrings, and the lint is two tools - pyflakes
+// for what the code *does* (an unused import, an undefined name, a redefinition) and pycodestyle for
+// how it is written (the E and W rules Ruff reimplements in Rust). Ruff itself is a Rust binary
+// compiled to native code and cannot run in Pyodide at all, so the page names the linters that
+// answered rather than borrowing Ruff's name.
 //
 // Installed on the first request, not at boot: a learner who never asks for a completion never pays
 // the ~1.5 MB, and the warm-up that a first Run needs stays the 10 MB it was. The install is a
@@ -404,6 +406,57 @@ def __mechalab_complete(code, line, column):
             "doc": doc[:400],
         })
     return _mechalab_json.dumps(items)
+
+def __mechalab_style(code):
+    # The style half, as pycodestyle: the rules themselves rather than a sample of them, selected to
+    # the slice that is true for a learner's file.
+    #
+    # The selection is the one Ruff shipped by default for years - E4 (imports), E7 (statements) and
+    # E9 (runtime) - minus two things. E9 is left out because the pyflakes half already answers a
+    # file that will not parse, in its own sentence. E741 (ambiguous variable name) is left out
+    # because in this course a bare l is a link length or an observer gain: the lessons teach that
+    # symbol, and a note telling a learner to rename it would be the checker arguing with the
+    # material.
+    #
+    # W291, W293 and W605 are added because they name characters a learner cannot see - whitespace
+    # after the last word of a line, whitespace on a blank line, an escape sequence Python reads
+    # literally - and this repo's own 100 starters and solutions trip none of them.
+    #
+    # Line length (E501) is deliberately not selected, and that is a measurement rather than a
+    # preference: at Black's 88 columns it fires 740 times across those same 100 files, so a learner
+    # who edited one line of a lesson would be shown notes about lines the lesson shipped. A checker
+    # that flags the exercise it just printed is noise, and Black - the Format button - is what owns
+    # that question anyway.
+    import pycodestyle
+    found = []
+
+    class _StyleCapture(pycodestyle.BaseReport):
+        def __init__(self, options):
+            super().__init__(options)
+            self.seen = []
+
+        def error(self, line_number, offset, text, check):
+            code = super().error(line_number, offset, text, check)
+            if code and code != "E741":
+                self.seen.append({
+                    "line": int(line_number),
+                    "column": int(offset) + 1,
+                    # pycodestyle's text already starts with the rule code ("E711 comparison to
+                    # None should be ..."), which is what the strip shows: the code is the part
+                    # that can be looked up.
+                    "text": str(text),
+                })
+            return code
+
+    options = pycodestyle.StyleGuide(
+        select=("E4", "E7", "W2", "W6"), quiet=True
+    ).options
+    report = _StyleCapture(options)
+    checker = pycodestyle.Checker(
+        lines=code.splitlines(True), options=options, report=report
+    )
+    checker.check_all()
+    return report.seen[:20]
 
 def __mechalab_lint(code):
     import pyflakes.api
@@ -438,6 +491,16 @@ def __mechalab_lint(code):
             })
 
     pyflakes.api.check(code, "<editor>", _Reporter())
+    try:
+        found.extend(__mechalab_style(code))
+    except Exception:
+        # A style half that could not run must not take the flake half down with it: the notes
+        # already collected are true, and a checker that goes silent because its second tool failed
+        # is worse than one that answers with what it has.
+        pass
+    # One list in reading order: a learner reads a file top to bottom, and two tools answering into
+    # two lists would make the strip an inventory of analyzers rather than of the code.
+    found.sort(key=lambda note: (note["line"], note["column"]))
     return _mechalab_json.dumps(found[:20])
 
 def __mechalab_hover(code, line, column):
@@ -543,7 +606,7 @@ async function ensureAnalysis(py) {
     analysisPromise = (async () => {
       await py.loadPackage('micropip');
       const micropip = py.pyimport('micropip');
-      await micropip.install(['jedi', 'pyflakes']);
+      await micropip.install(['jedi', 'pyflakes', 'pycodestyle']);
       py.runPython(ANALYSIS_HELPER_SOURCE);
       py.__mechalabAnalysisReady = true;
       return true;
@@ -743,7 +806,7 @@ const handleLint = (msg) =>
   handleAnalysis(msg, {
     type: 'lint',
     helper: '__mechalab_lint',
-    source: 'pyflakes',
+    source: 'pyflakes + pycodestyle',
     fallback: '[]',
     shape: 'messages',
     args: (m) => [String(m.code || '')],

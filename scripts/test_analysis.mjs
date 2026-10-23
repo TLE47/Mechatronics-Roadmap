@@ -9,7 +9,8 @@
  * - which line and column Jedi is asked about (1-based line, 0-based column — off by one and the
  *   completion list belongs to the previous character);
  * - how a Jedi type reads in a completion list, and what an unknown one becomes;
- * - what counts as a drawable pyflakes note, and how it reads in a sentence.
+ * - what counts as a drawable note, and how it reads in a sentence - which is the same rule for both
+ *   linters behind it, since pycodestyle's message already begins with the code it broke.
  *
  * The formatter rides the same channel (`format`, answered by Black), so its three outcomes are checked
  * here too: the tidied text, the parser's sentence for a file Black cannot read, and the install's own
@@ -132,6 +133,26 @@ check('a note reads as the line to look at, then what is wrong', () => {
   assert.equal(
     noteLabel({ line: 3, column: 1, text: "'os' imported but unused" }),
     "line 3 · 'os' imported but unused"
+  );
+});
+
+check('a style note keeps the rule it broke, and a merged list reads top to bottom', () => {
+  // The worker answers with pyflakes and pycodestyle notes in one list, already in reading order;
+  // pycodestyle's own text starts with the rule code, which is the part a learner can look up.
+  const merged = asLintNotes([
+    { line: 1, column: 1, text: "'os' imported but unused" },
+    { line: 3, column: 6, text: "E711 comparison to None should be 'if cond is None:'" },
+    { line: 9, column: 1, text: 'W291 trailing whitespace' },
+  ]);
+  assert.equal(
+    noteLabel(merged[1]),
+    "line 3 · E711 comparison to None should be 'if cond is None:'"
+  );
+  assert.equal(noteLabel(merged[2]), 'line 9 · W291 trailing whitespace');
+  assert.deepEqual(
+    merged.map((note) => note.line),
+    [1, 3, 9],
+    'the client keeps the order the worker sorted into'
   );
 });
 

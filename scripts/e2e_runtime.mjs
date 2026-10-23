@@ -36,11 +36,13 @@
  *    the editor, and says which of three things happened (tidied, already tidy, a parse refusal that
  *    leaves the file alone); the change is one undo.
  * 6. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
- *    `acos` with its signature, and picking one keeps the module name), the lint comes from
- *    pyflakes (an unused import is named with its line, and the note clears when the import is
- *    used), the pointer over a name opens Jedi's card for it (`def acos`, the call, the docstring),
- *    typing a call shows its signature with the argument marked, and a Run still works afterwards -
- *    all of these share one worker and one interpreter.
+ *    `acos` with its signature, and picking one keeps the module name), the lint comes from two
+ *    tools - pyflakes (an unused import is named with its line, and the note clears when the
+ *    import is used) and pycodestyle (a style rule is named with the code that can be looked up,
+ *    and a line that is merely long is *not* a note, because the line-length family is off by
+ *    measurement) - the pointer over a name opens Jedi's card for it (`def acos`, the call, the
+ *    docstring), typing a call shows its signature with the argument marked, and a Run still works
+ *    afterwards - all of these share one worker and one interpreter.
  *
  * Cross-origin isolation is checked first, because without `SharedArrayBuffer` the interrupt path
  * cannot exist at all (the app then falls back to terminating the worker).
@@ -345,6 +347,43 @@ async function main() {
         leftoverPanels,
         0,
         'expected the checker panel to disappear once pyflakes has nothing to say'
+      );
+    });
+
+    // 8b. The style half, from pycodestyle. Two assertions, and the second is a policy rather than an
+    // omission: at 88 columns the line-length rule fires 740 times across this repo's own 100
+    // starters and solutions, so it is not selected, and a file that is merely wide must stay quiet.
+    // One buffer carries both cases, so the panel is known to be showing *this* answer.
+    const wide = 'x'.repeat(90);
+    await setEditorCode(
+      page,
+      `import os\nvalue = 1\nif value == None:\n    print(os.getcwd())\nlabel = "${wide}"\n`
+    );
+    await page.waitForFunction(
+      () => /E711/.test(document.querySelector('[data-testid="analysis-notes"]')?.textContent ?? ''),
+      null,
+      { timeout: 60000 }
+    );
+    const stylePanel = await page.$eval(
+      '[data-testid="analysis-notes"]',
+      (element) => element.textContent ?? ''
+    );
+    check('a style nit is named with its rule, and a wide line is not a note', () => {
+      assert.match(
+        stylePanel,
+        /E711 comparison to None/,
+        `expected pycodestyle to name the rule, read: ${stylePanel}`
+      );
+      assert.match(stylePanel, /line 3/, `expected the note to say which line, read: ${stylePanel}`);
+      assert.doesNotMatch(
+        stylePanel,
+        /E501/,
+        `line length is deliberately not selected; read: ${stylePanel}`
+      );
+      assert.match(
+        stylePanel,
+        /pycodestyle/,
+        `the strip must say which linters answered, read: ${stylePanel}`
       );
     });
 
@@ -1472,7 +1511,10 @@ async function main() {
     '       Jedi completes math.acos without losing the module, hovers'
   );
   console.log(
-    '       `def acos`, shows the signature of a call being typed, pyflakes names an unused import, and a run still works.'
+    '       `def acos`, shows the signature of a call being typed, pyflakes names an unused import and'
+  );
+  console.log(
+    '       pycodestyle names a style rule (and leaves a merely long line alone), and a run still works.'
   );
 }
 
