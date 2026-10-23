@@ -22,6 +22,7 @@
 
 import React, { Suspense, forwardRef } from 'react';
 import type { AnalysisSession } from '../analysisClient';
+import type { Breakpoint } from '../editor/breakpoints';
 import type { InlineValueAt } from '../inlineValues';
 
 /** The imperative surface the runner (and the browser suites) need. */
@@ -71,18 +72,19 @@ export interface PythonEditorProps {
    */
   onToggleBreakpoint?: (line: number) => void;
   /**
-   * An edit carried a dot to another line, and these are the lines it now sits on.
+   * An edit carried a dot to another line, and these are the entries it now sits on.
    *
    * A breakpoint is held inside the editor as a document position so CodeMirror can map it through a
-   * change; the line numbers are what the runner stores and sends with the next run
-   * (`app/src/editor/breakpointState.ts`). Reported only when the number actually changed.
+   * change — its condition rides with it, so a park narrowed to `n == 3` stays narrowed after a line
+   * is inserted above. The line numbers are what the runner stores and sends with the next run
+   * (`app/src/editor/breakpointState.ts`). Reported only when an entry actually changed.
    */
-  onBreakpointsMoved?: (lines: number[]) => void;
+  onBreakpointsMoved?: (entries: Breakpoint[]) => void;
   /**
-   * The lines that should show a dot. Drawn, not owned: the runner decides, and a click it refuses
+   * The parks that should show a dot. Drawn, not owned: the runner decides, and a click it refuses
    * leaves the gutter saying what is actually armed.
    */
-  breakpoints?: number[];
+  breakpoints?: Breakpoint[];
   /**
    * Read the keys as Vim: normal mode, insert mode, `dd`, `u`, the lot.
    *

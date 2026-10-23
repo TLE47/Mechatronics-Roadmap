@@ -11,6 +11,45 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 185: A Breakpoint That Waits for a Pass
+
+The debugger row's last debugging gap: a dot could stop a loop, but only on its **first** turn. A
+breakpoint now carries a **condition** — a Python expression the worker compiles once per run and
+evaluates in the frame that reached the line — so `n == 3` parks the third pass and lets the first two
+run through. The toolbar's **Breakpoints (N)** panel lists every dot with one line for its condition,
+and a narrowed dot is drawn **hollow** in the gutter.
+
+| Decision | Why |
+| :--- | :--- |
+| A breakpoint is `{ line, condition }`, not a number | The two are one park: a condition with no dot is invisible state, and a dot that loses its condition when a line is inserted above is a bug nobody would find by reading the gutter |
+| The condition lives **in the editor's position entry** | Run 183 made a dot follow its statement through an edit; a condition stored beside the line number would stay at the old line while its statement moved, so a park that waited for `n == 3` would silently widen |
+| The older store is **read, not rejected** | `mechalab_breakpoints_v1` holds bare numbers on every machine that has armed a line; those read back as parks that always stop, and a mixed list reads entry by entry |
+| The worker **compiles each condition once per run** | A dot in a loop body is reached thousands of times; a `compile` per pass would turn the debugger into the slow part of the program |
+| A condition is stored **as typed** — whitespace runs collapse, nothing is trimmed | The panel's input *is* the stored string, so trimming on change would swallow the space bar: `n` + space would read back as `n`, and `n == 3` could never be written. Emptiness is decided by `.trim()` where it matters, at the dot and in the worker |
+| A condition that raises **parks anyway**, with the interpreter's sentence | Silently skipping the park hides the learner's typo; ending the run turns it into a failure with no line to look at. The bar names it where the breakpoint is |
+| The panel is where a condition is **written**, the gutter where it is drawn | A nine-pixel dot has no room for a form; the panel also says how many dots are armed, which a column of dots does not |
+| Conditions reach the interpreter **with the next run** | Same rule as the dots themselves: a message cannot reach a worker inside Python, so the panel's footer says so rather than letting a mid-run edit look applied |
+
+**What the section is for.** The panel is the one place a learner can see *why* a dot is there — line 3
+and `n == 3` beside it — and it is reachable before a run, which a paused bar is not.
+
+**One bug the build caught.** The Python harness is a JavaScript template literal, so a backtick in a
+comment inside it ends the string — one in a sentence about what a condition reads broke the worker
+chunk (`Expected a semicolon`) while `tsc` stayed green, because that file is JavaScript only Vite
+parses. `npm run build` is what found it.
+
+**Verified.** `npm run test:breakpoints` (20 checks: a condition is one line that keeps the space a
+learner types, it belongs to an armed line and leaves with the dot, the last write wins on a duplicate,
+an older store of bare numbers reads back as unconditional parks, and the condition rides the dot
+through an edit), `npm run test:runtime` (29 checks; three new: the loop parks on the third pass with
+`n = 3` after the condition was **typed** into the panel, both skipped passes still ran, and a
+condition that raises parks with the interpreter's `NameError` under the line), `npm run test:workbench`
+(50 suites on one dev server and one rebuilt bundle, including the gutter step whose stored-list
+assertion now reads entries), axe 11 tabs × 4 palettes with 0 exceptions, weight 1.01 MB (js
+695.8/700 kB, css 13.7/15 kB), `check_all` 29/29, lint clean.
+
+---
+
 ## [2026-10-22] — Run 184: Change a Value While It Is Parked
 
 The debugger row's last live-debugging gap: a park you can read but not steer. Every value in the paused

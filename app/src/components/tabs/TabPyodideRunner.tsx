@@ -90,10 +90,13 @@ import {
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import {
-  breakpointLinesForRun,
+  MAX_CONDITION_CHARS,
+  breakpointsForRun,
   readBreakpoints,
+  setBreakpointCondition,
   toggleBreakpoint,
   writeBreakpoints,
+  type Breakpoint,
 } from '../../editor/breakpoints';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
 import { ScopePanel } from '../ScopePanel';
@@ -128,6 +131,7 @@ import {
   Activity,
   Share2,
   Keyboard,
+  CircleDot,
 } from 'lucide-react';
 
 declare global {
@@ -208,6 +212,14 @@ interface PausedStep {
   reason?: 'breakpoint' | 'step' | 'pause';
   /** A frame edit that was refused, in the interpreter's own words; absent when it landed. */
   edit_error?: string;
+  /**
+   * Why a conditional breakpoint would not evaluate, in the interpreter's own words.
+   *
+   * A condition is the learner's expression, and one that raises is a mistake in it — not a reason to
+   * skip the park or to end the run. The bar says what the interpreter said, on the line it stopped
+   * on, so the fix is one look away.
+   */
+  condition_error?: string;
 }
 
 /**
@@ -322,9 +334,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // The lines the gutter has armed for this lesson (`app/src/editor/breakpoints.ts`). Read at mount,
   // re-read on a lesson switch, and written on every click: the store, not this state, is what a
   // reload reads back.
-  const [breakpoints, setBreakpoints] = useState<number[]>(() =>
+  const [breakpoints, setBreakpoints] = useState<Breakpoint[]>(() =>
     readBreakpoints(initialLessonId || PYTHON_LESSONS[0].id)
   );
+  // The Breakpoints panel: on request only. A dot alone does not say what it is waiting for, so the
+  // conditions live in one place the toolbar can open, titled with the count the gutter is drawing.
+  const [breakpointsOpen, setBreakpointsOpen] = useState(false);
   // Whether this page got a shared command word, which is what makes a park possible at all. State,
   // not `pauseRef.current`: the buffer is created when the worker is, and a ref would not re-render
   // the toolbar — the button would exist only after the learner pressed something else.
@@ -822,8 +837,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     rememberLastLesson(id);
     if (remember) rememberLessonInUrl(id);
     commitCode(readDraft(id) ?? found.starterCode);
-    // A breakpoint belongs to the file it was placed in: the new lesson reads its own list.
+    // A breakpoint belongs to the file it was placed in: the new lesson reads its own list, and the
+    // panel that lists them closes rather than showing another file's lines under this one's title.
     setBreakpoints(readBreakpoints(id));
+    setBreakpointsOpen(false);
     setRevealedHints(0);
     setPinnedScope(null);
     setStdout('');
@@ -1210,9 +1227,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * it pointing at a different statement; the line numbers it lands on are what gets stored and what
    * the next run is sent (`app/src/editor/breakpointState.ts`).
    */
-  const followBreakpointEdits = (lines: number[]) => {
+  const followBreakpointEdits = (entries: Breakpoint[]) => {
     const id = lessonIdRef.current || selectedId;
-    setBreakpoints(writeBreakpoints(id, lines));
+    setBreakpoints(writeBreakpoints(id, entries));
+  };
+
+  /**
+   * Narrow one armed line to the passes that matter, or widen it again with an empty condition.
+   *
+   * Written on every keystroke: the input's value is the stored condition, so what the learner reads
+   * is what the next run carries. The run in flight is unaffected — conditions travel with the
+   * request, like the dots themselves — which is why the panel says so.
+   */
+  const setConditionAt = (line: number, condition: string) => {
+    const id = lessonIdRef.current || selectedId;
+    setBreakpoints(writeBreakpoints(id, setBreakpointCondition(breakpoints, line, condition)));
   };
 
   /**
@@ -1508,7 +1537,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           // end of the document, or one that is blank, cannot be a breakpoint on this program. They
           // travel with the request because a message cannot reach a worker inside Python — a dot
           // added mid-run is therefore for the next run, which the paused bar's title says.
-          breakpoints: breakpointLinesForRun(sourceCode, breakpoints),
+          breakpoints: breakpointsForRun(sourceCode, breakpoints),
           plantSource: MECHALAB_PLANT_PY,
           plantFilename: MECHALAB_PLANT_FILENAME,
           helperFiles: helperFiles.map((file) => ({ name: file.name, content: file.content })),
@@ -2565,6 +2594,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <History className="w-3.5 h-3.5" />
                   <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
                 </button>
+                {/* The dots the gutter is drawing, and the condition each one waits for. Always
+                    present, not only once something is armed: a learner who has never clicked the
+                    gutter has no other way to find out that a breakpoint can be narrowed. */}
+                <button
+                  onClick={() => setBreakpointsOpen((open) => !open)}
+                  aria-expanded={breakpointsOpen}
+                  aria-controls="breakpoint-panel"
+                  data-testid="btn-breakpoints"
+                  title="Every dot on the gutter, with the condition that lets the run stop on it"
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                    breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+                  }`}
+                >
+                  <CircleDot className="w-3.5 h-3.5" />
+                  <span>
+                    Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}
+                  </span>
+                </button>
                 {/* Pause is offered only where a park is possible: the shared command word and a
                     trace hook exist together, and one without the other would be a dead button. */}
                 {isRunning && pauseCapable && !pausedStep && (
@@ -2982,6 +3029,74 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
             )}
 
+            {/* Every dot and the sentence it waits for. The gutter can arm a line but cannot say
+                why a park should let a loop pass; this is the one place a condition is written, and
+                the input is the stored value rather than a copy of it. */}
+            {breakpointsOpen && (
+              <div
+                id="breakpoint-panel"
+                data-testid="breakpoint-panel"
+                className="mt-3 rounded-lg border border-line-soft bg-canvas p-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono text-accent">
+                    BREAKPOINTS · this lesson
+                  </span>
+                  <span className="text-[11px] font-mono text-faint">
+                    {breakpoints.length
+                      ? `${breakpoints.length} armed · read when a run starts`
+                      : 'nothing armed'}
+                  </span>
+                </div>
+                {breakpoints.length === 0 ? (
+                  <p className="text-xs text-muted mt-2" data-testid="breakpoint-panel-empty">
+                    Click the column left of a line number to break there (or press F9 with the
+                    cursor on it). A condition narrows the dot to the pass that matters —{' '}
+                    <code className="font-mono text-body">n == 3</code> — so a loop is not a stop per
+                    turn.
+                  </p>
+                ) : (
+                  <ul className="mt-2 space-y-1.5">
+                    {breakpoints.map((entry) => (
+                      <li
+                        key={entry.line}
+                        data-testid={`breakpoint-row-${entry.line}`}
+                        className="flex flex-wrap items-center gap-2 text-xs"
+                      >
+                        <span className="w-14 shrink-0 font-mono text-muted">line {entry.line}</span>
+                        <input
+                          data-testid={`breakpoint-condition-${entry.line}`}
+                          aria-label={`Condition for the breakpoint on line ${entry.line}, as a Python expression`}
+                          placeholder="stop only when… (Python expression)"
+                          value={entry.condition}
+                          onChange={(event) => setConditionAt(entry.line, event.target.value)}
+                          maxLength={MAX_CONDITION_CHARS}
+                          spellCheck={false}
+                          className="min-w-0 flex-1 rounded border px-1.5 py-0.5 font-mono text-[11px] text-body"
+                          style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
+                        />
+                        <button
+                          onClick={() => toggleBreakpointAt(entry.line)}
+                          data-testid={`btn-clear-breakpoint-${entry.line}`}
+                          title={`Remove the breakpoint on line ${entry.line}`}
+                          aria-label={`Remove the breakpoint on line ${entry.line}`}
+                          className="px-2 py-0.5 rounded text-[11px] font-mono text-muted hover:text-rose border border-line cursor-pointer"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-[11px] text-faint mt-2">
+                  A condition is a Python expression the interpreter evaluates with the names that
+                  line can see: the run stops only when it is true. A dot that waits is drawn hollow,
+                  and one whose expression raises stops anyway — with the interpreter's own words in
+                  the bar above. Conditions reach the interpreter with the next run.
+                </p>
+              </div>
+            )}
+
             {/* The learner's own change, line by line. The roadmap card could say how many lines moved;
                 this says which ones, and where. */}
             {diffOpen && codeDiff && (
@@ -3324,6 +3439,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               >
                 {(runCodeRef.current || code).split('\n')[pausedStep.line - 1]?.trim() ?? ''}
               </code>
+              {/* A condition that raised is a mistake in the condition, not a reason to skip the
+                  park or end the run: the interpreter's sentence is shown where the breakpoint is. */}
+              {pausedStep.condition_error && (
+                <p
+                  data-testid="condition-error"
+                  role="status"
+                  className="mt-1.5 font-mono text-[11px]"
+                  style={{ color: 'var(--rose)' }}
+                >
+                  {pausedStep.condition_error} — the run stopped here because the condition could not
+                  be evaluated. Fix it in Breakpoints.
+                </p>
+              )}
               {pausedStep.values?.length > 0 && (
                 <div
                   data-testid="paused-values"

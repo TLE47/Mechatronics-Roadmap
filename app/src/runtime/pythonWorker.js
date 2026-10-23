@@ -112,6 +112,25 @@ function pauseRequested() {
 }
 
 /**
+ * The armed lines and their conditions, as text the Python side can read once per run.
+ *
+ * A JSON string rather than an array: a JS array arrives in Python as a proxy, and asking whether a
+ * line is armed would then be a boundary round trip on every executed line. The page already filters
+ * the list against the document it is about to run; this is the last check before it becomes a map
+ * the trace hook looks things up in, so a malformed message costs a breakpoint, not the run.
+ */
+function serializeBreakpoints(list) {
+  const rows = [];
+  for (const item of Array.isArray(list) ? list : []) {
+    const line = Math.round(Number(item?.line ?? item));
+    if (!Number.isInteger(line) || line < 1 || line > 1000000) continue;
+    rows.push({ line, condition: String(item?.condition ?? '').slice(0, 200) });
+    if (rows.length >= 100) break;
+  }
+  return JSON.stringify(rows);
+}
+
+/**
  * Block the interpreter on the lease of the page, and answer how the run should go on.
  *
  * The step is posted first: `postMessage` queues to the page even though this thread is about to
@@ -775,13 +794,10 @@ self.onmessage = async (event) => {
       py.globals.set('__mechalab_pause_requested__', pauseRequested);
       py.globals.set('__mechalab_pause__', pauseAt);
       py.globals.set('__mechalab_take_edit__', takePauseEdit);
-      // The armed lines, as one comma-joined string: a JS array arrives in Python as a proxy, and a
-      // membership test on one would be a boundary round trip on every executed line. The Python
-      // side builds a set once per run (`breakpoint_lines`).
-      py.globals.set(
-        '__mechalab_breakpoints__',
-        Array.isArray(breakpoints) ? breakpoints.join(',') : ''
-      );
+      // The armed lines and the condition each waits for, as one JSON string: a JS array arrives in
+      // Python as a proxy, and a membership test on one would be a boundary round trip on every
+      // executed line. The Python side builds one map per run (`breakpoint_conditions`).
+      py.globals.set('__mechalab_breakpoints__', serializeBreakpoints(breakpoints));
 
       const runnerHarness = `
 import json as _json, sys, time, traceback, warnings
@@ -836,13 +852,65 @@ def __mechalab_execute():
     # Step, so the line after the one a learner just read pauses too, without another click.
     pause_mode = 0
 
-    # The lines the gutter armed for this run. A breakpoint parks the run without anyone pressing
-    # anything, which is the difference between a pause that is asked for and one that is placed.
-    breakpoint_lines = set()
-    for _part in str(__mechalab_breakpoints__).split(","):
-        _part = _part.strip()
-        if _part.isdigit():
-            breakpoint_lines.add(int(_part))
+    # The lines the gutter armed for this run, and the condition each one waits for. A breakpoint
+    # parks the run without anyone pressing anything, which is the difference between a pause that is
+    # asked for and one that is placed; the condition is what makes a park in a loop land on the pass
+    # that matters instead of the first one.
+    breakpoint_conditions = {}
+    # Each condition is compiled once per run, not once per pass: a loop that reaches the same dot a
+    # thousand times would otherwise pay a compile for every turn. A condition that will not compile
+    # is kept with its own sentence and reported at the line, because the learner's typo is the thing
+    # to show - not a run that silently never stops.
+    breakpoint_checks = {}
+    try:
+        _armed = _json.loads(str(__mechalab_breakpoints__) or "[]")
+    except Exception:
+        _armed = []
+    if isinstance(_armed, list):
+        for _entry in _armed:
+            try:
+                _bp_line = int(_entry.get("line"))
+            except Exception:
+                continue
+            if _bp_line < 1:
+                continue
+            _bp_condition = str(_entry.get("condition") or "")[:200]
+            breakpoint_conditions[_bp_line] = _bp_condition
+            if not _bp_condition.strip():
+                continue
+            try:
+                breakpoint_checks[_bp_line] = (
+                    compile(_bp_condition, "<breakpoint>", "eval"),
+                    "",
+                )
+            except Exception as _bp_compile_error:
+                breakpoint_checks[_bp_line] = (
+                    None,
+                    f"Breakpoint condition failed ({_bp_condition}): "
+                    f"{type(_bp_compile_error).__name__}: {_bp_compile_error}",
+                )
+
+    def _breakpoint_hit(frame):
+        # Whether this line's dot stops the run now, and the sentence to show if its condition could
+        # not be read. The expression is the learner's own, evaluated with the names the line can see
+        # ('n == 3' inside a loop reads the loop's own 'n'). One that raises parks anyway and says
+        # what the interpreter said: skipping the park hides the mistake, and ending the run turns it
+        # into a failure the learner cannot trace back to their typing.
+        if frame.f_lineno not in breakpoint_conditions:
+            return False, ""
+        code, compile_error = breakpoint_checks.get(frame.f_lineno, (None, ""))
+        if compile_error:
+            return True, compile_error
+        if code is None:
+            return True, ""
+        try:
+            return bool(eval(code, frame.f_globals, frame.f_locals)), ""
+        except Exception as condition_error:
+            return (
+                True,
+                f"Breakpoint condition failed ({breakpoint_conditions[frame.f_lineno]}): "
+                f"{type(condition_error).__name__}: {condition_error}",
+            )
 
     def _apply_edit(frame):
         # A value the learner typed for a name the bar is showing. It is evaluated in the parked frame
@@ -877,10 +945,11 @@ def __mechalab_execute():
                 return "This interpreter cannot change a local inside a function; edit at top level."
         return ""
 
-    def _pause_here(frame, reason):
+    def _pause_here(frame, reason, condition_error=""):
         # A pause is only offered at a line of the learner's own file - stepping into math.sqrt is
         # reading CPython, not their program - and only while the page shares a command word. The
-        # reason travels with the step so the bar can say which of the three parks this is.
+        # reason travels with the step so the bar can say which of the three parks this is, and a
+        # condition that would not evaluate travels with it too.
         nonlocal t0, pause_mode
         edit_error = ""
         while True:
@@ -891,6 +960,8 @@ def __mechalab_execute():
                 "values": _trace_values(frame),
                 "reason": reason,
             }
+            if condition_error:
+                payload["condition_error"] = condition_error
             if edit_error:
                 payload["edit_error"] = edit_error
             verdict = __mechalab_pause__(_json.dumps(payload))
@@ -919,7 +990,7 @@ def __mechalab_execute():
                         "depth": _trace_depth(frame),
                         "values": _trace_values(frame),
                     })
-                on_breakpoint = frame.f_lineno in breakpoint_lines
+                on_breakpoint, condition_error = _breakpoint_hit(frame)
                 if pause_mode or on_breakpoint or __mechalab_pause_requested__():
                     # The wall clock keeps running while the worker is parked, and the harness's
                     # timeout is a wall clock: the time a learner spends reading their own line is
@@ -928,6 +999,7 @@ def __mechalab_execute():
                     _pause_here(
                         frame,
                         "step" if pause_mode else ("breakpoint" if on_breakpoint else "pause"),
+                        condition_error if on_breakpoint else "",
                     )
                     t0 += time.monotonic() - before
             if steps > max_s or (time.monotonic() - t0) > max_t:

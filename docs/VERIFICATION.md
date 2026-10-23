@@ -43,7 +43,7 @@ python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
 npm run test:theme                      # palette rules: stored pick, OS default, prefers-contrast, the three controls
 npm run test:theme:e2e                  # the three controls + contrast on all 11 tabs, in all four palettes
-npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step, breakpoints, a parked frame's values changed, Pages fallback
+npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step, breakpoints (conditional ones too), a parked frame's values changed, Pages fallback
 npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:share                      # the share link: round trip, the URL-safe alphabet, the measured cap, every malformed fragment
@@ -53,7 +53,7 @@ npm run test:layout                     # layout presets: which regions each sho
 npm run test:vim                        # Vim keys: off until asked for, remembered, blocked storage, and the mode word the badge prints
 npm run test:trace                      # the run trace: a payload from another thread, the step cap and its honest total, unreadable values cut
 npm run test:cells                      # # %% cells: the boundaries, the preamble, and where "run to here" stops
-npm run test:breakpoints                # the gutter's list: a toggle, per lesson, capped and evicted, lines that can run, and a dot that follows its statement through an edit
+npm run test:breakpoints                # the gutter's list: a toggle, a condition and the dot it belongs to, per lesson, capped and evicted, an older store read back, lines that can run, and a dot that follows its statement through an edit
 npm run test:try                        # try-it blocks: the marker rule, the lesson a page opens, the generated link read back by the app's own codec, and that every page is up to date
 npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes
 npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped and evicted, merged on restore

@@ -51,7 +51,8 @@ import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
 import { applyInlineValues, inlineValueField } from '../editor/inlineWidget';
 import { CELL_RUN_EVENT, cellField } from '../editor/cellWidget';
 import { BREAKPOINT_TOGGLE_EVENT, breakpointGutter } from '../editor/breakpointGutter';
-import { armedLines, setBreakpointLines } from '../editor/breakpointState';
+import type { Breakpoint } from '../editor/breakpoints';
+import { armedBreakpoints, setBreakpointLines } from '../editor/breakpointState';
 import type { InlineValueAt } from '../inlineValues';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
@@ -87,6 +88,16 @@ let vimModule: Promise<VimModule> | null = null;
 function loadVim(): Promise<VimModule> {
   vimModule ??= import('@replit/codemirror-vim');
   return vimModule;
+}
+
+/**
+ * The armed list as one string, for comparing two lists in an effect or a listener.
+ *
+ * Position and condition both: two dots on line 3 are different parks when one waits for `n == 3`.
+ * The separator cannot appear in a condition (newlines are folded by `normalizeCondition`).
+ */
+function breakpointKey(entries: readonly Breakpoint[]): string {
+  return entries.map((entry) => `${entry.line}:${entry.condition}`).join('\u0000');
 }
 
 /** `useLayoutEffect` on the browser, `useEffect` during SSR: React warns about the former on a server. */
@@ -198,7 +209,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     // place that knows which lesson this is and where it is kept (`breakpoints.ts`).
     const onToggleBreakpointRef = useRef(onToggleBreakpoint);
     // An edit carries a dot down with its statement (`breakpointState.ts`); the runner persists the
-    // resulting line numbers, because it is the owner of the list.
+    // resulting entries, because it is the owner of the list.
     const onBreakpointsMovedRef = useRef(onBreakpointsMoved);
     // The list as the runner last handed it over, and the list last reported back to it. A report is
     // sent only when an edit moved a dot to a line the runner does not already know about.
@@ -215,8 +226,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     onBreakpointsMovedRef.current = onBreakpointsMoved;
     breakpointsRef.current = breakpoints;
     // A string key rather than the array: the runner hands over a fresh array each render, and an
-    // effect keyed on it would dispatch a transaction on every keystroke.
-    const breakpointsKey = breakpoints.join(',');
+    // effect keyed on it would dispatch a transaction on every keystroke. The condition is part of
+    // the key — editing one is a change to the dots, not just to a label beside them.
+    const breakpointsKey = breakpointKey(breakpoints);
     const reportedBreakpointsKey = useRef(breakpointsKey);
     // The Vim mode word, reported upward as it changes: the badge the learner reads is the runner's
     // (`app/src/vimMode.ts`), and this file only knows what the plugin says the mode is.
@@ -383,11 +395,11 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
             // on are what the runner stores and what the next run is sent; a report is made only when
             // they differ from the list the runner already holds, or every keystroke would write.
             if (update.docChanged && onToggleBreakpointRef.current) {
-              const lines = armedLines(update.state);
-              const key = lines.join(',');
+              const entries = armedBreakpoints(update.state);
+              const key = breakpointKey(entries);
               if (key !== reportedBreakpointsKey.current) {
                 reportedBreakpointsKey.current = key;
-                onBreakpointsMovedRef.current?.(lines);
+                onBreakpointsMovedRef.current?.(entries);
               }
             }
             if (update.transactions.some((tr) => tr.annotation(sliderAnnotation))) {

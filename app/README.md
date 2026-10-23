@@ -684,6 +684,16 @@ the gutter slot beside a line, or put the caret on it and press **F9**, and the 
 or not the learner can reach the toolbar in time. Clicking an armed line disarms it, a lesson keeps its
 own list, and the list is remembered in `localStorage` across a reload.
 
+**A breakpoint can wait for a pass.** The toolbar's **Breakpoints (N)** panel lists every dot with one
+line for a condition — a Python expression the worker compiles once per run and evaluates **with the
+names the line can see** — so `n == 3` stops a loop on its third turn instead of its first, and
+**Continue** is not a stop per turn. A narrowed dot is drawn **hollow** rather than filled, because a
+filled dot would claim a park that only sometimes stops; the condition travels with the dot when an edit
+moves it; and a condition that raises parks **anyway**, with the interpreter's own sentence under the
+parked line, because a typo in the condition must neither end the run nor silently skip the park. The
+conditions reach the interpreter with the request, like the dots, so one written during a run applies to
+the next one.
+
 **A parked frame's values can be changed.** Every value in the bar is a button: it opens a one-line form
 prefilled with that value, and **Set** evaluates what you type in the frame the interpreter is stopped in
 and writes it back, so **Continue** runs the next line with it. The run does not move while you do this —
@@ -704,8 +714,9 @@ The recording is the history; the park is the present.
 | The quoted line comes from **the text that ran**, not from the editor | A run is a fact about a program; the panel still describes it after an edit, and a new run replaces it. |
 | A stop and a timeout keep their partial traces | "Where was my loop when I stopped it" is the question Stop is pressed to answer. |
 | A breakpoint is **held as a position, remembered as a line number** | While the editor is open a dot is a document position, so CodeMirror's change mapping carries it with the statement it was placed on: a newline typed above moves it down, undo brings it back, and Load Solution re-seeds it from the line number instead of collapsing it. The line number is what a lesson switch and a reload restore (see [`src/editor/breakpointState.ts`](src/editor/breakpointState.ts)). |
-| A breakpoint is read **when the run starts** | A park needs a set the interpreter already has; a message cannot reach a worker inside Python, so a dot added mid-run is for the next run (the toolbar's Pause catches the loop that is already spinning). |
+| A breakpoint is read **when the run starts** | A park needs a list the interpreter already has; a message cannot reach a worker inside Python, so a dot (or a condition) added mid-run is for the next run — the toolbar's Pause catches the loop that is already spinning. |
 | The gutter draws a **slot on every line** | A column that is invisible until it holds something has no affordance to click. The slot is the click target *and* the dot, so what the learner reads is what they pressed. |
+| A narrowed dot is **hollow**, and a condition that raises **still parks** | A filled dot says "always stops", which is the wrong sentence about a park the learner just narrowed; and a condition that could not be evaluated is a mistake the learner has to see, not a park skipped in silence or a run ended with no explanation. |
 | A value in the bar is a **button**, and the edit runs **in that frame** | "What if `total` were 41" is answered before the learner decides to continue: the worker evaluates the expression with the frame's own globals and locals, writes it back, and stays parked. Inside a function that needs `PyFrame_LocalsToFast` (a function frame's `f_locals` is a snapshot on CPython 3.12); a failure says so rather than leaving a value that only looks applied. The learner's file is never touched. |
 
 The panel says in a sentence that it is a recording — this is where the program has been, not where it

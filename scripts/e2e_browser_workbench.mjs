@@ -1288,8 +1288,12 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'line 4 still holds the statement the dot was placed on'
     );
     assert.deepEqual(
+      // A stored entry is `{ line, condition }` now: the condition belongs to the dot, so it moves
+      // with it. These two were armed without one, and this is where the shape is pinned.
       await page.evaluate(() =>
-        Object.values(JSON.parse(localStorage.getItem('mechalab_breakpoints_v1') ?? '{}')).flat()
+        Object.values(JSON.parse(localStorage.getItem('mechalab_breakpoints_v1') ?? '{}'))
+          .flat()
+          .map((entry) => (typeof entry === 'number' ? entry : entry.line))
       ),
       [4, 5],
       'the stored list must follow the edit too, because that is what the next reload restores'

@@ -12,57 +12,70 @@
  * slot: empty at rest, faint on hover, filled when the line is armed. The dot the learner reads and
  * the hit area they click are the same element.
  *
+ * **A dot that waits for something is drawn hollow.** A conditional breakpoint parks only on the pass
+ * its expression is true, and a filled dot would say "this always stops" — the wrong sentence about a
+ * park the learner just narrowed. The condition itself is written in the Breakpoints panel, not in a
+ * popover on a nine-pixel dot.
+ *
  * **The click leaves the editor as an event.** The gutter's configuration is built once, with no
  * access to React props, and the runner owns the persisted list (it is per lesson and travels with
  * the run). A bubbling `CustomEvent` on the editor's own DOM is the seam this app already uses for
  * cells and focus mode: the gutter stays pure, and `pythonEditorImpl` calls the runner.
  *
  * **A breakpoint is read when a run starts.** The worker parks from the list that travelled with the
- * request; a dot added during a run is for the next one. That is a real limit and it is written down
- * in `docs/PLAN-2.0-GAP.md` rather than papered over — the toolbar's Pause is what catches a loop
- * that is already spinning.
+ * request, conditions included; a dot added during a run is for the next one. That is a real limit
+ * and it is written down in `docs/PLAN-2.0-GAP.md` rather than papered over — the toolbar's Pause is
+ * what catches a loop that is already spinning.
  */
 
 import { type EditorState, type Extension } from '@codemirror/state';
 import { EditorView, GutterMarker, gutter } from '@codemirror/view';
-import { armedLines, breakpointLinesField } from './breakpointState.ts';
+import { type ArmedBreakpoint, armedBreakpoints, breakpointLinesField } from './breakpointState.ts';
 
 /** Dispatched on the editor's DOM with `detail: { line }` (1-based) when a slot is clicked. */
 export const BREAKPOINT_TOGGLE_EVENT = 'mechalab:toggle-breakpoint';
 
 /**
- * The armed line numbers for one state, cached by the positions array they came from.
+ * The armed lines and their conditions for one state, cached by the positions array they came from.
  *
  * `lineMarker` is asked about every visible line; walking the list and turning positions into line
  * numbers for each would be the same work twenty-five times a line. The positions array is replaced
- * on every edit and every effect, so its identity is the cache key.
+ * on every edit and every effect, so its identity is the cache key. The value is `line → condition`,
+ * which is every question the slot asks of state: armed or not, and why.
  */
-const lineCache = new WeakMap<number[], Set<number>>();
-function armedLineSet(state: EditorState): Set<number> {
+const lineCache = new WeakMap<ArmedBreakpoint[], Map<number, string>>();
+function armedLineMap(state: EditorState): Map<number, string> {
   const positions = state.field(breakpointLinesField);
   let lines = lineCache.get(positions);
   if (!lines) {
-    lines = new Set(armedLines(state));
+    lines = new Map(armedBreakpoints(state).map((entry) => [entry.line, entry.condition]));
     lineCache.set(positions, lines);
   }
   return lines;
 }
 
-/** One slot: the click target for a line, carrying whether that line is armed. */
+/** One slot: the click target for a line, carrying whether it is armed and what it waits for. */
 class BreakpointSlot extends GutterMarker {
-  constructor(readonly line: number, readonly armed: boolean) {
+  constructor(readonly line: number, readonly condition: string | null) {
     super();
   }
 
-  /** A dot is reused while its line and state are unchanged, which is the viewport's worth. */
+  /** A dot is reused while its line and condition are unchanged, which is the viewport's worth. */
   eq(other: GutterMarker): boolean {
-    return other instanceof BreakpointSlot && other.line === this.line && other.armed === this.armed;
+    return (
+      other instanceof BreakpointSlot &&
+      other.line === this.line &&
+      other.condition === this.condition
+    );
   }
 
   toDOM(): Node {
     const slot = document.createElement('span');
     slot.className = 'cm-breakpoint-slot';
-    slot.dataset.breakpoint = this.armed ? 'on' : 'off';
+    // `conditional` is a hollow ring: the dot is armed, the run stops only when its expression is true.
+    slot.dataset.breakpoint =
+      this.condition === null ? 'off' : this.condition.trim() ? 'conditional' : 'on';
+    if (this.condition) slot.title = `Stop here only when ${this.condition}`;
     slot.dataset.line = String(this.line);
     // Named for the browser suites, which click the slot for a line rather than counting elements.
     slot.dataset.testid = `breakpoint-slot-${this.line}`;
@@ -77,7 +90,7 @@ const breakpointGutterColumn = gutter({
   class: 'cm-breakpoint-gutter',
   lineMarker: (view, block) => {
     const line = view.state.doc.lineAt(block.from).number;
-    return new BreakpointSlot(line, armedLineSet(view.state).has(line));
+    return new BreakpointSlot(line, armedLineMap(view.state).get(line) ?? null);
   },
   // A slot carries its line number, and a dot's line changes when the text above it does: every edit
   // redraws, as does a new list from the runner.

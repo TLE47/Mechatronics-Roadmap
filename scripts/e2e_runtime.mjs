@@ -18,6 +18,10 @@
  *    interpreter is stopped in and written back to it, so Continue runs the next line with it — at
  *    top level and inside a function (where the frame's `f_locals` has to be pushed into its fast
  *    locals). A refused expression names itself and the run stays parked.
+ * 5b. **A condition narrows a park to the pass that matters.** `n == 3` on a line inside a loop is
+ *    sent with the dots, evaluated in the frame that reached the line, and the run stops on the
+ *    third turn only — and a condition that raises parks anyway, with the interpreter's sentence,
+ *    because a typo in the condition is not a reason to end the run.
  * 6. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
  *    `acos` with its signature, and picking one keeps the module name), the lint comes from
  *    pyflakes (an unused import is named with its line, and the note clears when the import is
@@ -712,6 +716,151 @@ async function main() {
     });
     await page.click('[data-testid="breakpoint-slot-3"]');
 
+    // 15. A condition on a breakpoint. The dot is armed on a line the loop runs three times and the
+    //     condition `n == 3` is typed into the Breakpoints panel, which is the only place one is
+    //     written. The gutter must draw the narrower park differently (a hollow ring), and the run
+    //     must stop on the third pass with the frame's own `n` in the bar — the check that it was not
+    //     the first pass, which an unconditional dot would have stopped on.
+    const conditionalCode = 'total = 0\nfor n in (1, 2, 3):\n    total = total + n\nprint(total)\n';
+    await setEditorCode(page, conditionalCode);
+    await page.click('[data-testid="breakpoint-slot-3"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-3"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click('[data-testid="btn-breakpoints"]');
+    await page.waitForSelector('[data-testid="breakpoint-condition-3"]', { timeout: 5000 });
+    // Typed one key at a time, not filled: the input's value is the stored condition, so a normaliser
+    // that trims would swallow the space bar and `n == 3` could never be written by a learner.
+    await page.click('[data-testid="breakpoint-condition-3"]');
+    await page.keyboard.type('n == 3');
+    const typedCondition = (await page.inputValue('[data-testid="breakpoint-condition-3"]')).trim();
+    await page.click('[data-testid="btn-breakpoints"]');
+    const narrowed = await page
+      .waitForFunction(
+        () =>
+          document.querySelector('[data-testid="breakpoint-slot-3"]')?.getAttribute('data-breakpoint') ===
+          'conditional',
+        undefined,
+        { timeout: 5000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    await page.click(RUN);
+    const narrowedParked = await page
+      .waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 })
+      .then(() => true)
+      .catch(() => false);
+    const narrowedLine = narrowedParked ? ((await page.textContent(PAUSED_LINE)) ?? '').trim() : '';
+    // The frame's own `n`, read from its chip: the whole values line is `total = 3n = 3` (the chips
+    // have no separator of their own), so a match on the text would not say which name held 3.
+    const narrowedN = narrowedParked
+      ? ((await page.textContent('[data-testid="paused-value-n"]').catch(() => '')) ?? '').trim()
+      : '';
+    check('a conditional breakpoint stops on the pass it names, not the first', () => {
+      assert.equal(
+        typedCondition,
+        'n == 3',
+        `expected the typed condition to read back as typed, got "${typedCondition}"`
+      );
+      assert.equal(
+        narrowed,
+        true,
+        'expected a dot that waits for its condition to be drawn hollow (data-breakpoint="conditional")'
+      );
+      assert.equal(
+        narrowedParked,
+        true,
+        'no paused bar appeared: the condition has to reach the worker with the dot, be compiled once, and be false on the first two passes'
+      );
+      assert.equal(
+        narrowedLine,
+        'total = total + n',
+        `expected the run to park on the armed line, got "${narrowedLine}"`
+      );
+      assert.equal(
+        narrowedN,
+        'n = 3',
+        `expected the parked frame to hold n = 3 (the third pass), got "${narrowedN.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const narrowedOutput = (await page.textContent(OUTPUT)) ?? '';
+    check('the passes the condition skipped still ran', () => {
+      assert.match(
+        narrowedOutput,
+        /\b6\b/,
+        `expected every pass to count (1 + 2 + 3 = 6), got "${narrowedOutput.slice(0, 120)}"`
+      );
+    });
+
+    // 16. A condition that raises. `missing == 3` compiles (it is a real expression) but the name is
+    //     not bound at this line, so evaluation fails where the run is. The park must still happen —
+    //     silently skipping it would hide the learner's own typo — and the bar must carry the
+    //     interpreter's sentence rather than a message of our own invention. The dot goes on line 4,
+    //     which this program runs once, so one Continue finishes it.
+    await page.click('[data-testid="btn-breakpoints"]');
+    await page.click('[data-testid="btn-clear-breakpoint-3"]');
+    await page.click('[data-testid="btn-breakpoints"]');
+    await page.click('[data-testid="breakpoint-slot-4"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-4"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click('[data-testid="btn-breakpoints"]');
+    await page.waitForSelector('[data-testid="breakpoint-condition-4"]', { timeout: 5000 });
+    await page.fill('[data-testid="breakpoint-condition-4"]', 'missing == 3');
+    await page.click('[data-testid="btn-breakpoints"]');
+    await page.click(RUN);
+    const raisedParked = await page
+      .waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 })
+      .then(() => true)
+      .catch(() => false);
+    const raisedText = raisedParked
+      ? ((await page.textContent('[data-testid="condition-error"]').catch(() => '')) ?? '').trim()
+      : '';
+    check('a condition that raises parks and names the interpreter sentence', () => {
+      assert.equal(
+        raisedParked,
+        true,
+        'expected the run to park on a line whose condition could not be evaluated'
+      );
+      assert.match(
+        raisedText,
+        /NameError/,
+        `expected the interpreter's own NameError under the parked line, got "${raisedText.slice(0, 160)}"`
+      );
+      assert.match(
+        raisedText,
+        /missing/,
+        `expected the sentence to name the name that is not bound, got "${raisedText.slice(0, 160)}"`
+      );
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    await page.click('[data-testid="breakpoint-slot-4"]');
+
     await context.close();
   } finally {
     await browser.close();
@@ -730,7 +879,10 @@ async function main() {
     '       a run parks on a shared word and steps line by line, Continue finishes it, a breakpoint parks on'
   );
   console.log(
-    '       the line it was placed on, a parked frame\u2019s values can be changed before it moves on (or are'
+    '       the line it was placed on, a condition narrows a park to the pass it names (and one that'
+  );
+  console.log(
+    '       raises parks with the interpreter\u2019s sentence), a parked frame\u2019s values can be changed before it moves on (or are'
   );
   console.log(
     '       refused in the interpreter\u2019s words), stopping a parked run keeps the interpreter; the page never blocks,'

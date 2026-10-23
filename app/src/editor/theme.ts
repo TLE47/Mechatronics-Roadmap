@@ -77,6 +77,14 @@ export const pythonTheme = EditorView.theme(
       backgroundColor: 'var(--rose)',
       borderColor: 'var(--rose)',
     },
+    // Armed, but only when its condition holds: a ring rather than a disc, so the dot still reads as
+    // a breakpoint and as a narrower one. The 2px border is what keeps the hole visible at 9px beside
+    // a filled dot the same size (WCAG 1.4.11 is met by the border, not by the fill).
+    '.cm-breakpoint-slot[data-breakpoint="conditional"]': {
+      backgroundColor: 'transparent',
+      borderColor: 'var(--rose)',
+      borderWidth: '2px',
+    },
     '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--accent) 6%, transparent)' },
     '.cm-activeLineGutter': {
       backgroundColor: 'color-mix(in srgb, var(--accent) 8%, transparent)',
