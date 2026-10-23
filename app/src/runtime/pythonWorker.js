@@ -52,7 +52,15 @@ const PAUSE_REQUEST = 1;
 const PAUSE_CONTINUE = 2;
 const PAUSE_STEP = 3;
 const PAUSE_STOP = 4;
+// A change to the parked frame's own values. The command word carries the decision; the value itself
+// rides in its own shared buffer, the same [state, length, bytes] layout stdin uses.
+const PAUSE_EDIT = 5;
 let pauseView = null;
+let editView = null;
+let editBytes = null;
+// The payload of the edit the page just asked for, read out of the shared buffer when the command
+// arrives and handed to Python by `takePauseEdit` on the very next call.
+let pendingEdit = '';
 
 // Scope. A learner's loop can produce tens of thousands of points; posting each one would cost more
 // than the simulation. Points are buffered here and sent in batches of SCOPE_FLUSH_POINTS, plus one
@@ -78,6 +86,18 @@ function readStdin(prompt) {
   const length = Atomics.load(stdinView, STDIN_LENGTH);
   const bytes = new Uint8Array(stdinBytes, 8, length).slice();
   return new TextDecoder().decode(bytes);
+}
+
+/**
+ * The edit the page just asked for, as JSON (`{ name, expression }`), and only once.
+ *
+ * Called from Python immediately after `pauseAt` answers `edit`: the value cannot ride back in the
+ * return value (that is a plain string, and evaluating it is Python's job, not this file's).
+ */
+function takePauseEdit() {
+  const text = pendingEdit;
+  pendingEdit = '';
+  return text;
 }
 
 /**
@@ -117,6 +137,28 @@ function pauseAt(payloadJson) {
     Atomics.wait(pauseView, PAUSE_COMMAND, PAUSE_NONE);
     const command = Atomics.load(pauseView, PAUSE_COMMAND);
     Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
+    if (command === PAUSE_EDIT) {
+      Atomics.store(pauseView, PAUSE_STATUS, 0);
+      // Copied now, while the page is still waiting for the next `paused` message: it will not touch
+      // the buffer again until this run has parked, and a decode here is a few hundred bytes.
+      pendingEdit = '';
+      if (editView) {
+        const length = Math.max(0, Math.min(Atomics.load(editView, 1), editBytes.byteLength - 8));
+        if (length) {
+          try {
+            // `slice()` copies out of shared memory first: `TextDecoder` refuses a view over a
+            // `SharedArrayBuffer` ("The provided ArrayBufferView value must not be shared"), which is
+            // the same reason `readStdin` copies before decoding.
+            pendingEdit = new TextDecoder().decode(
+              new Uint8Array(editBytes, 8, length).slice()
+            );
+          } catch {
+            pendingEdit = '';
+          }
+        }
+      }
+      return 'edit';
+    }
     if (command === PAUSE_CONTINUE || command === PAUSE_STEP || command === PAUSE_STOP) {
       Atomics.store(pauseView, PAUSE_STATUS, 0);
       if (command === PAUSE_CONTINUE) return 'continue';
@@ -191,6 +233,8 @@ function postResult(payload) {
     Atomics.store(pauseView, PAUSE_COMMAND, PAUSE_NONE);
     Atomics.store(pauseView, PAUSE_STATUS, 0);
   }
+  // A run is over: an edit left unread belongs to a frame that no longer exists.
+  pendingEdit = '';
   self.postMessage(payload);
 }
 
@@ -618,6 +662,10 @@ self.onmessage = async (event) => {
     stdinView = msg.stdinBuffer ? new Int32Array(msg.stdinBuffer, 0, 2) : null;
     stdinBytes = msg.stdinBuffer || null;
     pauseView = msg.pauseBuffer ? new Int32Array(msg.pauseBuffer, 0, 2) : null;
+    editView = msg.editBuffer ? new Int32Array(msg.editBuffer, 0, 2) : null;
+    // The buffer itself, not a view over it: the payload decode slices from byte 8, and a `Uint8Array`
+    // passed to another `Uint8Array` constructor is copied as an array-like, ignoring the offset.
+    editBytes = msg.editBuffer || null;
     if (interruptView && pyodideInstance) pyodideInstance.setInterruptBuffer(interruptView);
     return;
   }
@@ -726,6 +774,7 @@ self.onmessage = async (event) => {
       // question asked of the page before the line executes.
       py.globals.set('__mechalab_pause_requested__', pauseRequested);
       py.globals.set('__mechalab_pause__', pauseAt);
+      py.globals.set('__mechalab_take_edit__', takePauseEdit);
       // The armed lines, as one comma-joined string: a JS array arrives in Python as a proxy, and a
       // membership test on one would be a boundary round trip on every executed line. The Python
       // side builds a set once per run (`breakpoint_lines`).
@@ -795,18 +844,62 @@ def __mechalab_execute():
         if _part.isdigit():
             breakpoint_lines.add(int(_part))
 
+    def _apply_edit(frame):
+        # A value the learner typed for a name the bar is showing. It is evaluated in the parked frame
+        # - the names the bar read are the names it can see - and written back into that frame, so
+        # Continue carries on with the value they chose. Answers an error sentence, or "" when it
+        # landed: a rejected expression must not look like an applied one.
+        raw = __mechalab_take_edit__()
+        if not raw:
+            return ""
+        try:
+            request = _json.loads(raw)
+            edit_name = str(request.get("name") or "")
+            edit_expression = str(request.get("expression") or "")
+            if not edit_name or not edit_expression.strip():
+                return "An edit needs a name and a value."
+            edit_value = eval(
+                compile(edit_expression, "<frame edit>", "eval"),
+                frame.f_globals,
+                frame.f_locals,
+            )
+        except Exception as edit_error:
+            return f"{type(edit_error).__name__}: {edit_error}"
+        frame.f_locals[edit_name] = edit_value
+        # On CPython 3.12 a function frame's f_locals is a snapshot: writing it changes what the
+        # debugger reads, not what the function will use. Push it into the frame's fast locals. That
+        # API is private, so a failure says so rather than leaving a value that looks applied.
+        if frame.f_code.co_name != "<module>":
+            try:
+                import ctypes
+                ctypes.pythonapi.PyFrame_LocalsToFast(ctypes.py_object(frame), ctypes.c_int(0))
+            except Exception:
+                return "This interpreter cannot change a local inside a function; edit at top level."
+        return ""
+
     def _pause_here(frame, reason):
         # A pause is only offered at a line of the learner's own file - stepping into math.sqrt is
         # reading CPython, not their program - and only while the page shares a command word. The
         # reason travels with the step so the bar can say which of the three parks this is.
         nonlocal t0, pause_mode
-        verdict = __mechalab_pause__(_json.dumps({
-            "line": frame.f_lineno,
-            "fn": frame.f_code.co_name,
-            "depth": _trace_depth(frame),
-            "values": _trace_values(frame),
-            "reason": reason,
-        }))
+        edit_error = ""
+        while True:
+            payload = {
+                "line": frame.f_lineno,
+                "fn": frame.f_code.co_name,
+                "depth": _trace_depth(frame),
+                "values": _trace_values(frame),
+                "reason": reason,
+            }
+            if edit_error:
+                payload["edit_error"] = edit_error
+            verdict = __mechalab_pause__(_json.dumps(payload))
+            if verdict == "edit":
+                # Applied, or rejected with a sentence: either way the bar is posted again with this
+                # frame's current values, and the run stays parked until the learner decides.
+                edit_error = _apply_edit(frame)
+                continue
+            break
         if verdict == "stop":
             raise KeyboardInterrupt
         pause_mode = 1 if verdict == "step" else 0

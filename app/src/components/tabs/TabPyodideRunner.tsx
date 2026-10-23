@@ -206,7 +206,17 @@ interface PausedStep {
   values: { name: string; value: string }[];
   /** Why the interpreter parked: a gutter breakpoint, a Step, or the Pause button. */
   reason?: 'breakpoint' | 'step' | 'pause';
+  /** A frame edit that was refused, in the interpreter's own words; absent when it landed. */
+  edit_error?: string;
 }
+
+/**
+ * How large a frame edit may be, in UTF-8 bytes.
+ *
+ * The shared buffer is 8 bytes of `[state, length]` plus this many bytes of payload: an expression a
+ * learner types into one line, with room to spare, and small enough that the copy is never a pause.
+ */
+const FRAME_EDIT_BYTES = 2000;
 
 /** What the Share button last did, so the line under the toolbar can say it. */
 type ShareStatus =
@@ -305,6 +315,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Where the interpreter is parked, or null when it is not. The worker posts the step and then
   // blocks; Step, Continue and Stop are the three answers it is waiting for.
   const [pausedStep, setPausedStep] = useState<PausedStep | null>(null);
+  // The value being changed while the interpreter is parked, and why the last change was refused.
+  // Both belong to the park: they are dropped when it ends or when the run moves on.
+  const [frameEdit, setFrameEdit] = useState<{ name: string; expression: string } | null>(null);
+  const [frameEditError, setFrameEditError] = useState<string>('');
   // The lines the gutter has armed for this lesson (`app/src/editor/breakpoints.ts`). Read at mount,
   // re-read on a lesson switch, and written on every click: the store, not this state, is what a
   // reload reads back.
@@ -399,6 +413,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // `pauseAt`). Null means the browser gave no SharedArrayBuffer, and then Pause is simply absent —
   // a button that cannot work is worse than one that is not offered.
   const pauseRef = useRef<SharedArrayBuffer | null>(null);
+  // A change to a parked frame's values. The command word decides, the payload rides here: the same
+  // `[length, bytes]` shape stdin uses, for the same reason — a message queues behind the park.
+  const frameEditRef = useRef<SharedArrayBuffer | null>(null);
   const stopFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [stdinPrompt, setStdinPrompt] = useState<string | null>(null);
   const [stdinValue, setStdinValue] = useState<string>('');
@@ -896,18 +913,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         interruptRef.current = new SharedArrayBuffer(4);
         stdinCtrlRef.current = new SharedArrayBuffer(8 * 1024);
         pauseRef.current = new SharedArrayBuffer(8);
+        frameEditRef.current = new SharedArrayBuffer(8 + FRAME_EDIT_BYTES);
         setPauseCapable(true);
         worker.postMessage({
           type: 'init',
           interruptBuffer: interruptRef.current,
           stdinBuffer: stdinCtrlRef.current,
           pauseBuffer: pauseRef.current,
+          editBuffer: frameEditRef.current,
         });
       }
     } catch {
       interruptRef.current = null;
       stdinCtrlRef.current = null;
       pauseRef.current = null;
+      frameEditRef.current = null;
     }
     // A brand-new worker has not loaded Python, so the status has to stop saying it has. A tab switch
     // terminates the worker while this component's state survives it, and the next mount warms a new
@@ -1196,6 +1216,35 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   };
 
   /**
+   * Change one of the parked frame's values, and stay parked.
+   *
+   * The expression is evaluated by the worker **in the frame it is stopped in** and written back to
+   * the frame, so the next line runs with the value the learner chose. The run does not move: the page
+   * gets the same line back with the frame's new values, so "what if it were 41" is answered before
+   * the learner decides to continue. A refused expression comes back as `edit_error` on that bar.
+   */
+  const applyFrameEdit = () => {
+    const buffer = frameEditRef.current;
+    const pause = pauseRef.current;
+    if (!buffer || !pause || !pausedStep || !frameEdit) return;
+    const payload = new TextEncoder().encode(
+      JSON.stringify({ name: frameEdit.name, expression: frameEdit.expression })
+    );
+    if (!payload.length || payload.length > FRAME_EDIT_BYTES) {
+      setFrameEditError(`An edit must be between 1 and ${FRAME_EDIT_BYTES} bytes of UTF-8.`);
+      return;
+    }
+    // Bytes first, then the command that tells the worker to read them: it is parked on the command
+    // word and will not look at the buffer until that word changes.
+    new Uint8Array(buffer, 8, payload.length).set(payload);
+    Atomics.store(new Int32Array(buffer, 0, 2), 1, payload.length);
+    const command = new Int32Array(pause, 0, 2);
+    Atomics.store(command, 0, 5);
+    Atomics.notify(command, 0);
+    setFrameEditError('');
+  };
+
+  /**
    * Answer a parked interpreter: 2 continue, 3 step, 4 stop.
    *
    * The command is a shared word because a message would queue behind the very call it is meant to
@@ -1213,6 +1262,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       return;
     }
     setPausedStep(null);
+    setFrameEdit(null);
+    setFrameEditError('');
     resumeWatchdogRef.current?.();
   };
 
@@ -1225,6 +1276,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       Atomics.store(pause, 0, 4);
       Atomics.notify(pause, 0);
       setPausedStep(null);
+      setFrameEdit(null);
+      setFrameEditError('');
     }
     // With shared memory, stop in place: the interpreter raises KeyboardInterrupt inside the
     // running program, so imports, variables and the loaded runtime all survive. A worker that
@@ -1316,6 +1369,8 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // A new run is not paused: a bar left over from the previous one would describe a worker that
     // has already been replaced by this run.
     setPausedStep(null);
+    setFrameEdit(null);
+    setFrameEditError('');
     setStdout('');
     setStderr('');
     setInstructorError('');
@@ -1401,7 +1456,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           if (data.type === 'paused') {
             if (data.runId !== runId) return;
             clearRunWatchdog();
-            setPausedStep((data.step as PausedStep) ?? null);
+            const step = (data.step as PausedStep) ?? null;
+            setPausedStep(step);
+            // An edit that landed re-posts this park with the frame's new values: the form closes and
+            // the chips show what the program will use. One that was refused keeps the form open and
+            // says why, in the interpreter's own words.
+            if (step?.edit_error) setFrameEditError(step.edit_error);
+            else {
+              setFrameEditError('');
+              setFrameEdit(null);
+            }
             return;
           }
           if (data.runId !== runId) return;
@@ -3265,12 +3329,81 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   data-testid="paused-values"
                   className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-muted"
                 >
+                  {/* Each name is a button: a value you can read but not try is half a debugger. */}
                   {pausedStep.values.map((value) => (
-                    <span key={value.name}>
+                    <button
+                      key={value.name}
+                      type="button"
+                      data-testid={`paused-value-${value.name}`}
+                      onClick={() => {
+                        setFrameEdit({ name: value.name, expression: value.value });
+                        setFrameEditError('');
+                      }}
+                      title={`Change ${value.name} for this run — your code is untouched`}
+                      className="cursor-pointer border-0 bg-transparent p-0 text-left font-mono text-[11px] text-muted underline decoration-dotted underline-offset-2 hover:text-body"
+                    >
                       <span className="text-accent">{value.name}</span> = {value.value}
-                    </span>
+                    </button>
                   ))}
                 </div>
+              )}
+              {frameEdit && pauseCapable && (
+                <form
+                  data-testid="frame-edit"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    applyFrameEdit();
+                  }}
+                  className="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[11px]"
+                >
+                  <span className="text-accent">{frameEdit.name}</span>
+                  <span className="text-muted">=</span>
+                  <input
+                    data-testid="frame-edit-expression"
+                    aria-label={`New value for ${frameEdit.name}, as a Python expression`}
+                    value={frameEdit.expression}
+                    onChange={(event) => {
+                      const expression = event.target.value;
+                      setFrameEdit((current) => (current ? { ...current, expression } : current));
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape') {
+                        event.preventDefault();
+                        setFrameEdit(null);
+                      }
+                    }}
+                    autoFocus
+                    spellCheck={false}
+                    className="w-40 rounded border px-1.5 py-0.5 font-mono text-[11px] text-body"
+                    style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
+                  />
+                  <button
+                    type="submit"
+                    data-testid="btn-frame-edit-apply"
+                    className="cursor-pointer rounded border border-line bg-canvas px-2 py-0.5 font-mono text-[11px] text-body hover:bg-raise"
+                  >
+                    Set
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="btn-frame-edit-cancel"
+                    onClick={() => setFrameEdit(null)}
+                    className="cursor-pointer rounded border border-line bg-canvas px-2 py-0.5 font-mono text-[11px] text-muted hover:bg-raise"
+                  >
+                    Cancel
+                  </button>
+                  <span className="text-muted">this run only — your code is untouched</span>
+                </form>
+              )}
+              {frameEditError && (
+                <p
+                  data-testid="frame-edit-error"
+                  role="status"
+                  className="mt-1.5 font-mono text-[11px]"
+                  style={{ color: 'var(--rose)' }}
+                >
+                  {frameEditError}
+                </p>
               )}
             </div>
           )}

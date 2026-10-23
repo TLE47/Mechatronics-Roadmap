@@ -11,6 +11,36 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 184: Change a Value While It Is Parked
+
+The debugger row's last live-debugging gap: a park you can read but not steer. Every value in the paused
+bar is now a **button** — it opens a one-line form prefilled with that value, and **Set** evaluates what
+you type **in the frame the interpreter is stopped in** and writes it back, so **Continue** runs the next
+line with it. The run does not move while you edit: the worker re-posts the same park with the frame's new
+values, and a refused expression is reported in the interpreter's own words (`npm run test:runtime`,
+checks 14).
+
+| Decision | Why |
+| :--- | :--- |
+| The payload rides a **shared buffer**, the command word decides | A message queues behind the very park it is meant to steer; the bytes cannot fit in a word, so `PAUSE_EDIT` plus an `[length, bytes]` buffer is the only channel that reaches a parked worker |
+| The expression is evaluated **with the frame's own globals and locals** | "What if `total` were 41" must see the names the bar just read, not a fresh namespace |
+| The worker **stays parked** and re-posts the bar | Applying an edit is not a decision about where the program goes next; Step and Continue still are |
+| A function frame needs `PyFrame_LocalsToFast` | On CPython 3.12 a function's `f_locals` is a snapshot: writing it changes what the debugger reads, not what the function will use. The private call pushes it into the fast locals, and a failure is **reported** rather than leaving a value that only looks applied |
+| The learner's **file** is never touched | This changes one run of one program; the draft, the history and the diff describe the code, not the debugger |
+
+**Two bugs the probe caught before any gate ran.** `new Uint8Array(bytesView, 8, length)` treats a typed
+array as an *array-like* and copies the whole buffer, ignoring the offset — the payload decoded as
+control characters. And `TextDecoder.decode` refuses a view over a `SharedArrayBuffer` ("The provided
+ArrayBufferView value must not be shared"), which is why `readStdin` already slices before decoding; the
+edit path now does the same.
+
+Verified: `npm run test:runtime` (four new checks: a refused expression names itself and the run stays
+parked, an edit updates the bar's values without touching the code, the program continues with the new
+value, and a local inside a function is changed for the frame that holds it), `npm run test:workbench`
+(50 suites), axe 11 tabs × 4 palettes, weight, lint clean.
+
+---
+
 ## [2026-10-22] — Run 182: Breakpoints in the Gutter
 
 Run 181's pause had one hole left, and the plan named it: *"a park is asked for, not placed on a

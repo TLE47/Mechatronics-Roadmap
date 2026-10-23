@@ -684,6 +684,12 @@ the gutter slot beside a line, or put the caret on it and press **F9**, and the 
 or not the learner can reach the toolbar in time. Clicking an armed line disarms it, a lesson keeps its
 own list, and the list is remembered in `localStorage` across a reload.
 
+**A parked frame's values can be changed.** Every value in the bar is a button: it opens a one-line form
+prefilled with that value, and **Set** evaluates what you type in the frame the interpreter is stopped in
+and writes it back, so **Continue** runs the next line with it. The run does not move while you do this —
+the bar re-posts with the frame's new values — and a refused expression is shown in the interpreter's own
+words. It changes the run, never the file.
+
 Every run is also recorded, line by line, and the **Trace** panel beside the output steps through it
 ([`src/runTrace.ts`](src/runTrace.ts), [`src/components/TracePanel.tsx`](src/components/TracePanel.tsx),
 `npm run test:trace`, browser step 5h). A replay answers *"why did this loop do that?"* after the fact —
@@ -700,6 +706,7 @@ The recording is the history; the park is the present.
 | A breakpoint is **held as a position, remembered as a line number** | While the editor is open a dot is a document position, so CodeMirror's change mapping carries it with the statement it was placed on: a newline typed above moves it down, undo brings it back, and Load Solution re-seeds it from the line number instead of collapsing it. The line number is what a lesson switch and a reload restore (see [`src/editor/breakpointState.ts`](src/editor/breakpointState.ts)). |
 | A breakpoint is read **when the run starts** | A park needs a set the interpreter already has; a message cannot reach a worker inside Python, so a dot added mid-run is for the next run (the toolbar's Pause catches the loop that is already spinning). |
 | The gutter draws a **slot on every line** | A column that is invisible until it holds something has no affordance to click. The slot is the click target *and* the dot, so what the learner reads is what they pressed. |
+| A value in the bar is a **button**, and the edit runs **in that frame** | "What if `total` were 41" is answered before the learner decides to continue: the worker evaluates the expression with the frame's own globals and locals, writes it back, and stays parked. Inside a function that needs `PyFrame_LocalsToFast` (a function frame's `f_locals` is a snapshot on CPython 3.12); a failure says so rather than leaving a value that only looks applied. The learner's file is never touched. |
 
 The panel says in a sentence that it is a recording — this is where the program has been, not where it
 is — and offers **Show line** to put the caret on the step's line; the values are that step's frame, so

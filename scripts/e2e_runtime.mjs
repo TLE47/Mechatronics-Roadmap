@@ -14,7 +14,11 @@
  *    clickable, and after the interrupt the tabs still switch.
  * 4. **A breakpoint is a park that was placed.** The gutter is armed before the run, and the
  *    interpreter stops on that line with nobody pressing Pause (`app/src/editor/breakpoints.ts`).
- * 5. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
+ * 5. **A parked frame can be changed.** A value the learner types is evaluated in the frame the
+ *    interpreter is stopped in and written back to it, so Continue runs the next line with it — at
+ *    top level and inside a function (where the frame's `f_locals` has to be pushed into its fast
+ *    locals). A refused expression names itself and the run stays parked.
+ * 6. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
  *    `acos` with its signature, and picking one keeps the module name), the lint comes from
  *    pyflakes (an unused import is named with its line, and the note clears when the import is
  *    used), the pointer over a name opens Jedi's card for it (`def acos`, the call, the docstring),
@@ -580,6 +584,134 @@ async function main() {
     // Disarm, so a later visit to this page cannot be parked by this suite.
     await page.click('[data-testid="breakpoint-slot-4"]');
 
+    // 14. A parked frame's values can be changed before it moves on. A value chip opens a one-line
+    //     form, the worker evaluates the expression **in the frame it is stopped in** and stays
+    //     parked, and Continue runs the next line with the new value. A refused expression must say
+    //     so and leave the run parked rather than looking applied.
+    const editSource = 'total = 1\nprint(total)\n';
+    await setEditorCode(page, editSource);
+    await page.click('[data-testid="breakpoint-slot-2"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-2"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click(RUN);
+    await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 });
+
+    // A refused expression: the bar keeps the form open and says why, in the interpreter's words.
+    await page.click('[data-testid="paused-value-total"]');
+    await page.fill('[data-testid="frame-edit-expression"]', '1 +');
+    await page.click('[data-testid="btn-frame-edit-apply"]');
+    const refused = await page
+      .waitForSelector('[data-testid="frame-edit-error"]', { timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
+    const refusedText = refused
+      ? ((await page.textContent('[data-testid="frame-edit-error"]')) ?? '').trim()
+      : '';
+    const stillParked = await page.locator('[data-testid="paused-bar"]').count();
+    check('a refused edit is named and the run stays parked', () => {
+      assert.equal(refused, true, 'expected a sentence under the edit form for an expression that does not parse');
+      assert.match(
+        refusedText,
+        /SyntaxError|Error/,
+        `expected the interpreter's own failure, got "${refusedText}"`
+      );
+      assert.equal(stillParked, 1, 'a refused edit must not move the program on');
+    });
+    await page.click('[data-testid="btn-frame-edit-cancel"]');
+
+    await page.click('[data-testid="paused-value-total"]');
+    await page.fill('[data-testid="frame-edit-expression"]', '41');
+    await page.click('[data-testid="btn-frame-edit-apply"]');
+    const chipUpdated = await page
+      .waitForFunction(
+        () => (document.querySelector('[data-testid="paused-value-total"]')?.textContent ?? '').includes('41'),
+        undefined,
+        { timeout: 15000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const codeAfterEdit = (await getEditorCode(page)).trim();
+    check('an edit is applied in the parked frame, and the bar shows the new value', () => {
+      assert.equal(
+        chipUpdated,
+        true,
+        'expected the value chip to read 41 after the edit; the worker re-posts the park with the frame it now holds'
+      );
+      assert.equal(
+        codeAfterEdit,
+        editSource.trim(),
+        'changing a frame value must not touch the learner\u2019s code'
+      );
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const afterEdit = (await page.textContent(OUTPUT)) ?? '';
+    check('the program continues with the value it was given', () => {
+      assert.match(
+        afterEdit,
+        /\b41\b/,
+        `expected print(total) to print the edited value (41), got "${afterEdit.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="breakpoint-slot-2"]');
+
+    // Inside a function the frame's `f_locals` is a snapshot on CPython 3.12, so this is the check
+    // that the value is pushed back into the frame's fast locals rather than only into the copy the
+    // bar reads. If this interpreter cannot do it, the worker says so instead of pretending.
+    const editFunction = 'def f():\n    x = 1\n    return x\nprint(f())\n';
+    await setEditorCode(page, editFunction);
+    await page.click('[data-testid="breakpoint-slot-3"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-3"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click(RUN);
+    await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 });
+    await page.click('[data-testid="paused-value-x"]');
+    await page.fill('[data-testid="frame-edit-expression"]', '99');
+    await page.click('[data-testid="btn-frame-edit-apply"]');
+    await page
+      .waitForFunction(
+        () => (document.querySelector('[data-testid="paused-value-x"]')?.textContent ?? '').includes('99'),
+        undefined,
+        { timeout: 15000 }
+      )
+      .catch(() => undefined);
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const functionEdit = (await page.textContent(OUTPUT)) ?? '';
+    const functionError = await page.textContent('[data-testid="pre-actual-stdout"]').catch(() => '');
+    check('a local inside a function is changed for the frame that holds it', () => {
+      assert.match(
+        functionEdit,
+        /\b99\b/,
+        `expected the function to return the edited local (99), got "${String(functionError).slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="breakpoint-slot-3"]');
+
     await context.close();
   } finally {
     await browser.close();
@@ -598,7 +730,10 @@ async function main() {
     '       a run parks on a shared word and steps line by line, Continue finishes it, a breakpoint parks on'
   );
   console.log(
-    '       the line it was placed on, stopping a parked run keeps the interpreter; the page never blocks,'
+    '       the line it was placed on, a parked frame\u2019s values can be changed before it moves on (or are'
+  );
+  console.log(
+    '       refused in the interpreter\u2019s words), stopping a parked run keeps the interpreter; the page never blocks,'
   );
   console.log(
     '       Jedi completes math.acos without losing the module, hovers'
