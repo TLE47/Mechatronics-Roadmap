@@ -43,7 +43,7 @@ python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
 npm run test:theme                      # palette rules: stored pick, OS default, prefers-contrast, the three controls
 npm run test:theme:e2e                  # the three controls + contrast on all 11 tabs, in all four palettes
-npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step, breakpoints (conditional ones too), a parked frame's values changed, Pages fallback
+npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step/Step in (into the lesson and into the plant), breakpoints (conditional ones too), a parked frame's values changed, Pages fallback
 npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:share                      # the share link: round trip, the URL-safe alphabet, the measured cap, every malformed fragment

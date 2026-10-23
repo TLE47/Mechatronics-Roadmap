@@ -694,6 +694,14 @@ parked line, because a typo in the condition must neither end the run nor silent
 conditions reach the interpreter with the request, like the dots, so one written during a run applies to
 the next one.
 
+**Step in reaches the call.** **Step** runs a call to its end; **Step in** parks on the called function's
+first line instead — in your own file, or in a file you can read, like a lesson's helper tab or the
+shared plant. A park names its file now, so the bar shows the name and quotes **that** file's line
+rather than `main.py`'s, and the frame's values are the callee's. A call into CPython itself
+(`math.sqrt`) has no source in the editor to stand on, so a Step in on one behaves as a Step; from
+inside a helper, Step stays in that helper, and a call that returns lands back in its caller — the way
+out without a Step out button.
+
 **A parked frame's values can be changed.** Every value in the bar is a button: it opens a one-line form
 prefilled with that value, and **Set** evaluates what you type in the frame the interpreter is stopped in
 and writes it back, so **Continue** runs the next line with it. The run does not move while you do this —
@@ -716,6 +724,7 @@ The recording is the history; the park is the present.
 | A breakpoint is **held as a position, remembered as a line number** | While the editor is open a dot is a document position, so CodeMirror's change mapping carries it with the statement it was placed on: a newline typed above moves it down, undo brings it back, and Load Solution re-seeds it from the line number instead of collapsing it. The line number is what a lesson switch and a reload restore (see [`src/editor/breakpointState.ts`](src/editor/breakpointState.ts)). |
 | A breakpoint is read **when the run starts** | A park needs a list the interpreter already has; a message cannot reach a worker inside Python, so a dot (or a condition) added mid-run is for the next run — the toolbar's Pause catches the loop that is already spinning. |
 | The gutter draws a **slot on every line** | A column that is invisible until it holds something has no affordance to click. The slot is the click target *and* the dot, so what the learner reads is what they pressed. |
+| A step lands only in a file the page can show, and the park says **which** | A park quotes a line; a frame with no source (CPython's own) would be a sentence nobody can check, so `math.sqrt` is stepped over, not into. A step over parks at the depth that asked for it or shallower — which is also how a returning call lands back in its caller. |
 | A narrowed dot is **hollow**, and a condition that raises **still parks** | A filled dot says "always stops", which is the wrong sentence about a park the learner just narrowed; and a condition that could not be evaluated is a mistake the learner has to see, not a park skipped in silence or a run ended with no explanation. |
 | A value in the bar is a **button**, and the edit runs **in that frame** | "What if `total` were 41" is answered before the learner decides to continue: the worker evaluates the expression with the frame's own globals and locals, writes it back, and stays parked. Inside a function that needs `PyFrame_LocalsToFast` (a function frame's `f_locals` is a snapshot on CPython 3.12); a failure says so rather than leaving a value that only looks applied. The learner's file is never touched. |
 

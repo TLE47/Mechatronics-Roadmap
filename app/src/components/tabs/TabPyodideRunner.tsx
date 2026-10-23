@@ -98,6 +98,7 @@ import {
   writeBreakpoints,
   type Breakpoint,
 } from '../../editor/breakpoints';
+import type { LessonFile } from '../../lessonFiles';
 import { PythonEditor, type PythonEditorHandle } from '../PythonEditor';
 import { ScopePanel } from '../ScopePanel';
 import { normalizeScopeSeries, type ScopeSeries } from '../../scopeModel';
@@ -159,6 +160,27 @@ export const STORAGE_KEY_FIRST_GUIDE = 'mechalab_first_guide_dismissed_v1';
 // can cache what it fetches; this component only owns the messages it sends.
 
 
+/**
+ * The text a parked line is quoted from.
+ *
+ * A park names its own file because a Step in can land in a helper tab or the shared plant: quoting
+ * main.py's line 116 for a line of the plant would be a sentence about a different program. The
+ * learner's file is the text the run executed (so an edit made while parked cannot rewrite the
+ * quote), while a helper and the plant are quoted from the same copies their tabs show.
+ */
+function sourceForPark(
+  file: string | undefined,
+  runCode: string,
+  helperFiles: readonly LessonFile[]
+): string {
+  if (!file || file === '<lesson_editor>') return runCode;
+  const helper = helperFiles.find((entry) => entry.name === file);
+  if (helper) return helper.content;
+  // The plant is written into every run, whether or not this lesson's own text mentions it, so a
+  // learner can import it anywhere and step into it there.
+  return file === MECHALAB_PLANT_FILENAME ? MECHALAB_PLANT_PY : '';
+}
+
 /** The last palette run request this page has acted on; see the effect near the keyboard shortcut. */
 let LAST_RUN_REQUEST_HANDLED = 0;
 
@@ -212,6 +234,11 @@ interface PausedStep {
   reason?: 'breakpoint' | 'step' | 'pause';
   /** A frame edit that was refused, in the interpreter's own words; absent when it landed. */
   edit_error?: string;
+  /**
+   * The file the parked line is in: `<lesson_editor>` for the learner's own document, a helper tab's
+   * name, or the plant's filename. Absent from an older worker, which only ever parked in one file.
+   */
+  file?: string;
   /**
    * Why a conditional breakpoint would not evaluate, in the interpreter's own words.
    *
@@ -1274,13 +1301,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   };
 
   /**
-   * Answer a parked interpreter: 2 continue, 3 step, 4 stop.
+   * Answer a parked interpreter: 2 continue, 3 step, 4 stop, 6 step into the call.
    *
    * The command is a shared word because a message would queue behind the very call it is meant to
    * steer. Step leaves the worker's hook armed for the next line, so holding the button walks the
-   * program one line at a time.
+   * program one line at a time; Step in arms it for the next line of *any* file the learner can open,
+   * which is where a call's own body starts.
    */
-  const answerPause = (command: 2 | 3 | 4) => {
+  const answerPause = (command: 2 | 3 | 4 | 6) => {
     const buffer = pauseRef.current;
     if (!buffer) return;
     const view = new Int32Array(buffer, 0, 2);
@@ -3411,12 +3439,33 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   {pausedStep.reason === 'breakpoint' ? 'Breakpoint' : 'Paused'} ·{' '}
                   {pausedStep.fn === '<module>' ? 'top level' : `${pausedStep.fn}()`} · line{' '}
                   {pausedStep.line}
+                  {/* A step can land in a file of its own: naming it is what makes the quoted line
+                      below a statement about this program rather than the lesson's. */}
+                  {pausedStep.file && pausedStep.file !== '<lesson_editor>' && (
+                    <>
+                      {' · '}
+                      <span
+                        data-testid="paused-file"
+                        className="normal-case tracking-normal text-muted"
+                      >
+                        {pausedStep.file}
+                      </span>
+                    </>
+                  )}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <button
+                    onClick={() => answerPause(6)}
+                    data-testid="btn-step-in"
+                    title="Step into the call this line is about to make: stop at its first line, in your file or a helper"
+                    className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
+                  >
+                    Step in
+                  </button>
+                  <button
                     onClick={() => answerPause(3)}
                     data-testid="btn-step"
-                    title="Run this line and stop at the next one (the frame's values come with it)"
+                    title="Run this line and stop at the next one of this file (the frame's values come with it)"
                     className="px-2.5 py-1 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line cursor-pointer"
                   >
                     Step
@@ -3432,12 +3481,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </span>
               </div>
               {/* Quoted from the text that ran, not from the editor: a park describes a program,
-                  and an edit made while it is parked must not rewrite what it is about to execute. */}
+                  and an edit made while it is parked must not rewrite what it is about to execute.
+                  A helper's line is quoted from that helper, which is why the payload names a file. */}
               <code
                 data-testid="paused-line"
                 className="mt-2 block whitespace-pre overflow-x-auto font-mono text-[11.5px] text-body"
               >
-                {(runCodeRef.current || code).split('\n')[pausedStep.line - 1]?.trim() ?? ''}
+                {sourceForPark(pausedStep.file, runCodeRef.current || code, helperFiles)
+                  .split('\n')[pausedStep.line - 1]?.trim() ?? ''}
               </code>
               {/* A condition that raised is a mistake in the condition, not a reason to skip the
                   park or end the run: the interpreter's sentence is shown where the breakpoint is. */}

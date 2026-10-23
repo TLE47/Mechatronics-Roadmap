@@ -11,6 +11,45 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 186: Step Into the Call
+
+The debugger row's last named gap: a step could only run a call to its end. **Step in** parks on the
+called function's first line instead — in the learner's own file, and in a file that is not theirs,
+which is what "step into library code" means here: the lesson's helper tabs and the shared plant are
+code they can open, so they are places a step may stand. A park now carries **which file** it is in, so
+the bar names it and quotes **that** file's line instead of `main.py`'s.
+
+| Decision | Why |
+| :--- | :--- |
+| A step lands in **any file the page can show** | The plant and the helper tabs are readable; a CPython frame has no source in the editor, so a Step in on `math.sqrt` behaves as a Step. Parking on a line nobody can read would be a park nobody can check |
+| A frame's filename is compared **without its leading slash** | A module loaded from `sys.path` says `/mechalab_plant.py`; the page's helper is `mechalab_plant.py`. One comparison covers both, and the park reports the name the page can draw |
+| Every parked step carries its **file** | The bar quotes one line. Quoting main.py's line 116 for a line of the plant is a sentence about a different program |
+| A step over parks at the **depth that asked for it or shallower** | That keeps Step talking about the function being read (a Step inside the plant stays in the plant) and makes a returning call land back in its caller — the way out without a Step out button |
+| `_trace_depth` counts **project frames**, not just the lesson's file | Depth is the rule a step over uses; counting only `<lesson_editor>` would make every helper frame look one level deep, so a Step inside the plant would jump straight back to main |
+| Breakpoints stay in the file whose **gutter** drew them | A helper's line 3 must not fire the dot armed on main.py's line 3: the list and the line numbers are the lesson file's |
+| Pause still parks in the learner's own file | It is the button that promises the next line **of your file**; a step in is how a helper becomes a place to stand |
+
+**What it looks like.** At a park on `print(double(21))`, Step in moves the bar to `return x * 2`
+with `double()` in the header; at a park on `print(plant.fk(0.1, 0.2))`, Step in moves it into
+`mechalab_plant.py` — `Paused · fk() · line 117 · mechalab_plant.py` — and quotes the plant's own
+line, with the callee's `q1`, `q2`, `l1`, `l2` beside it.
+
+**One bug the probe caught before any gate ran.** A module imported from `sys.path` reports its
+frame's file as `/mechalab_plant.py`, while the page names files the way its tabs do
+(`mechalab_plant.py`). The first version compared the two forms, so the plant was never a place a step
+could stand and a Step in on it silently behaved as a Step over — a park that never happened, which is
+the failure mode this row has been chasing all along. The comparison now strips the leading slash, and
+the payload reports the name the page uses.
+
+**Verified.** `npm run test:runtime` (34 checks; four new: Step in stops at the called function's first
+line and names the frame, the program finishes with `42` afterwards, Step in lands in the plant with the
+bar naming the file and quoting its own line 117, and Step inside the plant stays there rather than
+jumping back to main), `npm run test:breakpoints` (20, unchanged and still green), `npm run test:workbench`
+(50 suites on one dev server and one rebuilt bundle), axe 11 tabs × 4 palettes with 0 exceptions, weight
+1.02 MB (js 696.8/700 kB, css 13.7/15 kB), `check_all` 29/29, lint clean.
+
+---
+
 ## [2026-10-22] — Run 185: A Breakpoint That Waits for a Pass
 
 The debugger row's last debugging gap: a dot could stop a loop, but only on its **first** turn. A

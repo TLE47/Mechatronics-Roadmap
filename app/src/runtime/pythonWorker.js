@@ -55,6 +55,10 @@ const PAUSE_STOP = 4;
 // A change to the parked frame's own values. The command word carries the decision; the value itself
 // rides in its own shared buffer, the same [state, length, bytes] layout stdin uses.
 const PAUSE_EDIT = 5;
+// Step **into** the call the parked line is about to make, rather than over it. Its own word because
+// the two land on different lines: a step over waits for the caller's next line, a step in takes the
+// first line of whatever the call runs.
+const PAUSE_STEP_IN = 6;
 let pauseView = null;
 let editView = null;
 let editBytes = null;
@@ -178,10 +182,16 @@ function pauseAt(payloadJson) {
       }
       return 'edit';
     }
-    if (command === PAUSE_CONTINUE || command === PAUSE_STEP || command === PAUSE_STOP) {
+    if (
+      command === PAUSE_CONTINUE ||
+      command === PAUSE_STEP ||
+      command === PAUSE_STEP_IN ||
+      command === PAUSE_STOP
+    ) {
       Atomics.store(pauseView, PAUSE_STATUS, 0);
       if (command === PAUSE_CONTINUE) return 'continue';
       if (command === PAUSE_STEP) return 'step';
+      if (command === PAUSE_STEP_IN) return 'step_in';
       return 'stop';
     }
     // A request that means nothing here (a pause asked for while already paused, or a word a
@@ -798,6 +808,17 @@ self.onmessage = async (event) => {
       // Python as a proxy, and a membership test on one would be a boundary round trip on every
       // executed line. The Python side builds one map per run (`breakpoint_conditions`).
       py.globals.set('__mechalab_breakpoints__', serializeBreakpoints(breakpoints));
+      // Every file the page can put on screen: the lesson's helper tabs and the shared plant. A step
+      // can land in one of them, and the bar quotes the line from the file it names - so a file the
+      // page cannot show is not a place to park (`project_files` in the harness).
+      py.globals.set(
+        '__mechalab_project_files__',
+        JSON.stringify(
+          [plantFilename, ...helperFiles.map((file) => file?.name)].filter(
+            (name) => typeof name === 'string' && name
+          )
+        )
+      );
 
       const runnerHarness = `
 import json as _json, sys, time, traceback, warnings
@@ -839,18 +860,47 @@ def __mechalab_execute():
                 break
         return out
 
+    # The files the learner can open on screen: their own file, a lesson's helper tabs, the shared
+    # plant. A step may land in any of them; a frame we did not compile has no source in the editor
+    # to quote, so CPython's own frames are not places to stand (stepping into math.sqrt is reading
+    # the interpreter, not the learner's program).
+    project_files = {"<lesson_editor>"}
+    try:
+        _project = _json.loads(str(__mechalab_project_files__) or "[]")
+    except Exception:
+        _project = []
+    if isinstance(_project, list):
+        for _name in _project:
+            if isinstance(_name, str) and _name:
+                project_files.add(_name.lstrip("/"))
+
+    def _project_name(filename):
+        # A module imported from sys.path reports its path, '/mechalab_plant.py', while the page names
+        # files the way its tabs do. Measured: without this the plant was never a place a step could
+        # stand, and a step in on it ran the call to its end instead.
+        return filename.lstrip("/")
+
+    def _in_project(filename):
+        return _project_name(filename) in project_files
+
     def _trace_depth(frame):
-        # Frames in the learner's own file only: a call into abs() is not a deeper step in their code.
+        # Frames of files the learner can open, and only those: a call into abs() is not a deeper
+        # step in their code, and neither is Pyodide's own plumbing.
         depth = 1
         walker = frame.f_back
-        while walker is not None and walker.f_code.co_filename == "<lesson_editor>":
+        while walker is not None and _in_project(walker.f_code.co_filename):
             depth += 1
             walker = walker.f_back
         return depth
 
-    # 0: run freely. 1: stop at the next line of the learner's file and wait for the page. Set by a
-    # Step, so the line after the one a learner just read pauses too, without another click.
+    # 0: run freely. 1: step over - stop at the next line of a file the learner can open, at the depth
+    # that asked for the step or shallower, so a call runs to its end and a returning call lands back
+    # in its caller. 2: step in - stop at the first line of any of those files, which is how a call
+    # becomes a frame the bar can show.
     pause_mode = 0
+    # The depth of the park that asked for a step. A step over parks at this depth or shallower; a
+    # step in has no floor, because the line it wants is one frame deeper.
+    step_floor = 0
 
     # The lines the gutter armed for this run, and the condition each one waits for. A breakpoint
     # parks the run without anyone pressing anything, which is the difference between a pause that is
@@ -946,16 +996,17 @@ def __mechalab_execute():
         return ""
 
     def _pause_here(frame, reason, condition_error=""):
-        # A pause is only offered at a line of the learner's own file - stepping into math.sqrt is
-        # reading CPython, not their program - and only while the page shares a command word. The
-        # reason travels with the step so the bar can say which of the three parks this is, and a
+        # A pause is only offered at a line the page can show - the learner's file, a helper tab, the
+        # plant - and only while the shared command word exists. The reason travels with the step so
+        # the bar can say which park this is, the file so it can quote the right text, and a
         # condition that would not evaluate travels with it too.
-        nonlocal t0, pause_mode
+        nonlocal t0, pause_mode, step_floor
         edit_error = ""
         while True:
             payload = {
                 "line": frame.f_lineno,
                 "fn": frame.f_code.co_name,
+                "file": _project_name(frame.f_code.co_filename),
                 "depth": _trace_depth(frame),
                 "values": _trace_values(frame),
                 "reason": reason,
@@ -973,7 +1024,15 @@ def __mechalab_execute():
             break
         if verdict == "stop":
             raise KeyboardInterrupt
-        pause_mode = 1 if verdict == "step" else 0
+        if verdict == "step_in":
+            # The first line of any project file, however deep: that is the call's own body.
+            pause_mode = 2
+            step_floor = 0
+        elif verdict == "step":
+            pause_mode = 1
+            step_floor = _trace_depth(frame)
+        else:
+            pause_mode = 0
 
     def _trace_guard(frame, event, arg):
         # t0 is assigned below (the paused time is added back), so it has to be declared here too,
@@ -981,7 +1040,10 @@ def __mechalab_execute():
         nonlocal steps, trace_total, t0
         if event == "line":
             steps += 1
-            if frame.f_code.co_filename == "<lesson_editor>":
+            in_lesson = frame.f_code.co_filename == "<lesson_editor>"
+            if in_lesson:
+                # The recording is the lesson's own file: a helper's lines are not the program the
+                # learner wrote, and the trace panel draws one file's story.
                 trace_total += 1
                 if want_trace and len(trace_steps) < trace_cap:
                     trace_steps.append({
@@ -990,18 +1052,27 @@ def __mechalab_execute():
                         "depth": _trace_depth(frame),
                         "values": _trace_values(frame),
                     })
+            # Where a park may land: a step in any file the page can show, a breakpoint only in the
+            # file whose gutter drew it (a helper's line 3 must not fire the dot on main.py's line 3),
+            # and Pause in the learner's own file, which is what the button promises.
+            reason = ""
+            if pause_mode and _in_project(frame.f_code.co_filename):
+                if pause_mode == 2 or _trace_depth(frame) <= step_floor:
+                    reason = "step"
+            on_breakpoint, condition_error = (False, "")
+            if not reason and in_lesson:
                 on_breakpoint, condition_error = _breakpoint_hit(frame)
-                if pause_mode or on_breakpoint or __mechalab_pause_requested__():
-                    # The wall clock keeps running while the worker is parked, and the harness's
-                    # timeout is a wall clock: the time a learner spends reading their own line is
-                    # not execution time, so it is added back rather than charged as a slow loop.
-                    before = time.monotonic()
-                    _pause_here(
-                        frame,
-                        "step" if pause_mode else ("breakpoint" if on_breakpoint else "pause"),
-                        condition_error if on_breakpoint else "",
-                    )
-                    t0 += time.monotonic() - before
+                if on_breakpoint:
+                    reason = "breakpoint"
+            if not reason and in_lesson and __mechalab_pause_requested__():
+                reason = "pause"
+            if reason:
+                # The wall clock keeps running while the worker is parked, and the harness's timeout
+                # is a wall clock: the time a learner spends reading a line is not execution time, so
+                # it is added back rather than charged as a slow loop.
+                before = time.monotonic()
+                _pause_here(frame, reason, condition_error if reason == "breakpoint" else "")
+                t0 += time.monotonic() - before
             if steps > max_s or (time.monotonic() - t0) > max_t:
                 raise TimeoutError(
                     f"ExecutionTimeoutError: Loop exceeded execution limit ({steps} line steps / {max_t:.1f}s). "

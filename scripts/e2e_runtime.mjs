@@ -22,6 +22,9 @@
  *    sent with the dots, evaluated in the frame that reached the line, and the run stops on the
  *    third turn only — and a condition that raises parks anyway, with the interpreter's sentence,
  *    because a typo in the condition is not a reason to end the run.
+ * 5c. **Step in reaches the call.** Step runs a call to its end; Step in takes the called function's
+ *    first line — in the learner's own file, and in the shared plant, where the bar must name the
+ *    file and quote **its** line rather than main.py's. Step inside the plant stays in the plant.
  * 6. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
  *    `acos` with its signature, and picking one keeps the module name), the lint comes from
  *    pyflakes (an unused import is named with its line, and the note clears when the import is
@@ -861,6 +864,163 @@ async function main() {
     );
     await page.click('[data-testid="breakpoint-slot-4"]');
 
+    // 17. Step in, in the learner's own file. The park is the line that makes the call; Step would run
+    //     it to its end, Step in takes the function's first line instead - the one thing a debugger
+    //     must be able to do that a pause cannot. The bar's header names the frame (`double()`), so
+    //     the check reads what the learner reads rather than counting parks.
+    const stepInCode = 'def double(x):\n    return x * 2\n\nprint(double(21))\n';
+    await setEditorCode(page, stepInCode);
+    await page.click('[data-testid="breakpoint-slot-4"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-4"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click(RUN);
+    await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 });
+    await page.click('[data-testid="btn-step-in"]');
+    const steppedIn = await page
+      .waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="paused-line"]')?.textContent ?? '').trim() ===
+          'return x * 2',
+        undefined,
+        { timeout: 20000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const steppedInLine = steppedIn ? ((await page.textContent(PAUSED_LINE)) ?? '').trim() : '';
+    const steppedInHeader = steppedIn
+      ? ((await page.textContent('[data-testid="paused-bar"]')) ?? '').trim()
+      : '';
+    check('Step in stops at the first line of the function that was called', () => {
+      assert.equal(
+        steppedIn,
+        true,
+        `expected the park to move into the call (line 2 of the file), got "${steppedInLine}"`
+      );
+      assert.match(
+        steppedInHeader,
+        /double\(\)/,
+        `expected the bar to name the frame it stepped into, got "${steppedInHeader.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const steppedInOutput = (await page.textContent(OUTPUT)) ?? '';
+    check('the program finishes after stepping into a call', () => {
+      assert.match(
+        steppedInOutput,
+        /\b42\b/,
+        `expected double(21) to print 42, got "${steppedInOutput.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="breakpoint-slot-4"]');
+
+    // 18. Step in, in a file that is not the learner's. Every run has the shared plant on the Pyodide
+    //     filesystem, so `plant.fk(...)` is a call into a read-only tab. The park must name that file
+    //     and quote **its** line (`return (`), not main.py's line 116: the payload's `file` is what
+    //     makes the bar a statement about this program. A Step from inside the plant then stays in the
+    //     plant (it steps over a frame at its own depth), which is what makes reading a helper
+    //     possible at all.
+    const plantCode = 'import mechalab_plant as plant\nprint(plant.fk(0.1, 0.2))\n';
+    await setEditorCode(page, plantCode);
+    await page.click('[data-testid="breakpoint-slot-2"]');
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="breakpoint-slot-2"]')?.getAttribute('data-breakpoint') ===
+        'on',
+      undefined,
+      { timeout: 5000 }
+    );
+    await page.click(RUN);
+    await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 });
+    await page.click('[data-testid="btn-step-in"]');
+    const plantParked = await page
+      .waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="paused-file"]')?.textContent ?? '').trim() ===
+          'mechalab_plant.py',
+        undefined,
+        { timeout: 20000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const plantFile = plantParked
+      ? ((await page.textContent('[data-testid="paused-file"]')) ?? '').trim()
+      : '';
+    const plantLine = plantParked ? ((await page.textContent(PAUSED_LINE)) ?? '').trim() : '';
+    const plantHeader = plantParked
+      ? ((await page.textContent('[data-testid="paused-bar"]')) ?? '').trim()
+      : '';
+    check('Step in lands in the shared plant, and the bar quotes the plant', () => {
+      assert.equal(
+        plantParked,
+        true,
+        'expected the step to land in mechalab_plant.py: the plant is a file the learner can open, so it is a place to stand'
+      );
+      assert.equal(plantFile, 'mechalab_plant.py');
+      assert.match(
+        plantHeader,
+        /fk\(\)/,
+        `expected the bar to name the plant's frame, got "${plantHeader.slice(0, 140)}"`
+      );
+      assert.equal(
+        plantLine,
+        'l1 * math.cos(q1) + l2 * math.cos(q1 + q2),',
+        `expected the plant's own first executable line of fk (117), got "${plantLine}"`
+      );
+    });
+    await page.click('[data-testid="btn-step"]');
+    const plantStepped = await page
+      .waitForFunction(
+        () =>
+          (document.querySelector('[data-testid="paused-line"]')?.textContent ?? '').trim() ===
+          'l1 * math.sin(q1) + l2 * math.sin(q1 + q2),',
+        undefined,
+        { timeout: 20000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const plantStepFile = plantStepped
+      ? ((await page.textContent('[data-testid="paused-file"]')) ?? '').trim()
+      : '';
+    check('Step inside a helper stays in that helper', () => {
+      assert.equal(
+        plantStepped,
+        true,
+        'expected Step to advance one line inside the plant rather than jumping back to main.py'
+      );
+      assert.equal(plantStepFile, 'mechalab_plant.py');
+    });
+    await page.click('[data-testid="btn-continue"]');
+    await page.waitForFunction(
+      () => {
+        const button = document.querySelector('[data-testid="btn-run-verify"]');
+        return Boolean(button) && !button.disabled;
+      },
+      null,
+      { timeout: 20000 }
+    );
+    const plantOutput = (await page.textContent(OUTPUT)) ?? '';
+    check('the call returns the plant\u2019s own answer after stepping through it', () => {
+      assert.match(
+        plantOutput,
+        /0\.195/,
+        `expected plant.fk(0.1, 0.2) to print x = 0.1950, got "${plantOutput.slice(0, 120)}"`
+      );
+    });
+    await page.click('[data-testid="breakpoint-slot-2"]');
+
     await context.close();
   } finally {
     await browser.close();
@@ -882,7 +1042,10 @@ async function main() {
     '       the line it was placed on, a condition narrows a park to the pass it names (and one that'
   );
   console.log(
-    '       raises parks with the interpreter\u2019s sentence), a parked frame\u2019s values can be changed before it moves on (or are'
+    '       raises parks with the interpreter\u2019s sentence), Step in reaches the call (in the lesson\u2019s'
+  );
+  console.log(
+    '       file and in the shared plant, quoted from the plant\u2019s own line), a parked frame\u2019s values can be changed before it moves on (or are'
   );
   console.log(
     '       refused in the interpreter\u2019s words), stopping a parked run keeps the interpreter; the page never blocks,'
