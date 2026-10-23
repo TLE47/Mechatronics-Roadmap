@@ -50,11 +50,8 @@ import { pythonEditorTheme } from '../editor/theme';
 import { sliderAnnotation, sliderField } from '../editor/sliderWidget';
 import { applyInlineValues, inlineValueField } from '../editor/inlineWidget';
 import { CELL_RUN_EVENT, cellField } from '../editor/cellWidget';
-import {
-  BREAKPOINT_TOGGLE_EVENT,
-  breakpointGutter,
-  setBreakpointLines,
-} from '../editor/breakpointGutter';
+import { BREAKPOINT_TOGGLE_EVENT, breakpointGutter } from '../editor/breakpointGutter';
+import { armedLines, setBreakpointLines } from '../editor/breakpointState';
 import type { InlineValueAt } from '../inlineValues';
 import { pythonCompletionSource } from '../editor/completions';
 import { analysisHover, analysisSignature } from '../editor/analysisTips';
@@ -179,6 +176,7 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       onGoToDefinition,
       onRunCell,
       onToggleBreakpoint,
+      onBreakpointsMoved,
       breakpoints = [],
       vimMode = false,
       onVimMode,
@@ -199,6 +197,12 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     // A gutter click asks for a line to be armed; the list belongs to the runner, which is the only
     // place that knows which lesson this is and where it is kept (`breakpoints.ts`).
     const onToggleBreakpointRef = useRef(onToggleBreakpoint);
+    // An edit carries a dot down with its statement (`breakpointState.ts`); the runner persists the
+    // resulting line numbers, because it is the owner of the list.
+    const onBreakpointsMovedRef = useRef(onBreakpointsMoved);
+    // The list as the runner last handed it over, and the list last reported back to it. A report is
+    // sent only when an edit moved a dot to a line the runner does not already know about.
+    const breakpointsRef = useRef(breakpoints);
     // Read at completion time, not captured: the session appears once the interpreter is ready, and
     // the editor is created long before that.
     const analysisRef = useRef(getAnalysis);
@@ -208,9 +212,12 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     onDefinitionRef.current = onGoToDefinition;
     onRunCellRef.current = onRunCell;
     onToggleBreakpointRef.current = onToggleBreakpoint;
+    onBreakpointsMovedRef.current = onBreakpointsMoved;
+    breakpointsRef.current = breakpoints;
     // A string key rather than the array: the runner hands over a fresh array each render, and an
     // effect keyed on it would dispatch a transaction on every keystroke.
     const breakpointsKey = breakpoints.join(',');
+    const reportedBreakpointsKey = useRef(breakpointsKey);
     // The Vim mode word, reported upward as it changes: the badge the learner reads is the runner's
     // (`app/src/vimMode.ts`), and this file only knows what the plugin says the mode is.
     const onVimModeRef = useRef(onVimMode);
@@ -372,6 +379,17 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           ...(onToggleBreakpoint ? [breakpointGutter] : []),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onChangeRef.current?.(update.state.doc.toString());
+            // A dot is held as a position, so an edit above it moved it. The line numbers it now sits
+            // on are what the runner stores and what the next run is sent; a report is made only when
+            // they differ from the list the runner already holds, or every keystroke would write.
+            if (update.docChanged && onToggleBreakpointRef.current) {
+              const lines = armedLines(update.state);
+              const key = lines.join(',');
+              if (key !== reportedBreakpointsKey.current) {
+                reportedBreakpointsKey.current = key;
+                onBreakpointsMovedRef.current?.(lines);
+              }
+            }
             if (update.transactions.some((tr) => tr.annotation(sliderAnnotation))) {
               onSliderRef.current?.();
             }
@@ -495,6 +513,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
     useEffect(() => {
       const view = viewRef.current;
       if (!view || !onToggleBreakpointRef.current) return;
+      // The runner's list is now the one this editor holds: a report echoing it back would be a
+      // write per edit.
+      reportedBreakpointsKey.current = breakpointsKey;
       view.dispatch({ effects: setBreakpointLines.of(breakpoints) });
       // eslint-disable-next-line react-hooks/exhaustive-deps -- the joined key is the value
     }, [breakpointsKey, testId]);
@@ -506,7 +527,15 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       if (!view) return;
       const current = view.state.doc.toString();
       if (current === value) return;
-      view.dispatch({ changes: { from: 0, to: current.length, insert: value } });
+      view.dispatch({
+        changes: { from: 0, to: current.length, insert: value },
+        // A replaced document has no positions to map — every dot would land on the end of the new
+        // file — so the list is re-seeded from the lines the runner holds. Load Solution and a
+        // restored draft then leave the dots on the lines they name.
+        ...(onToggleBreakpointRef.current
+          ? { effects: setBreakpointLines.of(breakpointsRef.current) }
+          : {}),
+      });
     }, [value]);
 
     return (

@@ -1184,6 +1184,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   };
 
   /**
+   * The editor moved a dot with the statement it was placed on, and these are its new lines.
+   *
+   * The editor holds a breakpoint as a position while it is open, so an edit above one does not leave
+   * it pointing at a different statement; the line numbers it lands on are what gets stored and what
+   * the next run is sent (`app/src/editor/breakpointState.ts`).
+   */
+  const followBreakpointEdits = (lines: number[]) => {
+    const id = lessonIdRef.current || selectedId;
+    setBreakpoints(writeBreakpoints(id, lines));
+  };
+
+  /**
    * Answer a parked interpreter: 2 continue, 3 step, 4 stop.
    *
    * The command is a shared word because a message would queue behind the very call it is meant to
@@ -3377,6 +3389,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 onGoToDefinition={goToDefinition}
                 onRunCell={runCellTo}
                 onToggleBreakpoint={toggleBreakpointAt}
+                onBreakpointsMoved={followBreakpointEdits}
                 breakpoints={breakpoints}
                 vimMode={vimOn}
                 onVimMode={setVimMode}

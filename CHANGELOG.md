@@ -30,16 +30,23 @@ an armed line disarms it, each lesson keeps its own list, and the list is rememb
 | The bar says **Breakpoint**, not Paused | The reason travels with the step: a park the learner placed and one they asked for answer different questions |
 | `F9` arms the caret's line | A gutter is a mouse target, and a mouse-only feature is half a feature |
 
-Two limits are deliberate and written down: a breakpoint is a **line number**, so an edit above a dot
-leaves it on its number, and the list is the one that **travelled with the request**, so a dot added
-while a program runs is for the next run — the toolbar's Pause is what catches a loop already spinning.
-The paused bar now carries `data-paused-reason`, so a suite can tell the three parks apart.
+A dot **follows its statement**: while the editor is open a breakpoint is held as a document position,
+so CodeMirror's own change mapping carries it through an edit (type a newline above one and it moves
+down, undo brings it back), and the line numbers it lands on are reported to the runner, which is what
+a reload restores ([`app/src/editor/breakpointState.ts`](app/src/editor/breakpointState.ts)). A
+whole-document replacement — Load Solution, Reset Starter, a restored draft — re-seeds the dots from
+the stored lines instead of mapping them, since every position would otherwise collapse to one end of
+the file. One limit is deliberate and written down: the list is the one that **travelled with the
+request**, so a dot added while a program runs is for the next run — the toolbar's Pause is what catches
+a loop already spinning. The paused bar now carries `data-paused-reason`, so a suite can tell the three
+parks apart.
 
-Verified: `npm run test:breakpoints` (10 checks: the toggle, the per-lesson store, its caps and
-eviction, a refused write, and the lines a run is sent), `npm run test:runtime` (a breakpoint parks on
-the armed line and Continue finishes the program), `npm run test:workbench` (50 suites), the built
-bundle's browser sweep (step 5i: gutter click, F9, a reload), axe 11 tabs × 4 palettes, weight, lint
-clean.
+Verified: `npm run test:breakpoints` (15 checks: the toggle, the per-lesson store, its caps and
+eviction, a refused write, the lines a run is sent, and the mapping that carries a dot through an edit),
+`npm run test:runtime` (a breakpoint parks on the armed line and Continue finishes the program),
+`npm run test:workbench` (50 suites), the built bundle's browser sweep (step 5i: gutter click, F9, a
+reload, and a newline typed above a dot moving it with its statement), axe 11 tabs × 4 palettes,
+weight, lint clean.
 
 ---
 

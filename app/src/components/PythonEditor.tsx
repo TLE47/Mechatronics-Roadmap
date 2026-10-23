@@ -71,6 +71,14 @@ export interface PythonEditorProps {
    */
   onToggleBreakpoint?: (line: number) => void;
   /**
+   * An edit carried a dot to another line, and these are the lines it now sits on.
+   *
+   * A breakpoint is held inside the editor as a document position so CodeMirror can map it through a
+   * change; the line numbers are what the runner stores and sends with the next run
+   * (`app/src/editor/breakpointState.ts`). Reported only when the number actually changed.
+   */
+  onBreakpointsMoved?: (lines: number[]) => void;
+  /**
    * The lines that should show a dot. Drawn, not owned: the runner decides, and a click it refuses
    * leaves the gutter saying what is actually armed.
    */

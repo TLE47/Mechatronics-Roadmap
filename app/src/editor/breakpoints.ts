@@ -13,10 +13,11 @@
  * rather than work, so it lives in `localStorage` beside the theme and the layout preset — not in the
  * IndexedDB stores drafts and notes use.
  *
- * **A line number, not a position.** An edit above a breakpoint leaves the dot on the number it was
- * put on, which is how every small debugger treats it. Mapping positions through CodeMirror's change
- * sets would make the editor the owner of the list, and the list has to survive a lesson switch and a
- * reload — so the number is the contract, and this limit is written down rather than hidden.
+ * **Remembered as a line number, held as a position.** What a reload restores is a number beside the
+ * draft it belongs to; what the editor keeps while it is open is a document position, so an edit above
+ * a dot carries it down with the statement it was placed on rather than leaving it pointing at
+ * whatever moved into that line ([`breakpointState.ts`](breakpointState.ts)). The runner owns the
+ * stored list, which is why the numbers, not the positions, are this module's contract.
  *
  * Pure, and separate from the gutter and the runner: the cases worth pinning (out-of-order clicks, a
  * stored list written by an older version, a runaway list, a browser that refuses storage) are

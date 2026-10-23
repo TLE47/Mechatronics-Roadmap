@@ -1263,12 +1263,46 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok breakpoints are remembered, and F9 arms the caret\u2019s line');
 
-    // Leave both the gutter and the draft as the rest of the suite expects them.
-    await page.getByTestId('breakpoint-slot-3').click();
+    // An edit above a dot carries it down with the statement it was placed on. The editor holds a
+    // breakpoint as a document position and lets CodeMirror map it through the change; the runner is
+    // told the line numbers it landed on, because those are what the next reload restores. A real
+    // keystroke, not a document swap: a replacement re-seeds the dots from the lines instead of
+    // mapping them (that is the Load Solution case).
+    await page.evaluate(() => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.setCursor(0);
+      editor.focus();
+    });
+    await page.keyboard.type('z = 0');
+    await page.keyboard.press('Enter');
+    await armed(4);
+    await armed(5);
+    assert.equal(
+      await page.getByTestId('breakpoint-slot-3').getAttribute('data-breakpoint'),
+      'off',
+      'a dot must move with its statement, not stay on the line number'
+    );
+    assert.equal(
+      await page.evaluate(() => window.__mechalabEditors['editor-main'].get().split('\n')[3]),
+      'b = 2',
+      'line 4 still holds the statement the dot was placed on'
+    );
+    assert.deepEqual(
+      await page.evaluate(() =>
+        Object.values(JSON.parse(localStorage.getItem('mechalab_breakpoints_v1') ?? '{}')).flat()
+      ),
+      [4, 5],
+      'the stored list must follow the edit too, because that is what the next reload restores'
+    );
+    console.log('  ok an edit above a breakpoint carries the dot with its statement');
+
+    // Leave both the gutter and the draft as the rest of the suite expects them. The dots are on
+    // lines 4 and 5 after the edit.
     await page.getByTestId('breakpoint-slot-4').click();
+    await page.getByTestId('breakpoint-slot-5').click();
     await page.waitForFunction(
       () =>
-        document.querySelector('[data-testid="breakpoint-slot-3"]')?.getAttribute('data-breakpoint') ===
+        document.querySelector('[data-testid="breakpoint-slot-4"]')?.getAttribute('data-breakpoint') ===
         'off',
       undefined,
       { timeout: 5000 }
@@ -2798,7 +2832,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit).'
     );
   } finally {
     await browser.close();

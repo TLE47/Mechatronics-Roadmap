@@ -3,7 +3,8 @@
  *
  * A column to the left of the line numbers where a dot means *stop here*. Click it to arm a line,
  * click again to disarm it; `F9` does the same for the caret line, because a gutter is a mouse target
- * and a feature only a mouse can operate is half a feature.
+ * and a feature only a mouse can operate is half a feature. The armed list itself — and the way an
+ * edit carries a dot along with its statement — is [`breakpointState.ts`](breakpointState.ts).
  *
  * **A slot on every line, not a marker on some lines.** CodeMirror renders gutter elements only for
  * lines that carry a marker unless `renderEmptyElements` is set, and a gutter that is invisible until
@@ -12,7 +13,7 @@
  * the hit area they click are the same element.
  *
  * **The click leaves the editor as an event.** The gutter's configuration is built once, with no
- * access to React props, and the runner owns the list (it is per lesson, persisted, and travels with
+ * access to React props, and the runner owns the persisted list (it is per lesson and travels with
  * the run). A bubbling `CustomEvent` on the editor's own DOM is the seam this app already uses for
  * cells and focus mode: the gutter stays pure, and `pythonEditorImpl` calls the runner.
  *
@@ -22,32 +23,30 @@
  * that is already spinning.
  */
 
-import { StateEffect, StateField, type EditorState, type Extension } from '@codemirror/state';
+import { type EditorState, type Extension } from '@codemirror/state';
 import { EditorView, GutterMarker, gutter } from '@codemirror/view';
-import { normalizeBreakpoints } from './breakpoints';
+import { armedLines, breakpointLinesField } from './breakpointState.ts';
 
 /** Dispatched on the editor's DOM with `detail: { line }` (1-based) when a slot is clicked. */
 export const BREAKPOINT_TOGGLE_EVENT = 'mechalab:toggle-breakpoint';
 
-/** Replace the drawn list; `[]` removes every dot. */
-export const setBreakpointLines = StateEffect.define<number[]>();
-
 /**
- * The armed lines, as the editor draws them.
+ * The armed line numbers for one state, cached by the positions array they came from.
  *
- * A `StateField` because the list is data and one transaction replaces it. It is **not** mapped
- * through edits — a breakpoint is a line number, which is what lets it survive a lesson switch in
- * `localStorage` (see `breakpoints.ts`).
+ * `lineMarker` is asked about every visible line; walking the list and turning positions into line
+ * numbers for each would be the same work twenty-five times a line. The positions array is replaced
+ * on every edit and every effect, so its identity is the cache key.
  */
-export const breakpointLinesField = StateField.define<number[]>({
-  create: () => [],
-  update: (lines, transaction) => {
-    for (const effect of transaction.effects) {
-      if (effect.is(setBreakpointLines)) return normalizeBreakpoints(effect.value);
-    }
-    return lines;
-  },
-});
+const lineCache = new WeakMap<number[], Set<number>>();
+function armedLineSet(state: EditorState): Set<number> {
+  const positions = state.field(breakpointLinesField);
+  let lines = lineCache.get(positions);
+  if (!lines) {
+    lines = new Set(armedLines(state));
+    lineCache.set(positions, lines);
+  }
+  return lines;
+}
 
 /** One slot: the click target for a line, carrying whether that line is armed. */
 class BreakpointSlot extends GutterMarker {
@@ -55,7 +54,7 @@ class BreakpointSlot extends GutterMarker {
     super();
   }
 
-  /** A dot is reused while its line and state are unchanged, which is the whole viewport's worth. */
+  /** A dot is reused while its line and state are unchanged, which is the viewport's worth. */
   eq(other: GutterMarker): boolean {
     return other instanceof BreakpointSlot && other.line === this.line && other.armed === this.armed;
   }
@@ -74,36 +73,23 @@ class BreakpointSlot extends GutterMarker {
   }
 }
 
-/** The line number a gutter block starts on. */
-function lineNumberAt(state: EditorState, from: number): number {
-  return state.doc.lineAt(from).number;
-}
-
-/**
- * The gutter itself: a slot per line, and a click that asks the runner to toggle that line.
- *
- * The runner is the owner, so the dot does not flip here. It flips when the new list is dispatched
- * back as `setBreakpointLines`, which also means a click the runner refuses (storage gone, a run
- * already carrying the old list) leaves the gutter telling the truth.
- */
 const breakpointGutterColumn = gutter({
   class: 'cm-breakpoint-gutter',
   lineMarker: (view, block) => {
-    const line = lineNumberAt(view.state, block.from);
-    return new BreakpointSlot(line, view.state.field(breakpointLinesField).includes(line));
+    const line = view.state.doc.lineAt(block.from).number;
+    return new BreakpointSlot(line, armedLineSet(view.state).has(line));
   },
-  // A slot carries its line number, so an edit can change what a slot *is* even when the list did
-  // not move: inserting a line above a dot shifts every line under it. Both cases rebuild.
+  // A slot carries its line number, and a dot's line changes when the text above it does: every edit
+  // redraws, as does a new list from the runner.
   lineMarkerChange: (update) =>
     update.docChanged ||
     update.startState.field(breakpointLinesField) !== update.state.field(breakpointLinesField),
   domEventHandlers: {
     click: (view, block, event) => {
-      // A drag that ends on the gutter is a selection, not a request. `detail === 0` is a click a
-      // script dispatched; a learner's click always carries a count.
+      // A double click is a selection gesture, not a second request.
       const mouse = event as MouseEvent;
       if (typeof mouse.detail === 'number' && mouse.detail > 1) return false;
-      const line = lineNumberAt(view.state, block.from);
+      const line = view.state.doc.lineAt(block.from).number;
       view.dom.dispatchEvent(
         new CustomEvent(BREAKPOINT_TOGGLE_EVENT, { detail: { line }, bubbles: true })
       );
