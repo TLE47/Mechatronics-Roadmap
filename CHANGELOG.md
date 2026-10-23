@@ -11,6 +11,30 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 191: Split's divider drags, and remembers
+
+The workspace row's third absence. Three presets were sets of hidden regions and Split was the one
+*arrangement*; its two columns were 1fr each, so the one thing a learner with a wide screen wants —
+more code, or more output — needed a drag that did not exist.
+
+| Decision | Why |
+| :--- | :--- |
+| The stored value is a **share of the work area**, not a pixel width | The same learner moves between a laptop and a monitor. 42% is the arrangement they chose; 480 px is two different amounts of code |
+| Neither column may go below **30%** | At 1440 px that is a 345 px editor — a line of Python without wrapping. A divider that squeezes the code until it wraps changes what the program looks like in order to show the output |
+| `fr` tracks, not percentages | The 16 px gap comes out of the free space first, so 50/50 is two equal columns instead of 100% plus a gap and a sideways scroll |
+| The drag is measured against **free space** (`width − gap`) | Otherwise the boundary trails the pointer by half the gap on every drag |
+| Pointer capture on the handle, no window listeners | Letting go outside the window still ends the drag, and nothing can leak between mounts |
+| One write, at the end | A pointer move per pixel would be a stored key per pixel |
+| The handle is a real `role="separator"` | `aria-valuenow` in whole percent, `←`/`→` in 2% steps (`Shift` 10%), `Home`/`End` to the clamps, and it hides below `lg` where the halves stack and there is no boundary |
+
+**Verified.** `npm run test:layout` 15 checks (7 new: the clamp, the announcement, the template's two
+fractions, a pointer to a share, the arrow keys at the clamps, a stored `0`/`1`/junk, and a store that
+throws). `npm run test:e2e:pages` on the built bundle at 1440 px: a pointer drag to 35% leaves a
+**484 px** editor of 1383 px free, `aria-valuenow` says 35, `Home`/`End` reach 30%/70%, and a reload
+puts the divider back at 70%.
+
+---
+
 ## [2026-10-23] — Run 190: the style half of the lint (pycodestyle)
 
 The lint/format row's last sentence: pyflakes names what the code *does*, and nothing named how it is

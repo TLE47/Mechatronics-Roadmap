@@ -49,7 +49,7 @@ npm run test:takealong                  # the offline button's rules: which URLs
 npm run test:share                      # the share link: round trip, the URL-safe alphabet, the measured cap, every malformed fragment
 npm run test:inline                     # inline values: which lines bind, which value belongs where, the payload's validation
 npm run test:symbols                    # go to definition: what counts as a def, the caret's word, the active file winning a tie
-npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits
+npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits, and Split's divider (clamped, remembered, arrow-keyed)
 npm run test:vim                        # Vim keys: off until asked for, remembered, blocked storage, and the mode word the badge prints
 npm run test:trace                      # the run trace: a payload from another thread, the step cap and its honest total, unreadable values cut
 npm run test:cells                      # # %% cells: the boundaries, the preamble, and where "run to here" stops
@@ -155,6 +155,14 @@ list holds 200 and drops the oldest, a store written by something else reads as 
 blocked storage never throws, and the totals quote a median (odd and even), the longest sitting and
 only the sittings that started today. It also checks focus mode's store: the choice survives a reload,
 the toggle broadcasts it once, and a store that refuses the write still returns the state to render.
+Split's divider is measured on the **built bundle**, because it is about where a boundary lands: `⌥4`
+at 1440 px, a pointer drag to 35% leaves a 484 px editor of 1383 px of free space with `aria-valuenow`
+agreeing, `Home`/`End` land on the 30%/70% clamps, and a reload puts the divider back where it was
+left. The arithmetic underneath (`test:layout`) is pinned without a browser: a share is clamped, a
+stored `0`, `1`, `banana` or `''` reads as the even split, a pointer outside the container clamps at
+the ends, a collapsed container gives no share at all, and a blocked store costs the memory rather
+than the drag.
+
 `test:portfolio` reads the exported Markdown as text, which is the only way to catch what a browser
 cannot: a document with three empty headings that read as "did nothing", a note starting with `#` that
 becomes a heading and swallows the section after it, a 500-card deck pasted in whole, or a time table

@@ -550,6 +550,16 @@ and the two rules are kept apart on purpose: *which* regions a preset shows, and
 are arranged (one column, or two at the `lg` breakpoint before a narrow window stacks them again)
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout`).
 
+**Split's divider is yours to move.** The handle between the columns is a `role="separator"`: drag
+it, or focus it and use `←`/`→` (2% a press, 10% with `Shift`), `Home`/`End` for the two ends, and
+double-click for an even split again. What is stored is the *share* of the work area the editor
+gets, not a pixel width, because the same learner moves between a laptop and a monitor; neither
+column may fall below 30%, which at 1440 px is a 345 px editor — still a line of Python without
+wrapping. The drag is captured by the handle itself, so letting go outside the window still ends it,
+and the number is written once at the end rather than on every pointer move
+([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout` for the arithmetic,
+`npm run test:e2e:pages` for the drag and the reload).
+
 **Sliders are a comment on a number.**
 
 ```python

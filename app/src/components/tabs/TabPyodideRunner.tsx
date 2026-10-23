@@ -79,12 +79,21 @@ import { MAIN_FILE_NAME, helperFilesForLesson } from '../../lessonFiles';
 import { findDefinition } from '../../symbolIndex';
 import { cellPrefix } from '../../editor/cells';
 import {
+  DEFAULT_SPLIT_RATIO,
   LAYOUTS,
+  SPLIT_MIN_RATIO,
+  SPLIT_MAX_RATIO,
   layoutArrangement,
   layoutShortcutFor,
   layoutShows,
   readLayout,
+  readSplitRatio,
+  splitGridTemplate,
+  splitRatioAfterKey,
+  splitRatioAt,
+  splitRatioPercent,
   writeLayout,
+  writeSplitRatio,
   type WorkspaceLayout,
 } from '../../workspaceLayout';
 import { markPaintReady } from '../../paintTiming';
@@ -344,6 +353,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Which of the three regions the screen gives its width to (`workspaceLayout.ts`). Read once at
   // mount: it is a preference, and a reload is the only thing that changes it from outside.
   const [layout, setLayout] = useState<WorkspaceLayout>(() => readLayout());
+  // Split's divider, as the share of the work area the editor gets (`workspaceLayout.ts`). Read once
+  // at mount like the preset itself: a drag is the only thing that changes it from outside storage.
+  const [splitRatio, setSplitRatio] = useState<number>(() => readSplitRatio());
+  const splitRatioRef = useRef<number>(splitRatio);
+  splitRatioRef.current = splitRatio;
+  const [draggingSplit, setDraggingSplit] = useState(false);
+  /** The pointer whose drag is in flight, so a second finger on a trackpad cannot drag both ways. */
+  const splitDragRef = useRef<number | null>(null);
+  const splitContainerRef = useRef<HTMLDivElement | null>(null);
   const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
   // Named groups the roadmap also uses; the old "Step 1 / Steps 3-5 / Steps 6-10" numbering was a
   // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
@@ -2017,6 +2035,55 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // ---------------------------------------------------------------------------------------------
+  // The Split divider.
+  //
+  // A pointer drag, captured by the handle itself: with pointer capture the moves keep arriving at
+  // the handle even when the pointer is over the editor or the page, so there are no window listeners
+  // to leak and no way to end a drag by letting go outside the window.
+  // ---------------------------------------------------------------------------------------------
+  const commitSplitRatio = (ratio: number) => setSplitRatio(writeSplitRatio(ratio));
+
+  const beginSplitDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    // The primary button only: a right click on the handle must not capture the pointer.
+    if (event.button !== 0) return;
+    splitDragRef.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDraggingSplit(true);
+    event.preventDefault();
+  };
+
+  const moveSplitDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (splitDragRef.current !== event.pointerId) return;
+    const container = splitContainerRef.current;
+    const box = container?.getBoundingClientRect();
+    if (!container || !box) return;
+    // The tracks share what the gap leaves, so the boundary is at `left + free * ratio`. Measuring
+    // against the full width would leave the divider half a gap behind the pointer.
+    const gap = Number.parseFloat(getComputedStyle(container).columnGap) || 0;
+    const next = splitRatioAt(event.clientX, box.left, box.width - gap);
+    // No write while dragging: a pointer emits a move per pixel, and a stored key per pixel is a
+    // write per pixel. The drag ends with one.
+    if (next !== null) setSplitRatio(next);
+  };
+
+  const endSplitDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (splitDragRef.current !== event.pointerId) return;
+    splitDragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setDraggingSplit(false);
+    // The ref, not the state: the last move and this release can arrive in one batch.
+    setSplitRatio(writeSplitRatio(splitRatioRef.current));
+  };
+
+  // A preset change can unmount the handle mid-drag (⌥1 while holding it). Pointer capture dies with
+  // the element, so the release never arrives and the "dragging" branch would stay on.
+  useEffect(() => {
+    if (layoutArrangement(layout) !== 'columns') setDraggingSplit(false);
+  }, [layout]);
+
   // ⌘↵ / Ctrl+↵ runs from anywhere on this screen, including inside the editor. The button stays
   // the discoverable path; this is the one keyboard habit a code editor trains.
   const runShortcutRef = useRef<() => void>(() => {});
@@ -2631,9 +2698,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             other is right for a laptop, wrong for a screen wide enough to show both at once, where
             the verdict is otherwise scrolled off the moment the line it is about is in view. */}
         <div
+          ref={splitContainerRef}
           data-focus-expand
           // Eight of twelve beside the chooser, all twelve when the chooser is hidden.
-          style={{ gridColumn: layoutShows(layout, 'list') ? undefined : '1 / -1' }}
+          style={{
+            gridColumn: layoutShows(layout, 'list') ? undefined : '1 / -1',
+            // The divider's share, as two fractions (the gap comes out of the free space first).
+            // Only written for Split: at every other preset the container is not a grid, and a
+            // template there would be a declaration nobody asked for.
+            ...(layoutArrangement(layout) === 'columns'
+              ? { gridTemplateColumns: splitGridTemplate(splitRatio) }
+              : {}),
+          }}
           data-layout={layout}
           className={
             layoutArrangement(layout) === 'columns'
@@ -4026,7 +4102,43 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           {/* Everything that reports on the editor. One wrapper, because Split's second column is
               exactly this block: the checker, the trace, the scope and the output describe the code,
               and a preset that moved only half of them would put a verdict beside nothing. */}
-          <div className="space-y-4" data-testid="results-column">
+          {/* The results column is the divider's anchor: the handle sits in the gap on its left
+              edge, which is the boundary itself. Dragging it moves the boundary, and the share it
+              leaves behind is remembered. Hidden below `lg`, where the two halves stack and there
+              is no boundary to drag. */}
+          <div className="space-y-4 relative" data-testid="results-column">
+          {layoutArrangement(layout) === 'columns' && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize the editor and results columns"
+              aria-valuemin={splitRatioPercent(SPLIT_MIN_RATIO)}
+              aria-valuemax={splitRatioPercent(SPLIT_MAX_RATIO)}
+              aria-valuenow={splitRatioPercent(splitRatio)}
+              aria-valuetext={`${splitRatioPercent(splitRatio)}% editor`}
+              title="Drag to resize · double-click for an even split · ←/→ also work"
+              data-testid="split-divider"
+              tabIndex={0}
+              onPointerDown={beginSplitDrag}
+              onPointerMove={moveSplitDrag}
+              onPointerUp={endSplitDrag}
+              onPointerCancel={endSplitDrag}
+              onDoubleClick={() => commitSplitRatio(DEFAULT_SPLIT_RATIO)}
+              onKeyDown={(event) => {
+                const next = splitRatioAfterKey(splitRatio, event.key, event.shiftKey);
+                if (next === null) return;
+                event.preventDefault();
+                commitSplitRatio(next);
+              }}
+              className="hidden lg:flex absolute -left-3 top-0 bottom-0 z-10 w-3 cursor-col-resize touch-none items-center justify-center"
+            >
+              <span
+                aria-hidden="true"
+                className={`h-10 w-[3px] rounded-full transition-colors ${draggingSplit ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                style={{ background: draggingSplit ? 'var(--accent)' : 'var(--muted)' }}
+              />
+            </div>
+          )}
           {/* What the checker saw. Absent when there is nothing to say, because a green "0 notes"
               strip under every lesson is furniture, not information. */}
           {(lintNotes.length > 0 || analysisNotice) && (

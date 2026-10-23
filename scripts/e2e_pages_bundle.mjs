@@ -746,6 +746,88 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     console.log(
       `  ok ${name}: ⌥4 puts the results beside the editor (editor ${split.editorWidth}px, results from ${split.resultsLeft}px)`
     );
+
+    // The divider drags, and the share it leaves behind survives a reload. Measured as track widths
+    // rather than as state: the promise is about where the boundary is on screen. The gap comes out
+    // of the free space before the two tracks share it, so the target is `left + free * share`.
+    const divider = wide.getByTestId('split-divider');
+    assert.equal(await divider.count(), 1, `${name}: Split must offer a divider to drag`);
+    await divider.scrollIntoViewIfNeeded();
+    const box = await wide.evaluate(() => {
+      const container = document.querySelector('[data-layout]');
+      const rect = container.getBoundingClientRect();
+      const gap = Number.parseFloat(getComputedStyle(container).columnGap) || 0;
+      return { left: rect.left, width: rect.width, gap };
+    });
+    const free = box.width - box.gap;
+    const dragTo = async (share) => {
+      const handle = await divider.boundingBox();
+      const y = handle.y + handle.height / 2;
+      await wide.mouse.move(handle.x + handle.width / 2, y);
+      await wide.mouse.down();
+      await wide.mouse.move(box.left + free * share, y, { steps: 8 });
+      await wide.mouse.up();
+    };
+    const shareNow = async () =>
+      wide.evaluate(() => {
+        const container = document.querySelector('[data-layout]');
+        const gap = Number.parseFloat(getComputedStyle(container).columnGap) || 0;
+        const editor = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
+        const value = Number(
+          document.querySelector('[data-testid="split-divider"]').getAttribute('aria-valuenow')
+        );
+        return {
+          editorWidth: Math.round(editor.width),
+          share: Math.round((editor.width / (container.getBoundingClientRect().width - gap)) * 100),
+          announced: value,
+        };
+      });
+    await dragTo(0.35);
+    const dragged = await shareNow();
+    assert.ok(
+      Math.abs(dragged.share - 35) <= 2,
+      `${name}: dragging to 35% left the editor at ${dragged.share}% (${dragged.editorWidth}px of ${Math.round(free)}px)`
+    );
+    assert.equal(
+      dragged.announced,
+      dragged.share,
+      `${name}: the separator must announce the share it actually has (${dragged.announced} vs ${dragged.share})`
+    );
+    console.log(
+      `  ok ${name}: dragging the divider moves the boundary (35% → editor ${dragged.editorWidth}px, announced ${dragged.announced}%)`
+    );
+
+    // ...and the keyboard reaches the same two ends, at the clamp: Home is the narrowest editor the
+    // preset allows, End the widest.
+    await divider.focus();
+    await wide.keyboard.press('Home');
+    const narrowest = await shareNow();
+    await wide.keyboard.press('End');
+    const widest = await shareNow();
+    assert.equal(narrowest.share, 30, `${name}: Home must be the 30% clamp, got ${narrowest.share}%`);
+    assert.equal(widest.share, 70, `${name}: End must be the 70% clamp, got ${widest.share}%`);
+    console.log(
+      `  ok ${name}: Home and End walk the divider to the two clamps (${narrowest.share}% / ${widest.share}%)`
+    );
+
+    // A reload is the assertion that matters: a divider that only lives in React state would be back
+    // at half on the next visit, and the learner would drag it again every time.
+    await wide.reload({ waitUntil: 'networkidle', timeout: 45000 });
+    if (await wide.getByTestId('tab-btn-tab-pyodide').count()) {
+      await wide.getByTestId('tab-btn-tab-pyodide').click();
+    }
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'split',
+      undefined,
+      { timeout: 10000 }
+    );
+    const remembered = await shareNow();
+    assert.equal(
+      remembered.share,
+      70,
+      `${name}: the divider must come back where it was left, got ${remembered.share}%`
+    );
+    console.log(`  ok ${name}: the divider comes back where it was left (${remembered.share}%)`);
     await wide.close();
 
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout
