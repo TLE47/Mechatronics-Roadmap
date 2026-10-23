@@ -34,6 +34,13 @@ export const PALETTE_ACTIONS: PaletteItem[] = [
     keywords: 'execute verify test play start',
   },
   {
+    id: 'action-format-file',
+    kind: 'action',
+    label: 'Format the file with Black',
+    detail: 'indent & style',
+    keywords: 'tidy pretty reindent spacing pep8 style clean',
+  },
+  {
     id: 'action-toggle-theme',
     kind: 'action',
     label: 'Toggle light / dark theme',

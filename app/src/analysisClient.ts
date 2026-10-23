@@ -369,7 +369,7 @@ export class AnalysisSession {
     const message = data as Record<string, unknown>;
     // The worker's own report on the install, which is not an answer to any request: it moves every
     // pending request onto the install budget and back off it again.
-    if (message.type === 'analysis-status') {
+    if (message.type === 'analysis-status' || message.type === 'format-status') {
       this.setInstalling(message.state === 'installing');
       return true;
     }
@@ -414,7 +414,7 @@ export class AnalysisSession {
   }
 
   private ask(
-    type: 'complete' | 'lint' | 'hover' | 'signature',
+    type: 'complete' | 'lint' | 'hover' | 'signature' | 'format',
     request: AnalysisRequest & Record<string, unknown>
   ): Promise<Record<string, unknown>> {
     const requestId = this.nextId;
@@ -483,4 +483,31 @@ export class AnalysisSession {
     }
     return { ok: true, value: asSignature(reply.signature), ms: Number(reply.ms) || 0 };
   }
+
+  /**
+   * The file as the formatter would write it.
+   *
+   * The formatter (Black) rides this channel because it is the same worker, the same "installs on first
+   * use" wait and the same one-answer-per-request contract as the analyzers; the session's install
+   * budget is what stops a slow wheel download being reported as "timed out".
+   *
+   * Three outcomes, and they are not two: a file Black cannot parse is the learner's own syntax and
+   * says so in the parser's words (`syntax: true`), while a missing wheel or a dead CDN is the
+   * formatter being unavailable and must not be blamed on their code.
+   */
+  async format(code: string): Promise<FormatReply> {
+    const reply = await this.ask('format', { code });
+    if (reply.unavailable) {
+      return { ok: false, syntax: false, reason: String(reply.unavailable) };
+    }
+    if (typeof reply.error === 'string' && reply.error) {
+      return { ok: false, syntax: true, reason: reply.error };
+    }
+    return { ok: true, text: String(reply.formatted ?? '') };
+  }
 }
+
+/** What the formatter answered: the tidied text, or which kind of failure it was. */
+export type FormatReply =
+  | { ok: true; text: string }
+  | { ok: false; syntax: boolean; reason: string };

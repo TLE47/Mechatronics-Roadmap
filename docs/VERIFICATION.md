@@ -43,7 +43,7 @@ python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
 npm run test:theme                      # palette rules: stored pick, OS default, prefers-contrast, the three controls
 npm run test:theme:e2e                  # the three controls + contrast on all 11 tabs, in all four palettes
-npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step/Step in (into the lesson and into the plant)/Step out, breakpoints (conditional ones too), a parked frame's values changed, watch expressions answered at every park, Pages fallback
+npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step/Step in (into the lesson and into the plant)/Step out, breakpoints (conditional ones too), a parked frame's values changed, watch expressions answered at every park, Format with Black (one undo, a parse refusal left alone), Pages fallback
 npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:share                      # the share link: round trip, the URL-safe alphabet, the measured cap, every malformed fragment
@@ -77,7 +77,7 @@ npm run test:watch                      # when the checks may re-run themselves:
 npm run test:watches                    # the paused bar's pinned expressions: one line and a width, pinned once, five per lesson, junk in the store, a browser that refuses storage
 npm run test:announce                   # what a screen reader hears after a run: the verdict first, then the failing line itself
 npm run test:scope                      # the Scope: NaN dropped, t/y aligned, the cursor's interpolation, zoom/pan windows clamped to the data, readable tables
-npm run test:analysis                   # completions, hover and signatures without a browser: where the insert starts, Jedi's cursor coordinates, the call under the cursor, note shape, request and timeout rules
+npm run test:analysis                   # completions, hover, signatures and the formatter without a browser: where the insert starts, Jedi's cursor coordinates, the call under the cursor, note shape, request and timeout rules, and Formatter's three outcomes (tidied, the parser's sentence, an install that says so)
 npm run test:checkhints                 # a failing check names its own rung; rung 2 is earned by a run made after the nudge
 npm run test:fonts                      # the two self-hosted faces: named, imported, emitted, no CDN
 npm run test:smoke                      # needs `npm ci` first

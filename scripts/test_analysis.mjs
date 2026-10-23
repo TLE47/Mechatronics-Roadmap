@@ -11,6 +11,10 @@
  * - how a Jedi type reads in a completion list, and what an unknown one becomes;
  * - what counts as a drawable pyflakes note, and how it reads in a sentence.
  *
+ * The formatter rides the same channel (`format`, answered by Black), so its three outcomes are checked
+ * here too: the tidied text, the parser's sentence for a file Black cannot read, and the install's own
+ * words for a formatter that is not there — which must not be blamed on the learner's code.
+ *
  * The transport cases are the ones that keep a run working: an analysis answer must never be mistaken
  * for a verdict, a request that is never answered must resolve (not hang), a late answer must be
  * consumed rather than resolved twice, and a dead worker must not take the editor down with it.
@@ -484,6 +488,79 @@ check('a worker that throws on post resolves the request instead of crashing the
   const reply = await session.complete({ code: 'x', line: 1, column: 1 });
   assert.equal(reply.ok, false);
   assert.match(reply.reason, /worker is gone/);
+});
+
+section('the formatter');
+
+check('a format request answers with the tidied file', async () => {
+  const { session, sent } = fakeSession();
+  const pending = session.format('x=1\n');
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].type, 'format');
+  assert.equal(sent[0].code, 'x=1\n');
+  assert.equal(
+    session.handleMessage({
+      type: 'format',
+      requestId: sent[0].requestId,
+      formatted: 'x = 1\n',
+    }),
+    true,
+    'the formatter answer is the session’s, so the run gate never sees it'
+  );
+  const reply = await pending;
+  assert.deepEqual(reply, { ok: true, text: 'x = 1\n' });
+});
+
+check('a file Black cannot parse is the learner’s syntax, not a missing formatter', async () => {
+  const { session, sent } = fakeSession();
+  const pending = session.format('def f(:\n');
+  session.handleMessage({
+    type: 'format',
+    requestId: sent[0].requestId,
+    error: 'InvalidInput: Cannot parse: 1:7: def f(:',
+  });
+  const reply = await pending;
+  assert.equal(reply.ok, false);
+  assert.equal(reply.syntax, true, 'the parser’s own sentence is the learner’s to fix');
+  assert.match(reply.reason, /Cannot parse/);
+});
+
+check('a formatter that could not install is not blamed on the code', async () => {
+  const { session, sent } = fakeSession();
+  const pending = session.format('x=1\n');
+  session.handleMessage({
+    type: 'format',
+    requestId: sent[0].requestId,
+    unavailable: 'Failed to fetch black',
+  });
+  const reply = await pending;
+  assert.equal(reply.ok, false);
+  assert.equal(reply.syntax, false);
+  assert.match(reply.reason, /Failed to fetch black/);
+});
+
+check('the formatter’s install notice holds its request open too', async () => {
+  const { session, sent } = fakeSession({ timeoutMs: 20 });
+  const pending = session.format('x=1\n');
+  assert.equal(
+    session.handleMessage({ type: 'format-status', state: 'installing' }),
+    true,
+    'the install notice must be claimed before the run gate can see it'
+  );
+  let settled = false;
+  pending.then(() => {
+    settled = true;
+  });
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  assert.equal(settled, false, 'the install budget holds the request open');
+  session.handleMessage({ type: 'format-status', state: 'done' });
+  session.handleMessage({
+    type: 'format',
+    requestId: sent[0].requestId,
+    formatted: 'x = 1\n',
+  });
+  const reply = await pending;
+  assert.equal(reply.ok, true);
 });
 
 for (const entry of entries) {

@@ -582,6 +582,93 @@ function errorText(error) {
   return message.slice(0, 300);
 }
 
+/**
+ * Black, installed once per worker.
+ *
+ * The formatter is pure Python, so it runs here as a library rather than as a native binary: Ruff is a
+ * Rust program and cannot run in Pyodide at all (`docs/PLAN-2.0-GAP.md`), which is why the formatter
+ * the learner gets is Black rather than `ruff format`. It installs on the first Format press - a few
+ * hundred milliseconds from the wheel cache, a couple of seconds cold - and is remembered on the
+ * interpreter, so a second press costs nothing. A failed install is forgotten, not cached: the next
+ * press with a network retries.
+ */
+let blackPromise = null;
+async function ensureBlack(py) {
+  if (py.__mechalabBlackReady) return true;
+  if (!blackPromise) {
+    blackPromise = (async () => {
+      await py.loadPackage('micropip');
+      const micropip = py.pyimport('micropip');
+      await micropip.install('black');
+      py.__mechalabBlackReady = true;
+      return true;
+    })().catch((error) => {
+      blackPromise = null;
+      throw error;
+    });
+  }
+  return blackPromise;
+}
+
+/**
+ * Format the learner's file, and answer with the text (or the parser's sentence).
+ *
+ * Black's mode is its default: the one `black file.py` uses on the command line. Not a preference the
+ * learner sets - an app that promised "format" and then asked about line length would be asking a
+ * beginner a question they came here to avoid.
+ */
+async function handleFormat(msg) {
+  const requestId = Number(msg.requestId) || 0;
+  const source = String(msg.code ?? '');
+  try {
+    const py = await ensurePyodideLoaded(msg.cdnUrl);
+    const wasReady = Boolean(py.__mechalabBlackReady);
+    if (!wasReady) self.postMessage({ type: 'format-status', state: 'installing' });
+    try {
+      await ensureBlack(py);
+    } finally {
+      if (!wasReady) self.postMessage({ type: 'format-status', state: 'done' });
+    }
+    py.globals.set('__mechalab_format_source__', source);
+    // The parser's refusal is answered as data, not as a thrown `PythonError`: the message of that
+    // error is a whole traceback, and which of its lines is the parser's own sentence is a guess that
+    // changed between Black versions (measured once: the tail said `ParseError: bad input`). A JSON
+    // answer says which kind of failure it is, in the one place that knows.
+    // Straight-line Python, one line per array entry: the answer is the whole document or the parser's
+    // position, and a status bar shows one line. Black 26 answers a bad file with
+    // `cannot parse: 1:6`, then the source line, then a caret; the first two are what a learner needs.
+    const formatScript = [
+      'import json as _mechalab_format_json, black as _mechalab_black',
+      'def _mechalab_format():',
+      '    try:',
+      '        _text = _mechalab_black.format_str(__mechalab_format_source__, mode=_mechalab_black.Mode())',
+      '        return _mechalab_format_json.dumps({"formatted": _text})',
+      '    except Exception as _mechalab_error:',
+      '        _lines = [line.strip() for line in str(_mechalab_error).splitlines() if line.strip()]',
+      '        _sentence = _lines[0] if _lines else ""',
+      '        if len(_lines) > 1 and _lines[1] != "^":',
+      '            _sentence = _sentence + " · " + _lines[1]',
+      '        return _mechalab_format_json.dumps({"error": "%s: %s" % (type(_mechalab_error).__name__, _sentence)})',
+      '_mechalab_format()',
+    ].join('\n');
+    const answer = py.runPython(formatScript);
+    const parsed = JSON.parse(String(answer ?? '{}'));
+    if (typeof parsed.error === 'string' && parsed.error) {
+      // A file Black cannot read is the learner's own syntax, and the parser's position is the half
+      // they can act on.
+      self.postMessage({ type: 'format', requestId, error: parsed.error });
+      return;
+    }
+    self.postMessage({ type: 'format', requestId, formatted: String(parsed.formatted ?? '') });
+  } catch (error) {
+    // Anything that is not the parser talking - a missing wheel, a dead CDN, a JSON answer that did
+    // not arrive - is the formatter being unavailable, which is a different sentence and must not be
+    // blamed on the learner's code.
+    console.error('[format] black failed', error);
+    self.postMessage({ type: 'format', requestId, unavailable: errorText(error) });
+  }
+}
+
 /** Load the interpreter (if needed), install the analyzers (if needed), write the lesson's files. */
 async function prepareAnalysis(msg) {
   const py = await ensurePyodideLoaded(msg.cdnUrl);
@@ -783,6 +870,10 @@ self.onmessage = async (event) => {
   }
   if (msg.type === 'signature') {
     await handleSignature(msg);
+    return;
+  }
+  if (msg.type === 'format') {
+    await handleFormat(msg);
     return;
   }
   if (msg.type === 'run') {

@@ -32,6 +32,9 @@
  *    evaluated in whichever frame the run stops in, so the same name is answered at every stop
  *    rather than only where it happens to be a local; one this frame cannot answer says so in place
  *    and the run stays parked, and the list is remembered per lesson.
+ * 5f. **The file can be tidied in place.** Format asks the worker for Black's own output, applies it to
+ *    the editor, and says which of three things happened (tidied, already tidy, a parse refusal that
+ *    leaves the file alone); the change is one undo.
  * 6. **The editor knows Python.** Completions come from Jedi inside this worker (`math.` offers
  *    `acos` with its signature, and picking one keeps the module name), the lint comes from
  *    pyflakes (an unused import is named with its line, and the note clears when the import is
@@ -1313,6 +1316,120 @@ async function main() {
     });
     await page.click('[data-testid="breakpoint-slot-3"]');
 
+    // 22. Format with Black. The formatter is a pure-Python library in the same worker — installed on the
+    //     first press, because it is ~2 MB of wheels — so the three things a unit test cannot see are
+    //     pinned here: the answer becomes the file, a file Black cannot read is a sentence about the
+    //     syntax (and leaves the file alone), and the change is one undo, which is what the status line
+    //     promises when it says ⌘Z puts it back.
+    const messy = "x=1\nif x>0:\n  print( x )\nprint( 'a',1 )\n";
+    await setEditorCode(page, messy);
+    await page.click('[data-testid="btn-format"]');
+    const formattedShown = await page
+      .waitForFunction(
+        () =>
+          document.querySelector('[data-testid="format-status"]')?.getAttribute('data-format-state') ===
+          'done',
+        undefined,
+        { timeout: 120000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const formattedText = (await getEditorCode(page)) ?? '';
+    check('Format rewrites the file exactly as Black would', () => {
+      assert.equal(
+        formattedShown,
+        true,
+        'expected a done status after the first press, which also installs Black'
+      );
+      assert.equal(
+        formattedText,
+        'x = 1\nif x > 0:\n    print(x)\nprint("a", 1)\n',
+        `expected Black's own output, got ${JSON.stringify(formattedText)}`
+      );
+    });
+    // The status line promises one undo, so the promise is checked: the caret goes to the editor and
+    // the platform's undo chord does what the sentence says.
+    await page.evaluate(() => window.__mechalabEditors?.['editor-main']?.focus());
+    await page.keyboard.press('ControlOrMeta+z');
+    const undone = await page
+      .waitForFunction(
+        () =>
+          window.__mechalabEditors?.['editor-main']?.get() ===
+          "x=1\nif x>0:\n  print( x )\nprint( 'a',1 )\n",
+        undefined,
+        { timeout: 10000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    check('one undo puts the learner\u2019s own text back', () => {
+      assert.equal(undone, true, 'expected the formatted document to be a single undo step');
+    });
+    // Back to the tidied file, so the second press has something it has already formatted.
+    await setEditorCode(page, formattedText);
+    await page.click('[data-testid="btn-format"]');
+    const alreadyTidy = await page
+      .waitForFunction(
+        () => /Already tidy/.test(document.querySelector('[data-testid="format-status"]')?.textContent ?? ''),
+        undefined,
+        { timeout: 30000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    check('a second press says the file is already tidy', () => {
+      assert.equal(alreadyTidy, true, 'expected the second Format to report that nothing changed');
+    });
+    const brokenCode = 'def f(:\n    return 1\n';
+    await setEditorCode(page, brokenCode);
+    await page.click('[data-testid="btn-format"]');
+    const parseShown = await page
+      .waitForFunction(
+        () => /could not parse/.test(document.querySelector('[data-testid="format-status"]')?.textContent ?? ''),
+        undefined,
+        { timeout: 30000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    const parseStatus = ((await page.textContent('[data-testid="format-status"]')) ?? '').trim();
+    const afterBroken = await getEditorCode(page);
+    check('a file Black cannot parse says so in the parser\u2019s words, and is left alone', () => {
+      assert.equal(parseShown, true, `expected a parse refusal, got "${parseStatus}"`);
+      assert.match(
+        parseStatus,
+        /cannot parse: \d+:\d+/i,
+        `expected the parser's own position in the sentence, got "${parseStatus}"`
+      );
+      assert.equal(
+        afterBroken,
+        brokenCode,
+        'a refused format must not touch the learner\u2019s file'
+      );
+    });
+    // The palette's own route to it: the command reaches the runner through a nonce, not a callback, so
+    // the wiring is worth one press.
+    await setEditorCode(page, messy);
+    await page.keyboard.press('Control+k');
+    await page.getByTestId('input-palette-search').fill('format');
+    await page.getByTestId('palette-item-action-format-file').waitFor({ timeout: 10000 });
+    await page.keyboard.press('Enter');
+    const paletteFormatted = await page
+      .waitForFunction(
+        () =>
+          document.querySelector('[data-testid="format-status"]')?.getAttribute('data-format-state') ===
+            'done' &&
+          (window.__mechalabEditors?.['editor-main']?.get() ?? '').startsWith('x = 1'),
+        undefined,
+        { timeout: 60000 }
+      )
+      .then(() => true)
+      .catch(() => false);
+    check('the palette\u2019s Format command formats the open file', () => {
+      assert.equal(
+        paletteFormatted,
+        true,
+        'expected ⌘K \u2192 "format" \u2192 Enter to tidy the editor, through the runner\u2019s request counter'
+      );
+    });
+
     await context.close();
   } finally {
     await browser.close();
@@ -1341,6 +1458,9 @@ async function main() {
   );
   console.log(
     '       a pinned expression is answered in every frame the run parks in (and says so when it cannot be),'
+  );
+  console.log(
+    '       Format rewrites the file as Black would, in one undo, and a parse refusal leaves it alone,'
   );
   console.log(
     '       a parked frame\u2019s values can be changed before it moves on (or are'

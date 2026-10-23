@@ -142,6 +142,7 @@ import {
   Share2,
   Keyboard,
   CircleDot,
+  Wand2,
 } from 'lucide-react';
 
 declare global {
@@ -192,6 +193,8 @@ function sourceForPark(
 
 /** The last palette run request this page has acted on; see the effect near the keyboard shortcut. */
 let LAST_RUN_REQUEST_HANDLED = 0;
+/** And the last palette Format request, which needs the same record for the same reason. */
+let LAST_FORMAT_REQUEST_HANDLED = 0;
 
 interface TabPyodideRunnerProps {
   initialLessonId?: string;
@@ -207,6 +210,11 @@ interface TabPyodideRunnerProps {
    * run function, and a mount must never fire a run the learner asked for on an earlier visit.
    */
   runRequest?: number;
+  /**
+   * A counter the palette bumps when "Format with Black" is chosen. Same nonce rule as `runRequest`:
+   * the palette outlives this component and must not fire a press nobody made in this visit.
+   */
+  formatRequest?: number;
   /**
    * An explicit "open this entry" request. The id alone cannot express it: choosing the lesson a
    * deep link already named leaves `initialLessonId` unchanged, so nothing would fire.
@@ -293,6 +301,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onToggleLessonCompleted,
   onOpenRoadmap,
   runRequest,
+  formatRequest,
   lessonRequest,
   sharedAttempt,
   onDismissShared,
@@ -846,6 +855,15 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // installed at all. Both are cleared on a lesson change: a note about another file is noise.
   const [lintNotes, setLintNotes] = useState<LintNote[]>([]);
   const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
+  // What the last Format press did. Black's answer is one of three things — a tidier file, "already
+  // tidy", or a sentence about why not — and the learner is told which, under the toolbar, rather
+  // than left to diff the file and guess.
+  const [formatStatus, setFormatStatus] = useState<
+    | { kind: 'idle' }
+    | { kind: 'working' }
+    | { kind: 'done'; changed: boolean }
+    | { kind: 'failed'; message: string }
+  >({ kind: 'idle' });
   const commitCode = (next: string) => {
     codeRef.current = next;
     setCode(next);
@@ -1179,6 +1197,77 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     const report = await cacheInventory();
     setOffline({ state: report.runtimeFiles > 0 ? 'ready' : 'partial', report });
   };
+
+  /**
+   * Tidy the editor's file with Black, in place.
+   *
+   * The formatter is a pure-Python library inside the same worker, so this is one request: the worker
+   * installs Black on first use (its `format-status` stretches the session's clock while it does),
+   * formats the text and answers with the file. It refuses instead of queueing while a run is in flight
+   * or a park is waiting: the worker is one thread, and a format asked at either moment would wait
+   * behind the very program it is meant to tidy.
+   *
+   * The answer is applied only to the text it was asked about. A learner who typed while the worker
+   * worked keeps what they typed and is told to press again — replacing their last sentence with a tidy
+   * version of the previous one is the one outcome nobody would forgive.
+   */
+  const formatCode = async () => {
+    if (isRunning) {
+      setFormatStatus({
+        kind: 'failed',
+        message: 'Stop the run first — the formatter shares its thread.',
+      });
+      return;
+    }
+    if (pausedStep) {
+      setFormatStatus({ kind: 'failed', message: 'Continue or Stop the parked run first.' });
+      return;
+    }
+    if (formatStatus.kind === 'working') return;
+    const source = codeRef.current;
+    if (!source.trim()) {
+      setFormatStatus({ kind: 'failed', message: 'There is nothing to format yet.' });
+      return;
+    }
+    setFormatStatus({ kind: 'working' });
+    // The formatter needs the interpreter, and pressing Format is as good a reason to load it as Run
+    // is: the button should not be dead for a learner who has written code but not yet run it.
+    const ready = pyodideStatusRef.current === 'ready' || (await warmRuntimeForOffline());
+    if (!ready) {
+      setFormatStatus({ kind: 'failed', message: 'The Python runtime could not be loaded.' });
+      return;
+    }
+    const reply = await analysisSession().format(source);
+    if (!reply.ok) {
+      setFormatStatus({
+        kind: 'failed',
+        message: reply.syntax
+          ? `Black could not parse this file — ${reply.reason}`
+          : 'The formatter could not load — it installs on one online visit, then stays in this browser session.',
+      });
+      return;
+    }
+    if (codeRef.current !== source) {
+      setFormatStatus({
+        kind: 'failed',
+        message: 'The file changed while it was being formatted — press Format again.',
+      });
+      return;
+    }
+    if (reply.text === source) {
+      setFormatStatus({ kind: 'done', changed: false });
+      return;
+    }
+    commitCode(reply.text);
+    setFormatStatus({ kind: 'done', changed: true });
+  };
+  const formatShortcutRef = useRef<() => void>(() => {});
+  formatShortcutRef.current = () => void formatCode();
+  useEffect(() => {
+    if (!formatRequest || formatRequest <= LAST_FORMAT_REQUEST_HANDLED) return;
+    LAST_FORMAT_REQUEST_HANDLED = formatRequest;
+    formatShortcutRef.current();
+  }, [formatRequest]);
 
   /** Hand a line to a program blocked in `input()`, and unblock the worker's wait. */
   const submitStdin = (line: string) => {
@@ -2709,6 +2798,19 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <Eye className="w-3.5 h-3.5" />
                   <span>Load Solution</span>
                 </button>
+                {/* Format is a text action, not a run one: it tidies the file in place, and the
+                    interpreter installs the formatter on the first press. Disabled while a program
+                    is running or parked, because the worker is one thread. */}
+                <button
+                  onClick={() => void formatCode()}
+                  disabled={isRunning || Boolean(pausedStep)}
+                  data-testid="btn-format"
+                  title="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                  <span>Format</span>
+                </button>
                 <button
                   onClick={() => setHistoryOpen((open) => !open)}
                   aria-expanded={historyOpen}
@@ -2866,6 +2968,27 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
             {/* The Share button's answer. A polite status, not an alert: it is a confirmation of
                 something the learner just asked for, and pressing Share twice must not trap them. */}
+            {/* Format's answer: the file was tidied, it already was, or why not. A formatter that
+                silently did nothing would leave the learner diffing their own file to find out. */}
+            {formatStatus.kind !== 'idle' && (
+              <p
+                role="status"
+                data-testid="format-status"
+                data-format-state={formatStatus.kind}
+                className="mt-2 text-[11.5px] leading-relaxed"
+                style={{
+                  color: formatStatus.kind === 'failed' ? 'var(--rose)' : 'var(--body)',
+                }}
+              >
+                {formatStatus.kind === 'working' && 'Formatting with Black… (it installs once)'}
+                {formatStatus.kind === 'done' &&
+                  (formatStatus.changed
+                    ? 'Formatted with Black — ⌘Z puts it back.'
+                    : 'Already tidy: Black changed nothing.')}
+                {formatStatus.kind === 'failed' && formatStatus.message}
+              </p>
+            )}
+
             {shareStatus.kind !== 'idle' && (
               <p
                 role="status"

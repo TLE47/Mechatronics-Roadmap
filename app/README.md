@@ -701,6 +701,15 @@ rather than `main.py`'s, and the frame's values are the callee's. A call into CP
 (`math.sqrt`) has no source in the editor to stand on, so a Step in on one behaves as a Step; from
 inside a helper, Step stays in that helper, and a call that returns lands back in its caller.
 
+**Format tidies the file with Black.** The toolbar's **Format** button (or *Format the file with Black* in
+`⌘K`) re-indents and re-spaces your file in place, with Black's own default mode — the same output
+`black file.py` would write. Black is pure Python, so it runs **inside the same worker** as your code,
+installed on the first press and remembered for the session; nothing is added to the bundle for it. The
+answer is applied as **one undo step** (the status line says so), and it is one of three sentences: the
+file was tidied, it was already tidy, or Black could not parse it — the last one quotes the parser's
+own position and leaves your file untouched. The button is disabled while a program runs or a park waits,
+because the worker is one thread.
+
 **Step out comes back.** **Step out** runs the rest of the frame that is parked and stops in its caller,
 on the line that made the call — even though a call is usually the last thing on its line and the caller
 gets no fresh line event to stop at, because the park is on the frame's **return**. From the plant it
@@ -741,6 +750,8 @@ The recording is the history; the park is the present.
 | A step out parks on a frame **return**, not on the caller's next line | `print(f(x))` never gives the caller another line event: waiting for one would run the program to its end. At the return event the caller's line is still the call, which is the line to show. |
 | A step lands only in a file the page can show, and the park says **which** | A park quotes a line; a frame with no source (CPython's own) would be a sentence nobody can check, so `math.sqrt` is stepped over, not into. A step over parks at the depth that asked for it or shallower — which is also how a returning call lands back in its caller. |
 | A narrowed dot is **hollow**, and a condition that raises **still parks** | A filled dot says "always stops", which is the wrong sentence about a park the learner just narrowed; and a condition that could not be evaluated is a mistake the learner has to see, not a park skipped in silence or a run ended with no explanation. |
+| The formatter is **Black**, in the worker, not a bundled library | Ruff is a Rust binary and cannot run in Pyodide at all; Black is pure Python and installs through micropip on the first press, so the formatter costs the bundle nothing and the offline page says it is unavailable rather than pretending. |
+| A format is **one undo step**, and a parse refusal touches nothing | A tidy-up the learner cannot take back is a change they did not ask for; and a file Black cannot read is their own syntax — the parser's position is the useful half, replacing their text with nothing is not. |
 | A watch is an **expression**, and it is evaluated in whichever frame parks | The bar's value chips list this frame's locals, so `plant.L1` or `n * 2` has nowhere to appear; a watch asks one question at every stop. |
 | A watch is pinned **while parked**, and the bar answers in that frame | A chip with nothing beside it until the next Step would look broken: the parked worker reads the expression from the frame-edit buffer, evaluates it in the frame it is standing in, and posts the same line again. |
 | A watch that raises **says so**, and the list is **five per lesson, per file** | A name this frame has not bound is a question it cannot answer, not a failure of the program, so the run stays parked and the sentence is shown in place. Five is what fits beside the frame's own values; the store is per lesson because `total` is one file's variable, not the next lesson's. |

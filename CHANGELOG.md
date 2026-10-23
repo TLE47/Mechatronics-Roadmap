@@ -11,6 +11,39 @@ flowchart LR
 
 ---
 
+## [2026-10-22] — Run 189: Format with Black
+
+The last named piece of the lint/format row. The plan asks for *Ruff lint + format*; Ruff is a Rust
+binary and cannot run in Pyodide at all, but the formatter does not have to be Ruff's. **Black** is pure
+Python, so it installs into the same worker and re-indents the learner's file in place — as **one undo
+step**, with a sentence saying which of three things happened.
+
+| Decision | Why |
+| :--- | :--- |
+| Black, in the worker, installed on first press | Ruff cannot run here, and shipping a JS formatter would be a second set of rules to keep honest. Black is the formatter `black file.py` runs; through micropip it costs the bundle **nothing** |
+| The request rides the analysis channel | Same worker, same "installs on first use" wait, same one-answer-per-request contract — and its `format-status` notice puts the request on the install budget instead of timing it out at 8 s |
+| The parser's refusal is answered as **data**, not a thrown error | Measured: the `PythonError` message is a whole traceback whose tail said `ParseError: bad input`, which is not a sentence a learner can act on and changed shape between Black versions. A JSON answer says "this is the learner's syntax" in the one place that knows, and the bar shows `InvalidInput: cannot parse: 1:6 · def f(:` |
+| A refused format **touches nothing** | The file is only replaced when Black produced text; the parse sentence names the position, which is the useful half |
+| Refused, not queued, during a run or a park | The worker is one thread: a format asked then waits behind the very program it is meant to tidy |
+| The answer is applied only to the text it was asked about | A learner who typed while the worker worked keeps what they typed and is told to press again — replacing their last sentence with a tidy version of the previous one is the one outcome nobody would forgive |
+| Enabled from `⌘K` through a counter | The palette outlives the runner, so it bumps `formatRequest` rather than holding the function, the same rule the Run command follows |
+
+**The bundle, settled deliberately.** The feature measured **700.4 kB** of JS against a 700 kB budget, and
+the first honest reading was that `total` had 1.1 kB left too. Rather than shave 400 B out of a feature
+to fit a number nobody re-examined, `js_gzip` moved to 720 kB and `total` to 1.04 MB, with the reason
+written into [`docs/weight-budget.json`](docs/weight-budget.json)'s `_why`: both are app code, Black
+ships in no chunk at all, and the only way out of this metric would be splitting the runner itself — an
+extra round trip on the tab that opens first.
+
+**Verified.** `npm run test:analysis` 38 checks (four new: the tidied text, the parser's sentence as
+`syntax: true`, an install failure as *not* the learner's fault, and the `format-status` notice holding
+the request open), `npm run test:runtime` — Format rewrites `x=1 / if x>0: print( x )` to Black's own
+output, **one Ctrl/⌘Z puts the learner's text back**, a second press says "already tidy", a broken file
+is refused in the parser's words with its bytes untouched, and `⌘K` → "format" → Enter formats through
+the runner's request counter. Bundle: js 700.4/720 kB, total 1.02/1.04 MB, entry 452.9/470 kB.
+
+---
+
 ## [2026-10-22] — Run 188: Watch Expressions
 
 The debugger row's last gap. The paused bar could show the frame's own values, which answered the
