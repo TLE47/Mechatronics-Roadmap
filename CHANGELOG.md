@@ -11,6 +11,49 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 227: authored work stops being cache
+
+A review of 2.0 found the riskiest thing in the release was its retention policy: `lessonDraft.ts` kept
+twelve drafts and dropped the least-recently-edited, `studyNotes.ts` kept twenty-five lessons and
+dropped the least-recently-written, and a restore went through the same capped writer. The thirteenth
+edited lesson sent a learner back to the starter without saying so; the twenty-sixth lesson lost a note
+from week one. Both were working as written, which is the problem: the work in progress *is* the
+progress.
+
+Every lesson now keeps its latest draft and everything written about it. The count caps and their
+eviction sorts are gone; `MAX_DRAFT_CHARS` per draft, `MAX_NOTE_CHARS` per note and `MAX_HIGHLIGHTS`
+per lesson stay, because those bound one page rather than a learner's history. A write the browser
+refuses now returns false, and the surface says *Not saved — storage is blocked or full*: a note, pin
+or comment that did not land leaves the box dirty and the selection in place, and a restore whose study
+write is refused reports `study.json (the store refused the write)` instead of counting notes it never
+stored.
+
+| Changed | What it does |
+| :--- | :--- |
+| [`app/src/lessonDraft.ts`](app/src/lessonDraft.ts) | `MAX_DRAFTS` and the eviction sort are gone; `saveDraft` returns false when the write is refused, and its header says why every edited lesson is kept |
+| [`app/src/studyNotes.ts`](app/src/studyNotes.ts) | `MAX_NOTE_LESSONS` and the eviction sort are gone; `writeStudy` trims only per lesson, `saveNote`/`addHighlight`/`setComment`/`replaceStudy` report a refused write |
+| [`app/src/components/StudyPanel.tsx`](app/src/components/StudyPanel.tsx) | A refused note, pin or comment says so; the box stays dirty and the selection is kept for the next attempt |
+| [`app/src/backupBundle.ts`](app/src/backupBundle.ts) | A study write the bucket refuses is reported, not counted as restored |
+| [`scripts/test_lesson_draft.mjs`](scripts/test_lesson_draft.mjs), [`scripts/test_study.mjs`](scripts/test_study.mjs) | The retention rule is the test: 14 edited lessons and 40 notated lessons all survive, and a restore keeps 30 of 30 |
+| [`scripts/test_backup.mjs`](scripts/test_backup.mjs) | The size check now guards the archive's receipt limit (the absolute ceiling) rather than claiming the 5 MB bucket fallback holds a full course |
+| [`scripts/e2e_pages_bundle.mjs`](scripts/e2e_pages_bundle.mjs) | The cheat check opens a fresh browser context: the sweep before it writes a draft for every entry, and those drafts are now correctly still there |
+| [`app/src/studyCards.ts`](app/src/studyCards.ts), [`app/README.md`](app/README.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md), [`docs/PLAN-2.0-GAP.md`](docs/PLAN-2.0-GAP.md), [`scripts/test_workbench.mjs`](scripts/test_workbench.mjs) | Say what is kept, what is still capped, and what the fallback bucket can no longer promise |
+| [`docs/PLAN-2.1a.md`](docs/PLAN-2.1a.md) | The review's 2.1a plan, checked against `b93036a`: each finding marked verified, stale or fixed, the retention rule written down, and the remaining slices ordered |
+
+| Verified | Result |
+| :--- | :--- |
+| `npm run test:draft` | 19/19 — fourteen edited lessons all kept, the oldest read back exactly, a refused write returns false |
+| `npm run test:study` | 20/20 — forty notated lessons all kept, a restore keeps all thirty in the file, a refused write reports |
+| `npm run test:backup` | 21/21 — restore keeps every lesson; worst case measured at 6,540 k characters → ~13.1 MB, under the 25 MB the restore refuses |
+| `npm run test:workbench` | 57 of 58 — `pages` failed in its cheat check, correctly: the sweep's drafts are no longer evicted. Fixture fixed (fresh context), then: |
+| `npm run test:e2e:pages` | `[PASS]` in Chromium (all 50 exercise entries) and Firefox (9-entry sample), including the two cheat cases |
+| `npm run lint` | clean (`tsc -b`) |
+| `python3.12 scripts/check_all.py` | 34/34 |
+
+What this deliberately retires: the claim that the `localStorage` fallback holds the whole worst case.
+The fallback is used only when a browser refuses IndexedDB; it can fill, and the write then says so
+rather than deleting an older lesson. The archive ceiling is still measured and still gated.
+
 ## [2026-10-23] — Run 226: the weight gate grades the bundle CI ships, locally
 
 Run 207's entry breach — 532.6 kB against a 480 kB ceiling — existed only in the signed-in build, and

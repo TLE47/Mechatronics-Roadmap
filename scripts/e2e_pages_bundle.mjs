@@ -659,25 +659,39 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     // matches the presentation check while the behavioural badge fails, so nothing is verified.
     // One Tier 2 entry and one Tier 3 entry - a beginner's first graded package is Tier 2, and a
     // Tier 3-only case would not notice a Tier 2 regression in how the self-check is attached.
+    //
+    // In a fresh context, because the sweep above wrote a draft for every entry it graded. Drafts
+    // are per lesson and kept - that is the retention rule - so reopening EX.02 on `page` would
+    // correctly show the reference solution the sweep saved, and the wait below would be waiting for
+    // a starter the store deliberately did not restore. The fixture starts clean rather than
+    // depending on an old cap having evicted the lesson by now.
+    const cheatContext = await browser.newContext();
+    await cheatContext.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
+    const cheatPage = await cheatContext.newPage();
+    await cheatPage.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
+    await cheatPage.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
+    await cheatPage.getByTestId('tab-btn-tab-pyodide').click();
     for (const cheatId of ['EX.02-mechanics.T2.02a', 'EX.05-control.T3.05a']) {
-      const entry = page.getByTestId(`lesson-item-${cheatId}`);
+      const entry = cheatPage.getByTestId(`lesson-item-${cheatId}`);
       await entry.scrollIntoViewIfNeeded();
       await entry.click();
-      await page.waitForFunction(
+      await cheatPage.waitForFunction(
         (key) => (window.__mechalabEditors?.[key]?.get() ?? '').includes('raise NotImplementedError'),
         'editor-main',
         { timeout: 15000 }
       );
-      const verifiedBefore = (await page.getByTestId('runner-verified-count').textContent())?.trim();
-      const cheatExpected = (await page.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
+      const verifiedBefore = (await cheatPage.getByTestId('runner-verified-count').textContent())?.trim();
+      const cheatExpected = (await cheatPage.getByTestId('pre-expected-stdout').textContent())?.trim() ?? '';
       assert.match(
         cheatExpected,
         /SELF-CHECK PASS/,
         `${name}: ${cheatId} expected output is not its self-check PASS line`
       );
-      await setEditorCode(page, `print(${JSON.stringify(cheatExpected)})\n`);
-      await page.getByTestId('btn-run-verify').click();
-      await page.waitForFunction(
+      await setEditorCode(cheatPage, `print(${JSON.stringify(cheatExpected)})\n`);
+      await cheatPage.getByTestId('btn-run-verify').click();
+      await cheatPage.waitForFunction(
         () => {
           const outBadge = document.querySelector('[data-testid="badge-output-check"]');
           const behBadge = document.querySelector('[data-testid="badge-behavior-check"]');
@@ -690,11 +704,12 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         { timeout: 90000 }
       );
       assert.equal(
-        (await page.getByTestId('runner-verified-count').textContent())?.trim(),
+        (await cheatPage.getByTestId('runner-verified-count').textContent())?.trim(),
         verifiedBefore,
         `${name}: printing ${cheatId}'s PASS line must not change the verified count`
       );
     }
+    await cheatContext.close();
     console.log(`  ok ${name}: a Tier 2 and a Tier 3 entry print their own PASS line and stay unverified`);
 
     // The recovery path, graded where it is used: every ramp page repairs an exit-check item, so

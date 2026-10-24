@@ -17,8 +17,10 @@
  * (`mergeLearningLog`), because the two merges must not disagree about what one event is.
  *
  * Every write goes through the store's own writer (`saveDraft`, `recordSnapshot`, `replaceLearningLog`)
- * rather than a raw `setItem`: those functions carry the caps and the eviction order, and a restore
- * that bypassed them could put the bucket over quota and take the editor down with it.
+ * rather than a raw `setItem`: those functions carry each store's own caps and merge rules, and a
+ * restore that bypassed them could put the bucket over quota and take the editor down with it. The
+ * study writer reports a refused write, which the report carries rather than counting notes it did not
+ * store.
  *
  * Reads and writes the browser's `localStorage` through those modules, so `scripts/test_backup.mjs`
  * runs it under Node with a `happy-dom` window and no React.
@@ -375,9 +377,17 @@ function restoreStudy(text: string | undefined, report: RestoreReport): void {
   }
   const incoming = parseStudy(JSON.stringify(raw));
   const { store, addedNotes, addedHighlights } = mergeStudy(readStudy(), incoming);
-  if (addedNotes || addedHighlights) replaceStudy(store);
-  report.notes += addedNotes;
-  report.highlights += addedHighlights;
+  if (addedNotes || addedHighlights) {
+    // The merge happens in memory; the report counts what actually landed. A bucket that refuses the
+    // write keeps nothing new, and saying "restored" would send the learner looking for a note that
+    // is not there.
+    if (!replaceStudy(store)) {
+      report.skipped.push('study.json (the store refused the write)');
+      return;
+    }
+    report.notes += addedNotes;
+    report.highlights += addedHighlights;
+  }
 }
 
 /**

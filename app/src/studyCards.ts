@@ -25,7 +25,11 @@ import { newCard, review, type CardSchedule, type Grade } from './fsrs.ts';
 import { readStudy, type StudyStore } from './studyNotes.ts';
 
 export const STORAGE_KEY_CARDS = 'mechalab_study_cards_v1';
-/** 25 lessons x 20 highlights is the notes cap; the deck can never be larger than its sources. */
+/**
+ * The deck's own size bound. Notes are no longer capped by lesson count, so a very active learner can
+ * own more commented highlights than this: the schedules of the cards left longest un-answered are the
+ * ones dropped, and the highlights themselves stay in the notes store.
+ */
 export const MAX_CARDS = 500;
 
 /** Lesson id and quote, with the quote escaped: an id that cannot collide with another card's. */

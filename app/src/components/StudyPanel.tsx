@@ -51,6 +51,9 @@ const RATINGS: { grade: Grade; label: string; hint: string }[] = [
   { grade: 4, label: 'Easy', hint: 'obvious' },
 ];
 
+/** Said when a store refuses a write, because "saved" must mean the bytes landed. */
+const NOT_SAVED = 'Not saved — storage is blocked or full';
+
 /** "in 6 days" for a card that came back; the panel says when, never an exact timestamp. */
 function waitText(ms: number): string {
   const days = Math.round(ms / DAY_MS);
@@ -130,10 +133,14 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
   useEffect(() => {
     if (!dirtyRef.current) return;
     const timer = window.setTimeout(() => {
-      saveNote(lessonId, note);
-      savedRef.current = note;
-      dirtyRef.current = false;
-      setStatus(note.trim() ? 'Note saved' : 'Note cleared');
+      const landed = saveNote(lessonId, note);
+      if (landed) {
+        savedRef.current = note;
+        dirtyRef.current = false;
+      }
+      // On a refusal the box stays dirty, so leaving the lesson is one more attempt and the line says
+      // why the next reload may not show what is on screen.
+      setStatus(landed ? (note.trim() ? 'Note saved' : 'Note cleared') : NOT_SAVED);
     }, 500);
     return () => window.clearTimeout(timer);
   }, [lessonId, note]);
@@ -148,7 +155,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     const owner = lessonId;
     return () => {
       if (!dirtyRef.current) return;
-      saveNote(owner, noteRef.current);
+      if (!saveNote(owner, noteRef.current)) return;
       savedRef.current = noteRef.current;
       dirtyRef.current = false;
     };
@@ -167,7 +174,9 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
 
   const pin = () => {
     if (!selection) return;
-    addHighlight(lessonId, selection);
+    // The selection is only cleared when the write landed: a refused highlight that also vanished
+    // from the page would be the one case where the learner cannot simply press again.
+    if (!addHighlight(lessonId, selection)) return setStatus(NOT_SAVED);
     window.getSelection()?.removeAllRanges();
     setSelection('');
     reload();
@@ -178,9 +187,9 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     if (value === highlight.comment) return;
     // `setComment`, not `addHighlight`: clearing the box is how a card is retired, and the pin path
     // refuses a blank overwrite on purpose.
-    setComment(lessonId, highlight.quote, value);
+    const landed = setComment(lessonId, highlight.quote, value);
     reload();
-    setStatus(value.trim() ? 'Comment saved' : 'Comment cleared');
+    setStatus(landed ? (value.trim() ? 'Comment saved' : 'Comment cleared') : NOT_SAVED);
   };
 
   const drop = (highlight: Highlight) => {

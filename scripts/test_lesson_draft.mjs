@@ -6,8 +6,8 @@
  * when the learner comes back, and the roadmap card can say so before opening it. Both are small
  * enough to pin without a browser, and the cases a browser test cannot reach on purpose are the ones
  * that matter: storage that throws (private mode), a store written by an older version, a bucket that
- * is full, a draft past the size cap, and the eviction order when more lessons are edited than the
- * store keeps.
+ * is full, a draft past the size cap, and the retention promise that replaced the old twelve-lesson
+ * cap: every edited lesson keeps its draft, however many are edited.
  *
  * Run: node --experimental-strip-types scripts/test_lesson_draft.mjs (`npm run test:draft`)
  */
@@ -15,7 +15,6 @@
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
 import {
-  MAX_DRAFTS,
   MAX_DRAFT_CHARS,
   STORAGE_KEY_DRAFTS,
   clearDraft,
@@ -113,19 +112,22 @@ check('a draft for an id the registry does not list is not stored', () => {
   assert.equal(window.localStorage.getItem(STORAGE_KEY_DRAFTS), null);
 });
 
-check('the store keeps the most recent lessons and evicts the oldest', () => {
+check('every edited lesson keeps its draft, however many are edited', () => {
+  // The store used to keep twelve and evict the least-recently-edited, so the thirteenth lesson sent
+  // a learner back to the starter with no warning. Fourteen is past that old cap on purpose.
   freshBrowser();
-  const ids = PYTHON_LESSONS.slice(0, MAX_DRAFTS + 2).map((lesson) => lesson.id);
+  const ids = PYTHON_LESSONS.slice(0, 14).map((lesson) => lesson.id);
   for (const id of ids) saveDraft(id, `# edited ${id}\n`);
   const kept = Object.keys(readDrafts());
-  assert.equal(kept.length, MAX_DRAFTS, `expected ${MAX_DRAFTS} drafts, kept ${kept.length}`);
-  assert.deepEqual(kept, ids.slice(2), 'expected the two oldest edits to be evicted');
+  assert.equal(kept.length, ids.length, 'no draft is dropped for being old');
+  assert.deepEqual([...kept].sort(), [...ids].sort(), 'every edited lesson is still there');
+  assert.equal(readDraft(ids[0]), `# edited ${ids[0]}\n`, 'the first edit is read back exactly');
 
-  // Editing an evicted lesson again makes it the newest, not the oldest by accident.
+  // Editing the oldest again still moves it to the newest slot, and drops nothing.
   saveDraft(ids[0], '# back again\n');
   const after = Object.keys(readDrafts());
   assert.equal(after[after.length - 1], ids[0], 'expected a re-edited lesson to move to the newest slot');
-  assert.equal(after.length, MAX_DRAFTS, 'expected the cap to hold after re-adding');
+  assert.equal(after.length, ids.length, 'expected the re-edit to add nothing and remove nothing');
 });
 
 check('a paste past the size cap is not stored, and does not disturb the rest', () => {
@@ -152,7 +154,7 @@ check('a store that throws neither crashes nor pretends to save', () => {
   freshBrowser({ store: 'throws' });
   assert.deepEqual(readDrafts(), {});
   assert.equal(readDraft(LESSON.id), null);
-  saveDraft(LESSON.id, EDIT);
+  assert.equal(saveDraft(LESSON.id, EDIT), false, 'a blocked write says it did not land');
   clearDraft(LESSON.id);
   assert.ok(true, 'expected every entry point to survive a blocked store');
 });
@@ -160,7 +162,7 @@ check('a store that throws neither crashes nor pretends to save', () => {
 check('no storage at all (the server render) is not an error', () => {
   freshBrowser({ store: 'absent' });
   assert.deepEqual(readDrafts(), {});
-  saveDraft(LESSON.id, EDIT);
+  assert.equal(saveDraft(LESSON.id, EDIT), false);
   assert.equal(readDraft(LESSON.id), null);
 });
 

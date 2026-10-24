@@ -70,7 +70,7 @@ npm run test:cells                      # # %% cells: the boundaries, the preamb
 npm run test:breakpoints                # the gutter's list: a toggle, a condition and the dot it belongs to, per lesson, capped and evicted, an older store read back, lines that can run, and a dot that follows its statement through an edit
 npm run test:try                        # try-it blocks: the marker rule, the lesson a page opens, the generated link read back by the app's own codec, and that every page is up to date
 npm run test:backup                     # the archive: CRC vector, byte-for-byte round trip, the three refusals, and a merge that never deletes
-npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped and evicted, merged on restore
+npm run test:study                      # notes and highlights: kept per lesson, deduped by quote, capped per lesson and never evicted by count, merged on restore
 npm run test:review                     # FSRS-5: the 0.9-at-stability identity, grade order, lapses, the year cap, and the card join
 npm run test:sitting                    # the sitting clock: idle cutoff, three-hour cap, backwards clock, totals, and focus's store
 npm run test:portfolio                  # the export: a section only when it has content, quoting, the twenty-card cap, the time table
@@ -85,7 +85,7 @@ npm run test:editor                     # slider directives and which lessons ge
 npm run test:storage                    # the move to IndexedDB: the bucket fallback, the migration order, the coalesced write queue, the retry after a refused write
 npm run test:traceback                  # Python's failure as data: the learner's frame, chained failures, both SyntaxError shapes, and the index entry it matches
 npm run test:resume                     # the lesson the next visit reopens, which one the roadmap offers and when it hands forward, and the ids it refuses
-npm run test:draft                      # the editor's unfinished work: kept per lesson, bounded, evicted, never a starter copy - and how much of it is written
+npm run test:draft                      # the editor's unfinished work: kept per lesson, bounded per draft and never evicted by count, never a starter copy - and how much of it is written
 npm run test:history                    # the versions behind the draft: filed on Run with its verdict, deduped, capped per lesson and in total
 npm run test:codediff                   # the Diff panel's rules: a change is an exact line, gaps are trimmed to context, the coarse fallback stays true
 npm run test:predict                    # the predict-first gate: lines not strings, four verdicts, a bounded store, and no way to be locked out
@@ -107,9 +107,10 @@ backup: a flag set here survives a file that lacks it, a draft or a note written
 copy, a highlight already kept is not doubled and an older file cannot erase a newer comment, an older
 arriving version never evicts a newer one, and restoring the same file twice adds nothing. The last
 check is a measurement rather than a claim: the caps of all seven stores, computed from the modules
-that export them, come to ~2.0 M characters - the archive's size, and the number the bucket fallback
-(`localStorage`, for a browser that refuses a database) still has to hold in case the store has to go
-back there.
+that export them, come to ~6.5 M characters - the archive's worst case, and a number the 5 MB bucket
+fallback (`localStorage`, for a browser that refuses a database) is no longer promised to hold. The
+fallback can fill, and a write it refuses returns false so the editor and the study panel say *Not
+saved* rather than dropping an older lesson; authoring in IndexedDB is bounded by the disk.
 
 `test:traceback` is the failure card's arithmetic, without a browser: a failing print names its own
 line and the source CPython printed beside it, a failure inside a function reports that function rather
@@ -133,17 +134,19 @@ deletes any of them and a refused copy leaves the bucket whole, the bucket wins 
 the same key, an entry only the database has is readable, reads are synchronous after `hydrate()` while
 writes land on `flush()` coalesced per key, a clear empties the database, a failed write goes back on
 the queue instead of being dropped, and a store that has not hydrated answers `null` ("not ready")
-rather than an empty store. `test:e2e:storage` then does it in Chromium: a bucket holding all six
+rather than an empty store. The capped stores still evict where their own caps say to; the authored
+ones (drafts, notes, highlights) apply only their per-entry caps and never drop a lesson for being old. `test:e2e:storage` then does it in Chromium: a bucket holding all six
 stores the way the previous build left it, a reload, and the checks that nothing was lost, the editor
 and the study panel and the deck show the carried work, a note typed now lands in the database and not
 in the bucket, and a further reload reads it back.
 
 `test:study` pins the note and highlight rules without a browser: a note keeps its own line breaks and
 is cleared to nothing by an empty box, a quote collapses to one line and the same passage pinned twice
-updates instead of duplicating, a blank comment does not erase a written one, the per-lesson and
-per-store caps evict the oldest writes, a corrupt or foreign store reads as what still parses, blocked
-and full storage never throws into the render, and the merge a restore performs fills gaps without
-ever overwriting a note written on this machine.
+updates instead of duplicating, a blank comment does not erase a written one, the per-lesson caps evict
+the oldest highlights of that lesson, a corrupt or foreign store reads as what still parses, blocked and
+full storage never throws into the render and returns false instead of claiming a write, every lesson's
+note survives however many are written (40 in the suite), and the merge a restore performs fills gaps
+without ever overwriting a note written on this machine.
 `test:e2e:backup` takes the archive the browser actually wrote, wipes `localStorage`, and restores it,
 asserting the milestone tick returns **without a reload** — the App's own copy of the maps is what a
 store-only restore would leave stale.

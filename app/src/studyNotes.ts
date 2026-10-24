@@ -12,16 +12,15 @@
  * - **A highlight** is a quoted passage plus an optional comment. The quote is the identity: saving
  *   the same passage twice updates what was said about it rather than growing a duplicate list.
  *
- * Bounded, because a note store with no ceiling is one that eventually makes every write, export and
- * backup pay for it - the caps are what keep the archive small and the fallback (`localStorage`, for a
- * browser that refuses IndexedDB) inside 5 MB:
- * `MAX_NOTE_CHARS` per note, `MAX_HIGHLIGHTS` per lesson, `MAX_NOTE_LESSONS` lessons. Eviction is by
- * last write, so the notes a learner is actually using survive and the ones from a month ago go
- * first — and a lesson that loses its last note and highlight is removed entirely, so an empty entry
- * never pins a lesson in the store.
+ * Bounded per lesson, not per store: `MAX_NOTE_CHARS` per note and `MAX_HIGHLIGHTS` per lesson bound
+ * what one page costs. The store used to cap itself at `MAX_NOTE_LESSONS` and evict the
+ * least-recently-written lesson, which meant a note from the first week disappeared when the
+ * twenty-sixth lesson was annotated — authored work is not cache. Every lesson now keeps what was
+ * written about it; a lesson whose last note and highlight are removed leaves no empty entry behind.
  *
- * Never throws: private mode and blocked storage both make `localStorage` throw on access, and a
- * learner in one of those still gets a working lesson, just without notes.
+ * A write that cannot land returns false rather than throwing: private mode and blocked storage both
+ * make `localStorage` throw on access, and a full bucket rejects the write, so the caller can say
+ * "not saved" instead of the learner finding out after a reload.
  */
 
 import { bulkStorage } from './bulkStorage.ts';
@@ -32,7 +31,6 @@ export const MAX_HIGHLIGHTS = 20;
 export const MAX_HIGHLIGHT_CHARS = 400;
 /** A highlight's comment is a margin note, not a second essay: the bucket has to hold 20 per lesson. */
 export const MAX_COMMENT_CHARS = 400;
-export const MAX_NOTE_LESSONS = 25;
 
 export interface Highlight {
   /** The quoted text, whitespace collapsed: the identity of the highlight. */
@@ -46,7 +44,7 @@ export interface Highlight {
 export interface LessonStudy {
   note: string;
   highlights: Highlight[];
-  /** Last write: the eviction order, and what tells an untouched lesson from an edited one. */
+  /** Last write: what orders the list, and what tells an untouched lesson from an edited one. */
   updatedAt: number;
 }
 
@@ -127,34 +125,36 @@ export function parseStudy(raw: string | null): StudyStore {
 }
 
 /**
- * Write the store back, newest last, capped.
+ * Write the store back; false means the browser refused it (a full bucket, or a blocked write).
  *
- * The cap is applied here rather than at every call site: a lesson that went over its highlight
- * limit, or a store that went over its lesson limit, is trimmed by the same rule no matter which
- * function put the entry in.
+ * The one cap applied here is per lesson — a highlight list longer than `MAX_HIGHLIGHTS` is trimmed
+ * by the same rule no matter which function put the entry in. Nothing is dropped for being old.
  */
-function writeStudy(store: Storage, study: StudyStore): void {
-  const ids = Object.keys(study).sort(
-    (a, b) => (study[a].updatedAt ?? 0) - (study[b].updatedAt ?? 0)
-  );
-  for (const stale of ids.slice(0, Math.max(0, ids.length - MAX_NOTE_LESSONS))) delete study[stale];
+function writeStudy(store: Storage, study: StudyStore): boolean {
+  const next: StudyStore = {};
+  for (const [id, lesson] of Object.entries(study)) {
+    next[id] = { ...lesson, highlights: lesson.highlights.slice(-MAX_HIGHLIGHTS) };
+  }
   try {
-    store.setItem(STORAGE_KEY_STUDY, JSON.stringify(study));
+    store.setItem(STORAGE_KEY_STUDY, JSON.stringify(next));
+    return true;
   } catch {
-    // A full or blocked bucket keeps this session's notes in memory and loses the write; the
-    // alternative - throwing into a React render - would take the lesson down with it.
+    // A full or blocked bucket keeps this session's notes in memory; the caller turns the false into
+    // a line that says so, because throwing into a React render would take the lesson down with it.
+    return false;
   }
 }
 
 /**
  * Replace the whole store, used after a restore has merged this browser's notes with another's.
  *
- * The same caps apply: a restored file is reviewed data, not a licence to fill the bucket.
+ * Every lesson in the file is kept. The per-lesson caps still apply, but a restore is no longer a
+ * reason to drop authored work; false means the bucket refused the write.
  */
-export function replaceStudy(study: StudyStore): void {
+export function replaceStudy(study: StudyStore): boolean {
   const store = storage();
-  if (!store) return;
-  writeStudy(store, { ...study });
+  if (!store) return false;
+  return writeStudy(store, { ...study });
 }
 
 /** Every lesson with something written about it. */
@@ -181,22 +181,21 @@ export function readLessonStudy(id: string): LessonStudy | null {
  * it has no highlights), so "no note" stays the same state as "never wrote one" instead of an entry
  * whose text happens to be blank.
  */
-export function saveNote(id: string, text: string, now: number = Date.now()): void {
+export function saveNote(id: string, text: string, now: number = Date.now()): boolean {
   const store = storage();
-  if (!store) return;
+  if (!store) return false;
   const study = readStudy();
   const note = cleanNote(text);
   const existing = study[id];
   if (!note) {
-    if (!existing) return;
+    if (!existing) return true;
     existing.note = '';
     if (existing.highlights.length === 0) delete study[id];
     else existing.updatedAt = now;
-    writeStudy(store, study);
-    return;
+    return writeStudy(store, study);
   }
   study[id] = { note, highlights: existing?.highlights ?? [], updatedAt: now };
-  writeStudy(store, study);
+  return writeStudy(store, study);
 }
 
 /**
@@ -227,7 +226,7 @@ export function addHighlight(
   lesson.highlights = lesson.highlights.slice(-MAX_HIGHLIGHTS);
   lesson.updatedAt = now;
   study[id] = lesson;
-  writeStudy(store, study);
+  if (!writeStudy(store, study)) return null;
   return lesson.highlights.find((highlight) => highlight.quote === cleaned) ?? null;
 }
 
@@ -254,7 +253,7 @@ export function setComment(
   if (!lesson || !found) return null;
   found.comment = cleanComment(comment);
   lesson.updatedAt = now;
-  writeStudy(store, study);
+  if (!writeStudy(store, study)) return null;
   return found;
 }
 
@@ -295,7 +294,7 @@ export function studyCounts(study: StudyStore = readStudy()): {
  *   is the text being edited, so it is by definition the newer draft.
  * - Highlights union by quote. For the same quote the newer `at` carries the comment, so restoring
  *   an older backup cannot erase a comment written after it.
- * - The result is written back through the same caps as any other write.
+ * - The result is returned whole; the caller writes it, and no lesson is dropped for being old.
  *
  * Returns what actually arrived, which is what the restore report counts.
  */

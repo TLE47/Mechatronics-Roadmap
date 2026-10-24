@@ -40,7 +40,7 @@ import {
   restoreBackupZip,
   restoreSummary,
 } from '../app/src/backupBundle.ts';
-import { MAX_DRAFTS, MAX_DRAFT_CHARS, readDraft, readDrafts, saveDraft } from '../app/src/lessonDraft.ts';
+import { MAX_DRAFT_CHARS, readDraft, readDrafts, saveDraft } from '../app/src/lessonDraft.ts';
 import {
   STORAGE_KEY_HISTORY,
   MAX_HISTORY_CHARS,
@@ -55,7 +55,6 @@ import {
   MAX_HIGHLIGHT_CHARS,
   MAX_HIGHLIGHTS,
   MAX_NOTE_CHARS,
-  MAX_NOTE_LESSONS,
   addHighlight,
   readLessonStudy,
   saveNote,
@@ -510,30 +509,37 @@ check('the summaries say what happened, and say "nothing new" when nothing was',
   );
 });
 
-check('the caps keep the bucket fallback - and the archive - inside 5 MB', () => {
-  // The bulk stores are in IndexedDB now (`app/src/bulkStorage.ts`), so this ceiling no longer guards a
-  // quota; it guards the two things that still have to hold every store at once: the `localStorage` a
-  // browser falls back to when it refuses a database, and the zip a learner hands over.
+check('the archive stays under its receipt limit, with every lesson\'s authored work at the caps', () => {
+  // Authored work is deliberately not capped by count any more: one draft and one study entry can
+  // exist per lesson in the registry, and neither is evicted for being old (`app/src/lessonDraft.ts`,
+  // `app/src/studyNotes.ts`). That retires the old "fits the 5 MB bucket fallback at worst case"
+  // claim on purpose - a browser that refuses IndexedDB gets that bucket, and a write that fills it
+  // returns false so the editor and the study panel say "Not saved" instead of dropping a lesson.
+  // What still has to hold is the archive: the absolute ceiling has to stay under the size the
+  // restore refuses as "not a MechaLab backup", or the app would write a file it cannot read back.
   // Measured, not guessed: 120 chars is a run event with a lesson id, an outcome and a short fail
   // line. Every store's own cap is exported by the module that enforces it.
-  const worst =
-    MAX_DRAFTS * MAX_DRAFT_CHARS + // drafts: 12 x 40,000
+  const lessons = PYTHON_LESSONS.length;
+  const authored =
+    lessons * MAX_DRAFT_CHARS + // one draft per lesson
+    // one study entry per lesson: a note plus 20 highlights, each a quote and a comment
+    lessons * (MAX_NOTE_CHARS + MAX_HIGHLIGHTS * (MAX_HIGHLIGHT_CHARS + MAX_COMMENT_CHARS));
+  const capped =
     MAX_HISTORY_CHARS + // versions: 120,000 chars total, by construction
-    // study notes: 40 lessons x (a note + 20 highlights, each a quote and a comment)
-    MAX_NOTE_LESSONS * (MAX_NOTE_CHARS + MAX_HIGHLIGHTS * (MAX_HIGHLIGHT_CHARS + MAX_COMMENT_CHARS)) +
     // review cards: 500 schedules, each keyed by lesson plus the quote it asks (~200 chars of schedule)
     MAX_CARDS * (MAX_HIGHLIGHT_CHARS + 200) +
     MAX_EVENTS * 120; // learning log: the runner's own cap, at ~120 chars an event
+  const worst = authored + capped;
   const verified = createBackupZip(0).length; // the archive overhead is a rounding error
-  const ceiling = (worst + verified) * 2; // UTF-16 in localStorage: two bytes per character
+  const ceiling = (worst + verified) * 2; // UTF-16 on its way into the zip
   assert.ok(
-    ceiling < 5_000_000,
-    `the stores could reach ${Math.round(ceiling / 1000)} kB, which no longer fits a bucket fallback`
+    ceiling < MAX_BACKUP_BYTES,
+    `a full course at the caps would be ${Math.round(ceiling / 1000)} kB, which the restore would refuse`
   );
   console.log(
-    `       caps: ${Math.round(worst / 1000)}k chars -> ~${Math.round(ceiling / 1000)} kB of a 5,000 kB bucket ` +
-      `(drafts ${MAX_DRAFT_CHARS * MAX_DRAFTS}, history ${MAX_HISTORY_CHARS}, ` +
-      `study ${MAX_NOTE_LESSONS} x ${MAX_NOTE_CHARS + MAX_HIGHLIGHTS * (MAX_HIGHLIGHT_CHARS + MAX_COMMENT_CHARS)}, ` +
+    `       caps: ${Math.round(worst / 1000)}k chars -> ~${Math.round(ceiling / 1000)} kB ` +
+      `(drafts ${lessons} x ${MAX_DRAFT_CHARS}, history ${MAX_HISTORY_CHARS}, ` +
+      `study ${lessons} x ${MAX_NOTE_CHARS + MAX_HIGHLIGHTS * (MAX_HIGHLIGHT_CHARS + MAX_COMMENT_CHARS)}, ` +
       `cards ${MAX_CARDS} x ${MAX_HIGHLIGHT_CHARS + 200}, ` +
       `log ${MAX_EVENTS} x 120)`
   );

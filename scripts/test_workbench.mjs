@@ -17,7 +17,7 @@
  *   test:collab      the co-editing document: ids, diffs, convergence under concurrent edits, wire rules
  *   test:editor      slider directives (parse/clamp/format) and which lessons get helper tabs
  *   test:resume      the lesson the next visit reopens, including the ids it must refuse
- *   test:draft       the editor's unfinished work: kept, bounded, evicted, and never a starter copy
+ *   test:draft       the editor's unfinished work: kept, bounded per draft, never evicted by count, never a starter copy
  *   test:codediff    the Diff panel's rules: what a change is, how gaps are trimmed, the coarse fallback
  *   test:predict     the predict-first gate's grading: lines not strings, four verdicts, a bounded store, no lockout
  *   test:watch       when the checks may re-run themselves: after a graded failure, on an edit, never past the gate
@@ -29,7 +29,7 @@
  *   test:takealong   the offline button's URL list, its size wording, and what "ready" may claim
  *   test:backup      the backup archive: CRC, round trip, the three refusals, and a merge that never deletes
  *   test:analysis    completions, hover and signatures without a browser: insertion point, cursor coordinates, the call under the cursor, note shape, transport
- *   test:study       notes and highlights: what is kept, deduped, evicted, and what a restore merges
+ *   test:study       notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
  *   test:review      FSRS: the 0.9-at-stability identity, grade ordering, lapses, the interval cap, and the card join
  *   test:sitting     the sitting clock: the idle cutoff, the three-hour cap, a backwards clock, the store, and focus's store
  *   test:portfolio   the exported Markdown: the progress record, notes and passages, the deck, the time table

@@ -17,22 +17,21 @@ import { diffLines } from './codeDiff.ts';
  * lesson keeps nothing, so a first visit writes nothing and "no draft" means "nothing typed yet"
  * rather than "we stored a copy of the starter".
  *
- * Bounded, because a draft store is what makes every write, export and backup pay for the learner's
- * whole editing history - and the `localStorage` a browser falls back to when it refuses IndexedDB is a
- * single 5 MB bucket shared with progress, theme and the log:
+ * **Every edited lesson keeps its latest draft.** The store used to keep twelve and evict the
+ * least-recently-edited; a learner who returned to the thirteenth got the starter back and was never
+ * told. Authored work is not cache: the count limit is gone, and the only ceiling left is
+ * `MAX_DRAFT_CHARS` per draft, because a paste bigger than that is a file rather than an exercise.
  *
- * - **At most `MAX_DRAFTS` lessons**, least-recently-edited evicted. Twelve is more than a week of
- *   self-paced work, and a learner who returns to the thirteenth still gets the lesson, just from its
- *   starter.
- * - **At most `MAX_DRAFT_CHARS` per draft.** A paste bigger than that is not a draft; it is a file,
- *   and storing it would spend the bucket on a single tab.
+ * **A write that cannot land says so.** `saveDraft` returns false when storage is blocked or the
+ * browser's bucket rejects the write, so the editor can tell the learner before the next reload
+ * silently starts from the starter. (The bulk stores live in IndexedDB, whose quota is a share of the
+ * disk; the 5 MB bucket is only the fallback a browser that refuses a database falls back to.)
  *
  * Never throws: private mode and blocked third-party storage both make `localStorage` throw on
  * access, and a learner in one of those gets a working editor without drafts.
  */
 
 export const STORAGE_KEY_DRAFTS = 'mechalab_drafts_v1';
-export const MAX_DRAFTS = 12;
 export const MAX_DRAFT_CHARS = 40_000;
 
 /** Lesson id -> editor text, most recently edited last. */
@@ -59,12 +58,15 @@ function parseDrafts(raw: string | null): Drafts {
   }
 }
 
-function writeDrafts(store: Storage, drafts: Drafts): void {
+/** Write the store; false means the browser refused it (a full bucket, or a blocked write). */
+function writeDrafts(store: Storage, drafts: Drafts): boolean {
   try {
     store.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(drafts));
+    return true;
   } catch {
-    // A full bucket must not break the editor; this session still works, the next starts from the
-    // lesson's own starter.
+    // A full bucket must not break the editor: the text is still on screen, and the caller turns the
+    // false into a line that says the draft did not land rather than pretending it did.
+    return false;
   }
 }
 
@@ -99,29 +101,30 @@ export function isEdited(code: string, starter: string): boolean {
  *
  * Called on a debounce while the learner types and once more when they leave a lesson, so the last
  * few keystrokes before a tab switch are not the ones that get lost.
+ *
+ * Returns false when the draft could not be stored — no storage at all (blocked, private mode), or a
+ * bucket that refused the write. True covers the deliberate decisions too: an untouched lesson keeps
+ * nothing, and a paste past `MAX_DRAFT_CHARS` is not a draft.
  */
-export function saveDraft(id: string, code: string): void {
+export function saveDraft(id: string, code: string): boolean {
   const starter = starterFor(id);
-  if (starter === null) return;
+  if (starter === null) return true;
   const store = storage();
-  if (!store) return;
+  if (!store) return false;
   const drafts = readDrafts();
 
   if (!isEdited(code, starter)) {
-    if (!(id in drafts)) return;
+    if (!(id in drafts)) return true;
     delete drafts[id];
-    writeDrafts(store, drafts);
-    return;
+    return writeDrafts(store, drafts);
   }
-  if (code.length > MAX_DRAFT_CHARS) return;
+  if (code.length > MAX_DRAFT_CHARS) return true;
 
-  // Delete then re-add: key order is the eviction order, and editing a lesson again makes it the
-  // newest one rather than leaving it where it first appeared.
+  // Delete then re-add so the most recently edited lesson is last: the order is what the roadmap's
+  // "continue where you left off" card reads, and nothing is dropped for being old any more.
   delete drafts[id];
   drafts[id] = code;
-  const ids = Object.keys(drafts);
-  for (const stale of ids.slice(0, Math.max(0, ids.length - MAX_DRAFTS))) delete drafts[stale];
-  writeDrafts(store, drafts);
+  return writeDrafts(store, drafts);
 }
 
 /** Forget one lesson's draft - what Reset Starter means once the editor is back on the starter. */

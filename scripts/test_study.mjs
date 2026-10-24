@@ -5,8 +5,9 @@
  * `app/src/studyNotes.ts` is small, and every rule in it is the kind that is invisible until it
  * bites: a note that comes back with its indent stripped, a highlight that duplicates when the same
  * passage is pinned twice, a clear that leaves an empty entry behind, a store written by an older
- * version read as a crash, a lesson limit that evicts the wrong lesson, and a restore that overwrites
- * a note written this morning with one from last week.
+ * version read as a crash, a write the bucket refuses, and a restore that overwrites a note written
+ * this morning with one from last week. It also pins the retention promise the store now makes:
+ * every lesson keeps its note, with no count at which the oldest is dropped.
  *
  * The storage cases are the ones the browser cannot be asked to produce on purpose: blocked storage
  * (private mode), storage that throws on access, and a bucket that rejects the write.
@@ -21,7 +22,6 @@ import {
   MAX_HIGHLIGHT_CHARS,
   MAX_HIGHLIGHTS,
   MAX_NOTE_CHARS,
-  MAX_NOTE_LESSONS,
   STORAGE_KEY_STUDY,
   addHighlight,
   cleanQuote,
@@ -177,23 +177,24 @@ check('removing a highlight keeps the rest, and empties the lesson when it was t
 
 section('the bucket');
 
-check('the least recently written lesson is the one evicted', () => {
+check('every lesson keeps its note, however many are written', () => {
+  // The store used to keep 25 lessons and drop the least-recently-written; a note from week one was
+  // the first thing to go. Forty is past that old limit on purpose: authored work is not cache.
   freshBrowser();
-  for (let index = 0; index < MAX_NOTE_LESSONS + 3; index += 1) {
+  for (let index = 0; index < 40; index += 1) {
     saveNote(`L.${index}`, `note ${index}`, 1000 + index);
   }
   const study = readStudy();
-  assert.equal(Object.keys(study).length, MAX_NOTE_LESSONS);
-  assert.equal(study['L.0'], undefined, 'the oldest three lessons go first');
-  assert.equal(study['L.1'], undefined);
-  assert.ok(study[`L.${MAX_NOTE_LESSONS + 2}`], 'the newest lesson stays');
+  assert.equal(Object.keys(study).length, 40, 'no lesson is dropped for being old');
+  assert.equal(study['L.0'].note, 'note 0', 'the first lesson written is still there');
+  assert.equal(study['L.39'].note, 'note 39');
 
-  // Writing to an old lesson again makes it the newest, so it survives the next eviction.
-  saveNote('L.3', 'back to this one', 9000);
-  saveNote('L.new', 'a new one', 9001);
+  // Editing the oldest again neither evicts it nor changes another lesson's text.
+  saveNote('L.0', 'back to this one', 9000);
   const after = readStudy();
-  assert.ok(after['L.3'], 'a lesson written again is not the oldest any more');
-  assert.equal(after['L.4'], undefined);
+  assert.equal(Object.keys(after).length, 40);
+  assert.equal(after['L.0'].note, 'back to this one');
+  assert.equal(after['L.1'].note, 'note 1');
 });
 
 check('a store written by something else reads as the part of itself that parses', () => {
@@ -219,12 +220,12 @@ check('a blocked or throwing store never throws at the caller', () => {
   freshBrowser({ store: 'throws' });
   assert.deepEqual(readStudy(), {});
   assert.equal(readLessonStudy('P.1'), null);
-  assert.doesNotThrow(() => saveNote('P.1', 'text'));
-  assert.doesNotThrow(() => addHighlight('P.1', 'quote'));
+  assert.equal(saveNote('P.1', 'text'), false, 'a blocked write says it did not land');
+  assert.equal(addHighlight('P.1', 'quote'), null);
 
   freshBrowser({ store: 'absent' });
   assert.deepEqual(readStudy(), {});
-  assert.doesNotThrow(() => saveNote('P.1', 'text'));
+  assert.equal(saveNote('P.1', 'text'), false);
 });
 
 check('a bucket that rejects the write keeps the session working', () => {
@@ -241,7 +242,7 @@ check('a bucket that rejects the write keeps the session working', () => {
       removeItem: (key) => real.removeItem(key),
     },
   });
-  assert.doesNotThrow(() => saveNote('P.1', 'text'));
+  assert.equal(saveNote('P.1', 'text'), false, 'the refusal is reported, not swallowed');
   assert.deepEqual(readStudy(), {}, 'the write was lost, and nothing crashed');
 });
 
@@ -316,21 +317,20 @@ check('an older file cannot erase a comment written after it', () => {
   assert.equal(merged.addedHighlights, 0);
 });
 
-check('a file with more lessons than the store keeps merges whole, and the write trims it', () => {
+check('a restore keeps every lesson in the file, including the ones written first', () => {
   freshBrowser();
   const incoming = {};
-  for (let index = 0; index < MAX_NOTE_LESSONS + 5; index += 1) {
+  for (let index = 0; index < 30; index += 1) {
     incoming[`L.${index}`] = { note: `n${index}`, highlights: [], updatedAt: 1000 + index };
   }
   const merged = mergeStudy({}, incoming);
-  assert.equal(Object.keys(merged.store).length, MAX_NOTE_LESSONS + 5, 'the merge itself drops nothing');
-  assert.equal(merged.addedLessons, MAX_NOTE_LESSONS + 5);
-  // `writeStudy` applies the cap: a restore goes through it, so what lands is the newest lessons.
-  replaceStudy(merged.store);
+  assert.equal(Object.keys(merged.store).length, 30, 'the merge drops nothing');
+  assert.equal(merged.addedLessons, 30);
+  assert.equal(replaceStudy(merged.store), true, 'the write landed');
   const stored = readStudy();
-  assert.equal(Object.keys(stored).length, MAX_NOTE_LESSONS);
-  assert.equal(stored['L.0'], undefined);
-  assert.ok(stored[`L.${MAX_NOTE_LESSONS + 4}`], 'the newest lessons are the ones that stay');
+  assert.equal(Object.keys(stored).length, 30, 'a restore drops no lesson for being old');
+  assert.equal(stored['L.0'].note, 'n0', 'the oldest lesson in the file survives the round trip');
+  assert.equal(stored['L.29'].note, 'n29');
 });
 
 check('counts say how much was written, not how many lessons exist', () => {

@@ -149,12 +149,14 @@ lacks it, a local draft beats the file's, a newer version is not pushed out by a
 still hold); `npm run test:e2e:backup` does it in Chromium — write the zip, wipe, restore, and see the
 tick and the draft come back.
 
-Why this as well as IndexedDB: the caps bound everything the seven stores can hold at ~2.0 M
-characters (12 drafts × 40 k, 120 k of versions, 25 lessons of notes and highlights, 500 review cards,
-5,000 log events) and `test:backup` computes that number from the exported caps instead of trusting
-this paragraph. Before the move that was 80% of a 5 MB bucket; now it is the size of the archive and
-the cost of one `put`, which is a budget a cap can defend rather than an emergency. A backup is still
-the part that matters when a browser is cleared, which no amount of storage room changes.
+Why this as well as IndexedDB: the caps bound everything the seven stores can hold at ~6.5 M
+characters — one draft and one study entry per registry lesson at the per-entry caps, 120 k of
+versions, 500 review cards, 5,000 log events — and `test:backup` computes that number from the exported
+caps instead of trusting this paragraph. It is the archive's worst case, not a promise that the 5 MB
+`localStorage` fallback can hold it: a browser that refuses a database can fill that bucket, and the
+writer then returns false, so the editor and the study panel say *Not saved* rather than evicting a
+lesson. A backup is still the part that matters when a browser is cleared, which no amount of storage
+room changes.
 
 ### Where the work is stored
 
@@ -249,10 +251,12 @@ the laptop.
 (trimmed, capped at 4,000 characters, cleared by emptying the box — so "no note" is one state, not
 two) and highlights that are identified by their quoted text, so pinning the same passage twice
 updates what was said about it instead of growing a duplicate list. A selection is collapsed to one
-line before it is stored, comments are capped at a margin note's length, and the store is bounded like
-every other one (20 highlights per lesson, 25 lessons, least-recently-written evicted). Notes ride in
-the backup and merge back the same way drafts do: the note on this machine is the newer draft and wins,
-and highlights union by quote with the newer comment kept.
+line before it is stored, comments are capped at a margin note's length, and the store is bounded per
+lesson, never by lesson count: 20 highlights per lesson and a 4,000-character note, and no number of
+lessons at which the first one is dropped. A write the browser refuses returns false, so the panel says
+*Not saved — storage is blocked or full* instead of claiming text that is not there. Notes ride in the
+backup and merge back the same way drafts do: the note on this machine is the newer draft and wins, and
+highlights union by quote with the newer comment kept.
 
 Two failures worth naming, because both are invisible until they happen: a note typed and then followed
 by a lesson switch within the debounce window is written by the lesson-change flush (the write belongs
@@ -1093,7 +1097,7 @@ npm run test:e2e:pages       # built bundle at the Pages base path: every graded
 npm run test:offline         # the service worker: isolation without host headers, the take-offline button, offline reload, run + deep link
 npm run test:takealong       # the offline button's rules: URL list, size wording, what "ready" may claim
 npm run test:backup          # the archive: CRC, round trip, the three refusals, and a merge that never deletes
-npm run test:study           # notes and highlights: what is kept, deduped, evicted, and what a restore merges
+npm run test:study           # notes and highlights: what is kept, deduped, refused by the store, and what a restore merges
 npm run test:review          # FSRS: 0.9-at-stability, grade order, lapses, the year cap, and the card join
 npm run test:sitting         # the sitting clock's rules and focus mode's store, without a browser
 npm run test:portfolio       # the export: sections only when they have content, quoting, caps, the time table
