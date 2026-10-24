@@ -1,0 +1,11 @@
+{
+  "_why": "Every Lighthouse audit this app deliberately does not satisfy, with the reason in prose, read by `npm run check:lighthouse` (`scripts/check_lighthouse.mjs`). The list is a ratchet in both directions: an audit below a full score that is not here fails the gate, an entry that fires on more items than `max_items` fails, and an entry that fires on nothing fails as stale. `max_items` is the number of failing nodes the audit named when the entry was written, so a regression that widens an accepted finding is still a red build. `performance` is not a category this gate runs at all — see the script's header: a score that moves with the runner is not a gate this repository keeps.",
+  "entries": [
+    {
+      "category": "best-practices",
+      "audit": "valid-source-maps",
+      "max_items": 1,
+      "reason": "Every byte of this bundle is built from this repository, and the repository is public: a debugging session starts at the source, not at a minified frame. Emitting `.map` files would roughly double what Pages has to serve (the bundle is 1.04 MB gzipped) to save a step the repository already saves, and the maps would be uploaded as public assets by the same artifact step. If this app ever ships code it does not publish, this entry is the first thing to delete."
+    }
+  ]
+}

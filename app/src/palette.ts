@@ -11,7 +11,7 @@
  * of equally good matches is the catalogue's order, never the engine's.
  */
 
-export type PaletteKind = 'lesson' | 'tab' | 'action';
+export type PaletteKind = 'lesson' | 'page' | 'tab' | 'action';
 
 export interface PaletteItem {
   /** Stable and unique: `lesson-P.1`, `tab-tab-pyodide`, `action-toggle-theme`. */
@@ -22,7 +22,55 @@ export interface PaletteItem {
   detail?: string;
   /** Extra words that should find this item without appearing in its label. */
   keywords?: string;
+  /**
+   * The lesson this row opens, when it is not the id's own tail.
+   *
+   * A search hit (`app/src/lessonSearch.ts`) is one *line* of a lesson, so its id has to be unique
+   * per hit; the lesson it belongs to is this field. Absent on every catalogue row, whose
+   * `lesson-P.1` id already says it.
+   */
+  lessonId?: string;
+  /** A line of the learner's own file this row opens the lesson on. Search hits only. */
+  line?: number;
+  /**
+   * A page outside the workbench this row opens in a new tab.
+   *
+   * A prose hit (`app/src/proseSearch.ts`) is a reading page on GitHub, because Pages serves only
+   * the built app; there is nothing in this window to switch to, so the row says where it goes.
+   */
+  href?: string;
 }
+
+/**
+ * Which door the palette was opened by, and therefore what it lists.
+ *
+ * `all` is `⌘K`: the whole catalogue. `lessons` is `⌘P`: the same ranking over lessons only, which
+ * is what a learner who knows what they are opening wants. `search` is `⌘⇧F`: text *inside* the
+ * lessons, computed per keystroke by `lessonSearch.ts` rather than ranked from a fixed list.
+ */
+export type PaletteMode = 'all' | 'lessons' | 'search';
+
+/** The words a mode prints: its placeholder, its accessible name, and what an empty list means. */
+export const PALETTE_MODE_TEXT: Record<
+  PaletteMode,
+  { placeholder: string; label: string; empty: string }
+> = {
+  all: {
+    placeholder: 'Jump to a lesson, tab or command…',
+    label: 'Search lessons, tabs and commands',
+    empty: 'Try a lesson id like P.1, a word from a title, or “theme”.',
+  },
+  lessons: {
+    placeholder: 'Open a lesson by id, title or idea…',
+    label: 'Search lessons',
+    empty: 'Try a lesson id like P.1, or a word from its title.',
+  },
+  search: {
+    placeholder: 'Search inside the lessons and course pages…',
+    label: 'Search inside the lessons and course pages',
+    empty: 'Nothing in the lessons or course pages matches that. Try a shorter word.',
+  },
+};
 
 export interface PaletteMatch {
   item: PaletteItem;
@@ -31,6 +79,7 @@ export interface PaletteMatch {
 
 const KIND_LABELS: Record<PaletteKind, string> = {
   lesson: 'Lesson',
+  page: 'Course page',
   tab: 'Tab',
   action: 'Command',
 };
@@ -39,8 +88,11 @@ export function paletteKindLabel(kind: PaletteKind): string {
   return KIND_LABELS[kind];
 }
 
-/** The order the groups are drawn in: where you can go, then what you can do. */
-export const PALETTE_KIND_ORDER: PaletteKind[] = ['lesson', 'tab', 'action'];
+/**
+ * The order the groups are drawn in: where you can go in the workbench, then where you can read,
+ * then the tabs and what you can do.
+ */
+export const PALETTE_KIND_ORDER: PaletteKind[] = ['lesson', 'page', 'tab', 'action'];
 
 /**
  * An in-order subsequence score, for queries that skip letters (`pyrun`).
@@ -136,5 +188,7 @@ export function groupPalette(matches: PaletteMatch[]): { kind: PaletteKind; matc
 
 /** The lesson id behind a lesson item, or null for tabs and commands. */
 export function lessonIdOf(item: PaletteItem): string | null {
-  return item.kind === 'lesson' && item.id.startsWith('lesson-') ? item.id.slice('lesson-'.length) : null;
+  if (item.kind !== 'lesson') return null;
+  if (item.lessonId) return item.lessonId;
+  return item.id.startsWith('lesson-') ? item.id.slice('lesson-'.length) : null;
 }

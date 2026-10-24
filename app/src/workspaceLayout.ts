@@ -15,8 +15,20 @@
  *    shows the code and the output one above the other, so a run's verdict sits off-screen while the
  *    line it is about is in view. Split's divider **drags**: the share of the width the editor gets
  *    is a remembered number (below), because how much code versus output a learner wants is a
- *    judgement about their own screen and the lesson, not a constant this file can pick. Docking
- *    (moving a panel to another edge) and an activity bar are still absent.
+ *    judgement about their own screen and the lesson, not a constant this file can pick.
+ *
+ * **Docking** is the other half of that sentence: a panel that is beside another one can sit on
+ * either edge. Study's chooser can be docked right of the work area, and Split's results can be
+ * docked left of the editor — the arrangement a learner wants when the thing they read *after*
+ * typing should be where their eyes already are. Both sides are remembered, and neither changes
+ * which regions a preset shows; a dock is a side, never a visibility. The one control is the
+ * button that names what it will move in the preset in force, because a second control for the
+ * panel that is not on screen is a button that appears to do nothing.
+ *
+ * The side lives in the arithmetic too. `splitRatio` is always *the editor's share*, so a results
+ * column on the left gets the other track, a pointer at `x` is measured from whichever side the
+ * editor is on, and `Home`/`End` still put the handle at the edge they name rather than at the
+ * smallest number the load-bearing track can take.
  *
  * The rules are a table, and the table is the whole module, which is why it is here rather than
  * inline in the runner: what a preset *hides* is the thing that is wrong when a button produces a
@@ -68,7 +80,8 @@ export const LAYOUTS: LayoutOption[] = [
     id: 'split',
     label: 'Split',
     shortcut: '⌥4',
-    title: 'Split layout (⌥4): the editor on the left and the results on the right, side by side',
+    title:
+      'Split layout (⌥4): the editor and the results side by side — the results dock on either edge',
     arrangement: 'columns',
   },
 ];
@@ -120,10 +133,11 @@ export function splitRatioPercent(ratio: number): number {
  * before either track is sized, so a 50/50 split is exactly two equal columns. Percentages would
  * make the pair 100% wide plus the gap, and the row would scroll sideways.
  */
-export function splitGridTemplate(ratio: number): string {
-  const left = Math.round(clampSplitRatio(ratio) * 1000) / 1000;
-  const right = Math.round((1 - left) * 1000) / 1000;
-  return `minmax(0, ${left}fr) minmax(0, ${right}fr)`;
+export function splitGridTemplate(ratio: number, resultsSide: DockSide = 'right'): string {
+  const editor = Math.round(clampSplitRatio(ratio) * 1000) / 1000;
+  const results = Math.round((1 - editor) * 1000) / 1000;
+  const [first, second] = resultsSide === 'left' ? [results, editor] : [editor, results];
+  return `minmax(0, ${first}fr) minmax(0, ${second}fr)`;
 }
 
 /**
@@ -133,11 +147,20 @@ export function splitGridTemplate(ratio: number): string {
  * tracks divide what is left after the gap, so measuring against the full width would put the
  * boundary half a gap behind the pointer for every drag.
  */
-export function splitRatioAt(clientX: number, left: number, width: number): number | null {
+export function splitRatioAt(
+  clientX: number,
+  left: number,
+  width: number,
+  resultsSide: DockSide = 'right'
+): number | null {
   if (!Number.isFinite(clientX) || !Number.isFinite(left) || !Number.isFinite(width) || width <= 0) {
     return null;
   }
-  return clampSplitRatio((clientX - left) / width);
+  // Measured from the container's left edge, then read as the editor's share: with the results
+  // docked left the editor is the track on the right, so the distance from the left edge is the
+  // results' share and the editor's is what is left.
+  const fromLeft = (clientX - left) / width;
+  return clampSplitRatio(resultsSide === 'left' ? 1 - fromLeft : fromLeft);
 }
 
 /**
@@ -147,20 +170,141 @@ export function splitRatioAt(clientX: number, left: number, width: number): numb
  * left column is the editor, so Right hands the editor more room. Home and End are the two extremes
  * a keyboard user otherwise cannot reach by holding an arrow.
  */
-export function splitRatioAfterKey(ratio: number, key: string, shift = false): number | null {
+export function splitRatioAfterKey(
+  ratio: number,
+  key: string,
+  shift = false,
+  resultsSide: DockSide = 'right'
+): number | null {
   const step = shift ? SPLIT_KEY_STEP_SHIFT : SPLIT_KEY_STEP;
+  // The keys move the handle, not the number: with the results docked left, `←` gives the editor
+  // (on the right) more room and `Home` puts the handle at the container's left edge, where the
+  // editor is at its widest. The announcement is still the editor's share, whichever side it is on.
+  const left = resultsSide === 'left';
   switch (key) {
     case 'ArrowLeft':
-      return clampSplitRatio(ratio - step);
+      return clampSplitRatio(left ? ratio + step : ratio - step);
     case 'ArrowRight':
-      return clampSplitRatio(ratio + step);
+      return clampSplitRatio(left ? ratio - step : ratio + step);
     case 'Home':
-      return SPLIT_MIN_RATIO;
+      return left ? SPLIT_MAX_RATIO : SPLIT_MIN_RATIO;
     case 'End':
-      return SPLIT_MAX_RATIO;
+      return left ? SPLIT_MIN_RATIO : SPLIT_MAX_RATIO;
     default:
       return null;
   }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Docking: which edge a panel that sits beside another one takes.
+// ---------------------------------------------------------------------------------------------
+export type DockSide = 'left' | 'right';
+
+/** The two panels that can have a panel beside them, and the side each one is docked to. */
+export interface WorkspaceDock {
+  list: DockSide;
+  results: DockSide;
+}
+
+export const DEFAULT_DOCK: WorkspaceDock = { list: 'left', results: 'right' };
+export const STORAGE_KEY_DOCK = 'mechalab_workspace_dock_v1';
+
+export function isDockSide(value: unknown): value is DockSide {
+  return value === 'left' || value === 'right';
+}
+
+/**
+ * A stored dock, field by field: one junk side is that field's default, not the whole object's.
+ *
+ * A build that once wrote `'top'` for the results should not also forget that the learner had
+ * docked the chooser on the right.
+ */
+export function normalizeDock(value: unknown): WorkspaceDock {
+  const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  return {
+    list: isDockSide(record.list) ? record.list : DEFAULT_DOCK.list,
+    results: isDockSide(record.results) ? record.results : DEFAULT_DOCK.results,
+  };
+}
+
+/** The region whose side this preset can change, or null when nothing sits beside anything. */
+export function dockTarget(layout: WorkspaceLayout): 'list' | 'results' | null {
+  if (layout === 'study') return 'list';
+  if (layout === 'split') return 'results';
+  return null;
+}
+
+/** The dock with the panel this preset can move on its other edge; other presets are unchanged. */
+export function flippedDock(dock: WorkspaceDock, layout: WorkspaceLayout): WorkspaceDock {
+  const region = dockTarget(layout);
+  if (!region) return dock;
+  return { ...dock, [region]: dock[region] === 'left' ? 'right' : 'left' };
+}
+
+export interface DockControl {
+  region: 'list' | 'results';
+  /** The side the panel would move to. */
+  side: DockSide;
+  /** The button's own text: an action, in the preset in force. */
+  label: string;
+  /** What the button promises, for a reader who hovers or listens to a screen reader. */
+  title: string;
+}
+
+/**
+ * The one dock button's words, or null when this preset has nothing beside a panel.
+ *
+ * Write hides the chooser and Read hides the editor, so in both there is no second edge to move
+ * anything to; a button there would be a control whose press changes nothing on screen.
+ */
+export function dockControl(
+  dock: WorkspaceDock,
+  layout: WorkspaceLayout
+): DockControl | null {
+  const region = dockTarget(layout);
+  if (!region) return null;
+  const side: DockSide = dock[region] === 'left' ? 'right' : 'left';
+  if (region === 'list') {
+    return {
+      region,
+      side,
+      label: side === 'right' ? 'List → Right' : 'List → Left',
+      title: `Move the lesson list to the ${side} of the work area. Remembered for this browser.`,
+    };
+  }
+  return {
+    region,
+    side,
+    label: side === 'left' ? 'Results → Left' : 'Results → Right',
+    title: `Move the results to the ${side} of the editor. Remembered for this browser.`,
+  };
+}
+
+/** The remembered dock, or the defaults when nothing is stored or the value is not a dock. */
+export function readDock(): WorkspaceDock {
+  const store = storage();
+  if (!store) return { ...DEFAULT_DOCK };
+  try {
+    const raw = store.getItem(STORAGE_KEY_DOCK);
+    if (raw === null || raw.trim() === '') return { ...DEFAULT_DOCK };
+    return normalizeDock(JSON.parse(raw));
+  } catch {
+    return { ...DEFAULT_DOCK };
+  }
+}
+
+/** Remember a dock and return what to render (normalized, not what was asked for). */
+export function writeDock(dock: WorkspaceDock): WorkspaceDock {
+  const normalized = normalizeDock(dock);
+  const store = storage();
+  if (store) {
+    try {
+      store.setItem(STORAGE_KEY_DOCK, JSON.stringify(normalized));
+    } catch {
+      // Blocked or full: the side lasts this visit only.
+    }
+  }
+  return normalized;
 }
 
 const SHOWN: Record<WorkspaceLayout, Record<WorkspaceRegion, boolean>> = {

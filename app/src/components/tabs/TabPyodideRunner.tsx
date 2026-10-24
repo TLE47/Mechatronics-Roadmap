@@ -2,11 +2,17 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PYTHON_LESSONS, PythonLessonItem } from '../../data/pythonLessonsData';
 import { MECHALAB_PLANT_FILENAME, MECHALAB_PLANT_PY } from '../../data/mechalabPlant';
 import { asOutputMatchMode, compareStdout, OutputMatchMode } from '../../outputMatch';
-import { coachForLesson } from '../../lessonCoach';
+import { coachForLesson, starterHoles } from '../../lessonCoach';
 import { failingChecks, hintCountFor, hintLock, nextRung, rungAnswersCheck } from '../../checkHints';
-import { matchError } from '../../errorIndex';
+import { entryHeadline, matchError } from '../../errorIndex';
 import { failureSummary, isAssertionFailure, parseFailure } from '../../traceback';
 import { TracebackCard } from '../TracebackCard';
+import { HelpSheet } from '../HelpSheet';
+import type { HelpReportInput } from '../../helpReport';
+import { PairSheet } from '../PairSheet';
+import { usePairSession } from '../../usePairSession';
+import { attemptLines, lessonLabel } from '../../pairing';
+import { COLLAB_MAX_TEXT, CollabText, fromWire, type CollabOp } from '../../collab';
 import { lessonPageUrl } from '../../startHere';
 import {
   assetUrlsFromDocument,
@@ -83,19 +89,26 @@ import {
   LAYOUTS,
   SPLIT_MIN_RATIO,
   SPLIT_MAX_RATIO,
+  dockControl,
+  flippedDock,
   layoutArrangement,
   layoutShortcutFor,
   layoutShows,
+  readDock,
   readLayout,
   readSplitRatio,
   splitGridTemplate,
   splitRatioAfterKey,
   splitRatioAt,
   splitRatioPercent,
+  writeDock,
   writeLayout,
   writeSplitRatio,
+  type WorkspaceDock,
   type WorkspaceLayout,
 } from '../../workspaceLayout';
+import { actionForEvent, type Keymap } from '../../keymap';
+import { useKeymap } from '../../useKeymap';
 import { markPaintReady } from '../../paintTiming';
 import { parseSliders } from '../../editor/sliderModel';
 import {
@@ -149,6 +162,8 @@ import {
   GitCompare,
   Activity,
   Share2,
+  LifeBuoy,
+  Users,
   Keyboard,
   CircleDot,
   Wand2,
@@ -227,8 +242,12 @@ interface TabPyodideRunnerProps {
   /**
    * An explicit "open this entry" request. The id alone cannot express it: choosing the lesson a
    * deep link already named leaves `initialLessonId` unchanged, so nothing would fire.
+   *
+   * `line` is a search hit's line in the lesson's **starter** (`app/src/lessonSearch.ts`): the pick
+   * puts the caret there when that number still describes the text on screen, and opens the lesson
+   * without a jump when the learner's draft has moved the line.
    */
-  lessonRequest?: { id: string; nonce: number } | null;
+  lessonRequest?: { id: string; nonce: number; line?: number } | null;
   /**
    * Code that arrived in a share link (`#share=…`). Offered, never applied: it is someone else's
    * attempt and the learner's own draft is behind it.
@@ -345,14 +364,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [openHelper, setOpenHelper] = useState<string | null>(null);
   // A jump that landed in the file that is *not* open: the tab switch mounts that editor, so the line
   // rides in with the mount (`PythonEditorProps.initialLine`) instead of being asked of a ref that
-  // does not exist yet.
-  const [pendingJump, setPendingJump] = useState<{ file: string; line: number } | null>(null);
+  // does not exist yet. `lesson` is which entry the jump was asked for: a line is a position in one
+  // lesson's file, and a leftover jump from another one has no line to name here.
+  const [pendingJump, setPendingJump] = useState<{ file: string; line: number; lesson: string } | null>(null);
   // The name F12 was pressed on when nothing in the lesson defines it. Said in the file strip, which
   // is already there, rather than in a toast the learner has to dismiss.
   const [symbolMiss, setSymbolMiss] = useState<string | null>(null);
   // Which of the three regions the screen gives its width to (`workspaceLayout.ts`). Read once at
   // mount: it is a preference, and a reload is the only thing that changes it from outside.
   const [layout, setLayout] = useState<WorkspaceLayout>(() => readLayout());
+  // Which edge the chooser (Study) and the results (Split) sit on (`workspaceLayout.ts`). Read once
+  // at mount, like the preset: it is the same kind of preference, and only this screen changes it.
+  const [dock, setDock] = useState<WorkspaceDock>(() => readDock());
+  const dockChoice = dockControl(dock, layout);
+  const resultsSide = dock.results;
   // Split's divider, as the share of the work area the editor gets (`workspaceLayout.ts`). Read once
   // at mount like the preset itself: a drag is the only thing that changes it from outside storage.
   const [splitRatio, setSplitRatio] = useState<number>(() => readSplitRatio());
@@ -391,6 +416,62 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [stdout, setStdout] = useState<string>('');
   const [stderr, setStderr] = useState<string>('');
   const [shareStatus, setShareStatus] = useState<ShareStatus>({ kind: 'idle' });
+  // Ask for help (`app/src/components/HelpSheet.tsx`): one report built from the run on screen.
+  const [helpOpen, setHelpOpen] = useState<boolean>(false);
+  // Pair study (`app/src/components/PairSheet.tsx`): a direct session with another workbench, and the
+  // attempt that arrived from it. The attempt is state, never an edit — the card below asks first.
+  const [pairOpen, setPairOpen] = useState<boolean>(false);
+  const [pairAttempt, setPairAttempt] = useState<{ lesson: string; code: string } | null>(null);
+  // Live co-editing (`app/src/collab.ts`): both pages hold the same document, and only the text that
+  // changed crosses the channel. `remote` counts the edits that arrived, which is what the status
+  // strip prints — a session with someone typing in it should look like one.
+  const [coEdit, setCoEdit] = useState<{ lesson: string; role: 'host' | 'guest'; remote: number } | null>(null);
+  // Their offer to co-edit: the text becomes the document only when this learner accepts, because
+  // accepting replaces what is in their editor (`offered-never-applied`, the rule the share link and
+  // the attempt card already follow).
+  const [collabInvite, setCollabInvite] = useState<{ lesson: string; text: string } | null>(null);
+  // Why co-editing is not running any more, when it was. One line above the editor, not a toast.
+  const [collabNotice, setCollabNotice] = useState<string | null>(null);
+  // The shared document itself, and the flag that keeps a peer's edit from being read as this
+  // workbench's own op to broadcast back at them.
+  const coEditRef = useRef<{ doc: CollabText; lesson: string } | null>(null);
+  const applyingPeerRef = useRef<boolean>(false);
+  const pair = usePairSession((message) => {
+    if (message.kind === 'attempt') {
+      setPairAttempt({ lesson: message.lesson, code: message.code });
+      // Close the sheet so the card is what the learner sees: an arriving attempt is a decision, and a
+      // modal in front of it would hide the thing being decided about.
+      setPairOpen(false);
+      return;
+    }
+    if (message.kind === 'collab-start') {
+      setCollabInvite({ lesson: message.lesson, text: message.text });
+      setCollabNotice(null);
+      // The other way round from an attempt: an offer to co-edit is a decision about the editor
+      // itself, and the sentence that says so belongs in the sheet that made it possible.
+      setPairOpen(true);
+      return;
+    }
+    if (message.kind === 'collab-ops') {
+      const ops = fromWire(message.ops);
+      if (ops) applyPeerOps(ops);
+      return;
+    }
+    if (message.kind === 'collab-stop') {
+      // Their decision, so no stop is sent back: the two sides would keep telling each other it is
+      // over. Just the sentence that names what happened.
+      coEditRef.current = null;
+      setCoEdit(null);
+      setCollabInvite(null);
+      setCollabNotice(
+        message.reason === 'lesson'
+          ? 'Co-editing ended: they moved to another lesson.'
+          : message.reason === 'declined'
+            ? 'They are not co-editing this lesson right now. Your editor was not touched.'
+            : 'They stopped co-editing. Your editor is yours again.'
+      );
+    }
+  });
   const [instructorError, setInstructorError] = useState<string>('');
   // What a capstone harness grades: the metrics the learner's own functions produce.
   const [harnessReport, setHarnessReport] = useState<HarnessReport | null>(null);
@@ -580,11 +661,33 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // A palette pick (or a roadmap practice chip) is an instruction, not a prop sync: the nonce is
   // what makes it land even when it names the entry already in `initialLessonId`, and the address
   // bar follows because a learner's own pick is what a copied URL should reopen.
+  //
+  // A search hit may also name a line. A line is counted in a text, so it is only that line while the
+  // editor holds the text it was counted in: the starter. Two cases, and they land differently.
+  //
+  // - **The lesson is already open**: nothing remounts, so the caret can move now.
+  // - **The pick switches lessons**: the editor is keyed by the lesson it holds, so a new one mounts.
+  //   A reveal asked *now* would land in the text about to be replaced — and would be dropped
+  //   entirely by a remount that arrives a moment later (a strict double mount). The line therefore
+  //   travels as a mount prop (`pendingJump` → `initialLine`), so whichever editor mounts is born on
+  //   that line rather than being told to go there afterwards.
   const lastLessonRequest = useRef<number>(0);
   useEffect(() => {
     if (!lessonRequest || lessonRequest.nonce <= lastLessonRequest.current) return;
     lastLessonRequest.current = lessonRequest.nonce;
-    selectLesson(lessonRequest.id, true);
+    const { id, line } = lessonRequest;
+    const sameLesson = id === selectedId;
+    const named = line !== undefined && Number.isFinite(line) ? line : null;
+    // A lesson that opens on the learner's own draft has its own lines: the pick opens the top.
+    if (!sameLesson && named !== null && readDraft(id) === null) {
+      setPendingJump({ file: MAIN_FILE_NAME, line: named, lesson: id });
+    }
+    selectLesson(id, true);
+    if (!sameLesson || named === null) return;
+    const starter = PYTHON_LESSONS.find((lesson) => lesson.id === id)?.starterCode ?? '';
+    if (codeRef.current === starter) showMainLine(named);
+    // `showMainLine` is declared below and is only called from the callback, not here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonRequest]);
 
   const currentLesson: PythonLessonItem =
@@ -599,8 +702,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const openHelperFile = helperFiles.find((file) => file.name === openHelper) ?? null;
   useEffect(() => {
     setOpenHelper(null);
-    setPendingJump(null);
     setSymbolMiss(null);
+    // A jump made *for* the lesson that is opening is the one the editor is about to mount with; one
+    // left over from another lesson would put this file's caret on that file's line.
+    setPendingJump((previous) => (previous && previous.lesson !== selectedId ? null : previous));
   }, [selectedId]);
   // An edit retires a "no definition" line: the name may well be defined now.
   useEffect(() => {
@@ -633,7 +738,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       editor?.revealLine(hit.line);
       return;
     }
-    setPendingJump({ file: hit.file, line: hit.line });
+    setPendingJump({ file: hit.file, line: hit.line, lesson: selectedId });
     setOpenHelper(targetTab);
   };
   /**
@@ -643,12 +748,16 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
    * now; or the helper tab is open, so `main.py` has to mount first and the line goes with the mount.
    */
   const showMainLine = (line: number) => {
-    if (openHelper === null) {
-      guideEditorRef.current?.revealLine(line);
+    if (openHelper === null && guideEditorRef.current) {
+      guideEditorRef.current.revealLine(line);
       return;
     }
-    setPendingJump({ file: MAIN_FILE_NAME, line });
-    setOpenHelper(null);
+    // The file to land in is not mounted yet: the helper tab is open, or the editor is still
+    // arriving. `revealLine` on a ref that does not exist is a no-op by design
+    // (`PythonEditor.tsx`), so the line goes with the mount instead — and a request that reaches a
+    // mounted editor after the fact is applied as `initialLine` changes.
+    setPendingJump({ file: MAIN_FILE_NAME, line, lesson: selectedId });
+    if (openHelper !== null) setOpenHelper(null);
   };
   // What the lesson's harness says about the code on screen now; a `null` report is a failed gate
   // (unproven), never a pass.
@@ -734,7 +843,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // One `lesson_open` per visit, including the first render: it is the denominator for abandon rate.
   // The sitting clock takes the same event, because it is the moment the learner is here: it opens a
   // sitting, or extends the one they were already in when they switched lesson without a break.
+  //
+  // The guard is for the replay, not for the learner. `main.tsx` mounts under `React.StrictMode`, which
+  // in development runs every effect a second time on the same instance to surface cleanup bugs — so
+  // a dev visit filed two opens 7 ms apart, and a pilot exporting from `npm run dev` read a visit count
+  // doubled (`docs/pilot-results.md`, Run 214). A ref survives that replay, so the second pass is a
+  // no-op; a real re-open is a *new* instance, whose ref starts empty, so visiting A → B → A still
+  // files three opens. Removing StrictMode would hide this and every other effect that cannot be
+  // replayed, which is the reason it is on.
+  const openedRef = useRef<string | null>(null);
   useEffect(() => {
+    if (openedRef.current === selectedId) return;
+    openedRef.current = selectedId;
     logEvent({ kind: 'lesson_open', lesson: selectedId });
     recordSittingEvent({ at: Date.now(), kind: 'open', lesson: selectedId });
   }, [selectedId]);
@@ -845,6 +965,60 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   });
 
   /**
+   * What a helper would need, from the screen the learner is looking at.
+   *
+   * Only what a failed run leaves: the lesson, the text that ran, the verdict, and the three places a
+   * failure can be described (Python's traceback, the instructor's assertion, a capstone's metrics).
+   * The hints are counted, never copied — the ladder is the course's answer, and the report is meant
+   * to reach a person, not to route around the pacing.
+   */
+  const helpInput = useMemo<HelpReportInput>(() => {
+    // Guarded on `location`, not on `window`: the smoke suite's SSR pass installs a `window` shim with
+    // no `location`, and the URL is a convenience in the report rather than something it depends on.
+    const location = typeof window === 'undefined' ? undefined : window.location;
+    const pageUrl = location?.origin
+      ? `${location.origin}${location.pathname}?lesson=${encodeURIComponent(currentLesson.id)}`
+      : '';
+    return {
+      lesson: { id: currentLesson.id, title: currentLesson.title, path: currentLesson.path },
+      code: runCodeRef.current || code,
+      stdout,
+      stderr,
+      verdict: passStatus,
+      instructorError,
+      harness: harnessResult ? { met: harnessResult.met, total: harnessResult.total, failures: harnessResult.failures } : null,
+      failure: parsedFailure
+        ? {
+            summary: parsedFailure.summary,
+            line: parsedFailure.frame?.line ?? null,
+            entry: errorEntry ? entryHeadline(errorEntry) : null,
+          }
+        : null,
+      checks: checkFailures.map((check) => ({ title: check.title, detail: check.detail })),
+      attempts: attemptsHere,
+      hintsRevealed: revealedHints,
+      hintCount,
+      url: pageUrl,
+    };
+  }, [
+    currentLesson.id,
+    currentLesson.title,
+    currentLesson.path,
+    code,
+    stdout,
+    stderr,
+    passStatus,
+    instructorError,
+    harnessResult,
+    parsedFailure,
+    errorEntry,
+    checkFailures,
+    attemptsHere,
+    revealedHints,
+    hintCount,
+  ]);
+
+  /**
    * Open one rung, never a cascade.
    *
    * Rung 1 also starts the clock for rung 2: the attempt on screen when it was opened does not
@@ -883,6 +1057,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     | { kind: 'failed'; message: string }
   >({ kind: 'idle' });
   const commitCode = (next: string) => {
+    // A co-editing session turns every local change into ops, and the diff is what makes one code
+    // path enough: typing, a paste, Format's rewrite, Load Solution and a slider all say the same
+    // thing — "the text is now this" — and `localOps` is what turns that into characters to send.
+    const shared = coEditRef.current;
+    if (shared && !applyingPeerRef.current) {
+      if (next.length > COLLAB_MAX_TEXT) {
+        stopCoEditLocally('too-long');
+      } else {
+        const ops = shared.doc.localOps(next);
+        if (ops.length > 0) pair.sendCollabOps(shared.lesson, ops);
+      }
+    }
     codeRef.current = next;
     setCode(next);
   };
@@ -892,6 +1078,133 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   useEffect(() => {
     lessonIdRef.current = selectedId;
   }, [selectedId]);
+
+  /**
+   * Stop co-editing on this side, and tell the other one why.
+   *
+   * Only a local decision sends a message — a stop that arrived is answered by clearing the state, or
+   * the two sides would keep telling each other it is over. The session's own `bye` covers leaving.
+   */
+  const stopCoEditLocally = (reason: 'lesson' | 'left' | 'declined' | 'offline' | 'too-long') => {
+    const shared = coEditRef.current;
+    coEditRef.current = null;
+    setCoEdit(null);
+    setCollabInvite(null);
+    if (shared && (reason === 'lesson' || reason === 'left')) {
+      pair.sendCollabStop(shared.lesson, reason);
+    }
+    setCollabNotice(
+      reason === 'lesson'
+        ? 'Co-editing ended: this workbench moved to another lesson.'
+        : reason === 'left'
+          ? 'You stopped co-editing. Your editor is yours again.'
+          : reason === 'declined'
+            ? 'You turned down co-editing. Your editor was not touched.'
+            : reason === 'too-long'
+              ? `Co-editing stopped: the file passed ${COLLAB_MAX_TEXT.toLocaleString()} characters.`
+              : 'The session ended, so co-editing stopped.'
+    );
+  };
+
+  /**
+   * Apply the other workbench's edit.
+   *
+   * The ops go into the shared document first, and the editor is handed the text that results: that
+   * is the one write a peer's keystroke makes, and it is applied outside the undo history, so ⌘Z still
+   * means "undo what I typed". A batch that changes nothing here (a duplicate the channel delivered
+   * twice) does not touch the editor at all.
+   */
+  const applyPeerOps = (ops: CollabOp[]) => {
+    const shared = coEditRef.current;
+    if (!shared) return;
+    let changed = 0;
+    for (const op of ops) if (shared.doc.apply(op)) changed += 1;
+    if (changed === 0) return;
+    const next = shared.doc.text;
+    if (next.length > COLLAB_MAX_TEXT) {
+      stopCoEditLocally('too-long');
+      return;
+    }
+    applyingPeerRef.current = true;
+    try {
+      guideEditorRef.current?.applyWithoutHistory(next);
+      codeRef.current = next;
+      setCode(next);
+    } finally {
+      applyingPeerRef.current = false;
+    }
+    setCoEdit((current) => (current ? { ...current, remote: current.remote + changed } : current));
+  };
+
+  /** Offer this lesson and this text as the document both of us edit — the host's side of it. */
+  const startCoEdit = () => {
+    if (pair.state !== 'connected' || pair.role !== 'host' || coEditRef.current) return;
+    if (codeRef.current.length > COLLAB_MAX_TEXT) {
+      setCollabNotice(`Co-editing needs a file under ${COLLAB_MAX_TEXT.toLocaleString()} characters.`);
+      return;
+    }
+    if (pair.sendCollabStart(selectedId, codeRef.current) !== 'sent') {
+      setCollabNotice('The offer to co-edit did not reach them — the session is not open.');
+      return;
+    }
+    coEditRef.current = { doc: CollabText.seed(codeRef.current, 0), lesson: selectedId };
+    setCoEdit({ lesson: selectedId, role: 'host', remote: 0 });
+    setCollabNotice(null);
+  };
+
+  /** Take up their offer: their text becomes this document, and this editor becomes a shared one. */
+  const acceptCoEdit = () => {
+    const invite = collabInvite;
+    if (!invite) return;
+    if (invite.text.length > COLLAB_MAX_TEXT) {
+      setCollabInvite(null);
+      setCollabNotice(`That file is over ${COLLAB_MAX_TEXT.toLocaleString()} characters, which co-editing will not carry.`);
+      return;
+    }
+    // The lesson first: `selectLesson` loads that lesson's draft, and doing it while a shared document
+    // is live would broadcast the draft as an edit of theirs.
+    if (invite.lesson !== selectedId) selectLesson(invite.lesson);
+    coEditRef.current = { doc: CollabText.seed(invite.text, 1), lesson: invite.lesson };
+    applyingPeerRef.current = true;
+    try {
+      guideEditorRef.current?.applyWithoutHistory(invite.text);
+      codeRef.current = invite.text;
+      setCode(invite.text);
+    } finally {
+      applyingPeerRef.current = false;
+    }
+    saveDraft(invite.lesson, invite.text);
+    setCoEdit({ lesson: invite.lesson, role: 'guest', remote: 0 });
+    setCollabInvite(null);
+    setCollabNotice(null);
+    setPairOpen(false);
+  };
+
+  /** Turn down an offer without the editor moving, and let them know rather than leave them waiting. */
+  const declineCoEdit = () => {
+    const lesson = collabInvite?.lesson ?? selectedId;
+    setCollabInvite(null);
+    pair.sendCollabStop(lesson, 'declined');
+    setCollabNotice('You turned down co-editing. Your editor was not touched.');
+  };
+
+  // A shared document belongs to one lesson. Moving this workbench elsewhere ends it — and says so on
+  // both screens — rather than writing the next lesson's text into a document about another one.
+  useEffect(() => {
+    const shared = coEditRef.current;
+    if (!shared || shared.lesson === selectedId) return;
+    stopCoEditLocally('lesson');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the lesson is the trigger
+  }, [selectedId]);
+
+  // A session that ends takes co-editing with it: there is no channel left to move text over, and a
+  // document that still says it is shared while nothing moves is worse than a sentence saying it
+  // stopped.
+  useEffect(() => {
+    if (pair.state === 'connected' || !coEditRef.current) return;
+    stopCoEditLocally('offline');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the session state is the trigger
+  }, [pair.state]);
 
   // Typing is the draft. Written once the learner pauses rather than on every keystroke, so the
   // store sees one write per thought instead of one per character; `saveDraft` itself is what
@@ -992,6 +1305,28 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     setOutputCheck('untested');
     setPassStatus('untested');
     onDismissTry?.();
+  };
+
+  /**
+   * Keep the session told which lesson this is, whether or not it is connected.
+   *
+   * The hook records the id even while offline, so the first `hello` after a connection carries the
+   * right lesson rather than the placeholder it opened with.
+   */
+  useEffect(() => {
+    pair.announceLesson(selectedId);
+  }, [selectedId, pair.state]);
+
+  /** Adopt an attempt that arrived in a pair session: same rule as a shared link, same card. */
+  const loadPairAttempt = () => {
+    if (!pairAttempt) return;
+    commitCode(pairAttempt.code);
+    saveDraft(selectedId, pairAttempt.code);
+    setPassStatus('untested');
+    setBehaviorCheck('untested');
+    setOutputCheck('untested');
+    setInstructorError('');
+    setPairAttempt(null);
   };
 
   /** Adopt a shared attempt: the one click that replaces the draft, said plainly on the card. */
@@ -2061,7 +2396,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
     // The tracks share what the gap leaves, so the boundary is at `left + free * ratio`. Measuring
     // against the full width would leave the divider half a gap behind the pointer.
     const gap = Number.parseFloat(getComputedStyle(container).columnGap) || 0;
-    const next = splitRatioAt(event.clientX, box.left, box.width - gap);
+    const next = splitRatioAt(event.clientX, box.left, box.width - gap, resultsSide);
     // No write while dragging: a pointer emits a move per pixel, and a stored key per pixel is a
     // write per pixel. The drag ends with one.
     if (next !== null) setSplitRatio(next);
@@ -2085,17 +2420,22 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   }, [layout]);
 
   // ⌘↵ / Ctrl+↵ runs from anywhere on this screen, including inside the editor. The button stays
-  // the discoverable path; this is the one keyboard habit a code editor trains.
+  // the discoverable path; this is the one keyboard habit a code editor trains. The key is read from
+  // the sheet's keymap (`app/src/keymap.ts`), so a learner who rebinds Run is not left with the old
+  // chord still running the lesson and the new one doing nothing.
   const runShortcutRef = useRef<() => void>(() => {});
   runShortcutRef.current = () => {
     if (isRunning) return;
     const lesson = PYTHON_LESSONS.find((l) => l.id === lessonIdRef.current) || PYTHON_LESSONS[0];
     requestRun(codeRef.current, lesson);
   };
+  const keymap = useKeymap();
+  const keymapRef = useRef<Keymap>(keymap);
+  keymapRef.current = keymap;
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
-      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      if (actionForEvent(keymapRef.current, event) === 'run') {
         event.preventDefault();
         runShortcutRef.current();
       }
@@ -2221,7 +2561,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
   // Every unverified lesson gets its own first-run brief: the starter's marked holes, the first
   // check, and the output that means finished. Hiding one lesson's brief does not hide the next's.
-  const coach = coachForLesson(currentLesson);
+  // The finish line is held until the first run has landed: the predict gate asks what the lesson
+  // will print, so a card that answers that question thirty lines above it hands the answer over and
+  // the gate stops being a question (found in the first beginner sitting, 2026-10-23).
+  // Built from the draft, not the starter: the card's "start with" and "first check" must name the
+  // hole the next run will actually stop at, or they send a learner back to work already done.
+  const coach = coachForLesson(currentLesson, code);
+  const holeNoun = coach.isExercise
+    ? `NotImplementedError ${coach.holeCount === 1 ? 'hole' : 'holes'}`
+    : `TODO ${coach.holeCount === 1 ? 'line' : 'lines'}`;
+  const hasRunThisSession = stdout.trim().length > 0 || stderr.trim().length > 0;
+  // A graded exercise's holes are `raise NotImplementedError(...)`, so its untouched starter prints a
+  // traceback and the lesson is graded against the self-check line a finished file prints. Asking
+  // "what will this print?" there has one honest answer — the traceback — that can never match, so
+  // the gate asks for the finished run instead (found in the first graded-exercise sitting,
+  // 2026-10-23). Hand-written pages keep the question, because their starter does print.
+  const gateAsksForFinish = currentLesson.track === 'modules';
+  const guideHoleUnfilled =
+    currentLesson.track === 'modules' && starterHoles(code, true).length > 0;
   const guideDismissed =
     dismissedGuides.includes('*') || dismissedGuides.includes(currentLesson.id);
   // Keep the brief up for the run that earns verification, so its "that is the whole loop" line is
@@ -2417,11 +2774,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       }`}
                 </span>
               </div>
-              <h3 className="text-base font-bold text-ink mt-1">
+              {/* An `h2`, not an `h3`: the page's only `h1` is the site title, so a lesson card is the
+                  next level down. `h3` skipped a level, which Lighthouse's `heading-order` audits. */}
+              <h2 className="text-base font-bold text-ink mt-1">
                 {currentLesson.id === 'P.1'
                   ? 'One editor, one button, one red line.'
                   : 'This starter, its first check, and the finish line.'}
-              </h3>
+              </h2>
               <p className="text-xs text-body mt-1 max-w-3xl">
                 {currentLesson.id === 'P.1'
                   ? 'This page is the whole lesson. Nothing to install and nothing else to read: change a line, press Run, and let the red line tell you what to fix.'
@@ -2443,19 +2802,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             <li className="bg-canvas border border-line-soft rounded-lg p-3">
               <div className="text-[11px] font-mono text-accent">1 · THE STARTER</div>
               <p className="text-xs text-body mt-1.5 break-words">
-                {coach.holeCount > 0 ? (
+                {coach.holeCount === 0 ? (
+                  <>The starter is complete; the checks decide whether its behaviour is right.</>
+                ) : coach.openHole ? (
                   <>
                     This starter leaves{' '}
                     <b>
-                      {coach.holeCount}{' '}
-                      {coach.isExercise
-                        ? `NotImplementedError ${coach.holeCount === 1 ? 'hole' : 'holes'}`
-                        : `TODO ${coach.holeCount === 1 ? 'line' : 'lines'}`}
+                      {coach.holeCount} {holeNoun}
                     </b>
-                    . Start with: <code>{coach.firstHole}</code>
+                    . Start with: <code>{coach.openHole}</code>
                   </>
                 ) : (
-                  <>The starter is complete; the checks decide whether its behaviour is right.</>
+                  <>
+                    All <b>{coach.holeCount} {holeNoun}</b> are written. The checks decide whether the
+                    behaviour is right.
+                  </>
                 )}
               </p>
               <button
@@ -2473,9 +2834,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </li>
 
             <li className="bg-canvas border border-line-soft rounded-lg p-3">
-              <div className="text-[11px] font-mono text-emerald">2 · THE FIRST FAILURE</div>
+              <div className="text-[11px] font-mono text-emerald">2 · PREDICT, THEN RUN</div>
               <p className="text-xs text-body mt-1.5 break-words">
-                Run it untouched. The first check is: <b>{coach.check}</b>
+                Run it untouched. The first Run asks what {coach.isExercise ? 'a finished run' : 'it'}{' '}
+                will print — a guess is enough, and <b>Skip and run</b> is allowed. The first check is:{' '}
+                <b>{coach.check}</b>
               </p>
               <p className="text-[11px] text-muted mt-1">
                 The red line names the value it expected and the value your code produced.
@@ -2496,8 +2859,18 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
             <li className="bg-canvas border border-line-soft rounded-lg p-3">
               <div className="text-[11px] font-mono text-amber">3 · THE FINISH LINE</div>
-              <p className="text-xs text-body mt-1.5 break-words">
-                When every check passes, it prints: <code>{coach.finish}</code>
+              <p className="text-xs text-body mt-1.5 break-words" data-testid="guide-finish">
+                {hasRunThisSession ? (
+                  <>
+                    When every check passes, it prints: <code>{coach.finish}</code>
+                  </>
+                ) : (
+                  <>
+                    The finish line is the <b>Expected Output</b> beside your run: reach it and every
+                    check passes. It stays out of this card until you have run, because the gate is
+                    about to ask you what it says.
+                  </>
+                )}
               </p>
               <p className="text-[11px] text-muted mt-1">
                 Hint 1 is a nudge; it never gives the answer.
@@ -2530,6 +2903,12 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     That is the harness measuring what your own functions compute, not reading a
                     printed line. The capstone passes only when every graded metric is at target, so
                     change that function and press <b>Run &amp; Verify Output</b> again.
+                  </>
+                ) : guideHoleUnfilled ? (
+                  <>
+                    That is the hole the starter leaves — the <code>raise</code> is its marker, not a
+                    mistake you wrote. Replace it with the code the message describes and press{' '}
+                    <b>Run &amp; Verify Output</b> again.
                   </>
                 ) : guideShowsExpectedGot ? (
                   <>
@@ -2573,16 +2952,22 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Sidebar: exercise search and selector */}
-        <div
+        {/* Left Sidebar: exercise search and selector */}          <div
           data-testid="lesson-list-card"
+          // Study's chooser can be docked on either side of the work area. `order` rather than a
+          // second copy of the card: the two regions are one row of the twelve-column grid, and
+          // the side is which of them comes first there. DOM order stays chooser-first, because
+          // that is the reading order of the screen (pick a lesson, then work on it).
+          data-list-dock={dock.list}
           // Focus mode hides the list: choosing a different lesson while working on this one is the
           // other task the mode exists to keep out. `data-focus-expand` on the pane gives it the row.
           data-chrome="lesson-list"
           // Write and Read give the work area the whole width: the list is a chooser, and once the
           // lesson is chosen it is the one column a learner is not looking at.
           style={{ display: layoutShows(layout, 'list') ? undefined : 'none' }}
-          className="lg:col-span-4 bg-panel border border-line rounded-xl p-4 flex flex-col max-h-[760px]"
+          className={`lg:col-span-4 bg-panel border border-line rounded-xl p-4 flex flex-col max-h-[760px] ${
+            dock.list === 'right' ? 'lg:order-2' : ''
+          }`}
         >
           {/* Search Input */}
           <div className="relative mb-3">
@@ -2707,15 +3092,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             // Only written for Split: at every other preset the container is not a grid, and a
             // template there would be a declaration nobody asked for.
             ...(layoutArrangement(layout) === 'columns'
-              ? { gridTemplateColumns: splitGridTemplate(splitRatio) }
+              ? { gridTemplateColumns: splitGridTemplate(splitRatio, resultsSide) }
               : {}),
           }}
           data-layout={layout}
-          className={
+          // Which edge the results are on in Split, and the chooser in Study. The CSS places the
+          // two Split panels by column (`index.css`), so the dock is a column swap there; in
+          // Study it is the pair's `order` below, because the chooser and this block are the two
+          // cells of one row.
+          data-dock={dock.results}
+          className={`lg:col-span-8 ${
             layoutArrangement(layout) === 'columns'
-              ? 'lg:col-span-8 grid gap-4 lg:grid-cols-2 items-start'
-              : 'lg:col-span-8 space-y-4'
-          }
+              ? 'grid gap-4 lg:grid-cols-2 items-start'
+              : 'space-y-4'
+          }${dock.list === 'right' ? ' lg:order-1' : ''}`}
         >
           {/* Active Lesson Metadata Card. Spans both columns when there are two: it describes the
               lesson the editor and the results are both about. */}
@@ -2784,9 +3174,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     </span>
                   )}
                 </div>
-                <h3 data-testid="lesson-title" className="text-base font-bold text-ink mt-1">
+                <h2 data-testid="lesson-title" className="text-base font-bold text-ink mt-1">
                   {currentLesson.title}
-                </h3>
+                </h2>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -2819,6 +3209,24 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     </button>
                   ))}
                 </div>
+                {/* Docking's one control, named for the panel it moves in the preset in force:
+                    "List → Right" in Study, "Results → Left" in Split. Write and Read show no
+                    button, because neither has a panel beside anything to move. */}
+                {dockChoice && (
+                  <button
+                    type="button"
+                    data-testid="btn-dock-toggle"
+                    onClick={() => setDock(writeDock(flippedDock(dock, layout)))}
+                    title={dockChoice.title}
+                    // The visible words come first, then the sentence: a name that only describes what
+                    // is drawn fails WCAG 2.5.3, which is what Lighthouse's
+                    // `label-content-name-mismatch` audit named here.
+                    aria-label={`${dockChoice.label}: ${dockChoice.title}`}
+                    className="px-2 py-1 rounded text-[10.5px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft"
+                  >
+                    {dockChoice.label}
+                  </button>
+                )}
                 <button
                   onClick={() => toggleLessonSelfMarked(currentLesson.id)}
                   data-testid="btn-toggle-lesson-complete"
@@ -2965,6 +3373,23 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   <span>Share</span>
+                </button>
+                {/* Pair study, beside the send: one session, two people, no server — the attempt
+                    travels over a direct channel and arrives as a card, not as an edit. */}
+                <button
+                  onClick={() => setPairOpen(true)}
+                  data-testid="btn-pair-open"
+                  title="Pair study: connect to another workbench directly and pass attempts back and forth"
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                    pair.state === 'connected' ? 'text-emerald border-emerald/60' : 'text-body border-line'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>
+                    {coEdit
+                      ? 'Pair · co-editing'
+                      : `Pair${pair.state === 'connected' && pair.peer ? ` · ${pair.peer}` : ''}`}
+                  </span>
                 </button>
                 {/* The gate's own door. The question also opens by itself on a lesson's first Run;
                     this is how a learner rereads the verdict, or predicts before pressing Run. */}
@@ -3127,6 +3552,57 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               </div>
             )}
 
+            {/* An attempt from a pair session: the same rule as a shared link — offered, never
+                applied. When it is for another lesson, the card says which one and offers the
+                switch, so loading can never drop a lesson's code into another lesson's draft. */}
+            {pairAttempt && (
+              <div
+                data-testid="pair-attempt-card"
+                className="mt-2 rounded-lg border border-accent/50 bg-accent/10 px-3 py-2.5"
+              >
+                <p className="eyebrow">From your pair session</p>
+                {pairAttempt.lesson === selectedId ? (
+                  <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
+                    They sent their attempt for this lesson — {attemptLines(pairAttempt.code)} lines.
+                    Loading it replaces the draft in this editor; your own work is here until you
+                    press the button.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[12.5px]" style={{ color: 'var(--body)' }}>
+                    They sent {attemptLines(pairAttempt.code)} lines for{' '}
+                    {lessonLabel(pairAttempt.lesson)}, and this editor is on {selectedId}. Open their
+                    lesson first — their code will not be dropped into yours.
+                  </p>
+                )}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {pairAttempt.lesson === selectedId ? (
+                    <button
+                      onClick={loadPairAttempt}
+                      data-testid="btn-load-pair-attempt"
+                      className="btn btn-primary px-2.5 py-1.5 text-[12px]"
+                    >
+                      Load their code
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => selectLesson(pairAttempt.lesson)}
+                      data-testid="btn-open-pair-lesson"
+                      className="btn px-2.5 py-1.5 text-[12px]"
+                    >
+                      Open {lessonLabel(pairAttempt.lesson)}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setPairAttempt(null)}
+                    data-testid="btn-dismiss-pair-attempt"
+                    className="btn px-2.5 py-1.5 text-[12px]"
+                  >
+                    Keep mine
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* A shared attempt is offered, never applied. The learner's own draft is the work; the
                 card says what the button replaces before it replaces it. */}
             {sharedAttempt && sharedAttempt.lesson === selectedId && (
@@ -3231,7 +3707,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <>
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <span className="text-[11px] font-mono text-amber">
-                        PREDICT FIRST · what will this print?
+                        {gateAsksForFinish
+                          ? 'PREDICT FIRST · what will a finished run print?'
+                          : 'PREDICT FIRST · what will this print?'}
                       </span>
                       <span className="text-[11px] font-mono text-faint">
                         {heldRun ? 'before the run' : 'before you press Run'}
@@ -3240,6 +3718,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     <label htmlFor="predict-input" className="mt-2 block text-xs text-body">
                       Type the output you expect, one line per line of output. It is checked against
                       the lesson&apos;s own expected output when you commit, and the run goes then.
+                      {gateAsksForFinish && (
+                        <>
+                          {' '}
+                          This starter stops at its first NotImplementedError, so predict the line a
+                          finished file prints — not the traceback.
+                        </>
+                      )}
                     </label>
                     <textarea
                       id="predict-input"
@@ -3248,7 +3733,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       rows={3}
                       spellCheck={false}
                       data-testid="predict-input"
-                      placeholder={'e.g.\nEncoder Ticks: 425 | Battery: 12.15 V'}
+                      // Shape, never content: the old example was P.1's own expected line repeated on
+                      // every lesson, which was half the answer to P.1's gate and another lesson's
+                      // output everywhere else.
+                      placeholder={'one line per line the program prints, e.g.\nLabel: value | Label: value'}
                       className="mt-1.5 w-full rounded border border-line bg-panel p-2 font-mono text-[12px] text-body resize-y"
                     />
                     <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -4054,6 +4542,30 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 )}
               </span>
             </div>
+            {coEdit && (
+              <p
+                role="status"
+                data-testid="coedit-status"
+                className="border-b px-3 py-1.5 text-[11px]"
+                style={{ borderColor: 'var(--border)', color: 'var(--emerald, var(--accent))', backgroundColor: 'var(--bg)' }}
+              >
+                Co-editing {lessonLabel(coEdit.lesson)} with {pair.peer ?? 'the other workbench'} ·{' '}
+                {coEdit.remote === 0
+                  ? 'no edits from them yet'
+                  : `${coEdit.remote} of their edits`}{' '}
+                · undo is yours
+              </p>
+            )}
+            {!coEdit && collabNotice && (
+              <p
+                role="status"
+                data-testid="coedit-notice"
+                className="border-b px-3 py-1.5 text-[11px]"
+                style={{ borderColor: 'var(--border)', color: 'var(--muted)', backgroundColor: 'var(--bg)' }}
+              >
+                {collabNotice}
+              </p>
+            )}
             {openHelperFile ? (
               <>
                 <p
@@ -4106,7 +4618,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               edge, which is the boundary itself. Dragging it moves the boundary, and the share it
               leaves behind is remembered. Hidden below `lg`, where the two halves stack and there
               is no boundary to drag. */}
-          <div className="space-y-4 relative" data-testid="results-column">
+          <div className="space-y-4 relative" data-testid="results-column" data-side={resultsSide}>
           {layoutArrangement(layout) === 'columns' && (
             <div
               role="separator"
@@ -4116,6 +4628,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               aria-valuemax={splitRatioPercent(SPLIT_MAX_RATIO)}
               aria-valuenow={splitRatioPercent(splitRatio)}
               aria-valuetext={`${splitRatioPercent(splitRatio)}% editor`}
+              data-side={resultsSide}
               title="Drag to resize · double-click for an even split · ←/→ also work"
               data-testid="split-divider"
               tabIndex={0}
@@ -4125,12 +4638,14 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               onPointerCancel={endSplitDrag}
               onDoubleClick={() => commitSplitRatio(DEFAULT_SPLIT_RATIO)}
               onKeyDown={(event) => {
-                const next = splitRatioAfterKey(splitRatio, event.key, event.shiftKey);
+                const next = splitRatioAfterKey(splitRatio, event.key, event.shiftKey, resultsSide);
                 if (next === null) return;
                 event.preventDefault();
                 commitSplitRatio(next);
               }}
-              className="hidden lg:flex absolute -left-3 top-0 bottom-0 z-10 w-3 cursor-col-resize touch-none items-center justify-center"
+              className={`hidden lg:flex absolute top-0 bottom-0 z-10 w-3 cursor-col-resize touch-none items-center justify-center ${
+                resultsSide === 'left' ? '-right-3' : '-left-3'
+              }`}
             >
               <span
                 aria-hidden="true"
@@ -4407,6 +4922,26 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   </span>
                 )}
               </div>
+              {/* The one affordance for a learner who is stuck rather than wrong yet: a failed run
+                  becomes a message a person can answer. It sits under the verdict, because that is
+                  the moment it is needed, and it is absent after a pass — a report about a run that
+                  worked is not a question. */}
+              {passStatus !== 'untested' && passStatus !== 'passed' && (
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                  <span style={{ color: 'var(--dim)' }}>
+                    Stuck on this one? Turn the run into a message you can send.
+                  </span>
+                  <button
+                    onClick={() => setHelpOpen(true)}
+                    data-testid="btn-ask-help"
+                    title="Build a report of this run — the lesson, your code, what the check said and the error — to copy or file as an issue"
+                    className="px-2 py-1 rounded-lg bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <LifeBuoy className="w-3.5 h-3.5" />
+                    <span>Ask for help</span>
+                  </button>
+                </div>
+              )}
               <pre
                 data-testid="pre-actual-stdout"
                 className="p-3 rounded-lg bg-canvas border border-line-soft font-mono text-xs text-ink whitespace-pre-wrap min-h-[120px]"
@@ -4522,6 +5057,22 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             )}
           </div>
         </div>
+      )}
+      {helpOpen && <HelpSheet input={helpInput} onClose={() => setHelpOpen(false)} />}
+      {pairOpen && (
+        <PairSheet
+          session={pair}
+          lesson={selectedId}
+          code={runCodeRef.current || code}
+          coEdit={coEdit}
+          collabInvite={collabInvite}
+          collabNotice={collabNotice}
+          onStartCoEdit={startCoEdit}
+          onAcceptCoEdit={acceptCoEdit}
+          onDeclineCoEdit={declineCoEdit}
+          onStopCoEdit={() => stopCoEditLocally('left')}
+          onClose={() => setPairOpen(false)}
+        />
       )}
     </div>
   );

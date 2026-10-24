@@ -23,6 +23,7 @@ import {
   MAX_SITTINGS,
   MAX_SITTING_LESSONS,
   MAX_SITTING_MS,
+  SITTING_RECORDED_EVENT,
   STORAGE_KEY_SITTINGS,
   closeSitting,
   currentSitting,
@@ -314,6 +315,34 @@ check('the exported log carries the sittings beside the events', () => {
   assert.equal(exported.sittings.length, 1, 'the pilot needs the measured time in the same file');
   assert.equal(exported.sittings[0].runs, 1);
   assert.equal(exported.sittings[0].end - exported.sittings[0].start, 2 * MIN);
+});
+
+check('every write announces itself, after the store already holds it', () => {
+  const window = freshBrowser();
+  const heard = [];
+  window.addEventListener(SITTING_RECORDED_EVENT, (event) => {
+    // The listener stands in for the study panel: it re-reads, so it has to see the sitting this
+    // event is about rather than the one before it.
+    heard.push({ runs: event.detail.runs, stored: readSittings().at(-1)?.runs ?? -1 });
+  });
+  recordSittingEvent({ at: T0, kind: 'open', lesson: 'P.1' });
+  recordSittingEvent({ at: T0 + 2 * MIN, kind: 'run', lesson: 'P.1' });
+  recordSittingEvent({ at: T0 + 3 * MIN, kind: 'review', lesson: 'P.1' });
+  assert.equal(
+    heard.length,
+    3,
+    'one announcement per write: a run happens one component away from the panel that prints the clock'
+  );
+  assert.deepEqual(
+    heard.map((entry) => entry.runs),
+    [0, 1, 1],
+    'the announcement carries the run count, so a reader that never re-read the store still moves'
+  );
+  assert.deepEqual(
+    heard.map((entry) => entry.stored),
+    [0, 1, 1],
+    'the store is written before the screen is told: a listener that re-reads must not see the old value'
+  );
 });
 
 console.log('focus mode');

@@ -13,6 +13,7 @@ import {
 import { dueCards, nextDueAt, reviewCard, syncCards, type StudyCard } from '../studyCards';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
 import {
+  SITTING_RECORDED_EVENT,
   currentSitting,
   formatDuration,
   readSittings,
@@ -64,13 +65,14 @@ function waitText(ms: number): string {
  * for ten minutes without answering has not been measured doing anything, and a clock that guessed
  * would be the first number in this app nobody could check.
  */
-function sittingText(): string {
+function sittingLine(): { text: string; runs: number } {
   const list = readSittings();
   const open = currentSitting(list);
   const summary = sittingSummary(list);
+  const runs = open?.runs ?? 0;
   // With one sitting on record, "today" *is* "this sitting": saying it twice reads like a stutter.
-  if (!open || list.length < 2) return summary;
-  return `${summary} · this sitting ${formatDuration(open.end - open.start)}`;
+  if (!open || list.length < 2) return { text: summary, runs };
+  return { text: `${summary} · this sitting ${formatDuration(open.end - open.start)}`, runs };
 }
 
 export function StudyPanel({ lessonId }: StudyPanelProps) {
@@ -82,9 +84,10 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
   const [cards, setCards] = useState<StudyCard[]>([]);
   const [reviewing, setReviewing] = useState<StudyCard | null>(null);
   const [revealed, setRevealed] = useState(false);
-  // What the clock says, read on the same beats as the deck: a sitting is written when a card is
-  // answered, so the panel's own numbers change exactly when it re-reads.
-  const [sitting, setSitting] = useState('');
+  // What the clock says. It is re-read on every write the clock announces, not just on mount and on
+  // a card rating: a run happens in the runner, one component over, and a panel that only refreshed
+  // for its own writes showed the number the store held when the lesson opened (`SITTING_RECORDED_EVENT`).
+  const [sitting, setSitting] = useState<{ text: string; runs: number }>({ text: '', runs: 0 });
   // What the store holds right now, and whether the learner has typed since: a write happens for a
   // keystroke, never for a value the component loaded. That distinction is what keeps React's
   // double-mount in development from writing an empty box over a real note - the mount load must not
@@ -100,7 +103,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     savedRef.current = study?.note ?? '';
     dirtyRef.current = false;
     setCards(syncCards());
-    setSitting(sittingText());
+    setSitting(sittingLine());
   };
 
   useEffect(() => {
@@ -109,8 +112,16 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     // A restore reads the deck behind this panel's back, so the count it is showing would be stale
     // until the next lesson switch: re-read on the event the rest of the app re-reads on.
     const onRestored = () => reload();
+    // The clock's line moves on any write, including a run this panel never sees — the runner writes
+    // it. Only the clock is re-read here: a full `reload` would pull the note box back from the store
+    // mid-sentence to refresh a duration.
+    const onRecorded = () => setSitting(sittingLine());
     window.addEventListener(STORE_RESTORED_EVENT, onRestored);
-    return () => window.removeEventListener(STORE_RESTORED_EVENT, onRestored);
+    window.addEventListener(SITTING_RECORDED_EVENT, onRecorded);
+    return () => {
+      window.removeEventListener(STORE_RESTORED_EVENT, onRestored);
+      window.removeEventListener(SITTING_RECORDED_EVENT, onRecorded);
+    };
     // `reload` is render-local; the only input it reads is the lesson id in this list.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
@@ -203,7 +214,6 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
     const remaining = dueCards(list).filter((card) => card.id !== reviewing.id);
     setReviewing(remaining[0] ?? null);
     setRevealed(false);
-    setSitting(sittingText());
     setStatus(next ? `Rated · back ${waitText(next.due - Date.now())}` : 'Rated');
   };
 
@@ -293,10 +303,11 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
         {/* The measured half of the study layer: what today cost, and how long this sitting is. */}
         <span
           data-testid="study-sitting"
+          data-sitting-runs={sitting.runs}
           title="Measured on this device: a sitting ends after five minutes without a run or an answer, and is capped at three hours."
           className="font-mono text-[10.5px] text-faint"
         >
-          {sitting || 'No sittings recorded yet'}
+          {sitting.text || 'No sittings recorded yet'}
         </span>
       </div>
 

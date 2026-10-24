@@ -18,6 +18,11 @@ export interface LessonCoach {
   check: string;
   /** The first line or two of the target output. */
   finish: string;
+  /**
+   * The first hole still open in the draft the guide was built for, or null when every hole has been
+   * written. The starter's own first hole is `firstHole`; this is the one to point at now.
+   */
+  openHole: string | null;
   /** True for a graded exercise bundle, false for a hand-written lesson page. */
   isExercise: boolean;
 }
@@ -171,27 +176,51 @@ export interface DraftProgress {
  * "something is there now" is the whole of what text can say. Neither rule can be fooled by typing
  * elsewhere in the file, which is what "6 lines changed" could not promise.
  */
-export function draftProgress(code: string, lesson: PythonLessonItem): DraftProgress {
+/** One starter hole, and whether the draft has written past it. */
+export interface DraftHole {
+  span: HoleSpan;
+  filled: boolean;
+}
+
+/**
+ * The starter's holes in file order, each paired with whether the given draft has written past it.
+ *
+ * This is the one judgement both the count and the pointer read: `draftProgress` counts the `filled`
+ * rows, and `firstOpenHole` names the first `!filled` one, so "2 of 7 written" and "start with the
+ * third hole" can never disagree about which hole is which.
+ */
+export function draftHoles(code: string, lesson: PythonLessonItem): DraftHole[] {
   const isExercise = lesson.track === 'modules';
   const holes = starterHoles(lesson.starterCode, isExercise);
-  if (holes.length === 0) return { filled: 0, total: 0, isExercise };
-  const draftHoles = new Map(starterHoles(code, isExercise).map((hole) => [hole.key, hole]));
+  if (holes.length === 0) return [];
+  const inDraft = new Map(starterHoles(code, isExercise).map((hole) => [hole.key, hole]));
   const draftText = compact(code);
-  let filled = 0;
-  for (const hole of holes) {
-    const inDraft = draftHoles.get(hole.key);
-    if (inDraft) {
+  return holes.map((hole) => {
+    const present = inDraft.get(hole.key);
+    if (present) {
       const written =
-        hole.probe === '' ? compact(inDraft.probe) !== '' : compact(inDraft.probe) !== compact(hole.probe);
-      if (written) filled += 1;
-    } else if (hole.probe !== '' && !draftText.includes(compact(hole.probe))) {
-      // The marker is gone. That counts only when the code it marked is gone with it, so tidying a
-      // comment up is not mistaken for work. An insertion hole whose marker was deleted cannot be
-      // judged at all, and is left uncounted rather than guessed.
-      filled += 1;
+        hole.probe === '' ? compact(present.probe) !== '' : compact(present.probe) !== compact(hole.probe);
+      return { span: hole, filled: written };
     }
-  }
-  return { filled, total: holes.length, isExercise };
+    // The marker is gone. That counts only when the code it marked is gone with it, so tidying a
+    // comment up is not mistaken for work. An insertion hole whose marker was deleted cannot be
+    // judged at all, and is left uncounted rather than guessed.
+    return { span: hole, filled: hole.probe !== '' && !draftText.includes(compact(hole.probe)) };
+  });
+}
+
+/** The first hole the draft has not written past - what the guide's "start with" must name. */
+export function firstOpenHole(code: string, lesson: PythonLessonItem): HoleSpan | null {
+  return draftHoles(code, lesson).find((row) => !row.filled)?.span ?? null;
+}
+
+export function draftProgress(code: string, lesson: PythonLessonItem): DraftProgress {
+  const rows = draftHoles(code, lesson);
+  return {
+    filled: rows.filter((row) => row.filled).length,
+    total: rows.length,
+    isExercise: lesson.track === 'modules',
+  };
 }
 
 function cleanHole(text: string): string {
@@ -202,10 +231,24 @@ function cleanHole(text: string): string {
   return trim(cleaned || text, MAX_HOLE_CHARS);
 }
 
-function checkFor(lesson: PythonLessonItem, firstHole: string): string {
+function checkFor(
+  lesson: PythonLessonItem,
+  firstHole: string,
+  openHole: string | null,
+  allWritten: boolean
+): string {
   if (lesson.track === 'modules') {
+    // No quote marks around the hole: the guide already sets it in bold, and nested quotes on a
+    // sentence-long hole message (the common case for a package) read like a quotation of itself.
+    // "Stops at" rather than "fails first on": every exercise hole raises `NotImplementedError`,
+    // and its message is an instruction, so the self-check stops rather than failing a check.
+    //
+    // The hole named is the draft's first open one: once hole 1 is written the self-check reaches
+    // hole 2, and a card still promising hole 1 describes a failure that cannot happen.
+    if (openHole) return `the package's own self-check, which stops at ${openHole}`;
+    if (allWritten) return "the package's own self-check, which now reaches every check";
     return firstHole
-      ? `the package's own self-check, which fails first on "${firstHole}"`
+      ? `the package's own self-check, which stops at ${firstHole}`
       : "the package's own self-check, which names the first behaviour to fix";
   }
   const summary =
@@ -224,7 +267,11 @@ function finishFor(expectedOutput: string): string {
   return trim(lines.join(' · ') || 'the Expected Output panel', MAX_FINISH_CHARS);
 }
 
-export function coachForLesson(lesson: PythonLessonItem): LessonCoach {
+export function coachForLesson(
+  lesson: PythonLessonItem,
+  /** The text in the editor, when the guide should point at the draft rather than the starter. */
+  draftCode: string = lesson.starterCode
+): LessonCoach {
   const isExercise = lesson.track === 'modules';
   const holes = starterHoles(lesson.starterCode, isExercise);
   // The count and the first hole come from one parse - the same one the roadmap card counts - so
@@ -235,10 +282,21 @@ export function coachForLesson(lesson: PythonLessonItem): LessonCoach {
     holes.map((hole) => cleanHole(hole.label)).find((text) => text.length > 0) ??
     'the first marked line in the starter';
 
+  // The pointer follows the draft, not the starter: a card that keeps saying "start with" the hole
+  // the learner just filled sends them back to finished work (found in the graded-exercise sitting,
+  // 2026-10-23). With no draft passed it is the starter's first hole, which is what the SSR gate and
+  // the per-lesson copy checks read.
+  const open = firstOpenHole(draftCode, lesson);
+  const openHole = open ? cleanHole(open.label) || 'the marked line still open in the editor' : null;
+  // The starter marks holes and the draft has none left open: everything is written, and both the
+  // pointer and the check have to say that rather than fall back to hole 1.
+  const allWritten = openHole === null && holes.length > 0;
+
   return {
     holeCount: holes.length,
     firstHole,
-    check: checkFor(lesson, firstHole),
+    openHole,
+    check: checkFor(lesson, firstHole, openHole, allWritten),
     finish: finishFor(lesson.expectedOutput),
     isExercise,
   };

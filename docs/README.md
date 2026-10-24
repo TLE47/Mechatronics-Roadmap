@@ -40,15 +40,19 @@ flowchart LR
 | Page | What it is |
 | :--- | :--- |
 | [`THEME.md`](THEME.md) | Every colour token in both palettes side by side, the utility that reaches each one, and the rules that keep a tab legible in both modes. Checked against [`app/src/index.css`](../app/src/index.css) by [`tests/test_theme_docs.py`](../tests/test_theme_docs.py). |
-| [`PLAN-2.0-GAP.md`](PLAN-2.0-GAP.md) | The workspace plan mapped against the code as it ships: what is already in production, what is partial, what is missing, and the order to build the rest. |
+| [`PLAN-2.0-GAP.md`](PLAN-2.0-GAP.md) | The workspace plan mapped against the code, and closed: every row says what shipped and names the command or step that proves it, ending with a summary of what the phase guarantees and what stays a boundary. Checked by [`scripts/check_plan_rows.py`](../scripts/check_plan_rows.py) — no row may reopen, every row must name something runnable, and every count it quotes is resolved against [`plan-facts.json`](plan-facts.json). |
+| [`plan-facts.json`](plan-facts.json) | The numbers the 2.0 page quotes and what owns each one: the gate list, the tab registry, the surface snapshot, the prose index, the error index, the committed firmware, the measured bundle total and the exercise sources. `scripts/check_plan_rows.py` recomputes them, so a stale number fails a push instead of waiting for a sweep. |
 | [`weight-budget.json`](weight-budget.json) | What the built bundle may cost, in gzipped bytes: the shell totals, the largest chunk, and today's measurement. Enforced by `npm run check:weight`, whose rules a unit suite pins — including that the `dist/` it measures is not older than the sources it claims to describe. |
 | [`a11y-allowlist.json`](a11y-allowlist.json) | Exceptions to the axe gate (`npm run check:axe`), each with a reason. Empty, and stale entries fail, so an exception cannot outlive what it excused. |
+| [`lighthouse-allowlist.json`](lighthouse-allowlist.json) | Exceptions to the Lighthouse gate (`npm run check:lighthouse`), which runs `best-practices`, `seo` and `accessibility` on the built bundle. One entry (`valid-source-maps`), same three-way ratchet: unlisted fails, wider fails, stale fails. Performance is not a category this gate runs. |
+| [`surface-snapshot.json`](surface-snapshot.json) | The painted surface of all 48 tab/palette combinations — region geometry (2 px tolerance), control counts, resolved colours, type and tokens — compared by `npm run check:snapshot`. Not a pixel diff, deliberately: see the script's header. Re-record with `--record` and read the diff. |
 
 ## When you are stuck or coming back
 
 - [`ERROR_EXPLAINER.md`](ERROR_EXPLAINER.md) — the failure you are looking at, by traceback and by symptom.
 - [`REENTRY.md`](REENTRY.md) — a five-task, twenty-minute way back in after weeks away.
 - [`PILOT.md`](PILOT.md) and [`pilot-results.md`](pilot-results.md) — how the beginner test is run and what it found.
+- [`PILOT_KIT.md`](PILOT_KIT.md) — the operator's run book for one sitting: the dry run, the export check while the participant is still there, the row, and the aggregate.
 - [`BEGINNER_TEST.md`](BEGINNER_TEST.md), [`friction-report.md`](friction-report.md), [`dogfood-log.md`](dogfood-log.md) — the sitting notes behind the difficulty fixes.
 
 ## Assets

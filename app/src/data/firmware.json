@@ -1,0 +1,46 @@
+{
+  "schema": "mechalab.firmware/1",
+  "fqbn": "arduino:avr:uno",
+  "generatedBy": "scripts/extract_and_compile_sketches.py --write-firmware",
+  "toolchain": {
+    "arduinoCli": "arduino-cli  Version: 1.5.1 Commit: Homebrew Date: 2026-06-05T09:39:33Z",
+    "core": "ID          Installed Latest Name"
+  },
+  "sketches": [
+    {
+      "id": "S0_7-arduino-uno-digital-io-and-pullups",
+      "hex": "firmware/S0_7-arduino-uno-digital-io-and-pullups.hex",
+      "sketchSha256": "5e36b5b04a698ac8dd79dfb98f3896ac66f9e41ea13476742cd89d11731f81f0",
+      "hexSha256": "a2cf607e362a1ed6fb0ff7cbdde29313b477adf53d78a98500e4944bc9601306",
+      "hexBytes": 6104
+    },
+    {
+      "id": "S0_8-adc-analog-read-and-serial-monitor",
+      "hex": "firmware/S0_8-adc-analog-read-and-serial-monitor.hex",
+      "sketchSha256": "2508c4486acc65fb131b50c7b9a394a0dfac72c24912f6819ad14aa74d84ae64",
+      "hexSha256": "53391aabe1908980b7a7c3954a443bc7f91c4f6eb255f0a9ab7f139246250ddf",
+      "hexBytes": 10236
+    },
+    {
+      "id": "S0_9-pwm-duty-cycle-and-analog-write",
+      "hex": "firmware/S0_9-pwm-duty-cycle-and-analog-write.hex",
+      "sketchSha256": "53d420142c8a1671329ccc727425888d02d61fc0939335fb0bb51437a0b04eb7",
+      "hexSha256": "cd98dab0d271751887937facc2558ed1a3e5812164bbfd23f151a5e92b3a37a8",
+      "hexBytes": 11488
+    },
+    {
+      "id": "S0_M-stage-0-milestone",
+      "hex": "firmware/S0_M-stage-0-milestone.hex",
+      "sketchSha256": "f26c40926880bc2626fef0873228da0eaa85535cf1e91cf7cc241401e07deef3",
+      "hexSha256": "016d27961150230f1dd1dd62413e50c366c9a868f557bab8617d6d4cc57ced4d",
+      "hexBytes": 12036
+    },
+    {
+      "id": "01_2-h-bridge-and-stall-current",
+      "hex": "firmware/01_2-h-bridge-and-stall-current.hex",
+      "sketchSha256": "037776e9fe0042ac7af3d1ec91d599c49e12671c2bba00d4d2c4362ca8d55f25",
+      "hexSha256": "bf1a4d8340ed52a4e1d9f1e8c953859bd375d755dc88b5e3c7399a25fe0e5560",
+      "hexBytes": 11300
+    }
+  ]
+}

@@ -8,7 +8,7 @@
  * 1. Does the controls own the page? `data-theme` on <html>, the stored key, the
  *    OS default on a first visit, the flip plus the two on/off palettes (contrast
  *    and paper), and an explicit pick surviving both a reload and an OS flip.
- * 2. Is every one of the eleven tabs readable in each of the four palettes? The audit walks
+ * 2. Is every one of the twelve tabs readable in each of the four palettes? The audit walks
  *    every visible text node, composites its colour over the stack of ancestor
  *    backgrounds it actually sits on, and computes WCAG contrast. Text below
  *    3:1 fails at any size; text between 3:1 and its size's minimum is listed as

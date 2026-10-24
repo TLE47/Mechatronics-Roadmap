@@ -13,14 +13,18 @@
  *      band is catalogue order (stable), so typing `p` lists P.1 before countdowns that contain it.
  *   4. **Keywords are searchable.** "damping ratio" finds the lesson whose ideas say it, even when
  *      its title does not.
+ *   5. **The three doors are one dialog.** `⌘K` is the whole catalogue, `⌘P` is its lesson rows and
+ *      `⌘⇧F` is `lessonSearch`'s hits; the mode texts exist for all three, and the keyboard sheet is
+ *      itself a palette action, so `⌘K` can find the sheet that explains `⌘K`.
  *
  * Run: `node --experimental-strip-types scripts/test_palette.mjs` (also a suite in test_workbench)
  */
 
 import assert from 'node:assert/strict';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
-import { rankPalette, groupPalette, lessonIdOf } from '../app/src/palette.ts';
+import { PALETTE_MODE_TEXT, rankPalette, groupPalette, lessonIdOf } from '../app/src/palette.ts';
 import { PALETTE_ACTIONS, paletteCatalog, lessonPaletteItems } from '../app/src/paletteCatalog.ts';
+import { SHORTCUT_ROWS, shortcutRows } from '../app/src/shortcuts.ts';
 
 const TABS = [
   { id: 'tab-arch', beginnerLabel: 'Roadmap', beginnerSubtitle: 'The ten steps', technicalLabel: 'Linear Tier Roadmap', technicalSubtitle: 'Tracks' },
@@ -128,5 +132,45 @@ assert.deepEqual(misses.map((item) => item.id), [], 'every catalogue label must 
 console.log('  ok every label finds itself when typed whole');
 
 assert.equal(lessonPaletteItems().length, PYTHON_LESSONS.length, 'the lesson list helper must not drop entries');
+
+// --- the three doors -------------------------------------------------------------------------
+
+assert.deepEqual(
+  Object.keys(PALETTE_MODE_TEXT).sort(),
+  ['all', 'lessons', 'search'],
+  'each door must have its own words: a placeholder that says "tab" in a lesson-only list is a lie'
+);
+assert.equal(
+  new Set(Object.values(PALETTE_MODE_TEXT).map((text) => text.placeholder)).size,
+  3,
+  'the three doors must not print the same placeholder'
+);
+assert(
+  catalog.filter((item) => item.kind === 'lesson').length > 0,
+  '⌘P\'s list is the catalogue\'s lesson rows, so there must be some'
+);
+console.log('  ok ⌘K, ⌘P and ⌘⇧F each name what they search');
+
+// --- the keyboard sheet ----------------------------------------------------------------------
+
+assert(SHORTCUT_ROWS.length >= 8, `the sheet must carry the keys people actually use, got ${SHORTCUT_ROWS.length}`);
+for (const row of SHORTCUT_ROWS) {
+  assert(row.keys.trim().length > 0, 'a row with no key is not a shortcut');
+  assert(row.action.trim().length > 15, `${row.keys} needs an action a beginner can act on`);
+}
+const sheetKeys = SHORTCUT_ROWS.map((row) => row.keys);
+assert.equal(
+  new Set(sheetKeys).size,
+  sheetKeys.length,
+  `one row per key: ${sheetKeys.filter((key, index) => sheetKeys.indexOf(key) !== index).join(', ')} appears twice`
+);
+assert.deepEqual(shortcutRows(), SHORTCUT_ROWS, 'the modal reads the same rows the suite pins');
+const sheetAction = PALETTE_ACTIONS.find((action) => action.id === 'action-open-shortcuts');
+assert(sheetAction, 'the sheet needs a door: a `?` nobody is told about is a secret');
+assert(
+  rankPalette(catalog, 'shortcuts').some((match) => match.item.id === 'action-open-shortcuts'),
+  'typing "shortcuts" into ⌘K must offer the sheet'
+);
+console.log(`  ok the sheet lists ${SHORTCUT_ROWS.length} keys once each, and ⌘K finds it`);
 
 console.log('[PASS] Palette catalogue and search: complete, unique, and predictable.');

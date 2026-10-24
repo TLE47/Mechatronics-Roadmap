@@ -72,6 +72,7 @@ Copy this into a private note per participant. Publish aggregates only.
 | Finished Step 1? | yes / no — minutes |
 | Their one-sentence fix | |
 | Course bug? | yes / no + page |
+| Transfer question (day 7–14) | due `____` / pass / fail — asked without a screen; keep the concept, in [`PILOT_KIT.md`](PILOT_KIT.md) |
 
 ## Triage: fix these first
 
@@ -86,6 +87,11 @@ One fix per stuck point, with a test where the page is generated or graded. Re-r
 sitting with a new person; do not count the author re-reading the fix as validation.
 
 ## Logging the result
+
+The order to do these in, with the command at each step, is [`PILOT_KIT.md`](PILOT_KIT.md). In short:
+export while the participant is still there, run `python3 scripts/pilot_preflight.py <export>` on the
+file, copy the `sheet` line into the row, and keep the export in `pilot-data/` where it cannot be
+committed.
 
 - Row per lesson in the pilot sheet ([`PILOT.md`](PILOT.md) §4), and the anonymised session in
   [`pilot-results.md`](pilot-results.md) once there is data.

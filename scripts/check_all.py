@@ -63,6 +63,7 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("python_lessons_data", ["scripts/generate_python_lessons_data.py", "--check"], False),
     ("error_index", ["scripts/generate_error_index.py", "--check"], False),
     ("run_callouts", ["scripts/generate_run_callouts.py", "--check"], False),
+    ("prose_index", ["scripts/generate_prose_index.py", "--check"], False),
     ("tab_names", ["scripts/check_tab_names.py"], False),
     ("link_history", ["scripts/generate_link_history_data.py", "--check"], False),
     ("sim_route", ["scripts/generate_sim_route.py", "--check"], False),
@@ -70,6 +71,22 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("next_links", ["scripts/generate_next_links.py", "--check"], False),
     ("step_docs", ["scripts/generate_step_docs.py", "--check"], False),
     ("readme_counts", ["scripts/generate_readme_counts.py", "--check"], False),
+    # The Board card renders each Arduino lesson's own sketch and the serial CI proves for it. The
+    # data is generated from the five pages, so a lesson that edits its sketch cannot leave the card
+    # teaching the old program.
+    ("board_panel", ["scripts/extract_and_compile_sketches.py", "--check-panel"], False),
+    # The Board tab runs committed machine code. This proves each `.hex` was built from the sketch the
+    # page still ships, and that the file on disk is the one the index hashes; the Node suite
+    # (`test:avr`) proves that hex prints the lesson's serial. A rebuild is not byte-compared: a newer
+    # toolchain changes the machine code, not the behaviour.
+    ("firmware", ["scripts/extract_and_compile_sketches.py", "--check-firmware"], False),
+    # The instruction pages are a list of commands, and a command that names a script which no longer
+    # exists is worse than no instructions. Reads the pages and the workflow files; never history.
+    ("doc_commands", ["scripts/check_doc_commands.py"], False),
+    # The 2.0 gap page is a claim, not a wish list: every row is closed, and a `ships` row names a
+    # command or a browser step a reader can run. Both directions were wrong once — Run 200 fixed two
+    # rows left `partial` after the work landed — so this reads the page instead of trusting it.
+    ("plan_rows", ["scripts/check_plan_rows.py"], False),
     ("consistency", ["scripts/check_consistency.py"], False),
     ("friction_report", ["scripts/friction_report.py", "--check"], False),
     ("assertions", ["scripts/lint_assertions.py"], False),

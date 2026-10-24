@@ -597,6 +597,74 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the card must print Python’s own words for a failure the index does not cover'
     );
     console.log('  ok a NameError is named by the card and left outside the index');
+
+    // 3c. Ask for help: the failed run as one message. The report is offered only after a run that
+    //     did not pass, it says what the card says, and the two doors are a clipboard write and
+    //     GitHub's own new-issue form — nothing leaves the page until the learner sends it.
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
+      origin: new URL(baseUrl).origin,
+    });
+    const askHelp = page.getByTestId('btn-ask-help');
+    await askHelp.waitFor({ timeout: 5000 });
+    await askHelp.click();
+    await page.getByTestId('help-sheet').waitFor({ timeout: 5000 });
+    const reportText = (await page.getByTestId('help-preview').innerText()).replace(/\s+/g, ' ');
+    assert.match(reportText, /# Stuck on P\.\d+ · /, `the report must name the lesson; read: ${reportText.slice(0, 160)}`);
+    assert.ok(
+      reportText.includes("NameError: name 'undefined_name' is not defined"),
+      'the report must carry Python\u2019s own last line'
+    );
+    assert.ok(reportText.includes('print(undefined_name)'), 'the report must carry the code that failed');
+    assert.match(reportText, /\*\*Verdict:\*\* ERROR · Syntax \/ Runtime Error/, reportText.slice(0, 200));
+    assert.match(
+      reportText,
+      /Hints opened:\*\* \d+ of \d+/,
+      'it must say how much of the ladder is open, and only that'
+    );
+
+    // The question is the one thing the run cannot say, and it goes into the message as it is typed.
+    await page.getByTestId('help-question').fill('I expected it to print 1.');
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="help-preview"]')?.textContent ?? '').includes(
+          'I expected it to print 1.'
+        ),
+      undefined,
+      { timeout: 5000 }
+    );
+
+    await page.getByTestId('btn-copy-help').click();
+    await page.waitForFunction(
+      () => /Copied/.test(document.querySelector('[data-testid="help-status"]')?.textContent ?? ''),
+      undefined,
+      { timeout: 5000 }
+    );
+    const copiedReport = await page.evaluate(() => navigator.clipboard.readText());
+    assert.ok(
+      copiedReport.includes('I expected it to print 1.') && copiedReport.includes('print(undefined_name)'),
+      'the clipboard must hold the whole report, question and code included'
+    );
+    assert.ok(
+      copiedReport.length <= 4000,
+      `a report past 4,000 characters is one a chat client cuts; got ${copiedReport.length}`
+    );
+
+    const issueHref = await page.getByTestId('btn-open-help-issue').getAttribute('href');
+    const issueUrl = new URL(issueHref ?? '');
+    assert.equal(
+      `${issueUrl.origin}${issueUrl.pathname}`,
+      'https://github.com/TLE47/Mechatronics-Roadmap/issues/new',
+      'the issue door must be GitHub\u2019s own new-issue form for this repository'
+    );
+    assert.match(issueUrl.searchParams.get('title') ?? '', /^Stuck on P\.\d+ · /);
+    assert.ok(
+      (issueUrl.searchParams.get('body') ?? '').includes('I expected it to print 1.'),
+      'the pre-filled body must be the report the learner just read'
+    );
+    await page.keyboard.press('Escape');
+    await page.getByTestId('help-sheet').waitFor({ state: 'detached', timeout: 5000 });
+    console.log('  ok a failed run becomes a report: the lesson, the code, the error, and a question');
+
     await page.getByTestId('lesson-item-P.6').click();
 
     // 4. Accidental infinite loop (while True:) is recoverable without losing editor work
@@ -923,6 +991,84 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('layout-study').click();
     assert.equal(await visible('lesson-list-card'), true, 'the Study button comes back');
     console.log('  ok ⌥1–⌥4 choose the regions and their arrangement, and the choice is remembered');
+
+    // 5d-ii. Docking: one button, and it names the panel this preset can move. Split moves the
+    //        results to the other side of the editor; Study moves the chooser to the other side of
+    //        the work area; Write and Read have nothing beside anything, so they show no button.
+    //        The side is a preference like the preset, so it has to outlive a reload.
+    await page.keyboard.press('Alt+4');
+    const dockButton = page.getByTestId('btn-dock-toggle');
+    assert.match(
+      (await dockButton.textContent()) ?? '',
+      /Results\s*→\s*Left/,
+      'Split must offer to move the results left'
+    );
+    await dockButton.click();
+    const dockedSplit = await page.evaluate(() => {
+      const box = document.querySelector('[data-layout]');
+      const divider = document.querySelector('[data-testid="split-divider"]');
+      return {
+        dock: box.getAttribute('data-dock'),
+        side: divider.getAttribute('data-side'),
+        handleOnTheRight: divider.classList.contains('-right-3'),
+        label: document.querySelector('[data-testid="btn-dock-toggle"]')?.textContent ?? '',
+      };
+    });
+    assert.equal(dockedSplit.dock, 'left', 'the docked side must be reported by the work area');
+    assert.equal(dockedSplit.side, 'left', 'the divider must know which edge it sits on');
+    assert.equal(dockedSplit.handleOnTheRight, true, 'a results column on the left puts the handle on its right edge');
+    assert.match(dockedSplit.label, /Results\s*→\s*Right/, 'the button must offer the way back');
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForEditor(page, 'editor-main');
+    assert.equal(
+      await page.evaluate(() => document.querySelector('[data-layout]').getAttribute('data-dock')),
+      'left',
+      'a docked results column must survive the reload'
+    );
+    await page.getByTestId('btn-dock-toggle').click();
+    assert.equal(
+      await page.evaluate(() => document.querySelector('[data-layout]').getAttribute('data-dock')),
+      'right',
+      'the way back must work too'
+    );
+
+    await page.getByTestId('layout-study').click();
+    assert.match(
+      (await page.getByTestId('btn-dock-toggle').textContent()) ?? '',
+      /List\s*→\s*Right/,
+      'Study must offer to move the chooser right'
+    );
+    await page.getByTestId('btn-dock-toggle').click();
+    assert.equal(
+      await page.getByTestId('lesson-list-card').getAttribute('data-list-dock'),
+      'right',
+      'the chooser must report the side it was moved to'
+    );
+    assert.match(
+      (await page.getByTestId('lesson-list-card').getAttribute('class')) ?? '',
+      /lg:order-2/,
+      'a chooser docked right is the second cell of the row, not the first'
+    );
+    await page.getByTestId('btn-dock-toggle').click();
+    assert.equal(
+      await page.getByTestId('lesson-list-card').getAttribute('data-list-dock'),
+      'left',
+      'the chooser comes back to the left'
+    );
+    await page.keyboard.press('Alt+2');
+    assert.equal(
+      await page.getByTestId('btn-dock-toggle').count(),
+      0,
+      'Write has nothing beside anything, so it must not draw a dock button'
+    );
+    await page.keyboard.press('Alt+3');
+    assert.equal(
+      await page.getByTestId('btn-dock-toggle').count(),
+      0,
+      'Read has nothing beside anything either'
+    );
+    await page.getByTestId('layout-study').click();
+    console.log('  ok docking moves the panel this preset can move, and the side is remembered');
 
     // 5e. `# %%` cells: a marker draws a "Run to here" button, and the button runs the document
     //     *through* that cell and no further — ungraded, so it neither verifies the lesson nor
@@ -1802,6 +1948,188 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // Back to the starter: the watch-mode step below starts from a failed check of its own.
     await page.getByTestId('btn-reset-starter').click();
 
+    // 7g-i-c. Pair study: two workbenches and no server. The invitation and the reply are carried by
+    //         hand — that is the whole signalling story — and from there the channel is real: an
+    //         attempt crosses it, arrives as a card, and lands in the other editor only on a press.
+    //         The two pages start on different lessons, which is the guard the card has to explain.
+    const pairCode = '# the attempt I wanted a second pair of eyes on\nprint("pair 🙂")\n';
+    await page.getByTestId('lesson-item-P.2').click();
+    await setEditorCode(page, pairCode);
+    await page.getByTestId('btn-pair-open').click();
+    await page.getByTestId('btn-pair-start').click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="pair-invitation-text"]')?.value ?? '').startsWith(
+          'mechalab-pair-1:'
+        ),
+      undefined,
+      { timeout: 15000 }
+    );
+    const invitation = await page.getByTestId('pair-invitation-text').inputValue();
+    assert.ok(
+      invitation.length < 16000,
+      `an invitation must stay pasteable; got ${invitation.length} characters`
+    );
+
+    const guestContext = await browser.newContext();
+    await guestContext.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
+    const guest = await guestContext.newPage();
+    await guest.goto(baseUrl, { waitUntil: 'networkidle' });
+    await waitForEditor(guest);
+    await guest.getByTestId('btn-pair-open').click();
+    await guest.getByTestId('btn-pair-join').click();
+    await guest.getByTestId('input-pair-invitation').fill(invitation);
+    await guest.getByTestId('btn-pair-make-reply').click();
+    await guest.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="pair-reply-text"]')?.value ?? '').startsWith(
+          'mechalab-pair-1:'
+        ),
+      undefined,
+      { timeout: 15000 }
+    );
+    const reply = await guest.getByTestId('pair-reply-text').inputValue();
+
+    await page.getByTestId('input-pair-reply').fill(reply);
+    await page.getByTestId('btn-pair-accept').click();
+    await page.getByTestId('pair-connected').waitFor({ timeout: 20000 });
+    await guest.getByTestId('pair-connected').waitFor({ timeout: 20000 });
+
+    await page.getByTestId('btn-pair-send-attempt').click();
+    await guest.getByTestId('pair-attempt-card').waitFor({ timeout: 15000 });
+    assert.equal(
+      await guest.getByTestId('pair-sheet').count(),
+      0,
+      'an arriving attempt closes the sheet, so the card is what the learner decides about'
+    );
+    assert.notEqual(
+      await getEditorCode(guest),
+      pairCode,
+      'an attempt from a session must never land in the editor without a press'
+    );
+    assert.match(
+      (await guest.getByTestId('pair-attempt-card').innerText()) ?? '',
+      /for P\.2/,
+      'the card must name the lesson the attempt is for when this editor is on another one'
+    );
+    await guest.getByTestId('btn-open-pair-lesson').click();
+    await guest.getByTestId('btn-load-pair-attempt').click();
+    await guest.waitForFunction(
+      (expected) => window.__mechalabEditors['editor-main'].get() === expected,
+      pairCode,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await guest.getByTestId('pair-attempt-card').count(),
+      0,
+      'loading the attempt must clear the offer, so it cannot be applied twice'
+    );
+
+    // 7g-i-d. Co-editing: the same channel, with the editors joined up. The host's text is the document
+    //         both start from, the guest accepts before their editor moves, and a keystroke on either
+    //         screen arrives on the other — while undo stays each person's own, which is the one thing
+    //         two people in one document cannot share.
+    await page.getByTestId('btn-coedit-start').click();
+    await guest.getByTestId('coedit-invite').waitFor({ timeout: 15000 });
+    assert.match(
+      (await guest.getByTestId('coedit-invite').innerText()) ?? '',
+      /P\.2/,
+      'the offer must name the lesson it would replace the editor with'
+    );
+    await guest.getByTestId('btn-coedit-accept').click();
+    await page.getByTestId('coedit-status').waitFor({ timeout: 15000 });
+    await guest.getByTestId('coedit-status').waitFor({ timeout: 15000 });
+    assert.equal(
+      await getEditorCode(guest),
+      await getEditorCode(page),
+      'accepting must leave both editors holding the same text'
+    );
+
+    await guest.evaluate(() => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.setCursor(editor.get().length);
+      editor.focus();
+    });
+    await guest.keyboard.type('# guest line');
+    await page.waitForFunction(
+      () => window.__mechalabEditors['editor-main'].get().includes('# guest line'),
+      undefined,
+      { timeout: 15000 }
+    );
+
+    await page.evaluate(() => {
+      const editor = window.__mechalabEditors['editor-main'];
+      editor.setCursor(editor.get().length);
+      editor.focus();
+    });
+    await page.keyboard.type('# host line');
+    await guest.waitForFunction(
+      () => window.__mechalabEditors['editor-main'].get().includes('# host line'),
+      undefined,
+      { timeout: 15000 }
+    );
+
+    // Undo is the host's own: it takes back what the host typed and leaves the guest's line alone,
+    // because a peer's edit never entered this history. A grouped type may undo in one press; the
+    // loop is what makes the assertion about the rule rather than about CodeMirror's grouping.
+    const undoKey = process.platform === 'darwin' ? 'Meta+z' : 'Control+z';
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const stillThere = await page.evaluate(() =>
+        window.__mechalabEditors['editor-main'].get().includes('# host line')
+      );
+      if (!stillThere) break;
+      await page.keyboard.press(undoKey);
+      await page.waitForTimeout(150);
+    }
+    assert.ok(
+      !(await getEditorCode(page)).includes('# host line'),
+      'undo must take back what this workbench typed'
+    );
+    await guest.waitForFunction(
+      () => !window.__mechalabEditors['editor-main'].get().includes('# host line'),
+      undefined,
+      { timeout: 15000 }
+    );
+    assert.match(
+      await getEditorCode(page),
+      /# guest line/,
+      'the host’s undo must not reach across to the guest’s line'
+    );
+    assert.match(await getEditorCode(guest), /# guest line/, 'and the guest keeps their own line');
+
+    await page.getByTestId('btn-coedit-stop').click();
+    await page.getByTestId('coedit-notice').waitFor({ timeout: 10000 });
+    await guest.waitForFunction(
+      () => /stopped co-editing/i.test(document.querySelector('[data-testid="coedit-notice"]')?.textContent ?? ''),
+      undefined,
+      { timeout: 10000 }
+    );
+    const hostBefore = await getEditorCode(page);
+    await guest.keyboard.type('!');
+    await guest.waitForTimeout(900);
+    assert.equal(
+      await getEditorCode(page),
+      hostBefore,
+      'once co-editing has stopped, a keystroke stays on the screen it was typed on'
+    );
+    console.log('  ok two workbenches co-edit one document, and undo stays each person’s own');
+
+    await page.getByTestId('btn-pair-leave').click();
+    await page.waitForFunction(
+      () =>
+        /ended/i.test(document.querySelector('[data-testid="pair-status"]')?.textContent ?? ''),
+      undefined,
+      { timeout: 10000 }
+    );
+    await guestContext.close();
+    await page.getByTestId('btn-close-pair').click();
+    console.log('  ok a pair session connects through hand-carried codes and an attempt is offered, not applied');
+    // Back to the lesson the steps below expect, on its starter.
+    await page.getByTestId('lesson-item-P.6').click();
+    await page.getByTestId('btn-reset-starter').click();
+
     // 7g-ii. Watch mode: after a failed check, the *typing* is what runs the code. One run per pause,
     //        not per keystroke, and the loop ends when the learner turns it off or passes.
     await page.getByTestId('btn-watch').click();
@@ -2669,6 +2997,134 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
     console.log('  ok the intended budget functions put all four rows at target and verify the capstone');
 
+    // 15. The Board card is the course's C bridge. Five Stage-0 lessons are Arduino sketches, and a
+    //     tab that runs CPython cannot compile them, so the card does what is provable: it shows the
+    //     lesson's own Full Solution (generated from the page, so it cannot be an older copy), hands
+    //     the learner to a simulator in another tab, and grades the half the page owns - the serial,
+    //     against the exact text CI proves by compiling that same sketch. A wrong prediction must be
+    //     refused with the line named, the verified serial must pass, and Copy must put the sketch on
+    //     the clipboard, because that copy *is* the bridge to the other tab.
+    await page.getByTestId('tab-btn-tab-arch').click();
+    const board = page.getByTestId('board-bridge');
+    await board.waitFor({ timeout: 15000 });
+    const boardLessons = await page.getByTestId('board-select').locator('option').count();
+    assert.equal(
+      boardLessons,
+      5,
+      `every Stage-0 Arduino lesson must be reachable from the card, got ${boardLessons} option(s)`
+    );
+    const shownSketch = await board.locator('pre').first().innerText();
+    assert(
+      shownSketch.includes('void setup()'),
+      `the card must show a real sketch, not a summary; got: ${shownSketch.slice(0, 80)}`
+    );
+    // A frame would be the seamless-looking choice and the wrong one: this document is served with
+    // COEP require-corp, so a cross-origin iframe of a site that sends no CORP header renders as an
+    // empty box. The hand-off is a link that opens another tab.
+    assert.equal(
+      await page.getByTestId('board-wokwi').getAttribute('target'),
+      '_blank',
+      'the simulator link must open in its own tab, so the workbench keeps the learner’s place'
+    );
+    assert(
+      ((await page.getByTestId('board-wokwi').getAttribute('href')) ?? '').startsWith('https://wokwi.com/'),
+      'the primary hand-off must be the Wokwi simulator'
+    );
+    await page.getByTestId('board-predict').fill('Released | pin_reading=HIGH(1) -> led_out=HIGH(1)');
+    await page.getByTestId('board-check').click();
+    const wrongVerdict = (await page.getByTestId('board-verdict').innerText()).trim();
+    assert(
+      /line \d+ differs/.test(wrongVerdict),
+      `a wrong prediction must name the line that differs, got: ${wrongVerdict}`
+    );
+    await page.getByTestId('board-expected').waitFor({ timeout: 5000 });
+    const verifiedSerial = (await page.getByTestId('board-expected').innerText()).trim();
+    await page.getByTestId('board-predict').fill(verifiedSerial);
+    await page.getByTestId('board-check').click();
+    const rightVerdict = (await page.getByTestId('board-verdict').innerText()).trim();
+    assert(
+      rightVerdict.startsWith('Matches the verified serial'),
+      `typing the verified serial back must pass, got: ${rightVerdict}`
+    );
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
+      origin: new URL(baseUrl).origin,
+    });
+    await page.getByTestId('board-copy').click();
+    const copiedSketch = await page.evaluate(() => navigator.clipboard.readText());
+    assert(
+      copiedSketch.includes('void setup()') && copiedSketch.length > 100,
+      `Copy must put the whole sketch on the clipboard; got ${copiedSketch.length} char(s)`
+    );
+    console.log('  ok the Board card shows the lesson sketch, grades a prediction and copies it');
+    // Back to the lessons, where the next step left this page: a suite that ends on another tab
+    // would make every later step fail on a locator that is simply not on screen.
+    await page.getByTestId('tab-btn-tab-pyodide').click();
+    await page.getByTestId('lesson-item-EX.05-control.T2.05a').waitFor({ timeout: 15000 });
+
+    // 16. The Board tab runs the compiled sketch. This is the only surface in the app that executes
+    //     machine code: the lesson's `.hex` is fetched, run in `avr8js`, and its USART becomes the
+    //     monitor. The serial it prints must be the lesson's, the clock must count real cycles, and a
+    //     guess typed into the box must be graded against what the emulator *printed* — the page's
+    //     text is the stop condition, not the answer key.
+    // Beginner View shows the six tabs a newcomer needs; Board is a lab, so open Advanced first.
+    const boardAdvance = page.getByTestId('btn-mode-advanced');
+    if (await boardAdvance.count()) await boardAdvance.click();
+    await page.getByTestId('tab-btn-tab-board').click();
+    await page.getByTestId('tab-board').waitFor({ timeout: 15000 });
+    const serialMonitor = page.getByTestId('board-tab-serial');
+    await page.getByTestId('board-tab-run').click();
+    // Wait for the run's own verdict, not for a substring: the monitor fills line by line, so a
+    // reader that stops at the first `pin_reading` reads half a serial and calls it the answer.
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="board-tab-status"]')?.textContent ?? '').trim() ===
+        'printed the whole serial',
+      undefined,
+      { timeout: 60000 }
+    );
+    const printedSerial = (await serialMonitor.innerText()).trim();
+    assert(
+      /Released \| pin_reading=HIGH\(1\) -> led_out=LOW\(0\)/.test(printedSerial) &&
+        /Pressed\s+\| pin_reading=LOW\(0\) -> led_out=HIGH\(1\)/.test(printedSerial),
+      `the emulator must print the lesson's serial, got: ${printedSerial}`
+    );
+    const boardStatus = (await page.getByTestId('board-tab-status').innerText()).trim();
+    assert.equal(
+      boardStatus,
+      'printed the whole serial',
+      `a completed run must say so in words a learner can read, got: ${boardStatus}`
+    );
+    const boardClock = (await page.getByTestId('board-tab-clock').innerText()).trim();
+    assert(
+      /^[\d,]+ cycles/.test(boardClock) && !boardClock.startsWith('0 '),
+      `the clock must count the cycles the emulator ran, got: ${boardClock}`
+    );
+    // The guess is graded against the printed serial: type what it printed, reset, run again.
+    await page.getByTestId('board-tab-guess').fill(printedSerial);
+    await page.getByTestId('board-tab-reset').click();
+    assert.equal(
+      (await serialMonitor.innerText()).trim(),
+      '',
+      'Reset must clear the monitor, so a second run cannot read the first run’s output as its own'
+    );
+    await page.getByTestId('board-tab-run').click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-testid="board-tab-status"]')?.textContent ?? '').trim() ===
+        'printed the whole serial',
+      undefined,
+      { timeout: 60000 }
+    );
+    await page.getByTestId('board-tab-verdict').waitFor({ timeout: 60000 });
+    const boardVerdict = (await page.getByTestId('board-tab-verdict').innerText()).trim();
+    assert(
+      /Matches the verified serial/.test(boardVerdict),
+      `a guess equal to the printed serial must pass, got: ${boardVerdict}`
+    );
+    console.log('  ok the Board tab runs the compiled sketch, prints its serial and grades a guess');
+    await page.getByTestId('tab-btn-tab-pyodide').click();
+    await page.getByTestId('lesson-item-EX.05-control.T2.05a').waitFor({ timeout: 15000 });
+
     // 12. The editor is CodeMirror, and a lesson is a small project: Python is highlighted, a
     //     lesson that imports the shared plant gets a locked tab holding that same source, and a
     //     `# @slider` comment becomes a control that rewrites the literal and re-runs.
@@ -2781,6 +3237,328 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
     console.log('  ok ⌘K opens a searchable dialog, ranks the typed lesson first, and closes on Escape');
 
+    // 12b. The other two doors into the same dialog, and the sheet that says so. `⌘P` lists the
+    // lessons only; `⌘⇧F` searches inside their text. The search jump is measured on a fresh context,
+    // where no draft has moved the lines: the caret promise is "the line that matched", not "line 7".
+    await formattingPage.keyboard.press('Control+p');
+    await formattingPage.getByTestId('command-palette').waitFor({ timeout: 10000 });
+    // A different door is a fresh question: the query the last visit typed is cleared in an effect, so
+    // wait for the field rather than reading the footer of the frame that still holds it.
+    await formattingPage.waitForFunction(
+      () => document.querySelector('[data-testid="input-palette-search"]')?.value === '',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await formattingPage.getByTestId('command-palette').getAttribute('data-palette-mode'),
+      'lessons',
+      '⌘P must open the palette on the lesson list'
+    );
+    const lessonsCount = (await formattingPage.getByTestId('palette-match-count').innerText()).match(/(\d+) of (\d+)/);
+    assert.equal(
+      lessonsCount?.[1],
+      lessonsCount?.[2],
+      `⌘P's empty list must be every lesson, not a subset; read: ${lessonsCount?.[0]}`
+    );
+    assert.equal(
+      await formattingPage.locator('[data-testid^="palette-item-tab-"]').count(),
+      0,
+      '⌘P must not offer tabs'
+    );
+    assert.equal(
+      await formattingPage.locator('[data-testid^="palette-item-action-"]').count(),
+      0,
+      '⌘P must not offer commands'
+    );
+    await formattingPage.getByTestId('input-palette-search').fill('P.9');
+    await formattingPage.getByTestId('palette-item-lesson-P.9').waitFor({ timeout: 5000 });
+    await formattingPage.keyboard.press('Enter');
+    await formattingPage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
+    await formattingPage.getByTestId('lesson-item-P.9').waitFor({ timeout: 5000 });
+    assert(
+      formattingPage.url().includes('lesson=P.9'),
+      `a quick-open must open its lesson; url was ${formattingPage.url()}`
+    );
+    console.log('  ok ⌘P lists lessons only and opens the one typed');
+
+    // A fresh context: `⌘⇧F` opens the lesson's own text, and the hit's line is where the caret lands.
+    // Measured here rather than on the suite's page because every draft edited above has moved lines.
+    const searchContext = await browser.newContext();
+    await searchContext.addInitScript(() => {
+      window.__mechalabPredictFirst = false;
+    });
+    const searchPage = await searchContext.newPage();
+    try {
+      await searchPage.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+      await searchPage.waitForSelector('[data-editor="editor-main"] .cm-content', { timeout: 60000 });
+      await searchPage.keyboard.press('Control+Shift+F');
+      await searchPage.getByTestId('command-palette').waitFor({ timeout: 10000 });
+      assert.equal(
+        await searchPage.getByTestId('command-palette').getAttribute('data-palette-mode'),
+        'search',
+        '⌘⇧F must open the palette on the lesson text'
+      );
+      // The dialog clears its field in an effect on open: filling before that lands would be wiped
+      // by the reset, which reads as "the search found nothing" rather than as a race.
+      await searchPage.waitForFunction(
+        () => document.querySelector('[data-testid="input-palette-search"]')?.value === '',
+        undefined,
+        { timeout: 5000 }
+      );
+      // The plant is imported by the Tier 2 and 3 starters, so the query finds code as well as prose.
+      await searchPage.getByTestId('input-palette-search').fill('mechalab_plant');
+      // The course pages are a fetch of their own. Wait for the footer to stop saying they are on
+      // their way (or missing) before counting rows, so the list and the footer are read from one
+      // settled state rather than across the moment the file lands. A failed fetch is not fatal
+      // here — the prose step below is where it is reported, with the reason.
+      await searchPage
+        .waitForFunction(
+          () => !document.querySelector('[data-testid="palette-note"]'),
+          undefined,
+          { timeout: 15000 }
+        )
+        .catch(() => undefined);
+      await searchPage.locator('[data-testid^="palette-item-search-"]').first().waitFor({ timeout: 10000 });
+      // Every row, not only the runner's: `⌘⇧F` also answers from the course pages, and the footer
+      // counts the list the learner is looking at.
+      const hitRows = await searchPage
+        .locator('[data-testid^="palette-item-"]')
+        .evaluateAll((rows) =>
+          rows.map((row) => ({
+            id: row.dataset.paletteId ?? '',
+            text: (row.innerText ?? '').replace(/\s+/g, ' '),
+          }))
+        );
+      assert.equal(
+        await searchPage.getByTestId('palette-match-count').innerText(),
+        `${hitRows.length} hit${hitRows.length === 1 ? '' : 's'}`,
+        'the footer must count hits, not the catalogue'
+      );
+      const starterRow = hitRows.findIndex((row) => /starter · line \d+/.test(row.text));
+      assert.ok(
+        starterRow >= 0,
+        `expected a starter line among the hits for the plant; read: ${JSON.stringify(hitRows.slice(0, 3))}`
+      );
+      // Keyboard only: walk the highlight down to the row that is a line of the file, then open it.
+      for (let step = 0; step < starterRow; step += 1) await searchPage.keyboard.press('ArrowDown');
+      const expectedLine = Number(hitRows[starterRow].text.match(/starter · line (\d+)/)[1]);
+      await searchPage.keyboard.press('Enter');
+      await searchPage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
+      // The pick switches the lesson, and an editor is keyed by the lesson it holds: wait for the
+      // *caret*, not for the bridge, because the old editor's bridge is still registered for a frame.
+      const caret = () =>
+        searchPage.evaluate(() => {
+          const bridge = window.__mechalabEditors?.['editor-main'];
+          if (!bridge) return null;
+          const text = bridge.get();
+          const line = text.slice(0, bridge.getCursor()).split('\n').length;
+          return { line, lineText: (text.split('\n')[line - 1] ?? '').trim() };
+        });
+      await searchPage
+        .waitForFunction(
+          (wanted) => {
+            const bridge = window.__mechalabEditors?.['editor-main'];
+            if (!bridge) return false;
+            return bridge.get().slice(0, bridge.getCursor()).split('\n').length === wanted;
+          },
+          expectedLine,
+          { timeout: 15000 }
+        )
+        .catch(() => undefined);
+      const landed = await caret();
+      assert.equal(
+        landed?.line,
+        expectedLine,
+        `the caret must land on the hit's line (${expectedLine}), not ${landed?.line}; hit ${hitRows[starterRow].id}`
+      );
+      assert.match(
+        landed?.lineText ?? '',
+        /mechalab_plant/,
+        `the line under the caret must be the line that matched; it reads: ${landed?.lineText}`
+      );
+      console.log(
+        `  ok ⌘⇧F finds the lesson by its text and puts the caret on line ${expectedLine} (${(landed?.lineText ?? '').slice(0, 40)}…)`
+      );
+
+      // The other half of the same door: the 65 reading pages, which are fetched the first time
+      // `⌘⇧F` opens and are not part of the bundle. `decoupling` is a word the runner's lessons do
+      // not carry, so a row for it can only have come from the prose index, and the row must name
+      // the section and the GitHub anchor rather than some page called S0.6.
+      await searchPage.keyboard.press('Control+Shift+F');
+      await searchPage.getByTestId('command-palette').waitFor({ timeout: 10000 });
+      await searchPage.waitForFunction(
+        () => document.querySelector('[data-testid="input-palette-search"]')?.value === '',
+        undefined,
+        { timeout: 5000 }
+      );
+      await searchPage.getByTestId('input-palette-search').fill('decoupling');
+      const proseRow = searchPage.locator('[data-testid^="palette-item-prose-"]').first();
+      await proseRow.waitFor({ timeout: 15000 });
+      assert.equal(
+        await searchPage.locator('[role="group"][aria-label="Course pages"]').count(),
+        1,
+        'the prose hits must sit under their own heading, not among the lessons'
+      );
+      const proseText = (await proseRow.innerText()).replace(/\s+/g, ' ');
+      assert.match(proseText, /Course page/, 'the row must say what it is');
+      assert.match(proseText, /S0\.6/, 'the row must name the page');
+      assert.match(proseText, /§ Idea 2: Power-rail decoupling/, 'the row must name the section it opens');
+      const proseHref = await proseRow.getAttribute('data-href');
+      assert.equal(
+        proseHref,
+        'https://github.com/TLE47/Mechatronics-Roadmap/blob/main/stage-0/S0.6-capacitors-and-decoupling.md#idea-2-power-rail-decoupling-bypass-capacitors',
+        `the row must open the page at its section; got ${proseHref}`
+      );
+      // Once the file is in, the footer says nothing about it: a permanent "65 pages" is furniture.
+      assert.equal(
+        await searchPage.getByTestId('palette-note').count(),
+        0,
+        'a loaded prose index must leave the footer quiet'
+      );
+
+      // Enter on the row leaves the workbench where it is and opens the page beside it. The tab is
+      // stubbed: the promise is the destination, not that github.com answers from CI.
+      await searchContext.route('https://github.com/**', (route) =>
+        route.fulfill({ status: 200, contentType: 'text/html', body: '<title>stub</title>' })
+      );
+      const proseRowIndex = await searchPage
+        .locator('[data-testid^="palette-item-"]')
+        .evaluateAll((rows, id) => rows.findIndex((row) => (row.getAttribute('data-testid') ?? '') === id),
+          (await proseRow.getAttribute('data-testid')) ?? '');
+      assert.ok(proseRowIndex >= 0, 'the prose row must be somewhere in the list');
+      const openedTab = searchContext.waitForEvent('page', { timeout: 10000 });
+      for (let step = 0; step < proseRowIndex; step += 1) await searchPage.keyboard.press('ArrowDown');
+      await searchPage.keyboard.press('Enter');
+      await searchPage.getByTestId('command-palette').waitFor({ state: 'detached', timeout: 5000 });
+      const opened = await openedTab;
+      // The tab exists before its navigation commits: wait for the URL rather than read about:blank.
+      await opened.waitForURL(proseHref, { timeout: 10000 });
+      assert.equal(
+        opened.url(),
+        proseHref,
+        `opening a course page must go to its GitHub anchor; got ${opened.url()}`
+      );
+      assert(
+        searchPage.url().includes('?lesson='),
+        'opening a course page must leave the workbench on the lesson it was showing'
+      );
+      await opened.close();
+      console.log('  ok ⌘⇧F finds the course pages and opens the section on GitHub beside the workbench');
+
+      // `?` opens the sheet — and is a character inside the editor, where it has to stay text. Blur
+      // first: the jump above left the caret in the editor, where `?` is Python.
+      await searchPage.evaluate(() => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      });
+      await searchPage.keyboard.press('?');
+      await searchPage.getByTestId('shortcuts-modal').waitFor({ timeout: 5000 });
+      const sheet = (await searchPage.getByTestId('shortcuts-list').innerText()).replace(/\s+/g, ' ');
+      for (const key of ['⌘K', '⌘P', '⌘⇧F', 'F9', 'F12', '⌥1 – ⌥4', '⌘.']) {
+        assert.ok(sheet.includes(key), `the key sheet must name ${key}; read: ${sheet.slice(0, 200)}`);
+      }
+      assert(
+        (await searchPage.getByTestId('shortcut-row').count()) >= 8,
+        'the sheet must list the keys, not one line'
+      );
+
+      // A row's key is a button. It waits for a chord, prints it, refuses a clash by naming the
+      // action that has the key, and the new chord is the one the page answers after a reload.
+      await searchPage.getByTestId('btn-rebind-focus').click();
+      assert.equal(
+        (await searchPage.getByTestId('btn-rebind-focus').textContent())?.trim(),
+        'Press keys…',
+        'the row must say it is waiting for a key'
+      );
+      await searchPage.keyboard.press('Control+Shift+J');
+      assert.equal(
+        (await searchPage.getByTestId('btn-rebind-focus').textContent())?.trim(),
+        '⌘⇧J',
+        'the row must print the key it just learned'
+      );
+      await searchPage.keyboard.press('Escape');
+      await searchPage.getByTestId('shortcuts-modal').waitFor({ state: 'detached', timeout: 5000 });
+      await searchPage.keyboard.press('Control+Shift+J');
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 5000 });
+      await searchPage.keyboard.press('Escape');
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ state: 'detached', timeout: 5000 });
+      await searchPage.reload({ waitUntil: 'networkidle' });
+      await searchPage.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, {
+        timeout: 20000,
+      });
+      await searchPage.keyboard.press('Control+Shift+J');
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 5000 });
+      await searchPage.keyboard.press('Escape');
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ state: 'detached', timeout: 5000 });
+
+      // ⌘K is the palette's: the clash is refused with its name, the row keeps waiting, and Escape
+      // during capture cancels the key rather than closing the sheet.
+      await searchPage.keyboard.press('?');
+      await searchPage.getByTestId('shortcuts-modal').waitFor({ timeout: 5000 });
+      await searchPage.getByTestId('btn-rebind-focus').click();
+      await searchPage.keyboard.press('Control+k');
+      await searchPage.waitForFunction(
+        () => (document.querySelector('[data-testid="keymap-status"]')?.textContent ?? '').includes('already the palette'),
+        undefined,
+        { timeout: 5000 }
+      );
+      assert.equal(
+        (await searchPage.getByTestId('btn-rebind-focus').textContent())?.trim(),
+        'Press keys…',
+        'a refused key must leave the row waiting for a different one'
+      );
+      await searchPage.keyboard.press('Escape');
+      assert.equal(
+        await searchPage.getByTestId('shortcuts-modal').count(),
+        1,
+        'Escape during capture cancels the key, not the sheet'
+      );
+      await searchPage.getByTestId('btn-reset-keymap').click();
+      await searchPage.waitForFunction(
+        () => (document.querySelector('[data-testid="keymap-status"]')?.textContent ?? '').includes('back to its shipped'),
+        undefined,
+        { timeout: 5000 }
+      );
+      assert.equal(
+        await searchPage.getByTestId('btn-reset-keymap').count(),
+        0,
+        'with every key shipped again there is nothing to reset'
+      );
+      await searchPage.keyboard.press('Escape');
+      await searchPage.getByTestId('shortcuts-modal').waitFor({ state: 'detached', timeout: 5000 });
+      await searchPage.keyboard.press('Control+Period');
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ timeout: 5000 });
+      await searchPage.keyboard.press('Escape');
+      await searchPage.getByTestId('btn-focus-pill').waitFor({ state: 'detached', timeout: 5000 });
+      console.log('  ok a sheet row learns a new key, refuses a clash by name, survives a reload and resets');
+
+      await searchPage.keyboard.press('Escape');
+      await searchPage.getByTestId('shortcuts-modal').waitFor({ state: 'detached', timeout: 5000 });
+      await searchPage.locator('[data-editor="editor-main"] .cm-content').click();
+      await searchPage.keyboard.press('?');
+      await searchPage.waitForFunction(
+        () => (window.__mechalabEditors?.['editor-main']?.get() ?? '').includes('?'),
+        undefined,
+        { timeout: 5000 }
+      );
+      assert.equal(
+        await searchPage.getByTestId('shortcuts-modal').count(),
+        0,
+        '? typed into the editor is a character, not a shortcut'
+      );
+      // And the sheet has a door in the palette, so a learner who never guessed `?` can find it.
+      await searchPage.keyboard.press('Control+k');
+      await searchPage.getByTestId('command-palette').waitFor({ timeout: 5000 });
+      await searchPage.getByTestId('input-palette-search').fill('shortcuts');
+      await searchPage.getByTestId('palette-item-action-open-shortcuts').waitFor({ timeout: 5000 });
+      await searchPage.keyboard.press('Enter');
+      await searchPage.getByTestId('shortcuts-modal').waitFor({ timeout: 5000 });
+      await searchPage.keyboard.press('Escape');
+      await searchPage.getByTestId('shortcuts-modal').waitFor({ state: 'detached', timeout: 5000 });
+      console.log('  ok ? opens the key sheet, stays a character in the editor, and ⌘K can find it');
+    } finally {
+      await searchContext.close();
+    }
+
     // Study notes: what the learner writes down is stored as they type, and a pinned passage keeps
     // its place with it. A reload is the assertion that matters - anything the panel held in React
     // state alone would be gone, and the note is the part of a lesson that cannot be regenerated.
@@ -2836,7 +3614,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     console.log('  ok a study note and a pinned highlight survive a reload');
 
     console.log(
-      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit).'
+      '[PASS] Real-browser Chromium E2E tests passed (Starter fail, Print-spoof rejection, SyntaxError, Infinite-loop Stop/Timeout recovery, Solution pass, CDN failure protection, Reload persistence, Last-lesson resume, roadmap resume & next card, draft restore & step count, run history restore, Diff panel lines & earned solution reference, share link copied, opened and loaded, a pair session over hand-carried codes, two editors co-editing one document with undo staying each person’s own, inline values drawn then cleared by an edit, F12/Ctrl-click go-to-definition across the lesson’s files, watch mode re-running on a pause, run verdicts announced with their failing line, Scope trace as plot & table, cursor/zoom/A-B overlay, Portfolio export categories, Diagnostic/Exit Review tabs, whitespace-vs-formatting grading, shared-plant import, Start here collapse & dismiss/restore, per-pass first-step collapse, 08.1 bench-gated pass, Tier 3 budget-gated pass, CodeMirror highlighting/read-only helper/slider re-run, ⌘K palette open/find/open/close, ⌘P quick-open over lessons only, ⌘⇧F inside-the-lesson search landing on the hit’s line and finding a course page at its section, the ? key sheet open and inert in the editor, a sheet row rebound to a new key, a clash refused and a reset, study note & pinned highlight across a reload, gutter breakpoints clicked, keyed and remembered, a dot following an edit, the Board card showing its own sketch, a prediction graded against the verified serial, and the sketch copied for the simulator).'
     );
   } finally {
     await browser.close();

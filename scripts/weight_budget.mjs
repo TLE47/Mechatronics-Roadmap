@@ -17,6 +17,11 @@
  *     chunks it preloads, and its stylesheets. This is what a first paint waits for, and it is the
  *     number a chunk split is supposed to move; `total` cannot, because a chunk nobody opens is
  *     still emitted into `dist/`.
+ * - **`prose_gzip`** — the searchable course pages (`dist/prose-index.json`), which the app fetches
+ *   only the first time `⌘⇧F` is opened. It is measured on its own rather than folded into
+ *   `js_gzip` or `total`: it is neither JavaScript nor part of a first paint, and a ceiling that
+ *   counted it with the shell would make a learner who never searches pay for it in the report.
+ *   A budget with no file behind it fails like every other unmeasured metric.
  * - **`total`** — everything emitted (assets plus the document): a ceiling on the bundle as a whole,
  *     not the cost of a visit. A split raises this slightly (chunk headers) while lowering
  *     `entry_gzip`, which is exactly the trade the report is meant to show.
@@ -31,7 +36,15 @@
  */
 
 /** The metrics the budget covers, in the order the report prints them. */
-export const METRICS = ['entry_gzip', 'js_gzip', 'css_gzip', 'fonts', 'largest_js_gzip', 'total'];
+export const METRICS = [
+  'entry_gzip',
+  'js_gzip',
+  'css_gzip',
+  'fonts',
+  'largest_js_gzip',
+  'prose_gzip',
+  'total',
+];
 
 /** `1234567` -> `1.18 MB`, `45678` -> `44.6 kB` — a size a person reads without arithmetic. */
 export function formatBytes(bytes) {
@@ -125,8 +138,12 @@ export function staleSources(sources, outputs) {
  * `entry` is the list of file names `index.html` itself names (its module script, its modulepreloads
  * and its stylesheets). An empty list yields `NaN` rather than `0`, so a document that stopped
  * naming its script reads as **unmeasured** at the gate instead of as a free visit.
+ *
+ * `prose` is the one file that is served but not part of the shell: `dist/prose-index.json`, fetched
+ * by `⌘⇧F`. It is deliberately not in `files`, so it changes `prose_gzip` without changing `total`.
+ * Missing, it is `NaN` — a budget nothing measures is a failure, not a pass.
  */
-export function measurementFrom(files, entry = []) {
+export function measurementFrom(files, entry = [], prose = null) {
   const sum = (predicate) =>
     files.filter(predicate).reduce((total, file) => total + file.gzip, 0);
   const js = files.filter((file) => file.name.endsWith('.js'));
@@ -141,6 +158,7 @@ export function measurementFrom(files, entry = []) {
       .filter((file) => file.name.endsWith('.woff2') || file.name.endsWith('.woff'))
       .reduce((total, file) => total + file.size, 0),
     largest_js_gzip: js.length ? Math.max(...js.map((file) => file.gzip)) : 0,
+    prose_gzip: prose && Number.isFinite(prose.gzip) ? prose.gzip : Number.NaN,
     total: files.reduce((total, file) => total + file.gzip, 0),
   };
 }

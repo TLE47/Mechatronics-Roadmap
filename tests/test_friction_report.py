@@ -15,7 +15,9 @@ Run: `python3 tests/test_friction_report.py` (also wired into the CI verify step
 """
 
 import importlib.util
+import json
 import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -46,6 +48,19 @@ def opened(lesson, t=0):
 
 def verified(lesson, t=0):
     return {"t": t, "kind": "verified", "lesson": lesson}
+
+
+def run_main(argv):
+    """`main`, with its report captured: the assertions are about the exit code and the words."""
+    with tempfile.TemporaryFile("w+", encoding="utf-8") as out:
+        stdout, stderr = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = out, out
+        try:
+            code = fr.main(argv)
+        finally:
+            sys.stdout, sys.stderr = stdout, stderr
+        out.seek(0)
+        return code, out.read()
 
 
 class FrictionReportTests(unittest.TestCase):
@@ -188,6 +203,78 @@ class FrictionReportTests(unittest.TestCase):
         self.addCleanup(os.unlink, path)
         with self.assertRaises(ValueError):
             fr.load_events([path])
+
+    # ---- The command line: --out, --check, and the two ways a run can fail ----
+
+    def test_out_writes_the_aggregate_without_touching_the_published_page(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        log = os.path.join(folder, "log.json")
+        with open(log, "w", encoding="utf-8") as handle:
+            json.dump(
+                {"schema": "mechalab.learning-log/1", "events": [opened("A"), run("A", outcome="passed"), verified("A")]},
+                handle,
+            )
+        with open(DOC, encoding="utf-8") as handle:
+            published = handle.read()
+        target = os.path.join(folder, "aggregate.md")
+        code, text = run_main(["--out", target, log])
+        self.assertEqual(code, 0, "expected exit 0; check that --out writes where it was told")
+        self.assertIn("aggregate.md", text, "expected the message to name the file it wrote, not the published page")
+        with open(target, encoding="utf-8") as handle:
+            written = handle.read()
+        self.assertIn(
+            "## Measures", written, "expected the aggregate to be the full report, not a partial file"
+        )
+        with open(DOC, encoding="utf-8") as handle:
+            self.assertEqual(
+                handle.read(),
+                published,
+                "expected docs/friction-report.md to be untouched: --out exists so a trial run cannot publish",
+            )
+
+    def test_check_honours_out_and_still_reports_the_published_page_current(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        target = os.path.join(folder, "aggregate.md")
+        code, text = run_main(["--out", target])
+        self.assertEqual(code, 0, "expected the empty-log render to be written to the --out path")
+        code, checked = run_main(["--check", "--out", target])
+        self.assertEqual(code, 0, "expected --check --out to accept the file it just wrote")
+        self.assertIn("is current", checked, "expected the check to say the trial report is current")
+        with open(target, "a", encoding="utf-8") as handle:
+            handle.write("\nstale")
+        code, stale = run_main(["--check", "--out", target])
+        self.assertEqual(code, 1, "expected exit 1 once the file no longer matches the logs given")
+        self.assertIn("is stale", stale, "expected the check to name the file as stale, not as missing")
+        code, published = run_main(["--check"])
+        self.assertEqual(code, 0, "expected the published page to still pass its own check")
+        self.assertIn(
+            "docs/friction-report.md is current",
+            published,
+            "expected the default check to name the published page it compared, not the --out file",
+        )
+
+    def test_an_out_path_that_cannot_be_written_is_a_usage_error(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        code, text = run_main(["--out", os.path.join(folder, "missing", "aggregate.md")])
+        self.assertEqual(code, 2, "expected exit 2 for an output path whose directory is not there")
+        self.assertIn("cannot write", text, "expected the message to say the write failed, not that it succeeded")
+
+    def test_an_unreadable_log_is_a_finding_not_a_traceback(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        log = os.path.join(folder, "log.json")
+        with open(log, "w", encoding="utf-8") as handle:
+            handle.write('{"schema": "someone-else/1", "events": []}')
+        code, text = run_main([log])
+        self.assertEqual(code, 1, "expected exit 1 for a log this script cannot read")
+        self.assertIn(
+            "someone-else/1",
+            text,
+            "expected the refusal to quote the schema it found, so the operator knows which file is wrong",
+        )
 
     def test_idle_gaps_do_not_count_as_active_time(self):
         events = [

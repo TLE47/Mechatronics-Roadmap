@@ -8,6 +8,7 @@ export type TabId =
   | 'tab-sysid'
   | 'tab-eskf'
   | 'tab-links'
+  | 'tab-board'
   | 'tab-pyodide'
   | 'tab-placement';
 

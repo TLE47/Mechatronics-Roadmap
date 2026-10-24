@@ -625,3 +625,132 @@ question would still need its key to be checkable.
 
 **The remaining hole, stated plainly:** `00-foundations.T1.00a` has no review and cannot get one
 honestly; the generator's report will keep printing `1 page(s) carry none` as long as that is true.
+
+## Run 76 — the first lesson, sat as a newcomer (author proxy)
+
+Not a module row: this one walks the first ten minutes the way the README now sends a stranger in —
+fresh profile, no help, only the in-course text. It is an **author proxy**, and the label is the
+limitation: I wrote the guide, so I read it faster and skipped what a beginner would stumble on. It is
+still the only sitting that reaches the predict gate, because every other browser suite switches the
+gate off to keep its runs short.
+
+| Step | What the page said | What I did | Cost |
+| :--- | :--- | :--- | :--- |
+| Land | Start here block, then the P.1 guide card: "One editor, one button, one red line" | Read the card, pressed **Run the starter** | none |
+| First Run | A **PREDICT FIRST** card: *what will this print?*, `Predict & Run` / `Skip and run` | Typed the untouched starter's honest output (`STANDBY`, `400`, `12.60`), committed | 1 question, judged 1 of 2 lines |
+| Failure | *Verify encoder_ticks (int 425) … expected 425, got 400*; the guide's **WHAT TO FIX** repeats it | Read it, pressed **Reveal Hint 1** | none — the red line named the value to change |
+| Fix | Hint 1 named the assertion, not the answer | Changed the two TODO lines, pressed Run | passed first try, 2 runs, 1 hint, 0 solution peeks |
+
+**The defect this found.** The guide card is written as the script for the first run — *"Run it
+untouched. The first check is …"* in step 2, *"When every check passes, it prints: `Mode: ACTIVE |
+E-Stop: False · Encoder Ticks: 425 | Battery: 12.15 V`"* in step 3 — and step 3 sat **thirty lines
+above the gate**. Two consequences, both measured on the sitting:
+
+1. A learner who follows the card presses Run expecting a red line, gets a text box, and can answer it
+   by scrolling up and copying step 3. The gate then reports "matched" for a prediction nobody made,
+   so the one lesson that teaches prediction proves nothing on the page where the habit is formed.
+2. If they copy it honestly, the card has also told them the untouched starter prints the *finished*
+   output, which it does not (`STANDBY`/`400`/`12.60`) — a false expectation two clicks before the
+   page corrects it.
+
+The card was written before the gate existed (Run 164) and nothing connected the two, which is exactly
+what the parity rule "no row may reopen" cannot see: both surfaces work, they just contradict.
+
+**The fix.** Step 2 is now **PREDICT, THEN RUN** and says the first Run asks, that a guess is enough,
+and that Skip is allowed — so the card scripts the flow that actually happens. Step 3 withholds the
+finish line until a run has landed this session (`stdout`/`stderr` non-empty), and points at the
+Expected Output panel instead; once anything has run, the exact two lines come back, because from then
+on the card has nothing left to give away.
+
+**Tests, in the two suites that own the behaviour.** `scripts/smoke_test_workbench.mjs` slices the
+guide's own section out of the server-rendered HTML and asserts it names the predict step and does not
+contain `Encoder Ticks: 425` before a run — a fast gate that needs no browser.
+`scripts/e2e_predict_gate.mjs` asserts the same on the live card while the gate is `asking`, asserts the
+finish line returns once the starter's output is on screen, and now opens P.2's gate through the
+**guide's** Run button rather than the toolbar's, so the card cannot become a way around the question it
+promises.
+
+**What this run does not claim.** The other two stalls a beginner would hit are unchanged and still
+unmeasured: the Expected Output panel below the editor still shows the target before any run (it is the
+comparison panel, and hiding it would remove the reference the red line is read against), and the two
+`Reveal Hint 1` buttons — one on the card, one in the runner — stay in sync, so pressing either is
+harmless but reads as a duplicate. Neither cost me a minute; both would need a stranger to price. The
+times above are hands-on minutes only: roughly four more were spent driving the page by DOM probes
+instead of a mouse, and that is instrumentation, not the course.
+
+## Run 77 — the first graded exercise, sat from the guide card (author proxy)
+
+The same first-visit walk as Run 76, one track over: `?lesson=EX.00-foundations.T1.00a`, fresh
+profile, the gate on (every browser suite switches it off), only the in-course text. A graded exercise
+is the other half of the catalogue — 50 of the 92 entries — and it meets the same card, gate and red
+line from a starter whose holes are `raise NotImplementedError(...)` rather than wrong values.
+
+| Step | What the page said | What I did | Cost |
+| :--- | :--- | :--- | :--- |
+| Land | "This starter leaves **7 NotImplementedError holes**. Start with: multiply the speed by the time step…" | Read it, pressed **Run the starter** | none |
+| First Run | A **PREDICT FIRST · what will this print?** card, example `Encoder Ticks: 425 \| Battery: 12.15 V` | Guessed the honest answer for a file that raises: `SELF-CHECK FAIL: NotImplementedError` | the gate scored it 0 of 1 |
+| Verdict | *None of your lines are in the output. That is the useful part: the screen just told you something you did not expect.* | Read the run: a traceback ending `NotImplementedError: TODO 1: …` | the verdict was false |
+| Failure | **WHAT TO FIX**: the same line, then *"That line is Python's own error, naming what it could not do."* | Read it; the raise is the hole the card just counted | none |
+| Hint 1 | *"Open the module, section 5 (`## 5. Exercise`): the hint ladder and the worked solution are there."* | Followed it out of the workbench | one redirect |
+
+**The three defects, all copy, all on the path a beginner takes.**
+
+1. **The gate's example was one lesson's answer.** The textarea's placeholder was
+   `Encoder Ticks: 425 | Battery: 12.15 V` on all 92 entries: half of P.1's expected output, handed to
+   P.1's own gate, and another lesson's numbers on the other 91. It is now a shape
+   (`one line per line the program prints, e.g. Label: value | Label: value`) and never lesson content.
+2. **The question did not fit a graded exercise.** An exercise's starter raises before it prints
+   anything, so "what will this print?" has one honest answer — the traceback — while the lesson is
+   graded against `SELF-CHECK PASS: 4 checks …`, the line a *finished* file prints. My guess named the
+   `NotImplementedError` the run in fact printed, and the gate told me none of my lines were in the
+   output and that the screen had surprised me: both sentences were false. Exercises now ask
+   **"what will a finished run print?"**, with one sentence saying the starter stops at its first
+   `NotImplementedError` and the traceback is not the guess. Hand-written pages keep "this", because
+   their starter prints.
+3. **The red line was read as the learner's bug.** `WHAT TO FIX` fell through to *"That line is
+   Python's own error, naming what it could not do"* — true of an error the learner wrote, false of the
+   `raise` the card had just told them was there. While the file still holds a hole, the panel now says
+   *"That is the hole the starter leaves — the `raise` is its marker, not a mistake you wrote."*
+
+A fourth, smaller one came from the same screen: the guide's step 2 read *the package's own self-check,
+which fails first on "multiply the speed by the time step, and…"* — quotes around a sentence, inside a
+sentence, for a self-check that cannot start at all. It is now *which stops at* and unwrapped.
+
+**Tests.** `scripts/e2e_predict_gate.mjs` gained a sixth section that opens this exercise, presses the
+guide's own Run button, and asserts the finished-run question, the "not the traceback" sentence, a
+placeholder that carries no lesson's numbers, and the hole-aware `WHAT TO FIX` copy after the failing
+run. `scripts/smoke_test_workbench.mjs` already walked every entry's brief; it now also asserts that an
+exercise's check **ends at** its hole, so the quotes cannot come back. The gate's own unit suite is
+untouched: the scoring rules did not change, only the words around them.
+
+**What this sitting could not do.** It did not finish the exercise. Seven holes is an hour of work, and
+the browser probes used to drive this page replace the whole buffer when they type, so every attempt to
+edit one line wiped the file; the pass state, and whether the red line advances to hole 2 after hole 1,
+are therefore **unmeasured on a graded exercise** and need a person at a keyboard. Hint 1 pointing at
+the module's §5 is recorded rather than changed: the workspace hint and the page's three-rung ladder are
+different objects on purpose, and a beginner who arrived from the card pays one detour to learn that.
+
+Run 211 answers half of that mechanically. The advance itself — fill hole 1, and the failure stops
+naming hole 1 and starts naming hole 2 — is now asserted in the browser suite against this exercise,
+with the panel's hole-aware copy checked on the second failure as well.
+
+The third of those questions was answered by looking rather than sitting. The card kept pointing at
+hole 1 after it was written (the roadmap card beside it already said `1 of 7 written`), so Run 212
+made the brief read the draft: `firstOpenHole` now feeds both "start with" and the package's "first
+check", the count stays the starter's, and a fully written file says so instead of counting holes it
+can no longer point at. What still needs a person is the walk itself: six more holes and the pass
+state.
+
+Run 213 closes the second one from the app's side. A finished file — the remaining six holes filled by
+the app's own Load Solution — prints `SELF-CHECK PASS: 4 checks …`, shows the toast *"Behavioural checks
+and output both green"*, the `PASS` badge, the card's *"That is the whole loop"*, and a verified count
+that moves by exactly one; that is now section 8 of the same suite. What is still a person's job is the
+experience: seven holes in a row, how long it takes, and where a beginner stops — a passing fixture
+proves the grader, not the course.
+
+**One more, found while checking the fix rather than before it.** Making the gate ask about the
+"finished run" left the card above it still saying *"The first Run asks what it will print"* — the same
+drift between the guide and the gate that Run 76 fixed, reappearing on the other track within an hour
+because two sentences describe one question. The card now asks what the gate asks (`a finished run` on
+an exercise), and `e2e_predict_gate.mjs` asserts the agreement in the same section that opens the
+exercise, so the pair moves together from now on.

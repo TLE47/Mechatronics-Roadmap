@@ -7,6 +7,11 @@
  * [`weight_budget.mjs`](weight_budget.mjs) and is pinned by `npm run test:weight`; this file only
  * measures and reports.
  *
+ * `dist/prose-index.json` is measured too, as `prose_gzip`, though it is not part of the shell: the
+ * app fetches it the first time `⌘⇧F` is opened. It is counted separately so a learner who never
+ * searches is not asked to pay for it in `total`, and a budget with no file behind it fails like
+ * any other unmeasured metric.
+ *
  * Two rules make it a gate rather than a dashboard:
  *
  * - a metric over its budget fails, and the line says by how much — a ceiling nobody breaches has no
@@ -53,6 +58,7 @@ import { nameStale, staleBuild } from './buildFreshness.mjs';
 const ROOT = process.cwd();
 const DIST = path.join(ROOT, 'dist');
 const BUDGET_FILE = path.join(ROOT, 'docs', 'weight-budget.json');
+const PROSE_FILE = path.join(DIST, 'prose-index.json');
 
 const argv = process.argv.slice(2);
 const JSON_OUT = argv.includes('--json');
@@ -141,7 +147,18 @@ function main() {
 
   const budgetFile = JSON.parse(fs.readFileSync(BUDGET_FILE, 'utf8'));
   const { files, entry } = readAssets(DIST);
-  const measured = measurementFrom(files, entry);
+  // Served beside the app, fetched only by a search: measured on its own, never folded into total.
+  const prose = fs.existsSync(PROSE_FILE)
+    ? (() => {
+        const buffer = fs.readFileSync(PROSE_FILE);
+        return {
+          name: 'prose-index.json',
+          size: buffer.length,
+          gzip: zlib.gzipSync(buffer, { level: 9 }).length,
+        };
+      })()
+    : null;
+  const measured = measurementFrom(files, entry, prose);
   const { rows, breaches, unmeasured, tightest } = compareBudgets(measured, budgetFile.budgets);
 
   if (RECORD) {
@@ -170,6 +187,10 @@ function main() {
     if (stale.length) log(`  measured on purpose from a build older than ${stale.length} source file(s)`);
     log(`The built bundle: ${files.length} files, first paint from ${entry.length} of them`);
     for (const file of biggest) log(`  ${file.name.padEnd(38)} ${formatBytes(file.gzip).padStart(8)}`);
+    log(
+      `  prose-index.json${' '.repeat(23)}${(prose ? formatBytes(prose.gzip) : 'missing').padStart(8)}  ` +
+        `(fetched by ⌘⇧F, not on a visit)`
+    );
     log('');
     log('  metric              measured     budget      used');
     for (const row of rows) {

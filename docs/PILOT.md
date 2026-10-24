@@ -46,7 +46,10 @@ background. A small thank-you (gift card, acknowledgement) improves completion; 
   [`docs/dogfood-log.md`](dogfood-log.md): active minutes, hints used, stuck type, course bug, transfer
   attempt.
 - **Transfer is asked 7–14 days later**, and only on a concept learned at least a week before. An
-  immediate transfer question measures memory, not understanding.
+  immediate transfer question measures memory, not understanding. The due date is written into the
+  participant's folder at the sitting and read back by `scripts/pilot_followup.py --due`, which also
+  names any folder that has an export and no date — that is the promise this protocol loses if nobody
+  keeps it for it ([`PILOT_KIT.md`](PILOT_KIT.md)).
 - **Log the stalls even when they resolve.** A stuck point that ends in success is still the data the
   revision needs.
 
@@ -83,6 +86,11 @@ exist and says so; it is the instrument the pilot's help budget is measured with
 
 Publish only aggregates. Participant names stay out of the repository; a participant may be quoted with
 consent and initials.
+
+The operator's order of operations is [`PILOT_KIT.md`](PILOT_KIT.md): dry-run the export before anyone
+sits, run `scripts/pilot_preflight.py` on the participant's file while they are still in the room, then
+file the row. The preflight is what makes `active_minutes` a measurement rather than an estimate — it
+reads the sittings out of the export and refuses one that has none.
 
 ## 5. What gets published
 

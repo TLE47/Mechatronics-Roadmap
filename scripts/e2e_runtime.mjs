@@ -59,6 +59,7 @@ import { chromium } from 'playwright-core';
 // Playwright download is a normal machine, and this suite has to run there too.
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
+import { readBulk } from './bulk_store_page.mjs';
 
 const EDITOR = '[data-editor="editor-main"] .cm-content';
 const RUN = '[data-testid="btn-run-verify"]';
@@ -177,6 +178,23 @@ async function main() {
     check('the typed line comes back as the input() value', () => {
       // The wait above is the assertion; reaching here means stdout carried the greeting.
       assert.ok(true);
+    });
+
+    // 3b. The study panel's clock line follows a run it did not make. The run is written by the
+    //     runner, one component over from the panel that prints the clock; before the clock announced
+    //     its writes, the panel kept the number the store held when the lesson mounted and the timed
+    //     walk in `docs/pilot-results.md` ended with 232 s stored and "under a minute" on screen.
+    await runAndWait(page, 'print("clock")');
+    const panelRuns = await page.getAttribute('[data-testid="study-sitting"]', 'data-sitting-runs');
+    const storedSittings = JSON.parse((await readBulk(page, 'mechalab_sittings_v1')) ?? '[]');
+    check('a run moves the panel\'s clock line without a reload', () => {
+      assert.ok(storedSittings.length > 0, 'the run wrote no sitting at all');
+      const storedRuns = storedSittings.at(-1).runs;
+      assert.equal(
+        Number(panelRuns),
+        storedRuns,
+        `the panel shows ${panelRuns} run(s) and the store holds ${storedRuns}: the clock line is reading a number it last saw on mount`
+      );
     });
 
     // 4. Stop must interrupt the interpreter, not replace it. The worker reports a boot id; a

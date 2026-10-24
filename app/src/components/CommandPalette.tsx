@@ -1,15 +1,32 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { CornerDownLeft, Search } from 'lucide-react';
 import {
+  PALETTE_MODE_TEXT,
   groupPalette,
   paletteKindLabel,
   rankPalette,
   type PaletteItem,
+  type PaletteMatch,
+  type PaletteMode,
 } from '../palette';
 
 interface CommandPaletteProps {
   isOpen: boolean;
   items: PaletteItem[];
+  /** Which door opened it: `⌘K`, `⌘P` or `⌘⇧F` (`app/src/palette.ts`). */
+  mode?: PaletteMode;
+  /**
+   * The results for `search` mode, computed from the query on every keystroke.
+   *
+   * Passed in rather than imported so the dialog stays a view: the indexing rules and their caps
+   * live in `app/src/lessonSearch.ts`, where a unit suite pins them without a browser.
+   */
+  search?: (query: string) => PaletteItem[];
+  /**
+   * What the footer says about the results themselves — `course pages loading…`, or that they could
+   * not be fetched. Absent when there is nothing to report.
+   */
+  note?: string | null;
   onClose: () => void;
   onSelect: (item: PaletteItem) => void;
 }
@@ -22,22 +39,46 @@ interface CommandPaletteProps {
  * one every palette trains - arrows move, Enter opens, Escape leaves - and every option is a real
  * `role="option"`, so a screen reader reads the list the sighted learner sees.
  */
-export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, items, onClose, onSelect }) => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({
+  isOpen,
+  items,
+  mode = 'all',
+  search,
+  note = null,
+  onClose,
+  onSelect,
+}) => {
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  const matches = useMemo(() => rankPalette(items, query), [items, query]);
+  // `search` answers with rows already in reading order and already capped, so it is not ranked
+  // again: the index knows which lesson and which line a hit is, and `rankPalette` only knows words.
+  const matches = useMemo<PaletteMatch[]>(
+    () =>
+      mode === 'search'
+        ? (search?.(query) ?? []).map((item) => ({ item, score: 0 }))
+        : rankPalette(items, query),
+    [mode, search, items, query]
+  );
   const groups = useMemo(() => groupPalette(matches), [matches]);
+  const text = PALETTE_MODE_TEXT[mode];
 
-  // A fresh open is a fresh question: an old query would hide the thing being looked for.
-  useEffect(() => {
+  // A fresh open — or a different door while it is open (`⌘P` after `⌘K`) — is a fresh question:
+  // an old query would hide the thing being looked for, and `quadrature` typed for a text search is
+  // not a query for the tab list.
+  //
+  // A **layout** effect, because this clears the field: a passive effect runs after paint, so a
+  // keystroke that arrives between the dialog appearing and the reset would be erased — which is
+  // what a driven browser does on purpose and a fast typist can do by accident. Before paint, the
+  // field is empty by the time anyone can type into it.
+  useLayoutEffect(() => {
     if (!isOpen) return;
     setQuery('');
     setActiveIndex(0);
     inputRef.current?.focus();
-  }, [isOpen]);
+  }, [isOpen, mode]);
 
   // The arrow keys move a highlight; keep it on screen when the list is longer than the panel.
   useEffect(() => {
@@ -99,8 +140,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, items, o
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Command palette"
+        aria-label={mode === 'search' ? 'Search inside the lessons' : 'Command palette'}
         data-testid="command-palette"
+        data-palette-mode={mode}
         onKeyDown={onKeyDown}
         className="w-full max-w-2xl overflow-hidden rounded-[var(--r-lg)] border shadow-2xl"
         style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border-strong)' }}
@@ -118,8 +160,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, items, o
               setActiveIndex(0);
             }}
             data-testid="input-palette-search"
-            placeholder="Jump to a lesson, tab or command…"
-            aria-label="Search lessons, tabs and commands"
+            placeholder={text.placeholder}
+            aria-label={text.label}
             role="combobox"
             aria-expanded="true"
             aria-controls="palette-results"
@@ -149,8 +191,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, items, o
               className="px-4 py-6 text-center text-[12.5px]"
               style={{ color: 'var(--muted)' }}
             >
-              Nothing matches “{query}”. Try a lesson id like <code>P.1</code>, a word from a title, or
-              “theme”.
+              Nothing matches “{query}”. {text.empty}
             </p>
           )}
 
@@ -171,6 +212,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, items, o
                     id={`palette-option-${item.id}`}
                     data-palette-id={item.id}
                     data-testid={`palette-item-${item.id}`}
+                    // Where a course-page row goes. A row is a button for the keyboard contract,
+                    // so the destination rides as data rather than as an anchor this list does not
+                    // need; the app opens it in a new tab on Enter.
+                    data-href={item.href}
                     role="option"
                     aria-selected={isActive}
                     type="button"
@@ -215,8 +260,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, items, o
           style={{ borderColor: 'var(--border)', color: 'var(--dim)' }}
         >
           <span>↑ ↓ to move · ↵ to open · esc to close</span>
-          <span data-testid="palette-match-count">
-            {matches.length} of {items.length}
+          <span className="flex items-center gap-2">
+            {note && (
+              <span data-testid="palette-note" style={{ color: 'var(--dim)' }}>
+                {note}
+              </span>
+            )}
+            <span data-testid="palette-match-count" data-palette-mode={mode}>
+              {mode === 'search'
+                ? `${matches.length} hit${matches.length === 1 ? '' : 's'}`
+                : `${matches.length} of ${items.length}`}
+            </span>
           </span>
         </div>
       </div>

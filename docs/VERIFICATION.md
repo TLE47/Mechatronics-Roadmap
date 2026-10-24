@@ -22,6 +22,7 @@ flowchart LR
 | What each of the ten steps costs, page by page, and each track's three depth layers | `scripts/route_model.py` from each page's front matter | `python3.12 scripts/generate_step_docs.py --check` |
 | The README's Start here block and the workbench card | `app/src/data/startHere.json` (one file, read by both) | `python3.12 scripts/generate_start_here.py --check` |
 | The callout on every lesson and module page: where to run it, or that there is no entry | `app/src/data/pythonLessonsData.ts`, the workbench's own registry | `python3.12 scripts/generate_run_callouts.py --check` |
+| The searchable text of the 65 reading pages, which `⌘⇧F` fetches on demand | `scripts/route_model.py` (the page list) and the Markdown pages themselves | `python3.12 scripts/generate_prose_index.py --check` |
 | The try-it link under a marked code block, carrying that block's current text and the page's own entry | `app/src/tryLinks.ts`, encoding with the app's share codec from each page's `?lesson=` | `node --experimental-strip-types scripts/generate_try_links.mjs --check` |
 | The name of every tab, and no page or label referring to one by position | `app/src/data/workbenchTabs.json`, read by `App.tsx` and by the callout generator | `python3.12 scripts/check_tab_names.py` |
 | Which workbench entries a roadmap step asks for, and that every entry is claimed once | `app/src/practiceLinks.ts`, joining the roadmap and the registry by track and pass | `npm run test:practice` |
@@ -38,18 +39,30 @@ once omitted all 23 lesson pages inside Tracks 00-08.
 ```bash
 python3.12 scripts/check_all.py         # every gate CI's verify step runs, in CI's order (~12 s)
 python3.12 scripts/check_workflows.py   # the workflow files themselves, before the push
+python3.12 scripts/check_doc_commands.py # every command the docs tell a reader to run still exists (Run 200)
+python3.12 scripts/check_plan_rows.py   # the 2.0 gap page: every row closed, every `ships` row runnable (Run 203)
 python3.12 scripts/check_all.py --full  # + the 48-package exercise sweep and the unittest discovery
 python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
 npm run test:theme                      # palette rules: stored pick, OS default, prefers-contrast, the three controls
-npm run test:theme:e2e                  # the three controls + contrast on all 11 tabs, in all four palettes
+npm run test:theme:e2e                  # the three controls + contrast on all 12 tabs, in all four palettes
+npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
+npm run check:snapshot                  # the painted surface of all 48 tab/palette pairs against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
 npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step/Step in (into the lesson and into the plant)/Step out, breakpoints (conditional ones too), a parked frame's values changed, watch expressions answered at every park, Format with Black (one undo, a parse refusal left alone), Pages fallback
 npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:share                      # the share link: round trip, the URL-safe alphabet, the measured cap, every malformed fragment
+npm run test:help                       # the stuck report: the sections a helper needs, the ladder left out, three printed caps, and the issue URL's own limit
+npm run test:pair                       # the pair session's wires: both signals round-trip, the wrong box is named, junk and oversized messages are dropped, and a parse writes nothing
+npm run test:collab                     # the co-editing document: seeded ids, one-keystroke diffs, convergence under concurrent edits in either order, unknown references, the wire rules, and a paste split into batches
+npm run test:board                      # the Board card: each lesson's own sketch, a prediction graded against the serial CI proves, and the shape checks that refuse a malformed bridge
+npm run check:panel                      # app/src/data/boardBridges.json still matches the five Arduino lesson pages it is generated from
+npm run test:avr                        # every committed .hex runs in avr8js and prints its lesson's serial; Intel HEX corruption and a wrong expectation are refused
+npm run check:firmware                  # each committed .hex was built from the sketch the page ships, and is the file app/src/data/firmware.json hashes
 npm run test:inline                     # inline values: which lines bind, which value belongs where, the payload's validation
 npm run test:symbols                    # go to definition: what counts as a def, the caret's word, the active file winning a tie
-npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits, and Split's divider (clamped, remembered, arrow-keyed)
+npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits, docking (the panel a preset can move, one field at a time), and Split's divider (clamped, remembered, arrow-keyed, and reversed with the results docked left)
+npm run test:keymap                     # the sheet's keys: the shipped six print as they always have, ⌘ and Ctrl are one chord, a character shortcut is the character, a rebind frees its old key, a clash or a browser key is refused with its sentence, a stored map is read field by field, and the sheet prints the map
 npm run test:vim                        # Vim keys: off until asked for, remembered, blocked storage, and the mode word the badge prints
 npm run test:trace                      # the run trace: a payload from another thread, the step cap and its honest total, unreadable values cut
 npm run test:cells                      # # %% cells: the boundaries, the preamble, and where "run to here" stops
@@ -64,7 +77,9 @@ npm run test:e2e:backup                 # the header buttons in Chromium: write 
 npm run test:e2e:review                 # pin, comment, rate and reload in Chromium: the card is still scheduled after the reload
 npm run test:e2e:focus                  # focus in Chromium: the chrome hides, the work stays, all three exits work, and a sitting is measured
 npm run test:e2e:storage                # the migration in Chromium: a pre-IndexedDB bucket arrives whole, the screen shows it, new work stays in the database
-npm run test:palette                    # ⌘K: the whole catalogue once, and the ranking order
+npm run test:palette                    # ⌘K, ⌘P and ⌘⇧F: the whole catalogue once, the ranking order, and that the sheet lists every key once
+npm run test:search                     # ⌘⇧F inside the lessons: a starter line is the editor's line, a hint is not, the solution is not searchable, and the caps hold
+npm run test:prose                      # ⌘⇧F in the 65 reading pages: the route's own list, no code/tables/callouts in the index, GitHub's anchor rule, a prose-only word found, heading beats body, and the caps
 npm run test:editor                     # slider directives and which lessons get helper tabs
 npm run test:storage                    # the move to IndexedDB: the bucket fallback, the migration order, the coalesced write queue, the retry after a refused write
 npm run test:traceback                  # Python's failure as data: the learner's frame, chained failures, both SyntaxError shapes, and the index entry it matches
@@ -156,12 +171,76 @@ blocked storage never throws, and the totals quote a median (odd and even), the 
 only the sittings that started today. It also checks focus mode's store: the choice survives a reload,
 the toggle broadcasts it once, and a store that refuses the write still returns the state to render.
 Split's divider is measured on the **built bundle**, because it is about where a boundary lands: `⌥4`
-at 1440 px, a pointer drag to 35% leaves a 484 px editor of 1383 px of free space with `aria-valuenow`
-agreeing, `Home`/`End` land on the 30%/70% clamps, and a reload puts the divider back where it was
-left. The arithmetic underneath (`test:layout`) is pinned without a browser: a share is clamped, a
+at 1440 px, a pointer drag to 35% leaves a 416 px editor of 1188 px of free space with `aria-valuenow`
+agreeing (the activity bar owns the other 196 px), `Home`/`End` land on the 30%/70% clamps, and a
+reload puts the divider back where it was left. The arithmetic underneath (`test:layout`) is pinned without a browser: a share is clamped, a
 stored `0`, `1`, `banana` or `''` reads as the even split, a pointer outside the container clamps at
 the ends, a collapsed container gives no share at all, and a blocked store costs the memory rather
 than the drag.
+
+**Docking and the activity bar are measured where they land, too.** The same built-bundle step presses
+the dock button with the results in Split and asserts the results end before the editor starts, both
+on the same row, the editor still over 320 px and `aria-valuenow` still the *editor's* share — then
+drags to 65% of the free space and requires a 35% editor, because the pointer mapping reverses with
+the panel, and presses `Home` for the editor's widest. A reload must bring back the side and the
+share. Switching to Study then puts the chooser on the second cell — 388 px, starting where the work
+area ends at 1012 px, on one row — and a reload keeps it there. At 1440 px the tab rail is an
+activity bar: a column, beside the workbench rather than above
+it, with no sideways scroll and every label wide enough to read. Below `xl` the built bundle's tablet
+pass keeps the horizontal rail the page has always had. The rules underneath are pinned by
+`test:layout` without a browser: which preset can move which panel (and that Write and Read move
+nothing), the other side's words, a stored side that is junk field by field, and the reversed
+template, pointer and keys together.
+
+**The sheet's rebinder is measured in the browser and pinned without one.** `test:keymap` (16 checks)
+holds the shipped six to the strings the sheet has always printed, proves ⌘K and Ctrl+K are one chord
+while Shift is exact, matches the sheet's `?` as a **character** (a synthetic press reports no Shift,
+and a French keyboard needs none), and walks the refusals — a clash named after the action that has
+the key, the browser's own chords, a bare letter, a key with no printable name — each leaving the old
+key working. It also reads a stored map field by field and prints the map through `shortcutRows`. The
+browser step rebinds focus to `⌘⇧J`, checks the sheet printed it, presses the new chord for focus
+mode, **reloads** and presses it again, tries `⌘K` (refused: “already the palette”) and resets all
+keys before confirming `⌘.` answers again.
+
+**A pair session is walked between two browsers, and its format is pinned without one.** `test:pair`
+(22 checks) round-trips an invitation and a reply, proves an invitation pasted into the reply box is
+named as that mistake (and vice versa), refuses a code from another build or build version, a cut-off
+paste and a description with no text, and walks the message rules: unknown kinds and versions, a
+non-string code, a sender's 400-character handle cut to 40, and an attempt at the 24,000-character cap
+allowed while one character past it is dropped rather than truncated. It also freezes a message and
+parses it, which is how "a parse is not a write" is pinned. Browser step 7g-i-c runs **two pages**: the
+host starts a session and copies the invitation, the guest opens it in a fresh context (so its own
+lesson is P.1) and returns a reply, the host pastes it and both read **Connected**; **Send my attempt**
+lands on the guest as a card that names P.2 — the guest's editor is untouched — and **Open P.2** then
+**Load their code** is what puts the host's text in the guest's editor.
+
+**A shared document is pinned by convergence, not by a screenshot.** `test:collab` (26 checks) holds
+the RGA to the only claim that matters — two copies that see the same ops in either order end up with
+the same text. It seeds a document and reads it back character by character, turns one keystroke, a
+middle insert and a replaced character into the smallest complete description of each, and then merges:
+an insert replayed on a second copy, two workbenches inserting at one origin and at different ones, an
+insert beside a delete of neighbouring text, two people typing a loop into one file, and a hundred
+random edits per side — applied as alternating batches on one copy and as each stream in turn on the
+other — must leave one text. It also pins the failure modes the sheet cannot show: an origin this
+replica never saw places its character at the start rather than dropping it, a duplicate insert and a
+delete of something already gone change nothing, a character typed after a tombstone keeps its place,
+and every malformed batch (`t` of two characters, slot 9, sequence 0, a half-formed origin, an empty
+or over-long array) is refused whole. A 450-character paste becomes three batches inside the channel's
+cap, and applying them in order leaves the other copy holding exactly the pasted text. Browser step
+7g-i-d then runs the same channel with the editors joined: the host offers, the guest's sheet names the
+lesson, **Accept and co-edit** leaves both editors holding one text, a keystroke typed on the guest
+arrives on the host and one typed on the host arrives on the guest, **the host's ⌘Z takes back only
+the host's line and the guest's line survives**, and after **Stop co-editing** a keystroke stays on the
+screen it was typed on. Leaving the session ends it on the host's status line.
+
+**The help report is pinned as text, and the sheet is walked in the browser.** `test:help` (20 checks)
+holds the report to the lesson's id, title, page and the verdict in the badge's words; keeps a hint's
+text out of it while printing how many rungs are open; and measures each cap — 120 lines of code, 1,200
+characters per output block, 4,000 characters of Markdown — with the sentence that says how much was
+left. It also round-trips the pre-filled issue through `URLSearchParams` (a `<` in the learner's words
+stays data) and refuses an oversized URL with its measured length. Browser step 3c presses **Ask for
+help** after a `NameError`, reads the report out of the sheet, types the question and sees it appear,
+reads the clipboard back, and checks the issue anchor's decoded body against what was on screen.
 
 `test:portfolio` reads the exported Markdown as text, which is the only way to catch what a browser
 cannot: a document with three empty headings that read as "did nothing", a note starting with `#` that
@@ -175,7 +254,9 @@ state are byte-identical.
 `test:e2e:focus` measures the mode in the browser: every `data-chrome` region is visible before the
 toggle and hidden after, while the editor, the lesson and the study card stay; `Escape`, `⌘.` and the
 pill each leave it; the choice survives a reload; and opening a lesson wrote exactly one sitting naming
-that lesson, with the panel printing a duration rather than a blank line.
+that lesson, with the panel printing a duration rather than a blank line. It also counts the visit in
+the learning log: one `lesson_open` per visit, on the dev server where `React.StrictMode` replays every
+effect, so a pilot export is not read with its visit count doubled.
 
 `test:runtime` is the one suite that cannot be a unit test: stopping a `while True:` in place needs
 cross-origin isolation, a real `SharedArrayBuffer` and a real browser. It asserts the Stop answers by
@@ -212,12 +293,122 @@ backgrounds it actually sits on. Anything below 3:1 fails the suite; `--warnings
 `npm run test:workbench`; `test:theme:e2e` is its own CI step, because a seventh browser suite in the
 parallel run pushed the older ones past their 30 s click timeouts.
 
+**Two gates ask what the screen is, not what it does.** `npm run check:lighthouse` runs Lighthouse 13
+against the built bundle served at the Pages base path, for the three categories whose audits are facts
+— `best-practices`, `seo`, `accessibility` — and fails on any audit below a full score that
+[`docs/lighthouse-allowlist.json`](lighthouse-allowlist.json) does not explain. `performance` is not run
+at all: this repository does not gate wall-clock numbers, and a score printed but not gated reads as a
+promise the build does not keep. The allowlist is the accessibility list's ratchet applied to audits —
+unlisted fails, an entry firing on more items than its `max_items` fails, and an entry nothing fires on
+fails as stale. Its first run found three real defects that the axe gate had passed (**two header
+buttons whose words are `hidden` below 1536 px, so they were unnamed icon buttons; a lesson card's `h3`
+skipping the level under the page's only `h1`; and the docking control's `aria-label` describing the
+move without containing the visible `List → Right`, WCAG 2.5.3**), all three fixed in the same run; the
+fourth finding, `valid-source-maps`, is the one allowed entry, because the bundle is built from this
+public repository and maps would roughly double what Pages serves.
+
+`npm run check:snapshot` records the **painted surface** of all 48 tab/palette combinations — header,
+activity rail, main pane and first panel geometry, the count of buttons, inputs, links, headings,
+canvases and tables, and the colours, type and `--bg/--panel/--text/--accent` the browser resolved — and
+fails when any of it moves. It is deliberately **not a pixel diff**: a baseline captured on the Mac this
+was written on does not survive the trip to the Linux runner, and a gate whose first red build is
+antialiasing is a gate people disable. Box numbers are compared with a 2 px tolerance (subpixel
+rounding is not a finding); counts and resolved styles are exact. Determinism is what makes it a gate
+rather than a screenshot library: two consecutive sweeps record byte-identical files, and a deliberately
+perturbed baseline (a header 12 px taller, a button counted twice) fails with the field named, while a
+2 px nudge passes — both measured, not assumed. It is the only check in the repository that notices a
+panel that stopped being a panel.
+
 `check_all.py --list` prints the gates it runs and which are heavy; `--only <gate>` re-runs one
 after you regenerate something, and `--json` reports them machine-readably. The list is not a
 second opinion about what matters: [`tests/test_check_all.py`](../tests/test_check_all.py) parses
 the workflow's verify step and fails when the script and CI drift apart, so a gate added in one
 place cannot go missing in the other. It exits `2` when handed an interpreter other than the
 pinned 3.12, because two of the gates execute module code that needs 3.10+ syntax.
+
+**A command in the docs is a gate, not a hope.** [`check_doc_commands.py`](../scripts/check_doc_commands.py)
+reads the instruction pages (this file, the plan, `README.md`, `CONTRIBUTING.md`, `app/README.md`,
+`docs/README.md`) and both workflow files, collects every `npm run <script>` and every
+`scripts/<name>.py` they name, and fails when one of them does not exist - naming the page, the line and
+the missing target. Run 200 exists because `npm run test:e2e:storage` was quoted in the plan and had
+never been added to `package.json`: a reader who followed it got `Missing script`, and no existing gate
+looked at prose. It is the counterpart of `check_all.py --check` rows, which keep a *generated* page
+honest; this one keeps the *instructions* honest, including the ones that only a maintainer runs
+(`--json`, `--verbose`, `--strict`, exit `1` on a finding, `2` on a bad command line).
+
+**The gap page is a contract, so it has a gate of its own (Run 203).**
+[`check_plan_rows.py`](../scripts/check_plan_rows.py) reads `docs/PLAN-2.0-GAP.md` and enforces the two
+things that page now claims. A row's verdict must be one of `ships`, `partial` or `missing`, and **no
+row may be open**: the plan is closed, so a `partial` or `missing` fails the build the moment it is
+written, and the failing line says which row reopened it. Each `ships` row must also name something a
+reader can run — an `npm run <script>` that is in `package.json`, a `scripts/…` or `tests/…` path on
+disk, or a `browser step <id>` that one of the Playwright suites actually numbers — because a `ships`
+without a command is a memory, and memory is what the page existed to replace. Both directions were
+wrong once: Run 200 corrected two rows that had stayed `partial` after the work landed, and the same
+page had two `ships` rows (the worker runtime, CodeMirror) that named no suite at all. A row that is
+cited but cannot run fails by name and path; a plan whose table stops parsing fails on a floor of 20
+rows rather than reading as a page with nothing left to check; and a table inside a fence is a quotation,
+not a claim. `tests/test_plan_rows.py` (19 cases) pins each rule on small plans written in a temporary
+tree — a reopened row, an invented verdict, a dead script, an absent path, a step no suite numbers, a
+repeated item, a truncated row, a fenced example, a page with no verdict column — and then reads this
+repository's own page, so the gate is green on the real file and not only on synthetic input.
+
+**The page's numbers are measured, not remembered (Run 206).** Run 204 swept every count on the page by
+hand and found eight stale; a sweep that has to be repeated is not a gate. So a number whose owner is a
+file or a generated artifact is now written with a marker after it — `36<!-- plan-fact:gates_total -->`,
+which Markdown renders as nothing — and [`docs/plan-facts.json`](plan-facts.json) names what owns each
+one: the gate list in `check_all.py` (all of it, and the subset every push runs), the tab registry, the
+surface snapshot, the prose index split into reading pages and arm modules, the error index, the
+committed firmware in kilobytes, the measured bundle total, and the starters and solutions on disk.
+The gate recomputes all eleven, fails on a disagreement (`the page says 56; the committed firmware, in
+kilobytes: 51`), on a marker naming a fact nobody defined, on a fact that is defined but no longer
+quoted (so deleting a claim cannot leave a dead fact behind), and on a fact that cannot be measured —
+a missing file or a bad pointer is reported, never skipped. Facts are deliberately limited to numbers
+with one authoritative source.
+
+**The runtime row's checks are named, not counted (Run 207).** `checks 15–16` in the debugger row points
+at a numbered step of `scripts/e2e_runtime.mjs`, so the gate resolves it the way `browser step 5d-ii` is
+resolved against the Playwright suites: renumbering the runtime suite fails the page instead of quietly
+pointing the row at another check. The three check *counts* the page used to quote (`test:avr` 14,
+`test:help` 20, `test:pair` 22) were removed for the same reason the facts stop where they do: a count
+that changes every time a suite gains a case is the run's to report, not the page's to promise, and a
+gate that cannot read it should not be asked to defend it. The suites still say their own number when
+they run.
+
+**The one thing the tab cannot run is C, and the card says so.** The five Arduino lessons — Stage 0's
+four plus Track 01's H-bridge lab — are sketches for an `arduino:avr:uno`; this app holds CPython, and
+an AVR toolchain is a multi-megabyte wasm build the bundle does not carry. The roadmap's **Board** card bridges the gap where it can be
+bridged: it renders the lesson's own `Full Solution` from `app/src/data/boardBridges.json` — generated
+from the five pages by `scripts/extract_and_compile_sketches.py --write-panel`, with `--check-panel` as
+its drift gate, so a lesson that edits its sketch cannot leave the card on the old program — copies it
+for the learner, and links to Wokwi or Tinkercad in a new tab with the three steps written out. The
+grading is the half this repository owns: *what does the serial print?* is compared with the exact text
+CI proves by compiling the same sketch against a host mock of `Arduino.h` and checking it against the
+lesson's `### Expected Output`, under the runner's own whitespace rule (`app/src/outputMatch.ts`), so a
+wrong value is named by line and a reflowed copy still passes. A link and not an `iframe` is a
+requirement, not a preference: the document is isolated with `COEP: require-corp` for
+`SharedArrayBuffer`, and a cross-origin frame from a site that sends no CORP header renders as an empty
+box. The card states the seam in its own words — the board runs elsewhere, it needs the network, and
+nothing pasted there comes back — and the graded prediction is filed in the learning log as a run
+(`npm run test:board`, browser step 15).
+
+**The Board tab runs the compiled sketch (Run 202).** The gap the card points across is now closed on
+this side too: `scripts/extract_and_compile_sketches.py --write-firmware` compiles each `Full Solution`
+for `arduino:avr:uno` with `arduino-cli` and commits the machine code to `app/public/firmware/` — 51 kB
+of Intel HEX, served rather than bundled — with `app/src/data/firmware.json` recording the hash of the
+sketch each hex was built from and of the file itself. The tab fetches that hex the first time Run is
+pressed, so `avr8js` is a lazy chunk (`vendor-avr`, 9.2 kB gzipped) and a first visit pays nothing for
+it, and executes it with Timer0/1/2 (Timer0 is `millis()`, therefore `delay()`), the three I/O ports and
+the USART as the serial monitor (`app/src/avrSim.ts`). Two gates hold the claim: `--check-firmware`
+proves the bytes were built from the sketch the page still ships — a rebuild is not byte-compared,
+because a newer toolchain changes the machine code rather than the behaviour — and `npm run test:avr`
+runs every committed hex through the same module the tab imports and asserts its serial is the lesson's,
+plus the refusals (a corrupted record, a truncated file, a wrong expectation running to the budget).
+What the tab cannot do is stated on it: an **edit** runs on a board or in CI, and unconnected inputs
+read 0 exactly as they do in the host mock CI compiles against, which is why the serial matches. The
+twelfth tab moved the tab-name gate to 12, the surface snapshot from 44 pairs to 48, axe to 12 tabs ×
+4 palettes, and `js_gzip`/`total` in `docs/weight-budget.json` by hand with the reason written there
+(browser step 16).
 
 **The workflow files are the first gate, because nothing inside the job can report them.**
 [`check_workflows.py`](../scripts/check_workflows.py) reads every `.github/workflows/*.yml` for the

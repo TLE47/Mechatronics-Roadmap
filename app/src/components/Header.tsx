@@ -260,6 +260,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onExportPortfolio}
             data-testid="btn-export-portfolio"
+            // The words are `hidden` below 1536 px, so the button is an icon with no name on most
+            // screens. The label repeats the visible text rather than describing it: a name that
+            // differs from what is drawn fails WCAG 2.5.3, and Lighthouse's `label-content-name-mismatch`
+            // found exactly that in the sibling buttons this fix matches.
+            aria-label="Export Progress (.md)"
             className="btn"
             style={{ color: 'var(--emerald)' }}
           >
@@ -269,6 +274,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenCheatSheet}
             data-testid="btn-open-cheatsheet"
+            aria-label="1-Page Cheat Sheet"
             className="btn"
             style={{ borderColor: 'var(--border-strong)', color: 'var(--accent)' }}
           >

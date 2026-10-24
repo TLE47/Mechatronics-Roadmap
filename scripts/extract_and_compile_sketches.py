@@ -14,12 +14,23 @@ Modes:
 3. `--host-verify`: Compiles each `Full Solution` C++ sketch with `g++` (if installed) against a lightweight
    host mock of `Arduino.h` (`Serial`, `pinMode`, `digitalRead`, `digitalWrite`, `analogRead`, `analogWrite`, `delay`)
    and verifies that its `setup()` output matches the lesson's `### Expected Output`!
+4. `--write-panel` / `--check-panel`: writes `app/src/data/boardBridges.json` - the lesson's own
+   sketch text and the serial output CI proves for it - which the workbench's **Board** card renders.
+   `--check-panel` is the drift gate: the page is the source, so a lesson that edits its sketch
+   cannot leave the card showing an older one.
+5. `--write-firmware` / `--check-firmware`: compiles each `Full Solution` for `arduino:avr:uno` and
+   commits the machine code to `app/public/firmware/<id>.hex`, with `app/src/data/firmware.json`
+   recording the hash of the sketch it was built from. The Board tab runs that hex in `avr8js`, so
+   the program a learner watches is the program the page ships. `--check-firmware` is the gate: the
+   sketch hash must match the page, and the hex must be the file the index hashes.
 """
 
 from __future__ import annotations  # `str | None` annotations must import on Python 3.9, the macOS system interpreter
 
 import argparse
 import concurrent.futures
+import hashlib
+import json
 import os
 import re
 import shutil
@@ -79,6 +90,226 @@ struct MockSerial {
     }
 } Serial;
 """
+
+
+PANEL_REL = os.path.join("app", "src", "data", "boardBridges.json")
+PANEL_SCHEMA = "mechalab.board-bridges/1"
+FIRMWARE_DIR_REL = os.path.join("app", "public", "firmware")
+FIRMWARE_INDEX_REL = os.path.join("app", "src", "data", "firmware.json")
+FIRMWARE_SCHEMA = "mechalab.firmware/1"
+FIRMWARE_FQBN = "arduino:avr:uno"
+
+
+def lesson_title(filepath: str) -> str:
+    """The page's own `# ` heading, so the card names the lesson the way the page does."""
+    with open(filepath, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("# "):
+                return line[2:].strip()
+    raise ValueError(f"No `# ` heading in {filepath}")
+
+
+def panel_document(root: str = ROOT) -> dict:
+    """The Board card's data: every Arduino lesson's sketch and the serial CI proves for it.
+
+    Deliberately generated rather than hand-written for the same reason `prose-index.json` is: the
+    lesson page owns the sketch, and a copy maintained beside it drifts silently the first time a
+    lesson edits its `Full Solution`.
+    """
+    bridges = []
+    for path in ARDUINO_LESSON_FILES:
+        info = extract_sketches_from_lesson(path)
+        bridges.append(
+            {
+                "id": info["slug"],
+                "title": lesson_title(path),
+                "page": os.path.relpath(path, root).replace(os.sep, "/"),
+                "expectedOutput": info["expected_output"],
+                "starter": info["starter_cpp"].strip(),
+                "solution": info["solution_cpp"].strip(),
+            }
+        )
+    return {
+        "schema": PANEL_SCHEMA,
+        "generatedBy": "scripts/extract_and_compile_sketches.py",
+        "bridges": bridges,
+    }
+
+
+def panel_text(root: str = ROOT) -> str:
+    """The file exactly as it should be on disk: stable key order, two-space indent, one newline."""
+    return json.dumps(panel_document(root), indent=2, ensure_ascii=False) + "\n"
+
+
+def write_panel(path: str | None = None, root: str = ROOT) -> str:
+    target = path or os.path.join(root, PANEL_REL)
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    with open(target, "w", encoding="utf-8") as f:
+        f.write(panel_text(root))
+    return target
+
+
+def check_panel(path: str | None = None, root: str = ROOT) -> list[str]:
+    """Why the committed card data no longer matches the lesson pages (empty when it does)."""
+    target = path or os.path.join(root, PANEL_REL)
+    expected = panel_text(root)
+    if not os.path.exists(target):
+        return [f"{target} is missing - run `python3 scripts/extract_and_compile_sketches.py --write-panel`"]
+    with open(target, "r", encoding="utf-8") as f:
+        actual = f.read()
+    if actual == expected:
+        return []
+    try:
+        committed = json.loads(actual)
+    except ValueError as error:
+        return [f"{target} is not valid JSON: {error}"]
+    wanted = json.loads(expected)
+    problems = []
+    if committed.get("schema") != wanted["schema"]:
+        problems.append(f"schema is {committed.get('schema')!r}, expected {wanted['schema']!r}")
+    old = {bridge.get("id"): bridge for bridge in committed.get("bridges", [])}
+    for bridge in wanted["bridges"]:
+        entry = old.get(bridge["id"])
+        if entry is None:
+            problems.append(f"{bridge['id']} is in the lesson but not in the card data")
+            continue
+        for field in ("title", "page", "expectedOutput", "starter", "solution"):
+            if entry.get(field) != bridge[field]:
+                problems.append(f"{bridge['id']}.{field} differs from {bridge['page']}")
+    for missing in sorted(set(old) - {bridge["id"] for bridge in wanted["bridges"]}):
+        problems.append(f"{missing} is in the card data but no lesson produces it")
+    if not problems:
+        problems.append("the document differs from the generated one (formatting or key order)")
+    return problems
+
+
+def sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _tool_version(argv: list[str]) -> str:
+    """Provenance for the index: which compiler built these bytes (informational, not gated)."""
+    try:
+        run = subprocess.run(argv, capture_output=True, text=True)
+    except OSError:
+        return "unknown"
+    first = (run.stdout or run.stderr).strip().splitlines()
+    return first[0] if first else "unknown"
+
+
+def firmware_document(root: str = ROOT) -> dict:
+    """Every Arduino lesson's compiled `Full Solution`, with hashes the gates can check.
+
+    The hex is committed rather than built in the browser: an AVR toolchain is far beyond this
+    app's weight, and the program is the *reference* - an edit still runs on a board or in CI. What
+    ties the committed bytes to the page is the sketch hash: CI cannot byte-compare a rebuild (a
+    newer toolchain changes the machine code, not the behaviour), so `--check-firmware` proves the
+    hex was built from this exact sketch text, and the Node suite proves it prints the lesson's serial.
+    """
+    cli = shutil.which("arduino-cli")
+    if not cli:
+        raise SystemExit("arduino-cli is required to build the firmware (`arduino-cli core install arduino:avr`)")
+
+    sketches_out = os.path.join(root, FIRMWARE_DIR_REL)
+    os.makedirs(sketches_out, exist_ok=True)
+    entries = []
+    with tempfile.TemporaryDirectory() as tmpdir:
+        for path in ARDUINO_LESSON_FILES:
+            info = extract_sketches_from_lesson(path)
+            sketch_dir = os.path.join(tmpdir, info["slug"])
+            os.makedirs(sketch_dir, exist_ok=True)
+            ino = os.path.join(sketch_dir, f"{info['slug']}.ino")
+            with open(ino, "w", encoding="utf-8") as handle:
+                handle.write(info["solution_cpp"])
+            build_dir = os.path.join(sketch_dir, "build")
+            run = subprocess.run(
+                [cli, "compile", "--fqbn", FIRMWARE_FQBN, "--output-dir", build_dir, sketch_dir],
+                capture_output=True,
+                text=True,
+            )
+            if run.returncode != 0:
+                raise SystemExit(f"arduino-cli failed on {info['slug']}:\n{run.stderr}")
+            built = os.path.join(build_dir, f"{info['slug']}.ino.hex")
+            with open(built, "r", encoding="utf-8") as handle:
+                hex_text = handle.read()
+            target = os.path.join(sketches_out, f"{info['slug']}.hex")
+            with open(target, "w", encoding="utf-8") as handle:
+                handle.write(hex_text)
+            entries.append(
+                {
+                    "id": info["slug"],
+                    "hex": f"{os.path.basename(FIRMWARE_DIR_REL)}/{info['slug']}.hex",
+                    "sketchSha256": sha256_text(info["solution_cpp"]),
+                    "hexSha256": sha256_text(hex_text),
+                    "hexBytes": len(hex_text.encode("utf-8")),
+                }
+            )
+    return {
+        "schema": FIRMWARE_SCHEMA,
+        "fqbn": FIRMWARE_FQBN,
+        "generatedBy": "scripts/extract_and_compile_sketches.py --write-firmware",
+        "toolchain": {
+            "arduinoCli": _tool_version([cli, "version"]),
+            "core": _tool_version([cli, "core", "list"]),
+        },
+        "sketches": entries,
+    }
+
+
+def write_firmware(root: str = ROOT) -> str:
+    target = os.path.join(root, FIRMWARE_INDEX_REL)
+    document = firmware_document(root)
+    with open(target, "w", encoding="utf-8") as handle:
+        handle.write(json.dumps(document, indent=2, ensure_ascii=False) + "\n")
+    return target
+
+
+def check_firmware(root: str = ROOT) -> list[str]:
+    """Why the committed firmware no longer matches the lessons (empty when it does).
+
+    No compiler is needed, which is what makes this a gate a laptop and a runner can both run: the
+    index carries the hash of the sketch each hex was built from, so a lesson edit is caught here,
+    and the Node suite catches a hex that stops printing what the lesson says.
+    """
+    index_path = os.path.join(root, FIRMWARE_INDEX_REL)
+    if not os.path.exists(index_path):
+        return [f"{index_path} is missing - run `python3 scripts/extract_and_compile_sketches.py --write-firmware`"]
+    with open(index_path, "r", encoding="utf-8") as handle:
+        try:
+            index = json.load(handle)
+        except ValueError as error:
+            return [f"{index_path} is not valid JSON: {error}"]
+    if index.get("schema") != FIRMWARE_SCHEMA:
+        return [f"firmware schema is {index.get('schema')!r}, expected {FIRMWARE_SCHEMA!r}"]
+
+    entries = {entry.get("id"): entry for entry in index.get("sketches", [])}
+    problems = []
+    for path in ARDUINO_LESSON_FILES:
+        info = extract_sketches_from_lesson(path)
+        entry = entries.get(info["slug"])
+        if entry is None:
+            problems.append(f"{info['slug']} has no compiled firmware; the Board tab cannot run it")
+            continue
+        wanted = sha256_text(info["solution_cpp"])
+        if entry.get("sketchSha256") != wanted:
+            problems.append(
+                f"{info['slug']} was built from a different sketch - {path} has changed since; "
+                "rebuild with --write-firmware"
+            )
+        hex_path = os.path.join(root, "app", "public", entry.get("hex", ""))
+        if not os.path.exists(hex_path):
+            problems.append(f"{info['slug']} names {entry.get('hex')}, which is not on disk")
+            continue
+        with open(hex_path, "r", encoding="utf-8") as handle:
+            hex_text = handle.read()
+        if entry.get("hexSha256") != sha256_text(hex_text):
+            problems.append(f"{entry.get('hex')} was edited after it was built; rebuild with --write-firmware")
+        lines = [line for line in hex_text.splitlines() if line.strip()]
+        if not lines or not lines[0].startswith(":") or not lines[-1].startswith(":00000001"):
+            problems.append(f"{entry.get('hex')} is not an Intel HEX file (no record or no end record)")
+    for extra in sorted(set(entries) - {extract_sketches_from_lesson(p)["slug"] for p in ARDUINO_LESSON_FILES}):
+        problems.append(f"{extra} has firmware but no lesson page produces it")
+    return problems
 
 
 def extract_sketches_from_lesson(filepath: str) -> dict:
@@ -229,6 +460,14 @@ def main():
     parser.add_argument("--extract-dir", help="Directory to write extracted .ino sketches")
     parser.add_argument("--compile-arduino-cli", action="store_true", help="Compile all sketches with arduino-cli for arduino:avr:uno")
     parser.add_argument("--host-verify", action="store_true", help="Compile and run all sketches on host using g++ mock")
+    parser.add_argument("--write-panel", nargs="?", const=PANEL_REL, default=None,
+                        metavar="PATH", help="Write the Board card's generated data (default: app/src/data/boardBridges.json)")
+    parser.add_argument("--check-panel", nargs="?", const=PANEL_REL, default=None,
+                        metavar="PATH", help="Fail when that data no longer matches the lesson pages")
+    parser.add_argument("--write-firmware", action="store_true",
+                        help="Compile every Full Solution for arduino:avr:uno and write app/public/firmware + its index")
+    parser.add_argument("--check-firmware", action="store_true",
+                        help="Fail when the committed firmware or its index no longer matches the lessons")
     args = parser.parse_args()
 
     if args.extract_dir:
@@ -280,6 +519,36 @@ def main():
     if args.host_verify:
         ok, msg = run_host_verify()
         print(msg)
+
+    if args.write_panel is not None:
+        target = write_panel(args.write_panel)
+        count = len(panel_document()["bridges"])
+        print(f"Wrote {count} Board bridge(s) to {os.path.relpath(target, ROOT)}")
+
+    if args.check_panel is not None:
+        problems = check_panel(args.check_panel)
+        if problems:
+            print("Board card data is stale:", file=sys.stderr)
+            for problem in problems:
+                print(f"  - {problem}", file=sys.stderr)
+            print("\nRun `python3 scripts/extract_and_compile_sketches.py --write-panel` to regenerate.",
+                  file=sys.stderr)
+            raise SystemExit(1)
+        print("OK: the Board card's data matches all lesson pages.")
+
+    if args.write_firmware:
+        target = write_firmware()
+        count = len(firmware_document()["sketches"])
+        print(f"Compiled {count} sketch(es) into app/public/firmware and wrote {os.path.relpath(target, ROOT)}")
+
+    if args.check_firmware:
+        problems = check_firmware()
+        if problems:
+            print("Committed firmware is stale:", file=sys.stderr)
+            for problem in problems:
+                print(f"  - {problem}", file=sys.stderr)
+            raise SystemExit(1)
+        print("OK: every lesson's firmware was built from the sketch the page ships.")
 
 
 if __name__ == "__main__":

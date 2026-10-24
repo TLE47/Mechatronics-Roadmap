@@ -761,8 +761,11 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     });
     const free = box.width - box.gap;
     const dragTo = async (share) => {
+      await divider.scrollIntoViewIfNeeded();
       const handle = await divider.boundingBox();
-      const y = handle.y + handle.height / 2;
+      // The handle is as tall as the results column, which can be taller than the window: aiming at
+      // its middle would put the pointer below the viewport, where no mouse event lands at all.
+      const y = handle.y + Math.min(handle.height / 2, 240);
       await wide.mouse.move(handle.x + handle.width / 2, y);
       await wide.mouse.down();
       await wide.mouse.move(box.left + free * share, y, { steps: 8 });
@@ -828,6 +831,187 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       `${name}: the divider must come back where it was left, got ${remembered.share}%`
     );
     console.log(`  ok ${name}: the divider comes back where it was left (${remembered.share}%)`);
+
+    // Docking, measured where the utilities exist: the results move to the left of the editor and
+    // stay on the same row, and the share is still *the editor's* — the same 70% is now the second
+    // track, so the editor is the wide one on the right. Dragging is measured again because the
+    // pointer mapping reverses with the panel: the boundary at 65% of the free space is a 35%
+    // editor, not a 65% one.
+    await wide.getByTestId('btn-dock-toggle').click();
+    const dockGeometry = () =>
+      wide.evaluate(() => {
+        const box = document.querySelector('[data-layout]');
+        const rect = box.getBoundingClientRect();
+        const gap = Number.parseFloat(getComputedStyle(box).columnGap) || 0;
+        const editor = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
+        const results = document.querySelector('[data-testid="results-column"]').getBoundingClientRect();
+        return {
+          dock: box.getAttribute('data-dock'),
+          editorLeft: Math.round(editor.left),
+          editorWidth: Math.round(editor.width),
+          editorTop: Math.round(editor.top),
+          resultsRight: Math.round(results.right),
+          resultsTop: Math.round(results.top),
+          sameRow: Math.abs(Math.round(editor.top) - Math.round(results.top)) <= 1,
+          share: Math.round((editor.width / (rect.width - gap)) * 100),
+          announced: Number(
+            document.querySelector('[data-testid="split-divider"]').getAttribute('aria-valuenow')
+          ),
+        };
+      });
+    const docked = await dockGeometry();
+    assert.equal(docked.dock, 'left', `${name}: the dock button must report the results docked left`);
+    assert.ok(
+      docked.resultsRight <= docked.editorLeft,
+      `${name}: a results column docked left must end before the editor starts, but it ends at ` +
+        `${docked.resultsRight}px and the editor starts at ${docked.editorLeft}px`
+    );
+    assert.equal(
+      docked.sameRow,
+      true,
+      `${name}: the docked pair must share a row (editor top ${docked.editorTop}, results top ${docked.resultsTop})`
+    );
+    assert.ok(
+      docked.editorWidth > 320,
+      `${name}: the docked editor column is ${docked.editorWidth}px, too narrow to type in`
+    );
+    assert.equal(
+      docked.share,
+      docked.announced,
+      `${name}: the separator must still announce the editor's share when the results are left ` +
+        `(${docked.announced} vs ${docked.share})`
+    );
+    console.log(
+      `  ok ${name}: the results dock left of the editor on the same row (editor ${docked.editorWidth}px on the right)`
+    );
+
+    await dragTo(0.65);
+    const dockedDrag = await dockGeometry();
+    assert.ok(
+      Math.abs(dockedDrag.share - 35) <= 2,
+      `${name}: dragging to 65% of the width with the results on the left must leave the editor at ` +
+        `35%, got ${dockedDrag.share}%`
+    );
+    await divider.focus();
+    await wide.keyboard.press('Home');
+    const dockedHome = await dockGeometry();
+    assert.equal(
+      dockedHome.share,
+      70,
+      `${name}: Home puts the handle at the left edge, which is the editor at its widest when the ` +
+        `results are docked left; got ${dockedHome.share}%`
+    );
+    await wide.reload({ waitUntil: 'networkidle', timeout: 45000 });
+    if (await wide.getByTestId('tab-btn-tab-pyodide').count()) {
+      await wide.getByTestId('tab-btn-tab-pyodide').click();
+    }
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-dock') === 'left',
+      undefined,
+      { timeout: 10000 }
+    );
+    const dockRemembered = await dockGeometry();
+    assert.equal(
+      dockRemembered.share,
+      70,
+      `${name}: the docked side and its share must both survive the reload`
+    );
+    console.log(
+      `  ok ${name}: the docked side survives a reload (results left, editor ${dockRemembered.share}%)`
+    );
+
+    // The activity bar: at 1440 the tab rail is a vertical strip down the left edge, every tab in
+    // one column and nothing behind a sideways scroll. Below `xl` the same rail is the horizontal
+    // scroller the tablet check drives.
+    const activityBar = await wide.evaluate(() => {
+      const rail = document.querySelector('[data-chrome="rail"]');
+      const row = document.querySelector('[data-testid="tab-rail"]');
+      const main = document.getElementById('main');
+      const buttons = [...row.querySelectorAll('[data-testid^="tab-btn-"]')];
+      return {
+        railLeft: Math.round(rail.getBoundingClientRect().left),
+        railRight: Math.round(rail.getBoundingClientRect().right),
+        mainLeft: Math.round(main.getBoundingClientRect().left),
+        direction: getComputedStyle(row).flexDirection,
+        sideways: row.scrollWidth - row.clientWidth,
+        count: buttons.length,
+        narrowest: Math.round(Math.min(...buttons.map((button) => button.getBoundingClientRect().width))),
+      };
+    });
+    assert.equal(
+      activityBar.direction,
+      'column',
+      `${name}: at 1440px the tab rail must be a vertical activity bar, got ${activityBar.direction}`
+    );
+    assert.ok(
+      activityBar.railLeft < activityBar.mainLeft,
+      `${name}: the activity bar must sit beside the workbench, not above it ` +
+        `(rail ${activityBar.railLeft}–${activityBar.railRight}px, main starts ${activityBar.mainLeft}px)`
+    );
+    assert.ok(
+      activityBar.sideways <= 1,
+      `${name}: the activity bar must not need a sideways scroll at 1440px (${activityBar.sideways}px past)`
+    );
+    assert.ok(
+      activityBar.count >= 5 && activityBar.narrowest > 120,
+      `${name}: every tab must have room for its label in the activity bar ` +
+        `(${activityBar.count} tabs, narrowest ${activityBar.narrowest}px)`
+    );
+    console.log(
+      `  ok ${name}: at 1440px the ${activityBar.count} tabs are an activity bar beside the workbench ` +
+        `(rail ends at ${activityBar.railRight}px, main starts at ${activityBar.mainLeft}px)`
+    );
+
+    // Study's half of docking: the chooser takes the second cell, so it sits to the right of the
+    // work area instead of shrinking the editor from the left. Measured on the bundle because the
+    // side is a Tailwind `order` utility here, which the dev server does not resolve.
+    await wide.getByTestId('layout-study').click();
+    await wide.getByTestId('btn-dock-toggle').click();
+    const studyDock = () =>
+      wide.evaluate(() => {
+        const chooser = document.querySelector('[data-testid="lesson-list-card"]');
+        const work = document.querySelector('[data-layout]');
+        const chooserBox = chooser.getBoundingClientRect();
+        const workBox = work.getBoundingClientRect();
+        return {
+          side: chooser.getAttribute('data-list-dock'),
+          sameRow: Math.abs(Math.round(chooserBox.top) - Math.round(workBox.top)) <= 1,
+          chooserLeft: Math.round(chooserBox.left),
+          workRight: Math.round(workBox.right),
+          chooserWidth: Math.round(chooserBox.width),
+        };
+      });
+    const studyDocked = await studyDock();
+    assert.equal(studyDocked.side, 'right', `${name}: the chooser must report the side it moved to`);
+    assert.ok(
+      studyDocked.chooserLeft >= studyDocked.workRight - 1,
+      `${name}: a chooser docked right must start after the work area ends, but it starts at ` +
+        `${studyDocked.chooserLeft}px and the work area ends at ${studyDocked.workRight}px`
+    );
+    assert.equal(
+      studyDocked.sameRow,
+      true,
+      `${name}: the chooser and the work area must stay on one row`
+    );
+    assert.ok(
+      studyDocked.chooserWidth > 260,
+      `${name}: a docked chooser is ${studyDocked.chooserWidth}px wide, too narrow to read a lesson title`
+    );
+    await wide.reload({ waitUntil: 'networkidle', timeout: 45000 });
+    if (await wide.getByTestId('tab-btn-tab-pyodide').count()) {
+      await wide.getByTestId('tab-btn-tab-pyodide').click();
+    }
+    await wide.waitForFunction(
+      () => document.querySelector('[data-list-dock]')?.getAttribute('data-list-dock') === 'right',
+      undefined,
+      { timeout: 10000 }
+    );
+    const studyRemembered = await studyDock();
+    assert.equal(studyRemembered.side, 'right', `${name}: the chooser's side must survive a reload`);
+    console.log(
+      `  ok ${name}: Study's chooser docks right of the work area and comes back there ` +
+        `(${studyDocked.chooserWidth}px, work area ends at ${studyDocked.workRight}px)`
+    );
     await wide.close();
 
     // Tablet viewport: the tab bar, lesson list and editor must all stay reachable, and the layout

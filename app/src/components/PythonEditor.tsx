@@ -30,6 +30,15 @@ export interface PythonEditorHandle {
   focus: () => void;
   getValue: () => string;
   setValue: (text: string) => void;
+  /**
+   * Replace the document with text this editor did not type — a peer's edit in a co-editing session.
+   *
+   * The smallest change that reaches `text`, applied **outside the undo history**: ⌘Z undoes what this
+   * workbench typed, not what the other one did. Without that separation one undo would reach across
+   * two people's work and put the document back to a state neither of them is editing, which is the
+   * "whose undo?" question the pair sheet answers by giving each person their own.
+   */
+  applyWithoutHistory: (text: string) => void;
   /** Put the cursor at the start of a 1-based line and scroll it into view. */
   revealLine: (line: number) => void;
   /**

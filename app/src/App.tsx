@@ -3,6 +3,9 @@ import { Header } from './components/Header';
 import { GuidedTourBar, TourStepInfo } from './components/GuidedTourBar';
 import { CheatSheetModal } from './components/CheatSheetModal';
 import { CommandPalette } from './components/CommandPalette';
+import { ShortcutsModal } from './components/ShortcutsModal';
+import { lessonSearchItems } from './lessonSearch';
+import { loadProseIndex, proseSearchItems, type ProsePage } from './proseSearch';
 import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { StartHereCard } from './components/StartHereCard';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
@@ -43,6 +46,8 @@ const importTabEskf = () =>
   import('./components/tabs/TabEskf').then((module) => ({ default: module.TabEskf }));
 const importTabLinkHealth = () =>
   import('./components/tabs/TabLinkHealth').then((module) => ({ default: module.TabLinkHealth }));
+const importTabBoard = () =>
+  import('./components/tabs/TabBoard').then((module) => ({ default: module.TabBoard }));
 
 const TabArchitecture = React.lazy(importTabArchitecture);
 const TabPlacementQuiz = React.lazy(importTabPlacementQuiz);
@@ -54,6 +59,7 @@ const TabCadPcb = React.lazy(importTabCadPcb);
 const TabSysId = React.lazy(importTabSysId);
 const TabEskf = React.lazy(importTabEskf);
 const TabLinkHealth = React.lazy(importTabLinkHealth);
+const TabBoard = React.lazy(importTabBoard);
 
 /** Fetch a tab's chunk before it is opened. The runner has none: it is imported statically. */
 const TAB_PREFETCH: Record<string, () => Promise<unknown>> = {
@@ -66,6 +72,7 @@ const TAB_PREFETCH: Record<string, () => Promise<unknown>> = {
   'tab-cadpcb': importTabCadPcb,
   'tab-sysid': importTabSysId,
   'tab-eskf': importTabEskf,
+  'tab-board': importTabBoard,
   'tab-links': importTabLinkHealth,
 };
 
@@ -97,6 +104,8 @@ import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
 import { useTheme } from './useTheme';
+import { actionForEvent } from './keymap';
+import { useKeymap } from './useKeymap';
 import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
 import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
@@ -106,7 +115,7 @@ import { readTrySnippet } from './tryLink';
 import { readLastLessonId, lessonOffer } from './lastLesson';
 import { editedLines, readDraft } from './lessonDraft';
 import { draftProgress } from './lessonCoach';
-import { lessonIdOf, type PaletteItem } from './palette';
+import { lessonIdOf, type PaletteItem, type PaletteMode } from './palette';
 import { paletteCatalog } from './paletteCatalog';
 import {
   ActiveTierPass,
@@ -122,6 +131,7 @@ import {
   Code2,
   Compass,
   Copy,
+  CircuitBoard,
   Cpu,
   Download,
   FlaskConical,
@@ -151,6 +161,7 @@ const TAB_ICONS: Record<TabId, LucideIcon> = {
   'tab-cadpcb': Cpu,
   'tab-sysid': LineChart,
   'tab-eskf': Radar,
+  'tab-board': CircuitBoard,
   'tab-links': Link2,
 };
 
@@ -326,6 +337,14 @@ export const WORKBENCH_TABS: WorkbenchTabMeta[] = [
     isBeginnerCore: false,
   },
   {
+    id: 'tab-board',
+    beginnerLabel: `${TAB_NAMES['tab-board']} (Arduino Uno)`,
+    beginnerSubtitle: 'Run the compiled C sketch and watch its serial',
+    technicalLabel: 'ATmega328P Emulator (avr8js) · Compiled Sketch',
+    technicalSubtitle: 'Committed .hex · USART Monitor · Cycle Budget',
+    isBeginnerCore: false,
+  },
+  {
     id: 'tab-links',
     beginnerLabel: `${TAB_NAMES['tab-links']} (Nightly Check)`,
     beginnerSubtitle: 'See which outside links still work',
@@ -376,7 +395,7 @@ export const App: React.FC = () => {
     togglePaper: togglePaperMode,
   } = useTheme();
   // `?view=theme` is a page of its own, read once on arrival. It is not a workbench tab: the rail
-  // stays the eleven tabs a learner needs, and this is a reference for whoever is adding a colour.
+  // stays the twelve tabs a learner needs, and this is a reference for whoever is adding a colour.
   const [themeView] = useState<boolean>(() => themeViewFromLocation());
 
   // A newcomer arrives to run the first lesson, not to read the advanced roadmap: open the Python
@@ -384,8 +403,29 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('tab-pyodide');
   const [tourIndex, setTourIndex] = useState<number>(0);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState<boolean>(false);
-  // `⌘K` is the keyboard's table of contents: one dialog over lessons, tabs and commands.
+  // `⌘K` is the keyboard's table of contents: one dialog over lessons, tabs and commands. `⌘P` and
+  // `⌘⇧F` open the same dialog on a narrower question, so there is one search box to learn
+  // (`app/src/palette.ts`).
   const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
+  const [paletteMode, setPaletteMode] = useState<PaletteMode>('all');
+  // Refs because the key handler below is registered once: it closes over the first render, and
+  // "is this door already open?" has to be answered by the value on screen now.
+  const paletteOpenRef = useRef<boolean>(false);
+  paletteOpenRef.current = isPaletteOpen;
+  const paletteModeRef = useRef<PaletteMode>(paletteMode);
+  paletteModeRef.current = paletteMode;
+  // The app-wide keys as the sheet has them (`app/src/keymap.ts`). Read through a ref inside the
+  // one window listener, so a rebind reaches the next keypress without re-installing it.
+  const keymap = useKeymap();
+  const keymapRef = useRef(keymap);
+  keymapRef.current = keymap;
+  // The course pages `⌘⇧F` also searches. They are a 200 kB file, fetched the first time that door
+  // opens and never on a normal visit; `idle` is "not asked for yet", not "empty".
+  const [prosePages, setProsePages] = useState<ProsePage[] | null>(null);
+  const [proseStatus, setProseStatus] = useState<'idle' | 'loading' | 'ready' | 'unavailable'>('idle');
+  const proseTried = useRef<boolean>(false);
+  // `?` — the sheet that lists the keys, including `?` itself.
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState<boolean>(false);
   // Focus mode: the chrome off, the work left. Read once from the store and then owned here, because
   // the header's button, the pill and the `data-focus` attribute must be one state, not three.
   const [focus, setFocusOn] = useState<boolean>(() => readFocus());
@@ -397,7 +437,12 @@ export const App: React.FC = () => {
   const [formatRequest, setFormatRequest] = useState<number>(0);
   // Bumped whenever a learner asks for a specific entry, so the runner can tell a new pick from a
   // render that happens to carry the same id.
-  const [lessonRequest, setLessonRequest] = useState<{ id: string; nonce: number } | null>(null);
+  const [lessonRequest, setLessonRequest] = useState<{
+    id: string;
+    nonce: number;
+    /** A line of the lesson's starter to put the caret on — what `⌘⇧F` names when it hits code. */
+    line?: number;
+  } | null>(null);
   // The collapsed Start here line can be dismissed for good; the roadmap tab carries the control
   // that restores it, so nothing is lost without a way back.
   const [startHereDismissed, setStartHereDismissed] = useState<boolean>(() => {
@@ -666,21 +711,76 @@ export const App: React.FC = () => {
   // One catalogue, built from the lesson registry and the rail's own metadata, so the palette can
   // never list a lesson the runner does not have or name a tab the strip does not show.
   const paletteItems = React.useMemo(() => paletteCatalog(WORKBENCH_TABS), []);
+  // `⌘P`'s list: the same rows, without the tabs and commands. Built from the catalogue rather than
+  // from the registry so a lesson can never appear in one door and not the other.
+  const lessonPaletteItems = React.useMemo(
+    () => paletteItems.filter((item) => item.kind === 'lesson'),
+    [paletteItems]
+  );
 
-  const openLesson = (lessonId: string) => {
+  // The searchable course pages are fetched when `⌘⇧F` opens the door that reads them — one
+  // attempt per open, so a failure on a train is retried the next time the palette is opened and
+  // never on a keystroke. The fetch itself is memoised in `proseSearch.ts`; a second door costs
+  // nothing.
+  useEffect(() => {
+    if (!isPaletteOpen) {
+      proseTried.current = false;
+      return;
+    }
+    if (paletteMode !== 'search' || proseTried.current) return;
+    proseTried.current = true;
+    setProseStatus('loading');
+    void loadProseIndex().then((pages) => {
+      setProsePages(pages);
+      setProseStatus(pages ? 'ready' : 'unavailable');
+    });
+  }, [isPaletteOpen, paletteMode]);
+
+  /** `⌘⇧F`'s list: the lesson text first, then the reading pages, each group in its own band. */
+  const paletteSearch = React.useCallback(
+    (query: string) => {
+      const rows = lessonSearchItems(query);
+      return prosePages ? [...rows, ...proseSearchItems(query, prosePages)] : rows;
+    },
+    [prosePages]
+  );
+
+  // What the footer says while the file is in flight, or when it could not be had at all. Silent
+  // once the pages are in: "65 course pages searched" on every keystroke is furniture.
+  const proseNote =
+    paletteMode !== 'search'
+      ? null
+      : proseStatus === 'loading'
+        ? 'course pages loading…'
+        : proseStatus === 'unavailable'
+          ? 'course pages unavailable offline'
+          : null;
+
+  const openLesson = (lessonId: string, line?: number) => {
     setPyodideLessonId(lessonId);
     // The id alone is not enough: re-choosing the lesson a deep link already named is a no-op prop
-    // change, so the runner gets a request it can count.
-    setLessonRequest((prev) => ({ id: lessonId, nonce: (prev?.nonce ?? 0) + 1 }));
+    // change, so the runner gets a request it can count. The line rides along for a search hit; the
+    // runner decides whether it is still a line of the text on screen.
+    setLessonRequest((prev) => ({
+      id: lessonId,
+      nonce: (prev?.nonce ?? 0) + 1,
+      ...(line && Number.isFinite(line) ? { line } : {}),
+    }));
     setActiveTab('tab-pyodide');
     setHighlightedId(null);
     document.getElementById('python-runner')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handlePaletteSelect = (item: PaletteItem) => {
+    // A course-page hit is a reading page on GitHub, not a panel in this window: open it beside the
+    // workbench instead of navigating away from the learner's draft.
+    if (item.href) {
+      window.open(item.href, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const lessonId = lessonIdOf(item);
     if (lessonId) {
-      openLesson(lessonId);
+      openLesson(lessonId, item.line);
       return;
     }
     if (item.kind === 'tab') {
@@ -712,6 +812,9 @@ export const App: React.FC = () => {
       case 'action-open-cheatsheet':
         setIsCheatSheetOpen(true);
         break;
+      case 'action-open-shortcuts':
+        setIsShortcutsOpen(true);
+        break;
       case 'action-export-portfolio':
         setIsPortfolioModalOpen(true);
         break;
@@ -742,13 +845,56 @@ export const App: React.FC = () => {
   // keyboard effects is a page where two of them fight over Escape.
   useEffect(() => {
     const apply = (on: boolean) => setFocusOn(setFocus(on));
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        setIsPaletteOpen((open) => !open);
+    /** The same door twice closes it; a different door switches the list without closing. */
+    const showPalette = (next: PaletteMode) => {
+      if (paletteOpenRef.current && paletteModeRef.current === next) {
+        setIsPaletteOpen(false);
         return;
       }
-      if ((event.metaKey || event.ctrlKey) && event.key === '.') {
+      setPaletteMode(next);
+      setIsPaletteOpen(true);
+    };
+    /** Is the keystroke going into a field or the editor? Then it is text, not a shortcut. */
+    const typing = (target: EventTarget | null): boolean => {
+      const element = target as HTMLElement | null;
+      if (!element) return false;
+      if (element.isContentEditable) return true;
+      const tag = element.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    };
+    const onKey = (event: KeyboardEvent) => {
+      // One lookup, from the map the sheet edits. The defaults are the keys this app has always
+      // answered; a rebind changes which press lands here, never what the press does.
+      const action = actionForEvent(keymapRef.current, event);
+      if (action === 'palette') {
+        event.preventDefault();
+        showPalette('all');
+        return;
+      }
+      // ⌘P is the browser's Print on every platform; this app takes it for quick-open the way a
+      // code editor does, and the cheat sheet's own Print button stays the way to print the page.
+      if (action === 'lessons') {
+        event.preventDefault();
+        showPalette('lessons');
+        return;
+      }
+      if (action === 'search') {
+        event.preventDefault();
+        showPalette('search');
+        return;
+      }
+      // `?` is a character before it is a shortcut: in the editor or a field it has to stay text.
+      // The rule follows the chord, not the row: a rebind that holds ⌘ or ⌥ is not a character, so
+      // it may open the sheet from anywhere a shortcut works.
+      if (action === 'sheet') {
+        const chord = keymapRef.current.sheet;
+        if (event.defaultPrevented) return;
+        if (!chord.mod && !chord.alt && typing(event.target)) return;
+        event.preventDefault();
+        setIsShortcutsOpen((open) => !open);
+        return;
+      }
+      if (action === 'focus') {
         event.preventDefault();
         apply(!focusRef.current);
         return;
@@ -1102,199 +1248,214 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* One scrollable rail instead of a ten-card grid: the whole workbench fits on one line, so
-          the page below starts a full row higher and a newcomer sees one continuous strip of
-          choices rather than a wall of tiles. Every label and subtitle is unchanged. */}
-      <nav
-        aria-label="Simulator Tabs"
-        data-chrome="rail"
-        className="border-b"
-        style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
-      >
-        <div className="relative mx-auto max-w-[var(--shell-max)]">
-          <div
-            className="flex gap-2 overflow-x-auto px-3 py-2 sm:px-5"
-            style={{ scrollbarWidth: 'thin', scrollSnapType: 'x proximity' }}
-          >
-          {visibleTabs.map((tab) => {
-            const Icon = TAB_ICONS[tab.id] ?? Sparkles;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                data-testid={`tab-btn-${tab.id}`}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setHighlightedId(null);
-                }}
-                // Pointer and focus intent, not a click: the chunk is usually in memory by the time
-                // the button is released, so the tab appears instead of a panel saying "Loading".
-                // Nothing is fetched for a tab the learner never points at.
-                onPointerEnter={() => prefetchTab(tab.id)}
-                onFocus={() => prefetchTab(tab.id)}
-                aria-current={isActive ? 'page' : undefined}
-                className="group flex min-w-[12rem] shrink-0 cursor-pointer snap-start items-center gap-2.5 rounded-[var(--r-md)] border px-2.5 py-2 text-left transition-colors"
-                style={{
-                  borderColor: isActive ? 'var(--accent)' : 'var(--border)',
-                  backgroundColor: isActive ? 'var(--accent-soft)' : 'transparent',
-                }}
-              >
-                <span
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-sm)] border"
+      {/* Below `xl` the rail is one scrollable line instead of a ten-card grid: the workbench fits
+          on a strip, so the page below starts a full row higher and a newcomer sees one continuous
+          strip of choices rather than a wall of tiles. At `xl` it is an activity bar instead: a
+          vertical strip down the left edge, all eleven tabs in one column, so the last three no
+          longer wait behind a sideways scroll. The wrapper is what makes the two a row; the rail's
+          inner block is the sticky part, so the strip keeps its buttons in view while a long
+          lesson scrolls past it. Every label and subtitle is unchanged in both. */}
+      <div className="xl:flex">
+        <nav
+          aria-label="Simulator Tabs"
+          data-chrome="rail"
+          className="border-b xl:w-[196px] xl:shrink-0 xl:border-b-0 xl:border-r"
+          style={{ backgroundColor: 'var(--panel)', borderColor: 'var(--border)' }}
+        >
+          <div className="relative mx-auto max-w-[var(--shell-max)] xl:sticky xl:top-0 xl:max-h-screen xl:max-w-none xl:overflow-y-auto">
+            <div
+              data-testid="tab-rail"
+              className="flex gap-2 overflow-x-auto px-3 py-2 sm:px-5 xl:flex-col xl:gap-1 xl:overflow-visible xl:px-2 xl:py-3"
+              style={{ scrollbarWidth: 'thin', scrollSnapType: 'x proximity' }}
+            >
+            {visibleTabs.map((tab) => {
+              const Icon = TAB_ICONS[tab.id] ?? Sparkles;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  data-testid={`tab-btn-${tab.id}`}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setHighlightedId(null);
+                  }}
+                  // Pointer and focus intent, not a click: the chunk is usually in memory by the time
+                  // the button is released, so the tab appears instead of a panel saying "Loading".
+                  // Nothing is fetched for a tab the learner never points at.
+                  onPointerEnter={() => prefetchTab(tab.id)}
+                  onFocus={() => prefetchTab(tab.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className="group flex min-w-[12rem] shrink-0 cursor-pointer snap-start items-center gap-2.5 rounded-[var(--r-md)] border px-2.5 py-2 text-left transition-colors xl:w-full xl:min-w-0"
                   style={{
                     borderColor: isActive ? 'var(--accent)' : 'var(--border)',
-                    color: isActive ? 'var(--accent)' : 'var(--dim)',
-                    backgroundColor: isActive
-                      ? 'color-mix(in srgb, var(--accent) 12%, transparent)'
-                      : 'var(--bg)',
+                    backgroundColor: isActive ? 'var(--accent-soft)' : 'transparent',
                   }}
-                  aria-hidden="true"
                 >
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
                   <span
-                    className="block truncate text-[12.5px] font-semibold"
-                    style={{ color: isActive ? 'var(--accent)' : 'var(--text)' }}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-sm)] border"
+                    style={{
+                      borderColor: isActive ? 'var(--accent)' : 'var(--border)',
+                      color: isActive ? 'var(--accent)' : 'var(--dim)',
+                      backgroundColor: isActive
+                        ? 'color-mix(in srgb, var(--accent) 12%, transparent)'
+                        : 'var(--bg)',
+                    }}
+                    aria-hidden="true"
                   >
-                    {viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel}
+                    <Icon className="h-4 w-4" />
                   </span>
-                  <span
-                    className="mt-0.5 block truncate text-[11px]"
-                    style={{ color: isActive ? 'var(--muted)' : 'var(--dim)' }}
-                  >
-                    {viewMode === 'beginner' ? tab.beginnerSubtitle : tab.beginnerLabel}
+                  <span className="min-w-0">
+                    <span
+                      className="block truncate text-[12.5px] font-semibold"
+                      style={{ color: isActive ? 'var(--accent)' : 'var(--text)' }}
+                    >
+                      {viewMode === 'beginner' ? tab.beginnerLabel : tab.technicalLabel}
+                    </span>
+                    <span
+                      className="mt-0.5 block truncate text-[11px]"
+                      style={{ color: isActive ? 'var(--muted)' : 'var(--dim)' }}
+                    >
+                      {viewMode === 'beginner' ? tab.beginnerSubtitle : tab.beginnerLabel}
+                    </span>
                   </span>
-                </span>
-              </button>
-            );
-          })}
-          </div>
-          {/* The rail scrolls; the fade says so without a scrollbar squatting under it. */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 w-10"
-            style={{ background: 'linear-gradient(90deg, transparent, var(--panel))' }}
-          />
-        </div>
-      </nav>
-
-      {/* Main Tab Pane. One Suspense boundary around the pane: only one tab is on screen, and every
-          lazy tab's chunk is fetched the first time it is opened, so the fallback is a panel rather
-          than a page. The runner is static, so the opening screen never shows it. */}
-      <main id="main" tabIndex={-1} className="flex-1 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4 outline-none">
-        <React.Suspense
-          fallback={
-            <div
-              data-testid="tab-loading"
-              role="status"
-              className="bg-panel border border-line rounded-xl p-6 text-sm text-muted"
-            >
-              Loading this tab…
+                </button>
+              );
+            })}
             </div>
-          }
-        >
-        {/* The landing screen is where a newcomer arrives, so it opens with the README's own
-            "Start here" block: one heading, one Lesson 1 link, one plain-English line. Once Lesson 1
-            is verified the same block closes to a single line. */}
-        {activeTab === 'tab-pyodide' && !startHereDismissed && (
-          <StartHereCard
-            lessonOneVerified={!!verifiedLessons['P.1']}
-            onDismiss={() => setStartHereDismissed(true)}
-            onStartLesson={() => {
-              // The reading link leaves for GitHub; this button stays and puts Lesson 1 under the
-              // cursor, so the two doors are never confused for each other. `openLesson` also
-              // handles the case where P.1 was already the prop but the reader had browsed away.
-              openLesson('P.1');
-            }}
-          />
-        )}
-        {activeTab !== 'tab-arch' &&
-          activeTab !== 'tab-pyodide' &&
-          activeTab !== 'tab-placement' &&
-          activeTab !== 'tab-links' && (
-          <SimulatorTierBanner
-            tabId={activeTab}
-            activeTierPass={activeTierPass}
-            onSelectTierPass={setActiveTierPass}
-          />
-        )}
-
-        {activeTab === 'tab-arch' && (
-          <TabArchitecture
-            onLoadPreset={handleLoadPreset}
-            beginnerView={viewMode === 'beginner'}
-            activeTierPass={activeTierPass}
-            onSelectTierPass={setActiveTierPass}
-            completedMilestones={completedMilestones}
-            verifiedLessons={verifiedLessons}
-            onToggleMilestone={handleToggleMilestone}
-            startHereDismissed={startHereDismissed}
-            onRestoreStartHere={handleRestoreStartHere}
-            onOpenPyodideLesson={openLesson}
-            resumeLesson={resumeLesson}
-            lessonAttempts={lessonAttempts}
-          />
-        )}
-        {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-        {activeTab === 'tab-foc' && <TabFOC onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-        {activeTab === 'tab-pend' && <TabPendulum onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-        {activeTab === 'tab-models' && <TabModels onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-        {activeTab === 'tab-cadpcb' && <TabCadPcb onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-        {activeTab === 'tab-sysid' && <TabSysId onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-        {activeTab === 'tab-eskf' && <TabEskf onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
-        {activeTab === 'tab-links' && <TabLinkHealth />}
-        {activeTab === 'tab-pyodide' && (
-          // An anchor for the Start here button: it scrolls here rather than opening GitHub.
-          <div id="python-runner" className="scroll-mt-4">
-            <TabPyodideRunner
-              initialLessonId={pyodideLessonId}
-              verifiedLessons={verifiedLessons}
-              completedLessons={completedLessons}
-              onMarkLessonVerified={handleMarkLessonVerified}
-              onToggleLessonCompleted={handleToggleLessonCompleted}
-              onOpenRoadmap={handleOpenRoadmap}
-              runRequest={runRequest}
-              formatRequest={formatRequest}
-              lessonRequest={lessonRequest}
-              sharedAttempt={sharedAttempt}
-              onDismissShared={() => setSharedAttempt(null)}
-              trySnippet={trySnippet}
-              onDismissTry={() => setTrySnippet(null)}
+            {/* The rail scrolls; the fade says so without a scrollbar squatting under it. */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 w-10 xl:hidden"
+              style={{ background: 'linear-gradient(90deg, transparent, var(--panel))' }}
             />
           </div>
-        )}
-        {activeTab === 'tab-placement' && (
-          <TabPlacementQuiz
-            onOpenPyodideLesson={openLesson}
-            onSwitchSimulatorTab={(tabIdx) => {
-              const legacyOrder: TabId[] = [
-                'tab-arch',
-                'tab-bode',
-                'tab-foc',
-                'tab-pend',
-                'tab-models',
-                'tab-cadpcb',
-                'tab-sysid',
-                'tab-eskf',
-                'tab-pyodide',
-                'tab-placement',
-              ];
-              const target = legacyOrder[tabIdx] || 'tab-arch';
-              setActiveTab(target);
-            }}
-          />
-        )}
-        </React.Suspense>
-      </main>
+        </nav>
+
+        {/* Main Tab Pane. One Suspense boundary around the pane: only one tab is on screen, and every
+            lazy tab's chunk is fetched the first time it is opened, so the fallback is a panel rather
+            than a page. The runner is static, so the opening screen never shows it. */}
+        <main id="main" tabIndex={-1} className="flex-1 min-w-0 p-3.5 sm:p-5 max-w-[1540px] w-full mx-auto space-y-4 outline-none">
+          <React.Suspense
+            fallback={
+              <div
+                data-testid="tab-loading"
+                role="status"
+                className="bg-panel border border-line rounded-xl p-6 text-sm text-muted"
+              >
+                Loading this tab…
+              </div>
+            }
+          >
+          {/* The landing screen is where a newcomer arrives, so it opens with the README's own
+              "Start here" block: one heading, one Lesson 1 link, one plain-English line. Once Lesson 1
+              is verified the same block closes to a single line. */}
+          {activeTab === 'tab-pyodide' && !startHereDismissed && (
+            <StartHereCard
+              lessonOneVerified={!!verifiedLessons['P.1']}
+              onDismiss={() => setStartHereDismissed(true)}
+              onStartLesson={() => {
+                // The reading link leaves for GitHub; this button stays and puts Lesson 1 under the
+                // cursor, so the two doors are never confused for each other. `openLesson` also
+                // handles the case where P.1 was already the prop but the reader had browsed away.
+                openLesson('P.1');
+              }}
+            />
+          )}
+          {activeTab !== 'tab-arch' &&
+            activeTab !== 'tab-pyodide' &&
+            activeTab !== 'tab-placement' &&
+            activeTab !== 'tab-board' &&
+            activeTab !== 'tab-links' && (
+            <SimulatorTierBanner
+              tabId={activeTab}
+              activeTierPass={activeTierPass}
+              onSelectTierPass={setActiveTierPass}
+            />
+          )}
+
+          {activeTab === 'tab-arch' && (
+            <TabArchitecture
+              onLoadPreset={handleLoadPreset}
+              beginnerView={viewMode === 'beginner'}
+              activeTierPass={activeTierPass}
+              onSelectTierPass={setActiveTierPass}
+              completedMilestones={completedMilestones}
+              verifiedLessons={verifiedLessons}
+              onToggleMilestone={handleToggleMilestone}
+              startHereDismissed={startHereDismissed}
+              onRestoreStartHere={handleRestoreStartHere}
+              onOpenPyodideLesson={openLesson}
+              resumeLesson={resumeLesson}
+              lessonAttempts={lessonAttempts}
+            />
+          )}
+          {activeTab === 'tab-bode' && <TabBode onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+          {activeTab === 'tab-foc' && <TabFOC onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+          {activeTab === 'tab-pend' && <TabPendulum onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+          {activeTab === 'tab-models' && <TabModels onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+          {activeTab === 'tab-cadpcb' && <TabCadPcb onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+          {activeTab === 'tab-sysid' && <TabSysId onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+          {activeTab === 'tab-eskf' && <TabEskf onLoadPreset={handleLoadPreset} highlightedId={highlightedId} presetRequest={presetRequest} />}
+          {activeTab === 'tab-board' && <TabBoard />}
+          {activeTab === 'tab-links' && <TabLinkHealth />}
+          {activeTab === 'tab-pyodide' && (
+            // An anchor for the Start here button: it scrolls here rather than opening GitHub.
+            <div id="python-runner" className="scroll-mt-4">
+              <TabPyodideRunner
+                initialLessonId={pyodideLessonId}
+                verifiedLessons={verifiedLessons}
+                completedLessons={completedLessons}
+                onMarkLessonVerified={handleMarkLessonVerified}
+                onToggleLessonCompleted={handleToggleLessonCompleted}
+                onOpenRoadmap={handleOpenRoadmap}
+                runRequest={runRequest}
+                formatRequest={formatRequest}
+                lessonRequest={lessonRequest}
+                sharedAttempt={sharedAttempt}
+                onDismissShared={() => setSharedAttempt(null)}
+                trySnippet={trySnippet}
+                onDismissTry={() => setTrySnippet(null)}
+              />
+            </div>
+          )}
+          {activeTab === 'tab-placement' && (
+            <TabPlacementQuiz
+              onOpenPyodideLesson={openLesson}
+              onSwitchSimulatorTab={(tabIdx) => {
+                const legacyOrder: TabId[] = [
+                  'tab-arch',
+                  'tab-bode',
+                  'tab-foc',
+                  'tab-pend',
+                  'tab-models',
+                  'tab-cadpcb',
+                  'tab-sysid',
+                  'tab-eskf',
+                  'tab-pyodide',
+                  'tab-placement',
+                ];
+                const target = legacyOrder[tabIdx] || 'tab-arch';
+                setActiveTab(target);
+              }}
+            />
+          )}
+          </React.Suspense>
+        </main>
+      </div>
 
       {/* Cheat sheet modal */}
       <CheatSheetModal isOpen={isCheatSheetOpen} onClose={() => setIsCheatSheetOpen(false)} />
 
-      {/* ⌘K. Rendered last so it sits above every panel, and only mounted while open. */}
+      {/* `?`: which key does what, from the one table in `src/shortcuts.ts`. */}
+      <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+
+      {/* ⌘K / ⌘P / ⌘⇧F. Rendered last so it sits above every panel, and only mounted while open. */}
       <CommandPalette
         isOpen={isPaletteOpen}
-        items={paletteItems}
+        mode={paletteMode}
+        items={paletteMode === 'lessons' ? lessonPaletteItems : paletteItems}
+        search={paletteSearch}
+        note={proseNote}
         onClose={() => setIsPaletteOpen(false)}
         onSelect={handlePaletteSelect}
       />

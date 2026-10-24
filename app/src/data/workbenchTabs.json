@@ -11,6 +11,7 @@
     "tab-cadpcb": "3D Parts & Motor Driver PCB Lab",
     "tab-sysid": "Sine-Sweep System Identification",
     "tab-eskf": "IMU Sensor Fusion & Real-Time Lock",
+    "tab-board": "Run an Arduino Sketch",
     "tab-links": "Citation Link Health"
   }
 }

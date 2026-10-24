@@ -54,6 +54,8 @@ jobs:
           # The app's error index is the explainer page; editing one without the other fails here.
           python3 scripts/generate_error_index.py --check
           python3 scripts/generate_run_callouts.py --check
+          # The searchable text of the 65 reading pages, which the app fetches only when asked.
+          python3 scripts/generate_prose_index.py --check
           # One name per tab, in one file; no page or label may point at a position instead.
           python3 scripts/check_tab_names.py
           python3 scripts/generate_link_history_data.py --check
@@ -66,6 +68,19 @@ jobs:
           # from each page's own metadata; a moved page must move the hours with it.
           python3 scripts/generate_step_docs.py --check
           python3 scripts/generate_readme_counts.py --check
+          # The Board card's data is the five Arduino lessons' own sketches plus the serial this job
+          # proves for them; a lesson that edits its sketch must not leave the card on the old one.
+          python3 scripts/extract_and_compile_sketches.py --check-panel
+          # The Board tab runs these bytes: every committed `.hex` must have been built from the
+          # sketch the page ships, and be the file the index hashes (the Node suite runs them).
+          python3 scripts/extract_and_compile_sketches.py --check-firmware
+          # Every `npm run …` and every `scripts/…` path an instruction page names must exist. The
+          # gate list had this coverage; the prose did not, and its first run found the plan telling
+          # a reader to run `npm run test:e2e:storage` for a suite package.json had never declared.
+          python3 scripts/check_doc_commands.py
+          # The 2.0 gap page is a contract now that every row reads `ships`: a reopened row fails here,
+          # and so does a `ships` row that names no command or browser step a reader can run.
+          python3 scripts/check_plan_rows.py
           python3 scripts/check_consistency.py
           python3 scripts/friction_report.py --check
           python3 scripts/lint_assertions.py
@@ -192,6 +207,20 @@ jobs:
       # serious/critical finding that docs/a11y-allowlist.json does not explain.
       - name: "Check accessibility: axe over all 11 tabs in both themes"
         run: npm run check:axe
+
+      # Lighthouse's own three categories—best-practices, SEO and accessibility—on the built bundle,
+      # against docs/lighthouse-allowlist.json. Performance is deliberately not run: a score that moves
+      # with the runner is not a gate this repository keeps (the script's header says so, and the row in
+      # docs/PLAN-2.0-GAP.md records the decision).
+      - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"
+        run: npm run check:lighthouse
+
+      # The painted surface of all 44 tab/palette combinations against docs/surface-snapshot.json:
+      # where the header, rail, main pane and panel sit, how many controls the tab has, and the resolved
+      # colours and type. Not a pixel diff, because antialiasing does not survive macOS -> Linux; the
+      # script's header explains, and geometry is compared with a 2 px tolerance.
+      - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
+        run: npm run check:snapshot
 
       # The interrupt path needs cross-origin isolation and a real SharedArrayBuffer, which no unit
       # test can provide: this suite stops a `while True:` in place, proves the interpreter survived

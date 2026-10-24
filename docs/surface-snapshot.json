@@ -1,0 +1,3851 @@
+{
+  "_why": "The painted surface of all 48 tab/palette combinations, read by `npm run check:snapshot` (`scripts/snapshot_surfaces.mjs`). Each entry records where the header, activity rail, main pane and its first panel sit, how many buttons, inputs, links, headings, canvases and tables the tab has, and the resolved colours, type and palette tokens. It is **not a pixel diff**: the runner is Linux and the person writing this is on a Mac, and a baseline whose antialiasing does not survive the trip is a gate people learn to skip. Box numbers are compared with a 2 px tolerance, so subpixel rounding is not a finding; counts and resolved styles are exact. Re-record with `npm run check:snapshot -- --record` when a change to the screen is intended, and read the diff: it is a list of what moved.",
+  "version": 1,
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "tolerance_px": 2,
+  "surfaces": {
+    "dark/tab-arch": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          8638
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          8598
+        ],
+        "footer": [
+          0,
+          8833,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          8876
+        ]
+      },
+      "counts": {
+        "buttons": 120,
+        "inputs": 4,
+        "links": 30,
+        "headings": 16,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-pyodide": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          114,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          114,
+          1244,
+          2245
+        ],
+        "panel": [
+          216,
+          134,
+          1204,
+          336
+        ],
+        "footer": [
+          0,
+          2359,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          2403
+        ]
+      },
+      "counts": {
+        "buttons": 154,
+        "inputs": 3,
+        "links": 5,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-placement": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1585
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          1545
+        ],
+        "footer": [
+          0,
+          1780,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1823
+        ]
+      },
+      "counts": {
+        "buttons": 61,
+        "inputs": 1,
+        "links": 3,
+        "headings": 9,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-bode": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1096
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1291,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1335
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 6,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(14, 22, 36)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-foc": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          969
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1164,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1208
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(14, 22, 36)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-pend": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          952
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1147,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1190
+        ]
+      },
+      "counts": {
+        "buttons": 39,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(14, 22, 36)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-models": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1032
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1227,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1270
+        ]
+      },
+      "counts": {
+        "buttons": 43,
+        "inputs": 4,
+        "links": 3,
+        "headings": 4,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(14, 22, 36)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-cadpcb": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1381
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1576,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1620
+        ]
+      },
+      "counts": {
+        "buttons": 39,
+        "inputs": 6,
+        "links": 3,
+        "headings": 4,
+        "canvases": 1,
+        "tables": 1
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(14, 22, 36)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-sysid": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          997
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1192,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1236
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(14, 22, 36)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-eskf": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1053
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1247,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1291
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(14, 22, 36)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-board": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          759
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          459
+        ],
+        "footer": [
+          0,
+          954,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          997
+        ]
+      },
+      "counts": {
+        "buttons": 35,
+        "inputs": 3,
+        "links": 4,
+        "headings": 3,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "dark/tab-links": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          153,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          153,
+          1244,
+          2176
+        ],
+        "panel": [
+          216,
+          173,
+          1204,
+          2136
+        ],
+        "footer": [
+          0,
+          2329,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          2414
+        ]
+      },
+      "counts": {
+        "buttons": 32,
+        "inputs": 1,
+        "links": 4,
+        "headings": 4,
+        "canvases": 0,
+        "tables": 2
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(7, 11, 18)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(238, 244, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#070b12",
+          "panel": "#0e1624",
+          "text": "#eef4ff",
+          "accent": "#38bdf8"
+        }
+      }
+    },
+    "light/tab-arch": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          8638
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          8598
+        ],
+        "footer": [
+          0,
+          8833,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          8876
+        ]
+      },
+      "counts": {
+        "buttons": 120,
+        "inputs": 4,
+        "links": 30,
+        "headings": 16,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-pyodide": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          114,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          114,
+          1244,
+          2245
+        ],
+        "panel": [
+          216,
+          134,
+          1204,
+          336
+        ],
+        "footer": [
+          0,
+          2359,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          2403
+        ]
+      },
+      "counts": {
+        "buttons": 154,
+        "inputs": 3,
+        "links": 5,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-placement": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1585
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          1545
+        ],
+        "footer": [
+          0,
+          1780,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1823
+        ]
+      },
+      "counts": {
+        "buttons": 61,
+        "inputs": 1,
+        "links": 3,
+        "headings": 9,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-bode": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1096
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1291,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1335
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 6,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(255, 255, 255)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-foc": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          969
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1164,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1208
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(255, 255, 255)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-pend": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          952
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1147,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1190
+        ]
+      },
+      "counts": {
+        "buttons": 39,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(255, 255, 255)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-models": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1032
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1227,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1270
+        ]
+      },
+      "counts": {
+        "buttons": 43,
+        "inputs": 4,
+        "links": 3,
+        "headings": 4,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(255, 255, 255)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-cadpcb": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1381
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1576,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1620
+        ]
+      },
+      "counts": {
+        "buttons": 39,
+        "inputs": 6,
+        "links": 3,
+        "headings": 4,
+        "canvases": 1,
+        "tables": 1
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(255, 255, 255)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-sysid": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          997
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1192,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1236
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(255, 255, 255)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-eskf": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1053
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1247,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1291
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(255, 255, 255)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-board": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          759
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          459
+        ],
+        "footer": [
+          0,
+          954,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          997
+        ]
+      },
+      "counts": {
+        "buttons": 35,
+        "inputs": 3,
+        "links": 4,
+        "headings": 3,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "light/tab-links": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          153,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          153,
+          1244,
+          2176
+        ],
+        "panel": [
+          216,
+          173,
+          1204,
+          2136
+        ],
+        "footer": [
+          0,
+          2329,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          2414
+        ]
+      },
+      "counts": {
+        "buttons": 32,
+        "inputs": 1,
+        "links": 4,
+        "headings": 4,
+        "canvases": 0,
+        "tables": 2
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(248, 246, 242)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(20, 26, 36)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#f8f6f2",
+          "panel": "#fff",
+          "text": "#141a24",
+          "accent": "#0d6b64"
+        }
+      }
+    },
+    "paper/tab-arch": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          8638
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          8598
+        ],
+        "footer": [
+          0,
+          8833,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          8876
+        ]
+      },
+      "counts": {
+        "buttons": 120,
+        "inputs": 4,
+        "links": 30,
+        "headings": 16,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-pyodide": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          114,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          114,
+          1244,
+          2245
+        ],
+        "panel": [
+          216,
+          134,
+          1204,
+          336
+        ],
+        "footer": [
+          0,
+          2359,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          2403
+        ]
+      },
+      "counts": {
+        "buttons": 154,
+        "inputs": 3,
+        "links": 5,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-placement": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1585
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          1545
+        ],
+        "footer": [
+          0,
+          1780,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1823
+        ]
+      },
+      "counts": {
+        "buttons": 61,
+        "inputs": 1,
+        "links": 3,
+        "headings": 9,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-bode": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1096
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1291,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1335
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 6,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(249, 241, 226)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-foc": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          969
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1164,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1208
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(249, 241, 226)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-pend": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          952
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1147,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1190
+        ]
+      },
+      "counts": {
+        "buttons": 39,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(249, 241, 226)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-models": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1032
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1227,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1270
+        ]
+      },
+      "counts": {
+        "buttons": 43,
+        "inputs": 4,
+        "links": 3,
+        "headings": 4,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(249, 241, 226)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-cadpcb": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1381
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1576,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1620
+        ]
+      },
+      "counts": {
+        "buttons": 39,
+        "inputs": 6,
+        "links": 3,
+        "headings": 4,
+        "canvases": 1,
+        "tables": 1
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(249, 241, 226)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-sysid": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          997
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1192,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1236
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(249, 241, 226)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-eskf": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1053
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1247,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1291
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(249, 241, 226)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-board": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          759
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          459
+        ],
+        "footer": [
+          0,
+          954,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          997
+        ]
+      },
+      "counts": {
+        "buttons": 35,
+        "inputs": 3,
+        "links": 4,
+        "headings": 3,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "paper/tab-links": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          153,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          153,
+          1244,
+          2176
+        ],
+        "panel": [
+          216,
+          173,
+          1204,
+          2136
+        ],
+        "footer": [
+          0,
+          2329,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          2414
+        ]
+      },
+      "counts": {
+        "buttons": 32,
+        "inputs": 1,
+        "links": 4,
+        "headings": 4,
+        "canvases": 0,
+        "tables": 2
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(239, 228, 208)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(31, 23, 16)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#efe4d0",
+          "panel": "#f9f1e2",
+          "text": "#1f1710",
+          "accent": "#0b6157"
+        }
+      }
+    },
+    "contrast/tab-arch": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          8638
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          8598
+        ],
+        "footer": [
+          0,
+          8833,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          8876
+        ]
+      },
+      "counts": {
+        "buttons": 120,
+        "inputs": 4,
+        "links": 30,
+        "headings": 16,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-pyodide": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          114,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          114,
+          1244,
+          2245
+        ],
+        "panel": [
+          216,
+          134,
+          1204,
+          336
+        ],
+        "footer": [
+          0,
+          2359,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          2403
+        ]
+      },
+      "counts": {
+        "buttons": 154,
+        "inputs": 3,
+        "links": 5,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-placement": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1585
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          1545
+        ],
+        "footer": [
+          0,
+          1780,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1823
+        ]
+      },
+      "counts": {
+        "buttons": 61,
+        "inputs": 1,
+        "links": 3,
+        "headings": 9,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-bode": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1096
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1291,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1335
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 6,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-foc": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          969
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1164,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1208
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-pend": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          952
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1147,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1190
+        ]
+      },
+      "counts": {
+        "buttons": 39,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-models": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1032
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1227,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1270
+        ]
+      },
+      "counts": {
+        "buttons": 43,
+        "inputs": 4,
+        "links": 3,
+        "headings": 4,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-cadpcb": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1381
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1576,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1620
+        ]
+      },
+      "counts": {
+        "buttons": 39,
+        "inputs": 6,
+        "links": 3,
+        "headings": 4,
+        "canvases": 1,
+        "tables": 1
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-sysid": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          997
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          167
+        ],
+        "footer": [
+          0,
+          1192,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1236
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-eskf": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          1053
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          195
+        ],
+        "footer": [
+          0,
+          1247,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          1291
+        ]
+      },
+      "counts": {
+        "buttons": 40,
+        "inputs": 4,
+        "links": 3,
+        "headings": 3,
+        "canvases": 1,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "12px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-board": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          195,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          195,
+          1244,
+          759
+        ],
+        "panel": [
+          216,
+          215,
+          1204,
+          459
+        ],
+        "footer": [
+          0,
+          954,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          997
+        ]
+      },
+      "counts": {
+        "buttons": 35,
+        "inputs": 3,
+        "links": 4,
+        "headings": 3,
+        "canvases": 0,
+        "tables": 0
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    },
+    "contrast/tab-links": {
+      "boxes": {
+        "header": [
+          0,
+          0,
+          1440,
+          56
+        ],
+        "rail": [
+          0,
+          153,
+          195,
+          759
+        ],
+        "main": [
+          196,
+          153,
+          1244,
+          2176
+        ],
+        "panel": [
+          216,
+          173,
+          1204,
+          2136
+        ],
+        "footer": [
+          0,
+          2329,
+          1440,
+          43
+        ],
+        "document": [
+          0,
+          0,
+          1440,
+          2414
+        ]
+      },
+      "counts": {
+        "buttons": 32,
+        "inputs": 1,
+        "links": 4,
+        "headings": 4,
+        "canvases": 0,
+        "tables": 2
+      },
+      "styles": {
+        "body": {
+          "display": "block",
+          "background": "rgb(0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "main": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "panel": {
+          "display": "block",
+          "background": "rgba(0, 0, 0, 0)",
+          "color": "rgb(255, 255, 255)",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontSize": "16.32px"
+        },
+        "shell": {
+          "display": "block"
+        },
+        "tokens": {
+          "bg": "#000",
+          "panel": "#000",
+          "text": "#fff",
+          "accent": "#7dd3fc"
+        }
+      }
+    }
+  }
+}

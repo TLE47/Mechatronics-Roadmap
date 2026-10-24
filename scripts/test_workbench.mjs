@@ -9,6 +9,12 @@
  *   test:theme:tokens  the ?view=theme page's parse of index.css, and its address
  *   test:spine       the ten-step spine the pages print, and the numbering no surface repeats
  *   test:palette     the ⌘K catalogue: every lesson/tab/command once, and predictable ranking
+ *   test:search      ⌘⇧F inside the course: a line, not a lesson, and the solution never indexed
+ *   test:prose       the 65 reading pages' index: what is copied, the heading slugs, the drift gate
+ *   test:keymap      the sheet's six rebindable keys: the rules, the clash, the store, the reset
+ *   test:help        the stuck report: what it carries, the three caps, and the ladder it leaves out
+ *   test:pair        the pair session's wires: the two signals, the message rules, and parsing that writes nothing
+ *   test:collab      the co-editing document: ids, diffs, convergence under concurrent edits, wire rules
  *   test:editor      slider directives (parse/clamp/format) and which lessons get helper tabs
  *   test:resume      the lesson the next visit reopens, including the ids it must refuse
  *   test:draft       the editor's unfinished work: kept, bounded, evicted, and never a starter copy
@@ -159,6 +165,8 @@ async function main() {
     { label: 'tokens', script: 'test_theme_tokens.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'spine', script: 'test_spine.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'palette', script: 'test_palette.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'search', script: 'test_lesson_search.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'prose', script: 'test_prose_search.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'editor', script: 'test_editor.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'resume', script: 'test_last_lesson.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'draft', script: 'test_lesson_draft.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -167,9 +175,13 @@ async function main() {
     { label: 'watch', script: 'test_watch.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'announce', script: 'test_announce.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'share', script: 'test_sharelink.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'help', script: 'test_help_report.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'pair', script: 'test_pair.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'collab', script: 'test_collab.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'inline', script: 'test_inline_values.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'symbols', script: 'test_symbols.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'layout', script: 'test_layout.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'keymap', script: 'test_keymap.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'vim', script: 'test_vim.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'trace', script: 'test_trace.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'cells', script: 'test_cells.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -177,6 +189,8 @@ async function main() {
     { label: 'try', script: 'test_try_links.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'history', script: 'test_draft_history.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'scope', script: 'test_scope.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'board', script: 'test_board_bridge.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'avr', script: 'test_avr.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'hints', script: 'test_check_hints.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'takealong', script: 'test_offline_takealong.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'backup', script: 'test_backup.mjs', env: { NODE_OPTIONS: TYPES } },

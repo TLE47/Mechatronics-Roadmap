@@ -24,9 +24,14 @@ could be read as a good result.
 Usage:
     python3 scripts/friction_report.py                       # rewrite the empty (N = 0) page
     python3 scripts/friction_report.py logs/a.json logs/b.json
+    python3 scripts/friction_report.py --out /tmp/aggregate.md logs/a.json logs/b.json
     python3 scripts/friction_report.py --check                # exit 1 if the page is stale
 
-Exit codes: `0` ok, `1` stale page or unreadable log, `2` wrong command line.
+`--out` is for trying an aggregate without touching the published page: the report is a generated file
+this repository commits, and a first run over real logs is an experiment until its numbers have been
+read. Points `--check` at the same file when both are given.
+
+Exit codes: `0` ok, `1` stale page or unreadable log, `2` wrong command line or an unwritable path.
 Exit-code family: typed.
 """
 
@@ -51,6 +56,19 @@ P80_ATTEMPTS_LIMIT = 8
 HELP_SHARE_LIMIT = 0.35
 UNFINISHED_LIMIT = 0.10
 FIRST_FAIL_SHARE_LIMIT = 0.50
+
+
+def display(path):
+    """A path as a reader should see it: relative inside the repository, absolute outside it.
+
+    `os.path.relpath` happily answers `../../../tmp/aggregate.md`, which is true and unhelpful; a file
+    written outside the repository is named by its own path.
+    """
+    try:
+        relative = os.path.relpath(path, ROOT)
+    except ValueError:
+        return path
+    return path if relative.startswith("..") else relative
 
 
 def load_events(paths):
@@ -290,30 +308,47 @@ def render(summary, sources):
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Turn exported learning logs into docs/friction-report.md")
     parser.add_argument("logs", nargs="*", help="exported learning-log JSON files (default: none, writes the N = 0 page)")
-    parser.add_argument("--check", action="store_true", help="fail if docs/friction-report.md is stale")
+    parser.add_argument("--check", action="store_true", help="fail if the report is stale")
+    parser.add_argument(
+        "--out",
+        metavar="PATH",
+        help="write the report here instead of docs/friction-report.md (a dry run; --check compares here)",
+    )
     args = parser.parse_args(argv)
 
     paths = []
     for pattern in args.logs:
         paths.extend(sorted(glob.glob(pattern)) or [pattern])
-    events = load_events(paths) if paths else []
+    try:
+        events = load_events(paths) if paths else []
+    except (OSError, ValueError) as error:
+        # An unreadable log is a finding, not a crash: the operator needs the file named, not a traceback.
+        print(f"[FAIL] {error}")
+        return 1
     summary = summarize(events)
-    text = render(summary, [os.path.relpath(p, ROOT) for p in paths] or ["no logs"])
+    text = render(summary, [display(p) for p in paths] or ["no logs"])
+    target = os.path.abspath(args.out) if args.out else OUT
+    shown = display(target)
 
     if args.check:
-        if not os.path.exists(OUT):
-            print("docs/friction-report.md is missing; run scripts/friction_report.py")
+        if not os.path.exists(target):
+            print(f"{shown} is missing; run scripts/friction_report.py")
             return 1
-        with open(OUT, "r", encoding="utf-8") as handle:
+        with open(target, "r", encoding="utf-8") as handle:
             if handle.read() != text:
-                print("docs/friction-report.md is stale; run scripts/friction_report.py")
+                print(f"{shown} is stale; run scripts/friction_report.py")
                 return 1
-        print("docs/friction-report.md is current")
+        print(f"{shown} is current")
         return 0
 
-    with open(OUT, "w", encoding="utf-8") as handle:
-        handle.write(text)
-    print(f"wrote {os.path.relpath(OUT, ROOT)} ({summary['events']} events)")
+    try:
+        with open(target, "w", encoding="utf-8") as handle:
+            handle.write(text)
+    except OSError as error:
+        # A directory that is not there, or is not writable: say which, and do not pretend to have written.
+        print(f"[FAIL] cannot write {shown}: {error}")
+        return 2
+    print(f"wrote {shown} ({summary['events']} events)")
     return 0
 
 

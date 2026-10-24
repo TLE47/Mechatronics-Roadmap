@@ -47,6 +47,7 @@ const budget = {
   css_gzip: 100,
   fonts: 500,
   largest_js_gzip: 800,
+  prose_gzip: 300,
   total: 2000,
 };
 const fits = {
@@ -55,6 +56,7 @@ const fits = {
   css_gzip: 90,
   fonts: 450,
   largest_js_gzip: 700,
+  prose_gzip: 250,
   total: 1800,
 };
 
@@ -203,7 +205,10 @@ check('the entry is the document plus the files it names, not the whole bundle',
 });
 
 check('an entry naming a file the build did not emit is unmeasured, not free', () => {
-  const measurement = measurementFrom(FILES, ['index.html', 'assets/gone-xyz.js']);
+  const measurement = measurementFrom(FILES, ['index.html', 'assets/gone-xyz.js'], {
+    name: 'prose-index.json',
+    gzip: 250,
+  });
   assert.equal(
     Number.isNaN(measurement.entry_gzip),
     true,
@@ -218,6 +223,21 @@ check('an entry naming a file the build did not emit is unmeasured, not free', (
 
 check('a document that names nothing is unmeasured, not an empty first paint', () => {
   assert.equal(Number.isNaN(measurementFrom(FILES).entry_gzip), true);
+});
+
+// The prose index is a file a search fetches, not a file a visit downloads: its budget moves on its
+// own, and `total` (what the shell costs) does not know about it.
+check('the prose index is measured on its own, never folded into the shell total', () => {
+  const shell = measurementFrom(FILES, ['index.html', 'assets/index-abc.js']);
+  assert.equal(Number.isNaN(shell.prose_gzip), true, 'no file is unmeasured, not zero bytes');
+  const withProse = measurementFrom(FILES, [], { name: 'prose-index.json', size: 5000, gzip: 1200 });
+  assert.equal(withProse.prose_gzip, 1200);
+  assert.equal(withProse.total, shell.total, 'a file fetched by a search must not move the shell total');
+  assert.deepEqual(
+    compareBudgets(shell, budget).unmeasured.map((row) => row.metric),
+    ['prose_gzip'],
+    'a missing prose index must fail the gate rather than pass as weight nothing measured'
+  );
 });
 
 check('a bundle with no js does not invent a largest chunk', () => {

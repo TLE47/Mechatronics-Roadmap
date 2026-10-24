@@ -29,3 +29,8 @@ LINK_REPORT.md
 
 
 screenshots/
+.fb-scratch/
+
+# Pilot exports: a participant's whole session. The kit keeps them here and they are never committed
+# (`docs/PILOT_KIT.md`); publishing is aggregates only.
+pilot-data/

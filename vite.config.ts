@@ -42,6 +42,11 @@ export default defineConfig(({ command }) => ({
           // catch-all `vendor` chunk is statically reachable from the entry, which is what put
           // 149 kB of CodeMirror back in `entry_gzip` the first time this was built.
           if (/node_modules\/@replit\//.test(id)) return 'vendor-vim';
+          // `avr8js` is only reached by the Board tab's Run handler (`import('../../avrSim.ts')`), and
+          // the catch-all `vendor` chunk is statically reachable from the entry: without this line the
+          // emulator's 14 kB lands in every first visit for a tab nobody opened, which is exactly the
+          // mistake the comment above records for CodeMirror.
+          if (/node_modules\/avr8js\//.test(id)) return 'vendor-avr';
           if (/node_modules\/katex\//.test(id)) return 'vendor-katex';
           if (/node_modules\/lucide-react\//.test(id)) return 'vendor-icons';
           return 'vendor';

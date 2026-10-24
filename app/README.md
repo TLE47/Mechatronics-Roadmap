@@ -64,7 +64,7 @@ test:theme:tokens` pins the parse and `npm run test:theme:e2e` checks the painte
 browser. The page is a route, not a tab: the learner's rail is unchanged.
 
 Legibility is measured, not eyeballed: `npm run test:theme` pins the storage/OS rules and keeps the
-three controls honest, and `npm run test:theme:e2e` drives Chromium through all eleven tabs in all four
+three controls honest, and `npm run test:theme:e2e` drives Chromium through all twelve tabs in all four
 palettes, compositing each text run over the backgrounds it actually sits on and failing anything
 below 3:1 (the current floor is 4.52:1, and 7:1 in high contrast). The unit suite runs inside
 `npm run test:workbench`; the browser sweep is its own CI step,
@@ -190,13 +190,52 @@ IndexedDB and comes back after a reload.
 | Key | Does |
 | :--- | :--- |
 | `⌘K` / `Ctrl+K` | The command palette: every lesson, exercise, tab and command in one searchable list. `↑`/`↓` move, `↵` opens, `esc` closes. It works while the editor has focus, which is when it is needed. |
+| `⌘P` / `Ctrl+P` | The same palette over **lessons only** — quick-open for a learner who already knows what they are opening. The browser's Print gives way; the cheat sheet's own **Print** button still prints. |
+| `⌘⇧F` / `Ctrl+⇧+F` | Search **inside** the course: the lessons' starter code, hint ladder, instructor's checks and expected output, and the 65 reading pages' prose. A starter hit opens the lesson with the caret on that line; a hint, check or output hit says which panel it is in; a course-page hit names its section and opens that page **on GitHub at the heading**, in a new tab, with the workbench still behind it. |
+| `?` | The sheet of every key, from [`src/shortcuts.ts`](src/shortcuts.ts) — one table, so the list cannot go stale. It must be typed outside an editor or a field, where `?` is a character. `⌘K` finds it too, by typing `shortcuts`. |
 | `⌘↵` / `Ctrl+↵` | Run the open lesson. |
 | `Escape`, then `i` | With **Vim keys** on (the toolbar's `Vim keys` button), normal mode reads `dd`, `u`, `/` and the rest; the badge beside the line count names the mode that is reading them. Off by default, and remembered once turned on ([`src/vimMode.ts`](src/vimMode.ts)). |
+
+**Six of those keys are yours to change.** A row's key in the sheet is a button: press it, press a
+new chord, and that is the key — `⌘⇧J` for focus, say. A key another action already has is refused
+with that action's name, one the browser keeps (⌘W, ⌘R, ⌘1) as the browser's, and a bare letter as
+typing; the old chord is freed by the move, so nothing has to be unbound first. **Reset all keys**
+puts the shipped six back, and the choice is remembered. A chord is stored **physically** —
+`KeyboardEvent.code` plus its modifiers — so `⌥1` still opens Study on a Mac that types `¡` for it;
+the sheet's own `?` is stored as the **character**, because `?` is Shift+Slash on a US keyboard, its
+own key on a French one, and the character is the thing the learner pressed. What stays fixed is
+said on the sheet: the four preset digits are a positional family, F9/F12 belong to the caret, and
+Escape and Tab belong to dialogs ([`src/keymap.ts`](src/keymap.ts),
+[`src/useKeymap.ts`](src/useKeymap.ts), `npm run test:keymap` for the rules, browser step 12b for the
+press, the clash, the reload and the reset).
 
 [`src/palette.ts`](src/palette.ts) is the whole search (prefix > word-start > substring >
 subsequence, stable order inside a score band) and [`src/paletteCatalog.ts`](src/paletteCatalog.ts)
 builds the list from the lesson registry plus the rail's metadata, so a new lesson or a renamed tab
 appears without editing the palette.
+
+**Three doors, one dialog.** `⌘K` lists everything, `⌘P` lists lessons, `⌘⇧F` searches the text the
+course carries ([`src/lessonSearch.ts`](src/lessonSearch.ts), [`src/proseSearch.ts`](src/proseSearch.ts));
+the dialog's own footer counts what it found, and each mode answers with its own placeholder, so a text
+search does not look like a lesson list. A search hit is a **line**, not a lesson: a starter hit opens
+the lesson *on that line* — the line travels as part of the mount (`initialLine`), so it survives the
+editor being replaced, which is what happens when the pick is for another lesson. The full solution is
+**not** indexed: the diff panel refuses to show it until it is earned, and a search box that echoed
+solution lines would be the same answer through a different door.
+
+**The reading pages are the other half.** The 65 pages a learner reads — 48 prose lessons and the 17 arm
+modules — are Markdown in this repository, and Pages serves only the built app, so their words are not
+in the bundle at all. `scripts/generate_prose_index.py` copies what is searchable (headings, prose,
+lists and safety notes; not code fences, tables, or the callouts and ladder-gate exam scripts write
+into every page) into [`app/public/prose-index.json`](public/prose-index.json), and the app fetches that
+file **the first time `⌘⇧F` is opened** — 207 kB gzipped, never on a normal visit, cached by the service
+worker after the first search. A heading hit outranks a body hit, two sections per page and fifteen rows
+overall; the row names its section and opens the page on GitHub at that heading's anchor
+(`github-slugger`'s rule, including the `-1` a repeated heading gets), so a hit on a 300-line module is
+a place to read, not just a page. `prose_gzip` is its own line in
+[`docs/weight-budget.json`](../docs/weight-budget.json): it is neither JavaScript nor part of a first
+paint, and `python3 scripts/generate_prose_index.py --check` (a CI gate, and in `check_all.py`) fails
+when a page changes without the index being rebuilt.
 
 ### Study notes
 
@@ -273,7 +312,9 @@ The clock is the other half, because the pilot's `active_minutes` column had no 
 [`src/sittingClock.ts`](src/sittingClock.ts) records **sittings**: any lesson open, run or review extends
 the one in progress, five minutes without one closes it, and a sitting is capped at three hours so a tab
 left open overnight is not study time. The study panel prints `Today 34 min · median sitting 18 min`,
-and the learning-log export carries the raw sittings beside the events, so a pilot can compute the median
+re-reading on `SITTING_RECORDED_EVENT` after any write — a run is written by the runner, so a panel that
+only refreshed for its own writes printed the number the store held on mount — and the learning-log
+export carries the raw sittings beside the events, so a pilot can compute the median
 and range `docs/PILOT.md` asks for instead of estimating them. A sitting is deliberately **not** in the
 backup: it is a fact about one machine's clock, and merging two machines' sittings would count the same
 hour twice.
@@ -339,15 +380,15 @@ the time section says it was measured on this device, because a pilot reading th
 the number is. The document is built on the render that opens the modal — never a frame of empty
 preview — and the download and the preview are the same string.
 
-### Accessibility and weight, as gates
+### Accessibility, weight, audits and surfaces, as gates
 
-Two numbers about the shell itself, both measured rather than asserted.
+Four measurements about the shell itself, all measured rather than asserted.
 
-**`npm run check:axe`** injects `axe-core` into every one of the eleven tabs, in all four palettes, and
-fails on anything `serious` or `critical`. `minor` and `moderate` findings are printed (46 of them:
-`page-has-heading-one`, `region`, `heading-order`) and do not fail — a gate that trips on a landmark
-suggestion is a gate people turn off. `color-contrast` is switched off here on purpose: the theme
-suite composites the real ancestor backgrounds and fails below 3:1 on all 44 tab/palette pairs, and a
+**`npm run check:axe`** injects `axe-core` into every one of the twelve tabs, in all four palettes, and
+fails on anything `serious` or `critical`. `minor` and `moderate` findings are printed (a few dozen of
+them, counted per tab and palette, and all of one kind: `page-has-heading-one`, `region`,
+`heading-order`) and do not fail — a gate that trips on a landmark suggestion is a gate people turn off. `color-contrast` is switched off here on purpose: the theme
+suite composites the real ancestor backgrounds and fails below 3:1 on all 48 tab/palette pairs, and a
 second, rougher contrast measure that disagreed with it would make the accurate one look wrong.
 
 Its first run found three things, all fixed rather than excused: **22 sliders with no accessible
@@ -366,21 +407,55 @@ It is empty.
 
 **`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
 it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
-because woff2 is already compressed), `largest_js_gzip` and `total`. Today that is **948.5 kB across 33
-files**, with the budgets 5-8% above. A breach fails with the overshoot named, and so does a budget with
-nothing measured behind it — a metric the build stopped emitting would otherwise pass forever. The
-rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and `npm run
-test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a budget
+because woff2 is already compressed), `largest_js_gzip`, `prose_gzip` and `total`. Today that is **1.04
+MB across 34 files**, with the budgets 5-8% above. A breach fails with the overshoot named, and so does a
+budget with nothing measured behind it — a metric the build stopped emitting would otherwise pass
+forever. The rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and `npm
+run test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a budget
 gate is usually wrong.
 
 A byte budget is a gate because it is deterministic. Wall-clock timing is not gated: on a shared runner
-its variance is larger than any regression this app could ship, and a flaky gate gets disabled.
+its variance is larger than any regression this app could ship, and a flaky gate gets disabled. That is
+why **Lighthouse runs without its performance category** — see below.
 
-### One chunk became an entry, five vendors and ten tabs
+**`npm run check:lighthouse`** runs Lighthouse against the **built bundle**, served at the Pages base
+path, for the three categories whose audits are facts: `best-practices`, `seo` and `accessibility`. The
+scores print; the audits are what fails. `performance` is not run at all, for the reason the paragraph
+above gives: a score that moves with the runner is not a gate, and a number nobody gates is read as a
+promise the build does not keep.
+
+Its first run found four things, and the first three were real. **Two header buttons had no accessible
+name** — their words are `hidden` below 1536 px, so on every ordinary screen they were an icon and
+nothing else (`Export Progress (.md)` and `1-Page Cheat Sheet` are now also their `aria-label`, matching
+the visible words rather than describing them). **A lesson card's heading was an `h3`** under the page's
+only `h1`, skipping a level. **The docking control's `aria-label` described the move** without
+containing the words drawn on it — `List → Right` — which is WCAG 2.5.3. The axe gate had passed all
+three: its ruleset and Lighthouse's disagree about text hidden with `display:none`, which is exactly why
+the CI row wanted both. The fourth finding, `valid-source-maps`, is the one entry in
+[`docs/lighthouse-allowlist.json`](../docs/lighthouse-allowlist.json) — every byte of this bundle is
+built from this public repository, and maps would roughly double what Pages serves. The allowlist is
+the same three-way ratchet as the accessibility one: unlisted fails, wider than recorded fails, and
+stale fails.
+
+**`npm run check:snapshot`** records the **painted surface** of all 48 tab/palette combinations: where
+the header, the activity rail, the main pane and its first panel sit, how many buttons, inputs, links,
+headings, canvases and tables the tab has, and the colours, type and palette tokens the browser
+resolved. Every other suite asks about a feature; this one is the only place that notices a panel that
+stopped being a panel.
+
+It is **not a pixel diff**, and that is a decision. A screenshot baseline is taken on one machine and
+its antialiasing does not exist on the next — the runner is Linux, the person writing this is on a Mac,
+and a gate whose first red build is font rasterisation teaches people to ignore it. So the portable
+part is recorded: geometry with a **2 px tolerance** per number, counts and resolved styles exactly.
+`--record` rewrites [`docs/surface-snapshot.json`](../docs/surface-snapshot.json) and the diff is the
+list of what moved; `--png` writes a picture per surface to `.fb-scratch/surfaces/` for the review a
+number cannot do; `--tab`/`--palette` narrow a run while fixing one.
+
+### One chunk became an entry, six vendors and twelve tabs
 
 The budget's first reading was a single 614 kB chunk, and turning the split into a gate is what made
 the number move. `App.tsx` imports the runner statically — it is the tab the app opens on, so a lazy
-boundary there would only add a fetch before the lesson appears — and the other ten tabs are
+boundary there would only add a fetch before the lesson appears — and the other eleven tabs are
 `React.lazy` chunks, fetched when the learner opens one. `vite.config.ts` splits the libraries by how
 often they change (`vendor-react`, `vendor-editor`, `vendor-katex`, `vendor-icons`), so editing a tab
 no longer invalidates React and CodeMirror with it.
@@ -559,6 +634,24 @@ wrapping. The drag is captured by the handle itself, so letting go outside the w
 and the number is written once at the end rather than on every pointer move
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout` for the arithmetic,
 `npm run test:e2e:pages` for the drag and the reload).
+
+**A panel can sit on either edge.** The presets decide what is on screen; **docking** decides which
+side. Study's chooser can move to the right of the work area, and Split's results to the left of the
+editor — the arrangement for a learner whose eyes are on the code and who wants the output on that
+side too. One button names the panel it will move *in the preset in force* (`List → Right`,
+`Results → Left`) and offers the way back; Write and Read draw no button, because neither has a panel
+beside anything to move. The two sides are remembered separately, and the stored share is still the
+**editor's**: with the results on the left, the pointer, the arrow keys and `Home`/`End` follow the
+handle, so `Home` puts it at the container's left edge and the editor is at its widest. The two
+Split columns are placed by CSS column rather than by document order, so the editor stays first in
+the DOM (it is what the results are about) while the screen can put either one first
+([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout`, `npm run test:e2e:pages`
+for the docked geometry and the drag).
+
+**At `xl` the tab rail is an activity bar.** Below 1280 px the twelve tabs are the horizontal scroller
+they have always been; above it they are a vertical strip down the left edge, pinned to the top so a
+long lesson scrolls past it, with every label visible and none of them behind a sideways scroll. Same
+buttons, same `data-testid`s: the strip is the rail's classes, not a second copy of the list.
 
 **Sliders are a comment on a number.**
 
@@ -795,8 +888,64 @@ can send a person: a screenshot loses the code and a paste lands in the wrong le
 | Decoding is validation | Version, alphabet, JSON shape, field types and the same length cap are checked; anything else decodes to nothing and the workbench opens normally. |
 
 The link opens `?lesson=<id>#share=<payload>`, so a client that strips the fragment still lands on
-the right lesson. Pair study — two people editing one attempt — is still missing; this is the send, not
-the session.
+the right lesson. The share link is the send; the session it was missing is **Pair**, below.
+
+### Asking for help
+
+A link is the work; a person answering a beginner also needs to know what the lesson was, what the
+check said and which line Python named. **Ask for help** sits under the verdict of a run that did not
+pass and turns that screen into one message ([`src/helpReport.ts`](src/helpReport.ts),
+[`src/components/HelpSheet.tsx`](src/components/HelpSheet.tsx), `npm run test:help`).
+
+| Rule | Why |
+| :--- | :--- |
+| **Nothing is sent from the app** | There is no endpoint. The sheet copies text, or opens GitHub's `issues/new` form pre-filled; the learner presses the button that files it. The footer says the code is in the report and to send it where they would send the file. |
+| **The preview is the report** | The `<pre>` is the exact string Copy writes and the issue's body, so nobody sends a message they have not read — including the caps' own sentences. |
+| The question comes **first** | The textarea is focused on open because what the learner was trying is the one thing a run cannot say; without it the report is a dump. It is capped at 500 characters. |
+| The ladder **never** travels | A report carries `Hints opened: 2 of 3`, never a rung's text or the solution — otherwise a helper's reply quotes the answer back, and the report becomes a way around the pacing `checkHints.ts` enforces. Pinned by `test:help`. |
+| Every cap **prints itself** | Code past 120 lines ends with `# … 80 more lines not included`; `stdout`, `stderr` and the instructor's message are cut at 1,200 characters each; a report past 4,000 ends with `_Report shortened: N characters were left out._` A report that silently drops the failing line is worse than none. |
+| The issue door is **measured** | GitHub's form refuses nothing, so the URL is capped at 7,000 characters and a report past it is refused *in the sheet* with its size, while Copy still works. |
+
+The report names the verdict in the badge's own words, the lesson page on GitHub, the attempts and
+rungs, the traceback's line and the explainer entry it matched, a capstone's failing metric lines, and
+the checks' own detail — the same sentences the panels show, so a helper reading the report is not
+reading a second description of the same failure.
+
+### Pair study
+
+**Pair** in the runner toolbar opens a session with one other workbench: a direct WebRTC data channel,
+with the connection carried **by hand** ([`src/pairing.ts`](src/pairing.ts),
+[`src/usePairSession.ts`](src/usePairSession.ts), [`src/components/PairSheet.tsx`](src/components/PairSheet.tsx),
+`npm run test:pair`).
+
+| Rule | Why |
+| :--- | :--- |
+| **Three pieces of text, no server** | The host copies an invitation (`mechalab-pair-1:` + base64url SDP), the guest sends back a reply, the host pastes it in. The app has no room to join and posts nothing; after those two pastes the two pages talk only to each other. |
+| **No ICE servers** | Two tabs on one machine, or two workbenches on one network, find each other from their own host candidates. Shipping a STUN address would tell a third party who is pairing, so there is none — and the sheet says a session across a restrictive network may not connect rather than pretending. |
+| A signal **says which box it belongs in** | The likeliest mistake with two textareas is pasting the invitation into the reply field; the refusal names that mistake, and a code from another build is refused before `setRemoteDescription` ever sees it. |
+| Gathering is **bounded** | The invitation exists after ICE completes or 3 s, whichever comes first — a button that waits forever is a button that never answers. |
+| **An attempt is offered, never applied** | Send is a button here; on the other side the attempt arrives as a card with its line count, and **Load their code** is what replaces a draft — the share link's rule, because it is the same thing. |
+| The card **knows the lesson** | An attempt carries its lesson id. If the two learners are on different lessons the card says which one and offers **Open P.2**; code is never dropped into another lesson's draft, and there is no lesson switch mid-merge. |
+| Messages are **validated field by field** | The other side is a program: unknown kind, wrong version, a non-string code or an attempt past 24,000 characters is dropped, never truncated into an editor with its ending missing. |
+
+### Co-editing one file
+
+**Co-edit together** joins the two editors: one document, both screens, over the same data channel
+([`src/collab.ts`](src/collab.ts), `npm run test:collab`). The host offers, the guest accepts, and from
+then on every change is shared.
+
+| Rule | Why |
+| :--- | :--- |
+| **A character has an identity** | The document is an RGA: each character carries `{workbench, sequence}` and the id of the character it was typed after, and the file is a walk of that tree. Two people typing at the same spot get the same order on both machines without a server or a clock deciding. |
+| **A local edit is a diff** | The editor only ever says "the text is now this"; the common prefix and suffix are found and the middle becomes character ops. That is why one path covers typing, pasting, Format's rewrite, Load Solution and a slider. |
+| **Undo is yours** | A peer's edit is applied outside the undo history, so ⌘Z steps back through what *you* typed. The one honest limit, said on the sheet: if they typed inside the exact text you undo, their characters go with it, as if you had selected and deleted. |
+| **The text travels once** | Both sides seed the same character ids from the starting text, so opening a session is one message rather than a transcript of every character already in the file. |
+| **Accepting is a press** | The guest's editor is replaced only when they press **Accept and co-edit** — the share link's rule and the attempt card's, for the same reason. Declining touches nothing and says so to the host. |
+| **A paste is split, not refused** | Ops travel in batches of 200 in order; applying them in order leaves the other copy holding the same text. A file past 24,000 characters stops co-editing with a sentence rather than half-applying a paste. |
+| **The lesson is the boundary** | Moving to another lesson, stopping co-editing or leaving the session ends it on both screens with the sentence that says which happened — a shared document never quietly starts writing into another lesson. |
+
+What it is not is presence: there is no cursor of theirs on your screen and no list of who is where.
+The two people are already talking, by whatever channel carried the invitation.
 
 ### Try-it blocks
 
@@ -814,6 +963,41 @@ its editor. A page now marks that fence with `<!-- try -->` on the line above it
 | The learner's draft is never touched | Scratch text is not written to the draft store, so a link from a page cannot cost a reader the work behind it. **Back to my draft** restores what was there, and the sitting still counts — they were at the screen. |
 | The lesson comes from the page | The id is the one the page's own run callout names, so a block cannot open a different entry from the link above it, and a page that names none is reported instead of shipping a link to nowhere. |
 | The link is generated, and `--check` gates it | Edit the code and re-run the generator; a stale page fails `npm run check:try-links` instead of opening old code. A block too long for the URL cap is refused by its measured size — why the biggest worked examples are still read-only. |
+
+### The board, without the board
+
+Five lessons are Arduino sketches — Stage 0's four plus Track 01's H-bridge lab — and this tab cannot
+compile C: it holds CPython, and an AVR toolchain is a multi-megabyte wasm build the weight budget does
+not carry. The roadmap's **Board** card
+([`src/components/BoardBridge.tsx`](src/components/BoardBridge.tsx),
+[`src/boardBridge.ts`](src/boardBridge.ts)) therefore bridges the gap instead of faking it: the lesson's
+own `Full Solution`, a Copy button, a link into a simulator in another tab, and one thing graded here.
+
+| Decision | Why |
+| :--- | :--- |
+| The sketch is generated from the page | `scripts/extract_and_compile_sketches.py --write-panel` writes [`src/data/boardBridges.json`](src/data/boardBridges.json) from the five lesson pages, and `--check-panel` (`npm run check:panel`) fails when it drifts. A hand-kept copy would teach an older program the first time a lesson edited its solution. |
+| The serial is the text CI proves | `--host-verify` compiles each solution against a host mock of `Arduino.h` and compares `setup()`'s output with the lesson's `### Expected Output`; the card shows that exact text and grades the learner's prediction against it with the runner's own whitespace rule (`src/outputMatch.ts`). |
+| The board is a link, never an `iframe` | The document is isolated with `COEP: require-corp` for `SharedArrayBuffer`, so a cross-origin frame from a site that sends no CORP header renders as an empty box; Wokwi's own embed is an unsupported prototype. A new tab is the only shape that works, which is why the polish — the sketch, the copy, the steps, the check — lives on this side. |
+| The card says where the seam is | Third-party simulators need the network, and Tinkercad asks for an account; nothing pasted there reaches this page. A card that implied otherwise would be a worse lie than one that points. |
+| A graded prediction is a `run` | Answering the serial box files `{ kind: 'run', lesson, outcome }` in the learning log, so the friction report counts the attempt the same way it counts a Python run — the learner did something and it was checked. |
+
+### Board — the tab that runs machine code
+
+The plan's last row asked for a read-only surface over the compiled Arduino reference, and **Board**
+is it ([`src/components/tabs/TabBoard.tsx`](src/components/tabs/TabBoard.tsx),
+[`src/avrSim.ts`](src/avrSim.ts)). `scripts/extract_and_compile_sketches.py --write-firmware` compiles
+each `Full Solution` for `arduino:avr:uno` and commits the `.hex` to [`app/public/firmware/`](public/firmware/)
+(51 kB of Intel HEX, **served, not bundled**) with [`src/data/firmware.json`](src/data/firmware.json)
+recording the hash of the sketch each was built from and of the file.
+
+| Decision | Why |
+| :--- | :--- |
+| The emulator is a lazy chunk of its own | `avr8js` (9.2 kB gzipped) is imported **inside** the Run handler. It also gets its own `vendor-avr` chunk: the catch-all `vendor` chunk is preloaded by `index.html`, and leaving the emulator in it put 9.6 kB in every first visit for a tab nobody opened — `entry_gzip` caught that at 481.7 kB against a 480 kB ceiling before the split, and reads 472.4 kB after it |
+| The program is committed, not built in the tab | An AVR toolchain is far beyond the bundle. What runs is the compiled reference; an **edit** runs on a board or in CI, and the tab says so |
+| Two gates, because a byte-compare cannot work | `--check-firmware` proves each hex was built from the sketch the page ships (a newer toolchain changes the machine code, not the behaviour); `npm run test:avr` runs every hex through `AvrSketch` — the module the tab uses — and asserts its serial is the lesson's |
+| The guess is graded against what it printed | The page's text is the run's **stop condition**, not the answer key; a guess is compared with the emulator's own USART output, so a divergence between page and program shows up as a mismatch instead of being forgiven |
+| Inputs float at 0, deliberately | No ADC is attached, exactly like `--host-verify`'s host mock, which is why the lesson's expected serial is what the emulator prints. A real board differs in the numbers an unconnected pin reads, not in the code |
+| Stop, Reset, and a cycle clock | A run is chunked (40 000 instructions a tick) so the tab stays responsive; leaving the tab cancels it, and the clock says how much Arduino time the run was |
 
 ## Stack
 
@@ -904,8 +1088,14 @@ npm run test:paint          # the first paint as a reading: one sample per visit
 npm run test:weight          # the weight budget's rules: the boundary, an unmeasured metric, the tightest
 npm run test:share           # the share link: round trips, the URL-safe alphabet, the measured cap, every malformed fragment
 npm run test:inline          # inline values: top-level bindings only, the last binding, payload validation, the cut
-npm run check:axe            # axe over all 11 tabs in every palette; serious/critical fails, stale allowlists fail
+npm run test:board           # the Board card: each lesson's sketch, a prediction graded against the proven serial, malformed bridges refused
+npm run check:panel          # the card's generated data still matches the five Arduino lesson pages
+npm run test:avr             # every committed .hex runs in avr8js and prints its lesson's serial; corrupt records and wrong expectations refused
+npm run check:firmware       # each .hex was built from the sketch the page ships, and is the file the index hashes
+npm run check:axe            # axe over all 12 tabs in every palette; serious/critical fails, stale allowlists fail
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
+npm run check:lighthouse     # best-practices, SEO and accessibility audits on the built bundle; performance is not run
+npm run check:snapshot       # the painted structure of all 48 tab/palette surfaces against docs/surface-snapshot.json
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting

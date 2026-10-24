@@ -35,7 +35,7 @@ import {
   startCompletion,
   type CompletionSource,
 } from '@codemirror/autocomplete';
-import { Compartment, EditorState } from '@codemirror/state';
+import { Compartment, EditorState, Transaction } from '@codemirror/state';
 import {
   drawSelection,
   dropCursor,
@@ -197,6 +197,9 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
   ) {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const viewRef = useRef<EditorView | null>(null);
+    // The line this editor was born with. The mount below applies that one, so the effect after the
+    // mount knows to apply only a *later* request — a search hit picked before the chunk landed.
+    const lineOnMountRef = useRef<number | undefined>(initialLine);
     const onChangeRef = useRef(onChange);
     const onSliderRef = useRef(onSliderCommit);
     // A jump is asked for by the runner, which may change its mind between renders (a different
@@ -278,6 +281,35 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
           const view = viewRef.current;
           if (!view) return;
           view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
+        },
+        applyWithoutHistory: (text: string) => {
+          const view = viewRef.current;
+          if (!view) return;
+          const current = view.state.doc.toString();
+          if (current === text) return;
+          // Replace the middle that differs and leave the rest of the document — and the selection,
+          // which CodeMirror maps through a change — alone. A whole-document replace would put the
+          // caret at the end every time the other person typed.
+          const shortest = Math.min(current.length, text.length);
+          let prefix = 0;
+          while (prefix < shortest && current[prefix] === text[prefix]) prefix += 1;
+          let suffix = 0;
+          while (
+            suffix < shortest - prefix &&
+            current[current.length - 1 - suffix] === text[text.length - 1 - suffix]
+          ) {
+            suffix += 1;
+          }
+          view.dispatch({
+            changes: {
+              from: prefix,
+              to: current.length - suffix,
+              insert: text.slice(prefix, text.length - suffix),
+            },
+            // The one line this method exists for: a change that is not this person's typing must
+            // not be theirs to undo.
+            annotations: Transaction.addToHistory.of(false),
+          });
         },
         revealLine: (line: number) => {
           const view = viewRef.current;
@@ -484,6 +516,18 @@ export const PythonEditorImpl = forwardRef<PythonEditorHandle, PythonEditorProps
       // The document is synced by the effect below; mounting once per editor instance is the point.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [testId, readOnly, ariaLabel]);
+
+    // A jump asked for while this editor was still arriving comes as a *changed* `initialLine`: the
+    // mount above applies the number the editor was born with, and this applies the ones that land
+    // after it. That is the case a search hit for another lesson hits when its editor chunk has not
+    // finished loading — the runner asks, the ref does not exist yet, and the line would be lost.
+    useEffect(() => {
+      if (initialLine === lineOnMountRef.current) return;
+      lineOnMountRef.current = initialLine;
+      const view = viewRef.current;
+      if (!view || !initialLine || !Number.isFinite(initialLine)) return;
+      revealLine(view, initialLine);
+    }, [initialLine]);
 
     // The Vim preference changed: reconfigure this editor instead of mounting another one, so the
     // document, the undo history and the caret survive the toggle. Also runs on mount, which is how a

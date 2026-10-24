@@ -18,30 +18,43 @@
  *    width, and everything that can go wrong with one is arithmetic: a stored `0` that collapses the
  *    editor, a stored `banana`, a pointer outside the container, a key at the clamp. Each is pinned
  *    here because a divider that can be dragged to nothing is worse than no divider.
+ * 6. **Docking is a side, not a visibility, and the side is in the arithmetic.** One button moves the
+ *    panel the preset in force has beside nothing else: Study's chooser in Study, Split's results
+ *    in Split, and no button at all in Write or Read. Because the stored ratio is always the
+ *    editor's share, a results column on the left has to reverse the grid template, the pointer
+ *    mapping and the two arrow keys together — a failure to reverse all four is a drag that moves
+ *    the boundary the wrong way, which is invisible until somebody tries it.
  *
  * Run: node --experimental-strip-types scripts/test_layout.mjs
  */
 
 import assert from 'node:assert/strict';
 import {
+  DEFAULT_DOCK,
   DEFAULT_LAYOUT,
   DEFAULT_SPLIT_RATIO,
   LAYOUTS,
   SPLIT_KEY_STEP,
   SPLIT_MAX_RATIO,
   SPLIT_MIN_RATIO,
+  STORAGE_KEY_DOCK,
   STORAGE_KEY_LAYOUT,
   STORAGE_KEY_SPLIT_RATIO,
   clampSplitRatio,
+  dockControl,
+  flippedDock,
   layoutArrangement,
   layoutShortcutFor,
   layoutShows,
+  normalizeDock,
+  readDock,
   readLayout,
   readSplitRatio,
   splitGridTemplate,
   splitRatioAfterKey,
   splitRatioAt,
   splitRatioPercent,
+  writeDock,
   writeLayout,
   writeSplitRatio,
 } from '../app/src/workspaceLayout.ts';
@@ -268,6 +281,120 @@ check('a store that throws costs the memory, not the divider', () => {
   } finally {
     delete globalThis.localStorage;
   }
+});
+
+section('docking');
+
+check('the defaults are the arrangement the app has always shipped', () => {
+  assert.deepEqual(DEFAULT_DOCK, { list: 'left', results: 'right' });
+  assert.deepEqual(readDock(), DEFAULT_DOCK, 'with no storage the defaults are the dock');
+});
+
+check('the one button names the panel this preset can move, and the other side', () => {
+  const study = dockControl(DEFAULT_DOCK, 'study');
+  assert.equal(study.region, 'list');
+  assert.equal(study.side, 'right', 'a chooser on the left offers to move right');
+  assert.match(study.label, /List .* Right/);
+  assert.match(study.title, /lesson list/);
+
+  const split = dockControl(DEFAULT_DOCK, 'split');
+  assert.equal(split.region, 'results');
+  assert.equal(split.side, 'left', 'results on the right offer to move left');
+  assert.match(split.label, /Results .* Left/);
+  assert.match(split.title, /results/);
+
+  // A panel already on the other side offers the way back, with its own words.
+  assert.match(dockControl({ list: 'right', results: 'left' }, 'study').label, /List .* Left/);
+  assert.match(dockControl({ list: 'right', results: 'left' }, 'split').label, /Results .* Right/);
+
+  // Write and Read have nothing beside anything: no button, rather than one that does nothing.
+  assert.equal(dockControl(DEFAULT_DOCK, 'write'), null);
+  assert.equal(dockControl(DEFAULT_DOCK, 'read'), null);
+});
+
+check('a flip moves only the panel the preset is showing', () => {
+  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'study'), { list: 'right', results: 'right' });
+  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'split'), { list: 'left', results: 'left' });
+  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'write'), DEFAULT_DOCK, 'Write has nothing to move');
+  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'read'), DEFAULT_DOCK, 'Read has nothing to move');
+  assert.deepEqual(
+    flippedDock({ list: 'right', results: 'left' }, 'study'),
+    { list: 'left', results: 'left' },
+    'the flip returns to where it started'
+  );
+});
+
+check('the dock is remembered, one field at a time', () => {
+  assert.equal(typeof globalThis.localStorage, 'undefined', 'this check assumes no global storage');
+  assert.deepEqual(writeDock(DEFAULT_DOCK), DEFAULT_DOCK, 'with no store the side still applies');
+
+  globalThis.localStorage = fakeStorage();
+  try {
+    assert.deepEqual(readDock(), DEFAULT_DOCK, 'an empty store is the defaults');
+    assert.deepEqual(writeDock({ list: 'right', results: 'left' }), { list: 'right', results: 'left' });
+    assert.equal(
+      globalThis.localStorage.data.get(STORAGE_KEY_DOCK),
+      '{"list":"right","results":"left"}'
+    );
+    assert.deepEqual(readDock(), { list: 'right', results: 'left' });
+    // Junk is per field: a side this build does not know does not forget the other one.
+    assert.deepEqual(normalizeDock({ list: 'up', results: 'left' }), { list: 'left', results: 'left' });
+    assert.deepEqual(normalizeDock({ list: 'right' }), { list: 'right', results: 'right' });
+    for (const junk of ['', '   ', 'banana', 'null', '[]', '{"list":"top"}']) {
+      globalThis.localStorage.data.set(STORAGE_KEY_DOCK, junk);
+      assert.deepEqual(readDock(), DEFAULT_DOCK, `stored ${JSON.stringify(junk)}`);
+    }
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('a store that throws costs the memory, not the dock', () => {
+  globalThis.localStorage = {
+    getItem() {
+      throw new Error('SecurityError');
+    },
+    setItem() {
+      throw new Error('QuotaExceededError');
+    },
+  };
+  try {
+    assert.deepEqual(readDock(), DEFAULT_DOCK);
+    assert.deepEqual(writeDock({ list: 'right', results: 'left' }), { list: 'right', results: 'left' });
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('a docked-left results column gets the second track, not the editor’s share', () => {
+  // The number is always the editor's share: at 42% the editor keeps 42 whether it is the first
+  // track or the second.
+  assert.equal(splitGridTemplate(0.42, 'right'), 'minmax(0, 0.42fr) minmax(0, 0.58fr)');
+  assert.equal(splitGridTemplate(0.42, 'left'), 'minmax(0, 0.58fr) minmax(0, 0.42fr)');
+  assert.equal(splitGridTemplate(0.5), splitGridTemplate(0.5, 'right'), 'the default is unchanged');
+  assert.equal(splitGridTemplate(0.1, 'left'), 'minmax(0, 0.7fr) minmax(0, 0.3fr)', 'the clamp holds');
+});
+
+check('a pointer is measured from the editor’s side of the boundary', () => {
+  assert.equal(splitRatioAt(700, 100, 1000, 'right'), 0.6);
+  assert.equal(splitRatioAt(700, 100, 1000, 'left'), 0.4, 'the same pixel, the other track');
+  assert.equal(splitRatioAt(600, 100, 1000, 'left'), 0.5);
+  assert.equal(splitRatioAt(0, 100, 1000, 'left'), SPLIT_MAX_RATIO, 'outside clamps, still');
+  assert.equal(splitRatioAt(5000, 100, 1000, 'left'), SPLIT_MIN_RATIO);
+  assert.equal(splitRatioAt(700, 100, 0, 'left'), null);
+});
+
+check('the keys move the handle, and the announcement is still the editor', () => {
+  // Docked left, the editor is the right-hand track: the left arrow hands it room.
+  assert.equal(splitRatioAfterKey(0.5, 'ArrowLeft', false, 'left'), 0.5 + SPLIT_KEY_STEP);
+  assert.equal(splitRatioAfterKey(0.5, 'ArrowRight', false, 'left'), 0.5 - SPLIT_KEY_STEP);
+  assert.equal(splitRatioAfterKey(0.5, 'ArrowLeft', true, 'left'), 0.6);
+  // Home is the container's left edge, which is the editor at its widest when the results are left.
+  assert.equal(splitRatioAfterKey(0.5, 'Home', false, 'left'), SPLIT_MAX_RATIO);
+  assert.equal(splitRatioAfterKey(0.5, 'End', false, 'left'), SPLIT_MIN_RATIO);
+  assert.equal(splitRatioAfterKey(SPLIT_MAX_RATIO, 'ArrowLeft', false, 'left'), SPLIT_MAX_RATIO);
+  assert.equal(splitRatioAfterKey(0.5, 'ArrowUp', false, 'left'), null);
+  assert.equal(splitRatioAfterKey(0.5, 'ArrowLeft'), 0.5 - SPLIT_KEY_STEP, 'the right-docked rules are unchanged');
 });
 
 console.log(`layout presets: ${passed} passed, ${failed} failed`);

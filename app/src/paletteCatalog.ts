@@ -67,6 +67,13 @@ export const PALETTE_ACTIONS: PaletteItem[] = [
     keywords: 'print reference sheet',
   },
   {
+    id: 'action-open-shortcuts',
+    kind: 'action',
+    label: 'Keyboard shortcuts',
+    detail: '?',
+    keywords: 'keys keymap bindings help sheet cheatsheet hotkeys',
+  },
+  {
     id: 'action-export-portfolio',
     kind: 'action',
     label: 'Export progress as Markdown',

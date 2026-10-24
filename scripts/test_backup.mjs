@@ -66,6 +66,7 @@ import {
   STORAGE_KEY_VERIFIED,
 } from '../app/src/progressKeys.ts';
 import { MAX_CARDS, cardId, readCards, reviewCard, syncCards } from '../app/src/studyCards.ts';
+import { readSittings, recordSittingEvent } from '../app/src/sittingClock.ts';
 import { DAY_MS } from '../app/src/fsrs.ts';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
@@ -368,6 +369,38 @@ check('a backup taken before cards existed still restores', () => {
   assert.equal(result.ok, true, `restore failed: ${result.message}`);
   assert.deepEqual(result.report.skipped, [], 'a missing deck is an older backup, not a bad file');
   assert.equal(result.report.notes, 1);
+});
+
+check('the archive leaves the sitting clock out, on purpose, and a doctored file cannot put it back', () => {
+  freshBrowser();
+  recordSittingEvent({ at: 1_700_000_000_000, kind: 'open', lesson: LESSON.id });
+  assert.equal(readSittings().length, 1, 'expected the clock to record the sitting before the backup');
+  const files = collectBackup(0);
+  assert.deepEqual(
+    files.map((file) => file.name).filter((name) => name.includes('sitting')),
+    [],
+    'the archive must not carry the sitting clock: a sitting is a fact about ONE machine, and merging two machines would count the same hour twice'
+  );
+
+  // A file that carries one anyway is not imported, so a hand-built archive cannot inflate a pilot's
+  // active_minutes - which is the only reason the clock exists.
+  const doctored = createZip(
+    [
+      ...files,
+      {
+        name: 'sittings.json',
+        text: JSON.stringify({
+          schema: 'mechalab.backup.sittings/1',
+          sittings: [{ start: 1_700_000_000_000, end: 1_700_000_600_000, runs: 1, reviews: 0, lessons: [] }],
+        }),
+      },
+    ].map((file) => ({ name: file.name, data: utf8(file.text) })),
+    new Date(0)
+  );
+  freshBrowser();
+  const result = restoreBackupZip(doctored);
+  assert.equal(result.ok, true, `restore failed: ${result.message}`);
+  assert.deepEqual(readSittings(), [], 'a restore must write nothing into the sitting clock');
 });
 
 check('a restore unions versions by timestamp: deduped, newest kept, cap held', () => {

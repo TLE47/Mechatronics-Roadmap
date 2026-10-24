@@ -1,5 +1,6 @@
 import * as startHere from './data/startHere.json';
 import { PYTHON_LESSONS } from './data/pythonLessonsData';
+import { pageUrl } from './pageUrl';
 
 // One source for the words: `app/src/data/startHere.json`. The README block is generated from the
 // same file by `scripts/generate_start_here.py`, so the two doors a newcomer can arrive at open
@@ -27,5 +28,5 @@ export const START_HERE_LESSON_URL = `https://github.com/TLE47/Mechatronics-Road
 
 /** Any lesson's reading page, from the same `path` the runner already shows. */
 export function lessonPageUrl(path: string): string {
-  return `https://github.com/TLE47/Mechatronics-Roadmap/blob/main/${path}`;
+  return pageUrl(path);
 }

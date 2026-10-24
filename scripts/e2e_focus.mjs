@@ -24,6 +24,7 @@ import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 const LESSON = PYTHON_LESSONS[0];
 const CHROME = ['header', 'rail', 'footer', 'lesson-list', 'mode-bar'];
 const SITTINGS_KEY = 'mechalab_sittings_v1';
+const LOG_KEY = 'mechalab.learningLog.v1';
 
 async function focusOn(page) {
   return (await page.locator('#top').getAttribute('data-focus')) === 'on';
@@ -82,6 +83,27 @@ async function main() {
       `the study panel must print the measured time, not a blank line; got: ${sittingLine}`
     );
     console.log(`  ok opening ${LESSON.id} wrote one sitting and the panel says "${sittingLine}"`);
+
+    // ---- One visit is one open, even in development ----
+    // The dev server mounts under `React.StrictMode`, which replays every effect; the runner's open is
+    // guarded so the replay is a no-op. Unguarded, this visit files two `lesson_open` events ~7 ms
+    // apart and a pilot exporting from `npm run dev` reads its visit count doubled (`docs/pilot-results.md`,
+    // Run 214). The second pass lands a tick after the first, so the read waits for one event and then
+    // for the burst to finish before counting.
+    const logEvents = await waitForBulk(page, LOG_KEY, (events) =>
+      Array.isArray(events) && events.some((event) => event.kind === 'lesson_open')
+    );
+    assert.ok(Array.isArray(logEvents), 'expected the learning log to be an array of events');
+    await page.waitForTimeout(500);
+    const opensAfterBurst = JSON.parse(await readBulk(page, LOG_KEY)).filter(
+      (event) => event.kind === 'lesson_open' && event.lesson === LESSON.id
+    );
+    assert.equal(
+      opensAfterBurst.length,
+      1,
+      `one visit must file one open; got ${opensAfterBurst.length} — React.StrictMode's effect replay is being logged as a second visit`
+    );
+    console.log('  ok one visit filed exactly one lesson_open');
 
     // ---- Everything is on screen before the toggle ----
     const before = await chromeState(page);

@@ -23,6 +23,7 @@ import {
 } from '../../spine';
 import { tabForPreset } from '../../demoPresets';
 import { TrailCard } from '../TrailCard';
+import { BoardBridge } from '../BoardBridge';
 import { trackLabel } from '../../trackLabel';
 import type { LessonAttempt } from '../../learningLog';
 import { PYTHON_TAB_NAME, tabName } from '../../tabNames';
@@ -233,6 +234,11 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
              answers the same question one level up: the card says what to do next, the trail says
              what the last fortnight was. It renders nothing on a first visit. */}
       <TrailCard onOpenLesson={onOpenPyodideLesson} />
+
+      {/* 0c. The embedded C lessons, bridged to a simulator (`BoardBridge.tsx`). Here rather than
+             in a tab of its own: it is a five-lesson addendum to Stage 0, not a twelfth lab, and
+             the roadmap is where a learner meets the on-ramp it belongs to. */}
+      <BoardBridge />
 
       {/* 1. Linear Level-Up Progression Pipeline Header */}
       <div className="bg-panel border border-line rounded-xl p-5">

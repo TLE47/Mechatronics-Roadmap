@@ -4,7 +4,7 @@ import { TabId } from '../types';
 import { Layers, ArrowUpRight } from 'lucide-react';
 
 interface SimulatorTierBannerProps {
-  tabId: Exclude<TabId, 'tab-arch' | 'tab-pyodide' | 'tab-placement' | 'tab-links'>;
+  tabId: Exclude<TabId, 'tab-arch' | 'tab-pyodide' | 'tab-placement' | 'tab-links' | 'tab-board'>;
   activeTierPass: ActiveTierPass;
   onSelectTierPass: (pass: ActiveTierPass) => void;
 }

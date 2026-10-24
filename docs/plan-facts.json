@@ -1,0 +1,69 @@
+{
+  "_why": "Every number on docs/PLAN-2.0-GAP.md that is a count of something in this repository, with the file or generated artifact that owns it. The page writes the number followed by `<!-- plan-fact:<id> -->`, which renders as nothing; `scripts/check_plan_rows.py` recomputes each fact and fails when the page and the repository disagree, when a marker names an undefined fact, and when a fact is defined but no longer quoted. Run 204 swept these by hand and found eight stale numbers, which is why they are data now. Add a fact when a new count is worth failing a build over; do not add one for a number whose owner is a suite run (that is check_all's job) or an external fact.",
+  "facts": {
+    "gates_total": {
+      "kind": "check_all_gates",
+      "what": "the gates in scripts/check_all.py"
+    },
+    "gates_fast": {
+      "kind": "check_all_gates",
+      "fast": true,
+      "what": "the gates that run on every push"
+    },
+    "tabs": {
+      "kind": "json_count",
+      "path": "app/src/data/workbenchTabs.json",
+      "pointer": "tabs",
+      "what": "the tabs in app/src/data/workbenchTabs.json"
+    },
+    "snapshot_pairs": {
+      "kind": "json_count",
+      "path": "docs/surface-snapshot.json",
+      "pointer": "surfaces",
+      "what": "the recorded tab/palette pairs in docs/surface-snapshot.json"
+    },
+    "prose_pages": {
+      "kind": "json_count",
+      "path": "app/public/prose-index.json",
+      "pointer": "pages",
+      "what": "the pages in app/public/prose-index.json"
+    },
+    "prose_lessons": {
+      "kind": "json_count",
+      "path": "app/public/prose-index.json",
+      "pointer": "pages",
+      "path_prefix": "modules/",
+      "prefix_keeps": false,
+      "what": "the reading pages (not arm modules) in app/public/prose-index.json"
+    },
+    "arm_modules": {
+      "kind": "json_count",
+      "path": "app/public/prose-index.json",
+      "pointer": "pages",
+      "path_prefix": "modules/",
+      "what": "the arm modules in app/public/prose-index.json"
+    },
+    "error_entries": {
+      "kind": "regex_count",
+      "path": "app/src/data/errorIndex.ts",
+      "pattern": "\"number\":",
+      "what": "the entries in app/src/data/errorIndex.ts"
+    },
+    "firmware_kb": {
+      "kind": "glob_kb",
+      "glob": "app/public/firmware/*.hex",
+      "what": "the committed firmware, in kilobytes"
+    },
+    "weight_total_mb": {
+      "kind": "json_mb",
+      "path": "docs/weight-budget.json",
+      "pointer": "measured.total",
+      "what": "the measured bundle total, in megabytes"
+    },
+    "starters_solutions": {
+      "kind": "glob_count",
+      "globs": ["exercises/*/starter.py", "exercises/*/solution.py"],
+      "what": "the exercise starters and solutions on disk"
+    }
+  }
+}

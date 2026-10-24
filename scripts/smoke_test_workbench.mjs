@@ -4,7 +4,7 @@
  * (`scripts/smoke_test_workbench.mjs`)
  *
  * Uses Vite's SSR module loader + ReactDOMServer to mount and verify:
- * 1. Beginner View (default plain-English 6-tab navigation) vs. Advanced View (all 11 technical labs).
+ * 1. Beginner View (default plain-English 6-tab navigation) vs. Advanced View (all 12 technical labs).
  * 2. In-Browser Python Lesson Runner (`TabPyodideRunner`): the whole generated lesson + exercise
  *    dataset, starter code,
  *    3-step hint ladder, search/filter UI, and completion state rendering.
@@ -88,7 +88,7 @@ export async function runSmokeTests(viteServer) {
     // and touched no app code: every tally below is derived from the dataset instead.
     const TOTAL = PYTHON_LESSONS.length;
 
-    // 1. Verify Beginner View (default) vs. Advanced View (all 11 technical labs)
+    // 1. Verify Beginner View (default) vs. Advanced View (all 12 technical labs)
     const cleanSsr = (html) => html.replace(/<!--\s*-->/g, '');
     globalThis.localStorage.clear();
     const htmlBeginner = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
@@ -202,6 +202,19 @@ export async function runSmokeTests(viteServer) {
       htmlBeginner.includes('Run the starter') &&
         !htmlBeginner.includes('data-testid="guide-what-to-fix"'),
       'The guide must offer to run the starter, and show the fix panel only after a failure'
+    );
+    // The guide scripts the first run, so it must not also print the answer the predict gate asks
+    // for. Found in the first beginner sitting (2026-10-23): the finish line sat thirty lines above
+    // the gate, so a learner could copy it into the question and the gate proved nothing.
+    const guideHtml = htmlBeginner.slice(htmlBeginner.indexOf('data-testid="first-lesson-guide"'));
+    const guideRegion = guideHtml.slice(0, guideHtml.indexOf('</section>'));
+    assert(
+      guideRegion.includes('PREDICT, THEN RUN'),
+      'The first-run guide must name the predict step its own Run button opens'
+    );
+    assert(
+      !guideRegion.includes('Encoder Ticks: 425'),
+      'The guide must withhold the finish line until the first run has landed, or it answers the gate'
     );
     assert(
       !htmlBeginner.includes('Interactive Guided Beginner Walkthrough'),
@@ -370,10 +383,10 @@ export async function runSmokeTests(viteServer) {
       'Beginner View should hide the maintainer Link Health dashboard unless it is the active tab'
     );
 
-    // Switch to Advanced View via localStorage and verify all 11 technical tabs render
+    // Switch to Advanced View via localStorage and verify all 12 technical tabs render
     globalThis.localStorage.setItem(STORAGE_KEY_VIEW_MODE, 'advanced');
     const htmlAdvanced = cleanSsr(ReactDOMServer.renderToString(React.createElement(App)));
-    assert.equal(WORKBENCH_TABS.length, 11, 'WORKBENCH_TABS must define all 11 tabs');
+    assert.equal(WORKBENCH_TABS.length, 12, 'WORKBENCH_TABS must define all 12 tabs');
     for (const tab of WORKBENCH_TABS) {
       assert(
         htmlAdvanced.includes(`data-testid="tab-btn-${tab.id}"`),
@@ -512,6 +525,13 @@ export async function runSmokeTests(viteServer) {
         assert(
           coach.check.includes(coach.firstHole),
           `Lesson ${lesson.id} exercise check must name its first hole`
+        );
+        // The hole goes in unwrapped: the guide already sets it in bold, and a package's hole is a
+        // sentence, so quotes around it read as a quotation of itself (first graded-exercise
+        // sitting, 2026-10-23).
+        assert(
+          coach.check.endsWith(coach.firstHole),
+          `Lesson ${lesson.id} exercise check must end at its hole, not wrap it in quotes`
         );
       }
       assert(coach.finish.length > 0, `Lesson ${lesson.id} must name a finished output`);

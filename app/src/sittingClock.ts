@@ -34,6 +34,17 @@ import { bulkStorage } from './bulkStorage.ts';
 
 export const STORAGE_KEY_SITTINGS = 'mechalab_sittings_v1';
 export const SITTINGS_SCHEMA = 'mechalab.sittings/1';
+/**
+ * Announced on `window` after every write.
+ *
+ * A sitting is written from wherever the activity happened — a lesson open and a run in the runner,
+ * a rating in the study panel — and those are three different components. The panel's clock line is
+ * not the writer for two of them, so without this it kept printing whatever the store held when the
+ * lesson mounted: the walk in `docs/pilot-results.md` ended with 232 s stored and "under a minute" on
+ * screen. One event at the single write point is cheaper and more honest than a timer guessing when
+ * the store might have moved.
+ */
+export const SITTING_RECORDED_EVENT = 'mechalab:sitting-recorded';
 /** Five minutes without a run, a review or a lesson open is a break. */
 export const IDLE_GAP_MS = 5 * 60_000;
 /** Past this, the sitting closes and the next event opens a new one. */
@@ -205,7 +216,22 @@ export function recordSittingEvent(event: SittingEvent): Sitting[] {
   if (closed) kept.push(closed);
   kept.push(sitting);
   writeSittings(kept);
+  announce(sitting);
   return kept.slice(-MAX_SITTINGS);
+}
+
+/** Tell the screen the clock moved. Silent outside a browser, where the unit suites run. */
+function announce(sitting: Sitting): void {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+  try {
+    // The page's own constructor, not this realm's: `focusMode.ts` learned the same thing — an event
+    // built by another realm's `CustomEvent` is not dispatched by every DOM implementation, and the
+    // symptom is a listener that never fires.
+    const EventCtor = typeof window.CustomEvent === 'function' ? window.CustomEvent : CustomEvent;
+    window.dispatchEvent(new EventCtor(SITTING_RECORDED_EVENT, { detail: { runs: sitting.runs } }));
+  } catch {
+    // A reader that cannot be told is a stale line, not a lost sitting.
+  }
 }
 
 /** The sitting still open at `now`, or null when the learner has been away long enough. */

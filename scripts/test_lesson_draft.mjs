@@ -254,6 +254,34 @@ check('an exercise counts a hole as filled when its raise is gone', () => {
   assert.equal(after.total, before.total, 'expected the denominator to stay the starter\'s own count');
 });
 
+// The guide's pointer is the other reader of the same parse: "start with" must name the hole the
+// next run will stop at, not the one just filled (found in the graded-exercise sitting, 2026-10-23).
+check('the guide points at the first hole still open in the draft', () => {
+  const fresh = coachForLesson(EXERCISE);
+  assert.equal(fresh.openHole, fresh.firstHole, 'a fresh starter points at its first hole');
+  const raise = EXERCISE.starterCode
+    .split('\n')
+    .find((line) => /raise\s+NotImplementedError\(/.test(line));
+  const fixed = EXERCISE.starterCode.replace(raise, '    return pos_m + vel_m_s * dt_s');
+  assert.notEqual(fixed, EXERCISE.starterCode, 'the fixture must contain the raise it replaces');
+  const next = coachForLesson(EXERCISE, fixed);
+  assert.equal(draftProgress(fixed, EXERCISE).filled, 1, 'one raise replaced is one hole written');
+  assert.ok(next.openHole && next.openHole !== fresh.openHole, 'the pointer must move off hole 1');
+  assert.ok(next.check.includes(next.openHole), 'the first check must name the same hole the pointer does');
+  assert.equal(next.holeCount, fresh.holeCount, 'the count stays the starter\'s, not the draft\'s');
+  const allWritten = coachForLesson(EXERCISE, EXERCISE.starterCode.replace(/raise NotImplementedError\([^\n]*\)/g, 'pass'));
+  assert.equal(allWritten.openHole, null, 'nothing is open once every raise is written');
+  assert.match(allWritten.check, /reaches every check/, 'and the check says so instead of naming hole 1');
+});
+
+check('a TODO lesson\'s pointer moves the same way', () => {
+  const next = coachForLesson(
+    P1,
+    P1.starterCode.replace('encoder_ticks = encoder_ticks', 'encoder_ticks = encoder_ticks + 25')
+  );
+  assert.ok(next.openHole && !/encoder_ticks/.test(next.openHole), 'expected the second TODO to be named');
+});
+
 check('a lesson whose starter marks nothing measurable says so instead of guessing', () => {
   const unmarked = { ...P1, starterCode: 'print("no markers here")' };
   assert.deepEqual(draftProgress('print(1)', unmarked), { filled: 0, total: 0, isExercise: false });

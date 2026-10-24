@@ -535,6 +535,21 @@ body {
   grid-column: 2;
 }
 
+/* Docking: the results can take the first track and the editor the second, so the thing a learner
+   reads after typing sits on the side their eyes are already on. `dense` is what keeps the pair on
+   one row: without it the auto-placement cursor only walks forward, so an item placed at column 1
+   after one at column 2 is pushed to a row of its own. Every other child spans both tracks, so
+   there is no hole for dense packing to back-fill from a later row. */
+[data-layout='split'][data-dock='left'] {
+  grid-auto-flow: row dense;
+}
+[data-layout='split'][data-dock='left'] > [data-testid='editor-panel'] {
+  grid-column: 2;
+}
+[data-layout='split'][data-dock='left'] > [data-testid='results-column'] {
+  grid-column: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
