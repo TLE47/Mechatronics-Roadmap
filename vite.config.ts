@@ -47,6 +47,14 @@ export default defineConfig(({ command }) => ({
           // emulator's 14 kB lands in every first visit for a tab nobody opened, which is exactly the
           // mistake the comment above records for CodeMirror.
           if (/node_modules\/avr8js\//.test(id)) return 'vendor-avr';
+          // `@supabase/supabase-js` is reached only by the account panel's
+          // `import('@supabase/supabase-js')` in `app/src/accounts.ts`, but this catch-all would park
+          // it in the statically preloaded `vendor`
+          // chunk — so a CI build, which sets the Supabase variables and therefore ships the library,
+          // paid its ~59 kB on the first paint of every visit, signed in or not (`entry_gzip` caught
+          // it at 532.6 kB against a 480 kB ceiling). Its own chunk is fetched when someone opens the
+          // account panel, so the sign-in configuration costs the first visit nothing.
+          if (/node_modules\/@supabase\//.test(id)) return 'vendor-auth';
           if (/node_modules\/katex\//.test(id)) return 'vendor-katex';
           if (/node_modules\/lucide-react\//.test(id)) return 'vendor-icons';
           return 'vendor';

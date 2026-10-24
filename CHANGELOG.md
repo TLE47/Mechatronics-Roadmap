@@ -11,6 +11,33 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 221: the weight gate now measures the build CI actually makes
+
+Push `5ece6a9` went red on the runner and green here, and the difference was not the code. CI builds
+with `VITE_SUPABASE_*` set from repository variables, so the account panel's library is live; the
+catch-all chunk rule parked `@supabase/supabase-js` in the statically preloaded `vendor` chunk, and
+the runner measured `entry_gzip` at **532.6 kB against the 480 kB ceiling**. On a fresh clone the same
+branch folds away and `dist/` is 472 kB, so the gate had never seen the shape that ships.
+
+| Changed | What it does |
+| :--- | :--- |
+| [`vite.config.ts`](vite.config.ts) | `@supabase/*` gets its own `vendor-auth` chunk, fetched only when the account panel opens: the fix is a split, not a ceiling. Signed-in `entry_gzip` measured 475.1 kB after it |
+| [`scripts/weight_budget.mjs`](scripts/weight_budget.mjs) | `buildVariant(files)` and `budgetsFor(file, variant)`: the measurement says which shape it is, and the ceilings for that shape are compared |
+| [`scripts/check_weight_budget.mjs`](scripts/check_weight_budget.mjs) | Names the shape it measured (`accounts configured: signing-in build`), compares against that shape's ceilings, and records which variant the `measured` block describes |
+| [`docs/weight-budget.json`](docs/weight-budget.json) | A `signed_in` block: `js_gzip` 810 kB, `total` 1.14 MB, both from this run's measurement, with the reason. `entry_gzip` keeps one shared 480 kB — a first paint that differs between the shapes would mean the split regressed |
+| [`scripts/test_weight_budget.mjs`](scripts/test_weight_budget.mjs) | Two checks: a 1-byte `vendor-auth` stub is `local_only` while the real chunk is `signed_in`, and the overlay leaves unspecified metrics at their base ceilings |
+
+Both builds emit a `vendor-auth` file — with the variables unset the branch is folded and Rollup
+leaves a one-byte stub — so the shape is read from that chunk's raw size, not from its name. Reading
+`process.env` would not help either: CI sets the variables on the build step only, not on the gate.
+
+| Verified | Result |
+| :--- | :--- |
+| Signed-in build (the CI configuration), then the gate | `[PASS] … 1.12 MB … signed_in budgets`, `entry_gzip` 475.1 kB of 480 kB, exit **0** |
+| Local-only build (a fresh clone), then the gate | `[PASS] … local_only budgets`, `1.06 MB`, `entry_gzip` 473.1 kB, exit **0** |
+| `node scripts/test_weight_budget.mjs` | 22/22 |
+| `--record` on the local build | `measured` refreshed, `variant: local_only` |
+
 ## [2026-10-23] — Run 220: one command says whether the kit works
 
 The kit's pieces were covered by four separate gates, and a person about to run a sitting had to

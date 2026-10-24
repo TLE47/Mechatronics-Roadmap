@@ -107,6 +107,54 @@ export function compareBudgets(measured, budget) {
 }
 
 /**
+ * Which build this one is, from the file names it emitted.
+ *
+ * The bundle has two shapes and the gate has to know which one it is measuring. Without the Supabase
+ * variables at build time (`npm run build` on a fresh clone) the account panel's library is never
+ * imported, so `vendor-auth` is not emitted and the bundle is `local_only`. With them set — a CI
+ * build, where the anon key is a repository variable — every visitor downloads a shell that also
+ * carries those bytes, so the ceilings that count emitted bytes have to be higher for it. Run 207 is
+ * why: the CI build measured `entry_gzip` at 532.6 kB against the 480 kB ceiling, a real breach that
+ * only ever happened on the runner, because the library had landed in the preloaded `vendor` chunk.
+ * (The chunk split is the fix; this is the gate that keeps the two shapes honest.)
+ *
+ * Detection is by what the account chunk actually **contains**, not by whether the file exists or by
+ * reading the environment. Both builds emit a `vendor-auth` chunk — Vite names the dynamic import
+ * before it knows the library will not be used — but with the variables unset the branch is folded
+ * away and the chunk is a one-byte stub. So the shape is "the chunk carries code", measured on the
+ * chunk's raw size: a stub is bytes, the library is tens of kilobytes. Reading `process.env` would be
+ * wrong as well as unavailable, because CI sets the variables on the build step only, not on the gate.
+ */
+export const VARIANTS = ['local_only', 'signed_in'];
+
+/** Raw bytes above which the account chunk is code rather than the folded-away stub. */
+const ACCOUNT_CHUNK_STUB_BYTES = 1024;
+
+export function buildVariant(files) {
+  return files.some(
+    (file) =>
+      /(^|\/)vendor-auth[a-zA-Z0-9._-]*\.js$/.test(file.name) &&
+      file.size > ACCOUNT_CHUNK_STUB_BYTES
+  )
+    ? 'signed_in'
+    : 'local_only';
+}
+
+/**
+ * The ceilings for one variant: the base set, with the variant's overrides on top.
+ *
+ * Only the metrics a signed-in build really moves are overridden — the emitted-byte ceilings
+ * (`js_gzip`, `total`) and, if the library ever reaches the preload list again, `entry_gzip`. A
+ * variant with no block of its own gets the base set, so an unknown variant can never pass by being
+ * unmeasured.
+ */
+export function budgetsFor(budgetFile, variant = 'local_only') {
+  const base = budgetFile?.budgets ?? {};
+  const overrides = variant === 'signed_in' ? budgetFile?.signed_in?.budgets ?? {} : {};
+  return { ...base, ...overrides };
+}
+
+/**
  * Which source files are newer than the build that claims to measure them.
  *
  * Why this exists: the gate reads `dist/`, and a `dist/` left over from an earlier checkout is

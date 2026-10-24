@@ -19,6 +19,8 @@
 import assert from 'node:assert/strict';
 import {
   METRICS,
+  budgetsFor,
+  buildVariant,
   compareBudgets,
   formatBytes,
   formatHeadroom,
@@ -254,6 +256,31 @@ check('sizes read as sizes, and headroom as a signed share', () => {
   assert.equal(formatHeadroom(960, 1000), '-4%');
   assert.equal(formatUsed(920, 1000), '92%');
   assert.equal(formatUsed(1100, 1000), '110%');
+});
+
+check('a build without the account library is local-only, and one with it is signed in', () => {
+  const local = [{ name: 'assets/vendor-react-a.js', size: 90_000, gzip: 30_000 }];
+  // Both builds emit a `vendor-auth` chunk; without the variables it is the one-byte stub Rollup
+  // leaves behind, and that must not read as a signed-in build.
+  const stub = [...local, { name: 'assets/vendor-auth-l0sNRNKZ.js', size: 1, gzip: 21 }];
+  const signed = [...local, { name: 'assets/vendor-auth-C6l3xeXS.js', size: 205_000, gzip: 57_798 }];
+  assert.equal(buildVariant(local), 'local_only');
+  assert.equal(buildVariant(stub), 'local_only');
+  assert.equal(buildVariant(signed), 'signed_in');
+  // The app chunk's own name must not be mistaken for the library's chunk.
+  assert.equal(buildVariant([{ name: 'assets/TabPyodideRunner-abc.js', size: 400_000, gzip: 90 }]), 'local_only');
+});
+
+check('the signed-in shape gets its own ceilings, overlaid on the base ones', () => {
+  const file = {
+    budgets: { entry_gzip: 480, js_gzip: 750, total: 1080 },
+    signed_in: { budgets: { js_gzip: 810, total: 1140 } },
+  };
+  assert.deepEqual(budgetsFor(file), { entry_gzip: 480, js_gzip: 750, total: 1080 });
+  assert.deepEqual(budgetsFor(file, 'signed_in'), { entry_gzip: 480, js_gzip: 810, total: 1140 });
+  // A shape with no block of its own keeps the base set: an unknown variant cannot pass by being
+  // unbudgeted, and it cannot silently lose a ceiling either.
+  assert.deepEqual(budgetsFor({ budgets: { js_gzip: 750 } }, 'signed_in'), { js_gzip: 750 });
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

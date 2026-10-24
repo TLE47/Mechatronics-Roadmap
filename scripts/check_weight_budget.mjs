@@ -22,6 +22,16 @@
  * `--record` rewrites the `measured` block with today's numbers and prints what moved; the budgets
  * themselves are hand-edited, deliberately, like the accessibility allowlist.
  *
+ * **Two shapes, two ceilings.** The same source builds a `local_only` bundle when the Supabase
+ * variables are unset and a `signed_in` one when they are set (CI has the anon key as a repository
+ * variable), and the signed-in build is bigger because the account panel's library is emitted with it.
+ * The gate names the shape it measured and compares against that shape's ceilings: `budgets` for
+ * `local_only`, `signed_in.budgets` overlaid on top for `signed_in`. Before Run 207 there was one set
+ * of numbers, so the gate passed locally and failed on the runner — 532.6 kB of entry against 480 kB —
+ * which is a gate that only works when nobody builds the way CI does. Both builds emit a
+ * `vendor-auth` file — the unset case is a one-byte stub — so the shape is read from that chunk's raw
+ * size, not from its name.
+ *
  * **A stale `dist/` is a failure, not a measurement.** The gate reads what was built, so a bundle
  * left over from an earlier checkout fits every budget while measuring code nobody is shipping — Run
  * 165 quoted 950.3 kB from exactly that. The sources are walked and compared with the newest output
@@ -47,6 +57,8 @@ import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import {
   METRICS,
+  budgetsFor,
+  buildVariant,
   compareBudgets,
   formatBytes,
   formatHeadroom,
@@ -158,11 +170,17 @@ function main() {
         };
       })()
     : null;
+  const variant = buildVariant(files);
   const measured = measurementFrom(files, entry, prose);
-  const { rows, breaches, unmeasured, tightest } = compareBudgets(measured, budgetFile.budgets);
+  const budgets = budgetsFor(budgetFile, variant);
+  const { rows, breaches, unmeasured, tightest } = compareBudgets(measured, budgets);
 
   if (RECORD) {
-    budgetFile.measured = { ...measured, recordedAt: new Date().toISOString().slice(0, 10) };
+    budgetFile.measured = {
+      ...measured,
+      variant,
+      recordedAt: new Date().toISOString().slice(0, 10),
+    };
     fs.writeFileSync(BUDGET_FILE, `${JSON.stringify(budgetFile, null, 2)}\n`);
     log(`recorded ${METRICS.map((metric) => `${metric}=${measured[metric]}`).join(' ')}`);
     for (const row of rows) {
@@ -178,14 +196,24 @@ function main() {
   if (JSON_OUT) {
     console.log(
       JSON.stringify(
-        { measured, rows, biggest, files: files.length, stale: stale.map((file) => file.path) },
+        {
+          variant,
+          measured,
+          rows,
+          biggest,
+          files: files.length,
+          stale: stale.map((file) => file.path),
+        },
         null,
         2
       )
     );
   } else {
     if (stale.length) log(`  measured on purpose from a build older than ${stale.length} source file(s)`);
-    log(`The built bundle: ${files.length} files, first paint from ${entry.length} of them`);
+    log(
+      `The built bundle: ${files.length} files, first paint from ${entry.length} of them` +
+        (variant === 'signed_in' ? ' (accounts configured: signing-in build)' : '')
+    );
     for (const file of biggest) log(`  ${file.name.padEnd(38)} ${formatBytes(file.gzip).padStart(8)}`);
     log(
       `  prose-index.json${' '.repeat(23)}${(prose ? formatBytes(prose.gzip) : 'missing').padStart(8)}  ` +
@@ -222,8 +250,8 @@ function main() {
   console.log(
     `[PASS] Weight: ${formatBytes(measured.total)} gzipped in ${files.length} files ` +
       `(js ${formatBytes(measured.js_gzip)}, css ${formatBytes(measured.css_gzip)}, ` +
-      `fonts ${formatBytes(measured.fonts)}); tightest metric ${tightest.metric} has ` +
-      `${formatBytes(tightest.headroom)} left.`
+      `fonts ${formatBytes(measured.fonts)}), ${variant} budgets; tightest metric ` +
+      `${tightest.metric} has ${formatBytes(tightest.headroom)} left.`
   );
 }
 
