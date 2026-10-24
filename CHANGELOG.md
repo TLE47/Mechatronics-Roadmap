@@ -11,6 +11,33 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 223: the palettes the runner actually gets
+
+Run 40050153030 cleared the weight gate and all 58 workbench suites, then failed the Lighthouse step:
+`accessibility/color-contrast`, score 97, eight nodes. Locally the same gate read 100 — the audit
+follows the machine's `prefers-color-scheme`, this Mac is dark, and CI has no preference at all, so the
+runner audited the **light** palette. Every finding was in light (eight) or paper (four); dark and
+contrast were clean, and the theme suite's floor is 3:1, so its 3.28:1 shortcut label passed there.
+
+| Finding | Measured | Fixed by |
+| :--- | :--- | :--- |
+| `.text-emerald` status line on its own wash | 4.41:1 | light `--emerald` `#047857` → `#02654a` (4.81:1 on `emerald/20`) |
+| `btn-guide-hint`, `btn-reveal-hint`, `Show Hint N` on `bg-amber/15` | 3.77 / 4.02 | `text-amber` → `text-amber-strong` (`#854d0e`, 4.67:1 on `amber/25`) |
+| The four layout presets' `⌥1`–`⌥4` at `opacity-70` | 3.28 inactive, 4.0 pressed | `opacity-70` → `opacity-90` (5.10 / 5.48) |
+| The editor's comment ink on the active-line wash | 4.47:1 | light `--dim` `#626d7e` → `#59636f` (5.21:1) |
+
+| Verified | Result |
+| :--- | :--- |
+| axe `color-contrast` on the built bundle, one run per palette | light 8 → **0**, dark 0, contrast 0, paper 4 → **0** |
+| `npm run check:lighthouse` | best-practices 100, seo 100, accessibility 100 |
+| `npm run check:axe` | 12 tabs × 4 themes, every serious/critical rule clear, 0 exceptions |
+| `npm run test:theme:e2e` | 52 tab/theme pairs, lowest measured run **4.57:1** (was 3.28 in light) |
+| `npm run test:theme`, `test:theme:tokens`, `tests/test_theme_docs.py` | 12/12, 10/10, 11/11 (the page's hex table now matches the tokens) |
+| `python3.12 scripts/check_all.py` | 34/34 |
+
+The audit still follows the runner's colour scheme — Lighthouse has no setting to pin
+`prefers-color-scheme` — so both palettes are now clean instead of one being clean by luck.
+
 ## [2026-10-23] — Run 222: a divider drag ends where the pointer is released
 
 The push after Run 221 went green on the weight step and red one step later, in the built-bundle

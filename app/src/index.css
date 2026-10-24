@@ -117,12 +117,16 @@
   --text: #141a24;
   --body: #2b3646;
   --muted: #4d5a6d;
-  --dim: #626d7e;
+  /* 4.69:1 on --panel-3 and 5.2:1 on the editor's active-line wash: the eyebrow ink also lands on
+     raised and tinted surfaces, not only on --panel-2. */
+  --dim: #59636f;
   --inverse: #ffffff;
   --accent: #0d6b64;
   --accent-strong: #115e59;
   --accent-soft: rgba(13, 148, 136, 0.12);
-  --emerald: #047857;
+  /* Darkened from #047857: as a label over its own wash (`text-emerald` on `bg-emerald/20`) the old
+     value measured 4.41:1, and a status chip is exactly how emerald is read. */
+  --emerald: #02654a;
   --emerald-strong: #065f46;
   --amber: #a16207;
   --amber-strong: #854d0e;

@@ -75,7 +75,7 @@ keeps the steps visible with lines instead of tints.
 | `--text` | `ink` | `#eef4ff` | `#141a24` | `#1f1710` | `#ffffff` | Headings, and any text that must lead the eye. |
 | `--body` | `body` | `#cbd5e1` | `#2b3646` | `#3a2c1c` | `#f4f7fd` | Long-form reading copy: lessons, explanations, captions with sentences in them. |
 | `--muted` | `muted` | `#9fb0c9` | `#4d5a6d` | `#57432c` | `#e6edf8` | Secondary labels and the caption beside a value. |
-| `--dim` | `faint` | `#7a8aa3` | `#626d7e` | `#6b5436` | `#cbd8ea` | 10–12px uppercase eyebrows and hints. It is the dimmest text allowed: 4.57:1 on `--panel-2` in dark. |
+| `--dim` | `faint` | `#7a8aa3` | `#59636f` | `#6b5436` | `#cbd8ea` | 10–12px uppercase eyebrows and hints. It is the dimmest text allowed: 4.57:1 on `--panel-2` in dark, and in light 4.69:1 on `--panel-3` (the raised surface an eyebrow also lands on). |
 | `--inverse` | `inverse` | `#06101c` | `#ffffff` | `#fbf5e9` | `#000000` | Text drawn *on* an accent fill (`.btn-primary`, `.skip-link`). |
 
 ## Signals
@@ -89,7 +89,7 @@ lifts each one until it clears 7:1 on black.
 | `--accent` | `accent` | `#38bdf8` | `#0d6b64` | `#0b6157` | `#7dd3fc` | "Powered on": the active tab, a live readout, the arm's traces. |
 | `--accent-strong` | `accent-strong` | `#0ea5e9` | `#115e59` | `#084f47` | `#bae6fd` | Hover and pressed states of an accent fill. |
 | `--accent-soft` | — | `rgba(56, 189, 248, 0.14)` | `rgba(13, 148, 136, 0.12)` | `rgba(11, 97, 87, 0.13)` | `rgba(125, 211, 252, 0.28)` | The wash behind the active nav item. The one tint with no utility: use `var(--accent-soft)`. |
-| `--emerald` | `emerald` | `#34d399` | `#047857` | `#12603a` | `#6ee7b7` | Passed, verified, inside tolerance. |
+| `--emerald` | `emerald` | `#34d399` | `#02654a` | `#12603a` | `#6ee7b7` | Passed, verified, inside tolerance. The light value is dark enough to read as a label over its own 20% wash, which is how a status chip uses it. |
 | `--emerald-strong` | `emerald-strong` | `#10b981` | `#065f46` | `#0d4f30` | `#a7f3d0` | The same signal, pressed or on a fill. |
 | `--amber` | `amber` | `#fbbf24` | `#a16207` | `#7a4d00` | `#fde68a` | Caution: near the limit, a fault not yet repaired. |
 | `--amber-strong` | `amber-strong` | `#f59e0b` | `#854d0e` | `#633f00` | `#fef3c7` | The same signal, pressed or on a fill. |

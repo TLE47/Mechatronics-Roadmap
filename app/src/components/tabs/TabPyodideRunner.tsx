@@ -2894,7 +2894,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 }}
                 disabled={currentLesson.hints.length === 0}
                 data-testid="btn-guide-hint"
-                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-amber/15 hover:bg-amber/25 text-amber border border-amber/40 disabled:opacity-50 cursor-pointer"
+                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 disabled:opacity-50 cursor-pointer"
               >
                 {revealedHints > 0 ? 'Hint 1 is open below' : 'Reveal Hint 1'}
               </button>
@@ -3217,7 +3217,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       }`}
                     >
                       {option.label}
-                      <span className="ml-1 opacity-70">{option.shortcut}</span>
+                      {/* 90%, not 70%: at 70% the shortcut measured 3.28:1 on the light canvas and
+                          4.0:1 on the pressed accent, so the de-emphasis broke the 4.5:1 floor. */}
+                      <span className="ml-1 opacity-90">{option.shortcut}</span>
                     </button>
                   ))}
                 </div>
@@ -4181,7 +4183,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                           : undefined
                     }
                     data-testid="btn-reveal-hint"
-                    className="px-2.5 py-1 rounded text-xs font-mono bg-amber/15 hover:bg-amber/25 text-amber border border-amber/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2.5 py-1 rounded text-xs font-mono bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {nextHintLabel}
                   </button>
@@ -4797,7 +4799,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       data-testid={`btn-check-hint-${check.id}`}
                       onClick={() => revealHint(check.hint)}
                       title={`Open Hint ${check.hint}, the rung that answers this check - and only that rung`}
-                      className="px-2 py-0.5 rounded bg-amber/15 hover:bg-amber/25 text-amber border border-amber/40 cursor-pointer"
+                      className="px-2 py-0.5 rounded bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 cursor-pointer"
                     >
                       Show Hint {check.hint}
                     </button>
