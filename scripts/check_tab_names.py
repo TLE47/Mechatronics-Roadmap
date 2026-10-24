@@ -101,6 +101,17 @@ def main(argv=None):
     if re.search(r"(beginner|technical)Label:\s*'\d+\.\s", app):
         findings.append("App.tsx still numbers a tab label")
 
+    # The view switch's technical label says how many labs there are. The count has to come from the
+    # registry the rail renders: it said "All 10" while twelve tabs shipped, and a typed number is
+    # the one thing adding a tab does not update.
+    if "labsSwitchLabel(WORKBENCH_TABS.length)" not in app:
+        findings.append(
+            "App.tsx does not derive the view switch's lab count from WORKBENCH_TABS; "
+            "pass WORKBENCH_TABS.length to labsSwitchLabel"
+        )
+    if re.search(r"All\s+\d+\s+Engineering Labs", app):
+        findings.append("App.tsx hard-codes the number of Engineering Labs")
+
     with open(CALLOUT, encoding="utf-8") as handle:
         callout = handle.read()
     if "workbenchTabs.json" not in callout:

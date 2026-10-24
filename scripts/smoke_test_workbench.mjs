@@ -42,10 +42,17 @@ function installDomShim() {
 export async function runSmokeTests(viteServer) {
   const repoRoot = process.cwd();
   installDomShim();
+  // The same read `vite.config.ts` makes: `package.json` is the release identity. The inline server
+  // this suite boots does not load the project config (it is an SSR render, not a browser), so the
+  // define is passed here too - and the check below then proves the footer reads that value.
+  const releaseVersion = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')
+  ).version;
   const vite =
     viteServer ??
     (await createServer({
       root: path.join(repoRoot, 'app'),
+      define: { __APP_VERSION__: JSON.stringify(releaseVersion) },
       server: { middlewareMode: true },
       appType: 'custom',
       logLevel: 'error',
@@ -396,6 +403,18 @@ export async function runSmokeTests(viteServer) {
     assert(
       htmlAdvanced.includes('25 kHz PMSM FOC &amp; SVPWM (Lab 01/03)'),
       'Advanced View must surface technical tab titles'
+    );
+    // The switch said "All 10" while twelve tabs shipped. The count is the registry's now, and this
+    // is the check that reads the rendered label rather than trusting the helper's wording.
+    assert(
+      htmlAdvanced.includes(`All ${WORKBENCH_TABS.length} Engineering Labs (Technical Names)`),
+      'the view switch must name the registry count; a typed number goes stale when a tab is added'
+    );
+    // One version, one place: the footer prints package.json's identity, and package.json is semver.
+    assert.match(releaseVersion, /^\d+\.\d+\.\d+$/, 'package.json must carry a semver release identity');
+    assert(
+      htmlAdvanced.includes(`data-testid="app-version">v${releaseVersion}<`),
+      `the footer must print package.json's version, v${releaseVersion}`
     );
     assert(
       htmlAdvanced.includes('Run Python Lessons') ||
@@ -964,8 +983,13 @@ export async function runSmokeTests(viteServer) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  runSmokeTests().catch((err) => {
-    console.error('[FAIL] Workbench smoke test error:', err);
-    process.exit(1);
-  });
+  // `npm run test:smoke` is a command, not a library: after the render and the close there is
+  // nothing left to do, and Vite's dependency scanner can keep a handle open after `close()`. The
+  // combined runner imports `runSmokeTests` and owns the server, so this branch is standalone only.
+  runSmokeTests()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error('[FAIL] Workbench smoke test error:', err);
+      process.exit(1);
+    });
 }

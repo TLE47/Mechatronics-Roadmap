@@ -11,7 +11,7 @@ file and the check that settles it.
 
 ```mermaid
 flowchart LR
-    R["§1 retention<br/>(done)"] --> T["§0 trust fixes<br/>version, lab count"]
+    R["§1 retention<br/>(done)"] --> T["§0 trust fixes<br/>(done)"]
     T --> RD["§2 reading<br/>inside the lesson"]
     RD --> Q["§3 quiet<br/>first screen"]
     Q --> M["§4 measured<br/>visit"]
@@ -27,7 +27,7 @@ flowchart LR
 | 3 | The everyday toolbar carries too many actions for one row | **Verified** — Run & Verify sits beside Watch, Vim, Format, History, Diff, Sharing, Pairing, Reset Runtime, Self-mark and the hint controls, most of them at 11–12.5 px ([`TabPyodideRunner.tsx`](../app/src/components/tabs/TabPyodideRunner.tsx)). Planned as §3. |
 | 4 | Small labels (11–12.5 px) need a rendered check on an ordinary laptop | **Verified** — the same file and [`app/src/components/StudyPanel.tsx`](../app/src/components/StudyPanel.tsx) use 10.5–12.5 px for controls and metadata. The review's own caveat stands: source does not prove how it looks. Planned as §3. |
 | 5 | Passing CI does not establish speed; Lighthouse excludes performance; the recorded bundle is `local_only` | **Partly stale.** The exclusion is deliberate and documented in [`scripts/check_lighthouse.mjs`](../scripts/check_lighthouse.mjs) — Best Practices, SEO and Accessibility are facts about the document; Performance on a runner is not. The `local_only` gap in the weight gate was closed in Run 226: [`docs/weight-budget.json`](weight-budget.json) now carries a `signed_in` block, and [`scripts/check_weight_budget.mjs`](../scripts/check_weight_budget.mjs) builds and grades that shape when `dist/` is local-only. What remains true is that **no timing is measured at all**. Planned as §4. |
-| 6 | `package.json` still says `1.0.0`; the switch says "All 10 Engineering Labs" while the registry has 12 tabs | **Verified, both cheap** — [`package.json`](../package.json), [`app/src/App.tsx`](../app/src/App.tsx) line 1205 against [`app/src/data/workbenchTabs.json`](../app/src/data/workbenchTabs.json). Do these first; see §0. |
+| 6 | `package.json` still says `1.0.0`; the switch says "All 10 Engineering Labs" while the registry has 12 tabs | **Verified, both cheap; fixed in Run 228** — `labsSwitchLabel(WORKBENCH_TABS.length)` now renders *All 12 Engineering Labs (Technical Names)*, and `package.json` is `2.0.0`, read by [`app/src/appVersion.ts`](../app/src/appVersion.ts) and printed in the footer. See §0. |
 | 7 | Zero non-author participants; the author walk is not beginner evidence | **Verified** — [`docs/pilot-results.md`](pilot-results.md) says N = 0 at every stage. Planned as §5; nothing in this plan may claim completion before it. |
 | 8 | Restore can silently drop older entries | **Verified for the old store** (a restore went through the capped writer). **Fixed in this slice**: every lesson is kept, and a refused write is reported instead of counted as restored. |
 
@@ -54,14 +54,20 @@ Two consequences are stated rather than hidden:
 - **Per-lesson caps remain.** A lesson with more than 20 highlights keeps the newest 20, and a draft past
   40,000 characters is not stored. Those bound one page's cost; they never remove a lesson's history.
 
-## §0 — Trust fixes (an afternoon, no design work)
+## §0 — Trust fixes (done in Run 228)
 
-1. Derive the lab switch's label from `WORKBENCH_TABS.length` instead of the hard-coded "All 10
-   Engineering Labs", so the count cannot disagree with the registry again.
-2. Decide the release identity once: either `version` in `package.json` becomes the 2.x identity and an
-   in-app build identifier reads it, or the review's premise is wrong and 1.0.0 stays. Do not half-change
-   it. **Acceptance:** `npm run test:tabnames` (or the layout suite that already counts tabs) fails if the
-   label and the registry disagree; `npm run build` shows the chosen version.
+1. **The count comes from the registry.** `labsSwitchLabel(count)` in
+   [`app/src/tabNames.ts`](../app/src/tabNames.ts) is called with `WORKBENCH_TABS.length`; the switch
+   renders *All 12 Engineering Labs (Technical Names)*. `scripts/check_tab_names.py` now fails if
+   App.tsx stops passing the registry count or hard-codes `All <number> Engineering Labs` again, and
+   `npm run test:smoke` reads the rendered label in both views.
+2. **The release identity is settled at 2.0.0.** `package.json` is the one place it lives; the footer
+   prints `v2.0.0` through [`app/src/appVersion.ts`](../app/src/appVersion.ts), so a bug report can name
+   the build it came from. `test:smoke` pins the footer against `package.json` and the version against
+   semver — a second literal anywhere fails the suite.
+
+**Acceptance:** `npm run test:tabnames` and `npm run test:smoke` pass; editing `workbenchTabs.json`
+changes the switch's number without touching App.tsx; changing `package.json` changes the footer.
 
 ## §1 — Retention: no authored work is evicted (done in this slice)
 
@@ -181,8 +187,8 @@ lesson, edits, runs, understands one failure, continues without guidance. The au
 
 ## Order, and what this plan refuses
 
-Risk and value first: **§1 (done) → §0 → §2 → §3 → §4 → §5**. §0 is hours; §2 is the release; §3 and §4
-are a week each; §5 decides whether the release may be called convenient.
+Risk and value first: **§1 and §0 (done) → §2 → §3 → §4 → §5**. §2 is the release; §3 and §4 are a week
+each; §5 decides whether the release may be called convenient.
 
 Not in 2.1a: new tabs or runtimes, a different editor, uPlot, cloud sync, a second design system, or any
 cap that deletes a lesson's authored work to make a number smaller. The review's closing line is the

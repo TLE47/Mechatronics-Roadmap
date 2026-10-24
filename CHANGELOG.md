@@ -2,6 +2,11 @@
 
 All structural changes, lesson splits, curriculum reorderings, angle-convention standardizations, and automated verification additions are logged below.
 
+**Release identity: `2.0.0`.** `package.json` is the one place the number lives; the workbench's footer
+prints it (through the define `vite.config.ts` injects), and `npm run test:smoke` and
+`npm run test:e2e:pages` pin the footer to the file. Entries below keep the run numbers they shipped
+with; they are a record, not a second version.
+
 ```mermaid
 flowchart LR
     TP["Track P (14 Files: P.1–P.12 + P.14 + P.M)"] --> S0["Stage 0 (11 Files: S0.0–S0.9 + S0.M)"]
@@ -10,6 +15,45 @@ flowchart LR
 ```
 
 ---
+
+## [2026-10-23] — Run 228: the release names its version, and the lab switch counts the registry
+
+Two labels disagreed with the code. The view switch offered **All 10 Engineering Labs** while the rail
+rendered twelve, and `package.json` still said `1.0.0` even though the docs, the plan and the adjudication
+all called this workbench 2.0. Neither is a rendering bug: both are numbers typed once and never read
+back when the thing they count changed.
+
+**The count is the registry's.** `labsSwitchLabel(count)` in [`app/src/tabNames.ts`](app/src/tabNames.ts)
+is called with `WORKBENCH_TABS.length`, so adding a tab changes the switch without an edit in App.tsx.
+`scripts/check_tab_names.py` now fails if the label hard-codes a number again or if App.tsx stops
+passing the registry count.
+
+**The version is settled at 2.0.0.** `package.json` is the only file that carries it. `vite.config.ts`
+reads that file once and injects `__APP_VERSION__`; [`app/src/appVersion.ts`](app/src/appVersion.ts)
+prints it in the footer, so a bug report can name the build it came from instead of asking which deploy
+it was. The fallback names a development build rather than inventing a release. `test:smoke` checks the
+SSR footer against `package.json` and the file against semver; `test:e2e:pages` checks the built bundle's
+footer in Chromium and Firefox, which is what proves the define survived the build.
+
+| Changed | What it does |
+| :--- | :--- |
+| [`app/src/tabNames.ts`](app/src/tabNames.ts) | `labsSwitchLabel(count)` — one wording, the caller supplies the registry's number |
+| [`app/src/App.tsx`](app/src/App.tsx) | Renders `labsSwitchLabel(WORKBENCH_TABS.length)`; the footer prints `APP_VERSION` under `data-testid="app-version"` |
+| [`app/src/appVersion.ts`](app/src/appVersion.ts), [`vite.config.ts`](vite.config.ts) | The version module, and the one read of `package.json` that injects it |
+| [`package.json`](package.json), [`package-lock.json`](package-lock.json) | Release identity `2.0.0`, both copies |
+| [`scripts/check_tab_names.py`](scripts/check_tab_names.py) | Refuses a typed lab count, and refuses an App.tsx that stops deriving it |
+| [`scripts/smoke_test_workbench.mjs`](scripts/smoke_test_workbench.mjs) | Pins the rendered switch label and the footer version; standalone `npm run test:smoke` now exits after its pass instead of waiting on Vite's dependency scanner |
+| [`scripts/e2e_pages_bundle.mjs`](scripts/e2e_pages_bundle.mjs) | Asserts the built footer prints `package.json`'s version, in both browsers |
+| [`scripts/e2e_same_task_pairs.mjs`](scripts/e2e_same_task_pairs.mjs), [`docs/PLAN-2.1a.md`](docs/PLAN-2.1a.md) | Stop repeating "All 10"; the plan's §0 is marked done, with its acceptance |
+
+| Verified | Result |
+| :--- | :--- |
+| `npm run lint` | clean (`tsc -b`) |
+| `npm run check:tabnames` | `OK: 12 tab names, no position numbers in 297 pages or app sources` |
+| `npm run test:smoke` | `[PASS]` — the rendered switch says *All 12 Engineering Labs (Technical Names)*, the footer says `v2.0.0`, and the command exits 0 |
+| `npm run build` | succeeds; `v2.0.0` is in `dist/assets/index-*.js` (the define reached the bundle) |
+| `npm run test:e2e:pages` | `[PASS]` in Chromium (all 50 exercise entries) and Firefox (9-entry sample), including the new footer assertion |
+| `python3.12 scripts/check_all.py` | 34/34 |
 
 ## [2026-10-23] — Run 227: authored work stops being cache
 

@@ -241,7 +241,7 @@ const CASES = [
 
   // --- Workspace mode (App.viewMode): absolute writes, must come out equal.
   {
-    name: 'mode: Beginner + All 10 Engineering Labs (control)',
+    name: 'mode: Beginner + All-labs (control)',
     setup: [],
     pair: [{ testid: 'btn-mode-beginner' }, { testid: 'btn-mode-advanced' }],
   },

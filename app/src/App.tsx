@@ -108,7 +108,8 @@ import { actionForEvent } from './keymap';
 import { useKeymap } from './useKeymap';
 import { ThemeTokens } from './components/ThemeTokens';
 import { themeViewFromLocation, themeViewSearch } from './themeRoute';
-import { PYTHON_TAB_NAME, TAB_NAMES } from './tabNames';
+import { PYTHON_TAB_NAME, TAB_NAMES, labsSwitchLabel } from './tabNames';
+import { APP_VERSION } from './appVersion';
 import { isKnownLesson, lessonIdFromLocation } from './lessonRoute';
 import { readSharedAttempt, type SharedAttempt } from './shareLink';
 import { readTrySnippet } from './tryLink';
@@ -371,8 +372,9 @@ const SiteFooter: React.FC = () => (
     data-chrome="footer"
     className="border-t border-line-soft bg-canvas px-4 py-3 text-center text-[11.5px] text-faint"
   >
-    MechaLab · Ten-Step Spiral Mechatronics Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License:
-    CC BY 4.0 (Docs) &amp; MIT (Code) ·{' '}
+    MechaLab <span data-testid="app-version">{APP_VERSION}</span> · Ten-Step Spiral Mechatronics
+    Curriculum (Track P → Stage 0 → Depths 1–3) · Dual License: CC BY 4.0 (Docs) &amp; MIT (Code)
+    ·{' '}
     <a
       href={themeViewSearch()}
       data-testid="link-theme-tokens"
@@ -1202,7 +1204,7 @@ export const App: React.FC = () => {
                 }
               >
                 <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
-                All 10 Engineering Labs (Technical Names)
+                {labsSwitchLabel(WORKBENCH_TABS.length)}
               </button>
             </div>
 

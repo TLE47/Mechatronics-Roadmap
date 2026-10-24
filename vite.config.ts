@@ -1,6 +1,14 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+
+// One release identity, one file (`package.json`). The footer reads it through
+// `app/src/appVersion.ts`, and this define is the only place the value enters the bundle - a second
+// typed version would be the thing that drifts after the next release.
+const { version } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+) as { version: string };
 
 // Project Pages serve this workbench from https://<owner>.github.io/Mechatronics-Roadmap/,
 // so every asset URL in a production bundle needs that prefix, while `npm run dev` keeps
@@ -19,6 +27,7 @@ import { ISOLATION_HEADERS } from './scripts/isolation-headers.mjs';
 export default defineConfig(({ command }) => ({
   root: 'app',
   base: command === 'build' ? PAGES_BASE : '/',
+  define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [react(), tailwindcss()],
   build: {
     outDir: '../dist',

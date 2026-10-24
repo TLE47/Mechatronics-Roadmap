@@ -601,6 +601,18 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await page.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
     assert.equal(pageErrors.length, 0, `${name}: page errors after mount: ${pageErrors.join(' | ')}`);
 
+    // The release identity, read from the bundle learners open. The footer prints package.json's
+    // version through the define `vite.config.ts` injects; a build that lost that define would print
+    // the development fallback here, which is exactly what this check exists to catch.
+    const releaseVersion = JSON.parse(
+      fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')
+    ).version;
+    assert.equal(
+      (await page.getByTestId('app-version').textContent())?.trim(),
+      `v${releaseVersion}`,
+      `${name}: the footer must print package.json's version (v${releaseVersion})`
+    );
+
     // The Beginner/Advanced view switch must work on the built bundle too.
     await page.getByTestId('btn-mode-advanced').click();
     await page.getByTestId('btn-mode-beginner').click();

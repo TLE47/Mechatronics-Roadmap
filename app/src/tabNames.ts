@@ -23,3 +23,14 @@ export function tabPhrase(id: TabId): string {
 
 /** What the runner lists: reading lessons and graded exercises, not "exercises" for both. */
 export const PYTHON_ENTRY_NOUN = 'lessons & exercises';
+
+/**
+ * The view switch's technical label, with the count taken from the registry the rail renders.
+ *
+ * The label said "All 10 Engineering Labs" while the rail showed twelve; a typed count is a number
+ * nobody re-reads when a tab is added. This is exported so a suite can pin the wording without
+ * rendering React, and `scripts/check_tab_names.py` fails if App.tsx stops passing the registry count.
+ */
+export function labsSwitchLabel(count: number): string {
+  return `All ${count} Engineering Labs (Technical Names)`;
+}
