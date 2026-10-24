@@ -11,6 +11,33 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 222: a divider drag ends where the pointer is released
+
+The push after Run 221 went green on the weight step and red one step later, in the built-bundle
+suite: `firefox: dragging to 65% of the width with the results on the left must leave the editor at
+35%, got 39%`. The 4% is not noise. The drag is 8 pointer moves, so one move is 4.4% of the free
+width — the boundary was one move behind the pointer.
+
+`endSplitDrag` committed `splitRatioRef.current`, which is assigned during render, and a
+`pointermove` is a *continuous* event whose `setState` can still be queued when the release arrives.
+Under load the last move had not rendered, so the release wrote the ratio from the move before it,
+and that write is last, so it won. Local runs never hit the window, which is why this only ever
+failed on the runner.
+
+| Changed | What it does |
+| :--- | :--- |
+| [`app/src/components/tabs/TabPyodideRunner.tsx`](app/src/components/tabs/TabPyodideRunner.tsx) | `endSplitDrag` computes the ratio from the **release position** (`event.clientX`) instead of the last rendered one, so the boundary lands where the pointer let go however the moves were coalesced. A `pointercancel` carries no position and still commits what it has |
+
+| Verified | Result |
+| :--- | :--- |
+| `PLAYWRIGHT_BROWSERS=both npm run test:e2e:pages` | green, 32 checks, both browsers, on the rebuilt bundle |
+| `npm run test:workbench` (the CI step: 58 suites on one dev server and one built bundle) | all 58 pass, `pages` 106.8s |
+| `npm run build` | typecheck and bundle clean |
+| `python3.12 scripts/check_all.py` | 34/34 |
+
+The race itself was not reproduced here (it needs the loaded runner); the offset names the mechanism,
+and the fix makes the release position authoritative rather than the last render.
+
 ## [2026-10-23] — Run 221: the weight gate now measures the build CI actually makes
 
 Push `5ece6a9` went red on the runner and green here, and the difference was not the code. CI builds

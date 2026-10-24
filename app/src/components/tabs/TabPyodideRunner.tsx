@@ -2409,8 +2409,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
     setDraggingSplit(false);
-    // The ref, not the state: the last move and this release can arrive in one batch.
-    setSplitRatio(writeSplitRatio(splitRatioRef.current));
+    // The release position, not the last ratio that was rendered. A pointermove is a continuous
+    // event, so its setState can still be queued when the release arrives (the browser coalesces
+    // moves under load); committing the ref then writes one move behind where the learner let go,
+    // and the boundary stays a step off — CI caught exactly that, 39% after a drag to 35%. The
+    // pointerup carries the position the drag ended at, so it is authoritative. A cancel carries
+    // none, and commits what it has.
+    const container = splitContainerRef.current;
+    const box = container?.getBoundingClientRect();
+    const gap = container ? Number.parseFloat(getComputedStyle(container).columnGap) || 0 : 0;
+    const released =
+      event.type === 'pointerup' && box
+        ? splitRatioAt(event.clientX, box.left, box.width - gap, resultsSide)
+        : null;
+    setSplitRatio(writeSplitRatio(released ?? splitRatioRef.current));
   };
 
   // A preset change can unmount the handle mid-drag (⌥1 while holding it). Pointer capture dies with
