@@ -11,6 +11,32 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 224: the surface snapshot records what the app asked for
+
+With the contrast finding closed, the same job reached the surface-snapshot step and failed on all 48
+surfaces with a font stack nobody had changed: the baseline expected
+`-apple-system, "system-ui", …` and CI measured `-apple-system, BlinkMacSystemFont, …`. Chrome on
+macOS serialises `BlinkMacSystemFont` as `"system-ui"`; Chrome on Linux keeps the name. The gate had
+never survived a Linux runner, because every earlier run failed above it.
+
+| Changed | What it does |
+| :--- | :--- |
+| [`scripts/snapshot_surfaces.mjs`](scripts/snapshot_surfaces.mjs) | `fontFamily` is recorded with the three platform aliases (`-apple-system`, `BlinkMacSystemFont`, `system-ui`) removed: the app's claim is *which* typeface it asked for, and those three are the browser's substitution, not the app's choice |
+| [`docs/surface-snapshot.json`](docs/surface-snapshot.json) | Re-recorded |
+
+Re-recording also caught a stale baseline of the kind the weight gate was fixed for: the runner tab's
+main pane is 16 px taller than the committed numbers in every palette, and that is *not* this branch —
+rebuilding with `5ece6a9`'s own `TabPyodideRunner.tsx` and `index.css` measures the same 2261 px, so the
+baseline was recorded from a `dist/` older than the commit that shipped it (`ensureBuilt` skips a
+rebuild while `dist/` is fresh). 144 font-stack values and 12 box values moved; every region, control
+count and colour is unchanged.
+
+| Verified | Result |
+| :--- | :--- |
+| `npm run check:snapshot` after recording | `[PASS] Surfaces: 48 measured … every tab in every palette matches` |
+| Two consecutive `--record` sweeps | byte-identical files, so the gate is still deterministic |
+| The same sweep with `5ece6a9`'s app sources | the same 2261 px runner, proving the 16 px predates this branch |
+
 ## [2026-10-23] — Run 223: the palettes the runner actually gets
 
 Run 40050153030 cleared the weight gate and all 58 workbench suites, then failed the Lighthouse step:

@@ -95,6 +95,17 @@ function measure() {
       Math.round(rect.height),
     ];
   };
+  // The platform aliases in the stack are not this app's choice: Chrome on macOS serialises
+  // `BlinkMacSystemFont` as `"system-ui"` and Chrome on Linux keeps the name, so a baseline recorded
+  // on a Mac failed on the runner with a font stack nobody had changed. What a snapshot can honestly
+  // claim is *which typeface the UI asked for* — the named families and the generic tail — so the
+  // three platform aliases are dropped before the value leaves the page.
+  const fontFamily = (value) =>
+    value
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => !/^(-apple-system|BlinkMacSystemFont|"system-ui"|system-ui)$/.test(part))
+      .join(', ');
   const style = (element) => {
     if (!element) return null;
     const computed = getComputedStyle(element);
@@ -102,7 +113,7 @@ function measure() {
       display: computed.display,
       background: computed.backgroundColor,
       color: computed.color,
-      fontFamily: computed.fontFamily,
+      fontFamily: fontFamily(computed.fontFamily),
       fontSize: computed.fontSize,
     };
   };

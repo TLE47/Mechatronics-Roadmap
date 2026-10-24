@@ -59,21 +59,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -105,7 +105,7 @@
           196,
           114,
           1244,
-          2245
+          2261
         ],
         "panel": [
           216,
@@ -115,7 +115,7 @@
         ],
         "footer": [
           0,
-          2359,
+          2375,
           1440,
           43
         ],
@@ -123,7 +123,7 @@
           0,
           0,
           1440,
-          2403
+          2419
         ]
       },
       "counts": {
@@ -139,21 +139,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -219,21 +219,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -299,21 +299,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -379,21 +379,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -459,21 +459,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -539,21 +539,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -619,21 +619,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -699,21 +699,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -779,21 +779,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(14, 22, 36)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -859,21 +859,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -939,21 +939,21 @@
           "display": "block",
           "background": "rgb(7, 11, 18)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(238, 244, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1019,21 +1019,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1065,7 +1065,7 @@
           196,
           114,
           1244,
-          2245
+          2261
         ],
         "panel": [
           216,
@@ -1075,7 +1075,7 @@
         ],
         "footer": [
           0,
-          2359,
+          2375,
           1440,
           43
         ],
@@ -1083,7 +1083,7 @@
           0,
           0,
           1440,
-          2403
+          2419
         ]
       },
       "counts": {
@@ -1099,21 +1099,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1179,21 +1179,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1259,21 +1259,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1339,21 +1339,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1419,21 +1419,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1499,21 +1499,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1579,21 +1579,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1659,21 +1659,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1739,21 +1739,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(255, 255, 255)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -1819,21 +1819,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1899,21 +1899,21 @@
           "display": "block",
           "background": "rgb(248, 246, 242)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(20, 26, 36)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -1979,21 +1979,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2025,7 +2025,7 @@
           196,
           114,
           1244,
-          2245
+          2261
         ],
         "panel": [
           216,
@@ -2035,7 +2035,7 @@
         ],
         "footer": [
           0,
-          2359,
+          2375,
           1440,
           43
         ],
@@ -2043,7 +2043,7 @@
           0,
           0,
           1440,
-          2403
+          2419
         ]
       },
       "counts": {
@@ -2059,21 +2059,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2139,21 +2139,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2219,21 +2219,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2299,21 +2299,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2379,21 +2379,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2459,21 +2459,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2539,21 +2539,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2619,21 +2619,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2699,21 +2699,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(249, 241, 226)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -2779,21 +2779,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2859,21 +2859,21 @@
           "display": "block",
           "background": "rgb(239, 228, 208)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(31, 23, 16)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2939,21 +2939,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -2985,7 +2985,7 @@
           196,
           114,
           1244,
-          2245
+          2261
         ],
         "panel": [
           216,
@@ -2995,7 +2995,7 @@
         ],
         "footer": [
           0,
-          2359,
+          2375,
           1440,
           43
         ],
@@ -3003,7 +3003,7 @@
           0,
           0,
           1440,
-          2403
+          2419
         ]
       },
       "counts": {
@@ -3019,21 +3019,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -3099,21 +3099,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -3179,21 +3179,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3259,21 +3259,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3339,21 +3339,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3419,21 +3419,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3499,21 +3499,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3579,21 +3579,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3659,21 +3659,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "12px"
         },
         "shell": {
@@ -3739,21 +3739,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
@@ -3819,21 +3819,21 @@
           "display": "block",
           "background": "rgb(0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "main": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "panel": {
           "display": "block",
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(255, 255, 255)",
-          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+          "fontFamily": "\"Inter Variable\", Inter, ui-sans-serif, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
           "fontSize": "16.32px"
         },
         "shell": {
