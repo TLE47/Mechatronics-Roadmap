@@ -198,7 +198,14 @@ share. Switching to Study then puts the **lesson text** on the second cell — 4
 the editor ends, on one row — and a reload keeps it there. At 1440 px the tab rail is an
 activity bar: a column, beside the workbench rather than above
 it, with no sideways scroll and every label wide enough to read. Below `xl` the built bundle's tablet
-pass keeps the horizontal rail the page has always had. The rules underneath are pinned by
+pass keeps the horizontal rail the page has always had, and requires **zero** elements past the right
+edge at 834 px, not just a document that does not scroll. Two kinds of box are geometry rather than
+layout and are counted separately instead of failing the row: an SVG `<path>` inside a KaTeX delimiter,
+and the children of KaTeX's screen-reader-only MathML copy (`.katex-mathml`, clipped by its own
+stylesheet) — Firefox on Linux lays those `<mo>` boxes out wider than macOS does, which is what put 34
+of them past a CI tablet's edge while the page itself scrolled by 0 px. The exemption checks the clip,
+so an unclipped math box is still counted, and the pass line prints how many were skipped. The rules
+underneath are pinned by
 `test:layout` without a browser: which preset can move which panel (and that Write and Read move
 nothing), the other side's words, a stored side that is junk field by field, and the reversed
 template, pointer and keys together.

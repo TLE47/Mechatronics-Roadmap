@@ -16,6 +16,27 @@ flowchart LR
 
 ---
 
+## [2026-10-24] — Run 237: a clipped formula copy is not a spill
+
+The first CI run on the release (`5e5c506`) failed one assertion, and only on Linux: at the 834 px
+tablet width, Firefox laid out **34** elements past the right edge with the document itself scrolling by
+0 px. The worst was an `<mo>` at 948 px, which named the cause — KaTeX writes a second, screen-reader-only
+copy of every formula as MathML inside `.katex-mathml`, clipped to a sliver by its own stylesheet. Its
+boxes keep their layout rectangles after the clip, and Firefox on Linux gives them wider metrics than
+macOS does, so a page that is correct to look at failed a check that counted drawing geometry.
+
+The check already knew this shape: an SVG `<path>` inside a stretchy delimiter is excluded for the same
+reason. It now excludes a descendant of `.katex-mathml` **only when that copy is actually clipped**
+(`clip-path`/`clip` off `none`/`auto`), so an unclipped math box is still counted and a broken render is
+still a failure. The skipped boxes are counted and printed on the pass line, so the exemption is visible
+rather than silent. Local runs now say `4 clipped SVG/MathML box(es) skipped`; the assertion itself —
+document overflow `≤ 0` and no unexempted element past the edge — is unchanged.
+
+Files: `scripts/e2e_pages_bundle.mjs`, `docs/VERIFICATION.md`, `CHANGELOG.md`.
+
+Verified: `npm run test:e2e:pages` PASS on chromium and firefox (tablet overflow 0 px, 4 clipped boxes
+skipped); `python3.12 scripts/check_all.py` 35/35; `npm run lint` and `npm run build` clean.
+
 ## [2026-10-24] — Run 236: the results page is rendered from the folders
 
 [`docs/pilot-results.md`](docs/pilot-results.md) is the one pilot artefact a reader cannot check for

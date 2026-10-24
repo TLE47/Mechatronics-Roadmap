@@ -1213,14 +1213,29 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         }
         return false;
       };
-      const spilled = [...document.querySelectorAll('body *')]
+      // KaTeX writes a second, screen-reader-only copy of every formula as MathML inside
+      // `.katex-mathml`, clipped to a sliver by `clip-path` (node_modules/katex/dist/katex.css, with
+      // the comment "Accessibility hack to only show to screen readers"). Its `<mo>` boxes are that
+      // geometry and are invisible, and Firefox on Linux lays them out wider than macOS does: 34 of
+      // them crossed a tablet's right edge while the document itself scrolled by 0px. Like the SVG
+      // `<path>` below, they are drawing geometry, not a layout box — the document's own overflow is
+      // still asserted, and that is the thing a learner can actually scroll. The clip test is what
+      // keeps this from becoming a blanket exemption: an unclipped math box is still counted.
+      const clippedMath = (element) => {
+        const copy = element.closest('.katex-mathml');
+        if (!copy) return false;
+        const style = getComputedStyle(copy);
+        return style.clipPath !== 'none' || style.clip !== 'auto';
+      };
+      const pastEdge = [...document.querySelectorAll('body *')]
         .map((element) => ({ element, rect: element.getBoundingClientRect() }))
         .filter(({ rect }) => rect.width > 0 && rect.height > 0 && rect.right - viewportWidth > 1)
-        // An SVG's `<path>` is drawing geometry, not a layout box: KaTeX draws a stretchy delimiter
-        // as a 400em-wide path clipped by its `<svg>`. The document's own overflow is asserted
-        // separately, and that is the thing a learner can actually scroll.
-        .filter(({ element }) => !element.ownerSVGElement)
-        .filter(({ element }) => !insideHorizontalScroller(element))
+        .filter(({ element }) => !insideHorizontalScroller(element));
+      const ignored = pastEdge.filter(
+        ({ element }) => element.ownerSVGElement || clippedMath(element)
+      ).length;
+      const spilled = pastEdge
+        .filter(({ element }) => !element.ownerSVGElement && !clippedMath(element))
         .sort((a, b) => b.rect.right - a.rect.right);
       const worst = spilled[0];
       return {
@@ -1228,6 +1243,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         scrollWidth: doc.scrollWidth,
         clientWidth: doc.clientWidth,
         spilled: spilled.length,
+        ignored,
         worst: worst
           ? `${worst.element.tagName.toLowerCase()}${worst.element.dataset?.testid ? `[data-testid=${worst.element.dataset.testid}]` : ''} runs to ${Math.round(worst.rect.right)}px`
           : '',
@@ -1237,10 +1253,12 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       layout.overflow <= 0 && layout.spilled === 0,
       `${name}: at ${TABLET_VIEWPORT.width}px the workbench scrolls sideways by ${layout.overflow}px ` +
         `(scrollWidth ${layout.scrollWidth} > clientWidth ${layout.clientWidth}); ${layout.spilled} element(s) past the viewport` +
-        (layout.worst ? `, worst: ${layout.worst}` : '')
+        (layout.worst ? `, worst: ${layout.worst}` : '') +
+        (layout.ignored ? ` (${layout.ignored} clipped SVG/MathML box(es) not counted)` : '')
     );
     console.log(
-      `  ok ${name}: tablet ${TABLET_VIEWPORT.width}x${TABLET_VIEWPORT.height} keeps nav, lesson list and runner usable within the viewport (horizontal overflow ${layout.overflow}px)`
+      `  ok ${name}: tablet ${TABLET_VIEWPORT.width}x${TABLET_VIEWPORT.height} keeps nav, lesson list and runner usable within the viewport (horizontal overflow ${layout.overflow}px` +
+        `${layout.ignored ? `, ${layout.ignored} clipped SVG/MathML box(es) skipped` : ''})`
     );
     await tablet.close();
     return 'pass';
