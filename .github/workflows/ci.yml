@@ -209,9 +209,11 @@ jobs:
         run: npm run check:axe
 
       # Lighthouse's own three categories—best-practices, SEO and accessibility—on the built bundle,
-      # against docs/lighthouse-allowlist.json. Performance is deliberately not run: a score that moves
-      # with the runner is not a gate this repository keeps (the script's header says so, and the row in
-      # docs/PLAN-2.0-GAP.md records the decision).
+      # against docs/lighthouse-allowlist.json. Both default palettes are audited, each pinned with a
+      # launch flag and verified in the browser first: a runner with no prefers-color-scheme preference
+      # used to be graded in light while a developer's Mac was graded in dark. Performance is
+      # deliberately not run: a score that moves with the runner is not a gate this repository keeps
+      # (the script's header says so, and the row in docs/PLAN-2.0-GAP.md records the decision).
       - name: "Check Lighthouse: best-practices, SEO and accessibility on the built bundle"
         run: npm run check:lighthouse
 

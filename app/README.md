@@ -424,6 +424,14 @@ scores print; the audits are what fails. `performance` is not run at all, for th
 above gives: a score that moves with the runner is not a gate, and a number nobody gates is read as a
 promise the build does not keep.
 
+It also does not grade the machine's colour scheme. Lighthouse cannot be told which
+`prefers-color-scheme` to audit, so a plain run follows the desktop: dark on this Mac, light on a
+runner with no preference, which is how one commit scored 100 here and 97 in CI. The gate now asks
+Chrome for **dark and then light**, and asks the browser which palette it resolved before each audit;
+a browser that does not take the pin fails the run (exit 2, naming the flag) instead of going back to
+grading whatever it is sitting on. That is not hypothetical: every contrast finding in CI's first red
+run of the gate was in light or paper, and none was in dark.
+
 Its first run found four things, and the first three were real. **Two header buttons had no accessible
 name** — their words are `hidden` below 1536 px, so on every ordinary screen they were an icon and
 nothing else (`Export Progress (.md)` and `1-Page Cheat Sheet` are now also their `aria-label`, matching

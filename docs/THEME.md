@@ -46,6 +46,13 @@ status label spends much of its life. The plot face is deliberately unchanged in
 traces drawn on it are literal colours tuned against that ink, so a brighter chart would wash them out
 rather than reveal them.
 
+**The two defaults are audited, pinned.** `npm run check:lighthouse` runs Lighthouse once for dark and
+once for light, asking Chrome for each palette and verifying with the browser that it took it, rather
+than inheriting the desktop's `prefers-color-scheme` — a gate that reads the machine grades a different
+palette in CI than it does locally, which is how a light-only contrast finding once passed here and
+failed on the runner. High contrast and paper are not in the Lighthouse run because they are never a
+first visit's palette; `npm run check:axe` and `npm run test:theme:e2e` measure all four.
+
 ## Surfaces
 
 Dark is the default: the work is a canvas, an editor and a plot, so the palette is a bench

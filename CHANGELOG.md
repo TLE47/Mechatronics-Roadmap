@@ -11,6 +11,32 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 225: the Lighthouse gate asks for a palette instead of reading the desktop
+
+Run 223 fixed every contrast finding the runner's light palette exposed and left the cause in place:
+Lighthouse has no setting for `prefers-color-scheme`, so the audit graded whatever the machine reported
+— dark on this Mac, light on a bare runner. The same commit scored 100 here and 97 there, and a
+regression that only broke light had nowhere to show up.
+
+Both palettes a first visit can open on are now asked for explicitly, and the browser is asked which one
+it took before the audit begins.
+
+| Changed | What it does |
+| :--- | :--- |
+| [`scripts/check_lighthouse.mjs`](scripts/check_lighthouse.mjs) | Two runs, dark then light, each in its own browser launched with `--blink-settings=preferredColorScheme=0` / `=1`; `readPinnedScheme` evaluates both media queries over the launched browser's DevTools socket first, and a browser that reports anything else fails the run with exit 2 naming the flag. Findings, scores and `--json` carry the palette; `max_items` is read per palette and an entry may name a `theme` |
+| [`docs/lighthouse-allowlist.json`](docs/lighthouse-allowlist.json) | `_why` records the two palettes and the optional `theme` |
+| [`docs/VERIFICATION.md`](docs/VERIFICATION.md), [`docs/THEME.md`](docs/THEME.md), [`docs/README.md`](docs/README.md), [`app/README.md`](app/README.md), [`docs/PLAN-2.0-GAP.md`](docs/PLAN-2.0-GAP.md), [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Say which palettes the gate runs and why they are pinned |
+
+| Verified | Result |
+| :--- | :--- |
+| `npm run check:lighthouse` | `[PASS]`, dark and light both `100/100/100`, two explained findings, none stale, 41 s for both palettes |
+| The same run with the light flag set to `preferredColorScheme=2` (no preference) | exit 2: `asked the browser for light (--blink-settings=preferredColorScheme=2) and it reported "none"` |
+| The same run with `valid-source-maps` narrowed to `"theme": "dark"` | exit 1 naming `light/best-practices/valid-source-maps`; dark still `ok`, the entry not stale |
+| `python3.12 scripts/check_all.py` | 34/34 |
+
+High contrast and paper are not run: they are never a first visit's palette (high contrast is taken only
+when the OS asks for it), and `check:axe` and `test:theme:e2e` already measure all four.
+
 ## [2026-10-23] — Run 224: the surface snapshot records what the app asked for
 
 With the contrast finding closed, the same job reached the surface-snapshot step and failed on all 48

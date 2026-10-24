@@ -307,6 +307,17 @@ move without containing the visible `List → Right`, WCAG 2.5.3**), all three f
 fourth finding, `valid-source-maps`, is the one allowed entry, because the bundle is built from this
 public repository and maps would roughly double what Pages serves.
 
+**Both default palettes are pinned, not inherited.** Lighthouse has no setting for
+`prefers-color-scheme`, so a run without a pin grades whatever desktop it happens to be on: the Mac
+this was written on reports dark, a Linux runner with no preference reports light, and the same commit
+scored 100 here and 97 there (Run 223). The gate asks Chrome for dark and then for light, and before
+each audit it asks the browser itself — one `Runtime.evaluate` over the DevTools socket — which palette
+it resolved. A browser that stops honouring the launch flag fails the run with exit 2 naming the flag,
+so the gate cannot quietly go back to grading the machine. `max_items` is read per palette, and an
+allowlist entry may name a `theme` when a finding belongs to one palette. High contrast and paper are
+not run here: they are never a first visit's palette, and `check:axe` and `test:theme:e2e` already
+measure them per palette.
+
 `npm run check:snapshot` records the **painted surface** of all 48 tab/palette combinations — header,
 activity rail, main pane and first panel geometry, the count of buttons, inputs, links, headings,
 canvases and tables, and the colours, type and `--bg/--panel/--text/--accent` the browser resolved — and
