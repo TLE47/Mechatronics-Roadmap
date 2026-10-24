@@ -196,7 +196,7 @@ IndexedDB and comes back after a reload.
 | `⌘⇧F` / `Ctrl+⇧+F` | Search **inside** the course: the lessons' starter code, hint ladder, instructor's checks and expected output, and the 65 reading pages' prose. A starter hit opens the lesson with the caret on that line; a hint, check or output hit says which panel it is in; a course-page hit names its section and opens that page **on GitHub at the heading**, in a new tab, with the workbench still behind it. |
 | `?` | The sheet of every key, from [`src/shortcuts.ts`](src/shortcuts.ts) — one table, so the list cannot go stale. It must be typed outside an editor or a field, where `?` is a character. `⌘K` finds it too, by typing `shortcuts`. |
 | `⌘↵` / `Ctrl+↵` | Run the open lesson. |
-| `Escape`, then `i` | With **Vim keys** on (the toolbar's `Vim keys` button), normal mode reads `dd`, `u`, `/` and the rest; the badge beside the line count names the mode that is reading them. Off by default, and remembered once turned on ([`src/vimMode.ts`](src/vimMode.ts)). |
+| `Escape`, then `i` | With **Vim keys** on (**More ⋯ → Vim keys**), normal mode reads `dd`, `u`, `/` and the rest; the badge beside the line count names the mode that is reading them. Off by default, and remembered once turned on ([`src/vimMode.ts`](src/vimMode.ts)). |
 
 **Six of those keys are yours to change.** A row's key in the sheet is a button: press it, press a
 new chord, and that is the key — `⌘⇧J` for focus, say. A key another action already has is refused
@@ -238,6 +238,44 @@ a place to read, not just a page. `prose_gzip` is its own line in
 [`docs/weight-budget.json`](../docs/weight-budget.json): it is neither JavaScript nor part of a first
 paint, and `python3 scripts/generate_prose_index.py --check` (a CI gate, and in `check_all.py`) fails
 when a page changes without the index being rebuilt.
+
+### The lesson text, beside the code
+
+The runner used to show code and send the learner to GitHub for the words that explain it: two tabs, and
+a scroll position lost on every lesson switch. The lesson is a pane now — **Study** puts it on the left
+and the editor on the right, and **Read** (⌥3) gives it the window, with the editor and results hidden.
+It is the preset that finally matches its name.
+
+**One source, copied at build time.** `scripts/generate_lesson_pages.py` reads each registry entry's own
+Markdown page — the file the repository ships, not a second copy in TypeScript — and writes
+[`app/public/lesson-pages/`](public/lesson-pages): h2–h4 headings with GitHub's anchors, paragraphs,
+nested lists, tables, fenced code, the safety-note blockquotes, display maths and images. It deliberately
+leaves out the generated callouts ("Run this in the workbench" is a link to where the learner is already
+standing), the ladder-gate exam (one paper reprinted on every page of a ladder), Mermaid (the app has no
+renderer, so its source would read as noise) and the **Full Solution** — Load Solution keeps the answer
+behind one door, and a reading pane that printed it would open the same door quietly. Inline emphasis,
+links, code spans and `$…$` maths stay Markdown in the payload and are parsed once in
+[`src/readerMarkdown.ts`](src/readerMarkdown.ts); the maths is the KaTeX every other tab uses. The page
+list is the registry's, not a glob: an entry with no page has none, and the pane says so.
+
+**Fetched per lesson, refused rather than guessed.** [`src/lessonPage.ts`](src/lessonPage.ts) loads one
+page when it opens — one request shared by two panes, held in memory, and a failure forgotten so Retry is
+a real retry. A 200 whose body is `index.html` (the SPA fallback) is refused instead of painted, and a
+payload from a newer build is refused by version.
+
+**Where you stopped is remembered per lesson.** [`src/readingPosition.ts`](src/readingPosition.ts) stores
+the heading at the top of the pane plus the pixel offset, so a page regenerated after a sentence changed
+still lands on its heading. It lives in `localStorage` and is deliberately **not** a draft: opening a
+lesson must not make the list call it edited, and clearing a draft must not send the reader back to the
+top. The pane's **Highlight** button pins the selection to the lesson's notes, so *pin selected text*
+means the lesson rather than the brief. GitHub is demoted to a **View source** link in the footer, where
+it belongs: copying, printing, filing an issue — not the reading copy.
+
+`npm run test:reader` pins the inline parser, the payload guard and the position store;
+`python3 scripts/generate_lesson_pages.py --check` is the drift gate (a page edited without its payload
+being rebuilt fails), `tests/test_lesson_pages.py` pins what the generator must and must not copy, and
+`npm run test:e2e:pages` opens a lesson, reads a heading, an equation and the source link out of the DOM,
+reloads and finds the same heading at the top of the pane.
 
 ### Study notes
 
@@ -411,12 +449,14 @@ It is empty.
 
 **`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
 it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
-because woff2 is already compressed), `largest_js_gzip`, `prose_gzip` and `total`. Today that is **1.06
-MB across 39 files**, with the budgets a few percent above. A breach fails with the overshoot named, and
+because woff2 is already compressed), `largest_js_gzip`, `prose_gzip`, `reader_gzip` and `total`. Today
+that is **1.07 MB across 39 files**, with the budgets a few percent above. A breach fails with the overshoot named, and
 so does a budget with nothing measured behind it — a metric the build stopped emitting would otherwise
 pass forever. The rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and
 `npm run test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a
-budget gate is usually wrong.
+budget gate is usually wrong. **`reader_gzip` is the lesson pane's own line**: the 92 generated payloads
+are served beside the bundle and fetched one page at a time, so they are neither JavaScript nor part of a
+first paint (669.2 kB against a 720 kB ceiling, and not in `total` for the same reason `prose_gzip` is not).
 
 The bundle has two shapes, and the gate grades the shipped one instead of only whatever is in `dist/`.
 A clone builds `local_only`: no Supabase variables, the account library folded to a one-byte stub. CI
@@ -634,19 +674,32 @@ top-level assignment, first occurrence wins — and an attribute (`z.real`) is d
 jumping to an unrelated `real`. A name nothing defines is not a dead key: the file strip says
 `no definition for <name>` ([`src/symbolIndex.ts`](src/symbolIndex.ts), `npm run test:symbols`).
 
+**The row is what you do next, and nothing else.** **Run & Verify** is the one primary action;
+**Pause** and **Stop** join it only while a program runs. Everything else — Format with Black,
+History, Diff, Reset Starter, Reset Runtime, Load Solution, Breakpoints, Share, Pair, Predict, Vim
+keys, Watch and Self-Mark — lives behind **More ⋯**, still one press away. At 1280×800 the folded row
+measured seven controls, and More reveals all thirteen; that is a contract, not a screenshot: at rest
+the row shows at most seven controls by id; every control is at least 12 px, the primary actions and
+the layout chips 13 px, metadata 11 px, and the lesson text is 17 px
+([`TabPyodideRunner.tsx`](src/components/tabs/TabPyodideRunner.tsx), `npm run check:labels`, which
+renders the built bundle in Chromium rather than reading the class list). The preset digits stay on
+the row, because they are navigation rather than an action.
+
 **The screen gives its width to one thing at a time, if you ask it to.** Four presets, in the
-editor's header or on `⌥1`–`⌥4`: **Study** (the chooser, the editor and the results — the default),
-**Write** (the editor alone; the results of a run describe code that has since changed), **Read** (the
-results, with the editor and chooser out of the way for rereading a traceback), and **Split** (the
-editor on the left, the results on the right — the arrangement a 1440 px screen has been asking for,
-where the verdict used to be scrolled off the moment the line it was about came into view). The
+editor's header or on `⌥1`–`⌥4`: **Study** (the chooser, the lesson text, the editor and the results —
+the default), **Write** (the editor alone; the results of a run describe code that has since changed),
+**Read** (the lesson text at the window's height, with the editor, chooser and results out of the way),
+and **Debug** (the editor on the left, the results on the right — the arrangement a 1440 px screen has
+been asking for, where the verdict used to be scrolled off the moment the line it was about came into
+view). Read meant *results only* before Run 229 and Split was this fourth preset's first name; a stored
+`read` still opens, and a stored `split` reads as `debug`, so no browser lands on a blank page. The
 choice is remembered. The shortcut reads `KeyboardEvent.code` because `⌥2` types `™` in `key` on a
 Mac, a stored value that is not one of the four reads as the default rather than blanking the page,
 and the two rules are kept apart on purpose: *which* regions a preset shows, and *how* the ones left
 are arranged (one column, or two at the `lg` breakpoint before a narrow window stacks them again)
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout`).
 
-**Split's divider is yours to move.** The handle between the columns is a `role="separator"`: drag
+**Debug's divider is yours to move.** The handle between the columns is a `role="separator"`: drag
 it, or focus it and use `←`/`→` (2% a press, 10% with `Shift`), `Home`/`End` for the two ends, and
 double-click for an even split again. What is stored is the *share* of the work area the editor
 gets, not a pixel width, because the same learner moves between a laptop and a monitor; neither
@@ -657,14 +710,14 @@ and the number is written once at the end rather than on every pointer move
 `npm run test:e2e:pages` for the drag and the reload).
 
 **A panel can sit on either edge.** The presets decide what is on screen; **docking** decides which
-side. Study's chooser can move to the right of the work area, and Split's results to the left of the
-editor — the arrangement for a learner whose eyes are on the code and who wants the output on that
-side too. One button names the panel it will move *in the preset in force* (`List → Right`,
+side. Study's lesson text can move to the right of the work area, and Debug's results to the left of
+the editor — the arrangement for a learner whose eyes are on the code and who wants the output on that
+side too. One button names the panel it will move *in the preset in force* (`Lesson → Right`,
 `Results → Left`) and offers the way back; Write and Read draw no button, because neither has a panel
 beside anything to move. The two sides are remembered separately, and the stored share is still the
 **editor's**: with the results on the left, the pointer, the arrow keys and `Home`/`End` follow the
 handle, so `Home` puts it at the container's left edge and the editor is at its widest. The two
-Split columns are placed by CSS column rather than by document order, so the editor stays first in
+Debug columns are placed by CSS column rather than by document order, so the editor stays first in
 the DOM (it is what the results are about) while the screen can put either one first
 ([`src/workspaceLayout.ts`](src/workspaceLayout.ts), `npm run test:layout`, `npm run test:e2e:pages`
 for the docked geometry and the drag).
@@ -814,10 +867,10 @@ offered where the browser gave the page shared memory; without it, nothing can r
 **A breakpoint is that park placed on a line** ([`src/editor/breakpoints.ts`](src/editor/breakpoints.ts),
 [`src/editor/breakpointGutter.ts`](src/editor/breakpointGutter.ts), `npm run test:breakpoints`): click
 the gutter slot beside a line, or put the caret on it and press **F9**, and the run stops there whether
-or not the learner can reach the toolbar in time. Clicking an armed line disarms it, a lesson keeps its
+or not the learner can reach the row in time. Clicking an armed line disarms it, a lesson keeps its
 own list, and the list is remembered in `localStorage` across a reload.
 
-**A breakpoint can wait for a pass.** The toolbar's **Breakpoints (N)** panel lists every dot with one
+**A breakpoint can wait for a pass.** **More ⋯ → Breakpoints (N)** lists every dot with one
 line for a condition — a Python expression the worker compiles once per run and evaluates **with the
 names the line can see** — so `n == 3` stops a loop on its third turn instead of its first, and
 **Continue** is not a stop per turn. A narrowed dot is drawn **hollow** rather than filled, because a
@@ -834,7 +887,7 @@ rather than `main.py`'s, and the frame's values are the callee's. A call into CP
 (`math.sqrt`) has no source in the editor to stand on, so a Step in on one behaves as a Step; from
 inside a helper, Step stays in that helper, and a call that returns lands back in its caller.
 
-**Format tidies the file with Black.** The toolbar's **Format** button (or *Format the file with Black* in
+**Format tidies the file with Black.** **More ⋯ → Format** (or *Format the file with Black* in
 `⌘K`) re-indents and re-spaces your file in place, with Black's own default mode — the same output
 `black file.py` would write. Black is pure Python, so it runs **inside the same worker** as your code,
 installed on the first press and remembered for the session; nothing is added to the bundle for it. The
@@ -878,7 +931,7 @@ The recording is the history; the park is the present.
 | The quoted line comes from **the text that ran**, not from the editor | A run is a fact about a program; the panel still describes it after an edit, and a new run replaces it. |
 | A stop and a timeout keep their partial traces | "Where was my loop when I stopped it" is the question Stop is pressed to answer. |
 | A breakpoint is **held as a position, remembered as a line number** | While the editor is open a dot is a document position, so CodeMirror's change mapping carries it with the statement it was placed on: a newline typed above moves it down, undo brings it back, and Load Solution re-seeds it from the line number instead of collapsing it. The line number is what a lesson switch and a reload restore (see [`src/editor/breakpointState.ts`](src/editor/breakpointState.ts)). |
-| A breakpoint is read **when the run starts** | A park needs a list the interpreter already has; a message cannot reach a worker inside Python, so a dot (or a condition) added mid-run is for the next run — the toolbar's Pause catches the loop that is already spinning. |
+| A breakpoint is read **when the run starts** | A park needs a list the interpreter already has; a message cannot reach a worker inside Python, so a dot (or a condition) added mid-run is for the next run — the row's Pause catches the loop that is already spinning. |
 | The gutter draws a **slot on every line** | A column that is invisible until it holds something has no affordance to click. The slot is the click target *and* the dot, so what the learner reads is what they pressed. |
 | A step out parks on a frame **return**, not on the caller's next line | `print(f(x))` never gives the caller another line event: waiting for one would run the program to its end. At the return event the caller's line is still the call, which is the line to show. |
 | A step lands only in a file the page can show, and the park says **which** | A park quotes a line; a frame with no source (CPython's own) would be a sentence nobody can check, so `math.sqrt` is stepped over, not into. A step over parks at the depth that asked for it or shallower — which is also how a returning call lands back in its caller. |
@@ -896,7 +949,7 @@ the quote and the numbers always describe the same moment.
 
 ### Sharing an attempt
 
-**Share** in the runner toolbar copies a link to this lesson with the editor's text in it
+**More ⋯ → Share** copies a link to this lesson with the editor's text in it
 ([`src/shareLink.ts`](src/shareLink.ts), `npm run test:share`). It is the one thing a stuck learner
 can send a person: a screenshot loses the code and a paste lands in the wrong lesson.
 
@@ -934,7 +987,7 @@ reading a second description of the same failure.
 
 ### Pair study
 
-**Pair** in the runner toolbar opens a session with one other workbench: a direct WebRTC data channel,
+**More ⋯ → Pair** opens a session with one other workbench: a direct WebRTC data channel,
 with the connection carried **by hand** ([`src/pairing.ts`](src/pairing.ts),
 [`src/usePairSession.ts`](src/usePairSession.ts), [`src/components/PairSheet.tsx`](src/components/PairSheet.tsx),
 `npm run test:pair`).
@@ -1055,6 +1108,10 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/components/PythonEditor.tsx`](src/components/PythonEditor.tsx) | The CodeMirror editor: view, external sync, test bridge. |
 | [`src/editor/`](src/editor) | Editor-only logic: the token theme, the slider model and its widget. |
 | [`src/lessonFiles.ts`](src/lessonFiles.ts) | The read-only helper files a lesson brings (the shared plant). |
+| [`src/lessonPage.ts`](src/lessonPage.ts) | The lesson text as data: the payload's shape and guard, where it is served from, and one fetch per page. |
+| [`src/readerMarkdown.ts`](src/readerMarkdown.ts) | Inline Markdown for the reader (emphasis, code, links, maths) and the heading anchors that match GitHub's. |
+| [`src/readingPosition.ts`](src/readingPosition.ts) | Where each lesson was left: a heading anchor plus an offset, kept apart from the draft store. |
+| [`src/components/LessonReader.tsx`](src/components/LessonReader.tsx) | The pane: blocks rendered as React, the position restored and flushed, Highlight, Top, and the source link. |
 | [`src/draftHistory.ts`](src/draftHistory.ts) | The versions behind the draft: what each run started from, with its verdict, bounded per lesson and in total, plus the merge a restore uses. |
 | [`src/codeDiff.ts`](src/codeDiff.ts) | The Diff panel's engine: exact-line LCS, hunk windows with counted gaps, the coarse head/tail fallback, and the changed-line count the roadmap card reuses. |
 | [`src/predictGate.ts`](src/predictGate.ts) | Predict first: how a free-text guess is graded against the expected output (four verdicts, lines not substrings), and the bounded per-lesson store of guesses and skips. |
@@ -1086,6 +1143,7 @@ pages. A stale registry is a build failure, not a silent mismatch.
 ```bash
 npm run lint                 # types
 npm run test:workbench       # runner behaviour (happy-dom) + palette search + editor model
+npm run test:reader          # the lesson pane without a browser: inline parsing, heading anchors, the payload guard, the position store
 npm run test:runtime         # the worker: in-place Stop, input(), isolation, Pages fallback
 npm run test:editor          # slider directives (parse/clamp/format) and helper-tab detection
 npm run test:history         # run history: filed on Run, deduped, capped per lesson and in total
@@ -1117,6 +1175,8 @@ npm run check:axe            # axe over all 12 tabs in every palette; serious/cr
 npm run check:weight         # the gzipped shell against docs/weight-budget.json (run after npm run build)
 npm run check:lighthouse     # best-practices, SEO and accessibility audits on the built bundle; performance is not run
 npm run check:snapshot       # the painted structure of all 48 tab/palette surfaces against docs/surface-snapshot.json
+npm run test:perf            # the visit, timed: six moments on the built bundle, laptop and throttled phone, against docs/perf-budget.json (--record writes docs/PERF.md)
+npm run test:perf:unit       # the perf page and its ceilings without a browser; a CI step
 npm run test:e2e:backup      # the header buttons in Chromium: write a zip, wipe, restore to store and screen
 npm run test:e2e:review      # pin, comment, rate, reload in Chromium: the card stays scheduled
 npm run test:e2e:focus       # focus in Chromium: the chrome hides, the work stays, three exits, one measured sitting

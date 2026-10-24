@@ -518,24 +518,22 @@ body {
    narrower editor with a hole beside it. */
 [data-focus='on'] [data-focus-expand] {
   grid-column: 1 / -1;
-}
-
-/* ----------------------------------------------------------------------------
-   The Split preset: the editor in the first column, the results in the second.
+}/* ----------------------------------------------------------------------------
+   The Debug preset: the editor in the first column, the results in the second.
 
    The container is a two-column grid at the `lg` breakpoint (`lg:grid-cols-2` on the runner's work
-   area); every card in it describes both halves, so each one spans the row except the two that are
-   the halves. Pinning them by placement rather than by document order is what keeps the cards
+   area); every card in it describes both halves, so each one spans the row except the two that
+   are the halves. Pinning them by placement rather than by document order is what keeps the cards
    between them — the predict gate, a share banner — from pushing the editor into the second
    column. These rules are inert below `lg`, where there is no grid to place anything in.
    ---------------------------------------------------------------------------- */
-[data-layout='split'] > * {
+[data-layout='debug'] > * {
   grid-column: 1 / -1;
 }
-[data-layout='split'] > [data-testid='editor-panel'] {
+[data-layout='debug'] > [data-testid='editor-panel'] {
   grid-column: 1;
 }
-[data-layout='split'] > [data-testid='results-column'] {
+[data-layout='debug'] > [data-testid='results-column'] {
   grid-column: 2;
 }
 
@@ -544,14 +542,53 @@ body {
    one row: without it the auto-placement cursor only walks forward, so an item placed at column 1
    after one at column 2 is pushed to a row of its own. Every other child spans both tracks, so
    there is no hole for dense packing to back-fill from a later row. */
-[data-layout='split'][data-dock='left'] {
+[data-layout='debug'][data-dock='left'] {
   grid-auto-flow: row dense;
 }
-[data-layout='split'][data-dock='left'] > [data-testid='editor-panel'] {
+[data-layout='debug'][data-dock='left'] > [data-testid='editor-panel'] {
   grid-column: 2;
 }
-[data-layout='split'][data-dock='left'] > [data-testid='results-column'] {
+[data-layout='debug'][data-dock='left'] > [data-testid='results-column'] {
   grid-column: 1;
+}
+
+/* ----------------------------------------------------------------------------
+   The Study preset: the lesson text beside the code it is about.
+
+   The diagram in `docs/PLAN-2.1a.md` is the rule: the lesson on the left, the editor above the
+   results on the right. Rows rather than a nested pair of containers, because the reader spans
+   both right-hand cards and each of them keeps its own height; a nested `space-y` column would
+   make the reader's height follow the results' and leave a gap under the code while drafting.
+   `items-start` keeps every card its own height instead of stretching to the row's tallest.
+   ---------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  [data-layout='study'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  [data-layout='study'] > [data-testid='lesson-reader'] {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  [data-layout='study'] > [data-testid='editor-panel'] {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  [data-layout='study'] > [data-testid='results-column'] {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  /* Docked right: the text takes the second track and the pair moves to the first. The rows stay
+     the same, so the editor is still above the results whichever side the reading is on. */
+  [data-layout='study'][data-lesson-dock='right'] > [data-testid='lesson-reader'] {
+    grid-column: 2;
+  }
+  [data-layout='study'][data-lesson-dock='right'] > [data-testid='editor-panel'],
+  [data-layout='study'][data-lesson-dock='right'] > [data-testid='results-column'] {
+    grid-column: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

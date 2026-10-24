@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "why": "Ceilings for the six visit moments, roughly three to four times the number recorded in docs/PERF.md, and looser where the recorded number is small enough for noise to dominate (a 73 ms warm run is mostly scheduler jitter). This file gates a regression that matters, not a busy afternoon: wall-clock time on a shared machine is noisy, so a tight ceiling would be re-run until green, which teaches the gate to be ignored. Raising one is allowed, but only with a fresh --record row and a sentence in docs/PERF.md that says what got slower and why the new number is acceptable.",
+  "profiles": {
+    "laptop": {
+      "description": "1440x900, DPR 1, no CPU or network throttling",
+      "ceiling_ms": {
+        "nav_to_lesson": 1600,
+        "lesson_to_editor": 1200,
+        "first_run": 6000,
+        "warm_run": 1200,
+        "lesson_switch": 1200,
+        "reload_restore": 2000
+      }
+    },
+    "phone": {
+      "description": "390x844, DPR 3, 4x CPU slowdown, Slow 4G (1.6 Mbit down, 750 kbit up, 150 ms RTT)",
+      "ceiling_ms": {
+        "nav_to_lesson": 40000,
+        "lesson_to_editor": 25000,
+        "first_run": 150000,
+        "warm_run": 3000,
+        "lesson_switch": 4000,
+        "reload_restore": 45000
+      }
+    }
+  }
+}

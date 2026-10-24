@@ -232,16 +232,16 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
   return (
     <div data-testid="panel-study" className="bg-panel border border-line rounded-xl p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs font-mono text-accent flex items-center gap-1.5">
+        <div className="text-[13px] font-mono text-accent flex items-center gap-1.5">
           <NotebookPen className="w-4 h-4" />
           <span>Study · notes, highlights and review</span>
         </div>
-        <span className="text-[10.5px] font-mono text-faint" data-testid="study-status">
+        <span className="text-[11.5px] font-mono text-faint" data-testid="study-status">
           {status || (highlights.length ? `${highlights.length} highlight${highlights.length === 1 ? '' : 's'}` : 'nothing kept yet')}
         </span>
       </div>
 
-      <label htmlFor="study-note" className="mt-2.5 block text-[11px] text-muted">
+      <label htmlFor="study-note" className="mt-2.5 block text-[12px] text-muted">
         What clicked, what is still fuzzy. Saved as you type, on this device only.
       </label>
       <textarea
@@ -254,7 +254,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
         }}
         rows={3}
         placeholder="e.g. The tolerance is on the angle, not the position — that is why 5 mm passed."
-        className="mt-1.5 w-full resize-y rounded-lg border px-2.5 py-2 font-mono text-xs outline-none"
+        className="mt-1.5 w-full resize-y rounded-lg border px-2.5 py-2 font-mono text-[13px] outline-none"
         style={{
           borderColor: 'var(--border)',
           backgroundColor: 'var(--canvas)',
@@ -273,13 +273,13 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
               ? 'Keep the selected text with this lesson'
               : 'Select a passage (or a line of code) first'
           }
-          className="btn btn-ghost text-[11px] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-ghost text-[12.5px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Highlighter className="w-3.5 h-3.5" />
           Pin selected text
         </button>
         {selection && (
-          <span className="min-w-0 flex-1 truncate font-mono text-[10.5px] text-faint" data-testid="study-selection">
+          <span className="min-w-0 flex-1 truncate font-mono text-[11.5px] text-faint" data-testid="study-selection">
             “{selection.slice(0, 90)}
             {selection.length > 90 ? '…' : ''}”
           </span>
@@ -297,14 +297,14 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
               ? 'Comment on a pinned passage to turn it into a review card'
               : 'Work through the cards due today'
           }
-          className="btn btn-ghost text-[11px] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-ghost text-[12.5px] disabled:opacity-50 disabled:cursor-not-allowed"
           data-card-count={cards.length}
           data-due-count={dueCount}
         >
           <GraduationCap className="w-3.5 h-3.5" />
           Review {cards.length > 0 ? `(${dueCount} due)` : ''}
         </button>
-        <span className="min-w-0 flex-1 truncate font-mono text-[10.5px] text-faint" data-testid="study-deck-note">
+        <span className="min-w-0 flex-1 truncate font-mono text-[11.5px] text-faint" data-testid="study-deck-note">
           {cards.length === 0
             ? 'every commented highlight is a card'
             : `${cards.length} card${cards.length === 1 ? '' : 's'} across the course${dueCount === 0 && soonestDue !== null ? ` · next ${waitText(soonestDue - Date.now())}` : ''}`}
@@ -314,7 +314,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
           data-testid="study-sitting"
           data-sitting-runs={sitting.runs}
           title="Measured on this device: a sitting ends after five minutes without a run or an answer, and is capped at three hours."
-          className="font-mono text-[10.5px] text-faint"
+          className="font-mono text-[11.5px] text-faint"
         >
           {sitting.text || 'No sittings recorded yet'}
         </span>
@@ -322,18 +322,18 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
 
       {reviewing && (
         <div data-testid="review-card" className="mt-2 rounded-lg border border-line bg-canvas p-2.5">
-          <div className="flex items-center justify-between gap-2 font-mono text-[10px] text-faint">
+          <div className="flex items-center justify-between gap-2 font-mono text-[11.5px] text-faint">
             <span data-testid="review-source" className="min-w-0 truncate">
               {reviewing.lesson}
             </span>
             <span>{reviewing.schedule.reps === 0 ? 'new card' : `seen ${reviewing.schedule.reps}x`}</span>
           </div>
-          <p data-testid="review-front" className="mt-1 font-mono text-[11.5px] text-body break-words">
+          <p data-testid="review-front" className="mt-1 font-mono text-[12.5px] text-body break-words">
             {reviewing.quote}
           </p>
           {revealed ? (
             <div data-testid="review-answer" className="mt-2 border-t border-line pt-2">
-              <p className="text-[11.5px] text-body break-words">{reviewing.comment}</p>
+              <p className="text-[12.5px] text-body break-words">{reviewing.comment}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {RATINGS.map((rating) => (
                   <button
@@ -342,7 +342,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
                     data-testid={`btn-rate-${rating.grade}`}
                     onClick={() => rate(rating.grade)}
                     title={rating.hint}
-                    className="btn btn-ghost text-[11px]"
+                    className="btn btn-ghost text-[12.5px]"
                   >
                     {rating.label}
                   </button>
@@ -354,7 +354,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
               type="button"
               data-testid="btn-show-answer"
               onClick={() => setRevealed(true)}
-              className="btn btn-ghost mt-2 text-[11px]"
+              className="btn btn-ghost mt-2 text-[12.5px]"
             >
               Show answer
             </button>
@@ -371,7 +371,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
               className="rounded-lg border border-line bg-canvas px-2.5 py-2"
             >
               <div className="flex items-start gap-2">
-                <p className="min-w-0 flex-1 font-mono text-[11px] text-body break-words">
+                <p className="min-w-0 flex-1 font-mono text-[12.5px] text-body break-words">
                   {highlight.quote.slice(0, MAX_HIGHLIGHT_CHARS)}
                 </p>
                 <button
@@ -394,7 +394,7 @@ export function StudyPanel({ lessonId }: StudyPanelProps) {
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') (event.target as HTMLInputElement).blur();
                 }}
-                className="mt-1.5 w-full rounded border px-2 py-1 text-[11px] outline-none"
+                className="mt-1.5 w-full rounded border px-2 py-1 text-[12.5px] outline-none"
                 style={{
                   borderColor: 'var(--border)',
                   backgroundColor: 'var(--panel)',

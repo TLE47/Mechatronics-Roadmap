@@ -84,6 +84,15 @@ files into [`docs/friction-report.md`](friction-report.md): attempts-to-verify P
 unfinished share, and the most common first failing assertion per unit. That page is empty until logs
 exist and says so; it is the instrument the pilot's help budget is measured with.
 
+**The sheet is a record, not a recollection.** Every field above has a home in one JSON file per sitting,
+`pilot-data/<date>-<initials>/sitting.json`, written by [`scripts/pilot_sitting.py`](../scripts/pilot_sitting.py)
+while it happens: `--new` opens it empty, `--stop` adds one row per place they stopped (minute, page, what
+they tried, kind), and `--finish` closes it from the export — copying `active_minutes`, the run and hint
+counts and `verified` rather than asking anyone to remember them. `--check` is the gate over the whole
+record: `finished` without a verified export is refused, minutes that drifted from the export are
+refused, and an `overhead_minutes` that is not `elapsed - active` is refused. `--status` then counts
+participants — and only folders with an export and a closed record behind them count.
+
 Publish only aggregates. Participant names stay out of the repository; a participant may be quoted with
 consent and initials.
 
@@ -94,7 +103,9 @@ reads the sittings out of the export and refuses one that has none.
 
 ## 5. What gets published
 
-[`docs/pilot-results.md`](pilot-results.md) is filled in after each stage and keeps its own limits:
+[`docs/pilot-results.md`](pilot-results.md) is generated after each stage — `python3 scripts/pilot_results.py`
+renders it from the participant folders, `--check` fails when the page and the folders disagree, and the
+author walk it carries lives in [`AUTHOR_WALK.md`](AUTHOR_WALK.md) — and keeps its own limits:
 
 - **the actual N**, with counts next to every percentage (five people are described, not turned into
   statistics);

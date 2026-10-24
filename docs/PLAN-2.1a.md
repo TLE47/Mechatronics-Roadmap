@@ -12,10 +12,10 @@ file and the check that settles it.
 ```mermaid
 flowchart LR
     R["§1 retention<br/>(done)"] --> T["§0 trust fixes<br/>(done)"]
-    T --> RD["§2 reading<br/>inside the lesson"]
-    RD --> Q["§3 quiet<br/>first screen"]
-    Q --> M["§4 measured<br/>visit"]
-    M --> P["§5 one beginner<br/>sitting"]
+    T --> RD["§2 reading<br/>inside the lesson<br/>(done)"]
+    RD --> Q["§3 quiet first<br/>screen (done)"]
+    Q --> M["§4 measured<br/>visit (done)"]
+    M --> P["§5 sitting<br/>instrument (done)<br/>participants owed"]
 ```
 
 ## What the review got right, and what moved
@@ -23,12 +23,12 @@ flowchart LR
 | # | Review finding | Verdict at `b93036a` |
 | --- | --- | --- |
 | 1 | Drafts evict past 12 lessons; notes evict past 25 | **Verified** — `MAX_DRAFTS` in [`app/src/lessonDraft.ts`](../app/src/lessonDraft.ts), `MAX_NOTE_LESSONS` in [`app/src/studyNotes.ts`](../app/src/studyNotes.ts). Both caps were applied on every write, including a restore. **Fixed in this slice**; see §1. |
-| 2 | Reading leaves the workspace: "Read this page on GitHub" is the reading copy, and the **Read** preset means *results only* | **Verified** — [`app/src/components/tabs/TabPyodideRunner.tsx`](../app/src/components/tabs/TabPyodideRunner.tsx) line ~3181, [`docs/ROUTE.md`](ROUTE.md), and a palette hit for a prose page opens GitHub ([`app/src/palette.ts`](../app/src/palette.ts) line 38). The **Read** preset hides the chooser and editor and shows the results ([`docs/PLAN-2.0-GAP.md`](PLAN-2.0-GAP.md), layout row). Planned as §2. |
+| 2 | Reading leaves the workspace: "Read this page on GitHub" is the reading copy, and the **Read** preset means *results only* | **Verified** at `b93036a` — [`app/src/components/tabs/TabPyodideRunner.tsx`](../app/src/components/tabs/TabPyodideRunner.tsx) line ~3181, [`docs/ROUTE.md`](ROUTE.md), and a palette hit for a prose page opens GitHub ([`app/src/palette.ts`](../app/src/palette.ts) line 38). **Fixed in Run 229**: the lesson renders in a pane beside the editor, Read is the reading preset, and the position is remembered. See §2. |
 | 3 | The everyday toolbar carries too many actions for one row | **Verified** — Run & Verify sits beside Watch, Vim, Format, History, Diff, Sharing, Pairing, Reset Runtime, Self-mark and the hint controls, most of them at 11–12.5 px ([`TabPyodideRunner.tsx`](../app/src/components/tabs/TabPyodideRunner.tsx)). Planned as §3. |
 | 4 | Small labels (11–12.5 px) need a rendered check on an ordinary laptop | **Verified** — the same file and [`app/src/components/StudyPanel.tsx`](../app/src/components/StudyPanel.tsx) use 10.5–12.5 px for controls and metadata. The review's own caveat stands: source does not prove how it looks. Planned as §3. |
 | 5 | Passing CI does not establish speed; Lighthouse excludes performance; the recorded bundle is `local_only` | **Partly stale.** The exclusion is deliberate and documented in [`scripts/check_lighthouse.mjs`](../scripts/check_lighthouse.mjs) — Best Practices, SEO and Accessibility are facts about the document; Performance on a runner is not. The `local_only` gap in the weight gate was closed in Run 226: [`docs/weight-budget.json`](weight-budget.json) now carries a `signed_in` block, and [`scripts/check_weight_budget.mjs`](../scripts/check_weight_budget.mjs) builds and grades that shape when `dist/` is local-only. What remains true is that **no timing is measured at all**. Planned as §4. |
 | 6 | `package.json` still says `1.0.0`; the switch says "All 10 Engineering Labs" while the registry has 12 tabs | **Verified, both cheap; fixed in Run 228** — `labsSwitchLabel(WORKBENCH_TABS.length)` now renders *All 12 Engineering Labs (Technical Names)*, and `package.json` is `2.0.0`, read by [`app/src/appVersion.ts`](../app/src/appVersion.ts) and printed in the footer. See §0. |
-| 7 | Zero non-author participants; the author walk is not beginner evidence | **Verified** — [`docs/pilot-results.md`](pilot-results.md) says N = 0 at every stage. Planned as §5; nothing in this plan may claim completion before it. |
+| 7 | Zero non-author participants; the author walk is not beginner evidence | **Verified** — [`docs/pilot-results.md`](pilot-results.md) says N = 0 at every stage. **Fixed as far as code can**: §5's instrument landed in Runs 232–234 (a record per sitting, a debrief, the rendered observation ticket, the 7–14 day transfer check), and every success criterion is now a field a gate audits. The three beginners are still owed, and nothing in this plan claims completion before them. |
 | 8 | Restore can silently drop older entries | **Verified for the old store** (a restore went through the capped writer). **Fixed in this slice**: every lesson is kept, and a refused write is reported instead of counted as restored. |
 
 The review's overall direction — *make the workspace safer and simpler before adding capability* — is
@@ -95,85 +95,162 @@ npm run test:backup   # restore + cap arithmetic; archive ceiling under MAX_BACK
 cap (measured in `test:backup`: ~6.5 M characters → ~13 MB), which is why the write must say when it
 fails. The old "fits 5 MB at worst case" property is deliberately retired.
 
-## §2 — Reading inside the lesson (the largest usability investment)
+## §2 — Reading inside the lesson (done in Run 229)
 
-The workspace should be *lesson on the left, editor on the right, checks underneath*:
+The workspace is *lesson on the left, editor on the right, checks underneath*: that is Study now. Read
+gives the text the window, because that is what a preset named Read should do.
 
 ```text
 ┌──────────────────────────────┬──────────────────────────────┐
 │ LESSON                       │ CODE                         │
 │ explanation · equations      │ main.py                      │
 │ worked example · exercise    │ [ Run & Check ]              │
-│ [ Add note ] [ Highlight ]   ├──────────────────────────────┤
+│ [ Highlight ] [ Top ]        ├──────────────────────────────┤
 │                              │ OUTPUT / CHECKS              │
 └──────────────────────────────┴──────────────────────────────┘
 ```
 
-Implementation direction, in the order that keeps it cheap:
+What shipped, against the implementation order this section asked for:
 
-1. **One source.** Generate the reader's payload at build time from the course Markdown, next to
-   `prose-index.json` (`scripts/generate_prose_index.py` already reads every page). Do not maintain a
-   second copy of a lesson in TypeScript.
-2. **Render what the pages already use**: headings and anchors, lists, tables, code fences, callouts,
-   images. KaTeX is already a dependency for the maths. A hand-written renderer is acceptable only if it
-   is pinned by a fixture per construct; otherwise take the smallest maintained Markdown renderer and
-   measure it into `sources_gzip`/entry like any other library.
-3. **The link stays, demoted.** "View source on GitHub" remains for copying, issues and printing; it is
-   no longer *the* reading copy.
-4. **Position is remembered**, per lesson, like a draft — and it is not a draft (it must not make a lesson
-   look edited).
-5. **Highlights anchor to the rendered page.** Selection already produces quote-keyed highlights; the
-   reader is the surface that makes "pin selected text" mean the lesson rather than the brief.
-6. **Presets match their names**: Study = lesson + editor + compact results; Read = lesson-focused;
-   Write = editor-focused; Debug = editor + checks + debugging tools. Rename the old Read preset if it
-   keeps its results-only meaning.
+1. **One source.** `scripts/generate_lesson_pages.py` reads each registry entry's own Markdown page and
+   writes `app/public/lesson-pages/<path>.json` — one file per page, served beside the bundle and fetched
+   when the lesson opens. The page list is the registry's (`build_lessons`), not a glob, and `--check` is
+   the drift gate. No lesson is stored twice.
+2. **A small block payload, not HTML.** Headings keep GitHub's anchors (`github-slugger`'s rule,
+   including the `-1` a repeated heading gets), and paragraphs, nested lists, tables, code fences, safety
+   quotes, display maths and images are blocks. Inline emphasis, links, code spans and `$…$` maths stay
+   Markdown in the payload and are parsed once in `app/src/readerMarkdown.ts`; KaTeX — already the app's
+   maths renderer — draws the formulas. A block this build does not know is refused by
+   `isLessonPage`, not painted raw, and a stale payload version is refused too. The generator skips what
+   would be wrong here: the **Full Solution** (the diff panel and palette keep that behind Load Solution),
+   the generated run callouts (the reader *is* the workbench), the ladder-gate exam and Mermaid.
+3. **The link stays, demoted.** The pane's footer reads *View source on GitHub ↗* — for copying, printing
+   and filing an issue — and a failed fetch says so and still offers it.
+4. **Position is remembered, and is not a draft.** `app/src/readingPosition.ts` stores a heading anchor plus
+   a pixel offset per lesson, in `localStorage`, in its own key: opening a lesson does not mark it edited
+   and clearing a draft does not scroll the reader to the top. The anchor survives a page regenerated after
+   a sentence changed; the offset is the fallback when a heading is gone. Writes are one per scroll pause
+   and one on the way out.
+5. **Highlights anchor to the rendered page.** Selecting in the pane offers **Highlight**, which writes the
+   same quote-keyed highlight the notes panel reads, so "pin selected text" now means the lesson.
+6. **Presets match their names.** Study = lesson + chooser + editor + results; Read = the lesson text at the
+   window's height; Write and Debug do not render the pane at all (so they cost no fetch), and the chooser
+   became a rail rather than a third of the work area. Docking moves the lesson text to the other edge in
+   Study, with the editor still first in the DOM.
 
-**Acceptance:** `npm run test:reader` (new) pins the renderer fixtures and the reading-position store;
-`npm run test:layout` pins the four presets' regions; `npm run test:e2e:pages` opens a lesson, reads a
-rendered heading and an equation in the DOM, reloads and finds the same scroll anchor. Bundle cost is
-recorded in `check:weight`, not hidden in the entry.
+Acceptance, all run in this slice (green):
 
-## §3 — A quiet first screen
+```bash
+npm run test:reader                            # 21/21: inline rules, GitHub anchors, payload guard, position store
+npm run test:layout                            # 24/24: four presets, docking, Debug's divider
+python3 scripts/generate_lesson_pages.py --check # 92 pages current, 653.3 kB gzipped
+python3 tests/test_lesson_pages.py             # 14/14: what the generator must and must not copy
+npm run check:weight                           # reader_gzip 669.2 kB of 720 kB; entry 479.4 kB of 495 kB
+npm run test:e2e:pages                         # Study reads beside the editor; a reload returns to the same heading
+```
 
-Keep visible: **Run & Check**, **Stop** while running, **Hints**, **Notes**, **More ⋯**, and
-**Next lesson** once passed. Everything else moves behind `More` or becomes contextual:
+**What this does not claim:** the pane is a reading copy, not an editor — the full solution, the graded
+checks and the code that runs stay the workbench's own controls. A page whose payload is missing says so
+instead of rendering a blank card, and a lesson with no Markdown page says that too.
+
+## §3 — A quiet first screen (done in Run 230)
+
+The row at rest is four layout presets, the dock toggle, **More ⋯** and **Run & Verify** — seven
+controls, measured. **Pause** and **Stop** join while a program runs, **Next lesson** is in the passed
+card, and everything else is one press away behind More:
 
 | Context | Appears |
 | --- | --- |
-| Running | Stop, elapsed time |
-| Paused at a breakpoint | Continue, Step, stop |
+| Running | Pause, Stop |
+| Paused at a breakpoint | Continue, Step, Stop (in the park bar) |
 | Failed run | Explain this error, the check's own hint rung |
 | Passed | Next lesson, review card if a comment exists |
-| Under More | Format with Black, History/Diff, Reset Runtime, Reset Starter, Solution, Share, Pair, editor preferences, Vim |
+| Under More | Format with Black, History, Diff, Load Solution, Reset Starter, Reset Runtime, Breakpoints, Share, Pair, Predict, Vim keys, Watch, Self-Mark |
 
-Type scale, pending the rendered check the review asked for: 17–18 px reading text, 13–14 px controls,
-12 px metadata; 11 px only for genuinely secondary labels. Do not shrink the editor to make room — the
-capability stays, only its default visibility changes.
+More is a disclosure, not a menu: `aria-expanded` / `aria-controls`, a `role="group"` panel, and
+`Escape` closes it and puts focus back on the button. Every folded control keeps its testid and its
+title, and stays in the DOM — the fold is visual, so an action is never absent for a keyboard or a
+screen reader, only folded.
 
-**Acceptance:** `npm run test:e2e` still reaches every moved action through `More`; `npm run check:axe`
-stays green; a keyboard path exists for every always-visible action.
+**The type scale was measured, not asserted.** `scripts/check_label_sizes.mjs` renders the built
+bundle in Chromium at 1280×800 and reads computed sizes:
 
-## §4 — Measure the visit, then split only if the measurement says so
+| What | Floor | Why |
+| --- | --- | --- |
+| Primary actions (Run, Stop, Pause, More, presets, dock) | 13 px | the controls a beginner presses first |
+| Every other control | 12 px | the folded toolbar included |
+| Metadata (counters, statuses, captions) | 11 px | secondary, never tiny |
+| Lesson paragraphs | 17–18 px | reading text, h2 22 px, h3/h4 18 px, quotes 15.5 px |
 
-Write `scripts/perf_walk.mjs` (Playwright, the same real Chromium the runtime suite uses) to record, on a
-named laptop and a throttled phone profile:
+The gate also holds the row itself: at most seven controls at rest, by id; More must reveal all
+thirteen folded ids; and none of them may be visible before it is opened. That is what keeps
+"quieter" from quietly becoming "hidden".
 
-| Moment | What it means |
-| --- | --- |
-| Navigation → lesson visible | first paint that matters |
-| Lesson visible → editor accepts a keystroke | CodeMirror is ready |
-| First Run → first output | Pyodide warm, or the cost of warming |
-| Warm Run → first output | the number a learner actually repeats |
-| Lesson switch → usable editor | cached lesson data |
-| Reload → draft and notes restored | the storage promise |
+The capability is unchanged: no editor was shrunk and no action was removed. Only its default
+visibility moved.
 
-Store the numbers in `docs/PERF.md` with the machine and date; a number without both is not a
-measurement. Gate only *regressions* (a generous ceiling per moment), never a score. Current bundle
-facts are in [`docs/weight-budget.json`](weight-budget.json): entry 473,064 B gzipped, largest chunk
-300,791 B, both graded for the signed-in shape on every `check:weight` run.
+Acceptance, all run in this slice (green):
 
-**Acceptance:** `npm run test:perf` prints all six moments for a build; `docs/PERF.md` has one row per
-date and machine; `check:weight` continues to grade both shapes.
+```bash
+npm run check:labels    # PASS: 7 controls at rest, 13 behind More, lesson text 17 px at 1280x800
+npm run test:e2e        # PASS: every moved action is still reached through More
+npm run test:e2e:pages  # PASS on the built bundle, chromium and firefox
+npm run test:runtime    # PASS: Breakpoints and Format with Black, now via More
+npm run check:axe       # PASS: 12 tabs x 4 palettes, no serious/critical finding
+npm run check:snapshot  # PASS after one re-record; the toolbar's extra row is the only move
+```
+
+**What this does not claim:** the measurement covers the Python runner's first screen at one laptop
+size, because that is the screen the review named. The other eleven tabs keep their own type and are
+still covered by `check:axe`, `test:theme:e2e` and `check:snapshot`; if this scale becomes the app's,
+the gate should walk those tabs too.
+
+## §4 — Measure the visit (done in Run 231)
+
+`scripts/perf_walk.mjs` (`npm run test:perf`) drives the **built bundle** — served at the Pages base
+path by `startStaticServer`, the same artifact `check:lighthouse` and `test:e2e:pages` grade — in the
+same real Chromium the runtime suite uses, and records the six moments §4 asked for:
+
+| Moment | What it means | How it is timed |
+| --- | --- | --- |
+| Navigation → lesson text | first paint that matters | `performance.now()` until the pane's own prose is on screen |
+| Lesson text → first keystroke | CodeMirror is ready | until a typed character comes back through the editor bridge |
+| First Run → first output | Pyodide warm, or the cost of warming | the click until the program's stdout carries its sentence |
+| Warm Run → first output | the number a learner actually repeats | the same, with a different sentence so the previous run's output cannot satisfy it |
+| Lesson switch → usable editor | cached lesson data | selecting the next lesson until its title and code are up and take a keystroke |
+| Reload → draft restored | the storage promise | the new document's `Date.now() - performance.timeOrigin` until the typed draft is back |
+
+**Two profiles, because an average of them describes neither.** `laptop` is 1440×900 at DPR 1 with no
+throttling. `phone` is 390×844 at DPR 3 with **4× CPU slowdown and Lighthouse's own Slow 4G** (1.6 Mbit
+down, 750 kbit up, 150 ms RTT), applied over the DevTools protocol before the first navigation. Both
+pin the light palette and ask for reduced motion, so a stored palette or a fade's duration cannot
+become a second variable.
+
+The numbers live in [`docs/PERF.md`](PERF.md), one row per date, machine and profile, written by
+`--record`; a number without the machine and the date is not a measurement. What is **gated** is the
+ceilings in [`docs/perf-budget.json`](perf-budget.json), at roughly two to three times the recorded
+value: a doubling fails, a busy afternoon does not. A moment the run could not measure, or one the
+budget does not name, is a failure too — otherwise the gate would pass by omission.
+
+**Why it is not a CI step.** CI's runner is a shared virtual machine, and the six moments would be a
+function of its contention rather than of this app, which is exactly why Lighthouse's performance
+category is not gated either. CI runs `npm run test:perf:unit` instead: it proves the page, the
+budget and the walk still describe the same six moments, and that no recorded number sits above its
+own ceiling. Cheap, no browser, and it fails the moment the doc drifts.
+
+Acceptance, run in this slice (green):
+
+```bash
+npm run test:perf          # six moments on both profiles, each under its ceiling
+npm run test:perf:unit     # 21/21: the budget's judgement, the row writer, and the shipped doc
+npm run test:perf -- --record  # writes the two rows into docs/PERF.md
+```
+
+**What this does not claim:** the `phone` profile is desktop Chrome emulating a small viewport on a
+slower CPU over a throttled link — a floor for what a phone pays, not that phone's number. The walk
+measures the Python runner's first visit, the moments this plan named; the eleven other tabs still
+have no timing gate (their cost is covered statically by `check:weight` and `check:snapshot`). And a
+regression that lands while nobody runs the walk is caught by nothing until somebody does.
 
 ## §5 — One beginner sitting before any "finished" claim
 
@@ -182,13 +259,40 @@ where they stop rather than helping. Success is not "completed the feature list"
 lesson, edits, runs, understands one failure, continues without guidance. The author walk in
 `pilot-results.md` stays labelled as an instrument check, never as evidence.
 
+**The instrument is built; the participants are not.** No command can produce a non-author beginner, so
+this section is finished in the only sense available to code: every criterion is a field, every field is
+written by one command, and every claim is refused without its evidence.
+
+| Criterion | Record field | Written by | Refused when |
+| --- | --- | --- | --- |
+| Finds the first lesson, unaided | `reached_lesson_1`, `minutes_to_lesson_1` | `--debrief` | yes with no minute; a minute past the sitting; `no` beside a minute |
+| Where they stopped | `stops[]` (minute, page, tried, kind) | `--stop` as it happens | a stop with no minute, page or kind |
+| Edits and runs | `runs`, `active_minutes`, `elapsed_minutes` | `--finish`, from the export | numbers that drifted from the export's sittings |
+| Understands one failure | `understood_error` (+ `--error-quote`) | `--debrief` | the export contradicts the help type |
+| Continues without guidance | `knew_next`, `help`, `person_hints` | `--debrief`, `--finish` | `person` help with no count; a hint the log does not record |
+| Finished | `finished`, `run_verify`, `finished_minutes` | `--debrief` | finished without a verified export and the graded loop |
+| The finding leaves the room | — | `--issue` | any of the above, since the body is withheld |
+
+The order is [`docs/PILOT_KIT.md`](PILOT_KIT.md)'s: open the record, log stops as they happen, finish from
+the export, debrief the answers, check, file the observation. The transfer question is the 7–14 day
+follow-up ([`scripts/pilot_followup.py`](../scripts/pilot_followup.py)), because a question asked the same
+day measures memory.
+
 **Acceptance:** `docs/pilot-results.md` gains a real row with N ≥ 3, or the release notes keep saying
-"no beginner evidence yet". `npm run check:pilot` still validates the kit.
+"no beginner evidence yet". `npm run check:pilot` still validates the kit, and now also that the answers
+cannot be written as claims without their evidence.
+
+**What this does not claim:** these sittings are run by the course author, so a participant recruited that
+way is self-selected and a row is a first reading, not a sample. `--status` prints `N (non-author) = 0`
+until a folder holds an export **and** an answered record, and `pilot-results.md` stays the template it
+says it is.
 
 ## Order, and what this plan refuses
 
-Risk and value first: **§1 and §0 (done) → §2 → §3 → §4 → §5**. §2 is the release; §3 and §4 are a week
-each; §5 decides whether the release may be called convenient.
+Risk and value first: **§1 and §0 (done) → §2 (done) → §3 (done) → §4 (done) → §5 (instrument done)**.
+§2 was the release; §3 and §4 were a week each; §5 decides whether the release may be called convenient,
+and nothing in this plan may claim it before three beginners have sat down. What remains is not code: it
+is three people, one timer and the operator's own `--stop` key.
 
 Not in 2.1a: new tabs or runtimes, a different editor, uPlot, cloud sync, a second design system, or any
 cap that deletes a lesson's authored work to make a number smaller. The review's closing line is the

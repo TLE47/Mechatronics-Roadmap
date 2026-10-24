@@ -41,6 +41,7 @@ python3.12 scripts/check_all.py         # every gate CI's verify step runs, in C
 python3.12 scripts/check_workflows.py   # the workflow files themselves, before the push
 python3.12 scripts/check_doc_commands.py # every command the docs tell a reader to run still exists (Run 200)
 python3.12 scripts/check_plan_rows.py   # the 2.0 gap page: every row closed, every `ships` row runnable (Run 203)
+python3.12 scripts/generate_lesson_pages.py --check # the 92 reader payloads still match the lesson pages, and none is left for a page the registry dropped
 python3.12 scripts/check_all.py --full  # + the 48-package exercise sweep and the unittest discovery
 python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
@@ -49,6 +50,11 @@ npm run test:theme:e2e                  # the three controls + contrast on all 1
 npm run check:weight                    # the gzipped shell against docs/weight-budget.json in both build shapes: a local-only dist/ also builds the signed-in one into dist-signed-in/, grades it, and removes it
 npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
 npm run check:snapshot                  # the painted surface of all 48 tab/palette pairs against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
+npm run check:labels                    # the first screen's type, rendered at 1280x800: seven controls at rest, thirteen behind More, primary 13 px, controls 12 px, metadata 11 px, lesson text 17-18 px
+npm run test:perf                       # the visit, timed: six moments on the built bundle, on a laptop and on a throttled phone, each against docs/perf-budget.json (add --record to write docs/PERF.md)
+npm run test:perf:unit                  # the perf page and the budget without a browser: six moments, two profiles, no recorded row above its ceiling (a CI step)
+npm run check:pilot                     # the sitting kit's six gates: the sitting record's rules, the export preflight, the transfer follow-up, the aggregate and the kit page's own commands
+python3 tests/test_pilot_sitting.py     # where a beginner sitting stopped: a stop that cannot be counted refused, `finished` without a verified export refused, minutes checked against the export, and `N = 0` said out loud
 npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step/Step in (into the lesson and into the plant)/Step out, breakpoints (conditional ones too), a parked frame's values changed, watch expressions answered at every park, Format with Black (one undo, a parse refusal left alone), Pages fallback
 npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
@@ -62,7 +68,8 @@ npm run test:avr                        # every committed .hex runs in avr8js an
 npm run check:firmware                  # each committed .hex was built from the sketch the page ships, and is the file app/src/data/firmware.json hashes
 npm run test:inline                     # inline values: which lines bind, which value belongs where, the payload's validation
 npm run test:symbols                    # go to definition: what counts as a def, the caret's word, the active file winning a tie
-npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits, docking (the panel a preset can move, one field at a time), and Split's divider (clamped, remembered, arrow-keyed, and reversed with the results docked left)
+npm run test:layout                     # layout presets: which regions each shows, a stored value validated, the ⌥ digits, docking (the panel a preset can move, one field at a time), and Debug's divider (clamped, remembered, arrow-keyed, and reversed with the results docked left)
+npm run test:reader                     # the lesson pane without a browser: inline Markdown and GitHub's anchor rule, the payload guard, and the reading-position store (anchors, clamps, a blocked store)
 npm run test:keymap                     # the sheet's keys: the shipped six print as they always have, ⌘ and Ctrl are one chord, a character shortcut is the character, a rebind frees its old key, a clash or a browser key is refused with its sentence, a stored map is read field by field, and the sheet prints the map
 npm run test:vim                        # Vim keys: off until asked for, remembered, blocked storage, and the mode word the badge prints
 npm run test:trace                      # the run trace: a payload from another thread, the step cap and its honest total, unreadable values cut
@@ -174,7 +181,7 @@ list holds 200 and drops the oldest, a store written by something else reads as 
 blocked storage never throws, and the totals quote a median (odd and even), the longest sitting and
 only the sittings that started today. It also checks focus mode's store: the choice survives a reload,
 the toggle broadcasts it once, and a store that refuses the write still returns the state to render.
-Split's divider is measured on the **built bundle**, because it is about where a boundary lands: `⌥4`
+Debug's divider is measured on the **built bundle**, because it is about where a boundary lands: `⌥4`
 at 1440 px, a pointer drag to 35% leaves a 416 px editor of 1188 px of free space with `aria-valuenow`
 agreeing (the activity bar owns the other 196 px), `Home`/`End` land on the 30%/70% clamps, and a
 reload puts the divider back where it was left. The arithmetic underneath (`test:layout`) is pinned without a browser: a share is clamped, a
@@ -183,12 +190,12 @@ the ends, a collapsed container gives no share at all, and a blocked store costs
 than the drag.
 
 **Docking and the activity bar are measured where they land, too.** The same built-bundle step presses
-the dock button with the results in Split and asserts the results end before the editor starts, both
+the dock button with the results in Debug and asserts the results end before the editor starts, both
 on the same row, the editor still over 320 px and `aria-valuenow` still the *editor's* share — then
 drags to 65% of the free space and requires a 35% editor, because the pointer mapping reverses with
 the panel, and presses `Home` for the editor's widest. A reload must bring back the side and the
-share. Switching to Study then puts the chooser on the second cell — 388 px, starting where the work
-area ends at 1012 px, on one row — and a reload keeps it there. At 1440 px the tab rail is an
+share. Switching to Study then puts the **lesson text** on the second cell — 472 px, starting where
+the editor ends, on one row — and a reload keeps it there. At 1440 px the tab rail is an
 activity bar: a column, beside the workbench rather than above
 it, with no sideways scroll and every label wide enough to read. Below `xl` the built bundle's tablet
 pass keeps the horizontal rail the page has always had. The rules underneath are pinned by
@@ -321,6 +328,67 @@ so the gate cannot quietly go back to grading the machine. `max_items` is read p
 allowlist entry may name a `theme` when a finding belongs to one palette. High contrast and paper are
 not run here: they are never a first visit's palette, and `check:axe` and `test:theme:e2e` already
 measure them per palette.
+
+`npm run check:labels` is the rendered half of §3 in [`PLAN-2.1a.md`](PLAN-2.1a.md): source can say
+`text-[10.5px]`, but only a browser knows what a label measures after the cascade and the root font
+size. It opens the built bundle in Chromium at 1280×800, reads the computed size of every control and
+every line of metadata on the first screen, and fails below **12 px for a control, 13 px for a primary
+action, 11 px for metadata, 17–18 px for a lesson paragraph**. It also holds the row itself: at rest
+the runner's toolbar carries at most seven controls by id (four presets, the dock toggle, More, Run),
+More must reveal all thirteen folded ids, and none of them may be visible before it is opened. That is
+what makes "quieter" a check rather than a opinion — and it is why the folded controls are still
+measured rather than assumed: `hidden` is a visual fold, never a smaller type size.
+
+`python3 scripts/pilot_sitting.py` is the §5 kit's record, and its rules are about what a claim needs: a
+participant sitting is one JSON file beside their export (`pilot-data/<date>-<initials>/sitting.json`)
+holding every stop with its minute, page and kind, the minutes the export measured, and the answers the
+observer gave. `--check` refuses the claims the evidence does not support — `finished: true` without a
+verified export and the graded loop, `active_minutes` that drifted from the export's sittings, an
+`overhead_minutes` that is not `elapsed - active`, a stop without a minute/page/kind, a help type the
+log contradicts — and `--status` counts a folder only when it holds an export **and** a closed record,
+printing `N (non-author) = 0` until then so the results page cannot look like a result. `--issue` renders
+the observation ticket's body from the same record — every stop as a row, an unanswered field as `not
+answered`, and no body at all when the evidence does not support the claims — so filing a sitting is one
+command rather than a retype. `--debrief` is the other half of that: the answers the sitting alone
+supplies — whether the first lesson was found unaided and in how many minutes, `understood_error` with the
+message it is about, `knew_next`, `their_fix`, and the graded loop — are written in one command that
+audits a copy first and **writes nothing when an answer would make the record unfilable** (`finished yes`
+with no graded loop, a find with no minute, a minute past the sitting), so the mistake is caught while the
+participant is still in the room. Pinned by `python3 tests/test_pilot_sitting.py` (51 checks, the last
+twenty-one over the ticket, its render, the debrief and the find) and run with the rest of the kit by
+`npm run check:pilot`.
+
+`python3 scripts/pilot_results.py` is the page itself: [`docs/pilot-results.md`](pilot-results.md) is
+rendered from the participant folders, counting with the same `counted()` predicate `--status` prints — an
+export **and** a closed, audited record — and refusing to quote a record whose claim its own evidence
+turns down (it appears in a `not counted` line instead). The stage table groups by the record's `stage`,
+and the funnel, time, help, top-10 and delayed-transfer tables are read from the records and their
+follow-up files rather than summarised by hand. `--check` fails when the committed page and the folders
+disagree, so a typed `N` cannot survive a gate; the author walk is written in [`AUTHOR_WALK.md`](AUTHOR_WALK.md)
+and inlined, so the narrative stays one copy. Pinned by `python3 tests/test_pilot_results.py` (12 checks)
+and both gates are part of `npm run check:pilot`.
+
+`npm run test:perf` is the other half of §4 in [`PLAN-2.1a.md`](PLAN-2.1a.md), and it is the only gate
+here that measures **time**. It drives the built bundle (the artifact Pages serves, through
+`startStaticServer`) in the same Chromium the runtime suite uses, and records six moments in the order a
+first visit happens: navigation → the lesson's own prose, the pane → the first keystroke CodeMirror
+echoes, the first run → its first output (Pyodide warming), a warm run → its output, a lesson switch →
+an editor that takes a keystroke, and a reload → the typed draft back in place. Two profiles, because an
+average of them describes neither: `laptop` (1440×900, DPR 1, nothing throttled) and `phone` (390×844,
+DPR 3, 4× CPU slowdown and Lighthouse's own Slow 4G over the DevTools protocol). Both pin the light
+palette and ask for reduced motion, so the palette and a fade's duration are not extra variables.
+
+What it grades is **ceilings**, not the numbers: [`docs/perf-budget.json`](perf-budget.json) holds them
+at roughly three to four times the value recorded in [`docs/PERF.md`](PERF.md), looser where the number
+is small enough for scheduler noise to dominate. A doubling fails; a busy afternoon does not. A moment
+the run could not measure, or one the budget forgets to name, fails too — a gate that passes by omission
+is worse than no gate. Numbers are recorded with `--record`, one row per date, machine and profile,
+because a number without both is not a measurement.
+
+The walk is deliberately **not** a CI step: six wall-clock moments on a shared runner would be a
+function of its contention, which is the same reason `check:lighthouse` does not score performance.
+What CI runs is `npm run test:perf:unit` — no browser, ~60 ms — which fails when the page, the budget
+and the walk stop describing the same six moments, or when a recorded row sits above its own ceiling.
 
 `npm run check:snapshot` records the **painted surface** of all 48 tab/palette combinations — header,
 activity rail, main pane and first panel geometry, the count of buttons, inputs, links, headings,
@@ -483,6 +551,10 @@ so nothing extra is built there.
   (≤ 0.50 mm, ≥ 45°, the delay its spare margin buys, both sign-off verdicts). The browser E2E types
   a 10%-short repair into 08.1 and a doubled zero-order hold into the Tier 3 capstone, asserting
   1.20 mm and 42.7° stay on the cards and both lessons stay unverified.
+- **The lesson pane's source:** every reader payload is generated from the page the registry names
+  (`scripts/generate_lesson_pages.py`), with `--check` as the drift gate and `tests/test_lesson_pages.py`
+  pinning what must not be copied — the **Full Solution** (locked behind Load Solution in the workbench),
+  the generated run callouts and the ladder-gate exam. A page edited without its payload rebuilt fails.
 - **Exercise coverage:** every graded package runs and every solution passes; the report CI
   reads is the same one the tests consume, so a package cannot be skipped silently.
 - **Links and sketches:** weekly, with failures filed as `link-*` issues.

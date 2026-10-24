@@ -16,6 +16,332 @@ flowchart LR
 
 ---
 
+## [2026-10-24] — Run 236: the results page is rendered from the folders
+
+[`docs/pilot-results.md`](docs/pilot-results.md) is the one pilot artefact a reader cannot check for
+themselves: the participant folders behind it are git-ignored, so a typed `N = 3` looked exactly like a
+measured one. It is generated now.
+
+`scripts/pilot_results.py` renders the page from `pilot-data/*/`. The count is
+`pilot_sitting.counted()` — the same predicate `--status` prints — **plus** `audit()`, so a record that
+claims more than its evidence supports is left off the page and named in a `not counted` line rather than
+published. Each sitting now names its stage (`--new --stage smoke|p1|p2|p3`, validated by the record's own
+audit), so the stage and funnel tables group by a choice instead of a guess. Time per stage is median and
+range, the top-10 stuck points are the records' own `stops` grouped by page and kind, the transfer table
+reads `follow-up.json`, and the per-lesson help split counts only a sitting that covered exactly one
+lesson — one help event cannot be apportioned to one of several pages without inventing the split.
+
+`--check` fails when the committed page and the folders disagree, and `npm run check:pilot` runs it as
+"results are current" (eight gates now), so a hand-typed count cannot survive a gate. The author walk
+moved to [`docs/AUTHOR_WALK.md`](docs/AUTHOR_WALK.md) and is inlined into the generated page, with a
+mermaid of the nine runs its own gate requires, so the narrative keeps one copy and the page can be
+generated whole.
+
+Files: `scripts/{pilot_results.py,pilot_sitting.py,check_pilot_kit.py}`,
+`tests/{test_pilot_results.py,test_check_pilot_kit.py}`,
+`docs/{pilot-results.md,AUTHOR_WALK.md,PILOT.md,PILOT_KIT.md,README.md,VERIFICATION.md}`, `CHANGELOG.md`.
+
+Verified: `python3 tests/test_pilot_results.py` 12/12; `python3 tests/test_check_pilot_kit.py` 8/8;
+`python3 -m unittest discover -s tests -p "test_pilot*.py"` 88/88; `npm run check:pilot` PASS (8/8);
+`python3.12 scripts/lint_assertions.py` 0 weak; `python3 scripts/check_doc_commands.py` PASS (421
+commands); `python3.12 scripts/check_all.py` 35/35. The page renders the shipped N = 0 template from zero
+folders, and a scratch folder elsewhere in /tmp produced a one-participant page and was removed, so the
+repository still publishes no participant.
+
+## [2026-10-24] — Run 235: §5's criteria are a record a gate reads
+
+§5 of [`docs/PLAN-2.1a.md`](docs/PLAN-2.1a.md) asks for three beginner sittings. Runs 232–234 built the
+instrument; what was still missing was the plan's **first** success criterion — *finds the first lesson,
+unaided* — whose two fields (`reached_lesson_1`, `minutes_to_lesson_1`) sat in the record written by
+nothing and checked by no gate. A `yes` with no minute was the same shape of claim as a finished sitting
+with no verified export: true and useless.
+
+`--debrief` now writes them together (`--reached-lesson-1 yes|no`, `--minutes-to-lesson-1 N`), refuses a
+minute with no find, and clears a stale minute when the answer becomes `no` — a find that did not happen
+has no minute, and one left behind would read as a slow find. `--check` refuses a `yes` with no minute, a
+minute beside a `no`, a minute outside 0–240, and a minute longer than the sitting itself.
+
+The plan page records what now exists rather than what was planned: §5 carries a criterion table — the
+criterion, the field, the command that writes it, and what that command refuses — and says plainly that
+the instrument is done and the participants are owed. `docs/README.md`'s plan row says the same, so the
+release cannot read as finished on the strength of its own tooling. Nothing in the plan claims
+"convenient" before three non-author beginners have sat down.
+
+Files: `scripts/pilot_sitting.py`, `tests/test_pilot_sitting.py`,
+`docs/{PLAN-2.1a.md,README.md,PILOT_KIT.md,VERIFICATION.md}`, `CHANGELOG.md`.
+
+Verified: `python3 tests/test_pilot_sitting.py` 51/51;
+`python3 -m unittest discover -s tests -p "test_pilot*.py"` 76/76; `npm run check:pilot` PASS (6/6);
+`python3.12 scripts/lint_assertions.py` 0 weak; `python3 scripts/check_doc_commands.py` PASS (415
+commands); `python3.12 scripts/check_all.py` 35/35. The operator path was walked once more in a scratch
+folder with the find included — open, one stop, finish (9 active / 40 elapsed), a full debrief, `--check`
+PASS with one counted participant — and removed, so `--status` still says `N (non-author) = 0`.
+
+## [2026-10-24] — Run 234: the answers are written once, and refused before they land
+
+The record's post-sitting fields — `understood_error`, `knew_next`, `their_fix` and the graded loop —
+were answered by editing `sitting.json` by hand. A JSON edit has no gate: a field name spelled wrong is
+silently accepted, `finished: true` lands with no `run_verify`, and the operator finds out at `--check`
+half an hour after the participant has gone.
+
+`--debrief` writes them in one command. It takes `--understood yes|partly|no` with the message it is
+about (`--error-quote`), `--knew-next`, `--their-fix` in their words, `--run-verify`, `--finished` and
+`--finished-minutes` — writes each into the record, and **audits a copy before writing**. An answer that
+would make the record unfilable is refused with the finding that names it, and nothing is written at all:
+`finished yes` with no graded loop, `finished yes` with no finish minute, a minute longer than the
+sitting. `finished no` clears any stale `finished_minutes`, because a sitting that ended early has no
+finish line. When it succeeds it prints which fields it recorded and what is still unanswered, so the
+operator does not have to read the JSON to know what is missing.
+
+It also refuses to run before the export is in the folder: these answers describe the sitting those
+numbers measured, so they are written after `--finish`, not instead of it.
+
+Files: `scripts/pilot_sitting.py`, `tests/test_pilot_sitting.py`,
+`docs/{PILOT_KIT.md,VERIFICATION.md,BEGINNER_TEST.md}`, `CHANGELOG.md`.
+
+Verified: `python3 tests/test_pilot_sitting.py` 45/45;
+`python3 -m unittest discover -s tests -p "test_pilot*.py"` 70/70; `npm run check:pilot` PASS (6/6);
+`python3.12 scripts/lint_assertions.py` 0 weak; `python3 scripts/check_doc_commands.py` PASS (415
+commands); `python3.12 scripts/check_all.py` 35/35. The whole operator path was walked once in a scratch
+folder — open, one stop, finish (9 active / 40 elapsed), a three-answer debrief, the graded loop, `--check`
+PASS with one counted participant, `--issue` — and then removed, so the repository still holds no
+participant data.
+
+## [2026-10-24] — Run 233: the ticket is rendered from the sitting, not retyped
+
+The observation ticket and the sitting record now share a vocabulary, but a stop written in the room
+still had to be typed a **second time** to file it — and a retyped row is exactly where a claim drifts:
+move a minute, soften a kind, drop the `resolved` line, and the ticket and the record describe two
+different sittings.
+
+`scripts/pilot_sitting.py --issue` renders the body from the closed record instead. It fills
+[`beginner-session-log`](.github/ISSUE_TEMPLATE/beginner-session-log.md)'s sections from the record's
+own fields — the background table, the reaching-Lesson-1 answers, every stop as a table row with its
+`kind`, the minutes the export measured, the help type, the graded loop, the course bug and the limits —
+prints it on stdout, and writes the identical text with `--out sitting.md` (temp file, `fsync`, rename) so
+`gh issue create --body-file` is the next command. A suggested title goes to stderr; stdout carries the
+body and nothing else.
+
+Two rules travel with the render, because a ticket is public. **A record its evidence does not support is
+refused**, with the same findings `--check` prints and **no body on stdout** to copy — a row cannot say
+*finished* for a sitting nothing verified. And **an unanswered field is said out loud**: `not answered`
+for a yes/no and `—` for a number or a line, never a blank that a reader takes for `no`. The empty
+record renders too — it claims nothing, so it is a prompt to go and ask, not a result.
+
+Files: `scripts/pilot_sitting.py`, `tests/test_pilot_sitting.py`,
+`.github/ISSUE_TEMPLATE/beginner-session-log.md`,
+`docs/{PILOT_KIT.md,VERIFICATION.md,BEGINNER_TEST.md}`, `CHANGELOG.md`.
+
+Verified: `python3 tests/test_pilot_sitting.py` 37/37;
+`python3 -m unittest discover -s tests -p "test_pilot*.py"` 62/62; `npm run check:pilot` PASS (6/6);
+`python3 scripts/check_doc_commands.py` PASS (414 commands); `python3.12 scripts/check_all.py` 35/35.
+The render was walked once in a scratch folder (`--new`, one `--stop`, `--issue --out`) and read line by
+line, then removed — no participant data exists and `--status` still prints `N (non-author) = 0`.
+
+## [2026-10-24] — Run 232: the sitting is a record, and a claim needs its export
+
+§5 of 2.1a cannot be written by the author — it needs three beginners — so what can be built is
+
+*the instrument*: a record of where each participant stopped that cannot claim more than its evidence
+supports. Until now that was a free-text cell on the observation sheet ("stuck points (time, page, what
+they tried)"), which cannot be counted into the top-10 table, cannot be joined to the participant's
+export, and would have let a row read *finished* for a sitting where nothing was ever verified.
+
+`scripts/pilot_sitting.py` writes one JSON record per participant beside their export in the
+git-ignored `pilot-data/<date>-<initials>/`: `--new` opens it empty (no minutes, no `verified`, no
+`finished`), `--stop` adds one row per place they stopped — minute, page, what they tried, and a kind
+from the protocol's vocabulary — and `--finish` closes it **from the export**, copying
+`active_minutes`, the run and hint counts and `verified`, and computing `overhead_minutes`. `--check`
+is the gate over the answers: `finished: true` without a verified export and `run_verify` is refused,
+`active_minutes` that drifted from the export's sittings is refused, an `overhead_minutes` that is not
+`elapsed - active` is refused, a stop without a minute, page or kind is refused, and a help type the log
+contradicts is refused. `--status` counts participants, and a folder counts only with an export and a
+closed record behind it: with none it prints `N (non-author) = 0` and says the results page stays a
+template.
+
+The one-off observation ticket now speaks the same language. The
+[`beginner-session-log`](.github/ISSUE_TEMPLATE/beginner-session-log.md) template used to offer `install`
+and `error message` where the record's kinds are `setup` and `error`, so a stop copied from a ticket
+would have been refused by `--check` and the top-10 table would have grouped the two forms differently.
+It now carries the record's `kind` vocabulary, its `minute · page · tried · kind · resolved` columns, its
+help types and its graded-loop field names (`run_verify`, `understood_error`, `knew_next`,
+`finished_minutes`), and says at the top that an observation is **not** a pilot row — `PILOT.md` §6's
+rule, which the ticket had left for the reader to remember. A test reads the template and fails if
+either side moves alone.
+
+The kit's own gate learned the record too: `npm run check:pilot` now runs six gates (30 checks over the
+sitting rule, including a template that invents nothing, a counted participant that has no export, and
+the observation ticket's own vocabulary),
+and the operator's order in [`docs/PILOT_KIT.md`](docs/PILOT_KIT.md) gains the record at the three
+moments it is written: before the sitting, during it, and after the export.
+
+Files: `scripts/pilot_sitting.py`, `tests/test_pilot_sitting.py`, `scripts/check_pilot_kit.py`,
+`tests/test_check_pilot_kit.py`, `.github/ISSUE_TEMPLATE/beginner-session-log.md`,
+`docs/{PILOT.md,PILOT_KIT.md,BEGINNER_TEST.md,pilot-results.md,README.md,VERIFICATION.md}`, `CHANGELOG.md`.
+
+Verified: `npm run check:pilot` PASS (6/6); `python3 tests/test_pilot_sitting.py` 30/30;
+`python3.12 -m unittest discover -s tests -p "test_pilot*.py"` 55/55;
+`python3 scripts/check_doc_commands.py` PASS (407 commands); `python3.12 scripts/check_all.py` 35/35.
+The operator's own path was walked once in a scratch folder — `--new`, `--stop`, `--finish` (15 active
+of 40 elapsed minutes, 25 overhead, help `person`), `--check` PASS — and then removed, so the
+repository still holds no participant data and `--status` still prints `N (non-author) = 0`.
+
+## [2026-10-24] — Run 231: the visit is timed, on a laptop and on a throttled phone
+
+Every gate in this repository measured a fact — a bundle's weight, a document's audits, a surface's
+shape — and none measured **time**. `check:lighthouse` says why it will not, and is right to: a score
+that moves with the runner is not a gate. That argument settles a gate and not a claim, and *"it feels
+slow to open"* is the first sentence a beginner says. `scripts/perf_walk.mjs` (`npm run test:perf`) is
+the answer: six moments, in the order a first visit happens, on the built bundle served at the Pages
+base path — the artifact Pages actually ships — in the same real Chromium the runtime suite drives.
+
+| Moment | Laptop (1440×900, unthrottled) | Phone (390×844, 4× CPU, Slow 4G) |
+| :--- | ---: | ---: |
+| Navigation → lesson text | 425 ms | 11 239 ms |
+| Lesson text → first keystroke | 162 ms | 6 136 ms |
+| First run → first output | 1 536 ms | 24 855 ms |
+| Warm run → first output | 86 ms | 139 ms |
+| Lesson switch → usable editor | 177 ms | 244 ms |
+| Reload → draft restored | 230 ms | 13 452 ms |
+
+The phone column is the one worth reading. A first visit there pays for the bundle, then the lesson
+payload, then the interpreter — and once it has paid, a run is 139 ms and a lesson switch 244 ms. The
+measurement also shows that the app's idle warm-up is doing its job: the 24.9 s first run already
+includes whatever Pyodide download the warm-up had finished while the learner was reading.
+
+Two profiles, not an average of them, because an average describes neither machine. Both pin the
+light palette and ask for reduced motion so a stored palette or a fade's duration cannot become a
+second variable. The throttling is Lighthouse's own mobile preset over the DevTools protocol
+(`Emulation.setCPUThrottlingRate`, `Network.emulateNetworkConditions`), applied before the first
+navigation rather than simulated afterwards.
+
+What is graded is a **ceiling per moment**, not a score, and the ceilings sit at roughly three to four
+times the recorded number ([`docs/perf-budget.json`](docs/perf-budget.json)). A moment the run could not
+measure, or one the budget forgets to name, fails as loudly as an overrun: a gate that passes by
+omission is worse than no gate. Numbers are recorded with `--record` into
+[`docs/PERF.md`](docs/PERF.md) with the machine and the date beside them, one row per date, machine and
+profile — a re-run replaces its own row rather than contradicting it.
+
+The walk is deliberately **not** a CI step: six wall-clock moments on a shared runner would be a
+function of its contention, which is exactly why Lighthouse's performance category is not gated either.
+CI runs `npm run test:perf:unit` instead — no browser, about 60 ms — which fails when the page, the
+budget and the walk stop describing the same six moments, or when a recorded row sits above its own
+ceiling.
+
+Files: `scripts/{perf_walk.mjs,test_perf_walk.mjs}`, `docs/{PERF.md,perf-budget.json,PLAN-2.1a.md,
+VERIFICATION.md,README.md}`, `package.json`, `.github/workflows/ci.yml`, `app/README.md`, `CHANGELOG.md`.
+
+Verified: `npm run test:perf` PASS on both profiles (rows above); `npm run test:perf:unit` 21/21;
+`npm run lint`; `python3.12 scripts/check_all.py` 35/35; `python3 scripts/check_workflows.py` OK;
+`python3 tests/test_check_all.py` OK; `python3 scripts/check_doc_commands.py` PASS (399 commands).
+
+## [2026-10-24] — Run 230: the row says what to do next, and the type scale is measured
+
+The runner's toolbar carried thirteen action buttons beside Run & Verify — Format, History, Diff,
+Reset Starter, Reset Runtime, Load Solution, Breakpoints, Share, Pair, Predict, Vim keys, Watch and
+Self-Mark — most of them at 11–12.5 px. At rest the row is now four layout presets, the dock toggle,
+**More ⋯** and **Run & Verify**; **Pause** and **Stop** join only while a program runs, and **Next
+lesson** stays in the passed card. More is a disclosure (`aria-expanded` / `aria-controls`, a
+`role="group"` panel, `Escape` closes it), it folds itself away after one action, and focus returns
+to it with `preventScroll`, so a learner who scrolled down to a result is not thrown back to the top
+of the page.
+
+Nothing was removed. The thirteen controls keep their testids, titles and handlers, and `hidden` is a
+visual fold rather than a smaller type size: the suites reach each of them through More
+(`scripts/e2e_toolbar.mjs`, 43 call sites rewritten), and Playwright's refusal to click a hidden node
+is what proves the fold is real rather than decorative.
+
+The type scale moved from *pending the rendered check* to a gate. `scripts/check_label_sizes.mjs`
+(`npm run check:labels`, a CI step beside axe, the snapshot and Lighthouse) opens the built bundle in
+Chromium at 1280×800 and reads computed sizes: **seven controls at rest by id**, More revealing all
+**thirteen**, primary actions at least **13 px**, every other control **12 px**, metadata **11 px**,
+and lesson paragraphs **17–18 px**. It caught what a source audit had missed — the first-lesson
+guide's four buttons and the offline button at 11 px, the chooser's track filters at 11 px, the
+editor's file tab at 11.5 px — and those are raised here. The lesson text is 17 px (h2 22, h3/h4 18,
+quotes 15.5), the study panel's controls 12.5 px with 11.5 px metadata, the reader's own toolbar and
+status lines 13 and 12 px, and the layout chips 13 px.
+
+Files: `app/src/components/tabs/TabPyodideRunner.tsx`, `components/{StudyPanel,LessonReader,LessonChooser}.tsx`,
+`scripts/{check_label_sizes.mjs,e2e_toolbar.mjs,e2e_browser_workbench.mjs,e2e_runtime.mjs,
+e2e_predict_gate.mjs,e2e_trail.mjs}`, `package.json`, `.github/workflows/ci.yml`,
+`docs/{PLAN-2.1a.md,VERIFICATION.md,surface-snapshot.json}`, `app/README.md`, `CHANGELOG.md`.
+
+Verified: `npm run lint`; `npm run check:labels` PASS (7 at rest, 13 behind More, lesson text 17 px);
+`npm run test:e2e` PASS; `npm run test:e2e:pages` PASS (chromium and firefox); `npm run test:e2e:predict`,
+`npm run test:e2e:trail` and `npm run test:runtime` PASS (Breakpoints and Format now go through More);
+`npm run check:axe` PASS (12 tabs × 4 palettes, 0 exceptions); `npm run check:snapshot` PASS after one
+intended re-record; `npm run check:weight` PASS in both shapes (entry 479.8 kB of 495 kB local and
+481.9 kB signed-in; the tightest metric is `css_gzip` with 403 B left); `npm run test:workbench` PASS
+(59/59 suites on one dev server and one built bundle); `npm run check:lighthouse` PASS (best-practices,
+SEO and accessibility 100 in both pinned palettes); `python3.12 scripts/check_all.py` 35/35.
+
+## [2026-10-23] — Run 229: the lesson is read in the workspace, not in another tab
+
+The runner has always shown the code and sent the learner to GitHub for the words that explain it. Every
+lesson switch was two tabs, a search for the paragraph and a scroll position lost going back — and the
+**Read** preset, the one named for reading, showed the *results*. The lesson is a pane now: Study puts it
+beside the editor, Read gives it the window, and where you stopped is where you come back to. The fourth
+preset, which was called Split, is **Debug** now — the editor and the results side by side, which is the
+task it actually serves; a browser with `split` or the old results-only `read` stored still opens on a
+preset, not on a blank page.
+
+**One source, generated from the pages themselves.** `scripts/generate_lesson_pages.py` reads each
+registry entry's own Markdown page and writes `app/public/lesson-pages/<path>.json` — 92 files, fetched
+one at a time as lessons open, never bundled. The page list is the registry's, not a glob. The payload is a
+small block list (headings with GitHub's anchors, paragraphs, nested lists, tables, code, safety quotes,
+display maths, images) rather than HTML: a block this build does not know is refused, so a stale payload
+cannot paint raw markup. Inline emphasis, code spans, links and `$…$` maths stay Markdown in the payload
+and are parsed once in `app/src/readerMarkdown.ts`; KaTeX draws the maths. The generator deliberately
+leaves out the **Full Solution** (Load Solution keeps it behind one door and the pane must not open
+another), the generated run callouts (the reader is already the workbench), the ladder-gate exam and
+Mermaid.
+
+**The place is kept, and it is not a draft.** `app/src/readingPosition.ts` stores the heading at the top of
+the pane plus the pixel offset, per lesson, in `localStorage` under its own key: opening a lesson does not
+mark it edited, and clearing a draft does not send the reader to the top. The anchor is what survives a
+page regenerated after a sentence changed; the offset is the fallback when a heading is gone. Writes are
+one per scroll pause and one on the way out. Selecting text in the pane offers **Highlight**, which writes
+the same quote-keyed highlight the notes panel reads.
+
+GitHub is demoted to *View source on GitHub ↗* in the pane's footer — copying, printing, filing an issue —
+and the failure path still offers it when a payload cannot be fetched. **Read** now means the lesson text
+at the window's height; Write and Debug do not render the pane at all, so they cost no fetch. The chooser
+became a rail rather than a third of the work area, which is where the width for the text came from.
+
+| Changed | What it does |
+| :--- | :--- |
+| [`app/src/components/LessonReader.tsx`](app/src/components/LessonReader.tsx) | The pane: blocks as React, maths through KaTeX, position restore and flush, Highlight, Top, the source link |
+| [`app/src/lessonPage.ts`](app/src/lessonPage.ts) | The payload's shape and guard, where it is served from, one fetch per page, a failure forgotten so Retry is real |
+| [`app/src/readerMarkdown.ts`](app/src/readerMarkdown.ts) | Inline Markdown (emphasis, code, links, maths) and the heading anchors, GitHub's rule including `-1` |
+| [`app/src/readingPosition.ts`](app/src/readingPosition.ts) | Anchor + offset per lesson, validated on read, cleared by Top, kept apart from the draft store |
+| [`app/src/components/LessonChooser.tsx`](app/src/components/LessonChooser.tsx) | The list extracted into a rail: search, the four filters and the rows unchanged |
+| [`app/src/components/tabs/TabPyodideRunner.tsx`](app/src/components/tabs/TabPyodideRunner.tsx), [`app/src/workspaceLayout.ts`](app/src/workspaceLayout.ts), [`app/src/index.css`](app/src/index.css) | Study = text beside editor; Read = text at window height; Split renamed Debug with `split`/`read` read back as presets; the lesson region in the preset table and its dock (`Lesson → Right`); the grid that places a panel by side rather than by order |
+| [`scripts/generate_lesson_pages.py`](scripts/generate_lesson_pages.py), [`tests/test_lesson_pages.py`](tests/test_lesson_pages.py) | The generator and its contract; `--check` is the drift gate in `check_all` and CI |
+| [`scripts/generate_python_lessons_data.py`](scripts/generate_python_lessons_data.py), [`app/src/data/pythonLessonsData.ts`](app/src/data/pythonLessonsData.ts) | Every entry's `readerPath`: its own page, or the module that set it |
+| [`scripts/test_reader.mjs`](scripts/test_reader.mjs), [`scripts/test_workbench.mjs`](scripts/test_workbench.mjs) | 21 checks without a browser: the inline rules, anchors, the payload guard, the position store — and the suite is registered in the matrix, so CI runs it rather than a script nobody invokes |
+| [`tests/test_lesson_pages.py`](tests/test_lesson_pages.py) | 14 checks on the generator, each assertion carrying what it expected and how to check it — the repository's assertion ratchet starts a new file at zero debt |
+| [`scripts/e2e_pages_bundle.mjs`](scripts/e2e_pages_bundle.mjs), [`scripts/e2e_browser_workbench.mjs`](scripts/e2e_browser_workbench.mjs) | Built bundle: the text renders beside the editor with headings, an equation and code; a reload returns to the same heading. Dev: the four presets show and hide the pane, and it docks |
+| [`scripts/weight_budget.mjs`](scripts/weight_budget.mjs), [`scripts/check_weight_budget.mjs`](scripts/check_weight_budget.mjs), [`docs/weight-budget.json`](docs/weight-budget.json) | `reader_gzip` as its own line (the payloads are fetched per lesson, never a first paint), and four shell ceilings moved by hand with the measurement recorded |
+| [`scripts/e2e_browser_workbench.mjs`](scripts/e2e_browser_workbench.mjs) | The dev server every suite shares now sets the `__APP_VERSION__` define from `package.json`: rooted at `app/`, it loaded no project config, so the smoke suite's footer assertion read `v0.0.0-dev` inside `test:workbench` while passing standalone. The Vim step now proves the text is in the live editor and puts the caret on line 1 before pressing `dd`, and sends both `d`s as one `type` batch: the step failed twice inside `test:workbench` by timing out on a keystroke whose line depended on where the caret had been left, while passing alone |
+| [`scripts/snapshot_surfaces.mjs`](scripts/snapshot_surfaces.mjs), [`scripts/axe_tabs.mjs`](scripts/axe_tabs.mjs), [`docs/surface-snapshot.json`](docs/surface-snapshot.json) | Both sweeps wait for the pane's payload before measuring or auditing: a surface read while it says *Loading the lesson text* is 71 px shorter with 3 headings instead of 17. The snapshot also waits until `#main` has stopped resizing for 250 ms, because a 3 px late reflow was flipping `tab-links` between 2411 and 2414 px across full sweeps with nothing changed in the app. The baseline is re-recorded — only the four `tab-pyodide` surfaces moved, which is the pane |
+| [`docs/PLAN-2.1a.md`](docs/PLAN-2.1a.md), [`docs/PLAN-2.0-GAP.md`](docs/PLAN-2.0-GAP.md), [`app/README.md`](app/README.md), [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | §2 marked done with its acceptance; the presets' row says what Read reads now |
+
+| Verified | Result |
+| :--- | :--- |
+| `npm run test:reader` | 21/21 — a price is not a formula, `K_p` keeps its underscore, a repeated heading gets `-1`, a stale payload is refused, a `NaN` offset cannot scroll anywhere |
+| `python3 scripts/generate_lesson_pages.py --check` | current: 92 pages, 4,851 blocks, 653.3 kB gzipped |
+| `python3 tests/test_lesson_pages.py` | 14/14 |
+| `npm run test:layout` | 24/24 — the four presets and their regions, the dock field, Debug's divider |
+| `npm run test:e2e:pages` | `[PASS]` in Chromium (all 50 exercise entries) and Firefox; Study puts the text left of the editor at 1440 px, 3+ headings and an equation in the DOM, and a reload restores the same heading |
+| `npm run test:e2e` | `[PASS]`, the presets showing and hiding the pane |
+| `npm run test:workbench` | all 59 suites pass on one dev server and one built bundle, the new `reader` suite (1.5 s) alongside `e2e` (201.3 s) and `pages` (173.8 s) |
+| `npm run check:snapshot` | `[PASS]` — 48 surfaces, after one re-record and two consecutive gates; only the four `tab-pyodide` surfaces moved |
+| `npm run check:axe` | `[PASS]` — 12 tabs × 4 themes clear every serious/critical rule, 0 exceptions |
+| `npm run check:lighthouse` | `[PASS]` — dark and light each 100/100/100, one explained finding, none stale |
+| `npm run check:weight` | `[PASS]` — 1.07 MB in 39 files, entry 479.4 of 495 kB; `reader_gzip` 669.2 of 720 kB; signed-in 1.13 MB, entry 481.4 kB |
+| `npm run build` | clean (`tsc -b` and the bundle) |
+| `python3.12 scripts/check_all.py` | 35/35 on every push (and `--full` 37/37) |
+
 ## [2026-10-23] — Run 228: the release names its version, and the lab switch counts the registry
 
 Two labels disagreed with the code. The view switch offered **All 10 Engineering Labs** while the rail

@@ -181,6 +181,7 @@ async function main() {
     { label: 'inline', script: 'test_inline_values.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'symbols', script: 'test_symbols.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'layout', script: 'test_layout.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'reader', script: 'test_reader.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'keymap', script: 'test_keymap.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'vim', script: 'test_vim.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'trace', script: 'test_trace.mjs', env: { NODE_OPTIONS: TYPES } },

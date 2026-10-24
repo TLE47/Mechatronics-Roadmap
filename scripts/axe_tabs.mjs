@@ -168,12 +168,15 @@ async function main() {
         // Eleven of the twelve tabs are lazy chunks (`React.lazy` in App.tsx): a click can land on the
         // Suspense panel, and auditing a panel that says "Loading this tab…" would pass every rule.
         // The editor is lazy for the same reason and shows its code as a placeholder
-        // (`data-editor-ready="false"`) while CodeMirror arrives, so it is waited out too. Wait for
-        // both to go — the tab's own markup — then let it settle.
+        // (`data-editor-ready="false"`) while CodeMirror arrives, so it is waited out too. The lesson
+        // pane fetches its page (Run 229), and auditing the spinner would skip every word of it — the
+        // contrast and heading-order questions the pane raises are about the text, not the placeholder.
+        // Wait for all three to go — the tab's own markup — then let it settle.
         await page.waitForFunction(
           () =>
             !document.querySelector('[data-testid="tab-loading"]') &&
-            !document.querySelector('[data-editor-ready="false"]'),
+            !document.querySelector('[data-editor-ready="false"]') &&
+            !document.querySelector('[data-testid="reader-loading"]'),
           undefined,
           { timeout: 20000 }
         );

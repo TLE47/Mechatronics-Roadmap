@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """One command that says whether the pilot kit still works (`scripts/check_pilot_kit.py`).
 
-The kit is machinery an operator reaches for while a stranger is sitting at their laptop: the export
-preflight, the transfer follow-up, the aggregate, and the instructions that tie them together. Those
-pieces are covered by four separate gates in this repository, and a person about to run a sitting should
-not have to remember four commands — or read a four-hundred-test matrix to learn that a script the kit
-names has been renamed.
+The kit is machinery an operator reaches for while a stranger is sitting at their laptop: the sitting
+record, the export preflight, the transfer follow-up, the aggregate, and the instructions that tie them
+together. Those pieces are covered by five separate gates in this repository, and a person about to run a
+sitting should not have to remember five commands — or read a four-hundred-test matrix to learn that a
+script the kit names has been renamed.
 
-So this runs the kit's own five gates and prints one line each. It is deliberately **not** part of
+So this runs the kit's own eight gates and prints one line each. It is deliberately **not** part of
 `check_all`: `check_all` already runs every one of them through its `tests` and `doc_commands` gates, and
 this exists for the five seconds before a sitting, not to duplicate CI.
 
@@ -15,10 +15,13 @@ What it runs, and why each one is the kit's business:
 
 | Gate | What it protects |
 | :--- | :--- |
+| `pilot_sitting.py`'s tests | The record of where a participant stopped, and the claims its export supports |
 | `pilot_preflight.py`'s tests | The check that decides whether a participant's export can be logged |
 | `pilot_followup.py`'s tests | The due date that keeps the transfer question from being forgotten |
 | `friction_report.py`'s tests | The arithmetic the aggregate publishes |
 | The committed aggregate is current | `docs/friction-report.md` matching what the script renders |
+| `pilot_results.py`'s tests | The results page reading its count from the folders, not from an edit |
+| The committed results are current | `docs/pilot-results.md` matching what the folders render |
 | Every command in the docs exists | The kit page's own instructions still pointing at real scripts |
 
 Every gate runs even when an earlier one fails: "the preflight is broken **and** a command in the kit no
@@ -56,10 +59,13 @@ def script(relative: str) -> str:
 # The kit, as a list of commands. `argv` is run in this repository's root, with this interpreter, so a
 # gate sees the same Python the operator does.
 GATES: list[tuple[str, list[str]]] = [
+    ("sitting tests", [PYTHON, script("tests/test_pilot_sitting.py")]),
     ("preflight tests", [PYTHON, script("tests/test_pilot_preflight.py")]),
     ("follow-up tests", [PYTHON, script("tests/test_pilot_followup.py")]),
     ("aggregate tests", [PYTHON, script("tests/test_friction_report.py")]),
     ("aggregate is current", [PYTHON, script("scripts/friction_report.py"), "--check"]),
+    ("results tests", [PYTHON, script("tests/test_pilot_results.py")]),
+    ("results are current", [PYTHON, script("scripts/pilot_results.py"), "--check"]),
     ("docs name real commands", [PYTHON, script("scripts/check_doc_commands.py")]),
 ]
 
@@ -124,7 +130,7 @@ def main(argv: list[str]) -> int:
     gates = select(GATES, args.only)
     if not gates:
         print(
-            f"[FAIL] no gate matches {args.only!r}; check the five names in GATES",
+            f"[FAIL] no gate matches {args.only!r}; check the names in GATES",
             file=sys.stderr,
         )
         return 2

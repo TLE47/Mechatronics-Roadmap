@@ -36,6 +36,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
+import { clickToolbar } from './e2e_toolbar.mjs';
 
 const P1_EXPECTED = ['Mode: ACTIVE | E-Stop: False', 'Encoder Ticks: 425 | Battery: 12.15 V'];
 // What the untouched P.1 starter actually prints: a guess at the *right* answer, made from the
@@ -168,7 +169,7 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
     // 5. Predict again is a real second attempt: the question returns, and the lesson's own expected
     //    output typed back is the one exact hit the gate can give.
     await openP1(page);
-    await page.getByTestId('btn-predict').click();
+    await clickToolbar(page, 'btn-predict');
     await page.getByTestId('predict-gate').waitFor({ timeout: 5000 });
     await page.getByTestId('btn-predict-again').click();
     await page.getByTestId('predict-input').waitFor({ timeout: 5000 });
@@ -290,7 +291,7 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
     const verifiedBefore = Number(
       ((await page.getByTestId('runner-verified-count').textContent()) ?? '').split('/')[0].trim()
     );
-    await page.getByTestId('btn-load-solution').click();
+    await clickToolbar(page, 'btn-load-solution');
     const solution = await getEditorCode(page);
     assert.equal(
       (solution.match(/raise NotImplementedError/g) || []).length,

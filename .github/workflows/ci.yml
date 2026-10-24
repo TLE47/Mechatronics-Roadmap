@@ -51,6 +51,9 @@ jobs:
           python3 scripts/generate_plant_data.py --check
           python3 scripts/check_term_order.py
           python3 scripts/generate_python_lessons_data.py --check
+          # The lesson text the workbench renders beside the editor, generated from the same pages
+          # the runner's registry names. A page edited without regenerating is stale here.
+          python3 scripts/generate_lesson_pages.py --check
           # The app's error index is the explainer page; editing one without the other fails here.
           python3 scripts/generate_error_index.py --check
           python3 scripts/generate_run_callouts.py --check
@@ -224,6 +227,21 @@ jobs:
       # script's header explains, and geometry is compared with a 2 px tolerance.
       - name: "Check the surface snapshot: every tab in every palette is still shaped the same"
         run: npm run check:snapshot
+
+      # The first screen's type, measured rather than read off a class list: the runner's row at rest
+      # carries at most seven controls, More still reveals all thirteen folded ones, and every control
+      # (12 px), primary action (13 px), metadata line (11 px) and lesson paragraph (17-18 px) meets
+      # §3 of docs/PLAN-2.1a.md at 1280x800 in a real Chromium.
+      - name: "Check label sizes: the quiet row, the folded toolbar, and reading text at 17-18 px"
+        run: npm run check:labels
+
+      # The other half of §4 of docs/PLAN-2.1a.md: the walk itself is deliberately not a CI step
+      # (its six moments would be a function of the runner's contention, the same reason
+      # check:lighthouse does not score performance), so what CI holds is the page: docs/PERF.md and
+      # docs/perf-budget.json must still describe the same six moments, and no recorded number may
+      # sit above its own ceiling. Cheap, no browser, and it fails the moment the doc drifts.
+      - name: "Check the perf page: six moments, both profiles, no row above its ceiling"
+        run: npm run test:perf:unit
 
       # The interrupt path needs cross-origin isolation and a real SharedArrayBuffer, which no unit
       # test can provide: this suite stops a `while True:` in place, proves the interpreter survived

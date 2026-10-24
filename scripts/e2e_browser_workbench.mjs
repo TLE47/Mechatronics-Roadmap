@@ -45,6 +45,7 @@ import { ISOLATION_HEADERS } from './isolation-headers.mjs';
 import { clearBulk, waitForBulk } from './bulk_store_page.mjs';
 import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { createServer } from 'vite';
+import { clickToolbar } from './e2e_toolbar.mjs';
 
 /**
  * The three stores this suite reads by hand. They are in IndexedDB now (`app/src/bulkStorage.ts`), so a
@@ -69,8 +70,13 @@ const START_HERE = JSON.parse(
  * suite do not each boot their own Vite.
  */
 export async function startDevServer(repoRoot = process.cwd()) {
+  // The release identity is a `define`, and a server rooted at `app/` finds no project config to read
+  // it from. The smoke suite renders the footer through this server and asserts the version the build
+  // prints, so the define has to be here rather than passed to a server this suite did not create.
+  const { version } = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
   const viteServer = await createServer({
     root: path.join(repoRoot, 'app'),
+    define: { __APP_VERSION__: JSON.stringify(version) },
     // Cross-origin isolation is what gives the page a SharedArrayBuffer, and without it the
     // interrupt-based Stop cannot exist. The production host is GitHub Pages, which cannot send
     // headers; `app/public/sw.js` covers that, and every local server sends them here.
@@ -309,7 +315,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       (await page.getByTestId('guide-what-to-fix').innerText()).includes('SyntaxError'),
       'the guide must surface the SyntaxError line for a broken starter edit'
     );
-    await page.getByTestId('btn-reset-starter').click();
+    await clickToolbar(page, 'btn-reset-starter');
 
     // 0b. Every lesson gets its own brief, not just P.1: P.2 must name its own first hole, and
     //     hiding P.2 must not hide P.3's brief.
@@ -902,20 +908,33 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok a name nothing defines is named in the file strip');
 
-    // 5d. Layout presets: ⌥1–⌥3 decide which regions the screen gives its width to, the buttons say
+    // 5d. Layout presets: ⌥1–⌥4 decide which regions the screen gives its width to, the buttons say
     //     which one is on, and the choice outlives a reload. The shortcut is read from `event.code`,
     //     because ⌥2 types ™ in `event.key` on a Mac.
     const visible = (testid) => page.getByTestId(testid).isVisible();
-    assert.equal(await visible('lesson-list-card'), true, 'Study shows the lesson chooser');
+    assert.equal(await visible('lesson-list-card'), true, 'Study shows the chooser rail');
+    assert.equal(await visible('lesson-reader'), true, 'Study shows the lesson text');
     assert.equal(await visible('editor-panel'), true, 'Study shows the editor');
     assert.equal(await visible('results-panel'), true, 'Study shows the results');
+    // The pane's own start: the lesson text is fetched, and a heading from the page is in the DOM.
+    await page.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 10000 });
+    assert.ok(
+      await page.locator('[data-testid="lesson-reader"] h2').first().isVisible(),
+      'the reading pane must render the page, not just its card'
+    );
+    assert.equal(
+      await page.getByTestId('link-lesson-source').textContent(),
+      'View source on GitHub ↗',
+      'the GitHub link is the source link now, not the reading copy'
+    );
     assert.equal(
       await page.getByTestId('layout-study').getAttribute('aria-pressed'),
       'true',
       'the preset in force must say so'
     );
     await page.keyboard.press('Alt+2');
-    assert.equal(await visible('lesson-list-card'), false, '⌥2 hides the lesson chooser');
+    assert.equal(await visible('lesson-list-card'), false, '⌥2 hides the chooser');
+    assert.equal(await visible('lesson-reader'), false, '⌥2 hides the lesson text');
     assert.equal(await visible('results-panel'), false, '⌥2 hides the last run’s output');
     assert.equal(await visible('editor-panel'), true, '⌥2 keeps the editor');
     assert.equal(
@@ -925,11 +944,13 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     await page.keyboard.press('Alt+3');
     assert.equal(await visible('editor-panel'), false, '⌥3 hides the editor');
-    assert.equal(await visible('results-panel'), true, '⌥3 keeps the results');
+    assert.equal(await visible('results-panel'), false, '⌥3 hides the results');
+    assert.equal(await visible('lesson-reader'), true, '⌥3 is the reading preset: the text stays');
     assert.equal(await visible('lesson-list-card'), false, '⌥3 keeps the chooser hidden');
     // Read is a click here, so the button path is pinned as well as the shortcut.
     await page.getByTestId('layout-read').click();
     assert.equal(await visible('editor-panel'), false, 'the Read button hides the editor');
+    assert.equal(await visible('lesson-reader'), true, 'the Read button keeps the lesson text');
     await page.reload({ waitUntil: 'networkidle' });
     await waitForEditor(page, 'editor-main');
     assert.equal(await visible('editor-panel'), false, 'a remembered preset survives the reload');
@@ -938,12 +959,13 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'true',
       'the remembered preset is the one the buttons report'
     );
-    // ⌥4 is the fourth arrangement the plan asked for: the editor and the results beside each other,
+    // ⌥4 is the arrangement a traceback is read in: the editor and the results beside each other,
     // not stacked. Pinned as a real two-column grid, because a preset that only stopped hiding the
     // results would look identical while scrolling between them.
     await page.keyboard.press('Alt+1');
     assert.equal(await visible('editor-panel'), true, '⌥1 brings the editor back');
     assert.equal(await visible('lesson-list-card'), true, '⌥1 brings the chooser back');
+    assert.equal(await visible('lesson-reader'), true, '⌥1 brings the lesson text back');
     assert.equal(await visible('results-panel'), true, '⌥1 brings the results back');
     // Structure, not computed style: this dev server resolves the config without the Tailwind
     // plugin, so utility classes have no rules here at all (`display` reads `block` even on a
@@ -952,18 +974,19 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     assert.equal(
       await page.getByTestId('layout-study').getAttribute('aria-pressed'),
       'true',
-      'Study is the preset in force before Split'
+      'Study is the preset in force before Debug'
     );
     await page.keyboard.press('Alt+4');
     assert.equal(
-      await page.getByTestId('layout-split').getAttribute('aria-pressed'),
+      await page.getByTestId('layout-debug').getAttribute('aria-pressed'),
       'true',
-      'the Split button must follow the shortcut'
+      'the Debug button must follow the shortcut'
     );
-    assert.equal(await visible('lesson-list-card'), false, '⌥4 hides the chooser, as the plan asks');
+    assert.equal(await visible('lesson-list-card'), false, '⌥4 hides the chooser');
+    assert.equal(await visible('lesson-reader'), false, '⌥4 hides the lesson text');
     assert.equal(await visible('editor-panel'), true, '⌥4 keeps the editor');
     assert.equal(await visible('results-panel'), true, '⌥4 keeps the results');
-    // Split's two columns are a grid on this container; the editor must still come first in the
+    // Debug's two columns are a grid on this container; the editor must still come first in the
     // DOM, so the second column is the results.
     const arrangement = await page.evaluate(() => {
       const box = document.querySelector('[data-layout]');
@@ -977,34 +1000,34 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
           !!(editor.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING),
       };
     });
-    assert.equal(arrangement.layout, 'split', 'the work area must report the Split preset');
+    assert.equal(arrangement.layout, 'debug', 'the work area must report the Debug preset');
     assert.match(
       arrangement.className,
       /\blg:grid-cols-2\b/,
-      'Split must ask for two columns at the wide breakpoint'
+      'Debug must ask for two columns at the wide breakpoint'
     );
     assert.equal(
       arrangement.editorFirst,
       true,
-      'Split must put the editor first, so the results land in the second column'
+      'Debug must put the editor first, so the results land in the second column'
     );
     await page.getByTestId('layout-study').click();
     assert.equal(await visible('lesson-list-card'), true, 'the Study button comes back');
     console.log('  ok ⌥1–⌥4 choose the regions and their arrangement, and the choice is remembered');
 
-    // 5d-ii. Docking: one button, and it names the panel this preset can move. Split moves the
-    //        results to the other side of the editor; Study moves the chooser to the other side of
-    //        the work area; Write and Read have nothing beside anything, so they show no button.
+    // 5d-ii. Docking: one button, and it names the panel this preset can move. Debug moves the
+    //        results to the other side of the editor; Study moves the lesson text to the other side
+    //        of the work area; Write and Read have nothing beside anything, so they show no button.
     //        The side is a preference like the preset, so it has to outlive a reload.
     await page.keyboard.press('Alt+4');
     const dockButton = page.getByTestId('btn-dock-toggle');
     assert.match(
       (await dockButton.textContent()) ?? '',
       /Results\s*→\s*Left/,
-      'Split must offer to move the results left'
+      'Debug must offer to move the results left'
     );
     await dockButton.click();
-    const dockedSplit = await page.evaluate(() => {
+    const dockedDebug = await page.evaluate(() => {
       const box = document.querySelector('[data-layout]');
       const divider = document.querySelector('[data-testid="split-divider"]');
       return {
@@ -1014,10 +1037,10 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
         label: document.querySelector('[data-testid="btn-dock-toggle"]')?.textContent ?? '',
       };
     });
-    assert.equal(dockedSplit.dock, 'left', 'the docked side must be reported by the work area');
-    assert.equal(dockedSplit.side, 'left', 'the divider must know which edge it sits on');
-    assert.equal(dockedSplit.handleOnTheRight, true, 'a results column on the left puts the handle on its right edge');
-    assert.match(dockedSplit.label, /Results\s*→\s*Right/, 'the button must offer the way back');
+    assert.equal(dockedDebug.dock, 'left', 'the docked side must be reported by the work area');
+    assert.equal(dockedDebug.side, 'left', 'the divider must know which edge it sits on');
+    assert.equal(dockedDebug.handleOnTheRight, true, 'a results column on the left puts the handle on its right edge');
+    assert.match(dockedDebug.label, /Results\s*→\s*Right/, 'the button must offer the way back');
     await page.reload({ waitUntil: 'networkidle' });
     await waitForEditor(page, 'editor-main');
     assert.equal(
@@ -1035,25 +1058,27 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('layout-study').click();
     assert.match(
       (await page.getByTestId('btn-dock-toggle').textContent()) ?? '',
-      /List\s*→\s*Right/,
-      'Study must offer to move the chooser right'
+      /Lesson\s*→\s*Right/,
+      'Study must offer to move the lesson text right'
     );
     await page.getByTestId('btn-dock-toggle').click();
     assert.equal(
-      await page.getByTestId('lesson-list-card').getAttribute('data-list-dock'),
+      await page.evaluate(() => document.querySelector('[data-layout]').getAttribute('data-lesson-dock')),
       'right',
-      'the chooser must report the side it was moved to'
+      'the lesson text must report the side it was moved to'
     );
-    assert.match(
-      (await page.getByTestId('lesson-list-card').getAttribute('class')) ?? '',
-      /lg:order-2/,
-      'a chooser docked right is the second cell of the row, not the first'
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForEditor(page, 'editor-main');
+    assert.equal(
+      await page.evaluate(() => document.querySelector('[data-layout]').getAttribute('data-lesson-dock')),
+      'right',
+      'a docked lesson pane must survive the reload'
     );
     await page.getByTestId('btn-dock-toggle').click();
     assert.equal(
-      await page.getByTestId('lesson-list-card').getAttribute('data-list-dock'),
+      await page.evaluate(() => document.querySelector('[data-layout]').getAttribute('data-lesson-dock')),
       'left',
-      'the chooser comes back to the left'
+      'the lesson text comes back to the left'
     );
     await page.keyboard.press('Alt+2');
     assert.equal(
@@ -1171,7 +1196,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     //     learner who types `i` and sees no text would decide the editor is broken
     //     (`app/src/vimMode.ts`, `pythonEditorImpl.tsx`).
     assert.equal(await page.getByTestId('vim-mode').count(), 0, 'vim keys must be off until asked for');
-    await page.getByTestId('btn-vim').click();
+    await clickToolbar(page, 'btn-vim');
     assert.equal(
       await page.getByTestId('btn-vim').getAttribute('aria-pressed'),
       'true',
@@ -1180,15 +1205,30 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     // The plugin is a chunk of its own, fetched on this press: the badge appears when it has arrived.
     await page.getByTestId('vim-mode').waitFor({ timeout: 15000 });
     assert.equal((await page.getByTestId('vim-mode').textContent())?.trim(), 'NORMAL');
-    await setEditorCode(page, 'a = 1\nb = 2\nprint(a + b)\n');
-    await page.evaluate(() => window.__mechalabEditors['editor-main'].focus());
+    const vimText = 'a = 1\nb = 2\nprint(a + b)'; // the newline is the editor's to add
+    await setEditorCode(page, `${vimText}\n`);
+    // Prove the text is in the editor that is live *now*, and put the caret on line 1: `dd` deletes
+    // the line the caret is on, so a caret left at the end of a replaced document would delete the
+    // last line and this step would report a timeout instead of the state it found.
+    const vimArmed = await page.evaluate(() => {
+      const bridge = window.__mechalabEditors['editor-main'];
+      if (!bridge) return null;
+      bridge.focus();
+      bridge.setCursor(0);
+      return bridge.get();
+    });
+    assert.equal(vimArmed?.trim(), vimText, 'the editor must hold the text the keystrokes are about');
     await page.keyboard.press('Escape');
-    await page.keyboard.press('d');
-    await page.keyboard.press('d');
+    // `type`, not two `press` round trips: a pending Vim operator waits for its second key, and two
+    // separate protocol calls is exactly the gap a loaded runner can widen.
+    await page.keyboard.type('dd');
+    // 15 s, like the other steps that wait on the editor: the plugin chunk and the re-render it
+    // triggers are the slow part under the twelve-suite matrix, and a 5 s wait is a claim about an
+    // idle machine rather than about `dd`.
     await page.waitForFunction(
       () => (window.__mechalabEditors['editor-main'].get() ?? '').startsWith('b = 2'),
       undefined,
-      { timeout: 5000 }
+      { timeout: 15000 }
     );
     assert.equal(
       (await getEditorCode(page)).trim(),
@@ -1224,7 +1264,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('vim-mode').waitFor({ timeout: 15000 });
     // Off again: the badge goes, and a keystroke is a keystroke. The editor is the same editor — the
     // document, the caret and the undo history were never rebuilt for the toggle.
-    await page.getByTestId('btn-vim').click();
+    await clickToolbar(page, 'btn-vim');
     assert.equal(await page.getByTestId('vim-mode').count(), 0, 'turning the keys off must drop the badge');
     await setEditorCode(page, 'print(1)\n');
     await page.evaluate(() => {
@@ -1461,13 +1501,13 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
 
     // 6. CDN failure never awards verification (even with full solution loaded)
     await page.getByTestId('lesson-item-P.7').click();
-    await page.getByTestId('btn-load-solution').click();
+    await clickToolbar(page, 'btn-load-solution');
     await page.evaluate(() => {
       // A refused connection, not an unresolvable host: the loader used to sit on DNS for ~10 s
       // before reporting the same 'could not be loaded' failure this asserts.
       window.__mechalabPyodideCdnUrl = 'http://127.0.0.1:1/pyodide/';
     });
-    await page.getByTestId('btn-reset-runtime').click();
+    await clickToolbar(page, 'btn-reset-runtime');
     await page.getByTestId('btn-run-verify').click();
     await page.getByTestId('status-execution-error').waitFor({ timeout: 15000 });
 
@@ -1486,8 +1526,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.evaluate(() => {
       window.__mechalabPyodideCdnUrl = undefined;
     });
-    await page.getByTestId('btn-reset-runtime').click();
-    await page.getByTestId('btn-toggle-lesson-complete').click();
+    await clickToolbar(page, 'btn-reset-runtime');
+    await clickToolbar(page, 'btn-toggle-lesson-complete');
     assert.equal(
       (await page.getByTestId('runner-self-marked-count').textContent())?.trim(),
       marked(1),
@@ -1727,7 +1767,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('tab-btn-tab-pyodide').click();
     // 7g. A run files the code it started from, so the version before the last edit is one click
     //     away. The draft keeps only the latest text; this is the attempt behind it.
-    await page.getByTestId('btn-draft-history').click();
+    await clickToolbar(page, 'btn-draft-history');
     await page.getByTestId('draft-history').waitFor({ timeout: 5000 });
     // P.4 grades behaviour before stdout, so a half-written starter fails its checks, not its output.
     assert.equal(
@@ -1749,7 +1789,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the restored version must be ungraded until it is run again'
     );
     // Reset Starter is the one edit that means "forget this one", so the card stops mentioning it.
-    await page.getByTestId('btn-reset-starter').click();
+    await clickToolbar(page, 'btn-reset-starter');
     await page.waitForTimeout(200);
     await page.getByTestId('tab-btn-tab-arch').click();
     await page.getByTestId('resume-card').waitFor({ timeout: 5000 });
@@ -1765,7 +1805,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     //       become the answer key for a lesson nobody has opened the answer to yet.
     await page.getByTestId('tab-btn-tab-pyodide').click();
     await waitForEditor(page);
-    await page.getByTestId('btn-diff').click();
+    await clickToolbar(page, 'btn-diff');
     await page.getByTestId('code-diff').waitFor({ timeout: 5000 });
     assert.equal(
       await page.getByTestId('code-diff').getAttribute('data-diff-target'),
@@ -1849,7 +1889,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('diff-target-starter').click();
     // Opening the solution is what earns the second reference; then the editor *is* the solution, so
     // the honest answer is "no changes" rather than a wall of identical rows.
-    await page.getByTestId('btn-load-solution').click();
+    await clickToolbar(page, 'btn-load-solution');
     assert.equal(
       await page.getByTestId('diff-target-solution').isDisabled(),
       false,
@@ -1871,8 +1911,8 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     );
     console.log('  ok the Diff panel names the lines changed, and unlocks the solution only once earned');
     // Leave the editor and the panel as the next step expects them.
-    await page.getByTestId('btn-reset-starter').click();
-    await page.getByTestId('btn-diff').click();
+    await clickToolbar(page, 'btn-reset-starter');
+    await clickToolbar(page, 'btn-diff');
 
     // 7g-i-b. Share: the one thing a stuck learner can send a person — this lesson and this code.
     //        The link is read out of the real clipboard, opened in a browser with no storage of its
@@ -1884,7 +1924,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     const shareCode = '# the attempt that got stuck\nprint("shared attempt 🙂")\n';
     await setEditorCode(page, shareCode);
     const sharedLessonTitle = await page.getByTestId('lesson-title').innerText();
-    await page.getByTestId('btn-share-attempt').click();
+    await clickToolbar(page, 'btn-share-attempt');
     await page.waitForFunction(
       () => /Link copied/.test(document.querySelector('[data-testid="share-status"]')?.textContent ?? ''),
       undefined,
@@ -1946,7 +1986,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await receiverContext.close();
     console.log('  ok Share copies a link, the receiver is offered the code, and loading it becomes their draft');
     // Back to the starter: the watch-mode step below starts from a failed check of its own.
-    await page.getByTestId('btn-reset-starter').click();
+    await clickToolbar(page, 'btn-reset-starter');
 
     // 7g-i-c. Pair study: two workbenches and no server. The invitation and the reply are carried by
     //         hand — that is the whole signalling story — and from there the channel is real: an
@@ -1955,7 +1995,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     const pairCode = '# the attempt I wanted a second pair of eyes on\nprint("pair 🙂")\n';
     await page.getByTestId('lesson-item-P.2').click();
     await setEditorCode(page, pairCode);
-    await page.getByTestId('btn-pair-open').click();
+    await clickToolbar(page, 'btn-pair-open');
     await page.getByTestId('btn-pair-start').click();
     await page.waitForFunction(
       () =>
@@ -1978,7 +2018,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     const guest = await guestContext.newPage();
     await guest.goto(baseUrl, { waitUntil: 'networkidle' });
     await waitForEditor(guest);
-    await guest.getByTestId('btn-pair-open').click();
+    await clickToolbar(guest, 'btn-pair-open');
     await guest.getByTestId('btn-pair-join').click();
     await guest.getByTestId('input-pair-invitation').fill(invitation);
     await guest.getByTestId('btn-pair-make-reply').click();
@@ -2128,11 +2168,11 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     console.log('  ok a pair session connects through hand-carried codes and an attempt is offered, not applied');
     // Back to the lesson the steps below expect, on its starter.
     await page.getByTestId('lesson-item-P.6').click();
-    await page.getByTestId('btn-reset-starter').click();
+    await clickToolbar(page, 'btn-reset-starter');
 
     // 7g-ii. Watch mode: after a failed check, the *typing* is what runs the code. One run per pause,
     //        not per keystroke, and the loop ends when the learner turns it off or passes.
-    await page.getByTestId('btn-watch').click();
+    await clickToolbar(page, 'btn-watch');
     assert.equal(
       await page.getByTestId('btn-watch').getAttribute('aria-pressed'),
       'true',
@@ -2188,7 +2228,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       'the announcement must not send a screen reader hunting for a colour'
     );
     // Off again: the rest of this suite clicks Run itself, and a watching editor would race it.
-    await page.getByTestId('btn-watch').click();
+    await clickToolbar(page, 'btn-watch');
     assert.equal(
       await page.getByTestId('btn-watch').getAttribute('aria-pressed'),
       'false',
@@ -2579,7 +2619,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       exactModeNote?.includes('grades exact formatting'),
       `Lesson 03.1 must say it grades exact formatting, got: ${exactModeNote}`
     );
-    await formattingPage.getByTestId('btn-load-solution').click();
+    await clickToolbar(formattingPage, 'btn-load-solution');
     const tableSolution = await getEditorCode(formattingPage);
     const unpadded = tableSolution.replace(/:(?:[<>^=])?\d+(\.\d+)?([fdegsx%])/g, ':$1$2');
     assert.notEqual(unpadded, tableSolution, 'the 03.1 solution must pad its table with field widths');
@@ -2628,7 +2668,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       formatVerified(0),
       'A formatting-only difference must never award lesson verification'
     );
-    await formattingPage.getByTestId('btn-load-solution').click();
+    await clickToolbar(formattingPage, 'btn-load-solution');
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
     assert.equal(
@@ -2644,7 +2684,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
       plainModeNote?.includes('Formatting is ignored'),
       `Lesson P.6 must say that whitespace is ignored, got: ${plainModeNote}`
     );
-    await formattingPage.getByTestId('btn-load-solution').click();
+    await clickToolbar(formattingPage, 'btn-load-solution');
     const plainSolution = await getEditorCode(formattingPage);
     const rewrapped = [
       'import contextlib, io',
@@ -2732,7 +2772,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     //     above saw the full first-timer block; a returning learner should get the compact line
     //     without losing the lesson link.
     await formattingPage.getByTestId('lesson-item-P.1').click();
-    await formattingPage.getByTestId('btn-load-solution').click();
+    await clickToolbar(formattingPage, 'btn-load-solution');
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 30000 });
     const collapsedStartHere = formattingPage.getByTestId('start-here');
@@ -2839,7 +2879,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('tab-btn-tab-pyodide').click();
     await formattingPage.getByTestId('lesson-item-08.1').scrollIntoViewIfNeeded();
     await formattingPage.getByTestId('lesson-item-08.1').click();
-    await formattingPage.getByTestId('btn-load-solution').click();
+    await clickToolbar(formattingPage, 'btn-load-solution');
     const benchSolution = await getEditorCode(formattingPage);
     const shortRepair = benchSolution.replace(
       'def repair_encoder_offset(q_measured, offset_rad):\n    return q_measured - offset_rad',
@@ -2901,7 +2941,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
     console.log('  ok a 10%-short 08.1 repair keeps 1.20 mm and leaves the lesson unverified');
 
-    await formattingPage.getByTestId('btn-load-solution').click();
+    await clickToolbar(formattingPage, 'btn-load-solution');
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 45000 });
     assert.equal(
@@ -2923,7 +2963,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await formattingPage.getByTestId('lesson-item-EX.08-capstones.T3.07a').scrollIntoViewIfNeeded();
     await formattingPage.getByTestId('lesson-item-EX.08-capstones.T3.07a').click();
     await formattingPage.getByTestId('lesson-harness').waitFor({ timeout: 10000 });
-    await formattingPage.getByTestId('btn-load-solution').click();
+    await clickToolbar(formattingPage, 'btn-load-solution');
     const budgetSolution = await getEditorCode(formattingPage);
     const doubleZoh = budgetSolution.replace(
       'return 0.5 * ts_us',
@@ -2982,7 +3022,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     );
     console.log('  ok a doubled zero-order hold keeps 42.7 deg and leaves the Tier 3 capstone unverified');
 
-    await formattingPage.getByTestId('btn-load-solution').click();
+    await clickToolbar(formattingPage, 'btn-load-solution');
     await formattingPage.getByTestId('btn-run-verify').click();
     await formattingPage.getByTestId('status-assert-passed').waitFor({ timeout: 45000 });
     assert.equal(

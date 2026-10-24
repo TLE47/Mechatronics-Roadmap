@@ -93,10 +93,17 @@ export while the participant is still there, run `python3 scripts/pilot_prefligh
 file, copy the `sheet` line into the row, and keep the export in `pilot-data/` where it cannot be
 committed.
 
-- Row per lesson in the pilot sheet ([`PILOT.md`](PILOT.md) §4), and the anonymised session in
-  [`pilot-results.md`](pilot-results.md) once there is data.
+- One sitting record per participant: `python3 scripts/pilot_sitting.py --new pilot-data/<date>-<initials>`,
+  one `--stop` per place they stopped, `--finish` from the export, `--debrief` for the answers the export
+  cannot give (what they made of the error, what they would do next, the fix they asked for, the graded
+  loop), then `--check`. That record is the row ([`PILOT.md`](PILOT.md) §4); the anonymised session goes
+  into [`pilot-results.md`](pilot-results.md) once there is data.
 - A one-off observation can be filed with the
-  [`beginner-session-log`](../.github/ISSUE_TEMPLATE/beginner-session-log.md) template.
+  [`beginner-session-log`](../.github/ISSUE_TEMPLATE/beginner-session-log.md) template, and from a closed
+  record its body is rendered rather than retyped:
+  `python3 scripts/pilot_sitting.py --issue pilot-data/<date>-<initials>`.
+- The record's stops reach the top-10 table by `kind`; `--issue` refuses a record whose evidence does not
+  support its claims, so an observation cannot say *finished* for a sitting nothing verified.
 - The browser's **Export Learning Log (.json)** is the machine record; run
   `python3 scripts/friction_report.py <log.json>` to add it to
   [`friction-report.md`](friction-report.md).

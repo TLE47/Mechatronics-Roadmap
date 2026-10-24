@@ -6,8 +6,9 @@
  * screenshot of the default: a row of the table that hides the wrong region (a blank work area), and a
  * stored value that survives a version bump and blanks the page on load. So:
  *
- * 1. **The table is pinned region by region.** Study shows everything; Write hides the chooser and the
- *    last run's output; Read hides the editor.
+ * 1. **The table is pinned region by region.** Study shows the lesson text, the editor and the
+ *    results; Write hides the lesson text and the results; Read hides the editor and the results;
+ *    Debug hides the lesson text and puts the editor and the results in two columns.
  * 2. **Nothing stored, nothing broken.** No `localStorage` at all (a booted page in a test harness, a
  *    browser that throws on access) reads as the default, and the toggle still returns what to render.
  * 3. **A stored value is validated, not trusted.** `'grid'` from an older build, or a half-written
@@ -19,8 +20,8 @@
  *    editor, a stored `banana`, a pointer outside the container, a key at the clamp. Each is pinned
  *    here because a divider that can be dragged to nothing is worse than no divider.
  * 6. **Docking is a side, not a visibility, and the side is in the arithmetic.** One button moves the
- *    panel the preset in force has beside nothing else: Study's chooser in Study, Split's results
- *    in Split, and no button at all in Write or Read. Because the stored ratio is always the
+ *    panel the preset in force has beside nothing else: Study's lesson text in Study, Debug's
+ *    results in Debug, and no button at all in Write or Read. Because the stored ratio is always the
  *    editor's share, a results column on the left has to reverse the grid template, the pointer
  *    mapping and the two arrow keys together — a failure to reverse all four is a drag that moves
  *    the boundary the wrong way, which is invisible until somebody tries it.
@@ -87,14 +88,14 @@ function fakeStorage(initial = {}) {
   };
 }
 
-const REGIONS = ['list', 'editor', 'results'];
+const REGIONS = ['lesson', 'editor', 'results'];
 
 console.log('layout presets');
 
 check('four presets, each printing its own shortcut', () => {
   assert.deepEqual(
     LAYOUTS.map((option) => option.id),
-    ['study', 'write', 'read', 'split']
+    ['study', 'write', 'read', 'debug']
   );
   assert.deepEqual(
     LAYOUTS.map((option) => option.shortcut),
@@ -107,21 +108,21 @@ check('four presets, each printing its own shortcut', () => {
 });
 
 check('the table: what each preset shows', () => {
-  assert.deepEqual(REGIONS.filter((r) => layoutShows('study', r)), ['list', 'editor', 'results']);
+  assert.deepEqual(REGIONS.filter((r) => layoutShows('study', r)), ['lesson', 'editor', 'results']);
   assert.deepEqual(REGIONS.filter((r) => layoutShows('write', r)), ['editor']);
-  assert.deepEqual(REGIONS.filter((r) => layoutShows('read', r)), ['results']);
-  // Split is the only preset that hides one region and shows the other two in two columns.
-  assert.deepEqual(REGIONS.filter((r) => layoutShows('split', r)), ['editor', 'results']);
+  assert.deepEqual(REGIONS.filter((r) => layoutShows('read', r)), ['lesson']);
+  // Debug is the only preset that hides one region and shows the other two in two columns.
+  assert.deepEqual(REGIONS.filter((r) => layoutShows('debug', r)), ['editor', 'results']);
 });
 
-check('the arrangement is a separate rule: only Split puts the work beside itself', () => {
+check('the arrangement is a separate rule: Study is a workbench, Debug is two columns', () => {
   assert.deepEqual(
     LAYOUTS.map((option) => [option.id, layoutArrangement(option.id)]),
     [
-      ['study', 'stack'],
+      ['study', 'workbench'],
       ['write', 'stack'],
       ['read', 'stack'],
-      ['split', 'columns'],
+      ['debug', 'columns'],
     ]
   );
 });
@@ -154,6 +155,15 @@ check('a stored value that is not a preset reads as the default', () => {
   }
 });
 
+check('the preset this build renamed still opens on the same two columns', () => {
+  globalThis.localStorage = fakeStorage({ [STORAGE_KEY_LAYOUT]: 'split' });
+  try {
+    assert.equal(readLayout(), 'debug', 'Split is Debug, not a reset to Study');
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
 check('storage that throws on read, or on write, costs the memory and not the toggle', () => {
   globalThis.localStorage = {
     getItem() {
@@ -175,10 +185,10 @@ check('the shortcut is the physical key, so ⌥2 works where it types ™', () =
   assert.equal(layoutShortcutFor('Digit1'), 'study');
   assert.equal(layoutShortcutFor('Digit2'), 'write');
   assert.equal(layoutShortcutFor('Digit3'), 'read');
-  assert.equal(layoutShortcutFor('Digit4'), 'split');
+  assert.equal(layoutShortcutFor('Digit4'), 'debug');
   assert.equal(layoutShortcutFor('1'), 'study');
   assert.equal(layoutShortcutFor('3'), 'read');
-  assert.equal(layoutShortcutFor('4'), 'split');
+  assert.equal(layoutShortcutFor('4'), 'debug');
   assert.equal(layoutShortcutFor('Digit5'), null, 'there is no fifth preset');
   assert.equal(layoutShortcutFor('5'), null);
   assert.equal(layoutShortcutFor('KeyQ'), null);
@@ -213,8 +223,13 @@ check('the grid template is two fractions, so the gap is not added to 100%', () 
   assert.equal(splitGridTemplate(0.5), 'minmax(0, 0.5fr) minmax(0, 0.5fr)');
   assert.equal(splitGridTemplate(0.42), 'minmax(0, 0.42fr) minmax(0, 0.58fr)');
   assert.equal(splitGridTemplate(0.1), 'minmax(0, 0.3fr) minmax(0, 0.7fr)');
-  // No float noise in a CSS value: the two shares have to read like numbers somebody typed.
-  assert.equal(splitGridTemplate(1 / 3), 'minmax(0, 0.333fr) minmax(0, 0.667fr)');
+  // No float noise in a CSS value, and the two shares are the whole percent the separator
+  // announces: a drag cannot leave a boundary at 34.5% that reads as 34 on one side and 35 on the
+  // other.
+  assert.equal(splitGridTemplate(1 / 3), 'minmax(0, 0.33fr) minmax(0, 0.67fr)');
+  assert.equal(splitRatioPercent(0.345), 35);
+  assert.equal(clampSplitRatio(0.345), 0.35, 'the ratio is the announced percent, exactly');
+  assert.equal(splitGridTemplate(clampSplitRatio(0.345)), 'minmax(0, 0.35fr) minmax(0, 0.65fr)');
 });
 
 check('a pointer becomes a share of the free space, and nothing else does', () => {
@@ -286,26 +301,26 @@ check('a store that throws costs the memory, not the divider', () => {
 section('docking');
 
 check('the defaults are the arrangement the app has always shipped', () => {
-  assert.deepEqual(DEFAULT_DOCK, { list: 'left', results: 'right' });
+  assert.deepEqual(DEFAULT_DOCK, { lesson: 'left', results: 'right' });
   assert.deepEqual(readDock(), DEFAULT_DOCK, 'with no storage the defaults are the dock');
 });
 
 check('the one button names the panel this preset can move, and the other side', () => {
   const study = dockControl(DEFAULT_DOCK, 'study');
-  assert.equal(study.region, 'list');
-  assert.equal(study.side, 'right', 'a chooser on the left offers to move right');
-  assert.match(study.label, /List .* Right/);
-  assert.match(study.title, /lesson list/);
+  assert.equal(study.region, 'lesson');
+  assert.equal(study.side, 'right', 'lesson text on the left offers to move right');
+  assert.match(study.label, /Lesson .* Right/);
+  assert.match(study.title, /lesson text/);
 
-  const split = dockControl(DEFAULT_DOCK, 'split');
-  assert.equal(split.region, 'results');
-  assert.equal(split.side, 'left', 'results on the right offer to move left');
-  assert.match(split.label, /Results .* Left/);
-  assert.match(split.title, /results/);
+  const debug = dockControl(DEFAULT_DOCK, 'debug');
+  assert.equal(debug.region, 'results');
+  assert.equal(debug.side, 'left', 'results on the right offer to move left');
+  assert.match(debug.label, /Results .* Left/);
+  assert.match(debug.title, /results/);
 
   // A panel already on the other side offers the way back, with its own words.
-  assert.match(dockControl({ list: 'right', results: 'left' }, 'study').label, /List .* Left/);
-  assert.match(dockControl({ list: 'right', results: 'left' }, 'split').label, /Results .* Right/);
+  assert.match(dockControl({ lesson: 'right', results: 'left' }, 'study').label, /Lesson .* Left/);
+  assert.match(dockControl({ lesson: 'right', results: 'left' }, 'debug').label, /Results .* Right/);
 
   // Write and Read have nothing beside anything: no button, rather than one that does nothing.
   assert.equal(dockControl(DEFAULT_DOCK, 'write'), null);
@@ -313,13 +328,13 @@ check('the one button names the panel this preset can move, and the other side',
 });
 
 check('a flip moves only the panel the preset is showing', () => {
-  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'study'), { list: 'right', results: 'right' });
-  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'split'), { list: 'left', results: 'left' });
+  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'study'), { lesson: 'right', results: 'right' });
+  assert.deepEqual(flippedDock(DEFAULT_DOCK, 'debug'), { lesson: 'left', results: 'left' });
   assert.deepEqual(flippedDock(DEFAULT_DOCK, 'write'), DEFAULT_DOCK, 'Write has nothing to move');
   assert.deepEqual(flippedDock(DEFAULT_DOCK, 'read'), DEFAULT_DOCK, 'Read has nothing to move');
   assert.deepEqual(
-    flippedDock({ list: 'right', results: 'left' }, 'study'),
-    { list: 'left', results: 'left' },
+    flippedDock({ lesson: 'right', results: 'left' }, 'study'),
+    { lesson: 'left', results: 'left' },
     'the flip returns to where it started'
   );
 });
@@ -331,15 +346,17 @@ check('the dock is remembered, one field at a time', () => {
   globalThis.localStorage = fakeStorage();
   try {
     assert.deepEqual(readDock(), DEFAULT_DOCK, 'an empty store is the defaults');
-    assert.deepEqual(writeDock({ list: 'right', results: 'left' }), { list: 'right', results: 'left' });
+    assert.deepEqual(writeDock({ lesson: 'right', results: 'left' }), { lesson: 'right', results: 'left' });
     assert.equal(
       globalThis.localStorage.data.get(STORAGE_KEY_DOCK),
-      '{"list":"right","results":"left"}'
+      '{"lesson":"right","results":"left"}'
     );
-    assert.deepEqual(readDock(), { list: 'right', results: 'left' });
+    assert.deepEqual(readDock(), { lesson: 'right', results: 'left' });
     // Junk is per field: a side this build does not know does not forget the other one.
-    assert.deepEqual(normalizeDock({ list: 'up', results: 'left' }), { list: 'left', results: 'left' });
-    assert.deepEqual(normalizeDock({ list: 'right' }), { list: 'right', results: 'right' });
+    assert.deepEqual(normalizeDock({ lesson: 'up', results: 'left' }), { lesson: 'left', results: 'left' });
+    assert.deepEqual(normalizeDock({ lesson: 'right' }), { lesson: 'right', results: 'right' });
+    // The old chooser dock is the reading pane's dock: the side a learner chose carries over.
+    assert.deepEqual(normalizeDock({ list: 'right', results: 'left' }), { lesson: 'right', results: 'left' });
     for (const junk of ['', '   ', 'banana', 'null', '[]', '{"list":"top"}']) {
       globalThis.localStorage.data.set(STORAGE_KEY_DOCK, junk);
       assert.deepEqual(readDock(), DEFAULT_DOCK, `stored ${JSON.stringify(junk)}`);
@@ -360,7 +377,7 @@ check('a store that throws costs the memory, not the dock', () => {
   };
   try {
     assert.deepEqual(readDock(), DEFAULT_DOCK);
-    assert.deepEqual(writeDock({ list: 'right', results: 'left' }), { list: 'right', results: 'left' });
+    assert.deepEqual(writeDock({ lesson: 'right', results: 'left' }), { lesson: 'right', results: 'left' });
   } finally {
     delete globalThis.localStorage;
   }

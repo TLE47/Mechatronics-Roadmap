@@ -19,6 +19,7 @@ import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { waitForEditor } from './editor-code.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
+import { clickToolbar } from './e2e_toolbar.mjs';
 
 const LESSON = PYTHON_LESSONS[0];
 
@@ -73,7 +74,7 @@ async function main() {
     // A run is over when it has been *filed*: every Run writes a version to the per-lesson history, so
     // the count of those entries is the one signal that cannot be confused with the previous run's
     // verdict still being on screen. The panel is collapsed until asked for, so ask once.
-    await page.getByTestId('btn-draft-history').click();
+    await clickToolbar(page, 'btn-draft-history');
     await page.getByTestId('draft-history').waitFor({ timeout: 5000 });
     // The editor's text is edited before each attempt on purpose: the starter itself is never filed
     // (it is one Reset away), so an untouched run would file nothing and the wait below would have no
@@ -98,7 +99,7 @@ async function main() {
     const firstStatus = await page.locator('[data-testid^="status-"]').first().getAttribute('data-testid');
     assert.ok(firstStatus, 'the first run must land on a verdict');
 
-    await page.getByTestId('btn-load-solution').click();
+    await clickToolbar(page, 'btn-load-solution');
     await page.getByTestId('btn-run-verify').click();
     await page.getByTestId('status-assert-passed').waitFor({ timeout: 60000 });
     console.log(`  ok the starter ran ${STARTER_RUNS} times (${firstStatus}) and the solution passed`);

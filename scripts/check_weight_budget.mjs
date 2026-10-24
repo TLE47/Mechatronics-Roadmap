@@ -152,6 +152,33 @@ function entryNames(html) {
   return [...names];
 }
 
+/**
+ * `dist/lesson-pages/**`, or null: served, but fetched one page at a time by the reader.
+ *
+ * The sum of every page's gzipped size, because the budget is on what the course's reading copy
+ * costs — not on a visit, which pays for one page. Counted apart from `total` for the same reason
+ * `prose-index.json` is: a learner who never opens the reader should not be charged for it in a
+ * report about the shell.
+ */
+function readerOf(dir) {
+  const root = path.join(dir, 'lesson-pages');
+  if (!fs.existsSync(root)) return null;
+  let gzip = 0;
+  let pages = 0;
+  const walk = (current) => {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.json')) {
+        gzip += zlib.gzipSync(fs.readFileSync(full), { level: 9 }).length;
+        pages += 1;
+      }
+    }
+  };
+  walk(root);
+  return pages ? { gzip, pages } : null;
+}
+
 /** `dist/prose-index.json` beside a build, or null: served, but fetched only by a search. */
 function proseOf(dir) {
   const file = path.join(dir, 'prose-index.json');
@@ -168,8 +195,17 @@ function proseOf(dir) {
 function measureBuild(dir) {
   const { files, entry } = readAssets(dir);
   const prose = proseOf(dir);
+  const reader = readerOf(dir);
   const variant = buildVariant(files);
-  return { dir, files, entry, prose, variant, measured: measurementFrom(files, entry, prose) };
+  return {
+    dir,
+    files,
+    entry,
+    prose,
+    reader,
+    variant,
+    measured: measurementFrom(files, entry, prose, reader),
+  };
 }
 
 /** A measurement plus the ceilings for the shape it is. */
@@ -229,6 +265,11 @@ function printBuild(heading, build) {
   log(
     `  prose-index.json${' '.repeat(23)}${(build.prose ? formatBytes(build.prose.gzip) : 'missing').padStart(8)}  ` +
       '(fetched by ⌘⇧F, not on a visit)'
+  );
+  log(
+    `  lesson-pages/ (${String(build.reader?.pages ?? 0).padStart(2)} pages)${' '.repeat(11)}` +
+      `${(build.reader ? formatBytes(build.reader.gzip) : 'missing').padStart(8)}  ` +
+      '(one page at a time, when a lesson opens)'
   );
   log('');
   log('  metric              measured     budget      used');

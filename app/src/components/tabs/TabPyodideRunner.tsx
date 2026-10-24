@@ -24,6 +24,8 @@ import {
 } from '../../offlineTakeAlong';
 import { FaultBench08 } from '../FaultBench08';
 import { StudyPanel } from '../StudyPanel';
+import { LessonReader } from '../LessonReader';
+import { LessonChooser, type TrackFilter } from '../LessonChooser';
 import type { HarnessReport } from '../../harnessGrading.ts';
 import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
 import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
@@ -167,6 +169,7 @@ import {
   Keyboard,
   CircleDot,
   Wand2,
+  MoreHorizontal,
 } from 'lucide-react';
 
 declare global {
@@ -390,7 +393,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const guideAssessmentRef = useRef<HTMLDivElement | null>(null);
   // Named groups the roadmap also uses; the old "Step 1 / Steps 3-5 / Steps 6-10" numbering was a
   // third scheme, belonging to neither the roadmap's passes nor any tab the learner can open.
-  const [trackFilter, setTrackFilter] = useState<'all' | 'onramp' | 'lessons' | 'modules'>('all');
+  const [trackFilter, setTrackFilter] = useState<TrackFilter>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   // The editor opens on the learner's own unfinished work when there is any (`src/lessonDraft.ts`),
   // and on the lesson's starter when there is not. Without this, "Continue P.4" on the roadmap would
@@ -773,6 +776,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const [diffOpen, setDiffOpen] = useState(false);
   const [diffTarget, setDiffTarget] = useState<DiffTarget>('starter');
   const [solutionUsed, setSolutionUsed] = useState<Record<string, boolean>>({});
+  // The secondary half of the toolbar, folded away by default (`docs/PLAN-2.1a.md` §3). Closed is
+  // the first screen a beginner sees; a control that is opened on purpose is read before it is used.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreButtonRef = useRef<HTMLButtonElement | null>(null);
   const draftHistory = useMemo(
     () => snapshotsFor(selectedId),
     [selectedId, passStatus, historyVersion]
@@ -2670,7 +2677,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       'Warming Python (once, ~10 MB)…'}
                 </span>
               </p>
-              <p className="mt-0.5 text-[11.5px]" style={{ color: 'var(--dim)' }}>
+              <p className="mt-0.5 text-[12px]" style={{ color: 'var(--dim)' }}>
                 {PYTHON_LESSONS.length} entries · starter code, three hints, behavioural tests
               </p>
             </div>
@@ -2678,7 +2685,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           <div className="flex items-center gap-3 font-mono tabular-nums">
             <div className="text-right">
-              <div className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
+              <div className="text-[12px]" style={{ color: 'var(--dim)' }}>
                 Executed &amp; Passed (WASM)
               </div>
               <div
@@ -2691,7 +2698,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
             <div className="h-8 w-px" style={{ backgroundColor: 'var(--border)' }} />
             <div className="text-right">
-              <div className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
+              <div className="text-[12px]" style={{ color: 'var(--dim)' }}>
                 Self-Marked
               </div>
               <div
@@ -2707,7 +2714,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 number is a claim; the state is on a data attribute so the browser suite reads the same
                 thing a learner does. */}
             <div className="text-right">
-              <div className="text-[10.5px]" style={{ color: 'var(--dim)' }}>
+              <div className="text-[12px]" style={{ color: 'var(--dim)' }}>
                 Offline
               </div>
               <button
@@ -2722,7 +2729,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       ? 'The page, its bundle and Python are cached: this step opens and runs with the network off'
                       : 'Cache this page, its bundle and the Python runtime, then report how much that took'
                 }
-                className="mt-0.5 px-2 py-0.5 rounded text-[11px] font-mono border cursor-pointer disabled:cursor-wait"
+                className="mt-0.5 px-2 py-0.5 rounded text-[12.5px] font-mono border cursor-pointer disabled:cursor-wait"
                 style={{
                   color:
                     offline.state === 'ready'
@@ -2802,7 +2809,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             <button
               onClick={dismissFirstGuide}
               data-testid="btn-guide-dismiss"
-              className="px-2.5 py-1 rounded text-[11px] font-mono text-muted hover:text-ink border border-line cursor-pointer"
+              className="px-2.5 py-1 rounded text-[12.5px] font-mono text-muted hover:text-ink border border-line cursor-pointer"
             >
               {currentLesson.id === 'P.1'
                 ? 'I have done this before — hide'
@@ -2839,7 +2846,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   window.setTimeout(() => guideEditorRef.current?.focus(), 0);
                 }}
                 data-testid="btn-guide-editor"
-                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 cursor-pointer"
+                className="mt-2 px-2.5 py-1 rounded text-[12.5px] font-mono bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 cursor-pointer"
               >
                 Show me the editor
               </button>
@@ -2859,7 +2866,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 onClick={() => requestRun(codeRef.current, currentLesson)}
                 disabled={isRunning}
                 data-testid="btn-guide-run"
-                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono font-bold bg-emerald hover:bg-emerald-strong text-inverse disabled:opacity-50 cursor-pointer"
+                className="mt-2 px-2.5 py-1 rounded text-[12.5px] font-mono font-bold bg-emerald hover:bg-emerald-strong text-inverse disabled:opacity-50 cursor-pointer"
               >
                 {isRunning
                   ? pyodideStatus === 'loading'
@@ -2894,7 +2901,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 }}
                 disabled={currentLesson.hints.length === 0}
                 data-testid="btn-guide-hint"
-                className="mt-2 px-2.5 py-1 rounded text-[11px] font-mono bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 disabled:opacity-50 cursor-pointer"
+                className="mt-2 px-2.5 py-1 rounded text-[12.5px] font-mono bg-amber/15 hover:bg-amber/25 text-amber-strong border border-amber/40 disabled:opacity-50 cursor-pointer"
               >
                 {revealedHints > 0 ? 'Hint 1 is open below' : 'Reveal Hint 1'}
               </button>
@@ -2963,168 +2970,37 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
         </section>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Sidebar: exercise search and selector */}          <div
-          data-testid="lesson-list-card"
-          // Study's chooser can be docked on either side of the work area. `order` rather than a
-          // second copy of the card: the two regions are one row of the twelve-column grid, and
-          // the side is which of them comes first there. DOM order stays chooser-first, because
-          // that is the reading order of the screen (pick a lesson, then work on it).
-          data-list-dock={dock.list}
-          // Focus mode hides the list: choosing a different lesson while working on this one is the
-          // other task the mode exists to keep out. `data-focus-expand` on the pane gives it the row.
-          data-chrome="lesson-list"
-          // Write and Read give the work area the whole width: the list is a chooser, and once the
-          // lesson is chosen it is the one column a learner is not looking at.
-          style={{ display: layoutShows(layout, 'list') ? undefined : 'none' }}
-          className={`lg:col-span-4 bg-panel border border-line rounded-xl p-4 flex flex-col max-h-[760px] ${
-            dock.list === 'right' ? 'lg:order-2' : ''
-          }`}
-        >
-          {/* Search Input */}
-          <div className="relative mb-3">
-            <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`Search ${PYTHON_LESSONS.length} lessons and exercises by ID, title, or topic...`}
-              data-testid="input-lesson-search"
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-canvas border border-line text-xs text-ink placeholder-faint focus:outline-none focus:border-accent"
-            />
-          </div>
+      {/* The chooser is a rail, not a third column of the work area: the entries stay one click
+          away while the lesson text and the editor share the width the chooser used to take. Read,
+          Write and Debug hide it, because each of them is about one panel and nothing else. */}
+      <div
+        className={`grid grid-cols-1 gap-5 ${
+          layout === 'study' ? 'lg:grid-cols-[224px_minmax(0,1fr)]' : ''
+        }`}
+      >
+        {layout === 'study' && (
+          <LessonChooser
+            lessons={PYTHON_LESSONS}
+            filteredLessons={filteredLessons}
+            trackFilter={trackFilter}
+            onTrackFilter={setTrackFilter}
+            searchQuery={searchQuery}
+            onSearchQuery={setSearchQuery}
+            currentId={selectedId}
+            verifiedLessons={verifiedLessons}
+            completedLessons={completedLessons}
+            onSelect={selectLesson}
+          />
+        )}
 
-          {/* The five filter chips cannot share one line with the count in a 4/12 column: they
-              used to run ~200px past the card and sit under the editor's opaque background, so a
-              chip was readable only after resizing the window. The count gets its own line and
-              the chips wrap inside the card. */}
-          <div className="mb-3">
-            <span className="block text-xs font-mono text-muted tabular-nums mb-1.5">
-              Lessons &amp; exercises ({filteredLessons.length})
-            </span>
-            <div className="flex flex-wrap gap-1" data-testid="track-filters">
-              {[
-                { id: 'all', label: `All (${PYTHON_LESSONS.length})` },
-                {
-                  id: 'modules',
-                  label: `Graded modules (${PYTHON_LESSONS.filter((l) => l.track === 'modules').length})`,
-                },
-                {
-                  id: 'lessons',
-                  label: `Track lessons (${PYTHON_LESSONS.filter(
-                    (l) => l.track !== 'modules' && l.track !== 'track-p' && l.track !== 'ramp'
-                  ).length})`,
-                },
-                {
-                  id: 'onramp',
-                  label: `Python on-ramp (${PYTHON_LESSONS.filter(
-                    (l) => l.track === 'track-p' || l.track === 'ramp'
-                  ).length})`,
-                },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setTrackFilter(tab.id as any)}
-                  className={`px-2 py-1 rounded text-[11px] font-mono whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                    trackFilter === tab.id
-                      ? 'bg-accent text-inverse font-bold'
-                      : 'bg-canvas text-muted hover:text-ink border border-line-soft'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div ref={splitContainerRef} data-focus-expand className="space-y-4">
 
-          <div className="overflow-y-auto space-y-1.5 pr-1 flex-1">
-            {filteredLessons.map((lesson) => {
-              const isSelected = lesson.id === currentLesson.id;
-              const isVerified = !!verifiedLessons[lesson.id];
-              const isSelfMarked = !!completedLessons[lesson.id];
-              return (
-                <button
-                  key={lesson.id}
-                  data-testid={`lesson-item-${lesson.id}`}
-                  onClick={() => selectLesson(lesson.id)}
-                  className={`w-full text-left p-2.5 rounded-lg border transition-all flex items-start justify-between gap-2 cursor-pointer ${
-                    isSelected
-                      ? 'bg-raise border-accent text-ink'
-                      : 'bg-canvas/70 border-line-soft text-body hover:border-line-strong'
-                  }`}
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 text-[11px] font-mono">
-                      <span className="font-bold text-accent">{lesson.id}</span>
-                      <span aria-hidden="true" className="text-faint">·</span>
-                      <span className="text-muted truncate">
-                        {roadmapStepForLesson(lesson.id)
-                          ? stepBreadcrumb(roadmapStepForLesson(lesson.id)!)
-                          : lesson.track === 'track-p'
-                            ? 'Python on-ramp'
-                            : lesson.track === 'ramp'
-                              ? 'School-maths ramp'
-                              : 'Stage 0 on-ramp'}
-                      </span>
-                    </div>
-                    <div className="text-xs font-medium mt-0.5 line-clamp-1">{lesson.title}</div>
-                  </div>
-                  <div className="shrink-0 mt-0.5">
-                    {isVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Verified</span>
-                      </span>
-                    ) : isSelfMarked ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-accent">
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Marked</span>
-                      </span>
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-faint" />
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* The lesson text, the editor and everything that reports on it. Only these three are the
+            preset's grid: the lesson card above describes all of them, and the run banners
+            between belong to the run, not to a column. */}
 
-        {/* Right Main Area: Lesson Ideas, Code Editor, Hints & Output Diff.
-            Split puts the editor and everything that reports on it in two columns — one above the
-            other is right for a laptop, wrong for a screen wide enough to show both at once, where
-            the verdict is otherwise scrolled off the moment the line it is about is in view. */}
-        <div
-          ref={splitContainerRef}
-          data-focus-expand
-          // Eight of twelve beside the chooser, all twelve when the chooser is hidden.
-          style={{
-            gridColumn: layoutShows(layout, 'list') ? undefined : '1 / -1',
-            // The divider's share, as two fractions (the gap comes out of the free space first).
-            // Only written for Split: at every other preset the container is not a grid, and a
-            // template there would be a declaration nobody asked for.
-            ...(layoutArrangement(layout) === 'columns'
-              ? { gridTemplateColumns: splitGridTemplate(splitRatio, resultsSide) }
-              : {}),
-          }}
-          data-layout={layout}
-          // Which edge the results are on in Split, and the chooser in Study. The CSS places the
-          // two Split panels by column (`index.css`), so the dock is a column swap there; in
-          // Study it is the pair's `order` below, because the chooser and this block are the two
-          // cells of one row.
-          data-dock={dock.results}
-          className={`lg:col-span-8 ${
-            layoutArrangement(layout) === 'columns'
-              ? 'grid gap-4 lg:grid-cols-2 items-start'
-              : 'space-y-4'
-          }${dock.list === 'right' ? ' lg:order-1' : ''}`}
-        >
-          {/* Active Lesson Metadata Card. Spans both columns when there are two: it describes the
-              lesson the editor and the results are both about. */}
-          <div
-            className="bg-panel border border-line rounded-xl p-4"
-            style={layoutArrangement(layout) === 'columns' ? { gridColumn: '1 / -1' } : undefined}
-          >
+          {/* Active Lesson Metadata Card. */}
+          <div className="bg-panel border border-line rounded-xl p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 {/* Whole items wrap; none of them breaks inside a word. Before this, the row was a
@@ -3175,10 +3051,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     href={lessonPageUrl(currentLesson.path)}
                     target="_blank"
                     rel="noreferrer"
-                    title="The GitHub page is the reading copy. This editor is where you type, run and verify; nothing is saved on GitHub."
-                    className="text-accent hover:text-accent underline underline-offset-2 whitespace-nowrap"
+                    title="The lesson text is the pane on this screen. The GitHub page remains for copying, printing and filing an issue; nothing you type is saved there."
+                    className="text-muted hover:text-accent underline underline-offset-2 whitespace-nowrap"
                   >
-                    Read this page on GitHub ↗
+                    View source on GitHub ↗
                   </a>
                   {isCurrentVerified && (
                     <span className="text-emerald font-semibold whitespace-nowrap">
@@ -3191,7 +3067,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 </h2>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div data-testid="runner-toolbar" className="flex flex-wrap items-center gap-2">
                 {/* The presets live on this card, not in the editor's own header: Read hides that
                     header, and a control that disappears with the panel it governs is a trap. A
                     shortcut with no control is a feature only its author knows, so the shortcut is
@@ -3210,7 +3086,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       title={option.title}
                       data-testid={`layout-${option.id}`}
                       onClick={() => setLayout(writeLayout(option.id))}
-                      className={`px-2 py-1 rounded text-[10.5px] font-mono cursor-pointer border transition-colors ${
+                      className={`px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors ${
                         layout === option.id
                           ? 'bg-accent text-inverse border-accent font-bold'
                           : 'bg-canvas text-muted hover:text-ink border-line-soft'
@@ -3236,118 +3112,21 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     // is drawn fails WCAG 2.5.3, which is what Lighthouse's
                     // `label-content-name-mismatch` audit named here.
                     aria-label={`${dockChoice.label}: ${dockChoice.title}`}
-                    className="px-2 py-1 rounded text-[10.5px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft"
+                    className="px-2 py-1 rounded text-[13px] font-mono cursor-pointer border transition-colors bg-canvas text-muted hover:text-ink border-line-soft"
                   >
                     {dockChoice.label}
                   </button>
                 )}
-                <button
-                  onClick={() => toggleLessonSelfMarked(currentLesson.id)}
-                  data-testid="btn-toggle-lesson-complete"
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono border flex items-center gap-1.5 cursor-pointer ${
-                    isCurrentSelfMarked
-                      ? 'bg-accent/20 border-accent text-accent'
-                      : 'bg-canvas border-line text-body hover:border-accent'
-                  }`}
-                >
-                  {isCurrentSelfMarked ? (
-                    <CheckSquare className="w-3.5 h-3.5" />
-                  ) : (
-                    <Square className="w-3.5 h-3.5" />
-                  )}
-                  <span>{isCurrentSelfMarked ? 'Self-Marked Complete' : 'Self-Mark Complete'}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    commitCode(currentLesson.starterCode);
-                    // Back on the starter is the one edit that means "forget this one".
-                    saveDraft(currentLesson.id, currentLesson.starterCode);
-                    setPassStatus('untested');
-                    setBehaviorCheck('untested');
-                    setOutputCheck('untested');
-                    setInstructorError('');
-                  }}
-                  data-testid="btn-reset-starter"
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset Starter</span>
-                </button>
-                <button
-                  onClick={resetRuntime}
-                  data-testid="btn-reset-runtime"
-                  title="Terminate and restart the background Python Web Worker without losing editor code"
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-accent border border-accent/40 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Reset Runtime</span>
-                </button>
-                <button
-                  onClick={() => {
-                    commitCode(currentLesson.fullSolution);
-                    logEvent({ kind: 'solution_open', lesson: selectedId });
-                    // The diff's solution reference is earned by opening it (or by passing), so this
-                    // is the moment it becomes reachable for this lesson.
-                    setSolutionUsed((used) => ({ ...used, [selectedId]: true }));
-                  }}
-                  data-testid="btn-load-solution"
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-amber border border-amber/40 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Load Solution</span>
-                </button>
-                {/* Format is a text action, not a run one: it tidies the file in place, and the
-                    interpreter installs the formatter on the first press. Disabled while a program
-                    is running or parked, because the worker is one thread. */}
-                <button
-                  onClick={() => void formatCode()}
-                  disabled={isRunning || Boolean(pausedStep)}
-                  data-testid="btn-format"
-                  title="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <Wand2 className="w-3.5 h-3.5" />
-                  <span>Format</span>
-                </button>
-                <button
-                  onClick={() => setHistoryOpen((open) => !open)}
-                  aria-expanded={historyOpen}
-                  aria-controls="draft-history"
-                  data-testid="btn-draft-history"
-                  title="Every run files the code it started from, with its verdict, so a version that worked is one click away"
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                    historyOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-                  }`}
-                >
-                  <History className="w-3.5 h-3.5" />
-                  <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
-                </button>
-                {/* The dots the gutter is drawing, and the condition each one waits for. Always
-                    present, not only once something is armed: a learner who has never clicked the
-                    gutter has no other way to find out that a breakpoint can be narrowed. */}
-                <button
-                  onClick={() => setBreakpointsOpen((open) => !open)}
-                  aria-expanded={breakpointsOpen}
-                  aria-controls="breakpoint-panel"
-                  data-testid="btn-breakpoints"
-                  title="Every dot on the gutter, with the condition that lets the run stop on it"
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                    breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
-                  }`}
-                >
-                  <CircleDot className="w-3.5 h-3.5" />
-                  <span>
-                    Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}
-                  </span>
-                </button>
-                {/* Pause is offered only where a park is possible: the shared command word and a
-                    trace hook exist together, and one without the other would be a dead button. */}
+                {/* The first screen keeps only what a learner does next: Pause and Stop while a
+                    program runs, More for the rest, and Run as the single primary action. §3 of
+                    `docs/PLAN-2.1a.md` is the list; `scripts/check_label_sizes.mjs` is the gate
+                    that keeps the folded controls legible once they are open. */}
                 {isRunning && pauseCapable && !pausedStep && (
                   <button
                     onClick={() => pauseExecution()}
                     data-testid="btn-pause-execution"
                     title="Stop at the next line of your file, without losing the session"
-                    className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
                   >
                     <Pause className="w-3.5 h-3.5" />
                     <span>Pause</span>
@@ -3357,107 +3136,28 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <button
                     onClick={() => stopExecution()}
                     data-testid="btn-stop-execution"
-                    className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-rose hover:bg-rose-strong text-inverse flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg text-[13px] font-mono font-bold bg-rose hover:bg-rose-strong text-inverse flex items-center gap-1.5 cursor-pointer"
                   >
                     <OctagonX className="w-3.5 h-3.5" />
                     <span>Stop</span>
                   </button>
                 )}
                 <button
-                  onClick={() => setDiffOpen((open) => !open)}
-                  aria-expanded={diffOpen}
-                  aria-controls="code-diff"
-                  data-testid="btn-diff"
-                  title="What you changed: your code against the starter, line by line"
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                    diffOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+                  type="button"
+                  ref={moreButtonRef}
+                  onClick={() => setMoreOpen((open) => !open)}
+                  aria-expanded={moreOpen}
+                  aria-controls="toolbar-more"
+                  data-testid="btn-more"
+                  title="Format with Black, history, diff, reset, sharing, pairing and editor preferences"
+                  className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
+                    moreOpen
+                      ? 'text-accent border-accent/60 bg-canvas'
+                      : 'text-body border-line bg-canvas hover:bg-raise'
                   }`}
                 >
-                  <GitCompare className="w-3.5 h-3.5" />
-                  <span>Diff</span>
-                </button>
-                {/* The one thing a stuck learner can send a person: this lesson and this code. The
-                    code rides in the URL fragment, so it never reaches the host — and it is base64,
-                    not encryption, which the title says rather than implying a privacy it lacks. */}
-                <button
-                  onClick={() => void shareAttempt()}
-                  data-testid="btn-share-attempt"
-                  title={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Share</span>
-                </button>
-                {/* Pair study, beside the send: one session, two people, no server — the attempt
-                    travels over a direct channel and arrives as a card, not as an edit. */}
-                <button
-                  onClick={() => setPairOpen(true)}
-                  data-testid="btn-pair-open"
-                  title="Pair study: connect to another workbench directly and pass attempts back and forth"
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                    pair.state === 'connected' ? 'text-emerald border-emerald/60' : 'text-body border-line'
-                  }`}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>
-                    {coEdit
-                      ? 'Pair · co-editing'
-                      : `Pair${pair.state === 'connected' && pair.peer ? ` · ${pair.peer}` : ''}`}
-                  </span>
-                </button>
-                {/* The gate's own door. The question also opens by itself on a lesson's first Run;
-                    this is how a learner rereads the verdict, or predicts before pressing Run. */}
-                <button
-                  onClick={() => {
-                    const next = !predictOpen;
-                    setPredictRecord(predictionFor(selectedId));
-                    setPredictOpen(next);
-                    if (next) setHeldRun(null);
-                  }}
-                  aria-expanded={predictOpen}
-                  aria-controls="predict-gate"
-                  data-testid="btn-predict"
-                  title="Predict first: commit to what the code will print, then run it"
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                    predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>
-                    Predict
-                    {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
-                  </span>
-                </button>
-                {/* Vim keys: a reading preference like watch mode, remembered the same way. Off by
-                    default, because normal mode reads a beginner's first `i` as a command and the
-                    editor would look broken rather than unusual (`app/src/vimMode.ts`). */}
-                <button
-                  onClick={() => {
-                    const next = writeVim(!vimOn);
-                    setVimOn(next);
-                    setVimMode('normal');
-                  }}
-                  aria-pressed={vimOn}
-                  data-testid="btn-vim"
-                  title={vimHint(vimOn)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                    vimOn ? 'text-accent border-accent/60' : 'text-body border-line'
-                  }`}
-                >
-                  <Keyboard className="w-3.5 h-3.5" />
-                  <span>{VIM_LABEL}</span>
-                </button>
-                <button
-                  onClick={() => setWatchOn(setWatch(!watchOn))}
-                  aria-pressed={watchOn}
-                  data-testid="btn-watch"
-                  title="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
-                    watchOn ? 'text-emerald border-emerald/60' : 'text-body border-line'
-                  }`}
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  <span>{watchOn ? 'Watching' : 'Watch'}</span>
+                  <MoreHorizontal className="w-3.5 h-3.5" />
+                  <span>More ⋯</span>
                 </button>
                 <button
                   onClick={() => {
@@ -3468,7 +3168,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   disabled={isRunning}
                   data-testid="btn-run-verify"
                   title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
-                  className="btn btn-primary ml-1 px-3.5 py-2 text-[12.5px] font-bold"
+                  className="btn btn-primary ml-1 px-3.5 py-2 text-[13px] font-bold"
                 >
                   {isRunning ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -3478,6 +3178,231 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   <span>{isRunning ? 'Running in Worker...' : 'Run & Verify Output'}</span>
                   {!isRunning && <span className="kbd ml-0.5">⌘↵</span>}
                 </button>
+                <div
+                  id="toolbar-more"
+                  role="group"
+                  aria-label="More actions"
+                  data-testid="toolbar-more"
+                  hidden={!moreOpen}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Escape') return;
+                    setMoreOpen(false);
+                    // `preventScroll`: a control that folds itself away must not scroll the page
+                    // back to the toolbar when the learner had scrolled down to read a result.
+                    moreButtonRef.current?.focus({ preventScroll: true });
+                  }}
+                  // One press is one action, so the panel folds itself away: leaving it open would
+                  // shift the editor down while the learner is reading the answer to what they
+                  // pressed, and would hide the row they came from. Focus goes back to More, so a
+                  // keyboard user is never dropped into the document.
+                  onClick={(event) => {
+                    if (!(event.target as HTMLElement).closest('button')) return;
+                    setMoreOpen(false);
+                    moreButtonRef.current?.focus({ preventScroll: true });
+                  }}
+                  className="order-last w-full rounded-xl border border-line bg-panel p-2.5"
+                >
+                  <p className="px-1 pb-2 text-[11px] font-mono uppercase tracking-[0.08em] text-faint">
+                    More actions
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => toggleLessonSelfMarked(currentLesson.id)}
+                      data-testid="btn-toggle-lesson-complete"
+                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono border flex items-center gap-1.5 cursor-pointer ${
+                        isCurrentSelfMarked
+                          ? 'bg-accent/20 border-accent text-accent'
+                          : 'bg-canvas border-line text-body hover:border-accent'
+                      }`}
+                    >
+                      {isCurrentSelfMarked ? (
+                        <CheckSquare className="w-3.5 h-3.5" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isCurrentSelfMarked ? 'Self-Marked Complete' : 'Self-Mark Complete'}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        commitCode(currentLesson.starterCode);
+                        // Back on the starter is the one edit that means "forget this one".
+                        saveDraft(currentLesson.id, currentLesson.starterCode);
+                        setPassStatus('untested');
+                        setBehaviorCheck('untested');
+                        setOutputCheck('untested');
+                        setInstructorError('');
+                      }}
+                      data-testid="btn-reset-starter"
+                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset Starter</span>
+                    </button>
+                    <button
+                      onClick={resetRuntime}
+                      data-testid="btn-reset-runtime"
+                      title="Terminate and restart the background Python Web Worker without losing editor code"
+                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-accent border border-accent/40 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Reset Runtime</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        commitCode(currentLesson.fullSolution);
+                        logEvent({ kind: 'solution_open', lesson: selectedId });
+                        // The diff's solution reference is earned by opening it (or by passing), so this
+                        // is the moment it becomes reachable for this lesson.
+                        setSolutionUsed((used) => ({ ...used, [selectedId]: true }));
+                      }}
+                      data-testid="btn-load-solution"
+                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-amber border border-amber/40 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Load Solution</span>
+                    </button>
+                    {/* Format is a text action, not a run one: it tidies the file in place, and the
+                        interpreter installs the formatter on the first press. Disabled while a program
+                        is running or parked, because the worker is one thread. */}
+                    <button
+                      onClick={() => void formatCode()}
+                      disabled={isRunning || Boolean(pausedStep)}
+                      data-testid="btn-format"
+                      title="Re-indent and tidy this file with Black (installs on the first press, then stays in this session)"
+                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Wand2 className="w-3.5 h-3.5" />
+                      <span>Format</span>
+                    </button>
+                    <button
+                      onClick={() => setHistoryOpen((open) => !open)}
+                      aria-expanded={historyOpen}
+                      aria-controls="draft-history"
+                      data-testid="btn-draft-history"
+                      title="Every run files the code it started from, with its verdict, so a version that worked is one click away"
+                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                        historyOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+                      }`}
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      <span>History{draftHistory.length ? ` (${draftHistory.length})` : ''}</span>
+                    </button>
+                    {/* The dots the gutter is drawing, and the condition each one waits for. Always
+                        present, not only once something is armed: a learner who has never clicked the
+                        gutter has no other way to find out that a breakpoint can be narrowed. */}
+                    <button
+                      onClick={() => setBreakpointsOpen((open) => !open)}
+                      aria-expanded={breakpointsOpen}
+                      aria-controls="breakpoint-panel"
+                      data-testid="btn-breakpoints"
+                      title="Every dot on the gutter, with the condition that lets the run stop on it"
+                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                        breakpointsOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+                      }`}
+                    >
+                      <CircleDot className="w-3.5 h-3.5" />
+                      <span>
+                        Breakpoints{breakpoints.length ? ` (${breakpoints.length})` : ''}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setDiffOpen((open) => !open)}
+                      aria-expanded={diffOpen}
+                      aria-controls="code-diff"
+                      data-testid="btn-diff"
+                      title="What you changed: your code against the starter, line by line"
+                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                        diffOpen ? 'text-accent border-accent/60' : 'text-body border-line'
+                      }`}
+                    >
+                      <GitCompare className="w-3.5 h-3.5" />
+                      <span>Diff</span>
+                    </button>
+                    {/* The one thing a stuck learner can send a person: this lesson and this code. The
+                        code rides in the URL fragment, so it never reaches the host — and it is base64,
+                        not encryption, which the title says rather than implying a privacy it lacks. */}
+                    <button
+                      onClick={() => void shareAttempt()}
+                      data-testid="btn-share-attempt"
+                      title={`Copy a link to this lesson with your code in it (${MAX_SHARE_URL} characters max). The code rides in the link's fragment, encoded — not encrypted — so send it only where you would send the file.`}
+                      className="px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise text-body border border-line flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>Share</span>
+                    </button>
+                    {/* Pair study, beside the send: one session, two people, no server — the attempt
+                        travels over a direct channel and arrives as a card, not as an edit. */}
+                    <button
+                      onClick={() => setPairOpen(true)}
+                      data-testid="btn-pair-open"
+                      title="Pair study: connect to another workbench directly and pass attempts back and forth"
+                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                        pair.state === 'connected' ? 'text-emerald border-emerald/60' : 'text-body border-line'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>
+                        {coEdit
+                          ? 'Pair · co-editing'
+                          : `Pair${pair.state === 'connected' && pair.peer ? ` · ${pair.peer}` : ''}`}
+                      </span>
+                    </button>
+                    {/* The gate's own door. The question also opens by itself on a lesson's first Run;
+                        this is how a learner rereads the verdict, or predicts before pressing Run. */}
+                    <button
+                      onClick={() => {
+                        const next = !predictOpen;
+                        setPredictRecord(predictionFor(selectedId));
+                        setPredictOpen(next);
+                        if (next) setHeldRun(null);
+                      }}
+                      aria-expanded={predictOpen}
+                      aria-controls="predict-gate"
+                      data-testid="btn-predict"
+                      title="Predict first: commit to what the code will print, then run it"
+                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                        predictOpen ? 'text-amber border-amber/60' : 'text-body border-line'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>
+                        Predict
+                        {predictRecord ? (predictRecord.skipped ? ' · skipped' : ' · answered') : ''}
+                      </span>
+                    </button>
+                    {/* Vim keys: a reading preference like watch mode, remembered the same way. Off by
+                        default, because normal mode reads a beginner's first `i` as a command and the
+                        editor would look broken rather than unusual (`app/src/vimMode.ts`). */}
+                    <button
+                      onClick={() => {
+                        const next = writeVim(!vimOn);
+                        setVimOn(next);
+                        setVimMode('normal');
+                      }}
+                      aria-pressed={vimOn}
+                      data-testid="btn-vim"
+                      title={vimHint(vimOn)}
+                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                        vimOn ? 'text-accent border-accent/60' : 'text-body border-line'
+                      }`}
+                    >
+                      <Keyboard className="w-3.5 h-3.5" />
+                      <span>{VIM_LABEL}</span>
+                    </button>
+                    <button
+                      onClick={() => setWatchOn(setWatch(!watchOn))}
+                      aria-pressed={watchOn}
+                      data-testid="btn-watch"
+                      title="Watch mode: after a failed check, re-run 1.5 s after you stop typing"
+                      className={`px-2.5 py-1.5 rounded-lg text-[13px] font-mono bg-canvas hover:bg-raise border flex items-center gap-1.5 cursor-pointer ${
+                        watchOn ? 'text-emerald border-emerald/60' : 'text-body border-line'
+                      }`}
+                    >
+                      <Activity className="w-3.5 h-3.5" />
+                      <span>{watchOn ? 'Watching' : 'Watch'}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -3490,7 +3415,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                 role="status"
                 data-testid="format-status"
                 data-format-state={formatStatus.kind}
-                className="mt-2 text-[11.5px] leading-relaxed"
+                className="mt-2 text-[12px] leading-relaxed"
                 style={{
                   color: formatStatus.kind === 'failed' ? 'var(--rose)' : 'var(--body)',
                 }}
@@ -3508,7 +3433,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               <p
                 role="status"
                 data-testid="share-status"
-                className="mt-2 rounded-lg border border-line-soft bg-panel px-3 py-2 text-[11.5px] leading-relaxed"
+                className="mt-2 rounded-lg border border-line-soft bg-panel px-3 py-2 text-[12px] leading-relaxed"
                 style={{ color: 'var(--body)' }}
               >
                 {shareStatus.kind === 'copied' && (
@@ -4478,6 +4403,38 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             </div>
           )}
 
+          <div
+            data-layout={layout}
+            // Which edge the results are on in Debug, and the lesson text in Study. The CSS places
+            // the panels by column (`index.css`), because a dock is a side, not a visibility.
+            data-dock={dock.results}
+            data-lesson-dock={dock.lesson}
+            style={
+              layoutArrangement(layout) === 'columns'
+                ? { gridTemplateColumns: splitGridTemplate(splitRatio, resultsSide) }
+                : undefined
+            }
+            className={
+              layoutArrangement(layout) === 'columns'
+                ? 'grid gap-4 lg:grid-cols-2 items-start'
+                : layoutArrangement(layout) === 'workbench'
+                  ? 'flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start'
+                  : 'space-y-4'
+            }
+          >
+            {/* Write and Debug do not read: the pane is not rendered at all there, so a hidden
+                preset costs no fetch and no place to lose. Coming back restores the lesson's
+                heading from the store, because unmounting flushed it. */}
+            {layoutShows(layout, 'lesson') && (
+              <LessonReader
+                lessonId={selectedId}
+                // The registry's own page for this entry: a lesson's Markdown, or the module that
+                // set an exercise. '' means the entry has no prose page, and the pane says so.
+                path={currentLesson.readerPath}
+                tall={layout === 'read'}
+              />
+            )}
+
           {/* Code editor: a small project, not a scratch pad. `main.py` is the learner's; a helper
               the lesson imports is a second, locked tab whose text is the module Pyodide loads. */}
           <div
@@ -4499,7 +4456,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     setPendingJump(null);
                     setOpenHelper(null);
                   }}
-                  className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[11.5px] font-mono cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
                   style={{
                     color: openHelper === null ? 'var(--accent)' : 'var(--muted)',
                     borderBottom: openHelper === null ? '2px solid var(--accent)' : '2px solid transparent',
@@ -4519,7 +4476,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                       setOpenHelper(file.name);
                     }}
                     title={`${file.name} is read-only: it is the module the checks import. F12 on a name jumps to its definition.`}
-                    className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[11.5px] font-mono cursor-pointer"
+                    className="flex items-center gap-1.5 rounded-t px-2.5 py-1.5 text-[12.5px] font-mono cursor-pointer"
                     style={{
                       color: openHelper === file.name ? 'var(--accent)' : 'var(--muted)',
                       borderBottom: openHelper === file.name ? '2px solid var(--accent)' : '2px solid transparent',
@@ -5017,6 +4974,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           </div>
           </div>
         </div>
+        </div>
       </div>
 
       {/* The verdict is announced, not only coloured: a screen reader hears the outcome and the
@@ -5057,14 +5015,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
               <p className="text-[12.5px] font-semibold" style={{ color: 'var(--text)' }}>
                 Lesson {currentLesson.id} passed
               </p>
-              <p className="text-[11px]" style={{ color: 'var(--dim)' }}>
+              <p className="text-[12px]" style={{ color: 'var(--dim)' }}>
                 Behavioural checks and output both green
               </p>
             </div>
-            {nextLesson && (
-              <button
+            {nextLesson && (                <button
                 onClick={() => selectLesson(nextLesson.id)}
-                className="btn btn-primary px-3 py-1.5 text-[12px]"
+                className="btn btn-primary px-3 py-1.5 text-[13px]"
               >
                 Next lesson →
               </button>

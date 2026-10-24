@@ -8,7 +8,7 @@ The runner is small, so the failures worth pinning are the ways it could reassur
    instead of being reported as the failure it is.
 3. **`--only` matching nothing and still exiting 0**, so a typo reads as a pass.
 4. **A `--json` mode that is not parseable**, or that disagrees with the human one.
-5. **The five real gates drifting away from the kit**: a renamed test file, or a docs gate that no
+5. **The six real gates drifting away from the kit**: a renamed test file, or a docs gate that no
    longer covers the kit page, would leave this command green while the kit it describes is broken.
 
 Run: `python3 tests/test_check_pilot_kit.py` (also wired into the CI verify step).
@@ -47,13 +47,20 @@ class PilotKitRunnerTests(unittest.TestCase):
         code, text = capture(cp.main, [])
         self.assertEqual(code, 0, f"expected every pilot gate to pass; the report was:\n{text}")
         self.assertIn(
-            "[PASS] 5 pilot gate(s)", text, "expected the summary to say the kit is ready, not just print lines"
+            "[PASS] 8 pilot gate(s)", text, "expected the summary to say the kit is ready, not just print lines"
         )
 
-    def test_the_five_gates_are_the_kit_itself(self):
+    def test_every_gate_is_the_kit_itself(self):
         names = [name for name, _ in cp.GATES]
-        self.assertEqual(len(cp.GATES), 5, "expected five gates; a new one belongs in the kit page too")
-        for expected in ("preflight tests", "follow-up tests", "aggregate tests", "docs name real commands"):
+        self.assertEqual(len(cp.GATES), 8, "expected eight gates; a new one belongs in the kit page too")
+        for expected in (
+            "sitting tests",
+            "preflight tests",
+            "follow-up tests",
+            "aggregate tests",
+            "results tests",
+            "docs name real commands",
+        ):
             self.assertIn(expected, names, f"expected the gate {expected!r} to be part of the kit's checks")
 
     def test_every_gate_names_a_script_that_exists(self):
@@ -102,7 +109,7 @@ class PilotKitRunnerTests(unittest.TestCase):
         payload = json.loads(text)
         self.assertEqual(code, 0, "expected exit 0 in JSON mode when every gate passes")
         self.assertIs(payload["ok"], True, "expected the JSON verdict to be true, matching the human summary")
-        self.assertEqual(len(payload["gates"]), 5, "expected one entry per gate in the JSON report")
+        self.assertEqual(len(payload["gates"]), 8, "expected one entry per gate in the JSON report")
         self.assertTrue(
             all(gate["ok"] for gate in payload["gates"]), "expected every gate entry in the JSON to read as passed"
         )

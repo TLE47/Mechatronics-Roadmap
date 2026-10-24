@@ -906,6 +906,24 @@ def extract_hints(text: str) -> list[str]:
     return cleaned
 
 
+def reader_page_path(entry_id: str, rel: str) -> str:
+    """The Markdown page the workbench's reader renders for an entry, or '' when it has none.
+
+    A lesson page is its own reading copy. An exercise package is a program, not prose: the page a
+    learner reads beside it is the module that set the exercise, and the package id names it
+    (`EX.05-control.T2.05a` -> `modules/05-control.T2.05a.md`). The rule lives here, once, and is
+    written into the registry, so `scripts/generate_lesson_pages.py` and the app cannot derive two
+    different pages from the same entry.
+    """
+    if rel.endswith(".md"):
+        return rel
+    if entry_id.startswith("EX."):
+        module = "modules/%s.md" % entry_id[len("EX.") :]
+        if os.path.isfile(os.path.join(ROOT, module)):
+            return module
+    return ""
+
+
 def exercise_lessons():
     """Tier 2/3 exercise packages, flattened into the same registry as the beginner lessons.
 
@@ -935,12 +953,15 @@ def exercise_lessons():
             manifest = json.load(handle)
         delivery = manifest.get("delivery", {})
         checker = exercise_bundle.selfcheck_source(directory)
+        entry_id = delivery.get("workbench_id", "EX." + manifest["id"])
+        entry_path = os.path.relpath(os.path.join(directory, "solution.py"), ROOT)
         entries.append(
             {
-                "id": delivery.get("workbench_id", "EX." + manifest["id"]),
+                "id": entry_id,
                 "title": "%s - graded exercise" % manifest["title"],
                 "track": "modules",
-                "path": os.path.relpath(os.path.join(directory, "solution.py"), ROOT),
+                "path": entry_path,
+                "readerPath": reader_page_path(entry_id, entry_path),
                 # An exercise is one learning objective, not a list of its functions: the ideas
                 # count is a beginner-lesson rule and the workbench enforces <= 2.
                 "ideas": [manifest["title"]],
@@ -967,7 +988,8 @@ def exercise_lessons():
     return entries
 
 
-def main():
+def build_lessons():
+    """The whole registry, in the order the runner lists it: lessons first, then packages."""
     files = get_python_lesson_files()
     lessons = []
     for path in files:
@@ -1000,6 +1022,7 @@ def main():
                 "title": title_m.group(1).strip() if title_m else rel,
                 "track": folder,
                 "path": rel,
+                "readerPath": reader_page_path(lesson_id, rel),
                 "ideas": [i.strip() for i in ideas if i.strip()],
                 "starterCode": starter,
                 "hints": hints,
@@ -1012,6 +1035,11 @@ def main():
         )
 
     lessons.extend(exercise_lessons())
+    return lessons
+
+
+def main():
+    lessons = build_lessons()
 
     out_dir = os.path.join(ROOT, "app", "src", "data")
     os.makedirs(out_dir, exist_ok=True)
@@ -1024,6 +1052,8 @@ def main():
         "  title: string;\n"
         "  track: string;\n"
         "  path: string;\n"
+        "  /** The Markdown page the reader renders; '' when the entry has no prose page. */\n"
+        "  readerPath: string;\n"
         "  ideas: string[];\n"
         "  starterCode: string;\n"
         "  hints: string[];\n"

@@ -52,6 +52,7 @@ const budget = {
   fonts: 500,
   largest_js_gzip: 800,
   prose_gzip: 300,
+  reader_gzip: 400,
   total: 2000,
 };
 const fits = {
@@ -61,6 +62,7 @@ const fits = {
   fonts: 450,
   largest_js_gzip: 700,
   prose_gzip: 250,
+  reader_gzip: 350,
   total: 1800,
 };
 
@@ -226,10 +228,12 @@ check('the entry is the document plus the files it names, not the whole bundle',
 });
 
 check('an entry naming a file the build did not emit is unmeasured, not free', () => {
-  const measurement = measurementFrom(FILES, ['index.html', 'assets/gone-xyz.js'], {
-    name: 'prose-index.json',
-    gzip: 250,
-  });
+  const measurement = measurementFrom(
+    FILES,
+    ['index.html', 'assets/gone-xyz.js'],
+    { name: 'prose-index.json', gzip: 250 },
+    { gzip: 300 }
+  );
   assert.equal(
     Number.isNaN(measurement.entry_gzip),
     true,
@@ -256,9 +260,22 @@ check('the prose index is measured on its own, never folded into the shell total
   assert.equal(withProse.total, shell.total, 'a file fetched by a search must not move the shell total');
   assert.deepEqual(
     compareBudgets(shell, budget).unmeasured.map((row) => row.metric),
-    ['prose_gzip'],
-    'a missing prose index must fail the gate rather than pass as weight nothing measured'
+    ['prose_gzip', 'reader_gzip'],
+    'a missing prose index and a missing reader must fail the gate rather than pass as weight nothing measured'
   );
+});
+
+// The reader's pages are fetched one at a time, so the ceiling is on the whole course and the shell
+// total must not move when a page is added.
+check('the reader payloads are summed on their own, never folded into the shell total', () => {
+  const shell = measurementFrom(FILES, ['index.html', 'assets/index-abc.js']);
+  assert.equal(Number.isNaN(shell.reader_gzip), true, 'no payloads is unmeasured, not zero bytes');
+  const withReader = measurementFrom(FILES, [], null, { gzip: 640, pages: 92 });
+  assert.equal(withReader.reader_gzip, 640);
+  assert.equal(withReader.total, shell.total, 'a page fetched by the reader must not move the shell total');
+  const withProse = measurementFrom(FILES, [], { name: 'prose-index.json', gzip: 1200 }, { gzip: 640 });
+  assert.equal(withProse.prose_gzip, 1200, 'the two fetched-on-demand stores are separate numbers');
+  assert.equal(withProse.reader_gzip, 640);
 });
 
 check('a bundle with no js does not invent a largest chunk', () => {

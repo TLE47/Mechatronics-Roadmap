@@ -728,7 +728,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     // each one must reject its starter and verify its own reference on the built bundle.
     await gradeRampEntries(page, name);
 
-    // Split (⌥4) is the one preset that is an *arrangement* and not only a set of hidden regions:
+    // Debug (⌥4) is the one preset that is an *arrangement* and not only a set of hidden regions:
     // the editor on the left, the results on the right. Measured here, on the built bundle, because
     // the two columns are Tailwind utilities and the dev server the workbench suites share resolves
     // its config without the Tailwind plugin — there `display` reads `block` on the same container.
@@ -745,7 +745,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     // The shortcut, not the button: ⌥4 is how a learner changes preset without leaving the editor.
     await wide.keyboard.press('Alt+4');
     await wide.waitForFunction(
-      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'split',
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'debug',
       undefined,
       { timeout: 5000 }
     );
@@ -763,22 +763,126 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     assert.equal(split.columns, 2, `${name}: ⌥4 must lay the work area out in two columns`);
     assert.ok(
       split.resultsLeft >= split.editorRight,
-      `${name}: Split must put the results beside the editor, but the editor runs to ${split.editorRight}px ` +
+      `${name}: Debug must put the results beside the editor, but the editor runs to ${split.editorRight}px ` +
         `and the results start at ${split.resultsLeft}px`
     );
     assert.ok(
       split.editorWidth > 320,
-      `${name}: Split's editor column is ${split.editorWidth}px, too narrow to type in at 1440px`
+      `${name}: Debug's editor column is ${split.editorWidth}px, too narrow to type in at 1440px`
     );
     console.log(
       `  ok ${name}: ⌥4 puts the results beside the editor (editor ${split.editorWidth}px, results from ${split.resultsLeft}px)`
+    );
+
+    // The reading pane: Study renders the page itself (a heading, the lesson's own code, an
+    // equation), the GitHub link is demoted to a source link, and the heading at the top of the
+    // pane survives a reload. Measured on the built bundle because it needs the real payload
+    // fetched from `dist/lesson-pages/`, which is exactly what a learner's first visit does.
+    await wide.keyboard.press('Alt+1');
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'study',
+      undefined,
+      { timeout: 5000 }
+    );
+    await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
+    const reader = await wide.evaluate(() => {
+      const box = document.querySelector('[data-testid="lesson-reader"]');
+      const scroll = document.querySelector('[data-testid="reader-scroll"]');
+      const editor = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
+      const readerBox = box.getBoundingClientRect();
+      return {
+        headings: [...box.querySelectorAll('[data-reader-anchor]')].map((heading) => heading.id),
+        formulas: box.querySelectorAll('.katex').length,
+        code: box.querySelectorAll('pre code').length,
+        source: (document.querySelector('[data-testid="link-lesson-source"]')?.textContent ?? '').trim(),
+        readerLeft: Math.round(readerBox.left),
+        readerRight: Math.round(readerBox.right),
+        readerWidth: Math.round(readerBox.width),
+        editorLeft: Math.round(editor.left),
+        editorWidth: Math.round(editor.width),
+        scrollable: scroll.scrollHeight > scroll.clientHeight,
+      };
+    });
+    assert.ok(reader.headings.length >= 3, `${name}: the pane rendered ${reader.headings.length} headings`);
+    assert.ok(reader.formulas > 0, `${name}: the pane must typeset the lesson's equations`);
+    assert.ok(reader.code > 0, `${name}: the pane must render the lesson's own code fences`);
+    assert.equal(
+      reader.source,
+      'View source on GitHub ↗',
+      `${name}: the GitHub link must be demoted to the source link`
+    );
+    assert.ok(
+      reader.readerRight <= reader.editorLeft,
+      `${name}: Study must put the lesson text beside the editor, but the text ends at ` +
+        `${reader.readerRight}px and the editor starts at ${reader.editorLeft}px`
+    );
+    assert.ok(
+      reader.readerWidth > 320 && reader.editorWidth > 320,
+      `${name}: Study's two columns are ${reader.readerWidth}px and ${reader.editorWidth}px, too narrow at 1440px`
+    );
+    assert.equal(reader.scrollable, true, `${name}: a long lesson needs its own scroll container`);
+    console.log(
+      `  ok ${name}: Study reads beside the code (${reader.headings.length} headings, ` +
+        `${reader.formulas} equations, text ${reader.readerWidth}px beside editor ${reader.editorWidth}px)`
+    );
+
+    // The reading position: scroll to a heading, reload, and find the same heading at the top of
+    // the pane. A raw pixel would land in a paragraph that moved; the anchor is what a regenerated
+    // page keeps.
+    const scrolled = await wide.evaluate(() => {
+      const scroll = document.querySelector('[data-testid="reader-scroll"]');
+      const heading = document.querySelectorAll('[data-reader-anchor]')[3];
+      scroll.scrollTop = heading.offsetTop + 24;
+      scroll.dispatchEvent(new Event('scroll'));
+      return { anchor: heading.dataset.readerAnchor, at: scroll.scrollTop };
+    });
+    await wide.waitForTimeout(500);
+    await wide.reload({ waitUntil: 'networkidle', timeout: 45000 });
+    if (await wide.getByTestId('tab-btn-tab-pyodide').count()) {
+      await wide.getByTestId('tab-btn-tab-pyodide').click();
+    }
+    await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
+    const restored = await wide.evaluate(() => {
+      const scroll = document.querySelector('[data-testid="reader-scroll"]');
+      let top = '';
+      for (const heading of document.querySelectorAll('[data-reader-anchor]')) {
+        if (heading.offsetTop <= scroll.scrollTop + 8) top = heading.dataset.readerAnchor;
+        else break;
+      }
+      return { at: Math.round(scroll.scrollTop), top };
+    });
+    assert.ok(restored.at > 0, `${name}: the pane came back at the top instead of where it was left`);
+    assert.equal(
+      restored.top,
+      scrolled.anchor,
+      `${name}: the pane came back at ${restored.at}px, under "${restored.top}", not "${scrolled.anchor}"`
+    );
+    console.log(
+      `  ok ${name}: the reading position comes back on its heading (${restored.top} at ${restored.at}px)`
+    );
+
+    // ...and the next lesson starts at its own top, not at the previous lesson's offset.
+    await wide.getByTestId('lesson-item-05.1').click();
+    await wide.getByTestId('reader-loading').waitFor({ state: 'detached', timeout: 20000 });
+    const nextLessonTop = await wide.evaluate(
+      () => Math.round(document.querySelector('[data-testid="reader-scroll"]').scrollTop)
+    );
+    assert.equal(nextLessonTop, 0, `${name}: a lesson never read here must start at the top`);
+    console.log(`  ok ${name}: a lesson never read here starts at the top`);
+
+    // Back to Debug for the divider below: the reading checks left the screen in Study.
+    await wide.keyboard.press('Alt+4');
+    await wide.waitForFunction(
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'debug',
+      undefined,
+      { timeout: 5000 }
     );
 
     // The divider drags, and the share it leaves behind survives a reload. Measured as track widths
     // rather than as state: the promise is about where the boundary is on screen. The gap comes out
     // of the free space before the two tracks share it, so the target is `left + free * share`.
     const divider = wide.getByTestId('split-divider');
-    assert.equal(await divider.count(), 1, `${name}: Split must offer a divider to drag`);
+    assert.equal(await divider.count(), 1, `${name}: Debug must offer a divider to drag`);
     await divider.scrollIntoViewIfNeeded();
     const box = await wide.evaluate(() => {
       const container = document.querySelector('[data-layout]');
@@ -847,7 +951,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       await wide.getByTestId('tab-btn-tab-pyodide').click();
     }
     await wide.waitForFunction(
-      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'split',
+      () => document.querySelector('[data-layout]')?.getAttribute('data-layout') === 'debug',
       undefined,
       { timeout: 10000 }
     );
@@ -989,55 +1093,56 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
         `(rail ends at ${activityBar.railRight}px, main starts at ${activityBar.mainLeft}px)`
     );
 
-    // Study's half of docking: the chooser takes the second cell, so it sits to the right of the
-    // work area instead of shrinking the editor from the left. Measured on the bundle because the
-    // side is a Tailwind `order` utility here, which the dev server does not resolve.
+    // Study's half of docking: the lesson text takes the second cell, so it sits to the right of
+    // the editor instead of on the left. Measured on the bundle because the columns are a grid
+    // template, and the reload is the promise that a side is a preference.
     await wide.getByTestId('layout-study').click();
     await wide.getByTestId('btn-dock-toggle').click();
     const studyDock = () =>
       wide.evaluate(() => {
-        const chooser = document.querySelector('[data-testid="lesson-list-card"]');
+        const readerBox = document
+          .querySelector('[data-testid="lesson-reader"]')
+          .getBoundingClientRect();
+        const editor = document.querySelector('[data-testid="editor-panel"]').getBoundingClientRect();
         const work = document.querySelector('[data-layout]');
-        const chooserBox = chooser.getBoundingClientRect();
-        const workBox = work.getBoundingClientRect();
         return {
-          side: chooser.getAttribute('data-list-dock'),
-          sameRow: Math.abs(Math.round(chooserBox.top) - Math.round(workBox.top)) <= 1,
-          chooserLeft: Math.round(chooserBox.left),
-          workRight: Math.round(workBox.right),
-          chooserWidth: Math.round(chooserBox.width),
+          side: work.getAttribute('data-lesson-dock'),
+          editorRight: Math.round(editor.right),
+          readerLeft: Math.round(readerBox.left),
+          readerWidth: Math.round(readerBox.width),
+          sameRow: Math.abs(Math.round(readerBox.top) - Math.round(editor.top)) <= 1,
         };
       });
     const studyDocked = await studyDock();
-    assert.equal(studyDocked.side, 'right', `${name}: the chooser must report the side it moved to`);
+    assert.equal(studyDocked.side, 'right', `${name}: the lesson text must report the side it moved to`);
     assert.ok(
-      studyDocked.chooserLeft >= studyDocked.workRight - 1,
-      `${name}: a chooser docked right must start after the work area ends, but it starts at ` +
-        `${studyDocked.chooserLeft}px and the work area ends at ${studyDocked.workRight}px`
+      studyDocked.readerLeft >= studyDocked.editorRight - 1,
+      `${name}: a lesson pane docked right must start after the editor ends, but it starts at ` +
+        `${studyDocked.readerLeft}px and the editor ends at ${studyDocked.editorRight}px`
     );
     assert.equal(
       studyDocked.sameRow,
       true,
-      `${name}: the chooser and the work area must stay on one row`
+      `${name}: the lesson text and the editor must stay on one row`
     );
     assert.ok(
-      studyDocked.chooserWidth > 260,
-      `${name}: a docked chooser is ${studyDocked.chooserWidth}px wide, too narrow to read a lesson title`
+      studyDocked.readerWidth > 320,
+      `${name}: a docked lesson pane is ${studyDocked.readerWidth}px wide, too narrow to read`
     );
     await wide.reload({ waitUntil: 'networkidle', timeout: 45000 });
     if (await wide.getByTestId('tab-btn-tab-pyodide').count()) {
       await wide.getByTestId('tab-btn-tab-pyodide').click();
     }
     await wide.waitForFunction(
-      () => document.querySelector('[data-list-dock]')?.getAttribute('data-list-dock') === 'right',
+      () => document.querySelector('[data-layout]')?.getAttribute('data-lesson-dock') === 'right',
       undefined,
       { timeout: 10000 }
     );
     const studyRemembered = await studyDock();
-    assert.equal(studyRemembered.side, 'right', `${name}: the chooser's side must survive a reload`);
+    assert.equal(studyRemembered.side, 'right', `${name}: the lesson pane's side must survive a reload`);
     console.log(
-      `  ok ${name}: Study's chooser docks right of the work area and comes back there ` +
-        `(${studyDocked.chooserWidth}px, work area ends at ${studyDocked.workRight}px)`
+      `  ok ${name}: Study's lesson text docks right of the editor and comes back there ` +
+        `(${studyDocked.readerWidth}px, editor ends at ${studyDocked.editorRight}px)`
     );
     await wide.close();
 
@@ -1111,6 +1216,10 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
       const spilled = [...document.querySelectorAll('body *')]
         .map((element) => ({ element, rect: element.getBoundingClientRect() }))
         .filter(({ rect }) => rect.width > 0 && rect.height > 0 && rect.right - viewportWidth > 1)
+        // An SVG's `<path>` is drawing geometry, not a layout box: KaTeX draws a stretchy delimiter
+        // as a 400em-wide path clipped by its `<svg>`. The document's own overflow is asserted
+        // separately, and that is the thing a learner can actually scroll.
+        .filter(({ element }) => !element.ownerSVGElement)
         .filter(({ element }) => !insideHorizontalScroller(element))
         .sort((a, b) => b.rect.right - a.rect.right);
       const worst = spilled[0];

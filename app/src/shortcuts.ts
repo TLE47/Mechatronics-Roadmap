@@ -63,7 +63,8 @@ export const SHORTCUT_ROWS: ShortcutRow[] = [
   },
   {
     keys: '⌥1 – ⌥4',
-    action: 'Study, Write, Read or Split — which parts of the workbench get the screen.',
+    action:
+      'Study, Write, Read or Debug — the lesson text and the code, the editor alone, the text alone, or the editor beside its results.',
   },
   {
     keys: '⌘.',
@@ -72,7 +73,7 @@ export const SHORTCUT_ROWS: ShortcutRow[] = [
   },
   {
     keys: '← →  Home  End',
-    action: 'Move Split’s divider when it has focus; ⇧ moves it in bigger steps.',
+    action: 'Move Debug’s divider when it has focus; ⇧ moves it in bigger steps.',
   },
   {
     keys: '↑ ↓  ↵  Esc',

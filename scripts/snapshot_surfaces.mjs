@@ -266,10 +266,14 @@ async function main() {
         await page.click(`[data-testid="tab-btn-${tabId}"]`);
         // Eleven of the twelve tabs are lazy chunks, and the editor is a lazy boundary of its own: a
         // measurement taken during either placeholder would describe a panel that says "Loading".
+        // The lesson pane fetches its page too (Run 229): a surface measured while it says "Loading the
+        // lesson text" is 71 px shorter and has a heading count of 3 instead of 17, which is a baseline
+        // of the spinner rather than of the lesson.
         await page.waitForFunction(
           () =>
             !document.querySelector('[data-testid="tab-loading"]') &&
-            !document.querySelector('[data-editor-ready="false"]'),
+            !document.querySelector('[data-editor-ready="false"]') &&
+            !document.querySelector('[data-testid="reader-loading"]'),
           undefined,
           { timeout: 30000 }
         );
@@ -281,6 +285,27 @@ async function main() {
           return true;
         });
         await page.waitForTimeout(400);
+        // And then wait until the pane has stopped *resizing*. A late font swap, a lazy image or a
+        // chart's first paint moves the page by a few pixels after that beat, and a snapshot taken
+        // mid-shift is a claim about a frame nobody sees — `tab-links` read 2411 or 2414 px depending
+        // on which side of a 3 px reflow the sweep landed, with nothing changed in the app.
+        await page.evaluate(
+          () =>
+            new Promise((resolve) => {
+              const target = document.querySelector('#main') ?? document.body;
+              let quiet = setTimeout(done, 250);
+              const observer = new ResizeObserver(() => {
+                clearTimeout(quiet);
+                quiet = setTimeout(done, 250);
+              });
+              function done() {
+                observer.disconnect();
+                resolve(true);
+              }
+              observer.observe(target);
+              setTimeout(done, 5000);
+            })
+        );
         const name = `${palette}/${tabId}`;
         surfaces[name] = await page.evaluate(measure);
         if (PNG) {

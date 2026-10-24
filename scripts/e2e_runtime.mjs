@@ -60,6 +60,7 @@ import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
 import { readBulk } from './bulk_store_page.mjs';
+import { clickToolbar } from './e2e_toolbar.mjs';
 
 const EDITOR = '[data-editor="editor-main"] .cm-content';
 const RUN = '[data-testid="btn-run-verify"]';
@@ -801,14 +802,14 @@ async function main() {
       undefined,
       { timeout: 5000 }
     );
-    await page.click('[data-testid="btn-breakpoints"]');
+    await clickToolbar(page, 'btn-breakpoints');
     await page.waitForSelector('[data-testid="breakpoint-condition-3"]', { timeout: 5000 });
     // Typed one key at a time, not filled: the input's value is the stored condition, so a normaliser
     // that trims would swallow the space bar and `n == 3` could never be written by a learner.
     await page.click('[data-testid="breakpoint-condition-3"]');
     await page.keyboard.type('n == 3');
     const typedCondition = (await page.inputValue('[data-testid="breakpoint-condition-3"]')).trim();
-    await page.click('[data-testid="btn-breakpoints"]');
+    await clickToolbar(page, 'btn-breakpoints');
     const narrowed = await page
       .waitForFunction(
         () =>
@@ -880,9 +881,9 @@ async function main() {
     //     silently skipping it would hide the learner's own typo — and the bar must carry the
     //     interpreter's sentence rather than a message of our own invention. The dot goes on line 4,
     //     which this program runs once, so one Continue finishes it.
-    await page.click('[data-testid="btn-breakpoints"]');
+    await clickToolbar(page, 'btn-breakpoints');
     await page.click('[data-testid="btn-clear-breakpoint-3"]');
-    await page.click('[data-testid="btn-breakpoints"]');
+    await clickToolbar(page, 'btn-breakpoints');
     await page.click('[data-testid="breakpoint-slot-4"]');
     await page.waitForFunction(
       () =>
@@ -891,10 +892,10 @@ async function main() {
       undefined,
       { timeout: 5000 }
     );
-    await page.click('[data-testid="btn-breakpoints"]');
+    await clickToolbar(page, 'btn-breakpoints');
     await page.waitForSelector('[data-testid="breakpoint-condition-4"]', { timeout: 5000 });
     await page.fill('[data-testid="breakpoint-condition-4"]', 'missing == 3');
-    await page.click('[data-testid="btn-breakpoints"]');
+    await clickToolbar(page, 'btn-breakpoints');
     await page.click(RUN);
     const raisedParked = await page
       .waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 })
@@ -1248,12 +1249,12 @@ async function main() {
     // Narrowed to the first pass, so Continue really does run to the end: an unconditional dot in
     // the loop would park again on the second turn and the run would never finish.
     if (!(await page.locator('[data-testid="breakpoint-condition-3"]').count())) {
-      await page.click('[data-testid="btn-breakpoints"]');
+      await clickToolbar(page, 'btn-breakpoints');
     }
     await page.waitForSelector('[data-testid="breakpoint-condition-3"]', { timeout: 5000 });
     await page.fill('[data-testid="breakpoint-condition-3"]', 'n == 1');
     if ((await page.getAttribute('[data-testid="btn-breakpoints"]', 'aria-expanded')) === 'true') {
-      await page.click('[data-testid="btn-breakpoints"]');
+      await clickToolbar(page, 'btn-breakpoints');
     }
     await page.click(RUN);
     await page.waitForSelector('[data-testid="paused-bar"]', { timeout: 60000 });
@@ -1380,7 +1381,7 @@ async function main() {
     //     promises when it says ⌘Z puts it back.
     const messy = "x=1\nif x>0:\n  print( x )\nprint( 'a',1 )\n";
     await setEditorCode(page, messy);
-    await page.click('[data-testid="btn-format"]');
+    await clickToolbar(page, 'btn-format');
     const formattedShown = await page
       .waitForFunction(
         () =>
@@ -1423,7 +1424,7 @@ async function main() {
     });
     // Back to the tidied file, so the second press has something it has already formatted.
     await setEditorCode(page, formattedText);
-    await page.click('[data-testid="btn-format"]');
+    await clickToolbar(page, 'btn-format');
     const alreadyTidy = await page
       .waitForFunction(
         () => /Already tidy/.test(document.querySelector('[data-testid="format-status"]')?.textContent ?? ''),
@@ -1437,7 +1438,7 @@ async function main() {
     });
     const brokenCode = 'def f(:\n    return 1\n';
     await setEditorCode(page, brokenCode);
-    await page.click('[data-testid="btn-format"]');
+    await clickToolbar(page, 'btn-format');
     const parseShown = await page
       .waitForFunction(
         () => /could not parse/.test(document.querySelector('[data-testid="format-status"]')?.textContent ?? ''),

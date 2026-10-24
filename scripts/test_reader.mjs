@@ -1,0 +1,321 @@
+#!/usr/bin/env node
+/**
+ * The lesson reader's rules, without a browser (`npm run test:reader`).
+ *
+ * The pane has three pieces that fail quietly: the inline parser (a delimiter it eats turns `K_p`
+ * into italic `K` and a subscript `p`; a `$` it misreads turns a price into a formula), the payload
+ * guard (a stale file from an older build must be refused, not painted as raw blocks), and the
+ * reading position (a stored `NaN` scrolls a learner to nowhere). Each is pinned here; the rendered
+ * result is `npm run test:e2e:pages`'s job, and the generated payloads are
+ * `python3 scripts/generate_lesson_pages.py --check` plus `tests/test_lesson_pages.py`.
+ */
+
+import assert from 'node:assert/strict';
+import {
+  LESSON_PAGE_VERSION,
+  clearLessonPageCache,
+  isLessonPage,
+  lessonPageUrl,
+  loadLessonPage,
+} from '../app/src/lessonPage.ts';
+import {
+  anchorFor,
+  headingAnchors,
+  inlinePlain,
+  parseInline,
+} from '../app/src/readerMarkdown.ts';
+import {
+  MAX_ANCHOR_CHARS,
+  STORAGE_KEY_READING,
+  clearReadingPosition,
+  readReadingPosition,
+  writeReadingPosition,
+} from '../app/src/readingPosition.ts';
+
+let passed = 0;
+let failed = 0;
+
+function section(title) {
+  console.log(`\n${title}`);
+}
+
+function check(name, fn) {
+  try {
+    fn();
+    passed += 1;
+    console.log(`  ok   ${name}`);
+  } catch (error) {
+    failed += 1;
+    console.error(`  FAIL ${name}\n       ${error.message}`);
+  }
+}
+
+async function checkAsync(name, fn) {
+  try {
+    await fn();
+    passed += 1;
+    console.log(`  ok   ${name}`);
+  } catch (error) {
+    failed += 1;
+    console.error(`  FAIL ${name}\n       ${error.message}`);
+  }
+}
+
+function fakeStorage(initial = {}) {
+  const data = new Map(Object.entries(initial));
+  return {
+    getItem: (key) => (data.has(key) ? data.get(key) : null),
+    setItem: (key, value) => data.set(key, String(value)),
+    data,
+  };
+}
+
+const kinds = (text) => parseInline(text).map((run) => run.k);
+const values = (text) => parseInline(text).map((run) => run.v);
+
+section('inline Markdown');
+
+check('code spans are one run and keep their bytes', () => {
+  assert.deepEqual(parseInline('use `K_p` here'), [
+    { k: 'text', v: 'use ' },
+    { k: 'code', v: 'K_p' },
+    { k: 'text', v: ' here' },
+  ]);
+  // A double backtick span can hold a single one, which is how a page shows a literal backtick.
+  assert.deepEqual(values('``a ` b``'), ['a ` b']);
+});
+
+check('strong and emphasis are nested labels, not a flattened string', () => {
+  assert.deepEqual(parseInline('**bold**'), [{ k: 'strong', v: 'bold' }]);
+  assert.deepEqual(parseInline('*soft*'), [{ k: 'em', v: 'soft' }]);
+  assert.deepEqual(parseInline('**`K_p`**'), [{ k: 'strong', v: '`K_p`' }]);
+});
+
+check('links keep their label Markdown and their URL whole', () => {
+  const runs = parseInline('read [the **notes**](https://example.invalid/a_(b)) now');
+  assert.equal(runs[1].k, 'link');
+  assert.equal(runs[1].href, 'https://example.invalid/a_(b)');
+  assert.equal(runs[1].v, 'the **notes**');
+  assert.equal(inlinePlain(runs[1].v), 'the notes');
+});
+
+check('an autolink is a link whose text is its URL', () => {
+  assert.deepEqual(parseInline('<https://example.invalid/x>'), [
+    { k: 'link', href: 'https://example.invalid/x', v: 'https://example.invalid/x' },
+  ]);
+});
+
+check('maths is $…$ with no space at either fence, so money stays money', () => {
+  assert.deepEqual(parseInline('$\\tau = R C$'), [{ k: 'math', v: '\\tau = R C' }]);
+  assert.deepEqual(parseInline('$5 and $6'), [{ k: 'text', v: '$5 and $6' }]);
+  assert.deepEqual(parseInline('$ 12 $'), [{ k: 'text', v: '$ 12 $' }]);
+});
+
+check('a lone asterisk is arithmetic, not an unclosed emphasis', () => {
+  assert.deepEqual(parseInline('2 * 3 * 4'), [{ k: 'text', v: '2 * 3 * 4' }]);
+  assert.deepEqual(parseInline('2 * 3'), [{ k: 'text', v: '2 * 3' }]);
+});
+
+check('identifiers with underscores are text', () => {
+  assert.deepEqual(parseInline('mechalab_plant and K_p'), [
+    { k: 'text', v: 'mechalab_plant and K_p' },
+  ]);
+});
+
+check('an escape is the character, and an inline image falls back to its alt', () => {
+  assert.deepEqual(values('a \\* b'), ['a * b']);
+  assert.deepEqual(parseInline('see ![the arm](../x.png)'), [{ k: 'text', v: 'see the arm' }]);
+});
+
+check('adjacent text is one run, so the DOM is not a span per character', () => {
+  assert.deepEqual(parseInline('plain words'), [{ k: 'text', v: 'plain words' }]);
+  assert.deepEqual(kinds('a `b` c **d** e'), ['text', 'code', 'text', 'strong', 'text']);
+});
+
+section('heading anchors');
+
+check('an anchor is GitHub\'s, punctuation and all', () => {
+  assert.equal(anchorFor('Goal'), 'goal');
+  assert.equal(anchorFor('Idea 1: PD control (`K_p`)'), 'idea-1-pd-control-k_p');
+  assert.equal(anchorFor('Step 2 — Build it'), 'step-2--build-it');
+  assert.equal(anchorFor('**Bold** heading'), 'bold-heading');
+});
+
+check('a repeated heading gets the -1 suffix, aligned to its block', () => {
+  const anchors = headingAnchors([
+    { t: 'h', l: 2, x: 'Summary' },
+    { t: 'p', x: 'text' },
+    { t: 'h', l: 2, x: 'Summary' },
+    { t: 'h', l: 3, x: 'Detail' },
+  ]);
+  assert.deepEqual(anchors, ['summary', null, 'summary-1', 'detail']);
+});
+
+section('payloads');
+
+const page = { v: LESSON_PAGE_VERSION, path: 'track-p/P.1-x.md', title: 'P.1', blocks: [
+  { t: 'h', l: 2, x: 'Goal' },
+  { t: 'p', x: 'words' },
+  { t: 'ul', items: [{ x: 'one', d: 0 }, { x: 'nested', d: 1 }] },
+  { t: 'code', lang: 'python', text: 'print(1)' },
+  { t: 'table', head: ['a'], rows: [['1']] },
+  { t: 'quote', x: 'note' },
+  { t: 'math', tex: 'x' },
+  { t: 'img', src: 'a.png', alt: 'a' },
+  { t: 'ol', items: [{ x: 'first', d: 0 }] },
+] };
+
+check('a page this build knows passes the guard', () => {
+  assert.equal(isLessonPage(page), true);
+});
+
+check('a stale version, an unknown block or a half-written one is refused', () => {
+  assert.equal(isLessonPage({ ...page, v: 2 }), false, 'a newer format this build cannot draw');
+  assert.equal(isLessonPage({ ...page, v: undefined }), false);
+  assert.equal(isLessonPage({ ...page, blocks: [{ t: 'video', src: 'x' }] }), false);
+  assert.equal(isLessonPage({ ...page, blocks: [{ t: 'h', l: 2 }] }), false);
+  assert.equal(isLessonPage({ ...page, blocks: [{ t: 'ul', items: [] }] }), false);
+  assert.equal(
+    isLessonPage({ ...page, blocks: [{ t: 'ul', items: [{ x: 'one', d: -1 }] }] }),
+    false,
+    'a negative depth is a negative indent nobody planned for'
+  );
+  assert.equal(isLessonPage(null), false);
+  assert.equal(isLessonPage('{"v":1}'), false);
+});
+
+check('the payload URL sits beside the bundle and moves with its base', () => {
+  assert.equal(lessonPageUrl('track-p/P.1-variables.md'), '/lesson-pages/track-p/P.1-variables.json');
+  assert.equal(lessonPageUrl('/modules/05-control.T2.05a.md'), '/lesson-pages/modules/05-control.T2.05a.json');
+});
+
+section('fetching a page');
+
+await checkAsync('one fetch answers every pane, and a failure is not remembered', async () => {
+  clearLessonPageCache();
+  let calls = 0;
+  let failNext = false;
+  const fetcher = async () => {
+    calls += 1;
+    if (failNext) throw new Error('offline');
+    return {
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => page,
+    };
+  };
+
+  const first = await loadLessonPage('a.md', { fetch: fetcher });
+  const second = await loadLessonPage('a.md', { fetch: fetcher });
+  assert.equal(first, second, 'the same payload object from memory');
+  assert.equal(calls, 1, 'a second pane must not start a second request');
+
+  failNext = true;
+  await assert.rejects(() => loadLessonPage('b.md', { fetch: fetcher }), /offline/);
+  failNext = false;
+  const retried = await loadLessonPage('b.md', { fetch: fetcher });
+  assert.equal(retried.path, page.path);
+  assert.equal(calls, 3, 'a failed fetch is forgotten, so Retry is a real attempt');
+});
+
+await checkAsync('an HTML answer, a 404 and a wrong payload all fail loudly', async () => {
+  clearLessonPageCache();
+  const respond = (body, { ok = true, type = 'application/json', status = 200 } = {}) => async () => ({
+    ok,
+    status,
+    headers: { get: () => type },
+    json: async () => body,
+  });
+  await assert.rejects(
+    () => loadLessonPage('x.md', { fetch: respond('<html>', { type: 'text/html' }) }),
+    /not found/
+  );
+  await assert.rejects(
+    () => loadLessonPage('x.md', { fetch: respond({}, { ok: false, status: 404 }) }),
+    /404/
+  );
+  await assert.rejects(() => loadLessonPage('x.md', { fetch: respond({ v: 99 }) }), /format/);
+});
+
+section('reading position');
+
+check('with no storage the position is remembered for the visit, not thrown', () => {
+  assert.equal(typeof globalThis.localStorage, 'undefined', 'this check assumes no global storage');
+  assert.equal(readReadingPosition('P.1'), null);
+  assert.deepEqual(writeReadingPosition('P.1', { anchor: 'goal', at: 120 }), { anchor: 'goal', at: 120 });
+});
+
+check('the store is per lesson, and a reload reads it back', () => {
+  globalThis.localStorage = fakeStorage();
+  try {
+    assert.equal(readReadingPosition('P.1'), null, 'an empty store is no position');
+    writeReadingPosition('P.1', { anchor: 'idea-1', at: 640 });
+    assert.deepEqual(readReadingPosition('P.1'), { anchor: 'idea-1', at: 640 });
+    assert.equal(readReadingPosition('P.2'), null, 'one lesson never inherits another');
+    assert.ok(globalThis.localStorage.data.get(STORAGE_KEY_READING), 'stored under the reader key');
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('a stored position is validated, not trusted', () => {
+  globalThis.localStorage = fakeStorage();
+  try {
+    writeReadingPosition('P.1', { anchor: 'x'.repeat(400), at: 12.6 });
+    assert.deepEqual(readReadingPosition('P.1'), { anchor: 'x'.repeat(MAX_ANCHOR_CHARS), at: 13 });
+
+    writeReadingPosition('P.1', { anchor: 'goal', at: -80 });
+    assert.deepEqual(readReadingPosition('P.1'), { anchor: 'goal', at: 0 });
+
+    writeReadingPosition('P.1', { anchor: 'goal', at: Number.NaN });
+    assert.deepEqual(readReadingPosition('P.1'), { anchor: '', at: 0 }, 'NaN is the top, not nowhere');
+
+    globalThis.localStorage.data.set(
+      STORAGE_KEY_READING,
+      JSON.stringify({ 'P.1': { anchor: 'goal', at: 'far' }, 'P.2': { anchor: 'x', at: 5 } })
+    );
+    assert.equal(readReadingPosition('P.1'), null, 'a junk entry is dropped');
+    assert.deepEqual(readReadingPosition('P.2'), { anchor: 'x', at: 5 }, 'and only that entry');
+
+    for (const junk of ['', '   ', 'banana', 'null', '[]', '7']) {
+      globalThis.localStorage.data.set(STORAGE_KEY_READING, junk);
+      assert.equal(readReadingPosition('P.1'), null, `stored ${JSON.stringify(junk)}`);
+    }
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('clearing one lesson leaves the others alone', () => {
+  globalThis.localStorage = fakeStorage();
+  try {
+    writeReadingPosition('P.1', { anchor: 'a', at: 10 });
+    writeReadingPosition('P.2', { anchor: 'b', at: 20 });
+    clearReadingPosition('P.1');
+    assert.equal(readReadingPosition('P.1'), null);
+    assert.deepEqual(readReadingPosition('P.2'), { anchor: 'b', at: 20 });
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+check('a store that throws costs the memory, never the scroll', () => {
+  globalThis.localStorage = {
+    getItem() {
+      throw new Error('SecurityError');
+    },
+    setItem() {
+      throw new Error('QuotaExceededError');
+    },
+  };
+  try {
+    assert.equal(readReadingPosition('P.1'), null);
+    assert.deepEqual(writeReadingPosition('P.1', { anchor: 'goal', at: 30 }), { anchor: 'goal', at: 30 });
+    clearReadingPosition('P.1');
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+console.log(`\nreader: ${passed} passed, ${failed} failed`);
+if (failed > 0) process.exitCode = 1;

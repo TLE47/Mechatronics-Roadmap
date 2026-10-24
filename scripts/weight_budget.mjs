@@ -22,6 +22,11 @@
  *   `js_gzip` or `total`: it is neither JavaScript nor part of a first paint, and a ceiling that
  *   counted it with the shell would make a learner who never searches pay for it in the report.
  *   A budget with no file behind it fails like every other unmeasured metric.
+ * - **`reader_gzip`** — every reader payload under `dist/lesson-pages/**`, summed. It is the same
+ *   kind of number as `prose_gzip`: served beside the bundle, fetched one page at a time when a
+ *   lesson opens, and neither JavaScript nor part of a first paint. Summed rather than averaged
+ *   because the ceiling is on what a course costs if every lesson is read; a single page's ceiling
+ *   would let a slow page hide among fast ones.
  * - **`total`** — everything emitted (assets plus the document): a ceiling on the bundle as a whole,
  *     not the cost of a visit. A split raises this slightly (chunk headers) while lowering
  *     `entry_gzip`, which is exactly the trade the report is meant to show.
@@ -43,6 +48,7 @@ export const METRICS = [
   'fonts',
   'largest_js_gzip',
   'prose_gzip',
+  'reader_gzip',
   'total',
 ];
 
@@ -229,9 +235,11 @@ export function staleSources(sources, outputs) {
  *
  * `prose` is the one file that is served but not part of the shell: `dist/prose-index.json`, fetched
  * by `⌘⇧F`. It is deliberately not in `files`, so it changes `prose_gzip` without changing `total`.
- * Missing, it is `NaN` — a budget nothing measures is a failure, not a pass.
+ * `reader` is the same arrangement for `dist/lesson-pages/**`: `{ gzip }`, the sum over every page,
+ * because a lesson opens one file but the ceiling is on the whole course. Missing, both are `NaN` —
+ * a budget nothing measures is a failure, not a pass.
  */
-export function measurementFrom(files, entry = [], prose = null) {
+export function measurementFrom(files, entry = [], prose = null, reader = null) {
   const sum = (predicate) =>
     files.filter(predicate).reduce((total, file) => total + file.gzip, 0);
   const js = files.filter((file) => file.name.endsWith('.js'));
@@ -247,6 +255,7 @@ export function measurementFrom(files, entry = [], prose = null) {
       .reduce((total, file) => total + file.size, 0),
     largest_js_gzip: js.length ? Math.max(...js.map((file) => file.gzip)) : 0,
     prose_gzip: prose && Number.isFinite(prose.gzip) ? prose.gzip : Number.NaN,
+    reader_gzip: reader && Number.isFinite(reader.gzip) ? reader.gzip : Number.NaN,
     total: files.reduce((total, file) => total + file.gzip, 0),
   };
 }

@@ -61,6 +61,9 @@ GATES: list[tuple[str, list[str], bool]] = [
     ("plant_data", ["scripts/generate_plant_data.py", "--check"], False),
     ("term_order", ["scripts/check_term_order.py"], False),
     ("python_lessons_data", ["scripts/generate_python_lessons_data.py", "--check"], False),
+    # The lesson text the reader renders, generated from the same pages the registry names: a page
+    # edited without regenerating would leave the pane showing last week's explanation.
+    ("lesson_pages", ["scripts/generate_lesson_pages.py", "--check"], False),
     ("error_index", ["scripts/generate_error_index.py", "--check"], False),
     ("run_callouts", ["scripts/generate_run_callouts.py", "--check"], False),
     ("prose_index", ["scripts/generate_prose_index.py", "--check"], False),
