@@ -46,6 +46,7 @@ python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
 npm run test:theme                      # palette rules: stored pick, OS default, prefers-contrast, the three controls
 npm run test:theme:e2e                  # the three controls + contrast on all 12 tabs, in all four palettes
+npm run check:weight                    # the gzipped shell against docs/weight-budget.json in both build shapes: a local-only dist/ also builds the signed-in one into dist-signed-in/, grades it, and removes it
 npm run check:lighthouse                # Lighthouse on the built bundle: best-practices, SEO and accessibility against docs/lighthouse-allowlist.json (performance not run)
 npm run check:snapshot                  # the painted surface of all 48 tab/palette pairs against docs/surface-snapshot.json: geometry (2 px), control counts, resolved styles
 npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step/Step in (into the lesson and into the plant)/Step out, breakpoints (conditional ones too), a parked frame's values changed, watch expressions answered at every park, Format with Black (one undo, a parse refusal left alone), Pages fallback
@@ -454,7 +455,11 @@ walk behind `staleSources`): the build is fresh when its newest output is at lea
 source. The weight gate exits `2` and names the newer files (`--allow-stale` overrides, and says so in
 the report); the Pages sweep and `npm run test:workbench` rebuild instead, printing what made them. CI
 builds before it measures, so the check costs nothing there and catches the local case — which is
-where the bad number came from.
+where the bad number came from. The weight gate also grades the shape that *ships*: when `dist/` is
+the local-only build it builds the signed-in one beside it (placeholders, not credentials), measures
+it against `signed_in`'s ceilings and deletes it, so a breach that only exists with the account
+library present fails locally instead of on the runner (Run 226). CI's `dist/` is already signed-in,
+so nothing extra is built there.
 
 ## What is asserted, not just run
 

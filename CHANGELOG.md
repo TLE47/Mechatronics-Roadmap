@@ -11,6 +11,38 @@ flowchart LR
 
 ---
 
+## [2026-10-23] — Run 226: the weight gate grades the bundle CI ships, locally
+
+Run 207's entry breach — 532.6 kB against a 480 kB ceiling — existed only in the signed-in build, and
+the first time anyone saw it was on the runner. `npm run check:weight` measured `dist/`, which on a
+clone is always `local_only`: the account branch folded away and `vendor-auth` a one-byte stub. A gate
+that only ever sees one shape cannot fail on the other.
+
+The gate now always grades the shape that ships. When `dist/` is the local-only build it builds
+`signed_in` into `dist-signed-in/` — a bare Vite build with placeholder Supabase values, about five
+seconds — measures it against the `signed_in` ceilings, and removes the directory. CI's `dist/` is
+already signed-in, so it builds nothing extra. The result is checked rather than assumed: the shape is
+read from the account chunk's contents, and a build that came out the wrong one exits 2 instead of
+being reported as the shape it was asked for.
+
+| Changed | What it does |
+| :--- | :--- |
+| [`scripts/check_weight_budget.mjs`](scripts/check_weight_budget.mjs) | Grades `dist/` and, when it is `local_only`, the signed-in shape built beside it; both reports print, `--json` carries a `shapes` array and is now the only thing on stdout (the PASS summary moved to stderr with the rest of the chatter), and the temporary directory is removed on success and on failure |
+| [`scripts/weight_budget.mjs`](scripts/weight_budget.mjs) | `shapeToBuild` (the shipped shape is the one still to build) and `signedInEnv` with build-only placeholders; `accountsConfigured` is false only without them, so nothing here is a credential |
+| [`scripts/test_weight_budget.mjs`](scripts/test_weight_budget.mjs) | Pins which shape gets built, and that the placeholders come from the process environment rather than a `.env` file |
+| [`.gitignore`](.gitignore) | `dist-*/`, so a killed run's leftover is never a source |
+| [`docs/weight-budget.json`](docs/weight-budget.json), [`docs/VERIFICATION.md`](docs/VERIFICATION.md), [`docs/README.md`](docs/README.md), [`app/README.md`](app/README.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/PLAN-2.0-GAP.md`](docs/PLAN-2.0-GAP.md), [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Say what every run now grades, and why the second build is not CI's cost |
+
+| Verified | Result |
+| :--- | :--- |
+| `npm run check:weight` | `[PASS]` — local_only 1.06 MB (entry 473.3 kB), signed_in 1.12 MB (entry 475.3 kB), ~5 s including the second build |
+| The `signed_in` `js_gzip` budget lowered to 700 kB | exit 1: `signed_in: js_gzip is 801.2 kB … over by 101.2 kB` |
+| `signedInEnv` returning the environment unchanged | exit 2: the `signed_in` build `came out local_only … the shipped shape was not graded`, no directory left behind |
+| `npm run test:weight` | 24/24 |
+| `python3.12 scripts/check_all.py` | 34/34 |
+
+`--record` still writes the measurement of the build in `dist/`; it does not build the second shape.
+
 ## [2026-10-23] — Run 225: the Lighthouse gate asks for a palette instead of reading the desktop
 
 Run 223 fixed every contrast finding the runner's light palette exposed and left the cause in place:

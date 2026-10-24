@@ -14,6 +14,9 @@ lab04_rt_test
 # Node / Vite
 node_modules/
 dist/
+# The weight gate builds the shape a local `dist/` is not beside it, then removes it. A killed run
+# can leave one behind, and it is never a source file.
+dist-*/
 *.tsbuildinfo
 
 # OS & Editor files

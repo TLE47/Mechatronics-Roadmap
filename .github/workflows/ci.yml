@@ -180,7 +180,8 @@ jobs:
 
       # What the bundle costs, in gzipped bytes, against docs/weight-budget.json: a metric over its
       # budget fails, and so does a budget the build no longer produces anything for. It reads the
-      # `dist/` the step above just built.
+      # `dist/` the step above just built — signed_in here — and on a machine whose build is
+      # local-only it builds the signed-in shape beside it, so the same gate can fail before a push.
       - name: "Check the weight budget: gzipped shell, largest chunk, and no metric left unmeasured"
         run: npm run check:weight
 

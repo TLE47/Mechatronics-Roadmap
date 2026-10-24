@@ -26,6 +26,8 @@ import {
   formatHeadroom,
   formatUsed,
   measurementFrom,
+  shapeToBuild,
+  signedInEnv,
   staleSources,
 } from './weight_budget.mjs';
 
@@ -169,6 +171,23 @@ check('nothing built at all reads every source as stale', () => {
 
 check('no sources (a bare checkout) is not a staleness failure', () => {
   assert.deepEqual(staleSources([], [OUT()]), []);
+});
+
+console.log('\nthe two shapes');
+
+// Run 226: a local gate measured `dist/`, which is always local-only on a clone, so a signed-in-only
+// breach could only ever surface in CI. The gate now builds the shipped shape beside it, and both
+// halves of that decision are pinned here.
+check('a local-only build leaves the signed-in shape to grade; a signed-in one is already it', () => {
+  assert.equal(shapeToBuild('local_only'), 'signed_in');
+  assert.equal(shapeToBuild('signed_in'), null, 'the build on disk is the shape that ships');
+});
+
+check('the signed-in build gets both variables from the process environment', () => {
+  const env = signedInEnv({ PATH: '/usr/bin', VITE_SUPABASE_URL: 'https://real.example' });
+  assert.equal(env.VITE_SUPABASE_URL, 'https://placeholder.invalid', 'the process env is what is measured');
+  assert.ok(env.VITE_SUPABASE_ANON_KEY, 'expected a placeholder key so the library is really emitted');
+  assert.equal(env.PATH, '/usr/bin', 'expected the rest of the environment to survive');
 });
 
 console.log('\nweight measurement');

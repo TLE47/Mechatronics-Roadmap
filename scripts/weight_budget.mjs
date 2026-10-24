@@ -141,6 +141,46 @@ export function buildVariant(files) {
 }
 
 /**
+ * The shape a run still has to build: the one that ships.
+ *
+ * A `signed_in` build on disk is already that shape, and CI's is signed_in by construction. A
+ * `local_only` build on disk — a fresh clone, every developer without `app/.env.local` — has never
+ * been graded with the account library present, which is the state in which Run 207's entry breach
+ * was invisible until the push. So the gate builds `signed_in` itself; it does not try to build
+ * `local_only` beside a signed-in `dist/`, because unwinding a developer's `.env.local` is not the
+ * gate's business and the local-only shape is what that machine's `npm run dev` and the rest of the
+ * local suite already use.
+ */
+export function shapeToBuild(variant) {
+  return variant === 'local_only' ? 'signed_in' : null;
+}
+
+/**
+ * The two variables a shape is decided by, and the stand-ins a build-only check uses for them.
+ *
+ * The placeholders are never connected to: they exist so the account branch stays live and the
+ * library is really emitted, which is the only thing a weight measurement needs. `accountsConfigured`
+ * cannot tell a placeholder from a real project — the panel offers a sign-in field either way — but
+ * this bundle is written to `dist-signed-in/`, measured, and deleted, never served to a person.
+ * Nothing here is a secret, and nothing is written to a file.
+ */
+export const SHAPE_PLACEHOLDERS = {
+  VITE_SUPABASE_URL: 'https://placeholder.invalid',
+  VITE_SUPABASE_ANON_KEY: 'local-verification-placeholder',
+};
+
+/**
+ * The environment the missing signed-in shape is built in.
+ *
+ * Both variables are set in the process environment, which Vite gives precedence over every `.env`
+ * file, so a developer who configured real credentials in `app/.env.local` still gets a build that
+ * measures the same bytes. The variant check in the gate refuses a build that did not take them.
+ */
+export function signedInEnv(base = process.env) {
+  return { ...base, ...SHAPE_PLACEHOLDERS };
+}
+
+/**
  * The ceilings for one variant: the base set, with the variant's overrides on top.
  *
  * Only the metrics a signed-in build really moves are overridden — the emitted-byte ceilings

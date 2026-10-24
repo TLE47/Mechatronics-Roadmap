@@ -407,12 +407,21 @@ It is empty.
 
 **`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
 it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
-because woff2 is already compressed), `largest_js_gzip`, `prose_gzip` and `total`. Today that is **1.04
-MB across 34 files**, with the budgets 5-8% above. A breach fails with the overshoot named, and so does a
-budget with nothing measured behind it — a metric the build stopped emitting would otherwise pass
-forever. The rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and `npm
-run test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a budget
-gate is usually wrong.
+because woff2 is already compressed), `largest_js_gzip`, `prose_gzip` and `total`. Today that is **1.06
+MB across 39 files**, with the budgets a few percent above. A breach fails with the overshoot named, and
+so does a budget with nothing measured behind it — a metric the build stopped emitting would otherwise
+pass forever. The rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and
+`npm run test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a
+budget gate is usually wrong.
+
+The bundle has two shapes, and the gate grades the shipped one instead of only whatever is in `dist/`.
+A clone builds `local_only`: no Supabase variables, the account library folded to a one-byte stub. CI
+builds `signed_in`, which carries that library and is the bundle that ships. When `dist/` is the
+local-only build, the gate builds the signed-in shape into `dist-signed-in/` — a bare Vite build with
+placeholder credentials, about five seconds — measures it against `signed_in`'s ceilings, and removes
+the directory. CI's `dist/` is already signed-in and builds nothing extra. That is Run 207's lesson
+kept: its entry breach existed only in the build nobody made locally, so it could only be found after
+a push.
 
 A byte budget is a gate because it is deterministic. Wall-clock timing is not gated: on a shared runner
 its variance is larger than any regression this app could ship, and a flaky gate gets disabled. That is
