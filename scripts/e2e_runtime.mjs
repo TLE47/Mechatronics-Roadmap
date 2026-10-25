@@ -284,13 +284,30 @@ async function main() {
       { timeout: 120000 }
     );
     await setEditorCode(page, 'import math\nmath.');
-    await page.evaluate(() => {
-      window.__mechalabEditors['editor-main'].setCursor(9999);
-      // The same command `Ctrl-Space` runs. A synthetic key press into a contenteditable after a tab
-      // switch is not what this suite is testing, and the binding is CodeMirror's own.
-      window.__mechalabEditors['editor-main'].startCompletion();
-    });
-    await page.waitForSelector('.cm-tooltip-autocomplete li', { timeout: 120000 });
+    // The ask is repeated, not sent once. The analyzers install on the first request of a fresh worker
+    // (~1.5 MB through micropip) and the client drops a request that arrives mid-install rather than
+    // hanging on it — on a loaded runner the first `startCompletion()` can land exactly there, and the
+    // suite then waited two minutes for a tooltip nobody had asked for again. Re-asking is what a
+    // learner's next keystroke does, and the assertion below is unchanged: Jedi must answer about this
+    // buffer, with the module's names.
+    const completionDeadline = Date.now() + 120000;
+    let completionListed = false;
+    while (!completionListed && Date.now() < completionDeadline) {
+      await page.evaluate(() => {
+        window.__mechalabEditors['editor-main'].setCursor(9999);
+        // The same command `Ctrl-Space` runs. A synthetic key press into a contenteditable after a tab
+        // switch is not what this suite is testing, and the binding is CodeMirror's own.
+        window.__mechalabEditors['editor-main'].startCompletion();
+      });
+      completionListed = await page
+        .waitForSelector('.cm-tooltip-autocomplete li', { timeout: 10000 })
+        .then(() => true)
+        .catch(() => false);
+    }
+    assert.ok(
+      completionListed,
+      'expected the completion list within two minutes, re-asking every ten seconds; the analyzer never answered'
+    );
     const completions = await page.$$eval('.cm-tooltip-autocomplete li', (items) =>
       items.map((item) => item.textContent ?? '')
     );
