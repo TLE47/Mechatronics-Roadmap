@@ -749,9 +749,17 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                       <div className="text-[0.72rem] font-mono uppercase text-muted mb-1">
                         Governing Equation ({step.tierBadge})
                       </div>
-                      <div className="bg-canvas border border-line-soft rounded-md p-3 overflow-x-auto text-xs">
+                      {/* Focusable for the same reason `MathPanel` is: a governing equation that does
+                          not fit scrolls sideways, and only a keyboard can be pointed at that scroll. */}
+                      <div
+                        tabIndex={0}
+                        role="group"
+                        aria-label={`${step.trackCode} governing equation`}
+                        className="bg-canvas border border-line-soft rounded-md p-3 overflow-x-auto text-xs"
+                      >
                         <MathView math={step.equation} block={true} />
-                      </div>                      <div className="bg-canvas border border-line-soft rounded-lg p-3.5 mt-3 text-xs">
+                      </div>
+                      <div className="bg-canvas border border-line-soft rounded-lg p-3.5 mt-3 text-xs">
                         <div className="font-bold text-emerald mb-1 flex items-center gap-1.5">
                           <Trophy className="w-3.5 h-3.5" />
                           <span>Deliverable (not auto-checked):</span>

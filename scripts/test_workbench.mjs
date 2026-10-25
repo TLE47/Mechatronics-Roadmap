@@ -45,6 +45,7 @@
  *   test:e2e:focus   focus mode in Chromium: the chrome hides, the work stays, three exits, and a measured sitting
  *   test:e2e:trail   the trail in Chromium: two runs become today's rows, a reload keeps them, a row opens its lesson
  *   test:fonts       the two self-hosted faces are named, imported and emitted
+ *   test:firstrun    the first lesson's tour without a browser: six steps, the edit and run gates, the offer rule, the restore, and every data-tour anchor in the app's own source
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
  *   test:e2e:pages   `npm run build` if `dist/` was missing, a static Pages server + Chromium, Firefox

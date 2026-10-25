@@ -27,7 +27,7 @@ flowchart LR
 | The name of every tab, and no page or label referring to one by position | `app/src/data/workbenchTabs.json`, read by `App.tsx` and by the callout generator | `python3.12 scripts/check_tab_names.py` |
 | Which workbench entries a roadmap step asks for, and that every entry is claimed once | `app/src/practiceLinks.ts`, joining the roadmap and the registry by track and pass | `npm run test:practice` |
 | Which views the course-level nav is drawn on: the roadmap, and every tab with a guide for all four passes — never the runner, quiz, board, survey, dashboard or lesson page | `app/src/courseLevels.ts`, derived from `SIMULATOR_TIER_GUIDES` | `npm run test:levels` |
-| The first-run tour: six steps, which ones wait for a real edit or a finished run, and that every `data-tour` anchor still exists (and no anchor is left with no step) | `app/src/tour.ts`, against the app's own source | `npm run test:tour` |
+| The first-run tour: six steps, which ones wait for a real edit or a finished run, and that every `data-tour` anchor still exists (and no anchor is left with no step) | `app/src/tour.ts`, against the app's own source | `npm run test:firstrun` |
 | Every count quoted anywhere in the docs | `scripts/check_consistency.py` | `python3.12 scripts/check_consistency.py` |
 
 `check_consistency.py` is the contradiction detector: it compares a quoted count with the count
@@ -48,7 +48,7 @@ python3.12 scripts/check_all.py --full  # + the 48-package exercise sweep and th
 python3.12 scripts/run_all_labs.py      # the 13 reference simulations and labs
 npm run test:practice                   # roadmap <-> workbench join
 npm run test:levels                     # the course-level nav only where a pane reads the pass: the roadmap and every four-pass guide banner, never the runner, quiz, board, survey, dashboard or lesson page
-npm run test:tour                       # the first-run tour without a browser: the six steps, the edit and run gates, a first-try pass skipping the red-checks step, the stored record (junk, a future version, a blocked store), when it opens, the resume chip, a restore that never moves it backwards, and every data-tour anchor in the source
+npm run test:firstrun                    # the first-run tour without a browser: the six steps, the edit and run gates, a first-try pass skipping the red-checks step, the stored record (junk, a future version, a blocked store), when it opens, the resume chip, a restore that never moves it backwards, and every data-tour anchor in the source
 npm run test:e2e:tour                   # …and in a browser: the ring on the brief with the brief still clickable through it, no Next on the action steps, typing alone advancing step 3, a failed run explained, Finish, no reopen, dismissal, the deep-link chip, the resume chip, the phone sheet, and the palette replay
 npm run test:theme                      # palette rules: stored pick, OS default, prefers-contrast, the three controls
 npm run test:theme:e2e                  # the three controls + contrast on all 12 tabs, in all four palettes

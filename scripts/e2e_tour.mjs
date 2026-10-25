@@ -48,6 +48,24 @@ async function go(page, baseUrl, path = '') {
   await page.waitForTimeout(700);
 }
 
+/**
+ * Wait, bounded, for a settled geometry rather than racing it with a fixed sleep.
+ *
+ * On a cold server the lesson list and the reader populate after the coach mark mounts, and an early
+ * measurement is a ring 4819 px above its brief — the component now re-measures when the document's
+ * height changes, so what is left for the test is to assert the invariant *once the page has settled*
+ * instead of on a stopwatch. The assertions below are unchanged: it still has to land, exactly, and it
+ * still fails if it never does.
+ */
+async function settled(page, predicate, timeout = 5000) {
+  try {
+    await page.waitForFunction(predicate, null, { timeout, polling: 100 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Answer the predict gate if it opened, the way a learner who has no answer yet would. */
 async function skipPredictIfAsked(page) {
   const skip = page.locator('[data-testid="btn-predict-skip"]');
@@ -95,8 +113,15 @@ async function main() {
     /* 2 — the brief, with the ring on it */
     await check('Next walks to the brief and the ring covers it', async () => {
       await page.locator('[data-testid="btn-tour-next"]').click();
-      await page.waitForTimeout(400);
       assert.equal(await step(page), 'lesson');
+      const landed = await settled(page, () => {
+        const ring = document.querySelector('[data-testid="first-run-tour-ring"]');
+        const anchor = document.querySelector('[data-tour="lesson-brief"]');
+        if (!ring || !anchor) return false;
+        const r = ring.getBoundingClientRect();
+        const a = anchor.getBoundingClientRect();
+        return Math.abs(r.left - a.left) < 12 && Math.abs(r.top - a.top) < 13;
+      });
       const geometry = await page.evaluate(() => {
         const ring = document.querySelector('[data-testid="first-run-tour-ring"]');
         const anchor = document.querySelector('[data-tour="lesson-brief"]');
@@ -115,6 +140,7 @@ async function main() {
         };
       });
       assert.ok(geometry, 'no ring on a words step with an anchor');
+      assert.ok(landed, `the ring never settled on the brief (offset ${geometry.dx}/${geometry.dy})`);
       assert.ok(geometry.dx < 12 && geometry.dy < 12 + 1, `ring offset ${geometry.dx}/${geometry.dy}`);
       assert.ok(geometry.dw < 16, `ring width off by ${geometry.dw}`);
       assert.equal(geometry.pointer, 'none', 'the ring must not eat clicks');
@@ -255,6 +281,12 @@ async function main() {
     await check('a phone gets a bottom sheet, 44 px buttons, no ring, one region at a time', async () => {
       await go(page, baseUrl, '?lesson=P.1');
       assert.equal(await step(page), 'welcome');
+      const bottomedOut = await settled(page, () => {
+        const card = document.querySelector('[data-testid="first-run-tour"]');
+        if (!card) return false;
+        const gap = window.innerHeight - card.getBoundingClientRect().bottom;
+        return gap >= 0 && gap <= 40;
+      });
       const sheet = await page.evaluate(() => {
         const card = document.querySelector('[data-testid="first-run-tour"]');
         const box = card.getBoundingClientRect();
@@ -266,6 +298,10 @@ async function main() {
           layout: document.querySelector('[data-layout]')?.dataset.layout,
         };
       });
+      assert.ok(
+        bottomedOut,
+        `the sheet never reached the bottom of the screen (${sheet.bottomGap}px from it)`
+      );
       assert.ok(sheet.bottomGap >= 0 && sheet.bottomGap <= 40, `sheet is ${sheet.bottomGap}px from the bottom`);
       assert.ok(sheet.width <= 390 - 8, `sheet is ${sheet.width}px wide on a 390px screen`);
       assert.equal(sheet.ring, false, 'a phone got the desktop ring');

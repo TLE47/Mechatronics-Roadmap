@@ -76,6 +76,13 @@ export async function startDevServer(repoRoot = process.cwd()) {
   // prints, so the define has to be here rather than passed to a server this suite did not create.
   const { version } = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
   const viteServer = await createServer({
+    // `configFile` is not optional here. Vite resolves a config from *its root*, and the root below is
+    // `app/` — so without this line the project's `vite.config.ts` (at the repository root) was never
+    // read, and every suite that drives this server was loading the app **without Tailwind**: no
+    // utilities, so no `fixed`, no `min-h-[44px]`, and a page 8002 px tall instead of 2781. The data
+    // attributes and the text still worked, which is why nobody noticed until the tour measured a ring
+    // against an element and got a `position: static` card 1048 px from the bottom of the screen.
+    configFile: path.join(repoRoot, 'vite.config.ts'),
     root: path.join(repoRoot, 'app'),
     define: { __APP_VERSION__: JSON.stringify(version) },
     // Cross-origin isolation is what gives the page a SharedArrayBuffer, and without it the
@@ -84,10 +91,22 @@ export async function startDevServer(repoRoot = process.cwd()) {
     server: { port: 0, host: '127.0.0.1', headers: ISOLATION_HEADERS },
     logLevel: 'error',
   });
+  // Fail here, not at whichever assertion first asks where something is: a server that lost the config
+  // still serves every data attribute and every word of text, and the suite then measures an unstyled
+  // page that looks, from the outside, exactly like a bug in the app.
+  if (!viteServer.config.plugins.some((plugin) => plugin.name.includes('tailwind'))) {
+    throw new Error(
+      'startDevServer loaded no Tailwind plugin: the app would be served unstyled and every geometry check would lie'
+    );
+  }
   await viteServer.listen();
   const address = viteServer.httpServer?.address();
   const port = typeof address === 'object' && address ? address.port : 4173;
-  return { viteServer, baseUrl: `http://127.0.0.1:${port}/Mechatronics-Roadmap/` };
+  // The base comes from the config: `/` for `serve`, `/Mechatronics-Roadmap/` only for `build`. Hard-coding
+  // the Pages path here meant the suites asked for a path the dev server only answered through its SPA
+  // fallback, which is another way the missing config went unnoticed.
+  const base = viteServer.config.base || '/';
+  return { viteServer, baseUrl: `http://127.0.0.1:${port}${base}` };
 }
 
 export function resolveChromiumExecutable() {
@@ -3447,7 +3466,11 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
         'the prose hits must sit under their own heading, not among the lessons'
       );
       const proseText = (await proseRow.innerText()).replace(/\s+/g, ' ');
-      assert.match(proseText, /Course page/, 'the row must say what it is');
+      // Case-insensitive on purpose: `innerText` returns what is *rendered*, and this label is styled
+      // `uppercase`. It used to read "Course page" only because the suite's dev server was loading the app
+      // without its stylesheet (see the note on `startDevServer`), so matching the case would tie this
+      // check to a bug that has since been fixed.
+      assert.match(proseText, /Course page/i, 'the row must say what it is');
       assert.match(proseText, /S0\.6/, 'the row must name the page');
       assert.match(proseText, /§ Idea 2: Power-rail decoupling/, 'the row must name the section it opens');
       const proseHref = await proseRow.getAttribute('data-href');

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The first-run tour without a browser (`scripts/test_tour.mjs`, `npm run test:tour`).
+ * The first-run tour without a browser (`scripts/test_tour.mjs`, `npm run test:firstrun`).
  *
  * A tour is mostly words, and words are the part nobody tests. Three things can go wrong that a
  * reader of the code would not see:
@@ -13,6 +13,10 @@
  *    tour.
  * 3. **The record reopens a finished tour, or never reopens a closed one.** `tourOffer` and
  *    `mergeTourStates` decide that, in both directions, and a restore is one of the ways it happens.
+ * 4. **The gate is not the gate.** `package.json` is JSON, so a second `"test:tour"` key is not a
+ *    syntax error — the last one silently wins, and the suite a doc names is a different suite. That
+ *    happened here: the presets walker took the name and these checks ran nowhere. So the last check
+ *    reads `package.json` itself and refuses any duplicate script name.
  *
  * Run: node --experimental-strip-types scripts/test_tour.mjs
  */
@@ -362,6 +366,26 @@ check('no anchor is left behind by a step that was removed', () => {
   for (const anchor of anchorsInSource()) {
     assert.ok(used.has(anchor), `data-tour="${anchor}" has no step; a stale name reads as a target`);
   }
+});
+
+/* ---- 7. The gate is registered, once ------------------------------------------------------- */
+
+check('the script name this doc promises runs this file, and no name is declared twice', () => {
+  const text = fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8');
+  const body = text.slice(text.indexOf('"scripts"'), text.indexOf('"dependencies"'));
+  const names = [...body.matchAll(/^\s{4}"([^"]+)":/gm)].map((match) => match[1]);
+  const duplicated = names.filter((name, index) => names.indexOf(name) !== index);
+  assert.deepEqual(
+    [...new Set(duplicated)],
+    [],
+    'a duplicated script key is not an error to JSON: the last one wins, so the other suite never runs'
+  );
+  const registry = JSON.parse(text).scripts;
+  assert.equal(
+    registry['test:firstrun'],
+    'node --experimental-strip-types scripts/test_tour.mjs',
+    '`npm run test:firstrun` must be this file'
+  );
 });
 
 if (failures) {

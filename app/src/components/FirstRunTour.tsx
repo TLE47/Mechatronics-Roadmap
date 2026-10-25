@@ -117,6 +117,13 @@ export const FirstRunTour: React.FC<FirstRunTourProps> = ({
   // Measure the anchor, and keep measuring: the page scrolls under the card, a result arrives and
   // moves it, and a phone rotates. A ring left behind on the wrong element is the one failure the
   // learner cannot explain away.
+  //
+  // "A result arrives and moves it" is not hypothetical: on a cold first visit the lesson list and the
+  // reader populate *after* the tour mounts, and a brief measured at 6 px was found 4819 px lower by
+  // the time the learner read the card — nothing had scrolled and nothing had resized, so scroll,
+  // resize and the anchor's own ResizeObserver all stayed silent. The document's height is what
+  // changes when content arrives above the anchor, so that is observed too, and a slow poll covers the
+  // reflow that leaves the height alone.
   useMeasuredLayoutEffect(() => {
     let frame = 0;
     const measure = () => {
@@ -165,11 +172,16 @@ export const FirstRunTour: React.FC<FirstRunTourProps> = ({
     window.addEventListener('resize', schedule, { passive: true });
     const observer =
       typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule);
-    if (element && observer) observer.observe(element);
+    if (element) observer?.observe(element);
+    // Content arriving above the anchor moves it without touching the anchor's own box.
+    observer?.observe(document.documentElement);
+    // The backstop for a reflow that changes neither: cheap, and this only runs while the card is up.
+    const poll = window.setInterval(schedule, 250);
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       window.removeEventListener('scroll', schedule, true);
       window.removeEventListener('resize', schedule);
+      window.clearInterval(poll);
       observer?.disconnect();
     };
   }, [step, isPhone]);

@@ -58,11 +58,47 @@ and a button on the `?` sheet; both bump a `tourRequest` nonce, the same idiom `
 `formatRequest` already use, because the shell outlives the runner and must not hold its functions.
 
 **Pinned, because a tour that loses its target is worse than none.** Five `data-tour` anchors name the
-elements; `npm run test:tour` (`scripts/test_tour.mjs`, 26 checks) reads the app's own source and fails if
-an anchor disappears *or* if an anchor is left behind with no step pointing at it. It also pins the gate
-per step (an action step that became skippable would be the slideshow this design exists to avoid), the
-store's validation of junk and of a future version, the offer rule in all five situations, and the
-merge.
+elements; `npm run test:firstrun` (`scripts/test_tour.mjs`, 27 checks) reads the app's own source and
+fails if an anchor disappears *or* if an anchor is left behind with no step pointing at it. It also
+pins the gate per step (an action step that became skippable would be the slideshow this design exists
+to avoid), the store's validation of junk and of a future version, the offer rule in all five
+situations, and the merge.
+
+**Two harness defects, both found by this feature measuring pixels.** The first is the suite's own dev
+server: `startDevServer` called `createServer({ root: 'app' })` with no `configFile`, and Vite resolves a
+config from *its* root — so the project's `vite.config.ts` at the repository root was never read and
+**every browser suite was driving the app without Tailwind**. No `fixed`, no `min-h-[44px]`, a page 8002
+px tall instead of 2781: data attributes and text still worked, which is why it went unnoticed. The
+tour's ring check is the first assertion in the harness that asks where something *is*, and it answered
+`position: static` and 1048 px from the bottom of the screen. `configFile` now points at the root config,
+and the base URL comes from `viteServer.config.base` instead of a hard-coded Pages path the dev server
+only answered through its SPA fallback.
+
+The second is the coach mark's measurement. On a cold first visit the lesson list and reader populate
+*after* the tour mounts, so a brief measured at 6 px was found 4819 px lower by the time a learner read
+the card — nothing had scrolled and the anchor's own box had not resized, so scroll, resize and its
+ResizeObserver all stayed silent. The document's height is what changes when content arrives above an
+anchor, so `FirstRunTour` observes that too, with a 250 ms poll as the backstop for a reflow that leaves
+the height alone. `e2e_tour` waits, bounded, for the ring and the sheet to settle instead of asserting on
+a 400 ms stopwatch: the assertions are unchanged, and it still fails if they never land.
+
+**The gate was not the gate, and JSON hid it.** The first version of this file registered as
+`test:tour` — a name `package.json` already used for the presets walker. Duplicate keys are not a JSON
+error; the last one wins, so `npm run test:tour` kept running the presets suite and these 27 checks ran
+nowhere, exactly as the docs said to invoke them. The suite is now `test:firstrun`, and its last check
+reads `package.json` and refuses *any* duplicated script key, so the next collision fails loudly
+instead of quietly deleting a gate. The same rename also left `test_tour.mjs` in the `test:workbench`
+list twice — `firstrun 1.0s` and `firstrun 0.5s` in one suite report is what a duplicate looks like — and
+that second registration is gone.
+
+**The axe gate had been auditing a placeholder.** The same missing stylesheet had a second cost: with no
+page rendered properly, three `pre`/scroll boxes never appeared wide enough to scroll, so
+`scrollable-region-focusable` — a serious rule — had nothing to report in twelve tabs. With the config
+read, `check:axe` failed on the first real sweep: a `<pre>` of pinned sketch lines in `BoardBridge`, a
+governing equation in `tab-arch`, and the run output in the lesson reader each scroll with no way for a
+keyboard to reach that scroll. All three now carry `tabIndex={0}` and a name (`role="group"` with the
+formula's or the sketch's own words), the pattern `MathPanel` already used. Nothing else moved — the
+snapshot and label baselines came back at their exact previous numbers.
 
 `npm run test:e2e:tour` (`scripts/e2e_tour.mjs`, **12 checks in a real browser**) walks the whole thing:
 the ring's geometry against the brief and that the brief is still clickable through it, the missing Next
@@ -78,10 +114,13 @@ tour. With the seed, `check:snapshot` (48 surfaces, 4 palettes) and `check:label
 exact previous numbers — 227 metadata rows, not the 232 the card had added — which is the diff that
 proves the feature is the only thing that changed.
 
-Verified: `test:tour` 26/26, `test:e2e:tour` 12/12, `test:backup` 22/22 (including the new round trip:
+Verified: `test:firstrun` 27/27, `test:e2e:tour` 12/12, `test:backup` 22/22 (including the new round trip:
 completed beats dismissed, a stale archive cannot un-finish it, and a nonsense record is skipped out
-loud), `check:snapshot` PASS, `check:labels` PASS, `axe` 12 tabs × 4 palettes PASS, `test:smoke` PASS,
-`test:pairs` 17/17, `tsc --noEmit` clean.
+loud), `check:snapshot` PASS (48 surfaces, unchanged), `check:labels` PASS (227 rows, unchanged),
+`check:axe` PASS (12 tabs × 4 palettes, 0 exceptions — over the real page, for the first time),
+`test:smoke` PASS, `test:pairs` 17/17, `test:e2e` PASS with the prose row now matched case-insensitively
+as the uppercase label it renders, `tsc --noEmit` clean, and `npm run test:workbench` green across every
+suite on one dev server and one built bundle.
 
 ## [2026-10-24] — Run 241: the course-level nav is drawn only where it changes something
 
