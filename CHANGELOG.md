@@ -46,6 +46,14 @@ the panel in a browser through both branches. Both skip CI and skip production; 
 deleted after the run. All local gates stay green: check_all 35/35, `test:accounts` 25, `test:schema` 18,
 `test:merge` 9, build and `check:weight` (entry 495.4 kB of 505, total 1.41 MB of 1.46).
 
+**The surface snapshot was re-recorded, and the diff is the reasoning.** The Start Here card's new
+sentence — *an account is optional, for carrying progress between devices* — is one line taller in all
+four palettes, so the sweep failed 16 numbers on the pyodide tab only: the card's panel 336 → **363 px**,
+main 2281 → 2307, the footer 2395 → 2421 and the document 2438 → 2464. Nothing else in 48 surfaces
+moved, which is what makes a one-tab diff readable as an intended change rather than drift. Run 1's CI
+job caught it; the same numbers were reproduced locally before recording, so the baseline was not
+assumed to be the platform's fault.
+
 ## [2026-10-24] — Run 239: the formulas ship with the page
 
 Every equation in the course borrowed its stylesheet from a CDN. `app/index.html` carried a jsdelivr
