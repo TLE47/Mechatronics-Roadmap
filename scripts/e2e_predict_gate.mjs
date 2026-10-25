@@ -137,13 +137,15 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
     // 3. One question per lesson: the next Run goes straight through.
     await page.getByTestId('btn-predict-close').click();
     await page.getByTestId('btn-run-verify').click();
-    await page.waitForTimeout(400);
+    // The run's own output is the horizon, not a stopwatch: if a gate had opened the run would still
+    // be waiting on an answer, so "stdout arrived" plus "no gate on screen" is the claim. Reading the
+    // count 400 ms after the click could pass while a card was still on its way in.
+    await waitForStdout(page, 'Encoder Ticks: 400');
     assert.equal(
       await page.getByTestId('predict-gate').count(),
       0,
       'a lesson that has been answered must not be asked again'
     );
-    await waitForStdout(page, 'Encoder Ticks: 400');
     console.log('  ok a lesson already answered runs without asking again');
 
     // 4. A second lesson asks its own question, and Skip is a recorded decision rather than a

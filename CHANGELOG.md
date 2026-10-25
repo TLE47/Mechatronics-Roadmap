@@ -111,6 +111,19 @@ mark never opens or Escape never closes it. Proven by pressing Escape before the
 (`.fb-scratch/probe_esc_race.mjs`: card opens, record stays `active`) and by three concurrent runs of
 the suite, which is the contention that produced both shapes.
 
+**Then the rest of the file, and one suite beside it, for the same reason.** `e2e_tour` had twelve more
+`click, waitForTimeout, assert` sites — the step after each Next, the edit gate, the Finish record, the
+palette replay, the chip start, the resume return, and the phone's two presses. Each now waits, bounded,
+for the state it claims (`waitForStep`, `waitForRecord`), so the assertion *is* the timeout instead of a
+stopwatch in front of it. The run gate was worse than slow: it slept 600 ms and then skipped the predict
+gate, so a gate arriving late was never answered and the tour could not advance for two minutes — it now
+waits for whichever comes first, the gate or the results step, and only then skips. `e2e_predict_gate`
+had the same shape in the other direction: `Run`, 400 ms, "no gate on screen" could pass while a card was
+still on its way in, so it reads that absence after the run's own output arrives. What is left in both
+files is a paint wait and the settle after a readiness selector, each with its reason in a comment.
+Verified with the contention that started this: three concurrent `e2e_tour` runs plus `e2e_predict_gate`
+against one dev server, all green.
+
 `npm run test:e2e:tour` (`scripts/e2e_tour.mjs`, **12 checks in a real browser**) walks the whole thing:
 the ring's geometry against the brief and that the brief is still clickable through it, the missing Next
 button on step 3 and that typing alone advances it, the predict gate handled the way a learner handles

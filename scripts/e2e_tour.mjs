@@ -71,6 +71,53 @@ async function settled(page, predicate, timeout = 5000) {
   }
 }
 
+/**
+ * Wait, bounded, for the coach mark to stand at `at` — or, with `null`, to be gone.
+ *
+ * Every assertion that follows the next used to be `click, waitForTimeout(300), assert`, which is a
+ * stopwatch measuring how long React takes on the runner. That is how `Esc dismisses, and a dismissed
+ * tour stays dismissed` went red on `main` on a commit that passed on the pull request: the click had
+ * landed, the state had not. Waiting for the state instead makes the assertion its own timeout.
+ */
+async function waitForStep(page, at, timeout = 20000) {
+  try {
+    await page.waitForFunction(
+      (wanted) => {
+        const card = document.querySelector('[data-testid="first-run-tour"]');
+        const current = card ? card.getAttribute('data-tour-step') : null;
+        return current === wanted;
+      },
+      at,
+      { timeout, polling: 100 }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Wait, bounded, for the stored record to reach `status` (the write, not the click). */
+async function waitForRecord(page, status, timeout = 20000) {
+  try {
+    await page.waitForFunction(
+      ([key, wanted]) => {
+        const raw = localStorage.getItem(key);
+        if (!raw) return false;
+        try {
+          return JSON.parse(raw).status === wanted;
+        } catch {
+          return false;
+        }
+      },
+      [KEY, status],
+      { timeout, polling: 100 }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Answer the predict gate if it opened, the way a learner who has no answer yet would. */
 async function skipPredictIfAsked(page) {
   const skip = page.locator('[data-testid="btn-predict-skip"]');
@@ -155,8 +202,7 @@ async function main() {
     /* 3 — the editor gate */
     await check('the editor step has no Next, switches to Write, and advances on a real edit', async () => {
       await page.locator('[data-testid="btn-tour-next"]').click();
-      await page.waitForTimeout(400);
-      assert.equal(await step(page), 'editor');
+      assert.ok(await waitForStep(page, 'editor'), 'Next did not reach the editor step');
       assert.equal(await page.locator('[data-testid="btn-tour-next"]').count(), 0, 'an action step drew Next');
       assert.equal(
         await page.evaluate(() => document.querySelector('[data-layout]')?.dataset.layout),
@@ -167,8 +213,10 @@ async function main() {
       assert.equal(focused, true, 'focus did not move into the editor');
       await page.locator('.cm-content').click();
       await page.keyboard.type('# tour edit');
-      await page.waitForTimeout(500);
-      assert.equal(await step(page), 'run');
+      assert.ok(
+        await waitForStep(page, 'run', 30000),
+        'a real edit did not advance the tour to the run step'
+      );
     });
 
     /* 4 — the run gate */
@@ -176,9 +224,23 @@ async function main() {
       const before = await page.locator('[data-testid="badge-behavior-check"]').innerText();
       assert.match(before, /UNTESTED/);
       await page.locator('[data-testid="btn-run-verify"]').click();
-      await page.waitForTimeout(600);
-      await skipPredictIfAsked(page);
-      await page.waitForSelector(`${CARD}[data-tour-step="results"]`, { timeout: 120_000 });
+      // Either the predict gate opens (the run is waiting on an answer) or the run finishes on its
+      // own. Sleeping here and then looking for the gate was a race in both directions: too early
+      // and nothing is skipped, leaving the tour unable to advance for two minutes.
+      const asked = await settled(
+        page,
+        () =>
+          Boolean(
+            document.querySelector('[data-testid="predict-gate"]') ||
+              document.querySelector('[data-testid="first-run-tour"][data-tour-step="results"]')
+          ),
+        120000
+      );
+      assert.ok(asked, 'neither the predict gate nor a finished run arrived');
+      if (await page.locator('[data-testid="predict-gate"]').count()) {
+        await skipPredictIfAsked(page);
+        assert.ok(await waitForStep(page, 'results', 120000), 'the run never produced a verdict');
+      }
       const verdict = await page.locator('[data-testid="badge-behavior-check"]').innerText();
       assert.doesNotMatch(verdict, /UNTESTED/, 'the tour moved on before a run had a verdict');
     });
@@ -202,14 +264,13 @@ async function main() {
     /* 6 — the end */
     await check('Got it, the hints, then Finish completes the tour', async () => {
       await page.locator('[data-testid="btn-tour-next"]').click();
-      await page.waitForTimeout(300);
-      assert.equal(await step(page), 'hints');
+      assert.ok(await waitForStep(page, 'hints'), 'Next did not reach the hints step');
       const label = await page.locator('[data-testid="btn-tour-next"]').innerText();
       assert.match(label, /Finish tour/);
       await page.locator('[data-testid="btn-tour-next"]').click();
-      await page.waitForTimeout(400);
+      assert.ok(await waitForStep(page, null), 'Finish did not take the coach mark down');
       assert.equal(await page.locator(CARD).count(), 0);
-      assert.equal((await record(page)).status, 'completed');
+      assert.ok(await waitForRecord(page, 'completed'), 'Finish did not record a completed tour');
     });
 
     /* 7 — and it stays finished */
@@ -222,13 +283,12 @@ async function main() {
     /* 12 — replay from the palette, in the same context that just finished */
     await check('the palette replays the tour after it was finished', async () => {
       await page.locator('[data-testid="btn-open-palette"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('[role="dialog"] input').fill('replay the first-lesson tour');
-      await page.waitForTimeout(300);
+      const search = page.locator('[role="dialog"] input');
+      await search.waitFor({ timeout: 15000 });
+      await search.fill('replay the first-lesson tour');
       await page.locator('[role="option"]', { hasText: 'Replay the first-lesson tour' }).first().click();
-      await page.waitForTimeout(600);
-      assert.equal(await step(page), 'welcome');
-      assert.equal((await record(page)).status, 'active');
+      assert.ok(await waitForStep(page, 'welcome'), 'the palette command did not replay the tour');
+      assert.ok(await waitForRecord(page, 'active'), 'the replay did not mark the tour active');
     });
     await ctx.context.close();
 
@@ -272,14 +332,12 @@ async function main() {
       assert.equal(await page.locator(CHIP).count(), 1, 'no chip on a deep link');
       assert.match(await page.locator(CHIP).innerText(), /Take the tour/);
       await page.locator('[data-testid="btn-tour-start"]').click();
-      await page.waitForTimeout(500);
-      assert.equal(await step(page), 'welcome');
+      assert.ok(await waitForStep(page, 'welcome'), 'the chip did not start the tour');
     });
 
     await check('leaving mid-tour offers the resume chip, and Resume continues there', async () => {
       await page.locator('[data-testid="btn-tour-next"]').click();
-      await page.waitForTimeout(300);
-      assert.equal(await step(page), 'lesson');
+      assert.ok(await waitForStep(page, 'lesson'), 'Next did not reach the brief');
       // A chip is offered once per record; this record has not been offered one since it started.
       await page.evaluate((key) => {
         const value = JSON.parse(localStorage.getItem(key));
@@ -290,8 +348,7 @@ async function main() {
       const chip = page.locator(CHIP);
       assert.match(await chip.innerText(), /Resume tour \(step 2 of 6\)/);
       await page.locator('[data-testid="btn-tour-start"]').click();
-      await page.waitForTimeout(500);
-      assert.equal(await step(page), 'lesson');
+      assert.ok(await waitForStep(page, 'lesson'), 'Resume did not return to the step it recorded');
     });
     await ctx.context.close();
 
@@ -328,10 +385,9 @@ async function main() {
       assert.equal(sheet.layout, 'read', 'the lesson step did not put the lesson text on screen');
       for (const height of sheet.buttons) assert.ok(height >= 44, `a ${height}px button on a phone`);
       await page.locator('[data-testid="btn-tour-next"]').click();
-      await page.waitForTimeout(300);
+      assert.ok(await waitForStep(page, 'lesson'), 'the phone did not reach the brief');
       await page.locator('[data-testid="btn-tour-next"]').click();
-      await page.waitForTimeout(400);
-      assert.equal(await step(page), 'editor');
+      assert.ok(await waitForStep(page, 'editor'), 'the phone never reached the editor step');
       assert.equal(
         await page.evaluate(() => document.querySelector('[data-layout]')?.dataset.layout),
         'write',
