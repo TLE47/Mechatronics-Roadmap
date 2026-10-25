@@ -233,6 +233,32 @@ function settle(page) {
   );
 }
 
+/**
+ * Poll, bounded, until `shows` reads false in the page — the same claim as the Apply side, which
+ * already waits for its state with `waitForFunction`.
+ *
+ * A check that says "this card is not showing my preset yet" is a claim about state the card has
+ * *finished* applying. `settle()` is two frames, which is enough on an idle machine and one render
+ * short on the matrix's shared dev server: `cad_flexure_stage` then read its own preset in the tab's
+ * default, and CI failed on "the readout already matches before its own card is applied" while
+ * nothing was wrong with the app. `shows` is a self-contained function, so it is evaluated in the
+ * page, exactly as the assertions do it.
+ */
+async function waitUntilFalse(page, shows, timeout = 5000) {
+  const deadline = Date.now() + timeout;
+  for (;;) {
+    let value = true;
+    try {
+      value = await page.evaluate(shows);
+    } catch {
+      value = true; // mid-render; the next pass will say
+    }
+    if (value === false) return true;
+    if (Date.now() >= deadline) return false;
+    await page.waitForTimeout(100);
+  }
+}
+
 async function freshPage(context, baseUrl, pageErrors) {
   const page = await context.newPage();
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -275,7 +301,9 @@ async function runTour(page, baseUrl, log) {
     if (testCase.perturb?.button) {
       await page.getByRole('button', { name: testCase.perturb.button }).first().click();
     }
-    await settle(page);
+    // The perturbation has to have landed before its absence means anything — bounded, like the
+    // Apply side below, so a frame-short read is not reported as a broken case.
+    await waitUntilFalse(page, testCase.shows);
 
     const before = await page.evaluate(testCase.shows);
     if (before !== false) {
@@ -317,9 +345,11 @@ async function runArchitecture(browser, baseUrl, pageErrors, log) {
       if (testCase.prime) {
         // The default already matches the preset: show the tab on another card first, and prove it differs.
         await openCard(page, testCase.prime);
-        await settle(page);
-        const primed = await page.evaluate(testCase.shows);
-        assert.equal(primed, false, `${testCase.preset}: the readout already matches before its own card is applied`);
+        const primed = await waitUntilFalse(page, testCase.shows);
+        assert.ok(
+          primed,
+          `${testCase.preset}: the readout still matches its own preset after the priming card, so this case proves nothing`
+        );
         await page.getByRole('button', { name: /^Start Here: Roadmap/ }).first().click({ timeout: 8000 });
       }
       await openCard(page, testCase)

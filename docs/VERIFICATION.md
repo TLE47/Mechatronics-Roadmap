@@ -36,6 +36,15 @@ derived from the lesson files and `modules/_index.yaml`, and fails on a second n
 hand-typed lesson count beside a generated table with one more row, and because the route total
 once omitted all 23 lesson pages inside Tracks 00-08.
 
+**A browser suite waits for a condition, never a stopwatch.** `page.goto()`, then `waitForTimeout(n)`,
+then `assert` measures how fast the runner is. On a machine sharing one dev server with three other
+suites, `domcontentloaded` fires before the module graph has been fetched and compiled, so a coach mark
+(or a stored record) written after that sleep is read too early — `scripts/e2e_tour.mjs` failed CI
+exactly that way on `main` (`1 !== 0`, then `null !== 'welcome'` on the same commit). Every browser suite
+opens with a readiness wait (`#root *`, `btn-theme-toggle`, or `waitForSelector` on the pane it audits)
+and asserts after a bounded `waitForFunction` on the state it claims. The sleeps that remain are paints
+— a 200 ms background transition, a 260 ms reflow settle — and each says so in a comment next to it.
+
 ## Full local run
 
 ```bash
