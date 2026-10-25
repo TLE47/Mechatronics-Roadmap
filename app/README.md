@@ -412,11 +412,19 @@ Each rule is pinned by `npm run test:trailreading` (20 checks) and the rendered 
 `npm run test:e2e:trail`, which runs a lesson three times before its pass and expects the card to say
 so.
 
-**It folds.** Once a few days have been worked the card is the tallest thing on the roadmap, so its
-header carries one toggle: folded, it is the totals line — `1 day · under a minute measured · 4 runs`
-— and the days, rows and readings are behind one press. The choice is a preference, kept in
-`localStorage` beside the layout and the palette rather than in the backup, and it survives a reload;
-`npm run test:e2e:trail` folds the card, reloads, and unfolds it again.
+**It folds** — and so do its two neighbours. Once a few days have been worked the trail is the
+tallest thing on the roadmap, the Board card is the tallest thing above the ten steps, and the resume
+card grows a line for the state and another for a half-written draft. Each carries one toggle in its
+header: folded, the trail is its totals line — `1 day · under a minute measured · 4 runs` — the Board
+card its heading and the lesson it holds, and the offer its `id · title` and a two-word badge
+(`passed`, `tried 3×`) with **Continue** still beside it, because a fold that hid the one press the
+card exists for would only be a card you unfold again. One implementation rather than three copies
+([`src/fold.ts`](src/fold.ts) owns the store and the hook,
+[`src/components/FoldToggle.tsx`](src/components/FoldToggle.tsx) the button); the choice is a
+preference, kept in `localStorage` beside the layout and the palette rather than in the backup, and it
+survives a reload. `aria-expanded` carries the state, the accessible name begins with the visible
+word, and each card carries `data-collapsed` so a test reads the state instead of a class;
+`npm run test:e2e:trail` folds the trail across a reload, and the workbench suite folds the other two.
 
 ### The portfolio export
 

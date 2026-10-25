@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, CheckCircle2, ChevronDown, ChevronRight, FlaskConical, Lightbulb } from 'lucide-react';
+import { CalendarClock, CheckCircle2, FlaskConical, Lightbulb } from 'lucide-react';
 import { readLearningLog } from '../learningLog';
 import { formatDuration, readSittings } from '../sittingClock';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
 import { buildTrail, entryLabel, hasWork, timeLabel, type Trail, type TrailEntry } from '../timeline';
 import { readTrail } from '../trailReading';
+import { STORAGE_KEY_TRAIL_COLLAPSED, useFold } from '../fold';
+import { FoldToggle } from './FoldToggle';
 
 interface TrailCardProps {
   /** Opens the lesson a row is about, in the runner. Rows stay text when there is no runner. */
@@ -53,23 +55,6 @@ export function trailSummary(trail: Trail): string {
   return parts.join(' · ');
 }
 
-/**
- * Where the fold is remembered (`app/src/trailReading.ts` owns the reading, not the preference).
- *
- * A preference, like the layout or the palette, so it is not part of a backup: a learner who folds the
- * trail on a phone wants it folded here too, and a restored archive has no business deciding that.
- */
-export const STORAGE_KEY_TRAIL_COLLAPSED = 'mechalab_trail_collapsed_v1';
-
-/** The stored fold, or open. A blocked store reads as open, which is where a first visit starts. */
-export function readTrailCollapsed(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY_TRAIL_COLLAPSED) === '1';
-  } catch {
-    return false;
-  }
-}
-
 /** One day's own line: its time and work, which is what makes a gap in the trail visible. */
 function daySummary(day: Trail['days'][number]): string {
   const parts: string[] = [];
@@ -95,17 +80,9 @@ function daySummary(day: Trail['days'][number]): string {
 export const TrailCard: React.FC<TrailCardProps> = ({ onOpenLesson, now }) => {
   const [nonce, setNonce] = useState(0);
   // Folded to its summary line, or open. The card is the tallest thing on the roadmap once a few
-  // days have been worked, and a returning learner may want the numbers without the transcript.
-  const [collapsed, setCollapsed] = useState<boolean>(readTrailCollapsed);
-  const toggle = () => {
-    const next = !collapsed;
-    setCollapsed(next);
-    try {
-      localStorage.setItem(STORAGE_KEY_TRAIL_COLLAPSED, next ? '1' : '0');
-    } catch {
-      // A blocked store folds it for this visit only; the reading itself is untouched.
-    }
-  };
+  // days have been worked, and a returning learner may want the numbers without the transcript. The
+  // store is shared with the roadmap's other two cards (`app/src/fold.ts`), so all three behave alike.
+  const { folded: collapsed, toggle } = useFold(STORAGE_KEY_TRAIL_COLLAPSED);
   useEffect(() => {
     const reread = () => setNonce((value) => value + 1);
     window.addEventListener(STORE_RESTORED_EVENT, reread);
@@ -148,26 +125,12 @@ export const TrailCard: React.FC<TrailCardProps> = ({ onOpenLesson, now }) => {
               {trailSummary(trail)}
             </div>
           )}
-          <button
-            type="button"
-            onClick={toggle}
-            data-testid="btn-trail-toggle"
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? 'Show the trail' : 'Hide the trail'}
-            title={
-              collapsed
-                ? 'Unfold the trail: its days, rows and readings'
-                : 'Fold the trail to one line, keeping the totals'
-            }
-            className="shrink-0 cursor-pointer rounded-[var(--r-sm)] border border-line-soft px-2 py-1 inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-muted hover:text-ink hover:border-line transition-colors"
-          >
-            {collapsed ? (
-              <ChevronRight className="w-3 h-3" aria-hidden="true" />
-            ) : (
-              <ChevronDown className="w-3 h-3" aria-hidden="true" />
-            )}
-            {collapsed ? 'Show' : 'Hide'}
-          </button>
+          <FoldToggle
+            folded={collapsed}
+            onToggle={toggle}
+            what="the trail"
+            testId="btn-trail-toggle"
+          />
         </div>
       </div>
 

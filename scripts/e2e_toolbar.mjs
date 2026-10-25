@@ -31,8 +31,19 @@ export const FOLDED_TOOLBAR = new Set([
 export async function openMore(page) {
   const more = page.getByTestId('btn-more');
   if (!(await more.count())) return;
-  if ((await more.getAttribute('aria-expanded')) !== 'true') await more.click();
-  await page.getByTestId('toolbar-more').waitFor({ state: 'visible', timeout: 5000 });
+  const panel = page.getByTestId('toolbar-more');
+  // Two presses at most, and only while `aria-expanded` says closed: a re-render between the read
+  // and the click can take the open back (the press lands on the previous render's button, the mount
+  // that follows starts with `moreOpen` false), and `waitFor` then polls a panel nobody opened for
+  // five seconds. That is the shape this failed with once on a loaded machine, at the step after a
+  // tab switch - the second press is guarded, so it cannot turn an open panel shut.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    if ((await more.getAttribute('aria-expanded')) !== 'true') {
+      await more.click({ timeout: 5000 }).catch(() => {});
+    }
+    if (await panel.isVisible().catch(() => false)) return;
+  }
+  await panel.waitFor({ state: 'visible', timeout: 5000 });
 }
 
 /**

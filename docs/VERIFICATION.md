@@ -496,6 +496,19 @@ box. The card states the seam in its own words — the board runs elsewhere, it 
 nothing pasted there comes back — and the graded prediction is filed in the learning log as a run
 (`npm run test:board`, browser step 15).
 
+**The roadmap's three cards fold the same way (Run 244).** The resume card, the trail and the Board
+card each grow once a learner has done something, and all three now carry the same toggle in the
+header. Folded, each keeps the line that says what it is — the offer's `id · title` and a two-word
+badge (`passed`, `tried 3×`) with the button that continues the lesson still beside it, the trail's
+totals line, the Board card's heading and the lesson it holds — and the detail is behind one press.
+One implementation rather than three copies: `app/src/fold.ts` owns the store and the hook,
+`app/src/components/FoldToggle.tsx` the button, and the keys sit beside the palette and the layout in
+`localStorage` rather than in a backup, so an archive restored on another machine cannot decide which
+cards this one has open. `aria-expanded` carries the state, the accessible name begins with the
+visible word (WCAG 2.5.3), and each card carries `data-collapsed` so a test reads the state rather
+than a class. `npm run test:e2e:trail` folds the trail across a reload; the workbench suite does the
+same for the offer (step 7c.5) and the Board card (step 15b).
+
 **The Board tab runs the compiled sketch (Run 202).** The gap the card points across is now closed on
 this side too: `scripts/extract_and_compile_sketches.py --write-firmware` compiles each `Full Solution`
 for `arduino:avr:uno` with `arduino-cli` and commits the machine code to `app/public/firmware/` — 51 kB
