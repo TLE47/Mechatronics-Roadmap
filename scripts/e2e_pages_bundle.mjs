@@ -358,6 +358,11 @@ async function gradeInPage(page, ids) {
 
 /** The delivery claim, asserted on what the page handed back for one package. */
 function assertGraded(result, name) {
+  // The state a stalled entry was stuck in, before any field it never reached. Without this line a
+  // reference run that timed out reached `result.referenceBadges[0]` and threw "Cannot read properties
+  // of undefined", which named neither the package nor the step — the one thing this record exists to
+  // say (`gradeInPage`'s `problem`).
+  assert.equal(result.problem, '', `${name}: ${result.id} — ${result.problem}`);
   assert.ok(result.starter?.includes('raise NotImplementedError'), `${name}: ${result.id} ${result.problem}`);
   assert.ok(
     result.starter.includes('_selfcheck()'),
