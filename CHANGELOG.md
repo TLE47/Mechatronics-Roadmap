@@ -121,8 +121,14 @@ waits for whichever comes first, the gate or the results step, and only then ski
 had the same shape in the other direction: `Run`, 400 ms, "no gate on screen" could pass while a card was
 still on its way in, so it reads that absence after the run's own output arrives. What is left in both
 files is a paint wait and the settle after a readiness selector, each with its reason in a comment.
-Verified with the contention that started this: three concurrent `e2e_tour` runs plus `e2e_predict_gate`
-against one dev server, all green.
+**And the presets suite, whose failure reads as an app bug.** CI then failed `tour` on
+`cad_flexure_stage: the readout already matches before its own card is applied`. That case is primed
+*because* the tab's default already matches its preset, so any read taken before the priming card's
+preset has landed reports exactly that sentence — and the only gate in front of the read was
+`settle()` (two frames plus 50 ms). The Apply side already waits with `waitForFunction`; the prime side
+now waits, bounded, until the tab has left the preset, so the message can only mean what it says.
+Verified with the contention that started this: three concurrent runs of `e2e_tour`, of
+`e2e_tour_presets` and one `e2e_predict_gate` against one dev server, all green.
 
 `npm run test:e2e:tour` (`scripts/e2e_tour.mjs`, **12 checks in a real browser**) walks the whole thing:
 the ring's geometry against the brief and that the brief is still clickable through it, the missing Next
