@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, CheckCircle2, FlaskConical, Lightbulb } from 'lucide-react';
+import { CalendarClock, CheckCircle2, ChevronDown, ChevronRight, FlaskConical, Lightbulb } from 'lucide-react';
 import { readLearningLog } from '../learningLog';
 import { formatDuration, readSittings } from '../sittingClock';
 import { STORE_RESTORED_EVENT } from '../backupBundle';
@@ -53,6 +53,23 @@ export function trailSummary(trail: Trail): string {
   return parts.join(' · ');
 }
 
+/**
+ * Where the fold is remembered (`app/src/trailReading.ts` owns the reading, not the preference).
+ *
+ * A preference, like the layout or the palette, so it is not part of a backup: a learner who folds the
+ * trail on a phone wants it folded here too, and a restored archive has no business deciding that.
+ */
+export const STORAGE_KEY_TRAIL_COLLAPSED = 'mechalab_trail_collapsed_v1';
+
+/** The stored fold, or open. A blocked store reads as open, which is where a first visit starts. */
+export function readTrailCollapsed(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY_TRAIL_COLLAPSED) === '1';
+  } catch {
+    return false;
+  }
+}
+
 /** One day's own line: its time and work, which is what makes a gap in the trail visible. */
 function daySummary(day: Trail['days'][number]): string {
   const parts: string[] = [];
@@ -77,6 +94,18 @@ function daySummary(day: Trail['days'][number]): string {
  */
 export const TrailCard: React.FC<TrailCardProps> = ({ onOpenLesson, now }) => {
   const [nonce, setNonce] = useState(0);
+  // Folded to its summary line, or open. The card is the tallest thing on the roadmap once a few
+  // days have been worked, and a returning learner may want the numbers without the transcript.
+  const [collapsed, setCollapsed] = useState<boolean>(readTrailCollapsed);
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem(STORAGE_KEY_TRAIL_COLLAPSED, next ? '1' : '0');
+    } catch {
+      // A blocked store folds it for this visit only; the reading itself is untouched.
+    }
+  };
   useEffect(() => {
     const reread = () => setNonce((value) => value + 1);
     window.addEventListener(STORE_RESTORED_EVENT, reread);
@@ -103,6 +132,7 @@ export const TrailCard: React.FC<TrailCardProps> = ({ onOpenLesson, now }) => {
       data-trail-days={trail.days.length}
       data-trail-entries={trail.totals.entries}
       data-trail-measured={trail.totals.measuredMs}
+      data-collapsed={collapsed ? 'true' : 'false'}
       className="bg-panel border border-line rounded-xl p-4"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -110,20 +140,45 @@ export const TrailCard: React.FC<TrailCardProps> = ({ onOpenLesson, now }) => {
           <CalendarClock className="w-3.5 h-3.5 text-accent" />
           <span className="text-xs font-mono uppercase tracking-wider text-accent">Your trail</span>
         </div>
-        {/* One day would be said twice: the day's own line already carries its time and runs. */}
-        {trail.days.length > 1 && (
-          <div data-testid="trail-summary" className="text-xs text-muted">
-            {trailSummary(trail)}
-          </div>
-        )}
+        <div className="ml-auto flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          {/* One day would be said twice while its own line is on screen. Folded, that line is gone,
+              so the summary becomes the only place the numbers still are. */}
+          {(collapsed || trail.days.length > 1) && (
+            <div data-testid="trail-summary" className="text-xs text-muted">
+              {trailSummary(trail)}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={toggle}
+            data-testid="btn-trail-toggle"
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Show the trail' : 'Hide the trail'}
+            title={
+              collapsed
+                ? 'Unfold the trail: its days, rows and readings'
+                : 'Fold the trail to one line, keeping the totals'
+            }
+            className="shrink-0 cursor-pointer rounded-[var(--r-sm)] border border-line-soft px-2 py-1 inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-muted hover:text-ink hover:border-line transition-colors"
+          >
+            {collapsed ? (
+              <ChevronRight className="w-3 h-3" aria-hidden="true" />
+            ) : (
+              <ChevronDown className="w-3 h-3" aria-hidden="true" />
+            )}
+            {collapsed ? 'Show' : 'Hide'}
+          </button>
+        </div>
       </div>
 
-      <p className="mt-1 text-xs text-muted">
-        What you actually did, newest first — the log the runner writes, across every lesson. Time is
-        measured in sittings, and filed on the day a sitting started.
-      </p>
+      {!collapsed && (
+        <p className="mt-1 text-xs text-muted">
+          What you actually did, newest first — the log the runner writes, across every lesson. Time is
+          measured in sittings, and filed on the day a sitting started.
+        </p>
+      )}
 
-      {readings.length > 0 && (
+      {!collapsed && readings.length > 0 && (
         <div
           data-testid="trail-readings"
           data-reading-count={readings.length}
@@ -155,60 +210,63 @@ export const TrailCard: React.FC<TrailCardProps> = ({ onOpenLesson, now }) => {
         </div>
       )}
 
-      <div className="mt-3 space-y-3">
-        {trail.days.map((day) => (
-          <div key={day.day} data-testid="trail-day" data-day={day.day} data-day-label={day.label}>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-2 border-b border-line-soft pb-1">
-              <span className="text-xs font-semibold text-ink">{day.label}</span>
-              <span data-testid="trail-day-summary" className="text-[11px] font-mono text-dim">
-                {daySummary(day)}
-              </span>
-            </div>
-            <ul className="mt-1 space-y-0.5">
-              {day.entries.map((entry) => (
-                <li
-                  key={`${entry.at}-${entry.kind}-${entry.lesson ?? ''}`}
-                  data-testid="trail-entry"
-                  data-kind={entry.kind}
-                  data-lesson={entry.lesson ?? ''}
-                  className="flex items-baseline gap-2 text-xs py-0.5"
-                >
-                  <span className="font-mono text-dim tabular-nums shrink-0">{timeLabel(entry.at)}</span>
-                  {entry.lesson && onOpenLesson ? (
-                    <button
-                      onClick={() => entry.lesson && onOpenLesson(entry.lesson)}
-                      className="font-mono font-semibold text-ink hover:text-accent cursor-pointer shrink-0 w-16 text-left"
-                      title={`Open ${entry.lesson}`}
-                    >
-                      {entry.lesson}
-                    </button>
-                  ) : (
-                    <span className="font-mono font-semibold text-ink shrink-0 w-16">
-                      {entry.lesson ?? 'log'}
-                    </span>
-                  )}
-                  <span className={`inline-flex items-center gap-1 shrink-0 ${toneFor(entry)}`}>
-                    <Icon entry={entry} />
-                    {entryLabel(entry)}
-                  </span>
-                  {entry.fail && (
-                    <span className="font-mono text-[11px] text-dim truncate" title={entry.fail}>
-                      {entry.fail}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {day.omitted > 0 && (
-              <div className="mt-0.5 text-[11px] text-dim">
-                …and {plural(day.omitted, 'more entry', 'more entries')} this day
+      {!collapsed && (
+        <div className="mt-3 space-y-3">
+          {trail.days.map((day) => (
+            <div key={day.day} data-testid="trail-day" data-day={day.day} data-day-label={day.label}>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-2 border-b border-line-soft pb-1">
+                <span className="text-xs font-semibold text-ink">{day.label}</span>
+                <span data-testid="trail-day-summary" className="text-[11px] font-mono text-dim">
+                  {daySummary(day)}
+                </span>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+              <ul className="mt-1 space-y-0.5">
+                {day.entries.map((entry) => (
+                  <li
+                    key={`${entry.at}-${entry.kind}-${entry.lesson ?? ''}`}
+                    data-testid="trail-entry"
+                    data-kind={entry.kind}
+                    data-lesson={entry.lesson ?? ''}
+                    className="flex items-baseline gap-2 text-xs py-0.5"
+                  >
+                    <span className="font-mono text-dim tabular-nums shrink-0">{timeLabel(entry.at)}</span>
+                    {entry.lesson && onOpenLesson ? (
+                      <button
+                        onClick={() => entry.lesson && onOpenLesson(entry.lesson)}
+                        className="font-mono font-semibold text-ink hover:text-accent cursor-pointer shrink-0 w-16 text-left"
+                        title={`Open ${entry.lesson}`}
+                      >
+                        {entry.lesson}
+                      </button>
+                    ) : (
+                      <span className="font-mono font-semibold text-ink shrink-0 w-16">
+                        {entry.lesson ?? 'log'}
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center gap-1 shrink-0 ${toneFor(entry)}`}>
+                      <Icon entry={entry} />
+                      {entryLabel(entry)}
+                    </span>
+                    {entry.fail && (
+                      <span className="font-mono text-[11px] text-dim truncate" title={entry.fail}>
+                        {entry.fail}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {day.omitted > 0 && (
+                <div className="mt-0.5 text-[11px] text-dim">
+                  …and {plural(day.omitted, 'more entry', 'more entries')} this day
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
 
-      {trail.omitted.days > 0 && (
+      )}
+
+      {!collapsed && trail.omitted.days > 0 && (
         <div data-testid="trail-omitted-days" className="mt-2 text-[11px] text-dim">
           {plural(trail.omitted.days, 'older day')} not shown. The whole log is in the export.
         </div>

@@ -200,6 +200,55 @@ async function main() {
     );
     console.log(`  ok the reload keeps the trail (${entries} → ${reloadedEntries} rows, both runs)`);
 
+    // ---- It folds, and stays folded across a reload ----
+    // The card is the tallest thing on the roadmap once a few days have been worked, so it folds to
+    // its totals line and keeps the transcript behind one press. The fold is a preference, like the
+    // layout, and a preference is judged by the reload it has to survive.
+    const card = page.getByTestId('trail-card');
+    assert.equal(await card.getAttribute('data-collapsed'), 'false', 'the trail must open expanded');
+    await page.getByTestId('btn-trail-toggle').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="trail-card"]')?.getAttribute('data-collapsed') === 'true',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(await page.getByTestId('trail-day').count(), 0, 'a folded trail still listed its days');
+    assert.equal(
+      await page.getByTestId('trail-entry').count(),
+      0,
+      'a folded trail still listed its rows'
+    );
+    assert.equal(
+      await page.getByTestId('btn-trail-toggle').getAttribute('aria-expanded'),
+      'false',
+      'the toggle must say it is folded'
+    );
+    const foldedSummary = (await page.getByTestId('trail-summary').textContent())?.trim() ?? '';
+    assert.match(
+      foldedSummary,
+      /day/,
+      `a folded trail must keep its totals on the line; got: ${foldedSummary}`
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => Boolean(document.querySelector('#root *')), undefined, {
+      timeout: 30000,
+    });
+    await openRoadmap(page);
+    await page.getByTestId('trail-card').waitFor({ timeout: 5000 });
+    assert.equal(
+      await page.getByTestId('trail-card').getAttribute('data-collapsed'),
+      'true',
+      'the fold must be remembered across a reload'
+    );
+    await page.getByTestId('btn-trail-toggle').click();
+    await page.getByTestId('trail-entry').first().waitFor({ timeout: 5000 });
+    assert.ok(
+      (await page.getByTestId('trail-entry').count()) > 0,
+      'unfolding the trail must bring its rows back'
+    );
+    console.log(`  ok the trail folds to its totals ("${foldedSummary}") and stays folded across a reload`);
+
     // ---- A row leads back to its lesson ----
     await page.getByTestId('trail-entry').first().locator('button').first().click();
     await page.getByTestId('lesson-title').waitFor({ timeout: 10000 });
@@ -214,7 +263,7 @@ async function main() {
     console.log(
       '[PASS] The trail: a fresh profile shows nothing, three failing runs and a pass become rows on ' +
         'today, the resisting lesson is read back with its count, the pass is one row, time is measured, ' +
-        'a reload keeps the trail, and a row opens its lesson'
+        'a reload keeps the trail, it folds to its totals and stays folded, and a row opens its lesson'
     );
   } finally {
     await browser.close();
