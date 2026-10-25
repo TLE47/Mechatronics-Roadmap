@@ -50,6 +50,7 @@
     "check:tabnames": "python3 scripts/check_tab_names.py",
     "test:tabnames": "python3 tests/test_tab_names.py",
     "test:practice": "node --experimental-strip-types scripts/test_practice_links.mjs",
+    "test:levels": "node --experimental-strip-types scripts/test_course_levels.mjs",
     "test:parity": "python3 tests/test_module_parity.py",
     "check:plant": "python3 scripts/generate_plant_data.py --check",
     "test:plant": "python3 tests/test_plant.py",

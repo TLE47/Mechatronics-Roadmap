@@ -16,6 +16,34 @@ flowchart LR
 
 ---
 
+## [2026-10-24] — Run 241: the course-level nav is drawn only where it changes something
+
+The header's four links — Start here, Beginner, Applied, Advanced — are a stored preference, and two
+panes read it: the Start Here roadmap cuts its ten steps by the pass, and the simulator tabs swap their
+guide banner (`SIMULATOR_TIER_GUIDES`). The nav was rendered on **all twelve** workbench views anyway,
+so on the other nine a press moved the highlight and changed nothing else. Measured on the live site:
+pressing Advanced on *Run Python Lessons* moved `aria-current` from `btn-pass-tier1` to
+`btn-pass-tier3`, wrote `mechalab_active_tier_pass_v1`, and left the page's text at the same length —
+a filter that filtered a third of the screens, presented as if it filtered all of them.
+
+**The nav now follows the content.** `app/src/courseLevels.ts` answers one question — does this view
+read the pass — and `Header` draws the nav only when the answer is yes. The answer is derived from the
+guides themselves (`Object.keys(SIMULATOR_TIER_GUIDES)`), plus the roadmap, so a tab that gains a guide
+is covered the day its guide exists and a tab that loses one cannot leave the nav behind. A partial
+guide does not count: a banner written for `tier1` alone would leave three of the four links dead, so a
+tab qualifies only when all four passes are present. The dashboard, the admin area and a lesson's
+reading page pass `false` — those are whole-page views with no tab pane to re-cut.
+
+**Pinned, because the failure mode is invisible.** `npm run test:levels`
+(`scripts/test_course_levels.mjs`, in `test:workbench`'s matrix) reads the tab table and fails if any
+tab is left without an answer, if the roadmap or a four-pass banner is excluded, if the Python runner,
+placement quiz, board or link survey claims to read the pass, or if a half-written guide keeps the nav.
+The prop is required, not optional, so a new header site cannot forget to decide.
+
+Verified in the browser against the local build: at 1280 px the nav is `flex`/314 px on the roadmap and
+on the vibration lab, and **absent from the DOM** on *Run Python Lessons* and the placement quiz, on a
+lesson page (`?lesson=P.4`) and on the dashboard (`?view=dashboard`). `tsc --noEmit` clean.
+
 ## [2026-10-24] — Run 240: the staging pass, and the two defects it found
 
 The accounts work had never met a live project. Staging (`mechalab-staging`, us-west-1) now exists: both

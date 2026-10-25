@@ -10,6 +10,7 @@ import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { StartHereCard } from './components/StartHereCard';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
 import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
+import { passChangesContent } from './courseLevels';
 // The runner is the tab the app opens on, so it is imported statically: its code is on the first
 // screen either way, and a lazy boundary there would only add a fetch before the lesson appears.
 import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
@@ -1474,6 +1475,8 @@ export const App: React.FC = () => {
           onExportPortfolio={() => setIsPortfolioModalOpen(true)}
           activeTierPass={activeTierPass}
           onSelectTierPass={setActiveTierPass}
+          // The dashboard and the admin area read no pass: the links would only move a highlight.
+          showCourseLevels={false}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
@@ -1550,6 +1553,8 @@ export const App: React.FC = () => {
           onExportPortfolio={() => setIsPortfolioModalOpen(true)}
           activeTierPass={activeTierPass}
           onSelectTierPass={setActiveTierPass}
+          // The dashboard and the admin area read no pass: the links would only move a highlight.
+          showCourseLevels={false}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
@@ -1592,6 +1597,9 @@ export const App: React.FC = () => {
         onExportPortfolio={() => setIsPortfolioModalOpen(true)}
         activeTierPass={activeTierPass}
         onSelectTierPass={setActiveTierPass}
+        // The workbench: the roadmap cuts its ten steps by the pass, and the lab tabs swap their
+        // guide banner. Everywhere else the links had nothing to change (`courseLevels.ts`).
+        showCourseLevels={passChangesContent(activeTab)}
         accountEmail={accountEmail}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenPalette={() => setIsPaletteOpen(true)}

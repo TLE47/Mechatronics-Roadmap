@@ -180,6 +180,7 @@ async function main() {
     { label: 'collab', script: 'test_collab.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'inline', script: 'test_inline_values.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'symbols', script: 'test_symbols.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'levels', script: 'test_course_levels.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'layout', script: 'test_layout.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'reader', script: 'test_reader.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'keymap', script: 'test_keymap.mjs', env: { NODE_OPTIONS: TYPES } },
