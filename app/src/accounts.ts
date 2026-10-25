@@ -18,6 +18,7 @@
 
 import type { Session, SupabaseClient, UserIdentity } from '@supabase/supabase-js';
 import { buildReturnUrl } from './returnTo';
+import { staleTotpFactors } from './accountRules';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.trim();
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
@@ -190,6 +191,14 @@ export interface TotpEnrolment {
 export async function enrolTotp(): Promise<{ enrolment: TotpEnrolment | null; problem: string | null }> {
   const supabase = await getClient();
   if (!supabase) return { enrolment: null, problem: 'Cloud sync is not configured for this build.' };
+  // A previous attempt that never got its code leaves an `unverified` factor under the same name, and
+  // Supabase refuses a second factor with that name — so the account could not enrol again, and the
+  // panel had no way out of it. An unverified factor protects nothing (`verifiedTotpFactors` does not
+  // return it), so it is cleared here and replaced by the one whose secret this attempt shows.
+  const { data: listed } = await supabase.auth.mfa.listFactors();
+  for (const factor of staleTotpFactors(listed?.all)) {
+    await supabase.auth.mfa.unenroll({ factorId: factor.id });
+  }
   const { data, error } = await supabase.auth.mfa.enroll({
     factorType: 'totp',
     friendlyName: 'MechaLab admin',

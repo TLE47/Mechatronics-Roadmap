@@ -96,6 +96,25 @@ export function authCallbackProblem(error: string | null, description: string | 
   return description?.trim() || 'Sign-in could not be completed. Try again.';
 }
 
+/**
+ * Which TOTP factors a fresh enrolment has to clear first.
+ *
+ * Supabase refuses a second factor with a friendly name that is already in use, and a half-finished
+ * attempt — the secret was shown, the code never arrived — leaves exactly that: an `unverified`
+ * factor under `MechaLab admin`. Left alone it is a dead end: the panel offers *Set up two-factor*,
+ * enrolment is rejected, and `verifiedTotpFactors` stays empty because an unverified factor protects
+ * nothing. Those are the ones to remove before enrolling again; a **verified** factor is never in this
+ * list, because it is the account's real second lock and replacing it silently would drop a lock the
+ * learner set.
+ */
+export function staleTotpFactors(
+  factors: Array<{ id: string; factor_type?: string; status?: string }> | null | undefined
+): Array<{ id: string }> {
+  return (factors ?? [])
+    .filter((factor) => (factor.factor_type ?? 'totp') === 'totp' && factor.status === 'unverified')
+    .map((factor) => ({ id: factor.id }));
+}
+
 /** True when a session's user has confirmed an address; magic-link accounts count as confirmed. */
 export function isVerifiedUser(user: { email_confirmed_at?: string | null; confirmed_at?: string | null } | null): boolean {
   return Boolean(user?.email_confirmed_at || user?.confirmed_at);

@@ -17,6 +17,7 @@ import {
   syncScopeLine,
   authCallbackProblem,
   isVerifiedUser,
+  staleTotpFactors,
   MIN_PASSWORD_LENGTH,
 } from '../app/src/accountRules.ts';
 import { buildReturnUrl, normalizeBase, parseReturnTarget, safeReturnTo } from '../app/src/returnTo.ts';
@@ -374,6 +375,21 @@ test('a non-boolean or non-string row cannot change settings', () => {
   ]);
   assert.equal(parsed.announcement, '');
   assert.equal(flagOn(parsed, 'guided_tour'), true);
+});
+
+test('a half-finished two-factor attempt is cleared, a working factor never is', () => {
+  // The dead end this exists for: the secret was shown, the code never arrived, and Supabase then
+  // refuses a second factor under the same friendly name — so the account can never enrol again.
+  const listed = [
+    { id: 'stale', factor_type: 'totp', status: 'unverified', friendly_name: 'MechaLab admin' },
+    { id: 'real', factor_type: 'totp', status: 'verified', friendly_name: 'MechaLab admin' },
+    { id: 'phone', factor_type: 'phone', status: 'unverified' },
+  ];
+  assert.deepEqual(staleTotpFactors(listed), [{ id: 'stale' }]);
+  assert.deepEqual(staleTotpFactors([{ id: 'real', factor_type: 'totp', status: 'verified' }]), []);
+  assert.deepEqual(staleTotpFactors([]), []);
+  assert.deepEqual(staleTotpFactors(null), []);
+  assert.deepEqual(staleTotpFactors(undefined), []);
 });
 
 console.log(`accounts: ${passed} checks passed`);
