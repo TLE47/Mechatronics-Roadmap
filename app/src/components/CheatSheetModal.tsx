@@ -1,13 +1,19 @@
 import React from 'react';
-import { X, Printer } from 'lucide-react';
+import { X, Printer, Compass } from 'lucide-react';
 import { MathView } from './MathView';
 
 interface CheatSheetModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /**
+   * Opens the first-lesson tour again. The `?` sheet is where a learner looks for "how does this
+   * work" after the tour has been closed, so the tour has to be reachable from it and nowhere else
+   * that could be mistaken for a second onboarding.
+   */
+  onReplayTour?: () => void;
 }
 
-export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClose }) => {
+export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClose, onReplayTour }) => {
   if (!isOpen) return null;
 
   const handlePrint = () => {
@@ -28,6 +34,16 @@ export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClos
             </div>
           </div>
           <div className="flex gap-2 print:hidden">
+            {onReplayTour && (
+              <button
+                onClick={onReplayTour}
+                data-testid="btn-replay-tour"
+                className="bg-raise hover:bg-elevate text-ink font-bold text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all border border-line cursor-pointer"
+              >
+                <Compass className="w-4 h-4" />
+                <span>Replay the first-lesson tour</span>
+              </button>
+            )}
             <button
               onClick={handlePrint}
               className="bg-accent hover:bg-accent/80 text-inverse font-bold text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all cursor-pointer"

@@ -102,7 +102,13 @@ function CodeBlock({ block }: { block: Extract<ReaderBlock, { t: 'code' }> }) {
       <div className="border-b border-line-soft px-3 py-1 font-mono text-[12px] uppercase tracking-wider text-faint">
         {block.lang || 'text'}
       </div>
-      <pre className="overflow-x-auto p-3 font-mono text-[12.5px] leading-relaxed text-body">
+      {/* `tabIndex` because a long line scrolls this element and a keyboard has no other way to reach
+          that scroll: axe's `scrollable-region-focusable`, which only sees the pane once it is styled. */}
+      <pre
+        tabIndex={0}
+        aria-label={`${block.lang || 'text'} code`}
+        className="overflow-x-auto p-3 font-mono text-[12.5px] leading-relaxed text-body"
+      >
         <code>{block.text}</code>
       </pre>
     </div>

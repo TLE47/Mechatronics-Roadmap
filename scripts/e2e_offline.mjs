@@ -32,6 +32,7 @@ import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { waitForEditor } from './editor-code.mjs';
 import { BASE, startStaticServer } from './e2e_pages_bundle.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 // The same executable search the other browser suites use: a machine with a system Chrome and no
 // Playwright download is a normal machine, and this suite should run there too.
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
@@ -96,6 +97,8 @@ async function main() {
     await context.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    // Offline reloads are measured on the lesson, not under the first-run tour.
+    await seedTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));

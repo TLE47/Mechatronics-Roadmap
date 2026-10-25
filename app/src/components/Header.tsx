@@ -25,6 +25,12 @@ interface HeaderProps {
   onExportPortfolio: () => void;
   activeTierPass: ActiveTierPass;
   onSelectTierPass: (pass: ActiveTierPass) => void;
+  /**
+   * Whether this view reads the pass at all. On the views that do not — the Python runner, the
+   * placement quiz, the board and link surveys, the dashboard and the admin area — the four links
+   * moved a highlight and changed nothing else, so they are not drawn (`courseLevels.ts`).
+   */
+  showCourseLevels: boolean;
   /** The signed-in address, or null when signed out (and when accounts are not configured). */
   accountEmail: string | null;
   onOpenAccount: () => void;
@@ -72,6 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
   onExportPortfolio,
   activeTierPass,
   onSelectTierPass,
+  showCourseLevels,
   accountEmail,
   onOpenAccount,
   onOpenPalette,
@@ -127,7 +134,10 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="sr-only">, back to top</span>
         </a>
 
-        {/* Zone 2: four course-level links, underlined when active. */}
+        {/* Zone 2: four course-level links, filled when active — but only on a view that reads the
+            pass. A control that cannot change what is on screen is worse than no control: the click
+            looks broken. */}
+        {showCourseLevels && (
         <nav
           aria-label="Course level navigation"
           className="hidden items-center gap-1 md:flex"
@@ -151,6 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
             );
           })}
         </nav>
+        )}
 
         {/* Zone 3: actions. Secondary tools stay reachable but quiet; the account button is the
             only one that shows state, so it keeps a border. */}

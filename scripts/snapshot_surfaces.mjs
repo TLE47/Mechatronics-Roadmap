@@ -42,6 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const ROOT = process.cwd();
 const SNAPSHOT_FILE = path.join(ROOT, 'docs', 'surface-snapshot.json');
@@ -252,6 +253,9 @@ async function main() {
           }
         }, palette);
       }
+      // This sweep measures the workbench, not onboarding: a first-run coach mark over the toolbar
+      // would be recorded as the tab's own structure (`scripts/tour_seed.mjs`).
+      await seedTourSeen(context);
       const page = await context.newPage();
       page.on('pageerror', (error) => errors.push(`${palette}: ${error.message}`));
       await page.goto(baseUrl, { waitUntil: 'load' });

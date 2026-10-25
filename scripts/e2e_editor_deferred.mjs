@@ -22,6 +22,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { getEditorCode, waitForEditor } from './editor-code.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
 /** The lesson the app opens on, and the first line of its starter: what must be readable. */
@@ -65,6 +66,8 @@ async function main() {
       await context.addInitScript(() => {
         window.__mechalabPredictFirst = false;
       });
+      // The editor's first paint is the subject here; a first-run coach mark over it is not.
+      await seedTourSeen(context);
       const page = await context.newPage();
       // Only uncaught exceptions: React logs a caught boundary error through `console.error`, and this
       // check is about the app surviving, not about the log it leaves behind.
@@ -116,6 +119,7 @@ async function main() {
       await context.addInitScript(() => {
         window.__mechalabPredictFirst = false;
       });
+      await seedTourSeen(context);
       const page = await context.newPage();
       const pageErrors = [];
       page.on('pageerror', (error) => pageErrors.push(error.message));

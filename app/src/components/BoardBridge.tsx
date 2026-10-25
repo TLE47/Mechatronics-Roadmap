@@ -150,7 +150,13 @@ export const BoardBridge: React.FC = () => {
               {copied === 'done' ? 'Copied' : copied === 'failed' ? 'Copy failed: select it' : 'Copy sketch'}
             </button>
           </div>
+          {/* Pinned to a few lines, so a long sketch scrolls inside this box: `tabIndex` is what
+              lets a keyboard reach that scroll (axe's `scrollable-region-focusable`), and the name
+              says which box got the stop. */}
           <pre
+            tabIndex={0}
+            role="group"
+            aria-label="The sketch (Full Solution)"
             className="bg-canvas border border-line rounded-md p-2 text-[0.72rem] leading-relaxed overflow-auto font-mono text-ink"
             style={{ maxHeight: `${PINNED_LINES * 1.15}rem` }}
           >

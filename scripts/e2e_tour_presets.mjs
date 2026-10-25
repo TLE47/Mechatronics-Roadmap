@@ -25,6 +25,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 /** Tour steps 2–8, in tour order. `perturb` runs before the precondition; `shows` is the readout. */
 const TOUR_CASES = [
@@ -307,6 +308,10 @@ async function openCard(page, { depth, card }) {
 async function runArchitecture(browser, baseUrl, pageErrors, log) {
   for (const testCase of ARCH_CASES) {
     const context = await browser.newContext();
+    // This suite drives the simulator tour; the first-run coach mark is a different tour and must not
+    // sit over the presets it clicks. Seeded on the context so `freshPage`'s storage clear cannot
+    // bring it back — the init script runs again on the reload that follows.
+    await seedTourSeen(context);
     try {
       const page = await freshPage(context, baseUrl, pageErrors);
       if (testCase.prime) {
@@ -345,6 +350,7 @@ export async function runTourPresetTests({ baseUrl: externalBaseUrl } = {}) {
   const pageErrors = [];
   try {
     const tourContext = await browser.newContext();
+    await seedTourSeen(tourContext);
     try {
       const page = await freshPage(tourContext, baseUrl, pageErrors);
       await runTour(page, baseUrl, (line) => console.log(line));

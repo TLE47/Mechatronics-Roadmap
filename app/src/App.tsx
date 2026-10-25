@@ -10,6 +10,7 @@ import { SimulatorTierBanner } from './components/SimulatorTierBanner';
 import { StartHereCard } from './components/StartHereCard';
 import { STORAGE_KEY_START_HERE_DISMISSED } from './startHere';
 import { SPINE_STEP_COUNT, stepForMilestone } from './spine';
+import { passChangesContent } from './courseLevels';
 // The runner is the tab the app opens on, so it is imported statically: its code is on the first
 // screen either way, and a lazy boundary there would only add a fetch before the lesson appears.
 import { TabPyodideRunner } from './components/tabs/TabPyodideRunner';
@@ -500,6 +501,14 @@ export const App: React.FC = () => {
   const [runRequest, setRunRequest] = useState<number>(0);
   // And its "Format with Black" command, for the same reason: the runner owns the editor's text.
   const [formatRequest, setFormatRequest] = useState<number>(0);
+  // Bumped by the palette and the `?` sheet for "Replay the first-lesson tour"; the runner watches it
+  // (`tourRequest`), because the tour lives where its anchors are and this shell only asks.
+  const [tourRequest, setTourRequest] = useState<number>(0);
+  const requestTour = () => {
+    setActiveTab('tab-pyodide');
+    setIsCheatSheetOpen(false);
+    setTourRequest((nonce) => nonce + 1);
+  };
   // Bumped whenever a learner asks for a specific entry, so the runner can tell a new pick from a
   // render that happens to carry the same id.
   const [lessonRequest, setLessonRequest] = useState<{
@@ -1102,6 +1111,9 @@ export const App: React.FC = () => {
         setActiveTab('tab-pyodide');
         setFormatRequest((nonce) => nonce + 1);
         break;
+      case 'action-tour-replay':
+        requestTour();
+        break;
       case 'action-toggle-theme':
         toggleThemeMode();
         break;
@@ -1474,6 +1486,8 @@ export const App: React.FC = () => {
           onExportPortfolio={() => setIsPortfolioModalOpen(true)}
           activeTierPass={activeTierPass}
           onSelectTierPass={setActiveTierPass}
+          // The dashboard and the admin area read no pass: the links would only move a highlight.
+          showCourseLevels={false}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
@@ -1550,6 +1564,8 @@ export const App: React.FC = () => {
           onExportPortfolio={() => setIsPortfolioModalOpen(true)}
           activeTierPass={activeTierPass}
           onSelectTierPass={setActiveTierPass}
+          // The dashboard and the admin area read no pass: the links would only move a highlight.
+          showCourseLevels={false}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
@@ -1592,6 +1608,9 @@ export const App: React.FC = () => {
         onExportPortfolio={() => setIsPortfolioModalOpen(true)}
         activeTierPass={activeTierPass}
         onSelectTierPass={setActiveTierPass}
+        // The workbench: the roadmap cuts its ten steps by the pass, and the lab tabs swap their
+        // guide banner. Everywhere else the links had nothing to change (`courseLevels.ts`).
+        showCourseLevels={passChangesContent(activeTab)}
         accountEmail={accountEmail}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenPalette={() => setIsPaletteOpen(true)}
@@ -1860,6 +1879,7 @@ export const App: React.FC = () => {
                 onOpenRoadmap={handleOpenRoadmap}
                 runRequest={runRequest}
                 formatRequest={formatRequest}
+                tourRequest={tourRequest}
                 lessonRequest={lessonRequest}
                 sharedAttempt={sharedAttempt}
                 onDismissShared={() => setSharedAttempt(null)}
@@ -1894,7 +1914,11 @@ export const App: React.FC = () => {
       </div>
 
       {/* Cheat sheet modal */}
-      <CheatSheetModal isOpen={isCheatSheetOpen} onClose={() => setIsCheatSheetOpen(false)} />
+      <CheatSheetModal
+        isOpen={isCheatSheetOpen}
+        onClose={() => setIsCheatSheetOpen(false)}
+        onReplayTour={requestTour}
+      />
 
       {/* `?`: which key does what, from the one table in `src/shortcuts.ts`. */}
       <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />

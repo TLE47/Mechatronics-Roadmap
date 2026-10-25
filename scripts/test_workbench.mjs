@@ -45,6 +45,7 @@
  *   test:e2e:focus   focus mode in Chromium: the chrome hides, the work stays, three exits, and a measured sitting
  *   test:e2e:trail   the trail in Chromium: two runs become today's rows, a reload keeps them, a row opens its lesson
  *   test:fonts       the two self-hosted faces are named, imported and emitted
+ *   test:firstrun    the first lesson's tour without a browser: six steps, the edit and run gates, the offer rule, the restore, and every data-tour anchor in the app's own source
  *   test:smoke       Vite in middleware mode, SSR-render App + Runner + Quiz
  *   test:e2e         Vite dev server on a random port + Chromium
  *   test:e2e:pages   `npm run build` if `dist/` was missing, a static Pages server + Chromium, Firefox
@@ -180,6 +181,8 @@ async function main() {
     { label: 'collab', script: 'test_collab.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'inline', script: 'test_inline_values.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'symbols', script: 'test_symbols.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'levels', script: 'test_course_levels.mjs', env: { NODE_OPTIONS: TYPES } },
+    { label: 'firstrun', script: 'test_tour.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'layout', script: 'test_layout.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'reader', script: 'test_reader.mjs', env: { NODE_OPTIONS: TYPES } },
     { label: 'keymap', script: 'test_keymap.mjs', env: { NODE_OPTIONS: TYPES } },
@@ -210,6 +213,7 @@ async function main() {
     { label: 'e2e', script: 'e2e_browser_workbench.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
     { label: 'pages', script: 'e2e_pages_bundle.mjs', env: { PAGES_SERVER_URL: pagesUrl }, browser: true },
     { label: 'pairs', script: 'e2e_same_task_pairs.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
+    { label: 'firstrun-e2e', script: 'e2e_tour.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
     { label: 'tour', script: 'e2e_tour_presets.mjs', env: { E2E_BASE_URL: devUrl }, browser: true },
     { label: 'defer', script: 'e2e_editor_deferred.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },
     { label: 'bak2e', script: 'e2e_backup.mjs', env: { E2E_BASE_URL: devUrl, NODE_OPTIONS: TYPES }, browser: true },

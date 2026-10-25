@@ -30,6 +30,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 // The tab ids come from the one file that names them, so a new tab is swept without
 // touching this script.
@@ -172,6 +173,9 @@ async function firstVisit(page, url, colorScheme) {
 /** A context whose stored pick is `palette`, so a palette the OS cannot request is reachable. */
 async function contextFor(browser, palette) {
   const context = await browser.newContext({ colorScheme: SCHEME[palette] });
+  // The palette sweep measures the workbench, not the first-run coach mark over it. The stored tour
+  // record has no "theme" in its key, so the first-visit storage assertion below is unaffected.
+  await seedTourSeen(context);
   // Neither extra palette is reachable from the OS: contrast is a media query the browser cannot be
   // made to answer here, and paper is never a default at all. Both are stored picks.
   if (palette === 'contrast' || palette === 'paper') {
@@ -201,6 +205,7 @@ async function main() {
   try {
     // 1. First visit follows the OS, with nothing stored.
     const lightContext = await browser.newContext({ colorScheme: 'light' });
+    await seedTourSeen(lightContext);
     const lightPage = await lightContext.newPage();
     await firstVisit(lightPage, baseUrl, 'light');
     assert.equal(

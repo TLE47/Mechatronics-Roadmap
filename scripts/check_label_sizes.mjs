@@ -42,6 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const ROOT = process.cwd();
 
@@ -238,6 +239,8 @@ async function main() {
       colorScheme: 'light',
       reducedMotion: 'reduce',
     });
+    // The first screen's type is measured on the workbench, not on a first-run coach mark.
+    await seedTourSeen(context);
     const page = await context.newPage();
     page.on('pageerror', (error) => pageErrors.push(error.message));
     await page.goto(baseUrl, { waitUntil: 'load' });

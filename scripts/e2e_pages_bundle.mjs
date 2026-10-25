@@ -52,6 +52,7 @@ import { chromium, firefox } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
 import { nameStale, staleBuild } from './buildFreshness.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const repoRoot = process.cwd();
 export const BASE = (process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/').replace(/\/?$/, '/');
@@ -598,6 +599,9 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await context.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    // The built bundle is graded as a returning learner's workbench: a first-run coach mark over it
+    // would be measured as part of the page.
+    await seedTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(String(error)));
@@ -686,6 +690,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await cheatContext.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    await seedTourSeen(cheatContext);
     const cheatPage = await cheatContext.newPage();
     await cheatPage.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await cheatPage.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
@@ -741,6 +746,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await wideContext.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    await seedTourSeen(wideContext);
     const wide = await wideContext.newPage();
     await wide.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await wide.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });
@@ -1158,6 +1164,7 @@ async function checkInBrowser(name, launcher, baseUrl, gradingIds) {
     await tabletContext.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    await seedTourSeen(tabletContext);
     const tablet = await tabletContext.newPage();
     await tablet.goto(baseUrl, { waitUntil: 'networkidle', timeout: 45000 });
     await tablet.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, { timeout: 20000 });

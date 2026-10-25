@@ -27,6 +27,7 @@ import { chromium } from 'playwright-core';
 import { getEditorCode, waitForEditor } from './editor-code.mjs';
 import { clearBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 // The app's own reader, so the archive the browser wrote is checked by the code that restores it.
 import { readZip, fromUtf8 } from '../app/src/backupZip.ts';
 
@@ -69,6 +70,8 @@ async function main() {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'mechalab-backup-'));
   try {
     const context = await browser.newContext({ acceptDownloads: true });
+    // A first-run coach mark over the toolbar would intercept the header buttons this suite presses.
+    await seedTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));

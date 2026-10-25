@@ -16,6 +16,140 @@ flowchart LR
 
 ---
 
+## [2026-10-24] — Run 242: the first lesson explains itself, and waits for you to do it
+
+The starter fails on purpose. A beginner's very first *Run & Verify Output* therefore prints red checks
+— and a beginner reads red as "I broke it" well inside two minutes. Nothing on the page said otherwise:
+the per-lesson brief (`first-lesson-guide`) names the holes and the finish line in three columns of
+prose, which is a paragraph where a beginner needs a pointer.
+
+**A six-step first-run tour, two steps of which have no Next button.** `app/src/tour.ts` holds the table
+— welcome, the brief, the editor, Run, the red checks, the hints — and the gate each step waits on: a
+press for the words, **the editor text changing** for step 3, **a run finishing with a verdict** for
+step 4. The reducer is pure (`reduceTour`), so those rules are tested without a browser; a signal the
+current step does not ask for returns the same object and React reads it as no change. A learner who
+passes on the first attempt skips the red-checks step entirely, because it would then be a sentence
+about something that did not happen.
+
+**A ring, not a backdrop.** The coach mark draws its shadow round a cut-out (`pointer-events: none`) so
+the highlighted control and everything around it stay clickable — a step that asks for a press must not
+be covered by the thing asking. On a phone (below 768 px) the card becomes a bottom sheet above the
+safe area, its buttons 44 px, and the step's own `mobileView` puts the region it is talking about on
+screen. The preset a step needs is applied through `shownLayout` and **never written**: `writeLayout`
+is still only called by the layout buttons, so the learner's own choice is exactly where they left it
+when the tour ends.
+
+**Where it opens.** `app/src/tourState.ts` answers that with `tourOffer`: a first visit with nothing
+saved opens it; any verified or completed lesson, or a draft, is a returning learner and gets nothing; a
+deep link into a later lesson gets a chip instead (*New here? … Take the tour*); a page left mid-tour
+gets a resume chip that names the step (*Resume tour (step 3 of 6)*) once. Esc dismisses, the ×
+dismisses, and neither ever reopens it. The record is versioned, and `mergeTourStates` means a restore can
+never move it backwards — **`tour.json` is the one non-preference a backup carries**, because "this
+learner has been shown the tour" is a fact about them, not a look-and-feel choice.
+
+**Measured, locally.** The learning log gains one kind — `tour`, with `action` (`shown`, `resume`, `step`,
+`skipped`, `completed`) and the step number — so a pilot can tell "walked it" from "closed it at step two"
+without watching anyone. It never leaves the browser, like every other event, and the friction report
+counts the kinds it knows and ignores the rest. Measured in the browser while wiring it: one `shown` on
+a first visit, `step 2` on Next, `skipped 2` on the ×.
+
+**Replayable from both doors a stuck learner tries.** `Replay the first-lesson tour` is a palette command
+and a button on the `?` sheet; both bump a `tourRequest` nonce, the same idiom `runRequest` and
+`formatRequest` already use, because the shell outlives the runner and must not hold its functions.
+
+**Pinned, because a tour that loses its target is worse than none.** Five `data-tour` anchors name the
+elements; `npm run test:firstrun` (`scripts/test_tour.mjs`, 27 checks) reads the app's own source and
+fails if an anchor disappears *or* if an anchor is left behind with no step pointing at it. It also
+pins the gate per step (an action step that became skippable would be the slideshow this design exists
+to avoid), the store's validation of junk and of a future version, the offer rule in all five
+situations, and the merge.
+
+**Two harness defects, both found by this feature measuring pixels.** The first is the suite's own dev
+server: `startDevServer` called `createServer({ root: 'app' })` with no `configFile`, and Vite resolves a
+config from *its* root — so the project's `vite.config.ts` at the repository root was never read and
+**every browser suite was driving the app without Tailwind**. No `fixed`, no `min-h-[44px]`, a page 8002
+px tall instead of 2781: data attributes and text still worked, which is why it went unnoticed. The
+tour's ring check is the first assertion in the harness that asks where something *is*, and it answered
+`position: static` and 1048 px from the bottom of the screen. `configFile` now points at the root config,
+and the base URL comes from `viteServer.config.base` instead of a hard-coded Pages path the dev server
+only answered through its SPA fallback.
+
+The second is the coach mark's measurement. On a cold first visit the lesson list and reader populate
+*after* the tour mounts, so a brief measured at 6 px was found 4819 px lower by the time a learner read
+the card — nothing had scrolled and the anchor's own box had not resized, so scroll, resize and its
+ResizeObserver all stayed silent. The document's height is what changes when content arrives above an
+anchor, so `FirstRunTour` observes that too, with a 250 ms poll as the backstop for a reflow that leaves
+the height alone. `e2e_tour` waits, bounded, for the ring and the sheet to settle instead of asserting on
+a 400 ms stopwatch: the assertions are unchanged, and it still fails if they never land.
+
+**The gate was not the gate, and JSON hid it.** The first version of this file registered as
+`test:tour` — a name `package.json` already used for the presets walker. Duplicate keys are not a JSON
+error; the last one wins, so `npm run test:tour` kept running the presets suite and these 27 checks ran
+nowhere, exactly as the docs said to invoke them. The suite is now `test:firstrun`, and its last check
+reads `package.json` and refuses *any* duplicated script key, so the next collision fails loudly
+instead of quietly deleting a gate. The same rename also left `test_tour.mjs` in the `test:workbench`
+list twice — `firstrun 1.0s` and `firstrun 0.5s` in one suite report is what a duplicate looks like — and
+that second registration is gone.
+
+**The axe gate had been auditing a placeholder.** The same missing stylesheet had a second cost: with no
+page rendered properly, three `pre`/scroll boxes never appeared wide enough to scroll, so
+`scrollable-region-focusable` — a serious rule — had nothing to report in twelve tabs. With the config
+read, `check:axe` failed on the first real sweep: a `<pre>` of pinned sketch lines in `BoardBridge`, a
+governing equation in `tab-arch`, and the run output in the lesson reader each scroll with no way for a
+keyboard to reach that scroll. All three now carry `tabIndex={0}` and a name (`role="group"` with the
+formula's or the sketch's own words), the pattern `MathPanel` already used. Nothing else moved — the
+snapshot and label baselines came back at their exact previous numbers.
+
+`npm run test:e2e:tour` (`scripts/e2e_tour.mjs`, **12 checks in a real browser**) walks the whole thing:
+the ring's geometry against the brief and that the brief is still clickable through it, the missing Next
+button on step 3 and that typing alone advances it, the predict gate handled the way a learner handles
+it, red-checks-after-a-failed-run, Finish, no reopen on reload, dismissal, the deep-link chip, the
+resume chip continuing at step 2, the phone sheet and its region switching, and the palette replay.
+
+**The harnesses are not first-time visitors.** A fresh Playwright context is exactly the visitor the
+tour is for, so the coach mark appeared over the workbench in every suite that drives it — and
+`check:snapshot` proved it by failing on an intercepted click. All 20 app-driving suites now seed the
+record first (`scripts/tour_seed.mjs`); `e2e_tour.mjs` is the one that does not, because it measures the
+tour. With the seed, `check:snapshot` (48 surfaces, 4 palettes) and `check:labels` returned to their
+exact previous numbers — 227 metadata rows, not the 232 the card had added — which is the diff that
+proves the feature is the only thing that changed.
+
+Verified: `test:firstrun` 27/27, `test:e2e:tour` 12/12, `test:backup` 22/22 (including the new round trip:
+completed beats dismissed, a stale archive cannot un-finish it, and a nonsense record is skipped out
+loud), `check:snapshot` PASS (48 surfaces, unchanged), `check:labels` PASS (227 rows, unchanged),
+`check:axe` PASS (12 tabs × 4 palettes, 0 exceptions — over the real page, for the first time),
+`test:smoke` PASS, `test:pairs` 17/17, `test:e2e` PASS with the prose row now matched case-insensitively
+as the uppercase label it renders, `tsc --noEmit` clean, and `npm run test:workbench` green across every
+suite on one dev server and one built bundle.
+
+## [2026-10-24] — Run 241: the course-level nav is drawn only where it changes something
+
+The header's four links — Start here, Beginner, Applied, Advanced — are a stored preference, and two
+panes read it: the Start Here roadmap cuts its ten steps by the pass, and the simulator tabs swap their
+guide banner (`SIMULATOR_TIER_GUIDES`). The nav was rendered on **all twelve** workbench views anyway,
+so on the other nine a press moved the highlight and changed nothing else. Measured on the live site:
+pressing Advanced on *Run Python Lessons* moved `aria-current` from `btn-pass-tier1` to
+`btn-pass-tier3`, wrote `mechalab_active_tier_pass_v1`, and left the page's text at the same length —
+a filter that filtered a third of the screens, presented as if it filtered all of them.
+
+**The nav now follows the content.** `app/src/courseLevels.ts` answers one question — does this view
+read the pass — and `Header` draws the nav only when the answer is yes. The answer is derived from the
+guides themselves (`Object.keys(SIMULATOR_TIER_GUIDES)`), plus the roadmap, so a tab that gains a guide
+is covered the day its guide exists and a tab that loses one cannot leave the nav behind. A partial
+guide does not count: a banner written for `tier1` alone would leave three of the four links dead, so a
+tab qualifies only when all four passes are present. The dashboard, the admin area and a lesson's
+reading page pass `false` — those are whole-page views with no tab pane to re-cut.
+
+**Pinned, because the failure mode is invisible.** `npm run test:levels`
+(`scripts/test_course_levels.mjs`, in `test:workbench`'s matrix) reads the tab table and fails if any
+tab is left without an answer, if the roadmap or a four-pass banner is excluded, if the Python runner,
+placement quiz, board or link survey claims to read the pass, or if a half-written guide keeps the nav.
+The prop is required, not optional, so a new header site cannot forget to decide.
+
+Verified in the browser against the local build: at 1280 px the nav is `flex`/314 px on the roadmap and
+on the vibration lab, and **absent from the DOM** on *Run Python Lessons* and the placement quiz, on a
+lesson page (`?lesson=P.4`) and on the dashboard (`?view=dashboard`). `tsc --noEmit` clean.
+
 ## [2026-10-24] — Run 240: the staging pass, and the two defects it found
 
 The accounts work had never met a live project. Staging (`mechalab-staging`, us-west-1) now exists: both

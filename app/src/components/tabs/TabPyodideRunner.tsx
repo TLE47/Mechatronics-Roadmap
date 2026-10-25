@@ -26,6 +26,16 @@ import { FaultBench08 } from '../FaultBench08';
 import { StudyPanel } from '../StudyPanel';
 import { LessonReader } from '../LessonReader';
 import { LessonChooser, type TrackFilter } from '../LessonChooser';
+import { FirstRunTour } from '../FirstRunTour';
+import {
+  layoutForStep,
+  reduceTour,
+  stepAt,
+  type TourFacts,
+  type TourSignal,
+  type TourState,
+} from '../../tour';
+import { readTour, resumeLabel, tourOffer, writeTour } from '../../tourState';
 import type { HarnessReport } from '../../harnessGrading.ts';
 import { harnessGate, parseHarnessReport } from '../../harnessGrading.ts';
 import { harnessForLesson, harnessSourceForLesson } from '../../lessonHarnesses.ts';
@@ -40,7 +50,7 @@ import {
 } from '../../analysisClient';
 import { rememberLessonInUrl } from '../../lessonRoute';
 import { rememberLastLesson } from '../../lastLesson';
-import { isEdited, readDraft, saveDraft } from '../../lessonDraft';
+import { isEdited, readDraft, readDrafts, saveDraft } from '../../lessonDraft';
 import { STORAGE_KEY_COMPLETED, STORAGE_KEY_VERIFIED } from '../../progressKeys';
 import {
   clearHistory,
@@ -243,6 +253,12 @@ interface TabPyodideRunnerProps {
    */
   formatRequest?: number;
   /**
+   * A counter the palette and the `?` sheet bump when "Replay the first-lesson tour" is chosen. Same
+   * nonce rule as `runRequest`: both outlive this component, and a mount must never open a tour
+   * nobody asked for on this visit.
+   */
+  tourRequest?: number;
+  /**
    * An explicit "open this entry" request. The id alone cannot express it: choosing the lesson a
    * deep link already named leaves `initialLessonId` unchanged, so nothing would fire.
    *
@@ -333,6 +349,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   onOpenRoadmap,
   runRequest,
   formatRequest,
+  tourRequest,
   lessonRequest,
   sharedAttempt,
   onDismissShared,
@@ -348,6 +365,25 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   // Set when a run starts, so the result effect can tell a scratch run from an attempt at the lesson
   // even if the learner has already left scratch by the time it finishes.
   const runScratchRef = useRef<boolean>(false);
+  // The first-run tour (`app/src/tour.ts`, `app/src/tourState.ts`). Read once at mount: it records
+  // what this browser has already been shown, and only this screen writes it back.
+  const [tourState, setTourState] = useState<TourState>(() => readTour());
+  // Whether *this visit* draws the coach mark, which is not the same question as what the record says.
+  // A record left on step 4 means the learner closed the page mid-tour: that gets the chip, and the
+  // card only comes back when they take it. Only a fresh record on step one opens by itself.
+  const [tourOpen, setTourOpen] = useState<boolean>(() => {
+    const stored = readTour();
+    return stored.status === 'active' && stored.stepIndex === 0;
+  });
+  // The chip is either "new here" or "you were at step 4": the same control, two honest labels.
+  const [tourChip, setTourChip] = useState<{ resume: boolean } | null>(null);
+  const [isPhone, setIsPhone] = useState<boolean>(() => {
+    try {
+      return window.matchMedia('(max-width: 767px)').matches;
+    } catch {
+      return false;
+    }
+  });
   const [dismissedGuides, setDismissedGuides] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_FIRST_GUIDE);
@@ -2636,8 +2672,223 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
   const guideShowsExpectedGot =
     passStatus === 'behavior_failed' && guideFixLine.startsWith('AssertionError');
 
+  /* ---- The first-run tour --------------------------------------------------------------------
+   * The gate is the app's own state, never a click: step 3 moves when the editor text differs from
+   * the text the tour found, and step 4 moves when a run has ended with a verdict. `reduceTour` owns
+   * those rules; this block only measures and forwards, so a rule lives in one place to be tested.
+   */
+  const tourStep = stepAt(tourState.stepIndex);
+  const tourActive = tourOpen && tourState.status === 'active';
+  // What the document was when the tour reached the editor step. A draft restored from storage is not
+  // an edit the learner made in this visit, and must not satisfy a step that asks them to type.
+  const tourBaselineRef = useRef<string | null>(null);
+  // Runs already counted when the tour started: a run from before it does not satisfy step 4.
+  const tourRunBaselineRef = useRef<number>(0);
+  const runButtonRef = useRef<HTMLButtonElement | null>(null);
+  const attemptsHereNow = runAttempts[selectedId] ?? 0;
+  const tourFacts: TourFacts = {
+    edited: tourBaselineRef.current !== null && code !== tourBaselineRef.current,
+    runFinished: !isRunning && attemptsHereNow > tourRunBaselineRef.current,
+    passed: passStatus === 'passed',
+  };
+  const tourFactsRef = useRef<TourFacts>(tourFacts);
+  tourFactsRef.current = tourFacts;
+
+  // A mirror of the record for the click handlers: the reducer is pure, but writing the record and
+  // closing the card are two updates, and doing them inside a `setTourState` updater would run both
+  // twice under StrictMode's double-invoke.
+  const tourStateRef = useRef<TourState>(tourState);
+  tourStateRef.current = tourState;
+
+  const signalTour = (signal: TourSignal) => {
+    const previous = tourStateRef.current;
+    const next = reduceTour(previous, signal, tourFactsRef.current);
+    if (next === previous) return;
+    // Local only, like every other log line: this is how a pilot tells "walked it" from "closed it at
+    // step two" without watching anyone (`learningLog.ts`).
+    logEvent({
+      kind: 'tour',
+      action: next.status === 'completed' ? 'completed' : next.status === 'dismissed' ? 'skipped' : 'step',
+      level: next.stepIndex + 1,
+    });
+    setTourState(writeTour(next));
+    // Anything but "still walking" puts the card away: a dismissed and a finished tour look the same
+    // on the page, and the record is what remembers which one it was.
+    if (next.status !== 'active') setTourOpen(false);
+  };
+
+  /**
+   * Start (or restart) the tour, with both baselines taken now.
+   *
+   * `resume` continues at the step the record left off at; `restart` is the replay the palette and the
+   * `?` sheet ask for, which begins at step one because that is what "replay" means.
+   */
+  const startTour = (mode: 'restart' | 'resume' = 'restart') => {
+    tourBaselineRef.current = null;
+    tourRunBaselineRef.current = runAttempts[selectedId] ?? 0;
+    setTourChip(null);
+    setTourOpen(true);
+    const previous = readTour();
+    const next: TourState =
+      mode === 'resume'
+        ? { ...previous, status: 'active', chipShown: true, updatedAt: Date.now() }
+        : reduceTour(previous, 'replay', tourFactsRef.current);
+    logEvent({
+      kind: 'tour',
+      action: mode === 'resume' ? 'resume' : 'shown',
+      level: next.stepIndex + 1,
+    });
+    setTourState(writeTour(next));
+  };
+
+  // Which surface to offer. Judged against the lesson actually open, so a deep link into a later
+  // entry gets the chip rather than a tour of six steps about someone else's lesson.
+  useEffect(() => {
+    const current = readTour();
+    const offer = tourOffer(current, {
+      onFirstLesson: selectedId === PYTHON_LESSONS[0].id,
+      hasProgress:
+        Object.keys(verifiedLessons).length > 0 ||
+        Object.keys(completedLessons).length > 0 ||
+        Object.keys(readDrafts()).length > 0,
+    });
+    if (offer === 'none') return;
+    if (offer === 'tour') {
+      tourBaselineRef.current = null;
+      tourRunBaselineRef.current = runAttempts[selectedId] ?? 0;
+      setTourOpen(true);
+      // A record that is already open on step one is this effect running again (StrictMode's
+      // double-invoke in development), not a second time the learner was shown it.
+      if (!(current.status === 'active' && current.stepIndex === 0)) {
+        logEvent({ kind: 'tour', action: 'shown', level: 1 });
+      }
+      setTourState(writeTour({ ...current, status: 'active', stepIndex: 0, updatedAt: Date.now() }));
+      return;
+    }
+    // Someone who left the tour at step 4 gets the step, not the welcome: `active` is the record that
+    // says where they were.
+    setTourChip({ resume: current.status === 'active' });
+    setTourState(writeTour({ ...current, chipShown: true, updatedAt: Date.now() }));
+    // Deliberately keyed on the lesson: the counts are read once per visit, so the run that finishes
+    // during the tour cannot close the tour it is part of.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+
+  // The palette and the `?` sheet ask for a replay with a nonce, the same way they ask for a run.
+  const lastTourRequestRef = useRef<number>(tourRequest ?? 0);
+  useEffect(() => {
+    if ((tourRequest ?? 0) === lastTourRequestRef.current) return;
+    lastTourRequestRef.current = tourRequest ?? 0;
+    startTour();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourRequest]);
+
+  // Step 3's gate: the editor now holds text that is not the text the tour found.
+  useEffect(() => {
+    if (!tourActive) return;
+    if (tourStep.gate === 'edited') {
+      if (tourBaselineRef.current === null) {
+        tourBaselineRef.current = code;
+        return;
+      }
+      if (tourFactsRef.current.edited) signalTour('edited');
+    }
+  }, [tourActive, tourStep.gate, code]);
+
+  // Step 4's gate: a run that finished while the tour was on screen.
+  useEffect(() => {
+    if (!tourActive) return;
+    if (tourStep.gate === 'run-finished' && tourFactsRef.current.runFinished) {
+      signalTour('run-finished');
+    }
+  }, [tourActive, tourStep.gate, tourFacts.runFinished]);
+
+  // Focus follows the kind of step: the editor for the typing one, Run for the press one. A card that
+  // keeps focus while asking the learner to type is a card they have to fight.
+  useEffect(() => {
+    if (!tourActive) return;
+    if (tourStep.id === 'editor') guideEditorRef.current?.focus();
+    else if (tourStep.id === 'run') runButtonRef.current?.focus();
+  }, [tourActive, tourStep.id]);
+
+  // Esc closes the tour — unless a sheet is open, in which case that press was meant for the sheet.
+  useEffect(() => {
+    if (!tourActive) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (moreOpen || helpOpen || pairOpen) return;
+      signalTour('dismiss');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourActive, moreOpen, helpOpen, pairOpen]);
+
+  // A narrower window turns the coach mark into a bottom sheet; the preset the tour leans on follows.
+  useEffect(() => {
+    const query = (() => {
+      try {
+        return window.matchMedia('(max-width: 767px)');
+      } catch {
+        return null;
+      }
+    })();
+    if (!query) return;
+    const onChange = () => setIsPhone(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
+  // The preset the tour needs, without touching the learner's remembered one: `writeLayout` is only
+  // ever called by the layout buttons, so finishing the tour restores their own choice by itself.
+  const shownLayout = tourActive ? layoutForStep(tourState.stepIndex, isPhone) : layout;
+
   return (
     <div className="space-y-5">
+      {/* The coach mark, then the chip, before anything else on the page: the tour is about this
+          screen, and a card that arrives below the fold is a card that arrives late. */}
+      {tourActive && (
+        <FirstRunTour
+          index={tourState.stepIndex}
+          step={tourStep}
+          passedFirstTry={tourFacts.runFinished && tourFacts.passed}
+          onNext={() => signalTour('next')}
+          onSkipStep={() => signalTour('skip-step')}
+          onDismiss={() => signalTour('dismiss')}
+        />
+      )}
+      {tourChip && !tourActive && (
+        <div
+          data-testid="tour-chip"
+          className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--r-md)] border px-3.5 py-2.5 text-[12.5px]"
+          style={{ borderColor: 'var(--border-strong)', backgroundColor: 'var(--panel)', color: 'var(--body)' }}
+        >
+          <span>
+            {tourChip.resume
+              ? `${resumeLabel(tourState)} — pick up where you left off.`
+              : 'New here? The first-lesson tour is six steps and about two minutes.'}
+          </span>
+          <button
+            type="button"
+            onClick={() => startTour(tourChip.resume ? 'resume' : 'restart')}
+            data-testid="btn-tour-start"
+            className="min-h-[44px] rounded border px-2.5 py-1 text-[12px] font-semibold sm:min-h-0"
+            style={{ borderColor: 'var(--accent)', color: 'var(--accent)', backgroundColor: 'var(--accent-soft)' }}
+          >
+            {tourChip.resume ? 'Resume' : 'Take the tour'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTourChip(null)}
+            aria-label="Dismiss the tour offer"
+            data-testid="btn-tour-chip-dismiss"
+            className="ml-auto grid h-11 w-11 place-items-center rounded border sm:h-8 sm:w-8"
+            style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Runtime strip. The three numbers that move, the interpreter, and one line about what
           this screen is. The long explanation now lives in the first-lesson guide below, so a
           learner reaches the editor a screen sooner. */}
@@ -2975,10 +3226,10 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           Write and Debug hide it, because each of them is about one panel and nothing else. */}
       <div
         className={`grid grid-cols-1 gap-5 ${
-          layout === 'study' ? 'lg:grid-cols-[224px_minmax(0,1fr)]' : ''
+          shownLayout === 'study' ? 'lg:grid-cols-[224px_minmax(0,1fr)]' : ''
         }`}
       >
-        {layout === 'study' && (
+        {shownLayout === 'study' && (
           <LessonChooser
             lessons={PYTHON_LESSONS}
             filteredLessons={filteredLessons}
@@ -2999,8 +3250,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             preset's grid: the lesson card above describes all of them, and the run banners
             between belong to the run, not to a column. */}
 
-          {/* Active Lesson Metadata Card. */}
-          <div className="bg-panel border border-line rounded-xl p-4">
+          {/* Active Lesson Metadata Card. `data-tour` names it for the first-run tour's second step
+              (`app/src/tour.ts`), and `scripts/test_tour.mjs` fails if the name goes away. */}
+          <div data-tour="lesson-brief" className="bg-panel border border-line rounded-xl p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 {/* Whole items wrap; none of them breaks inside a word. Before this, the row was a
@@ -3166,7 +3418,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                     requestRun(codeRef.current, lesson);
                   }}
                   disabled={isRunning}
+                  ref={runButtonRef}
                   data-testid="btn-run-verify"
+                  data-tour="run-button"
                   title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
                   className="btn btn-primary ml-1 px-3.5 py-2 text-[13px] font-bold"
                 >
@@ -4085,7 +4339,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           {/* Progressive 3-Step Hint Ladder */}
           {currentLesson.hints.length > 0 && (
-            <div className="bg-panel border border-line rounded-xl p-4">
+            <div data-tour="hint-ladder" className="bg-panel border border-line rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-mono text-amber flex items-center gap-1.5">
                   <Lightbulb className="w-4 h-4" />
@@ -4404,20 +4658,20 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           )}
 
           <div
-            data-layout={layout}
+            data-layout={shownLayout}
             // Which edge the results are on in Debug, and the lesson text in Study. The CSS places
             // the panels by column (`index.css`), because a dock is a side, not a visibility.
             data-dock={dock.results}
             data-lesson-dock={dock.lesson}
             style={
-              layoutArrangement(layout) === 'columns'
+              layoutArrangement(shownLayout) === 'columns'
                 ? { gridTemplateColumns: splitGridTemplate(splitRatio, resultsSide) }
                 : undefined
             }
             className={
-              layoutArrangement(layout) === 'columns'
+              layoutArrangement(shownLayout) === 'columns'
                 ? 'grid gap-4 lg:grid-cols-2 items-start'
-                : layoutArrangement(layout) === 'workbench'
+                : layoutArrangement(shownLayout) === 'workbench'
                   ? 'flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start'
                   : 'space-y-4'
             }
@@ -4425,13 +4679,13 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             {/* Write and Debug do not read: the pane is not rendered at all there, so a hidden
                 preset costs no fetch and no place to lose. Coming back restores the lesson's
                 heading from the store, because unmounting flushed it. */}
-            {layoutShows(layout, 'lesson') && (
+            {layoutShows(shownLayout, 'lesson') && (
               <LessonReader
                 lessonId={selectedId}
                 // The registry's own page for this entry: a lesson's Markdown, or the module that
                 // set an exercise. '' means the entry has no prose page, and the pane says so.
                 path={currentLesson.readerPath}
-                tall={layout === 'read'}
+                tall={shownLayout === 'read'}
               />
             )}
 
@@ -4441,8 +4695,9 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
             ref={editorPanelRef}
             id="python-runner-editor"
             data-testid="editor-panel"
+            data-tour="editor"
             // Read hides the editor rather than shrinking it: a traceback is what that preset is for.
-            style={{ display: layoutShows(layout, 'editor') ? undefined : 'none' }}
+            style={{ display: layoutShows(shownLayout, 'editor') ? undefined : 'none' }}
             className="bg-panel border border-line rounded-xl overflow-hidden scroll-mt-4"
           >
             <div className="bg-canvas border-b border-line-soft flex flex-wrap items-center justify-between gap-2 px-3 py-1.5">
@@ -4674,6 +4929,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div
             ref={guideAssessmentRef}
             data-testid="panel-instructor-tests"
+            data-tour="checks-panel"
             className="bg-panel border border-line rounded-xl p-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -4799,7 +5055,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
 
           {/* The run trace: the last run replayed step by step, beside the output it explains. A
               recording, so it is gone when an edit makes it describe a program that no longer exists. */}
-          <div style={{ display: layoutShows(layout, 'results') ? undefined : 'none' }}>
+          <div style={{ display: layoutShows(shownLayout, 'results') ? undefined : 'none' }}>
             <TracePanel
               trace={trace}
               step={traceStep}
@@ -4821,11 +5077,11 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
           <div
             data-testid="results-panel"
             // Write hides the last run's output: while drafting, it describes code that has changed.
-            style={{ display: layoutShows(layout, 'results') ? undefined : 'none' }}
+            style={{ display: layoutShows(shownLayout, 'results') ? undefined : 'none' }}
             // Split already spends half the screen on this block: two cards inside one column of it
             // would be two 20-character panels. They stack there and sit side by side everywhere else.
             className={
-              layoutArrangement(layout) === 'columns'
+              layoutArrangement(shownLayout) === 'columns'
                 ? 'grid grid-cols-1 gap-4'
                 : 'grid grid-cols-1 md:grid-cols-2 gap-4'
             }

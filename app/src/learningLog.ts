@@ -14,6 +14,9 @@
  *    capstone — every graded number on its harness.
  *  - `hint` / `solution_open`: which help was used and when, so "needed a person" can be told apart
  *    from "used the ladder".
+ *  - `tour`: which onboarding step was on screen — shown, a step reached, skipped, or completed. It is
+ *    the only record of whether the tour was walked or dismissed at step two, which is the question a
+ *    pilot asks about onboarding.
  *  - `export`: when the learner handed the file over, so a partial log is not read as a whole one.
  *
  * Events are capped so the log cannot grow without bound - it is the largest store, and a log that grew
@@ -32,7 +35,17 @@ import { bulkStorage } from './bulkStorage.ts';
 import { readSittings } from './sittingClock.ts';
 import { PAINT_SCHEMA, flushPaintSample, paintSummary, readPaintSamples } from './paintTiming.ts';
 
-export type LearningEventKind = 'lesson_open' | 'run' | 'verified' | 'hint' | 'solution_open' | 'export';
+export type LearningEventKind =
+  | 'lesson_open'
+  | 'run'
+  | 'verified'
+  | 'hint'
+  | 'solution_open'
+  | 'tour'
+  | 'export';
+
+/** What the first-run tour did: opened, resumed, reached a step, closed, or reached the end. */
+export type TourLogAction = 'shown' | 'resume' | 'step' | 'skipped' | 'completed';
 
 export interface LearningEvent {
   /** Milliseconds since the epoch, so idle gaps are visible without a clock event. */
@@ -43,8 +56,10 @@ export interface LearningEvent {
   outcome?: string;
   /** `run`: the first line of the failing assertion or traceback, truncated. */
   fail?: string;
-  /** `hint`: how many hints were unlocked after this click. */
+  /** `hint`: how many hints were unlocked after this click. `tour`: which step, 1-based. */
   level?: number;
+  /** `tour`: which of the five things happened. */
+  action?: TourLogAction;
   /** `run`: wall-clock milliseconds between the run starting and its result. */
   ms?: number;
 }
