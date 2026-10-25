@@ -143,6 +143,14 @@ drafts · 11 log events`), or says the file has nothing new; a refusal says whic
 backup, a download that stopped short, or a zip that was re-compressed after it was unzipped, which is
 common enough (macOS Archive Utility) to deserve its own sentence.
 
+**A restore brings work, not settings.** The theme and palette, the layout, focus mode, breakpoints and
+watch expressions, the lesson the next visit reopens and the fold of each roadmap card stay on the
+device they were chosen on: they are choices about reading on one screen, and importing them would
+fight the choices already made on the machine the archive lands on. Rather than leaving a learner to
+wonder where their folded cards went, the archive's own `README.txt` says what is left out and names
+the three keys. The one carried exception is `tour.json` — that the tour was *shown* is a fact about
+the learner, not a preference about a screen.
+
 A restore writes the stores, not React's copy of them, so the controls dispatch
 `mechalab:store-restored` and `App` re-reads the maps: the tick comes back without a reload, which keeps
 the learner's tab and unsaved editor text. `npm run test:backup` pins the format (CRC vector, a
