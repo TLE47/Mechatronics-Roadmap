@@ -16,6 +16,33 @@ flowchart LR
 
 ---
 
+## [2026-10-25] — Run 243: the trail folds to one line
+
+The roadmap's trail card is the most useful thing on that page after a fortnight and the tallest thing
+on it after a week: every day, every row, and the readings above them. A learner who wants the totals
+still had to scroll past the transcript to reach the steps underneath.
+
+**One toggle in the header, and the totals stay.** Folded, the card is its summary line — `1 day ·
+under a minute measured · 4 runs` — and the days, rows, readings and the omitted-days sentence go
+behind one press. That line is already the card's own arithmetic (`trailSummary`), so the fold hides
+rows rather than dropping numbers. It also makes the one-day case honest: expanded, a single day is not
+summarised twice and the summary is absent; folded, that day's own line is gone, so the summary is what
+appears.
+
+**The choice is a preference, not data.** `mechalab_trail_collapsed_v1` sits in `localStorage` beside
+the palette, the layout and the last lesson, and is deliberately **not** in the backup — a restored
+archive has no business deciding whether a card on this device is folded, which is the same line
+`tour.json` crosses in the other direction ("shown" is a fact about the learner, not a preference).
+
+**It is one button with a name, not a colour.** `aria-expanded` carries the state and the accessible
+name begins with the visible word (`Show the trail` / `Hide the trail`, WCAG 2.5.3), the chevron is
+`aria-hidden`, and the card carries `data-collapsed` so a test reads the state instead of a class.
+
+Verified: `npm run test:e2e:trail` folds the card (no rows, no readings, `aria-expanded="false"`, the
+summary still naming the day), reloads and finds it still folded, then unfolds it and finds every row
+back; `check:snapshot` (48 surfaces) and `check:labels` (227 rows) unchanged, `check:axe` PASS,
+`npm run test:trail` and `npm run test:smoke` PASS, `tsc --noEmit` clean.
+
 ## [2026-10-24] — Run 242: the first lesson explains itself, and waits for you to do it
 
 The starter fails on purpose. A beginner's very first *Run & Verify Output* therefore prints red checks

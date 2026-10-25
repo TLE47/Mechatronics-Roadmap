@@ -412,6 +412,12 @@ Each rule is pinned by `npm run test:trailreading` (20 checks) and the rendered 
 `npm run test:e2e:trail`, which runs a lesson three times before its pass and expects the card to say
 so.
 
+**It folds.** Once a few days have been worked the card is the tallest thing on the roadmap, so its
+header carries one toggle: folded, it is the totals line — `1 day · under a minute measured · 4 runs`
+— and the days, rows and readings are behind one press. The choice is a preference, kept in
+`localStorage` beside the layout and the palette rather than in the backup, and it survives a reload;
+`npm run test:e2e:trail` folds the card, reloads, and unfolds it again.
+
 ### The portfolio export
 
 **Export Progress (.md)** writes one Markdown file a learner can put in a repository, a CV or a course
