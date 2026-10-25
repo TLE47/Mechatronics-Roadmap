@@ -43,8 +43,13 @@ const step = (page) => page.locator(CARD).getAttribute('data-tour-step').catch((
 
 async function go(page, baseUrl, path = '') {
   await page.goto(`${baseUrl}${path}`, { waitUntil: 'domcontentloaded' });
-  // The workbench mounts, the tour decision runs in an effect, and the coach mark is measured after
-  // that; 400 ms is the point where every case below has been stable in practice.
+  // The shell is the readiness signal a fixed sleep was standing in for. `domcontentloaded` fires
+  // before the module graph has been fetched and compiled, and on a contended runner (three suites
+  // sharing one dev server) that gap is seconds: the tour read as never having opened
+  // (`null !== 'welcome'`) and an Escape pressed into it went nowhere.
+  await page.waitForSelector('[data-testid="btn-theme-toggle"]', { timeout: 20000 });
+  // Then the settle: the tour decision runs in an effect after the shell mounts, and the coach mark
+  // is measured after that.
   await page.waitForTimeout(700);
 }
 
@@ -232,14 +237,29 @@ async function main() {
     page = ctx.page;
     await check('Esc dismisses, and a dismissed tour stays dismissed', async () => {
       await go(page, baseUrl, '?lesson=P.1');
+      const opened = await settled(
+        page,
+        () => !!document.querySelector('[data-testid="first-run-tour"]'),
+        15000
+      );
+      assert.ok(opened, 'a fresh visit must open the coach mark');
       assert.equal(await step(page), 'welcome');
+      // Press only once the card is *on screen*. `step()` waits for the element, but the keydown
+      // listener arrives with it: on a contended runner the card can mount after `go()`'s fixed
+      // sleep, and the Escape then goes nowhere while the card stays up at `welcome` — which is
+      // exactly how this check failed once in CI on a commit that passed everywhere else.
+      await page.locator(CARD).waitFor({ timeout: 15000 });
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(400);
-      assert.equal(await page.locator(CARD).count(), 0);
-      assert.equal((await record(page)).status, 'dismissed');
+      const gone = await settled(
+        page,
+        () => !document.querySelector('[data-testid="first-run-tour"]')
+      );
+      assert.ok(gone, 'Escape must take the coach mark down');
+      assert.equal(await page.locator(CARD).count(), 0, 'the card is still up after Escape');
+      assert.equal((await record(page)).status, 'dismissed', 'Escape must record the dismissal');
       await go(page, baseUrl, '?lesson=P.1');
-      assert.equal(await page.locator(CARD).count(), 0);
-      assert.equal(await page.locator(CHIP).count(), 0);
+      assert.equal(await page.locator(CARD).count(), 0, 'a dismissed tour reopened on reload');
+      assert.equal(await page.locator(CHIP).count(), 0, 'a dismissed tour offered the resume chip');
     });
     await ctx.context.close();
 

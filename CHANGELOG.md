@@ -100,6 +100,17 @@ keyboard to reach that scroll. All three now carry `tabIndex={0}` and a name (`r
 formula's or the sketch's own words), the pattern `MathPanel` already used. Nothing else moved — the
 snapshot and label baselines came back at their exact previous numbers.
 
+**Then it failed once on `main` and passed everywhere else, and the test was wrong.** The dismiss check
+pressed Escape 700 ms after a fresh visit and then asserted the card was gone; on a runner sharing one
+dev server with three other browser suites the coach mark mounts *after* that sleep, so the key went
+into a page with no listener and the card appeared a moment later (`1 !== 0`). The next run of the same
+three-instance contention found the other half of the same assumption (`null !== 'welcome'`). `go()` now
+waits for the shell (`btn-theme-toggle`) instead of sleeping, presses only once the card is on screen,
+and waits bounded for the dismissal — the assertions are unchanged, and the case still fails if the
+mark never opens or Escape never closes it. Proven by pressing Escape before the mount on purpose
+(`.fb-scratch/probe_esc_race.mjs`: card opens, record stays `active`) and by three concurrent runs of
+the suite, which is the contention that produced both shapes.
+
 `npm run test:e2e:tour` (`scripts/e2e_tour.mjs`, **12 checks in a real browser**) walks the whole thing:
 the ring's geometry against the brief and that the brief is still clickable through it, the missing Next
 button on step 3 and that typing alone advances it, the predict gate handled the way a learner handles
