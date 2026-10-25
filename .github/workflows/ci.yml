@@ -175,6 +175,11 @@ jobs:
       - name: Check the cloud-sync merge rules (local vs account progress)
         run: npm run test:merge
 
+      # The account layer without a browser or a project: return-to sanitising, password rules,
+      # the keep-both workspace merge, the dashboard model and the admin gate.
+      - name: Check the account rules (sign-in, return-to, workspace merge, admin gate)
+        run: npm run test:accounts
+
       - name: Check the 08.1 fault-bench metrics
         run: npm run test:faultbench
 

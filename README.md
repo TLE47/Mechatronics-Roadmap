@@ -22,11 +22,11 @@
 <!-- start-here:start -->
 > **Start here — your first 2 hours**
 >
-> What MechaLab is: this course's browser workbench. Python 3.12 and the circuit simulators run inside the tab, with nothing to install and no account.
+> What MechaLab is: this course's browser workbench. Python 3.12 and the circuit simulators run inside the tab, with nothing to install and no account needed. An account is optional, for carrying progress between devices.
 >
 > **[Read Lesson 1: Variables and data types →](track-p/P.1-variables-and-data-types.md)**
 >
-> When to use it: any time a lesson asks you to run something — Run Python Lessons lists every lesson and exercise that has an entry. Read the page for the idea, then type, run and verify in MechaLab; your progress stays in this browser, and nothing is saved on GitHub.
+> When to use it: any time a lesson asks you to run something — Run Python Lessons lists every lesson and exercise that has an entry. Read the page for the idea, then type, run and verify in MechaLab; your progress stays in this browser unless you sign in, and nothing is saved on GitHub.
 <!-- start-here:end -->
 
 ---
@@ -54,7 +54,7 @@ No previous electronics, mechanics, or coding. No maths past school arithmetic: 
 
 | | Step | Where |
 | :--- | :--- | :--- |
-| 1 | **Open the workbench** — Python 3.12 and the circuit sims run in the tab, with no account | [MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) |
+| 1 | **Open the workbench** — Python 3.12 and the circuit sims run in the tab, with no account needed | [MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) |
 | 2 | **Read and run Lesson 1** — variables, types and one prediction you check yourself | [P.1 · Variables and data types](track-p/P.1-variables-and-data-types.md) |
 | 3 | **Follow the route below** — each step ends with something you can run and verify | [Your route: 10 steps](#your-route-10-steps) |
 
@@ -137,7 +137,7 @@ Every lesson's `## Check yourself` is closed-book: the answers are in `<details>
 
 | Requirement | What it covers |
 | :--- | :--- |
-| **A browser** | [MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) runs Python 3.12, the circuit simulators, and every graded check. Nothing to install, no account. |
+| **A browser** | [MechaLab](https://tle47.github.io/Mechatronics-Roadmap/) runs Python 3.12, the circuit simulators, and every graded check. Nothing to install, no account required. |
 | **Optional \$15–\$25** | An Arduino Uno clone, breadboard, LEDs, resistors, a potentiometer, and buttons, for the physical versions of Steps 2 and 3. |
 | **Optional ~\$150** | A current-limited bench supply, multimeter, small motor, and driver, for the physical motor labs. Required for none of the route. |
 

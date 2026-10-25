@@ -127,6 +127,24 @@ export function saveDraft(id: string, code: string): boolean {
   return writeDrafts(store, drafts);
 }
 
+/**
+ * Replace the whole store - what a merged cloud workspace writes back.
+ *
+ * Takes the drafts it is given as the new truth (they have already been merged by
+ * `workspaceMerge.ts`), validates each entry the same way a read does, and keeps the newest edit
+ * last, which is the order the "continue" card has always read. Returns false when the browser
+ * refused the write, so the caller can say the merge did not land instead of pretending it did.
+ */
+export function replaceDrafts(drafts: Drafts): boolean {
+  const store = storage();
+  if (!store) return false;
+  const clean: Drafts = {};
+  for (const [id, text] of Object.entries(drafts)) {
+    if (typeof text === 'string' && text.length > 0) clean[id] = text;
+  }
+  return writeDrafts(store, clean);
+}
+
 /** Forget one lesson's draft - what Reset Starter means once the editor is back on the starter. */
 export function clearDraft(id: string): void {
   const store = storage();

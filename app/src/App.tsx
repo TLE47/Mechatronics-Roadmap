@@ -80,15 +80,38 @@ function prefetchTab(tabId: string): void {
   void TAB_PREFETCH[tabId]?.();
 }
 import { PresetRequest, tabForPreset } from './demoPresets';
-import { AccountPanel } from './components/AccountPanel';
+import type { SignUpOutcome } from './components/AccountPanel';
 import {
   accountsConfigured,
   currentSession,
+  isRecoveryLink,
+  loadMyRole,
   onSessionChange,
   sendMagicLink,
+  sendPasswordReset,
+  sessionProviders,
+  signInWithGoogle,
+  signInWithPassword,
   signOutNow,
+  signUpWithPassword,
+  updatePassword,
 } from './accounts';
+import { deleteAccount, exportAccountData } from './accountActions';
+import { authCallbackProblem, emailProblem, passwordProblem } from './accountRules';
 import { loadProgress, saveProgress } from './cloudProgress';
+import { parseReturnTarget } from './returnTo';
+import { defaultPublicSettings, flagOn, type PublicSettings } from './siteSettingsModel';
+import { loadPublicSettings } from './siteSettings';
+import {
+  mergeAndApplyWorkspace,
+  previewWorkspace,
+  setWorkspaceSyncEnabled,
+  workspaceSyncEnabled,
+  type WorkspaceSyncReport,
+} from './workspaceSync';
+import type { DashboardEvent, DashboardStudy } from './dashboardData';
+import { readDrafts } from './lessonDraft';
+import { dueCards, syncCards } from './studyCards';
 import { mergeProgress, PROGRESS_SCHEMA, type ProgressSnapshot } from './progressMerge';
 import {
   STORAGE_KEY_COMPLETED,
@@ -149,6 +172,46 @@ import {
   Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+
+/**
+ * The three whole-screen views. The account panel, the learner dashboard and the admin area are
+ * split into their own chunks: a visitor who never signs in should not download them, and the weight
+ * budget is a promise to the first lesson, not to a settings page.
+ */
+const AccountPanel = React.lazy(() =>
+  import('./components/AccountPanel').then((module) => ({ default: module.AccountPanel }))
+);
+const LearnerDashboard = React.lazy(() =>
+  import('./components/LearnerDashboard').then((module) => ({ default: module.LearnerDashboard }))
+);
+const AdminDashboard = React.lazy(() =>
+  import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard }))
+);
+
+type WholePage = 'workbench' | 'dashboard' | 'admin';
+
+/** `?view=dashboard` and `?view=admin` are addresses, so a dashboard survives a reload. */
+function pageFromLocation(): WholePage {
+  if (typeof window === 'undefined' || !window.location) return 'workbench';
+  const view = new URLSearchParams(window.location.search || '').get('view');
+  return view === 'dashboard' || view === 'admin' ? view : 'workbench';
+}
+
+/** The sentence shown after a workspace merge: what arrived, and what was kept twice. */
+function workspaceReportLine(report: WorkspaceSyncReport): string {
+  const parts: string[] = [];
+  if (report.addedDrafts) parts.push(`${report.addedDrafts} draft(s)`);
+  if (report.addedNotes) parts.push(`${report.addedNotes} note(s)`);
+  if (report.addedHighlights) parts.push(`${report.addedHighlights} highlight(s)`);
+  const arrived = parts.length
+    ? `${parts.join(', ')} came in from your account.`
+    : 'This browser and your account were already in step.';
+  const kept = report.conflicts
+    ? ` ${report.conflicts} version(s) differed; both copies were kept.`
+    : '';
+  const stored = report.stored ? '' : ' This browser refused the write — the account still has the merged copy.';
+  return `${arrived}${kept}${stored}`;
+}
 
 /** One glyph per tab, so the rail can be scanned by shape as well as by name. */
 const TAB_ICONS: Record<TabId, LucideIcon> = {
@@ -470,6 +533,20 @@ export const App: React.FC = () => {
   const [syncNote, setSyncNote] = useState<string>('');
   // True only after the account's copy has been merged in; a save before that would overwrite it.
   const syncReady = useRef<boolean>(false);
+  const [accountProviders, setAccountProviders] = useState<string[]>([]);
+  const [accountRole, setAccountRole] = useState<string | null>(null);
+  // A reset link lands on `?type=recovery`: the panel then opens on "set a new password".
+  const [recovery, setRecovery] = useState<boolean>(() => isRecoveryLink());
+  const [wholePage, setWholePage] = useState<WholePage>(() => pageFromLocation());
+  // Workspace sync is opt-in per browser; its preview and last report are what the panel shows.
+  const [workspaceSync, setWorkspaceSync] = useState<boolean>(() => workspaceSyncEnabled());
+  const [workspacePreview, setWorkspacePreview] = useState<Awaited<
+    ReturnType<typeof previewWorkspace>
+  > | null>(null);
+  const [workspaceReport, setWorkspaceReport] = useState<string | null>(null);
+  const [workspaceConflicts, setWorkspaceConflicts] = useState<number>(0);
+  // Public settings: one announcement line and one live flag. The defaults are "no banner, feature on".
+  const [siteSettings, setSiteSettings] = useState<PublicSettings>(() => defaultPublicSettings());
 
   const [viewMode, setViewMode] = useState<WorkbenchViewMode>(() => {
     try {
@@ -537,6 +614,49 @@ export const App: React.FC = () => {
     return () => window.removeEventListener(STORE_RESTORED_EVENT, onRestored);
   }, []);
 
+  // The account service is public: an announcement banner is not worth a sign-in.
+  useEffect(() => {
+    let live = true;
+    loadPublicSettings()
+      .then((settings) => {
+        if (live) setSiteSettings(settings);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  // Where a sign-in round trip asked to come back to, and what an OAuth refusal said.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.location) return;
+    const search = window.location.search || '';
+    const target = parseReturnTarget(search, isKnownLesson);
+    if (target?.view) setWholePage(target.view);
+    if (target?.lessonId) {
+      setActiveTab('tab-pyodide');
+      setLessonRequest({ id: target.lessonId, nonce: Date.now() });
+    }
+    // Google and Supabase report a refused sign-in in the query string. Show the sentence once, then
+    // take it out of the address so a reload does not resurrect it.
+    const params = new URLSearchParams(search);
+    const callback = authCallbackProblem(
+      params.get('error') ?? params.get('error_code'),
+      params.get('error_description')
+    );
+    if (callback) {
+      setAccountError(callback);
+      setIsAccountOpen(true);
+    }
+    if (search.includes('return=') || callback) {
+      const url = new URL(window.location.href);
+      for (const key of ['return', 'error', 'error_description', 'error_code']) {
+        url.searchParams.delete(key);
+      }
+      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_VIEW_MODE, viewMode);
@@ -597,10 +717,27 @@ export const App: React.FC = () => {
     if (!accountsConfigured) return;
     let cancelled = false;
 
-    const applySession = async (session: Session | null) => {
+    const applySession = async (session: Session | null, event = '') => {
       if (cancelled) return;
+      // A reset link creates a session *and* says why it exists. Open the panel on the new-password
+      // field instead of dropping the learner into the workbench with no way to set one.
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecovery(true);
+        setIsAccountOpen(true);
+      }
       setAccountEmail(session?.user.email ?? null);
       setAccountUserId(session?.user.id ?? null);
+      setAccountProviders(sessionProviders(session));
+      setAccountRole(null);
+      if (session) {
+        // The role decides whether the admin entry is offered; the server checks it again on every
+        // admin action, so a failure here is only a missing button, never an open door.
+        loadMyRole(session.user.id)
+          .then((role) => {
+            if (!cancelled) setAccountRole(role);
+          })
+          .catch(() => undefined);
+      }
       if (!session) {
         syncReady.current = false;
         setSyncNote('');
@@ -618,6 +755,25 @@ export const App: React.FC = () => {
         syncReady.current = true;
         await saveProgress(session.user.id, { ...merged, updatedAt: Date.now() });
         if (!cancelled) setSyncNote(remote ? 'Progress merged with your account.' : 'Progress saved to your account.');
+        // Only when this browser opted in. A project without the workspace migration throws here;
+        // that must not take progress sync down with it, so it has its own catch.
+        if (workspaceSyncEnabled()) {
+          try {
+            const report = await mergeAndApplyWorkspace(session.user.id);
+            if (!cancelled) {
+              setWorkspaceConflicts(report.conflicts);
+              setWorkspaceReport(workspaceReportLine(report));
+            }
+          } catch (workspaceError) {
+            if (!cancelled) {
+              setWorkspaceReport(
+                workspaceError instanceof Error
+                  ? `Draft sync unavailable: ${workspaceError.message}`
+                  : 'Draft sync unavailable.'
+              );
+            }
+          }
+        }
       } catch (error) {
         // Signed in but the row is unreachable: keep the learner working locally and say so.
         syncReady.current = false;
@@ -654,12 +810,135 @@ export const App: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [completedMilestones, verifiedLessons, completedLessons, accountUserId]);
 
-  const handleSendMagicLink = async (address: string) => {
+  /** The address bar as an internal destination: `?lesson=P.1`, `?view=dashboard`, or the root. */
+  const intendedDestination = (): string =>
+    typeof window === 'undefined' || !window.location ? '' : window.location.search || '';
+
+  const handleSendMagicLink = async (address: string): Promise<string | null> => {
+    const problem = emailProblem(address);
+    if (problem) return problem;
     setAccountBusy(true);
     setAccountError(null);
-    const problem = await sendMagicLink(address);
+    const failure = await sendMagicLink(address.trim(), intendedDestination());
     setAccountBusy(false);
-    if (problem) setAccountError(problem);
+    return failure;
+  };
+
+  const handleSignIn = async (address: string, password: string): Promise<string | null> => {
+    const problem = emailProblem(address) ?? (password ? null : 'Enter your password.');
+    if (problem) return problem;
+    setAccountBusy(true);
+    setAccountError(null);
+    const failure = await signInWithPassword(address.trim(), password);
+    setAccountBusy(false);
+    return failure;
+  };
+
+  const handleCreateAccount = async (address: string, password: string): Promise<SignUpOutcome> => {
+    const problem = emailProblem(address) ?? passwordProblem(password, address);
+    if (problem) return { problem, needsVerification: false };
+    setAccountBusy(true);
+    setAccountError(null);
+    const outcome = await signUpWithPassword(address.trim(), password, intendedDestination());
+    setAccountBusy(false);
+    return outcome;
+  };
+
+  const handlePasswordReset = async (address: string): Promise<string | null> => {
+    const problem = emailProblem(address);
+    if (problem) return problem;
+    setAccountBusy(true);
+    setAccountError(null);
+    const failure = await sendPasswordReset(address.trim(), intendedDestination());
+    setAccountBusy(false);
+    return failure;
+  };
+
+  const handleSetPassword = async (password: string): Promise<string | null> => {
+    const problem = passwordProblem(password, accountEmail ?? '');
+    if (problem) return problem;
+    setAccountBusy(true);
+    const failure = await updatePassword(password);
+    setAccountBusy(false);
+    if (!failure) setRecovery(false);
+    return failure;
+  };
+
+  const handleGoogle = async (): Promise<string | null> => {
+    setAccountBusy(true);
+    setAccountError(null);
+    const failure = await signInWithGoogle(intendedDestination());
+    setAccountBusy(false);
+    return failure;
+  };
+
+  const handleExportData = async (): Promise<string | null> => {
+    setAccountBusy(true);
+    const result = await exportAccountData();
+    setAccountBusy(false);
+    if (result.problem) return result.problem;
+    try {
+      const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'mechalab-account.json';
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      return 'The export was built but the browser refused the download.';
+    }
+    return null;
+  };
+
+  const handleDeleteAccount = async (confirmation: string): Promise<string | null> => {
+    setAccountBusy(true);
+    const result = await deleteAccount(confirmation);
+    setAccountBusy(false);
+    if (result.problem) return result.problem;
+    syncReady.current = false;
+    setAccountEmail(null);
+    setAccountUserId(null);
+    setAccountProviders([]);
+    setAccountRole(null);
+    setSyncNote('');
+    setAccountError(null);
+    setWorkspaceSync(false);
+    setWorkspaceSyncEnabled(false);
+    setWorkspaceReport(null);
+    setWorkspaceConflicts(0);
+    setIsAccountOpen(false);
+    return null;
+  };
+
+  const handleToggleWorkspaceSync = async (on: boolean) => {
+    if (!on) {
+      setWorkspaceSyncEnabled(false);
+      setWorkspaceSync(false);
+      setWorkspaceReport('Drafts and notes stay in this browser now. Nothing was deleted.');
+      return;
+    }
+    if (!accountUserId) {
+      setAccountError('Sign in first, then turn on draft and note sync.');
+      return;
+    }
+    setAccountBusy(true);
+    setAccountError(null);
+    try {
+      // Show what each side holds before the merge writes anything.
+      setWorkspacePreview(await previewWorkspace(accountUserId));
+      const report = await mergeAndApplyWorkspace(accountUserId);
+      setWorkspaceSyncEnabled(true);
+      setWorkspaceSync(true);
+      setWorkspaceConflicts(report.conflicts);
+      setWorkspaceReport(workspaceReportLine(report));
+    } catch (error) {
+      setAccountError(
+        error instanceof Error ? `Draft sync is unavailable: ${error.message}` : 'Draft sync is unavailable.'
+      );
+    } finally {
+      setAccountBusy(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -671,8 +950,29 @@ export const App: React.FC = () => {
     syncReady.current = false;
     setAccountEmail(null);
     setAccountUserId(null);
+    setAccountProviders([]);
+    setAccountRole(null);
     setSyncNote('');
     setAccountError(null);
+    setWorkspacePreview(null);
+    setWorkspaceReport(null);
+  };
+
+  /** Move between the workbench, the dashboard and the admin area, and keep the address in step. */
+  const openPage = (next: WholePage) => {
+    setWholePage(next);
+    if (typeof window === 'undefined' || !window.location) return;
+    const url = new URL(window.location.href);
+    if (next === 'workbench') url.searchParams.delete('view');
+    else url.searchParams.set('view', next);
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  const openLessonFromDashboard = (id: string) => {
+    openPage('workbench');
+    setActiveTab('tab-pyodide');
+    setHighlightedId(null);
+    setLessonRequest({ id, nonce: Date.now() });
   };
 
   const handleRestoreStartHere = () => {
@@ -1101,6 +1401,142 @@ export const App: React.FC = () => {
     }
   };
 
+  // One account panel, shared by the workbench and the whole-page views. It is built only while it is
+  // open: a lazy element is fetched when React renders it, so an always-present one would download
+  // its chunk on every visit and render inside the server-side smoke test, which has no browser.
+  const accountPanel = isAccountOpen ? (
+    <React.Suspense fallback={null}>
+      <AccountPanel
+        isOpen={isAccountOpen}
+        onClose={() => setIsAccountOpen(false)}
+        configured={accountsConfigured}
+        email={accountEmail}
+        note={syncNote}
+        error={accountError}
+        busy={accountBusy}
+        providers={accountProviders}
+        recovery={recovery}
+        workspaceSync={workspaceSync}
+        workspacePreview={workspacePreview}
+        workspaceReport={workspaceReport}
+        role={accountRole}
+        onMagicLink={handleSendMagicLink}
+        onSignIn={handleSignIn}
+        onCreateAccount={handleCreateAccount}
+        onPasswordReset={handlePasswordReset}
+        onSetPassword={handleSetPassword}
+        onGoogle={handleGoogle}
+        onSignOut={handleSignOut}
+        onToggleWorkspaceSync={(on) => void handleToggleWorkspaceSync(on)}
+        onExportData={handleExportData}
+        onDeleteAccount={handleDeleteAccount}
+        onOpenDashboard={() => {
+          setIsAccountOpen(false);
+          openPage('dashboard');
+        }}
+        onOpenAdmin={() => {
+          setIsAccountOpen(false);
+          openPage('admin');
+        }}
+      />
+    </React.Suspense>
+  ) : null;
+
+  // The dashboard reads the same stores the workbench writes, and only reads them when it is on
+  // screen. `storeNonce` re-reads after a backup restore, so the counts match the files on disk.
+  const dashboardData = useMemo(() => {
+    if (wholePage === 'workbench') return null;
+    return {
+      drafts: readDrafts(),
+      // `LessonStudy` and `DashboardStudy` describe the same shape; the dashboard only needs note and
+      // quote, so it cannot depend on the parts it does not render.
+      study: readStudy() as unknown as DashboardStudy,
+      events: readLearningLog() as unknown as DashboardEvent[],
+      due: dueCards(syncCards()).length,
+    };
+  }, [wholePage, storeNonce]);
+
+  if (wholePage !== 'workbench') {
+    const offer = lessonOffer(
+      readLastLessonId(),
+      PYTHON_LESSONS.map((lesson) => lesson.id),
+      { verified: verifiedLessons, completed: completedLessons }
+    );
+    return (
+      <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
+        <Header
+          theme={theme}
+          fallback={themeFallback}
+          onToggle={toggleThemeMode}
+          onToggleContrast={toggleContrastMode}
+          onTogglePaper={togglePaperMode}
+          onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
+          onExportPortfolio={() => setIsPortfolioModalOpen(true)}
+          activeTierPass={activeTierPass}
+          onSelectTierPass={setActiveTierPass}
+          accountEmail={accountEmail}
+          onOpenAccount={() => setIsAccountOpen(true)}
+          onOpenPalette={() => setIsPaletteOpen(true)}
+          focus={focus}
+          onToggleFocus={toggleFocusMode}
+        />
+        {siteSettings.announcement && (
+          <div
+            role="status"
+            data-testid="site-announcement"
+            className="border-b px-4 py-2 text-center text-xs"
+            style={{ backgroundColor: 'var(--accent-soft)', borderColor: 'var(--border)', color: 'var(--accent)' }}
+          >
+            {siteSettings.announcement}
+          </div>
+        )}
+        <main id="main" tabIndex={-1} className="flex-1 w-full outline-none">
+          <React.Suspense
+            fallback={
+              <p className="p-6 text-xs" style={{ color: 'var(--muted)' }}>
+                Loading…
+              </p>
+            }
+          >
+            {wholePage === 'dashboard' ? (
+              <LearnerDashboard
+                email={accountEmail}
+                role={accountRole}
+                lessons={PYTHON_LESSONS.map((lesson) => ({ id: lesson.id, title: lesson.title }))}
+                verified={verifiedLessons}
+                completed={completedLessons}
+                milestones={completedMilestones}
+                continueLesson={offer}
+                drafts={dashboardData?.drafts ?? {}}
+                study={dashboardData?.study ?? {}}
+                events={dashboardData?.events ?? []}
+                dueCards={dashboardData?.due ?? 0}
+                workspaceSync={workspaceSync}
+                conflicts={workspaceConflicts}
+                syncNote={syncNote}
+                onOpenLesson={openLessonFromDashboard}
+                onBack={() => openPage('workbench')}
+                onOpenAccount={() => setIsAccountOpen(true)}
+                onOpenAdmin={() => openPage('admin')}
+              />
+            ) : (
+              <AdminDashboard
+                configured={accountsConfigured}
+                signedIn={Boolean(accountEmail)}
+                role={accountRole}
+                version={APP_VERSION}
+                onBack={() => openPage('workbench')}
+                onOpenAccount={() => setIsAccountOpen(true)}
+              />
+            )}
+          </React.Suspense>
+        </main>
+        <SiteFooter />
+        {accountPanel}
+      </div>
+    );
+  }
+
   if (themeView) {
     return (
       <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
@@ -1234,10 +1670,22 @@ export const App: React.FC = () => {
         </div>
       </div>
 
+      {siteSettings.announcement && (
+        <div
+          role="status"
+          data-testid="site-announcement"
+          className="border-b px-4 py-2 text-center text-xs"
+          style={{ backgroundColor: 'var(--accent-soft)', borderColor: 'var(--border)', color: 'var(--accent)' }}
+        >
+          {siteSettings.announcement}
+        </div>
+      )}
+
       {/* The simulator tour is for exploring the labs, not for the first lesson. On the Python
           runner it would put a tier-matrix paragraph between a newcomer and Lesson P.1, so it
-          appears once they open the roadmap (or any simulator tab). */}
-      {activeTab !== 'tab-pyodide' && (
+          appears once they open the roadmap (or any simulator tab). The admin's `guided_tour` flag
+          can hide it site-wide, and an absent setting means on. */}
+      {flagOn(siteSettings, 'guided_tour') && activeTab !== 'tab-pyodide' && (
         <div data-chrome="tour">
           <GuidedTourBar
             currentStepIndex={tourIndex}
@@ -1512,17 +1960,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      <AccountPanel
-        isOpen={isAccountOpen}
-        onClose={() => setIsAccountOpen(false)}
-        configured={accountsConfigured}
-        email={accountEmail}
-        note={syncNote}
-        error={accountError}
-        busy={accountBusy}
-        onSendLink={handleSendMagicLink}
-        onSignOut={handleSignOut}
-      />
+      {accountPanel}
 
       {/* Focus mode hides every control that would offer a different task, so the way out has to be
           on screen itself: one pill, and Escape doing the same thing. */}

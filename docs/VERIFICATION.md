@@ -539,6 +539,36 @@ it against `signed_in`'s ceilings and deletes it, so a breach that only exists w
 library present fails locally instead of on the runner (Run 226). CI's `dist/` is already signed-in,
 so nothing extra is built there.
 
+## Accounts, sync and the admin area
+
+`npm run test:accounts` runs the account rules under Node's type stripping, with no browser and no
+project: email and password checks, the callback-error sentences, the return-to sanitiser (a scheme,
+`//host`, a backslash, encoded `..` and another project's base path all become the site root), the
+keep-both workspace merge (one-sided data kept, identical copies collapsed, two different drafts/notes
+both retained, highlights unioned by quote, re-merging the result stable), the dashboard model and the
+admin gate. `npm run test:merge` still pins the progress merge. `npm run test:schema`
+([`tests/test_accounts_schema.py`](../tests/test_accounts_schema.py)) reads the migrations and the Edge
+Functions as text and fails if a table is created without RLS, forced RLS or the revoke-first grants; if
+the role table ever gains a write grant; if a write policy is open with `using (true)`; if a privileged
+function does not establish the caller from the JWT; if an admin write is unaudited, loses the last-admin
+guard or drops the MFA check; if a server-only credential name appears under `app/src`; or if the docs
+lose the setup, privacy or bootstrap story.
+
+What this cannot prove is a real Supabase project, so two scripts run against staging instead, by hand,
+and never in CI: `npm run check:staging` creates confirmed test accounts and asserts, in 18 checks,
+two-account isolation in both directions, the role self-write refusal, a learner's JWT refused by
+`admin-action` and `curriculum-pr`, an admin at `aal1` refused and at `aal2` admitted after a real TOTP
+enrolment, the announcement write / public read / clear, promote and demote, the last-admin `409`, an
+audit row per write, export, and deletion of the auth user with its rows; `npm run test:e2e:two-factor`
+drives the account panel in a browser — first-time enrolment from the secret it shows, a code that
+verifies, an announcement saved by the resulting `aal2` session, and a second browser asked for a code
+instead of a new secret. `npm run check:staging` found the assurance check asking the SDK for the level
+of a session it does not keep; it now reads the `aal` claim of the token `getUser()` validated. Still
+manual: the confirmation email, the Google round trip, the two-browser draft conflict, the offline merge
+and the GitHub App pull request ([`ACCOUNTS.md`](ACCOUNTS.md), *Release checks*). CI stays on the
+local-only build — no account keys are required for a push to be green, which is also what keeps a fresh
+clone working.
+
 ## What is asserted, not just run
 
 - **Lesson size:** at most two new ideas per lesson (`lint_lessons.py`), checked from the

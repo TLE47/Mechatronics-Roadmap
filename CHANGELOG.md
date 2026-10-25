@@ -16,6 +16,77 @@ flowchart LR
 
 ---
 
+## [2026-10-24] — Run 240: the staging pass, and the two defects it found
+
+The accounts work had never met a live project. Staging (`mechalab-staging`, us-west-1) now exists: both
+migrations applied, three Edge Functions deployed with `APP_ORIGIN`, Auth pointed at localhost and the
+Pages base, and the first admin granted out of band. Running the release checks by hand found two
+things no local gate could see.
+
+**Every admin was locked out.** `requireAdmin` asked
+`auth.mfa.getAuthenticatorAssuranceLevel()` for the session level, but that helper reads the *stored
+session* of the client it is called on, and the function's client is stateless by design — it carries
+the caller's header and nothing else. It answered `null` for every request, so a genuine `aal2` session
+was refused with the MFA sentence and `ADMIN_REQUIRE_MFA=0` was the only way in. The check now decodes
+the `aal` claim of the token `getUser()` has already validated.
+
+**A first admin had no way to enrol a factor.** The panel could sign in, sync, export and delete, and
+the admin area existed, but nothing offered Supabase's TOTP enrolment — so the MFA requirement was
+unreachable from the app. The account panel now has a **Two-factor** section for an admin: *Set up
+two-factor* shows the base32 secret and `otpauth://` link, a six-digit code turns the session `aal2`,
+and a returning admin is asked for a code instead of being shown the secret again (`enrolTotp`,
+`verifiedTotpFactors`, `verifyTotp`, `currentAssurance` in `app/src/accounts.ts`).
+
+The pass is scripted rather than retyped: `npm run check:staging` (`scripts/staging_checks.mjs`) creates
+confirmed test accounts and runs **18 checks** — isolation in both directions, the role self-write
+refusal, learner refusals from both functions, `aal1` refused and `aal2` admitted, announcement write /
+public read / clear, promote and demote, the last-admin `409`, audit rows, export, deletion of user and
+rows, and `curriculum-pr`'s `501`. `npm run test:e2e:two-factor` (`scripts/e2e_two_factor.mjs`) drives
+the panel in a browser through both branches. Both skip CI and skip production; staging's test data is
+deleted after the run. All local gates stay green: check_all 35/35, `test:accounts` 25, `test:schema` 18,
+`test:merge` 9, build and `check:weight` (entry 495.4 kB of 505, total 1.41 MB of 1.46).
+
+## [2026-10-24] — Run 238: the account is optional, the admin area is a role
+
+The workbench could sign a learner in with an emailed link and sync three progress maps. Accounts now
+run the full product decision: **learning stays open without an account; an account is for carrying
+work between devices; administration is a role checked on the server.**
+
+**Sign-in** grew into one flow: the same Google button for new and returning learners, email + password
+with confirmation and reset, and the old sign-in link kept as an alternative. A round trip returns to
+the lesson or dashboard it started from, through `returnTo.ts`, which accepts only this origin's base
+path and refuses a scheme, `//host`, a backslash and `..`; Supabase's redirect allow-list is the second
+lock. Account settings list the connected methods and offer export and delete.
+
+**Workspace sync is opt-in and never chooses silently.** `workspaceMerge.ts` keeps a draft or note that
+exists on one side, collapses identical copies, and when two devices hold different text keeps the newer
+in the lesson's slot **and the other in a conflict entry** with its origin and time. Highlights union by
+quote; two comments on one quote keep both. The account panel shows what each side holds before the
+merge writes, and the dashboard counts the kept versions.
+
+**A learner dashboard** (`?view=dashboard`) reads the same stores as the workbench: Continue (from
+`lessonOffer`, so it never sends anyone back to a verified lesson), progress counts, recent study, saved
+work, due review and the account/sync scope. It is a home base, not a gate: the back button returns to
+the lesson, and a signed-out visitor can open it.
+
+**The admin area** (`?view=admin`) is hidden by role and protected by everything else: five tables with
+RLS **and explicit grants** (Supabase's default `grant all` revoked first), a role table the browser can
+only read, and three Edge Functions that read the caller from the JWT, re-read the role with the
+service-role client, and require an `aal2` session. It ships an announcement (public read), a fixed
+feature flag (`guided_tour`, on unless written), a role control that refuses to demote the last admin,
+an audit log written by the server, and a curriculum workflow that opens a **pull request** through a
+GitHub App — CI and the generators remain the publishing gate.
+
+Files: `app/src/{accounts,accountActions,accountRules,returnTo,workspaceMerge,workspaceSync,dashboardData,adminModel,siteSettings,siteSettingsModel}.ts`, `app/src/components/{AccountPanel,LearnerDashboard,AdminDashboard}.tsx`, `app/src/App.tsx`, `app/src/lessonDraft.ts` (`replaceDrafts`), `supabase/migrations/000{1,2}_*.sql`, `supabase/functions/{_shared/http,account-action,admin-action,curriculum-pr}`, `scripts/test_accounts.mjs`, `tests/test_accounts_schema.py`, `package.json`, `.github/workflows/ci.yml`, `docs/ACCOUNTS.md`, `docs/ADMIN.md`, `docs/VERIFICATION.md`, `docs/README.md`, `README.md`, `app/src/data/startHere.json`, `docs/weight-budget.json`.
+
+Verified: `npm run test:accounts` 25 checks; `npm run test:schema` 18 tests; `python3.12
+scripts/check_all.py` 35/35; `npm run lint` and `npm run build` clean; `npm run check:weight` within both
+shapes (entry 485.1 kB local / 487.1 signed, js 762.6 / 822.4 of the raised 790 / 850 ceilings, tightest
+metric 277 B). The three new screens are `React.lazy` chunks, so a visitor who never opens them does not
+download them. What these checks cannot prove is a live project: the staging checklist in
+[`docs/ACCOUNTS.md`](docs/ACCOUNTS.md) — Google round trip, two-account isolation, MFA, export/delete and
+a real PR — is written down and has **not** been run from this environment.
+
 ## [2026-10-24] — Run 237: a clipped formula copy is not a spill
 
 The first CI run on the release (`5e5c506`) failed one assertion, and only on Linux: at the 834 px

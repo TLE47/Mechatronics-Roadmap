@@ -1102,6 +1102,15 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/analysisClient.ts`](src/analysisClient.ts) | Completions, lint and format over the worker: request ids, timeouts, Jedi's vocabulary mapped to the completion list, pyflakes and pycodestyle messages made drawable, Black's refusal told apart from a missing formatter. |
 | [`src/editor/completions.ts`](src/editor/completions.ts) | The completion source: Jedi when the interpreter is up, keywords when it is not, and the inserted span after the dot. |
 | [`src/progressMerge.ts`](src/progressMerge.ts) | Merging saved progress between browsers and accounts. |
+| [`src/accounts.ts`](src/accounts.ts) | The optional Supabase account: Google, email + password, reset and the emailed link, plus the caller's own role. The SDK is imported on demand, so a signed-out visit never downloads it. |
+| [`src/accountRules.ts`](src/accountRules.ts) | The rules worth testing without a project: email and password checks, provider labels, the admin predicate, the sync-scope sentence and OAuth error wording. |
+| [`src/accountActions.ts`](src/accountActions.ts) | The browser side of the Edge Functions: export/delete one's own data, admin settings, roles, audit, curriculum PR. No key is read here. |
+| [`src/returnTo.ts`](src/returnTo.ts) | Where a sign-in round trip may return to: this origin and base path only, with the destination reduced to a known view or lesson. |
+| [`src/workspaceMerge.ts`](src/workspaceMerge.ts) | The keep-both merge for drafts, notes and highlights — pure, so the conflict rule is tested without storage. |
+| [`src/workspaceSync.ts`](src/workspaceSync.ts) | Opt-in draft/note sync: the local stores, the `mechalab_workspace` row, the pre-sync preview and the merge report. |
+| [`src/dashboardData.ts`](src/dashboardData.ts) | The learner dashboard's model: continue, progress counts, recent study, saved work and review. |
+| [`src/adminModel.ts`](src/adminModel.ts) | The admin capabilities, action names and the denial order the page shows; the server repeats every check. |
+| [`src/siteSettings.ts`](src/siteSettings.ts) | The public announcement and feature flags, read once per visit, with built-in defaults when no project is configured. |
 | [`src/lessonCoach.ts`](src/lessonCoach.ts) | The progressive hints and the stuck-state prompts. |
 | [`src/checkHints.ts`](src/checkHints.ts) | The join between a failed check and the hint rung that answers it, plus the rule that earns rung 2. |
 | [`src/runtime/pythonWorker.js`](src/runtime/pythonWorker.js) | The interpreter worker: warm-up, run, in-place Stop, `input()`, `mechalab.scope`, `result` and `scope` messages. |

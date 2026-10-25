@@ -14,6 +14,14 @@ lab04_rt_test
 # Node / Vite
 node_modules/
 dist/
+# Local build configuration, including the Supabase project `docs/ACCOUNTS.md` tells you to point at.
+# The anon key is public by design, but the file names a project and is per-machine: never committed.
+.env*.local
+# Credential handoff for the staging pass: an access token and the database password, one file each,
+# mode 0600. Read into an environment variable at use; never passed as a flag.
+.staging-secrets/
+# `supabase link` writes the project ref and pooler URLs here; they are per-machine, not source.
+supabase/.temp/
 # The weight gate builds the shape a local `dist/` is not beside it, then removes it. A killed run
 # can leave one behind, and it is never a source file.
 dist-*/
