@@ -16,6 +16,40 @@ flowchart LR
 
 ---
 
+## [2026-10-25] — Run 244: every roadmap card folds the same way
+
+Run 243 gave the trail a fold. The two cards beside it grow the same way and had no answer to it: the
+resume card carries a sentence about the state and, once a draft exists, a second line about it, and
+the Board card is the tallest thing above the ten steps — a sketch and a prediction box side by side.
+
+**One implementation, three cards.** `app/src/fold.ts` owns the stored fold and `useFold`, and
+`app/src/components/FoldToggle.tsx` owns the button — `aria-expanded`, the visible word first in the
+accessible name (WCAG 2.5.3), an `aria-hidden` chevron. The trail moved onto both instead of keeping
+its own copy. The keys sit beside the palette and the layout in `localStorage`, one per card, and none
+of them is in the backup: a restored archive has no business deciding which cards this device has open.
+
+**What a fold keeps is the point of it.** The Board card keeps its heading, the lesson it holds and the
+lesson count; the sketch, the picker and the simulator steps go behind the press. The offer keeps
+`id · title`, a two-word badge read from the same fields in the same order as the sentence it replaces
+(`passed`, `marked complete`, `tried 3×`, `edited, not run`), and — deliberately — the button that
+continues the lesson, because a fold that hid the one press the card exists for would only be unfolded
+again. Each card carries `data-collapsed`, so a test reads the state rather than a class.
+
+**Verified.** `npm run test:e2e` PASS (51 steps) with the two new ones: the offer folds at step 7c.5
+and the Board card at 15b, each reloaded and found folded before it is unfolded again;
+`npm run test:e2e:trail` still folds the trail across a reload; `check:snapshot` PASS over 48 surfaces
+(re-recorded: one button more on the roadmap in each palette, the board card's toggle — the offer and
+the trail are absent on the seeded empty profile); `check:labels` PASS (227 rows), `check:axe` PASS
+(12 tabs × 4 palettes, no exceptions), `test:trail` 27/27, `test:board` 12/12, `tsc` clean,
+`check_all` 35/35, `check_doc_commands` 436 commands.
+
+**One flake fixed in the harness.** `scripts/e2e_toolbar.mjs`'s `openMore` now presses the disclosure
+at most twice, guarded on `aria-expanded`. A run under load failed a step after a tab switch because
+the press landed on a render that then remounted, and `waitFor` only polls visibility — it never
+presses again. Two unrelated editor steps (`# %%` markers, Vim `dd`) timed out in other runs with the
+host at load 7.7; the same `dd` timeout is in an earlier sweep log, so that is the machine, not this
+change.
+
 ## [2026-10-25] — Run 243: the trail folds to one line
 
 The roadmap's trail card is the most useful thing on that page after a fortnight and the tallest thing

@@ -1645,6 +1645,58 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await page.getByTestId('tab-btn-tab-arch').click();
     console.log('  ok the roadmap opens with the lesson the learner stopped on');
 
+    // 7c.5 And the offer folds, without losing the press that acts on it. The card carries a
+    //      sentence about the state and, later, a line about a half-written draft; a learner who
+    //      already knows what they were doing can fold both away. What must survive the fold is the
+    //      reason the card exists at all: the button that continues the lesson, and a short word
+    //      saying what state it is in. The fold is a preference, so it is judged by the reload it
+    //      has to survive - and it shares its store with the trail and the board card below.
+    assert.equal(
+      await resumeCard.getAttribute('data-collapsed'),
+      'false',
+      'the offer must open expanded'
+    );
+    await page.getByTestId('btn-resume-toggle').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="resume-card"]')?.getAttribute('data-collapsed') ===
+        'true',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await page.getByTestId('resume-lesson-state').count(),
+      0,
+      'a folded offer still printed its state sentence'
+    );
+    assert.equal(
+      await page.getByTestId('btn-resume-toggle').getAttribute('aria-expanded'),
+      'false',
+      'the toggle must say it is folded'
+    );
+    const foldedBadge = (await page.getByTestId('resume-badge').textContent())?.trim() ?? '';
+    assert.ok(
+      foldedBadge.length > 0,
+      'a folded offer must keep a word for the state; it printed an empty badge'
+    );
+    assert.equal(
+      await page.getByTestId('btn-resume-lesson').isVisible(),
+      true,
+      'folding the offer must not take away the button that continues the lesson'
+    );
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.getByTestId('tab-btn-tab-arch').click();
+    await page.getByTestId('resume-card').waitFor({ timeout: 10000 });
+    assert.equal(
+      await page.getByTestId('resume-card').getAttribute('data-collapsed'),
+      'true',
+      'the fold must be remembered across a reload, like the trail’s'
+    );
+    // Unfolded again, so the steps after this one read the card the way a learner first sees it.
+    await page.getByTestId('btn-resume-toggle').click();
+    await page.getByTestId('resume-lesson-state').waitFor({ timeout: 5000 });
+    console.log(`  ok the offer folds to its heading (badge "${foldedBadge}") and stays folded`);
+
     // 7d. And passing it hands the offer forward. A card that kept naming the lesson just verified
     //     would ask for it twice, on the screen whose job is to say what is next - so with P.4
     //     passed the card moves to P.5 and changes its words from "continue" to "next".
@@ -3121,6 +3173,46 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
       `Copy must put the whole sketch on the clipboard; got ${copiedSketch.length} char(s)`
     );
     console.log('  ok the Board card shows the lesson sketch, grades a prediction and copies it');
+
+    // 15b. And the card folds. It is the tallest thing above the ten steps - a sketch and a
+    //      prediction box side by side - and a learner who has already used it wants the map back.
+    //      Folded it keeps its heading and names the lesson it holds, so the card is still findable;
+    //      the sketch and the picker are behind one press. Same store as the trail and the offer.
+    assert.equal(await board.getAttribute('data-collapsed'), 'false', 'the Board card must open expanded');
+    await page.getByTestId('btn-board-toggle').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="board-bridge"]')?.getAttribute('data-collapsed') ===
+        'true',
+      undefined,
+      { timeout: 5000 }
+    );
+    assert.equal(
+      await page.getByTestId('board-select').count(),
+      0,
+      'a folded Board card still showed the lesson picker'
+    );
+    assert.equal(
+      await board.locator('pre').count(),
+      0,
+      'a folded Board card still showed a sketch'
+    );
+    const boardSummary = ((await page.getByTestId('board-summary').textContent()) ?? '').trim();
+    assert.ok(
+      boardSummary.length > 0,
+      'a folded Board card must still say which lesson it holds; the summary was empty'
+    );
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.getByTestId('tab-btn-tab-arch').click();
+    await page.getByTestId('board-bridge').waitFor({ timeout: 15000 });
+    assert.equal(
+      await page.getByTestId('board-bridge').getAttribute('data-collapsed'),
+      'true',
+      'the Board card’s fold must be remembered across a reload'
+    );
+    await page.getByTestId('btn-board-toggle').click();
+    await page.getByTestId('board-select').waitFor({ timeout: 5000 });
+    console.log(`  ok the Board card folds to "${boardSummary}" and stays folded`);
     // Back to the lessons, where the next step left this page: a suite that ends on another tab
     // would make every later step fail on a locator that is simply not on screen.
     await page.getByTestId('tab-btn-tab-pyodide').click();

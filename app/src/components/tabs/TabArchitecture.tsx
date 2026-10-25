@@ -24,6 +24,8 @@ import {
 import { tabForPreset } from '../../demoPresets';
 import { TrailCard } from '../TrailCard';
 import { BoardBridge } from '../BoardBridge';
+import { FoldToggle } from '../FoldToggle';
+import { STORAGE_KEY_RESUME_COLLAPSED, useFold } from '../../fold';
 import { trackLabel } from '../../trackLabel';
 import type { LessonAttempt } from '../../learningLog';
 import { PYTHON_TAB_NAME, tabName } from '../../tabNames';
@@ -83,6 +85,22 @@ interface TabArchitectureProps {
   lessonAttempts?: Record<string, LessonAttempt>;
 }
 
+type ResumeLesson = NonNullable<TabArchitectureProps['resumeLesson']>;
+
+/**
+ * The offer in two words, for the folded card.
+ *
+ * Deliberately beside the sentence it shortens, reading the same fields in the same order, so the
+ * folded badge and the open sentence cannot describe one lesson two ways.
+ */
+function resumeBadge(lesson: ResumeLesson): string {
+  if (lesson.verified) return 'passed';
+  if (lesson.completed) return 'marked complete';
+  if (lesson.runs > 0) return lesson.runs === 1 ? 'tried once' : `tried ${lesson.runs}×`;
+  if (lesson.edited > 0) return 'edited, not run';
+  return lesson.reason === 'next' ? 'not opened' : 'opened';
+}
+
 export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   onLoadPreset,
   beginnerView,
@@ -103,6 +121,10 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
   // pass's first step does not unfold another pass's; completion stays the only auto-collapse.
   const [expandedFirstStep, setExpandedFirstStep] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
+  // Folded to its heading, or open. The card grows a line for the state and another for a
+  // half-written draft, and a learner who already knows what they were doing wants the map back
+  // without losing the one press that continues it. Same store as the trail and the board card.
+  const { folded: resumeFolded, toggle: toggleResume } = useFold(STORAGE_KEY_RESUME_COLLAPSED);
   // Advanced View always shows the full matrix. Beginner View shows only the Beginner column
   // until the learner asks for the deeper ones.
   const showAdvancedColumns = !beginnerView || advancedColumnsOpen;
@@ -158,6 +180,7 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
           data-testid="resume-card"
           data-resume-lesson={resumeLesson.id}
           data-resume-reason={resumeLesson.reason}
+          data-collapsed={resumeFolded ? 'true' : 'false'}
           className="bg-panel border border-accent/40 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3"
         >
           <div className="min-w-0">
@@ -169,29 +192,41 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
                 {resumeLesson.id}
               </span>
               <span className="text-sm font-semibold text-ink">{resumeLesson.title}</span>
+              {/* Folded, the badge keeps the answer the card exists to give — passed, half-written
+                  or never opened — without the sentence and the draft detail behind it. */}
+              {resumeFolded && (
+                <span
+                  data-testid="resume-badge"
+                  className="text-[11px] font-mono uppercase tracking-wider text-muted"
+                >
+                  {resumeBadge(resumeLesson)}
+                </span>
+              )}
             </div>
-            <div data-testid="resume-lesson-state" className="mt-0.5 text-xs text-muted">
-              {trackLabel(resumeLesson.track)} ·{' '}
-              {resumeLesson.verified
-                ? 'executed and passed'
-                : resumeLesson.completed
-                ? 'marked complete by you'
-                : resumeLesson.runs > 0
-                ? `tried ${
-                    resumeLesson.runs === 1 ? 'once' : `${resumeLesson.runs} times`
-                  }, not passed yet`
-                : resumeLesson.edited > 0
-                ? 'edited, never run'
-                : resumeLesson.reason === 'next'
-                ? 'not opened yet'
-                : 'opened, never run'}
-            </div>
+            {!resumeFolded && (
+              <div data-testid="resume-lesson-state" className="mt-0.5 text-xs text-muted">
+                {trackLabel(resumeLesson.track)} ·{' '}
+                {resumeLesson.verified
+                  ? 'executed and passed'
+                  : resumeLesson.completed
+                  ? 'marked complete by you'
+                  : resumeLesson.runs > 0
+                  ? `tried ${
+                      resumeLesson.runs === 1 ? 'once' : `${resumeLesson.runs} times`
+                    }, not passed yet`
+                  : resumeLesson.edited > 0
+                  ? 'edited, never run'
+                  : resumeLesson.reason === 'next'
+                  ? 'not opened yet'
+                  : 'opened, never run'}
+              </div>
+            )}
             {/* The half-written exercise is the part of the work the lesson id cannot show: without
                 this the card would offer "a lesson" when what is waiting is a program. The step
                 count is the honest half of "how close is this to passing" - the starter marks the
                 steps, so the card can count the ones already written; whether they are *right* is
                 still the runner's job, and the card never claims otherwise. */}
-            {resumeLesson.edited > 0 && (
+            {!resumeFolded && resumeLesson.edited > 0 && (
               <div data-testid="resume-draft" className="mt-1 text-xs text-emerald">
                 Your unfinished edit is still here
                 {resumeLesson.stepsTotal > 0 && (
@@ -210,23 +245,31 @@ export const TabArchitecture: React.FC<TabArchitectureProps> = ({
               </div>
             )}
           </div>
-          <button
-            onClick={() => onOpenPyodideLesson(resumeLesson.id)}
-            data-testid="btn-resume-lesson"
-            className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 bg-accent/20 text-accent border border-accent/50 hover:bg-accent/30 cursor-pointer transition-colors"
-          >
-            <Play className="w-3.5 h-3.5" />
-            {/* The tab is named by the runner itself, so the button says what it does, not where. */}
-            <span>
-              {resumeLesson.reason === 'next'
-                ? resumeLesson.edited > 0
-                  ? 'Resume'
-                  : 'Start'
-                : 'Continue'}{' '}
-              {resumeLesson.id}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={() => onOpenPyodideLesson(resumeLesson.id)}
+              data-testid="btn-resume-lesson"
+              className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 bg-accent/20 text-accent border border-accent/50 hover:bg-accent/30 cursor-pointer transition-colors"
+            >
+              <Play className="w-3.5 h-3.5" />
+              {/* The tab is named by the runner itself, so the button says what it does, not where. */}
+              <span>
+                {resumeLesson.reason === 'next'
+                  ? resumeLesson.edited > 0
+                    ? 'Resume'
+                    : 'Start'
+                  : 'Continue'}{' '}
+                {resumeLesson.id}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+            <FoldToggle
+              folded={resumeFolded}
+              onToggle={toggleResume}
+              what="the lesson offer"
+              testId="btn-resume-toggle"
+            />
+          </div>
         </div>
       )}
 
