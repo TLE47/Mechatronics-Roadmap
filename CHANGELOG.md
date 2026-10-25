@@ -16,6 +16,25 @@ flowchart LR
 
 ---
 
+## [2026-10-25] — Run 245: the archive says what it leaves out
+
+Runs 243–244 added three folds, all of them preferences in `localStorage` and none of them in the
+backup. That was the right line — a fold, a palette and a layout are choices about reading on one
+screen — but the archive never said so: a learner who restored on a new laptop and found every card
+unfolded had nothing to read but the code.
+
+**`README.txt` now carries a "What is not in this zip" section.** It names the preferences that stay on
+the device — theme and palette, layout and which side a panel is docked on, focus mode, breakpoints and
+watch expressions, the lesson the next visit reopens, and the fold of each roadmap card — and lists the
+three keys (`mechalab_resume_collapsed_v1`, `mechalab_trail_collapsed_v1`,
+`mechalab_board_collapsed_v1`) rather than saying "settings are not included". The same section keeps
+the one deliberate exception beside it: `tour.json` travels because the tour having been *shown* is a
+fact about the learner, not a preference about a screen.
+
+**`test:backup` pins the claim both ways.** The README must say what it leaves out and name each fold
+key, and no file in the archive may contain one — so a fold added later cannot quietly start riding
+inside a store, and a README edit cannot drop the section without failing a suite.
+
 ## [2026-10-25] — Run 244: every roadmap card folds the same way
 
 Run 243 gave the trail a fold. The two cards beside it grow the same way and had no answer to it: the

@@ -207,6 +207,24 @@ check('the bundle names its files, its schema and its date', () => {
   assert.equal(manifest.createdAt, '1970-01-01T00:00:00.000Z');
   assert.deepEqual(manifest.files.map((file) => file.name), files.slice(1).map((file) => file.name));
   assert.match(files.at(-1).text, /How to restore/, 'the README must say how to restore the archive');
+  // The archive says what it leaves out, not only what it holds. A fold is the preference a learner is
+  // most likely to look for after a restore on a new machine, so the README names all three keys
+  // rather than saying "settings are not included" and leaving them to wonder.
+  const readme = files.at(-1).text;
+  assert.match(readme, /What is not in this zip/, 'the README must say what is deliberately left out');
+  assert.match(readme, /fold of each roadmap card/, 'the README must name the roadmap fold');
+  for (const key of [
+    'mechalab_resume_collapsed_v1',
+    'mechalab_trail_collapsed_v1',
+    'mechalab_board_collapsed_v1',
+  ]) {
+    assert.ok(readme.includes(key), `the README must name ${key}`);
+    assert.equal(
+      files.some((file) => file.name !== 'README.txt' && file.text.includes(key)),
+      false,
+      `a fold is a preference, so ${key} must not be carried by any file in the archive`
+    );
+  }
   assert.equal(backupFileName(0), 'mechalab-backup-1970-01-01.zip');
 });
 
