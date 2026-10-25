@@ -56,7 +56,7 @@ npm run test:perf:unit                  # the perf page and the budget without a
 npm run check:pilot                     # the sitting kit's six gates: the sitting record's rules, the export preflight, the transfer follow-up, the aggregate and the kit page's own commands
 python3 tests/test_pilot_sitting.py     # where a beginner sitting stopped: a stop that cannot be counted refused, `finished` without a verified export refused, minutes checked against the export, and `N = 0` said out loud
 npm run test:runtime                    # the worker: in-place Stop, input(), isolation, Pause/Step/Step in (into the lesson and into the plant)/Step out, breakpoints (conditional ones too), a parked frame's values changed, watch expressions answered at every park, Format with Black (one undo, a parse refusal left alone), Pages fallback
-npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run and deep link
+npm run test:offline                    # the built bundle with no host headers: worker isolation, the take-offline button, offline reload, run, deep link, and 01.4's formulas from the cached stylesheet and faces
 npm run test:takealong                  # the offline button's rules: which URLs it sends, how a size reads, what "ready" may claim
 npm run test:share                      # the share link: round trip, the URL-safe alphabet, the measured cap, every malformed fragment
 npm run test:help                       # the stuck report: the sections a helper needs, the ladder left out, three printed caps, and the issue URL's own limit
@@ -102,7 +102,7 @@ npm run test:announce                   # what a screen reader hears after a run
 npm run test:scope                      # the Scope: NaN dropped, t/y aligned, the cursor's interpolation, zoom/pan windows clamped to the data, readable tables
 npm run test:analysis                   # completions, hover, signatures and the formatter without a browser: where the insert starts, Jedi's cursor coordinates, the call under the cursor, note shape, request and timeout rules, and Formatter's three outcomes (tidied, the parser's sentence, an install that says so)
 npm run test:checkhints                 # a failing check names its own rung; rung 2 is earned by a run made after the nudge
-npm run test:fonts                      # the two self-hosted faces: named, imported, emitted, no CDN
+npm run test:fonts                      # the self-hosted faces — Inter, JetBrains Mono and KaTeX's 19 maths faces: imported, emitted, nothing remote
 npm run test:smoke                      # needs `npm ci` first
 ```
 

@@ -46,6 +46,49 @@ the panel in a browser through both branches. Both skip CI and skip production; 
 deleted after the run. All local gates stay green: check_all 35/35, `test:accounts` 25, `test:schema` 18,
 `test:merge` 9, build and `check:weight` (entry 495.4 kB of 505, total 1.41 MB of 1.46).
 
+## [2026-10-24] — Run 239: the formulas ship with the page
+
+Every equation in the course borrowed its stylesheet from a CDN. `app/index.html` carried a jsdelivr
+`<link>` pinned to **0.16.21** while `katex` in `package.json` was **0.16.47**, so the layout rules were
+a version older than the JavaScript that wrote the markup, and a page with `$f_c = 1/(2\pi R C)$` needed
+jsdelivr to answer before it could be read. The weight gate could not see it either: `entryNames` skips
+a stylesheet that is not under `assets/`, so the `entry_gzip` it reported was the bytes this repository
+serves, not the first paint a learner waits for.
+
+Maths is self-hosted now. `app/src/main.tsx` imports `katex/dist/katex.min.css` with the UI fonts, so
+Vite emits it as `vendor-katex-*.css` and links it from the built document — styled at first paint, from
+this origin, offline. The `woff`/`ttf` sources of each face are trimmed by a plugin in `vite.config.ts`
+(`katexWoff2Only`): the untouched stylesheet would have put **1.08 MB** of fonts in `dist/` (woff2 plus
+303 kB of woff and 514 kB of ttf) for the 260 kB of woff2 a current browser actually asks for. Nothing
+else about the typesetting changed.
+
+**The budget moved by hand, with the measurement.** `fonts` 302.7 → **558.9 kB** (19 KaTeX faces),
+`css_gzip` 14.7 → **22.2 kB** (the rules and 19 `@font-face` blocks), `total` 1.08 → **1.35 MB** local
+and 1.14 → **1.41 MB** signed-in. `entry_gzip` took only the stylesheet link (485.1 → 492.8 kB local,
+481.4 → 494.8 signed-in) and keeps its 505 kB ceiling: the KaTeX JavaScript chunk was already preloaded,
+because `MathView` is statically reachable. The ceilings are 600 kB fonts, 26 kB css, 1.40/1.46 MB total
+— room for one more small feature, not another font family. `fonts` counts emitted bytes, not a visit: a
+browser fetches a face only when a rendered glyph needs it, and the browser check below measured a
+lesson page loading three of the nineteen.
+
+**Pinned, not assumed.** `npm run test:fonts` now fails if `app/src/main.tsx` stops importing the
+stylesheet, if the built document or the emitted CSS names another origin, if a face the CSS names was
+not emitted, if a `woff`/`ttf` face survives the trim, or if the KaTeX stylesheet is not linked from
+`dist/index.html`. The gate that measured the old CDN as invisible was updated in the same run.
+
+**Offline is a test, not a hope.** `npm run test:offline` opens lesson 01.4 while the network is still
+there — 100 formulas, and the worker keeps its payload, the stylesheet and the three faces the page
+asked for — then **empties Chromium's HTTP cache** before going offline, so a glyph served after that
+can only come from `mechalab-assets-v1`. The offline reload still sets 100 formulas in `KaTeX_Main` and
+prints no raw `$…$`. The check is real: putting the jsdelivr `<link>` back (and dropping the import) fails
+the suite at `expected the KaTeX stylesheet in the asset cache; found: nothing`.
+
+Verified: `check:weight` PASS in both shapes (local 1.35 MB, signed-in 1.41 MB, tightest `css_gzip` 3.8 kB
+left), `test:fonts`, `test:weight` 25/25, `test:offline` PASS (offline formulas, HTTP cache cleared), and
+a browser run of the built bundle at the Pages base with every third-party request blocked — lesson 01.4
+rendered **100** formulas, none of them raw `$…$`, glyphs `KaTeX_Main` fetched 200 from `assets/`, and
+only the Pyodide interpreter (its documented CDN, by design) left this origin.
+
 ## [2026-10-24] — Run 238: the account is optional, the admin area is a role
 
 The workbench could sign a learner in with an emailed link and sync three progress maps. Accounts now

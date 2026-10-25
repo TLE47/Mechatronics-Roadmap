@@ -15,6 +15,11 @@
  *    size — with no lesson run first, so the button is the only reason the interpreter is there;
  * 4. with the context offline, a reload still renders the workbench, a lesson still runs to the same
  *    verdict, and a **deep link** opens a lesson the cache never saw.
+ * 5. **a lesson's formulas survive the flight.** Lesson 01.4 is opened while the network is still there
+ *    — its reader payload, the KaTeX stylesheet and the faces its formulas need are served by this
+ *    origin, so `cacheFirst` keeps them — then the browser's own HTTP cache is cleared, the context
+ *    goes offline, and the page is reloaded. A formula that renders after that can only have come from
+ *    `mechalab-assets-v1`, which is the claim the self-hosted stylesheet exists for.
  *
  * Starting from the button rather than from a run is the point of the suite: the run path used to be
  * the only thing that pulled Pyodide in, and a learner about to board had no way to ask for it.
@@ -172,7 +177,54 @@ async function main() {
     );
     console.log(`  ok the take-offline button cached the bundle and ${pyodideCached.length} runtime files (${offlineLabel})`);
 
+    // ---- A lesson with formulas, while the network is still there ----
+    // Nothing special is asked for here: opening the lesson is what a learner does, and the stylesheet
+    // and faces it needs are same-origin requests, so the worker keeps them on the way past.
+    const mathLesson = await context.newPage();
+    mathLesson.on('pageerror', (error) => pageErrors.push(`01.4: ${error.message}`));
+    await mathLesson.goto(`${baseUrl}?lesson=01.4`, { waitUntil: 'domcontentloaded' });
+    await mathLesson.waitForSelector('.katex', { timeout: 30000 });
+    const onlineFormulas = await mathLesson.evaluate(
+      () => document.querySelectorAll('.katex').length
+    );
+    assert.ok(
+      onlineFormulas > 5,
+      `lesson 01.4 must render its formulas online before the offline half means anything; counted ${onlineFormulas}`
+    );
+    const mathCached = await mathLesson.evaluate(async () => {
+      const cache = await caches.open('mechalab-assets-v1');
+      const urls = (await cache.keys()).map((request) => new URL(request.url).pathname);
+      return {
+        stylesheet: urls.filter((url) => /vendor-katex-[\w-]+\.css$/.test(url)),
+        faces: urls.filter((url) => /KaTeX_[\w-]+\.woff2$/.test(url)),
+        payload: urls.filter((url) => /lesson-pages\/.*01\.4-[\w-]+\.json$/.test(url)),
+      };
+    });
+    assert.equal(
+      mathCached.stylesheet.length,
+      1,
+      `expected the KaTeX stylesheet in the asset cache; found: ${mathCached.stylesheet.join(', ') || 'nothing'}`
+    );
+    assert.ok(
+      mathCached.faces.length > 0,
+      `expected at least one KaTeX face in the asset cache; found: ${mathCached.faces.join(', ') || 'nothing'}`
+    );
+    assert.equal(
+      mathCached.payload.length,
+      1,
+      `expected lesson 01.4's reader payload in the asset cache; found: ${mathCached.payload.join(', ') || 'nothing'}`
+    );
+    console.log(
+      `  ok online: lesson 01.4 renders ${onlineFormulas} formulas and the worker keeps its payload, ` +
+        `stylesheet and ${mathCached.faces.length} face(s)`
+    );
+
     // ---- No network from here on ----
+    // The browser's own HTTP cache would answer a font without the network and without the worker, so it
+    // is emptied first: after this, a byte this origin serves can only come from CacheStorage.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Network.clearBrowserCache');
+    await cdp.detach();
     await context.setOffline(true);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => Boolean(document.querySelector('#root *')), undefined, {
@@ -215,10 +267,51 @@ async function main() {
     assert.match(title, /Ordered Lists/, `offline deep link must open its lesson; title was: ${title}`);
     console.log('  ok offline: ?lesson=P.4 opens that lesson from the cached shell');
 
+    // The formulas, with no HTTP cache to fall back on and no network to ask.
+    await mathLesson.reload({ waitUntil: 'domcontentloaded' });
+    await mathLesson.waitForSelector('.katex', { timeout: 20000 });
+    await mathLesson.waitForFunction(() => document.fonts.status === 'loaded', undefined, {
+      timeout: 20000,
+    });
+    const offlineMath = await mathLesson.evaluate(() => {
+      const symbol = document.querySelector('.katex .mord, .katex .mbin, .katex .mrel');
+      return {
+        formulas: document.querySelectorAll('.katex').length,
+        face: symbol ? getComputedStyle(symbol).fontFamily : '',
+        main: document.fonts.check('16px KaTeX_Main'),
+        raw: (document.querySelector('[data-testid="lesson-reader"]')?.textContent ?? '').includes(
+          '$'
+        ),
+      };
+    });
+    assert.ok(
+      offlineMath.formulas > 5,
+      `offline, lesson 01.4 must still render its formulas; counted ${offlineMath.formulas}`
+    );
+    assert.match(
+      offlineMath.face,
+      /KaTeX_Main/,
+      `offline formula glyphs must be set in a KaTeX face; got "${offlineMath.face}"`
+    );
+    assert.equal(
+      offlineMath.main,
+      true,
+      'offline, KaTeX_Main must load from the cached face: a formula in a fallback face is a formula the flight broke'
+    );
+    assert.equal(
+      offlineMath.raw,
+      false,
+      'offline, the reader must still print formulas rather than raw `$…$` source'
+    );
+    console.log(
+      `  ok offline: lesson 01.4 still sets ${offlineMath.formulas} formulas in KaTeX_Main, from the cache`
+    );
+
     assert.deepEqual(pageErrors, [], `the page threw while offline: ${pageErrors.join(' | ')}`);
     console.log(
       `[PASS] Offline workbench: worker-supplied isolation, cached shell + ${cached.assets.length} assets + ` +
-        `${pyodideCached.length} runtime files, with the network off: reload, deep link, and a lesson run`
+        `${pyodideCached.length} runtime files, with the network off and the HTTP cache cleared: reload, ` +
+        `deep link, a lesson run, and 01.4's formulas from the cached stylesheet and faces`
     );
   } finally {
     await browser.close();

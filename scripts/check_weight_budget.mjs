@@ -134,8 +134,12 @@ function readAssets(dir) {
 
 /**
  * The asset names the document names: `<script src>`, `<link rel="modulepreload" href>` and
- * `<link rel="stylesheet" href>`. A stylesheet from another origin (KaTeX's CDN copy in the
- * template) is skipped — the gate measures this bundle, not somebody else's.
+ * `<link rel="stylesheet" href>`.
+ *
+ * Every one of them is this bundle's own: KaTeX's stylesheet is emitted as `vendor-katex-*.css` and
+ * linked like any other (it used to be a jsdelivr `<link>`, which this function skipped because it
+ * only counted `assets/` paths — a first paint that depended on a third party, and a budget that
+ * could not see it). `scripts/test_fonts.mjs` fails if a remote `<link>` comes back.
  */
 function entryNames(html) {
   const names = new Set(['index.html']);

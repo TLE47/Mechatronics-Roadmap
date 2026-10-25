@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -23,12 +23,46 @@ const PAGES_BASE = process.env.PAGES_BASE ?? '/Mechatronics-Roadmap/';
 // Defined in scripts/isolation-headers.mjs so the test servers send exactly the same pair.
 import { ISOLATION_HEADERS } from './scripts/isolation-headers.mjs';
 
+/**
+ * KaTeX's stylesheet, shipped with only the woff2 fonts it names.
+ *
+ * The package's CSS lists three sources per face — woff2, woff and ttf — for browsers that needed
+ * fallbacks about a decade ago. Vite emits every file a `url()` names, so importing the stylesheet
+ * unchanged would put **1.08 MB** of fonts in `dist/` (260 kB of woff2 plus 303 kB of woff and 514 kB
+ * of ttf) for the woff2 that every current browser loads instead. This keeps the layout rules and the
+ * first source of each `@font-face`, and drops the other two.
+ *
+ * Maths used to come from a jsdelivr copy of this file, pinned to 0.16.21 while the JavaScript package
+ * was 0.16.47; self-hosting puts both on the installed version, keeps formulas rendering with no
+ * network beyond the page, and makes `check:weight` measure the real cost instead of skipping a
+ * remote stylesheet (`entryNames` used to ignore it).
+ */
+function katexWoff2Only(): Plugin {
+  return {
+    name: 'mechalab:katex-woff2-only',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!/[\\/]katex[\\/]dist[\\/]katex(\.min)?\.css$/.test(id)) return null;
+      const next = code.replace(
+        /,url\([^)]*\.(?:woff|ttf)\)\s*format\("(?:woff|truetype)"\)/g,
+        ''
+      );
+      return next === code ? null : { code: next, map: null };
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
   root: 'app',
+  // `docs/ACCOUNTS.md` puts `.env.local` at the repository root, and Vite would otherwise look for it
+  // beside `root` — `app/` — so a developer followed the instructions exactly and got the local-only
+  // build ('Cloud sync is not wired into this deployment yet'). The root is the one `.gitignore`
+  // already covers, and CI passes the variables in the environment, which outranks this either way.
+  envDir: '..',
   base: command === 'build' ? PAGES_BASE : '/',
   define: { __APP_VERSION__: JSON.stringify(version) },
-  plugins: [react(), tailwindcss()],
+  plugins: [katexWoff2Only(), react(), tailwindcss()],
   build: {
     outDir: '../dist',
     emptyOutDir: true,

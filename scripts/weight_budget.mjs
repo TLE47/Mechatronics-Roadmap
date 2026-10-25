@@ -10,8 +10,10 @@
  * - **`js_gzip`** — the sum of every `.js` in `dist/assets`, gzipped. This is what a first load
  *   actually transfers (the CDN gzips; the browser gets the compressed bytes).
  * - **`css_gzip`** — the same for `.css`. Tailwind emits one file, so this is also the whole stylesheet.
- * - **`fonts`** — the two self-hosted variable faces, counted as their file sizes: woff2 is already
- *   compressed, so gzipping it again would flatter the number.
+ * - **`fonts`** — every emitted face, counted as its file size: the two self-hosted variable faces
+ *   and KaTeX's 19 maths faces. woff2 is already compressed, so gzipping it again would flatter the
+ *   number. This is emitted weight, not the cost of a visit — a browser fetches a face only when a
+ *   rendered glyph needs it — but a bundle that has to work offline carries all of them.
  * - **`largest_js_gzip`** — the biggest single chunk. A total can stay flat while one route's chunk
  *   doubles and its own first paint gets slower; this is the number that notices. * - **`entry_gzip`** — the document plus everything `index.html` names: its module script, the
  *     chunks it preloads, and its stylesheets. This is what a first paint waits for, and it is the

@@ -108,7 +108,9 @@ with the lesson list rendered.
 **without** the header pair, the worker takes control, and then the context goes offline. It asserts the
 isolated document, the cached shell/manifest/bundle, the take-offline button, an offline reload that
 paints the workbench, a whole lesson run to a verdict with the network off, and an offline deep link
-into a lesson.
+into a lesson. Before it goes offline it opens lesson **01.4** — a page of 100 formulas — and then
+empties Chromium's HTTP cache, so the reload's glyphs can only come from `mechalab-assets-v1`: the
+formulas still set in `KaTeX_Main` offline is what the self-hosted stylesheet buys.
 
 **The interpreter is cached too.** Pyodide is loaded by that module worker with a dynamic `import()` of
 its ESM build, and its `pyodide.mjs`, wasm binary, stdlib zip and any wheel it loads are cached under
@@ -245,6 +247,11 @@ The runner used to show code and send the learner to GitHub for the words that e
 a scroll position lost on every lesson switch. The lesson is a pane now — **Study** puts it on the left
 and the editor on the right, and **Read** (⌥3) gives it the window, with the editor and results hidden.
 It is the preset that finally matches its name.
+
+**Maths ships with the page.** KaTeX's stylesheet is imported from the package and its faces are emitted
+into `dist/assets/` — the page used to borrow a jsdelivr copy pinned to a different version than the
+JavaScript — so a formula is laid out from bytes this origin serves, and offline. `vite.config.ts` keeps
+only the woff2 source of each face; `npm run test:fonts` fails if a remote stylesheet or font comes back.
 
 **One source, copied at build time.** `scripts/generate_lesson_pages.py` reads each registry entry's own
 Markdown page — the file the repository ships, not a second copy in TypeScript — and writes
@@ -449,8 +456,9 @@ It is empty.
 
 **`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
 it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
-because woff2 is already compressed), `largest_js_gzip`, `prose_gzip`, `reader_gzip` and `total`. Today
-that is **1.07 MB across 39 files**, with the budgets a few percent above. A breach fails with the overshoot named, and
+because woff2 is already compressed — the two UI faces and KaTeX's 19 maths faces), `largest_js_gzip`,
+`prose_gzip`, `reader_gzip` and `total`. Today that is **1.35 MB across 62 files** (1.41 MB with the
+account library, which is how CI builds it), with the budgets a few percent above. A breach fails with the overshoot named, and
 so does a budget with nothing measured behind it — a metric the build stopped emitting would otherwise
 pass forever. The rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and
 `npm run test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a
@@ -1161,7 +1169,7 @@ npm run test:analysis       # completions, hover and signatures: insertion point
 npm run test:checkhints      # the failed check -> rung join, and the rule that earns rung 2
 npm run test:e2e             # dev server, one lesson end to end
 npm run test:e2e:pages       # built bundle at the Pages base path: every graded entry, ramp R.1-R.6, tablet width
-npm run test:offline         # the service worker: isolation without host headers, the take-offline button, offline reload, run + deep link
+npm run test:offline         # the service worker: isolation without host headers, the take-offline button, offline reload, run + deep link, formulas from the cache
 npm run test:takealong       # the offline button's rules: URL list, size wording, what "ready" may claim
 npm run test:backup          # the archive: CRC, round trip, the three refusals, and a merge that never deletes
 npm run test:study           # notes and highlights: what is kept, deduped, refused by the store, and what a restore merges

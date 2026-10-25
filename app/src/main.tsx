@@ -6,6 +6,11 @@ import ReactDOM from 'react-dom/client';
 // Latin-script visit downloads (48 KB sans, 40 KB mono).
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
+// Maths, self-hosted. The stylesheet arrives with the main CSS instead of a jsdelivr request, and its
+// fonts are emitted into the same hashed `assets/` directory (woff2 only — see `vite.config.ts`); a
+// page with formulas therefore renders with no network beyond this origin. The JS half already came
+// from the `katex` package through `MathView.tsx`.
+import 'katex/dist/katex.min.css';
 import App from './App';
 import { flushBulkStorage, hydrateBulkStorage } from './bulkStorage';
 import { startPaintTiming } from './paintTiming';

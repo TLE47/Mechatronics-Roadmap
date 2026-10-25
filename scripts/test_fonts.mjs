@@ -20,6 +20,12 @@
  *    self-hosting: no third-party request, no CDN outage, and the same face offline.
  * 4. **The built bundle carries the files**, and the editor asks for `--font-mono` so the code face
  *    and the app's numbers are the same family.
+ * 5. **Maths is self-hosted too.** The KaTeX stylesheet is imported from the package rather than
+ *    linked from jsdelivr, its 19 woff2 faces are emitted beside the other fonts, and neither the
+ *    document nor the emitted CSS names another origin — the property that makes a formula render on
+ *    a machine that cannot reach a CDN. The stylesheet's `woff` and `ttf` sources are trimmed by
+ *    `vite.config.ts`; a face left behind at those formats is another 817 kB of fonts nobody loads, so the
+ *    suite fails on one too.
  *
  * Run: `node scripts/test_fonts.mjs` (also part of `npm run test:workbench`).
  */
@@ -61,7 +67,7 @@ assert.match(
   'expected body to use var(--font-sans) instead of spelling a stack out a second time'
 );
 
-// 3. No font CDN, in the shell or the stylesheet.
+// 3. No font CDN, in the shell or the stylesheet — and no remote stylesheet of any kind.
 for (const [where, text] of [
   ['app/index.html', html],
   ['app/src/index.css', css],
@@ -70,6 +76,10 @@ for (const [where, text] of [
     !/fonts\.(googleapis|gstatic)\.com/.test(text),
     `expected ${where} not to load a font from a CDN; the two faces are self-hosted so the page needs no third-party request`
   );
+  assert.ok(
+    !/<link[^>]+href="https?:\/\//.test(text),
+    `expected ${where} to link only stylesheets this bundle ships; a remote one (KaTeX used to come from jsdelivr) is a render that waits on somebody else's server`
+  );
 }
 
 // 4. The editor and the built bundle.
@@ -77,6 +87,12 @@ assert.match(
   editorTheme,
   /fontFamily:\s*'var\(--font-mono/,
   'expected the editor to ask for --font-mono, so the code face and the app’s tables are one family'
+);
+
+// 5. Maths: the stylesheet is imported from the package, not linked from a CDN.
+assert.ok(
+  main.includes("import 'katex/dist/katex.min.css'"),
+  'expected src/main.tsx to import katex/dist/katex.min.css; without it KaTeX has no layout rules and every formula renders as stacked plain text'
 );
 
 const distAssets = path.join(repoRoot, 'dist', 'assets');
@@ -91,10 +107,54 @@ if (fs.existsSync(distAssets)) {
       `expected a Latin ${family} woff2 in dist/assets; the import is there but nothing was emitted, so the browser falls back`
     );
   }
-  const fontKb = files
-    .filter((file) => file.endsWith('.woff2'))
-    .reduce((total, file) => total + fs.statSync(path.join(distAssets, file)).size, 0);
-  console.log(`[fonts] dist carries ${files.filter((f) => f.endsWith('.woff2')).length} woff2 files (${Math.round(fontKb / 1024)} KB total, subsets unicode-range gated)`);
+
+  // The maths stylesheet is its own emitted file: `vendor-katex`, because `katex` has a chunk of its
+  // own in `vite.config.ts`, and the built index.html links it so formulas are styled at first paint
+  // rather than after the JavaScript injects a <link>.
+  const katexCss = files.find((file) => /^vendor-katex-[\w-]+\.css$/.test(file));
+  assert.ok(
+    katexCss,
+    'expected a vendor-katex stylesheet in dist/assets: katex/dist/katex.min.css is imported but nothing was emitted'
+  );
+  const builtHtml = fs.readFileSync(path.join(repoRoot, 'dist', 'index.html'), 'utf8');
+  assert.ok(
+    new RegExp(`<link[^>]+href="[^"]*${katexCss}"`).test(builtHtml),
+    `expected dist/index.html to link ${katexCss}; without the link the rules arrive late and every formula flashes unstyled`
+  );
+  assert.ok(
+    !/(?:src|href)="https?:\/\//.test(builtHtml),
+    'expected the built document to name no third-party asset; a CDN stylesheet is the dependency self-hosting removed'
+  );
+
+  const katexCssText = fs.readFileSync(path.join(distAssets, katexCss), 'utf8');
+  assert.ok(
+    !/url\(\s*['"]?https?:\/\//.test(katexCssText),
+    `expected ${katexCss} to fetch nothing from another origin; every face it names must be a file this bundle serves`
+  );
+  const katexFonts = [...katexCssText.matchAll(/url\(\s*['"]?([^'")]*KaTeX_[^'")]*)/g)].map((match) => match[1]);
+  assert.ok(katexFonts.length >= 19, `expected ${katexCss} to name KaTeX’s 19 faces, found ${katexFonts.length}`);
+  for (const ref of katexFonts) {
+    const name = path.basename(ref);
+    assert.ok(
+      files.includes(name),
+      `expected ${name} beside the stylesheet: a url() the build did not emit is a request that 404s, and the formula falls back to a text face`
+    );
+  }
+  // No `woff`/`ttf` left over: the plugin keeps only the first source of each `@font-face`, and the
+  // other two are 1.17 MB of files no current browser asks for.
+  const legacy = files.filter((file) => /^KaTeX_.*\.(?:woff|ttf|otf)$/.test(file));
+  assert.equal(
+    legacy.length,
+    0,
+    `expected no legacy KaTeX font formats in dist/assets, found ${legacy.join(', ')}; the woff2-only trim in vite.config.ts did not reach the stylesheet`
+  );
+
+  const woff2 = files.filter((file) => file.endsWith('.woff2'));
+  const fontKb = woff2.reduce((total, file) => total + fs.statSync(path.join(distAssets, file)).size, 0);
+  console.log(
+    `[fonts] dist carries ${woff2.length} woff2 files (${Math.round(fontKb / 1024)} KB total, subsets unicode-range gated) `+
+      `including KaTeX’s ${new Set(katexFonts.map((ref) => path.basename(ref))).size} maths faces`
+  );
 } else {
   console.log('[fonts] dist/ absent - bundle half skipped (it runs in CI, after the build)');
 }

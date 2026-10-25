@@ -78,7 +78,9 @@
     />
     <meta name="twitter:image" content="https://tle47.github.io/Mechatronics-Roadmap/og.png" />
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
+    <!-- No third-party stylesheet, and no third-party font: KaTeX's CSS and its woff2 faces are
+         bundled from node_modules (`app/src/main.tsx`, `vite.config.ts`), so formulas render on a
+         machine that cannot reach a CDN. -->
   </head>
   <body class="bg-canvas text-ink antialiased">
     <div id="root"></div>
