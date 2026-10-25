@@ -8,6 +8,10 @@
  * left out: a theme is a device choice, not work, and restoring one onto another machine would fight
  * the learner's own pick.
  *
+ * The first-run tour's record is the exception, and it is not a preference: `tour.json` says the tour
+ * was *shown*, which is a fact about the learner. Carrying it means someone who restores a backup on a
+ * new laptop is not walked through the first lesson again on the machine where they already were.
+ *
  * What a restore does: **merges, never deletes.** Progress flags union, so a milestone ticked on a
  * laptop survives arriving on a desktop that has not seen it. Drafts fill gaps only — the text on this
  * machine is by definition the newer one, so it wins. Versions union and are deduped by the timestamp
@@ -33,6 +37,7 @@ import { readLearningLog, replaceLearningLog, type LearningEvent } from './learn
 import { mergeStudy, parseStudy, readStudy, replaceStudy, studyCounts } from './studyNotes.ts';
 import { mergeCards, parseCards, readCardList, readCards, replaceCards } from './studyCards.ts';
 import { mergeLearningLog } from './progressMerge.ts';
+import { mergeTourStates, readTour, writeTour } from './tourState.ts';
 import {
   STORAGE_KEY_COMPLETED,
   STORAGE_KEY_MILESTONES,
@@ -127,6 +132,7 @@ history.json        The versions each Run filed, with the verdict that run got.
 study.json          Your notes and the passages you highlighted, per lesson.
 study-cards.json    When each review card is due, and how many times you have answered it.
 learning-log.json   When you opened, ran, passed, and used a hint - the pilot record.
+tour.json           Whether the first-lesson tour has been seen, and the step it resumes at.
 README.txt          This page.
 
 How to restore
@@ -185,7 +191,11 @@ export function collectBackup(now: number = Date.now()): BackupFile[] {
       2
     ),
   };
-  const data: BackupFile[] = [progress, drafts, history, study, cards, log];
+  const tour: BackupFile = {
+    name: 'tour.json',
+    text: JSON.stringify({ schema: 'mechalab.backup.tour/1', tour: readTour() }, null, 2),
+  };
+  const data: BackupFile[] = [progress, drafts, history, study, cards, log, tour];
   const manifest: BackupManifest = {
     schema: BACKUP_SCHEMA,
     app: 'MechaLab Workbench',
@@ -410,6 +420,44 @@ function restoreCards(text: string | undefined, report: RestoreReport): void {
   report.cards += added + updated;
 }
 
+/**
+ * Merge a restored tour record in.
+ *
+ * A backup taken before the tour existed has no such file: an older backup, not a corrupt one, so
+ * the absence is silent. `mergeTourStates` never moves a learner backwards — a finished tour stays
+ * finished, whatever order the archives are restored in — which is what keeps this safe to repeat.
+ */
+function restoreTour(text: string | undefined, report: RestoreReport): void {
+  if (text === undefined) return;
+  const file = asRecord(parseJson(text));
+  const raw = asRecord(file?.tour);
+  if (!raw) {
+    report.skipped.push('tour.json');
+    return;
+  }
+  const incoming = readTourFrom(raw);
+  if (!incoming) {
+    report.skipped.push('tour.json (not a record this build knows)');
+    return;
+  }
+  const stored = readTour();
+  const merged = mergeTourStates(stored, incoming);
+  if (merged !== stored) writeTour(merged);
+}
+
+/** A tour record out of a file's JSON, through the same validation the store uses. */
+function readTourFrom(raw: Record<string, unknown>): ReturnType<typeof readTour> | null {
+  const allowed = ['not-started', 'active', 'dismissed', 'completed'];
+  if (typeof raw.status !== 'string' || !allowed.includes(raw.status)) return null;
+  return {
+    version: typeof raw.version === 'number' ? raw.version : 0,
+    status: raw.status as ReturnType<typeof readTour>['status'],
+    stepIndex: typeof raw.stepIndex === 'number' ? raw.stepIndex : 0,
+    chipShown: raw.chipShown === true,
+    updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : Date.now(),
+  };
+}
+
 function restoreLog(text: string | undefined, report: RestoreReport): void {
   const file = asRecord(parseJson(text));
   const events = Array.isArray(file?.events) ? (file?.events as unknown[]) : null;
@@ -472,5 +520,6 @@ export function restoreBackupZip(bytes: Uint8Array): RestoreResult {
   restoreStudy(contents.get('study.json'), report);
   restoreCards(contents.get('study-cards.json'), report);
   restoreLog(contents.get('learning-log.json'), report);
+  restoreTour(contents.get('tour.json'), report);
   return { ok: true, report };
 }

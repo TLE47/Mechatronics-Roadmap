@@ -19,6 +19,7 @@ import { chromium } from 'playwright-core';
 import { readBulk, waitForBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { waitForEditor } from './editor-code.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import { DAY_MS } from '../app/src/fsrs.ts';
 
@@ -65,6 +66,7 @@ async function main() {
   });
   try {
     const context = await browser.newContext();
+    await seedTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));

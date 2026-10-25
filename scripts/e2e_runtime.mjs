@@ -61,6 +61,7 @@ import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workben
 import { getEditorCode, setEditorCode } from './editor-code.mjs';
 import { readBulk } from './bulk_store_page.mjs';
 import { clickToolbar } from './e2e_toolbar.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const EDITOR = '[data-editor="editor-main"] .cm-content';
 const RUN = '[data-testid="btn-run-verify"]';
@@ -119,6 +120,8 @@ async function main() {
     await context.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    // And the first-run tour is seeded away for the same reason: the runtime is what is under test.
+    await seedTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(String(error)));

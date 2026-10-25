@@ -20,6 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable } from '../scripts/e2e_browser_workbench.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const SECRETS = process.env.STAGING_SECRETS_DIR ?? path.join(os.homedir(), '.staging-secrets');
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:3000';
@@ -95,6 +96,8 @@ const executablePath = resolveChromiumExecutable();
 const browser = await chromium.launch({ ...(executablePath ? { executablePath } : {}), headless: true });
 try {
   const page = await browser.newPage();
+  // The tour would open over the header this suite clicks; it has its own suite (`scripts/e2e_tour.mjs`).
+  await seedTourSeen(page);
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.getByTestId('btn-account').click();
   await submitSignIn(page);
@@ -129,6 +132,7 @@ try {
   // Part two: another device tomorrow. A fresh context has no stored session, so signing in lands at
   // aal1 and the panel has to recognise that a factor already exists.
   const other = await browser.newContext();
+  await seedTourSeen(other);
   const page2 = await other.newPage();
   await page2.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page2.getByTestId('btn-account').click();

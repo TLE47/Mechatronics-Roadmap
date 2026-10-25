@@ -16,6 +16,73 @@ flowchart LR
 
 ---
 
+## [2026-10-24] — Run 242: the first lesson explains itself, and waits for you to do it
+
+The starter fails on purpose. A beginner's very first *Run & Verify Output* therefore prints red checks
+— and a beginner reads red as "I broke it" well inside two minutes. Nothing on the page said otherwise:
+the per-lesson brief (`first-lesson-guide`) names the holes and the finish line in three columns of
+prose, which is a paragraph where a beginner needs a pointer.
+
+**A six-step first-run tour, two steps of which have no Next button.** `app/src/tour.ts` holds the table
+— welcome, the brief, the editor, Run, the red checks, the hints — and the gate each step waits on: a
+press for the words, **the editor text changing** for step 3, **a run finishing with a verdict** for
+step 4. The reducer is pure (`reduceTour`), so those rules are tested without a browser; a signal the
+current step does not ask for returns the same object and React reads it as no change. A learner who
+passes on the first attempt skips the red-checks step entirely, because it would then be a sentence
+about something that did not happen.
+
+**A ring, not a backdrop.** The coach mark draws its shadow round a cut-out (`pointer-events: none`) so
+the highlighted control and everything around it stay clickable — a step that asks for a press must not
+be covered by the thing asking. On a phone (below 768 px) the card becomes a bottom sheet above the
+safe area, its buttons 44 px, and the step's own `mobileView` puts the region it is talking about on
+screen. The preset a step needs is applied through `shownLayout` and **never written**: `writeLayout`
+is still only called by the layout buttons, so the learner's own choice is exactly where they left it
+when the tour ends.
+
+**Where it opens.** `app/src/tourState.ts` answers that with `tourOffer`: a first visit with nothing
+saved opens it; any verified or completed lesson, or a draft, is a returning learner and gets nothing; a
+deep link into a later lesson gets a chip instead (*New here? … Take the tour*); a page left mid-tour
+gets a resume chip that names the step (*Resume tour (step 3 of 6)*) once. Esc dismisses, the ×
+dismisses, and neither ever reopens it. The record is versioned, and `mergeTourStates` means a restore can
+never move it backwards — **`tour.json` is the one non-preference a backup carries**, because "this
+learner has been shown the tour" is a fact about them, not a look-and-feel choice.
+
+**Measured, locally.** The learning log gains one kind — `tour`, with `action` (`shown`, `resume`, `step`,
+`skipped`, `completed`) and the step number — so a pilot can tell "walked it" from "closed it at step two"
+without watching anyone. It never leaves the browser, like every other event, and the friction report
+counts the kinds it knows and ignores the rest. Measured in the browser while wiring it: one `shown` on
+a first visit, `step 2` on Next, `skipped 2` on the ×.
+
+**Replayable from both doors a stuck learner tries.** `Replay the first-lesson tour` is a palette command
+and a button on the `?` sheet; both bump a `tourRequest` nonce, the same idiom `runRequest` and
+`formatRequest` already use, because the shell outlives the runner and must not hold its functions.
+
+**Pinned, because a tour that loses its target is worse than none.** Five `data-tour` anchors name the
+elements; `npm run test:tour` (`scripts/test_tour.mjs`, 26 checks) reads the app's own source and fails if
+an anchor disappears *or* if an anchor is left behind with no step pointing at it. It also pins the gate
+per step (an action step that became skippable would be the slideshow this design exists to avoid), the
+store's validation of junk and of a future version, the offer rule in all five situations, and the
+merge.
+
+`npm run test:e2e:tour` (`scripts/e2e_tour.mjs`, **12 checks in a real browser**) walks the whole thing:
+the ring's geometry against the brief and that the brief is still clickable through it, the missing Next
+button on step 3 and that typing alone advances it, the predict gate handled the way a learner handles
+it, red-checks-after-a-failed-run, Finish, no reopen on reload, dismissal, the deep-link chip, the
+resume chip continuing at step 2, the phone sheet and its region switching, and the palette replay.
+
+**The harnesses are not first-time visitors.** A fresh Playwright context is exactly the visitor the
+tour is for, so the coach mark appeared over the workbench in every suite that drives it — and
+`check:snapshot` proved it by failing on an intercepted click. All 20 app-driving suites now seed the
+record first (`scripts/tour_seed.mjs`); `e2e_tour.mjs` is the one that does not, because it measures the
+tour. With the seed, `check:snapshot` (48 surfaces, 4 palettes) and `check:labels` returned to their
+exact previous numbers — 227 metadata rows, not the 232 the card had added — which is the diff that
+proves the feature is the only thing that changed.
+
+Verified: `test:tour` 26/26, `test:e2e:tour` 12/12, `test:backup` 22/22 (including the new round trip:
+completed beats dismissed, a stale archive cannot un-finish it, and a nonsense record is skipped out
+loud), `check:snapshot` PASS, `check:labels` PASS, `axe` 12 tabs × 4 palettes PASS, `test:smoke` PASS,
+`test:pairs` 17/17, `tsc --noEmit` clean.
+
 ## [2026-10-24] — Run 241: the course-level nav is drawn only where it changes something
 
 The header's four links — Start here, Beginner, Applied, Advanced — are a stored preference, and two

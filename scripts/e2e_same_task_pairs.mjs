@@ -39,6 +39,7 @@ import { chromium } from 'playwright-core';
 import { BULK_KEYS } from '../app/src/bulkStorage.ts';
 import { clearBulk, readBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 /** Injected into every page load: spec resolution, clicking, fingerprinting. */
 const HELPERS = `
@@ -417,6 +418,9 @@ export async function runSameTaskPairSweep({ baseUrl: externalBaseUrl, only = pr
   const failures = [];
   try {
     const context = await browser.newContext();
+    // Seeded on the context, so it survives the per-case `localStorage.clear()`: an init script runs
+    // again on the reload that follows, and the coach mark never appears over the controls.
+    await seedTourSeen(context);
     const page = await context.newPage();
     await page.addInitScript({ content: HELPERS });
     let index = 0;

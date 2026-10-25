@@ -94,6 +94,13 @@ export const PALETTE_ACTIONS: PaletteItem[] = [
     keywords: 'design colours colors palette css',
   },
   {
+    id: 'action-tour-replay',
+    kind: 'action',
+    label: 'Replay the first-lesson tour',
+    detail: '6 steps',
+    keywords: 'onboarding guide coach marks help tour walkthrough',
+  },
+  {
     id: 'action-pass-level0',
     kind: 'action',
     label: 'Go to Start here (Stage 0)',

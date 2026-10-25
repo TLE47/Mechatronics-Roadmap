@@ -501,6 +501,14 @@ export const App: React.FC = () => {
   const [runRequest, setRunRequest] = useState<number>(0);
   // And its "Format with Black" command, for the same reason: the runner owns the editor's text.
   const [formatRequest, setFormatRequest] = useState<number>(0);
+  // Bumped by the palette and the `?` sheet for "Replay the first-lesson tour"; the runner watches it
+  // (`tourRequest`), because the tour lives where its anchors are and this shell only asks.
+  const [tourRequest, setTourRequest] = useState<number>(0);
+  const requestTour = () => {
+    setActiveTab('tab-pyodide');
+    setIsCheatSheetOpen(false);
+    setTourRequest((nonce) => nonce + 1);
+  };
   // Bumped whenever a learner asks for a specific entry, so the runner can tell a new pick from a
   // render that happens to carry the same id.
   const [lessonRequest, setLessonRequest] = useState<{
@@ -1102,6 +1110,9 @@ export const App: React.FC = () => {
       case 'action-format-file':
         setActiveTab('tab-pyodide');
         setFormatRequest((nonce) => nonce + 1);
+        break;
+      case 'action-tour-replay':
+        requestTour();
         break;
       case 'action-toggle-theme':
         toggleThemeMode();
@@ -1868,6 +1879,7 @@ export const App: React.FC = () => {
                 onOpenRoadmap={handleOpenRoadmap}
                 runRequest={runRequest}
                 formatRequest={formatRequest}
+                tourRequest={tourRequest}
                 lessonRequest={lessonRequest}
                 sharedAttempt={sharedAttempt}
                 onDismissShared={() => setSharedAttempt(null)}
@@ -1902,7 +1914,11 @@ export const App: React.FC = () => {
       </div>
 
       {/* Cheat sheet modal */}
-      <CheatSheetModal isOpen={isCheatSheetOpen} onClose={() => setIsCheatSheetOpen(false)} />
+      <CheatSheetModal
+        isOpen={isCheatSheetOpen}
+        onClose={() => setIsCheatSheetOpen(false)}
+        onReplayTour={requestTour}
+      />
 
       {/* `?`: which key does what, from the one table in `src/shortcuts.ts`. */}
       <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />

@@ -37,6 +37,7 @@ import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
 import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { clickToolbar } from './e2e_toolbar.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const P1_EXPECTED = ['Mode: ACTIVE | E-Stop: False', 'Encoder Ticks: 425 | Battery: 12.15 V'];
 // What the untouched P.1 starter actually prints: a guess at the *right* answer, made from the
@@ -73,7 +74,11 @@ export async function runPredictGateSuite({ baseUrl: externalBaseUrl } = {}) {
 
   try {
     // No init script: the gate is on, which is the state a first-time learner meets.
-    const page = await (await browser.newContext()).newPage();
+    // The first-run tour is the one thing seeded away: this suite drives the Run button itself, and a
+    // coach mark over it would be answering a different question.
+    const context = await browser.newContext();
+    await seedTourSeen(context);
+    const page = await context.newPage();
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await page.getByTestId('tab-btn-tab-pyodide').click();
     await openP1(page);

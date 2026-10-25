@@ -46,6 +46,7 @@ import { clearBulk, waitForBulk } from './bulk_store_page.mjs';
 import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
 import { createServer } from 'vite';
 import { clickToolbar } from './e2e_toolbar.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 /**
  * The three stores this suite reads by hand. They are in IndexedDB now (`app/src/bulkStorage.ts`), so a
@@ -170,6 +171,9 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await context.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    // This suite is a returning visitor: it drives the workbench, and a first-run coach mark fixed over
+    // the toolbar would swallow the header and toolbar presses it makes throughout.
+    await seedTourSeen(context);
     const page = await context.newPage();
 
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
@@ -1949,6 +1953,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await receiverContext.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    await seedTourSeen(receiverContext);
     const receiver = await receiverContext.newPage();
     await receiver.goto(sharedUrl, { waitUntil: 'networkidle' });
     await receiver.getByTestId('shared-attempt-card').waitFor({ timeout: 15000 });
@@ -2015,6 +2020,7 @@ export async function runRealBrowserE2ETests({ baseUrl: externalBaseUrl } = {}) 
     await guestContext.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    await seedTourSeen(guestContext);
     const guest = await guestContext.newPage();
     await guest.goto(baseUrl, { waitUntil: 'networkidle' });
     await waitForEditor(guest);
@@ -3327,6 +3333,7 @@ print("uart dropped @115.2k=%d, @500k=%d" % (plant.simulate_uart_tx(1000, 20, 0.
     await searchContext.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    await seedTourSeen(searchContext);
     const searchPage = await searchContext.newPage();
     try {
       await searchPage.goto(baseUrl, { waitUntil: 'domcontentloaded' });

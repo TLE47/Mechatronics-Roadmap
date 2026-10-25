@@ -65,6 +65,7 @@ import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable } from './e2e_browser_workbench.mjs';
 import { ensureBuilt, startStaticServer } from './e2e_pages_bundle.mjs';
 import { getEditorCode, setEditorCode, waitForEditor } from './editor-code.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const ROOT = process.cwd();
 const BUDGET_FILE = path.join(ROOT, 'docs', 'perf-budget.json');
@@ -394,6 +395,9 @@ async function measureProfile(browser, baseUrl, profile) {
     // waited behind a predicted answer would measure this walk's typing rather than the runtime.
     window.__mechalabPredictFirst = false;
   });
+  // And the first-run tour has been seen: its card is fixed over the workbench, so leaving it up would
+  // put a first-visit overlay inside the numbers for the first paint and the first Run.
+  await seedTourSeen(context);
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(String(error)));

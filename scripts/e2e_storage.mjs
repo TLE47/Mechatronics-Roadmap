@@ -23,6 +23,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { bulkKeys, readBulk, waitForBulk } from './bulk_store_page.mjs';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 import { getEditorCode, waitForEditor } from './editor-code.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 
@@ -84,6 +85,8 @@ async function main() {
 
   try {
     const context = await browser.newContext();
+    // The suite's own store is what is under test; the first-run coach mark is not part of it.
+    await seedTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));

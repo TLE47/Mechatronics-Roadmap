@@ -50,6 +50,7 @@ import {
   snapshotsFor,
 } from '../app/src/draftHistory.ts';
 import { LOG_STORAGE_KEY, MAX_EVENTS, readLearningLog } from '../app/src/learningLog.ts';
+import { STORAGE_KEY_TOUR } from '../app/src/tourState.ts';
 import {
   MAX_COMMENT_CHARS,
   MAX_HIGHLIGHT_CHARS,
@@ -195,6 +196,9 @@ check('the bundle names its files, its schema and its date', () => {
       'study.json',
       'study-cards.json',
       'learning-log.json',
+      // Whether the first-run tour has been seen: a fact about the learner, not a preference, so a
+      // restore on a second machine does not walk them through lesson one again.
+      'tour.json',
       'README.txt',
     ]
   );
@@ -290,6 +294,60 @@ check('a restore never deletes: local flags survive flags the backup does not ha
     keep: true,
   });
   assert.equal(result.report.verified, 1, 'only the flag this browser lacked is new');
+});
+
+check('the first-run tour travels with the archive, and never arrives downgraded', () => {
+  // The one record in a backup that is not a preference: "this learner has been shown the tour" is a
+  // fact about them, so restoring on a second machine must not walk them through lesson one again.
+  const completed = { version: 1, status: 'completed', stepIndex: 5, chipShown: true, updatedAt: 9 };
+  freshBrowser();
+  globalThis.localStorage.setItem(STORAGE_KEY_TOUR, JSON.stringify(completed));
+  const bytes = createBackupZip(0);
+
+  // A machine that has only dismissed it: the finished record wins.
+  freshBrowser();
+  globalThis.localStorage.setItem(
+    STORAGE_KEY_TOUR,
+    JSON.stringify({ ...completed, status: 'dismissed', stepIndex: 2, updatedAt: 99 })
+  );
+  const result = restoreBackupZip(bytes);
+  assert.equal(result.ok, true, `restore failed: ${result.message}`);
+  assert.equal(JSON.parse(globalThis.localStorage.getItem(STORAGE_KEY_TOUR)).status, 'completed');
+
+  // And the other way round: an archive from before the tour finished cannot un-finish it.
+  freshBrowser();
+  globalThis.localStorage.setItem(
+    STORAGE_KEY_TOUR,
+    JSON.stringify({ ...completed, status: 'active', stepIndex: 1 })
+  );
+  const stale = createBackupZip(0);
+  freshBrowser();
+  globalThis.localStorage.setItem(STORAGE_KEY_TOUR, JSON.stringify(completed));
+  restoreBackupZip(stale);
+  assert.equal(JSON.parse(globalThis.localStorage.getItem(STORAGE_KEY_TOUR)).status, 'completed');
+
+  // A file that is not a record this build knows is skipped and said out loud, not guessed at.
+  freshBrowser();
+  globalThis.localStorage.setItem(STORAGE_KEY_TOUR, JSON.stringify(completed));
+  const bad = createZip([
+    {
+      name: 'manifest.json',
+      data: utf8(
+        JSON.stringify({
+          schema: BACKUP_SCHEMA,
+          app: 'MechaLab Workbench',
+          createdAt: '1970-01-01T00:00:00.000Z',
+          counts: {},
+          files: [],
+        })
+      ),
+    },
+    { name: 'tour.json', data: utf8(JSON.stringify({ schema: 'mechalab.backup.tour/1', tour: { status: 'nonsense' } })) },
+  ]);
+  const rejected = restoreBackupZip(bad);
+  assert.equal(rejected.ok, true, `restore failed: ${rejected.message}`);
+  assert.match(rejected.report.skipped.join(' '), /tour\.json/);
+  assert.equal(JSON.parse(globalThis.localStorage.getItem(STORAGE_KEY_TOUR)).status, 'completed');
 });
 
 check("a draft written here beats the backup's copy, and a lesson with none is filled", () => {

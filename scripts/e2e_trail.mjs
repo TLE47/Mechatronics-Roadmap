@@ -20,6 +20,7 @@ import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workben
 import { waitForEditor } from './editor-code.mjs';
 import { PYTHON_LESSONS } from '../app/src/data/pythonLessonsData.ts';
 import { clickToolbar } from './e2e_toolbar.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const LESSON = PYTHON_LESSONS[0];
 
@@ -48,6 +49,8 @@ async function main() {
     await context.addInitScript(() => {
       window.__mechalabPredictFirst = false;
     });
+    // This suite drives the workbench; the first-run coach mark (its own suite) is not on screen.
+    await seedTourSeen(context);
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));

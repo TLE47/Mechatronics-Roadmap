@@ -45,6 +45,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { resolveChromiumExecutable, startDevServer } from './e2e_browser_workbench.mjs';
+import { seedTourSeen } from './tour_seed.mjs';
 
 const ROOT = process.cwd();
 const ALLOWLIST_FILE = path.join(ROOT, 'docs', 'a11y-allowlist.json');
@@ -149,6 +150,9 @@ async function main() {
           }
         }, theme);
       }
+      // Axe runs on the tab as built, not on the first-run tour over it (that dialog has its own
+      // accessible-name assertions in `scripts/e2e_tour.mjs`).
+      await seedTourSeen(context);
       const page = await context.newPage();
       page.on('pageerror', (error) => errors.push(`${theme}: ${error.message}`));
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
