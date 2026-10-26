@@ -3441,6 +3441,7 @@ export const TabPyodideRunner: React.FC<TabPyodideRunnerProps> = ({
                   disabled={isRunning}
                   ref={runButtonRef}
                   data-testid="btn-run-verify"
+                  data-sound="primary"
                   data-tour="run-button"
                   title="Run & Verify Output — ⌘↵ / Ctrl+↵ runs from anywhere on this screen"
                   className="btn btn-primary ml-1 px-3.5 py-2 text-[13px] font-bold"

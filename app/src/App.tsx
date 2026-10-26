@@ -136,6 +136,7 @@ import {
 import { STORE_RESTORED_EVENT } from './backupBundle';
 import { FOCUS_EVENT, focusLabel, readFocus, setFocus } from './focusMode';
 import { SoundControlLazy } from './components/SoundControlLazy';
+import { SoundClicks } from './components/SoundClicks';
 import { attemptsByLesson, downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
@@ -201,19 +202,14 @@ const LearnerDashboard = React.lazy(() =>
 const AdminDashboard = React.lazy(() =>
   import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard }))
 );
-// The walkable room is its own chunk for the same reason: it is a place to visit, not the price of a
-// first lesson, and a learner who never opens it downloads neither it nor the street outside.
-const Workshop = React.lazy(() =>
-  import('./components/game/Workshop').then((module) => ({ default: module.Workshop }))
-);
 
-type WholePage = 'workbench' | 'dashboard' | 'admin' | 'lab';
+type WholePage = 'workbench' | 'dashboard' | 'admin';
 
-/** `?view=dashboard`, `?view=admin` and `?view=lab` are addresses, so a page survives a reload. */
+/** `?view=dashboard` and `?view=admin` are addresses, so a page survives a reload. */
 function pageFromLocation(): WholePage {
   if (typeof window === 'undefined' || !window.location) return 'workbench';
   const view = new URLSearchParams(window.location.search || '').get('view');
-  return view === 'dashboard' || view === 'admin' || view === 'lab' ? view : 'workbench';
+  return view === 'dashboard' || view === 'admin' ? view : 'workbench';
 }
 
 /** The sentence shown after a workspace merge: what arrived, and what was kept twice. */
@@ -1194,9 +1190,6 @@ export const App: React.FC = () => {
       case 'action-theme-tokens':
         if (typeof window !== 'undefined') window.location.assign(themeViewSearch());
         break;
-      case 'action-open-lab':
-        openPage('lab');
-        break;
       case 'action-pass-level0':
       case 'action-pass-tier1':
       case 'action-pass-tier2':
@@ -1535,6 +1528,10 @@ export const App: React.FC = () => {
     );
     return (
       <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
+        {/* The interface's ear: one delegated listener for every control on every screen. It
+            renders nothing, costs a muted learner no fetch, and is mounted here so the dashboard
+            and the admin area tick the same as the workbench. */}
+        <SoundClicks />
         <Header
           theme={theme}
           fallback={themeFallback}
@@ -1545,13 +1542,12 @@ export const App: React.FC = () => {
           onExportPortfolio={() => setIsPortfolioModalOpen(true)}
           activeTierPass={activeTierPass}
           onSelectTierPass={setActiveTierPass}
-          // The dashboard, the admin area and the lab read no pass: the links would only move a
+          // The dashboard and the admin area read no pass: the links would only move a
           // highlight.
           showCourseLevels={false}
           accountEmail={accountEmail}
           onOpenAccount={() => setIsAccountOpen(true)}
           onOpenPalette={() => setIsPaletteOpen(true)}
-          onOpenLab={() => openPage('lab')}
           focus={focus}
           onToggleFocus={toggleFocusMode}
         />
@@ -1573,24 +1569,7 @@ export const App: React.FC = () => {
               </p>
             }
           >
-            {wholePage === 'lab' ? (
-              <Workshop
-                continueLesson={
-                  offer
-                    ? {
-                        ...offer,
-                        // The lab labels its Continue button with the lesson's name; the offer
-                        // itself carries only the id and why it was chosen.
-                        title:
-                          PYTHON_LESSONS.find((lesson) => lesson.id === offer.id)?.title ?? offer.id,
-                      }
-                    : null
-                }
-                verifiedLessons={verifiedLessons}
-                onOpenLesson={openLessonFromDashboard}
-                onLeave={() => openPage('workbench')}
-              />
-            ) : wholePage === 'dashboard' ? (
+            {wholePage === 'dashboard' ? (
               <LearnerDashboard
                 email={accountEmail}
                 role={accountRole}
@@ -1633,6 +1612,10 @@ export const App: React.FC = () => {
   if (themeView) {
     return (
       <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
+        {/* The interface's ear: one delegated listener for every control on every screen. It
+            renders nothing, costs a muted learner no fetch, and is mounted here so the dashboard
+            and the admin area tick the same as the workbench. */}
+        <SoundClicks />
         <Header
           theme={theme}
           fallback={themeFallback}
@@ -1673,6 +1656,7 @@ export const App: React.FC = () => {
       data-focus={focus ? 'on' : 'off'}
       className="min-h-screen flex flex-col bg-canvas text-ink"
     >
+      <SoundClicks />
       {/* Keyboard users can jump the header, the mode bar and the tab rail in one key. */}
       <a href="#main" className="skip-link">
         Skip to the workbench
@@ -1693,7 +1677,6 @@ export const App: React.FC = () => {
         accountEmail={accountEmail}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenPalette={() => setIsPaletteOpen(true)}
-        onOpenLab={() => openPage('lab')}
         focus={focus}
         onToggleFocus={toggleFocusMode}
       />
@@ -1824,6 +1807,7 @@ export const App: React.FC = () => {
                 <button
                   key={tab.id}
                   data-testid={`tab-btn-${tab.id}`}
+                  data-sound="nav"
                   onClick={() => {
                     setActiveTab(tab.id);
                     setHighlightedId(null);

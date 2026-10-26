@@ -38,6 +38,10 @@ LINK_REPORT.md
 .sweep-state.json
 .browser-verdicts.json
 
+# The music beds' 7 MB CC0 sources: `scripts/build_music.mjs` cuts the committed loops from these,
+# and `--download` puts them here. The loops ship; the sources do not.
+.cache/music/
+
 
 screenshots/
 .fb-scratch/

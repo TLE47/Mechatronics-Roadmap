@@ -111,6 +111,7 @@ export function LessonChooser({
             <button
               key={lesson.id}
               data-testid={`lesson-item-${lesson.id}`}
+              data-sound="row"
               onClick={() => onSelect(lesson.id)}
               className={`flex w-full items-start justify-between gap-2 rounded-lg border p-2.5 text-left transition-all cursor-pointer ${
                 isSelected

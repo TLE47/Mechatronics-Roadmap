@@ -88,6 +88,23 @@ export const LINK_HISTORY: LinkHistoryPoint[] = [
       "SERVER_ERROR": 1,
       "UNREACHABLE": 21
     }
+  },
+  {
+    "date": "2026-10-26T11:37:33+00:00",
+    "urls": 603,
+    "served": 557,
+    "notChecked": 46,
+    "failed": 0,
+    "blocked": 32,
+    "unreachable": 13,
+    "serverError": 1,
+    "verdicts": {
+      "BLOCKED": 32,
+      "FAIL": 0,
+      "PASS": 557,
+      "SERVER_ERROR": 1,
+      "UNREACHABLE": 13
+    }
   }
 ];
 
@@ -106,187 +123,205 @@ export interface HostRecurrence {
 }
 
 /** Runs whose record carried its unverified URL list; older rows cannot contribute. */
-export const HOST_RECURRENCE_RUNS: number = 3;
+export const HOST_RECURRENCE_RUNS: number = 4;
 
 export const HOST_RECURRENCE: HostRecurrence[] = [
   {
     "host": "st.com",
-    "runs": 3,
+    "runs": 4,
     "urls": 5,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "link.springer.com",
-    "runs": 3,
-    "urls": 4,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   },
   {
     "host": "sciencedirect.com",
-    "runs": 3,
+    "runs": 4,
     "urls": 4,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   },
   {
     "host": "analog.com",
-    "runs": 3,
+    "runs": 4,
     "urls": 3,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   },
   {
     "host": "cds.caltech.edu",
-    "runs": 3,
+    "runs": 4,
     "urls": 2,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   },
   {
     "host": "ctms.engin.umich.edu",
-    "runs": 3,
+    "runs": 4,
     "urls": 2,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   },
   {
     "host": "doi.org",
-    "runs": 3,
+    "runs": 4,
     "urls": 2,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "mathworks.com",
+    "runs": 4,
+    "urls": 2,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "raspberrypi.com",
+    "runs": 4,
+    "urls": 2,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "wiki.st.com",
+    "runs": 4,
+    "urls": 2,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "advanced.onlinelibrary.wiley.com",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "allaboutcircuits.com",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "dl.acm.org",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "elmerfem.org",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "fbsbook.org",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "iso.org",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "journals.sagepub.com",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "maxongroup.com",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "mitpress.mit.edu",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "ngspice.sourceforge.io",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "onlinelibrary.wiley.com",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "rug.nl",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "sapien.ucsd.edu",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "science.org",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "w3.org",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "wiki.linuxfoundation.org",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
+  },
+  {
+    "host": "ww1.microchip.com",
+    "runs": 4,
+    "urls": 1,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   },
   {
     "host": "learn.sparkfun.com",
     "runs": 3,
-    "urls": 2,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "mathworks.com",
-    "runs": 3,
-    "urls": 2,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "raspberrypi.com",
-    "runs": 3,
-    "urls": 2,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "wiki.st.com",
-    "runs": 3,
-    "urls": 2,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "advanced.onlinelibrary.wiley.com",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "allaboutcircuits.com",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "dl.acm.org",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "elmerfem.org",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "fbsbook.org",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "iso.org",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "journals.sagepub.com",
-    "runs": 3,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
     "host": "libero-project.github.io",
     "runs": 3,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
-    "host": "maxongroup.com",
+    "host": "link.springer.com",
     "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "mitpress.mit.edu",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "ngspice.sourceforge.io",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "onlinelibrary.wiley.com",
-    "runs": 3,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
     "host": "openmodelica.org",
     "runs": 3,
-    "urls": 1,
+    "urls": 0,
     "lastSeen": "2026-10-19T22:24:26+00:00"
   },
   {
-    "host": "rug.nl",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "host": "reddit.com",
+    "runs": 1,
+    "urls": 3,
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   },
   {
-    "host": "sapien.ucsd.edu",
-    "runs": 3,
+    "host": "compliantmechanisms.byu.edu",
+    "runs": 1,
     "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   },
   {
-    "host": "science.org",
-    "runs": 3,
+    "host": "en.cppreference.com",
+    "runs": 1,
     "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "w3.org",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "wiki.linuxfoundation.org",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
-  },
-  {
-    "host": "ww1.microchip.com",
-    "runs": 3,
-    "urls": 1,
-    "lastSeen": "2026-10-19T22:24:26+00:00"
+    "lastSeen": "2026-10-26T11:37:33+00:00"
   }
 ];

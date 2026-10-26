@@ -16,6 +16,114 @@ flowchart LR
 
 ---
 
+## [2026-10-26] — Run 252: real lo-fi, and a panel to set it by
+
+Sound v2 gave the workbench an interface and a room; the music was still two oscillator drones. This
+run makes it music, and gives the learner a settings panel to shape all of it.
+
+**Two CC0 beds, cut rather than composed.** *Snow Drift* and *Fire Place* by holiznacc0 (*Winter
+Lofi*, Free Music Archive, CC0 1.0 Universal) are the plan's named beds: **Lab Night** at the bench,
+**Focus Current** in focus. `scripts/build_music.mjs` cuts a 60-second window at a fixed start, folds
+the two seconds after it back over the head with an equal-power crossfade, peak-normalises both to the
+same level, and encodes stereo AAC at 56 kbps — 434 kB each. The 7 MB sources are not committed
+(`.cache/music/` is ignored); the provenance, the windows and the licence are in
+[`app/src/audio/assets/music/NOTICE.md`](app/src/audio/assets/music/NOTICE.md). The drone is now the
+**fallback** and a choice: a browser without AAC, an offline visit, or a learner who picked **Drone**
+hears the drones, and the debug snapshot says which (`musicSource`).
+
+**The panel.** `components/SoundSettingsPanel.tsx` replaces three sliders in a popover: Sound (master
+and whether a remembered "on" is armed), Music (fader and *which* music), Room, Cues, Interface (a
+switch for the ticks plus three previews), and a credit line with Reset. Two new prefs — `clicks` and
+`beds` — join the store, with old records migrated; Reset restores the levels and switches but never
+switches the learner's sound off or changes the music mid-phrase.
+
+**Three bugs, found by the tests rather than by luck.** A press is dispatched on `pointerdown` and the
+control's handler runs after it, so an async hop to the engine let the *press that switches the
+clicks off* swallow its own sound — the handler is now kept beside the engine and called inside the
+event. A preview was being eaten by the same press under the 35 ms click gap, so previews are exempt
+from the gap (and from the switch: asking to hear a tick is not chatter). And the browser suite's duck
+check raced a fast run; the engine now keeps a bounded `duckHistory`, so the assertion is about what
+happened rather than about catching it.
+
+**Weight.** The beds are a new **`music`** metric at their own bytes — 867.7 kB against 1.00 MB — kept
+apart from `audio` so a track cannot hide in a room-tone ceiling. `total` moved by hand to 2.40 MB
+local and 2.46 MB signed-in; `entry_gzip` and `largest_js_gzip` did not, because nothing musical is on
+a first paint.
+
+**Verified.** `test:audio` **32 checks**; `test:e2e:game` **16** in Chromium (the panel's sections and
+faders, a preview named by its label, the Interface switch, the Music source reporting `file`);
+`test:weight` 27; `check:weight --record` clean (music 867.7/1000 kB, total 2.39/2.46 MB); `tsc`;
+`build`; `build_music --check`; the full workbench matrix, the snapshot surfaces and `check_all`.
+
+---
+
+## [2026-10-26] — Run 250: the room you can hear
+
+Sound v1 was three cues and two beds; this run makes it a place. The bench now has an interface that
+answers under the pointer, a room with four layers instead of one drone, a limiter that no burst can
+clip, and a rain loop that arrives only after someone asks for sound.
+
+**The interface.** Seven kinds of control, one sound each (`nav`, `primary`, `toggle`, `row`, `chip`,
+`slider`, `close`), classified from what an element already says about itself — `data-sound`, a role,
+`aria-pressed`, a close word — so no second styling system was added to the app. One delegated
+listener in `SoundClicks` (mounted in all three of `App`'s branches) reads the control under the
+pointer or the one the keyboard activated and places the tick by its x position, clamped to ±0.35.
+Ticks have their own gap (35 ms), their own ceiling (0.1 per tone), and a cap of 16 per second, and
+they never duck and never eat a cue's gap. A disabled control is silent; `data-sound="none"` silences
+a subtree; text fields were never a sound in this design.
+
+**The room.** `audio/ambience.ts` is a table — rain, floor, city, bench — with a row for home, focus
+and a run. The bench is the one layer on the effects bus, so a run makes the machine louder while the
+bed and the room duck; a run in focus keeps the machine and pulls the rain and city back. A failed
+run pulls one gust of rain (1.55×, half a second down), which is the room reacting to the machine
+rather than a punishment sound.
+
+**The mixer.** A room bus of its own, so the new **Room** fader is independent of Music; a
+`DynamicsCompressorNode` limiter at −6 dB as the last thing before the speakers, with nothing
+bypassing it. The store gained `room` and migrates a record written before it existed.
+
+**The one recorded file.** `app/src/audio/assets/rain-loop.m4a` — 24 s of rain, mono AAC at 40 kbps,
+127 kB — rendered by `scripts/build_ambience.mjs` from a seeded PRNG (so it has no third-party rights
+and rebuilds byte-for-byte; `--check` proves the committed file is current). It is fetched only after
+the gesture, has a synthesised fallback for a browser that cannot decode AAC, and is measured by a new
+**`audio`** metric at its own bytes. That metric moved `total` by hand: 1.40 → 1.53 MB local and 1.46
+→ 1.59 MB signed-in; `entry_gzip` did not move, because nothing audio is on a first paint.
+
+**Verification.** `npm run test:audio` is 27 checks (the graph, the limiter, the room table, the click
+vocabulary, pan, the cap, both rain paths); `npm run test:e2e:game` is 13 in Chromium, now including
+the room arriving from the real file, a click heard as a `toggle`, and a muted interface scheduling
+nothing. `npm run check:weight` records `audio 127.0 kB / 150 kB`.
+
+**Docs.** [`docs/AUDIO.md`](docs/AUDIO.md) is rewritten around the two kinds of sound (furniture and
+place); [`app/src/audio/assets/README.md`](app/src/audio/assets/README.md) carries the loop's
+provenance; `docs/README.md` and `app/README.md` list the four new modules.
+
+---
+
+## [2026-10-26] — Run 249: the lab comes out
+
+The walkable room is removed. It was a place beside the course — the header's **Lab** door, its own
+`?view=lab` address, a palette command and a lazy chunk — and the owner judged that a 2.5D game does
+not belong in a workbench whose job is to get someone to a lesson and a verified check. It arrived
+whole in 3.2; it leaves whole rather than shrinking into something that is neither a game nor a page.
+
+**What left.** `app/src/workshop.ts` (the room's rules), `app/src/components/game/Workshop.tsx` (the
+screen), their two suites (`test:workshop`, `test:e2e:workshop`), `docs/WORKSHOP.md`, the header's
+door and its `onOpenLab` prop, the `lab` member of `WholePage` and of `?view=` parsing, the
+palette's `action-open-lab`, the two `package.json` scripts and the two rows in the `test:workbench`
+matrix.
+
+**What did not move.** Every lesson, the runner, the roadmap, the reward ledger, Mission Control,
+the Black Box, sound and focus mode are untouched: the room never gated a lesson, so nothing a
+learner earned was stored in it. A bookmarked `?view=lab` now falls back to the workbench, which is
+what every unknown `?view=` value already did.
+
+**Docs.** `docs/README.md` and `app/README.md` no longer list the room; `docs/VERIFICATION.md` no
+longer claims its two suites. Run 248 stays in this file as the record of the room arriving; this
+entry is the record of it leaving.
+
+---
+
 ## [2026-10-25] — Run 248: MechaLab 3.2 — The workshop you can walk
 
 The plan's fourth layer is a place, and this is its first shippable version: one 2.5D room under the
