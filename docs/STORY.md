@@ -21,6 +21,16 @@ line — *"If you're hearing this, someone followed the oil. Good. Curious is en
 
 You finish the arm. You are the one who can check the machine.
 
+```mermaid
+flowchart LR
+    A["You: role optimized"] --> B["The oil trail"]
+    B --> C["The Last Hands' door"]
+    C --> D["The arm, in ten capabilities"]
+    D --> E["The four faults, proven"]
+    E --> F["Your recording in the Black Box"]
+    G["EA Corp + GLaDOS: a system notice"] -. "the reason to check" .-> D
+```
+
 ## The ten missions
 
 Each mission is one spine step of the real curriculum (`docs/ROUTE.md`), and it is verified when

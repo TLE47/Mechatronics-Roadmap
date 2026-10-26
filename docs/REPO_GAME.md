@@ -4,6 +4,16 @@ The site tells one story, and the repository is where that story is written, rev
 Nothing here is a separate product: a Work Order is a task, a Field Service Call is a bug, a Black Box
 Voice is a recording, and the ten milestones are the ten missions.
 
+```mermaid
+flowchart LR
+    O["An opener names the lesson id"] --> B["On the bench"]
+    R["A pull request states the checks it ran"] --> V["Checks green"]
+    B --> R
+    V --> M["Merged and labelled verified"]
+    M --> F["The next chapter's firmware release"]
+    F --> O
+```
+
 ## Openers
 
 | Form | What it is | Lands in |

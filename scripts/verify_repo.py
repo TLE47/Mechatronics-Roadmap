@@ -419,6 +419,17 @@ MATH_ONLY_COMMANDS = frozenset(
 
 # Shell pages that host math. The workbench's own formulas live in `src/**` (checked by
 # `find_source_math_issues`), and the old static `web/` pages were replaced by the Vite app.
+# Every page the repository publishes draws at least one picture. These Markdown files are not pages:
+# a Black Box recording is a ≤120-word voice memo the dashboard prints verbatim (a diagram would be
+# read as text), a `.github/` template is a form GitHub renders as fields, and the resources list is a
+# bibliography. Everything else still has to carry one.
+MERMAID_EXEMPT_PREFIXES = (".github/", "content/blackbox/")
+MERMAID_EXEMPT_FILES = frozenset(
+    {
+        "resources/textbooks-and-papers.md",
+    }
+)
+
 MATH_HTML_FILES = ("app/index.html",)
 
 _TEXT_GROUP_RE = re.compile(r"\\(?:" + "|".join(TEXT_MODE_GROUPS) + r")\s*\{")
@@ -648,7 +659,8 @@ def verify_repository(repo_root: Path) -> dict[str, Any]:
 
         m_blocks = extract_mermaid_blocks(text)
         total_mermaid += len(m_blocks)
-        if len(m_blocks) == 0 and rel_path != "resources/textbooks-and-papers.md":
+        exempt = rel_path in MERMAID_EXEMPT_FILES or rel_path.startswith(MERMAID_EXEMPT_PREFIXES)
+        if len(m_blocks) == 0 and not exempt:
             errors.append(f"{rel_path}: Expected at least 1 Mermaid diagram, found 0")
 
         for issue in find_math_hygiene_issues(text, rel_path):

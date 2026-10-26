@@ -15,6 +15,16 @@ scripts/build_content.py       validate → app/src/data/contentBundle.ts + cont
 app/src/content/{loader,recordings}.ts   the only modules that import the generated files
 ```
 
+```mermaid
+flowchart TD
+    P["A pull request changes one file"] --> V["build_content.py: schema + cross-file checks"]
+    V -->|fails| X["CI stops: the file or its link is wrong"]
+    V -->|passes| G["contentBundle.ts + contentRecordings.ts + manifest"]
+    G --> S["The site imports the bundle; it hard-codes no mission"]
+    S --> R["A learner verifies a step"]
+    R --> L["Award ledger (stable ids, idempotent)"]
+```
+
 ## The commands
 
 ```bash
