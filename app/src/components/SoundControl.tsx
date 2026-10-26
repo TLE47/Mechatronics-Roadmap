@@ -144,7 +144,7 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
     }
   };
 
-  const setLevel = (key: 'music' | 'sfx', value: number) => {
+  const setLevel = (key: 'music' | 'room' | 'sfx', value: number) => {
     const next = writeSoundPrefs({ [key]: value / 100 } as Partial<SoundPrefs>);
     setPrefs(next);
     void loadSoundEngine().then((engine) => engine.apply(next));
@@ -217,9 +217,9 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
               Starts on your next click.
             </p>
           )}
-          {(['music', 'sfx'] as const).map((key) => {
+          {(['music', 'room', 'sfx'] as const).map((key) => {
             const value = Math.round(prefs[key] * 100);
-            const label = key === 'music' ? 'Music' : 'Effects';
+            const label = key === 'music' ? 'Music' : key === 'room' ? 'Room' : 'Cues';
             return (
               <label key={key} className="mt-3 block text-[11px] font-semibold uppercase tracking-wide">
                 <span className="flex items-center justify-between">
@@ -245,7 +245,8 @@ export const SoundControl: React.FC<{ variant?: 'header' | 'pill' }> = ({ varian
             );
           })}
           <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--dim)' }}>
-            Nothing autoplays. Focus keeps the bed quieter, and a run ducks it until the checks finish.
+            Nothing autoplays. Room is the rain, the floor and the city; Cues is every click and
+            verdict. Focus quiets both, and a run leans on the bench until the checks finish.
           </p>
         </div>
       )}

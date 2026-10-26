@@ -479,8 +479,11 @@ It is empty.
 **`npm run check:weight`** gzips the built shell (`dist/assets/**` plus `dist/index.html`) and compares
 it against [`docs/weight-budget.json`](../docs/weight-budget.json): `js_gzip`, `css_gzip`, `fonts` (raw,
 because woff2 is already compressed — the two UI faces and KaTeX's 19 maths faces), `largest_js_gzip`,
-`prose_gzip`, `reader_gzip` and `total`. Today that is **1.38 MB across 74 files** (1.44 MB with the
-account library, which is how CI builds it), with the budgets a few percent above. A breach fails with the overshoot named, and
+`prose_gzip`, `reader_gzip`, `audio` and `total`. Today that is **1.56 MB across 74 files** — the shape
+CI builds, with the account library; a local-only clone is about 60 kB smaller because that library
+folds away — with the budgets a few percent above. **`audio` is the room's one recorded loop**
+(`rain-loop.m4a`, 127 kB, measured at its own bytes because AAC is already compressed): inside `total`,
+nothing to do with a first paint, since it is fetched only after sound is turned on. A breach fails with the overshoot named, and
 so does a budget with nothing measured behind it — a metric the build stopped emitting would otherwise
 pass forever. The rules are pure ([`../scripts/weight_budget.mjs`](../scripts/weight_budget.mjs)) and
 `npm run test:weight` pins the boundary at exactly-on-budget and one-byte-over, because that is where a
@@ -1172,7 +1175,11 @@ pages. A stale registry is a build failure, not a silent mismatch.
 | [`src/focusMode.ts`](src/focusMode.ts) | Focus mode's stored choice and the event the header, the pill and the page share. |
 | [`src/audio/prefs.ts`](src/audio/prefs.ts) | Sound's stored choice (`mechalab_sound_v1`), its clamping, the subscribers both controls read, and the labels. Off by default. |
 | [`src/audio/facade.ts`](src/audio/facade.ts) | The two functions the runner and focus mode call — `playCue`, `setSoundScene` — as one window event, so no audio code reaches the entry chunk. |
-| [`src/audio/engine.ts`](src/audio/engine.ts) | The only AudioContext: the mixer graph, synthesised cues, two beds, ducking and the focus scene. A lazy chunk, fetched after first paint. |
+| [`src/audio/engine.ts`](src/audio/engine.ts) | The only AudioContext: the mixer graph, synthesised cues, two beds, the limiter, the duck and the focus scene, the seven interface ticks, and the one recorded loop with its synthesised fallback. A lazy chunk, fetched after first paint. |
+| [`src/audio/clickMap.ts`](src/audio/clickMap.ts) | What a control is, from what it already says about itself (`data-sound`, role, `aria-pressed`, a close word), and the pan a pointer's position asks for. |
+| [`src/audio/ambience.ts`](src/audio/ambience.ts) | The room as a table: rain, floor, city and bench, per state — and why the bench is the one layer that rises during a run. |
+| [`src/audio/rainAsset.ts`](src/audio/rainAsset.ts) | The recorded loop's URL, in its own module, so a Node test can import the engine without meeting an `.m4a`. |
+| [`src/components/SoundClicks.tsx`](src/components/SoundClicks.tsx) | The interface's ear: one delegated listener, the dedupe between a pointer and a keyboard press, and nothing rendered. |
 | [`src/components/SoundControl.tsx`](src/components/SoundControl.tsx) | The header's sound button and panel, the focus pill's mute, and the one-shot gesture that starts a remembered "on" without autoplaying. |
 | [`src/portfolio.ts`](src/portfolio.ts) | The exported Markdown: progress, notes and passages, the deck, and the measured sittings. |
 | [`src/traceback.ts`](src/traceback.ts) | CPython's failure text as data: frames, the learner's own frame, chains, and both SyntaxError shapes. |

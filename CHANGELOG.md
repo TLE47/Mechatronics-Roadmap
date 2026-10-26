@@ -16,6 +16,49 @@ flowchart LR
 
 ---
 
+## [2026-10-26] — Run 250: the room you can hear
+
+Sound v1 was three cues and two beds; this run makes it a place. The bench now has an interface that
+answers under the pointer, a room with four layers instead of one drone, a limiter that no burst can
+clip, and a rain loop that arrives only after someone asks for sound.
+
+**The interface.** Seven kinds of control, one sound each (`nav`, `primary`, `toggle`, `row`, `chip`,
+`slider`, `close`), classified from what an element already says about itself — `data-sound`, a role,
+`aria-pressed`, a close word — so no second styling system was added to the app. One delegated
+listener in `SoundClicks` (mounted in all three of `App`'s branches) reads the control under the
+pointer or the one the keyboard activated and places the tick by its x position, clamped to ±0.35.
+Ticks have their own gap (35 ms), their own ceiling (0.1 per tone), and a cap of 16 per second, and
+they never duck and never eat a cue's gap. A disabled control is silent; `data-sound="none"` silences
+a subtree; text fields were never a sound in this design.
+
+**The room.** `audio/ambience.ts` is a table — rain, floor, city, bench — with a row for home, focus
+and a run. The bench is the one layer on the effects bus, so a run makes the machine louder while the
+bed and the room duck; a run in focus keeps the machine and pulls the rain and city back. A failed
+run pulls one gust of rain (1.55×, half a second down), which is the room reacting to the machine
+rather than a punishment sound.
+
+**The mixer.** A room bus of its own, so the new **Room** fader is independent of Music; a
+`DynamicsCompressorNode` limiter at −6 dB as the last thing before the speakers, with nothing
+bypassing it. The store gained `room` and migrates a record written before it existed.
+
+**The one recorded file.** `app/src/audio/assets/rain-loop.m4a` — 24 s of rain, mono AAC at 40 kbps,
+127 kB — rendered by `scripts/build_ambience.mjs` from a seeded PRNG (so it has no third-party rights
+and rebuilds byte-for-byte; `--check` proves the committed file is current). It is fetched only after
+the gesture, has a synthesised fallback for a browser that cannot decode AAC, and is measured by a new
+**`audio`** metric at its own bytes. That metric moved `total` by hand: 1.40 → 1.53 MB local and 1.46
+→ 1.59 MB signed-in; `entry_gzip` did not move, because nothing audio is on a first paint.
+
+**Verification.** `npm run test:audio` is 27 checks (the graph, the limiter, the room table, the click
+vocabulary, pan, the cap, both rain paths); `npm run test:e2e:game` is 13 in Chromium, now including
+the room arriving from the real file, a click heard as a `toggle`, and a muted interface scheduling
+nothing. `npm run check:weight` records `audio 127.0 kB / 150 kB`.
+
+**Docs.** [`docs/AUDIO.md`](docs/AUDIO.md) is rewritten around the two kinds of sound (furniture and
+place); [`app/src/audio/assets/README.md`](app/src/audio/assets/README.md) carries the loop's
+provenance; `docs/README.md` and `app/README.md` list the four new modules.
+
+---
+
 ## [2026-10-26] — Run 249: the lab comes out
 
 The walkable room is removed. It was a place beside the course — the header's **Lab** door, its own

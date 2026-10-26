@@ -14,6 +14,9 @@ import {
 } from '../theme';
 import { focusLabel } from '../focusMode';
 import { SoundControlLazy } from './SoundControlLazy';
+// The interface's own ear: one delegated listener for every control's click, mounted once with the
+// header (which every screen renders). It renders nothing and holds no state.
+import { SoundClicks } from './SoundClicks';
 
 interface HeaderProps {
   /** The palette on screen, the OS palette leaving high contrast returns to, and the three controls. */
@@ -108,6 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
         backgroundColor: 'color-mix(in srgb, var(--bg) 82%, transparent)',
       }}
     >
+      <SoundClicks />
       <div className="mx-auto flex max-w-[var(--shell-max)] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
         {/* Zone 1: brand lockup. The mark is the arm a learner is working towards. The link's name
             is its own text plus a screen-reader-only tail: an `aria-label` that rewords it ("MechaLab

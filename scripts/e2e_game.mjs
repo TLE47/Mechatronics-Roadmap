@@ -11,7 +11,9 @@
  *     first Black Box recording open and the second one still locked, and a Perk panel that names
  *     what the next level opens.
  *  3. A real run that passes files an award: the toast appears, the ledger holds it, and a reload
- *     does not grant it a second time.
+ *     does not grant it a second time. Sound is exercised in the same scenario, because it hangs off
+ *     the same run: off until asked for, the room arriving after the gesture, a click heard through
+ *     the delegated listener, the bed ducked while the checks run, and one press back to silence.
  *
  * The middle scenario seeds the verified flags on purpose — the engine's contract is that flags are
  * the only input, and re-running 21 lessons in a browser would test Pyodide, not the game.
@@ -207,6 +209,32 @@ async function main() {
       assert.match(storedSound ?? '', /"on":true/, 'the toggle must remember the choice');
       console.log('  ok sound is off by default and turns on in one click');
 
+      // The room arrives after the gesture, not with it: the loop is fetched by the engine's lazy
+      // chunk. A browser without AAC (headless Chromium is one) gets the synthesised fallback rather
+      // than silence, which is the same promise the unit suite pins from the other side.
+      await page.waitForFunction(
+        () => ['file', 'synth'].includes(window.__mechalabAudio?.().rain ?? 'none'),
+        undefined,
+        { timeout: 20000 }
+      );
+      const rain = await page.evaluate(() => window.__mechalabAudio?.().rain);
+      console.log(`  ok the room arrives after the gesture (${rain})`);
+
+      // A click is heard, and it is the delegated listener that hears it: the classifier decides the
+      // role, so the settings button (an `aria-expanded` latch) must arrive as a toggle.
+      await page.getByTestId('btn-sound-settings').click();
+      await page.getByTestId('sound-room').fill('40');
+      await page.waitForFunction(() => window.__mechalabAudio?.().room === 0.4, undefined, {
+        timeout: 5000,
+      });
+      const uiCues = await page.evaluate(() => window.__mechalabAudio?.().uiCues);
+      assert.ok(
+        uiCues.includes('toggle'),
+        `a latch must sound like a latch, got ${JSON.stringify(uiCues)}`
+      );
+      await page.keyboard.press('Escape');
+      console.log('  ok a control click is heard, and the Room fader reaches the engine');
+
       // Focus is a scene on the same bus: the bed crossfades quieter and the header's control goes
       // with the chrome, so the pill carries the one press from muted.
       await page.getByTestId('btn-focus-toggle').click();
@@ -275,13 +303,25 @@ async function main() {
         timeout: 15000,
       });
       console.log('  ok a remembered "on" waits for a gesture instead of autoplaying');
+
+      // And one press the other way: a muted engine schedules nothing, whatever the learner touches.
+      await page.getByTestId('btn-sound-toggle').click(); // on -> off
+      await page.waitForFunction(() => window.__mechalabAudio?.().muted === true, undefined, {
+        timeout: 5000,
+      });
+      const beforeMute = await page.evaluate(() => window.__mechalabAudio?.().uiCues.length);
+      await page.getByTestId('btn-sound-settings').click();
+      await page.keyboard.press('Escape');
+      const afterMute = await page.evaluate(() => window.__mechalabAudio?.().uiCues.length);
+      assert.equal(afterMute, beforeMute, 'a muted interface must be silent, not merely quiet');
+      console.log('  ok one press mutes, and a muted interface schedules nothing');
       await context.close();
     }
   } finally {
     await browser.close();
     if (ownServer) await ownServer.viteServer.close();
   }
-  console.log('[PASS] game: 10 browser checks');
+  console.log('[PASS] game: 13 browser checks');
 }
 
 main().catch((error) => {

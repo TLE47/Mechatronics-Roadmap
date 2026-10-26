@@ -13,8 +13,9 @@
  *    `writeSoundPrefs` returns what to render, so blocked storage costs the memory, never the toggle —
  *    the same contract as `focusMode.ts` and the fold keys.
  *
- * The three numbers are deliberately few: a master toggle, the music bed, the effects. Per-cue volume
- * is an implementation detail, and every knob here is one a learner can reason about in a second.
+ * The four numbers are deliberately few: a master toggle, the music bed, the room, and the effects.
+ * Per-cue volume is an implementation detail, and every knob here is one a learner can reason about
+ * in a second — "the bed", "the rain", "the buttons and the checkmarks".
  */
 
 export interface SoundPrefs {
@@ -22,7 +23,12 @@ export interface SoundPrefs {
   on: boolean;
   /** Bed level, 0..1. The beds are quiet by construction; this is the relative balance. */
   music: number;
-  /** Cue level, 0..1. */
+  /**
+   * Room-tone level, 0..1 — the rain, the floor, the city. Separate from `music` because the bed is
+   * an instrument and the room is a place, and a learner may want one without the other.
+   */
+  room: number;
+  /** Cue level, 0..1. Every interface tick and every verdict rides this number. */
   sfx: number;
 }
 
@@ -30,7 +36,7 @@ export const SOUND_STORAGE_KEY = 'mechalab_sound_v1';
 export const SOUND_SCHEMA = 'mechalab.sound/1';
 
 /** What a fresh browser hears: nothing, until the toggle is pressed. */
-export const DEFAULT_SOUND_PREFS: SoundPrefs = { on: false, music: 0.6, sfx: 0.8 };
+export const DEFAULT_SOUND_PREFS: SoundPrefs = { on: false, music: 0.6, room: 0.45, sfx: 0.8 };
 
 /** A level that would not round-trip is a level the slider could never show. */
 export function clampLevel(value: unknown, fallback: number): number {
@@ -61,6 +67,8 @@ export function parseSoundPrefs(raw: string | null | undefined): SoundPrefs {
     return {
       on: parsed.on === true,
       music: clampLevel(parsed.music, DEFAULT_SOUND_PREFS.music),
+      // A record written before the Room fader existed simply has no `room`; it gets the default.
+      room: clampLevel(parsed.room, DEFAULT_SOUND_PREFS.room),
       sfx: clampLevel(parsed.sfx, DEFAULT_SOUND_PREFS.sfx),
     };
   } catch {
@@ -105,6 +113,7 @@ export function writeSoundPrefs(patch: Partial<SoundPrefs>): SoundPrefs {
   const next: SoundPrefs = {
     on: typeof patch.on === 'boolean' ? patch.on : base.on,
     music: clampLevel(patch.music, base.music),
+    room: clampLevel(patch.room, base.room),
     sfx: clampLevel(patch.sfx, base.sfx),
   };
   current = next;
@@ -134,6 +143,6 @@ export function soundLabel(on: boolean): string {
 /** The panel's one-line explanation; the same words in both variants. */
 export function soundHint(on: boolean): string {
   return on
-    ? 'Cues on a run, and a quiet room tone. Muted in one click.'
+    ? 'Every click, and the room: rain, the floor, the city. Muted in one click.'
     : 'Nothing plays until you turn this on. The choice is remembered.';
 }

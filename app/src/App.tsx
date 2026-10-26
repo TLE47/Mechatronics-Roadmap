@@ -136,6 +136,7 @@ import {
 import { STORE_RESTORED_EVENT } from './backupBundle';
 import { FOCUS_EVENT, focusLabel, readFocus, setFocus } from './focusMode';
 import { SoundControlLazy } from './components/SoundControlLazy';
+import { SoundClicks } from './components/SoundClicks';
 import { attemptsByLesson, downloadLearningLog, readLearningLog, replaceLearningLog } from './learningLog';
 import type { Session } from '@supabase/supabase-js';
 import { TabId } from './types';
@@ -1527,6 +1528,10 @@ export const App: React.FC = () => {
     );
     return (
       <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
+        {/* The interface's ear: one delegated listener for every control on every screen. It
+            renders nothing, costs a muted learner no fetch, and is mounted here so the dashboard
+            and the admin area tick the same as the workbench. */}
+        <SoundClicks />
         <Header
           theme={theme}
           fallback={themeFallback}
@@ -1607,6 +1612,10 @@ export const App: React.FC = () => {
   if (themeView) {
     return (
       <div id="top" className="min-h-screen flex flex-col bg-canvas text-ink">
+        {/* The interface's ear: one delegated listener for every control on every screen. It
+            renders nothing, costs a muted learner no fetch, and is mounted here so the dashboard
+            and the admin area tick the same as the workbench. */}
+        <SoundClicks />
         <Header
           theme={theme}
           fallback={themeFallback}
@@ -1647,6 +1656,7 @@ export const App: React.FC = () => {
       data-focus={focus ? 'on' : 'off'}
       className="min-h-screen flex flex-col bg-canvas text-ink"
     >
+      <SoundClicks />
       {/* Keyboard users can jump the header, the mode bar and the tab rail in one key. */}
       <a href="#main" className="skip-link">
         Skip to the workbench
@@ -1797,6 +1807,7 @@ export const App: React.FC = () => {
                 <button
                   key={tab.id}
                   data-testid={`tab-btn-${tab.id}`}
+                  data-sound="nav"
                   onClick={() => {
                     setActiveTab(tab.id);
                     setHighlightedId(null);

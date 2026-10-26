@@ -53,6 +53,7 @@ const budget = {
   largest_js_gzip: 800,
   prose_gzip: 300,
   reader_gzip: 400,
+  audio: 500,
   total: 2000,
 };
 const fits = {
@@ -63,6 +64,7 @@ const fits = {
   largest_js_gzip: 700,
   prose_gzip: 250,
   reader_gzip: 350,
+  audio: 400,
   total: 1800,
 };
 
@@ -200,6 +202,9 @@ const FILES = [
   { name: 'assets/TabBode-ghi.js', size: 100, gzip: 30 },
   { name: 'assets/index-abc.css', size: 200, gzip: 90 },
   { name: 'assets/inter-latin.woff2', size: 450, gzip: 450 },
+  // The room's loop: already compressed, so its own bytes are the number (a gzip of AAC is a few
+  // bytes smaller and would under-report what a visit costs by hiding an incompressible file).
+  { name: 'assets/rain-loop-abc.m4a', size: 400, gzip: 400 },
   { name: 'index.html', size: 500, gzip: 60 },
 ];
 
@@ -209,7 +214,13 @@ check('js, css, fonts and the largest chunk are measured from the files', () => 
   assert.equal(measurement.css_gzip, 90);
   assert.equal(measurement.fonts, 450, 'expected the font counted at its own size, not gzipped twice');
   assert.equal(measurement.largest_js_gzip, 900, 'expected the biggest chunk, not the sum');
-  assert.equal(measurement.total, 1930, 'expected everything measured to be in the total');
+  assert.equal(measurement.audio, 400, 'expected the media file counted at its own size');
+  assert.equal(measurement.total, 2330, 'expected everything measured to be in the total, audio included');
+});
+
+check('a build with no recorded room is unmeasured, not free', () => {
+  const silent = measurementFrom([{ name: 'assets/index-abc.js', size: 3000, gzip: 900 }]);
+  assert.equal(Number.isNaN(silent.audio), true, 'removing the loop must fail the gate, not shrink it');
 });
 
 // The split's own metric: the document plus what it names is a first paint, and a chunk nobody opens

@@ -42,7 +42,7 @@ flowchart LR
 | [`STORY.md`](STORY.md) | The Last Hands: the premise, the ten missions and what each earns, the Black Box, and the five rules the story may never break. |
 | [`CONTENT.md`](CONTENT.md) | The content pipeline: `content/` as the source of truth, the schemas, `npm run build:content`, what `--check` proves, and how a rename resolves through `aliases.yaml`. |
 | [`REPO_GAME.md`](REPO_GAME.md) | The repository as the game board: the four issue forms, the PR template, the labels and the ten milestones — and what is deliberately not automated. |
-| [`AUDIO.md`](AUDIO.md) | Sound: off by default and armed by a gesture, synthesised with no audio files, the mixer graph, what ducks a run, and how focus stays quiet. |
+| [`AUDIO.md`](AUDIO.md) | Sound: off by default and armed by a gesture, the mixer and its limiter, the seven interface ticks and their pacing, the room's four layers, the one recorded loop and its fallback, what ducks a run, and how focus stays quiet. |
 
 ## Accounts and administration
 
